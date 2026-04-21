@@ -90,6 +90,10 @@ function applySidecar(
     if (sidecar.correlationTags?.length) { result = { ...result, correlationTags: sidecar.correlationTags }; }
     if (sidecar.trashed) { result = { ...result, trashed: true }; }
     if (hasPerformanceData(sidecar)) { result = { ...result, hasPerformanceData: true }; }
+    // Session-group propagation: groupId (shared across the group's members) and debugAdapterType
+    // (set only on the DAP main log) drive tree coalescing and primary-member selection.
+    if (sidecar.groupId) { result = { ...result, groupId: sidecar.groupId }; }
+    if (sidecar.debugAdapterType) { result = { ...result, debugAdapterType: sidecar.debugAdapterType }; }
     if (ctx.hasCachedSev) {
         return { ...result, errorCount: sidecar.errorCount, warningCount: sidecar.warningCount, perfCount: sidecar.perfCount, anrCount: sidecar.anrCount, fwCount: sidecar.fwCount, infoCount: sidecar.infoCount };
     }

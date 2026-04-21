@@ -6,7 +6,7 @@
 import * as vscode from 'vscode';
 import { getConfig, getLogDirectoryUri, readTrackedFiles, readTrackedFilesStreaming } from '../../modules/config/config';
 import { SessionMetadataStore, migrateSidecarsInDirectory } from '../../modules/session/session-metadata';
-import { SessionMetadata, TreeItem, groupSplitFiles } from './session-history-grouping';
+import { SessionMetadata, TreeItem, groupSplitFiles, groupSessionGroups } from './session-history-grouping';
 import { loadBatch, LoadMetadataTarget, type OnItemLoaded } from './session-history-metadata';
 
 /** Target interface for fetch operations that need access to provider state. */
@@ -73,8 +73,14 @@ export async function fetchItemsCore(
         ]);
         const items = await loadBatch(target, logDir, logFiles, { centralMeta, onItemLoaded: callbacks?.onItemLoaded });
         pruneCache(target, items);
-        const grouped = groupSplitFiles(items);
-        return grouped.sort((a, b) => b.mtime - a.mtime);
+        const splitGrouped = groupSplitFiles(items);
+        // Session-group coalescing runs AFTER split-group coalescing so that a multi-part DAP
+        // session (rotated into _001.log / _002.log) lands as one SplitGroup that then becomes
+        // one member of its SessionGroup \u2014 not N individual group members. Feature-gated on the
+        // user setting so disabling returns the pre-feature rendering exactly as before.
+        const cfg = getConfig().sessionGroups;
+        const finalItems = cfg.enabled ? groupSessionGroups(splitGrouped) : splitGrouped;
+        return finalItems.sort((a, b) => b.mtime - a.mtime);
     } catch {
         return [];
     }
