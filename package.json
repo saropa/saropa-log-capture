@@ -2385,6 +2385,34 @@
           "type": "number",
           "title": "%config.sessionListPageSize.title%"
         },
+        "saropaLogCapture.sessionGroups.enabled": {
+          "default": true,
+          "description": "Automatically group log files captured in the same time window (e.g. Drift Advisor + Logcat + debug session) into a single logical Session in the Logs list.",
+          "type": "boolean",
+          "title": "Session Groups: Enabled"
+        },
+        "saropaLogCapture.sessionGroups.lookbackSeconds": {
+          "default": 20,
+          "description": "When a new session starts, claim pre-existing ungrouped log files whose last-write time is within this many seconds. Only affects files that are not already part of another group.",
+          "minimum": 0,
+          "maximum": 600,
+          "type": "number",
+          "title": "Session Groups: Lookback Seconds"
+        },
+        "saropaLogCapture.sessionGroups.idleSeconds": {
+          "default": 60,
+          "description": "Close a standalone session group (one not anchored to a debug session) after this many seconds of silence. After closure, no new files can be added to the group.",
+          "minimum": 5,
+          "maximum": 3600,
+          "type": "number",
+          "title": "Session Groups: Idle Timeout Seconds"
+        },
+        "saropaLogCapture.sessionGroups.standaloneEnabled": {
+          "default": true,
+          "description": "Allow groups to form without a debug session. A standalone group forms when \u22652 integration providers (e.g. Drift Advisor + Logcat) produce output within the lookback window.",
+          "type": "boolean",
+          "title": "Session Groups: Standalone Grouping"
+        },
         "saropaLogCapture.verboseDap": {
           "default": false,
           "description": "%config.verboseDap.description%",
