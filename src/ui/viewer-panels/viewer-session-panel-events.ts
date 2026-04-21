@@ -67,6 +67,33 @@ export function getSessionPanelEventsScript(): string {
     });
 
     if (sessionListEl) {
+        /* Session-group chevron collapse/expand: check before the day-heading handler because
+           group chevrons live inside session rows which themselves live inside day-group blocks.
+           Without this guard the event would fall through to the row-open path. */
+        sessionListEl.addEventListener('click', function(e) {
+            var chev = e.target.closest('.session-group-chevron');
+            if (chev) {
+                var groupBlock = chev.closest('.session-group');
+                if (!groupBlock) return;
+                var gid = groupBlock.getAttribute('data-group-id');
+                if (!gid) return;
+                e.preventDefault();
+                e.stopPropagation();
+                collapsedGroups[gid] = !collapsedGroups[gid];
+                if (!collapsedGroups[gid]) delete collapsedGroups[gid];
+                /* Persist through the display-options pipeline, same pattern as collapsedDays. */
+                var optsCopy = {};
+                for (var ck in sessionDisplayOptions) optsCopy[ck] = sessionDisplayOptions[ck];
+                optsCopy.collapsedGroups = collapsedGroups;
+                sessionDisplayOptions = optsCopy;
+                vscodeApi.postMessage({ type: 'setSessionDisplayOptions', options: sessionDisplayOptions });
+                /* Re-render so the aggregate severity badges on the primary row recompute based
+                   on the new collapsed state. A DOM-only toggle would leave stale per-file counts
+                   on a newly-collapsed primary. */
+                if (cachedSessions) renderSessionList(cachedSessions);
+                return;
+            }
+        }, true);
         /* Day heading collapse/expand: toggle on click or Enter/Space. */
         sessionListEl.addEventListener('click', function(e) {
             var heading = e.target.closest('.session-day-heading');
@@ -224,6 +251,13 @@ export function getSessionPanelEventsScript(): string {
                 collapsedDays = Object.create(null);
                 for (var dk in opts.collapsedDays) {
                     if (opts.collapsedDays[dk]) collapsedDays[dk] = true;
+                }
+            }
+            /* Restore persisted collapsed-group state from options. */
+            if (opts.collapsedGroups) {
+                collapsedGroups = Object.create(null);
+                for (var gk in opts.collapsedGroups) {
+                    if (opts.collapsedGroups[gk]) collapsedGroups[gk] = true;
                 }
             }
             sessionListPage = 0;
