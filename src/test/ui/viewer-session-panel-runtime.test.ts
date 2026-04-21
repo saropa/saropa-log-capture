@@ -66,6 +66,49 @@ suite('Session panel script runtime', () => {
         assert.ok(html.includes('data-uri="file:///alpha.log"'), 'Preview items should have data-uri');
     });
 
+    test('should render reveal-in-OS hover action button on every session row', () => {
+        /* Every session row gets a hover button that reveals the log in the OS
+           file explorer. The button must carry the revealInOS action and the
+           folder-opened codicon, and be wrapped in a session-item-actions
+           container that CSS can toggle on hover. */
+        const { sandbox, messageHandlers, elements } = buildSandbox();
+        bootPanel(sandbox);
+
+        for (const handler of messageHandlers) {
+            handler({
+                data: {
+                    type: 'sessionList',
+                    sessions: [{
+                        uriString: 'file:///alpha.log', filename: 'alpha.log',
+                        displayName: 'alpha.log', mtime: Date.now(), trashed: false,
+                    }],
+                },
+            });
+        }
+        const html = String(elements.get('session-list')?.innerHTML ?? '');
+        assert.ok(html.includes('session-item-actions'), 'Row should include hover-actions container');
+        assert.ok(html.includes('data-session-action="revealInOS"'), 'Row should include revealInOS action');
+        assert.ok(html.includes('codicon-folder-opened'), 'Reveal button should use folder-opened icon');
+    });
+
+    test('should render reveal-in-OS button on preview rows too', () => {
+        /* Preview rows (streamed before metadata resolves) should also offer the
+           reveal action so users do not wait for metadata to jump to the file. */
+        const { sandbox, messageHandlers, elements } = buildSandbox();
+        bootPanel(sandbox);
+
+        for (const handler of messageHandlers) {
+            handler({
+                data: {
+                    type: 'sessionListPreview',
+                    previews: [{ filename: 'alpha.log', uriString: 'file:///alpha.log' }],
+                },
+            });
+        }
+        const html = String(elements.get('session-list')?.innerHTML ?? '');
+        assert.ok(html.includes('data-session-action="revealInOS"'), 'Preview row should include revealInOS action');
+    });
+
     test('should replace preview with full session list when data arrives', () => {
         const { sandbox, messageHandlers, elements } = buildSandbox();
         bootPanel(sandbox);
