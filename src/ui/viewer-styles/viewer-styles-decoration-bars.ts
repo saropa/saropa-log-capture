@@ -175,5 +175,26 @@ export function getDecorationBarStyles(): string {
     color: var(--vscode-debugConsole-warningForeground, #ff9800);
     border: 1px solid rgba(255, 152, 0, 0.3);
 }
+
+/* Critical fire icon — replaces the severity dot in the gutter. */
+/* WHY absolute: must sit over the gutter at the same spot as the */
+/* [class*="level-bar-"]::before dot (left: 0.69em) without pushing the */
+/* log text. .line has position: relative so this anchors inside the row. */
+.critical-fire-icon {
+    position: absolute;
+    left: 0.3em;
+    top: 0;
+    bottom: 0;
+    margin: auto 0;
+    height: 1em;
+    line-height: 1;
+    font-size: 0.95em;
+    cursor: pointer;
+    z-index: 3;
+    user-select: none;
+}
+/* Hide the severity dot on lines that already carry the fire icon, so */
+/* the emoji alone acts as the severity indicator — no duplication. */
+.line:has(.critical-fire-icon)[class*="level-bar-"]::before { display: none; }
 `;
 }
