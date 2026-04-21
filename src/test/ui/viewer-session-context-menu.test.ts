@@ -38,6 +38,15 @@ suite('ViewerSessionContextMenu', () => {
             assert.ok(hideItem > 0, 'hideByName should have session-normal-only');
             assert.ok(showItem > 0, 'showOnlyByName should have session-normal-only');
         });
+        test('should include Reveal in File Explorer action with folder-opened icon', () => {
+            /* The reveal action lets the user jump from a log row to its OS folder.
+               It must be exposed both on the hover button (tested in panel runtime)
+               and on the context menu for keyboard/multi-select users. */
+            const html = getSessionContextMenuHtml();
+            assert.ok(html.includes('data-session-action="revealInOS"'));
+            assert.ok(html.includes('codicon-folder-opened'));
+            assert.ok(html.includes('session-reveal-label'));
+        });
     });
     suite('getSessionContextMenuScript', () => {
         test('should post sessionAction with action and uriStrings/filenames', () => {
@@ -66,6 +75,15 @@ suite('ViewerSessionContextMenu', () => {
             const script = getSessionContextMenuScript();
             assert.ok(script.includes('cachedSessions'));
             assert.ok(script.includes('displayName'));
+        });
+        test('should expose platform-aware reveal label on window', () => {
+            /* The hover button in session rows reuses getRevealInOSLabel so the
+               tooltip matches the context menu label (Explorer/Finder/Containing Folder). */
+            const script = getSessionContextMenuScript();
+            assert.ok(script.includes('window.getRevealInOSLabel'));
+            assert.ok(script.includes('Reveal in Finder'));
+            assert.ok(script.includes('Open Containing Folder'));
+            assert.ok(script.includes('Reveal in File Explorer'));
         });
     });
 });

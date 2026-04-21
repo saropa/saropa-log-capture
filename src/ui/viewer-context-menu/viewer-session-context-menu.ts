@@ -2,6 +2,9 @@
 
 /** Returns the HTML for the session context menu element. */
 export function getSessionContextMenuHtml(): string {
+    /* Export and Copy actions are grouped under flyout submenus (6 export targets, 2 copy targets)
+       to keep the top-level menu short and scannable. The submenu flyout uses the same
+       .context-menu-submenu / .context-menu-submenu-content pattern as the line context menu. */
     return /* html */ `<div id="session-context-menu" class="session-context-menu">
     <div class="context-menu-item" data-session-action="open">
         <span class="codicon codicon-go-to-file"></span> Open
@@ -17,30 +20,46 @@ export function getSessionContextMenuHtml(): string {
         <span class="codicon codicon-tag"></span> Tag...
     </div>
     <div class="context-menu-separator"></div>
-    <div class="context-menu-item" data-session-action="exportHtml">
-        <span class="codicon codicon-file-code"></span> Export as HTML
+    <!-- Export flyout submenu: 6 export targets (HTML, CSV, JSON, JSONL, .slc Bundle, Loki) -->
+    <div class="context-menu-submenu" id="session-export-submenu">
+        <span class="codicon codicon-export"></span> Export
+        <span class="context-menu-arrow codicon codicon-chevron-right"></span>
+        <div class="context-menu-submenu-content">
+            <div class="context-menu-item" data-session-action="exportHtml">
+                <span class="codicon codicon-file-code"></span> Export as HTML
+            </div>
+            <div class="context-menu-item" data-session-action="exportCsv">
+                <span class="codicon codicon-table"></span> Export as CSV
+            </div>
+            <div class="context-menu-item" data-session-action="exportJson">
+                <span class="codicon codicon-json"></span> Export as JSON
+            </div>
+            <div class="context-menu-item" data-session-action="exportJsonl">
+                <span class="codicon codicon-list-flat"></span> Export as JSONL
+            </div>
+            <div class="context-menu-item" data-session-action="exportSlc">
+                <span class="codicon codicon-package"></span> Export as .slc Bundle
+            </div>
+            <div class="context-menu-item" data-session-action="exportToLoki">
+                <span class="codicon codicon-cloud-upload"></span> Export to Loki
+            </div>
+        </div>
     </div>
-    <div class="context-menu-item" data-session-action="exportCsv">
-        <span class="codicon codicon-table"></span> Export as CSV
+    <!-- Copy flyout submenu: 2 copy targets (Deep Link, File Path) -->
+    <div class="context-menu-submenu" id="session-copy-submenu">
+        <span class="codicon codicon-copy"></span> Copy
+        <span class="context-menu-arrow codicon codicon-chevron-right"></span>
+        <div class="context-menu-submenu-content">
+            <div class="context-menu-item" data-session-action="copyDeepLink">
+                <span class="codicon codicon-link"></span> <span class="session-copy-deep-link-label">Copy Deep Link</span>
+            </div>
+            <div class="context-menu-item" data-session-action="copyFilePath">
+                <span class="codicon codicon-copy"></span> <span class="session-copy-file-path-label">Copy File Path</span>
+            </div>
+        </div>
     </div>
-    <div class="context-menu-item" data-session-action="exportJson">
-        <span class="codicon codicon-json"></span> Export as JSON
-    </div>
-    <div class="context-menu-item" data-session-action="exportJsonl">
-        <span class="codicon codicon-list-flat"></span> Export as JSONL
-    </div>
-    <div class="context-menu-item" data-session-action="exportSlc">
-        <span class="codicon codicon-package"></span> Export as .slc Bundle
-    </div>
-    <div class="context-menu-item" data-session-action="exportToLoki">
-        <span class="codicon codicon-cloud-upload"></span> Export to Loki
-    </div>
-    <div class="context-menu-separator"></div>
-    <div class="context-menu-item" data-session-action="copyDeepLink">
-        <span class="codicon codicon-link"></span> Copy Deep Link
-    </div>
-    <div class="context-menu-item" data-session-action="copyFilePath">
-        <span class="codicon codicon-copy"></span> Copy File Path
+    <div class="context-menu-item" data-session-action="revealInOS">
+        <span class="codicon codicon-folder-opened"></span> <span class="session-reveal-label">Reveal in File Explorer</span>
     </div>
     <div class="context-menu-separator session-normal-only"></div>
     <div class="context-menu-item session-normal-only" data-session-action="hideByName">
@@ -75,6 +94,18 @@ export function getSessionContextMenuScript(): string {
     var sessionCtxUris = [];
     var sessionCtxFilenames = [];
     var sessionCtxTrashed = false;
+
+    /* Platform-aware "reveal" label. Matches the built-in VS Code command title:
+       Windows → "Reveal in File Explorer", macOS → "Reveal in Finder", Linux → "Open Containing Folder".
+       Exposed on window so the hover button in the session row can use the same label. */
+    window.getRevealInOSLabel = function() {
+        var plat = ((navigator && navigator.platform) || '').toLowerCase();
+        if (plat.indexOf('mac') >= 0) return 'Reveal in Finder';
+        if (plat.indexOf('linux') >= 0) return 'Open Containing Folder';
+        return 'Reveal in File Explorer';
+    };
+    var revealLabelEl = sessionCtxMenu ? sessionCtxMenu.querySelector('.session-reveal-label') : null;
+    if (revealLabelEl) revealLabelEl.textContent = getRevealInOSLabel();
 
     /* (x, y, uriOrUris, filenameOrFilenames, trashed) - single items or arrays for multi-select */
     window.showSessionContextMenu = function(x, y, uriOrUris, filenameOrFilenames, trashed) {
