@@ -182,7 +182,9 @@ export function registerCollectionCommands(deps: CollectionCommandDeps): vscode.
             const items = collection.sources.map(s => ({
                 label: s.label,
                 description: s.type,
-                path: s.relativePath,
+                // For file/session sources the key is the relative path; for group sources it's
+                // the synthetic "group:<id>" key. `removeSource` accepts either.
+                path: s.type === 'group' ? `group:${s.groupId}` : s.relativePath,
             }));
 
             const picked = await vscode.window.showQuickPick(items, {

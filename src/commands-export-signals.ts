@@ -38,8 +38,12 @@ export async function resolveSignals(
     if (scope === 'collection') {
         const inv = await collectionStore.getActiveCollection();
         if (!inv?.sources?.length) { return null; }
+        // Signals aggregate across session sources. Group sources are skipped here because the
+        // signal pipeline expects physical paths today; expanding groups would require an async
+        // metadata load which the caller's sync flow doesn't accommodate. Groups pinned for
+        // search/export still work; they just don't contribute to aggregated signals yet.
         const sessionPaths = inv.sources
-            .filter(s => s.type === 'session')
+            .filter((s): s is typeof s & { type: 'session'; relativePath: string } => s.type === 'session')
             .map(s => path.relative(logDir.fsPath, path.join(folder.uri.fsPath, s.relativePath)))
             .map(p => p.split(path.sep).join('/'));
         const validPaths = sessionPaths.filter(p => !p.startsWith('..'));

@@ -79,7 +79,11 @@ export async function importCollectionFromSlc(
     const created = await store.createCollection({ name: inv.name, notes: inv.notes });
     try {
         for (const src of inv.sources) {
-            await store.addSource(created.id, { type: src.type, relativePath: src.relativePath, label: src.label });
+            if (src.type === 'group') {
+                await store.addSource(created.id, { type: 'group', groupId: src.groupId, label: src.label });
+            } else {
+                await store.addSource(created.id, { type: src.type, relativePath: src.relativePath, label: src.label });
+            }
         }
         await store.setActiveCollectionId(created.id);
         historyProvider.refresh();
