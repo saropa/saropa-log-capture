@@ -194,6 +194,8 @@ export interface SaropaLogCaptureConfig {
   readonly integrationsFlutterCrashLogs: IntegrationFlutterCrashLogsConfig;
   readonly projectIndex: ProjectIndexConfig;
   readonly replay: ReplayConfig;
+  /** Auto-group related log files into logical Sessions (see SessionGroupsConfig). */
+  readonly sessionGroups: SessionGroupsConfig;
 }
 
 /** Bundled error-classification settings pushed to each viewer target. */
@@ -218,6 +220,18 @@ export interface ViewerDbDetectorToggles {
   readonly slowBurstEnabled: boolean;
   readonly baselineHintsEnabled: boolean;
   readonly timestampBurstEnabled: boolean;
+}
+
+/** Auto-group related log files captured in the same time window into one logical Session. */
+export interface SessionGroupsConfig {
+  /** Master switch. When false, every log file stands alone as today. */
+  readonly enabled: boolean;
+  /** Seconds before the anchor during which pre-existing ungrouped files are claimed. */
+  readonly lookbackSeconds: number;
+  /** Seconds of silence after which a standalone (non-DAP) group is closed. */
+  readonly idleSeconds: number;
+  /** Allow standalone grouping (triggered by \u22652 integration providers firing inside the lookback window). */
+  readonly standaloneEnabled: boolean;
 }
 
 /** Session replay defaults (loaded log playback with optional timing). */

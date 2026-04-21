@@ -184,6 +184,14 @@ export function getConfig(): SaropaLogCaptureConfig {
       minLineDelayMs: clamp(cfg.get("replay.minLineDelayMs"), 0, 1000, 10),
       maxDelayMs: clamp(cfg.get("replay.maxDelayMs"), 1000, 300000, 30000),
     },
+    sessionGroups: {
+      enabled: ensureBoolean(cfg.get("sessionGroups.enabled"), true),
+      // 20s covers realistic lookback (target files that arrived seconds before the anchor).
+      lookbackSeconds: clamp(cfg.get("sessionGroups.lookbackSeconds"), 0, 600, 20),
+      // 60s idle closes a standalone group; enough to ride out brief pauses, short enough to avoid chaining unrelated captures.
+      idleSeconds: clamp(cfg.get("sessionGroups.idleSeconds"), 5, 3600, 60),
+      standaloneEnabled: ensureBoolean(cfg.get("sessionGroups.standaloneEnabled"), true),
+    },
   };
 }
 
