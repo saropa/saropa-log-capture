@@ -46,7 +46,7 @@ export function registerCommands(deps: CommandDeps, captureToggle: CaptureToggle
         ...toolCommands(deps),
         ...externalLogsCommands(deps),
         ...learningCommands(deps),
-        ...sessionGroupCommands(deps.historyProvider),
+        ...sessionGroupCommands(deps.historyProvider, deps.viewerProvider),
         walkthroughCommand(),
     );
 }

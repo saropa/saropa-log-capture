@@ -1,6 +1,10 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { runGroupSelectedSessions, runUngroupSession } from '../commands-session-groups';
+import {
+    runGroupSelectedSessions,
+    runUngroupSession,
+    runOpenSessionGroup,
+} from '../commands-session-groups';
 import type { SessionMeta } from '../modules/session/session-metadata';
 
 /**
@@ -58,6 +62,17 @@ const LOG_DIR = vscode.Uri.file('/tmp/logs');
 const A = vscode.Uri.joinPath(LOG_DIR, 'a.log');
 const B = vscode.Uri.joinPath(LOG_DIR, 'b.log');
 const C = vscode.Uri.joinPath(LOG_DIR, 'c.log');
+
+/** Fake LogViewerProvider that records every loadFromFiles invocation. */
+class FakeViewerProvider {
+    loadCalls: vscode.Uri[][] = [];
+    async loadFromFiles(uris: readonly vscode.Uri[]): Promise<void> {
+        this.loadCalls.push([...uris]);
+    }
+    async loadFromFile(uri: vscode.Uri): Promise<void> {
+        this.loadCalls.push([uri]);
+    }
+}
 
 suite('commands-session-groups', () => {
 
@@ -166,6 +181,76 @@ suite('commands-session-groups', () => {
             await runUngroupSession(hp as never, [A]);
 
             assert.strictEqual(hp.refreshCount, 0);
+        });
+    });
+
+    suite('runOpenSessionGroup', () => {
+        test('expands a single grouped target to every member of its group', async () => {
+            const store = new InMemoryStore();
+            store.data.set(relKey(A), { groupId: 'g1' });
+            store.data.set(relKey(B), { groupId: 'g1' });
+            store.data.set(relKey(C), { groupId: 'g1' });
+            const hp = makeHistoryProvider(store);
+            const viewer = new FakeViewerProvider();
+
+            // User right-clicked A only; should open every member of g1.
+            await runOpenSessionGroup(hp as never, viewer as never, [A]);
+
+            assert.strictEqual(viewer.loadCalls.length, 1);
+            const passed = viewer.loadCalls[0].map(u => u.fsPath.split(/[\\/]/).pop()).sort();
+            assert.deepStrictEqual(passed, ['a.log', 'b.log', 'c.log']);
+        });
+
+        test('passes ungrouped targets through unchanged', async () => {
+            const store = new InMemoryStore();
+            store.data.set(relKey(A), {});
+            store.data.set(relKey(B), {});
+            const hp = makeHistoryProvider(store);
+            const viewer = new FakeViewerProvider();
+
+            await runOpenSessionGroup(hp as never, viewer as never, [A, B]);
+
+            const passed = viewer.loadCalls[0].map(u => u.fsPath.split(/[\\/]/).pop()).sort();
+            assert.deepStrictEqual(passed, ['a.log', 'b.log']);
+        });
+
+        test('dedupes when multiple targets belong to the same group', async () => {
+            const store = new InMemoryStore();
+            store.data.set(relKey(A), { groupId: 'g1' });
+            store.data.set(relKey(B), { groupId: 'g1' });
+            const hp = makeHistoryProvider(store);
+            const viewer = new FakeViewerProvider();
+
+            // User selected both A and B; result should NOT repeat a.log twice.
+            await runOpenSessionGroup(hp as never, viewer as never, [A, B]);
+
+            const passed = viewer.loadCalls[0].map(u => u.fsPath.split(/[\\/]/).pop());
+            assert.strictEqual(new Set(passed).size, passed.length);
+        });
+
+        test('merges mixed grouped + ungrouped targets without duplicating group members', async () => {
+            const store = new InMemoryStore();
+            store.data.set(relKey(A), { groupId: 'g1' });
+            store.data.set(relKey(B), { groupId: 'g1' });
+            store.data.set(relKey(C), {});
+            const hp = makeHistoryProvider(store);
+            const viewer = new FakeViewerProvider();
+
+            await runOpenSessionGroup(hp as never, viewer as never, [A, C]);
+
+            // A expands to [a, b], C passes through; total set is {a, b, c}.
+            const passed = viewer.loadCalls[0].map(u => u.fsPath.split(/[\\/]/).pop()).sort();
+            assert.deepStrictEqual(passed, ['a.log', 'b.log', 'c.log']);
+        });
+
+        test('no-op with zero targets', async () => {
+            const store = new InMemoryStore();
+            const hp = makeHistoryProvider(store);
+            const viewer = new FakeViewerProvider();
+
+            await runOpenSessionGroup(hp as never, viewer as never, []);
+
+            assert.strictEqual(viewer.loadCalls.length, 0);
         });
     });
 });

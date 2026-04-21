@@ -9,6 +9,9 @@ export function getSessionContextMenuHtml(): string {
     <div class="context-menu-item" data-session-action="open">
         <span class="codicon codicon-go-to-file"></span> Open
     </div>
+    <div class="context-menu-item" data-session-action="openGroup">
+        <span class="codicon codicon-files"></span> <span class="session-open-group-label">Open as Merged Group</span>
+    </div>
     <div class="context-menu-item" data-session-action="replay">
         <span class="codicon codicon-debug-start"></span> Replay
     </div>
