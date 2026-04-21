@@ -1,20 +1,27 @@
 /**
  * Session-group anchoring state machine.
  *
- * Wires the two grouping triggers described in bugs/auto-group-related-sessions.md:
+ * Implements the three-window model described in
+ * bugs/auto-group-related-sessions.md:
  *
- *   - **DAP-anchored:** when a debug session starts, mint a groupId, claim every
- *     pre-existing ungrouped file in the log directory whose mtime falls inside
- *     the lookback window, then do a second claim pass at debug-session end to
- *     stamp any sidecar files that integration providers wrote during the session
- *     (e.g. `.logcat.log` written by `adb-logcat.ts:onSessionEnd`).
+ *   - **Before window** (`beforeSeconds`): at DAP-session start, claim every
+ *     ungrouped file whose mtime falls inside this many seconds before the
+ *     start event.
+ *   - **During window**: every file written while the session is active is
+ *     eligible; picked up by the immediate end-sweep.
+ *   - **After window** (`afterSeconds`): at DAP-session end, schedule a
+ *     delayed sweep that fires `afterSeconds` later and claims any late
+ *     file (e.g. `.logcat.log` flushed by `adb-logcat.ts:onSessionEnd` after
+ *     the DAP event already fired). The delayed sweep enforces an upper
+ *     bound on mtime so it cannot steal files written deep into a later
+ *     session.
  *
- *   - **Standalone:** currently a no-op. Public integration-provider plumbing
- *     doesn't yet expose "new provider file created" events — when it does, wire
- *     that through `onIntegrationFileCreated()`.
+ * Conflict resolution is **first-claim-wins**: a file already carrying a
+ * different `groupId` is never re-claimed automatically. Users override
+ * via the `groupSelectedSessions` / `ungroupSession` commands.
  *
- * One active group at a time. A file already carrying a different `groupId` is
- * never re-claimed (enforced inside `stampGroupIdBatch`).
+ * Standalone grouping (no DAP session) is not wired in this iteration \u2014
+ * no integration provider currently runs outside a DAP session.
  */
 
 import * as vscode from 'vscode';
@@ -23,7 +30,7 @@ import type { SessionGroupsConfig } from '../config/config-types';
 import { generateGroupId } from './session-groups';
 
 /** Settings shape consumed by the tracker \u2014 kept minimal for easy test injection. */
-export type TrackerSettings = Pick<SessionGroupsConfig, 'enabled' | 'lookbackSeconds'>;
+export type TrackerSettings = Pick<SessionGroupsConfig, 'enabled' | 'beforeSeconds' | 'afterSeconds'>;
 
 /** Injected dependencies \u2014 makes the tracker unit-testable without activating a real extension. */
 export interface SessionGroupTrackerDeps {
@@ -37,14 +44,18 @@ export interface SessionGroupTrackerDeps {
     readonly readDirectory?: (uri: vscode.Uri) => Promise<[string, vscode.FileType][]>;
     /** Override for stat-ing a file (test seam). Defaults to `vscode.workspace.fs.stat`. */
     readonly stat?: (uri: vscode.Uri) => Promise<vscode.FileStat>;
+    /**
+     * Override for scheduling the delayed after-window sweep. Defaults to
+     * `setTimeout`. Tests pass a synchronous fake that invokes the callback
+     * immediately (or after manually advancing a mock clock).
+     */
+    readonly scheduleAfterSweep?: (callback: () => void, delayMs: number) => void;
 }
 
 /**
- * Anchor state for the currently active group.
- *
- * `activeGroupId` is undefined when no DAP session is in flight. When it is
- * defined, `startMs` records when the anchor fired (used to reject files whose
- * mtime is older than `startMs - lookbackSeconds * 1000`).
+ * Anchor state while a DAP session is live. When `active` is `undefined` the
+ * tracker is idle \u2014 either no DAP session ever started, or the current one
+ * already ran its immediate end-sweep.
  */
 interface ActiveAnchor {
     readonly groupId: string;
@@ -63,13 +74,12 @@ export class SessionGroupTracker {
     }
 
     /**
-     * Mint a group on DAP session start and stamp lookback-eligible files.
+     * Mint a group on DAP session start and run the **before-sweep**.
      *
      * Called from `extension-lifecycle.ts` after `sessionManager.startSession()`
-     * so the main log file URI is already valid.
-     *
-     * No-op when the feature is disabled. Silent on failure \u2014 grouping is
-     * best-effort and must not break session startup.
+     * resolves, so the main log file URI is valid. No-op when the feature is
+     * disabled. Silent on failure \u2014 grouping is best-effort and must not
+     * break session startup.
      */
     async onDapSessionStart(mainLogUri: vscode.Uri, startMs: number): Promise<void> {
         try {
@@ -78,10 +88,12 @@ export class SessionGroupTracker {
             const logDir = parentDir(mainLogUri);
             const groupId = generateGroupId();
             this.active = { groupId, startMs, logDir };
-            const claimed = await this.sweepAndStamp(logDir, startMs, settings.lookbackSeconds, groupId);
+            const claimed = await this.sweepAndStamp({
+                logDir, startMs, beforeSeconds: settings.beforeSeconds, groupId, upperBoundMs: undefined,
+            });
             this.deps.log(
                 `session-group: opened ${groupId.slice(0, 8)}\u2026 anchored on ${mainLogUri.fsPath} ` +
-                `(claimed ${claimed} file${claimed === 1 ? '' : 's'} in the lookback window)`,
+                `(before-sweep claimed ${claimed} file${claimed === 1 ? '' : 's'})`,
             );
         } catch (err) {
             this.deps.log(`session-group: start-claim failed: ${errorMessage(err)}`);
@@ -89,29 +101,37 @@ export class SessionGroupTracker {
     }
 
     /**
-     * Close the active group on DAP session end, running a final sweep to claim
-     * any sidecar files integration providers produced during the session.
+     * On DAP session end:
+     *   1. Run an **immediate end-sweep** to pick up any during-session file
+     *      the before-sweep missed.
+     *   2. Schedule a **delayed end-sweep** for `endMs + afterSeconds * 1000`
+     *      that catches late-flushed sidecars without the caller needing to
+     *      await it. The delayed sweep caps mtime at its upper bound so it
+     *      cannot steal files from a later session.
      *
-     * The sweep window is `startMs - lookbackSeconds*1000` through `now`, so any
-     * file whose mtime is at least as recent as the lookback bound is eligible \u2014
-     * the "during-session" files all have mtime \u2265 startMs and are covered.
+     * After step 1, `this.active` is cleared so a subsequent DAP session can
+     * start fresh. The delayed-sweep closure still carries the completed
+     * group's groupId + window bounds.
      */
     async onDapSessionEnd(mainLogUri: vscode.Uri): Promise<void> {
         try {
             if (!this.active) { return; }
             const { groupId, startMs, logDir } = this.active;
-            const settings = this.deps.getSettings();
-            if (settings.enabled) {
-                const claimed = await this.sweepAndStamp(logDir, startMs, settings.lookbackSeconds, groupId);
-                this.deps.log(
-                    `session-group: closed ${groupId.slice(0, 8)}\u2026 ` +
-                    `(final sweep claimed ${claimed} additional file${claimed === 1 ? '' : 's'})`,
-                );
-            }
-            // Always clear state even if settings flipped mid-session \u2014 the anchor is gone.
+            // Capture once before clearing \u2014 a new session could overwrite `active` before the delayed sweep fires.
             this.active = undefined;
+            const settings = this.deps.getSettings();
+            if (!settings.enabled) { return; }
+            const endMs = Date.now();
+            const immediateClaimed = await this.sweepAndStamp({
+                logDir, startMs, beforeSeconds: settings.beforeSeconds, groupId, upperBoundMs: undefined,
+            });
+            this.deps.log(
+                `session-group: immediate end-sweep for ${groupId.slice(0, 8)}\u2026 ` +
+                `claimed ${immediateClaimed} additional file${immediateClaimed === 1 ? '' : 's'}`,
+            );
+            this.scheduleDelayedSweep({ logDir, startMs, endMs, groupId }, settings);
             // Silence the unused-param warning; logUri is kept in the signature because future
-            // standalone-mode wiring will rely on it.
+            // wiring (collection fan-out, standalone mode) will need it.
             void mainLogUri;
         } catch (err) {
             this.deps.log(`session-group: end-claim failed: ${errorMessage(err)}`);
@@ -120,23 +140,64 @@ export class SessionGroupTracker {
     }
 
     /**
-     * Scan `logDir`, find files whose mtime falls inside the claim window and
-     * whose metadata is ungrouped, and stamp them with `groupId`.
+     * Schedule the delayed after-window sweep. Uses `setTimeout` by default;
+     * tests inject a synchronous fake via `scheduleAfterSweep`.
      *
-     * Returns the count of files actually stamped.
+     * The sweep's upper bound on mtime (`endMs + afterSeconds * 1000`) is the
+     * key guard against stealing files from a later session.
      */
-    private async sweepAndStamp(
-        logDir: vscode.Uri,
-        startMs: number,
-        lookbackSeconds: number,
-        groupId: string,
-    ): Promise<number> {
+    private scheduleDelayedSweep(
+        ctx: { logDir: vscode.Uri; startMs: number; endMs: number; groupId: string },
+        settings: TrackerSettings,
+    ): void {
+        const afterMs = Math.max(0, settings.afterSeconds) * 1000;
+        const upperBoundMs = ctx.endMs + afterMs;
+        const schedule = this.deps.scheduleAfterSweep ?? ((cb: () => void, ms: number) => { setTimeout(cb, ms).unref?.(); });
+        schedule(() => {
+            // Settings may have changed between schedule and fire \u2014 re-read rather than close over the old value.
+            const live = this.deps.getSettings();
+            if (!live.enabled) { return; }
+            this.sweepAndStamp({
+                logDir: ctx.logDir,
+                startMs: ctx.startMs,
+                beforeSeconds: live.beforeSeconds,
+                groupId: ctx.groupId,
+                upperBoundMs,
+            })
+                .then(count => {
+                    if (count > 0) {
+                        this.deps.log(
+                            `session-group: delayed after-sweep for ${ctx.groupId.slice(0, 8)}\u2026 ` +
+                            `claimed ${count} late file${count === 1 ? '' : 's'}`,
+                        );
+                    }
+                })
+                .catch(err => this.deps.log(`session-group: delayed sweep failed: ${errorMessage(err)}`));
+        }, afterMs);
+    }
+
+    /**
+     * Scan `args.logDir`, find files whose mtime falls inside the claim window
+     * and whose metadata is ungrouped, and stamp them with `args.groupId`.
+     *
+     * Window: `startMs - beforeSeconds * 1000` \u2264 mtime \u2264 `upperBoundMs` (if
+     * provided; otherwise no upper bound). Returns the count of files actually
+     * stamped.
+     */
+    private async sweepAndStamp(args: {
+        logDir: vscode.Uri;
+        startMs: number;
+        beforeSeconds: number;
+        groupId: string;
+        upperBoundMs: number | undefined;
+    }): Promise<number> {
+        const { logDir, startMs, beforeSeconds, groupId, upperBoundMs } = args;
         // vscode.workspace.fs returns Thenables (no .catch), so wrap in Promise and guard with try/catch.
         const readDir = this.deps.readDirectory
             ?? ((uri: vscode.Uri): Promise<[string, vscode.FileType][]> => Promise.resolve(vscode.workspace.fs.readDirectory(uri)));
         const statFn = this.deps.stat
             ?? ((uri: vscode.Uri): Promise<vscode.FileStat> => Promise.resolve(vscode.workspace.fs.stat(uri)));
-        const windowStartMs = startMs - Math.max(0, lookbackSeconds) * 1000;
+        const windowStartMs = startMs - Math.max(0, beforeSeconds) * 1000;
         let entries: [string, vscode.FileType][];
         try {
             entries = await readDir(logDir);
@@ -154,6 +215,7 @@ export class SessionGroupTracker {
             let stat: vscode.FileStat | undefined;
             try { stat = await statFn(uri); } catch { continue; }
             if (stat.mtime < windowStartMs) { continue; }
+            if (upperBoundMs !== undefined && stat.mtime > upperBoundMs) { continue; }
             toStamp.push(uri);
         }
         if (toStamp.length === 0) { return 0; }
