@@ -31,6 +31,8 @@ export function getSessionPanelScript(): string {
     var selectedSessionUris = Object.create(null);
     /** Track which day groups are collapsed (keyed by YYYY-MM-DD). */
     var collapsedDays = Object.create(null);
+    /** Track which session groups are collapsed (keyed by groupId). */
+    var collapsedGroups = Object.create(null);
     window.__sharedPanelWidth = MIN_PANEL_WIDTH;
 
     /**
