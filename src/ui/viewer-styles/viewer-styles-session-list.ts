@@ -246,14 +246,20 @@ export function getSessionListStyles(): string {
 }
 
 /* --- Session context menu --- */
+/* overflow must stay "visible" — the Copy and Export flyout submenus are absolutely-positioned
+   children and would be clipped by "overflow: auto". The menu is compact enough (≤13 items) that
+   scrolling is unnecessary; the show() logic clamps the menu's top/left to the viewport instead. */
 .session-context-menu {
     display: none; position: fixed; z-index: 300;
     background: var(--vscode-menu-background, var(--vscode-editor-background));
     border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border));
     border-radius: 4px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-    padding: 4px 0; min-width: 180px; overflow-y: auto;
+    padding: 4px 0; min-width: 180px; overflow: visible;
 }
 .session-context-menu.visible { display: block; }
+/* Flip submenu to open leftward when the parent menu is near the right edge of the viewport.
+   Mirrors the .context-menu.flip-submenu rule used by the line context menu. */
+.session-context-menu.flip-submenu .context-menu-submenu-content { left: auto; right: 100%; }
 
 /* --- Severity dots --- */
 .sev-dots { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; color: var(--vscode-descriptionForeground); vertical-align: middle; }

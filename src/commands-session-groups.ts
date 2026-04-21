@@ -9,6 +9,7 @@
  * See bugs/auto-group-related-sessions.md \u00a7"Manual group" and \u00a7"Ungroup".
  */
 
+import * as path from 'path';
 import * as vscode from 'vscode';
 import type { SessionHistoryProvider } from './ui/session/session-history-provider';
 import type { LogViewerProvider } from './ui/provider/log-viewer-provider';
@@ -16,6 +17,48 @@ import type { CollectionStore } from './modules/collection/collection-store';
 import { generateGroupId } from './modules/session/session-groups';
 import { resolveOrPickCollection } from './collection-commands-helpers';
 import { t } from './l10n';
+
+/**
+ * Invert a metadata-map key back into its log file URI.
+ *
+ * The map keys come from `relativeKey(uri)` = `asRelativePath(uri).replace(/\\/g, '/')`.
+ * `asRelativePath` produces one of two shapes depending on whether the URI is
+ * inside any workspace folder at lookup time:
+ *
+ *   - workspace-relative (e.g. `reports/a.log`) when it is — the workspace
+ *     folder prefix was stripped.
+ *   - absolute path (e.g. `/tmp/logs/a.log`, `d:/tmp/logs/a.log`) when it
+ *     is not — `asRelativePath` falls through to the URI's fsPath.
+ *
+ * Reconstructing with `Uri.joinPath(logDir, key)` was wrong for BOTH shapes:
+ * for workspace-relative keys it double-prefixed (`/ws/reports/reports/a.log`),
+ * and for absolute keys it concatenated (`/tmp/logs/tmp/logs/a.log`). The next
+ * `stampGroupIdBatch` call then computed a fresh `asRelativePath` off the
+ * mangled URI, producing a key that didn't match the one in the store — so
+ * the "clear groupId" / "fan out to siblings" fan-out silently no-op'd.
+ *
+ * Fix: invert by *matching how the key was produced*, not by mechanical joining.
+ * Absolute keys came from the fsPath branch — rebuild with `Uri.file`. Relative
+ * keys came from the workspace-folder branch — rejoin with that workspace's URI.
+ */
+function keyToLogUri(anyTarget: vscode.Uri, key: string): vscode.Uri {
+    // Absolute detection must cover POSIX `/x`, Windows drive `d:/x`, and UNC.
+    // `path.isAbsolute` uses the host platform's rules, which is what we want:
+    // the key was produced on this same platform via `asRelativePath`.
+    if (path.isAbsolute(key)) {
+        return vscode.Uri.file(key);
+    }
+    // Prefer the workspace folder containing the reference URI; fall back to
+    // the first workspace folder (`asRelativePath` itself does the same lookup).
+    const folder = vscode.workspace.getWorkspaceFolder(anyTarget) ?? vscode.workspace.workspaceFolders?.[0];
+    if (folder) {
+        return vscode.Uri.joinPath(folder.uri, key);
+    }
+    // No workspace loaded at all — `asRelativePath` would have returned the
+    // fsPath, so we should not have reached this branch. Fall back to the log
+    // directory to preserve the previous (buggy) behavior rather than crash.
+    return vscode.Uri.joinPath(vscode.Uri.joinPath(anyTarget, '..'), key);
+}
 
 /** Extract the Uri out of either a bare Uri or a context-menu item { uri }. Returns undefined for unknown input. */
 function toUri(arg: unknown): vscode.Uri | undefined {
@@ -146,10 +189,13 @@ export async function runUngroupSession(
             return;
         }
         // Fan out: every file in the metadata map whose groupId is in our set gets cleared.
+        // `relKey` is what `asRelativePath` produced — use `keyToLogUri` (not a plain
+        // `joinPath(logDir, ...)`) so the rebuilt URI round-trips back to the same key
+        // when `stampGroupIdBatch` re-derives it. See `keyToLogUri` for the full rationale.
         const toClear: vscode.Uri[] = [];
         for (const [relKey, meta] of all) {
             if (meta.groupId && groupIds.has(meta.groupId)) {
-                toClear.push(vscode.Uri.joinPath(logDir, relKey));
+                toClear.push(keyToLogUri(uris[0], relKey));
             }
         }
         await store.stampGroupIdBatch(toClear, undefined);
@@ -222,7 +268,9 @@ async function expandGroupMembership(
         const relKey = vscode.workspace.asRelativePath(target).replace(/\\/g, '/');
         const meta = all.get(relKey);
         if (meta?.groupId) {
-            pushGroupMembers(all, meta.groupId, logDir, push);
+            // Pass the target URI so `keyToLogUri` can resolve the correct
+            // workspace folder when rebuilding sibling URIs (see helper docs).
+            pushGroupMembers(all, meta.groupId, target, push);
         } else {
             push(target);
         }
@@ -234,12 +282,15 @@ async function expandGroupMembership(
 function pushGroupMembers(
     all: ReadonlyMap<string, import('./modules/session/session-metadata').SessionMeta>,
     groupId: string,
-    logDir: vscode.Uri,
+    referenceUri: vscode.Uri,
     push: (u: vscode.Uri) => void,
 ): void {
     for (const [relPath, other] of all) {
         if (other.groupId === groupId) {
-            push(vscode.Uri.joinPath(logDir, relPath));
+            // `relPath` is `asRelativePath` output — invert via `keyToLogUri` so the
+            // rebuilt URI matches the one originally stored (otherwise filter, dedupe,
+            // and downstream `stampGroupIdBatch` calls lose track of the file).
+            push(keyToLogUri(referenceUri, relPath));
         }
     }
 }
