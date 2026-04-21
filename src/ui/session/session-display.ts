@@ -24,6 +24,8 @@ export interface SessionDisplayOptions {
     readonly sessionListPageSize?: number;
     /** Day groups the user has collapsed in the session list, keyed by YYYY-MM-DD. */
     readonly collapsedDays?: Readonly<Record<string, boolean>>;
+    /** Session groups the user has collapsed in the session list, keyed by groupId. */
+    readonly collapsedGroups?: Readonly<Record<string, boolean>>;
 }
 
 /** Default display options. */
