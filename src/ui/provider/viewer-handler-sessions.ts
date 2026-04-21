@@ -156,6 +156,11 @@ export async function handleSessionAction(
                 await vscode.commands.executeCommand('saropaLogCapture.openSessionGroup', items[0], items);
             }
             break;
+        case 'addGroupToCollection':
+            if (items.length > 0) {
+                await vscode.commands.executeCommand('saropaLogCapture.addGroupToCollection', items[0], items);
+            }
+            break;
     }
     if (mutating.includes(action) || action === 'group' || action === 'ungroup') { await ctx.refreshList(); }
 }
