@@ -28,6 +28,7 @@ import { BookmarkStore } from './modules/storage/bookmark-store';
 import { buildSessionListPayload, LOG_LAST_VIEWED_KEY } from './ui/provider/viewer-provider-helpers';
 import { registerDebugLifecycle } from './extension-lifecycle';
 import { SessionGroupTracker } from './modules/session/session-group-tracker';
+import { setRetentionGroupContext } from './modules/config/file-retention';
 import { AiWatcher } from './modules/ai/ai-watcher';
 import { formatAiEntry, filterAiEntries } from './modules/ai/ai-line-formatter';
 import { registerAllIntegrations } from './activation-integrations';
@@ -210,6 +211,11 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         getSettings: () => getConfig().sessionGroups,
         log: (msg: string) => outputChannel.appendLine(msg),
     });
+    // Expose the tracker to the retention sweep so it can skip active groups and expand closed
+    // groups atomically. File-retention doesn't see the tracker via a normal parameter chain
+    // (that would churn four interfaces for one optional hook); the module-level holder is the
+    // sanctioned workaround.
+    setRetentionGroupContext({ getActiveGroupId: () => sessionGroupTracker.getActiveGroupId() });
     registerDebugLifecycle({ context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav, aiWatcher, fireSessionStart: apiHandle.fireSessionStart, fireSessionEnd: apiHandle.fireSessionEnd, sessionGroupTracker });
     registerCommands({
         context,
