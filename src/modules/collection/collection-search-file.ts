@@ -5,7 +5,7 @@
 
 import * as vscode from 'vscode';
 import {
-    CollectionSource,
+    CollectionFileSource,
     SearchMatch,
     SEARCHABLE_SIDECAR_EXTENSIONS,
     SKIP_SIDECAR_EXTENSIONS,
@@ -33,7 +33,7 @@ export function gatherContext(
  * For 'file' type, returns just the file itself.
  */
 export async function resolveSearchableFiles(
-    source: CollectionSource,
+    source: CollectionFileSource,
     workspaceUri: vscode.Uri,
 ): Promise<{ uri: vscode.Uri; isSidecar: boolean }[]> {
     const mainUri = vscode.Uri.joinPath(workspaceUri, source.relativePath);

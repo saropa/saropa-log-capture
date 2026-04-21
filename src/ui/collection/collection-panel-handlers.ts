@@ -162,7 +162,11 @@ function renderSearchResults(result: CollectionSearchResult, query: string): str
 
     for (const sourceResult of result.results) {
         const fileName = sourceResult.sourceFile.split(/[/\\]/).pop() ?? sourceResult.sourceFile;
-        const isMainSource = sourceResult.sourceFile === sourceResult.source.relativePath;
+        // After group expansion, sourceResult.source is always a file/session source (never
+        // a group itself) because the resolver replaces groups with their members before search.
+        // Belt-and-braces: guard anyway so a future refactor can't throw here.
+        const mainPath = sourceResult.source.type === 'group' ? '' : sourceResult.source.relativePath;
+        const isMainSource = sourceResult.sourceFile === mainPath;
 
         html += `<div class="result-group">`;
         html += `<div class="result-group-header">`;
@@ -287,7 +291,9 @@ export async function checkMissingSources(collection: Collection): Promise<strin
 
     const checks = await Promise.all(
         collection.sources.map(async (source) => ({
-            path: source.relativePath,
+            // Group sources get the synthetic "group:<id>" key; file/session sources use the
+            // workspace-relative path. checkSourceExists handles both variants.
+            path: source.type === 'group' ? `group:${source.groupId}` : source.relativePath,
             exists: await checkSourceExists(source, folder.uri),
         })),
     );

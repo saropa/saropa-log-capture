@@ -13,16 +13,19 @@ import type { Collection, CollectionSource } from '../../modules/collection/coll
 import { renderEmptyResults } from './collection-panel-handlers';
 
 export function renderSourceItem(source: CollectionSource, isMissing: boolean = false): string {
-    const icon = source.type === 'session' ? '📄' : '📎';
-    const typeLabel = source.type === 'session' ? 'session' : 'file';
+    const icon = source.type === 'session' ? '📄' : source.type === 'group' ? '🗂️' : '📎';
+    const typeLabel = source.type === 'session' ? 'session' : source.type === 'group' ? 'group' : 'file';
     const missingClass = isMissing ? ' source-missing' : '';
     const missingIcon = isMissing ? '<span class="source-warning" title="' + t('msg.sourceFileMissing') + '">⚠️</span>' : '';
-    return `<div class="source-item${missingClass}" data-path="${escapeHtml(source.relativePath)}">
+    // Group sources use the synthetic "group:<id>" key; file/session sources use relativePath.
+    // The unpin button posts this key back to the extension via the existing removeSource flow.
+    const dataPath = source.type === 'group' ? `group:${source.groupId}` : source.relativePath;
+    return `<div class="source-item${missingClass}" data-path="${escapeHtml(dataPath)}">
     <span class="source-icon">${icon}</span>
     ${missingIcon}
     <span class="source-label">${escapeHtml(source.label)}</span>
     <span class="source-type">${typeLabel}</span>
-    <button class="unpin-btn" data-path="${escapeHtml(source.relativePath)}" title="${t('action.unpin')}">✕</button>
+    <button class="unpin-btn" data-path="${escapeHtml(dataPath)}" title="${t('action.unpin')}">✕</button>
 </div>`;
 }
 
@@ -30,7 +33,10 @@ export function buildCollectionHtml(inv: Collection, missingSources: string[] = 
     const nonce = getNonce();
     const missingSet = new Set(missingSources);
     const sourcesHtml = inv.sources.length > 0
-        ? inv.sources.map(s => renderSourceItem(s, missingSet.has(s.relativePath))).join('')
+        ? inv.sources.map(s => renderSourceItem(
+            s,
+            missingSet.has(s.type === 'group' ? `group:${s.groupId}` : s.relativePath),
+        )).join('')
         : `<div class="empty-sources">${t('msg.noSourcesPinned')}</div>`;
 
     return `<!DOCTYPE html><html><head>
