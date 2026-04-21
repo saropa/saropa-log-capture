@@ -1,5 +1,10 @@
 # Auto-group related log files into a single "Session"
 
+> **Status: implemented in v7.3.0.** All 9 phases of this plan shipped to `main`
+> across commits `53e2e701` (foundation) through `5eb6ae6e` (docs). See
+> CHANGELOG.md under v7.3.0 Added for the user-facing summary. This document is
+> retained as the design reference.
+
 ## Problem
 
 When a debug run produces output across multiple capture targets — e.g. the
