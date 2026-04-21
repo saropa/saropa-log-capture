@@ -6,8 +6,10 @@ import * as vscode from 'vscode';
 import JSZip from 'jszip';
 import { t } from '../../l10n';
 import { getLogDirectoryUri } from '../config/config';
-import type { Collection, CollectionSource } from '../collection/collection-types';
+import type { Collection, CollectionSource, CollectionFileSource } from '../collection/collection-types';
 import { findSidecarUris } from './slc-session-files';
+import { resolveCollectionSources } from '../collection/collection-source-resolver';
+import { SessionMetadataStore } from '../session/session-metadata';
 import {
     MANIFEST_VERSION_COLLECTION,
     MANIFEST_FILENAME,
@@ -20,7 +22,7 @@ import {
 } from './slc-types';
 
 async function resolveCollectionSourceUris(
-    source: CollectionSource,
+    source: CollectionFileSource,
     workspaceUri: vscode.Uri,
 ): Promise<vscode.Uri[]> {
     const mainUri = vscode.Uri.joinPath(workspaceUri, source.relativePath);
@@ -50,7 +52,12 @@ export async function buildCollectionZipBuffer(
         return count === 0 ? basename : `${count}_${basename}`;
     }
 
-    for (const source of collection.sources) {
+    // Expand any session-group sources into their current member files before bundling so the
+    // exported archive contains the files the user would see in a search today.
+    const folder = vscode.workspace.getWorkspaceFolder(workspaceUri) ?? vscode.workspace.workspaceFolders?.[0];
+    const logDir = folder ? getLogDirectoryUri(folder) : workspaceUri;
+    const expanded = await resolveCollectionSources(collection.sources, logDir, new SessionMetadataStore());
+    for (const source of expanded) {
         const uris = await resolveCollectionSourceUris(source, workspaceUri);
         const mainUri = uris[0];
         let mainBasename: string;
