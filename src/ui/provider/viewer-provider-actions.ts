@@ -5,7 +5,7 @@
 
 import * as vscode from "vscode";
 import { resolveSourceUri } from "../../modules/source/source-resolver";
-import { TreeItem, isSplitGroup } from "../session/session-history-grouping";
+import { TreeItem, isSplitGroup, isSessionGroup } from "../session/session-history-grouping";
 import { formatMtime, formatMtimeTimeOnly, formatRelativeTime } from "../session/session-display";
 import { getConfig } from "../../modules/config/config";
 import { getGitBlame } from "../../modules/git/git-blame";
@@ -50,13 +50,17 @@ export async function updateLastViewed(context: vscode.ExtensionContext, uri: vs
 }
 
 /** Shared type for session metadata fields needed to build a webview record. */
-type Meta = { filename: string; displayName?: string; adapter?: string; size: number; mtime: number; date?: string; hasTimestamps?: boolean; lineCount?: number; durationMs?: number; errorCount?: number; warningCount?: number; perfCount?: number; fwCount?: number; infoCount?: number; uri: { toString(): string }; trashed?: boolean; tags?: string[]; autoTags?: string[]; correlationTags?: string[]; hasPerformanceData?: boolean };
+type Meta = { filename: string; displayName?: string; adapter?: string; size: number; mtime: number; date?: string; hasTimestamps?: boolean; lineCount?: number; durationMs?: number; errorCount?: number; warningCount?: number; perfCount?: number; fwCount?: number; infoCount?: number; uri: { toString(): string }; trashed?: boolean; tags?: string[]; autoTags?: string[]; correlationTags?: string[]; hasPerformanceData?: boolean; groupId?: string };
+
+/** Extra fields written onto session-group member records so the webview can render groupings. */
+type GroupRenderExtras = { groupId?: string; isGroupPrimary?: boolean; groupSize?: number };
 
 /** Build a single webview record from session metadata. */
 export async function buildSessionItemRecord(
     m: Meta,
     activeStr: string | undefined,
     options?: SessionListPayloadOptions,
+    extras?: GroupRenderExtras,
 ): Promise<Record<string, unknown>> {
     const { getActiveLastWriteTime, getLastViewedAt } = options ?? {};
     const uri = m.uri instanceof vscode.Uri ? m.uri : vscode.Uri.parse(m.uri.toString());
@@ -84,6 +88,12 @@ export async function buildSessionItemRecord(
         uriString: uriStr, trashed: m.trashed ?? false, tags: m.tags ?? [],
         autoTags: m.autoTags ?? [], correlationTags: m.correlationTags ?? [],
         hasPerformanceData: m.hasPerformanceData ?? false,
+        // Session-group render hints. `groupId` prefers the explicit extras value (from a
+        // SessionGroup's expansion in buildSessionListPayload) over the raw SessionMeta field so
+        // that groups built via auto-grouping AND manual grouping both carry the id uniformly.
+        groupId: extras?.groupId ?? m.groupId,
+        isGroupPrimary: extras?.isGroupPrimary ?? false,
+        groupSize: extras?.groupSize ?? 0,
     };
 }
 
@@ -96,10 +106,41 @@ export async function buildSessionListPayload(
     const activeStr = activeUri?.toString();
     const records: Record<string, unknown>[] = [];
     for (const item of items) {
-        if (isSplitGroup(item)) {
+        if (isSessionGroup(item)) {
+            records.push(...await expandSessionGroupToRecords(item, activeStr, options));
+        } else if (isSplitGroup(item)) {
             for (const part of item.parts) { records.push(await buildSessionItemRecord(part, activeStr, options)); }
         } else {
             records.push(await buildSessionItemRecord(item, activeStr, options));
+        }
+    }
+    return records;
+}
+
+/**
+ * Expand a SessionGroup into one webview record per member. Each record carries the shared
+ * groupId, an isGroupPrimary flag for the member chosen by pickPrimaryTreeItem(), and the group's
+ * total member count (so the webview can render the "+N" badge without recounting).
+ *
+ * SplitGroup members are flattened to their parts, inheriting the same extras; nested SessionGroups
+ * aren't produced by groupSessionGroups() today but are handled defensively in case a future
+ * refactor introduces them.
+ */
+async function expandSessionGroupToRecords(
+    group: { groupId: string; members: readonly TreeItem[]; primary: TreeItem },
+    activeStr: string | undefined,
+    options: SessionListPayloadOptions | undefined,
+): Promise<Record<string, unknown>[]> {
+    const records: Record<string, unknown>[] = [];
+    const groupSize = group.members.length;
+    for (const member of group.members) {
+        const extras = { groupId: group.groupId, isGroupPrimary: member === group.primary, groupSize };
+        if (isSplitGroup(member)) {
+            for (const part of member.parts) {
+                records.push(await buildSessionItemRecord(part, activeStr, options, extras));
+            }
+        } else {
+            records.push(await buildSessionItemRecord(member, activeStr, options, extras));
         }
     }
     return records;
