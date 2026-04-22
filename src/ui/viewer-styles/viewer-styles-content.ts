@@ -21,6 +21,20 @@ export function getContentStyles(): string {
 .slow-query-burst-marker:hover {
     color: var(--vscode-textLink-activeForeground, var(--vscode-textLink-foreground));
 }
+/* Count badge for collapsed runs of adjacent identical db-signal markers
+   (applyConsecutiveDbMarkerCollapse). Sits after the marker label; muted against the
+   green marker background so it reads as a secondary count, not a second link. */
+.marker-collapse-count {
+    margin-left: 6px;
+    padding: 0 6px;
+    border-radius: 8px;
+    background: var(--vscode-badge-background, rgba(255, 255, 255, 0.12));
+    color: var(--vscode-badge-foreground, inherit);
+    font-style: normal;
+    text-decoration: none;
+    font-size: 0.85em;
+    opacity: 0.85;
+}
 
 /* Drift SQL: dim the " with args [...]" suffix (drift-log-line-args-fold.ts) */
 .drift-args-dim {
