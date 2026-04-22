@@ -48,17 +48,38 @@ function collapseAllSections() {
     else { recalcHeights(); renderViewport(true); }
 }
 
+/** Expand every toggleable section: stack groups and continuation groups.
+ *  Note: SQL repeat drilldowns are NOT reopened — the user may never have opened them. */
+function expandAllSections() {
+    var gid;
+    for (gid in groupHeaderMap) {
+        if (groupHeaderMap[gid] && groupHeaderMap[gid].collapsed) {
+            groupHeaderMap[gid].collapsed = false;
+        }
+    }
+    if (typeof contHeaderMap !== 'undefined') {
+        for (gid in contHeaderMap) {
+            if (contHeaderMap[gid] && contHeaderMap[gid].contCollapsed) {
+                contHeaderMap[gid].contCollapsed = false;
+            }
+        }
+    }
+    if (typeof recalcAndRender === 'function') { recalcAndRender(); }
+    else { recalcHeights(); renderViewport(true); }
+}
+
 function toggleStackGroup(groupId) {
     var header = groupHeaderMap[groupId];
     if (!header) return;
     var beforeCollapsed = header.collapsed;
-    // Cycle: expanded -> collapsed -> preview -> expanded
-    if (header.collapsed === 'preview') {
-        header.collapsed = false; // Expand all
-    } else if (header.collapsed === false) {
-        header.collapsed = true; // Collapse all
+    // Two-state toggle: collapsed ↔ expanded.
+    // Preview mode is only used as an initial default (set in addToData),
+    // not as a user-facing toggle state — clicking always goes to the
+    // opposite extreme so a single click fully opens or fully closes.
+    if (header.collapsed === false) {
+        header.collapsed = true;
     } else {
-        header.collapsed = 'preview'; // Show preview ([+N more] for extra frames)
+        header.collapsed = false;
     }
     if (header.collapsed === true && beforeCollapsed !== true) {
         trackLearningDismissForStackGroup(groupId);

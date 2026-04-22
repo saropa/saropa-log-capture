@@ -187,8 +187,9 @@ async function runCrossSessionLookup(progress, lineText) {
         }
         const hash = (0, error_fingerprint_1.hashFingerprint)(normalized);
         progress('trend', '📊 Reading session metadata...');
-        const insights = await (0, cross_session_aggregator_1.aggregateInsights)();
-        const match = insights.recurringErrors.find(e => e.hash === hash);
+        const aggregated = await (0, cross_session_aggregator_1.aggregateSignals)();
+        // Find matching error signal by fingerprint (raw hash for error-kind signals)
+        const match = aggregated.allSignals.find(s => s.kind === 'error' && s.fingerprint === hash);
         if (!match) {
             return {};
         }

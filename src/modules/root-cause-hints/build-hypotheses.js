@@ -31,6 +31,12 @@ const MAX_EVIDENCE_IDS = exports.ROOT_CAUSE_MAX_EVIDENCE_IDS;
 function isDecorativeExcerpt(s) {
     return !/[a-zA-Z0-9]/.test(s);
 }
+/** Build a human-readable reason for the confidence level. */
+function buildConfidenceReason(cat, occurrences) {
+    const catLabel = cat === 'non-fatal' ? 'non-fatal error' : `${cat} crash`;
+    const countLabel = occurrences === 1 ? '1 occurrence' : `${occurrences} occurrences`;
+    return `${catLabel}, ${countLabel}`;
+}
 /** Map crash category to confidence level. */
 function categoryConfidence(cat) {
     if (cat === 'fatal' || cat === 'anr' || cat === 'oom' || cat === 'native') {
@@ -73,6 +79,7 @@ function errorHypotheses(bundle) {
         text: (0, build_hypotheses_text_1.truncateText)(`Error: ${excerpt}`, MAX_TEXT_LEN),
         evidenceLineIds: lineIds.slice().sort((a, b) => a - b),
         confidence: categoryConfidence(cat),
+        confidenceReason: buildConfidenceReason(cat, lineIds.length),
         hypothesisKey: `err::${key}`,
         tier: 0,
     }));
@@ -101,6 +108,41 @@ function dedupeAndMerge(work) {
     }
     return Array.from(byKey.values());
 }
+/**
+ * Bug 002 fix: when a high-confidence ANR hypothesis exists, error-recent
+ * hypotheses are almost certainly ANR dump lines (CPU stats, IO pressure,
+ * process list). Instead of showing them as separate reports, merge their
+ * evidence line IDs into the ANR hypothesis so the single ANR report links
+ * to the actual dump lines. No information is lost — the user sees one
+ * consolidated report instead of three overlapping ones.
+ */
+function mergeErrorsIntoAnr(work) {
+    const anrIdx = work.findIndex((h) => h.hypothesisKey === 'anr::risk' && h.confidence === 'high');
+    if (anrIdx < 0) {
+        return work;
+    }
+    // Collect all error-recent evidence line IDs into the ANR hypothesis.
+    const errorIds = [];
+    for (const h of work) {
+        if (h.templateId === 'error-recent') {
+            errorIds.push(...h.evidenceLineIds);
+        }
+    }
+    if (errorIds.length === 0) {
+        return work;
+    }
+    const anr = work[anrIdx];
+    const merged = new Set([...anr.evidenceLineIds, ...errorIds]);
+    const ids = Array.from(merged).filter((n) => n >= 0).slice(0, MAX_EVIDENCE_IDS);
+    const updated = { ...anr, evidenceLineIds: ids };
+    return work.map((h, i) => {
+        if (i === anrIdx) {
+            return updated;
+        }
+        // Remove error-recent — their evidence now lives in the ANR hypothesis.
+        return h;
+    }).filter((h) => h.templateId !== 'error-recent');
+}
 function capEvidence(ids) {
     const u = Array.from(new Set(ids.filter((n) => {
         return Number.isFinite(n) && n >= 0;
@@ -113,6 +155,7 @@ function stripWorking(h) {
         text: h.text,
         evidenceLineIds: capEvidence(h.evidenceLineIds),
         confidence: h.confidence,
+        confidenceReason: h.confidenceReason,
         hypothesisKey: h.hypothesisKey,
     };
 }
@@ -149,7 +192,7 @@ function buildHypotheses(bundle) {
         ...(0, build_hypotheses_general_1.classifiedErrorHypotheses)(bundle, MAX_TEXT_LEN),
         ...(0, build_hypotheses_general_1.anrHypotheses)(bundle, MAX_TEXT_LEN),
     ];
-    const merged = dedupeAndMerge(parts);
+    const merged = mergeErrorsIntoAnr(dedupeAndMerge(parts));
     merged.sort((a, b) => {
         if (a.tier !== b.tier) {
             return a.tier - b.tier;

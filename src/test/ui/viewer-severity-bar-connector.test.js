@@ -44,6 +44,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const assert = __importStar(require("node:assert"));
 const viewer_data_viewport_1 = require("../../ui/viewer/viewer-data-viewport");
 const viewer_data_helpers_render_1 = require("../../ui/viewer/viewer-data-helpers-render");
+const viewer_data_helpers_render_stack_1 = require("../../ui/viewer/viewer-data-helpers-render-stack");
 const viewer_styles_decoration_1 = require("../../ui/viewer-styles/viewer-styles-decoration");
 const viewer_data_add_1 = require("../../ui/viewer/viewer-data-add");
 suite('Severity bar connector (same-level joining)', () => {
@@ -55,8 +56,12 @@ suite('Severity bar connector (same-level joining)', () => {
     test('should skip blank lines when finding next dot', () => {
         assert.ok(viewportScript.includes("classList.contains('line-blank')"), 'findNextDotSibling must skip blank lines');
     });
-    test('should skip hidden-chevron elements in dot search', () => {
-        assert.ok(viewportScript.includes("classList.contains('hidden-chevron')"), 'findNextDotSibling must skip hidden-chevron elements');
+    test('should not reference the retired .hidden-chevron / .peek-collapse classes', () => {
+        // Unified line-collapsing rethink retired both indicator elements — the
+        // render loop no longer emits them and the post-pass no longer skips them.
+        // findNextDotSibling just scans for dot-carrying rows; nothing to skip.
+        assert.ok(!viewportScript.includes("classList.contains('hidden-chevron')"), 'findNextDotSibling must not reference the retired .hidden-chevron class');
+        assert.ok(!viewportScript.includes("classList.contains('peek-collapse')"), 'bar-bridge loop must not reference the retired .peek-collapse class');
     });
     test('should only connect dots with the same bar level', () => {
         assert.ok(viewportScript.includes('nextLvl !== lvl'), 'connector loop must compare adjacent dot levels and skip mismatches');
@@ -94,9 +99,14 @@ suite('Hidden-lines chevron insertion', () => {
     test('should define buildHiddenTip for tooltip formatting', () => {
         assert.ok(viewportScript.includes('function buildHiddenTip('), 'viewport script must define buildHiddenTip');
     });
-    test('should insert chevron HTML with title on the span element', () => {
-        assert.ok(viewportScript.includes('hidden-chevron'), 'render loop must insert hidden-chevron div');
-        assert.ok(viewportScript.includes('<span title="'), 'title attribute must be on the inner span for reliable tooltip hit-testing');
+    test('should stamp .bar-hidden-rows + tooltip on the row after a hidden gap', () => {
+        // Unified line-collapsing (bugs/unified-line-collapsing.md): the old
+        // .hidden-chevron DIV was retired. The outlined-dot state is now
+        // represented by injecting .bar-hidden-rows + data-hidden-from/to + title
+        // onto the outer <div class="..."> of the visible row that FOLLOWS the
+        // hidden gap. No separate indicator element is emitted.
+        assert.ok(viewportScript.includes('class="bar-hidden-rows '), 'render loop must inject .bar-hidden-rows onto the row after a hidden gap');
+        assert.ok(viewportScript.includes('title="' + "'"), 'tooltip must be set on the row outer div so hover works anywhere on the row');
     });
     test('should use prevVisIdx to detect gaps between visible lines', () => {
         assert.ok(viewportScript.includes('prevVisIdx'), 'render loop must track previous visible line index');
@@ -152,30 +162,34 @@ suite('Stack level inheritance from parent line', () => {
     });
 });
 suite('Stack header level CSS class in renderItem', () => {
-    const renderChunk = (0, viewer_data_helpers_render_1.getViewerDataHelpersRender)();
+    /* Stack-header rendering was extracted to viewer-data-helpers-render-stack.ts
+       as part of the unified line-collapsing rethink (keeps the parent file under
+       the 300-line eslint max-lines limit). The level-class and class-list
+       assertions now target that module's output. */
+    const renderChunk = (0, viewer_data_helpers_render_stack_1.getStackHeaderRenderScript)();
     test('should apply level class to stack-header div', () => {
-        assert.ok(renderChunk.includes("hdrLevelCls = item.level ? ' level-' + item.level : ''"), 'renderItem must compute hdrLevelCls from item.level for stack headers');
+        assert.ok(renderChunk.includes("hdrLevelCls = item.level ? ' level-' + item.level : ''"), 'stack-header renderer must compute hdrLevelCls from item.level');
     });
     test('should include hdrLevelCls in stack-header class list', () => {
         assert.ok(renderChunk.includes("stack-header' + hdrLevelCls + matchCls"), 'stack-header div must include the level class before other class concatenations');
     });
 });
-suite('Hidden-chevron CSS', () => {
+suite('Retired indicator classes are fully removed', () => {
+    // The unified line-collapsing rethink retired the .hidden-chevron (▼) and
+    // .peek-collapse (−) elements in favour of the outlined severity dot state
+    // (.bar-hidden-rows). The CSS blocks and their usages are removed so the
+    // bundled webview stylesheet does not ship dead rules.
     const css = (0, viewer_styles_decoration_1.getDecorationStyles)();
-    test('should define hidden-chevron styles', () => {
-        assert.ok(css.includes('.hidden-chevron'), 'CSS must define .hidden-chevron');
-        assert.ok(css.includes('.hidden-chevron > span'), 'CSS must style the inner span');
+    test('should no longer define .hidden-chevron rules', () => {
+        // Match an active selector usage (followed by `{`, ` >`, `:hover`, etc.).
+        // Mere mentions in comments / migration notes are allowed.
+        assert.ok(!/\.hidden-chevron\s*[{>:]/.test(css), 'CSS must not contain any active .hidden-chevron rule after the rethink');
     });
-    test('should use zero height with overflow visible', () => {
-        assert.ok(css.includes('height: 0') && css.includes('overflow: visible'), 'hidden-chevron div must be zero-height with visible overflow');
+    test('should no longer define .peek-collapse rules', () => {
+        assert.ok(!/\.peek-collapse\s*[{>:]/.test(css), 'CSS must not contain any active .peek-collapse rule after the rethink');
     });
-    test('should not use font-size: 0 on parent (breaks child em units)', () => {
-        // Regression: font-size: 0 on parent makes 0.75em = 0px on child.
-        const chevronBlock = css.slice(css.indexOf('.hidden-chevron {'), css.indexOf('.hidden-chevron > span'));
-        assert.ok(!chevronBlock.includes('font-size: 0'), 'parent .hidden-chevron must not set font-size: 0');
-    });
-    test('should position span absolutely for gutter placement', () => {
-        assert.ok(css.includes('position: absolute'), 'inner span must be absolutely positioned');
+    test('should still define the replacement .bar-hidden-rows state', () => {
+        assert.ok(css.includes('.bar-hidden-rows'), 'unified outlined-dot state must be present');
     });
 });
 //# sourceMappingURL=viewer-severity-bar-connector.test.js.map

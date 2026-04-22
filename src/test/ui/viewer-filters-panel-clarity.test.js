@@ -34,29 +34,51 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const assert = __importStar(require("assert"));
-const viewer_filters_panel_html_1 = require("../../ui/viewer-search-filter/viewer-filters-panel-html");
 const viewer_filters_panel_script_1 = require("../../ui/viewer-search-filter/viewer-filters-panel-script");
 const viewer_scope_filter_1 = require("../../ui/viewer-search-filter/viewer-scope-filter");
 const viewer_scope_filter_hint_1 = require("../../ui/viewer-search-filter/viewer-scope-filter-hint");
-const viewer_filter_1 = require("../../ui/viewer-search-filter/viewer-filter");
 const viewer_exclusions_1 = require("../../ui/viewer-search-filter/viewer-exclusions");
 const viewer_toolbar_script_1 = require("../../ui/viewer-toolbar/viewer-toolbar-script");
 const viewer_toolbar_filter_drawer_html_1 = require("../../ui/viewer-toolbar/viewer-toolbar-filter-drawer-html");
 const viewer_presets_1 = require("../../ui/viewer-search-filter/viewer-presets");
 suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
-    test('HTML uses Log Inputs, File Scope, and scope element ids', () => {
-        const html = (0, viewer_filters_panel_html_1.getFiltersPanelHtml)();
-        assert.ok(html.includes('Log Inputs'));
-        assert.ok(html.includes('SQL Commands'));
-        assert.ok(html.includes('File Scope'));
-        assert.ok(html.includes('id="scope-filter-hint"'));
+    test('Filter drawer tab bar should have all 6 tabs with icons', () => {
+        const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
+        assert.ok(html.includes('filter-tab-log-sources'), 'should have Log Sources tab');
+        assert.ok(html.includes('filter-tab-exclusions'), 'should have Exclusions tab');
+        assert.ok(html.includes('filter-tab-scope'), 'should have File Scope tab');
+        assert.ok(html.includes('filter-tab-log-tags'), 'should have Message Tags tab');
+        assert.ok(html.includes('filter-tab-class-tags'), 'should have Source Classes tab');
+        assert.ok(html.includes('filter-tab-sql-patterns'), 'should have SQL Commands tab');
+        /* Each tab should have a codicon */
+        assert.ok(html.includes('codicon-broadcast'), 'Log Sources tab should have broadcast icon');
+        assert.ok(html.includes('codicon-exclude'), 'Exclusions tab should have exclude icon');
+        assert.ok(html.includes('codicon-folder-opened'), 'File Scope tab should have folder icon');
+        assert.ok(html.includes('codicon-tag'), 'Message Tags tab should have tag icon');
+        assert.ok(html.includes('codicon-symbol-class'), 'Source Classes tab should have class icon');
+        assert.ok(html.includes('codicon-database'), 'SQL Commands tab should have database icon');
     });
-    test('filters panel script maps external: stream ids to readable labels', () => {
-        const script = (0, viewer_filters_panel_script_1.getFiltersPanelScript)();
-        assert.ok(script.includes('External log'));
-        assert.ok(script.includes("id.indexOf('external:') === 0"));
-        assert.ok(script.includes('commitSourceFilterFromCheckboxes'));
-        assert.ok(script.includes('getSourceFilterCheckboxes'));
+    test('Filter drawer should contain tag/origin/SQL tab panels', () => {
+        const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
+        assert.ok(html.includes('source-tag-chips'), 'should have source tag chips container');
+        assert.ok(html.includes('class-tag-chips'), 'should have class tag chips container');
+        assert.ok(html.includes('sql-pattern-chips'), 'should have SQL pattern chips container');
+    });
+    test('Each tab should have a count suffix span', () => {
+        const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
+        assert.ok(html.includes('filter-tab-count-log-sources'), 'Log Sources tab count');
+        assert.ok(html.includes('filter-tab-count-exclusions'), 'Exclusions tab count');
+        assert.ok(html.includes('filter-tab-count-scope'), 'File Scope tab count');
+        assert.ok(html.includes('filter-tab-count-log-tags'), 'Message Tags tab count');
+        assert.ok(html.includes('filter-tab-count-class-tags'), 'Source Classes tab count');
+        assert.ok(html.includes('filter-tab-count-sql-patterns'), 'SQL Commands tab count');
+    });
+    test('Tags panel script wires tier radio event handlers', () => {
+        const script = (0, viewer_filters_panel_script_1.getTagsPanelScript)();
+        assert.ok(script.includes('tier-flutter'), 'should wire Flutter DAP radio handlers');
+        assert.ok(script.includes('tier-device'), 'should wire Device radio handlers');
+        assert.ok(script.includes('tier-external'), 'should wire External radio handlers');
+        assert.ok(script.includes('setShowExternal'), 'should call setShowExternal on change');
     });
     test('scope script disables unattributed checkbox when scope is all', () => {
         const script = (0, viewer_scope_filter_1.getScopeFilterScript)();
@@ -77,93 +99,100 @@ suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
         assert.ok(script.includes('data-scope-reset="all"'));
         assert.ok(script.includes('Reset to All logs'));
     });
-    test('toolbar script should define setAccordionSummary helper', () => {
+    test('toolbar script should define setAccordionSummary that updates tab counts', () => {
         const script = (0, viewer_toolbar_script_1.getToolbarScript)();
-        assert.ok(script.includes('function setAccordionSummary(sectionId, text)'), 'toolbar script must define setAccordionSummary for use by filter sections');
-        assert.ok(script.includes('.filter-accordion-summary'), 'setAccordionSummary should target the .filter-accordion-summary span');
+        assert.ok(script.includes('function setAccordionSummary(sectionId, text)'), 'toolbar script must define setAccordionSummary for backward compat');
+        assert.ok(script.includes('filter-tab-count-'), 'setAccordionSummary should target filter-tab-count elements');
     });
-    test('source filter script should update log inputs summary and tooltips', () => {
-        const script = (0, viewer_filters_panel_script_1.getFiltersPanelScript)();
-        assert.ok(script.includes('updateLogInputsSummary'), 'source filter should call updateLogInputsSummary on change');
-        assert.ok(script.includes('Show or hide'), 'stream rows should have descriptive tooltip text');
+    test('toolbar script should define activateFilterTab for tab switching', () => {
+        const script = (0, viewer_toolbar_script_1.getToolbarScript)();
+        assert.ok(script.includes('function activateFilterTab(key)'), 'toolbar script must define activateFilterTab');
+        assert.ok(script.includes('initFilterTabs'), 'toolbar script must call initFilterTabs');
     });
-    test('category filter script should update log inputs summary and tooltips', () => {
-        const script = (0, viewer_filter_1.getFilterScript)();
-        assert.ok(script.includes('updateLogInputsSummary'), 'channel filter should call updateLogInputsSummary');
-        assert.ok(script.includes('Show or hide'), 'channel labels should have descriptive tooltip text');
+    test('Tags panel script should define updateLogSourcesSummary', () => {
+        const script = (0, viewer_filters_panel_script_1.getTagsPanelScript)();
+        assert.ok(script.includes('updateLogSourcesSummary'), 'should define updateLogSourcesSummary for tier summary');
     });
     test('exclusion script should set accordion summary', () => {
         const script = (0, viewer_exclusions_1.getExclusionScript)();
-        assert.ok(script.includes("setAccordionSummary('exclusions-section'"), 'exclusion rebuild should update accordion summary');
+        assert.ok(script.includes("setAccordionSummary('exclusions-section'"), 'exclusion rebuild should update tab count via setAccordionSummary');
     });
     test('scope script should set accordion summary and clear on reset', () => {
         const script = (0, viewer_scope_filter_1.getScopeFilterScript)();
-        assert.ok(script.includes("setAccordionSummary('scope-section'"), 'scope filter should update accordion summary');
-        // resetScopeFilter should also clear the summary
+        assert.ok(script.includes("setAccordionSummary('scope-section'"), 'scope filter should update tab count via setAccordionSummary');
         const resetIdx = script.indexOf('function resetScopeFilter');
         const resetBody = script.substring(resetIdx, script.indexOf('}', resetIdx + 30) + 1);
-        assert.ok(resetBody.includes("setAccordionSummary('scope-section', '')"), 'resetScopeFilter should clear accordion summary');
+        assert.ok(resetBody.includes("setAccordionSummary('scope-section', '')"), 'resetScopeFilter should clear tab count');
     });
-    test('drawer HTML should not contain old section names or sidecar jargon', () => {
+    test('drawer HTML should use correct section names and not old ones', () => {
         const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
         assert.ok(!html.includes('Log Streams'), 'drawer should not use old "Log Streams" title');
         assert.ok(!html.includes('Output Channels'), 'drawer should not use old "Output Channels" title');
         assert.ok(!html.includes('Code Tags'), 'drawer should not use old "Code Tags" title');
         assert.ok(!html.includes('sidecar'), 'drawer should not contain sidecar jargon');
-        assert.ok(html.includes('Log Inputs'), 'drawer should use "Log Inputs" title');
-        assert.ok(html.includes('Exclusions'), 'drawer should use "Exclusions" title');
-        assert.ok(html.includes('Message Tags'), 'drawer should use "Message Tags" title');
-        assert.ok(html.includes('Code Origins'), 'drawer should use "Code Origins" title');
+        assert.ok(!html.includes('Log Inputs'), 'drawer should not use old "Log Inputs" title');
+        assert.ok(html.includes('Log Sources'), 'drawer should use "Log Sources" title');
         assert.ok(html.includes('File Scope'), 'drawer should use "File Scope" title');
     });
-    test('panel HTML should not contain old section names', () => {
-        const html = (0, viewer_filters_panel_html_1.getFiltersPanelHtml)();
-        assert.ok(!html.includes('Log Streams'), 'panel should not use old "Log Streams" title');
-        assert.ok(!html.includes('Output Channels'), 'panel should not use old "Output Channels" title');
-        assert.ok(!html.includes('Code Tags'), 'panel should not use old "Code Tags" title');
-        assert.ok(html.includes('Exclusions'), 'panel should use "Exclusions" title');
-        assert.ok(html.includes('Message Tags'), 'panel should use "Message Tags" title');
-        assert.ok(html.includes('Code Origins'), 'panel should use "Code Origins" title');
+    test('Tags panel script should not contain source checkbox code', () => {
+        const script = (0, viewer_filters_panel_script_1.getTagsPanelScript)();
+        assert.ok(!script.includes('sidecar'), 'should not use sidecar jargon');
+        assert.ok(!script.includes('commitSourceFilterFromCheckboxes'), 'source checkboxes removed');
+        assert.ok(!script.includes('getSourceFilterCheckboxes'), 'source checkboxes removed');
+        assert.ok(!script.includes('syncSourceFilterUi'), 'source filter sync removed');
     });
-    test('source filter script should not contain sidecar jargon', () => {
-        const script = (0, viewer_filters_panel_script_1.getFiltersPanelScript)();
-        assert.ok(!script.includes('sidecar'), 'source filter should not use sidecar jargon');
-        assert.ok(!script.includes('External (sidecar log)'), 'should not use old sidecar label');
-        assert.ok(script.includes('External log'), 'should use clean "External log" label');
-    });
-    test('merged Log Inputs section should contain divider element', () => {
-        const drawerHtml = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
-        assert.ok(drawerHtml.includes('id="log-inputs-divider"'), 'drawer should have divider between sources and categories');
-        const panelHtml = (0, viewer_filters_panel_html_1.getFiltersPanelHtml)();
-        assert.ok(panelHtml.includes('id="log-inputs-divider"'), 'panel should have divider between sources and categories');
-    });
-    test('updateLogInputsSummary should count both sources and categories', () => {
-        const script = (0, viewer_filters_panel_script_1.getFiltersPanelScript)();
-        assert.ok(script.includes('function updateLogInputsSummary'), 'should define updateLogInputsSummary');
-        assert.ok(script.includes('source-filter-list'), 'should query source filter list');
-        assert.ok(script.includes('output-channels-list'), 'should query output channels list');
-        assert.ok(script.includes("setAccordionSummary('log-inputs-section'"), 'should target log-inputs-section');
-    });
-    test('toolbar script should hide level dots when filter drawer opens', () => {
+    test('toolbar filter button should toggle filter panel via setActivePanel', () => {
         const script = (0, viewer_toolbar_script_1.getToolbarScript)();
-        assert.ok(script.includes("levelMenuBtn"), 'should reference level-menu-btn element');
-        assert.ok(script.includes("levelMenuBtn.classList.add('u-hidden')"), 'should hide dots on drawer open');
-        assert.ok(script.includes("levelMenuBtn.classList.remove('u-hidden')"), 'should show dots on drawer close');
+        /* Filter panel is a sidebar, not a dropdown — toolbar button
+         * calls setActivePanel('filters') to open it in panel-slot. */
+        assert.ok(script.includes("setActivePanel('filters')"), 'filter button should toggle via setActivePanel');
     });
-    test('Log Inputs should contain Flutter and Device radio groups', () => {
+    test('Log Sources should contain all three tier radio groups with hints', () => {
         const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
-        assert.ok(html.includes('name="tier-flutter"'), 'Log Inputs should contain Flutter radio group');
-        assert.ok(html.includes('name="tier-device"'), 'Log Inputs should contain Device radio group');
+        assert.ok(html.includes('name="tier-flutter"'), 'should contain Flutter DAP radio group');
+        assert.ok(html.includes('name="tier-device"'), 'should contain Device radio group');
+        assert.ok(html.includes('name="tier-external"'), 'should contain External radio group');
+        assert.ok(html.includes('Flutter DAP'), 'should use "Flutter DAP" label');
+        assert.ok(html.includes('Debug Adapter Protocol'), 'Flutter DAP should have DAP tooltip');
+        assert.ok(html.includes('stdout, stderr, console'), 'Flutter DAP should list DAP categories');
+        assert.ok(html.includes('Logcat'), 'Device should mention logcat');
+        assert.ok(html.includes('Saved logs'), 'External should mention saved logs');
     });
-    test('Exclusions accordion should contain exclusion controls', () => {
+    test('drawer HTML should not contain source/category checkbox containers', () => {
+        const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
+        assert.ok(!html.includes('source-filter-list'), 'source checkboxes removed from drawer');
+        assert.ok(!html.includes('output-channels-list'), 'category checkboxes removed from drawer');
+    });
+    test('Exclusions tab panel should contain exclusion controls', () => {
         const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
         assert.ok(html.includes('exclusions-section'), 'should have exclusions-section');
-        assert.ok(html.includes('opt-exclusions'), 'Exclusions should contain exclusion checkbox');
+        assert.ok(html.includes('opt-exclusions'), 'Exclusions panel should contain exclusion checkbox');
     });
-    test('preset save should capture tri-state tier modes', () => {
+    test('exclusion checkbox should be inline with text input in drawer', () => {
+        const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
+        const wrapperStart = html.indexOf('exclusion-input-wrapper');
+        const togglePos = html.indexOf('exclusion-toggle', wrapperStart);
+        const inputPos = html.indexOf('exclusion-add-input', wrapperStart);
+        assert.ok(wrapperStart > -1, 'should have exclusion-input-wrapper');
+        assert.ok(togglePos > wrapperStart, 'checkbox toggle should be inside wrapper');
+        assert.ok(inputPos > togglePos, 'text input should follow checkbox inside wrapper');
+    });
+    test('exclusion label should be screen-reader-only in drawer', () => {
+        const drawerHtml = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
+        assert.ok(drawerHtml.includes('u-sr-only'), 'drawer exclusion label should use u-sr-only');
+    });
+    test('drawer footer should say "Saved Filters" with "Default" option, no Reset button', () => {
+        const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
+        assert.ok(html.includes('id="preset-select"'), 'hidden preset select must exist');
+        assert.ok(html.includes('>Default</option>'), 'default option should read "Default"');
+        assert.ok(!html.includes('filter-drawer-footer-label'), 'old footer label should be removed');
+        assert.ok(!html.includes('reset-all-filters'), 'Reset all button should be removed');
+    });
+    test('preset save should capture tri-state tier modes for all three tiers', () => {
         const script = (0, viewer_presets_1.getPresetsScript)();
-        assert.ok(script.includes('filters.deviceMode'), 'getCurrentFilters should save deviceMode state');
-        assert.ok(script.includes('filters.flutterMode'), 'getCurrentFilters should save flutterMode state');
+        assert.ok(script.includes('filters.flutterMode'), 'should save flutterMode');
+        assert.ok(script.includes('filters.deviceMode'), 'should save deviceMode');
+        assert.ok(script.includes('filters.externalMode'), 'should save externalMode');
     });
 });
 //# sourceMappingURL=viewer-filters-panel-clarity.test.js.map

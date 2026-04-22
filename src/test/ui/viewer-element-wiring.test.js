@@ -82,15 +82,15 @@ suite('Webview element ID wiring', () => {
         'ib-performance',
         'ib-sql-filter',
         'ib-sql-filter-count-short',
-        // Old filters panel — removed from body HTML
-        'filters-panel',
-        'filters-search',
-        'filters-search-clear',
         // Old footer toggle buttons — not in current HTML
         'audio-toggle',
         'deco-toggle',
         'error-breakpoint-toggle',
         'wrap-toggle',
+        // Old recurring signals elements — replaced by signal-trends-* in panel refactor
+        'signal-recurring-loading',
+        'signal-recurring-list',
+        'signal-recurring-empty',
     ]);
     /** Combined allowlist of IDs that aren't expected in static HTML. */
     const allowlist = new Set([...dynamicIds, ...staleIds]);

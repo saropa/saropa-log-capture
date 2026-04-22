@@ -141,8 +141,15 @@ class LogSession {
                     includeElapsedTime: this.config.includeElapsedTime,
                 });
                 this._previousTimestamp = next.timestamp;
-                const lines = this.deduplicator.process(formatted);
-                await this.writeProcessedLines(lines);
+                /* Capture-side deduplication is intentionally bypassed: the
+                   unified line-collapsing rethink (bugs/unified-line-collapsing.md)
+                   moves every collapse/hide to the viewer layer so line numbers
+                   in the captured file match the app's actual output 1:1. Each
+                   incoming line is written as its own row; identical-within-500ms
+                   runs that the old Deduplicator would have folded to `(xN)`
+                   suffix are now folded visually in the viewer via .bar-hidden-rows
+                   (click to expand) and preserve per-line timestamps in the file. */
+                await this.writeProcessedLines([formatted]);
                 this.pendingLines.shift();
                 this._lastLineTime = Date.now();
                 this._lastWriteTime = this._lastLineTime;
@@ -293,13 +300,12 @@ class LogSession {
         // Preserve newest output by flushing any queued appendLine calls before closing.
         await this.drainPendingLines();
         this._state = 'stopped';
-        // Flush deduplication buffer.
+        // Capture-side deduplication bypassed — no pending fold buffer to flush.
+        // (See the drainPendingLines comment for the "every raw line is written"
+        //  rationale.) Kept calling deduplicator.flush() for defensive state
+        // reset in case a future code path resurfaces capture-side folding.
         if (this.writeStream) {
-            const flushed = this.deduplicator.flush();
-            for (const line of flushed) {
-                this.writeStream.write(line + '\n');
-                this._lineCount++;
-            }
+            this.deduplicator.flush(); /* no-op under bypass; discards any state. */
             const footer = `\n=== SESSION END — ${new Date().toISOString()} — ${this._lineCount} lines ===\n`;
             this.writeStream.write(footer);
             await new Promise((resolve, reject) => {

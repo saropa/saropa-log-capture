@@ -54,7 +54,7 @@ function buildViewerHtml(opts) {
         viewerGroupAsciiArt: opts.viewerGroupAsciiArt,
         viewerDetectAsciiArt: opts.viewerDetectAsciiArt,
         viewerRepeatThresholds: opts.viewerRepeatThresholds,
-        viewerDbInsightsEnabled: opts.viewerDbInsightsEnabled,
+        viewerDbSignalsEnabled: opts.viewerDbSignalsEnabled,
         staticSqlFromFingerprintEnabled: opts.staticSqlFromFingerprintEnabled,
         viewerSlowBurstThresholds: opts.viewerSlowBurstThresholds,
         viewerDbDetectorToggles: opts.viewerDbDetectorToggles,

@@ -92,5 +92,97 @@ suite("log-viewer-separator-line (viewer banner / rule detection)", () => {
             assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)("==============================="), true);
         });
     });
+    // --- Drift v3.3.3+ rounded-corner banner (the reported failing case). The
+    //     later release switched from light corners (┌┐└┘) to rounded (╭╮╰╯)
+    //     with T-connector dividers (├┤). Every row of the banner must be
+    //     classified as a separator so art-block grouping keeps the whole frame
+    //     together; a missed row splits the block visually.
+    suite("Drift v3.3.3 rounded + T-connector banner (all rows)", () => {
+        test("╭──╮ top rule is a separator", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('╭──────────────────────────────────────────────────╮'), true);
+        });
+        test("├──┤ middle divider rule is a separator", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('├──────────────────────────────────────────────────┤'), true);
+        });
+        test("╰──╯ bottom rule is a separator", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('╰──────────────────────────────────────────────────╯'), true);
+        });
+        test("│ title │ row with v3.3.3 version is a separator", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('│           DRIFT DEBUG SERVER   v3.3.3            │'), true);
+        });
+        test("logcat-prefixed rounded top rule is a separator", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('I/flutter (13876): ╭──────────────────────────────────────────────────╮'), true);
+        });
+        test("logcat-prefixed T-connector divider is a separator", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('I/flutter (13876): ├──────────────────────────────────────────────────┤'), true);
+        });
+    });
+    // --- Heavy-line variants (used by Rich/Python and some Node libs) ---
+    suite("heavy-line banners (┏━┓ ┃ ┣ ┫ ┗ ┛)", () => {
+        test("┏━┓ top rule", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('┏━━━━━━━━━━━━━━━━━━━━┓'), true);
+        });
+        test("┃ content ┃ bar-pair", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('┃     HEAVY BANNER     ┃'), true);
+        });
+        test("┣━┫ divider", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('┣━━━━━━━━━━━━━━━━━━━━┫'), true);
+        });
+        test("┗━┛ bottom rule", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('┗━━━━━━━━━━━━━━━━━━━━┛'), true);
+        });
+    });
+    // --- Mixed light/double (DOS-era boxes, still seen in .NET / legacy tooling) ---
+    suite("mixed light/double banners (╒══╕ ╞══╡ ╘══╛)", () => {
+        test("╒══╕ top rule", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('╒══════════════════╕'), true);
+        });
+        test("╞══╡ divider", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('╞══════════════════╡'), true);
+        });
+        test("╘══╛ bottom rule", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('╘══════════════════╛'), true);
+        });
+    });
+    // --- ASCII plus-corner banner — relies on the 0.6 art-char ratio,
+    //     not the bar-pair regex. ASCII `|` is intentionally excluded
+    //     from the bar-pair set so markdown tables stay plain text.
+    suite("ASCII plus-corner banners", () => {
+        test("+---+ top rule", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('+----------------+'), true);
+        });
+        test("==== classic rule (wider)", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('==================='), true);
+        });
+    });
+    // --- Boxen-style: title embedded directly inside the top rule ---
+    suite("boxen-style banners (title in rule)", () => {
+        test("╭─[ TITLE ]─╮ with bracketed title in top rule", () => {
+            // Mostly-art line with a short title; ratio still ≥ 0.6.
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('╭─[ TITLE ]────────────────────────────╮'), true);
+        });
+    });
+    // --- Indented banners: detection must ignore leading whitespace on both
+    //     the bar-pair and pure-box-rule branches.
+    suite("indented banners", () => {
+        test("indented rounded-corner rule stays a separator", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('      ╭──────────╮'), true);
+        });
+        test("indented heavy bar-pair stays a separator", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('    ┃     text     ┃'), true);
+        });
+    });
+    // --- Negative cases: widening must not false-positive on real log lines ---
+    suite("widening must not false-positive on real log lines", () => {
+        test("markdown table row is NOT a separator (ASCII | excluded from bar set)", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('| col1 | col2 | col3 |'), false);
+        });
+        test("plain sentence with one box char in middle is NOT a separator", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('Starting worker thread ─ pool size 8'), false);
+        });
+        test("stack frame gutter `│ #N …` is NOT a separator", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('│ #0  package:foo/main.dart  foo (package:foo/a.dart:1:1)'), false);
+        });
+    });
 });
 //# sourceMappingURL=log-viewer-separator-line.test.js.map

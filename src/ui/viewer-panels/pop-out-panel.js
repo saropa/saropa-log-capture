@@ -216,7 +216,7 @@ class PopOutPanel {
     setMinimapViewportRedOutline(show) { this.post({ type: "minimapViewportRedOutline", show }); }
     setMinimapViewportOutsideArrow(show) { this.post({ type: "minimapViewportOutsideArrow", show }); }
     setViewerRepeatThresholds(t) { (0, pop_out_panel_viewer_state_1.postViewerRepeatThresholds)(this, t); }
-    setViewerDbInsightsEnabled(enabled) { this.post({ type: "setViewerDbInsightsEnabled", enabled }); }
+    setViewerDbSignalsEnabled(enabled) { this.post({ type: "setViewerDbSignalsEnabled", enabled }); }
     setStaticSqlFromFingerprintEnabled(enabled) { this.post({ type: "setStaticSqlFromFingerprintEnabled", enabled }); }
     setViewerDbDetectorToggles(toggles) { (0, pop_out_panel_viewer_state_1.postViewerDbDetectorToggles)(this, toggles); }
     setDbBaselineFingerprintSummary(entries) { (0, pop_out_panel_viewer_state_1.postDbBaselineFingerprintSummary)(this, entries); }
@@ -266,7 +266,7 @@ class PopOutPanel {
             viewerGroupAsciiArt: cfg.viewerGroupAsciiArt,
             viewerDetectAsciiArt: cfg.viewerDetectAsciiArt,
             viewerRepeatThresholds: cfg.viewerRepeatThresholds,
-            viewerDbInsightsEnabled: cfg.viewerDbInsightsEnabled,
+            viewerDbSignalsEnabled: cfg.viewerDbSignalsEnabled,
             staticSqlFromFingerprintEnabled: cfg.staticSqlFromFingerprintEnabled,
             viewerDbDetectorToggles: (0, config_1.viewerDbDetectorTogglesFromConfig)(cfg),
             viewerSlowBurstThresholds: cfg.viewerSlowBurstThresholds,

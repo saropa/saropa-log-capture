@@ -41,6 +41,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LogViewerProvider = void 0;
 const vscode = __importStar(require("vscode"));
 const log_viewer_provider_load_1 = require("./log-viewer-provider-load");
+const log_viewer_provider_load_group_1 = require("./log-viewer-provider-load-group");
 const log_viewer_provider_tailing_1 = require("./log-viewer-provider-tailing");
 const log_viewer_provider_setup_1 = require("./log-viewer-provider-setup");
 const viewer_highlight_serializer_1 = require("../viewer-decorations/viewer-highlight-serializer");
@@ -78,7 +79,7 @@ class LogViewerProvider {
     onOpenSessionFromPanel;
     onDisplayOptionsChange;
     onPopOutRequest;
-    onOpenInsightTabRequest;
+    onOpenSignalTabRequest;
     onRevealLogFile;
     onAddBookmark;
     onFindInFiles;
@@ -163,7 +164,7 @@ class LogViewerProvider {
     setOpenSessionFromPanelHandler(handler) { this.onOpenSessionFromPanel = handler; }
     setDisplayOptionsHandler(handler) { this.onDisplayOptionsChange = handler; }
     setPopOutHandler(handler) { this.onPopOutRequest = handler; }
-    setOpenInsightTabHandler(handler) { this.onOpenInsightTabRequest = handler; }
+    setOpenSignalTabHandler(handler) { this.onOpenSignalTabRequest = handler; }
     setRevealLogFileHandler(handler) { this.onRevealLogFile = handler; }
     setAddBookmarkHandler(handler) { this.onAddBookmark = handler; }
     setFindInFilesHandler(handler) { this.onFindInFiles = handler; }
@@ -222,8 +223,8 @@ class LogViewerProvider {
     setViewerRepeatThresholds(thresholds) {
         state.setViewerRepeatThresholdsImpl(this, thresholds);
     }
-    setViewerDbInsightsEnabled(enabled) {
-        state.setViewerDbInsightsEnabledImpl(this, enabled);
+    setViewerDbSignalsEnabled(enabled) {
+        state.setViewerDbSignalsEnabledImpl(this, enabled);
     }
     setStaticSqlFromFingerprintEnabled(enabled) {
         state.setStaticSqlFromFingerprintEnabledImpl(this, enabled);
@@ -298,6 +299,14 @@ class LogViewerProvider {
             this.postMessage({ type: "startReplay", replayConfig: this.getReplayConfig() });
         }
     }
+    /**
+     * Load multiple log files as a single merged view (Phase 5 of the session-groups feature).
+     * Delegates to `mergedLoadFromFiles()` which orchestrates the sort-by-mtime + primary load +
+     * non-sidecar append sequence. See that helper for the full contract.
+     */
+    async loadFromFiles(uris) {
+        await (0, log_viewer_provider_load_group_1.mergedLoadFromFiles)(this, uris);
+    }
     getTailLastLineCount() { return this.tail.tailLastLineCount; }
     setTailLastLineCount(n) { this.tail.tailLastLineCount = n; }
     getTailUpdateInProgress() { return this.tail.tailUpdateInProgress; }
@@ -346,7 +355,7 @@ class LogViewerProvider {
             onPartNavigate: this.onPartNavigate, onSavePresetRequest: this.onSavePresetRequest,
             onSessionListRequest: this.onSessionListRequest, onOpenSessionFromPanel: this.onOpenSessionFromPanel,
             onDisplayOptionsChange: this.onDisplayOptionsChange, onPopOutRequest: this.onPopOutRequest,
-            onOpenInsightTabRequest: this.onOpenInsightTabRequest, onRevealLogFile: this.onRevealLogFile, onAddBookmark: this.onAddBookmark,
+            onOpenSignalTabRequest: this.onOpenSignalTabRequest, onRevealLogFile: this.onRevealLogFile, onAddBookmark: this.onAddBookmark,
             onFindInFiles: this.onFindInFiles, onOpenFindResult: this.onOpenFindResult,
             onFindNavigateMatch: this.onFindNavigateMatch, onBookmarkAction: this.onBookmarkAction,
             onSessionNavigate: this.onSessionNavigate, onSessionAction: this.onSessionAction,

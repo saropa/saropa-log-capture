@@ -125,9 +125,9 @@ async function compareLogSessionsWithDbFingerprints(uriA, uriB) {
     const scanOpts = typeof slowMs === 'number' && slowMs > 0 ? { slowQueryMs: slowMs } : undefined;
     const scanA = (0, db_session_fingerprint_diff_1.scanSaropaLogDatabaseFingerprints)(textA, scanOpts);
     const scanB = (0, db_session_fingerprint_diff_1.scanSaropaLogDatabaseFingerprints)(textB, scanOpts);
-    const insightsOn = (0, config_1.getConfig)().viewerDbInsightsEnabled;
+    const signalsOn = (0, config_1.getConfig)().viewerDbSignalsEnabled;
     const dbCompareState = (0, db_detector_framework_1.createDbDetectorSessionState)();
-    const dbCompareDetectorResults = insightsOn
+    const dbCompareDetectorResults = signalsOn
         ? (0, db_detector_framework_1.runDefaultSessionDbCompareDetectors)({ baseline: scanA.summary, target: scanB.summary }, dbCompareState)
         : [];
     return {

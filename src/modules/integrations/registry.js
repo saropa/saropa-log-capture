@@ -198,6 +198,53 @@ class IntegrationRegistry {
     getLastEndContributorIds() {
         return [...this.lastEndContributorIds];
     }
+    /**
+     * Start streaming providers. Called after LogSession.start() to let
+     * providers that spawn long-running child processes (e.g. adb logcat)
+     * begin pushing lines into the session via writer.writeLine().
+     */
+    runOnSessionStartStreaming(context, writer) {
+        for (const p of this.providers) {
+            if (!p.onSessionStartStreaming) {
+                continue;
+            }
+            let enabled;
+            try {
+                const result = p.isEnabled(context);
+                // Sync path only — async isEnabled is not supported here
+                enabled = typeof result === 'boolean' ? result : false;
+            }
+            catch (err) {
+                const msg = err instanceof Error ? err.message : String(err);
+                context.outputChannel.appendLine(`[${p.id}] isEnabled failed: ${msg}`);
+                continue;
+            }
+            if (!enabled) {
+                continue;
+            }
+            try {
+                p.onSessionStartStreaming(context, writer);
+            }
+            catch (err) {
+                const msg = err instanceof Error ? err.message : String(err);
+                context.outputChannel.appendLine(`[${p.id}] onSessionStartStreaming failed: ${msg}`);
+            }
+        }
+    }
+    /**
+     * Forward a DAP process event PID to all streaming providers that
+     * implement onProcessId (e.g. adb logcat PID filtering).
+     */
+    dispatchProcessId(processId) {
+        for (const p of this.providers) {
+            if (p.onProcessId) {
+                try {
+                    p.onProcessId(processId);
+                }
+                catch { /* logged by provider */ }
+            }
+        }
+    }
     /** Runs onSessionStartAsync for all enabled providers. When options are provided, async contributions (header + meta) are applied and merged at session end. */
     runOnSessionStartAsync(context, options) {
         if (options) {

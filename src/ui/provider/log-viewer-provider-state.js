@@ -66,7 +66,7 @@ exports.setMinimapProportionalLinesImpl = setMinimapProportionalLinesImpl;
 exports.setMinimapViewportRedOutlineImpl = setMinimapViewportRedOutlineImpl;
 exports.setMinimapViewportOutsideArrowImpl = setMinimapViewportOutsideArrowImpl;
 exports.setViewerRepeatThresholdsImpl = setViewerRepeatThresholdsImpl;
-exports.setViewerDbInsightsEnabledImpl = setViewerDbInsightsEnabledImpl;
+exports.setViewerDbSignalsEnabledImpl = setViewerDbSignalsEnabledImpl;
 exports.setStaticSqlFromFingerprintEnabledImpl = setStaticSqlFromFingerprintEnabledImpl;
 exports.setViewerDbDetectorTogglesImpl = setViewerDbDetectorTogglesImpl;
 exports.setDbBaselineFingerprintSummaryImpl = setDbBaselineFingerprintSummaryImpl;
@@ -182,8 +182,8 @@ function setViewerRepeatThresholdsImpl(target, thresholds) {
         },
     });
 }
-function setViewerDbInsightsEnabledImpl(target, enabled) {
-    target.postMessage({ type: "setViewerDbInsightsEnabled", enabled });
+function setViewerDbSignalsEnabledImpl(target, enabled) {
+    target.postMessage({ type: "setViewerDbSignalsEnabled", enabled });
 }
 function setStaticSqlFromFingerprintEnabledImpl(target, enabled) {
     target.postMessage({ type: "setStaticSqlFromFingerprintEnabled", enabled });

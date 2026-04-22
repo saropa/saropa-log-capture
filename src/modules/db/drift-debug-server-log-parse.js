@@ -23,9 +23,14 @@ const RING_MAX = 24;
 const VIEWER_URL_RE = /https?:\/\/(?:127\.0\.0\.1|localhost):\d+/;
 /**
  * Strip common box-drawing / column chars so the URL can be found inside ASCII frames.
+ *
+ * Covers the full Unicode box-drawing block (U+2500–U+257F) so rounded-corner frames
+ * (Drift v3.3.3: `╭╮╰╯`), heavy variants (`┏┓┗┛`), and mixed light/double (`╒╕╘╛`) all
+ * reduce to plain text for URL extraction. Earlier versions hand-picked a subset and
+ * missed rounded corners.
  */
 function stripAsciiBoxNoise(s) {
-    return s.replace(/[│┃║╔╗╚╝╠╣╦╩╬├┤┬┴┼═\-]/g, " ").replace(/\s+/g, " ").trim();
+    return s.replace(/[\u2500-\u257F\-]/g, " ").replace(/\s+/g, " ").trim();
 }
 /** First http://127.0.0.1:port or http://localhost:port in the line, normalized (no trailing slash). */
 function extractDriftViewerHttpUrl(plain) {

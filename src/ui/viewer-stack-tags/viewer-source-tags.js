@@ -33,6 +33,11 @@ var sourceTagShowAll = false;
 var sourceTagMaxChips = 20;
 var sourceTagMinChip = 2;
 
+/** Saved hidden state before a solo action, so double-tap-again restores it. */
+var savedHiddenSourceTags = null;
+/** Which source tag is currently solo'd (null if none). */
+var soloedSourceTag = null;
+
 /**
  * Regex to parse source tags from plain text (start of line only).
  * Group 1: logcat level (V/D/I/W/E/F/A) — captured but ignored for grouping.
@@ -103,20 +108,27 @@ function parseSourceTag(plainText) {
     var m = sourceTagPattern.exec(plainText);
     if (m) {
         var raw = m[2] || m[3];
-        if (!raw) return null;
-        var tag = raw.toLowerCase();
-        var body = plainText.slice(m[0].length);
-        if (driftStatementPattern.test(body)) return 'database';
-        if (m[2] && genericLogcatTags[tag]) {
-            var sub = extractSubTag(body);
-            if (sub && !isNoisySourceTag(sub)) return sub;
-            // Bracket/caps sub-tag was only a time-like or hash token — do not fall back to generic "flutter"/"android".
-            if (sub && isNoisySourceTag(sub)) return null;
-            // Leading [token] not matched by extractSubTag (inline pattern requires a letter after "[") may still be noise (e.g. [08:45:23.606]).
-            var leadBracket = /^\\s*\\[([^\\]]+)\\]/.exec(body);
-            if (leadBracket && leadBracket[1] && isNoisySourceTag(leadBracket[1].toLowerCase())) return null;
+        if (raw) {
+            var tag = raw.toLowerCase();
+            var body = plainText.slice(m[0].length);
+            if (driftStatementPattern.test(body)) return 'database';
+            if (m[2] && genericLogcatTags[tag]) {
+                var sub = extractSubTag(body);
+                if (sub && !isNoisySourceTag(sub)) return sub;
+                // Bracket/caps sub-tag was only a time-like or hash token — do not fall back to generic "flutter"/"android".
+                if (sub && isNoisySourceTag(sub)) return null;
+                // Leading [token] not matched by extractSubTag (inline pattern requires a letter after "[") may still be noise (e.g. [08:45:23.606]).
+                var leadBracket = /^\\s*\\[([^\\]]+)\\]/.exec(body);
+                if (leadBracket && leadBracket[1] && isNoisySourceTag(leadBracket[1].toLowerCase())) return null;
+            }
+            if (!isNoisySourceTag(tag)) return tag;
+            /* Leading bracket matched but was noisy (timestamp/hash/ISO-date prefix, e.g.
+               [16:07:58.532] on console/SDA log lines). Previously we returned null here and
+               the meaningful secondary tag ([console], [log], ...) never registered — the
+               user saw WindowManager/ActivityManager chips but no 'console' chip. Fall
+               through to the inline-tag scan below so the first letter-led bracket in the
+               line wins instead. */
         }
-        return isNoisySourceTag(tag) ? null : tag;
     }
     inlineTagPattern.lastIndex = 0;
     var inlineMatch = inlineTagPattern.exec(plainText);
@@ -212,6 +224,9 @@ function toggleDatabaseSqlFromToolbar() {
 
 /** Toggle a single source tag on/off and re-apply the filter. */
 function toggleSourceTag(tag) {
+    /* Manual toggle breaks any active solo — discard saved state. */
+    savedHiddenSourceTags = null;
+    soloedSourceTag = null;
     if (hiddenSourceTags[tag]) {
         delete hiddenSourceTags[tag];
     } else {
@@ -225,6 +240,8 @@ function toggleSourceTag(tag) {
 
 /** Show all source tags (remove all from hidden set). */
 function selectAllTags() {
+    savedHiddenSourceTags = null;
+    soloedSourceTag = null;
     hiddenSourceTags = {};
     applySourceTagFilter();
     rebuildTagChips();
@@ -232,6 +249,8 @@ function selectAllTags() {
 
 /** Hide all source tags (add all to hidden set). */
 function deselectAllTags() {
+    savedHiddenSourceTags = null;
+    soloedSourceTag = null;
     var keys = Object.keys(sourceTagCounts);
     for (var i = 0; i < keys.length; i++) {
         hiddenSourceTags[keys[i]] = true;
@@ -258,9 +277,14 @@ function updateTagSummary() {
         var summary = total + ' tag' + (total !== 1 ? 's' : '')
             + (hidden > 0 ? ' (' + hidden + ' hidden)' : '');
         el.textContent = summary;
-        if (typeof setAccordionSummary === 'function') setAccordionSummary('log-tags-section', summary);
-        var section = document.getElementById('log-tags-section');
-        if (section) { section.style.display = total > 0 ? '' : 'none'; }
+        /* Accordion header shows concise count: "5 hidden" or total */
+        var accordionText = hidden > 0
+            ? hidden + ' of ' + total + ' hidden'
+            : total + ' tag' + (total !== 1 ? 's' : '');
+        if (typeof setAccordionSummary === 'function') setAccordionSummary('log-tags-section', accordionText);
+        /* Show/hide the tab button based on whether tags exist */
+        var tab = document.getElementById('filter-tab-log-tags');
+        if (tab) { tab.style.display = total > 0 ? '' : 'none'; }
     }
 }
 

@@ -39,12 +39,14 @@ const config_1 = require("../config/config");
 const flood_guard_1 = require("../capture/flood-guard");
 const session_metadata_1 = require("./session-metadata");
 const session_event_bus_1 = require("./session-event-bus");
+const session_manager_listeners_1 = require("./session-manager-listeners");
 const session_manager_events_1 = require("./session-manager-events");
 const session_manager_routing_1 = require("./session-manager-routing");
-const session_manager_start_1 = require("./session-manager-start");
 const session_manager_stop_1 = require("./session-manager-stop");
 const session_manager_internals_1 = require("./session-manager-internals");
-const adb_logcat_capture_1 = require("../integrations/adb-logcat-capture");
+const session_manager_start_sequence_1 = require("./session-manager-start-sequence");
+const session_manager_actions_1 = require("./session-manager-actions");
+const integrations_1 = require("../integrations");
 /**
  * Manages active debug log sessions, bridges DAP output to LogSession,
  * and broadcasts written lines to registered listeners (e.g. sidebar viewer).
@@ -108,23 +110,13 @@ class SessionManagerImpl {
     /** Write a message to the extension's output channel. */
     logToOutputChannel(message) { this.outputChannel.appendLine(message); }
     /** Register a listener that receives every line written to the log. */
-    addLineListener(listener) { this.lineListeners.push(listener); }
+    addLineListener(listener) { (0, session_manager_listeners_1.addListener)(this.lineListeners, listener); }
     /** Remove a previously registered line listener. */
-    removeLineListener(listener) {
-        const idx = this.lineListeners.indexOf(listener);
-        if (idx >= 0) {
-            this.lineListeners.splice(idx, 1);
-        }
-    }
+    removeLineListener(listener) { (0, session_manager_listeners_1.removeListener)(this.lineListeners, listener); }
     /** Register a listener for file split events. */
-    addSplitListener(listener) { this.splitListeners.push(listener); }
+    addSplitListener(listener) { (0, session_manager_listeners_1.addListener)(this.splitListeners, listener); }
     /** Remove a previously registered split listener. */
-    removeSplitListener(listener) {
-        const idx = this.splitListeners.indexOf(listener);
-        if (idx >= 0) {
-            this.splitListeners.splice(idx, 1);
-        }
-    }
+    removeSplitListener(listener) { (0, session_manager_listeners_1.removeListener)(this.splitListeners, listener); }
     /** Called by the DAP tracker for every output event. */
     onOutputEvent(sessionId, body) {
         const effectiveSessionId = (0, session_manager_routing_1.resolveEffectiveSessionId)(sessionId, {
@@ -151,44 +143,42 @@ class SessionManagerImpl {
     /** Called by the DAP tracker when a process event with systemProcessId is received. */
     onProcessId(sessionId, processId) {
         this.processIds.set(sessionId, processId);
-        if (this.cachedConfig.integrationsAdapters?.includes('adbLogcat')) {
-            (0, adb_logcat_capture_1.setLogcatPidFilter)(processId);
-        }
+        // Forward to all streaming providers that care about PID filtering
+        (0, integrations_1.getDefaultIntegrationRegistry)().dispatchProcessId(processId);
     }
     /** Start capturing a debug session. */
     async startSession(session, context) {
-        this.cachedConfig = (0, config_1.getConfig)();
+        // Serialize starts per workspace. Without this, two simultaneous
+        // onDidStartDebugSession events (Flutter parent + Dart VM child, or
+        // compound launches) can both fall through aliasing checks and create
+        // duplicate LogSession instances for the same timestamp-derived filename.
+        const key = session.workspaceFolder?.uri.fsPath ?? '__no_workspace__';
+        await (0, session_manager_internals_1.withStartLock)(key, () => this.runStartSequence(session, context));
+    }
+    /** Run the aliasing-then-create sequence — serialized by startSession. */
+    async runStartSequence(session, context) {
         const deps = {
-            config: this.cachedConfig,
             sessions: this.sessions,
             ownerSessionIds: this.ownerSessionIds,
             ownerSessionCreatedAt: this.ownerSessionCreatedAt,
             childToParentId: this.childToParentId,
             earlyBuffer: this.earlyBuffer,
             outputChannel: this.outputChannel,
-            getSingleRecentOwnerSession: (windowMs) => this.getSingleRecentOwnerSession(windowMs),
             statusBar: this.statusBar,
+            floodGuard: this.floodGuard,
+            categoryCounts: this.categoryCounts,
+            getSingleRecentOwnerSession: (w) => this.getSingleRecentOwnerSession(w),
             broadcastSplit: (uri, totalParts) => this.broadcastSplit(uri, totalParts),
             onOutputEvent: (id, b) => this.onOutputEvent(id, b),
             clearBufferTimeoutState: () => this.clearBufferTimeoutState(),
+            setExclusionRules: (r) => { this.exclusionRules = r; },
+            setAutoTagger: (a) => { this.autoTagger = a; },
+            setSessionStartTime: (v) => { this.sessionStartTime = v; },
+            setFloodSuppressedTotal: (v) => { this.floodSuppressedTotal = v; },
         };
-        const outcome = await (0, session_manager_start_1.startSessionImpl)(session, context, deps);
-        // startSessionImpl already logs the specific skip reason (disabled / init failed).
-        if (outcome.kind === 'skipped') {
-            return;
-        }
-        if (outcome.kind === 'aliased') {
-            return;
-        }
-        const onOut = (id, b) => this.onOutputEvent(id, b);
-        (0, session_manager_internals_1.applyStartResult)({
-            sessions: this.sessions, ownerSessionIds: this.ownerSessionIds, ownerSessionCreatedAt: this.ownerSessionCreatedAt,
-            childToParentId: this.childToParentId, earlyBuffer: this.earlyBuffer, outputChannel: this.outputChannel,
-            config: this.cachedConfig, onOutputEvent: onOut, clearBufferTimeoutState: () => this.clearBufferTimeoutState(),
-            statusBar: this.statusBar, setExclusionRules: (r) => { this.exclusionRules = r; }, setAutoTagger: (a) => { this.autoTagger = a; },
-            floodGuard: this.floodGuard, categoryCounts: this.categoryCounts,
-            setSessionStartTime: (v) => { this.sessionStartTime = v; }, setFloodSuppressedTotal: (v) => { this.floodSuppressedTotal = v; },
-        }, session, outcome.result);
+        /* Re-sync cachedConfig to the snapshot the orchestrator started with,
+           so subsequent event handlers see the same values. */
+        this.cachedConfig = await (0, session_manager_start_sequence_1.runStartSequenceImpl)(deps, session, context);
     }
     /** Stop and finalize a debug session's log file. */
     async stopSession(session) {
@@ -239,17 +229,7 @@ class SessionManagerImpl {
         if (!logSession) {
             return undefined;
         }
-        if (logSession.state === 'recording') {
-            logSession.pause();
-            this.statusBar.setPaused(true);
-            return true;
-        }
-        if (logSession.state === 'paused') {
-            logSession.resume();
-            this.statusBar.setPaused(false);
-            return false;
-        }
-        return undefined;
+        return (0, session_manager_actions_1.togglePauseOn)({ logSession, setPaused: (v) => this.statusBar.setPaused(v) });
     }
     /** Clear the active session's line count and viewer. */
     clearActiveSession() {
@@ -262,15 +242,15 @@ class SessionManagerImpl {
     }
     /** Stop all sessions (called on deactivate). */
     async stopAll() {
-        this.earlyBuffer.clear();
-        this.childToParentId.clear();
-        this.ownerSessionCreatedAt.clear();
-        this.bufferingLoggedFor.clear();
-        this.clearBufferTimeoutState();
-        const unique = new Set(this.sessions.values());
-        await Promise.allSettled([...unique].map(s => s.stop()));
-        this.sessions.clear();
-        this.ownerSessionIds.clear();
+        await (0, session_manager_actions_1.stopAllSessions)({
+            sessions: this.sessions,
+            ownerSessionIds: this.ownerSessionIds,
+            ownerSessionCreatedAt: this.ownerSessionCreatedAt,
+            childToParentId: this.childToParentId,
+            bufferingLoggedFor: this.bufferingLoggedFor,
+            earlyBuffer: this.earlyBuffer,
+            clearBufferTimeoutState: () => this.clearBufferTimeoutState(),
+        });
     }
     /** Get the keyword watcher instance (for external access to counts). */
     getWatcher() { return this.watcher; }
