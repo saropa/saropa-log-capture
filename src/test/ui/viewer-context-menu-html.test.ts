@@ -134,6 +134,24 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('data-action="copy-decorated" data-line-action'));
         });
 
+        test('should include Copy Line Number and Copy Timestamp line-scoped items', () => {
+            const html = getContextMenuHtml();
+            /* Both are line-only copy helpers that sit next to Copy Line / Copy Line Decorated. */
+            assert.ok(html.includes('Copy Line Number'));
+            assert.ok(html.includes('data-action="copy-line-number" data-line-action'));
+            assert.ok(html.includes('Copy Timestamp'));
+            /* Timestamp item carries data-timestamp-action so showContextMenu can hide it when the
+               line has no epoch (markers, synthetic rows) — prevents silent empty-string copies. */
+            assert.ok(html.includes('data-action="copy-timestamp" data-line-action data-timestamp-action'));
+            /* Ordering: both new items appear between Copy Line Decorated and the first separator
+               that precedes the "All" group, so they are grouped with the per-line copy helpers. */
+            const decIdx = html.indexOf('data-action="copy-decorated"');
+            const numIdx = html.indexOf('data-action="copy-line-number"');
+            const tsIdx = html.indexOf('data-action="copy-timestamp"');
+            const allIdx = html.indexOf('data-action="copy-all"');
+            assert.ok(decIdx > 0 && numIdx > decIdx && tsIdx > numIdx && allIdx > tsIdx);
+        });
+
         test('should group "All" items between separators in Copy & Export submenu', () => {
             const html = getContextMenuHtml();
             const copyAllIdx = html.indexOf('data-action="copy-all"');

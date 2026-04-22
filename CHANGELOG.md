@@ -28,6 +28,10 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [Unreleased]
 
+### Added
+
+- **Copy Line Number and Copy Timestamp in the viewer right-click menu.** Two new items under Copy & Export alongside Copy Line / Copy Line Decorated. Copy Line Number writes the 1-based row position (matches the counter decoration). Copy Timestamp writes the line's epoch as ISO 8601 so it round-trips cleanly into bug reports and other tools; the item hides when the line has no timestamp (markers, synthetic rows).
+
 ### Internal
 
 - **Quality-check line counter now matches eslint.** `scripts/modules/checks_build.py` previously flagged files based on raw line count (blanks and comments included), while eslint's `max-lines` rule with `skipBlankLines` and `skipComments` counted only non-blank, non-comment lines. Files could warn in the build script while passing lint. The script now uses the same accounting as eslint, so the two tools agree on which files are over 300. No source code changes.
