@@ -75,6 +75,12 @@ export function getContextMenuHtml(): string {
             <div class="context-menu-item" data-action="copy-decorated" data-line-action>
                 <span class="codicon codicon-copy"></span> Copy Line Decorated
             </div>
+            <div class="context-menu-item" data-action="copy-line-number" data-line-action>
+                <span class="codicon codicon-list-ordered"></span> Copy Line Number
+            </div>
+            <div class="context-menu-item" data-action="copy-timestamp" data-line-action data-timestamp-action>
+                <span class="codicon codicon-clock"></span> Copy Timestamp
+            </div>
             <div class="context-menu-separator"></div>
             <div class="context-menu-item" data-action="copy-all">
                 <span class="codicon codicon-clippy"></span> Copy All
