@@ -237,6 +237,12 @@ function applyCompressDedupModes() {
  */
 function recalcHeights() {
     applyCompressDedupModes();
+    /* Marker visibility + consecutive-collapse passes must run BEFORE the height loop so that
+       calcItemHeight can honour markerHidden/markerCollapsed. They depend only on flags set by
+       the triggering filter (levelFiltered, tier state, etc.) — those are already in place by
+       the time any filter reaches recalcHeights. */
+    if (typeof applyDbSignalMarkerVisibility === 'function') applyDbSignalMarkerVisibility();
+    if (typeof applyConsecutiveDbMarkerCollapse === 'function') applyConsecutiveDbMarkerCollapse();
     totalHeight = 0;
     for (var i = 0; i < allLines.length; i++) {
         allLines[i].height = calcItemHeight(allLines[i]);

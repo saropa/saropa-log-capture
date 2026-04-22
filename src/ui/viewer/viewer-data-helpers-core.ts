@@ -174,7 +174,14 @@ function calcItemHeight(item) {
     if (item.type === 'line' && isLineContentBlank(item)) return Math.max(4, Math.floor(ROW_HEIGHT / 4));
     /* Structured file collapse (plan 051): markdown sections and JSON brace pairs. */
     if (item._mdSectionHidden || item._jsonSectionHidden) return 0;
-    if (item.type === 'marker') return MARKER_HEIGHT;
+    if (item.type === 'marker') {
+        /* markerHidden / markerCollapsed are set by applyDbSignalMarkerVisibility and
+           applyConsecutiveDbMarkerCollapse (viewer-data-marker-filter). Honouring them here
+           is the single source of truth for marker visibility — without this gate, collapsed
+           or orphaned db-signal markers still occupy a row despite the filter pass running. */
+        if (item.markerHidden || item.markerCollapsed) return 0;
+        return MARKER_HEIGHT;
+    }
     if (item.type === 'run-separator') return (typeof RUN_SEPARATOR_HEIGHT !== 'undefined') ? RUN_SEPARATOR_HEIGHT : 72;
     var _tierHidden = (typeof isTierHidden === 'function') ? isTierHidden(item) : false;
     if (item.type === 'stack-frame' && item.groupId >= 0) {
