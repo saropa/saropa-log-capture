@@ -10,7 +10,11 @@ export function getAsciiArtStyles(): string {
     return /* css */ `
 /* --- ASCII Art Block: grouped separator lines rendered as one visual unit --- */
 
-/* All art-block lines: uniform color, tight layout, no wrapping */
+/* All art-block lines: uniform color, tight layout, no wrapping.
+   line-height 1 + height 1em collapses the inter-row gap so vertical box-drawing
+   strokes (│, ║) on adjacent rows connect cleanly. The base .line rule uses
+   line-height 1.5 which left visible whitespace above and below every glyph —
+   fine for prose, but it shreds ASCII banners. */
 .line.art-block-start,
 .line.art-block-middle,
 .line.art-block-end {
@@ -21,12 +25,17 @@ export function getAsciiArtStyles(): string {
     overflow-wrap: normal;
     position: relative;
     overflow: hidden;
+    line-height: 1;
+    height: 1em;
 }
 
-/* Top of block: breathing room above, rounded top corners on background */
+/* Top of block: rounded top corners, padded breathing room above.
+   Breathing room uses padding (not margin) so it is included in the element's
+   height and stays in sync with calcItemHeight — margins would desync the
+   virtual scroller's prefix sums and cause rows below the block to drift. */
 .line.art-block-start {
-    margin-top: 6px;
-    padding-top: 4px;
+    padding-top: 6px;
+    height: calc(1em + 6px);
     border-radius: 6px 6px 0 0;
     background: color-mix(in srgb, var(--vscode-terminal-ansiYellow, #dcdcaa) 4%, transparent);
 }
@@ -37,13 +46,30 @@ export function getAsciiArtStyles(): string {
     background: color-mix(in srgb, var(--vscode-terminal-ansiYellow, #dcdcaa) 4%, transparent);
 }
 
-/* Bottom of block: breathing room below, rounded bottom corners, no decoration */
+/* Bottom of block: rounded bottom corners, padded breathing room below
+   (see note on .art-block-start for why this is padding, not margin). */
 .line.art-block-end {
-    padding-bottom: 4px;
-    margin-bottom: 6px;
+    padding-bottom: 6px;
+    height: calc(1em + 6px);
     border-radius: 0 0 6px 6px;
     padding-left: var(--deco-prefix-width-em, 14.25em);
     background: color-mix(in srgb, var(--vscode-terminal-ansiYellow, #dcdcaa) 4%, transparent);
+}
+
+/* Pin the start-line decoration to a fixed slot so the box-drawing art always
+   begins at exactly --deco-prefix-width-em from the left, regardless of
+   timestamp/counter/PID text length. Without this, a wider decoration (e.g.
+   5-digit line numbers + logcat tag + PID/TID) pushes the first row's '╭'
+   rightward while the '│' on middle rows stays pinned to padding-left — the
+   user sees corners that don't align with the vertical bars below them.
+   WHY the /0.85 divisor: .line-decoration has font-size: 0.85em, so inside it
+   1em = 0.85em-of-parent. To reserve exactly --deco-content-indent-em of the
+   PARENT em, we need that many em / 0.85 in the decoration's own em unit. */
+.line.art-block-start .line-decoration {
+    display: inline-block;
+    width: calc(var(--deco-content-indent-em, 13em) / 0.85);
+    overflow: hidden;
+    vertical-align: top;
 }
 
 /* Continuous gutter bar via border-left (avoids ::after conflict with shimmer).
