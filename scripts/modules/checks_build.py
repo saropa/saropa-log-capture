@@ -91,11 +91,79 @@ def step_test() -> bool:
     return True
 
 
+def _count_code_lines(filepath: str) -> int:
+    """Count lines excluding blank lines and comment-only lines.
+
+    Mirrors eslint's `max-lines` rule with `skipBlankLines: true` and
+    `skipComments: true` (see eslint.config.mjs). Before this, the build
+    script tallied raw line counts while eslint tallied stripped counts,
+    so the two tools disagreed — a file could warn here while passing lint.
+
+    A line is COUNTED if, after removing blank/whitespace-only content and
+    any leading/trailing comment spans, something non-whitespace remains.
+    Trailing comments on real code (e.g. `foo(); // note`) still count the
+    line — same as eslint. Lines entirely inside a `/* ... */` block, or
+    lines that are only `//` comments, are skipped.
+
+    This is a heuristic (not a full TS tokenizer) — it doesn't understand
+    strings containing `//` or `/*`, which is rare enough that the count
+    stays within one or two of eslint's number in practice. Close enough
+    for the two tools to agree on whether a file is over the 300 threshold.
+    """
+    count = 0
+    in_block = False  # are we currently inside a /* ... */ that opened earlier
+    try:
+        with open(filepath, encoding="utf-8") as f:
+            lines = f.readlines()
+    except OSError:
+        return 0
+
+    for raw in lines:
+        s = raw.strip()
+        if not s:
+            continue
+
+        # Strip comment spans from this line; what's left decides if it counts.
+        kept = ""
+        i = 0
+        while i < len(s):
+            if in_block:
+                # Looking for the closing `*/` of a block comment that spans lines.
+                end = s.find("*/", i)
+                if end == -1:
+                    i = len(s)  # whole remainder is comment
+                else:
+                    i = end + 2
+                    in_block = False
+                continue
+            # Line comment — rest of line is comment, done.
+            if s[i:i + 2] == "//":
+                break
+            # Block comment start on this line.
+            if s[i:i + 2] == "/*":
+                close = s.find("*/", i + 2)
+                if close == -1:
+                    in_block = True
+                    break
+                i = close + 2
+                continue
+            kept += s[i]
+            i += 1
+
+        if kept.strip():
+            count += 1
+    return count
+
+
 def check_file_line_limits() -> bool:
     """Check the 300-line limit on TypeScript files in src/.
 
     This is a project quality guideline. Keeping files
     short encourages modular design and makes code review easier.
+
+    Line counting matches eslint's `max-lines` with `skipBlankLines` and
+    `skipComments` — see `_count_code_lines`. The displayed count is the
+    stripped count, not the raw file length.
 
     NOTE: This check triggers a WARNING only. It does not halt the build/publish
     process, allowing for legacy files or temporary exceptions.
@@ -136,8 +204,9 @@ def check_file_line_limits() -> bool:
             rel = os.path.normpath(os.path.relpath(filepath, PROJECT_ROOT))
             if rel in ignore_paths:
                 continue
-            with open(filepath, encoding="utf-8") as f:
-                count = sum(1 for _ in f)
+            # Match eslint's accounting (blanks + comment-only lines skipped)
+            # so script warnings and lint warnings can't disagree.
+            count = _count_code_lines(filepath)
             if count > MAX_FILE_LINES:
                 violations.append(f"{rel} ({count} lines)")
 
