@@ -38,8 +38,9 @@ exports.hasMeaningfulPerformanceData = hasMeaningfulPerformanceData;
 const vscode = __importStar(require("vscode"));
 const l10n_1 = require("../../l10n");
 const config_1 = require("../config/config");
-const safe_json_1 = require("../misc/safe-json");
 const extension_logger_1 = require("../misc/extension-logger");
+const session_metadata_io_1 = require("./session-metadata-io");
+// MetaMap type imported from session-metadata-io.ts
 /**
  * Whether performance integration payload contains meaningful session-level data.
  * Used for UI affordances (session badges/chips), so empty placeholder objects should not count.
@@ -69,16 +70,16 @@ Object.defineProperty(exports, "isOurSidecar", { enumerable: true, get: function
 class SessionMetadataStore {
     /** URI of the central metadata file. Returns undefined if no workspace folder is available. */
     getMetaUri(logUri) {
-        return this.getCentralMetaUri(logUri);
+        return (0, session_metadata_io_1.getCentralMetaUri)(logUri);
     }
     /** Load metadata for a log file from central store. Migrates legacy sidecar on first read. */
     async loadMetadata(logUri) {
-        const centralUri = this.getCentralMetaUri(logUri);
+        const centralUri = (0, session_metadata_io_1.getCentralMetaUri)(logUri);
         if (!centralUri) {
             return {};
         }
-        const key = this.relativeKey(logUri);
-        const data = await this.readCentral(centralUri);
+        const key = (0, session_metadata_io_1.relativeKey)(logUri);
+        const data = await (0, session_metadata_io_1.readCentral)(centralUri);
         let meta = data[key] ? { ...data[key] } : {};
         if (Object.keys(meta).length === 0) {
             meta = await this.migrateSidecarToCentral(logUri, centralUri, key, data);
@@ -86,39 +87,39 @@ class SessionMetadataStore {
         return meta;
     }
     async migrateSidecarToCentral(logUri, centralUri, key, data) {
-        const sidecar = await this.loadSidecar(logUri);
+        const sidecar = await (0, session_metadata_io_1.loadSidecar)(logUri);
         if (Object.keys(sidecar).length === 0) {
             return {};
         }
         data[key] = sidecar;
-        await this.writeCentral(centralUri, data);
+        await (0, session_metadata_io_1.writeCentral)(centralUri, data);
         try {
-            await vscode.workspace.fs.delete(this.fallbackSidecarUri(logUri));
+            await vscode.workspace.fs.delete((0, session_metadata_io_1.fallbackSidecarUri)(logUri));
         }
         catch { /* ignore */ }
         return sidecar;
     }
     /** Save metadata for a log file. Writes to central store only; never creates sidecar files. */
     async saveMetadata(logUri, meta) {
-        const centralUri = this.getCentralMetaUri(logUri);
+        const centralUri = (0, session_metadata_io_1.getCentralMetaUri)(logUri);
         if (!centralUri) {
             return;
         }
-        const key = this.relativeKey(logUri);
-        const data = await this.readCentral(centralUri);
+        const key = (0, session_metadata_io_1.relativeKey)(logUri);
+        const data = await (0, session_metadata_io_1.readCentral)(centralUri);
         data[key] = meta;
-        await this.writeCentral(centralUri, data);
+        await (0, session_metadata_io_1.writeCentral)(centralUri, data);
     }
     /** Remove metadata for a log file (e.g. after permanent delete or rename). */
     async deleteMetadata(logUri) {
-        const centralUri = this.getCentralMetaUri(logUri);
+        const centralUri = (0, session_metadata_io_1.getCentralMetaUri)(logUri);
         if (!centralUri) {
             return;
         }
-        const key = this.relativeKey(logUri);
-        const data = await this.readCentral(centralUri);
+        const key = (0, session_metadata_io_1.relativeKey)(logUri);
+        const data = await (0, session_metadata_io_1.readCentral)(centralUri);
         delete data[key];
-        await this.writeCentral(centralUri, data);
+        await (0, session_metadata_io_1.writeCentral)(centralUri, data);
     }
     async setDisplayName(logUri, name) {
         const meta = await this.loadMetadata(logUri);
@@ -228,6 +229,69 @@ class SessionMetadataStore {
         }
     }
     /**
+     * Set (or clear when `groupId` is undefined) the `groupId` on a single entry.
+     * Used by ungroup flows on a per-file basis. For bulk stamping use `stampGroupIdBatch`.
+     */
+    async setGroupId(logUri, groupId) {
+        const meta = await this.loadMetadata(logUri);
+        if (groupId === undefined) {
+            delete meta.groupId;
+        }
+        else {
+            meta.groupId = groupId;
+        }
+        await this.saveMetadata(logUri, meta);
+    }
+    /**
+     * Stamp the same `groupId` on many entries in one read-modify-write.
+     *
+     * Skips entries that already carry a different `groupId` (respects the
+     * "never re-claim a grouped file" rule). Returns the list of URIs that were
+     * actually stamped so the caller can log or display the claim outcome.
+     *
+     * `groupId === undefined` clears the field on every listed URI, used by the
+     * bulk-ungroup command. When clearing, the "respect existing groupId" guard
+     * is intentionally skipped \u2014 callers of the clear path are explicitly
+     * removing a known group.
+     */
+    async stampGroupIdBatch(logUris, groupId) {
+        if (logUris.length === 0) {
+            return [];
+        }
+        const centralUri = (0, session_metadata_io_1.getCentralMetaUri)(logUris[0]);
+        if (!centralUri) {
+            return [];
+        }
+        const data = await (0, session_metadata_io_1.readCentral)(centralUri);
+        const stamped = [];
+        for (const logUri of logUris) {
+            const key = (0, session_metadata_io_1.relativeKey)(logUri);
+            const existing = data[key] ? { ...data[key] } : {};
+            if (groupId === undefined) {
+                if (existing.groupId === undefined) {
+                    continue;
+                }
+                delete existing.groupId;
+            }
+            else {
+                // Respect the "never re-claim" rule: skip files already in a different group.
+                if (existing.groupId !== undefined && existing.groupId !== groupId) {
+                    continue;
+                }
+                if (existing.groupId === groupId) {
+                    continue;
+                } // no-op when already stamped
+                existing.groupId = groupId;
+            }
+            data[key] = existing;
+            stamped.push(logUri);
+        }
+        if (stamped.length > 0) {
+            await (0, session_metadata_io_1.writeCentral)(centralUri, data);
+        }
+        return stamped;
+    }
+    /**
      * Read the central metadata file once and return all entries keyed by relative path.
      * Used by SessionHistoryProvider to avoid N reads per refresh cycle.
      */
@@ -237,58 +301,8 @@ class SessionMetadataStore {
             return new Map();
         }
         const centralUri = vscode.Uri.joinPath((0, config_1.getLogDirectoryUri)(folder), '.session-metadata.json');
-        const data = await this.readCentral(centralUri);
+        const data = await (0, session_metadata_io_1.readCentral)(centralUri);
         return new Map(Object.entries(data));
-    }
-    getCentralMetaUri(logUri) {
-        const folder = vscode.workspace.getWorkspaceFolder(logUri) ?? vscode.workspace.workspaceFolders?.[0];
-        if (!folder) {
-            return undefined;
-        }
-        const logDir = (0, config_1.getLogDirectoryUri)(folder);
-        return vscode.Uri.joinPath(logDir, '.session-metadata.json');
-    }
-    relativeKey(logUri) {
-        return vscode.workspace.asRelativePath(logUri).replace(/\\/g, '/');
-    }
-    fallbackSidecarUri(logUri) {
-        const str = logUri.toString();
-        const dotIdx = str.lastIndexOf('.');
-        if (dotIdx === -1) {
-            return vscode.Uri.parse(str + '.meta.json');
-        }
-        return vscode.Uri.parse(str.slice(0, dotIdx) + '.meta.json');
-    }
-    async readCentral(uri) {
-        try {
-            const data = await vscode.workspace.fs.readFile(uri);
-            const parsed = (0, safe_json_1.parseJSONOrDefault)(Buffer.from(data), {});
-            return typeof parsed === 'object' && parsed !== null ? parsed : {};
-        }
-        catch {
-            return {};
-        }
-    }
-    async writeCentral(uri, data) {
-        const dir = vscode.Uri.joinPath(uri, '..');
-        try {
-            await vscode.workspace.fs.createDirectory(dir);
-        }
-        catch { /* may exist */ }
-        const json = JSON.stringify(data, null, 2);
-        await vscode.workspace.fs.writeFile(uri, Buffer.from(json, 'utf-8'));
-    }
-    /** Read a legacy .meta.json sidecar (migration only — never written by new code). */
-    async loadSidecar(logUri) {
-        const metaUri = this.fallbackSidecarUri(logUri);
-        try {
-            const data = await vscode.workspace.fs.readFile(metaUri);
-            const parsed = (0, safe_json_1.parseJSONOrDefault)(Buffer.from(data), {});
-            return typeof parsed === 'object' && parsed !== null ? parsed : {};
-        }
-        catch {
-            return {};
-        }
     }
 }
 exports.SessionMetadataStore = SessionMetadataStore;

@@ -108,3 +108,49 @@ suite('viewer-data-add device-other demotion preserves originalLevel (plan 050)'
         );
     });
 });
+
+suite('viewer-data-add blank rows compacted at birth', () => {
+    /* Why these tests: calcItemHeight() compacts blank `type: 'line'` rows to
+       quarter-height, but streaming arrivals do not trigger recalcHeights() so
+       the gate never fires on insertion. Before this fix, a whitespace-only log
+       line was born at ROW_HEIGHT in addToData and rendered as a full-height gap
+       until the next filter pass. Both the structured-file (docItem) and
+       regular log-line (lineItem) creation paths must stamp the same
+       quarter-height value calcItemHeight would return, gated on the same
+       !hidden precondition so filtered-out rows still collapse to 0. */
+
+    test('structured-file (docItem) branch stamps quarter-height for blank html at birth', () => {
+        const block = extractAddToDataBlock(getViewerDataAddScript());
+        assert.ok(block.length > 0, 'expected addToData block');
+        /* Birth-height formula must match calcItemHeight's gate value exactly
+           so addToData and a later recalcHeights() agree on the same row. */
+        assert.ok(
+            block.includes('_docBlank') && block.includes('isLineContentBlank({ html: html })'),
+            'docItem path must consult isLineContentBlank for the blank-at-birth decision',
+        );
+        assert.ok(
+            block.includes('_docBlank ? Math.max(4, Math.floor(ROW_HEIGHT / 4)) : ROW_HEIGHT'),
+            'docItem blank branch must use the same quarter-height value as calcItemHeight',
+        );
+        /* The blank check must be skipped for already-hidden rows so
+           filtered-out items stay at height 0, not quarter. */
+        assert.ok(
+            block.includes('!_docHidden && typeof isLineContentBlank'),
+            'docItem blank check must be gated on !_docHidden so filtered rows still collapse to 0',
+        );
+    });
+
+    test('regular log-line (lineItem) branch stamps quarter-height for blank html at birth', () => {
+        const block = extractAddToDataBlock(getViewerDataAddScript());
+        /* lineItem birth-height must quarter-compact blanks on arrival, matching
+           calcItemHeight's ROW_HEIGHT/4 value so there is no jump on next filter pass. */
+        assert.ok(
+            block.includes('_lineBlank') && block.includes('_lineBlank ? Math.max(4, Math.floor(ROW_HEIGHT / 4)) : ROW_HEIGHT'),
+            'lineItem blank branch must use the same quarter-height value as calcItemHeight',
+        );
+        assert.ok(
+            block.includes('!_lineHidden && typeof isLineContentBlank'),
+            'lineItem blank check must be gated on !_lineHidden so filtered rows still collapse to 0',
+        );
+    });
+});

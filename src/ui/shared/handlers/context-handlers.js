@@ -6,10 +6,10 @@
  *
  * ## Database-tagged lines (Drift SQL)
  *
- * The webview attaches `dbInsight` to `sourceTag === 'database'` rows and may send
+ * The webview attaches `dbSignal` to `sourceTag === 'database'` rows and may send
  * `hasDatabaseLine: true` with **Show integration context**. When there is no HTTP/perf/etc.
  * data in the ±window and no `saropa-drift-advisor` session meta, we still open the popover
- * so **Database insight** can render from line-local metadata. {@link shouldPostNoIntegrationDataError}
+ * so **Database signal** can render from line-local metadata. {@link shouldPostNoIntegrationDataError}
  * encodes that gate for tests and keeps the “empty context” decision in one place.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -179,7 +179,7 @@ function buildSnapshotSummary(sessionData) {
 }
 /** Aggregate performance fingerprints and optional session data for current log. */
 async function handlePerformanceRequest(post, logUri) {
-    const [insights, logContext] = await Promise.all([
+    const [aggregated, logContext] = await Promise.all([
         (0, perf_aggregator_1.aggregatePerformance)('all').catch(() => undefined),
         logUri ? (async () => {
             try {
@@ -205,8 +205,8 @@ async function handlePerformanceRequest(post, logUri) {
     const sessionData = logContext?.sessionData;
     post({
         type: 'performanceData',
-        trends: insights?.trends ?? [],
-        sessionCount: insights?.sessionCount ?? 0,
+        trends: aggregated?.trends ?? [],
+        sessionCount: aggregated?.sessionCount ?? 0,
         sessionData: sessionData ?? undefined,
         currentLogLabel: currentLogLabel ?? undefined,
         heroErrorCount: logContext?.errorCount,
@@ -235,7 +235,7 @@ async function handleIntegrationContextRequest(logUri, lineIndex, post, options)
         let centerTime = timestamp && timestamp > 0
             ? timestamp
             : getSessionCenterTime(meta.integrations);
-        // Database-tagged lines still show line-local insight even without a captured timestamp.
+        // Database-tagged lines still show line-local signal even without a captured timestamp.
         if (centerTime === 0 && hasDatabaseLine) {
             centerTime = Date.now();
         }

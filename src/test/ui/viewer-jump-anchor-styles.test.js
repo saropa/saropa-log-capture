@@ -78,6 +78,14 @@ suite('ViewerJumpScrollPlacement', () => {
         assert.ok(!script.includes("if (typeof toggleCompressLines === 'function') toggleCompressLines();"), 'viewer script should not contain the removed button click handler branch');
         assert.ok(!script.includes("if (jumpBtn) jumpBtn.addEventListener('click', function(e) {"), 'false-positive guard: jump button wiring remains separate');
     });
+    test('syncJumpButtonInset reads --scrollbar-w to clear the native scrollbar', () => {
+        const script = (0, viewer_script_1.getViewerScript)(5000);
+        /* Before: only getBoundingClientRect for rightPx. Chromium does not update the rect
+           when ::-webkit-scrollbar width changes via a class toggle — buttons overlapped.
+           After: explicit getComputedStyle read of --scrollbar-w adds the scrollbar width. */
+        assert.ok(script.includes('--scrollbar-w'), 'syncJumpButtonInset must read the --scrollbar-w CSS variable');
+        assert.ok(script.includes('getComputedStyle'), 'must use getComputedStyle to resolve --scrollbar-w at call time');
+    });
     test('layout sync is scheduled after paint via chained requestAnimationFrame', () => {
         const script = (0, viewer_script_1.getViewerScript)(5000);
         assert.ok(script.includes('requestAnimationFrame(function() { requestAnimationFrame(syncJumpButtonInset); })'));

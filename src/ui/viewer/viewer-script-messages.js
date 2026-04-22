@@ -57,6 +57,7 @@ window.addEventListener('message', function(event) {
             if (typeof window.exitReplayMode === 'function') window.exitReplayMode();
             if (currentFilename && !autoScroll) { scrollMemory[currentFilename] = logEl.scrollTop; }
             autoScroll = true;
+            fileMode = 'log'; formatEnabled = false; if (typeof updateFormatToggleVisibility === 'function') updateFormatToggleVisibility();
             allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null; nextSeq = 1; sessionStartTs = 0;
             if (typeof applyDecorationLayoutWidth === 'function') applyDecorationLayoutWidth();
             lastStart = -1; lastEnd = -1; groupHeaderMap = {}; prefixSums = null;
@@ -75,7 +76,7 @@ window.addEventListener('message', function(event) {
                 repeatTracker.sqlRepeatPreview = null; repeatTracker.sqlStreakFingerprint = null; repeatTracker.sqlStreakSqlSnippet = '';
                 repeatTracker.sqlStreakFirstTs = 0; repeatTracker.sqlStreakLastTs = 0; repeatTracker.sqlStreakVariantOrder = []; repeatTracker.sqlStreakVariantCounts = null;
             }
-            if (typeof resetDbInsightDetectorSession === 'function') resetDbInsightDetectorSession();
+            if (typeof resetDbSignalDetectorSession === 'function') resetDbSignalDetectorSession();
             if (typeof setDbBaselineFingerprintSummaryFromHost === 'function') setDbBaselineFingerprintSummaryFromHost(null);
             if (typeof resetRootCauseHypothesesSession === 'function') resetRootCauseHypothesesSession();
             if (typeof resetCompressDupStreak === 'function') resetCompressDupStreak();
@@ -120,7 +121,7 @@ window.addEventListener('message', function(event) {
         case 'driftViewerHealth':
             if (typeof applyDriftViewerHealthFromHost === 'function') applyDriftViewerHealthFromHost(msg); break;
         case 'rootCauseHypothesesResult':
-            if (typeof handleRootCauseHypothesesResult === 'function') handleRootCauseHypothesesResult(msg.hypotheses); break;
+            if (typeof handleRootCauseHypothesesResult === 'function') handleRootCauseHypothesesResult(msg.hypotheses, msg.trends); break;
         case 'setRootCauseHintHostFields':
             if (Object.prototype.hasOwnProperty.call(msg, 'driftAdvisorSummary')) {
                 rchHostDriftAdvisorSummary = (msg.driftAdvisorSummary && typeof msg.driftAdvisorSummary.issueCount === 'number' && msg.driftAdvisorSummary.issueCount > 0) ? msg.driftAdvisorSummary : null;
@@ -136,6 +137,8 @@ window.addEventListener('message', function(event) {
             break;
         case 'triggerCopyAllFiltered': if (typeof copyAllFilteredWithCount === 'function') copyAllFilteredWithCount(); break;
         case 'triggerCollapseAllSections': if (typeof collapseAllSections === 'function') collapseAllSections(); break;
+        case 'triggerExpandAllSections': if (typeof expandAllSections === 'function') expandAllSections(); break;
+        case 'triggerToggleSearch': if (typeof toggleSearchPanel === 'function') toggleSearchPanel(); break;
         case 'triggerExplainRootCauseHypotheses':
             if (typeof runTriggerExplainRootCauseHypothesesFromHost === 'function') runTriggerExplainRootCauseHypothesesFromHost();
             break;
@@ -146,22 +149,18 @@ window.addEventListener('message', function(event) {
             currentFilename = msg.filename || '';
             updateFooterText();
             break;
+        case 'setFileMode': fileMode = msg.mode || 'log'; formatEnabled = false; if (typeof updateFormatToggleVisibility === 'function') updateFormatToggleVisibility(); break;
         case 'setSources':
-            // Multi-source view: which streams exist (debug, terminal, …) and which are visible.
-            if (typeof window !== 'undefined') {
-                window.availableSources = Array.isArray(msg.sources) ? msg.sources : [];
-                window.enabledSources = Array.isArray(msg.enabledSources) ? msg.enabledSources : null;
-            }
+            if (typeof window !== 'undefined') { window.availableSources = Array.isArray(msg.sources) ? msg.sources : []; window.enabledSources = Array.isArray(msg.enabledSources) ? msg.enabledSources : null; }
+            /* Log Sources tab is always visible — no need to toggle panel display */
             if (typeof recalcHeights === 'function') recalcHeights();
             if (typeof renderViewport === 'function') renderViewport(true);
             if (typeof updateFooterText === 'function') updateFooterText();
-            if (typeof syncSourceFilterUi === 'function') syncSourceFilterUi();
             break;
         case 'setEnabledSources':
             if (typeof window !== 'undefined' && Array.isArray(msg.enabledSources)) window.enabledSources = msg.enabledSources;
             if (typeof recalcHeights === 'function') recalcHeights();
             if (typeof renderViewport === 'function') renderViewport(true);
-            if (typeof syncSourceFilterUi === 'function') syncSourceFilterUi();
             break;
         case 'setCategories':
             handleSetCategories(msg);
@@ -258,7 +257,8 @@ window.addEventListener('message', function(event) {
             if (typeof handleMinimapViewportOutsideArrow === 'function') handleMinimapViewportOutsideArrow(msg);
             break;
         case 'minimapWidth': if (typeof handleMinimapWidth === 'function') handleMinimapWidth(msg); break;
-        case 'scrollbarVisible': /* Apply showScrollbar setting: body class drives --scrollbar-w and vertical scrollbar width in CSS */ document.body.classList.toggle('scrollbar-visible', msg.show === true); syncJumpButtonInset(); break;
+        case 'minimapWidthPx': if (typeof handleMinimapWidthPx === 'function') handleMinimapWidthPx(msg); break;
+        case 'scrollbarVisible': /* Apply showScrollbar setting + force Chromium scrollbar re-render */ applyScrollbarVisible(msg.show === true); break;
         case 'searchMatchOptionsAlwaysVisible': document.body.classList.toggle('search-match-options-always', msg.always === true); break;
         case 'iconBarPosition':
             document.body.dataset.iconBar = msg.position || 'left';

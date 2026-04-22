@@ -62,8 +62,16 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
        calcItemHeight(), filters, search, and viewport work unchanged. */
     if (fileMode !== 'log') {
         if (typeof breakContinuationGroup === 'function') breakContinuationGroup();
-        // Honor current level filter on appended streaming lines — see calcLevelFiltered.
-        var docItem = { html: html, rawText: rawText || null, type: 'line', height: (catFiltered || calcLevelFiltered('info')) ? 0 : ROW_HEIGHT, category: category, groupId: -1, timestamp: ts, level: 'info', seq: nextSeq++, sourceTag: null, logcatTag: null, sqlVerb: null, tier: undefined, filteredOut: catFiltered, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: false, classTags: [], isSeparator: false, errorClass: null, errorSuppressed: false, fw: undefined, sourcePath: sp || null, scopeFiltered: false, isAnr: false, autoHidden: false, source: lineSource, timeRangeFiltered: false, recentErrorContext: false, levelFiltered: calcLevelFiltered('info') };
+        /* Birth-height parity with calcItemHeight: a streaming whitespace-only row was
+           born at ROW_HEIGHT and only collapsed on the next recalcHeights() pass,
+           leaving a visible full-height gap between non-blank rows until something
+           re-triggered layout. Stamp the same Math.max(4, Math.floor(ROW_HEIGHT / 4))
+           value calcItemHeight would return so addToData and a later recalc agree on
+           the same row geometry. The blank check is gated on !_docHidden so already-
+           filtered rows still collapse fully to 0 (quarter > 0 would re-show them). */
+        var _docHidden = (catFiltered || calcLevelFiltered('info'));
+        var _docBlank = !_docHidden && typeof isLineContentBlank === 'function' && isLineContentBlank({ html: html });
+        var docItem = { html: html, rawText: rawText || null, type: 'line', height: _docHidden ? 0 : (_docBlank ? Math.max(4, Math.floor(ROW_HEIGHT / 4)) : ROW_HEIGHT), category: category, groupId: -1, timestamp: ts, level: 'info', seq: nextSeq++, sourceTag: null, logcatTag: null, sqlVerb: null, tier: undefined, filteredOut: catFiltered, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: false, classTags: [], isSeparator: false, errorClass: null, errorSuppressed: false, fw: undefined, sourcePath: sp || null, scopeFiltered: false, isAnr: false, autoHidden: false, source: lineSource, timeRangeFiltered: false, recentErrorContext: false, levelFiltered: calcLevelFiltered('info') };
         if (elapsedMs !== undefined && elapsedMs >= 0) docItem.elapsedMs = elapsedMs;
         allLines.push(docItem);
         totalHeight += docItem.height;
@@ -262,10 +270,17 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         var lineTierHidden = (typeof isTierHidden === 'function') ? isTierHidden({ tier: lineTier, level: lvl, originalLevel: preDemotionLevel !== lvl ? preDemotionLevel : undefined }) : false;
         var classHidden = (typeof isClassFiltered === 'function' && isClassFiltered({ classTags: cTags, type: 'line' }));
         var isAutoHidden = (typeof testAutoHide === 'function') ? testAutoHide(plain) : false;
-        // Streaming-lines filter gap: lines arriving after a level toggle bypassed the filter until applyLevelFilter() next ran.
-        var lineH = (errorSuppressed || lineTierHidden || classHidden || catFiltered || calcLevelFiltered(lvl)) ? 0 : ROW_HEIGHT;
         var scopeFilt = (typeof calcScopeFiltered === 'function') ? calcScopeFiltered(sp) : false;
-        var finalH = (scopeFilt || isAutoHidden) ? 0 : lineH;
+        /* Birth-height parity with calcItemHeight (mirrors the docItem branch above):
+           streaming whitespace-only lines must be born at the same quarter-height
+           calcItemHeight returns, otherwise they render as full-height gaps until
+           the next recalcHeights() pass. Streaming-lines filter gap: lines arriving
+           after a level toggle bypassed the filter until applyLevelFilter() next ran,
+           which is why _lineHidden folds in calcLevelFiltered(lvl) too. The blank
+           check is gated on !_lineHidden so filtered rows still collapse fully to 0. */
+        var _lineHidden = errorSuppressed || lineTierHidden || classHidden || catFiltered || calcLevelFiltered(lvl) || scopeFilt || isAutoHidden;
+        var _lineBlank = !_lineHidden && typeof isLineContentBlank === 'function' && isLineContentBlank({ html: html });
+        var finalH = _lineHidden ? 0 : (_lineBlank ? Math.max(4, Math.floor(ROW_HEIGHT / 4)) : ROW_HEIGHT);
         if (isAutoHidden && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
         var isAnr = (lvl === 'performance' && anrPattern.test(plain));
         var lineItem = { html: html, rawText: rawText || null, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sqlVerb: sqlMeta ? sqlMeta.verb : null, tier: lineTier, filteredOut: catFiltered, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource, timeRangeFiltered: false, recentErrorContext: recentErrorContext, levelFiltered: calcLevelFiltered(lvl), parsedPid: slp ? slp.pid : undefined, parsedTid: slp ? slp.tid : undefined, parsedTag: slp ? slp.tag : undefined, parsedRawLevel: slp ? slp.rawLvl : undefined, structuredPrefixLen: slp ? slp.prefixLen : 0, levelTooltip: (typeof getLevelTooltip === 'function' && slp) ? getLevelTooltip(slp.rawLvl, lvl) : ((typeof getLevelTooltip === 'function') ? getLevelTooltip(null, lvl) : null) };

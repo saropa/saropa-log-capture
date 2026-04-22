@@ -1,6 +1,6 @@
 "use strict";
 /**
- * Share investigation via GitHub Gist. Exports .slc to buffer, uploads as secret gist, optionally adds README with deep link.
+ * Share collection via GitHub Gist. Exports .slc to buffer, uploads as secret gist, optionally adds README with deep link.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -42,8 +42,8 @@ const slc_bundle_1 = require("../export/slc-bundle");
 const github_auth_1 = require("./github-auth");
 const marketplace_url_1 = require("../marketplace-url");
 const GIST_API = 'https://api.github.com/gists';
-function generateReadme(gistId, investigation) {
-    return `# ${investigation.name}
+function generateReadme(gistId, collection) {
+    return `# ${collection.name}
 
 Shared via [Saropa Log Capture](${(0, marketplace_url_1.buildItemUrl)('saropa.saropa-log-capture')})
 
@@ -56,12 +56,12 @@ vscode://saropa.saropa-log-capture/import?gist=${gistId}
 
 ## Contents
 
-- ${investigation.sources.length} pinned source(s)
-- Created: ${new Date(investigation.createdAt).toISOString()}
+- ${collection.sources.length} pinned source(s)
+- Created: ${new Date(collection.createdAt).toISOString()}
 
 ## Notes
 
-${investigation.notes ?? 'No notes provided.'}
+${collection.notes ?? 'No notes provided.'}
 
 ## Remove this share
 
@@ -69,19 +69,19 @@ Secret gists do not expire. To delete: open this gist on GitHub and use **Delete
 `;
 }
 /**
- * Share investigation to a GitHub Gist. Optionally pass a prebuilt buffer (e.g. from a size check) to avoid building twice.
+ * Share collection to a GitHub Gist. Optionally pass a prebuilt buffer (e.g. from a size check) to avoid building twice.
  */
-async function shareViaGist(investigation, workspaceUri, context, prebuiltBuffer) {
-    const slcBuffer = prebuiltBuffer ?? await (0, slc_bundle_1.exportInvestigationToBuffer)(investigation, workspaceUri);
+async function shareViaGist(collection, workspaceUri, context, prebuiltBuffer) {
+    const slcBuffer = prebuiltBuffer ?? await (0, slc_bundle_1.exportCollectionToBuffer)(collection, workspaceUri);
     const slcBase64 = slcBuffer.toString('base64');
     const token = await (0, github_auth_1.getGitHubToken)(context);
     const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
     const publicGist = cfg.get('share.gistPublic', false);
     const createPayload = {
-        description: `Saropa Investigation: ${investigation.name}`,
+        description: `Saropa Collection: ${collection.name}`,
         public: publicGist,
         files: {
-            'investigation.slc.b64': { content: slcBase64 },
+            'collection.slc.b64': { content: slcBase64 },
         },
     };
     const createRes = await fetch(GIST_API, {
@@ -97,7 +97,7 @@ async function shareViaGist(investigation, workspaceUri, context, prebuiltBuffer
         throw new Error(errBody.message ?? 'Failed to create gist');
     }
     const gist = (await createRes.json());
-    const readmeContent = generateReadme(gist.id, investigation);
+    const readmeContent = generateReadme(gist.id, collection);
     const patchRes = await fetch(`${GIST_API}/${gist.id}`, {
         method: 'PATCH',
         headers: {
@@ -114,7 +114,7 @@ async function shareViaGist(investigation, workspaceUri, context, prebuiltBuffer
     if (!patchRes.ok) {
         // Non-fatal: gist was created, just no README
     }
-    const rawUrl = gist.files['investigation.slc.b64']?.raw_url ?? '';
+    const rawUrl = gist.files['collection.slc.b64']?.raw_url ?? '';
     const deepLinkUrl = `vscode://saropa.saropa-log-capture/import?gist=${gist.id}`;
     return {
         gistId: gist.id,

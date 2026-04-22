@@ -95,10 +95,7 @@ function getTrashPanelScript() {
     }
 
     function updateTrashBadge(count) {
-        var badge = document.getElementById('ib-trash-badge');
-        if (!badge) return;
-        badge.textContent = count > 99 ? '99+' : String(count);
-        badge.style.display = count > 0 ? 'inline-block' : 'none';
+        if (typeof updateIconBadge === 'function') updateIconBadge('ib-trash-badge', 'ib-trash-count', count);
     }
 
     /* ---- Click handlers ---- */

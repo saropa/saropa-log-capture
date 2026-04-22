@@ -143,7 +143,7 @@ function getRecurringPanelStyles() {
 }
 
 .recurring-footer { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
-#recurring-footer-insights:hover { text-decoration: underline; }
+#recurring-footer-signals:hover { text-decoration: underline; }
 .recurring-footer-action {
     cursor: pointer;
     color: var(--vscode-textLink-foreground);

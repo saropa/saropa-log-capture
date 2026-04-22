@@ -142,8 +142,12 @@ var decoShowBar = true;
 var lineColorsEnabled = true;
 /** Strip bracket source tag prefix (e.g. [log]) from displayed line text. */
 var stripSourceTagPrefix = true;
-/** Default collapsed state for new stack groups: false (expanded), true (collapsed), 'preview'. */
-var stackDefaultState = false;
+/** Default collapsed state for new stack groups: false (expanded), true (collapsed), 'preview'.
+ *  Out-of-the-box default is true (collapsed) — a noisy log (Drift SELECT flood, logcat
+ *  debug spam) otherwise renders thousands of visible stack frames on first paint. Users
+ *  who prefer the full trace expanded by default switch this in Decorations → Stack frames.
+ *  See bugs/unified-line-collapsing.md. */
+var stackDefaultState = true;
 /** Number of app frames shown in preview mode. */
 var stackPreviewCount = 3;
 /** Whether the settings panel popover is currently visible. */

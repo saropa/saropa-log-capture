@@ -22,6 +22,7 @@ function getViewerRootCauseHintsScript(slowOpThresholdMs) {
         /* javascript */ `
 var rchCachedHypotheses = [];
 var rchCachedBundle = null;
+var rchCachedTrends = {};
 var rchDismissedKeys = Object.create(null);
 
 function rchStr(key, fallback) {
@@ -89,9 +90,10 @@ function postBundleToHost() {
     vscodeApi.postMessage({ type: 'rootCauseBundle', bundle: bundle });
 }
 
-/** Called when the host responds with hypothesis results. */
-function handleRootCauseHypothesesResult(hypotheses) {
+/** Called when the host responds with hypothesis results and cross-session trends. */
+function handleRootCauseHypothesesResult(hypotheses, trends) {
     rchCachedHypotheses = Array.isArray(hypotheses) ? hypotheses : [];
+    rchCachedTrends = (trends && typeof trends === 'object') ? trends : {};
     renderRootCauseHypothesesFromCache();
 }
 
@@ -140,6 +142,11 @@ function renderRootCauseHypothesesFromCache() {
                 }
                 /* No trailing space — flex gap handles spacing between children */
                 li += '<span class="root-cause-hyp-conf root-cause-hyp-conf--' + escapeHtml(confNorm) + '" role="img" aria-label="' + escapeHtml(confTip) + '" title="' + escapeHtml(confTip) + '">' + confEmoji + '</span>';
+            }
+            /* Cross-session trend badge: shows ↻N if this signal type appeared in 2+ past sessions */
+            var trendCount = rchCachedTrends[item.templateId];
+            if (typeof trendCount === 'number' && trendCount >= 2) {
+                li += '<span class="rch-trend-badge" title="Detected in ' + trendCount + ' session' + (trendCount === 1 ? '' : 's') + '">\\u21BB' + trendCount + '</span>';
             }
             li += '<button type="button" class="rch-hyp-text rch-report-btn" data-rch-key="' + escapeHtml(item.hypothesisKey) + '" title="Open signal report">' + escapeHtml(item.text) + '</button>';
             li += '<button type="button" class="rch-dismiss-btn" data-rch-dismiss="' + escapeHtml(item.hypothesisKey) + '" aria-label="Dismiss signal" title="Dismiss signal"><span class="codicon codicon-close"></span></button>';

@@ -41,67 +41,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * only checks cannot detect.
  */
 const assert = __importStar(require("assert"));
-const vm = __importStar(require("vm"));
-const viewer_session_transforms_1 = require("../../ui/viewer/viewer-session-transforms");
-const viewer_session_tags_1 = require("../../ui/viewer-panels/viewer-session-tags");
-const viewer_session_panel_1 = require("../../ui/viewer-panels/viewer-session-panel");
-function noop() { }
-function mockEl() {
-    return {
-        classList: { add: noop, remove: noop, toggle: noop },
-        style: { display: '', width: '' },
-        innerHTML: '',
-        textContent: '',
-        addEventListener: noop,
-        querySelector: () => null,
-        querySelectorAll: () => [],
-        contains: () => false,
-        getAttribute: () => null,
-        setAttribute: noop,
-        focus: noop,
-    };
-}
-/** Create a VM sandbox with mock DOM and capture message handlers. */
-function buildSandbox() {
-    const elements = new Map();
-    const getEl = (id) => {
-        if (!elements.has(id)) {
-            elements.set(id, mockEl());
-        }
-        return elements.get(id);
-    };
-    const document = {
-        getElementById: (id) => getEl(id),
-        addEventListener: noop,
-    };
-    const messageHandlers = [];
-    const sandbox = {
-        document,
-        CSS: { escape: (v) => v },
-        vscodeApi: { postMessage: noop },
-        requestAnimationFrame: (fn) => fn(),
-        __sharedPanelWidth: 560,
-    };
-    sandbox.window = sandbox;
-    sandbox.addEventListener = (type, fn) => {
-        if (type === 'message') {
-            messageHandlers.push(fn);
-        }
-    };
-    vm.createContext(sandbox);
-    return { sandbox, messageHandlers, elements };
-}
-/** Boot the panel scripts in a sandbox and return message handlers. */
-function bootPanel(sandbox) {
-    vm.runInContext((0, viewer_session_transforms_1.getSessionTransformsScript)(), sandbox);
-    vm.runInContext((0, viewer_session_tags_1.getSessionTagsScript)(), sandbox);
-    vm.runInContext((0, viewer_session_panel_1.getSessionPanelScript)(), sandbox);
-}
+const viewer_session_panel_test_helpers_1 = require("./viewer-session-panel-test-helpers");
 suite('Session panel script runtime', () => {
     test('should render full session list without ReferenceError', () => {
-        const { sandbox, messageHandlers } = buildSandbox();
+        const { sandbox, messageHandlers } = (0, viewer_session_panel_test_helpers_1.buildSandbox)();
         try {
-            bootPanel(sandbox);
+            (0, viewer_session_panel_test_helpers_1.bootPanel)(sandbox);
         }
         catch (e) {
             const err = e;
@@ -133,8 +78,8 @@ suite('Session panel script runtime', () => {
         }
     });
     test('should render preview list with shimmer metadata without ReferenceError', () => {
-        const { sandbox, messageHandlers, elements } = buildSandbox();
-        bootPanel(sandbox);
+        const { sandbox, messageHandlers, elements } = (0, viewer_session_panel_test_helpers_1.buildSandbox)();
+        (0, viewer_session_panel_test_helpers_1.bootPanel)(sandbox);
         const previewMessage = {
             data: {
                 type: 'sessionListPreview',
@@ -154,9 +99,48 @@ suite('Session panel script runtime', () => {
         assert.ok(html.includes('beta.log'), 'Preview should contain second filename');
         assert.ok(html.includes('data-uri="file:///alpha.log"'), 'Preview items should have data-uri');
     });
+    test('should render reveal-in-OS hover action button on every session row', () => {
+        /* Every session row gets a hover button that reveals the log in the OS
+           file explorer. The button must carry the revealInOS action and the
+           folder-opened codicon, and be wrapped in a session-item-actions
+           container that CSS can toggle on hover. */
+        const { sandbox, messageHandlers, elements } = (0, viewer_session_panel_test_helpers_1.buildSandbox)();
+        (0, viewer_session_panel_test_helpers_1.bootPanel)(sandbox);
+        for (const handler of messageHandlers) {
+            handler({
+                data: {
+                    type: 'sessionList',
+                    sessions: [{
+                            uriString: 'file:///alpha.log', filename: 'alpha.log',
+                            displayName: 'alpha.log', mtime: Date.now(), trashed: false,
+                        }],
+                },
+            });
+        }
+        const html = String(elements.get('session-list')?.innerHTML ?? '');
+        assert.ok(html.includes('session-item-actions'), 'Row should include hover-actions container');
+        assert.ok(html.includes('data-session-action="revealInOS"'), 'Row should include revealInOS action');
+        assert.ok(html.includes('codicon-folder-opened'), 'Reveal button should use folder-opened icon');
+    });
+    test('should render reveal-in-OS button on preview rows too', () => {
+        /* Preview rows (streamed before metadata resolves) should also offer the
+           reveal action so users do not wait for metadata to jump to the file. */
+        const { sandbox, messageHandlers, elements } = (0, viewer_session_panel_test_helpers_1.buildSandbox)();
+        (0, viewer_session_panel_test_helpers_1.bootPanel)(sandbox);
+        for (const handler of messageHandlers) {
+            handler({
+                data: {
+                    type: 'sessionListPreview',
+                    previews: [{ filename: 'alpha.log', uriString: 'file:///alpha.log' }],
+                },
+            });
+        }
+        const html = String(elements.get('session-list')?.innerHTML ?? '');
+        assert.ok(html.includes('data-session-action="revealInOS"'), 'Preview row should include revealInOS action');
+    });
     test('should replace preview with full session list when data arrives', () => {
-        const { sandbox, messageHandlers, elements } = buildSandbox();
-        bootPanel(sandbox);
+        const { sandbox, messageHandlers, elements } = (0, viewer_session_panel_test_helpers_1.buildSandbox)();
+        (0, viewer_session_panel_test_helpers_1.bootPanel)(sandbox);
         // First: preview
         for (const handler of messageHandlers) {
             handler({
@@ -184,8 +168,8 @@ suite('Session panel script runtime', () => {
         assert.ok(!finalHtml.includes('session-shimmer-meta'), 'Full render should not have shimmer');
     });
     test('should handle sessionListBatch without ReferenceError', () => {
-        const { sandbox, messageHandlers } = buildSandbox();
-        bootPanel(sandbox);
+        const { sandbox, messageHandlers } = (0, viewer_session_panel_test_helpers_1.buildSandbox)();
+        (0, viewer_session_panel_test_helpers_1.bootPanel)(sandbox);
         // Send preview first, then batch update
         for (const handler of messageHandlers) {
             handler({
@@ -216,16 +200,16 @@ suite('Session panel script runtime', () => {
         }
     });
     test('should handle sessionListBatch with empty items', () => {
-        const { sandbox, messageHandlers } = buildSandbox();
-        bootPanel(sandbox);
+        const { sandbox, messageHandlers } = (0, viewer_session_panel_test_helpers_1.buildSandbox)();
+        (0, viewer_session_panel_test_helpers_1.bootPanel)(sandbox);
         for (const handler of messageHandlers) {
             handler({ data: { type: 'sessionListBatch', items: [] } });
         }
         assert.ok(true, 'Empty batch should not throw');
     });
     test('should handle sessionListBatch before preview without error', () => {
-        const { sandbox, messageHandlers } = buildSandbox();
-        bootPanel(sandbox);
+        const { sandbox, messageHandlers } = (0, viewer_session_panel_test_helpers_1.buildSandbox)();
+        (0, viewer_session_panel_test_helpers_1.bootPanel)(sandbox);
         // Batch arrives without a prior preview — should degrade gracefully
         for (const handler of messageHandlers) {
             handler({
@@ -241,8 +225,8 @@ suite('Session panel script runtime', () => {
         assert.ok(true, 'Batch without preview should not throw');
     });
     test('should handle empty preview gracefully', () => {
-        const { sandbox, messageHandlers, elements } = buildSandbox();
-        bootPanel(sandbox);
+        const { sandbox, messageHandlers, elements } = (0, viewer_session_panel_test_helpers_1.buildSandbox)();
+        (0, viewer_session_panel_test_helpers_1.bootPanel)(sandbox);
         // Verify loading element is shown before preview
         const loadingEl = elements.get('session-loading');
         loadingEl.style.display = '';
@@ -256,8 +240,8 @@ suite('Session panel script runtime', () => {
     suite('name filter', () => {
         /** Helper: boot sandbox, send session list, return elements + sandbox. */
         function bootWithSessions(sessions) {
-            const result = buildSandbox();
-            bootPanel(result.sandbox);
+            const result = (0, viewer_session_panel_test_helpers_1.buildSandbox)();
+            (0, viewer_session_panel_test_helpers_1.bootPanel)(result.sandbox);
             for (const handler of result.messageHandlers) {
                 handler({ data: { type: 'sessionList', sessions } });
             }

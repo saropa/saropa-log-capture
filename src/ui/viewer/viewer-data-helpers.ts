@@ -10,6 +10,7 @@ import type { ViewerSlowBurstThresholds } from '../../modules/db/drift-db-slow-b
 import type { ViewerDbDetectorToggles } from '../../modules/config/config-types';
 import { getViewerDataHelpersCore } from './viewer-data-helpers-core';
 import { getViewerDataHelpersRender } from './viewer-data-helpers-render';
+import { getStackHeaderRenderScript } from './viewer-data-helpers-render-stack';
 import { getViewerDataMarkerFilterScript } from './viewer-data-marker-filter';
 import { getNPlusOneDetectorScript } from './viewer-data-n-plus-one-script';
 import { getSqlDrilldownUiScript } from './viewer-data-sql-drilldown-ui';
@@ -27,6 +28,7 @@ export function getViewerDataHelpers(
         getSqlDrilldownUiScript() +
         getViewerDataHelpersCore() +
         getViewerDataMarkerFilterScript() +
+        getStackHeaderRenderScript() +
         getViewerDataHelpersRender()
     );
 }

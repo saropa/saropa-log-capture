@@ -31,7 +31,7 @@ function sortDetectors(defs) {
  * disable failing detectors until state is reset.
  */
 function runDbDetectorsIngest(registry, ctx, state, options) {
-    if (options?.insightsEnabled === false) {
+    if (options?.signalsEnabled === false) {
         return [];
     }
     const collected = [];
@@ -60,7 +60,7 @@ function runDbDetectorsIngest(registry, ctx, state, options) {
  * Detectors without `compare` are skipped; merge rules match `runDbDetectorsIngest`.
  */
 function runDbDetectorsCompare(registry, maps, state, options) {
-    if (options?.insightsEnabled === false) {
+    if (options?.signalsEnabled === false) {
         return [];
     }
     const { baseline, target } = maps;

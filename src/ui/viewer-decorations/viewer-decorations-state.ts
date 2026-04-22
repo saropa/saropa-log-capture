@@ -112,7 +112,9 @@ function resetDecoDefaults() {
     decoLineColorMode = 'none';
     decoShowBar = true;
     stripSourceTagPrefix = true;
-    stackDefaultState = false;
+    /* Default matches the initial value in viewer-deco-settings.ts — collapsed by default so
+       noisy logs do not render thousands of stack frames on first paint. */
+    stackDefaultState = true;
     stackPreviewCount = 3;
 }
 

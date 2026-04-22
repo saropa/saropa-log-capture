@@ -48,6 +48,28 @@ suite('LogSession queue safety', () => {
     }
   });
 
+  test('identical consecutive lines are all written (capture-side dedup bypass)', async () => {
+    /* Unified line-collapsing rethink (bugs/unified-line-collapsing.md):
+       LogSession no longer routes incoming lines through Deduplicator.process(),
+       so identical-within-500ms runs that the old path would have folded to
+       `line (x5)` are now each written as their own row. This preserves per-line
+       timestamps and 1:1 file-line-number-to-app-output mapping — the viewer
+       handles the display-time fold. Regression test pins that every repeat
+       reaches disk and no `(xN)` suffix is appended by the capture side. */
+    const tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'saropa-log-nodedup-'));
+    const session = new LogSession(makeSessionContext(tmpRoot), makeSessionConfig('reports', 1000), () => {});
+    await session.start();
+    const identical = 'Error: Connection refused';
+    for (let i = 0; i < 5; i++) {
+      session.appendLine(identical, 'console', new Date(`2026-03-23T10:02:00.${String(i * 50).padStart(3, '0')}Z`));
+    }
+    await session.stop();
+    const body = await fs.readFile(session.fileUri.fsPath, 'utf-8');
+    const occurrences = body.split(identical).length - 1;
+    assert.strictEqual(occurrences, 5, 'all five identical lines must reach the file');
+    assert.ok(!/\(x\d+\)/.test(body), 'capture side must not stamp an (xN) suffix');
+  });
+
   test('maxLines rotates parts and preserves newest lines', async () => {
     const tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'saropa-log-split-'));
     const session = new LogSession(makeSessionContext(tmpRoot), makeSessionConfig('reports', 3), () => {});

@@ -44,17 +44,17 @@ const export_formats_1 = require("./modules/export/export-formats");
 const slc_bundle_1 = require("./modules/export/slc-bundle");
 const loki_export_1 = require("./modules/export/loki-export");
 const build_ci_1 = require("./modules/integrations/providers/build-ci");
-const commands_export_insights_1 = require("./commands-export-insights");
+const commands_export_signals_1 = require("./commands-export-signals");
 const commands_export_helpers_1 = require("./commands-export-helpers");
 function exportCommands(deps) {
-    const { context, viewerProvider, historyProvider, investigationStore } = deps;
+    const { context, viewerProvider, historyProvider, collectionStore } = deps;
     return [
         (0, commands_export_helpers_1.htmlExportCmd)('exportHtml', html_export_1.exportToHtml),
         (0, commands_export_helpers_1.htmlExportCmd)('exportHtmlInteractive', html_export_interactive_1.exportToInteractiveHtml),
         (0, commands_export_helpers_1.fileExportCmd)('exportCsv', export_formats_1.exportToCsv),
         (0, commands_export_helpers_1.fileExportCmd)('exportJson', export_formats_1.exportToJson),
         (0, commands_export_helpers_1.fileExportCmd)('exportJsonl', export_formats_1.exportToJsonl),
-        (0, commands_export_insights_1.exportInsightsSummaryCmd)(viewerProvider, investigationStore),
+        (0, commands_export_signals_1.exportSignalsSummaryCmd)(viewerProvider, collectionStore),
         vscode.commands.registerCommand('saropaLogCapture.exportSlc', async (item) => {
             const uri = item?.uri ?? viewerProvider.getCurrentFileUri();
             if (!uri) {
@@ -93,7 +93,7 @@ function exportCommands(deps) {
                 await viewerProvider.loadFromFile(lastResult.mainLogUri);
             }
             else if (lastResult) {
-                await (0, commands_export_helpers_1.importInvestigationFromSlc)(lastResult.investigation, investigationStore, historyProvider);
+                await (0, commands_export_helpers_1.importCollectionFromSlc)(lastResult.collection, collectionStore, historyProvider);
             }
         }),
         vscode.commands.registerCommand('saropaLogCapture.exportToLoki', async (item) => {

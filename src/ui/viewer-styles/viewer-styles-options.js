@@ -8,6 +8,7 @@ exports.getOptionsStyles = getOptionsStyles;
  */
 const viewer_styles_exclusion_chips_1 = require("./viewer-styles-exclusion-chips");
 const viewer_styles_options_extra_1 = require("./viewer-styles-options-extra");
+const viewer_styles_options_severity_keywords_1 = require("./viewer-styles-options-severity-keywords");
 function getOptionsStyles() {
     return /* css */ `
 
@@ -146,24 +147,40 @@ function getOptionsStyles() {
     background: var(--vscode-list-hoverBackground, rgba(255, 255, 255, 0.05));
 }
 
-/* Tier radio groups (Flutter / Device) — inline radios with a legend label */
+/* Container for the tier source groups */
+.tier-filter-list {
+    padding: 6px 10px;
+}
+/* Tier radio groups (Flutter / Device / External) — radios below legend */
 .tier-radio-group {
     border: none;
     margin: 0;
-    padding: 4px 0;
+    padding: 8px 0;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
+    gap: 4px 10px;
     font-size: 12px;
 }
 .tier-radio-group legend {
-    /* Float legend inline with the radios instead of the default fieldset caption */
-    float: left;
-    padding: 0;
-    margin-right: 6px;
+    /* Legend sits on its own line above the radios */
+    width: 100%;
+    padding: 0 0 4px;
     font-weight: 600;
     font-size: 12px;
     color: var(--vscode-foreground);
+}
+/* Inline hint after the tier legend — explains what the tier includes */
+.tier-hint {
+    font-weight: normal;
+    font-size: 11px;
+    opacity: 0.6;
+}
+/* Vertical spacing before Device and External tiers */
+.tier-radio-group-spaced {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--vscode-panel-border);
 }
 .tier-radio-group label {
     display: flex;
@@ -171,6 +188,8 @@ function getOptionsStyles() {
     gap: 4px;
     cursor: pointer;
     font-size: 12px;
+    /* Indent radios under the legend */
+    margin-left: 12px;
 }
 .tier-radio-group input[type="radio"] {
     accent-color: var(--vscode-button-background);
@@ -212,7 +231,7 @@ function getOptionsStyles() {
     padding: 0 0 4px 24px;
 }
 
-/* Log Inputs: subheading before external source checkboxes */
+/* Log Sources: subheading before external source checkboxes */
 .source-external-group-title {
     margin-top: 8px;
     padding-top: 4px;
@@ -264,47 +283,6 @@ function getOptionsStyles() {
     display: none !important;
 }
 
-/* Severity keywords display */
-.severity-keywords-display {
-    margin-bottom: 8px;
-}
-.sk-level-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-    padding: 3px 0;
-    font-size: 11px;
-}
-.sk-dot {
-    width: 8px;
-    height: 8px;
-    min-width: 8px;
-    border-radius: 50%;
-    margin-top: 3px;
-}
-.sk-label {
-    font-weight: 600;
-    min-width: 80px;
-    color: var(--vscode-foreground);
-}
-.sk-pills {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 3px;
-}
-.sk-pill {
-    background: var(--vscode-badge-background, rgba(90, 93, 94, 0.4));
-    color: var(--vscode-badge-foreground, var(--vscode-foreground));
-    padding: 1px 6px;
-    border-radius: 3px;
-    font-size: 10px;
-    white-space: nowrap;
-}
-.sk-pills em {
-    opacity: 0.5;
-    font-size: 10px;
-}
-
-` + (0, viewer_styles_options_extra_1.getOptionsExtraStyles)() + (0, viewer_styles_exclusion_chips_1.getExclusionChipStyles)();
+` + (0, viewer_styles_options_extra_1.getOptionsExtraStyles)() + (0, viewer_styles_exclusion_chips_1.getExclusionChipStyles)() + (0, viewer_styles_options_severity_keywords_1.getSeverityKeywordsStyles)();
 }
 //# sourceMappingURL=viewer-styles-options.js.map

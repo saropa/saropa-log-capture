@@ -47,10 +47,10 @@ const project_indexer_1 = require("./modules/project-indexer/project-indexer");
 const extension_activation_1 = require("./extension-activation");
 const session_comparison_1 = require("./ui/session/session-comparison");
 const analysis_panel_1 = require("./ui/analysis/analysis-panel");
-const insights_panel_1 = require("./ui/insights/insights-panel");
-const insight_tab_panel_1 = require("./ui/viewer-panels/insight-tab-panel");
+const signal_tab_panel_1 = require("./ui/viewer-panels/signal-tab-panel");
 const bug_report_panel_1 = require("./ui/panels/bug-report-panel");
 const timeline_panel_1 = require("./ui/panels/timeline-panel");
+const keyboard_shortcuts_panel_1 = require("./ui/panels/keyboard-shortcuts-panel");
 const signal_report_panel_1 = require("./ui/signals/signal-report-panel");
 /** Refs returned by runActivation; used in deactivate to stop sessions, dispose API, indexer and pop-out. */
 let activationRefs = null;
@@ -75,10 +75,10 @@ function deactivate() {
     // Dispose editor panels that are not tied to activationRefs.
     (0, session_comparison_1.disposeComparisonPanel)();
     (0, analysis_panel_1.disposeAnalysisPanel)();
-    (0, insights_panel_1.disposeInsightsPanel)();
-    (0, insight_tab_panel_1.disposeInsightTabPanel)();
+    (0, signal_tab_panel_1.disposeSignalTabPanel)();
     (0, bug_report_panel_1.disposeBugReportPanel)();
     (0, timeline_panel_1.disposeTimelinePanel)();
     (0, signal_report_panel_1.disposeSignalReportPanel)();
+    (0, keyboard_shortcuts_panel_1.disposeKeyboardShortcutsPanel)();
 }
 //# sourceMappingURL=extension.js.map

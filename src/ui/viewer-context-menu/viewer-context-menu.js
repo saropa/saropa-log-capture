@@ -143,6 +143,14 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
     var openSourceItem = contextMenuEl.querySelector('[data-action="open-source"]');
     if (openSourceItem) openSourceItem.style.display = hasSourceLink ? '' : 'none';
 
+    /* Copy Timestamp hides when the line carries no epoch (markers, synthetic rows). Both .timestamp
+       and .ts are checked because stack frames/headers store it under .timestamp while some code
+       paths still set .ts on lineData — the context menu must not copy an empty string silently. */
+    var hasTimestamp = !!(lineData && (lineData.timestamp || lineData.ts));
+    contextMenuEl.querySelectorAll('[data-timestamp-action]').forEach(function(el) {
+        el.style.display = (hasLine && hasTimestamp) ? '' : 'none';
+    });
+
     // Code-quality actions depend on the codeQuality session adapter.
     var integrationAdapters = (typeof window !== 'undefined' && Array.isArray(window.integrationAdapters))
         ? window.integrationAdapters
@@ -194,7 +202,7 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
         el.style.display = (hasLine && driftLineCat && driftAvailable) ? '' : 'none';
     });
 
-    var hasSqlFingerprint = !!(lineData && lineData.dbInsight && lineData.dbInsight.fingerprint);
+    var hasSqlFingerprint = !!(lineData && lineData.dbSignal && lineData.dbSignal.fingerprint);
     var staticSqlOn = (typeof staticSqlFromFingerprintEnabled !== 'undefined' && staticSqlFromFingerprintEnabled);
     contextMenuEl.querySelectorAll('[data-static-sql-line-action]').forEach(function(el) {
         el.style.display = (hasLine && hasSqlFingerprint && staticSqlOn) ? '' : 'none';
