@@ -26,7 +26,9 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [Unreleased]
+## [7.4.0]
+
+Adds a toggle to hide DB signal markers and click-to-peek on the hidden-lines chevron, groups Flutter exception banners into one error block, and fixes duplicate log loading plus a few level-classification quirks. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
 
 ### Added
 
@@ -81,6 +83,8 @@ Hover a log in the Logs panel and a new folder icon lets you jump straight to th
 ---
 
 ## [7.2.2]
+
+Reorganizes the icon bar into clearer groups, renames the Find icon to Find in Files, and stops count badges from doubling up next to button labels. [log](https://github.com/saropa/saropa-log-capture/blob/v7.2.2/CHANGELOG.md)
 
 ### Changed
 
@@ -325,7 +329,7 @@ Catches Flutter sessions that slip past the normal start event, adds collapsible
 
 ## [6.1.1]
 
-Fixes the Project Logs panel not following your active debug session, adds more date range options, and adds name-based session filtering.
+Fixes the Project Logs panel not following your active debug session, adds more date range options, and adds name-based session filtering. [log](https://github.com/saropa/saropa-log-capture/blob/v6.1.1/CHANGELOG.md)
 
 ### Fixed
 
