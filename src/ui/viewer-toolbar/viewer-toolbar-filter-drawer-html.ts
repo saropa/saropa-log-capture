@@ -150,6 +150,12 @@ function getFilterTabPanels(): string {
         </div>
         <div id="sql-pattern-chips" class="source-tag-chips options-tags"></div>
         <div class="options-row">
+            <label title="Show DB signal markers inline in the log (timestamp-burst, slow-query-burst). Turn off to suppress all such markers regardless of the DB level filter.">
+                <input type="checkbox" id="opt-db-signal-markers" checked />
+                Show DB signal markers
+            </label>
+        </div>
+        <div class="options-row">
             <button type="button" id="open-sql-query-history-from-tags" class="options-action-btn" title="Open scrollable list of SQL fingerprints for this session">SQL Query History\u2026</button>
         </div>
     </div>`;

@@ -66,6 +66,9 @@ function syncFiltersPanelUi() {
     if (typeof rebuildTagChips === 'function') rebuildTagChips();
     if (typeof rebuildClassTagChips === 'function') rebuildClassTagChips();
     if (typeof rebuildSqlPatternChips === 'function') rebuildSqlPatternChips();
+    /* Sync DB signal markers checkbox — dbSignalMarkersVisible lives in the marker-filter script. */
+    var dbMarkCb = document.getElementById('opt-db-signal-markers');
+    if (dbMarkCb && typeof dbSignalMarkersVisible !== 'undefined') dbMarkCb.checked = !!dbSignalMarkersVisible;
 }
 
 // Exclusion controls
@@ -93,6 +96,12 @@ tierExternalRadios.forEach(function(radio) {
     radio.addEventListener('change', function(e) {
         if (e.target.checked && typeof setShowExternal === 'function') setShowExternal(e.target.value);
     });
+});
+
+// DB signal markers visibility toggle (timestamp-burst, slow-query-burst)
+var dbSignalMarkersCb = document.getElementById('opt-db-signal-markers');
+if (dbSignalMarkersCb) dbSignalMarkersCb.addEventListener('change', function(e) {
+    if (typeof setDbSignalMarkersVisible === 'function') setDbSignalMarkersVisible(e.target.checked);
 });
 
 // SQL Query History button
