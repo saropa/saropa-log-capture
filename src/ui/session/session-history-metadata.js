@@ -51,7 +51,9 @@ async function loadBatch(target, logDir, files, opts) {
         while (index < files.length) {
             const i = index++;
             results[i] = await loadMetadata(target, logDir, files[i], centralMeta);
-            onItemLoaded?.(results[i], i);
+            /* Await the callback so each item reaches the webview before the
+             * worker moves on to the next file — gives progressive UI updates. */
+            await onItemLoaded?.(results[i], i);
         }
     };
     const count = Math.min(limit, files.length);
@@ -100,6 +102,14 @@ function applySidecar(target, meta, sidecar, ctx) {
     }
     if (hasPerformanceData(sidecar)) {
         result = { ...result, hasPerformanceData: true };
+    }
+    // Session-group propagation: groupId (shared across the group's members) and debugAdapterType
+    // (set only on the DAP main log) drive tree coalescing and primary-member selection.
+    if (sidecar.groupId) {
+        result = { ...result, groupId: sidecar.groupId };
+    }
+    if (sidecar.debugAdapterType) {
+        result = { ...result, debugAdapterType: sidecar.debugAdapterType };
     }
     if (ctx.hasCachedSev) {
         return { ...result, errorCount: sidecar.errorCount, warningCount: sidecar.warningCount, perfCount: sidecar.perfCount, anrCount: sidecar.anrCount, fwCount: sidecar.fwCount, infoCount: sidecar.infoCount };

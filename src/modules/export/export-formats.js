@@ -205,7 +205,7 @@ function formatCsvRow(entry) {
 }
 /**
  * Escape a field for CSV (quote if contains comma, quote, or newline).
- * Exported for use by insights-export-formats and tests.
+ * Exported for use by signals-export-formats and tests.
  */
 function escapeCsvField(value) {
     if (value.includes(',') || value.includes('"') || value.includes('\n')) {

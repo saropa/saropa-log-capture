@@ -14,8 +14,14 @@ const stack_parser_1 = require("./stack-parser");
 /**
  * Single-character test for "art" symbols in the ratio heuristic (===, box-drawing, etc.).
  * ASCII space counts separately, matching the embedded viewer loop (`artChars.test(ch) || ch === ' '`).
+ *
+ * Covers the full Unicode box-drawing block (U+2500–U+257F: light/heavy/double/rounded
+ * corners, bars, T-connectors, half-lines, diagonals) and the block-elements range
+ * (U+2580–U+259F: shaded art like ░▒▓█) so banners using any variant — Drift v3.3.3
+ * rounded `╭╮╰╯` with `├┤` dividers, Isar `║╔╝`, boxen mixed, Spring/Rich shaded logos
+ * — all reach the ≥ 60% art-char ratio threshold.
  */
-const ART_CHAR = /^[=+*_#~|/\\<>[\]{}()^v─│┌┐└┘├┤┬┴┼═║╔╗╚╝╠╣╦╩╬╭╮╯╰-]$/;
+const ART_CHAR = /^[=+*_#~|/\\<>[\]{}()^v\u2500-\u257F\u2580-\u259F-]$/;
 /** Strip logcat (`I/flutter (1234): `) or bracket (`[log] `) prefix so separator detection runs on message body only. */
 const SOURCE_PREFIX = /^(?:[VDIWEFA]\/[^(:\s]+\s*(?:\(\s*\d+\))?:\s|\[[^\]]+]\s)/;
 function charCountsTowardSeparatorRatio(ch) {

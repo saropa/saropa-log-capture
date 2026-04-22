@@ -142,13 +142,47 @@ async function handleSessionAction(action, uriStrings, filenames, ctx) {
             }
             break;
         }
-        case 'addToInvestigation':
+        // Reveal each selected log in the OS file explorer (Explorer/Finder/containing folder).
+        // Runs the built-in VS Code command per item; failures are swallowed because the native
+        // OS call may not be available in restricted/remote contexts and a thrown error would
+        // be surfaced as a modal that isn't actionable.
+        case 'revealInOS': {
             for (const item of items) {
-                await vscode.commands.executeCommand('saropaLogCapture.addToInvestigation', { uri: item.uri });
+                await vscode.commands.executeCommand('revealFileInOS', item.uri).then(() => { }, () => { });
+            }
+            break;
+        }
+        case 'addToCollection':
+            for (const item of items) {
+                await vscode.commands.executeCommand('saropaLogCapture.addToCollection', { uri: item.uri });
+            }
+            break;
+        // Session groups: Group, Ungroup, and Open-as-Merged-Group take the full selection in a
+        // single invocation (not one command per item) because they operate on the group as a
+        // whole. Running them per-item would produce N singletons for Group, and N separate
+        // viewer loads for Open, defeating the point.
+        case 'group':
+            if (items.length > 0) {
+                await vscode.commands.executeCommand('saropaLogCapture.groupSelectedSessions', items[0], items);
+            }
+            break;
+        case 'ungroup':
+            if (items.length > 0) {
+                await vscode.commands.executeCommand('saropaLogCapture.ungroupSession', items[0], items);
+            }
+            break;
+        case 'openGroup':
+            if (items.length > 0) {
+                await vscode.commands.executeCommand('saropaLogCapture.openSessionGroup', items[0], items);
+            }
+            break;
+        case 'addGroupToCollection':
+            if (items.length > 0) {
+                await vscode.commands.executeCommand('saropaLogCapture.addGroupToCollection', items[0], items);
             }
             break;
     }
-    if (mutating.includes(action)) {
+    if (mutating.includes(action) || action === 'group' || action === 'ungroup') {
         await ctx.refreshList();
     }
 }

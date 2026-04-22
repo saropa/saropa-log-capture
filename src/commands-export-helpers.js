@@ -40,7 +40,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildCiTokenCmd = buildCiTokenCmd;
 exports.htmlExportCmd = htmlExportCmd;
 exports.fileExportCmd = fileExportCmd;
-exports.importInvestigationFromSlc = importInvestigationFromSlc;
+exports.importCollectionFromSlc = importCollectionFromSlc;
 const vscode = __importStar(require("vscode"));
 const l10n_1 = require("./l10n");
 function buildCiTokenCmd(context, opts) {
@@ -89,20 +89,25 @@ function fileExportCmd(name, fn) {
         }
     });
 }
-/** Import an investigation from an SLC bundle result into the store. */
-async function importInvestigationFromSlc(inv, store, historyProvider) {
-    const created = await store.createInvestigation({ name: inv.name, notes: inv.notes });
+/** Import a collection from an SLC bundle result into the store. */
+async function importCollectionFromSlc(inv, store, historyProvider) {
+    const created = await store.createCollection({ name: inv.name, notes: inv.notes });
     try {
         for (const src of inv.sources) {
-            await store.addSource(created.id, { type: src.type, relativePath: src.relativePath, label: src.label });
+            if (src.type === 'group') {
+                await store.addSource(created.id, { type: 'group', groupId: src.groupId, label: src.label });
+            }
+            else {
+                await store.addSource(created.id, { type: src.type, relativePath: src.relativePath, label: src.label });
+            }
         }
-        await store.setActiveInvestigationId(created.id);
+        await store.setActiveCollectionId(created.id);
         historyProvider.refresh();
-        await vscode.commands.executeCommand('saropaLogCapture.openInvestigation');
-        vscode.window.showInformationMessage((0, l10n_1.t)('msg.investigationImported', inv.name));
+        await vscode.commands.executeCommand('saropaLogCapture.openCollection');
+        vscode.window.showInformationMessage((0, l10n_1.t)('msg.collectionImported', inv.name));
     }
     catch (e) {
-        await store.deleteInvestigation(created.id).catch(() => { });
+        await store.deleteCollection(created.id).catch(() => { });
         vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));
     }
 }

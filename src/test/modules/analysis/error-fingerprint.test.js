@@ -118,5 +118,39 @@ suite('ErrorFingerprint', () => {
             assert.ok(/^[0-9a-f]{8}$/.test(hash));
         });
     });
+    suite('classifyCategory', () => {
+        test('should classify ANR patterns', () => {
+            assert.strictEqual((0, error_fingerprint_1.classifyCategory)('ANR in com.example.app'), 'anr');
+            assert.strictEqual((0, error_fingerprint_1.classifyCategory)('Application Not Responding'), 'anr');
+            assert.strictEqual((0, error_fingerprint_1.classifyCategory)('Input dispatching timed out'), 'anr');
+        });
+        test('should classify OOM patterns', () => {
+            assert.strictEqual((0, error_fingerprint_1.classifyCategory)('java.lang.OutOfMemoryError'), 'oom');
+            assert.strictEqual((0, error_fingerprint_1.classifyCategory)('heap exhaustion detected'), 'oom');
+            assert.strictEqual((0, error_fingerprint_1.classifyCategory)('OOM killer invoked'), 'oom');
+            assert.strictEqual((0, error_fingerprint_1.classifyCategory)('Cannot allocate memory'), 'oom');
+        });
+        test('should classify native crash patterns', () => {
+            assert.strictEqual((0, error_fingerprint_1.classifyCategory)('signal SIGSEGV in thread'), 'native');
+            assert.strictEqual((0, error_fingerprint_1.classifyCategory)('SIGABRT received'), 'native');
+            assert.strictEqual((0, error_fingerprint_1.classifyCategory)('SIGBUS error'), 'native');
+            assert.strictEqual((0, error_fingerprint_1.classifyCategory)('crash in libflutter.so'), 'native');
+            assert.strictEqual((0, error_fingerprint_1.classifyCategory)('native crash detected'), 'native');
+        });
+        test('should classify fatal patterns', () => {
+            assert.strictEqual((0, error_fingerprint_1.classifyCategory)('FATAL exception in main'), 'fatal');
+            assert.strictEqual((0, error_fingerprint_1.classifyCategory)('unhandled exception: null'), 'fatal');
+            assert.strictEqual((0, error_fingerprint_1.classifyCategory)('uncaught TypeError'), 'fatal');
+        });
+        test('should default to non-fatal for unrecognized text', () => {
+            assert.strictEqual((0, error_fingerprint_1.classifyCategory)('normal error message'), 'non-fatal');
+            assert.strictEqual((0, error_fingerprint_1.classifyCategory)('connection refused'), 'non-fatal');
+            assert.strictEqual((0, error_fingerprint_1.classifyCategory)(''), 'non-fatal');
+        });
+        test('should prioritize ANR over other categories', () => {
+            // ANR check runs first, so an ANR line with "FATAL" still classifies as ANR
+            assert.strictEqual((0, error_fingerprint_1.classifyCategory)('ANR FATAL exception'), 'anr');
+        });
+    });
 });
 //# sourceMappingURL=error-fingerprint.test.js.map

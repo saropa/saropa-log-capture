@@ -81,20 +81,20 @@ function formatAnalysis(data) {
     else {
         parts.push('*First occurrence — no cross-session matches found.*');
     }
-    if (d.investigationContext) {
-        parts.push(formatInvestigationBrief(d.investigationContext));
+    if (d.collectionContext) {
+        parts.push(formatCollectionBrief(d.collectionContext));
     }
     if (d.firebaseMatch) {
         parts.push((0, bug_report_sections_1.formatProductionImpact)(d.firebaseMatch));
     }
     return parts.join('\n\n');
 }
-function formatInvestigationBrief(inv) {
+function formatCollectionBrief(inv) {
     if (!inv) {
         return '';
     }
     return [
-        `### Active Investigation: ${inv.name}`,
+        `### Active Collection: ${inv.name}`,
         `- Sources: ${inv.sources.length}`,
         inv.lastSearchQuery ? `- Last search: \`${inv.lastSearchQuery}\`` : '',
         inv.notes?.trim() ? `- Notes: ${inv.notes.trim()}` : '',

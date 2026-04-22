@@ -85,11 +85,12 @@ async function runTriageLookup(ctx, lineText, errCtx) {
 async function runErrorTimeline(ctx, errCtx) {
     const { post, signal, progress } = ctx;
     progress('error-timeline', '📊 Loading error history...');
-    const insights = await (0, cross_session_aggregator_1.aggregateInsights)('all').catch(() => undefined);
+    const aggregated = await (0, cross_session_aggregator_1.aggregateSignals)('all').catch(() => undefined);
     if (signal.aborted) {
         return {};
     }
-    const match = insights?.recurringErrors.find(e => e.hash === errCtx.hash);
+    // Find matching error signal by fingerprint (which is the raw hash for error-kind signals)
+    const match = aggregated?.allSignals.find(s => s.kind === 'error' && s.fingerprint === errCtx.hash);
     if (!match) {
         post('error-timeline', (0, analysis_panel_render_1.emptySlot)('error-timeline', '📊 First occurrence — no history yet'));
         return {};

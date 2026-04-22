@@ -33,6 +33,8 @@ function getIconBarStyles() {
     border-right: 1px solid var(--vscode-activityBar-border, var(--vscode-panel-border));
     transition: width 0.15s ease;
     cursor: pointer;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 #icon-bar.ib-labels-visible {
@@ -121,6 +123,21 @@ function getIconBarStyles() {
     pointer-events: none;
 }
 
+/* When labels are visible, the inline "(N)" count beside each label already shows the number,
+   so suppress the overlay badge to avoid double-counting on every icon.
+   !important is required because updateIconBadge() sets display via inline style. */
+#icon-bar.ib-labels-visible .ib-badge {
+    display: none !important;
+}
+
+/* Inline count shown next to label text when labels are visible, e.g. "Signals (32)".
+   Dimmed and smaller than the label to avoid visual clutter. */
+.ib-count {
+    font-size: 0.85em;
+    font-weight: 400;
+    opacity: 0.55;
+}
+
 /* ===================================================================
    Right-side overrides — icon bar
    =================================================================== */
@@ -142,8 +159,9 @@ body[data-icon-bar="right"] .ib-badge {
 .ib-separator {
     width: 20px;
     height: 1px;
-    background: var(--vscode-panel-border);
-    margin: 4px 0;
+    background: var(--vscode-activityBar-inactiveForeground, var(--vscode-panel-border));
+    opacity: 0.4;
+    margin: 5px 0;
 }
 #icon-bar.ib-labels-visible .ib-separator {
     width: 100%;

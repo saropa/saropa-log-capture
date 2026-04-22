@@ -69,9 +69,9 @@ function registerNoRestoreSerializers(context) {
         deserializeWebviewPanel(p) { p.dispose(); return Promise.resolve(); },
     };
     for (const viewType of [
-        'saropaLogCapture.insights', 'saropaLogCapture.insightTab', 'saropaLogCapture.bugReport',
+        'saropaLogCapture.signals', 'saropaLogCapture.signalTab', 'saropaLogCapture.bugReport',
         'saropaLogCapture.analysis', 'saropaLogCapture.timeline',
-        'saropaLogCapture.comparison', 'saropaLogCapture.investigation',
+        'saropaLogCapture.comparison', 'saropaLogCapture.collection',
         'saropaLogCapture.popOutViewer',
     ]) {
         context.subscriptions.push(vscode.window.registerWebviewPanelSerializer(viewType, noRestore));

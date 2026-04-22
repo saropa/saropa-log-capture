@@ -6,23 +6,23 @@
  * HTTP requests, terminal output, etc.) filtered to ±N seconds around
  * a clicked log line. Triggered from the context menu "Show Integration Context".
  *
- * ## Database insight (line-local)
+ * ## Database signal (line-local)
  *
- * Rows with `sourceTag === 'database'` (Drift `Sent` SQL) carry `dbInsight` from the data layer
+ * Rows with `sourceTag === 'database'` (Drift `Sent` SQL) carry `dbSignal` from the data layer
  * (fingerprint, session seen-count, optional avg/max `elapsedMs`, `sqlSnippet`). The embedded
- * `buildDatabaseInsightPopoverSection` function renders only when `row.dbInsight` exists; non-DB lines never get that section. SQL is truncated in the body with
+ * `buildDatabaseSignalPopoverSection` function renders only when `row.dbSignal` exists; non-DB lines never get that section. SQL is truncated in the body with
  * the full string on `title` for hover/copy; fingerprint uses the same pattern.
  *
  * ## Drift Advisor CTA
  *
  * "Open in Drift Advisor" appears only when `window.driftAdvisorAvailable` is true (set from the extension host).
- * Multiple buttons (Database insight + session Drift meta) share the class `popover-drift-open`; handlers use
+ * Multiple buttons (Database signal + session Drift meta) share the class `popover-drift-open`; handlers use
  * `querySelectorAll` so each fires `openDriftAdvisor`.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getContextPopoverScript = getContextPopoverScript;
 const viewer_context_popover_browser_1 = require("./viewer-context-popover-browser");
-const viewer_context_popover_db_insight_1 = require("./viewer-context-popover-db-insight");
+const viewer_context_popover_db_signal_1 = require("./viewer-context-popover-db-signal");
 const viewer_context_popover_integration_sections_1 = require("./viewer-context-popover-integration-sections");
 const viewer_context_popover_shared_script_1 = require("./viewer-context-popover-shared-script");
 const viewer_quality_popover_script_1 = require("./viewer-quality-popover-script");
@@ -30,7 +30,7 @@ const viewer_quality_popover_script_1 = require("./viewer-quality-popover-script
  * Returns the JavaScript code for the context popover in the webview.
  */
 function getContextPopoverScript() {
-    return (0, viewer_context_popover_browser_1.getContextPopoverBrowserScript)() + (0, viewer_context_popover_db_insight_1.getContextPopoverDbInsightScript)() + (0, viewer_context_popover_integration_sections_1.getContextPopoverDatabaseQueriesScript)() + (0, viewer_context_popover_integration_sections_1.getContextPopoverSecurityScript)() + (0, viewer_context_popover_integration_sections_1.getRelatedQueriesPopoverScript)() + (
+    return (0, viewer_context_popover_browser_1.getContextPopoverBrowserScript)() + (0, viewer_context_popover_db_signal_1.getContextPopoverDbSignalScript)() + (0, viewer_context_popover_integration_sections_1.getContextPopoverDatabaseQueriesScript)() + (0, viewer_context_popover_integration_sections_1.getContextPopoverSecurityScript)() + (0, viewer_context_popover_integration_sections_1.getRelatedQueriesPopoverScript)() + (
     /* javascript */ `
 var contextPopoverEl = null;
 var contextPopoverLineIdx = -1;
@@ -288,10 +288,10 @@ function buildPopoverContent(lineIdx, data) {
         html += securityHtml;
     }
 
-    var dbInsightHtml = buildDatabaseInsightPopoverSection(lineIdx);
-    if (dbInsightHtml) {
+    var dbSignalHtml = buildDatabaseSignalPopoverSection(lineIdx);
+    if (dbSignalHtml) {
         hasContent = true;
-        html += dbInsightHtml;
+        html += dbSignalHtml;
     }
 
     var driftAdvisorAvail = (typeof window !== 'undefined' && window.driftAdvisorAvailable);

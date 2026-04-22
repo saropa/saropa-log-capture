@@ -12,7 +12,7 @@ exports.getViewerStyles = getViewerStyles;
  * blend seamlessly with the surrounding panel chrome.
  */
 const viewer_styles_content_1 = require("./viewer-styles-content");
-const viewer_styles_n_plus_one_insight_1 = require("./viewer-styles-n-plus-one-insight");
+const viewer_styles_n_plus_one_signal_1 = require("./viewer-styles-n-plus-one-signal");
 const viewer_styles_sql_repeat_drilldown_1 = require("./viewer-styles-sql-repeat-drilldown");
 const viewer_styles_components_1 = require("./viewer-styles-components");
 const viewer_styles_overlays_1 = require("./viewer-styles-overlays");
@@ -26,10 +26,11 @@ const viewer_styles_bookmarks_1 = require("./viewer-styles-bookmarks");
 const viewer_styles_sql_query_history_1 = require("./viewer-styles-sql-query-history");
 const viewer_styles_trash_1 = require("./viewer-styles-trash");
 const viewer_styles_about_1 = require("./viewer-styles-about");
+const viewer_styles_collections_1 = require("./viewer-styles-collections");
 const viewer_styles_crashlytics_1 = require("./viewer-styles-crashlytics");
 const viewer_styles_recurring_1 = require("./viewer-styles-recurring");
 const viewer_styles_performance_1 = require("./viewer-styles-performance");
-const viewer_styles_insight_1 = require("./viewer-styles-insight");
+const viewer_styles_signal_1 = require("./viewer-styles-signal");
 const viewer_styles_ai_1 = require("./viewer-styles-ai");
 const viewer_styles_run_separator_1 = require("./viewer-styles-run-separator");
 const viewer_styles_ui_1 = require("./viewer-styles-ui");
@@ -39,10 +40,25 @@ const viewer_styles_toolbar_1 = require("./viewer-styles-toolbar");
 const viewer_styles_filter_drawer_1 = require("./viewer-styles-filter-drawer");
 const viewer_styles_lines_1 = require("./viewer-styles-lines");
 const viewer_styles_ascii_art_1 = require("./viewer-styles-ascii-art");
+const viewer_styles_format_1 = require("./viewer-styles-format");
+const viewer_styles_flutter_banner_1 = require("./viewer-styles-flutter-banner");
 function getViewerStyles() {
     return /* css */ `
 /* Utility: hide element without inline style (CSP-friendly) */
 .u-hidden { display: none !important; }
+
+/* Utility: visually hidden but accessible to screen readers */
+.u-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
 
 /* ===================================================================
    Reset & Root Layout
@@ -95,6 +111,8 @@ body[data-icon-bar=”right”] #panel-content-row {
     min-width: 0;
     display: flex;
     flex-direction: column;
+    /* Positioning context for the floating search overlay */
+    position: relative;
 }
 
 /* ===================================================================
@@ -174,6 +192,6 @@ body.scrollbar-visible #log-content::-webkit-scrollbar { width: 10px; height: 10
     background: var(--vscode-scrollbarSlider-hoverBackground);
 }
 #log-content::-webkit-scrollbar-track { background: transparent; }
-` + (0, viewer_styles_lines_1.getLineStyles)() + (0, viewer_styles_ascii_art_1.getAsciiArtStyles)() + (0, viewer_styles_content_1.getContentStyles)() + (0, viewer_styles_n_plus_one_insight_1.getNPlusOneInsightStyles)() + (0, viewer_styles_sql_repeat_drilldown_1.getSqlRepeatDrilldownStyles)() + (0, viewer_styles_replay_1.getReplayStyles)() + (0, viewer_styles_components_1.getComponentStyles)() + (0, viewer_styles_overlays_1.getOverlayStyles)() + (0, viewer_styles_tags_1.getTagStyles)() + (0, viewer_styles_options_1.getOptionsStyles)() + (0, viewer_styles_errors_1.getErrorStyles)() + (0, viewer_styles_icon_bar_1.getIconBarStyles)() + (0, viewer_styles_session_1.getSessionPanelStyles)() + (0, viewer_styles_find_1.getFindPanelStyles)() + (0, viewer_styles_bookmarks_1.getBookmarkPanelStyles)() + (0, viewer_styles_sql_query_history_1.getSqlQueryHistoryPanelStyles)() + (0, viewer_styles_trash_1.getTrashPanelStyles)() + (0, viewer_styles_about_1.getAboutPanelStyles)() + (0, viewer_styles_crashlytics_1.getCrashlyticsPanelStyles)() + (0, viewer_styles_recurring_1.getRecurringPanelStyles)() + (0, viewer_styles_performance_1.getPerformancePanelStyles)() + (0, viewer_styles_insight_1.getInsightPanelStyles)() + (0, viewer_styles_ai_1.getAiStyles)() + (0, viewer_styles_run_separator_1.getRunSeparatorStyles)() + (0, viewer_styles_ui_1.getContextPopoverStyles)() + (0, viewer_styles_root_cause_hints_1.getRootCauseHypothesesStyles)() + (0, viewer_styles_toolbar_1.getToolbarStyles)() + (0, viewer_styles_filter_drawer_1.getFilterDrawerStyles)();
+` + (0, viewer_styles_lines_1.getLineStyles)() + (0, viewer_styles_ascii_art_1.getAsciiArtStyles)() + (0, viewer_styles_content_1.getContentStyles)() + (0, viewer_styles_n_plus_one_signal_1.getNPlusOneSignalStyles)() + (0, viewer_styles_sql_repeat_drilldown_1.getSqlRepeatDrilldownStyles)() + (0, viewer_styles_replay_1.getReplayStyles)() + (0, viewer_styles_components_1.getComponentStyles)() + (0, viewer_styles_overlays_1.getOverlayStyles)() + (0, viewer_styles_tags_1.getTagStyles)() + (0, viewer_styles_options_1.getOptionsStyles)() + (0, viewer_styles_errors_1.getErrorStyles)() + (0, viewer_styles_icon_bar_1.getIconBarStyles)() + (0, viewer_styles_session_1.getSessionPanelStyles)() + (0, viewer_styles_find_1.getFindPanelStyles)() + (0, viewer_styles_bookmarks_1.getBookmarkPanelStyles)() + (0, viewer_styles_sql_query_history_1.getSqlQueryHistoryPanelStyles)() + (0, viewer_styles_trash_1.getTrashPanelStyles)() + (0, viewer_styles_about_1.getAboutPanelStyles)() + (0, viewer_styles_collections_1.getCollectionsPanelStyles)() + (0, viewer_styles_crashlytics_1.getCrashlyticsPanelStyles)() + (0, viewer_styles_recurring_1.getRecurringPanelStyles)() + (0, viewer_styles_performance_1.getPerformancePanelStyles)() + (0, viewer_styles_signal_1.getSignalPanelStyles)() + (0, viewer_styles_ai_1.getAiStyles)() + (0, viewer_styles_run_separator_1.getRunSeparatorStyles)() + (0, viewer_styles_ui_1.getContextPopoverStyles)() + (0, viewer_styles_root_cause_hints_1.getRootCauseHypothesesStyles)() + (0, viewer_styles_toolbar_1.getToolbarStyles)() + (0, viewer_styles_filter_drawer_1.getFilterDrawerStyles)() + (0, viewer_styles_format_1.getFormatStyles)() + (0, viewer_styles_flutter_banner_1.getFlutterBannerStyles)();
 }
 //# sourceMappingURL=viewer-styles.js.map

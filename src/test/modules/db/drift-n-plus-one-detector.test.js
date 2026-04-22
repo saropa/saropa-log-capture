@@ -71,7 +71,7 @@ suite('DriftNPlusOneDetector', () => {
         assert.ok(standard && custom);
         assert.strictEqual(standard.fingerprint, custom.fingerprint, 'same SQL should produce the same fingerprint regardless of format');
     });
-    test('before: fewer than minRepeats does not emit insight', () => {
+    test('before: fewer than minRepeats does not emit signal', () => {
         const d = new drift_n_plus_one_detector_1.NPlusOneDetector();
         const fp = (0, drift_n_plus_one_detector_1.parseDriftSqlFingerprint)(baseLine(0));
         assert.ok(fp);
@@ -81,17 +81,17 @@ suite('DriftNPlusOneDetector', () => {
         }
         assert.strictEqual(last, null);
     });
-    test('after: minRepeats with distinct args emits insight', () => {
+    test('after: minRepeats with distinct args emits signal', () => {
         const d = new drift_n_plus_one_detector_1.NPlusOneDetector();
         const fp = (0, drift_n_plus_one_detector_1.parseDriftSqlFingerprint)(baseLine(0));
         assert.ok(fp);
-        let insight = null;
+        let signal = null;
         for (let i = 0; i < drift_n_plus_one_detector_1.N_PLUS_ONE_EMBED_CONFIG.minRepeats; i++) {
-            insight = d.feed(2000 + i * 10, fp.fingerprint, `[row-${i}]`);
+            signal = d.feed(2000 + i * 10, fp.fingerprint, `[row-${i}]`);
         }
-        assert.ok(insight);
-        assert.strictEqual(insight.repeats, drift_n_plus_one_detector_1.N_PLUS_ONE_EMBED_CONFIG.minRepeats);
-        assert.strictEqual(insight.distinctArgs, drift_n_plus_one_detector_1.N_PLUS_ONE_EMBED_CONFIG.minRepeats);
+        assert.ok(signal);
+        assert.strictEqual(signal.repeats, drift_n_plus_one_detector_1.N_PLUS_ONE_EMBED_CONFIG.minRepeats);
+        assert.strictEqual(signal.distinctArgs, drift_n_plus_one_detector_1.N_PLUS_ONE_EMBED_CONFIG.minRepeats);
     });
     test('false positive guard: same args repeated many times does not trigger', () => {
         const d = new drift_n_plus_one_detector_1.NPlusOneDetector();
@@ -111,7 +111,7 @@ suite('DriftNPlusOneDetector', () => {
             assert.strictEqual(d.feed(4000 + i * 10, fp.fingerprint, argsKey), null);
         }
     });
-    test('cooldown suppresses a second insight for the same fingerprint', () => {
+    test('cooldown suppresses a second signal for the same fingerprint', () => {
         const d = new drift_n_plus_one_detector_1.NPlusOneDetector();
         const fp = (0, drift_n_plus_one_detector_1.parseDriftSqlFingerprint)(baseLine(0));
         assert.ok(fp);

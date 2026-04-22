@@ -88,16 +88,20 @@ function renderItem(item, idx, prevVis) {
         }
     }
     if (item.type === 'marker') {
-        /* Collapse count: applyConsecutiveDbMarkerCollapse() merges adjacent identical db-signal
-           markers into the run's head; count > 1 means follow-ups were swallowed. Showing the
-           count preserves the "this happened N times" signal without stacking N rows. */
-        var countSuffix = '';
-        if (item.markerCollapseCount && item.markerCollapseCount > 1) {
-            countSuffix = ' <span class="marker-collapse-count" title="' + item.markerCollapseCount
-                + ' adjacent identical markers — filter a surrounding line visible to see each separately">\\u00d7'
-                + item.markerCollapseCount + '</span>';
-        }
-        return '<div class="marker' + spacingCls + '"' + idxAttr + '>' + html + countSuffix + '</div>';
+        /* Unified line-collapsing (bugs/unified-line-collapsing.md).
+           The v7.4.0 "× N" badge on the run-head marker was retired as unreadable.
+           applyConsecutiveDbMarkerCollapse() still folds follow-ups to height 0
+           so the margin stops stacking identical markers. Markers do not carry a
+           severity dot in the gutter (they're their own row type with coloured
+           background), so the outlined-dot signal used for line/stack-header
+           rows does not apply here. Instead, when the marker represents a
+           collapsed run, a title attribute on the marker div tells the user via
+           hover how many identical markers were folded into it — keeps the
+           "nothing hidden silently" guarantee without re-adding a visible badge. */
+        var _mkTitle = (item.markerCollapseCount && item.markerCollapseCount > 1)
+            ? ' title="' + item.markerCollapseCount + ' adjacent identical markers collapsed into this one"'
+            : '';
+        return '<div class="marker' + spacingCls + '"' + idxAttr + _mkTitle + '>' + html + '</div>';
     }
     if (item.type === 'run-separator') {
         var rs = item.runSummary;
@@ -141,30 +145,15 @@ function renderItem(item, idx, prevVis) {
     /* Art-block gutter: CSS border-left handles the continuous bar (not bar-up/bar-down pseudo
        which would conflict with the shimmer ::after). Only the start line keeps its dot. */
     if (item.type === 'stack-header') {
-        // Unicode triangles for state: ▶ collapsed, ▼ expanded, ▷ preview (code uses \\u25b6/\\u25bc/\\u25b7)
-        var ch, sf;
-        if (item.collapsed === true) {
-            ch = '\u25b6';
-            sf = item.frameCount > 1 ? '  [+' + (item.frameCount - 1) + ' frames]' : '';
-        } else if (item.collapsed === false) { ch = '\u25bc'; sf = ''; }
-        else {
-            ch = '\u25b7';
-            var appFrames = item._appFrameCount || 0;
-            var totalFrames = item.frameCount || 0;
-            var fwFrames = totalFrames - appFrames;
-            var hiddenCount = Math.max(0, appFrames - (item.previewCount || 3)) + fwFrames;
-            sf = hiddenCount > 0 ? '  [+' + hiddenCount + ' more]' : '';
-        }
-        var dup = item.dupCount > 1 ? ' <span class="stack-dedup-badge">(x' + item.dupCount + ')</span>' : '';
-        var hdrQb = (typeof getQualityBadge === 'function') ? getQualityBadge(item) : '';
-        var hdrHeat = (item.qualityPercent != null && typeof decoShowQuality !== 'undefined' && decoShowQuality) ? (item.qualityPercent >= 80 ? ' line-quality-high' : (item.qualityPercent >= 50 ? ' line-quality-med' : ' line-quality-low')) : '';
-        var hdrLevelCls = item.level ? ' level-' + item.level : '';
-        return '<div class="stack-header' + hdrLevelCls + matchCls + spacingCls + barCls + hdrHeat + '"' + idxAttr + ' data-gid="' + item.groupId + '">' + ch + ' ' + hdrQb + html.trim() + dup + sf + '</div>';
+        /* Delegated to viewer-data-helpers-render-stack-header.ts.
+           Moved there as part of the unified line-collapsing rethink to keep
+           this file under the 300-line eslint max-lines limit. */
+        return renderStackHeader(item, html, spacingCls, matchCls, barCls, idxAttr);
     }
     if (item.type === 'stack-frame') {
-        var sfQb = (typeof getQualityBadge === 'function') ? getQualityBadge(item) : '';
-        var sfHeat = (item.qualityPercent != null && typeof decoShowQuality !== 'undefined' && decoShowQuality) ? (item.qualityPercent >= 80 ? ' line-quality-high' : (item.qualityPercent >= 50 ? ' line-quality-med' : ' line-quality-low')) : '';
-        return '<div class="line stack-line' + (item.fw ? ' framework-frame' : '') + matchCls + barCls + sfHeat + '"' + idxAttr + '>' + stackGutter + sfQb + html + '</div>';
+        /* Delegated to viewer-data-helpers-render-stack.ts. Carries dedup-fold
+           and preview-mode-last-visible-frame .bar-hidden-rows wiring. */
+        return renderStackFrame(item, html, matchCls, barCls, idxAttr, stackGutter);
     }
     if (item.category && item.category.indexOf('ai-') === 0) {
         var aiCat = item.category;
@@ -214,9 +203,21 @@ function renderItem(item, idx, prevVis) {
     }
     var annHtml = (typeof getAnnotationHtml === 'function') ? getAnnotationHtml(idx) : '';
     var badge = '';
-    var compressDupBadge = '';
+    /* Unified line-collapsing (bugs/unified-line-collapsing.md, commit 4):
+       the prior inline (×N) .compress-dup-badge is retired. The dedup-fold
+       survivor now carries .bar-hidden-rows (outlined severity dot) instead,
+       with the count in the row's tooltip — satisfies the plan's "only
+       decorations, no text badges" rule. */
+    var dupHiddenCls = '';
+    var dupTitleAttr = '';
+    var dupDataAttr = '';
     if (item.compressDupCount > 1) {
-        compressDupBadge = '<span class="compress-dup-badge" title="' + item.compressDupCount + ' identical lines">(×' + item.compressDupCount + ')</span> ';
+        dupHiddenCls = ' bar-hidden-rows';
+        dupTitleAttr = ' title="' + item.compressDupCount + ' identical rows collapsed here \\u00b7 click to expand"';
+        /* data-dedup-count routes this row's click through peekDedupFold() in
+           viewer-peek-chevron.ts — reveals the hidden duplicates (listed on
+           item.compressDupHiddenIndices by applyCompressDedupModes). */
+        dupDataAttr = ' data-dedup-count="' + item.compressDupCount + '"';
     }
     if (typeof getErrorBadge === 'function' && item.errorClass) badge = getErrorBadge(item.errorClass);
     if (!badge && item.isAnr) badge = '<span class="error-badge error-badge-anr" title="ANR Pattern Detected">\\u23f1 ANR</span> ';
@@ -277,7 +278,12 @@ function renderItem(item, idx, prevVis) {
        art-continuation lines where deco is empty. The order 'deco then
        contBadge' (not the reverse) preserves the invariant that the badge
        never precedes the decoration prefix in the output string. */
-    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + bannerCls + '"' + idxAttr + titleAttr + '>' + stackGutter + deco + contBadge + elapsed + badge + compressDupBadge + catBadge + html + '</div>' + annHtml;
+    /* dupHiddenCls adds .bar-hidden-rows when this line is a dedup-fold survivor;
+       dupTitleAttr carries the count tooltip. dupTitleAttr only applies when
+       titleAttr is empty (dedup never overrides a more specific tooltip like
+       highlight or recent-error-context). */
+    var effTitleAttr = titleAttr || dupTitleAttr;
+    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + bannerCls + dupHiddenCls + '"' + idxAttr + dupDataAttr + effTitleAttr + '>' + stackGutter + deco + contBadge + elapsed + badge + catBadge + html + '</div>' + annHtml;
 }
 `;
 }

@@ -140,6 +140,47 @@ function getOptionsExtraStyles() {
 }
 .integrations-when { }
 
+/* Companion extensions section — links to related Saropa extensions above the adapter list. */
+.integrations-companion-section {
+    margin: 0 0 16px 0;
+    padding: 0 0 12px 0;
+    border-bottom: 1px solid var(--vscode-sideBar-border, rgba(255, 255, 255, 0.1));
+}
+.integrations-companion-heading {
+    font-size: 12px;
+    font-weight: 600;
+    margin: 0 0 6px 0;
+}
+.integrations-companion-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 8px;
+    padding: 6px 0;
+    font-size: 12px;
+}
+.integrations-companion-label {
+    font-weight: 600;
+    flex: 0 0 auto;
+}
+.integrations-companion-benefit {
+    flex: 1 1 100%;
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+    line-height: 1.35;
+    margin: 2px 0 0 0;
+}
+.integrations-companion-link {
+    font-size: 11px;
+    color: var(--vscode-textLink-foreground, var(--vscode-focusBorder));
+    cursor: pointer;
+    text-decoration: none;
+    margin: 2px 0 0 0;
+}
+.integrations-companion-link:hover {
+    text-decoration: underline;
+}
+
 /* Keyboard shortcuts view */
 .shortcuts-h3 {
     font-size: 12px;

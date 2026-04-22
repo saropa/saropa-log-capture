@@ -5,7 +5,7 @@
  * Re-exports all handlers from the handlers subdirectory for backward compatibility.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildDiagnosticHtml = exports.serializeContext = exports.handleRelatedQueriesRequest = exports.handleIntegrationContextDocument = exports.handleIntegrationContextRequest = exports.handlePerformanceRequest = exports.handleInsightDataRequest = exports.handleSetErrorStatus = exports.handleRecurringRequest = exports.disposeCrashlyticsHandlers = exports.stopCrashlyticsAutoRefresh = exports.startCrashlyticsAutoRefresh = exports.handleCrashlyticsShowOutput = exports.handleOpenGcloudInstall = exports.handleOpenGoogleServicesJson = exports.handleBrowseGoogleServices = exports.handleGcloudAuth = exports.handleCrashlyticsAction = exports.handleCrashDetail = exports.handleCrashlyticsRequest = void 0;
+exports.buildDiagnosticHtml = exports.serializeContext = exports.handleRelatedQueriesRequest = exports.handleIntegrationContextDocument = exports.handleIntegrationContextRequest = exports.handlePerformanceRequest = exports.handleSignalDataRequest = exports.handleSetErrorStatus = exports.disposeCrashlyticsHandlers = exports.stopCrashlyticsAutoRefresh = exports.startCrashlyticsAutoRefresh = exports.handleCrashlyticsShowOutput = exports.handleOpenGcloudInstall = exports.handleOpenGoogleServicesJson = exports.handleBrowseGoogleServices = exports.handleGcloudAuth = exports.handleCrashlyticsAction = exports.handleCrashDetail = exports.handleCrashlyticsRequest = void 0;
 exports.disposeHandlers = disposeHandlers;
 var crashlytics_handlers_1 = require("./handlers/crashlytics-handlers");
 Object.defineProperty(exports, "handleCrashlyticsRequest", { enumerable: true, get: function () { return crashlytics_handlers_1.handleCrashlyticsRequest; } });
@@ -20,9 +20,8 @@ Object.defineProperty(exports, "startCrashlyticsAutoRefresh", { enumerable: true
 Object.defineProperty(exports, "stopCrashlyticsAutoRefresh", { enumerable: true, get: function () { return crashlytics_handlers_1.stopCrashlyticsAutoRefresh; } });
 Object.defineProperty(exports, "disposeCrashlyticsHandlers", { enumerable: true, get: function () { return crashlytics_handlers_1.disposeCrashlyticsHandlers; } });
 var recurring_handlers_1 = require("./handlers/recurring-handlers");
-Object.defineProperty(exports, "handleRecurringRequest", { enumerable: true, get: function () { return recurring_handlers_1.handleRecurringRequest; } });
 Object.defineProperty(exports, "handleSetErrorStatus", { enumerable: true, get: function () { return recurring_handlers_1.handleSetErrorStatus; } });
-Object.defineProperty(exports, "handleInsightDataRequest", { enumerable: true, get: function () { return recurring_handlers_1.handleInsightDataRequest; } });
+Object.defineProperty(exports, "handleSignalDataRequest", { enumerable: true, get: function () { return recurring_handlers_1.handleSignalDataRequest; } });
 var context_handlers_1 = require("./handlers/context-handlers");
 Object.defineProperty(exports, "handlePerformanceRequest", { enumerable: true, get: function () { return context_handlers_1.handlePerformanceRequest; } });
 Object.defineProperty(exports, "handleIntegrationContextRequest", { enumerable: true, get: function () { return context_handlers_1.handleIntegrationContextRequest; } });

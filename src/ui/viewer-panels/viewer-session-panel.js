@@ -35,6 +35,8 @@ function getSessionPanelScript() {
     var selectedSessionUris = Object.create(null);
     /** Track which day groups are collapsed (keyed by YYYY-MM-DD). */
     var collapsedDays = Object.create(null);
+    /** Track which session groups are collapsed (keyed by groupId). */
+    var collapsedGroups = Object.create(null);
     window.__sharedPanelWidth = MIN_PANEL_WIDTH;
 
     /**
@@ -96,6 +98,8 @@ function getSessionPanelScript() {
     function requestSessionList() {
         if (sessionLoadingEl) sessionLoadingEl.style.display = '';
         if (sessionEmptyEl) sessionEmptyEl.style.display = 'none';
+        /* Clear stale items so streaming preview batches don't append after old content. */
+        if (sessionListEl) sessionListEl.innerHTML = '';
         vscodeApi.postMessage({ type: 'requestSessionList' });
     }
 

@@ -90,6 +90,42 @@ function getSessionListStyles() {
     white-space: nowrap;
 }
 
+/* --- Row hover actions (reveal in OS, etc.) --- */
+/* Container sits beside the info column. Hidden by default; revealed on row hover
+   or keyboard focus. Rendered inline so it participates in the flex row without
+   overlaying the meta text. */
+.session-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    pointer-events: none;
+}
+.session-item:hover .session-item-actions,
+.session-item:focus-within .session-item-actions {
+    opacity: 1;
+    pointer-events: auto;
+}
+.session-item-action {
+    background: transparent;
+    border: none;
+    padding: 2px 4px;
+    cursor: pointer;
+    color: var(--vscode-icon-foreground, var(--vscode-foreground));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+}
+.session-item-action:hover {
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
+.session-item-action .codicon {
+    font-size: 14px;
+}
+
 /* --- Latest suffix --- */
 .session-latest { opacity: 0.5; font-style: italic; font-size: 11px; margin-left: 3px; }
 
@@ -117,6 +153,11 @@ function getSessionListStyles() {
     font-size: 12px;
     flex-shrink: 0;
     transition: transform 0.15s ease;
+}
+/* File count shown dimmed in parentheses beside the date label. */
+.session-day-count {
+    font-weight: 400;
+    opacity: 0.5;
 }
 
 /* Collapsed day group: hide session items. */
@@ -207,14 +248,20 @@ function getSessionListStyles() {
 }
 
 /* --- Session context menu --- */
+/* overflow must stay "visible" — the Copy and Export flyout submenus are absolutely-positioned
+   children and would be clipped by "overflow: auto". The menu is compact enough (≤13 items) that
+   scrolling is unnecessary; the show() logic clamps the menu's top/left to the viewport instead. */
 .session-context-menu {
     display: none; position: fixed; z-index: 300;
     background: var(--vscode-menu-background, var(--vscode-editor-background));
     border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border));
     border-radius: 4px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-    padding: 4px 0; min-width: 180px; overflow-y: auto;
+    padding: 4px 0; min-width: 180px; overflow: visible;
 }
 .session-context-menu.visible { display: block; }
+/* Flip submenu to open leftward when the parent menu is near the right edge of the viewport.
+   Mirrors the .context-menu.flip-submenu rule used by the line context menu. */
+.session-context-menu.flip-submenu .context-menu-submenu-content { left: auto; right: 100%; }
 
 /* --- Severity dots --- */
 .sev-dots { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; color: var(--vscode-descriptionForeground); vertical-align: middle; }

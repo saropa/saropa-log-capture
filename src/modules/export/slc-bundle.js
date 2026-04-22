@@ -3,7 +3,7 @@
  * .slc session bundle export and import. Export produces a ZIP with manifest.json,
  * metadata.json, log file(s), and integration sidecar files; import extracts into
  * the workspace log directory and merges metadata.
- * v3: investigation bundles (type 'investigation') with investigation.json and sources/.
+ * v3: collection bundles (type 'collection') with collection.json and sources/.
  * Invoked by exportSlc command and session panel "Export as SLC".
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -43,7 +43,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.exportInvestigationToBuffer = exports.exportInvestigationToSlc = exports.exportSessionToSlc = void 0;
+exports.exportCollectionToBuffer = exports.exportCollectionToSlc = exports.exportSessionToSlc = void 0;
 exports.isSlcManifestValid = isSlcManifestValid;
 exports.importSlcBundle = importSlcBundle;
 const vscode = __importStar(require("vscode"));
@@ -52,23 +52,23 @@ const l10n_1 = require("../../l10n");
 const slc_types_1 = require("./slc-types");
 const slc_session_1 = require("./slc-session");
 Object.defineProperty(exports, "exportSessionToSlc", { enumerable: true, get: function () { return slc_session_1.exportSessionToSlc; } });
-const slc_investigation_1 = require("./slc-investigation");
-Object.defineProperty(exports, "exportInvestigationToSlc", { enumerable: true, get: function () { return slc_investigation_1.exportInvestigationToSlc; } });
-Object.defineProperty(exports, "exportInvestigationToBuffer", { enumerable: true, get: function () { return slc_investigation_1.exportInvestigationToBuffer; } });
+const slc_collection_1 = require("./slc-collection");
+Object.defineProperty(exports, "exportCollectionToSlc", { enumerable: true, get: function () { return slc_collection_1.exportCollectionToSlc; } });
+Object.defineProperty(exports, "exportCollectionToBuffer", { enumerable: true, get: function () { return slc_collection_1.exportCollectionToBuffer; } });
 /** Returns true if manifest has supported version and required fields. */
 function isSlcManifestValid(manifest) {
-    if (manifest.version === slc_types_1.MANIFEST_VERSION_INVESTIGATION && manifest.type === 'investigation') {
-        return !!(manifest.investigation?.name &&
-            Array.isArray(manifest.investigation.sources));
+    if (manifest.version === slc_types_1.MANIFEST_VERSION_COLLECTION && manifest.type === 'collection') {
+        return !!(manifest.collection?.name &&
+            Array.isArray(manifest.collection.sources));
     }
     const validVersion = manifest.version === 1 || manifest.version === 2;
     return validVersion && typeof manifest.mainLog === 'string' && manifest.mainLog.length > 0;
 }
-function isInvestigationManifest(m) {
-    return m.version === slc_types_1.MANIFEST_VERSION_INVESTIGATION && m.type === 'investigation' && !!m.investigation;
+function isCollectionManifest(m) {
+    return m.version === slc_types_1.MANIFEST_VERSION_COLLECTION && m.type === 'collection' && !!m.collection;
 }
 /**
- * Import a .slc bundle: dispatches to session or investigation import based on manifest type.
+ * Import a .slc bundle: dispatches to session or collection import based on manifest type.
  */
 async function importSlcBundle(slcUri) {
     let raw;
@@ -106,8 +106,8 @@ async function importSlcBundle(slcUri) {
         vscode.window.showErrorMessage((0, l10n_1.t)('msg.slcImportInvalidManifest'));
         return undefined;
     }
-    if (isInvestigationManifest(manifest)) {
-        return (0, slc_investigation_1.importInvestigationFromSlc)(zip, manifest);
+    if (isCollectionManifest(manifest)) {
+        return (0, slc_collection_1.importCollectionFromSlc)(zip, manifest);
     }
     return (0, slc_session_1.importSessionFromSlc)(zip, manifest);
 }

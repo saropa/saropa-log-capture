@@ -50,10 +50,10 @@ suite('ViewerIconBar', () => {
         test('should include optional labels for each icon', () => {
             const html = (0, viewer_icon_bar_1.getIconBarHtml)();
             assert.ok(html.includes('class="ib-label"'));
-            assert.ok(html.includes('>Project Logs</span>'));
-            assert.ok(html.includes('>Find</span>'));
+            assert.ok(html.includes('>Logs<'), 'Logs label should be present');
+            assert.ok(html.includes('>Find in Files</span>'));
             assert.ok(!html.includes('id="ib-search"'), 'in-log search is session-nav only, not an icon bar tool');
-            assert.ok(html.includes('>Bookmarks</span>'));
+            assert.ok(html.includes('>Bookmarks<'), 'Bookmarks label should be present');
             assert.ok(html.includes('>Options</span>'));
         });
         test('should include separator and main icon buttons', () => {
@@ -74,7 +74,7 @@ suite('ViewerIconBar', () => {
             const ids = [
                 'ib-sessions', 'ib-find', 'ib-bookmarks',
                 'ib-sql-query-history', 'ib-trash', 'ib-options',
-                'ib-crashlytics', 'ib-insight', 'ib-about',
+                'ib-crashlytics', 'ib-signal', 'ib-about',
             ];
             for (const id of ids) {
                 const match = html.match(new RegExp(`id="${id}"[^>]*title="([^"]*)"`));
@@ -95,13 +95,13 @@ suite('ViewerIconBar', () => {
             assert.ok(script.includes('ib-icon'));
             assert.ok(script.includes('applyLabelsVisible'));
         });
-        test('should define ensureInsightSlideoutOpen that skips toggle when insight already active', () => {
+        test('should define ensureSignalSlideoutOpen that skips toggle when signal already active', () => {
             const script = (0, viewer_icon_bar_1.getIconBarScript)();
-            assert.ok(script.includes('ensureInsightSlideoutOpen'));
-            // When insight is already active, it must NOT call setActivePanel (which toggles off)
-            // Instead it calls openInsightPanel directly — verify both branches exist
-            assert.ok(script.includes("activePanel === 'insight'"), 'must check whether insight is already the active panel');
-            assert.ok(script.includes("setActivePanel('insight')"), 'must delegate to setActivePanel when insight is not active');
+            assert.ok(script.includes('ensureSignalSlideoutOpen'));
+            // When signal is already active, it must NOT call setActivePanel (which toggles off)
+            // Instead it calls openSignalPanel directly — verify both branches exist
+            assert.ok(script.includes("activePanel === 'signal'"), 'must check whether signal is already the active panel');
+            assert.ok(script.includes("setActivePanel('signal')"), 'must delegate to setActivePanel when signal is not active');
         });
     });
 });

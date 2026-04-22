@@ -1,8 +1,9 @@
 "use strict";
 /**
- * Recurring Errors Handlers
+ * Recurring Signal Handlers
  *
- * Handlers for recurring errors panel operations.
+ * Handlers for recurring signals panel operations.
+ * All signal kinds (error, warning, perf, SQL, etc.) go through the unified RecurringSignalEntry type.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -38,97 +39,88 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.handleRecurringRequest = handleRecurringRequest;
 exports.handleSetErrorStatus = handleSetErrorStatus;
-exports.handleInsightDataRequest = handleInsightDataRequest;
+exports.handleSignalDataRequest = handleSignalDataRequest;
+exports.handleOpenSessionForSignalType = handleOpenSessionForSignalType;
 const path = __importStar(require("path"));
 const vscode = __importStar(require("vscode"));
 const config_1 = require("../../../modules/config/config");
 const cross_session_aggregator_1 = require("../../../modules/misc/cross-session-aggregator");
+const recurring_signal_builder_1 = require("../../../modules/misc/recurring-signal-builder");
 const error_status_store_1 = require("../../../modules/misc/error-status-store");
-const regression_hint_service_1 = require("../../../modules/regression/regression-hint-service");
 const session_metadata_1 = require("../../../modules/session/session-metadata");
-/** Normalize path segment for comparison with timeline session (forward slashes). */
-function normSession(s) {
-    return s.replace(/\\/g, '/');
-}
-/** Recurring errors that appear in the given session (timeline contains session path). */
-function filterRecurringInSession(errors, sessionRelPath) {
-    const norm = normSession(sessionRelPath);
-    return errors.filter(e => e.timeline.some(t => normSession(t.session) === norm || normSession(t.session).endsWith(norm)));
-}
-/** Aggregate recurring errors and send to webview. */
-async function handleRecurringRequest(post) {
-    const insights = await (0, cross_session_aggregator_1.aggregateInsights)('all').catch(() => undefined);
-    const errors = insights?.recurringErrors ?? [];
-    const statuses = await (0, error_status_store_1.getErrorStatusBatch)(errors.map(e => e.hash));
-    post({ type: 'recurringErrorsData', errors, statuses });
-}
-/** Update error status and refresh. */
-async function handleSetErrorStatus(hash, status, post) {
+const metadata_loader_1 = require("../../../modules/session/metadata-loader");
+const signal_summary_types_1 = require("../../../modules/root-cause-hints/signal-summary-types");
+const signal_lint_enricher_1 = require("../../../modules/diagnostics/signal-lint-enricher");
+const signal_da_enricher_1 = require("../../../modules/diagnostics/signal-da-enricher");
+/** Update error/warning triage status and refresh the signal panel.
+ *  Needs currentFileUri so the refresh includes "Signals in this log" data. */
+async function handleSetErrorStatus(hash, status, post, currentFileUri) {
     await (0, error_status_store_1.setErrorStatus)(hash, status);
-    await handleRecurringRequest(post);
+    // Re-send full signal data so the unified list re-renders with updated triage states
+    await handleSignalDataRequest(post, currentFileUri);
 }
-/** Full insight payload (recurring + hot files + environment + optional recurringInThisLog). */
-async function handleInsightDataRequest(post, currentFileUri) {
-    const insights = await (0, cross_session_aggregator_1.aggregateInsights)('all').catch(() => undefined);
-    const errors = insights?.recurringErrors ?? [];
-    const hotFiles = insights?.hotFiles ?? [];
-    const platforms = insights?.platforms ?? [];
-    const sdkVersions = insights?.sdkVersions ?? [];
-    const debugAdapters = insights?.debugAdapters ?? [];
-    const statuses = await (0, error_status_store_1.getErrorStatusBatch)(errors.map(e => e.hash));
-    const commitLinks = (0, config_1.getConfig)().integrationsGit?.commitLinks ?? true;
-    const regressionHints = await (0, regression_hint_service_1.getFirstSeenHintsForErrors)(errors.map(e => e.hash), {
-        resolveCommitUrls: commitLinks,
-        cap: 15,
-    }).catch(() => ({}));
-    let recurringInThisLog;
-    let errorsInThisLog;
-    let errorsInThisLogTotal;
+/** Full signal payload (unified signals + hot files + environment). */
+async function handleSignalDataRequest(post, currentFileUri) {
+    const aggregated = await (0, cross_session_aggregator_1.aggregateSignals)('all').catch(() => undefined);
+    const allSignals = aggregated?.allSignals ?? [];
+    const errorFingerprints = allSignals.filter(s => s.kind === 'error' || s.kind === 'warning').map(s => s.fingerprint);
+    const statuses = await (0, error_status_store_1.getErrorStatusBatch)(errorFingerprints);
+    let signalsInThisLog;
+    let sessionCorrelationTags = [];
     if (currentFileUri) {
-        const folder = vscode.workspace.workspaceFolders?.[0];
-        if (folder) {
-            const logDir = (0, config_1.getLogDirectoryUri)(folder);
-            const rel = path.relative(logDir.fsPath, currentFileUri.fsPath);
-            const sessionRel = normSession(rel);
-            if (!rel.startsWith('..') && sessionRel.length > 0) {
-                recurringInThisLog = filterRecurringInSession(errors, sessionRel);
-            }
-        }
         try {
             const store = new session_metadata_1.SessionMetadataStore();
             const meta = await store.loadMetadata(currentFileUri);
-            const fps = meta?.fingerprints ?? [];
-            const top3 = [...fps]
-                .sort((a, b) => (b.c ?? 0) - (a.c ?? 0))
-                .slice(0, 3)
-                .map(f => ({
-                normalizedText: f.n ?? '',
-                exampleLine: f.e ?? '',
-                count: f.c ?? 0,
-            }));
-            if (top3.length > 0) {
-                errorsInThisLog = top3;
+            sessionCorrelationTags = meta?.correlationTags ?? [];
+            const sessionFilename = path.basename(currentFileUri.fsPath);
+            const thisSessionSignals = (0, recurring_signal_builder_1.buildAllRecurringSignals)([{ filename: sessionFilename, meta }]);
+            if (thisSessionSignals.length > 0) {
+                signalsInThisLog = thisSessionSignals;
             }
-            errorsInThisLogTotal = fps.length;
         }
         catch {
-            // ignore
+            // ignore — metadata may not exist yet for new sessions
         }
     }
     post({
-        type: 'insightData',
-        errors,
+        type: 'signalData',
         statuses,
-        hotFiles,
-        platforms,
-        sdkVersions,
-        debugAdapters,
-        recurringInThisLog,
-        errorsInThisLog,
-        errorsInThisLogTotal,
-        regressionHints,
+        hotFiles: aggregated?.hotFiles ?? [],
+        platforms: aggregated?.platforms ?? [],
+        sdkVersions: aggregated?.sdkVersions ?? [],
+        debugAdapters: aggregated?.debugAdapters ?? [],
+        // Enrich signals with lint diagnostics + DA table metadata
+        allSignals: await (0, signal_da_enricher_1.enrichSignalsWithDaContext)(await (0, signal_lint_enricher_1.enrichSignalsWithLintContext)([...allSignals], sessionCorrelationTags)),
+        signalsInThisLog: await (0, signal_da_enricher_1.enrichSignalsWithDaContext)(await (0, signal_lint_enricher_1.enrichSignalsWithLintContext)([...(signalsInThisLog ?? [])], sessionCorrelationTags)),
+        coOccurrences: aggregated?.coOccurrences ?? [],
     });
+}
+/**
+ * Find the most recent session that has the given signal type and return its URI string.
+ * Returns undefined if no matching session found.
+ */
+async function handleOpenSessionForSignalType(signalType) {
+    const metas = await (0, metadata_loader_1.loadFilteredMetas)('all');
+    const matching = metas
+        .filter(m => {
+        const s = m.meta.signalSummary;
+        if (!s || !(0, signal_summary_types_1.isPersistedSignalSummaryV1)(s)) {
+            return false;
+        }
+        // Check if this session has a non-zero count for the requested signal type
+        const count = s.counts[signalType];
+        return typeof count === 'number' && count > 0;
+    })
+        .sort((a, b) => (0, metadata_loader_1.parseSessionDate)(b.filename) - (0, metadata_loader_1.parseSessionDate)(a.filename));
+    if (matching.length === 0) {
+        return undefined;
+    }
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+        return undefined;
+    }
+    const logDir = (0, config_1.getLogDirectoryUri)(folder);
+    return vscode.Uri.joinPath(logDir, matching[0].filename).toString();
 }
 //# sourceMappingURL=recurring-handlers.js.map

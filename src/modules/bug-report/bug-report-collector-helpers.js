@@ -99,15 +99,16 @@ async function collectWorkspaceData(filePath, crashLine, fingerprint) {
     const uri = filePath ? await resolveSourceUri(filePath) : undefined;
     const lineStart = crashLine ? Math.max(1, crashLine - 2) : 0;
     const lineEnd = crashLine ? crashLine + 2 : 0;
-    const [preview, blame, history, lineHistory, insights, imports] = await Promise.all([
+    const [preview, blame, history, lineHistory, aggregated, imports] = await Promise.all([
         uri && crashLine ? (0, workspace_analyzer_1.getSourcePreview)(uri, crashLine) : Promise.resolve(undefined),
         uri && crashLine ? (0, git_blame_1.getGitBlame)(uri, crashLine).catch(() => undefined) : Promise.resolve(undefined),
         uri ? (0, workspace_analyzer_1.getGitHistory)(uri, 10) : Promise.resolve([]),
         uri && crashLine ? (0, workspace_analyzer_1.getGitHistoryForLines)(uri, lineStart, lineEnd) : Promise.resolve([]),
-        (0, cross_session_aggregator_1.aggregateInsights)(),
+        (0, cross_session_aggregator_1.aggregateSignals)(),
         uri ? (0, import_extractor_1.extractImports)(uri).catch(() => undefined) : Promise.resolve(undefined),
     ]);
-    const match = insights.recurringErrors.find(e => e.hash === fingerprint);
+    // Find matching error signal by fingerprint (raw hash for error-kind signals)
+    const match = aggregated.allSignals.find(s => s.kind === 'error' && s.fingerprint === fingerprint);
     const crossMatch = match ? {
         sessionCount: match.sessionCount, totalOccurrences: match.totalOccurrences,
         firstSeen: match.firstSeen, lastSeen: match.lastSeen,

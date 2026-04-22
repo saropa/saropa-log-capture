@@ -40,6 +40,21 @@ suite('drift-debug-server-log-parse', () => {
         const line = '      │              http://127.0.0.1:8642               │';
         assert.strictEqual((0, drift_debug_server_log_parse_1.extractDriftViewerHttpUrl)(line), 'http://127.0.0.1:8642');
     });
+    // Drift v3.3.3 wraps the URL in rounded-corner frames; earlier stripping
+    // hand-picked a subset and missed ╭╮╰╯, so the URL couldn't be matched.
+    test('extractDriftViewerHttpUrl handles rounded-corner frame chars', () => {
+        const line = '╰ http://127.0.0.1:8642 ╯';
+        assert.strictEqual((0, drift_debug_server_log_parse_1.extractDriftViewerHttpUrl)(line), 'http://127.0.0.1:8642');
+    });
+    test('extractDriftViewerHttpUrl handles heavy-frame chars', () => {
+        const line = '┃ http://127.0.0.1:8642 ┃';
+        assert.strictEqual((0, drift_debug_server_log_parse_1.extractDriftViewerHttpUrl)(line), 'http://127.0.0.1:8642');
+    });
+    test('stripAsciiBoxNoise removes full box-drawing block', () => {
+        assert.strictEqual((0, drift_debug_server_log_parse_1.stripAsciiBoxNoise)('╭──╮ hello ╰──╯'), 'hello');
+        assert.strictEqual((0, drift_debug_server_log_parse_1.stripAsciiBoxNoise)('┏━━┓ world ┗━━┛'), 'world');
+        assert.strictEqual((0, drift_debug_server_log_parse_1.stripAsciiBoxNoise)('├──┤ divider ├──┤'), 'divider');
+    });
     test('accumulator emits after banner + URL lines', () => {
         const acc = (0, drift_debug_server_log_parse_1.createDriftDebugServerLogAccumulator)();
         assert.strictEqual(acc.push('╭──╮'), null);

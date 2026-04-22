@@ -131,6 +131,14 @@ body.search-match-options-always .session-search-toggles-inline {
 .session-search-icon-btn .codicon {
     font-size: 16px;
 }
+/* Clear button sits inside the input shell — reduce size to avoid stretching the row */
+.search-clear-btn {
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+.search-clear-btn:hover {
+    opacity: 1;
+}
 .session-search-funnel-btn[aria-expanded="true"] {
     background: var(--vscode-toolbar-activeBackground, var(--vscode-button-secondaryBackground));
     color: var(--vscode-toolbar-activeForeground, var(--vscode-foreground));

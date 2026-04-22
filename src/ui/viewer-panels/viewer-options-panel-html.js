@@ -46,7 +46,7 @@ function getOptionsPanelHtml() {
                 <span>Font size: <span id="font-size-label">13px</span></span>
             </div>
             <div class="options-row">
-                <input type="range" id="font-size-slider" min="8" max="22" value="13" style="width: 100%;" title="Adjust the font size for log text" />
+                <input type="range" id="font-size-slider" min="4" max="42" value="13" style="width: 100%;" title="Adjust the font size for log text" />
             </div>
             <div class="options-row">
                 <span>Line height: <span id="line-height-label">1.5</span></span>

@@ -1,14 +1,15 @@
 "use strict";
 /**
- * Search flyout HTML — drops below the toolbar when search icon is clicked.
+ * Search flyout HTML — floating overlay anchored top-right of the log area.
  *
- * Contains the same search input and controls as the old session-nav search,
- * plus inline history and options popover (no more position:fixed hacks).
+ * Toggled via the view title bar `$(search)` icon or the webview toolbar search button.
+ * Contains the search input with clear [x] button, case/word/regex toggles,
+ * match navigation, highlight/filter mode popover, and search history.
  *
- * Preserved IDs: `#search-input`, `#search-case-toggle`, `#search-word-toggle`,
- * `#search-regex-toggle`, `#match-count`, `#search-prev`, `#search-next`,
- * `#search-funnel-btn`, `#search-mode-toggle`, `#search-options-popover`,
- * `#search-history`.
+ * Preserved IDs: `#search-input`, `#search-clear-btn`, `#search-case-toggle`,
+ * `#search-word-toggle`, `#search-regex-toggle`, `#match-count`, `#search-prev`,
+ * `#search-next`, `#search-funnel-btn`, `#search-mode-toggle`,
+ * `#search-options-popover`, `#search-history`.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getSearchFlyoutHtml = getSearchFlyoutHtml;
@@ -19,6 +20,9 @@ function getSearchFlyoutHtml() {
     <div class="search-flyout-row">
         <div class="session-search-input-shell">
             <input id="search-input" type="text" placeholder="Filter or search in log\u2026" title="Type to search or filter log lines" autocomplete="off" />
+            <button type="button" id="search-clear-btn" class="session-search-icon-btn search-clear-btn" title="Clear search" aria-label="Clear search" style="display:none">
+                <span class="codicon codicon-close"></span>
+            </button>
             <div class="session-search-trailing">
                 <div class="session-search-toggles-inline search-input-actions" role="group" aria-label="Match options">
                     <button type="button" id="search-case-toggle" class="search-input-btn" title="Match Case — toggle case-sensitive search" aria-label="Match Case" aria-pressed="false"><span class="codicon codicon-case-sensitive"></span></button>

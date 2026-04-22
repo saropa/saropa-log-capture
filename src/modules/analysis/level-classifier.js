@@ -26,6 +26,15 @@ const driftStatementPattern = /\bDrift(?::\s+Sent|\s+(?:SELECT|INSERT|UPDATE|DEL
 const strictStructuralErrorPattern = /\w*(?:error|exception)\s*[:\]!]|\[(?:error|exception|fatal|panic|critical)\]|_\w*(?:Error|Exception)\b|Null check operator/i;
 /** Loose structural error: bare `error`/`exception` with negative lookahead, Dart private types, Null check. */
 const looseStructuralErrorPattern = /\b(?:error|exception)(?!\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\b|_\w*(?:Error|Exception)\b|Null check operator/i;
+/**
+ * Flutter framework exception banner: `════ Exception caught by <library> ════`.
+ * Why: strict/loose patterns require `Exception:` / `[exception]` / `_Exception` shapes, so
+ * the `Exception caught by` phrase (space-separated, no colon) falls through to `info` and
+ * the whole rendering error block ends up hidden under the Errors/Warnings filter.
+ * This is Flutter's canonical error title for rendering/widgets/scheduler/gesture/services —
+ * always an error, never an excluded handler/recovery phrase.
+ */
+const flutterExceptionBannerPattern = /\bException caught by\b/i;
 /** Performance patterns that use regex features (quantifiers, alternation) and can't be simple keywords. */
 const structuralPerfPattern = /\b(skipped\s+\d+\s+frames?|gc\s+(?:pause|freed|concurrent))\b/i;
 const anrPattern = /\b(anr|application\s+not\s+responding|input\s+dispatching\s+timed\s+out)\b/i;
@@ -105,6 +114,10 @@ function matchesError(plainText, strict) {
     if (structural.test(plainText)) {
         return true;
     }
+    // Flutter banner runs independently of strict/loose — it is unambiguous even in strict mode.
+    if (flutterExceptionBannerPattern.test(plainText)) {
+        return true;
+    }
     return kwError !== null && kwError.test(plainText);
 }
 function matchesPerf(plainText) {
@@ -116,6 +129,15 @@ function matchesPerf(plainText) {
 function classifyLogcat(prefix, plainText, strict) {
     if (prefix === 'E' || prefix === 'F' || prefix === 'A') {
         return 'error';
+    }
+    // Android frameworks emit perf events at W/ level — e.g.
+    //   W/ActivityManager: Slow operation: 51ms so far, now at startProcess: …
+    //   W/Choreographer:   Skipped 30 frames!
+    // These are semantically performance signals, not ambiguous warnings, so
+    // let structural/keyword perf matches promote ahead of the W short-circuit.
+    // Non-perf W/ lines still fall through to 'warning' below.
+    if (prefix === 'W' && matchesPerf(plainText)) {
+        return 'performance';
     }
     if (prefix === 'W') {
         return 'warning';
