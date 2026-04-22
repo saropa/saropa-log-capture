@@ -107,20 +107,27 @@ function parseSourceTag(plainText) {
     var m = sourceTagPattern.exec(plainText);
     if (m) {
         var raw = m[2] || m[3];
-        if (!raw) return null;
-        var tag = raw.toLowerCase();
-        var body = plainText.slice(m[0].length);
-        if (driftStatementPattern.test(body)) return 'database';
-        if (m[2] && genericLogcatTags[tag]) {
-            var sub = extractSubTag(body);
-            if (sub && !isNoisySourceTag(sub)) return sub;
-            // Bracket/caps sub-tag was only a time-like or hash token — do not fall back to generic "flutter"/"android".
-            if (sub && isNoisySourceTag(sub)) return null;
-            // Leading [token] not matched by extractSubTag (inline pattern requires a letter after "[") may still be noise (e.g. [08:45:23.606]).
-            var leadBracket = /^\\s*\\[([^\\]]+)\\]/.exec(body);
-            if (leadBracket && leadBracket[1] && isNoisySourceTag(leadBracket[1].toLowerCase())) return null;
+        if (raw) {
+            var tag = raw.toLowerCase();
+            var body = plainText.slice(m[0].length);
+            if (driftStatementPattern.test(body)) return 'database';
+            if (m[2] && genericLogcatTags[tag]) {
+                var sub = extractSubTag(body);
+                if (sub && !isNoisySourceTag(sub)) return sub;
+                // Bracket/caps sub-tag was only a time-like or hash token — do not fall back to generic "flutter"/"android".
+                if (sub && isNoisySourceTag(sub)) return null;
+                // Leading [token] not matched by extractSubTag (inline pattern requires a letter after "[") may still be noise (e.g. [08:45:23.606]).
+                var leadBracket = /^\\s*\\[([^\\]]+)\\]/.exec(body);
+                if (leadBracket && leadBracket[1] && isNoisySourceTag(leadBracket[1].toLowerCase())) return null;
+            }
+            if (!isNoisySourceTag(tag)) return tag;
+            /* Leading bracket matched but was noisy (timestamp/hash/ISO-date prefix, e.g.
+               [16:07:58.532] on console/SDA log lines). Previously we returned null here and
+               the meaningful secondary tag ([console], [log], ...) never registered — the
+               user saw WindowManager/ActivityManager chips but no 'console' chip. Fall
+               through to the inline-tag scan below so the first letter-led bracket in the
+               line wins instead. */
         }
-        return isNoisySourceTag(tag) ? null : tag;
     }
     inlineTagPattern.lastIndex = 0;
     var inlineMatch = inlineTagPattern.exec(plainText);
