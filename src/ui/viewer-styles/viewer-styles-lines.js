@@ -17,6 +17,9 @@ function getLineStyles() {
     transition: background 0.1s ease;
 }
 .line:hover { background: var(--vscode-list-hoverBackground); }
+/* Stack gutter spacer: reserves the same width as the collapse arrow on
+   stack headers so line numbers and content stay aligned across all lines. */
+.stack-gutter-spacer { visibility: hidden; }
 
 /* --- Floating copy icon (single overlay pinned to right edge of #log-content) --- */
 .line, .stack-header { position: relative; }

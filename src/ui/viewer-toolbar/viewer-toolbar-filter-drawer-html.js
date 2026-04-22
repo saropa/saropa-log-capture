@@ -1,26 +1,29 @@
 "use strict";
 /**
- * Filter drawer HTML — drops below the toolbar when filter icon is clicked.
+ * Filter panel HTML — full-height slide-out panel in the panel-slot.
  *
- * Consolidates ALL filter controls that previously lived in the sidebar
- * Filters panel and footer level fly-up into a single compact drawer.
+ * Opened by the toolbar filter button via setActivePanel('filters').
+ * Layout: levels row at top, then vertical tab sidebar (left) with
+ * panel content area (right).
  *
- * Layout:
- *   Row 1: Level toggles + context slider (always visible when open)
- *   Row 2: Accordion sections (each with a summary line, expandable)
- *   Row 3: Presets, reset, active count
- *
- * All interior element IDs match the old filters-panel / level-flyup so
- * that existing scripts bind without changes.
+ * Tabs: Log Sources, Exclusions, File Scope, Message Tags, Source Classes,
+ * SQL Commands. Each has an icon, toggleable label, and count suffix.
+ * Click tab bar whitespace to toggle labels (persisted in webview state).
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getFilterDrawerHtml = getFilterDrawerHtml;
-/** Filter drawer HTML fragment — inserted after the search flyout. */
+/** Filter panel HTML — inserted into #panel-slot. */
 function getFilterDrawerHtml() {
     return /* html */ `
-<div id="filter-drawer" class="filter-drawer u-hidden" role="region" aria-label="Filters">
+<div id="filters-panel" class="filters-panel" role="region" aria-label="Filters">
+    <div class="filters-panel-header">
+        <span>Filters</span>
+        <button class="filters-panel-close" type="button" title="Close" aria-label="Close Filters">
+            <span class="codicon codicon-close"></span>
+        </button>
+    </div>
 
-    <!-- Row 1: Levels (always visible when drawer is open) -->
+    <!-- Levels row -->
     <div class="filter-drawer-levels">
         <div class="filter-drawer-level-row">
             <div class="level-flyup-header">
@@ -42,93 +45,118 @@ function getFilterDrawerHtml() {
         </div>
     </div>
 
-    <!-- Row 2: Accordion filter sections -->
-    <div class="filter-drawer-sections">
-        ${getAccordionSections()}
+    <!-- Vertical tab sidebar (left) + panel content (right) -->
+    <div class="filter-tab-layout">
+        <div class="filter-tab-bar" role="tablist" aria-label="Filter sections"
+             title="Click background to show or hide tab labels">
+            ${getFilterTabs()}
+        </div>
+        <div class="filter-tab-panels">
+            ${getFilterTabPanels()}
+        </div>
     </div>
 
-    <!-- Row 3: Presets + active count + reset -->
-    <div class="filter-drawer-footer">
-        <span class="filter-drawer-footer-label">Preset:</span>
-        <select id="preset-select" title="Apply a preset filter configuration (e.g. Errors Only, Warnings+)">
-            <option value="">None</option>
-        </select>
-        <span id="filter-drawer-summary" class="filter-drawer-summary" title="Summary of currently active filters"></span>
-        <span class="filter-drawer-spacer"></span>
-        <button id="reset-all-filters" class="options-action-btn" title="Clear all active filters and show all log lines">Reset all</button>
-    </div>
+    <!-- Hidden preset select — kept for backward compat with presets script -->
+    <select id="preset-select" class="u-hidden" aria-hidden="true">
+        <option value="">Default</option>
+    </select>
+    <span id="filter-drawer-summary" class="filter-drawer-summary u-hidden" aria-hidden="true"></span>
 </div>`;
 }
-/** Accordion sections — each has a clickable header and collapsible body. */
-function getAccordionSections() {
+/** Tab buttons — each with a codicon, label, and count suffix span. */
+function getFilterTabs() {
     return /* html */ `
-        ${accordionSection('log-inputs-section', 'Log Inputs', `
-            <div class="options-row-list tier-filter-list">
-                <fieldset class="tier-radio-group">
-                    <legend>Flutter</legend>
-                    <label title="Show all Flutter output"><input type="radio" name="tier-flutter" value="all" checked /> All</label>
-                    <label title="Show only Flutter warnings and errors"><input type="radio" name="tier-flutter" value="warnplus" /> Warn+</label>
-                    <label title="Hide all Flutter output"><input type="radio" name="tier-flutter" value="none" /> None</label>
-                </fieldset>
-                <fieldset class="tier-radio-group">
-                    <legend>Device</legend>
-                    <label title="Show all device/system logs (excludes critical device errors which are always visible)"><input type="radio" name="tier-device" value="all" /> All</label>
-                    <label title="Show only device warnings and errors"><input type="radio" name="tier-device" value="warnplus" /> Warn+</label>
-                    <label title="Hide all device/system logs"><input type="radio" name="tier-device" value="none" checked /> None</label>
-                </fieldset>
-            </div>
-            <div id="log-inputs-divider" class="log-inputs-divider" style="display:none"></div>
-            <div id="source-filter-list" class="options-row-list source-filter-list"></div>
-            <div id="log-inputs-divider-cat" class="log-inputs-divider" style="display:none"></div>
-            <div id="output-channels-list"></div>
-        `)}
-        ${accordionSection('exclusions-section', 'Exclusions', `
-            <label class="options-row" title="Enable or disable exclusion pattern filtering"><input type="checkbox" id="opt-exclusions" /><span id="exclusion-label">Exclusion patterns</span></label>
-            <div class="exclusion-input-wrapper">
-                <input id="exclusion-add-input" type="text" placeholder="e.g. verbose or /debug/i" title="Enter a text pattern or /regex/i to exclude matching log lines" />
-                <button id="exclusion-add-btn" title="Add this pattern to the exclusion list">Add</button>
-            </div>
-            <div id="exclusion-chips" class="exclusion-chips"></div>
-            <div class="options-hint" id="exclusion-count"></div>
-        `)}
-        ${accordionSection('log-tags-section', 'Message Tags', `
-            <div class="options-hint">Tags from your logging framework</div>
-            <div class="options-row"><span id="source-tag-summary" class="source-tag-summary"></span></div>
-            <div id="source-tag-chips" class="source-tag-chips options-tags"></div>
-        `)}
-        ${accordionSection('class-tags-section', 'Code Origins', `
-            <div class="options-hint">Class &amp; method where log originated</div>
-            <div class="options-row"><span id="class-tag-summary" class="source-tag-summary"></span></div>
-            <div id="class-tag-chips" class="source-tag-chips options-tags"></div>
-        `)}
-        ${accordionSection('scope-section', 'File Scope', `
-            <div id="scope-status" class="options-hint"></div>
-            <label class="options-row" title="Show all log lines regardless of source file"><input type="radio" name="scope" value="all" checked /> All logs</label>
-            <label class="options-row" title="Show only logs from the current workspace"><input type="radio" name="scope" value="workspace" disabled /> Only workspace<span id="scope-suffix-workspace" class="scope-suffix"></span></label>
-            <label class="options-row" title="Show only logs from the current package"><input type="radio" name="scope" value="package" disabled /> Only package<span id="scope-suffix-package" class="scope-suffix"></span></label>
-            <label class="options-row" title="Show only logs from the active file\u2019s directory"><input type="radio" name="scope" value="directory" disabled /> Only directory<span id="scope-suffix-directory" class="scope-suffix"></span></label>
-            <label class="options-row" title="Show only logs from the active file"><input type="radio" name="scope" value="file" disabled /> Only file<span id="scope-suffix-file" class="scope-suffix"></span></label>
-            <label class="options-row scope-unattrib-row" title="When a scope is active, also exclude lines that have no source file from the debugger"><input type="checkbox" id="scope-hide-unattrib" /><span>Exclude lines with no source file</span></label>
-            <div id="scope-filter-hint" class="options-hint scope-filter-hint" style="display:none" aria-live="polite"></div>
-        `)}
-        ${accordionSection('sql-patterns-section', 'SQL Commands', `
-            <div class="options-row"><span id="sql-pattern-summary" class="source-tag-summary"></span></div>
-            <div id="sql-pattern-chips" class="source-tag-chips options-tags"></div>
-            <div class="options-row">
-                <button type="button" id="open-sql-query-history-from-filters" class="options-action-btn" title="Open the SQL Query History panel to browse all queries in this session">SQL Query History\u2026</button>
-            </div>
-        `)}`;
+        ${filterTab('log-sources', 'broadcast', 'Log Sources')}
+        ${filterTab('exclusions', 'exclude', 'Exclusions')}
+        ${filterTab('scope', 'folder-opened', 'File Scope')}
+        ${filterTab('log-tags', 'tag', 'Message Tags')}
+        ${filterTab('class-tags', 'symbol-class', 'Source Classes')}
+        ${filterTab('sql-patterns', 'database', 'SQL Commands')}`;
 }
-/** Single accordion section with collapsible body. */
-function accordionSection(id, title, body) {
+/** Single tab button with icon, label, and count. */
+function filterTab(id, icon, label) {
     return /* html */ `
-    <div class="filter-accordion" id="${id}" style="display:none">
-        <button type="button" class="filter-accordion-header" title="Click to expand or collapse the ${title} filter section" aria-expanded="false">
-            <span class="filter-accordion-arrow codicon codicon-chevron-right"></span>
-            <span class="filter-accordion-title">${title}</span>
-            <span class="filter-accordion-summary"></span>
-        </button>
-        <div class="filter-accordion-body">${body}</div>
+    <button type="button" class="filter-tab" id="filter-tab-${id}"
+            role="tab" aria-selected="false"
+            aria-controls="${id}-section"
+            title="${label}">
+        <span class="codicon codicon-${icon}"></span>
+        <span class="filter-tab-label">${label}</span>
+        <span class="filter-tab-count" id="filter-tab-count-${id}"></span>
+    </button>`;
+}
+/** Tab panel content — each panel wraps the section body. */
+function getFilterTabPanels() {
+    return /* html */ `
+    <div class="filter-tab-panel" id="log-sources-section" role="tabpanel" style="display:none">
+        <div class="options-row-list tier-filter-list">
+            <fieldset class="tier-radio-group">
+                <legend title="Debug Adapter Protocol \u2014 the channel between VS Code and the Flutter debugger">Flutter DAP <span class="tier-hint">\u2014 stdout, stderr, console</span></legend>
+                <label title="Show all output from your app code"><input type="radio" name="tier-flutter" value="all" checked /> All</label>
+                <label title="Show only warnings and errors from your app"><input type="radio" name="tier-flutter" value="warnplus" /> Warn+</label>
+                <label title="Hide all app output"><input type="radio" name="tier-flutter" value="none" /> None</label>
+            </fieldset>
+            <fieldset class="tier-radio-group tier-radio-group-spaced">
+                <legend>Device <span class="tier-hint">\u2014 Logcat, Android system logs</span></legend>
+                <label title="Show all device/system logs (critical errors like crashes and ANR are always visible)"><input type="radio" name="tier-device" value="all" /> All</label>
+                <label title="Show only device warnings and errors"><input type="radio" name="tier-device" value="warnplus" checked /> Warn+</label>
+                <label title="Hide device/system logs (critical errors remain visible)"><input type="radio" name="tier-device" value="none" /> None</label>
+            </fieldset>
+            <fieldset class="tier-radio-group tier-radio-group-spaced">
+                <legend>External <span class="tier-hint">\u2014 Saved logs, terminal, browser, drift-perf</span></legend>
+                <label title="Show all external source output"><input type="radio" name="tier-external" value="all" /> All</label>
+                <label title="Show only warnings and errors from external sources"><input type="radio" name="tier-external" value="warnplus" checked /> Warn+</label>
+                <label title="Hide all external source output"><input type="radio" name="tier-external" value="none" /> None</label>
+            </fieldset>
+        </div>
+    </div>
+    <div class="filter-tab-panel" id="exclusions-section" role="tabpanel" style="display:none">
+        <div class="exclusion-input-wrapper">
+            <label class="exclusion-toggle" title="Enable or disable exclusion pattern filtering"><input type="checkbox" id="opt-exclusions" /><span id="exclusion-label" class="u-sr-only">Exclusion patterns</span></label>
+            <input id="exclusion-add-input" type="text" placeholder="e.g. verbose or /debug/i" title="Enter a text pattern or /regex/i to exclude matching log lines" />
+            <button id="exclusion-add-btn" title="Add this pattern to the exclusion list">Add</button>
+        </div>
+        <div id="exclusion-chips" class="exclusion-chips"></div>
+        <div class="options-hint" id="exclusion-count"></div>
+    </div>
+    <div class="filter-tab-panel" id="scope-section" role="tabpanel" style="display:none">
+        <div id="scope-status" class="options-hint"></div>
+        <label class="options-row" title="Show all log lines regardless of source file"><input type="radio" name="scope" value="all" checked /> All logs</label>
+        <label class="options-row" title="Show only logs from the current workspace"><input type="radio" name="scope" value="workspace" disabled /> Only workspace<span id="scope-suffix-workspace" class="scope-suffix"></span></label>
+        <label class="options-row" title="Show only logs from the current package"><input type="radio" name="scope" value="package" disabled /> Only package<span id="scope-suffix-package" class="scope-suffix"></span></label>
+        <label class="options-row" title="Show only logs from the active file\u2019s directory"><input type="radio" name="scope" value="directory" disabled /> Only directory<span id="scope-suffix-directory" class="scope-suffix"></span></label>
+        <label class="options-row" title="Show only logs from the active file"><input type="radio" name="scope" value="file" disabled /> Only file<span id="scope-suffix-file" class="scope-suffix"></span></label>
+        <label class="options-row scope-unattrib-row" title="When a scope is active, also exclude lines that have no source file from the debugger"><input type="checkbox" id="scope-hide-unattrib" /><span>Exclude lines with no source file</span></label>
+        <div id="scope-filter-hint" class="options-hint scope-filter-hint" style="display:none" aria-live="polite"></div>
+    </div>
+    <div class="filter-tab-panel" id="log-tags-section" role="tabpanel" style="display:none">
+        <div class="options-hint">Tags from your logging framework</div>
+        <div class="options-row">
+            <span id="source-tag-summary" class="source-tag-summary"></span>
+        </div>
+        <div id="source-tag-chips" class="source-tag-chips options-tags"></div>
+    </div>
+    <div class="filter-tab-panel" id="class-tags-section" role="tabpanel" style="display:none">
+        <div class="options-hint">Class &amp; method where log originated</div>
+        <div class="options-row">
+            <span id="class-tag-summary" class="source-tag-summary"></span>
+        </div>
+        <div id="class-tag-chips" class="source-tag-chips options-tags"></div>
+    </div>
+    <div class="filter-tab-panel" id="sql-patterns-section" role="tabpanel" style="display:none">
+        <div class="options-row">
+            <span id="sql-pattern-summary" class="source-tag-summary"></span>
+        </div>
+        <div id="sql-pattern-chips" class="source-tag-chips options-tags"></div>
+        <div class="options-row">
+            <label title="Show DB signal markers inline in the log (timestamp-burst, slow-query-burst). Turn off to suppress all such markers regardless of the DB level filter.">
+                <input type="checkbox" id="opt-db-signal-markers" checked />
+                Show DB signal markers
+            </label>
+        </div>
+        <div class="options-row">
+            <button type="button" id="open-sql-query-history-from-tags" class="options-action-btn" title="Open scrollable list of SQL fingerprints for this session">SQL Query History\u2026</button>
+        </div>
     </div>`;
 }
 //# sourceMappingURL=viewer-toolbar-filter-drawer-html.js.map

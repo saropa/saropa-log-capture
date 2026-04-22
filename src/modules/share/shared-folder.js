@@ -1,6 +1,6 @@
 "use strict";
 /**
- * Save investigation .slc to a shared folder path (team namespace). Path can be local or network.
+ * Save collection .slc to a shared folder path (team namespace). Path can be local or network.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -41,12 +41,12 @@ const vscode = __importStar(require("vscode"));
 const path = __importStar(require("path"));
 const slc_bundle_1 = require("../export/slc-bundle");
 /**
- * Save investigation bundle to sharedFolderPath. Path is used as-is if absolute; otherwise relative to workspace root.
+ * Save collection bundle to sharedFolderPath. Path is used as-is if absolute; otherwise relative to workspace root.
  * Returns the file URI written.
  */
-async function saveToSharedFolder(investigation, workspaceUri, sharedFolderPath) {
-    const buffer = await (0, slc_bundle_1.exportInvestigationToBuffer)(investigation, workspaceUri);
-    const safeName = (investigation.name.replace(/[^a-zA-Z0-9_\- .]/g, '_').trim() || 'investigation') + '.slc';
+async function saveToSharedFolder(collection, workspaceUri, sharedFolderPath) {
+    const buffer = await (0, slc_bundle_1.exportCollectionToBuffer)(collection, workspaceUri);
+    const safeName = (collection.name.replace(/[^a-zA-Z0-9_\- .]/g, '_').trim() || 'collection') + '.slc';
     const isAbsolute = path.isAbsolute(sharedFolderPath);
     const dirUri = isAbsolute
         ? vscode.Uri.file(sharedFolderPath)

@@ -18,6 +18,7 @@ const viewer_pin_1 = require("../viewer/viewer-pin");
 const viewer_exclusions_1 = require("../viewer-search-filter/viewer-exclusions");
 const viewer_copy_1 = require("../viewer/viewer-copy");
 const viewer_hidden_lines_1 = require("../viewer/viewer-hidden-lines");
+const viewer_peek_chevron_1 = require("../viewer/viewer-peek-chevron");
 const viewer_auto_hide_modal_1 = require("../viewer/viewer-auto-hide-modal");
 const viewer_annotations_1 = require("../viewer/viewer-annotations");
 const viewer_timing_1 = require("../viewer/viewer-timing");
@@ -49,6 +50,7 @@ const viewer_scope_filter_hint_1 = require("../viewer-search-filter/viewer-scope
 const session_time_buckets_1 = require("../../modules/viewer/session-time-buckets");
 const viewer_time_range_filter_1 = require("../viewer/viewer-time-range-filter");
 const viewer_presets_1 = require("../viewer-search-filter/viewer-presets");
+const viewer_presets_submenu_1 = require("../viewer-search-filter/viewer-presets-submenu");
 const viewer_filter_badge_1 = require("../viewer-search-filter/viewer-filter-badge");
 const viewer_context_modal_1 = require("../viewer-context-menu/viewer-context-modal");
 const viewer_context_popover_1 = require("../viewer-context-menu/viewer-context-popover");
@@ -65,8 +67,9 @@ const viewer_filters_panel_1 = require("../viewer-search-filter/viewer-filters-p
 const viewer_toolbar_script_1 = require("../viewer-toolbar/viewer-toolbar-script");
 const viewer_options_panel_1 = require("../viewer-panels/viewer-options-panel");
 const viewer_crashlytics_panel_1 = require("../panels/viewer-crashlytics-panel");
-const viewer_insight_panel_1 = require("../panels/viewer-insight-panel");
+const viewer_signal_panel_1 = require("../panels/viewer-signal-panel");
 const viewer_performance_panel_1 = require("../panels/viewer-performance-panel");
+const viewer_collections_panel_script_1 = require("../viewer-panels/viewer-collections-panel-script");
 const viewer_about_panel_1 = require("../viewer-panels/viewer-about-panel");
 const viewer_icon_bar_1 = require("../viewer-nav/viewer-icon-bar");
 const viewer_error_breakpoint_1 = require("../viewer-decorations/viewer-error-breakpoint");
@@ -81,17 +84,20 @@ const viewer_goto_line_1 = require("../viewer/viewer-goto-line");
 const viewer_run_nav_1 = require("../viewer-nav/viewer-run-nav");
 const viewer_structured_line_parser_1 = require("../viewer/viewer-structured-line-parser");
 const viewer_metadata_filter_1 = require("../viewer-search-filter/viewer-metadata-filter");
+const viewer_format_markdown_1 = require("../viewer/viewer-format-markdown");
+const viewer_format_json_1 = require("../viewer/viewer-format-json");
+const viewer_format_csv_1 = require("../viewer/viewer-format-csv");
 function scriptTag(nonce, ...parts) {
     return `<script nonce="${nonce}">${parts.join('\n')}</script>`;
 }
 /** Build all script tags in the order required by the viewer. */
 function getViewerScriptTags(opts) {
-    const { nonce, extensionUri, viewerMaxLines: maxLines, viewerPreserveAsciiBoxArt, viewerGroupAsciiArt, viewerDetectAsciiArt, viewerRepeatThresholds, viewerDbInsightsEnabled, staticSqlFromFingerprintEnabled, viewerSlowBurstThresholds, viewerDbDetectorToggles, signalSlowOpThresholdMs, } = opts;
+    const { nonce, extensionUri, viewerMaxLines: maxLines, viewerPreserveAsciiBoxArt, viewerGroupAsciiArt, viewerDetectAsciiArt, viewerRepeatThresholds, viewerDbSignalsEnabled, staticSqlFromFingerprintEnabled, viewerSlowBurstThresholds, viewerDbDetectorToggles, signalSlowOpThresholdMs, } = opts;
     return (scriptTag(nonce, (0, viewer_error_handler_1.getErrorHandlerScript)()) +
         scriptTag(nonce, (0, viewer_structured_line_parser_1.getStructuredLineParserScript)()) +
         scriptTag(nonce, (0, viewer_layout_1.getLayoutScript)(), (0, viewer_data_1.getViewerDataScript)({
             repeatThresholds: viewerRepeatThresholds,
-            viewerDbInsightsEnabled: viewerDbInsightsEnabled !== false,
+            viewerDbSignalsEnabled: viewerDbSignalsEnabled !== false,
             staticSqlFromFingerprintEnabled: staticSqlFromFingerprintEnabled !== false,
             slowBurstThresholds: viewerSlowBurstThresholds,
             dbDetectorToggles: viewerDbDetectorToggles,
@@ -103,12 +109,13 @@ function getViewerScriptTags(opts) {
         scriptTag(nonce, (0, viewer_exclusions_1.getExclusionScript)()) +
         scriptTag(nonce, (0, viewer_copy_1.getCopyScript)()) +
         scriptTag(nonce, (0, viewer_hidden_lines_1.getHiddenLinesScript)()) +
+        scriptTag(nonce, (0, viewer_peek_chevron_1.getPeekChevronScript)()) +
         scriptTag(nonce, (0, viewer_auto_hide_modal_1.getAutoHideModalScript)()) +
         scriptTag(nonce, (0, viewer_annotations_1.getAnnotationScript)()) +
         scriptTag(nonce, (0, viewer_timing_1.getTimingScript)()) +
         scriptTag(nonce, (0, viewer_replay_1.getReplayScript)()) +
-        scriptTag(nonce, (0, viewer_decorations_1.getDecorationsScript)()) +
         scriptTag(nonce, (0, viewer_deco_settings_1.getDecoSettingsScript)()) +
+        scriptTag(nonce, (0, viewer_decorations_1.getDecorationsScript)()) +
         scriptTag(nonce, (0, viewer_deco_settings_listeners_1.getDecoSettingsListenersScript)()) +
         scriptTag(nonce, (0, viewer_quality_badge_1.getQualityBadgeScript)()) +
         scriptTag(nonce, (0, viewer_lint_badge_1.getLintBadgeScript)()) +
@@ -133,6 +140,7 @@ function getViewerScriptTags(opts) {
         scriptTag(nonce, (0, session_time_buckets_1.getSessionTimeBucketsScript)()) +
         scriptTag(nonce, (0, viewer_time_range_filter_1.getViewerTimeRangeFilterScript)()) +
         scriptTag(nonce, (0, viewer_presets_1.getPresetsScript)()) +
+        scriptTag(nonce, (0, viewer_presets_submenu_1.getPresetsSubmenuScript)()) +
         scriptTag(nonce, (0, viewer_filter_badge_1.getFilterBadgeScript)()) +
         scriptTag(nonce, (0, viewer_context_modal_1.getContextModalScript)()) +
         scriptTag(nonce, (0, viewer_context_popover_1.getContextPopoverScript)()) +
@@ -148,10 +156,14 @@ function getViewerScriptTags(opts) {
         scriptTag(nonce, (0, viewer_filters_panel_1.getFiltersPanelScript)()) +
         scriptTag(nonce, (0, viewer_options_panel_1.getOptionsPanelScript)()) +
         scriptTag(nonce, (0, viewer_crashlytics_panel_1.getCrashlyticsPanelScript)()) +
-        scriptTag(nonce, (0, viewer_insight_panel_1.getInsightPanelScript)()) +
-        // Performance UI lives only inside Insight (insight-pp-*); standalone performance-panel was removed.
-        scriptTag(nonce, (0, viewer_performance_panel_1.getPerformancePanelScript)('insight-')) +
+        scriptTag(nonce, (0, viewer_collections_panel_script_1.getCollectionsPanelScript)()) +
+        scriptTag(nonce, (0, viewer_signal_panel_1.getSignalPanelScript)()) +
+        // Performance UI lives only inside Signal panel (signal-pp-*); standalone performance-panel was removed.
+        scriptTag(nonce, (0, viewer_performance_panel_1.getPerformancePanelScript)('signal-')) +
         scriptTag(nonce, (0, viewer_about_panel_1.getAboutPanelScript)()) +
+        scriptTag(nonce, (0, viewer_format_markdown_1.getViewerFormatMarkdownScript)()) +
+        scriptTag(nonce, (0, viewer_format_json_1.getViewerFormatJsonScript)()) +
+        scriptTag(nonce, (0, viewer_format_csv_1.getViewerFormatCsvScript)()) +
         scriptTag(nonce, (0, viewer_icon_bar_1.getIconBarScript)()) +
         scriptTag(nonce, (0, viewer_toolbar_script_1.getToolbarScript)()) +
         scriptTag(nonce, (0, viewer_error_breakpoint_1.getErrorBreakpointScript)()) +

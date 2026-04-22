@@ -83,10 +83,10 @@ suite('Viewer toolbar', () => {
         assert.ok(leftIdx < rightIdx, 'toolbar-left should precede toolbar-right');
         assert.ok(filenameIdx > rightIdx, 'filename should be in toolbar-right');
     });
-    test('filter drawer HTML preserves required element IDs', () => {
+    test('filter panel HTML preserves required element IDs', () => {
         const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
         const required = [
-            'id="filter-drawer"',
+            'id="filters-panel"',
             'id="level-select-all"',
             'id="level-select-none"',
             'id="context-lines-slider"',
@@ -94,10 +94,9 @@ suite('Viewer toolbar', () => {
             'name="tier-flutter"',
             'name="tier-device"',
             'id="preset-select"',
-            'id="reset-all-filters"',
         ];
         for (const id of required) {
-            assert.ok(html.includes(id), `filter drawer must contain ${id}`);
+            assert.ok(html.includes(id), `filter panel must contain ${id}`);
         }
     });
     test('context label uses compact \u00b1N format', () => {
@@ -108,27 +107,34 @@ suite('Viewer toolbar', () => {
         const src = readSrc('ui/viewer-search-filter/viewer-level-filter.ts');
         assert.ok(src.includes("'\\u00B1' + contextLinesBefore"), 'syncContextSlider should set label to \u00b1N');
     });
-    test('filter drawer has accordion sections', () => {
+    test('filter drawer has tab bar with tabs', () => {
         const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
-        assert.ok(html.includes('filter-accordion'), 'filter drawer should have accordion sections');
-        assert.ok(html.includes('filter-accordion-header'), 'accordion sections need clickable headers');
+        assert.ok(html.includes('filter-tab-bar'), 'filter drawer should have tab bar');
+        assert.ok(html.includes('filter-tab'), 'tab bar should contain filter tabs');
     });
-    test('filter drawer has preset label and reset after summary', () => {
+    test('filter drawer has hidden preset select for backward compat', () => {
         const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
-        assert.ok(html.includes('filter-drawer-footer-label'), 'footer should have a preset label');
-        assert.ok(html.includes('>Preset:</span>'), 'preset label should read "Preset:"');
-        const summaryIdx = html.indexOf('id="filter-drawer-summary"');
-        const resetIdx = html.indexOf('id="reset-all-filters"');
-        assert.ok(summaryIdx < resetIdx, 'reset button should appear after summary (far right)');
+        assert.ok(html.includes('id="preset-select"'), 'hidden preset select must exist for backward compat');
+        assert.ok(html.includes('>Default</option>'), 'default preset option should read "Default"');
+        assert.ok(!html.includes('filter-drawer-footer-label'), 'old Saved Filters footer label should be removed');
     });
-    test('filter drawer sections use grid container', () => {
+    test('actions dropdown has presets submenu', () => {
+        const html = (0, viewer_toolbar_actions_html_1.getActionsDropdownHtml)();
+        assert.ok(html.includes('id="presets-submenu"'), 'actions dropdown should have presets submenu container');
+        assert.ok(html.includes('toolbar-actions-submenu-trigger'), 'presets item should have submenu trigger class');
+    });
+    test('filter drawer has vertical tab layout with sidebar and panels', () => {
         const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
-        assert.ok(html.includes('class="filter-drawer-sections"'), 'accordion sections should be inside grid container');
+        assert.ok(html.includes('filter-tab-layout'), 'tab bar and panels should be inside layout container');
+        assert.ok(html.includes('filter-tab-panels'), 'tab panels should be inside panels container');
     });
-    test('accordion script manages expanded class', () => {
-        const src = readSrc('ui/viewer-toolbar/viewer-toolbar-script.ts');
-        assert.ok(src.includes("classList.add('expanded')"), 'handleAccordionClick should add expanded class');
-        assert.ok(src.includes("classList.remove('expanded')"), 'collapseAllAccordions should remove expanded class');
+    test('tab switching script defines activateFilterTab', () => {
+        /* Filter tab logic lives in a concatenated sibling script. */
+        const tabs = readSrc('ui/viewer-toolbar/viewer-toolbar-filter-tabs-script.ts');
+        const main = readSrc('ui/viewer-toolbar/viewer-toolbar-script.ts');
+        assert.ok(tabs.includes('function activateFilterTab(key)'), 'activateFilterTab should switch visible panel');
+        assert.ok(tabs.includes('initFilterTabs'), 'initFilterTabs should wire tab click handlers');
+        assert.ok(main.includes('getFilterTabsScript'), 'toolbar script should concatenate the filter tabs script');
     });
     test('actions dropdown preserves replay script IDs', () => {
         const html = (0, viewer_toolbar_actions_html_1.getActionsDropdownHtml)();
@@ -144,10 +150,20 @@ suite('Viewer toolbar', () => {
         assert.ok(src.includes('getFilterDrawerHtml'), 'body should import filter drawer');
         assert.ok(src.includes('getActionsDropdownHtml'), 'body should import actions');
     });
-    test('content body does not include old footer or filters panel', () => {
+    test('content scripts load presets submenu after presets', () => {
+        const src = readSrc('ui/provider/viewer-content-scripts.ts');
+        const presetsIdx = src.indexOf('getPresetsScript()');
+        const submenuIdx = src.indexOf('getPresetsSubmenuScript()');
+        assert.ok(presetsIdx > 0, 'content scripts should load presets script');
+        assert.ok(submenuIdx > 0, 'content scripts should load presets submenu script');
+        assert.ok(submenuIdx > presetsIdx, 'presets submenu must load after presets (depends on globals)');
+    });
+    test('content body does not include old footer or Tags slide-out panel', () => {
         const src = readSrc('ui/provider/viewer-content-body.ts');
         assert.ok(!src.includes('id="footer"'), 'old footer removed');
-        assert.ok(!src.includes('getFiltersPanelHtml'), 'filters panel removed from body');
+        assert.ok(!src.includes('getFiltersPanelHtml'), 'old filters panel name removed from body');
+        /* Tags sections moved into filter drawer — slide-out panel removed from body */
+        assert.ok(!src.includes('getTagsPanelHtml'), 'Tags slide-out panel removed from body');
     });
     test('toolbar should be inside log-area-with-footer, not above panel-content-row', () => {
         const { getViewerBodyHtml } = require('../../ui/provider/viewer-content-body');

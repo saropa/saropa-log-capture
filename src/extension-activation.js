@@ -43,6 +43,7 @@ const config_1 = require("./modules/config/config");
 const tracker_1 = require("./modules/capture/tracker");
 const session_manager_1 = require("./modules/session/session-manager");
 const status_bar_1 = require("./ui/shared/status-bar");
+const capture_toggle_status_bar_1 = require("./ui/shared/capture-toggle-status-bar");
 const session_history_provider_1 = require("./ui/session/session-history-provider");
 const deep_links_1 = require("./modules/features/deep-links");
 const gist_importer_1 = require("./modules/share/gist-importer");
@@ -52,22 +53,23 @@ const commands_1 = require("./commands");
 const session_display_1 = require("./ui/session/session-display");
 const viewer_broadcaster_1 = require("./ui/provider/viewer-broadcaster");
 const pop_out_panel_1 = require("./ui/viewer-panels/pop-out-panel");
-const insight_tab_panel_1 = require("./ui/viewer-panels/insight-tab-panel");
+const extension_activation_handlers_1 = require("./extension-activation-handlers");
 const viewer_handler_wiring_1 = require("./ui/provider/viewer-handler-wiring");
 const gitignore_checker_1 = require("./modules/config/gitignore-checker");
 const crashlytics_io_1 = require("./modules/crashlytics/crashlytics-io");
 const session_metadata_1 = require("./modules/session/session-metadata");
 const project_indexer_1 = require("./modules/project-indexer/project-indexer");
-const log_search_1 = require("./modules/search/log-search");
 const bookmark_store_1 = require("./modules/storage/bookmark-store");
 const viewer_provider_helpers_1 = require("./ui/provider/viewer-provider-helpers");
 const extension_lifecycle_1 = require("./extension-lifecycle");
+const session_group_tracker_1 = require("./modules/session/session-group-tracker");
+const file_retention_1 = require("./modules/config/file-retention");
 const ai_watcher_1 = require("./modules/ai/ai-watcher");
 const ai_line_formatter_1 = require("./modules/ai/ai-line-formatter");
 const activation_integrations_1 = require("./activation-integrations");
 const api_1 = require("./api");
-const investigation_store_1 = require("./modules/investigation/investigation-store");
-const investigation_panel_1 = require("./ui/investigation/investigation-panel");
+const collection_store_1 = require("./modules/collection/collection-store");
+const collection_panel_1 = require("./ui/collection/collection-panel");
 const activation_providers_1 = require("./activation-providers");
 const activation_listeners_1 = require("./activation-listeners");
 const diagnostic_cache_1 = require("./modules/diagnostics/diagnostic-cache");
@@ -78,7 +80,8 @@ const ai_auto_enable_1 = require("./modules/ai/ai-auto-enable");
 const flutter_crash_watcher_1 = require("./modules/integrations/flutter-crash-watcher");
 function runActivation(context, outputChannel) {
     const statusBar = new status_bar_1.StatusBar();
-    context.subscriptions.push(statusBar, outputChannel);
+    const captureToggle = new capture_toggle_status_bar_1.CaptureToggleStatusBar((0, config_1.getConfig)().enabled);
+    context.subscriptions.push(statusBar, captureToggle, outputChannel);
     const sessionManager = new session_manager_1.SessionManagerImpl(statusBar, outputChannel);
     (0, learning_runtime_1.initLearningRuntime)(context, sessionManager);
     context.subscriptions.push({ dispose: () => { void (0, learning_runtime_1.flushLearningBuffer)(); } });
@@ -133,11 +136,11 @@ function runActivation(context, outputChannel) {
     const bookmarkStore = new bookmark_store_1.BookmarkStore(context);
     context.subscriptions.push(bookmarkStore);
     bookmarkStore.onDidChange(() => { broadcaster.sendBookmarkList(bookmarkStore.getAll()); });
-    const investigationStore = new investigation_store_1.InvestigationStore(context);
-    context.subscriptions.push(investigationStore, { dispose: investigation_panel_1.disposeInvestigationPanel });
+    const collectionStore = new collection_store_1.CollectionStore(context);
+    context.subscriptions.push(collectionStore, { dispose: collection_panel_1.disposeCollectionPanel });
     const importHandlers = {
-        importFromGist: (gistId) => (0, gist_importer_1.importFromGist)(gistId, investigationStore),
-        importFromUrl: (url) => (0, gist_importer_1.importFromUrl)(url, investigationStore),
+        importFromGist: (gistId) => (0, gist_importer_1.importFromGist)(gistId, collectionStore),
+        importFromUrl: (url) => (0, gist_importer_1.importFromUrl)(url, collectionStore),
     };
     context.subscriptions.push(vscode.window.registerUriHandler((0, deep_links_1.createUriHandler)(importHandlers)), vscode.authentication.onDidChangeSessions(async (e) => {
         if (e.provider.id !== 'github') {
@@ -150,7 +153,12 @@ function runActivation(context, outputChannel) {
     }));
     const initCfg = (0, config_1.getConfig)();
     (0, activation_broadcaster_config_1.applyInitialBroadcasterConfig)(broadcaster, initCfg);
-    (0, activation_listeners_1.setupConfigListener)(context, sessionManager, broadcaster);
+    /* Restore custom minimap drag-to-resize width from workspace state (overrides preset) */
+    const customMmPx = context.workspaceState.get('saropaLogCapture.minimapCustomPx');
+    if (typeof customMmPx === 'number' && customMmPx >= 20 && customMmPx <= 160) {
+        broadcaster.postToWebview({ type: 'minimapWidthPx', px: customMmPx });
+    }
+    (0, activation_listeners_1.setupConfigListener)(context, sessionManager, broadcaster, captureToggle);
     (0, activation_listeners_1.setupLineListeners)({ context, sessionManager, broadcaster, historyProvider, inlineDecorations });
     (0, activation_listeners_1.setupScopeContextListener)(context, broadcaster);
     (0, activation_listeners_1.setupDiagnosticListener)(context, diagnosticCache, broadcaster);
@@ -189,80 +197,9 @@ function runActivation(context, outputChannel) {
     const handlerDeps = { sessionManager, broadcaster, historyProvider, bookmarkStore, context, onOpenBookmark, openSessionForReplay, onFirstSessionListReady };
     (0, viewer_handler_wiring_1.wireSharedHandlers)(viewerProvider, handlerDeps);
     (0, viewer_handler_wiring_1.wireSharedHandlers)(popOutPanel, handlerDeps);
-    const updateSessionNav = async () => {
-        const uri = viewerProvider.getCurrentFileUri();
-        if (!uri) {
-            viewerProvider.setSessionNavInfo(false, false, 0, 0);
-            return;
-        }
-        const adj = await historyProvider.getAdjacentSessions(uri);
-        viewerProvider.setSessionNavInfo(!!adj.prev, !!adj.next, adj.index, adj.total);
-    };
-    const smartBookmarkSuggestedForUri = new Set();
-    viewerProvider.setFileLoadedHandler((uri, loadResult) => {
-        void updateSessionNav();
-        const isActive = historyProvider.getActiveUri()?.toString() === uri.toString();
-        if (isActive) {
-            void (0, extension_activation_helpers_1.maybeSuggestSmartBookmark)(uri, loadResult, bookmarkStore, smartBookmarkSuggestedForUri);
-        }
+    const { updateSessionNav } = (0, extension_activation_handlers_1.wireViewerSpecificHandlers)({
+        viewerProvider, historyProvider, bookmarkStore, popOutPanel, context, version,
     });
-    viewerProvider.setSessionNavigateHandler(async (direction) => {
-        const uri = viewerProvider.getCurrentFileUri();
-        if (!uri) {
-            return;
-        }
-        const adj = await historyProvider.getAdjacentSessions(uri);
-        const target = direction < 0 ? adj.prev : adj.next;
-        if (target) {
-            await viewerProvider.loadFromFile(target);
-        }
-    });
-    viewerProvider.setBecameVisibleHandler(() => {
-        // Active session always takes priority.
-        const activeUri = historyProvider.getActiveUri();
-        if (activeUri) {
-            if (viewerProvider.getCurrentFileUri()?.toString() === activeUri.toString()) {
-                return;
-            }
-            void viewerProvider.loadFromFile(activeUri);
-            return;
-        }
-    });
-    viewerProvider.setOpenSessionFromPanelHandler(async (uriString) => {
-        if (!uriString) {
-            return;
-        }
-        await viewerProvider.loadFromFile(vscode.Uri.parse(uriString));
-        await (0, viewer_provider_helpers_1.updateLastViewed)(context, uriString);
-    });
-    viewerProvider.setPopOutHandler(() => { void popOutPanel.open(); });
-    viewerProvider.setOpenInsightTabHandler(() => {
-        (0, insight_tab_panel_1.openInsightTab)({
-            getCurrentFileUri: () => viewerProvider.getCurrentFileUri(),
-            context,
-            extensionUri: context.extensionUri,
-            version,
-        });
-    });
-    viewerProvider.setRevealLogFileHandler(async () => {
-        await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
-    });
-    viewerProvider.setFindInFilesHandler(async (query, options) => {
-        const results = await (0, log_search_1.searchLogFilesConcurrent)(query, {
-            caseSensitive: Boolean(options.caseSensitive),
-            useRegex: Boolean(options.useRegex),
-            wholeWord: Boolean(options.wholeWord),
-        });
-        viewerProvider.sendFindResults(results);
-    });
-    viewerProvider.setOpenFindResultHandler(async (uriString, query, options) => {
-        if (!uriString) {
-            return;
-        }
-        await viewerProvider.loadFromFile(vscode.Uri.parse(uriString));
-        viewerProvider.setupFindSearch(query, options);
-    });
-    viewerProvider.setFindNavigateMatchHandler(() => { viewerProvider.findNextMatch(); });
     context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory('*', new tracker_1.SaropaTrackerFactory(sessionManager)));
     const aiWatcher = new ai_watcher_1.AiWatcher(outputChannel);
     context.subscriptions.push(aiWatcher);
@@ -272,7 +209,19 @@ function runActivation(context, outputChannel) {
             broadcaster.addLine((0, ai_line_formatter_1.formatAiEntry)(entry));
         }
     });
-    (0, extension_lifecycle_1.registerDebugLifecycle)({ context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav, aiWatcher, fireSessionStart: apiHandle.fireSessionStart, fireSessionEnd: apiHandle.fireSessionEnd });
+    // Session-group tracker \u2014 watches DAP start/stop and stamps related files with a shared groupId.
+    // Reads settings fresh on every call so users can tune lookback seconds mid-session without reloading.
+    const sessionGroupTracker = new session_group_tracker_1.SessionGroupTracker({
+        metaStore: historyProvider.getMetaStore(),
+        getSettings: () => (0, config_1.getConfig)().sessionGroups,
+        log: (msg) => outputChannel.appendLine(msg),
+    });
+    // Expose the tracker to the retention sweep so it can skip active groups and expand closed
+    // groups atomically. File-retention doesn't see the tracker via a normal parameter chain
+    // (that would churn four interfaces for one optional hook); the module-level holder is the
+    // sanctioned workaround.
+    (0, file_retention_1.setRetentionGroupContext)({ getActiveGroupId: () => sessionGroupTracker.getActiveGroupId() });
+    (0, extension_lifecycle_1.registerDebugLifecycle)({ context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav, aiWatcher, fireSessionStart: apiHandle.fireSessionStart, fireSessionEnd: apiHandle.fireSessionEnd, sessionGroupTracker });
     (0, commands_1.registerCommands)({
         context,
         sessionManager,
@@ -280,9 +229,9 @@ function runActivation(context, outputChannel) {
         historyProvider,
         inlineDecorations,
         popOutPanel,
-        investigationStore,
+        collectionStore,
         broadcaster,
-    });
+    }, captureToggle);
     (0, learning_notifications_1.scheduleLearningSuggestionCheck)(context, broadcaster);
     (0, activation_providers_1.registerNoRestoreSerializers)(context);
     if (folder) {

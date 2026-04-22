@@ -123,8 +123,20 @@ suite('isErrorLine', () => {
     test('should detect error keyword', () => {
         assert.strictEqual((0, error_rate_alert_1.isErrorLine)('An error occurred', 'stdout'), true);
     });
+    test('should detect errors plural', () => {
+        assert.strictEqual((0, error_rate_alert_1.isErrorLine)('Build completed with 3 errors', 'stdout'), true);
+    });
     test('should detect exception keyword', () => {
         assert.strictEqual((0, error_rate_alert_1.isErrorLine)('NullPointerException', 'stdout'), true);
+    });
+    test('should detect standalone exception', () => {
+        assert.strictEqual((0, error_rate_alert_1.isErrorLine)('Unhandled exception in thread', 'stdout'), true);
+    });
+    test('should detect PascalCase error types like TypeError', () => {
+        assert.strictEqual((0, error_rate_alert_1.isErrorLine)('TypeError: Cannot read properties of null', 'stdout'), true);
+    });
+    test('should detect PascalCase error types like SyntaxError', () => {
+        assert.strictEqual((0, error_rate_alert_1.isErrorLine)('SyntaxError: Unexpected token', 'stdout'), true);
     });
     test('should detect fatal keyword', () => {
         assert.strictEqual((0, error_rate_alert_1.isErrorLine)('FATAL: cannot continue', 'stdout'), true);
@@ -135,6 +147,14 @@ suite('isErrorLine', () => {
     test('should not match regular text', () => {
         assert.strictEqual((0, error_rate_alert_1.isErrorLine)('Everything is fine', 'stdout'), false);
     });
+    // False-positive regression: camelCase identifiers containing "error"
+    // should not trigger — they are config properties, not real errors
+    test('should not match camelCase identifiers containing error', () => {
+        assert.strictEqual((0, error_rate_alert_1.isErrorLine)('  __breakOnConditionalError: false', 'stdout'), false);
+    });
+    test('should not match camelCase identifiers like showErrorDialog', () => {
+        assert.strictEqual((0, error_rate_alert_1.isErrorLine)('  showErrorDialog: true', 'stdout'), false);
+    });
 });
 suite('isWarningLine', () => {
     test('should detect warn keyword', () => {
@@ -143,8 +163,15 @@ suite('isWarningLine', () => {
     test('should be case insensitive', () => {
         assert.strictEqual((0, error_rate_alert_1.isWarningLine)('WARN: something'), true);
     });
+    test('should detect PascalCase warning types like DeprecationWarning', () => {
+        assert.strictEqual((0, error_rate_alert_1.isWarningLine)('DeprecationWarning: Buffer() is deprecated'), true);
+    });
     test('should not match regular text', () => {
         assert.strictEqual((0, error_rate_alert_1.isWarningLine)('All good'), false);
+    });
+    // False-positive regression: camelCase identifiers containing "warn"
+    test('should not match camelCase identifiers like showWarningDialog', () => {
+        assert.strictEqual((0, error_rate_alert_1.isWarningLine)('  showWarningDialog: true'), false);
     });
 });
 //# sourceMappingURL=error-rate-alert.test.js.map

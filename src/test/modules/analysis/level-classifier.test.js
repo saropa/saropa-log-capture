@@ -48,50 +48,7 @@ suite('LevelClassifier', () => {
             assert.strictEqual((0, level_classifier_1.classifyLevel)('I/flutter (1): Drift: Sent SELECT 1', 'stderr', true, false), 'database');
         });
     });
-    suite('classifyLevel — logcat prefixes', () => {
-        test('should classify E/ as error', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('E/MediaCodec: error', 'stdout', true), 'error');
-        });
-        test('should classify F/ as error', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('F/System: fatal crash', 'stdout', true), 'error');
-        });
-        test('should classify A/ as error', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('A/libc: assertion failed', 'stdout', true), 'error');
-        });
-        test('should classify W/ as warning', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('W/InputManager: slow event', 'stdout', true), 'warning');
-        });
-        test('should classify V/ as debug', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('V/Verbose: trace info', 'stdout', true), 'debug');
-        });
-        test('should classify D/ as debug', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('D/Debug: step through', 'stdout', true), 'debug');
-        });
-        test('should classify I/ with performance keyword as performance', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('I/Choreographer: Skipped 30 frames', 'stdout', true), 'performance');
-        });
-        test('should classify I/ with TODO as todo', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('I/App: TODO fix this', 'stdout', true), 'todo');
-        });
-        test('should classify I/ plain text as info', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('I/App: started', 'stdout', true), 'info');
-        });
-        test('should classify I/flutter Drift SQL statements as database even with "ApplicationLogError" in args', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('I/flutter (5475): Drift: Sent DELETE FROM "activities" WHERE "activity_type_name" IN (?, ?, ?, ?, ?) with args [ApplicationLogTodo, ApplicationLogBreadcrumb, ApplicationLogInfo, ApplicationLogWarning, ApplicationLogError]', 'stdout', true), 'database');
-        });
-        test('should classify capture-prefixed Drift SQL as database when logcat is not at line start', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('[12:00:00.000] [stdout] I/flutter (5475): Drift: Sent DELETE FROM "activities" WHERE "activity_type_name" IN (?, ?) with args [ApplicationLogTodo, ApplicationLogError]', 'stdout', true), 'database');
-        });
-        test('should classify E/flutter Drift SQL as database, not runtime error', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('E/flutter (1): Drift: Sent SELECT 1', 'stdout', true), 'database');
-        });
-        test('should classify DriftDebugInterceptor SELECT as database', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('Drift SELECT: SELECT * FROM "contacts" WHERE "id" = ?; | args: [42]', 'stdout', true), 'database');
-        });
-        test('should classify DriftDebugInterceptor UPDATE as database', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('Drift UPDATE: UPDATE "organizations" SET "version" = ?; | args: [null]', 'stdout', true), 'database');
-        });
-    });
+    // Logcat prefix tests extracted to level-classifier-logcat.test.ts
     suite('classifyLevel — strict mode', () => {
         test('should detect error with colon suffix', () => {
             assert.strictEqual((0, level_classifier_1.classifyLevel)('Error: something broke', 'stdout', true), 'error');
@@ -248,6 +205,47 @@ suite('LevelClassifier', () => {
                 warning: ['warn', 'warning', 'caution'],
             });
             assert.strictEqual((0, level_classifier_1.classifyLevel)('Build failed', 'stdout', true), 'error');
+        });
+    });
+    // Flutter emits rendering / widgets / scheduler / gesture / services exceptions
+    // wrapped in a box-drawing banner: '════ Exception caught by <library> ════'.
+    // The phrase has no colon or bracket, so without a dedicated pattern it falls
+    // through to 'info' and the entire error block disappears under the
+    // Errors/Warnings filter.
+    suite('classifyLevel — Flutter exception banner', () => {
+        test('should classify `Exception caught by rendering library` banner as error', () => {
+            const banner = '════════ Exception caught by rendering library ═════════════════════════════════';
+            assert.strictEqual((0, level_classifier_1.classifyLevel)(banner, 'stderr', true, false), 'error');
+        });
+        test('should classify banner as error in loose mode too', () => {
+            const banner = '════════ Exception caught by widgets library ═════════════════════════════════';
+            assert.strictEqual((0, level_classifier_1.classifyLevel)(banner, 'stderr', false, false), 'error');
+        });
+        test('should match all common Flutter banner variants', () => {
+            const variants = [
+                '════════ Exception caught by rendering library ═════════',
+                '════════ Exception caught by widgets library ═════════',
+                '════════ Exception caught by scheduler library ═════════',
+                '════════ Exception caught by gesture system ═════════',
+                '════════ Exception caught by services library ═════════',
+                '════════ Exception caught by image resource service ═════════',
+            ];
+            for (const v of variants) {
+                assert.strictEqual((0, level_classifier_1.classifyLevel)(v, 'stdout', true, false), 'error', `Failed for: ${v}`);
+            }
+        });
+        test('should still classify banner as error when user cleared error keywords', () => {
+            // Pattern is structural — not dependent on the user-configurable keyword list.
+            (0, level_classifier_1.setSeverityKeywords)({ ...config_normalizers_1.DEFAULT_SEVERITY_KEYWORDS, error: [] });
+            const banner = '════════ Exception caught by rendering library ═════════';
+            assert.strictEqual((0, level_classifier_1.classifyLevel)(banner, 'stdout', true, false), 'error');
+        });
+        test('should not false-trigger on "exception caught by" inside handler text', () => {
+            // Reset to defaults first so the kwError test env is clean
+            (0, level_classifier_1.setSeverityKeywords)(config_normalizers_1.DEFAULT_SEVERITY_KEYWORDS);
+            // The pattern matches the phrase unconditionally — this IS an error by design.
+            // Guard: make sure we didn't accidentally match unrelated phrases.
+            assert.notStrictEqual((0, level_classifier_1.classifyLevel)('Exception handler registered successfully', 'stdout', true, false), 'error');
         });
     });
 });

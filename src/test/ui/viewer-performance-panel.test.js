@@ -51,11 +51,11 @@ suite('ViewerPerformancePanel', () => {
             assert.ok(html.includes('data-action="copy-message"'));
             assert.ok(html.includes('Copy message'));
         });
-        test('should support insight prefix for embedded panel', () => {
-            const html = (0, viewer_performance_panel_1.getPerformancePanelHtml)('insight-');
-            assert.ok(html.includes('id="insight-pp-panel"'));
-            assert.ok(html.includes('id="insight-pp-session-intro"'));
-            assert.ok(html.includes('id="insight-pp-copy-message-menu"'));
+        test('should support signal prefix for embedded panel', () => {
+            const html = (0, viewer_performance_panel_1.getPerformancePanelHtml)('signal-');
+            assert.ok(html.includes('id="signal-pp-panel"'));
+            assert.ok(html.includes('id="signal-pp-session-intro"'));
+            assert.ok(html.includes('id="signal-pp-copy-message-menu"'));
         });
     });
     suite('getPerformancePanelScript', () => {
@@ -71,28 +71,28 @@ suite('ViewerPerformancePanel', () => {
         test('should use positive condition for ID prefix (Sonar S7735)', () => {
             // When no prefix is given, the script should contain the runtime fallback
             const noPrefix = (0, viewer_performance_panel_1.getPerformancePanelScript)();
-            assert.ok(noPrefix.includes('__insightPerfIdPrefix'));
+            assert.ok(noPrefix.includes('__signalPerfIdPrefix'));
             // When a prefix string is given, it should be inlined directly
-            const withPrefix = (0, viewer_performance_panel_1.getPerformancePanelScript)('insight-');
-            assert.ok(withPrefix.includes("'insight-'"));
-            assert.ok(!withPrefix.includes('__insightPerfIdPrefix'));
+            const withPrefix = (0, viewer_performance_panel_1.getPerformancePanelScript)('signal-');
+            assert.ok(withPrefix.includes("'signal-'"));
+            assert.ok(!withPrefix.includes('__signalPerfIdPrefix'));
         });
-        test('webview should bind to embedded insight- panel IDs', () => {
-            const script = (0, viewer_performance_panel_1.getPerformancePanelScript)('insight-');
-            assert.ok(script.includes("'insight-'"));
-            assert.ok(script.includes("ppIdPrefix + 'pp-panel'") || script.includes("insight-pp-panel"));
+        test('webview should bind to embedded signal- panel IDs', () => {
+            const script = (0, viewer_performance_panel_1.getPerformancePanelScript)('signal-');
+            assert.ok(script.includes("'signal-'"));
+            assert.ok(script.includes("ppIdPrefix + 'pp-panel'") || script.includes("signal-pp-panel"));
         });
-        test('session perf chip should open Insight without setActivePanel toggle-off', () => {
-            const script = (0, viewer_performance_panel_1.getPerformancePanelScript)('insight-');
-            assert.ok(script.includes('ensureInsightSlideoutOpen'));
+        test('session perf chip should open Signal without setActivePanel toggle-off', () => {
+            const script = (0, viewer_performance_panel_1.getPerformancePanelScript)('signal-');
+            assert.ok(script.includes('ensureSignalSlideoutOpen'));
             assert.ok(script.includes('session-perf-chip'));
         });
-        test('session perf chip should try ensureInsightSlideoutOpen before setActivePanel fallback', () => {
+        test('session perf chip should try ensureSignalSlideoutOpen before setActivePanel fallback', () => {
             const script = (0, viewer_performance_panel_1.getPerformancePanelScript)();
-            const ensureIdx = script.indexOf('ensureInsightSlideoutOpen');
-            const fallbackIdx = script.indexOf("window.setActivePanel === 'function') window.setActivePanel('insight')");
-            assert.ok(ensureIdx > 0, 'ensureInsightSlideoutOpen must appear in chip handler');
-            assert.ok(fallbackIdx > ensureIdx, 'setActivePanel fallback must come after ensureInsightSlideoutOpen');
+            const ensureIdx = script.indexOf('ensureSignalSlideoutOpen');
+            const fallbackIdx = script.indexOf("window.setActivePanel === 'function') window.setActivePanel('signal')");
+            assert.ok(ensureIdx > 0, 'ensureSignalSlideoutOpen must appear in chip handler');
+            assert.ok(fallbackIdx > ensureIdx, 'setActivePanel fallback must come after ensureSignalSlideoutOpen');
         });
         test('session perf chip fallback should use else-if chain, not unconditional calls', () => {
             const script = (0, viewer_performance_panel_1.getPerformancePanelScript)();
@@ -100,8 +100,8 @@ suite('ViewerPerformancePanel', () => {
             const chipStart = script.indexOf("getElementById('session-perf-chip')");
             assert.ok(chipStart > 0);
             const handlerBlock = script.slice(chipStart, chipStart + 500);
-            // The setActivePanel('insight') call must be in an else-if, not a standalone if
-            assert.ok(handlerBlock.includes('else if (typeof window.setActivePanel'), 'setActivePanel(insight) must be else-if (only fires when ensureInsightSlideoutOpen is absent)');
+            // The setActivePanel('signal') call must be in an else-if, not a standalone if
+            assert.ok(handlerBlock.includes('else if (typeof window.setActivePanel'), 'setActivePanel(signal) must be else-if (only fires when ensureSignalSlideoutOpen is absent)');
         });
     });
 });

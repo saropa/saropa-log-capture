@@ -118,6 +118,15 @@ function getRootCauseHypothesesStyles() {
     color: var(--vscode-charts-green, #89d185);
     animation: rch-toast-fade 1.5s ease-out forwards;
 }
+/* Cross-session trend badge: small ↻N indicator between confidence emoji and signal text */
+.rch-trend-badge {
+    font-size: 10px;
+    color: var(--vscode-descriptionForeground);
+    opacity: 0.75;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+}
 @keyframes rch-toast-fade {
     0%, 60% { opacity: 1; }
     100% { opacity: 0; }

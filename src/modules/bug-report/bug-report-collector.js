@@ -40,7 +40,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.collectInvestigationContext = collectInvestigationContext;
+exports.collectCollectionContext = collectCollectionContext;
 exports.collectBugReportData = collectBugReportData;
 const vscode = __importStar(require("vscode"));
 const path = __importStar(require("node:path"));
@@ -58,11 +58,11 @@ const firebase_crashlytics_1 = require("../crashlytics/firebase-crashlytics");
 const lint_violation_reader_1 = require("../misc/lint-violation-reader");
 const health_score_1 = require("../misc/health-score");
 const saropa_lints_refresh_prompt_1 = require("../misc/saropa-lints-refresh-prompt");
-const investigation_store_1 = require("../investigation/investigation-store");
+const collection_store_1 = require("../collection/collection-store");
 const bug_report_collector_helpers_1 = require("./bug-report-collector-helpers");
-/** Collect active investigation context for bug report, if any. */
-async function collectInvestigationContext(store) {
-    const active = await store.getActiveInvestigation();
+/** Collect active collection context for bug report, if any. */
+async function collectCollectionContext(store) {
+    const active = await store.getActiveCollection();
     if (!active) {
         return undefined;
     }
@@ -144,13 +144,13 @@ async function collectBugReportData(errorText, lineIndex, fileUri, extensionCont
     const tokenNames = tokens.map(t => t.value);
     const wsFolder = vscode.workspace.workspaceFolders?.[0];
     const errorTokens = tokens.filter(t => t.type === 'error-class' || t.type === 'quoted-string').map(t => t.value);
-    const investigationPromise = extensionContext
-        ? collectInvestigationContext(new investigation_store_1.InvestigationStore(extensionContext))
+    const collectionPromise = extensionContext
+        ? collectCollectionContext(new collection_store_1.CollectionStore(extensionContext))
         : Promise.resolve(undefined);
     if (wsFolder) {
         await (0, saropa_lints_refresh_prompt_1.offerSaropaLintRefreshIfNeeded)(wsFolder.uri, stackTrace);
     }
-    const [wsData, devEnv, docMatches, resolvedSymbols, fileAnalyses, fbCtx, lintMatches, lintHealthScoreParams, investigationContext, qualitySummary] = await Promise.all([
+    const [wsData, devEnv, docMatches, resolvedSymbols, fileAnalyses, fbCtx, lintMatches, lintHealthScoreParams, collectionContext, qualitySummary] = await Promise.all([
         (0, bug_report_collector_helpers_1.collectWorkspaceData)(sourceRef?.filePath, sourceRef?.line, fingerprint),
         (0, environment_collector_1.collectDevEnvironment)().then(environment_collector_1.formatDevEnvironment).catch(() => ({})),
         wsFolder ? (0, docs_scanner_1.scanDocsForTokens)(tokenNames, wsFolder).catch(() => undefined) : Promise.resolve(undefined),
@@ -159,7 +159,7 @@ async function collectBugReportData(errorText, lineIndex, fileUri, extensionCont
         (0, firebase_crashlytics_1.getFirebaseContext)(errorTokens).catch(() => undefined),
         wsFolder ? (0, lint_violation_reader_1.findLintMatches)(stackTrace, wsFolder.uri).catch(() => undefined) : Promise.resolve(undefined),
         wsFolder ? (0, health_score_1.getHealthScoreParamsForWorkspace)(wsFolder.uri).catch(() => undefined) : Promise.resolve(undefined),
-        investigationPromise,
+        collectionPromise,
         collectQualitySummary(fileUri, referencedPaths),
     ]);
     const [sourcePreview, blame, gitHistory, crossSessionMatch, lineRangeHistory, imports] = wsData;
@@ -175,7 +175,7 @@ async function collectBugReportData(errorText, lineIndex, fileUri, extensionCont
         resolvedSymbols, fileAnalyses, primarySourcePath: sourceRef?.filePath,
         logFilename, lineNumber: fileLineIndex + 1, firebaseMatch, lintMatches,
         lintHealthScoreParams,
-        investigationContext, qualitySummary,
+        collectionContext, qualitySummary,
     };
 }
 //# sourceMappingURL=bug-report-collector.js.map

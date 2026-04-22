@@ -120,6 +120,9 @@ function getCrashlyticsPanelScript() {
                 cpHelpInnerEl.innerHTML = '';
             }
         }
+        /* Update icon bar badge with Crashlytics issue count. */
+        var cpCount = (ctx.issues && ctx.issues.length) ? ctx.issues.length : 0;
+        if (typeof updateIconBadge === 'function') updateIconBadge('ib-crashlytics-badge', 'ib-crashlytics-count', cpCount);
     }
 
     function renderIssue(issue) {

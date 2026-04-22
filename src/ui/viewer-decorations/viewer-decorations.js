@@ -20,6 +20,7 @@ exports.getDecorationsScript = getDecorationsScript;
  *
  * Concatenated into the same script scope as viewer-script.ts.
  */
+const viewer_decorations_state_1 = require("./viewer-decorations-state");
 function getDecorationsScript() {
     return /* javascript */ `
 /**
@@ -109,23 +110,6 @@ function formatSessionElapsed(ms) {
 }
 
 /**
- * Reset all sub-toggles to their defaults.
- * Used by the options panel "Reset to defaults" action.
- */
-function resetDecoDefaults() {
-    decoShowDot = true;
-    decoShowCounter = true;
-    decoShowCounterOnBlank = false;
-    decoShowTimestamp = true;
-    decoShowSessionElapsed = false;
-    decoLineColorMode = 'none';
-    decoShowBar = true;
-    stripSourceTagPrefix = true;
-    stackDefaultState = false;
-    stackPreviewCount = 3;
-}
-
-/**
  * Compute counter digit width from the current max line number.
  * Keeps a 5-char minimum, then grows for 6+ digits.
  */
@@ -156,21 +140,6 @@ function applyDecorationLayoutWidth() {
     root.style.setProperty('--deco-content-indent-em', contentIndentEm + 'em');
     root.style.setProperty('--deco-prefix-width-em', totalPaddingEm + 'em');
     lastAppliedCounterDigits = digits;
-}
-
-/** Update the Deco button style and tooltip to reflect whether any decoration is active. */
-function updateDecoButton() {
-    var btn = document.getElementById('deco-toggle');
-    if (!btn) return;
-    var on = areDecorationsOn();
-    btn.title = on
-        ? 'Decorations ON (click gear to configure)'
-        : 'Decorations OFF (click gear to configure)';
-    if (on) {
-        btn.classList.remove('toggle-inactive');
-    } else {
-        btn.classList.add('toggle-inactive');
-    }
 }
 
 /**
@@ -234,15 +203,6 @@ function getLineTintClass(item) {
     if (item.level) return ' line-tint-' + item.level;
     return '';
 }
-
-// Register decoration button click — opens settings panel directly
-var decoToggleBtn = document.getElementById('deco-toggle');
-if (decoToggleBtn) {
-    decoToggleBtn.addEventListener('click', function() {
-        if (typeof toggleDecoSettings === 'function') toggleDecoSettings();
-    });
-}
-applyDecorationLayoutWidth();
-`;
+` + (0, viewer_decorations_state_1.getDecorationsStateScript)();
 }
 //# sourceMappingURL=viewer-decorations.js.map

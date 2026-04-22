@@ -40,7 +40,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.shouldRedactEnvVar = exports.getFileTypeGlob = exports.readTrackedFiles = exports.isTrackedFile = void 0;
+exports.shouldRedactEnvVar = exports.getFileTypeGlob = exports.readTrackedFilesStreaming = exports.readTrackedFiles = exports.isTrackedFile = void 0;
 exports.getConfig = getConfig;
 exports.getLogDirectoryUri = getLogDirectoryUri;
 exports.getReportFolderUri = getReportFolderUri;
@@ -128,7 +128,7 @@ function getConfig() {
             transactionMinCount: cfg.get("repeatCollapseTransactionMinCount"),
             dmlMinCount: cfg.get("repeatCollapseDmlMinCount"),
         }),
-        viewerDbInsightsEnabled: (0, config_validation_1.ensureBoolean)(cfg.get("viewerDbInsightsEnabled"), true),
+        viewerDbSignalsEnabled: (0, config_validation_1.ensureBoolean)(cfg.get("viewerDbSignalsEnabled"), true),
         staticSqlFromFingerprintEnabled: (0, config_validation_1.ensureBoolean)(cfg.get("staticSqlFromFingerprint.enabled"), true),
         viewerDbDetectorNPlusOneEnabled: (0, config_validation_1.ensureBoolean)(cfg.get("viewerDbDetectorNPlusOneEnabled"), true),
         viewerDbDetectorSlowBurstEnabled: (0, config_validation_1.ensureBoolean)(cfg.get("viewerDbDetectorSlowBurstEnabled"), true),
@@ -170,6 +170,15 @@ function getConfig() {
             minLineDelayMs: (0, config_validation_1.clamp)(cfg.get("replay.minLineDelayMs"), 0, 1000, 10),
             maxDelayMs: (0, config_validation_1.clamp)(cfg.get("replay.maxDelayMs"), 1000, 300000, 30000),
         },
+        sessionGroups: {
+            enabled: (0, config_validation_1.ensureBoolean)(cfg.get("sessionGroups.enabled"), true),
+            // 10s is a conservative default — wide enough to catch sidecar preamble writes, narrow enough
+            // to avoid falsely joining independent captures that just happen to land close in time.
+            beforeSeconds: (0, config_validation_1.clamp)(cfg.get("sessionGroups.beforeSeconds"), 0, 600, 10),
+            // 10s after session end catches late-flushed sidecars (e.g. adb-logcat writes .logcat.log in
+            // its onSessionEnd hook, after the DAP session has already terminated).
+            afterSeconds: (0, config_validation_1.clamp)(cfg.get("sessionGroups.afterSeconds"), 0, 600, 10),
+        },
     };
 }
 function getLogDirectoryUri(workspaceFolder) {
@@ -208,7 +217,7 @@ function getSaropaCacheCrashlyticsUri(workspaceFolder) {
 function getSaropaIndexDirUri(workspaceFolder) {
     return vscode.Uri.joinPath(getSaropaDirUri(workspaceFolder), 'index');
 }
-/** Per-detector flags for the log viewer DB pipeline (when master DB insights is on). */
+/** Per-detector flags for the log viewer DB pipeline (when master DB signals is on). */
 function viewerDbDetectorTogglesFromConfig(cfg) {
     return {
         nPlusOneEnabled: cfg.viewerDbDetectorNPlusOneEnabled,
@@ -228,6 +237,7 @@ function errorRateConfigFromConfig(cfg) {
 var config_file_utils_1 = require("./config-file-utils");
 Object.defineProperty(exports, "isTrackedFile", { enumerable: true, get: function () { return config_file_utils_1.isTrackedFile; } });
 Object.defineProperty(exports, "readTrackedFiles", { enumerable: true, get: function () { return config_file_utils_1.readTrackedFiles; } });
+Object.defineProperty(exports, "readTrackedFilesStreaming", { enumerable: true, get: function () { return config_file_utils_1.readTrackedFilesStreaming; } });
 Object.defineProperty(exports, "getFileTypeGlob", { enumerable: true, get: function () { return config_file_utils_1.getFileTypeGlob; } });
 Object.defineProperty(exports, "shouldRedactEnvVar", { enumerable: true, get: function () { return config_file_utils_1.shouldRedactEnvVar; } });
 //# sourceMappingURL=config.js.map

@@ -1,7 +1,7 @@
 "use strict";
 /**
- * Import investigation from GitHub Gist or from a URL (raw .slc or base64).
- * Shared flow: fetch or read (file://) → temp file → importSlcBundle → persist investigation and set active.
+ * Import collection from GitHub Gist or from a URL (raw .slc or base64).
+ * Shared flow: fetch or read (file://) → temp file → importSlcBundle → persist collection and set active.
  * URL import allows: https (any host); http only for same-network LAN (127.0.0.1, 192.168.x.x, 10.x.x.x, 172.16–31.x.x); file:// for local .slc.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -56,25 +56,25 @@ async function writeTempFile(data, suffix) {
     await vscode.workspace.fs.writeFile(uri, data instanceof Buffer ? data : Buffer.from(data));
     return uri;
 }
-/** If result is an investigation bundle, persist it and set as active; show toast. Returns the investigation or undefined. */
-async function persistAndActivateInvestigation(result, store) {
-    if (!result || !('investigation' in result)) {
+/** If result is a collection bundle, persist it and set as active; show toast. Returns the collection or undefined. */
+async function persistAndActivateCollection(result, store) {
+    if (!result || !('collection' in result)) {
         return undefined;
     }
     const invResult = result;
-    await store.addInvestigation(invResult.investigation);
-    await store.setActiveInvestigationId(invResult.investigation.id);
-    vscode.window.showInformationMessage((0, l10n_1.t)('msg.investigationImported', invResult.investigation.name));
-    return invResult.investigation;
+    await store.addCollection(invResult.collection);
+    await store.setActiveCollectionId(invResult.collection.id);
+    vscode.window.showInformationMessage((0, l10n_1.t)('msg.collectionImported', invResult.collection.name));
+    return invResult.collection;
 }
 /** Run import from a temp .slc URI; always deletes the temp file. */
 async function importFromSlcUri(tempUri, store) {
     try {
         const result = await (0, slc_bundle_1.importSlcBundle)(tempUri);
         if (result && 'mainLogUri' in result) {
-            vscode.window.showInformationMessage((0, l10n_1.t)('msg.investigationImported', 'Session'));
+            vscode.window.showInformationMessage((0, l10n_1.t)('msg.collectionImported', 'Session'));
         }
-        return persistAndActivateInvestigation(result, store);
+        return persistAndActivateCollection(result, store);
     }
     finally {
         try {
@@ -91,7 +91,7 @@ async function importFromGist(gistId, store) {
         throw new Error((0, l10n_1.t)('msg.importGistNotFound'));
     }
     const gist = (await res.json());
-    const slcFile = gist.files?.['investigation.slc.b64'];
+    const slcFile = gist.files?.['collection.slc.b64'];
     if (!slcFile?.raw_url) {
         throw new Error((0, l10n_1.t)('msg.importGistInvalid'));
     }

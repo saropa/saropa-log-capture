@@ -72,6 +72,13 @@ suite('Viewer compress lines (embedded script)', () => {
         assert.ok(dataScript.includes('!isLineEligibleForDupCompress(item)'), 'consecutive mode must break runs when a line is hidden by filters');
         assert.ok(dataScript.includes('!isLineEligibleForDupCompress(globalItem)'), 'global mode must ignore hidden lines for first-occurrence / count');
         assert.ok(dataScript.includes('row.levelFiltered'), 'level filter must affect duplicate grouping');
+        assert.ok(dataScript.includes('row.metadataFiltered'), 'metadata filter must affect duplicate grouping (mirrors calcItemHeight)');
+    });
+    test('lineDedupeKey strips structured prefix so identical message bodies match (fix: prefix mismatch)', () => {
+        assert.ok(dataScript.includes('structuredLineParsing'), 'lineDedupeKey must check structured-line parsing flag');
+        assert.ok(dataScript.includes('row.structuredPrefixLen'), 'lineDedupeKey must use structuredPrefixLen to strip the prefix');
+        assert.ok(dataScript.includes('stripHtmlPrefix'), 'lineDedupeKey must call stripHtmlPrefix for structured lines');
+        assert.ok(dataScript.includes('stripSourceTagPrefix'), 'lineDedupeKey must fall back to source-tag bracket stripping');
     });
     test('addLines uses full recalc when compressLinesMode is on (not append-only prefix sums)', () => {
         assert.ok(messageHandler.includes('compressLinesMode') && messageHandler.includes('recalcHeights'), 'message handler should branch on compress mode');
@@ -185,9 +192,10 @@ suite('Viewer compress streak (embedded script)', () => {
         assert.ok(dataScript.slice(i, i + 420).includes('compressLinesMode') && dataScript.slice(i, i + 420).includes('return'), 'must early-return when compressLinesMode so we never suggest while already compressing');
         assert.ok(dataScript.slice(i, i + 520).includes('compressNonConsecutiveMode'), 'must also early-return when non-consecutive compression is enabled');
     });
-    test('blank-line hiding remains independent from compression modes', () => {
+    test('blank lines always render at quarter height (not gated on toggle)', () => {
         const dataHelpers = (0, viewer_data_1.getViewerDataScript)();
-        assert.ok(dataHelpers.includes("var hideBlanks = (typeof hideBlankLines !== 'undefined' && hideBlankLines);"), 'compression toggles must not implicitly hide blanks');
+        /* Blank lines are unconditionally compact — no hideBlankLines gate. */
+        assert.ok(dataHelpers.includes('isLineContentBlank(item)') && dataHelpers.includes('ROW_HEIGHT / 4'), 'calcItemHeight must return quarter height for blank lines unconditionally');
     });
     test('clear log resets suggestion flags and streak (session reset)', () => {
         const mh = (0, viewer_script_messages_1.getViewerScriptMessageHandler)();

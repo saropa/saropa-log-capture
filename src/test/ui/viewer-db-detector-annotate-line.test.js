@@ -36,7 +36,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * VM tests for **`annotate-line`** and primary ingest rollup wiring (plan **DB_15**).
  *
- * Runs the same script chunks as `viewer-sql-repeat-compression.test.ts` plus DB insights on,
+ * Runs the same script chunks as `viewer-sql-repeat-compression.test.ts` plus DB signals on,
  * registers a test detector that patches the current line via **`ctx.anchorSeq`**, and exercises
  * direct **`applyDbAnnotateLineResult`** for false positives and height deltas.
  */
@@ -66,8 +66,10 @@ var suppressTransientErrors = false;
 var viewerPreserveAsciiBoxArt = true;
 var viewerGroupAsciiArt = true;
 var viewerDetectAsciiArt = false;
+var fileMode = 'log';
 var showFlutter = 'all';
-var showDevice = 'none';
+var showDevice = 'warnplus';
+var showExternal = 'warnplus';
 function isTierHidden() { return false; }
 
 function stripTags(html) { var s = (html == null ? '' : String(html)).replace(/<[^>]*>/g, ''); return s.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&'); }
@@ -145,7 +147,7 @@ suite("Viewer DB annotate-line (DB_15 VM)", () => {
         assert.strictEqual(line.type, "line");
         assert.strictEqual(line.vmTestAnnotate, true);
         assert.strictEqual(line.level, "performance");
-        assert.ok(line.dbInsight);
+        assert.ok(line.dbSignal);
     });
     test("applyDbAnnotateLineResult: unknown targetSeq is no-op (false positive guard)", () => {
         const s = loadAnnotateSandbox();

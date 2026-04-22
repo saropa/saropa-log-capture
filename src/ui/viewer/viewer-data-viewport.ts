@@ -7,14 +7,14 @@ function getBarLevel(el) {
     return m ? m[1] : null;
 }
 
-/** Find next viewport child with a visible severity dot (non-blank, non-chevron), stopping at markers. */
+/** Find next viewport child with a visible severity dot (non-blank), stopping at markers.
+    Note: the prior .hidden-chevron / .peek-collapse skip was removed when the unified
+    line-collapsing rethink retired those indicator elements — no render path emits
+    them anymore, so there is nothing to skip. */
 function findNextDotSibling(children, startIdx) {
     for (var ni = startIdx + 1; ni < children.length; ni++) {
         if (!children[ni]) continue;
         if (children[ni].classList.contains('marker')) return -1;
-        /* Skip both indicator divs so the same-level connector spans their gap. */
-        if (children[ni].classList.contains('hidden-chevron')) continue;
-        if (children[ni].classList.contains('peek-collapse')) continue;
         var lvl = getBarLevel(children[ni]);
         if (lvl && !children[ni].classList.contains('line-blank')) return ni;
     }
@@ -131,41 +131,61 @@ function renderViewport(force) {
     for (var i = startIdx; i <= endIdx && i < allLines.length; i++) {
         if (allLines[i].height === 0) continue;
         if (typeof window.replayMode !== 'undefined' && window.replayMode && typeof window.replayCurrentIndex === 'number' && i > window.replayCurrentIndex) continue;
-        // Insert chevron when non-blank lines are hidden between two visible lines.
-        // data-from/data-to carry the hidden-range indices so the click handler in
-        // viewer-hidden-lines.ts can set peekOverride on exactly those items.
+
+        /* Unified line-collapsing (plan: bugs/unified-line-collapsing.md).
+           Replaces the separate .hidden-chevron (▼) and .peek-collapse (−) elements
+           that used to be injected between visible rows. Both states now surface as
+           a single class (.bar-hidden-rows) stamped onto the row immediately AFTER
+           the hidden run (or the row starting a peek group) so its severity dot
+           goes outlined — no extra DOM node, no margin glyph, no text content. The
+           click handler in viewer-peek-chevron.ts delegates on .bar-hidden-rows
+           and routes by which data-* attrs are present.
+
+           WHY the row AFTER the gap rather than the row BEFORE: the render loop
+           streams top-down and the row-before has already been emitted by the
+           time we detect the gap (at row i). Marking the row-after is in-loop and
+           requires no post-pass over the emitted strings, at the cost of a tiny
+           mental model difference ("hidden rows are above me" vs "below me") —
+           the tooltip text makes that explicit so the cue is unambiguous. */
+        var _hiddenFrom = -1, _hiddenTo = -1, _hiddenTip = '';
         if (prevVisIdx >= 0 && i - prevVisIdx > 1) {
-            var hInfo = countHiddenNonBlank(prevVisIdx + 1, i);
-            if (hInfo.count > 0) {
-                var tip = buildHiddenTip(hInfo).replace(/"/g, '&quot;');
-                /* Empty span: the glyph is drawn via CSS ::before { content } in
-                   viewer-styles-decoration-bars.ts. WHY CSS pseudo and not a text node:
-                   a text node (even inside user-select:none) can still be pulled into
-                   window.getSelection() via drag-select in some Chromium paths, so the
-                   glyph ended up in copied log text. CSS-generated content is not in
-                   the DOM and cannot be selected or copied by any path. */
-                parts.push('<div class="hidden-chevron" data-from="' + (prevVisIdx + 1) + '" data-to="' + i + '"><span title="' + tip + '"></span></div>');
+            var _hInfo = countHiddenNonBlank(prevVisIdx + 1, i);
+            if (_hInfo.count > 0) {
+                _hiddenFrom = prevVisIdx + 1;
+                _hiddenTo = i;
+                _hiddenTip = buildHiddenTip(_hInfo).replace(/"/g, '&quot;');
             }
         }
-        /* First line of a peek group gets an un-peek marker ABOVE it. A peek group is a
-           contiguous run of items sharing the same peekAnchorKey (set by peekChevron in
-           viewer-hidden-lines.ts). "First" = no previous item or previous item has a
-           different key. Clicking the marker clears the key for the whole group. */
+        var _peekKey = null;
         var _pk = allLines[i].peekAnchorKey;
         if (_pk !== undefined && _pk !== null && (i === 0 || allLines[i - 1].peekAnchorKey !== _pk)) {
-            parts.push('<div class="peek-collapse" data-peek-key="' + _pk + '" title="Collapse peek"><span></span></div>');
+            _peekKey = _pk;
         }
-        parts.push(renderItem(allLines[i], i, prevVis));
+
+        var _rendered = renderItem(allLines[i], i, prevVis);
+        /* Inject .bar-hidden-rows class + tooltip + routing data onto the outer div.
+           Single regex: match the first class=" of the rendered row (always the outer
+           wrapper) and prepend the extra attrs + class token. No other divs in the
+           row string start with "class=\\"" at position 0, so the ^<div anchor keeps
+           this unambiguous. */
+        if (_peekKey !== null) {
+            _rendered = _rendered.replace(/^<div class="/,
+                '<div data-peek-key="' + _peekKey + '" title="Click to collapse peek" class="bar-hidden-rows ');
+        } else if (_hiddenFrom >= 0) {
+            _rendered = _rendered.replace(/^<div class="/,
+                '<div data-hidden-from="' + _hiddenFrom + '" data-hidden-to="' + _hiddenTo + '" title="' + _hiddenTip + '" class="bar-hidden-rows ');
+        }
+        parts.push(_rendered);
         prevVis = allLines[i];
         prevVisIdx = i;
     }
     viewportEl.innerHTML = parts.join('');
-    // Connect consecutive same-level dots, bridging through blank/non-dot lines
+    // Connect consecutive same-level dots, bridging through blank/non-dot lines.
+    // The prior skips for .hidden-chevron / .peek-collapse were removed when the
+    // unified line-collapsing rethink retired those indicator elements.
     var ch = viewportEl.children;
     for (var ci = 0; ci < ch.length; ci++) {
         if (!ch[ci]) continue;
-        if (ch[ci].classList.contains('hidden-chevron')) continue;
-        if (ch[ci].classList.contains('peek-collapse')) continue;
         var lvl = getBarLevel(ch[ci]);
         if (!lvl || ch[ci].classList.contains('line-blank')) continue;
         var ni = findNextDotSibling(ch, ci);
@@ -175,7 +195,7 @@ function renderViewport(force) {
         ch[ci].classList.add('bar-down');
         ch[ni].classList.add('bar-up');
         for (var bi = ci + 1; bi < ni; bi++) {
-            if (ch[bi] && !ch[bi].classList.contains('hidden-chevron') && !ch[bi].classList.contains('peek-collapse')) {
+            if (ch[bi]) {
                 ch[bi].classList.add('bar-up', 'bar-down', 'bar-bridge', 'level-bar-' + lvl);
             }
         }

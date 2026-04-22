@@ -18,7 +18,7 @@ function queuePopOutViewerConfigMicrotask(post, cfg) {
         post({ type: "minimapViewportRedOutline", show: cfg.minimapViewportRedOutline });
         post({ type: "minimapViewportOutsideArrow", show: cfg.minimapViewportOutsideArrow });
         post({ type: "setViewerRepeatThresholds", thresholds: cfg.viewerRepeatThresholds });
-        post({ type: "setViewerDbInsightsEnabled", enabled: cfg.viewerDbInsightsEnabled });
+        post({ type: "setViewerDbSignalsEnabled", enabled: cfg.viewerDbSignalsEnabled });
         post({ type: "setStaticSqlFromFingerprintEnabled", enabled: cfg.staticSqlFromFingerprintEnabled });
         post({ type: "setViewerSlowBurstThresholds", thresholds: cfg.viewerSlowBurstThresholds });
         post({ type: "setViewerDbDetectorToggles", ...(0, config_1.viewerDbDetectorTogglesFromConfig)(cfg) });

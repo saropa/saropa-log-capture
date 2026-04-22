@@ -1,7 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getSourceTagUiScript = getSourceTagUiScript;
-/** Returns the JavaScript for source tag UI rendering: chips, tag links, and palette. */
+/**
+ * Source tag UI rendering: chips, tag links, color palette, and solo behavior.
+ *
+ * Solo (double-click) behavior:
+ * - Double-click a chip to solo it (hide all other tags). The previous hidden
+ *   state is saved so a second double-click on the same chip restores it.
+ * - Single-click chip toggles are delayed 250ms to distinguish from double-click;
+ *   any manual filter change (toggle, All, None, reset) clears the saved solo state.
+ * - Inline tag links in the viewport call soloSourceTag directly (single click).
+ */
 function getSourceTagUiScript() {
     return /* javascript */ `
 function escapeTagHtml(text) {
@@ -41,18 +50,40 @@ function rebuildTagChips() {
     updateTagSummary();
 }
 
-/* Event delegation for chip clicks — avoids inline onclick escaping issues. */
+/* Event delegation for chip clicks — avoids inline onclick escaping issues.
+ * Chip clicks are delayed 250ms so a double-click can cancel the pending
+ * toggle and run soloSourceTag instead — avoids the race where two toggles
+ * fire before dblclick and corrupt saved solo state. Action buttons (All,
+ * None, Show all) fire immediately since they have no double-click meaning. */
 (function() {
     var chipsEl = document.getElementById('source-tag-chips');
     if (!chipsEl) { return; }
+    var chipClickTimer = null;
     chipsEl.addEventListener('click', function(e) {
         var chip = e.target.closest('.source-tag-chip');
-        if (chip && chip.dataset.tag) { toggleSourceTag(chip.dataset.tag); return; }
+        if (chip && chip.dataset.tag) {
+            var tag = chip.dataset.tag;
+            clearTimeout(chipClickTimer);
+            chipClickTimer = setTimeout(function() {
+                chipClickTimer = null;
+                toggleSourceTag(tag);
+            }, 250);
+            return;
+        }
         var btn = e.target.closest('[data-action]');
         if (!btn) return;
         if (btn.dataset.action === 'all') { selectAllTags(); }
         else if (btn.dataset.action === 'none') { deselectAllTags(); }
         else if (btn.dataset.action === 'toggle-all') { sourceTagShowAll = !sourceTagShowAll; rebuildTagChips(); }
+    });
+    chipsEl.addEventListener('dblclick', function(e) {
+        var chip = e.target.closest('.source-tag-chip');
+        if (chip && chip.dataset.tag) {
+            /* Cancel the pending single-click toggle — this is a solo action. */
+            clearTimeout(chipClickTimer);
+            chipClickTimer = null;
+            soloSourceTag(chip.dataset.tag);
+        }
     });
 })();
 
@@ -60,23 +91,33 @@ function rebuildTagChips() {
 function resetSourceTags() {
     sourceTagCounts = {};
     hiddenSourceTags = {};
-    var section = document.getElementById('log-tags-section');
-    if (section) { section.style.display = 'none'; }
+    savedHiddenSourceTags = null;
+    soloedSourceTag = null;
+    /* Hide the tab button when tags are cleared */
+    var tab = document.getElementById('filter-tab-log-tags');
+    if (tab) { tab.style.display = 'none'; }
     var container = document.getElementById('source-tag-chips');
     if (container) { container.innerHTML = ''; }
     updateTagSummary();
     if (typeof updateSqlToolbarButton === 'function') updateSqlToolbarButton();
 }
 
-/** Solo a tag: show only lines with this tag. Click again to clear. */
+/**
+ * Solo a source tag: show only lines with this tag, hiding everything else.
+ * Double-tap the same tag again to restore the filter state from before the solo.
+ */
 function soloSourceTag(tag) {
-    var keys = Object.keys(sourceTagCounts);
-    var hiddenCount = Object.keys(hiddenSourceTags).length;
-    var isSolo = hiddenCount === keys.length - 1 && !hiddenSourceTags[tag];
-    if (isSolo) {
-        hiddenSourceTags = {};
+    if (soloedSourceTag === tag && savedHiddenSourceTags !== null) {
+        /* Already solo'd on this tag — restore the previous filter state. */
+        hiddenSourceTags = savedHiddenSourceTags;
+        savedHiddenSourceTags = null;
+        soloedSourceTag = null;
     } else {
+        /* Save current state so a second double-tap can restore it. */
+        savedHiddenSourceTags = Object.assign({}, hiddenSourceTags);
+        soloedSourceTag = tag;
         hiddenSourceTags = {};
+        var keys = Object.keys(sourceTagCounts);
         for (var i = 0; i < keys.length; i++) {
             if (keys[i] !== tag) hiddenSourceTags[keys[i]] = true;
         }

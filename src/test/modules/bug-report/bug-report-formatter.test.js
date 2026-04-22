@@ -151,12 +151,12 @@ suite('BugReportFormatter', () => {
             assert.ok(md.includes('## Recent Git History'));
             assert.ok(md.includes('abc1234'));
         });
-        test('should include investigation context when present', () => {
+        test('should include collection context when present', () => {
             const md = (0, bug_report_formatter_1.formatBugReport)(minimalData({
                 logFilename: '',
                 lineNumber: 1,
-                investigationContext: {
-                    name: 'My Investigation',
+                collectionContext: {
+                    name: 'My Collection',
                     createdAt: 1700000000000,
                     sources: [{ label: 'session.log', type: 'session', pinnedAt: 1700000001000 }],
                     lastSearchQuery: 'TimeoutException',
@@ -164,13 +164,13 @@ suite('BugReportFormatter', () => {
                     notes: 'Repro steps noted.',
                 },
             }));
-            assert.ok(md.includes('## Investigation Context'));
-            assert.ok(md.includes('My Investigation'));
+            assert.ok(md.includes('## Collection Context'));
+            assert.ok(md.includes('My Collection'));
             assert.ok(md.includes('session.log'));
             assert.ok(md.includes('TimeoutException'));
             assert.ok(md.includes('Matches: 5'));
             assert.ok(md.includes('Repro steps noted.'));
-            assert.ok(md.includes('Report generated from investigation context'));
+            assert.ok(md.includes('Report generated from collection context'));
         });
         test('should include cross-session data when present', () => {
             const md = (0, bug_report_formatter_1.formatBugReport)(minimalData({

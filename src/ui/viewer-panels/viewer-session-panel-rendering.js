@@ -1,18 +1,22 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getSessionRenderingScript = getSessionRenderingScript;
 /**
  * Session panel rendering functions (list, items, day headings, metadata).
  * Returns a JS fragment intended to run inside the session panel IIFE scope.
  * Includes pagination: only the current page of sessions is rendered; bar shows "Showing X–Y of Z" and Prev/Next when total > pageSize.
  */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSessionRenderingScript = getSessionRenderingScript;
+const viewer_session_panel_rendering_groups_1 = require("./viewer-session-panel-rendering-groups");
 /** Get the session panel rendering script fragment. */
 function getSessionRenderingScript() {
-    return /* javascript */ `
+    return (0, viewer_session_panel_rendering_groups_1.getSessionGroupRenderingScript)() + /* javascript */ `
     /* escapeAttr and escapeHtmlText are provided by the session panel IIFE bootstrap. */
     function renderSessionList(sessions) {
         if (sessionLoadingEl) sessionLoadingEl.style.display = 'none';
         if (!sessionListEl) return;
+        /* Update icon bar badge with total session count (including empty list). */
+        var sessionBadgeCount = (sessions || []).filter(function(s) { return !s.trashed; }).length;
+        if (typeof updateIconBadge === 'function') updateIconBadge('ib-sessions-badge', 'ib-sessions-count', sessionBadgeCount);
         if (!sessions || sessions.length === 0) {
             sessionListEl.innerHTML = '';
             if (sessionListPaginationEl) sessionListPaginationEl.style.display = 'none';
@@ -114,32 +118,33 @@ function getSessionRenderingScript() {
         return list;
     }
 
-    function renderFlat(sessions, bnCounts) { return sessions.map(function(s) { return renderItem(s, bnCounts); }).join(''); }
+    function renderFlat(sessions, bnCounts) { return renderItemsWithGroupBlocks(sessions, bnCounts); }
 
     function renderGrouped(sessions, bnCounts) {
-        var groups = [], currentKey = '', dayItems = [];
+        var groups = [], currentKey = '', dayRecords = [];
         for (var i = 0; i < sessions.length; i++) {
             var key = toDateKey(sessions[i].mtime || 0);
             if (key !== currentKey) {
                 /* Flush previous day group. */
-                if (currentKey) groups.push(renderDayGroup(currentKey, dayItems));
+                if (currentKey) groups.push(renderDayGroup(currentKey, dayRecords, bnCounts));
                 currentKey = key;
-                dayItems = [];
+                dayRecords = [];
             }
-            dayItems.push(renderItem(sessions[i], bnCounts));
+            dayRecords.push(sessions[i]);
         }
         /* Flush final day group. */
-        if (currentKey) groups.push(renderDayGroup(currentKey, dayItems));
+        if (currentKey) groups.push(renderDayGroup(currentKey, dayRecords, bnCounts));
         return groups.join('');
     }
 
-    /** Wrap a day heading and its items in a collapsible group container. */
-    function renderDayGroup(dateKey, itemsHtml) {
+    /** Wrap a day heading and its items (run through group-coalescing) in a collapsible container. */
+    function renderDayGroup(dateKey, dayRecords, bnCounts) {
         var collapsed = !!collapsedDays[dateKey];
         var cls = 'session-day-group' + (collapsed ? ' collapsed' : '');
+        var itemsHtml = renderItemsWithGroupBlocks(dayRecords, bnCounts);
         return '<div class="' + cls + '" data-day-key="' + escapeAttr(dateKey) + '">'
-            + renderDayHeading(dateKey, collapsed)
-            + '<div class="session-day-items">' + itemsHtml.join('') + '</div>'
+            + renderDayHeading(dateKey, collapsed, dayRecords.length)
+            + '<div class="session-day-items">' + itemsHtml + '</div>'
             + '</div>';
     }
 
@@ -149,7 +154,10 @@ function getSessionRenderingScript() {
         if (s.updatedInLastMinute) iconTitle = 'Log updated in the last minute';
         else if (s.updatedSinceViewed) iconTitle = 'Log has new lines since last viewed';
         /* selectedSessionUris is defined in session panel IIFE; multi-select state for Ctrl-click. Update dots only for non-active logs. */
-        var cls = 'session-item' + (s.isActive ? ' session-item-active' : '') + (!s.isActive && s.updatedInLastMinute ? ' session-item-updated-recent' : '') + (!s.isActive && s.updatedSinceViewed && !s.updatedInLastMinute ? ' session-item-updated-since-viewed' : '') + (typeof selectedSessionUris !== 'undefined' && selectedSessionUris[s.uriString] ? ' session-item-selected' : '');
+        var groupRole = s._groupRole || '';
+        var groupClass = groupRole === 'primary' ? ' session-item-primary'
+            : groupRole === 'secondary' ? ' session-item-secondary' : '';
+        var cls = 'session-item' + groupClass + (s.isActive ? ' session-item-active' : '') + (!s.isActive && s.updatedInLastMinute ? ' session-item-updated-recent' : '') + (!s.isActive && s.updatedSinceViewed && !s.updatedInLastMinute ? ' session-item-updated-since-viewed' : '') + (typeof selectedSessionUris !== 'undefined' && selectedSessionUris[s.uriString] ? ' session-item-selected' : '');
         var rawName = s.displayName || s.filename;
         var bn = getSessionBasename(rawName);
         /* Only show subfolder when basenames collide for disambiguation. */
@@ -161,19 +169,48 @@ function getSessionRenderingScript() {
         var perfBadge = s.hasPerformanceData ? '<span class="session-item-perf" title="Performance data available"><span class="codicon codicon-graph-line"></span></span>' : '';
         /* Dot: red = updated in last minute, orange = new since last viewed; only for non-active logs. */
         var updateDot = !s.isActive && (s.updatedInLastMinute || s.updatedSinceViewed) ? '<span class="session-item-update-dot" title="' + (s.updatedInLastMinute ? 'Updated in the last minute' : 'New lines since last viewed') + '"></span>' : '';
+        /* Group primary: leading chevron (flips on collapse) and a "+N" badge after the name. */
+        var groupChevron = '', groupCount = '';
+        if (groupRole === 'primary') {
+            var chev = s._groupCollapsed ? 'codicon-chevron-right' : 'codicon-chevron-down';
+            var chevTitle = s._groupCollapsed ? 'Expand this session group' : 'Collapse this session group';
+            groupChevron = '<span class="session-group-chevron" role="button" tabindex="0" title="' + chevTitle + '" aria-label="' + chevTitle + '"><span class="codicon ' + chev + '"></span></span>';
+            var secCount = Math.max(0, (s.groupSize || 1) - 1);
+            if (secCount > 0) groupCount = ' <span class="session-group-count">+' + secCount + '</span>';
+        }
         return '<div class="' + cls + '" data-uri="' + escapeAttr(s.uriString || '') + '" data-filename="' + escapeAttr(s.filename || '') + '">'
+            + groupChevron
             + '<span class="session-item-icon" title="' + iconTitle + '"><span class="codicon ' + icon + '"></span>' + updateDot + '</span>'
             + '<div class="session-item-info">'
-            + '<span class="session-item-name">' + escapeHtmlText(name) + (s.isLatestOfName ? ' <span class="session-latest">(latest)</span>' : '') + perfBadge + '</span>'
+            + '<span class="session-item-name">' + escapeHtmlText(name) + (s.isLatestOfName ? ' <span class="session-latest">(latest)</span>' : '') + groupCount + perfBadge + '</span>'
             + (meta ? '<span class="session-item-meta">' + meta + '</span>' : '')
-            + '</div></div>';
+            + '</div>'
+            + renderSessionRowActions()
+            + '</div>';
     }
 
-    function renderDayHeading(dateKey, collapsed) {
+    /* Hover-revealed action buttons on a session row. Currently: reveal the log file
+       in the OS file explorer. Uses data-session-action so the parent click handler
+       can dispatch without duplicating logic from the context menu. */
+    function renderSessionRowActions() {
+        var label = typeof getRevealInOSLabel === 'function' ? getRevealInOSLabel() : 'Reveal in File Explorer';
+        var labelAttr = escapeAttr(label);
+        return '<span class="session-item-actions">'
+            + '<button type="button" class="session-item-action" data-session-action="revealInOS" '
+            + 'title="' + labelAttr + '" aria-label="' + labelAttr + '">'
+            + '<span class="codicon codicon-folder-opened"></span></button>'
+            + '</span>';
+    }
+
+    function renderDayHeading(dateKey, collapsed, count) {
         var chevron = collapsed ? 'codicon-chevron-right' : 'codicon-chevron-down';
+        /* Show file count dimmed in parentheses after the date label. */
+        var countText = typeof count === 'number' && count > 0
+            ? ' <span class="session-day-count">(' + count + ')</span>' : '';
         return '<div class="session-day-heading" role="button" tabindex="0" aria-expanded="' + (!collapsed) + '">'
             + '<span class="session-day-chevron codicon ' + chevron + '"></span>'
             + escapeHtmlText(formatDayHeading(dateKeyToEpoch(dateKey)))
+            + countText
             + '</div>';
     }
 
@@ -228,7 +265,11 @@ function getSessionRenderingScript() {
         return result;
     }
 
-    /** Render a lightweight preview list (filenames only, shimmer on metadata). */
+    /**
+     * Render a lightweight preview list (filenames only, shimmer on metadata).
+     * Called once per directory level during streaming scan — appends to existing
+     * items so the first filenames appear immediately while subdirectories continue loading.
+     */
     function renderSessionListPreview(previews) {
         if (sessionLoadingEl) sessionLoadingEl.style.display = 'none';
         if (!sessionListEl) return;
@@ -243,9 +284,12 @@ function getSessionRenderingScript() {
                 + '<div class="session-item-info">'
                 + '<span class="session-item-name">' + escapeHtmlText(name) + '</span>'
                 + '<span class="session-item-meta session-shimmer-meta"></span>'
-                + '</div></div>';
+                + '</div>'
+                + renderSessionRowActions()
+                + '</div>';
         }).join('');
-        sessionListEl.innerHTML = html;
+        /* Append instead of replace — multiple batches arrive as directories are scanned. */
+        sessionListEl.insertAdjacentHTML('beforeend', html);
     }
 
     /** Update preview items in-place with resolved metadata (progressive loading). */

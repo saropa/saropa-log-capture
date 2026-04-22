@@ -56,6 +56,67 @@ suite('StackParser', () => {
             assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('│ #0  package:foo/main.dart  foo (package:foo/a.dart:1:1)'), false);
             assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('│  at Object.run (main.js:1:1)'), false);
         });
+        // --- Drift v3.3.3 rounded-corner banner (reported failing case) ---
+        test('detects rounded-corner top rule (╭──╮)', () => {
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('╭──────────────────────────────────────────────────╮'), true);
+        });
+        test('detects rounded-corner bottom rule (╰──╯)', () => {
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('╰──────────────────────────────────────────────────╯'), true);
+        });
+        test('detects T-connector divider rule (├──┤)', () => {
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('├──────────────────────────────────────────────────┤'), true);
+        });
+        // --- Heavy variants ---
+        test('detects heavy top rule (┏━┓) and bottom rule (┗━┛)', () => {
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('┏━━━━━━━━━━━━━━━━━━━━┓'), true);
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('┗━━━━━━━━━━━━━━━━━━━━┛'), true);
+        });
+        test('detects heavy bar-pair content line (┃ … ┃)', () => {
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('┃     HEAVY BANNER     ┃'), true);
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('┃          ┃'), true);
+        });
+        test('detects heavy T-connector rule (┣━┫)', () => {
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('┣━━━━━━━━━━━━━━━━━━━━┫'), true);
+        });
+        // --- Mixed light/double (DOS-style) ---
+        test('detects light/double corners (╒══╕ ╘══╛)', () => {
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('╒══════════════════╕'), true);
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('╘══════════════════╛'), true);
+        });
+        test('detects light/double T-connectors (╞══╡)', () => {
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('╞══════════════════╡'), true);
+        });
+        // --- Mixed light/heavy ---
+        test('detects mixed light/heavy corners (┍━┑ ┕━┙)', () => {
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('┍━━━━━━━━━━━━━━━━┑'), true);
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('┕━━━━━━━━━━━━━━━━┙'), true);
+        });
+        // --- Boxen-style (title embedded in top rule) ---
+        test('detects classic light corner rule (┌──┐ └──┘)', () => {
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('┌──────────────────┐'), true);
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('└──────────────────┘'), true);
+        });
+        // --- Indented banners (leading whitespace from DAP wrapping) ---
+        test('detects indented rounded-corner rule', () => {
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('    ╭────────╮'), true);
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('\t\t├────────┤'), true);
+        });
+        // --- Dashed bar variants ---
+        test('detects dashed light bars (╎ … ╎)', () => {
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('╎     dashed bar     ╎'), true);
+        });
+        // --- Rejections: lines with ordinary content must not match pure-box-rule ---
+        test('does not match ordinary text mixed with single box char', () => {
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('some log line with a ─ in the middle'), false);
+        });
+        test('does not match single box-drawing char alone', () => {
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('─'), false);
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('│'), false);
+        });
+        test('does not match markdown table rows (ASCII | excluded)', () => {
+            // ASCII | is intentionally NOT in the bar class — markdown tables stay plain text.
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('| col1 | col2 | col3 |'), false);
+        });
     });
     suite('isStackFrameLine — box art exemption', () => {
         test('should not treat paired empty bars as a stack frame', () => {

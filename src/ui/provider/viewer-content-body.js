@@ -17,7 +17,8 @@ const viewer_sql_query_history_panel_1 = require("../viewer-panels/viewer-sql-qu
 const viewer_trash_panel_1 = require("../viewer-panels/viewer-trash-panel");
 const viewer_options_panel_1 = require("../viewer-panels/viewer-options-panel");
 const viewer_crashlytics_panel_1 = require("../panels/viewer-crashlytics-panel");
-const viewer_insight_panel_1 = require("../panels/viewer-insight-panel");
+const viewer_signal_panel_1 = require("../panels/viewer-signal-panel");
+const viewer_collections_panel_1 = require("../viewer-panels/viewer-collections-panel");
 const viewer_about_panel_1 = require("../viewer-panels/viewer-about-panel");
 const viewer_scrollbar_minimap_1 = require("../viewer/viewer-scrollbar-minimap");
 const viewer_goto_line_1 = require("../viewer/viewer-goto-line");
@@ -45,13 +46,14 @@ function getViewerBodyHtml(opts) {
     ${(0, viewer_trash_panel_1.getTrashPanelHtml)()}
     ${(0, viewer_options_panel_1.getOptionsPanelHtml)()}
     ${(0, viewer_crashlytics_panel_1.getCrashlyticsPanelHtml)()}
-    ${(0, viewer_insight_panel_1.getInsightPanelHtml)()}
+    ${(0, viewer_collections_panel_1.getCollectionsPanelHtml)()}
+    ${(0, viewer_signal_panel_1.getSignalPanelHtml)()}
     ${(0, viewer_about_panel_1.getAboutPanelHtml)()}
+    ${(0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)()}
     </div>
     <div id="log-area-with-footer">
     ${(0, viewer_toolbar_html_1.getToolbarHtml)({ version })}
     ${(0, viewer_toolbar_search_html_1.getSearchFlyoutHtml)()}
-    ${(0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)()}
     ${(0, viewer_toolbar_actions_html_1.getActionsDropdownHtml)()}
     <div id="compress-suggest-banner" class="compress-suggest-banner u-hidden" role="status" aria-live="polite">
         <span class="compress-suggest-msg">Many identical lines in a row — try <strong>Compress lines</strong> (Options \u2192 Layout or right-click \u2192 Options).</span>
