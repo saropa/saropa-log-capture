@@ -59,8 +59,8 @@ function formatBugReport(data) {
             sections.push(owaspSection);
         }
     }
-    if (data.investigationContext) {
-        sections.push(formatInvestigationContext(data.investigationContext));
+    if (data.collectionContext) {
+        sections.push(formatCollectionContext(data.collectionContext));
     }
     if (data.qualitySummary?.length) {
         sections.push((0, bug_report_sections_1.formatCodeQualitySection)(data.qualitySummary));
@@ -129,7 +129,7 @@ function collectSourcePaths(data) {
     }
     return paths;
 }
-function formatInvestigationContext(inv) {
+function formatCollectionContext(inv) {
     const created = new Date(inv.createdAt).toISOString();
     const rows = inv.sources.map(s => {
         const pinned = new Date(s.pinnedAt).toISOString();
@@ -137,8 +137,8 @@ function formatInvestigationContext(inv) {
     }).join('\n');
     const table = `| Source | Type | Pinned |\n|--------|------|--------|\n${rows}`;
     const parts = [
-        '## Investigation Context',
-        `**Investigation:** ${inv.name}`,
+        '## Collection Context',
+        `**Collection:** ${inv.name}`,
         `**Created:** ${created}`,
         `### Pinned Sources (${inv.sources.length})`,
         table,
@@ -154,7 +154,7 @@ function formatInvestigationContext(inv) {
         parts.push(recentSearchLines.join('\n'));
     }
     if (inv.notes?.trim()) {
-        parts.push('### Investigation Notes\n' + inv.notes.trim());
+        parts.push('### Collection Notes\n' + inv.notes.trim());
     }
     return parts.join('\n\n');
 }

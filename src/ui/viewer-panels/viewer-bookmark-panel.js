@@ -211,13 +211,10 @@ function getBookmarkPanelScript() {
     /* --- Message listener --- */
 
     function updateBadge(data) {
-        var badge = document.getElementById('ib-bookmarks-badge');
-        if (!badge) return;
         var total = 0;
         var keys = Object.keys(data || {});
         for (var i = 0; i < keys.length; i++) { total += (data[keys[i]].bookmarks || []).length; }
-        badge.textContent = total > 99 ? '99+' : String(total);
-        badge.style.display = total > 0 ? 'inline-block' : 'none';
+        if (typeof updateIconBadge === 'function') updateIconBadge('ib-bookmarks-badge', 'ib-bookmarks-count', total);
     }
 
     window.addEventListener('message', function(e) {

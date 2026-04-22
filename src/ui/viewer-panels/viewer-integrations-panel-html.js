@@ -12,6 +12,9 @@ exports.getIntegrationsPanelHtml = getIntegrationsPanelHtml;
  */
 const ansi_1 = require("../../modules/capture/ansi");
 const integrations_ui_1 = require("../../modules/integrations/integrations-ui");
+const marketplace_url_1 = require("../../modules/marketplace-url");
+const saropa_lints_api_1 = require("../../modules/misc/saropa-lints-api");
+const drift_advisor_constants_1 = require("../../modules/integrations/drift-advisor-constants");
 /**
  * When the description has no extra notes, still offer expand/collapse if the text is long
  * enough that a multi-line clamp (see CSS) likely truncates. Mirrors ~3–4 wrapped lines.
@@ -28,6 +31,39 @@ function splitPerformanceWarning(performanceNote) {
     }
     const text = trimmed.slice(PERFORMANCE_WARNING_EMOJI.length).trim().replace(/^[-\u2014:]\s*/, '');
     return { warningEmoji: PERFORMANCE_WARNING_EMOJI, text };
+}
+/** Extensions that unlock deeper integration features in Log Capture. */
+const COMPANION_EXTENSIONS = [
+    {
+        extensionId: saropa_lints_api_1.SAROPA_LINTS_EXTENSION_ID,
+        label: 'Saropa Lints',
+        benefit: 'Lint violations in bug reports, OWASP summaries, health scores, and one-click Explain Rule.',
+    },
+    {
+        extensionId: drift_advisor_constants_1.DRIFT_ADVISOR_EXTENSION_ID,
+        label: 'Saropa Drift Advisor',
+        benefit: 'Query stats, schema health, anomaly counts, index suggestions, and Open in Drift Advisor.',
+    },
+];
+/** Render the companion extensions block shown above the adapter list. */
+function renderCompanionExtensionsHtml() {
+    const suiteUrl = (0, ansi_1.escapeHtml)((0, marketplace_url_1.buildItemUrl)('saropa.saropa-suite'));
+    const rows = COMPANION_EXTENSIONS.map((c) => {
+        const url = (0, ansi_1.escapeHtml)((0, marketplace_url_1.buildItemUrl)(c.extensionId));
+        return `<div class="integrations-companion-row">
+            <span class="integrations-companion-label">${(0, ansi_1.escapeHtml)(c.label)}</span>
+            <span class="integrations-companion-benefit">${(0, ansi_1.escapeHtml)(c.benefit)}</span>
+            <a class="integrations-companion-link" data-url="${url}" href="#">View in Marketplace</a>
+        </div>`;
+    }).join('\n');
+    return `<div class="integrations-companion-section">
+        <div class="integrations-companion-heading">Companion extensions</div>
+        <p class="integrations-intro">These Saropa extensions unlock richer diagnostics when installed alongside Log Capture. Each is fully optional.</p>
+        ${rows}
+        <div class="integrations-companion-row integrations-companion-suite">
+            <a class="integrations-companion-link" data-url="${suiteUrl}" href="#">Install all with the Saropa Suite extension pack</a>
+        </div>
+    </div>`;
 }
 /** Build one integration row: checkbox, label, long description, and optional perf/when-to-disable lines. */
 function renderIntegrationRow(a) {
@@ -86,6 +122,7 @@ function getIntegrationsPanelHtml() {
         </div>
         <div class="integrations-content">
             <p class="integrations-intro">Choose session capture adapters (header lines and sidecars), third-party tools (Crashlytics, Drift, etc.), and in-editor features like Explain with AI. Each row notes performance impact and when you might turn it off.</p>
+            ${renderCompanionExtensionsHtml()}
             <div class="integrations-search-wrapper">
                 <input id="integrations-search" type="text" placeholder="Search integrations…" aria-label="Search integrations" />
             </div>

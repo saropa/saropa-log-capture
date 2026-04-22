@@ -91,8 +91,11 @@ function generateSummary(filename, stats) {
     if (stats.exclusionsApplied > 0) {
         lines.push(`Exclusions applied: ${stats.exclusionsApplied}`);
     }
+    // Title uses "Log Captured" per TERMINOLOGY.md — "session" is banned in
+    // user-facing text. The internal concept stays "session" in code (see
+    // SessionSummary/SessionStats); only the displayed title is renamed.
     return {
-        title: `Session Complete: ${filename}`,
+        title: `Log Captured: ${filename}`,
         lines,
         stats,
     };
@@ -146,7 +149,7 @@ function showSummaryNotification(summary) {
     const message = `${summary.title}\n${summary.lines.join(' | ')}`;
     const openLabel = (0, l10n_1.t)('action.openLog');
     const copyLabel = (0, l10n_1.t)('action.copyLogPath');
-    vscode.window.showInformationMessage(message, openLabel, copyLabel).then((selection) => {
+    vscode.window.showInformationMessage(message, copyLabel, openLabel).then((selection) => {
         if (selection === openLabel) {
             // After finalize there is no active session; open the finalized log when we have its URI.
             if (summary.logUri) {

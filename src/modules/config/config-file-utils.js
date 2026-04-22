@@ -36,6 +36,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isTrackedFile = isTrackedFile;
 exports.readTrackedFiles = readTrackedFiles;
+exports.readTrackedFilesStreaming = readTrackedFilesStreaming;
 exports.getFileTypeGlob = getFileTypeGlob;
 exports.shouldRedactEnvVar = shouldRedactEnvVar;
 const vscode = __importStar(require("vscode"));
@@ -50,6 +51,14 @@ const maxScanDepth = 10;
 /** List tracked files, optionally recursing into subdirectories. Returns relative paths. */
 async function readTrackedFiles(dirUri, fileTypes, includeSubfolders) {
     return collectFiles(dirUri, fileTypes, includeSubfolders ? maxScanDepth : 0, '');
+}
+/**
+ * Like readTrackedFiles, but calls onBatch with each directory's files as soon as
+ * that directory is scanned — callers can show filenames immediately instead of
+ * waiting for the full recursive scan to finish.
+ */
+async function readTrackedFilesStreaming(dirUri, fileTypes, includeSubfolders, onBatch) {
+    return collectFilesStreaming(dirUri, { fileTypes, depth: includeSubfolders ? maxScanDepth : 0, prefix: '', onBatch });
 }
 async function collectFiles(dir, fileTypes, depth, prefix) {
     let entries;
@@ -67,6 +76,37 @@ async function collectFiles(dir, fileTypes, depth, prefix) {
         }
         else if (depth > 0 && type === vscode.FileType.Directory && !name.startsWith('.')) {
             results.push(...await collectFiles(vscode.Uri.joinPath(dir, name), fileTypes, depth - 1, rel));
+        }
+    }
+    return results;
+}
+/** Streaming variant: emits files from each directory as soon as it's scanned. */
+async function collectFilesStreaming(dir, opts) {
+    let entries;
+    try {
+        entries = await vscode.workspace.fs.readDirectory(dir);
+    }
+    catch {
+        return [];
+    }
+    const results = [];
+    /* Collect files from this directory level and emit them immediately. */
+    const batch = [];
+    for (const [name, type] of entries) {
+        if (type === vscode.FileType.File && isTrackedFile(name, opts.fileTypes)) {
+            const rel = opts.prefix ? `${opts.prefix}/${name}` : name;
+            results.push(rel);
+            batch.push(rel);
+        }
+    }
+    if (batch.length > 0) {
+        opts.onBatch(batch);
+    }
+    /* Then recurse into subdirectories. */
+    for (const [name, type] of entries) {
+        if (opts.depth > 0 && type === vscode.FileType.Directory && !name.startsWith('.')) {
+            const rel = opts.prefix ? `${opts.prefix}/${name}` : name;
+            results.push(...await collectFilesStreaming(vscode.Uri.joinPath(dir, name), { ...opts, depth: opts.depth - 1, prefix: rel }));
         }
     }
     return results;

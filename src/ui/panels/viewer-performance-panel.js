@@ -3,11 +3,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getPerformancePanelHtml = getPerformancePanelHtml;
 exports.getPerformancePanelScript = getPerformancePanelScript;
 /**
- * Performance panel HTML and script for the webview (standalone + Insight-embedded via `prefix`).
+ * Performance panel HTML and script for the webview (standalone + Signal-embedded via `prefix`).
  *
  * Tabs: **Current** (scan `allLines` for perf events), **Trends** (host `requestPerformanceData`),
  * **Log** (session snapshot / intro when no perf payload), **Database** (`buildDbStatsView` in
- * `viewer-performance-db-tab.ts`: Drift rollup `dbInsightSessionRollup`, client-side timeline buckets).
+ * `viewer-performance-db-tab.ts`: Drift rollup `dbSignalSessionRollup`, client-side timeline buckets).
  * Opening the panel replays the active tab’s refresh path so **Log** reloads snapshot data after dismiss.
  * Log intro: right-click copies full text via the small context menu.
  */
@@ -17,8 +17,8 @@ const viewer_performance_session_tab_1 = require("./viewer-performance-session-t
 const viewer_performance_db_tab_1 = require("./viewer-performance-db-tab");
 const viewer_error_rate_tab_1 = require("./viewer-error-rate-tab");
 /**
- * When prefix is 'insight-', IDs become insight-pp-panel, insight-pp-current-view, etc.
- * Used when embedding the performance panel inside the Insight panel.
+ * When prefix is 'signal-', IDs become signal-pp-panel, signal-pp-current-view, etc.
+ * Used when embedding the performance panel inside the Signal panel.
  */
 function getPerformancePanelHtml(prefix) {
     const id = prefix ? prefix + 'pp-panel' : 'performance-panel';
@@ -82,12 +82,12 @@ function getPerformancePanelHtml(prefix) {
     </div>
 </div>`;
 }
-/** Generate the performance panel script. When prefix is 'insight-', binds to insight-pp-* elements (set window.__insightPerfIdPrefix before this script runs). */
+/** Generate the performance panel script. When prefix is 'signal-', binds to signal-pp-* elements (set window.__signalPerfIdPrefix before this script runs). */
 function getPerformancePanelScript(prefix) {
     // Positive condition (Sonar S7735): use prefix when it is a string; otherwise emit runtime fallback.
     const ppIdPrefix = typeof prefix === 'string'
         ? `'${prefix}'`
-        : `(typeof window.__insightPerfIdPrefix === 'undefined' ? '' : window.__insightPerfIdPrefix)`;
+        : `(typeof window.__signalPerfIdPrefix === 'undefined' ? '' : window.__signalPerfIdPrefix)`;
     const pid = (s) => `document.getElementById(${ppIdPrefix} + 'pp-${s}')`;
     return /* javascript */ `
 (function() {
@@ -250,17 +250,17 @@ function getPerformancePanelScript(prefix) {
 
     var sessionPerfChip = document.getElementById('session-perf-chip');
     if (sessionPerfChip) sessionPerfChip.addEventListener('click', function() {
-        if (typeof window.ensureInsightSlideoutOpen === 'function') window.ensureInsightSlideoutOpen();
-        else if (typeof window.setActivePanel === 'function') window.setActivePanel('insight');
-        else if (typeof openInsightPanel === 'function') openInsightPanel();
-        if (typeof window.setInsightTab === 'function') window.setInsightTab('performance');
+        if (typeof window.ensureSignalSlideoutOpen === 'function') window.ensureSignalSlideoutOpen();
+        else if (typeof window.setActivePanel === 'function') window.setActivePanel('signal');
+        else if (typeof openSignalPanel === 'function') openSignalPanel();
+        if (typeof window.setSignalTab === 'function') window.setSignalTab('performance');
         if (typeof openPerformancePanel === 'function') openPerformancePanel();
     });
 
     document.addEventListener('click', function(e) {
         if (!ppOpen) return;
         if (ppPanel && ppPanel.contains(e.target)) return;
-        var ibBtn = document.getElementById('ib-insight');
+        var ibBtn = document.getElementById('ib-signal');
         if (ibBtn && (ibBtn === e.target || ibBtn.contains(e.target))) return;
         var perfChip = document.getElementById('session-perf-chip');
         if (perfChip && (perfChip === e.target || perfChip.contains(e.target))) return;

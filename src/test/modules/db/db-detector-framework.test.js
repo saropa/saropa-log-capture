@@ -153,7 +153,7 @@ const baseCtx = {
     assert.strictEqual(out.length, 1);
     assert.strictEqual(out[0].detectorId, "c-high");
 });
-(0, node_test_1.default)("runDbDetectorsCompare: insightsEnabled false returns empty", () => {
+(0, node_test_1.default)("runDbDetectorsCompare: signalsEnabled false returns empty", () => {
     const d = {
         id: "x",
         priority: 0,
@@ -170,7 +170,7 @@ const baseCtx = {
     };
     const state = (0, db_detector_framework_1.createDbDetectorSessionState)();
     const out = (0, db_detector_framework_1.runDbDetectorsCompare)([d], { baseline: new Map(), target: new Map() }, state, {
-        insightsEnabled: false,
+        signalsEnabled: false,
     });
     assert.deepStrictEqual(out, []);
 });
@@ -301,7 +301,7 @@ const baseCtx = {
     assert.strictEqual(a.length, b.length);
     assert.strictEqual(a[0]?.detectorId, b[0]?.detectorId);
 });
-(0, node_test_1.default)("runDbDetectorsIngest: insightsEnabled false returns empty", () => {
+(0, node_test_1.default)("runDbDetectorsIngest: signalsEnabled false returns empty", () => {
     const d = {
         id: "x",
         priority: 0,
@@ -316,7 +316,7 @@ const baseCtx = {
         ],
     };
     const state = (0, db_detector_framework_1.createDbDetectorSessionState)();
-    const out = (0, db_detector_framework_1.runDbDetectorsIngest)([d], baseCtx, state, { insightsEnabled: false });
+    const out = (0, db_detector_framework_1.runDbDetectorsIngest)([d], baseCtx, state, { signalsEnabled: false });
     assert.deepStrictEqual(out, []);
 });
 //# sourceMappingURL=db-detector-framework.test.js.map

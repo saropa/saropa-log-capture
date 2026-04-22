@@ -24,6 +24,20 @@ function getContentStyles() {
 .slow-query-burst-marker:hover {
     color: var(--vscode-textLink-activeForeground, var(--vscode-textLink-foreground));
 }
+/* Count badge for collapsed runs of adjacent identical db-signal markers
+   (applyConsecutiveDbMarkerCollapse). Sits after the marker label; muted against the
+   green marker background so it reads as a secondary count, not a second link. */
+.marker-collapse-count {
+    margin-left: 6px;
+    padding: 0 6px;
+    border-radius: 8px;
+    background: var(--vscode-badge-background, rgba(255, 255, 255, 0.12));
+    color: var(--vscode-badge-foreground, inherit);
+    font-style: normal;
+    text-decoration: none;
+    font-size: 0.85em;
+    opacity: 0.85;
+}
 
 /* Drift SQL: dim the " with args [...]" suffix (drift-log-line-args-fold.ts) */
 .drift-args-dim {
@@ -40,7 +54,14 @@ function getContentStyles() {
     white-space: pre;
     word-break: normal;
     overflow-wrap: normal;
-    user-select: none;
+    /* WHY user-select is intentionally NOT set to none here: the header row is
+       clickable (click toggleStackGroup) AND users legitimately need to copy
+       the error / function / path text inside it. Browsers distinguish click
+       without drag (fires click event, toggle) from click-drag (text selection)
+       natively, so both affordances coexist without a CSS override. The prior
+       user-select:none rule (inherited from the original collapsible-stack
+       commit with no documented rationale) blocked copying the header text
+       entirely and was removed as part of the unified-line-collapsing rethink. */
 }
 /* Stack-header text color follows inherited level — same tokens as .line.level-* in viewer-styles-lines.ts. */
 .stack-header.level-warning { color: var(--vscode-debugConsole-warningForeground, #cca700); }
@@ -190,10 +211,10 @@ function getContentStyles() {
    =================================================================== */
 .category-badge {
     display: inline-block;
-    padding: 0 4px;
-    margin-right: 4px;
-    border-radius: 3px;
-    font-size: 9px;
+    padding: 0 0.3em;
+    margin-right: 0.3em;
+    border-radius: 0.25em;
+    font-size: 0.7em;
     font-weight: 600;
     vertical-align: middle;
     color: var(--cat-clr, #888);
