@@ -17,36 +17,11 @@ import { getViewerDataAddStackGroupLearningAndToggleScript } from './viewer-data
 import { getDriftDebugServerFromLogScript } from './viewer-drift-debug-server-from-log-script';
 import { getRepeatCollapseBranchScript } from './viewer-data-add-repeat-collapse';
 import { getAsciiArtDetectScript } from './viewer-data-add-ascii-art-detect';
+import { getFlutterBannerScript } from './viewer-data-add-flutter-banner';
+import { getDataAddContextHelpersScript } from './viewer-data-add-context-helpers';
 
 export function getViewerDataAddScript(staticSqlFromFingerprintEnabled = true): string {
-    return getDriftDebugServerFromLogScript() + getViewerDataAddDbDetectorsScript(staticSqlFromFingerprintEnabled) + getContinuationScript() + getRepeatCollapseBranchScript() + getAsciiArtDetectScript() + /* javascript */ `
-
-/** Nearest earlier line used for the “recent error context” window (skips Drift SQL rows). */
-function proximityInheritAnchor() {
-    var j = allLines.length - 1;
-    while (j >= 0) {
-        var it = allLines[j];
-        if (it.type === 'marker' || it.type === 'run-separator') { return null; }
-        var p = stripTags(it.html);
-        if (typeof isDriftSqlStatementLine === 'function' && isDriftSqlStatementLine(p)) {
-            j--;
-            continue;
-        }
-        return it;
-    }
-    return null;
-}
-
-/** Level of the most recent non-marker line, for stack-header inheritance. */
-function previousLineLevel() {
-    for (var i = allLines.length - 1; i >= 0; i--) {
-        var it = allLines[i];
-        if (it.type === 'marker' || it.type === 'run-separator') return 'error';
-        if (it.level) return it.level;
-    }
-    return 'error';
-}
-
+    return getDriftDebugServerFromLogScript() + getViewerDataAddDbDetectorsScript(staticSqlFromFingerprintEnabled) + getContinuationScript() + getRepeatCollapseBranchScript() + getAsciiArtDetectScript() + getFlutterBannerScript() + getDataAddContextHelpersScript() + /* javascript */ `
 function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPercent, source, rawText, tier) {
     /* elapsedMs: per-line delay (from [+Nms]) for replay. qualityPercent: per-file line coverage (0-100) for badges. source: stream id for multi-source filter ('debug'|'terminal'|...). tier: 'flutter'|'device-critical'|'device-other'|'external' */
     var lineSource = source || 'debug';
@@ -163,7 +138,19 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     var slp = (typeof parseStructuredPrefix === 'function') ? parseStructuredPrefix(plain, sniffedFormatId) : null;
     var isSep = isSeparatorLine(slp ? slp.msg : plain);
     var isAi = category && category.indexOf('ai-') === 0;
+    /* Flutter exception banner: classify every line in the \`════ Exception caught by …\` block
+       (header + body + closing rule) under one bannerGroupId. Must run before lvl is chosen so
+       we can override level to 'error' for every tagged line — body lines like "The following
+       assertion was thrown during layout:" otherwise classify as info and drop out under the
+       Errors/Warnings filter. slp?.msg uses the post-prefix message so structured logcat/bracket
+       formats still hit the banner regex. */
+    var bannerInfo = (typeof classifyFlutterBannerLine === 'function')
+        ? classifyFlutterBannerLine(slp ? slp.msg : plain)
+        : { groupId: -1, role: null };
     var lvl = isSep ? 'info' : isAi ? 'notice' : ((typeof classifyLevel === 'function') ? classifyLevel(plain, category) : 'info');
+    /* Override level for banner body/footer: they rarely carry an error keyword on their own
+       but logically belong to the same incident as the banner header. */
+    if (bannerInfo.groupId !== -1) lvl = 'error';
     /* Device-other: demote error/warning to info for display, but preserve original
        level for signal analysis — demoted warnings/errors must still feed the signal
        collector so recurring patterns are not silently suppressed (plan 050). */
@@ -282,6 +269,13 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         /* Only set originalLevel when demotion changed the display level — saves memory on
            the vast majority of lines where no demotion occurs (plan 050). */
         if (preDemotionLevel !== lvl) lineItem.originalLevel = preDemotionLevel;
+        /* Attach Flutter banner group membership: consumed by the rendering pipeline
+           (banner-group-start/mid/end CSS classes) so the whole exception block is
+           visually cohesive — left border, background tint, rounded top/bottom. */
+        if (bannerInfo.groupId !== -1) {
+            lineItem.bannerGroupId = bannerInfo.groupId;
+            lineItem.bannerRole = bannerInfo.role;
+        }
         allLines.push(lineItem);
         /* Art-block grouping: consecutive separator lines within 1 s form one visual block.
            Each DAP output event creates a new Date() so lines in the same banner differ by milliseconds. */

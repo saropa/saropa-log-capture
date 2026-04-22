@@ -88,7 +88,16 @@ function renderItem(item, idx, prevVis) {
         }
     }
     if (item.type === 'marker') {
-        return '<div class="marker' + spacingCls + '"' + idxAttr + '>' + html + '</div>';
+        /* Collapse count: applyConsecutiveDbMarkerCollapse() merges adjacent identical db-signal
+           markers into the run's head; count > 1 means follow-ups were swallowed. Showing the
+           count preserves the "this happened N times" signal without stacking N rows. */
+        var countSuffix = '';
+        if (item.markerCollapseCount && item.markerCollapseCount > 1) {
+            countSuffix = ' <span class="marker-collapse-count" title="' + item.markerCollapseCount
+                + ' adjacent identical markers — filter a surrounding line visible to see each separately">\\u00d7'
+                + item.markerCollapseCount + '</span>';
+        }
+        return '<div class="marker' + spacingCls + '"' + idxAttr + '>' + html + countSuffix + '</div>';
     }
     if (item.type === 'run-separator') {
         var rs = item.runSummary;
@@ -251,13 +260,24 @@ function renderItem(item, idx, prevVis) {
         blankCls += ' recent-error-context';
     }
     var catBadge = getCategoryBadge(item);
+    /* Flutter exception banner grouping: visually connect the header/body/footer
+       lines of an \`════ Exception caught by … ════\` block via banner-group-*
+       CSS classes (left accent rail + background tint, rounded top/bottom).
+       Applied here — not on a wrapper div — so virtualized viewport rendering
+       stays a flat list and no layout reflow happens during expand/scroll. */
+    var bannerCls = '';
+    if (item.bannerGroupId !== undefined && item.bannerGroupId >= 0) {
+        if (item.bannerRole === 'header') bannerCls = ' banner-group-start';
+        else if (item.bannerRole === 'footer') bannerCls = ' banner-group-end';
+        else bannerCls = ' banner-group-mid';
+    }
     /* Render order: deco first, then contBadge. When deco exists the badge is
        already spliced into it (left of the » chevron) and the standalone
        contBadge variable is cleared — so this tail position only applies to
        art-continuation lines where deco is empty. The order 'deco then
        contBadge' (not the reverse) preserves the invariant that the badge
        never precedes the decoration prefix in the output string. */
-    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + '"' + idxAttr + titleAttr + '>' + stackGutter + deco + contBadge + elapsed + badge + compressDupBadge + catBadge + html + '</div>' + annHtml;
+    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + bannerCls + '"' + idxAttr + titleAttr + '>' + stackGutter + deco + contBadge + elapsed + badge + compressDupBadge + catBadge + html + '</div>' + annHtml;
 }
 `;
 }

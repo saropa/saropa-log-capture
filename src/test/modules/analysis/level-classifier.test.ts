@@ -219,4 +219,54 @@ suite('LevelClassifier', () => {
         });
     });
 
+    // Flutter emits rendering / widgets / scheduler / gesture / services exceptions
+    // wrapped in a box-drawing banner: '════ Exception caught by <library> ════'.
+    // The phrase has no colon or bracket, so without a dedicated pattern it falls
+    // through to 'info' and the entire error block disappears under the
+    // Errors/Warnings filter.
+    suite('classifyLevel — Flutter exception banner', () => {
+
+        test('should classify `Exception caught by rendering library` banner as error', () => {
+            const banner = '════════ Exception caught by rendering library ═════════════════════════════════';
+            assert.strictEqual(classifyLevel(banner, 'stderr', true, false), 'error');
+        });
+
+        test('should classify banner as error in loose mode too', () => {
+            const banner = '════════ Exception caught by widgets library ═════════════════════════════════';
+            assert.strictEqual(classifyLevel(banner, 'stderr', false, false), 'error');
+        });
+
+        test('should match all common Flutter banner variants', () => {
+            const variants = [
+                '════════ Exception caught by rendering library ═════════',
+                '════════ Exception caught by widgets library ═════════',
+                '════════ Exception caught by scheduler library ═════════',
+                '════════ Exception caught by gesture system ═════════',
+                '════════ Exception caught by services library ═════════',
+                '════════ Exception caught by image resource service ═════════',
+            ];
+            for (const v of variants) {
+                assert.strictEqual(classifyLevel(v, 'stdout', true, false), 'error', `Failed for: ${v}`);
+            }
+        });
+
+        test('should still classify banner as error when user cleared error keywords', () => {
+            // Pattern is structural — not dependent on the user-configurable keyword list.
+            setSeverityKeywords({ ...DEFAULT_SEVERITY_KEYWORDS, error: [] });
+            const banner = '════════ Exception caught by rendering library ═════════';
+            assert.strictEqual(classifyLevel(banner, 'stdout', true, false), 'error');
+        });
+
+        test('should not false-trigger on "exception caught by" inside handler text', () => {
+            // Reset to defaults first so the kwError test env is clean
+            setSeverityKeywords(DEFAULT_SEVERITY_KEYWORDS);
+            // The pattern matches the phrase unconditionally — this IS an error by design.
+            // Guard: make sure we didn't accidentally match unrelated phrases.
+            assert.notStrictEqual(
+                classifyLevel('Exception handler registered successfully', 'stdout', true, false),
+                'error',
+            );
+        });
+    });
+
 });
