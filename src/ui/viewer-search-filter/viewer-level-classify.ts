@@ -10,6 +10,9 @@ export function getLevelClassifyScript(): string {
 // ── Structural patterns (hardcoded) ─────────────────────────────────
 var strictStructuralErrorPattern = /\\w*(?:error|exception)\\s*[:\\]!]|\\[(?:error|exception|fatal|panic|critical)\\]|_\\w*(?:Error|Exception)\\b|Null check operator/i;
 var looseStructuralErrorPattern = /\\b(?:error|exception)(?!\\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\\b|_\\w*(?:Error|Exception)\\b|Null check operator/i;
+// Flutter framework exception banner: strict/loose patterns miss 'Exception caught by <lib>'
+// because the phrase has no colon/bracket. Mirror extension-side level-classifier.ts.
+var flutterExceptionBannerPattern = /\\bException caught by\\b/i;
 var driftStatementPattern = /\\bDrift(?:\\:\\s+Sent|\\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\s*\\:)\\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\b/i;
 var structuralPerfPattern = /\\b(skipped\\s+\\d+\\s+frames?|gc\\s+(?:pause|freed|concurrent))\\b/i;
 var strictLevelDetection = true;
@@ -57,6 +60,8 @@ function isDriftSqlStatementLine(plainText) {
 function matchesError(plainText) {
     var sp = strictLevelDetection ? strictStructuralErrorPattern : looseStructuralErrorPattern;
     if (sp.test(plainText)) return true;
+    // Flutter banner: unambiguous error marker regardless of strict mode.
+    if (flutterExceptionBannerPattern.test(plainText)) return true;
     return kwError !== null && kwError.test(plainText);
 }
 
@@ -72,6 +77,10 @@ function classifyLevel(plainText, category) {
     if (lcm) {
         var L = lcm[1];
         if (L === 'E' || L === 'F' || L === 'A') return 'error';
+        // Android frameworks emit perf events at W/ (e.g. W/ActivityManager: Slow operation,
+        // W/Choreographer: Skipped N frames). Let perf matches promote above the W short-circuit
+        // so they are classified as 'performance' instead of generic 'warning'.
+        if (L === 'W' && matchesPerf(plainText)) return 'performance';
         if (L === 'W') return 'warning';
         if (matchesError(plainText)) return 'error';
         if (matchesPerf(plainText)) return 'performance';
