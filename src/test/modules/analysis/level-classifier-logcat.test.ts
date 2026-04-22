@@ -23,6 +23,24 @@ suite('LevelClassifier — logcat prefixes', () => {
         assert.strictEqual(classifyLevel('W/InputManager: slow event', 'stdout', true), 'warning');
     });
 
+    test('should classify W/ActivityManager Slow operation as performance (perf promotes over W)', () => {
+        assert.strictEqual(
+            classifyLevel(
+                'W/ActivityManager: Slow operation: 51ms so far, now at startProcess: returned from zygote!',
+                'stdout',
+                true,
+            ),
+            'performance',
+        );
+    });
+
+    test('should classify W/Choreographer Skipped frames as performance (perf promotes over W)', () => {
+        assert.strictEqual(
+            classifyLevel('W/Choreographer: Skipped 30 frames!', 'stdout', true),
+            'performance',
+        );
+    });
+
     test('should classify V/ as debug', () => {
         assert.strictEqual(classifyLevel('V/Verbose: trace info', 'stdout', true), 'debug');
     });

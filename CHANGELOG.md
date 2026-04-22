@@ -26,6 +26,12 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **`W/ActivityManager: Slow operation …` lines are now classified as performance, not warnings.** Android frameworks emit slow-operation and dropped-frame events at logcat `W/` level (e.g. `W/ActivityManager: Slow operation: 51ms …`, `W/Choreographer: Skipped 30 frames!`) — previously the `W/` prefix short-circuited classification to `warning` before performance patterns were checked, so these lines cluttered the warning band instead of the performance band. Performance matches now promote ahead of the `W/` fallback; non-perf `W/` lines still classify as `warning`.
+
 ## [7.3.0]
 
 Hover a log in the Logs panel and a new folder icon lets you jump straight to the file in your OS file explorer. The right-click menu on logs is also tidier — export and copy actions are now grouped under flyout submenus. And the Logs list now bundles a debug session's log together with its Drift Advisor and Logcat files into a single expandable "Session" entry, so clicking the chevron opens everything merged into one view.
