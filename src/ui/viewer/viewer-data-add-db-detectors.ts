@@ -116,7 +116,9 @@ function applyDbMarkerResults(results, ts, sp, lineSource) {
                 activeGroupHeader = null;
             }
             cleanupTrailingRepeats();
-            var markerItem = { html: html, type: 'marker', height: MARKER_HEIGHT, category: cat, groupId: -1, timestamp: ts, sourcePath: sp || null, source: lineSource };
+            /* Persist anchorSeq on the item so the marker-visibility pass can locate the jump target
+               (applyDbSignalMarkerVisibility() hides orphaned markers whose anchor is filtered). */
+            var markerItem = { html: html, type: 'marker', height: MARKER_HEIGHT, category: cat, groupId: -1, timestamp: ts, sourcePath: sp || null, source: lineSource, anchorSeq: (typeof anc === 'number' && isFinite(anc)) ? anc : undefined };
             allLines.push(markerItem);
             totalHeight += MARKER_HEIGHT;
         } catch (_mkErr) { /* swallow — never block ingest */ }
