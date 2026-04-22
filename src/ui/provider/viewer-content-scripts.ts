@@ -19,6 +19,7 @@ import { getPinScript } from '../viewer/viewer-pin';
 import { getExclusionScript } from '../viewer-search-filter/viewer-exclusions';
 import { getCopyScript } from '../viewer/viewer-copy';
 import { getHiddenLinesScript } from '../viewer/viewer-hidden-lines';
+import { getPeekChevronScript } from '../viewer/viewer-peek-chevron';
 import { getAutoHideModalScript } from '../viewer/viewer-auto-hide-modal';
 import { getAnnotationScript } from '../viewer/viewer-annotations';
 import { getTimingScript } from '../viewer/viewer-timing';
@@ -156,6 +157,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getExclusionScript()) +
         scriptTag(nonce, getCopyScript()) +
         scriptTag(nonce, getHiddenLinesScript()) +
+        scriptTag(nonce, getPeekChevronScript()) +
         scriptTag(nonce, getAutoHideModalScript()) +
         scriptTag(nonce, getAnnotationScript()) +
         scriptTag(nonce, getTimingScript()) +

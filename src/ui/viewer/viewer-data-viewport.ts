@@ -12,7 +12,9 @@ function findNextDotSibling(children, startIdx) {
     for (var ni = startIdx + 1; ni < children.length; ni++) {
         if (!children[ni]) continue;
         if (children[ni].classList.contains('marker')) return -1;
+        /* Skip both indicator divs so the same-level connector spans their gap. */
         if (children[ni].classList.contains('hidden-chevron')) continue;
+        if (children[ni].classList.contains('peek-collapse')) continue;
         var lvl = getBarLevel(children[ni]);
         if (lvl && !children[ni].classList.contains('line-blank')) return ni;
     }
@@ -129,13 +131,29 @@ function renderViewport(force) {
     for (var i = startIdx; i <= endIdx && i < allLines.length; i++) {
         if (allLines[i].height === 0) continue;
         if (typeof window.replayMode !== 'undefined' && window.replayMode && typeof window.replayCurrentIndex === 'number' && i > window.replayCurrentIndex) continue;
-        // Insert chevron when non-blank lines are hidden between two visible lines
+        // Insert chevron when non-blank lines are hidden between two visible lines.
+        // data-from/data-to carry the hidden-range indices so the click handler in
+        // viewer-hidden-lines.ts can set peekOverride on exactly those items.
         if (prevVisIdx >= 0 && i - prevVisIdx > 1) {
             var hInfo = countHiddenNonBlank(prevVisIdx + 1, i);
             if (hInfo.count > 0) {
                 var tip = buildHiddenTip(hInfo).replace(/"/g, '&quot;');
-                parts.push('<div class="hidden-chevron"><span title="' + tip + '">\\u25B8</span></div>');
+                /* Empty span: the glyph is drawn via CSS ::before { content } in
+                   viewer-styles-decoration-bars.ts. WHY CSS pseudo and not a text node:
+                   a text node (even inside user-select:none) can still be pulled into
+                   window.getSelection() via drag-select in some Chromium paths, so the
+                   glyph ended up in copied log text. CSS-generated content is not in
+                   the DOM and cannot be selected or copied by any path. */
+                parts.push('<div class="hidden-chevron" data-from="' + (prevVisIdx + 1) + '" data-to="' + i + '"><span title="' + tip + '"></span></div>');
             }
+        }
+        /* First line of a peek group gets an un-peek marker ABOVE it. A peek group is a
+           contiguous run of items sharing the same peekAnchorKey (set by peekChevron in
+           viewer-hidden-lines.ts). "First" = no previous item or previous item has a
+           different key. Clicking the marker clears the key for the whole group. */
+        var _pk = allLines[i].peekAnchorKey;
+        if (_pk !== undefined && _pk !== null && (i === 0 || allLines[i - 1].peekAnchorKey !== _pk)) {
+            parts.push('<div class="peek-collapse" data-peek-key="' + _pk + '" title="Collapse peek"><span></span></div>');
         }
         parts.push(renderItem(allLines[i], i, prevVis));
         prevVis = allLines[i];
@@ -147,6 +165,7 @@ function renderViewport(force) {
     for (var ci = 0; ci < ch.length; ci++) {
         if (!ch[ci]) continue;
         if (ch[ci].classList.contains('hidden-chevron')) continue;
+        if (ch[ci].classList.contains('peek-collapse')) continue;
         var lvl = getBarLevel(ch[ci]);
         if (!lvl || ch[ci].classList.contains('line-blank')) continue;
         var ni = findNextDotSibling(ch, ci);
@@ -156,7 +175,7 @@ function renderViewport(force) {
         ch[ci].classList.add('bar-down');
         ch[ni].classList.add('bar-up');
         for (var bi = ci + 1; bi < ni; bi++) {
-            if (ch[bi] && !ch[bi].classList.contains('hidden-chevron')) {
+            if (ch[bi] && !ch[bi].classList.contains('hidden-chevron') && !ch[bi].classList.contains('peek-collapse')) {
                 ch[bi].classList.add('bar-up', 'bar-down', 'bar-bridge', 'level-bar-' + lvl);
             }
         }
