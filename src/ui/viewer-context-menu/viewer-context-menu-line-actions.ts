@@ -68,6 +68,23 @@ function handleLineAction(action, lineIdx) {
             if (logText.length > 0 || refs.length > 0) vscodeApi.postMessage({ type: 'copyWithSource', text: logText, sourceRefs: refs });
             return true;
         }
+        case 'copy-line-number': {
+            /* 1-based index in the viewer row list — matches the counter decoration users see. We
+               do not expose the internal 0-based lineIdx because the rest of the UI (counter column,
+               status bar, line pickers) is 1-based, and mixing bases silently is a footgun. */
+            vscodeApi.postMessage({ type: 'copyToClipboard', text: String(lineIdx + 1) });
+            return true;
+        }
+        case 'copy-timestamp': {
+            /* Prefer .timestamp (canonical on stack headers/frames, markers, and doc items in
+               addToData) and fall back to .ts for any code path that still sets the short name.
+               ISO 8601 is unambiguous when pasted into another tool/log/bug report — the on-screen
+               T07:23:36 decoration is for reading, not for round-tripping. */
+            var tsVal = lineData.timestamp || lineData.ts;
+            if (!tsVal) return true;
+            vscodeApi.postMessage({ type: 'copyToClipboard', text: new Date(tsVal).toISOString() });
+            return true;
+        }
         case 'copy-to-search':
             if (typeof openSearch === 'function' && typeof searchInputEl !== 'undefined') {
                 openSearch();

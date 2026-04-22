@@ -140,6 +140,14 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
     var openSourceItem = contextMenuEl.querySelector('[data-action="open-source"]');
     if (openSourceItem) openSourceItem.style.display = hasSourceLink ? '' : 'none';
 
+    /* Copy Timestamp hides when the line carries no epoch (markers, synthetic rows). Both .timestamp
+       and .ts are checked because stack frames/headers store it under .timestamp while some code
+       paths still set .ts on lineData — the context menu must not copy an empty string silently. */
+    var hasTimestamp = !!(lineData && (lineData.timestamp || lineData.ts));
+    contextMenuEl.querySelectorAll('[data-timestamp-action]').forEach(function(el) {
+        el.style.display = (hasLine && hasTimestamp) ? '' : 'none';
+    });
+
     // Code-quality actions depend on the codeQuality session adapter.
     var integrationAdapters = (typeof window !== 'undefined' && Array.isArray(window.integrationAdapters))
         ? window.integrationAdapters
