@@ -6,6 +6,7 @@ import * as assert from 'node:assert';
 import { getViewerDataAddScript } from '../../ui/viewer/viewer-data-add';
 import { getViewerDataHelpersCore } from '../../ui/viewer/viewer-data-helpers-core';
 import { getViewerDataHelpersRender } from '../../ui/viewer/viewer-data-helpers-render';
+import { getAsciiArtStyles } from '../../ui/viewer-styles/viewer-styles-ascii-art';
 
 function extractAddToDataBlock(script: string): string {
     const start = script.indexOf('function addToData(');
@@ -119,6 +120,81 @@ suite('ASCII art block grouping', () => {
             assert.ok(
                 render.includes('!item.artBlockPos'),
                 'spacing logic must be skipped for art block lines',
+            );
+        });
+    });
+
+    suite('tight row layout (no inter-row gap)', () => {
+        // Before: art-block lines inherited .line { line-height: 1.5 }, so
+        // vertical box-drawing strokes │ on adjacent rows never connected —
+        // the box appeared broken. After: art-block lines override to
+        // line-height 1 with matching height so strokes meet cleanly.
+        test('CSS collapses inter-row gap via line-height 1 on all three art-block classes', () => {
+            const css = getAsciiArtStyles();
+            /* The shared rule that applies to start+middle+end must set both
+               line-height and height; check the combined selector block exists. */
+            assert.ok(
+                css.includes('.line.art-block-start,\n.line.art-block-middle,\n.line.art-block-end'),
+                'shared rule must target all three art-block classes',
+            );
+            assert.ok(css.includes('line-height: 1;'), 'line-height must be 1 for tight box-drawing');
+            assert.ok(css.includes('height: 1em;'), 'base art-block height must be 1em');
+        });
+
+        test('CSS breathing room uses padding (not margin) so virtualization stays in sync', () => {
+            const css = getAsciiArtStyles();
+            /* Margin is not included in item.height and would desync the
+               scroller's prefix sums; padding is included via border-box. */
+            assert.ok(
+                css.includes('padding-top: 6px;\n    height: calc(1em + 6px);'),
+                'art-block-start must use padding-top + height calc (not margin)',
+            );
+            assert.ok(
+                css.includes('padding-bottom: 6px;\n    height: calc(1em + 6px);'),
+                'art-block-end must use padding-bottom + height calc (not margin)',
+            );
+            assert.ok(!css.includes('margin-top: 6px'), 'art-block-start must not use margin-top');
+            assert.ok(!css.includes('margin-bottom: 6px'), 'art-block-end must not use margin-bottom');
+        });
+
+        test('calcItemHeight returns compact logFontSize-based heights for art-block rows', () => {
+            const core = getViewerDataHelpersCore();
+            assert.ok(
+                core.includes("item.artBlockPos === 'start' || item.artBlockPos === 'end'"),
+                'start and end must resolve together with +6 padding',
+            );
+            assert.ok(
+                core.includes('return logFontSize + 6'),
+                'start/end height must be logFontSize + 6px to match CSS padding',
+            );
+            assert.ok(
+                core.includes("item.artBlockPos === 'middle'") && core.includes('return logFontSize'),
+                'middle height must be logFontSize (no padding)',
+            );
+        });
+    });
+
+    suite('perfect indent alignment', () => {
+        // Before: the top-row decoration prefix (counter/timestamp/tag) had
+        // variable rendered width, so the ╭ corner drifted left/right relative
+        // to the │ bars on middle rows. After: decoration is a fixed-width
+        // inline-block sized in parent em units, pinning the corner.
+        test('CSS pins start-line decoration to fixed --deco-content-indent-em slot', () => {
+            const css = getAsciiArtStyles();
+            assert.ok(
+                css.includes('.line.art-block-start .line-decoration'),
+                'must scope the fixed-width slot to art-block-start only (other rows unaffected)',
+            );
+            assert.ok(
+                css.includes('display: inline-block'),
+                'decoration must be inline-block so width takes effect',
+            );
+            /* /0.85 compensates for the decoration's 0.85em font-size; without
+               it the slot would only reserve 0.85 * 13em = 11.05em of parent
+               space and the art would still drift. */
+            assert.ok(
+                css.includes('width: calc(var(--deco-content-indent-em, 13em) / 0.85)'),
+                'slot width must divide by 0.85 to account for decoration font-size',
             );
         });
     });

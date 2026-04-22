@@ -172,6 +172,16 @@ function calcItemHeight(item) {
      * waste space, tall enough to preserve paragraph breaks. Placed after
      * the continuation-collapse gate so collapsed children stay fully hidden. */
     if (item.type === 'line' && isLineContentBlank(item)) return Math.max(4, Math.floor(ROW_HEIGHT / 4));
+    /* ASCII art block rows use a compact height so consecutive box-drawing
+       strokes (│, ║, ─) connect without visible gaps. Matches the CSS in
+       viewer-styles-ascii-art.ts: start/end = 1em + 6px padding, middle = 1em.
+       WHY logFontSize and not ROW_HEIGHT: ROW_HEIGHT is measured from a .line
+       probe with line-height 1.5 (base rule), but art-block lines override to
+       line-height 1. Returning ROW_HEIGHT here would leave ~0.5em of empty
+       space below each art row and the scroller's prefix sums would be taller
+       than the rendered block, producing drift in subsequent row positions. */
+    if (item.artBlockPos === 'start' || item.artBlockPos === 'end') return logFontSize + 6;
+    if (item.artBlockPos === 'middle') return logFontSize;
     /* Structured file collapse (plan 051): markdown sections and JSON brace pairs. */
     if (item._mdSectionHidden || item._jsonSectionHidden) return 0;
     if (item.type === 'marker') {
