@@ -62,7 +62,12 @@ function handleRepeatCollapse(category, ts, fw, sp, elapsedMs, source, rawText, 
         totalHeight -= oldH;
     }
     var repeatTierHidden = (typeof isTierHidden === 'function') ? isTierHidden({ tier: lineTier }) : false;
-    var repeatH = (repeatAutoHide || catFiltered || repeatTierHidden) ? 0 : ROW_HEIGHT;
+    /* The "N × SQL repeated:" row carries the collapsed SELECT's level (typically 'database').
+       Without this check it was visible even with the Database filter off — the user toggles
+       the filter, but the notification row is built here during streaming and had no filter
+       flag set until applyLevelFilter() ran on the next user interaction. */
+    var repeatLvlFilt = (typeof calcLevelFiltered === 'function') ? calcLevelFiltered(lvl) : false;
+    var repeatH = (repeatAutoHide || catFiltered || repeatTierHidden || repeatLvlFilt) ? 0 : ROW_HEIGHT;
     if (!isUpdate && repeatAutoHide && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
     if (!isUpdate) {
         repeatItem = {
@@ -90,7 +95,8 @@ function handleRepeatCollapse(category, ts, fw, sp, elapsedMs, source, rawText, 
             isAnr: (lvl === 'performance' && anrPattern.test(repeatTracker.lastPlainText)),
             autoHidden: repeatAutoHide,
             source: lineSource,
-            timeRangeFiltered: false
+            timeRangeFiltered: false,
+            levelFiltered: repeatLvlFilt
         };
         if (sqlDrill) {
             repeatItem.sqlRepeatDrilldown = sqlDrill;
@@ -109,6 +115,9 @@ function handleRepeatCollapse(category, ts, fw, sp, elapsedMs, source, rawText, 
         repeatItem.html = repeatHtml;
         repeatItem.timestamp = ts;
         repeatItem.level = lvl;
+        /* Keep levelFiltered in sync with the (possibly refreshed) level — calcItemHeight
+           below reads it, so a stale flag would leak visibility or hide incorrectly. */
+        repeatItem.levelFiltered = repeatLvlFilt;
         repeatItem.sourceTag = sTag;
         repeatItem.logcatTag = lTag;
         repeatItem.classTags = cTags;

@@ -118,9 +118,30 @@ function applyDbMarkerResults(results, ts, sp, lineSource) {
             cleanupTrailingRepeats();
             /* Persist anchorSeq on the item so the marker-visibility pass can locate the jump target
                (applyDbSignalMarkerVisibility() hides orphaned markers whose anchor is filtered). */
-            var markerItem = { html: html, type: 'marker', height: MARKER_HEIGHT, category: cat, groupId: -1, timestamp: ts, sourcePath: sp || null, source: lineSource, anchorSeq: (typeof anc === 'number' && isFinite(anc)) ? anc : undefined };
+            /* Orphan check at birth: applyDbSignalMarkerVisibility runs only inside recalcHeights
+               (on user interaction), so streaming markers rendered visible until the next pass —
+               even when their anchor SELECT was already hidden by a level/source filter. Compute
+               hidden state now by locating the anchor and reusing the shared helper, and stamp
+               markerHidden + a zero initial height so the first render matches the filter state. */
+            var _mHidden = false;
+            if (typeof dbSignalMarkersVisible !== 'undefined' && !dbSignalMarkersVisible) {
+                _mHidden = true;
+            } else if (typeof anc === 'number' && isFinite(anc) && typeof isNonMarkerItemEffectivelyHidden === 'function') {
+                /* Anchor was pushed immediately before the marker in the same batch — a short
+                   reverse scan beats building a global seq→index map per marker. Bound the scan
+                   so pathological inputs can't turn this into O(n²). */
+                for (var _lk = allLines.length - 1, _lkMin = Math.max(0, _lk - 32); _lk >= _lkMin; _lk--) {
+                    var _cand = allLines[_lk];
+                    if (_cand && _cand.type !== 'marker' && _cand.seq === anc) {
+                        _mHidden = isNonMarkerItemEffectivelyHidden(_cand);
+                        break;
+                    }
+                }
+            }
+            var _mH = _mHidden ? 0 : MARKER_HEIGHT;
+            var markerItem = { html: html, type: 'marker', height: _mH, category: cat, groupId: -1, timestamp: ts, sourcePath: sp || null, source: lineSource, anchorSeq: (typeof anc === 'number' && isFinite(anc)) ? anc : undefined, markerHidden: _mHidden };
             allLines.push(markerItem);
-            totalHeight += MARKER_HEIGHT;
+            totalHeight += _mH;
         } catch (_mkErr) { /* swallow — never block ingest */ }
     }
 }
