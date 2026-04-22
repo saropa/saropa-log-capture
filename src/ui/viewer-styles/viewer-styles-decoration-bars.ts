@@ -102,23 +102,96 @@ export function getDecorationBarStyles(): string {
 .bar-up.bar-down::after { top: 0; bottom: 0; }
 
 /* Hidden-lines chevron: zero-height indicator between visible lines when non-blank lines are filtered out.
-   The div is zero-height; the absolute span overflows visually without affecting layout. */
+   The div is zero-height; the absolute span overflows visually without affecting layout.
+   WHY centered in the severity-dot column: the severity bar at left:0.69em + width:0.54em
+   forms a vertical timeline of dots. A gap in that timeline *is* the signal that lines
+   were hidden; placing the ellipsis at the dot's center (0.96em) visually fills the gap
+   instead of squeezing a tiny glyph into the 0.69em sliver to the left of the dots,
+   which reads as a single pixel against the dot column. */
 .hidden-chevron {
     position: relative;
     height: 0;
     overflow: visible;
+    /* WHY unselectable: this glyph is a UI indicator for hidden rows, not log content.
+       Without this, drag-selecting across a gap pulls the glyph into the clipboard
+       (user reported copied text full of stray \\u25B8/\\u22EE characters). */
+    user-select: none;
+    -webkit-user-select: none;
 }
+.hidden-chevron > span { user-select: none; -webkit-user-select: none; }
 .hidden-chevron > span {
     position: absolute;
-    left: 0.42em;
-    top: -0.5em;
-    font-size: 0.75em;
+    /* 0.96em = dot column center (0.69em + 0.54em/2); translateX(-50%) centers the glyph on it.
+       translateY(-50%) centers vertically on the div's baseline (which sits between the two
+       flanking .line rows since the parent is height:0) so the big glyph straddles the gap. */
+    left: 0.96em;
+    top: 0;
+    transform: translate(-50%, -50%);
+    /* Icon represents hidden *rows*, not just a hint — scale to roughly a row's worth so the
+       gap is obvious without crowding the flanking dots. */
+    font-size: 2em;
     line-height: 1;
-    color: var(--vscode-descriptionForeground, #888);
-    opacity: 0.7;
-    cursor: default;
+    color: var(--vscode-descriptionForeground, #bbb);
+    opacity: 0.95;
+    cursor: help;
     z-index: 3;
+    font-weight: 700;
+    letter-spacing: -0.1em;
+    /* Background mask hides the faint connector bar (bar-down/up at left:0.85em, width:0.23em)
+       passing through this gap when both flanking dots share a level — otherwise the connector
+       threads through the ellipsis and muddies the "gap here" signal. Padding widens the mask
+       slightly beyond the glyph so the connector is fully occluded at the crossover. */
+    padding: 0 0.12em;
+    background: var(--vscode-editor-background, #1e1e1e);
+    border-radius: 0.15em;
 }
+/* WHY ::before content instead of a text node inside the span:
+   a DOM text node can be pulled into window.getSelection() by native drag-select,
+   so Ctrl/Cmd+C was pasting the glyph between log lines. CSS ::before content is
+   not part of the DOM and is excluded from every copy path (native selection,
+   Select All, execCommand, clipboard API). The title attribute on the span still
+   works for the tooltip. U+22EE VERTICAL ELLIPSIS reads as "more dots here"
+   inside the severity-dot timeline. */
+.hidden-chevron > span::before { content: '\\22EE'; }
+/* Click target — the 2em glyph sits in a zero-height div, so pointer-events need to
+   extend past the zero rect. The span is already visually ~32px tall; make it
+   pointer-interactive and give the parent div a tall hit zone without adding layout. */
+.hidden-chevron { cursor: pointer; pointer-events: auto; }
+.hidden-chevron > span { pointer-events: auto; }
+.hidden-chevron:hover > span { opacity: 1; color: var(--vscode-textLink-foreground, #3794ff); }
+
+/* Un-peek marker: rendered at the start of every contiguous run of peekOverride'd
+   items by the render loop in viewer-data-viewport.ts. Same column and zero-height
+   approach as .hidden-chevron so layout is unaffected; different glyph (U+2212
+   MINUS SIGN) and accent color so users can visually tell the two states apart. */
+.peek-collapse {
+    position: relative;
+    height: 0;
+    overflow: visible;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.peek-collapse > span {
+    position: absolute;
+    left: 0.96em;
+    top: 0;
+    transform: translate(-50%, -50%);
+    font-size: 2em;
+    line-height: 1;
+    color: var(--vscode-textLink-foreground, #3794ff);
+    opacity: 0.95;
+    z-index: 3;
+    font-weight: 700;
+    letter-spacing: -0.1em;
+    padding: 0 0.12em;
+    background: var(--vscode-editor-background, #1e1e1e);
+    border-radius: 0.15em;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.peek-collapse > span::before { content: '\\2212'; }
+.peek-collapse:hover > span { opacity: 1; color: var(--vscode-errorForeground, #f48771); }
 
 /* Continuation line collapse badge — inline pill showing hidden line count.
    Toggles group visibility on click. Uses em so it scales with zoom. */
