@@ -169,12 +169,15 @@ suite('ViewerOptionsPanel', () => {
         });
     });
     suite('getKeyboardShortcutsViewHtml (Keyboard shortcuts screen)', () => {
-        test('should return shortcuts view with back button and power shortcuts table', () => {
+        test('should return shortcuts view with back button and grouped shortcuts tables', () => {
             const html = (0, viewer_keyboard_shortcuts_html_1.getKeyboardShortcutsViewHtml)();
             assert.ok(html.includes('id="shortcuts-view"'));
             assert.ok(html.includes('id="shortcuts-back"'));
             assert.ok(html.includes('Keyboard shortcuts'));
-            assert.ok(html.includes('Power shortcuts (panel viewer)'));
+            /* Grouped sections replaced the single "Power shortcuts" table */
+            assert.ok(html.includes('General'));
+            assert.ok(html.includes('Navigation'));
+            assert.ok(html.includes('Panels'));
             assert.ok(html.includes('Ctrl+F'));
             assert.ok(html.includes('Key commands (Command Palette)'));
         });

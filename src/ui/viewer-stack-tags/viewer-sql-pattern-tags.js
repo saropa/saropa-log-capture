@@ -13,7 +13,7 @@
  * - **Chip key** = verb category string (e.g. `'SELECT'`, `'Transaction'`, `'Other SQL'`).
  * - `parseSqlFingerprint().verb` is mapped to a category by `sqlVerbCategory()`.
  * - Lines with `sourceTag === 'database'` but no parseable verb go to **`Other SQL`**.
- * - Lines counted: `line`, `repeat-notification`, and `n-plus-one-insight` with `sourceTag === 'database'`.
+ * - Lines counted: `line`, `repeat-notification`, and `n-plus-one-signal` with `sourceTag === 'database'`.
  *
  * ## Performance
  * - **`registerSqlPattern`** (hot path during streaming): O(1) per line — just increment verb count.
@@ -49,7 +49,7 @@ function sqlVerbCategory(verb) {
 function shouldTrackSqlPatternLine(item) {
     if (!item || item.type === 'marker') return false;
     if (item.sourceTag !== 'database') return false;
-    return item.type === 'line' || item.type === 'repeat-notification' || item.type === 'n-plus-one-insight';
+    return item.type === 'line' || item.type === 'repeat-notification' || item.type === 'n-plus-one-signal';
 }
 
 function sqlPatternRowHidden(item) {
@@ -202,9 +202,14 @@ function updateSqlPatternSummary() {
     var summary = total + ' command type' + (total !== 1 ? 's' : '')
         + (hidden > 0 ? ' (' + hidden + ' hidden)' : '');
     el.textContent = summary;
-    if (typeof setAccordionSummary === 'function') setAccordionSummary('sql-patterns-section', summary);
-    var section = document.getElementById('sql-patterns-section');
-    if (section) section.style.display = total > 0 ? '' : 'none';
+    /* Accordion header shows concise count: "2 of 6 hidden" or total */
+    var accordionText = hidden > 0
+        ? hidden + ' of ' + total + ' hidden'
+        : total + ' type' + (total !== 1 ? 's' : '');
+    if (typeof setAccordionSummary === 'function') setAccordionSummary('sql-patterns-section', accordionText);
+    /* Show/hide the tab button based on whether SQL patterns exist */
+    var tab = document.getElementById('filter-tab-sql-patterns');
+    if (tab) { tab.style.display = total > 0 ? '' : 'none'; }
 }
 
 (function() {
@@ -223,8 +228,9 @@ function updateSqlPatternSummary() {
 function resetSqlPatternTags() {
     sqlVerbCounts = {};
     hiddenSqlVerbs = {};
-    var section = document.getElementById('sql-patterns-section');
-    if (section) section.style.display = 'none';
+    /* Hide the tab button when SQL patterns are cleared */
+    var tab = document.getElementById('filter-tab-sql-patterns');
+    if (tab) tab.style.display = 'none';
     var container = document.getElementById('sql-pattern-chips');
     if (container) container.innerHTML = '';
     var sum = document.getElementById('sql-pattern-summary');

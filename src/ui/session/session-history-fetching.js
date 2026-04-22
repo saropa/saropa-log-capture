@@ -67,22 +67,34 @@ async function fetchItemsCore(target, logDirOverride, callbacks) {
     }
     const configuredDir = folder ? (0, config_1.getLogDirectoryUri)(folder) : undefined;
     const logDir = logDirOverride ?? configuredDir;
-    try {
-        await migrateIfNeeded(folder ?? undefined, configuredDir, logDirOverride);
-    }
-    catch { /* migration is best-effort */ }
+    /* Migration is best-effort — fire-and-forget so it never delays file listing. */
+    migrateIfNeeded(folder ?? undefined, configuredDir, logDirOverride).catch(() => { });
     try {
         const { fileTypes, includeSubfolders } = (0, config_1.getConfig)();
-        const logFiles = await (0, config_1.readTrackedFiles)(logDir, fileTypes, includeSubfolders);
-        try {
-            callbacks?.onFilesListed?.(logFiles, logDir);
-        }
-        catch { /* preview is non-critical */ }
-        const centralMeta = await target.metaStore.loadAllMetadata(logDir);
+        /* Stream file names to the caller per-directory so the first batch appears
+           immediately, and load the central metadata store in parallel. */
+        const onBatch = callbacks?.onFilesFound
+            ? (files) => { try {
+                callbacks.onFilesFound(files, logDir);
+            }
+            catch { /* non-critical */ } }
+            : undefined;
+        const [logFiles, centralMeta] = await Promise.all([
+            onBatch
+                ? (0, config_1.readTrackedFilesStreaming)(logDir, fileTypes, includeSubfolders, onBatch)
+                : (0, config_1.readTrackedFiles)(logDir, fileTypes, includeSubfolders),
+            target.metaStore.loadAllMetadata(logDir),
+        ]);
         const items = await (0, session_history_metadata_1.loadBatch)(target, logDir, logFiles, { centralMeta, onItemLoaded: callbacks?.onItemLoaded });
         pruneCache(target, items);
-        const grouped = (0, session_history_grouping_1.groupSplitFiles)(items);
-        return grouped.sort((a, b) => b.mtime - a.mtime);
+        const splitGrouped = (0, session_history_grouping_1.groupSplitFiles)(items);
+        // Session-group coalescing runs AFTER split-group coalescing so that a multi-part DAP
+        // session (rotated into _001.log / _002.log) lands as one SplitGroup that then becomes
+        // one member of its SessionGroup \u2014 not N individual group members. Feature-gated on the
+        // user setting so disabling returns the pre-feature rendering exactly as before.
+        const cfg = (0, config_1.getConfig)().sessionGroups;
+        const finalItems = cfg.enabled ? (0, session_history_grouping_1.groupSessionGroups)(splitGrouped) : splitGrouped;
+        return finalItems.sort((a, b) => b.mtime - a.mtime);
     }
     catch {
         return [];

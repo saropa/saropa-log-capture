@@ -20,70 +20,77 @@ import { getViewerDataHelpersCore } from '../../ui/viewer/viewer-data-helpers-co
 import { getDecorationStyles } from '../../ui/viewer-styles/viewer-styles-decoration';
 import { getHiddenLinesScript } from '../../ui/viewer/viewer-hidden-lines';
 
-suite('Peek chevron — data attributes on the hidden-chevron', () => {
+suite('Peek chevron — data attributes on the row after a hidden gap', () => {
+    // Unified line-collapsing: both indicator states (hidden gap behind, peek
+    // group start) are now stamped onto the outer row via .bar-hidden-rows
+    // plus routing data-* attrs. The click handler disambiguates by which
+    // attrs are present. See bugs/unified-line-collapsing.md.
     const viewport = getViewportRenderScript();
 
-    test('should emit data-from with the first hidden index', () => {
-        // prevVisIdx is the last visible line before the gap; the gap starts at prevVisIdx+1.
+    test('should emit data-hidden-from with the first hidden index', () => {
+        // _hiddenFrom = prevVisIdx + 1 — first hidden index (inclusive).
         assert.ok(
-            viewport.includes(`data-from="' + (prevVisIdx + 1) + '"`),
-            'chevron must carry data-from so peekChevron knows the start index',
+            viewport.includes("data-hidden-from=\"' + _hiddenFrom + '\""),
+            'row after a hidden gap must carry data-hidden-from so peekChevron knows the start index',
         );
     });
 
-    test('should emit data-to with the next visible index (exclusive)', () => {
-        // i is the next visible line after the gap; range is [from, to) exclusive.
+    test('should emit data-hidden-to with the next visible index (exclusive)', () => {
+        // _hiddenTo = i — exclusive end of the hidden range.
         assert.ok(
-            viewport.includes(`data-to="' + i + '"`),
-            'chevron must carry data-to as the exclusive range end',
+            viewport.includes("data-hidden-to=\"' + _hiddenTo + '\""),
+            'row after a hidden gap must carry data-hidden-to as the exclusive range end',
         );
     });
 });
 
-suite('Peek chevron — un-peek marker injection in render loop', () => {
+suite('Peek chevron — un-peek state stamped on the first peek-group row', () => {
     const viewport = getViewportRenderScript();
 
     test('should read peekAnchorKey from the current item', () => {
         assert.ok(
             viewport.includes('allLines[i].peekAnchorKey'),
-            'render loop must look up each peekAnchorKey to decide marker placement',
+            'render loop must look up each peekAnchorKey to decide which row starts a peek group',
         );
     });
 
-    test('should inject .peek-collapse at the first item of a peek group', () => {
+    test('should stamp .bar-hidden-rows on the first row of a peek group', () => {
         assert.ok(
             viewport.includes('allLines[i - 1].peekAnchorKey !== _pk'),
             'first-in-group detection must compare prev key to current key',
         );
         assert.ok(
-            viewport.includes('<div class="peek-collapse"'),
-            'render loop must emit a peek-collapse div for the group start',
+            viewport.includes('class="bar-hidden-rows '),
+            'render loop must inject .bar-hidden-rows onto the first row of a peek group',
         );
     });
 
     test('should pass peekAnchorKey through as data-peek-key for the click handler', () => {
         assert.ok(
-            viewport.includes(`data-peek-key="' + _pk + '"`),
-            'peek-collapse must carry data-peek-key so unpeekChevron can match the group',
+            viewport.includes("data-peek-key=\"' + _peekKey + '\""),
+            'peek-group row must carry data-peek-key so unpeekChevron can match the group',
         );
     });
 });
 
-suite('Peek chevron — same-level dot bridging skips both indicator divs', () => {
+suite('Retired indicator divs no longer affect bar-bridge logic', () => {
+    // The unified line-collapsing rethink retired .peek-collapse and
+    // .hidden-chevron entirely, so the bar-bridge post-pass no longer needs
+    // to skip them. These tests pin the cleanup so nobody reintroduces the
+    // skip without first reintroducing the divs themselves.
     const viewport = getViewportRenderScript();
 
-    test('should skip peek-collapse in findNextDotSibling', () => {
+    test('should no longer reference .peek-collapse in the render loop', () => {
         assert.ok(
-            viewport.includes(`classList.contains('peek-collapse')`) &&
-                viewport.includes('findNextDotSibling'),
-            'findNextDotSibling must skip peek-collapse the same way it skips hidden-chevron',
+            !viewport.includes(`classList.contains('peek-collapse')`),
+            'render loop must not reference the retired .peek-collapse class',
         );
     });
 
-    test('should skip peek-collapse when adding bar-bridge classes', () => {
+    test('should no longer reference .hidden-chevron in the render loop', () => {
         assert.ok(
-            viewport.includes(`!ch[bi].classList.contains('peek-collapse')`),
-            'bar-bridge loop must not stamp level classes onto peek-collapse divs',
+            !viewport.includes(`classList.contains('hidden-chevron')`),
+            'render loop must not reference the retired .hidden-chevron class',
         );
     });
 });
@@ -175,46 +182,24 @@ suite('Peek chevron — initHiddenLines wires initPeekChevron', () => {
     });
 });
 
-suite('Peek chevron — CSS for .peek-collapse and hit targets', () => {
+suite('Retired .peek-collapse CSS is fully removed', () => {
+    // The CSS rules for .peek-collapse (and .hidden-chevron) were removed when
+    // the unified line-collapsing rethink retired those indicator elements.
+    // The outlined severity-dot state (.bar-hidden-rows) replaces both.
     const css = getDecorationStyles();
 
-    test('should define .peek-collapse with zero height + overflow visible', () => {
-        const block = css.slice(css.indexOf('.peek-collapse {'), css.indexOf('.peek-collapse >'));
+    test('should no longer define any .peek-collapse CSS rule', () => {
+        // Active selector usage only — comment mentions are allowed.
         assert.ok(
-            block.includes('height: 0') && block.includes('overflow: visible'),
-            'peek-collapse must be zero-height with overflow visible',
+            !/\.peek-collapse\s*[{>:]/.test(css),
+            'bundled stylesheet must not carry dead .peek-collapse rules',
         );
     });
 
-    test('should render the minus glyph via ::before content (not a text node)', () => {
+    test('should define the replacement .bar-hidden-rows state', () => {
         assert.ok(
-            css.includes(`.peek-collapse > span::before { content: '\\2212'; }`),
-            'un-peek glyph must be drawn via ::before content so it cannot be selected or copied',
-        );
-    });
-
-    test('should mark both indicator divs user-select: none', () => {
-        const hiddenMatch = /\.hidden-chevron\s*\{[\s\S]*?user-select:\s*none/.test(css);
-        const peekMatch = /\.peek-collapse\s*\{[\s\S]*?user-select:\s*none/.test(css);
-        assert.ok(hiddenMatch, 'hidden-chevron must be unselectable');
-        assert.ok(peekMatch, 'peek-collapse must be unselectable');
-    });
-
-    test('should give the hidden-chevron a click cursor and pointer-events', () => {
-        assert.ok(
-            css.includes('.hidden-chevron { cursor: pointer; pointer-events: auto; }'),
-            'chevron must be visually and behaviorally clickable',
-        );
-    });
-
-    test('should visually differentiate peek-collapse from hidden-chevron', () => {
-        const peekBlock = css.slice(
-            css.indexOf('.peek-collapse >'),
-            css.indexOf('.peek-collapse:hover'),
-        );
-        assert.ok(
-            peekBlock.includes('var(--vscode-textLink-foreground'),
-            'peek-collapse must use accent/link color, distinct from descriptionForeground',
+            css.includes('.bar-hidden-rows'),
+            'unified outlined-dot state must be present',
         );
     });
 });

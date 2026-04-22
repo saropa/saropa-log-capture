@@ -87,5 +87,57 @@ suite('File retention', () => {
             assert.strictEqual(stats[1].name, 'b.log');
         });
     });
+    suite('expandGroupsForTrash', () => {
+        test('ungrouped candidates pass through unchanged', () => {
+            const meta = new Map([
+                ['a.log', {}],
+                ['b.log', {}],
+            ]);
+            const out = (0, file_retention_1.expandGroupsForTrash)(['a.log', 'b.log'], meta, undefined);
+            assert.deepStrictEqual([...out].sort(), ['a.log', 'b.log']);
+        });
+        test('skips an active-group member entirely', () => {
+            const meta = new Map([
+                ['a.log', { groupId: 'g1' }],
+                ['b.log', { groupId: 'g1' }],
+                ['c.log', {}],
+            ]);
+            // Candidate a.log is in the active group g1 \u2014 must be skipped.
+            const out = (0, file_retention_1.expandGroupsForTrash)(['a.log', 'c.log'], meta, 'g1');
+            assert.deepStrictEqual([...out].sort(), ['c.log']);
+        });
+        test('expands a closed-group candidate to every member', () => {
+            const meta = new Map([
+                ['a.log', { groupId: 'g1' }],
+                ['b.log', { groupId: 'g1' }],
+                ['c.log', { groupId: 'g1' }],
+            ]);
+            // Candidate a.log \u2192 expands to all three members of g1 (group is closed, no active id).
+            const out = (0, file_retention_1.expandGroupsForTrash)(['a.log'], meta, undefined);
+            assert.deepStrictEqual([...out].sort(), ['a.log', 'b.log', 'c.log']);
+        });
+        test('dedupes when multiple candidates belong to the same closed group', () => {
+            const meta = new Map([
+                ['a.log', { groupId: 'g1' }],
+                ['b.log', { groupId: 'g1' }],
+            ]);
+            // Two candidates, both in g1 \u2192 output is still just {a, b} (not duplicated).
+            const out = (0, file_retention_1.expandGroupsForTrash)(['a.log', 'b.log'], meta, undefined);
+            assert.deepStrictEqual([...out].sort(), ['a.log', 'b.log']);
+        });
+        test('separates closed-group expansion from active-group skip', () => {
+            const meta = new Map([
+                ['a1.log', { groupId: 'open' }],
+                ['a2.log', { groupId: 'open' }],
+                ['b1.log', { groupId: 'closed' }],
+                ['b2.log', { groupId: 'closed' }],
+                ['c.log', {}],
+            ]);
+            // a1 is in the active group 'open' \u2192 skipped. b1 is in closed group \u2192 expands to b1+b2.
+            // c is ungrouped \u2192 passes through. Result: {b1, b2, c}.
+            const out = (0, file_retention_1.expandGroupsForTrash)(['a1.log', 'b1.log', 'c.log'], meta, 'open');
+            assert.deepStrictEqual([...out].sort(), ['b1.log', 'b2.log', 'c.log']);
+        });
+    });
 });
 //# sourceMappingURL=file-retention.test.js.map

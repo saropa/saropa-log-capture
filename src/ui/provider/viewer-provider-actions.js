@@ -80,7 +80,7 @@ async function updateLastViewed(context, uri) {
     await context.workspaceState.update(exports.LOG_LAST_VIEWED_KEY, map);
 }
 /** Build a single webview record from session metadata. */
-async function buildSessionItemRecord(m, activeStr, options) {
+async function buildSessionItemRecord(m, activeStr, options, extras) {
     const { getActiveLastWriteTime, getLastViewedAt } = options ?? {};
     const uri = m.uri instanceof vscode.Uri ? m.uri : vscode.Uri.parse(m.uri.toString());
     const mtime = await resolveMtime(uri, m.mtime);
@@ -107,6 +107,12 @@ async function buildSessionItemRecord(m, activeStr, options) {
         uriString: uriStr, trashed: m.trashed ?? false, tags: m.tags ?? [],
         autoTags: m.autoTags ?? [], correlationTags: m.correlationTags ?? [],
         hasPerformanceData: m.hasPerformanceData ?? false,
+        // Session-group render hints. `groupId` prefers the explicit extras value (from a
+        // SessionGroup's expansion in buildSessionListPayload) over the raw SessionMeta field so
+        // that groups built via auto-grouping AND manual grouping both carry the id uniformly.
+        groupId: extras?.groupId ?? m.groupId,
+        isGroupPrimary: extras?.isGroupPrimary ?? false,
+        groupSize: extras?.groupSize ?? 0,
     };
 }
 /** Convert tree items to a flat session list for the webview panel. Uses filesystem stat when mtime is missing; processes items sequentially to avoid I/O burst. */
@@ -114,13 +120,41 @@ async function buildSessionListPayload(items, activeUri, options) {
     const activeStr = activeUri?.toString();
     const records = [];
     for (const item of items) {
-        if ((0, session_history_grouping_1.isSplitGroup)(item)) {
+        if ((0, session_history_grouping_1.isSessionGroup)(item)) {
+            records.push(...await expandSessionGroupToRecords(item, activeStr, options));
+        }
+        else if ((0, session_history_grouping_1.isSplitGroup)(item)) {
             for (const part of item.parts) {
                 records.push(await buildSessionItemRecord(part, activeStr, options));
             }
         }
         else {
             records.push(await buildSessionItemRecord(item, activeStr, options));
+        }
+    }
+    return records;
+}
+/**
+ * Expand a SessionGroup into one webview record per member. Each record carries the shared
+ * groupId, an isGroupPrimary flag for the member chosen by pickPrimaryTreeItem(), and the group's
+ * total member count (so the webview can render the "+N" badge without recounting).
+ *
+ * SplitGroup members are flattened to their parts, inheriting the same extras; nested SessionGroups
+ * aren't produced by groupSessionGroups() today but are handled defensively in case a future
+ * refactor introduces them.
+ */
+async function expandSessionGroupToRecords(group, activeStr, options) {
+    const records = [];
+    const groupSize = group.members.length;
+    for (const member of group.members) {
+        const extras = { groupId: group.groupId, isGroupPrimary: member === group.primary, groupSize };
+        if ((0, session_history_grouping_1.isSplitGroup)(member)) {
+            for (const part of member.parts) {
+                records.push(await buildSessionItemRecord(part, activeStr, options, extras));
+            }
+        }
+        else {
+            records.push(await buildSessionItemRecord(member, activeStr, options, extras));
         }
     }
     return records;

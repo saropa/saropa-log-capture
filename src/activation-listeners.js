@@ -41,6 +41,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.setupLineListeners = setupLineListeners;
 exports.setupConfigListener = setupConfigListener;
+exports.maybeBroadcastScopeContext = maybeBroadcastScopeContext;
 exports.setupScopeContextListener = setupScopeContextListener;
 exports.setupDiagnosticListener = setupDiagnosticListener;
 const vscode = __importStar(require("vscode"));
@@ -80,13 +81,18 @@ function setupLineListeners(deps) {
 /**
  * Setup configuration change listener.
  */
-function setupConfigListener(context, sessionManager, broadcaster) {
+function setupConfigListener(context, sessionManager, broadcaster, captureToggle) {
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
         if (!e.affectsConfiguration('saropaLogCapture')) {
             return;
         }
         const cfg = (0, config_1.getConfig)();
         sessionManager.refreshConfig(cfg);
+        if (e.affectsConfiguration('saropaLogCapture.enabled')) {
+            /* Keep the status bar toggle in sync when the setting changes
+             * externally (e.g. via the Settings UI or settings.json edit). */
+            captureToggle.setEnabled(cfg.enabled);
+        }
         if (e.affectsConfiguration('saropaLogCapture.iconBarPosition')) {
             broadcaster.setIconBarPosition(cfg.iconBarPosition);
         }
@@ -107,6 +113,9 @@ function setupConfigListener(context, sessionManager, broadcaster) {
         }
         if (e.affectsConfiguration('saropaLogCapture.minimapWidth')) {
             broadcaster.setMinimapWidth(cfg.minimapWidth);
+            /* Explicit preset change clears any custom drag-to-resize width */
+            context.workspaceState.update('saropaLogCapture.minimapCustomPx', undefined)
+                .then(undefined, () => { });
         }
         if (e.affectsConfiguration('saropaLogCapture.showScrollbar')) {
             broadcaster.setScrollbarVisible(cfg.showScrollbar);
@@ -126,8 +135,8 @@ function setupConfigListener(context, sessionManager, broadcaster) {
             || e.affectsConfiguration('saropaLogCapture.repeatCollapseDmlMinCount')) {
             broadcaster.setViewerRepeatThresholds(cfg.viewerRepeatThresholds);
         }
-        if (e.affectsConfiguration('saropaLogCapture.viewerDbInsightsEnabled')) {
-            broadcaster.setViewerDbInsightsEnabled(cfg.viewerDbInsightsEnabled);
+        if (e.affectsConfiguration('saropaLogCapture.viewerDbSignalsEnabled')) {
+            broadcaster.setViewerDbSignalsEnabled(cfg.viewerDbSignalsEnabled);
         }
         if (e.affectsConfiguration('saropaLogCapture.staticSqlFromFingerprint.enabled')) {
             broadcaster.setStaticSqlFromFingerprintEnabled(cfg.staticSqlFromFingerprintEnabled);
@@ -200,15 +209,49 @@ async function showSecurityAdapterNotice(context, cfg) {
     }
 }
 /**
+ * Build and broadcast scope context for the given editor, optionally skipping
+ * the broadcast when the editor is `undefined`.
+ *
+ * This is the invariant that fixes the File Scope radios being permanently
+ * greyed out once the log viewer has focus: VS Code fires
+ * `onDidChangeActiveTextEditor` with `undefined` whenever focus moves to a
+ * non-text surface (webviews, sidebar, settings UI). Before this guard, every
+ * such firing rebuilt an all-null context and wiped the
+ * workspace/package/directory/file paths the webview uses to decide which
+ * radios to enable — which is exactly the moment the user needs them usable.
+ *
+ * @param editor The editor VS Code handed to the listener (or `undefined`).
+ * @param broadcaster Receives the rebuilt scope context.
+ * @param options.allowNullEditor When `true`, broadcast even if `editor` is
+ *   undefined. Use for the initial seed (cold start with no file open shows the
+ *   "Open a source file to enable scope filters" hint). When `false`, skip the
+ *   broadcast so the previously-broadcast context stays in effect. Use for the
+ *   listener firings — focus moving away from a text editor is not a reason to
+ *   forget which editor the user last had open.
+ */
+async function maybeBroadcastScopeContext(editor, broadcaster, options) {
+    if (!editor && !options.allowNullEditor) {
+        return;
+    }
+    const ctx = await (0, scope_context_1.buildScopeContext)(editor);
+    broadcaster.setScopeContext(ctx);
+}
+/**
  * Setup scope context listener for source-scope filter.
+ *
+ * Seeds the webview with the current active editor's context on startup, then
+ * re-broadcasts whenever the user moves to a different text editor. Ignores
+ * `undefined` editor firings — see `maybeBroadcastScopeContext` for why.
  */
 function setupScopeContextListener(context, broadcaster) {
-    const updateScopeContext = async () => {
-        const ctx = await (0, scope_context_1.buildScopeContext)(vscode.window.activeTextEditor);
-        broadcaster.setScopeContext(ctx);
-    };
-    context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => { updateScopeContext().catch(() => { }); }));
-    updateScopeContext().catch(() => { });
+    context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor((editor) => {
+        maybeBroadcastScopeContext(editor, broadcaster, { allowNullEditor: false })
+            .catch(() => { });
+    }));
+    // Initial seed: allow null so a cold start with no file open still shows
+    // the webview's "Open a source file…" hint.
+    maybeBroadcastScopeContext(vscode.window.activeTextEditor, broadcaster, { allowNullEditor: true })
+        .catch(() => { });
 }
 /**
  * Setup diagnostic change listener for lint badge live updates.

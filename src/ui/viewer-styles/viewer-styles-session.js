@@ -11,8 +11,12 @@ exports.getSessionPanelStyles = getSessionPanelStyles;
 const viewer_styles_session_panel_1 = require("./viewer-styles-session-panel");
 const viewer_styles_session_list_1 = require("./viewer-styles-session-list");
 const viewer_styles_session_tags_loading_1 = require("./viewer-styles-session-tags-loading");
+const viewer_styles_session_group_1 = require("./viewer-styles-session-group");
 /** Return CSS for the session panel and its list items. */
 function getSessionPanelStyles() {
-    return (0, viewer_styles_session_panel_1.getSessionPanelLayoutStyles)() + (0, viewer_styles_session_list_1.getSessionListStyles)() + (0, viewer_styles_session_tags_loading_1.getSessionTagsLoadingStyles)();
+    return (0, viewer_styles_session_panel_1.getSessionPanelLayoutStyles)()
+        + (0, viewer_styles_session_list_1.getSessionListStyles)()
+        + (0, viewer_styles_session_tags_loading_1.getSessionTagsLoadingStyles)()
+        + (0, viewer_styles_session_group_1.getSessionGroupStyles)();
 }
 //# sourceMappingURL=viewer-styles-session.js.map

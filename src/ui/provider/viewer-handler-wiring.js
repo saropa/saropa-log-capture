@@ -53,7 +53,7 @@ const filter_presets_1 = require("../../modules/storage/filter-presets");
 const viewer_provider_helpers_1 = require("./viewer-provider-helpers");
 const viewer_handler_bookmarks_1 = require("./viewer-handler-bookmarks");
 const viewer_handler_sessions_1 = require("./viewer-handler-sessions");
-/** Workspace state: Project Logs panel root folder override (URI string). */
+/** Workspace state: Logs panel root folder override (URI string). */
 exports.SESSION_PANEL_ROOT_KEY = "sessionPanelRootFolder";
 /** Workspace state: last folder used in browse dialog so defaultUri is never system default. */
 const SESSION_PANEL_LAST_BROWSE_KEY = "sessionPanelLastBrowseFolder";
@@ -164,8 +164,6 @@ function makePayloadOptions(deps) {
         getLastViewedAt: (uri) => lastViewedMap[uri],
     };
 }
-/** Batch size for streaming session metadata to the webview. */
-const streamBatchSize = 5;
 /** Wire session list, browse root, clear root, and session action handlers. */
 function wireSessionListHandlers(target, deps) {
     const { historyProvider, broadcaster, sessionManager } = deps;
@@ -192,34 +190,33 @@ function wireSessionListHandlers(target, deps) {
         const overrideUri = overrideUriStr ? vscode.Uri.parse(overrideUriStr) : undefined;
         const activeStr = historyProvider.getActiveUri()?.toString();
         const opts = makePayloadOptions(deps);
-        const pending = [];
         const allRecords = [];
-        const recordPromises = [];
-        const flush = () => {
-            if (pending.length === 0) {
-                return;
-            }
-            broadcaster.postToWebview({ type: 'sessionListBatch', items: pending.splice(0) });
-        };
-        const onItemLoaded = (item) => {
-            recordPromises.push((0, viewer_provider_helpers_1.buildSessionItemRecord)(item, activeStr, opts).then(rec => {
+        /* Serialize UI updates: 8 workers load files in parallel, but only one
+         * posts to the webview at a time. Each post is followed by a macrotask
+         * yield (setTimeout) so the webview can render before the next update.
+         * Without serialization, all 8 workers finish near-simultaneously and
+         * the webview receives a burst that renders as a single pop-in. */
+        let sendChain = Promise.resolve();
+        const onItemLoaded = async (item) => {
+            try {
+                const rec = await (0, viewer_provider_helpers_1.buildSessionItemRecord)(item, activeStr, opts);
                 allRecords.push(rec);
-                pending.push(rec);
-                if (pending.length >= streamBatchSize) {
-                    flush();
-                }
-            }).catch(() => { }));
+                sendChain = sendChain.then(() => {
+                    broadcaster.postToWebview({ type: 'sessionListBatch', items: [rec] });
+                    return new Promise(r => setTimeout(r, 0));
+                }).catch(() => { });
+                await sendChain;
+            }
+            catch { /* non-critical — row keeps its shimmer */ }
         };
-        const onFilesListed = (files, logDir) => {
+        const onFilesFound = (files, logDir) => {
             const previews = files.map(f => ({
                 filename: f,
                 uriString: vscode.Uri.joinPath(logDir, f).toString(),
             }));
             broadcaster.postToWebview({ type: 'sessionListPreview', previews });
         };
-        const items = await historyProvider.getAllChildrenStreaming(onItemLoaded, overrideUri, onFilesListed);
-        await Promise.all(recordPromises);
-        flush();
+        const items = await historyProvider.getAllChildrenStreaming(onItemLoaded, overrideUri, onFilesFound);
         // When cache was hit, callbacks never fired — build payload from returned items.
         if (allRecords.length === 0 && items.length > 0) {
             const payload = await (0, viewer_provider_helpers_1.buildSessionListPayload)(items, historyProvider.getActiveUri(), opts);

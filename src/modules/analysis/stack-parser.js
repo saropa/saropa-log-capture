@@ -131,14 +131,35 @@ function isFrameworkLogLine(text) {
     return tier !== 'flutter';
 }
 /**
- * True for decorative log banners that pair vertical box-drawing bars on one line (`│ … │`
- * or `║ … ║`), e.g. Drift debug server output or Isar connect banners. These are not trace
- * gutters; the viewer avoids grouping them as stack frames so preview mode does not insert
- * `[+N more]` mid-banner.
+ * Unicode vertical-bar variants that commonly pair to form banner side-rails.
+ * Covers: │ (light, U+2502), ┃ (heavy, U+2503), ║ (double, U+2551),
+ * ╎ (light dashed, U+254E), ╏ (heavy dashed, U+254F),
+ * ╽ (light up / heavy down, U+257D), ╿ (heavy up / light down, U+257F).
+ * ASCII `|` is intentionally excluded to avoid false-positives on markdown tables
+ * and natural text — the 0.6 art-char ratio in isLogViewerSeparatorLine still
+ * catches pure-ASCII `|...|` banners via shape.
+ */
+const DECOR_BAR_CLASS = "[\\u2502\\u2503\\u2551\\u254E\\u254F\\u257D\\u257F]";
+/** Bar-pair banner: a vertical bar on each side with content (or just whitespace) between. */
+const BAR_PAIR_RE = new RegExp(`^\\s*${DECOR_BAR_CLASS}\\s+(?:.*\\S\\s*)?${DECOR_BAR_CLASS}\\s*$`);
+/**
+ * Pure box-drawing rule: the whole line (after trimming) is made of box-drawing
+ * characters (U+2500–U+257F) and whitespace, with at least two box-drawing chars.
+ * Catches rounded/heavy/mixed variants like `╭──╮`, `├──┤`, `╰──╯`, `┏━━┓`, `╒══╕`
+ * that earlier bar-pair logic missed because corners/T-connectors are not bars.
+ */
+const PURE_BOX_RULE_RE = /^\s*[\u2500-\u257F][\u2500-\u257F\s]*[\u2500-\u257F]\s*$/;
+/**
+ * True for decorative log banners: either paired vertical bars on one line
+ * (`│ … │`, `┃ … ┃`, `║ … ║`, …), or a pure box-drawing rule line using any
+ * corners/T-connectors (`╭──╮`, `├──┤`, `╰──╯`, `┏━━┓`, `╔══╗`, …). Seen in
+ * Drift debug server output (v3.3.3 switched from `┌┐└┘` to rounded `╭╮╰╯`
+ * with `├┤` dividers), Isar connect, boxen, rich, etc. These are not trace
+ * gutters; the viewer avoids grouping them as stack frames so preview mode
+ * does not insert `[+N more]` mid-banner.
  */
 function isAsciiBoxDrawingDecorLine(line) {
-    // Paired bars with optional content between them — matches both `│ text │` and `║ text ║`.
-    return /^\s*[\u2502\u2551]\s+(?:.*\S\s*)?[\u2502\u2551]\s*$/.test(line);
+    return BAR_PAIR_RE.test(line) || PURE_BOX_RULE_RE.test(line);
 }
 /** Detect whether a line is a continuation of a stack trace. Multi-language. */
 function isStackFrameLine(line) {

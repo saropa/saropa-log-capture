@@ -44,6 +44,7 @@ const path = __importStar(require("node:path"));
 const config_1 = require("../config/config");
 const correlation_scanner_1 = require("../analysis/correlation-scanner");
 const error_fingerprint_1 = require("../analysis/error-fingerprint");
+const warning_fingerprint_1 = require("../analysis/warning-fingerprint");
 const perf_fingerprint_1 = require("../misc/perf-fingerprint");
 const anr_risk_scorer_1 = require("../analysis/anr-risk-scorer");
 const app_version_1 = require("../misc/app-version");
@@ -55,6 +56,10 @@ const external_log_tailer_1 = require("../integrations/external-log-tailer");
 const adb_logcat_capture_1 = require("../integrations/adb-logcat-capture");
 const unified_session_log_writer_1 = require("./unified-session-log-writer");
 const session_drift_sql_fingerprint_persist_1 = require("./session-drift-sql-fingerprint-persist");
+const viewer_message_handler_actions_1 = require("../../ui/provider/viewer-message-handler-actions");
+const signal_summary_extract_1 = require("../root-cause-hints/signal-summary-extract");
+const general_signal_scanner_1 = require("../analysis/general-signal-scanner");
+const cross_session_aggregator_1 = require("../misc/cross-session-aggregator");
 /** Build session statistics for the summary notification. */
 function buildSessionStats(params) {
     const { logSession, sessionStartTime, categoryCounts, watcher, floodSuppressedTotal } = params;
@@ -128,6 +133,16 @@ async function finalizeSession(params, stats) {
     }).catch((err) => {
         outputChannel.appendLine(`Failed to scan fingerprints: ${err}`);
     });
+    const pWarnFp = (0, warning_fingerprint_1.scanForWarningFingerprints)(logSession.fileUri).then(async (wfps) => {
+        if (wfps.length > 0) {
+            const meta = await metadataStore.loadMetadata(logSession.fileUri);
+            meta.warningFingerprints = wfps;
+            await metadataStore.saveMetadata(logSession.fileUri, meta);
+            outputChannel.appendLine(`Warning fingerprints: ${wfps.length} patterns`);
+        }
+    }).catch((err) => {
+        outputChannel.appendLine(`Failed to scan warning fingerprints: ${err}`);
+    });
     const pPerf = (0, perf_fingerprint_1.scanForPerfFingerprints)(logSession.fileUri).then(async (pfs) => {
         if (pfs.length > 0) {
             await metadataStore.setPerfFingerprints(logSession.fileUri, pfs);
@@ -137,8 +152,35 @@ async function finalizeSession(params, stats) {
         outputChannel.appendLine(`Failed to scan perf fingerprints: ${err}`);
     });
     const pDriftSql = (0, session_drift_sql_fingerprint_persist_1.scanAndPersistDriftSqlFingerprintSummary)(logSession.fileUri, metadataStore, outputChannel);
-    Promise.allSettled([pCorr, pFp, pPerf, pDriftSql]).then(() => {
+    // Persist signal summary: prefer the viewer-collected bundle (richer data with
+    // hypothesis template IDs, N+1 fingerprints, slow op names). If the viewer was
+    // never opened, fallback to extension-side general signal scanning so network
+    // failures, memory events, slow ops, etc. are still captured.
+    const pSignal = Promise.resolve().then(async () => {
+        // Respect the signalAutoTrack setting — skip persistence if disabled
+        const autoTrack = vscode.workspace.getConfiguration('saropaLogCapture').get('signalAutoTrack', true);
+        if (!autoTrack) {
+            return;
+        }
+        const bundle = (0, viewer_message_handler_actions_1.getLastSignalBundle)();
+        const summary = bundle
+            ? (0, signal_summary_extract_1.extractSignalSummary)(bundle, (0, viewer_message_handler_actions_1.getLastSignalHypotheses)())
+            : await (0, general_signal_scanner_1.scanForGeneralSignals)(logSession.fileUri);
+        if (!summary) {
+            return;
+        }
+        const meta = await metadataStore.loadMetadata(logSession.fileUri);
+        meta.signalSummary = summary;
+        await metadataStore.saveMetadata(logSession.fileUri, meta);
+        const source = bundle ? 'viewer' : 'extension-scan';
+        outputChannel.appendLine(`Signal summary (${source}): ${JSON.stringify(summary.counts)}`);
+    }).catch((err) => {
+        outputChannel.appendLine(`Failed to persist signal summary: ${err}`);
+    });
+    Promise.allSettled([pCorr, pFp, pWarnFp, pPerf, pDriftSql, pSignal]).then(() => {
         params.onReportsIndexReady?.(logSession.fileUri);
+        // Notify user about recurring signals that hit the 5+ session threshold
+        notifyRecurringSignals(outputChannel);
     }).catch(() => { });
     scanAnrRiskForSession(logSession.fileUri, metadataStore, outputChannel);
     (0, app_version_1.detectAppVersion)().then(async (version) => {
@@ -150,13 +192,33 @@ async function finalizeSession(params, stats) {
         outputChannel.appendLine(`Failed to detect app version: ${err}`);
     });
     storeSessionDeviceInfo(logSession.fileUri, params.debugAdapterType, metadataStore, outputChannel);
-    // Refresh recurring errors sidebar after metadata scans complete.
-    setTimeout(() => vscode.commands.executeCommand('saropaLogCapture.refreshRecurringErrors'), 3000);
+    // Refresh signals sidebar after metadata scans complete
+    setTimeout(() => vscode.commands.executeCommand('saropaLogCapture.refreshRecurringSignals'), 3000);
     const filename = logSession.fileUri.fsPath.split(/[\\/]/).pop() ?? '';
     (0, session_summary_1.showSummaryNotification)((0, session_summary_1.withLogUri)((0, session_summary_1.generateSummary)(filename, stats), logSession.fileUri));
     if (config.autoOpen) {
         await vscode.window.showTextDocument(logSession.fileUri);
     }
+}
+/** Notify user about recurring signals after scans complete.
+ *  Fires once per session — shows the most severe recurring signal if any hit 5+ sessions. */
+function notifyRecurringSignals(out) {
+    (0, cross_session_aggregator_1.aggregateSignals)('all').then(aggregated => {
+        const recurring = aggregated.allSignals.filter(s => s.recurring);
+        if (recurring.length === 0) {
+            return;
+        }
+        // Pick the most severe recurring signal for the notification
+        const top = recurring[0];
+        const label = top.label.length > 60 ? top.label.slice(0, 57) + '...' : top.label;
+        const msg = `Recurring signal: ${label} (${top.sessionCount} sessions)`;
+        out.appendLine(msg);
+        void vscode.window.showInformationMessage(msg, 'Open Signals').then(action => {
+            if (action === 'Open Signals') {
+                void vscode.commands.executeCommand('saropaLogCapture.showSignals');
+            }
+        });
+    }).catch(() => { });
 }
 /** Async: scan log file for ANR risk patterns and store results in metadata. */
 function scanAnrRiskForSession(fileUri, store, out) {

@@ -10,12 +10,14 @@ function getBarLevel(el) {
     return m ? m[1] : null;
 }
 
-/** Find next viewport child with a visible severity dot (non-blank, non-chevron), stopping at markers. */
+/** Find next viewport child with a visible severity dot (non-blank), stopping at markers.
+    Note: the prior .hidden-chevron / .peek-collapse skip was removed when the unified
+    line-collapsing rethink retired those indicator elements — no render path emits
+    them anymore, so there is nothing to skip. */
 function findNextDotSibling(children, startIdx) {
     for (var ni = startIdx + 1; ni < children.length; ni++) {
         if (!children[ni]) continue;
         if (children[ni].classList.contains('marker')) return -1;
-        if (children[ni].classList.contains('hidden-chevron')) continue;
         var lvl = getBarLevel(children[ni]);
         if (lvl && !children[ni].classList.contains('line-blank')) return ni;
     }
@@ -132,24 +134,61 @@ function renderViewport(force) {
     for (var i = startIdx; i <= endIdx && i < allLines.length; i++) {
         if (allLines[i].height === 0) continue;
         if (typeof window.replayMode !== 'undefined' && window.replayMode && typeof window.replayCurrentIndex === 'number' && i > window.replayCurrentIndex) continue;
-        // Insert chevron when non-blank lines are hidden between two visible lines
+
+        /* Unified line-collapsing (plan: bugs/unified-line-collapsing.md).
+           Replaces the separate .hidden-chevron (▼) and .peek-collapse (−) elements
+           that used to be injected between visible rows. Both states now surface as
+           a single class (.bar-hidden-rows) stamped onto the row immediately AFTER
+           the hidden run (or the row starting a peek group) so its severity dot
+           goes outlined — no extra DOM node, no margin glyph, no text content. The
+           click handler in viewer-peek-chevron.ts delegates on .bar-hidden-rows
+           and routes by which data-* attrs are present.
+
+           WHY the row AFTER the gap rather than the row BEFORE: the render loop
+           streams top-down and the row-before has already been emitted by the
+           time we detect the gap (at row i). Marking the row-after is in-loop and
+           requires no post-pass over the emitted strings, at the cost of a tiny
+           mental model difference ("hidden rows are above me" vs "below me") —
+           the tooltip text makes that explicit so the cue is unambiguous. */
+        var _hiddenFrom = -1, _hiddenTo = -1, _hiddenTip = '';
         if (prevVisIdx >= 0 && i - prevVisIdx > 1) {
-            var hInfo = countHiddenNonBlank(prevVisIdx + 1, i);
-            if (hInfo.count > 0) {
-                var tip = buildHiddenTip(hInfo).replace(/"/g, '&quot;');
-                parts.push('<div class="hidden-chevron"><span title="' + tip + '">\\u25B8</span></div>');
+            var _hInfo = countHiddenNonBlank(prevVisIdx + 1, i);
+            if (_hInfo.count > 0) {
+                _hiddenFrom = prevVisIdx + 1;
+                _hiddenTo = i;
+                _hiddenTip = buildHiddenTip(_hInfo).replace(/"/g, '&quot;');
             }
         }
-        parts.push(renderItem(allLines[i], i, prevVis));
+        var _peekKey = null;
+        var _pk = allLines[i].peekAnchorKey;
+        if (_pk !== undefined && _pk !== null && (i === 0 || allLines[i - 1].peekAnchorKey !== _pk)) {
+            _peekKey = _pk;
+        }
+
+        var _rendered = renderItem(allLines[i], i, prevVis);
+        /* Inject .bar-hidden-rows class + tooltip + routing data onto the outer div.
+           Single regex: match the first class=" of the rendered row (always the outer
+           wrapper) and prepend the extra attrs + class token. No other divs in the
+           row string start with "class=\\"" at position 0, so the ^<div anchor keeps
+           this unambiguous. */
+        if (_peekKey !== null) {
+            _rendered = _rendered.replace(/^<div class="/,
+                '<div data-peek-key="' + _peekKey + '" title="Click to collapse peek" class="bar-hidden-rows ');
+        } else if (_hiddenFrom >= 0) {
+            _rendered = _rendered.replace(/^<div class="/,
+                '<div data-hidden-from="' + _hiddenFrom + '" data-hidden-to="' + _hiddenTo + '" title="' + _hiddenTip + '" class="bar-hidden-rows ');
+        }
+        parts.push(_rendered);
         prevVis = allLines[i];
         prevVisIdx = i;
     }
     viewportEl.innerHTML = parts.join('');
-    // Connect consecutive same-level dots, bridging through blank/non-dot lines
+    // Connect consecutive same-level dots, bridging through blank/non-dot lines.
+    // The prior skips for .hidden-chevron / .peek-collapse were removed when the
+    // unified line-collapsing rethink retired those indicator elements.
     var ch = viewportEl.children;
     for (var ci = 0; ci < ch.length; ci++) {
         if (!ch[ci]) continue;
-        if (ch[ci].classList.contains('hidden-chevron')) continue;
         var lvl = getBarLevel(ch[ci]);
         if (!lvl || ch[ci].classList.contains('line-blank')) continue;
         var ni = findNextDotSibling(ch, ci);
@@ -159,7 +198,7 @@ function renderViewport(force) {
         ch[ci].classList.add('bar-down');
         ch[ni].classList.add('bar-up');
         for (var bi = ci + 1; bi < ni; bi++) {
-            if (ch[bi] && !ch[bi].classList.contains('hidden-chevron')) {
+            if (ch[bi]) {
                 ch[bi].classList.add('bar-up', 'bar-down', 'bar-bridge', 'level-bar-' + lvl);
             }
         }

@@ -7,8 +7,8 @@ const drift_db_timestamp_burst_thresholds_1 = require("../../modules/db/drift-db
 const db_detector_embed_merge_generated_1 = require("./generated/db-detector-embed-merge.generated");
 const viewer_db_detector_timestamp_burst_embed_1 = require("./viewer-db-detector-timestamp-burst-embed");
 const BASELINE_VOLUME_HINT_ID = "db.baseline-volume-hint";
-function getViewerDbDetectorFrameworkScript(dbInsightsEnabled, slowBurstThresholds, detectorToggles) {
-    const enabledJs = dbInsightsEnabled ? "true" : "false";
+function getViewerDbDetectorFrameworkScript(dbSignalsEnabled, slowBurstThresholds, detectorToggles) {
+    const enabledJs = dbSignalsEnabled ? "true" : "false";
     const sb = (0, drift_db_slow_burst_thresholds_1.normalizeViewerSlowBurstThresholds)(slowBurstThresholds);
     const burstJson = JSON.stringify({
         slowQueryMs: sb.slowQueryMs,
@@ -27,7 +27,7 @@ function getViewerDbDetectorFrameworkScript(dbInsightsEnabled, slowBurstThreshol
         cooldownMs: tsb.cooldownMs,
     });
     return /* javascript */ `
-var viewerDbInsightsEnabled = ${enabledJs};
+var viewerDbSignalsEnabled = ${enabledJs};
 var viewerSlowBurstThresholds = ${burstJson};
 var viewerTimestampBurstThresholds = ${tsBurstJson};
 var viewerDbDetectorNPlusOneEnabled = ${nPlusOneJs};
@@ -67,10 +67,10 @@ function registerDbDetector(detector) {
     dbDetectorRegistry.push(detector);
 }
 ${db_detector_embed_merge_generated_1.EMBED_MERGE_DB_DETECTOR_RESULTS_JS}
-/** Apply session-rollup-patch results into dbInsightSessionRollup (same math as live Drift lines). */
+/** Apply session-rollup-patch results into dbSignalSessionRollup (same math as live Drift lines). */
 function applyDbSessionRollupPatches(results) {
     if (!results || !results.length) return;
-    if (typeof updateDbInsightRollup !== 'function') return;
+    if (typeof updateDbSignalRollup !== 'function') return;
     var i, r, p, k, reps, j;
     for (i = 0; i < results.length; i++) {
         r = results[i];
@@ -79,12 +79,12 @@ function applyDbSessionRollupPatches(results) {
         if (!p.fingerprint) continue;
         reps = (typeof p.repeatCount === 'number' && p.repeatCount > 0) ? Math.min(p.repeatCount, 1000) : 1;
         for (j = 0; j < reps; j++) {
-            updateDbInsightRollup(p.fingerprint, p.elapsedMs);
+            updateDbSignalRollup(p.fingerprint, p.elapsedMs);
         }
     }
 }
 function runDbDetectors(ctx) {
-    if (typeof viewerDbInsightsEnabled !== 'undefined' && !viewerDbInsightsEnabled) return [];
+    if (typeof viewerDbSignalsEnabled !== 'undefined' && !viewerDbSignalsEnabled) return [];
     var all = [];
     var list = dbDetectorRegistry.slice().sort(function(a, b) { return (a.priority || 0) - (b.priority || 0); });
     var i, d, j, chunk;
@@ -140,7 +140,7 @@ function pruneDbDetectorStateAfterTrim(oldestKeptTs) {
     }
 }
 /** Reset detector session flags and DB-specific accumulators when the log is cleared. */
-function resetDbInsightDetectorSession() {
+function resetDbSignalDetectorSession() {
     var k;
     for (k in dbDetectorSessionDisabled) {
         if (Object.prototype.hasOwnProperty.call(dbDetectorSessionDisabled, k)) delete dbDetectorSessionDisabled[k];
@@ -157,8 +157,8 @@ function resetDbInsightDetectorSession() {
     if (typeof tsBurstBySession !== 'undefined') {
         tsBurstBySession = Object.create(null);
     }
-    if (typeof dbInsightSessionRollup !== 'undefined') {
-        dbInsightSessionRollup = Object.create(null);
+    if (typeof dbSignalSessionRollup !== 'undefined') {
+        dbSignalSessionRollup = Object.create(null);
     }
     baselineVolumeHintEmitted = Object.create(null);
 }
@@ -198,7 +198,7 @@ ${(0, viewer_db_detector_timestamp_burst_embed_1.getTimestampBurstDetectorEmbedJ
                 stableKey: '${drift_db_slow_burst_detector_1.SLOW_QUERY_BURST_DETECTOR_ID}::' + sid + '::' + windowStartMs,
                 priority: 85,
                 payload: {
-                    category: 'db-insight',
+                    category: 'db-signal',
                     label: 'Slow query burst',
                     anchorSeq: anc
                 }
@@ -216,7 +216,7 @@ ${(0, viewer_db_detector_timestamp_burst_embed_1.getTimestampBurstDetectorEmbedJ
             var bEnt = ctx.baselineFingerprintSummary.get(fp);
             if (!bEnt || typeof bEnt.count !== 'number' || bEnt.count < 3) return [];
             if (baselineVolumeHintEmitted[fp]) return [];
-            var roll = typeof dbInsightSessionRollup !== 'undefined' ? dbInsightSessionRollup[fp] : null;
+            var roll = typeof dbSignalSessionRollup !== 'undefined' ? dbSignalSessionRollup[fp] : null;
             var cur = roll && typeof roll.count === 'number' ? roll.count : 0;
             if (cur <= bEnt.count) return [];
             baselineVolumeHintEmitted[fp] = true;
@@ -227,7 +227,7 @@ ${(0, viewer_db_detector_timestamp_burst_embed_1.getTimestampBurstDetectorEmbedJ
                 stableKey: '${BASELINE_VOLUME_HINT_ID}::' + fp,
                 priority: 92,
                 payload: {
-                    category: 'db-insight',
+                    category: 'db-signal',
                     label: 'SQL count above baseline (' + cur + ' vs ' + bEnt.count + ')',
                     anchorSeq: anc
                 }
@@ -240,9 +240,9 @@ ${(0, viewer_db_detector_timestamp_burst_embed_1.getTimestampBurstDetectorEmbedJ
         feed: function(ctx) {
             if (typeof viewerDbDetectorNPlusOneEnabled !== 'undefined' && !viewerDbDetectorNPlusOneEnabled) return [];
             if (!ctx || !ctx.sql || !ctx.sql.fingerprint) return [];
-            if (typeof detectNPlusOneInsight !== 'function') return [];
-            var insight = detectNPlusOneInsight(ctx.timestampMs, ctx.sql.fingerprint, ctx.sql.argsKey);
-            if (!insight) return [];
+            if (typeof detectNPlusOneSignal !== 'function') return [];
+            var signal = detectNPlusOneSignal(ctx.timestampMs, ctx.sql.fingerprint, ctx.sql.argsKey);
+            if (!signal) return [];
             var stableKey = 'db.n-plus-one::' + ctx.sql.fingerprint + '::' + ctx.timestampMs;
             return [{
                 kind: 'synthetic-line',
@@ -250,12 +250,12 @@ ${(0, viewer_db_detector_timestamp_burst_embed_1.getTimestampBurstDetectorEmbedJ
                 stableKey: stableKey,
                 priority: 100,
                 payload: {
-                    syntheticType: 'n-plus-one-insight',
-                    insight: {
-                        repeats: insight.repeats,
-                        distinctArgs: insight.distinctArgs,
-                        windowSpanMs: insight.windowSpanMs,
-                        confidence: insight.confidence
+                    syntheticType: 'n-plus-one-signal',
+                    signal: {
+                        repeats: signal.repeats,
+                        distinctArgs: signal.distinctArgs,
+                        windowSpanMs: signal.windowSpanMs,
+                        confidence: signal.confidence
                     },
                     sqlMeta: {
                         fingerprint: ctx.sql.fingerprint,

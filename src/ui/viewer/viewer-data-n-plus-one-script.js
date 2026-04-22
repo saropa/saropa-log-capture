@@ -4,7 +4,7 @@ exports.getNPlusOneDetectorScript = getNPlusOneDetectorScript;
 /**
  * Embedded webview script: Drift SQL N+1 burst detector.
  *
- * Emits `parseSqlFingerprint` / `detectNPlusOneInsight` into the same scope as
+ * Emits `parseSqlFingerprint` / `detectNPlusOneSignal` into the same scope as
  * `addToData` (see `viewer-data-helpers.ts` load order). Thresholds are interpolated
  * from `N_PLUS_ONE_EMBED_CONFIG` in `modules/db/drift-n-plus-one-detector.ts` so the
  * extension and unit tests agree on numbers; **function bodies must stay aligned**
@@ -13,7 +13,7 @@ exports.getNPlusOneDetectorScript = getNPlusOneDetectorScript;
  * Fingerprint normalization must match `normalizeDriftSqlFingerprintSql` in
  * `modules/db/drift-sql-fingerprint-normalize.ts` (uses `DRIFT_SQL_KEYWORD_ALT`).
  *
- * Also emits `driftSqlSnippetFromPlain` for dbInsight fallback text (kept in sync with
+ * Also emits `driftSqlSnippetFromPlain` for dbSignal fallback text (kept in sync with
  * `viewer-data-add-db-detectors.ts`).
  */
 const drift_n_plus_one_detector_1 = require("../../modules/db/drift-n-plus-one-detector");
@@ -106,7 +106,7 @@ function parseSqlFingerprint(plainText) {
     if (!fp) return null;
     return { fingerprint: fp, argsKey: argsPart || '[]', sqlSnippet: sqlPart, verb: verbMatch[1].toUpperCase() };
 }
-/* Fallback dbInsight snippet from plain text: substring from first Drift prefix onward, max 500 chars (shared with emitDbLineDetectors). */
+/* Fallback dbSignal snippet from plain text: substring from first Drift prefix onward, max 500 chars (shared with emitDbLineDetectors). */
 function driftSqlSnippetFromPlain(plain) {
     if (!plain) return '';
     /* Try "Drift:" first, then bare "Drift " for DriftDebugInterceptor lines like "Drift SELECT:". */
@@ -115,14 +115,14 @@ function driftSqlSnippetFromPlain(plain) {
     var raw = di >= 0 ? plain.substring(di).trim() : plain.trim();
     return raw.length > 500 ? raw.substring(0, 497) + '...' : raw;
 }
-var dbInsightSessionRollup = Object.create(null);
+var dbSignalSessionRollup = Object.create(null);
 /** Per normalized SQL fingerprint: session-wide seen count and duration stats (elapsedMs when present on lines). */
-function updateDbInsightRollup(fingerprint, elapsedMs) {
+function updateDbSignalRollup(fingerprint, elapsedMs) {
     if (!fingerprint) return null;
-    var e = dbInsightSessionRollup[fingerprint];
+    var e = dbSignalSessionRollup[fingerprint];
     if (!e) {
         e = { count: 0, sumMs: 0, maxMs: 0, countWithMs: 0 };
-        dbInsightSessionRollup[fingerprint] = e;
+        dbSignalSessionRollup[fingerprint] = e;
     }
     e.count++;
     if (typeof elapsedMs === 'number' && elapsedMs >= 0 && isFinite(elapsedMs)) {
@@ -136,10 +136,10 @@ function updateDbInsightRollup(fingerprint, elapsedMs) {
         maxDurationMs: e.countWithMs > 0 ? e.maxMs : undefined
     };
 }
-/** Read rollup stats without mutating (after updateDbInsightRollup / session-rollup-patch). */
-function peekDbInsightRollup(fingerprint) {
+/** Read rollup stats without mutating (after updateDbSignalRollup / session-rollup-patch). */
+function peekDbSignalRollup(fingerprint) {
     if (!fingerprint) return null;
-    var e = dbInsightSessionRollup[fingerprint];
+    var e = dbSignalSessionRollup[fingerprint];
     if (!e) return null;
     return {
         seenCount: e.count,
@@ -181,12 +181,12 @@ function pruneNPlusOneFingerprints(now) {
         keys = Object.keys(nPlusOneDetector.byFingerprint);
     }
 }
-function detectNPlusOneInsight(ts, fingerprint, argsKey) {
+function detectNPlusOneSignal(ts, fingerprint, argsKey) {
     if (!fingerprint) return null;
     var now = ts || Date.now();
     var entry = nPlusOneDetector.byFingerprint[fingerprint];
     if (!entry) {
-        entry = { hits: [], lastInsightTs: 0 };
+        entry = { hits: [], lastSignalTs: 0 };
         nPlusOneDetector.byFingerprint[fingerprint] = entry;
     }
     entry.hits.push({ ts: now, argsKey: argsKey || '[]' });
@@ -207,11 +207,11 @@ function detectNPlusOneInsight(ts, fingerprint, argsKey) {
         pruneNPlusOneFingerprints(now);
         return null;
     }
-    if (entry.lastInsightTs > 0 && (now - entry.lastInsightTs) < nPlusOneDetector.cooldownMs) {
+    if (entry.lastSignalTs > 0 && (now - entry.lastSignalTs) < nPlusOneDetector.cooldownMs) {
         pruneNPlusOneFingerprints(now);
         return null;
     }
-    entry.lastInsightTs = now;
+    entry.lastSignalTs = now;
     var windowSpanMs = entry.hits[entry.hits.length - 1].ts - entry.hits[0].ts;
     var confidence = 'low';
     if (distinctRatio >= 0.7 && repeats >= 12) confidence = 'high';

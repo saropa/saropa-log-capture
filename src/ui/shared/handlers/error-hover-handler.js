@@ -28,11 +28,12 @@ async function handleErrorHoverRequest(text, lineIndex, post) {
     const hash = (0, error_fingerprint_1.hashFingerprint)(normalized);
     const crashCategory = (0, error_fingerprint_1.classifyCategory)(text);
     // Parallel: cross-session lookup + triage status
-    const [insights, statuses] = await Promise.all([
-        (0, cross_session_aggregator_1.aggregateInsights)('all').catch(() => undefined),
+    const [aggregated, statuses] = await Promise.all([
+        (0, cross_session_aggregator_1.aggregateSignals)('all').catch(() => undefined),
         (0, error_status_store_1.getErrorStatusBatch)([hash]).catch(() => ({})),
     ]);
-    const match = insights?.recurringErrors.find(e => e.hash === hash);
+    // Find matching error signal by fingerprint (which is the raw hash for error-kind signals)
+    const match = aggregated?.allSignals.find(s => s.kind === 'error' && s.fingerprint === hash);
     const triageStatus = statuses[hash] ?? 'open';
     const resolveUrls = (0, config_1.getConfig)().integrationsGit?.commitLinks ?? true;
     const sourceRef = (0, source_linker_1.extractSourceReference)(text);

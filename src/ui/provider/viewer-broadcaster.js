@@ -194,9 +194,9 @@ class ViewerBroadcaster {
             t.setViewerRepeatThresholds(thresholds);
         }
     }
-    setViewerDbInsightsEnabled(enabled) {
+    setViewerDbSignalsEnabled(enabled) {
         for (const t of this.targets) {
-            t.setViewerDbInsightsEnabled(enabled);
+            t.setViewerDbSignalsEnabled(enabled);
         }
     }
     setStaticSqlFromFingerprintEnabled(enabled) {

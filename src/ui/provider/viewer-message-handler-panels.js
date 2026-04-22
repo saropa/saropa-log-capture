@@ -105,26 +105,23 @@ function dispatchPanelMessage(msg, ctx) {
         case "crashlyticsPanelClosed":
             panelHandlers.stopCrashlyticsAutoRefresh();
             return true;
-        case "requestRecurringErrors":
-            panelHandlers.handleRecurringRequest(ctx.post).catch(() => { });
-            return true;
-        case "requestInsightData":
-            panelHandlers.handleInsightDataRequest(ctx.post, ctx.currentFileUri).catch(() => { });
+        case "requestSignalData":
+            panelHandlers.handleSignalDataRequest(ctx.post, ctx.currentFileUri).catch(() => { });
             return true;
         case "requestPerformanceData":
             panelHandlers.handlePerformanceRequest(ctx.post, ctx.currentFileUri).catch(() => { });
             return true;
         case "setRecurringErrorStatus":
-            panelHandlers.handleSetErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open'), ctx.post).catch(() => { });
+            panelHandlers.handleSetErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open'), ctx.post, ctx.currentFileUri).catch(() => { });
             return true;
-        case "openInsights":
-            ctx.post({ type: 'openInsight', tab: 'recurring' });
+        case "openSignals":
+            ctx.post({ type: 'openSignalPanel', tab: 'recurring' });
             return true;
-        case "addInsightItemToCase":
-            vscode.commands.executeCommand('saropaLogCapture.addInsightItemToCase', msg.payload);
+        case "addSignalItemToCollection":
+            vscode.commands.executeCommand('saropaLogCapture.addSignalItemToCollection', msg.payload);
             return true;
-        case "exportInsightsSummary":
-            vscode.commands.executeCommand('saropaLogCapture.exportInsightsSummary');
+        case "exportSignalsSummary":
+            vscode.commands.executeCommand('saropaLogCapture.exportSignalsSummary');
             return true;
         case "requestAboutContent":
             void (0, about_content_loader_1.loadAndPostAboutContent)(ctx.context.extensionUri, ctx.extensionVersion, ctx.context.extension.id, ctx.post);
@@ -184,6 +181,11 @@ function dispatchPanelMessage(msg, ctx) {
             return true;
         case "openQualityReport":
             void vscode.commands.executeCommand('saropaLogCapture.openQualityReport');
+            return true;
+        case "openLintRule":
+            // Open VS Code settings filtered to the lint rule name so the user can
+            // find the saropa_lints rule configuration and documentation
+            void vscode.commands.executeCommand('workbench.action.openSettings', String(msg.rule ?? ''));
             return true;
         case "openDriftAdvisor":
             void vscode.commands.executeCommand(drift_advisor_integration_1.DRIFT_ADVISOR_OPEN_COMMAND).then(undefined, () => { });

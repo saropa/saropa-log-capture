@@ -210,5 +210,50 @@ const base = {
     const hy = (0, build_hypotheses_1.buildHypotheses)(b);
     strict_1.default.ok(hy.some((h) => h.templateId === "sql-burst" && h.hypothesisKey === "burst::bfp"));
 });
+// --- Bug 002: ANR merges redundant error-recent hypotheses ---
+(0, node_test_1.default)("buildHypotheses: high-confidence ANR absorbs error-recent evidence lines", () => {
+    const hy = (0, build_hypotheses_1.buildHypotheses)({
+        ...base,
+        errors: [
+            { lineIndex: 10, excerpt: "74% 3935/com.saropamobile.app: 23% user + 51% kernel" },
+            { lineIndex: 11, excerpt: "full avg10=0.00 avg60=0.01 avg300=0.00 total=5846171" },
+        ],
+        anrRisk: { score: 100, level: "high", signals: ["4 ANR keywords", "12 Choreographer warnings"] },
+    });
+    // Error-recent reports removed — their evidence merged into the ANR hypothesis.
+    const anr = hy.find((h) => h.templateId === "anr-risk");
+    strict_1.default.ok(anr, "ANR hypothesis should be present");
+    strict_1.default.ok(anr.evidenceLineIds.includes(10), "ANR should carry error line 10");
+    strict_1.default.ok(anr.evidenceLineIds.includes(11), "ANR should carry error line 11");
+    strict_1.default.strictEqual(hy.filter((h) => h.templateId === "error-recent").length, 0);
+});
+(0, node_test_1.default)("buildHypotheses: medium-confidence ANR does NOT merge error-recent hypotheses", () => {
+    const hy = (0, build_hypotheses_1.buildHypotheses)({
+        ...base,
+        errors: [
+            { lineIndex: 10, excerpt: "RenderFlex overflowed by 42 pixels on the right" },
+        ],
+        // score 30 → medium confidence (≤50), errors stay separate
+        anrRisk: { score: 30, level: "medium", signals: ["1 Choreographer warning"] },
+    });
+    strict_1.default.ok(hy.some((h) => h.templateId === "anr-risk"));
+    strict_1.default.ok(hy.some((h) => h.templateId === "error-recent"));
+});
+(0, node_test_1.default)("buildHypotheses: high ANR merge does not affect non-error hypothesis types", () => {
+    const hy = (0, build_hypotheses_1.buildHypotheses)({
+        ...base,
+        errors: [
+            { lineIndex: 5, excerpt: "CPU usage from 246427ms to 0ms ago with some extra text here" },
+        ],
+        anrRisk: { score: 100, level: "high", signals: ["4 ANR keywords"] },
+        fingerprintLeaders: [{ fingerprint: "fp1", count: 20, sampleLineIndex: 1 }],
+    });
+    // Errors merged into ANR, but fingerprint-leader survives independently.
+    const anr = hy.find((h) => h.templateId === "anr-risk");
+    strict_1.default.ok(anr, "ANR hypothesis should be present");
+    strict_1.default.ok(anr.evidenceLineIds.includes(5), "ANR should carry merged error line 5");
+    strict_1.default.strictEqual(hy.filter((h) => h.templateId === "error-recent").length, 0);
+    strict_1.default.ok(hy.some((h) => h.templateId === "fingerprint-leader"));
+});
 // v2 general signal tests and fingerprinting tests are in build-hypotheses-general.test.ts
 //# sourceMappingURL=build-hypotheses.test.js.map

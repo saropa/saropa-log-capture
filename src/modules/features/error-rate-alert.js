@@ -149,24 +149,45 @@ class ErrorRateAlert {
 exports.ErrorRateAlert = ErrorRateAlert;
 /**
  * Check if a log line indicates an error based on category or content.
+ *
+ * Uses word-boundary matching to avoid false positives on identifiers
+ * like `__breakOnConditionalError` or `showErrorDialog`. PascalCase
+ * compound types (TypeError, NullPointerException) are matched via a
+ * separate pattern that requires a word boundary before the capital letter.
  */
-/** Loose classification: keep legacy substring semantics; only gate stderr with config. */
 function isErrorLine(text, category) {
     const cfg = (0, config_1.getConfig)();
     if (category === 'stderr' && cfg.stderrTreatAsError) {
         return true;
     }
-    const lowerText = text.toLowerCase();
-    return (lowerText.includes('error') ||
-        lowerText.includes('exception') ||
-        lowerText.includes('fatal') ||
-        lowerText.includes('failed'));
+    return (
+    // Standalone "error"/"errors" as a whole word
+    /\berrors?\b/i.test(text) ||
+        // PascalCase error types: TypeError, SyntaxError, etc.
+        /\b[A-Z]\w*Error\b/.test(text) ||
+        // Standalone "exception"/"exceptions" as a whole word
+        /\bexceptions?\b/i.test(text) ||
+        // PascalCase exception types: NullPointerException, etc.
+        /\b[A-Z]\w*Exception\b/.test(text) ||
+        /\bfatal\b/i.test(text) ||
+        /\bfailed\b/i.test(text) ||
+        // Logcat E/ (error), F/ (fatal), A/ (assert) prefixes
+        /^[efa]\/\S/i.test(text));
 }
 /**
  * Check if a log line indicates a warning.
+ *
+ * Uses word-boundary matching to avoid false positives on identifiers
+ * like `showWarningDialog`. PascalCase compound types (DeprecationWarning)
+ * are matched via a separate pattern requiring a leading word boundary.
  */
 function isWarningLine(text) {
-    const lowerText = text.toLowerCase();
-    return lowerText.includes('warn');
+    return (
+    // Standalone "warn"/"warning"/"warnings" as a whole word
+    /\bwarn(ings?)?\b/i.test(text) ||
+        // PascalCase warning types: DeprecationWarning, etc.
+        /\b[A-Z]\w*Warning\b/.test(text) ||
+        // Logcat W/ prefix (e.g. "W/SomeTag: ...")
+        /^w\/\S/i.test(text));
 }
 //# sourceMappingURL=error-rate-alert.js.map

@@ -69,14 +69,14 @@ function loadEmbedMerge() {
         detectorId: "a",
         stableKey: "k1",
         priority: 0,
-        payload: { syntheticType: "n-plus-one-insight" },
+        payload: { syntheticType: "n-plus-one-signal" },
     };
     const high = {
         kind: "synthetic-line",
         detectorId: "b",
         stableKey: "k1",
         priority: 10,
-        payload: { syntheticType: "n-plus-one-insight" },
+        payload: { syntheticType: "n-plus-one-signal" },
     };
     const merged = (0, db_detector_framework_1.mergeDbDetectorResultsByStableKey)([low, high]);
     assert.strictEqual(merged.length, 1);

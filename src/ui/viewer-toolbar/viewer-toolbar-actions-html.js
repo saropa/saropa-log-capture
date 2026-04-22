@@ -24,6 +24,18 @@ function getActionsDropdownHtml() {
         <button type="button" class="footer-actions-item" data-action="export" role="menuitem" title="Export log lines to a file with optional level filtering">
             <span class="codicon codicon-export" aria-hidden="true"></span> Export
         </button>
+        <hr class="footer-actions-separator" role="separator">
+        <div class="toolbar-actions-submenu-trigger" role="menuitem" aria-haspopup="true" title="Saved combinations of level, source, search, and exclusion filters \u2014 apply a preset to quickly switch your entire filter configuration">
+            <button type="button" class="footer-actions-item" id="presets-submenu-btn">
+                <span class="codicon codicon-library" aria-hidden="true"></span> Presets
+                <span class="codicon codicon-chevron-right" aria-hidden="true"></span>
+            </button>
+            <div class="toolbar-actions-submenu" id="presets-submenu" role="menu" aria-label="Quick Filters">
+                <button type="button" class="footer-actions-item preset-submenu-item" data-preset="" role="menuitem" title="Reset all filters to defaults: all levels enabled, Flutter DAP=All, Device=Warn+, External=Warn+, no search or exclusions">
+                    <span class="codicon codicon-clear-all" aria-hidden="true"></span> Default
+                </button>
+            </div>
+        </div>
     </div>
 </div>`;
 }

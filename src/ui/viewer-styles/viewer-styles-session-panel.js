@@ -174,38 +174,38 @@ function getSessionPanelLayoutStyles() {
     overflow-y: auto;
 }
 
-/* --- Investigations section --- */
-.session-investigations {
+/* --- Collections section --- */
+.session-collections {
     padding: 8px 12px;
     border-bottom: 1px solid var(--vscode-panel-border);
     background: var(--vscode-sideBarSectionHeader-background, transparent);
 }
-.session-investigations-header {
+.session-collections-header {
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     color: var(--vscode-descriptionForeground);
     margin-bottom: 2px;
 }
-.session-investigations-hint {
+.session-collections-hint {
     font-size: 10px;
     color: var(--vscode-descriptionForeground);
     margin: 0 0 6px 0;
     line-height: 1.3;
 }
-.session-investigations-list {
+.session-collections-list {
     margin-bottom: 6px;
 }
-.session-investigations-create-row {
+.session-collections-create-row {
     margin-bottom: 0;
 }
-.session-investigations-create-form {
+.session-collections-create-form {
     margin-top: 6px;
     display: flex;
     flex-direction: column;
     gap: 6px;
 }
-.session-investigations-name-input {
+.session-collections-name-input {
     font-size: 12px;
     padding: 4px 8px;
     border: 1px solid var(--vscode-input-border, transparent);
@@ -215,15 +215,15 @@ function getSessionPanelLayoutStyles() {
     width: 100%;
     box-sizing: border-box;
 }
-.session-investigations-name-input:focus {
+.session-collections-name-input:focus {
     outline: 1px solid var(--vscode-focusBorder);
     outline-offset: -1px;
 }
-.session-investigations-create-form-actions {
+.session-collections-create-form-actions {
     display: flex;
     gap: 6px;
 }
-.session-investigations-create-confirm {
+.session-collections-create-confirm {
     font-size: 12px;
     padding: 4px 10px;
     background: var(--vscode-button-background);
@@ -232,18 +232,18 @@ function getSessionPanelLayoutStyles() {
     border-radius: 3px;
     cursor: pointer;
 }
-.session-investigations-create-confirm:hover {
+.session-collections-create-confirm:hover {
     background: var(--vscode-button-hoverBackground);
 }
-.session-investigations-create-confirm:disabled {
+.session-collections-create-confirm:disabled {
     opacity: 0.6;
     cursor: default;
 }
-.session-investigations-name-input:disabled {
+.session-collections-name-input:disabled {
     opacity: 0.7;
     cursor: not-allowed;
 }
-.session-investigations-create-cancel {
+.session-collections-create-cancel {
     font-size: 12px;
     padding: 4px 10px;
     background: var(--vscode-button-secondaryBackground);
@@ -252,31 +252,31 @@ function getSessionPanelLayoutStyles() {
     border-radius: 3px;
     cursor: pointer;
 }
-.session-investigations-create-cancel:hover {
+.session-collections-create-cancel:hover {
     background: var(--vscode-button-secondaryHoverBackground);
 }
-.session-investigations-create-error {
+.session-collections-create-error {
     font-size: 11px;
     color: var(--vscode-errorForeground);
 }
-.session-investigation-item {
+.session-collection-item {
     padding: 4px 8px;
     cursor: pointer;
     font-size: 12px;
     border-radius: 3px;
 }
-.session-investigation-item:hover {
+.session-collection-item:hover {
     background: var(--vscode-list-hoverBackground);
 }
-.session-investigation-item.session-investigation-active {
+.session-collection-item.session-collection-active {
     background: var(--vscode-list-activeSelectionBackground);
     color: var(--vscode-list-activeSelectionForeground);
 }
-.session-investigation-check {
+.session-collection-check {
     margin-left: 4px;
     font-weight: bold;
 }
-.session-investigations-create {
+.session-collections-create {
     font-size: 12px;
     padding: 4px 8px;
     background: none;
@@ -285,7 +285,7 @@ function getSessionPanelLayoutStyles() {
     color: var(--vscode-textLink-foreground);
     cursor: pointer;
 }
-.session-investigations-create:hover {
+.session-collections-create:hover {
     background: var(--vscode-toolbar-hoverBackground);
 }
 `;

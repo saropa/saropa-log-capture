@@ -131,6 +131,11 @@ function applyCompressDedupModes() {
         var cleared = allLines[i];
         if (cleared.compressDupHidden) cleared.compressDupHidden = false;
         if (cleared.compressDupCount != null) delete cleared.compressDupCount;
+        /* Also clear the hidden-indices list stamped for the peek-dedup click
+           handler. Without this, toggling compression off then on while a
+           survivor's list is stale could point peekDedupFold at indices that
+           are no longer hidden. */
+        if (cleared.compressDupHiddenIndices != null) delete cleared.compressDupHiddenIndices;
     }
     var useConsecutive = (typeof compressLinesMode !== 'undefined') && compressLinesMode;
     var useGlobal = (typeof compressNonConsecutiveMode !== 'undefined') && compressNonConsecutiveMode;
@@ -138,9 +143,16 @@ function applyCompressDedupModes() {
 
     /** Build a dedup key from the visible message body — strip the same
      *  structured/source-tag prefix that renderItem removes so lines that
-     *  look identical on screen produce the same key. */
+     *  look identical on screen produce the same key.
+     *  WHY stack-frame is accepted alongside 'line': a Drift SELECT flood
+     *  (11 000+ queries) emits identical \`DriftDebugInterceptor._log (...dart:92:5)\`
+     *  stack frames under every call. Gating on \`type === 'line'\` alone meant
+     *  non-consecutive compression passed them through untouched and the viewer
+     *  rendered thousands of visually identical stack rows. Same plain text
+     *  produces the same dedup key across both types. See bugs/unified-line-collapsing.md. */
     function lineDedupeKey(row) {
-        if (!row || row.type !== 'line') return null;
+        if (!row) return null;
+        if (row.type !== 'line' && row.type !== 'stack-frame') return null;
         var html = row.html || '';
         /* Strip structured prefix (timestamp/PID/tag) the same way renderItem does. */
         var useStructured = (typeof structuredLineParsing !== 'undefined' && structuredLineParsing);
@@ -158,9 +170,11 @@ function applyCompressDedupModes() {
      * True if this line may occupy vertical space when compressDup* flags are cleared.
      * Mirrors calcItemHeight filter gates so duplicate collapse matches what the user can see
      * under current level/source/search/app-only/blank-collapse options.
+     * Accepts both 'line' and 'stack-frame' (see lineDedupeKey for rationale).
      */
     function isLineEligibleForDupCompress(row) {
-        if (!row || row.type !== 'line') return false;
+        if (!row) return false;
+        if (row.type !== 'line' && row.type !== 'stack-frame') return false;
         if (row.filteredOut || row.excluded || row.levelFiltered || row.sourceFiltered || row.classFiltered || row.sqlPatternFiltered || row.searchFiltered || row.errorSuppressed || row.scopeFiltered || row.repeatHidden || row.metadataFiltered || (row.type === 'line' && row.timeRangeFiltered)) return false;
         var peeking = (typeof isPeeking !== 'undefined' && isPeeking);
         if (!peeking && (row.userHidden || row.autoHidden)) return false;
@@ -173,15 +187,23 @@ function applyCompressDedupModes() {
         var runStart = -1;
         var runKey = null;
 
+        /* compressDupHiddenIndices: list of allLines indices hidden under this
+           run's survivor. The peek-dedup click handler (viewer-peek-chevron.ts)
+           reads it to reveal exactly this fold without touching other folds.
+           WHY stamped on the survivor and not recomputed on click: click-time
+           recomputation would need lineDedupeKey access plus a full scan of
+           allLines; stamping is O(N) once per dedup pass and O(1) per click. */
         function flushRun(endInclusive) {
             if (runStart < 0) return;
             var runLen = endInclusive - runStart + 1;
             if (runLen > 1) {
-                var j;
+                var j, _hidden = [];
                 for (j = runStart; j < endInclusive; j++) {
                     allLines[j].compressDupHidden = true;
+                    _hidden.push(j);
                 }
                 allLines[endInclusive].compressDupCount = runLen;
+                allLines[endInclusive].compressDupHiddenIndices = _hidden;
             }
             runStart = -1;
             runKey = null;
@@ -209,6 +231,10 @@ function applyCompressDedupModes() {
 
     var firstIdxByKey = Object.create(null);
     var countByKey = Object.create(null);
+    /* Per-key list of hidden indices — survivor gets this in compressDupHiddenIndices
+       so the peek-dedup click handler can reveal exactly this fold. See the
+       consecutive-mode comment above for rationale. */
+    var hiddenIdxByKey = Object.create(null);
     for (i = 0; i < allLines.length; i++) {
         var globalItem = allLines[i];
         var globalKey = lineDedupeKey(globalItem);
@@ -216,15 +242,18 @@ function applyCompressDedupModes() {
         if (firstIdxByKey[globalKey] == null) {
             firstIdxByKey[globalKey] = i;
             countByKey[globalKey] = 1;
+            hiddenIdxByKey[globalKey] = [];
         } else {
             globalItem.compressDupHidden = true;
             countByKey[globalKey]++;
+            hiddenIdxByKey[globalKey].push(i);
         }
     }
     for (var key in countByKey) {
         var count = countByKey[key];
         if (count > 1) {
             allLines[firstIdxByKey[key]].compressDupCount = count;
+            allLines[firstIdxByKey[key]].compressDupHiddenIndices = hiddenIdxByKey[key];
         }
     }
 }

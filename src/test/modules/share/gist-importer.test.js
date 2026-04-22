@@ -42,7 +42,7 @@ suite('GistImporter', () => {
     suite('importFromUrl', () => {
         test('rejects non-https URL', async () => {
             const store = {};
-            await assert.rejects(() => (0, gist_importer_1.importFromUrl)('http://example.com/investigation.slc', store), (err) => err.message.includes('https'));
+            await assert.rejects(() => (0, gist_importer_1.importFromUrl)('http://example.com/collection.slc', store), (err) => err.message.includes('https'));
         });
         test('rejects invalid URL', async () => {
             const store = {};

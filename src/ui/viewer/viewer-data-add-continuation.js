@@ -80,6 +80,9 @@ function finalizeContinuationGroup() {
  * Detects continuation runs and marks headers / children.
  */
 function checkContinuationOnNormalLine(lineItem) {
+    /* File views: every line shares the same load timestamp, so continuation
+     * would group the entire file into one collapsed block. Skip it. */
+    if (typeof isViewingFile !== 'undefined' && isViewingFile) return;
     if (lineItem.type !== 'line' || lineItem.isSeparator) {
         finalizeContinuationGroup();
         lastNormalLineForCont = null;

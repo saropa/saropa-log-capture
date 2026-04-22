@@ -2,15 +2,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getStackFilterScript = getStackFilterScript;
 /**
- * Client-side JavaScript for the Flutter/Device log filter.
+ * Client-side JavaScript for the Flutter DAP / Device / External log filter.
  *
- * Radio groups in Log Inputs control visibility with three states:
+ * Three radio groups in Log Sources control visibility with three states:
  *   - 'all':      show every line from that tier
  *   - 'warnplus': show only warnings and errors (checks originalLevel for
  *                 device-other lines whose level was demoted to info)
  *   - 'none':     hide every line from that tier
  *
- * Defaults: Flutter = 'all', Device = 'none'.
+ * Defaults: Flutter DAP = 'all', Device = 'warnplus', External = 'warnplus'.
  *
  * Device-critical lines (e.g. AndroidRuntime crashes) are always visible
  * regardless of the Device setting — they bypass this filter entirely.
@@ -20,9 +20,10 @@ exports.getStackFilterScript = getStackFilterScript;
 function getStackFilterScript() {
     return /* javascript */ `
 var showFlutter = 'all';
-var showDevice = 'none';
+var showDevice = 'warnplus';
+var showExternal = 'warnplus';
 
-/** Update Flutter tier filter mode ('all' | 'warnplus' | 'none') and refilter. */
+/** Update Flutter DAP tier filter mode ('all' | 'warnplus' | 'none') and refilter. */
 function setShowFlutter(mode) {
     if (showFlutter === mode) return;
     showFlutter = mode;
@@ -38,8 +39,16 @@ function setShowDevice(mode) {
     renderViewport(true);
 }
 
+/** Update External tier filter mode ('all' | 'warnplus' | 'none') and refilter. */
+function setShowExternal(mode) {
+    if (showExternal === mode) return;
+    showExternal = mode;
+    recalcHeights();
+    renderViewport(true);
+}
+
 /**
- * Check if an item is hidden by the Flutter/Device tier filter.
+ * Check if an item is hidden by the Flutter DAP / Device / External tier filter.
  * Device-critical items always pass (never hidden by this filter).
  *
  * In 'warnplus' mode, checks originalLevel (pre-demotion) first, then
@@ -49,7 +58,10 @@ function setShowDevice(mode) {
 function isTierHidden(item) {
     if (!item.tier) return false;
     if (item.tier === 'device-critical') return false;
-    var mode = (item.tier === 'flutter') ? showFlutter : (item.tier === 'device-other') ? showDevice : 'all';
+    var mode = (item.tier === 'flutter') ? showFlutter
+        : (item.tier === 'device-other') ? showDevice
+        : (item.tier === 'external') ? showExternal
+        : 'all';
     if (mode === 'all') return false;
     if (mode === 'none') return true;
     /* 'warnplus': show only warnings and errors */

@@ -176,6 +176,21 @@ function getUiStyles() {
     filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.9));
     transition: top 0.08s linear;
 }
+/* Drag-to-resize grip on the left edge of the minimap column */
+.minimap-resize-handle {
+    flex: 0 0 4px;
+    width: 4px;
+    cursor: col-resize;
+    align-self: stretch;
+    background: transparent;
+    transition: background 0.15s;
+    z-index: 1; /* above minimap canvas */
+}
+.minimap-resize-handle:hover {
+    background: var(--vscode-sash-hoverBorder, rgba(0, 122, 204, 0.6));
+}
+/* Lock cursor to col-resize during drag so it does not flicker */
+body.mm-resizing, body.mm-resizing * { cursor: col-resize !important; }
 .scrollbar-minimap {
     flex: 0 0 auto;
     width: 60px;
@@ -188,22 +203,27 @@ function getUiStyles() {
 }
 .minimap-viewport {
     position: absolute; left: 0; right: 0; pointer-events: none; min-height: 10px;
+    /* z-index ensures viewport renders above the canvas compositing layer */
+    z-index: 1;
     /* Slightly more transparent than default theme slider so the log map shows through */
     background: var(--vscode-scrollbarSlider-background, rgba(121, 121, 121, 0.34));
     transition: top 0.08s linear;
+    /* Reserve border space so toggling the outline doesn't shift size */
+    border: 2px solid transparent;
+    box-sizing: border-box;
 }
 .minimap-viewport.minimap-viewport--red-outline {
-    box-shadow: inset 0 0 0 2px rgba(239, 68, 68, 0.95);
+    border-color: rgba(239, 68, 68, 0.95);
     background: rgba(121, 121, 121, 0.30);
 }
 .scrollbar-minimap:hover .minimap-viewport { background: var(--vscode-scrollbarSlider-hoverBackground, rgba(100, 100, 100, 0.58)); }
 .scrollbar-minimap:hover .minimap-viewport.minimap-viewport--red-outline {
     background: rgba(100, 100, 100, 0.38);
-    box-shadow: inset 0 0 0 2px rgba(255, 82, 82, 1);
+    border-color: rgba(255, 82, 82, 1);
 }
 .scrollbar-minimap.mm-dragging .minimap-viewport { background: var(--vscode-scrollbarSlider-activeBackground, rgba(191, 191, 191, 0.32)); }
 .scrollbar-minimap.mm-dragging .minimap-viewport.minimap-viewport--red-outline {
-    box-shadow: inset 0 0 0 2px rgba(255, 82, 82, 1);
+    border-color: rgba(255, 82, 82, 1);
 }
 
 /* ===================================================================

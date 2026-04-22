@@ -83,5 +83,13 @@ suite('Continuation line collapsing', () => {
         const fnBody = script.substring(script.indexOf('function expandContinuationForSearch'));
         assert.ok(fnBody.includes('recalcHeights'), 'should recalc after search-expand');
     });
+    test('should skip continuation grouping when viewing a file', () => {
+        /* File views assign the same timestamp to every line, causing the
+         * entire file to collapse into one group. The guard must early-return
+         * so no groups are created for file views. */
+        const script = (0, viewer_data_add_continuation_1.getContinuationScript)();
+        const fnBody = script.substring(script.indexOf('function checkContinuationOnNormalLine'));
+        assert.ok(fnBody.includes('isViewingFile'), 'checkContinuationOnNormalLine must skip when isViewingFile is set');
+    });
 });
 //# sourceMappingURL=viewer-continuation.test.js.map

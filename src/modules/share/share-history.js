@@ -12,12 +12,12 @@ async function getShareHistory(context) {
     const raw = context.workspaceState.get(SHARE_HISTORY_KEY, []);
     return raw.slice(0, MAX_RECENT_SHARES);
 }
-async function addToShareHistory(context, result, investigationName) {
+async function addToShareHistory(context, result, collectionName) {
     const entry = {
         gistId: result.gistId,
         deepLinkUrl: result.deepLinkUrl,
         gistUrl: result.gistUrl,
-        investigationName,
+        collectionName,
         sharedAt: Date.now(),
     };
     const list = await getShareHistory(context);

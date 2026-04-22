@@ -47,15 +47,15 @@ const drift_db_repeat_thresholds_1 = require("../../modules/db/drift-db-repeat-t
 const drift_db_slow_burst_thresholds_1 = require("../../modules/db/drift-db-slow-burst-thresholds");
 const drift_db_slow_burst_detector_1 = require("../../modules/db/drift-db-slow-burst-detector");
 suite('Viewer N+1 detector embed', () => {
-    test('embed defines parseSqlFingerprint and detectNPlusOneInsight', () => {
+    test('embed defines parseSqlFingerprint and detectNPlusOneSignal', () => {
         const chunk = (0, viewer_data_n_plus_one_script_1.getNPlusOneDetectorScript)();
         assert.ok(chunk.includes('function parseSqlFingerprint'));
         assert.ok(chunk.includes('function normalizeDriftSqlFingerprintSql'));
-        assert.ok(chunk.includes('function detectNPlusOneInsight'));
+        assert.ok(chunk.includes('function detectNPlusOneSignal'));
         assert.ok(chunk.includes('function pruneNPlusOneFingerprints'));
         assert.ok(chunk.includes('sqlSnippet'));
-        assert.ok(chunk.includes('function updateDbInsightRollup'));
-        assert.ok(chunk.includes('function peekDbInsightRollup'));
+        assert.ok(chunk.includes('function updateDbSignalRollup'));
+        assert.ok(chunk.includes('function peekDbSignalRollup'));
         assert.ok(chunk.includes('function driftSqlSnippetFromPlain'));
         assert.ok(chunk.includes('function getDriftRepeatMinN'));
         assert.ok(chunk.includes('dbRepeatThresholds'));
@@ -71,20 +71,20 @@ suite('Viewer N+1 detector embed', () => {
         assert.ok(chunk.includes(`read: ${drift_db_repeat_thresholds_1.VIEWER_REPEAT_THRESHOLD_DEFAULTS.readMinCount}`));
         assert.ok(chunk.includes(`dml: ${drift_db_repeat_thresholds_1.VIEWER_REPEAT_THRESHOLD_DEFAULTS.dmlMinCount}`));
     });
-    test('viewer data script can bake DB insights off (viewerDbInsightsEnabled false)', () => {
-        const data = (0, viewer_data_1.getViewerDataScript)({ viewerDbInsightsEnabled: false });
-        assert.ok(data.includes('var viewerDbInsightsEnabled = false'));
+    test('viewer data script can bake DB signals off (viewerDbSignalsEnabled false)', () => {
+        const data = (0, viewer_data_1.getViewerDataScript)({ viewerDbSignalsEnabled: false });
+        assert.ok(data.includes('var viewerDbSignalsEnabled = false'));
     });
     test('viewer data script can bake static SQL affordance off (staticSqlFromFingerprintEnabled false)', () => {
-        const data = (0, viewer_data_1.getViewerDataScript)({ viewerDbInsightsEnabled: true, staticSqlFromFingerprintEnabled: false });
+        const data = (0, viewer_data_1.getViewerDataScript)({ viewerDbSignalsEnabled: true, staticSqlFromFingerprintEnabled: false });
         assert.ok(data.includes('var staticSqlFromFingerprintEnabled = false'));
     });
-    test('full viewer data script includes N+1 insight row type, insightMeta, and DB_15 detector pipeline', () => {
+    test('full viewer data script includes N+1 signal row type, signalMeta, and DB_15 detector pipeline', () => {
         const data = (0, viewer_data_1.getViewerDataScript)();
-        assert.ok(data.includes("'n-plus-one-insight'"));
-        assert.ok(data.includes('insightMeta'));
+        assert.ok(data.includes("'n-plus-one-signal'"));
+        assert.ok(data.includes('signalMeta'));
         assert.ok(data.includes('parseSqlFingerprint'));
-        assert.ok(data.includes('dbInsight'));
+        assert.ok(data.includes('dbSignal'));
         assert.ok(data.includes('::sqlfp::'));
         assert.ok(data.includes('SQL repeated:'));
         assert.ok(data.includes('repeat-sql-fp'));
@@ -95,7 +95,7 @@ suite('Viewer N+1 detector embed', () => {
         assert.ok(data.includes('applyDbAnnotateLineResult'));
         assert.ok(data.includes('db.ingest-rollup'));
         assert.ok(data.includes('function applyDbDetectorResultsInPriorityOrder'));
-        assert.ok(data.includes('function peekDbInsightRollup'));
+        assert.ok(data.includes('function peekDbSignalRollup'));
         assert.ok(data.includes('registerBuiltinDbDetectors'));
         assert.ok(data.includes('pruneDbDetectorStateAfterTrim'));
         assert.ok(data.includes('applyDbMarkerResults'));

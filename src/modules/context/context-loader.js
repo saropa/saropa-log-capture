@@ -81,8 +81,14 @@ async function findSidecarUris(logUri) {
         const entries = await vscode.workspace.fs.readDirectory(dirUri);
         const prefix = baseName + '.';
         const terminalSuffix = baseName + '.terminal.log';
+        // The primary log itself satisfies `startsWith(baseName + '.')` because the dot sits right
+        // before the `.log` extension (e.g. `20260421_160343_contacts.log` starts with `20260421_160343_contacts.`).
+        // Without this guard, the primary gets re-loaded by the viewer via parseExternalSidecarToPending,
+        // which skips the `[HH:MM:SS.mmm] [category]` prefix strip and ANSI conversion — the user then
+        // sees duplicate rows with literal `[16:13:49.489] [console] [32m…` visible in the body.
+        const primarySuffix = baseName + '.log';
         for (const [name] of entries) {
-            if (name.startsWith(prefix) && name.endsWith('.log') && name !== terminalSuffix) {
+            if (name.startsWith(prefix) && name.endsWith('.log') && name !== terminalSuffix && name !== primarySuffix) {
                 sidecars.push(vscode.Uri.joinPath(dirUri, name));
             }
         }

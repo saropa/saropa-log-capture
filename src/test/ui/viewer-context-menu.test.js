@@ -84,6 +84,40 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes("case 'annotate':"));
             assert.ok(script.includes("case 'open-source':"));
             assert.ok(script.includes("case 'show-context':"));
+            assert.ok(script.includes("case 'copy-line-number':"));
+            assert.ok(script.includes("case 'copy-timestamp':"));
+        });
+        test('copy-line-number posts the 1-based row position', () => {
+            const script = (0, viewer_context_menu_1.getContextMenuScript)();
+            /* 1-based: matches the counter decoration users see; the rest of the UI is 1-based too. */
+            assert.ok(script.includes('String(lineIdx + 1)'));
+            /* Goes through the generic clipboard postMessage path — no new host route needed. */
+            const idx = script.indexOf("case 'copy-line-number':");
+            const snippet = script.slice(idx, idx + 400);
+            assert.ok(snippet.includes("type: 'copyToClipboard'"));
+            assert.ok(snippet.includes('String(lineIdx + 1)'));
+        });
+        test('copy-timestamp guards missing epoch and emits ISO 8601', () => {
+            const script = (0, viewer_context_menu_1.getContextMenuScript)();
+            const idx = script.indexOf("case 'copy-timestamp':");
+            assert.ok(idx >= 0);
+            const snippet = script.slice(idx, idx + 500);
+            /* Both .timestamp (canonical) and .ts (legacy) must be checked — dropping either makes
+               the copy silently empty on stack frames or markers depending on code path. */
+            assert.ok(snippet.includes('lineData.timestamp || lineData.ts'));
+            /* Null-guard: the visibility layer hides the item when no ts, but the handler must still
+               refuse to post an empty ISO string if a race exposes it. */
+            assert.ok(snippet.includes('if (!tsVal) return true;'));
+            assert.ok(snippet.includes('new Date(tsVal).toISOString()'));
+            assert.ok(snippet.includes("type: 'copyToClipboard'"));
+        });
+        test('showContextMenu hides copy-timestamp when the line has no epoch', () => {
+            const script = (0, viewer_context_menu_1.getContextMenuScript)();
+            /* The data-timestamp-action filter sits alongside data-line-action / data-source-action
+               so that markers and synthetic rows (which have no .timestamp) don't expose a button
+               that would copy an empty string. */
+            assert.ok(script.includes("querySelectorAll('[data-timestamp-action]')"));
+            assert.ok(script.includes('lineData.timestamp || lineData.ts'));
         });
         test('copy-decorated should use linesToDecoratedText for decorated copy', () => {
             const script = (0, viewer_context_menu_1.getContextMenuScript)();

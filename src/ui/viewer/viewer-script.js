@@ -23,6 +23,35 @@ var viewportEl = document.getElementById('viewport');
 var spacerBottom = document.getElementById('spacer-bottom');
 var jumpBtn = document.getElementById('jump-btn');
 var jumpTopBtn = document.getElementById('jump-top-btn');
+/** Toggle the scrollbar-visible body class and force Chromium to re-render the scrollbar.
+ *  Chromium paints ::-webkit-scrollbar once per scroll container and caches the composited
+ *  layer. Cycling overflow-y forces a layout recalc but NOT a scrollbar repaint — that works
+ *  for 0 -> 10px (the layer must be created fresh) but fails for 10px -> 0, leaving a stale
+ *  10px scrollbar visible when the user turns the setting off. Briefly setting display:none
+ *  tears down the render tree so the scroll container is rebuilt and ::-webkit-scrollbar is
+ *  re-read from scratch. Preserve scrollTop because display:none resets it to 0. */
+function applyScrollbarVisible(show) {
+    document.body.classList.toggle('scrollbar-visible', !!show);
+    if (logEl) {
+        var sT = logEl.scrollTop;
+        var prev = logEl.style.display;
+        logEl.style.display = 'none';
+        /* Force synchronous reflow so the render tree is actually torn down before we
+           restore display — a bare style swap without this read leaves the layer alive. */
+        void logEl.offsetHeight;
+        logEl.style.display = prev || '';
+        /* Restoring scrollTop fires a scroll event. Flag both listeners so we do not
+           close the "Scroll map & scrollbar" context menu (which is designed to stay
+           open across toggles) and so the virtual-scroll render handler skips a pass
+           it does not need (position has not actually changed). */
+        if (window.setProgrammaticScroll) window.setProgrammaticScroll();
+        suppressScroll = true;
+        logEl.scrollTop = sT;
+        suppressScroll = false;
+    }
+    syncJumpButtonInset();
+}
+
 /* Pin jump buttons to the log pane top-right / bottom-right using viewport coordinates.
    position:fixed plus #log-content getBoundingClientRect avoids bad containing blocks (some webviews
    mis-resolve absolute + right so controls appear on the text left edge). */
@@ -33,7 +62,11 @@ function syncJumpButtonInset() {
     if (lr.width < 8 || lr.height < 8) return;
     var vw = window.innerWidth;
     var vh = window.innerHeight;
-    var rightPx = Math.max(8, Math.round(vw - lr.right + 8));
+    /* Chromium compositor does not always update getBoundingClientRect when
+       ::-webkit-scrollbar width changes via a dynamic class toggle, so read
+       --scrollbar-w explicitly to guarantee the buttons clear the scrollbar. */
+    var sbW = logWrapEl ? (parseInt(getComputedStyle(logWrapEl).getPropertyValue('--scrollbar-w'), 10) || 0) : 0;
+    var rightPx = Math.max(8, Math.round(vw - lr.right + 8 + sbW));
     var replayBar = document.getElementById('replay-bar');
     var replayNudge = replayBar && replayBar.classList.contains('replay-bar-visible') ? 44 : 0;
     if (jumpBtn) {
@@ -119,6 +152,10 @@ var nextGroupId = 0, activeGroupHeader = null, groupHeaderMap = {};
 var lastStart = -1, lastEnd = -1, rafPending = false;
 var currentFilename = '', nextSeq = 1, scrollMemory = {};
 var loadTruncatedInfo = null;
+/** Structured file mode (plan 051): 'log' | 'markdown' | 'json' | 'csv' | 'html'. Non-log modes skip analysis. */
+var fileMode = 'log';
+/** Whether the format toggle is on for the current non-log file. */
+var formatEnabled = false;
 var correlationByLineIndex = {};
 /* When true, paired "│ … │" banner rows are not stack frames (see isStackFrameText). Baked from host config. */
 var viewerPreserveAsciiBoxArt = ${viewerPreserveAsciiBoxArt ? 'true' : 'false'};

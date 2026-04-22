@@ -87,23 +87,22 @@ suite('Viewer toolbar animations', () => {
             assert.match(css, /prefers-reduced-motion.*anim-dropdown-close/s, 'reduced motion must cover anim-dropdown-close');
         });
     });
-    /* ---- CSS: Filter drawer accordion transitions ---- */
+    /* ---- CSS: Filter drawer tab bar styles ---- */
     suite('filter drawer styles CSS', () => {
         let css;
         setup(() => { css = (0, viewer_styles_filter_drawer_1.getFilterDrawerStyles)(); });
-        test('accordion body should default to max-height: 0 (not display: none)', () => {
-            assert.match(css, /\.filter-accordion-body\s*\{[^}]*max-height:\s*0/s, 'accordion body default: max-height: 0');
-            assert.ok(!css.includes('.filter-accordion-body[hidden]'), 'should not use [hidden] selector for accordion body');
+        test('tab layout should use flex row for sidebar + panels', () => {
+            assert.match(css, /\.filter-tab-layout\s*\{[^}]*display:\s*flex/s, 'tab layout needs flex for horizontal sidebar + panel arrangement');
         });
-        test('accordion body should have transition on max-height and opacity', () => {
-            assert.match(css, /\.filter-accordion-body\s*\{[^}]*transition:[^}]*max-height/s, 'accordion body needs max-height transition');
-            assert.match(css, /\.filter-accordion-body\s*\{[^}]*transition:[^}]*opacity/s, 'accordion body needs opacity transition');
+        test('tab bar should use vertical flex-direction', () => {
+            assert.match(css, /\.filter-tab-bar\s*\{[^}]*flex-direction:\s*column/s, 'tab bar needs vertical column layout');
         });
-        test('expanded accordion body should allow scrolling', () => {
-            assert.match(css, /\.filter-accordion\.expanded\s+\.filter-accordion-body\s*\{[^}]*overflow-y:\s*auto/s, 'expanded body needs overflow-y: auto for long content');
+        test('tab panels container should scroll independently', () => {
+            assert.match(css, /\.filter-tab-panels\s*\{[^}]*overflow-y:\s*auto/s, 'tab panels container needs overflow-y: auto for scrolling');
+            assert.match(css, /\.filter-tab-panels\s*\{[^}]*flex:\s*1/s, 'tab panels container should fill remaining width');
         });
-        test('reduced-motion should disable accordion body transitions', () => {
-            assert.match(css, /prefers-reduced-motion.*\.filter-accordion-body/s, 'reduced motion must cover accordion body transitions');
+        test('active tab should have bottom border indicator', () => {
+            assert.match(css, /\.filter-tab\[aria-selected="true"\]/s, 'active tab needs aria-selected style rule');
         });
     });
     /* ---- CSS: Signals collapse class ---- */
@@ -135,32 +134,31 @@ suite('Viewer toolbar animations', () => {
         test('should check prefers-reduced-motion', () => {
             assert.ok(src.includes('prefers-reduced-motion'), 'script must check reduced motion preference');
         });
-        test('should use anim-flyout-open for search and filter drawer', () => {
+        test('should use anim-flyout-open for search flyout', () => {
             assert.ok(src.includes("animatedShow(searchFlyout, 'anim-flyout-open')"), 'search flyout opens with animation');
-            assert.ok(src.includes("animatedShow(filterDrawer, 'anim-flyout-open')"), 'filter drawer opens with animation');
         });
-        test('should use anim-flyout-close for search and filter drawer', () => {
+        test('should use anim-flyout-close for search flyout', () => {
             assert.ok(src.includes("animatedHide(searchFlyout, 'anim-flyout-close')"), 'search flyout closes with animation');
-            assert.ok(src.includes("animatedHide(filterDrawer, 'anim-flyout-close')"), 'filter drawer closes with animation');
         });
-        test('should use signals-drawer-hidden instead of u-hidden for Signals', () => {
-            assert.ok(src.includes("classList.add('signals-drawer-hidden')"), 'signals collapse should use signals-drawer-hidden');
-            assert.ok(src.includes("classList.remove('signals-drawer-hidden')"), 'signals restore should remove signals-drawer-hidden');
+        test('filter panel should use setActivePanel instead of animations', () => {
+            /* Filter panel is now a panel-slot slide-out, not a dropdown.
+             * It opens via setActivePanel('filters'), not animatedShow. */
+            assert.ok(src.includes("setActivePanel('filters')"), 'filter button should toggle via setActivePanel');
         });
         test('should not export showSignalsPanel to window', () => {
             assert.ok(!src.includes('window.showSignalsPanel'), 'showSignalsPanel must not be exported — panel is only opened via toggleSignalsPanel');
         });
-        test('accordion should not use body.hidden', () => {
-            assert.ok(!src.includes('body.hidden'), 'accordion must not set body.hidden (CSS max-height handles visibility)');
+        test('tab switching should use style.display not hidden attribute', () => {
+            assert.ok(!src.includes('body.hidden'), 'tab panels must not use body.hidden for visibility');
         });
         test('actions popover should have animationend handler for toolbar-actions-open', () => {
             assert.ok(src.includes("remove('toolbar-actions-open'"), 'actions close animation must remove toolbar-actions-open on end');
         });
     });
-    /* ---- HTML: Accordion body has no hidden attribute ---- */
-    test('filter drawer accordion bodies should not have hidden attribute', () => {
+    /* ---- HTML: Tab panels use style display for visibility ---- */
+    test('filter drawer tab panels should not have hidden attribute', () => {
         const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
-        assert.ok(!html.includes('filter-accordion-body" hidden'), 'accordion body must not use hidden attribute (CSS max-height handles visibility)');
+        assert.ok(!html.includes('filter-tab-panel" hidden'), 'tab panels must not use hidden attribute (style.display handles visibility)');
     });
 });
 //# sourceMappingURL=viewer-toolbar-animations.test.js.map

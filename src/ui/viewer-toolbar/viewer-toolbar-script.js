@@ -1,19 +1,22 @@
 "use strict";
-/**
- * Toolbar interaction script: flyout open/close, Signals mutual exclusion,
- * actions dropdown, and session nav wiring.
- *
- * Loaded after the icon bar script so it can override `openFiltersPanel` /
- * `closeFiltersPanel` with drawer equivalents for backward compatibility.
- */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getToolbarScript = getToolbarScript;
+/**
+ * Toolbar interaction script: flyout open/close, Signals mutual exclusion,
+ * actions dropdown, filter panel toggle, and tab bar wiring.
+ *
+ * The filter panel is a slide-out in #panel-slot (like Sessions, Bookmarks).
+ * The toolbar filter button toggles it via setActivePanel('filters').
+ *
+ * Filter tab bar logic lives in viewer-toolbar-filter-tabs-script.ts; it is
+ * appended below the main IIFE so tab click handlers wire up during page load.
+ */
+const viewer_toolbar_filter_tabs_script_1 = require("./viewer-toolbar-filter-tabs-script");
 /** Returns the toolbar interaction JavaScript. */
 function getToolbarScript() {
     return /* javascript */ `
 (function() {
     var searchFlyout = document.getElementById('search-flyout');
-    var filterDrawer = document.getElementById('filter-drawer');
     var signalsHost = document.getElementById('root-cause-hypotheses');
     var searchBtn = document.getElementById('toolbar-search-btn');
     var filterBtn = document.getElementById('toolbar-filter-btn');
@@ -82,40 +85,11 @@ function getToolbarScript() {
         }
     }
 
-    /* ---- Filter drawer ---- */
+    /* ---- Filter panel (slide-out in panel-slot) ---- */
 
-    function openFilterDrawer() {
-        if (!filterDrawer) return;
-        closeActionsDropdown();
-        if (signalsHost && signalsUserVisible &&
-            !signalsHost.classList.contains('signals-drawer-hidden')) {
-            signalsWasVisible = true;
-            signalsHost.classList.add('signals-drawer-hidden');
-        }
-        animatedShow(filterDrawer, 'anim-flyout-open');
-        if (filterBtn) filterBtn.setAttribute('aria-expanded', 'true');
-        if (levelMenuBtn) levelMenuBtn.classList.add('u-hidden');
-        if (typeof syncFiltersPanelUi === 'function') syncFiltersPanelUi();
-    }
-
-    function closeFilterDrawer() {
-        if (!filterDrawer) return;
-        animatedHide(filterDrawer, 'anim-flyout-close');
-        if (filterBtn) filterBtn.setAttribute('aria-expanded', 'false');
-        if (levelMenuBtn) levelMenuBtn.classList.remove('u-hidden');
-        if (signalsWasVisible && signalsHost) {
-            signalsHost.classList.remove('signals-drawer-hidden');
-            signalsWasVisible = false;
-        }
-    }
-
-    function toggleFilterDrawer() {
-        if (!filterDrawer) return;
-        var closing = filterDrawer.classList.contains('anim-flyout-close');
-        if (filterDrawer.classList.contains('u-hidden') || closing) {
-            openFilterDrawer();
-        } else {
-            closeFilterDrawer();
+    function toggleFilterPanel() {
+        if (typeof setActivePanel === 'function') {
+            setActivePanel('filters');
         }
     }
 
@@ -124,7 +98,16 @@ function getToolbarScript() {
     function openActionsDropdown() {
         if (!actionsPopover) return;
         closeSearchFlyout();
-        closeFilterDrawer();
+        var menu = document.getElementById('footer-actions-menu');
+        if (menu && actionsBtn) {
+            var btnRect = actionsBtn.getBoundingClientRect();
+            menu.classList.add('toolbar-actions-visible');
+            menu.style.top = btnRect.bottom + 'px';
+            menu.style.left = '';
+            menu.style.right = '';
+            var rightOffset = window.innerWidth - btnRect.right;
+            menu.style.right = rightOffset + 'px';
+        }
         actionsPopover.classList.remove('anim-dropdown-close');
         actionsPopover.classList.add('toolbar-actions-open');
         if (!reduceMotion.matches) actionsPopover.classList.add('anim-dropdown-open');
@@ -138,8 +121,10 @@ function getToolbarScript() {
         var wasOpen = actionsOpen;
         actionsOpen = false;
         if (!wasOpen) return;
+        var menu = document.getElementById('footer-actions-menu');
         if (reduceMotion.matches) {
             actionsPopover.classList.remove('toolbar-actions-open');
+            if (menu) menu.classList.remove('toolbar-actions-visible');
         } else {
             actionsPopover.classList.remove('anim-dropdown-open');
             actionsPopover.classList.add('anim-dropdown-close');
@@ -177,40 +162,10 @@ function getToolbarScript() {
         }
     }
 
-    /* ---- Accordion sections ---- */
-
-    function initAccordions() {
-        var headers = document.querySelectorAll('.filter-accordion-header');
-        for (var i = 0; i < headers.length; i++) {
-            headers[i].addEventListener('click', handleAccordionClick);
-        }
-    }
-
-    function handleAccordionClick(e) {
-        var header = e.currentTarget;
-        var section = header.parentElement;
-        if (!section) return;
-        var wasOpen = section.classList.contains('expanded');
-        collapseAllAccordions();
-        if (!wasOpen) {
-            section.classList.add('expanded');
-            header.setAttribute('aria-expanded', 'true');
-        }
-    }
-
-    function collapseAllAccordions() {
-        var sections = document.querySelectorAll('.filter-accordion');
-        for (var i = 0; i < sections.length; i++) {
-            sections[i].classList.remove('expanded');
-            var hdr = sections[i].querySelector('.filter-accordion-header');
-            if (hdr) hdr.setAttribute('aria-expanded', 'false');
-        }
-    }
-
     /* ---- Button wiring ---- */
 
     if (searchBtn) searchBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleSearchFlyout(); });
-    if (filterBtn) filterBtn.addEventListener('click', toggleFilterDrawer);
+    if (filterBtn) filterBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleFilterPanel(); });
     if (signalsBtn) signalsBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleSignalsPanel(); });
     if (actionsBtn) actionsBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleActionsDropdown(); });
 
@@ -219,11 +174,6 @@ function getToolbarScript() {
     document.addEventListener('keydown', function(e) {
         if (e.key !== 'Escape') return;
         if (actionsOpen) { closeActionsDropdown(); e.preventDefault(); return; }
-        if (filterDrawer && !filterDrawer.classList.contains('u-hidden')) {
-            closeFilterDrawer();
-            e.preventDefault();
-            return;
-        }
     });
 
     /* ---- Outside click dismiss (actions only) ---- */
@@ -252,44 +202,61 @@ function getToolbarScript() {
 
     /* ---- Backward-compat aliases ---- */
 
-    window.openFiltersPanel = openFilterDrawer;
-    window.closeFiltersPanel = closeFilterDrawer;
-    window.openFilterDrawer = openFilterDrawer;
-    window.closeFilterDrawer = closeFilterDrawer;
+    window.openFiltersPanel = function() { if (typeof setActivePanel === 'function') setActivePanel('filters'); };
+    window.closeFiltersPanel = function() { if (typeof closeFiltersSlideout === 'function') closeFiltersSlideout(); };
+    window.openFilterDrawer = window.openFiltersPanel;
+    window.closeFilterDrawer = window.closeFiltersPanel;
     window.toggleSearchFlyout = toggleSearchFlyout;
     window.openSearchFlyout = openSearchFlyout;
     window.closeSearchFlyout = closeSearchFlyout;
-    window.toggleFilterDrawer = toggleFilterDrawer;
+    window.toggleFilterDrawer = toggleFilterPanel;
     window.toggleSignalsPanel = toggleSignalsPanel;
     window.hideSignalsPanel = hideSignalsPanel;
     window.closeActionsDropdown = closeActionsDropdown;
-    /** Backward compat for replay script's action toggle. */
     window.setFooterActionsOpen = function(open) {
         if (open) openActionsDropdown(); else closeActionsDropdown();
     };
 
-    initAccordions();
+    /* ---- Format toggle (plan 051) ---- */
+
+    var formatBtn = document.getElementById('toolbar-format-btn');
+
+    /** Show/hide the format toggle based on the current file mode. */
+    window.updateFormatToggleVisibility = function() {
+        if (formatBtn) {
+            formatBtn.style.display = (fileMode === 'log') ? 'none' : '';
+            formatBtn.classList.toggle('toolbar-icon-btn-active', formatEnabled);
+        }
+    };
+
+    function toggleFormat() {
+        formatEnabled = !formatEnabled;
+        if (formatBtn) formatBtn.classList.toggle('toolbar-icon-btn-active', formatEnabled);
+        /* Build or clear the mode-specific layout data. */
+        if (formatEnabled) {
+            if (fileMode === 'markdown' && typeof buildMdSections === 'function') buildMdSections();
+            if (fileMode === 'json' && typeof buildJsonBracePairs === 'function') buildJsonBracePairs();
+            if (fileMode === 'csv' && typeof buildCsvLayout === 'function') buildCsvLayout();
+        }
+        if (typeof recalcHeights === 'function') recalcHeights();
+        if (typeof buildPrefixSums === 'function') buildPrefixSums();
+        if (typeof renderViewport === 'function') renderViewport(true);
+    }
+
+    if (formatBtn) formatBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleFormat(); });
+
     initAnimEnd(searchFlyout);
-    initAnimEnd(filterDrawer);
-    /* Actions popover uses toolbar-actions-open (not u-hidden) for its
-       base display:none state, so it needs its own animationend handler. */
     if (actionsPopover) {
         actionsPopover.addEventListener('animationend', function() {
             if (actionsPopover.classList.contains('anim-dropdown-close')) {
                 actionsPopover.classList.remove('toolbar-actions-open', 'anim-dropdown-close');
+                var menu = document.getElementById('footer-actions-menu');
+                if (menu) menu.classList.remove('toolbar-actions-visible');
             }
             actionsPopover.classList.remove('anim-dropdown-open');
         });
     }
 })();
-
-/** Set the summary text in an accordion section header (shown as bracketed suffix). */
-function setAccordionSummary(sectionId, text) {
-    var sec = document.getElementById(sectionId);
-    if (!sec) return;
-    var el = sec.querySelector('.filter-accordion-summary');
-    if (el) el.textContent = text ? '(' + text + ')' : '';
-}
-`;
+` + (0, viewer_toolbar_filter_tabs_script_1.getFilterTabsScript)();
 }
 //# sourceMappingURL=viewer-toolbar-script.js.map

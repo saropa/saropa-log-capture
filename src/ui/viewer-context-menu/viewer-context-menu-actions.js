@@ -133,6 +133,10 @@ function handleWorkspaceToggleAction(action) {
     }
     if (action === 'toggle-show-scrollbar') {
         var nextSb = !document.body.classList.contains('scrollbar-visible');
+        /* Optimistically apply + force scrollbar re-render so CSS takes effect immediately
+           and syncContextMenuToggles() (called inside postBool) reads the correct state.
+           The extension round-trip echoes the same value back via 'scrollbarVisible'. */
+        applyScrollbarVisible(nextSb);
         postBool('setShowScrollbar', nextSb);
         return true;
     }

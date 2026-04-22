@@ -61,10 +61,20 @@ suite('Viewer DB signal marker filter', () => {
         assert.ok(data.includes('item.markerHidden'));
     });
 
-    test('marker render branch emits × N collapse count badge when count > 1', () => {
+    test('marker render branch surfaces collapse count via title attribute when count > 1', () => {
         const data = getViewerDataScript();
-        assert.ok(data.includes('marker-collapse-count'));
-        assert.ok(data.includes('item.markerCollapseCount > 1'));
+        // Visible "× N" badge was retired (unreadable per bugs/unified-line-collapsing.md);
+        // collapse count is now exposed via a hover title on the marker div, preserving
+        // the "nothing hidden silently" guarantee without re-adding a text badge.
+        assert.ok(data.includes('item.markerCollapseCount > 1'), 'guard still gates the count > 1 branch');
+        assert.ok(
+            data.includes('adjacent identical markers collapsed into this one'),
+            'title attribute communicates the collapse count on hover',
+        );
+        assert.ok(
+            !data.includes('marker-collapse-count'),
+            'retired badge class must not reappear (regression guard)',
+        );
     });
 
     test('emitted markers carry anchorSeq so visibility pass can probe the anchor', () => {

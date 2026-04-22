@@ -132,6 +132,7 @@ function initMinimap() {
         }
     });
     initMinimapDrag();
+    if (typeof initMinimapResize === 'function') initMinimapResize();
     minimapEl.addEventListener('wheel', function(e) {
         e.preventDefault();
         var dy = e.deltaY;

@@ -1,6 +1,6 @@
 "use strict";
 /**
- * Temporary LAN HTTP server to serve an investigation .slc file so teammates on the same network can download it.
+ * Temporary LAN HTTP server to serve a collection .slc file so teammates on the same network can download it.
  * Use for enterprise / no-GitHub sharing. Call stopLanShareServer() to stop the server.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -62,19 +62,19 @@ function getLocalIP() {
     return '127.0.0.1';
 }
 /**
- * Start a temporary HTTP server that serves the investigation as .slc. Returns the download URL and a stop function.
+ * Start a temporary HTTP server that serves the collection as .slc. Returns the download URL and a stop function.
  * Only one server can be active at a time; starting another stops the previous one.
  */
-async function startShareServer(investigation, workspaceUri) {
-    const buffer = await (0, slc_bundle_1.exportInvestigationToBuffer)(investigation, workspaceUri);
+async function startShareServer(collection, workspaceUri) {
+    const buffer = await (0, slc_bundle_1.exportCollectionToBuffer)(collection, workspaceUri);
     if (activeServer) {
         activeServer.close();
         activeServer = null;
     }
     const server = http.createServer((req, res) => {
-        if (req.url === '/' || req.url === '/investigation.slc') {
+        if (req.url === '/' || req.url === '/collection.slc') {
             res.setHeader('Content-Type', 'application/octet-stream');
-            res.setHeader('Content-Disposition', 'attachment; filename="investigation.slc"');
+            res.setHeader('Content-Disposition', 'attachment; filename="collection.slc"');
             res.end(buffer);
         }
         else {
@@ -99,7 +99,7 @@ async function startShareServer(investigation, workspaceUri) {
     }
     activeServer = server;
     const ip = getLocalIP();
-    const url = `http://${ip}:${port}/investigation.slc`;
+    const url = `http://${ip}:${port}/collection.slc`;
     const stop = () => {
         if (activeServer === server) {
             activeServer.close();

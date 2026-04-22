@@ -83,8 +83,9 @@ async function getBlameHint(uri, line, options) {
  * Uses session metadata integrations.git.commit from the Git provider.
  */
 async function getFirstSeenCommitForError(errorHash, options) {
-    const insights = await (0, cross_session_aggregator_1.aggregateInsights)('all').catch(() => undefined);
-    const error = insights?.recurringErrors.find(e => e.hash === errorHash);
+    const aggregated = await (0, cross_session_aggregator_1.aggregateSignals)('all').catch(() => undefined);
+    // Find matching error signal by fingerprint (raw hash for error-kind signals)
+    const error = aggregated?.allSignals.find(s => s.kind === 'error' && s.fingerprint === errorHash);
     if (!error?.firstSeen) {
         return undefined;
     }
@@ -128,18 +129,18 @@ async function getRegressionHintsForError(errorHash, options) {
     return { blame, firstSeen };
 }
 /**
- * Batch first-seen commit hints for recurring errors (e.g. for Insights panel).
+ * Batch first-seen commit hints for recurring errors (e.g. for Signal panel).
  * Loads session meta for first-seen sessions in parallel; caps count for performance.
  */
 async function getFirstSeenHintsForErrors(errorHashes, options) {
     const cap = options?.cap ?? 15;
     const resolve = options?.resolveCommitUrls ?? true;
-    const insights = await (0, cross_session_aggregator_1.aggregateInsights)('all').catch(() => undefined);
-    if (!insights) {
+    const aggregated = await (0, cross_session_aggregator_1.aggregateSignals)('all').catch(() => undefined);
+    if (!aggregated) {
         return {};
     }
     const toFetch = errorHashes.slice(0, cap).filter(h => {
-        const err = insights.recurringErrors.find(e => e.hash === h);
+        const err = aggregated.allSignals.find(s => s.kind === 'error' && s.fingerprint === h);
         return err?.firstSeen !== undefined && err?.firstSeen !== null;
     });
     const folder = vscode.workspace.workspaceFolders?.[0];
@@ -150,7 +151,7 @@ async function getFirstSeenHintsForErrors(errorHashes, options) {
     const store = new session_metadata_1.SessionMetadataStore();
     const remoteBase = resolve ? await (0, git_source_code_1.getRemoteBaseUrl)(folder.uri.fsPath).catch(() => undefined) : undefined;
     const entries = await Promise.all(toFetch.map(async (hash) => {
-        const error = insights.recurringErrors.find(e => e.hash === hash);
+        const error = aggregated.allSignals.find(s => s.kind === 'error' && s.fingerprint === hash);
         if (!error?.firstSeen) {
             return undefined;
         }

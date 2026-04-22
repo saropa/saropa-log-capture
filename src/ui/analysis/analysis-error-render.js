@@ -50,39 +50,40 @@ function renderTriageUpdate(hash, status) {
     return renderTriageButtons(hash, status);
 }
 /** Render cross-session timeline section with sparkline SVG. */
-function renderTimelineSection(error) {
-    const trend = error.timeline
+function renderTimelineSection(signal) {
+    const trend = signal.timeline
         .map(t => ({ date: (0, stack_parser_1.extractDateFromFilename)(t.session), count: t.count }))
         .filter((t) => t.date !== undefined)
         .sort((a, b) => a.date.localeCompare(b.date));
-    const logs = `${error.sessionCount} log${error.sessionCount !== 1 ? 's' : ''}`;
-    let html = `<details class="group" open><summary class="group-header">📊 Error History <span class="match-count">${error.totalOccurrences} occurrences across ${logs}</span></summary>`;
-    html += renderVersionInfo(error);
+    const logs = `${signal.sessionCount} log${signal.sessionCount !== 1 ? 's' : ''}`;
+    let html = `<details class="group" open><summary class="group-header">📊 Error History <span class="match-count">${signal.totalOccurrences} occurrences across ${logs}</span></summary>`;
+    html += renderVersionInfo(signal);
     if (trend.length >= 2) {
         html += buildSparkline(trend);
     }
     html += '</details>';
     return (0, analysis_panel_render_1.doneSlot)('error-timeline', html);
 }
-function renderVersionInfo(error) {
+/** Render first-seen / last-seen version info for the error timeline. */
+function renderVersionInfo(signal) {
     const parts = [];
-    if (error.firstSeen) {
-        const date = (0, stack_parser_1.extractDateFromFilename)(error.firstSeen);
+    if (signal.firstSeen) {
+        const date = (0, stack_parser_1.extractDateFromFilename)(signal.firstSeen);
         if (date) {
             parts.push(`First: ${(0, ansi_1.escapeHtml)(date)}`);
         }
     }
-    if (error.lastSeen) {
-        const date = (0, stack_parser_1.extractDateFromFilename)(error.lastSeen);
+    if (signal.lastSeen) {
+        const date = (0, stack_parser_1.extractDateFromFilename)(signal.lastSeen);
         if (date) {
             parts.push(`Last: ${(0, ansi_1.escapeHtml)(date)}`);
         }
     }
-    if (error.firstSeenVersion) {
-        parts.push(`v${(0, ansi_1.escapeHtml)(error.firstSeenVersion)}`);
+    if (signal.firstSeenVersion) {
+        parts.push(`v${(0, ansi_1.escapeHtml)(signal.firstSeenVersion)}`);
     }
-    if (error.lastSeenVersion && error.lastSeenVersion !== error.firstSeenVersion) {
-        parts.push(`→ v${(0, ansi_1.escapeHtml)(error.lastSeenVersion)}`);
+    if (signal.lastSeenVersion && signal.lastSeenVersion !== signal.firstSeenVersion) {
+        parts.push(`→ v${(0, ansi_1.escapeHtml)(signal.lastSeenVersion)}`);
     }
     return parts.length > 0 ? `<div class="err-version-info">${parts.join(' &middot; ')}</div>` : '';
 }

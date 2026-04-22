@@ -51,7 +51,7 @@ const lateStartTriggered = new Set();
  * @internal
  */
 function applySessionStartedState(deps, session) {
-    const { context, sessionManager, broadcaster, historyProvider, viewerProvider, aiWatcher, fireSessionStart } = deps;
+    const { context, sessionManager, broadcaster, historyProvider, viewerProvider, aiWatcher, fireSessionStart, sessionGroupTracker } = deps;
     const activeSession = sessionManager.getActiveSession();
     const filename = sessionManager.getActiveFilename();
     if (filename) {
@@ -61,6 +61,11 @@ function applySessionStartedState(deps, session) {
     viewerProvider.setSessionNavInfo(false, false, 0, 0);
     if (activeSession?.fileUri) {
         broadcaster.setCurrentFile(activeSession.fileUri);
+    }
+    // Anchor a session group on this DAP session. Fire-and-forget: grouping is best-effort and
+    // must not delay or fail session startup. The tracker swallows and logs its own errors.
+    if (activeSession?.fileUri) {
+        sessionGroupTracker.onDapSessionStart(activeSession.fileUri, Date.now()).catch(() => { });
     }
     broadcaster.setSplitInfo(1, 1);
     broadcaster.setSessionInfo({
@@ -97,7 +102,7 @@ function applySessionStartedState(deps, session) {
     broadcaster.setContextViewLines(cfg.contextViewLines);
     broadcaster.setCopyContextLines(cfg.copyContextLines);
     broadcaster.setPresets((0, filter_presets_1.loadPresets)());
-    // Clear any stale Project Logs panel root override so the panel reverts to the
+    // Clear any stale Logs panel root override so the panel reverts to the
     // workspace default — which matches the session's log directory for standalone
     // workspaces. Without this, a folder previously chosen via "Browse" persists
     // across debug sessions and shows logs from a different project.
@@ -114,7 +119,7 @@ function applySessionStartedState(deps, session) {
 }
 /** Register onDidStartDebugSession and onDidTerminateDebugSession handlers. */
 function registerDebugLifecycle(deps) {
-    const { context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider: _viewerProvider, updateSessionNav, aiWatcher, fireSessionStart: _fireSessionStart, fireSessionEnd } = deps;
+    const { context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider: _viewerProvider, updateSessionNav, aiWatcher, fireSessionStart: _fireSessionStart, fireSessionEnd, sessionGroupTracker } = deps;
     // When output is buffered and no log session exists (e.g. Dart/Cursor never fired onDidStartDebugSession),
     // try to start capture using the active debug session so dart run and similar still get logs.
     // NOTE: Don't require active.id === sessionId — Flutter creates parent + child sessions with
@@ -156,6 +161,13 @@ function registerDebugLifecycle(deps) {
             projectName: session.workspaceFolder?.name ?? 'Unknown',
             fileUri: ending?.fileUri,
         });
+        // Close the session group before stopSession() runs \u2014 the sweep re-scans the log
+        // directory to catch sidecars that integration providers wrote during the session
+        // (e.g. adb-logcat.ts:onSessionEnd creates `.logcat.log` at this moment).
+        // Best-effort: failures here must not block the session stop flow.
+        if (ending?.fileUri) {
+            await sessionGroupTracker.onDapSessionEnd(ending.fileUri).catch(() => { });
+        }
         // Session end: stop session, clear broadcaster/history/decorations, update nav.
         await sessionManager.stopSession(session);
         broadcaster.setSessionActive(false);
@@ -174,7 +186,7 @@ function registerDebugLifecycle(deps) {
  * If a debug session is already active when the extension activates (e.g. after
  * a window reload or extension host restart), start capture for it immediately.
  * Without this, onDidStartDebugSession never fires for the pre-existing session
- * and the session is invisible in the Project Logs panel.
+ * and the log is invisible in the Logs panel.
  */
 function attachToExistingSession(deps) {
     const { context, sessionManager, broadcaster } = deps;

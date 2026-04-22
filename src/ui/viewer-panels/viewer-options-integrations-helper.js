@@ -59,6 +59,20 @@ function initIntegrationsOptionsHandlers() {
             filterIntegrations(e.target.value);
         });
     }
+
+    /* Companion extension "View in Marketplace" links — open URL via host. */
+    var companionSection = document.querySelector('.integrations-companion-section');
+    if (companionSection) {
+        companionSection.addEventListener('click', function(e) {
+            var link = e.target && e.target.closest && e.target.closest('.integrations-companion-link');
+            if (!link) return;
+            e.preventDefault();
+            var url = link.getAttribute('data-url');
+            if (url && typeof vscodeApi !== 'undefined') {
+                vscodeApi.postMessage({ type: 'openUrl', url: url });
+            }
+        });
+    }
 }
 
 initIntegrationsOptionsHandlers();

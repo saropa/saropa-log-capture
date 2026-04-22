@@ -1,50 +1,18 @@
 "use strict";
 /**
- * Icon bar HTML and script for the vertical activity bar.
+ * Icon bar interaction script for the vertical activity bar.
  *
  * Tools open a slide-out panel in `#panel-slot` with mutual exclusion. In-log search lives only
  * in the session-nav field (top bar); use Ctrl+F / focus the search input — not an icon here.
  *
- * Optional text labels: click the bar background or separator (not a button) to toggle;
- * preference is persisted in webview state (iconBarLabelsVisible).
+ * HTML markup lives in viewer-icon-bar-html.ts; re-exported here so callers can
+ * continue importing both from this module.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getIconBarHtml = getIconBarHtml;
+exports.getIconBarHtml = void 0;
 exports.getIconBarScript = getIconBarScript;
-/** Generate the icon bar HTML with codicon-based buttons and optional labels. */
-function getIconBarHtml() {
-    return /* html */ `
-<div id="icon-bar" role="toolbar" aria-label="Log viewer tools" title="Click bar to show or hide icon labels">
-    <button id="ib-sessions" class="ib-icon" tabindex="0" title="Click to open/close — browse and switch between log sessions in this project" aria-label="Project Logs">
-        <span class="codicon codicon-files"></span><span class="ib-label">Project Logs</span>
-    </button>
-    <button id="ib-find" class="ib-icon" tabindex="0" title="Click to open/close — search across all log files in this project (Ctrl+Shift+F)" aria-label="Find in Files (Ctrl+Shift+F)">
-        <span class="codicon codicon-list-filter"></span><span class="ib-label">Find</span>
-    </button>
-    <button id="ib-bookmarks" class="ib-icon" tabindex="0" title="Click to open/close — view and manage bookmarked log lines" aria-label="Bookmarks">
-        <span class="codicon codicon-bookmark"></span><span id="ib-bookmarks-badge" class="ib-badge"></span><span class="ib-label">Bookmarks</span>
-    </button>
-    <button id="ib-sql-query-history" class="ib-icon" tabindex="0" title="Click to open/close — browse SQL queries captured during this session" aria-label="SQL Query History">
-        <span class="codicon codicon-database"></span><span class="ib-label">SQL History</span>
-    </button>
-    <button id="ib-trash" class="ib-icon" tabindex="0" title="Click to open/close — view and restore deleted log sessions" aria-label="Trash">
-        <span class="codicon codicon-trash"></span><span id="ib-trash-badge" class="ib-badge"></span><span class="ib-label">Trash</span>
-    </button>
-    <button id="ib-options" class="ib-icon" tabindex="0" title="Click to open/close — display, layout, and audio settings" aria-label="Options">
-        <span class="codicon codicon-settings-gear"></span><span class="ib-label">Options</span>
-    </button>
-    <div class="ib-separator"></div>
-    <button id="ib-crashlytics" class="ib-icon" tabindex="0" title="Click to open/close — Firebase Crashlytics crash reports" aria-label="Crashlytics">
-        <span class="codicon codicon-flame"></span><span class="ib-label">Crashlytics</span>
-    </button>
-    <button id="ib-insight" class="ib-icon" tabindex="0" title="Click to open/close — performance insights and analysis for this session" aria-label="Insights">
-        <span class="codicon codicon-lightbulb"></span><span class="ib-label">Insights</span>
-    </button>
-    <button id="ib-about" class="ib-icon" tabindex="0" title="Click to open/close — version info, links, and help" aria-label="About Saropa">
-        <span class="codicon codicon-home"></span><span class="ib-label">About</span>
-    </button>
-</div>`;
-}
+var viewer_icon_bar_html_1 = require("./viewer-icon-bar-html");
+Object.defineProperty(exports, "getIconBarHtml", { enumerable: true, get: function () { return viewer_icon_bar_html_1.getIconBarHtml; } });
 /** Generate the icon bar toggle script. */
 function getIconBarScript() {
     return /* js */ `
@@ -53,6 +21,25 @@ function getIconBarScript() {
     var panelSlot = document.getElementById('panel-slot');
     var iconBar = document.getElementById('icon-bar');
     var MIN_PANEL_WIDTH = 560;
+
+    /**
+     * Update both the overlay badge (icons-only mode) and inline count label
+     * (labels-visible mode) for an icon bar button.
+     * Badge ID convention: ib-{name}-badge, count ID: ib-{name}-count.
+     * Caps display at 99; shows "99+" for counts above 99.
+     */
+    window.updateIconBadge = function(badgeId, countId, count) {
+        var text = count > 99 ? '99+' : String(count);
+        var badge = document.getElementById(badgeId);
+        if (badge) {
+            badge.textContent = text;
+            badge.style.display = count > 0 ? 'inline-block' : 'none';
+        }
+        var countEl = document.getElementById(countId);
+        if (countEl) {
+            countEl.textContent = count > 0 ? ' (' + text + ')' : '';
+        }
+    };
 
     /** Restore and persist icon bar label visibility (uses same webview state as other viewer UI). */
     var api = typeof vscodeApi !== 'undefined' ? vscodeApi : (window._vscodeApi || null);
@@ -127,8 +114,10 @@ function getIconBarScript() {
         sqlHistory: document.getElementById('ib-sql-query-history'),
         trash: document.getElementById('ib-trash'),
         options: document.getElementById('ib-options'),
+
+        collections: document.getElementById('ib-collections'),
         crashlytics: document.getElementById('ib-crashlytics'),
-        insight: document.getElementById('ib-insight'),
+        signal: document.getElementById('ib-signal'),
         about: document.getElementById('ib-about'),
     };
 
@@ -136,12 +125,13 @@ function getIconBarScript() {
         if (typeof closeSearch === 'function') closeSearch();
         if (typeof closeFindPanel === 'function') closeFindPanel();
         if (typeof closeBookmarkPanel === 'function') closeBookmarkPanel();
-        if (typeof closeFiltersPanel === 'function') closeFiltersPanel();
+        if (typeof closeFiltersSlideout === 'function') closeFiltersSlideout();
         if (typeof closeSqlQueryHistoryPanel === 'function') closeSqlQueryHistoryPanel();
         if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
         if (typeof closeTrashPanel === 'function') closeTrashPanel();
+        if (typeof closeCollectionsPanel === 'function') closeCollectionsPanel();
         if (typeof closeCrashlyticsPanel === 'function') closeCrashlyticsPanel();
-        if (typeof closeInsightPanel === 'function') closeInsightPanel();
+        if (typeof closeSignalPanel === 'function') closeSignalPanel();
         if (typeof closeAboutPanel === 'function') closeAboutPanel();
         if (typeof closeSessionPanel === 'function') closeSessionPanel();
     }
@@ -179,26 +169,30 @@ function getIconBarScript() {
             openTrashPanel();
         } else if (name === 'options' && typeof openOptionsPanel === 'function') {
             openOptionsPanel();
+        } else if (name === 'collections' && typeof openCollectionsPanel === 'function') {
+            openCollectionsPanel();
         } else if (name === 'crashlytics' && typeof openCrashlyticsPanel === 'function') {
             openCrashlyticsPanel();
-        } else if (name === 'insight' && typeof openInsightPanel === 'function') {
-            openInsightPanel();
+        } else if (name === 'signal' && typeof openSignalPanel === 'function') {
+            openSignalPanel();
         } else if (name === 'about' && typeof openAboutPanel === 'function') {
             openAboutPanel();
+        } else if (name === 'filters' && typeof openFiltersSlideout === 'function') {
+            openFiltersSlideout();
         }
     };
 
     /**
-     * Open the Insights slide-out without treating a second request as "close".
-     * The header Performance chip uses this: setActivePanel('insight') alone toggles off when
-     * Insights is already active, leaving panel-slot width 0 so nothing appears.
+     * Open the Signal slide-out without treating a second request as "close".
+     * The header Performance chip uses this: setActivePanel('signal') alone toggles off when
+     * Signal is already active, leaving panel-slot width 0 so nothing appears.
      */
-    window.ensureInsightSlideoutOpen = function() {
-        if (activePanel === 'insight') {
-            if (typeof openInsightPanel === 'function') openInsightPanel();
+    window.ensureSignalSlideoutOpen = function() {
+        if (activePanel === 'signal') {
+            if (typeof openSignalPanel === 'function') openSignalPanel();
             return;
         }
-        setActivePanel('insight');
+        setActivePanel('signal');
     };
 
     /** Allow panels to clear their icon state when closed externally. */
@@ -228,11 +222,14 @@ function getIconBarScript() {
     if (iconButtons.options) {
         iconButtons.options.addEventListener('click', function() { setActivePanel('options'); });
     }
+    if (iconButtons.collections) {
+        iconButtons.collections.addEventListener('click', function() { setActivePanel('collections'); });
+    }
     if (iconButtons.crashlytics) {
         iconButtons.crashlytics.addEventListener('click', function() { setActivePanel('crashlytics'); });
     }
-    if (iconButtons.insight) {
-        iconButtons.insight.addEventListener('click', function() { setActivePanel('insight'); });
+    if (iconButtons.signal) {
+        iconButtons.signal.addEventListener('click', function() { setActivePanel('signal'); });
     }
     if (iconButtons.about) {
         iconButtons.about.addEventListener('click', function() { setActivePanel('about'); });
