@@ -154,10 +154,16 @@ function isLineContentBlank(item) {
     return /^\\s*$/.test(text);
 }
 function calcItemHeight(item) {
-    if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered || item.classFiltered || item.sqlPatternFiltered || item.searchFiltered || item.errorSuppressed || item.scopeFiltered || item.repeatHidden || item.compressDupHidden || item.metadataFiltered) return 0;
-    if (item.type === 'line' && item.timeRangeFiltered) return 0;
-    var _peeking = (typeof isPeeking !== 'undefined' && isPeeking);
-    if (!_peeking && (item.userHidden || item.autoHidden)) return 0;
+    /* peekOverride: scoped peek from clicking a hidden-chevron (viewer-peek-chevron.ts).
+       Bypasses every filter/hide gate so the user can reveal exactly one gap's worth of
+       hidden lines without disturbing the global filter state. Does NOT override
+       continuation/stack-group collapse — those are explicit user actions, not filters. */
+    if (!item.peekOverride) {
+        if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered || item.classFiltered || item.sqlPatternFiltered || item.searchFiltered || item.errorSuppressed || item.scopeFiltered || item.repeatHidden || item.compressDupHidden || item.metadataFiltered) return 0;
+        if (item.type === 'line' && item.timeRangeFiltered) return 0;
+        var _peeking = (typeof isPeeking !== 'undefined' && isPeeking);
+        if (!_peeking && (item.userHidden || item.autoHidden)) return 0;
+    }
     if (item.contIsChild && item.contGroupId >= 0 && typeof contHeaderMap !== 'undefined') {
         var contHdr = contHeaderMap[item.contGroupId];
         if (contHdr && contHdr.contCollapsed) return 0;
@@ -185,7 +191,8 @@ function calcItemHeight(item) {
         }
         return 0;
     }
-    if (_tierHidden) return 0;
+    /* Tier hide is a filter, not an explicit collapse — peekOverride bypasses it too. */
+    if (_tierHidden && !item.peekOverride) return 0;
     if (item.type === 'repeat-notification' && item.sqlRepeatDrilldown && item.sqlRepeatDrilldownOpen) {
         return ROW_HEIGHT + estimateSqlRepeatDrilldownExtraHeight(item.sqlRepeatDrilldown);
     }

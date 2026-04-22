@@ -35,6 +35,7 @@ function initHiddenLines() {
             if (typeof openAutoHideModal === 'function') openAutoHideModal();
         });
     }
+    if (typeof initPeekChevron === 'function') initPeekChevron();
 }
 
 /** Hide a single line by index. Markers cannot be hidden. */
