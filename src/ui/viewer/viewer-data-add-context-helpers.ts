@@ -41,5 +41,20 @@ function previousLineLevel() {
     }
     return 'error';
 }
+
+/* Bug: streaming lines (Drift SELECT + stack frames, N × SQL repeated: rows, plus any line
+   that arrived after the user toggled a level off) were visible despite the filter.
+   Reason: applyLevelFilter() only runs on user interactions (toggle clicks, preset changes,
+   persisted-state restore); it does not run per appended item. addToData and the repeat-
+   collapse branch never consulted enabledLevels, so new items entered with levelFiltered
+   unset (falsy) and calcItemHeight treated them as visible.
+   Fix: each item-creation site calls this helper and stamps item.levelFiltered at birth so
+   the first render already honors the current filter state. Keep the 'everything on' short-
+   circuit — that is the hot path and must not allocate or scan. */
+function calcLevelFiltered(lvl) {
+    if (typeof enabledLevels === 'undefined' || typeof allLevelNames === 'undefined') return false;
+    if (enabledLevels.size >= allLevelNames.length) return false;
+    return !enabledLevels.has(lvl);
+}
 `;
 }
