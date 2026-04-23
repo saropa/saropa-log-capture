@@ -1,6 +1,191 @@
 # Changelog Archive
 
-Versions 5.6.3 and prior. For current changes see [CHANGELOG.md](./CHANGELOG.md).
+Versions 6.2.1 and prior. For current changes see [CHANGELOG.md](./CHANGELOG.md).
+
+---
+
+## [6.2.1]
+
+Fixes CI failures from a misnamed CSS test selector and coverage thresholds that no longer matched the codebase. [log](https://github.com/saropa/saropa-log-capture/blob/v6.2.1/CHANGELOG.md)
+
+<details>
+<summary>Maintenance</summary>
+
+- **CI: Signals evidence button test referenced wrong CSS class.** The test `viewer-root-cause-hints-styles.test.ts` asserted against `.root-cause-hyp-evidence` which never existed in the CSS — the actual class is `.rch-report-btn`. Updated the test regex and assertion messages to match the real selectors.
+- **CI: coverage thresholds lowered to match current codebase.** Functions and statements lowered from 50% to 48%, branches from 45% to 40%, lines from 50% to 48%. The previous thresholds caused CI to fail after recent feature additions.
+</details>
+
+---
+
+## [6.2.0]
+
+Catches Flutter sessions that slip past the normal start event, adds collapsible daily groups in Project Logs, a three-way tier filter, and automatic Flutter crash-log import. [log](https://github.com/saropa/saropa-log-capture/blob/v6.2.0/CHANGELOG.md)
+
+### Fixed
+
+- **Flutter debug sessions now captured when `onDidStartDebugSession` does not fire.** The late-start fallback required an exact session ID match between the buffering session and `activeDebugSession`, which always fails for Flutter's parent/child session model (output arrives on the Dart VM child, but the active session is the Flutter parent). Removed the strict ID check so any buffered output triggers capture via the active session. Also added `attachToExistingSession` to detect sessions already running at activation time (covers window reload and extension host restart), wrapped the `onDidStartDebugSession` handler in try/catch so errors are logged instead of silently swallowed, and added diagnostic logging at every silent skip path in the session-start pipeline.
+
+### Added
+
+- **Collapsible daily groupings in Project Logs.** Click a day heading to collapse or expand that group. Collapsed state persists across panel close/reopen via workspace storage. Headings show a chevron indicator and support keyboard navigation (Enter/Space).
+- **Tri-state tier filter for Flutter and Device logs.** The Log Inputs section in the filter drawer now offers three modes per tier — All, Warn+, and None — instead of a simple on/off checkbox. "Warn+" surfaces only warnings and errors from that tier while hiding info/debug noise. The keyboard shortcut `A` cycles Device through all three states.
+- **Flutter CLI crash log detection.** When Flutter's tooling crashes (`flutter test`, `flutter run`, `flutter build`), it writes `flutter_XX.log` files to the workspace root. The extension now auto-detects these files, imports them into the reports directory so they appear in the session history list, and annotates any active debug session with the crash details. Enabled by default via the `flutterCrashLogs` integration adapter.
+
+---
+
+## [6.1.1]
+
+Fixes the Project Logs panel not following your active debug session, adds more date range options, and adds name-based session filtering. [log](https://github.com/saropa/saropa-log-capture/blob/v6.1.1/CHANGELOG.md)
+
+### Fixed
+
+- **Project Logs panel now follows the active debug session.** Starting a debug session automatically points the panel at that session's log directory, so logs appear immediately instead of showing stale entries from a previously browsed folder.
+
+### Added
+
+- **Expanded date range filter options in Project Logs panel.** The dropdown now offers 10 choices: Last hour, Last 4 hours, Last 8 hours, Last 24 hours, Last 7 days, Last 30 days, Last 3 months, Last 6 months, Last year, and All time. The same expanded options are available in the Insights panel time-range selector.
+- **Name-based filtering in Project Logs panel.** Right-click any session to "Hide This Name" (exclude all sessions with the same canonical name, ignoring dates) or "Show Only This Name" (show only matching sessions). A filter bar appears with the active filter and a "Show All" button to clear it.
+
+<details>
+<summary>Maintenance</summary>
+- **"slow operation" keyword missing from package.json performance defaults.** The `package.json` default for `saropaLogCapture.severityKeywords.performance` was missing `"slow operation"`, which is present in the code-level defaults. When VS Code reads configuration, it uses the `package.json` default, so lines like `Slow operation: took 5000ms` were classified as `info` instead of `performance`.
+</details>
+
+---
+
+## [6.1.0]
+
+Adds session time toggles, signal report saving, PERF-line detection, and a configurable slow-operation threshold.
+[log](https://github.com/saropa/saropa-log-capture/blob/v6.1.0/CHANGELOG.md)
+
+### Added
+
+- **Session time (T+) toggle in context menu.** Options submenu now includes a quick toggle for session elapsed time, matching the gear panel checkbox.
+- **Save Report button on signal reports.** Saves a markdown report to the configured log directory (`saropaLogCapture.logDirectory`).
+- **PERF-line slow-operation signal detection.** `[log] PERF operationName: Nms` lines are now recognized as slow operations, with the operation name shown in the hypothesis text (e.g. "Slow operation (1.0s): dbEventCountForDate").
+- **Configurable slow-operation threshold.** New setting `saropaLogCapture.signalSlowOpThresholdMs` (default 500ms, range 100-60000) controls the minimum duration for a slow-operation signal. Lowered from the previous hardcoded 2000ms.
+- **Copy Log Path button on session-end notification.** A new "Copy Log Path" button appears alongside "Open Log" when a session completes, copying the log file path to the clipboard.
+
+### Changed
+
+- **Signal report title** is now "Saropa Signal Report" (panel tab and heading).
+- **Copy Report** now copies the report as markdown with evidence lines and resolved source file paths.
+
+### Fixed
+
+- **Severity dot order inconsistent between project list and viewer toolbar.** Unified all severity level orderings (toolbar dots, filter drawer, export panel, project list) to a single canonical order: error → warning → info → performance → todo → notice → debug → database.
+- **Confidence badge unreadable in some themes.** Replaced theme-variable-only colors with explicit high-contrast foreground, background, and border values.
+- **External sidecar timestamps not parsed.** Lines from external sidecars (e.g. SDA logs) with ISO 8601 timestamps now have their timestamps extracted, enabling Session time (T+), elapsed time, and timestamp decorations.
+- **Warning-recurring signal missed for device-other lines (plan 050).** Device-other tier demotion (error/warning → info for display) was also suppressing signal detection. The original pre-demotion level is now preserved on line items so the signal collector sees the true classification while display remains unchanged.
+
+<details>
+<summary>Maintenance</summary>
+
+- Eliminated signal algorithm duplication — hypothesis building now runs exclusively on the host (single TypeScript source of truth) instead of being duplicated as ~280 lines of embedded JavaScript in the webview
+- Deduplicated session list I/O on startup — auto-load and streaming session list now share a single in-flight fetch instead of scanning the directory and loading every file header twice
+- Fixed signal report panel leak on deactivation — the signal report webview panel is now explicitly disposed during extension deactivation
+- Split `build-hypotheses.ts`, `viewer-continuation-behavior.test.ts`, and `viewer-styles-decoration.ts` to stay within the 300-line limit
+- Reclassified internal-only CHANGELOG entries (file splits, CI fixes, param refactors, script cleanup) from Changed/Fixed to Maintenance across 7 releases
+- Added missing intro lines and `[log]` links to 9 releases; added missing `## [5.0.3]` heading and `---` separators
+</details>
+
+---
+
+## [6.0.0]
+
+Adds structured line parsing for known log formats, a signal report panel with evidence context, and metadata click-to-filter — plus general-purpose signal detection beyond SQL.
+[log](https://github.com/saropa/saropa-log-capture/blob/v6.0.0/CHANGELOG.md)
+
+### Added
+
+- **Signal report panel** — clicking a signal in the strip opens a rich webview report with evidence lines in context (5 lines surrounding each evidence line), related lines summary, and actionable recommendations per signal type; follows the analysis panel pattern with progressive section loading
+- **Structured line parsing (plan 047)** — auto-detects known log line formats (Android logcat threadtime, logcat shorthand, Log4j/Logback, Python logging, bracketed timestamp+level, ISO timestamp+level, syslog RFC 3164, SDA log) and extracts metadata (timestamp, PID, TID, log level, tag). Strips the structured prefix from displayed text for a clean view. Default on, toggle via Decoration Settings
+- **PID/TID display toggle** — show process and thread IDs in the decoration prefix (off by default); click to filter by PID or TID
+- **Level prefix display toggle** — show the raw log level indicator (e.g. "D", "INFO") in the decoration prefix (off by default)
+- **Parsed tag display** — extracted log tags (e.g. "Zygote", "ActivityManager") shown as clickable filter toggles in the decoration prefix
+- **Metadata click-to-filter** — clicking a PID, TID, or tag value toggles an inclusive filter showing only lines with that value
+- **Level tooltips** — hovering over a log line shows the full severity level name (e.g. "Debug", "Warning", "Fatal")
+- **Format sniffer** — for file-loaded logs, samples lines from the file head and middle to auto-detect the primary format; known sources (live logcat, etc.) skip sniffing
+- **"Slow operation" performance keyword** — added to default performance keywords so Android `Slow operation` messages are classified as performance issues
+
+### Changed
+
+- **Signals: general log pattern detection** — signals now detect recurring warnings, network failures (SocketException, ECONNREFUSED, etc.), memory pressure (OOM, heap exhaustion), slow operations (>2s), permission denials, and classified errors (critical/bug) — not just SQL patterns
+- **Signals: ANR risk detection** — surfaces ANR risk score from host-side analysis with detailed signal breakdown; host-side enrichment pipeline scans the log file for ANR patterns (choreographer warnings, GC pauses, dropped frames, jank) and injects the result into the bundle before hypothesis building
+- **Signals: three confidence levels** — high/medium/low with red/yellow/white dots; crashes and OOM get high confidence, recurring patterns get medium, volume-based hints stay low
+- **Signals: actionable text** — signal text includes the actual problem (e.g. "Network failure: SocketException: Connection refused (5 occurrences)") instead of generic templates
+- **Signals: FNV-1a error fingerprinting** — errors are now grouped by normalized fingerprint (strips timestamps, UUIDs, hex, paths, numbers) instead of last-100-char suffix matching; errors differing only in port numbers or IDs now merge correctly
+- **Signals: crash category confidence** — error signals use crash category (fatal/anr/oom/native) to set high confidence instead of defaulting everything to medium
+- **Signals panel hidden by default** — the root-cause signals panel no longer auto-opens when signals are detected; the toolbar badge still shows the count and users click the icon to reveal it
+- **Signal report copy feedback** — clipboard copy now shows a status bar message on success or failure instead of silently swallowing errors
+- **Signal report not-ready feedback** — clicking a signal hypothesis before the bundle has loaded now shows a status bar message instead of doing nothing
+
+### Fixed
+
+- **Stale ANR scores across sessions** — host-side ANR risk cache is now cleared when the session changes, preventing stale scores from a previous session
+- **Slow operation dedup** — slow operation hypothesis keys now use content-based excerpt keys instead of line indices, so the same slow operation at different line positions correctly merges into one hypothesis
+
+---
+
+## [5.8.0]
+
+Adds a Collapse All button and DB timestamp burst detection, fixes stack traces ignoring parent severity, and tightens up decoration and copy behavior.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.8.0/CHANGELOG.md)
+
+### Added
+
+- **Collapse All Sections button** — new `$(collapse-all)` icon on the viewer title bar collapses all expanded stack groups, continuation line groups, and SQL repeat drilldown panels in one click
+- **DB timestamp burst detector (DB_16)** — emits a marker when 3+ database queries fire at the same timestamp (within 10ms tolerance), surfacing redundant or concurrent DB lookups as a code smell. Toggle via `saropaLogCapture.viewerDbDetectorTimestampBurstEnabled`
+
+### Changed
+
+- **Decoration prefix uses grey text** — timestamp, counter, elapsed time, and `»` separator now render in `editorLineNumber` grey instead of inheriting the line's severity color, visually separating metadata from log content
+- **Links use grey text until hovered** — source file links and URL links render in `editorLineNumber` grey, revealing their blue link color only on hover
+
+### Fixed
+
+- **Stack traces always showed error severity regardless of parent line** — stack frames and headers were hardcoded to `level: 'error'`, so a database query's stack trace showed red dots and red text while the query itself showed cyan. Stack groups now inherit the severity of the preceding log line, keeping the severity bar and text color visually connected
+- **"Copy Line" and "Copy Line Decorated" ignored multi-line selection** — when shift-click selected multiple lines, the context menu actions only copied the single right-clicked line. Now both copy all selected lines. Also fixed shift-click selection using wrong indices when filtered lines are present
+- **Decorated copy duplicated severity emoji dot** — `decorateLine` prepended a severity dot (e.g. 🟢) but the line text already contained one from the original log, producing a double dot. Now strips the leading dot from text when the decoration adds one
+- **Continuation badge overlapping log text** — the `[+N lines]` collapse badge was rendered inline, causing it to wrap and overlap adjacent lines when the log line was long. Now absolutely positioned at the right edge of the line
+- **ASCII art block grouping broken for multi-event output** — consecutive separator lines (e.g. Drift Debug Server banner) were not grouped because each DAP output event created a new `Date()` with different milliseconds. Timestamp comparison now uses 1 s proximity instead of strict equality
+
+---
+
+## [5.7.1]
+
+Fixes an options panel crash when severity keywords haven't loaded yet.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.7.1/CHANGELOG.md)
+
+### Fixed
+
+- **Options panel crash when severity keywords not yet loaded** — `renderSeverityKeywordsDisplay` threw `TypeError: Cannot read properties of null` because the `typeof` guard did not catch `null` (`typeof null === 'object'`). Now uses truthiness check
+
+---
+
+## [5.7.0]
+
+Adds configurable severity keywords, console continuation grouping, Copy Line Decorated, strip-source-tag toggle, and configurable stack frame defaults.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.7.0/CHANGELOG.md)
+
+### Added
+
+- **Source Logger Best Practices** guide (`docs/SOURCE_LOGGER_BEST_PRACTICES.md`) — documents how to structure `dart:developer` `log()` calls for optimal Saropa Log Capture experience
+- **Mid-line stack frame detection** — `isStackFrameText()` now recognizes Dart source paths (`package:*.dart:N` and `(./lib/*.dart:N:N)`) anywhere in the line, not just at the start. Fixes detection for `stack_trace` package output with `⠀ »` prefix
+- **Strip source tag prefix** toggle in Decoration Settings — hides `[log]`, `[SDA]`, and other bracket prefixes from displayed text when already parsed as a source tag (on by default)
+- **Configurable stack frame defaults** in Decoration Settings — choose initial collapsed state (expanded/preview/collapsed) and preview frame count for stack groups
+- **Console continuation grouping** — multi-line `dart:developer` `log()` output split by the Dart DA into separate events now groups as continuation lines (same timestamp, same category, no source tag on child)
+- **Copy Line Decorated** context menu option — copies clicked/selected line(s) with severity emoji, sequence number, and timestamp
+- **Configurable severity keywords** (`saropaLogCapture.severityKeywords`) — users can customize which keywords trigger each severity level (error, warning, performance, todo, debug, notice). Structural patterns (logcat prefixes, `Error:`, `[error]`, Dart `_TypeError`) remain built-in
+- **Severity Keywords section** in the viewer Options panel — shows current keyword-to-level mapping with color indicators and a button to open VS Code settings for editing
+
+### Changed
+
+- **Project Logs panel now loads progressively** — items appear with metadata top-to-bottom as each file resolves instead of waiting for all files to finish loading
+- Copy & Export submenu now groups "All" items (Copy All, Copy All Decorated, Copy as snippet) together with separators for clarity
+- Downgraded `failed`/`failure`/`fail` keywords from error to warning severity — these indicate something worth investigating, not a definitive error
+- Severity classification now separates structural patterns (hardcoded) from keyword patterns (user-configurable), improving transparency and customizability
+- Root-cause hypotheses no longer produce duplicate signals for stack-frame continuation lines that inherited error level via proximity
 
 ---
 
