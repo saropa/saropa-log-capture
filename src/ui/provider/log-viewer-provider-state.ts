@@ -161,6 +161,12 @@ export function setMinimapWidthImpl(target: ProviderStateTarget, width: "xsmall"
 export function setScrollbarVisibleImpl(target: ProviderStateTarget, show: boolean): void {
   target.postMessage({ type: "scrollbarVisible", show });
 }
+export function setLogFontSizeImpl(target: ProviderStateTarget, size: number): void {
+  target.postMessage({ type: "setLogFontSize", size });
+}
+export function setLogLineHeightImpl(target: ProviderStateTarget, height: number): void {
+  target.postMessage({ type: "setLogLineHeight", height });
+}
 export function setSearchMatchOptionsAlwaysVisibleImpl(target: ProviderStateTarget, always: boolean): void {
   target.postMessage({ type: "searchMatchOptionsAlwaysVisible", always });
 }
