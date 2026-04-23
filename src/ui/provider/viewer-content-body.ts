@@ -77,10 +77,12 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     <div id="pinned-section"></div>
     <div id="root-cause-hypotheses" class="root-cause-hypotheses u-hidden" role="region" aria-label="Hypotheses"></div>
     <div id="log-content-wrapper">
+    <div class="log-content-clip">
     <div id="log-content" class="nowrap" role="log" aria-label="Log content">
         <div id="spacer-top"></div>
         <div id="viewport"></div>
         <div id="spacer-bottom"></div>
+    </div>
     </div>
     <button id="jump-top-btn" title="Scroll to top" aria-label="Scroll to top">&#x2B06; Top</button>
     <button id="jump-btn" title="Scroll to bottom" aria-label="Scroll to bottom">&#x2B07; Bottom</button>
