@@ -70,6 +70,11 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
   });
   queueMicrotask(() => target.postMessage({ type: 'setDriftAdvisorAvailable', available: !!vscode.extensions.getExtension(DRIFT_ADVISOR_EXTENSION_ID) }));
   queueMicrotask(() => target.postMessage({ type: 'captureEnabled', enabled: getConfig().enabled }));
+  /* Seed typography from user settings so webview boots with configured font size / line height
+     instead of its hard-coded defaults. Handler on the webview also updates the reset target so
+     Ctrl+0 / Ctrl+Shift+0 return to the *user's* configured value, not the hard-coded fallback. */
+  queueMicrotask(() => target.postMessage({ type: 'setLogFontSize', size: getConfig().logFontSize }));
+  queueMicrotask(() => target.postMessage({ type: 'setLogLineHeight', height: getConfig().logLineHeight }));
   queueMicrotask(() => target.postMessage({ type: 'minimapShowSqlDensity', show: getConfig().minimapShowSqlDensity }));
   queueMicrotask(() => target.postMessage({ type: 'minimapProportionalLines', show: getConfig().minimapProportionalLines }));
   queueMicrotask(() => target.postMessage({ type: 'minimapViewportRedOutline', show: getConfig().minimapViewportRedOutline }));
