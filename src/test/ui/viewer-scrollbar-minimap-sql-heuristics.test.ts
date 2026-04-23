@@ -117,16 +117,22 @@ suite('viewer-scrollbar-minimap-sql-heuristics', () => {
             assert.ok(script.includes("(lv === 'info' || lv === 'debug' || lv === 'notice') && !mmShowInfo"), 'info/debug/notice skipped from severity groups when setting off');
         });
 
-        test('after: paintMinimap fills neutral strokes when mc === 0 && total > 0', () => {
+        test('after: paintMinimap collects a presence layer and paints it with neutral gray', () => {
             const script = getScrollbarMinimapScript();
-            assert.ok(script.includes('mc === 0 && total > 0'), 'neutral branch guard');
-            assert.ok(script.includes('rgba(140, 140, 140, 0.24)'), 'neutral stroke fill');
+            // Presence layer is now populated unconditionally for lines without a colored severity tick,
+            // not gated on mc === 0 — so every visible line gets a mark and the minimap reads as a density map.
+            assert.ok(script.includes('presence.push('), 'presence collection');
+            assert.ok(script.includes('presence.length > 0'), 'presence paint guard');
+            assert.ok(script.includes('rgba(140, 140, 140, 0.22)'), 'neutral presence fill');
         });
 
         test('hover title explains scroll map in plain language', () => {
             const script = getScrollbarMinimapScript();
             assert.ok(script.includes('Scroll map — click or drag'), 'plain hover explanation');
-            assert.ok(script.includes('Enable info/debug/notice markers in settings'), 'points to settings for info colors');
+            // Hint now fires when info/debug/notice lines are being drawn as gray presence ticks,
+            // pointing the user to the "Show info on minimap" setting to upgrade them to colored ticks.
+            assert.ok(script.includes('Gray ticks are info/debug/notice'), 'explains gray presence ticks');
+            assert.ok(script.includes('Show info on minimap'), 'points to the setting that enables colored info ticks');
         });
     });
 });
