@@ -92,8 +92,11 @@ suite('viewer-scrollbar-minimap-sql-heuristics', () => {
     suite('SQL density painting (scroll map vs editor minimap)', () => {
         test('sqlDensity color is pink (not blue) so bands read as annotation, not error', () => {
             const script = getScrollbarMinimapScript();
+            // Intent: the hue must be pink rgba(200,120,180), which users don't confuse with
+            // selection highlights. Alpha is not pinned — it gets tuned for the paint model
+            // (per-pixel reduction vs overdraw) and fluorescence vs readability balance.
             assert.ok(
-                script.includes("sqlDensity: 'rgba(200, 120, 180, 1)'"),
+                /sqlDensity:\s*'rgba\(200,\s*120,\s*180,\s*[\d.]+\)'/.test(script),
                 'SQL density must use pink rgba(200,120,180) — blue was mistaken for selection highlights'
             );
         });

@@ -11,27 +11,32 @@ function initMmColors() {
     var cs = getComputedStyle(document.documentElement);
     function v(n, fb) { return cs.getPropertyValue(n).trim() || fb; }
     /* Severity swatches mirror the canonical .level-dot-* hex palette in
-       viewer-styles-level.ts (footer chip dots), just rendered at reduced alpha
-       for the minimap. Why: single source of truth — the color in the footer
-       chip equals the color in the scroll map, so users can scan the minimap
-       and immediately know which level a tick represents without learning a
-       second palette. Prior palette used different hues (teal vs green for
-       info, yellow vs orange for warning) which created the "yellow??"
-       confusion when the footer chip was orange but the minimap was yellow.
-       Uniform 0.6 alpha for most levels; performance purple gets 0.85 because
-       the hue is perceptually darker and would otherwise read as a faded
-       stripe next to the brighter colors. */
+       viewer-styles-level.ts (footer chip dots), so the minimap tick and the
+       footer chip read as the same color — single source of truth for "what
+       does this color mean?". Alpha values are calibrated for the per-pixel-
+       row reduction paint model (one deterministic fill per y-pixel, no
+       overdraw). Previously these alphas were higher (0.6 severity / 0.85
+       purple / 1.0 SQL density) because the old paint model stamped every
+       line at the same pixel and source-over compositing darkened the
+       result; face-value alphas in that world read correctly only *after*
+       blending. In the per-pixel model there is no blending to compensate
+       for, so those same values render fluorescent. Lowered across the
+       board: severity at 0.5-0.55, purple performance at 0.6 (down from
+       0.85 — the overdraw bump is no longer needed), database at 0.45
+       (cyan is a perceptually bright hue), SQL density at 0.5 (annotation
+       weight, matches severity), slow SQL at 0.6 (slightly hotter to flag
+       actionability without screaming). */
     mmColors = {
-        error: 'rgba(244,67,54,0.6)',
-        warning: 'rgba(255,152,0,0.6)',
-        performance: 'rgba(156,39,176,0.85)',
-        todo: 'rgba(189,189,189,0.55)',
-        debug: 'rgba(121,85,72,0.6)',
-        notice: 'rgba(33,150,243,0.6)',
-        info: 'rgba(76,175,80,0.6)',
-        database: 'rgba(0,188,212,0.6)',
-        sqlDensity: 'rgba(200, 120, 180, 1)',
-        sqlSlowDensity: 'rgba(255, 189, 89, 1)',
+        error: 'rgba(244,67,54,0.55)',
+        warning: 'rgba(255,152,0,0.55)',
+        performance: 'rgba(156,39,176,0.6)',
+        todo: 'rgba(189,189,189,0.45)',
+        debug: 'rgba(121,85,72,0.5)',
+        notice: 'rgba(33,150,243,0.5)',
+        info: 'rgba(76,175,80,0.5)',
+        database: 'rgba(0,188,212,0.45)',
+        sqlDensity: 'rgba(200, 120, 180, 0.5)',
+        sqlSlowDensity: 'rgba(255, 189, 89, 0.6)',
         searchMatch: v('--vscode-editorOverviewRuler-findMatchForeground', 'rgba(234,92,0,0.85)'),
         currentMatch: 'rgba(255,150,50,1)',
         /* Full-canvas base under SQL bands and severity ticks. */
