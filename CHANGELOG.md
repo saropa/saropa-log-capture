@@ -26,6 +26,14 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Icon-bar separators (`<div class="ib-separator">` below SQL History and below Trash in [viewer-icon-bar-html.ts](src/ui/viewer-nav/viewer-icon-bar-html.ts)) were effectively invisible.** The rule painted them with `--vscode-activityBar-inactiveForeground` (which in Dark+ and most other themes is already ~40% alpha) and then layered an extra `opacity: 0.4` on top — stacking to ~0.16 effective alpha against the activity-bar background. Switched to `--vscode-activityBar-border` (falling back to `--vscode-panel-border`, then `--vscode-contrastBorder`, then a neutral rgba) and dropped the extra `opacity`, so the 1 px rule reads cleanly in every theme. Also added `flex: 0 0 1px` to the separator so the 1 px height cannot be collapsed by the icon bar's flex-column layout ([viewer-styles-icon-bar.ts](src/ui/viewer-styles/viewer-styles-icon-bar.ts)).
+
+---
+
 ## [7.5.1]
 
 Tweak log viewer font size and line spacing on the fly, the default rows are tighter, the minimap colors read more evenly, and "show native scrollbar" actually toggles back off when you tell it to. [log](https://github.com/saropa/saropa-log-capture/blob/v7.5.1/CHANGELOG.md)
