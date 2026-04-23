@@ -21,9 +21,10 @@ import { getFlutterBannerScript } from './viewer-data-add-flutter-banner';
 import { getDataAddContextHelpersScript } from './viewer-data-add-context-helpers';
 import { getDocItemBuilderScript } from './viewer-data-add-doc-item';
 import { getLineBirthScript } from './viewer-data-add-line-birth';
+import { getStackHeaderRepeatScript } from './viewer-data-add-stack-header-repeat';
 
 export function getViewerDataAddScript(staticSqlFromFingerprintEnabled = true): string {
-    return getDriftDebugServerFromLogScript() + getViewerDataAddDbDetectorsScript(staticSqlFromFingerprintEnabled) + getContinuationScript() + getRepeatCollapseBranchScript() + getAsciiArtDetectScript() + getFlutterBannerScript() + getDataAddContextHelpersScript() + getDocItemBuilderScript() + getLineBirthScript() + /* javascript */ `
+    return getDriftDebugServerFromLogScript() + getViewerDataAddDbDetectorsScript(staticSqlFromFingerprintEnabled) + getContinuationScript() + getRepeatCollapseBranchScript() + getAsciiArtDetectScript() + getFlutterBannerScript() + getDataAddContextHelpersScript() + getDocItemBuilderScript() + getLineBirthScript() + getStackHeaderRepeatScript() + /* javascript */ `
 function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPercent, source, rawText, tier) {
     /* elapsedMs: per-line delay (from [+Nms]) for replay. qualityPercent: per-file line coverage (0-100) for badges. source: stream id for multi-source filter ('debug'|'terminal'|...). tier: 'flutter'|'device-critical'|'device-other'|'external' */
     var lineSource = source || 'debug';
@@ -45,6 +46,10 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     if (ts && !sessionStartTs) sessionStartTs = ts;
     if (isMarker) {
         resetCompressDupStreak();
+        /* bug_003: markers are hard boundaries for stack-header streaks, but the reset is
+           performed inside cleanupTrailingRepeats below so it can first restore the hidden
+           anchor and zero the trailing chip. Calling resetStackHdrRepeatTracker() here
+           would clear anchorIdx before cleanup can read it, leaving the anchor orphaned. */
         if (typeof breakContinuationGroup === 'function') breakContinuationGroup();
         if (activeGroupHeader) {
             if (typeof finalizeStackGroup === 'function') finalizeStackGroup(activeGroupHeader);
@@ -64,6 +69,9 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
        calcItemHeight(), filters, search, and viewport work unchanged. */
     if (fileMode !== 'log') {
         if (typeof breakContinuationGroup === 'function') breakContinuationGroup();
+        /* bug_003: structured file mode skips all log analysis — any open stack-header
+           streak must not persist into a non-log document. */
+        if (typeof resetStackHdrRepeatTracker === 'function') resetStackHdrRepeatTracker();
         /* Delegated to viewer-data-add-doc-item.ts (buildDocItem). Birth-height
            parity with calcItemHeight + blank-at-birth gating live there. */
         var docItem = buildDocItem(html, rawText, category, ts, sp, lineSource, catFiltered);
@@ -99,6 +107,13 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
             activeGroupHeader.frameCount++;
             return;
         }
+        /* bug_003: before allocating a new stack-group, try to fold this header into an
+           active repeat streak. Consecutive identical Drift interceptor traces otherwise
+           produce N separate header rows while surrounding SQL lines collapse — the
+           visible inconsistency this fixes. Helper hides the anchor and creates/updates a
+           "N × stack repeated" chip on match; points activeGroupHeader at the hidden
+           anchor so any following frames flow into its (hidden) group. */
+        if (typeof tryCollapseRepeatStackHeader === 'function' && tryCollapseRepeatStackHeader(html, plainFrame, ts, rawText)) return;
         var gid = nextGroupId++;
         var sTagH = (typeof parseSourceTag === 'function') ? parseSourceTag(plainFrame) : null;
         var lTagH = (typeof parseLogcatTag === 'function') ? parseLogcatTag(plainFrame) : null;
@@ -250,6 +265,11 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     if (!shouldShowNormalLine) {
         handleRepeatCollapse(category, ts, fw, sp, elapsedMs, source, rawText, tier, lvl, sTag, lTag, cTags, sqlMeta, catFiltered, plain, minN);
     } else {
+        /* bug_003: a normal-line push is real content between stack groups — break any
+           active stack-header repeat streak. Not reset inside the handleRepeatCollapse
+           branch above: SQL repeat-notification chips are streak-neutral (they represent
+           already-collapsed routine noise, not new content). */
+        if (typeof resetStackHdrRepeatTracker === 'function') resetStackHdrRepeatTracker();
 
         // Add the original line normally (includes first line of a streak and lines before threshold N).
         var errorClass = (typeof classifyError === 'function' && lineTier !== 'device-other' && (!strictLevelDetection || lvl === 'error')) ? classifyError(plain) : null;

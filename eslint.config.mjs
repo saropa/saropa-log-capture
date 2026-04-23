@@ -54,10 +54,16 @@ export default [{
     // Small ViewerTarget surface growth (DB detector toggles, typography settings pipeline)
     // without another provider split. Bumped 320 → 325 when the typography setLogFontSize /
     // setLogLineHeight pre-handler pattern was added alongside the existing handleDbMessages one.
+    // viewer-data-add.ts: addToData is a dense state machine that dispatches markers,
+    // structured-file items, stack frames/headers, continuation groups, and line classification.
+    // bug_003 added a stack-header repeat entry point + three streak-reset hooks; the bulk of
+    // the new logic lives in viewer-data-add-stack-header-repeat.ts. Matching the 325 tier here
+    // rather than carving another split since addToData's dispatch flow is the file's point.
     files: [
         "src/ui/provider/log-viewer-provider.ts",
         "src/ui/viewer-panels/pop-out-panel.ts",
         "src/ui/viewer/viewer-script-messages.ts",
+        "src/ui/viewer/viewer-data-add.ts",
     ],
     rules: {
         "max-lines": ["warn", { max: 325, skipBlankLines: true, skipComments: true }],

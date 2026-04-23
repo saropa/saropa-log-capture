@@ -67,6 +67,37 @@ function generateRepeatHash(level, plainText) {
     return level + '::' + preview;
 }
 function cleanupTrailingRepeats() {
+    /* bug_003: stack-header repeat streak cleanup at marker boundaries. Independent of
+       the SQL tracker — a marker can arrive after a pure stack-header streak (no SQL
+       involvement). Restore the anchor and its frame visibility, then zero the chip.
+       Runs before the early-return below so it fires even when SQL tracker is idle. */
+    if (typeof stackHdrRepeatTracker !== 'undefined' &&
+        stackHdrRepeatTracker.anchorIdx >= 0 &&
+        stackHdrRepeatTracker.anchorIdx < allLines.length) {
+        var sAnchor = allLines[stackHdrRepeatTracker.anchorIdx];
+        if (sAnchor && sAnchor.repeatHidden) {
+            sAnchor.repeatHidden = false;
+            /* Restore the default collapse state so frames under the anchor render
+               again; tryCollapseRepeatStackHeader forced collapsed=true to hide them
+               while the streak was active. */
+            var _sds = (typeof stackDefaultState !== 'undefined') ? stackDefaultState : false;
+            sAnchor.collapsed = _sds;
+            sAnchor.height = calcItemHeight(sAnchor);
+            totalHeight += sAnchor.height;
+        }
+        if (stackHdrRepeatTracker.lastRepeatNotificationIdx >= 0 &&
+            stackHdrRepeatTracker.lastRepeatNotificationIdx < allLines.length) {
+            var sChip = allLines[stackHdrRepeatTracker.lastRepeatNotificationIdx];
+            if (sChip && sChip.type === 'repeat-notification' && sChip.stackHdrRepeat && sChip.height > 0) {
+                totalHeight -= sChip.height;
+                sChip.height = 0;
+            }
+        }
+        stackHdrRepeatTracker.anchorIdx = -1;
+        stackHdrRepeatTracker.count = 0;
+        stackHdrRepeatTracker.lastTimestamp = 0;
+        stackHdrRepeatTracker.lastRepeatNotificationIdx = -1;
+    }
     if (repeatTracker.count <= 1 || repeatTracker.lastLineIndex < 0) return;
     if (repeatTracker.lastLineIndex < allLines.length) {
         var orig = allLines[repeatTracker.lastLineIndex];
