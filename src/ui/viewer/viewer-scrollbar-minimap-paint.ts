@@ -104,20 +104,45 @@ function paintMinimap() {
         sqlBuckets = new Uint16Array(densityBucketCount);
         slowSqlBuckets = new Uint16Array(densityBucketCount);
     }
-    /* Collect ticks in two layers:
-       - "presence": every visible line that does NOT qualify for a colored severity
-         tick (no level, unknown level, or info/debug/notice when mmShowInfo is off).
-         Painted first as neutral low-alpha gray so the minimap reads as a density map
-         instead of a sparse scatter with large black gaps.
-       - "groups": severity-colored ticks, keyed by level and painted on top of presence. */
-    var groups = {};
-    var presence = [];
+    /* Per-pixel-row severity reduction. Each y-pixel in the minimap shows the
+       highest-priority level among source lines that map to it — no alpha
+       stacking, no source-over compositing surprises, exactly one deterministic
+       color per pixel. Replaces the old "stamp every line and let the blend
+       operator sort it out" approach, which saturated into gray walls at
+       sub-pixel pitch and produced unpredictable color mixing wherever
+       different-severity lines collided. Priority order reflects what users
+       actually scan the minimap for: error first, then warning, performance,
+       notice, database, info, debug, todo; presence is the catch-all for
+       lines with no level or info/debug/notice lines when mmShowInfo is off. */
+    var LV_EMPTY = 0;
+    var LV_PRESENCE = 1;
+    var LV_TODO = 2;
+    var LV_DEBUG = 3;
+    var LV_INFO = 4;
+    var LV_DATABASE = 5;
+    var LV_NOTICE = 6;
+    var LV_PERFORMANCE = 7;
+    var LV_WARNING = 8;
+    var LV_ERROR = 9;
+    var lvFromName = {
+        error: LV_ERROR, warning: LV_WARNING, performance: LV_PERFORMANCE,
+        notice: LV_NOTICE, database: LV_DATABASE, info: LV_INFO,
+        debug: LV_DEBUG, todo: LV_TODO
+    };
+    var lvColors = [null, 'rgba(140,140,140,0.28)',
+        mmColors.todo, mmColors.debug, mmColors.info, mmColors.database,
+        mmColors.notice, mmColors.performance, mmColors.warning, mmColors.error];
+
+    var bucketLv = new Uint8Array(mmH);
+    var bucketW = new Float32Array(mmH);
     var hiddenInfoCount = 0;
+
     for (var i = 0; i < allLines.length; i += step) {
         var it = allLines[i];
         if (it.height === 0 || it.type === 'stack-frame' || it.type === 'marker') continue;
         var py = Math.round((mmLineOffset(i, hasPfx, cumH) / total) * mmH);
-        /* SQL density must not depend on minimap severity visibility (e.g. hidden info dots). */
+        if (py < 0 || py >= mmH) continue;
+        /* SQL density must not depend on severity visibility (hidden info dots). */
         if (mmShowSqlDensity && sqlBuckets && slowSqlBuckets) {
             var plainSql = stripTags(it.html || '');
             if (isLikelySqlLine(it, plainSql)) {
@@ -126,45 +151,59 @@ function paintMinimap() {
                 if (isLikelySlowSqlLine(it, plainSql)) slowSqlBuckets[bi]++;
             }
         }
-        /* Pitch to the next sampled line — drives mmBarHeight so adjacent bars leave a visual gap when room allows. */
-        var nextI = i + step;
-        var nextPy = nextI < allLines.length ? Math.round((mmLineOffset(nextI, hasPfx, cumH) / total) * mmH) : mmH;
-        var barW = mmBarWidthFrac(it);
-        var barH1 = mmBarHeight(3, nextPy - py);
-        var lv = it.level;
-        var hasSev = lv && mmColors[lv];
-        var hiddenInfo = hasSev && (lv === 'info' || lv === 'debug' || lv === 'notice') && !mmShowInfo;
-        if (!hasSev || hiddenInfo) {
-            presence.push({ py: py, w: barW, h: barH1 });
-            if (hiddenInfo) hiddenInfoCount++;
-            continue;
+        var lvEnum = lvFromName[it.level] || LV_EMPTY;
+        /* mmShowInfo off demotes info/debug/notice to presence priority: the
+           line still marks its pixel (no black gaps) but can be overridden by
+           any higher-severity line landing on the same pixel. */
+        if (!mmShowInfo && (lvEnum === LV_INFO || lvEnum === LV_DEBUG || lvEnum === LV_NOTICE)) {
+            hiddenInfoCount++;
+            lvEnum = LV_PRESENCE;
+        } else if (lvEnum === LV_EMPTY) {
+            lvEnum = LV_PRESENCE;
         }
-        if (!groups[lv]) groups[lv] = [];
-        groups[lv].push({ py: py, w: barW, h: barH1 });
+        var prev = bucketLv[py];
+        if (lvEnum > prev) {
+            bucketLv[py] = lvEnum;
+            bucketW[py] = mmBarWidthFrac(it);
+        } else if (lvEnum === prev) {
+            /* Same priority at same pixel: keep the widest so proportional-width
+               still shows the longest line falling into this pixel. */
+            var w2 = mmBarWidthFrac(it);
+            if (w2 > bucketW[py]) bucketW[py] = w2;
+        }
     }
 
     if (mmShowSqlDensity && sqlBuckets && slowSqlBuckets) {
         paintSqlDensityBuckets(sqlBuckets, slowSqlBuckets, mmW, mmH);
     }
 
-    /* Paint neutral presence first so severity ticks layer on top — every visible
-       line gets a mark, no more black gaps when info/debug/notice are hidden. */
-    if (presence.length > 0) {
-        mmCtx.fillStyle = 'rgba(140, 140, 140, 0.22)';
-        for (var p = 0; p < presence.length; p++) {
-            var pm = presence[p];
-            mmCtx.fillRect(0, pm.py, mmW * pm.w, pm.h);
+    /* Pre-compute bar heights: extend each filled pixel up to 3px tall when
+       the next filled pixel is ≥4px away, collapse to 1px at dense pitch.
+       Preserves the old "1px gap between bars when space allows" aesthetic
+       without per-source-line next-y lookups. */
+    var fillHeights = new Uint8Array(mmH);
+    var prevFilled = -1;
+    for (var yh = 0; yh < mmH; yh++) {
+        if (bucketLv[yh] === LV_EMPTY) continue;
+        if (prevFilled >= 0) {
+            var gap = yh - prevFilled;
+            fillHeights[prevFilled] = gap >= 4 ? 3 : Math.max(1, gap - 1);
         }
+        prevFilled = yh;
     }
+    if (prevFilled >= 0) fillHeights[prevFilled] = 3;
 
-    // Paint severity markers on top
+    /* Paint in priority order (low → high). Each pixel is painted exactly
+       once — by its bucket's chosen level — at that level's full intended
+       alpha. Grouped by level to minimize fillStyle switches. */
     var barH = 3;
-    for (var lv in groups) {
-        mmCtx.fillStyle = mmColors[lv];
-        var arr = groups[lv];
-        for (var j = 0; j < arr.length; j++) {
-            var seg = arr[j];
-            mmCtx.fillRect(0, seg.py, mmW * seg.w, seg.h);
+    for (var lvIdx = LV_PRESENCE; lvIdx <= LV_ERROR; lvIdx++) {
+        var color = lvColors[lvIdx];
+        if (!color) continue;
+        mmCtx.fillStyle = color;
+        for (var yy = 0; yy < mmH; yy++) {
+            if (bucketLv[yy] !== lvIdx) continue;
+            mmCtx.fillRect(0, yy, mmW * bucketW[yy], fillHeights[yy]);
         }
     }
 

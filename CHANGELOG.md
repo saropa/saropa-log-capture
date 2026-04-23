@@ -26,6 +26,18 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Minimap now uses per-pixel-row severity reduction instead of stamping every line.** Previously `paintMinimap()` in `viewer-scrollbar-minimap-paint.ts` pushed one fillRect per source line at the line's rounded y-pixel and relied on source-over alpha compositing to blend whatever landed on the same pixel. This saturated into solid gray walls at sub-pixel pitch (long logs in a short minimap) and produced unpredictable color mixing wherever different-severity lines collided — we were effectively fighting the blend operator with alpha gymnastics. Replaced with a bucket-reduction pass: a `Uint8Array(mmH)` stores the highest-priority level any line at that y-pixel carries (error > warning > performance > notice > database > info > debug > todo > presence), and a parallel `Float32Array(mmH)` tracks the widest line at the winning priority. The paint phase then emits exactly one rect per filled pixel at that level's intended alpha — deterministic, no stacking, no compositing surprises. A post-pass computes bar heights (up to 3px tall when the next filled pixel is ≥4px away, collapsing to 1px at dense pitch) to preserve the "visible 1px gap between bars" aesthetic from the old `mmBarHeight` helper. The `mmShowInfo` off branch now demotes info/debug/notice lines to presence priority instead of skipping them, so any higher-severity line at the same pixel still wins — fixing the previous case where a few dim presence ticks could mask error lines that also landed there.
+
+### Fixed
+
+- **"Show native scrollbar" still didn't actually hide the scrollbar — the v7.5.1 fix also failed.** The v7.5.1 entry claimed this was fixed by moving the `::-webkit-scrollbar` width rule onto a class on `#log-content` itself, on the theory that Chromium re-evaluates pseudo-element styles on host-class changes. In practice the 10px scrollbar still stayed painted after toggle-off (earlier `overflow-y` and `display: none` cycles had the same problem). Chromium in the VS Code webview simply does not re-read `::-webkit-scrollbar` at runtime once the composited layer exists, regardless of which ancestor *or* the host itself has its class flipped. Switched to a layout-based approach that bypasses the pseudo-element entirely: `#log-content` is now wrapped in a new `.log-content-clip` parent with `overflow: hidden`, and `#log-content` itself is sized `calc(100% + 10px)` wide with `padding-right: 10px` so its native vertical scrollbar paints in clipped overflow — physically invisible. Toggling "Show native scrollbar" flips `.log-content-clip` between `overflow: hidden` and `overflow: visible` (and reverts `#log-content` back to `width: 100%; padding-right: 0`), which is an ordinary box-model change that Chromium reflows reliably. Horizontal scrollbar is preserved: it runs along the bottom of `#log-content`, and only its rightmost 10px is clipped (the slider stays usable across the full scroll range). `syncJumpButtonInset` now reads the clip element's `getBoundingClientRect()` instead of `#log-content`'s — the latter extends into the clipped zone and would push the Top/Bottom jump buttons off the visible edge.
+
+---
+
 ## [7.5.2]
 
 The minimap now reads as a proper density map — every line shows up as a faint gray tick under the colored severity bars, so long runs of info/debug no longer look like empty gaps — and the thin separators below SQL History and Trash in the icon bar are actually visible in every theme now. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
