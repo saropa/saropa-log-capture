@@ -151,4 +151,4 @@ All six pass. Total suite: 2540 passing (2534 baseline + 6 new).
 
 ## Commits
 
-<!-- Added as fixes land. -->
+- `d7677f0a` fix(viewer): collapse repeating stack-headers matching SQL chip UX (bug_003)
