@@ -12,21 +12,22 @@ import { getScrollbarMinimapScript, getScrollbarMinimapHtml } from '../../ui/vie
 import { getViewerScript } from '../../ui/viewer/viewer-script';
 
 suite('ScrollbarToggleOptimisticUpdate', () => {
-    test('applyScrollbarVisible toggles class on #log-content itself', () => {
+    test('applyScrollbarVisible toggles body.scrollbar-visible; scrollbar hide is a layout clip', () => {
         const script = getViewerScript(5000);
-        /* Chromium in the VS Code webview caches the composited ::-webkit-scrollbar
-           layer and only reliably re-evaluates pseudo-element styles when the HOST
-           element's own class changes. Toggling body.scrollbar-visible alone left
-           the 10px bar painted on screen; the fix is a second class directly on
-           #log-content that controls the ::-webkit-scrollbar width rule. */
+        /* The scrollbar-hide mechanism moved off ::-webkit-scrollbar styling (which
+           Chromium caches in the VS Code webview and won't re-paint) onto a layout
+           clip: .log-content-clip has overflow: hidden by default, #log-content is
+           10px wider with padding-right: 10px, so the vertical scrollbar lives in
+           the clipped overflow. Body class toggling flips the clip — always works
+           because overflow changes on normal elements force reflow. */
         assert.ok(script.includes('function applyScrollbarVisible'), 'function must exist');
         assert.ok(
-            script.includes("logEl.classList.toggle('show-scrollbar'"),
-            'must toggle show-scrollbar class on #log-content so ::-webkit-scrollbar re-reads',
+            script.includes("document.body.classList.toggle('scrollbar-visible'"),
+            'must toggle body.scrollbar-visible — single source of truth for the layout clip',
         );
         assert.ok(
-            script.includes("document.body.classList.toggle('scrollbar-visible'"),
-            'must still toggle body.scrollbar-visible for --scrollbar-w and scrollbar-width',
+            !script.includes("logEl.classList.toggle('show-scrollbar'"),
+            'must NOT toggle a host-element class — prior approach failed and was removed',
         );
     });
 
