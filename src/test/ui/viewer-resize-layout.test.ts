@@ -22,15 +22,31 @@ suite('ViewerResizeLayout', () => {
 		);
 	});
 
-	test('::-webkit-scrollbar hides vertical (width:0) but shows horizontal (height:10px)', () => {
+	test('vertical scrollbar is hidden via layout clip, not ::-webkit-scrollbar width', () => {
 		const css = getViewerStyles();
+		/* .log-content-clip wraps #log-content; overflow: hidden by default clips the
+		   extra 10px on the right (where the scrollbar paints). body.scrollbar-visible
+		   flips overflow to visible so the scrollbar re-enters view. The pseudo-element
+		   width stays at 10px always — we don't rely on Chromium to repaint it. */
 		assert.ok(
-			css.includes('#log-content::-webkit-scrollbar { width: 0; height: 10px; }'),
-			'default: vertical hidden, horizontal 10px',
+			css.includes('.log-content-clip {'),
+			'.log-content-clip wrapper must be defined',
 		);
 		assert.ok(
-			css.includes('#log-content.show-scrollbar::-webkit-scrollbar { width: 10px; height: 10px; }'),
-			'opt-in: both scrollbars 10px; class on the host (not body) so Chromium re-reads the pseudo',
+			/\.log-content-clip\s*\{[^}]*overflow:\s*hidden/.test(css),
+			'.log-content-clip must clip by default (hides vertical scrollbar)',
+		);
+		assert.ok(
+			css.includes('body.scrollbar-visible .log-content-clip { overflow: visible; }'),
+			'body.scrollbar-visible must lift the clip',
+		);
+		assert.ok(
+			css.includes('#log-content::-webkit-scrollbar { width: 10px; height: 10px; }'),
+			'pseudo-element width stays at 10px always — not toggled',
+		);
+		assert.ok(
+			/#log-content\s*\{[^}]*width:\s*calc\(100% \+ 10px\)/.test(css),
+			'#log-content must be 10px wider than its clip parent',
 		);
 	});
 
