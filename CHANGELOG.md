@@ -26,7 +26,9 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [Unreleased]
+## [7.5.2]
+
+The minimap now reads as a proper density map — every line shows up as a faint gray tick under the colored severity bars, so long runs of info/debug no longer look like empty gaps — and the thin separators below SQL History and Trash in the icon bar are actually visible in every theme now. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
 
 ### Fixed
 
