@@ -10,21 +10,26 @@ export function getScrollbarMinimapPaintScript(): string {
 function initMmColors() {
     var cs = getComputedStyle(document.documentElement);
     function v(n, fb) { return cs.getPropertyValue(n).trim() || fb; }
-    /* Severity swatches use explicit rgba instead of VS Code theme vars because
-       --vscode-editorOverviewRuler-*Foreground comes in near-opaque in most themes,
-       which made error/warning/notice bars visually dominate the minimap and
-       swamped the dimmer purple (performance). Hand-tuned alphas equalize weight
-       across levels so no single color overwhelms the scroll map. */
+    /* Severity swatches mirror the canonical .level-dot-* hex palette in
+       viewer-styles-level.ts (footer chip dots), just rendered at reduced alpha
+       for the minimap. Why: single source of truth — the color in the footer
+       chip equals the color in the scroll map, so users can scan the minimap
+       and immediately know which level a tick represents without learning a
+       second palette. Prior palette used different hues (teal vs green for
+       info, yellow vs orange for warning) which created the "yellow??"
+       confusion when the footer chip was orange but the minimap was yellow.
+       Uniform 0.6 alpha for most levels; performance purple gets 0.85 because
+       the hue is perceptually darker and would otherwise read as a faded
+       stripe next to the brighter colors. */
     mmColors = {
-        error: 'rgba(244,68,68,0.75)',
-        warning: 'rgba(204,167,0,0.75)',
-        /* Performance/SQL purple bumped to full alpha + richer hue — prior 0.85 with
-           dark purple read as a faded stripe next to the brighter severity bars. */
-        performance: 'rgba(186,85,211,1)',
-        todo: 'rgba(189,189,189,0.7)',
-        debug: 'rgba(121,85,72,0.7)',
-        notice: 'rgba(33,150,243,0.7)',
-        info: 'rgba(78,201,176,0.7)',
+        error: 'rgba(244,67,54,0.6)',
+        warning: 'rgba(255,152,0,0.6)',
+        performance: 'rgba(156,39,176,0.85)',
+        todo: 'rgba(189,189,189,0.55)',
+        debug: 'rgba(121,85,72,0.6)',
+        notice: 'rgba(33,150,243,0.6)',
+        info: 'rgba(76,175,80,0.6)',
+        database: 'rgba(0,188,212,0.6)',
         sqlDensity: 'rgba(200, 120, 180, 1)',
         sqlSlowDensity: 'rgba(255, 189, 89, 1)',
         searchMatch: v('--vscode-editorOverviewRuler-findMatchForeground', 'rgba(234,92,0,0.85)'),
@@ -99,8 +104,15 @@ function paintMinimap() {
         sqlBuckets = new Uint16Array(densityBucketCount);
         slowSqlBuckets = new Uint16Array(densityBucketCount);
     }
-    // Collect markers grouped by color to minimize fillStyle switches
+    /* Collect ticks in two layers:
+       - "presence": every visible line that does NOT qualify for a colored severity
+         tick (no level, unknown level, or info/debug/notice when mmShowInfo is off).
+         Painted first as neutral low-alpha gray so the minimap reads as a density map
+         instead of a sparse scatter with large black gaps.
+       - "groups": severity-colored ticks, keyed by level and painted on top of presence. */
     var groups = {};
+    var presence = [];
+    var hiddenInfoCount = 0;
     for (var i = 0; i < allLines.length; i += step) {
         var it = allLines[i];
         if (it.height === 0 || it.type === 'stack-frame' || it.type === 'marker') continue;
@@ -114,21 +126,38 @@ function paintMinimap() {
                 if (isLikelySlowSqlLine(it, plainSql)) slowSqlBuckets[bi]++;
             }
         }
-        var lv = it.level;
-        if (!lv || !mmColors[lv]) continue;
-        if ((lv === 'info' || lv === 'debug' || lv === 'notice') && !mmShowInfo) continue;
-        if (!groups[lv]) groups[lv] = [];
         /* Pitch to the next sampled line — drives mmBarHeight so adjacent bars leave a visual gap when room allows. */
         var nextI = i + step;
         var nextPy = nextI < allLines.length ? Math.round((mmLineOffset(nextI, hasPfx, cumH) / total) * mmH) : mmH;
-        groups[lv].push({ py: py, w: mmBarWidthFrac(it), h: mmBarHeight(3, nextPy - py) });
+        var barW = mmBarWidthFrac(it);
+        var barH1 = mmBarHeight(3, nextPy - py);
+        var lv = it.level;
+        var hasSev = lv && mmColors[lv];
+        var hiddenInfo = hasSev && (lv === 'info' || lv === 'debug' || lv === 'notice') && !mmShowInfo;
+        if (!hasSev || hiddenInfo) {
+            presence.push({ py: py, w: barW, h: barH1 });
+            if (hiddenInfo) hiddenInfoCount++;
+            continue;
+        }
+        if (!groups[lv]) groups[lv] = [];
+        groups[lv].push({ py: py, w: barW, h: barH1 });
     }
 
     if (mmShowSqlDensity && sqlBuckets && slowSqlBuckets) {
         paintSqlDensityBuckets(sqlBuckets, slowSqlBuckets, mmW, mmH);
     }
 
-    // Paint severity markers
+    /* Paint neutral presence first so severity ticks layer on top — every visible
+       line gets a mark, no more black gaps when info/debug/notice are hidden. */
+    if (presence.length > 0) {
+        mmCtx.fillStyle = 'rgba(140, 140, 140, 0.22)';
+        for (var p = 0; p < presence.length; p++) {
+            var pm = presence[p];
+            mmCtx.fillRect(0, pm.py, mmW * pm.w, pm.h);
+        }
+    }
+
+    // Paint severity markers on top
     var barH = 3;
     for (var lv in groups) {
         mmCtx.fillStyle = mmColors[lv];
@@ -136,24 +165,6 @@ function paintMinimap() {
         for (var j = 0; j < arr.length; j++) {
             var seg = arr[j];
             mmCtx.fillRect(0, seg.py, mmW * seg.w, seg.h);
-        }
-    }
-
-    var mc = 0;
-    for (var k in groups) mc += groups[k].length;
-    /* When "show info on minimap" is off, info/debug/notice bars are hidden — severity groups may be empty. Draw a neutral presence band so the canvas is not blank and still shows scroll structure. */
-    if (mc === 0 && total > 0) {
-        mmCtx.fillStyle = 'rgba(140, 140, 140, 0.24)';
-        var barN = 2;
-        for (var ni = 0; ni < allLines.length; ni += step) {
-            var nit = allLines[ni];
-            if (nit.height === 0 || nit.type === 'stack-frame' || nit.type === 'marker') continue;
-            var npy = Math.round((mmLineOffset(ni, hasPfx, cumH) / total) * mmH);
-            /* Per-line pitch → 1px gap between neutral bars when space allows; otherwise 1px bar, no gap. */
-            var nextNi = ni + step;
-            var nextNpy = nextNi < allLines.length ? Math.round((mmLineOffset(nextNi, hasPfx, cumH) / total) * mmH) : mmH;
-            var nw = mmBarWidthFrac(nit);
-            mmCtx.fillRect(0, npy, mmW * nw, mmBarHeight(barN, nextNpy - npy));
         }
     }
 
@@ -167,8 +178,10 @@ function paintMinimap() {
     } else {
         title += ' Turn on "SQL activity on scroll map" in Layout options for SQL shading.';
     }
-    if (mc === 0 && total > 0) {
-        title += ' Enable info/debug/notice markers in settings for colored ticks on info-heavy logs.';
+    /* Hint fires when info/debug/notice lines are being drawn as neutral presence —
+       user can enable "Show info on minimap" to upgrade them to colored ticks. */
+    if (hiddenInfoCount > 0) {
+        title += ' Gray ticks are info/debug/notice — enable "Show info on minimap" for colored ticks.';
     }
     title += ' ' + Math.round(total) + ' px content.';
     minimapEl.title = title;
