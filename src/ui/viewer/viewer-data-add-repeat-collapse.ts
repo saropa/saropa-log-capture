@@ -24,6 +24,13 @@ function handleRepeatCollapse(category, ts, fw, sp, elapsedMs, source, rawText, 
     /* --- SQL fingerprint repeats: notification row with drilldown --- */
 
     // First line that enters repeat-collapse: hide the anchor row; further repeats update one notification row.
+    /* collapsedAnchorText/RawText carry the hidden anchor's content forward onto the
+       notification row so Ctrl+C can expand "N × SQL repeated" back into N real lines
+       on copy. Captured here (at hide time) because the anchor is the only place the
+       full original text lives — sqlRepeatDrilldown.sqlSnippet is capped at 500 chars
+       and sqlHistoryPreview at 120, neither is safe for round-tripping the raw SQL. */
+    var collapsedAnchorText = '';
+    var collapsedAnchorRawText = null;
     if (repeatTracker.count === minN && repeatTracker.lastLineIndex >= 0 &&
         repeatTracker.lastLineIndex < allLines.length) {
         var sqlOrigItem = allLines[repeatTracker.lastLineIndex];
@@ -31,6 +38,8 @@ function handleRepeatCollapse(category, ts, fw, sp, elapsedMs, source, rawText, 
             totalHeight -= sqlOrigItem.height;
             sqlOrigItem.height = 0;
             sqlOrigItem.repeatHidden = true;
+            collapsedAnchorText = (typeof stripTags === 'function') ? stripTags(sqlOrigItem.html || '') : String(sqlOrigItem.html || '');
+            collapsedAnchorRawText = sqlOrigItem.rawText || null;
         }
     }
 
@@ -103,6 +112,11 @@ function handleRepeatCollapse(category, ts, fw, sp, elapsedMs, source, rawText, 
             repeatItem.sqlRepeatDrilldownOpen = false;
             repeatItem.repeatPreviewText = preview || '\\u2026';
         }
+        /* Copy-expansion data (set only on initial creation — the anchor is in range
+           only on this code path; subsequent repeats take the update branch below
+           after the anchor has already been hidden). */
+        if (collapsedAnchorText) repeatItem.collapsedLineText = collapsedAnchorText;
+        if (collapsedAnchorRawText) repeatItem.collapsedRawText = collapsedAnchorRawText;
         /* DB_11: fingerprint + preview on repeat rows for query history rebuild after trim (no dbSignal on these rows). */
         if (sqlMeta && sqlMeta.fingerprint) {
             repeatItem.sqlHistoryFp = sqlMeta.fingerprint;
