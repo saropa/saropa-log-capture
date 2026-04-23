@@ -26,6 +26,14 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Copying a collapsed "N × SQL repeated:" row now copies the N individual SQL lines, not just the header.** Previously Ctrl+C on (or around) a collapsed SQL repeat row produced a single `14 × SQL repeated: SELECT ...` header line in the clipboard and silently dropped the 14 underlying queries — they are never pushed into `allLines` individually by `handleRepeatCollapse` in `viewer-data-add-repeat-collapse.ts`, so there was nothing for `linesToPlainText` to serialize. The hidden anchor's stripped HTML and `rawText` are now captured onto the notification row as `collapsedLineText` / `collapsedRawText` at the moment the anchor is hidden, and the copy script (`viewer-copy.ts`) routes through a new `isExpandableRepeatNotification` / `repeatCountForExpansion` pair so plain-text, markdown, snippet, raw, decorated, copy-all, and the hover copy-float button all emit `repeatCount` copies of the captured text. The expansion is gated on `item.height > 0` so that `cleanupTrailingRepeats` (marker boundary / trim) correctly leaves the inert notification out of the clipboard while restoring the now-un-hidden anchor. `getSelectedLines` now skips `repeatHidden` anchors so a selection spanning both the anchor and the notification row no longer double-counts the first query. The "Copied N lines" toast from `copyAllFilteredWithCount` now reports the post-expansion total via `countExpandedLines(lines)` instead of `lines.length`.
+
+---
+
 ## [7.5.3]
 
 ### Changed
