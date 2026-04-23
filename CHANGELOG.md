@@ -28,6 +28,14 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [Unreleased]
 
+### Changed
+
+- **Minimap severity colors rebalanced for even visual weight.** The bright severity bars (error, warning, notice blue) read as dominant because `initMmColors` in `viewer-scrollbar-minimap-paint.ts` pulled from `--vscode-editorOverviewRuler-*Foreground` theme vars that arrive near-opaque in most themes, while the purple `performance` band fell back to an unread `rgba(156,39,176,0.85)` and looked washed out next to them. Severity swatches are now hand-tuned explicit rgba values (0.75 alpha for error/warning, 0.7 for notice/info/debug/todo) and the performance purple is bumped to a brighter `rgba(186,85,211,1)` so all levels share comparable visual weight on the scroll map.
+
+### Fixed
+
+- **"Show native scrollbar" could not be turned off once enabled.** Toggling the setting via the Scroll map & scrollbar submenu (or the right-click compact menu on the minimap / scrollbar) correctly flipped the checkbox and moved the Top/Bottom jump buttons back inward, but the 10px Chromium scrollbar itself stayed on screen. Chromium in the VS Code webview caches the composited `::-webkit-scrollbar` layer and only reliably re-evaluates pseudo-element styles when the *host element's own* class/style changes — toggling `body.scrollbar-visible` alone (an ancestor class) left the 10px bar painted even after the cascade selected `width: 0`. The width rule is now scoped to a class on `#log-content` itself (`#log-content.show-scrollbar::-webkit-scrollbar { width: 10px }`), and `applyScrollbarVisible` in [viewer-script.ts](src/ui/viewer/viewer-script.ts) toggles that class on the host alongside `body.scrollbar-visible`. The body class still drives the `--scrollbar-w` jump-button offset and `scrollbar-width` — those work on ancestor changes.
+
 ---
 
 ## [7.5.0]
