@@ -180,8 +180,14 @@ body.scrollbar-visible #log-content-wrapper { --scrollbar-w: 10px; }
 body.scrollbar-visible #log-content {
     scrollbar-width: auto; /* show both scrollbars when the user opts in */
 }
+/* ::-webkit-scrollbar width is toggled via a class on #log-content itself, not on
+   body. Chromium's VS Code webview caches the composited scrollbar layer and only
+   reliably re-evaluates ::-webkit-scrollbar when the HOST element's own class
+   changes — an ancestor body-class toggle left the 10px bar on screen even after
+   the width:0 rule took over in the cascade. Keep body.scrollbar-visible for the
+   --scrollbar-w wrapper variable and scrollbar-width; use .show-scrollbar here. */
 #log-content::-webkit-scrollbar { width: 0; height: 10px; }
-body.scrollbar-visible #log-content::-webkit-scrollbar { width: 10px; height: 10px; }
+#log-content.show-scrollbar::-webkit-scrollbar { width: 10px; height: 10px; }
 #log-content::-webkit-scrollbar-thumb {
     background: var(--vscode-scrollbarSlider-background);
     border-radius: 4px;
