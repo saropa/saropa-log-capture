@@ -33,6 +33,8 @@ export function applyInitialBroadcasterConfig(
     broadcaster.setMinimapViewportOutsideArrow(cfg.minimapViewportOutsideArrow);
     broadcaster.setMinimapWidth(cfg.minimapWidth);
     broadcaster.setScrollbarVisible(cfg.showScrollbar);
+    broadcaster.setLogFontSize(cfg.logFontSize);
+    broadcaster.setLogLineHeight(cfg.logLineHeight);
     broadcaster.setSearchMatchOptionsAlwaysVisible(cfg.viewerAlwaysShowSearchMatchOptions);
     broadcaster.setErrorRateConfig(errorRateConfigFromConfig(cfg));
 }
