@@ -122,6 +122,10 @@ export interface SaropaLogCaptureConfig {
   readonly minimapWidth: "xsmall" | "small" | "medium" | "large" | "xlarge";
   /** When true, show the native vertical scrollbar in the log viewer (default: false). */
   readonly showScrollbar: boolean;
+  /** Default font size in pixels for log viewer text (4–42, default 13). */
+  readonly logFontSize: number;
+  /** Default line height multiplier for log viewer text (0.5–4.0, default 1.1). */
+  readonly logLineHeight: number;
   /** When true, always show match case / whole word / regex toggles in the log search strip (default: false). */
   readonly viewerAlwaysShowSearchMatchOptions: boolean;
   /**

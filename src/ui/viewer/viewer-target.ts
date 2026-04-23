@@ -66,6 +66,8 @@ export interface ViewerTarget {
 
   setMinimapWidth(width: "xsmall" | "small" | "medium" | "large" | "xlarge"): void;
   setScrollbarVisible(show: boolean): void;
+  setLogFontSize(size: number): void;
+  setLogLineHeight(height: number): void;
   setSearchMatchOptionsAlwaysVisible(always: boolean): void;
   setIconBarPosition(position: "left" | "right"): void;
   setErrorRateConfig(config: ErrorRateConfig): void;

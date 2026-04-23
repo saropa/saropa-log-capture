@@ -1,12 +1,14 @@
 /** Message handler script for the log viewer webview. Extracted to keep viewer-script.ts under the line limit. */
 
 import { getViewerScriptDbMessageHandler } from './viewer-script-messages-db';
+import { getViewerScriptTypographyMessageHandler } from './viewer-script-messages-typography';
 
 export function getViewerScriptMessageHandler(): string {
-    return getViewerScriptDbMessageHandler() + /* javascript */ `
+    return getViewerScriptDbMessageHandler() + getViewerScriptTypographyMessageHandler() + /* javascript */ `
 window.addEventListener('message', function(event) {
     var msg = event.data;
-    if (typeof handleDbMessages === 'function' && handleDbMessages(msg)) return;
+    /* Pre-handlers return true when they've dispatched the message; skip the switch on hit. */
+    if ((typeof handleDbMessages === 'function' && handleDbMessages(msg)) || (typeof handleTypographyMessages === 'function' && handleTypographyMessages(msg))) return;
     switch (msg.type) {
         case 'addLines': {
             var isHidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';

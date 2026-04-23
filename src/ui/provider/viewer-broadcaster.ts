@@ -165,6 +165,12 @@ export class ViewerBroadcaster implements ViewerTarget {
   setScrollbarVisible(show: boolean): void {
     for (const t of this.targets) { t.setScrollbarVisible(show); }
   }
+  setLogFontSize(size: number): void {
+    for (const t of this.targets) { t.setLogFontSize(size); }
+  }
+  setLogLineHeight(height: number): void {
+    for (const t of this.targets) { t.setLogLineHeight(height); }
+  }
   setSearchMatchOptionsAlwaysVisible(always: boolean): void {
     for (const t of this.targets) { t.setSearchMatchOptionsAlwaysVisible(always); }
   }

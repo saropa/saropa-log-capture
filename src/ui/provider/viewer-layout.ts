@@ -29,8 +29,25 @@ export function getLayoutScript(): string {
 /** Current font size in pixels. */
 var logFontSize = 13;
 
-/** Current line height multiplier. */
-var logLineHeight = 2.0;
+/**
+ * Reset target for the font size — what Ctrl+0 / fontSizeReset returns to.
+ * Updated by the setLogFontSize host message so reset follows the user's configured setting,
+ * not the hard-coded fallback. Keep in sync with package.json "saropaLogCapture.logFontSize" default.
+ */
+var logFontSizeDefault = 13;
+
+/**
+ * Current line height multiplier.
+ *
+ * Default 1.1 (was 2.0) after users flagged ~0.5em of visible whitespace between rows in dense
+ * logs — that was the 0.5em leading produced by the old line-height: 1.5 CSS fallback. 1.1 keeps
+ * descenders/ascenders from clipping in monospace while eliminating the intra-line gap.
+ * Must stay in sync with the CSS fallback in viewer-styles-lines.ts and the package.json default.
+ */
+var logLineHeight = 1.1;
+
+/** Reset target for the line height — what Ctrl+Shift+0 / lineHeightReset returns to. */
+var logLineHeightDefault = 1.1;
 
 /** Enable visual spacing (breathing room) between sections. */
 var visualSpacingEnabled = true;
@@ -189,12 +206,25 @@ document.documentElement.style.setProperty('--log-line-height', logLineHeight.to
 // Measure actual row height after all CSS is applied
 requestAnimationFrame(function() { measureRowHeight(); });
 
-// Ctrl+scroll to zoom font size
+/*
+ * Typography wheel gestures on #log-content:
+ *  - Ctrl/Meta + wheel        → font size ±1 px
+ *  - Ctrl/Meta + Shift + wheel → line height ±0.1
+ *
+ * Shift is checked first so Ctrl+Shift+wheel does not also fire the font-size branch.
+ * Step size 0.1 matches the keyboard shortcuts lineHeightUp/Down for consistency.
+ */
 var _logContentEl = document.getElementById('log-content');
 if (_logContentEl) {
     _logContentEl.addEventListener('wheel', function(e) {
         if (!e.ctrlKey && !e.metaKey) return;
         e.preventDefault();
+        if (e.shiftKey) {
+            /* 0.1 * ±1 and round to 1 decimal to avoid 1.1 + 0.1 => 1.2000000000000002 drift. */
+            var next = Math.round((logLineHeight + (e.deltaY < 0 ? 0.1 : -0.1)) * 10) / 10;
+            setLineHeight(next);
+            return;
+        }
         setFontSize(logFontSize + (e.deltaY < 0 ? 1 : -1));
     }, { passive: false });
 }

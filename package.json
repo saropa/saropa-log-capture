@@ -766,6 +766,22 @@
           "title": "%config.showScrollbar.title%",
           "type": "boolean"
         },
+        "saropaLogCapture.logFontSize": {
+          "default": 13,
+          "description": "%config.logFontSize.description%",
+          "title": "%config.logFontSize.title%",
+          "type": "number",
+          "minimum": 4,
+          "maximum": 42
+        },
+        "saropaLogCapture.logLineHeight": {
+          "default": 1.1,
+          "description": "%config.logLineHeight.description%",
+          "title": "%config.logLineHeight.title%",
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 4
+        },
         "saropaLogCapture.viewerAlwaysShowSearchMatchOptions": {
           "default": false,
           "description": "%config.viewerAlwaysShowSearchMatchOptions.description%",
@@ -2714,5 +2730,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "7.5.0"
+  "version": "7.5.1"
 }
