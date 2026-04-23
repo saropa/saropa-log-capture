@@ -25,9 +25,11 @@ suite('Copy All Filtered Lines', () => {
                 script.includes("type: 'copyAllFiltered'"),
                 'copyAllFilteredWithCount should post copyAllFiltered message',
             );
+            /* Post-expansion: the toast must count "N × SQL repeated" rows as N lines,
+               not one, so the number matches what actually hits the clipboard. */
             assert.ok(
-                script.includes('lineCount: lines.length'),
-                'copyAllFilteredWithCount should include lineCount',
+                script.includes('lineCount: countExpandedLines(lines)'),
+                'copyAllFilteredWithCount should report the expanded line count',
             );
         });
 
