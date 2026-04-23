@@ -132,6 +132,12 @@ export function getConfig(): SaropaLogCaptureConfig {
     minimapViewportOutsideArrow: ensureBoolean(cfg.get("minimapViewportOutsideArrow"), false),
     minimapWidth: ensureEnum(cfg.get("minimapWidth"), ["xsmall", "small", "medium", "large", "xlarge"], "medium"),
     showScrollbar: ensureBoolean(cfg.get("showScrollbar"), false),
+    /* 4–42 px matches HTML slider min/max and webview setFontSize() guard. */
+    logFontSize: clamp(cfg.get("logFontSize"), 4, 42, 13),
+    /* 0.5–4.0 matches HTML slider min/max and webview setLineHeight() guard. Default 1.1
+       avoids the ~0.5em intra-line leading that the old 1.5 default produced — a request
+       from users seeing visible gaps between every row in dense logs. */
+    logLineHeight: clamp(cfg.get("logLineHeight"), 0.5, 4.0, 1.1),
     viewerAlwaysShowSearchMatchOptions: ensureBoolean(cfg.get("viewerAlwaysShowSearchMatchOptions"), false),
     viewerRepeatThresholds: normalizeViewerRepeatThresholds({
       globalMinCount: cfg.get("repeatCollapseGlobalMinCount"),

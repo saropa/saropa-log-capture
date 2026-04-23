@@ -107,6 +107,12 @@ export function setupConfigListener(
         if (e.affectsConfiguration('saropaLogCapture.showScrollbar')) {
             broadcaster.setScrollbarVisible(cfg.showScrollbar);
         }
+        if (e.affectsConfiguration('saropaLogCapture.logFontSize')) {
+            broadcaster.setLogFontSize(cfg.logFontSize);
+        }
+        if (e.affectsConfiguration('saropaLogCapture.logLineHeight')) {
+            broadcaster.setLogLineHeight(cfg.logLineHeight);
+        }
         if (e.affectsConfiguration('saropaLogCapture.viewerAlwaysShowSearchMatchOptions')) {
             broadcaster.setSearchMatchOptionsAlwaysVisible(cfg.viewerAlwaysShowSearchMatchOptions);
         }
