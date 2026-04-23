@@ -112,18 +112,36 @@ suite('viewer-scrollbar-minimap-sql-heuristics', () => {
     });
 
     suite('neutral presence fallback (severity hidden / info-only)', () => {
-        test('before: without neutral branch, info-only logs could paint nothing when info markers are off', () => {
+        test('mmShowInfo off routes info/debug/notice lines to presence priority (not skipped)', () => {
             const script = getScrollbarMinimapScript();
-            assert.ok(script.includes("(lv === 'info' || lv === 'debug' || lv === 'notice') && !mmShowInfo"), 'info/debug/notice skipped from severity groups when setting off');
+            // Intent: when the user hides info markers, those lines must still mark their pixels
+            // so there are no black gaps — they just paint at presence priority, beaten by any
+            // higher-severity line landing on the same pixel. Previously they were skipped
+            // entirely, which left big empty stretches in info-heavy logs.
+            assert.ok(
+                /lvEnum\s*===\s*LV_INFO\s*\|\|\s*lvEnum\s*===\s*LV_DEBUG\s*\|\|\s*lvEnum\s*===\s*LV_NOTICE/.test(script),
+                'info/debug/notice checked together for the mmShowInfo demotion branch',
+            );
+            assert.ok(script.includes('!mmShowInfo'), 'demotion is gated on mmShowInfo');
         });
 
-        test('after: paintMinimap collects a presence layer and paints it with neutral gray', () => {
+        test('after: paintMinimap reduces to one color per y-pixel via priority buckets', () => {
             const script = getScrollbarMinimapScript();
-            // Presence layer is now populated unconditionally for lines without a colored severity tick,
-            // not gated on mc === 0 — so every visible line gets a mark and the minimap reads as a density map.
-            assert.ok(script.includes('presence.push('), 'presence collection');
-            assert.ok(script.includes('presence.length > 0'), 'presence paint guard');
-            assert.ok(script.includes('rgba(140, 140, 140, 0.22)'), 'neutral presence fill');
+            // Per-pixel-row reduction replaces the old "stamp every line and let source-over blend
+            // sort it out" approach. Each y-pixel gets exactly one deterministic color, so there's
+            // no alpha stacking and no unpredictable compositing when lines collide at the same pixel.
+            assert.ok(script.includes('bucketLv'), 'per-pixel priority buckets exist');
+            assert.ok(script.includes('new Uint8Array(mmH)'), 'bucket is sized to minimap height');
+            // Priority constants: error highest, presence lowest. Error must outrank warning so that
+            // a pixel containing any error-level line paints red, not whatever else landed there.
+            assert.ok(script.includes('LV_ERROR'), 'priority enum defined');
+            assert.ok(script.includes('LV_PRESENCE'), 'presence priority defined');
+            assert.ok(/LV_ERROR\s*=\s*9/.test(script), 'error is highest priority');
+            assert.ok(/LV_PRESENCE\s*=\s*1/.test(script), 'presence is lowest colored priority');
+            // Presence is still rendered for info/debug/notice when mmShowInfo is off, but now as
+            // a bucket entry that any higher-priority line at the same pixel overrides.
+            assert.ok(script.includes('!mmShowInfo'), 'mmShowInfo demotes info/debug/notice to presence');
+            assert.ok(script.includes('lvEnum = LV_PRESENCE'), 'demotion writes presence priority');
         });
 
         test('hover title explains scroll map in plain language', () => {
