@@ -26,10 +26,6 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [Unreleased]
-
----
-
 ## [7.5.1]
 
 Tweak log viewer font size and line spacing on the fly, the default rows are tighter, the minimap colors read more evenly, and "show native scrollbar" actually toggles back off when you tell it to. [log](https://github.com/saropa/saropa-log-capture/blob/v7.5.1/CHANGELOG.md)
