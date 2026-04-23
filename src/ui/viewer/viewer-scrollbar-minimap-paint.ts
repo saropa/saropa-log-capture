@@ -10,14 +10,21 @@ export function getScrollbarMinimapPaintScript(): string {
 function initMmColors() {
     var cs = getComputedStyle(document.documentElement);
     function v(n, fb) { return cs.getPropertyValue(n).trim() || fb; }
+    /* Severity swatches use explicit rgba instead of VS Code theme vars because
+       --vscode-editorOverviewRuler-*Foreground comes in near-opaque in most themes,
+       which made error/warning/notice bars visually dominate the minimap and
+       swamped the dimmer purple (performance). Hand-tuned alphas equalize weight
+       across levels so no single color overwhelms the scroll map. */
     mmColors = {
-        error: v('--vscode-editorOverviewRuler-errorForeground', 'rgba(244,68,68,0.85)'),
-        warning: v('--vscode-editorOverviewRuler-warningForeground', 'rgba(204,167,0,0.85)'),
-        performance: v('--vscode-editorOverviewRuler-infoForeground', 'rgba(156,39,176,0.85)'),
-        todo: 'rgba(189,189,189,0.65)',
-        debug: 'rgba(121,85,72,0.65)',
-        notice: 'rgba(33,150,243,0.65)',
-        info: 'rgba(78,201,176,0.65)',
+        error: 'rgba(244,68,68,0.75)',
+        warning: 'rgba(204,167,0,0.75)',
+        /* Performance/SQL purple bumped to full alpha + richer hue — prior 0.85 with
+           dark purple read as a faded stripe next to the brighter severity bars. */
+        performance: 'rgba(186,85,211,1)',
+        todo: 'rgba(189,189,189,0.7)',
+        debug: 'rgba(121,85,72,0.7)',
+        notice: 'rgba(33,150,243,0.7)',
+        info: 'rgba(78,201,176,0.7)',
         sqlDensity: 'rgba(200, 120, 180, 1)',
         sqlSlowDensity: 'rgba(255, 189, 89, 1)',
         searchMatch: v('--vscode-editorOverviewRuler-findMatchForeground', 'rgba(234,92,0,0.85)'),
