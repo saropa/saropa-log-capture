@@ -26,7 +26,7 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [Unreleased]
+## [7.5.3]
 
 ### Changed
 
@@ -34,6 +34,7 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Fixed
 
+- **"Open Log" button on the post-session "Log Captured" notification did nothing visible.** After a debug session finalized, the summary toast's "Open Log" action called `vscode.window.showTextDocument(summary.logUri)` in `showSummaryNotification` (`src/modules/session/session-summary.ts`). That opens the log as a plain text file in the editor area. But the Log Viewer (the surface this extension was built around) is a webview registered under `views`/`viewsContainers.panel` in `package.json` — it lives in the **panel** dock at the bottom, alongside the terminal, not in the editor area. After a debug session the user is focused on the Log Viewer panel streaming the capture, so clicking "Open Log" quietly opened a text tab in a completely different surface they weren't looking at — indistinguishable from "does not work." "Copy Log Path" kept working because it writes to the clipboard and never changes UI focus. Routed the button through `saropaLogCapture.openSession` instead, which focuses the Log Viewer webview and loads the finalized file via `viewerProvider.loadFromFile` — the same path the session history panel uses to open a log, and the only path that lands on the surface the user is actually watching. Fallback to `saropaLogCapture.open` is kept for the unexpected case where `summary.logUri` isn't set (still an active session).
 - **"Show native scrollbar" still didn't actually hide the scrollbar — the v7.5.1 fix also failed.** The v7.5.1 entry claimed this was fixed by moving the `::-webkit-scrollbar` width rule onto a class on `#log-content` itself, on the theory that Chromium re-evaluates pseudo-element styles on host-class changes. In practice the 10px scrollbar still stayed painted after toggle-off (earlier `overflow-y` and `display: none` cycles had the same problem). Chromium in the VS Code webview simply does not re-read `::-webkit-scrollbar` at runtime once the composited layer exists, regardless of which ancestor *or* the host itself has its class flipped. Switched to a layout-based approach that bypasses the pseudo-element entirely: `#log-content` is now wrapped in a new `.log-content-clip` parent with `overflow: hidden`, and `#log-content` itself is sized `calc(100% + 10px)` wide with `padding-right: 10px` so its native vertical scrollbar paints in clipped overflow — physically invisible. Toggling "Show native scrollbar" flips `.log-content-clip` between `overflow: hidden` and `overflow: visible` (and reverts `#log-content` back to `width: 100%; padding-right: 0`), which is an ordinary box-model change that Chromium reflows reliably. Horizontal scrollbar is preserved: it runs along the bottom of `#log-content`, and only its rightmost 10px is clipped (the slider stays usable across the full scroll range). `syncJumpButtonInset` now reads the clip element's `getBoundingClientRect()` instead of `#log-content`'s — the latter extends into the clipped zone and would push the Top/Bottom jump buttons off the visible edge.
 
 ---
