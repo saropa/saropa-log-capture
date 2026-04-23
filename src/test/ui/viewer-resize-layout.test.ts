@@ -29,8 +29,8 @@ suite('ViewerResizeLayout', () => {
 			'default: vertical hidden, horizontal 10px',
 		);
 		assert.ok(
-			css.includes('body.scrollbar-visible #log-content::-webkit-scrollbar { width: 10px; height: 10px; }'),
-			'opt-in: both scrollbars 10px',
+			css.includes('#log-content.show-scrollbar::-webkit-scrollbar { width: 10px; height: 10px; }'),
+			'opt-in: both scrollbars 10px; class on the host (not body) so Chromium re-reads the pseudo',
 		);
 	});
 
