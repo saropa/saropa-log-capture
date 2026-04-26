@@ -26,9 +26,9 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [7.5.6]
+## [Unreleased]
 
-Session groups in the Logs list now treat the capture whose log header `Project:` matches your workspace folder (the one that contains the log directory) as the primary row when that header is present, instead of always favoring the earliest file timestamp among sidecars. [log](https://github.com/saropa/saropa-log-capture/blob/v7.5.6/CHANGELOG.md)
+Development builds use **`version` in [package.json](./package.json)** (currently **7.5.6**); this section lists changes **after** the last published Marketplace release (**7.5.5**).
 
 ### Changed
 
@@ -42,7 +42,7 @@ Toolbar footer level chips show letter codes beside each dot, DB-signal markers 
 
 ### Changed
 
-- **Toolbar level filter dots now include letter labels (`E`, `W`, `I`, `P`, `T`, `N`, `D`, `DB`).** This improves readability and accessibility versus color-only dots. Footer chips now show dot+letter+count, disabled levels fade, and click/double-click behavior is unchanged. Bug plan: `plans/history/2026.04/2026.04.26/bug_006_level-dots-unreadable-without-labels.md`.
+- **Toolbar level filter dots now include letter labels (`E`, `W`, `I`, `P`, `T`, `N`, `D`, `DB`).** This improves readability and accessibility versus color-only dots. Footer chips now show dot+letter+count, disabled levels fade, and click/double-click behavior is unchanged. Bug plan: `bugs/bug_006_level-dots-unreadable-without-labels.md`.
 
 ### Fixed
 
