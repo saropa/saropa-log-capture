@@ -26,7 +26,7 @@ function makeSession(filename: string, partNumber?: number): SessionMetadata {
 /** Build a SessionMetadata with a custom mtime, groupId, and optional debugAdapterType. */
 function makeSessionWithGroup(
     filename: string,
-    opts: { mtime: number; groupId?: string; debugAdapterType?: string; size?: number },
+    opts: { mtime: number; groupId?: string; debugAdapterType?: string; size?: number; project?: string },
 ): SessionMetadata {
     return {
         uri: vscode.Uri.parse(`file:///${filename}`),
@@ -35,6 +35,7 @@ function makeSessionWithGroup(
         mtime: opts.mtime,
         groupId: opts.groupId,
         debugAdapterType: opts.debugAdapterType,
+        project: opts.project,
     };
 }
 
@@ -133,6 +134,34 @@ suite('session-history-grouping', () => {
             assert.ok(isSessionGroup(group));
             if (!isSessionGroup(group)) { return; }
             assert.strictEqual((group.primary as SessionMetadata).filename, 'logcat.log');
+        });
+
+        test('header Project matching workspace folder beats earlier mtime when no DAP', () => {
+            const logcat = makeSessionWithGroup('session.logcat.log', {
+                mtime: 500, groupId: 'g3', project: 'OtherApp',
+            });
+            const appLog = makeSessionWithGroup('session.log', {
+                mtime: 2000, groupId: 'g3', project: 'contacts',
+            });
+            const out = groupSessionGroups([logcat, appLog], 'Contacts');
+            const group = out[0];
+            assert.ok(isSessionGroup(group));
+            if (!isSessionGroup(group)) { return; }
+            assert.strictEqual((group.primary as SessionMetadata).filename, 'session.log');
+        });
+
+        test('when no member header matches workspace folder, primary rule falls back to DAP/mtime', () => {
+            const logcat = makeSessionWithGroup('session.logcat.log', {
+                mtime: 500, groupId: 'g4', project: 'Alpha',
+            });
+            const dart = makeSessionWithGroup('session.log', {
+                mtime: 2000, groupId: 'g4', project: 'Beta', debugAdapterType: 'dart',
+            });
+            const out = groupSessionGroups([logcat, dart], 'Contacts');
+            const group = out[0];
+            assert.ok(isSessionGroup(group));
+            if (!isSessionGroup(group)) { return; }
+            assert.strictEqual((group.primary as SessionMetadata).filename, 'session.log');
         });
 
         test('separates members of different groups', () => {

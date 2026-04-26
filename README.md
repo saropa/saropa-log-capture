@@ -32,7 +32,7 @@ But this is not just a log saver. It is a **full diagnostic workstation** built 
 - **Export anywhere** — HTML, CSV, JSON, shareable `.slc` bundles, or push to Grafana Loki.
 - **Tail any log** — Open any workspace `.log` file and watch new lines live.
 - **Run navigation** — Jump between Flutter runs (launch, hot restart, hot reload) inside a single log.
-- **Session Groups** — A debug session and its sidecar logs (Drift Advisor, Logcat, etc.) collapse into one entry in the Logs panel with a chevron, `+N` count badge, and summed severity totals. Right-click to Group, Ungroup, Open Merged, or Add Group to Collection.
+- **Session Groups** — A debug session and its sidecar logs (Drift Advisor, Logcat, etc.) collapse into one entry in the Logs panel with a chevron, `+N` count badge, and summed severity totals. The visible primary row prefers the capture whose log header `Project:` matches the workspace folder that holds your log directory (when that header is present). Right-click to Group, Ungroup, Open Merged, or Add Group to Collection.
 - **Session context** — Optional adapters attach lockfile hashes, Git state, env snapshots, test results, crash dumps, Docker inspect, and more to each session header.
 - **Structured log parsing** — Auto-detects logcat, syslog, and other formats; strips prefix metadata; click-to-filter on extracted fields.
 - **ASCII art detection** — Box-drawing characters and figlet banners detected and grouped into styled visual blocks.
