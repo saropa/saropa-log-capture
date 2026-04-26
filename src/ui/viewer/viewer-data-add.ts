@@ -38,8 +38,9 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
           'flutter'. Without this default those lines carried tier=undefined and isTierHidden() bailed out
           via its early (!item.tier) return false, leaving the typical bulk of a Flutter app DAP output
           uncontrollable by the Flutter DAP radio — toggling All/Warn+/None appeared to do nothing.
-          classifyLogLine() already tags launch boilerplate ("Launching…", VM Service connect) and logcat
-          lines explicitly as 'device-other', so the remainder reaching this branch is legitimate app output. */
+          classifyLogLine() already tags launch boilerplate ("Launching…", VM Service connect), logcat
+          lines, and prefixless Android system_server / Zygote output (bug_005) as 'device-other', so the
+          remainder reaching this branch is legitimate app output. */
     var lineTier = tier || (fw === true ? 'device-other' : (fw === false ? 'flutter' : (lineSource !== 'debug' ? 'external' : 'flutter')));
     /* Category filter: lines arriving while a category is unchecked must start hidden. */
     var catFiltered = !!(typeof activeFilters !== 'undefined' && activeFilters && !isMarker && !activeFilters.has(category));
