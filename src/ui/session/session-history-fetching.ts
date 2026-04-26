@@ -79,7 +79,11 @@ export async function fetchItemsCore(
         // one member of its SessionGroup \u2014 not N individual group members. Feature-gated on the
         // user setting so disabling returns the pre-feature rendering exactly as before.
         const cfg = getConfig().sessionGroups;
-        const finalItems = cfg.enabled ? groupSessionGroups(splitGrouped) : splitGrouped;
+        const hostFolder = vscode.workspace.getWorkspaceFolder(logDir);
+        const preferredWorkspaceFolderName = hostFolder?.name;
+        const finalItems = cfg.enabled
+            ? groupSessionGroups(splitGrouped, preferredWorkspaceFolderName)
+            : splitGrouped;
         return finalItems.sort((a, b) => b.mtime - a.mtime);
     } catch {
         return [];
