@@ -32,6 +32,18 @@ function isNonMarkerItemEffectivelyHidden(it) {
     return false;
 }
 
+/** True when the user has narrowed the level filter AND 'database' is not in the enabled set.
+ *  Why: db-signal markers (DB timestamp burst, N+1, slow query bursts) annotate database
+ *  activity. If the user filtered out database-level lines, the annotations belong with them
+ *  — leaving them visible under "Errors Only" or similar narrow filters surprises the user
+ *  ("non-error content showing under errors only"). The default-all-levels case stays a
+ *  no-op so the hot path doesn't change. */
+function isDbSignalLevelDisabled() {
+    if (typeof enabledLevels === 'undefined' || typeof allLevelNames === 'undefined') return false;
+    if (enabledLevels.size >= allLevelNames.length) return false;
+    return !enabledLevels.has('database');
+}
+
 /** Set \`markerHidden\` on every db-signal marker based on the user toggle and anchor visibility. */
 function applyDbSignalMarkerVisibility() {
     /* Build seq → index lookup once so anchor probing is O(1) per marker. Seq is unique per line item. */
@@ -42,10 +54,16 @@ function applyDbSignalMarkerVisibility() {
             seqToIdx[it.seq] = i;
         }
     }
+    var dbLvlOff = isDbSignalLevelDisabled();
     for (var j = 0; j < allLines.length; j++) {
         var m = allLines[j];
         if (!m || m.type !== 'marker' || m.category !== 'db-signal') continue;
         if (!dbSignalMarkersVisible) { m.markerHidden = true; continue; }
+        /* Level filter has 'database' off → hide every db-signal marker. Runs before the
+           anchor probe so a marker whose anchor was compressed/repeat-collapsed (and is no
+           longer in allLines) still hides. Without this gate, the orphan branch below
+           defaulted to visible and the marker survived "Errors Only". */
+        if (dbLvlOff) { m.markerHidden = true; continue; }
         /* Orphan check: if the marker's jump target is filtered out, hide the marker too —
            clicking it would silently no-op (scrollToAnchorSeq skips height-0 items). */
         var anc = m.anchorSeq;
