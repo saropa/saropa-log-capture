@@ -26,15 +26,19 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [Unreleased]
+## [7.5.6]
+
+Session groups in the Logs list now treat the capture whose log header `Project:` matches your workspace folder (the one that contains the log directory) as the primary row when that header is present, instead of always favoring the earliest file timestamp among sidecars. [log](https://github.com/saropa/saropa-log-capture/blob/v7.5.6/CHANGELOG.md)
 
 ### Changed
 
-- **Session group primary row** — When several captures share a session group, the tree’s primary row now **prefers the log whose header `Project:` matches the workspace folder that contains the log directory** (case-insensitive), resolved via `getWorkspaceFolder(logDir)`. If no member’s header matches, behavior is unchanged (DAP `debugAdapterType` first, then earliest `mtime`). This avoids showing an integration sidecar (e.g. logcat) as the main row when your app log lists the open project but has a later file timestamp.
+- **Session group primary row** — When several captures share a session group, the tree’s primary row **prefers the log whose header `Project:` matches the workspace folder that contains the log directory** (case-insensitive), resolved via `getWorkspaceFolder(logDir)`. If no member’s header matches, behavior is unchanged (DAP `debugAdapterType` first, then earliest `mtime`). This avoids showing an integration sidecar (e.g. logcat) as the main row when your app log lists the open project but has a later file timestamp.
 
 ---
 
 ## [7.5.5]
+
+Toolbar footer level chips show letter codes beside each dot, DB-signal markers honor level filters, prefixless Android `system_server` noise respects Device tier, and drag-select / streaming tail rendering are more reliable. [log](https://github.com/saropa/saropa-log-capture/blob/v7.5.5/CHANGELOG.md)
 
 ### Changed
 
