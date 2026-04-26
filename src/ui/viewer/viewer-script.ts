@@ -296,6 +296,12 @@ function onLogOrWrapResize() {
                 suppressScroll = true;
                 logEl.scrollTop = logEl.scrollHeight;
                 suppressScroll = false;
+                /* Same render-snap-render guard as the addLines path: the first render
+                   used the pre-snap scrollTop, so when a resize moves the bottom by
+                   more than OVERSCAN rows the snapped view lands in empty bottom-spacer
+                   space until the next event re-renders. Re-render here uses the
+                   snapped scrollTop and paints the tail in the same frame. */
+                renderViewport(false);
             }
         }
     });
