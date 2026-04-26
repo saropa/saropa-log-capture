@@ -31,6 +31,15 @@ function addIsolatedFrame(s: StackSandboxVm, html: string, ts: number): void {
     addFrame(s, html, ts);
 }
 
+/** Mimics a collapsed SQL fingerprint row between stack groups — walk-back must skip it. */
+function injectSqlStyleRepeatChip(s: StackSandboxVm): void {
+    s.allLines.push({
+        html: '<span class="repeat-notification">14 × SQL repeated: <span class="repeat-preview">SELECT …</span></span>',
+        type: 'repeat-notification',
+        height: 20
+    });
+}
+
 suite('viewer stack-header repeat collapse (bug_003)', () => {
     test('three consecutive matching single-frame stack-headers collapse to one chip', () => {
         const s = loadStackHeaderRepeatSandbox();
@@ -108,6 +117,21 @@ suite('viewer stack-header repeat collapse (bug_003)', () => {
         assert.strictEqual(headers[0].repeatHidden, false, 'trailing-chip cleanup must un-hide the pre-marker anchor');
         assert.ok(headers[0].height > 0, 'restored anchor should have non-zero height');
         assert.strictEqual(headers[1].repeatHidden, undefined, 'post-marker header is a fresh anchor');
+    });
+
+    test('SQL-style repeat-notification between matching headers does not break collapse', () => {
+        const s = loadStackHeaderRepeatSandbox();
+        const t0 = 1_000_000;
+        addIsolatedFrame(s, FRAME, t0);
+        injectSqlStyleRepeatChip(s);
+        addIsolatedFrame(s, FRAME, t0 + 100);
+        addIsolatedFrame(s, FRAME, t0 + 200);
+
+        const headers = s.allLines.filter((l: StackItemVm) => l.type === 'stack-header');
+        const stackChips = s.allLines.filter((l: StackItemVm) => l.type === 'repeat-notification' && l.stackHdrRepeat);
+        assert.strictEqual(headers.length, 1, 'anchor header only — SQL chip is not a content boundary');
+        assert.strictEqual(stackChips.length, 1);
+        assert.ok(stackChips[0].html?.includes('3 × stack repeated:'), 'stack streak should reach 3 across the SQL chip');
     });
 
     test('tracker resets after plain-line break so new streaks start at count 2', () => {
