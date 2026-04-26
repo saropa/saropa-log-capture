@@ -105,6 +105,75 @@ const launchPatterns: RegExp[] = [
 ];
 
 /**
+ * Android system process output that arrives WITHOUT a logcat prefix.
+ *
+ * Why these patterns exist: capturing logs over DAP (or via `adb logcat -v raw`,
+ * tombstone dumps, system_server stderr) produces lines from the Android system
+ * processes — Zygote, system_server, ActivityManager, lmkd, etc. — with no
+ * `D/Tag(pid):` prefix. Without classifying these as `device-other`, they fall
+ * through to the `tier='flutter'` fallback in `viewer-data-add.ts`, which means
+ * the Device Logs `warnplus` gate cannot filter them and the user sees a flood
+ * of boot/system noise even with strict level filters off.
+ *
+ * Each pattern below is anchored at line start and targets a specific message
+ * the Android frameworks emit verbatim. Keep them tight — false positives on
+ * user app output would mis-classify legitimate app code as device noise.
+ */
+const androidSystemPatterns: RegExp[] = [
+    /* Logcat buffer banner emitted between buffer dumps (`main`, `system`,
+       `crash`, `events`, `radio`). Definitive marker that what follows is
+       device-side log output. */
+    /^---------\s+beginning\s+of\s+\w+/,
+    /* Saropa-side custom start banner produced by the capture script when it
+       enters a new system_server session. Always brackets system process output. */
+    /^>>>>>>\s+START\s+com\.[\w.]+/,
+    /* Zygote / system_server process lifecycle (boot path).
+       Verbatim strings from frameworks/base. */
+    /^Forked\s+child\s+process\s+\d+/,
+    /^System\s+server\s+process\s+\d+\s+has\s+been\s+created/,
+    /^Entering\s+forkRepeatedly\s+native\s+zygote\s+loop/,
+    /^Process\s+\S+\s+\(pid\s+\d+\)\s+has\s+died/,
+    /^VM\s+exiting\s+with\s+result\s+code/,
+    /* Boot preload / class init / JCA boilerplate. */
+    /^(?:begin|end)\s+preload$/,
+    /^Called\s+ZygoteHooks\.endPreload\(\)/,
+    /^Installed\s+(?:AndroidKeyStoreProvider|JCA\s+providers)/,
+    /^Warmed\s+up\s+JCA\s+providers/,
+    /^Using\s+default\s+boot\s+image$/,
+    /^Leaving\s+lock\s+profiling\s+enabled/,
+    /^SAFE\s+MODE\s+(?:not\s+)?enabled/,
+    /^Memory\s+class:\s*\d+/,
+    /^System\s+now\s+ready/,
+    /* ActivityManager / WindowManager system_server diagnostics. */
+    /^Slow\s+operation:\s+\d+ms\s+so\s+far/,
+    /^Override\s+config\s+changes=/,
+    /^DeferredDisplayUpdater:/,
+    /^Registering\s+transition\s+player/,
+    /^ThemeHomeDelay:/,
+    /^ProcessObserver\s+broadcast\s+(?:disabled|enabled)/,
+    /^Skipping\s+saving\s+the\s+start\s+info/,
+    /^Too\s+early\s+to\s+(?:start|bind)\s+service\s+in\s+system_server/,
+    /^Current\s+user\s*:\s*\d+/,
+    /* Service registration / receiver / unbind diagnostics. */
+    /^Unable\s+to\s+(?:start\s+service|find\s+com\.)/,
+    /^Receiver\s+with\s+filter\s+\S+\s+already\s+registered/,
+    /^Unbind\s+failed:\s+could\s+not\s+find\s+connection/,
+    /* lmkd / freezer / display settings boot output. */
+    /^Connection\s+with\s+lmkd\s+established/,
+    /^lmkd\s+data\s+connection\s+established/,
+    /^Freezer\s+(?:timeout\s+set\s+to|exemption\s+set\s+to|enabled|override\s+set\s+to)/,
+    /^freezer\s+override\s+set\s+to/,
+    /^No\s+existing\s+display\s+settings/,
+    /* StatsPullAtomService boot probe — emits "not ready yet" repeatedly. */
+    /^StatsPullAtomService\s+not\s+ready\s+yet/,
+    /* WebViewLoader / forkRepeatedly native zygote diagnostics. */
+    /^mbuffer\s+starts\s+with\s+\d+/,
+    /^forkRepeatedly\s+terminated\s+due\s+to\s+non-simple\s+command/,
+    /* Accepting command socket connections (Zygote). */
+    /^Accepting\s+command\s+socket\s+connections/,
+];
+
+/**
  * Classify a regular (non-stack-frame) log line by device tier.
  * Returns a DeviceTier for logcat lines, 'device-other' for launch boilerplate,
  * or undefined if the line format is unrecognised.
@@ -115,6 +184,12 @@ export function classifyLogLine(text: string): DeviceTier | undefined {
         return getDeviceTier(m[1]);
     }
     for (const pat of launchPatterns) {
+        if (pat.test(text)) { return 'device-other'; }
+    }
+    /* Prefixless Android system process output. Run AFTER logcat/launch checks
+       so an explicit logcat tag still wins (a hypothetical line that matches
+       both should keep its logcat tag classification). */
+    for (const pat of androidSystemPatterns) {
         if (pat.test(text)) { return 'device-other'; }
     }
     return undefined;
