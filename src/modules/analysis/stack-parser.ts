@@ -152,7 +152,8 @@ const androidSystemPatterns: RegExp[] = [
     /^ThemeHomeDelay:/,
     /^ProcessObserver\s+broadcast\s+(?:disabled|enabled)/,
     /^Skipping\s+saving\s+the\s+start\s+info/,
-    /^Too\s+early\s+to\s+(?:start|bind)\s+service\s+in\s+system_server/,
+    // Android also emits combined verb form "start/bind service ...".
+    /^Too\s+early\s+to\s+(?:(?:start|bind)\s+service|start\/bind\s+service)\s+in\s+system_server/,
     /^Current\s+user\s*:\s*\d+/,
     /* Service registration / receiver / unbind diagnostics. */
     /^Unable\s+to\s+(?:start\s+service|find\s+com\.)/,
