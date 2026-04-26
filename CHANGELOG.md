@@ -28,8 +28,6 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [Unreleased]
 
-**7.5.7** — [package.json](./package.json) `version`. Marketplace is still **7.5.5** until the next publish.
-
 ### Changed
 
 - **Session group primary row** — When several captures share a session group, the tree’s primary row **prefers the log whose header `Project:` matches the workspace folder that contains the log directory** (case-insensitive), resolved via `getWorkspaceFolder(logDir)`. If no member’s header matches, behavior is unchanged (DAP `debugAdapterType` first, then earliest `mtime`). This avoids showing an integration sidecar (e.g. logcat) as the main row when your app log lists the open project but has a later file timestamp.
