@@ -35,6 +35,32 @@ suite('Viewer DB signal marker filter', () => {
         assert.ok(js.includes("m.category !== 'db-signal'"));
     });
 
+    test('bug 004: db-signal markers hide when database level is filtered (Errors Only)', () => {
+        const js = getViewerDataMarkerFilterScript();
+        assert.ok(js.includes('function isDbSignalLevelDisabled'), 'level gate helper');
+        assert.ok(
+            js.includes("enabledLevels.has('database')"),
+            'narrowed filter without database must hide db-signal markers',
+        );
+        // Gate must run before anchor/orphan branches so compressed anchors still hide markers.
+        const visIdx = js.indexOf('function applyDbSignalMarkerVisibility');
+        assert.ok(visIdx >= 0);
+        const dbLvlIdx = js.indexOf('dbLvlOff');
+        const ancIdx = js.indexOf('var anc = m.anchorSeq', visIdx);
+        assert.ok(dbLvlIdx > visIdx && ancIdx > dbLvlIdx, 'dbLvlOff runs before anchor probe');
+    });
+
+    test('bug 004: streaming marker birth mirrors level gate (no flash before recalcHeights)', () => {
+        const data = getViewerDataScript();
+        assert.ok(
+            data.includes('isDbSignalLevelDisabled()'),
+            'applyDbMarkerResults must consult the same gate as applyDbSignalMarkerVisibility',
+        );
+        const birthGate =
+            "typeof isDbSignalLevelDisabled === 'function' && isDbSignalLevelDisabled()";
+        assert.ok(data.includes(birthGate), 'at-birth path calls isDbSignalLevelDisabled');
+    });
+
     test('collapse pass resets head on any visible non-marker line and increments on adjacency', () => {
         const js = getViewerDataMarkerFilterScript();
         assert.ok(js.includes('markerCollapsed = true'));
