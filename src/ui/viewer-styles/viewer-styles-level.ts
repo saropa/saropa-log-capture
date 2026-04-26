@@ -50,8 +50,8 @@ export function getLevelStyles(): string {
    Why: 8 colors at 12px are unscannable on dense toolbar (color-blind users
    especially), and the toolbar footer was the only level-filter UI without
    any text label, diverging from the filter drawer's emoji+label+count
-   chips. Match the dot color (active) or descriptionForeground (inactive)
-   so the chip carries the same active-state cue as the dot beside it. */
+   chips. Per-level colors match the dot; inactive groups also lower letter
+   opacity via :has(.level-dot:not(.active)) so state stays paired with the dot. */
 .level-letter {
     font-size: 10px;
     font-weight: 600;

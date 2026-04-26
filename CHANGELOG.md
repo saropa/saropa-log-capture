@@ -38,7 +38,7 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Changed
 
-- **Toolbar level filter dots now include letter labels (`E`, `W`, `I`, `P`, `T`, `N`, `D`, `DB`).** This improves readability and accessibility versus color-only dots. Footer chips now show dot+letter+count, disabled levels fade, and click/double-click behavior is unchanged. Bug plan: `bugs/bug_006_level-dots-unreadable-without-labels.md`.
+- **Toolbar level filter dots now include letter labels (`E`, `W`, `I`, `P`, `T`, `N`, `D`, `DB`).** This improves readability and accessibility versus color-only dots. Footer chips now show dot+letter+count, disabled levels fade, and click/double-click behavior is unchanged. Bug plan: `plans/history/2026.04/2026.04.26/bug_006_level-dots-unreadable-without-labels.md`.
 
 ### Fixed
 
