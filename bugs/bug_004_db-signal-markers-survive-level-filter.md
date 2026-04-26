@@ -1,6 +1,6 @@
 # Bug 004 — DB-Signal Markers Survive the Level Filter
 
-## Status: Fix Ready
+## Status: Fixed
 
 ## Problem
 
@@ -61,6 +61,7 @@ The at-birth marker-creation path now mirrors the recalc gate: if `isDbSignalLev
 
 - `npm run check-types`
 - `npm run lint`
+- Automated: `src/test/ui/viewer-data-marker-filter.test.ts` (tests named “bug 004”)
 - Manual: load a log with Drift bursts under `Errors Only`; the `DB timestamp burst` marker should not render. Toggle `database` back on via the level filter drawer; the marker re-appears subject to the existing anchor-visibility rules.
 
 ## Notes
