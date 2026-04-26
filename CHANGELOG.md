@@ -26,7 +26,9 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [Unreleased]
+## [7.5.7]
+
+Session-group primary row favors the app log whose `Project:` header matches the workspace folder that contains the log directory when several captures share a session group, instead of picking only by timestamp. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
 
 ### Changed
 
