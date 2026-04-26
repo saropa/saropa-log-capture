@@ -126,6 +126,12 @@ function applyDbMarkerResults(results, ts, sp, lineSource) {
             var _mHidden = false;
             if (typeof dbSignalMarkersVisible !== 'undefined' && !dbSignalMarkersVisible) {
                 _mHidden = true;
+            } else if (typeof isDbSignalLevelDisabled === 'function' && isDbSignalLevelDisabled()) {
+                /* Mirror applyDbSignalMarkerVisibility's database-level gate so streaming
+                   markers don't briefly flash visible under "Errors Only" before the next
+                   recalcHeights pass. Same reasoning as the recalc path: db-signal markers
+                   belong with database lines. */
+                _mHidden = true;
             } else if (typeof anc === 'number' && isFinite(anc) && typeof isNonMarkerItemEffectivelyHidden === 'function') {
                 /* Anchor was pushed immediately before the marker in the same batch — a short
                    reverse scan beats building a global seq→index map per marker. Bound the scan
