@@ -1,6 +1,6 @@
 # Bug 006 — Toolbar Level Dots Unreadable, Two Filter Strips Diverge
 
-## Status: Fix Ready
+## Status: Fixed
 
 ## Problem
 
@@ -62,4 +62,5 @@ If a future redesign decides to unify entirely, the call site here is small (eig
 
 - `npm run check-types`
 - `npm run lint`
+- `npm run compile-tests` then `npx vscode-test --run out/test/ui/viewer-toolbar.test.js` — includes regression test `toolbar level summary has letter chip between dot and count (bug 006)`.
 - Manual: open the viewer; the footer should read `🔴E 29  🟠W 137  🟢I 4,552 …` style. Toggle a level off via the drawer; the corresponding letter in the footer should fade to 45% opacity. Click a dot in the footer; behavior matches the prior dot-only click (toggles the level). Double-click "solos" the level (existing behavior preserved).
