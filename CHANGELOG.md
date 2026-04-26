@@ -28,7 +28,7 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [Unreleased]
 
-Development builds use **`version` in [package.json](./package.json)** (currently **7.5.6**); this section lists changes **after** the last published Marketplace release (**7.5.5**).
+**7.5.7** — [package.json](./package.json) `version`. Marketplace is still **7.5.5** until the next publish.
 
 ### Changed
 
