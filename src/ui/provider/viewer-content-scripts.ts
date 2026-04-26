@@ -18,6 +18,7 @@ import { getWatchScript } from '../viewer/viewer-watch';
 import { getPinScript } from '../viewer/viewer-pin';
 import { getExclusionScript } from '../viewer-search-filter/viewer-exclusions';
 import { getCopyScript } from '../viewer/viewer-copy';
+import { getCopyDragSelectScript } from '../viewer/viewer-copy-drag-select';
 import { getHiddenLinesScript } from '../viewer/viewer-hidden-lines';
 import { getPeekChevronScript } from '../viewer/viewer-peek-chevron';
 import { getAutoHideModalScript } from '../viewer/viewer-auto-hide-modal';
@@ -156,6 +157,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getPinScript()) +
         scriptTag(nonce, getExclusionScript()) +
         scriptTag(nonce, getCopyScript()) +
+        scriptTag(nonce, getCopyDragSelectScript()) +
         scriptTag(nonce, getHiddenLinesScript()) +
         scriptTag(nonce, getPeekChevronScript()) +
         scriptTag(nonce, getAutoHideModalScript()) +
