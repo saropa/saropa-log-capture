@@ -1,6 +1,6 @@
 # Bug 003 — Stack-Header Dedup Consistency
 
-## Status: Fix Ready
+## Status: Fixed (in-tree; see `viewer-data-add-stack-header-repeat.ts` + tests)
 
 ## Problem
 
@@ -138,16 +138,17 @@ VM-based sandbox that mirrors `viewer-sql-repeat-compression-sandbox.ts` but swa
 
 ### `src/test/ui/viewer-stack-header-repeat.test.ts` (new)
 
-Six regression tests for `tryCollapseRepeatStackHeader` + cleanup:
+Seven regression tests for `tryCollapseRepeatStackHeader` + cleanup:
 
 1. Three consecutive matching isolated stack-headers collapse to one anchor + one `stackHdrRepeat` chip with `"3 × stack repeated:"`; anchor marked `repeatHidden=true`, `height=0`, `collapsed=true`.
 2. A plain-line between isolated matching headers resets the tracker via the normal-line-push reset hook → no chip, both headers remain.
 3. Isolated headers with different plain-text hashes do not merge.
 4. Isolated matching headers more than `repeatWindowMs` (3000 ms) apart do not merge.
 5. Marker cleanup: trailing chip → anchor is restored (`repeatHidden=false`, `height>0`), chip zeroed, and a post-marker matching header starts a fresh anchor (walk-back's marker-stopper rule).
-6. Two independent streaks separated by a plain-line each produce their own chip at count=2 — the second streak does not continue from the first's count.
+6. A SQL-style `repeat-notification` row injected between matching headers does not break the streak (Drift: SQL chip between identical interceptor stacks).
+7. Two independent streaks separated by a plain-line each produce their own chip at count=2 — the second streak does not continue from the first's count.
 
-All six pass. Total suite: 2540 passing (2534 baseline + 6 new).
+All seven pass (`npx vscode-test --run out/test/ui/viewer-stack-header-repeat.test.js`).
 
 ## Commits
 
