@@ -1,6 +1,6 @@
 # Bug 005 — Prefixless system_server Lines Escape the Device Tier Gate
 
-## Status: Fix Ready
+## Status: Fixed
 
 ## Problem
 

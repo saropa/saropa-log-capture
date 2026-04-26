@@ -43,6 +43,7 @@ suite('classifyLogLine — prefixless Android system process patterns', () => {
         assert.strictEqual(classifyLogLine('Installed AndroidKeyStoreProvider in 0ms.'), 'device-other');
         assert.strictEqual(classifyLogLine('Warmed up JCA providers in 3ms.'), 'device-other');
         assert.strictEqual(classifyLogLine('Using default boot image'), 'device-other');
+        assert.strictEqual(classifyLogLine('Leaving lock profiling enabled'), 'device-other');
         assert.strictEqual(classifyLogLine('Memory class: 192'), 'device-other');
         assert.strictEqual(classifyLogLine('System now ready'), 'device-other');
     });
@@ -51,6 +52,10 @@ suite('classifyLogLine — prefixless Android system process patterns', () => {
         assert.strictEqual(classifyLogLine('Slow operation: 188ms so far, now at startProcess: returned from zygote!'), 'device-other');
         assert.strictEqual(
             classifyLogLine('Override config changes=200 {1.0 ?mcc0mnc [en_US] ldltr sw411dp w411dp h914dp}'),
+            'device-other',
+        );
+        assert.strictEqual(
+            classifyLogLine('Override config changes=60007dfc {1.0 ?mcc0mnc [en_US] ldltr sw411dp w411dp h914dp}'),
             'device-other',
         );
         assert.strictEqual(classifyLogLine('DeferredDisplayUpdater: applying DisplayInfo(1080 x 2400) immediately'), 'device-other');
@@ -83,6 +88,10 @@ suite('classifyLogLine — prefixless Android system process patterns', () => {
         assert.strictEqual(classifyLogLine('No existing display settings, starting empty'), 'device-other');
     });
 
+    test('StatsPullAtomService boot probe is device-other', () => {
+        assert.strictEqual(classifyLogLine('StatsPullAtomService not ready yet.'), 'device-other');
+    });
+
     test('app stdout/stderr without these patterns still returns undefined', () => {
         // User app's debugPrint() / print() output — must NOT be misclassified as device.
         assert.strictEqual(classifyLogLine('User loaded contact list with 42 entries'), undefined);
@@ -91,7 +100,7 @@ suite('classifyLogLine — prefixless Android system process patterns', () => {
     });
 
     test('logcat-prefixed lines still classify by tag (regression: prefix wins over system patterns)', () => {
-        // I/flutter — the pattern would otherwise match nothing, but the logcat tag must take priority.
-        assert.notStrictEqual(classifyLogLine('I/flutter (1234): Forked child process 1'), undefined);
+        // I/flutter — must stay flutter tier even if the message body echoes a system_server string.
+        assert.strictEqual(classifyLogLine('I/flutter (1234): Forked child process 1'), 'flutter');
     });
 });
