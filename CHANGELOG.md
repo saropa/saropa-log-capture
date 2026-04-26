@@ -28,11 +28,16 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [7.5.7]
 
-Session-group primary row favors the app log whose `Project:` header matches the workspace folder that contains the log directory when several captures share a session group, instead of picking only by timestamp. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+Session-group primary row favors the app log whose `Project:` header matches the workspace folder that contains the log directory when several captures share a session group, instead of picking only by timestamp; repeated identical stack headers collapse into an `N × stack repeated` chip; copy on collapsed SQL-repeat rows expands to the full underlying lines. [log](https://github.com/saropa/saropa-log-capture/blob/v7.5.7/CHANGELOG.md)
 
 ### Changed
 
 - **Session group primary row** — When several captures share a session group, the tree’s primary row **prefers the log whose header `Project:` matches the workspace folder that contains the log directory** (case-insensitive), resolved via `getWorkspaceFolder(logDir)`. If no member’s header matches, behavior is unchanged (DAP `debugAdapterType` first, then earliest `mtime`). This avoids showing an integration sidecar (e.g. logcat) as the main row when your app log lists the open project but has a later file timestamp.
+
+### Fixed
+
+- **Repeated identical stacks now collapse into an `N × stack repeated` chip.** Stack headers previously bypassed repeat collapse because they returned early in `viewer-data-add.ts`. New stack-header repeat handling hides the anchor/group, emits a repeat notification row, and restores state correctly on cleanup boundaries.
+- **Copy on collapsed SQL-repeat rows now expands to the underlying SQL lines.** Copy paths now use captured hidden-anchor text and repeat count so clipboard output includes all repeated lines (not just the header), with selection/toast counts updated accordingly.
 
 ---
 
@@ -42,12 +47,12 @@ Toolbar footer level chips show letter codes beside each dot, DB-signal markers 
 
 ### Changed
 
-- **Toolbar level filter dots now include letter labels (`E`, `W`, `I`, `P`, `T`, `N`, `D`, `DB`).** This improves readability and accessibility versus color-only dots. Footer chips now show dot+letter+count, disabled levels fade, and click/double-click behavior is unchanged. Bug plan: `bugs/bug_006_level-dots-unreadable-without-labels.md`.
+- **Toolbar level filter dots now include letter labels (`E`, `W`, `I`, `P`, `T`, `N`, `D`, `DB`).** This improves readability and accessibility versus color-only dots. Footer chips now show dot+letter+count, disabled levels fade, and click/double-click behavior is unchanged.
 
 ### Fixed
 
-- **DB-signal markers now respect level filters.** Orphaned markers (missing SQL anchors in `allLines`) no longer stay visible under filtered views. `isDbSignalLevelDisabled()` now gates marker visibility in recalc and marker creation. Bug plan: `bugs/bug_004_db-signal-markers-survive-level-filter.md`.
-- **Prefixless Android `system_server` lines now hide under Device filters.** Common framework messages now classify as `device-other` (instead of falling back to Flutter tier), while explicit logcat prefixes still win. Bug plan: `bugs/bug_005_prefixless-system-server-escapes-device-tier.md`.
+- **DB-signal markers now respect level filters.** Orphaned markers (missing SQL anchors in `allLines`) no longer stay visible under filtered views. `isDbSignalLevelDisabled()` now gates marker visibility in recalc and marker creation.
+- **Prefixless Android `system_server` lines now hide under Device filters.** Common framework messages now classify as `device-other` (instead of falling back to Flutter tier), while explicit logcat prefixes still win.
 - **Plain mouse drag now selects log lines for copy.** Drag selection now uses the indexed selection model with thresholding, robust row hit-testing, and edge autoscroll, so selection survives virtualized re-renders.
 - **Drag-select now releases safely on focus-loss and missed mouseup scenarios.** This prevents stuck drag state and runaway autoscroll after out-of-window mouseup events.
 - **Viewer no longer flickers near bottom during streaming.** After auto-scroll snap, a second viewport render now runs in the same frame so large batches paint correctly at the tail.
@@ -59,11 +64,6 @@ Toolbar footer level chips show letter codes beside each dot, DB-signal markers 
 ### Changed
 
 - **Minimap colors rebalanced for per-pixel paint.** Color alphas in `initMmColors` were tuned for the old overdraw model and became too bright after per-pixel reduction. Alphas were lowered across severity/perf/database/SQL bands, and the SQL-density test now pins hue only so alpha can continue to be tuned.
-
-### Fixed
-
-- **Repeated identical stacks now collapse into an `N × stack repeated` chip.** Stack headers previously bypassed repeat collapse because they returned early in `viewer-data-add.ts`. New stack-header repeat handling hides the anchor/group, emits a repeat notification row, and restores state correctly on cleanup boundaries.
-- **Copy on collapsed SQL-repeat rows now expands to the underlying SQL lines.** Copy paths now use captured hidden-anchor text and repeat count so clipboard output includes all repeated lines (not just the header), with selection/toast counts updated accordingly.
 
 ---
 
@@ -408,7 +408,7 @@ Overhauls the filter panel into focused sections with a dedicated Tags & Origins
 - **adb logcat Phase 2: streaming provider pattern.** Logcat spawning now uses `IntegrationProvider` hooks (`onSessionStartStreaming`, `onProcessId`) instead of hardcoded session-init logic.
 - **`ROADMAP.md` now redirects to `plans/`.** It points to `plans/` for upcoming work and `plans/history/` for completed work.
 - **README restructured for faster grokking.** Installation & Quick Start moved to the top of the page, a hyperlinked Table of Contents added, the Integration adapters wall-of-text broken into scannable sub-bullets, and the Configuration table split into six categorized tables (Capture, Viewer & Display, Filter & Search, Alert & Diagnostics, File Splitting Rules, Advanced).
-- **README hero section rewritten to explain the feature set.** The intro and overview now lead with the value proposition (zero-config capture, diagnostic workstation, error intelligence, SQL diagnostics) instead of reading like technical documentation. Added coverage for signals, structured log parsing, ASCII art detection, and Drift SQL diagnostics. Fixed stale `bugs/` links to `plans/`.
+- **README hero section rewritten to explain the feature set.** The intro and overview now lead with the value proposition (zero-config capture, diagnostic workstation, error intelligence, SQL diagnostics) instead of reading like technical documentation. Added coverage for signals, structured log parsing, ASCII art detection, and Drift SQL diagnostics. Fixed stale documentation links to use `plans/`.
 </details>
 
 ---
