@@ -49,8 +49,11 @@ var logLineHeight = 1.1;
 /** Reset target for the line height — what Ctrl+Shift+0 / lineHeightReset returns to. */
 var logLineHeightDefault = 1.1;
 
-/** Enable visual spacing (breathing room) between sections. */
-var visualSpacingEnabled = true;
+/** Enable visual spacing (breathing room) between sections. Default off for IDE-like density; toggle with V. */
+var visualSpacingEnabled = false;
+
+/** Reset target for Options reset — seeded from host logViewerVisualSpacing message (workspace setting). */
+var logViewerVisualSpacingDefault = false;
 
 /** Hide lines that are empty or only whitespace. */
 var hideBlankLines = false;
@@ -133,6 +136,9 @@ function toggleLineHeightMode() {
  */
 function toggleVisualSpacing() {
     visualSpacingEnabled = !visualSpacingEnabled;
+    if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
+        vscodeApi.postMessage({ type: 'setLogViewerVisualSpacing', value: visualSpacingEnabled });
+    }
     if (typeof renderViewport === 'function') {
         renderViewport(true);
     }
