@@ -2733,11 +2733,17 @@
     "verify:release-version": "node scripts/modules/release-version-check.mjs",
     "verify:release-tag": "node scripts/modules/release-version-check.mjs --tag",
     "test:file": "node scripts/modules/run-vscode-test-file.mjs",
+    "test:smoke": "node scripts/modules/patch-vscode-test.js && vscode-test --run out/test/extension-smoke.test.js",
+    "generate:list-commands": "node scripts/modules/list-commands.mjs",
+    "verify:list-commands": "node scripts/modules/list-commands.mjs --check",
+    "verify:node-toolchain": "node scripts/modules/verify-node-toolchain.mjs",
+    "clean": "node scripts/modules/clean.mjs",
+    "preflight": "npm run doctor && npm run check-types && npm run verify-nls",
     "generate:db-detector-embed-merge": "node scripts/modules/generate-db-detector-embed-merge.mjs",
-    "compile": "npm run generate:db-detector-embed-merge && npm run check-types && npm run lint && npm run verify-nls && npm run verify:webview-catalog && npm run verify:host-outbound-catalog && node esbuild.js && npm run verify:dist-size",
+    "compile": "npm run generate:db-detector-embed-merge && npm run verify:node-toolchain && npm run check-types && npm run lint && npm run verify-nls && npm run verify:webview-catalog && npm run verify:host-outbound-catalog && npm run verify:list-commands && node esbuild.js && npm run verify:dist-size",
     "compile-tests": "node -e \"require('fs').rmSync('out', { recursive: true, force: true })\" && tsc -p . --outDir out --noEmit false",
     "lint": "eslint src",
-    "package": "npm run check-types && npm run lint && npm run verify:webview-catalog && npm run verify:host-outbound-catalog && node esbuild.js --production && npm run verify:dist-size",
+    "package": "npm run verify:node-toolchain && npm run check-types && npm run lint && npm run verify:webview-catalog && npm run verify:host-outbound-catalog && npm run verify:list-commands && node esbuild.js --production && npm run verify:dist-size",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "test": "node scripts/modules/patch-vscode-test.js && vscode-test",
     "test:coverage": "npm run pretest && node scripts/modules/run-coverage.js",
@@ -2747,5 +2753,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "7.5.7"
+  "version": "7.6.0"
 }

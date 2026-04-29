@@ -226,11 +226,22 @@ npm run generate:webview-catalog
 
 `npm run compile` runs **`verify:webview-catalog`** and fails when `doc/internal/webview-incoming-message-types.md` is out of date.
 
+### Extension → webview message catalog
+
+Host code that posts into webviews (`this.postMessage`, `target.postMessage`, `ctx.post`, `.webview.postMessage`) is indexed (heuristic; see script for exclusions such as `src/ui/viewer/`). Regenerate when you add or change those payloads:
+
+```bash
+npm run generate:host-outbound-catalog
+```
+
+`npm run compile` runs **`verify:host-outbound-catalog`** against `doc/internal/webview-outbound-message-types.md`.
+
 ### TypeScript emit
 
+- Root **`tsconfig.json`** sets **`"noEmit": true`** so a stray `tsc -p .` does not write `.js` next to sources. Test output uses **`--noEmit false --outDir out`** (see `compile-tests` / `watch-tests`).
 - Use **`npm run check-types`** (`tsc --noEmit`) for typechecking.
-- Use **`npm run compile-tests`** to emit test JavaScript under **`out/`** only (`tsc --outDir out`).
-- Avoid running **`tsc -p .`** without **`--outDir`**: the default compiler options can emit `.js` beside `.ts` under `src/`, which is confusing alongside tracked sources. See [doc/AGENTS.md](doc/AGENTS.md).
+- Use **`npm run compile-tests`** to emit test JavaScript under **`out/`** only (`tsc --outDir out --noEmit false`).
+- See [doc/AGENTS.md](doc/AGENTS.md) for the full picture.
 
 ### Bundle analysis (optional)
 
@@ -268,7 +279,39 @@ npm run test
 
 The `pretest` script runs type-check, lint, and compile first. Tests run inside a VS Code Extension Host; the first run may take longer while the test environment is set up.
 
-To iterate on a **single test file** without waiting for the full suite, use the **Extension Test Runner** (recommended in `.vscode/extensions.json`) and the Testing view in VS Code, or run `vscode-test` with a file filter if your local setup supports it.
+To iterate on a **single test file** without waiting for the full suite:
+
+```bash
+npm run test:file -- out/test/ui/viewer-toolbar.test.js
+```
+
+(prerequisite: `npm run compile-tests` so the compiled file exists). Alternatively use the **Extension Test Runner** and the Testing view in VS Code (recommended in `.vscode/extensions.json`).
+
+### Environment doctor
+
+```bash
+npm run doctor
+```
+
+Checks Node vs `engines.node`, `node_modules`, and `dist/extension.js`.
+
+Faster gate (no esbuild / webview catalog): **`npm run preflight`** (`doctor` + types + NLS).
+
+Remove stale **`out/`** test emit: **`npm run clean`** (optional **`--dist`** / **`--vscode-test`**).
+
+Activation smoke only: **`npm run test:smoke`** (requires **`npm run compile-tests`** first).
+
+If you add **`contributes.commands`** entries, run **`npm run generate:list-commands`** and commit **`doc/internal/contributes-commands.md`**.
+
+### Release version vs changelog
+
+Before tagging or publishing, confirm the package version has a matching changelog section:
+
+```bash
+npm run verify:release-version
+```
+
+Optional: **`npm run verify:release-tag`** — same as above plus requires an exact **`v{version}`** git tag on `HEAD`.
 
 ### Coverage
 

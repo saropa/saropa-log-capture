@@ -91,9 +91,11 @@ suite('ViewerContextMenu', () => {
             const script = (0, viewer_context_menu_1.getContextMenuScript)();
             /* 1-based: matches the counter decoration users see; the rest of the UI is 1-based too. */
             assert.ok(script.includes('String(lineIdx + 1)'));
-            /* Goes through the generic clipboard postMessage path — no new host route needed. */
+            /* Goes through the generic clipboard postMessage path — no new host route needed.
+               Snippet is 800 chars because the WHY comment above the implementation is long and
+               we need to reach the vscodeApi.postMessage line that sits after it. */
             const idx = script.indexOf("case 'copy-line-number':");
-            const snippet = script.slice(idx, idx + 400);
+            const snippet = script.slice(idx, idx + 800);
             assert.ok(snippet.includes("type: 'copyToClipboard'"));
             assert.ok(snippet.includes('String(lineIdx + 1)'));
         });
@@ -101,7 +103,10 @@ suite('ViewerContextMenu', () => {
             const script = (0, viewer_context_menu_1.getContextMenuScript)();
             const idx = script.indexOf("case 'copy-timestamp':");
             assert.ok(idx >= 0);
-            const snippet = script.slice(idx, idx + 500);
+            /* 900 chars: the WHY comment above this case is the longest in the file (covers
+               .timestamp vs .ts rationale + ISO 8601 reasoning), so the snippet must extend past
+               it to reach the `new Date(tsVal).toISOString()` line. */
+            const snippet = script.slice(idx, idx + 900);
             /* Both .timestamp (canonical) and .ts (legacy) must be checked — dropping either makes
                the copy silently empty on stack frames or markers depending on code path. */
             assert.ok(snippet.includes('lineData.timestamp || lineData.ts'));
