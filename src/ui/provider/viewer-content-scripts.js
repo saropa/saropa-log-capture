@@ -17,6 +17,7 @@ const viewer_watch_1 = require("../viewer/viewer-watch");
 const viewer_pin_1 = require("../viewer/viewer-pin");
 const viewer_exclusions_1 = require("../viewer-search-filter/viewer-exclusions");
 const viewer_copy_1 = require("../viewer/viewer-copy");
+const viewer_copy_drag_select_1 = require("../viewer/viewer-copy-drag-select");
 const viewer_hidden_lines_1 = require("../viewer/viewer-hidden-lines");
 const viewer_peek_chevron_1 = require("../viewer/viewer-peek-chevron");
 const viewer_auto_hide_modal_1 = require("../viewer/viewer-auto-hide-modal");
@@ -108,6 +109,7 @@ function getViewerScriptTags(opts) {
         scriptTag(nonce, (0, viewer_pin_1.getPinScript)()) +
         scriptTag(nonce, (0, viewer_exclusions_1.getExclusionScript)()) +
         scriptTag(nonce, (0, viewer_copy_1.getCopyScript)()) +
+        scriptTag(nonce, (0, viewer_copy_drag_select_1.getCopyDragSelectScript)()) +
         scriptTag(nonce, (0, viewer_hidden_lines_1.getHiddenLinesScript)()) +
         scriptTag(nonce, (0, viewer_peek_chevron_1.getPeekChevronScript)()) +
         scriptTag(nonce, (0, viewer_auto_hide_modal_1.getAutoHideModalScript)()) +

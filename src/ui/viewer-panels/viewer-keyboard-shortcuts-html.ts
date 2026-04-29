@@ -106,7 +106,7 @@ function getPowerShortcutsHtml(): string {
                     <tr data-action-id="toggleWrap"><td><kbd>W</kbd></td><td>Word wrap</td><td>Toggle wrapping of long lines to fit the panel width</td></tr>
                     <tr data-action-id="toggleCompress"><td><kbd>C</kbd></td><td>Compress duplicates</td><td>Collapse consecutive identical lines into one row with a count badge</td></tr>
                     <tr data-action-id="toggleBlankLines"><td><kbd>H</kbd></td><td>Hide blank lines</td><td>Hide lines that are empty or only whitespace</td></tr>
-                    <tr data-action-id="toggleSpacing"><td><kbd>V</kbd></td><td>Visual spacing</td><td>Toggle breathing room between log sections</td></tr>
+                    <tr data-action-id="toggleSpacing"><td><kbd>V</kbd></td><td>Visual spacing</td><td>Toggle breathing room between log sections (default off)</td></tr>
                     <tr data-action-id="togglePause"><td><kbd>Space</kbd></td><td>Pause/resume</td><td>Pause auto-scroll so new lines don't push the viewport</td></tr>
                     <tr data-action-id="toggleDevice"><td><kbd>A</kbd></td><td>Cycle device logs</td><td>Cycle device log visibility: None → Warn+ → All → None</td></tr>
                 </tbody>
