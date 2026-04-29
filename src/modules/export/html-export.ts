@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import { ansiToHtml, escapeHtml } from '../capture/ansi';
 import { SessionMetadataStore } from '../session/session-metadata';
+import { isPlainTextBlankAfterAnsi } from '../misc/blank-line-text';
+import { getSimpleHtmlExportStyles } from './html-export-styles';
 
 /**
  * Export a .log file to a styled .html file alongside it.
@@ -30,10 +32,12 @@ export async function exportToHtml(logUri: vscode.Uri): Promise<vscode.Uri> {
 function buildBodyWithAnnotations(lines: string[], annotations: Map<number, string>): string {
     const parts: string[] = [];
     for (let i = 0; i < lines.length; i++) {
-        parts.push(ansiToHtml(lines[i]));
+        const raw = lines[i];
+        const blankCls = isPlainTextBlankAfterAnsi(raw) ? ' line-blank' : '';
+        parts.push(`<div class="line${blankCls}">${ansiToHtml(raw)}</div>`);
         const ann = annotations.get(i);
         if (ann) {
-            parts.push(`<span class="annotation">[Note: ${escapeHtml(ann)}]</span>`);
+            parts.push(`<div class="annotation">[Note: ${escapeHtml(ann)}]</div>`);
         }
     }
     return parts.join('\n');
@@ -83,7 +87,7 @@ summary {
     color: #9cdcfe;
 }
 .body-block { padding: 0; }
-.annotation { color: #6a9955; font-style: italic; }
+${getSimpleHtmlExportStyles()}
 </style>
 </head>
 <body>
@@ -91,7 +95,7 @@ summary {
 <summary>Session Context</summary>
 <div class="header-block"><pre>${headerHtml}</pre></div>
 </details>
-<div class="body-block"><pre>${bodyHtml}</pre></div>
+<div class="body-block"><div id="log-content">${bodyHtml}</div></div>
 </body>
 </html>`;
 }

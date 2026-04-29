@@ -11,6 +11,8 @@
 export function getInteractiveStyles(): string {
     return `
 :root {
+    /* Match interactive export .line vertical rhythm (see .line.line-blank quarter rule). */
+    --export-line-height: 1.5;
     --bg: #1e1e1e;
     --fg: #d4d4d4;
     --bg-hover: rgba(255,255,255,0.05);
@@ -121,6 +123,12 @@ body {
     word-break: break-all;
     padding: 0 8px;
 }
+/* Quarter-height blank rows — parity with log viewer (viewer-styles-decoration-bars). */
+.line.line-blank {
+    height: max(4px, calc(0.25 * 1em * var(--export-line-height, 1.5)));
+    min-height: 4px;
+    line-height: 1;
+}
 .line:hover { background: var(--bg-hover); }
 .line.cat-stderr { color: var(--error); }
 .line.hidden { display: none; }
@@ -189,5 +197,32 @@ mark { background: var(--search-highlight); color: inherit; border-radius: 2px; 
 .ansi-bright-cyan { color: #29b8db; } .ansi-bright-white { color: #fff; }
 .ansi-bold { font-weight: bold; } .ansi-dim { opacity: 0.7; }
 .ansi-italic { font-style: italic; } .ansi-underline { text-decoration: underline; }
+`;
+}
+
+/**
+ * Styles for static `exportToHtml` — same per-line `.line` / `.line.line-blank` quarter-height model
+ * as the live viewer and `getInteractiveStyles()` (see `.line.line-blank` rule there).
+ */
+export function getSimpleHtmlExportStyles(): string {
+    return `
+:root { --export-line-height: 1.5; }
+#log-content .line {
+    white-space: pre-wrap;
+    word-break: break-all;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: var(--export-line-height, 1.5);
+}
+#log-content .line.line-blank {
+    height: max(4px, calc(0.25 * 1em * var(--export-line-height, 1.5)));
+    min-height: 4px;
+    line-height: 1;
+}
+#log-content .annotation {
+    color: #6a9955;
+    font-style: italic;
+    display: block;
+}
 `;
 }
