@@ -141,6 +141,11 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
     case "revealLogFile":
       if (ctx.currentFileUri && ctx.onRevealLogFile) { Promise.resolve(ctx.onRevealLogFile(ctx.currentFileUri.toString())).catch(() => {}); }
       return true;
+    case "openLogFileInEditor":
+      if (ctx.currentFileUri) {
+        vscode.window.showTextDocument(ctx.currentFileUri, { preview: true }).then(() => {}, () => {});
+      }
+      return true;
     // Hold-to-copy path: show status bar confirmation so users get visible feedback.
     case "copyCurrentFilePath":
       if (ctx.currentFileUri) {
