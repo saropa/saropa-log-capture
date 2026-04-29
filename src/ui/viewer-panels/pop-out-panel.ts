@@ -226,6 +226,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setScrollbarVisible(show: boolean): void { this.post({ type: "scrollbarVisible", show }); }
   setLogFontSize(size: number): void { this.post({ type: "setLogFontSize", size }); }
   setLogLineHeight(height: number): void { this.post({ type: "setLogLineHeight", height }); }
+  setLogViewerVisualSpacing(enabled: boolean): void { this.post({ type: "logViewerVisualSpacing", value: enabled }); }
   setSearchMatchOptionsAlwaysVisible(always: boolean): void { this.post({ type: "searchMatchOptionsAlwaysVisible", always }); }
   setIconBarPosition(position: "left" | "right"): void { this.post({ type: "iconBarPosition", position }); }
   setErrorRateConfig(config: ErrorRateConfig): void { postErrorRateConfig(this, config); }

@@ -1,10 +1,11 @@
 /**
  * Typography message handlers for the log viewer webview.
  *
- * Applies `setLogFontSize` and `setLogLineHeight` host messages that seed the webview from the
- * `saropaLogCapture.logFontSize` / `saropaLogCapture.logLineHeight` user settings and keep it in
- * sync with live config changes. Extracted from viewer-script-messages.ts to keep that file
- * under the line-count limit and to mirror the `handleDbMessages` pre-handler pattern.
+ * Applies `setLogFontSize`, `setLogLineHeight`, and `logViewerVisualSpacing` host messages that seed
+ * the webview from `saropaLogCapture.logFontSize`, `saropaLogCapture.logLineHeight`, and
+ * `saropaLogCapture.logViewerVisualSpacing`, keeping typography/layout toggles in sync with the
+ * workspace. Extracted from viewer-script-messages.ts to keep that file under the line-count limit
+ * and to mirror the `handleDbMessages` pre-handler pattern.
  *
  * Invariants:
  * - Updates `logFontSizeDefault` / `logLineHeightDefault` BEFORE calling setFontSize/setLineHeight,
@@ -29,6 +30,18 @@ function handleTypographyMessages(msg) {
                 if (typeof setLineHeight === 'function') setLineHeight(msg.height);
             }
             return true;
+        case 'logViewerVisualSpacing': {
+            var lvvs = msg.value === true;
+            logViewerVisualSpacingDefault = lvvs;
+            visualSpacingEnabled = lvvs;
+            if (typeof syncOptionsPanelUi === 'function') syncOptionsPanelUi();
+            if (typeof recalcAndRender === 'function') recalcAndRender();
+            else {
+                if (typeof recalcHeights === 'function') recalcHeights();
+                if (typeof renderViewport === 'function') renderViewport(true);
+            }
+            return true;
+        }
     }
     return false;
 }
