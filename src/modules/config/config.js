@@ -121,6 +121,12 @@ function getConfig() {
         minimapViewportOutsideArrow: (0, config_validation_1.ensureBoolean)(cfg.get("minimapViewportOutsideArrow"), false),
         minimapWidth: (0, config_validation_1.ensureEnum)(cfg.get("minimapWidth"), ["xsmall", "small", "medium", "large", "xlarge"], "medium"),
         showScrollbar: (0, config_validation_1.ensureBoolean)(cfg.get("showScrollbar"), false),
+        /* 4–42 px matches HTML slider min/max and webview setFontSize() guard. */
+        logFontSize: (0, config_validation_1.clamp)(cfg.get("logFontSize"), 4, 42, 13),
+        /* 0.5–4.0 matches HTML slider min/max and webview setLineHeight() guard. Default 1.1
+           avoids the ~0.5em intra-line leading that the old 1.5 default produced — a request
+           from users seeing visible gaps between every row in dense logs. */
+        logLineHeight: (0, config_validation_1.clamp)(cfg.get("logLineHeight"), 0.5, 4.0, 1.1),
         viewerAlwaysShowSearchMatchOptions: (0, config_validation_1.ensureBoolean)(cfg.get("viewerAlwaysShowSearchMatchOptions"), false),
         viewerRepeatThresholds: (0, drift_db_repeat_thresholds_1.normalizeViewerRepeatThresholds)({
             globalMinCount: cfg.get("repeatCollapseGlobalMinCount"),

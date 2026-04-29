@@ -27,9 +27,10 @@ suite('Viewer toolbar tooltips', () => {
         assert.ok(html.includes('title="Number of currently selected lines"'), 'selection needs tooltip');
         // Interactive elements describe their actions
         assert.ok(
-            html.includes('click to open in editor') && html.includes('copy path'),
+            html.includes('Log file') && html.includes('open in editor') && html.includes('copy path'),
             'filename tooltip should describe the log file actions modal',
         );
+        assert.ok(html.includes('long-press'), 'session nav label should hint long-press for session metadata');
         assert.ok(html.includes('click to open filter drawer'), 'trigger label should describe click action');
     });
 

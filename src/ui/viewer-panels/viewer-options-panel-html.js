@@ -49,10 +49,10 @@ function getOptionsPanelHtml() {
                 <input type="range" id="font-size-slider" min="4" max="42" value="13" style="width: 100%;" title="Adjust the font size for log text" />
             </div>
             <div class="options-row">
-                <span>Line height: <span id="line-height-label">1.5</span></span>
+                <span>Line height: <span id="line-height-label">1.1</span></span>
             </div>
             <div class="options-row">
-                <input type="range" id="line-height-slider" min="5" max="40" value="15" style="width: 100%;" title="Adjust the spacing between log lines" />
+                <input type="range" id="line-height-slider" min="5" max="40" value="11" style="width: 100%;" title="Adjust the spacing between log lines" />
             </div>
             <label class="options-row" title="Wrap long lines to fit the panel width">
                 <input type="checkbox" id="opt-wrap" />

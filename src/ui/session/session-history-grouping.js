@@ -50,6 +50,10 @@ function getTreeItemGroupId(item) {
     }
     return item.groupId;
 }
+/** Sort split parts by part number so part 1 is representative (matches `getTreeItemUri`). */
+function sortedSplitParts(parts) {
+    return [...parts].sort((a, b) => (a.partNumber ?? 0) - (b.partNumber ?? 0));
+}
 /**
  * Extract the debug adapter type for primary-member selection. Only
  * `SessionMetadata` (and therefore the parts of a `SplitGroup`) can carry
@@ -61,26 +65,56 @@ function getTreeItemAdapter(item) {
         return undefined;
     }
     if (isSplitGroup(item)) {
-        return item.parts[0]?.debugAdapterType;
+        return sortedSplitParts(item.parts)[0]?.debugAdapterType;
     }
     return item.debugAdapterType;
 }
+/** Parsed log header `Project:` line, for matching the active workspace folder name. */
+function getTreeItemProject(item) {
+    if (isSessionGroup(item)) {
+        return undefined;
+    }
+    if (isSplitGroup(item)) {
+        return sortedSplitParts(item.parts)[0]?.project;
+    }
+    return item.project;
+}
+function normalizeProjectLabel(label) {
+    return label.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+/** True when the log header project matches the workspace folder name (case-insensitive). */
+function headerProjectMatchesWorkspaceFolder(headerProject, workspaceFolderName) {
+    if (!workspaceFolderName?.trim() || !headerProject?.trim()) {
+        return false;
+    }
+    return normalizeProjectLabel(headerProject) === normalizeProjectLabel(workspaceFolderName);
+}
 /**
  * Pick the primary member of a session group using the same rule as
- * `getPrimaryMember()` in modules/session/session-groups.ts:
- *   1. Any member with a non-empty `debugAdapterType` wins (earliest mtime as
- *      tie-breaker when multiple DAP members exist).
- *   2. Otherwise, earliest-mtime member wins.
+ * `getPrimaryMember()` in modules/session/session-groups.ts, with one UI-first
+ * refinement:
+ *
+ *   0. When `preferredWorkspaceFolderName` is set, restrict the candidate set
+ *      to members whose parsed header `Project:` matches that name (case-
+ *      insensitive). If at least one member matches, only those compete for
+ *      primary; if none match, all members compete (same as before).
+ *   1. Any candidate with a non-empty `debugAdapterType` wins (earliest mtime
+ *      tie-breaker among DAP candidates).
+ *   2. Otherwise, earliest-mtime candidate wins.
  */
-function pickPrimaryTreeItem(members) {
-    const dap = members.filter(m => {
+function pickPrimaryTreeItem(members, preferredWorkspaceFolderName) {
+    const pool = preferredWorkspaceFolderName?.trim()
+        ? members.filter(m => headerProjectMatchesWorkspaceFolder(getTreeItemProject(m), preferredWorkspaceFolderName))
+        : [];
+    const candidateSet = pool.length > 0 ? pool : members;
+    const dap = candidateSet.filter(m => {
         const a = getTreeItemAdapter(m);
         return typeof a === 'string' && a.length > 0;
     });
     if (dap.length > 0) {
         return dap.reduce((earliest, m) => (m.mtime < earliest.mtime ? m : earliest));
     }
-    return members.reduce((earliest, m) => (m.mtime < earliest.mtime ? m : earliest));
+    return candidateSet.reduce((earliest, m) => (m.mtime < earliest.mtime ? m : earliest));
 }
 /**
  * Coalesce tree items that share a `groupId` into a single `SessionGroup`.
@@ -91,8 +125,12 @@ function pickPrimaryTreeItem(members) {
  *
  * Singletons stay as standalone entries \u2014 a group-of-one is indistinguishable
  * from an ungrouped file in the tree, so we don't wrap it.
+ *
+ * @param preferredWorkspaceFolderName When set (typically the `WorkspaceFolder.name`
+ *   that contains the log directory), members whose log header `Project:` matches
+ *   are preferred as the group's primary row over other captures from the same group.
  */
-function groupSessionGroups(items) {
+function groupSessionGroups(items, preferredWorkspaceFolderName) {
     const buckets = new Map();
     const ungrouped = [];
     for (const item of items) {
@@ -116,7 +154,7 @@ function groupSessionGroups(items) {
             continue;
         }
         const sorted = [...members].sort((a, b) => a.mtime - b.mtime);
-        const primary = pickPrimaryTreeItem(sorted);
+        const primary = pickPrimaryTreeItem(sorted, preferredWorkspaceFolderName);
         const totalSize = sorted.reduce((sum, m) => sum + getTreeItemSize(m), 0);
         result.push({
             type: 'session-group',

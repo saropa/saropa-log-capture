@@ -223,6 +223,8 @@ class PopOutPanel {
     setViewerSlowBurstThresholds(t) { (0, pop_out_panel_viewer_state_1.postViewerSlowBurstThresholds)(this, t); }
     setMinimapWidth(width) { this.post({ type: "minimapWidth", width }); }
     setScrollbarVisible(show) { this.post({ type: "scrollbarVisible", show }); }
+    setLogFontSize(size) { this.post({ type: "setLogFontSize", size }); }
+    setLogLineHeight(height) { this.post({ type: "setLogLineHeight", height }); }
     setSearchMatchOptionsAlwaysVisible(always) { this.post({ type: "searchMatchOptionsAlwaysVisible", always }); }
     setIconBarPosition(position) { this.post({ type: "iconBarPosition", position }); }
     setErrorRateConfig(config) { (0, pop_out_panel_viewer_state_1.postErrorRateConfig)(this, config); }
