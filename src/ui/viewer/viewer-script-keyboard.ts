@@ -130,7 +130,12 @@ document.addEventListener('keydown', function(e) {
 
     /* File actions */
     if (action === 'copyFilePath') { e.preventDefault(); vscodeApi.postMessage({ type: 'copyCurrentFilePath' }); return; }
-    if (action === 'revealFile') { e.preventDefault(); vscodeApi.postMessage({ type: 'revealLogFile' }); return; }
+    if (action === 'revealFile') {
+        e.preventDefault();
+        if (typeof window.openLogFileActionsModal === 'function') { window.openLogFileActionsModal(); }
+        else { vscodeApi.postMessage({ type: 'revealLogFile' }); }
+        return;
+    }
 });
 `;
 }

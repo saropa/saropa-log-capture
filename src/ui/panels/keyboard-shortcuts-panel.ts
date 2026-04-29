@@ -164,8 +164,8 @@ function copyRows(m: Record<string, string>): Row[] {
             'Selects all lines currently rendered in the viewport. Selected lines are highlighted and can then be copied using any of the copy shortcuts, or acted on via the right-click context menu.'],
         ['copyFilePath', key(m, 'copyFilePath', 'ctrl+shift+p'), 'Copy log file path',
             'Copies the full filesystem path of the currently displayed log file to the clipboard and briefly shows a "Path copied" message in the VS Code status bar. Useful for referencing the exact file in terminal commands, bug reports, or chat messages.'],
-        ['revealFile', key(m, 'revealFile', 'ctrl+shift+e'), 'Reveal log file',
-            'Opens the operating system\'s file explorer and highlights the current log file. On Windows this opens File Explorer; on macOS, Finder; on Linux, the default file manager. The containing folder is shown with the file pre-selected.'],
+        ['revealFile', key(m, 'revealFile', 'ctrl+shift+e'), 'Log file actions',
+            'Opens a small menu: open the log in the text editor, reveal its folder in the system file manager, or copy the file path.'],
     ];
 }
 

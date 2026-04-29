@@ -80,41 +80,7 @@ var AT_BOTTOM_OFF_PX = 56;
 var footerEl = document.getElementById('viewer-toolbar');
 var footerTextEl = document.getElementById('footer-text');
 var footerVersion = footerTextEl ? (footerTextEl.getAttribute('data-version') || '') : '';
-/* Footer filename gestures: click=reveal, long-press=copy, dblclick=open folder. */
-var _fnPressTimer = null;
-var _fnLongFired = false;
-function _fnCancelTimer() { if (_fnPressTimer) { clearTimeout(_fnPressTimer); _fnPressTimer = null; } }
-if (footerTextEl) {
-    footerTextEl.addEventListener('mousedown', function(e) {
-        if (e.button !== 0) return;
-        var fnEl = e.target && e.target.closest ? e.target.closest('.footer-filename') : null;
-        if (!fnEl) return;
-        e.preventDefault();
-        _fnLongFired = false;
-        _fnPressTimer = setTimeout(function() {
-            _fnPressTimer = null;
-            _fnLongFired = true;
-            vscodeApi.postMessage({ type: 'copyCurrentFilePath' });
-            fnEl.title = 'Copied!';
-            setTimeout(function() { fnEl.title = 'Click: reveal \\u00b7 Hold: copy path \\u00b7 Double-click: open folder'; }, 1500);
-        }, 500);
-    });
-    footerTextEl.addEventListener('mouseup', _fnCancelTimer);
-    footerTextEl.addEventListener('mouseleave', _fnCancelTimer);
-    footerTextEl.addEventListener('dragstart', function(e) { e.preventDefault(); _fnCancelTimer(); });
-    footerTextEl.addEventListener('click', function(e) {
-        var fnEl = e.target && e.target.closest ? e.target.closest('.footer-filename') : null;
-        if (!fnEl) return;
-        if (_fnLongFired) { _fnLongFired = false; return; }
-        vscodeApi.postMessage({ type: 'revealLogFile' });
-    });
-    footerTextEl.addEventListener('dblclick', function(e) {
-        var fnEl = e.target && e.target.closest ? e.target.closest('.footer-filename') : null;
-        if (!fnEl) return;
-        e.preventDefault();
-        vscodeApi.postMessage({ type: 'openCurrentFileFolder' });
-    });
-}
+/* Footer filename: click opens log-file actions modal (see getLogFileModalScript). */
 var wrapToggle = document.getElementById('wrap-toggle');
 
 var vscodeApi = acquireVsCodeApi();

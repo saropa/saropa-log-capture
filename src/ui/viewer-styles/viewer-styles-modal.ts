@@ -210,5 +210,22 @@ export function getModalStyles(): string {
 .modal-btn-primary:hover {
     background: var(--vscode-button-hoverBackground);
 }
+
+/* Log file path actions (footer filename) */
+.log-file-modal-content {
+    min-width: 280px;
+    max-width: 400px;
+}
+.log-file-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 4px;
+    padding-bottom: 16px;
+}
+.log-file-modal-btn {
+    width: 100%;
+    text-align: center;
+}
 `;
 }

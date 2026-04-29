@@ -1,6 +1,7 @@
 import * as assert from 'node:assert';
 import { getViewerScriptMessageHandler } from '../../ui/viewer/viewer-script-messages';
 import { getViewerScript } from '../../ui/viewer/viewer-script';
+import { getLogFileModalScript } from '../../ui/viewer/viewer-log-file-modal';
 import { getViewerScriptFooterChunk } from '../../ui/viewer/viewer-script-footer';
 import { getViewportRenderScript } from '../../ui/viewer/viewer-data-viewport';
 
@@ -147,38 +148,6 @@ suite('Webview script null guards – core viewer', () => {
             );
         });
 
-        test('filename mousedown should check e.button for left-click only', () => {
-            assert.ok(
-                script.includes('if (e.button !== 0) return'),
-                'mousedown handler should reject non-left clicks',
-            );
-        });
-
-        test('filename mousedown should use closest for target detection', () => {
-            assert.ok(
-                script.includes("e.target.closest('.footer-filename')"),
-                'mousedown handler should use closest instead of classList.contains',
-            );
-        });
-
-        test('filename mousedown should preventDefault to block drag', () => {
-            const mdBlock = script.slice(
-                script.indexOf("addEventListener('mousedown'"),
-                script.indexOf("addEventListener('mouseup'"),
-            );
-            assert.ok(
-                mdBlock.includes('e.preventDefault()'),
-                'mousedown on filename should call preventDefault',
-            );
-        });
-
-        test('should prevent dragstart on footer text element', () => {
-            assert.ok(
-                script.includes("addEventListener('dragstart'"),
-                'footerTextEl should have a dragstart listener',
-            );
-        });
-
         test('should guard logEl in onLogOrWrapResize', () => {
             const block = script.slice(
                 script.indexOf('function onLogOrWrapResize'),
@@ -187,6 +156,32 @@ suite('Webview script null guards – core viewer', () => {
             assert.ok(
                 block.includes('if (logEl && allLines.length'),
                 'onLogOrWrapResize should guard logEl',
+            );
+        });
+    });
+
+    suite('viewer-log-file-modal', () => {
+        const script = getLogFileModalScript();
+
+        test('filename click should use closest for target detection', () => {
+            assert.ok(
+                script.includes("e.target.closest('.footer-filename')"),
+                'click handler should use closest for .footer-filename',
+            );
+        });
+
+        test('filename click should preventDefault and stopPropagation', () => {
+            const start = script.indexOf("footerText.addEventListener('click'");
+            assert.ok(start >= 0, 'footer filename click listener should exist');
+            const clickBlock = script.slice(start, start + 400);
+            assert.ok(clickBlock.includes('e.preventDefault()'), 'click should preventDefault');
+            assert.ok(clickBlock.includes('e.stopPropagation()'), 'click should stopPropagation');
+        });
+
+        test('should prevent dragstart on footer text element', () => {
+            assert.ok(
+                script.includes("addEventListener('dragstart'"),
+                'footer should have a dragstart listener',
             );
         });
     });
