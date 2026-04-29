@@ -10,7 +10,8 @@ function updateFooterText() {
     if (prefix) footerTextEl.appendChild(document.createTextNode(prefix));
     if (currentFilename) {
         var fn = document.createElement('span');
-        fn.className = 'footer-filename'; fn.textContent = currentFilename; fn.title = 'Click for open in editor, folder, or copy path';
+        /* Keep in sync with #footer-text title in viewer-toolbar-html.ts */
+        fn.className = 'footer-filename'; fn.textContent = currentFilename; fn.title = 'Log file — click the name for actions (open in editor, folder, copy path). Press F1 in the viewer (default) for the shortcut list.';
         footerTextEl.appendChild(fn);
     }
     if (loadTruncatedInfo) {

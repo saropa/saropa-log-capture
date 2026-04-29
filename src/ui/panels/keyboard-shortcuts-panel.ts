@@ -190,7 +190,7 @@ function displayRows(m: Record<string, string>): Row[] {
         ['toggleBlankLines', key(m, 'toggleBlankLines', 'h'), 'Hide blank lines',
             'Toggles visibility of lines that are empty or contain only whitespace. When hidden, the log becomes denser and more scannable — the line numbers skip over the hidden blanks so you can see the gaps. The checkbox in Options stays in sync.'],
         ['toggleSpacing', key(m, 'toggleSpacing', 'v'), 'Visual spacing',
-            'Toggles extra vertical "breathing room" between logical sections of the log — for example, between output from different source categories (stdout vs. stderr), or between different debug sessions. When off, all lines are packed tightly with uniform spacing. The checkbox in Options stays in sync.'],
+            'Toggles extra vertical "breathing room" between logical sections of the log — for example, between output from different source categories (stdout vs. stderr), or between different debug sessions. Off by default for IDE-like density; turn on when you want clearer section separation. The checkbox in Options stays in sync.'],
         ['togglePause', key(m, 'togglePause', 'space'), 'Pause / resume',
             'Pauses auto-scroll during a live capture session. When paused, new log lines continue to arrive and are stored, but the viewport stays where you left it — a "Paused" indicator appears in the toolbar with a line count showing how many new lines have arrived. Press again to resume: the viewport jumps to the latest line and auto-scroll re-engages.'],
         ['toggleDevice', key(m, 'toggleDevice', 'a'), 'Cycle device logs',

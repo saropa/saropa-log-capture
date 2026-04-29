@@ -56,6 +56,7 @@ suite('MinimapResizeHandle', () => {
         assert.ok(html.includes('id="minimap-resize-handle"'), 'resize handle element must exist');
         assert.ok(html.includes('class="minimap-resize-handle"'), 'resize handle must have its CSS class');
         assert.ok(html.includes('Drag to resize'), 'handle must have a descriptive title attribute');
+        assert.ok(html.includes('right-click'), 'minimap canvas should hint right-click for strip options');
     });
 
     test('resize handle is before the minimap in the DOM (left edge)', () => {

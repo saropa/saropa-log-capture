@@ -22,6 +22,12 @@ function mmCleanupDrag() {
 function initMinimapDrag() {
     minimapEl.addEventListener('pointerdown', function(e) {
         if (totalHeight === 0) return;
+        // Only the primary (left) mouse button should scroll. Right/middle clicks
+        // must pass through so the 'contextmenu' listener can show the menu —
+        // preventDefault + setPointerCapture here would otherwise move the
+        // viewport before the menu appears. Touch pointers report button===0,
+        // so they still scroll as before.
+        if (e.button !== 0) return;
         e.preventDefault();
         minimapEl.setPointerCapture(e.pointerId);
         scrollToMinimapY(e.clientY);

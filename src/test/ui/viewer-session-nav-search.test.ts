@@ -107,6 +107,14 @@ suite('Viewer toolbar search', () => {
         );
     });
 
+    test('session header tooltip documents long-press copy', () => {
+        const src = readSrc('ui/viewer-nav/viewer-session-header.ts');
+        assert.ok(
+            src.includes('long-press') && src.includes('updateSessionInfoTooltip'),
+            'tooltip should surface long-press so users discover clipboard copy',
+        );
+    });
+
     test('search and presets modules have no global function name collisions', () => {
         const searchSrc = readSrc('ui/viewer-search-filter/viewer-search.ts');
         const presetsSrc = readSrc('ui/viewer-search-filter/viewer-presets.ts');
