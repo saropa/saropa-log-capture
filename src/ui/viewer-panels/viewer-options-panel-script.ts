@@ -220,7 +220,12 @@ function resetOptionsToDefault() {
     showElapsed = false;
     if (typeof lineColorsEnabled !== 'undefined') lineColorsEnabled = true;
     if (typeof updateDecoButton === 'function') updateDecoButton();
-    if (typeof visualSpacingEnabled !== 'undefined') visualSpacingEnabled = true;
+    if (typeof visualSpacingEnabled !== 'undefined') {
+        visualSpacingEnabled = logViewerVisualSpacingDefault;
+    }
+    if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
+        vscodeApi.postMessage({ type: 'setLogViewerVisualSpacing', value: !!visualSpacingEnabled });
+    }
     minimapShowSqlDensity = true;
     if (typeof handleMinimapShowSqlDensity === 'function') handleMinimapShowSqlDensity({ show: true });
     if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {

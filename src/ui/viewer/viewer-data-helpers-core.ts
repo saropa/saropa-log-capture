@@ -178,11 +178,47 @@ function extractContext(plainText) {
     }
     return null;
 }
-/** True if line has no content or only whitespace (spaces, tabs, Unicode whitespace). */
+/** Map HTML numeric/hex entities that denote Unicode whitespace to a regular space.
+ *  Keep in sync with decodeHtmlWhitespaceEntities in src/modules/misc/blank-line-text.ts. */
+function decodeHtmlWhitespaceEntities(text) {
+    return text.replace(/&#(?:x([0-9a-fA-F]+)|([0-9]+));?/gi, function (m, hex, dec) {
+        var n = hex ? parseInt(hex, 16) : parseInt(dec || '0', 10);
+        if (!isFinite(n)) return m;
+        if ((n >= 9 && n <= 13) || n === 32 || n === 160) return ' ';
+        if (n >= 8192 && n <= 8202) return ' ';
+        if (n === 5760 || n === 8232 || n === 8233 || n === 8239 || n === 8287 || n === 12288) return ' ';
+        return m;
+    });
+}
+/** Normalize invisible / compatibility chars so NBSP / ZWSP / BOM-only rows count as blank.
+ *  Keep in sync with src/modules/misc/blank-line-text.ts (export + tests). */
+function normalizeForBlankCheck(text) {
+    if (!text) return '';
+    var s = decodeHtmlWhitespaceEntities(text);
+    s = s.replace(/^\\uFEFF/, '');
+    s = s.replace(/&nbsp;/gi, ' ').replace(/&#160;/gi, ' ').replace(/&#xA0;/gi, ' ');
+    s = s.replace(/[\\u00A0\\u1680\\u180E\\u2000-\\u200A\\u202F\\u205F\\u3000]/g, ' ');
+    s = s.replace(/[\\u200B-\\u200D\\uFEFF\\u2060-\\u2064]/g, '');
+    return s;
+}
+/** True if line has no visible content: raw stripTags blank, or (Format on) formatted output is blank. */
 function isLineContentBlank(item) {
     if (!item || !item.html) return true;
-    var text = stripTags(item.html);
-    return /^\\s*$/.test(text);
+    var base = normalizeForBlankCheck(stripTags(item.html));
+    if (/^\\s*$/.test(base)) return true;
+    if (typeof fileMode !== 'undefined' && fileMode !== 'log' && typeof formatEnabled !== 'undefined' && formatEnabled && item.type === 'line') {
+        var wi = (typeof item.viewerLineIndex === 'number') ? item.viewerLineIndex : -1;
+        if (wi >= 0) {
+            var fmtProbe = '';
+            if (fileMode === 'markdown' && typeof formatMarkdownLine === 'function') fmtProbe = formatMarkdownLine(item, wi);
+            else if (fileMode === 'json' && typeof formatJsonLine === 'function') fmtProbe = formatJsonLine(item, wi);
+            else if (fileMode === 'csv' && typeof formatCsvLine === 'function') fmtProbe = formatCsvLine(item, wi);
+            else fmtProbe = item.html;
+            var fmtPlain = normalizeForBlankCheck(stripTags(fmtProbe));
+            if (/^\\s*$/.test(fmtPlain)) return true;
+        }
+    }
+    return false;
 }
 function calcItemHeight(item) {
     /* peekOverride: scoped peek from clicking a hidden-chevron (viewer-peek-chevron.ts).

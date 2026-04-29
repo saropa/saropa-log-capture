@@ -358,6 +358,8 @@
   "config.logFontSize.title": "Log viewer font size (px)",
   "config.logLineHeight.description": "Default line height multiplier for log viewer text (0.5\u20134.0). Lower values pack rows tighter. Can also be changed live with Ctrl/Cmd+Shift+wheel or Ctrl/Cmd+Shift+= / Ctrl/Cmd+Shift+-.",
   "config.logLineHeight.title": "Log viewer line height",
+  "config.logViewerVisualSpacing.description": "When enabled, the log viewer adds extra vertical gaps between some line kinds (markers, level changes, stack headers). Toggle with V or the Options panel. When disabled, rows use uniform spacing (IDE-like density).",
+  "config.logViewerVisualSpacing.title": "Log viewer visual spacing",
   "config.viewerAlwaysShowSearchMatchOptions.description": "Always show match case, whole word, and regular expression toggles in the log viewer search bar. When off (default), those toggles appear only while the search field is focused or has text.",
   "config.viewerAlwaysShowSearchMatchOptions.title": "Always show log search match options",
   "config.slowGapThreshold.description": "Elapsed time threshold (ms) for highlighting slow gaps between lines.",
