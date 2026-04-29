@@ -210,6 +210,36 @@ Keep descriptions concise; avoid restating the name. Prefer "Returns the compile
 if (isSessionActive) { return; }
 ```
 
+## Prerequisites (toolchain)
+
+- **Node.js** ≥ **22** (see `package.json` → `engines.node`, `.nvmrc`, and `.node-version`). CI uses Node 22; mismatched Node versions can cause subtle test or script failures.
+- Optional: use the **[Dev Container](https://code.visualstudio.com/docs/devcontainers/containers)** defined in `.devcontainer/devcontainer.json` (`npm ci` runs on container create).
+- Agent-oriented pointers (F5 host, webview catalog, bundle analysis): [doc/AGENTS.md](doc/AGENTS.md).
+
+### Webview → extension message catalog
+
+If you add or rename a **`postMessage` `type`** handled in `src/ui/provider/viewer-message-handler*.ts` (including boolean toggle keys defined in `viewer-workspace-bool-message-map.ts`), regenerate the index and commit it:
+
+```bash
+npm run generate:webview-catalog
+```
+
+`npm run compile` runs **`verify:webview-catalog`** and fails when `doc/internal/webview-incoming-message-types.md` is out of date.
+
+### TypeScript emit
+
+- Use **`npm run check-types`** (`tsc --noEmit`) for typechecking.
+- Use **`npm run compile-tests`** to emit test JavaScript under **`out/`** only (`tsc --outDir out`).
+- Avoid running **`tsc -p .`** without **`--outDir`**: the default compiler options can emit `.js` beside `.ts` under `src/`, which is confusing alongside tracked sources. See [doc/AGENTS.md](doc/AGENTS.md).
+
+### Bundle analysis (optional)
+
+```bash
+npm run analyze-bundle
+```
+
+Writes `out/extension-bundle-meta.json` and prints an esbuild dependency/size breakdown (development bundle, not minified production).
+
 ## Testing
 
 ### Where tests live
@@ -237,6 +267,8 @@ npm run test
 ```
 
 The `pretest` script runs type-check, lint, and compile first. Tests run inside a VS Code Extension Host; the first run may take longer while the test environment is set up.
+
+To iterate on a **single test file** without waiting for the full suite, use the **Extension Test Runner** (recommended in `.vscode/extensions.json`) and the Testing view in VS Code, or run `vscode-test` with a file filter if your local setup supports it.
 
 ### Coverage
 
