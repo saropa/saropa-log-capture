@@ -253,6 +253,7 @@ Saropa Log Capture works standalone, but unlocks richer diagnostics when paired 
 ## Requirements
 
 - **VS Code** ^1.108.1 (or a Cursor/Open VSX–compatible editor). The extension declares `engines.vscode: "^1.108.1"` in `package.json`.
+- **Node.js** ≥ **22** for building and tests (`engines.node` in `package.json`; use `.nvmrc` / `.node-version` with a version manager). Optional: open the repo in the **Dev Container** (`.devcontainer/devcontainer.json`). See [CONTRIBUTING.md](CONTRIBUTING.md) and [doc/AGENTS.md](doc/AGENTS.md).
 
 ## Remote development (SSH, WSL, Dev Containers)
 
