@@ -156,4 +156,14 @@ suite('viewer-scrollbar-minimap-sql-heuristics', () => {
             assert.ok(script.includes('Show info on minimap'), 'points to the setting that enables colored info ticks');
         });
     });
+
+    suite('blank lines on scroll map', () => {
+        test('paint loop skips isLineContentBlank rows for severity ticks', () => {
+            const script = getScrollbarMinimapScript();
+            assert.ok(
+                script.includes('isLineContentBlank(it)'),
+                'minimap must skip quarter-height blank lines so ticks align with substantive rows',
+            );
+        });
+    });
 });

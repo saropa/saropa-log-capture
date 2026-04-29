@@ -6,6 +6,7 @@ import * as assert from 'node:assert';
 import { getViewerDataAddScript } from '../../ui/viewer/viewer-data-add';
 import { getDocItemBuilderScript } from '../../ui/viewer/viewer-data-add-doc-item';
 import { getLineBirthScript } from '../../ui/viewer/viewer-data-add-line-birth';
+import { getViewerDataHelpersCore } from '../../ui/viewer/viewer-data-helpers-core';
 
 function extractAddToDataBlock(script: string): string {
     const start = script.indexOf('function addToData(');
@@ -107,6 +108,20 @@ suite('viewer-data-add device-other demotion preserves originalLevel (plan 050)'
         assert.ok(
             condLine,
             'device-other guard must be in the same if-condition as the lvl === info check',
+        );
+    });
+});
+
+suite('viewer-data-helpers-core blank detection', () => {
+    test('embed defines normalizeForBlankCheck for NBSP/ZWSP parity with blank-line-text.ts', () => {
+        const core = getViewerDataHelpersCore();
+        assert.ok(
+            core.includes('function normalizeForBlankCheck') && core.includes('isLineContentBlank(item)'),
+            'core helpers must normalize before isLineContentBlank',
+        );
+        assert.ok(
+            core.includes('&nbsp;') && core.includes('\\u200B'),
+            'normalize must cover nbsp entities and ZWSP escapes in the strip regex',
         );
     });
 });

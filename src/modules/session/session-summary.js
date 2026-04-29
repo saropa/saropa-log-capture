@@ -151,9 +151,14 @@ function showSummaryNotification(summary) {
     const copyLabel = (0, l10n_1.t)('action.copyLogPath');
     vscode.window.showInformationMessage(message, copyLabel, openLabel).then((selection) => {
         if (selection === openLabel) {
-            // After finalize there is no active session; open the finalized log when we have its URI.
+            // Route through saropaLogCapture.openSession so the finalized log loads in the
+            // Log Viewer webview (panel container, bottom dock — same surface as the session
+            // history panel). The previous showTextDocument(uri) path opened the log as plain
+            // text in the editor area, a different surface from where the user was watching
+            // the session stream, so clicks appeared to do nothing. When logUri is missing
+            // fall back to saropaLogCapture.open for the active-session case.
             if (summary.logUri) {
-                void vscode.window.showTextDocument(summary.logUri);
+                void vscode.commands.executeCommand('saropaLogCapture.openSession', { uri: summary.logUri });
             }
             else {
                 void vscode.commands.executeCommand('saropaLogCapture.open');

@@ -42,7 +42,10 @@ function renderItem(item, idx, prevVis) {
         else if (fileMode === 'json' && typeof formatJsonLine === 'function') fmtHtml = formatJsonLine(item, idx);
         else if (fileMode === 'csv' && typeof formatCsvLine === 'function') fmtHtml = formatCsvLine(item, idx);
         else fmtHtml = item.html;
-        return '<div class="line fmt-' + fileMode + '"' + idxAttr + '>' + fmtHtml + '</div>';
+        /* Same .line.line-blank quarter-height as plain log mode (viewer-styles-decoration-bars). */
+        var _fmtBlank = typeof isLineContentBlank === 'function' && isLineContentBlank(item);
+        var _fmtBlankCls = _fmtBlank ? ' line-blank' : '';
+        return '<div class="line fmt-' + fileMode + _fmtBlankCls + '"' + idxAttr + '>' + fmtHtml + '</div>';
     }
     var rawHtml = item.html;
     /* Structured line parsing: strip the detected prefix (timestamp, PID, TID, level, tag).

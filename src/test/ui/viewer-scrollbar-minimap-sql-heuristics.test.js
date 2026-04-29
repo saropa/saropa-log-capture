@@ -100,7 +100,10 @@ suite('viewer-scrollbar-minimap-sql-heuristics', () => {
     suite('SQL density painting (scroll map vs editor minimap)', () => {
         test('sqlDensity color is pink (not blue) so bands read as annotation, not error', () => {
             const script = (0, viewer_scrollbar_minimap_1.getScrollbarMinimapScript)();
-            assert.ok(script.includes("sqlDensity: 'rgba(200, 120, 180, 1)'"), 'SQL density must use pink rgba(200,120,180) — blue was mistaken for selection highlights');
+            // Intent: the hue must be pink rgba(200,120,180), which users don't confuse with
+            // selection highlights. Alpha is not pinned — it gets tuned for the paint model
+            // (per-pixel reduction vs overdraw) and fluorescence vs readability balance.
+            assert.ok(/sqlDensity:\s*'rgba\(200,\s*120,\s*180,\s*[\d.]+\)'/.test(script), 'SQL density must use pink rgba(200,120,180) — blue was mistaken for selection highlights');
         });
         test('after: paintSqlDensityBuckets uses full strip width (regression: no right-rail-only 0.42 fraction)', () => {
             const script = (0, viewer_scrollbar_minimap_1.getScrollbarMinimapScript)();
@@ -112,19 +115,40 @@ suite('viewer-scrollbar-minimap-sql-heuristics', () => {
         });
     });
     suite('neutral presence fallback (severity hidden / info-only)', () => {
-        test('before: without neutral branch, info-only logs could paint nothing when info markers are off', () => {
+        test('mmShowInfo off routes info/debug/notice lines to presence priority (not skipped)', () => {
             const script = (0, viewer_scrollbar_minimap_1.getScrollbarMinimapScript)();
-            assert.ok(script.includes("(lv === 'info' || lv === 'debug' || lv === 'notice') && !mmShowInfo"), 'info/debug/notice skipped from severity groups when setting off');
+            // Intent: when the user hides info markers, those lines must still mark their pixels
+            // so there are no black gaps — they just paint at presence priority, beaten by any
+            // higher-severity line landing on the same pixel. Previously they were skipped
+            // entirely, which left big empty stretches in info-heavy logs.
+            assert.ok(/lvEnum\s*===\s*LV_INFO\s*\|\|\s*lvEnum\s*===\s*LV_DEBUG\s*\|\|\s*lvEnum\s*===\s*LV_NOTICE/.test(script), 'info/debug/notice checked together for the mmShowInfo demotion branch');
+            assert.ok(script.includes('!mmShowInfo'), 'demotion is gated on mmShowInfo');
         });
-        test('after: paintMinimap fills neutral strokes when mc === 0 && total > 0', () => {
+        test('after: paintMinimap reduces to one color per y-pixel via priority buckets', () => {
             const script = (0, viewer_scrollbar_minimap_1.getScrollbarMinimapScript)();
-            assert.ok(script.includes('mc === 0 && total > 0'), 'neutral branch guard');
-            assert.ok(script.includes('rgba(140, 140, 140, 0.24)'), 'neutral stroke fill');
+            // Per-pixel-row reduction replaces the old "stamp every line and let source-over blend
+            // sort it out" approach. Each y-pixel gets exactly one deterministic color, so there's
+            // no alpha stacking and no unpredictable compositing when lines collide at the same pixel.
+            assert.ok(script.includes('bucketLv'), 'per-pixel priority buckets exist');
+            assert.ok(script.includes('new Uint8Array(mmH)'), 'bucket is sized to minimap height');
+            // Priority constants: error highest, presence lowest. Error must outrank warning so that
+            // a pixel containing any error-level line paints red, not whatever else landed there.
+            assert.ok(script.includes('LV_ERROR'), 'priority enum defined');
+            assert.ok(script.includes('LV_PRESENCE'), 'presence priority defined');
+            assert.ok(/LV_ERROR\s*=\s*9/.test(script), 'error is highest priority');
+            assert.ok(/LV_PRESENCE\s*=\s*1/.test(script), 'presence is lowest colored priority');
+            // Presence is still rendered for info/debug/notice when mmShowInfo is off, but now as
+            // a bucket entry that any higher-priority line at the same pixel overrides.
+            assert.ok(script.includes('!mmShowInfo'), 'mmShowInfo demotes info/debug/notice to presence');
+            assert.ok(script.includes('lvEnum = LV_PRESENCE'), 'demotion writes presence priority');
         });
         test('hover title explains scroll map in plain language', () => {
             const script = (0, viewer_scrollbar_minimap_1.getScrollbarMinimapScript)();
             assert.ok(script.includes('Scroll map — click or drag'), 'plain hover explanation');
-            assert.ok(script.includes('Enable info/debug/notice markers in settings'), 'points to settings for info colors');
+            // Hint now fires when info/debug/notice lines are being drawn as gray presence ticks,
+            // pointing the user to the "Show info on minimap" setting to upgrade them to colored ticks.
+            assert.ok(script.includes('Gray ticks are info/debug/notice'), 'explains gray presence ticks');
+            assert.ok(script.includes('Show info on minimap'), 'points to the setting that enables colored info ticks');
         });
     });
 });

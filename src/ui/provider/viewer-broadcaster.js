@@ -224,6 +224,16 @@ class ViewerBroadcaster {
             t.setScrollbarVisible(show);
         }
     }
+    setLogFontSize(size) {
+        for (const t of this.targets) {
+            t.setLogFontSize(size);
+        }
+    }
+    setLogLineHeight(height) {
+        for (const t of this.targets) {
+            t.setLogLineHeight(height);
+        }
+    }
     setSearchMatchOptionsAlwaysVisible(always) {
         for (const t of this.targets) {
             t.setSearchMatchOptionsAlwaysVisible(always);

@@ -22,8 +22,11 @@ const viewer_data_add_repeat_collapse_1 = require("./viewer-data-add-repeat-coll
 const viewer_data_add_ascii_art_detect_1 = require("./viewer-data-add-ascii-art-detect");
 const viewer_data_add_flutter_banner_1 = require("./viewer-data-add-flutter-banner");
 const viewer_data_add_context_helpers_1 = require("./viewer-data-add-context-helpers");
+const viewer_data_add_doc_item_1 = require("./viewer-data-add-doc-item");
+const viewer_data_add_line_birth_1 = require("./viewer-data-add-line-birth");
+const viewer_data_add_stack_header_repeat_1 = require("./viewer-data-add-stack-header-repeat");
 function getViewerDataAddScript(staticSqlFromFingerprintEnabled = true) {
-    return (0, viewer_drift_debug_server_from_log_script_1.getDriftDebugServerFromLogScript)() + (0, viewer_data_add_db_detectors_1.getViewerDataAddDbDetectorsScript)(staticSqlFromFingerprintEnabled) + (0, viewer_data_add_continuation_1.getContinuationScript)() + (0, viewer_data_add_repeat_collapse_1.getRepeatCollapseBranchScript)() + (0, viewer_data_add_ascii_art_detect_1.getAsciiArtDetectScript)() + (0, viewer_data_add_flutter_banner_1.getFlutterBannerScript)() + (0, viewer_data_add_context_helpers_1.getDataAddContextHelpersScript)() + /* javascript */ `
+    return (0, viewer_drift_debug_server_from_log_script_1.getDriftDebugServerFromLogScript)() + (0, viewer_data_add_db_detectors_1.getViewerDataAddDbDetectorsScript)(staticSqlFromFingerprintEnabled) + (0, viewer_data_add_continuation_1.getContinuationScript)() + (0, viewer_data_add_repeat_collapse_1.getRepeatCollapseBranchScript)() + (0, viewer_data_add_ascii_art_detect_1.getAsciiArtDetectScript)() + (0, viewer_data_add_flutter_banner_1.getFlutterBannerScript)() + (0, viewer_data_add_context_helpers_1.getDataAddContextHelpersScript)() + (0, viewer_data_add_doc_item_1.getDocItemBuilderScript)() + (0, viewer_data_add_line_birth_1.getLineBirthScript)() + (0, viewer_data_add_stack_header_repeat_1.getStackHeaderRepeatScript)() + /* javascript */ `
 function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPercent, source, rawText, tier) {
     /* elapsedMs: per-line delay (from [+Nms]) for replay. qualityPercent: per-file line coverage (0-100) for badges. source: stream id for multi-source filter ('debug'|'terminal'|...). tier: 'flutter'|'device-critical'|'device-other'|'external' */
     var lineSource = source || 'debug';
@@ -37,14 +40,19 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
           'flutter'. Without this default those lines carried tier=undefined and isTierHidden() bailed out
           via its early (!item.tier) return false, leaving the typical bulk of a Flutter app DAP output
           uncontrollable by the Flutter DAP radio — toggling All/Warn+/None appeared to do nothing.
-          classifyLogLine() already tags launch boilerplate ("Launching…", VM Service connect) and logcat
-          lines explicitly as 'device-other', so the remainder reaching this branch is legitimate app output. */
+          classifyLogLine() already tags launch boilerplate ("Launching…", VM Service connect), logcat
+          lines, and prefixless Android system_server / Zygote output (bug_005) as 'device-other', so the
+          remainder reaching this branch is legitimate app output. */
     var lineTier = tier || (fw === true ? 'device-other' : (fw === false ? 'flutter' : (lineSource !== 'debug' ? 'external' : 'flutter')));
     /* Category filter: lines arriving while a category is unchecked must start hidden. */
     var catFiltered = !!(typeof activeFilters !== 'undefined' && activeFilters && !isMarker && !activeFilters.has(category));
     if (ts && !sessionStartTs) sessionStartTs = ts;
     if (isMarker) {
         resetCompressDupStreak();
+        /* bug_003: markers are hard boundaries for stack-header streaks, but the reset is
+           performed inside cleanupTrailingRepeats below so it can first restore the hidden
+           anchor and zero the trailing chip. Calling resetStackHdrRepeatTracker() here
+           would clear anchorIdx before cleanup can read it, leaving the anchor orphaned. */
         if (typeof breakContinuationGroup === 'function') breakContinuationGroup();
         if (activeGroupHeader) {
             if (typeof finalizeStackGroup === 'function') finalizeStackGroup(activeGroupHeader);
@@ -64,8 +72,12 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
        calcItemHeight(), filters, search, and viewport work unchanged. */
     if (fileMode !== 'log') {
         if (typeof breakContinuationGroup === 'function') breakContinuationGroup();
-        // Honor current level filter on appended streaming lines — see calcLevelFiltered.
-        var docItem = { html: html, rawText: rawText || null, type: 'line', height: (catFiltered || calcLevelFiltered('info')) ? 0 : ROW_HEIGHT, category: category, groupId: -1, timestamp: ts, level: 'info', seq: nextSeq++, sourceTag: null, logcatTag: null, sqlVerb: null, tier: undefined, filteredOut: catFiltered, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: false, classTags: [], isSeparator: false, errorClass: null, errorSuppressed: false, fw: undefined, sourcePath: sp || null, scopeFiltered: false, isAnr: false, autoHidden: false, source: lineSource, timeRangeFiltered: false, recentErrorContext: false, levelFiltered: calcLevelFiltered('info') };
+        /* bug_003: structured file mode skips all log analysis — any open stack-header
+           streak must not persist into a non-log document. */
+        if (typeof resetStackHdrRepeatTracker === 'function') resetStackHdrRepeatTracker();
+        /* Delegated to viewer-data-add-doc-item.ts (buildDocItem). Birth-height
+           parity with calcItemHeight + blank-at-birth gating live there. */
+        var docItem = buildDocItem(html, rawText, category, ts, sp, lineSource, catFiltered);
         if (elapsedMs !== undefined && elapsedMs >= 0) docItem.elapsedMs = elapsedMs;
         allLines.push(docItem);
         totalHeight += docItem.height;
@@ -98,6 +110,13 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
             activeGroupHeader.frameCount++;
             return;
         }
+        /* bug_003: before allocating a new stack-group, try to fold this header into an
+           active repeat streak. Consecutive identical Drift interceptor traces otherwise
+           produce N separate header rows while surrounding SQL lines collapse — the
+           visible inconsistency this fixes. Helper hides the anchor and creates/updates a
+           "N × stack repeated" chip on match; points activeGroupHeader at the hidden
+           anchor so any following frames flow into its (hidden) group. */
+        if (typeof tryCollapseRepeatStackHeader === 'function' && tryCollapseRepeatStackHeader(html, plainFrame, ts, rawText)) return;
         var gid = nextGroupId++;
         var sTagH = (typeof parseSourceTag === 'function') ? parseSourceTag(plainFrame) : null;
         var lTagH = (typeof parseLogcatTag === 'function') ? parseLogcatTag(plainFrame) : null;
@@ -249,6 +268,11 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     if (!shouldShowNormalLine) {
         handleRepeatCollapse(category, ts, fw, sp, elapsedMs, source, rawText, tier, lvl, sTag, lTag, cTags, sqlMeta, catFiltered, plain, minN);
     } else {
+        /* bug_003: a normal-line push is real content between stack groups — break any
+           active stack-header repeat streak. Not reset inside the handleRepeatCollapse
+           branch above: SQL repeat-notification chips are streak-neutral (they represent
+           already-collapsed routine noise, not new content). */
+        if (typeof resetStackHdrRepeatTracker === 'function') resetStackHdrRepeatTracker();
 
         // Add the original line normally (includes first line of a streak and lines before threshold N).
         var errorClass = (typeof classifyError === 'function' && lineTier !== 'device-other' && (!strictLevelDetection || lvl === 'error')) ? classifyError(plain) : null;
@@ -264,10 +288,10 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         var lineTierHidden = (typeof isTierHidden === 'function') ? isTierHidden({ tier: lineTier, level: lvl, originalLevel: preDemotionLevel !== lvl ? preDemotionLevel : undefined }) : false;
         var classHidden = (typeof isClassFiltered === 'function' && isClassFiltered({ classTags: cTags, type: 'line' }));
         var isAutoHidden = (typeof testAutoHide === 'function') ? testAutoHide(plain) : false;
-        // Streaming-lines filter gap: lines arriving after a level toggle bypassed the filter until applyLevelFilter() next ran.
-        var lineH = (errorSuppressed || lineTierHidden || classHidden || catFiltered || calcLevelFiltered(lvl)) ? 0 : ROW_HEIGHT;
         var scopeFilt = (typeof calcScopeFiltered === 'function') ? calcScopeFiltered(sp) : false;
-        var finalH = (scopeFilt || isAutoHidden) ? 0 : lineH;
+        /* Birth-height computation delegated to viewer-data-add-line-birth.ts —
+           mirrors buildDocItem's quarter-height-at-birth + filter-gap fix. */
+        var finalH = computeLineBirthHeight(html, errorSuppressed, lineTierHidden, classHidden, catFiltered, lvl, scopeFilt, isAutoHidden);
         if (isAutoHidden && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
         var isAnr = (lvl === 'performance' && anrPattern.test(plain));
         var lineItem = { html: html, rawText: rawText || null, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sqlVerb: sqlMeta ? sqlMeta.verb : null, tier: lineTier, filteredOut: catFiltered, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource, timeRangeFiltered: false, recentErrorContext: recentErrorContext, levelFiltered: calcLevelFiltered(lvl), parsedPid: slp ? slp.pid : undefined, parsedTid: slp ? slp.tid : undefined, parsedTag: slp ? slp.tag : undefined, parsedRawLevel: slp ? slp.rawLvl : undefined, structuredPrefixLen: slp ? slp.prefixLen : 0, levelTooltip: (typeof getLevelTooltip === 'function' && slp) ? getLevelTooltip(slp.rawLvl, lvl) : ((typeof getLevelTooltip === 'function') ? getLevelTooltip(null, lvl) : null) };

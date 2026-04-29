@@ -145,6 +145,8 @@ function paintMinimap() {
     for (var i = 0; i < allLines.length; i += step) {
         var it = allLines[i];
         if (it.height === 0 || it.type === 'stack-frame' || it.type === 'marker') continue;
+        /* Blank rows use quarter height in the log; skip them on the scroll map so ticks match “real” lines. */
+        if (typeof isLineContentBlank === 'function' && isLineContentBlank(it)) continue;
         var py = Math.round((mmLineOffset(i, hasPfx, cumH) / total) * mmH);
         if (py < 0 || py >= mmH) continue;
         /* SQL density must not depend on severity visibility (hidden info dots). */

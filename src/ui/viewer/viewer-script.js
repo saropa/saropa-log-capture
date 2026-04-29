@@ -18,37 +18,23 @@ function getViewerScript(maxLines, viewerPreserveAsciiBoxArt = true, viewerGroup
     return /* javascript */ `
 var logEl = document.getElementById('log-content');
 var logWrapEl = document.getElementById('log-content-wrapper');
+/* Clip parent of #log-content. #log-content is 10px wider than this clip (so the native
+   vertical scrollbar paints in clipped overflow — invisible). Use its rect, not logEl's,
+   for jump-button inset calculations: logEl.getBoundingClientRect().right extends into
+   the clipped zone and would push jump buttons off the visible edge. */
+var logClipEl = document.querySelector('.log-content-clip');
 var spacerTop = document.getElementById('spacer-top');
 var viewportEl = document.getElementById('viewport');
 var spacerBottom = document.getElementById('spacer-bottom');
 var jumpBtn = document.getElementById('jump-btn');
 var jumpTopBtn = document.getElementById('jump-top-btn');
-/** Toggle the scrollbar-visible body class and force Chromium to re-render the scrollbar.
- *  Chromium paints ::-webkit-scrollbar once per scroll container and caches the composited
- *  layer. Cycling overflow-y forces a layout recalc but NOT a scrollbar repaint — that works
- *  for 0 -> 10px (the layer must be created fresh) but fails for 10px -> 0, leaving a stale
- *  10px scrollbar visible when the user turns the setting off. Briefly setting display:none
- *  tears down the render tree so the scroll container is rebuilt and ::-webkit-scrollbar is
- *  re-read from scratch. Preserve scrollTop because display:none resets it to 0. */
+/** Toggle the Show-native-scrollbar setting via body.scrollbar-visible.
+ *  The class controls layout — .log-content-clip flips between overflow: hidden
+ *  (scrollbar clipped off-screen) and overflow: visible (scrollbar in view), and
+ *  #log-content's width/padding-right compensate. No ::-webkit-scrollbar width
+ *  changes, so Chromium's pseudo-element cache is a non-issue. */
 function applyScrollbarVisible(show) {
     document.body.classList.toggle('scrollbar-visible', !!show);
-    if (logEl) {
-        var sT = logEl.scrollTop;
-        var prev = logEl.style.display;
-        logEl.style.display = 'none';
-        /* Force synchronous reflow so the render tree is actually torn down before we
-           restore display — a bare style swap without this read leaves the layer alive. */
-        void logEl.offsetHeight;
-        logEl.style.display = prev || '';
-        /* Restoring scrollTop fires a scroll event. Flag both listeners so we do not
-           close the "Scroll map & scrollbar" context menu (which is designed to stay
-           open across toggles) and so the virtual-scroll render handler skips a pass
-           it does not need (position has not actually changed). */
-        if (window.setProgrammaticScroll) window.setProgrammaticScroll();
-        suppressScroll = true;
-        logEl.scrollTop = sT;
-        suppressScroll = false;
-    }
     syncJumpButtonInset();
 }
 
@@ -58,13 +44,16 @@ function applyScrollbarVisible(show) {
 function syncJumpButtonInset() {
     /* Require log rect only so jump controls stay anchored during resizes. */
     if (!logEl) return;
-    var lr = logEl.getBoundingClientRect();
+    /* Use the clip parent's rect as the visible-area reference: #log-content extends
+       10px past it into clipped overflow, so logEl.getBoundingClientRect().right would
+       put the jump buttons past the visible edge when the scrollbar is hidden. */
+    var lr = (logClipEl || logEl).getBoundingClientRect();
     if (lr.width < 8 || lr.height < 8) return;
     var vw = window.innerWidth;
     var vh = window.innerHeight;
-    /* Chromium compositor does not always update getBoundingClientRect when
-       ::-webkit-scrollbar width changes via a dynamic class toggle, so read
-       --scrollbar-w explicitly to guarantee the buttons clear the scrollbar. */
+    /* --scrollbar-w is 10px only when body.scrollbar-visible is set (clip lifted,
+       scrollbar in view). In that state lr.right already coincides with the scrollbar's
+       outer edge, so sbW adds 10px of inset to keep the buttons off the slider. */
     var sbW = logWrapEl ? (parseInt(getComputedStyle(logWrapEl).getPropertyValue('--scrollbar-w'), 10) || 0) : 0;
     var rightPx = Math.max(8, Math.round(vw - lr.right + 8 + sbW));
     var replayBar = document.getElementById('replay-bar');
@@ -309,6 +298,12 @@ function onLogOrWrapResize() {
                 suppressScroll = true;
                 logEl.scrollTop = logEl.scrollHeight;
                 suppressScroll = false;
+                /* Same render-snap-render guard as the addLines path: the first render
+                   used the pre-snap scrollTop, so when a resize moves the bottom by
+                   more than OVERSCAN rows the snapped view lands in empty bottom-spacer
+                   space until the next event re-renders. Re-render here uses the
+                   snapped scrollTop and paints the tail in the same frame. */
+                renderViewport(false);
             }
         }
     });

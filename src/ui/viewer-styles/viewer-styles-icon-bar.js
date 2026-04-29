@@ -155,12 +155,16 @@ body[data-icon-bar="right"] .ib-badge {
 /* ===================================================================
    Right-side overrides — all slide-out panels
    =================================================================== */
-/* --- Icon bar separator --- */
+/* --- Icon bar separator ---
+   Previously used activityBar-inactiveForeground (which in Dark+ is already ~40% alpha)
+   plus an additional opacity: 0.4, giving ~0.16 effective alpha — invisible against the
+   activity-bar background. Use activityBar-border (the same var as the bar's own edge)
+   and drop the extra opacity so the rule is actually visible in all themes. */
 .ib-separator {
     width: 20px;
     height: 1px;
-    background: var(--vscode-activityBar-inactiveForeground, var(--vscode-panel-border));
-    opacity: 0.4;
+    flex: 0 0 1px;
+    background: var(--vscode-activityBar-border, var(--vscode-panel-border, var(--vscode-contrastBorder, rgba(128, 128, 128, 0.35))));
     margin: 5px 0;
 }
 #icon-bar.ib-labels-visible .ib-separator {

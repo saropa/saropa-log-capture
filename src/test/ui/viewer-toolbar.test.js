@@ -39,6 +39,7 @@ const path = __importStar(require("path"));
 const viewer_toolbar_html_1 = require("../../ui/viewer-toolbar/viewer-toolbar-html");
 const viewer_toolbar_filter_drawer_html_1 = require("../../ui/viewer-toolbar/viewer-toolbar-filter-drawer-html");
 const viewer_toolbar_actions_html_1 = require("../../ui/viewer-toolbar/viewer-toolbar-actions-html");
+const viewer_styles_level_1 = require("../../ui/viewer-styles/viewer-styles-level");
 /**
  * Structure and integration tests for the toolbar, filter drawer, and actions dropdown.
  *
@@ -53,6 +54,24 @@ suite('Viewer toolbar', () => {
         const p = fs.existsSync(fromOut) ? fromOut : fromSrcTree;
         return fs.readFileSync(p, 'utf8');
     }
+    test('toolbar level summary has letter chip between dot and count (bug 006)', () => {
+        const html = (0, viewer_toolbar_html_1.getToolbarHtml)({ version: '1.0.0' });
+        const snippets = [
+            'class="level-letter level-letter-error">E</span><span class="dot-count"',
+            'class="level-letter level-letter-warning">W</span><span class="dot-count"',
+            'class="level-letter level-letter-info">I</span><span class="dot-count"',
+            'class="level-letter level-letter-performance">P</span><span class="dot-count"',
+            'class="level-letter level-letter-todo">T</span><span class="dot-count"',
+            'class="level-letter level-letter-notice">N</span><span class="dot-count"',
+            'class="level-letter level-letter-debug">D</span><span class="dot-count"',
+            'class="level-letter level-letter-database">DB</span><span class="dot-count"',
+        ];
+        for (const s of snippets) {
+            assert.ok(html.includes(s), `toolbar HTML should contain: ${s}`);
+        }
+        const css = (0, viewer_styles_level_1.getLevelStyles)();
+        assert.ok(css.includes('.level-dot-group:has(.level-dot:not(.active)) .level-letter'), 'level CSS should dim letter when dot is inactive (pairs with syncLevelDots)');
+    });
     test('toolbar HTML preserves required element IDs', () => {
         const html = (0, viewer_toolbar_html_1.getToolbarHtml)({ version: '1.0.0' });
         const required = [

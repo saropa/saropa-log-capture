@@ -3,11 +3,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getViewerScriptMessageHandler = getViewerScriptMessageHandler;
 const viewer_script_messages_db_1 = require("./viewer-script-messages-db");
+const viewer_script_messages_typography_1 = require("./viewer-script-messages-typography");
 function getViewerScriptMessageHandler() {
-    return (0, viewer_script_messages_db_1.getViewerScriptDbMessageHandler)() + /* javascript */ `
+    return (0, viewer_script_messages_db_1.getViewerScriptDbMessageHandler)() + (0, viewer_script_messages_typography_1.getViewerScriptTypographyMessageHandler)() + /* javascript */ `
 window.addEventListener('message', function(event) {
     var msg = event.data;
-    if (typeof handleDbMessages === 'function' && handleDbMessages(msg)) return;
+    /* Pre-handlers return true when they've dispatched the message; skip the switch on hit. */
+    if ((typeof handleDbMessages === 'function' && handleDbMessages(msg)) || (typeof handleTypographyMessages === 'function' && handleTypographyMessages(msg))) return;
     switch (msg.type) {
         case 'addLines': {
             var isHidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';
@@ -36,7 +38,8 @@ window.addEventListener('message', function(event) {
                 // preserving text selection while the log is being written to.
                 renderViewport(false);
                 if (typeof scheduleMinimap === 'function') scheduleMinimap();
-                if (autoScroll && !window.isContextMenuOpen) { if (window.setProgrammaticScroll) window.setProgrammaticScroll(); suppressScroll = true; logEl.scrollTop = logEl.scrollHeight; suppressScroll = false; }
+                // Render-snap-render: the render above used the OLD scrollTop and only reaches OVERSCAN rows past the previous bottom. When a streaming batch is larger than that the snapped viewport lands inside the empty bottom spacer and the contents appear to jump until the next event paints the new tail. The trailing renderViewport(false) re-uses the snapped scrollTop and is cheap on small batches (early-returns on unchanged range).
+                if (autoScroll && !window.isContextMenuOpen) { if (window.setProgrammaticScroll) window.setProgrammaticScroll(); suppressScroll = true; logEl.scrollTop = logEl.scrollHeight; suppressScroll = false; renderViewport(false); }
                 updateFooterText();
             }
             if (typeof scheduleRootCauseHypothesesRefresh === 'function') scheduleRootCauseHypothesesRefresh();

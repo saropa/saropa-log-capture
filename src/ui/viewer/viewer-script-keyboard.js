@@ -79,7 +79,7 @@ document.addEventListener('keydown', function(e) {
     }
     if (action === 'fontSizeUp') { e.preventDefault(); if (typeof setFontSize === 'function') setFontSize(logFontSize + 1); return; }
     if (action === 'fontSizeDown') { e.preventDefault(); if (typeof setFontSize === 'function') setFontSize(logFontSize - 1); return; }
-    if (action === 'fontSizeReset') { e.preventDefault(); if (typeof setFontSize === 'function') setFontSize(13); return; }
+    if (action === 'fontSizeReset') { e.preventDefault(); if (typeof setFontSize === 'function') setFontSize(typeof logFontSizeDefault === 'number' ? logFontSizeDefault : 13); return; }
     if (action === 'gotoLine') { e.preventDefault(); if (typeof openGotoLine === 'function') openGotoLine(); return; }
     if (action === 'togglePause') { e.preventDefault(); vscodeApi.postMessage({ type: 'togglePause' }); return; }
     if (action === 'toggleWrap') { e.preventDefault(); toggleWrap(); return; }
@@ -129,7 +129,7 @@ document.addEventListener('keydown', function(e) {
     /* Line height adjustment — mirrors font size shortcuts */
     if (action === 'lineHeightUp') { e.preventDefault(); if (typeof setLineHeight === 'function') setLineHeight(logLineHeight + 0.1); return; }
     if (action === 'lineHeightDown') { e.preventDefault(); if (typeof setLineHeight === 'function') setLineHeight(logLineHeight - 0.1); return; }
-    if (action === 'lineHeightReset') { e.preventDefault(); if (typeof setLineHeight === 'function') setLineHeight(2.0); return; }
+    if (action === 'lineHeightReset') { e.preventDefault(); if (typeof setLineHeight === 'function') setLineHeight(typeof logLineHeightDefault === 'number' ? logLineHeightDefault : 1.1); return; }
 
     /* File actions */
     if (action === 'copyFilePath') { e.preventDefault(); vscodeApi.postMessage({ type: 'copyCurrentFilePath' }); return; }

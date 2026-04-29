@@ -92,9 +92,13 @@ suite('ViewerJumpScrollPlacement', () => {
     });
 });
 suite('ViewerLogContentMinimapLayout', () => {
-    test('log-content uses flex 1 1 0% so the scroll area fills width beside the minimap', () => {
+    test('.log-content-clip uses flex 1 1 0% so the scroll area fills width beside the minimap', () => {
         const full = (0, viewer_styles_1.getViewerStyles)();
-        assert.ok(full.includes('flex: 1 1 0%'), '#log-content should consume remaining row space (not leave a dead gutter)');
+        /* #log-content itself is now 10px wider than its container (width: calc(100% + 10px))
+           to push the native vertical scrollbar into clipped overflow. The flex: 1 1 0% role
+           — consume remaining row width beside the minimap — moved to .log-content-clip,
+           which is the new flex child in #log-content-wrapper. */
+        assert.ok(/\.log-content-clip\s*\{[^}]*flex:\s*1 1 0%/.test(full), '.log-content-clip should consume remaining row space (not leave a dead gutter)');
         assert.ok(full.includes('align-items: stretch'), '#log-content-wrapper row stretches minimap height');
         assert.ok(full.includes('flex: 0 0 auto') && full.includes('.scrollbar-minimap'), 'minimap stays fixed-width column');
     });

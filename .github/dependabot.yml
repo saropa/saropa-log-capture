@@ -14,6 +14,11 @@ updates:
         update-types:
           - "minor"
           - "patch"
+      # Keep production patch bumps batched (majors stay individual for review)
+      prod-patch:
+        dependency-type: "production"
+        update-types:
+          - "patch"
     open-pull-requests-limit: 10
     commit-message:
       prefix: "chore(deps)"

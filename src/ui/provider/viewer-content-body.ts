@@ -79,7 +79,7 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     <div id="root-cause-hypotheses" class="root-cause-hypotheses u-hidden" role="region" aria-label="Hypotheses"></div>
     <div id="log-content-wrapper">
     <div class="log-content-clip">
-    <div id="log-content" class="nowrap" role="log" aria-label="Log content">
+    <div id="log-content" class="nowrap" role="log" aria-label="Log content" title="Right-click a line for actions (copy, filters, source). Long-press &quot;Log N of M&quot; in the toolbar to copy session metadata.">
         <div id="spacer-top"></div>
         <div id="viewport"></div>
         <div id="spacer-bottom"></div>

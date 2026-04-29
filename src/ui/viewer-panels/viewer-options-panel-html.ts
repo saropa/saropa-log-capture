@@ -126,8 +126,8 @@ export function getOptionsPanelHtml(): string {
                     <option value="xlarge">Extra wide (120px)</option>
                 </select>
             </label>
-            <label class="options-row" title="Add extra vertical padding between log lines for easier reading">
-                <input type="checkbox" id="opt-visual-spacing" checked />
+            <label class="options-row" title="Extra vertical gaps between some line kinds (markers, level changes). Off by default; press V to toggle.">
+                <input type="checkbox" id="opt-visual-spacing" />
                 <span>Visual spacing (breathing room)</span>
             </label>
             <label class="options-row" title="Hide lines that are empty or only whitespace">

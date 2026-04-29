@@ -21,6 +21,7 @@
 import * as vscode from 'vscode';
 import { ansiToHtml, escapeHtml } from '../capture/ansi';
 import { SessionMetadataStore } from '../session/session-metadata';
+import { isPlainTextBlankAfterAnsi } from '../misc/blank-line-text';
 import { getInteractiveStyles } from './html-export-styles';
 import { getInteractiveScript } from './html-export-script';
 import { wrapJsonInLine } from './html-export-json';
@@ -170,7 +171,8 @@ function buildInteractiveBody(lines: ParsedLine[], annotations: Map<number, stri
 
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        const cls = line.category === 'stderr' ? 'line cat-stderr' : 'line';
+        const blankCls = isPlainTextBlankAfterAnsi(line.text) ? ' line-blank' : '';
+        const cls = (line.category === 'stderr' ? 'line cat-stderr' : 'line') + blankCls;
 
         if (line.isStackFrame) {
             if (!inStackGroup) {

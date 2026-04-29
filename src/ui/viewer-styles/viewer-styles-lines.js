@@ -11,8 +11,11 @@ function getLineStyles() {
     word-break: normal;
     overflow-wrap: anywhere;
     padding: 0 8px 0 1.85em;
-    line-height: var(--log-line-height, 1.5);
-    height: calc(1em * var(--log-line-height, 1.5));
+    /* Fallback 1.1 matches the JS default in viewer-layout.ts and the package.json
+       setting default — keep all three in sync. 1.5 produced ~0.5em of visible intra-line
+       leading that users read as a gap between every row in dense logs. */
+    line-height: var(--log-line-height, 1.1);
+    height: calc(1em * var(--log-line-height, 1.1));
     overflow: visible;
     transition: background 0.1s ease;
 }
