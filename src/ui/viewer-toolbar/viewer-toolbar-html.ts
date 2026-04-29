@@ -26,7 +26,7 @@ export function getToolbarHtml(opts: ToolbarHtmlOptions): string {
         <button type="button" id="session-prev" class="toolbar-icon-btn" title="Navigate to the previous (older) log session" aria-label="Previous log (older)" disabled>
             <span class="codicon codicon-chevron-left" aria-hidden="true"></span>
         </button>
-        <span class="nav-bar-label" title="Current log position in the session list">Log <span id="session-nav-current">1</span> of <span id="session-nav-total">1</span></span>
+        <span class="nav-bar-label" title="Session position — long-press (hold ~0.5s) to copy session metadata; hover for details when loaded">Log <span id="session-nav-current">1</span> of <span id="session-nav-total">1</span></span>
         <button type="button" id="session-next" class="toolbar-icon-btn" title="Navigate to the next (newer) log session" aria-label="Next log (newer)" disabled>
             <span class="codicon codicon-chevron-right" aria-hidden="true"></span>
         </button>
@@ -76,7 +76,7 @@ export function getToolbarHtml(opts: ToolbarHtmlOptions): string {
     </div>
     <div class="toolbar-right">
         <span id="session-details-inline" class="session-details-inline" aria-label="Log context" title="Log session context and metadata"></span>
-        <span id="footer-text" data-version="${ver}" class="toolbar-filename" title="Log file path — click to open in editor, show folder, or copy path"></span>
+        <span id="footer-text" data-version="${ver}" class="toolbar-filename" title="Log file — click the name for actions (open in editor, folder, copy path). Press F1 in the viewer (default) for the shortcut list."></span>
     </div>
 </div>`;
 }

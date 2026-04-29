@@ -159,6 +159,25 @@ body[data-icon-bar=”right”] #panel-content-row {
 }
 body.scrollbar-visible #log-content-wrapper { --scrollbar-w: 10px; }
 
+/* Vertical scrollbar is physically clipped, not CSS-hidden. Chromium in the VS Code
+   webview caches the composited ::-webkit-scrollbar layer and ignores live updates
+   to width / display / scrollbar-width — previous attempts (overflow cycle,
+   display:none cycle, host-class toggle) all failed. .log-content-clip reserves
+   the real flex width; #log-content inside is 10px wider with matching padding-right,
+   so the scrollbar lives in the clipped overflow and is invisible. Toggling the
+   Show-native-scrollbar setting lifts the clip (overflow: visible) so the scrollbar
+   re-enters the visible area — works because overflow changes on a normal element
+   force reflow, unlike webkit pseudo-element style changes. Horizontal scrollbar
+   is unaffected: it runs along the bottom, and only the rightmost 10px is clipped. */
+.log-content-clip {
+    flex: 1 1 0%;
+    min-width: 0;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+}
+body.scrollbar-visible .log-content-clip { overflow: visible; }
+
 /* ===================================================================
    Log Content Area
    Main scrollable region. Vertical scrollbar is hidden because
@@ -166,24 +185,36 @@ body.scrollbar-visible #log-content-wrapper { --scrollbar-w: 10px; }
    Horizontal scrollbar is styled to match the VS Code theme.
    =================================================================== */
 #log-content {
-    flex: 1 1 0%;
-    min-width: 0;
+    /* Width is (clip-parent width + 10px). The extra 10px is where the vertical
+       scrollbar paints; padding-right: 10px keeps content inside the visible area.
+       .log-content-clip has overflow: hidden, so the 10px scrollbar zone is clipped
+       off-screen. Horizontal scrollbar still runs the full element width along the
+       bottom — only its rightmost 10px is clipped (scrollbar slider stays usable). */
+    width: calc(100% + 10px);
     height: 100%;
     overflow-y: auto;
     /* Horizontal scroll when lines use white-space: pre (banners, stacks) — same idea as the Debug Console wide line. */
     overflow-x: auto;
     overflow-anchor: none;
-    padding: 4px 0 40px;
+    padding: 4px 10px 40px 0;
     position: relative;
-    /* Vertical scrollbar hidden by ::-webkit-scrollbar width:0 below; horizontal stays 10px.
-       Do NOT add scrollbar-width:none — Chromium 130+ treats it as authoritative and hides
-       the horizontal bar too, making wide nowrap lines invisible on the right side. */
+    box-sizing: border-box;
+    /* Do NOT add scrollbar-width:none — Chromium 130+ treats it as authoritative
+       and hides the horizontal bar too, making wide nowrap lines invisible on the
+       right side. We hide the vertical bar via .log-content-clip's overflow clip. */
 }
+/* When the user opts in to the native vertical scrollbar, drop the clipping trick:
+   the clip parent becomes overflow: visible (above) so the extra 10px zone shows,
+   and #log-content returns to 100% width / no right padding — visually identical
+   to having the scrollbar live in-layout like a normal element. */
 body.scrollbar-visible #log-content {
-    scrollbar-width: auto; /* show both scrollbars when the user opts in */
+    width: 100%;
+    padding-right: 0;
 }
-#log-content::-webkit-scrollbar { width: 0; height: 10px; }
-body.scrollbar-visible #log-content::-webkit-scrollbar { width: 10px; height: 10px; }
+/* Vertical scrollbar is always painted at 10px so its thumb is draggable when
+   the clip is lifted. Chromium's caching no longer matters — visibility is
+   controlled by layout (clip on / clip off), not by ::-webkit-scrollbar width. */
+#log-content::-webkit-scrollbar { width: 10px; height: 10px; }
 #log-content::-webkit-scrollbar-thumb {
     background: var(--vscode-scrollbarSlider-background);
     border-radius: 4px;
