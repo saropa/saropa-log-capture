@@ -17,6 +17,7 @@ export function queuePopOutViewerConfigMicrotask(
     post({ type: "setRootCauseHintL10n", strings: getRootCauseHintViewerStrings() });
     post({ type: "setLogFontSize", size: cfg.logFontSize });
     post({ type: "setLogLineHeight", height: cfg.logLineHeight });
+    post({ type: "logViewerVisualSpacing", value: cfg.logViewerVisualSpacing });
     post({ type: "minimapShowSqlDensity", show: cfg.minimapShowSqlDensity });
     post({ type: "minimapProportionalLines", show: cfg.minimapProportionalLines });
     post({ type: "minimapViewportRedOutline", show: cfg.minimapViewportRedOutline });

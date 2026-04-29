@@ -113,6 +113,9 @@ export function setupConfigListener(
         if (e.affectsConfiguration('saropaLogCapture.logLineHeight')) {
             broadcaster.setLogLineHeight(cfg.logLineHeight);
         }
+        if (e.affectsConfiguration('saropaLogCapture.logViewerVisualSpacing')) {
+            broadcaster.setLogViewerVisualSpacing(cfg.logViewerVisualSpacing);
+        }
         if (e.affectsConfiguration('saropaLogCapture.viewerAlwaysShowSearchMatchOptions')) {
             broadcaster.setSearchMatchOptionsAlwaysVisible(cfg.viewerAlwaysShowSearchMatchOptions);
         }

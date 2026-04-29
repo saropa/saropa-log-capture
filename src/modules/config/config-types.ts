@@ -126,6 +126,11 @@ export interface SaropaLogCaptureConfig {
   readonly logFontSize: number;
   /** Default line height multiplier for log viewer text (0.5–4.0, default 1.1). */
   readonly logLineHeight: number;
+  /**
+   * When true, the log viewer adds extra vertical gaps between some line kinds (markers, level changes).
+   * Syncs with the V shortcut and Options panel; default off for IDE-like density.
+   */
+  readonly logViewerVisualSpacing: boolean;
   /** When true, always show match case / whole word / regex toggles in the log search strip (default: false). */
   readonly viewerAlwaysShowSearchMatchOptions: boolean;
   /**

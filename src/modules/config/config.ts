@@ -138,6 +138,7 @@ export function getConfig(): SaropaLogCaptureConfig {
        avoids the ~0.5em intra-line leading that the old 1.5 default produced — a request
        from users seeing visible gaps between every row in dense logs. */
     logLineHeight: clamp(cfg.get("logLineHeight"), 0.5, 4.0, 1.1),
+    logViewerVisualSpacing: ensureBoolean(cfg.get("logViewerVisualSpacing"), false),
     viewerAlwaysShowSearchMatchOptions: ensureBoolean(cfg.get("viewerAlwaysShowSearchMatchOptions"), false),
     viewerRepeatThresholds: normalizeViewerRepeatThresholds({
       globalMinCount: cfg.get("repeatCollapseGlobalMinCount"),

@@ -77,6 +77,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
            parity with calcItemHeight + blank-at-birth gating live there. */
         var docItem = buildDocItem(html, rawText, category, ts, sp, lineSource, catFiltered);
         if (elapsedMs !== undefined && elapsedMs >= 0) docItem.elapsedMs = elapsedMs;
+        docItem.viewerLineIndex = allLines.length;
         allLines.push(docItem);
         totalHeight += docItem.height;
         return;
@@ -304,6 +305,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
             lineItem.bannerGroupId = bannerInfo.groupId;
             lineItem.bannerRole = bannerInfo.role;
         }
+        lineItem.viewerLineIndex = allLines.length;
         allLines.push(lineItem);
         /* Art-block grouping: consecutive separator lines within 1 s form one visual block.
            Each DAP output event creates a new Date() so lines in the same banner differ by milliseconds. */
