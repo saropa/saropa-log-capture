@@ -100,7 +100,7 @@ suite('ViewerKeybindings', () => {
       assert.strictEqual(getViewerActionLabel('lineHeightDown'), 'Line height down');
       assert.strictEqual(getViewerActionLabel('lineHeightReset'), 'Line height reset');
       assert.strictEqual(getViewerActionLabel('copyFilePath'), 'Copy log file path');
-      assert.strictEqual(getViewerActionLabel('revealFile'), 'Reveal log file');
+      assert.strictEqual(getViewerActionLabel('revealFile'), 'Log file actions');
       assert.strictEqual(getViewerActionLabel('showKeyboardShortcuts'), 'Keyboard shortcuts');
     });
     test('returns actionId for unknown', () => {
