@@ -274,8 +274,10 @@ function recalcHeights() {
     if (typeof applyConsecutiveDbMarkerCollapse === 'function') applyConsecutiveDbMarkerCollapse();
     totalHeight = 0;
     for (var i = 0; i < allLines.length; i++) {
-        allLines[i].height = calcItemHeight(allLines[i]);
-        totalHeight += allLines[i].height;
+        var _row = allLines[i];
+        if (_row.type === 'line') _row.viewerLineIndex = i;
+        _row.height = calcItemHeight(_row);
+        totalHeight += _row.height;
     }
     /* Invalidate visible-line cache so updateLineCount recalc runs after filter/layout change. */
     if (typeof window !== 'undefined') window.__visibleCountDirty = true;
