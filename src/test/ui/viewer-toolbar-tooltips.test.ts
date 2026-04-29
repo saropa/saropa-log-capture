@@ -26,8 +26,10 @@ suite('Viewer toolbar tooltips', () => {
         assert.ok(html.includes('title="Total number of lines'), 'line count needs tooltip');
         assert.ok(html.includes('title="Number of currently selected lines"'), 'selection needs tooltip');
         // Interactive elements describe their actions
-        assert.ok(html.includes('double-click to open folder'), 'filename tooltip should describe double-click');
-        assert.ok(html.includes('long-press to copy path'), 'filename tooltip should describe long-press');
+        assert.ok(
+            html.includes('click to open in editor') && html.includes('copy path'),
+            'filename tooltip should describe the log file actions modal',
+        );
         assert.ok(html.includes('click to open filter drawer'), 'trigger label should describe click action');
     });
 
