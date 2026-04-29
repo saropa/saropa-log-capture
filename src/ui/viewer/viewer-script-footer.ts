@@ -10,7 +10,7 @@ function updateFooterText() {
     if (prefix) footerTextEl.appendChild(document.createTextNode(prefix));
     if (currentFilename) {
         var fn = document.createElement('span');
-        fn.className = 'footer-filename'; fn.textContent = currentFilename; fn.title = 'Click: reveal \\u00b7 Hold: copy path \\u00b7 Double-click: open folder';
+        fn.className = 'footer-filename'; fn.textContent = currentFilename; fn.title = 'Click for open in editor, folder, or copy path';
         footerTextEl.appendChild(fn);
     }
     if (loadTruncatedInfo) {
