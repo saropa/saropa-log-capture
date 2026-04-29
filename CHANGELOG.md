@@ -26,6 +26,18 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [7.6.0] - unreleased
+
+### Fixed
+
+- **Log viewer blank lines now render at quarter height.** `calcItemHeight` already used quarter height for scroll math, but `.line` CSS forced every row to full line-box height, so whitespace-only lines looked full-sized and could skew scroll totals. `.line.line-blank` now matches the JS contract (`max(4px, ~¼ of the normal line box)`).
+
+### Changed
+
+- **Log file path in the viewer footer** — Clicking the log filename (or **Ctrl+Shift+E**) opens a **Log file** dialog with **Open in editor**, **Open containing folder**, and **Copy path**, replacing separate click / long-press / double-click gestures on the footer name.
+
+---
+
 ## [7.5.7]
 
 Session-group primary row favors the app log whose `Project:` header matches the workspace folder that contains the log directory when several captures share a session group, instead of picking only by timestamp; repeated identical stack headers collapse into an `N × stack repeated` chip; copy on collapsed SQL-repeat rows expands to the full underlying lines. [log](https://github.com/saropa/saropa-log-capture/blob/v7.5.7/CHANGELOG.md)
