@@ -13,6 +13,8 @@ function queuePopOutViewerConfigMicrotask(post, cfg) {
     queueMicrotask(() => {
         post({ type: "setViewerKeybindings", keyToAction: (0, viewer_keybindings_1.getViewerKeybindingsFromConfig)() });
         post({ type: "setRootCauseHintL10n", strings: (0, root_cause_hint_l10n_host_1.getRootCauseHintViewerStrings)() });
+        post({ type: "setLogFontSize", size: cfg.logFontSize });
+        post({ type: "setLogLineHeight", height: cfg.logLineHeight });
         post({ type: "minimapShowSqlDensity", show: cfg.minimapShowSqlDensity });
         post({ type: "minimapProportionalLines", show: cfg.minimapProportionalLines });
         post({ type: "minimapViewportRedOutline", show: cfg.minimapViewportRedOutline });

@@ -39,6 +39,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const assert = __importStar(require("node:assert"));
 const viewer_data_add_1 = require("../../ui/viewer/viewer-data-add");
+const viewer_data_add_doc_item_1 = require("../../ui/viewer/viewer-data-add-doc-item");
+const viewer_data_add_line_birth_1 = require("../../ui/viewer/viewer-data-add-line-birth");
 function extractAddToDataBlock(script) {
     const start = script.indexOf('function addToData(');
     const end = script.indexOf('\nfunction toggleStackGroup(');
@@ -112,22 +114,30 @@ suite('viewer-data-add blank rows compacted at birth', () => {
        quarter-height value calcItemHeight would return, gated on the same
        !hidden precondition so filtered-out rows still collapse to 0. */
     test('structured-file (docItem) branch stamps quarter-height for blank html at birth', () => {
+        /* docItem creation lives in viewer-data-add-doc-item.ts (extracted from
+           addToData to satisfy the 300-line cap). The addToData block must still
+           delegate to buildDocItem, and the helper must encode the same
+           quarter-height formula calcItemHeight uses on the next recalc pass. */
         const block = extractAddToDataBlock((0, viewer_data_add_1.getViewerDataAddScript)());
         assert.ok(block.length > 0, 'expected addToData block');
-        /* Birth-height formula must match calcItemHeight's gate value exactly
-           so addToData and a later recalcHeights() agree on the same row. */
-        assert.ok(block.includes('_docBlank') && block.includes('isLineContentBlank({ html: html })'), 'docItem path must consult isLineContentBlank for the blank-at-birth decision');
-        assert.ok(block.includes('_docBlank ? Math.max(4, Math.floor(ROW_HEIGHT / 4)) : ROW_HEIGHT'), 'docItem blank branch must use the same quarter-height value as calcItemHeight');
+        assert.ok(block.includes('buildDocItem('), 'addToData must delegate docItem construction to buildDocItem');
+        const helper = (0, viewer_data_add_doc_item_1.getDocItemBuilderScript)();
+        assert.ok(helper.includes('_docBlank') && helper.includes('isLineContentBlank({ html: html })'), 'docItem path must consult isLineContentBlank for the blank-at-birth decision');
+        assert.ok(helper.includes('_docBlank ? Math.max(4, Math.floor(ROW_HEIGHT / 4)) : ROW_HEIGHT'), 'docItem blank branch must use the same quarter-height value as calcItemHeight');
         /* The blank check must be skipped for already-hidden rows so
            filtered-out items stay at height 0, not quarter. */
-        assert.ok(block.includes('!_docHidden && typeof isLineContentBlank'), 'docItem blank check must be gated on !_docHidden so filtered rows still collapse to 0');
+        assert.ok(helper.includes('!_docHidden && typeof isLineContentBlank'), 'docItem blank check must be gated on !_docHidden so filtered rows still collapse to 0');
     });
     test('regular log-line (lineItem) branch stamps quarter-height for blank html at birth', () => {
+        /* lineItem birth-height computation lives in viewer-data-add-line-birth.ts
+           (extracted from addToData to satisfy the 300-line cap). The addToData
+           block must still delegate to computeLineBirthHeight, and the helper must
+           encode the same quarter-height formula calcItemHeight uses. */
         const block = extractAddToDataBlock((0, viewer_data_add_1.getViewerDataAddScript)());
-        /* lineItem birth-height must quarter-compact blanks on arrival, matching
-           calcItemHeight's ROW_HEIGHT/4 value so there is no jump on next filter pass. */
-        assert.ok(block.includes('_lineBlank') && block.includes('_lineBlank ? Math.max(4, Math.floor(ROW_HEIGHT / 4)) : ROW_HEIGHT'), 'lineItem blank branch must use the same quarter-height value as calcItemHeight');
-        assert.ok(block.includes('!_lineHidden && typeof isLineContentBlank'), 'lineItem blank check must be gated on !_lineHidden so filtered rows still collapse to 0');
+        assert.ok(block.includes('computeLineBirthHeight('), 'addToData must delegate lineItem birth-height to computeLineBirthHeight');
+        const helper = (0, viewer_data_add_line_birth_1.getLineBirthScript)();
+        assert.ok(helper.includes('_lineBlank') && helper.includes('_lineBlank ? Math.max(4, Math.floor(ROW_HEIGHT / 4)) : ROW_HEIGHT'), 'lineItem blank branch must use the same quarter-height value as calcItemHeight');
+        assert.ok(helper.includes('!_lineHidden && typeof isLineContentBlank'), 'lineItem blank check must be gated on !_lineHidden so filtered rows still collapse to 0');
     });
 });
 //# sourceMappingURL=viewer-data-add-embed.test.js.map
