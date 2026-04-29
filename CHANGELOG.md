@@ -28,6 +28,10 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [7.6.0] - unreleased
 
+### Added
+
+- **Contributor / agent tooling** — `engines.node` (≥22) with `.nvmrc` and `.node-version`; Dev Container (`.devcontainer/devcontainer.json`); [doc/AGENTS.md](doc/AGENTS.md); auto-generated [doc/internal/webview-incoming-message-types.md](doc/internal/webview-incoming-message-types.md) via `npm run generate:webview-catalog` with `verify:webview-catalog` on `npm run compile`; `verify:dist-size` guard on `dist/extension.js`; `npm run analyze-bundle` for esbuild metafile analysis; GitHub PR template and bug report issue form.
+
 ### Fixed
 
 - **Log viewer blank lines now render at quarter height.** `calcItemHeight` already used quarter height for scroll math, but `.line` CSS forced every row to full line-box height, so whitespace-only lines looked full-sized and could skew scroll totals. `.line.line-blank` now matches the JS contract (`max(4px, ~¼ of the normal line box)`).

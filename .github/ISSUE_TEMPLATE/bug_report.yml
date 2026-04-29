@@ -1,0 +1,59 @@
+name: Bug report
+description: Report incorrect behavior in Saropa Log Capture
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report. **F5 / Extension Development Host:** use [VS Code](https://code.visualstudio.com/) for reliable extension loading (see README).
+  - type: input
+    id: vscode
+    attributes:
+      label: VS Code version
+      description: Help → About, or `code --version`
+      placeholder: e.g. 1.108.2
+    validations:
+      required: true
+  - type: input
+    id: extension
+    attributes:
+      label: Saropa Log Capture version
+      placeholder: e.g. 7.5.7
+    validations:
+      required: false
+  - type: dropdown
+    id: host
+    attributes:
+      label: Where does the bug show up?
+      options:
+        - Log Viewer (webview)
+        - Session / Project Logs panel
+        - Capture / status bar
+        - Commands / settings
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: Minimal steps, starting from a fresh window if possible
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots (optional)
+      description: Redact secrets. Output channel “Saropa Log Capture” if relevant.
