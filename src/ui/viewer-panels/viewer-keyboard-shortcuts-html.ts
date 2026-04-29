@@ -89,7 +89,7 @@ function getPowerShortcutsHtml(): string {
                     <tr data-action-id="copyAll"><td><kbd>Ctrl+Shift+A</kbd></td><td>Copy all visible</td><td>Copy every visible (non-filtered) line to the clipboard</td></tr>
                     <tr data-action-id="selectAll"><td><kbd>Ctrl+A</kbd></td><td>Select all</td><td>Select all lines in the viewport</td></tr>
                     <tr data-action-id="copyFilePath"><td><kbd>Ctrl+Shift+P</kbd></td><td>Copy file path</td><td>Copy the current log file path to the clipboard</td></tr>
-                    <tr data-action-id="revealFile"><td><kbd>Ctrl+Shift+E</kbd></td><td>Reveal log file</td><td>Show the current log file in the system file explorer</td></tr>
+                    <tr data-action-id="revealFile"><td><kbd>Ctrl+Shift+E</kbd></td><td>Log file actions</td><td>Open a menu: editor, folder, or copy path</td></tr>
                 </tbody>
             </table>
 

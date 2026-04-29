@@ -29,6 +29,7 @@ import { getDecoSettingsHtml } from '../viewer-decorations/viewer-deco-settings'
 import { getExportModalHtml } from '../viewer-panels/viewer-export';
 import { getEditModalHtml } from '../viewer-context-menu/viewer-edit-modal';
 import { getAutoHideModalHtml } from '../viewer/viewer-auto-hide-modal';
+import { getLogFileModalHtml } from '../viewer/viewer-log-file-modal';
 import { getIconBarHtml } from '../viewer-nav/viewer-icon-bar';
 
 export interface ViewerBodyOptions {
@@ -99,6 +100,7 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     ${getContextModalHtml()}
     ${getDecoSettingsHtml()}
     ${getExportModalHtml()}
+    ${getLogFileModalHtml()}
     ${getEditModalHtml()}
     ${getAutoHideModalHtml()}
     </div>

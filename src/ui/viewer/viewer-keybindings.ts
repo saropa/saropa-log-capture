@@ -149,7 +149,7 @@ export const VIEWER_ACTION_LABELS: Record<ViewerKeybindingActionId, string> = {
   lineHeightDown: 'Line height down',
   lineHeightReset: 'Line height reset',
   copyFilePath: 'Copy log file path',
-  revealFile: 'Reveal log file',
+  revealFile: 'Log file actions',
 };
 
 export function getViewerActionLabel(actionId: string): string {
