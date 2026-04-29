@@ -5,6 +5,8 @@
 		"lib": [
 			"ES2022"
 		],
+		/* Prevent accidental `tsc -p .` from emitting *.js next to sources; test emit uses `--noEmit false --outDir out`. */
+		"noEmit": true,
 		"sourceMap": true,
 		"rootDir": "src",
 		"strict": true,   /* enable all strict type-checking options */

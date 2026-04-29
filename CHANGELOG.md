@@ -26,12 +26,13 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [7.6.0] - unreleased
+## [7.6.0]
 
 ### Added
 
 - **Contributor / agent tooling** — `engines.node` (≥22) with `.nvmrc` and `.node-version`; Dev Container (`.devcontainer/devcontainer.json`); [doc/AGENTS.md](doc/AGENTS.md); auto-generated [doc/internal/webview-incoming-message-types.md](doc/internal/webview-incoming-message-types.md) via `npm run generate:webview-catalog` with `verify:webview-catalog` on `npm run compile`; `verify:dist-size` guard on `dist/extension.js`; `npm run analyze-bundle` for esbuild metafile analysis; GitHub PR template and bug report issue form.
-- **More dev workflow hardening** — `tsconfig.json` **`noEmit: true`** with test builds using `--noEmit false --outDir out`; [doc/internal/webview-outbound-message-types.md](doc/internal/webview-outbound-message-types.md) + `verify:host-outbound-catalog`; [doc/internal/proposed-api.md](doc/internal/proposed-api.md); `npm run doctor`, `test:file`, `verify:release-version`, `verify:release-tag`; Dependabot production patch group; feature-request issue template + issue chooser links; Gitleaks in CI; extension activation smoke test.
+- **More dev workflow hardening** — `tsconfig.json` **`noEmit: true`** with test builds using `--noEmit false --outDir out`; [doc/internal/webview-outbound-message-types.md](doc/internal/webview-outbound-message-types.md) + `verify:host-outbound-catalog`; [doc/internal/proposed-api.md](doc/internal/proposed-api.md); `npm run doctor`, `test:file`, **`test:smoke`**, **`preflight`**, **`clean`**, **`verify:node-toolchain`**, [doc/internal/contributes-commands.md](doc/internal/contributes-commands.md) + **`verify:list-commands`**; `verify:release-version`, `verify:release-tag`; Dependabot production patch group; feature-request issue template + issue chooser links; Gitleaks in CI; extension activation smoke test.
+- **Log viewer discoverability** — Native tooltips on the log surface, scroll map, session count, and file name explain right-click line actions, long-press to copy session metadata, minimap right-click options, the log file modal, and **F1** for in-viewer shortcuts (defaults).
 - **Workspace setting `saropaLogCapture.logViewerVisualSpacing`** — Persists log viewer visual spacing (same behavior as **V** / Options). Host seeds the webview on load and on config change; toggling in the viewer updates the workspace setting.
 
 ### Fixed

@@ -209,8 +209,11 @@ function syncOptionsPanelUi() {
 
 /** Reset all options panel options to default (viewer display/layout/audio only; not workspace settings). */
 function resetOptionsToDefault() {
-    if (typeof setFontSize === 'function') setFontSize(13);
-    if (typeof setLineHeight === 'function') setLineHeight(2.0);
+    /* Reset to user's configured setting (seeded into logFontSizeDefault / logLineHeightDefault
+       by setLogFontSize / setLogLineHeight host messages) — not the webview's hard-coded fallback.
+       Falls back to fallback literal if the settings-driven default was never received. */
+    if (typeof setFontSize === 'function') setFontSize(typeof logFontSizeDefault === 'number' ? logFontSizeDefault : 13);
+    if (typeof setLineHeight === 'function') setLineHeight(typeof logLineHeightDefault === 'number' ? logLineHeightDefault : 1.1);
     wordWrap = false;
     var logEl = document.getElementById('log-content');
     if (logEl) logEl.classList.toggle('nowrap', true);

@@ -130,3 +130,18 @@ suite('Blank line row height CSS', () => {
         );
     });
 });
+
+suite('Structured format mode blank rows', () => {
+    const renderScript = getViewerDataHelpersRender();
+
+    test('formatted log lines append line-blank when isLineContentBlank', () => {
+        assert.ok(
+            renderScript.includes('_fmtBlank') && renderScript.includes("' line-blank'"),
+            'fmt branch must stamp line-blank for quarter-height CSS',
+        );
+        assert.ok(
+            renderScript.includes("isLineContentBlank(item)"),
+            'fmt branch must reuse isLineContentBlank(item)',
+        );
+    });
+});

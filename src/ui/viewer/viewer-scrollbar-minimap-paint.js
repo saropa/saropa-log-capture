@@ -12,16 +12,33 @@ function getScrollbarMinimapPaintScript() {
 function initMmColors() {
     var cs = getComputedStyle(document.documentElement);
     function v(n, fb) { return cs.getPropertyValue(n).trim() || fb; }
+    /* Severity swatches mirror the canonical .level-dot-* hex palette in
+       viewer-styles-level.ts (footer chip dots), so the minimap tick and the
+       footer chip read as the same color — single source of truth for "what
+       does this color mean?". Alpha values are calibrated for the per-pixel-
+       row reduction paint model (one deterministic fill per y-pixel, no
+       overdraw). Previously these alphas were higher (0.6 severity / 0.85
+       purple / 1.0 SQL density) because the old paint model stamped every
+       line at the same pixel and source-over compositing darkened the
+       result; face-value alphas in that world read correctly only *after*
+       blending. In the per-pixel model there is no blending to compensate
+       for, so those same values render fluorescent. Lowered across the
+       board: severity at 0.5-0.55, purple performance at 0.6 (down from
+       0.85 — the overdraw bump is no longer needed), database at 0.45
+       (cyan is a perceptually bright hue), SQL density at 0.5 (annotation
+       weight, matches severity), slow SQL at 0.6 (slightly hotter to flag
+       actionability without screaming). */
     mmColors = {
-        error: v('--vscode-editorOverviewRuler-errorForeground', 'rgba(244,68,68,0.85)'),
-        warning: v('--vscode-editorOverviewRuler-warningForeground', 'rgba(204,167,0,0.85)'),
-        performance: v('--vscode-editorOverviewRuler-infoForeground', 'rgba(156,39,176,0.85)'),
-        todo: 'rgba(189,189,189,0.65)',
-        debug: 'rgba(121,85,72,0.65)',
-        notice: 'rgba(33,150,243,0.65)',
-        info: 'rgba(78,201,176,0.65)',
-        sqlDensity: 'rgba(200, 120, 180, 1)',
-        sqlSlowDensity: 'rgba(255, 189, 89, 1)',
+        error: 'rgba(244,67,54,0.55)',
+        warning: 'rgba(255,152,0,0.55)',
+        performance: 'rgba(156,39,176,0.6)',
+        todo: 'rgba(189,189,189,0.45)',
+        debug: 'rgba(121,85,72,0.5)',
+        notice: 'rgba(33,150,243,0.5)',
+        info: 'rgba(76,175,80,0.5)',
+        database: 'rgba(0,188,212,0.45)',
+        sqlDensity: 'rgba(200, 120, 180, 0.5)',
+        sqlSlowDensity: 'rgba(255, 189, 89, 0.6)',
         searchMatch: v('--vscode-editorOverviewRuler-findMatchForeground', 'rgba(234,92,0,0.85)'),
         currentMatch: 'rgba(255,150,50,1)',
         /* Full-canvas base under SQL bands and severity ticks. */
@@ -94,13 +111,45 @@ function paintMinimap() {
         sqlBuckets = new Uint16Array(densityBucketCount);
         slowSqlBuckets = new Uint16Array(densityBucketCount);
     }
-    // Collect markers grouped by color to minimize fillStyle switches
-    var groups = {};
+    /* Per-pixel-row severity reduction. Each y-pixel in the minimap shows the
+       highest-priority level among source lines that map to it — no alpha
+       stacking, no source-over compositing surprises, exactly one deterministic
+       color per pixel. Replaces the old "stamp every line and let the blend
+       operator sort it out" approach, which saturated into gray walls at
+       sub-pixel pitch and produced unpredictable color mixing wherever
+       different-severity lines collided. Priority order reflects what users
+       actually scan the minimap for: error first, then warning, performance,
+       notice, database, info, debug, todo; presence is the catch-all for
+       lines with no level or info/debug/notice lines when mmShowInfo is off. */
+    var LV_EMPTY = 0;
+    var LV_PRESENCE = 1;
+    var LV_TODO = 2;
+    var LV_DEBUG = 3;
+    var LV_INFO = 4;
+    var LV_DATABASE = 5;
+    var LV_NOTICE = 6;
+    var LV_PERFORMANCE = 7;
+    var LV_WARNING = 8;
+    var LV_ERROR = 9;
+    var lvFromName = {
+        error: LV_ERROR, warning: LV_WARNING, performance: LV_PERFORMANCE,
+        notice: LV_NOTICE, database: LV_DATABASE, info: LV_INFO,
+        debug: LV_DEBUG, todo: LV_TODO
+    };
+    var lvColors = [null, 'rgba(140,140,140,0.28)',
+        mmColors.todo, mmColors.debug, mmColors.info, mmColors.database,
+        mmColors.notice, mmColors.performance, mmColors.warning, mmColors.error];
+
+    var bucketLv = new Uint8Array(mmH);
+    var bucketW = new Float32Array(mmH);
+    var hiddenInfoCount = 0;
+
     for (var i = 0; i < allLines.length; i += step) {
         var it = allLines[i];
         if (it.height === 0 || it.type === 'stack-frame' || it.type === 'marker') continue;
         var py = Math.round((mmLineOffset(i, hasPfx, cumH) / total) * mmH);
-        /* SQL density must not depend on minimap severity visibility (e.g. hidden info dots). */
+        if (py < 0 || py >= mmH) continue;
+        /* SQL density must not depend on severity visibility (hidden info dots). */
         if (mmShowSqlDensity && sqlBuckets && slowSqlBuckets) {
             var plainSql = stripTags(it.html || '');
             if (isLikelySqlLine(it, plainSql)) {
@@ -109,46 +158,59 @@ function paintMinimap() {
                 if (isLikelySlowSqlLine(it, plainSql)) slowSqlBuckets[bi]++;
             }
         }
-        var lv = it.level;
-        if (!lv || !mmColors[lv]) continue;
-        if ((lv === 'info' || lv === 'debug' || lv === 'notice') && !mmShowInfo) continue;
-        if (!groups[lv]) groups[lv] = [];
-        /* Pitch to the next sampled line — drives mmBarHeight so adjacent bars leave a visual gap when room allows. */
-        var nextI = i + step;
-        var nextPy = nextI < allLines.length ? Math.round((mmLineOffset(nextI, hasPfx, cumH) / total) * mmH) : mmH;
-        groups[lv].push({ py: py, w: mmBarWidthFrac(it), h: mmBarHeight(3, nextPy - py) });
+        var lvEnum = lvFromName[it.level] || LV_EMPTY;
+        /* mmShowInfo off demotes info/debug/notice to presence priority: the
+           line still marks its pixel (no black gaps) but can be overridden by
+           any higher-severity line landing on the same pixel. */
+        if (!mmShowInfo && (lvEnum === LV_INFO || lvEnum === LV_DEBUG || lvEnum === LV_NOTICE)) {
+            hiddenInfoCount++;
+            lvEnum = LV_PRESENCE;
+        } else if (lvEnum === LV_EMPTY) {
+            lvEnum = LV_PRESENCE;
+        }
+        var prev = bucketLv[py];
+        if (lvEnum > prev) {
+            bucketLv[py] = lvEnum;
+            bucketW[py] = mmBarWidthFrac(it);
+        } else if (lvEnum === prev) {
+            /* Same priority at same pixel: keep the widest so proportional-width
+               still shows the longest line falling into this pixel. */
+            var w2 = mmBarWidthFrac(it);
+            if (w2 > bucketW[py]) bucketW[py] = w2;
+        }
     }
 
     if (mmShowSqlDensity && sqlBuckets && slowSqlBuckets) {
         paintSqlDensityBuckets(sqlBuckets, slowSqlBuckets, mmW, mmH);
     }
 
-    // Paint severity markers
-    var barH = 3;
-    for (var lv in groups) {
-        mmCtx.fillStyle = mmColors[lv];
-        var arr = groups[lv];
-        for (var j = 0; j < arr.length; j++) {
-            var seg = arr[j];
-            mmCtx.fillRect(0, seg.py, mmW * seg.w, seg.h);
+    /* Pre-compute bar heights: extend each filled pixel up to 3px tall when
+       the next filled pixel is ≥4px away, collapse to 1px at dense pitch.
+       Preserves the old "1px gap between bars when space allows" aesthetic
+       without per-source-line next-y lookups. */
+    var fillHeights = new Uint8Array(mmH);
+    var prevFilled = -1;
+    for (var yh = 0; yh < mmH; yh++) {
+        if (bucketLv[yh] === LV_EMPTY) continue;
+        if (prevFilled >= 0) {
+            var gap = yh - prevFilled;
+            fillHeights[prevFilled] = gap >= 4 ? 3 : Math.max(1, gap - 1);
         }
+        prevFilled = yh;
     }
+    if (prevFilled >= 0) fillHeights[prevFilled] = 3;
 
-    var mc = 0;
-    for (var k in groups) mc += groups[k].length;
-    /* When "show info on minimap" is off, info/debug/notice bars are hidden — severity groups may be empty. Draw a neutral presence band so the canvas is not blank and still shows scroll structure. */
-    if (mc === 0 && total > 0) {
-        mmCtx.fillStyle = 'rgba(140, 140, 140, 0.24)';
-        var barN = 2;
-        for (var ni = 0; ni < allLines.length; ni += step) {
-            var nit = allLines[ni];
-            if (nit.height === 0 || nit.type === 'stack-frame' || nit.type === 'marker') continue;
-            var npy = Math.round((mmLineOffset(ni, hasPfx, cumH) / total) * mmH);
-            /* Per-line pitch → 1px gap between neutral bars when space allows; otherwise 1px bar, no gap. */
-            var nextNi = ni + step;
-            var nextNpy = nextNi < allLines.length ? Math.round((mmLineOffset(nextNi, hasPfx, cumH) / total) * mmH) : mmH;
-            var nw = mmBarWidthFrac(nit);
-            mmCtx.fillRect(0, npy, mmW * nw, mmBarHeight(barN, nextNpy - npy));
+    /* Paint in priority order (low → high). Each pixel is painted exactly
+       once — by its bucket's chosen level — at that level's full intended
+       alpha. Grouped by level to minimize fillStyle switches. */
+    var barH = 3;
+    for (var lvIdx = LV_PRESENCE; lvIdx <= LV_ERROR; lvIdx++) {
+        var color = lvColors[lvIdx];
+        if (!color) continue;
+        mmCtx.fillStyle = color;
+        for (var yy = 0; yy < mmH; yy++) {
+            if (bucketLv[yy] !== lvIdx) continue;
+            mmCtx.fillRect(0, yy, mmW * bucketW[yy], fillHeights[yy]);
         }
     }
 
@@ -162,8 +224,10 @@ function paintMinimap() {
     } else {
         title += ' Turn on "SQL activity on scroll map" in Layout options for SQL shading.';
     }
-    if (mc === 0 && total > 0) {
-        title += ' Enable info/debug/notice markers in settings for colored ticks on info-heavy logs.';
+    /* Hint fires when info/debug/notice lines are being drawn as neutral presence —
+       user can enable "Show info on minimap" to upgrade them to colored ticks. */
+    if (hiddenInfoCount > 0) {
+        title += ' Gray ticks are info/debug/notice — enable "Show info on minimap" for colored ticks.';
     }
     title += ' ' + Math.round(total) + ' px content.';
     minimapEl.title = title;
