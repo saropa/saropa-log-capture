@@ -61,7 +61,13 @@ function updateSessionInfoTooltip() {
     var label = document.querySelector('.nav-bar-label');
     if (!label) return;
     var text = buildSessionInfoText(sessionInfoData);
-    label.title = text || '';
+    /* User hint: long-press is easy to miss — surface it in the native tooltip (like footer path hints). */
+    var hint = 'Tip: long-press (hold ~0.5s) on this label to copy session details to the clipboard.';
+    if (text) {
+        label.title = hint + '\\n\\n' + text;
+    } else {
+        label.title = hint + ' Full details appear here after the capture has session metadata.';
+    }
 }
 
 /** No-op — toolbar is always visible; kept for backward compat. */

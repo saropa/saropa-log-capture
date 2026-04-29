@@ -74,6 +74,8 @@ exports.setViewerSlowBurstThresholdsImpl = setViewerSlowBurstThresholdsImpl;
 exports.setViewerSqlPatternChipSettingsImpl = setViewerSqlPatternChipSettingsImpl;
 exports.setMinimapWidthImpl = setMinimapWidthImpl;
 exports.setScrollbarVisibleImpl = setScrollbarVisibleImpl;
+exports.setLogFontSizeImpl = setLogFontSizeImpl;
+exports.setLogLineHeightImpl = setLogLineHeightImpl;
 exports.setSearchMatchOptionsAlwaysVisibleImpl = setSearchMatchOptionsAlwaysVisibleImpl;
 exports.setIconBarPositionImpl = setIconBarPositionImpl;
 exports.setErrorRateConfigImpl = setErrorRateConfigImpl;
@@ -218,6 +220,12 @@ function setMinimapWidthImpl(target, width) {
 }
 function setScrollbarVisibleImpl(target, show) {
     target.postMessage({ type: "scrollbarVisible", show });
+}
+function setLogFontSizeImpl(target, size) {
+    target.postMessage({ type: "setLogFontSize", size });
+}
+function setLogLineHeightImpl(target, height) {
+    target.postMessage({ type: "setLogLineHeight", height });
 }
 function setSearchMatchOptionsAlwaysVisibleImpl(target, always) {
     target.postMessage({ type: "searchMatchOptionsAlwaysVisible", always });
