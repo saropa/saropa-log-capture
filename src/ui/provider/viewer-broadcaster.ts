@@ -171,6 +171,9 @@ export class ViewerBroadcaster implements ViewerTarget {
   setLogLineHeight(height: number): void {
     for (const t of this.targets) { t.setLogLineHeight(height); }
   }
+  setLogViewerVisualSpacing(enabled: boolean): void {
+    for (const t of this.targets) { t.setLogViewerVisualSpacing(enabled); }
+  }
   setSearchMatchOptionsAlwaysVisible(always: boolean): void {
     for (const t of this.targets) { t.setSearchMatchOptionsAlwaysVisible(always); }
   }

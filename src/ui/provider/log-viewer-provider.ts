@@ -223,6 +223,7 @@ export class LogViewerProvider
   setScrollbarVisible(show: boolean): void { state.setScrollbarVisibleImpl(this, show); }
   setLogFontSize(size: number): void { state.setLogFontSizeImpl(this, size); }
   setLogLineHeight(height: number): void { state.setLogLineHeightImpl(this, height); }
+  setLogViewerVisualSpacing(enabled: boolean): void { state.setLogViewerVisualSpacingImpl(this, enabled); }
   setSearchMatchOptionsAlwaysVisible(always: boolean): void { state.setSearchMatchOptionsAlwaysVisibleImpl(this, always); }
   setIconBarPosition(position: "left" | "right"): void { state.setIconBarPositionImpl(this, position); }
   setErrorRateConfig(config: ErrorRateConfig): void { state.setErrorRateConfigImpl(this, config); }

@@ -97,6 +97,9 @@ export function setMinimapShowInfoImpl(target: ProviderStateTarget, show: boolea
 export function setMinimapShowSqlDensityImpl(target: ProviderStateTarget, show: boolean): void {
   target.postMessage({ type: "minimapShowSqlDensity", show });
 }
+export function setLogViewerVisualSpacingImpl(target: ProviderStateTarget, enabled: boolean): void {
+  target.postMessage({ type: "logViewerVisualSpacing", value: enabled });
+}
 export function setMinimapProportionalLinesImpl(target: ProviderStateTarget, show: boolean): void {
   target.postMessage({ type: "minimapProportionalLines", show });
 }

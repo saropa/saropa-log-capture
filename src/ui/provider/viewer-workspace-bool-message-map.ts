@@ -4,6 +4,7 @@
  * and options panel toggles without duplicating `getConfiguration().update` cases.
  */
 export const SAROPA_BOOL_SETTING_BY_MSG_TYPE: Readonly<Record<string, string>> = {
+  setLogViewerVisualSpacing: "logViewerVisualSpacing",
   setMinimapSqlDensity: "minimapShowSqlDensity",
   setMinimapProportionalLines: "minimapProportionalLines",
   setShowScrollbar: "showScrollbar",

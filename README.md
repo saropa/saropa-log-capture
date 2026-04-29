@@ -196,7 +196,7 @@ But this is not just a log saver. It is a **full diagnostic workstation** built 
 - **Line decorations:** Severity dots, sequential counters, timestamps (with optional milliseconds), session elapsed time (e.g. 5m 15s), and whole-line coloring — each togglable independently via the Options panel or context menu (Layout submenu). No master switch; decorations appear when any individual option is on. Blank lines skip the severity dot (the vertical bar continues); counter on blank lines is optional via **Decoration settings** → **Show line number on blank lines** (off by default) so Go to Line matches file references.
 - **Lint diagnostic badges:** Log lines referencing source files with active VS Code diagnostics (errors, warnings from any linter) show inline badges with counts. Works with all linters (ESLint, TypeScript, Dart analyzer, saropa_lints, etc.). Badges update live as diagnostics change. Off by default; enable via **Decoration settings** → **Lint badge**.
 - **Severity bar mode:** Colored left borders by log level as an alternative/complement to dot indicators.
-- **Visual spacing:** Heuristic breathing room before/after level changes, markers, and stack traces.
+- **Visual spacing:** Optional heuristic breathing room before/after level changes, markers, and stack traces (off by default; press **V** or use Options). Persisted in workspace setting `saropaLogCapture.logViewerVisualSpacing`.
 - **Font size / line height:** Adjustable via sliders in the Options panel.
 - **Elapsed time:** Show `+Nms` between lines; slow gaps highlighted.
 - **Scrollbar minimap:** Visual overview showing search matches, errors, warnings, and viewport position.
@@ -297,7 +297,7 @@ Open **Options** → **Keyboard shortcuts…** in the viewer for the full refere
 | A                    | Cycle device logs (None/Warn+/All)  |
 | C                    | Toggle compress duplicates          |
 | H                    | Toggle hide blank lines             |
-| V                    | Toggle visual spacing               |
+| V                    | Toggle visual spacing (default off) |
 | O                    | Toggle options panel                |
 | F                    | Toggle filters panel                |
 | S                    | Toggle signals panel                |
