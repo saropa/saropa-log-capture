@@ -76,7 +76,7 @@ export function getToolbarHtml(opts: ToolbarHtmlOptions): string {
     </div>
     <div class="toolbar-right">
         <span id="session-details-inline" class="session-details-inline" aria-label="Log context" title="Log session context and metadata"></span>
-        <span id="footer-text" data-version="${ver}" class="toolbar-filename" title="Log file path — click to reveal in explorer, double-click to open folder, long-press to copy path"></span>
+        <span id="footer-text" data-version="${ver}" class="toolbar-filename" title="Log file path — click to open in editor, show folder, or copy path"></span>
     </div>
 </div>`;
 }

@@ -312,7 +312,7 @@ Open **Options** → **Keyboard shortcuts…** in the viewer for the full refere
 | Ctrl+Alt+C           | Copy selection as raw text          |
 | Ctrl+Shift+A         | Copy all visible lines to clipboard |
 | Ctrl+Shift+P         | Copy log file path                  |
-| Ctrl+Shift+E         | Reveal log file in explorer         |
+| Ctrl+Shift+E         | Log file actions (editor, folder, copy path) |
 | Ctrl+= / Ctrl+-      | Increase / decrease font size       |
 | Ctrl+0               | Reset font size                     |
 | Ctrl+Shift+= / -     | Increase / decrease line height     |
