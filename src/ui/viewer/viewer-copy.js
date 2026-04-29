@@ -12,13 +12,42 @@ function getCopyScript() {
 var selectionStart = -1;
 var selectionEnd = -1;
 
+/* Copy expansion for collapsed SQL repeats.
+   A "N × SQL repeated:" row is one allLines entry with an sqlRepeatDrilldown carrying
+   repeatCount; the N individual SQL lines themselves are never pushed into allLines
+   (see viewer-data-add-repeat-collapse.ts). Without expansion, copying that row gives
+   the user one line of header text and zero of the content they see represented.
+   We store the hidden anchor's text on the notification row as collapsedLineText /
+   collapsedRawText, and emit repeatCount copies when serializing for the clipboard.
+   Guard on height > 0: cleanupTrailingRepeats (marker boundary / trim) zeroes the
+   notification height and un-hides the anchor; expanding an inert notification then
+   would double the anchor's content. */
+function isExpandableRepeatNotification(item) {
+    if (!item || item.type !== 'repeat-notification') return false;
+    if (!(item.height > 0)) return false;
+    if (!item.collapsedLineText && !item.collapsedRawText) return false;
+    var d = item.sqlRepeatDrilldown;
+    return !!(d && d.repeatCount > 0);
+}
+
+function repeatCountForExpansion(item) {
+    return (item.sqlRepeatDrilldown.repeatCount | 0) || 1;
+}
+
 function getSelectedLines() {
     var start = Math.min(selectionStart, selectionEnd);
     var end = Math.max(selectionStart, selectionEnd);
     if (start < 0 || end < 0 || start >= allLines.length) return [];
     var result = [];
     for (var i = start; i <= Math.min(end, allLines.length - 1); i++) {
-        if (!allLines[i].excluded) result.push(allLines[i]);
+        var it = allLines[i];
+        if (it.excluded) continue;
+        /* Skip the hidden anchor of an active SQL repeat: its content is already
+           represented (and will be expanded below) by the corresponding
+           repeat-notification row in the same range. Including it here would
+           produce one extra SQL copy on top of the N from expansion. */
+        if (it.repeatHidden) continue;
+        result.push(it);
     }
     return result;
 }
@@ -31,12 +60,34 @@ function getVisibleLines() {
     return result;
 }
 
+function lineToPlainText(item) {
+    if (isExpandableRepeatNotification(item)) {
+        var n = repeatCountForExpansion(item);
+        var txt = item.collapsedLineText || stripTags(item.collapsedRawText || '');
+        var parts = new Array(n);
+        for (var k = 0; k < n; k++) parts[k] = txt;
+        return parts.join('\\n');
+    }
+    return stripTags(item.html);
+}
+
 function linesToPlainText(lines) {
     var parts = [];
     for (var i = 0; i < lines.length; i++) {
-        parts.push(stripTags(lines[i].html));
+        parts.push(lineToPlainText(lines[i]));
     }
     return parts.join('\\n');
+}
+
+/* Count how many output lines linesToPlainText will actually produce so the
+   "Copied N lines" toast reflects the expanded total rather than the count of
+   allLines entries (which undercounts collapsed repeats by a factor of repeatCount). */
+function countExpandedLines(lines) {
+    var total = 0;
+    for (var i = 0; i < lines.length; i++) {
+        total += isExpandableRepeatNotification(lines[i]) ? repeatCountForExpansion(lines[i]) : 1;
+    }
+    return total;
 }
 
 function linesToMarkdown(lines) {
@@ -68,17 +119,29 @@ function copyAsSnippet() {
 function getAllCopyableLines() {
     var lines = [];
     for (var i = 0; i < allLines.length; i++) {
-        if (allLines[i].height > 0 && allLines[i].type !== 'marker') {
-            lines.push(allLines[i]);
-        }
+        var it = allLines[i];
+        if (it.height <= 0) continue;
+        if (it.type === 'marker') continue;
+        lines.push(it);
     }
     return lines;
+}
+
+function lineToRawText(item) {
+    if (isExpandableRepeatNotification(item)) {
+        var n = repeatCountForExpansion(item);
+        var txt = item.collapsedRawText != null ? item.collapsedRawText : (item.collapsedLineText || '');
+        var parts = new Array(n);
+        for (var k = 0; k < n; k++) parts[k] = txt;
+        return parts.join('\\n');
+    }
+    return item.rawText != null ? item.rawText : stripTags(item.html);
 }
 
 function linesToRawText(lines) {
     var parts = [];
     for (var i = 0; i < lines.length; i++) {
-        parts.push(lines[i].rawText != null ? lines[i].rawText : stripTags(lines[i].html));
+        parts.push(lineToRawText(lines[i]));
     }
     return parts.join('\\n');
 }
@@ -98,11 +161,13 @@ function copyAllToClipboard() {
 function copyAllFilteredWithCount() {
     var lines = getAllCopyableLines();
     if (lines.length === 0) return;
-    vscodeApi.postMessage({ type: 'copyAllFiltered', text: linesToPlainText(lines), lineCount: lines.length });
+    /* lineCount reports the expanded total so the toast matches what landed on
+       the clipboard — a single "12 × SQL repeated:" row contributes 12, not 1. */
+    vscodeApi.postMessage({ type: 'copyAllFiltered', text: linesToPlainText(lines), lineCount: countExpandedLines(lines) });
 }
 
-function decorateLine(item) {
-    var text = stripTags(item.html || '');
+function decorateLine(item, overrideText) {
+    var text = overrideText != null ? overrideText : stripTags(item.html || '');
     var parts = [];
     /* Emoji dot only in copy when "Severity dot (copy only)" is checked; viewer uses gutter bar only. */
     var addingDot = typeof decoShowDot !== 'undefined' && decoShowDot && typeof getLevelDot === 'function';
@@ -126,7 +191,19 @@ function decorateLine(item) {
 function linesToDecoratedText(lines) {
     var parts = [];
     for (var i = 0; i < lines.length; i++) {
-        parts.push(decorateLine(lines[i]));
+        var it = lines[i];
+        if (isExpandableRepeatNotification(it)) {
+            /* Expanded repeats share the notification's seq/timestamp — per-instance
+               metadata was not retained at ingest (only the anchor and a drilldown
+               snapshot are kept). Emitting N decorated copies with the same prefix
+               is intentional: the decoration is a visual aid, not a claim of
+               distinct timestamps. */
+            var n = repeatCountForExpansion(it);
+            var txt = it.collapsedLineText || stripTags(it.collapsedRawText || '');
+            for (var k = 0; k < n; k++) parts.push(decorateLine(it, txt));
+        } else {
+            parts.push(decorateLine(it));
+        }
     }
     return parts.join('\\n');
 }
@@ -234,7 +311,9 @@ if (copyFloat) copyFloat.addEventListener('click', function(e) {
     if (!copyFloatLineEl) return;
     var ci = parseInt(copyFloatLineEl.dataset.idx, 10);
     if (ci >= 0 && ci < allLines.length) {
-        vscodeApi.postMessage({ type: 'copyToClipboard', text: stripTags(allLines[ci].html) });
+        /* Route through lineToPlainText so the hover-to-copy float expands a
+           "N × SQL repeated" row into N lines, matching Ctrl+C behavior. */
+        vscodeApi.postMessage({ type: 'copyToClipboard', text: lineToPlainText(allLines[ci]) });
         showCopyToast();
     }
 });

@@ -274,6 +274,15 @@ suite('Compress suggestion banner markup', () => {
     });
 });
 
+suite('Log viewer discoverability (body HTML)', () => {
+    test('log content has hover title for line actions and session long-press hint', () => {
+        const html = getViewerBodyHtml({ version: '0' });
+        assert.ok(html.includes('id="log-content"'));
+        assert.ok(html.includes('Right-click a line'));
+        assert.ok(html.includes('long-press'));
+    });
+});
+
 suite('Toolbar icon button disabled state CSS', () => {
     const css = getToolbarStyles();
 

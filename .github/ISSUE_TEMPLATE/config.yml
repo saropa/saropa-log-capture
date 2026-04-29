@@ -1,1 +1,8 @@
 blank_issues_enabled: true
+contact_links:
+  - name: Contributing guide
+    url: https://github.com/saropa/saropa-log-capture/blob/main/CONTRIBUTING.md
+    about: Developer setup, tests, and PR expectations.
+  - name: Agent / contributor notes
+    url: https://github.com/saropa/saropa-log-capture/blob/main/doc/AGENTS.md
+    about: Toolchain, webview message catalogs, and common foot-guns.

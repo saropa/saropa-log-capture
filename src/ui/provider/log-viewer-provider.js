@@ -243,6 +243,8 @@ class LogViewerProvider {
     }
     setMinimapWidth(width) { state.setMinimapWidthImpl(this, width); }
     setScrollbarVisible(show) { state.setScrollbarVisibleImpl(this, show); }
+    setLogFontSize(size) { state.setLogFontSizeImpl(this, size); }
+    setLogLineHeight(height) { state.setLogLineHeightImpl(this, height); }
     setSearchMatchOptionsAlwaysVisible(always) { state.setSearchMatchOptionsAlwaysVisibleImpl(this, always); }
     setIconBarPosition(position) { state.setIconBarPositionImpl(this, position); }
     setErrorRateConfig(config) { state.setErrorRateConfigImpl(this, config); }
