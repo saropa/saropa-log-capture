@@ -2679,7 +2679,8 @@
   },
   "displayName": "%displayName%",
   "engines": {
-    "vscode": "^1.105.0"
+    "vscode": "^1.105.0",
+    "node": ">=22.0.0"
   },
   "extensionKind": [
     "workspace"
@@ -2716,11 +2717,15 @@
   "scripts": {
     "check-types": "tsc --noEmit",
     "verify-nls": "node scripts/modules/verify-nls.js",
+    "verify:webview-catalog": "node scripts/modules/webview-message-catalog.mjs --check",
+    "generate:webview-catalog": "node scripts/modules/webview-message-catalog.mjs",
+    "verify:dist-size": "node scripts/modules/verify-dist-extension-size.mjs",
+    "analyze-bundle": "node scripts/modules/analyze-extension-bundle.mjs",
     "generate:db-detector-embed-merge": "node scripts/modules/generate-db-detector-embed-merge.mjs",
-    "compile": "npm run generate:db-detector-embed-merge && npm run check-types && npm run lint && npm run verify-nls && node esbuild.js",
+    "compile": "npm run generate:db-detector-embed-merge && npm run check-types && npm run lint && npm run verify-nls && npm run verify:webview-catalog && node esbuild.js && npm run verify:dist-size",
     "compile-tests": "node -e \"require('fs').rmSync('out', { recursive: true, force: true })\" && tsc -p . --outDir out",
     "lint": "eslint src",
-    "package": "npm run check-types && npm run lint && node esbuild.js --production",
+    "package": "npm run check-types && npm run lint && npm run verify:webview-catalog && node esbuild.js --production && npm run verify:dist-size",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "test": "node scripts/modules/patch-vscode-test.js && vscode-test",
     "test:coverage": "npm run pretest && node scripts/modules/run-coverage.js",
