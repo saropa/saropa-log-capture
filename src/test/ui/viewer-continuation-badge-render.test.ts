@@ -117,3 +117,16 @@ suite('Continuation badge CSS', () => {
         );
     });
 });
+
+suite('Blank line row height CSS', () => {
+    const css = getDecorationBarStyles();
+
+    test('line-blank rows use quarter height to match calcItemHeight', () => {
+        const blankRule = css.match(/\.line\.line-blank\s*\{[^}]*\}/s)?.[0] ?? '';
+        assert.ok(blankRule.includes('0.25'), '.line.line-blank must set ~quarter of full line box height');
+        assert.ok(
+            blankRule.includes('max(4px,') && blankRule.includes('calc(0.25'),
+            'must enforce min 4px like calcItemHeight Math.max(4, …)',
+        );
+    });
+});
