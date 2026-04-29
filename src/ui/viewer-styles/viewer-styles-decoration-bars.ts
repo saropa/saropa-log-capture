@@ -61,7 +61,15 @@ export function getDecorationBarStyles(): string {
 
 /* Blank/empty lines: set --blank-line-bg to any color to join before/after; when unset, previous line tint shows. */
 .line.line-blank {
-    background-color: var(--blank-line-bg);
+  background-color: var(--blank-line-bg);
+  /* Must match calcItemHeight: Math.max(4, floor(ROW_HEIGHT/4)) while base .line uses
+     full ROW_HEIGHT (= 1em × --log-line-height, see viewer-styles-lines.ts). Without
+     this, virtual-scroll prefix sums use quarter height but the DOM row stays full
+     height — blank gaps look "full size" and scroll height drifts. */
+  height: max(4px, calc(0.25 * 1em * var(--log-line-height, 1.1)));
+  min-height: 4px;
+  /* Empty content: no need for the full strut; keeps the short box visually tight. */
+  line-height: 1;
 }
 
 /* Positioning context for severity dots and connector bars */
