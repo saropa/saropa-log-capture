@@ -198,8 +198,13 @@ suite('ViewerOptionsPanel', () => {
         });
         test('should reset display, layout, and audio defaults', () => {
             const script = (0, viewer_options_panel_1.getOptionsPanelScript)();
-            assert.ok(script.includes('setFontSize(13)'));
-            assert.ok(script.includes('setLineHeight(2.0)'));
+            // Reset uses the settings-driven defaults (logFontSizeDefault / logLineHeightDefault)
+            // seeded by setLogFontSize / setLogLineHeight host messages, with literal fallbacks
+            // (13 / 1.1) for the case where the settings message was never received.
+            assert.ok(script.includes('logFontSizeDefault'));
+            assert.ok(script.includes('logLineHeightDefault'));
+            assert.ok(script.includes('setFontSize('));
+            assert.ok(script.includes('setLineHeight('));
             assert.ok(script.includes('resetDecoDefaults'));
             assert.ok(script.includes('audioRateLimit = 2000'));
         });
