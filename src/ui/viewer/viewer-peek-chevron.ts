@@ -1,13 +1,22 @@
 /**
- * Client-side JavaScript for the scoped peek-chevron feature in the log viewer.
- * Clicking a `.hidden-chevron` (rendered between visible lines when non-blank lines
- * are filtered out) reveals exactly that gap's hidden items under a fresh per-group
- * key; a matching `.peek-collapse` marker then appears above the first revealed line
- * so the user can collapse that one group again without touching other peeks or
- * disturbing the global filter state.
+ * Client-side JavaScript for the scoped peek feature in the log viewer.
  *
- * Concatenated into the same script scope as viewer-script.ts (shared `allLines`,
- * `recalcAndRender`, `renderViewport`, `recalcHeights`).
+ * EXPAND: clicking the outlined severity dot (`.bar-hidden-rows` row state)
+ * with a `data-hidden-from` attr reveals exactly that filter-hidden gap's
+ * items; a `data-dedup-count` attr reveals a dedup-fold survivor's hidden
+ * duplicates. Each expansion mints a fresh peek key (via `nextPeekKey++`)
+ * stamped on every revealed item's `peekAnchorKey`, so two adjacent gaps can
+ * be expanded and collapsed independently.
+ *
+ * COLLAPSE: clicking the outlined dot does NOT collapse — that behavior
+ * deleted lines from view in a way users perceived as data loss (the dot
+ * looks identical for "expand" and "collapse" states; the only signal was
+ * the hover tooltip). Collapse now requires an explicit click on the
+ * `.peek-collapse-link` pill rendered as a sibling row directly below every
+ * peek-anchor row. See bug 048 plan.
+ *
+ * Concatenated into the same script scope as viewer-script.ts (shared
+ * `allLines`, `recalcAndRender`, `renderViewport`, `recalcHeights`).
  */
 export function getPeekChevronScript(): string {
     return /* javascript */ `
@@ -19,30 +28,51 @@ export function getPeekChevronScript(): string {
     collapse both on one click. */
 var nextPeekKey = 1;
 
-/** Wire up viewport-level event delegation for peek / un-peek on the unified
-    .bar-hidden-rows row state. Delegated because the row divs are re-created
-    on every renderViewport() call — a direct listener would be lost.
+/** Wire up viewport-level event delegation for two distinct controls:
+      1. .peek-collapse-link[data-peek-key] — explicit collapse pill (only
+         emitted under expanded peek-anchor rows). Click → unpeekChevron.
+      2. .bar-hidden-rows row state — outlined severity dot. Click → expand
+         a filter-hidden gap (data-hidden-from) or a dedup fold
+         (data-dedup-count). NEVER collapses; see file header.
 
-    WHY .bar-hidden-rows replaces the old .hidden-chevron / .peek-collapse
-    selectors: the unified line-collapsing plan (bugs/unified-line-collapsing.md)
-    retires those separate glyph elements in favour of an outlined severity dot
-    on the row itself. Both "reveal hidden gap" and "re-collapse peeked group"
-    states now live on the same class; which action fires depends on which
-    data-* attrs the row carries (set by the render loop in viewer-data-viewport.ts).
+    Delegated because both targets are re-created on every renderViewport()
+    call — a direct listener would be lost.
 
-    WHY ignore shift-click: viewer-copy.ts uses shift-click for range selection.
-    Letting plain clicks toggle the peek preserves the text-selection affordance
-    (click-drag still selects text because the click event only fires on mouseup
-    without a drag — Chromium / Firefox never fire click on drag-select).
+    WHY ignore shift-click: viewer-copy.ts uses shift-click for range
+    selection. Letting plain clicks fire here preserves the text-selection
+    affordance (click-drag still selects text because the click event only
+    fires on mouseup without a drag — Chromium / Firefox never fire click on
+    drag-select).
 
-    WHY stopPropagation: other viewport-level click handlers (viewer-copy, etc.)
-    also listen to the same event — without stopPropagation the row would both
-    toggle peek AND register a line selection. */
+    WHY stopPropagation only when handled: other viewport-level click
+    handlers (viewer-copy, viewer-script-click-handlers for stack-headers,
+    etc.) listen on the same viewport. We must let those fire when this
+    handler did not own the click (e.g. a stack-header click that happens
+    to land on a row also carrying .bar-hidden-rows but with no peek-key /
+    hidden-from / dedup-count attrs). */
 function initPeekChevron() {
     var vp = document.getElementById('viewport');
     if (!vp) return;
     vp.addEventListener('click', function(e) {
         if (e.shiftKey) return;
+
+        /* Explicit collapse control: an inline ".peek-collapse-link" sibling
+           row sits directly below every peek-anchor row when it is expanded.
+           Clicking that link is now the ONLY way a click can collapse a peek
+           group. Plain clicks on the severity dot deliberately do nothing
+           here. WHY: when dot-click also collapsed, users perceived it as
+           the viewer deleting their lines — the dot looks identical for
+           "click to expand" and "click to collapse" and the only signal
+           distinguishing them was the hover tooltip, which is invisible
+           during scroll-and-click. See bug 048 plan and the immediate fix. */
+        var collapseLink = e.target.closest('.peek-collapse-link[data-peek-key]');
+        if (collapseLink) {
+            unpeekChevron(parseInt(collapseLink.dataset.peekKey, 10));
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
+
         var target = e.target.closest('.bar-hidden-rows');
         if (!target) return;
         /* WHY dispatch before stopPropagation: a stack-header collapsed by the
@@ -54,10 +84,13 @@ function initPeekChevron() {
            first, and only stop propagation when we actually handle the click. */
         var handled = false;
         if (target.dataset.peekKey) {
-            /* Un-peek path: row belongs to an already-expanded peek group,
-               click collapses exactly that group. */
-            unpeekChevron(parseInt(target.dataset.peekKey, 10));
-            handled = true;
+            /* Already-expanded peek anchor: dot click is a deliberate no-op.
+               The user collapses via the .peek-collapse-link sibling row that
+               renders directly below the anchor (see top of this handler).
+               WHY return rather than fall through: without this guard the
+               dedup-survivor branch below would re-fire peekDedupFold on each
+               click and mint a fresh peek key indefinitely. */
+            return;
         } else if (target.dataset.hiddenFrom !== undefined) {
             /* Peek path: row sits immediately after a filter-hidden run; reveal it. */
             var from = parseInt(target.dataset.hiddenFrom, 10);
