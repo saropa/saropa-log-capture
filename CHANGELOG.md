@@ -26,6 +26,14 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Log viewer selection** — Restored within-line text selection and stopped the flicker/jump that made selection unusable. Drag-select now only takes over when the cursor leaves the start row (multi-row intent); within-row drags fall through to native browser text selection so half-line, word, and SQL-token selections work again. Live capture's auto-scroll-to-bottom is also paused while a selection is in progress, so streaming lines no longer rewrite the viewport DOM mid-drag and wipe what you were selecting.
+
+---
+
 ## [7.6.0]
 
 ### Added
