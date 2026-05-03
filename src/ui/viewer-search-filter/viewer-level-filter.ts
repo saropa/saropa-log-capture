@@ -38,7 +38,11 @@ function applyLevelFilter() {
             if (allLines[i].levelFiltered || allLines[i].type === 'marker') continue;
             for (var j = 1; j <= contextLinesBefore && (i - j) >= 0; j++) {
                 var ctx = allLines[i - j];
-                if (ctx.type === 'marker') continue;
+                // Synthetic analysis rows (repeat chips, N+1 signals) describe the surrounding
+                // SQL — they are not "what led to the error" and only add noise when dragged in
+                // as context. Skip them so the 3-line window walks back to real log content
+                // (stack frames, info lines, etc.) which actually shows causality.
+                if (ctx.type === 'marker' || ctx.type === 'repeat-notification' || ctx.type === 'n-plus-one-signal') continue;
                 if (ctx.levelFiltered) { ctx.levelFiltered = false; ctx.isContext = true; }
             }
         }
