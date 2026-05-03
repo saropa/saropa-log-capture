@@ -41,6 +41,16 @@ suite('ViewerIconBar', () => {
             assert.ok(!html.includes('>Replay</span>'));
         });
 
+        test('should not render a count badge on the Logs icon', () => {
+            /* Regression guard: the Logs badge plateaued at "99+" for any project with real
+               history, so it conveyed no information. Removed deliberately — re-adding would
+               just bring back permanent visual noise. The session count is shown inside the
+               panel header instead. */
+            const html = getIconBarHtml();
+            assert.ok(!html.includes('id="ib-sessions-badge"'), 'Logs badge span must not be present');
+            assert.ok(!html.includes('id="ib-sessions-count"'), 'Logs inline-count span must not be present');
+        });
+
         test('should have action-oriented tooltips on all icon buttons', () => {
             const html = getIconBarHtml();
             const ids = [
