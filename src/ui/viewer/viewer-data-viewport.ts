@@ -169,13 +169,29 @@ function renderViewport(force) {
            row string start with "class=\\"" at position 0, so the ^<div anchor keeps
            this unambiguous. */
         if (_peekKey !== null) {
+            /* WHY tooltip text changed: the dot itself no longer collapses on
+               click (see viewer-peek-chevron.ts). It is purely an indicator
+               that this row is the start of an expanded peek group. The user
+               collapses via the explicit .peek-collapse-link rendered just
+               below this row. */
             _rendered = _rendered.replace(/^<div class="/,
-                '<div data-peek-key="' + _peekKey + '" title="Click to collapse peek" class="bar-hidden-rows ');
+                '<div data-peek-key="' + _peekKey + '" title="Lines below were revealed under this peek" class="bar-hidden-rows ');
         } else if (_hiddenFrom >= 0) {
             _rendered = _rendered.replace(/^<div class="/,
                 '<div data-hidden-from="' + _hiddenFrom + '" data-hidden-to="' + _hiddenTo + '" title="' + _hiddenTip + '" class="bar-hidden-rows ');
         }
         parts.push(_rendered);
+        /* Inline collapse control for peek groups: a thin sibling row holding
+           the only click target that can collapse this peek. The severity dot
+           on the row above is a no-op for clicks now — having a separate,
+           visibly button-like element prevents the "I clicked the dot and my
+           lines vanished" failure mode (bug 048). The .peek-collapse-row carries
+           no level-bar-* class, so findNextDotSibling() naturally skips it
+           and the bar-bridge post-pass treats it as a transparent gap. */
+        if (_peekKey !== null) {
+            parts.push('<div class="peek-collapse-row"><span class="peek-collapse-link" data-peek-key="'
+                + _peekKey + '" title="Re-hide the lines revealed under this peek">\\u00d7 hide revealed lines</span></div>');
+        }
         prevVis = allLines[i];
         prevVisIdx = i;
     }
