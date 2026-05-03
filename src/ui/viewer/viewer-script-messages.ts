@@ -38,7 +38,8 @@ window.addEventListener('message', function(event) {
                 renderViewport(false);
                 if (typeof scheduleMinimap === 'function') scheduleMinimap();
                 // Render-snap-render: the render above used the OLD scrollTop and only reaches OVERSCAN rows past the previous bottom. When a streaming batch is larger than that the snapped viewport lands inside the empty bottom spacer and the contents appear to jump until the next event paints the new tail. The trailing renderViewport(false) re-uses the snapped scrollTop and is cheap on small batches (early-returns on unchanged range).
-                if (autoScroll && !window.isContextMenuOpen) { if (window.setProgrammaticScroll) window.setProgrammaticScroll(); suppressScroll = true; logEl.scrollTop = logEl.scrollHeight; suppressScroll = false; renderViewport(false); }
+                // Suppress snap-to-bottom while the user is selecting: the snap changes the viewport range mid-drag, which makes renderViewport rewrite DOM and wipes any native within-line selection the user is building. With the snap suppressed the visible range stays put and renderViewport's hysteresis early-returns, preserving both native and model selections during streaming. Sticky-bottom resumes on the next batch after selection clears.
+                if (autoScroll && !window.isContextMenuOpen && (typeof isUserSelecting !== 'function' || !isUserSelecting())) { if (window.setProgrammaticScroll) window.setProgrammaticScroll(); suppressScroll = true; logEl.scrollTop = logEl.scrollHeight; suppressScroll = false; renderViewport(false); }
                 updateFooterText();
             }
             if (typeof scheduleRootCauseHypothesesRefresh === 'function') scheduleRootCauseHypothesesRefresh();
