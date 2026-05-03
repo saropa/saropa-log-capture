@@ -182,6 +182,80 @@ suite('Peek chevron — initHiddenLines wires initPeekChevron', () => {
     });
 });
 
+suite('Bug 048 immediate fix — explicit collapse pill replaces dot-click collapse', () => {
+    /* The outlined severity dot used to be a toggle: a second click on a
+       row with data-peek-key would call unpeekChevron and lines would vanish.
+       That read as data deletion to users (the dot looks identical for
+       "click to expand" and "click to collapse"). The fix: dot click on a
+       peek anchor is now a deliberate no-op, and a sibling .peek-collapse-row
+       holding a clickable .peek-collapse-link[data-peek-key] is injected
+       directly below the anchor row to provide an explicit collapse control.
+       These pins lock the new behavior so a future refactor can't silently
+       restore the data-loss-feeling dot-click toggle. */
+    const peek = getPeekChevronScript();
+    const viewport = getViewportRenderScript();
+
+    test('click handler must short-circuit on data-peek-key (no unpeek from the dot)', () => {
+        // The "if (target.dataset.peekKey) { return; }" guard prevents the
+        // dot-click collapse path. We slice from the branch start to the
+        // next "} else" arm — large enough to catch the full comment block
+        // AND the bare `return;` statement that follows it.
+        const handlerStart = peek.indexOf('function initPeekChevron');
+        assert.ok(handlerStart >= 0, 'handler function must exist');
+        const handlerSlice = peek.slice(handlerStart, handlerStart + 4000);
+        const peekKeyBranchIdx = handlerSlice.indexOf('target.dataset.peekKey)');
+        assert.ok(peekKeyBranchIdx >= 0, 'handler must guard on target.dataset.peekKey');
+        // Find the closing of this if block: scan forward to "} else if"
+        // (which starts the hiddenFrom branch). Up to ~1500 chars to comfortably
+        // cover the WHY comment.
+        const tail = handlerSlice.slice(peekKeyBranchIdx, peekKeyBranchIdx + 1500);
+        const elseIfIdx = tail.indexOf('} else if');
+        assert.ok(elseIfIdx > 0, 'branch must close into a "} else if" for the hiddenFrom path');
+        const dotBranchBody = tail.slice(0, elseIfIdx);
+        // CORE PINS: no unpeek, AND a bare `return;` statement (not just the
+        // word "return" inside a comment — match `\breturn\s*;`).
+        assert.ok(
+            !dotBranchBody.includes('unpeekChevron'),
+            'data-peek-key branch must NOT call unpeekChevron — that re-introduces the data-loss-feeling collapse-on-dot-click bug',
+        );
+        assert.ok(
+            /\breturn\s*;/.test(dotBranchBody),
+            'data-peek-key branch must contain a bare `return;` statement to prevent fall-through to the dedup re-fire path',
+        );
+    });
+
+    test('click handler must route .peek-collapse-link[data-peek-key] to unpeekChevron', () => {
+        assert.ok(
+            peek.includes(`closest('.peek-collapse-link[data-peek-key]')`),
+            'handler must look for the explicit collapse pill before the dot fallthrough',
+        );
+        // The unpeekChevron call lives inside the collapseLink branch and
+        // takes the link's dataset.peekKey value.
+        assert.ok(
+            peek.includes('unpeekChevron(parseInt(collapseLink.dataset.peekKey'),
+            'collapse-link delegate must call unpeekChevron with the link\'s peek-key',
+        );
+    });
+
+    test('render loop must inject a .peek-collapse-row sibling under every peek-anchor row', () => {
+        // The sibling row is the only click target that can collapse a peek
+        // group. Without it, an expanded peek group has no UI affordance to
+        // re-hide the revealed lines (since the dot click is now a no-op).
+        assert.ok(
+            viewport.includes('class="peek-collapse-row"'),
+            'render loop must emit the peek-collapse-row container as a sibling of the peek-anchor row',
+        );
+        assert.ok(
+            viewport.includes('class="peek-collapse-link"'),
+            'peek-collapse-row must contain the peek-collapse-link click target',
+        );
+        assert.ok(
+            viewport.includes('data-peek-key="') && viewport.includes("' + _peekKey +"),
+            'peek-collapse-link must carry the same data-peek-key the dot carries, so unpeekChevron matches the right group',
+        );
+    });
+});
+
 suite('Retired .peek-collapse CSS is fully removed', () => {
     // The CSS rules for .peek-collapse (and .hidden-chevron) were removed when
     // the unified line-collapsing rethink retired those indicator elements.
