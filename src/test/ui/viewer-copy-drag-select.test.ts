@@ -119,4 +119,39 @@ suite('viewer-copy-drag-select', () => {
         );
         assert.ok(script.includes('rowEl.dataset'));
     });
+
+    test('activation requires the cursor to leave the start row so within-line text selection works', () => {
+        /* Regression guard: a prior version activated drag-select on any 4px movement, which
+           wiped native browser selection (clearNativeTextSelection) and stamped a whole-row
+           .selected class. That made selecting half a line / a word / a SQL token impossible —
+           dragging horizontally inside one row immediately replaced the in-progress text
+           highlight with a row highlight. Activation must now also require the cursor to be
+           on a different row index than dragSelectStartIdx. */
+        assert.ok(
+            /curIdx === dragSelectStartIdx/.test(script),
+            'activation must compare cursor row to dragSelectStartIdx and skip when equal',
+        );
+        /* The within-row early return must precede activateDragSelect() so we never call
+           clearNativeTextSelection while the drag is still inside the start row. */
+        const earlyReturnIdx = script.indexOf('curIdx === dragSelectStartIdx) return');
+        const activateIdx = script.indexOf('activateDragSelect();');
+        assert.ok(
+            earlyReturnIdx >= 0 && activateIdx >= 0 && earlyReturnIdx < activateIdx,
+            'within-row early return must come before activateDragSelect call',
+        );
+    });
+
+    test('exposes isUserSelecting() for the streaming/auto-scroll path to query', () => {
+        /* The addLines handler in viewer-script-messages.ts calls this to suppress
+           snap-to-bottom while a selection is in progress. If this signature drifts the
+           handler's typeof guard will silently fail open and live capture will scroll over
+           the user's selection again. */
+        assert.ok(
+            /function isUserSelecting\(\)/.test(script),
+            'isUserSelecting must be a top-level function so it lives on window',
+        );
+        assert.ok(script.includes('dragSelectActive'));
+        assert.ok(script.includes('window.getSelection'));
+        assert.ok(script.includes('isCollapsed'));
+    });
 });
