@@ -156,9 +156,30 @@ function onDragSelectMouseMove(e) {
     dragSelectLastX = e.clientX;
     dragSelectLastY = e.clientY;
     if (!dragSelectActive) {
+        /* Activation requires BOTH a small jitter-filter distance AND that the cursor has
+           left the start row. Within-row drags must fall through to the browser's native
+           text selection so users can select half a line, a word, a SQL token, etc.
+
+           Why: the prior threshold-only gate killed all within-line text selection. Any
+           drag past 4px — even purely horizontal across a single row — wiped the native
+           blue highlight (clearNativeTextSelection on activate) and stamped a whole-row
+           .selected class instead. Users reported selection as "impossible, drops, jumps,
+           flickers" because the act of dragging to extend a selection inside a line
+           replaced it with a whole-row highlight on the first frame past 4px.
+
+           Row-crossing as the activation gate captures the actual intent: a vertical drag
+           that leaves the start row is multi-row selection; anything else is text. We
+           keep the squared-distance jitter filter so a sub-pixel mouse twitch on a row
+           boundary doesn't immediately commit. */
         var dx = e.clientX - dragSelectStartX;
         var dy = e.clientY - dragSelectStartY;
         if (dx * dx + dy * dy < dragSelectThresholdPx * dragSelectThresholdPx) return;
+        var curIdx = getDragRowDataIdx(e.target);
+        if (curIdx < 0) curIdx = dragSelectResolveIdxAtPoint(e.clientX, e.clientY);
+        /* Still on the start row → do NOT activate, do NOT preventDefault — let native
+           text selection extend within the row. The early return here is critical: any
+           code below this point assumes drag-select is the active mode. */
+        if (curIdx < 0 || curIdx === dragSelectStartIdx) return;
         activateDragSelect();
     }
     /* Try the direct event target first (cheap), then elementFromPoint (handles cursors
@@ -172,8 +193,22 @@ function onDragSelectMouseMove(e) {
     updateDragSelectAutoscroll(e.clientY);
     /* Suppress the browser's own text-selection drag — we are providing the selection
        UI via the .selected class. Without this, the native blue highlight would briefly
-       paint until the next scroll-driven viewport re-render wiped it out. */
+       paint until the next scroll-driven viewport re-render wiped it out. Only reached
+       AFTER activation; pre-activation within-row drags returned early above. */
     if (e.preventDefault) e.preventDefault();
+}
+
+/* True when the user is actively building a selection — drag in flight, multi-row model
+   selection from shift+click, or a non-collapsed native (within-line) selection. Used by
+   the addLines path to suppress autoScroll snap-to-bottom while a selection is in
+   progress: the snap was changing the viewport range mid-drag, which forced renderViewport
+   to rewrite DOM and wiped any native selection the user was building inside a line. */
+function isUserSelecting() {
+    if (typeof dragSelectActive !== 'undefined' && dragSelectActive) return true;
+    if (typeof selectionStart !== 'undefined' && typeof selectionEnd !== 'undefined' &&
+        selectionStart >= 0 && selectionEnd >= 0 && selectionStart !== selectionEnd) return true;
+    var s = (typeof window !== 'undefined' && window.getSelection) ? window.getSelection() : null;
+    return !!(s && !s.isCollapsed);
 }
 
 function onDragSelectMouseUp() {
