@@ -134,6 +134,41 @@ export function getDecorationBarStyles(): string {
     box-sizing: border-box;
 }
 
+/* Inline collapse control rendered as a sibling row directly below every
+   expanded peek-anchor row. Replaces the prior dot-click collapse behavior:
+   plain clicks on the severity dot used to collapse and made lines appear
+   to vanish (bug 048 — read as data deletion). Collapsing now requires an
+   explicit click on this visibly-button-like element. The row itself is a
+   neutral container; .peek-collapse-link is the actual click target. */
+.peek-collapse-row {
+    height: max(8px, calc(0.7 * 1em * var(--log-line-height, 1.1)));
+    line-height: 1;
+    text-align: center;
+    user-select: none;
+    /* WHY no margin: this row sits flush below the peek-anchor row; a margin
+       would visually detach it and weaken the "this controls that row's
+       expansion" association. */
+    margin: 0;
+}
+.peek-collapse-link {
+    display: inline-block;
+    padding: 0.05em 0.6em;
+    font-size: 0.78em;
+    color: var(--vscode-descriptionForeground, #888);
+    background: color-mix(in srgb, var(--vscode-badge-background, #4d4d4d) 30%, transparent);
+    border-radius: 0.25em;
+    cursor: pointer;
+    user-select: none;
+}
+.peek-collapse-link:hover {
+    background: var(--vscode-badge-background, #4d4d4d);
+    color: var(--vscode-badge-foreground, #fff);
+}
+/* If the bar-bridge post-pass added level-bar-* to this row (because it sat
+   between two same-level severity dots), suppress the dot — the row is a
+   control, not a log line, and a severity dot on it would be misleading. */
+.peek-collapse-row[class*="level-bar-"]::before { display: none; }
+
 /* Connector bars join consecutive dots — scale with zoom via em */
 .bar-down::after, .bar-up::after {
     content: ''; position: absolute; left: 0.85em; width: 0.23em;
