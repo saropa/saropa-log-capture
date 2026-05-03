@@ -14,7 +14,7 @@ export function getIconBarHtml(): string {
     return /* html */ `
 <div id="icon-bar" role="toolbar" aria-label="Log viewer tools" title="Click bar to show or hide icon labels">
     <button id="ib-sessions" class="ib-icon" tabindex="0" title="Click to open/close — browse and switch between log sessions in this project" aria-label="Logs">
-        <span class="codicon codicon-files"></span><span id="ib-sessions-badge" class="ib-badge"></span><span class="ib-label">Logs<span id="ib-sessions-count" class="ib-count"></span></span>
+        <span class="codicon codicon-files"></span><span class="ib-label">Logs</span>
     </button>
     <button id="ib-find" class="ib-icon" tabindex="0" title="Click to open/close — search across all log files in this project (Ctrl+Shift+F)" aria-label="Find in Files (Ctrl+Shift+F)">
         <span class="codicon codicon-search"></span><span class="ib-label">Find in Files</span>
