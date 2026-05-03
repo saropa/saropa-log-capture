@@ -48,11 +48,16 @@ function renderStackHeader(item, html, spacingCls, matchCls, barCls, idxAttr) {
         ? (item.qualityPercent >= 80 ? ' line-quality-high'
             : (item.qualityPercent >= 50 ? ' line-quality-med' : ' line-quality-low'))
         : '';
-    var hdrLevelCls = item.level ? ' level-' + item.level : '';
+    // Context-pulled rows must mute (opacity 0.4) and drop their level color so they
+    // visually read as background — otherwise a stack header dragged in as context
+    // for a nearby error keeps its full-color level-database tint and looks like
+    // primary content. Mirrors the main-line rule in viewer-data-helpers-render.ts.
+    var hdrLevelCls = (item.level && !item.isContext) ? ' level-' + item.level : '';
+    var hdrCtxCls = item.isContext ? ' context-line' + (item.isContextFirst ? ' context-first' : '') : '';
     var hdrHiddenCls = _hdrHidden ? ' bar-hidden-rows' : '';
     var hdrTitleAttr = _hdrTip ? ' title="' + _hdrTip.replace(/"/g, '&quot;') + '"' : '';
     return '<div class="stack-header' + hdrLevelCls + matchCls + spacingCls + barCls
-        + hdrHeat + hdrHiddenCls + '"' + idxAttr + hdrTitleAttr
+        + hdrHeat + hdrHiddenCls + hdrCtxCls + '"' + idxAttr + hdrTitleAttr
         + ' data-gid="' + item.groupId + '">' + hdrQb + html.trim() + dup + '</div>';
 }
 
@@ -101,8 +106,11 @@ function renderStackFrame(item, html, matchCls, barCls, idxAttr, stackGutter) {
     }
     var sfCombCls = sfDupCls || sfPrevCls;
     var sfCombTitle = sfDupTitle || sfPrevTitle;
+    // Context-pulled stack frames mute via .context-line so a Drift stack frame dragged
+    // in 3 rows before an unrelated error reads as background, not a participating frame.
+    var sfCtxCls = item.isContext ? ' context-line' + (item.isContextFirst ? ' context-first' : '') : '';
     return '<div class="line stack-line' + (item.fw ? ' framework-frame' : '')
-        + matchCls + barCls + sfHeat + sfCombCls + '"' + idxAttr + sfDupDataAttr + sfCombTitle + '>'
+        + matchCls + barCls + sfHeat + sfCombCls + sfCtxCls + '"' + idxAttr + sfDupDataAttr + sfCombTitle + '>'
         + stackGutter + sfQb + html + '</div>';
 }
 `;
