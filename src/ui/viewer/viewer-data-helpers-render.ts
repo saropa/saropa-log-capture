@@ -126,7 +126,11 @@ function renderItem(item, idx, prevVis) {
             '<span class="run-sep-counts">' + dots + '</span></div></div>';
     }
     if (item.type === 'repeat-notification' || item.type === 'n-plus-one-signal') {
-        return '<div class="line' + matchCls + '"' + idxAttr + '>' + html + '</div>';
+        // Defense in depth: applyLevelFilter now skips these as context anchors so they
+        // shouldn't reach this branch with isContext=true, but apply the mute anyway so
+        // any future code path that flips isContext on a chip renders consistently.
+        var chipCtxCls = item.isContext ? ' context-line' + (item.isContextFirst ? ' context-first' : '') : '';
+        return '<div class="line' + matchCls + chipCtxCls + '"' + idxAttr + '>' + html + '</div>';
     }
     /* Stack gutter: when any stack groups exist, non-header lines get an
        invisible spacer matching the arrow width so line numbers stay aligned. */
