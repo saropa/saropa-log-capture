@@ -144,7 +144,8 @@ var stripSourceTagPrefix = true;
  *  Out-of-the-box default is true (collapsed) — a noisy log (Drift SELECT flood, logcat
  *  debug spam) otherwise renders thousands of visible stack frames on first paint. Users
  *  who prefer the full trace expanded by default switch this in Decorations → Stack frames.
- *  See bugs/unified-line-collapsing.md. */
+ *  Toggle UI per stack group is the inline .stack-toggle chevron in the header (▶ collapsed,
+ *  ▼ expanded); see bugs/048_plan-severity-gutter-decoupling.md. */
 var stackDefaultState = true;
 /** Number of app frames shown in preview mode. */
 var stackPreviewCount = 3;
