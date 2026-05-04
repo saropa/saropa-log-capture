@@ -145,13 +145,15 @@ export class LogSession {
                 });
                 this._previousTimestamp = next.timestamp;
                 /* Capture-side deduplication is intentionally bypassed: the
-                   unified line-collapsing rethink (bugs/unified-line-collapsing.md)
-                   moves every collapse/hide to the viewer layer so line numbers
-                   in the captured file match the app's actual output 1:1. Each
-                   incoming line is written as its own row; identical-within-500ms
-                   runs that the old Deduplicator would have folded to `(xN)`
-                   suffix are now folded visually in the viewer via .bar-hidden-rows
-                   (click to expand) and preserve per-line timestamps in the file. */
+                   2026.04 unified-line-collapsing rethink moved every collapse/hide
+                   to the viewer layer so line numbers in the captured file match
+                   the app's actual output 1:1. Each incoming line is written as
+                   its own row; identical-within-500ms runs that the old
+                   Deduplicator would have folded to `(xN)` suffix are now folded
+                   visually in the viewer via the inline .dedup-badge ("×N" pill)
+                   on the survivor row (see bugs/048_plan-severity-gutter-decoupling.md
+                   for the current viewer-side affordance) and preserve per-line
+                   timestamps in the file. */
                 await this.writeProcessedLines([formatted]);
                 this.pendingLines.shift();
 
