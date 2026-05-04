@@ -34,7 +34,7 @@ export function getDecoSettingsHtml(): string {
     </label>
     <label class="deco-settings-row">
         <input type="checkbox" id="deco-opt-counter" checked />
-        Counter
+        Line numbers
     </label>
     <label class="deco-settings-row deco-indent">
         <input type="checkbox" id="deco-opt-counter-on-blank" title="Show line number on blank lines so Go to Line matches file" />

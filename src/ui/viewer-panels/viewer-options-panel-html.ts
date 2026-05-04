@@ -60,10 +60,6 @@ export function getOptionsPanelHtml(): string {
                 <input type="checkbox" id="opt-deco-dot" checked />
                 <span>Severity dot</span>
             </label>
-            <label class="options-row" title="Show the line number in the prefix">
-                <input type="checkbox" id="opt-deco-counter" checked />
-                <span>Counter</span>
-            </label>
             <label class="options-row" title="Show the time each line was logged">
                 <input type="checkbox" id="opt-deco-timestamp" checked />
                 <span>Timestamp</span>
@@ -112,6 +108,10 @@ export function getOptionsPanelHtml(): string {
         <!-- Layout Section -->
         <div class="options-section">
             <h3 class="options-section-title">Layout</h3>
+            <label class="options-row" title="Show the line number at the start of each row (file-line index, e.g. 1, 2, 3 …).">
+                <input type="checkbox" id="opt-deco-counter" checked />
+                <span>Line numbers</span>
+            </label>
             <label class="options-row" title="Adds pink and orange background shading on the right-hand scroll map (not a second scrollbar). Pink = SQL lines in that part of the log; orange = slow SQL. Severity and search stay as short ticks on top.">
                 <input type="checkbox" id="opt-minimap-sql-density" />
                 <span>SQL activity on scroll map (pink / orange shading)</span>
