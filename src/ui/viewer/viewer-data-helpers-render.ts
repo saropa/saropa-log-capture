@@ -91,16 +91,17 @@ function renderItem(item, idx, prevVis) {
         }
     }
     if (item.type === 'marker') {
-        /* Unified line-collapsing (bugs/unified-line-collapsing.md).
-           The v7.4.0 "× N" badge on the run-head marker was retired as unreadable.
+        /* The v7.4.0 "× N" badge on the run-head marker was retired by the
+           2026.04 unified-line-collapsing rethink as unreadable.
            applyConsecutiveDbMarkerCollapse() still folds follow-ups to height 0
-           so the margin stops stacking identical markers. Markers do not carry a
-           severity dot in the gutter (they're their own row type with coloured
-           background), so the outlined-dot signal used for line/stack-header
-           rows does not apply here. Instead, when the marker represents a
-           collapsed run, a title attribute on the marker div tells the user via
-           hover how many identical markers were folded into it — keeps the
-           "nothing hidden silently" guarantee without re-adding a visible badge. */
+           so the margin stops stacking identical markers. Markers do not carry
+           a severity dot in the gutter (they're their own row type with
+           coloured background), so the gutter affordances introduced by plan
+           048 (bugs/048_plan-severity-gutter-decoupling.md) do not apply
+           here. Instead, when the marker represents a collapsed run, a title
+           attribute on the marker div tells the user via hover how many
+           identical markers were folded into it — keeps the "nothing hidden
+           silently" guarantee without re-adding a visible badge. */
         var _mkTitle = (item.markerCollapseCount && item.markerCollapseCount > 1)
             ? ' title="' + item.markerCollapseCount + ' adjacent identical markers collapsed into this one"'
             : '';
@@ -158,9 +159,13 @@ function renderItem(item, idx, prevVis) {
         return renderStackHeader(item, html, spacingCls, matchCls, barCls, idxAttr);
     }
     if (item.type === 'stack-frame') {
-        /* Delegated to viewer-data-helpers-render-stack.ts. Carries dedup-fold
-           and preview-mode-last-visible-frame .bar-hidden-rows wiring. */
-        return renderStackFrame(item, html, matchCls, barCls, idxAttr, stackGutter);
+        /* Delegated to viewer-data-helpers-render-stack.ts. Emits inline
+           .dedup-badge for cross-type dedup-fold survivors; preview-mode
+           "more frames hidden" notices are pushed by the render loop in
+           viewer-data-viewport.ts as sibling .viewer-divider rows. idx is
+           passed so the badge can carry data-dedup-survivor-idx for the
+           click delegate in viewer-peek-chevron.ts. */
+        return renderStackFrame(item, idx, html, matchCls, barCls, idxAttr, stackGutter);
     }
     if (item.category && item.category.indexOf('ai-') === 0) {
         var aiCat = item.category;
@@ -210,21 +215,28 @@ function renderItem(item, idx, prevVis) {
     }
     var annHtml = (typeof getAnnotationHtml === 'function') ? getAnnotationHtml(idx) : '';
     var badge = '';
-    /* Unified line-collapsing (bugs/unified-line-collapsing.md, commit 4):
-       the prior inline (×N) .compress-dup-badge is retired. The dedup-fold
-       survivor now carries .bar-hidden-rows (outlined severity dot) instead,
-       with the count in the row's tooltip — satisfies the plan's "only
-       decorations, no text badges" rule. */
-    var dupHiddenCls = '';
-    var dupTitleAttr = '';
-    var dupDataAttr = '';
+    /* Severity-gutter decoupling (plan: bugs/048_plan-severity-gutter-decoupling.md).
+       The prior outlined-dot state (.bar-hidden-rows) on the dedup-fold
+       survivor was overloaded with three other concepts (filter-gap peek,
+       expanded peek anchor, collapsed stack header) and the dot looked
+       identical for "click to expand" and "click to collapse". The
+       survivor now carries a dedicated inline .dedup-badge ("×N" / "×N hide")
+       at the END of its text content. Click → peekDedupFold (reveals the
+       hidden duplicates listed on item.compressDupHiddenIndices) when
+       collapsed, or unpeekChevron(peekAnchorKey) when expanded. */
+    var dupBadge = '';
     if (item.compressDupCount > 1) {
-        dupHiddenCls = ' bar-hidden-rows';
-        dupTitleAttr = ' title="' + item.compressDupCount + ' identical rows collapsed here \\u00b7 click to expand"';
-        /* data-dedup-count routes this row's click through peekDedupFold() in
-           viewer-peek-chevron.ts — reveals the hidden duplicates (listed on
-           item.compressDupHiddenIndices by applyCompressDedupModes). */
-        dupDataAttr = ' data-dedup-count="' + item.compressDupCount + '"';
+        /* Dedup peek is "expanded" when the survivor itself carries a
+           peekAnchorKey — peekDedupFold stamps both the survivor and the
+           revealed duplicates with the same key so a single click on the
+           badge can collapse the whole group via the same key. */
+        var _dupExpanded = (item.peekAnchorKey !== undefined && item.peekAnchorKey !== null);
+        var _dupLabel = '\\u00d7' + item.compressDupCount + (_dupExpanded ? ' hide' : '');
+        var _dupCls = _dupExpanded ? 'dedup-badge dedup-badge-expanded' : 'dedup-badge';
+        var _dupTitle = _dupExpanded
+            ? item.compressDupCount + ' identical rows revealed \\u00b7 click to hide'
+            : item.compressDupCount + ' identical rows collapsed here \\u00b7 click to show';
+        dupBadge = '<span class="' + _dupCls + '" data-dedup-survivor-idx="' + idx + '" title="' + _dupTitle + '">' + _dupLabel + '</span>';
     }
     if (typeof getErrorBadge === 'function' && item.errorClass) badge = getErrorBadge(item.errorClass);
     if (!badge && item.isAnr) badge = '<span class="error-badge error-badge-anr" title="ANR Pattern Detected">\\u23f1 ANR</span> ';
@@ -284,13 +296,13 @@ function renderItem(item, idx, prevVis) {
        contBadge variable is cleared — so this tail position only applies to
        art-continuation lines where deco is empty. The order 'deco then
        contBadge' (not the reverse) preserves the invariant that the badge
-       never precedes the decoration prefix in the output string. */
-    /* dupHiddenCls adds .bar-hidden-rows when this line is a dedup-fold survivor;
-       dupTitleAttr carries the count tooltip. dupTitleAttr only applies when
-       titleAttr is empty (dedup never overrides a more specific tooltip like
-       highlight or recent-error-context). */
-    var effTitleAttr = titleAttr || dupTitleAttr;
-    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + bannerCls + dupHiddenCls + '"' + idxAttr + dupDataAttr + effTitleAttr + '>' + stackGutter + deco + contBadge + elapsed + badge + catBadge + html + '</div>' + annHtml;
+       never precedes the decoration prefix in the output string.
+
+       dupBadge ("×N" / "×N hide" inline pill) renders at the END of the
+       row's text content, not on the outer div. The plan keeps it adjacent
+       to the line text it folds so the user reads "this row · ×12" as a
+       single unit, not as a gutter decoration that could mean anything. */
+    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + bannerCls + '"' + idxAttr + titleAttr + '>' + stackGutter + deco + contBadge + elapsed + badge + catBadge + html + dupBadge + '</div>' + annHtml;
 }
 `;
 }
