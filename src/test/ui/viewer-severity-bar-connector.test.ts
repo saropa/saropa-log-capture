@@ -34,17 +34,31 @@ suite('Severity bar connector (same-level joining)', () => {
         );
     });
 
-    test('should not reference the retired .hidden-chevron / .peek-collapse classes', () => {
-        // Unified line-collapsing rethink retired both indicator elements — the
-        // render loop no longer emits them and the post-pass no longer skips them.
-        // findNextDotSibling just scans for dot-carrying rows; nothing to skip.
+    test('should skip .viewer-divider sibling rows when finding the next dot', () => {
+        // Plan 048 introduced .viewer-divider control rows interleaved among
+        // log lines. They must not break the connector chain that joins
+        // consecutive same-level dots, otherwise a divider in the middle of
+        // a same-level run would visually slice the timeline in two.
+        assert.ok(
+            viewportScript.includes("classList.contains('viewer-divider')"),
+            'findNextDotSibling must skip .viewer-divider so connectors bridge through them',
+        );
+    });
+
+    test('should no longer reference the retired indicator classes', () => {
+        // The unified-line-collapsing rethink retired .hidden-chevron / .peek-collapse;
+        // plan 048 retired the overloaded .bar-hidden-rows that succeeded them.
         assert.ok(
             !viewportScript.includes("classList.contains('hidden-chevron')"),
-            'findNextDotSibling must not reference the retired .hidden-chevron class',
+            'render loop must not reference the long-retired .hidden-chevron class',
         );
         assert.ok(
             !viewportScript.includes("classList.contains('peek-collapse')"),
-            'bar-bridge loop must not reference the retired .peek-collapse class',
+            'render loop must not reference the long-retired .peek-collapse class',
+        );
+        assert.ok(
+            !viewportScript.includes('class="bar-hidden-rows '),
+            'render loop must not stamp the retired .bar-hidden-rows class on rows',
         );
     });
 
@@ -117,19 +131,16 @@ suite('Hidden-lines chevron insertion', () => {
         );
     });
 
-    test('should stamp .bar-hidden-rows + tooltip on the row after a hidden gap', () => {
-        // Unified line-collapsing (bugs/unified-line-collapsing.md): the old
-        // .hidden-chevron DIV was retired. The outlined-dot state is now
-        // represented by injecting .bar-hidden-rows + data-hidden-from/to + title
-        // onto the outer <div class="..."> of the visible row that FOLLOWS the
-        // hidden gap. No separate indicator element is emitted.
+    test('should push a .viewer-divider row when a filter-hidden gap exists', () => {
+        // Plan 048 (bugs/048_plan-severity-gutter-decoupling.md): the
+        // .bar-hidden-rows overload on the row AFTER the gap was retired.
+        // The render loop now pushes a dedicated .viewer-divider sibling
+        // row carrying the count + click target. See viewer-data-divider.ts
+        // for the divider HTML; here we only pin that the render loop calls
+        // the builder when prevVisIdx leaves a gap.
         assert.ok(
-            viewportScript.includes('class="bar-hidden-rows '),
-            'render loop must inject .bar-hidden-rows onto the row after a hidden gap',
-        );
-        assert.ok(
-            viewportScript.includes('title="' + "'"),
-            'tooltip must be set on the row outer div so hover works anywhere on the row',
+            viewportScript.includes('buildHiddenGapDivider(_hiddenFrom, _hiddenTo, _hInfo)'),
+            'render loop must call buildHiddenGapDivider on a detected gap',
         );
     });
 
@@ -240,10 +251,14 @@ suite('Stack header level CSS class in renderItem', () => {
        assertions now target that module's output. */
     const renderChunk = getStackRenderScript();
 
-    test('should apply level class to stack-header div', () => {
+    test('should apply level class to stack-header div, gated on !item.isContext', () => {
+        // Commit e2522420 added the !item.isContext guard so context-pulled
+        // headers mute via .context-line instead of carrying a full-color
+        // level- class. See viewer-context-line-muting.test.ts for the
+        // dedicated regression test on this behavior.
         assert.ok(
-            renderChunk.includes("hdrLevelCls = item.level ? ' level-' + item.level : ''"),
-            'stack-header renderer must compute hdrLevelCls from item.level',
+            renderChunk.includes("hdrLevelCls = (item.level && !item.isContext) ? ' level-' + item.level : ''"),
+            'stack-header renderer must compute hdrLevelCls from item.level when !isContext',
         );
     });
 
@@ -256,10 +271,18 @@ suite('Stack header level CSS class in renderItem', () => {
 });
 
 suite('Retired indicator classes are fully removed', () => {
-    // The unified line-collapsing rethink retired the .hidden-chevron (▼) and
-    // .peek-collapse (−) elements in favour of the outlined severity dot state
-    // (.bar-hidden-rows). The CSS blocks and their usages are removed so the
-    // bundled webview stylesheet does not ship dead rules.
+    /* Three generations of retired indicator classes:
+       1. .hidden-chevron (▼) and .peek-collapse (−) — the original
+          inline glyphs. Retired by the 2026.04 unified-line-collapsing
+          rethink.
+       2. .bar-hidden-rows — the overloaded outlined-dot state that
+          replaced them. Retired by plan 048 because the dot looked
+          identical for "click to expand" and "click to collapse".
+       3. .peek-collapse-row — the interim sibling pill from the surgical
+          fix in commit 4a4d1590. Replaced by the trailing .viewer-divider
+          on expanded peek groups under plan 048.
+       This suite pins all three so a future refactor cannot quietly
+       resurrect any of them. */
     const css = getDecorationStyles();
 
     test('should no longer define .hidden-chevron rules', () => {
@@ -267,21 +290,29 @@ suite('Retired indicator classes are fully removed', () => {
         // Mere mentions in comments / migration notes are allowed.
         assert.ok(
             !/\.hidden-chevron\s*[{>:]/.test(css),
-            'CSS must not contain any active .hidden-chevron rule after the rethink',
+            'CSS must not contain any active .hidden-chevron rule',
         );
     });
 
     test('should no longer define .peek-collapse rules', () => {
         assert.ok(
             !/\.peek-collapse\s*[{>:]/.test(css),
-            'CSS must not contain any active .peek-collapse rule after the rethink',
+            'CSS must not contain any active .peek-collapse rule',
         );
     });
 
-    test('should still define the replacement .bar-hidden-rows state', () => {
+    test('should no longer define .bar-hidden-rows rules', () => {
         assert.ok(
-            css.includes('.bar-hidden-rows'),
-            'unified outlined-dot state must be present',
+            !/\.bar-hidden-rows\s*[{>:]/.test(css)
+                && !/\.bar-hidden-rows::before/.test(css),
+            'CSS must not carry the retired overloaded .bar-hidden-rows state',
+        );
+    });
+
+    test('should define the new .viewer-divider affordance', () => {
+        assert.ok(
+            css.includes('.viewer-divider'),
+            'plan-048 .viewer-divider rule must replace .bar-hidden-rows',
         );
     });
 });
