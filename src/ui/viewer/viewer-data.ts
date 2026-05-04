@@ -12,6 +12,7 @@ import { getCompressStreakScript } from './viewer-data-compress-streak';
 import { getViewerDataAddScript } from './viewer-data-add';
 import { getViewerDataHelpers } from './viewer-data-helpers';
 import { getViewportRenderScript } from './viewer-data-viewport';
+import { getDividerRenderScript } from './viewer-data-divider';
 
 /** Options for building the viewer data webview script. */
 export interface ViewerDataScriptOptions {
@@ -149,7 +150,9 @@ function applyCompressDedupModes() {
      *  stack frames under every call. Gating on \`type === 'line'\` alone meant
      *  non-consecutive compression passed them through untouched and the viewer
      *  rendered thousands of visually identical stack rows. Same plain text
-     *  produces the same dedup key across both types. See bugs/unified-line-collapsing.md. */
+     *  produces the same dedup key across both types. The fold's user-facing
+     *  affordance is the inline .dedup-badge ("×N" pill) on the survivor row;
+     *  see bugs/048_plan-severity-gutter-decoupling.md. */
     function lineDedupeKey(row) {
         if (!row) return null;
         if (row.type !== 'line' && row.type !== 'stack-frame') return null;
@@ -283,6 +286,8 @@ function recalcHeights() {
     if (typeof window !== 'undefined') window.__visibleCountDirty = true;
     if (typeof buildPrefixSums === 'function') buildPrefixSums();
 }
+
+${getDividerRenderScript()}
 
 ${getViewportRenderScript()}
 `;
