@@ -28,16 +28,22 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [Unreleased]
 
-### Fixed
-
-- **Severity-bar dot no longer collapses lines on click** — Clicking the outlined dot on the severity bar used to be a toggle: an unclick would collapse a previously-expanded peek group or dedup fold, making lines appear to vanish. Because the dot looks identical in both "click to expand" and "click to collapse" states, the collapse felt like the viewer was deleting log content. Plain dot clicks now only expand. To collapse a peek group, click the new explicit **× hide revealed lines** control that renders directly below the peek-anchor row.
-- **Level filter context lines** — Stack frames, stack headers, repeat chips ("N × SQL repeated"), and N+1 signal chips that were dragged in as context for nearby errors rendered at full color/opacity, looking like primary content even when only **Error** was enabled. They now mute correctly via `.context-line` (opacity 0.4) and drop their level color, so context reads as background. Synthetic analysis chips ("N × SQL repeated", "⚠ Potential N+1 query") are also no longer eligible as context anchors — they describe the surrounding SQL rather than show what led to an error, so the ±N window walks past them to real log lines (stack frames, info lines) that actually carry causality.
-- **Log viewer selection** — Restored within-line text selection and stopped the flicker/jump that made selection unusable. Drag-select now only takes over when the cursor leaves the start row (multi-row intent); within-row drags fall through to native browser text selection so half-line, word, and SQL-token selections work again. Live capture's auto-scroll-to-bottom is also paused while a selection is in progress, so streaming lines no longer rewrite the viewport DOM mid-drag and wipe what you were selecting.
-
 ### Changed
 
+- **Severity gutter is now read-only — every expand/collapse has its own affordance** — The outlined severity dot was overloaded with four different meanings (filter-hidden gap, expanded peek group, dedup-fold survivor, collapsed stack header) and the dot looked identical for "click to expand" and "click to collapse". That overload is gone. The gutter now shows severity only; clicks pass through. Each concept gets a dedicated, self-describing control:
+  - **Filter-hidden gap** — a thin row between the two visible lines reads `── 12 hidden lines · show ──`. Click expands.
+  - **Expanded peek group** — leading `── hide 12 revealed · collapse ──` row above the range AND a trailing `── hide 12 revealed (above) · collapse ──` row below it. Either click collapses the whole group, so the user can re-hide from wherever they scrolled to without scrolling back to the top.
+  - **Dedup-fold survivor** — inline `×12` pill at the end of the survivor row's text. Click expands the folded duplicates and the badge mutates to `×12 hide`. Click again collapses.
+  - **Collapsed / preview stack** — inline `▶` / `▼` chevron inside the stack-header text (IDE convention). Preview-mode also gets a `── 8 more stack frames hidden · show all ──` row below the last visible app frame.
+
+  Plan: `bugs/048_plan-severity-gutter-decoupling.md`. Supersedes the surgical `× hide revealed lines` pill from the prior commit.
 - **Line numbers toggle** — Renamed the **Counter** checkbox to **Line numbers** in both the *Options* panel and the *Decorations* panel, and moved the Options-panel row from *Display* into *Layout*. Same underlying toggle (`decoShowCounter`) and same line-number rendering — clearer label, more discoverable spot for a structural layout choice.
 - **Removed the count badge from the Logs icon** — Any project with real history sat permanently at "99+", so the badge conveyed nothing and just added clutter. The actual session count is still visible inside the Logs panel.
+
+### Fixed
+
+- **Level filter context lines** — Stack frames, stack headers, repeat chips ("N × SQL repeated"), and N+1 signal chips that were dragged in as context for nearby errors rendered at full color/opacity, looking like primary content even when only **Error** was enabled. They now mute correctly via `.context-line` (opacity 0.4) and drop their level color, so context reads as background. Synthetic analysis chips ("N × SQL repeated", "⚠ Potential N+1 query") are also no longer eligible as context anchors — they describe the surrounding SQL rather than show what led to an error, so the ±N window walks past them to real log lines (stack frames, info lines) that actually carry causality.
+- **Log viewer selection** — Restored within-line text selection and stopped the flicker/jump that made selection unusable. Drag-select now only takes over when the cursor leaves the start row (multi-row intent); within-row drags fall through to native browser text selection so half-line, word, and SQL-token selections work again. Live capture's auto-scroll-to-bottom is also paused while a selection is in progress, so streaming lines no longer rewrite the viewport DOM mid-drag and wipe what you were selecting.
 
 ---
 
