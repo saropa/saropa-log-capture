@@ -1,6 +1,6 @@
 # 048 — Plan: Severity-Gutter Decoupling
 
-## Status: Open
+## Status: Implemented (with two deferred secondary affordances — see "Deferred")
 
 ## Problem
 
@@ -177,11 +177,49 @@ Code comments referencing `bugs/unified-line-collapsing.md` should be amended in
 
 ## Changes Made
 
-<!-- Fill in as implementation proceeds. -->
+**New files**
+- [src/ui/viewer-styles/viewer-styles-collapse-controls.ts](../src/ui/viewer-styles/viewer-styles-collapse-controls.ts) — CSS for `.viewer-divider`, `.dedup-badge`, `.stack-toggle`. Wired into the bundled stylesheet via [viewer-styles-decoration.ts](../src/ui/viewer-styles/viewer-styles-decoration.ts).
+- [src/ui/viewer/viewer-data-divider.ts](../src/ui/viewer/viewer-data-divider.ts) — `buildHiddenGapDivider`, `buildPeekHideDivider`, `buildPreviewFramesDivider`, `getPreviewModeHiddenInfo`, `countPeekedLines`. Wired into the script bundle via [viewer-data.ts](../src/ui/viewer/viewer-data.ts).
+
+**Render-loop rewire** ([viewer-data-viewport.ts](../src/ui/viewer/viewer-data-viewport.ts))
+- Removed the `.bar-hidden-rows` + `data-hidden-from/to` + `data-peek-key` injection on log rows.
+- Removed the interim `.peek-collapse-row` sibling emitted by the surgical fix in commit 4a4d1590.
+- Added leading divider for filter-hidden gaps (`buildHiddenGapDivider`).
+- Added leading + trailing dividers for expanded peek groups, suppressed for dedup peeks (the badge owns dedup toggle).
+- Added trailing divider for preview-mode last-visible-frame.
+- Taught `findNextDotSibling` to skip `.viewer-divider`.
+
+**Row rendering**
+- [viewer-data-helpers-render.ts](../src/ui/viewer/viewer-data-helpers-render.ts) — replaced the `.bar-hidden-rows` + `data-dedup-count` outer-div stamping on dedup-fold survivors with an inline `.dedup-badge` ("×N" / "×N hide") at the END of the row text. State mutates via `item.peekAnchorKey`.
+- [viewer-data-helpers-render-stack.ts](../src/ui/viewer/viewer-data-helpers-render-stack.ts) — replaced `.bar-hidden-rows` on the stack-header with an inline `.stack-toggle` chevron (▶ collapsed/preview, ▼ expanded). Removed the in-frame preview-mode `.bar-hidden-rows` wiring (moved to the divider helper). Cross-type dedup-fold uses the same inline `.dedup-badge` as plain rows.
+
+**Click delegation** ([viewer-peek-chevron.ts](../src/ui/viewer/viewer-peek-chevron.ts))
+- Removed the `.bar-hidden-rows` selector and the `data-peek-key` early-return guard from the surgical fix.
+- Added narrow delegations: `.viewer-divider[data-divider-action]` (show-gap → peekChevron, hide-peek → unpeekChevron, show-frames → toggleStackGroup) and `.dedup-badge[data-dedup-survivor-idx]` (collapsed → peekDedupFold, expanded → unpeekChevron).
+- Added `peekKind = 'filter' | 'dedup'` discriminator on peeked items so the render loop knows to suppress the bracketing dividers for dedup peeks.
+
+**CSS cleanup** ([viewer-styles-decoration-bars.ts](../src/ui/viewer-styles/viewer-styles-decoration-bars.ts))
+- Removed the `[class*="level-bar-"].bar-hidden-rows::before` outlined-dot rule.
+- Removed the interim `.peek-collapse-row` / `.peek-collapse-link` rules from the surgical fix.
+
+**Comment updates** — replaced stale `bugs/unified-line-collapsing.md` references with pointers to this plan in [viewer-data-helpers-core.ts](../src/ui/viewer/viewer-data-helpers-core.ts), [viewer-data-helpers-render.ts](../src/ui/viewer/viewer-data-helpers-render.ts), [viewer-data.ts](../src/ui/viewer/viewer-data.ts), [viewer-deco-settings.ts](../src/ui/viewer-decorations/viewer-deco-settings.ts), [log-session.ts](../src/modules/capture/log-session.ts).
 
 ## Tests Added
 
-<!-- Fill in as implementation proceeds. -->
+- [src/test/ui/viewer-severity-gutter-decoupling.test.ts](../src/test/ui/viewer-severity-gutter-decoupling.test.ts) — new file. Pins the four design principles: gutter is read-only (no `cursor:pointer` on the dot, no `.bar-hidden-rows` on rows, no severity-gutter selector in the click delegate); each concept has its own affordance (`.viewer-divider`, `.dedup-badge`, `.stack-toggle`); collapse controls exist at the END of the revealed range (trailing peek divider with "above" wording); dedup-badge mutates between collapsed (`×N`) and expanded (`×N hide`) state; stack chevron parity (▶ vs ▼); preview-mode detection moved out of `renderStackFrame`.
+- [src/test/ui/viewer-peek-chevron.test.ts](../src/test/ui/viewer-peek-chevron.test.ts) — rewritten to assert the new architecture: divider-row emission, hide-peek + show-gap + show-frames action routing, dedup-badge state-machine, no `.bar-hidden-rows` reference anywhere, peekKind tracking, retired-rule cleanup (`.hidden-chevron`, `.peek-collapse`, `.bar-hidden-rows`, `.peek-collapse-row`).
+- [src/test/ui/viewer-severity-bar-connector.test.ts](../src/test/ui/viewer-severity-bar-connector.test.ts) — updated: dot-stamping assertions flipped to divider-emission assertions; `findNextDotSibling` must skip `.viewer-divider`; the stale `hdrLevelCls` assertion was rewritten to match the actual `(item.level && !item.isContext)` form added in commit e2522420.
+
+All 2628 tests pass after the changes.
+
+## Deferred (explicit, not buried)
+
+Two secondary affordances from the plan's Principle 3 ("collapse controls live at the END of the revealed range") were intentionally NOT implemented in this iteration. The user can still collapse in both cases, just not from the far end of the expansion:
+
+1. **Dedup-fold "(hide above)" link on the last revealed duplicate** — the plan calls for an inline link on the last visible duplicate row that mirrors the badge's collapse action. The badge on the survivor (top of the range) provides the only collapse target today. Adding the link requires per-row "is this the last row of this dedup peek group" detection during render.
+2. **Stack-frame "(collapse trace)" link on the last visible frame of an expanded stack** — the plan calls for an inline link aligned right on the last frame that mirrors the chevron's collapse action. The chevron in the header (top of the range) provides the only collapse target today.
+
+Both are usability enhancements for very long expansions. Filter-hidden peeks (the most-revealing case) DO have leading + trailing dividers as per Principle 3.
 
 ## Commits
 
