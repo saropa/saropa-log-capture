@@ -221,7 +221,8 @@ function isLineContentBlank(item) {
     return false;
 }
 function calcItemHeight(item) {
-    /* peekOverride: scoped peek from clicking a hidden-chevron (viewer-peek-chevron.ts).
+    /* peekOverride: scoped peek triggered by a .viewer-divider show-gap click or
+       a .dedup-badge expand (see viewer-peek-chevron.ts and bugs/048_plan-severity-gutter-decoupling.md).
        Bypasses every filter/hide gate so the user can reveal exactly one gap's worth of
        hidden lines without disturbing the global filter state. Does NOT override
        continuation/stack-group collapse — those are explicit user actions, not filters. */
