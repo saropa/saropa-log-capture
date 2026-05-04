@@ -1,4 +1,4 @@
-/** Viewport rendering helpers: bar level detection, hidden-line chevrons, and virtual scroll renderer. */
+/** Viewport rendering helpers: bar level detection, hidden-line dividers, and virtual scroll renderer. */
 export function getViewportRenderScript(): string {
     return /* javascript */ `
 /** Extract bar level (e.g. 'error') from element class, or null. */
@@ -8,13 +8,15 @@ function getBarLevel(el) {
 }
 
 /** Find next viewport child with a visible severity dot (non-blank), stopping at markers.
-    Note: the prior .hidden-chevron / .peek-collapse skip was removed when the unified
-    line-collapsing rethink retired those indicator elements — no render path emits
-    them anymore, so there is nothing to skip. */
+    Skips .viewer-divider sibling rows because they are control affordances injected
+    between log rows (see bugs/048_plan-severity-gutter-decoupling.md and
+    viewer-data-divider.ts) — they do not own a severity level and must not short-circuit
+    the connector chain that joins consecutive same-level dots. */
 function findNextDotSibling(children, startIdx) {
     for (var ni = startIdx + 1; ni < children.length; ni++) {
         if (!children[ni]) continue;
         if (children[ni].classList.contains('marker')) return -1;
+        if (children[ni].classList.contains('viewer-divider')) continue;
         var lvl = getBarLevel(children[ni]);
         if (lvl && !children[ni].classList.contains('line-blank')) return ni;
     }
@@ -132,73 +134,86 @@ function renderViewport(force) {
         if (allLines[i].height === 0) continue;
         if (typeof window.replayMode !== 'undefined' && window.replayMode && typeof window.replayCurrentIndex === 'number' && i > window.replayCurrentIndex) continue;
 
-        /* Unified line-collapsing (plan: bugs/unified-line-collapsing.md).
-           Replaces the separate .hidden-chevron (▼) and .peek-collapse (−) elements
-           that used to be injected between visible rows. Both states now surface as
-           a single class (.bar-hidden-rows) stamped onto the row immediately AFTER
-           the hidden run (or the row starting a peek group) so its severity dot
-           goes outlined — no extra DOM node, no margin glyph, no text content. The
-           click handler in viewer-peek-chevron.ts delegates on .bar-hidden-rows
-           and routes by which data-* attrs are present.
-
-           WHY the row AFTER the gap rather than the row BEFORE: the render loop
-           streams top-down and the row-before has already been emitted by the
-           time we detect the gap (at row i). Marking the row-after is in-loop and
-           requires no post-pass over the emitted strings, at the cost of a tiny
-           mental model difference ("hidden rows are above me" vs "below me") —
-           the tooltip text makes that explicit so the cue is unambiguous. */
-        var _hiddenFrom = -1, _hiddenTo = -1, _hiddenTip = '';
+        /* Severity-gutter decoupling (plan: bugs/048_plan-severity-gutter-decoupling.md).
+           Filter-hidden gaps and expanded peek ranges no longer overload the
+           severity dot — they surface as dedicated .viewer-divider rows
+           injected as siblings of the actual log rows. The divider carries
+           its own click target, count, and reason text so the user knows
+           what will happen BEFORE clicking. The gutter dot stays purely
+           informational; this kills the "I clicked the dot and my lines
+           vanished" failure mode the plan exists to fix. */
+        var _hiddenFrom = -1, _hiddenTo = -1, _hInfo = null;
         if (prevVisIdx >= 0 && i - prevVisIdx > 1) {
-            var _hInfo = countHiddenNonBlank(prevVisIdx + 1, i);
+            _hInfo = countHiddenNonBlank(prevVisIdx + 1, i);
             if (_hInfo.count > 0) {
                 _hiddenFrom = prevVisIdx + 1;
                 _hiddenTo = i;
-                _hiddenTip = buildHiddenTip(_hInfo).replace(/"/g, '&quot;');
             }
         }
-        var _peekKey = null;
+        /* Peek-group boundary detection: peekAnchorKey is set on every item
+           inside the expanded range. First-of-group = preceding allLines item
+           does not share the key. Last-of-group = following allLines item
+           does not share the key. The check uses allLines (not visible-only)
+           because the peek range is contiguous in allLines order, and the
+           leading/trailing divider must straddle the actual range edges
+           even if some interior items happen to be hidden by orthogonal
+           filters at render time. */
         var _pk = allLines[i].peekAnchorKey;
-        if (_pk !== undefined && _pk !== null && (i === 0 || allLines[i - 1].peekAnchorKey !== _pk)) {
-            _peekKey = _pk;
+        var _hasPk = (_pk !== undefined && _pk !== null);
+        var _peekFirst = _hasPk && (i === 0 || allLines[i - 1].peekAnchorKey !== _pk);
+        var _peekLast = _hasPk && (i === allLines.length - 1 || allLines[i + 1].peekAnchorKey !== _pk);
+        /* Dedup peeks own their toggle via the inline .dedup-badge on the
+           survivor row (the badge mutates "×N" → "×N hide" once expanded).
+           Suppress the leading/trailing brackets for dedup so the user is
+           not offered a redundant collapse target on a non-survivor row. */
+        var _dividersOk = _hasPk && allLines[i].peekKind !== 'dedup';
+
+        /* Leading divider: filter-hidden gap above this row.
+           WHY emit even when the row is also a peek-anchor: the gap divider
+           and the peek "hide" divider report different things. Stacking them
+           is rare (peeking removes the gap that produced it), but if both
+           apply they read as two distinct controls. */
+        if (_hiddenFrom >= 0 && typeof buildHiddenGapDivider === 'function') {
+            parts.push(buildHiddenGapDivider(_hiddenFrom, _hiddenTo, _hInfo));
+        }
+        /* Leading divider: this row starts an expanded filter peek group.
+           The "hide" action collapses the WHOLE group from the top. */
+        if (_peekFirst && _dividersOk && typeof buildPeekHideDivider === 'function') {
+            parts.push(buildPeekHideDivider(_pk, countPeekedLines(_pk), 'start'));
         }
 
-        var _rendered = renderItem(allLines[i], i, prevVis);
-        /* Inject .bar-hidden-rows class + tooltip + routing data onto the outer div.
-           Single regex: match the first class=" of the rendered row (always the outer
-           wrapper) and prepend the extra attrs + class token. No other divs in the
-           row string start with "class=\\"" at position 0, so the ^<div anchor keeps
-           this unambiguous. */
-        if (_peekKey !== null) {
-            /* WHY tooltip text changed: the dot itself no longer collapses on
-               click (see viewer-peek-chevron.ts). It is purely an indicator
-               that this row is the start of an expanded peek group. The user
-               collapses via the explicit .peek-collapse-link rendered just
-               below this row. */
-            _rendered = _rendered.replace(/^<div class="/,
-                '<div data-peek-key="' + _peekKey + '" title="Lines below were revealed under this peek" class="bar-hidden-rows ');
-        } else if (_hiddenFrom >= 0) {
-            _rendered = _rendered.replace(/^<div class="/,
-                '<div data-hidden-from="' + _hiddenFrom + '" data-hidden-to="' + _hiddenTo + '" title="' + _hiddenTip + '" class="bar-hidden-rows ');
+        parts.push(renderItem(allLines[i], i, prevVis));
+
+        /* Trailing divider: this row is the LAST of an expanded filter peek
+           group. The "hide" action collapses the WHOLE group from the
+           bottom — the user can collapse from wherever they scrolled to
+           without scrolling back up to the leading divider (Principle 3
+           of the plan). */
+        if (_peekLast && _dividersOk && typeof buildPeekHideDivider === 'function') {
+            parts.push(buildPeekHideDivider(_pk, countPeekedLines(_pk), 'end'));
         }
-        parts.push(_rendered);
-        /* Inline collapse control for peek groups: a thin sibling row holding
-           the only click target that can collapse this peek. The severity dot
-           on the row above is a no-op for clicks now — having a separate,
-           visibly button-like element prevents the "I clicked the dot and my
-           lines vanished" failure mode (bug 048). The .peek-collapse-row carries
-           no level-bar-* class, so findNextDotSibling() naturally skips it
-           and the bar-bridge post-pass treats it as a transparent gap. */
-        if (_peekKey !== null) {
-            parts.push('<div class="peek-collapse-row"><span class="peek-collapse-link" data-peek-key="'
-                + _peekKey + '" title="Re-hide the lines revealed under this peek">\\u00d7 hide revealed lines</span></div>');
+        /* Trailing divider: preview-mode stack groups announce their trimmed
+           frames here. The divider's "show all" action expands the whole
+           stack via toggleStackGroup(gid), routed through the click handler
+           in viewer-peek-chevron.ts. */
+        var _previewInfo = (typeof getPreviewModeHiddenInfo === 'function')
+            ? getPreviewModeHiddenInfo(allLines[i]) : null;
+        if (_previewInfo && typeof buildPreviewFramesDivider === 'function') {
+            parts.push(buildPreviewFramesDivider(_previewInfo));
         }
+
         prevVis = allLines[i];
         prevVisIdx = i;
     }
     viewportEl.innerHTML = parts.join('');
-    // Connect consecutive same-level dots, bridging through blank/non-dot lines.
-    // The prior skips for .hidden-chevron / .peek-collapse were removed when the
-    // unified line-collapsing rethink retired those indicator elements.
+    /* Connect consecutive same-level dots, bridging through blank/non-dot
+       lines AND through .viewer-divider control rows. findNextDotSibling
+       already skips dividers when searching for the next dot; the bridge
+       loop below then walks every intermediate child including dividers
+       and adds bar-bridge + level-bar-* so the connector ::after paints
+       through them. The .viewer-divider[class*="level-bar-"]::before {
+       display:none; } CSS rule keeps the dividers' own dots suppressed
+       even when they pick up a level class from this bridging. */
     var ch = viewportEl.children;
     for (var ci = 0; ci < ch.length; ci++) {
         if (!ch[ci]) continue;
