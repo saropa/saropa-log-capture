@@ -29,6 +29,7 @@
     "Deutsch",
     "drilldown",
     "drilldowns",
+    "dups",
     "ECONNREFUSED",
     "ellipsized",
     "esbuild",
@@ -43,6 +44,7 @@
     "hotfiles",
     "idevicesyslog",
     "inlines",
+    "invisibles",
     "Jaccard",
     "jank",
     "journalctl",
@@ -101,13 +103,15 @@
     "unclickable",
     "Ungroup",
     "Unhide",
+    "unpeek",
     "unpushed",
     "viewports",
     "visibilitychange",
     "vscodeignore",
     "vsixignore",
     "winget",
-    "Wireshark"
+    "Wireshark",
+    "ZWSP"
   ],
   "chat.tools.terminal.autoApprove": {
     "git add": true,
