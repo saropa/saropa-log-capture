@@ -55,6 +55,26 @@ suite('ViewerOptionsPanel', () => {
             assert.ok(html.includes('value="xsmall"') && html.includes('value="xlarge"'));
             assert.ok(html.includes('value="medium"'));
         });
+
+        test('Layout has Line numbers checkbox (renamed from "Counter") under the Layout section', () => {
+            // Why: the user-facing label was renamed Counter → Line numbers and the row moved
+            // from Display to Layout. The id `opt-deco-counter` is preserved so existing event
+            // wiring (viewer-options-events.ts, resetOptionsToDefault, syncOptionsPanelUi) keeps
+            // working. This test pins both the new label and the new placement so a regression
+            // (re-adding "Counter" or moving it back into Display) fails fast.
+            const html = getOptionsPanelHtml();
+            assert.ok(html.includes('id="opt-deco-counter"'), 'id must be preserved for event wiring');
+            assert.ok(html.includes('<span>Line numbers</span>'), 'label must read "Line numbers", not "Counter"');
+            assert.ok(!html.includes('<span>Counter</span>'), 'old "Counter" label must be gone');
+            // Confirm the row sits in Layout, not Display: slice from the Layout section title to
+            // the next section title and assert the id appears in that window.
+            const layoutStart = html.indexOf('Layout</h3>');
+            assert.ok(layoutStart > 0, 'Layout section must exist');
+            const nextSection = html.indexOf('options-section-title', layoutStart + 1);
+            const layoutSlice = html.slice(layoutStart, nextSection > 0 ? nextSection : undefined);
+            assert.ok(layoutSlice.includes('id="opt-deco-counter"'),
+                '"Line numbers" row must live in the Layout section, not Display');
+        });
     });
 
     suite('getOptionsStyles', () => {
