@@ -26,7 +26,9 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [Unreleased]
+## [7.7.0]
+
+Each expand/collapse in the log viewer now has its own dedicated control instead of overloading the severity dot, the Counter toggle is renamed Line numbers and moved to Layout, the permanent 99+ badge on the Logs icon is gone, dragged-in context lines (stack frames, repeat chips) mute correctly under level filters, and within-line text selection in the viewer works again. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
 
 ### Changed
 
@@ -48,6 +50,8 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 ---
 
 ## [7.6.0]
+
+Adds contributor and agent tooling (Node 22 pinning, Dev Container, AGENTS.md, generated message catalogs, bundle-size guards), native tooltips and an F1 shortcuts hint across the log viewer, and a workspace setting for visual spacing; fixes blank lines that were rendering at full height instead of quarter height in the viewer and HTML exports; clicking the footer filename now opens a unified Log file dialog with editor / folder / copy actions. [log](https://github.com/saropa/saropa-log-capture/blob/v7.6.0/CHANGELOG.md)
 
 ### Added
 
@@ -107,6 +111,8 @@ Toolbar footer level chips show letter codes beside each dot, DB-signal markers 
 
 ## [7.5.4]
 
+Tones down minimap colors after the v7.5.3 per-pixel paint change made the severity, performance, database, and SQL bands too bright. [log](https://github.com/saropa/saropa-log-capture/blob/v7.5.4/CHANGELOG.md)
+
 ### Changed
 
 - **Minimap colors rebalanced for per-pixel paint.** Color alphas in `initMmColors` were tuned for the old overdraw model and became too bright after per-pixel reduction. Alphas were lowered across severity/perf/database/SQL bands, and the SQL-density test now pins hue only so alpha can continue to be tuned.
@@ -114,6 +120,8 @@ Toolbar footer level chips show letter codes beside each dot, DB-signal markers 
 ---
 
 ## [7.5.3]
+
+Minimap now uses deterministic per-pixel severity reduction so high-severity signals stay visible even when info/debug are hidden, the `Open Log` action on the post-capture notification opens the Log Viewer instead of a hidden editor tab, and the native scrollbar toggle hides and shows reliably. [log](https://github.com/saropa/saropa-log-capture/blob/v7.5.3/CHANGELOG.md)
 
 ### Changed
 
