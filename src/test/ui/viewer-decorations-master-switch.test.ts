@@ -1,6 +1,6 @@
 import * as assert from 'node:assert';
 import { getDecorationsScript } from '../../ui/viewer-decorations/viewer-decorations';
-import { getDecoSettingsScript } from '../../ui/viewer-decorations/viewer-deco-settings';
+import { getDecoSettingsHtml, getDecoSettingsScript } from '../../ui/viewer-decorations/viewer-deco-settings';
 import { getQualityBadgeScript } from '../../ui/viewer-decorations/viewer-quality-badge';
 import { getLintBadgeScript } from '../../ui/viewer-decorations/viewer-lint-badge';
 
@@ -118,6 +118,19 @@ suite('Decoration master switch removal', () => {
                     `${v} must be declared before areDecorationsOn`,
                 );
             }
+        });
+
+        test('Decorations panel labels the line-number checkbox "Line numbers" (renamed from "Counter")', () => {
+            // Why: the user-facing label was renamed to match the Options-panel label so the
+            // two surfaces stay in sync. The id `deco-opt-counter` is preserved (event wiring,
+            // syncDecoSettingsUi, and decoShowCounter state still bind by id). Pin the new
+            // label so a regression that re-introduces "Counter" fails fast.
+            const html = getDecoSettingsHtml();
+            assert.ok(html.includes('id="deco-opt-counter"'), 'id must be preserved for event wiring');
+            assert.ok(/id="deco-opt-counter"\s+checked\s*\/>\s*Line numbers/.test(html),
+                '"Line numbers" must be the visible label adjacent to deco-opt-counter');
+            // The sub-toggle "Show line number on blank lines" already says "line number" in
+            // its label and is unaffected by the rename — leave it alone.
         });
     });
 
