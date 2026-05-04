@@ -100,74 +100,21 @@ export function getDecorationBarStyles(): string {
 /* Blank lines: no dot, keep vertical bar (connector) */
 .line-blank[class*="level-bar-"]::before { display: none; }
 
-/* Outlined-dot state for rows that have hidden rows associated with them
-   (dedup fold survivor, filter-hidden run preceded by this row, user-collapsed
-   stack header, Preview-trim last visible frame, etc.). Part 1 of the unified
-   line-collapsing rethink (see bugs/unified-line-collapsing.md) — this rule
-   defines the visual vocabulary only; no JS wires items to it yet.
-
-   WHY larger than the normal dot (0.9em vs 0.54em): the outlined state must
-   read as "special" at a glance. Parity with the solid dot would make the
-   cue too quiet to replace the old ▼ / ▾ / × N / [+N] glyphs.
-
-   WHY an opaque center (var(--vscode-editor-background) rather than transparent):
-   the severity connector bar at left:0.85em–1.08em passes through the dot's
-   centerline. A transparent fill would show the connector straight through
-   the hole and muddy the signal. Using the viewport's own background token
-   keeps the fill tracking the active theme.
-
-   WHY center is preserved at 0.96em (left = 0.96 - 0.9/2 = 0.51em): the
-   larger dot stays column-aligned with the connector bar (left:0.85em,
-   width:0.23em, centerline 0.965em) and with the normal 0.54em dot it
-   replaces, so mixing outlined and solid dots in the same timeline keeps
-   the same vertical rail.
-
-   Border thickness in em scales with font-size (log-zoom) the same way the
-   dot diameter does, so the ring stays visually proportional at every zoom
-   level — hard-coded px would shrink relative to the dot when the user
-   zooms the log view up. */
-[class*="level-bar-"].bar-hidden-rows::before {
-    width: 0.9em; height: 0.9em;
-    left: 0.51em;
-    background: var(--vscode-editor-background, #1e1e1e);
-    border: 0.15em solid var(--bar-color);
-    box-sizing: border-box;
-}
-
-/* Inline collapse control rendered as a sibling row directly below every
-   expanded peek-anchor row. Replaces the prior dot-click collapse behavior:
-   plain clicks on the severity dot used to collapse and made lines appear
-   to vanish (bug 048 — read as data deletion). Collapsing now requires an
-   explicit click on this visibly-button-like element. The row itself is a
-   neutral container; .peek-collapse-link is the actual click target. */
-.peek-collapse-row {
-    height: max(8px, calc(0.7 * 1em * var(--log-line-height, 1.1)));
-    line-height: 1;
-    text-align: center;
-    user-select: none;
-    /* WHY no margin: this row sits flush below the peek-anchor row; a margin
-       would visually detach it and weaken the "this controls that row's
-       expansion" association. */
-    margin: 0;
-}
-.peek-collapse-link {
-    display: inline-block;
-    padding: 0.05em 0.6em;
-    font-size: 0.78em;
-    color: var(--vscode-descriptionForeground, #888);
-    background: color-mix(in srgb, var(--vscode-badge-background, #4d4d4d) 30%, transparent);
-    border-radius: 0.25em;
-    cursor: pointer;
-    user-select: none;
-}
-.peek-collapse-link:hover {
-    background: var(--vscode-badge-background, #4d4d4d);
-    color: var(--vscode-badge-foreground, #fff);
-}
-/* If the bar-bridge post-pass added level-bar-* to this row (because it sat
-   between two same-level severity dots), suppress the dot — the row is a
-   control, not a log line, and a severity dot on it would be misleading. */
-.peek-collapse-row[class*="level-bar-"]::before { display: none; }
+/* Severity-gutter decoupling (plan: bugs/048_plan-severity-gutter-decoupling.md).
+   The prior .bar-hidden-rows outlined-dot state was overloaded with FOUR
+   different concepts (filter-hidden gap, expanded peek anchor, dedup-fold
+   survivor, collapsed stack header) and the dot looked identical for
+   "click to expand" and "click to collapse" — clicking it removed lines
+   from view in a way users perceived as data deletion. The state has been
+   removed entirely. Each concept now has its own dedicated affordance:
+     - filter gaps + peek brackets : .viewer-divider sibling rows
+                                     (viewer-styles-collapse-controls.ts)
+     - dedup-fold survivors        : inline .dedup-badge
+     - collapsed stack headers     : inline .stack-toggle chevron
+     - preview-mode trimmed frames : .viewer-divider sibling row
+   The interim .peek-collapse-row / .peek-collapse-link (the surgical
+   fix from commit 4a4d1590) is also gone — its job is done by the
+   trailing .viewer-divider on expanded peek groups. */
 
 /* Connector bars join consecutive dots — scale with zoom via em */
 .bar-down::after, .bar-up::after {
@@ -178,11 +125,13 @@ export function getDecorationBarStyles(): string {
 .bar-up:not(.bar-down)::after { top: 0; bottom: 50%; }
 .bar-up.bar-down::after { top: 0; bottom: 0; }
 
-/* .hidden-chevron and .peek-collapse were the pre-rethink indicator elements
-   (▼ and − rendered between visible rows). The unified line-collapsing rethink
-   (bugs/unified-line-collapsing.md) retired both in favour of the outlined
-   severity dot state (.bar-hidden-rows) — all rules for those classes are
-   removed here. Nothing in the render pipeline emits those elements anymore. */
+/* History: pre-2026.04 the viewer used .hidden-chevron (▼) and .peek-collapse
+   (−) elements between visible rows. The 2026.04 unified line-collapsing
+   rethink replaced them with the overloaded .bar-hidden-rows outlined-dot
+   state. The 2026.05 severity-gutter decoupling (plan 048) replaced THAT
+   with dedicated .viewer-divider / .dedup-badge / .stack-toggle affordances
+   (see viewer-styles-collapse-controls.ts). Nothing in the render pipeline
+   emits any of the retired classes anymore. */
 
 /* Continuation line collapse badge — inline pill showing hidden line count.
    Toggles group visibility on click. Uses em so it scales with zoom. */
