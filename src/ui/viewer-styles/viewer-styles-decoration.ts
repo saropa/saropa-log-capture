@@ -1,4 +1,5 @@
 import { getDecorationBarStyles } from './viewer-styles-decoration-bars';
+import { getCollapseControlStyles } from './viewer-styles-collapse-controls';
 
 /**
  * CSS styles for log line decoration prefix and settings panel.
@@ -147,5 +148,5 @@ export function getDecorationStyles(): string {
     background: var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
     margin: 4px 8px;
 }
-` + getDecorationBarStyles();
+` + getDecorationBarStyles() + getCollapseControlStyles();
 }
