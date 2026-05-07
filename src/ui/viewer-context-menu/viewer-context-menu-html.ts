@@ -61,6 +61,11 @@ export function getContextMenuHtml(): string {
         <span class="codicon codicon-copy"></span> Copy Full Path
     </div>
     <div class="context-menu-separator" data-source-action></div>
+    <div class="context-menu-item" data-action="copy-error-warning-block" data-copy-error-warning-row style="display:none">
+        <span class="codicon codicon-error" data-ew-copy-icon aria-hidden="true"></span>
+        <span data-ew-copy-label>Copy Error</span>
+    </div>
+    <div class="context-menu-separator" data-copy-error-warning-separator style="display:none"></div>
     <!-- Copy & Export submenu: shortens main menu so it fits on screen; Copy to Search after separator (line-only). -->
     <div class="context-menu-submenu" id="copy-export-submenu">
         <span class="codicon codicon-clippy"></span> Copy & Export
