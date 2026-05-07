@@ -1,0 +1,56 @@
+import * as assert from 'node:assert';
+import {
+    computeIncidentRange,
+    effectiveErrorWarningLevel,
+} from '../../ui/viewer-context-menu/viewer-context-menu-incident-range';
+
+const id = (s: string): string => s;
+
+suite('ViewerContextMenuIncidentRange', () => {
+    test('effectiveErrorWarningLevel respects originalLevel for demoted device lines', () => {
+        assert.strictEqual(effectiveErrorWarningLevel({ type: 'line', level: 'info', originalLevel: 'error' }), 'error');
+        assert.strictEqual(effectiveErrorWarningLevel({ type: 'line', level: 'info' }), null);
+        assert.strictEqual(effectiveErrorWarningLevel({ type: 'marker' }), null);
+    });
+
+    test('computes consecutive duplicate error line run', () => {
+        const lines = [
+            { type: 'line', level: 'info', html: 'x' },
+            { type: 'line', level: 'error', html: 'SameError' },
+            { type: 'line', level: 'error', html: 'SameError' },
+            { type: 'line', level: 'error', html: 'SameError' },
+            { type: 'line', level: 'info', html: 'after' },
+        ];
+        const r = computeIncidentRange(lines, 2, id);
+        assert.deepStrictEqual(r, { lo: 1, hi: 3 });
+    });
+
+    test('merges stack group and preceding message line', () => {
+        const lines = [
+            { type: 'line', level: 'warning', html: 'msg' },
+            { type: 'stack-header', level: 'warning', html: 'hdr', groupId: 1 },
+            { type: 'stack-frame', level: 'warning', html: 'fr', groupId: 1 },
+        ];
+        assert.deepStrictEqual(computeIncidentRange(lines, 0, id), { lo: 0, hi: 2 });
+        assert.deepStrictEqual(computeIncidentRange(lines, 1, id), { lo: 0, hi: 2 });
+        assert.deepStrictEqual(computeIncidentRange(lines, 2, id), { lo: 0, hi: 2 });
+    });
+
+    test('merges continuation group members', () => {
+        const lines = [
+            { type: 'line', level: 'error', html: 'a', contGroupId: 9 },
+            { type: 'line', level: 'error', html: 'b', contGroupId: 9 },
+            { type: 'line', level: 'error', html: 'c', contGroupId: 9 },
+        ];
+        assert.deepStrictEqual(computeIncidentRange(lines, 1, id), { lo: 0, hi: 2 });
+    });
+
+    test('returns null when no error or warning appears in merged range', () => {
+        const lines = [
+            { type: 'line', level: 'info', html: 'only' },
+            { type: 'stack-header', level: 'info', html: 'h', groupId: 3 },
+            { type: 'stack-frame', level: 'info', html: 'f', groupId: 3 },
+        ];
+        assert.strictEqual(computeIncidentRange(lines, 1, id), null);
+    });
+});
