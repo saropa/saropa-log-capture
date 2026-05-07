@@ -47,7 +47,9 @@ export function getTimestampBurstDetectorEmbedJs(): string {
                 payload: {
                     category: 'db-signal',
                     label: 'DB timestamp burst (' + st.count + ' queries at same instant)',
-                    anchorSeq: anc
+                    anchorSeq: anc,
+                    burstStartSeq: st.firstSeq,
+                    burstEndSeq: anc
                 }
             }];
         }

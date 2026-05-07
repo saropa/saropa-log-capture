@@ -48,6 +48,9 @@ test("feedTimestampBurstDetector: three lines at same ts emits marker", () => {
   assert.strictEqual(out[0].detectorId, TIMESTAMP_BURST_DETECTOR_ID);
   assert.strictEqual(out[0].kind, "marker");
   assert.strictEqual(out[0].priority, 80);
+  const pay = out[0].payload as { burstStartSeq?: number; burstEndSeq?: number };
+  assert.strictEqual(pay.burstStartSeq, 1);
+  assert.strictEqual(pay.burstEndSeq, 3);
 });
 
 test("feedTimestampBurstDetector: tolerance allows slight differences", () => {
