@@ -36,6 +36,62 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes('linesToPlainText'));
         });
 
+        test('Copy Line must not hijack a single-line right-click when a stale shift-click selection exists', () => {
+            const script = getContextMenuScript();
+            /* Bug repro: previously `case 'copy'` (and `copy-decorated`) widened the selection
+               check with `hasAnySel = selectionStart >= 0 && sel.hi > sel.lo`, so any prior
+               shift-click range hijacked Copy Line on rows OUTSIDE the selection — the user
+               right-clicked line 50 to copy line 50 and got lines 5-10 instead. The fix removes
+               that fallback; only `sel.multiLine` (right-click is INSIDE the selection) triggers
+               the multi-line branch. Guard the regression by asserting `hasAnySel` is gone and
+               the surrounding `case 'copy'` / `case 'copy-decorated'` blocks no longer reference
+               it. */
+            assert.ok(!/hasAnySel/.test(script), 'hasAnySel must be removed from copy actions');
+            const copyCase = script.indexOf("case 'copy':");
+            assert.ok(copyCase >= 0);
+            const copyBlock = script.slice(copyCase, copyCase + 1200);
+            assert.ok(!copyBlock.includes('hasAnySel'));
+            const decoCase = script.indexOf("case 'copy-decorated':");
+            assert.ok(decoCase >= 0);
+            const decoBlock = script.slice(decoCase, decoCase + 800);
+            assert.ok(!decoBlock.includes('hasAnySel'));
+        });
+
+        test('Copy Line emits a "Copied line N (X characters)" toast and Copy Lines emits a range toast', () => {
+            const script = getContextMenuScript();
+            /* The toast message reads as natural English with locale-formatted numbers
+               (toLocaleString gives "1,247 characters") so users can see what landed on
+               the clipboard without squinting at the status bar. Assert the helper exists,
+               the format strings are present, and `case 'copy'` calls it for both single
+               and multi-line paths. */
+            assert.ok(script.includes('function formatCopyToastMessage'));
+            assert.ok(script.includes("'Copied lines '"));
+            assert.ok(script.includes("'Copied line '"));
+            assert.ok(script.includes('toLocaleString'));
+            const copyCase = script.indexOf("case 'copy':");
+            const copyBlock = script.slice(copyCase, copyCase + 1500);
+            assert.ok(copyBlock.includes("formatCopyToastMessage('lines'"));
+            assert.ok(copyBlock.includes("formatCopyToastMessage('line'"));
+            assert.ok(copyBlock.includes('showCopyToast('));
+        });
+
+        test('Copy Line Decorated, Copy Line Number, and Copy Timestamp all surface a toast', () => {
+            const script = getContextMenuScript();
+            assert.ok(script.includes("formatCopyToastMessage('line-decorated'"));
+            assert.ok(script.includes("formatCopyToastMessage('lines-decorated'"));
+            assert.ok(script.includes("formatCopyToastMessage('line-number'"));
+            assert.ok(script.includes("formatCopyToastMessage('timestamp'"));
+        });
+
+        test('copy-selection global path also surfaces a toast (top-level Copy menu item)', () => {
+            const script = getContextMenuScript();
+            const start = script.indexOf("if (action === 'copy-selection')");
+            assert.ok(start >= 0);
+            const block = script.slice(start, start + 1500);
+            assert.ok(block.includes('showCopyToast('));
+            assert.ok(block.includes("formatCopyToastMessage('selection'"));
+        });
+
         test('should use copyContextLines for Copy with source (expand range before/after)', () => {
             const script = getContextMenuScript();
             assert.ok(script.includes('copyContextLines'));
@@ -58,6 +114,16 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes("case 'show-context':"));
             assert.ok(script.includes("case 'copy-line-number':"));
             assert.ok(script.includes("case 'copy-timestamp':"));
+            assert.ok(script.includes("case 'copy-error-warning-block':"));
+        });
+
+        test('should define incident range helpers before showContextMenu uses them', () => {
+            const script = getContextMenuScript();
+            assert.ok(script.includes('function computeIncidentLineRange'));
+            assert.ok(script.includes('function effectiveErrorWarningLevel'));
+            const incIdx = script.indexOf('function computeIncidentLineRange');
+            const showIdx = script.indexOf('function showContextMenu');
+            assert.ok(incIdx > 0 && showIdx > incIdx);
         });
 
         test('copy-line-number posts the 1-based row position', () => {
