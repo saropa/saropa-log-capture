@@ -191,7 +191,11 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
        actual fault and should never show error-colored dots/borders. */
     if (lvl === 'info' && !isSep && !skipProximityInherit && lineTier !== 'device-other' && typeof proximityInheritAnchor === 'function') {
         var anchor = proximityInheritAnchor();
-        if (anchor && anchor.level === 'error' && ts && anchor.timestamp
+        /* Belt-and-suspenders: only a primary error row may seed the band (helper also skips
+           recentErrorContext / synthetic types). Require finite timestamps so bad data never matches. */
+        if (anchor && anchor.level === 'error' && !anchor.recentErrorContext
+            && typeof ts === 'number' && isFinite(ts)
+            && typeof anchor.timestamp === 'number' && isFinite(anchor.timestamp)
             && Math.abs(ts - anchor.timestamp) <= 2000) {
             lvl = 'error';
             recentErrorContext = true;
