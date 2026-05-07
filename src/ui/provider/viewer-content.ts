@@ -54,6 +54,8 @@ export interface ViewerHtmlOptions {
   readonly viewerDbDetectorToggles?: Partial<ViewerDbDetectorToggles>;
   /** Minimum duration (ms) for a slow-operation signal (default 500). */
   readonly signalSlowOpThresholdMs?: number;
+  /** Log viewer divider row text captions (`accessibility.showCollapseDividerLabels`, default false). */
+  readonly accessibilityShowCollapseDividerLabels?: boolean;
 }
 
 /**
@@ -89,6 +91,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
         viewerSlowBurstThresholds: opts.viewerSlowBurstThresholds,
         viewerDbDetectorToggles: opts.viewerDbDetectorToggles,
         signalSlowOpThresholdMs: opts.signalSlowOpThresholdMs,
+        accessibilityShowCollapseDividerLabels: opts.accessibilityShowCollapseDividerLabels === true,
     });
     return /* html */ `<!DOCTYPE html>
 <html lang="en">

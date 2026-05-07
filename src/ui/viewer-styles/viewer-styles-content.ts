@@ -12,6 +12,42 @@ export function getContentStyles(): string {
     font-style: italic;
     line-height: 1.5;
 }
+/* DB_16 timestamp burst — cyan rail matches database level / gutter (same token as level-bar-database). */
+.marker.marker-db-ts-burst-edge {
+    --db-ts-burst-ac: var(--vscode-terminal-ansiCyan, #00bcd4);
+    font-style: normal;
+    background: color-mix(in srgb, var(--db-ts-burst-ac) 14%, transparent);
+    color: var(--db-ts-burst-ac);
+    border-left: 2px solid var(--db-ts-burst-ac);
+    border-right: 2px solid var(--db-ts-burst-ac);
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+.marker.marker-db-ts-burst-edge.marker-db-ts-burst-top {
+    border-top: 2px solid var(--db-ts-burst-ac);
+    border-bottom: 1px dashed color-mix(in srgb, var(--db-ts-burst-ac) 50%, transparent);
+}
+.marker.marker-db-ts-burst-edge.marker-db-ts-burst-bottom {
+    border-top: 1px dashed color-mix(in srgb, var(--db-ts-burst-ac) 50%, transparent);
+    border-bottom: 2px solid var(--db-ts-burst-ac);
+}
+/* Member log lines framed between the two rails (virtualized flat rows; no DOM wrapper). */
+.line.db-ts-burst-member {
+    --db-ts-burst-ac: var(--vscode-terminal-ansiCyan, #00bcd4);
+    border-left: 2px solid var(--db-ts-burst-ac);
+    border-right: 2px solid var(--db-ts-burst-ac);
+    background: color-mix(in srgb, var(--db-ts-burst-ac) 8%, transparent);
+    box-sizing: border-box;
+}
+.line.db-ts-burst-member.db-ts-burst-first,
+.line.db-ts-burst-member.db-ts-burst-mid {
+    border-bottom: 1px dashed color-mix(in srgb, var(--db-ts-burst-ac) 30%, transparent);
+}
+.line.db-ts-burst-member:hover {
+    background: color-mix(in srgb, var(--db-ts-burst-ac) 14%, transparent);
+}
 .slow-query-burst-marker {
     cursor: pointer;
     font-style: italic;

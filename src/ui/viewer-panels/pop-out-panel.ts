@@ -227,6 +227,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setLogFontSize(size: number): void { this.post({ type: "setLogFontSize", size }); }
   setLogLineHeight(height: number): void { this.post({ type: "setLogLineHeight", height }); }
   setLogViewerVisualSpacing(enabled: boolean): void { this.post({ type: "logViewerVisualSpacing", value: enabled }); }
+  setShowCollapseDividerLabels(show: boolean): void { this.post({ type: "showCollapseDividerLabels", value: show }); }
   setSearchMatchOptionsAlwaysVisible(always: boolean): void { this.post({ type: "searchMatchOptionsAlwaysVisible", always }); }
   setIconBarPosition(position: "left" | "right"): void { this.post({ type: "iconBarPosition", position }); }
   setErrorRateConfig(config: ErrorRateConfig): void { postErrorRateConfig(this, config); }
@@ -275,6 +276,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       viewerDbDetectorToggles: viewerDbDetectorTogglesFromConfig(cfg),
       viewerSlowBurstThresholds: cfg.viewerSlowBurstThresholds,
       signalSlowOpThresholdMs: cfg.signalSlowOpThresholdMs,
+      accessibilityShowCollapseDividerLabels: cfg.accessibilityShowCollapseDividerLabels,
     });
     wv.onDidReceiveMessage((msg: Record<string, unknown>) => this.handleMessage(msg));
     this.startBatchTimer();

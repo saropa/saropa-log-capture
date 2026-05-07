@@ -23,6 +23,7 @@
  * them so we never call `onContextMenuAction` for blocked commands.
  */
 export { getContextMenuHtml, getScrollChromeContextMenuHtml } from './viewer-context-menu-html';
+import { getDbTimestampBurstRangeBrowserScript } from './viewer-context-menu-db-burst-range';
 import { getIncidentRangeBrowserScript } from './viewer-context-menu-incident-range';
 import { getContextMenuSourcesScript } from './viewer-context-menu-sources';
 import { getContextMenuActionsScript } from './viewer-context-menu-actions';
@@ -32,6 +33,7 @@ export function getContextMenuScript(): string {
     return getContextMenuGlobalsScript()
         + getContextMenuSourcesScript()
         + getIncidentRangeBrowserScript()
+        + getDbTimestampBurstRangeBrowserScript()
         + getContextMenuUiScript()
         + getContextMenuActionsScript();
 }
@@ -142,13 +144,17 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
     var openSourceItem = contextMenuEl.querySelector('[data-action="open-source"]');
     if (openSourceItem) openSourceItem.style.display = hasSourceLink ? '' : 'none';
 
-    /* Copy Error / Warning: continuation group, stack + preceding line, consecutive duplicate EW rows. */
+    /* Copy Error / Warning + Copy DB cluster: full grouped block before Copy & Export. */
     var ewRow = contextMenuEl.querySelector('[data-copy-error-warning-row]');
-    var ewSep = contextMenuEl.querySelector('[data-copy-error-warning-separator]');
+    var dbClusterRow = contextMenuEl.querySelector('[data-copy-db-cluster-row]');
+    var groupedBlockSep = contextMenuEl.querySelector('[data-grouped-block-copy-separator]');
     var ewRange = (hasLine && typeof computeIncidentLineRange === 'function') ? computeIncidentLineRange(lineIdx) : null;
+    var dbBurstRange = (hasLine && typeof computeDbTimestampBurstLineRange === 'function') ? computeDbTimestampBurstLineRange(lineIdx) : null;
     var showEw = !!(hasLine && ewRange);
+    var showDbCluster = !!(hasLine && dbBurstRange);
     if (ewRow) ewRow.style.display = showEw ? '' : 'none';
-    if (ewSep) ewSep.style.display = showEw ? '' : 'none';
+    if (dbClusterRow) dbClusterRow.style.display = showDbCluster ? '' : 'none';
+    if (groupedBlockSep) groupedBlockSep.style.display = (showEw || showDbCluster) ? '' : 'none';
     if (showEw && ewRow) {
         var ewLevel = lineData && typeof effectiveErrorWarningLevel === 'function' ? effectiveErrorWarningLevel(lineData) : null;
         if (!ewLevel && ewRange) {

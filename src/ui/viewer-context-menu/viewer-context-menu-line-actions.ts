@@ -136,7 +136,26 @@ function handleLineAction(action, lineIdx) {
                 var li = allLines[ii];
                 if (li && li.html != null) partsEw.push(stripTags(li.html));
             }
-            vscodeApi.postMessage({ type: 'copyToClipboard', text: partsEw.join(String.fromCharCode(10)) });
+            var textEw = partsEw.join(String.fromCharCode(10));
+            vscodeApi.postMessage({ type: 'copyToClipboard', text: textEw });
+            if (textEw.length > 0 && typeof showCopyToast === 'function') {
+                showCopyToast(formatCopyToastMessage('lines', inc.lo + 1, inc.hi + 1, textEw.length));
+            }
+            return true;
+        }
+        case 'copy-db-cluster-block': {
+            var dbR = (typeof computeDbTimestampBurstLineRange === 'function') ? computeDbTimestampBurstLineRange(lineIdx) : null;
+            if (!dbR) return true;
+            var partsDb = [];
+            for (var dj = dbR.lo; dj <= dbR.hi; dj++) {
+                var lj = allLines[dj];
+                if (lj && lj.html != null) partsDb.push(stripTags(lj.html));
+            }
+            var textDb = partsDb.join(String.fromCharCode(10));
+            vscodeApi.postMessage({ type: 'copyToClipboard', text: textDb });
+            if (textDb.length > 0 && typeof showCopyToast === 'function') {
+                showCopyToast(formatCopyToastMessage('lines', dbR.lo + 1, dbR.hi + 1, textDb.length));
+            }
             return true;
         }
         case 'copy-to-search':

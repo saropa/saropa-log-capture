@@ -16,6 +16,8 @@
  * (built once when the host posts `setDbBaselineFingerprintSummary`, not per ingest line).
  */
 
+import { getViewerDataApplyDbMarkerResultsScript } from "./viewer-data-add-db-marker-apply";
+
 export function getViewerDataAddDbDetectorsScript(staticSqlFromFingerprintEnabled = true): string {
     const staticSqlJs = staticSqlFromFingerprintEnabled ? "true" : "false";
     return /* javascript */ `
@@ -94,63 +96,9 @@ function applyDbSyntheticLineResults(results, scopeFilt, ts, sp, lineSource) {
         } catch (_n1EmitErr) { /* swallow — never block ingest on heuristic */ }
     }
 }
-/** DB_08 slow-query burst markers (click target uses data-anchor-seq for scroll). */
-function applyDbMarkerResults(results, ts, sp, lineSource) {
-    if (!results || !results.length) return;
-    var i, r, pl, cat, lbl, anc, anchorAttr, html;
-    for (i = 0; i < results.length; i++) {
-        r = results[i];
-        if (!r || r.kind !== 'marker' || !r.payload) continue;
-        pl = r.payload;
-        cat = pl.category || 'db-signal';
-        lbl = pl.label || 'Slow query burst';
-        anc = pl.anchorSeq;
-        anchorAttr = (typeof anc === 'number' && isFinite(anc)) ? ' data-anchor-seq="' + anc + '"' : '';
-        html = '<span class="slow-query-burst-marker"' + anchorAttr
-            + ' role="button" tabindex="0" title="Jump to completing slow query">' + escapeHtml(lbl) + '</span>';
-        try {
-            resetCompressDupStreak();
-            if (activeGroupHeader) {
-                if (typeof finalizeStackGroup === 'function') finalizeStackGroup(activeGroupHeader);
-                if (typeof registerClassTags === 'function') registerClassTags(activeGroupHeader);
-                activeGroupHeader = null;
-            }
-            cleanupTrailingRepeats();
-            /* Persist anchorSeq on the item so the marker-visibility pass can locate the jump target
-               (applyDbSignalMarkerVisibility() hides orphaned markers whose anchor is filtered). */
-            /* Orphan check at birth: applyDbSignalMarkerVisibility runs only inside recalcHeights
-               (on user interaction), so streaming markers rendered visible until the next pass —
-               even when their anchor SELECT was already hidden by a level/source filter. Compute
-               hidden state now by locating the anchor and reusing the shared helper, and stamp
-               markerHidden + a zero initial height so the first render matches the filter state. */
-            var _mHidden = false;
-            if (typeof dbSignalMarkersVisible !== 'undefined' && !dbSignalMarkersVisible) {
-                _mHidden = true;
-            } else if (typeof isDbSignalLevelDisabled === 'function' && isDbSignalLevelDisabled()) {
-                /* Mirror applyDbSignalMarkerVisibility's database-level gate so streaming
-                   markers don't briefly flash visible under "Errors Only" before the next
-                   recalcHeights pass. Same reasoning as the recalc path: db-signal markers
-                   belong with database lines. */
-                _mHidden = true;
-            } else if (typeof anc === 'number' && isFinite(anc) && typeof isNonMarkerItemEffectivelyHidden === 'function') {
-                /* Anchor was pushed immediately before the marker in the same batch — a short
-                   reverse scan beats building a global seq→index map per marker. Bound the scan
-                   so pathological inputs can't turn this into O(n²). */
-                for (var _lk = allLines.length - 1, _lkMin = Math.max(0, _lk - 32); _lk >= _lkMin; _lk--) {
-                    var _cand = allLines[_lk];
-                    if (_cand && _cand.type !== 'marker' && _cand.seq === anc) {
-                        _mHidden = isNonMarkerItemEffectivelyHidden(_cand);
-                        break;
-                    }
-                }
-            }
-            var _mH = _mHidden ? 0 : MARKER_HEIGHT;
-            var markerItem = { html: html, type: 'marker', height: _mH, category: cat, groupId: -1, timestamp: ts, sourcePath: sp || null, source: lineSource, anchorSeq: (typeof anc === 'number' && isFinite(anc)) ? anc : undefined, markerHidden: _mHidden };
-            allLines.push(markerItem);
-            totalHeight += _mH;
-        } catch (_mkErr) { /* swallow — never block ingest */ }
-    }
-}
+` +
+        getViewerDataApplyDbMarkerResultsScript() +
+        /* javascript */ `
 /** Merge \`annotate-line\` payload onto an existing row (by \`seq\`); adjusts \`totalHeight\` if \`height\` changes. */
 function applyDbAnnotateLineResult(r) {
     if (!r || r.kind !== 'annotate-line' || !r.payload) return;

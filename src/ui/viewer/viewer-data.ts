@@ -21,6 +21,8 @@ export interface ViewerDataScriptOptions {
     readonly staticSqlFromFingerprintEnabled?: boolean;
     readonly slowBurstThresholds?: Partial<ViewerSlowBurstThresholds>;
     readonly dbDetectorToggles?: Partial<ViewerDbDetectorToggles>;
+    /** Baked seed for `saropaLogCapture.accessibility.showCollapseDividerLabels` (default false). */
+    readonly accessibilityShowCollapseDividerLabels?: boolean;
 }
 
 export function getViewerDataScript(opts: ViewerDataScriptOptions = {}): string {
@@ -30,6 +32,7 @@ export function getViewerDataScript(opts: ViewerDataScriptOptions = {}): string 
         staticSqlFromFingerprintEnabled = true,
         slowBurstThresholds,
         dbDetectorToggles,
+        accessibilityShowCollapseDividerLabels = false,
     } = opts;
     return getViewerDataHelpers(repeatThresholds, viewerDbSignalsEnabled, slowBurstThresholds, dbDetectorToggles) + getCompressStreakScript() + getViewerDataAddScript(staticSqlFromFingerprintEnabled) + /* javascript */ `
 
@@ -287,7 +290,7 @@ function recalcHeights() {
     if (typeof buildPrefixSums === 'function') buildPrefixSums();
 }
 
-${getDividerRenderScript()}
+${getDividerRenderScript(accessibilityShowCollapseDividerLabels)}
 
 ${getViewportRenderScript()}
 `;

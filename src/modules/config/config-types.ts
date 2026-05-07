@@ -131,6 +131,11 @@ export interface SaropaLogCaptureConfig {
    * Syncs with the V shortcut and Options panel; default off for IDE-like density.
    */
   readonly logViewerVisualSpacing: boolean;
+  /**
+   * When true, filter/peek/stack-preview divider rows show the inline caption pill (e.g. "N hidden lines · show")
+   * in addition to the gutter chevron. Default off; enable when you want the redundant visible label.
+   */
+  readonly accessibilityShowCollapseDividerLabels: boolean;
   /** When true, always show match case / whole word / regex toggles in the log search strip (default: false). */
   readonly viewerAlwaysShowSearchMatchOptions: boolean;
   /**

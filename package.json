@@ -788,6 +788,12 @@
           "title": "%config.logViewerVisualSpacing.title%",
           "type": "boolean"
         },
+        "saropaLogCapture.accessibility.showCollapseDividerLabels": {
+          "default": false,
+          "markdownDescription": "%config.accessibility.showCollapseDividerLabels.description%",
+          "title": "%config.accessibility.showCollapseDividerLabels.title%",
+          "type": "boolean"
+        },
         "saropaLogCapture.viewerAlwaysShowSearchMatchOptions": {
           "default": false,
           "description": "%config.viewerAlwaysShowSearchMatchOptions.description%",

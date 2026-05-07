@@ -10,31 +10,47 @@
  * happens in viewer-data-viewport.ts. Click delegation lives in
  * viewer-peek-chevron.ts.
  *
+ * Text pill (`─── N hidden lines · show ───`, etc.) is optional: host setting
+ * `saropaLogCapture.accessibility.showCollapseDividerLabels` (default off).
+ * Dividers stay full-width clickable rows with gutter chevron; when the pill
+ * is hidden, `aria-label` names the control for assistive tech.
+ *
  * See bugs/048_plan-severity-gutter-decoupling.md.
  */
-export function getDividerRenderScript(): string {
-    return /* javascript */ `
+export function getDividerRenderScript(showCollapseDividerLabelsInitial = false): string {
+  const seed = showCollapseDividerLabelsInitial ? "true" : "false";
+  return /* javascript */ `
+/** Escape text for HTML attributes on divider controls. */
+function dividerHtmlAttrEscape(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+/** Host-synced: show the inline "─── N hidden · show ───" pill (default off). */
+var showCollapseDividerLabels = ${seed};
+
 /** Build the HTML for an inline divider row that announces a filter-hidden
     gap between two visible log lines. Click → reveal the gap under a fresh
-    peek key (peekChevron(from, to)).
-
-    WHY a label inside the divider rather than an icon: the user must know
-    BEFORE clicking what is hidden and how much. "12 hidden — show" beats
-    a bare chevron because the latter's mystery cost was the original
-    failure mode in plan 048. */
+    peek key (peekChevron(from, to)). */
 function buildHiddenGapDivider(from, to, info) {
     var n = info.count;
-    var label = n + ' hidden line' + (n !== 1 ? 's' : '') + ' \\u00b7 show';
+    var pillText = n + ' hidden line' + (n !== 1 ? 's' : '') + ' \\u00b7 show';
     var tip = (typeof buildHiddenTip === 'function') ? buildHiddenTip(info) : (n + ' hidden');
-    /* role="button" + aria-expanded=false: the divider IS the affordance.
-       Screen readers should announce it as an interactive control, not as
-       descriptive prose between two log lines. */
+    var titleEsc = dividerHtmlAttrEscape(tip + ' \\u00b7 click to show');
+    /* role="button" + aria-expanded=false: divider is interactive; SR users
+       get aria-label only when the visible pill is suppressed. */
+    var pill = showCollapseDividerLabels
+        ? '<span class="viewer-divider-label">\\u2500\\u2500\\u2500 ' + pillText + ' \\u2500\\u2500\\u2500</span>'
+        : '';
+    var aria = !showCollapseDividerLabels
+        ? ' aria-label="' + dividerHtmlAttrEscape(pillText) + '"'
+        : '';
     return '<div class="viewer-divider" role="button" aria-expanded="false"'
         + ' data-divider-action="show-gap"'
         + ' data-hidden-from="' + from + '"'
         + ' data-hidden-to="' + to + '"'
-        + ' title="' + tip.replace(/"/g, '&quot;') + ' \\u00b7 click to show"'
-        + '><span class="viewer-divider-label">\\u2500\\u2500\\u2500 ' + label + ' \\u2500\\u2500\\u2500</span></div>';
+        + ' title="' + titleEsc + '"'
+        + aria
+        + '>' + pill + '</div>';
 }
 
 /** Build the HTML for a leading or trailing divider that brackets an
@@ -50,12 +66,21 @@ function buildPeekHideDivider(peekKey, count, pos) {
     var label = (pos === 'end')
         ? 'hide ' + count + ' revealed (above) \\u00b7 collapse'
         : 'hide ' + count + ' revealed \\u00b7 collapse';
+    var titlePlain = 'Re-hide the ' + count + ' lines revealed under this peek';
+    var titleEsc = dividerHtmlAttrEscape(titlePlain);
+    var pill = showCollapseDividerLabels
+        ? '<span class="viewer-divider-label">\\u2500\\u2500\\u2500 ' + label + ' \\u2500\\u2500\\u2500</span>'
+        : '';
+    var aria = !showCollapseDividerLabels
+        ? ' aria-label="' + dividerHtmlAttrEscape(label) + '"'
+        : '';
     return '<div class="viewer-divider" role="button" aria-expanded="true"'
         + ' data-divider-action="hide-peek"'
         + ' data-peek-key="' + peekKey + '"'
         + ' data-peek-pos="' + pos + '"'
-        + ' title="Re-hide the ' + count + ' lines revealed under this peek"'
-        + '><span class="viewer-divider-label">\\u2500\\u2500\\u2500 ' + label + ' \\u2500\\u2500\\u2500</span></div>';
+        + ' title="' + titleEsc + '"'
+        + aria
+        + '>' + pill + '</div>';
 }
 
 /** Detect whether a stack-frame is the LAST visible app-frame of a Preview-
@@ -93,15 +118,23 @@ function getPreviewModeHiddenInfo(item) {
     Click → expand the whole stack via toggleStackGroup(gid). The click
     handler dispatches on data-divider-action='show-frames'. */
 function buildPreviewFramesDivider(info) {
-    var label = info.hidden + ' more stack frame' + (info.hidden !== 1 ? 's' : '')
+    var pillText = info.hidden + ' more stack frame' + (info.hidden !== 1 ? 's' : '')
         + ' hidden \\u00b7 show all';
     var tip = 'Preview mode \\u00b7 ' + info.shown + ' of ' + info.total
         + ' frames shown \\u00b7 click to show all';
+    var titleEsc = dividerHtmlAttrEscape(tip);
+    var pill = showCollapseDividerLabels
+        ? '<span class="viewer-divider-label">\\u2500\\u2500\\u2500 ' + pillText + ' \\u2500\\u2500\\u2500</span>'
+        : '';
+    var aria = !showCollapseDividerLabels
+        ? ' aria-label="' + dividerHtmlAttrEscape(pillText) + '"'
+        : '';
     return '<div class="viewer-divider" role="button" aria-expanded="false"'
         + ' data-divider-action="show-frames"'
         + ' data-gid="' + info.gid + '"'
-        + ' title="' + tip + '"'
-        + '><span class="viewer-divider-label">\\u2500\\u2500\\u2500 ' + label + ' \\u2500\\u2500\\u2500</span></div>';
+        + ' title="' + titleEsc + '"'
+        + aria
+        + '>' + pill + '</div>';
 }
 
 /** Count the number of items currently sharing a peekAnchorKey. Used by

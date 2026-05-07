@@ -115,6 +115,7 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes("case 'copy-line-number':"));
             assert.ok(script.includes("case 'copy-timestamp':"));
             assert.ok(script.includes("case 'copy-error-warning-block':"));
+            assert.ok(script.includes("case 'copy-db-cluster-block':"));
         });
 
         test('should define incident range helpers before showContextMenu uses them', () => {
@@ -126,6 +127,13 @@ suite('ViewerContextMenu', () => {
             const incIdx = script.indexOf('function computeIncidentLineRange');
             const showIdx = script.indexOf('function showContextMenu');
             assert.ok(incIdx > 0 && showIdx > incIdx);
+        });
+
+        test('should define DB burst range helper before showContextMenu', () => {
+            const script = getContextMenuScript();
+            const dbIdx = script.indexOf('function computeDbTimestampBurstLineRange');
+            const showIdx = script.indexOf('function showContextMenu');
+            assert.ok(dbIdx > 0 && showIdx > dbIdx);
         });
 
         test('copy-line-number posts the 1-based row position', () => {

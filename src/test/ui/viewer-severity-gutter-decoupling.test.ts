@@ -194,6 +194,22 @@ suite('Stack chevron parity: ▶ for collapsed/preview, ▼ for fully expanded',
     });
 });
 
+suite('Collapse divider captions ( accessibility setting baked into script )', () => {
+    test('default script seeds showCollapseDividerLabels false', () => {
+        assert.ok(
+            getDividerRenderScript(false).includes('var showCollapseDividerLabels = false'),
+            'webview must boot with captions off unless workspace enables them',
+        );
+    });
+
+    test('host can bake true so first paint matches workspace', () => {
+        assert.ok(
+            getDividerRenderScript(true).includes('var showCollapseDividerLabels = true'),
+            'buildViewerHtml must forward accessibility.showCollapseDividerLabels into divider script seed',
+        );
+    });
+});
+
 suite('Preview-mode trimmed-frame divider', () => {
     const divider = getDividerRenderScript();
     const stackChunk = getStackHeaderRenderScript();

@@ -1,10 +1,10 @@
 /**
  * Typography message handlers for the log viewer webview.
  *
- * Applies `setLogFontSize`, `setLogLineHeight`, and `logViewerVisualSpacing` host messages that seed
- * the webview from `saropaLogCapture.logFontSize`, `saropaLogCapture.logLineHeight`, and
- * `saropaLogCapture.logViewerVisualSpacing`, keeping typography/layout toggles in sync with the
- * workspace. Extracted from viewer-script-messages.ts to keep that file under the line-count limit
+ * Applies typography-related host messages (`setLogFontSize`, `setLogLineHeight`, `logViewerVisualSpacing`,
+ * `showCollapseDividerLabels`) that seed from workspace settings (`logFontSize`, `logLineHeight`,
+ * `logViewerVisualSpacing`, `accessibility.showCollapseDividerLabels`), keeping layout and divider captions
+ * in sync with the workspace. Extracted from viewer-script-messages.ts to keep that file under the line-count limit
  * and to mirror the `handleDbMessages` pre-handler pattern.
  *
  * Invariants:
@@ -40,6 +40,11 @@ function handleTypographyMessages(msg) {
                 if (typeof recalcHeights === 'function') recalcHeights();
                 if (typeof renderViewport === 'function') renderViewport(true);
             }
+            return true;
+        }
+        case 'showCollapseDividerLabels': {
+            showCollapseDividerLabels = msg.value === true;
+            if (typeof renderViewport === 'function') renderViewport(true);
             return true;
         }
     }
