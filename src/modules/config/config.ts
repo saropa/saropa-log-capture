@@ -139,6 +139,10 @@ export function getConfig(): SaropaLogCaptureConfig {
        from users seeing visible gaps between every row in dense logs. */
     logLineHeight: clamp(cfg.get("logLineHeight"), 0.5, 4.0, 1.1),
     logViewerVisualSpacing: ensureBoolean(cfg.get("logViewerVisualSpacing"), false),
+    accessibilityShowCollapseDividerLabels: ensureBoolean(
+      cfg.get("accessibility.showCollapseDividerLabels"),
+      false,
+    ),
     viewerAlwaysShowSearchMatchOptions: ensureBoolean(cfg.get("viewerAlwaysShowSearchMatchOptions"), false),
     viewerRepeatThresholds: normalizeViewerRepeatThresholds({
       globalMinCount: cfg.get("repeatCollapseGlobalMinCount"),
