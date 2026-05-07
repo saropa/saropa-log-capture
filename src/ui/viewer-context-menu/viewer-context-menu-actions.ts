@@ -6,6 +6,8 @@
  * Copy/clipboard notes for reviewers:
  * - `copy-selection`: If the browser selection is empty, falls back to the line index from the
  *   right-click (`savedLineIdx`) so Shift+click line highlights (not native selection) still copy.
+ *   Both branches (native selection / shift-click fallback) emit a `showCopyToast()` so users
+ *   see what landed on the clipboard without checking the status bar.
  * - `copy-with-source`: When the global path has nothing from the selection, returns false so
  *   `onContextMenuAction` can run the line-scoped branch (expanded context + source refs).
  */
@@ -21,6 +23,7 @@ function handleGlobalAction(action, savedLineIdx) {
         var text = sel ? sel.toString() : '';
         if (text.length > 0) {
             vscodeApi.postMessage({ type: 'copyToClipboard', text: text });
+            if (typeof showCopyToast === 'function') showCopyToast(formatCopyToastMessage('selection', 0, 0, text.length));
             return true;
         }
         /* Native selection is empty: shift+click range uses .selected only — copy like "Copy Line" from saved row. */
@@ -29,13 +32,17 @@ function handleGlobalAction(action, savedLineIdx) {
             var plainCs = stripTags(lineDataCs.html || '');
             var selRange = getSelectionRange(savedLineIdx);
             var outCs;
+            var toastCs;
             if (selRange.multiLine && typeof getSelectedLines === 'function' && typeof linesToPlainText === 'function') {
                 var linesCs = getSelectedLines();
                 outCs = linesCs.length > 0 ? linesToPlainText(linesCs) : plainCs;
+                toastCs = formatCopyToastMessage('lines', selRange.lo + 1, selRange.hi + 1, outCs.length);
             } else {
                 outCs = plainCs;
+                toastCs = formatCopyToastMessage('line', savedLineIdx + 1, savedLineIdx + 1, outCs.length);
             }
             vscodeApi.postMessage({ type: 'copyToClipboard', text: outCs });
+            if (outCs.length > 0 && typeof showCopyToast === 'function') showCopyToast(toastCs);
             return true;
         }
         vscodeApi.postMessage({ type: 'copyToClipboard', text: '' });
