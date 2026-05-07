@@ -42,7 +42,7 @@ Right-click → Copy & Export → Copy Line now copies the line you actually rig
 
 ### Added
 
-- **Copy Error / Copy Warning** — On error or warning lines, the main context menu (above **Copy & Export**) gains **Copy Error** or **Copy Warning** (`codicon-error` / `codicon-warning`). It copies plain text for the whole incident block: continuation groups (split long lines), stack headers/frames plus the preceding message line, and consecutive duplicate error/warning rows with the same message.
+- **Copy Error / Copy Warning** — On error or warning lines, the main context menu (above **Copy & Export**) gains **Copy Error** or **Copy Warning** (`codicon-error` / `codicon-warning`). It copies plain text for the **full adjacent error/warning run** (until severity breaks), **Flutter `════ Exception caught by … ════` blocks** by `bannerGroupId` (full render-overflow / layout dumps, including long stdout bodies), continuation fragments (split long lines), and stack groups with the preceding message line when those touch that band.
 
 ---
 
