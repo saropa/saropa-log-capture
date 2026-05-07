@@ -55,4 +55,13 @@ suite('ViewerLevelLineColors', () => {
         const debugRe = /\.line\.level-debug\s*\{[^}]*terminal-ansiYellow/s;
         assert.ok(debugRe.exec(css), 'debug lines should keep terminal-ansiYellow');
     });
+
+    test('severity gutter connector uses color-mix not opacity (dot stacks above stripe)', () => {
+        const deco = getDecorationStyles();
+        const connectorRe =
+            /\.bar-down::after,\s*\.bar-up::after\s*\{[\s\S]*?background:\s*color-mix\(in srgb,\s*var\(--bar-color\)\s*45%,\s*transparent\)[\s\S]*?z-index:\s*1[\s\S]*?\}/;
+        assert.ok(connectorRe.test(deco), 'connector fill should use color-mix 45% and z-index 1');
+        const badOpacity = /\.bar-down::after,\s*\.bar-up::after\s*\{[\s\S]*?opacity:\s*0\./;
+        assert.ok(!badOpacity.test(deco), 'regression: connector must not use opacity (Chromium stacks it over the dot)');
+    });
 });
