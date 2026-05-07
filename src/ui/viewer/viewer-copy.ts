@@ -239,24 +239,30 @@ function updateSelectionHighlight() {
     var start = Math.min(selectionStart, selectionEnd);
     var end = Math.max(selectionStart, selectionEnd);
     for (var i = 0; i < children.length; i++) {
-        var idx = lastStart + i;
-        if (idx >= start && idx <= end) {
-            children[i].classList.add('selected');
-        } else {
-            children[i].classList.remove('selected');
+        var el = children[i];
+        var raw = el.dataset ? el.dataset.idx : null;
+        /* .viewer-divider rows have no data-idx; never map lastStart + child offset. */
+        if (raw === undefined || raw === null || raw === '') {
+            el.classList.remove('selected');
+            continue;
         }
+        var idx = parseInt(raw, 10);
+        el.classList.toggle('selected', !isNaN(idx) && idx >= start && idx <= end);
     }
 }
 
 var copyToastEl = null;
 var copyToastTimer = 0;
-function showCopyToast() {
+/* Optional message lets callers replace the default "Copied" with richer feedback —
+   e.g. "Copied lines 116-225 (1,247 characters)" — so users see what landed on the
+   clipboard at a glance instead of squinting at the status bar. */
+function showCopyToast(message) {
     if (!copyToastEl) {
         copyToastEl = document.createElement('div');
         copyToastEl.className = 'copy-toast';
-        copyToastEl.textContent = 'Copied';
         document.body.appendChild(copyToastEl);
     }
+    copyToastEl.textContent = (typeof message === 'string' && message.length > 0) ? message : 'Copied';
     clearTimeout(copyToastTimer);
     copyToastEl.classList.add('visible');
     copyToastTimer = setTimeout(function() { copyToastEl.classList.remove('visible'); }, 1500);
@@ -308,8 +314,7 @@ if (copyFloat) copyFloat.addEventListener('click', function(e) {
     if (!copyFloatLineEl) return;
     var ci = parseInt(copyFloatLineEl.dataset.idx, 10);
     if (ci >= 0 && ci < allLines.length) {
-        /* Route through lineToPlainText so the hover-to-copy float expands a
-           "N × SQL repeated" row into N lines, matching Ctrl+C behavior. */
+        /* Hover copy: repeat rows expand via lineToPlainText (same as Ctrl+C). */
         vscodeApi.postMessage({ type: 'copyToClipboard', text: lineToPlainText(allLines[ci]) });
         showCopyToast();
     }
