@@ -69,6 +69,7 @@ export interface ViewerTarget {
   setLogFontSize(size: number): void;
   setLogLineHeight(height: number): void;
   setLogViewerVisualSpacing(enabled: boolean): void;
+  setShowCollapseDividerLabels(show: boolean): void;
   setSearchMatchOptionsAlwaysVisible(always: boolean): void;
   setIconBarPosition(position: "left" | "right"): void;
   setErrorRateConfig(config: ErrorRateConfig): void;

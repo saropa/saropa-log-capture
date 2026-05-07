@@ -116,6 +116,9 @@ export function setupConfigListener(
         if (e.affectsConfiguration('saropaLogCapture.logViewerVisualSpacing')) {
             broadcaster.setLogViewerVisualSpacing(cfg.logViewerVisualSpacing);
         }
+        if (e.affectsConfiguration('saropaLogCapture.accessibility.showCollapseDividerLabels')) {
+            broadcaster.setShowCollapseDividerLabels(cfg.accessibilityShowCollapseDividerLabels);
+        }
         if (e.affectsConfiguration('saropaLogCapture.viewerAlwaysShowSearchMatchOptions')) {
             broadcaster.setSearchMatchOptionsAlwaysVisible(cfg.viewerAlwaysShowSearchMatchOptions);
         }

@@ -10,6 +10,7 @@
  *
  * Browser copy: `getIncidentRangeBrowserScript()` — keep behavior in sync with
  * {@link computeIncidentRange} (validated by Node tests in `viewer-context-menu-incident-range.test.ts`).
+ * **DB timestamp bursts:** `viewer-context-menu-db-burst-range.ts` defines `computeDbTimestampBurstLineRange` for Copy DB cluster.
  */
 
 /** Minimal viewer line shape for range computation (matches webview `allLines` entries). */

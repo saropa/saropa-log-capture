@@ -117,6 +117,8 @@ export interface ViewerScriptsOptions {
     readonly viewerDbDetectorToggles?: Partial<ViewerDbDetectorToggles>;
     /** Minimum duration (ms) for a slow-operation signal (default 500). */
     readonly signalSlowOpThresholdMs?: number;
+    /** When true, divider rows show the "─── N hidden · show ───" pill (`accessibility.showCollapseDividerLabels`). */
+    readonly accessibilityShowCollapseDividerLabels?: boolean;
 }
 
 /** Build all script tags in the order required by the viewer. */
@@ -134,6 +136,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         viewerSlowBurstThresholds,
         viewerDbDetectorToggles,
         signalSlowOpThresholdMs,
+        accessibilityShowCollapseDividerLabels,
     } = opts;
     return (
         scriptTag(nonce, getErrorHandlerScript()) +
@@ -147,6 +150,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
                 staticSqlFromFingerprintEnabled: staticSqlFromFingerprintEnabled !== false,
                 slowBurstThresholds: viewerSlowBurstThresholds,
                 dbDetectorToggles: viewerDbDetectorToggles,
+                accessibilityShowCollapseDividerLabels: accessibilityShowCollapseDividerLabels === true,
             }),
             getViewerScript(maxLines, viewerPreserveAsciiBoxArt !== false, viewerGroupAsciiArt !== false, viewerDetectAsciiArt === true),
             getViewerRootCauseHintsScript(signalSlowOpThresholdMs),

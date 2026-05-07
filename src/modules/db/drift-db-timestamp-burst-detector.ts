@@ -112,6 +112,9 @@ export function feedTimestampBurstDetector(
         category: "db-signal",
         label: `DB timestamp burst (${st.count} queries at same instant)`,
         anchorSeq: anc,
+        /** Inclusive seq range covered by this burst when the marker is emitted (`firstSeq` … completing line). */
+        burstStartSeq: st.firstSeq,
+        burstEndSeq: anc,
       },
     },
   ];

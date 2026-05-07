@@ -8,6 +8,13 @@
  * - Device-critical lines keep their real severity (e.g. `E/AndroidRuntime` shows red).
  * The severity gutter always uses `level-bar-{item.level}` so dot/connector color matches text.
  */
+
+import {
+  VIEWER_RENDER_EMBED_LINE_DB_TS_BURST,
+  VIEWER_RENDER_EMBED_MARKER_BURST_EDGE,
+} from "./viewer-data-helpers-render-db-ts-burst-snips";
+import { VIEWER_RENDER_EMBED_RUN_SEPARATOR } from "./viewer-data-helpers-render-run-separator-snip";
+
 export function getViewerDataHelpersRender(): string {
     return /* javascript */ `
 /** Whether to show output channel badges on log lines (toggled from Decorations panel). */
@@ -91,41 +98,18 @@ function renderItem(item, idx, prevVis) {
         }
     }
     if (item.type === 'marker') {
-        /* The v7.4.0 "× N" badge on the run-head marker was retired by the
-           2026.04 unified-line-collapsing rethink as unreadable.
-           applyConsecutiveDbMarkerCollapse() still folds follow-ups to height 0
-           so the margin stops stacking identical markers. Markers do not carry
-           a severity dot in the gutter (they're their own row type with
-           coloured background), so the gutter affordances introduced by plan
-           048 (bugs/048_plan-severity-gutter-decoupling.md) do not apply
-           here. Instead, when the marker represents a collapsed run, a title
-           attribute on the marker div tells the user via hover how many
-           identical markers were folded into it — keeps the "nothing hidden
-           silently" guarantee without re-adding a visible badge. */
+        /* Collapsed runs: markerCollapseCount > 1 → title tooltip (048 / unified collapsing). */
         var _mkTitle = (item.markerCollapseCount && item.markerCollapseCount > 1)
             ? ' title="' + item.markerCollapseCount + ' adjacent identical markers collapsed into this one"'
             : '';
-        return '<div class="marker' + spacingCls + '"' + idxAttr + _mkTitle + '>' + html + '</div>';
+` +
+        VIEWER_RENDER_EMBED_MARKER_BURST_EDGE +
+        /* javascript */ `
+        return '<div class="marker' + _burstEdgeCls + spacingCls + '"' + idxAttr + _mkTitle + '>' + html + '</div>';
     }
-    if (item.type === 'run-separator') {
-        var rs = item.runSummary;
-        if (!rs) return '<div class="run-separator"' + idxAttr + '></div>';
-        var startStr = (typeof formatRunTime === 'function') ? formatRunTime(rs.startTime) : '--:--:--';
-        var endStr = (typeof formatRunTime === 'function') ? formatRunTime(rs.endTime) : '--:--:--';
-        var durStr = (typeof formatDuration === 'function') ? formatDuration(rs.durationMs) : '';
-        var runNum = (item.runIndex != null) ? item.runIndex + 1 : 0;
-        var dots = '';
-        if (rs.errors > 0) dots += '<span class="run-sep-dot run-sep-dot-error" title="Errors">' + rs.errors + '</span>';
-        if (rs.warnings > 0) dots += '<span class="run-sep-dot run-sep-dot-warning" title="Warnings">' + rs.warnings + '</span>';
-        if (rs.perfs > 0) dots += '<span class="run-sep-dot run-sep-dot-perf" title="Perf">' + rs.perfs + '</span>';
-        if (rs.infos > 0) dots += '<span class="run-sep-dot run-sep-dot-info" title="Info">' + rs.infos + '</span>';
-        if (!dots) dots = '<span class="run-sep-dot run-sep-dot-none">0</span>';
-        return '<div class="run-separator"' + idxAttr + '><div class="run-separator-inner">' +
-            '<span class="run-sep-title">Run ' + runNum + '</span>' +
-            '<span class="run-sep-times">' + startStr + ' \\u2013 ' + endStr + '</span>' +
-            '<span class="run-sep-duration">' + durStr + '</span>' +
-            '<span class="run-sep-counts">' + dots + '</span></div></div>';
-    }
+` +
+        VIEWER_RENDER_EMBED_RUN_SEPARATOR +
+        /* javascript */ `
     if (item.type === 'repeat-notification' || item.type === 'n-plus-one-signal') {
         // Defense in depth: applyLevelFilter now skips these as context anchors so they
         // shouldn't reach this branch with isContext=true, but apply the mute anyway so
@@ -291,18 +275,11 @@ function renderItem(item, idx, prevVis) {
         else if (item.bannerRole === 'footer') bannerCls = ' banner-group-end';
         else bannerCls = ' banner-group-mid';
     }
-    /* Render order: deco first, then contBadge. When deco exists the badge is
-       already spliced into it (left of the » chevron) and the standalone
-       contBadge variable is cleared — so this tail position only applies to
-       art-continuation lines where deco is empty. The order 'deco then
-       contBadge' (not the reverse) preserves the invariant that the badge
-       never precedes the decoration prefix in the output string.
-
-       dupBadge ("×N" / "×N hide" inline pill) renders at the END of the
-       row's text content, not on the outer div. The plan keeps it adjacent
-       to the line text it folds so the user reads "this row · ×12" as a
-       single unit, not as a gutter decoration that could mean anything. */
-    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + bannerCls + '"' + idxAttr + titleAttr + '>' + stackGutter + deco + contBadge + elapsed + badge + catBadge + html + dupBadge + '</div>' + annHtml;
+` +
+        VIEWER_RENDER_EMBED_LINE_DB_TS_BURST +
+        /* javascript */ `
+    /* Tail: deco → contBadge; dupBadge after line text (048 dedup affordance). */
+    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + bannerCls + dbTsBurstCls + '"' + idxAttr + titleAttr + '>' + stackGutter + deco + contBadge + elapsed + badge + catBadge + html + dupBadge + '</div>' + annHtml;
 }
 `;
 }

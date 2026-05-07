@@ -41,9 +41,14 @@ Right-click → Copy & Export → Copy Line now copies the line you actually rig
 
 - **Copy toast feedback** — Every Copy & Export action (`Copy`, `Copy Line`, `Copy Line Decorated`, `Copy Line Number`, `Copy Timestamp`) now flashes an in-viewer toast: `Copied line 178 (87 characters)`, `Copied lines 116-225 (1,247 characters)`, `Copied line number 178`, `Copied timestamp`. The toast is rendered on the webview side for instant feedback (no host round-trip), in addition to the existing status-bar message.
 
+- **DB timestamp burst framing** — Same-time-query bursts no longer render as one green slab after the last SELECT; the viewer adds **database-colored** top and bottom rails with the burst label twice, connects them with cyan left/right borders and a light tint on each included log line so the whole cluster reads as one framed block.
+
 ### Added
 
+- **Accessibility: collapse divider captions** — Divider rows between filtered/peek/stack-preview collapsed ranges hide the redundant `─── N hidden lines · show ───` style pill **by default** (the gutter chevron and clickable row remain). Settings → search **Accessibility: show collapse divider captions** or set `saropaLogCapture.accessibility.showCollapseDividerLabels` to restore the pill.
 - **Copy Error / Copy Warning** — On error or warning lines, the main context menu (above **Copy & Export**) gains **Copy Error** or **Copy Warning** (`codicon-error` / `codicon-warning`). It copies plain text for the **full adjacent error/warning run** (until severity breaks), **Flutter `════ Exception caught by … ════` blocks** by `bannerGroupId` (full render-overflow / layout dumps, including long stdout bodies), continuation fragments (split long lines), and stack groups with the preceding message line when those touch that band.
+
+- **Copy DB cluster** — On any row that belongs to a **DB timestamp burst** framed block (cyan top/bottom rails and boxed SQL lines), the same menu gains **Copy DB cluster** (`codicon-database`). It copies plain text for the **whole burst** in order: both rail headings plus every clustered database line inside the frame. **Copy Error** / **Warning** and **Copy DB cluster** share one separator strip before **Copy & Export** when either applies; both commands now show the same multi-line copy toast (`Copied lines …`) as Copy Line ranges.
 
 ---
 
