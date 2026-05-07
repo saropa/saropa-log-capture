@@ -23,6 +23,7 @@
  * them so we never call `onContextMenuAction` for blocked commands.
  */
 export { getContextMenuHtml, getScrollChromeContextMenuHtml } from './viewer-context-menu-html';
+import { getIncidentRangeBrowserScript } from './viewer-context-menu-incident-range';
 import { getContextMenuSourcesScript } from './viewer-context-menu-sources';
 import { getContextMenuActionsScript } from './viewer-context-menu-actions';
 
@@ -30,6 +31,7 @@ import { getContextMenuActionsScript } from './viewer-context-menu-actions';
 export function getContextMenuScript(): string {
     return getContextMenuGlobalsScript()
         + getContextMenuSourcesScript()
+        + getIncidentRangeBrowserScript()
         + getContextMenuUiScript()
         + getContextMenuActionsScript();
 }
@@ -139,6 +141,27 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
     var hasSourceLink = lineData && lineData.html && lineData.html.indexOf('source-link') !== -1;
     var openSourceItem = contextMenuEl.querySelector('[data-action="open-source"]');
     if (openSourceItem) openSourceItem.style.display = hasSourceLink ? '' : 'none';
+
+    /* Copy Error / Warning: continuation group, stack + preceding line, consecutive duplicate EW rows. */
+    var ewRow = contextMenuEl.querySelector('[data-copy-error-warning-row]');
+    var ewSep = contextMenuEl.querySelector('[data-copy-error-warning-separator]');
+    var ewRange = (hasLine && typeof computeIncidentLineRange === 'function') ? computeIncidentLineRange(lineIdx) : null;
+    var showEw = !!(hasLine && ewRange);
+    if (ewRow) ewRow.style.display = showEw ? '' : 'none';
+    if (ewSep) ewSep.style.display = showEw ? '' : 'none';
+    if (showEw && ewRow) {
+        var ewLevel = lineData && typeof effectiveErrorWarningLevel === 'function' ? effectiveErrorWarningLevel(lineData) : null;
+        if (!ewLevel && ewRange) {
+            for (var ewi = ewRange.lo; ewi <= ewRange.hi && !ewLevel; ewi++) {
+                ewLevel = effectiveErrorWarningLevel(allLines[ewi]);
+            }
+        }
+        var ewLabelEl = ewRow.querySelector('[data-ew-copy-label]');
+        var ewIconEl = ewRow.querySelector('[data-ew-copy-icon]');
+        var ewIsWarn = ewLevel === 'warning';
+        if (ewLabelEl) ewLabelEl.textContent = ewIsWarn ? 'Copy Warning' : 'Copy Error';
+        if (ewIconEl) ewIconEl.className = 'codicon ' + (ewIsWarn ? 'codicon-warning' : 'codicon-error');
+    }
 
     /* Copy Timestamp hides when the line carries no epoch (markers, synthetic rows). Both .timestamp
        and .ts are checked because stack frames/headers store it under .timestamp while some code

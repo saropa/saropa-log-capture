@@ -3,8 +3,17 @@
  * Handles actions that operate on a specific log line identified by index.
  * Extracted from viewer-context-menu-actions.ts to keep files under the line limit.
  *
- * Also defines `getSelectionRange()` — the shared shift+click selection helper used by
- * both `handleLineAction` (this file) and `handleGlobalAction` (viewer-context-menu-actions.ts).
+ * Also defines two shared helpers used by both `handleLineAction` (this file) and
+ * `handleGlobalAction` (viewer-context-menu-actions.ts):
+ *  - `getSelectionRange()` — shift+click selection bounds relative to a row index.
+ *  - `formatCopyToastMessage()` — copy-feedback strings (`Copied line 178 (87 characters)`,
+ *    `Copied lines 116-225 (1,247 characters)`, etc.) rendered via `showCopyToast()`.
+ *
+ * Copy actions on the right-click menu use `sel.multiLine` (right-click is INSIDE the
+ * shift-click range) as the SOLE trigger for multi-line copy. A previous `hasAnySel`
+ * fallback widened that to "any prior shift-click range" and silently hijacked Copy
+ * Line on rows outside the selection — the user right-clicked line 50 to copy line 50
+ * but lines 5-10 landed on the clipboard. That fallback is gone.
  */
 
 /** Get the line-scoped context menu action handler script. */
@@ -23,6 +32,27 @@ function getSelectionRange(lineIdx) {
     return { lo: lo, hi: hi, multiLine: multiLine };
 }
 
+/**
+ * Format the in-webview copy toast — instant feedback so the user sees what landed on
+ * the clipboard without having to glance at the status bar. Numbers are locale-formatted
+ * so "1,247 characters" reads naturally; line numbers are 1-based to match the counter
+ * decoration column users see in the viewer.
+ */
+function formatCopyToastMessage(kind, lo, hi, charCount) {
+    var fmt = function(n) {
+        try { return Number(n).toLocaleString(); } catch (_e) { return String(n); }
+    };
+    var charPart = ' (' + fmt(charCount) + ' character' + (charCount === 1 ? '' : 's') + ')';
+    if (kind === 'lines') return 'Copied lines ' + lo + '-' + hi + charPart;
+    if (kind === 'line') return 'Copied line ' + lo + charPart;
+    if (kind === 'lines-decorated') return 'Copied lines ' + lo + '-' + hi + ' decorated' + charPart;
+    if (kind === 'line-decorated') return 'Copied line ' + lo + ' decorated' + charPart;
+    if (kind === 'line-number') return 'Copied line number ' + lo;
+    if (kind === 'timestamp') return 'Copied timestamp';
+    if (kind === 'selection') return 'Copied selection' + charPart;
+    return 'Copied' + charPart;
+}
+
 function handleLineAction(action, lineIdx) {
     if (lineIdx < 0 || lineIdx >= allLines.length) return false;
 
@@ -31,23 +61,34 @@ function handleLineAction(action, lineIdx) {
 
     switch (action) {
         case 'copy': {
+            /* Only treat this as a multi-line copy when the right-clicked line is INSIDE the
+               shift-click selection (sel.multiLine). Without this guard, a stale selection
+               from earlier in the session silently hijacks "Copy Line" on any other row —
+               user right-clicks line 50, sees Copy Line, but lines 5-10 land on the clipboard. */
             var sel = getSelectionRange(lineIdx);
-            var hasAnySel = typeof selectionStart !== 'undefined' && selectionStart >= 0 && sel.hi > sel.lo;
-            if ((sel.multiLine || hasAnySel) && typeof getSelectedLines === 'function' && typeof linesToPlainText === 'function') {
+            var copyText;
+            var copyToast;
+            if (sel.multiLine && typeof getSelectedLines === 'function' && typeof linesToPlainText === 'function') {
                 var lines = getSelectedLines();
-                var text = lines.length > 0 ? linesToPlainText(lines) : plainText;
-                vscodeApi.postMessage({ type: 'copyToClipboard', text: text });
+                copyText = lines.length > 0 ? linesToPlainText(lines) : plainText;
+                copyToast = formatCopyToastMessage('lines', sel.lo + 1, sel.hi + 1, copyText.length);
             } else {
-                vscodeApi.postMessage({ type: 'copyToClipboard', text: plainText });
+                copyText = plainText;
+                copyToast = formatCopyToastMessage('line', lineIdx + 1, lineIdx + 1, copyText.length);
             }
+            vscodeApi.postMessage({ type: 'copyToClipboard', text: copyText });
+            if (copyText.length > 0 && typeof showCopyToast === 'function') showCopyToast(copyToast);
             return true;
         }
         case 'copy-decorated': {
             var sel = getSelectionRange(lineIdx);
-            var hasAnySel = typeof selectionStart !== 'undefined' && selectionStart >= 0 && sel.hi > sel.lo;
-            var decoLines = (sel.multiLine || hasAnySel) && typeof getSelectedLines === 'function' ? getSelectedLines() : [lineData];
+            var decoLines = sel.multiLine && typeof getSelectedLines === 'function' ? getSelectedLines() : [lineData];
             var decoText = typeof linesToDecoratedText === 'function' ? linesToDecoratedText(decoLines) : plainText;
             vscodeApi.postMessage({ type: 'copyToClipboard', text: decoText });
+            var decoToast = sel.multiLine
+                ? formatCopyToastMessage('lines-decorated', sel.lo + 1, sel.hi + 1, decoText.length)
+                : formatCopyToastMessage('line-decorated', lineIdx + 1, lineIdx + 1, decoText.length);
+            if (decoText.length > 0 && typeof showCopyToast === 'function') showCopyToast(decoToast);
             return true;
         }
         case 'copy-with-source': {
@@ -73,6 +114,7 @@ function handleLineAction(action, lineIdx) {
                do not expose the internal 0-based lineIdx because the rest of the UI (counter column,
                status bar, line pickers) is 1-based, and mixing bases silently is a footgun. */
             vscodeApi.postMessage({ type: 'copyToClipboard', text: String(lineIdx + 1) });
+            if (typeof showCopyToast === 'function') showCopyToast(formatCopyToastMessage('line-number', lineIdx + 1, lineIdx + 1, 0));
             return true;
         }
         case 'copy-timestamp': {
@@ -83,6 +125,18 @@ function handleLineAction(action, lineIdx) {
             var tsVal = lineData.timestamp || lineData.ts;
             if (!tsVal) return true;
             vscodeApi.postMessage({ type: 'copyToClipboard', text: new Date(tsVal).toISOString() });
+            if (typeof showCopyToast === 'function') showCopyToast(formatCopyToastMessage('timestamp', 0, 0, 0));
+            return true;
+        }
+        case 'copy-error-warning-block': {
+            var inc = (typeof computeIncidentLineRange === 'function') ? computeIncidentLineRange(lineIdx) : null;
+            if (!inc) return true;
+            var partsEw = [];
+            for (var ii = inc.lo; ii <= inc.hi; ii++) {
+                var li = allLines[ii];
+                if (li && li.html != null) partsEw.push(stripTags(li.html));
+            }
+            vscodeApi.postMessage({ type: 'copyToClipboard', text: partsEw.join(String.fromCharCode(10)) });
             return true;
         }
         case 'copy-to-search':
