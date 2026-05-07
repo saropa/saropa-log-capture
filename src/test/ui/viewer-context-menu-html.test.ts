@@ -113,6 +113,17 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('data-action="toggle-minimap-sql-density"'));
         });
 
+        test('should place Copy Error block and separator immediately before Copy & Export', () => {
+            const html = getContextMenuHtml();
+            const ewIdx = html.indexOf('data-action="copy-error-warning-block"');
+            const ewSepIdx = html.indexOf('data-copy-error-warning-separator');
+            const copyExportIdx = html.indexOf('id="copy-export-submenu"');
+            assert.ok(ewIdx > 0 && ewSepIdx > ewIdx && copyExportIdx > ewSepIdx);
+            assert.ok(html.includes('data-ew-copy-label'));
+            assert.ok(html.includes('data-ew-copy-icon'));
+            assert.ok(html.includes('codicon-error'));
+        });
+
         test('should include data-action attributes', () => {
             const html = getContextMenuHtml();
             assert.ok(html.includes('data-action="copy-selection"'));

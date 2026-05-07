@@ -26,6 +26,25 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+Right-click → Copy & Export → Copy Line now copies the line you actually right-clicked, even if there's a stale shift-click selection from earlier in the session, and every copy from the context menu shows an instant in-viewer toast (e.g. `Copied lines 116-225 (1,247 characters)`) so you can confirm what landed on the clipboard at a glance. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+
+### Fixed
+
+- **Row selection highlight vs injected dividers** — After a virtual-scroll pass, the blue shift-click / drag-select stripe was reapplied using **viewport child position** (`lastStart + i`) instead of each row’s `data-idx`. Injected `.viewer-divider` rows (hidden-line gaps from filters, peek groups, preview-trimmed stack frames, etc.) sit between real log lines, so indices drifted: the wrong rows picked up `.selected` and the line you were trying to work on no longer matched the stripe—making within-line text selection feel broken next to collapsed or folded ranges. The stripe now keys only on `data-idx`; dividers never receive `.selected`.
+- **Copy Line hijacked by stale shift-click selection** — Right-click → Copy & Export → **Copy Line** (and **Copy Line Decorated**) silently copied the previously shift-click-selected range whenever you right-clicked any other row, instead of the line you actually targeted. Multi-line clipboard output now triggers only when the right-click target row is **inside** the active shift-click range (`sel.multiLine`), so line 50 → Copy Line copies line 50 — not lines 5-10 from a selection you made earlier.
+
+### Changed
+
+- **Copy toast feedback** — Every Copy & Export action (`Copy`, `Copy Line`, `Copy Line Decorated`, `Copy Line Number`, `Copy Timestamp`) now flashes an in-viewer toast: `Copied line 178 (87 characters)`, `Copied lines 116-225 (1,247 characters)`, `Copied line number 178`, `Copied timestamp`. The toast is rendered on the webview side for instant feedback (no host round-trip), in addition to the existing status-bar message.
+
+### Added
+
+- **Copy Error / Copy Warning** — On error or warning lines, the main context menu (above **Copy & Export**) gains **Copy Error** or **Copy Warning** (`codicon-error` / `codicon-warning`). It copies plain text for the whole incident block: continuation groups (split long lines), stack headers/frames plus the preceding message line, and consecutive duplicate error/warning rows with the same message.
+
+---
+
 ## [7.7.0]
 
 Each expand/collapse in the log viewer now has its own dedicated control instead of overloading the severity dot, the Counter toggle is renamed Line numbers and moved to Layout, the permanent 99+ badge on the Logs icon is gone, dragged-in context lines (stack frames, repeat chips) mute correctly under level filters, and within-line text selection in the viewer works again. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
