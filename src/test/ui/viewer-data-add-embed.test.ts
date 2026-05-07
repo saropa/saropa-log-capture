@@ -7,6 +7,7 @@ import { getViewerDataAddScript } from '../../ui/viewer/viewer-data-add';
 import { getDocItemBuilderScript } from '../../ui/viewer/viewer-data-add-doc-item';
 import { getLineBirthScript } from '../../ui/viewer/viewer-data-add-line-birth';
 import { getViewerDataHelpersCore } from '../../ui/viewer/viewer-data-helpers-core';
+import { getDataAddContextHelpersScript } from '../../ui/viewer/viewer-data-add-context-helpers';
 
 function extractAddToDataBlock(script: string): string {
     const start = script.indexOf('function addToData(');
@@ -122,6 +123,44 @@ suite('viewer-data-helpers-core blank detection', () => {
         assert.ok(
             core.includes('&nbsp;') && core.includes('\\u200B'),
             'normalize must cover nbsp entities and ZWSP escapes in the strip regex',
+        );
+    });
+});
+
+suite('viewer-data-add context helpers', () => {
+    test('proximityInheritAnchor skips recentErrorContext rows to prevent chain propagation', () => {
+        const helpers = getDataAddContextHelpersScript();
+        assert.ok(
+            helpers.includes('if (it.recentErrorContext)'),
+            'proximity anchor must skip previously promoted recent-error rows',
+        );
+        assert.ok(
+            helpers.includes('Do not chain off already-promoted recent-error context rows'),
+            'helper should document why recentErrorContext rows are skipped',
+        );
+    });
+
+    test('proximityInheritAnchor skips synthetic and stack-frame rows', () => {
+        const helpers = getDataAddContextHelpersScript();
+        assert.ok(
+            helpers.includes("it.type === 'repeat-notification'") && helpers.includes("it.type === 'stack-frame'"),
+            'repeat-notification / n-plus-one / stack-frame must not be proximity anchors',
+        );
+    });
+
+    test('previousLineLevel skips recentErrorContext for stack-header inheritance', () => {
+        const helpers = getDataAddContextHelpersScript();
+        assert.ok(
+            /function previousLineLevel\(\)[\s\S]*if \(it\.recentErrorContext\) continue/.test(helpers),
+            'previousLineLevel must skip proximity-promoted lines when inheriting level',
+        );
+    });
+
+    test('addToData recent-error band requires primary anchor and finite timestamps', () => {
+        const block = extractAddToDataBlock(getViewerDataAddScript());
+        assert.ok(
+            block.includes('!anchor.recentErrorContext') && block.includes('isFinite(ts)') && block.includes('isFinite(anchor.timestamp)'),
+            'recentErrorContext promotion must refuse chained anchors and non-finite timestamps',
         );
     });
 });

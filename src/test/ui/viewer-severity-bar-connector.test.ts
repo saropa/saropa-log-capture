@@ -242,6 +242,13 @@ suite('Stack level inheritance from parent line', () => {
             'previousLineLevel must return error when hitting a marker boundary',
         );
     });
+
+    test('should skip recentErrorContext rows when walking back for header level', () => {
+        assert.ok(
+            addScript.includes('function previousLineLevel(') && addScript.includes('if (it.recentErrorContext) continue'),
+            'previousLineLevel must not inherit level from proximity-promoted context lines',
+        );
+    });
 });
 
 suite('Stack header level CSS class in renderItem', () => {
