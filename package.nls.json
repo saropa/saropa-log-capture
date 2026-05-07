@@ -360,6 +360,8 @@
   "config.logLineHeight.title": "Log viewer line height",
   "config.logViewerVisualSpacing.description": "When enabled, the log viewer adds extra vertical gaps between some line kinds (markers, level changes, stack headers). Toggle with V or the Options panel. When disabled, rows use uniform spacing (IDE-like density).",
   "config.logViewerVisualSpacing.title": "Log viewer visual spacing",
+  "config.accessibility.showCollapseDividerLabels.description": "When enabled, collapse divider rows (filtered gaps, peek brackets, preview-mode stack trims) show the full inline caption pill (for example \"─── 12 hidden lines · show ───\") in addition to the gutter chevron. **Default off** — the clickable row plus chevron is enough for most users; turn on when you want the redundant visible text.",
+  "config.accessibility.showCollapseDividerLabels.title": "Accessibility: show collapse divider captions",
   "config.viewerAlwaysShowSearchMatchOptions.description": "Always show match case, whole word, and regular expression toggles in the log viewer search bar. When off (default), those toggles appear only while the search field is focused or has text.",
   "config.viewerAlwaysShowSearchMatchOptions.title": "Always show log search match options",
   "config.slowGapThreshold.description": "Elapsed time threshold (ms) for highlighting slow gaps between lines.",

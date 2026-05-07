@@ -36,6 +36,7 @@ export function applyInitialBroadcasterConfig(
     broadcaster.setLogFontSize(cfg.logFontSize);
     broadcaster.setLogLineHeight(cfg.logLineHeight);
     broadcaster.setLogViewerVisualSpacing(cfg.logViewerVisualSpacing);
+    broadcaster.setShowCollapseDividerLabels(cfg.accessibilityShowCollapseDividerLabels);
     broadcaster.setSearchMatchOptionsAlwaysVisible(cfg.viewerAlwaysShowSearchMatchOptions);
     broadcaster.setErrorRateConfig(errorRateConfigFromConfig(cfg));
 }

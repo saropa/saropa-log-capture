@@ -59,6 +59,7 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
     viewerDbDetectorToggles: viewerDbDetectorTogglesFromConfig(cfg),
     viewerSlowBurstThresholds: cfg.viewerSlowBurstThresholds,
     signalSlowOpThresholdMs: cfg.signalSlowOpThresholdMs,
+    accessibilityShowCollapseDividerLabels: cfg.accessibilityShowCollapseDividerLabels,
   });
   webviewView.webview.onDidReceiveMessage((msg: Record<string, unknown>) => target.handleMessage(msg));
   target.startBatchTimer();
@@ -76,6 +77,10 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
   queueMicrotask(() => target.postMessage({ type: 'setLogFontSize', size: getConfig().logFontSize }));
   queueMicrotask(() => target.postMessage({ type: 'setLogLineHeight', height: getConfig().logLineHeight }));
   queueMicrotask(() => target.postMessage({ type: 'logViewerVisualSpacing', value: getConfig().logViewerVisualSpacing }));
+  queueMicrotask(() => target.postMessage({
+    type: 'showCollapseDividerLabels',
+    value: getConfig().accessibilityShowCollapseDividerLabels,
+  }));
   queueMicrotask(() => target.postMessage({ type: 'minimapShowSqlDensity', show: getConfig().minimapShowSqlDensity }));
   queueMicrotask(() => target.postMessage({ type: 'minimapProportionalLines', show: getConfig().minimapProportionalLines }));
   queueMicrotask(() => target.postMessage({ type: 'minimapViewportRedOutline', show: getConfig().minimapViewportRedOutline }));

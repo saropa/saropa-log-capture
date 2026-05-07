@@ -174,6 +174,9 @@ export class ViewerBroadcaster implements ViewerTarget {
   setLogViewerVisualSpacing(enabled: boolean): void {
     for (const t of this.targets) { t.setLogViewerVisualSpacing(enabled); }
   }
+  setShowCollapseDividerLabels(show: boolean): void {
+    for (const t of this.targets) { t.setShowCollapseDividerLabels(show); }
+  }
   setSearchMatchOptionsAlwaysVisible(always: boolean): void {
     for (const t of this.targets) { t.setSearchMatchOptionsAlwaysVisible(always); }
   }
