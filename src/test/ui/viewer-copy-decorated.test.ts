@@ -36,6 +36,20 @@ suite('Copy Decorated', () => {
                 'should parseInt dataset.idx with radix 10',
             );
         });
+
+        test('updateSelectionHighlight should use data-idx per row, not lastStart + child index', () => {
+            const start = script.indexOf('function updateSelectionHighlight');
+            assert.ok(start >= 0, 'updateSelectionHighlight must exist');
+            const rest = script.slice(start, start + 1200);
+            assert.ok(
+                rest.includes('el.dataset') && rest.includes("parseInt(raw, 10)"),
+                'should parse each viewport child data-idx for range check',
+            );
+            assert.ok(
+                !rest.includes('lastStart + i'),
+                'must not map selection with lastStart + loop index (breaks when .viewer-divider rows exist)',
+            );
+        });
     });
 
     suite('decorateLine dot deduplication', () => {
@@ -84,52 +98,33 @@ suite('Copy Decorated', () => {
     suite('copy-decorated multi-line selection', () => {
         const script = getContextMenuLineActionsScript();
 
-        test('should respect selection even when right-click is outside range', () => {
+        test('should copy the right-clicked line when the click is OUTSIDE a stale shift-click selection', () => {
+            /* Earlier behavior used `sel.multiLine || hasAnySel` so any prior shift-click range
+               hijacked Copy Line / Copy Line Decorated on rows outside that range — user
+               right-clicks line 50 to copy it and gets lines 5-10 instead. The fix scopes the
+               multi-line branch to `sel.multiLine` only (right-click is INSIDE the selection),
+               which matches user expectation: right-click line 50 → copy line 50. */
             const start = script.indexOf("case 'copy-decorated':");
             assert.ok(start >= 0, 'copy-decorated case must exist');
-            const block = script.slice(start, start + 500);
+            const block = script.slice(start, start + 800);
 
-            assert.ok(
-                block.includes('hasAnySel'),
-                'should check for any active selection, not just multiLine',
-            );
-            assert.ok(
-                block.includes('sel.multiLine || hasAnySel'),
-                'should use OR of multiLine and hasAnySel',
-            );
-        });
-
-        test('hasAnySel should check selectionStart >= 0 and sel.hi > sel.lo', () => {
-            const start = script.indexOf("case 'copy-decorated':");
-            const block = script.slice(start, start + 500);
-
-            assert.ok(
-                block.includes('selectionStart >= 0'),
-                'hasAnySel should require selectionStart >= 0',
-            );
-            assert.ok(
-                block.includes('sel.hi > sel.lo'),
-                'hasAnySel should require hi > lo (at least 2 lines)',
-            );
+            assert.ok(!block.includes('hasAnySel'), 'hasAnySel must be removed');
+            assert.ok(block.includes('sel.multiLine'), 'should still respect multiLine selection');
+            assert.ok(!/sel\.multiLine\s*\|\|/.test(block), 'must not OR multiLine with anything else');
         });
     });
 
     suite('copy (plain) multi-line selection consistency', () => {
         const script = getContextMenuLineActionsScript();
 
-        test('copy action should also use hasAnySel for consistency with copy-decorated', () => {
+        test('copy action mirrors copy-decorated: only sel.multiLine triggers multi-line copy', () => {
             const start = script.indexOf("case 'copy':");
             assert.ok(start >= 0, 'copy case must exist');
-            const block = script.slice(start, start + 500);
+            const block = script.slice(start, start + 1200);
 
-            assert.ok(
-                block.includes('hasAnySel'),
-                'copy should check hasAnySel like copy-decorated',
-            );
-            assert.ok(
-                block.includes('sel.multiLine || hasAnySel'),
-                'copy should use same OR pattern as copy-decorated',
-            );
+            assert.ok(!block.includes('hasAnySel'), 'hasAnySel must be removed from copy too');
+            assert.ok(block.includes('sel.multiLine'), 'should still gate on multiLine');
+            assert.ok(!/sel\.multiLine\s*\|\|/.test(block), 'must not OR multiLine with anything else');
         });
     });
 });
