@@ -81,6 +81,7 @@ export function getDecorationBarStyles(): string {
     content: ''; position: absolute; left: 0.69em;
     top: 0; bottom: 0; margin: auto 0;
     width: 0.54em; height: 0.54em; border-radius: 50%;
+    /* Above connector ::after — must stay in front where the gutter bar overlaps the dot. */
     pointer-events: none; z-index: 2;
 }
 /* Gutter dots/connectors use the same --vscode-* tokens as .line.level-* in viewer-styles.ts so bar and text stay aligned. */
@@ -119,7 +120,12 @@ export function getDecorationBarStyles(): string {
 /* Connector bars join consecutive dots — scale with zoom via em */
 .bar-down::after, .bar-up::after {
     content: ''; position: absolute; left: 0.85em; width: 0.23em;
-    background: var(--bar-color); opacity: 0.45; pointer-events: none; z-index: 1;
+    /* color-mix at 45% replaces opacity — opacity on ::after interacted with stacking contexts
+       in Chromium/WebKit so the gutter stripe could paint on top of the severity dot (::before). */
+    background: color-mix(in srgb, var(--bar-color) 45%, transparent);
+    pointer-events: none;
+    /* Below severity dot (::before); keep above unpositioned row content via positive z-index. */
+    z-index: 1;
 }
 .bar-down:not(.bar-up)::after { top: 50%; bottom: 0; }
 .bar-up:not(.bar-down)::after { top: 0; bottom: 50%; }
