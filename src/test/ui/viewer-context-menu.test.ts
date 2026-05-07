@@ -121,6 +121,8 @@ suite('ViewerContextMenu', () => {
             const script = getContextMenuScript();
             assert.ok(script.includes('function computeIncidentLineRange'));
             assert.ok(script.includes('function effectiveErrorWarningLevel'));
+            assert.ok(script.includes('mergeBanner'));
+            assert.ok(script.includes('rangeHasCopyableIncident'));
             const incIdx = script.indexOf('function computeIncidentLineRange');
             const showIdx = script.indexOf('function showContextMenu');
             assert.ok(incIdx > 0 && showIdx > incIdx);
