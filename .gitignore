@@ -16,6 +16,7 @@ __pycache__/
 # AI / editor tooling — never commit or publish
 .claude/
 CLAUDE.md
+bugs/FINISH_REVIEW.md
 *claude_temp*
 .github/copilot-instructions.md
 .cursor/
