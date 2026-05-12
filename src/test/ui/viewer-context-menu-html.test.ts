@@ -51,6 +51,7 @@ suite('ViewerContextMenuHtml', () => {
                 'layout submenu must not use the old Options label',
             );
             assert.ok(html.includes('data-action="toggle-wrap"'));
+            assert.ok(html.includes('data-action="toggle-line-numbers"'));
             assert.ok(html.includes('data-action="toggle-timestamp"'));
             assert.ok(html.includes('data-action="toggle-session-elapsed"'));
             assert.ok(html.includes('data-action="toggle-spacing"'));
@@ -58,6 +59,7 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('data-action="toggle-compress-lines"'));
             assert.ok(html.includes('data-action="toggle-compress-lines-global"'));
             assert.ok(html.includes('Word wrap'));
+            assert.ok(html.includes('Line numbers'));
             assert.ok(html.includes('Timestamp'));
             assert.ok(html.includes('Session elapsed'));
             assert.ok(html.includes('Visual spacing'));
@@ -69,6 +71,7 @@ suite('ViewerContextMenuHtml', () => {
         test('should include leading codicons on Layout toggles and hide-blank toggle', () => {
             const html = getContextMenuHtml();
             assert.ok(html.includes('data-action="toggle-wrap"') && html.includes('codicon-word-wrap'));
+            assert.ok(html.includes('data-action="toggle-line-numbers"') && html.includes('codicon-list-ordered'));
             assert.ok(html.includes('codicon-clock') && html.includes('toggle-timestamp'));
             assert.ok(html.includes('codicon-watch') && html.includes('toggle-session-elapsed'));
             assert.ok(html.includes('codicon-layout-panel') && html.includes('toggle-spacing'));
@@ -96,21 +99,20 @@ suite('ViewerContextMenuHtml', () => {
             const html = getContextMenuHtml();
             const optionsStart = html.indexOf('> Layout');
             assert.ok(optionsStart >= 0);
-            const scrollChromeSub = html.indexOf('id="scroll-chrome-submenu"', optionsStart);
-            const optionsEnd = scrollChromeSub > optionsStart ? scrollChromeSub : html.indexOf('</div>\n    </div>\n</div>', optionsStart);
+            /* Layout is now the last submenu (scroll-chrome was removed), so bound by the menu close tag. */
+            const optionsEnd = html.indexOf('</div>\n</div>', optionsStart);
             const optionsBlock = optionsEnd > optionsStart ? html.slice(optionsStart, optionsEnd) : html.slice(optionsStart);
             assert.ok(!optionsBlock.includes('toggle-hide-blank-lines'));
             assert.ok(!optionsBlock.includes('Hide blank lines'));
             assert.ok(!optionsBlock.includes('Hide This Text (Always)'));
         });
 
-        test('should include Scroll map & scrollbar submenu with minimap and scrollbar toggles', () => {
+        test('should not include Scroll map & scrollbar submenu in main context menu', () => {
+            /* Scroll map toggles are only in the compact scroll-chrome menu (right-click on minimap/scrollbar).
+               Removed from main menu to reduce clutter — users right-click the minimap to access these. */
             const html = getContextMenuHtml();
-            assert.ok(html.includes('id="scroll-chrome-submenu"'));
-            assert.ok(html.includes('Scroll map & scrollbar'));
-            assert.ok(html.includes('data-action="toggle-minimap-proportional"'));
-            assert.ok(html.includes('data-action="toggle-show-scrollbar"'));
-            assert.ok(html.includes('data-action="toggle-minimap-sql-density"'));
+            assert.ok(!html.includes('id="scroll-chrome-submenu"'));
+            assert.ok(!html.includes('Scroll map & scrollbar'));
         });
 
         test('should place Copy Error, Copy DB cluster, and grouped separator immediately before Copy & Export', () => {
@@ -283,16 +285,15 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('codicon-check'));
         });
 
-        test('should use context-menu-label class on all toggle text spans', () => {
+        test('should use context-menu-label class on all toggle text spans in main menu', () => {
             const html = getContextMenuHtml();
+            /* Only toggles in the main menu — minimap/scrollbar toggles live in the compact
+               scroll-chrome menu (getScrollChromeContextMenuHtml) and are not in getContextMenuHtml. */
             const toggleActions = [
-                'toggle-wrap', 'toggle-timestamp',
+                'toggle-wrap', 'toggle-line-numbers', 'toggle-timestamp',
                 'toggle-session-elapsed', 'toggle-spacing', 'toggle-line-height',
                 'toggle-compress-lines', 'toggle-compress-lines-global',
                 'toggle-hide-blank-lines',
-                'toggle-minimap-proportional', 'toggle-show-scrollbar',
-                'toggle-minimap-info-markers', 'toggle-minimap-sql-density',
-                'toggle-minimap-viewport-red-outline', 'toggle-minimap-outside-arrow',
             ];
             for (const action of toggleActions) {
                 const pattern = new RegExp(

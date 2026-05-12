@@ -177,6 +177,7 @@ function handleWorkspaceToggleAction(action) {
 function handleToggleAction(action) {
     var toggleFns = {
         'toggle-wrap': typeof toggleWrap === 'function' ? toggleWrap : null,
+        'toggle-line-numbers': typeof toggleLineNumbers === 'function' ? toggleLineNumbers : null,
         'toggle-timestamp': typeof toggleTimestamp === 'function' ? toggleTimestamp : null,
         'toggle-session-elapsed': typeof toggleSessionElapsed === 'function' ? toggleSessionElapsed : null,
         'toggle-spacing': typeof toggleVisualSpacing === 'function' ? toggleVisualSpacing : null,

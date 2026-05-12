@@ -49,7 +49,6 @@ ${getScrollChromeMenuTogglesHtml()}
  * the footer gear panel remains **Options** in the UI.
  */
 export function getContextMenuHtml(): string {
-    const scrollToggles = getScrollChromeMenuTogglesHtml();
     return `<div id="context-menu" class="context-menu">
     <div class="context-menu-item" data-action="open-source-link" data-source-action>
         <span class="codicon codicon-go-to-file"></span> Open File
@@ -235,6 +234,12 @@ export function getContextMenuHtml(): string {
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span class="context-menu-label">Word wrap</span>
             </div>
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-line-numbers">
+                <span class="codicon codicon-list-ordered" aria-hidden="true"></span>
+                <span class="context-menu-check codicon codicon-check"></span>
+                <span class="context-menu-label">Line numbers</span>
+            </div>
+            <div class="context-menu-separator"></div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-timestamp">
                 <span class="codicon codicon-clock" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
@@ -245,6 +250,7 @@ export function getContextMenuHtml(): string {
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span class="context-menu-label">Session elapsed</span>
             </div>
+            <div class="context-menu-separator"></div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-spacing">
                 <span class="codicon codicon-layout-panel" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
@@ -255,6 +261,7 @@ export function getContextMenuHtml(): string {
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span class="context-menu-label">Comfortable line height</span>
             </div>
+            <div class="context-menu-separator"></div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-compress-lines">
                 <span class="codicon codicon-fold" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
@@ -265,13 +272,6 @@ export function getContextMenuHtml(): string {
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span class="context-menu-label">Compress lines (non-consecutive dupes)</span>
             </div>
-        </div>
-    </div>
-    <div class="context-menu-submenu" id="scroll-chrome-submenu">
-        <span class="codicon codicon-layout-sidebar-right"></span> Scroll map & scrollbar
-        <span class="context-menu-arrow codicon codicon-chevron-right"></span>
-        <div class="context-menu-submenu-content">
-${scrollToggles}
         </div>
     </div>
 </div>`;
