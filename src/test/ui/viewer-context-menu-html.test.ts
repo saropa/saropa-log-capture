@@ -34,7 +34,7 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('Pin Line'));
             assert.ok(html.includes('Bookmark Line'));
             assert.ok(html.includes('Edit Line'));
-            assert.ok(html.includes('Show Context'));
+            assert.ok(html.includes('View Context'));
             assert.ok(html.includes('Add to Watch List'));
             assert.ok(!html.includes('Add to Exclusions'));
         });
@@ -63,7 +63,7 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('Timestamp'));
             assert.ok(html.includes('Session elapsed'));
             assert.ok(html.includes('Visual spacing'));
-            assert.ok(html.includes('Comfortable line height'));
+            assert.ok(html.includes('Tall rows'));
             assert.ok(html.includes('Compress lines (consecutive dupes)'));
             assert.ok(html.includes('Compress lines (non-consecutive dupes)'));
         });
@@ -79,12 +79,12 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('<span class="codicon codicon-fold" aria-hidden="true"></span>'));
             assert.ok(html.includes('<span class="codicon codicon-fold-down" aria-hidden="true"></span>'));
             assert.ok(
-                /\bdata-action="toggle-hide-blank-lines"[\s\S]{0,120}codicon-eye-closed\b/.test(html),
-                'hide blank lines toggle should use the same eye-closed icon as other Hide items'
+                /\bdata-action="toggle-show-blank-lines"[\s\S]{0,120}codicon-whitespace\b/.test(html),
+                'show blank lines toggle should use the whitespace icon'
             );
             assert.ok(
                 !html.includes('codicon-blank'),
-                'context menu HTML must not use codicon-blank (invisible); it broke Hide blank lines alignment'
+                'context menu HTML must not use codicon-blank (invisible); it broke blank lines toggle alignment'
             );
         });
 
@@ -102,8 +102,8 @@ suite('ViewerContextMenuHtml', () => {
             /* Layout is now the last submenu (scroll-chrome was removed), so bound by the menu close tag. */
             const optionsEnd = html.indexOf('</div>\n</div>', optionsStart);
             const optionsBlock = optionsEnd > optionsStart ? html.slice(optionsStart, optionsEnd) : html.slice(optionsStart);
-            assert.ok(!optionsBlock.includes('toggle-hide-blank-lines'));
-            assert.ok(!optionsBlock.includes('Hide blank lines'));
+            assert.ok(!optionsBlock.includes('toggle-show-blank-lines'));
+            assert.ok(!optionsBlock.includes('Show blank lines'));
             assert.ok(!optionsBlock.includes('Hide This Text (Always)'));
         });
 
@@ -249,8 +249,8 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('Hide This Text (Always)'));
             assert.ok(html.includes('Hide All Visible'));
             assert.ok(html.includes('Unhide All'));
-            assert.ok(html.includes('data-action="toggle-hide-blank-lines"'));
-            assert.ok(html.includes('Hide blank lines'));
+            assert.ok(html.includes('data-action="toggle-show-blank-lines"'));
+            assert.ok(html.includes('Show blank lines'));
             assert.ok(html.includes('data-action="add-exclusion"'));
         });
 
@@ -293,7 +293,7 @@ suite('ViewerContextMenuHtml', () => {
                 'toggle-wrap', 'toggle-line-numbers', 'toggle-timestamp',
                 'toggle-session-elapsed', 'toggle-spacing', 'toggle-line-height',
                 'toggle-compress-lines', 'toggle-compress-lines-global',
-                'toggle-hide-blank-lines',
+                'toggle-show-blank-lines',
             ];
             for (const action of toggleActions) {
                 const pattern = new RegExp(
@@ -304,6 +304,44 @@ suite('ViewerContextMenuHtml', () => {
                     `toggle ${action} should have context-menu-label on its text span`,
                 );
             }
+        });
+        test('should have title tooltip on every context-menu-item', () => {
+            const html = getContextMenuHtml();
+            /* Every data-action item must carry a title attribute for tooltip.
+               Extract each <div ...data-action="X"...> opening tag and check for title=. */
+            const divPattern = /<div[^>]+data-action="([^"]+)"[^>]*>/g;
+            let match;
+            const missingTooltips: string[] = [];
+            while ((match = divPattern.exec(html)) !== null) {
+                const action = match[1];
+                const tag = match[0];
+                if (!tag.includes('title="')) {
+                    missingTooltips.push(action);
+                }
+            }
+            assert.deepStrictEqual(
+                missingTooltips, [],
+                `menu items missing title tooltip: ${missingTooltips.join(', ')}`,
+            );
+        });
+
+        test('should use "View" not "Show" for navigation actions to avoid confusion with toggles', () => {
+            const html = getContextMenuHtml();
+            assert.ok(html.includes('View Context'));
+            assert.ok(html.includes('View Integration Context'));
+            assert.ok(html.includes('View Related Queries'));
+            assert.ok(html.includes('View Code Quality'));
+            /* "Show" should not appear as the visible label for these navigation items. */
+            assert.ok(!html.includes('>Show Context<') && !html.includes('> Show Context<'));
+            assert.ok(!html.includes('>Show code quality<') && !html.includes('> Show code quality<'));
+        });
+
+        test('should use positive "Show blank lines" label with inverted toggle logic', () => {
+            const html = getContextMenuHtml();
+            assert.ok(html.includes('data-action="toggle-show-blank-lines"'));
+            assert.ok(html.includes('Show blank lines'));
+            /* Old negative "Hide blank lines" label must not appear as a toggle label. */
+            assert.ok(!html.includes('"toggle-hide-blank-lines"'));
         });
     });
 
