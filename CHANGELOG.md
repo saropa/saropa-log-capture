@@ -26,6 +26,28 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Icon bar crushed when horizontal scrollbar visible** — Added `min-width` to the icon bar so Chromium's flex layout cannot compress it below its declared width when wide log lines trigger a horizontal scrollbar.
+- **Signal panel crash on PERFORMANCE link** — Removed stale calls to `renderRecurringInLog`, `renderErrorsInLog`, and `renderThisLogEmptyState` that were deleted in the signals consolidation refactor but left behind in `applyStateAB`, causing a `ReferenceError` when the panel rendered with an active log.
+
+### Changed
+
+- **Thinner severity connector stripe** — The vertical connector bar between severity gutter dots narrowed from `0.23em` to `0.17em` so it reads as a subtle guide line rather than competing with the dots for attention.
+- **Layout submenu grouping** — Added horizontal separators in the right-click → Layout submenu to visually group related toggles: text display (Word wrap, Line numbers), time (Timestamp, Session elapsed), spacing (Visual spacing, Comfortable line height), and compression (consecutive / non-consecutive dupes).
+
+### Added
+
+- **Line numbers in Layout submenu** — The right-click → Layout submenu now includes a **Line numbers** toggle (checkmark mirrors the Options panel checkbox). Previously only accessible from the Options or Decorations panels.
+
+### Removed
+
+- **Scroll map & scrollbar submenu** — Removed the **Scroll map & scrollbar** submenu from the main right-click context menu. The same toggles remain accessible via right-click directly on the scroll map or native scrollbar.
+
+---
+
 ## [7.8.0]
 
 Right-click → Copy & Export → Copy Line now copies the line you actually right-clicked, even if there's a stale shift-click selection from earlier in the session, and every copy from the context menu shows an instant in-viewer toast (e.g. `Copied lines 116-225 (1,247 characters)`) so you can confirm what landed on the clipboard at a glance. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
