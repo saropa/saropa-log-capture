@@ -9,7 +9,8 @@ media/codicons/
 coverage/
 .nyc_output/
 *.vsix
-/reports
+/reports/*
+!/reports/organize_reports.py
 nul
 __pycache__/
 
