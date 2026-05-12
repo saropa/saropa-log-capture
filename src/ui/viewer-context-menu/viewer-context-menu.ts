@@ -108,7 +108,8 @@ function syncContextMenuToggles() {
             else if (action === 'toggle-session-elapsed') on = (typeof decoShowSessionElapsed !== 'undefined') && decoShowSessionElapsed;
             else if (action === 'toggle-spacing') on = (typeof visualSpacingEnabled !== 'undefined') && visualSpacingEnabled;
             else if (action === 'toggle-line-height') on = (typeof logLineHeight !== 'undefined') && logLineHeight >= 1.5; /* comfortable when >= 1.5 (presets: 1.2 / 2.0) */
-            else if (action === 'toggle-hide-blank-lines') on = (typeof hideBlankLines !== 'undefined') && hideBlankLines;
+            /* Inverted: checkmark means blank lines ARE visible (positive "Show" language). */
+            else if (action === 'toggle-show-blank-lines') on = (typeof hideBlankLines === 'undefined') || !hideBlankLines;
             else if (action === 'toggle-compress-lines') on = (typeof compressLinesMode !== 'undefined') && compressLinesMode;
             else if (action === 'toggle-compress-lines-global') on = (typeof compressNonConsecutiveMode !== 'undefined') && compressNonConsecutiveMode;
             else if (action === 'toggle-minimap-proportional') on = (typeof minimapProportionalLines !== 'undefined') && minimapProportionalLines;
