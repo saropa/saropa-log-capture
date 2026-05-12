@@ -256,7 +256,7 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes("'toggle-line-numbers'"));
             assert.ok(script.includes("'toggle-spacing'"));
             assert.ok(script.includes("'toggle-line-height'"));
-            assert.ok(script.includes("'toggle-hide-blank-lines'"));
+            assert.ok(script.includes("'toggle-show-blank-lines'"));
             assert.ok(script.includes("'toggle-compress-lines'"));
             assert.ok(script.includes("'toggle-compress-lines-global'"));
         });
