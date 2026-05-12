@@ -110,13 +110,13 @@ if sys.platform == "win32":
 
 # ── Project imports ──────────────────────────────────────────
 # Grouped by layer: constants/config → display → data → actions.
-from modules.constants import C, ExitCode, PROJECT_ROOT
-from modules.display import dim, heading, info, show_logo
-from modules.utils import get_installed_extension_versions, read_package_version
-from modules.report import print_timing, save_report
-from modules.install import prompt_open_report
-from modules.publish_confirm import confirm_publish
-from modules.orchestrator import (
+from modules.publish.constants import C, ExitCode, PROJECT_ROOT
+from modules.publish.display import dim, heading, info, show_logo
+from modules.publish.utils import get_installed_extension_versions, read_package_version
+from modules.publish.report import print_timing, save_report
+from modules.publish.install import prompt_open_report
+from modules.publish.publish_confirm import confirm_publish
+from modules.publish.orchestrator import (
     ask_publish_stores,
     package_and_install,
     print_report_path,
@@ -230,7 +230,7 @@ def _check_stores_ps_and_script() -> tuple[str, str] | None:
     # The store-version check lives in a separate PowerShell script because
     # it handles HTTP polling with retries — logic that's simpler in PS
     # than shelling out to curl/Invoke-WebRequest from Python.
-    script = os.path.join(PROJECT_ROOT, "scripts", "modules", "check-stores-version.ps1")
+    script = os.path.join(PROJECT_ROOT, "scripts", "modules", "publish", "check-stores-version.ps1")
     if not os.path.isfile(script):
         print(f"ERROR: Missing {script}", file=sys.stderr)
         return None
