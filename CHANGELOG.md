@@ -46,6 +46,10 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 - **Scroll map & scrollbar submenu** — Removed the **Scroll map & scrollbar** submenu from the main right-click context menu. The same toggles remain accessible via right-click directly on the scroll map or native scrollbar.
 
+### Internal
+
+- **Report organizer script** — Added `reports/organize_reports.py` (shared across Saropa projects) and `.gitignore` exception so the script is version-controlled while report output remains ignored.
+
 ---
 
 ## [7.8.0]
