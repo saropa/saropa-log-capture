@@ -12,7 +12,9 @@ export function getSessionPanelLayoutStyles(): string {
    =================================================================== */
 .session-panel {
     width: 100%;
-    min-width: 560px;
+    /* Allow 25 % narrower than the 560 px default so users with tight layouts
+       can reclaim horizontal space via the resize handle. */
+    min-width: 420px;
     height: 100%;
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
     border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
