@@ -182,7 +182,7 @@ function handleToggleAction(action) {
         'toggle-session-elapsed': typeof toggleSessionElapsed === 'function' ? toggleSessionElapsed : null,
         'toggle-spacing': typeof toggleVisualSpacing === 'function' ? toggleVisualSpacing : null,
         'toggle-line-height': typeof toggleLineHeightMode === 'function' ? toggleLineHeightMode : null,
-        'toggle-hide-blank-lines': typeof toggleHideBlankLines === 'function' ? toggleHideBlankLines : null,
+        'toggle-show-blank-lines': typeof toggleHideBlankLines === 'function' ? toggleHideBlankLines : null,
         'toggle-compress-lines': typeof toggleCompressLines === 'function' ? toggleCompressLines : null,
         'toggle-compress-lines-global': typeof toggleCompressNonConsecutiveLines === 'function' ? toggleCompressNonConsecutiveLines : null,
     };
