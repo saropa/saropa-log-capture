@@ -28,6 +28,14 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [Unreleased]
 
+### Changed
+
+- **Session panel minimum width reduced** — Lowered the session panel minimum width from 560px to 420px (25% narrower) so users with tight layouts can shrink the panel further via the resize handle. Default width unchanged.
+
+### Fixed
+
+- **Icon bar too narrow** — Widened icon bar from 36px to 44px (closer to VS Code's native 48px activity bar) so icons have horizontal breathing room instead of looking crushed.
+
 ---
 
 ## [7.8.1]
