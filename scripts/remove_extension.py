@@ -32,9 +32,9 @@ import os
 import shutil
 import sys
 
-from modules.constants import C, PROJECT_ROOT
-from modules.display import dim, fail, heading, info, ok, warn, ask_yn
-from modules.utils import read_package_version, run
+from modules.publish.constants import C, PROJECT_ROOT
+from modules.publish.display import dim, fail, heading, info, ok, warn, ask_yn
+from modules.publish.utils import read_package_version, run
 
 EXTENSION_ID = "saropa.saropa-log-capture"
 EXTENSION_PREFIX = "saropa"
