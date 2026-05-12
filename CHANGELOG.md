@@ -28,6 +28,10 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [Unreleased]
 
+---
+
+## [7.8.1]
+
 ### Fixed
 
 - **Icon bar crushed when horizontal scrollbar visible** — Added `min-width` to the icon bar so Chromium's flex layout cannot compress it below its declared width when wide log lines trigger a horizontal scrollbar.
