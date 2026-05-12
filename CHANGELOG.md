@@ -39,7 +39,7 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Changed
 
-- **Thinner severity connector stripe** — The vertical connector bar between severity gutter dots narrowed from `0.23em` to `0.17em` so it reads as a subtle guide line rather than competing with the dots for attention.
+- **Lighter severity gutter** — Severity dots reduced from `0.54em` to `0.44em` and connector stripes from `0.23em` to `0.14em` so the gutter reads as a subtle guide rather than competing with log text for attention.
 - **Layout submenu grouping** — Added horizontal separators in the right-click → Layout submenu to visually group related toggles: text display (Word wrap, Line numbers), time (Timestamp, Session elapsed), spacing (Visual spacing, Comfortable line height), and compression (consecutive / non-consecutive dupes).
 
 ### Added
