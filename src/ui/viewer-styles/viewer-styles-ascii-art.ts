@@ -77,8 +77,8 @@ export function getAsciiArtStyles(): string {
 .line.art-block-start[class*="level-bar-"],
 .line.art-block-middle[class*="level-bar-"],
 .line.art-block-end[class*="level-bar-"] {
-    border-left: 0.23em solid var(--bar-color);
-    margin-left: 0.74em;
+    border-left: 0.14em solid var(--bar-color);
+    margin-left: 0.82em;
 }
 
 /* Suppress severity dot on continuation lines (start keeps its dot) */

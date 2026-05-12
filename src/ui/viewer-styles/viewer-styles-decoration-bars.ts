@@ -78,9 +78,9 @@ export function getDecorationBarStyles(): string {
 /* Severity dot mode (colored circle on timeline) — scale with zoom via em */
 [class*="level-bar-"] { z-index: 1; }
 [class*="level-bar-"]::before {
-    content: ''; position: absolute; left: 0.69em;
+    content: ''; position: absolute; left: 0.74em;
     top: 0; bottom: 0; margin: auto 0;
-    width: 0.54em; height: 0.54em; border-radius: 50%;
+    width: 0.44em; height: 0.44em; border-radius: 50%;
     /* Above connector ::after — must stay in front where the gutter bar overlaps the dot. */
     pointer-events: none; z-index: 2;
 }
@@ -119,7 +119,7 @@ export function getDecorationBarStyles(): string {
 
 /* Connector bars join consecutive dots — scale with zoom via em */
 .bar-down::after, .bar-up::after {
-    content: ''; position: absolute; left: 0.87em; width: 0.17em;
+    content: ''; position: absolute; left: 0.89em; width: 0.14em;
     /* color-mix at 45% replaces opacity — opacity on ::after interacted with stacking contexts
        in Chromium/WebKit so the gutter stripe could paint on top of the severity dot (::before). */
     background: color-mix(in srgb, var(--bar-color) 45%, transparent);
