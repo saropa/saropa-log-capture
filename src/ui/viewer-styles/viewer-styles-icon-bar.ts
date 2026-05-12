@@ -21,6 +21,7 @@ export function getIconBarStyles(): string {
 
 #icon-bar {
     width: var(--icon-bar-width);
+    min-width: var(--icon-bar-width);
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
@@ -37,6 +38,7 @@ export function getIconBarStyles(): string {
 
 #icon-bar.ib-labels-visible {
     width: var(--icon-bar-width-with-labels);
+    min-width: var(--icon-bar-width-with-labels);
     align-items: stretch;
 }
 
