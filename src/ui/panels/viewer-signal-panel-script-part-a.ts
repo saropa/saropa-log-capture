@@ -55,7 +55,6 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
         }
         renderSectionAccordion('session-details');
         renderSectionAccordion('this-log');
-        if (hasLog) { renderRecurringInLog(); renderErrorsInLog(); renderThisLogEmptyState(); }
     }
 
     function setSectionExpanded(name, expanded) {
