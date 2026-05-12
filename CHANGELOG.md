@@ -31,6 +31,9 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 ### Changed
 
 - **Session panel minimum width reduced** — Lowered the session panel minimum width from 560px to 420px (25% narrower) so users with tight layouts can shrink the panel further via the resize handle. Default width unchanged.
+- **Context menu: positive toggle language** — The "Hide blank lines" toggle in the Hide submenu is now "Show blank lines" with inverted checkmark logic (checked = blank lines visible). Reduces confusion between one-shot hide actions and on/off toggles.
+- **Context menu: "View" for navigation actions** — Renamed "Show Context", "Show Integration Context", "Show Related Queries", and "Show code quality" to "View Context", "View Integration Context", "View Related Queries", and "View Code Quality". Reserves "Show" for toggle semantics only.
+- **Context menu tooltips** — Every context menu item now carries a `title` tooltip describing what it does: copy actions, search actions, hide actions, layout toggles, and all Actions submenu items.
 
 ### Fixed
 
