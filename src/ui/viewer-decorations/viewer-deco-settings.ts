@@ -207,6 +207,17 @@ function toggleSessionElapsed() {
     if (typeof renderViewport === 'function') renderViewport(true);
 }
 
+/**
+ * Toggle line numbers (counter) in the decoration prefix.
+ * Callable from the context menu (Layout → Line numbers).
+ */
+function toggleLineNumbers() {
+    decoShowCounter = !decoShowCounter;
+    if (typeof updateDecoButton === 'function') updateDecoButton();
+    syncDecoSettingsUi();
+    if (typeof renderViewport === 'function') renderViewport(true);
+}
+
 /** Sync checkbox/select UI elements from the current state variables. */
 function syncDecoSettingsUi() {
     var dot = document.getElementById('deco-opt-dot');
