@@ -34,10 +34,12 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 - **Context menu: positive toggle language** — The "Hide blank lines" toggle in the Hide submenu is now "Show blank lines" with inverted checkmark logic (checked = blank lines visible). Reduces confusion between one-shot hide actions and on/off toggles.
 - **Context menu: "View" for navigation actions** — Renamed "Show Context", "Show Integration Context", "Show Related Queries", and "Show code quality" to "View Context", "View Integration Context", "View Related Queries", and "View Code Quality". Reserves "Show" for toggle semantics only.
 - **Context menu tooltips** — Every context menu item now carries a `title` tooltip describing what it does: copy actions, search actions, hide actions, layout toggles, and all Actions submenu items.
+- **"Tall rows" label** — Renamed "Comfortable line height" to "Tall rows" in the Layout submenu. The tooltip explains the actual effect (1.2 → 2.0 line-height).
 
 ### Fixed
 
 - **Icon bar too narrow** — Widened icon bar from 36px to 44px (closer to VS Code's native 48px activity bar) so icons have horizontal breathing room instead of looking crushed.
+- **Orphan separator in Copy & Export** — The horizontal rule between the per-line copy items (Copy Line, Copy Timestamp, etc.) and the "Copy All" group was missing `data-line-action`, so it stayed visible as a top-edge line when right-clicking empty space with no line targeted.
 
 ---
 
