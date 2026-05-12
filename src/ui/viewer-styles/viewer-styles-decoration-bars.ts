@@ -119,7 +119,7 @@ export function getDecorationBarStyles(): string {
 
 /* Connector bars join consecutive dots — scale with zoom via em */
 .bar-down::after, .bar-up::after {
-    content: ''; position: absolute; left: 0.85em; width: 0.23em;
+    content: ''; position: absolute; left: 0.87em; width: 0.17em;
     /* color-mix at 45% replaces opacity — opacity on ::after interacted with stacking contexts
        in Chromium/WebKit so the gutter stripe could paint on top of the severity dot (::before). */
     background: color-mix(in srgb, var(--bar-color) 45%, transparent);
