@@ -26,6 +26,15 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Organized `scripts/modules/` into subfolders** — Split the flat `scripts/modules/` directory (35+ files) into six purpose-based subfolders: `publish/` (Python publish pipeline), `verify/` (CI verification), `generate/` (code/catalog generators), `test/` (test tooling), `build/` (bundle/clean), and `fix/` (fixers and diagnostics). Updated all Python imports, `package.json` script paths, runtime cross-references, and auto-generated doc headers.
+- **l10n translation pipeline** — Added `scripts/translate_l10n.py` to audit, sync, and translate l10n bundles. Audits English bundle against TS source strings, syncs missing/orphan keys, and translates all locale bundles via Google Translate (free tier, `deep-translator`). The publish pipeline (Step 9) now automatically syncs and translates instead of just warning.
+
+---
+
 ## [7.8.2]
 
 ### Changed
@@ -35,6 +44,7 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 - **Context menu: "View" for navigation actions** — Renamed "Show Context", "Show Integration Context", "Show Related Queries", and "Show code quality" to "View Context", "View Integration Context", "View Related Queries", and "View Code Quality". Reserves "Show" for toggle semantics only.
 - **Context menu tooltips** — Every context menu item now carries a `title` tooltip describing what it does: copy actions, search actions, hide actions, layout toggles, and all Actions submenu items.
 - **"Tall rows" label** — Renamed "Comfortable line height" to "Tall rows" in the Layout submenu. The tooltip explains the actual effect (1.2 → 2.0 line-height).
+- **Keyboard shortcut hints in context menus** — Menu items that have keyboard shortcuts now show a right-aligned dimmed hint (e.g. `W`, `Ctrl+C`, `Ctrl+Shift+Scroll`). Covers Copy, Select All, Pin, Bookmark, Word wrap, Visual spacing, Tall rows, Compress, and Show blank lines.
 
 ### Fixed
 
