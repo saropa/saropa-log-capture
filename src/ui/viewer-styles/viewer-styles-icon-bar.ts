@@ -15,7 +15,9 @@ export function getIconBarStyles(): string {
    Icon Bar — vertical activity bar (default: left side)
    =================================================================== */
 :root {
-    --icon-bar-width: 36px;
+    /* VS Code's native activity bar is 48px; 44px gives 6px horizontal
+       breathing room around the 32px icon buttons without wasting log space. */
+    --icon-bar-width: 44px;
     --icon-bar-width-with-labels: 140px;
 }
 
