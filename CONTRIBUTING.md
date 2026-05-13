@@ -214,7 +214,6 @@ if (isSessionActive) { return; }
 
 - **Node.js** ≥ **22** (see `package.json` → `engines.node`, `.nvmrc`, and `.node-version`). CI uses Node 22; mismatched Node versions can cause subtle test or script failures.
 - Optional: use the **[Dev Container](https://code.visualstudio.com/docs/devcontainers/containers)** defined in `.devcontainer/devcontainer.json` (`npm ci` runs on container create).
-- Agent-oriented pointers (F5 host, webview catalog, bundle analysis): [doc/AGENTS.md](doc/AGENTS.md).
 
 ### Webview → extension message catalog
 
@@ -241,7 +240,6 @@ npm run generate:host-outbound-catalog
 - Root **`tsconfig.json`** sets **`"noEmit": true`** so a stray `tsc -p .` does not write `.js` next to sources. Test output uses **`--noEmit false --outDir out`** (see `compile-tests` / `watch-tests`).
 - Use **`npm run check-types`** (`tsc --noEmit`) for typechecking.
 - Use **`npm run compile-tests`** to emit test JavaScript under **`out/`** only (`tsc --outDir out --noEmit false`).
-- See [doc/AGENTS.md](doc/AGENTS.md) for the full picture.
 
 ### Bundle analysis (optional)
 
