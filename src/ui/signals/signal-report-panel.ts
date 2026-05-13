@@ -47,7 +47,7 @@ export async function showSignalReport(
   const state: PanelState = { hypothesis, bundle, fileUri };
   const panel = createPanel(hypothesis);
   panel.webview.onDidReceiveMessage(
-    (msg) => handleMessage(msg, state),
+    (msg) => handleMessage(msg, state, panel),
   );
   panel.webview.html = buildSignalReportShell({
     nonce: getNonce(),
@@ -213,9 +213,18 @@ function postSection(panel: vscode.WebviewPanel, id: string, title: string, html
   panel.webview.postMessage({ type: 'sectionReady', id, title, html });
 }
 
-function handleMessage(msg: Record<string, unknown>, state: PanelState): void {
-  if (msg.type === 'copyReport') { copyReport(state); }
-  if (msg.type === 'saveReport') { saveReport(state); }
+/** Send a toast notification to the webview for user-visible feedback. */
+function postToast(panel: vscode.WebviewPanel, text: string, level: 'success' | 'error'): void {
+  panel.webview.postMessage({ type: 'toast', text, level });
+}
+
+function handleMessage(
+  msg: Record<string, unknown>,
+  state: PanelState,
+  panel: vscode.WebviewPanel,
+): void {
+  if (msg.type === 'copyReport') { copyReport(state, panel); }
+  if (msg.type === 'saveReport') { saveReport(state, panel); }
   if (msg.type === 'openSessionFromHistory') {
     const uri = msg.uriString as string;
     if (uri) { vscode.commands.executeCommand('saropaLogCapture.openLog', vscode.Uri.parse(uri)); }
@@ -229,19 +238,19 @@ function handleMessage(msg: Record<string, unknown>, state: PanelState): void {
   }
 }
 
-function copyReport(state: PanelState): void {
+function copyReport(state: PanelState, panel: vscode.WebviewPanel): void {
   buildMarkdownReport(state).then(
     (md) => {
       if (!md) { return; }
       vscode.env.clipboard.writeText(md).then(
-        () => { vscode.window.setStatusBarMessage('Signal report copied', 2000); },
-        () => { vscode.window.setStatusBarMessage('Failed to copy signal report', 3000); },
+        () => { postToast(panel, 'Report copied to clipboard', 'success'); },
+        () => { postToast(panel, 'Failed to copy report', 'error'); },
       );
     },
-  ).catch(() => { vscode.window.setStatusBarMessage('Failed to build report', 3000); });
+  ).catch(() => { postToast(panel, 'Failed to build report', 'error'); });
 }
 
-function saveReport(state: PanelState): void {
+function saveReport(state: PanelState, panel: vscode.WebviewPanel): void {
   buildMarkdownReport(state).then((md) => {
     if (!md) { return; }
     const wsFolder = vscode.workspace.workspaceFolders?.[0];
@@ -250,10 +259,10 @@ function saveReport(state: PanelState): void {
     const destUri = vscode.Uri.joinPath(logDirUri, filename);
     return vscode.workspace.fs.createDirectory(logDirUri)
       .then(() => vscode.workspace.fs.writeFile(destUri, Buffer.from(md, 'utf-8')))
-      .then(() => { vscode.window.setStatusBarMessage(`Signal report saved to ${filename}`, 3000); });
+      .then(() => { postToast(panel, `Report saved to ${filename}`, 'success'); });
   }).catch((err) => {
     logExtensionError('saveSignalReport', err instanceof Error ? err : new Error(String(err)));
-    vscode.window.setStatusBarMessage('Failed to save signal report', 3000);
+    postToast(panel, 'Failed to save report', 'error');
   });
 }
 
