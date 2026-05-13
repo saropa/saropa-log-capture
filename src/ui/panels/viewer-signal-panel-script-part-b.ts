@@ -112,13 +112,76 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
         }).join('');
     }
 
+    /** Fu7: latest non-zero timestamp in the current allLines buffer, used as the session reference.
+     *  Walks from the end so it's typically a few iterations, not full O(n). Returns 0 if no timestamps. */
+    function sessionLatestTs() {
+        if (typeof allLines === 'undefined' || !allLines || !allLines.length) return 0;
+        for (var k = allLines.length - 1; k >= 0; k--) {
+            var li = allLines[k];
+            var t = li && li.timestamp;
+            if (typeof t === 'number' && t > 0) return t;
+        }
+        return 0;
+    }
+
+    /** Fu7: representative timestamp for a signal — its first lineIndex's timestamp, or 0 if unknown. */
+    function signalRepTs(s) {
+        if (typeof allLines === 'undefined' || !s.lineIndices || s.lineIndices.length === 0) return 0;
+        var li = allLines[s.lineIndices[0]];
+        var t = li && li.timestamp;
+        return (typeof t === 'number' && t > 0) ? t : 0;
+    }
+
+    /** Fu3 evidence preview: render up to 3 supporting lines for a signal as a sub-block.
+     *  Each line is stripped of HTML and truncated at 90 chars to keep the panel column compact.
+     *  Empty when no lineIndices or when allLines lookups fail. */
+    function buildEvidencePreviewHtml(s) {
+        if (typeof allLines === 'undefined' || !s.lineIndices || s.lineIndices.length === 0) return '';
+        var snippets = [];
+        var seen = {};
+        for (var e = 0; e < s.lineIndices.length && snippets.length < 3; e++) {
+            var idx = s.lineIndices[e];
+            if (seen[idx]) continue;
+            seen[idx] = 1;
+            var li = allLines[idx];
+            if (!li || !li.html) continue;
+            /* Reuse stripTags from the shared webview scope (defined in collect-general). */
+            var plain = (typeof stripTags === 'function' ? stripTags(li.html) : li.html).replace(/\\s+/g, ' ').trim();
+            if (!plain) continue;
+            var compact = plain.length > 90 ? plain.slice(0, 87) + '\\u2026' : plain;
+            snippets.push('<div class="signal-evidence-line" title="Line ' + (idx + 1) + ': ' + esc(plain) + '">' + esc(compact) + '</div>');
+        }
+        if (snippets.length === 0) return '';
+        return '<div class="signal-evidence-preview" aria-label="Supporting log lines">' + snippets.join('') + '</div>';
+    }
+
     /** Render signals detected in the current log session (all kinds). Also manages the "This log" empty state. */
     function renderSignalsInThisLog() {
         var listEl = document.getElementById('signals-in-log-list'), summaryEl = document.getElementById('signals-in-log-summary');
         var emptyBlock = document.getElementById('signal-this-log-empty');
-        var signals = signalDataCache.signalsInThisLog || [];
-        if (summaryEl) summaryEl.textContent = signals.length === 0 ? 'Signals in this log' : 'Signals in this log (' + signals.length + ')';
-        if (emptyBlock) emptyBlock.style.display = signals.length === 0 ? '' : 'none';
+        var signalsAll = signalDataCache.signalsInThisLog || [];
+        /* Fu7: time-window filter. Signals lacking a timestamp are hidden under any active window
+           (you can't time-locate them, so they aren't in "the last X"). No-op when window is null. */
+        var signals;
+        if (signalsInLogWindowMs == null) {
+            signals = signalsAll;
+        } else {
+            var refTs = sessionLatestTs();
+            if (refTs === 0) {
+                signals = signalsAll;
+            } else {
+                var cutoff = refTs - signalsInLogWindowMs;
+                signals = signalsAll.filter(function(s) {
+                    var st = signalRepTs(s);
+                    return st > 0 && st >= cutoff;
+                });
+            }
+        }
+        var summaryWindowLabel = (signalsInLogWindowMs != null && signals.length !== signalsAll.length) ? (' of ' + signalsAll.length) : '';
+        if (summaryEl) summaryEl.textContent = signalsAll.length === 0
+            ? 'Signals in this log'
+            : 'Signals in this log (' + signals.length + summaryWindowLabel + ')';
+        if (emptyBlock) emptyBlock.style.display = signalsAll.length === 0 ? '' : 'none';
         if (!listEl) { return; }
         if (signals.length === 0) { listEl.innerHTML = ''; return; }
         listEl.innerHTML = signals.slice(0, 20).map(function(s) {
@@ -126,7 +189,12 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
             var meta = s.totalOccurrences + 'x' + (s.avgDurationMs ? ', avg ' + fmtMs(s.avgDurationMs) : '');
             var lineAttr = s.lineIndices && s.lineIndices.length > 0 ? ' data-line="' + s.lineIndices[0] + '"' : '';
             var clickCls = lineAttr ? ' signal-jumpable' : '';
-            return '<div class="signal-env-row signal-in-log-row' + clickCls + '"' + lineAttr + ' title="' + esc(s.label) + (lineAttr ? ' — click to jump' : '') + '"><span>' + icon + ' ' + esc(text) + '</span><span class="signal-hotfile-meta">' + meta + '</span></div>';
+            var preview = buildEvidencePreviewHtml(s);
+            return '<div class="signal-env-row signal-in-log-row' + clickCls + '"' + lineAttr + ' title="' + esc(s.label) + (lineAttr ? ' — click to jump' : '') + '">'
+                + '<span>' + icon + ' ' + esc(text) + '</span>'
+                + '<span class="signal-hotfile-meta">' + meta + '</span>'
+                + preview
+                + '</div>';
         }).join('');
     }
 `;
