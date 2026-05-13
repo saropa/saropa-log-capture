@@ -18,6 +18,7 @@ import { loadFilteredMetas, parseSessionDate } from '../../../modules/session/me
 import { isPersistedSignalSummaryV1 } from '../../../modules/root-cause-hints/signal-summary-types';
 import { enrichSignalsWithLintContext } from '../../../modules/diagnostics/signal-lint-enricher';
 import { enrichSignalsWithDaContext } from '../../../modules/diagnostics/signal-da-enricher';
+import { buildRegressionSignalEntries, detectRegressions } from '../../../modules/signals/regression-detector';
 import type { PostFn } from './crashlytics-handlers';
 
 /** Update error/warning triage status and refresh the signal panel.
@@ -89,7 +90,21 @@ export async function handleSignalDataRequest(post: PostFn, currentFileUri?: vsc
             sessionCorrelationTags = meta?.correlationTags ?? [];
             const sessionFilename = path.basename(currentFileUri.fsPath);
             const thisSessionSignals = buildAllRecurringSignals([{ filename: sessionFilename, meta }]);
-            if (thisSessionSignals.length > 0) { signalsInThisLog = thisSessionSignals; }
+            /* F7/F8 (plan 052): compute regression/recovery against the last N sessions and
+               prepend the results to "Signals in this log". Prepending puts the
+               highest-actionability items first (new error types) and the highest-positive items
+               near them (recoveries). Falls back silently if no past metas or no fingerprints. */
+            const allMetas = await loadFilteredMetas('all').catch(() => [] as Awaited<ReturnType<typeof loadFilteredMetas>>);
+            const pastMetas = [...allMetas]
+                .filter((m) => m.filename !== sessionFilename)
+                .sort((a, b) => parseSessionDate(a.filename) - parseSessionDate(b.filename));
+            const regression = detectRegressions({
+                currentFingerprints: meta?.fingerprints ?? [],
+                pastMetas,
+            });
+            const regressionEntries = buildRegressionSignalEntries(sessionFilename, regression);
+            const merged = [...regressionEntries, ...thisSessionSignals];
+            if (merged.length > 0) { signalsInThisLog = merged; }
         } catch {
             // ignore — metadata may not exist yet for new sessions
         }
