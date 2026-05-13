@@ -6,12 +6,13 @@
  * rendering branches that used to carry the overloaded outlined-dot state
  * for stack groups.
  *
- * Stack-header vocabulary: an inline `.stack-toggle` chevron (▶ / ▼) inside
- * the header text shows collapse state — IDE / debugger / file-explorer
- * convention. The whole header row stays clickable via the existing
+ * Stack-header vocabulary: multi-frame stacks get an inline `.stack-toggle`
+ * chevron (▶ / ▼) showing collapse state — IDE / debugger / file-explorer
+ * convention. The whole header row is clickable via the existing
  * .stack-header[data-gid] handler (viewer-script-click-handlers.ts); the
- * chevron is the visual cue. The prior `.bar-hidden-rows` outlined-dot
- * state on the gutter is gone.
+ * chevron is the visual cue. 1-frame stacks (header only, no child frames)
+ * omit the chevron and skip the toggle — nothing to expand. The prior
+ * `.bar-hidden-rows` outlined-dot state on the gutter is gone.
  *
  * Stack-frame vocabulary: dedup-fold survivors carry the same inline
  * `.dedup-badge` ("×N" / "×N hide") used by non-stack rows in
@@ -37,9 +38,17 @@ function renderStackHeader(item, html, spacingCls, matchCls, barCls, idxAttr) {
        trailing .viewer-divider below the last visible app-frame (rendered by
        viewer-data-viewport.ts) carries the exact trimmed-frame count for the
        preview case, so the chevron does not need to disambiguate further. */
+    /* 1-frame stacks (header only, no child frames) have nothing to
+       expand/collapse — hide the chevron so the row does not look toggleable.
+       frameCount includes the header itself, so >1 means children exist. */
+    var _hasChildren = item.frameCount > 1;
     var _glyph = '\\u25b6';
     var _hdrTip = '';
-    if (item.collapsed === true) {
+    if (!_hasChildren) {
+        _glyph = '';
+        _hdrTip = 'Stack trace'
+            + (item.dupCount > 1 ? ' \\u00b7 appeared ' + item.dupCount + ' times' : '');
+    } else if (item.collapsed === true) {
         _hdrTip = 'Stack trace collapsed'
             + (item.frameCount > 1 ? ' \\u00b7 ' + (item.frameCount - 1) + ' frames' : '')
             + ' \\u00b7 click to expand';
@@ -71,8 +80,11 @@ function renderStackHeader(item, html, spacingCls, matchCls, barCls, idxAttr) {
        attr so a click that lands on the chevron specifically still resolves
        to the same group via either selector path; the existing whole-row
        handler in viewer-script-click-handlers.ts (.stack-header[data-gid])
-       wins because the chevron is inside the row. */
-    var chev = '<span class="stack-toggle" data-gid="' + item.groupId + '">' + _glyph + '</span>';
+       wins because the chevron is inside the row.
+       Omitted for 1-frame stacks (no children) — no toggle to afford. */
+    var chev = _hasChildren
+        ? '<span class="stack-toggle" data-gid="' + item.groupId + '">' + _glyph + '</span>'
+        : '';
     return '<div class="stack-header' + hdrLevelCls + matchCls + spacingCls + barCls
         + hdrHeat + hdrCtxCls + '"' + idxAttr + hdrTitleAttr
         + ' data-gid="' + item.groupId + '">' + chev + hdrQb + html.trim() + dup + '</div>';

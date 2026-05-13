@@ -1,6 +1,8 @@
 /** CSS for the signal report webview panel. */
 
 import { getEcosystemStyles } from './signal-report-ecosystem-styles';
+import { getFeedbackStyles } from './signal-report-feedback-styles';
+import { getLayoutStyles } from './signal-report-layout-styles';
 
 export function getSignalReportStyles(): string {
   return /* css */ `
@@ -45,31 +47,27 @@ h2 {
     background: rgba(255, 80, 80, 0.18);
     color: #f14c4c;
     border-color: #f14c4c;
+    box-shadow: 0 0 6px rgba(241, 76, 76, 0.25);
 }
 .conf-badge--medium {
     background: rgba(255, 200, 0, 0.18);
     color: #cca700;
     border-color: #cca700;
+    box-shadow: 0 0 6px rgba(204, 167, 0, 0.2);
 }
 .conf-badge--low {
     background: rgba(128, 128, 128, 0.18);
     color: var(--vscode-foreground);
     border-color: var(--vscode-widget-border, rgba(128, 128, 128, 0.5));
 }
-.section-slot {
-    margin: 8px 0;
-    min-height: 24px;
-}
-.section-loading {
-    color: var(--vscode-descriptionForeground);
-    font-style: italic;
-    font-size: 12px;
-}
+/* .section-slot and .section-loading styles live in layout and feedback style modules */
 .evidence-block {
     margin: 8px 0;
     border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
     border-radius: 4px;
     overflow: hidden;
+    /* Subtle warm glow on the block that contains the actual evidence */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 .evidence-header {
     background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
@@ -77,6 +75,13 @@ h2 {
     font-size: 11px;
     color: var(--vscode-descriptionForeground);
     border-bottom: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+}
+.evidence-meta {
+    padding: 4px 8px;
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+    background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
+    border-bottom: 1px solid var(--vscode-widget-border, rgba(128, 128, 128, 0.15));
 }
 .evidence-lines {
     font-family: var(--vscode-editor-font-family, 'Consolas', monospace);
@@ -223,6 +228,11 @@ details summary:hover {
     border: 1px solid var(--vscode-widget-border, rgba(128, 128, 128, 0.3));
     border-radius: 4px;
     background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.overview-stat:hover {
+    border-color: var(--vscode-textLink-foreground, #3794ff);
+    transform: translateY(-1px);
 }
 .stat-count {
     font-size: 18px;
@@ -280,5 +290,5 @@ details summary:hover {
 .history-session-row:hover { background: var(--vscode-list-hoverBackground); }
 .history-session-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .history-session-date { flex-shrink: 0; color: var(--vscode-descriptionForeground); margin-left: 12px; }
-` + getEcosystemStyles();
+` + getLayoutStyles() + getFeedbackStyles() + getEcosystemStyles();
 }

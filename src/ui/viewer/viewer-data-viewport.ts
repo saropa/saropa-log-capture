@@ -44,6 +44,7 @@ function countHiddenNonBlank(fromIdx, toIdx) {
         if (item.userHidden || item.autoHidden) reasons.hidden = (reasons.hidden || 0) + 1;
         if (item.repeatHidden) reasons.repeat = (reasons.repeat || 0) + 1;
         if (item.compressDupHidden) reasons.duplicate = (reasons.duplicate || 0) + 1;
+        if (item.stackDedupHidden) reasons.duplicate = (reasons.duplicate || 0) + 1;
         if (item.classFiltered) reasons.classTag = (reasons.classTag || 0) + 1;
         if (item.sqlPatternFiltered) reasons.sqlPattern = (reasons.sqlPattern || 0) + 1;
         if (item.scopeFiltered) reasons.scope = (reasons.scope || 0) + 1;
