@@ -21,6 +21,9 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
     var currentLogLabel = '';
     var heroErrorCount = undefined, heroWarningCount = undefined, heroSnapshotSummary = '';
     var heroSparklineData = undefined;
+    /* Fu7 time-window filter state. null = "All" (no filter); otherwise ms window from session-latest-ts.
+       Lives in part-a so it survives across panel renders without resetting on signalData refresh. */
+    var signalsInLogWindowMs = null;
 
     function getStoredSectionState() {
         try {

@@ -24,9 +24,9 @@ Items below qualify as quick wins because they (a) ship on **existing data** —
 
 ### Tier 1 — Signals panel UX (rendering only, no new data)
 
-- [ ] **Fu7** — Time-window filter chips (Last 5s / 30s / 5min / All) at top of signals panel. Biggest live-debugging unlock — user just hit the bug, only the last 30s matters.
-- [ ] **Fu3** — Inline evidence preview: render a 3-line snippet of the supporting log lines directly under each signal title. Removes the click-through to see what the signal is grounded in.
-- [ ] **Fu2** — Scroll-lock pulse: clicking a signal already jumps to the implicated line; add a brief ±10-line highlight pulse so the eye lands on the right place. Reuses existing pulse styles.
+- [x] **Fu7** — Time-window filter chips (Last 5s / 30s / 5min / All) at top of signals panel. Biggest live-debugging unlock — user just hit the bug, only the last 30s matters.
+- [x] **Fu3** — Inline evidence preview: render a 3-line snippet of the supporting log lines directly under each signal title. Removes the click-through to see what the signal is grounded in.
+- [x] **Fu2** — Scroll-lock pulse: clicking a signal already jumps to the implicated line; add a brief ±10-line highlight pulse so the eye lands on the right place. Reuses existing pulse styles.
 - [ ] **Fu4** — Mute-with-reason: right-click a signal → free-text reason (≤80 chars) → persist. Anonymous mute is silent; reasoned mute becomes a labeled training example for the already-shipped noise-learning system at [src/modules/learning/](../src/modules/learning/) (plan [025](history/2026.03/20260323/025_plan-noise-learning.md), implemented 2026-03-23). Wire the reason into the existing `trackInteraction` API.
 
 ### Tier 2 — New signals on existing data (no SDK)
@@ -47,7 +47,7 @@ Items below qualify as quick wins because they (a) ship on **existing data** —
 If shipping a subset rather than the full quick-win pass, in this order:
 
 1. [x] **F10** severity escalation chain — highest signal-to-noise per line of code in the whole plan.
-2. [ ] **Fu7** time-window filter — instant UX win on every existing signal; compounds the value of everything else.
+2. [x] **Fu7** time-window filter — instant UX win on every existing signal; compounds the value of everything else.
 3. [ ] **F7 + F8** new / disappearing error pair — share storage and query, ship together.
 
 ### Explicitly deferred — not quick wins

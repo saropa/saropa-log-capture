@@ -40,6 +40,33 @@ export function getSignalScriptPartD(): string {
         });
     }
 
+    /* Fu2 scroll-lock pulse: add a temporary .line-pulse class to lines within +/-10 of the
+       target so the eye lands on the right place after the jump. Keep the radius small enough
+       that the visual cue is clearly localized — too wide and it becomes noise. The CSS keyframe
+       removes itself by class-remove on animationend so we don't leak DOM state. */
+    function pulseLinesAround(targetIdx) {
+        var radius = 10;
+        var lo = Math.max(0, targetIdx - radius);
+        var hi = targetIdx + radius;
+        /* requestAnimationFrame ensures we run AFTER renderViewport(false) repaints, so the
+           queried .line elements are the post-jump rendered set, not the pre-jump viewport. */
+        window.requestAnimationFrame(function() {
+            window.requestAnimationFrame(function() {
+                var nodes = document.querySelectorAll('.line[data-idx]');
+                for (var pi = 0; pi < nodes.length; pi++) {
+                    var n = nodes[pi];
+                    var di = parseInt(n.getAttribute('data-idx') || '', 10);
+                    if (isNaN(di) || di < lo || di > hi) continue;
+                    /* Trigger reflow before adding the class so the animation restarts cleanly
+                       if the same line is targeted twice in a row. */
+                    n.classList.remove('line-pulse');
+                    void n.offsetWidth;
+                    n.classList.add('line-pulse');
+                }
+            });
+        });
+    }
+
     /* "Signals in this log" rows — click to jump to the line where the signal was detected */
     var signalsInLogEl = document.getElementById('signals-in-log-list');
     if (signalsInLogEl) {
@@ -51,7 +78,29 @@ export function getSignalScriptPartD(): string {
             if (isNaN(lineIdx)) return;
             /* scrollToLineNumber is defined in viewer-goto-line.ts — scrolls to the given 1-based line number */
             if (typeof scrollToLineNumber === 'function') { scrollToLineNumber(lineIdx + 1); }
+            pulseLinesAround(lineIdx);
         });
+    }
+
+    /* Fu7 time-window filter chips — clicking a chip sets the active window and re-renders.
+       The chip set is small (4 buttons) so we wire each rather than using event delegation. */
+    var twChips = document.querySelectorAll('.signal-tw-chip');
+    for (var ti = 0; ti < twChips.length; ti++) {
+        (function(chip) {
+            chip.addEventListener('click', function() {
+                var v = chip.getAttribute('data-tw');
+                signalsInLogWindowMs = (v === 'all') ? null : parseInt(v, 10);
+                /* Update visual pressed state on all chips, not just the clicked one,
+                   so the previous active chip drops its active class in the same frame. */
+                for (var ci = 0; ci < twChips.length; ci++) {
+                    var other = twChips[ci];
+                    var isActive = (other === chip);
+                    other.classList.toggle('signal-tw-chip-active', isActive);
+                    other.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                }
+                if (typeof renderSignalsInThisLog === 'function') renderSignalsInThisLog();
+            });
+        })(twChips[ti]);
     }
 
     /** Render co-occurring signal pairs in the "Related signals" block. */
