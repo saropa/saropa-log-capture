@@ -1,6 +1,11 @@
 # Plan 053 — Noise Learning Phase 4 Follow-ups
 
-## Status: Proposed
+## Status: Partial (A + B shipped, C + D pending)
+
+- [x] **Workstream A** — Insights panel suggestions section (filter suggestions render in the panel with Accept/Reject)
+- [x] **Workstream B** — `filter-out` emission from level/category toggles (emitter wired in `viewer-level-filter.ts`)
+- [ ] **Workstream C** — Confidence feedback loop
+- [ ] **Workstream D** — Optional cross-workspace global aggregates
 
 ## Goal
 
