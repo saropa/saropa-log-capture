@@ -26,16 +26,25 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [Unreleased]
+## [7.8.3]
+
+Post-capture toast gains Always Open and Don't Ask Again buttons, the l10n translation pipeline now auto-syncs and translates all 10 locale bundles with brand-name protection, and context menu items show keyboard shortcut hints. [log](https://github.com/saropa/saropa-log-capture/blob/v7.8.3/CHANGELOG.md)
+
+### Added
+
+- **End-of-capture toast: "Always Open" and "Don't Ask Again" buttons** — The post-capture notification now has four actions: Copy Log Path, Open Log, Always Open, and Don't Ask Again. "Always Open" persists the preference to auto-open future logs in the viewer without asking. "Don't Ask Again" suppresses the notification entirely. Both write to the new `afterCaptureAction` setting.
+- **`afterCaptureAction` setting** — Replaces the boolean `autoOpen` setting with a three-way enum: `"ask"` (show notification, default), `"openLog"` (auto-open in the viewer), `"nothing"` (suppress notification). Existing `autoOpen: true` is automatically migrated to `"openLog"`.
 
 ### Changed
 
 - **Organized `scripts/modules/` into subfolders** — Split the flat `scripts/modules/` directory (35+ files) into six purpose-based subfolders: `publish/` (Python publish pipeline), `verify/` (CI verification), `generate/` (code/catalog generators), `test/` (test tooling), `build/` (bundle/clean), and `fix/` (fixers and diagnostics). Updated all Python imports, `package.json` script paths, runtime cross-references, and auto-generated doc headers.
-- **l10n translation pipeline** — Added `scripts/translate_l10n.py` to audit, sync, and translate l10n bundles. Audits English bundle against TS source strings, syncs missing/orphan keys, and translates all locale bundles via Google Translate (free tier, `deep-translator`). The publish pipeline (Step 9) now automatically syncs and translates instead of just warning.
+- **l10n translation pipeline** — Added `scripts/translate_l10n.py` to audit, sync, and translate l10n bundles. Audits English bundle against TS source strings, syncs missing/orphan keys, and translates all locale bundles via Google Translate (free tier, `deep-translator`). The publish pipeline (Step 9) now automatically syncs and translates instead of just warning. Brand names (Saropa, GitHub, Loki, etc.) are shielded from translation via placeholder substitution; existing mangled brand translations are automatically detected, reset, and retranslated. Writes timestamped audit reports and gap exports (CSV/JSON) to `reports/`.
 
 ---
 
 ## [7.8.2]
+
+Context menu gets positive toggle language, "View" prefixes for navigation actions, tooltips on every item, keyboard shortcut hints, and a renamed "Tall rows" option; icon bar is wider and the session panel shrinks narrower. [log](https://github.com/saropa/saropa-log-capture/blob/v7.8.2/CHANGELOG.md)
 
 ### Changed
 
@@ -54,6 +63,8 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 ---
 
 ## [7.8.1]
+
+Fixes icon bar layout when a horizontal scrollbar is present, a signal panel crash on the PERFORMANCE link, and adds line numbers to the Layout submenu. [log](https://github.com/saropa/saropa-log-capture/blob/v7.8.1/CHANGELOG.md)
 
 ### Fixed
 
