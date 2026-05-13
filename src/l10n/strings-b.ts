@@ -11,6 +11,7 @@ export const stringsB: Record<string, string> = {
     'action.editAnyway': 'Edit Anyway',
     'action.cancel': 'Cancel',
     'action.deleteAll': 'Delete All',
+    'action.alwaysOpen': 'Always Open',
     'action.openLog': 'Open Log',
     'action.copyLogPath': 'Copy Log Path',
     'action.add': 'Add',

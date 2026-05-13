@@ -209,10 +209,15 @@ export async function finalizeSession(
     setTimeout(() => vscode.commands.executeCommand('saropaLogCapture.refreshRecurringSignals'), 3000);
 
     const filename = logSession.fileUri.fsPath.split(/[\\/]/).pop() ?? '';
-    showSummaryNotification(withLogUri(generateSummary(filename, stats), logSession.fileUri));
 
-    if (config.autoOpen) {
-        await vscode.window.showTextDocument(logSession.fileUri);
+    // afterCaptureAction controls post-capture behavior:
+    // - "ask": show the summary toast with Open / Copy / Always Open / Don't Ask buttons
+    // - "openLog": silently open the log in the viewer (no toast)
+    // - "nothing": do nothing (no toast, no auto-open)
+    if (config.afterCaptureAction === 'openLog') {
+        void vscode.commands.executeCommand('saropaLogCapture.openSession', { uri: logSession.fileUri });
+    } else if (config.afterCaptureAction === 'ask') {
+        showSummaryNotification(withLogUri(generateSummary(filename, stats), logSession.fileUri));
     }
 }
 

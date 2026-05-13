@@ -104,7 +104,15 @@ export function getConfig(): SaropaLogCaptureConfig {
       return typeof v === "string" && v.trim().length > 0 ? v.trim() : "bugs";
     })(),
     lintReportImpactLevel: ensureEnum(cfg.get("lintReportImpactLevel"), ["essential", "recommended", "full"], "recommended"),
-    autoOpen: ensureBoolean(cfg.get("autoOpen"), false),
+    // Migration: the old boolean `autoOpen` mapped true → "openLog". If the new
+    // enum key is absent but the legacy key is true, honour the user's intent.
+    afterCaptureAction: (() => {
+      const v = cfg.get("afterCaptureAction");
+      if (typeof v === "string" && ["ask", "openLog", "nothing"].includes(v)) {
+        return v as "ask" | "openLog" | "nothing";
+      }
+      return cfg.get<boolean>("autoOpen") === true ? "openLog" : "ask";
+    })(),
     maxLogFiles: ensureNonNegative(cfg.get("maxLogFiles"), 0),
     gitignoreCheck: ensureBoolean(cfg.get("gitignoreCheck"), true),
     redactEnvVars: ensureStringArray(cfg.get("redactEnvVars"), []),
