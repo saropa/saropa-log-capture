@@ -22,6 +22,29 @@ export const ROOT_CAUSE_SLOW_OP_MIN_MS_DEFAULT = 500;
 /** Minimum ANR risk score to surface as a signal. */
 export const ROOT_CAUSE_ANR_MIN_SCORE = 20;
 
+/* --- Severity escalation chain (plan 052 F10) ---
+ * Why a 5s window: tight enough that the warnings feel causally related to the error,
+ * loose enough to cover async cleanup paths and retry-then-fail sequences. Tuning later
+ * if too noisy. Minimum of 2 warnings prevents "one warning before an unrelated error"
+ * from firing — that's too common to be useful. */
+export const ROOT_CAUSE_SEVERITY_ESCALATION_MIN_WARNINGS = 2;
+export const ROOT_CAUSE_SEVERITY_ESCALATION_WINDOW_MS = 5000;
+
+/* --- Silence-then-burst (plan 052 F9) ---
+ * Why 10s silence + 20 lines: smaller silences are common (user idle, between requests).
+ * 10s with no output is unusual enough that the following burst is likely the unwinding
+ * of something blocked. Burst window of 1s separates "queue drain" from "normal logging". */
+export const ROOT_CAUSE_SILENCE_BURST_MIN_SILENCE_MS = 10000;
+export const ROOT_CAUSE_SILENCE_BURST_MIN_LINES = 20;
+export const ROOT_CAUSE_SILENCE_BURST_WINDOW_MS = 1000;
+
+/* --- Frame-budget cluster (plan 052 F14) ---
+ * Why 5 slow ops in 10s: a single slow op is forgivable, but 5 in 10s correlates with
+ * user-visible jank or stutter. Builds on the existing slow-operation detector — counts
+ * cluster severity, not individual op severity. */
+export const ROOT_CAUSE_FRAME_BUDGET_CLUSTER_MIN_COUNT = 5;
+export const ROOT_CAUSE_FRAME_BUDGET_CLUSTER_WINDOW_MS = 10000;
+
 /**
  * True when the bundle has enough correlated signal to show the Hypotheses strip.
  * Template-specific floors also apply inside `buildHypotheses` (e.g. cap-only fingerprints).
@@ -46,6 +69,11 @@ export function isRootCauseHintsEligible(bundle: RootCauseHintBundle): boolean {
   if (bundle.permissionDenials && bundle.permissionDenials.length > 0) { return true; }
   if (bundle.classifiedErrors && bundle.classifiedErrors.length > 0) { return true; }
   if (bundle.anrRisk && bundle.anrRisk.score >= ROOT_CAUSE_ANR_MIN_SCORE) { return true; }
+
+  // v2 burst/escalation signals (plan 052 Group 1)
+  if (bundle.severityEscalations && bundle.severityEscalations.length > 0) { return true; }
+  if (bundle.silenceBursts && bundle.silenceBursts.length > 0) { return true; }
+  if (bundle.frameBudgetClusters && bundle.frameBudgetClusters.length > 0) { return true; }
 
   return false;
 }
