@@ -61,6 +61,14 @@ export function getSignalPanelHtml(): string {
                 <div id="signal-this-log-empty" class="signal-this-log-empty signal-hotfiles-empty" style="display:none"><span class="signal-margin-emoji" aria-hidden="true">ℹ️</span>${thisLogEmpty}</div>
                 <div class="signal-narrative-block">
                     <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">📡</span><span id="signals-in-log-summary">Signals in this log</span></div>
+                    <!-- Time-window filter (Fu7) — applies to "Signals in this log" only.
+                         Cross-session signals further down the panel have no meaningful single-session timestamp. -->
+                    <div class="signal-tw-filter" role="group" aria-label="Filter signals by time window">
+                        <button type="button" class="signal-tw-chip signal-tw-chip-active" data-tw="all" aria-pressed="true">All</button>
+                        <button type="button" class="signal-tw-chip" data-tw="5000" aria-pressed="false">Last 5s</button>
+                        <button type="button" class="signal-tw-chip" data-tw="30000" aria-pressed="false">Last 30s</button>
+                        <button type="button" class="signal-tw-chip" data-tw="300000" aria-pressed="false">Last 5min</button>
+                    </div>
                     <div id="signals-in-log-list" class="signal-hotfiles-list"></div>
                 </div>
             </div>
