@@ -187,6 +187,10 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     wireSharedHandlers(viewerProvider, handlerDeps);
     wireSharedHandlers(popOutPanel, handlerDeps);
 
+    // Reset the watcher's running totals when the user acknowledges the badge,
+    // so the badge only counts hits since the last time the panel was focused.
+    viewerProvider.setWatchAcknowledgedHandler(() => sessionManager.getWatcher().resetCounts());
+
     const { updateSessionNav } = wireViewerSpecificHandlers({
         viewerProvider, historyProvider, bookmarkStore, popOutPanel, context, version,
     });
