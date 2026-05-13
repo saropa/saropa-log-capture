@@ -500,11 +500,17 @@
           "type": "boolean",
           "title": "%config.aiActivity.showSystemWarnings.title%"
         },
-        "saropaLogCapture.autoOpen": {
-          "default": false,
-          "description": "%config.autoOpen.description%",
-          "type": "boolean",
-          "title": "%config.autoOpen.title%"
+        "saropaLogCapture.afterCaptureAction": {
+          "default": "ask",
+          "description": "%config.afterCaptureAction.description%",
+          "type": "string",
+          "enum": ["ask", "openLog", "nothing"],
+          "enumDescriptions": [
+            "%config.afterCaptureAction.enum.ask%",
+            "%config.afterCaptureAction.enum.openLog%",
+            "%config.afterCaptureAction.enum.nothing%"
+          ],
+          "title": "%config.afterCaptureAction.title%"
         },
         "saropaLogCapture.autoTagRules": {
           "default": [],
