@@ -34,8 +34,8 @@ Items below qualify as quick wins because they (a) ship on **existing data** —
 - [x] **F10** — Severity escalation chain (warn → warn → error within configurable window, default 5s). Highest signal-to-noise of the lot; the pattern is intrinsically meaningful. Sliding-window scan over existing severity classification, low false-positive risk.
 - [x] **F9** — Silence-then-burst (≥10s of silence followed by ≥20 lines in <1s). Catches UI freezes and watchdog events that are otherwise invisible. Two-counter check.
 - [x] **F14** — Frame-budget cluster (≥5 PERF lines or Flutter frame-budget warnings in 10s). Direct extension of the already-shipped detector from [plans/048_plan-perf-line-signal-detection.md](048_plan-perf-line-signal-detection.md); same source data, one aggregation layer.
-- [ ] **F7** — New error type signal: error fingerprint not seen in the previous M sessions appears in current. Cross-session set lookup against the project index. Big perceived value — "you just introduced a new crash."
-- [ ] **F8** — Disappearing error signal (positive): fingerprint present in past M sessions absent in current. Same storage as F7, opposite query. Rewards good fixes; currently the panel surfaces problems only.
+- [x] **F7** — New error type signal: error fingerprint not seen in the previous M sessions appears in current. Cross-session set lookup against the project index. Big perceived value — "you just introduced a new crash."
+- [x] **F8** — Disappearing error signal (positive): fingerprint present in past M sessions absent in current. Same storage as F7, opposite query. Rewards good fixes; currently the panel surfaces problems only.
 
 ### Tier 3 — Bug report variants (no SDK, no redaction blocker)
 
@@ -48,7 +48,7 @@ If shipping a subset rather than the full quick-win pass, in this order:
 
 1. [x] **F10** severity escalation chain — highest signal-to-noise per line of code in the whole plan.
 2. [x] **Fu7** time-window filter — instant UX win on every existing signal; compounds the value of everything else.
-3. [ ] **F7 + F8** new / disappearing error pair — share storage and query, ship together.
+3. [x] **F7 + F8** new / disappearing error pair — share storage and query, ship together.
 
 ### Explicitly deferred — not quick wins
 
