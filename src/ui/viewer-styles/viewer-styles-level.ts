@@ -38,14 +38,17 @@ export function getLevelStyles(): string {
     transition: opacity 0.2s ease;
 }
 .level-dot:not(.active) { opacity: 0.3; }
-.level-dot-info { background: #4caf50; }
+/* Dot palette matches .line.level-* text colors in viewer-styles-lines.ts and
+   .level-bar-* in viewer-styles-decoration-bars.ts. Info=blue, Notice=cyan,
+   Database=green — keep the three in lockstep when any one changes. */
+.level-dot-info { background: #2196f3; }
 .level-dot-warning { background: #ff9800; }
 .level-dot-error { background: #f44336; }
 .level-dot-performance { background: #9c27b0; }
 .level-dot-todo { background: #bdbdbd; }
 .level-dot-debug { background: #795548; }
-.level-dot-notice { background: #2196f3; }
-.level-dot-database { background: #00bcd4; }
+.level-dot-notice { background: #00bcd4; }
+.level-dot-database { background: #4caf50; }
 /* Level letter chip — sits between the colored dot and the count.
    Why: 8 colors at 12px are unscannable on dense toolbar (color-blind users
    especially), and the toolbar footer was the only level-filter UI without
@@ -64,12 +67,12 @@ export function getLevelStyles(): string {
 .level-dot-group:has(.level-dot:not(.active)) .level-letter { opacity: 0.45; }
 .level-letter-error { color: #f44336; }
 .level-letter-warning { color: #ff9800; }
-.level-letter-info { color: #4caf50; }
+.level-letter-info { color: #2196f3; }
 .level-letter-performance { color: #9c27b0; }
 .level-letter-todo { color: var(--vscode-descriptionForeground); }
 .level-letter-debug { color: #a1887f; }
-.level-letter-notice { color: #2196f3; }
-.level-letter-database { color: #00bcd4; }
+.level-letter-notice { color: #00bcd4; }
+.level-letter-database { color: #4caf50; }
 .dot-count {
     font-size: 10px;
     color: var(--vscode-descriptionForeground);
