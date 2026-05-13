@@ -207,14 +207,27 @@ function renderViewport(force) {
         prevVisIdx = i;
     }
     viewportEl.innerHTML = parts.join('');
-    /* Connect consecutive same-level dots, bridging through blank/non-dot
-       lines AND through .viewer-divider control rows. findNextDotSibling
-       already skips dividers when searching for the next dot; the bridge
-       loop below then walks every intermediate child including dividers
-       and adds bar-bridge + level-bar-* so the connector ::after paints
-       through them. The .viewer-divider[class*="level-bar-"]::before {
-       display:none; } CSS rule keeps the dividers' own dots suppressed
-       even when they pick up a level class from this bridging. */
+    /* Connect consecutive same-level dots. The connector ::after only paints
+       through INVISIBLE intermediate rows — blank lines and .viewer-divider
+       control rows — never through real content rows that happen to lack
+       their own level-bar-* class (stack frames, generic stdout, repeat
+       notification chips, etc.). Previously the bridge stamped every
+       intermediate child with level-bar-{lvl} + bar-bridge, which painted a
+       coloured vertical stripe right through unrelated content; users read
+       that as the warning/error chain "claiming" rows it had nothing to do
+       with (e.g. a yellow line continuing through a stack frame sandwiched
+       between two warning dots). Now the bar-down stub on ci and bar-up stub
+       on ni still anchor the chain visually, but a real content row in the
+       middle is left untouched — producing a clean visual break that
+       matches the user's "severity line should break between colors" mental
+       model. findNextDotSibling continues to skip blanks and dividers (so
+       same-level dots still pair up across empty gaps); it does NOT skip
+       non-blank non-leveled rows, so a stack frame between two warnings
+       returns the stack frame's index — and the same-level check then sees
+       no level on it, falls into the mismatch branch, and the chain breaks.
+       The .viewer-divider[class*="level-bar-"]::before { display:none; }
+       CSS rule keeps any dividers' own dots suppressed even when they pick
+       up a level class from bridging across them. */
     var ch = viewportEl.children;
     for (var ci = 0; ci < ch.length; ci++) {
         if (!ch[ci]) continue;
@@ -224,11 +237,25 @@ function renderViewport(force) {
         if (ni < 0 || !ch[ni]) continue;
         var nextLvl = getBarLevel(ch[ni]);
         if (nextLvl !== lvl) { ci = ni - 1; continue; }
+        /* Only paint the bridge across truly empty rows. A real content row
+           between ci and ni breaks the chain — keep ci/ni's own bar-down /
+           bar-up stubs (so the chain reads as "almost connected") but do not
+           colour the content row's gutter. */
+        var bridgeable = true;
+        for (var bj = ci + 1; bj < ni; bj++) {
+            if (!ch[bj]) continue;
+            if (ch[bj].classList.contains('line-blank')) continue;
+            if (ch[bj].classList.contains('viewer-divider')) continue;
+            bridgeable = false;
+            break;
+        }
         ch[ci].classList.add('bar-down');
         ch[ni].classList.add('bar-up');
-        for (var bi = ci + 1; bi < ni; bi++) {
-            if (ch[bi]) {
-                ch[bi].classList.add('bar-up', 'bar-down', 'bar-bridge', 'level-bar-' + lvl);
+        if (bridgeable) {
+            for (var bi = ci + 1; bi < ni; bi++) {
+                if (ch[bi]) {
+                    ch[bi].classList.add('bar-up', 'bar-down', 'bar-bridge', 'level-bar-' + lvl);
+                }
             }
         }
         ci = ni - 1;
