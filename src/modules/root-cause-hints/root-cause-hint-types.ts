@@ -97,6 +97,48 @@ export interface SignalAnrRisk {
   readonly signals: readonly string[];
 }
 
+/**
+ * Severity escalation — warnings preceding an error within a time window.
+ * Why: errors that arrive after a chain of warnings rarely come out of nowhere; the warnings
+ * are usually the load-bearing precursor. Surfacing this answers "did we see this coming?".
+ */
+export interface SignalSeverityEscalation {
+  readonly errorLineIndex: number;
+  readonly errorExcerpt: string;
+  /** Line indices of preceding warnings within the lookback window (chronological order). */
+  readonly precedingWarningLineIds: readonly number[];
+  /** Span from earliest preceding warning to the error, in ms. */
+  readonly windowMs: number;
+}
+
+/**
+ * Silence-then-burst — extended quiet period followed by a flood of lines in <1s.
+ * Why: a frozen UI unwinding, a watchdog firing, or a deferred queue draining. Invisible in
+ * a regular scroll because the silence is the signal, not the lines themselves.
+ */
+export interface SignalSilenceBurst {
+  /** First line of the burst (immediately after the silence). */
+  readonly lineIndex: number;
+  /** Silence duration in ms between the previous line and the burst start. */
+  readonly silenceMs: number;
+  /** Number of lines in the burst. */
+  readonly burstSize: number;
+  /** Span from first to last burst line, in ms. */
+  readonly burstWindowMs: number;
+}
+
+/**
+ * Frame-budget cluster — multiple slow operations packed into a short window.
+ * Why: a single 500ms operation is forgivable; five of them in 10s is UI jank visible to the
+ * user. Builds on the existing slow-operation detector (plan 048).
+ */
+export interface SignalFrameBudgetCluster {
+  /** Line indices of the slow operations in the cluster (chronological). */
+  readonly lineIndices: readonly number[];
+  /** Cluster span from first to last slow op, in ms. */
+  readonly windowMs: number;
+}
+
 // --- Bundle ---
 
 export interface RootCauseHintBundle {
@@ -117,6 +159,10 @@ export interface RootCauseHintBundle {
   readonly permissionDenials?: readonly SignalPermissionDenial[];
   readonly classifiedErrors?: readonly SignalClassifiedError[];
   readonly anrRisk?: SignalAnrRisk;
+  // v2 burst/escalation signals (plan 052 Group 1)
+  readonly severityEscalations?: readonly SignalSeverityEscalation[];
+  readonly silenceBursts?: readonly SignalSilenceBurst[];
+  readonly frameBudgetClusters?: readonly SignalFrameBudgetCluster[];
 }
 
 // --- Hypothesis output ---

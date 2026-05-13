@@ -26,6 +26,16 @@ For older versions (7.1.1 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+### Added
+- **Three new signals on existing log data** — The Signals panel now surfaces three patterns that previously required reading the log line by line. Each runs as a one-pass webview scan and posts results to the host hypothesis builder so the existing UI renders them with no extra wiring. Settings unchanged; thresholds match the rationale in `plans/052_plan-semantic-timeline-capture-and-signal-expansion.md`.
+  - **Severity escalation chain (F10)** — When ≥2 warnings precede an error within 5s, the panel reports "Severity escalation: N warnings preceded the error within Xs". Evidence links to the error first, then the warnings in chronological order, so clicking the report goes straight to the failure.
+  - **Silence-then-burst (F9)** — Catches frozen-UI unwinds and watchdog events that are invisible to a regular scroll because the *gap* is the signal. Detects a ≥10s silence followed by ≥20 lines in <1s. Confidence promotes from medium → high when the silence reaches ≥30s (that range is hard to explain as user idle).
+  - **Frame-budget cluster (F14)** — Builds on the existing slow-operation detector (plan 048): a single 500ms op is forgivable, but ≥5 within 10s is jank visible to the user. Reuses `rchExtractDuration` from the general collector so the PERF regex doesn't get duplicated.
+
+---
+
 ## [7.10.0]
 
 Expanding "N × SQL repeated:" no longer overlaps the rows below, chip rows align to the same content column as decorated lines, the redundant `»` separator is gone from line decorations, and the **About Saropa** panel now renders the changelog as formatted markdown (headings, bullets, bold, italic, code, rules) with selectable text, plus a press-and-hold on the "Saropa Log Capture vX.Y.Z" title copies the title to the clipboard. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
