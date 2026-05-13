@@ -105,9 +105,13 @@ export function getDecoSettingsHtml(): string {
     <div class="deco-settings-row">
         <span>Stack frames</span>
         <select id="deco-stack-default-state">
-            <option value="expanded">Expanded</option>
-            <option value="preview">Preview</option>
+            <!-- Order matches the JS default (stackDefaultState = true / collapsed) so the dropdown's
+                 visible default lines up with runtime state before syncDecoSettingsUi() runs. Without
+                 this, the panel briefly shows "Expanded" while new stacks actually arrive collapsed —
+                 confusing the user when they first open Decoration Settings on a fresh session. -->
             <option value="collapsed">Collapsed</option>
+            <option value="preview">Preview</option>
+            <option value="expanded">Expanded</option>
         </select>
     </div>
     <div class="deco-settings-row deco-indent">
@@ -142,10 +146,14 @@ var lineColorsEnabled = true;
 var stripSourceTagPrefix = true;
 /** Default collapsed state for new stack groups: false (expanded), true (collapsed), 'preview'.
  *  Out-of-the-box default is true (collapsed) — a noisy log (Drift SELECT flood, logcat
- *  debug spam) otherwise renders thousands of visible stack frames on first paint. Users
- *  who prefer the full trace expanded by default switch this in Decorations → Stack frames.
- *  Toggle UI per stack group is the inline .stack-toggle chevron in the header (▶ collapsed,
- *  ▼ expanded); see bugs/048_plan-severity-gutter-decoupling.md. */
+ *  debug spam, full Dart call chains on every log() if the app starts emitting structured
+ *  stacks for non-Error levels) otherwise renders thousands of visible stack frames on
+ *  first paint. Users who prefer the full trace expanded by default switch this in
+ *  Decorations → Stack frames. The fallback in viewer-data-add.ts addToData() must also
+ *  default to true — if it ever resolves before this var is set, defaulting to expanded
+ *  reproduces the exact noise pattern this default exists to prevent. Toggle UI per stack
+ *  group is the inline .stack-toggle chevron in the header (▶ collapsed, ▼ expanded);
+ *  see bugs/048_plan-severity-gutter-decoupling.md. */
 var stackDefaultState = true;
 /** Number of app frames shown in preview mode. */
 var stackPreviewCount = 3;
