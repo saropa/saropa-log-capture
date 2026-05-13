@@ -26,6 +26,19 @@ For older versions (7.1.1 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+Expanding "N × SQL repeated:" no longer overlaps the rows below, chip rows align to the same content column as decorated lines, and the redundant `»` separator is gone from line decorations. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+
+### Fixed
+- **SQL repeat drilldown no longer overlaps later rows** — Clicking "N × SQL repeated:" expanded an inline panel inside a `.line` element with a strict 1em CSS height; the block-level drilldown overflowed via `overflow: visible` and painted on top of the next several log rows. The row now grows to fit the panel via a new `.line.line-has-block` rule, and `estimateSqlRepeatDrilldownExtraHeight()` baseline jumped from 44 → 122px to match the actual rendered panel (container margins + two meta rows + snippet pre + variant title), so the virtual scroller's prefix sums no longer undercount.
+- **Chip rows align to the content column when decorations are on** — Repeat-notification and N+1 chips skipped the decoration prefix and rendered at the left edge of the viewer, breaking the tabular column that decorated lines establish. A new `.line.line-deco-spacer-only` class is applied to chip rows whenever decorations are globally on, so the chip label and any embedded drilldown panel sit at the same content column as message text on regular lines.
+
+### Changed
+- **Decoration prefix drops the `»` chevron** — With the hanging-indent content column the separator was visually redundant; trailing whitespace alone now marks the column boundary. Copy output still emits `»` because plain-text paste has no columns to anchor against. The continuation badge splice now targets the trailing `&nbsp;&nbsp;</span>` inside `.line-decoration` instead of the old chevron sentinel.
+
+---
+
 ## [7.9.0]
 
 Navigator arrows now use proper VS Code icons and fade when the panel is in the background, signal reports get a two-column layout with collapsible sections and visual polish, and several rendering bugs are squashed. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
