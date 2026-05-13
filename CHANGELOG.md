@@ -26,7 +26,7 @@ For older versions (7.1.1 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [Unreleased]
+## [7.10.0]
 
 Expanding "N × SQL repeated:" no longer overlaps the rows below, chip rows align to the same content column as decorated lines, the redundant `»` separator is gone from line decorations, and the **About Saropa** panel now renders the changelog as formatted markdown (headings, bullets, bold, italic, code, rules) with selectable text, plus a press-and-hold on the "Saropa Log Capture vX.Y.Z" title copies the title to the clipboard. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
 

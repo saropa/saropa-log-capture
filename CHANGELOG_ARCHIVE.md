@@ -1,6 +1,77 @@
 # Changelog Archive
 
-Versions 7.1.1 and prior. For current changes see [CHANGELOG.md](./CHANGELOG.md).
+Versions 7.2.0 and prior. For current changes see [CHANGELOG.md](./CHANGELOG.md).
+
+---
+
+## [7.2.0]
+
+Adds a dedicated Collections panel, structured viewers for markdown/JSON/CSV/HTML, a floating search overlay, capture on/off status-bar toggle, full F1 shortcuts reference, and richer signal reports (stack traces, fingerprints, cross-session history). [log](https://github.com/saropa/saropa-log-capture/blob/v7.2.0/CHANGELOG.md)
+
+### Added
+
+- **Structured file modes added for non-log documents (`.md`, `.json/.jsonl`, `.csv`, `.html`).** These files now bypass log analysis and use format-aware rendering with a toolbar Format toggle.
+- **Collapse All now toggles to Expand All.** The title-bar button flips icon/state using `saropaLogCapture.allCollapsed`.
+- **Maximize Panel button.** A `$(screen-full)` button in the view title bar toggles VS Code's maximized-panel mode for the log viewer.
+- **Floating search overlay added in the title bar.** It includes case/word/regex toggles, match navigation, and inline clear behavior.
+- **Toolbar decoration toggle added.** One click disables/restores all decorations, preserving prior state (defaulting to elapsed time when no prior state exists).
+- **Capture on/off status-bar toggle added.** A persistent icon flips `saropaLogCapture.enabled` for the workspace and warns when capture is off.
+- **Icon-bar buttons now show item counts.** Labels-visible mode shows inline counts; icon-only mode uses badges; values cap at `99+`.
+- **Collections now have a dedicated slide-out panel.** It includes onboarding copy, inline rename, and merge support.
+- **Auto-generated collection names.** When creating a collection via "Add to Collection", the filename is converted to a human-readable name (e.g. `flutter_debug_2024-01-15.log` → `Flutter Debug 2024-01-15`) and pre-filled in the name input.
+- **23 new keyboard shortcuts added.** Total rebindable shortcuts increase from 22 to 45 across panels, display controls, navigation, zoom/line-height, bookmarking, and file actions.
+- **Standalone keyboard shortcuts reference (F1) added.** Opens a full-page searchable shortcut table grouped by category with live match counts.
+
+### Fixed
+
+- **Hide blank lines now keeps a tiny gap instead of fully removing rows.** This preserves paragraph breaks while reducing wasted space.
+- **File views no longer auto-collapse into continuation groups.** Continuation grouping is skipped for loaded files with shared load timestamps.
+- **Stack group toggle is now two-state (collapsed/expanded).** Removed the extra preview cycle for faster interaction.
+- **Session-list metadata now loads progressively.** Workers now await per-item build/send, producing smooth top-to-bottom detail hydration.
+- **Decoration-toggle load crash fixed.** Script load order now defines decoration settings before `areDecorationsOn()` reads them.
+- **False-positive error signals on config properties.** `isErrorLine()` and `isWarningLine()` used naive substring matching, so identifiers like `__breakOnConditionalError` or `showWarningDialog` triggered false error/warning signals. Now uses word-boundary regex plus explicit PascalCase compound-type patterns (TypeError, NullPointerException, DeprecationWarning) so real errors still match but embedded substrings in camelCase identifiers do not.
+- **Signal report: 12 debugging improvements.** The signal report now includes substantially more diagnostic context for error debugging:
+  - **Stack trace extraction.** Evidence sections use an asymmetric context window (10 lines before, 10 after + up to 30 extra lines extending through stack trace frames). The markdown export now matches the HTML panel. Previously the markdown used a symmetric ±5 window that cut off stack traces.
+  - **Error classification shown.** Each error's crash category (fatal, anr, oom, native, non-fatal) is now displayed as a badge in the related-lines section and all-errors listing, so the developer can immediately gauge severity.
+  - **All errors in session listed.** The Session Overview section now lists every error in the session (up to 10) with line numbers, excerpts, and category badges — not just a count.
+  - **Confidence explanation.** The report header shows a human-readable reason for the confidence level (e.g. "fatal crash, 3 occurrences") instead of just "medium."
+  - **Session duration and timeline position.** The overview shows session duration (parsed from header/footer timestamps) and each evidence block shows where the error sits in the session (e.g. "Line 25 of 59 (42%, mid-session)").
+  - **Fingerprint transparency.** Each error group in the related-lines section shows the normalized fingerprint key — the text after timestamps, UUIDs, paths, and numbers are stripped — so the developer can see what the grouping algorithm matched on.
+  - **What changed since last clean session.** The cross-session history section compares the current session header (extension version, VS Code version, debug adapter, git branch/commit, OS) against the most recent session that did NOT have this signal, and highlights what differs.
+  - **Framework vs app classification.** Error lines are classified as "framework," "app," or "config-dump" based on their content and position in the log. Config-dump lines (inside the session header) are explicitly flagged so the developer knows they're not real errors.
+  - **Session outcome.** The overview shows whether the session ended cleanly (footer present) or was interrupted (no footer — possible crash or force-quit).
+  - **Preceding action context.** Each evidence block shows the most recent user-initiated action (hot reload, build step, file sync, etc.) found by scanning backwards up to 50 lines from the error.
+  - **Contextual recommendations.** The Recommendations section now branches on the error's crash category instead of showing generic advice. For example, "fatal" errors get "check the stack trace for the throw site and add a top-level error handler," while "oom" errors get "profile heap usage, check for retained references."
+  - **Related lines grouped by fingerprint.** Errors in the Related Lines section are grouped by fingerprint hash instead of listed individually. Each group shows the occurrence count, category badge, origin classification, and normalized fingerprint key.
+- **Icon bar not scrollable.** When the viewport is short, bottom icon bar items (Signals, About) were clipped and unreachable. The icon bar now scrolls vertically when buttons exceed the available height.
+- **Icon bar separator barely visible.** The horizontal divider between the upper and lower icon groups used the panel border color, which is invisible in many themes. Now uses the inactive foreground color at reduced opacity so it is visible across light and dark themes.
+- **Minimap viewport red outline not visible.** The red outline on the minimap viewport slider was invisible because the canvas compositing layer obscured the `box-shadow`. Fixed by adding `z-index: 1` to the viewport element and switching from `inset box-shadow` to a real `border` for reliable rendering.
+- **Continuation collapse button moved left of `»` chevron.** The `+N` / `−N` expand/collapse button was positioned to the right of the `»` chevron, overlapping with the timestamp. It is now injected into the decoration prefix before the `»` so it sits near the line numbers and cannot overlap other elements. The standalone contBadge token in the render string was also moved to sit after `deco` (not before), so the art-continuation fallback path — where `deco` is empty and the splice is skipped — matches the invariant that the badge never precedes the decoration prefix.
+- **Compress lines dedup missed structured-prefix lines.** The dedup key compared the full HTML text including structured prefixes (timestamps, PIDs, logcat tags). Lines with identical message bodies but different timestamps produced different keys and were not compressed. Now strips the structured prefix (and source-tag brackets) before comparing, matching what the user sees on screen. Also added `metadataFiltered` to the eligibility check so metadata-filtered lines are excluded from dedup grouping (mirrors `calcItemHeight`).
+- **Compress lines toggles were not reversible.** The streaming repeat tracker permanently swallowed non-SQL consecutive duplicates (never stored them in `allLines`), so unchecking "Compress lines" could not expand them back. Non-SQL duplicates are now always stored individually in `allLines`, and the compress dedup algorithm (`applyCompressDedupModes`) handles grouping when compress mode is toggled on. Unchecking compress now expands all lines. SQL fingerprint repeats retain their existing drilldown notification row behavior.
+### Changed
+
+- **Collections explainer condensed.** The banner is now shorter, dismissible, and the standalone "New Collection" button was removed in favor of context-menu creation.
+- **Terminology standardized across UI.** `Project Logs` → `Logs`, `Code Origins` → `Source Classes`, and `filter preset` → `Quick Filter`.
+- **Source Classes tab shows selected count.** The tab header and body summary now display the number of selected (visible) tags instead of the total count. Shows nothing when no tags are selected (never shows zero).
+- **Log Sources layout improved.** Tier radios now sit below source titles with clearer spacing and padding.
+- **Font zoom range widened from 8–22px to 4–42px.** Applies to keyboard shortcuts, Ctrl+wheel, and the Options slider.
+- **`Investigation` renamed to `Collection` everywhere.** Commands, UI, types, and filenames were updated; `.saropa/collections.json` format is unchanged.
+- **Collections removed from Signal panel.** The "Your cases" section and "Create Investigation" button no longer appear inside the Signals slide-out. Collections are now managed in their own dedicated panel.
+- **Repeated non-SQL lines now show inline `(×N)` badges.** This removes separate repeat rows while preserving SQL fingerprint drilldown behavior.
+- **Log Sources panel layout improved.** Source type descriptions (stdout, stderr, console / Logcat, Android system logs / etc.) now appear inline after the tier name with a dash separator instead of on a separate line. Device and External tiers have visual spacing separators.
+- **Filters panel redesigned as a full-height slide-out with vertical tabs.** It replaces the old accordion + Tags/Origins split layout and removes the Tags icon-bar button.
+- **Date group headings show file count.** Collapsible day sections in the Project Logs panel now display the number of files in each group, right-aligned as a subtle badge.
+- **Presets moved from filter drawer to kebab menu.** Saved filters now appear in a `Presets` flyout with per-preset tooltips.
+- **Kebab dropdown aligned to button.** The actions dropdown now opens directly below the three-dot icon instead of anchoring to the far right of the page.
+- **Session summary button order swapped.** "Copy Log Path" now appears before "Open Log" in the post-session notification dialog.
+
+<details>
+<summary>Maintenance</summary>
+
+- **Icon bar Bookmarks label test matched wrong structure.** The `getIconBarHtml` test asserted `>Bookmarks</span>` but the label wraps a nested count span; loosened the assertion to `>Bookmarks<`, matching the existing loose pattern for the Logs label.
+- **Terminology dictionary added.** `docs/guides/TERMINOLOGY.md` maps user terms to internal names and lists banned terms.
+</details>
 
 ---
 
