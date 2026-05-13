@@ -28,7 +28,12 @@ For older versions (7.1.1 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [Unreleased]
 
-Expanding "N × SQL repeated:" no longer overlaps the rows below, chip rows align to the same content column as decorated lines, and the redundant `»` separator is gone from line decorations. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+Expanding "N × SQL repeated:" no longer overlaps the rows below, chip rows align to the same content column as decorated lines, the redundant `»` separator is gone from line decorations, and the **About Saropa** panel now renders the changelog as formatted markdown (headings, bullets, bold, italic, code, rules) with selectable text, plus a press-and-hold on the "Saropa Log Capture vX.Y.Z" title copies the title to the clipboard. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+
+### Added
+- **About panel: long-press title to copy "Saropa Log Capture vX.Y.Z"** — Press and hold the title row in the About Saropa panel for half a second to copy the full product name + version string to the clipboard; the existing copy toast confirms what landed. Useful for pasting into bug reports without retyping the version. Mouse and touch are both wired, and the row dims briefly during the press so the gesture is discoverable.
+- **About panel: changelog now renders as formatted markdown** — Recent changes used to show as a plain-text `<pre>` block; the panel now parses headings (`#` through `######`), `**bold**`, `*italic*`, `` `inline code` ``, `-`/`*` bullets, blockquotes, and `---` horizontal rules into styled HTML. Inline `[text](url)` links render as plain underlined text (the "Full changelog on Marketplace" link above remains the single authorized external nav from the panel). Raw HTML inside the changelog is escaped before formatting runs, so untrusted angle brackets can't inject markup.
+- **About panel: changelog text is now selectable** — The global `body { user-select: none }` rule (which confines native selection to the main `#viewport`) was suppressing drag-to-select inside the About panel. The changelog container and all its descendants now opt back in to `user-select: text` with a `cursor: text` affordance, so you can highlight a line and use the platform copy menu.
 
 ### Fixed
 - **N+1 signal confidence badge was double-boxed** — The confidence label (LOW/MEDIUM/HIGH) on "Potential N+1 query" rows had both square brackets in the text and a CSS border on the `.n1-conf` span, producing a redundant double-box. Removed the brackets so only the styled border remains.
