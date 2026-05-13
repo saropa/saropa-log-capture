@@ -99,6 +99,72 @@ suite('LevelClassifier (special formats)', () => {
         });
     });
 
+    suite('classifyLevel — DB vendor bracket tags and "Vendor:" prefixes', () => {
+
+        // The three examples below are real lines from the contacts app debug
+        // session that previously slipped through the level filter when the user
+        // disabled the Database level. They now classify as 'database' so the
+        // filter can group them with Drift SQL output.
+
+        test('should classify "DRIFT:" colon prefix as database despite "failed" keyword', () => {
+            assert.strictEqual(
+                classifyLevel('DRIFT: VM Service WebSocket connect failed: Got fragment', 'stdout', true),
+                'database',
+            );
+        });
+
+        test('should classify "[IsarDriftRowCountAudit]" bracket tag as database', () => {
+            assert.strictEqual(
+                classifyLevel('[log] [IsarDriftRowCountAudit] contact_avatars: isar=n/a drift=0 (ContactAvatarDBModel)', 'stdout', true),
+                'database',
+            );
+        });
+
+        test('should classify "[Drift]" bare bracket tag as database', () => {
+            assert.strictEqual(
+                classifyLevel('[Drift] connection pool warming up', 'stdout', true),
+                'database',
+            );
+        });
+
+        test('should classify "Isar:" colon prefix as database', () => {
+            assert.strictEqual(
+                classifyLevel('Isar: opened collection contact_avatars', 'stdout', true),
+                'database',
+            );
+        });
+
+        test('should NOT promote mid-message "[Drift]" mention to database', () => {
+            // Anchored matcher — bracket tag must be at line head.
+            assert.strictEqual(
+                classifyLevel('see [Drift] for migration details', 'stdout', true),
+                'info',
+            );
+        });
+
+        test('should still classify "[Drift] Error: lost" as error (error wins over annotation)', () => {
+            assert.strictEqual(
+                classifyLevel('[Drift] Error: lost connection to database', 'stdout', true),
+                'error',
+            );
+        });
+
+        test('should classify "[SqliteCache]" under I/flutter logcat as database', () => {
+            assert.strictEqual(
+                classifyLevel('I/flutter (12345): [SqliteCache] evicting stale entries', 'stdout', true),
+                'database',
+            );
+        });
+
+        test('should NOT regress: bare "DB" prefix does NOT promote (excluded vendor list)', () => {
+            // Bare DB/SQL excluded to avoid false positives on common English.
+            assert.strictEqual(
+                classifyLevel('DB: this is just a regular message', 'stdout', true),
+                'info',
+            );
+        });
+    });
+
     suite('classifyLevel — generic SQL (non-Drift)', () => {
 
         test('should classify SELECT...FROM as database', () => {
