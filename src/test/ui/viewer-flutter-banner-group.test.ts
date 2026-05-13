@@ -10,6 +10,7 @@ import * as assert from 'node:assert';
 import { getViewerDataAddScript } from '../../ui/viewer/viewer-data-add';
 import { getFlutterBannerScript } from '../../ui/viewer/viewer-data-add-flutter-banner';
 import { getViewerDataHelpersRender } from '../../ui/viewer/viewer-data-helpers-render';
+import { getViewportRenderScript } from '../../ui/viewer/viewer-data-viewport';
 import { getFlutterBannerStyles } from '../../ui/viewer-styles/viewer-styles-flutter-banner';
 
 suite('Flutter exception banner grouping', () => {
@@ -124,6 +125,94 @@ suite('Flutter exception banner grouping', () => {
             assert.ok(
                 /border-left:\s*3px\s+solid/.test(css),
                 'banner group must use a left accent rail to visually connect rows',
+            );
+        });
+
+        test('severity dot is pulled into the banner rail (tight gap)', () => {
+            // WHY pin both numbers: the rail visually "joins" the dot column
+            // only when both the dot ::before AND the bar-up/bar-down ::after
+            // are pulled in together. If a future tweak moves one but not the
+            // other, the stub connector visibly offsets from the dot it joins.
+            const css = getFlutterBannerStyles();
+            // Dot ::before override applies to all three banner positions.
+            assert.ok(
+                /\.banner-group-start\[class\*="level-bar-"\]::before[\s\S]*?\.banner-group-mid\[class\*="level-bar-"\]::before[\s\S]*?\.banner-group-end\[class\*="level-bar-"\]::before[\s\S]*?left:\s*0\.15em/.test(css),
+                'all three banner positions must pull the severity dot to left: 0.15em',
+            );
+            // Connector ::after must be re-centered under the pulled dot.
+            assert.ok(
+                /\.banner-group-(?:start|mid|end)\.bar-(?:up|down)::after[\s\S]*?left:\s*0\.30em/.test(css),
+                'bar-up / bar-down connector must align under the pulled dot at left: 0.30em',
+            );
+        });
+
+        test('banner body and footer rows hide the line-decoration prefix', () => {
+            // WHY visibility:hidden rather than display:none — the span must
+            // continue to occupy its natural width so the .line:has(.line-decoration)
+            // rule keeps applying (14.25em padding-left + hanging-indent), which
+            // keeps the message text on body/footer rows column-aligned with
+            // the header. display:none would collapse the prefix, drop the
+            // hanging indent, and slam body text up against the banner rail.
+            const css = getFlutterBannerStyles();
+            assert.ok(
+                /\.banner-group-mid\s*>\s*\.line-decoration[\s\S]*?\.banner-group-end\s*>\s*\.line-decoration[\s\S]*?visibility:\s*hidden/.test(css),
+                'banner body + footer rows must hide their .line-decoration via visibility:hidden',
+            );
+            // Banner header must NOT be in the hide list — it's the one row
+            // that should display the counter + timestamp for the whole block.
+            assert.ok(
+                !/\.banner-group-start\s*>\s*\.line-decoration[^}]*visibility:\s*hidden/.test(css),
+                'banner header (start) must keep its visible counter + timestamp',
+            );
+        });
+    });
+
+    suite('severity connector breaks at real content rows (no bridge through unrelated content)', () => {
+        const viewport = getViewportRenderScript();
+
+        test('bridge loop pre-checks for blocking content rows before painting', () => {
+            // WHY a pre-check rather than skipping inline: bar-down/bar-up on
+            // the dots themselves still needs to fire (anchors the chain so
+            // dot pairs still read as related), but the level-bar-{lvl} stamp
+            // on intermediate rows must NOT happen if any of them is a real
+            // content row. The two decisions are independent — that's why
+            // there's a "bridgeable" flag.
+            assert.ok(
+                viewport.includes('var bridgeable = true'),
+                'connector loop must declare a bridgeable flag before painting bridge classes',
+            );
+            assert.ok(
+                viewport.includes("ch[bj].classList.contains('line-blank')")
+                    && viewport.includes("ch[bj].classList.contains('viewer-divider')"),
+                'pre-check must allow blank lines and viewer-divider rows as bridgeable rows',
+            );
+            assert.ok(
+                viewport.includes('bridgeable = false'),
+                'pre-check must flip bridgeable to false on a real content row',
+            );
+            assert.ok(
+                viewport.includes('if (bridgeable) {'),
+                'bridge class assignment must be gated by the bridgeable flag',
+            );
+        });
+
+        test('dot anchors (bar-down on ci, bar-up on ni) still fire when not bridgeable', () => {
+            // The chain must still read as "almost connected" even when the
+            // bridge is suppressed — these two classes paint the stub above
+            // the trailing dot and below the leading dot.
+            const loopStart = viewport.indexOf("ch[ci].classList.add('bar-down')");
+            assert.ok(loopStart >= 0, 'bar-down anchor must be assigned to ci');
+            assert.ok(
+                viewport.indexOf("ch[ni].classList.add('bar-up')", loopStart) > loopStart,
+                'bar-up anchor must be assigned to ni',
+            );
+            // Both anchors must come BEFORE the bridgeable gate so they
+            // fire regardless of whether intermediate rows are bridgeable.
+            const anchorIdx = viewport.indexOf("ch[ci].classList.add('bar-down')");
+            const gateIdx = viewport.indexOf('if (bridgeable) {');
+            assert.ok(
+                anchorIdx >= 0 && gateIdx > anchorIdx,
+                'dot anchors must be assigned before the bridgeable-gated paint loop',
             );
         });
     });
