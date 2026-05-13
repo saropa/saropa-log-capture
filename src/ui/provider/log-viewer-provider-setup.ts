@@ -29,8 +29,7 @@ export interface LogViewerSetupTarget {
   onBecameVisible(): void;
   stopBatchTimer(): void;
   getView(): vscode.WebviewView | undefined;
-  getUnreadWatchHits(): number;
-  setUnreadWatchHits(n: number): void;
+  acknowledgeWatchHits(): void;
   handleMessage(msg: Record<string, unknown>): void;
 }
 
@@ -130,8 +129,9 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
   webviewView.onDidChangeVisibility(() => {
     if (webviewView.visible) {
       target.setVisibleView(webviewView);
-      target.setUnreadWatchHits(0);
-      helpers.updateBadge(webviewView, target.getUnreadWatchHits());
+      // Badge reset + watcher count reset consolidated in acknowledgeWatchHits
+      // so the two can never drift out of sync.
+      target.acknowledgeWatchHits();
       target.onBecameVisible();
     }
   });

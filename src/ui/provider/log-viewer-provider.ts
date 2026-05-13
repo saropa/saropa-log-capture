@@ -74,6 +74,7 @@ export class LogViewerProvider
   private onBrowseSessionRoot?: () => Promise<void>;
   private onClearSessionRoot?: () => Promise<void>;
   private onBecameVisibleHandler?: () => void;
+  private onWatchAcknowledged?: () => void;
   private readonly seenCategories = new Set<string>();
   private unreadWatchHits = 0;
   private cachedPresets: readonly FilterPreset[] = [];
@@ -118,8 +119,6 @@ export class LogViewerProvider
     if (view === undefined) { this.visibleView = undefined; }
     else { this.views.add(view); this.visibleView = view; }
   }
-  getUnreadWatchHits(): number { return this.unreadWatchHits; }
-  setUnreadWatchHits(n: number): void { this.unreadWatchHits = n; }
   getExtensionUri(): vscode.Uri { return this.extensionUri; }
   getVersion(): string { return this.version; }
   getContext(): vscode.ExtensionContext { return this.context; }
@@ -153,6 +152,12 @@ export class LogViewerProvider
   setBrowseSessionRootHandler(handler: () => Promise<void>): void { this.onBrowseSessionRoot = handler; }
   setClearSessionRootHandler(handler: () => Promise<void>): void { this.onClearSessionRoot = handler; }
   setBecameVisibleHandler(handler: () => void): void { this.onBecameVisibleHandler = handler; }
+  setWatchAcknowledgedHandler(handler: () => void): void { this.onWatchAcknowledged = handler; }
+  /** Reset badge + watcher counts when the user sees the panel — consolidated so they cannot drift out of sync. */
+  acknowledgeWatchHits(): void {
+    if (this.unreadWatchHits === 0) { return; }
+    this.unreadWatchHits = 0; for (const v of this.views) { helpers.updateBadge(v, 0); } this.onWatchAcknowledged?.();
+  }
   // -- Webview state methods --
   scrollToLine(line: number): void { state.scrollToLineImpl(this, line); }
   setExclusions(patterns: readonly string[]): void { state.setExclusionsImpl(this, patterns); }
@@ -308,7 +313,7 @@ export class LogViewerProvider
 
   handleMessage(msg: Record<string, unknown>): void {
     if (msg.type === 'viewerFocused') {
-      if (this.unreadWatchHits > 0) { this.unreadWatchHits = 0; for (const v of this.views) { helpers.updateBadge(v, 0); } }
+      this.acknowledgeWatchHits();
       return;
     }
     const ctx: ViewerMessageContext = {
