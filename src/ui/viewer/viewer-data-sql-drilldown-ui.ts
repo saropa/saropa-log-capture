@@ -71,8 +71,19 @@ function estimateSqlRepeatDrilldownExtraHeight(d) {
     sqlLines = Math.max(1, Math.min(sqlLines, 6));
     var v = d.variants ? d.variants.length : 0;
     var more = d.moreVariantCount > 0 ? 1 : 0;
-    var staticRow = (typeof staticSqlFromFingerprintEnabled !== 'undefined' && staticSqlFromFingerprintEnabled && d.fingerprint) ? 28 : 0;
-    return 44 + sqlLines * 16 + v * 18 + more * 16 + staticRow;
+    var staticRow = (typeof staticSqlFromFingerprintEnabled !== 'undefined' && staticSqlFromFingerprintEnabled && d.fingerprint) ? 32 : 0;
+    /* Component breakdown for the baseline (must stay in step with
+       viewer-styles-sql-repeat-drilldown.ts):
+         container margins (6+2) + padding-top+bottom (6+8)            = 22
+         two .sql-repeat-drilldown-meta rows (font 0.92em, mb 4)        ≈ 40
+         <pre> snippet padding+margin (6+6 + 6 + 8) + 1 baseline line   ≈ 38
+         .sql-repeat-drilldown-variant-title (font 0.88em, mt 4 mb 2)   ≈ 22
+       Total baseline ≈ 122. The previous value of 44 underestimated by
+       ~78px, causing the panel to overflow the row and overlap the next
+       5+ rows (see line-has-block fix in viewer-styles-lines.ts).
+       Per-variant rows are 0.88em (font ~11px) + 2+2 margin ≈ 16px.
+       The "+N more distinct" row matches a variant row. */
+    return 122 + sqlLines * 15 + v * 16 + more * 16 + staticRow;
 }
 /** Build repeat-notification inner HTML for SQL fingerprint rows (collapsed or expanded). */
 function buildSqlRepeatNotificationRowHtml(item) {

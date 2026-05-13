@@ -115,7 +115,21 @@ function renderItem(item, idx, prevVis) {
         // shouldn't reach this branch with isContext=true, but apply the mute anyway so
         // any future code path that flips isContext on a chip renders consistently.
         var chipCtxCls = item.isContext ? ' context-line' + (item.isContextFirst ? ' context-first' : '') : '';
-        return '<div class="line' + matchCls + chipCtxCls + '"' + idxAttr + '>' + html + '</div>';
+        /* Tabular-column alignment: when decorations are globally on, push chip
+           rows to the same content column as decorated lines via the spacer-only
+           class. No real prefix is rendered (chip rows have no meaningful
+           per-line counter/timestamp to display), but the CSS rule reserves
+           padding-left so the chip label and any embedded drilldown panel sit
+           in the same column as message text on regular lines. */
+        var chipDecoCls = (typeof areDecorationsOn === 'function' && areDecorationsOn()) ? ' line-deco-spacer-only' : '';
+        /* When the SQL repeat drilldown is expanded, the .line embeds a block
+           <div class="sql-repeat-drilldown-detail"> child. Block children
+           overflow the .line's strict 1em height and visually overlap
+           subsequent rows. line-has-block flips height to auto so the row
+           grows to fit the panel — matches the larger value calcItemHeight()
+           returns for this case. */
+        var chipBlockCls = item.sqlRepeatDrilldownOpen ? ' line-has-block' : '';
+        return '<div class="line' + matchCls + chipCtxCls + chipDecoCls + chipBlockCls + '"' + idxAttr + '>' + html + '</div>';
     }
     /* Stack gutter: when any stack groups exist, non-header lines get an
        invisible spacer matching the arrow width so line numbers stay aligned. */
@@ -177,7 +191,7 @@ function renderItem(item, idx, prevVis) {
     var gap = isArtCont ? '' : ((typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '');
     var elapsed = isArtCont ? '' : ((typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '');
     /* Compute continuation badge early so it can be injected into the
-       decoration prefix (left of the » chevron, near the line numbers). */
+       decoration prefix (inside the .line-decoration span, near the line numbers). */
     var contBadge = '';
     if (item.contChildCount > 0 && item.contGroupId >= 0) {
         var contCls = item.contCollapsed ? 'cont-badge' : 'cont-badge cont-badge-expanded';
@@ -191,10 +205,12 @@ function renderItem(item, idx, prevVis) {
     }
     /* idx passed so decoration can show file line number (idx+1); blank-line counter gated by decoShowCounterOnBlank. */
     var deco = isArtCont ? '' : ((typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item, idx) : '');
-    /* Splice continuation badge into the decoration prefix, left of the »
-       chevron, so it sits near the line numbers and never overlaps the timestamp. */
+    /* Splice continuation badge into the trailing whitespace of the decoration
+       prefix (the prefix now ends '&nbsp;&nbsp;</span>' after the chevron was
+       removed). The badge then sits inside the .line-decoration span, just
+       before the closing tag, immediately right of the timestamp. */
     if (contBadge && deco) {
-        deco = deco.replace('\\u00BB </span>', contBadge + ' \\u00BB </span>');
+        deco = deco.replace('&nbsp;&nbsp;</span>', '&nbsp;' + contBadge + '&nbsp;</span>');
         contBadge = '';
     }
     var annHtml = (typeof getAnnotationHtml === 'function') ? getAnnotationHtml(idx) : '';
