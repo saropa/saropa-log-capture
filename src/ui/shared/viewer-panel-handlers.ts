@@ -24,6 +24,8 @@ export {
     handleSetErrorStatus,
     handleSignalDataRequest,
     handleMuteSignalWithReason,
+    handleAcceptFilterSuggestion,
+    handleRejectFilterSuggestion,
 } from './handlers/recurring-handlers';
 
 export {

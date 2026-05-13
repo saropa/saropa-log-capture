@@ -81,6 +81,12 @@ export function getSignalPanelHtml(): string {
                 <span class="signal-section-toggle" aria-hidden="true"></span>
             </button>
             <div id="signal-body-across-logs" class="signal-section-body">
+                <!-- Filter suggestions (plan 053-A) — pending noise-learning suggestions. Block self-hides
+                     when no pending suggestions exist so empty-state UI doesn't appear. -->
+                <div class="signal-narrative-block" id="signal-suggestions-block" style="display:none">
+                    <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">💡</span><span id="signal-suggestions-summary">Filter suggestions</span></div>
+                    <div id="signal-suggestions-list" class="signal-suggestions-list"></div>
+                </div>
                 <div class="signal-narrative-block">
                     <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">📁</span><span id="signal-hotfiles-summary">Frequently modified files</span></div>
                     <div id="signal-hotfiles-empty" class="signal-hotfiles-empty" style="display:none"><span class="signal-margin-emoji" aria-hidden="true">ℹ️</span>${emptyHotFiles}</div>
