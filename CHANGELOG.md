@@ -26,6 +26,14 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [7.8.4]
+
+### Fixed
+
+- **Watch badge now shows only unseen hits** — The keyword watch badge on the Saropa Log Capture tab previously showed a cumulative total that kept climbing and never meaningfully reset. Now when the panel gains focus, both the badge and the underlying watcher counts reset, so the badge only reflects hits since the user last looked.
+
+---
+
 ## [7.8.3]
 
 Post-capture toast gains Always Open and Don't Ask Again buttons, the l10n translation pipeline now auto-syncs and translates all 10 locale bundles with brand-name protection, and context menu items show keyboard shortcut hints. [log](https://github.com/saropa/saropa-log-capture/blob/v7.8.3/CHANGELOG.md)
