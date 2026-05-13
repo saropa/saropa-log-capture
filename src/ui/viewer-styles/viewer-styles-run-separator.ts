@@ -55,7 +55,8 @@ export function getRunSeparatorStyles(): string {
 .run-sep-dot-error { background: #f44336; color: #fff; }
 .run-sep-dot-warning { background: #ff9800; color: #000; }
 .run-sep-dot-perf { background: #9c27b0; color: #fff; }
-.run-sep-dot-info { background: #4caf50; color: #fff; }
+/* Info dot blue, matching the rotated level palette (Info=blue, Notice=cyan, DB=green). */
+.run-sep-dot-info { background: #2196f3; color: #fff; }
 .run-sep-dot-none { background: rgba(255,255,255,0.25); color: rgba(255,255,255,0.8); }
 `;
 }

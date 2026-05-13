@@ -134,9 +134,14 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
 .line.level-performance {
     color: var(--vscode-charts-purple, #a855f7);
 }
-/* Info: same token as Debug Console info tint, gutter dot, and in-log "Info" highlights. */
+/* Info: blue — same token as Notice/Framework chart blue. Why we moved off
+   debugConsole-infoForeground: that token resolves to a purple-ish tint in
+   several themes (and the fallback is #b695f8 purple), which clashed with
+   Performance (also purple). Anchoring Info to charts-blue keeps the
+   "standard info blue" reading users expect and frees the cyan/green
+   space for Notice and Database below. */
 .line.level-info {
-    color: var(--vscode-debugConsole-infoForeground, #b695f8);
+    color: var(--vscode-charts-blue, #2196f3);
 }
 .line.level-todo {
     color: var(--vscode-terminal-ansiWhite, #e5e5e5);
@@ -146,11 +151,17 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
     color: var(--vscode-terminal-ansiYellow, #dcdcaa);
     opacity: 0.8;
 }
+/* Notice: cyan — distinct from Info (blue) and Database (green). Notice is a
+   step above Info but below Warning, so a cooler hue between blue and green
+   reads as "pay attention but not urgent". */
 .line.level-notice {
-    color: var(--vscode-charts-blue, #2196f3);
-}
-.line.level-database {
     color: var(--vscode-terminal-ansiCyan, #00bcd4);
+}
+/* Database: green — distinct from Notice (cyan). Green reads as "neutral
+   activity, healthy traffic" which fits SQL query output (it is not an
+   error or warning, just a record of what the DB did). */
+.line.level-database {
+    color: var(--vscode-charts-green, #4caf50);
 }
 
 /* --- ASCII separator lines (===, ---, +---, Drift/Unicode box banners, etc.) --- */

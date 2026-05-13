@@ -3,20 +3,46 @@ import { getDecorationStyles } from '../../ui/viewer-styles/viewer-styles-decora
 import { getViewerStyles } from '../../ui/viewer-styles/viewer-styles';
 
 suite('ViewerLevelLineColors', () => {
-    test('info line text matches info severity bar token (debug console info)', () => {
+    test('info line text matches info severity bar token (charts blue)', () => {
         const viewer = getViewerStyles();
         const deco = getDecorationStyles();
+        // Info anchored to charts-blue (was debugConsole-infoForeground which resolved
+        // to a purple-ish tint in several themes and clashed with Performance).
         assert.ok(
-            /\.line\.level-info\s*\{[^}]*debugConsole-infoForeground/s.test(viewer),
-            'info line text should use debugConsole-infoForeground',
+            /\.line\.level-info\s*\{[^}]*charts-blue/s.test(viewer),
+            'info line text should use charts-blue',
         );
         assert.ok(
-            /\.level-bar-info\s*\{[^}]*debugConsole-infoForeground/s.test(deco),
+            /\.level-bar-info\s*\{[^}]*charts-blue/s.test(deco),
             'info severity bar should use the same token as info line text',
         );
         assert.ok(
-            !/\.level-bar-info\s*\{[^}]*charts-yellow/s.test(deco),
-            'regression: info bar must not use charts-yellow while text uses debugConsole-infoForeground',
+            !/\.level-bar-info\s*\{[^}]*debugConsole-infoForeground/s.test(deco),
+            'regression: info bar must not regress to debugConsole-infoForeground (purple-ish in many themes)',
+        );
+    });
+
+    test('notice uses ansi-cyan and database uses charts-green (palette rotation)', () => {
+        const viewer = getViewerStyles();
+        const deco = getDecorationStyles();
+        // Three-way rotation away from the prior info=purple / notice=blue / db=cyan
+        // palette. Verify line text and gutter bar agree per level so the picker
+        // dot, gutter bar, and log row never disagree on what a level "looks like".
+        assert.ok(
+            /\.line\.level-notice\s*\{[^}]*terminal-ansiCyan/s.test(viewer),
+            'notice line text should use terminal-ansiCyan',
+        );
+        assert.ok(
+            /\.level-bar-notice\s*\{[^}]*terminal-ansiCyan/s.test(deco),
+            'notice severity bar should use terminal-ansiCyan',
+        );
+        assert.ok(
+            /\.line\.level-database\s*\{[^}]*charts-green/s.test(viewer),
+            'database line text should use charts-green',
+        );
+        assert.ok(
+            /\.level-bar-database\s*\{[^}]*charts-green/s.test(deco),
+            'database severity bar should use charts-green',
         );
     });
 

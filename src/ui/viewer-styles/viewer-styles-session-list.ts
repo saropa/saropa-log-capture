@@ -268,8 +268,13 @@ export function getSessionListStyles(): string {
 .sev-error { background: var(--vscode-charts-red, #f44336); }
 .sev-warning { background: var(--vscode-charts-yellow, #ffc107); }
 .sev-perf { background: var(--vscode-charts-purple, #a855f7); }
-.sev-fw { background: var(--vscode-charts-blue, #2196f3); }
-.sev-info { background: var(--vscode-charts-green, #4caf50); }
+/* Framework reads as "neutral background activity" — pick a hue that does not
+   collide with Info (also blue). Charts-foreground is theme-neutral and keeps
+   the dot legible without competing with the Info/Notice/Database trio. */
+.sev-fw { background: var(--vscode-charts-foreground, #cccccc); }
+/* Info dot follows the level palette: Info=blue (rotated from green when the
+   level palette became Info=blue / Notice=cyan / Database=green). */
+.sev-info { background: var(--vscode-charts-blue, #2196f3); }
 .sev-other { background: var(--vscode-descriptionForeground, #888); opacity: 0.5; }
 `;
 }
