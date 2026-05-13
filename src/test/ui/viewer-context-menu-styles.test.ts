@@ -28,6 +28,20 @@ suite('ViewerContextMenuStyles', () => {
         );
     });
 
+    test('should style shortcut hints as right-aligned and dimmed', () => {
+        const css = getContextMenuStyles();
+        assert.match(
+            css,
+            /\.context-menu-shortcut\s*\{[^}]*opacity:\s*0\.5/s,
+            'shortcut hint should be dimmed (opacity 0.5)',
+        );
+        assert.match(
+            css,
+            /\.context-menu-shortcut\s*\{[^}]*margin-left:\s*24px/s,
+            'shortcut hint should have left margin to separate from label',
+        );
+    });
+
     test('should hide checkmark by default and show when checked', () => {
         const css = getContextMenuStyles();
         assert.match(
