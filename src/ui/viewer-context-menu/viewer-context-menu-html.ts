@@ -75,6 +75,7 @@ export function getContextMenuHtml(): string {
         <div class="context-menu-submenu-content">
             <div class="context-menu-item" data-action="copy-selection" title="Copy the selected text to the clipboard">
                 <span class="codicon codicon-copy"></span> Copy
+                <span class="context-menu-shortcut">Ctrl+C</span>
             </div>
             <div class="context-menu-item" data-action="copy" data-line-action title="Copy this line as plain text">
                 <span class="codicon codicon-copy"></span> Copy Line
@@ -91,6 +92,7 @@ export function getContextMenuHtml(): string {
             <div class="context-menu-separator" data-line-action></div>
             <div class="context-menu-item" data-action="copy-all" title="Copy every line in the log as plain text">
                 <span class="codicon codicon-clippy"></span> Copy All
+                <span class="context-menu-shortcut">Ctrl+Shift+A</span>
             </div>
             <div class="context-menu-item" data-action="copy-all-decorated" title="Copy every line with decoration prefixes">
                 <span class="codicon codicon-clippy"></span> Copy All Decorated
@@ -104,6 +106,7 @@ export function getContextMenuHtml(): string {
             </div>
             <div class="context-menu-item" data-action="select-all" title="Select all lines in the viewport">
                 <span class="codicon codicon-list-flat"></span> Select All
+                <span class="context-menu-shortcut">Ctrl+A</span>
             </div>
             <div class="context-menu-item" data-action="export-current-view" title="Export filtered log content to a file">
                 <span class="codicon codicon-export"></span> Export current view…
@@ -146,9 +149,11 @@ export function getContextMenuHtml(): string {
         <div class="context-menu-submenu-content">
             <div class="context-menu-item" data-action="pin" title="Pin this line to a sticky header strip at the top of the viewer">
                 <span class="codicon codicon-pin"></span> Pin Line
+                <span class="context-menu-shortcut">P</span>
             </div>
             <div class="context-menu-item" data-action="bookmark" title="Save this line to the Bookmarks panel for quick navigation">
                 <span class="codicon codicon-bookmark"></span> Bookmark Line
+                <span class="context-menu-shortcut">Ctrl+B</span>
             </div>
             <div class="context-menu-item" data-action="edit" title="Edit this line's text in place">
                 <span class="codicon codicon-edit"></span> Edit Line
@@ -222,6 +227,7 @@ export function getContextMenuHtml(): string {
                 <span class="codicon codicon-whitespace" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span class="context-menu-label">Show blank lines</span>
+                <span class="context-menu-shortcut">H</span>
             </div>
         </div>
     </div>
@@ -233,6 +239,7 @@ export function getContextMenuHtml(): string {
                 <span class="codicon codicon-word-wrap" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span class="context-menu-label">Word wrap</span>
+                <span class="context-menu-shortcut">W</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-line-numbers" title="Show the line number at the start of each row">
                 <span class="codicon codicon-list-ordered" aria-hidden="true"></span>
@@ -255,17 +262,20 @@ export function getContextMenuHtml(): string {
                 <span class="codicon codicon-layout-panel" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span class="context-menu-label">Visual spacing</span>
+                <span class="context-menu-shortcut">V</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-line-height" title="Double each row's height for easier reading (1.2 → 2.0 line-height)">
                 <span class="codicon codicon-unfold" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span class="context-menu-label">Tall rows</span>
+                <span class="context-menu-shortcut">Ctrl+Shift+Scroll</span>
             </div>
             <div class="context-menu-separator"></div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-compress-lines" title="Collapse runs of identical consecutive lines into one row with a count badge">
                 <span class="codicon codicon-fold" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span class="context-menu-label">Compress lines (consecutive dupes)</span>
+                <span class="context-menu-shortcut">C</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-compress-lines-global" title="Also collapse duplicate lines that are not adjacent to each other">
                 <span class="codicon codicon-fold-down" aria-hidden="true"></span>

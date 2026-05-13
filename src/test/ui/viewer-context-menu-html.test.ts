@@ -336,6 +336,34 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(!html.includes('>Show code quality<') && !html.includes('> Show code quality<'));
         });
 
+        test('should show keyboard shortcut hints on items that have bindings', () => {
+            const html = getContextMenuHtml();
+            /* Each shortcut hint uses context-menu-shortcut class with the key text.
+               Verify by finding the action, then checking the shortcut span follows. */
+            const expected: [string, string][] = [
+                ['copy-selection', 'Ctrl+C'],
+                ['copy-all', 'Ctrl+Shift+A'],
+                ['select-all', 'Ctrl+A'],
+                ['pin', 'P'],
+                ['bookmark', 'Ctrl+B'],
+                ['toggle-wrap', 'W'],
+                ['toggle-spacing', 'V'],
+                ['toggle-line-height', 'Ctrl+Shift+Scroll'],
+                ['toggle-compress-lines', 'C'],
+                ['toggle-show-blank-lines', 'H'],
+            ];
+            for (const [action, key] of expected) {
+                const actionIdx = html.indexOf(`data-action="${action}"`);
+                assert.ok(actionIdx >= 0, `${action} must exist in HTML`);
+                /* Find the shortcut span within the same menu item (next 500 chars). */
+                const slice = html.slice(actionIdx, actionIdx + 500);
+                assert.ok(
+                    slice.includes(`context-menu-shortcut">${key}<`),
+                    `${action} should show shortcut hint "${key}"`,
+                );
+            }
+        });
+
         test('should use positive "Show blank lines" label with inverted toggle logic', () => {
             const html = getContextMenuHtml();
             assert.ok(html.includes('data-action="toggle-show-blank-lines"'));

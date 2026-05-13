@@ -113,6 +113,14 @@ export function getContextMenuStyles(): string {
 /* Explicit flex item so the text label is never collapsed by the flex layout.
    font-family inherits from .context-menu-item; override only if needed. */
 .context-menu-label { flex: 1 1 auto; }
+/* Right-aligned dimmed shortcut hint (VS Code convention: Ctrl+C sits right of the label).
+   margin-left:auto pushes it to the far right; the label's flex:1 already fills the middle. */
+.context-menu-shortcut {
+    margin-left: 24px;
+    opacity: 0.5;
+    font-size: 11px;
+    white-space: nowrap;
+}
 
 `;
 }
