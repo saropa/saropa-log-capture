@@ -12,6 +12,7 @@ import { aggregateSignals } from '../../../modules/misc/cross-session-aggregator
 import type { RecurringSignalEntry } from '../../../modules/misc/recurring-signal-builder';
 import { buildAllRecurringSignals } from '../../../modules/misc/recurring-signal-builder';
 import { getErrorStatusBatch, setErrorStatus, type ErrorStatus } from '../../../modules/misc/error-status-store';
+import { getInteractionTracker } from '../../../modules/learning/learning-runtime';
 import { SessionMetadataStore } from '../../../modules/session/session-metadata';
 import { loadFilteredMetas, parseSessionDate } from '../../../modules/session/metadata-loader';
 import { isPersistedSignalSummaryV1 } from '../../../modules/root-cause-hints/signal-summary-types';
@@ -24,6 +25,51 @@ import type { PostFn } from './crashlytics-handlers';
 export async function handleSetErrorStatus(hash: string, status: string, post: PostFn, currentFileUri?: vscode.Uri): Promise<void> {
     await setErrorStatus(hash, status as ErrorStatus);
     // Re-send full signal data so the unified list re-renders with updated triage states
+    await handleSignalDataRequest(post, currentFileUri);
+}
+
+/**
+ * Fu4 (plan 052): Mute a signal with a free-text reason.
+ *
+ * Two outcomes from a single user gesture:
+ *   1. Status flip: the signal goes from open → muted, same path as anonymous mute.
+ *   2. Labeled training example: the reason gets recorded via the existing InteractionTracker
+ *      using the `add-exclusion` type. The signal label becomes the `lineText` (the pattern the
+ *      tracker will analyze for noise-learning), suffixed with the reason as a hint comment.
+ *      Without a reason the user gets the existing anonymous mute behavior — no learning data.
+ *
+ * Cancel from the InputBox aborts the mute entirely. This matches the rule of least surprise:
+ * "I clicked Mute, then thought better of it" should not result in a half-applied state.
+ */
+export async function handleMuteSignalWithReason(hash: string, label: string, post: PostFn, currentFileUri?: vscode.Uri): Promise<void> {
+    if (!hash) { return; }
+    const reason = await vscode.window.showInputBox({
+        title: 'Mute signal',
+        prompt: 'Why are you muting this signal? (Optional but feeds noise-learning so future suggestions improve.)',
+        placeHolder: 'e.g. expected framework noise, known third-party warning, intentional debug print',
+        validateInput: (v) => v.length > 80 ? 'Reason must be 80 characters or fewer' : undefined,
+        ignoreFocusOut: true,
+    });
+    /* showInputBox returns undefined when the user dismisses with Escape; an empty string means
+       "OK with no text". Treat undefined as a cancel and bail; treat empty as "anonymous mute". */
+    if (reason === undefined) { return; }
+    await setErrorStatus(hash, 'muted' as ErrorStatus);
+    /* Only feed the learning system if the user actually provided a reason. The bare signal label
+       has no narrative signal beyond what the tracker would see from any other interaction. */
+    if (reason.trim().length > 0 && label) {
+        try {
+            getInteractionTracker()?.handleViewerMessage({
+                type: 'trackInteraction',
+                interactionType: 'add-exclusion',
+                /* lineText carries the pattern the extractor will analyze. Combining label + reason
+                   gives the extractor both the signal content and the user's framing of WHY it's noise. */
+                lineText: `${label} // reason: ${reason.trim()}`,
+                lineLevel: 'info',
+            });
+        } catch {
+            /* Non-critical: a learning capture failure must never block the mute itself. */
+        }
+    }
     await handleSignalDataRequest(post, currentFileUri);
 }
 

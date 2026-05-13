@@ -29,6 +29,16 @@ export function getSignalScriptPartD(): string {
             var triageBtn = e.target.closest('.re-action[data-hash]');
             if (triageBtn && triageBtn.dataset.hash && triageBtn.dataset.status) {
                 e.stopPropagation();
+                /* Fu4 (plan 052): Mute routes through a separate path that prompts for a reason
+                   on the extension side and feeds the noise-learning system. Close / Re-open keep
+                   the original anonymous status-flip path because the user has no narrative to
+                   add (Close is "fixed", Re-open is "wasn't fixed" — pure status). */
+                if (triageBtn.dataset.status === 'muted') {
+                    var parentRow = triageBtn.closest('.signal-trend-row');
+                    var lbl = (parentRow && parentRow.getAttribute('title')) || '';
+                    vscodeApi.postMessage({ type: 'muteSignalWithReason', hash: triageBtn.dataset.hash, label: lbl });
+                    return;
+                }
                 vscodeApi.postMessage({ type: 'setRecurringErrorStatus', hash: triageBtn.dataset.hash, status: triageBtn.dataset.status });
                 return;
             }
