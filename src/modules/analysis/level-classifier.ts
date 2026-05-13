@@ -22,6 +22,55 @@ const threadtimeLevelPattern = /^\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\.\d{3}\s+\d+\s+
 // Matches both LogInterceptor (`Drift: Sent SELECT`) and DriftDebugInterceptor (`Drift SELECT: SELECT`).
 const driftStatementPattern = /\bDrift(?::\s+Sent|\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\s*:)\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\b/i;
 
+/**
+ * Vendor tokens that strongly imply database content when they appear as a
+ * leading bracket tag or `Vendor:` prefix. Curated — bare "DB" / "SQL" are
+ * intentionally excluded to avoid false positives on common English text
+ * (e.g. "DB connection issue" in a non-DB log line, "SQL injection" in a
+ * security advisory). Add new vendors only when the token is unambiguous in
+ * isolation.
+ */
+const databaseVendorTokens = '(?:Drift|Isar|Sqlite|Sqflite|Hive|Realm|Postgres|MySQL|MongoDB?)';
+
+/**
+ * Bracket tag at line head containing a DB vendor token, e.g.:
+ *   "[Drift] log message"           → bracket = "[Drift]"
+ *   "[IsarDriftRowCountAudit] ..."  → bracket contains "Isar" + "Drift"
+ *   "[log] [SqliteCache] ..."       → outer "[log]" tolerated, inner tag matches
+ *   "I/flutter (12): [Drift] ..."   → logcat prefix tolerated
+ * Anchored to line start (after optional logcat/threadtime/`[log]` shells) so
+ * a mid-message mention like "see [Drift] for details" doesn't promote.
+ */
+const databaseBracketTagPattern = new RegExp(
+    '^(?:[VDIWEFA]\\/[^:]*:\\s*)?'           // optional logcat prefix
+    + '(?:\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\s+\\d+\\s+\\d+\\s+[VDIWEFA]\\s+[^:]*:\\s*)?' // optional threadtime
+    + '(?:\\[log\\]\\s*)?'                    // optional Flutter [log] shell
+    + '\\[[^\\]]*' + databaseVendorTokens + '[^\\]]*\\]',
+    'i',
+);
+
+/**
+ * `Vendor:` colon prefix at line head, e.g.:
+ *   "DRIFT: VM Service WebSocket connect failed"
+ *   "Drift: Sent SELECT ..."  (also caught by driftStatementPattern, this is broader)
+ *   "Isar: opened collection x"
+ *   "[log] Database: rolling back transaction"
+ * Anchored to line start so "the Drift: project is..." mid-message doesn't promote.
+ */
+const databaseColonPrefixPattern = new RegExp(
+    '^(?:[VDIWEFA]\\/[^:]*:\\s*)?'           // optional logcat prefix
+    + '(?:\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\s+\\d+\\s+\\d+\\s+[VDIWEFA]\\s+[^:]*:\\s*)?' // optional threadtime
+    + '(?:\\[log\\]\\s*)?'                    // optional Flutter [log] shell
+    + databaseVendorTokens + '\\s*:',
+    'i',
+);
+
+/** True when the line opens with a DB vendor bracket tag or `Vendor:` prefix. */
+function matchesDatabaseAnnotation(plainText: string): boolean {
+    return databaseBracketTagPattern.test(plainText)
+        || databaseColonPrefixPattern.test(plainText);
+}
+
 /** Strict structural error: keyword in label position (`Error:`, `[error]`), Dart private types, Null check. */
 const strictStructuralErrorPattern = /\w*(?:error|exception)\s*[:\]!]|\[(?:error|exception|fatal|panic|critical)\]|_\w*(?:Error|Exception)\b|Null check operator/i;
 /** Loose structural error: bare `error`/`exception` with negative lookahead, Dart private types, Null check. */
@@ -107,6 +156,14 @@ export function classifyLevel(
     const lcm = logcatLevelPattern.exec(plainText) ?? threadtimeLevelPattern.exec(plainText);
     if (lcm) { return classifyLogcat(lcm[1], plainText, strict); }
     if (matchesError(plainText, strict)) { return 'error'; }
+    // DB-vendor bracket tags and `Vendor:` prefixes promote to database BEFORE the
+    // generic warning/perf keyword sweep — without this, lines like
+    // "DRIFT: VM Service WebSocket connect failed" would be classified as
+    // 'warning' (via the "failed" keyword) and "[IsarDriftRowCountAudit] ..."
+    // as 'info', so the Database level filter could not hide them as a group.
+    // Error still wins above this check so a `[Drift] Error: lost connection`
+    // stays an error.
+    if (matchesDatabaseAnnotation(plainText)) { return 'database'; }
     return classifyNonError(plainText);
 }
 
@@ -150,6 +207,11 @@ function classifyLogcat(prefix: string, plainText: string, strict: boolean): Sev
     if (kwTodo?.test(plainText)) { return 'todo'; }
     if (prefix === 'V' || prefix === 'D' || kwDebug?.test(plainText)) { return 'debug'; }
     if (kwNotice?.test(plainText)) { return 'notice'; }
+    // DB-vendor annotation runs before genericSqlPattern so an I/flutter line
+    // like "[Drift] connection pool warming" without a SQL keyword still
+    // classifies as database. Stays after W-warning short-circuit on purpose:
+    // an explicit W/ from logcat is a stronger signal than a vendor tag.
+    if (matchesDatabaseAnnotation(plainText)) { return 'database'; }
     if (genericSqlPattern.test(plainText)) { return 'database'; }
     return 'info';
 }
