@@ -17,6 +17,8 @@
   "command.copyFilePath.title": "파일 경로 복사",
   "command.createCollection.title": "Saropa Log Capture: 조사 생성",
   "command.createReportFile.title": "Saropa Log Capture: Create Bug Report File",
+  "command.copyHandoffBundle.title": "Saropa Log Capture: Copy Compact Handoff Bundle",
+  "command.exportGitHubIssue.title": "Saropa Log Capture: Copy GitHub Issue Markdown",
   "command.delete.title": "Saropa Log Capture: 로그 파일 삭제",
   "command.deleteCollection.title": "조사 삭제",
   "command.deleteSession.title": "로그 파일 삭제",

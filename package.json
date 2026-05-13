@@ -197,6 +197,16 @@
         "title": "%command.createReportFile.title%"
       },
       {
+        "command": "saropaLogCapture.exportGitHubIssue",
+        "icon": "$(github)",
+        "title": "%command.exportGitHubIssue.title%"
+      },
+      {
+        "command": "saropaLogCapture.copyHandoffBundle",
+        "icon": "$(comment-discussion)",
+        "title": "%command.copyHandoffBundle.title%"
+      },
+      {
         "command": "saropaLogCapture.explainRootCauseHypotheses",
         "icon": "$(sparkle)",
         "title": "%command.explainRootCauseHypotheses.title%"

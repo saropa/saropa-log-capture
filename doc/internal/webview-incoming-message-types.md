@@ -52,6 +52,7 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `insertMarker` | viewer-message-handler-actions.ts |
 | `linkClicked` | viewer-message-handler-session-ui.ts |
 | `mergeCollections` | viewer-message-handler-collection.ts |
+| `muteSignalWithReason` | viewer-message-handler-panels.ts |
 | `navigatePart` | viewer-message-handler-session-ui.ts |
 | `navigateSession` | viewer-message-handler-session-ui.ts |
 | `openBookmark` | viewer-message-handler-session-ui.ts |
@@ -124,4 +125,4 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `viewerKeybindingRecordCancelled` | viewer-message-handler-actions.ts |
 | `viewerKeybindingRecorded` | viewer-message-handler-actions.ts |
 
-**Total:** 116 distinct types.
+**Total:** 117 distinct types.

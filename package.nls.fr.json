@@ -17,6 +17,8 @@
   "command.copyFilePath.title": "Copier le chemin du fichier",
   "command.createCollection.title": "Saropa Log Capture : Créer une enquête",
   "command.createReportFile.title": "Saropa Log Capture: Create Bug Report File",
+  "command.copyHandoffBundle.title": "Saropa Log Capture: Copy Compact Handoff Bundle",
+  "command.exportGitHubIssue.title": "Saropa Log Capture: Copy GitHub Issue Markdown",
   "command.delete.title": "Saropa Log Capture : Supprimer le fichier journal",
   "command.deleteCollection.title": "Supprimer l'enquête",
   "command.deleteSession.title": "Supprimer le fichier journal",
