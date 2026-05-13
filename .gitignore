@@ -21,7 +21,7 @@ bugs/FINISH_REVIEW.md
 *claude_temp*
 .github/copilot-instructions.md
 .cursor/
-/AGENTS.md
+AGENTS.md
 agent-transcripts/
 *.cursorrules
 .cursorrules
