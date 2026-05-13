@@ -1,6 +1,8 @@
 # Plan: Noise Learning
 
-**Status: IMPLEMENTED (2026-03-23).** MVP shipped: `src/modules/learning/` (store, tracker, pattern extract, suggestion engine), webview `trackInteraction` + `setLearningOptions`, commands and `saropaLogCapture.learning.*` settings, QuickPick review, deferred notification with frequency cooldown. Follow-up: Insights panel section, richer filter-out tracking, optional global aggregates (Phase 4). Developer overview: `src/modules/learning/README.md`. QA: `examples/noise-learning-sample-interactions.txt`.
+**Status: IMPLEMENTED (2026-03-23).** MVP shipped: `src/modules/learning/` (store, tracker, pattern extract, suggestion engine), webview `trackInteraction` + `setLearningOptions`, commands and `saropaLogCapture.learning.*` settings, QuickPick review, deferred notification with frequency cooldown. Developer overview: `src/modules/learning/README.md`. QA: `examples/noise-learning-sample-interactions.txt`.
+
+> **Phase 4 follow-ups have been split into [plan 053](../../../053_plan-noise-learning-phase-4-followups.md)** — Insights panel suggestions section, `filter-out` emission wiring, confidence feedback loop, optional cross-workspace aggregates. The scroll-tracking dedupe/caps bullet from the original Phase 4 list is already implemented at [viewer-script.ts:163-205](../../../../src/ui/viewer/viewer-script.ts#L163-L205) and is not part of 053.
 
 ---
 
