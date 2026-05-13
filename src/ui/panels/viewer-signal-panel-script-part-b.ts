@@ -20,6 +20,35 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
         return Math.floor(d / 604800000) + 'w ago';
     }
 
+    /** Plan 053-A: render the pending filter-suggestions section inside the Insights panel.
+     *  Block is hidden entirely when no pending suggestions (don't show empty headers). Each row
+     *  has Accept and Reject actions delegated through the panel's click handler. */
+    function renderFilterSuggestions() {
+        var blockEl = document.getElementById('signal-suggestions-block');
+        var listEl = document.getElementById('signal-suggestions-list');
+        var summaryEl = document.getElementById('signal-suggestions-summary');
+        var items = signalSuggestionsCache || [];
+        if (!blockEl || !listEl) return;
+        if (items.length === 0) { blockEl.style.display = 'none'; listEl.innerHTML = ''; return; }
+        blockEl.style.display = '';
+        if (summaryEl) summaryEl.textContent = 'Filter suggestions (' + items.length + ')';
+        listEl.innerHTML = items.slice(0, 8).map(function(s) {
+            var pat = s.pattern.length > 64 ? s.pattern.slice(0, 61) + '\\u2026' : s.pattern;
+            var pct = (s.impact && typeof s.impact.percentageReduction === 'number') ? s.impact.percentageReduction : 0;
+            var lines = (s.impact && typeof s.impact.linesAffected === 'number') ? s.impact.linesAffected : 0;
+            var sample = (s.sampleLines && s.sampleLines[0]) ? s.sampleLines[0] : '';
+            var sampleCompact = sample.length > 90 ? sample.slice(0, 87) + '\\u2026' : sample;
+            return '<div class="signal-suggestion-row" data-sid="' + esc(s.id) + '">'
+                + '<div class="signal-suggestion-head"><code class="signal-suggestion-pattern" title="' + esc(s.pattern) + '">' + esc(pat) + '</code><span class="signal-suggestion-impact">~' + lines + ' lines (' + pct + '%)</span></div>'
+                + (sampleCompact ? '<div class="signal-suggestion-sample" title="' + esc(sample) + '">' + esc(sampleCompact) + '</div>' : '')
+                + '<div class="signal-suggestion-actions">'
+                +   '<button type="button" class="signal-suggestion-accept" data-sid="' + esc(s.id) + '" data-pattern="' + escapeAttr(s.pattern) + '">Accept</button>'
+                +   '<button type="button" class="signal-suggestion-reject" data-sid="' + esc(s.id) + '">Reject</button>'
+                + '</div>'
+                + '</div>';
+        }).join('');
+    }
+
     function renderHotFiles() {
         var summaryEl = document.getElementById('signal-hotfiles-summary');
         var emptyEl = document.getElementById('signal-hotfiles-empty');

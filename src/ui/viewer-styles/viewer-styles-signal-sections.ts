@@ -274,5 +274,68 @@ export function getSignalSectionsStyles(): string {
 .line-pulse {
     animation: saropaLinePulse 900ms ease-in-out 1;
 }
+
+/* Plan 053-A: filter-suggestions section inside Insights panel. Rows stack the pattern + impact,
+   sample line, and Accept/Reject buttons. Compact size matches the existing signal-env-row
+   density so the section doesn't dominate the panel even when several suggestions are pending. */
+.signal-suggestions-list { font-size: 12px; }
+.signal-suggestion-row {
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 4px;
+    padding: 6px 8px;
+    margin-bottom: 6px;
+    background: var(--vscode-editor-background, transparent);
+}
+.signal-suggestion-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+}
+.signal-suggestion-pattern {
+    font-family: var(--vscode-editor-font-family, monospace);
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    flex: 1;
+}
+.signal-suggestion-impact {
+    color: var(--vscode-descriptionForeground);
+    white-space: nowrap;
+    font-size: 11px;
+}
+.signal-suggestion-sample {
+    color: var(--vscode-descriptionForeground);
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-bottom: 4px;
+    opacity: 0.85;
+}
+.signal-suggestion-actions {
+    display: flex;
+    gap: 6px;
+}
+.signal-suggestion-accept,
+.signal-suggestion-reject {
+    background: transparent;
+    color: var(--vscode-foreground);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 3px;
+    padding: 2px 10px;
+    font-size: 11px;
+    cursor: pointer;
+}
+.signal-suggestion-accept:hover {
+    background: var(--vscode-button-secondaryHoverBackground, var(--vscode-list-hoverBackground, rgba(255,255,255,0.04)));
+    border-color: var(--vscode-focusBorder, var(--vscode-textLink-foreground, #3794ff));
+}
+.signal-suggestion-reject:hover {
+    background: var(--vscode-list-hoverBackground, rgba(255,255,255,0.04));
+}
 `;
 }
