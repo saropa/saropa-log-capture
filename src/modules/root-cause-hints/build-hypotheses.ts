@@ -25,6 +25,11 @@ import {
   nPlusOneHypotheses,
   sqlBurstHypotheses,
 } from './build-hypotheses-sql';
+import {
+  frameBudgetClusterHypotheses,
+  severityEscalationHypotheses,
+  silenceBurstHypotheses,
+} from './build-hypotheses-bursts';
 import { classifyCategory, hashFingerprint, normalizeLine } from '../analysis/error-fingerprint-pure';
 import { truncateText } from './build-hypotheses-text';
 
@@ -221,6 +226,10 @@ export function buildHypotheses(bundle: RootCauseHintBundle): RootCauseHypothesi
     ...permissionHypotheses(bundle, MAX_TEXT_LEN),
     ...classifiedErrorHypotheses(bundle, MAX_TEXT_LEN),
     ...anrHypotheses(bundle, MAX_TEXT_LEN),
+    // v2 burst/escalation signals (plan 052 Group 1)
+    ...severityEscalationHypotheses(bundle, MAX_TEXT_LEN),
+    ...silenceBurstHypotheses(bundle, MAX_TEXT_LEN),
+    ...frameBudgetClusterHypotheses(bundle, MAX_TEXT_LEN),
   ];
 
   const merged = mergeErrorsIntoAnr(dedupeAndMerge(parts));

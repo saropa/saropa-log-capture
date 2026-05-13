@@ -12,6 +12,7 @@
 import { ROOT_CAUSE_ERROR_EXCERPT_MIN_LEN, ROOT_CAUSE_FP_LEADER_MIN_COUNT, ROOT_CAUSE_SQL_BURST_MIN_COUNT } from '../../modules/root-cause-hints/root-cause-hint-eligibility';
 import { ROOT_CAUSE_HINT_BUNDLE_VERSION } from '../../modules/root-cause-hints/root-cause-hint-types';
 import { getViewerRootCauseHintsGeneralCollectChunk } from './viewer-root-cause-hints-embed-collect-general';
+import { getViewerRootCauseHintsBurstsCollectChunk } from './viewer-root-cause-hints-embed-collect-bursts';
 
 export function getViewerRootCauseHintsEmbedCollectChunk(slowOpThresholdMs: number): string {
   const BV = ROOT_CAUSE_HINT_BUNDLE_VERSION;
@@ -19,7 +20,11 @@ export function getViewerRootCauseHintsEmbedCollectChunk(slowOpThresholdMs: numb
   const MIN_FP = ROOT_CAUSE_FP_LEADER_MIN_COUNT;
   const MIN_BURST = ROOT_CAUSE_SQL_BURST_MIN_COUNT;
 
-  return getViewerRootCauseHintsGeneralCollectChunk(slowOpThresholdMs) + /* javascript */ `
+  // Concatenated webview scope: general collector defines rchExtractDuration / stripTags
+  // helpers that the bursts collector reuses. Order matters — bursts must come after general.
+  return getViewerRootCauseHintsGeneralCollectChunk(slowOpThresholdMs)
+    + getViewerRootCauseHintsBurstsCollectChunk(slowOpThresholdMs)
+    + /* javascript */ `
 var rchHostDriftAdvisorSummary = null;
 var rchHostSessionDiffSummary = null;
 var rootCauseHintSessionEpoch = 0;
@@ -139,6 +144,7 @@ function collectRootCauseHintBundleEmbedded() {
     }
 
     var general = collectGeneralSignals();
+    var bursts = collectBurstSignals();
 
     return {
         bundleVersion: ${BV},
@@ -154,7 +160,10 @@ function collectRootCauseHintBundleEmbedded() {
         memoryEvents: general.memoryEvents.length ? general.memoryEvents : undefined,
         slowOperations: general.slowOperations.length ? general.slowOperations : undefined,
         permissionDenials: general.permissionDenials.length ? general.permissionDenials : undefined,
-        classifiedErrors: general.classifiedErrors.length ? general.classifiedErrors : undefined
+        classifiedErrors: general.classifiedErrors.length ? general.classifiedErrors : undefined,
+        severityEscalations: bursts.escalations.length ? bursts.escalations : undefined,
+        silenceBursts: bursts.silenceBursts.length ? bursts.silenceBursts : undefined,
+        frameBudgetClusters: bursts.frameBudgetClusters.length ? bursts.frameBudgetClusters : undefined
     };
 }
 `;
