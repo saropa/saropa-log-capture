@@ -23,6 +23,7 @@ export {
 export {
     handleSetErrorStatus,
     handleSignalDataRequest,
+    handleMuteSignalWithReason,
 } from './handlers/recurring-handlers';
 
 export {

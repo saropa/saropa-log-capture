@@ -27,6 +27,7 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.copyAllFilteredLines` | %command.copyAllFilteredLines.title% |  |
 | `saropaLogCapture.copyDeepLink` | %command.copyDeepLink.title% |  |
 | `saropaLogCapture.copyFilePath` | %command.copyFilePath.title% |  |
+| `saropaLogCapture.copyHandoffBundle` | %command.copyHandoffBundle.title% |  |
 | `saropaLogCapture.createCollection` | %command.createCollection.title% |  |
 | `saropaLogCapture.createReportFile` | %command.createReportFile.title% |  |
 | `saropaLogCapture.debugProjectIndexRanking` | Debug Project Index Ranking |  |
@@ -38,6 +39,7 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.explainRootCauseHypotheses` | %command.explainRootCauseHypotheses.title% |  |
 | `saropaLogCapture.exportCollection` | %command.exportCollection.title% |  |
 | `saropaLogCapture.exportCsv` | %command.exportCsv.title% |  |
+| `saropaLogCapture.exportGitHubIssue` | %command.exportGitHubIssue.title% |  |
 | `saropaLogCapture.exportHtml` | %command.exportHtml.title% |  |
 | `saropaLogCapture.exportHtmlInteractive` | %command.exportHtmlInteractive.title% |  |
 | `saropaLogCapture.exportJson` | %command.exportJson.title% |  |
@@ -97,4 +99,4 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.trashSession` | %command.trashSession.title% |  |
 | `saropaLogCapture.ungroupSession` | Saropa Log Capture: Ungroup Session |  |
 
-**Total:** 90 commands.
+**Total:** 92 commands.
