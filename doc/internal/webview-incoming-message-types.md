@@ -7,6 +7,7 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 
 | `type` | Referenced in |
 |--------|----------------|
+| `acceptFilterSuggestion` | viewer-message-handler-panels.ts |
 | `addAutoHidePattern` | viewer-message-handler-actions.ts |
 | `addBookmark` | viewer-message-handler-session-ui.ts |
 | `addSignalItemToCollection` | viewer-message-handler-panels.ts |
@@ -81,6 +82,7 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `promptAnnotation` | viewer-message-handler-session-ui.ts |
 | `promptGoToLine` | viewer-message-handler-session-ui.ts |
 | `quickExportLogs` | viewer-message-handler-session-ui.ts |
+| `rejectFilterSuggestion` | viewer-message-handler-panels.ts |
 | `removeAutoHidePattern` | viewer-message-handler-actions.ts |
 | `renameCollection` | viewer-message-handler-collection.ts |
 | `requestAboutContent` | viewer-message-handler-panels.ts |
@@ -125,4 +127,4 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `viewerKeybindingRecordCancelled` | viewer-message-handler-actions.ts |
 | `viewerKeybindingRecorded` | viewer-message-handler-actions.ts |
 
-**Total:** 117 distinct types.
+**Total:** 119 distinct types.

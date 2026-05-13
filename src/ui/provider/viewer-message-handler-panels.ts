@@ -63,6 +63,11 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
          for a free-text reason via InputBox, then mutes AND feeds the reason into the existing
          noise-learning system as a labeled training example. Cancel from the prompt aborts the mute. */
       case "muteSignalWithReason": panelHandlers.handleMuteSignalWithReason(String(msg.hash ?? ''), String(msg.label ?? ''), ctx.post, ctx.currentFileUri).catch(() => {}); return true;
+      /* Plan 053-A: filter-suggestion accept/reject. Accept updates workspace exclusions and
+         marks the suggestion accepted; reject only marks the suggestion rejected. Both re-send
+         signalData so the panel re-renders without the now-actioned row. */
+      case "acceptFilterSuggestion": panelHandlers.handleAcceptFilterSuggestion(String(msg.id ?? ''), String(msg.pattern ?? ''), ctx.post, ctx.currentFileUri).catch(() => {}); return true;
+      case "rejectFilterSuggestion": panelHandlers.handleRejectFilterSuggestion(String(msg.id ?? ''), ctx.post, ctx.currentFileUri).catch(() => {}); return true;
       case "openSignals": ctx.post({ type: 'openSignalPanel', tab: 'recurring' }); return true;
       case "addSignalItemToCollection":
         vscode.commands.executeCommand('saropaLogCapture.addSignalItemToCollection', msg.payload);

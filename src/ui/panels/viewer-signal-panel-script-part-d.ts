@@ -92,6 +92,27 @@ export function getSignalScriptPartD(): string {
         });
     }
 
+    /* Plan 053-A: filter-suggestion Accept/Reject delegation. Both actions post a message to the
+       extension which updates persisted suggestion state + (for accept) the workspace
+       exclusions array, then re-sends signalData so the section re-renders. */
+    var suggestionsListEl = document.getElementById('signal-suggestions-list');
+    if (suggestionsListEl) {
+        suggestionsListEl.addEventListener('click', function(e) {
+            var accept = e.target.closest('.signal-suggestion-accept');
+            if (accept && accept.dataset.sid && accept.dataset.pattern) {
+                e.stopPropagation();
+                vscodeApi.postMessage({ type: 'acceptFilterSuggestion', id: accept.dataset.sid, pattern: accept.dataset.pattern });
+                return;
+            }
+            var reject = e.target.closest('.signal-suggestion-reject');
+            if (reject && reject.dataset.sid) {
+                e.stopPropagation();
+                vscodeApi.postMessage({ type: 'rejectFilterSuggestion', id: reject.dataset.sid });
+                return;
+            }
+        });
+    }
+
     /* Fu7 time-window filter chips — clicking a chip sets the active window and re-renders.
        The chip set is small (4 buttons) so we wire each rather than using event delegation. */
     var twChips = document.querySelectorAll('.signal-tw-chip');
