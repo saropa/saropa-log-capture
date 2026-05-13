@@ -59,6 +59,10 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
       case "requestSignalData": panelHandlers.handleSignalDataRequest(ctx.post, ctx.currentFileUri).catch(() => {}); return true;
       case "requestPerformanceData": panelHandlers.handlePerformanceRequest(ctx.post, ctx.currentFileUri).catch(() => {}); return true;
       case "setRecurringErrorStatus": panelHandlers.handleSetErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open'), ctx.post, ctx.currentFileUri).catch(() => {}); return true;
+      /* Fu4 (plan 052): Mute-with-reason. Distinct from setRecurringErrorStatus because it prompts
+         for a free-text reason via InputBox, then mutes AND feeds the reason into the existing
+         noise-learning system as a labeled training example. Cancel from the prompt aborts the mute. */
+      case "muteSignalWithReason": panelHandlers.handleMuteSignalWithReason(String(msg.hash ?? ''), String(msg.label ?? ''), ctx.post, ctx.currentFileUri).catch(() => {}); return true;
       case "openSignals": ctx.post({ type: 'openSignalPanel', tab: 'recurring' }); return true;
       case "addSignalItemToCollection":
         vscode.commands.executeCommand('saropaLogCapture.addSignalItemToCollection', msg.payload);

@@ -27,7 +27,7 @@ Items below qualify as quick wins because they (a) ship on **existing data** —
 - [x] **Fu7** — Time-window filter chips (Last 5s / 30s / 5min / All) at top of signals panel. Biggest live-debugging unlock — user just hit the bug, only the last 30s matters.
 - [x] **Fu3** — Inline evidence preview: render a 3-line snippet of the supporting log lines directly under each signal title. Removes the click-through to see what the signal is grounded in.
 - [x] **Fu2** — Scroll-lock pulse: clicking a signal already jumps to the implicated line; add a brief ±10-line highlight pulse so the eye lands on the right place. Reuses existing pulse styles.
-- [ ] **Fu4** — Mute-with-reason: right-click a signal → free-text reason (≤80 chars) → persist. Anonymous mute is silent; reasoned mute becomes a labeled training example for the already-shipped noise-learning system at [src/modules/learning/](../src/modules/learning/) (plan [025](history/2026.03/20260323/025_plan-noise-learning.md), implemented 2026-03-23). Wire the reason into the existing `trackInteraction` API.
+- [x] **Fu4** — Mute-with-reason: right-click a signal → free-text reason (≤80 chars) → persist. Anonymous mute is silent; reasoned mute becomes a labeled training example for the already-shipped noise-learning system at [src/modules/learning/](../src/modules/learning/) (plan [025](history/2026.03/20260323/025_plan-noise-learning.md), implemented 2026-03-23). Wire the reason into the existing `trackInteraction` API.
 
 ### Tier 2 — New signals on existing data (no SDK)
 
@@ -39,8 +39,8 @@ Items below qualify as quick wins because they (a) ship on **existing data** —
 
 ### Tier 3 — Bug report variants (no SDK, no redaction blocker)
 
-- [ ] **E3** — GitHub-issue preset: variant of the existing formatter targeting GitHub's template conventions (Summary / Steps / Current Route / Recent Actions / Errors / Network / Device / Screenshots). New command `saropaLogCapture.exportGitHubIssue`.
-- [ ] **E4** — Compact handoff bundle: a 3-section markdown subset (~30 lines max) for "I'm stuck, can you look?" Slack messages. Subset of existing formatter, no new data collection. Command `saropaLogCapture.copyHandoffBundle`.
+- [x] **E3** — GitHub-issue preset: variant of the existing formatter targeting GitHub's template conventions (Summary / Steps / Current Route / Recent Actions / Errors / Network / Device / Screenshots). New command `saropaLogCapture.exportGitHubIssue`.
+- [x] **E4** — Compact handoff bundle: a 3-section markdown subset (~30 lines max) for "I'm stuck, can you look?" Slack messages. Subset of existing formatter, no new data collection. Command `saropaLogCapture.copyHandoffBundle`.
 
 ### Recommended ship order
 

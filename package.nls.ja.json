@@ -17,6 +17,8 @@
   "command.copyFilePath.title": "ファイルパスをコピー",
   "command.createCollection.title": "Saropa Log Capture: 調査を作成",
   "command.createReportFile.title": "Saropa Log Capture: Create Bug Report File",
+  "command.copyHandoffBundle.title": "Saropa Log Capture: Copy Compact Handoff Bundle",
+  "command.exportGitHubIssue.title": "Saropa Log Capture: Copy GitHub Issue Markdown",
   "command.delete.title": "Saropa Log Capture: ログファイルを削除",
   "command.deleteCollection.title": "調査を削除",
   "command.deleteSession.title": "ログファイルを削除",
