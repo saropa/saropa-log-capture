@@ -49,7 +49,12 @@ def _push_to_origin() -> bool:
 
     Detects the current branch name dynamically rather than hardcoding
     "main", so this works on feature branches too.
-    If push is rejected (non-fast-forward), pulls with merge and retries once.
+
+    If push is rejected (non-fast-forward), rebases the local release
+    commit on top of remote and retries. Rebase is used instead of merge
+    because a merge can conflict on files both sides touched (e.g.
+    package.json version field), while rebase replays our commit on top
+    of the latest remote state — keeping the release commit at HEAD.
     """
     branch = run(
         ["git", "rev-parse", "--abbrev-ref", "HEAD"],
@@ -67,15 +72,24 @@ def _push_to_origin() -> bool:
         return True
 
     if "non-fast-forward" in (push.stderr or "") or "rejected" in (push.stderr or "").lower():
-        fix("Remote has new commits; pulling with merge then re-pushing...")
-        pull = run(["git", "pull", "origin", branch_name, "--no-edit"], cwd=PROJECT_ROOT)
-        if pull.returncode != 0:
-            fail(f"git pull failed: {pull.stderr.strip()}")
+        # Rebase instead of merge: our release commit (version bump +
+        # CHANGELOG) should sit on top of whatever landed on remote.
+        # A merge would conflict if remote also touched package.json.
+        fix("Remote has new commits; rebasing release commit then re-pushing...")
+        rebase = run(
+            ["git", "pull", "--rebase", "origin", branch_name],
+            cwd=PROJECT_ROOT,
+        )
+        if rebase.returncode != 0:
+            # Rebase conflict — abort to restore clean state, then
+            # tell the user to resolve manually.
+            run(["git", "rebase", "--abort"], cwd=PROJECT_ROOT)
+            fail("Rebase failed (conflict). Resolve manually and re-run.")
             return False
-        ok("Merged remote changes")
+        ok("Rebased on latest remote")
         push2 = run(["git", "push", "origin", branch_name], cwd=PROJECT_ROOT)
         if push2.returncode != 0:
-            fail(f"git push failed after merge: {push2.stderr.strip()}")
+            fail(f"git push failed after rebase: {push2.stderr.strip()}")
             return False
         ok(f"Pushed to origin/{branch_name}")
         return True
