@@ -232,6 +232,7 @@ def check_l10n_bundles() -> bool:
     """
     from modules.verify.l10n_bundle_audit import run_audit, sync_english_bundle
     from modules.verify.l10n_translator import (
+        fix_mangled_brands,
         get_canonical_keys,
         get_translation_locales,
         translate_locale,
@@ -252,14 +253,24 @@ def check_l10n_bundles() -> bool:
     else:
         ok("l10n English bundle already in sync")
 
-    # ── Step C: translate locale bundles ────────────────────────
+    # ── Step C: fix mangled brands + translate ─────────────────
     canonical = get_canonical_keys()
     locales = get_translation_locales()
+
+    # Reset translations that mangled brand names so they get retranslated
+    # with brand shielding on the next pass.
+    total_brand_fixes = 0
+    for locale in locales:
+        fixed = fix_mangled_brands(locale, canonical)
+        total_brand_fixes += fixed
+    if total_brand_fixes > 0:
+        ok(f"l10n: reset {total_brand_fixes} mangled brand translation(s)")
+
     total_translated = 0
     total_errors = 0
 
     for locale in locales:
-        translated, _skipped, errors = translate_locale(locale, canonical)
+        translated, _kept, _brand, errors = translate_locale(locale, canonical)
         total_translated += translated
         total_errors += errors
         if translated > 0:
