@@ -137,7 +137,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         var hdrTierHidden = (typeof isTierHidden === 'function') ? isTierHidden({ tier: lineTier, level: _hdrLevel, originalLevel: _hdrOrigLevel }) : false;
         var hdrH = (hdrAutoHide || catFiltered || hdrTierHidden || calcLevelFiltered(_hdrLevel)) ? 0 : ROW_HEIGHT;
         if (hdrAutoHide && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
-        var _sds = (typeof stackDefaultState !== 'undefined') ? stackDefaultState : false;
+        var _sds = (typeof stackDefaultState !== 'undefined') ? stackDefaultState : true;
         var _spc = (typeof stackPreviewCount !== 'undefined') ? stackPreviewCount : 3;
         var hdr = { html: html, rawText: rawText || null, type: 'stack-header', height: hdrH, category: category, groupId: gid, frameCount: 1, collapsed: _sds, previewCount: _spc, timestamp: ts, fw: fw, tier: lineTier, level: _hdrLevel, seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, filteredOut: catFiltered, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: false, autoHidden: hdrAutoHide, qualityPercent: qualityPercent, source: lineSource, levelFiltered: calcLevelFiltered(_hdrLevel) };
         if (_hdrOrigLevel) hdr.originalLevel = _hdrOrigLevel;

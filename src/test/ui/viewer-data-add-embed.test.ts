@@ -49,9 +49,19 @@ suite('viewer-data-add embed', () => {
             block.includes("type: 'stack-header'") && block.includes('collapsed: _sds'),
             'stack-header collapsed state should use the configurable _sds variable',
         );
+        // Fallback is true (collapsed) to match the OOTB default declared in
+        // viewer-deco-settings.ts. Was false (expanded) before — that fallback
+        // reproduced the very Drift-flood / full-callchain noise the collapsed
+        // default exists to prevent if script-load ordering left the var unset
+        // when the first stack arrived (especially once the Flutter app starts
+        // emitting structured stacks for non-Error log levels).
         assert.ok(
-            block.includes('? stackDefaultState : false'),
-            'stackDefaultState should default to false (expanded) when not configured',
+            block.includes('? stackDefaultState : true'),
+            'stackDefaultState should fall back to true (collapsed) when undefined — must match OOTB default in viewer-deco-settings.ts:149',
+        );
+        assert.ok(
+            !block.includes('? stackDefaultState : false'),
+            'regression: fallback must not revert to false (expanded) — would reintroduce stack-frame flood on noisy logs',
         );
     });
 });
