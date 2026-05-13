@@ -24,6 +24,11 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
     /* Fu7 time-window filter state. null = "All" (no filter); otherwise ms window from session-latest-ts.
        Lives in part-a so it survives across panel renders without resetting on signalData refresh. */
     var signalsInLogWindowMs = null;
+    /* Plan 053-A: pending noise-learning suggestions cached from the extension host.
+       Refreshed when the panel opens (sent in the signalData payload). Each entry has
+       { id, pattern, description, confidence, impact: { linesAffected, percentageReduction },
+         sampleLines: string[] }. */
+    var signalSuggestionsCache = [];
 
     function getStoredSectionState() {
         try {
