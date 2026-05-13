@@ -47,10 +47,8 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     if (ts && !sessionStartTs) sessionStartTs = ts;
     if (isMarker) {
         resetCompressDupStreak();
-        /* bug_003: markers are hard boundaries for stack-header streaks, but the reset is
-           performed inside cleanupTrailingRepeats below so it can first restore the hidden
-           anchor and zero the trailing chip. Calling resetStackHdrRepeatTracker() here
-           would clear anchorIdx before cleanup can read it, leaving the anchor orphaned. */
+        /* bug_003: markers break stack-header streaks, but the reset is inside
+           cleanupTrailingRepeats (not here) so it can restore the anchor first. */
         if (typeof breakContinuationGroup === 'function') breakContinuationGroup();
         if (activeGroupHeader) {
             if (typeof finalizeStackGroup === 'function') finalizeStackGroup(activeGroupHeader);
@@ -122,22 +120,23 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         if (lTagH && lTagH === sTagH) lTagH = null;
         var cTagsH = (typeof parseClassTags === 'function') ? parseClassTags(plainFrame) : [];
         var hdrAutoHide = (typeof testAutoHide === 'function') ? testAutoHide(plainFrame) : false;
-        /* Find the previous non-marker line to get both its level and originalLevel.
-           Device-other lines demote error/warning to info but store the pre-demotion
-           level in originalLevel — warnplus mode needs this to keep stack headers
-           visible when they follow a demoted error/warning line. */
+        /* Find the previous non-marker line for level/originalLevel AND source-tag
+           fallback — traces belong to their parent line, so inherit sourceTag when the
+           frame text has none (e.g. DB toggle hides orphaned DriftDebugInterceptor). */
         var _prevForHdr = null;
         for (var _ph = allLines.length - 1; _ph >= 0; _ph--) {
             var _phi = allLines[_ph];
             if (_phi.type !== 'marker' && _phi.type !== 'run-separator') { _prevForHdr = _phi; break; }
         }
+        if (!sTagH && !lTagH && _prevForHdr) {
+            sTagH = _prevForHdr.sourceTag || null;
+            lTagH = _prevForHdr.logcatTag || null;
+        }
         var _hdrLevel = previousLineLevel();
         var _hdrOrigLevel = (_prevForHdr && _prevForHdr.originalLevel) ? _prevForHdr.originalLevel : undefined;
         var hdrTierHidden = (typeof isTierHidden === 'function') ? isTierHidden({ tier: lineTier, level: _hdrLevel, originalLevel: _hdrOrigLevel }) : false;
-        // Stack header inherits _hdrLevel from the preceding line — a Drift SELECT header is 'database', must hide under the Database filter.
         var hdrH = (hdrAutoHide || catFiltered || hdrTierHidden || calcLevelFiltered(_hdrLevel)) ? 0 : ROW_HEIGHT;
         if (hdrAutoHide && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
-        // Use configurable defaults: stackDefaultState (false/true/'preview'), stackPreviewCount (1-20).
         var _sds = (typeof stackDefaultState !== 'undefined') ? stackDefaultState : false;
         var _spc = (typeof stackPreviewCount !== 'undefined') ? stackPreviewCount : 3;
         var hdr = { html: html, rawText: rawText || null, type: 'stack-header', height: hdrH, category: category, groupId: gid, frameCount: 1, collapsed: _sds, previewCount: _spc, timestamp: ts, fw: fw, tier: lineTier, level: _hdrLevel, seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, filteredOut: catFiltered, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: false, autoHidden: hdrAutoHide, qualityPercent: qualityPercent, source: lineSource, levelFiltered: calcLevelFiltered(_hdrLevel) };

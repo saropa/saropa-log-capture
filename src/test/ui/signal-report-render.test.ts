@@ -200,6 +200,69 @@ test("buildSignalReportShell: should include ecosystem link click handler in scr
   assert.ok(html.includes("type: 'openUrl'"), 'should post openUrl message');
 });
 
+// --- Collapsible sections and two-column grid ---
+
+test("buildSignalReportShell: should wrap sections in collapsible details elements", () => {
+  const html = buildSignalReportShell({
+    nonce: "n",
+    hypothesis: {
+      templateId: "test",
+      text: "Test",
+      evidenceLineIds: [],
+      hypothesisKey: "test::collapse",
+    },
+  });
+  // Each section should be a <details> with class section-slot
+  assert.ok(html.includes('<details id="section-overview"'), 'overview should be a details element');
+  assert.ok(html.includes('<details id="section-evidence"'), 'evidence should be a details element');
+  assert.ok(html.includes('class="section-toggle"'), 'should have toggle summaries');
+  assert.ok(html.includes('class="section-body"'), 'should have section body wrappers');
+});
+
+test("buildSignalReportShell: should use two-column grid layout", () => {
+  const html = buildSignalReportShell({
+    nonce: "n",
+    hypothesis: {
+      templateId: "test",
+      text: "Test",
+      evidenceLineIds: [],
+      hypothesisKey: "test::grid",
+    },
+  });
+  assert.ok(html.includes('report-grid'), 'should have grid container');
+  assert.ok(html.includes('report-col--primary'), 'should have primary column');
+  assert.ok(html.includes('report-col--secondary'), 'should have secondary column');
+});
+
+test("buildSignalReportShell: should include setState/getState persistence logic", () => {
+  const html = buildSignalReportShell({
+    nonce: "n",
+    hypothesis: {
+      templateId: "test",
+      text: "Test",
+      evidenceLineIds: [],
+      hypothesisKey: "test::state",
+    },
+  });
+  // The webview script must use getState to restore sections on recreation
+  assert.ok(html.includes('getState'), 'should include getState for persistence');
+  assert.ok(html.includes('setState'), 'should include setState for persistence');
+});
+
+test("buildSignalReportShell: should include toast handler in script", () => {
+  const html = buildSignalReportShell({
+    nonce: "n",
+    hypothesis: {
+      templateId: "test",
+      text: "Test",
+      evidenceLineIds: [],
+      hypothesisKey: "test::toast",
+    },
+  });
+  assert.ok(html.includes('showToast'), 'should have toast display function');
+  assert.ok(html.includes("msg.type === 'toast'"), 'should handle toast messages');
+});
+
 // --- resolveSourcePaths ---
 
 test("resolveSourcePaths: should resolve relative dart path to absolute", () => {

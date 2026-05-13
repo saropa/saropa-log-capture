@@ -203,6 +203,27 @@ suite('viewer-data-add blank rows compacted at birth', () => {
         );
     });
 
+    test('stack-header inherits sourceTag from previous line when frame text has no tag', () => {
+        /* Without this inheritance, stack headers like "» DriftDebugInterceptor._log"
+           get sourceTag: null (the frame text has no logcat prefix or [tag] bracket),
+           so they stay visible when the user hides the Database source tag via the
+           DB toolbar toggle. The fallback uses the already-scanned _prevForHdr item. */
+        const block = extractAddToDataBlock(getViewerDataAddScript());
+        assert.ok(block.length > 0, 'expected addToData block');
+        assert.ok(
+            block.includes('if (!sTagH && !lTagH && _prevForHdr)'),
+            'stack-header must inherit sourceTag from _prevForHdr when frame text yields no tag',
+        );
+        assert.ok(
+            block.includes('sTagH = _prevForHdr.sourceTag || null'),
+            'sourceTag inheritance must use _prevForHdr.sourceTag',
+        );
+        assert.ok(
+            block.includes('lTagH = _prevForHdr.logcatTag || null'),
+            'logcatTag inheritance must also fall back to _prevForHdr.logcatTag',
+        );
+    });
+
     test('regular log-line (lineItem) branch stamps quarter-height for blank html at birth', () => {
         /* lineItem birth-height computation lives in viewer-data-add-line-birth.ts
            (extracted from addToData to satisfy the 300-line cap). The addToData
