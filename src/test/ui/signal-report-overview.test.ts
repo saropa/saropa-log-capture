@@ -103,6 +103,68 @@ test('buildOverviewHtml: should sum warning counts across groups', () => {
   assert.ok(html.includes('Warnings'));
 });
 
+// --- Session timing (Started / Ended / Duration) ---
+
+test('buildOverviewHtml: should show formatted start and end times from log lines', () => {
+  // Minimal log with a session header date and footer
+  const logLines = [
+    '=== SAROPA LOG CAPTURE ===',
+    'Date: 2026-05-13T10:35:40.123Z',
+    '==========================================',
+    'some log output',
+    '=== SESSION END — 2026-05-13T11:03:49.456Z — 1533 lines ===',
+  ];
+  const html = buildOverviewHtml({
+    bundle: makeBundle(),
+    logLineCount: logLines.length,
+    logFilePath: '/tmp/test.log',
+    logLines,
+  });
+  // Started and Ended rows should contain formatted timestamps (local time varies,
+  // so check for the label and the date portion which is timezone-invariant in ISO)
+  assert.ok(html.includes('Started'), 'should show Started row');
+  assert.ok(html.includes('Ended'), 'should show Ended row');
+  assert.ok(html.includes('Duration'), 'should show Duration row');
+  assert.ok(html.includes('Clean stop'), 'should show clean stop outcome');
+});
+
+test('buildOverviewHtml: should omit Ended row when session has no footer', () => {
+  const logLines = [
+    '=== SAROPA LOG CAPTURE ===',
+    'Date: 2026-05-13T10:35:40.123Z',
+    '==========================================',
+    'some log output (no footer)',
+  ];
+  const html = buildOverviewHtml({
+    bundle: makeBundle(),
+    logLineCount: logLines.length,
+    logFilePath: undefined,
+    logLines,
+  });
+  assert.ok(html.includes('Started'), 'should still show Started');
+  assert.ok(!html.includes('Ended'), 'should not show Ended without footer');
+  assert.ok(!html.includes('Duration'), 'no duration without end time');
+});
+
+test('buildOverviewMarkdown: should include start/end times in markdown', () => {
+  const logLines = [
+    '=== SAROPA LOG CAPTURE ===',
+    'Date: 2026-05-13T10:35:40.123Z',
+    '==========================================',
+    'output',
+    '=== SESSION END — 2026-05-13T11:03:49.456Z — 5 lines ===',
+  ];
+  const md = buildOverviewMarkdown({
+    bundle: makeBundle(),
+    logLineCount: logLines.length,
+    logFilePath: '/tmp/test.log',
+    logLines,
+  });
+  assert.ok(md.includes('**Started:**'), 'markdown should include Started');
+  assert.ok(md.includes('**Ended:**'), 'markdown should include Ended');
+  assert.ok(md.includes('**Duration:**'), 'markdown should include Duration');
+});
+
 // --- buildOtherSignalsHtml ---
 
 test('buildOtherSignalsHtml: should show no-data when no other signals exist', () => {

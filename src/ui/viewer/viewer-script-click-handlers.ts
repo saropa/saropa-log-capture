@@ -106,22 +106,32 @@ if (viewportEl) viewportEl.addEventListener('click', function(e) {
         toggleJsonSection(parseInt(jsonNode.dataset.jsonSection));
         return;
     }
-    var header = e.target.closest('.stack-header');
-    if (header && header.dataset.gid !== undefined) {
-        toggleStackGroup(parseInt(header.dataset.gid));
-        return;
-    }
-    var contBadge = e.target.closest('.cont-badge');
-    if (contBadge && contBadge.dataset.contGid !== undefined && typeof toggleContinuationGroup === 'function') {
-        toggleContinuationGroup(parseInt(contBadge.dataset.contGid));
-        return;
-    }
-    /* Metadata filter toggle: PID, TID, or tag click in decoration prefix. */
+    /* Metadata filter toggle: PID, TID, or tag click in decoration prefix.
+     * Must run before .stack-header so keyword clicks inside collapsible
+     * headers are not swallowed by the collapse/expand toggle. */
     var metaSpan = e.target.closest('[data-meta-key]');
     if (metaSpan && typeof toggleMetadataFilter === 'function') {
         e.preventDefault();
         e.stopPropagation();
         toggleMetadataFilter(metaSpan.dataset.metaKey, metaSpan.dataset.metaValue);
+        return;
+    }
+    var header = e.target.closest('.stack-header');
+    if (header && header.dataset.gid !== undefined) {
+        var _gid = parseInt(header.dataset.gid);
+        var _hdr = groupHeaderMap[_gid];
+        /* 1-frame stacks (header only, no child frames) have nothing to
+         * expand/collapse — skip toggle so clicks fall through harmlessly.
+         * frameCount includes the header itself, so >1 means children exist. */
+        if (_hdr && _hdr.frameCount > 1) {
+            toggleStackGroup(_gid);
+            return;
+        }
+    }
+    var contBadge = e.target.closest('.cont-badge');
+    if (contBadge && contBadge.dataset.contGid !== undefined && typeof toggleContinuationGroup === 'function') {
+        toggleContinuationGroup(parseInt(contBadge.dataset.contGid));
+        return;
     }
 });
 

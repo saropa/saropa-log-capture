@@ -82,7 +82,15 @@ export function getContentStyles(): string {
 .stack-header {
     padding: 0 8px 0 16px;
     cursor: pointer;
-    color: var(--vscode-debugConsole-errorForeground, #f48771);
+    /* WHY inherit instead of error-red: the old default was
+       var(--vscode-debugConsole-errorForeground) which made EVERY stack header
+       look like an error unless a level-* override kicked in. Drift SQL
+       interceptor traces (DriftDebugInterceptor) that correctly inherit
+       level='database' still showed red because any gap in the CSS cascade
+       (ANSI span stripped, level class missing, theme variable unset) fell
+       back to the error color. Using inherit keeps unclassified headers
+       neutral; the explicit .level-error rule below handles actual errors. */
+    color: inherit;
     line-height: 1.5;
     white-space: pre;
     word-break: normal;
@@ -96,7 +104,9 @@ export function getContentStyles(): string {
        commit with no documented rationale) blocked copying the header text
        entirely and was removed as part of the unified-line-collapsing rethink. */
 }
-/* Stack-header text color follows inherited level — same tokens as .line.level-* in viewer-styles-lines.ts. */
+/* Stack-header text color follows inherited level — same tokens as .line.level-* in viewer-styles-lines.ts.
+   Error is explicit (not baked into .stack-header default) so non-error traces never flash red. */
+.stack-header.level-error { color: var(--vscode-debugConsole-errorForeground, #f48771); }
 .stack-header.level-warning { color: var(--vscode-debugConsole-warningForeground, #cca700); }
 .stack-header.level-performance { color: var(--vscode-charts-purple, #a855f7); }
 .stack-header.level-info { color: var(--vscode-debugConsole-infoForeground, #b695f8); }

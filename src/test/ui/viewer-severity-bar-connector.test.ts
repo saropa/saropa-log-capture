@@ -99,7 +99,7 @@ suite('Hidden-lines chevron insertion', () => {
         const requiredFlags = [
             'levelFiltered', 'excluded', 'filteredOut', 'sourceFiltered',
             'searchFiltered', 'errorSuppressed', 'repeatHidden',
-            'compressDupHidden', 'scopeFiltered', 'timeRangeFiltered',
+            'compressDupHidden', 'stackDedupHidden', 'scopeFiltered', 'timeRangeFiltered',
             'classFiltered', 'sqlPatternFiltered',
         ];
         for (const flag of requiredFlags) {

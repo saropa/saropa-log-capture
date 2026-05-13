@@ -8,7 +8,7 @@ All notable changes to Saropa Log Capture will be documented in this file.
 
 **GitHub Source Code** - [github.com / saropa / saropa-log-capture](https://github.com/saropa/saropa-log-capture)
 
-For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
+For older versions (7.1.1 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
 
 <!-- MAINTENANCE NOTES -- IMPORTANT --
 
@@ -26,7 +26,44 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [7.9.0]
+
+Navigator arrows now use proper VS Code icons and fade when the panel is in the background, signal reports get a two-column layout with collapsible sections and visual polish, and several rendering bugs are squashed. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+
+### Changed
+- **Navigator arrows use codicon chevrons** — Replaced Unicode block arrows (⬆/⬇) with `codicon-chevron-up` / `codicon-chevron-down` so the top/bottom jump buttons look like intentional UI, not stray lines.
+- **Navigator buttons dim when viewer is unfocused** — Jump-to-top and jump-to-bottom buttons now render at 50% opacity until the log viewer panel has focus, then raise to 85% (full on hover). Reduces visual noise when the panel is in the background.
+
+### Added
+- **Signal report two-column layout** — On wide monitors (900px+), the report splits into a primary column (overview, evidence, details, related) and a secondary column (signals, history, recommendations, ecosystem). Stacks to single-column on narrow panels.
+- **Signal report collapsible sections** — Every section is now a `<details>` toggle that can be collapsed/expanded. Collapse state persists across tab-group moves.
+- **Session start/end timestamps in overview** — The Session Overview now shows formatted start and end times (e.g. `2026-05-13 10:35:40`) alongside the existing duration and outcome fields.
+- **Signal report visual polish** — Subtle left-border accent colors per section category, confidence badge glow, hover lift on stat cards, styled evidence metadata, and shadow on evidence blocks.
+- **Signal report loading shimmer** — Loading placeholders now pulse with a shimmer animation so the report looks alive while sections populate, not frozen.
+- **Signal report toast notifications** — Copy Report and Save Report now show an in-panel toast (success/error) instead of the barely-visible status bar message.
+
+### Fixed
+- **Signal report lost content on tab move** — Moving the Signal Report panel to another editor group destroyed and recreated the webview, reverting all sections to loading placeholders. Sections are now persisted via `setState`/`getState` so content survives tab-group moves.
+- **Non-error stack traces no longer default to error-red** — Stack headers (e.g. Drift SQL interceptor traces) inherited the error foreground color as their CSS default, making database-level and info-level traces appear red regardless of their actual severity. The base `.stack-header` color is now neutral (`inherit`); error-red is applied only via an explicit `.level-error` rule.
+- **Keyword filter clicks broken on collapsible rows** — Clicking a metadata keyword (PID, TID, tag) inside a stack header toggled the collapse instead of activating the filter. The stack-header click handler was checked before the metadata handler, swallowing the event. Reordered so metadata clicks are handled first.
+- **1-frame stack headers showed a misleading collapse chevron** — Single-frame stacks (e.g. a lone `GeolocatorAndroid.getLastKnownPosition` trace) rendered a ▶ toggle with nothing to expand. Clicking changed internal state but had zero visual effect. The chevron and toggle are now omitted when `frameCount === 1`; the dedup badge `(xN)` still shows as information.
+- **Dedup-hidden stack groups reappeared after filter changes** — `finalizeStackGroup` hid duplicate stacks by setting `height = 0` directly, but `calcItemHeight` had no flag to check, so any `recalcHeights()` call (from toggling filters, expanding groups, etc.) would silently un-hide them. Hidden duplicates now carry `stackDedupHidden = true` so they persist through recalculation.
+- **N+1 signal confidence badge was double-boxed** — The confidence label (LOW/MEDIUM/HIGH) on N+1 query signals had both square brackets in the text and a CSS border, creating a redundant double-box. Removed the brackets so only the styled border remains.
+- **DB toggle left Drift stack traces visible** — Stack headers like `DriftDebugInterceptor._log` had no recognizable source tag, so they fell into the "other" bucket and stayed visible when the Database source tag was hidden. Stack headers now inherit `sourceTag` from the preceding log line when the frame text has no tag of its own.
+
+<details>
+<summary>Maintenance</summary>
+
+- **README conciseness overhaul** — Merged redundant Overview and intro sections into a single "Why Use This?" list. Replaced the detailed Features accordion with high-level category bullets. Moved the full settings tables to `docs/CONFIGURATION.md` (README now shows only the three key settings). Removed the Power Shortcuts and Key Commands tables (README links to `docs/walkthrough/keyboard-shortcuts.md` and keeps only the top 3 shortcuts). Condensed "Full Debug Console Capture" to a tip box, "Remote Development" to two sentences, and the Contributing section.
+- **README terminology updated to v7.x** — Replaced "Investigation" with "Collection", "Insights" with "Signals", and "Log Inputs" with "Log Sources" throughout the README per the terminology dictionary.
+- **README covers recent features** — Added bullets for structured file support (.md/.json/.csv/.html), floating search overlay, post-capture toasts, typography controls, and the Collections panel.
+</details>
+
+---
+
 ## [7.8.4]
+
+The keyword watch badge now resets when you look at the panel, so it only shows hits you haven't seen. [log](https://github.com/saropa/saropa-log-capture/blob/v7.8.4/CHANGELOG.md)
 
 ### Fixed
 
@@ -43,14 +80,13 @@ Post-capture toast gains Always Open and Don't Ask Again buttons, the l10n trans
 - **End-of-capture toast: "Always Open" and "Don't Ask Again" buttons** — The post-capture notification now has four actions: Copy Log Path, Open Log, Always Open, and Don't Ask Again. "Always Open" persists the preference to auto-open future logs in the viewer without asking. "Don't Ask Again" suppresses the notification entirely. Both write to the new `afterCaptureAction` setting.
 - **`afterCaptureAction` setting** — Replaces the boolean `autoOpen` setting with a three-way enum: `"ask"` (show notification, default), `"openLog"` (auto-open in the viewer), `"nothing"` (suppress notification). Existing `autoOpen: true` is automatically migrated to `"openLog"`.
 
-### Changed
+<details>
+<summary>Maintenance</summary>
 
 - **Organized `scripts/modules/` into subfolders** — Split the flat `scripts/modules/` directory (35+ files) into six purpose-based subfolders: `publish/` (Python publish pipeline), `verify/` (CI verification), `generate/` (code/catalog generators), `test/` (test tooling), `build/` (bundle/clean), and `fix/` (fixers and diagnostics). Updated all Python imports, `package.json` script paths, runtime cross-references, and auto-generated doc headers.
 - **l10n translation pipeline** — Added `scripts/translate_l10n.py` to audit, sync, and translate l10n bundles. Audits English bundle against TS source strings, syncs missing/orphan keys, and translates all locale bundles via Google Translate (free tier, `deep-translator`). The publish pipeline (Step 9) now automatically syncs and translates instead of just warning. Brand names (Saropa, GitHub, Loki, etc.) are shielded from translation via placeholder substitution; existing mangled brand translations are automatically detected, reset, and retranslated. Writes timestamped audit reports and gap exports (CSV/JSON) to `reports/`.
-
-### Fixed
-
 - **Publish script: push failure on remote changes** — When `git push` was rejected (non-fast-forward) in Step 11, the fallback `git pull --no-edit` used merge, which could conflict on files both sides touched (e.g. `package.json` version field after a prior publish). Switched to `git pull --rebase` so the release commit is replayed on top of remote changes. If the rebase itself conflicts, it aborts cleanly and tells the user to resolve manually.
+</details>
 
 ---
 
@@ -96,15 +132,17 @@ Fixes icon bar layout when a horizontal scrollbar is present, a signal panel cra
 
 - **Scroll map & scrollbar submenu** — Removed the **Scroll map & scrollbar** submenu from the main right-click context menu. The same toggles remain accessible via right-click directly on the scroll map or native scrollbar.
 
-### Internal
+<details>
+<summary>Maintenance</summary>
 
 - **Report organizer script** — Added `reports/organize_reports.py` (shared across Saropa projects) and `.gitignore` exception so the script is version-controlled while report output remains ignored.
+</details>
 
 ---
 
 ## [7.8.0]
 
-Right-click → Copy & Export → Copy Line now copies the line you actually right-clicked, even if there's a stale shift-click selection from earlier in the session, and every copy from the context menu shows an instant in-viewer toast (e.g. `Copied lines 116-225 (1,247 characters)`) so you can confirm what landed on the clipboard at a glance. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+Right-click → Copy & Export → Copy Line now copies the line you actually right-clicked, even if there's a stale shift-click selection from earlier in the session, and every copy from the context menu shows an instant in-viewer toast (e.g. `Copied lines 116-225 (1,247 characters)`) so you can confirm what landed on the clipboard at a glance. [log](https://github.com/saropa/saropa-log-capture/blob/v7.8.0/CHANGELOG.md)
 
 ### Fixed
 
@@ -130,7 +168,7 @@ Right-click → Copy & Export → Copy Line now copies the line you actually rig
 
 ## [7.7.0]
 
-Each expand/collapse in the log viewer now has its own dedicated control instead of overloading the severity dot, the Counter toggle is renamed Line numbers and moved to Layout, the permanent 99+ badge on the Logs icon is gone, dragged-in context lines (stack frames, repeat chips) mute correctly under level filters, and within-line text selection in the viewer works again. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+Each expand/collapse in the log viewer now has its own dedicated control instead of overloading the severity dot, the Counter toggle is renamed Line numbers and moved to Layout, the permanent 99+ badge on the Logs icon is gone, dragged-in context lines (stack frames, repeat chips) mute correctly under level filters, and within-line text selection in the viewer works again. [log](https://github.com/saropa/saropa-log-capture/blob/v7.7.0/CHANGELOG.md)
 
 ### Changed
 
@@ -153,12 +191,10 @@ Each expand/collapse in the log viewer now has its own dedicated control instead
 
 ## [7.6.0]
 
-Adds contributor and agent tooling (Node 22 pinning, Dev Container, AGENTS.md, generated message catalogs, bundle-size guards), native tooltips and an F1 shortcuts hint across the log viewer, and a workspace setting for visual spacing; fixes blank lines that were rendering at full height instead of quarter height in the viewer and HTML exports; clicking the footer filename now opens a unified Log file dialog with editor / folder / copy actions. [log](https://github.com/saropa/saropa-log-capture/blob/v7.6.0/CHANGELOG.md)
+Native tooltips and an F1 shortcuts hint across the log viewer, a workspace setting for visual spacing; fixes blank lines that were rendering at full height instead of quarter height in the viewer and HTML exports; clicking the footer filename now opens a unified Log file dialog with editor / folder / copy actions. [log](https://github.com/saropa/saropa-log-capture/blob/v7.6.0/CHANGELOG.md)
 
 ### Added
 
-- **Contributor / agent tooling** — `engines.node` (≥22) with `.nvmrc` and `.node-version`; Dev Container (`.devcontainer/devcontainer.json`); [doc/AGENTS.md](doc/AGENTS.md); auto-generated [doc/internal/webview-incoming-message-types.md](doc/internal/webview-incoming-message-types.md) via `npm run generate:webview-catalog` with `verify:webview-catalog` on `npm run compile`; `verify:dist-size` guard on `dist/extension.js`; `npm run analyze-bundle` for esbuild metafile analysis; GitHub PR template and bug report issue form.
-- **More dev workflow hardening** — `tsconfig.json` **`noEmit: true`** with test builds using `--noEmit false --outDir out`; [doc/internal/webview-outbound-message-types.md](doc/internal/webview-outbound-message-types.md) + `verify:host-outbound-catalog`; [doc/internal/proposed-api.md](doc/internal/proposed-api.md); `npm run doctor`, `test:file`, **`test:smoke`**, **`preflight`**, **`clean`**, **`verify:node-toolchain`**, [doc/internal/contributes-commands.md](doc/internal/contributes-commands.md) + **`verify:list-commands`**; `verify:release-version`, `verify:release-tag`; Dependabot production patch group; feature-request issue template + issue chooser links; Gitleaks in CI; extension activation smoke test.
 - **Log viewer discoverability** — Native tooltips on the log surface, scroll map, session count, and file name explain right-click line actions, long-press to copy session metadata, minimap right-click options, the log file modal, and **F1** for in-viewer shortcuts (defaults).
 - **Workspace setting `saropaLogCapture.logViewerVisualSpacing`** — Persists log viewer visual spacing (same behavior as **V** / Options). Host seeds the webview on load and on config change; toggling in the viewer updates the workspace setting.
 
@@ -175,6 +211,13 @@ Adds contributor and agent tooling (Node 22 pinning, Dev Container, AGENTS.md, g
 - **Interactive HTML export** — Blank body lines use the same quarter-height `.line.line-blank` styling as the viewer.
 - **Simple HTML export** (`Export HTML`) — Body lines are emitted as `#log-content` rows with class `line` / `line-blank` instead of a single `<pre>`, matching quarter-height blanks and the same decoration model as the viewer / interactive export.
 - **Scroll map (minimap)** — Quarter-height blank lines no longer paint severity ticks, so the strip reflects substantive lines more closely.
+
+<details>
+<summary>Maintenance</summary>
+
+- **Contributor / agent tooling** — `engines.node` (≥22) with `.nvmrc` and `.node-version`; Dev Container (`.devcontainer/devcontainer.json`); [doc/AGENTS.md](doc/AGENTS.md); auto-generated [doc/internal/webview-incoming-message-types.md](doc/internal/webview-incoming-message-types.md) via `npm run generate:webview-catalog` with `verify:webview-catalog` on `npm run compile`; `verify:dist-size` guard on `dist/extension.js`; `npm run analyze-bundle` for esbuild metafile analysis; GitHub PR template and bug report issue form.
+- **More dev workflow hardening** — `tsconfig.json` **`noEmit: true`** with test builds using `--noEmit false --outDir out`; [doc/internal/webview-outbound-message-types.md](doc/internal/webview-outbound-message-types.md) + `verify:host-outbound-catalog`; [doc/internal/proposed-api.md](doc/internal/proposed-api.md); `npm run doctor`, `test:file`, **`test:smoke`**, **`preflight`**, **`clean`**, **`verify:node-toolchain`**, [doc/internal/contributes-commands.md](doc/internal/contributes-commands.md) + **`verify:list-commands`**; `verify:release-version`, `verify:release-tag`; Dependabot production patch group; feature-request issue template + issue chooser links; Gitleaks in CI; extension activation smoke test.
+</details>
 
 ---
 
@@ -238,7 +281,7 @@ Minimap now uses deterministic per-pixel severity reduction so high-severity sig
 
 ## [7.5.2]
 
-The minimap now reads as a true density map with faint gray ticks under severity bars, and icon-bar separators are visible across themes. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+The minimap now reads as a true density map with faint gray ticks under severity bars, and icon-bar separators are visible across themes. [log](https://github.com/saropa/saropa-log-capture/blob/v7.5.2/CHANGELOG.md)
 
 ### Fixed
 
@@ -291,15 +334,17 @@ Captured files now keep every line, repeat collapse uses click-to-expand outline
 - **DB burst markers now hide immediately when their anchor line is filtered.** Anchor-visibility checks now run at marker creation time, setting `markerHidden` and zero height for orphaned markers.
 - **ASCII-art banners now render as one tight, aligned block.** Art rows use compact line-height/height with matching virtual-scroll math, and start-line indent is fixed so box corners and vertical bars stay aligned.
 
-### Internal
+<details>
+<summary>Maintenance</summary>
 
 - **Quality-check line counting now matches ESLint.** `scripts/modules/checks_build.py` now counts non-blank, non-comment lines like `max-lines`, removing false warning mismatches.
+</details>
 
 ---
 
 ## [7.4.0]
 
-Adds a DB-signal marker toggle and hidden-gap click-to-peek, groups Flutter exception banners into one error block, and fixes duplicate log loading plus level-classification edge cases. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+Adds a DB-signal marker toggle and hidden-gap click-to-peek, groups Flutter exception banners into one error block, and fixes duplicate log loading plus level-classification edge cases. [log](https://github.com/saropa/saropa-log-capture/blob/v7.4.0/CHANGELOG.md)
 
 ### Added
 
@@ -323,7 +368,7 @@ Adds a DB-signal marker toggle and hidden-gap click-to-peek, groups Flutter exce
 
 ## [7.3.0]
 
-Logs panel rows now include Reveal in File Explorer, log context actions are grouped under Export/Copy flyouts, and session logs auto-bundle with Drift Advisor/Logcat sidecars into one expandable entry.
+Logs panel rows now include Reveal in File Explorer, log context actions are grouped under Export/Copy flyouts, and session logs auto-bundle with Drift Advisor/Logcat sidecars into one expandable entry. [log](https://github.com/saropa/saropa-log-capture/blob/v7.3.0/CHANGELOG.md)
 
 ### Added
 
@@ -349,7 +394,6 @@ Logs panel rows now include Reveal in File Explorer, log context actions are gro
 - **Ungroup/Open-as-merged now resolves sibling files correctly.** URI reconstruction now uses `keyToLogUri(...)`, so fan-out actions target all group members reliably.
 - **ASCII box-drawing detection failed on Drift Debug Server v3.3.3 banners and other non-light-corner variants.** The `isAsciiBoxDrawingDecorLine` helper (and its webview mirror) only paired `│` (U+2502) and `║` (U+2551) as bar chars, so the rounded top/bottom rules (`╭──╮`, `╰──╯`) and T-connector divider (`├──┤`) introduced by Drift v3.3.3 fell through to the 0.6 art-char ratio fallback. That fallback had a hand-picked char list that happened to include the corners but missed heavy variants (`┏━┓`, `┃`, `┣━┫`, `┗━┛`), mixed light/heavy (`┍━┑`, `┕━┙`), mixed light/double (`╒══╕`, `╞══╡`, `╘══╛`), and dashed bars (`╎`, `╏`). The URL stripper `stripAsciiBoxNoise` (both TS and webview copies) had the same subset gap and couldn't extract the viewer URL from a rounded-corner frame. All three locations now use ranges: the bar-pair regex accepts any of `│┃║╎╏╽╿`; a new pure-box-rule branch matches lines whose non-whitespace characters are entirely in U+2500–U+257F (covering every corner, T-connector, half-line, and diagonal in the Unicode box-drawing block); the ratio fallback accepts the full U+2500–U+257F plus block-elements U+2580–U+259F (for shaded art like `░▒▓█`); and `stripAsciiBoxNoise` strips the full U+2500–U+257F range. ASCII `|` is intentionally excluded from the bar-pair set so markdown tables still read as plain text. `+---+ | text |` ASCII banners still classify via the ratio fallback. Added 33 new unit tests covering rounded/heavy/mixed variants, indented banners, boxen-style title-in-rule, and regression guards against markdown-table and single-box-char false-positives.
 
-[log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
 
 ---
 
@@ -384,7 +428,7 @@ Fixes the duplicate end-of-capture notifications that could appear after a singl
 
 ## [7.2.0]
 
-Adds a dedicated Collections panel, structured viewers for markdown/JSON/CSV/HTML, a floating search overlay, capture on/off status-bar toggle, full F1 shortcuts reference, and richer signal reports (stack traces, fingerprints, cross-session history). [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+Adds a dedicated Collections panel, structured viewers for markdown/JSON/CSV/HTML, a floating search overlay, capture on/off status-bar toggle, full F1 shortcuts reference, and richer signal reports (stack traces, fingerprints, cross-session history). [log](https://github.com/saropa/saropa-log-capture/blob/v7.2.0/CHANGELOG.md)
 
 ### Added
 
@@ -427,12 +471,9 @@ Adds a dedicated Collections panel, structured viewers for markdown/JSON/CSV/HTM
 - **Continuation collapse button moved left of `»` chevron.** The `+N` / `−N` expand/collapse button was positioned to the right of the `»` chevron, overlapping with the timestamp. It is now injected into the decoration prefix before the `»` so it sits near the line numbers and cannot overlap other elements. The standalone contBadge token in the render string was also moved to sit after `deco` (not before), so the art-continuation fallback path — where `deco` is empty and the splice is skipped — matches the invariant that the badge never precedes the decoration prefix.
 - **Compress lines dedup missed structured-prefix lines.** The dedup key compared the full HTML text including structured prefixes (timestamps, PIDs, logcat tags). Lines with identical message bodies but different timestamps produced different keys and were not compressed. Now strips the structured prefix (and source-tag brackets) before comparing, matching what the user sees on screen. Also added `metadataFiltered` to the eligibility check so metadata-filtered lines are excluded from dedup grouping (mirrors `calcItemHeight`).
 - **Compress lines toggles were not reversible.** The streaming repeat tracker permanently swallowed non-SQL consecutive duplicates (never stored them in `allLines`), so unchecking "Compress lines" could not expand them back. Non-SQL duplicates are now always stored individually in `allLines`, and the compress dedup algorithm (`applyCompressDedupModes`) handles grouping when compress mode is toggled on. Unchecking compress now expands all lines. SQL fingerprint repeats retain their existing drilldown notification row behavior.
-- **Icon bar Bookmarks label test matched wrong structure.** The `getIconBarHtml` test asserted `>Bookmarks</span>` but the label wraps a nested count span (`<span class="ib-label">Bookmarks<span id="ib-bookmarks-count">...</span></span>`) to display the bookmark count next to the label. Loosened the assertion to `>Bookmarks<`, matching the existing loose pattern already used for the Logs label (which has the same nested count structure).
-
 ### Changed
 
 - **Collections explainer condensed.** The banner is now shorter, dismissible, and the standalone "New Collection" button was removed in favor of context-menu creation.
-- **Terminology dictionary added.** `docs/guides/TERMINOLOGY.md` maps user terms to internal names and lists banned terms.
 - **Terminology standardized across UI.** `Project Logs` → `Logs`, `Code Origins` → `Source Classes`, and `filter preset` → `Quick Filter`.
 - **Source Classes tab shows selected count.** The tab header and body summary now display the number of selected (visible) tags instead of the total count. Shows nothing when no tags are selected (never shows zero).
 - **Log Sources layout improved.** Tier radios now sit below source titles with clearer spacing and padding.
@@ -447,126 +488,13 @@ Adds a dedicated Collections panel, structured viewers for markdown/JSON/CSV/HTM
 - **Kebab dropdown aligned to button.** The actions dropdown now opens directly below the three-dot icon instead of anchoring to the far right of the page.
 - **Session summary button order swapped.** "Copy Log Path" now appears before "Open Log" in the post-session notification dialog.
 
----
-
-## [7.1.1]
-
-Stops false-positive HTTP signals from Android PID numbers, restricts extension-side signal scanning to error-level logcat lines, scales continuation and category badges with zoom, and consolidates duplicate ANR reports. [log](https://github.com/saropa/saropa-log-capture/blob/v7.1.1/CHANGELOG.md)
-
-### Fixed
-
-- **Network failure signals no longer false-positive on Android PIDs.** The HTTP status code detector (e.g. 502) now requires an HTTP context keyword (HTTP, status, response, GET, POST, etc.) on the same line. Previously, bare numbers in logcat CPU dumps (e.g. PID 502 in `3% 502/android.hardware.sensors`) matched as HTTP 502 "Bad Gateway".
-- **Extension-side signal scanner now filters by logcat level.** Network, memory, permission, and error pattern matching is restricted to error-class logcat lines (E/F/A). Info-level system noise like ActivityManager process starts no longer contributes to signal counts. Slow-op detection still runs at any level.
-- **Continuation badge no longer overlaps timestamp text.** The `[+]` badge used fixed `font-size: 10px` which didn't scale with zoom and could overlap the decoration prefix. Now uses `0.75em` so it scales with the viewer's font size.
-- **Continuation badge now shows count inline.** Changed from `[+]` (count hidden in tooltip) to `+7` / `−7` so the user sees how many lines are collapsed without hovering.
-- **Category badge (`category-badge`) now scales with zoom.** Changed from fixed `9px` / `4px` to em-based units (`0.7em` / `0.3em`).
-- **Signal reports no longer triplicate for a single ANR event.** When a high-confidence ANR hypothesis exists, redundant `error-recent` hypotheses (typically ANR dump lines like CPU stats and IO pressure) are merged into the ANR report. The user sees one consolidated report with evidence links to all the dump lines.
-
----
-
-## [7.1.0]
-
-Simplifies the filter drawer to three core sections, adds a dedicated Tags & Origins slide-out panel for chip-heavy browsing, and renames log input categories for clarity. [log](https://github.com/saropa/saropa-log-capture/blob/v7.1.0/CHANGELOG.md)
-
-### Fixed
-
-- **CI coverage thresholds adjusted after v7.0.0 code growth.** Functions threshold lowered from 48% to 43%, branches from 40% to 37%, statements held at 48%. New tests for anomaly detection (10 functions) and crash category classification bring coverage back above the new thresholds.
-
-### Changed
-
-- **Filter drawer simplified.** Removed Message Tags, Code Origins, and SQL Commands accordion sections from the narrow filter dropdown. Only filtering controls remain: Log Sources (tier radios), Text Exclusions, and File Scope.
-- **Tags & Origins slide-out panel.** New icon bar button (Tags) opens a dedicated side panel for chip-heavy browsing sections: Message Tags, Code Origins, SQL Commands, and Individual Sources placeholder. These sections get room to breathe instead of being crammed into tiny accordions.
-- **"Log Inputs" renamed to "Log Sources".** The accordion section name now describes what it controls more clearly.
-- **"Flutter App" renamed to "Flutter DAP".** The tier radio label now includes a tooltip explaining what the Debug Adapter Protocol is. Hint text added below: "stdout, stderr, console".
-- **"Exclusions" renamed to "Text Exclusions".** Clarifies that these patterns filter by text content, not by source or category.
-- **"Preset: None" replaced by "Saved Filters: Default".** Footer label and default option renamed. The redundant "Reset all" button was removed — selecting "Default" resets everything.
-- **Modularized 7 oversized files to meet the 300 LOC limit.** Extracted severity keywords CSS, logcat classifier tests, session panel test helpers, session metadata I/O, session manager listeners, signal accumulators, and viewer-specific activation handlers into dedicated modules. No behavior changes.
-
----
-
-## [7.0.0]
-
-Overhauls the filter panel into focused sections with a dedicated Tags & Origins side panel, adds drag-to-resize scroll map, and replaces the old Insights panel with a unified Signals system — cross-session trends, co-occurrence detection, severity classification, recurring signal notifications, full markdown reports with evidence context and stack traces, and Drift Advisor integration for SQL signals. [log](https://github.com/saropa/saropa-log-capture/blob/v7.0.0/CHANGELOG.md)
-
-### Changed
-
-- **Project Logs now shows file names immediately during scan.** Sidecar migration and metadata loading no longer block first-name visibility.
-- **Exclusion checkbox moved inline with textbox.** The toggle now sits in the input row to save vertical space.
-- **Filter panel redesigned into focused sections.** Core controls stay in the drawer; chip-heavy controls moved to the dedicated Tags & Origins side panel.
-- **Log Sources now uses three tier radios with clearer labels and defaults:** Flutter DAP (All), Device (Warn+), and External (Warn+).
-- **External tier now includes all non-Flutter, non-device sources.** Previously un-tiered AI/drift-perf lines now filter correctly under External.
-- **Exclusions renamed to "Text Exclusions"** to clarify that these patterns filter by text content, not by source or category.
-- **Saved Filters replaces the Preset dropdown.** Footer label is now `Saved Filters: Default`, and selecting `Default` resets all filters.
-- **Signal report `Related Lines` now lists concrete items.** It shows line numbers and text (up to 20 rows) instead of count-only summaries.
-- **Signal report evidence context expanded to 10 lines** (from 5).
-- **Signal report evidence now includes contiguous stack traces.** Context extends past normal radius to capture nearby Dart/Flutter and Java/Kotlin frames.
-- **Signal report now reads the log file once per panel.** Sections share one read to reduce I/O.
-- **Double-click now solos filter chips.** Double-click a Message Tag or Code Origin to isolate it; double-click again to restore prior state.
-- **Signal trends: lint rule link.** Signals with saropa_lints context now show a `📋 Rule` button that opens VS Code settings for that rule.
-- **Signal trends: Drift Advisor link for SQL signals.** SQL signals now show a `🔍 DA` button for one-click panel open.
-- **SQL signals now include Drift Advisor table metadata.** When available, schema/table/index context is shown directly in the Signals panel.
-- **`RecurringError` was removed in favor of unified `RecurringSignalEntry`.** All host/webview/analysis/export/test paths now use one recurring-signal type.
-- **Internal `dbInsight` identifiers were renamed to `dbSignal`.** This is an internal consistency cleanup with no user-facing behavior change.
-- **Remaining `insight` naming was removed in favor of `signal`.** Function names, command IDs, comments, and docs are now consistent.
-- **Signal trend analysis added.** Recurring signals now show increasing/stable/decreasing direction with colored trend arrows.
-- **`PersistedSignalSummaryV2` now stores real entries, not just counts.** Cross-session aggregation uses richer V2 details with V1 fallback support.
-- **Recurring signal notification.** Finalization now shows a VS Code info notice when a signal appears in 5+ sessions, with an `Open Signals` action.
-- **Cross-signal co-occurrence detection added.** Signal pairs with high Jaccard overlap are persisted in `CrossSessionSignals.coOccurrences`.
-- **Unified signals now track versions.** Error/warning signals include `firstSeenVersion` and `lastSeenVersion` from session `appVersion`.
-- **Signals panel consolidated into unified lists.** `This log` and `Across your logs` now avoid duplicate sections and include inline triage controls.
-- **Extension-side scanner now writes V2 signal entries even when viewer is unopened.** Sessions persist deduped per-pattern entries (not count-only summaries).
-- **Related Signals section added.** Co-occurring signal pairs now render under `Across your logs` with overlap and shared-session counts.
-- **Signal jump-to-line added.** Signals with line indices now jump to their first occurrence in the current log.
-
-### Added
-
-- **Drag-to-resize scroll map added.** Minimap width is now draggable (20–160px), persisted per workspace, and reset by preset changes.
-- **`Works best with` section added to README.** It lists companion Saropa extensions and links to the Saropa Suite pack.
-- **Companion extensions in Integrations panel.** Options → Integrations now shows install links for Saropa Lints, Drift Advisor, Claude Guard, and the Saropa Suite pack.
-- **Signal report now includes a `Companion Extensions` section.** It shows Drift Advisor/Lints context when available and install prompts when missing.
-- **Signal report `Session Overview` section added.** It surfaces top-level session stats (errors, warnings, SQL bursts/N+1, ANR risk, Drift issues).
-- **Signal report `Signal Details` section added.** It includes type-specific details plus occurrence distribution (first/last/span/cluster pattern).
-- **Signal report: Other Signals section.** Shows other hypotheses from the same session with confidence badges.
-- **Signal report markdown export is now full-fidelity.** Copy/Save includes all report sections instead of header + evidence only.
-- **Signal summaries now persist to session metadata on finalize.** Root-cause bundles are compacted and saved for cross-session analysis.
-- **Signal trends in Insights panel.** `Across your logs` now aggregates persisted summaries and opens the latest matching session on click.
-- **Signal report `Cross-Session History` section added.** It lists past sessions with the same signal and supports click-to-open navigation.
-- **Trend badges on signals.** Hypotheses now show `↻N` when the same signal appears in 2+ past sessions.
-- **Warning fingerprinting added.** Warnings are now normalized, hashed, and persisted at finalization for cross-session tracking.
-- **Unified `All Signals` view added.** `Across your logs` now merges recurring errors/trends into one impact-sorted list across error/warning/perf/SQL and summary signal types.
-- **`Insights` was renamed to `Signals` across the UI and commands.** User-facing terminology is now consistent.
-- **Automated signal severity classification added.** Recurring signals are labeled critical/high/medium/low and sorted with visual priority indicators.
-- **`All signals in this log` section added.** It shows unified current-session errors/warnings/perf/SQL summaries from session metadata.
-- **Unified signals now ingest Drift Advisor data when available.** Slow queries and diagnostic issues appear alongside log-derived signals.
-- **Standalone insights panel retired.** Legacy `src/ui/insights/` webview panel is removed; functionality lives in the built-in Signals panel/tab.
-- **Extension-side general signal scanning added at finalize.** Non-webview sessions now still get network/memory/slow-op/permission/classified signal data.
-- **Signals now include lint diagnostic enrichment.** File-referenced signals pull VS Code diagnostics (with bounded background analysis) including rule/source/severity details.
-
-### Fixed
-
-- **Warning detection now recognizes logcat `W/` prefixes.**
-- **Error detection now recognizes logcat `E/`, `F/`, and `A/` prefixes.**
-- **`Show native scrollbar` toggle now applies immediately.** Toggle state updates optimistically and forces a safe reflow so cached Chromium scrollbar styling refreshes.
-- **Jump buttons now clear the native scrollbar.** Inset now reads `--scrollbar-w` directly instead of unreliable geometry.
-- **Context-menu checkmarks no longer mimic submenu arrows.** Check icons now render inline by label (VS Code convention) instead of right-edge arrow position.
-- **`DriftDebugInterceptor` SQL lines are now recognized.** SQL tagging/fingerprinting/history/N+1 paths now support both Drift log formats across extension and webview parsers.
-- **Dot-separated project names now display correctly.** Dots are now treated as word separators in both tree and webview session panels.
-- **Bracket-prefixed metadata is now fully stripped.** Parser logic now skips multiple leading bracket groups so actual log format/message content is parsed and displayed correctly.
-- **Continuation badge no longer overlaps log text.** It is now an inline compact pill by the line counter.
-- **Signal reports now open in separate tabs.** Reports no longer replace each other, making side-by-side comparison possible.
-- **Signals panel text now wraps correctly.** Flex layout keeps icon/actions pinned while long descriptions wrap inside available width.
-- **Device-other lines are no longer re-promoted by recent-error context.** Framework noise stays demoted to info as intended.
-- **Recent-error-context border no longer shifts content.** The visual indicator now uses inset `box-shadow` instead of padding changes.
-
 <details>
 <summary>Maintenance</summary>
 
-- **adb logcat Phase 2: streaming provider pattern.** Logcat spawning now uses `IntegrationProvider` hooks (`onSessionStartStreaming`, `onProcessId`) instead of hardcoded session-init logic.
-- **`ROADMAP.md` now redirects to `plans/`.** It points to `plans/` for upcoming work and `plans/history/` for completed work.
-- **README restructured for faster grokking.** Installation & Quick Start moved to the top of the page, a hyperlinked Table of Contents added, the Integration adapters wall-of-text broken into scannable sub-bullets, and the Configuration table split into six categorized tables (Capture, Viewer & Display, Filter & Search, Alert & Diagnostics, File Splitting Rules, Advanced).
-- **README hero section rewritten to explain the feature set.** The intro and overview now lead with the value proposition (zero-config capture, diagnostic workstation, error intelligence, SQL diagnostics) instead of reading like technical documentation. Added coverage for signals, structured log parsing, ASCII art detection, and Drift SQL diagnostics. Fixed stale documentation links to use `plans/`.
+- **Icon bar Bookmarks label test matched wrong structure.** The `getIconBarHtml` test asserted `>Bookmarks</span>` but the label wraps a nested count span; loosened the assertion to `>Bookmarks<`, matching the existing loose pattern for the Logs label.
+- **Terminology dictionary added.** `docs/guides/TERMINOLOGY.md` maps user terms to internal names and lists banned terms.
 </details>
 
 ---
 
-For older versions (6.2.1 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
+For older versions (7.1.1 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
