@@ -169,6 +169,17 @@ function overviewRow(label: string, value: string): string {
 
 // --- Session timing + outcome helpers ---
 
+/**
+ * Format an ISO timestamp to a readable local date+time string.
+ * Example: "2026-05-13 10:35:40" — uses 24-hour format for unambiguous log correlation.
+ */
+function formatTimestamp(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) { return iso; }
+  const pad = (n: number): string => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
 /** Format duration in ms to a human-readable string. */
 function formatDuration(ms: number): string {
   if (ms < 1000) { return `${ms}ms`; }
@@ -185,6 +196,12 @@ function outcomeLabel(outcome: SessionOutcome): string {
 
 function appendTimingHtml(parts: string[], logLines: readonly string[]): void {
   const timing = parseSessionTiming(logLines);
+  if (timing?.startIso) {
+    parts.push(overviewRow('Started', formatTimestamp(timing.startIso)));
+  }
+  if (timing?.endIso) {
+    parts.push(overviewRow('Ended', formatTimestamp(timing.endIso)));
+  }
   if (timing?.durationMs) {
     parts.push(overviewRow('Duration', formatDuration(timing.durationMs)));
   }
@@ -194,6 +211,12 @@ function appendTimingHtml(parts: string[], logLines: readonly string[]): void {
 
 function appendTimingMarkdown(lines: string[], logLines: readonly string[]): void {
   const timing = parseSessionTiming(logLines);
+  if (timing?.startIso) {
+    lines.push(`- **Started:** ${formatTimestamp(timing.startIso)}`);
+  }
+  if (timing?.endIso) {
+    lines.push(`- **Ended:** ${formatTimestamp(timing.endIso)}`);
+  }
   if (timing?.durationMs) {
     lines.push(`- **Duration:** ${formatDuration(timing.durationMs)}`);
   }
