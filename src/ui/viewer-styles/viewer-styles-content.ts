@@ -12,9 +12,10 @@ export function getContentStyles(): string {
     font-style: italic;
     line-height: 1.5;
 }
-/* DB_16 timestamp burst — cyan rail matches database level / gutter (same token as level-bar-database). */
+/* DB_16 timestamp burst — green rail matches database level / gutter (same token as level-bar-database).
+   Was cyan when Database itself was cyan; rotated to green alongside the Info=blue / Notice=cyan / DB=green palette swap. */
 .marker.marker-db-ts-burst-edge {
-    --db-ts-burst-ac: var(--vscode-terminal-ansiCyan, #00bcd4);
+    --db-ts-burst-ac: var(--vscode-charts-green, #4caf50);
     font-style: normal;
     background: color-mix(in srgb, var(--db-ts-burst-ac) 14%, transparent);
     color: var(--db-ts-burst-ac);
@@ -33,9 +34,11 @@ export function getContentStyles(): string {
     border-top: 1px dashed color-mix(in srgb, var(--db-ts-burst-ac) 50%, transparent);
     border-bottom: 2px solid var(--db-ts-burst-ac);
 }
-/* Member log lines framed between the two rails (virtualized flat rows; no DOM wrapper). */
+/* Member log lines framed between the two rails (virtualized flat rows; no DOM wrapper).
+   Rail color follows level-bar-database (charts-green) so the rails stay visually
+   aligned with the SQL rows they group. */
 .line.db-ts-burst-member {
-    --db-ts-burst-ac: var(--vscode-terminal-ansiCyan, #00bcd4);
+    --db-ts-burst-ac: var(--vscode-charts-green, #4caf50);
     border-left: 2px solid var(--db-ts-burst-ac);
     border-right: 2px solid var(--db-ts-burst-ac);
     background: color-mix(in srgb, var(--db-ts-burst-ac) 8%, transparent);
@@ -109,10 +112,10 @@ export function getContentStyles(): string {
 .stack-header.level-error { color: var(--vscode-debugConsole-errorForeground, #f48771); }
 .stack-header.level-warning { color: var(--vscode-debugConsole-warningForeground, #cca700); }
 .stack-header.level-performance { color: var(--vscode-charts-purple, #a855f7); }
-.stack-header.level-info { color: var(--vscode-debugConsole-infoForeground, #b695f8); }
+.stack-header.level-info { color: var(--vscode-charts-blue, #2196f3); }
 .stack-header.level-debug { color: var(--vscode-terminal-ansiYellow, #dcdcaa); }
-.stack-header.level-notice { color: var(--vscode-charts-blue, #2196f3); }
-.stack-header.level-database { color: var(--vscode-terminal-ansiCyan, #00bcd4); }
+.stack-header.level-notice { color: var(--vscode-terminal-ansiCyan, #00bcd4); }
+.stack-header.level-database { color: var(--vscode-charts-green, #4caf50); }
 .stack-header:hover { background: var(--vscode-list-hoverBackground); }
 /* When collapsed, hide all child frame lines */
 .stack-group.collapsed .stack-frames { display: none; }
