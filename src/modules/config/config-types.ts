@@ -82,7 +82,10 @@ export interface SaropaLogCaptureConfig {
   readonly reportFolder: string;
   /** Bug report lint section: which impact levels to include (essential = critical+high; recommended = +medium; full = all). */
   readonly lintReportImpactLevel: "essential" | "recommended" | "full";
-  readonly autoOpen: boolean;
+  /** What to do when a capture ends: "ask" shows the summary toast, "openLog"
+   * auto-opens the log in the viewer, "nothing" suppresses both. Replaces the
+   * former boolean `autoOpen` setting — `true` mapped to "openLog". */
+  readonly afterCaptureAction: "ask" | "openLog" | "nothing";
   readonly maxLogFiles: number;
   readonly gitignoreCheck: boolean;
   readonly redactEnvVars: readonly string[];

@@ -148,37 +148,59 @@ export function formatBytes(bytes: number): string {
 }
 
 /**
- * Show a session summary notification with Open Log and Copy Log Path buttons.
+ * Show a session summary notification with Open Log, Copy Log Path,
+ * Always Open, and Don't Ask Again buttons.
+ *
+ * "Always Open" persists the user's preference by writing
+ * `afterCaptureAction: "openLog"` to settings so future captures skip the
+ * toast. "Don't Ask Again" writes `"nothing"` to suppress the toast entirely.
+ * "Copy" stays manual-only — clipboard writes cannot be meaningfully automated
+ * as a default action.
  */
 export function showSummaryNotification(summary: SessionSummary): void {
     const message = `${summary.title}\n${summary.lines.join(' | ')}`;
     const openLabel = t('action.openLog');
     const copyLabel = t('action.copyLogPath');
+    const alwaysOpenLabel = t('action.alwaysOpen');
+    const dontAskLabel = t('action.dontAskAgain');
 
     vscode.window.showInformationMessage(
         message,
         copyLabel,
         openLabel,
+        alwaysOpenLabel,
+        dontAskLabel,
     ).then((selection) => {
-        if (selection === openLabel) {
-            // Route through saropaLogCapture.openSession so the finalized log loads in the
-            // Log Viewer webview (panel container, bottom dock — same surface as the session
-            // history panel). The previous showTextDocument(uri) path opened the log as plain
-            // text in the editor area, a different surface from where the user was watching
-            // the session stream, so clicks appeared to do nothing. When logUri is missing
-            // fall back to saropaLogCapture.open for the active-session case.
+        if (selection === openLabel || selection === alwaysOpenLabel) {
+            // Route through saropaLogCapture.openSession so the finalized log
+            // loads in the Log Viewer webview, not as plain text in the editor.
             if (summary.logUri) {
                 void vscode.commands.executeCommand('saropaLogCapture.openSession', { uri: summary.logUri });
             } else {
                 void vscode.commands.executeCommand('saropaLogCapture.open');
             }
+        }
+        if (selection === alwaysOpenLabel) {
+            // Persist the preference so future captures auto-open without asking.
+            persistAfterCaptureAction('openLog');
+        } else if (selection === dontAskLabel) {
+            // Suppress the toast for all future captures.
+            persistAfterCaptureAction('nothing');
         } else if (selection === copyLabel) {
-            // Copy the log file path to the clipboard for external use.
             if (summary.logUri) {
                 void vscode.env.clipboard.writeText(summary.logUri.fsPath);
             }
         }
     });
+}
+
+/** Write the afterCaptureAction setting to user-level settings.json. */
+function persistAfterCaptureAction(value: 'openLog' | 'nothing'): void {
+    vscode.workspace.getConfiguration('saropaLogCapture')
+        .update('afterCaptureAction', value, vscode.ConfigurationTarget.Global)
+        .then(undefined, () => {
+            // Non-critical — the toast still worked, the preference just didn't stick.
+        });
 }
 
 /**
