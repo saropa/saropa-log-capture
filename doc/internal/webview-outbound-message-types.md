@@ -94,8 +94,9 @@ Heuristic index of `type` fields on objects passed to `this.postMessage` / `targ
 | `startReplay` | src/ui/provider/log-viewer-provider-state.ts, src/ui/provider/log-viewer-provider.ts |
 | `summaryReady` | src/ui/analysis/analysis-panel-helpers.ts |
 | `syncState` | src/ui/session/session-comparison.ts |
+| `toast` | src/ui/signals/signal-report-panel.ts |
 | `updateFooter` | src/ui/provider/log-viewer-provider-state.ts |
 | `updateWatchCounts` | src/ui/provider/log-viewer-provider.ts |
 | `viewerKeybindingRecordMode` | src/ui/provider/viewer-message-handler-actions.ts |
 
-**Total:** 91 distinct types.
+**Total:** 92 distinct types.
