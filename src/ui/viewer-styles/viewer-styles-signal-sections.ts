@@ -215,5 +215,64 @@ export function getSignalSectionsStyles(): string {
 /* Jumpable signal rows — cursor pointer and hover highlight to indicate clickability */
 .signal-jumpable { cursor: pointer; }
 .signal-jumpable:hover { background: var(--vscode-list-hoverBackground, rgba(255,255,255,0.04)); }
+
+/* Fu7: time-window filter chips. Compact row of buttons above the signals list — the active
+   chip gets the editor-foreground border so it reads as pressed without needing a fill change. */
+.signal-tw-filter {
+    display: flex;
+    gap: 4px;
+    margin: 4px 0 6px;
+    flex-wrap: wrap;
+}
+.signal-tw-chip {
+    background: transparent;
+    color: var(--vscode-foreground);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 10px;
+    padding: 2px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    line-height: 1.4;
+}
+.signal-tw-chip:hover {
+    background: var(--vscode-list-hoverBackground, rgba(255,255,255,0.04));
+}
+.signal-tw-chip-active {
+    border-color: var(--vscode-focusBorder, var(--vscode-textLink-foreground, #3794ff));
+    background: var(--vscode-list-activeSelectionBackground, transparent);
+    color: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
+}
+
+/* Fu3: inline evidence preview under a signal title. Three compact lines of raw log text so the
+   user can verify what the signal is pointing at without clicking through. Width is constrained
+   so long lines truncate rather than push the meta column out of the row. */
+.signal-evidence-preview {
+    width: 100%;
+    margin-top: 3px;
+    padding-left: 18px;
+    font-size: 11px;
+    opacity: 0.75;
+    line-height: 1.35;
+}
+.signal-evidence-line {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--vscode-descriptionForeground, var(--vscode-foreground));
+}
+/* Force the row to wrap so the preview drops below the icon/meta cells instead of breaking flex. */
+.signal-in-log-row { flex-wrap: wrap; }
+
+/* Fu2: scroll-lock pulse. Brief highlight on lines around the jump target so the eye lands on
+   the right place. Keyframes fade in then out so the cue is clearly transient — no leftover
+   visual debt. Cleanup is by JS class-remove on animationend (see part-d). */
+@keyframes saropaLinePulse {
+    0%   { background-color: transparent; }
+    25%  { background-color: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 179, 8, 0.3)); }
+    100% { background-color: transparent; }
+}
+.line-pulse {
+    animation: saropaLinePulse 900ms ease-in-out 1;
+}
 `;
 }
