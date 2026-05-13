@@ -41,7 +41,7 @@ function applyDbSyntheticLineResults(results, scopeFilt, ts, sp, lineSource) {
                 : sqlMeta.fingerprint;
             n1Html = '<span class="repeat-notification n1-signal">'
                 + '\\u26a0 Potential N+1 query '
-                + '<span class="n1-conf n1-conf-' + signal.confidence + '">[' + confLabel + ']</span> '
+                + '<span class="n1-conf n1-conf-' + signal.confidence + '">' + confLabel + '</span> '
                 + ' - ' + signal.repeats + ' repeats / ' + signal.distinctArgs + ' arg variants in ' + windowSec + 's'
                 + ' <span class="n1-fp">(' + escapeHtml(previewFingerprint) + ')</span>'
                 + ' <span class="n1-actions">'
