@@ -16,6 +16,30 @@ export function getLineStyles(): string {
     overflow: visible;
     transition: background 0.1s ease;
 }
+/* Rows that embed a block-level child (currently: expanded SQL repeat drilldown
+   panel inside repeat-notification rows) must grow to fit the panel. WHY a class
+   rather than always using min-height on .line: the virtual scroller's prefix
+   sums treat each row as exactly calcItemHeight() tall; non-expanded rows must
+   stay at the strict fixed height so block-flow positions match the prefix
+   sums. The class is applied only when the item carries the open-state flag
+   that calcItemHeight() also reads, keeping DOM and scroll math in sync.
+   Failure mode this avoids: clicking "N × SQL repeated:" expands the panel,
+   the .line stays 1em tall, overflow: visible lets the panel paint on top
+   of the next 5–10 rows, hiding real log content. */
+.line.line-has-block {
+    height: auto;
+    min-height: calc(1em * var(--log-line-height, 1.1));
+}
+/* Chip rows (repeat-notification, n-plus-one-signal) do not carry a real
+   decoration prefix, but when decorations are globally on they still need to
+   start at the same content column as decorated lines so the view reads as a
+   single tabular column. This rule applies only padding-left, NOT the
+   negative text-indent used by .line:has(.line-decoration) — without a
+   prefix to fill the indent space the first inline content would otherwise
+   render pulled left to ~1.25em, breaking the column. */
+.line.line-deco-spacer-only {
+    padding-left: var(--deco-prefix-width-em, 14.25em);
+}
 .line:hover { background: var(--vscode-list-hoverBackground); }
 /* Stack gutter spacer: reserves the same width as the collapse arrow on
    stack headers so line numbers and content stay aligned across all lines. */

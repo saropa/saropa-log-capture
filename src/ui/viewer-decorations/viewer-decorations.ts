@@ -186,8 +186,15 @@ function getDecorationPrefix(item, idx) {
         parts.push('<span class="meta-filter-toggle deco-parsed-tag" data-meta-key="tag" data-meta-value="' + item.parsedTag.replace(/"/g, '&quot;') + '" title="Filter by tag: ' + item.parsedTag.replace(/"/g, '&quot;') + '">' + item.parsedTag + '</span>');
     }
     if (parts.length === 0) return '';
+    /* WHY no '»' chevron: with --deco-prefix-width-em + hanging-indent, the
+       content column is visually obvious without a separator glyph. The chevron
+       was redundant and added noise on every line. Two trailing &nbsp; keep a
+       small whitespace gap between the prefix and the message body so the
+       columns don't visually touch when the timestamp ends in a digit.
+       Copy output (viewer-copy.ts) still emits '»' because plain text has no
+       columns to anchor against — the chevron survives there as a separator. */
     return '<span class="line-decoration">'
-        + parts.join('&nbsp; ') + '&nbsp;\\u00BB '
+        + parts.join('&nbsp; ') + '&nbsp;&nbsp;'
         + '</span>';
 }
 
