@@ -19,6 +19,8 @@ import { isPersistedSignalSummaryV1 } from '../../../modules/root-cause-hints/si
 import { enrichSignalsWithLintContext } from '../../../modules/diagnostics/signal-lint-enricher';
 import { enrichSignalsWithDaContext } from '../../../modules/diagnostics/signal-da-enricher';
 import { buildRegressionSignalEntries, detectRegressions } from '../../../modules/signals/regression-detector';
+import { getLearningStore } from '../../../modules/learning/learning-runtime';
+import { SuggestionEngine, type RuleSuggestion } from '../../../modules/learning/suggestion-engine';
 import type { PostFn } from './crashlytics-handlers';
 
 /** Update error/warning triage status and refresh the signal panel.
@@ -110,6 +112,12 @@ export async function handleSignalDataRequest(post: PostFn, currentFileUri?: vsc
         }
     }
 
+    /* Plan 053-A: pending noise-learning suggestions piggyback on the same payload so the panel
+       doesn't need a separate round-trip on open. Failures here must NOT block the panel render —
+       the learning store can be uninitialized or empty for new workspaces, and we'd rather show
+       signals without suggestions than show nothing. */
+    const filterSuggestions = await loadPendingFilterSuggestions().catch(() => [] as RuleSuggestion[]);
+
     post({
         type: 'signalData',
         statuses,
@@ -125,7 +133,51 @@ export async function handleSignalDataRequest(post: PostFn, currentFileUri?: vsc
             await enrichSignalsWithLintContext([...(signalsInThisLog ?? [])], sessionCorrelationTags),
         ),
         coOccurrences: aggregated?.coOccurrences ?? [],
+        filterSuggestions,
     });
+}
+
+/** Plan 053-A: fetch pending suggestions from the learning system for panel display. */
+async function loadPendingFilterSuggestions(): Promise<RuleSuggestion[]> {
+    const store = getLearningStore();
+    if (!store) { return []; }
+    const engine = new SuggestionEngine(store);
+    /* Use listPendingSuggestions (not refreshAndListPending) — the notification path already
+       triggers refresh on its own cooldown. The panel just reads what's pending right now;
+       triggering an extract every panel open would burn CPU on signal-data refreshes that
+       happen multiple times per session. */
+    return engine.listPendingSuggestions();
+}
+
+/** Plan 053-A: Accept a filter suggestion. Mirrors the QuickPick accept path — update workspace
+ *  exclusions then mark the suggestion accepted, then re-send signal data so the panel re-renders
+ *  without the now-accepted row. */
+export async function handleAcceptFilterSuggestion(id: string, pattern: string, post: PostFn, currentFileUri?: vscode.Uri): Promise<void> {
+    if (!id || !pattern) { return; }
+    const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+    const cur = cfg.get<string[]>('exclusions', []);
+    if (!cur.includes(pattern)) {
+        try {
+            await cfg.update('exclusions', [...cur, pattern], vscode.ConfigurationTarget.Workspace);
+        } catch {
+            /* Settings write failure: surface to user, do not mark suggestion accepted. */
+            void vscode.window.showErrorMessage(`Failed to add exclusion: ${pattern}`);
+            return;
+        }
+    }
+    const store = getLearningStore();
+    if (store) { await store.setSuggestionStatus(id, 'accepted'); }
+    await handleSignalDataRequest(post, currentFileUri);
+}
+
+/** Plan 053-A: Reject a filter suggestion. Persists rejection so the same pattern doesn't
+ *  re-surface; once plan 053 Workstream C (confidence feedback loop) lands, rejections will
+ *  also suppress the pattern for N sessions. */
+export async function handleRejectFilterSuggestion(id: string, post: PostFn, currentFileUri?: vscode.Uri): Promise<void> {
+    if (!id) { return; }
+    const store = getLearningStore();
+    if (store) { await store.setSuggestionStatus(id, 'rejected'); }
+    await handleSignalDataRequest(post, currentFileUri);
 }
 
 /**

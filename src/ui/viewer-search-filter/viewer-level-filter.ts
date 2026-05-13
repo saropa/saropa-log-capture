@@ -12,6 +12,7 @@ var levelMenuOpen = false;
 ${getLevelClassifyScript()}
 ${getApplyLevelFilterFn()}
 ${getToggleLevelFn()}
+${getLevelFilterOutEmitFn()}
 ${getSyncLevelDotsFn()}
 ${getFlyupFns()}
 ${getSelectFns()}
@@ -57,11 +58,15 @@ function applyLevelFilter() {
 }`;
 }
 
-/** Toggle a single level and sync dots + persistence. */
+/** Toggle a single level and sync dots + persistence.
+ *  Plan 053-B: when a level transitions from enabled → disabled, emit `filter-out` interactions
+ *  for the lines that just became hidden. This is the missing emitter — the InteractionType
+ *  union already declares `'filter-out'` but no source existed until now. */
 function getToggleLevelFn(): string {
     return /* javascript */ `
 function toggleLevel(level) {
-    if (enabledLevels.has(level)) { enabledLevels.delete(level); }
+    var wasEnabled = enabledLevels.has(level);
+    if (wasEnabled) { enabledLevels.delete(level); }
     else { enabledLevels.add(level); }
     var btn = document.getElementById('level-' + level + '-toggle');
     if (btn) btn.classList.toggle('active', enabledLevels.has(level));
@@ -69,6 +74,44 @@ function toggleLevel(level) {
     applyLevelFilter();
     saveLevelState();
     if (typeof markPresetDirty === 'function') markPresetDirty();
+    /* Only emit on enabled → disabled. Re-enabling a level provides no noise signal. */
+    if (wasEnabled && typeof emitFilterOutForLevels === 'function') {
+        emitFilterOutForLevels([level]);
+    }
+}`;
+}
+
+/** Plan 053-B: emit `filter-out` interactions for lines belonging to one or more disabled levels.
+ *  Per-toggle cap of 50 events with index-based dedupe, mirroring the scroll-burst pattern in
+ *  viewer-script.ts. Truncates lineText to 100 chars to match the existing scroll emission shape.
+ *  Gated by learningEnabled — when learning is off, the call is a no-op. */
+export function getLevelFilterOutEmitFn(): string {
+    return /* javascript */ `
+function emitFilterOutForLevels(disabledLevels) {
+    if (typeof learningEnabled !== 'undefined' && !learningEnabled) return;
+    if (typeof allLines === 'undefined' || !allLines.length) return;
+    if (typeof vscodeApi === 'undefined') return;
+    var levelSet = {};
+    for (var li = 0; li < disabledLevels.length; li++) { levelSet[disabledLevels[li]] = 1; }
+    var sent = 0;
+    var seen = {};
+    var cap = 50;
+    for (var i = 0; i < allLines.length && sent < cap; i++) {
+        var row = allLines[i];
+        if (!row || (row.type !== 'line' && row.type !== 'stack-frame')) continue;
+        if (!levelSet[row.level]) continue;
+        if (seen[i]) continue;
+        seen[i] = 1;
+        var plain = stripTags(row.html || '');
+        if (!plain) continue;
+        vscodeApi.postMessage({
+            type: 'trackInteraction',
+            interactionType: 'filter-out',
+            lineText: plain.length > 100 ? plain.substring(0, 100) : plain,
+            lineLevel: row.level || ''
+        });
+        sent++;
+    }
 }`;
 }
 
@@ -125,15 +168,29 @@ function selectAllLevels() {
     if (typeof markPresetDirty === 'function') markPresetDirty();
 }
 function selectNoneLevels() {
+    /* Plan 053-B: snapshot what's being disabled before we wipe the set so we can emit
+       filter-out events for every previously-visible level. */
+    var disabledNow = Array.from(enabledLevels);
     enabledLevels = new Set();
     syncAllLevelButtons(false);
     syncLevelDots();
     applyLevelFilter();
     saveLevelState();
     if (typeof markPresetDirty === 'function') markPresetDirty();
+    if (disabledNow.length > 0 && typeof emitFilterOutForLevels === 'function') {
+        emitFilterOutForLevels(disabledNow);
+    }
 }
 function soloLevel(level) {
     if (enabledLevels.size === 1 && enabledLevels.has(level)) { selectAllLevels(); return; }
+    /* Plan 053-B: solo disables every level except the chosen one — snapshot the previously-
+       enabled set MINUS the soloed level so we emit filter-out for the levels that just hid. */
+    var disabledNow = [];
+    var prevEnabled = enabledLevels;
+    for (var li = 0; li < allLevelNames.length; li++) {
+        var nm = allLevelNames[li];
+        if (prevEnabled.has(nm) && nm !== level) disabledNow.push(nm);
+    }
     enabledLevels = new Set([level]);
     syncAllLevelButtons(false);
     var btn = document.getElementById('level-' + level + '-toggle');
@@ -142,6 +199,9 @@ function soloLevel(level) {
     applyLevelFilter();
     saveLevelState();
     if (typeof markPresetDirty === 'function') markPresetDirty();
+    if (disabledNow.length > 0 && typeof emitFilterOutForLevels === 'function') {
+        emitFilterOutForLevels(disabledNow);
+    }
 }
 function syncAllLevelButtons(active) {
     for (var i = 0; i < allLevelNames.length; i++) {

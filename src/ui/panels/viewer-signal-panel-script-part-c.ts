@@ -183,8 +183,12 @@ export function getSignalScriptPartC(): string {
                 allSignals: d.allSignals || [], signalsInThisLog: d.signalsInThisLog || [],
                 coOccurrences: d.coOccurrences || []
             };
+            /* Plan 053-A: noise-learning suggestions arrive in the same signalData payload so
+               the panel never makes a separate round-trip. Empty list hides the section. */
+            signalSuggestionsCache = d.filterSuggestions || [];
             renderHotFiles(); renderSignalsInThisLog();
             renderEnvironment(); renderSignalTrends(); renderCoOccurrences();
+            renderFilterSuggestions();
             /* Update icon bar badge with total signal count (this log + all signals). */
             var sigTotal = (signalDataCache.signalsInThisLog || []).length + (signalDataCache.allSignals || []).length;
             if (typeof updateIconBadge === 'function') updateIconBadge('ib-signal-badge', 'ib-signal-count', sigTotal);
