@@ -14,6 +14,31 @@ var looseStructuralErrorPattern = /\\b(?:error|exception)(?!\\s+(?:handl|recover
 // because the phrase has no colon/bracket. Mirror extension-side level-classifier.ts.
 var flutterExceptionBannerPattern = /\\bException caught by\\b/i;
 var driftStatementPattern = /\\bDrift(?:\\:\\s+Sent|\\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\s*\\:)\\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\b/i;
+// Curated DB-vendor tokens. Mirrors level-classifier.ts. Bare "DB" / "SQL"
+// are excluded to avoid false positives on common English text.
+var databaseVendorTokensSrc = '(?:Drift|Isar|Sqlite|Sqflite|Hive|Realm|Postgres|MySQL|MongoDB?)';
+// Bracket tag at line head containing a DB vendor token (e.g. "[IsarDriftRowCountAudit] ...").
+// Anchored to line start (after optional logcat/threadtime/[log] shells) so a
+// mid-message "[Drift]" mention does not promote the whole line to database.
+var databaseBracketTagPattern = new RegExp(
+    '^(?:[VDIWEFA]\\\\/[^:]*:\\\\s*)?'
+    + '(?:\\\\d{2}-\\\\d{2}\\\\s+\\\\d{2}:\\\\d{2}:\\\\d{2}\\\\.\\\\d{3}\\\\s+\\\\d+\\\\s+\\\\d+\\\\s+[VDIWEFA]\\\\s+[^:]*:\\\\s*)?'
+    + '(?:\\\\[log\\\\]\\\\s*)?'
+    + '\\\\[[^\\\\]]*' + databaseVendorTokensSrc + '[^\\\\]]*\\\\]',
+    'i',
+);
+// "Vendor:" prefix at line head (e.g. "DRIFT: VM Service WebSocket connect failed").
+var databaseColonPrefixPattern = new RegExp(
+    '^(?:[VDIWEFA]\\\\/[^:]*:\\\\s*)?'
+    + '(?:\\\\d{2}-\\\\d{2}\\\\s+\\\\d{2}:\\\\d{2}:\\\\d{2}\\\\.\\\\d{3}\\\\s+\\\\d+\\\\s+\\\\d+\\\\s+[VDIWEFA]\\\\s+[^:]*:\\\\s*)?'
+    + '(?:\\\\[log\\\\]\\\\s*)?'
+    + databaseVendorTokensSrc + '\\\\s*:',
+    'i',
+);
+function matchesDatabaseAnnotation(plainText) {
+    return databaseBracketTagPattern.test(plainText)
+        || databaseColonPrefixPattern.test(plainText);
+}
 var structuralPerfPattern = /\\b(skipped\\s+\\d+\\s+frames?|gc\\s+(?:pause|freed|concurrent))\\b/i;
 var strictLevelDetection = true;
 var stderrTreatAsError = false;
@@ -89,10 +114,22 @@ function classifyLevel(plainText, category) {
         if (L === 'V' || L === 'D') return 'debug';
         if (kwDebug && kwDebug.test(plainText)) return 'debug';
         if (kwNotice && kwNotice.test(plainText)) return 'notice';
+        // DB-vendor annotation runs before genericSqlPattern so an I/flutter line
+        // like "[Drift] connection pool warming" with no SQL keyword still
+        // classifies as database. Stays after W-warning short-circuit on
+        // purpose: an explicit W/ from logcat is a stronger signal than a tag.
+        if (matchesDatabaseAnnotation(plainText)) return 'database';
         if (genericSqlPattern.test(plainText)) return 'database';
         return 'info';
     }
     if (matchesError(plainText)) return 'error';
+    // DB-vendor bracket tags and "Vendor:" prefixes promote to database BEFORE the
+    // generic warning/perf keyword sweep — without this, lines like
+    // "DRIFT: VM Service WebSocket connect failed" classify as 'warning' (via
+    // the "failed" keyword) and "[IsarDriftRowCountAudit] ..." as 'info', so
+    // the Database level filter could not hide them as a group. Error still
+    // wins above this check.
+    if (matchesDatabaseAnnotation(plainText)) return 'database';
     if (memoryPhraseRe.test(plainText) && !flutterDartContextRe.test(plainText)) return 'info';
     if (kwWarn && kwWarn.test(plainText)) return 'warning';
     if (matchesPerf(plainText)) return 'performance';
