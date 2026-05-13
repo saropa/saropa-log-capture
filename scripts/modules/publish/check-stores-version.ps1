@@ -16,7 +16,8 @@ param(
 )
 
 $ErrorActionPreference = "Continue"
-$repoRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+# PSScriptRoot = scripts/modules/publish → three levels up to repo root
+$repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
 $bodyFile = Join-Path $PSScriptRoot "marketplace-gallery-query-body.json"
 if (-not (Test-Path $bodyFile)) {
     Write-Error "Missing $bodyFile (JSON POST body for gallery API)."
