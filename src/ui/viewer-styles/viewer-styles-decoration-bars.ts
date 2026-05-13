@@ -39,24 +39,26 @@ export function getDecorationBarStyles(): string {
 .line.line-tint-debug:hover {
     background-color: rgba(220, 220, 170, 0.16);
 }
+/* Notice tint: cyan, matches .line.level-notice and .level-bar-notice. */
 .line.line-tint-notice {
-    background-color: rgba(33, 150, 243, 0.08);
+    background-color: color-mix(in srgb, var(--vscode-terminal-ansiCyan, #00bcd4) 10%, transparent);
 }
 .line.line-tint-notice:hover {
-    background-color: rgba(33, 150, 243, 0.16);
+    background-color: color-mix(in srgb, var(--vscode-terminal-ansiCyan, #00bcd4) 18%, transparent);
 }
+/* Database tint: green, matches .line.level-database and .level-bar-database. */
 .line.line-tint-database {
-    background-color: color-mix(in srgb, var(--vscode-terminal-ansiCyan, #00bcd4) 12%, transparent);
+    background-color: color-mix(in srgb, var(--vscode-charts-green, #4caf50) 12%, transparent);
 }
 .line.line-tint-database:hover {
-    background-color: color-mix(in srgb, var(--vscode-terminal-ansiCyan, #00bcd4) 20%, transparent);
+    background-color: color-mix(in srgb, var(--vscode-charts-green, #4caf50) 20%, transparent);
 }
-/* Matches .line.level-info / .level-bar-info (debug console info token). */
+/* Info tint: blue, matches .line.level-info and .level-bar-info. */
 .line.line-tint-info {
-    background-color: color-mix(in srgb, var(--vscode-debugConsole-infoForeground, #b695f8) 10%, transparent);
+    background-color: color-mix(in srgb, var(--vscode-charts-blue, #2196f3) 10%, transparent);
 }
 .line.line-tint-info:hover {
-    background-color: color-mix(in srgb, var(--vscode-debugConsole-infoForeground, #b695f8) 18%, transparent);
+    background-color: color-mix(in srgb, var(--vscode-charts-blue, #2196f3) 18%, transparent);
 }
 
 /* Blank/empty lines: set --blank-line-bg to any color to join before/after; when unset, previous line tint shows. */
@@ -92,10 +94,10 @@ export function getDecorationBarStyles(): string {
 .level-bar-performance { --bar-color: var(--vscode-charts-purple, #a855f7); }
 .level-bar-todo { --bar-color: var(--vscode-terminal-ansiWhite, #e5e5e5); }
 .level-bar-debug { --bar-color: var(--vscode-terminal-ansiYellow, #dcdcaa); }
-.level-bar-notice { --bar-color: var(--vscode-charts-blue, #2196f3); }
+.level-bar-notice { --bar-color: var(--vscode-terminal-ansiCyan, #00bcd4); }
 .level-bar-framework { --bar-color: var(--vscode-charts-blue, #2196f3); }
-.level-bar-database { --bar-color: var(--vscode-terminal-ansiCyan, #00bcd4); }
-.level-bar-info { --bar-color: var(--vscode-debugConsole-infoForeground, #b695f8); }
+.level-bar-database { --bar-color: var(--vscode-charts-green, #4caf50); }
+.level-bar-info { --bar-color: var(--vscode-charts-blue, #2196f3); }
 [class*="level-bar-"]::before { background: var(--bar-color); }
 .bar-bridge::before { display: none; }
 /* Blank lines: no dot, keep vertical bar (connector) */
