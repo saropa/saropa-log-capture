@@ -4,7 +4,7 @@ Thank you for your interest in contributing! This document provides guidelines f
 
 ## Commit messages
 
-- **No editor or tool trailers.** Do not add "Made-with: Cursor" or similar lines to commit messages. A `commit-msg` hook is provided to enforce this; install with: `cp scripts/git-hooks/commit-msg .git/hooks/commit-msg` (and `chmod +x .git/hooks/commit-msg` on Unix).
+- **No attribution trailers in commit messages.** Commit messages contain the change description only — no editor markers, no co-author lines, no tool credits. A `commit-msg` hook in [scripts/git-hooks/](scripts/git-hooks/) strips trailer-shaped lines automatically. Enable it **once per clone** with `npm run install:hooks` (runs `git config core.hooksPath scripts/git-hooks` — no file-copy step, the in-repo hook is the single source of truth).
 
 ## Design Principles
 
