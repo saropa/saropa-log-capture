@@ -26,7 +26,7 @@ For older versions (7.1.1 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [Unreleased]
+## [7.11.0]
 
 ### Added
 - **Noise-learning Phase 4 — filter-out emission + Insights panel suggestions section** — Two coordinated additions plan 053 promised:
