@@ -148,6 +148,21 @@ export function getSessionPanelEventsScript(): string {
             selectedSessionUris = Object.create(null);
             if (cachedSessions) renderSessionList(cachedSessions);
             vscodeApi.postMessage({ type: 'openSessionFromPanel', uriString: uri });
+            /* renderSessionList above rebuilt the list DOM, so the clicked node
+               is now detached. If this click bubbled to the document-level
+               outside-click handler, sessionPanelEl.contains() would test a
+               detached node, get false, and close the panel instantly. Stop
+               propagation so the panel stays open after a selection. */
+            e.stopPropagation();
+            /* Then close it on a short delay rather than keeping it open
+               indefinitely — long enough that picking another file to view
+               doesn't require reopening the panel. Each selection resets the
+               countdown. */
+            if (sessionAutoCloseTimer) clearTimeout(sessionAutoCloseTimer);
+            sessionAutoCloseTimer = setTimeout(function() {
+                sessionAutoCloseTimer = null;
+                closeSessionPanel();
+            }, 5000);
         });
         /* Keyboard support: Enter/Space on focused day heading toggles collapse. */
         sessionListEl.addEventListener('keydown', function(e) {
