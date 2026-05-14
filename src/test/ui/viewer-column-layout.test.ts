@@ -14,6 +14,7 @@
  */
 import * as assert from 'node:assert';
 import { getDecorationStyles } from '../../ui/viewer-styles/viewer-styles-decoration';
+import { getDecorationsScript } from '../../ui/viewer-decorations/viewer-decorations';
 
 suite('viewer column layout (path 1 — fixed-width decoration prefix)', () => {
     test('.line-decoration is pinned to a fixed-width inline-block column', () => {
@@ -23,9 +24,12 @@ suite('viewer column layout (path 1 — fixed-width decoration prefix)', () => {
         const body = rule[0];
         assert.ok(/display:\s*inline-block/.test(body), 'decoration prefix must be display:inline-block');
         assert.ok(
-            /width:\s*var\(--deco-content-indent-em/.test(body),
+            /width:\s*calc\(var\(--deco-content-indent-em/.test(body),
             'decoration prefix width must be pinned to --deco-content-indent-em',
         );
+        // The /0.85 divisor converts the parent-em var into the span's own
+        // 0.85em font units — without it the box is ~15% too narrow.
+        assert.ok(/\/\s*0\.85/.test(body), 'width must divide by 0.85 for the .line-decoration font-size');
     });
 
     test('the hanging-indent model is preserved (not replaced by a flex rewrite)', () => {
@@ -37,5 +41,18 @@ suite('viewer column layout (path 1 — fixed-width decoration prefix)', () => {
             /\.line:has\(\.line-decoration\)\s*\{[^}]*text-indent:\s*calc\(-1/s.test(css),
             'the negative text-indent hanging-indent must remain (wrapped-line alignment)',
         );
+    });
+
+    test('prefix-column width is computed from the enabled decoration parts, not a static worst-case', () => {
+        const script = getDecorationsScript();
+        const fn = /function applyDecorationLayoutWidth\(\)\s*\{[\s\S]*?\n\}/.exec(script);
+        assert.ok(fn, 'expected the applyDecorationLayoutWidth function');
+        const body = fn[0];
+        // Each enabled part must contribute conditionally — no hardcoded 13em base.
+        assert.ok(/if\s*\(decoShowTimestamp\)/.test(body), 'timestamp must add width only when enabled');
+        assert.ok(/decoShowCounter/.test(body), 'counter must contribute to width');
+        assert.ok(/showParsedPidTid/.test(body) && /structuredLineParsing/.test(body),
+            'PID/TID and tag columns must contribute only when enabled');
+        assert.ok(!/13\s*\+\s*extraDigits/.test(body), 'the static 13em worst-case base must be gone');
     });
 });
