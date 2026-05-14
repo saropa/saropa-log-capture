@@ -83,6 +83,11 @@ function isStackFrameText(html) {
     var plain = stripTags(html);
     return /\\(\\.\\\/\\S+\\.dart:\\d+:\\d+\\)/.test(plain);
 }
+/* Real isAsyncGapText so the async-gap continuation branch in tryIngestStackLine
+   executes — exercised by viewer-stack-async-gap.test.ts. */
+function isAsyncGapText(html) {
+    return /^<asynchronous suspension>$/.test(stripTags(html).trim());
+}
 function parseClassTags() { return []; }
 function parseLogcatTag() { return null; }
 function parseSourceTag() { return null; }
