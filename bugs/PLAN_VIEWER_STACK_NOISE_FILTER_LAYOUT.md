@@ -53,7 +53,19 @@ yields exactly one group.
 
 ## Item B — common-prefix compression of Drift traces (covers request 5)
 
-**Diagnosis.** Every Drift SELECT trace opens with the identical 8 frames
+**Status: RE-SCOPED to verification — likely already covered by Item A.** Investigating
+the dedup infrastructure showed `tryCollapseRepeatStackHeader()`
+(`viewer-data-add-stack-header-repeat.ts`) already collapses *consecutive* stack groups
+whose header line matches (within a 3s window) into a single "N × stack repeated" chip —
+and it deliberately does NOT gate on differing tails (see its "No frameCount gate" note).
+Before Item A, traces were shattered into 1-frame groups so this fired on fragments;
+after Item A it operates on whole traces. So consecutive Drift SELECT traces sharing the
+`_StringStackTrace (#1 DriftDebugInterceptor._log …)` header should now collapse into one
+chip with no new code. **Action: verify in F5 on the real log before writing anything.**
+Build the common-prefix feature below ONLY if verification shows a real residual gap
+(e.g. interleaved non-consecutive traces that the streak logic misses).
+
+**Original diagnosis.** Every Drift SELECT trace opens with the identical 8 frames
 (`DriftDebugInterceptor._log → runSelect → _InterceptedExecutor.runSelect →
 LazyDatabase.runSelect → SimpleSelectStatement._getRaw → doWhenOpened → _mapResponse →
 getSingleOrNull`). `tryCollapseRepeatStackHeader()` only collapses *whole identical*
@@ -76,7 +88,18 @@ respect 300-LOC limit), `viewer-data-helpers-render-stack.ts`, `calcItemHeight()
 
 ## Item C — frame compression is half-done (covers request 6)
 
-**Diagnosis.** The `(x2)`/`(x3)` badges (`stack-dedup-badge`, `dupCount`) currently
+**Status: RE-SCOPED to verification — block-level dedup already exists.** Two mechanisms
+already do block-level dedup: `finalizeStackGroup()` (`viewer-stack-dedup.ts`) hashes the
+*whole-trace signature* and hides later identical groups behind a `(xN)` badge on the
+first; `tryCollapseRepeatStackHeader()` handles consecutive streaks (see Item B). The
+`(x2)`/`(x3)` badges in the original screenshots were these mechanisms working — but on
+the shattered 1-frame groups Item A's bug produced. Post-Item-A they operate on whole
+blocks. **Action: verify in F5 that whole post-Item-A traces dedup correctly and no
+half-collapsed blocks remain.** Only if verification shows individual-frame dedup still
+fires *inside* a block that's already represented by an `×N` header is there code to
+write (demote/remove the within-block frame dedup).
+
+**Original diagnosis.** The `(x2)`/`(x3)` badges (`stack-dedup-badge`, `dupCount`) currently
 compress *individual repeated frame lines*, not whole blocks. Result: a partially
 collapsed block where some frames merged and the block structure is still sprawled.
 
@@ -174,11 +197,17 @@ render correctly; no virtualization regressions on the 6,508-line sample.
 
 ## Sequencing
 
-1. **Item A** — tiny, contained, highest payoff (un-shatters every block). Low risk.
-2. **Item B** — depends on A (needs whole blocks).
-3. **Item C** — depends on A + B (block-level dedup).
-4. **Item D** — independent of A–C; classification + color-from-level. Medium risk.
+1. **Item A** — DONE, committed. Un-shatters every block.
+2. **Item B** — re-scoped to F5 verification (existing streak-collapse likely covers it).
+3. **Item C** — re-scoped to F5 verification (existing block dedup likely covers it).
+4. **Item D** — independent of A–C; classification + color-from-level. Medium risk. **Next.**
 5. **Item E** — last; biggest blast radius; rewrites the row DOM.
+
+**Revised note:** Item A turned out to be the keystone — it activates two pre-existing
+block-dedup mechanisms (`finalizeStackGroup`, `tryCollapseRepeatStackHeader`) that were
+previously firing on shattered 1-frame fragments. B and C are therefore verification
+tasks, not code tasks, unless F5 on the real log reveals a residual gap. Proceeding to
+Item D (genuinely broken, independent) rather than writing speculative B/C code.
 
 Each lands as its own commit(s) with `npm run check-types`, `npm run lint`,
 `npm run compile`, tests, and an F5 manual check before the next begins.
