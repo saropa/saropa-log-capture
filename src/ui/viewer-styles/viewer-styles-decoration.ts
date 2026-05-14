@@ -55,6 +55,22 @@ export function getDecorationStyles(): string {
 .line:has(.line-decoration) .line-decoration {
     /* Pulled right of severity bar by padding; indent pulls decoration start to 1.25em */
     margin-right: 0;
+    /* Fixed-width prefix column. The hanging-indent rule above already ASSUMES
+       this span is exactly --deco-content-indent-em wide — text-indent is set to
+       -(that width) so the message text lands at --deco-prefix-width-em. But the
+       span was content-sized, so variable counter / timestamp / PID / TID / tag
+       content drifted the column and pushed the message text a few ems
+       line-to-line. Making the width explicit (display:inline-block + width)
+       pins the column: the box is always exactly the reserved width, so the
+       message text starts at the same x on every decorated line regardless of
+       prefix content. No overflow:hidden — an inline-block flows subsequent
+       content after its BOX edge even if content visually spills, so the rare
+       wide PID/tag case can overlap slightly but never shifts the column (and
+       this avoids the baseline shift overflow:hidden would introduce). The
+       text-indent / padding-left model is otherwise unchanged, so wrapped SQL
+       and error lines still align via the .line rule above. */
+    display: inline-block;
+    width: var(--deco-content-indent-em, 13em);
 }
 /* Emoji toggle buttons (decorations, audio, minimap) */
 .emoji-toggle {
