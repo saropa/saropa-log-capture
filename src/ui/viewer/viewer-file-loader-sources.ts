@@ -78,8 +78,12 @@ export function parseExternalSidecarToPending(content: string, label: string): P
     const lines = content.split(/\r?\n/).filter((s) => s.length > 0);
     return lines.map((raw) => {
         const extracted = extractTimestamp(raw);
+        // Strip the leading timestamp from the displayed text — it belongs in the
+        // time decoration column, not inline in the message. rawText keeps the
+        // full original line so copy and dedup still see the timestamp.
+        const displayText = extracted?.rest ?? raw;
         return {
-            text: linkifyUrls(linkifyHtml(escapeHtml(raw))),
+            text: linkifyUrls(linkifyHtml(escapeHtml(displayText))),
             rawText: raw,
             isMarker: false,
             lineCount: 0,

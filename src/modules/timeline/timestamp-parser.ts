@@ -102,14 +102,26 @@ export function parseTimestamp(text: string, sessionStart?: number): number | un
 }
 
 /**
- * Extract a timestamp from the beginning of a log line.
- * Returns the timestamp and the remaining text, or undefined if not found.
+ * Extract a leading timestamp from a log line.
+ * Returns the parsed timestamp (epoch ms) and the line with the timestamp
+ * removed, or undefined if no recognized timestamp prefix is found.
+ *
+ * Every branch hands the candidate to {@link parseTimestamp} and only commits
+ * if it parses — so a bracket/word that merely *looks* like a prefix (e.g.
+ * `[stdout]`, `Got 5 12:00:00 …`) is rejected rather than mis-stripped.
+ *
+ * Recognized prefixes (in priority order):
+ * - `[timestamp] rest`        — bracketed (ISO, time-only, epoch, …)
+ * - `YYYY-MM-DD{T| }HH:MM:SS[.fff][Z|±HH:MM] rest` — ISO or space-separated date+time
+ * - `HH:MM:SS[.fff] rest`     — clock time only (resolved against the session date)
+ * - `Mon DD HH:MM:SS rest`    — syslog RFC 3164 (year assumed current)
+ * - `<10-13 digit epoch> rest`— Unix epoch seconds / milliseconds
  */
 export function extractTimestamp(
     line: string,
     sessionStart?: number,
 ): { timestamp: number; rest: string } | undefined {
-    // Pattern: [timestamp] rest
+    // Pattern: [timestamp] rest — only wins when the bracket content parses.
     const bracketMatch = line.match(/^\[([^\]]+)\]\s*(.*)/);
     if (bracketMatch) {
         const ts = parseTimestamp(bracketMatch[1], sessionStart);
@@ -118,16 +130,39 @@ export function extractTimestamp(
         }
     }
 
-    // Pattern: timestamp rest (ISO or epoch)
-    const isoMatch = line.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[^\s]*)\s+(.*)/);
-    if (isoMatch) {
-        const ts = parseTimestamp(isoMatch[1], sessionStart);
+    // Pattern: leading date+time — ISO ("…T…") or space-separated ("YYYY-MM-DD HH:MM:SS"),
+    // with optional fractional seconds and a timezone (Z or ±HH:MM) that carries no space.
+    const dateTimeMatch = line.match(/^(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}[^\s]*)\s+(.*)/);
+    if (dateTimeMatch) {
+        const ts = parseTimestamp(dateTimeMatch[1], sessionStart);
         if (ts !== undefined) {
-            return { timestamp: ts, rest: isoMatch[2] };
+            return { timestamp: ts, rest: dateTimeMatch[2] };
         }
     }
 
-    // Pattern: epoch timestamp rest
+    // Pattern: leading clock time only — "HH:MM:SS" / "HH:MM:SS.mmm" (comma ms tolerated).
+    const timeOnlyMatch = line.match(/^(\d{2}:\d{2}:\d{2}(?:[.,]\d+)?)\s+(.*)/);
+    if (timeOnlyMatch) {
+        const ts = parseTimestamp(timeOnlyMatch[1].replace(',', '.'), sessionStart);
+        if (ts !== undefined) {
+            return { timestamp: ts, rest: timeOnlyMatch[2] };
+        }
+    }
+
+    // Pattern: syslog RFC 3164 — "Mon DD HH:MM:SS". Restricted to real month
+    // abbreviations: V8's Date parser is lenient enough to "parse" prose like
+    // "Got 5 12:00:00", so the regex shape itself must reject non-months.
+    const syslogMatch = line.match(
+        /^((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+(.*)/,
+    );
+    if (syslogMatch) {
+        const ts = parseTimestamp(syslogMatch[1], sessionStart);
+        if (ts !== undefined) {
+            return { timestamp: ts, rest: syslogMatch[2] };
+        }
+    }
+
+    // Pattern: leading Unix epoch — 10-digit (seconds) or 13-digit (milliseconds).
     const epochMatch = line.match(/^(\d{10,13})\s+(.*)/);
     if (epochMatch) {
         const ts = parseTimestamp(epochMatch[1], sessionStart);
