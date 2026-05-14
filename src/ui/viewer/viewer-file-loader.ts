@@ -191,6 +191,18 @@ function parseFileLine(raw: string, ctx: FileParseContext): PendingLine {
     if (/^===\s*(SESSION END|SPLIT)/.test(raw)) {
         return buildMarkerLine(raw, src);
     }
+    // ISO-8601 timestamped line: "2026-05-14T11:50:51.135Z  [TAG]  message".
+    // Reporting tools (e.g. the pubspec vibrancy report) prefix every line with a
+    // UTC ISO timestamp. Without this case the whole line — timestamp included —
+    // fell through to the raw fallback with timestamp:0, so the time decoration
+    // column was empty and the ISO string cluttered the message text instead.
+    // Anchored on a leading digit, so it can never collide with the [bracket]
+    // formats below. Date.parse handles the optional fractional seconds and Z.
+    const isoTs = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?)\s+(.*)$/.exec(raw);
+    if (isoTs) {
+        const isoMs = Date.parse(isoTs[1]);
+        return buildFileLine({ text: isoTs[2], category: 'console', classifyFrame: ctx.classifyFrame, timestamp: Number.isNaN(isoMs) ? 0 : isoMs, source: src });
+    }
     // [time] [+elapsed] [category] rest
     const timeElapsedCat = /^\[([\d:.]+)\]\s*\[(\+\d+(?:\.\d+)?(?:ms|s))\]\s*\[([\w-]+)\]\s?(.*)$/.exec(raw);
     if (timeElapsedCat) {
