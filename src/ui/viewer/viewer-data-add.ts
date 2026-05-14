@@ -94,6 +94,17 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     if (typeof ingestDriftDebugServerFromPlain === 'function') ingestDriftDebugServerFromPlain(plain);
     /* Structured line parsing: extract metadata (PID, TID, level, tag) from known log formats. */
     var slp = (typeof parseStructuredPrefix === 'function') ? parseStructuredPrefix(plain, sniffedFormatId) : null;
+    /* Record which decoration data this log actually carries so the prefix
+       column reserves width only for parts that will render — see decoSeen /
+       applyDecorationLayoutWidth. A markdown/plain file trips none of these. */
+    if (typeof decoSeen !== 'undefined') {
+        if (ts) decoSeen.ts = true;
+        if (slp) {
+            if (slp.pid != null || slp.tid != null) decoSeen.pidTid = true;
+            if (slp.tag) decoSeen.tag = true;
+            if (slp.rawLvl) decoSeen.rawLevel = true;
+        }
+    }
     var isSep = isSeparatorLine(slp ? slp.msg : plain);
     var isAi = category && category.indexOf('ai-') === 0;
     /* Flutter exception banner: classify every line in the \`════ Exception caught by …\` block
