@@ -36,9 +36,18 @@ function areDecorationsOn() {
 
 /** Epoch ms of the first timestamped line — used for session elapsed display. */
 var sessionStartTs = 0;
-/** Last decoration signature (digit count + enabled-part flags) applied to the
-    CSS width vars; prevents repeated style writes on the scroll hot path. */
+/** Last decoration signature (digit count + enabled-part flags + data-seen
+    flags) applied to the CSS width vars; prevents repeated style writes on the
+    scroll hot path. */
 var lastAppliedDecoSig = '';
+/** Which decoration data the loaded log actually contains. A decoration toggle
+    being ON does not mean any line carries that data — a markdown/plain file
+    has no timestamps, PIDs, or tags — so applyDecorationLayoutWidth() reserves
+    a column's width only when both the toggle is on AND the data was seen.
+    Set incrementally in addToData(); reset on 'clear'. */
+var decoSeen = { ts: false, pidTid: false, tag: false, rawLevel: false };
+/** Clear all decoration data-seen flags — called on 'clear', before a new file loads. */
+function resetDecoSeen() { decoSeen.ts = false; decoSeen.pidTid = false; decoSeen.tag = false; decoSeen.rawLevel = false; }
 
 /**
  * Map log level to a colored dot emoji.
@@ -125,39 +134,44 @@ function getCounterDigitsForLayout() {
 
 /**
  * Recompute the decorated-line prefix column width from the decoration parts
- * that are ACTUALLY enabled — counter, timestamp, session-elapsed, PID/TID,
- * level prefix, structured tag. Each disabled part contributes zero width, so
- * the gap between the severity bar and the message text shrinks to fit instead
- * of always reserving a static worst-case column (the old hardcoded 13em
- * reserved timestamp + PID + tag space even when only the counter was shown).
- * Runs from renderViewport() plus addLines/clear; a digit+flag signature skips
- * the CSS write when nothing relevant changed, keeping it cheap on the scroll
- * hot path.
+ * that will ACTUALLY RENDER — a part counts only when its toggle is on AND the
+ * loaded log actually carries that data (see decoSeen). A toggle being on does
+ * NOT mean any line has the data: a markdown / plain-text / lint-report file
+ * has no timestamps, PIDs, or tags, so reserving columns for them left a huge
+ * empty gap between the severity bar and the message text. Each non-rendering
+ * part now contributes zero width, so the gap shrinks to exactly what is shown.
+ * Runs from renderViewport() plus addLines/clear; a digit+flag+data signature
+ * skips the CSS write when nothing relevant changed, keeping it cheap on the
+ * scroll hot path.
  */
 function applyDecorationLayoutWidth() {
     var root = document.documentElement;
     if (!root || !root.style) return;
     var digits = getCounterDigitsForLayout();
-    var showPid = (typeof showParsedPidTid !== 'undefined' && showParsedPidTid);
-    var showLvl = (typeof showParsedLevelPrefix !== 'undefined' && showParsedLevelPrefix);
-    var showTag = (typeof structuredLineParsing !== 'undefined' && structuredLineParsing);
-    /* Signature gates the CSS write: width now depends on digit count AND which
-       parts are enabled, so the old digits-only key would miss flag toggles. */
-    var sig = digits + '|' + (decoShowCounter ? 1 : 0) + (decoShowCounterOnBlank ? 1 : 0)
-        + (decoShowTimestamp ? 1 : 0) + (showMilliseconds ? 1 : 0) + (decoShowSessionElapsed ? 1 : 0)
-        + (showPid ? 1 : 0) + (showLvl ? 1 : 0) + (showTag ? 1 : 0);
+    /* A part is reserved only when enabled AND present in the data. The counter
+       is the exception — it uses the row index, so it always renders when on. */
+    var hasCounter = decoShowCounter || decoShowCounterOnBlank;
+    var hasTime = decoShowTimestamp && decoSeen.ts;
+    var hasSessionElapsed = decoShowSessionElapsed && decoSeen.ts;
+    var hasPid = (typeof showParsedPidTid !== 'undefined' && showParsedPidTid) && decoSeen.pidTid;
+    var hasLvl = (typeof showParsedLevelPrefix !== 'undefined' && showParsedLevelPrefix) && decoSeen.rawLevel;
+    var hasTag = (typeof structuredLineParsing !== 'undefined' && structuredLineParsing) && decoSeen.tag;
+    /* Signature gates the CSS write: width depends on digit count, the enabled
+       flags, AND which data has been seen (data arrives as lines stream in). */
+    var sig = digits + '|' + (hasCounter ? 1 : 0) + (hasTime ? 1 : 0) + (showMilliseconds ? 1 : 0)
+        + (hasSessionElapsed ? 1 : 0) + (hasPid ? 1 : 0) + (hasLvl ? 1 : 0) + (hasTag ? 1 : 0);
     if (sig === lastAppliedDecoSig) return;
     /* Per-part em widths at the .line parent font size. The deco prefix renders
        at font-size:0.85em; these are deliberately a touch generous because
        over-reserving only leaves a small gap, while under-reserving lets a part
        overlap the message. Tune via F5 if the gap reads too wide/tight. */
     var em = 0;
-    if (decoShowCounter || decoShowCounterOnBlank) em += digits * 0.62 + 0.5;
-    if (decoShowTimestamp) em += showMilliseconds ? 7.5 : 5.5;
-    if (decoShowSessionElapsed) em += 6.5;
-    if (showPid) em += 7;
-    if (showLvl) em += 1.6;
-    if (showTag) em += 7;
+    if (hasCounter) em += digits * 0.62 + 0.5;
+    if (hasTime) em += showMilliseconds ? 7.5 : 5.5;
+    if (hasSessionElapsed) em += 6.5;
+    if (hasPid) em += 7;
+    if (hasLvl) em += 1.6;
+    if (hasTag) em += 7;
     if (em > 0) em += 1; // trailing &nbsp;&nbsp; gap getDecorationPrefix appends
     var contentIndentEm = em;
     var totalPaddingEm = 1.25 + contentIndentEm; // 1.25em keeps severity bar clear.
