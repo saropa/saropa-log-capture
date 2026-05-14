@@ -78,6 +78,12 @@ function buildHiddenTip(info) {
 
 function renderViewport(force) {
     if (!logEl || !logEl.clientHeight) return;
+    /* Keep the decoration prefix-column width in sync with which decoration
+       parts are enabled. Cheap: applyDecorationLayoutWidth() early-returns via
+       a digit+flag signature when nothing relevant changed. This is the single
+       hook covering every decoration-toggle path (each calls renderViewport),
+       so individual toggle handlers don't each need to remember to call it. */
+    if (typeof applyDecorationLayoutWidth === 'function') applyDecorationLayoutWidth();
     var scrollTop = logEl.scrollTop;
     var viewH = logEl.clientHeight;
     var bufferPx = OVERSCAN * ROW_HEIGHT;

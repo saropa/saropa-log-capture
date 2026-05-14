@@ -68,9 +68,16 @@ export function getDecorationStyles(): string {
        wide PID/tag case can overlap slightly but never shifts the column (and
        this avoids the baseline shift overflow:hidden would introduce). The
        text-indent / padding-left model is otherwise unchanged, so wrapped SQL
-       and error lines still align via the .line rule above. */
+       and error lines still align via the .line rule above.
+       The /0.85 divisor: .line-decoration has font-size:0.85em, so 1em here is
+       0.85em-of-parent. --deco-content-indent-em is expressed in parent ems (it
+       drives the .line padding/text-indent), so to make THIS box exactly that
+       parent-width we divide by 0.85. Same pattern as the art-block rule in
+       viewer-styles-ascii-art.ts. --deco-content-indent-em is itself recomputed
+       from the enabled decoration parts (applyDecorationLayoutWidth), so the
+       column is only as wide as the parts actually shown. */
     display: inline-block;
-    width: var(--deco-content-indent-em, 13em);
+    width: calc(var(--deco-content-indent-em, 13em) / 0.85);
 }
 /* Emoji toggle buttons (decorations, audio, minimap) */
 .emoji-toggle {
