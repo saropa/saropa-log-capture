@@ -78,6 +78,14 @@ export function getDecorationStyles(): string {
        column is only as wide as the parts actually shown. */
     display: inline-block;
     width: calc(var(--deco-content-indent-em, 13em) / 0.85);
+    /* text-indent: 0 is REQUIRED, not cosmetic. text-indent is an inherited
+       property; the .line rule sets a large negative text-indent for the
+       hanging indent. While .line-decoration was display:inline it did not
+       establish its own block formatting context, so the inherited negative
+       indent never applied to its own content. As an inline-block it DOES —
+       without this reset the counter / timestamp / tag text inside is yanked
+       ~--deco-content-indent-em to the left, off the visible row entirely. */
+    text-indent: 0;
 }
 /* Emoji toggle buttons (decorations, audio, minimap) */
 .emoji-toggle {
