@@ -141,7 +141,12 @@ function isStackFrameText(html) {
         return true;
     }
     if (/^package:/.test(trimmed)) return true;          // Dart package paths
-    if (/^\\s+\\S+\\.\\S+:\\d+/.test(plain)) return true; // Generic: "  pkg.Func:123"
+    // Indented "file.ext:line" frames (Go tracebacks, generic). The trailing group is
+    // the guard: a real frame ends file:line with a column, a frame suffix (" +0x" Go
+    // offset, " (" paren), a closing bracket, or end-of-line. Without it, audit/report
+    // lines like "  foo_utils.dart:11  SomeMethod" (file:line + prose) were misread as
+    // stack frames and pulled into a bogus stack group. Keep in sync with stack-parser.ts.
+    if (/^\\s+\\S+\\.\\S+:\\d+(?::\\d+|\\s+[+(]|\\s*[)\\]]|\\s*$)/.test(plain)) return true;
     // Mid-line Dart source paths: "Method package:foo/bar.dart:1:2" or "(./lib/foo.dart:1:2)"
     if (/\\bpackage:\\S+\\.dart:\\d+/.test(plain)) return true;
     return /\\(\\.\\\/\\S+\\.dart:\\d+:\\d+\\)/.test(plain);
