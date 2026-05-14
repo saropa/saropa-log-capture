@@ -15,6 +15,7 @@
 import * as assert from 'node:assert';
 import { getDecorationStyles } from '../../ui/viewer-styles/viewer-styles-decoration';
 import { getDecorationsScript } from '../../ui/viewer-decorations/viewer-decorations';
+import { getViewerDataAddScript } from '../../ui/viewer/viewer-data-add';
 
 suite('viewer column layout (path 1 — fixed-width decoration prefix)', () => {
     test('.line-decoration is pinned to a fixed-width inline-block column', () => {
@@ -43,16 +44,27 @@ suite('viewer column layout (path 1 — fixed-width decoration prefix)', () => {
         );
     });
 
-    test('prefix-column width is computed from the enabled decoration parts, not a static worst-case', () => {
+    test('prefix-column width is gated on enabled flags AND data actually present', () => {
         const script = getDecorationsScript();
         const fn = /function applyDecorationLayoutWidth\(\)\s*\{[\s\S]*?\n\}/.exec(script);
         assert.ok(fn, 'expected the applyDecorationLayoutWidth function');
         const body = fn[0];
-        // Each enabled part must contribute conditionally — no hardcoded 13em base.
-        assert.ok(/if\s*\(decoShowTimestamp\)/.test(body), 'timestamp must add width only when enabled');
-        assert.ok(/decoShowCounter/.test(body), 'counter must contribute to width');
-        assert.ok(/showParsedPidTid/.test(body) && /structuredLineParsing/.test(body),
-            'PID/TID and tag columns must contribute only when enabled');
+        // No hardcoded worst-case base.
         assert.ok(!/13\s*\+\s*extraDigits/.test(body), 'the static 13em worst-case base must be gone');
+        // A part is reserved only when the toggle is on AND the data was seen —
+        // a markdown/plain file with no timestamps/PIDs/tags must reserve nothing
+        // for those columns. decoSeen carries the data-presence flags.
+        assert.ok(/decoShowTimestamp\s*&&\s*decoSeen\.ts/.test(body), 'timestamp width must require decoSeen.ts');
+        assert.ok(/decoSeen\.pidTid/.test(body) && /decoSeen\.tag/.test(body),
+            'PID/TID and tag columns must require their decoSeen data flags');
+        assert.ok(/decoShowCounter/.test(body), 'counter must contribute to width when enabled');
+    });
+
+    test('decoSeen data-presence flags are tracked at ingestion and reset on clear', () => {
+        const decoScript = getDecorationsScript();
+        assert.ok(/var decoSeen\s*=\s*\{/.test(decoScript), 'decoSeen must be declared in the decorations script');
+        const add = getViewerDataAddScript();
+        assert.ok(/decoSeen\.ts\s*=\s*true/.test(add), 'addToData must record when a timestamped line is seen');
+        assert.ok(/decoSeen\.pidTid\s*=\s*true/.test(add), 'addToData must record when PID/TID data is seen');
     });
 });
