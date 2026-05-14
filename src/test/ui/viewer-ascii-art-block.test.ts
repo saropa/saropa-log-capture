@@ -285,13 +285,18 @@ suite('ASCII art block grouping', () => {
         });
 
         test('should finalize art block on stack frames', () => {
-            const block = extractAddToDataBlock(getViewerDataAddScript());
-            const sfStart = block.indexOf('if (isStackFrameText(html))');
-            // Slice to just past the finalizeArtBlock call (within first 200 chars of stack-frame path)
-            const stackSection = block.slice(sfStart, sfStart + 200);
+            // Stack-line ingestion moved to viewer-data-add-stack-ingest.ts
+            // (tryIngestStackLine); the finalizeArtBlock call must still run
+            // before any frame/header is pushed into allLines.
+            const script = getViewerDataAddScript();
+            const sfStart = script.indexOf('function tryIngestStackLine(');
+            assert.ok(sfStart >= 0, 'expected tryIngestStackLine function in script');
+            const firstPush = script.indexOf('allLines.push', sfStart);
+            assert.ok(firstPush > sfStart, 'expected an allLines.push inside tryIngestStackLine');
+            const stackSection = script.slice(sfStart, firstPush);
             assert.ok(
                 stackSection.includes('finalizeArtBlock'),
-                'stack-frame path must finalize any open art block',
+                'stack-line ingestion must finalize any open art block before pushing frames',
             );
         });
     });
