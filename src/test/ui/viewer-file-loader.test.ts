@@ -66,6 +66,23 @@ suite('Viewer file loader', () => {
             const pending = parseRawLinesToPending(lines, ctx);
             assert.strictEqual(pending[0].rawText, 'MARKER: test');
         });
+
+        test('extracts an ISO 8601 timestamp prefix, strips it, and sets timestamp', () => {
+            const line = '2026-05-14T11:50:51.135Z  [CACHE]  HIT  flutter.releases';
+            const pending = parseRawLinesToPending([line], ctx);
+            assert.strictEqual(pending.length, 1);
+            assert.strictEqual(pending[0].timestamp, Date.parse('2026-05-14T11:50:51.135Z'));
+            // The ISO prefix must be removed from the message — it belongs in the
+            // time decoration column, not inline in the text.
+            assert.strictEqual(pending[0].rawText, '[CACHE]  HIT  flutter.releases');
+            assert.ok(!pending[0].text.includes('2026-05-14T'), 'ISO prefix must be stripped from the displayed text');
+        });
+
+        test('parses an ISO line without trailing Z or fractional seconds', () => {
+            const pending = parseRawLinesToPending(['2026-05-14T11:50:51 plain message'], ctx);
+            assert.ok(pending[0].timestamp > 0, 'timestamp must be parsed even without .mmm or Z');
+            assert.strictEqual(pending[0].rawText, 'plain message');
+        });
     });
 
     suite('parseElapsedToMs', () => {
