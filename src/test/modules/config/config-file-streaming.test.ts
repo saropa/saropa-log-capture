@@ -151,4 +151,26 @@ suite('readTrackedFilesStreaming', () => {
         assert.strictEqual(batches.length, 1);
         assert.strictEqual(batches[0].length, 4);
     });
+
+    test('should emit newest date folders and files first', async () => {
+        /* Report folders/files are date-stamped, so the streaming scan sorts
+           entries reverse-alphabetically (= reverse-chronological) — the
+           preview shimmers fill with recent files before older ones. */
+        tmpRoot = await createTempTree({
+            '2026.04': ['2026.04.13_run.log'],
+            '2026.05': ['2026.05.01_run.log', '2026.05.14_run.log'],
+        });
+        const uri = vscode.Uri.file(tmpRoot);
+        const batches: string[][] = [];
+        await readTrackedFilesStreaming(uri, fileTypes, true, (files) => {
+            batches.push([...files]);
+        });
+        /* 2026.05 is recursed before 2026.04, and within 2026.05 the newer
+           file leads. */
+        assert.deepStrictEqual(batches[0], [
+            '2026.05/2026.05.14_run.log',
+            '2026.05/2026.05.01_run.log',
+        ]);
+        assert.deepStrictEqual(batches[1], ['2026.04/2026.04.13_run.log']);
+    });
 });
