@@ -64,6 +64,14 @@ async function collectFilesStreaming(dir: vscode.Uri, opts: StreamingCollectOpts
   try {
     entries = await vscode.workspace.fs.readDirectory(dir);
   } catch { return []; }
+  /* Scan newest-first. Report folders and files are date-stamped (2026.05.14,
+     2026.04.13, …), so reverse-alphabetical order is reverse-chronological:
+     the most recent date folder is recursed first and its files are emitted
+     first. Without this the streaming preview shimmers through the oldest
+     files before reaching the recent ones the user almost always wants.
+     The final tree order is still mtime-sorted in fetchItemsCore — this only
+     controls the order shimmers appear during the scan. */
+  entries.sort((a, b) => b[0].localeCompare(a[0]));
   const results: string[] = [];
   /* Collect files from this directory level and emit them immediately. */
   const batch: string[] = [];
