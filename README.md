@@ -37,7 +37,7 @@ VS Code deletes your Debug Console the moment you stop debugging. Every `print`,
 3. Output is automatically captured to `reports/`
 4. Click the **Saropa Log Capture** icon on the activity bar to view output in real time
 
-> **Testing the extension (F5):** Use **VS Code** (not Cursor) to run the Extension Development Host: **File → Open Folder** → this repo, then press **F5**. Cursor may not load the extension when used as the F5 host.
+> **Testing the extension (F5):** Use **VS Code** (not a downstream fork) to run the Extension Development Host: **File → Open Folder** → this repo, then press **F5**. Some forks may not load the extension when used as the F5 host.
 
 ---
 
@@ -175,7 +175,7 @@ Saropa Log Capture works standalone, but unlocks richer diagnostics when paired 
 
 ## Requirements
 
-- **VS Code** ^1.108.1 (or a Cursor/Open VSX-compatible editor)
+- **VS Code** ^1.108.1 — also available via Open VSX for compatible editors.
 - **Node.js** >= **22** for building and tests. Optional: use the **Dev Container** (`.devcontainer/devcontainer.json`). See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Remote Development
