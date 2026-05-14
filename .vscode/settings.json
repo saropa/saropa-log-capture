@@ -118,6 +118,7 @@
     "vsixignore",
     "winget",
     "Wireshark",
+    "workstream",
     "ZWSP"
   ],
   "chat.tools.terminal.autoApprove": {
