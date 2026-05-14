@@ -71,8 +71,16 @@ function matchesDatabaseAnnotation(plainText: string): boolean {
         || databaseColonPrefixPattern.test(plainText);
 }
 
-/** Strict structural error: keyword in label position (`Error:`, `[error]`), Dart private types, Null check. */
-const strictStructuralErrorPattern = /\w*(?:error|exception)\s*[:\]!]|\[(?:error|exception|fatal|panic|critical)\]|_\w*(?:Error|Exception)\b|Null check operator/i;
+/**
+ * Strict structural error: keyword in label position (`Error:`, `[error]`), Dart private
+ * types, Null check.
+ * The `(` in the char class catches the `<Type>Exception (detail)` / `<Type>Error (detail)`
+ * shape — e.g. `PermissionDeniedException (no OS grant on file)`. Without it, an exception
+ * object printed with a parenthesized detail (no trailing colon) fell through to `info`,
+ * so it never reached the Errors filter and the E toggle could read zero on a log that
+ * plainly contained errors. See bugs/PLAN_VIEWER_STACK_NOISE_FILTER_LAYOUT.md Item D.
+ */
+const strictStructuralErrorPattern = /\w*(?:error|exception)\s*[:\]!(]|\[(?:error|exception|fatal|panic|critical)\]|_\w*(?:Error|Exception)\b|Null check operator/i;
 /** Loose structural error: bare `error`/`exception` with negative lookahead, Dart private types, Null check. */
 const looseStructuralErrorPattern = /\b(?:error|exception)(?!\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\b|_\w*(?:Error|Exception)\b|Null check operator/i;
 /**
@@ -84,6 +92,16 @@ const looseStructuralErrorPattern = /\b(?:error|exception)(?!\s+(?:handl|recover
  * always an error, never an excluded handler/recovery phrase.
  */
 const flutterExceptionBannerPattern = /\bException caught by\b/i;
+
+/**
+ * Structural warning: "could not / unable to / failed to / cannot <verb>" failure phrasing
+ * that carries no `warn`/`fail` keyword. Catches lines like
+ * `databaseDecode: could not decode "{…}" as DatabaseValueType.Json` — a real,
+ * actionable failure that otherwise classified as `info` and vanished under the level
+ * filter. Requires a following word so a bare trailing "cannot." does not match.
+ * See bugs/PLAN_VIEWER_STACK_NOISE_FILTER_LAYOUT.md Item D.
+ */
+const structuralWarnPattern = /\b(?:could\s*not|couldn't|cannot|unable\s+to|failed\s+to)\s+\w/i;
 
 /** Performance patterns that use regex features (quantifiers, alternation) and can't be simple keywords. */
 const structuralPerfPattern = /\b(skipped\s+\d+\s+frames?|gc\s+(?:pause|freed|concurrent))\b/i;
@@ -220,6 +238,9 @@ function classifyNonError(plainText: string): SeverityLevel {
     // Memory phrases without Flutter/Dart context stay info.
     if (memoryPhraseRe.test(plainText) && !flutterDartContextRe.test(plainText)) { return 'info'; }
     if (kwWarn?.test(plainText)) { return 'warning'; }
+    // Structural failure phrasing ("could not decode …") with no warn/fail keyword.
+    // Not applied on the logcat path on purpose — there the prefix is authority.
+    if (structuralWarnPattern.test(plainText)) { return 'warning'; }
     if (matchesPerf(plainText)) { return 'performance'; }
     if (flutterDartContextRe.test(plainText) && memoryPhraseRe.test(plainText)) { return 'performance'; }
     if (kwTodo?.test(plainText)) { return 'todo'; }

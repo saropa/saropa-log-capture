@@ -8,7 +8,10 @@
 export function getLevelClassifyScript(): string {
     return /* javascript */ `
 // ── Structural patterns (hardcoded) ─────────────────────────────────
-var strictStructuralErrorPattern = /\\w*(?:error|exception)\\s*[:\\]!]|\\[(?:error|exception|fatal|panic|critical)\\]|_\\w*(?:Error|Exception)\\b|Null check operator/i;
+// The '(' in the strict error char class catches the "<Type>Exception (detail)" shape
+// (e.g. "PermissionDeniedException (no OS grant on file)") — without it that line fell
+// through to 'info' and never reached the Errors filter. Mirrors level-classifier.ts.
+var strictStructuralErrorPattern = /\\w*(?:error|exception)\\s*[:\\]!(]|\\[(?:error|exception|fatal|panic|critical)\\]|_\\w*(?:Error|Exception)\\b|Null check operator/i;
 var looseStructuralErrorPattern = /\\b(?:error|exception)(?!\\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\\b|_\\w*(?:Error|Exception)\\b|Null check operator/i;
 // Flutter framework exception banner: strict/loose patterns miss 'Exception caught by <lib>'
 // because the phrase has no colon/bracket. Mirror extension-side level-classifier.ts.
@@ -40,6 +43,9 @@ function matchesDatabaseAnnotation(plainText) {
         || databaseColonPrefixPattern.test(plainText);
 }
 var structuralPerfPattern = /\\b(skipped\\s+\\d+\\s+frames?|gc\\s+(?:pause|freed|concurrent))\\b/i;
+// Structural warning: "could not / unable to / failed to / cannot <verb>" failure phrasing
+// with no warn/fail keyword (e.g. "databaseDecode: could not decode …"). Mirrors level-classifier.ts.
+var structuralWarnPattern = /\\b(?:could\\s*not|couldn't|cannot|unable\\s+to|failed\\s+to)\\s+\\w/i;
 var strictLevelDetection = true;
 var stderrTreatAsError = false;
 var flutterDartContextRe = /(?:^[VDIW]\\/(?:flutter|dart)[\\s:]|package\\/(?:flutter|dart)\\b)/i;
@@ -132,6 +138,9 @@ function classifyLevel(plainText, category) {
     if (matchesDatabaseAnnotation(plainText)) return 'database';
     if (memoryPhraseRe.test(plainText) && !flutterDartContextRe.test(plainText)) return 'info';
     if (kwWarn && kwWarn.test(plainText)) return 'warning';
+    // Structural failure phrasing ("could not decode …") with no warn/fail keyword.
+    // Not applied on the logcat path above on purpose — there the prefix is authority.
+    if (structuralWarnPattern.test(plainText)) return 'warning';
     if (matchesPerf(plainText)) return 'performance';
     if (flutterDartContextRe.test(plainText) && memoryPhraseRe.test(plainText)) return 'performance';
     if (kwTodo && kwTodo.test(plainText)) return 'todo';
