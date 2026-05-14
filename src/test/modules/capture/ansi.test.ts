@@ -52,11 +52,22 @@ suite('ANSI Module', () => {
             assert.strictEqual(ansiToHtml('hello <world>'), 'hello &lt;world&gt;');
         });
 
-        test('should convert red foreground', () => {
-            assert.strictEqual(
-                ansiToHtml('\x1b[31mred\x1b[0m'),
-                '<span style="color:var(--vscode-terminal-ansiRed, #cd3131)">red</span>',
-            );
+        // Foreground ANSI is intentionally dropped — severity color is owned by
+        // item.level so the level filter and on-row color can never disagree.
+        // See bugs/PLAN_VIEWER_STACK_NOISE_FILTER_LAYOUT.md Item D.
+        test('should drop red foreground (no color span emitted)', () => {
+            assert.strictEqual(ansiToHtml('\x1b[31mred\x1b[0m'), 'red');
+        });
+
+        test('should drop bright foreground (no color span emitted)', () => {
+            assert.strictEqual(ansiToHtml('\x1b[91mbright red\x1b[0m'), 'bright red');
+        });
+
+        test('should never emit a color: style for any foreground code', () => {
+            for (const code of [30, 31, 32, 33, 34, 35, 36, 37, 90, 91, 92, 93, 94, 95, 96, 97]) {
+                const result = ansiToHtml(`\x1b[${code}mtext\x1b[0m`);
+                assert.ok(!result.includes('color:'), `code ${code} must not emit a color: style`);
+            }
         });
 
         test('should convert bold text', () => {
@@ -66,24 +77,19 @@ suite('ANSI Module', () => {
             );
         });
 
-        test('should handle combined SGR parameters', () => {
+        test('should keep non-color SGR attributes while dropping the foreground', () => {
+            // Bold survives; the red foreground is discarded.
             const result = ansiToHtml('\x1b[1;31mbold red\x1b[0m');
-            assert.ok(result.includes('color:var(--vscode-terminal-ansiRed, #cd3131)'));
-            assert.ok(result.includes('font-weight:bold'));
+            assert.ok(!result.includes('color:'), 'foreground color must be dropped');
+            assert.ok(result.includes('font-weight:bold'), 'bold attribute must survive');
             assert.ok(result.includes('bold red'));
         });
 
         test('should close trailing open span', () => {
-            const result = ansiToHtml('\x1b[32mgreen text');
+            // Uses bold (not foreground) since foreground no longer opens a span.
+            const result = ansiToHtml('\x1b[1mbold text');
             assert.ok(result.endsWith('</span>'));
-            assert.ok(result.includes('color:var(--vscode-terminal-ansiGreen, #0dbc79)'));
-        });
-
-        test('should handle bright foreground colors', () => {
-            assert.strictEqual(
-                ansiToHtml('\x1b[91mbright red\x1b[0m'),
-                '<span style="color:var(--vscode-terminal-ansiBrightRed, #f14c4c)">bright red</span>',
-            );
+            assert.ok(result.includes('font-weight:bold'));
         });
 
         test('should handle background colors', () => {
@@ -125,24 +131,20 @@ suite('ANSI Module', () => {
             assert.strictEqual(ansiToHtml('\x1b[0m'), '');
         });
 
-        test('should handle reset mid-stream', () => {
+        test('should handle reset mid-stream (foreground dropped, text preserved)', () => {
             const result = ansiToHtml('\x1b[31mred\x1b[0m plain');
-            assert.strictEqual(result, '<span style="color:var(--vscode-terminal-ansiRed, #cd3131)">red</span> plain');
+            assert.strictEqual(result, 'red plain');
         });
 
-        test('should handle color change without reset', () => {
+        test('should handle color change without reset (both foregrounds dropped)', () => {
             const result = ansiToHtml('\x1b[31mred\x1b[32mgreen\x1b[0m');
-            assert.ok(result.includes('color:var(--vscode-terminal-ansiRed, #cd3131)'));
-            assert.ok(result.includes('color:var(--vscode-terminal-ansiGreen, #0dbc79)'));
-            assert.ok(result.includes('red'));
-            assert.ok(result.includes('green'));
+            assert.strictEqual(result, 'redgreen');
+            assert.ok(!result.includes('color:'));
         });
 
-        test('should handle default foreground reset', () => {
+        test('should handle default foreground reset (no-op since foreground is dropped)', () => {
             const result = ansiToHtml('\x1b[31mred\x1b[39mdefault');
-            assert.ok(result.includes('color:var(--vscode-terminal-ansiRed, #cd3131)'));
-            assert.ok(result.includes('red'));
-            assert.ok(result.includes('default'));
+            assert.strictEqual(result, 'reddefault');
         });
 
         test('should ignore unknown SGR codes', () => {
