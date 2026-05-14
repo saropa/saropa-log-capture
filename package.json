@@ -2752,6 +2752,7 @@
     "verify:dist-size": "node scripts/modules/verify/verify-dist-extension-size.mjs",
     "analyze-bundle": "node scripts/modules/build/analyze-extension-bundle.mjs",
     "doctor": "node scripts/modules/fix/doctor.mjs",
+    "install:hooks": "git config core.hooksPath scripts/git-hooks",
     "verify:release-version": "node scripts/modules/verify/release-version-check.mjs",
     "verify:release-tag": "node scripts/modules/verify/release-version-check.mjs --tag",
     "test:file": "node scripts/modules/test/run-vscode-test-file.mjs",
