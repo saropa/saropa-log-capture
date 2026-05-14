@@ -160,8 +160,18 @@ function initSessionPanelResize(panelEl, saveWidth) {
     var slotEl = document.getElementById('panel-slot');
     if (!handle || !panelEl || !slotEl) return;
     var dragging = false;
+    /* Anchor the drag to where it started. The old code set the width from the
+       absolute mouse X (e.clientX, or vw - e.clientX on a right icon bar), which
+       is NOT the slot's current width — it's off by the icon-bar width and any
+       other left offset. That mismatch made the panel snap sideways the instant
+       you grabbed the handle. Tracking a delta from the start position keeps the
+       first move a no-op. */
+    var startX = 0;
+    var startWidth = 0;
     handle.addEventListener('mousedown', function(e) {
         e.preventDefault(); dragging = true;
+        startX = e.clientX;
+        startWidth = slotEl.getBoundingClientRect().width;
         handle.classList.add('dragging');
         slotEl.style.transition = 'none';
     });
@@ -169,8 +179,10 @@ function initSessionPanelResize(panelEl, saveWidth) {
         if (!dragging) return;
         var vw = document.documentElement.clientWidth;
         var isRight = document.body.dataset.iconBar === 'right';
-        var raw = isRight ? vw - e.clientX : e.clientX;
-        var w = Math.max(560, Math.min(vw * 0.8, raw)) + 'px';
+        /* On a right-side icon bar the panel grows as the mouse moves left, so
+           the delta sign is inverted. */
+        var delta = isRight ? (startX - e.clientX) : (e.clientX - startX);
+        var w = Math.max(560, Math.min(vw * 0.8, startWidth + delta)) + 'px';
         slotEl.style.width = w;
     });
     document.addEventListener('mouseup', function() {
