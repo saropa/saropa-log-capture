@@ -31,6 +31,10 @@ suite('viewer column layout (path 1 — fixed-width decoration prefix)', () => {
         // The /0.85 divisor converts the parent-em var into the span's own
         // 0.85em font units — without it the box is ~15% too narrow.
         assert.ok(/\/\s*0\.85/.test(body), 'width must divide by 0.85 for the .line-decoration font-size');
+        // text-indent:0 is load-bearing: as an inline-block the span would
+        // otherwise inherit .line's large negative text-indent and yank the
+        // counter/timestamp text off-screen.
+        assert.ok(/text-indent:\s*0/.test(body), 'inline-block prefix must reset the inherited negative text-indent');
     });
 
     test('the hanging-indent model is preserved (not replaced by a flex rewrite)', () => {
