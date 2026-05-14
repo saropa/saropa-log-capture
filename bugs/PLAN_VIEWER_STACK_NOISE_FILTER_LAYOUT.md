@@ -120,6 +120,20 @@ block that is already represented by an `×N` header.
 
 ## Item D — colorized line must appear in its level filter (covers request 3)
 
+**Status: DONE.** ANSI foreground color is no longer rendered (`ansi.ts` — `standardFg`/
+`brightFg` and the `fg` state field removed; background/bold/dim/italic/underline kept).
+Severity color is now owned entirely by the `level-*` palette, so on-row color and the
+level filter cannot disagree. Error classifier tightened in both `level-classifier.ts`
+and `viewer-level-classify.ts`: the strict pattern's char class gained `(` so
+`PermissionDeniedException (…)` is caught, and a new `structuralWarnPattern`
+(`could not`/`couldn't`/`cannot`/`unable to`/`failed to` + word) classifies failure
+phrasing like `databaseDecode: could not decode …` as `warning` instead of `info`. Tests:
+`ansi.test.ts` updated (29 pass, incl. a new "never emit a color: style" guard);
+level-classifier suites pass (39+29+16). check-types / lint / compile clean. Manual F5
+still pending. **Loose error pattern intentionally not changed** — the webview is
+strict-by-default and the reported bug is strict-context; touching loose risks unintended
+classification shifts. Follow-up if loose parity is needed.
+
 **Diagnosis.** Two independent severity systems disagree:
 1. `classifyLevel()` (`viewer-level-classify.ts:98`) sets `item.level`, which drives both
    the E/W/I/P/N/D/DB toggle counts AND the `level-bar-{level}` gutter class.
@@ -200,8 +214,8 @@ render correctly; no virtualization regressions on the 6,508-line sample.
 1. **Item A** — DONE, committed. Un-shatters every block.
 2. **Item B** — re-scoped to F5 verification (existing streak-collapse likely covers it).
 3. **Item C** — re-scoped to F5 verification (existing block dedup likely covers it).
-4. **Item D** — independent of A–C; classification + color-from-level. Medium risk. **Next.**
-5. **Item E** — last; biggest blast radius; rewrites the row DOM.
+4. **Item D** — DONE. ANSI foreground stripped; error/warn classifier tightened.
+5. **Item E** — last; biggest blast radius; rewrites the row DOM. **Next.**
 
 **Revised note:** Item A turned out to be the keystone — it activates two pre-existing
 block-dedup mechanisms (`finalizeStackGroup`, `tryCollapseRepeatStackHeader`) that were
