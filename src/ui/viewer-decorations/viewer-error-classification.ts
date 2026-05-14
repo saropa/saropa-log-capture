@@ -102,6 +102,15 @@ function classifyError(plainText) {
 
 /**
  * Get a classification badge for an error type.
+ *
+ * All four classifications render as a single emoji in the gutter, absolutely
+ * positioned (see .critical-fire-icon / .error-badge-gutter in
+ * viewer-styles-decoration-bars.ts) so they sit in their own column and never
+ * push the log text. WHY: the previous "🐛 BUG" / "⚡ TRANSIENT" pills were
+ * inline-block flow content, so every classified line's text shifted right and
+ * broke alignment with the surrounding lines. The full label lives in the title
+ * tooltip and the hover popover; .error-badge-interactive keeps hover/analysis.
+ *
  * @param {string} classification - 'transient', 'critical', or 'bug'
  * @returns {string} - HTML for the badge
  */
@@ -109,19 +118,13 @@ function getErrorBadge(classification) {
     if (!classification) return '';
 
     if (classification === 'critical') {
-        // Critical is rendered as a bare fire emoji positioned over the severity
-        // dot (see .critical-fire-icon in viewer-styles-decoration-bars.ts).
-        // WHY no "CRITICAL" text or red box: the inline badge previously
-        // overlapped the log content and duplicated the gutter severity dot.
-        // The fire icon alone replaces the dot; hover/click still opens the
-        // analysis panel because .error-badge-interactive is retained.
         return '<span class="critical-fire-icon error-badge-interactive" title="Critical Error \\u2014 hover for details" aria-label="Critical Error">\\ud83d\\udd25</span>';
     }
     if (classification === 'transient') {
-        return '<span class="error-badge error-badge-transient error-badge-interactive" title="Transient Error \\u2014 hover for details">\\u26a1 TRANSIENT</span> ';
+        return '<span class="error-badge-gutter error-badge-transient error-badge-interactive" title="Transient Error \\u2014 hover for details" aria-label="Transient Error">\\u26a1</span>';
     }
     if (classification === 'bug') {
-        return '<span class="error-badge error-badge-bug error-badge-interactive" title="Likely Bug \\u2014 hover for details">\\ud83d\\udc1b BUG</span> ';
+        return '<span class="error-badge-gutter error-badge-bug error-badge-interactive" title="Likely Bug \\u2014 hover for details" aria-label="Likely Bug">\\ud83d\\udc1b</span>';
     }
 
     return '';

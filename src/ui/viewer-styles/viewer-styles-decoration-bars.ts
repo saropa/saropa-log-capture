@@ -161,47 +161,15 @@ export function getDecorationBarStyles(): string {
     color: var(--vscode-badge-foreground, #fff);
 }
 
-/* Error classification badges */
-.error-badge {
-    display: inline-block;
-    padding: 1px 6px;
-    margin-right: 4px;
-    border-radius: 3px;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    vertical-align: middle;
-}
-
-.error-badge-critical {
-    background-color: rgba(255, 0, 0, 0.2);
-    color: var(--vscode-errorForeground, #f48771);
-    border: 1px solid var(--vscode-errorForeground, #f48771);
-}
-
-.error-badge-transient {
-    background-color: rgba(255, 165, 0, 0.15);
-    color: var(--vscode-debugConsole-warningForeground, #cca700);
-    border: 1px solid var(--vscode-debugConsole-warningForeground, #cca700);
-}
-
-.error-badge-bug {
-    background-color: rgba(255, 105, 180, 0.15);
-    color: var(--vscode-debugConsole-errorForeground, #f48771);
-    border: 1px solid var(--vscode-debugConsole-errorForeground, #f48771);
-}
-
-.error-badge-anr {
-    background-color: rgba(255, 152, 0, 0.2);
-    color: var(--vscode-debugConsole-warningForeground, #ff9800);
-    border: 1px solid rgba(255, 152, 0, 0.3);
-}
-
-/* Critical fire icon — replaces the severity dot in the gutter. */
-/* WHY absolute: must sit over the gutter at the same spot as the */
-/* [class*="level-bar-"]::before dot (left: 0.69em) without pushing the */
-/* log text. .line has position: relative so this anchors inside the row. */
-.critical-fire-icon {
+/* Error classification markers — all four (critical / bug / transient / ANR)
+   render as a single emoji absolutely positioned in the gutter, in their OWN
+   column, so they never push the log text. WHY absolute: the prior inline
+   "🐛 BUG" / "⚡ TRANSIENT" pills were flow content — every classified line's
+   text shifted right and broke alignment with the surrounding lines. .line has
+   position: relative so these anchor inside the row. The full label is in the
+   title tooltip + hover popover; .error-badge-interactive keeps hover/analysis. */
+.critical-fire-icon,
+.error-badge-gutter {
     position: absolute;
     left: 0.3em;
     top: 0;
@@ -214,8 +182,9 @@ export function getDecorationBarStyles(): string {
     z-index: 3;
     user-select: none;
 }
-/* Hide the severity dot on lines that already carry the fire icon, so */
-/* the emoji alone acts as the severity indicator — no duplication. */
-.line:has(.critical-fire-icon)[class*="level-bar-"]::before { display: none; }
+/* Hide the severity dot on lines carrying a classification icon, so the emoji
+   alone acts as the gutter indicator — no duplicated dot, no double-width gutter. */
+.line:has(.critical-fire-icon)[class*="level-bar-"]::before,
+.line:has(.error-badge-gutter)[class*="level-bar-"]::before { display: none; }
 `;
 }

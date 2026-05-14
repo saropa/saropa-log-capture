@@ -239,7 +239,9 @@ function renderItem(item, idx, prevVis) {
         dupBadge = '<span class="' + _dupCls + '" data-dedup-survivor-idx="' + idx + '" title="' + _dupTitle + '">' + _dupLabel + '</span>';
     }
     if (typeof getErrorBadge === 'function' && item.errorClass) badge = getErrorBadge(item.errorClass);
-    if (!badge && item.isAnr) badge = '<span class="error-badge error-badge-anr" title="ANR Pattern Detected">\\u23f1 ANR</span> ';
+    /* ANR marker: gutter icon (absolute, .error-badge-gutter) for the same reason
+       as the bug/transient badges — an inline "⏱ ANR" pill shifted the line text. */
+    if (!badge && item.isAnr) badge = '<span class="error-badge-gutter error-badge-anr" title="ANR Pattern Detected" aria-label="ANR Pattern Detected">\\u23f1</span>';
     if (typeof getQualityBadge === 'function') badge += getQualityBadge(item);
     if (typeof getLintBadge === 'function') badge += getLintBadge(item);
     var corr = (typeof correlationByLineIndex !== 'undefined' && correlationByLineIndex[idx]);
