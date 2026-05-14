@@ -41,6 +41,7 @@ function isTierHidden() { return false; }
 
 function stripTags(html) { var s = (html == null ? '' : String(html)).replace(/<[^>]*>/g, ''); return s.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&'); }
 function isStackFrameText() { return false; }
+function isAsyncGapText() { return false; }
 function parseClassTags() { return []; }
 function parseLogcatTag() { return null; }
 function classifyLevel() { return 'info'; }

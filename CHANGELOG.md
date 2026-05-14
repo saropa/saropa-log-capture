@@ -28,6 +28,8 @@ For older versions (7.1.1 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [Unreleased]
 
+### Fixed
+- **Async-gap markers no longer shatter Dart stack traces** — `<asynchronous suspension>` lines failed the stack-frame test, so each one closed the active stack group; a typical Drift async trace was split into ~15 separate one-frame groups instead of one collapsible block. They now fold into the enclosing stack group as continuation frames — hidden while the header is collapsed or in preview, revealed on full expand so await boundaries stay inspectable. An orphan gap with no active group still renders as a normal line. Stack-line ingestion was extracted from `addToData` into `viewer-data-add-stack-ingest.ts` to stay within the file-size limit.
 
 ---
 

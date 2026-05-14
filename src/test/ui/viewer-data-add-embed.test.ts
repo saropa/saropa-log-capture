@@ -4,6 +4,7 @@
  */
 import * as assert from 'node:assert';
 import { getViewerDataAddScript } from '../../ui/viewer/viewer-data-add';
+import { getStackIngestScript } from '../../ui/viewer/viewer-data-add-stack-ingest';
 import { getDocItemBuilderScript } from '../../ui/viewer/viewer-data-add-doc-item';
 import { getLineBirthScript } from '../../ui/viewer/viewer-data-add-line-birth';
 import { getViewerDataHelpersCore } from '../../ui/viewer/viewer-data-helpers-core';
@@ -43,8 +44,10 @@ suite('viewer-data-add embed', () => {
     });
 
     test('stack-header uses configurable default state via stackDefaultState var', () => {
-        const block = extractAddToDataBlock(getViewerDataAddScript());
-        assert.ok(block.length > 0, 'expected addToData block');
+        // Stack-header creation moved to viewer-data-add-stack-ingest.ts
+        // (tryIngestStackLine), extracted from addToData for the line cap.
+        const block = getStackIngestScript();
+        assert.ok(block.length > 0, 'expected stack-ingest script');
         assert.ok(
             block.includes("type: 'stack-header'") && block.includes('collapsed: _sds'),
             'stack-header collapsed state should use the configurable _sds variable',
@@ -217,9 +220,10 @@ suite('viewer-data-add blank rows compacted at birth', () => {
         /* Without this inheritance, stack headers like "» DriftDebugInterceptor._log"
            get sourceTag: null (the frame text has no logcat prefix or [tag] bracket),
            so they stay visible when the user hides the Database source tag via the
-           DB toolbar toggle. The fallback uses the already-scanned _prevForHdr item. */
-        const block = extractAddToDataBlock(getViewerDataAddScript());
-        assert.ok(block.length > 0, 'expected addToData block');
+           DB toolbar toggle. The fallback uses the already-scanned _prevForHdr item.
+           Stack-header creation lives in viewer-data-add-stack-ingest.ts. */
+        const block = getStackIngestScript();
+        assert.ok(block.length > 0, 'expected stack-ingest script');
         assert.ok(
             block.includes('if (!sTagH && !lTagH && _prevForHdr)'),
             'stack-header must inherit sourceTag from _prevForHdr when frame text yields no tag',

@@ -147,6 +147,15 @@ function isStackFrameText(html) {
     return /\\(\\.\\\/\\S+\\.dart:\\d+:\\d+\\)/.test(plain);
 }
 
+/** True if the line is a Dart async-gap marker (the literal "<asynchronous suspension>").
+ *  These carry no payload — no method/file/line — but Dart emits one between nearly
+ *  every async frame, so they must be folded INTO the enclosing stack group rather than
+ *  terminating it. Deliberately NOT part of isStackFrameText(): a gap must never start a
+ *  new group on its own (an orphan gap with no active header stays a normal line). */
+function isAsyncGapText(html) {
+    return /^<asynchronous suspension>$/.test(stripTags(html).trim());
+}
+
 function handleScroll() {
     if (typeof suppressScroll !== 'undefined' && suppressScroll) return;
     if (!logEl) return;
