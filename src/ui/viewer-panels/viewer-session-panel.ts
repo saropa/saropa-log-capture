@@ -22,6 +22,10 @@ export function getSessionPanelScript(): string {
     var sessionLoadingEl = document.getElementById('session-loading');
     var cachedSessions = null;
     var sessionListPage = 0;
+    /** Pending auto-close countdown started when a file is opened from the panel.
+        The panel lingers briefly so a follow-up selection (viewing another file)
+        doesn't require reopening it. null = no countdown in flight. */
+    var sessionAutoCloseTimer = null;
 
     var sessionDisplayOptions = {
         stripDatetime: true, normalizeNames: true, showDayHeadings: true,
@@ -83,6 +87,9 @@ export function getSessionPanelScript(): string {
     /** Closes panel and returns focus to icon bar for a11y. */
     window.closeSessionPanel = function() {
         if (!sessionPanelEl) return;
+        /* A manual/explicit close cancels any pending auto-close so the timer
+           can't fire later and re-close an already-reopened panel. */
+        if (sessionAutoCloseTimer) { clearTimeout(sessionAutoCloseTimer); sessionAutoCloseTimer = null; }
         sessionPanelEl.classList.remove('visible');
         sessionPanelOpen = false;
         if (typeof clearActivePanel === 'function') clearActivePanel('sessions');
