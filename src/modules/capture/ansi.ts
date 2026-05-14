@@ -1,29 +1,20 @@
 /** Regex matching ANSI escape sequences (SGR and cursor codes). */
 const ANSI_REGEX = /\x1b\[[0-9;]*[a-zA-Z]/g;
 
-/** Standard foreground colors (SGR 30-37). Uses VS Code CSS variables so ANSI colors match the active theme. */
-const standardFg: Record<number, string> = {
-    30: 'var(--vscode-terminal-ansiBlack, #000)',
-    31: 'var(--vscode-terminal-ansiRed, #cd3131)',
-    32: 'var(--vscode-terminal-ansiGreen, #0dbc79)',
-    33: 'var(--vscode-terminal-ansiYellow, #e5e510)',
-    34: 'var(--vscode-terminal-ansiBlue, #2472c8)',
-    35: 'var(--vscode-terminal-ansiMagenta, #bc3fbc)',
-    36: 'var(--vscode-terminal-ansiCyan, #11a8cd)',
-    37: 'var(--vscode-terminal-ansiWhite, #e5e5e5)',
-};
-
-/** Bright foreground colors (SGR 90-97). Uses VS Code CSS variables so ANSI colors match the active theme. */
-const brightFg: Record<number, string> = {
-    90: 'var(--vscode-terminal-ansiBrightBlack, #666)',
-    91: 'var(--vscode-terminal-ansiBrightRed, #f14c4c)',
-    92: 'var(--vscode-terminal-ansiBrightGreen, #23d18b)',
-    93: 'var(--vscode-terminal-ansiBrightYellow, #f5f543)',
-    94: 'var(--vscode-terminal-ansiBrightBlue, #3b8eea)',
-    95: 'var(--vscode-terminal-ansiBrightMagenta, #d670d6)',
-    96: 'var(--vscode-terminal-ansiBrightCyan, #29b8db)',
-    97: 'var(--vscode-terminal-ansiBrightWhite, #fff)',
-};
+/*
+ * ANSI FOREGROUND COLOR IS DELIBERATELY NOT RENDERED.
+ *
+ * Source ANSI foreground color cannot be trusted as a severity signal: in real
+ * logs the same code is used across unrelated severities (e.g. a Flutter app
+ * paints yellow `\e[33m` on notices, perf lines, warnings, AND decode failures;
+ * green `\e[32m` just means "routine DB chatter"). Letting it tint the text
+ * produced "looks like an error but is not under the E filter" — color and
+ * filter membership disagreeing. Severity color is now owned 100% by the
+ * level-* palette derived from item.level, so the level toggle and the on-row
+ * color can never disagree. See bugs/PLAN_VIEWER_STACK_NOISE_FILTER_LAYOUT.md
+ * Item D. Background colors, bold, dim, italic, underline are still honored —
+ * they are not severity signals.
+ */
 
 /** Standard background colors (SGR 40-47). Uses VS Code CSS variables so ANSI colors match the active theme. */
 const standardBg: Record<number, string> = {
@@ -54,7 +45,6 @@ interface AnsiState {
     dim: boolean;
     italic: boolean;
     underline: boolean;
-    fg: string | null;
     bg: string | null;
 }
 
@@ -87,7 +77,8 @@ export function escapeHtml(text: string): string {
  * Convert ANSI SGR escape codes to HTML span elements.
  * Text is HTML-escaped before conversion to prevent XSS.
  * Non-SGR ANSI codes are silently stripped.
- * Supports: reset, bold, dim, italic, underline, 16 fg/bg colors.
+ * Supports: reset, bold, dim, italic, underline, 16 background colors.
+ * Foreground colors are intentionally dropped — see the top-of-file comment.
  */
 export function ansiToHtml(text: string): string {
     if (!text.includes('\x1b[')) {
@@ -162,16 +153,15 @@ function applySingleParam(state: AnsiState, code: number): void {
     if (code === 22) { state.bold = false; state.dim = false; return; }
     if (code === 23) { state.italic = false; return; }
     if (code === 24) { state.underline = false; return; }
-    if (code === 39) { state.fg = null; return; }
     if (code === 49) { state.bg = null; return; }
-    state.fg = standardFg[code] ?? brightFg[code] ?? state.fg;
+    // Foreground codes (30-37, 39, 90-97) intentionally ignored — see the
+    // foreground-color block comment at the top of this file.
     state.bg = standardBg[code] ?? brightBg[code] ?? state.bg;
 }
 
 /** Build an opening span tag from the current ANSI state. */
 function buildSpanOpen(state: AnsiState): string {
     const styles: string[] = [];
-    if (state.fg) { styles.push(`color:${state.fg}`); }
     if (state.bg) { styles.push(`background-color:${state.bg}`); }
     if (state.bold) { styles.push('font-weight:bold'); }
     if (state.dim) { styles.push('opacity:0.7'); }
@@ -181,7 +171,7 @@ function buildSpanOpen(state: AnsiState): string {
 }
 
 function createEmptyState(): AnsiState {
-    return { bold: false, dim: false, italic: false, underline: false, fg: null, bg: null };
+    return { bold: false, dim: false, italic: false, underline: false, bg: null };
 }
 
 function resetState(state: AnsiState): void {
@@ -189,11 +179,10 @@ function resetState(state: AnsiState): void {
     state.dim = false;
     state.italic = false;
     state.underline = false;
-    state.fg = null;
     state.bg = null;
 }
 
 function isEmptyState(state: AnsiState): boolean {
     return !state.bold && !state.dim && !state.italic && !state.underline
-        && state.fg === null && state.bg === null;
+        && state.bg === null;
 }
