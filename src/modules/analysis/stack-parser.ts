@@ -253,7 +253,13 @@ export function isStackFrameLine(line: string): boolean {
         return true;
     }
     if (/^package:/.test(trimmed)) { return true; }
-    if (/^\s+\S+\.\S+:\d+/.test(line)) { return true; }
+    // Indented `file.ext:line` frames (Go tracebacks, generic). The trailing group
+    // is the guard: a real frame ends the `file:line` with a column (`:5`), a frame
+    // suffix (` +0x1a` Go offset, ` (` open paren), a closing bracket, or end-of-line.
+    // Without it, audit/report lines like `  foo_utils.dart:11  SomeMethod` —
+    // `file:line` followed by a prose description — were misread as stack frames and
+    // pulled into a bogus stack group. Keep in sync with viewer-script.ts.
+    if (/^\s+\S+\.\S+:\d+(?::\d+|\s+[+(]|\s*[)\]]|\s*$)/.test(line)) { return true; }
     // Mid-line Dart source paths: "Method package:foo/bar.dart:1:2" or "(./lib/foo.dart:1:2)"
     if (/\bpackage:\S+\.dart:\d+/.test(line)) { return true; }
     return /\(\.\/\S+\.dart:\d+:\d+\)/.test(line);

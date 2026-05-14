@@ -130,6 +130,31 @@ suite('StackParser', () => {
         });
     });
 
+    suite('isStackFrameLine — indented file:line frames vs audit/report lines', () => {
+        // Audit/report tools emit "  file.ext:line  Description" lists. The generic
+        // indented-frame rule used to swallow these, grouping a whole report section
+        // into one bogus stack block. The trailing guard (column / frame suffix /
+        // bracket / end-of-line) keeps real frames matching while rejecting prose.
+        test('should reject audit-report lines (file:line followed by a description)', () => {
+            assert.strictEqual(isStackFrameLine('  async_barrier_utils.dart:11  AsyncBarrierUtils'), false);
+            assert.strictEqual(isStackFrameLine('  batch_flush_utils.dart:14  possible recursion: add()'), false);
+            assert.strictEqual(isStackFrameLine('  async_mutex_utils.dart:17  acquire'), false);
+        });
+
+        test('should still detect Go traceback location lines', () => {
+            assert.strictEqual(isStackFrameLine('\t/usr/local/go/src/runtime/panic.go:914 +0x21f'), true);
+            assert.strictEqual(isStackFrameLine('\tmain.go:10 +0x18'), true);
+        });
+
+        test('should still detect an indented file:line:col frame', () => {
+            assert.strictEqual(isStackFrameLine('  lib/src/foo.dart:42:7'), true);
+        });
+
+        test('should still detect an indented file:line at end of line', () => {
+            assert.strictEqual(isStackFrameLine('  vendor/pkg/file.rb:88'), true);
+        });
+    });
+
     // --- Dart / Flutter ---
 
     test('should detect Flutter package frame as framework', () => {
