@@ -36,8 +36,9 @@ function areDecorationsOn() {
 
 /** Epoch ms of the first timestamped line — used for session elapsed display. */
 var sessionStartTs = 0;
-/** Last digit count applied to CSS vars; prevents repeated style writes in hot paths. */
-var lastAppliedCounterDigits = -1;
+/** Last decoration signature (digit count + enabled-part flags) applied to the
+    CSS width vars; prevents repeated style writes on the scroll hot path. */
+var lastAppliedDecoSig = '';
 
 /**
  * Map log level to a colored dot emoji.
@@ -123,21 +124,46 @@ function getCounterDigitsForLayout() {
 }
 
 /**
- * Keep decorated-line hanging indent in sync with counter digit width.
- * Base layout assumes up to 4 digits; add 1em per extra digit.
- * Runs often while streaming, so skip CSS writes unless digit width changed.
+ * Recompute the decorated-line prefix column width from the decoration parts
+ * that are ACTUALLY enabled — counter, timestamp, session-elapsed, PID/TID,
+ * level prefix, structured tag. Each disabled part contributes zero width, so
+ * the gap between the severity bar and the message text shrinks to fit instead
+ * of always reserving a static worst-case column (the old hardcoded 13em
+ * reserved timestamp + PID + tag space even when only the counter was shown).
+ * Runs from renderViewport() plus addLines/clear; a digit+flag signature skips
+ * the CSS write when nothing relevant changed, keeping it cheap on the scroll
+ * hot path.
  */
 function applyDecorationLayoutWidth() {
     var root = document.documentElement;
     if (!root || !root.style) return;
     var digits = getCounterDigitsForLayout();
-    if (digits === lastAppliedCounterDigits) return;
-    var extraDigits = Math.max(0, digits - 4);
-    var contentIndentEm = 13 + extraDigits;
+    var showPid = (typeof showParsedPidTid !== 'undefined' && showParsedPidTid);
+    var showLvl = (typeof showParsedLevelPrefix !== 'undefined' && showParsedLevelPrefix);
+    var showTag = (typeof structuredLineParsing !== 'undefined' && structuredLineParsing);
+    /* Signature gates the CSS write: width now depends on digit count AND which
+       parts are enabled, so the old digits-only key would miss flag toggles. */
+    var sig = digits + '|' + (decoShowCounter ? 1 : 0) + (decoShowCounterOnBlank ? 1 : 0)
+        + (decoShowTimestamp ? 1 : 0) + (showMilliseconds ? 1 : 0) + (decoShowSessionElapsed ? 1 : 0)
+        + (showPid ? 1 : 0) + (showLvl ? 1 : 0) + (showTag ? 1 : 0);
+    if (sig === lastAppliedDecoSig) return;
+    /* Per-part em widths at the .line parent font size. The deco prefix renders
+       at font-size:0.85em; these are deliberately a touch generous because
+       over-reserving only leaves a small gap, while under-reserving lets a part
+       overlap the message. Tune via F5 if the gap reads too wide/tight. */
+    var em = 0;
+    if (decoShowCounter || decoShowCounterOnBlank) em += digits * 0.62 + 0.5;
+    if (decoShowTimestamp) em += showMilliseconds ? 7.5 : 5.5;
+    if (decoShowSessionElapsed) em += 6.5;
+    if (showPid) em += 7;
+    if (showLvl) em += 1.6;
+    if (showTag) em += 7;
+    if (em > 0) em += 1; // trailing &nbsp;&nbsp; gap getDecorationPrefix appends
+    var contentIndentEm = em;
     var totalPaddingEm = 1.25 + contentIndentEm; // 1.25em keeps severity bar clear.
     root.style.setProperty('--deco-content-indent-em', contentIndentEm + 'em');
     root.style.setProperty('--deco-prefix-width-em', totalPaddingEm + 'em');
-    lastAppliedCounterDigits = digits;
+    lastAppliedDecoSig = sig;
 }
 
 /**
