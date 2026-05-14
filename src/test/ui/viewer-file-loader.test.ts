@@ -83,6 +83,46 @@ suite('Viewer file loader', () => {
             assert.ok(pending[0].timestamp > 0, 'timestamp must be parsed even without .mmm or Z');
             assert.strictEqual(pending[0].rawText, 'plain message');
         });
+
+        test('parses a space-separated date+time prefix', () => {
+            const pending = parseRawLinesToPending(['2026-05-14 11:50:51.135  some message'], ctx);
+            assert.ok(pending[0].timestamp > 0, 'space-separated date+time must be parsed');
+            assert.strictEqual(pending[0].rawText, 'some message');
+        });
+
+        test('parses a clock-time-only prefix', () => {
+            const pending = parseRawLinesToPending(['11:50:51.135  clock-only message'], ctx);
+            assert.ok(pending[0].timestamp > 0, 'clock-time-only prefix must be parsed');
+            assert.strictEqual(pending[0].rawText, 'clock-only message');
+        });
+
+        test('parses a syslog RFC 3164 prefix', () => {
+            const pending = parseRawLinesToPending(['May 14 11:50:51 host daemon started'], ctx);
+            assert.ok(pending[0].timestamp > 0, 'syslog Mon DD HH:MM:SS prefix must be parsed');
+            assert.strictEqual(pending[0].rawText, 'host daemon started');
+        });
+
+        test('parses a Unix epoch-ms prefix', () => {
+            const epoch = 1747223451135;
+            const pending = parseRawLinesToPending([`${epoch} epoch message`], ctx);
+            assert.strictEqual(pending[0].timestamp, epoch);
+            assert.strictEqual(pending[0].rawText, 'epoch message');
+        });
+
+        test('does not mistake a bracket category for a timestamp', () => {
+            const pending = parseRawLinesToPending(['[stdout] not a timestamp'], ctx);
+            assert.strictEqual(pending[0].category, 'stdout');
+            assert.strictEqual(pending[0].timestamp, 0);
+        });
+
+        test('does not mistake prose for a syslog timestamp', () => {
+            // "Got 5 12:00:00" matches the syslog SHAPE, but "Got" is not a month —
+            // parseTimestamp rejects it via the native-Date check, so the line is
+            // left untouched rather than mis-stripped.
+            const pending = parseRawLinesToPending(['Got 5 12:00:00 results back'], ctx);
+            assert.strictEqual(pending[0].timestamp, 0);
+            assert.strictEqual(pending[0].rawText, 'Got 5 12:00:00 results back');
+        });
     });
 
     suite('parseElapsedToMs', () => {
@@ -121,12 +161,16 @@ suite('Viewer file loader', () => {
             const pending = parseExternalSidecarToPending('raw <b>text</b>', 'app');
             assert.strictEqual(pending[0].rawText, 'raw <b>text</b>');
         });
-        test('should extract ISO 8601 timestamps from sidecar lines', () => {
+        test('should extract ISO 8601 timestamps from sidecar lines and strip them from the text', () => {
             const line = '2026-04-13T11:46:50.066Z  [CACHE]  HIT  flutter.releases';
             const pending = parseExternalSidecarToPending(line, 'sda');
             assert.strictEqual(pending.length, 1);
             const expected = new Date('2026-04-13T11:46:50.066Z').getTime();
             assert.strictEqual(pending[0].timestamp, expected);
+            // The timestamp belongs in the time decoration column, not inline.
+            assert.ok(!pending[0].text.includes('2026-04-13T'), 'ISO prefix must be stripped from the displayed text');
+            // rawText keeps the full original line for copy / dedup.
+            assert.strictEqual(pending[0].rawText, line);
         });
         test('should return timestamp 0 for lines without timestamps', () => {
             const pending = parseExternalSidecarToPending('plain log line', 'sda');

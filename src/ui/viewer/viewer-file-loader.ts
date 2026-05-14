@@ -9,6 +9,7 @@
 import { escapeHtml } from '../../modules/capture/ansi';
 import { buildLogLineHtmlWithOptionalDriftArgsDim } from '../../modules/db/drift-log-line-args-fold';
 import type { DeviceTier } from '../../modules/analysis/device-tag-tiers';
+import { extractTimestamp } from '../../modules/timeline/timestamp-parser';
 export {
     SOURCE_TERMINAL,
     SOURCE_EXTERNAL_PREFIX,
@@ -191,18 +192,6 @@ function parseFileLine(raw: string, ctx: FileParseContext): PendingLine {
     if (/^===\s*(SESSION END|SPLIT)/.test(raw)) {
         return buildMarkerLine(raw, src);
     }
-    // ISO-8601 timestamped line: "2026-05-14T11:50:51.135Z  [TAG]  message".
-    // Reporting tools (e.g. the pubspec vibrancy report) prefix every line with a
-    // UTC ISO timestamp. Without this case the whole line — timestamp included —
-    // fell through to the raw fallback with timestamp:0, so the time decoration
-    // column was empty and the ISO string cluttered the message text instead.
-    // Anchored on a leading digit, so it can never collide with the [bracket]
-    // formats below. Date.parse handles the optional fractional seconds and Z.
-    const isoTs = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?)\s+(.*)$/.exec(raw);
-    if (isoTs) {
-        const isoMs = Date.parse(isoTs[1]);
-        return buildFileLine({ text: isoTs[2], category: 'console', classifyFrame: ctx.classifyFrame, timestamp: Number.isNaN(isoMs) ? 0 : isoMs, source: src });
-    }
     // [time] [+elapsed] [category] rest
     const timeElapsedCat = /^\[([\d:.]+)\]\s*\[(\+\d+(?:\.\d+)?(?:ms|s))\]\s*\[([\w-]+)\]\s?(.*)$/.exec(raw);
     if (timeElapsedCat) {
@@ -226,6 +215,17 @@ function parseFileLine(raw: string, ctx: FileParseContext): PendingLine {
     const catMatch = /^\[([\w-]+)\]\s?(.*)$/.exec(raw);
     if (catMatch) {
         return buildFileLine({ text: catMatch[2], category: catMatch[1], classifyFrame: ctx.classifyFrame, timestamp: 0, source: src });
+    }
+    // Bare leading timestamp — ISO ("2026-05-14T11:50:51.135Z …"), space-separated
+    // date+time, clock-time-only, syslog, or Unix epoch. Reporting tools prefix every
+    // line this way; without detection the whole line fell through to the raw fallback
+    // with timestamp:0, so the timestamp cluttered the message and the time decoration
+    // column stayed empty. Runs AFTER the explicit [bracket] formats so a bracketed
+    // category is never mis-read as a timestamp; extractTimestamp validates every
+    // candidate, so prose is never mis-stripped.
+    const extracted = extractTimestamp(raw, ctx.sessionMidnightMs || undefined);
+    if (extracted) {
+        return buildFileLine({ text: extracted.rest, category: 'console', classifyFrame: ctx.classifyFrame, timestamp: extracted.timestamp, source: src });
     }
     return buildFileLine({ text: raw, category: 'console', classifyFrame: ctx.classifyFrame, timestamp: 0, source: src });
 }
