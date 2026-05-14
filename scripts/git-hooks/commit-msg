@@ -1,13 +1,27 @@
 #!/bin/sh
-# Strip editor/tool attribution trailers from commit messages (repo policy: no credit lines).
-# Some environments append "Made-with: Cursor" after the author message; remove it in-place.
-# Install: cp scripts/git-hooks/commit-msg .git/hooks/commit-msg && chmod +x .git/hooks/commit-msg
+# Strip attribution trailers from commit messages (repo policy: change description only,
+# no editor/tool credit lines).
+#
+# Install (one-time, per clone): npm run install:hooks
+#   — or manually: git config core.hooksPath scripts/git-hooks
+#
+# Why strip rather than reject the commit:
+#   Some editors append the trailer AFTER the human finishes typing the message. A
+#   `commit-msg` reject would block legitimate commits. Stripping in-place keeps the
+#   policy invisible and impossible to forget.
 msg_file="$1"
 if [ -z "$msg_file" ] || [ ! -f "$msg_file" ]; then
 	exit 0
 fi
 tmp="${msg_file}.strip.$$"
-# Drop CRLF for matching; drop whole lines matching Cursor attribution (same patterns as before).
-tr -d '\r' < "$msg_file" | grep -viE '^[[:space:]]*(made-with|made[[:space:]]+with):[[:space:]]*cursor[[:space:]]*$' > "$tmp" || true
+# Drop CRLF for matching; remove lines that look like attribution trailers.
+# Patterns (case-insensitive, extended regex, OR-alternation) — match by SHAPE, not by name:
+#   1. Line-anchored "Made-with:" / "Made with:" / "Co-Authored-By:" trailers (any value).
+#   2. "Generated with [<text>](<url>)" — the canonical markdown-link attribution shape.
+#      Matched anywhere in the line so a leading emoji prefix is tolerated. False-positive
+#      risk is low because the bracket+paren combo is rare in normal commit-body prose.
+tr -d '\r' < "$msg_file" | grep -viE \
+	'^[[:space:]]*(made[-[:space:]]?with|co-authored-by)[[:space:]]*:|generated[[:space:]]+with[[:space:]]+\[[^]]*\][[:space:]]*\(' \
+	> "$tmp" || true
 mv -f "$tmp" "$msg_file"
 exit 0
