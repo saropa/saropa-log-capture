@@ -1,6 +1,6 @@
 # GitHub Secrets (for CI / publish)
 
-To use **OVSX_PAT** (Open VSX / Cursor publish) in GitHub Actions or to have it documented for this repo:
+To use **OVSX_PAT** (Open VSX Registry publish token) in GitHub Actions or to have it documented for this repo:
 
 ## Add OVSX_PAT to this repo
 
