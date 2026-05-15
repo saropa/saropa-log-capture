@@ -11,7 +11,7 @@ const ANSI_REGEX = /\x1b\[[0-9;]*[a-zA-Z]/g;
  * produced "looks like an error but is not under the E filter" — color and
  * filter membership disagreeing. Severity color is now owned 100% by the
  * level-* palette derived from item.level, so the level toggle and the on-row
- * color can never disagree. See bugs/PLAN_VIEWER_STACK_NOISE_FILTER_LAYOUT.md
+ * color can never disagree. See plans/history/2026.05/2026.05.15/054_plan-viewer-stack-noise-filter-layout.md
  * Item D. Background colors, bold, dim, italic, underline are still honored —
  * they are not severity signals.
  */

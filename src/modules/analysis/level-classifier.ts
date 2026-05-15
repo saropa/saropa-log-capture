@@ -78,7 +78,7 @@ function matchesDatabaseAnnotation(plainText: string): boolean {
  * shape — e.g. `PermissionDeniedException (no OS grant on file)`. Without it, an exception
  * object printed with a parenthesized detail (no trailing colon) fell through to `info`,
  * so it never reached the Errors filter and the E toggle could read zero on a log that
- * plainly contained errors. See bugs/PLAN_VIEWER_STACK_NOISE_FILTER_LAYOUT.md Item D.
+ * plainly contained errors. See plans/history/2026.05/2026.05.15/054_plan-viewer-stack-noise-filter-layout.md Item D.
  */
 const strictStructuralErrorPattern = /\w*(?:error|exception)\s*[:\]!(]|\[(?:error|exception|fatal|panic|critical)\]|_\w*(?:Error|Exception)\b|Null check operator/i;
 /** Loose structural error: bare `error`/`exception` with negative lookahead, Dart private types, Null check. */
@@ -99,7 +99,7 @@ const flutterExceptionBannerPattern = /\bException caught by\b/i;
  * `databaseDecode: could not decode "{…}" as DatabaseValueType.Json` — a real,
  * actionable failure that otherwise classified as `info` and vanished under the level
  * filter. Requires a following word so a bare trailing "cannot." does not match.
- * See bugs/PLAN_VIEWER_STACK_NOISE_FILTER_LAYOUT.md Item D.
+ * See plans/history/2026.05/2026.05.15/054_plan-viewer-stack-noise-filter-layout.md Item D.
  */
 const structuralWarnPattern = /\b(?:could\s*not|couldn't|cannot|unable\s+to|failed\s+to)\s+\w/i;
 
