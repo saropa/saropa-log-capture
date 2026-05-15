@@ -74,3 +74,53 @@ suite('async-gap stack-group continuation', () => {
         );
     });
 });
+
+/*
+ * The bare ")" that closes Dart's "_StringStackTrace (#0 … )" object dump is
+ * payload-free framework noise — the same shape problem as the async gap above.
+ * Before the fix it failed isStackFrameText(), hit the group-close path in
+ * addToData(), and rendered as a junk ")" row after every trace.
+ * tryIngestStackLine() now folds it into the OPEN group as an fw=true frame;
+ * an orphan ")" (no active group) stays a normal line.
+ */
+suite('trace-tail ")" stack-group continuation', () => {
+    // Header shape uses the Drift "(./path.dart:line:col)" anchor so the
+    // sandbox's minimal isStackFrameText classifier accepts it.
+    const HEADER = '_StringStackTrace (#1  Foo.bar (./lib/foo.dart:1:2)';
+    const FRAME = '#2  Baz.qux (./lib/baz.dart:3:4)';
+    const TAIL = ')';
+
+    test('the ")" closing a Dart trace folds into the group, not a junk line', () => {
+        const vm = loadStackHeaderRepeatSandbox();
+        addLine(vm, HEADER, 1000); // becomes the stack-header
+        addLine(vm, FRAME, 1000); // frame in group 0
+        addLine(vm, TAIL, 1000); // _StringStackTrace tail ")" — must fold in
+
+        const tail = vm.allLines[vm.allLines.length - 1] as GapItem;
+        assert.strictEqual(tail.type, 'stack-frame', 'the ")" must be ingested into the group, not left as a normal line');
+        assert.strictEqual(tail.fw, true, 'the ")" must be fw=true so it hides in collapsed/preview state');
+        const headers = vm.allLines.filter((i) => i.type === 'stack-header');
+        assert.strictEqual(headers.length, 1, 'the ")" must not close the group or start a new one');
+    });
+
+    test('the ")" trace-tail is excluded from the header frame count', () => {
+        const vm = loadStackHeaderRepeatSandbox();
+        addLine(vm, HEADER, 1000); // header -> frameCount 1
+        addLine(vm, FRAME, 1000); // frame  -> frameCount 2
+        addLine(vm, TAIL, 1000); // tail   -> frameCount unchanged
+        const header = vm.allLines.find((i) => i.type === 'stack-header');
+        assert.ok(header, 'expected a stack-header');
+        assert.strictEqual(header!.frameCount, 2, 'frameCount must count header + real frames only, not the ")" tail');
+    });
+
+    test('an orphan ")" with no active group stays a normal line', () => {
+        const vm = loadStackHeaderRepeatSandbox();
+        addLine(vm, TAIL, 1000); // no active group header
+        assert.strictEqual(vm.allLines.length, 1, 'expected the orphan ")" to produce one row');
+        assert.strictEqual(
+            vm.allLines[0].type,
+            'line',
+            'orphan ")" must fall through to normal-line handling, not start a group',
+        );
+    });
+});
