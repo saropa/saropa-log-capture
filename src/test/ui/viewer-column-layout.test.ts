@@ -37,6 +37,23 @@ suite('viewer column layout (path 1 — fixed-width decoration prefix)', () => {
         assert.ok(/text-indent:\s*0/.test(body), 'inline-block prefix must reset the inherited negative text-indent');
     });
 
+    test('.deco-parsed-tag is clipped to the reserved tag column with an ellipsis', () => {
+        const css = getDecorationStyles();
+        const rule = /\.deco-parsed-tag\s*\{[^}]*\}/s.exec(css);
+        assert.ok(rule, 'expected the ".deco-parsed-tag" rule');
+        const body = rule[0];
+        // The tag column is a FIXED 7em reservation (applyDecorationLayoutWidth).
+        // A long logcat tag — MediaSessionCompat, WindowExtensionsImpl — is wider
+        // than that and, with no clip, spilled straight over the message text
+        // ("MediaSessionComCouldn't…"). inline-block + max-width + ellipsis pins
+        // it inside the column; the full tag stays on the title tooltip.
+        assert.ok(/display:\s*inline-block/.test(body), 'tag must be display:inline-block to accept max-width');
+        assert.ok(/max-width:\s*7em/.test(body), 'tag must be capped at the 7em reserved column width');
+        assert.ok(/overflow:\s*hidden/.test(body), 'tag overflow must be clipped, not spilled');
+        assert.ok(/text-overflow:\s*ellipsis/.test(body), 'a clipped tag must show an ellipsis');
+        assert.ok(/white-space:\s*nowrap/.test(body), 'the tag must stay on one line so the ellipsis applies');
+    });
+
     test('the hanging-indent model is preserved (not replaced by a flex rewrite)', () => {
         const css = getDecorationStyles();
         // Path 1 keeps padding-left + negative text-indent so wrapped SQL/error
