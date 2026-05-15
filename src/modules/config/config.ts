@@ -147,9 +147,15 @@ export function getConfig(): SaropaLogCaptureConfig {
        from users seeing visible gaps between every row in dense logs. */
     logLineHeight: clamp(cfg.get("logLineHeight"), 0.5, 4.0, 1.1),
     logViewerVisualSpacing: ensureBoolean(cfg.get("logViewerVisualSpacing"), false),
+    /* Default ON: when this rendered as off, preview-collapsed stack frames left a
+       silent ~8px gap between visible rows (the .viewer-divider stayed in the DOM
+       but its label pill was suppressed), and users couldn't tell that frames had
+       been hidden or how to expand them. The pill is now styled as muted text
+       (viewer-styles-collapse-controls.ts) so it announces the gap without
+       shouting. Setting still exposed for users who want it off entirely. */
     accessibilityShowCollapseDividerLabels: ensureBoolean(
       cfg.get("accessibility.showCollapseDividerLabels"),
-      false,
+      true,
     ),
     viewerAlwaysShowSearchMatchOptions: ensureBoolean(cfg.get("viewerAlwaysShowSearchMatchOptions"), false),
     viewerRepeatThresholds: normalizeViewerRepeatThresholds({

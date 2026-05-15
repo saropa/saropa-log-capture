@@ -195,17 +195,21 @@ suite('Stack chevron parity: ▶ for collapsed/preview, ▼ for fully expanded',
 });
 
 suite('Collapse divider captions ( accessibility setting baked into script )', () => {
-    test('default script seeds showCollapseDividerLabels false', () => {
+    test('default script seeds showCollapseDividerLabels true', () => {
+        // Default flipped to true: when off, the .viewer-divider row stayed in the
+        // DOM but its label pill was suppressed, leaving a silent ~8px gap users
+        // could not interpret. The pill now renders as muted text so the gap reads
+        // as "N hidden · show" instead of mystery whitespace.
         assert.ok(
-            getDividerRenderScript(false).includes('var showCollapseDividerLabels = false'),
-            'webview must boot with captions off unless workspace enables them',
+            getDividerRenderScript().includes('var showCollapseDividerLabels = true'),
+            'webview must boot with captions on so collapsed gaps announce themselves',
         );
     });
 
-    test('host can bake true so first paint matches workspace', () => {
+    test('host can bake false to honour the workspace opt-out', () => {
         assert.ok(
-            getDividerRenderScript(true).includes('var showCollapseDividerLabels = true'),
-            'buildViewerHtml must forward accessibility.showCollapseDividerLabels into divider script seed',
+            getDividerRenderScript(false).includes('var showCollapseDividerLabels = false'),
+            'buildViewerHtml must forward accessibility.showCollapseDividerLabels=false into divider script seed',
         );
     });
 });

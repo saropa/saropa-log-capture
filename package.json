@@ -805,7 +805,7 @@
           "type": "boolean"
         },
         "saropaLogCapture.accessibility.showCollapseDividerLabels": {
-          "default": false,
+          "default": true,
           "markdownDescription": "%config.accessibility.showCollapseDividerLabels.description%",
           "title": "%config.accessibility.showCollapseDividerLabels.title%",
           "type": "boolean"
