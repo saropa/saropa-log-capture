@@ -2,9 +2,10 @@
 
 import { getViewerScriptDbMessageHandler } from './viewer-script-messages-db';
 import { getViewerScriptTypographyMessageHandler } from './viewer-script-messages-typography';
+import { getSourceLineStampScript } from './viewer-source-line-stamp';
 
 export function getViewerScriptMessageHandler(): string {
-    return getViewerScriptDbMessageHandler() + getViewerScriptTypographyMessageHandler() + /* javascript */ `
+    return getViewerScriptDbMessageHandler() + getViewerScriptTypographyMessageHandler() + getSourceLineStampScript() + /* javascript */ `
 window.addEventListener('message', function(event) {
     var msg = event.data;
     /* Pre-handlers return true when they've dispatched the message; skip the switch on hit. */
@@ -13,8 +14,8 @@ window.addEventListener('message', function(event) {
         case 'addLines': {
             var isHidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';
             for (var i = 0; i < msg.lines.length; i++) {
-                var ln = msg.lines[i];
-                addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw, ln.sourcePath, ln.elapsedMs, ln.qualityPercent, ln.source, ln.rawText, ln.tier);
+                var ln = msg.lines[i], beforeAddLen = allLines.length;
+                addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw, ln.sourcePath, ln.elapsedMs, ln.qualityPercent, ln.source, ln.rawText, ln.tier); stampSourceLineNoOnNewItems(beforeAddLen, ln.sourceLineNo);
                 if (typeof applyLintDataToLastLine === 'function') applyLintDataToLastLine(ln);
             }
             trimData();
