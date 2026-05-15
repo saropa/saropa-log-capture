@@ -85,8 +85,18 @@ function renderStackHeader(item, html, spacingCls, matchCls, barCls, idxAttr) {
     var chev = _hasChildren
         ? '<span class="stack-toggle" data-gid="' + item.groupId + '">' + _glyph + '</span>'
         : '';
+    /* Column alignment: a stack header carries no .line-decoration prefix, so
+       without help it sits at the bare .stack-header padding-left (16px) while
+       every decorated log line starts at --deco-prefix-width-em (~14.25em).
+       The header then juts far out to the LEFT of the message column and reads
+       as broken. line-deco-spacer-only reserves the same left padding (the
+       exact pattern repeat-notification chips already use) so the header's
+       chevron + text land in the content column. Gated on areDecorationsOn()
+       because when decorations are off there is no column to align to. */
+    var hdrDecoCls = (typeof areDecorationsOn === 'function' && areDecorationsOn())
+        ? ' line-deco-spacer-only' : '';
     return '<div class="stack-header' + hdrLevelCls + matchCls + spacingCls + barCls
-        + hdrHeat + hdrCtxCls + '"' + idxAttr + hdrTitleAttr
+        + hdrHeat + hdrCtxCls + hdrDecoCls + '"' + idxAttr + hdrTitleAttr
         + ' data-gid="' + item.groupId + '">' + chev + hdrQb + html.trim() + dup + '</div>';
 }
 
@@ -121,8 +131,16 @@ function renderStackFrame(item, idx, html, matchCls, barCls, idxAttr, stackGutte
        dragged in 3 rows before an unrelated error reads as background, not a
        participating frame. */
     var sfCtxCls = item.isContext ? ' context-line' + (item.isContextFirst ? ' context-first' : '') : '';
+    /* Column alignment: stack frames carry no .line-decoration prefix either, so
+       without help they sit at the bare .line indent — LEFT of their own header
+       once the header is pulled into the content column (see hdrDecoCls in
+       renderStackHeader). line-deco-spacer-only reserves the same left padding so
+       the expanded frames nest UNDER the header instead of jutting out past it.
+       Gated on areDecorationsOn() to match the header's gate. */
+    var sfDecoCls = (typeof areDecorationsOn === 'function' && areDecorationsOn())
+        ? ' line-deco-spacer-only' : '';
     return '<div class="line stack-line' + (item.fw ? ' framework-frame' : '')
-        + matchCls + barCls + sfHeat + sfCtxCls + '"' + idxAttr + '>'
+        + matchCls + barCls + sfHeat + sfCtxCls + sfDecoCls + '"' + idxAttr + '>'
         + stackGutter + sfQb + html + sfDupBadge + '</div>';
 }
 `;
