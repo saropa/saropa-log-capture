@@ -144,6 +144,11 @@ var decoShowBar = true;
 var lineColorsEnabled = true;
 /** Strip bracket source tag prefix (e.g. [log]) from displayed line text. */
 var stripSourceTagPrefix = true;
+/** Show the parsed source tag column (e.g. flutter, HWUI) in the decoration prefix.
+ *  Independent of structuredLineParsing — that toggle controls whether the prefix
+ *  is stripped from the message text; this toggle controls whether the chip is
+ *  rendered in the reserved tag column. */
+var decoShowParsedTag = true;
 /** Default collapsed state for new stack groups: false (expanded), true (collapsed), 'preview'.
  *  Out-of-the-box default is true (collapsed) — a noisy log (Drift SELECT flood, logcat
  *  debug spam, full Dart call chains on every log() if the app starts emitting structured
@@ -217,10 +222,21 @@ function toggleSessionElapsed() {
 
 /**
  * Toggle line numbers (counter) in the decoration prefix.
- * Callable from the context menu (Layout → Line numbers).
+ * Callable from the context menu (Columns → Line numbers).
  */
 function toggleLineNumbers() {
     decoShowCounter = !decoShowCounter;
+    if (typeof updateDecoButton === 'function') updateDecoButton();
+    syncDecoSettingsUi();
+    if (typeof renderViewport === 'function') renderViewport(true);
+}
+
+/**
+ * Toggle the parsed source tag column (e.g. flutter, HWUI).
+ * Callable from the context menu (Columns → Tag).
+ */
+function toggleParsedTag() {
+    decoShowParsedTag = !decoShowParsedTag;
     if (typeof updateDecoButton === 'function') updateDecoButton();
     syncDecoSettingsUi();
     if (typeof renderViewport === 'function') renderViewport(true);
