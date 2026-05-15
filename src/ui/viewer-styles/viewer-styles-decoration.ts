@@ -38,6 +38,19 @@ export function getDecorationStyles(): string {
 }
 .deco-parsed-tag {
     color: var(--vscode-textLink-foreground, #3794ff);
+    /* The tag column is a FIXED reservation (applyDecorationLayoutWidth adds a
+       flat 7em for it). A long logcat tag — MediaSessionCompat, FlutterJNI,
+       WindowExtensionsImpl — is wider than that, and with no clip it spilled
+       straight over the start of the message text ("MediaSessionComCouldn't…").
+       inline-block + max-width + ellipsis pins it inside the reserved column;
+       the full tag is still on the title tooltip. max-width is in the span's
+       own 0.85em units, so ~6em of the parent — inside the 7em reservation. */
+    display: inline-block;
+    max-width: 7em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
 }
 .deco-pid-tid {
     opacity: 0.7;
