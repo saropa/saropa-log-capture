@@ -36,17 +36,29 @@ export function getCollapseControlStyles(): string {
        Margin would visually detach it and weaken the association. */
     margin: 0;
 }
+/* Hover restores full opacity AND the badge pill so the row reads as a
+   button when the user reaches for it. At rest the label stays muted text
+   (no background) so a divider in the middle of dense logs whispers
+   "N hidden · show" instead of competing with real log lines. */
 .viewer-divider:hover .viewer-divider-label {
     background: var(--vscode-badge-background, #4d4d4d);
     color: var(--vscode-badge-foreground, #fff);
+    opacity: 1;
 }
 .viewer-divider-label {
     display: inline-block;
     padding: 0.05em 0.6em;
     font-size: 0.78em;
     color: var(--vscode-descriptionForeground, #888);
-    background: color-mix(in srgb, var(--vscode-badge-background, #4d4d4d) 30%, transparent);
+    background: transparent;
     border-radius: 0.25em;
+    /* WHY 0.55: descriptionForeground is already a muted grey, but on the
+       common dark themes it still reads as solid text against the editor
+       background. Dropping opacity to 0.55 pushes it into "secondary
+       affordance" territory — visible enough that users see the count
+       and click target, faint enough that scanning real log lines is
+       not interrupted. Hover lifts to 1 so the click target is obvious. */
+    opacity: 0.55;
 }
 /* If the bar-bridge post-pass added level-bar-* to this row (because it
    sat between two same-level severity dots), suppress the dot — the row
