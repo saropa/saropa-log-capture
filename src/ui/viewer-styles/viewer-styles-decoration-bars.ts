@@ -122,9 +122,15 @@ export function getDecorationBarStyles(): string {
 /* Connector bars join consecutive dots — scale with zoom via em */
 .bar-down::after, .bar-up::after {
     content: ''; position: absolute; left: 0.89em; width: 0.14em;
-    /* color-mix at 45% replaces opacity — opacity on ::after interacted with stacking contexts
-       in Chromium/WebKit so the gutter stripe could paint on top of the severity dot (::before). */
-    background: color-mix(in srgb, var(--bar-color) 45%, transparent);
+    /* Bumped from 45% to 70%. At 45% the connector was faint enough that the
+       1-row empty gutter at a color transition read as a continuous faint
+       line, not a break — users perceived the gutter as "joining between
+       colors." At 70% the stripe is vivid enough that its absence at a chain
+       boundary is unmistakably empty space. color-mix replaces opacity so
+       the gutter stripe never paints on top of the severity dot (::before)
+       — opacity on ::after interacted with stacking contexts in Chromium/
+       WebKit. */
+    background: color-mix(in srgb, var(--bar-color) 70%, transparent);
     pointer-events: none;
     /* Below severity dot (::before); keep above unpositioned row content via positive z-index. */
     z-index: 1;
