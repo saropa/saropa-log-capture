@@ -84,15 +84,14 @@ suite('ViewerLevelLineColors', () => {
 
     test('severity gutter connector uses color-mix not opacity (dot stacks above stripe)', () => {
         const deco = getDecorationStyles();
-        // Bumped from 45% to 70%: at 45% the 1-row empty gutter at a
-        // color-transition row boundary read as continuous faint line,
-        // not a break — users perceived the gutter as "joining between
-        // colors" even though the chain logic correctly stopped stamping
-        // bar-up/bar-down at the mismatch. 70% makes the stripe vivid
-        // enough that its absence at the boundary is clearly empty space.
+        // The 70% bump produced a connector that looked like a single solid
+        // color column at the wider 0.28em stripe width — hue contrast
+        // between adjacent rows disappeared. Back to 45% so each row's color
+        // reads as its own. The stripe width was the actual readability lever:
+        // 4px stripes resolve hue clearly, 2px stripes blur.
         const connectorRe =
-            /\.bar-down::after,\s*\.bar-up::after\s*\{[\s\S]*?background:\s*color-mix\(in srgb,\s*var\(--bar-color\)\s*70%,\s*transparent\)[\s\S]*?z-index:\s*1[\s\S]*?\}/;
-        assert.ok(connectorRe.test(deco), 'connector fill should use color-mix 70% and z-index 1');
+            /\.bar-down::after,\s*\.bar-up::after\s*\{[\s\S]*?width:\s*0\.28em[\s\S]*?background:\s*color-mix\(in srgb,\s*var\(--bar-color\)\s*45%,\s*transparent\)[\s\S]*?z-index:\s*1[\s\S]*?\}/;
+        assert.ok(connectorRe.test(deco), 'connector should be 0.28em wide with color-mix 45% and z-index 1');
         const badOpacity = /\.bar-down::after,\s*\.bar-up::after\s*\{[\s\S]*?opacity:\s*0\./;
         assert.ok(!badOpacity.test(deco), 'regression: connector must not use opacity (Chromium stacks it over the dot)');
     });
