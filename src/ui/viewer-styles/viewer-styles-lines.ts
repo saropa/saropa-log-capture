@@ -30,14 +30,17 @@ export function getLineStyles(): string {
     height: auto;
     min-height: calc(1em * var(--log-line-height, 1.1));
 }
-/* Chip rows (repeat-notification, n-plus-one-signal) do not carry a real
-   decoration prefix, but when decorations are globally on they still need to
-   start at the same content column as decorated lines so the view reads as a
-   single tabular column. This rule applies only padding-left, NOT the
-   negative text-indent used by .line:has(.line-decoration) — without a
+/* Chip rows (repeat-notification, n-plus-one-signal) and stack headers do not
+   carry a real decoration prefix, but when decorations are globally on they
+   still need to start at the same content column as decorated lines so the
+   view reads as a single tabular column. This rule applies only padding-left,
+   NOT the negative text-indent used by .line:has(.line-decoration) — without a
    prefix to fill the indent space the first inline content would otherwise
-   render pulled left to ~1.25em, breaking the column. */
-.line.line-deco-spacer-only {
+   render pulled left to ~1.25em, breaking the column. The .stack-header
+   selector overrides that element's own padding-left:16px (viewer-styles-content.ts)
+   — without it the header juts far left of the message column. */
+.line.line-deco-spacer-only,
+.stack-header.line-deco-spacer-only {
     padding-left: var(--deco-prefix-width-em, 14.25em);
 }
 .line:hover { background: var(--vscode-list-hoverBackground); }

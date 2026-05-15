@@ -11,6 +11,7 @@ import { getViewportRenderScript } from '../../ui/viewer/viewer-data-viewport';
 import { getViewerDataHelpersRender } from '../../ui/viewer/viewer-data-helpers-render';
 import { getStackHeaderRenderScript as getStackRenderScript } from '../../ui/viewer/viewer-data-helpers-render-stack';
 import { getDecorationStyles } from '../../ui/viewer-styles/viewer-styles-decoration';
+import { getLineStyles } from '../../ui/viewer-styles/viewer-styles-lines';
 import { getViewerDataAddScript } from '../../ui/viewer/viewer-data-add';
 
 suite('Severity bar connector (same-level joining)', () => {
@@ -301,6 +302,37 @@ suite('Stack header level CSS class in renderItem', () => {
         assert.ok(
             renderChunk.includes("stack-header' + hdrLevelCls + matchCls"),
             'stack-header div must include the level class before other class concatenations',
+        );
+    });
+
+    test('should align the stack header to the content column when decorations are on', () => {
+        // A stack header carries no .line-decoration prefix, so without help it
+        // sits at the bare .stack-header padding-left (16px) while decorated log
+        // lines start at --deco-prefix-width-em (~14.25em) — the header jutted
+        // far left of the message column and read as broken. hdrDecoCls adds
+        // line-deco-spacer-only (the same affordance repeat-notification chips
+        // use) so the header lands in the content column. Gated on
+        // areDecorationsOn() because with decorations off there is no column.
+        assert.ok(
+            renderChunk.includes('areDecorationsOn') && renderChunk.includes('line-deco-spacer-only'),
+            'renderStackHeader must add line-deco-spacer-only when areDecorationsOn()',
+        );
+        assert.ok(
+            renderChunk.includes('hdrCtxCls + hdrDecoCls'),
+            'hdrDecoCls must be concatenated into the stack-header class list',
+        );
+    });
+});
+
+suite('Stack header column alignment CSS', () => {
+    const css = getLineStyles();
+
+    test('should reserve the decoration-column padding for stack headers', () => {
+        // Pairs with the renderStackHeader hdrDecoCls test above: the rendered
+        // class is inert without a CSS rule binding it to the deco-column width.
+        assert.ok(
+            css.includes('.stack-header.line-deco-spacer-only'),
+            'viewer-styles-lines must give .stack-header.line-deco-spacer-only the deco-column padding-left',
         );
     });
 });
