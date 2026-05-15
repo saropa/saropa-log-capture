@@ -121,21 +121,9 @@ export function getDecorationBarStyles(): string {
 
 /* Connector bars join consecutive dots — scale with zoom via em */
 .bar-down::after, .bar-up::after {
-    /* Widened from 0.14em (~2px) to 0.28em (~4px). At 2px the stripe was thin
-       enough that the per-row color binding was visually ambiguous — adjacent
-       rows of different colors looked like one fuzzy continuous line because
-       the eye can't resolve hue on a 2-pixel-wide vertical stripe. At 4px
-       each row's color reads as its own color, and chain breaks at color
-       transitions stand out as their own empty pixel rows. Position left
-       moved slightly to stay centred under the 0.44em dot:
-       dot center = 0.74em + 0.44em/2 = 0.96em → stripe left = 0.96 - 0.14 = 0.82em. */
-    content: ''; position: absolute; left: 0.82em; width: 0.28em;
-    /* color-mix replaces opacity so the gutter stripe never paints on top of
-       the severity dot (::before) — opacity on ::after interacted with
-       stacking contexts in Chromium/WebKit. Back to 45% (down from 70%)
-       because at higher saturation the wider stripe looked like a single
-       solid color column. 45% lets row backgrounds bleed through enough that
-       hue contrast between adjacent rows is preserved. */
+    content: ''; position: absolute; left: 0.89em; width: 0.14em;
+    /* color-mix at 45% replaces opacity — opacity on ::after interacted with stacking contexts
+       in Chromium/WebKit so the gutter stripe could paint on top of the severity dot (::before). */
     background: color-mix(in srgb, var(--bar-color) 45%, transparent);
     pointer-events: none;
     /* Below severity dot (::before); keep above unpositioned row content via positive z-index. */
