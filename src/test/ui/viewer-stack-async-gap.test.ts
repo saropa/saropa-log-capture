@@ -1,6 +1,6 @@
 /**
  * Tests for async-gap ("<asynchronous suspension>") stack-group continuation —
- * Item A of bugs/PLAN_VIEWER_STACK_NOISE_FILTER_LAYOUT.md.
+ * Item A of plans/history/2026.05/2026.05.15/054_plan-viewer-stack-noise-filter-layout.md.
  *
  * Before the fix, an async-gap line failed isStackFrameText(), hit the
  * group-close path in addToData(), and shattered every Dart async trace into

@@ -54,7 +54,7 @@ suite('ANSI Module', () => {
 
         // Foreground ANSI is intentionally dropped — severity color is owned by
         // item.level so the level filter and on-row color can never disagree.
-        // See bugs/PLAN_VIEWER_STACK_NOISE_FILTER_LAYOUT.md Item D.
+        // See plans/history/2026.05/2026.05.15/054_plan-viewer-stack-noise-filter-layout.md Item D.
         test('should drop red foreground (no color span emitted)', () => {
             assert.strictEqual(ansiToHtml('\x1b[31mred\x1b[0m'), 'red');
         });
