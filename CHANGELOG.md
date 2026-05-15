@@ -28,6 +28,9 @@ For older versions (7.1.1 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [Unreleased]
 
+### Added
+- **Columns submenu in the right-click menu** — a new top-level **Columns** submenu (above **Layout**) gathers the per-line column toggles in fixed order: Line numbers, Timestamp, Session elapsed, and a new **Tag** toggle for the parsed source-tag chip (e.g. `flutter`, `HWUI`). Layout now keeps only whole-row treatment toggles (wrap, spacing, line height, compression). The Tag toggle is independent of the structured-prefix-strip option — turning the chip off does not put the bracket prefix back into the message text.
+
 ### Changed
 - **Stack-header expander chevrons dimmed at rest** — the inline `▶` / `▼` chevron on collapsible stack headers used the full `--vscode-descriptionForeground` color, which made it compete with the header text. The chevron now sits at `opacity: 0.5` so it reads as a quiet hint while idle, and returns to full opacity on hover so the affordance is still discoverable.
 
