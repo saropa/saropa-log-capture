@@ -129,9 +129,22 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
     case "clearSessionRoot": ctx.onClearSessionRoot?.()?.then(undefined, () => {}); return true;
     case "openSessionFromPanel": ctx.onOpenSessionFromPanel?.(msgStr(msg, "uriString")); return true;
     case "openSessionForSignalType": {
-      // Find the most recent session with this signal type and open it in the viewer
-      handleOpenSessionForSignalType(msgStr(msg, "signalType")).then(uri => {
-        if (uri) { ctx.onOpenSessionFromPanel?.(uri); }
+      /* Resolve to a specific session (fingerprint preferred), then ask the webview to scroll to
+         the matching line. If the resolved session is already loaded we skip the load and post
+         scrollToSignal directly — otherwise the user would see no visible feedback. */
+      const fingerprint = msgStr(msg, "fingerprint");
+      const label = msgStr(msg, "label");
+      const detail = msgStr(msg, "detail");
+      const signalType = msgStr(msg, "signalType");
+      handleOpenSessionForSignalType(signalType, fingerprint || undefined).then(async uri => {
+        if (!uri) { return; }
+        const currentUri = ctx.currentFileUri?.toString();
+        if (uri !== currentUri) {
+          /* onOpenSessionFromPanel is typed `void` but the activation handler returns Promise<void>.
+             Wrap in Promise.resolve so we wait for the load to settle before posting the scroll. */
+          await Promise.resolve(ctx.onOpenSessionFromPanel?.(uri));
+        }
+        ctx.post({ type: 'scrollToSignal', fingerprint, label, detail });
       }).catch(() => {});
       return true;
     }
