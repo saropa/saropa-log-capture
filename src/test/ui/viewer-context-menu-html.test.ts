@@ -51,29 +51,27 @@ suite('ViewerContextMenuHtml', () => {
                 'layout submenu must not use the old Options label',
             );
             assert.ok(html.includes('data-action="toggle-wrap"'));
-            assert.ok(html.includes('data-action="toggle-line-numbers"'));
-            assert.ok(html.includes('data-action="toggle-timestamp"'));
-            assert.ok(html.includes('data-action="toggle-session-elapsed"'));
             assert.ok(html.includes('data-action="toggle-spacing"'));
             assert.ok(html.includes('data-action="toggle-line-height"'));
             assert.ok(html.includes('data-action="toggle-compress-lines"'));
             assert.ok(html.includes('data-action="toggle-compress-lines-global"'));
             assert.ok(html.includes('Word wrap'));
-            assert.ok(html.includes('Line numbers'));
-            assert.ok(html.includes('Timestamp'));
-            assert.ok(html.includes('Session elapsed'));
             assert.ok(html.includes('Visual spacing'));
             assert.ok(html.includes('Tall rows'));
             assert.ok(html.includes('Compress lines (consecutive dupes)'));
             assert.ok(html.includes('Compress lines (non-consecutive dupes)'));
         });
 
-        test('should include leading codicons on Layout toggles and hide-blank toggle', () => {
+        test('should include leading codicons on Columns / Layout toggles and hide-blank toggle', () => {
             const html = getContextMenuHtml();
             assert.ok(html.includes('data-action="toggle-wrap"') && html.includes('codicon-word-wrap'));
             assert.ok(html.includes('data-action="toggle-line-numbers"') && html.includes('codicon-list-ordered'));
             assert.ok(html.includes('codicon-clock') && html.includes('toggle-timestamp'));
             assert.ok(html.includes('codicon-watch') && html.includes('toggle-session-elapsed'));
+            assert.ok(
+                /\bdata-action="toggle-parsed-tag"[\s\S]{0,200}codicon-tag\b/.test(html),
+                'parsed-tag toggle should use the tag codicon'
+            );
             assert.ok(html.includes('codicon-layout-panel') && html.includes('toggle-spacing'));
             assert.ok(html.includes('codicon-unfold') && html.includes('toggle-line-height'));
             assert.ok(html.includes('<span class="codicon codicon-fold" aria-hidden="true"></span>'));
@@ -291,7 +289,8 @@ suite('ViewerContextMenuHtml', () => {
                scroll-chrome menu (getScrollChromeContextMenuHtml) and are not in getContextMenuHtml. */
             const toggleActions = [
                 'toggle-wrap', 'toggle-line-numbers', 'toggle-timestamp',
-                'toggle-session-elapsed', 'toggle-spacing', 'toggle-line-height',
+                'toggle-session-elapsed', 'toggle-parsed-tag',
+                'toggle-spacing', 'toggle-line-height',
                 'toggle-compress-lines', 'toggle-compress-lines-global',
                 'toggle-show-blank-lines',
             ];
