@@ -20,12 +20,20 @@ export function getStackIngestScript(): string {
 /** Try to ingest \`html\` as a stack frame / header / async-gap. Returns true if consumed. */
 function tryIngestStackLine(html, rawText, category, ts, fw, sp, elapsedMs, qualityPercent, lineSource, lineTier, catFiltered) {
     var isAsyncGap = isAsyncGapText(html);
+    /* The bare ")" that closes Dart's "_StringStackTrace (#0  …  )" object dump
+       carries no frame info. Without folding it into the active group it fails
+       isStackFrameText(), hits the group-close path in addToData(), and renders
+       as a junk ")" row after every trace. Treated like an async gap: consumed
+       into the group, hidden when collapsed/preview, shown only on full expand.
+       Guarded on activeGroupHeader so a stray ")" with no open trace stays a
+       normal line and never starts a group on its own. */
+    var isTraceTail = !!activeGroupHeader && /^\\)$/.test(stripTags(html).trim());
     /* Async-gap markers ("<asynchronous suspension>") fold into an OPEN stack group as
        continuation frames. Without this they fail isStackFrameText(), hit the group-close
        path in addToData(), and shatter every Dart async trace into ~15 one-frame groups. A
        gap with no active group (orphan) makes this condition false and falls through to
        normal-line handling — a gap must never start a group on its own. */
-    if (!(isStackFrameText(html) || (activeGroupHeader && isAsyncGap))) return false;
+    if (!(isStackFrameText(html) || (activeGroupHeader && (isAsyncGap || isTraceTail)))) return false;
     resetCompressDupStreak();
     if (typeof breakContinuationGroup === 'function') breakContinuationGroup();
     if (typeof finalizeArtBlock === 'function') finalizeArtBlock();
@@ -33,10 +41,11 @@ function tryIngestStackLine(html, rawText, category, ts, fw, sp, elapsedMs, qual
     var context = (typeof extractContext === 'function') ? extractContext(plainFrame) : null;
 
     if (activeGroupHeader) {
-        /* Async gaps are payload-free framework noise: force fw=true so calcItemHeight
-           hides them when the header is collapsed or in preview mode, and reveals them
-           only on full expand (user can still inspect await boundaries when needed). */
-        var frameFw = isAsyncGap ? true : fw;
+        /* Async gaps and the ")" trace-tail are payload-free framework noise: force
+           fw=true so calcItemHeight hides them when the header is collapsed or in
+           preview mode, and reveals them only on full expand (user can still inspect
+           await boundaries / the raw trace shape when needed). */
+        var frameFw = (isAsyncGap || isTraceTail) ? true : fw;
         if (!activeGroupHeader._appFrameCount) activeGroupHeader._appFrameCount = 0;
         var appIdx = frameFw ? -1 : activeGroupHeader._appFrameCount;
         if (!frameFw) activeGroupHeader._appFrameCount++;
@@ -53,9 +62,9 @@ function tryIngestStackLine(html, rawText, category, ts, fw, sp, elapsedMs, qual
         if (activeGroupHeader.originalLevel) sfItem.originalLevel = activeGroupHeader.originalLevel;
         if (elapsedMs !== undefined && elapsedMs >= 0) sfItem.elapsedMs = elapsedMs;
         allLines.push(sfItem);
-        /* Gaps are not real frames — counting them would inflate the header's
-           "N frames" label and the preview/expand math. */
-        if (!isAsyncGap) activeGroupHeader.frameCount++;
+        /* Gaps and the ")" trace-tail are not real frames — counting them would
+           inflate the header's "N frames" label and the preview/expand math. */
+        if (!isAsyncGap && !isTraceTail) activeGroupHeader.frameCount++;
         return true;
     }
     /* bug_003: before allocating a new stack-group, try to fold this header into an
