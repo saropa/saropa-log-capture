@@ -21,7 +21,7 @@ export interface ViewerDataScriptOptions {
     readonly staticSqlFromFingerprintEnabled?: boolean;
     readonly slowBurstThresholds?: Partial<ViewerSlowBurstThresholds>;
     readonly dbDetectorToggles?: Partial<ViewerDbDetectorToggles>;
-    /** Baked seed for `saropaLogCapture.accessibility.showCollapseDividerLabels` (default false). */
+    /** Baked seed for `saropaLogCapture.accessibility.showCollapseDividerLabels` (default true). */
     readonly accessibilityShowCollapseDividerLabels?: boolean;
 }
 
@@ -32,7 +32,10 @@ export function getViewerDataScript(opts: ViewerDataScriptOptions = {}): string 
         staticSqlFromFingerprintEnabled = true,
         slowBurstThresholds,
         dbDetectorToggles,
-        accessibilityShowCollapseDividerLabels = false,
+        /* Default true: matches the published setting default. When a caller
+           omits this option, the divider script seed must still resolve to
+           "captions on" so collapsed gaps announce themselves. */
+        accessibilityShowCollapseDividerLabels = true,
     } = opts;
     return getViewerDataHelpers(repeatThresholds, viewerDbSignalsEnabled, slowBurstThresholds, dbDetectorToggles) + getCompressStreakScript() + getViewerDataAddScript(staticSqlFromFingerprintEnabled) + /* javascript */ `
 

@@ -379,7 +379,7 @@
   "config.logLineHeight.title": "Log viewer line height",
   "config.logViewerVisualSpacing.description": "When enabled, the log viewer adds extra vertical gaps between some line kinds (markers, level changes, stack headers). Toggle with V or the Options panel. When disabled, rows use uniform spacing (IDE-like density).",
   "config.logViewerVisualSpacing.title": "Log viewer visual spacing",
-  "config.accessibility.showCollapseDividerLabels.description": "When enabled, collapse divider rows (filtered gaps, peek brackets, preview-mode stack trims) show the full inline caption pill (for example \"─── 12 hidden lines · show ───\") in addition to the gutter chevron. **Default off** — the clickable row plus chevron is enough for most users; turn on when you want the redundant visible text.",
+  "config.accessibility.showCollapseDividerLabels.description": "Show the inline caption pill (for example \"─── 12 hidden lines · show ───\") on collapse divider rows — filtered gaps, peek brackets, and preview-mode stack trims. **Default on** — when off, the divider row still claims a few pixels of height with no visible text, leaving an unexplained gap between visible log lines. The pill renders as muted text at rest and brightens on hover.",
   "config.accessibility.showCollapseDividerLabels.title": "Accessibility: show collapse divider captions",
   "config.slowGapThreshold.description": "行間の遅いギャップをハイライトするための経過時間のしきい値（ミリ秒）。",
   "config.slowGapThreshold.title": "Elapsed time threshold (ms) for highlighting slow gaps between lines.",

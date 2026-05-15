@@ -54,7 +54,7 @@ export interface ViewerHtmlOptions {
   readonly viewerDbDetectorToggles?: Partial<ViewerDbDetectorToggles>;
   /** Minimum duration (ms) for a slow-operation signal (default 500). */
   readonly signalSlowOpThresholdMs?: number;
-  /** Log viewer divider row text captions (`accessibility.showCollapseDividerLabels`, default false). */
+  /** Log viewer divider row text captions (`accessibility.showCollapseDividerLabels`, default true). */
   readonly accessibilityShowCollapseDividerLabels?: boolean;
 }
 
@@ -91,7 +91,11 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
         viewerSlowBurstThresholds: opts.viewerSlowBurstThresholds,
         viewerDbDetectorToggles: opts.viewerDbDetectorToggles,
         signalSlowOpThresholdMs: opts.signalSlowOpThresholdMs,
-        accessibilityShowCollapseDividerLabels: opts.accessibilityShowCollapseDividerLabels === true,
+        /* `?? true` — undefined falls back to the published default (on); a
+           literal `false` still passes through so callers can opt out. The
+           prior `=== true` coerced undefined to false and contradicted the
+           default after the flip. */
+        accessibilityShowCollapseDividerLabels: opts.accessibilityShowCollapseDividerLabels ?? true,
     });
     return /* html */ `<!DOCTYPE html>
 <html lang="en">

@@ -10,14 +10,16 @@
  * happens in viewer-data-viewport.ts. Click delegation lives in
  * viewer-peek-chevron.ts.
  *
- * Text pill (`─── N hidden lines · show ───`, etc.) is optional: host setting
- * `saropaLogCapture.accessibility.showCollapseDividerLabels` (default off).
- * Dividers stay full-width clickable rows with gutter chevron; when the pill
- * is hidden, `aria-label` names the control for assistive tech.
+ * Text pill (`─── N hidden lines · show ───`, etc.) is host-synced via setting
+ * `saropaLogCapture.accessibility.showCollapseDividerLabels` (default ON). When
+ * the pill was off, the divider row still claimed ~8px of height with no visible
+ * label, leaving a silent gap users could not interpret — flipping the default
+ * fixes that without removing the opt-out. Pill renders as muted text now (see
+ * viewer-styles-collapse-controls.ts) so it is informative without shouting.
  *
  * See bugs/048_plan-severity-gutter-decoupling.md.
  */
-export function getDividerRenderScript(showCollapseDividerLabelsInitial = false): string {
+export function getDividerRenderScript(showCollapseDividerLabelsInitial = true): string {
   const seed = showCollapseDividerLabelsInitial ? "true" : "false";
   return /* javascript */ `
 /** Escape text for HTML attributes on divider controls. */
@@ -25,7 +27,7 @@ function dividerHtmlAttrEscape(s) {
     return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 }
 
-/** Host-synced: show the inline "─── N hidden · show ───" pill (default off). */
+/** Host-synced: show the inline "─── N hidden · show ───" pill (default on). */
 var showCollapseDividerLabels = ${seed};
 
 /** Build the HTML for an inline divider row that announces a filter-hidden
