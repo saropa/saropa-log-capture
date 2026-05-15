@@ -75,6 +75,34 @@ suite('Severity bar connector (same-level joining)', () => {
             'dot search must stop at markers to break connector chain at session boundaries',
         );
     });
+
+    test('findNextDotSibling must return non-leveled content rows, not skip them', () => {
+        // Regression: the prior code gated the return on a level
+        // (`if (lvl && !line-blank) return ni`), so the chain reached OVER an
+        // unrelated content row (stack frame, generic stdout, the ")" trace-tail)
+        // and stamped bar-down/bar-up stubs on same-level dots beyond it — the
+        // connector "running through" content the user reported. The fix returns
+        // the next non-blank, non-divider row regardless of level; getBarLevel()
+        // then yields null for it and the caller's `nextLvl !== lvl` check breaks
+        // the chain AT that row. Commit 11cb4ca7 documented this behavior in the
+        // render-loop comment but never actually updated the function.
+        const m = /function findNextDotSibling\([\s\S]*?\n}/.exec(viewportScript);
+        assert.ok(m, 'findNextDotSibling must be defined');
+        const body = m![0];
+        assert.ok(
+            body.includes("classList.contains('line-blank')"),
+            'findNextDotSibling must still skip blank lines (invisible gaps)',
+        );
+        assert.ok(
+            !body.includes('getBarLevel') && !body.includes('var lvl'),
+            'findNextDotSibling must NOT gate its return on a level — a non-leveled content '
+            + 'row has to be returned so the same-level check breaks the chain at it',
+        );
+        assert.ok(
+            body.includes('return ni;'),
+            'findNextDotSibling must unconditionally return the next real (non-blank, non-divider) row',
+        );
+    });
 });
 
 suite('Hidden-lines chevron insertion', () => {
