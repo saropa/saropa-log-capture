@@ -125,6 +125,35 @@ suite('Viewer file loader', () => {
         });
     });
 
+    suite('sourceLineNo (gutter line-number mapping)', () => {
+        // The displayed gutter number must track the user's raw file line, not the
+        // in-memory allLines index — which drifts after Item A added hidden async-gap
+        // items and synthetic repeat chips. parseRawLinesToPending and parseFileLine
+        // honor ctx.sourceLineOffset to compute 1-based file-line numbers.
+        test('parseRawLinesToPending stamps 1-based sourceLineNo from index when no offset', () => {
+            const pending = parseRawLinesToPending(['[stdout] a', '[stdout] b', '[stdout] c'], ctx);
+            assert.strictEqual(pending[0].sourceLineNo, 1);
+            assert.strictEqual(pending[1].sourceLineNo, 2);
+            assert.strictEqual(pending[2].sourceLineNo, 3);
+        });
+        test('parseRawLinesToPending adds ctx.sourceLineOffset (post-header start) to the index', () => {
+            // sourceLineOffset = headerEnd; first content line is at file row headerEnd+1.
+            const offsetCtx: FileParseContext = { ...ctx, sourceLineOffset: 50 };
+            const pending = parseRawLinesToPending(['[stdout] first', '[stdout] second'], offsetCtx);
+            assert.strictEqual(pending[0].sourceLineNo, 51);
+            assert.strictEqual(pending[1].sourceLineNo, 52);
+        });
+        test('marker lines also carry sourceLineNo', () => {
+            // Markers were previously omitted; without sourceLineNo on them the gutter
+            // would skip numbers at session-boundary rows.
+            const offsetCtx: FileParseContext = { ...ctx, sourceLineOffset: 100 };
+            const pending = parseRawLinesToPending(['--- MARKER: split ---', '[stdout] after'], offsetCtx);
+            assert.strictEqual(pending[0].isMarker, true);
+            assert.strictEqual(pending[0].sourceLineNo, 101);
+            assert.strictEqual(pending[1].sourceLineNo, 102);
+        });
+    });
+
     suite('parseElapsedToMs', () => {
         test('parses +Nms to ms', () => {
             assert.strictEqual(parseElapsedToMs('+125ms'), 125);
