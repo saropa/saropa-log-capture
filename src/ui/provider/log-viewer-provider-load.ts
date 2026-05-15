@@ -131,7 +131,13 @@ export async function executeLoadContent(
   target.postMessage({ type: "setMaxLines", maxLines: Math.max(contentLines.length + 1000, cfg.maxLines) });
 
   const post = (msg: unknown): void => { if (checkGen()) { target.postMessage(msg); } };
-  const ctx = buildMainCtx(fields, SOURCE_DEBUG);
+  // Single-part: the displayed gutter line number must match the user's raw file (post-Item-A,
+  // the in-memory allLines index counts hidden stack frames + synthetic chips, so idx+1 drifts
+  // arbitrarily from the file line). For multi-part sessions content comes from several files
+  // concatenated end-to-end; a single offset cannot represent that, so we omit it and let the
+  // gutter fall back to the in-memory ordinal.
+  const mainSourceLineOffset = sessionParts.length === 1 ? findHeaderEnd(sessionParts[0].lines) : undefined;
+  const ctx = { ...buildMainCtx(fields, SOURCE_DEBUG), ...(mainSourceLineOffset !== undefined ? { sourceLineOffset: mainSourceLineOffset } : {}) };
 
   // Source filter: default to debug only; terminal sidecar (if present) adds a second source.
   post({ type: "setSources", sources: [SOURCE_DEBUG], enabledSources: [SOURCE_DEBUG] });
@@ -224,7 +230,10 @@ export function createTailWatcher(
       const lastCount = target.getTailLastLineCount();
       if (contentLines.length <= lastCount) { return; }
       const newLines = contentLines.slice(lastCount);
-      const ctx = { classifyFrame: (t: string) => helpers.classifyFrame(t), sessionMidnightMs };
+      // Tail append: the first new content line sits at file position `headerEnd + lastCount`
+      // (0-based). parseRawLinesToPending adds 1 to produce the 1-based gutter number so the
+      // tailed line numbers continue the same source-file numbering the initial load used.
+      const ctx = { classifyFrame: (t: string) => helpers.classifyFrame(t), sessionMidnightMs, sourceLineOffset: headerEnd + lastCount };
       const pending = parseRawLinesToPending(newLines, ctx);
       target.setTailLastLineCount(contentLines.length);
       target.postMessage({ type: "addLines", lines: pending, lineCount: contentLines.length });

@@ -203,7 +203,14 @@ function getDecorationPrefix(item, idx) {
     // decorated copy format (see decorateLine() in viewer-copy.ts).
     /* Show counter when Counter is on, or when blank and "Show line number on blank lines" is on. */
     if (decoShowCounter || (isBlank && decoShowCounterOnBlank)) {
-        var seqStr = (typeof idx === 'number') ? String(idx + 1) : (item.seq !== undefined ? String(item.seq) : '?');
+        // Prefer the source-file line number stamped at line arrival in viewer-script-messages.ts.
+        // idx is the position in allLines, which counts hidden stack-frame items, folded
+        // async-gap markers, and synthetic chip rows — so idx+1 does NOT track the user's raw
+        // file line. Fall back to idx+1 only when no source line is available (e.g. multi-part
+        // sessions or in-memory streams where a single offset cannot represent the source).
+        var lineNoSrc = (typeof item.sourceLineNo === 'number') ? item.sourceLineNo
+            : ((typeof idx === 'number') ? (idx + 1) : (item.seq !== undefined ? item.seq : '?'));
+        var seqStr = String(lineNoSrc);
         parts.push('<span class="deco-counter">' + seqStr.padStart(getCounterDigitsForLayout(), '\\u00a0') + '</span>');
     }
     if (!isBlank && decoShowTimestamp) {
