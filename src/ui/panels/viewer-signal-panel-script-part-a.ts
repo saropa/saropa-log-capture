@@ -105,6 +105,10 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
 
     window.openSignalPanel = function() {
         if (!signalPanel) return;
+        /* Hide any peer panel that's still .visible — otherwise both render in the same
+           #panel-slot grid cell and the earlier one bleeds through (e.g. Logs/Sessions when this
+           open is triggered by the host message path that bypasses setActivePanel). */
+        if (typeof hideOtherPanelsInSlot === 'function') { hideOtherPanelsInSlot(signalPanel); }
         signalPanelOpen = true;
         signalPanel.classList.add('visible');
         var stored = getStoredSectionState();

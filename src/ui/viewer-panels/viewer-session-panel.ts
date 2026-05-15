@@ -75,6 +75,9 @@ export function getSessionPanelScript(): string {
     /** Opens panel and moves focus into it for a11y (keyboard/screen-reader). */
     window.openSessionPanel = function() {
         if (!sessionPanelEl) return;
+        /* Hide any peer panel still .visible — #panel-slot stacks every panel in one grid cell,
+           so two simultaneous .visible siblings overlap and the earlier one bleeds through. */
+        if (typeof hideOtherPanelsInSlot === 'function') { hideOtherPanelsInSlot(sessionPanelEl); }
         sessionPanelOpen = true;
         sessionPanelEl.classList.add('visible');
         requestSessionList();

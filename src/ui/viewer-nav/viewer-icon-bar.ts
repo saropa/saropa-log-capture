@@ -104,6 +104,22 @@ export function getIconBarScript(): string {
         panelSlot.style.width = w + 'px';
     };
 
+    /* Defensive peer-hide for panels that share #panel-slot's single grid cell. The cell is sized
+       to ONE panel — if two siblings have .visible at once they overlay each other and the earlier
+       one bleeds through (see viewer-styles.ts #panel-slot grid stack). setActivePanel enforces this
+       via closeAllPanels(), but any code path that adds .visible directly (host openSignalPanel
+       message, Performance chip → openSignalPanel, etc.) must call this helper FIRST so an
+       already-open peer is unambiguously closed before the new one shows. */
+    window.hideOtherPanelsInSlot = function(except) {
+        if (!panelSlot) return;
+        var nodes = panelSlot.children;
+        for (var hi = 0; hi < nodes.length; hi++) {
+            var n = nodes[hi];
+            if (n === except) continue;
+            if (n.classList && n.classList.contains('visible')) { n.classList.remove('visible'); }
+        }
+    };
+
     var iconButtons = {
         sessions: document.getElementById('ib-sessions'),
         find: document.getElementById('ib-find'),
