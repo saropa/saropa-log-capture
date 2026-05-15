@@ -26,9 +26,12 @@ For older versions (7.1.1 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [Unreleased]
+## [7.11.1]
+
+Stack traces, severity gutters, and the session panel all line up where they should now — long logcat tags get trimmed instead of overlapping the message, the session panel shows your most recent files first and stays open after you pick one, error pills moved into their own gutter column so they stop pushing the log text sideways, and loaded log files with leading timestamps (ISO, syslog, epoch, and more) are recognized and stripped from the message. [log](https://github.com/saropa/saropa-log-capture/blob/v7.11.1/CHANGELOG.md)
 
 ### Fixed
+- **Test pinning a removed ANSI-foreground span no longer fails CI** — `viewer-broadcaster-live-line.test.ts` asserted that processing `\x1b[31m` (foreground red) produced a `color:` style, but commit `156aab44` deliberately stopped rendering ANSI foreground colors so they cannot disagree with the level-* palette. The test was orphaned: a green `npm test` would never produce a `color:` span, so the assertion could never pass. Swapped to background SGR 41 (still rendered) and added an `\x1b`-absence assertion that exercises the live conversion path. No runtime/user-facing change.
 - **Stack-trace headers now align with the message column** — a `_StringStackTrace (#1 …)` header carries no decoration prefix, so it sat at the bare `.stack-header` indent (16px) while every decorated log line starts at the much larger `--deco-prefix-width-em` column. The header jutted far out to the left of the message text and read as corrupted, especially where it wrapped. Stack headers now reserve the same left padding as decorated lines (the `line-deco-spacer-only` affordance already used by repeat chips, gated on decorations being on), so the header's chevron and text land in the content column with its frames.
 - **Severity gutter connector no longer runs through unrelated content** — `findNextDotSibling` skipped non-leveled content rows when searching for the next dot, so a connector chain could reach *over* a stack frame or plain output line and stamp `bar-down`/`bar-up` stubs onto same-level dots beyond it — the gutter line appeared to run through content (and across changing colors) it had nothing to do with. It now returns the next real (non-blank, non-divider) row regardless of level; a non-leveled row yields `null`, the same-level check fails, and the chain breaks cleanly at that row. Blank lines and `.viewer-divider` control rows are still skipped so same-level dots pair across genuine gaps. This completes the intent commit `11cb4ca7` documented but never applied to the function.
 - **The `)` closing a Dart `_StringStackTrace` no longer renders as a junk line** — Dart's `log(…, stackTrace:)` prints the trace as an object dump that ends with a bare `)` on its own line. That `)` is not a stack frame or async-gap marker, so it failed the stack-frame test, closed the active group, and rendered as a stray `)` row after every trace. It now folds into the open stack group as an `fw=true` continuation frame (same treatment as `<asynchronous suspension>`): hidden while the header is collapsed or in preview, revealed only on full expand. An orphan `)` with no active group still renders as a normal line, and it is excluded from the header's frame count.
@@ -46,6 +49,8 @@ For older versions (7.1.1 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 ---
 
 ## [7.11.0]
+
+Signals get a lot smarter — the panel now learns from the levels you switch off, flags brand-new crash types and resolved ones across recent sessions, lets you mute a signal with a reason, and gains three new detectors (severity escalation, silence-then-burst, and frame-budget clusters). The Signals panel adds a time-window filter, inline evidence previews under each row, and a pulse highlight when you jump to a line. Two new one-click bug-report formats land too: GitHub Issue Markdown and a compact handoff bundle for chat. [log](https://github.com/saropa/saropa-log-capture/blob/v7.11.0/CHANGELOG.md)
 
 ### Added
 - **Noise-learning Phase 4 — filter-out emission + Insights panel suggestions section** — Two coordinated additions plan 053 promised:
