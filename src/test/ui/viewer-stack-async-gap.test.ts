@@ -124,3 +124,64 @@ suite('trace-tail ")" stack-group continuation', () => {
         );
     });
 });
+
+/* Raw Dart stacks emit 6 leading spaces on every continuation frame (e.g.
+ * "      #2  Caller (./lib/foo.dart:1:2)"). Combined with the .stack-frames
+ * padding-left this pushed continuation frames further right than the header
+ * and broke column alignment under expansion. tryIngestStackLine now strips
+ * leading whitespace from frame html so the viewer's CSS owns the indent.
+ * ANSI dim wrappers on framework frames must survive the trim. */
+suite('stack-frame leading-whitespace trim', () => {
+    const HEADER = '#0  Foo.bar (./lib/foo.dart:1:2)';
+
+    test('leading spaces are stripped from continuation frame html', () => {
+        const vm = loadStackHeaderRepeatSandbox();
+        addLine(vm, HEADER, 1000);
+        addLine(vm, '      #1  Baz.qux (./lib/baz.dart:3:4)', 1000);
+        const frame = vm.allLines[vm.allLines.length - 1];
+        assert.strictEqual(frame.type, 'stack-frame');
+        assert.ok(
+            !/^\s/.test(frame.html ?? ''),
+            'continuation frame html must not start with whitespace; got ' + JSON.stringify(frame.html),
+        );
+    });
+
+    test('leading ANSI <span> wrapper is preserved when whitespace is stripped', () => {
+        const vm = loadStackHeaderRepeatSandbox();
+        addLine(vm, HEADER, 1000);
+        addLine(vm, '<span style="opacity:.6">      #1  Baz.qux (./lib/baz.dart:3:4)</span>', 1000);
+        const frame = vm.allLines[vm.allLines.length - 1];
+        assert.strictEqual(frame.type, 'stack-frame');
+        assert.ok(
+            /^<span style="opacity:\.6">#1\b/.test(frame.html ?? ''),
+            'ANSI dim wrapper must remain at start; got ' + JSON.stringify(frame.html),
+        );
+    });
+});
+
+/* The literal "<asynchronous suspension>" marker is renamed to a compact
+ * broken-chain glyph at ingest. tryIngestStackLine() replaces html for
+ * isAsyncGap frames; rawText keeps the original phrase so search hits it. */
+suite('async-gap broken-chain glyph rendering', () => {
+    const HEADER = '#0  Foo.bar (./lib/foo.dart:1:2)';
+
+    test('async-gap html is replaced with the broken-chain glyph and a tooltip', () => {
+        const vm = loadStackHeaderRepeatSandbox();
+        addLine(vm, HEADER, 1000);
+        addLine(vm, GAP, 1000);
+        const gap = vm.allLines[vm.allLines.length - 1] as GapItem;
+        assert.strictEqual(gap.isAsyncGap, true);
+        assert.ok(
+            (gap.html ?? '').includes('async-gap-glyph'),
+            'expected glyph span class; got ' + JSON.stringify(gap.html),
+        );
+        assert.ok(
+            (gap.html ?? '').includes('title="Async suspension'),
+            'expected explanatory tooltip; got ' + JSON.stringify(gap.html),
+        );
+        assert.ok(
+            !(gap.html ?? '').includes('asynchronous suspension'),
+            'raw phrase must not survive in html (only in rawText); got ' + JSON.stringify(gap.html),
+        );
+    });
+});
