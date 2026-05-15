@@ -87,7 +87,14 @@ suite('ViewerLevelLineColors', () => {
         const connectorRe =
             /\.bar-down::after,\s*\.bar-up::after\s*\{[\s\S]*?background:\s*color-mix\(in srgb,\s*var\(--bar-color\)\s*45%,\s*transparent\)[\s\S]*?z-index:\s*1[\s\S]*?\}/;
         assert.ok(connectorRe.test(deco), 'connector fill should use color-mix 45% and z-index 1');
-        const badOpacity = /\.bar-down::after,\s*\.bar-up::after\s*\{[\s\S]*?opacity:\s*0\./;
-        assert.ok(!badOpacity.test(deco), 'regression: connector must not use opacity (Chromium stacks it over the dot)');
+        // Bound the regression check to the connector rule body — `[^}]*` stops
+        // at the rule's own closing brace so an unrelated `opacity:` declaration
+        // in a later rule (e.g. `.stack-toggle`) cannot false-positive here.
+        const connectorBody = /\.bar-down::after,\s*\.bar-up::after\s*\{([^}]*)\}/.exec(deco);
+        assert.ok(connectorBody, 'connector rule must exist to check it for opacity');
+        assert.ok(
+            !/opacity:\s*0\./.test(connectorBody[1]),
+            'regression: connector must not use opacity (Chromium stacks it over the dot)',
+        );
     });
 });
