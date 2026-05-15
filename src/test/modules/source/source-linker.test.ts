@@ -20,6 +20,16 @@ suite('linkifyHtml', () => {
         assert.ok(result.includes('data-line="128"'));
     });
 
+    /* bug_001: contacts' replaceLocalPackagePath() rewrites package:saropa/ to ./lib/
+       before embedding the stack in the message body. The new unwrapped Dart shape
+       always lands here — must linkify or stack frames lose their click-to-source. */
+    test('should linkify Dart workspace-relative ./lib/ path with line:col', () => {
+        const result = linkifyHtml('#0      Foo.bar (./lib/services/location.dart:42:9)');
+        assert.ok(result.includes('data-path="./lib/services/location.dart"'));
+        assert.ok(result.includes('data-line="42"'));
+        assert.ok(result.includes('data-col="9"'));
+    });
+
     test('should linkify Unix absolute path', () => {
         const result = linkifyHtml('  at /home/user/project/src/main.ts:55');
         assert.ok(result.includes('data-path="/home/user/project/src/main.ts"'));
