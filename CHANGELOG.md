@@ -26,6 +26,13 @@ For older versions (7.1.1 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+### Tests
+- **Regression coverage for unwrapped Dart stacks (bug_001)** — the contacts project's `debug()` helper stopped passing `stackTrace:` to `dart:developer.log()` and now embeds the trace as plain `#N` lines in the message body, killing the `_StringStackTrace (…)` wrapper VS Code's debug console rendered. Production already grouped these correctly via `isStackFrameText`'s `^#\d+\s` rule, but the test suite was written entirely against the wrapped fixture. Added `viewer-stack-unwrapped-dart.test.ts` to pin: three unwrapped `#N` frames collapse to one stack-header, no orphan `)` row appears, and an async-gap mid-trace still folds into the group. Also added a `source-linker` test for the workspace-relative `./lib/foo.dart:42:9` shape contacts now emits, so a future regex tightening can't silently break click-to-source. The wrapper-compensation code (`isTraceTail`) is intentionally kept — other Dart projects still emit the wrapped form. No runtime/user-facing change.
+
+---
+
 ## [7.11.1]
 
 Stack traces, severity gutters, and the session panel all line up where they should now — long logcat tags get trimmed instead of overlapping the message, the session panel shows your most recent files first and stays open after you pick one, error pills moved into their own gutter column so they stop pushing the log text sideways, and loaded log files with leading timestamps (ISO, syslog, epoch, and more) are recognized and stripped from the message. [log](https://github.com/saropa/saropa-log-capture/blob/v7.11.1/CHANGELOG.md)
