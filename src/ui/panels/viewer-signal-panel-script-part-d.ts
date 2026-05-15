@@ -42,11 +42,20 @@ export function getSignalScriptPartD(): string {
                 vscodeApi.postMessage({ type: 'setRecurringErrorStatus', hash: triageBtn.dataset.hash, status: triageBtn.dataset.status });
                 return;
             }
-            /* Row click — open the most recent session with this signal type */
+            /* Row click — open the session containing this signal and scroll to it.
+               fingerprint pins it to the specific signal (host resolves which session); label is the
+               text the post-load webview handler searches for to scroll to the right line. Without
+               those, the host falls back to "most recent session of this kind" which is too coarse. */
             var row = e.target.closest('.signal-trend-row');
             if (!row || !row.dataset.signalType) { return; }
             e.stopPropagation();
-            vscodeApi.postMessage({ type: 'openSessionForSignalType', signalType: row.dataset.signalType });
+            vscodeApi.postMessage({
+                type: 'openSessionForSignalType',
+                signalType: row.dataset.signalType,
+                fingerprint: row.dataset.fingerprint || '',
+                label: row.dataset.label || '',
+                detail: row.dataset.detail || ''
+            });
         });
     }
 
@@ -76,6 +85,41 @@ export function getSignalScriptPartD(): string {
             });
         });
     }
+
+    /* Expose a label-based scroll-and-pulse helper so the main viewer message bus can use it
+       after the host opens a session for a clicked signal. Strategy: try detail (raw example
+       text — usually substring-matches), fall back to label tokens (skipping <N>/<TS>/<UUID>/<HEX>
+       placeholders since they're regex-only and won't substring-match real lines). */
+    window.signalScrollToLabel = function(label, detail) {
+        if (typeof allLines === 'undefined' || !allLines || allLines.length === 0) return;
+        var needles = [];
+        if (typeof detail === 'string' && detail.length >= 4) { needles.push(detail.toLowerCase()); }
+        if (typeof label === 'string' && label.length >= 4) {
+            /* Pick the longest segment between placeholder tokens (<N>, <TS>, <UUID>, <HEX>) — that
+               is the strongest contiguous substring anchor available in the original log line. */
+            var run = '';
+            var segments = label.split(/<\\w+>/);
+            for (var ti = 0; ti < segments.length; ti++) {
+                var seg = segments[ti].trim();
+                if (seg.length > run.length) { run = seg; }
+            }
+            if (run.length >= 4) { needles.push(run.toLowerCase()); }
+        }
+        if (needles.length === 0) return;
+        var foundIdx = -1;
+        for (var li = 0; li < allLines.length; li++) {
+            var item = allLines[li];
+            if (!item || item.type !== 'line') continue;
+            var hay = (item.rawText || item.html || '').toLowerCase();
+            for (var ni = 0; ni < needles.length; ni++) {
+                if (hay.indexOf(needles[ni]) !== -1) { foundIdx = li; break; }
+            }
+            if (foundIdx !== -1) break;
+        }
+        if (foundIdx === -1) return;
+        if (typeof scrollToLineNumber === 'function') { scrollToLineNumber(foundIdx + 1); }
+        pulseLinesAround(foundIdx);
+    };
 
     /* "Signals in this log" rows — click to jump to the line where the signal was detected */
     var signalsInLogEl = document.getElementById('signals-in-log-list');
