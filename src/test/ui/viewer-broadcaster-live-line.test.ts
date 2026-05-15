@@ -44,10 +44,16 @@ suite('buildPendingLineFromLineData', () => {
     });
 
     test('rawText preserves original unprocessed text for regular lines', () => {
-        const raw = 'Hello \x1b[31mworld\x1b[0m';
+        // Use a background color (SGR 41) rather than foreground (SGR 31): the ANSI
+        // converter intentionally drops foreground colors so they cannot disagree
+        // with the level-* palette (see src/modules/capture/ansi.ts top-of-file
+        // comment). Background, bold, dim, italic, underline are still rendered,
+        // so this exercises the actual conversion path that's still live.
+        const raw = 'Hello \x1b[41mworld\x1b[0m';
         const pl = buildPendingLineFromLineData(sampleLineData({ text: raw, lineCount: 1 }));
         assert.strictEqual(pl.rawText, raw, 'rawText should be the original text before HTML conversion');
-        assert.ok(pl.text.includes('color:'), 'HTML should contain ANSI-converted span');
+        assert.ok(!pl.text.includes('\x1b'), 'HTML output should have ANSI escape codes stripped/converted');
+        assert.ok(pl.text.includes('background-color:'), 'HTML should contain ANSI-converted background span');
     });
 
     test('rawText preserves original text for marker lines', () => {
