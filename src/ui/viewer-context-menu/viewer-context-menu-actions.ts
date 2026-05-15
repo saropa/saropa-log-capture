@@ -180,6 +180,7 @@ function handleToggleAction(action) {
         'toggle-line-numbers': typeof toggleLineNumbers === 'function' ? toggleLineNumbers : null,
         'toggle-timestamp': typeof toggleTimestamp === 'function' ? toggleTimestamp : null,
         'toggle-session-elapsed': typeof toggleSessionElapsed === 'function' ? toggleSessionElapsed : null,
+        'toggle-parsed-tag': typeof toggleParsedTag === 'function' ? toggleParsedTag : null,
         'toggle-spacing': typeof toggleVisualSpacing === 'function' ? toggleVisualSpacing : null,
         'toggle-line-height': typeof toggleLineHeightMode === 'function' ? toggleLineHeightMode : null,
         'toggle-show-blank-lines': typeof toggleHideBlankLines === 'function' ? toggleHideBlankLines : null,

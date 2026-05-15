@@ -45,8 +45,9 @@ ${getScrollChromeMenuTogglesHtml()}
 
 /**
  * Returns the HTML for the log content context menu.
- * Layout toggles (wrap, decorations, timestamps, compression) use the top-level **Layout** submenu;
- * the footer gear panel remains **Options** in the UI.
+ * Column toggles (line numbers, timestamps, session elapsed, tag) live in the top-level
+ * **Columns** submenu; layout toggles (wrap, spacing, line height, compression) live in
+ * the top-level **Layout** submenu; the footer gear panel remains **Options** in the UI.
  */
 export function getContextMenuHtml(): string {
     return `<div id="context-menu" class="context-menu">
@@ -232,21 +233,14 @@ export function getContextMenuHtml(): string {
         </div>
     </div>
     <div class="context-menu-submenu">
-        <span class="codicon codicon-settings-gear"></span> Layout
+        <span class="codicon codicon-table"></span> Columns
         <span class="context-menu-arrow codicon codicon-chevron-right"></span>
         <div class="context-menu-submenu-content">
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-wrap" title="Wrap long lines to fit the viewer width">
-                <span class="codicon codicon-word-wrap" aria-hidden="true"></span>
-                <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">Word wrap</span>
-                <span class="context-menu-shortcut">W</span>
-            </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-line-numbers" title="Show the line number at the start of each row">
                 <span class="codicon codicon-list-ordered" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span class="context-menu-label">Line numbers</span>
             </div>
-            <div class="context-menu-separator"></div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-timestamp" title="Show the wall-clock timestamp in each line's decoration prefix">
                 <span class="codicon codicon-clock" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
@@ -256,6 +250,23 @@ export function getContextMenuHtml(): string {
                 <span class="codicon codicon-watch" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span class="context-menu-label">Session elapsed</span>
+            </div>
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-parsed-tag" title="Show the parsed source tag column (e.g. flutter, HWUI)">
+                <span class="codicon codicon-tag" aria-hidden="true"></span>
+                <span class="context-menu-check codicon codicon-check"></span>
+                <span class="context-menu-label">Tag</span>
+            </div>
+        </div>
+    </div>
+    <div class="context-menu-submenu">
+        <span class="codicon codicon-settings-gear"></span> Layout
+        <span class="context-menu-arrow codicon codicon-chevron-right"></span>
+        <div class="context-menu-submenu-content">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-wrap" title="Wrap long lines to fit the viewer width">
+                <span class="codicon codicon-word-wrap" aria-hidden="true"></span>
+                <span class="context-menu-check codicon codicon-check"></span>
+                <span class="context-menu-label">Word wrap</span>
+                <span class="context-menu-shortcut">W</span>
             </div>
             <div class="context-menu-separator"></div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-spacing" title="Add extra vertical gaps between markers and level changes">

@@ -106,6 +106,7 @@ function syncContextMenuToggles() {
             else if (action === 'toggle-line-numbers') on = (typeof decoShowCounter !== 'undefined') && decoShowCounter;
             else if (action === 'toggle-timestamp') on = (typeof decoShowTimestamp !== 'undefined') && decoShowTimestamp; /* per-line time in margin */
             else if (action === 'toggle-session-elapsed') on = (typeof decoShowSessionElapsed !== 'undefined') && decoShowSessionElapsed;
+            else if (action === 'toggle-parsed-tag') on = (typeof decoShowParsedTag === 'undefined') || decoShowParsedTag;
             else if (action === 'toggle-spacing') on = (typeof visualSpacingEnabled !== 'undefined') && visualSpacingEnabled;
             else if (action === 'toggle-line-height') on = (typeof logLineHeight !== 'undefined') && logLineHeight >= 1.5; /* comfortable when >= 1.5 (presets: 1.2 / 2.0) */
             /* Inverted: checkmark means blank lines ARE visible (positive "Show" language). */
