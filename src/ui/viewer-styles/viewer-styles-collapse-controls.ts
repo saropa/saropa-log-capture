@@ -103,6 +103,10 @@ export function getCollapseControlStyles(): string {
     display: inline-block;
     margin-right: 0.35em;
     color: var(--vscode-descriptionForeground, #888);
+    /* Dim the resting state so the chevron reads as a quiet hint rather than
+       competing with the header text. Full opacity on hover keeps the
+       affordance discoverable without making it shouty when idle. */
+    opacity: 0.5;
     cursor: pointer;
     user-select: none;
     /* Fixed width so collapsed (▶) and expanded (▼) line up vertically
@@ -112,6 +116,7 @@ export function getCollapseControlStyles(): string {
 }
 .stack-toggle:hover {
     color: var(--vscode-foreground, #fff);
+    opacity: 1;
 }
 `;
 }
