@@ -150,7 +150,9 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
                 staticSqlFromFingerprintEnabled: staticSqlFromFingerprintEnabled !== false,
                 slowBurstThresholds: viewerSlowBurstThresholds,
                 dbDetectorToggles: viewerDbDetectorToggles,
-                accessibilityShowCollapseDividerLabels: accessibilityShowCollapseDividerLabels === true,
+                /* `?? true` — undefined falls back to the published default
+                   (on); a literal `false` still passes through. */
+                accessibilityShowCollapseDividerLabels: accessibilityShowCollapseDividerLabels ?? true,
             }),
             getViewerScript(maxLines, viewerPreserveAsciiBoxArt !== false, viewerGroupAsciiArt !== false, viewerDetectAsciiArt === true),
             getViewerRootCauseHintsScript(signalSlowOpThresholdMs),
