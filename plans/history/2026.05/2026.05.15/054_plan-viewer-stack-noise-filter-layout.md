@@ -1,7 +1,11 @@
 # PLAN 054: Viewer stack-trace noise, level/color consistency, column layout
 
-Status: **Mostly complete — remaining work is F5 verification + an explicit decision
-on Item E Path 2.** Triggered by an unusable real log
+Status: **CLOSED 2026-05-15.** All code work for this plan is committed. Item E
+Path 2 spun out to `plans/deferred/055_plan-viewer-row-dom-grid-rewrite.md`; Path 1
+is the accepted answer. Remaining work is F5 verification of the fixes on the real
+sample log — tracked at the bottom of this plan.
+
+Triggered by an unusable real log
 (`D:\src\contacts\reports\20260514\20260514_103120_contacts.log`, 6,508 lines,
 ~60% stack-trace scaffolding).
 
@@ -26,7 +30,9 @@ the next").
 **Open work after the F5 of `20260514_225412_contacts.log`:**
 1. Re-F5 the sample log to confirm Item F's fix lines up the gutter with the source-file row.
 2. F5 verification of Items B, C, D on the same log.
-3. Whether to schedule Item E Path 2 (full `.line-cols` / `.line-msg` DOM rewrite) as a follow-up plan, or accept Path 1 as the final answer.
+3. Item E Path 2 (full `.line-cols` / `.line-msg` DOM rewrite) **deferred**, spun out to
+   [plans/deferred/055_plan-viewer-row-dom-grid-rewrite.md](deferred/055_plan-viewer-row-dom-grid-rewrite.md).
+   Path 1 is the accepted answer for this plan.
 
 ---
 
