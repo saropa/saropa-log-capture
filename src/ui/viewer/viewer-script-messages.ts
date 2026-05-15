@@ -199,6 +199,12 @@ window.addEventListener('message', function(event) {
         case 'sessionNavInfo':
             if (typeof handleSessionNavInfo === 'function') handleSessionNavInfo(msg);
             break;
+        case 'scrollToSignal':
+            /* Host loaded the session containing the clicked signal; jump to the first matching line.
+               signalScrollToLabel lives in the signal panel script (owns pulseLinesAround); if the
+               signal script never ran in this webview, this is a silent no-op. */
+            if (typeof window.signalScrollToLabel === 'function') { window.signalScrollToLabel(msg.label || '', msg.detail || ''); }
+            break;
         case 'scrollToLine': {
             if (window.isContextMenuOpen) break;
             var li = Math.max(0, Math.min(Number(msg.line) - 1, allLines.length - 1));
