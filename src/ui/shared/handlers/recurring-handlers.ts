@@ -15,7 +15,9 @@ import { getErrorStatusBatch, setErrorStatus, type ErrorStatus } from '../../../
 import { getInteractionTracker } from '../../../modules/learning/learning-runtime';
 import { SessionMetadataStore } from '../../../modules/session/session-metadata';
 import { loadFilteredMetas, parseSessionDate } from '../../../modules/session/metadata-loader';
-import { isPersistedSignalSummaryV1 } from '../../../modules/root-cause-hints/signal-summary-types';
+import { isPersistedSignalSummaryV2 } from '../../../modules/root-cause-hints/signal-summary-types';
+import { isPersistedDriftSqlFingerprintSummaryV1 } from '../../../modules/db/drift-sql-fingerprint-summary-persist';
+import type { SessionMeta } from '../../../modules/session/session-metadata';
 import { enrichSignalsWithLintContext } from '../../../modules/diagnostics/signal-lint-enricher';
 import { enrichSignalsWithDaContext } from '../../../modules/diagnostics/signal-da-enricher';
 import { buildRegressionSignalEntries, detectRegressions } from '../../../modules/signals/regression-detector';
@@ -181,23 +183,73 @@ export async function handleRejectFilterSuggestion(id: string, post: PostFn, cur
 }
 
 /**
- * Find the most recent session that has the given signal type and return its URI string.
- * Returns undefined if no matching session found.
+ * Find the most recent session that contains the given signal and return its URI string.
+ *
+ * Preferred: exact fingerprint match against meta.fingerprints / warningFingerprints /
+ * perfFingerprints / driftSqlFingerprintSummary.fingerprints / signalSummary.entries (V2).
+ *
+ * Fallback (no fingerprint or no fingerprint match): "any session that has at least one
+ * signal of this kind" — checked against the typed metadata lists, not signalSummary.counts.
+ * The old counts-key path silently never matched because the SignalKind values
+ * (e.g. "error", "warning", "sql") don't equal the SignalSummaryCounts keys
+ * (e.g. "errors", "warningGroups", "sqlBursts"), which is the reason every click
+ * looked dead before this rewrite.
  */
-export async function handleOpenSessionForSignalType(signalType: string): Promise<string | undefined> {
+export async function handleOpenSessionForSignalType(
+    signalType: string,
+    fingerprint?: string,
+): Promise<string | undefined> {
     const metas = await loadFilteredMetas('all');
-    const matching = metas
-        .filter(m => {
-            const s = m.meta.signalSummary;
-            if (!s || !isPersistedSignalSummaryV1(s)) { return false; }
-            // Check if this session has a non-zero count for the requested signal type
-            const count = (s.counts as Record<string, number | undefined>)[signalType];
-            return typeof count === 'number' && count > 0;
-        })
-        .sort((a, b) => parseSessionDate(b.filename) - parseSessionDate(a.filename));
-    if (matching.length === 0) { return undefined; }
+    const byFingerprint = fingerprint
+        ? metas.filter(m => sessionHasFingerprint(m.meta, fingerprint))
+        : [];
+    /* Prefer a fingerprint match. Fall back to any session of that kind only when no session
+       carries the specific fingerprint (older sessions may pre-date fingerprint storage). */
+    const candidates = byFingerprint.length > 0
+        ? byFingerprint
+        : metas.filter(m => sessionHasAnyOfKind(m.meta, signalType));
+    if (candidates.length === 0) { return undefined; }
+    const sorted = [...candidates].sort((a, b) => parseSessionDate(b.filename) - parseSessionDate(a.filename));
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) { return undefined; }
     const logDir = getLogDirectoryUri(folder);
-    return vscode.Uri.joinPath(logDir, matching[0].filename).toString();
+    return vscode.Uri.joinPath(logDir, sorted[0].filename).toString();
+}
+
+/** True if any of this session's persisted fingerprint lists carries the given identifier. */
+function sessionHasFingerprint(meta: SessionMeta, fp: string): boolean {
+    if ((meta.fingerprints ?? []).some(f => f.h === fp)) { return true; }
+    if ((meta.warningFingerprints ?? []).some(f => f.h === fp)) { return true; }
+    /* Perf signals use the operation name as their fingerprint, not a hash. */
+    if ((meta.perfFingerprints ?? []).some(p => p.name === fp)) { return true; }
+    const drift = meta.driftSqlFingerprintSummary;
+    if (drift && isPersistedDriftSqlFingerprintSummaryV1(drift) && fp in drift.fingerprints) {
+        return true;
+    }
+    const summary = meta.signalSummary;
+    if (summary && isPersistedSignalSummaryV2(summary)) {
+        if ((summary.entries ?? []).some(e => e.fingerprint === fp)) { return true; }
+    }
+    return false;
+}
+
+/** True if this session contains any signal of the requested kind. Used as fallback when the
+ *  specific fingerprint can't be located (e.g. older sessions, kinds with no per-fingerprint store). */
+function sessionHasAnyOfKind(meta: SessionMeta, kind: string): boolean {
+    switch (kind) {
+        case 'error': return (meta.fingerprints ?? []).length > 0;
+        case 'warning': return (meta.warningFingerprints ?? []).length > 0;
+        case 'perf': return (meta.perfFingerprints ?? []).length > 0;
+        case 'sql': {
+            const d = meta.driftSqlFingerprintSummary;
+            return !!(d && isPersistedDriftSqlFingerprintSummaryV1(d) && Object.keys(d.fingerprints).length > 0);
+        }
+        default: {
+            /* Remaining kinds (network/memory/slow-op/anr/permission/classified) only land in V2
+               entries — V1 counts keys don't share names with SignalKind values so they're unusable. */
+            const s = meta.signalSummary;
+            if (!s || !isPersistedSignalSummaryV2(s)) { return false; }
+            return (s.entries ?? []).some(e => e.kind === kind);
+        }
+    }
 }

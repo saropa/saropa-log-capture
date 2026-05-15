@@ -42,6 +42,7 @@ Heuristic index of `type` fields on objects passed to `this.postMessage` / `targ
 | `rootCauseHypothesesResult` | src/ui/provider/viewer-message-handler-root-cause.ts |
 | `scrollbarVisible` | src/ui/provider/log-viewer-provider-state.ts |
 | `scrollToLine` | src/ui/provider/log-viewer-provider-state.ts, src/ui/provider/viewer-message-handler-session-ui.ts |
+| `scrollToSignal` | src/ui/provider/viewer-message-handler-session-ui.ts |
 | `searchHistory` | src/ui/collection/collection-panel.ts |
 | `searchMatchOptionsAlwaysVisible` | src/ui/provider/log-viewer-provider-state.ts |
 | `searchProgress` | src/ui/collection/collection-panel-handlers.ts |
@@ -99,4 +100,4 @@ Heuristic index of `type` fields on objects passed to `this.postMessage` / `targ
 | `updateWatchCounts` | src/ui/provider/log-viewer-provider.ts |
 | `viewerKeybindingRecordMode` | src/ui/provider/viewer-message-handler-actions.ts |
 
-**Total:** 92 distinct types.
+**Total:** 93 distinct types.
