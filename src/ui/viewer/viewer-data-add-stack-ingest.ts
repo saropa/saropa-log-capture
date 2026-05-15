@@ -34,6 +34,21 @@ function tryIngestStackLine(html, rawText, category, ts, fw, sp, elapsedMs, qual
        gap with no active group (orphan) makes this condition false and falls through to
        normal-line handling — a gap must never start a group on its own. */
     if (!(isStackFrameText(html) || (activeGroupHeader && (isAsyncGap || isTraceTail)))) return false;
+    /* Strip leading whitespace from frame/gap text so the viewer's CSS owns the
+       indent. Raw Dart stacks emit 6 leading spaces on every continuation frame
+       ("      #2  Caller …"); combined with .stack-frames .line padding-left
+       this pushed continuation frames further right than the header and broke
+       column alignment under expansion. Regex preserves leading ANSI/dim
+       <span> wrappers so dim styling on framework frames survives the trim. */
+    html = html.replace(/^((?:<[^>]+>)*)\\s+/, '$1');
+    if (isAsyncGap) {
+        /* Render the noisy "<asynchronous suspension>" marker as a compact
+           broken-chain glyph with a tooltip. The original phrase dominates
+           expanded Dart traces (one per await) and shifts the eye off the
+           actual frames. rawText keeps the original text so search still
+           hits "<asynchronous suspension>" verbatim. */
+        html = '<span class="async-gap-glyph" title="Async suspension &mdash; the call stack jumped microtasks across an await. Frames below ran before the await resumed.">⛓️‍💥</span>';
+    }
     resetCompressDupStreak();
     if (typeof breakContinuationGroup === 'function') breakContinuationGroup();
     if (typeof finalizeArtBlock === 'function') finalizeArtBlock();
