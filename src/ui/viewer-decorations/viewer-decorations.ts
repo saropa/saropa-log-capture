@@ -155,7 +155,12 @@ function applyDecorationLayoutWidth() {
     var hasSessionElapsed = decoShowSessionElapsed && decoSeen.ts;
     var hasPid = (typeof showParsedPidTid !== 'undefined' && showParsedPidTid) && decoSeen.pidTid;
     var hasLvl = (typeof showParsedLevelPrefix !== 'undefined' && showParsedLevelPrefix) && decoSeen.rawLevel;
-    var hasTag = (typeof structuredLineParsing !== 'undefined' && structuredLineParsing) && decoSeen.tag;
+    /* Tag column: gated by its own toggle (Columns → Tag) AND by structuredLineParsing
+       — without structured parsing the tag is never extracted into item.parsedTag, so a
+       reserved column would always be empty. */
+    var hasTag = (typeof decoShowParsedTag === 'undefined' || decoShowParsedTag)
+        && (typeof structuredLineParsing !== 'undefined' && structuredLineParsing)
+        && decoSeen.tag;
     /* Signature gates the CSS write: width depends on digit count, the enabled
        flags, AND which data has been seen (data arrives as lines stream in). */
     var sig = digits + '|' + (hasCounter ? 1 : 0) + (hasTime ? 1 : 0) + (showMilliseconds ? 1 : 0)
@@ -229,7 +234,9 @@ function getDecorationPrefix(item, idx) {
     if (!isBlank && typeof showParsedLevelPrefix !== 'undefined' && showParsedLevelPrefix && item.parsedRawLevel) {
         parts.push('<span class="deco-level-prefix">' + item.parsedRawLevel + '</span>');
     }
-    if (!isBlank && item.parsedTag && typeof structuredLineParsing !== 'undefined' && structuredLineParsing) {
+    if (!isBlank && item.parsedTag
+        && typeof structuredLineParsing !== 'undefined' && structuredLineParsing
+        && (typeof decoShowParsedTag === 'undefined' || decoShowParsedTag)) {
         parts.push('<span class="meta-filter-toggle deco-parsed-tag" data-meta-key="tag" data-meta-value="' + item.parsedTag.replace(/"/g, '&quot;') + '" title="Filter by tag: ' + item.parsedTag.replace(/"/g, '&quot;') + '">' + item.parsedTag + '</span>');
     }
     if (parts.length === 0) return '';
