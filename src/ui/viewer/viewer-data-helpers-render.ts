@@ -203,7 +203,9 @@ function renderItem(item, idx, prevVis) {
             : 'Click to collapse ' + item.contChildCount + ' continuation lines';
         contBadge = '<span class="' + contCls + '" data-cont-gid="' + item.contGroupId + '" title="' + contTip + '">' + contLabel + '</span>';
     }
-    /* idx passed so decoration can show file line number (idx+1); blank-line counter gated by decoShowCounterOnBlank. */
+    /* idx is the allLines position; getDecorationPrefix prefers item.sourceLineNo (stamped at
+       line arrival from the raw file) and falls back to idx+1 only when no source line is
+       available. Blank-line counter gated by decoShowCounterOnBlank. */
     var deco = isArtCont ? '' : ((typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item, idx) : '');
     /* Splice continuation badge into the trailing whitespace of the decoration
        prefix (the prefix now ends '&nbsp;&nbsp;</span>' after the chevron was

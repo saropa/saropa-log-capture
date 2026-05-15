@@ -49,6 +49,10 @@ export interface PendingLine {
     readonly source?: string;
     /** Original unprocessed text before HTML/ANSI conversion. Used for "copy raw" feature. */
     readonly rawText?: string;
+    /** 1-based source-file line number. Carries through to the rendered gutter counter so
+        the displayed number maps to the user's open file, not the in-memory array index
+        (which counts hidden stack frames, async-gap markers, and synthetic chip rows). */
+    readonly sourceLineNo?: number;
 }
 
 /** Context for parsing file lines — bundles parameters to stay within limits. */
@@ -57,6 +61,10 @@ export interface FileParseContext {
     readonly sessionMidnightMs: number;
     /** Stream source id for multi-source view (e.g. SOURCE_DEBUG). Omit for default 'debug'. */
     readonly source?: string;
+    /** 0-based file-line offset of the FIRST input line (typically the post-header start, i.e.
+        the value `findHeaderEnd()` returned for this file). Added to the per-line index +1 to
+        produce `PendingLine.sourceLineNo`. Omit for in-memory streams with no source file. */
+    readonly sourceLineOffset?: number;
 }
 
 /**
@@ -155,9 +163,13 @@ export async function sendFileLines(
 ): Promise<void> {
     const batchSize = 500;
     const cats = new Set<string>();
+    // Per-line sourceLineNo = sourceLineOffset (post-header start, supplied by caller) + index + 1
+    // (1-based). Without this offset the displayed gutter counter shows the post-header
+    // position, not the actual file line, which mismatches what a user reading the raw file sees.
+    const offset = ctx.sourceLineOffset ?? 0;
     for (let i = 0; i < lines.length; i += batchSize) {
         const chunk = lines.slice(i, i + batchSize);
-        const batch = chunk.map((line) => parseFileLine(line, ctx));
+        const batch = chunk.map((line, j) => parseFileLine(line, ctx, offset + i + j + 1));
         for (const ln of batch) {
             if (!ln.isMarker) { cats.add(ln.category); }
         }
@@ -183,38 +195,38 @@ export async function sendFileLines(
  * Parse a raw log file line into a PendingLine for the webview.
  * Detects markers, session boundaries, and extracts timestamps, optional [+Nms] elapsed, and category.
  */
-function parseFileLine(raw: string, ctx: FileParseContext): PendingLine {
+function parseFileLine(raw: string, ctx: FileParseContext, sourceLineNo?: number): PendingLine {
     const src = ctx.source ?? SOURCE_DEBUG;
     if (/^---\s*(MARKER:|MAX LINES)/.test(raw)) {
         const label = raw.replace(/^-+\s*/, '').replace(/\s*-+$/, '');
-        return buildMarkerLine(label, src);
+        return buildMarkerLine(label, src, sourceLineNo);
     }
     if (/^===\s*(SESSION END|SPLIT)/.test(raw)) {
-        return buildMarkerLine(raw, src);
+        return buildMarkerLine(raw, src, sourceLineNo);
     }
     // [time] [+elapsed] [category] rest
     const timeElapsedCat = /^\[([\d:.]+)\]\s*\[(\+\d+(?:\.\d+)?(?:ms|s))\]\s*\[([\w-]+)\]\s?(.*)$/.exec(raw);
     if (timeElapsedCat) {
         const ts = parseTimeToMs(timeElapsedCat[1], ctx.sessionMidnightMs);
         const elapsed = parseElapsedToMs(timeElapsedCat[2]);
-        return buildFileLine({ text: timeElapsedCat[4], category: timeElapsedCat[3], classifyFrame: ctx.classifyFrame, timestamp: ts, elapsedMs: elapsed, source: src });
+        return buildFileLine({ text: timeElapsedCat[4], category: timeElapsedCat[3], classifyFrame: ctx.classifyFrame, timestamp: ts, elapsedMs: elapsed, source: src, sourceLineNo });
     }
     // [time] [category] rest
     const tsMatch = /^\[([\d:.]+)\]\s*\[([\w-]+)\]\s?(.*)$/.exec(raw);
     if (tsMatch) {
         const ts = parseTimeToMs(tsMatch[1], ctx.sessionMidnightMs);
-        return buildFileLine({ text: tsMatch[3], category: tsMatch[2], classifyFrame: ctx.classifyFrame, timestamp: ts, source: src });
+        return buildFileLine({ text: tsMatch[3], category: tsMatch[2], classifyFrame: ctx.classifyFrame, timestamp: ts, source: src, sourceLineNo });
     }
     // [+elapsed] [category] rest (no absolute time)
     const elapsedCat = /^\[(\+\d+(?:\.\d+)?(?:ms|s))\]\s*\[([\w-]+)\]\s?(.*)$/.exec(raw);
     if (elapsedCat) {
         const elapsed = parseElapsedToMs(elapsedCat[1]);
-        return buildFileLine({ text: elapsedCat[3], category: elapsedCat[2], classifyFrame: ctx.classifyFrame, timestamp: 0, elapsedMs: elapsed, source: src });
+        return buildFileLine({ text: elapsedCat[3], category: elapsedCat[2], classifyFrame: ctx.classifyFrame, timestamp: 0, elapsedMs: elapsed, source: src, sourceLineNo });
     }
     // [category] rest
     const catMatch = /^\[([\w-]+)\]\s?(.*)$/.exec(raw);
     if (catMatch) {
-        return buildFileLine({ text: catMatch[2], category: catMatch[1], classifyFrame: ctx.classifyFrame, timestamp: 0, source: src });
+        return buildFileLine({ text: catMatch[2], category: catMatch[1], classifyFrame: ctx.classifyFrame, timestamp: 0, source: src, sourceLineNo });
     }
     // Bare leading timestamp — ISO ("2026-05-14T11:50:51.135Z …"), space-separated
     // date+time, clock-time-only, syslog, or Unix epoch. Reporting tools prefix every
@@ -225,13 +237,13 @@ function parseFileLine(raw: string, ctx: FileParseContext): PendingLine {
     // candidate, so prose is never mis-stripped.
     const extracted = extractTimestamp(raw, ctx.sessionMidnightMs || undefined);
     if (extracted) {
-        return buildFileLine({ text: extracted.rest, category: 'console', classifyFrame: ctx.classifyFrame, timestamp: extracted.timestamp, source: src });
+        return buildFileLine({ text: extracted.rest, category: 'console', classifyFrame: ctx.classifyFrame, timestamp: extracted.timestamp, source: src, sourceLineNo });
     }
-    return buildFileLine({ text: raw, category: 'console', classifyFrame: ctx.classifyFrame, timestamp: 0, source: src });
+    return buildFileLine({ text: raw, category: 'console', classifyFrame: ctx.classifyFrame, timestamp: 0, source: src, sourceLineNo });
 }
 
 /** Build a PendingLine for a visual separator (marker, session end, etc.). */
-function buildMarkerLine(text: string, source?: string): PendingLine {
+function buildMarkerLine(text: string, source?: string, sourceLineNo?: number): PendingLine {
     return {
         text: escapeHtml(text),
         rawText: text,
@@ -240,6 +252,7 @@ function buildMarkerLine(text: string, source?: string): PendingLine {
         category: 'console',
         timestamp: 0,
         ...(source ? { source } : {}),
+        ...(sourceLineNo !== undefined ? { sourceLineNo } : {}),
     };
 }
 
@@ -250,6 +263,7 @@ interface FileLineOptions {
     timestamp: number;
     elapsedMs?: number;
     source?: string;
+    sourceLineNo?: number;
 }
 
 /** Build a PendingLine for a regular log line. Converts ANSI codes to HTML and linkifies paths. */
@@ -266,14 +280,18 @@ function buildFileLine(opts: FileLineOptions): PendingLine {
         tier,
         fw: tier !== undefined ? tier !== 'flutter' : undefined,
         ...(opts.source ? { source: opts.source } : {}),
+        ...(opts.sourceLineNo !== undefined ? { sourceLineNo: opts.sourceLineNo } : {}),
     };
 }
 
 /**
  * Parse raw log file lines into PendingLine[] for the webview.
  * Used by tail mode to append new lines when a watched file changes.
+ * `ctx.sourceLineOffset` is the 0-based file-line offset of `lines[0]`; per-line
+ * `sourceLineNo` is computed as `sourceLineOffset + i + 1` (1-based).
  */
 export function parseRawLinesToPending(lines: string[], ctx: FileParseContext): PendingLine[] {
-    return lines.map((raw) => parseFileLine(raw, ctx));
+    const offset = ctx.sourceLineOffset ?? 0;
+    return lines.map((raw, i) => parseFileLine(raw, ctx, offset + i + 1));
 }
 
