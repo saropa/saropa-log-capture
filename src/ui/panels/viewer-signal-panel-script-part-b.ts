@@ -135,7 +135,18 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
             else if (s.trend === 'stable') { trendBadge = ' <span class="signal-trend-stable" title="Stable">\u2014</span>'; }
             var triageHtml = buildTriageHtml(s);
             var dimCls = (signalDataCache.statuses || {})[s.fingerprint] === 'closed' ? ' re-closed' : '';
-            return '<div class="signal-env-row signal-trend-row' + sevCls + dimCls + '" data-signal-type="' + esc(s.kind) + '" title="' + esc(s.label) + '">'
+            /* data-fingerprint + data-label + data-detail travel to the click handler so the host
+               can resolve to the specific session containing this fingerprint and the webview can
+               scroll to the matching line. detail is the raw example text (substring-searchable);
+               label is the normalized form (token placeholders like <N>/<TS>, not directly matchable).
+               Without these, the host can only resolve by kind ("any session with any error"), which
+               often lands on the already-open log and looks like a dead click. */
+            return '<div class="signal-env-row signal-trend-row' + sevCls + dimCls
+                + '" data-signal-type="' + esc(s.kind)
+                + '" data-fingerprint="' + esc(s.fingerprint)
+                + '" data-label="' + esc(s.label)
+                + '" data-detail="' + esc(s.detail || '')
+                + '" title="' + esc(s.label) + '">'
                 + '<span>' + icon + recurBadge + trendBadge + ' ' + esc(text) + '</span>'
                 + '<span class="signal-hotfile-meta">' + meta + '</span>' + lintBtn + daBtn + triageHtml + '</div>';
         }).join('');
