@@ -1,24 +1,40 @@
 /** Viewport rendering helpers: bar level detection, hidden-line dividers, and virtual scroll renderer. */
 export function getViewportRenderScript(): string {
     return /* javascript */ `
-/** Extract bar level (e.g. 'error') from element class, or null. */
+/** Extract the FULL bar level (e.g. 'error', 'error-recent-context') from an
+    element's class, or null. The capture group must include hyphens: a
+    recent-error-context row carries level-bar-error-recent-context (a muted
+    grey bar) while a real fault carries level-bar-error (full red). Truncating
+    at the first hyphen collapsed both to 'error', so the connector joined a
+    grey dot to a red dot into one stripe — the "connecting different colors"
+    the user reported. Keeping the full suffix makes the levels distinct so the
+    chain breaks between them. */
 function getBarLevel(el) {
-    var m = /level-bar-(\\w+)/.exec(el.className);
+    var m = /level-bar-([\\w-]+)/.exec(el.className);
     return m ? m[1] : null;
 }
 
-/** Find next viewport child with a visible severity dot (non-blank), stopping at markers.
-    Skips .viewer-divider sibling rows because they are control affordances injected
-    between log rows (see bugs/048_plan-severity-gutter-decoupling.md and
-    viewer-data-divider.ts) — they do not own a severity level and must not short-circuit
-    the connector chain that joins consecutive same-level dots. */
+/** Find the next viewport child that is a REAL content row, stopping at markers.
+    Skips .line-blank and .viewer-divider rows — those are invisible gaps (blank
+    lines) and control affordances (see bugs/048_plan-severity-gutter-decoupling.md
+    and viewer-data-divider.ts), so same-level dots still pair up across them.
+
+    It deliberately does NOT skip non-leveled content rows (stack frames, generic
+    stdout, the ")" tail of a Dart trace, …). Returning them is the whole point:
+    getBarLevel() yields null for such a row, the caller's nextLvl-vs-lvl check
+    then fails, and the connector chain breaks cleanly AT that row. The previous
+    code skipped them, so a chain could reach over an unrelated content row and
+    stamp bar-down/bar-up stubs on same-level dots beyond it — the connector
+    "running through" content the user reported. This matches the documented
+    intent of commit 11cb4ca7 (its comment described this behavior but the
+    function was never actually updated to match). */
 function findNextDotSibling(children, startIdx) {
     for (var ni = startIdx + 1; ni < children.length; ni++) {
         if (!children[ni]) continue;
         if (children[ni].classList.contains('marker')) return -1;
         if (children[ni].classList.contains('viewer-divider')) continue;
-        var lvl = getBarLevel(children[ni]);
-        if (lvl && !children[ni].classList.contains('line-blank')) return ni;
+        if (children[ni].classList.contains('line-blank')) continue;
+        return ni;
     }
     return -1;
 }
