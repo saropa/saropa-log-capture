@@ -127,6 +127,18 @@ export function getContentStyles(): string {
     word-break: normal;
     overflow-wrap: normal;
 }
+/* Broken-chain glyph that replaces the raw "<asynchronous suspension>" text
+   inside expanded stack traces. The original phrase dominated expanded
+   Dart traces (one per await) and shifted the eye off the actual frames;
+   the glyph keeps the visual marker but compresses ~25 chars to one.
+   Slightly dimmed so it reads as a separator, not a frame. cursor:help
+   surfaces the title tooltip explanation on hover. */
+.async-gap-glyph {
+    display: inline-block;
+    opacity: 0.65;
+    cursor: help;
+    margin-left: 2px;
+}
 /* Thread header lines from Android/Java thread dumps */
 .thread-header {
     color: var(--vscode-textLink-foreground);
