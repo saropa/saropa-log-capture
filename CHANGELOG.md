@@ -28,6 +28,9 @@ For older versions (7.1.1 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [Unreleased]
 
+### Changed
+- **Stack-header expander chevrons dimmed at rest** — the inline `▶` / `▼` chevron on collapsible stack headers used the full `--vscode-descriptionForeground` color, which made it compete with the header text. The chevron now sits at `opacity: 0.5` so it reads as a quiet hint while idle, and returns to full opacity on hover so the affordance is still discoverable.
+
 ### Fixed
 - **Scrollbar minimap palette synced with the per-row gutter** — the "rotate Info=blue / Notice=cyan / DB=green" palette change in commit `492d346f` updated `viewer-styles-decoration-bars.ts` but missed the canvas palette in `viewer-scrollbar-minimap-paint.ts`. The same source line painted a blue dot in the row gutter and a green tick on the scroll map (or any of the rotated pairs), so the minimap was unreliable as an overview of the gutter it sits next to. Synced the three rotated slots — info now `#2196f3` charts-blue, notice now `#00bcd4` terminal-cyan, database now `#4caf50` charts-green. Error / warning / performance / todo / debug were untouched by the rotation.
 
