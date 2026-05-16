@@ -118,7 +118,7 @@ suite('Principle 3: collapse controls live at the END of the revealed range', ()
             'last-of-peek detection must check the next allLines item key',
         );
         assert.ok(
-            viewport.includes("buildPeekHideDivider(_pk, countPeekedLines(_pk), 'end')"),
+            /buildPeekHideDivider\(_pk,\s*countPeekedLines\(_pk\),\s*'end'/.test(viewport),
             'trailing divider must call buildPeekHideDivider with end position',
         );
     });
