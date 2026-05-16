@@ -61,11 +61,16 @@ export function getDecorationStyles(): string {
 
 /* Hanging indent for decorated lines: overflow text aligns with content, not decoration. 13em scales with --log-font-size. */
 /* When time/number are shown, reserve 1.25em left for severity bar (dot at 0.69em + 0.54em) so the bar does not cover the numbers. */
-.line:has(.line-decoration) {
+/* Stack-headers now render the same .line-decoration prefix (counter + chevron)
+   as regular log rows so they get a clickable line-number column, instead of
+   the prior bespoke .line-deco-spacer-only padding + inline chevron. */
+.line:has(.line-decoration),
+.stack-header:has(.line-decoration) {
     padding-left: var(--deco-prefix-width-em, 14.25em); /* 1.25em bar clearance + dynamic decoration width */
     text-indent: calc(-1 * var(--deco-content-indent-em, 13em));
 }
-.line:has(.line-decoration) .line-decoration {
+.line:has(.line-decoration) .line-decoration,
+.stack-header:has(.line-decoration) .line-decoration {
     /* Pulled right of severity bar by padding; indent pulls decoration start to 1.25em */
     margin-right: 0;
     /* Fixed-width prefix column. The hanging-indent rule above already ASSUMES

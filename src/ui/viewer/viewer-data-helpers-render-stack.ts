@@ -31,7 +31,7 @@ export function getStackHeaderRenderScript(): string {
     The header carries a tooltip describing the trace state and an inline
     .stack-toggle chevron. Click anywhere on the row routes through the
     existing whole-row .stack-header[data-gid] handler. */
-function renderStackHeader(item, html, spacingCls, matchCls, barCls, idxAttr) {
+function renderStackHeader(item, idx, html, spacingCls, matchCls, barCls, idxAttr) {
     /* Tooltip + chevron glyph from the header's collapse state:
        - collapsed === true  : user (or default) collapsed the trace explicitly  → ▶
        - collapsed === false : fully expanded, no hidden frames                  → ▼
@@ -77,29 +77,20 @@ function renderStackHeader(item, html, spacingCls, matchCls, barCls, idxAttr) {
     var hdrLevelCls = (item.level && !item.isContext) ? ' level-' + item.level : '';
     var hdrCtxCls = item.isContext ? ' context-line' + (item.isContextFirst ? ' context-first' : '') : '';
     var hdrTitleAttr = ' title="' + _hdrTip.replace(/"/g, '&quot;') + '"';
-    /* No inline chevron on the stack-header itself — the toggle moved to
-       the previous log line's counter-row chevron (data-affordance-kind="stack",
-       stamped by computeRowAffordances when a row's next visible neighbor
-       is a multi-frame stack-header). The stack-header is now purely
-       informational text; click anywhere on the row still toggles via the
-       existing .stack-header[data-gid] whole-row handler in
-       viewer-script-click-handlers.ts, so accessibility / fallback
-       interactivity is preserved even when the counter column is hidden
-       or the previous row is not visible. */
-    var chev = '';
-    /* Column alignment: a stack header carries no .line-decoration prefix, so
-       without help it sits at the bare .stack-header padding-left (16px) while
-       every decorated log line starts at --deco-prefix-width-em (~14.25em).
-       The header then juts far out to the LEFT of the message column and reads
-       as broken. line-deco-spacer-only reserves the same left padding (the
-       exact pattern repeat-notification chips already use) so the header's
-       chevron + text land in the content column. Gated on areDecorationsOn()
-       because when decorations are off there is no column to align to. */
-    var hdrDecoCls = (typeof areDecorationsOn === 'function' && areDecorationsOn())
-        ? ' line-deco-spacer-only' : '';
+    /* Stack-header renders through the same decoration prefix path as a
+       regular log row — line number + chevron in the counter column,
+       clickable. getCounterAffordance reads item.type === 'stack-header'
+       and item.frameCount > 1 and emits the ▶/▼ chevron with
+       data-affordance-kind="stack" data-stack-gid="<gid>". The whole
+       .deco-counter-row wrapper is the click target (line number AND
+       chevron), routed by handleCounterRowClick → toggleStackGroup.
+       _hasChildren gate: 1-frame stacks have nothing to expand, so
+       getCounterAffordance returns the bare counter + empty chevron
+       spacer (same layout, no interactivity). */
+    var hdrDeco = (typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item, idx, null) : '';
     return '<div class="stack-header' + hdrLevelCls + matchCls + spacingCls + barCls
-        + hdrHeat + hdrCtxCls + hdrDecoCls + '"' + idxAttr + hdrTitleAttr
-        + ' data-gid="' + item.groupId + '">' + chev + hdrQb + html.trim() + dup + '</div>';
+        + hdrHeat + hdrCtxCls + '"' + idxAttr + hdrTitleAttr
+        + ' data-gid="' + item.groupId + '">' + hdrDeco + hdrQb + html.trim() + dup + '</div>';
 }
 
 /** Render a single stack-frame row. Called from renderItem() when item.type === 'stack-frame'.

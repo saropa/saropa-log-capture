@@ -54,21 +54,20 @@ suite("Counter-row affordance — chevron right of the line number", () => {
         );
     });
 
-    test("stack branch fires when the next visible row is a multi-frame stack-header", () => {
-        // The toggle moved off the stack-header (no more inline ▶ stack
-        // chip in the middle of the row) onto the previous log line's
-        // counter-row chevron, so the user expands/collapses the trace
-        // from the line that owns it.
+    test("stack branch fires on multi-frame stack-header rows themselves", () => {
+        // The chevron lives on the stack-header row's own line number,
+        // not on the previous log line. Clicking the line number OR the
+        // chevron toggles the trace via toggleStackGroup(item.groupId).
         assert.ok(
-            aff.includes("item._stackToggleGid != null"),
-            "stack-toggle gid is stamped on the row whose next visible neighbor is a multi-frame header",
+            aff.includes("item.type === 'stack-header' && item.frameCount > 1"),
+            "stack branch must fire when the row IS a multi-frame stack-header",
         );
         assert.ok(
             aff.includes("data-stack-gid"),
             "stack chevron must carry the group id so click routes to toggleStackGroup",
         );
         assert.ok(
-            aff.includes("hdr.collapsed === false"),
+            aff.includes("item.collapsed === false"),
             "chevron must flip to ▼ only when the header is FULLY expanded — preview state stays ▶",
         );
     });
@@ -126,10 +125,6 @@ suite("Counter-row affordance — chevron right of the line number", () => {
         assert.ok(
             aff.includes("_triggeredPeekKey"),
             "pre-pass must also clear/recompute _triggeredPeekKey each tick",
-        );
-        assert.ok(
-            aff.includes("_stackToggleGid"),
-            "pre-pass must also clear/recompute _stackToggleGid each tick",
         );
     });
 
