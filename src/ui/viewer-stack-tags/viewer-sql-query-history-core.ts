@@ -20,6 +20,37 @@ export function getSqlQueryHistoryRuntimeScript(maxFp: number = SQL_QUERY_HISTOR
     return /* javascript */ `
 var sqlQueryHistoryByFp = {};
 var SQL_QUERY_HISTORY_MAX_FP = ${cap};
+/** DB_17: cumulative payload from the host (sidebar logs minus the active log). null = none. */
+var sqlQueryHistoryCumulative = null;
+/** DB_17: user toggle for layering cumulative rows under live ones. Persists via vscodeApi.setState. */
+var sqlQueryHistoryCumulativeEnabled = false;
+/** DB_17 init: read prior toggle preference once at script load. */
+(function loadSqlQueryHistoryCumulativePref() {
+    try {
+        if (typeof vscodeApi === 'undefined' || !vscodeApi.getState) return;
+        var st = vscodeApi.getState();
+        if (st && typeof st.sqlHistoryCumulativeEnabled === 'boolean') {
+            sqlQueryHistoryCumulativeEnabled = st.sqlHistoryCumulativeEnabled;
+        }
+    } catch (_e) { /* state read is best-effort */ }
+})();
+function setSqlQueryHistoryCumulativeFromHost(payload) {
+    sqlQueryHistoryCumulative = payload || null;
+}
+function setSqlQueryHistoryCumulativeEnabled(on) {
+    sqlQueryHistoryCumulativeEnabled = !!on;
+    try {
+        if (typeof vscodeApi !== 'undefined' && vscodeApi.setState) {
+            var st = vscodeApi.getState() || {};
+            st.sqlHistoryCumulativeEnabled = sqlQueryHistoryCumulativeEnabled;
+            vscodeApi.setState(st);
+        }
+    } catch (_e) { /* state write is best-effort */ }
+}
+function hasSqlQueryHistoryCumulativeData() {
+    return !!(sqlQueryHistoryCumulative && sqlQueryHistoryCumulative.fingerprints
+        && Object.keys(sqlQueryHistoryCumulative.fingerprints).length > 0);
+}
 
 function truncateSqlHistoryPreviewString(s) {
     var raw = String(s || '');

@@ -8,6 +8,7 @@ import * as vscode from "vscode";
 import type { ViewerRepeatThresholds } from "../../modules/db/drift-db-repeat-thresholds";
 import type { ViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
 import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift-sql-fingerprint-summary-persist";
+import type { CumulativeSqlFingerprintPayload } from "../../modules/db/cumulative-sql-fingerprint-aggregator";
 import { LineData } from "../../modules/session/session-manager";
 import { HighlightRule } from "../../modules/storage/highlight-rules";
 import { FilterPreset } from "../../modules/storage/filter-presets";
@@ -213,11 +214,8 @@ export class LogViewerProvider
   setViewerDbDetectorToggles(toggles: ViewerDbDetectorToggles): void {
     state.setViewerDbDetectorTogglesImpl(this, toggles);
   }
-  setDbBaselineFingerprintSummary(
-    entries: Readonly<Record<string, PersistedDriftSqlFingerprintEntryV1>> | null,
-  ): void {
-    state.setDbBaselineFingerprintSummaryImpl(this, entries);
-  }
+  setDbBaselineFingerprintSummary(e: Readonly<Record<string, PersistedDriftSqlFingerprintEntryV1>> | null): void { state.setDbBaselineFingerprintSummaryImpl(this, e); }
+  setCumulativeSqlFingerprintSummary(p: CumulativeSqlFingerprintPayload | null): void { state.setCumulativeSqlFingerprintSummaryImpl(this, p); }
   setViewerSlowBurstThresholds(thresholds: ViewerSlowBurstThresholds): void {
     state.setViewerSlowBurstThresholdsImpl(this, thresholds);
   }
@@ -299,7 +297,9 @@ export class LogViewerProvider
     const obj = Object.fromEntries(counts);
     const total = [...counts.values()].reduce((s, n) => s + n, 0);
     this.postMessage({ type: "updateWatchCounts", counts: obj });
-    if (total > this.unreadWatchHits) { this.unreadWatchHits = total; }
+    // Suppress badge while the panel is visible — onDidChangeVisibility only fires
+    // on transitions, so hits landing while already open would silently re-light it.
+    this.unreadWatchHits = [...this.views].some((v) => v.visible) ? 0 : Math.max(this.unreadWatchHits, total);
     for (const v of this.views) { helpers.updateBadge(v, this.unreadWatchHits); }
   }
 

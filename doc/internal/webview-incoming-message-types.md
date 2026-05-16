@@ -121,10 +121,11 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `showIntegrationContext` | viewer-message-handler-panels.ts |
 | `showKeyboardShortcuts` | viewer-message-handler-session-ui.ts |
 | `showRelatedQueries` | viewer-message-handler-panels.ts |
+| `sqlHistoryCrossLogJump` | viewer-message-handler-session-ui.ts |
 | `startRecordViewerKey` | viewer-message-handler-actions.ts |
 | `togglePause` | viewer-message-handler-actions.ts |
 | `trackInteraction` | viewer-message-handler.ts |
 | `viewerKeybindingRecordCancelled` | viewer-message-handler-actions.ts |
 | `viewerKeybindingRecorded` | viewer-message-handler-actions.ts |
 
-**Total:** 119 distinct types.
+**Total:** 120 distinct types.
