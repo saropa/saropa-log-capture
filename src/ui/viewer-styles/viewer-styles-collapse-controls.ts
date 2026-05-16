@@ -60,12 +60,16 @@ export function getCollapseControlStyles(): string {
        not interrupted. Hover lifts to 1 so the click target is obvious. */
     opacity: 0.55;
 }
-/* Defensive: if a viewer-divider ever ends up with a level-bar-* class
-   (it shouldn't anymore — the JS bridge that stamped these is gone, the
-   connector is pure CSS now), suppress the dot. The row is a control
-   affordance, not a log line, and a severity dot on it would be misleading. */
+/* Dividers carry a level-bar-* class when they sit inside a same-level
+   chain — the render loop stamps the surrounding chain's level so the
+   :has(+ .level-bar-X) sibling selector on the previous row can find a
+   matching neighbor and extend the chain stripe through the divider. The
+   stripe (::after) IS allowed to paint on the divider — that's what keeps
+   the chain visually unbroken across hidden-line gaps. But the dot
+   (::before) must stay suppressed: the divider is a control affordance,
+   not a log line, and a severity dot on it would read as "this row has
+   the level" rather than "the chain passes through here." */
 .viewer-divider[class*="level-bar-"]::before { display: none; }
-.viewer-divider[class*="level-bar-"]::after  { display: none; }
 
 /* ===================================================================
    Dedup badge — inline "×N" pill at the end of a dedup-fold survivor.

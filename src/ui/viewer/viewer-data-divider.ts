@@ -33,7 +33,7 @@ var showCollapseDividerLabels = ${seed};
 /** Build the HTML for an inline divider row that announces a filter-hidden
     gap between two visible log lines. Click → reveal the gap under a fresh
     peek key (peekChevron(from, to)). */
-function buildHiddenGapDivider(from, to, info) {
+function buildHiddenGapDivider(from, to, info, chainLevel) {
     var n = info.count;
     var pillText = n + ' hidden line' + (n !== 1 ? 's' : '') + ' \\u00b7 show';
     var tip = (typeof buildHiddenTip === 'function') ? buildHiddenTip(info) : (n + ' hidden');
@@ -46,7 +46,12 @@ function buildHiddenGapDivider(from, to, info) {
     var aria = !showCollapseDividerLabels
         ? ' aria-label="' + dividerHtmlAttrEscape(pillText) + '"'
         : '';
-    return '<div class="viewer-divider" role="button" aria-expanded="false"'
+    /* level-bar-{chainLevel} on the divider lets the CSS sibling-aware chain
+       extend through it. Without this class the :has(+ .level-bar-X) selector
+       on the previous row fails (divider is the immediate next sibling and
+       carries no level), and the chain stripe breaks at every gap divider. */
+    var lvlCls = chainLevel ? ' level-bar-' + chainLevel : '';
+    return '<div class="viewer-divider' + lvlCls + '" role="button" aria-expanded="false"'
         + ' data-divider-action="show-gap"'
         + ' data-hidden-from="' + from + '"'
         + ' data-hidden-to="' + to + '"'
@@ -64,7 +69,7 @@ function buildHiddenGapDivider(from, to, info) {
     of an expansion eliminates the "I clicked near where I opened the
     expand control and lines I didn't ask to hide vanished" failure mode.
     The user can collapse from wherever they scrolled to. */
-function buildPeekHideDivider(peekKey, count, pos) {
+function buildPeekHideDivider(peekKey, count, pos, chainLevel) {
     var label = (pos === 'end')
         ? 'hide ' + count + ' revealed (above) \\u00b7 collapse'
         : 'hide ' + count + ' revealed \\u00b7 collapse';
@@ -76,7 +81,8 @@ function buildPeekHideDivider(peekKey, count, pos) {
     var aria = !showCollapseDividerLabels
         ? ' aria-label="' + dividerHtmlAttrEscape(label) + '"'
         : '';
-    return '<div class="viewer-divider" role="button" aria-expanded="true"'
+    var lvlCls = chainLevel ? ' level-bar-' + chainLevel : '';
+    return '<div class="viewer-divider' + lvlCls + '" role="button" aria-expanded="true"'
         + ' data-divider-action="hide-peek"'
         + ' data-peek-key="' + peekKey + '"'
         + ' data-peek-pos="' + pos + '"'
@@ -119,7 +125,7 @@ function getPreviewModeHiddenInfo(item) {
 /** Build a "more frames hidden" divider for a preview-mode stack group.
     Click → expand the whole stack via toggleStackGroup(gid). The click
     handler dispatches on data-divider-action='show-frames'. */
-function buildPreviewFramesDivider(info) {
+function buildPreviewFramesDivider(info, chainLevel) {
     var pillText = info.hidden + ' more stack frame' + (info.hidden !== 1 ? 's' : '')
         + ' hidden \\u00b7 show all';
     var tip = 'Preview mode \\u00b7 ' + info.shown + ' of ' + info.total
@@ -131,7 +137,8 @@ function buildPreviewFramesDivider(info) {
     var aria = !showCollapseDividerLabels
         ? ' aria-label="' + dividerHtmlAttrEscape(pillText) + '"'
         : '';
-    return '<div class="viewer-divider" role="button" aria-expanded="false"'
+    var lvlCls = chainLevel ? ' level-bar-' + chainLevel : '';
+    return '<div class="viewer-divider' + lvlCls + '" role="button" aria-expanded="false"'
         + ' data-divider-action="show-frames"'
         + ' data-gid="' + info.gid + '"'
         + ' title="' + titleEsc + '"'
