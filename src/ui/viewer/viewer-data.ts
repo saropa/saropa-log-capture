@@ -145,8 +145,13 @@ function applyCompressDedupModes() {
            are no longer hidden. */
         if (cleared.compressDupHiddenIndices != null) delete cleared.compressDupHiddenIndices;
     }
-    var useConsecutive = (typeof compressLinesMode !== 'undefined') && compressLinesMode;
+    var useExactConsecutive = (typeof compressLinesMode !== 'undefined') && compressLinesMode;
     var useGlobal = (typeof compressNonConsecutiveMode !== 'undefined') && compressNonConsecutiveMode;
+    /* Numeric-variant fold runs only when no explicit compress mode is on — the explicit modes are
+       strict dedup the user opted into, and silently broadening their match rule would surprise. */
+    var useNumericVariant = !useExactConsecutive && !useGlobal
+        && (typeof collapseNumericVariants !== 'undefined') && collapseNumericVariants;
+    var useConsecutive = useExactConsecutive || useNumericVariant;
     if (!useConsecutive && !useGlobal) return;
 
     /** Build a dedup key from the visible message body — strip the same
@@ -172,6 +177,14 @@ function applyCompressDedupModes() {
             html = html.replace(/^(?:\\[[^\\]]+\\]\\s?)+/, '');
         }
         var t = stripTags(html).replace(/\\s+/g, ' ').trim();
+        if (t.length === 0) return null;
+        /* Numeric-variant fold replaces every digit run with a placeholder so lines that differ
+           only by counters/IDs hash to the same key. Source apps that emit "Repeated log #1",
+           "Repeated log #2", … flood the viewer otherwise (FloodGuard and exact dedup both see
+           distinct strings). Length normalization is intentional — '#1' and '#29' fold together.
+           Active only when neither explicit compress mode is on (see useNumericVariant above);
+           strict compress keeps the unmodified key. */
+        if (useNumericVariant) t = t.replace(/\\d+/g, '<n>');
         if (t.length === 0) return null;
         return t;
     }
