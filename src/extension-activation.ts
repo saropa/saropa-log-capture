@@ -192,7 +192,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     viewerProvider.setWatchAcknowledgedHandler(() => sessionManager.getWatcher().resetCounts());
 
     const { updateSessionNav } = wireViewerSpecificHandlers({
-        viewerProvider, historyProvider, bookmarkStore, popOutPanel, context, version,
+        viewerProvider, historyProvider, bookmarkStore, popOutPanel, broadcaster, outputChannel, context, version,
     });
 
     context.subscriptions.push(

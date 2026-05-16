@@ -15,6 +15,7 @@ import type { ViewerRepeatThresholds } from "../../modules/db/drift-db-repeat-th
 import type { ViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
 import type { SessionDisplayOptions } from "../session/session-display";
 import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift-sql-fingerprint-summary-persist";
+import type { CumulativeSqlFingerprintPayload } from "../../modules/db/cumulative-sql-fingerprint-aggregator";
 import type { ErrorClassificationSettings, ErrorRateConfig, ViewerDbDetectorToggles } from "../../modules/config/config-types";
 
 /** Contract for a webview that renders captured debug output. */
@@ -81,6 +82,13 @@ export interface ViewerTarget {
   setDbBaselineFingerprintSummary(
     entries: Readonly<Record<string, PersistedDriftSqlFingerprintEntryV1>> | null,
   ): void;
+  /**
+   * Plan **DB_17**: aggregate of persisted SQL fingerprint summaries from every sidebar log
+   * EXCEPT the currently displayed one. Webview overlays this on top of its live per-log
+   * rollup when the SQL History panel's `Cumulative across logs` toggle is on.
+   * Pass `null` to clear (e.g. when no sidebar logs have persisted summaries).
+   */
+  setCumulativeSqlFingerprintSummary(payload: CumulativeSqlFingerprintPayload | null): void;
   /** Push an arbitrary message to the webview (e.g. learning options). */
   postToWebview(message: unknown): void;
 }

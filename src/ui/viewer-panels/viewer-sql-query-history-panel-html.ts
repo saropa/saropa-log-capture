@@ -23,6 +23,10 @@ export function getSqlQueryHistoryPanelHtml(): string {
     </div>
     <div class="sql-query-history-toolbar">
         <input id="sql-query-history-search" type="search" placeholder="Filter by fingerprint or preview\u2026" />
+        <label id="sql-query-history-cumulative-wrap" class="sql-qh-cumulative u-hidden" title="Aggregate SQL fingerprints across every sidebar log (excludes the active log to avoid double-counting). Cross-log rows show the fingerprint only \u2014 readable SQL text comes in Step 2.">
+            <input id="sql-query-history-cumulative" type="checkbox" />
+            <span>Cumulative across logs</span>
+        </label>
     </div>
     <div id="sql-query-history-drift-status" class="sql-query-history-drift-status u-hidden" role="status" aria-live="polite"></div>
     <div id="sql-query-history-hint" class="sql-query-history-hint u-hidden" role="status" aria-live="polite"></div>

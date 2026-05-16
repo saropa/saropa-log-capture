@@ -61,6 +61,7 @@ Heuristic index of `type` fields on objects passed to `this.postMessage` / `targ
 | `setContextLines` | src/ui/provider/log-viewer-provider-state.ts |
 | `setContextViewLines` | src/ui/provider/log-viewer-provider-state.ts |
 | `setCopyContextLines` | src/ui/provider/log-viewer-provider-state.ts |
+| `setCumulativeSqlFingerprintSummary` | src/ui/provider/log-viewer-provider-state.ts |
 | `setDbBaselineFingerprintSummary` | src/ui/provider/log-viewer-provider-state.ts |
 | `setDriftAdvisorAvailable` | src/ui/provider/log-viewer-provider-setup.ts, src/ui/provider/viewer-message-handler-panels.ts |
 | `setDriftAdvisorDbPanelMeta` | src/ui/provider/log-viewer-provider-load.ts |
@@ -100,4 +101,4 @@ Heuristic index of `type` fields on objects passed to `this.postMessage` / `targ
 | `updateWatchCounts` | src/ui/provider/log-viewer-provider.ts |
 | `viewerKeybindingRecordMode` | src/ui/provider/viewer-message-handler-actions.ts |
 
-**Total:** 93 distinct types.
+**Total:** 94 distinct types.

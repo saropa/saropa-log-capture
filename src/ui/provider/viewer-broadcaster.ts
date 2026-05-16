@@ -17,6 +17,7 @@ import type { ScopeContext } from "../../modules/storage/scope-context";
 import type { SessionDisplayOptions } from "../session/session-display";
 import type { ViewerTarget } from "../viewer/viewer-target";
 import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift-sql-fingerprint-summary-persist";
+import type { CumulativeSqlFingerprintPayload } from "../../modules/db/cumulative-sql-fingerprint-aggregator";
 import type { DiagnosticCache } from "../../modules/diagnostics/diagnostic-cache";
 import type { ErrorClassificationSettings, ErrorRateConfig, ViewerDbDetectorToggles } from "../../modules/config/config-types";
 
@@ -193,6 +194,9 @@ export class ViewerBroadcaster implements ViewerTarget {
     entries: Readonly<Record<string, PersistedDriftSqlFingerprintEntryV1>> | null,
   ): void {
     for (const t of this.targets) { t.setDbBaselineFingerprintSummary(entries); }
+  }
+  setCumulativeSqlFingerprintSummary(payload: CumulativeSqlFingerprintPayload | null): void {
+    for (const t of this.targets) { t.setCumulativeSqlFingerprintSummary(payload); }
   }
   postToWebview(message: unknown): void {
     for (const t of this.targets) { t.postToWebview(message); }

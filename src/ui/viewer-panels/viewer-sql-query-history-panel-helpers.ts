@@ -43,12 +43,36 @@ export function getSqlQueryHistoryPanelHelpersScript(): string {
     }
     function getSqlQueryHistoryRowsForRender() {
         var fp, row, rows = [];
+        var liveSeen = Object.create(null);
         for (fp in sqlQueryHistoryByFp) {
             if (!Object.prototype.hasOwnProperty.call(sqlQueryHistoryByFp, fp)) continue;
             row = sqlQueryHistoryByFp[fp];
+            liveSeen[fp] = true;
             rows.push({ fp: fp, count: row.count, firstIdx: row.firstIdx, lastIdx: row.lastIdx,
                 lastSeen: row.lastSeen, preview: row.preview || '', sampleSql: row.sampleSql || '',
-                maxDur: row.maxDur });
+                maxDur: row.maxDur, crossLog: false });
+        }
+        /* DB_17: when toggle is on, layer in fingerprints from sidebar logs other than the active one.
+           Skip any fingerprint already present in the live map (that fingerprint exists in the active log
+           and the live row's preview is more readable than a bare fingerprint hash). */
+        if (sqlQueryHistoryCumulativeEnabled
+            && typeof hasSqlQueryHistoryCumulativeData === 'function'
+            && hasSqlQueryHistoryCumulativeData()) {
+            var cum = sqlQueryHistoryCumulative.fingerprints;
+            for (fp in cum) {
+                if (!Object.prototype.hasOwnProperty.call(cum, fp)) continue;
+                if (liveSeen[fp]) continue;
+                var ce = cum[fp];
+                rows.push({ fp: fp, count: ce.count, firstIdx: -1, lastIdx: -1,
+                    /* No lastSeen on persisted cumulative rows — sort puts them after live ties on count. */
+                    lastSeen: 0,
+                    /* Step 1: cumulative-only rows have no SQL text persisted yet — show fingerprint. */
+                    preview: '', sampleSql: '',
+                    maxDur: ce.maxDurationMs,
+                    crossLog: true,
+                    crossLogUriString: ce.firstSourceUriString || '',
+                    crossLogLine: typeof ce.firstSourceLine === 'number' ? ce.firstSourceLine : -1 });
+            }
         }
         return rows;
     }

@@ -128,6 +128,24 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
     case "browseSessionRoot": ctx.onBrowseSessionRoot?.()?.then(undefined, () => {}); return true;
     case "clearSessionRoot": ctx.onClearSessionRoot?.()?.then(undefined, () => {}); return true;
     case "openSessionFromPanel": ctx.onOpenSessionFromPanel?.(msgStr(msg, "uriString")); return true;
+    case "sqlHistoryCrossLogJump": {
+      /* DB_17: SQL History panel row jump where the fingerprint's first occurrence is in
+         a sidebar log other than the active one. Load that log first (if needed), then
+         post `scrollToLine` so the webview scrolls to the persisted physical line index. */
+      const targetUri = msgStr(msg, "uriString");
+      const lineRaw = msg.line;
+      const line = typeof lineRaw === "number" && isFinite(lineRaw) ? Math.max(0, Math.floor(lineRaw)) : 0;
+      if (!targetUri) { return true; }
+      (async () => {
+        const currentUri = ctx.currentFileUri?.toString();
+        if (targetUri !== currentUri) {
+          await Promise.resolve(ctx.onOpenSessionFromPanel?.(targetUri));
+        }
+        /* Webview line numbers are 1-based; persisted firstOccurrenceLine is 0-based. */
+        ctx.post({ type: 'scrollToLine', line: line + 1 });
+      })().catch(() => {});
+      return true;
+    }
     case "openSessionForSignalType": {
       /* Resolve to a specific session (fingerprint preferred), then ask the webview to scroll to
          the matching line. If the resolved session is already loaded we skip the load and post
