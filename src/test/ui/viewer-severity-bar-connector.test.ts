@@ -11,7 +11,6 @@ import { getViewportRenderScript } from '../../ui/viewer/viewer-data-viewport';
 import { getViewerDataHelpersRender } from '../../ui/viewer/viewer-data-helpers-render';
 import { getStackHeaderRenderScript as getStackRenderScript } from '../../ui/viewer/viewer-data-helpers-render-stack';
 import { getDecorationStyles } from '../../ui/viewer-styles/viewer-styles-decoration';
-import { getLineStyles } from '../../ui/viewer-styles/viewer-styles-lines';
 import { getViewerStyles } from '../../ui/viewer-styles/viewer-styles';
 import { getViewerDataAddScript } from '../../ui/viewer/viewer-data-add';
 
@@ -319,34 +318,41 @@ suite('Stack header level CSS class in renderItem', () => {
         );
     });
 
-    test('should align the stack header to the content column when decorations are on', () => {
-        // A stack header carries no .line-decoration prefix, so without help it
-        // sits at the bare .stack-header padding-left (16px) while decorated log
-        // lines start at --deco-prefix-width-em (~14.25em) — the header jutted
-        // far left of the message column and read as broken. hdrDecoCls adds
-        // line-deco-spacer-only (the same affordance repeat-notification chips
-        // use) so the header lands in the content column. Gated on
-        // areDecorationsOn() because with decorations off there is no column.
+    test('stack-header gets its own .line-decoration prefix (line number + chevron)', () => {
+        // Stack-headers now render through getDecorationPrefix like regular
+        // log rows, so they get a clickable line-number column with a chevron.
+        // The shared CSS rule .line:has(.line-decoration), .stack-header:has(.line-decoration)
+        // in viewer-styles-decoration.ts gives them the same padding-left +
+        // text-indent treatment, replacing the bespoke .line-deco-spacer-only
+        // class that used to handle stack-header indent in isolation.
         assert.ok(
-            renderChunk.includes('areDecorationsOn') && renderChunk.includes('line-deco-spacer-only'),
-            'renderStackHeader must add line-deco-spacer-only when areDecorationsOn()',
+            renderChunk.includes('getDecorationPrefix(item, idx, null)'),
+            'renderStackHeader must call getDecorationPrefix so the row gets a counter-row chevron',
         );
+        // Stack-FRAMES still use line-deco-spacer-only (they don't render
+        // their own decoration prefix); only the HEADER stops using it.
+        // Verify by checking the renderStackHeader function specifically.
+        const headerFnMatch = /function renderStackHeader\([^{]*\{[\s\S]*?\n\}/.exec(renderChunk);
+        assert.ok(headerFnMatch, 'renderStackHeader function must exist');
         assert.ok(
-            renderChunk.includes('hdrCtxCls + hdrDecoCls'),
-            'hdrDecoCls must be concatenated into the stack-header class list',
+            !headerFnMatch![0].includes('line-deco-spacer-only'),
+            'line-deco-spacer-only must be retired from renderStackHeader — the shared :has(.line-decoration) rule handles it now',
         );
     });
 });
 
 suite('Stack header column alignment CSS', () => {
-    const css = getLineStyles();
+    const css = getDecorationStyles();
 
-    test('should reserve the decoration-column padding for stack headers', () => {
-        // Pairs with the renderStackHeader hdrDecoCls test above: the rendered
-        // class is inert without a CSS rule binding it to the deco-column width.
+    test('shared :has(.line-decoration) rule covers both .line and .stack-header', () => {
+        // Stack-headers now render their own .line-decoration prefix (line
+        // number + chevron). The padding-left + text-indent rule that gives
+        // regular .line rows their hanging indent must also apply to
+        // stack-headers, otherwise the stack-header text juts to the left
+        // of the message column.
         assert.ok(
-            css.includes('.stack-header.line-deco-spacer-only'),
-            'viewer-styles-lines must give .stack-header.line-deco-spacer-only the deco-column padding-left',
+            /\.line:has\(\.line-decoration\)[^{]*\.stack-header:has\(\.line-decoration\)/.test(css),
+            'the padding-left rule must include both .line and .stack-header selectors',
         );
     });
 });

@@ -21,8 +21,11 @@ import { getViewerDataAddScript } from '../../ui/viewer/viewer-data-add';
 suite('viewer column layout (path 1 — fixed-width decoration prefix)', () => {
     test('.line-decoration is pinned to a fixed-width inline-block column', () => {
         const css = getDecorationStyles();
-        const rule = /\.line:has\(\.line-decoration\)\s*\.line-decoration\s*\{[^}]*\}/s.exec(css);
-        assert.ok(rule, 'expected the ".line:has(.line-decoration) .line-decoration" rule');
+        // The rule now applies to both .line and .stack-header (stack-headers
+        // render the same line-decoration prefix). The regex tolerates extra
+        // selectors via the [\s\S]* in the selector list before .line-decoration.
+        const rule = /\.line:has\(\.line-decoration\)[^{]*\.line-decoration\s*\{[^}]*\}/s.exec(css);
+        assert.ok(rule, 'expected the ".line:has(.line-decoration) ... .line-decoration" rule');
         const body = rule[0];
         assert.ok(/display:\s*inline-block/.test(body), 'decoration prefix must be display:inline-block');
         assert.ok(
@@ -61,7 +64,7 @@ suite('viewer column layout (path 1 — fixed-width decoration prefix)', () => {
         // lines still align under the message column. A flex rewrite would have
         // neutralized text-indent — this asserts that did NOT happen.
         assert.ok(
-            /\.line:has\(\.line-decoration\)\s*\{[^}]*text-indent:\s*calc\(-1/s.test(css),
+            /\.line:has\(\.line-decoration\)[^{]*\{[^}]*text-indent:\s*calc\(-1/s.test(css),
             'the negative text-indent hanging-indent must remain (wrapped-line alignment)',
         );
     });
