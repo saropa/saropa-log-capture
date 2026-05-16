@@ -135,13 +135,17 @@ export function getDecorationBarStyles(): string {
 .level-bar-info:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-info)::after {
     content: ''; position: absolute;
     left: 0.89em; width: 0.14em;
+    /* Anchor the stripe at THIS row's middle (top: 50%) and let it extend
+       to 50% PAST this row's bottom edge (bottom: -50%). Net: stripe spans
+       from this dot to where the next row's dot will sit (50% into the next
+       row's height). Using percentages (not calc(1em * --log-line-height))
+       so the stripe automatically scales with whatever row height the user's
+       --log-line-height setting produces, including blank rows and lines
+       with non-default line-height. .line / .stack-header parents have
+       overflow: visible so the stripe paints past the row's bottom edge
+       into the next row's top half without clipping. */
     top: 50%;
-    /* Use a fixed row-height multiple, not "height: 100%", so blank rows
-       (quarter-height) still extend the stripe to the next normal row's
-       middle. .line and .stack-header parents have overflow: visible so the
-       stripe can paint past this row's bottom edge into the next row's
-       top half. */
-    height: calc(1em * var(--log-line-height, 1.1));
+    bottom: -50%;
     /* color-mix at 45% replaces opacity — opacity on ::after interacted with
        Chromium/WebKit stacking contexts so the gutter stripe could paint on
        top of the severity dot (::before). */
