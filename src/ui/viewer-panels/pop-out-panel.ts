@@ -15,6 +15,7 @@ import * as vscode from "vscode";
 import type { ViewerRepeatThresholds } from "../../modules/db/drift-db-repeat-thresholds";
 import type { ViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
 import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift-sql-fingerprint-summary-persist";
+import type { CumulativeSqlFingerprintPayload } from "../../modules/db/cumulative-sql-fingerprint-aggregator";
 import { getNonce, buildViewerHtml, getEffectiveViewerLines } from "../provider/viewer-content";
 import { getConfig, viewerDbDetectorTogglesFromConfig } from "../../modules/config/config";
 import type { LineData } from "../../modules/session/session-manager";
@@ -221,6 +222,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setStaticSqlFromFingerprintEnabled(enabled: boolean): void { this.post({ type: "setStaticSqlFromFingerprintEnabled", enabled }); }
   setViewerDbDetectorToggles(toggles: ViewerDbDetectorToggles): void { postViewerDbDetectorToggles(this, toggles); }
   setDbBaselineFingerprintSummary(entries: Readonly<Record<string, PersistedDriftSqlFingerprintEntryV1>> | null): void { postDbBaselineFingerprintSummary(this, entries); }
+  setCumulativeSqlFingerprintSummary(payload: CumulativeSqlFingerprintPayload | null): void { this.post({ type: "setCumulativeSqlFingerprintSummary", payload }); }
   setViewerSlowBurstThresholds(t: ViewerSlowBurstThresholds): void { postViewerSlowBurstThresholds(this, t); }
   setMinimapWidth(width: "xsmall" | "small" | "medium" | "large" | "xlarge"): void { this.post({ type: "minimapWidth", width }); }
   setScrollbarVisible(show: boolean): void { this.post({ type: "scrollbarVisible", show }); }
