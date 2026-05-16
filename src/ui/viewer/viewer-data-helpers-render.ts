@@ -131,12 +131,14 @@ function renderItem(item, idx, prevVis) {
         var chipBlockCls = item.sqlRepeatDrilldownOpen ? ' line-has-block' : '';
         return '<div class="line' + matchCls + chipCtxCls + chipDecoCls + chipBlockCls + '"' + idxAttr + '>' + html + '</div>';
     }
-    /* Stack gutter: when any stack groups exist, non-header lines get an
-       invisible spacer matching the arrow width so line numbers stay aligned. */
+    /* Stack-gutter-spacer retired. It existed to compensate for the OLD
+       inline .stack-toggle ▶ chevron on stack-header rows (regular rows
+       got an invisible-▶ spacer of the same width to keep columns aligned).
+       Now the chevron lives in the counter-row column on BOTH stack-headers
+       AND regular rows, so any compensating spacer would be a one-sided
+       shift — and was exactly the cause of "_StringStackTrace doesn't align
+       with the message column" the user kept reporting. */
     var stackGutter = '';
-    if (typeof nextGroupId !== 'undefined' && nextGroupId > 0 && item.type !== 'stack-header') {
-        stackGutter = '<span class="stack-gutter-spacer">\\u25b6 </span>';
-    }
     var isBlank = isLineContentBlank(item);
     var barCls = '';
     // Blank lines get no bar class here; the connector bridge in renderViewport() adds the
