@@ -101,6 +101,14 @@ export function getDecorationBarStyles(): string {
 [class*="level-bar-"]::before { background: var(--bar-color); }
 /* Blank lines: no dot, the connector ::after below still paints across them. */
 .line-blank[class*="level-bar-"]::before { display: none; }
+/* Stack trace rows (header + frames) belong to the SAME logical output as
+   the log line above them — the trace is just "more detail for the line."
+   Showing a severity dot on each frame would visually multiply the entry's
+   weight. The chain ::after still paints on these rows so the gutter line
+   reads as one continuous band through the whole entry; only the dots are
+   suppressed. */
+.stack-header[class*="level-bar-"]::before,
+.line.stack-line[class*="level-bar-"]::before { display: none; }
 
 /* Connector line between consecutive same-level dots.
    Declarative — no JS chain walking. Each row paints its OWN stripe ONLY
