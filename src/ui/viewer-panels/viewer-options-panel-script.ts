@@ -199,6 +199,8 @@ function syncOptionsPanelUi() {
     if (compressCheck && typeof compressLinesMode !== 'undefined') compressCheck.checked = compressLinesMode;
     var compressGlobalCheck = document.getElementById('opt-compress-lines-global');
     if (compressGlobalCheck && typeof compressNonConsecutiveMode !== 'undefined') compressGlobalCheck.checked = compressNonConsecutiveMode;
+    var numericVariantCheck = document.getElementById('opt-collapse-numeric-variants');
+    if (numericVariantCheck && typeof collapseNumericVariants !== 'undefined') numericVariantCheck.checked = collapseNumericVariants;
     syncIntegrationsUi();
     syncAudioUi();
     renderSeverityKeywordsDisplay();
@@ -239,6 +241,9 @@ function resetOptionsToDefault() {
     if (typeof hideBlankLines !== 'undefined') hideBlankLines = false;
     if (typeof compressLinesMode !== 'undefined') compressLinesMode = false;
     if (typeof compressNonConsecutiveMode !== 'undefined') compressNonConsecutiveMode = false;
+    /* Default-on per user preference: numeric-variant fold catches floods like "Repeated log #N"
+       that the source app has already deduped. Reset restores the default rather than disabling. */
+    if (typeof collapseNumericVariants !== 'undefined') collapseNumericVariants = true;
     if (typeof audioEnabled !== 'undefined') audioEnabled = false;
     if (typeof audioRateLimit !== 'undefined') audioRateLimit = 2000;
     if (typeof setAudioVolume === 'function') setAudioVolume(30);
