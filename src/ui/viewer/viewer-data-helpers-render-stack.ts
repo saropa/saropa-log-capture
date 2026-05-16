@@ -77,17 +77,16 @@ function renderStackHeader(item, html, spacingCls, matchCls, barCls, idxAttr) {
     var hdrLevelCls = (item.level && !item.isContext) ? ' level-' + item.level : '';
     var hdrCtxCls = item.isContext ? ' context-line' + (item.isContextFirst ? ' context-first' : '') : '';
     var hdrTitleAttr = ' title="' + _hdrTip.replace(/"/g, '&quot;') + '"';
-    /* Stack-headers have no line-number prefix to attach a chevron to, so
-       the toggle stays inline at the START of the header text — the OG
-       "▶ stack" / "▼ stack" affordance, in normal row flow (not floating).
-       data-gid lets a click on the chevron resolve to the same group via
-       the dedicated handler in viewer-peek-chevron.ts even though the
-       whole-row .stack-header[data-gid] handler in
-       viewer-script-click-handlers.ts already catches clicks anywhere on
-       the row. Omitted for 1-frame stacks (no children to toggle). */
-    var chev = _hasChildren
-        ? '<span class="stack-toggle" data-gid="' + item.groupId + '">' + _glyph + ' stack</span>\\u00a0'
-        : '';
+    /* No inline chevron on the stack-header itself — the toggle moved to
+       the previous log line's counter-row chevron (data-affordance-kind="stack",
+       stamped by computeRowAffordances when a row's next visible neighbor
+       is a multi-frame stack-header). The stack-header is now purely
+       informational text; click anywhere on the row still toggles via the
+       existing .stack-header[data-gid] whole-row handler in
+       viewer-script-click-handlers.ts, so accessibility / fallback
+       interactivity is preserved even when the counter column is hidden
+       or the previous row is not visible. */
+    var chev = '';
     /* Column alignment: a stack header carries no .line-decoration prefix, so
        without help it sits at the bare .stack-header padding-left (16px) while
        every decorated log line starts at --deco-prefix-width-em (~14.25em).

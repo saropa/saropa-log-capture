@@ -97,6 +97,19 @@ function handleCounterRowClick(e) {
             return true;
         }
     }
+    if (kind === 'stack') {
+        /* Stack toggle moved off the stack-header (no more inline chip) and
+           onto the previous log line's counter-row chevron. data-stack-gid
+           routes through the same toggleStackGroup handler the whole-row
+           click in viewer-script-click-handlers.ts uses, so behavior is
+           identical regardless of where the user clicks. */
+        var stackGid = parseInt(row.dataset.stackGid, 10);
+        if (!isNaN(stackGid) && typeof toggleStackGroup === 'function') {
+            toggleStackGroup(stackGid);
+            stopHandled(e);
+            return true;
+        }
+    }
     return false;
 }
 
