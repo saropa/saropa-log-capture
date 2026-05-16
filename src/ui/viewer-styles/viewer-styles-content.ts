@@ -128,17 +128,20 @@ export function getContentStyles(): string {
     overflow-wrap: normal;
 }
 /* Broken-chain glyph that replaces the raw "<asynchronous suspension>" text
-   inside expanded stack traces. The original phrase dominated expanded
-   Dart traces (one per await) and shifted the eye off the actual frames;
-   the glyph keeps the visual marker but compresses ~25 chars to one.
-   Slightly dimmed so it reads as a separator, not a frame. cursor:help
-   surfaces the title tooltip explanation on hover. */
-.async-gap-glyph {
-    display: inline-block;
-    opacity: 0.65;
-    cursor: help;
-    margin-left: 2px;
-}
+   on Dart async stack frames. The wrapper holds the ORIGINAL phrase in a
+   .async-gap-text span styled with the sr-only pattern: visually clipped to
+   1px but kept in the DOM so getSelection().toString() and stripTags() still
+   capture it on Ctrl+C. The visible icon comes from CSS ::before — pseudo-
+   element content is never included in clipboard text, which is why the
+   icon does not contaminate copies. Click toggles .expanded which swaps the
+   icon for the readable text inline. */
+.async-gap-glyph { display: inline-block; cursor: pointer; margin-left: 6px; position: relative; vertical-align: baseline; }
+.async-gap-glyph::before { content: '\\26d3\\fe0f\\200d\\1f4a5'; opacity: 0.55; user-select: none; font-size: 0.85em; margin-right: 2px; }
+.async-gap-glyph:hover::before { opacity: 0.85; }
+.async-gap-glyph:focus { outline: 1px dotted var(--vscode-focusBorder); }
+.async-gap-glyph .async-gap-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; user-select: text; color: transparent; }
+.async-gap-glyph.expanded::before { content: ''; margin: 0; }
+.async-gap-glyph.expanded .async-gap-text { position: static; width: auto; height: auto; overflow: visible; clip: auto; color: var(--vscode-descriptionForeground); opacity: 0.75; }
 /* Thread header lines from Android/Java thread dumps */
 .thread-header {
     color: var(--vscode-textLink-foreground);

@@ -17,38 +17,78 @@
  */
 export function getStackIngestScript(): string {
     return /* javascript */ `
+/* HTML for the inline broken-chain glyph appended onto the prior frame in
+   place of a standalone "<asynchronous suspension>" row. The visible icon
+   comes from CSS ::before (not in DOM text), so it never lands on the
+   clipboard. The raw phrase lives inside .async-gap-text using the sr-only
+   pattern (position:absolute; clip): visually hidden but kept in the DOM so
+   getSelection().toString() and stripTags() both capture it on copy.
+   Click toggles .expanded which swaps the icon for the readable text. */
+var ASYNC_GAP_GLYPH_HTML = '<span class="async-gap-glyph" role="button" tabindex="0" title="Async suspension &mdash; the call stack jumped microtasks across an await. Click to reveal the original marker."><span class="async-gap-text">&lt;asynchronous suspension&gt;</span></span>';
+
+/** Find the most recent row of the active stack group — the frame the inline
+    gap glyph should attach to. Walks backwards because group rows are
+    contiguous in allLines, so the first matching groupId is the latest. */
+function findLastGroupRow() {
+    if (!activeGroupHeader) return null;
+    for (var i = allLines.length - 1; i >= 0; i--) {
+        var it = allLines[i];
+        if (it.groupId !== activeGroupHeader.groupId) continue;
+        if (it.type === 'stack-frame' || it.type === 'stack-header') return it;
+    }
+    return null;
+}
+
 /** Try to ingest \`html\` as a stack frame / header / async-gap. Returns true if consumed. */
 function tryIngestStackLine(html, rawText, category, ts, fw, sp, elapsedMs, qualityPercent, lineSource, lineTier, catFiltered) {
     var isAsyncGap = isAsyncGapText(html);
     /* The bare ")" that closes Dart's "_StringStackTrace (#0  …  )" object dump
-       carries no frame info. Without folding it into the active group it fails
-       isStackFrameText(), hits the group-close path in addToData(), and renders
-       as a junk ")" row after every trace. Treated like an async gap: consumed
-       into the group, hidden when collapsed/preview, shown only on full expand.
-       Guarded on activeGroupHeader so a stray ")" with no open trace stays a
-       normal line and never starts a group on its own. */
+       carries no frame info — pure formatting cruft. Without consuming it the
+       ")" fails isStackFrameText(), hits the group-close path in addToData(),
+       and renders as a junk ")" row after every trace. Dropped entirely (no
+       row, no icon) since unlike an async gap it has no information to expand
+       to. Guarded on activeGroupHeader so a stray ")" with no open trace stays
+       a normal line and never starts a group on its own. */
     var isTraceTail = !!activeGroupHeader && /^\\)$/.test(stripTags(html).trim());
     /* Async-gap markers ("<asynchronous suspension>") fold into an OPEN stack group as
-       continuation frames. Without this they fail isStackFrameText(), hit the group-close
-       path in addToData(), and shatter every Dart async trace into ~15 one-frame groups. A
-       gap with no active group (orphan) makes this condition false and falls through to
-       normal-line handling — a gap must never start a group on its own. */
+       an inline glyph on the previous frame. Without this they fail isStackFrameText(),
+       hit the group-close path in addToData(), and shatter every Dart async trace into
+       ~15 one-frame groups. A gap with no active group (orphan) makes this condition
+       false and falls through to normal-line handling — a gap must never start a group
+       on its own. */
     if (!(isStackFrameText(html) || (activeGroupHeader && (isAsyncGap || isTraceTail)))) return false;
-    /* Strip leading whitespace from frame/gap text so the viewer's CSS owns the
+    /* Trace-tail ")" is consumed silently — no row appended. Returning before the
+       glyph-append branch below means we also do NOT emit a trailing icon: there is
+       no async semantic to mark, the ")" is just _StringStackTrace's closing brace. */
+    if (isTraceTail) return true;
+    /* Async gap: append the broken-chain glyph to the previous frame in this
+       group instead of creating a standalone row. Keeps the trace visually
+       compact while preserving the original "<asynchronous suspension>" text
+       in the DOM for selection/copy. frameCount is NOT incremented — gaps are
+       not real frames. */
+    if (isAsyncGap) {
+        var anchor = findLastGroupRow();
+        if (anchor) {
+            anchor.html = (anchor.html || '') + ASYNC_GAP_GLYPH_HTML;
+            /* rawText carries the original phrase verbatim so Alt+Shift+C
+               (copyAsRawText) and search both still hit it. Separator is a
+               single space to match the inline visual; tests assert on
+               trailing "<asynchronous suspension>". */
+            if (anchor.rawText != null) {
+                anchor.rawText = anchor.rawText + ' <asynchronous suspension>';
+            } else {
+                anchor.rawText = stripTags(anchor.html || '');
+            }
+        }
+        return true;
+    }
+    /* Strip leading whitespace from frame text so the viewer's CSS owns the
        indent. Raw Dart stacks emit 6 leading spaces on every continuation frame
        ("      #2  Caller …"); combined with .stack-frames .line padding-left
        this pushed continuation frames further right than the header and broke
        column alignment under expansion. Regex preserves leading ANSI/dim
        <span> wrappers so dim styling on framework frames survives the trim. */
     html = html.replace(/^((?:<[^>]+>)*)\\s+/, '$1');
-    if (isAsyncGap) {
-        /* Render the noisy "<asynchronous suspension>" marker as a compact
-           broken-chain glyph with a tooltip. The original phrase dominates
-           expanded Dart traces (one per await) and shifts the eye off the
-           actual frames. rawText keeps the original text so search still
-           hits "<asynchronous suspension>" verbatim. */
-        html = '<span class="async-gap-glyph" title="Async suspension &mdash; the call stack jumped microtasks across an await. Frames below ran before the await resumed.">⛓️‍💥</span>';
-    }
     resetCompressDupStreak();
     if (typeof breakContinuationGroup === 'function') breakContinuationGroup();
     if (typeof finalizeArtBlock === 'function') finalizeArtBlock();
@@ -56,14 +96,9 @@ function tryIngestStackLine(html, rawText, category, ts, fw, sp, elapsedMs, qual
     var context = (typeof extractContext === 'function') ? extractContext(plainFrame) : null;
 
     if (activeGroupHeader) {
-        /* Async gaps and the ")" trace-tail are payload-free framework noise: force
-           fw=true so calcItemHeight hides them when the header is collapsed or in
-           preview mode, and reveals them only on full expand (user can still inspect
-           await boundaries / the raw trace shape when needed). */
-        var frameFw = (isAsyncGap || isTraceTail) ? true : fw;
         if (!activeGroupHeader._appFrameCount) activeGroupHeader._appFrameCount = 0;
-        var appIdx = frameFw ? -1 : activeGroupHeader._appFrameCount;
-        if (!frameFw) activeGroupHeader._appFrameCount++;
+        var appIdx = fw ? -1 : activeGroupHeader._appFrameCount;
+        if (!fw) activeGroupHeader._appFrameCount++;
         var cTagsF = (typeof parseClassTags === 'function') ? parseClassTags(plainFrame) : [];
         if (cTagsF.length > 0 && activeGroupHeader.classTags) {
             for (var ci = 0; ci < cTagsF.length; ci++) {
@@ -71,15 +106,13 @@ function tryIngestStackLine(html, rawText, category, ts, fw, sp, elapsedMs, qual
             }
         }
         // levelFiltered stamped at birth so frames inheriting a filtered-out level (e.g. 'database') stay hidden when the header is later expanded.
-        var sfItem = { html: html, rawText: rawText || null, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: frameFw, tier: lineTier, level: activeGroupHeader.level, sourceTag: activeGroupHeader.sourceTag, logcatTag: activeGroupHeader.logcatTag, filteredOut: catFiltered, sourceFiltered: false, classFiltered: false, classTags: cTagsF, context: context, _appFrameIdx: appIdx, sourcePath: sp || null, scopeFiltered: false, autoHidden: false, qualityPercent: qualityPercent, source: lineSource, levelFiltered: calcLevelFiltered(activeGroupHeader.level), isAsyncGap: isAsyncGap };
+        var sfItem = { html: html, rawText: rawText || null, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw, tier: lineTier, level: activeGroupHeader.level, sourceTag: activeGroupHeader.sourceTag, logcatTag: activeGroupHeader.logcatTag, filteredOut: catFiltered, sourceFiltered: false, classFiltered: false, classTags: cTagsF, context: context, _appFrameIdx: appIdx, sourcePath: sp || null, scopeFiltered: false, autoHidden: false, qualityPercent: qualityPercent, source: lineSource, levelFiltered: calcLevelFiltered(activeGroupHeader.level) };
         /* Inherit originalLevel from header so warnplus mode in calcItemHeight
            correctly shows frames from demoted device-other error/warning stacks. */
         if (activeGroupHeader.originalLevel) sfItem.originalLevel = activeGroupHeader.originalLevel;
         if (elapsedMs !== undefined && elapsedMs >= 0) sfItem.elapsedMs = elapsedMs;
         allLines.push(sfItem);
-        /* Gaps and the ")" trace-tail are not real frames — counting them would
-           inflate the header's "N frames" label and the preview/expand math. */
-        if (!isAsyncGap && !isTraceTail) activeGroupHeader.frameCount++;
+        activeGroupHeader.frameCount++;
         return true;
     }
     /* bug_003: before allocating a new stack-group, try to fold this header into an

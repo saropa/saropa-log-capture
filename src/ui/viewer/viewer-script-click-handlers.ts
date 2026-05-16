@@ -116,6 +116,17 @@ if (viewportEl) viewportEl.addEventListener('click', function(e) {
         toggleMetadataFilter(metaSpan.dataset.metaKey, metaSpan.dataset.metaValue);
         return;
     }
+    /* Async-gap glyph: toggle inline expansion (icon ↔ "<asynchronous suspension>"
+       text). Must run BEFORE .stack-header so a click on the glyph that sits
+       inside a stack header row does not also fire the collapse toggle; the
+       glyph also lives on stack-frame rows where there is no group handler. */
+    var asyncGlyph = e.target.closest('.async-gap-glyph');
+    if (asyncGlyph) {
+        e.preventDefault();
+        e.stopPropagation();
+        asyncGlyph.classList.toggle('expanded');
+        return;
+    }
     var header = e.target.closest('.stack-header');
     if (header && header.dataset.gid !== undefined) {
         var _gid = parseInt(header.dataset.gid);

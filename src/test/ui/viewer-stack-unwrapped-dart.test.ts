@@ -17,7 +17,7 @@
  * tests cover the new unwrapped path alongside it.
  */
 import * as assert from 'node:assert';
-import { loadStackHeaderRepeatSandbox, StackItemVm, StackSandboxVm } from './viewer-stack-header-repeat-sandbox';
+import { loadStackHeaderRepeatSandbox, StackSandboxVm } from './viewer-stack-header-repeat-sandbox';
 
 // addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPercent, source, rawText, tier)
 function addLine(vm: StackSandboxVm, html: string, ts: number): void {
@@ -35,8 +35,6 @@ const FRAME_1 = '#1      _ContactsHomePageState.refresh (./lib/screens/home.dart
 const FRAME_2 = '#2      Foo.bar (./lib/foo.dart:7:11)';
 const MESSAGE = 'PermissionDeniedException: location permission denied';
 const GAP = '&lt;asynchronous suspension&gt;';
-
-type FrameItem = StackItemVm & { fw?: boolean; isAsyncGap?: boolean };
 
 suite('unwrapped Dart stack ingestion (bug_001)', () => {
     test('three unwrapped #N frames collapse into ONE stack-header', () => {
@@ -78,16 +76,28 @@ suite('unwrapped Dart stack ingestion (bug_001)', () => {
         const vm = loadStackHeaderRepeatSandbox();
         addLine(vm, MESSAGE, 1000);
         addLine(vm, FRAME_0, 1000); // header
-        addLine(vm, FRAME_1, 1000); // frame
-        addLine(vm, GAP, 1000); // async gap — must NOT close the group
+        addLine(vm, FRAME_1, 1000); // frame — anchor for gap glyph
+        const before = vm.allLines.length;
+        addLine(vm, GAP, 1000); // async gap — must NOT close the group, no row added
         addLine(vm, FRAME_2, 1000); // frame still in same group
 
         const headers = vm.allLines.filter((i) => i.type === 'stack-header');
         assert.strictEqual(headers.length, 1, 'unwrapped + gap must not shatter the group');
 
-        const gap = vm.allLines.find((i) => (i as FrameItem).isAsyncGap) as FrameItem | undefined;
-        assert.ok(gap, 'expected to find the async-gap frame');
-        assert.strictEqual(gap!.fw, true, 'async-gap inside unwrapped trace must still be fw=true');
+        // The gap is folded inline — no extra row. Before-after delta should be 1 (only FRAME_2).
+        assert.strictEqual(
+            vm.allLines.length - before,
+            1,
+            'gap must not create a row; only the trailing frame should be added',
+        );
+
+        // Find the anchor (FRAME_1) — it now carries the glyph in its html.
+        const anchor = vm.allLines.find((i) => (i.html ?? '').includes('home.dart:128'));
+        assert.ok(anchor, 'expected to find the anchor frame');
+        assert.ok(
+            (anchor!.html ?? '').includes('async-gap-glyph'),
+            'glyph must be appended to the prior frame; got ' + JSON.stringify(anchor!.html),
+        );
 
         assert.strictEqual(
             headers[0].frameCount,
