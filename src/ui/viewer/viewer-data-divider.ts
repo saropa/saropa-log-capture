@@ -1,162 +1,141 @@
 /**
- * Client-side helpers for the inline `.viewer-divider` rows that bracket
- * filter-hidden gaps, expanded peek ranges, and preview-mode trimmed-frame
- * notices in the log viewer.
+ * Client-side helpers for the chevron that decorates the line-number column
+ * on rows that "own" expandable / collapsible hidden content below them.
  *
- * Extracted from viewer-data-viewport.ts so the render-loop file stays
- * comfortably under the 300-line eslint `max-lines` limit.
+ * Replaces the prior between-row `.viewer-divider` rows (filter-hidden gap
+ * pill, peek-collapse bracket, preview-mode trimmed-frame notice) AND the
+ * inline `.dedup-badge` chip at the end of dedup-fold survivors. Both
+ * approaches had visual problems: floating between-row pills overlapped
+ * with adjacent rows' tag chips, and trailing inline pills competed with
+ * the row's own text content for attention.
  *
- * The functions here build HTML strings; injection into the render loop
- * happens in viewer-data-viewport.ts. Click delegation lives in
- * viewer-peek-chevron.ts.
+ * The new vocabulary: a single ▶ / ▼ chevron rendered immediately right of
+ * the line number in the decoration prefix. The chevron + counter form one
+ * click target (`.deco-counter-row`) so the whole numeric column is
+ * interactive when any following content is collapsed. Tooltip carries the
+ * count + reason + tag context.
  *
- * Text pill (`─── N hidden lines · show ───`, etc.) is host-synced via setting
- * `saropaLogCapture.accessibility.showCollapseDividerLabels` (default ON). When
- * the pill was off, the divider row still claimed ~8px of height with no visible
- * label, leaving a silent gap users could not interpret — flipping the default
- * fixes that without removing the opt-out. Pill renders as muted text now (see
- * viewer-styles-collapse-controls.ts) so it is informative without shouting.
+ * Affordance kinds the chevron currently routes:
+ *   - data-affordance-kind="dedup"  : compressDupCount > 1 survivor
+ *   - data-affordance-kind="gap"    : filter-hidden lines follow this row
+ *   - data-affordance-kind="peek"   : this row triggered a now-expanded peek
  *
- * See bugs/048_plan-severity-gutter-decoupling.md.
+ * Stack-header rows do NOT use this path — they keep their inline
+ * `.stack-toggle` chevron at the start of the header text because they have
+ * no line-number prefix to attach to (see viewer-data-helpers-render-stack.ts).
  */
-export function getDividerRenderScript(showCollapseDividerLabelsInitial = true): string {
-  const seed = showCollapseDividerLabelsInitial ? "true" : "false";
-  return /* javascript */ `
-/** Escape text for HTML attributes on divider controls. */
+/** @deprecated kept only so legacy imports compile during the refactor —
+ * returns an empty stub. The between-row .viewer-divider concept has been
+ * replaced by .deco-counter-row + .deco-chevron in the line-number column.
+ * See getCounterAffordanceScript below. Tests pinning the old API
+ * (buildHiddenGapDivider, buildPeekHideDivider, etc.) need rewriting. */
+export function getDividerRenderScript(_showCollapseDividerLabelsInitial = true): string {
+    return '';
+}
+
+export function getCounterAffordanceScript(): string {
+    return /* javascript */ `
+/** Escape text for HTML attributes on the counter-row click target. */
 function dividerHtmlAttrEscape(s) {
     return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 }
 
-/** Host-synced: show the inline "─── N hidden · show ───" pill (default on). */
-var showCollapseDividerLabels = ${seed};
+/** Stamp ._hiddenAfter / ._triggeredPeekKey on every visible row in one
+    forward pass over allLines. Runs once per renderViewport call BEFORE the
+    DOM build loop so renderItem → getDecorationPrefix → getCounterAffordance
+    can read the stamped info without each row scanning ahead.
 
-/** Build the HTML for an inline divider row that announces a filter-hidden
-    gap between two visible log lines. Click → reveal the gap under a fresh
-    peek key (peekChevron(from, to)). */
-function buildHiddenGapDivider(from, to, info, chainLevel) {
-    var n = info.count;
-    var pillText = n + ' hidden line' + (n !== 1 ? 's' : '') + ' \\u00b7 show';
-    var tip = (typeof buildHiddenTip === 'function') ? buildHiddenTip(info) : (n + ' hidden');
-    var titleEsc = dividerHtmlAttrEscape(tip + ' \\u00b7 click to show');
-    /* role="button" + aria-expanded=false: divider is interactive; SR users
-       get aria-label only when the visible pill is suppressed. */
-    var pill = showCollapseDividerLabels
-        ? '<span class="viewer-divider-label">\\u2500\\u2500\\u2500 ' + pillText + ' \\u2500\\u2500\\u2500</span>'
-        : '';
-    var aria = !showCollapseDividerLabels
-        ? ' aria-label="' + dividerHtmlAttrEscape(pillText) + '"'
-        : '';
-    /* level-bar-{chainLevel} on the divider lets the CSS sibling-aware chain
-       extend through it. Without this class the :has(+ .level-bar-X) selector
-       on the previous row fails (divider is the immediate next sibling and
-       carries no level), and the chain stripe breaks at every gap divider. */
-    var lvlCls = chainLevel ? ' level-bar-' + chainLevel : '';
-    return '<div class="viewer-divider' + lvlCls + '" role="button" aria-expanded="false"'
-        + ' data-divider-action="show-gap"'
-        + ' data-hidden-from="' + from + '"'
-        + ' data-hidden-to="' + to + '"'
-        + ' title="' + titleEsc + '"'
-        + aria
-        + '>' + pill + '</div>';
-}
-
-/** Build the HTML for a leading or trailing divider that brackets an
-    expanded peek range. action='hide' collapses the group via
-    unpeekChevron(peekKey). pos is 'start' or 'end' so the label can read
-    "hide N revealed" (top) or "hide N revealed (above)" (bottom).
-
-    WHY two dividers per peek (start AND end): collapse from the FAR end
-    of an expansion eliminates the "I clicked near where I opened the
-    expand control and lines I didn't ask to hide vanished" failure mode.
-    The user can collapse from wherever they scrolled to. */
-function buildPeekHideDivider(peekKey, count, pos, chainLevel) {
-    var label = (pos === 'end')
-        ? 'hide ' + count + ' revealed (above) \\u00b7 collapse'
-        : 'hide ' + count + ' revealed \\u00b7 collapse';
-    var titlePlain = 'Re-hide the ' + count + ' lines revealed under this peek';
-    var titleEsc = dividerHtmlAttrEscape(titlePlain);
-    var pill = showCollapseDividerLabels
-        ? '<span class="viewer-divider-label">\\u2500\\u2500\\u2500 ' + label + ' \\u2500\\u2500\\u2500</span>'
-        : '';
-    var aria = !showCollapseDividerLabels
-        ? ' aria-label="' + dividerHtmlAttrEscape(label) + '"'
-        : '';
-    var lvlCls = chainLevel ? ' level-bar-' + chainLevel : '';
-    return '<div class="viewer-divider' + lvlCls + '" role="button" aria-expanded="true"'
-        + ' data-divider-action="hide-peek"'
-        + ' data-peek-key="' + peekKey + '"'
-        + ' data-peek-pos="' + pos + '"'
-        + ' title="' + titleEsc + '"'
-        + aria
-        + '>' + pill + '</div>';
-}
-
-/** Detect whether a stack-frame is the LAST visible app-frame of a Preview-
-    mode stack group (header.collapsed is neither true nor false; some frames
-    are trimmed). Returns { hidden, total, shown } describing the trimmed
-    frames so the divider label can carry exact counts, or null when this
-    frame is not the preview cutoff.
-
-    WHY the helper lives here (not in renderStackFrame): the trailing divider
-    is a sibling row, not part of the frame's HTML. Detection has to happen
-    in the render loop's outer scope so the divider can be pushed into
-    parts[] right after the frame's row. */
-function getPreviewModeHiddenInfo(item) {
-    if (!item || item.type !== 'stack-frame') return null;
-    if (typeof groupHeaderMap === 'undefined' || item.groupId == null || item.groupId < 0) return null;
-    var hdr = groupHeaderMap[item.groupId];
-    if (!hdr) return null;
-    /* Preview mode is the "neither true nor false" header.collapsed state.
-       In explicit collapsed/expanded states the trailing divider is owned
-       by other paths (collapsed → no frames visible; expanded → no frames
-       hidden). */
-    if (hdr.collapsed === true || hdr.collapsed === false) return null;
-    if (item.fw) return null;
-    var appCnt = hdr._appFrameCount || 0;
-    var prevCnt = hdr.previewCount || 3;
-    var lastVisibleAppIdx = Math.min(prevCnt, appCnt) - 1;
-    if (lastVisibleAppIdx < 0 || item._appFrameIdx !== lastVisibleAppIdx) return null;
-    var fwCnt = (hdr.frameCount || 0) - appCnt;
-    var hidden = Math.max(0, appCnt - prevCnt) + fwCnt;
-    if (hidden <= 0) return null;
-    return { hidden: hidden, total: hdr.frameCount || 0, shown: Math.min(prevCnt, appCnt), gid: item.groupId };
-}
-
-/** Build a "more frames hidden" divider for a preview-mode stack group.
-    Click → expand the whole stack via toggleStackGroup(gid). The click
-    handler dispatches on data-divider-action='show-frames'. */
-function buildPreviewFramesDivider(info, chainLevel) {
-    var pillText = info.hidden + ' more stack frame' + (info.hidden !== 1 ? 's' : '')
-        + ' hidden \\u00b7 show all';
-    var tip = 'Preview mode \\u00b7 ' + info.shown + ' of ' + info.total
-        + ' frames shown \\u00b7 click to show all';
-    var titleEsc = dividerHtmlAttrEscape(tip);
-    var pill = showCollapseDividerLabels
-        ? '<span class="viewer-divider-label">\\u2500\\u2500\\u2500 ' + pillText + ' \\u2500\\u2500\\u2500</span>'
-        : '';
-    var aria = !showCollapseDividerLabels
-        ? ' aria-label="' + dividerHtmlAttrEscape(pillText) + '"'
-        : '';
-    var lvlCls = chainLevel ? ' level-bar-' + chainLevel : '';
-    return '<div class="viewer-divider' + lvlCls + '" role="button" aria-expanded="false"'
-        + ' data-divider-action="show-frames"'
-        + ' data-gid="' + info.gid + '"'
-        + ' title="' + titleEsc + '"'
-        + aria
-        + '>' + pill + '</div>';
-}
-
-/** Count the number of items currently sharing a peekAnchorKey. Used by
-    buildPeekHideDivider to put an exact count in the label so the user
-    knows how many lines collapse on click. */
-function countPeekedLines(peekKey) {
-    if (!(peekKey > 0) || typeof allLines === 'undefined') return 0;
-    var n = 0;
+    Rules:
+    - If two consecutive visible rows are NOT adjacent in allLines (i.e. some
+      items between them have height 0), count the non-blank hidden items and
+      stamp { count, from, to, info } on the FIRST of the pair. This is the
+      "filter-hidden gap" affordance.
+    - If the row immediately after a visible row carries a peekAnchorKey and
+      the current row does NOT, the current row TRIGGERED that peek (was the
+      collapsed-state owner before expansion). Stamp _triggeredPeekKey so the
+      chevron flips to ▼ and offers re-collapse. */
+function computeRowAffordances() {
+    var prevVis = -1;
     for (var i = 0; i < allLines.length; i++) {
-        var it = allLines[i];
-        if (it && it.peekAnchorKey === peekKey) n++;
+        // Clear stale stamps from previous render — affordance state changes when
+        // filters toggle, peeks open / close, lines stream in.
+        if (allLines[i]._hiddenAfter) allLines[i]._hiddenAfter = null;
+        if (allLines[i]._triggeredPeekKey != null) allLines[i]._triggeredPeekKey = null;
+        if (allLines[i].height === 0) continue;
+        if (prevVis >= 0) {
+            if (i - prevVis > 1 && typeof countHiddenNonBlank === 'function') {
+                var info = countHiddenNonBlank(prevVis + 1, i);
+                if (info && info.count > 0) {
+                    allLines[prevVis]._hiddenAfter = { count: info.count, from: prevVis + 1, to: i, info: info };
+                }
+            } else if (i - prevVis === 1) {
+                /* Adjacent in allLines: detect peek-trigger pattern.
+                   peekAnchorKey is set on items revealed under a peek; the
+                   triggering row stays without the key. So a visible row
+                   without the key followed by a visible row with the key
+                   identifies the trigger. */
+                var nextKey = allLines[i].peekAnchorKey;
+                var prevKey = allLines[prevVis].peekAnchorKey;
+                if (nextKey != null && prevKey !== nextKey) {
+                    allLines[prevVis]._triggeredPeekKey = nextKey;
+                }
+            }
+        }
+        prevVis = i;
     }
-    return n;
+}
+
+/** Build the clickable counter+chevron wrapper for one row, OR return ''
+    when no affordance applies (the caller then renders the bare counter).
+    Priority order:
+      1. dedup-fold survivor (compressDupCount > 1) — ▶ / ▼ on peekAnchorKey
+      2. filter-hidden gap below (_hiddenAfter from the pre-pass) — ▶
+      3. expanded peek triggered by this row (_triggeredPeekKey) — ▼
+
+    Why this priority: dedup state is row-local data so it must win when
+    present (the survivor IS what the user clicks to expand its hidden
+    duplicates). A row can only carry one of these states at a time in
+    practice — a dedup survivor never has _hiddenAfter (the hidden
+    duplicates are tagged compressDupHidden, NOT filter-hidden), and a
+    peek-trigger row's expanded peek replaces what would have been
+    _hiddenAfter. */
+function getCounterAffordance(item, idx, hiddenAfter, counterHtml) {
+    var kind = null, glyph = '\\u25b6', tip = '', dataAttrs = '';
+    var tagPart = item.parsedTag ? (item.parsedTag + ' \\u00b7 ') : '';
+
+    if (item.compressDupCount > 1) {
+        var dupExpanded = (item.peekAnchorKey != null);
+        kind = 'dedup';
+        glyph = dupExpanded ? '\\u25bc' : '\\u25b6';
+        dataAttrs = ' data-dedup-survivor-idx="' + idx + '"';
+        tip = tagPart + item.compressDupCount + ' identical row' + (item.compressDupCount !== 1 ? 's' : '')
+            + (dupExpanded ? ' revealed \\u00b7 click to hide' : ' collapsed here \\u00b7 click to show');
+    } else if (hiddenAfter && hiddenAfter.count > 0) {
+        kind = 'gap';
+        glyph = '\\u25b6';
+        dataAttrs = ' data-hidden-from="' + hiddenAfter.from + '" data-hidden-to="' + hiddenAfter.to + '"';
+        var gapTip = (typeof buildHiddenTip === 'function') ? buildHiddenTip(hiddenAfter.info) : (hiddenAfter.count + ' hidden');
+        tip = tagPart + gapTip + ' \\u00b7 click to show';
+    } else if (item._triggeredPeekKey != null) {
+        kind = 'peek';
+        glyph = '\\u25bc';
+        dataAttrs = ' data-peek-key="' + item._triggeredPeekKey + '"';
+        tip = tagPart + 'revealed lines below \\u00b7 click to re-collapse';
+    } else {
+        return '';
+    }
+
+    var chev = '<span class="deco-chevron">' + glyph + '</span>';
+    /* role="button" + aria-expanded encodes the toggle state for screen
+       readers. The wrapper is the click target (delegated in
+       viewer-peek-chevron.ts via .deco-counter-row[data-affordance-kind]),
+       so both the line-number digits and the chevron glyph trigger the
+       same action — the user can aim at either. */
+    var expanded = (kind === 'peek' || (kind === 'dedup' && item.peekAnchorKey != null)) ? 'true' : 'false';
+    return '<span class="deco-counter-row" role="button" aria-expanded="' + expanded + '"'
+        + ' data-affordance-kind="' + kind + '"' + dataAttrs
+        + ' title="' + dividerHtmlAttrEscape(tip) + '">'
+        + counterHtml + chev + '</span>';
 }
 `;
 }

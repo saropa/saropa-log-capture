@@ -1,353 +1,216 @@
 /**
- * Tests for the scoped peek-chevron feature (viewer-peek-chevron.ts) AFTER
- * the severity-gutter decoupling (plan: bugs/048_plan-severity-gutter-decoupling.md).
+ * Spec for the counter-row affordance: a single ▶ / ▼ chevron rendered
+ * right of the line number on rows that own collapsible / expandable
+ * hidden content. Replaces the prior between-row `.viewer-divider` pills
+ * and trailing `.dedup-badge` chips, all of which had visual overlap or
+ * tag-column collision problems.
  *
- * The peekOverride / peekAnchorKey state machine is unchanged. Only the
- * UI vocabulary that triggers it has changed:
- *   - Filter-hidden gap expand → .viewer-divider[data-divider-action="show-gap"]
- *   - Peek group collapse      → .viewer-divider[data-divider-action="hide-peek"]
- *                                 (leading AND trailing brackets the range)
- *   - Dedup-fold expand/hide   → inline .dedup-badge on the survivor
- *   - Preview-mode show-all    → .viewer-divider[data-divider-action="show-frames"]
+ * Each expand / collapse concept now wires through ONE click target —
+ * `.deco-counter-row[data-affordance-kind]` — with the kind attribute
+ * dispatching to the right peek / unpeek function:
+ *   data-affordance-kind="dedup" → peekDedupFold / unpeekChevron
+ *   data-affordance-kind="gap"   → peekChevron(from, to, 'filter')
+ *   data-affordance-kind="peek"  → unpeekChevron(peekKey)
  *
- * The severity dot is no longer interactive — assertions below pin that
- * the render loop and click delegate emit none of the prior overload.
- *
- * Pattern: string-includes assertions against the generated webview JS / CSS,
- * matching the existing viewer-severity-bar-connector.test.ts style.
+ * Stack-headers keep their inline `.stack-toggle` because they have no
+ * line-number prefix to host a counter-row chevron.
  */
-import * as assert from 'node:assert';
-import { getPeekChevronScript } from '../../ui/viewer/viewer-peek-chevron';
-import { getViewportRenderScript } from '../../ui/viewer/viewer-data-viewport';
-import { getDividerRenderScript } from '../../ui/viewer/viewer-data-divider';
-import { getViewerDataHelpersCore } from '../../ui/viewer/viewer-data-helpers-core';
-import { getDecorationStyles } from '../../ui/viewer-styles/viewer-styles-decoration';
-import { getHiddenLinesScript } from '../../ui/viewer/viewer-hidden-lines';
+import * as assert from "assert";
+import { getPeekChevronScript } from "../../ui/viewer/viewer-peek-chevron";
+import { getCounterAffordanceScript } from "../../ui/viewer/viewer-data-divider";
+import { getViewerStyles } from "../../ui/viewer-styles/viewer-styles";
 
-suite('Filter-hidden gap → divider row carries the expand attrs', () => {
-    /* Plan 048 replaces the prior overload (".bar-hidden-rows" stamped on
-       the row AFTER the gap with data-hidden-from/to attrs) with an inline
-       .viewer-divider sibling row that carries the same attrs. The divider
-       IS the click target; the severity gutter no longer is. */
-    const divider = getDividerRenderScript();
-    const viewport = getViewportRenderScript();
+suite("Counter-row affordance — chevron right of the line number", () => {
+    const aff = getCounterAffordanceScript();
 
-    test('buildHiddenGapDivider emits data-hidden-from / data-hidden-to', () => {
+    test("script defines getCounterAffordance + computeRowAffordances", () => {
         assert.ok(
-            divider.includes('data-hidden-from="\' + from + \'"'),
-            'divider builder must propagate the start index for peekChevron',
+            aff.includes("function getCounterAffordance("),
+            "the affordance builder must be exported into the viewer script scope",
         );
         assert.ok(
-            divider.includes('data-hidden-to="\' + to + \'"'),
-            'divider builder must propagate the exclusive end index',
+            aff.includes("function computeRowAffordances("),
+            "the per-row pre-pass that stamps _hiddenAfter / _triggeredPeekKey must exist",
         );
     });
 
-    test('buildHiddenGapDivider tags itself with show-gap action', () => {
+    test("getCounterAffordance emits ▶ for collapsed states, ▼ for expanded", () => {
+        // \\u25b6 = ▶ (collapsed), \\u25bc = ▼ (expanded). Same direction-
+        // encodes-state convention as .stack-toggle on stack-headers.
+        assert.ok(aff.includes("\\u25b6") && aff.includes("\\u25bc"), "both chevron glyphs must be present in the builder");
+    });
+
+    test("dedup branch wins when item.compressDupCount > 1", () => {
         assert.ok(
-            divider.includes('data-divider-action="show-gap"'),
-            'show-gap action lets the click delegate route filter-gap dividers to peekChevron',
+            aff.includes("item.compressDupCount > 1"),
+            "dedup is the highest-priority affordance because the state is row-local",
+        );
+        assert.ok(
+            aff.includes("data-dedup-survivor-idx"),
+            "dedup chevron must carry the survivor idx so click routes to peekDedupFold",
         );
     });
 
-    test('render loop calls buildHiddenGapDivider when a gap is detected', () => {
+    test("gap branch fires when item has _hiddenAfter stamped by the pre-pass", () => {
         assert.ok(
-            viewport.includes('buildHiddenGapDivider(_hiddenFrom, _hiddenTo, _hInfo)'),
-            'renderViewport must push a divider row when prevVisIdx leaves a gap',
+            aff.includes("hiddenAfter && hiddenAfter.count > 0"),
+            "filter-hidden gap is the second-priority affordance",
+        );
+        assert.ok(
+            aff.includes("data-hidden-from") && aff.includes("data-hidden-to"),
+            "gap chevron must carry from/to so click routes to peekChevron(from, to)",
         );
     });
 
-    test('render loop no longer stamps .bar-hidden-rows onto a row', () => {
-        // Plan 048 retires the overload entirely. Any reintroduction would
-        // re-create the data-loss-feeling dot-click failure mode.
+    test("peek branch fires when item triggered an expanded peek (▼ collapse)", () => {
         assert.ok(
-            !viewport.includes('class="bar-hidden-rows '),
-            'render loop must not inject the retired .bar-hidden-rows class',
-        );
-    });
-});
-
-suite('Peek group collapse → leading + trailing divider brackets', () => {
-    const divider = getDividerRenderScript();
-    const viewport = getViewportRenderScript();
-
-    test('buildPeekHideDivider emits hide-peek action + peek-key + position', () => {
-        assert.ok(
-            divider.includes('data-divider-action="hide-peek"'),
-            'hide-peek action lets the click delegate route to unpeekChevron',
+            aff.includes("_triggeredPeekKey"),
+            "the pre-pass stamps _triggeredPeekKey on the row that triggered a now-expanded peek",
         );
         assert.ok(
-            divider.includes('data-peek-key="\' + peekKey + \'"'),
-            'divider must carry the peek-key so unpeekChevron collapses the right group',
-        );
-        assert.ok(
-            divider.includes('data-peek-pos="\' + pos + \'"'),
-            'divider must carry start/end so the label can read "above" on the trailing bracket',
+            aff.includes("data-peek-key"),
+            "peek-collapse chevron must carry the key so click routes to unpeekChevron",
         );
     });
 
-    test('render loop emits BOTH leading and trailing dividers per peek group', () => {
-        // Principle 3 of plan 048: collapse from far end of the expansion.
-        // The user can then close the group from wherever they scrolled to.
+    test("clickable counter-row wraps the line-number digits AND the chevron", () => {
+        // The whole numeric column is interactive so the user can aim at
+        // either the digits or the small chevron — same action.
         assert.ok(
-            viewport.includes("buildPeekHideDivider(_pk, countPeekedLines(_pk), 'start')"),
-            'leading divider must emit at the first row of an expanded peek group',
+            aff.includes("deco-counter-row") && aff.includes("role=\"button\""),
+            "wrapper carries role=button so the whole region reads as a click target to AT",
         );
         assert.ok(
-            viewport.includes("buildPeekHideDivider(_pk, countPeekedLines(_pk), 'end')"),
-            'trailing divider must emit at the last row of an expanded peek group',
-        );
-    });
-
-    test('render loop suppresses peek dividers for dedup peeks', () => {
-        // Dedup peeks own their toggle via the inline .dedup-badge on the
-        // survivor. Bracketing dividers would be a redundant target on a
-        // row that does not own the fold.
-        assert.ok(
-            viewport.includes("peekKind !== 'dedup'"),
-            'render loop must skip leading/trailing brackets when peekKind is dedup',
-        );
-    });
-});
-
-suite('Preview-mode trimmed-frame divider', () => {
-    const divider = getDividerRenderScript();
-    const viewport = getViewportRenderScript();
-
-    test('getPreviewModeHiddenInfo only fires for preview-mode app frames', () => {
-        // Header.collapsed === true / false → not preview; fw frames → never visible
-        // in preview. Returns null in those cases so the divider does not emit.
-        assert.ok(
-            divider.includes('hdr.collapsed === true || hdr.collapsed === false'),
-            'helper must short-circuit when header is in an explicit collapsed/expanded state',
-        );
-        assert.ok(
-            divider.includes('item.fw'),
-            'helper must short-circuit on framework frames (always hidden in preview)',
+            aff.includes("aria-expanded"),
+            "wrapper sets aria-expanded so screen readers announce the toggle state",
         );
     });
 
-    test('buildPreviewFramesDivider routes show-frames action through gid', () => {
+    test("tooltip prepends the parsed tag when present so suppressed context is one hover away", () => {
         assert.ok(
-            divider.includes('data-divider-action="show-frames"'),
-            'show-frames action lets the click delegate route to toggleStackGroup',
-        );
-        assert.ok(
-            divider.includes('data-gid="\' + info.gid + \'"'),
-            'divider must carry the gid so toggleStackGroup expands the right group',
+            aff.includes("item.parsedTag"),
+            "tooltip text must include the row's parsed tag (e.g. flutter, MediaSessionCompat) when one exists",
         );
     });
 
-    test('render loop pushes preview divider AFTER the last visible app frame', () => {
+    test("computeRowAffordances clears stale stamps before re-scanning", () => {
+        // Stamps must be regenerated on every render — filters toggle,
+        // peeks open / close, lines stream in. Stale data would leave a
+        // chevron pointing at content that no longer exists.
         assert.ok(
-            viewport.includes('getPreviewModeHiddenInfo(allLines[i])')
-                && viewport.includes('buildPreviewFramesDivider(_previewInfo)'),
-            'renderViewport must emit a preview divider when the helper returns info',
+            aff.includes("_hiddenAfter") && aff.includes("= null"),
+            "pre-pass must null out _hiddenAfter before recomputing",
+        );
+        assert.ok(
+            aff.includes("_triggeredPeekKey"),
+            "pre-pass must also clear/recompute _triggeredPeekKey each tick",
         );
     });
 });
 
-suite('Click delegation routes the four affordances correctly', () => {
+suite("Click delegate routes counter-row affordances by kind", () => {
     const peek = getPeekChevronScript();
 
-    test('handler routes show-gap divider clicks to peekChevron', () => {
+    test("delegate scopes to .deco-counter-row by data-affordance-kind", () => {
         assert.ok(
-            peek.includes(`closest('.viewer-divider[data-divider-action]')`),
-            'handler must scope to .viewer-divider with an action attribute',
-        );
-        assert.ok(
-            peek.includes(`'show-gap'`) && peek.includes('peekChevron(from, to,'),
-            'show-gap branch must call peekChevron with the divider data-attrs',
+            peek.includes("closest('.deco-counter-row[data-affordance-kind]')"),
+            "handler must scope to the counter-row wrapper, not the chevron child, so line-number clicks count",
         );
     });
 
-    test('handler routes hide-peek divider clicks to unpeekChevron', () => {
+    test("'dedup' kind routes to peekDedupFold / unpeekChevron based on survivor.peekAnchorKey", () => {
         assert.ok(
-            peek.includes(`'hide-peek'`) && peek.includes('unpeekChevron(peekKey)'),
-            'hide-peek branch must call unpeekChevron with the divider peek-key',
+            peek.includes("kind === 'dedup'") && peek.includes("peekDedupFold(idx)"),
+            "collapsed dedup → peekDedupFold(idx)",
+        );
+        assert.ok(
+            peek.includes("survivor.peekAnchorKey != null") && peek.includes("unpeekChevron(survivor.peekAnchorKey)"),
+            "expanded dedup → unpeekChevron(survivor's peek key)",
         );
     });
 
-    test('handler routes show-frames divider clicks to toggleStackGroup', () => {
+    test("'gap' kind routes to peekChevron(from, to, 'filter')", () => {
         assert.ok(
-            peek.includes(`'show-frames'`) && peek.includes('toggleStackGroup(gid)'),
-            'show-frames branch must call toggleStackGroup with the divider gid',
+            peek.includes("kind === 'gap'"),
+            "filter-hidden gap kind must have its own branch",
+        );
+        assert.ok(
+            peek.includes("peekChevron(from, to, 'filter')"),
+            "gap click must call peekChevron with the filter kind so calcItemHeight bypasses filter gates",
         );
     });
 
-    test('handler routes .dedup-badge clicks via collapsed/expanded state', () => {
+    test("'peek' kind routes to unpeekChevron(peekKey)", () => {
         assert.ok(
-            peek.includes(`closest('.dedup-badge[data-dedup-survivor-idx]')`),
-            'badge handler must scope to .dedup-badge by data-attr',
-        );
-        // When the survivor already carries a peekAnchorKey the badge collapses
-        // (unpeekChevron); otherwise it expands (peekDedupFold).
-        assert.ok(
-            peek.includes('survivor.peekAnchorKey !== undefined'),
-            'badge handler must inspect peekAnchorKey to choose direction',
+            peek.includes("kind === 'peek'"),
+            "peek-collapse kind must have its own branch",
         );
         assert.ok(
-            peek.includes('unpeekChevron(survivor.peekAnchorKey)')
-                && peek.includes('peekDedupFold(idx)'),
-            'badge handler must wire both directions through one selector',
+            peek.includes("unpeekChevron(peekKey)"),
+            "peek click on the trigger row must collapse via the stamped peek key",
         );
     });
 
-    test('severity dot has no interactive class — gutter is read-only', () => {
-        // Plan 048 Principle 1: the severity gutter shows severity. It does
-        // not accept clicks. The retired .bar-hidden-rows selector and its
-        // closest('.bar-hidden-rows') click delegate are gone.
+    test("shift-click is left alone so range selection still works", () => {
+        // viewer-copy.ts uses shift-click for multi-row selection. The
+        // delegate must not consume those events.
         assert.ok(
-            !peek.includes(".bar-hidden-rows"),
-            'click delegate must not reference the retired .bar-hidden-rows class',
-        );
-    });
-
-    test('handler bails on shift-click so range selection still works', () => {
-        assert.ok(
-            peek.includes('if (e.shiftKey) return'),
-            'click handler must bail on shiftKey to avoid colliding with row selection',
-        );
-    });
-
-    test('handler is delegated at the viewport level', () => {
-        assert.ok(
-            peek.includes(`document.getElementById('viewport')`),
-            'click handler must be delegated from #viewport (stable across re-renders)',
+            peek.includes("if (e.shiftKey) return"),
+            "delegate must short-circuit on shift-click",
         );
     });
 });
 
-suite('Peek state machine — calcItemHeight peekOverride bypass', () => {
-    const core = getViewerDataHelpersCore();
+suite("Counter-row CSS — clickable line-number column", () => {
+    const css = getViewerStyles();
 
-    test('should wrap filter gates in !item.peekOverride', () => {
+    test(".deco-counter-row is the clickable container, .deco-chevron is the glyph", () => {
+        assert.ok(css.includes(".deco-counter-row"), "wrapper rule must exist");
+        assert.ok(css.includes(".deco-chevron"), "chevron child rule must exist");
+    });
+
+    test(".deco-counter-row has cursor: pointer and a hover state", () => {
+        // The whole region must read as interactive at rest, and the hover
+        // affordance gives the user visual feedback the click is live.
         assert.ok(
-            core.includes('if (!item.peekOverride)'),
-            'calcItemHeight must short-circuit past filter gates when peekOverride is set',
+            /\.deco-counter-row\s*\{[^}]*cursor:\s*pointer/.test(css),
+            "wrapper must declare cursor: pointer",
+        );
+        assert.ok(
+            /\.deco-counter-row:hover/.test(css),
+            "wrapper must have a hover rule (background tint or chevron lift)",
         );
     });
 
-    test('should still respect peekOverride for tier-hidden items', () => {
+    test(".deco-chevron is dimmed at rest, lifts on counter-row hover", () => {
         assert.ok(
-            core.includes('_tierHidden && !item.peekOverride'),
-            'tier-hidden gate must also defer to peekOverride',
+            /\.deco-chevron\s*\{[^}]*opacity:\s*0\.5/.test(css),
+            "chevron must sit at ~0.5 opacity at rest so it reads as a quiet marker on the number",
+        );
+        assert.ok(
+            css.includes(".deco-counter-row:hover .deco-chevron") || css.includes(".deco-counter-row:focus-visible .deco-chevron"),
+            "hover/focus on the wrapper must lift the chevron to full opacity",
         );
     });
 
-    test('should NOT wrap continuation-collapse inside peekOverride bypass', () => {
-        // Continuation collapse is an explicit user action, not a filter;
-        // peek must not undo it. The contCollapsed gate sits AFTER the
-        // peekOverride wrap block closes.
-        const src = core;
-        const peekStart = src.indexOf('if (!item.peekOverride)');
-        const contGate = src.indexOf('contCollapsed');
-        assert.ok(peekStart >= 0 && contGate >= 0, 'both gates must exist');
+    test("retired affordances do NOT have CSS rules — no .viewer-divider or .dedup-badge", () => {
+        // The new design replaces both with .deco-counter-row + .deco-chevron.
+        // Re-introducing either would recreate the overlap / floating-pill
+        // visual problems the user reported.
         assert.ok(
-            contGate > peekStart,
-            'contCollapsed gate must come after the peekOverride wrap',
-        );
-    });
-});
-
-suite('Peek state machine — peek / un-peek functions', () => {
-    const peek = getPeekChevronScript();
-
-    test('should mint a fresh peekAnchorKey for each peek', () => {
-        // Per-group keys let two adjacent peeks collapse independently.
-        assert.ok(peek.includes('var nextPeekKey = 1'), 'must declare monotonic key counter');
-        assert.ok(peek.includes('var key = nextPeekKey++'), 'peek* must mint a new key per call');
-    });
-
-    test('should set peekOverride and peekAnchorKey on items in [from, to)', () => {
-        assert.ok(peek.includes('it.peekOverride = true'), 'peek must set peekOverride flag');
-        assert.ok(peek.includes('it.peekAnchorKey = key'), 'peek must stamp the group key on each item');
-    });
-
-    test('should stamp peekKind so render loop knows whether to bracket the group', () => {
-        // peekKind='dedup' suppresses the leading/trailing .viewer-divider
-        // brackets (the badge handles that group's collapse). 'filter' gets
-        // the brackets (Principle 3 of the plan).
-        assert.ok(
-            peek.includes(`survivor.peekKind = 'dedup'`),
-            'peekDedupFold must mark the survivor as a dedup peek',
+            !css.includes(".viewer-divider"),
+            ".viewer-divider rule must be removed — between-row dividers caused overlap with adjacent rows' tag chips",
         );
         assert.ok(
-            peek.includes('it.peekKind = pkind') || peek.includes('it.peekKind = '),
-            'peekChevron must stamp peekKind on every revealed item',
+            !css.includes(".dedup-badge"),
+            ".dedup-badge rule must be removed — trailing pill was replaced by the counter-row chevron",
         );
     });
 
-    test('should skip items already peeked by another group', () => {
+    test(".stack-toggle survives for stack-header rows (no line-number prefix to host counter-row)", () => {
         assert.ok(
-            peek.includes('it.peekAnchorKey !== undefined && it.peekAnchorKey !== null'),
-            'peekChevron must not overwrite an existing peek group key',
-        );
-    });
-
-    test('should clear only the matching key in unpeekChevron', () => {
-        assert.ok(
-            peek.includes('it.peekAnchorKey === key'),
-            'unpeekChevron must match the specific group key, not clear all peeks',
-        );
-    });
-});
-
-suite('Peek chevron — initHiddenLines wires initPeekChevron', () => {
-    const hidden = getHiddenLinesScript();
-
-    test('should call initPeekChevron from initHiddenLines', () => {
-        assert.ok(
-            hidden.includes(`typeof initPeekChevron === 'function'`) &&
-                hidden.includes('initPeekChevron()'),
-            'initHiddenLines must invoke initPeekChevron so the click handler wires up',
-        );
-    });
-});
-
-suite('Retired CSS rules and selectors are fully removed', () => {
-    /* Plan 048 retired both the .bar-hidden-rows outlined-dot state AND the
-       interim .peek-collapse-row sibling that briefly bridged the gap
-       between the unified-line-collapsing rethink and the gutter-decoupling
-       rework. Pin the cleanup so a future refactor does not silently
-       re-introduce either. */
-    const css = getDecorationStyles();
-
-    test('CSS no longer defines .bar-hidden-rows outlined-dot rule', () => {
-        // Match an active selector usage (followed by `{`, ` >`, `:hover`, etc.).
-        // Mere mentions in comments / migration notes are allowed.
-        assert.ok(
-            !/\.bar-hidden-rows\s*[{>:]/.test(css)
-                && !/\.bar-hidden-rows::before/.test(css),
-            'bundled stylesheet must not carry dead .bar-hidden-rows rules',
-        );
-    });
-
-    test('CSS no longer defines .peek-collapse-row interim rule', () => {
-        assert.ok(
-            !/\.peek-collapse-row\s*[{>:]/.test(css),
-            'bundled stylesheet must not carry the interim .peek-collapse-row rule',
-        );
-    });
-
-    test('CSS defines the new .viewer-divider affordance', () => {
-        assert.ok(
-            css.includes('.viewer-divider'),
-            'plan-048 .viewer-divider rule must be present',
-        );
-    });
-
-    test('CSS defines the new .dedup-badge affordance', () => {
-        assert.ok(
-            css.includes('.dedup-badge'),
-            'plan-048 .dedup-badge rule must be present',
-        );
-    });
-
-    test('CSS defines the new .stack-toggle affordance', () => {
-        assert.ok(
-            css.includes('.stack-toggle'),
-            'plan-048 .stack-toggle rule must be present',
+            css.includes(".stack-toggle"),
+            "stack-headers keep their inline chevron because they have no decoration prefix",
         );
     });
 });
