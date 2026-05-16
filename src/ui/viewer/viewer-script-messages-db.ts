@@ -54,6 +54,15 @@ function handleDbMessages(msg) {
             }
             if (typeof scheduleRootCauseHypothesesRefresh === 'function') scheduleRootCauseHypothesesRefresh();
             return true;
+        case 'setCumulativeSqlFingerprintSummary':
+            /* DB_17: store cumulative aggregate from host so the SQL History panel can layer
+               cross-log fingerprint data under the active log's live rollup when the user
+               enables the Cumulative toggle. */
+            if (typeof setSqlQueryHistoryCumulativeFromHost === 'function') {
+                setSqlQueryHistoryCumulativeFromHost(msg.payload || null);
+            }
+            if (typeof refreshSqlQueryHistoryPanelIfOpen === 'function') refreshSqlQueryHistoryPanelIfOpen();
+            return true;
         default:
             return false;
     }

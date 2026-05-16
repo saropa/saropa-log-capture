@@ -51,4 +51,14 @@ suite('viewer-sql-query-history panel HTML', () => {
         assert.ok(html.includes('id="sql-query-history-drift-status"'));
         assert.ok(html.includes('id="sql-query-history-open-viewer"'));
     });
+
+    test('DB_17: cumulative-across-logs toggle is present and starts hidden', () => {
+        const html = getSqlQueryHistoryPanelHtml();
+        assert.ok(html.includes('id="sql-query-history-cumulative-wrap"'),
+            'toggle wrap mount must exist for show/hide via updateSqlHistoryCumulativeUi');
+        assert.ok(html.includes('class="sql-qh-cumulative u-hidden"'),
+            'wrap starts hidden until host posts cumulative payload');
+        assert.ok(html.includes('id="sql-query-history-cumulative"'), 'checkbox input present');
+        assert.ok(html.includes('Cumulative across logs'), 'user-facing label uses agreed wording');
+    });
 });

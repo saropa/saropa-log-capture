@@ -271,5 +271,25 @@ export function getSqlQueryHistoryPanelStyles(): string {
     text-align: center;
     white-space: pre-line;
 }
+
+/* DB_17: Cumulative across logs toggle, lives in the toolbar next to the search input. */
+.sql-qh-cumulative {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+    cursor: pointer;
+    user-select: none;
+}
+
+.sql-qh-cumulative input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+}
+
+.sql-qh-cumulative:hover {
+    color: var(--vscode-foreground);
+}
 `;
 }

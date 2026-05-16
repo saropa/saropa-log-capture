@@ -11,6 +11,7 @@ import * as vscode from "vscode";
 import type { ViewerRepeatThresholds } from "../../modules/db/drift-db-repeat-thresholds";
 import type { ViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
 import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift-sql-fingerprint-summary-persist";
+import type { CumulativeSqlFingerprintPayload } from "../../modules/db/cumulative-sql-fingerprint-aggregator";
 import type { ErrorClassificationSettings, ErrorRateConfig, ViewerDbDetectorToggles } from "../../modules/config/config-types";
 import { getConfig } from "../../modules/config/config";
 import type { FilterPreset } from "../../modules/storage/filter-presets";
@@ -143,6 +144,12 @@ export function setDbBaselineFingerprintSummaryImpl(
   entries: Readonly<Record<string, PersistedDriftSqlFingerprintEntryV1>> | null,
 ): void {
   target.postMessage({ type: "setDbBaselineFingerprintSummary", fingerprints: entries });
+}
+export function setCumulativeSqlFingerprintSummaryImpl(
+  target: ProviderStateTarget,
+  payload: CumulativeSqlFingerprintPayload | null,
+): void {
+  target.postMessage({ type: "setCumulativeSqlFingerprintSummary", payload });
 }
 export function setViewerSlowBurstThresholdsImpl(target: ProviderStateTarget, thresholds: ViewerSlowBurstThresholds): void {
   target.postMessage({

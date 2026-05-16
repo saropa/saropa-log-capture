@@ -8,6 +8,9 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
     return /* javascript */ `
     function renderSqlQueryHistoryPanel() {
         if (!listEl || !tbodyEl || !emptyEl) return;
+        /* DB_17: show/hide the Cumulative toggle wrap based on whether the host has supplied
+           any cross-log fingerprint data. Hides cleanly when there are no other sidebar logs. */
+        updateSqlHistoryCumulativeUi();
         var q = (searchEl && searchEl.value ? searchEl.value : '').toLowerCase().trim();
         var rows = getSqlQueryHistoryRowsForRender();
         /* Update icon bar badge with total distinct SQL query count (unfiltered). */
@@ -25,9 +28,7 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
         if (filtered.length === 0) {
             tbodyEl.innerHTML = '';
             emptyEl.classList.remove('u-hidden');
-            emptyEl.textContent = rows.length === 0
-                ? 'No parsed SQL fingerprints in this session yet.'
-                : 'No rows match your filter.';
+            emptyEl.textContent = computeSqlHistoryEmptyText(rows.length);
             return;
         }
         emptyEl.classList.add('u-hidden');
@@ -42,16 +43,30 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
             r = filtered[i];
             var durTxt = r.maxDur !== undefined ? String(r.maxDur) : '\u2014';
             var expandSrc = (r.sampleSql && r.sampleSql.length) ? r.sampleSql : r.fp;
+            /* DB_17: cross-log rows have no live line index (firstIdx === -1) so the jump
+               button posts a host message instead of calling scrollToLineNumber directly.
+               Use data attributes so the click handler can route correctly without rescanning state. */
+            var crossLogAttr = r.crossLog ? ' data-cross-log="1"' : '';
+            var crossLogUriAttr = r.crossLog && r.crossLogUriString
+                ? ' data-cross-log-uri="' + escapeHtml(r.crossLogUriString) + '"' : '';
+            var crossLogLineAttr = r.crossLog && typeof r.crossLogLine === 'number'
+                ? ' data-cross-log-line="' + r.crossLogLine + '"' : '';
+            var jumpLabel = r.crossLog
+                ? (r.crossLogLine >= 0 ? ('Open log \u00b7 line ' + (r.crossLogLine + 1) + ' \\u2197') : 'Open log \\u2197')
+                : ('Line ' + (r.firstIdx + 1) + ' \\u2197');
+            var jumpTitle = r.crossLog
+                ? 'Open the source log and jump to the first occurrence'
+                : 'Jump to first occurrence';
             parts.push('<tr>'
                 + '<td class="sql-qh-cell-count"><span class="sql-query-history-count">' + r.count + '</span></td>'
                 + '<td class="sql-qh-cell-preview"><div class="sql-query-history-row" role="button" tabindex="0" aria-expanded="false"'
-                + ' data-first-idx="' + r.firstIdx + '" data-fingerprint="' + escapeHtml(r.fp) + '">'
+                + ' data-first-idx="' + r.firstIdx + '" data-fingerprint="' + escapeHtml(r.fp) + '"' + crossLogAttr + crossLogUriAttr + crossLogLineAttr + '>'
                 + '<div class="sql-query-history-preview">' + escapeHtml(r.preview || r.fp) + '</div>'
                 + '<div class="sql-query-history-expanded u-hidden">'
                 + '<pre class="sql-query-history-sql">' + escapeHtml(formatSqlForExpand(expandSrc)) + '</pre>'
                 + '<div class="sql-query-history-row-actions">'
-                + '<button type="button" class="sql-query-history-jump" title="Jump to first occurrence">'
-                + 'Line ' + (r.firstIdx + 1) + ' \\u2197</button>'
+                + '<button type="button" class="sql-query-history-jump" title="' + jumpTitle + '">'
+                + jumpLabel + '</button>'
                 + '<button type="button" class="sql-qh-action-btn sql-query-history-drift" title="Open in Drift viewer (Run SQL tab)">'
                 + '<span class="codicon codicon-link-external"></span></button>'
                 + '<button type="button" class="sql-qh-action-btn" data-copy-fp title="Copy fingerprint">'
@@ -94,6 +109,13 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
     };
     function jumpSqlHistoryRow(rowEl) {
         if (!rowEl) return;
+        /* DB_17: cross-log rows ask the host to switch logs first; the host posts scrollToLine
+           after the load completes. We don't try to scroll locally because the line index
+           refers to the OTHER log's physical line numbering, not allLines in the current view. */
+        if (rowEl.getAttribute('data-cross-log') === '1') {
+            jumpSqlHistoryCrossLog(rowEl);
+            return;
+        }
         var idx = parseInt(rowEl.getAttribute('data-first-idx') || '-1', 10);
         if (!isFinite(idx) || idx < 0) return;
         var hidden = typeof sqlHistoryTargetLineLikelyHidden === 'function' && sqlHistoryTargetLineLikelyHidden(idx);
@@ -103,6 +125,41 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
         } else {
             setSqlHistoryHint('', false);
         }
+    }
+    function jumpSqlHistoryCrossLog(rowEl) {
+        var uri = rowEl.getAttribute('data-cross-log-uri') || '';
+        if (!uri) {
+            setSqlHistoryHint('No source log recorded for this fingerprint.', true);
+            return;
+        }
+        var line = parseInt(rowEl.getAttribute('data-cross-log-line') || '-1', 10);
+        if (!isFinite(line) || line < 0) line = 0;
+        if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
+            vscodeApi.postMessage({ type: 'sqlHistoryCrossLogJump', uriString: uri, line: line });
+            setSqlHistoryHint('Opening source log\\u2026', true);
+        }
+    }
+    /** Show or hide the Cumulative toggle wrap based on whether the host has supplied any cross-log data. */
+    function updateSqlHistoryCumulativeUi() {
+        var wrap = document.getElementById('sql-query-history-cumulative-wrap');
+        var checkbox = document.getElementById('sql-query-history-cumulative');
+        if (!wrap) return;
+        var has = (typeof hasSqlQueryHistoryCumulativeData === 'function') && hasSqlQueryHistoryCumulativeData();
+        wrap.classList.toggle('u-hidden', !has);
+        if (checkbox && checkbox.checked !== !!sqlQueryHistoryCumulativeEnabled) {
+            checkbox.checked = !!sqlQueryHistoryCumulativeEnabled;
+        }
+    }
+    /** Empty-state copy distinguishes "no SQL anywhere" from "filter rejected everything" and from "toggle off + cumulative available". */
+    function computeSqlHistoryEmptyText(visibleRowCount) {
+        if (visibleRowCount > 0) {
+            return 'No rows match your filter.';
+        }
+        var hasCum = (typeof hasSqlQueryHistoryCumulativeData === 'function') && hasSqlQueryHistoryCumulativeData();
+        if (hasCum && !sqlQueryHistoryCumulativeEnabled) {
+            return 'No parsed SQL fingerprints in this log. Toggle Cumulative across logs to see fingerprints from other sidebar logs.';
+        }
+        return 'No parsed SQL fingerprints in this session yet.';
     }
     function copyVisibleSqlHistoryJson() {
         var q = (searchEl && searchEl.value ? searchEl.value : '').toLowerCase().trim();

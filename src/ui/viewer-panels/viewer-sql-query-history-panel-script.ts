@@ -80,6 +80,17 @@ export function getSqlQueryHistoryPanelScript(): string {
             if (e.key === 'Escape') { e.preventDefault(); closeSqlQueryHistoryPanel(); }
         });
     }
+    /* DB_17: cumulative toggle. Initial checked state mirrors the persisted preference loaded
+       in viewer-sql-query-history-core.ts. The wrap is shown/hidden by updateSqlHistoryCumulativeUi
+       depending on whether the host has supplied any cumulative data. */
+    var cumulativeEl = document.getElementById('sql-query-history-cumulative');
+    if (cumulativeEl) {
+        cumulativeEl.checked = !!sqlQueryHistoryCumulativeEnabled;
+        cumulativeEl.addEventListener('change', function() {
+            setSqlQueryHistoryCumulativeEnabled(!!cumulativeEl.checked);
+            renderSqlQueryHistoryPanel();
+        });
+    }
     var closeBtn = document.getElementById('sql-query-history-close');
     if (closeBtn) closeBtn.addEventListener('click', closeSqlQueryHistoryPanel);
     var copyBtn = document.getElementById('sql-query-history-copy');
