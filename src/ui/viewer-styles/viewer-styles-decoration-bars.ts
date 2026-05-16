@@ -143,17 +143,23 @@ export function getDecorationBarStyles(): string {
 .level-bar-info:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-info)::after {
     content: ''; position: absolute;
     left: 0.89em; width: 0.14em;
-    /* Anchor the stripe at THIS row's middle (top: 50%) and let it extend
-       to 50% PAST this row's bottom edge (bottom: -50%). Net: stripe spans
-       from this dot to where the next row's dot will sit (50% into the next
-       row's height). Using percentages (not calc(1em * --log-line-height))
-       so the stripe automatically scales with whatever row height the user's
-       --log-line-height setting produces, including blank rows and lines
-       with non-default line-height. .line / .stack-header parents have
-       overflow: visible so the stripe paints past the row's bottom edge
-       into the next row's top half without clipping. */
+    /* Anchor at THIS row's middle (top: 50%) and extend by a FULL row
+       height past this row's bottom (bottom: -100%). Why the overshoot:
+       not all rows are the same height — stack-header rows use
+       line-height: 1.5 while .line rows use --log-line-height (1.1 default).
+       A "just reach next-row's middle" stripe (bottom: -50%) falls 0.2em
+       short on log_line → stack_header transitions, producing the
+       fragmented chain look the user reported. Overshooting one full row
+       height means the stripe ALWAYS reaches past the next row's middle
+       regardless of height. The next row's own stripe ALSO paints from its
+       middle, so the overlap region in the chain interior covers the same
+       pixels with the same color (45% color-mix) twice — visually one
+       continuous, slightly more saturated stripe at the overlap. Lone
+       rows (no same-level next) don't paint, so chain ENDS are still
+       clean. .line / .stack-header parents have overflow: visible so the
+       stripe paints past the row's bottom edge without clipping. */
     top: 50%;
-    bottom: -50%;
+    bottom: -100%;
     /* color-mix at 45% replaces opacity — opacity on ::after interacted with
        Chromium/WebKit stacking contexts so the gutter stripe could paint on
        top of the severity dot (::before). */
