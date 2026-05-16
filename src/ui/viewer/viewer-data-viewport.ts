@@ -1,44 +1,9 @@
-/** Viewport rendering helpers: bar level detection, hidden-line dividers, and virtual scroll renderer. */
+/** Viewport rendering helpers: hidden-line dividers and virtual scroll renderer.
+ *  The severity-gutter connector (line joining consecutive same-level dots) is
+ *  pure CSS in viewer-styles-decoration-bars.ts (a :has(+ .level-bar-X) sibling
+ *  selector on each row). No JS chain bookkeeping lives here. */
 export function getViewportRenderScript(): string {
     return /* javascript */ `
-/** Extract the FULL bar level (e.g. 'error', 'error-recent-context') from an
-    element's class, or null. The capture group must include hyphens: a
-    recent-error-context row carries level-bar-error-recent-context (a muted
-    grey bar) while a real fault carries level-bar-error (full red). Truncating
-    at the first hyphen collapsed both to 'error', so the connector joined a
-    grey dot to a red dot into one stripe — the "connecting different colors"
-    the user reported. Keeping the full suffix makes the levels distinct so the
-    chain breaks between them. */
-function getBarLevel(el) {
-    var m = /level-bar-([\\w-]+)/.exec(el.className);
-    return m ? m[1] : null;
-}
-
-/** Find the next viewport child that is a REAL content row, stopping at markers.
-    Skips .line-blank and .viewer-divider rows — those are invisible gaps (blank
-    lines) and control affordances (see bugs/048_plan-severity-gutter-decoupling.md
-    and viewer-data-divider.ts), so same-level dots still pair up across them.
-
-    It deliberately does NOT skip non-leveled content rows (stack frames, generic
-    stdout, the ")" tail of a Dart trace, …). Returning them is the whole point:
-    getBarLevel() yields null for such a row, the caller's nextLvl-vs-lvl check
-    then fails, and the connector chain breaks cleanly AT that row. The previous
-    code skipped them, so a chain could reach over an unrelated content row and
-    stamp bar-down/bar-up stubs on same-level dots beyond it — the connector
-    "running through" content the user reported. This matches the documented
-    intent of commit 11cb4ca7 (its comment described this behavior but the
-    function was never actually updated to match). */
-function findNextDotSibling(children, startIdx) {
-    for (var ni = startIdx + 1; ni < children.length; ni++) {
-        if (!children[ni]) continue;
-        if (children[ni].classList.contains('marker')) return -1;
-        if (children[ni].classList.contains('viewer-divider')) continue;
-        if (children[ni].classList.contains('line-blank')) continue;
-        return ni;
-    }
-    return -1;
-}
-
 /** Count hidden non-blank lines between two allLines indices (exclusive). */
 function countHiddenNonBlank(fromIdx, toIdx) {
     var count = 0, reasons = {};
@@ -229,59 +194,11 @@ function renderViewport(force) {
         prevVisIdx = i;
     }
     viewportEl.innerHTML = parts.join('');
-    /* Connect consecutive same-level dots. The connector ::after only paints
-       through INVISIBLE intermediate rows — blank lines and .viewer-divider
-       control rows — never through real content rows that happen to lack
-       their own level-bar-* class (stack frames, generic stdout, repeat
-       notification chips, etc.). Previously the bridge stamped every
-       intermediate child with level-bar-{lvl} + bar-bridge, which painted a
-       coloured vertical stripe right through unrelated content; users read
-       that as the warning/error chain "claiming" rows it had nothing to do
-       with (e.g. a yellow line continuing through a stack frame sandwiched
-       between two warning dots). Now the bar-down stub on ci and bar-up stub
-       on ni still anchor the chain visually, but a real content row in the
-       middle is left untouched — producing a clean visual break that
-       matches the user's "severity line should break between colors" mental
-       model. findNextDotSibling continues to skip blanks and dividers (so
-       same-level dots still pair up across empty gaps); it does NOT skip
-       non-blank non-leveled rows, so a stack frame between two warnings
-       returns the stack frame's index — and the same-level check then sees
-       no level on it, falls into the mismatch branch, and the chain breaks.
-       The .viewer-divider[class*="level-bar-"]::before { display:none; }
-       CSS rule keeps any dividers' own dots suppressed even when they pick
-       up a level class from bridging across them. */
-    var ch = viewportEl.children;
-    for (var ci = 0; ci < ch.length; ci++) {
-        if (!ch[ci]) continue;
-        var lvl = getBarLevel(ch[ci]);
-        if (!lvl || ch[ci].classList.contains('line-blank')) continue;
-        var ni = findNextDotSibling(ch, ci);
-        if (ni < 0 || !ch[ni]) continue;
-        var nextLvl = getBarLevel(ch[ni]);
-        if (nextLvl !== lvl) { ci = ni - 1; continue; }
-        /* Only paint the bridge across truly empty rows. A real content row
-           between ci and ni breaks the chain — keep ci/ni's own bar-down /
-           bar-up stubs (so the chain reads as "almost connected") but do not
-           colour the content row's gutter. */
-        var bridgeable = true;
-        for (var bj = ci + 1; bj < ni; bj++) {
-            if (!ch[bj]) continue;
-            if (ch[bj].classList.contains('line-blank')) continue;
-            if (ch[bj].classList.contains('viewer-divider')) continue;
-            bridgeable = false;
-            break;
-        }
-        ch[ci].classList.add('bar-down');
-        ch[ni].classList.add('bar-up');
-        if (bridgeable) {
-            for (var bi = ci + 1; bi < ni; bi++) {
-                if (ch[bi]) {
-                    ch[bi].classList.add('bar-up', 'bar-down', 'bar-bridge', 'level-bar-' + lvl);
-                }
-            }
-        }
-        ci = ni - 1;
-    }
+    /* Severity-gutter connector: the line between consecutive same-level dots
+       is purely CSS, painted by viewer-styles-decoration-bars.ts via a
+       :has(+ .level-bar-X) selector on each row. No JS chain walking, no
+       bridge stamping. The row's own level-bar-* class drives both the dot
+       and the connecting stripe via --bar-color, so they cannot disagree. */
     spacerTop.style.height = startOffset + 'px';
     spacerBottom.style.height = bottomH + 'px';
     // Re-apply row selection highlight after DOM replace so shift-click selection is preserved (e.g. on right-click context menu).

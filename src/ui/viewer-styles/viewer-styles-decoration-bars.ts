@@ -99,47 +99,58 @@ export function getDecorationBarStyles(): string {
 .level-bar-database { --bar-color: var(--vscode-charts-green, #4caf50); }
 .level-bar-info { --bar-color: var(--vscode-charts-blue, #2196f3); }
 [class*="level-bar-"]::before { background: var(--bar-color); }
-.bar-bridge::before { display: none; }
-/* Blank lines: no dot, keep vertical bar (connector) */
+/* Blank lines: no dot, the connector ::after below still paints across them. */
 .line-blank[class*="level-bar-"]::before { display: none; }
 
-/* Severity-gutter decoupling (plan: bugs/048_plan-severity-gutter-decoupling.md).
-   The prior .bar-hidden-rows outlined-dot state was overloaded with FOUR
-   different concepts (filter-hidden gap, expanded peek anchor, dedup-fold
-   survivor, collapsed stack header) and the dot looked identical for
-   "click to expand" and "click to collapse" — clicking it removed lines
-   from view in a way users perceived as data deletion. The state has been
-   removed entirely. Each concept now has its own dedicated affordance:
-     - filter gaps + peek brackets : .viewer-divider sibling rows
-                                     (viewer-styles-collapse-controls.ts)
-     - dedup-fold survivors        : inline .dedup-badge
-     - collapsed stack headers     : inline .stack-toggle chevron
-     - preview-mode trimmed frames : .viewer-divider sibling row
-   The interim .peek-collapse-row / .peek-collapse-link (the surgical
-   fix from commit 4a4d1590) is also gone — its job is done by the
-   trailing .viewer-divider on expanded peek groups. */
-
-/* Connector bars join consecutive dots — scale with zoom via em */
-.bar-down::after, .bar-up::after {
-    content: ''; position: absolute; left: 0.89em; width: 0.14em;
-    /* color-mix at 45% replaces opacity — opacity on ::after interacted with stacking contexts
-       in Chromium/WebKit so the gutter stripe could paint on top of the severity dot (::before). */
+/* Connector line between consecutive same-level dots.
+   Declarative — no JS chain walking. Each row paints its OWN stripe ONLY
+   when its immediate next sibling shares the same level-bar-* class. The
+   stripe is anchored at this row's middle (top: 50%) and extends downward
+   by one row height (height: calc(1em * --log-line-height)), reaching the
+   next row's middle exactly. Result:
+     - run of N same-level rows → N-1 stripes, each dot connected to the next
+     - lone row (no same-level next) → no stripe, just the dot
+     - end of a chain (next is different level) → :has() fails on the LAST
+       row, no overshoot past its dot — clean termination.
+   Single source of truth: the row's own level-bar-* class drives both the
+   dot color (::before) and the line color (::after) via --bar-color. They
+   cannot disagree because they're both pseudo-elements of the same element
+   reading the same custom property.
+   One selector per level — listed individually because CSS has no "same
+   class as me" combinator. Order doesn't matter; specificity is identical.
+   :not(:is(.art-block-start, .art-block-middle, .art-block-end)) excludes
+   ASCII-art rows — those already paint a continuous border-left for their
+   gutter rail (viewer-styles-ascii-art.ts) and reuse ::after for the
+   shimmer animation, so the chain connector must NOT also claim ::after
+   there or it would replace the shimmer with a static stripe. */
+.level-bar-error:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-error)::after,
+.level-bar-error-recent-context:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-error-recent-context)::after,
+.level-bar-warning:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-warning)::after,
+.level-bar-performance:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-performance)::after,
+.level-bar-todo:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-todo)::after,
+.level-bar-debug:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-debug)::after,
+.level-bar-notice:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-notice)::after,
+.level-bar-framework:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-framework)::after,
+.level-bar-database:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-database)::after,
+.level-bar-info:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-info)::after {
+    content: ''; position: absolute;
+    left: 0.89em; width: 0.14em;
+    top: 50%;
+    /* Use a fixed row-height multiple, not "height: 100%", so blank rows
+       (quarter-height) still extend the stripe to the next normal row's
+       middle. .line and .stack-header parents have overflow: visible so the
+       stripe can paint past this row's bottom edge into the next row's
+       top half. */
+    height: calc(1em * var(--log-line-height, 1.1));
+    /* color-mix at 45% replaces opacity — opacity on ::after interacted with
+       Chromium/WebKit stacking contexts so the gutter stripe could paint on
+       top of the severity dot (::before). */
     background: color-mix(in srgb, var(--bar-color) 45%, transparent);
     pointer-events: none;
-    /* Below severity dot (::before); keep above unpositioned row content via positive z-index. */
+    /* Below severity dot (::before z-index: 2) so the dot covers the stripe
+       at the connection point and remains the focal element. */
     z-index: 1;
 }
-.bar-down:not(.bar-up)::after { top: 50%; bottom: 0; }
-.bar-up:not(.bar-down)::after { top: 0; bottom: 50%; }
-.bar-up.bar-down::after { top: 0; bottom: 0; }
-
-/* History: pre-2026.04 the viewer used .hidden-chevron (▼) and .peek-collapse
-   (−) elements between visible rows. The 2026.04 unified line-collapsing
-   rethink replaced them with the overloaded .bar-hidden-rows outlined-dot
-   state. The 2026.05 severity-gutter decoupling (plan 048) replaced THAT
-   with dedicated .viewer-divider / .dedup-badge / .stack-toggle affordances
-   (see viewer-styles-collapse-controls.ts). Nothing in the render pipeline
-   emits any of the retired classes anymore. */
 
 /* Continuation line collapse badge — inline pill showing hidden line count.
    Toggles group visibility on click. Uses em so it scales with zoom. */
