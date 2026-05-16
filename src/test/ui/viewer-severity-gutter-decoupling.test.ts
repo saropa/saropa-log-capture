@@ -58,46 +58,47 @@ suite('Affordance CSS: counter-row chevron replaces divider + dedup-badge', () =
         assert.ok(ctlCss.includes('.deco-chevron'), 'chevron child rule must exist');
     });
 
-    test('CSS defines .stack-toggle for stack-header rows', () => {
-        // Stack-headers have no line-number prefix, so they keep an inline
-        // chevron at the start of the header text — see renderStackHeader.
-        assert.ok(ctlCss.includes('.stack-toggle'), '.stack-toggle rule must exist for stack-header chevrons');
-    });
-
-    test('retired affordances absent: no .viewer-divider, no .dedup-badge rules', () => {
-        // Both were replaced by the counter-row chevron. Re-introducing
-        // either would recreate the overlap / floating-pill problems the
-        // user reported (chip overlapping adjacent rows' tag chips,
-        // chip stacking on chip between the same row pair).
+    test('retired affordances absent: no .viewer-divider, no .dedup-badge, no .stack-toggle rules', () => {
+        // All three were replaced by the counter-row chevron (with the
+        // 'stack' kind routing trace toggles to the previous log line).
+        // Re-introducing any would recreate the overlap / floating-pill /
+        // mid-row-clutter problems the user reported.
         assert.ok(
             !ctlCss.includes('.viewer-divider'),
             '.viewer-divider rule must be removed — between-row pills caused tag-column overlap',
         );
         assert.ok(
             !ctlCss.includes('.dedup-badge'),
-            '.dedup-badge rule must be removed — trailing pill was replaced by the counter-row chevron',
+            '.dedup-badge rule must be removed — trailing pill replaced by counter-row chevron',
+        );
+        assert.ok(
+            !ctlCss.includes('.stack-toggle'),
+            '.stack-toggle rule must be removed — inline ▶ stack chip replaced by previous-line counter-row chevron',
         );
     });
 });
 
-suite('Stack chevron parity: ▶ for collapsed/preview, ▼ for fully expanded', () => {
+suite('Stack-header rendering: no inline chevron, plain text only', () => {
     const stackChunk = getStackHeaderRenderScript();
 
-    test('header uses ▶ (\\u25b6) and ▼ (\\u25bc) glyphs for state', () => {
+    test('stack-header emits no inline .stack-toggle span', () => {
+        // The toggle moved to the previous log line's counter-row chevron
+        // (data-affordance-kind="stack"). The stack-header is plain text;
+        // click anywhere on the row still toggles via the whole-row
+        // .stack-header[data-gid] handler in viewer-script-click-handlers.ts.
         assert.ok(
-            stackChunk.includes('\\u25b6') && stackChunk.includes('\\u25bc'),
-            'header must use ▶ for collapsed/preview and ▼ for expanded',
+            !stackChunk.includes('<span class="stack-toggle"'),
+            'stack-header must not emit the retired inline .stack-toggle chip',
         );
     });
 
-    test('chevron is an inline .stack-toggle span inside the header text', () => {
+    test('stack-header still uses ▶ / ▼ glyphs in its hover tooltip text', () => {
+        // The chevron itself moved off the header, but the tooltip text
+        // (rendered server-side into hdrTitleAttr) can still describe
+        // state with glyphs the user knows.
         assert.ok(
-            stackChunk.includes('<span class="stack-toggle"'),
-            'chevron must be an inline span so it sits in the header text (no decoration prefix on stack-headers)',
-        );
-        assert.ok(
-            stackChunk.includes('data-gid="\' + item.groupId + \'"'),
-            'chevron must carry data-gid so a click on the chevron alone still resolves the group',
+            stackChunk.includes('\\u25b6') && stackChunk.includes('\\u25bc'),
+            'header tooltip / glyph computation must still distinguish ▶ vs ▼ state',
         );
     });
 

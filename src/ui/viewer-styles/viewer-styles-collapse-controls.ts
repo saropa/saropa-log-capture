@@ -10,10 +10,10 @@
  * column variants — all of which either overlapped row content, claimed
  * inconsistent vertical space, or required separate state vocabularies.
  *
- * `.stack-toggle` remains for stack-header rows because they have no
- * line-number prefix to attach a chevron to; it renders inline at the
- * start of the header text (NOT absolute-positioned, NOT in the tag
- * column — see viewer-data-helpers-render-stack.ts).
+ * Stack-header chevrons are also retired: the trace's expand/collapse
+ * toggle moved to the previous log line's counter-row chevron (kind=
+ * "stack"), so the stack-header itself is plain text. See
+ * viewer-data-helpers-render-stack.ts and viewer-data-divider.ts.
  *
  * Concatenated into the bundled stylesheet via viewer-styles-decoration.ts.
  */
@@ -67,25 +67,9 @@ export function getCollapseControlStyles(): string {
     font-size: 0.85em;
 }
 
-/* ===================================================================
-   Stack toggle — inline chevron at the start of a stack-header's text.
-   Kept INLINE (not floating, not absolute) because stack-header rows
-   have no decoration prefix to host a counter-row chevron. The whole
-   header row remains clickable via the existing handler — the chevron
-   is just the visible cue.
-   =================================================================== */
-.stack-toggle {
-    display: inline-block;
-    margin-right: 0.35em;
-    color: var(--vscode-descriptionForeground, #888);
-    opacity: 0.5;
-    cursor: pointer;
-    user-select: none;
-    font-size: 0.85em;
-}
-.stack-toggle:hover {
-    color: var(--vscode-foreground, #fff);
-    opacity: 1;
-}
+/* Stack-header inline chevron is fully retired — toggle moved to the
+   previous log line's counter-row chevron (kind="stack"). No CSS rule
+   for the retired class lives here; the whole-row click handler in
+   viewer-script-click-handlers.ts still toggles the trace on row click. */
 `;
 }
