@@ -115,24 +115,16 @@ suite('Severity bar connector (CSS sibling architecture)', () => {
         );
     });
 
-    test('viewer-divider rows participate in chain (::after paints, ::before suppressed)', () => {
-        // Dividers (filter-gap, peek-hide, preview-frames) get stamped with
-        // the surrounding chain level at render time in viewer-data-viewport.ts.
-        // That lets the :has(+ .level-bar-X) selector on the row ABOVE find
-        // a matching neighbor and the chain stripe extend through the gap.
-        // The divider's own ::after also paints (continuing the chain to the
-        // row below). The dot ::before stays suppressed — the divider is a
-        // control, not a log line.
+    test('between-row divider rows are retired — chain spans naturally row-to-row', () => {
+        // The .viewer-divider concept was retired alongside the move to
+        // the counter-row chevron affordance. With no DOM rows between
+        // visible log rows, the :has(+ .level-bar-X) selector on each
+        // row finds its immediate neighbor directly — no divider stamping,
+        // no chain bridging, no special-case CSS.
         const fullStyles = getViewerStyles();
         assert.ok(
-            /\.viewer-divider\[class\*="level-bar-"\]::before\s*\{[^}]*display:\s*none/.test(fullStyles),
-            'viewer-divider dot (::before) must stay suppressed even when divider has a level-bar-* class',
-        );
-        // Conversely, no rule should force ::after to display:none on dividers
-        // — that would break the chain through them.
-        assert.ok(
-            !/\.viewer-divider\[class\*="level-bar-"\]::after\s*\{[^}]*display:\s*none/.test(fullStyles),
-            'viewer-divider ::after must NOT be hidden — that would break the chain across gap dividers',
+            !fullStyles.includes('.viewer-divider'),
+            'no .viewer-divider CSS rule should remain — counter-row chevron replaced it',
         );
     });
 });
@@ -191,23 +183,14 @@ suite('Hidden-lines chevron insertion', () => {
         );
     });
 
-    test('should push a .viewer-divider row when a filter-hidden gap exists', () => {
-        // Plan 048 (bugs/048_plan-severity-gutter-decoupling.md): the
-        // .bar-hidden-rows overload on the row AFTER the gap was retired.
-        // The render loop now pushes a dedicated .viewer-divider sibling
-        // row carrying the count + click target. See viewer-data-divider.ts
-        // for the divider HTML; here we only pin that the render loop calls
-        // the builder when prevVisIdx leaves a gap.
+    test('filter-hidden gaps surface via _hiddenAfter pre-pass, not divider rows', () => {
+        // Replaces the old buildHiddenGapDivider call: the counter-row
+        // chevron on the row BEFORE the gap reads its _hiddenAfter stamp
+        // (set by computeRowAffordances in viewer-data-divider.ts) and
+        // routes the click to peekChevron.
         assert.ok(
-            viewportScript.includes('buildHiddenGapDivider(_hiddenFrom, _hiddenTo, _hInfo, _chainLvl)'),
-            'render loop must call buildHiddenGapDivider on a detected gap (with chain level)',
-        );
-    });
-
-    test('should use prevVisIdx to detect gaps between visible lines', () => {
-        assert.ok(
-            viewportScript.includes('prevVisIdx'),
-            'render loop must track previous visible line index',
+            viewportScript.includes('computeRowAffordances()'),
+            'render loop must invoke the affordance pre-pass each render',
         );
     });
 
@@ -407,10 +390,14 @@ suite('Retired indicator classes are fully removed', () => {
         );
     });
 
-    test('should define the new .viewer-divider affordance', () => {
+    test('should NOT define .viewer-divider (retired alongside dedup-badge)', () => {
+        // The between-row .viewer-divider concept was retired when the
+        // counter-row chevron took over filter-hidden / peek / preview
+        // affordances. Re-introducing it would recreate the tag-column
+        // overlap problem the user reported.
         assert.ok(
-            css.includes('.viewer-divider'),
-            'plan-048 .viewer-divider rule must replace .bar-hidden-rows',
+            !css.includes('.viewer-divider'),
+            'no .viewer-divider CSS rule should remain — counter-row chevron replaced it',
         );
     });
 });
