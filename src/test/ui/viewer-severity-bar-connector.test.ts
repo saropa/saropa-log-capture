@@ -96,8 +96,8 @@ suite('Severity bar connector (CSS sibling architecture)', () => {
             'connector must be anchored at the row middle (top: 50%)',
         );
         assert.ok(
-            /bottom:\s*-100%/.test(decoStyles),
-            'connector must overshoot one row height past bottom — stack-header rows use line-height 1.5 vs .line\'s 1.1, so bottom: -50% falls short; -100% bridges the mismatch (adjacent same-level stripes overlap in same color, no artifact)',
+            /bottom:\s*-50%/.test(decoStyles),
+            'connector reaches exactly to next row\'s middle (bottom: -50%); requires uniform row heights, which stack-header now provides by matching .line\'s line-height var(--log-line-height)',
         );
     });
 
