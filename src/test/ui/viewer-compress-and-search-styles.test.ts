@@ -106,6 +106,34 @@ suite('Viewer compress lines (embedded script)', () => {
     test('integrationsAdapters message updates footer quality report enabled state', () => {
         assert.ok(messageHandler.includes('applyFooterQualityReportState'));
     });
+
+    test('numeric-variant fold suppressed when either explicit compress mode is on', () => {
+        // useNumericVariant must be gated on !useExactConsecutive && !useGlobal so the user's
+        // strict opt-in wins. Without that gate, turning Compress (consecutive) on would silently
+        // broaden the dedup key — a behavior change the user did not ask for.
+        assert.ok(
+            dataScript.includes('var useNumericVariant = !useExactConsecutive && !useGlobal'),
+            'useNumericVariant must short-circuit when either explicit compress mode is on',
+        );
+        assert.ok(
+            dataScript.includes("typeof collapseNumericVariants !== 'undefined') && collapseNumericVariants"),
+            'useNumericVariant must read collapseNumericVariants (with typeof guard)',
+        );
+        assert.ok(
+            dataScript.includes('var useConsecutive = useExactConsecutive || useNumericVariant'),
+            'useConsecutive must compose the explicit consecutive mode with the numeric variant',
+        );
+    });
+
+    test('lineDedupeKey applies /\\d+/g normalization ONLY when useNumericVariant is active', () => {
+        // Source apps emit "Repeated log #1", "Repeated log #2", …; byte-equal dedup never folds
+        // them. Normalizing digit runs to a placeholder collapses the flood. The conditional is
+        // critical — exact compress modes must keep the unmodified key.
+        assert.ok(
+            dataScript.includes("if (useNumericVariant) t = t.replace(/\\d+/g, '<n>')"),
+            'digit-run normalization must be gated on useNumericVariant',
+        );
+    });
 });
 
 suite('Session nav overlay CSS (search strip not forced to nav-button chrome)', () => {
@@ -143,6 +171,12 @@ suite('Search strip and options (compress UI wiring)', () => {
         const html = getOptionsPanelHtml();
         assert.ok(html.includes('id="opt-compress-lines"'), 'compress toggle must exist for syncOptionsPanelUi');
         assert.ok(html.includes('id="opt-compress-lines-global"'), 'global compress toggle must exist for syncOptionsPanelUi');
+        // The numeric-variant toggle ships default-on; the checkbox must exist so
+        // syncOptionsPanelUi can reflect its state and so users can turn it off.
+        assert.ok(
+            html.includes('id="opt-collapse-numeric-variants"'),
+            'numeric-variant toggle must exist for syncOptionsPanelUi',
+        );
     });
 
     test('layout script exposes toggleCompressLines', () => {
@@ -151,6 +185,10 @@ suite('Search strip and options (compress UI wiring)', () => {
         assert.ok(layout.includes('function toggleCompressNonConsecutiveLines'));
         assert.ok(layout.includes('compressLinesMode'));
         assert.ok(layout.includes('compressNonConsecutiveMode'));
+        // Numeric-variant fold ships default-on; the var declaration and the toggle function
+        // must both be present so the options checkbox has something to wire up.
+        assert.ok(layout.includes('var collapseNumericVariants = true'), 'must default to true');
+        assert.ok(layout.includes('function toggleCollapseNumericVariants'));
     });
 
     test('layout exposes compress toggle and suggestion banner helpers', () => {
