@@ -215,14 +215,19 @@ suite('Webview script null guards – core viewer', () => {
             );
         });
 
-        test('should guard children[ni] in findNextDotSibling', () => {
-            const block = script.slice(
-                script.indexOf('function findNextDotSibling'),
-                script.indexOf('function findNextDotSibling') + 300,
+        test('findNextDotSibling and getBarLevel are retired', () => {
+            // The chain connector is now pure CSS (viewer-styles-decoration-
+            // bars.ts :has(+ .level-bar-X)::after per level). The JS helpers
+            // findNextDotSibling and getBarLevel were used only by the
+            // removed connector loop — they're gone, and so is the null-guard
+            // they used to need.
+            assert.ok(
+                !script.includes('function findNextDotSibling'),
+                'findNextDotSibling must be removed — chain connector is CSS-only now',
             );
             assert.ok(
-                block.includes('if (!children[ni]) continue'),
-                'findNextDotSibling should guard children[ni]',
+                !script.includes('function getBarLevel'),
+                'getBarLevel must be removed — only the chain loop used it',
             );
         });
     });
