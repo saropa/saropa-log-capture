@@ -1,19 +1,23 @@
 /**
- * Tests for async-gap ("<asynchronous suspension>") stack-group continuation —
- * Item A of plans/history/2026.05/2026.05.15/054_plan-viewer-stack-noise-filter-layout.md.
+ * Tests for async-gap ("<asynchronous suspension>") stack-group handling.
  *
- * Before the fix, an async-gap line failed isStackFrameText(), hit the
- * group-close path in addToData(), and shattered every Dart async trace into
- * ~15 one-frame groups. tryIngestStackLine() now folds a gap into the OPEN
- * group as an fw=true continuation frame; an orphan gap (no active group)
- * stays a normal line.
+ * Before the original fix, a gap line failed isStackFrameText() and shattered
+ * every Dart async trace into ~15 one-frame groups. The current design folds
+ * a gap INTO the active group as an inline broken-chain glyph appended to the
+ * previous frame's html — no separate row is created. This keeps traces
+ * visually compact while preserving "<asynchronous suspension>" in the DOM
+ * for selection/copy (sr-only span inside the glyph; icon comes from CSS
+ * ::before so it never lands on the clipboard).
+ *
+ * An orphan gap with no active group still falls through to normal-line
+ * handling — a gap must never start a group on its own.
  */
 import * as assert from 'node:assert';
 import { loadStackHeaderRepeatSandbox, StackItemVm, StackSandboxVm } from './viewer-stack-header-repeat-sandbox';
 
 // addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPercent, source, rawText, tier)
-function addLine(vm: StackSandboxVm, html: string, ts: number): void {
-    vm.addToData(html, false, 'debug', ts, false, null, undefined, undefined, 'debug', html, undefined);
+function addLine(vm: StackSandboxVm, html: string, ts: number, rawText: string = html): void {
+    vm.addToData(html, false, 'debug', ts, false, null, undefined, undefined, 'debug', rawText, undefined);
 }
 
 const FRAME_A = 'DriftDebugInterceptor._log (./lib/drift_debug_interceptor.dart:92:5)';
@@ -23,8 +27,6 @@ const FRAME_C = '#9  Baz.qux (./lib/baz.dart:987:11)';
 // suspension>" would otherwise be eaten by stripTags() as a bogus tag. This
 // mirrors what the extension's line renderer actually sends.
 const GAP = '&lt;asynchronous suspension&gt;';
-
-type GapItem = StackItemVm & { fw?: boolean; isAsyncGap?: boolean };
 
 suite('async-gap stack-group continuation', () => {
     test('a gap between frames keeps the trace as ONE group', () => {
@@ -42,14 +44,43 @@ suite('async-gap stack-group continuation', () => {
         assert.strictEqual(gids.size, 1, 'every frame and the gap must share one groupId');
     });
 
-    test('gap is ingested as an fw=true stack-frame flagged isAsyncGap', () => {
+    test('gap is consumed inline — no separate row is added', () => {
         const vm = loadStackHeaderRepeatSandbox();
-        addLine(vm, FRAME_A, 1000);
+        addLine(vm, FRAME_A, 1000); // header
+        addLine(vm, FRAME_B, 1000); // 1 frame
+        const before = vm.allLines.length;
         addLine(vm, GAP, 1000);
-        const gap = vm.allLines[vm.allLines.length - 1] as GapItem;
-        assert.strictEqual(gap.type, 'stack-frame', 'gap must be ingested as a stack-frame');
-        assert.strictEqual(gap.isAsyncGap, true, 'gap must carry the isAsyncGap flag');
-        assert.strictEqual(gap.fw, true, 'gap must be fw=true so it hides in collapsed/preview state');
+        assert.strictEqual(vm.allLines.length, before, 'gap must not add a row — it attaches inline to the prior frame');
+    });
+
+    test('gap appends the glyph (with hidden raw text) to the prior frame html', () => {
+        const vm = loadStackHeaderRepeatSandbox();
+        addLine(vm, FRAME_A, 1000); // header
+        addLine(vm, FRAME_B, 1000); // frame — anchor for the gap glyph
+        addLine(vm, GAP, 1000);
+        const anchor = vm.allLines[vm.allLines.length - 1];
+        const html = anchor.html ?? '';
+        assert.ok(html.includes('async-gap-glyph'), 'expected glyph span on the prior frame; got ' + JSON.stringify(html));
+        assert.ok(
+            html.includes('&lt;asynchronous suspension&gt;'),
+            'expected the raw phrase in the sr-only text span for clipboard capture; got ' + JSON.stringify(html),
+        );
+        assert.ok(
+            !html.includes('asynchronous suspension>') || html.includes('&lt;asynchronous suspension&gt;'),
+            'raw "<asynchronous suspension>" must only appear HTML-escaped inside .async-gap-text',
+        );
+    });
+
+    test('first gap (with no frame yet) attaches to the stack-header', () => {
+        const vm = loadStackHeaderRepeatSandbox();
+        addLine(vm, FRAME_A, 1000); // header — no continuation frames yet
+        addLine(vm, GAP, 1000);
+        const header = vm.allLines.find((i) => i.type === 'stack-header');
+        assert.ok(header, 'expected a stack-header');
+        assert.ok(
+            (header!.html ?? '').includes('async-gap-glyph'),
+            'glyph must attach to the header when no continuation frame exists yet',
+        );
     });
 
     test('gaps are excluded from the header frame count', () => {
@@ -61,6 +92,18 @@ suite('async-gap stack-group continuation', () => {
         const header = vm.allLines.find((i) => i.type === 'stack-header');
         assert.ok(header, 'expected a stack-header');
         assert.strictEqual(header!.frameCount, 3, 'frameCount must count header + real frames only, not gaps');
+    });
+
+    test("prior frame's rawText gains the verbatim phrase so Alt+Shift+C and search hit it", () => {
+        const vm = loadStackHeaderRepeatSandbox();
+        addLine(vm, FRAME_A, 1000); // header
+        addLine(vm, FRAME_B, 1000, FRAME_B); // anchor frame — rawText = its plain text
+        addLine(vm, GAP, 1000);
+        const anchor = vm.allLines[vm.allLines.length - 1] as StackItemVm & { rawText?: string };
+        assert.ok(
+            (anchor.rawText ?? '').endsWith('<asynchronous suspension>'),
+            'prior frame rawText must end with the unescaped phrase; got ' + JSON.stringify(anchor.rawText),
+        );
     });
 
     test('an orphan gap with no active group stays a normal line', () => {
@@ -77,37 +120,35 @@ suite('async-gap stack-group continuation', () => {
 
 /*
  * The bare ")" that closes Dart's "_StringStackTrace (#0 … )" object dump is
- * payload-free framework noise — the same shape problem as the async gap above.
- * Before the fix it failed isStackFrameText(), hit the group-close path in
- * addToData(), and rendered as a junk ")" row after every trace.
- * tryIngestStackLine() now folds it into the OPEN group as an fw=true frame;
- * an orphan ")" (no active group) stays a normal line.
+ * pure formatting noise — no method, no file, no line, nothing to expand to.
+ * tryIngestStackLine() drops it entirely (no row, no icon) since unlike an
+ * async gap it has no semantic the user could reveal. An orphan ")" with no
+ * active group still falls through to normal-line handling.
  */
-suite('trace-tail ")" stack-group continuation', () => {
+suite('trace-tail ")" stack-group handling', () => {
     // Header shape uses the Drift "(./path.dart:line:col)" anchor so the
     // sandbox's minimal isStackFrameText classifier accepts it.
     const HEADER = '_StringStackTrace (#1  Foo.bar (./lib/foo.dart:1:2)';
     const FRAME = '#2  Baz.qux (./lib/baz.dart:3:4)';
     const TAIL = ')';
 
-    test('the ")" closing a Dart trace folds into the group, not a junk line', () => {
+    test('the ")" closing a Dart trace is dropped entirely — no row added', () => {
         const vm = loadStackHeaderRepeatSandbox();
         addLine(vm, HEADER, 1000); // becomes the stack-header
         addLine(vm, FRAME, 1000); // frame in group 0
-        addLine(vm, TAIL, 1000); // _StringStackTrace tail ")" — must fold in
+        const before = vm.allLines.length;
+        addLine(vm, TAIL, 1000); // _StringStackTrace tail ")"
 
-        const tail = vm.allLines[vm.allLines.length - 1] as GapItem;
-        assert.strictEqual(tail.type, 'stack-frame', 'the ")" must be ingested into the group, not left as a normal line');
-        assert.strictEqual(tail.fw, true, 'the ")" must be fw=true so it hides in collapsed/preview state');
+        assert.strictEqual(vm.allLines.length, before, 'the ")" must not add a row');
         const headers = vm.allLines.filter((i) => i.type === 'stack-header');
         assert.strictEqual(headers.length, 1, 'the ")" must not close the group or start a new one');
     });
 
-    test('the ")" trace-tail is excluded from the header frame count', () => {
+    test('the ")" trace-tail does not affect the header frame count', () => {
         const vm = loadStackHeaderRepeatSandbox();
         addLine(vm, HEADER, 1000); // header -> frameCount 1
         addLine(vm, FRAME, 1000); // frame  -> frameCount 2
-        addLine(vm, TAIL, 1000); // tail   -> frameCount unchanged
+        addLine(vm, TAIL, 1000); // tail   -> dropped, frameCount unchanged
         const header = vm.allLines.find((i) => i.type === 'stack-header');
         assert.ok(header, 'expected a stack-header');
         assert.strictEqual(header!.frameCount, 2, 'frameCount must count header + real frames only, not the ")" tail');
@@ -159,29 +200,41 @@ suite('stack-frame leading-whitespace trim', () => {
     });
 });
 
-/* The literal "<asynchronous suspension>" marker is renamed to a compact
- * broken-chain glyph at ingest. tryIngestStackLine() replaces html for
- * isAsyncGap frames; rawText keeps the original phrase so search hits it. */
+/* The "<asynchronous suspension>" marker is folded inline onto the prior frame
+ * as a broken-chain glyph. The wrapper carries the original phrase in a
+ * .async-gap-text span (sr-only via CSS) so clipboard text and search both
+ * still hit it; the visible icon is a CSS ::before pseudo-element. role="button"
+ * + tabindex makes the glyph keyboard-focusable; click toggles .expanded.
+ */
 suite('async-gap broken-chain glyph rendering', () => {
     const HEADER = '#0  Foo.bar (./lib/foo.dart:1:2)';
 
-    test('async-gap html is replaced with the broken-chain glyph and a tooltip', () => {
+    test('appended glyph carries the tooltip and click affordance', () => {
         const vm = loadStackHeaderRepeatSandbox();
         addLine(vm, HEADER, 1000);
         addLine(vm, GAP, 1000);
-        const gap = vm.allLines[vm.allLines.length - 1] as GapItem;
-        assert.strictEqual(gap.isAsyncGap, true);
+        const anchor = vm.allLines[vm.allLines.length - 1];
+        const html = anchor.html ?? '';
+        assert.ok(html.includes('class="async-gap-glyph"'), 'expected glyph wrapper class; got ' + JSON.stringify(html));
+        assert.ok(html.includes('role="button"'), 'glyph must expose role="button" so click is announced; got ' + JSON.stringify(html));
+        assert.ok(html.includes('title="Async suspension'), 'expected explanatory tooltip; got ' + JSON.stringify(html));
+    });
+
+    test('the original phrase is HTML-escaped inside .async-gap-text — never raw in html', () => {
+        const vm = loadStackHeaderRepeatSandbox();
+        addLine(vm, HEADER, 1000);
+        addLine(vm, GAP, 1000);
+        const anchor = vm.allLines[vm.allLines.length - 1];
+        const html = anchor.html ?? '';
         assert.ok(
-            (gap.html ?? '').includes('async-gap-glyph'),
-            'expected glyph span class; got ' + JSON.stringify(gap.html),
+            html.includes('<span class="async-gap-text">&lt;asynchronous suspension&gt;</span>'),
+            'expected sr-only text span carrying the escaped phrase; got ' + JSON.stringify(html),
         );
+        // The raw, unescaped angle-bracketed phrase must not appear — that would let the
+        // browser parse it as a tag and lose the text from selection/copy entirely.
         assert.ok(
-            (gap.html ?? '').includes('title="Async suspension'),
-            'expected explanatory tooltip; got ' + JSON.stringify(gap.html),
-        );
-        assert.ok(
-            !(gap.html ?? '').includes('asynchronous suspension'),
-            'raw phrase must not survive in html (only in rawText); got ' + JSON.stringify(gap.html),
+            !/[^&]<asynchronous suspension>/.test(html),
+            'raw unescaped phrase must not appear in html; got ' + JSON.stringify(html),
         );
     });
 });
