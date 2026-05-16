@@ -26,7 +26,13 @@ For older versions (7.1.1 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [7.12.0] - Unreleased
+## [7.12.1]
+
+- Version bump for publication only
+
+---
+
+## [7.12.0]
 
 Right-click → **Columns** is now its own submenu where you can flip the per-line column chips on and off (including a new toggle for the source-tag chip like `flutter` or `HWUI`), the activity-bar badge stops piling up while the Logs view is already open, clicking a row in the Signals sidebar actually opens the right session and scrolls to the line, collapsed stack gaps now caption themselves so a hidden run of frames doesn't look like a mystery 8 px gap, and the scrollbar minimap finally shows the same colors as the gutter next to it. [log](https://github.com/saropa/saropa-log-capture/blob/v7.12.0/CHANGELOG.md)
 
