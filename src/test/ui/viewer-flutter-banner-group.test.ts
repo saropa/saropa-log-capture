@@ -130,19 +130,24 @@ suite('Flutter exception banner grouping', () => {
 
         test('severity dot is pulled into the banner rail (tight gap)', () => {
             // WHY pin both numbers: the rail visually "joins" the dot column
-            // only when both the dot ::before AND the bar-up/bar-down ::after
+            // only when both the dot ::before AND the chain-connector ::after
             // are pulled in together. If a future tweak moves one but not the
-            // other, the stub connector visibly offsets from the dot it joins.
+            // other, the connector visibly offsets from the dot it joins.
             const css = getFlutterBannerStyles();
             // Dot ::before override applies to all three banner positions.
             assert.ok(
                 /\.banner-group-start\[class\*="level-bar-"\]::before[\s\S]*?\.banner-group-mid\[class\*="level-bar-"\]::before[\s\S]*?\.banner-group-end\[class\*="level-bar-"\]::before[\s\S]*?left:\s*0\.15em/.test(css),
                 'all three banner positions must pull the severity dot to left: 0.15em',
             );
-            // Connector ::after must be re-centered under the pulled dot.
+            // Connector ::after on banner-group rows must be re-centered under
+            // the pulled dot. The chain logic itself is now pure CSS in
+            // viewer-styles-decoration-bars.ts via :has(+ .level-bar-X)::after;
+            // banner-group rows just override the ::after's `left` position
+            // so the chain stripe paints under the pulled-in dot rather than
+            // at the default 0.89em.
             assert.ok(
-                /\.banner-group-(?:start|mid|end)\.bar-(?:up|down)::after[\s\S]*?left:\s*0\.30em/.test(css),
-                'bar-up / bar-down connector must align under the pulled dot at left: 0.30em',
+                /\.banner-group-(?:start|mid|end)\[class\*="level-bar-"\]::after[\s\S]*?left:\s*0\.30em/.test(css),
+                'banner-group ::after connector must align under the pulled dot at left: 0.30em',
             );
         });
 
@@ -167,52 +172,39 @@ suite('Flutter exception banner grouping', () => {
         });
     });
 
-    suite('severity connector breaks at real content rows (no bridge through unrelated content)', () => {
+    suite('severity connector is pure CSS — JS chain machinery retired', () => {
+        // The dot-to-dot connector that used to live as a JS loop in
+        // renderViewport (findNextDotSibling + bar-up/bar-down/bar-bridge
+        // class stamping + a bridgeable pre-check) is gone. The chain is now
+        // ten per-level CSS rules using :has(+ .level-bar-X)::after on each
+        // row. Sibling-aware, declarative, no JS, no DOM bookkeeping. These
+        // tests pin that retirement so the JS chain doesn't come back.
         const viewport = getViewportRenderScript();
 
-        test('bridge loop pre-checks for blocking content rows before painting', () => {
-            // WHY a pre-check rather than skipping inline: bar-down/bar-up on
-            // the dots themselves still needs to fire (anchors the chain so
-            // dot pairs still read as related), but the level-bar-{lvl} stamp
-            // on intermediate rows must NOT happen if any of them is a real
-            // content row. The two decisions are independent — that's why
-            // there's a "bridgeable" flag.
+        test('renderViewport no longer carries the chain helpers or class stamping', () => {
             assert.ok(
-                viewport.includes('var bridgeable = true'),
-                'connector loop must declare a bridgeable flag before painting bridge classes',
+                !viewport.includes('function findNextDotSibling('),
+                'findNextDotSibling was JS chain machinery — replaced by CSS :has() selectors',
             );
             assert.ok(
-                viewport.includes("ch[bj].classList.contains('line-blank')")
-                    && viewport.includes("ch[bj].classList.contains('viewer-divider')"),
-                'pre-check must allow blank lines and viewer-divider rows as bridgeable rows',
+                !viewport.includes('function getBarLevel('),
+                'getBarLevel was used only by the retired chain loop',
             );
             assert.ok(
-                viewport.includes('bridgeable = false'),
-                'pre-check must flip bridgeable to false on a real content row',
+                !/classList\.add\([^)]*['"]bar-up['"]/.test(viewport),
+                'render loop must not stamp .bar-up — chain is CSS-only',
             );
             assert.ok(
-                viewport.includes('if (bridgeable) {'),
-                'bridge class assignment must be gated by the bridgeable flag',
+                !/classList\.add\([^)]*['"]bar-down['"]/.test(viewport),
+                'render loop must not stamp .bar-down — chain is CSS-only',
             );
-        });
-
-        test('dot anchors (bar-down on ci, bar-up on ni) still fire when not bridgeable', () => {
-            // The chain must still read as "almost connected" even when the
-            // bridge is suppressed — these two classes paint the stub above
-            // the trailing dot and below the leading dot.
-            const loopStart = viewport.indexOf("ch[ci].classList.add('bar-down')");
-            assert.ok(loopStart >= 0, 'bar-down anchor must be assigned to ci');
             assert.ok(
-                viewport.indexOf("ch[ni].classList.add('bar-up')", loopStart) > loopStart,
-                'bar-up anchor must be assigned to ni',
+                !/classList\.add\([^)]*['"]bar-bridge['"]/.test(viewport),
+                'render loop must not stamp .bar-bridge — chain is CSS-only',
             );
-            // Both anchors must come BEFORE the bridgeable gate so they
-            // fire regardless of whether intermediate rows are bridgeable.
-            const anchorIdx = viewport.indexOf("ch[ci].classList.add('bar-down')");
-            const gateIdx = viewport.indexOf('if (bridgeable) {');
             assert.ok(
-                anchorIdx >= 0 && gateIdx > anchorIdx,
-                'dot anchors must be assigned before the bridgeable-gated paint loop',
+                !viewport.includes('var bridgeable'),
+                'bridgeable pre-check belonged to the retired bridge stamping — no longer needed',
             );
         });
     });
