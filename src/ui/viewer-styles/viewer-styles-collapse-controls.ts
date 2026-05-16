@@ -60,11 +60,12 @@ export function getCollapseControlStyles(): string {
        not interrupted. Hover lifts to 1 so the click target is obvious. */
     opacity: 0.55;
 }
-/* If the bar-bridge post-pass added level-bar-* to this row (because it
-   sat between two same-level severity dots), suppress the dot — the row
-   is a control, not a log line, and a severity dot on it would be
-   misleading (same WHY as .peek-collapse-row's prior rule). */
+/* Defensive: if a viewer-divider ever ends up with a level-bar-* class
+   (it shouldn't anymore — the JS bridge that stamped these is gone, the
+   connector is pure CSS now), suppress the dot. The row is a control
+   affordance, not a log line, and a severity dot on it would be misleading. */
 .viewer-divider[class*="level-bar-"]::before { display: none; }
+.viewer-divider[class*="level-bar-"]::after  { display: none; }
 
 /* ===================================================================
    Dedup badge — inline "×N" pill at the end of a dedup-fold survivor.
