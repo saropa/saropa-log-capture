@@ -10,16 +10,20 @@ import type { LogViewerProvider } from './ui/provider/log-viewer-provider';
 import type { SessionHistoryProvider } from './ui/session/session-history-provider';
 import type { BookmarkStore } from './modules/storage/bookmark-store';
 import type { PopOutPanel } from './ui/viewer-panels/pop-out-panel';
+import type { ViewerBroadcaster } from './ui/provider/viewer-broadcaster';
 import { openSignalTab } from './ui/viewer-panels/signal-tab-panel';
 import { updateLastViewed } from './ui/provider/viewer-provider-helpers';
 import { searchLogFilesConcurrent } from './modules/search/log-search';
 import { maybeSuggestSmartBookmark } from './extension-activation-helpers';
+import { refreshCumulativeSqlFingerprintBaseline } from './modules/db/cumulative-sql-fingerprint-refresh';
 
 interface ViewerHandlerDeps {
     readonly viewerProvider: LogViewerProvider;
     readonly historyProvider: SessionHistoryProvider;
     readonly bookmarkStore: BookmarkStore;
     readonly popOutPanel: PopOutPanel;
+    readonly broadcaster: ViewerBroadcaster;
+    readonly outputChannel: vscode.OutputChannel;
     readonly context: vscode.ExtensionContext;
     readonly version: string;
 }
@@ -29,7 +33,7 @@ interface ViewerHandlerDeps {
  * @returns updateSessionNav — needed by registerDebugLifecycle.
  */
 export function wireViewerSpecificHandlers(deps: ViewerHandlerDeps): { updateSessionNav: () => Promise<void> } {
-    const { viewerProvider, historyProvider, bookmarkStore, popOutPanel, context, version } = deps;
+    const { viewerProvider, historyProvider, bookmarkStore, popOutPanel, broadcaster, outputChannel, context, version } = deps;
 
     const updateSessionNav = async (): Promise<void> => {
         const uri = viewerProvider.getCurrentFileUri();
@@ -45,6 +49,10 @@ export function wireViewerSpecificHandlers(deps: ViewerHandlerDeps): { updateSes
         if (isActive) {
             void maybeSuggestSmartBookmark(uri, loadResult, bookmarkStore, smartBookmarkSuggestedForUri);
         }
+        /* DB_17: refresh cumulative SQL fingerprint baseline whenever the active log changes,
+           so the SQL History panel's `Cumulative` toggle reflects every OTHER sidebar log
+           except the one now in view (active log feeds `sqlQueryHistoryByFp` live). */
+        void refreshCumulativeSqlFingerprintBaseline(broadcaster, uri, outputChannel);
     });
 
     viewerProvider.setSessionNavigateHandler(async (direction) => {

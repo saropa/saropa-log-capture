@@ -26,6 +26,33 @@ suite('viewer-sql-query-history panel script', () => {
         assert.ok(s.includes('hidden until filters'));
     });
 
+    test('DB_17: cumulative toggle wires checkbox change → setSqlQueryHistoryCumulativeEnabled', () => {
+        const s = getSqlQueryHistoryPanelScript();
+        assert.ok(s.includes("getElementById('sql-query-history-cumulative')"),
+            'panel script must look up the toggle checkbox');
+        assert.ok(s.includes('setSqlQueryHistoryCumulativeEnabled'),
+            'change listener must update the persisted preference flag');
+        assert.ok(s.includes('updateSqlHistoryCumulativeUi'),
+            'render must show/hide the toggle wrap based on host-supplied data');
+    });
+
+    test('DB_17: cross-log row jump posts sqlHistoryCrossLogJump instead of scrolling locally', () => {
+        const s = getSqlQueryHistoryPanelScript();
+        assert.ok(s.includes('jumpSqlHistoryCrossLog'), 'cross-log jump helper must exist');
+        assert.ok(s.includes("type: 'sqlHistoryCrossLogJump'"),
+            'cross-log jump must post the host message that loads the source log first');
+        assert.ok(s.includes("data-cross-log"), 'rows tag cross-log status via data attribute');
+        assert.ok(s.includes('data-cross-log-uri'), 'rows carry the source log uri for the host to load');
+    });
+
+    test('DB_17: empty-state copy distinguishes per-log empty vs filter mismatch vs cumulative-available', () => {
+        const s = getSqlQueryHistoryPanelScript();
+        assert.ok(s.includes('computeSqlHistoryEmptyText'),
+            'empty-state helper centralizes the three messages');
+        assert.ok(s.includes('Toggle Cumulative across logs'),
+            'hint suggests the toggle when other sidebar logs have data');
+    });
+
     test('Escape closes panel from search input and panel keydown', () => {
         const s = getSqlQueryHistoryPanelScript();
         assert.ok(s.includes("e.key === 'Escape'"));
