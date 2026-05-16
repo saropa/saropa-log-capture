@@ -49,7 +49,20 @@ export function getLineStyles(): string {
 .stack-gutter-spacer { visibility: hidden; }
 
 /* --- Floating copy icon (single overlay pinned to right edge of #log-content) --- */
-.line, .stack-header { position: relative; }
+/* isolation: isolate creates a fresh stacking context per row so each row's
+   own pseudo-elements (dot ::before z-index: 2, chain stripe ::after z-index: 1)
+   resolve their z-order WITHIN the row. Without this, a chain stripe ::after
+   from the PREVIOUS row that overflows into THIS row's space (via
+   overflow: visible) would render against the global stacking context — and
+   in some browsers paint on top of this row's dot at the overlap point.
+   With per-row isolation, each row paints atomically in document order: the
+   previous row paints first (including its overshoot), the current row
+   paints over it. The dot is in the current row's stacking context, so it
+   wins over any other row's overshooting stripe at every overlap point. */
+.line, .stack-header {
+    position: relative;
+    isolation: isolate;
+}
 #copy-float {
     display: none;
     position: absolute;
