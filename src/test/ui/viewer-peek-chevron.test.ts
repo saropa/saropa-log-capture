@@ -1,19 +1,22 @@
 /**
  * Spec for the counter-row affordance: a single ▶ / ▼ chevron rendered
  * right of the line number on rows that own collapsible / expandable
- * hidden content. Replaces the prior between-row `.viewer-divider` pills
- * and trailing `.dedup-badge` chips, all of which had visual overlap or
- * tag-column collision problems.
+ * hidden content. Replaces the prior between-row `.viewer-divider` pills,
+ * trailing `.dedup-badge` chips, AND the inline `.stack-toggle` chevron
+ * on stack-header rows, all of which had visual overlap, tag-column
+ * collision, or mid-row clutter problems.
  *
- * Each expand / collapse concept now wires through ONE click target —
+ * Each expand / collapse concept wires through ONE click target —
  * `.deco-counter-row[data-affordance-kind]` — with the kind attribute
  * dispatching to the right peek / unpeek function:
  *   data-affordance-kind="dedup" → peekDedupFold / unpeekChevron
+ *   data-affordance-kind="stack" → toggleStackGroup(gid)
  *   data-affordance-kind="gap"   → peekChevron(from, to, 'filter')
  *   data-affordance-kind="peek"  → unpeekChevron(peekKey)
  *
- * Stack-headers keep their inline `.stack-toggle` because they have no
- * line-number prefix to host a counter-row chevron.
+ * Stack toggle priority: when a log line's next visible row is a multi-
+ * frame stack-header, the chevron on the log line owns the trace's
+ * collapse state — the stack-header itself renders as plain text.
  */
 import * as assert from "assert";
 import { getPeekChevronScript } from "../../ui/viewer/viewer-peek-chevron";
@@ -48,6 +51,25 @@ suite("Counter-row affordance — chevron right of the line number", () => {
         assert.ok(
             aff.includes("data-dedup-survivor-idx"),
             "dedup chevron must carry the survivor idx so click routes to peekDedupFold",
+        );
+    });
+
+    test("stack branch fires when the next visible row is a multi-frame stack-header", () => {
+        // The toggle moved off the stack-header (no more inline ▶ stack
+        // chip in the middle of the row) onto the previous log line's
+        // counter-row chevron, so the user expands/collapses the trace
+        // from the line that owns it.
+        assert.ok(
+            aff.includes("item._stackToggleGid != null"),
+            "stack-toggle gid is stamped on the row whose next visible neighbor is a multi-frame header",
+        );
+        assert.ok(
+            aff.includes("data-stack-gid"),
+            "stack chevron must carry the group id so click routes to toggleStackGroup",
+        );
+        assert.ok(
+            aff.includes("hdr.collapsed === false"),
+            "chevron must flip to ▼ only when the header is FULLY expanded — preview state stays ▶",
         );
     });
 
@@ -105,6 +127,21 @@ suite("Counter-row affordance — chevron right of the line number", () => {
             aff.includes("_triggeredPeekKey"),
             "pre-pass must also clear/recompute _triggeredPeekKey each tick",
         );
+        assert.ok(
+            aff.includes("_stackToggleGid"),
+            "pre-pass must also clear/recompute _stackToggleGid each tick",
+        );
+    });
+
+    test("rows without any affordance still emit an empty .deco-chevron spacer", () => {
+        // The chevron span renders even when no action applies so the
+        // line-number column width stays identical row-to-row. Without
+        // this spacer, rows with a chevron would sit ~0.9em wider than
+        // rows without and the numeric column would zig-zag.
+        assert.ok(
+            /if\s*\(!kind\)\s*\{[^}]*return\s+counterHtml\s*\+\s*chev/.test(aff),
+            "no-affordance branch must return counterHtml + empty chev so column alignment matches",
+        );
     });
 });
 
@@ -148,6 +185,17 @@ suite("Click delegate routes counter-row affordances by kind", () => {
         assert.ok(
             peek.includes("unpeekChevron(peekKey)"),
             "peek click on the trigger row must collapse via the stamped peek key",
+        );
+    });
+
+    test("'stack' kind routes to toggleStackGroup(gid)", () => {
+        assert.ok(
+            peek.includes("kind === 'stack'"),
+            "stack kind must have its own branch in the delegate",
+        );
+        assert.ok(
+            peek.includes("toggleStackGroup(stackGid)"),
+            "stack click on the previous-line chevron must toggle the trace via its gid",
         );
     });
 
@@ -207,10 +255,14 @@ suite("Counter-row CSS — clickable line-number column", () => {
         );
     });
 
-    test(".stack-toggle survives for stack-header rows (no line-number prefix to host counter-row)", () => {
+    test(".stack-toggle is fully retired — toggle moved to previous-line counter-row chevron", () => {
+        // The inline ▶ stack chip used to clutter the middle of the
+        // stack-header row. The user moves expansion control onto the
+        // line above (the log line that emitted the trace) via
+        // data-affordance-kind="stack".
         assert.ok(
-            css.includes(".stack-toggle"),
-            "stack-headers keep their inline chevron because they have no decoration prefix",
+            !css.includes(".stack-toggle"),
+            "no .stack-toggle CSS rule should remain — counter-row stack-kind affordance replaces it",
         );
     });
 });
