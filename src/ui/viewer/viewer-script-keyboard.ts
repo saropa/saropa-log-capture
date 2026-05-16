@@ -65,6 +65,12 @@ document.addEventListener('keydown', function(e) {
         if (typeof closeFindPanel === 'function') closeFindPanel();
         if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
         if (typeof closeSessionPanel === 'function') closeSessionPanel();
+        /* Clear both flavors of selection: the viewer's click-selection state
+           (selectionStart/End + .selected class) and the browser's native text
+           selection. Either may be present independently — drag-select uses
+           native ranges, shift-click uses our custom state. */
+        if (typeof clearSelection === 'function') clearSelection();
+        var _escSel = window.getSelection(); if (_escSel) _escSel.removeAllRanges();
         return;
     }
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
