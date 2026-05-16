@@ -94,7 +94,14 @@ export function getContentStyles(): string {
        back to the error color. Using inherit keeps unclassified headers
        neutral; the explicit .level-error rule below handles actual errors. */
     color: inherit;
-    line-height: 1.5;
+    /* Match .line's row height. Was 1.5 (visual breathing room) but the
+       severity-gutter chain stripe is anchored as a percentage of the parent
+       row's height — when stack-header rows were taller than .line rows the
+       chain stripe couldn't reach the next dot's middle, producing visible
+       gaps at log-line → stack-header transitions. Stack headers are part
+       of the same logical entry as the log line above them anyway, so a
+       uniform compact height fits the "all-one-output" semantics. */
+    line-height: var(--log-line-height, 1.1);
     white-space: pre;
     word-break: normal;
     overflow-wrap: normal;
