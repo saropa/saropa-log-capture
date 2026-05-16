@@ -136,33 +136,33 @@ function getCounterAffordance(item, idx, hiddenAfter, counterHtml) {
         tip = tagPart + 'revealed lines below \\u00b7 click to re-collapse';
     }
 
-    /* Always emit the chevron span — even when there is no affordance —
-       so the line-number column width stays identical row-to-row. An
-       empty span with the .deco-chevron rule's fixed 0.9em width is the
-       spacer; rows with an action fill it with the glyph. Without this
-       spacer, rows with a chevron would sit ~0.9em wider than rows
-       without one and the numeric column would zig-zag down the page. */
-    var chev = '<span class="deco-chevron">' + glyph + '</span>';
+    /* Always emit the chevron span with non-empty content (a non-breaking
+       space when no glyph applies) so its layout box renders identically
+       to a glyph-bearing span. An empty inline-block can collapse to zero
+       width in some baseline / font contexts even with an explicit width,
+       which shifts the digits left on chevron-less rows and breaks the
+       numeric column alignment. */
+    var chev = '<span class="deco-chevron">' + (glyph || '\\u00a0') + '</span>';
 
-    if (!kind) {
-        /* No interactive affordance — return the counter + empty-chevron
-           spacer without a click wrapper, so the row is non-interactive
-           but the column layout still matches affordance rows pixel-for-
-           pixel. */
-        return counterHtml + chev;
+    /* Always wrap counter + chevron in .deco-counter-row, even when no
+       interactive affordance applies. Without the wrapper, the bare counter
+       + chevron pair lives directly inside .line-decoration and the inline
+       formatting metrics (baseline, whitespace between siblings) differ
+       subtly from the wrapped case — that's enough to shift the digits a
+       fraction of an em between rows. One structure for every row keeps the
+       numeric column straight; the data-affordance-kind attribute (present
+       only on interactive rows) is what the click delegate and the cursor /
+       hover CSS rules scope to. */
+    var wrapperAttrs = '';
+    if (kind) {
+        var expanded = (kind === 'peek'
+            || (kind === 'dedup' && item.peekAnchorKey != null)
+            || (kind === 'stack' && item.collapsed === false)) ? 'true' : 'false';
+        wrapperAttrs = ' role="button" aria-expanded="' + expanded + '"'
+            + ' data-affordance-kind="' + kind + '"' + dataAttrs
+            + ' title="' + dividerHtmlAttrEscape(tip) + '"';
     }
-
-    /* role="button" + aria-expanded encodes the toggle state for screen
-       readers. The wrapper is the click target (delegated in
-       viewer-peek-chevron.ts via .deco-counter-row[data-affordance-kind]),
-       so both the line-number digits and the chevron glyph trigger the
-       same action — the user can aim at either. */
-    var expanded = (kind === 'peek'
-        || (kind === 'dedup' && item.peekAnchorKey != null)
-        || (kind === 'stack' && item.collapsed === false)) ? 'true' : 'false';
-    return '<span class="deco-counter-row" role="button" aria-expanded="' + expanded + '"'
-        + ' data-affordance-kind="' + kind + '"' + dataAttrs
-        + ' title="' + dividerHtmlAttrEscape(tip) + '">'
+    return '<span class="deco-counter-row"' + wrapperAttrs + '>'
         + counterHtml + chev + '</span>';
 }
 `;

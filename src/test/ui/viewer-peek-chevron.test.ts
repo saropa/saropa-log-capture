@@ -128,14 +128,32 @@ suite("Counter-row affordance — chevron right of the line number", () => {
         );
     });
 
-    test("rows without any affordance still emit an empty .deco-chevron spacer", () => {
-        // The chevron span renders even when no action applies so the
-        // line-number column width stays identical row-to-row. Without
-        // this spacer, rows with a chevron would sit ~0.9em wider than
-        // rows without and the numeric column would zig-zag.
+    test("every row wraps counter + chevron in .deco-counter-row (identical DOM, identical metrics)", () => {
+        // The wrapper was previously conditional — only added when an
+        // affordance applied. Loose siblings vs an inline-block wrapper
+        // have subtly different baseline / whitespace behaviour, which
+        // shifted the digits a fraction of an em on chevron-less rows
+        // and broke the numeric-column alignment the user reported.
+        // Now every row gets the same wrapper; the data-affordance-kind
+        // attribute is what differentiates interactive from inert rows.
         assert.ok(
-            /if\s*\(!kind\)\s*\{[^}]*return\s+counterHtml\s*\+\s*chev/.test(aff),
-            "no-affordance branch must return counterHtml + empty chev so column alignment matches",
+            !/if\s*\(!kind\)\s*\{[^}]*return\s+counterHtml\s*\+\s*chev/.test(aff),
+            "no-affordance branch must NOT return loose counter + chev — wrap unconditionally",
+        );
+        assert.ok(
+            /return\s+'<span class="deco-counter-row"/.test(aff),
+            "builder must return a .deco-counter-row wrapper on every code path",
+        );
+    });
+
+    test("empty chevron span carries a \\u00a0 fallback so layout is identical to a glyph-bearing span", () => {
+        // An empty inline-block can collapse to zero width in some
+        // baseline / font contexts even with explicit width, which
+        // shifts the digits left on non-affordance rows. Filling with
+        // a non-breaking space guarantees the layout box renders.
+        assert.ok(
+            /glyph\s*\|\|\s*'\\u00a0'/.test(aff),
+            "chevron span must fall back to a non-breaking space when no glyph applies",
         );
     });
 });
@@ -212,16 +230,18 @@ suite("Counter-row CSS — clickable line-number column", () => {
         assert.ok(css.includes(".deco-chevron"), "chevron child rule must exist");
     });
 
-    test(".deco-counter-row has cursor: pointer and a hover state", () => {
-        // The whole region must read as interactive at rest, and the hover
-        // affordance gives the user visual feedback the click is live.
+    test(".deco-counter-row[data-affordance-kind] is the interactive variant", () => {
+        // EVERY row gets a .deco-counter-row wrapper so the DOM structure
+        // is identical (alignment depends on that). Cursor + hover styles
+        // must scope to [data-affordance-kind] so non-interactive rows
+        // do not falsely advertise themselves as clickable.
         assert.ok(
-            /\.deco-counter-row\s*\{[^}]*cursor:\s*pointer/.test(css),
-            "wrapper must declare cursor: pointer",
+            /\.deco-counter-row\[data-affordance-kind\]\s*\{[^}]*cursor:\s*pointer/.test(css),
+            "cursor:pointer must scope to [data-affordance-kind], not the bare wrapper",
         );
         assert.ok(
-            /\.deco-counter-row:hover/.test(css),
-            "wrapper must have a hover rule (background tint or chevron lift)",
+            /\.deco-counter-row\[data-affordance-kind\]:hover/.test(css),
+            "hover style must scope to [data-affordance-kind] so inert rows do not glow",
         );
     });
 
@@ -231,8 +251,9 @@ suite("Counter-row CSS — clickable line-number column", () => {
             "chevron must sit at ~0.5 opacity at rest so it reads as a quiet marker on the number",
         );
         assert.ok(
-            css.includes(".deco-counter-row:hover .deco-chevron") || css.includes(".deco-counter-row:focus-visible .deco-chevron"),
-            "hover/focus on the wrapper must lift the chevron to full opacity",
+            css.includes(".deco-counter-row[data-affordance-kind]:hover .deco-chevron")
+                || css.includes(".deco-counter-row[data-affordance-kind]:focus-visible .deco-chevron"),
+            "hover/focus on the interactive wrapper must lift the chevron to full opacity",
         );
     });
 

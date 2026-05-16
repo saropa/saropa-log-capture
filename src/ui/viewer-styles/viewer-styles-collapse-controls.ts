@@ -25,26 +25,29 @@ export function getCollapseControlStyles(): string {
    own expandable / collapsible hidden content below them.
    =================================================================== */
 
-/* The wrapper is a real layout span inside the .line-decoration prefix,
-   so it adds nothing exotic to row geometry — no absolute positioning,
-   no overlay z-index games. Its width is the counter digits plus a small
-   chevron glyph, which sits flush against the right edge of the number.
-   Cursor + role expose interactivity; the title attribute carries the
-   per-affordance tooltip (count, reason, parsed-tag context). */
+/* EVERY row wraps counter + chevron in .deco-counter-row, even when no
+   affordance applies. Identical DOM structure keeps the inline-formatting
+   metrics (baseline alignment, whitespace handling) the same row-to-row,
+   so the line-number digits land at the same x on every line. Only rows
+   that carry [data-affordance-kind] are interactive — cursor / hover /
+   focus styles scope to that attribute so non-interactive rows do not
+   advertise themselves as clickable. */
 .deco-counter-row {
     display: inline-block;
-    cursor: pointer;
     border-radius: 2px;
 }
-.deco-counter-row:hover {
+.deco-counter-row[data-affordance-kind] {
+    cursor: pointer;
+}
+.deco-counter-row[data-affordance-kind]:hover {
     background: var(--vscode-editor-hoverHighlightBackground, rgba(173, 214, 255, 0.15));
 }
-.deco-counter-row:hover .deco-chevron,
-.deco-counter-row:focus-visible .deco-chevron {
+.deco-counter-row[data-affordance-kind]:hover .deco-chevron,
+.deco-counter-row[data-affordance-kind]:focus-visible .deco-chevron {
     color: var(--vscode-foreground, #fff);
     opacity: 1;
 }
-.deco-counter-row:focus-visible {
+.deco-counter-row[data-affordance-kind]:focus-visible {
     outline: 1px dotted var(--vscode-focusBorder);
     outline-offset: 1px;
 }

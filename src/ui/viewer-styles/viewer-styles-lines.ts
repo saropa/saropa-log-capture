@@ -44,9 +44,9 @@ export function getLineStyles(): string {
     padding-left: var(--deco-prefix-width-em, 14.25em);
 }
 .line:hover { background: var(--vscode-list-hoverBackground); }
-/* Stack gutter spacer: reserves the same width as the collapse arrow on
-   stack headers so line numbers and content stay aligned across all lines. */
-.stack-gutter-spacer { visibility: hidden; }
+/* .stack-gutter-spacer rule retired alongside the inline collapse chevron
+   it compensated for. The counter-row chevron now lives on the same column
+   on every row (stack-header or regular), so no compensating spacer is needed. */
 
 /* --- Floating copy icon (single overlay pinned to right edge of #log-content) --- */
 /* isolation: isolate creates a fresh stacking context per row so each row's
