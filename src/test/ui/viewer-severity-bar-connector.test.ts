@@ -77,11 +77,12 @@ suite('Severity bar connector (CSS sibling architecture)', () => {
     });
 
     test('connector ::after geometry matches the dot column', () => {
-        // The stripe must be anchored at the row's middle (top: 50%) so it
-        // starts where the dot sits, and extend by one row-height-em downward
-        // so it reaches the next row's middle (where the next dot sits).
-        // Width and left position match the prior stripe and the dot column
-        // so the chain reads as a single column.
+        // The stripe is anchored at this row's middle (top: 50%) and extends
+        // 50% PAST the row's bottom edge (bottom: -50%). Net: it spans from
+        // this dot to where the next row's dot sits (50% into the next row).
+        // Using percentages rather than a calc on --log-line-height so the
+        // stripe automatically scales with whatever row height the parent
+        // produces, including blank rows and lines with custom line-height.
         assert.ok(
             /left:\s*0\.89em/.test(decoStyles),
             'connector left position must remain at 0.89em (under the dot)',
@@ -95,8 +96,8 @@ suite('Severity bar connector (CSS sibling architecture)', () => {
             'connector must be anchored at the row middle (top: 50%)',
         );
         assert.ok(
-            /height:\s*calc\(1em \* var\(--log-line-height/.test(decoStyles),
-            'connector height must scale with --log-line-height so blank rows still reach the next dot',
+            /bottom:\s*-50%/.test(decoStyles),
+            'connector must extend 50% past the row\'s bottom edge to reach the next dot',
         );
     });
 
