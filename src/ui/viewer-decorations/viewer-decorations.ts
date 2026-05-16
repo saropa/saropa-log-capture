@@ -171,7 +171,19 @@ function applyDecorationLayoutWidth() {
        over-reserving only leaves a small gap, while under-reserving lets a part
        overlap the message. Tune via F5 if the gap reads too wide/tight. */
     var em = 0;
-    if (hasCounter) em += digits * 0.62 + 0.5;
+    /* Counter slot width = digits + the always-emitted .deco-chevron spacer
+       that sits immediately right of the line number (see getCounterAffordance
+       in viewer-data-divider.ts). The spacer claims a fixed inline-block
+       width even when no glyph is rendered so the numeric column stays
+       straight row-to-row. Reserving its width here is what keeps the
+       message column aligned with .line-deco-spacer-only rows (stack-
+       headers, stack-frames) — without this add, the spacer pushed the
+       message right on regular rows but not on stack rows, so stack
+       headers jutted ~1em to the left of the message column. The 1.0em
+       is at parent .line font; chevron renders inside the deco prefix's
+       0.85em font context (width 0.9em + margin-left 0.25em ≈ 0.98em
+       parent), rounded up generously. */
+    if (hasCounter) em += digits * 0.62 + 0.5 + 1.0;
     if (hasTime) em += showMilliseconds ? 7.5 : 5.5;
     if (hasSessionElapsed) em += 6.5;
     if (hasPid) em += 7;
