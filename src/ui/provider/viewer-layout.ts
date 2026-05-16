@@ -64,6 +64,12 @@ var compressLinesMode = false;
 /** Collapse non-consecutive duplicate log lines globally with a count badge on the first instance. */
 var compressNonConsecutiveMode = false;
 
+/* Default on: source apps often emit "Repeated log #1", "Repeated log #2", … which differ only by a
+   counter, so exact-text dedup never catches them. This setting folds consecutive lines whose
+   non-digit characters match (digit runs of any length are treated as equal). Disabled implicitly
+   when either compress mode is on so the user's explicit choice (strict dedup) wins. */
+var collapseNumericVariants = true;
+
 /**
  * Measure actual line height from the DOM and update ROW_HEIGHT / MARKER_HEIGHT.
  * Uses a hidden probe element with the same CSS class as log lines.
@@ -182,6 +188,21 @@ function toggleCompressLines() {
     if (compressLinesMode && typeof compressNonConsecutiveMode !== 'undefined') compressNonConsecutiveMode = false;
     if (!compressLinesMode && typeof compressNonConsecutiveMode !== 'undefined' && !compressNonConsecutiveMode) hideCompressSuggestionBanner();
     if (compressLinesMode) hideCompressSuggestionBanner();
+    if (typeof recalcAndRender === 'function') recalcAndRender();
+    else {
+        if (typeof recalcHeights === 'function') recalcHeights();
+        if (typeof renderViewport === 'function') renderViewport(true);
+    }
+}
+
+/**
+ * Toggle the numeric-variant fold: when on, consecutive lines that differ only by digit
+ * runs (e.g. "Repeated log #1", "Repeated log #2") collapse into one survivor row with a
+ * count badge — same UX as compressLinesMode, looser matching. Suppressed when either
+ * explicit compress mode is on.
+ */
+function toggleCollapseNumericVariants() {
+    collapseNumericVariants = !collapseNumericVariants;
     if (typeof recalcAndRender === 'function') recalcAndRender();
     else {
         if (typeof recalcHeights === 'function') recalcHeights();
