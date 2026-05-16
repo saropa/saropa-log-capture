@@ -156,18 +156,28 @@ function renderViewport(force) {
            not offered a redundant collapse target on a non-survivor row. */
         var _dividersOk = _hasPk && allLines[i].peekKind !== 'dedup';
 
+        /* The CSS-only chain connector (:has(+ .level-bar-X)::after) breaks at
+           any sibling that lacks a matching level-bar-* class. A viewer-divider
+           between two same-level rows would shatter the chain visually. The
+           fix: stamp the divider with the SURROUNDING chain's level so it
+           participates in the CSS chain naturally. Use prevVis.level when both
+           sides match, otherwise leave the divider unleveled (chain ends at
+           a true level transition either way). */
+        var _chainLvl = (prevVis && allLines[i] && prevVis.level && prevVis.level === allLines[i].level)
+            ? prevVis.level : null;
+
         /* Leading divider: filter-hidden gap above this row.
            WHY emit even when the row is also a peek-anchor: the gap divider
            and the peek "hide" divider report different things. Stacking them
            is rare (peeking removes the gap that produced it), but if both
            apply they read as two distinct controls. */
         if (_hiddenFrom >= 0 && typeof buildHiddenGapDivider === 'function') {
-            parts.push(buildHiddenGapDivider(_hiddenFrom, _hiddenTo, _hInfo));
+            parts.push(buildHiddenGapDivider(_hiddenFrom, _hiddenTo, _hInfo, _chainLvl));
         }
         /* Leading divider: this row starts an expanded filter peek group.
            The "hide" action collapses the WHOLE group from the top. */
         if (_peekFirst && _dividersOk && typeof buildPeekHideDivider === 'function') {
-            parts.push(buildPeekHideDivider(_pk, countPeekedLines(_pk), 'start'));
+            parts.push(buildPeekHideDivider(_pk, countPeekedLines(_pk), 'start', _chainLvl));
         }
 
         parts.push(renderItem(allLines[i], i, prevVis));
@@ -176,9 +186,11 @@ function renderViewport(force) {
            group. The "hide" action collapses the WHOLE group from the
            bottom — the user can collapse from wherever they scrolled to
            without scrolling back up to the leading divider (Principle 3
-           of the plan). */
+           of the plan). The trailing divider's chain level matches the
+           CURRENT row (since the next visible row's level is unknown at this
+           point). */
         if (_peekLast && _dividersOk && typeof buildPeekHideDivider === 'function') {
-            parts.push(buildPeekHideDivider(_pk, countPeekedLines(_pk), 'end'));
+            parts.push(buildPeekHideDivider(_pk, countPeekedLines(_pk), 'end', allLines[i].level));
         }
         /* Trailing divider: preview-mode stack groups announce their trimmed
            frames here. The divider's "show all" action expands the whole
@@ -187,7 +199,7 @@ function renderViewport(force) {
         var _previewInfo = (typeof getPreviewModeHiddenInfo === 'function')
             ? getPreviewModeHiddenInfo(allLines[i]) : null;
         if (_previewInfo && typeof buildPreviewFramesDivider === 'function') {
-            parts.push(buildPreviewFramesDivider(_previewInfo));
+            parts.push(buildPreviewFramesDivider(_previewInfo, allLines[i].level));
         }
 
         prevVis = allLines[i];
