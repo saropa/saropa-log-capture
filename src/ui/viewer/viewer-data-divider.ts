@@ -53,12 +53,8 @@ function dividerHtmlAttrEscape(s) {
                           a peekAnchorKey it does NOT share — meaning it
                           triggered that peek. Counter chevron offers
                           collapse (▼) via the peek key.
-    - _stackToggleGid : the NEXT visible row is a stack-header for a
-                        multi-frame trace this row emitted. The toggle
-                        moves OFF the stack-header (no more inline
-                        chip in the middle of the row) and ONTO this
-                        row's line-number column so the user expands /
-                        collapses the trace from the line that owns it. */
+    Stack-headers carry their own line-number + chevron via
+    renderStackHeader → getDecorationPrefix; no stamping needed here. */
 function computeRowAffordances() {
     var prevVis = -1;
     for (var i = 0; i < allLines.length; i++) {
@@ -66,7 +62,6 @@ function computeRowAffordances() {
         // filters toggle, peeks open / close, lines stream in.
         if (allLines[i]._hiddenAfter) allLines[i]._hiddenAfter = null;
         if (allLines[i]._triggeredPeekKey != null) allLines[i]._triggeredPeekKey = null;
-        if (allLines[i]._stackToggleGid != null) allLines[i]._stackToggleGid = null;
         if (allLines[i].height === 0) continue;
         if (prevVis >= 0) {
             if (i - prevVis > 1 && typeof countHiddenNonBlank === 'function') {
@@ -85,18 +80,6 @@ function computeRowAffordances() {
                 if (nextKey != null && prevKey !== nextKey) {
                     allLines[prevVis]._triggeredPeekKey = nextKey;
                 }
-            }
-            /* Stack-toggle takes ownership when the next visible row is a
-               multi-frame stack-header. frameCount > 1 means there are
-               child frames to expand/collapse (1-frame stacks have no
-               toggle affordance because there is nothing to hide). The
-               check runs regardless of in-allLines adjacency: filter-
-               hidden lines between a log line and its trace don't disqualify
-               the line from owning the trace's toggle. */
-            if (allLines[i].type === 'stack-header' && allLines[i].frameCount > 1
-                && allLines[prevVis].type !== 'stack-header'
-                && allLines[prevVis].type !== 'stack-frame') {
-                allLines[prevVis]._stackToggleGid = allLines[i].groupId;
             }
         }
         prevVis = i;
@@ -128,19 +111,17 @@ function getCounterAffordance(item, idx, hiddenAfter, counterHtml) {
         dataAttrs = ' data-dedup-survivor-idx="' + idx + '"';
         tip = tagPart + item.compressDupCount + ' identical row' + (item.compressDupCount !== 1 ? 's' : '')
             + (dupExpanded ? ' revealed \\u00b7 click to hide' : ' collapsed here \\u00b7 click to show');
-    } else if (item._stackToggleGid != null && typeof groupHeaderMap !== 'undefined' && groupHeaderMap[item._stackToggleGid]) {
-        /* Stack toggle takes priority over filter-hidden gap and peek
-           because the stack-header is the IMMEDIATE next visible row —
-           the user's mental model is "this line emitted a trace; click
-           to expand". A gap or peek that nominally targets the same row
-           refers to less-adjacent content. */
-        var hdr = groupHeaderMap[item._stackToggleGid];
-        var stackExpanded = (hdr.collapsed === false);
+    } else if (item.type === 'stack-header' && item.frameCount > 1) {
+        /* Stack-header IS a collapsed row representing N hidden frames.
+           Its own line number gets the chevron — click to expand the
+           trace. ▶ when collapsed or in preview mode (some frames
+           hidden); ▼ when fully expanded (all frames visible). */
+        var stackExpanded = (item.collapsed === false);
         kind = 'stack';
         glyph = stackExpanded ? '\\u25bc' : '\\u25b6';
-        dataAttrs = ' data-stack-gid="' + item._stackToggleGid + '"';
-        var frameWord = (hdr.frameCount === 2) ? 'frame' : 'frames';
-        tip = tagPart + 'stack trace \\u00b7 ' + (hdr.frameCount - 1) + ' ' + frameWord + ' \\u00b7 '
+        dataAttrs = ' data-stack-gid="' + item.groupId + '"';
+        var frameWord = (item.frameCount === 2) ? 'frame' : 'frames';
+        tip = tagPart + 'stack trace \\u00b7 ' + (item.frameCount - 1) + ' ' + frameWord + ' \\u00b7 '
             + (stackExpanded ? 'click to collapse' : 'click to expand');
     } else if (hiddenAfter && hiddenAfter.count > 0) {
         kind = 'gap';
@@ -178,7 +159,7 @@ function getCounterAffordance(item, idx, hiddenAfter, counterHtml) {
        same action — the user can aim at either. */
     var expanded = (kind === 'peek'
         || (kind === 'dedup' && item.peekAnchorKey != null)
-        || (kind === 'stack' && groupHeaderMap[item._stackToggleGid].collapsed === false)) ? 'true' : 'false';
+        || (kind === 'stack' && item.collapsed === false)) ? 'true' : 'false';
     return '<span class="deco-counter-row" role="button" aria-expanded="' + expanded + '"'
         + ' data-affordance-kind="' + kind + '"' + dataAttrs
         + ' title="' + dividerHtmlAttrEscape(tip) + '">'

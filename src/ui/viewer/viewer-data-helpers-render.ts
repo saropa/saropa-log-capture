@@ -154,7 +154,7 @@ function renderItem(item, idx, prevVis) {
         /* Delegated to viewer-data-helpers-render-stack-header.ts.
            Moved there as part of the unified line-collapsing rethink to keep
            this file under the 300-line eslint max-lines limit. */
-        return renderStackHeader(item, html, spacingCls, matchCls, barCls, idxAttr);
+        return renderStackHeader(item, idx, html, spacingCls, matchCls, barCls, idxAttr);
     }
     if (item.type === 'stack-frame') {
         /* Delegated to viewer-data-helpers-render-stack.ts. Emits inline
