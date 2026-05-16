@@ -142,6 +142,10 @@ export function getOptionsPanelHtml(): string {
                 <input type="checkbox" id="opt-compress-lines-global" />
                 <span>Compress lines (non-consecutive dupes)</span>
             </label>
+            <label class="options-row" title="Collapse consecutive lines that differ only by numbers (e.g. 'Repeated log #1', 'Repeated log #2'). Suppressed when either compress option above is on.">
+                <input type="checkbox" id="opt-collapse-numeric-variants" />
+                <span>Collapse numeric variants (digit-only differences)</span>
+            </label>
         </div>
 
         <!-- Audio Section -->

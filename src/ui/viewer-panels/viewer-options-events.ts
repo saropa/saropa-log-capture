@@ -112,6 +112,11 @@ if (optCompressLinesGlobal) optCompressLinesGlobal.addEventListener('change', fu
     if (typeof toggleCompressNonConsecutiveLines === 'function') toggleCompressNonConsecutiveLines();
     syncOptionsPanelUi();
 });
+var optCollapseNumericVariants = document.getElementById('opt-collapse-numeric-variants');
+if (optCollapseNumericVariants) optCollapseNumericVariants.addEventListener('change', function(e) {
+    if (typeof toggleCollapseNumericVariants === 'function') toggleCollapseNumericVariants();
+    syncOptionsPanelUi();
+});
 
 // Audio
 var optAudio = document.getElementById('opt-audio');
