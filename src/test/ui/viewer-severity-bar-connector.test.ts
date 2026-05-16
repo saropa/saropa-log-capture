@@ -114,18 +114,24 @@ suite('Severity bar connector (CSS sibling architecture)', () => {
         );
     });
 
-    test('viewer-divider rows are defensively excluded from chain', () => {
-        // Control rows (filter-gap, peek-hide, preview-frames dividers) get a
-        // defensive ::after { display:none } override in viewer-styles-collapse-
-        // controls.ts. The dividers don't normally carry level-bar-* classes
-        // anymore (the JS bridge that used to stamp them is gone), but the
-        // override defends against any future regression where a divider
-        // accidentally inherits one.
-        // This test ensures the override is present in the bundle.
+    test('viewer-divider rows participate in chain (::after paints, ::before suppressed)', () => {
+        // Dividers (filter-gap, peek-hide, preview-frames) get stamped with
+        // the surrounding chain level at render time in viewer-data-viewport.ts.
+        // That lets the :has(+ .level-bar-X) selector on the row ABOVE find
+        // a matching neighbor and the chain stripe extend through the gap.
+        // The divider's own ::after also paints (continuing the chain to the
+        // row below). The dot ::before stays suppressed — the divider is a
+        // control, not a log line.
         const fullStyles = getViewerStyles();
         assert.ok(
-            /\.viewer-divider\[class\*="level-bar-"\]::after\s*\{[^}]*display:\s*none/.test(fullStyles),
-            'viewer-divider rows must defensively hide ::after even if they pick up a level-bar-* class',
+            /\.viewer-divider\[class\*="level-bar-"\]::before\s*\{[^}]*display:\s*none/.test(fullStyles),
+            'viewer-divider dot (::before) must stay suppressed even when divider has a level-bar-* class',
+        );
+        // Conversely, no rule should force ::after to display:none on dividers
+        // — that would break the chain through them.
+        assert.ok(
+            !/\.viewer-divider\[class\*="level-bar-"\]::after\s*\{[^}]*display:\s*none/.test(fullStyles),
+            'viewer-divider ::after must NOT be hidden — that would break the chain across gap dividers',
         );
     });
 });
@@ -192,8 +198,8 @@ suite('Hidden-lines chevron insertion', () => {
         // for the divider HTML; here we only pin that the render loop calls
         // the builder when prevVisIdx leaves a gap.
         assert.ok(
-            viewportScript.includes('buildHiddenGapDivider(_hiddenFrom, _hiddenTo, _hInfo)'),
-            'render loop must call buildHiddenGapDivider on a detected gap',
+            viewportScript.includes('buildHiddenGapDivider(_hiddenFrom, _hiddenTo, _hInfo, _chainLvl)'),
+            'render loop must call buildHiddenGapDivider on a detected gap (with chain level)',
         );
     });
 
