@@ -54,18 +54,15 @@ export function getFlutterBannerStyles(): string {
    the rail visually flows through the dots.
    Connector ::after width is 0.14em; re-centering it under the pulled-in dot
    (dot center = 0.15em + 0.44em/2 = 0.37em → connector left = 0.37 - 0.07 = 0.30em)
-   prevents the bar-up / bar-down stub from looking offset from the dot it joins. */
+   keeps the same-level chain stripe aligned with the dot it joins. */
 .banner-group-start[class*="level-bar-"]::before,
 .banner-group-mid[class*="level-bar-"]::before,
 .banner-group-end[class*="level-bar-"]::before {
     left: 0.15em;
 }
-.banner-group-start.bar-down::after,
-.banner-group-mid.bar-down::after,
-.banner-group-end.bar-down::after,
-.banner-group-start.bar-up::after,
-.banner-group-mid.bar-up::after,
-.banner-group-end.bar-up::after {
+.banner-group-start[class*="level-bar-"]::after,
+.banner-group-mid[class*="level-bar-"]::after,
+.banner-group-end[class*="level-bar-"]::after {
     left: 0.30em;
 }
 

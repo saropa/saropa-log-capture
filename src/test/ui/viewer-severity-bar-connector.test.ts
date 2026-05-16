@@ -12,96 +12,120 @@ import { getViewerDataHelpersRender } from '../../ui/viewer/viewer-data-helpers-
 import { getStackHeaderRenderScript as getStackRenderScript } from '../../ui/viewer/viewer-data-helpers-render-stack';
 import { getDecorationStyles } from '../../ui/viewer-styles/viewer-styles-decoration';
 import { getLineStyles } from '../../ui/viewer-styles/viewer-styles-lines';
+import { getViewerStyles } from '../../ui/viewer-styles/viewer-styles';
 import { getViewerDataAddScript } from '../../ui/viewer/viewer-data-add';
 
-suite('Severity bar connector (same-level joining)', () => {
+suite('Severity bar connector (CSS sibling architecture)', () => {
+    // The connector that joins consecutive same-level dots is now pure CSS in
+    // viewer-styles-decoration-bars.ts, using :has(+ .level-bar-X)::after on
+    // each row. The previous JS architecture (findNextDotSibling + bar-up /
+    // bar-down / bar-bridge stamping in the render loop) is fully removed —
+    // it had multiple drift bugs (the chain extending across colour changes,
+    // the stripe's --bar-color disagreeing with the dot's). These tests pin
+    // the new architecture.
     const viewportScript = getViewportRenderScript();
+    const decoStyles = getDecorationStyles();
 
-    test('should use findNextDotSibling instead of findNextBarSibling', () => {
+    test('viewport script no longer contains the retired chain helpers', () => {
         assert.ok(
-            viewportScript.includes('function findNextDotSibling('),
-            'viewport script must define findNextDotSibling',
+            !viewportScript.includes('function findNextDotSibling('),
+            'findNextDotSibling was JS chain machinery — replaced by CSS sibling selectors',
         );
         assert.ok(
-            !viewportScript.includes('function findNextBarSibling('),
-            'old findNextBarSibling must be removed',
+            !viewportScript.includes('function getBarLevel('),
+            'getBarLevel was used only by the chain loop — no longer needed',
+        );
+        assert.ok(
+            !/classList\.add\([^)]*['"]bar-up['"]/.test(viewportScript),
+            'render loop must not stamp .bar-up — chain is now CSS-only',
+        );
+        assert.ok(
+            !/classList\.add\([^)]*['"]bar-down['"]/.test(viewportScript),
+            'render loop must not stamp .bar-down — chain is now CSS-only',
+        );
+        assert.ok(
+            !/classList\.add\([^)]*['"]bar-bridge['"]/.test(viewportScript),
+            'render loop must not stamp .bar-bridge — chain is now CSS-only',
         );
     });
 
-    test('should skip blank lines when finding next dot', () => {
+    test('CSS defines a :has(+ same-level)::after connector for every level', () => {
+        // One rule per level — CSS has no "same class as me" combinator, so
+        // each level gets its own selector. All ten levels must be present
+        // or those rows visually break out of the chain.
+        const levels = [
+            'error',
+            'error-recent-context',
+            'warning',
+            'performance',
+            'todo',
+            'debug',
+            'notice',
+            'framework',
+            'database',
+            'info',
+        ];
+        for (const lvl of levels) {
+            // The selector for level X must include `:has(+ .level-bar-X)` —
+            // that's the sibling-aware check the browser uses to decide
+            // whether to paint the chain stripe from this dot to the next.
+            assert.ok(
+                decoStyles.includes(`:has(+ .level-bar-${lvl})`),
+                `connector CSS must include a :has(+ .level-bar-${lvl}) sibling rule`,
+            );
+        }
+    });
+
+    test('connector ::after geometry matches the dot column', () => {
+        // The stripe must be anchored at the row's middle (top: 50%) so it
+        // starts where the dot sits, and extend by one row-height-em downward
+        // so it reaches the next row's middle (where the next dot sits).
+        // Width and left position match the prior stripe and the dot column
+        // so the chain reads as a single column.
         assert.ok(
-            viewportScript.includes("classList.contains('line-blank')"),
-            'findNextDotSibling must skip blank lines',
+            /left:\s*0\.89em/.test(decoStyles),
+            'connector left position must remain at 0.89em (under the dot)',
+        );
+        assert.ok(
+            /width:\s*0\.14em/.test(decoStyles),
+            'connector width must remain at 0.14em',
+        );
+        assert.ok(
+            /top:\s*50%/.test(decoStyles),
+            'connector must be anchored at the row middle (top: 50%)',
+        );
+        assert.ok(
+            /height:\s*calc\(1em \* var\(--log-line-height/.test(decoStyles),
+            'connector height must scale with --log-line-height so blank rows still reach the next dot',
         );
     });
 
-    test('should skip .viewer-divider sibling rows when finding the next dot', () => {
-        // Plan 048 introduced .viewer-divider control rows interleaved among
-        // log lines. They must not break the connector chain that joins
-        // consecutive same-level dots, otherwise a divider in the middle of
-        // a same-level run would visually slice the timeline in two.
+    test('connector excludes ASCII-art rows so shimmer animation is preserved', () => {
+        // viewer-styles-ascii-art.ts uses ::after for a shimmer keyframe
+        // animation across art-block rows. The chain connector also targets
+        // ::after; both rules on the same element would replace the shimmer
+        // with a static stripe. The :not(:is(.art-block-start, .art-block-middle,
+        // .art-block-end)) qualifier on the chain rule keeps art-block ::after
+        // free for shimmer use. art-block rows already paint a continuous
+        // border-left as their gutter rail.
         assert.ok(
-            viewportScript.includes("classList.contains('viewer-divider')"),
-            'findNextDotSibling must skip .viewer-divider so connectors bridge through them',
+            /:not\(:is\(\.art-block-start,\s*\.art-block-middle,\s*\.art-block-end\)\)/.test(decoStyles),
+            'connector must exclude art-block rows so shimmer ::after is preserved',
         );
     });
 
-    test('should no longer reference the retired indicator classes', () => {
-        // The unified-line-collapsing rethink retired .hidden-chevron / .peek-collapse;
-        // plan 048 retired the overloaded .bar-hidden-rows that succeeded them.
+    test('viewer-divider rows are defensively excluded from chain', () => {
+        // Control rows (filter-gap, peek-hide, preview-frames dividers) get a
+        // defensive ::after { display:none } override in viewer-styles-collapse-
+        // controls.ts. The dividers don't normally carry level-bar-* classes
+        // anymore (the JS bridge that used to stamp them is gone), but the
+        // override defends against any future regression where a divider
+        // accidentally inherits one.
+        // This test ensures the override is present in the bundle.
+        const fullStyles = getViewerStyles();
         assert.ok(
-            !viewportScript.includes("classList.contains('hidden-chevron')"),
-            'render loop must not reference the long-retired .hidden-chevron class',
-        );
-        assert.ok(
-            !viewportScript.includes("classList.contains('peek-collapse')"),
-            'render loop must not reference the long-retired .peek-collapse class',
-        );
-        assert.ok(
-            !viewportScript.includes('class="bar-hidden-rows '),
-            'render loop must not stamp the retired .bar-hidden-rows class on rows',
-        );
-    });
-
-    test('should only connect dots with the same bar level', () => {
-        assert.ok(
-            viewportScript.includes('nextLvl !== lvl'),
-            'connector loop must compare adjacent dot levels and skip mismatches',
-        );
-    });
-
-    test('should still stop connector chain at markers', () => {
-        assert.ok(
-            viewportScript.includes("classList.contains('marker')"),
-            'dot search must stop at markers to break connector chain at session boundaries',
-        );
-    });
-
-    test('findNextDotSibling must return non-leveled content rows, not skip them', () => {
-        // Regression: the prior code gated the return on a level
-        // (`if (lvl && !line-blank) return ni`), so the chain reached OVER an
-        // unrelated content row (stack frame, generic stdout, the ")" trace-tail)
-        // and stamped bar-down/bar-up stubs on same-level dots beyond it — the
-        // connector "running through" content the user reported. The fix returns
-        // the next non-blank, non-divider row regardless of level; getBarLevel()
-        // then yields null for it and the caller's `nextLvl !== lvl` check breaks
-        // the chain AT that row. Commit 11cb4ca7 documented this behavior in the
-        // render-loop comment but never actually updated the function.
-        const m = /function findNextDotSibling\([\s\S]*?\n}/.exec(viewportScript);
-        assert.ok(m, 'findNextDotSibling must be defined');
-        const body = m![0];
-        assert.ok(
-            body.includes("classList.contains('line-blank')"),
-            'findNextDotSibling must still skip blank lines (invisible gaps)',
-        );
-        assert.ok(
-            !body.includes('getBarLevel') && !body.includes('var lvl'),
-            'findNextDotSibling must NOT gate its return on a level — a non-leveled content '
-            + 'row has to be returned so the same-level check breaks the chain at it',
-        );
-        assert.ok(
-            body.includes('return ni;'),
-            'findNextDotSibling must unconditionally return the next real (non-blank, non-divider) row',
+            /\.viewer-divider\[class\*="level-bar-"\]::after\s*\{[^}]*display:\s*none/.test(fullStyles),
+            'viewer-divider rows must defensively hide ::after even if they pick up a level-bar-* class',
         );
     });
 });

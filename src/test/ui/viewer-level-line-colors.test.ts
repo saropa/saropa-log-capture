@@ -84,16 +84,25 @@ suite('ViewerLevelLineColors', () => {
 
     test('severity gutter connector uses color-mix not opacity (dot stacks above stripe)', () => {
         const deco = getDecorationStyles();
-        const connectorRe =
-            /\.bar-down::after,\s*\.bar-up::after\s*\{[\s\S]*?background:\s*color-mix\(in srgb,\s*var\(--bar-color\)\s*45%,\s*transparent\)[\s\S]*?z-index:\s*1[\s\S]*?\}/;
-        assert.ok(connectorRe.test(deco), 'connector fill should use color-mix 45% and z-index 1');
-        // Bound the regression check to the connector rule body — `[^}]*` stops
-        // at the rule's own closing brace so an unrelated `opacity:` declaration
-        // in a later rule (e.g. `.stack-toggle`) cannot false-positive here.
-        const connectorBody = /\.bar-down::after,\s*\.bar-up::after\s*\{([^}]*)\}/.exec(deco);
-        assert.ok(connectorBody, 'connector rule must exist to check it for opacity');
+        // Connector is now per-level :has(+ .level-bar-X)::after rules (one
+        // per level) instead of the prior .bar-down/.bar-up class system.
+        // Each rule must use color-mix(45%) for the fill, not opacity, so the
+        // pseudo-element doesn't stack above the dot in Chromium/WebKit.
         assert.ok(
-            !/opacity:\s*0\./.test(connectorBody[1]),
+            /:has\(\+\s*\.level-bar-info\)::after/.test(deco),
+            'connector CSS must use :has(+ .level-bar-*) sibling selectors',
+        );
+        assert.ok(
+            /background:\s*color-mix\(in srgb,\s*var\(--bar-color\)\s*45%,\s*transparent\)/.test(deco),
+            'connector fill should use color-mix 45%',
+        );
+        // The rule body must not use opacity (regression guard from the
+        // pre-CSS-sibling era — opacity on ::after interacted with stacking
+        // contexts and let the gutter stripe paint on top of the dot).
+        const ruleBody = /:has\(\+[^)]*\)::after\s*\{([^}]*)\}/.exec(deco);
+        assert.ok(ruleBody, 'connector :has-based rule must exist');
+        assert.ok(
+            !/opacity:\s*0\./.test(ruleBody![1]),
             'regression: connector must not use opacity (Chromium stacks it over the dot)',
         );
     });
