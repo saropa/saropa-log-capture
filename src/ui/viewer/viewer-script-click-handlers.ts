@@ -129,6 +129,17 @@ if (viewportEl) viewportEl.addEventListener('click', function(e) {
     }
     var header = e.target.closest('.stack-header');
     if (header && header.dataset.gid !== undefined) {
+        /* If the click landed on the .deco-counter-row (line number + chevron)
+           the dedicated handleCounterRowClick in viewer-peek-chevron.ts has
+           ALREADY called toggleStackGroup for this event. Firing again here
+           would re-toggle and the user would see no net change — exactly the
+           "clicking the chevron does nothing" bug reported when stack-headers
+           started rendering their own counter-row. The check uses closest()
+           so a click on either the .deco-counter or .deco-chevron child still
+           counts as a counter-row click. */
+        if (e.target.closest('.deco-counter-row[data-affordance-kind]')) {
+            return;
+        }
         var _gid = parseInt(header.dataset.gid);
         var _hdr = groupHeaderMap[_gid];
         /* 1-frame stacks (header only, no child frames) have nothing to
