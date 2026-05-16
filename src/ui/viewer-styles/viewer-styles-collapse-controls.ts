@@ -1,14 +1,19 @@
 /**
- * CSS for the dedicated collapse / expand affordances introduced by
- * bugs/048_plan-severity-gutter-decoupling.md.
+ * CSS for the unified expand / collapse affordance: a small chevron rendered
+ * immediately right of the line number on rows that own hidden content
+ * below them. The chevron + counter form one clickable region
+ * (`.deco-counter-row`) routed through viewer-peek-chevron.ts via
+ * `data-affordance-kind`.
  *
- * Replaces the prior overloaded outlined-dot state (.bar-hidden-rows) on
- * the severity gutter. Each expand/collapse concept now has its own
- * affordance so the gutter reads as purely informational:
- *   .viewer-divider — full-row-width thin button bar (filter-hidden gaps,
- *                     peek leading/trailing brackets, preview-mode notice).
- *   .dedup-badge   — inline "×N" pill at the end of a dedup-fold survivor.
- *   .stack-toggle  — inline chevron inside a stack-header's text.
+ * Replaces three earlier visual languages — `.viewer-divider` between-row
+ * pills, `.dedup-badge` trailing chip, and the absolute-positioned tag-
+ * column variants — all of which either overlapped row content, claimed
+ * inconsistent vertical space, or required separate state vocabularies.
+ *
+ * `.stack-toggle` remains for stack-header rows because they have no
+ * line-number prefix to attach a chevron to; it renders inline at the
+ * start of the header text (NOT absolute-positioned, NOT in the tag
+ * column — see viewer-data-helpers-render-stack.ts).
  *
  * Concatenated into the bundled stylesheet via viewer-styles-decoration.ts.
  */
@@ -16,120 +21,67 @@ export function getCollapseControlStyles(): string {
     return /* css */ `
 
 /* ===================================================================
-   Viewer dividers — bracket expanded peek ranges and surface
-   filter-hidden gaps as their own row, not a gutter overload.
+   Counter-row chevron — clickable line-number + ▶ / ▼ on rows that
+   own expandable / collapsible hidden content below them.
    =================================================================== */
 
-/* WHY a full-row bar instead of a small icon: a control whose entire
-   body says what it does and what will happen leaves no room for the
-   "is this informational or interactive?" misreading that the
-   overloaded outlined dot suffered from. Width also gives room for
-   the count + reason text. */
-.viewer-divider {
-    height: max(8px, calc(0.7 * 1em * var(--log-line-height, 1.1)));
-    line-height: 1;
-    text-align: center;
-    user-select: none;
+/* The wrapper is a real layout span inside the .line-decoration prefix,
+   so it adds nothing exotic to row geometry — no absolute positioning,
+   no overlay z-index games. Its width is the counter digits plus a small
+   chevron glyph, which sits flush against the right edge of the number.
+   Cursor + role expose interactivity; the title attribute carries the
+   per-affordance tooltip (count, reason, parsed-tag context). */
+.deco-counter-row {
+    display: inline-block;
     cursor: pointer;
-    /* WHY no margin: the divider sits flush against the row it belongs to
-       so its position reads unambiguously as "this row's expand control".
-       Margin would visually detach it and weaken the association. */
-    margin: 0;
+    border-radius: 2px;
 }
-/* Hover restores full opacity AND the badge pill so the row reads as a
-   button when the user reaches for it. At rest the label stays muted text
-   (no background) so a divider in the middle of dense logs whispers
-   "N hidden · show" instead of competing with real log lines. */
-.viewer-divider:hover .viewer-divider-label {
-    background: var(--vscode-badge-background, #4d4d4d);
-    color: var(--vscode-badge-foreground, #fff);
+.deco-counter-row:hover {
+    background: var(--vscode-editor-hoverHighlightBackground, rgba(173, 214, 255, 0.15));
+}
+.deco-counter-row:hover .deco-chevron,
+.deco-counter-row:focus-visible .deco-chevron {
+    color: var(--vscode-foreground, #fff);
     opacity: 1;
 }
-.viewer-divider-label {
+.deco-counter-row:focus-visible {
+    outline: 1px dotted var(--vscode-focusBorder);
+    outline-offset: 1px;
+}
+
+/* The chevron itself: dimmed at rest so the line-number column reads as
+   primary, the chevron as a quiet hint. Hover lifts to full opacity (rule
+   above). Fixed inline-block width so ▶ and ▼ occupy the same horizontal
+   space — toggling state does not jitter the message column. */
+.deco-chevron {
     display: inline-block;
-    padding: 0.05em 0.6em;
-    font-size: 0.78em;
+    margin-left: 0.25em;
+    width: 0.9em;
+    text-align: center;
     color: var(--vscode-descriptionForeground, #888);
-    background: transparent;
-    border-radius: 0.25em;
-    /* WHY 0.55: descriptionForeground is already a muted grey, but on the
-       common dark themes it still reads as solid text against the editor
-       background. Dropping opacity to 0.55 pushes it into "secondary
-       affordance" territory — visible enough that users see the count
-       and click target, faint enough that scanning real log lines is
-       not interrupted. Hover lifts to 1 so the click target is obvious. */
     opacity: 0.55;
-}
-/* Dividers carry a level-bar-* class when they sit inside a same-level
-   chain — the render loop stamps the surrounding chain's level so the
-   :has(+ .level-bar-X) sibling selector on the previous row can find a
-   matching neighbor and extend the chain stripe through the divider. The
-   stripe (::after) IS allowed to paint on the divider — that's what keeps
-   the chain visually unbroken across hidden-line gaps. But the dot
-   (::before) must stay suppressed: the divider is a control affordance,
-   not a log line, and a severity dot on it would read as "this row has
-   the level" rather than "the chain passes through here." */
-.viewer-divider[class*="level-bar-"]::before { display: none; }
-
-/* ===================================================================
-   Dedup badge — inline "×N" pill at the end of a dedup-fold survivor.
-   =================================================================== */
-
-/* WHY an inline trailing badge on the survivor (not a divider above or
-   below): the survivor IS a real visible row carrying real text. A
-   divider on either side would be ambiguous about which row owns the
-   fold. An inline trailing badge is unambiguously attached to the
-   survivor it folds. */
-.dedup-badge {
-    display: inline-block;
-    margin-left: 0.5em;
-    padding: 0.05em 0.45em;
-    font-size: 0.75em;
-    font-weight: 600;
-    color: var(--vscode-descriptionForeground, #888);
-    background: color-mix(in srgb, var(--vscode-badge-background, #4d4d4d) 35%, transparent);
-    border-radius: 0.25em;
-    cursor: pointer;
     user-select: none;
-    vertical-align: baseline;
-}
-.dedup-badge:hover {
-    background: var(--vscode-badge-background, #4d4d4d);
-    color: var(--vscode-badge-foreground, #fff);
-}
-/* When the dedup peek is expanded the badge mutates to "×N hide"; the
-   slightly higher contrast tells the user the click action has flipped. */
-.dedup-badge.dedup-badge-expanded {
-    background: var(--vscode-badge-background, #4d4d4d);
-    color: var(--vscode-badge-foreground, #fff);
+    /* font-size 0.85em pulls the glyph slightly smaller than the counter
+       digits so it reads as a marker on the number, not a competing
+       second character at the same weight. */
+    font-size: 0.85em;
 }
 
 /* ===================================================================
-   Stack toggle — inline chevron inside a stack-header's text.
+   Stack toggle — inline chevron at the start of a stack-header's text.
+   Kept INLINE (not floating, not absolute) because stack-header rows
+   have no decoration prefix to host a counter-row chevron. The whole
+   header row remains clickable via the existing handler — the chevron
+   is just the visible cue.
    =================================================================== */
-
-/* WHY inline (not in the gutter): convention. Every IDE, debugger, file
-   explorer, and JSON viewer uses inline chevrons for collapsible
-   regions. Putting them in the severity gutter (as the prior outlined
-   dot did) was novel for novelty's sake. The whole stack-header row
-   stays clickable via the existing handler in
-   viewer-script-click-handlers.ts; the chevron is the visual cue so
-   the user does not need to read the tooltip to learn the row is a
-   toggle. */
 .stack-toggle {
     display: inline-block;
     margin-right: 0.35em;
     color: var(--vscode-descriptionForeground, #888);
-    /* Dim the resting state so the chevron reads as a quiet hint rather than
-       competing with the header text. Full opacity on hover keeps the
-       affordance discoverable without making it shouty when idle. */
     opacity: 0.5;
     cursor: pointer;
     user-select: none;
-    /* Fixed width so collapsed (▶) and expanded (▼) line up vertically
-       and the header text does not jitter horizontally on toggle. */
-    width: 0.9em;
-    text-align: center;
+    font-size: 0.85em;
 }
 .stack-toggle:hover {
     color: var(--vscode-foreground, #fff);

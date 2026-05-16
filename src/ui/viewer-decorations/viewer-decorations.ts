@@ -185,6 +185,35 @@ function applyDecorationLayoutWidth() {
     lastAppliedDecoSig = sig;
 }
 
+/** Last successfully measured tag-column x-offset (px from .line left edge).
+    Cached so divider chips on screens with no currently-visible parsed tag
+    fall back to the last known good value instead of jumping to the default. */
+var lastMeasuredTagLeftPx = -1;
+
+/**
+ * Measure the actual x-offset of a rendered .deco-parsed-tag relative to its
+ * containing .line, and write it to --deco-tag-position-px on the document
+ * root. Consumed by .viewer-divider chips (and dedup-badge / stack-toggle) so
+ * they sit in the exact same x-column as real tags — no em-based estimation,
+ * no drift when parts toggle on/off or the user zooms the log font.
+ *
+ * Skipped when no parsed tag is currently in the viewport: prior measurement
+ * is preserved via lastMeasuredTagLeftPx so the chips don't jump.
+ */
+function measureTagColumnPosition() {
+    var sample = document.querySelector('.line .deco-parsed-tag');
+    if (!sample) return;
+    var line = sample.closest('.line');
+    if (!line) return;
+    var tagRect = sample.getBoundingClientRect();
+    var lineRect = line.getBoundingClientRect();
+    var leftPx = tagRect.left - lineRect.left;
+    if (!(leftPx > 0)) return;
+    if (Math.abs(leftPx - lastMeasuredTagLeftPx) < 0.5) return; // unchanged
+    lastMeasuredTagLeftPx = leftPx;
+    document.documentElement.style.setProperty('--deco-tag-position-px', leftPx + 'px');
+}
+
 /**
  * Build the decoration prefix HTML for a single log line.
  * Only includes parts whose sub-toggle is enabled.
@@ -195,7 +224,15 @@ function applyDecorationLayoutWidth() {
  * Example output: <span class="line-decoration"><span class="deco-counter">    1</span> T07:23:36 » </span>
  * (Emoji dot is only used in Copy with decorations, not in the viewer.)
  */
-function getDecorationPrefix(item, idx) {
+/**
+ * hiddenAfter — when present, info about lines hidden BETWEEN this visible row
+ * and the next. Drives the small ▶ chevron rendered immediately right of the
+ * line number (see chevronInfo below). The chevron + counter form one click
+ * target — the whole line-number area is interactive when any following
+ * content is collapsed (filter-hidden gap, dedup-fold, stack collapse, etc.).
+ * No floating chips, no tag replacement, no overlay collisions.
+ */
+function getDecorationPrefix(item, idx, hiddenAfter) {
     if (!areDecorationsOn()) return '';
     if (!item || item.type === 'marker' || item.type === 'stack-frame') return '';
 
@@ -216,7 +253,18 @@ function getDecorationPrefix(item, idx) {
         var lineNoSrc = (typeof item.sourceLineNo === 'number') ? item.sourceLineNo
             : ((typeof idx === 'number') ? (idx + 1) : (item.seq !== undefined ? item.seq : '?'));
         var seqStr = String(lineNoSrc);
-        parts.push('<span class="deco-counter">' + seqStr.padStart(getCounterDigitsForLayout(), '\\u00a0') + '</span>');
+        /* Build the chevron when this row owns any kind of hidden-content
+           expand/collapse — a filter-hidden gap follows it, a stack-header
+           with collapsed/preview frames, a dedup-fold survivor, etc.
+           getCounterAffordance returns either an empty string (no chevron,
+           plain counter) or the full clickable counter+chevron HTML with
+           data-affordance-action / data-affordance-arg / title attrs the
+           click delegate routes on. The line-number digits themselves are
+           inside the wrapper so the whole numeric column is clickable. */
+        var counterHtml = '<span class="deco-counter">' + seqStr.padStart(getCounterDigitsForLayout(), '\\u00a0') + '</span>';
+        var affordance = (typeof getCounterAffordance === 'function')
+            ? getCounterAffordance(item, idx, hiddenAfter, counterHtml) : '';
+        parts.push(affordance || counterHtml);
     }
     if (!isBlank && decoShowTimestamp) {
         var ts = formatDecoTimestamp(item.timestamp);

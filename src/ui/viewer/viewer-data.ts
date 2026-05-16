@@ -12,7 +12,7 @@ import { getCompressStreakScript } from './viewer-data-compress-streak';
 import { getViewerDataAddScript } from './viewer-data-add';
 import { getViewerDataHelpers } from './viewer-data-helpers';
 import { getViewportRenderScript } from './viewer-data-viewport';
-import { getDividerRenderScript } from './viewer-data-divider';
+import { getCounterAffordanceScript } from './viewer-data-divider';
 
 /** Options for building the viewer data webview script. */
 export interface ViewerDataScriptOptions {
@@ -32,10 +32,11 @@ export function getViewerDataScript(opts: ViewerDataScriptOptions = {}): string 
         staticSqlFromFingerprintEnabled = true,
         slowBurstThresholds,
         dbDetectorToggles,
-        /* Default true: matches the published setting default. When a caller
-           omits this option, the divider script seed must still resolve to
-           "captions on" so collapsed gaps announce themselves. */
-        accessibilityShowCollapseDividerLabels = true,
+        /* Carried for backward-compat with callers that still pass it —
+           between-row divider rows are retired (counter-row chevron handles
+           collapsed-gap announcements now). Renamed to _* so lint does not
+           flag it as unused. */
+        accessibilityShowCollapseDividerLabels: _accessibilityShowCollapseDividerLabels = true,
     } = opts;
     return getViewerDataHelpers(repeatThresholds, viewerDbSignalsEnabled, slowBurstThresholds, dbDetectorToggles) + getCompressStreakScript() + getViewerDataAddScript(staticSqlFromFingerprintEnabled) + /* javascript */ `
 
@@ -293,7 +294,7 @@ function recalcHeights() {
     if (typeof buildPrefixSums === 'function') buildPrefixSums();
 }
 
-${getDividerRenderScript(accessibilityShowCollapseDividerLabels)}
+${getCounterAffordanceScript()}
 
 ${getViewportRenderScript()}
 `;

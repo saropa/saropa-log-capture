@@ -205,8 +205,15 @@ function renderItem(item, idx, prevVis) {
     }
     /* idx is the allLines position; getDecorationPrefix prefers item.sourceLineNo (stamped at
        line arrival from the raw file) and falls back to idx+1 only when no source line is
-       available. Blank-line counter gated by decoShowCounterOnBlank. */
-    var deco = isArtCont ? '' : ((typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item, idx) : '');
+       available. Blank-line counter gated by decoShowCounterOnBlank.
+       3rd arg item._hiddenAfter (stamped by computeRowAffordances in the
+       render pre-pass): when this row has filter-hidden lines below it the
+       prefix builder emits a ▶ chevron right of the line number with the
+       gap's count and click route. dedup-fold survivors get the same
+       chevron treatment via item.compressDupCount, peek-trigger rows via
+       item._triggeredPeekKey — see getCounterAffordance for the priority
+       order. No floating chips, no tag replacement, no overlay collisions. */
+    var deco = isArtCont ? '' : ((typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item, idx, item._hiddenAfter) : '');
     /* Splice continuation badge into the trailing whitespace of the decoration
        prefix (the prefix now ends '&nbsp;&nbsp;</span>' after the chevron was
        removed). The badge then sits inside the .line-decoration span, just
@@ -217,29 +224,6 @@ function renderItem(item, idx, prevVis) {
     }
     var annHtml = (typeof getAnnotationHtml === 'function') ? getAnnotationHtml(idx) : '';
     var badge = '';
-    /* Severity-gutter decoupling (plan: bugs/048_plan-severity-gutter-decoupling.md).
-       The prior outlined-dot state (.bar-hidden-rows) on the dedup-fold
-       survivor was overloaded with three other concepts (filter-gap peek,
-       expanded peek anchor, collapsed stack header) and the dot looked
-       identical for "click to expand" and "click to collapse". The
-       survivor now carries a dedicated inline .dedup-badge ("×N" / "×N hide")
-       at the END of its text content. Click → peekDedupFold (reveals the
-       hidden duplicates listed on item.compressDupHiddenIndices) when
-       collapsed, or unpeekChevron(peekAnchorKey) when expanded. */
-    var dupBadge = '';
-    if (item.compressDupCount > 1) {
-        /* Dedup peek is "expanded" when the survivor itself carries a
-           peekAnchorKey — peekDedupFold stamps both the survivor and the
-           revealed duplicates with the same key so a single click on the
-           badge can collapse the whole group via the same key. */
-        var _dupExpanded = (item.peekAnchorKey !== undefined && item.peekAnchorKey !== null);
-        var _dupLabel = '\\u00d7' + item.compressDupCount + (_dupExpanded ? ' hide' : '');
-        var _dupCls = _dupExpanded ? 'dedup-badge dedup-badge-expanded' : 'dedup-badge';
-        var _dupTitle = _dupExpanded
-            ? item.compressDupCount + ' identical rows revealed \\u00b7 click to hide'
-            : item.compressDupCount + ' identical rows collapsed here \\u00b7 click to show';
-        dupBadge = '<span class="' + _dupCls + '" data-dedup-survivor-idx="' + idx + '" title="' + _dupTitle + '">' + _dupLabel + '</span>';
-    }
     if (typeof getErrorBadge === 'function' && item.errorClass) badge = getErrorBadge(item.errorClass);
     /* ANR marker: gutter icon (absolute, .error-badge-gutter) for the same reason
        as the bug/transient badges — an inline "⏱ ANR" pill shifted the line text. */
@@ -298,8 +282,10 @@ function renderItem(item, idx, prevVis) {
 ` +
         VIEWER_RENDER_EMBED_LINE_DB_TS_BURST +
         /* javascript */ `
-    /* Tail: deco → contBadge; dupBadge after line text (048 dedup affordance). */
-    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + bannerCls + dbTsBurstCls + '"' + idxAttr + titleAttr + '>' + stackGutter + deco + contBadge + elapsed + badge + catBadge + html + dupBadge + '</div>' + annHtml;
+    /* Dedup-fold affordance now lives in the line-number column (chevron
+       wrapper in deco). No trailing chip after html anymore — see the
+       counter-row affordance in getDecorationPrefix. */
+    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + bannerCls + dbTsBurstCls + '"' + idxAttr + titleAttr + '>' + stackGutter + deco + contBadge + elapsed + badge + catBadge + html + '</div>' + annHtml;
 }
 `;
 }

@@ -1,21 +1,24 @@
 /**
  * Client-side JavaScript for the scoped peek feature in the log viewer.
  *
- * Severity-gutter decoupling (plan: bugs/048_plan-severity-gutter-decoupling.md).
- * The severity dot is no longer interactive. Each expand/collapse concept
- * is wired to its own dedicated affordance:
+ * All expand / collapse affordances on regular log rows now route through
+ * a single click target: `.deco-counter-row` (the clickable line-number +
+ * ▶ / ▼ chevron in the decoration prefix). Its `data-affordance-kind`
+ * attribute dispatches to one of three actions:
  *
- *   .viewer-divider[data-divider-action="show-gap"]
- *     → peekChevron(from, to) — reveals a filter-hidden gap.
- *   .viewer-divider[data-divider-action="hide-peek"]
- *     → unpeekChevron(peekKey) — collapses an expanded peek group from
- *       either the leading (above) or trailing (below) bracket.
- *   .viewer-divider[data-divider-action="show-frames"]
- *     → toggleStackGroup(gid) — expands a Preview-mode stack group from
- *       its trimmed-frames notice below the last visible app-frame.
- *   .dedup-badge[data-dedup-survivor-idx]
- *     → peekDedupFold(idx) when collapsed, or unpeekChevron(peekAnchorKey)
- *       when the survivor itself already carries a peekAnchorKey.
+ *   data-affordance-kind="dedup"  + data-dedup-survivor-idx
+ *     → peekDedupFold(idx) when collapsed, unpeekChevron(peekAnchorKey)
+ *       when expanded (state read from the survivor row).
+ *   data-affordance-kind="gap"    + data-hidden-from / data-hidden-to
+ *     → peekChevron(from, to, 'filter').
+ *   data-affordance-kind="peek"   + data-peek-key
+ *     → unpeekChevron(peekKey) — re-collapses a peek the user previously
+ *       expanded; the trigger row carries the ▼ chevron until collapse.
+ *
+ * Stack-headers keep their own inline `.stack-toggle` (they have no
+ * line-number prefix to host a counter-row), routed to toggleStackGroup
+ * via the existing whole-row `.stack-header[data-gid]` handler in
+ * viewer-script-click-handlers.ts.
  *
  * Concatenated into the same script scope as viewer-script.ts (shared
  * `allLines`, `recalcAndRender`, `renderViewport`, `recalcHeights`,
@@ -51,68 +54,50 @@ function initPeekChevron() {
     if (!vp) return;
     vp.addEventListener('click', function(e) {
         if (e.shiftKey) return;
-        if (handleDividerClick(e)) return;
-        if (handleDedupBadgeClick(e)) return;
+        if (handleCounterRowClick(e)) return;
     });
 }
 
-/** Route a click on a .viewer-divider through the right peek/expand
-    function based on its data-divider-action. Returns true when the click
-    was handled (so the outer delegate can short-circuit). */
-function handleDividerClick(e) {
-    var divider = e.target.closest('.viewer-divider[data-divider-action]');
-    if (!divider) return false;
-    var action = divider.dataset.dividerAction;
-    if (action === 'show-gap') {
-        var from = parseInt(divider.dataset.hiddenFrom, 10);
-        var to = parseInt(divider.dataset.hiddenTo, 10);
+/** Route a click on a .deco-counter-row through the right peek/unpeek
+    function based on its data-affordance-kind. The whole counter+chevron
+    span is the click target — line-number digits or chevron, same result.
+    Returns true when handled (caller short-circuits). */
+function handleCounterRowClick(e) {
+    var row = e.target.closest('.deco-counter-row[data-affordance-kind]');
+    if (!row) return false;
+    var kind = row.dataset.affordanceKind;
+    if (kind === 'dedup') {
+        var idx = parseInt(row.dataset.dedupSurvivorIdx, 10);
+        if (isNaN(idx) || !allLines[idx]) return false;
+        var survivor = allLines[idx];
+        if (survivor.peekAnchorKey != null) {
+            /* Already expanded — collapse via the same peek key that
+               peekDedupFold stamped on the survivor and its duplicates. */
+            unpeekChevron(survivor.peekAnchorKey);
+        } else {
+            peekDedupFold(idx);
+        }
+        stopHandled(e);
+        return true;
+    }
+    if (kind === 'gap') {
+        var from = parseInt(row.dataset.hiddenFrom, 10);
+        var to = parseInt(row.dataset.hiddenTo, 10);
         if (from >= 0 && to > from) {
             peekChevron(from, to, 'filter');
             stopHandled(e);
             return true;
         }
-    } else if (action === 'hide-peek') {
-        var peekKey = parseInt(divider.dataset.peekKey, 10);
+    }
+    if (kind === 'peek') {
+        var peekKey = parseInt(row.dataset.peekKey, 10);
         if (peekKey > 0) {
             unpeekChevron(peekKey);
             stopHandled(e);
             return true;
         }
-    } else if (action === 'show-frames') {
-        /* Preview-mode stack expansion. WHY route through toggleStackGroup
-           rather than minting a peek key: a stack group has its own
-           collapsed=true/false state machine separate from the peekOverride
-           system. Reusing toggleStackGroup keeps the two states (header
-           expand and divider expand) wired to the same source of truth. */
-        var gid = parseInt(divider.dataset.gid, 10);
-        if (!isNaN(gid) && typeof toggleStackGroup === 'function') {
-            toggleStackGroup(gid);
-            stopHandled(e);
-            return true;
-        }
     }
     return false;
-}
-
-/** Route a click on a .dedup-badge through peek/unpeek. The badge mutates
-    its label between collapsed ("×N") and expanded ("×N hide") based on
-    whether the survivor carries a peekAnchorKey, so a single click target
-    handles both directions. Returns true when handled. */
-function handleDedupBadgeClick(e) {
-    var badge = e.target.closest('.dedup-badge[data-dedup-survivor-idx]');
-    if (!badge) return false;
-    var idx = parseInt(badge.dataset.dedupSurvivorIdx, 10);
-    if (isNaN(idx) || !allLines[idx]) return false;
-    var survivor = allLines[idx];
-    if (survivor.peekAnchorKey !== undefined && survivor.peekAnchorKey !== null) {
-        /* Already expanded — collapse via the same peek key that
-           peekDedupFold stamped on the survivor and the duplicates. */
-        unpeekChevron(survivor.peekAnchorKey);
-    } else {
-        peekDedupFold(idx);
-    }
-    stopHandled(e);
-    return true;
 }
 
 /** Stop event propagation when a handler owned the click. Pulled into a

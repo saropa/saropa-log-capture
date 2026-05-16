@@ -111,99 +111,25 @@ function renderViewport(force) {
         return;
     }
     lastStart = startIdx; lastEnd = endIdx;
+    /* Pre-pass: stamp _hiddenAfter and _triggeredPeekKey on every visible
+       row before the DOM build. Each row's counter-chevron affordance reads
+       these stamps in getDecorationPrefix → getCounterAffordance, so this
+       pass is what makes "the chevron knows there are hidden lines below
+       this row" possible without each renderItem call scanning forward. */
+    if (typeof computeRowAffordances === 'function') computeRowAffordances();
     // Find previous visible line before viewport start for spacing calculation
     var prevVis = null;
     for (var sp = startIdx - 1; sp >= 0; sp--) {
         if (allLines[sp].height > 0) { prevVis = allLines[sp]; break; }
     }
     var parts = [];
-    var prevVisIdx = -1;
     for (var i = startIdx; i <= endIdx && i < allLines.length; i++) {
         if (allLines[i].height === 0) continue;
         if (typeof window.replayMode !== 'undefined' && window.replayMode && typeof window.replayCurrentIndex === 'number' && i > window.replayCurrentIndex) continue;
 
-        /* Severity-gutter decoupling (plan: bugs/048_plan-severity-gutter-decoupling.md).
-           Filter-hidden gaps and expanded peek ranges no longer overload the
-           severity dot — they surface as dedicated .viewer-divider rows
-           injected as siblings of the actual log rows. The divider carries
-           its own click target, count, and reason text so the user knows
-           what will happen BEFORE clicking. The gutter dot stays purely
-           informational; this kills the "I clicked the dot and my lines
-           vanished" failure mode the plan exists to fix. */
-        var _hiddenFrom = -1, _hiddenTo = -1, _hInfo = null;
-        if (prevVisIdx >= 0 && i - prevVisIdx > 1) {
-            _hInfo = countHiddenNonBlank(prevVisIdx + 1, i);
-            if (_hInfo.count > 0) {
-                _hiddenFrom = prevVisIdx + 1;
-                _hiddenTo = i;
-            }
-        }
-        /* Peek-group boundary detection: peekAnchorKey is set on every item
-           inside the expanded range. First-of-group = preceding allLines item
-           does not share the key. Last-of-group = following allLines item
-           does not share the key. The check uses allLines (not visible-only)
-           because the peek range is contiguous in allLines order, and the
-           leading/trailing divider must straddle the actual range edges
-           even if some interior items happen to be hidden by orthogonal
-           filters at render time. */
-        var _pk = allLines[i].peekAnchorKey;
-        var _hasPk = (_pk !== undefined && _pk !== null);
-        var _peekFirst = _hasPk && (i === 0 || allLines[i - 1].peekAnchorKey !== _pk);
-        var _peekLast = _hasPk && (i === allLines.length - 1 || allLines[i + 1].peekAnchorKey !== _pk);
-        /* Dedup peeks own their toggle via the inline .dedup-badge on the
-           survivor row (the badge mutates "×N" → "×N hide" once expanded).
-           Suppress the leading/trailing brackets for dedup so the user is
-           not offered a redundant collapse target on a non-survivor row. */
-        var _dividersOk = _hasPk && allLines[i].peekKind !== 'dedup';
-
-        /* The CSS-only chain connector (:has(+ .level-bar-X)::after) breaks at
-           any sibling that lacks a matching level-bar-* class. A viewer-divider
-           between two same-level rows would shatter the chain visually. The
-           fix: stamp the divider with the SURROUNDING chain's level so it
-           participates in the CSS chain naturally. Use prevVis.level when both
-           sides match, otherwise leave the divider unleveled (chain ends at
-           a true level transition either way). */
-        var _chainLvl = (prevVis && allLines[i] && prevVis.level && prevVis.level === allLines[i].level)
-            ? prevVis.level : null;
-
-        /* Leading divider: filter-hidden gap above this row.
-           WHY emit even when the row is also a peek-anchor: the gap divider
-           and the peek "hide" divider report different things. Stacking them
-           is rare (peeking removes the gap that produced it), but if both
-           apply they read as two distinct controls. */
-        if (_hiddenFrom >= 0 && typeof buildHiddenGapDivider === 'function') {
-            parts.push(buildHiddenGapDivider(_hiddenFrom, _hiddenTo, _hInfo, _chainLvl));
-        }
-        /* Leading divider: this row starts an expanded filter peek group.
-           The "hide" action collapses the WHOLE group from the top. */
-        if (_peekFirst && _dividersOk && typeof buildPeekHideDivider === 'function') {
-            parts.push(buildPeekHideDivider(_pk, countPeekedLines(_pk), 'start', _chainLvl));
-        }
-
         parts.push(renderItem(allLines[i], i, prevVis));
 
-        /* Trailing divider: this row is the LAST of an expanded filter peek
-           group. The "hide" action collapses the WHOLE group from the
-           bottom — the user can collapse from wherever they scrolled to
-           without scrolling back up to the leading divider (Principle 3
-           of the plan). The trailing divider's chain level matches the
-           CURRENT row (since the next visible row's level is unknown at this
-           point). */
-        if (_peekLast && _dividersOk && typeof buildPeekHideDivider === 'function') {
-            parts.push(buildPeekHideDivider(_pk, countPeekedLines(_pk), 'end', allLines[i].level));
-        }
-        /* Trailing divider: preview-mode stack groups announce their trimmed
-           frames here. The divider's "show all" action expands the whole
-           stack via toggleStackGroup(gid), routed through the click handler
-           in viewer-peek-chevron.ts. */
-        var _previewInfo = (typeof getPreviewModeHiddenInfo === 'function')
-            ? getPreviewModeHiddenInfo(allLines[i]) : null;
-        if (_previewInfo && typeof buildPreviewFramesDivider === 'function') {
-            parts.push(buildPreviewFramesDivider(_previewInfo, allLines[i].level));
-        }
-
         prevVis = allLines[i];
-        prevVisIdx = i;
     }
     viewportEl.innerHTML = parts.join('');
     /* Severity-gutter connector: the line between consecutive same-level dots
@@ -215,6 +141,15 @@ function renderViewport(force) {
     spacerBottom.style.height = bottomH + 'px';
     // Re-apply row selection highlight after DOM replace so shift-click selection is preserved (e.g. on right-click context menu).
     if (typeof updateSelectionHighlight === 'function') updateSelectionHighlight();
+    /* Tag-column x-offset measurement: after the DOM update, query a real
+       .deco-parsed-tag and write its actual left offset to
+       --deco-tag-position-px. Consumed by the .viewer-divider chips /
+       .dedup-badge / .stack-toggle so they sit in the exact same x-column
+       as real tags. Doing this AFTER innerHTML update (not inside
+       applyDecorationLayoutWidth which runs at the TOP of renderViewport)
+       means the measurement reflects the just-rendered tag positions, not
+       the previous render's stale state. */
+    if (typeof measureTagColumnPosition === 'function') measureTagColumnPosition();
 }
 `;
 }
