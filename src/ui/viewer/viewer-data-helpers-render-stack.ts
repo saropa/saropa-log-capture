@@ -14,13 +14,16 @@
  * omit the chevron and skip the toggle — nothing to expand. The prior
  * `.bar-hidden-rows` outlined-dot state on the gutter is gone.
  *
- * Stack-frame vocabulary: dedup-fold survivors carry the same inline
- * `.dedup-badge` ("×N" / "×N hide") used by non-stack rows in
- * viewer-data-helpers-render.ts. Preview-mode trimmed-frame notices are
- * emitted by the render loop in viewer-data-viewport.ts as a sibling
- * `.viewer-divider` row directly below the last visible app-frame —
- * detection lives in viewer-data-divider.ts (`getPreviewModeHiddenInfo`),
- * not here, so this file no longer carries Preview-mode state.
+ * Stack-frame vocabulary: dedup-fold survivors do NOT get an affordance on
+ * stack-frame rows in the current design — those rows have no line-number
+ * prefix to host a counter-row chevron, and the prior inline trailing pill
+ * competed with frame text content. Cross-type dedup is rare; the collapsed
+ * duplicates remain reachable via the parent stack-header's expand toggle.
+ *
+ * Preview-mode trimmed-frame "more frames hidden" notice is also retired —
+ * Preview-mode itself is still alive (header.collapsed === 'preview' state),
+ * but the user expands trimmed frames via the stack-header's own ▶ / ▼
+ * toggle. No separate divider row, no separate affordance.
  */
 export function getStackHeaderRenderScript(): string {
     return /* javascript */ `
@@ -35,9 +38,8 @@ function renderStackHeader(item, html, spacingCls, matchCls, barCls, idxAttr) {
        - anything else       : Preview mode — some frames trimmed                → ▶
        WHY ▶ for both collapsed and preview: both states have hidden content the
        user could expand. ▼ would falsely signal "everything is shown". The
-       trailing .viewer-divider below the last visible app-frame (rendered by
-       viewer-data-viewport.ts) carries the exact trimmed-frame count for the
-       preview case, so the chevron does not need to disambiguate further. */
+       chevron is the only affordance for preview mode — clicking it expands
+       to fully expanded, exposing every trimmed frame. */
     /* 1-frame stacks (header only, no child frames) have nothing to
        expand/collapse — hide the chevron so the row does not look toggleable.
        frameCount includes the header itself, so >1 means children exist. */
@@ -75,15 +77,16 @@ function renderStackHeader(item, html, spacingCls, matchCls, barCls, idxAttr) {
     var hdrLevelCls = (item.level && !item.isContext) ? ' level-' + item.level : '';
     var hdrCtxCls = item.isContext ? ' context-line' + (item.isContextFirst ? ' context-first' : '') : '';
     var hdrTitleAttr = ' title="' + _hdrTip.replace(/"/g, '&quot;') + '"';
-    /* Chevron sits at the START of the text content, before the quality badge
-       and the header label — IDE convention. data-gid duplicates the row's
-       attr so a click that lands on the chevron specifically still resolves
-       to the same group via either selector path; the existing whole-row
-       handler in viewer-script-click-handlers.ts (.stack-header[data-gid])
-       wins because the chevron is inside the row.
-       Omitted for 1-frame stacks (no children) — no toggle to afford. */
+    /* Stack-headers have no line-number prefix to attach a chevron to, so
+       the toggle stays inline at the START of the header text — the OG
+       "▶ stack" / "▼ stack" affordance, in normal row flow (not floating).
+       data-gid lets a click on the chevron resolve to the same group via
+       the dedicated handler in viewer-peek-chevron.ts even though the
+       whole-row .stack-header[data-gid] handler in
+       viewer-script-click-handlers.ts already catches clicks anywhere on
+       the row. Omitted for 1-frame stacks (no children to toggle). */
     var chev = _hasChildren
-        ? '<span class="stack-toggle" data-gid="' + item.groupId + '">' + _glyph + '</span>'
+        ? '<span class="stack-toggle" data-gid="' + item.groupId + '">' + _glyph + ' stack</span>\\u00a0'
         : '';
     /* Column alignment: a stack header carries no .line-decoration prefix, so
        without help it sits at the bare .stack-header padding-left (16px) while
@@ -117,16 +120,14 @@ function renderStackFrame(item, idx, html, matchCls, barCls, idxAttr, stackGutte
        or below would create. The .dedup-badge click delegate in
        viewer-peek-chevron.ts routes to peekDedupFold(idx) when collapsed
        or unpeekChevron(peekAnchorKey) when expanded. */
+    /* Stack-frame dedup-fold affordance dropped: stack-frames have no
+       line-number prefix to host a chevron, and the prior inline trailing
+       pill at the END of frame text competed with the frame's own content.
+       Cross-type dedup-fold across stack-frames is rare in practice; the
+       collapsed duplicates remain accessible via the parent stack-header's
+       expand toggle. Re-add here with a clear UX pattern if user demand
+       surfaces. */
     var sfDupBadge = '';
-    if (item.compressDupCount > 1) {
-        var _sfExpanded = (item.peekAnchorKey !== undefined && item.peekAnchorKey !== null);
-        var _sfLabel = '\\u00d7' + item.compressDupCount + (_sfExpanded ? ' hide' : '');
-        var _sfCls = _sfExpanded ? 'dedup-badge dedup-badge-expanded' : 'dedup-badge';
-        var _sfTitle = _sfExpanded
-            ? item.compressDupCount + ' identical stack frames revealed \\u00b7 click to hide'
-            : item.compressDupCount + ' identical stack frames collapsed here \\u00b7 click to show';
-        sfDupBadge = '<span class="' + _sfCls + '" data-dedup-survivor-idx="' + idx + '" title="' + _sfTitle + '">' + _sfLabel + '</span>';
-    }
     /* Context-pulled stack frames mute via .context-line so a Drift stack frame
        dragged in 3 rows before an unrelated error reads as background, not a
        participating frame. */
