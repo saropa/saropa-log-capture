@@ -26,6 +26,14 @@ For older versions (7.1.1 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- Logs panel drag handle now actually shrinks to the 420 px minimum advertised in v7.10.x. Three JS gates (`MIN_PANEL_WIDTH` in the session-panel script and the icon-bar script, plus the resize-drag `Math.max` floor in `viewer-session-transforms`) were still hardcoded to 560 px, which silently overrode the CSS minimum and made the earlier change a no-op.
+
+---
+
 ## [7.12.1]
 
 - Version bump for publication only
