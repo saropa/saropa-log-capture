@@ -31,7 +31,10 @@ export function getSessionPanelScript(): string {
         stripDatetime: true, normalizeNames: true, showDayHeadings: true,
         reverseSort: false, showLatestOnly: false, panelWidth: 0, dateRange: 'all',
     };
-    var MIN_PANEL_WIDTH = 560;
+    /* Match the CSS .session-panel min-width (viewer-styles-session-panel.ts).
+       Earlier the CSS dropped to 420 but this JS gate stayed at 560, so the
+       drag handle and slot width still refused to shrink — keep them in lock-step. */
+    var MIN_PANEL_WIDTH = 420;
     var selectedSessionUris = Object.create(null);
     /** Track which day groups are collapsed (keyed by YYYY-MM-DD). */
     var collapsedDays = Object.create(null);

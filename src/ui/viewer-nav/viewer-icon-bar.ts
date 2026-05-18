@@ -17,7 +17,10 @@ export function getIconBarScript(): string {
     var activePanel = null;
     var panelSlot = document.getElementById('panel-slot');
     var iconBar = document.getElementById('icon-bar');
-    var MIN_PANEL_WIDTH = 560;
+    /* Stay in lock-step with the CSS .session-panel min-width and the JS gate
+       in viewer-session-panel.ts. If this drifts higher the slot snaps back to
+       this value when a panel opens, silently undoing a user's narrower drag. */
+    var MIN_PANEL_WIDTH = 420;
 
     /**
      * Update both the overlay badge (icons-only mode) and inline count label
