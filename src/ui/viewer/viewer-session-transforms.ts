@@ -182,7 +182,11 @@ function initSessionPanelResize(panelEl, saveWidth) {
         /* On a right-side icon bar the panel grows as the mouse moves left, so
            the delta sign is inverted. */
         var delta = isRight ? (startX - e.clientX) : (e.clientX - startX);
-        var w = Math.max(560, Math.min(vw * 0.8, startWidth + delta)) + 'px';
+        /* 420 floor matches the CSS .session-panel min-width and the JS
+           MIN_PANEL_WIDTH constants. Any divergence here re-introduces the
+           bug where the drag handle refused to shrink past 560 even though
+           the other gates allowed it. */
+        var w = Math.max(420, Math.min(vw * 0.8, startWidth + delta)) + 'px';
         slotEl.style.width = w;
     });
     document.addEventListener('mouseup', function() {
