@@ -260,6 +260,14 @@ export function isStackFrameLine(line: string): boolean {
     // `file:line` followed by a prose description — were misread as stack frames and
     // pulled into a bogus stack group. Keep in sync with viewer-script.ts.
     if (/^\s+\S+\.\S+:\d+(?::\d+|\s+[+(]|\s*[)\]]|\s*$)/.test(line)) { return true; }
+    // Dart `stack_trace` package `Trace.toString()` format:
+    //   "      ./lib/foo.dart 273:9  ActivityModel.dbAdd"
+    // Path-with-slash + SPACE + line:col + spaces + member. Distinct from the
+    // colon-attached `file.ext:line` rule above. Requiring `/` in the path
+    // avoids matching prose like `   notes.txt 1:1 update`; requiring the
+    // trailing `\s+\S` keeps audit lines (which terminate after the description
+    // without a column suffix) from being misread as frames.
+    if (/^\s+\S*\/\S+\.\S+\s+\d+:\d+\s+\S/.test(line)) { return true; }
     // Mid-line Dart source paths: "Method package:foo/bar.dart:1:2" or "(./lib/foo.dart:1:2)"
     if (/\bpackage:\S+\.dart:\d+/.test(line)) { return true; }
     return /\(\.\/\S+\.dart:\d+:\d+\)/.test(line);

@@ -155,6 +155,24 @@ suite('StackParser', () => {
         });
     });
 
+    suite('isStackFrameLine — Dart Trace.toString() format (path SPACE line:col SPACES member)', () => {
+        // The stack_trace package emits `<uri> <line>:<col>  <member>` with a
+        // space (not colon) between file and line:col. Real example from
+        // contacts app dart:developer log(stackTrace:) output.
+        test('should detect indented relative path with space-separated line:col', () => {
+            assert.strictEqual(isStackFrameLine('      ./lib/database/drift_middleware/user_data/activity_drift_extensions_io.dart 273:9  ActivityModelExtensions.dbActivityAdd'), true);
+        });
+
+        test('should detect short relative path with multiple spaces before member', () => {
+            assert.strictEqual(isStackFrameLine('      ./lib/utils/foo.dart 184:15                 ContactGroupIndustryUtils._findAll'), true);
+        });
+
+        test('should NOT match audit-style file:line without slash in path', () => {
+            // No `/`, colon attached to filename — must remain a normal line.
+            assert.strictEqual(isStackFrameLine('  async_barrier_utils.dart 11  AsyncBarrierUtils'), false);
+        });
+    });
+
     // --- Dart / Flutter ---
 
     test('should detect Flutter package frame as framework', () => {

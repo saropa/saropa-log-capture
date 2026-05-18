@@ -108,6 +108,22 @@ export function getLineStyles(): string {
     color: var(--vscode-textLink-foreground, #3794ff);
     text-decoration: underline;
 }
+/* Per-segment hover highlight while Ctrl/Cmd is held.
+   :has(~ .source-link-seg:hover) matches any segment that has a LATER
+   sibling being hovered — combined with :hover on the hovered segment
+   itself, this lights up the cumulative prefix the click would filter on.
+   Without the body.ctrl-held gate the segments would highlight on plain
+   hover too, defeating the visual cue that Ctrl unlocks a different
+   action (filter) than plain click (open file). */
+body.ctrl-held .source-link-seg:hover,
+body.ctrl-held .source-link-seg:has(~ .source-link-seg:hover) {
+    background: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 92, 0, 0.33));
+    color: var(--vscode-textLink-foreground, #3794ff);
+    text-decoration: underline;
+}
+body.ctrl-held .source-link {
+    cursor: cell;
+}
 
 /* --- Clickable URL links within log lines --- */
 .url-link {

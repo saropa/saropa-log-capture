@@ -155,6 +155,27 @@ function applySearchFilter() {
     else { recalcHeights(); }
 }
 
+/**
+ * Drive the existing search-filter pipeline from a path prefix (Ctrl+click on
+ * a .source-link-seg). Drops the prefix into the search input, forces filter
+ * mode on, and re-runs the search so non-matching lines collapse to height=0.
+ * Opens the search UI so the prefix is visible and the user can clear / refine
+ * it. Updates the visible "Mode" toggle label so it stays in sync.
+ */
+function filterToPathPrefix(prefix) {
+    if (!searchInputEl || !prefix) return;
+    searchInputEl.value = prefix;
+    if (!searchFilterMode) {
+        searchFilterMode = true;
+        if (searchModeToggleEl) {
+            searchModeToggleEl.textContent = 'Mode: Filter';
+            searchModeToggleEl.classList.add('active');
+        }
+    }
+    if (typeof openSearch === 'function') openSearch();
+    updateSearch();
+}
+
 /** Reset the searchFiltered flag on every line item so all lines become visible again. */
 function clearSearchFilteredFlags() {
     if (!searchFilterDirty) return;

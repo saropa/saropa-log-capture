@@ -143,6 +143,18 @@ document.addEventListener('keydown', function(e) {
         return;
     }
 });
+
+/* Track Ctrl/Cmd press for source-link segment hover-highlight.
+   The body.ctrl-held class drives the CSS that lights up the cumulative
+   prefix on .source-link-seg hover. Updated on keydown/keyup AND blur (so
+   alt-tabbing away while holding Ctrl never strands the highlight on). */
+function _slcUpdateCtrlHeld(e) {
+    var held = !!(e && (e.ctrlKey || e.metaKey));
+    document.body.classList.toggle('ctrl-held', held);
+}
+document.addEventListener('keydown', _slcUpdateCtrlHeld);
+document.addEventListener('keyup', _slcUpdateCtrlHeld);
+window.addEventListener('blur', function() { document.body.classList.remove('ctrl-held'); });
 `;
 }
 
