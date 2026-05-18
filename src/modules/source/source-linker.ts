@@ -19,17 +19,26 @@ const sourceExtensions = new Set([
 ]);
 
 /**
- * Matches `path/file.ext:line` or `path/file.ext:line:col`.
+ * Matches two stack-frame shapes in one alternation so a single replace pass
+ * catches both — keeps capture-group bookkeeping consistent for the callback.
+ *
+ * Branch A — colon-attached: `path/file.ext:line` or `path/file.ext:line:col`.
+ *   Captures: 1=path 2=ext 3=line 4=col(opt) ; branch-B groups are undefined.
+ * Branch B — Dart `stack_trace` Trace.toString(): `path/file.ext LINE:COL`
+ *   (one+ spaces between filename and line:col; col MANDATORY to avoid
+ *   matching prose like "edit foo.dart 42 changes").
+ *   Captures: 5=path 6=ext 7=line 8=col ; branch-A groups are undefined.
+ *
  * Path may include slashes, dots, colons (drive letters), dashes, underscores.
  * Extension must be from the source-extension whitelist (injected at build time).
  */
 const FILE_LINE_PATTERN =
-    /([\w./\\:~-]+\.(EXT_SET)):(\d+)(?::(\d+))?/g;
+    /([\w./\\:~-]+\.(EXT_SET)):(\d+)(?::(\d+))?|([\w./\\:~-]+\.(EXT_SET)) +(\d+):(\d+)/g;
 
 /** Build the regex with the actual extension set. */
 function buildPattern(): RegExp {
     const extAlt = [...sourceExtensions].join('|');
-    const src = FILE_LINE_PATTERN.source.replace('EXT_SET', extAlt);
+    const src = FILE_LINE_PATTERN.source.replace(/EXT_SET/g, extAlt);
     return new RegExp(src, 'g');
 }
 
@@ -57,15 +66,62 @@ export function linkifyHtml(html: string): string {
 /** Apply file:line regex to a single text segment (no HTML tags). */
 function linkifyTextSegment(text: string): string {
     fileLineRegex.lastIndex = 0;
-    // eslint-disable-next-line max-params -- regex capture groups
-    return text.replace(fileLineRegex, (match, filePath: string, _ext: string, line: string, col: string | undefined) => {
-        if (isUrlPort(match, text)) {
-            return match;
-        }
+    return text.replace(fileLineRegex, (match: string, ...groups: (string | undefined)[]) => {
+        // Branch A (colon-attached) uses groups 0..3 ; Branch B (Trace space-sep)
+        // uses groups 4..7. Pick whichever branch matched by checking which path
+        // group is defined. Combining into one regex keeps a single replace pass
+        // — running two passes risks the second pattern wrapping path text the
+        // first pass already turned into HTML.
+        const filePath = groups[0] ?? groups[4];
+        const line = groups[2] ?? groups[6];
+        const col = groups[3] ?? groups[7];
+        if (!filePath || !line) { return match; }
+        if (isUrlPort(match, text)) { return match; }
         const safePath = escapeHtml(filePath);
         const colAttr = col ? ` data-col="${col}"` : '';
-        return `<a class="source-link" data-path="${safePath}" data-line="${line}"${colAttr}>${escapeHtml(match)}</a>`;
+        // Replace the path portion of the match with per-segment spans so each
+        // folder + the filename becomes an independently hoverable region.
+        // Ctrl+hover + Ctrl+click on a segment then filters the log to lines
+        // containing that cumulative prefix. The line:col tail (the part of
+        // the match after the path) stays as plain text inside the <a>, so
+        // clicking it (Ctrl or not) routes to the existing open-file action.
+        const pathSpans = buildPathSegmentSpans(filePath);
+        const tailRaw = match.slice(filePath.length);
+        const tailHtml = escapeHtml(tailRaw);
+        return `<a class="source-link" data-path="${safePath}" data-line="${line}"${colAttr}>${pathSpans}${tailHtml}</a>`;
     });
+}
+
+/**
+ * Split a path into per-segment spans, each carrying the CUMULATIVE prefix
+ * up to and including that segment. CSS `:has(~ :hover)` then turns hovering
+ * any segment into a highlight of all earlier siblings plus the hovered one
+ * (the prefix that a Ctrl+click would filter on).
+ *
+ * Leading `./` and `/` are merged into the FIRST real folder so the very
+ * first span is `./lib/` (or `/usr/`), not a useless `./` alone — clicking
+ * "./" would have filtered to every relative path in the log.
+ */
+function buildPathSegmentSpans(filePath: string): string {
+    const parts = filePath.split('/');
+    // Merge a leading `.` or empty (from absolute paths) into the next part.
+    if (parts.length > 1 && (parts[0] === '.' || parts[0] === '')) {
+        parts[1] = parts[0] + '/' + parts[1];
+        parts.shift();
+    }
+    let cumulative = '';
+    const spans: string[] = [];
+    parts.forEach((part, idx) => {
+        const isLast = idx === parts.length - 1;
+        const seg = part + (isLast ? '' : '/');
+        cumulative += seg;
+        // Skip an empty trailing segment (path ending with `/` would emit "").
+        if (!seg) { return; }
+        spans.push(
+            `<span class="source-link-seg" data-prefix="${escapeHtml(cumulative)}">${escapeHtml(seg)}</span>`,
+        );
+    });
+    return spans.join('');
 }
 
 /** Reject matches that are actually URL port numbers (e.g. localhost:8080). */
@@ -105,10 +161,17 @@ export function extractSourceReference(text: string): SourceReference | undefine
         return undefined;
     }
 
+    // Same branch picking as linkifyTextSegment — branch A occupies groups 1..4,
+    // branch B occupies groups 5..8. Whichever branch matched has a defined path.
+    const filePath = match[1] ?? match[5];
+    const lineStr = match[3] ?? match[7];
+    const colStr = match[4] ?? match[8];
+    if (!filePath || !lineStr) { return undefined; }
+
     return {
-        filePath: match[1],
-        line: parseInt(match[3], 10),
-        col: match[4] ? parseInt(match[4], 10) : undefined,
+        filePath,
+        line: parseInt(lineStr, 10),
+        col: colStr ? parseInt(colStr, 10) : undefined,
     };
 }
 
