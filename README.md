@@ -285,7 +285,7 @@ Press **F1** inside the viewer for the full interactive reference with descripti
 | **Ctrl+F** | Open search overlay |
 | **F5** | Start debugging (VS Code built-in) |
 
-See [docs/walkthrough/keyboard-shortcuts.md](docs/walkthrough/keyboard-shortcuts.md) for the complete list, or open **Options → Keyboard shortcuts...** in the viewer. All 45 power shortcuts are rebindable via `saropaLogCapture.viewerKeybindings`.
+See [docs/walkthrough/keyboard-shortcuts.md](docs/walkthrough/keyboard-shortcuts.md) for the complete list, or open **Options → Keyboard shortcuts...** in the viewer. All 51 power shortcuts are rebindable via `saropaLogCapture.viewerKeybindings`.
 
 ---
 
