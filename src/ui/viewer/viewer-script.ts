@@ -147,6 +147,10 @@ function isStackFrameText(html) {
     // lines like "  foo_utils.dart:11  SomeMethod" (file:line + prose) were misread as
     // stack frames and pulled into a bogus stack group. Keep in sync with stack-parser.ts.
     if (/^\\s+\\S+\\.\\S+:\\d+(?::\\d+|\\s+[+(]|\\s*[)\\]]|\\s*$)/.test(plain)) return true;
+    // Dart stack_trace package Trace.toString() format: indent + path-with-/
+    // + SPACE + line:col + spaces + member. Distinct from the colon-attached
+    // file:line rule above. Mirrors stack-parser.ts isStackFrameLine().
+    if (/^\\s+\\S*\\/\\S+\\.\\S+\\s+\\d+:\\d+\\s+\\S/.test(plain)) return true;
     // Mid-line Dart source paths: "Method package:foo/bar.dart:1:2" or "(./lib/foo.dart:1:2)"
     if (/\\bpackage:\\S+\\.dart:\\d+/.test(plain)) return true;
     return /\\(\\.\\\/\\S+\\.dart:\\d+:\\d+\\)/.test(plain);
