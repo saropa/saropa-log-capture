@@ -125,28 +125,13 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
        collector so recurring patterns are not silently suppressed (plan 050). */
     var preDemotionLevel = lvl;
     if (lineTier === 'device-other' && (lvl === 'error' || lvl === 'warning')) lvl = 'info';
-    // Recent-error context: if this line is plain info but falls inside 2s after a real error/stack line
-    // above (see Level Filters fly-up), it is tinted like an error so the incident reads as one band.
-    // Those rows are flagged recentErrorContext and styled distinctly from the faulting line. Drift SQL
-    // never gets this tint and is skipped when locating the prior error so it does not break the band.
-    var skipProximityInherit = (typeof isDriftSqlStatementLine === 'function' && isDriftSqlStatementLine(plain));
+    // Recent-error proximity tint removed: a time-based heuristic that paints any
+    // info line within 2 s of an error as error context is unreliable in dense logs —
+    // unrelated subsequent primary log lines (e.g. "Event Badge Displayed" arriving
+    // ms after a Permission heartbeat) got tinted red, dragging their stack frames
+    // with them. Errors are now marked only from their own classification; stack
+    // frames still group via stack-parser, which is the correct continuation signal.
     var recentErrorContext = false;
-    /* Device-other lines are intentionally demoted (error/warning → info) to suppress
-       framework noise.  Skip recentErrorContext so the demotion is not undone — these
-       system messages (ActivityManager, WindowManager, etc.) are unrelated to the
-       actual fault and should never show error-colored dots/borders. */
-    if (lvl === 'info' && !isSep && !skipProximityInherit && lineTier !== 'device-other' && typeof proximityInheritAnchor === 'function') {
-        var anchor = proximityInheritAnchor();
-        /* Belt-and-suspenders: only a primary error row may seed the band (helper also skips
-           recentErrorContext / synthetic types). Require finite timestamps so bad data never matches. */
-        if (anchor && anchor.level === 'error' && !anchor.recentErrorContext
-            && typeof ts === 'number' && isFinite(ts)
-            && typeof anchor.timestamp === 'number' && isFinite(anchor.timestamp)
-            && Math.abs(ts - anchor.timestamp) <= 2000) {
-            lvl = 'error';
-            recentErrorContext = true;
-        }
-    }
     var sTag = (typeof parseSourceTag === 'function') ? parseSourceTag(plain) : null;
     // Source-tag driven: any line tagged 'database' that isn't already error/warning gets the level.
     // Separator lines stay 'info' — source tags should not override decorative lines.

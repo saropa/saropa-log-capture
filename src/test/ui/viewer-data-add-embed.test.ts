@@ -104,26 +104,12 @@ suite('viewer-data-add device-other demotion preserves originalLevel (plan 050)'
         );
     });
 
-    test('recentErrorContext skips device-other lines so demotion is not undone', () => {
-        const block = extractAddToDataBlock(getViewerDataAddScript());
-        /* Before this fix, device-other lines were demoted to info (line 149), then
-           the recentErrorContext check (line 156) only tested `lvl === 'info'` and
-           re-promoted them to error — undoing the demotion.  The guard ensures
-           framework noise (ActivityManager, WindowManager, etc.) stays suppressed. */
-        assert.ok(
-            block.includes("lineTier !== 'device-other'"),
-            'recentErrorContext condition must exclude device-other tier to prevent re-promotion of demoted lines',
-        );
-        /* The device-other guard must appear in the same conditional as the
-           existing recentErrorContext checks (lvl === info, !isSep, !skipProximityInherit). */
-        const condLine = block.split('\n').find(
-            (l: string) => l.includes("lineTier !== 'device-other'") && l.includes("lvl === 'info'"),
-        );
-        assert.ok(
-            condLine,
-            'device-other guard must be in the same if-condition as the lvl === info check',
-        );
-    });
+    /* Note: the former 'recentErrorContext skips device-other lines' test
+       guarded a condition inside the 2-second proximity tint, which has been
+       removed entirely (time-based heuristic painted unrelated subsequent
+       lines red). Device-other lines still demote to info via the
+       preDemotionLevel block above; no separate re-promotion guard is needed
+       because nothing re-promotes them anymore. */
 });
 
 suite('viewer-data-helpers-core blank detection', () => {
@@ -141,39 +127,27 @@ suite('viewer-data-helpers-core blank detection', () => {
 });
 
 suite('viewer-data-add context helpers', () => {
-    test('proximityInheritAnchor skips recentErrorContext rows to prevent chain propagation', () => {
-        const helpers = getDataAddContextHelpersScript();
-        assert.ok(
-            helpers.includes('if (it.recentErrorContext)'),
-            'proximity anchor must skip previously promoted recent-error rows',
-        );
-        assert.ok(
-            helpers.includes('Do not chain off already-promoted recent-error context rows'),
-            'helper should document why recentErrorContext rows are skipped',
-        );
-    });
-
-    test('proximityInheritAnchor skips synthetic and stack-frame rows', () => {
-        const helpers = getDataAddContextHelpersScript();
-        assert.ok(
-            helpers.includes("it.type === 'repeat-notification'") && helpers.includes("it.type === 'stack-frame'"),
-            'repeat-notification / n-plus-one / stack-frame must not be proximity anchors',
-        );
-    });
-
-    test('previousLineLevel skips recentErrorContext for stack-header inheritance', () => {
-        const helpers = getDataAddContextHelpersScript();
-        assert.ok(
-            /function previousLineLevel\(\)[\s\S]*if \(it\.recentErrorContext\) continue/.test(helpers),
-            'previousLineLevel must skip proximity-promoted lines when inheriting level',
-        );
-    });
-
-    test('addToData recent-error band requires primary anchor and finite timestamps', () => {
+    test('proximity tint removed: addToData does not invoke proximityInheritAnchor', () => {
+        // Time-based 2 s tint painted unrelated subsequent lines as error context.
+        // Errors must come from each line's own classifier now; nothing should
+        // re-introduce the helper or its call site.
         const block = extractAddToDataBlock(getViewerDataAddScript());
         assert.ok(
-            block.includes('!anchor.recentErrorContext') && block.includes('isFinite(ts)') && block.includes('isFinite(anchor.timestamp)'),
-            'recentErrorContext promotion must refuse chained anchors and non-finite timestamps',
+            !block.includes('proximityInheritAnchor'),
+            'addToData must not call proximityInheritAnchor — the 2 s proximity tint was removed for false-positive collateral on dense logs',
+        );
+        const helpers = getDataAddContextHelpersScript();
+        assert.ok(
+            !helpers.includes('function proximityInheritAnchor'),
+            'proximityInheritAnchor helper must stay removed — re-adding without a non-time-based anchor signal would reintroduce the same collateral',
+        );
+    });
+
+    test('previousLineLevel still defined for stack-header inheritance', () => {
+        const helpers = getDataAddContextHelpersScript();
+        assert.ok(
+            /function previousLineLevel\(\)/.test(helpers),
+            'previousLineLevel must still exist — stack-headers depend on it for level inheritance',
         );
     });
 });

@@ -1,58 +1,28 @@
 /**
  * Embedded JavaScript helpers used by addToData for context lookups:
  *
- * - `proximityInheritAnchor()` — locates the nearest earlier non-marker line that is
- *   eligible as the anchor for the 2-second recent-error-context tint window. Skips
- *   Drift SQL rows so a single database call between an error and its follow-on
- *   output doesn't break the error band. Skips proximity-inherited rows (no chaining),
- *   synthetic notification rows, and stack frames so anchors stay “real” log lines.
  * - `previousLineLevel()` — returns the severity level of the most recent non-marker
- *   line (skipping proximity-inherited rows), used to inherit a level onto a new
- *   stack-header (where the first frame lands on a header row that otherwise has no
- *   classifier signal).
+ *   line, used to inherit a level onto a new stack-header (where the first frame lands
+ *   on a header row that otherwise has no classifier signal).
  *
  * Extracted from viewer-data-add.ts purely to keep that file under the 300-code-line
  * limit — the logic is unchanged.
+ *
+ * Note: `proximityInheritAnchor()` was removed alongside the 2-second recent-error
+ * proximity tint in viewer-data-add.ts — a time-based heuristic that painted any info
+ * line within 2 s of an error as error context turned out to drag unrelated subsequent
+ * primary log lines (and their stack frames) red. Errors are now marked solely from
+ * their own classification; stack-group rendering handles continuation visually.
  */
 
 /** Get the embedded JavaScript for addToData context lookup helpers. */
 export function getDataAddContextHelpersScript(): string {
     return /* javascript */ `
-/** Nearest earlier line used for the "recent error context" window (skips Drift SQL rows). */
-function proximityInheritAnchor() {
-    var j = allLines.length - 1;
-    while (j >= 0) {
-        var it = allLines[j];
-        if (it.type === 'marker' || it.type === 'run-separator') { return null; }
-        /* Do not chain off already-promoted recent-error context rows.
-           Otherwise one real error can "walk" forward indefinitely by making each
-           new line the next anchor, which paints unrelated stretches red. */
-        if (it.recentErrorContext) {
-            j--;
-            continue;
-        }
-        /* Synthetic / secondary rows inherit levels or timestamps oddly — never anchor. */
-        if (it.type === 'repeat-notification' || it.type === 'n-plus-one-signal' || it.type === 'stack-frame') {
-            j--;
-            continue;
-        }
-        var p = stripTags(it.html);
-        if (typeof isDriftSqlStatementLine === 'function' && isDriftSqlStatementLine(p)) {
-            j--;
-            continue;
-        }
-        return it;
-    }
-    return null;
-}
-
 /** Level of the most recent non-marker line, for stack-header inheritance. */
 function previousLineLevel() {
     for (var i = allLines.length - 1; i >= 0; i--) {
         var it = allLines[i];
         if (it.type === 'marker' || it.type === 'run-separator') return 'error';
-        /* Skip proximity-promoted context lines so headers inherit pre-incident severity. */
-        if (it.recentErrorContext) continue;
         if (it.level) return it.level;
     }
     return 'error';
