@@ -142,6 +142,15 @@ document.addEventListener('keydown', function(e) {
         else { vscodeApi.postMessage({ type: 'revealLogFile' }); }
         return;
     }
+
+    /* Keyboard-driven line selection. Helpers live in viewer-selection-keyboard.ts;
+       typeof guard mirrors the escape branch — separately loaded but same scope. */
+    if (action === 'extendSelectionUp') { e.preventDefault(); if (typeof extendLineSelection === 'function') extendLineSelection(-1, 1); return; }
+    if (action === 'extendSelectionDown') { e.preventDefault(); if (typeof extendLineSelection === 'function') extendLineSelection(1, 1); return; }
+    if (action === 'extendSelectionPageUp') { e.preventDefault(); if (typeof extendLineSelectionByPage === 'function') extendLineSelectionByPage(-1); return; }
+    if (action === 'extendSelectionPageDown') { e.preventDefault(); if (typeof extendLineSelectionByPage === 'function') extendLineSelectionByPage(1); return; }
+    if (action === 'extendSelectionTop') { e.preventDefault(); if (typeof extendLineSelectionToEdge === 'function') extendLineSelectionToEdge(-1); return; }
+    if (action === 'extendSelectionBottom') { e.preventDefault(); if (typeof extendLineSelectionToEdge === 'function') extendLineSelectionToEdge(1); return; }
 });
 
 /* Track Ctrl/Cmd press for source-link segment hover-highlight.
