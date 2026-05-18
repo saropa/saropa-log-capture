@@ -92,7 +92,9 @@ suite('linkifyHtml', () => {
 
     test('should linkify multiple matches in one line', () => {
         const result = linkifyHtml('error in file.ts:10 see also utils.ts:20');
-        const matches = result.match(/source-link/g);
+        // Count the anchor opener specifically. `source-link` on its own would
+        // also match the per-segment `source-link-seg` spans inside each <a>.
+        const matches = result.match(/<a class="source-link"/g);
         assert.strictEqual(matches?.length, 2);
     });
 
@@ -117,8 +119,72 @@ suite('linkifyHtml', () => {
     });
 
     test('should escape special characters in link text', () => {
+        // Filename now lives inside a per-segment span; the :line tail is
+        // appended raw after the segment span(s).
         const result = linkifyHtml('at file.ts:42');
-        assert.ok(result.includes('>file.ts:42</a>'));
+        assert.ok(result.includes('file.ts</span>:42</a>'));
+    });
+
+    // --- Per-segment hover spans for Ctrl+click filter ---
+
+    test('should wrap each folder + filename in a source-link-seg span with cumulative prefix', () => {
+        const result = linkifyHtml('  at ./lib/database/foo.dart:42');
+        // Leading ./ merges into the first folder so segment 1 is "./lib/"
+        // (not a useless "./" alone) — clicking "./" would have filtered to
+        // every relative path in the log.
+        assert.ok(result.includes('<span class="source-link-seg" data-prefix="./lib/">./lib/</span>'));
+        assert.ok(result.includes('<span class="source-link-seg" data-prefix="./lib/database/">database/</span>'));
+        assert.ok(result.includes('<span class="source-link-seg" data-prefix="./lib/database/foo.dart">foo.dart</span>'));
+    });
+
+    test('should preserve the line:col tail as plain text after the segment spans', () => {
+        const result = linkifyHtml('at ./lib/foo.dart:42:5');
+        // The :42:5 is the tail — must not be inside any source-link-seg
+        // span because it is not a clickable path segment.
+        assert.ok(result.includes('>foo.dart</span>:42:5</a>'));
+    });
+
+    test('should segment a package: URI by slash, keeping the URI scheme in the first segment', () => {
+        const result = linkifyHtml('at package:myapp/src/widget.dart:128');
+        // package:myapp has no slash before the colon, so the FIRST segment
+        // is "package:myapp/" — the URI scheme rides with the first folder.
+        assert.ok(result.includes('<span class="source-link-seg" data-prefix="package:myapp/">package:myapp/</span>'));
+        assert.ok(result.includes('<span class="source-link-seg" data-prefix="package:myapp/src/">src/</span>'));
+        assert.ok(result.includes('<span class="source-link-seg" data-prefix="package:myapp/src/widget.dart">widget.dart</span>'));
+    });
+
+    // --- Dart stack_trace Trace.toString() format: path SPACE line:col ---
+    // Real frames from contacts-app dart:developer log(stackTrace:) output.
+    // The package emits `<uri> <line>:<col>  <member>` with a space between
+    // filename and line:col, not a colon. Linkifier must handle both shapes.
+
+    test('should linkify Trace format with space-separated line:col', () => {
+        const result = linkifyHtml('      ./lib/main.dart 392:5                                         _initFirebaseAppCheck');
+        assert.ok(result.includes('class="source-link"'));
+        assert.ok(result.includes('data-path="./lib/main.dart"'));
+        assert.ok(result.includes('data-line="392"'));
+        assert.ok(result.includes('data-col="5"'));
+    });
+
+    test('should linkify long Trace path with multiple spaces before line:col', () => {
+        const result = linkifyHtml('      ./lib/database/debug/isar_drift_row_count_audit.dart 242:13  IsarDriftRowCountAudit.logComparison');
+        assert.ok(result.includes('data-path="./lib/database/debug/isar_drift_row_count_audit.dart"'));
+        assert.ok(result.includes('data-line="242"'));
+        assert.ok(result.includes('data-col="13"'));
+    });
+
+    test('should NOT linkify Trace-shape prose without col (line-only)', () => {
+        // `foo.dart 42 description` shouldn't link — too ambiguous to be a frame.
+        const result = linkifyHtml('see foo.dart 42 description');
+        assert.ok(!result.includes('source-link'));
+    });
+
+    test('should still linkify normal colon-attached form alongside Trace form', () => {
+        // Regression: combined regex must not break the original branch.
+        const result = linkifyHtml('Error at file.ts:42:10');
+        assert.ok(result.includes('data-path="file.ts"'));
+        assert.ok(result.includes('data-line="42"'));
+        assert.ok(result.includes('data-col="10"'));
     });
 });
 
