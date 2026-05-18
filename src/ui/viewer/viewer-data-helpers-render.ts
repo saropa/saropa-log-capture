@@ -84,7 +84,12 @@ function renderItem(item, idx, prevVis) {
             spacingCls += ' spacing-after';
         } else if (item.isContextFirst) {
             // No spacing-before for context lines; gap goes after the error instead
-        } else if (item.type === 'stack-header') {
+        } else if (item.type === 'stack-header' && item.frameCount > 1) {
+            // Multi-frame stack-header: separate visually from a preceding non-stack line.
+            // Single-frame synthesized stack-headers (Dart Trace.toString() with one frame)
+            // fall through to the next branch and get the same level-transition spacing
+            // as a normal log line — they are rendered through the regular .line path
+            // (see the frameCount > 1 guard on the renderStackHeader dispatch below).
             if (spPrev && spPrev.type !== 'stack-frame' && spPrev.type !== 'stack-header') spacingCls += ' spacing-before';
         } else if (item.type !== 'stack-frame' && item.type !== 'repeat-notification' && item.type !== 'n-plus-one-signal') {
             if (spPrev && spPrev.type !== 'marker') {
@@ -152,10 +157,18 @@ function renderItem(item, idx, prevVis) {
     }
     /* Art-block gutter: CSS border-left handles the continuous bar (not bar-up/bar-down pseudo
        which would conflict with the shimmer ::after). Only the start line keeps its dot. */
-    if (item.type === 'stack-header') {
-        /* Delegated to viewer-data-helpers-render-stack-header.ts.
-           Moved there as part of the unified line-collapsing rethink to keep
-           this file under the 300-line eslint max-lines limit. */
+    if (item.type === 'stack-header' && item.frameCount > 1) {
+        /* Multi-frame trace: render as a chevron-bearing collapsible header.
+           Delegated to viewer-data-helpers-render-stack.ts (renderStackHeader).
+           Single-frame "traces" (Dart Trace.toString() output where one log
+           message has a one-frame stack — common pattern in contacts app
+           audit/log calls) fall through to the regular .line render path
+           below. There is nothing to expand/collapse with one frame, and the
+           .stack-header HTML composition (hdrDeco + hdrQb + html.trim()) is
+           missing the elapsed / badge / catBadge prefix elements that regular
+           .line rows carry, so a synthesized header sits visually left of the
+           parent log message above it. Falling through restores column
+           alignment with the parent line. */
         return renderStackHeader(item, idx, html, spacingCls, matchCls, barCls, idxAttr);
     }
     if (item.type === 'stack-frame') {

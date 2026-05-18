@@ -84,6 +84,21 @@ if (viewportEl) viewportEl.addEventListener('click', function(e) {
     }
     var link = e.target.closest('.source-link');
     if (link) {
+        /* Ctrl/Cmd + click on a path segment routes to FILTER, not open.
+           Each .source-link-seg carries its cumulative prefix in
+           data-prefix (e.g. "./lib/database/"); we drop that into the
+           search input, force filter mode on, and re-run the search so
+           the log collapses to lines containing that prefix. Routes
+           BEFORE the link-click branch so Ctrl+click never falls through
+           to the open-file path that would have opened a split editor. */
+        var seg = e.target.closest('.source-link-seg');
+        if (seg && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            if (typeof filterToPathPrefix === 'function') {
+                filterToPathPrefix(seg.dataset.prefix || '');
+            }
+            return;
+        }
         e.preventDefault();
         vscodeApi.postMessage({
             type: 'linkClicked',
