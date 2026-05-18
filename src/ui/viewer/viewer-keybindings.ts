@@ -52,6 +52,12 @@ export const VIEWER_KEYBINDING_ACTION_IDS = [
   'lineHeightReset',
   'copyFilePath',
   'revealFile',
+  'extendSelectionUp',
+  'extendSelectionDown',
+  'extendSelectionPageUp',
+  'extendSelectionPageDown',
+  'extendSelectionTop',
+  'extendSelectionBottom',
 ] as const;
 
 export type ViewerKeybindingActionId = (typeof VIEWER_KEYBINDING_ACTION_IDS)[number];
@@ -102,6 +108,12 @@ const DEFAULT_ACTION_TO_KEY: Record<ViewerKeybindingActionId, string> = {
   lineHeightReset: 'ctrl+shift+0',
   copyFilePath: 'ctrl+shift+p',
   revealFile: 'ctrl+shift+e',
+  extendSelectionUp: 'shift+arrowup',
+  extendSelectionDown: 'shift+arrowdown',
+  extendSelectionPageUp: 'shift+pageup',
+  extendSelectionPageDown: 'shift+pagedown',
+  extendSelectionTop: 'ctrl+shift+home',
+  extendSelectionBottom: 'ctrl+shift+end',
 };
 
 /** Short labels for status bar when recording a keybinding. */
@@ -150,6 +162,12 @@ export const VIEWER_ACTION_LABELS: Record<ViewerKeybindingActionId, string> = {
   lineHeightReset: 'Line height reset',
   copyFilePath: 'Copy log file path',
   revealFile: 'Log file actions',
+  extendSelectionUp: 'Extend selection up one line',
+  extendSelectionDown: 'Extend selection down one line',
+  extendSelectionPageUp: 'Extend selection up one page',
+  extendSelectionPageDown: 'Extend selection down one page',
+  extendSelectionTop: 'Extend selection to first line',
+  extendSelectionBottom: 'Extend selection to last line',
 };
 
 export function getViewerActionLabel(actionId: string): string {

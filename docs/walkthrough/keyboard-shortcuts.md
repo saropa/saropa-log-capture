@@ -34,5 +34,8 @@ Master these shortcuts to work faster with your logs.
 | Key | Action |
 |-----|--------|
 | **Shift+Click** | Select multiple lines |
+| **Shift+Down / Shift+Up** | Extend selection ±1 line (crosses the anchor to invert direction) |
+| **Shift+PageDown / Shift+PageUp** | Extend selection by one viewport |
+| **Ctrl+Shift+End / Ctrl+Shift+Home** | Extend selection to the last / first line |
 | **Ctrl+C** | Copy as plain text |
 | **Ctrl+Shift+C** | Copy as markdown |

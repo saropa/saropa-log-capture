@@ -75,6 +75,12 @@ function getPowerShortcutsHtml(): string {
                     <tr data-action-id="bookmark"><td><kbd>Ctrl+B</kbd></td><td>Bookmark line</td><td>Save the center line to the bookmarks panel</td></tr>
                     <tr data-action-id="insertMarker"><td><kbd>M</kbd></td><td>Insert marker</td><td>Insert a visual separator line at the current position</td></tr>
                     <tr><td><kbd>Shift+Click</kbd></td><td>Select range</td><td>Select a range of lines between the click and the last selected line</td></tr>
+                    <tr data-action-id="extendSelectionDown"><td><kbd>Shift+Down</kbd></td><td>Extend selection down</td><td>Grow / shrink the line selection one row downward (crossing the anchor switches direction)</td></tr>
+                    <tr data-action-id="extendSelectionUp"><td><kbd>Shift+Up</kbd></td><td>Extend selection up</td><td>Grow / shrink the line selection one row upward</td></tr>
+                    <tr data-action-id="extendSelectionPageDown"><td><kbd>Shift+PageDown</kbd></td><td>Extend selection by page (down)</td><td>Move the selection cursor down by one viewport</td></tr>
+                    <tr data-action-id="extendSelectionPageUp"><td><kbd>Shift+PageUp</kbd></td><td>Extend selection by page (up)</td><td>Move the selection cursor up by one viewport</td></tr>
+                    <tr data-action-id="extendSelectionBottom"><td><kbd>Ctrl+Shift+End</kbd></td><td>Extend selection to end</td><td>Extend the selection from the anchor down to the last line</td></tr>
+                    <tr data-action-id="extendSelectionTop"><td><kbd>Ctrl+Shift+Home</kbd></td><td>Extend selection to start</td><td>Extend the selection from the anchor up to the first line</td></tr>
                     <tr><td>Double-click</td><td>Inline peek</td><td>Open an inline peek showing surrounding context lines</td></tr>
                 </tbody>
             </table>
