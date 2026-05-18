@@ -285,12 +285,12 @@ suite('Stack level inheritance from parent line', () => {
         );
     });
 
-    test('should skip recentErrorContext rows when walking back for header level', () => {
-        assert.ok(
-            addScript.includes('function previousLineLevel(') && addScript.includes('if (it.recentErrorContext) continue'),
-            'previousLineLevel must not inherit level from proximity-promoted context lines',
-        );
-    });
+    /* Note: the former 'skip recentErrorContext rows' test guarded a defensive
+       skip inside previousLineLevel that mattered only when the 2 s proximity
+       tint was painting lines as recentErrorContext. The tint is removed; no
+       code path sets the flag to true anymore, so the skip is unnecessary.
+       previousLineLevel still walks back to inherit a real level onto stack
+       headers (covered by the marker-fallback test above). */
 });
 
 suite('Stack header level CSS class in renderItem', () => {
