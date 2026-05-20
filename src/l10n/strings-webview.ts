@@ -54,4 +54,8 @@ export const stringsWebview: Record<string, string> = {
     'viewer.bookmark.deleteFile': 'Delete all for this file',
     'viewer.bookmark.noMatching': 'No matching bookmarks',
     'viewer.bookmark.emptyShort': 'No bookmarks yet.',
+
+    // Trash panel — runtime strings built client-side.
+    'viewer.trash.itemIcon': 'Trashed session',
+    'viewer.meta.lines': '{0} lines',
 };
