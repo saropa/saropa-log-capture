@@ -38,25 +38,40 @@ Surface measured: 47 files carry `title=`/`aria-label`/`placeholder` attrs (357
 total) plus visible text and client-side JS strings.
 
 Host-built HTML (method 1 — `t()`):
-- [ ] `viewer-toolbar/viewer-toolbar-html.ts` (49)
-- [ ] `viewer-toolbar/viewer-toolbar-filter-drawer-html.ts` (49)
-- [ ] `viewer-toolbar/viewer-toolbar-search-html.ts` (21)
-- [ ] `viewer-toolbar/viewer-toolbar-actions-html.ts` (7)
-- [ ] `viewer-panels/viewer-session-panel-html.ts` (23)
-- [ ] `viewer-nav/viewer-icon-bar-html.ts` (22)
-- [ ] `viewer-search-filter/viewer-search-html.ts` (17)
-- [ ] `provider/viewer-content-body.ts` (16)
-- [ ] `viewer-panels/viewer-find-panel.ts` (14)
-- [ ] `viewer-panels/viewer-bookmark-panel.ts` (12)
-- [ ] `panels/viewer-signal-panel.ts` (9)
-- [ ] remaining ~35 files with smaller counts (context menu, options panel,
-      keyboard-shortcuts, replay, collections, etc.) — enumerate per batch.
+- [x] `viewer-toolbar/viewer-toolbar-html.ts`
+- [x] `viewer-toolbar/viewer-toolbar-filter-drawer-html.ts`
+- [x] `viewer-toolbar/viewer-toolbar-search-html.ts` (toolbar search flyout)
+- [x] `viewer-toolbar/viewer-toolbar-actions-html.ts`
+- [x] `viewer-nav/viewer-icon-bar-html.ts`
+- [x] `provider/viewer-content-body.ts`
+- [x] `viewer-panels/viewer-find-panel.ts` (host HTML + client results)
+- [x] `viewer-panels/viewer-session-panel-html.ts` (Logs panel)
+- [x] `viewer-panels/viewer-bookmark-panel.ts`
+- [x] `panels/viewer-signal-panel.ts`
+- [ ] `viewer-search-filter/viewer-search-html.ts` (17 — the in-log search bar, distinct from the toolbar flyout)
+- [ ] `viewer-panels/viewer-trash-panel.ts`, `viewer-collections-panel.ts`,
+      `panels/viewer-crashlytics-panel.ts`, `viewer-panels/viewer-about-panel.ts`,
+      `viewer-panels/viewer-sql-query-history-panel-html.ts`, `viewer-panels/viewer-options-panel*`
+- [ ] remaining ~25 smaller files (context menu, modals, decorations,
+      replay, run-nav, session-comparison, analysis-panel, etc.) — enumerate per batch.
 
 Client-built JS (method 2 — `vt()`):
 - [x] stack/tree header tooltips (`viewer-data-helpers-render-stack.ts`)
+- [x] find-panel runtime result strings (`viewer-find-panel.ts`)
 - [ ] peek-chevron / dedup-fold affordances
 - [ ] divider / "N hidden" pills
-- [ ] any other render-time labels surfaced during the host-side passes
+- [ ] render-time labels in `viewer-data-helpers-render*.ts`, `viewer-replay.ts`,
+      `viewer-error-classification.ts`, `viewer-root-cause-hints-script.ts`,
+      `viewer-data-add-db-detectors.ts`, `viewer-data-sql-drilldown-ui.ts`, etc.
+
+### Progress (this pass)
+
+Infra + automated translation + 11 files done & committed (top chrome: toolbar,
+filter drawer, search flyout, actions, icon bar, body, find panel; the Logs,
+bookmark, and signals side panels (commit `0be058b5`); plus the stack/tree
+tooltips). ~30 files remain — the rest of the side panels and the client-side
+render/decoration scripts. Every pattern needed is established and proven green;
+the remainder is mechanical continuation in the same shape.
 
 ## Translation is automated (no hand-translation, no per-string toil)
 
