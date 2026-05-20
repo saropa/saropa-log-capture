@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """l10n bundle audit: verify and sync VS Code translation bundles.
 
-Source of truth: src/l10n/strings-a.ts + strings-b.ts (symbolic key → English
-text). VS Code's vscode.l10n.t() is keyed by the English string VALUE, so
-bundle.l10n.json keys must be the exact English text from those TS files.
+Source of truth: every src/l10n/strings-*.ts (symbolic key → English text),
+globbed via extract_all_source_strings() — strings-a/b plus strings-viewer
+(host HTML) and strings-webview (client iframe). VS Code's vscode.l10n.t() is
+keyed by the English string VALUE, so bundle.l10n.json keys must be the exact
+English text from those TS files.
 
 Two bundle layers:
   1. bundle.l10n.json — English baseline (keys = English text, values = same)
@@ -34,8 +36,12 @@ _MODULE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = _MODULE_DIR.parent.parent.parent
 
 L10N_DIR = PROJECT_ROOT / "l10n"
-STRINGS_A_PATH = PROJECT_ROOT / "src" / "l10n" / "strings-a.ts"
-STRINGS_B_PATH = PROJECT_ROOT / "src" / "l10n" / "strings-b.ts"
+# Source registries are GLOBBED, not hardcoded: strings-a/b plus strings-viewer
+# (host HTML) and strings-webview (client iframe), and any future split, are all
+# picked up automatically so their keys sync + translate at publish without ever
+# editing this module again. See plan 053.
+STRINGS_DIR = PROJECT_ROOT / "src" / "l10n"
+SOURCE_GLOB = "strings-*.ts"
 EN_BUNDLE_PATH = L10N_DIR / "bundle.l10n.json"
 REPORTS_DIR = PROJECT_ROOT / "reports"
 
@@ -113,15 +119,26 @@ def extract_ts_strings(filepath: Path) -> dict[str, str]:
     return result
 
 
+def extract_all_source_strings() -> dict[str, str]:
+    """Merge {symbolic_key: english} from every src/l10n/strings-*.ts file.
+
+    Globbed so new registries (strings-viewer, strings-webview, future splits)
+    flow through audit/sync/translate automatically. Sorted for a deterministic
+    merge; keys are namespaced per file so collisions are not expected.
+    """
+    merged: dict[str, str] = {}
+    for path in sorted(STRINGS_DIR.glob(SOURCE_GLOB)):
+        merged.update(extract_ts_strings(path))
+    return merged
+
+
 def _build_en_to_sym_key_map() -> dict[str, str]:
     """Build reverse lookup: English value → symbolic key.
 
     When multiple symbolic keys share the same English value, the first
     one wins (alphabetically). This is for human-readable reports only.
     """
-    strings_a = extract_ts_strings(STRINGS_A_PATH)
-    strings_b = extract_ts_strings(STRINGS_B_PATH)
-    all_strings = {**strings_a, **strings_b}
+    all_strings = extract_all_source_strings()
     # Reverse: value → key. First key wins for duplicates.
     reverse: dict[str, str] = {}
     for sym_key, en_val in all_strings.items():
@@ -201,9 +218,7 @@ class AuditResult:
 
 def run_audit() -> AuditResult:
     """Run a full l10n bundle audit. Pure data — no console output."""
-    strings_a = extract_ts_strings(STRINGS_A_PATH)
-    strings_b = extract_ts_strings(STRINGS_B_PATH)
-    all_strings = {**strings_a, **strings_b}
+    all_strings = extract_all_source_strings()
     en_to_sym = _build_en_to_sym_key_map()
 
     # English values are the bundle keys (VS Code l10n convention).
@@ -470,9 +485,7 @@ def sync_english_bundle() -> tuple[int, int, int]:
     Returns (added, kept, removed). Orphan keys are dropped; new keys are
     added as identity maps (English → English). Existing values are preserved.
     """
-    strings_a = extract_ts_strings(STRINGS_A_PATH)
-    strings_b = extract_ts_strings(STRINGS_B_PATH)
-    all_strings = {**strings_a, **strings_b}
+    all_strings = extract_all_source_strings()
 
     en_bundle: dict[str, str] = json.loads(
         EN_BUNDLE_PATH.read_text(encoding="utf-8")
