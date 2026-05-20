@@ -1,6 +1,6 @@
 # Bug 006 — Signal Report: `err::` related panel diverges from spec (aggregate count, excerpt-vs-log, overflow)
 
-## Status: Fixed (pending review)
+## Status: Fixed
 
 <!-- Status values: Open → Investigating → Fix Ready → Fixed (pending review) → Closed -->
 
