@@ -9,6 +9,7 @@ import * as vm from 'vm';
 import { getSessionTransformsScript } from '../../ui/viewer/viewer-session-transforms';
 import { getSessionTagsScript } from '../../ui/viewer-panels/viewer-session-tags';
 import { getSessionPanelScript } from '../../ui/viewer-panels/viewer-session-panel';
+import { vtStub } from './viewer-session-panel-test-helpers';
 
 function noop(): void {}
 function mockEl(): Record<string, unknown> {
@@ -49,6 +50,8 @@ function buildSandbox(): {
         vscodeApi: { postMessage: noop },
         requestAnimationFrame: (fn: () => void) => fn(),
         __sharedPanelWidth: 560,
+        // Webview l10n bridge stand-in — render scripts now resolve strings via vt().
+        vt: vtStub,
     };
     sandbox.window = sandbox;
     sandbox.addEventListener = (type: string, fn: (e: { data?: unknown }) => void) => {
