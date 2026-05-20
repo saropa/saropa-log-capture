@@ -12,6 +12,7 @@ import * as assert from 'node:assert';
 import { getTreeIngestScript } from '../../ui/viewer/viewer-data-add-tree-ingest';
 import { getViewerDataAddScript } from '../../ui/viewer/viewer-data-add';
 import { getStackHeaderRenderScript } from '../../ui/viewer/viewer-data-helpers-render-stack';
+import { stringsWebview } from '../../l10n/strings-webview';
 
 suite('Flutter render-tree descendant folding (plan 052)', () => {
 
@@ -96,10 +97,24 @@ suite('Flutter render-tree descendant folding (plan 052)', () => {
             assert.ok(matches.length >= 2, 'both the tree header and child item must carry category');
         });
 
-        test('renderStackHeader re-words the tooltip for a tree group', () => {
+        test('renderStackHeader re-words the tooltip for a tree group via vt() keys', () => {
             const r = getStackHeaderRenderScript();
             assert.ok(r.includes('item.treeGroup'), 'render must branch on treeGroup');
-            assert.ok(r.includes('Render tree'), 'tree tooltip must read "Render tree", not "Stack trace"');
+            // The literal moved into the localizable registry; render now resolves
+            // the treeHeader.* key family through vt().
+            assert.ok(r.includes("viewer.treeHeader."), 'tree tooltip must use the localized treeHeader key family');
+            assert.ok(/vt\(/.test(r), 'tooltips must resolve through the vt() webview-l10n helper');
+        });
+
+        test('the "Render tree" English source lives in the webview string registry', () => {
+            assert.ok(
+                stringsWebview['viewer.treeHeader.single'] === 'Render tree',
+                'English source for the tree tooltip must be in strings-webview.ts, not hardcoded in render',
+            );
+            assert.ok(
+                /\{0\}/.test(stringsWebview['viewer.treeHeader.collapsed']),
+                'collapsed template must keep a {0} placeholder for the node count',
+            );
         });
     });
 
