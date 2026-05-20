@@ -4,6 +4,7 @@ import { stringsB } from './l10n/strings-b';
 import { stringsWebview } from './l10n/strings-webview';
 import { stringsViewer } from './l10n/strings-viewer';
 import { stringsViewerB } from './l10n/strings-viewer-b';
+import { stringsViewerC } from './l10n/strings-viewer-c';
 
 /**
  * English strings keyed by symbolic ID.
@@ -17,6 +18,7 @@ const strings: Record<string, string> = {
     ...stringsB,
     ...stringsViewer,
     ...stringsViewerB,
+    ...stringsViewerC,
     ...stringsWebview,
 };
 
