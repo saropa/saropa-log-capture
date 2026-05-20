@@ -52,4 +52,18 @@ export const stringsViewerC: Record<string, string> = {
     'viewer.crashlytics.loading': 'Loading Crashlytics data…',
     'viewer.crashlytics.empty': 'No open Crashlytics issues',
     'viewer.crashlytics.help': 'Help',
+
+    // ── SQL Query History panel — host HTML (viewer-sql-query-history-panel-html.ts) ─
+    'viewer.sqlHistory.header': 'SQL Query History',
+    'viewer.sqlHistory.openViewer.title': 'Open Drift debug viewer in system browser (full window)',
+    'viewer.sqlHistory.copy.title': 'Copy visible rows as JSON',
+    'viewer.sqlHistory.close.title': 'Close',
+    'viewer.sqlHistory.search.placeholder': 'Filter by fingerprint or preview…',
+    'viewer.sqlHistory.cumulative.title': 'Aggregate SQL fingerprints across every sidebar log (excludes the active log to avoid double-counting). Cross-log rows show the fingerprint only — readable SQL text comes in Step 2.',
+    'viewer.sqlHistory.cumulative.label': 'Cumulative across logs',
+    'viewer.sqlHistory.col.count': 'Count',
+    'viewer.sqlHistory.col.sql': 'SQL',
+    'viewer.sqlHistory.col.slow': 'Slow',
+    'viewer.sqlHistory.col.slow.title': 'Slowest duration in milliseconds',
+    'viewer.sqlHistory.empty': 'No parsed SQL fingerprints in this session yet.',
 };
