@@ -39,8 +39,9 @@ suite('Viewer about panel', () => {
         // Copy uses the established copyToClipboard postMessage protocol.
         assert.ok(src.includes("type: 'copyToClipboard'"), 'posts copyToClipboard');
         // Toast reuses the global helper from viewer-copy.ts — the prefix lets the user
-        // see exactly what landed on the clipboard.
-        assert.ok(src.includes("showCopyToast('Copied: ' + text)"), 'toast confirms copied text');
+        // see exactly what landed on the clipboard. The "Copied: {0}" message is now
+        // localized via vt() (webview-l10n bridge, plan 053).
+        assert.ok(src.includes("showCopyToast(vt('viewer.about.copied', text))"), 'toast confirms copied text via vt()');
     });
 
     test('script formats markdown blocks (headings, bullets, hr) and inline (bold, italic, code, links)', () => {
