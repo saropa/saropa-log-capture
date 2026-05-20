@@ -4,6 +4,7 @@
  */
 
 import { getErrorHandlerScript } from '../viewer-decorations/viewer-error-handler';
+import { getWebviewL10nScript } from './viewer-l10n-inject';
 import { getLayoutScript } from './viewer-layout';
 import type { ViewerRepeatThresholds } from '../../modules/db/drift-db-repeat-thresholds';
 import type { ViewerSlowBurstThresholds } from '../../modules/db/drift-db-slow-burst-thresholds';
@@ -141,6 +142,9 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
     } = opts;
     return (
         scriptTag(nonce, getErrorHandlerScript()) +
+        // __VT map + vt() must exist before any render script that resolves a
+        // localized template; placed right after the error handler.
+        scriptTag(nonce, getWebviewL10nScript()) +
         scriptTag(nonce, getStructuredLineParserScript()) +
         scriptTag(
             nonce,
