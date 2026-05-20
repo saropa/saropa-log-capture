@@ -8,6 +8,19 @@ import * as vm from 'vm';
 import { getSessionTransformsScript } from '../../ui/viewer/viewer-session-transforms';
 import { getSessionTagsScript } from '../../ui/viewer-panels/viewer-session-tags';
 import { getSessionPanelScript } from '../../ui/viewer-panels/viewer-session-panel';
+import { stringsWebview } from '../../l10n/strings-webview';
+
+/** Faithful stand-in for the webview's vt() (l10n bridge) — resolves a key to its
+ *  English template via stringsWebview and substitutes {0},{1},… positionally.
+ *  The real bridge injects __VT; the sandbox provides this so render scripts that
+ *  call vt() resolve to real English text matching the runtime tests' assertions. */
+export function vtStub(key: string, ...args: (string | number)[]): string {
+    let s = stringsWebview[key] ?? key;
+    for (let i = 0; i < args.length; i++) {
+        s = s.split('{' + i + '}').join(String(args[i]));
+    }
+    return s;
+}
 
 /** No-op function for mock DOM callbacks. */
 export function noop(): void {}
@@ -56,6 +69,8 @@ export function buildSandbox(): {
         vscodeApi: { postMessage: noop },
         requestAnimationFrame: (fn: () => void) => fn(),
         __sharedPanelWidth: 560,
+        // Webview l10n bridge stand-in — render scripts now resolve strings via vt().
+        vt: vtStub,
     };
     sandbox.window = sandbox;
     sandbox.addEventListener = (type: string, fn: (e: { data?: unknown }) => void) => {
