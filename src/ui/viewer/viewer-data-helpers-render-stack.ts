@@ -46,24 +46,25 @@ function renderStackHeader(item, idx, html, spacingCls, matchCls, barCls, idxAtt
     var _hasChildren = item.frameCount > 1;
     /* Same collapsible widget serves Dart stack traces AND Flutter render-tree
        descendant dumps (item.treeGroup, see viewer-data-add-tree-ingest.ts).
-       Swap the noun/unit so a tree's tooltip never claims to be a "stack trace". */
-    var _noun = item.treeGroup ? 'Render tree' : 'Stack trace';
-    var _unit = item.treeGroup ? 'nodes' : 'frames';
+       The key family ('treeHeader'/'stackHeader') picks "Render tree"/"nodes"
+       vs "Stack trace"/"frames"; vt() resolves localized full-sentence templates
+       (strings-webview.ts) so word order stays correct per language. */
+    var _fam = item.treeGroup ? 'viewer.treeHeader.' : 'viewer.stackHeader.';
     var _glyph = '\\u25b6';
     var _hdrTip = '';
     if (!_hasChildren) {
         _glyph = '';
-        _hdrTip = _noun
-            + (item.dupCount > 1 ? ' \\u00b7 appeared ' + item.dupCount + ' times' : '');
+        /* Trees never dedup, so only stacks reach the singleDup variant. */
+        _hdrTip = (!item.treeGroup && item.dupCount > 1)
+            ? vt('viewer.stackHeader.singleDup', item.dupCount)
+            : vt(_fam + 'single');
     } else if (item.collapsed === true) {
-        _hdrTip = _noun + ' collapsed'
-            + (item.frameCount > 1 ? ' \\u00b7 ' + (item.frameCount - 1) + ' ' + _unit : '')
-            + ' \\u00b7 click to expand';
+        _hdrTip = vt(_fam + 'collapsed', item.frameCount - 1);
     } else if (item.collapsed === false) {
         _glyph = '\\u25bc';
-        _hdrTip = _noun + ' expanded \\u00b7 click to collapse';
+        _hdrTip = vt(_fam + 'expanded');
     } else {
-        _hdrTip = _noun + ' \\u00b7 preview mode \\u00b7 click to expand all';
+        _hdrTip = vt(_fam + 'preview');
     }
     var dup = item.dupCount > 1
         ? ' <span class="stack-dedup-badge">(x' + item.dupCount + ')</span>'
