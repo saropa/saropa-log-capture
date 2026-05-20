@@ -77,6 +77,9 @@ function trimData() {
     }
     allLines.splice(0, excess);
     activeGroupHeader = null;
+    /* A retained tree header may have been trimmed away — drop the dangling ref
+       so a later child row never appends to a header no longer in allLines. */
+    if (typeof resetTreeDetector === 'function') resetTreeDetector();
     if (typeof cleanupContinuationAfterTrim === 'function') cleanupContinuationAfterTrim(excess, trimmedForCont);
     // Adjust art-block tracker: if in-progress block was trimmed away, reset; otherwise shift index
     if (typeof artBlockTracker !== 'undefined' && artBlockTracker.startIdx >= 0) {
