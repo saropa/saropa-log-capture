@@ -175,6 +175,11 @@ export const stringsViewer: Record<string, string> = {
     'viewer.search.modePopover.label': 'Search display mode',
     'viewer.search.modeToggle.title': 'Toggle between Highlight mode (show all, highlight matches) and Filter mode (hide non-matches)',
     'viewer.search.modeToggle.highlight': 'Mode: Highlight',
+    // Compact in-log search bar (viewer-search-filter/viewer-search-html.ts) — shorter titles.
+    'viewer.searchBar.prev.title': 'Previous match (Shift+F3)',
+    'viewer.searchBar.next.title': 'Next match (F3)',
+    'viewer.searchBar.funnel.title': 'Highlight vs filter mode',
+    'viewer.searchBar.modeToggle.title': 'Toggle highlight/filter mode',
 
     // ── Actions dropdown (viewer-toolbar-actions-html.ts) ─────────────
     'viewer.actions.menu.label': 'Actions',
