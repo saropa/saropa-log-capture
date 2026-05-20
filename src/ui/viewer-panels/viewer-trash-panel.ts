@@ -5,22 +5,24 @@
  * Follows the same pattern as the bookmark panel.
  */
 
+import { t } from '../../l10n';
+
 /** Generate the trash panel HTML. */
 export function getTrashPanelHtml(): string {
     return /* html */ `
-<div id="trash-panel" class="trash-panel" role="region" aria-label="Trash">
+<div id="trash-panel" class="trash-panel" role="region" aria-label="${t('viewer.trash.region')}">
     <div class="trash-panel-header">
-        <span>Trash</span>
+        <span>${t('viewer.trash.header')}</span>
         <div class="trash-panel-actions">
-            <button id="trash-empty-all" class="trash-panel-action" title="Empty Trash" aria-label="Empty Trash">
+            <button id="trash-empty-all" class="trash-panel-action" title="${t('viewer.trash.emptyAll')}" aria-label="${t('viewer.trash.emptyAll')}">
                 <span class="codicon codicon-clear-all"></span>
             </button>
-            <button id="trash-panel-close" class="trash-panel-close" title="Close" aria-label="Close Trash"><span class="codicon codicon-close"></span></button>
+            <button id="trash-panel-close" class="trash-panel-close" title="${t('viewer.trash.close.title')}" aria-label="${t('viewer.trash.close.label')}"><span class="codicon codicon-close"></span></button>
         </div>
     </div>
     <div class="trash-panel-content">
         <div id="trash-list"></div>
-        <div id="trash-empty" class="trash-empty">No trashed sessions</div>
+        <div id="trash-empty" class="trash-empty">${t('viewer.trash.empty')}</div>
     </div>
 </div>`;
 }
@@ -75,7 +77,7 @@ export function getTrashPanelScript(): string {
         var meta = buildTrashMeta(s);
         var dots = renderSeverityDots(s);
         return '<div class="trash-item" data-uri="' + escapeAttr(s.uriString || '') + '" data-filename="' + escapeAttr(s.filename || '') + '">'
-            + '<span class="trash-item-icon" title="Trashed session"><span class="codicon codicon-trash"></span></span>'
+            + '<span class="trash-item-icon" title="' + vt('viewer.trash.itemIcon') + '"><span class="codicon codicon-trash"></span></span>'
             + '<div class="trash-item-info">'
             + '<span class="trash-item-name">' + escapeHtml(name) + '</span>'
             + (meta ? '<span class="trash-item-meta">' + escapeHtml(meta) + '</span>' : '')
@@ -86,7 +88,7 @@ export function getTrashPanelScript(): string {
         var parts = [];
         if (s.adapter) parts.push(s.adapter);
         if (s.formattedMtime) parts.push(s.formattedMtime);
-        if (s.lineCount > 0) parts.push(s.lineCount.toLocaleString('en-US') + ' lines');
+        if (s.lineCount > 0) parts.push(vt('viewer.meta.lines', s.lineCount.toLocaleString('en-US')));
         if (s.durationMs > 0) parts.push(formatSessionDuration(s.durationMs));
         if (s.size) parts.push(formatSessionSize(s.size));
         return parts.join(' \\u00b7 ');
