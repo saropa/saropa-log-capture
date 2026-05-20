@@ -26,6 +26,18 @@ For older versions (7.1.1 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Render-tree descendant dumps are now a collapsible group** — a Flutter layout exception appends `This RenderObject had the following descendants (showing up to depth N):` followed by 15–40 indented `child…` rows (in a real 4,793-line log: 30 such dumps, 438 child rows). These had no handling and rendered as plain lines, burying the actual error. A new detector [viewer-data-add-tree-ingest.ts](src/ui/viewer/viewer-data-add-tree-ingest.ts) folds the dump into one collapsible group, reusing the existing stack-group machinery (`stack-header` + `stack-frame` types) so the chevron, `toggleStackGroup`, preview mode, and height/visibility calc all apply with no new render code. A `treeGroup` flag re-words the header tooltip to "Render tree" / "nodes" in [viewer-data-helpers-render-stack.ts](src/ui/viewer/viewer-data-helpers-render-stack.ts). Child indentation is preserved (it carries the hierarchy). It owns a separate `activeTreeHeader` lifecycle so stack dedup never silently hides a tree, reset on marker / clear / trim. Consumed before the banner classifier (like stack frames), so the tree forms its own group inside the exception band. See [plan 052](bugs/052_plan-flutter-exception-grouping.md).
+
+### Fixed
+
+- **Every printed copy of a Flutter exception now groups, not just the stderr one** — a single layout exception is logged once per sink in slightly different shapes, but the banner detector in [viewer-data-add-flutter-banner.ts](src/ui/viewer/viewer-data-add-flutter-banner.ts) only matched the stderr form `════ Exception caught by …`. The console / wrapped copies — `══╡ EXCEPTION CAUGHT BY … ╞══`, `FlutterErrorDetails (══╡ …`, and `Potential Null Check Operator Error Detected: ══╡ …` — were never grouped (real log: 16 of 46 headers grouped, 30 left ungrouped). The console shapes break a pure-`═` run after only two chars with the corner glyphs `╡` (U+2561) / `╞` (U+255E), so the old `/═{4,}\s+/` anchor never fit them. Open regex broadened to `/[═╡╞]{2,}\s*Exception caught by\b/i`: the phrase is the discriminator, the leading box-run guards against prose. ANSI is already converted to `<span>` upstream and stripped via `slp.msg`/`stripTags`, so the existing close-rule detection fires for every copy. Each copy now gets its own band. See [plan 052](bugs/052_plan-flutter-exception-grouping.md).
+
+---
+
 ## [7.13.0]
 
 ### Fixed

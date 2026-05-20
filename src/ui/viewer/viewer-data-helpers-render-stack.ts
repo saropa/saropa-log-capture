@@ -44,21 +44,26 @@ function renderStackHeader(item, idx, html, spacingCls, matchCls, barCls, idxAtt
        expand/collapse — hide the chevron so the row does not look toggleable.
        frameCount includes the header itself, so >1 means children exist. */
     var _hasChildren = item.frameCount > 1;
+    /* Same collapsible widget serves Dart stack traces AND Flutter render-tree
+       descendant dumps (item.treeGroup, see viewer-data-add-tree-ingest.ts).
+       Swap the noun/unit so a tree's tooltip never claims to be a "stack trace". */
+    var _noun = item.treeGroup ? 'Render tree' : 'Stack trace';
+    var _unit = item.treeGroup ? 'nodes' : 'frames';
     var _glyph = '\\u25b6';
     var _hdrTip = '';
     if (!_hasChildren) {
         _glyph = '';
-        _hdrTip = 'Stack trace'
+        _hdrTip = _noun
             + (item.dupCount > 1 ? ' \\u00b7 appeared ' + item.dupCount + ' times' : '');
     } else if (item.collapsed === true) {
-        _hdrTip = 'Stack trace collapsed'
-            + (item.frameCount > 1 ? ' \\u00b7 ' + (item.frameCount - 1) + ' frames' : '')
+        _hdrTip = _noun + ' collapsed'
+            + (item.frameCount > 1 ? ' \\u00b7 ' + (item.frameCount - 1) + ' ' + _unit : '')
             + ' \\u00b7 click to expand';
     } else if (item.collapsed === false) {
         _glyph = '\\u25bc';
-        _hdrTip = 'Stack trace expanded \\u00b7 click to collapse';
+        _hdrTip = _noun + ' expanded \\u00b7 click to collapse';
     } else {
-        _hdrTip = 'Stack trace \\u00b7 preview mode \\u00b7 click to expand all';
+        _hdrTip = _noun + ' \\u00b7 preview mode \\u00b7 click to expand all';
     }
     var dup = item.dupCount > 1
         ? ' <span class="stack-dedup-badge">(x' + item.dupCount + ')</span>'
