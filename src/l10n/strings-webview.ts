@@ -31,4 +31,17 @@ export const stringsWebview: Record<string, string> = {
     'viewer.treeHeader.collapsed': 'Render tree collapsed · {0} nodes · click to expand',
     'viewer.treeHeader.expanded': 'Render tree expanded · click to collapse',
     'viewer.treeHeader.preview': 'Render tree · preview mode · click to expand all',
+
+    // Find in Files — runtime result strings built client-side.
+    'viewer.find.minChars': 'Type at least 2 characters',
+    'viewer.find.noMatches': 'No matches found',
+    // {0}=matches, {1}=totalFiles when no file matched.
+    'viewer.find.summaryZero': '{0} matches in 0 of {1} files',
+    // {0}=count, {1}=match/matches, {2}=fileHits, {3}=totalFiles, {4}=file/files.
+    // The count words are separate keys so singular/plural stays correct per language.
+    'viewer.find.summary': '{0} {1} in {2} of {3} {4}',
+    'viewer.find.matchWord.one': 'match',
+    'viewer.find.matchWord.many': 'matches',
+    'viewer.find.fileWord.one': 'file',
+    'viewer.find.fileWord.many': 'files',
 };
