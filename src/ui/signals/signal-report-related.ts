@@ -1,7 +1,9 @@
 /**
  * Builds detailed HTML for the "Related Lines" section of signal reports.
  * Shows actual items with excerpts and line numbers instead of summary counts.
- * Errors are grouped by fingerprint with category, origin, and normalized-key badges.
+ * Every branch (errors, warnings, network, memory, slow ops, classified) uses
+ * the same wrapList + itemRow shape: a "N <thing>(s)" summary, one row per
+ * occurrence with line number and log-preferred text, and an overflow notice.
  */
 
 import { escapeHtml } from '../../modules/capture/ansi';
@@ -11,11 +13,6 @@ import type {
   RootCauseHintError,
 } from '../../modules/root-cause-hints/root-cause-hint-types';
 import { excerptKey } from '../../modules/root-cause-hints/build-hypotheses-text';
-import { hashFingerprint, normalizeLine } from '../../modules/analysis/error-fingerprint-pure';
-import {
-  classifyErrorOrigin,
-  buildFingerprintNote,
-} from './signal-report-context';
 
 /** Maximum related items to show before truncating with "...and N more". */
 const maxItems = 20;
@@ -54,89 +51,30 @@ export function buildRelatedHtml(
 }
 
 /**
- * Show all errors grouped by fingerprint. Each group shows the normalized
- * fingerprint key, category, origin classification, and all occurrence lines.
+ * Show all errors, one row per occurrence, via the shared wrapList + itemRow
+ * convention every other signal branch uses (so the error section renders
+ * identically to warnings / network / memory / etc.).
+ *
+ * Earlier this branch emitted bespoke per-fingerprint-group markup, which broke
+ * the section contract three ways: no single "N error(s)" aggregate, the raw
+ * excerpt leaked into the group summary even when a fuller log line existed, and
+ * no overflow notice. Fingerprint collapse was considered but is incompatible
+ * with the contract: the maxItems overflow only triggers when occurrences (not
+ * distinct fingerprints) exceed the cap, so the list must stay flat. The cap +
+ * "...and N more" already bounds a flood of repeats.
  */
 function buildErrorRelated(bundle: RootCauseHintBundle, logLines: readonly string[]): string {
   const errors = bundle.errors;
-  if (!errors || errors.length === 0) {
+  const valid = (errors ?? []).filter((e): e is RootCauseHintError => !!e);
+  if (valid.length === 0) {
     return '<div class="no-data">No error details available</div>';
   }
-  const groups = groupErrorsByFingerprint(errors);
-  if (groups.length === 0) {
-    return '<div class="no-data">No error details available</div>';
-  }
-  const parts: string[] = [];
-  for (const g of groups) {
-    parts.push(buildErrorGroupHtml(g, logLines));
-  }
-  return parts.join('');
-}
-
-/** Group errors by fingerprint hash for display. */
-function groupErrorsByFingerprint(
-  errors: readonly RootCauseHintError[],
-): ErrorGroup[] {
-  const map = new Map<string, ErrorGroup>();
-  for (const e of errors) {
-    if (!e) { continue; }
-    const ex = (e.excerpt || '').trim();
-    const fp = e.fingerprint ?? hashFingerprint(normalizeLine(ex));
-    const existing = map.get(fp);
-    if (existing) {
-      existing.items.push(e);
-    } else {
-      map.set(fp, {
-        fingerprint: fp,
-        excerpt: ex,
-        category: e.category,
-        items: [e],
-      });
-    }
-  }
-  // Sort groups by occurrence count (most frequent first)
-  return Array.from(map.values()).sort((a, b) => b.items.length - a.items.length);
-}
-
-interface ErrorGroup {
-  readonly fingerprint: string;
-  readonly excerpt: string;
-  readonly category: string | undefined;
-  readonly items: RootCauseHintError[];
-}
-
-/** Render a single fingerprint group with badges and occurrence list. */
-function buildErrorGroupHtml(group: ErrorGroup, logLines: readonly string[]): string {
-  const badges: string[] = [];
-  if (group.category) {
-    badges.push(`<span class="error-cat-badge">${escapeHtml(group.category)}</span>`);
-  }
-  // Origin classification from the first occurrence
-  const firstItem = group.items[0];
-  if (firstItem && logLines.length > 0) {
-    const origin = classifyErrorOrigin(
-      resolveText(logLines, firstItem.lineIndex, firstItem.excerpt),
-      logLines,
-      firstItem.lineIndex,
-    );
-    if (origin !== 'unknown') {
-      badges.push(`<span class="related-badge">${escapeHtml(origin)}</span>`);
-    }
-  }
-  // Fingerprint transparency — show normalized form
-  const fpNote = buildFingerprintNote(group.excerpt);
-  if (fpNote) {
-    badges.push(`<span class="fp-note">${escapeHtml(fpNote)}</span>`);
-  }
-  const badgeHtml = badges.length > 0 ? ` ${badges.join(' ')}` : '';
-  const summary = `${group.items.length} occurrence(s): ${group.excerpt}`;
-  const rows = group.items
+  // category is the per-row badge — the highest-signal classification the error
+  // carries; mirrors how the classified / slow branches badge their rows.
+  const rows = valid
     .slice(0, maxItems)
-    .map(e => itemRow(e.lineIndex, resolveText(logLines, e.lineIndex, e.excerpt)));
-  return (
-    `<div class="related-summary">${escapeHtml(summary)}${badgeHtml}</div>` +
-    `<div class="related-list">${rows.join('')}</div>`
-  );
+    .map(e => itemRow(e.lineIndex, resolveText(logLines, e.lineIndex, e.excerpt), e.category));
+  return wrapList(`${valid.length} error(s)`, rows, valid.length);
 }
 
 /** Show all occurrences of the matching warning group with actual log lines. */
