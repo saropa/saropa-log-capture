@@ -20,9 +20,10 @@ function levelCircle(level: string, emoji: string, labelKey: string): string {
     return `<button id="level-${level}-toggle" class="level-circle active" title="${t('viewer.drawer.levelDot.' + level + '.title')}" aria-label="${t('viewer.drawer.levelToggle.' + level)}"><span class="level-emoji">${emoji}</span><span class="level-label">${t(labelKey)}</span><span class="level-count"></span></button>`;
 }
 
-/** One source-tier radio (All / Warn+ / None) within a tier fieldset. */
-function tierRadio(name: string, value: string, titleKey: string, labelKey: string, checked: boolean): string {
-    return `<label title="${t(titleKey)}"><input type="radio" name="tier-${name}" value="${value}"${checked ? ' checked' : ''} /> ${t(labelKey)}</label>`;
+/** One source-tier radio. Visible label derives from value (radio.all/warnplus/none),
+    keeping the signature within the 4-parameter limit. */
+function tierRadio(name: string, value: string, titleKey: string, checked: boolean): string {
+    return `<label title="${t(titleKey)}"><input type="radio" name="tier-${name}" value="${value}"${checked ? ' checked' : ''} /> ${t('viewer.drawer.radio.' + value)}</label>`;
 }
 
 /** Filter panel HTML — inserted into #panel-slot. */
@@ -109,21 +110,21 @@ function getFilterTabPanels(): string {
         <div class="options-row-list tier-filter-list">
             <fieldset class="tier-radio-group">
                 <legend title="${t('viewer.drawer.dap.legendTitle')}">${t('viewer.drawer.dap.legendText')} <span class="tier-hint">${t('viewer.drawer.dap.legendHint')}</span></legend>
-                ${tierRadio('flutter', 'all', 'viewer.drawer.dap.all.title', 'viewer.drawer.radio.all', true)}
-                ${tierRadio('flutter', 'warnplus', 'viewer.drawer.dap.warnplus.title', 'viewer.drawer.radio.warnplus', false)}
-                ${tierRadio('flutter', 'none', 'viewer.drawer.dap.none.title', 'viewer.drawer.radio.none', false)}
+                ${tierRadio('flutter', 'all', 'viewer.drawer.dap.all.title',true)}
+                ${tierRadio('flutter', 'warnplus', 'viewer.drawer.dap.warnplus.title',false)}
+                ${tierRadio('flutter', 'none', 'viewer.drawer.dap.none.title',false)}
             </fieldset>
             <fieldset class="tier-radio-group tier-radio-group-spaced">
                 <legend>${t('viewer.drawer.device.legendText')} <span class="tier-hint">${t('viewer.drawer.device.legendHint')}</span></legend>
-                ${tierRadio('device', 'all', 'viewer.drawer.device.all.title', 'viewer.drawer.radio.all', false)}
-                ${tierRadio('device', 'warnplus', 'viewer.drawer.device.warnplus.title', 'viewer.drawer.radio.warnplus', true)}
-                ${tierRadio('device', 'none', 'viewer.drawer.device.none.title', 'viewer.drawer.radio.none', false)}
+                ${tierRadio('device', 'all', 'viewer.drawer.device.all.title',false)}
+                ${tierRadio('device', 'warnplus', 'viewer.drawer.device.warnplus.title',true)}
+                ${tierRadio('device', 'none', 'viewer.drawer.device.none.title',false)}
             </fieldset>
             <fieldset class="tier-radio-group tier-radio-group-spaced">
                 <legend>${t('viewer.drawer.external.legendText')} <span class="tier-hint">${t('viewer.drawer.external.legendHint')}</span></legend>
-                ${tierRadio('external', 'all', 'viewer.drawer.external.all.title', 'viewer.drawer.radio.all', false)}
-                ${tierRadio('external', 'warnplus', 'viewer.drawer.external.warnplus.title', 'viewer.drawer.radio.warnplus', true)}
-                ${tierRadio('external', 'none', 'viewer.drawer.external.none.title', 'viewer.drawer.radio.none', false)}
+                ${tierRadio('external', 'all', 'viewer.drawer.external.all.title',false)}
+                ${tierRadio('external', 'warnplus', 'viewer.drawer.external.warnplus.title',true)}
+                ${tierRadio('external', 'none', 'viewer.drawer.external.none.title',false)}
             </fieldset>
         </div>
     </div>
