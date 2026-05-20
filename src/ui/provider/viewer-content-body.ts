@@ -1,6 +1,9 @@
 /**
  * Viewer webview body HTML (main-content through icon bar).
  * Extracted to keep viewer-content.ts under the line limit.
+ *
+ * User-facing strings resolve through t() (host-built HTML) — see strings-viewer-b.ts.
+ * The log-content title is escapeHtml()-wrapped because its text contains quotes.
  */
 
 import { getToolbarHtml } from '../viewer-toolbar/viewer-toolbar-html';
@@ -31,6 +34,8 @@ import { getEditModalHtml } from '../viewer-context-menu/viewer-edit-modal';
 import { getAutoHideModalHtml } from '../viewer/viewer-auto-hide-modal';
 import { getLogFileModalHtml } from '../viewer/viewer-log-file-modal';
 import { getIconBarHtml } from '../viewer-nav/viewer-icon-bar';
+import { t } from '../../l10n';
+import { escapeHtml } from '../../modules/capture/ansi';
 
 export interface ViewerBodyOptions {
     readonly version?: string;
@@ -61,33 +66,33 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     ${getSearchFlyoutHtml()}
     ${getActionsDropdownHtml()}
     <div id="compress-suggest-banner" class="compress-suggest-banner u-hidden" role="status" aria-live="polite">
-        <span class="compress-suggest-msg">Many identical lines in a row — try <strong>Compress lines</strong> (Options \u2192 Layout or right-click \u2192 Options).</span>
-        <button type="button" id="compress-suggest-enable" class="compress-suggest-btn">Enable</button>
-        <button type="button" id="compress-suggest-dismiss" class="compress-suggest-dismiss" title="Dismiss">\u00d7</button>
+        <span class="compress-suggest-msg">${t('viewer.compressBanner.msg', '<strong>' + t('viewer.compressBanner.boldTerm') + '</strong>')}</span>
+        <button type="button" id="compress-suggest-enable" class="compress-suggest-btn">${t('viewer.compressBanner.enable')}</button>
+        <button type="button" id="compress-suggest-dismiss" class="compress-suggest-dismiss" title="${t('viewer.compressBanner.dismiss')}">×</button>
     </div>
     <div id="resume-session-banner" class="resume-session-banner u-hidden" role="status" aria-live="polite">
-        <span class="resume-session-msg">Loaded latest log.</span>
-        <button type="button" id="resume-session-btn" class="resume-session-action" title="Open last viewed session"></button>
-        <button type="button" id="resume-session-dismiss" class="resume-session-dismiss" title="Dismiss">\u00d7</button>
+        <span class="resume-session-msg">${t('viewer.resumeBanner.msg')}</span>
+        <button type="button" id="resume-session-btn" class="resume-session-action" title="${t('viewer.resumeBanner.btn.title')}"></button>
+        <button type="button" id="resume-session-dismiss" class="resume-session-dismiss" title="${t('viewer.resumeBanner.dismiss')}">×</button>
     </div>
     <div id="split-breadcrumb">
-        <button id="split-prev" title="Previous part" aria-label="Previous part" disabled>&#x25C0;</button>
-        <span class="nav-bar-label" aria-hidden="true">Part <span id="split-current">1</span> of <span id="split-total">1</span></span>
-        <button id="split-next" title="Next part" aria-label="Next part" disabled>&#x25B6;</button>
+        <button id="split-prev" title="${t('viewer.split.prev.title')}" aria-label="${t('viewer.split.prev.label')}" disabled>&#x25C0;</button>
+        <span class="nav-bar-label" aria-hidden="true">${t('viewer.split.part')} <span id="split-current">1</span> ${t('viewer.split.of')} <span id="split-total">1</span></span>
+        <button id="split-next" title="${t('viewer.split.next.title')}" aria-label="${t('viewer.split.next.label')}" disabled>&#x25B6;</button>
     </div>
     <div id="pinned-section"></div>
-    <div id="root-cause-hypotheses" class="root-cause-hypotheses u-hidden" role="region" aria-label="Hypotheses"></div>
+    <div id="root-cause-hypotheses" class="root-cause-hypotheses u-hidden" role="region" aria-label="${t('viewer.rootCause.region')}"></div>
     <div id="log-content-wrapper">
     <div class="log-content-clip">
-    <div id="log-content" class="nowrap" role="log" aria-label="Log content" title="Right-click a line for actions (copy, filters, source). Long-press &quot;Log N of M&quot; in the toolbar to copy session metadata.">
+    <div id="log-content" class="nowrap" role="log" aria-label="${t('viewer.logContent.region')}" title="${escapeHtml(t('viewer.logContent.title'))}">
         <div id="spacer-top"></div>
         <div id="viewport"></div>
         <div id="spacer-bottom"></div>
     </div>
     </div>
-    <button id="jump-top-btn" title="Scroll to top" aria-label="Scroll to top">&#x2B06; Top</button>
-    <button id="jump-btn" title="Scroll to bottom" aria-label="Scroll to bottom">&#x2B07; Bottom</button>
-    <div id="copy-float" class="codicon codicon-copy" title="Copy line" role="button" aria-label="Copy line"></div>
+    <button id="jump-top-btn" title="${t('viewer.jumpTop.title')}" aria-label="${t('viewer.jumpTop.title')}">&#x2B06; ${t('viewer.jumpTop.text')}</button>
+    <button id="jump-btn" title="${t('viewer.jumpBottom.title')}" aria-label="${t('viewer.jumpBottom.title')}">&#x2B07; ${t('viewer.jumpBottom.text')}</button>
+    <div id="copy-float" class="codicon codicon-copy" title="${t('viewer.copyFloat.title')}" role="button" aria-label="${t('viewer.copyFloat.label')}"></div>
     ${getScrollbarMinimapHtml()}
     ${getGotoLineHtml()}
     ${getReplayBarHtml()}
