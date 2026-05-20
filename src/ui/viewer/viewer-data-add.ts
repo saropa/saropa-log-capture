@@ -23,9 +23,10 @@ import { getDocItemBuilderScript } from './viewer-data-add-doc-item';
 import { getLineBirthScript } from './viewer-data-add-line-birth';
 import { getStackHeaderRepeatScript } from './viewer-data-add-stack-header-repeat';
 import { getStackIngestScript } from './viewer-data-add-stack-ingest';
+import { getTreeIngestScript } from './viewer-data-add-tree-ingest';
 
 export function getViewerDataAddScript(staticSqlFromFingerprintEnabled = true): string {
-    return getDriftDebugServerFromLogScript() + getViewerDataAddDbDetectorsScript(staticSqlFromFingerprintEnabled) + getContinuationScript() + getRepeatCollapseBranchScript() + getAsciiArtDetectScript() + getFlutterBannerScript() + getDataAddContextHelpersScript() + getDocItemBuilderScript() + getLineBirthScript() + getStackHeaderRepeatScript() + getStackIngestScript() + /* javascript */ `
+    return getDriftDebugServerFromLogScript() + getViewerDataAddDbDetectorsScript(staticSqlFromFingerprintEnabled) + getContinuationScript() + getRepeatCollapseBranchScript() + getAsciiArtDetectScript() + getFlutterBannerScript() + getDataAddContextHelpersScript() + getDocItemBuilderScript() + getLineBirthScript() + getStackHeaderRepeatScript() + getStackIngestScript() + getTreeIngestScript() + /* javascript */ `
 function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPercent, source, rawText, tier) {
     /* elapsedMs: per-line delay (from [+Nms]) for replay. qualityPercent: per-file line coverage (0-100) for badges. source: stream id for multi-source filter ('debug'|'terminal'|...). tier: 'flutter'|'device-critical'|'device-other'|'external' */
     var lineSource = source || 'debug';
@@ -56,6 +57,8 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
             if (typeof registerClassTags === 'function') registerClassTags(activeGroupHeader);
             activeGroupHeader = null;
         }
+        /* A marker (run separator, etc.) ends any open render-tree dump too. */
+        if (typeof resetTreeDetector === 'function') resetTreeDetector();
         cleanupTrailingRepeats();
         if (typeof finalizeArtBlock === 'function') finalizeArtBlock();
         var markerItem = { html: html, rawText: rawText || null, type: 'marker', height: MARKER_HEIGHT, category: category, groupId: -1, timestamp: ts, sourcePath: sp || null, source: lineSource };
@@ -85,6 +88,11 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
        viewer-data-add-stack-ingest.ts. Returns true when the line was consumed
        as part of a stack group — see that module for the async-gap reasoning. */
     if (tryIngestStackLine(html, rawText, category, ts, fw, sp, elapsedMs, qualityPercent, lineSource, lineTier, catFiltered)) return;
+    /* Render-tree descendant dumps ("This RenderObject had the following descendants…")
+       fold into their own collapsible group, the same way stack frames do — consumed
+       before the banner classifier so the 30+ child rows form one foldable group
+       rather than 30+ banner-body lines. See viewer-data-add-tree-ingest.ts. */
+    if (typeof tryIngestTreeLine === 'function' && tryIngestTreeLine(html, rawText, category, ts, fw, sp, elapsedMs, qualityPercent, lineSource, lineTier, catFiltered)) return;
     if (activeGroupHeader) {
         if (typeof finalizeStackGroup === 'function') finalizeStackGroup(activeGroupHeader);
         if (typeof registerClassTags === 'function') registerClassTags(activeGroupHeader);
