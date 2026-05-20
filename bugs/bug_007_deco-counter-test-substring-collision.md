@@ -1,6 +1,6 @@
 # Bug 007 — Decoration Styles Test: `.deco-counter` assertion collides with `.deco-counter-row`
 
-## Status: Fixed (pending review)
+## Status: Fixed
 
 <!-- Status values: Open → Investigating → Fix Ready → Fixed (pending review) → Closed -->
 
