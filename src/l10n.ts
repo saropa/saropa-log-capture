@@ -2,14 +2,16 @@ import * as vscode from 'vscode';
 import { stringsA } from './l10n/strings-a';
 import { stringsB } from './l10n/strings-b';
 import { stringsWebview } from './l10n/strings-webview';
+import { stringsViewer } from './l10n/strings-viewer';
 
 /**
  * English strings keyed by symbolic ID.
  * Source of truth for default (English) text lives in l10n/strings-a.ts, strings-b.ts,
- * and strings-webview.ts. Translation bundles in `l10n/` map the English string →
+ * strings-viewer.ts (host-built viewer HTML), and strings-webview.ts (client-side
+ * webview strings). Translation bundles in `l10n/` map the English string →
  * translated string.
  */
-const strings: Record<string, string> = { ...stringsA, ...stringsB, ...stringsWebview };
+const strings: Record<string, string> = { ...stringsA, ...stringsB, ...stringsViewer, ...stringsWebview };
 
 /**
  * Localized string lookup. Resolves a symbolic key to its English string,
