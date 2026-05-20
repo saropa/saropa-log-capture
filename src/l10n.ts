@@ -3,6 +3,7 @@ import { stringsA } from './l10n/strings-a';
 import { stringsB } from './l10n/strings-b';
 import { stringsWebview } from './l10n/strings-webview';
 import { stringsViewer } from './l10n/strings-viewer';
+import { stringsViewerB } from './l10n/strings-viewer-b';
 
 /**
  * English strings keyed by symbolic ID.
@@ -11,7 +12,13 @@ import { stringsViewer } from './l10n/strings-viewer';
  * webview strings). Translation bundles in `l10n/` map the English string →
  * translated string.
  */
-const strings: Record<string, string> = { ...stringsA, ...stringsB, ...stringsViewer, ...stringsWebview };
+const strings: Record<string, string> = {
+    ...stringsA,
+    ...stringsB,
+    ...stringsViewer,
+    ...stringsViewerB,
+    ...stringsWebview,
+};
 
 /**
  * Localized string lookup. Resolves a symbolic key to its English string,
