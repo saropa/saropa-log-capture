@@ -58,4 +58,26 @@ export const stringsWebview: Record<string, string> = {
     // Trash panel — runtime strings built client-side.
     'viewer.trash.itemIcon': 'Trashed session',
     'viewer.meta.lines': '{0} lines',
+
+    // About panel — runtime strings (chrome only; brand copy stays English).
+    // changelogLoading is shared: host HTML t() (via merged map) + client vt() reset.
+    'viewer.about.changelogLoading': 'Loading…',
+    'viewer.about.changelogUnavailable': 'Changelog unavailable.',
+    'viewer.about.copied': 'Copied: {0}',
+
+    // Crashlytics panel — runtime strings built client-side.
+    'viewer.crashlytics.headerBase': 'Crashlytics',
+    'viewer.crashlytics.openConsole': 'Open Firebase Console',
+    'viewer.crashlytics.openGsj': 'Open google-services.json',
+    'viewer.crashlytics.copyDiag': 'Copy diagnostic',
+    'viewer.crashlytics.showOutput': 'Show Output',
+    'viewer.crashlytics.queryFailed': 'Query failed',
+    'viewer.crashlytics.fatal': 'FATAL',
+    'viewer.crashlytics.nonfatal': 'NON-FATAL',
+    'viewer.crashlytics.closeIssue': 'Close',
+    'viewer.crashlytics.mute': 'Mute',
+    'viewer.crashlytics.usersOne': '{0} user',
+    'viewer.crashlytics.usersMany': '{0} users',
+    'viewer.crashlytics.events': '{0} events',
+    'viewer.crashlytics.loadingDetail': 'Loading crash details…',
 };

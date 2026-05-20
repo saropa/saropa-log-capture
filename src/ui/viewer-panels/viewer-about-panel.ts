@@ -6,28 +6,31 @@
  */
 
 import { buildItemUrl } from "../../modules/marketplace-url";
+import { t } from "../../l10n";
 
-/** Generate the about panel HTML with static content. */
+/** Generate the about panel HTML with static content.
+ *  Only UI chrome is localized; product names, taglines, and link blurbs are
+ *  brand/marketing copy left English by design (see strings-viewer-c.ts note). */
 export function getAboutPanelHtml(): string {
     return /* html */ `
-<div id="about-panel" class="about-panel" role="region" aria-label="About Saropa">
+<div id="about-panel" class="about-panel" role="region" aria-label="${t('viewer.about.region')}">
     <div class="about-panel-header">
-        <span>About Saropa</span>
-        <button id="about-panel-close" class="about-panel-close" title="Close" aria-label="Close About"><span class="codicon codicon-close"></span></button>
+        <span>${t('viewer.about.region')}</span>
+        <button id="about-panel-close" class="about-panel-close" title="${t('viewer.about.close.title')}" aria-label="${t('viewer.about.close.label')}"><span class="codicon codicon-close"></span></button>
     </div>
     <div class="about-panel-content">
-        <div id="ab-title-row" class="ab-version-row" title="Press and hold to copy">
+        <div id="ab-title-row" class="ab-version-row" title="${t('viewer.about.copyHint')}">
             <span class="ab-version-label">Saropa Log Capture</span>
             <span id="ab-version-badge" class="ab-version-badge"></span>
         </div>
         <p class="ab-tagline">Built for Resilience. Designed for Peace of Mind.</p>
         <p class="ab-blurb">A technology firm rooted in financial services and online security. We build digital safeguards\u2009\u2014\u2009developer extensions that just work and a crisis management platform trusted by 50,000+ users.</p>
-        <div class="ab-section">Recent changes</div>
-        <a id="about-changelog-link" href="#" class="ab-changelog-link" data-url="#">Full changelog on Marketplace</a>
-        <div id="about-changelog" class="ab-changelog"><span class="ab-changelog-loading">Loading…</span></div>
-        <div class="ab-section">Projects</div>
+        <div class="ab-section">${t('viewer.about.recentChanges')}</div>
+        <a id="about-changelog-link" href="#" class="ab-changelog-link" data-url="#">${t('viewer.about.fullChangelog')}</a>
+        <div id="about-changelog" class="ab-changelog"><span class="ab-changelog-loading">${t('viewer.about.changelogLoading')}</span></div>
+        <div class="ab-section">${t('viewer.about.projects')}</div>
         ${getProjectLinksHtml()}
-        <div class="ab-section">Connect</div>
+        <div class="ab-section">${t('viewer.about.connect')}</div>
         ${getConnectLinksHtml()}
     </div>
 </div>`;
@@ -57,7 +60,7 @@ export function getAboutPanelScript(): string {
         aboutPanelEl.classList.remove('visible');
         aboutPanelOpen = false;
         var cl = document.getElementById('about-changelog');
-        if (cl) cl.innerHTML = '<span class="ab-changelog-loading">Loading\\u2026</span>';
+        if (cl) cl.innerHTML = '<span class="ab-changelog-loading">' + vt('viewer.about.changelogLoading') + '</span>';
         if (typeof clearActivePanel === 'function') clearActivePanel('about');
         var ibBtn = document.getElementById('ib-about');
         if (ibBtn) ibBtn.focus();
@@ -84,7 +87,7 @@ export function getAboutPanelScript(): string {
             if (e.data.changelogExcerpt) {
                 chunk.innerHTML = formatAboutMarkdown(e.data.changelogExcerpt);
             } else {
-                chunk.textContent = 'Changelog unavailable.';
+                chunk.textContent = vt('viewer.about.changelogUnavailable');
             }
         }
         var link = document.getElementById('about-changelog-link');
@@ -180,7 +183,7 @@ export function getAboutPanelScript(): string {
         if (typeof vscodeApi !== 'undefined') vscodeApi.postMessage({ type: 'copyToClipboard', text: text });
         /* Reuse the viewer's shared toast (defined in viewer-copy.ts at global
            scope, loaded earlier in the script list) so styling stays consistent. */
-        if (typeof showCopyToast === 'function') showCopyToast('Copied: ' + text);
+        if (typeof showCopyToast === 'function') showCopyToast(vt('viewer.about.copied', text));
     }
     if (titleRow) {
         titleRow.addEventListener('mousedown', startTitlePress);
