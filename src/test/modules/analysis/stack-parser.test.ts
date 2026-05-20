@@ -173,6 +173,32 @@ suite('StackParser', () => {
         });
     });
 
+    suite('isStackFrameLine — Dart SDK frames with no file path (dart:async)', () => {
+        // `stack_trace` right-pads a bare library URI to align the member, e.g.
+        // `      dart:async                  Future.timeout.<fn>`. These have no
+        // `/path line:col`, so before the dedicated branch they leaked out of the
+        // trace as normal lines and fragmented the group. Real examples from the
+        // contacts app startup log (20260520_145051_contacts.log).
+        test('should detect a bare dart:async frame with padded member', () => {
+            assert.strictEqual(isStackFrameLine('      dart:async                                  Future.timeout.<fn>'), true);
+        });
+
+        test('should detect dart:async members starting with _ and <', () => {
+            assert.strictEqual(isStackFrameLine('      dart:async                                  Future.wait'), true);
+            assert.strictEqual(isStackFrameLine('      dart:async                                  _rootRun'), true);
+            assert.strictEqual(isStackFrameLine('      dart:async                                  <fn>'), true);
+        });
+
+        test('should detect a dart: SDK frame that carries a file:line', () => {
+            assert.strictEqual(isStackFrameLine('      dart:async/future_impl.dart 23:45    _CompleterImpl.complete'), true);
+        });
+
+        test('should NOT match single-spaced prose beginning with dart:', () => {
+            // Only one space before the next word — not the stack_trace padding shape.
+            assert.strictEqual(isStackFrameLine('dart:async is a Dart core library'), false);
+        });
+    });
+
     // --- Dart / Flutter ---
 
     test('should detect Flutter package frame as framework', () => {

@@ -94,6 +94,14 @@ function tryIngestStackLine(html, rawText, category, ts, fw, sp, elapsedMs, qual
     if (typeof finalizeArtBlock === 'function') finalizeArtBlock();
     var plainFrame = stripTags(html);
     var context = (typeof extractContext === 'function') ? extractContext(plainFrame) : null;
+    /* Render both Dart SDK and app frames member-first, with the code location as a
+       muted right-aligned source tag — the member was previously shoved far right by the
+       stack_trace alignment padding (worst for app frames, whose long ./lib/... paths set
+       the widest column). App-frame source links are lifted intact so click-to-open and
+       Ctrl+click-filter survive. Display-only: plainFrame, rawText, and the repeat-collapse
+       comparison below all use the original html, so tag parsing, dedup, search, and raw
+       copy are unchanged. */
+    var displayHtml = (typeof formatFrameMemberFirst === 'function') ? formatFrameMemberFirst(html) : html;
 
     if (activeGroupHeader) {
         if (!activeGroupHeader._appFrameCount) activeGroupHeader._appFrameCount = 0;
@@ -106,7 +114,7 @@ function tryIngestStackLine(html, rawText, category, ts, fw, sp, elapsedMs, qual
             }
         }
         // levelFiltered stamped at birth so frames inheriting a filtered-out level (e.g. 'database') stay hidden when the header is later expanded.
-        var sfItem = { html: html, rawText: rawText || null, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw, tier: lineTier, level: activeGroupHeader.level, sourceTag: activeGroupHeader.sourceTag, logcatTag: activeGroupHeader.logcatTag, filteredOut: catFiltered, sourceFiltered: false, classFiltered: false, classTags: cTagsF, context: context, _appFrameIdx: appIdx, sourcePath: sp || null, scopeFiltered: false, autoHidden: false, qualityPercent: qualityPercent, source: lineSource, levelFiltered: calcLevelFiltered(activeGroupHeader.level) };
+        var sfItem = { html: displayHtml, rawText: rawText || null, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw, tier: lineTier, level: activeGroupHeader.level, sourceTag: activeGroupHeader.sourceTag, logcatTag: activeGroupHeader.logcatTag, filteredOut: catFiltered, sourceFiltered: false, classFiltered: false, classTags: cTagsF, context: context, _appFrameIdx: appIdx, sourcePath: sp || null, scopeFiltered: false, autoHidden: false, qualityPercent: qualityPercent, source: lineSource, levelFiltered: calcLevelFiltered(activeGroupHeader.level) };
         /* Inherit originalLevel from header so warnplus mode in calcItemHeight
            correctly shows frames from demoted device-other error/warning stacks. */
         if (activeGroupHeader.originalLevel) sfItem.originalLevel = activeGroupHeader.originalLevel;
@@ -147,7 +155,7 @@ function tryIngestStackLine(html, rawText, category, ts, fw, sp, elapsedMs, qual
     if (hdrAutoHide && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
     var _sds = (typeof stackDefaultState !== 'undefined') ? stackDefaultState : true;
     var _spc = (typeof stackPreviewCount !== 'undefined') ? stackPreviewCount : 3;
-    var hdr = { html: html, rawText: rawText || null, type: 'stack-header', height: hdrH, category: category, groupId: gid, frameCount: 1, collapsed: _sds, previewCount: _spc, timestamp: ts, fw: fw, tier: lineTier, level: _hdrLevel, seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, filteredOut: catFiltered, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: false, autoHidden: hdrAutoHide, qualityPercent: qualityPercent, source: lineSource, levelFiltered: calcLevelFiltered(_hdrLevel) };
+    var hdr = { html: displayHtml, rawText: rawText || null, type: 'stack-header', height: hdrH, category: category, groupId: gid, frameCount: 1, collapsed: _sds, previewCount: _spc, timestamp: ts, fw: fw, tier: lineTier, level: _hdrLevel, seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, filteredOut: catFiltered, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: false, autoHidden: hdrAutoHide, qualityPercent: qualityPercent, source: lineSource, levelFiltered: calcLevelFiltered(_hdrLevel) };
     if (_hdrOrigLevel) hdr.originalLevel = _hdrOrigLevel;
     if (elapsedMs !== undefined && elapsedMs >= 0) hdr.elapsedMs = elapsedMs;
     allLines.push(hdr);
