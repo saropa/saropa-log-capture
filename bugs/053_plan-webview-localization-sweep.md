@@ -58,6 +58,21 @@ Client-built JS (method 2 — `vt()`):
 - [ ] divider / "N hidden" pills
 - [ ] any other render-time labels surfaced during the host-side passes
 
+## Translation is automated (no hand-translation, no per-string toil)
+
+The publish pipeline already machine-translates at release: `check_l10n_bundles()`
+in `scripts/modules/publish/checks_build.py` runs sync + `deep-translator` (with
+brand-name shielding) across all 10 locales. The audit/translator previously
+scanned only `strings-a.ts` + `strings-b.ts`; it now **globs `src/l10n/strings-*.ts`**
+(`extract_all_source_strings()` in `l10n_bundle_audit.py`), so every new key in
+`strings-viewer.ts` / `strings-webview.ts` — and any future split — is synced to
+the English bundle and translated at publish automatically.
+
+Consequence for this sweep: each area's job is only to **expose** strings through
+`t()`/`vt()` with English keys. Translations need no manual work — publish fills
+`bundle.l10n.*.json` for the new keys. Until a publish runs, missing keys fall
+back to English (unchanged behavior).
+
 ## Verification per area
 
 `npm run check-types` · `npm run lint` (no new warnings) · `npm run compile`
