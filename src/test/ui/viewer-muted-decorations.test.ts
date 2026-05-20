@@ -33,8 +33,14 @@ test("decoration prefix does not use opacity hack", () => {
 
 test("no standalone deco-counter color rule (parent handles it)", () => {
   const css = getDecorationStyles();
+  // Match the bare `.deco-counter` class only. A plain substring check also
+  // matches `.deco-counter-row` (the legitimate collapse-affordance wrapper
+  // from getCollapseControlStyles), giving a false failure. The negative
+  // lookahead `(?![\w-])` rejects any continuation char, so `.deco-counter-row`
+  // and a future `.deco-counterX` are excluded while a real standalone
+  // `.deco-counter {`, `.deco-counter:hover`, or `.deco-counter,` still trips.
   assert.ok(
-    !css.includes(".deco-counter"),
+    !/\.deco-counter(?![\w-])/.test(css),
     ".deco-counter rule should be removed — parent .line-decoration sets the grey",
   );
 });
