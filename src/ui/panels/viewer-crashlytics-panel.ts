@@ -6,27 +6,28 @@
  */
 
 import { getCrashlyticsSetupScript } from './viewer-crashlytics-setup';
+import { t } from '../../l10n';
 
 /** Generate the crashlytics panel HTML shell. */
 export function getCrashlyticsPanelHtml(): string {
     return /* html */ `
-<div id="crashlytics-panel" class="crashlytics-panel" role="region" aria-label="Crashlytics">
+<div id="crashlytics-panel" class="crashlytics-panel" role="region" aria-label="${t('viewer.crashlytics.region')}">
     <div class="crashlytics-panel-header">
-        <span id="cp-header-text">Crashlytics</span>
+        <span id="cp-header-text">${t('viewer.crashlytics.region')}</span>
         <div class="crashlytics-panel-actions">
-            <button id="cp-refresh" class="crashlytics-panel-action" title="Refresh" aria-label="Refresh Crashlytics">
+            <button id="cp-refresh" class="crashlytics-panel-action" title="${t('viewer.crashlytics.refresh.title')}" aria-label="${t('viewer.crashlytics.refresh.label')}">
                 <span class="codicon codicon-refresh"></span>
             </button>
-            <button id="cp-panel-close" class="crashlytics-panel-close" title="Close" aria-label="Close Crashlytics">&times;</button>
+            <button id="cp-panel-close" class="crashlytics-panel-close" title="${t('viewer.crashlytics.close.title')}" aria-label="${t('viewer.crashlytics.close.label')}">&times;</button>
         </div>
     </div>
     <div class="crashlytics-panel-content">
-        <div id="cp-loading" class="crashlytics-loading" style="display:none">Loading Crashlytics data\u2026</div>
+        <div id="cp-loading" class="crashlytics-loading" style="display:none">${t('viewer.crashlytics.loading')}</div>
         <div id="cp-setup" style="display:none"></div>
         <div id="cp-issues"></div>
-        <div id="cp-empty" class="cp-empty" style="display:none">No open Crashlytics issues</div>
-        <div id="cp-console" class="cp-console" style="display:none">Open Firebase Console</div>
-        <details class="cp-help-details"><summary>Help</summary><div id="cp-help-inner"></div></details>
+        <div id="cp-empty" class="cp-empty" style="display:none">${t('viewer.crashlytics.empty')}</div>
+        <div id="cp-console" class="cp-console" style="display:none">${t('viewer.crashlytics.openConsole')}</div>
+        <details class="cp-help-details"><summary>${t('viewer.crashlytics.help')}</summary><div id="cp-help-inner"></div></details>
     </div>
 </div>`;
 }
@@ -89,19 +90,19 @@ export function getCrashlyticsPanelScript(): string {
         if (!ctx.available) { renderSetup(ctx); return; }
         if (cpHeaderEl) {
             var note = ctx.refreshNote || '';
-            cpHeaderEl.innerHTML = 'Crashlytics' + (note ? ' <span class="cp-refresh-note">' + esc(note) + '</span>' : '');
+            cpHeaderEl.innerHTML = vt('viewer.crashlytics.headerBase') + (note ? ' <span class="cp-refresh-note">' + esc(note) + '</span>' : '');
         }
         if (ctx.issues && ctx.issues.length > 0) {
             if (cpIssuesEl) cpIssuesEl.innerHTML = ctx.issues.map(renderIssue).join('');
         } else if (ctx.diagnosticHtml) {
             // When query fails (e.g. 404), offer to open the config file used for projectId/appId.
             lastDiagnosticCopyText = ctx.diagnosticCopyText || '';
-            var openBtn = '<div class="cp-diag-actions"><button class="cp-setup-btn" data-action="crashlyticsOpenGoogleServicesJson">Open google-services.json</button>';
-            if (ctx.diagnosticCopyText) openBtn += ' <button class="cp-setup-btn cp-btn-secondary" data-action="crashlyticsCopyDiagnostic">Copy diagnostic</button>';
-            openBtn += ' <a class="cp-setup-link cp-show-output" data-action="crashlyticsShowOutput">Show Output</a>';
-            if (ctx.consoleUrl) openBtn += ' <a class="cp-setup-link" data-action="openUrl" data-url="' + esc(ctx.consoleUrl) + '">Open Firebase Console</a>';
+            var openBtn = '<div class="cp-diag-actions"><button class="cp-setup-btn" data-action="crashlyticsOpenGoogleServicesJson">' + vt('viewer.crashlytics.openGsj') + '</button>';
+            if (ctx.diagnosticCopyText) openBtn += ' <button class="cp-setup-btn cp-btn-secondary" data-action="crashlyticsCopyDiagnostic">' + vt('viewer.crashlytics.copyDiag') + '</button>';
+            openBtn += ' <a class="cp-setup-link cp-show-output" data-action="crashlyticsShowOutput">' + vt('viewer.crashlytics.showOutput') + '</a>';
+            if (ctx.consoleUrl) openBtn += ' <a class="cp-setup-link" data-action="openUrl" data-url="' + esc(ctx.consoleUrl) + '">' + vt('viewer.crashlytics.openConsole') + '</a>';
             openBtn += '</div>';
-            if (cpIssuesEl) cpIssuesEl.innerHTML = '<div class="cp-error">Query failed</div>' + ctx.diagnosticHtml + openBtn;
+            if (cpIssuesEl) cpIssuesEl.innerHTML = '<div class="cp-error">' + vt('viewer.crashlytics.queryFailed') + '</div>' + ctx.diagnosticHtml + openBtn;
         } else {
             if (cpEmptyEl) cpEmptyEl.style.display = '';
         }
@@ -126,20 +127,20 @@ export function getCrashlyticsPanelScript(): string {
 
     function renderIssue(issue) {
         var badge = issue.isFatal
-            ? '<span class="cp-badge cp-badge-fatal">FATAL</span>'
-            : '<span class="cp-badge cp-badge-nonfatal">NON-FATAL</span>';
+            ? '<span class="cp-badge cp-badge-fatal">' + vt('viewer.crashlytics.fatal') + '</span>'
+            : '<span class="cp-badge cp-badge-nonfatal">' + vt('viewer.crashlytics.nonfatal') + '</span>';
         var state = issue.state !== 'UNKNOWN'
             ? ' <span class="cp-badge cp-badge-' + issue.state.toLowerCase() + '">' + esc(issue.state) + '</span>' : '';
         var users = issue.userCount > 0
-            ? ' \\u00b7 ' + issue.userCount + ' user' + (issue.userCount !== 1 ? 's' : '') : '';
+            ? ' \\u00b7 ' + vt(issue.userCount !== 1 ? 'viewer.crashlytics.usersMany' : 'viewer.crashlytics.usersOne', issue.userCount) : '';
         var ver = formatVersionRange(issue);
         var actions = '<div class="cp-actions">'
-            + '<button class="cp-action-btn" data-action="crashlyticsCloseIssue" data-issue="' + esc(issue.id) + '">Close</button>'
-            + '<button class="cp-action-btn" data-action="crashlyticsMuteIssue" data-issue="' + esc(issue.id) + '">Mute</button>'
+            + '<button class="cp-action-btn" data-action="crashlyticsCloseIssue" data-issue="' + esc(issue.id) + '">' + vt('viewer.crashlytics.closeIssue') + '</button>'
+            + '<button class="cp-action-btn" data-action="crashlyticsMuteIssue" data-issue="' + esc(issue.id) + '">' + vt('viewer.crashlytics.mute') + '</button>'
             + '</div>';
         return '<div class="cp-item" data-issue-id="' + esc(issue.id) + '">'
             + '<div class="cp-title">' + badge + state + ' ' + esc(issue.title) + ' <span class="cp-expand-icon">\\u25B6</span></div>'
-            + '<div class="cp-meta">' + esc(issue.subtitle) + ' \\u00b7 ' + issue.eventCount + ' events' + users + ver + '</div>'
+            + '<div class="cp-meta">' + esc(issue.subtitle) + ' \\u00b7 ' + vt('viewer.crashlytics.events', issue.eventCount) + users + ver + '</div>'
             + actions
             + '<div class="cp-detail" id="cp-detail-' + esc(issue.id) + '"></div></div>';
     }
@@ -159,9 +160,9 @@ export function getCrashlyticsPanelScript(): string {
         lastDiagnosticCopyText = ctx.diagnosticCopyText || '';
         var parts = [];
         if (ctx.diagnosticCopyText) {
-            parts.push('<button class="cp-setup-btn cp-btn-secondary" data-action="crashlyticsCopyDiagnostic">Copy diagnostic</button>');
+            parts.push('<button class="cp-setup-btn cp-btn-secondary" data-action="crashlyticsCopyDiagnostic">' + vt('viewer.crashlytics.copyDiag') + '</button>');
         }
-        parts.push('<a class="cp-setup-link cp-show-output" data-action="crashlyticsShowOutput">Show Output</a>');
+        parts.push('<a class="cp-setup-link cp-show-output" data-action="crashlyticsShowOutput">' + vt('viewer.crashlytics.showOutput') + '</a>');
         return '<div class="cp-diag-actions-row">' + parts.join(' ') + '</div>';
     }
 
@@ -226,7 +227,7 @@ export function getCrashlyticsPanelScript(): string {
             item.classList.remove('detail-open');
         } else {
             if (!det.dataset.loaded) {
-                det.innerHTML = '<div class="cp-detail-loading">Loading crash details\\u2026</div>';
+                det.innerHTML = '<div class="cp-detail-loading">' + vt('viewer.crashlytics.loadingDetail') + '</div>';
                 det.dataset.loaded = '1';
                 vscodeApi.postMessage({ type: 'fetchCrashDetail', issueId: id });
             }
