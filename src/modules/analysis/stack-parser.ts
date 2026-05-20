@@ -253,6 +253,15 @@ export function isStackFrameLine(line: string): boolean {
         return true;
     }
     if (/^package:/.test(trimmed)) { return true; }
+    // Dart SDK frames with no file path: `dart:async        Future.timeout.<fn>`.
+    // The `stack_trace` package right-pads the bare library to align the member, so
+    // there is no `/path line:col` for the rules below to catch. Without this branch
+    // these frames fail every test, leak out of their trace as normal lines (rendered
+    // with the raw padding intact), and close the open stack group — fragmenting the
+    // trace. The `\s{2,}` + member-start guard keeps a prose line like
+    // `dart:async is single-spaced text` from matching. Keep in sync with
+    // isStackFrameText in viewer-script.ts.
+    if (/^dart:\S+(?:\s+\d+:\d+)?\s{2,}[\w$<]/.test(trimmed)) { return true; }
     // Indented `file.ext:line` frames (Go tracebacks, generic). The trailing group
     // is the guard: a real frame ends the `file:line` with a column (`:5`), a frame
     // suffix (` +0x1a` Go offset, ` (` open paren), a closing bracket, or end-of-line.

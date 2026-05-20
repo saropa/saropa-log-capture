@@ -134,6 +134,11 @@ export function getContentStyles(): string {
     word-break: normal;
     overflow-wrap: normal;
 }
+/* Dart SDK frame origin: the library URI ("dart:async") floats to a muted,
+   right-aligned "source" position so the member leads. float (not flex) leaves every
+   other frame's pre-formatted layout untouched; italic + low opacity mark it as origin
+   metadata, not the call. */
+.frame-lib-src { float: right; margin-left: 1.5em; opacity: 0.6; font-style: italic; }
 /* Broken-chain glyph that replaces the raw "<asynchronous suspension>" text
    on Dart async stack frames. The wrapper holds the ORIGINAL phrase in a
    .async-gap-text span styled with the sr-only pattern: visually clipped to

@@ -178,6 +178,25 @@ function extractContext(plainText) {
     }
     return null;
 }
+/** Reformat a stack frame so the member leads and the code location moves to a muted,
+    right-aligned source tag, collapsing the stack_trace padding that shoves the member
+    far right. Dart SDK frames ("dart:async   Future.timeout.<fn>") carry no link, so the
+    library is lifted from PLAIN text (safe: emitted uncolored, caller keeps rawText). App
+    frames ("./lib/foo.dart 273:9   Member") arrive linkified as <a class="source-link">…</a>
+    carrying click-to-open + Ctrl+click-filter, so the link is lifted INTACT via an HTML
+    regex — a plain-text rebuild would escapeHtml it away and kill both. Unlinkified input
+    is unchanged. Keep the dart: pattern synced with isStackFrameText / isStackFrameLine. */
+function formatFrameMemberFirst(html) {
+    var plain = stripTags(html);
+    var m = /^(dart:\\S+(?:\\s+\\d+:\\d+)?)\\s{2,}([\\w$<].*?)\\s*$/.exec(plain);
+    if (m) return escapeHtml(m[2]) + ' <span class="frame-lib-src">' + escapeHtml(m[1]) + '</span>';
+    /* App frame: <a class="source-link">…</a> + alignment padding (\\s{2,}) + member.
+       Non-greedy .*? stops at the FIRST </a> — there is exactly one link per frame (the
+       path); the member that follows is plain trailing text with no link of its own. */
+    var am = /^(<a class="source-link"[^>]*>.*?<\\/a>)\\s{2,}(\\S.*?)\\s*$/.exec(html);
+    if (am) return am[2] + ' <span class="frame-lib-src">' + am[1] + '</span>';
+    return html;
+}
 /** Map HTML numeric/hex entities that denote Unicode whitespace to a regular space.
  *  Keep in sync with decodeHtmlWhitespaceEntities in src/modules/misc/blank-line-text.ts. */
 function decodeHtmlWhitespaceEntities(text) {

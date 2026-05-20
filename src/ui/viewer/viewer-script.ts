@@ -141,6 +141,13 @@ function isStackFrameText(html) {
         return true;
     }
     if (/^package:/.test(trimmed)) return true;          // Dart package paths
+    // Dart SDK frames with no file path: "dart:async        Future.timeout.<fn>".
+    // stack_trace right-pads the bare library to align the member, so there is no
+    // "/path line:col" for the rules below to catch. Without this they leak out of the
+    // trace as normal lines (raw padding preserved by white-space:pre-wrap) and close
+    // the open group, fragmenting the trace. \\s{2,} + member-start guards prose.
+    // Mirrors stack-parser.ts isStackFrameLine().
+    if (/^dart:\\S+(?:\\s+\\d+:\\d+)?\\s{2,}[\\w$<]/.test(trimmed)) return true;
     // Indented "file.ext:line" frames (Go tracebacks, generic). The trailing group is
     // the guard: a real frame ends file:line with a column, a frame suffix (" +0x" Go
     // offset, " (" paren), a closing bracket, or end-of-line. Without it, audit/report
