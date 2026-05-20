@@ -2,13 +2,20 @@
  * Embedded JavaScript for Flutter exception banner grouping.
  *
  * A Flutter framework exception prints a multi-line block bracketed by heavy
- * box-drawing rules (U+2550 `═`):
+ * box-drawing rules (U+2550 `═`). The same incident is usually logged more than
+ * once — once per sink — in slightly different shapes:
  *
- *     ════════ Exception caught by rendering library ═════════════════════════
+ *     ════════ Exception caught by rendering library ═════════════════════════   (stderr)
+ *     ══╡ EXCEPTION CAUGHT BY RENDERING LIBRARY ╞═══════════════════════════════   (console)
+ *     FlutterErrorDetails (══╡ EXCEPTION CAUGHT BY RENDERING LIBRARY ╞══ …          (wrapped)
  *     The following assertion was thrown during layout:
  *     A RenderFlex overflowed by 22 pixels on the right.
  *     ...
  *     ════════════════════════════════════════════════════════════════════════
+ *
+ * `flutterBannerOpenRe` matches all of these (see its inline note); each copy
+ * becomes its own group, so every printed copy gets the band rather than only
+ * the stderr one.
  *
  * Without grouping:
  *  1. Only the opening line carries the word "Exception" — body lines like
@@ -31,10 +38,22 @@ export function getFlutterBannerScript(): string {
     return /* javascript */ `
 /* ── Flutter exception banner grouping ───────────────────────────── */
 
-/* Opening banner: '════ Exception caught by <library> ════'.
-   Accepts 4+ heavy-horizontal chars before the phrase so minor Flutter format
-   tweaks don't break detection. Phrase is case-insensitive to tolerate variants. */
-var flutterBannerOpenRe = /\\u2550{4,}\\s+Exception caught by\\b/i;
+/* Opening banner. Flutter prints the "Exception caught by …" line in several
+   shapes depending on the sink:
+     stderr  : '════════ Exception caught by rendering library ════'
+     console : '══╡ EXCEPTION CAUGHT BY RENDERING LIBRARY ╞══'  (often ANSI-colored)
+     wrapped : 'FlutterErrorDetails (══╡ EXCEPTION CAUGHT BY … ╞══'
+     wrapped : 'Potential Null Check Operator Error Detected: ══╡ … ╞══'
+   The console shapes break a pure-═ run after only two chars using the corner
+   glyphs ╡ (U+2561) / ╞ (U+255E), so the previous /═{4,}\\s+/ anchor matched ONLY
+   the stderr shape and left ~65% of real exception copies ungrouped (the
+   FlutterErrorDetails / console / null-check copies). Accept any run (2+) of
+   heavy-horizontal OR the two corner glyphs, optional whitespace, then the
+   phrase. The phrase is the real discriminator (case-insensitive); the leading
+   box run guards against a prose line that merely contains the words. ANSI is
+   converted to <span> upstream (ansiToHtml) and stripped here via slp.msg /
+   stripTags, so the regex sees clean text — no escape codes to skip. */
+var flutterBannerOpenRe = /[\\u2550\\u2561\\u255e]{2,}\\s*Exception caught by\\b/i;
 /* Closing rule: line made entirely of heavy-horizontal chars (20+) and whitespace.
    Flutter's FlutterError uses 80 chars; requiring 20+ is lenient for truncation
    but high enough to never false-trigger on short dividers. */
