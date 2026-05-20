@@ -19,23 +19,23 @@ export function getSignalPanelHtml(): string {
     const acrossYourLogs = t('signal.acrossYourLogs');
     const emptyHotFiles = t('signal.emptyHotFiles');
     return /* html */ `
-<div id="signal-panel" class="signal-panel" role="region" aria-label="Signals">
+<div id="signal-panel" class="signal-panel" role="region" aria-label="${t('signal.panel.region')}">
     <div class="signal-panel-header">
-        <span>Signals</span>
+        <span>${t('signal.panel.title')}</span>
         <div class="signal-panel-actions">
-            <button id="signal-panel-open-tab" class="signal-panel-copy-md" title="Open in new tab" aria-label="Open Signals in new tab">
+            <button id="signal-panel-open-tab" class="signal-panel-copy-md" title="${t('signal.panel.openTab.title')}" aria-label="${t('signal.panel.openTab.label')}">
                 <span class="codicon codicon-link-external"></span>
             </button>
-            <button id="signal-panel-copy-md" class="signal-panel-copy-md" title="Copy to Markdown" aria-label="Copy to Markdown">
+            <button id="signal-panel-copy-md" class="signal-panel-copy-md" title="${t('signal.panel.copyMd.title')}" aria-label="${t('signal.panel.copyMd.label')}">
                 <span class="codicon codicon-copy"></span>
             </button>
-            <button id="signal-panel-close" class="signal-panel-close" title="Close" aria-label="Close">&times;</button>
+            <button id="signal-panel-close" class="signal-panel-close" title="${t('signal.panel.close')}" aria-label="${t('signal.panel.close')}">&times;</button>
         </div>
     </div>
     <div id="signal-scroll" class="signal-panel-content">
         <!-- Current log at a glance (no section header) -->
         <div id="signal-hero-block" class="signal-hero-block" aria-hidden="true" style="display:none">
-            <div id="signal-performance-scope" class="signal-scope-label" style="display:none">Current log: <span id="signal-current-log-label"></span></div>
+            <div id="signal-performance-scope" class="signal-scope-label" style="display:none">${t('signal.panel.currentLog')} <span id="signal-current-log-label"></span></div>
             <div id="signal-performance-hero" class="signal-performance-hero" style="display:none" aria-live="polite"></div>
         </div>
         <!-- Session details (collapsed by default) -->
@@ -60,14 +60,14 @@ export function getSignalPanelHtml(): string {
             <div id="signal-body-this-log" class="signal-section-body">
                 <div id="signal-this-log-empty" class="signal-this-log-empty signal-hotfiles-empty" style="display:none"><span class="signal-margin-emoji" aria-hidden="true">ℹ️</span>${thisLogEmpty}</div>
                 <div class="signal-narrative-block">
-                    <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">📡</span><span id="signals-in-log-summary">Signals in this log</span></div>
+                    <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">📡</span><span id="signals-in-log-summary">${t('signal.panel.inLogSummary')}</span></div>
                     <!-- Time-window filter (Fu7) — applies to "Signals in this log" only.
                          Cross-session signals further down the panel have no meaningful single-session timestamp. -->
-                    <div class="signal-tw-filter" role="group" aria-label="Filter signals by time window">
-                        <button type="button" class="signal-tw-chip signal-tw-chip-active" data-tw="all" aria-pressed="true">All</button>
-                        <button type="button" class="signal-tw-chip" data-tw="5000" aria-pressed="false">Last 5s</button>
-                        <button type="button" class="signal-tw-chip" data-tw="30000" aria-pressed="false">Last 30s</button>
-                        <button type="button" class="signal-tw-chip" data-tw="300000" aria-pressed="false">Last 5min</button>
+                    <div class="signal-tw-filter" role="group" aria-label="${t('signal.panel.twFilter.label')}">
+                        <button type="button" class="signal-tw-chip signal-tw-chip-active" data-tw="all" aria-pressed="true">${t('signal.panel.tw.all')}</button>
+                        <button type="button" class="signal-tw-chip" data-tw="5000" aria-pressed="false">${t('signal.panel.tw.5s')}</button>
+                        <button type="button" class="signal-tw-chip" data-tw="30000" aria-pressed="false">${t('signal.panel.tw.30s')}</button>
+                        <button type="button" class="signal-tw-chip" data-tw="300000" aria-pressed="false">${t('signal.panel.tw.5min')}</button>
                     </div>
                     <div id="signals-in-log-list" class="signal-hotfiles-list"></div>
                 </div>
@@ -84,24 +84,24 @@ export function getSignalPanelHtml(): string {
                 <!-- Filter suggestions (plan 053-A) — pending noise-learning suggestions. Block self-hides
                      when no pending suggestions exist so empty-state UI doesn't appear. -->
                 <div class="signal-narrative-block" id="signal-suggestions-block" style="display:none">
-                    <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">💡</span><span id="signal-suggestions-summary">Filter suggestions</span></div>
+                    <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">💡</span><span id="signal-suggestions-summary">${t('signal.panel.suggestions')}</span></div>
                     <div id="signal-suggestions-list" class="signal-suggestions-list"></div>
                 </div>
                 <div class="signal-narrative-block">
-                    <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">📁</span><span id="signal-hotfiles-summary">Frequently modified files</span></div>
+                    <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">📁</span><span id="signal-hotfiles-summary">${t('signal.panel.hotfiles')}</span></div>
                     <div id="signal-hotfiles-empty" class="signal-hotfiles-empty" style="display:none"><span class="signal-margin-emoji" aria-hidden="true">ℹ️</span>${emptyHotFiles}</div>
                     <div id="signal-hotfiles-list" class="signal-hotfiles-list"></div>
                 </div>
                 <div class="signal-narrative-block">
-                    <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">📡</span><span id="signal-trends-summary">All signals</span></div>
-                    <div id="signal-trends-empty" class="signal-hotfiles-empty" style="display:none"><span class="signal-margin-emoji" aria-hidden="true">ℹ️</span>No signals across sessions yet. Errors, warnings, performance, and SQL patterns will appear here as you capture logs.</div>
+                    <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">📡</span><span id="signal-trends-summary">${t('signal.panel.allSignals')}</span></div>
+                    <div id="signal-trends-empty" class="signal-hotfiles-empty" style="display:none"><span class="signal-margin-emoji" aria-hidden="true">ℹ️</span>${t('signal.panel.trendsEmpty')}</div>
                     <div id="signal-trends-list" class="signal-hotfiles-list"></div>
                     <div id="signal-trends-footer" class="signal-recurring-footer">
-                        <span id="signal-export-summary" class="recurring-footer-action" title="Export signals summary">Export summary</span>
+                        <span id="signal-export-summary" class="recurring-footer-action" title="${t('signal.panel.exportSummary.title')}">${t('signal.panel.exportSummary')}</span>
                     </div>
                 </div>
                 <div class="signal-narrative-block" id="signal-cooccurrence-block" style="display:none">
-                    <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">🔗</span><span id="signal-cooccurrence-summary">Related signals</span></div>
+                    <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">🔗</span><span id="signal-cooccurrence-summary">${t('signal.panel.related')}</span></div>
                     <div id="signal-cooccurrence-list" class="signal-hotfiles-list"></div>
                 </div>
             </div>
@@ -110,7 +110,7 @@ export function getSignalPanelHtml(): string {
         <section id="signal-section-environment" class="signal-section">
             <button type="button" class="signal-section-header" id="signal-header-environment" aria-expanded="false" aria-controls="signal-body-environment">
                 <span class="signal-section-emoji" aria-hidden="true">⚙️</span>
-                <span class="signal-section-title" id="signal-environment-summary">Environment</span>
+                <span class="signal-section-title" id="signal-environment-summary">${t('signal.panel.environment')}</span>
                 <span class="signal-section-toggle" aria-hidden="true"></span>
             </button>
             <div id="signal-body-environment" class="signal-section-body" style="display:none">
