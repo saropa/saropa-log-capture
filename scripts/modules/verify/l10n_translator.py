@@ -21,9 +21,7 @@ from pathlib import Path
 
 from modules.verify.l10n_bundle_audit import (
     L10N_DIR,
-    extract_ts_strings,
-    STRINGS_A_PATH,
-    STRINGS_B_PATH,
+    extract_all_source_strings,
 )
 from modules.verify.l10n_brands import (
     is_brand_only,
@@ -231,9 +229,7 @@ def fix_mangled_brands(locale: str, canonical_keys: set[str]) -> int:
 
 def get_canonical_keys() -> set[str]:
     """Return the set of English string values that every bundle must have."""
-    strings_a = extract_ts_strings(STRINGS_A_PATH)
-    strings_b = extract_ts_strings(STRINGS_B_PATH)
-    return set({**strings_a, **strings_b}.values())
+    return set(extract_all_source_strings().values())
 
 
 def get_translation_locales() -> list[str]:
