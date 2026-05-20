@@ -6,36 +6,38 @@
  * Follows the same slide-out pattern as the session and options panels.
  */
 
+import { t } from '../../l10n';
+
 /** Generate the Find in Files panel HTML. */
 export function getFindPanelHtml(): string {
     return /* html */ `
-<div id="find-panel" class="find-panel" role="region" aria-label="Find in Files">
+<div id="find-panel" class="find-panel" role="region" aria-label="${t('viewer.find.region')}">
     <div class="find-panel-header">
-        <span>Find in Files</span>
+        <span>${t('viewer.find.header')}</span>
         <div class="find-panel-header-actions">
-            <button id="find-sort-toggle" class="find-header-btn" title="Sort results by match count, highest first" aria-label="Sort by match count"><span class="codicon codicon-sort-precedence"></span></button>
-            <button id="find-panel-close" class="find-panel-close" title="Close the Find in Files panel" aria-label="Close Find in Files"><span class="codicon codicon-close"></span></button>
+            <button id="find-sort-toggle" class="find-header-btn" title="${t('viewer.find.sort.title')}" aria-label="${t('viewer.find.sort.label')}"><span class="codicon codicon-sort-precedence"></span></button>
+            <button id="find-panel-close" class="find-panel-close" title="${t('viewer.find.close.title')}" aria-label="${t('viewer.find.close.label')}"><span class="codicon codicon-close"></span></button>
         </div>
     </div>
     <div class="find-panel-content" style="display:flex;flex-direction:column;flex:1;min-height:0;">
         <div class="find-input-wrapper">
-            <input id="find-input" type="text" placeholder="Search all session files..." title="Search across all log files in this project" aria-label="Search all session files" />
+            <input id="find-input" type="text" placeholder="${t('viewer.find.input.placeholder')}" title="${t('viewer.find.input.title')}" aria-label="${t('viewer.find.input.label')}" />
             <div class="find-input-actions">
-                <button id="find-case-toggle" class="search-input-btn" title="Match Case — toggle case-sensitive search" aria-label="Match Case">
+                <button id="find-case-toggle" class="search-input-btn" title="${t('viewer.search.case.title')}" aria-label="${t('viewer.search.case.label')}">
                     <span class="codicon codicon-case-sensitive"></span>
                 </button>
-                <button id="find-word-toggle" class="search-input-btn" title="Match Whole Word — only match complete words" aria-label="Match Whole Word">
+                <button id="find-word-toggle" class="search-input-btn" title="${t('viewer.search.word.title')}" aria-label="${t('viewer.search.word.label')}">
                     <span class="codicon codicon-whole-word"></span>
                 </button>
-                <button id="find-regex-toggle" class="search-input-btn" title="Use Regular Expression — interpret search as regex pattern" aria-label="Use Regular Expression">
+                <button id="find-regex-toggle" class="search-input-btn" title="${t('viewer.search.regex.title')}" aria-label="${t('viewer.search.regex.label')}">
                     <span class="codicon codicon-regex"></span>
                 </button>
             </div>
         </div>
         <div id="find-summary" class="find-summary"></div>
         <div id="find-results" class="find-results"></div>
-        <div id="find-empty" class="find-empty">Type to search across all session files</div>
-        <div id="find-loading" class="find-loading" style="display:none">Searching...</div>
+        <div id="find-empty" class="find-empty">${t('viewer.find.empty')}</div>
+        <div id="find-loading" class="find-loading" style="display:none">${t('viewer.find.loading')}</div>
     </div>
 </div>`;
 }
@@ -83,7 +85,7 @@ export function getFindPanelScript(): string {
         if (query.length < 2) {
             clearResults();
             findEmptyEl.style.display = query ? 'none' : '';
-            findSummaryEl.textContent = query ? 'Type at least 2 characters' : '';
+            findSummaryEl.textContent = query ? vt('viewer.find.minChars') : '';
             return;
         }
         findLoadingEl.style.display = '';
@@ -114,17 +116,19 @@ export function getFindPanelScript(): string {
         if (!data || !data.files || data.files.length === 0) {
             findResultsEl.innerHTML = '';
             findEmptyEl.style.display = '';
-            findEmptyEl.textContent = 'No matches found';
+            findEmptyEl.textContent = vt('viewer.find.noMatches');
             findSummaryEl.textContent = data
-                ? data.totalMatches + ' matches in 0 of ' + data.totalFiles + ' files'
+                ? vt('viewer.find.summaryZero', data.totalMatches, data.totalFiles)
                 : '';
             return;
         }
         findEmptyEl.style.display = 'none';
-        findSummaryEl.textContent = data.totalMatches + ' match'
-            + (data.totalMatches === 1 ? '' : 'es') + ' in '
-            + data.files.length + ' of ' + data.totalFiles + ' file'
-            + (data.totalFiles === 1 ? '' : 's');
+        findSummaryEl.textContent = vt('viewer.find.summary',
+            data.totalMatches,
+            vt(data.totalMatches === 1 ? 'viewer.find.matchWord.one' : 'viewer.find.matchWord.many'),
+            data.files.length,
+            data.totalFiles,
+            vt(data.totalFiles === 1 ? 'viewer.find.fileWord.one' : 'viewer.find.fileWord.many'));
 
         var files = data.files.slice();
         if (findSortByHits) {
