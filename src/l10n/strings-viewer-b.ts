@@ -64,4 +64,17 @@ export const stringsViewerB: Record<string, string> = {
     'viewer.jumpBottom.text': 'Bottom',
     'viewer.copyFloat.title': 'Copy line',
     'viewer.copyFloat.label': 'Copy line',
+
+    // ── Find in Files panel — host HTML (viewer-find-panel.ts) ────────
+    'viewer.find.region': 'Find in Files',
+    'viewer.find.header': 'Find in Files',
+    'viewer.find.sort.title': 'Sort results by match count, highest first',
+    'viewer.find.sort.label': 'Sort by match count',
+    'viewer.find.close.title': 'Close the Find in Files panel',
+    'viewer.find.close.label': 'Close Find in Files',
+    'viewer.find.input.placeholder': 'Search all session files...',
+    'viewer.find.input.title': 'Search across all log files in this project',
+    'viewer.find.input.label': 'Search all session files',
+    'viewer.find.empty': 'Type to search across all session files',
+    'viewer.find.loading': 'Searching...',
 };
