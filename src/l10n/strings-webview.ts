@@ -44,4 +44,14 @@ export const stringsWebview: Record<string, string> = {
     'viewer.find.matchWord.many': 'matches',
     'viewer.find.fileWord.one': 'file',
     'viewer.find.fileWord.many': 'files',
+
+    // Bookmark panel — runtime strings built client-side.
+    'viewer.bookmark.fileTitle': 'Log file',
+    'viewer.bookmark.withNote': 'Bookmark with note',
+    'viewer.bookmark.noNote': 'Bookmark',
+    'viewer.bookmark.editNote': 'Edit Note',
+    'viewer.bookmark.delete': 'Delete',
+    'viewer.bookmark.deleteFile': 'Delete all for this file',
+    'viewer.bookmark.noMatching': 'No matching bookmarks',
+    'viewer.bookmark.emptyShort': 'No bookmarks yet.',
 };
