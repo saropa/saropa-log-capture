@@ -5,25 +5,27 @@
  * Follows the same slide-out pattern as the session and find panels.
  */
 
+import { t } from '../../l10n';
+
 /** Generate the bookmark panel HTML. */
 export function getBookmarkPanelHtml(): string {
     return /* html */ `
-<div id="bookmark-panel" class="bookmark-panel" role="region" aria-label="Bookmarks">
+<div id="bookmark-panel" class="bookmark-panel" role="region" aria-label="${t('viewer.bookmark.region')}">
     <div class="bookmark-panel-header">
-        <span>Bookmarks</span>
+        <span>${t('viewer.bookmark.header')}</span>
         <div class="bookmark-panel-actions">
-            <button id="bookmark-delete-all" class="bookmark-panel-action" title="Remove all bookmarks across all log files" aria-label="Delete All Bookmarks">
+            <button id="bookmark-delete-all" class="bookmark-panel-action" title="${t('viewer.bookmark.deleteAll.title')}" aria-label="${t('viewer.bookmark.deleteAll.label')}">
                 <span class="codicon codicon-clear-all"></span>
             </button>
-            <button id="bookmark-panel-close" class="bookmark-panel-close" title="Close the Bookmarks panel" aria-label="Close Bookmarks"><span class="codicon codicon-close"></span></button>
+            <button id="bookmark-panel-close" class="bookmark-panel-close" title="${t('viewer.bookmark.close.title')}" aria-label="${t('viewer.bookmark.close.label')}"><span class="codicon codicon-close"></span></button>
         </div>
     </div>
     <div class="bookmark-panel-content" style="display:flex;flex-direction:column;flex:1;min-height:0;">
         <div class="bookmark-input-wrapper">
-            <input id="bookmark-filter-input" type="text" placeholder="Filter bookmarks..." title="Filter bookmarks by line text or note content" aria-label="Filter bookmarks" />
+            <input id="bookmark-filter-input" type="text" placeholder="${t('viewer.bookmark.filter.placeholder')}" title="${t('viewer.bookmark.filter.title')}" aria-label="${t('viewer.bookmark.filter.label')}" />
         </div>
         <div id="bookmark-list" class="bookmark-list"></div>
-        <div id="bookmark-empty" class="bookmark-empty">No bookmarks yet.\nRight-click a line to bookmark it.</div>
+        <div id="bookmark-empty" class="bookmark-empty">${t('viewer.bookmark.emptyInitial')}</div>
     </div>
 </div>`;
 }
@@ -76,11 +78,11 @@ export function getBookmarkPanelScript(): string {
             hasVisible = true;
             html += '<div class="bookmark-file-group">'
                 + '<div class="bookmark-file-header">'
-                + '<span class="codicon codicon-file" title="Log file"></span>'
+                + '<span class="codicon codicon-file" title="' + vt('viewer.bookmark.fileTitle') + '"></span>'
                 + '<span class="bookmark-file-name">' + escapeHtml(entry.filename) + '</span>'
                 + '<span class="bookmark-count-badge">' + filtered.length + '</span>'
                 + '<button class="bookmark-file-delete" data-file-uri="' + escapeAttr(entry.fileUri)
-                + '" data-filename="' + escapeAttr(entry.filename) + '" title="Delete all for this file">'
+                + '" data-filename="' + escapeAttr(entry.filename) + '" title="' + vt('viewer.bookmark.deleteFile') + '">'
                 + '<span class="codicon codicon-trash"></span></button>'
                 + '</div>';
             for (var j = 0; j < filtered.length; j++) {
@@ -89,14 +91,14 @@ export function getBookmarkPanelScript(): string {
                 html += '<div class="bookmark-item" data-file-uri="' + escapeAttr(entry.fileUri)
                     + '" data-line="' + b.lineIndex + '" data-id="' + escapeAttr(b.id) + '">'
                     + '<div class="bookmark-item-main">'
-                    + '<span class="codicon codicon-' + (b.note ? 'comment' : 'bookmark') + '" title="' + (b.note ? 'Bookmark with note' : 'Bookmark') + '"></span>'
+                    + '<span class="codicon codicon-' + (b.note ? 'comment' : 'bookmark') + '" title="' + (b.note ? vt('viewer.bookmark.withNote') : vt('viewer.bookmark.noNote')) + '"></span>'
                     + '<span class="bookmark-item-label">' + escapeHtml(label) + '</span>'
                     + '</div>'
                     + (b.note ? '<div class="bookmark-item-note">' + escapeHtml(b.note) + '</div>' : '')
                     + '<div class="bookmark-item-actions">'
-                    + '<button class="bookmark-action-btn bookmark-edit" title="Edit Note">'
+                    + '<button class="bookmark-action-btn bookmark-edit" title="' + vt('viewer.bookmark.editNote') + '">'
                     + '<span class="codicon codicon-edit"></span></button>'
-                    + '<button class="bookmark-action-btn bookmark-delete" title="Delete">'
+                    + '<button class="bookmark-action-btn bookmark-delete" title="' + vt('viewer.bookmark.delete') + '">'
                     + '<span class="codicon codicon-trash"></span></button>'
                     + '</div></div>';
             }
@@ -105,7 +107,7 @@ export function getBookmarkPanelScript(): string {
         bookmarkListEl.innerHTML = html;
         if (!hasVisible && bookmarkEmptyEl) {
             bookmarkEmptyEl.style.display = '';
-            bookmarkEmptyEl.textContent = filter ? 'No matching bookmarks' : 'No bookmarks yet.';
+            bookmarkEmptyEl.textContent = filter ? vt('viewer.bookmark.noMatching') : vt('viewer.bookmark.emptyShort');
         }
     }
 
