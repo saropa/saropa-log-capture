@@ -44,6 +44,62 @@ suite('Flutter exception banner grouping', () => {
         });
     });
 
+    suite('detection — behavioral, all sink formats (plan 052)', () => {
+        // The banner script is self-contained (no external globals), so we can
+        // eval it and exercise classifyFlutterBannerLine directly — a real check
+        // that every printed copy of an exception groups, not just a string match.
+        // A static "includes" check could not catch the prior bug where only the
+        // stderr shape matched: the regex was present, it just didn't fit console.
+        function loadClassifier(): {
+            classify: (s: string) => { groupId: number; role: string | null };
+            reset: () => void;
+        } {
+            const factory = new Function(
+                getFlutterBannerScript() +
+                '\nreturn { classify: classifyFlutterBannerLine, reset: resetFlutterBannerDetector };',
+            );
+            return factory();
+        }
+
+        const headers = [
+            '════════ Exception caught by rendering library ═════',
+            '══╡ EXCEPTION CAUGHT BY RENDERING LIBRARY ╞══════════',
+            'FlutterErrorDetails (══╡ EXCEPTION CAUGHT BY RENDERING LIBRARY ╞══',
+            'Potential Null Check Operator Error Detected: ══╡ EXCEPTION CAUGHT BY RENDERING LIBRARY ╞══',
+        ];
+
+        headers.forEach((h, i) => {
+            test(`format ${i + 1} opens a banner group: ${h.slice(0, 28)}…`, () => {
+                const api = loadClassifier();
+                api.reset();
+                const r = api.classify(h);
+                assert.strictEqual(r.role, 'header', 'header line must open a group');
+                assert.ok(r.groupId >= 0, 'header must carry a real groupId');
+            });
+        });
+
+        test('body lines stay in the group and the closing rule ends it', () => {
+            const api = loadClassifier();
+            api.reset();
+            api.classify('══╡ EXCEPTION CAUGHT BY RENDERING LIBRARY ╞══════');
+            const body = api.classify('The following assertion was thrown during performLayout():');
+            assert.strictEqual(body.role, 'body', 'mid lines are body');
+            const footer = api.classify(
+                '═════════════════════════════════════════════════════════════════',
+            );
+            assert.strictEqual(footer.role, 'footer', 'pure heavy-rule line closes the group');
+            const after = api.classify('I/flutter ( 4323): Background GC freed 5MB');
+            assert.strictEqual(after.role, null, 'lines after the close are not grouped');
+        });
+
+        test('prose containing the phrase does not open a group', () => {
+            const api = loadClassifier();
+            api.reset();
+            const r = api.classify('no exception caught by the error handler here');
+            assert.strictEqual(r.role, null, 'no leading box-rule → not a banner header');
+        });
+    });
+
     suite('state machine', () => {
         test('should expose begin/end/current helpers consumed by addToData', () => {
             const script = getFlutterBannerScript();
