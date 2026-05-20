@@ -1,13 +1,15 @@
 import * as vscode from 'vscode';
 import { stringsA } from './l10n/strings-a';
 import { stringsB } from './l10n/strings-b';
+import { stringsWebview } from './l10n/strings-webview';
 
 /**
  * English strings keyed by symbolic ID.
- * Source of truth for default (English) text lives in l10n/strings-a.ts and l10n/strings-b.ts.
- * Translation bundles in `l10n/` map the English string → translated string.
+ * Source of truth for default (English) text lives in l10n/strings-a.ts, strings-b.ts,
+ * and strings-webview.ts. Translation bundles in `l10n/` map the English string →
+ * translated string.
  */
-const strings: Record<string, string> = { ...stringsA, ...stringsB };
+const strings: Record<string, string> = { ...stringsA, ...stringsB, ...stringsWebview };
 
 /**
  * Localized string lookup. Resolves a symbolic key to its English string,
@@ -18,4 +20,18 @@ export function t(key: string, ...args: (string | number | boolean)[]): string {
     return args.length > 0
         ? vscode.l10n.t(message, ...args)
         : vscode.l10n.t(message);
+}
+
+/**
+ * Resolve every webview string key to its translated template (placeholders
+ * like `{0}` left intact for client-side substitution). Shipped into the iframe
+ * by getWebviewL10nScript() as the `__VT` map. Only webview keys are included so
+ * the injected blob stays small — extension-host strings never reach the page.
+ */
+export function getWebviewL10nMap(): Record<string, string> {
+    const map: Record<string, string> = {};
+    for (const key of Object.keys(stringsWebview)) {
+        map[key] = t(key);
+    }
+    return map;
 }
