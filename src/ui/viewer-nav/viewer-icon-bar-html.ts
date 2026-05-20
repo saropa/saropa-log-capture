@@ -7,43 +7,48 @@
  *
  * Optional text labels: click the bar background or separator (not a button) to toggle;
  * preference is persisted in webview state (iconBarLabelsVisible).
+ *
+ * User-facing strings resolve through t() (host-built HTML); IDs are load-bearing
+ * (scripts query them) so the markup is migrated inline, not via a helper.
  */
+
+import { t } from '../../l10n';
 
 /** Generate the icon bar HTML with codicon-based buttons and optional labels. */
 export function getIconBarHtml(): string {
     return /* html */ `
-<div id="icon-bar" role="toolbar" aria-label="Log viewer tools" title="Click bar to show or hide icon labels">
-    <button id="ib-sessions" class="ib-icon" tabindex="0" title="Click to open/close — browse and switch between log sessions in this project" aria-label="Logs">
-        <span class="codicon codicon-files"></span><span class="ib-label">Logs</span>
+<div id="icon-bar" role="toolbar" aria-label="${t('viewer.iconBar.toolbar.label')}" title="${t('viewer.iconBar.toolbar.title')}">
+    <button id="ib-sessions" class="ib-icon" tabindex="0" title="${t('viewer.iconBar.sessions.title')}" aria-label="${t('viewer.iconBar.sessions.label')}">
+        <span class="codicon codicon-files"></span><span class="ib-label">${t('viewer.iconBar.sessions.text')}</span>
     </button>
-    <button id="ib-find" class="ib-icon" tabindex="0" title="Click to open/close — search across all log files in this project (Ctrl+Shift+F)" aria-label="Find in Files (Ctrl+Shift+F)">
-        <span class="codicon codicon-search"></span><span class="ib-label">Find in Files</span>
+    <button id="ib-find" class="ib-icon" tabindex="0" title="${t('viewer.iconBar.find.title')}" aria-label="${t('viewer.iconBar.find.label')}">
+        <span class="codicon codicon-search"></span><span class="ib-label">${t('viewer.iconBar.find.text')}</span>
     </button>
-    <button id="ib-signal" class="ib-icon" tabindex="0" title="Click to open/close — signals, errors, warnings, and performance analysis" aria-label="Signals">
-        <span class="codicon codicon-pulse"></span><span id="ib-signal-badge" class="ib-badge"></span><span class="ib-label">Signals<span id="ib-signal-count" class="ib-count"></span></span>
+    <button id="ib-signal" class="ib-icon" tabindex="0" title="${t('viewer.iconBar.signal.title')}" aria-label="${t('viewer.iconBar.signal.label')}">
+        <span class="codicon codicon-pulse"></span><span id="ib-signal-badge" class="ib-badge"></span><span class="ib-label">${t('viewer.iconBar.signal.text')}<span id="ib-signal-count" class="ib-count"></span></span>
     </button>
-    <button id="ib-sql-query-history" class="ib-icon" tabindex="0" title="Click to open/close — browse SQL queries captured during this session" aria-label="SQL Query History">
-        <span class="codicon codicon-database"></span><span id="ib-sql-badge" class="ib-badge"></span><span class="ib-label">SQL History<span id="ib-sql-count" class="ib-count"></span></span>
-    </button>
-    <div class="ib-separator"></div>
-    <button id="ib-crashlytics" class="ib-icon" tabindex="0" title="Click to open/close — Firebase Crashlytics crash reports" aria-label="Crashlytics">
-        <span class="codicon codicon-flame"></span><span id="ib-crashlytics-badge" class="ib-badge"></span><span class="ib-label">Crashlytics<span id="ib-crashlytics-count" class="ib-count"></span></span>
-    </button>
-    <button id="ib-collections" class="ib-icon" tabindex="0" title="Click to open/close — group related log sessions and files into named collections" aria-label="Collections">
-        <span class="codicon codicon-folder-library"></span><span id="ib-collections-badge" class="ib-badge"></span><span class="ib-label">Collections<span id="ib-collections-count" class="ib-count"></span></span>
-    </button>
-    <button id="ib-bookmarks" class="ib-icon" tabindex="0" title="Click to open/close — view and manage bookmarked log lines" aria-label="Bookmarks">
-        <span class="codicon codicon-bookmark"></span><span id="ib-bookmarks-badge" class="ib-badge"></span><span class="ib-label">Bookmarks<span id="ib-bookmarks-count" class="ib-count"></span></span>
-    </button>
-    <button id="ib-trash" class="ib-icon" tabindex="0" title="Click to open/close — view and restore deleted log sessions" aria-label="Trash">
-        <span class="codicon codicon-trash"></span><span id="ib-trash-badge" class="ib-badge"></span><span class="ib-label">Trash<span id="ib-trash-count" class="ib-count"></span></span>
+    <button id="ib-sql-query-history" class="ib-icon" tabindex="0" title="${t('viewer.iconBar.sqlHistory.title')}" aria-label="${t('viewer.iconBar.sqlHistory.label')}">
+        <span class="codicon codicon-database"></span><span id="ib-sql-badge" class="ib-badge"></span><span class="ib-label">${t('viewer.iconBar.sqlHistory.text')}<span id="ib-sql-count" class="ib-count"></span></span>
     </button>
     <div class="ib-separator"></div>
-    <button id="ib-options" class="ib-icon" tabindex="0" title="Click to open/close — display, layout, and audio settings" aria-label="Options">
-        <span class="codicon codicon-settings-gear"></span><span class="ib-label">Options</span>
+    <button id="ib-crashlytics" class="ib-icon" tabindex="0" title="${t('viewer.iconBar.crashlytics.title')}" aria-label="${t('viewer.iconBar.crashlytics.label')}">
+        <span class="codicon codicon-flame"></span><span id="ib-crashlytics-badge" class="ib-badge"></span><span class="ib-label">${t('viewer.iconBar.crashlytics.text')}<span id="ib-crashlytics-count" class="ib-count"></span></span>
     </button>
-    <button id="ib-about" class="ib-icon" tabindex="0" title="Click to open/close — version info, links, and help" aria-label="About Saropa">
-        <span class="codicon codicon-home"></span><span class="ib-label">About</span>
+    <button id="ib-collections" class="ib-icon" tabindex="0" title="${t('viewer.iconBar.collections.title')}" aria-label="${t('viewer.iconBar.collections.label')}">
+        <span class="codicon codicon-folder-library"></span><span id="ib-collections-badge" class="ib-badge"></span><span class="ib-label">${t('viewer.iconBar.collections.text')}<span id="ib-collections-count" class="ib-count"></span></span>
+    </button>
+    <button id="ib-bookmarks" class="ib-icon" tabindex="0" title="${t('viewer.iconBar.bookmarks.title')}" aria-label="${t('viewer.iconBar.bookmarks.label')}">
+        <span class="codicon codicon-bookmark"></span><span id="ib-bookmarks-badge" class="ib-badge"></span><span class="ib-label">${t('viewer.iconBar.bookmarks.text')}<span id="ib-bookmarks-count" class="ib-count"></span></span>
+    </button>
+    <button id="ib-trash" class="ib-icon" tabindex="0" title="${t('viewer.iconBar.trash.title')}" aria-label="${t('viewer.iconBar.trash.label')}">
+        <span class="codicon codicon-trash"></span><span id="ib-trash-badge" class="ib-badge"></span><span class="ib-label">${t('viewer.iconBar.trash.text')}<span id="ib-trash-count" class="ib-count"></span></span>
+    </button>
+    <div class="ib-separator"></div>
+    <button id="ib-options" class="ib-icon" tabindex="0" title="${t('viewer.iconBar.options.title')}" aria-label="${t('viewer.iconBar.options.label')}">
+        <span class="codicon codicon-settings-gear"></span><span class="ib-label">${t('viewer.iconBar.options.text')}</span>
+    </button>
+    <button id="ib-about" class="ib-icon" tabindex="0" title="${t('viewer.iconBar.about.title')}" aria-label="${t('viewer.iconBar.about.label')}">
+        <span class="codicon codicon-home"></span><span class="ib-label">${t('viewer.iconBar.about.text')}</span>
     </button>
 </div>`;
 }
