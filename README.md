@@ -94,6 +94,7 @@ VS Code deletes your Debug Console the moment you stop debugging. Every `print`,
 - **Pop-out viewer:** Open the viewer as a floating window on a second monitor.
 - **Click-to-source:** Click `file.ts:42` to jump to source; Ctrl+Click for split editor.
 - **Collapsible stack traces:** Grouped and collapsed by default. Click to cycle: preview (first 3 app frames) / expanded / collapsed.
+- **Flutter exception grouping:** Every copy of an `Exception caught by …` block is banded as one incident (stderr, console, and `FlutterErrorDetails` shapes), and the verbose render-tree descendant dump folds into a collapsible group.
 - **Structured files:** `.md`, `.json`, `.csv`, `.html` rendered with format-aware previews.
 - **Insert markers (M), pin lines (P), annotate (N), bookmark (Ctrl+B).**
 - **Inline peek:** Double-click to expand surrounding context. Escape to dismiss.
