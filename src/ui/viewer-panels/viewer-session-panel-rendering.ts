@@ -48,7 +48,7 @@ export function getSessionRenderingScript(): string {
         }
         /* When all filters produce zero results, show a hint instead of a blank list. */
         if (active.length === 0) {
-            sessionListEl.innerHTML = '<div class="session-empty-filtered">No sessions match the current filters</div>';
+            sessionListEl.innerHTML = '<div class="session-empty-filtered">' + vt('viewer.session.noMatch') + '</div>';
             if (sessionListPaginationEl) sessionListPaginationEl.style.display = 'none';
             renderNameFilterBar();
             return;
@@ -77,10 +77,10 @@ export function getSessionRenderingScript(): string {
             } else {
                 sessionListPaginationEl.style.display = '';
                 var from = start + 1, to = Math.min(start + pageSize, total);
-                var label = 'Showing ' + from + '\u2013' + to + ' of ' + total;
+                var label = vt('viewer.session.pagination.showing', from, to, total);
                 sessionListPaginationEl.innerHTML = '<span class="session-list-pagination-label">' + escapeHtmlText(label) + '</span>'
-                    + '<button type="button" id="session-pagination-prev" class="session-list-pagination-btn" title="Previous page" ' + (sessionListPage <= 0 ? ' disabled' : '') + '><span class="codicon codicon-chevron-left"></span></button>'
-                    + '<button type="button" id="session-pagination-next" class="session-list-pagination-btn" title="Next page" ' + (sessionListPage >= totalPages - 1 ? ' disabled' : '') + '><span class="codicon codicon-chevron-right"></span></button>';
+                    + '<button type="button" id="session-pagination-prev" class="session-list-pagination-btn" title="' + vt('viewer.session.pagination.prev') + '" ' + (sessionListPage <= 0 ? ' disabled' : '') + '><span class="codicon codicon-chevron-left"></span></button>'
+                    + '<button type="button" id="session-pagination-next" class="session-list-pagination-btn" title="' + vt('viewer.session.pagination.next') + '" ' + (sessionListPage >= totalPages - 1 ? ' disabled' : '') + '><span class="codicon codicon-chevron-right"></span></button>';
             }
         }
     }
@@ -97,13 +97,13 @@ export function getSessionRenderingScript(): string {
         /* Display label uses current display-option transforms so it matches
            what the user sees in the list (adapts when Dates/Tidy change). */
         var nfLabel = applySessionDisplayOptions(sessionNameFilter.rawBasename);
-        var verb = sessionNameFilter.mode === 'only' ? 'Showing only' : 'Hiding';
+        var verb = sessionNameFilter.mode === 'only' ? vt('viewer.session.nameFilter.only', nfLabel) : vt('viewer.session.nameFilter.hiding', nfLabel);
         nameFilterBarEl.innerHTML = '<span class="session-name-filter-label">'
             + '<span class="codicon codicon-filter"></span> '
-            + escapeHtmlText(verb + ': ' + nfLabel)
+            + escapeHtmlText(verb)
             + '</span>'
-            + '<button type="button" id="session-name-filter-clear" class="session-name-filter-clear" title="Clear name filter" aria-label="Clear name filter">'
-            + '<span class="codicon codicon-close"></span> Show All</button>';
+            + '<button type="button" id="session-name-filter-clear" class="session-name-filter-clear" title="' + vt('viewer.session.nameFilter.clear.title') + '" aria-label="' + vt('viewer.session.nameFilter.clear.title') + '">'
+            + '<span class="codicon codicon-close"></span> ' + vt('viewer.session.nameFilter.showAll') + '</button>';
         nameFilterBarEl.style.display = '';
     }
 
@@ -148,9 +148,9 @@ export function getSessionRenderingScript(): string {
 
     function renderItem(s, bnCounts) {
         var icon = s.isActive ? 'codicon-record' : (s.hasTimestamps ? 'codicon-history' : 'codicon-output');
-        var iconTitle = s.isActive ? 'Actively recording' : (s.hasTimestamps ? 'Completed session' : 'Log file');
-        if (s.updatedInLastMinute) iconTitle = 'Log updated in the last minute';
-        else if (s.updatedSinceViewed) iconTitle = 'Log has new lines since last viewed';
+        var iconTitle = s.isActive ? vt('viewer.session.icon.recording') : (s.hasTimestamps ? vt('viewer.session.icon.completed') : vt('viewer.session.icon.logFile'));
+        if (s.updatedInLastMinute) iconTitle = vt('viewer.session.icon.updatedMin');
+        else if (s.updatedSinceViewed) iconTitle = vt('viewer.session.icon.updatedSince');
         /* selectedSessionUris is defined in session panel IIFE; multi-select state for Ctrl-click. Update dots only for non-active logs. */
         var groupRole = s._groupRole || '';
         var groupClass = groupRole === 'primary' ? ' session-item-primary'
@@ -164,14 +164,14 @@ export function getSessionRenderingScript(): string {
         var name = applySessionDisplayOptions(displayInput);
         var dots = renderSeverityDots(s);
         var meta = buildSessionMeta(s, dots, fileTime);
-        var perfBadge = s.hasPerformanceData ? '<span class="session-item-perf" title="Performance data available"><span class="codicon codicon-graph-line"></span></span>' : '';
+        var perfBadge = s.hasPerformanceData ? '<span class="session-item-perf" title="' + vt('viewer.session.perfAvailable') + '"><span class="codicon codicon-graph-line"></span></span>' : '';
         /* Dot: red = updated in last minute, orange = new since last viewed; only for non-active logs. */
-        var updateDot = !s.isActive && (s.updatedInLastMinute || s.updatedSinceViewed) ? '<span class="session-item-update-dot" title="' + (s.updatedInLastMinute ? 'Updated in the last minute' : 'New lines since last viewed') + '"></span>' : '';
+        var updateDot = !s.isActive && (s.updatedInLastMinute || s.updatedSinceViewed) ? '<span class="session-item-update-dot" title="' + (s.updatedInLastMinute ? vt('viewer.session.dot.updatedMin') : vt('viewer.session.dot.updatedSince')) + '"></span>' : '';
         /* Group primary: leading chevron (flips on collapse) and a "+N" badge after the name. */
         var groupChevron = '', groupCount = '';
         if (groupRole === 'primary') {
             var chev = s._groupCollapsed ? 'codicon-chevron-right' : 'codicon-chevron-down';
-            var chevTitle = s._groupCollapsed ? 'Expand this session group' : 'Collapse this session group';
+            var chevTitle = s._groupCollapsed ? vt('viewer.session.group.expand') : vt('viewer.session.group.collapse');
             groupChevron = '<span class="session-group-chevron" role="button" tabindex="0" title="' + chevTitle + '" aria-label="' + chevTitle + '"><span class="codicon ' + chev + '"></span></span>';
             var secCount = Math.max(0, (s.groupSize || 1) - 1);
             if (secCount > 0) groupCount = ' <span class="session-group-count">+' + secCount + '</span>';
@@ -180,7 +180,7 @@ export function getSessionRenderingScript(): string {
             + groupChevron
             + '<span class="session-item-icon" title="' + iconTitle + '"><span class="codicon ' + icon + '"></span>' + updateDot + '</span>'
             + '<div class="session-item-info">'
-            + '<span class="session-item-name">' + escapeHtmlText(name) + (s.isLatestOfName ? ' <span class="session-latest">(latest)</span>' : '') + groupCount + perfBadge + '</span>'
+            + '<span class="session-item-name">' + escapeHtmlText(name) + (s.isLatestOfName ? ' <span class="session-latest">' + vt('viewer.session.latest') + '</span>' : '') + groupCount + perfBadge + '</span>'
             + (meta ? '<span class="session-item-meta">' + meta + '</span>' : '')
             + '</div>'
             + renderSessionRowActions()
@@ -191,7 +191,7 @@ export function getSessionRenderingScript(): string {
        in the OS file explorer. Uses data-session-action so the parent click handler
        can dispatch without duplicating logic from the context menu. */
     function renderSessionRowActions() {
-        var label = typeof getRevealInOSLabel === 'function' ? getRevealInOSLabel() : 'Reveal in File Explorer';
+        var label = typeof getRevealInOSLabel === 'function' ? getRevealInOSLabel() : vt('viewer.session.revealInOS');
         var labelAttr = escapeAttr(label);
         return '<span class="session-item-actions">'
             + '<button type="button" class="session-item-action" data-session-action="revealInOS" '
@@ -278,7 +278,7 @@ export function getSessionRenderingScript(): string {
             var bn = getSessionBasename(p.filename);
             var name = applySessionDisplayOptions(bn);
             return '<div class="session-item" data-uri="' + escapeAttr(p.uriString || '') + '" data-filename="' + escapeAttr(p.filename || '') + '">'
-                + '<span class="session-item-icon" title="Log file"><span class="codicon codicon-output"></span></span>'
+                + '<span class="session-item-icon" title="' + vt('viewer.session.icon.logFile') + '"><span class="codicon codicon-output"></span></span>'
                 + '<div class="session-item-info">'
                 + '<span class="session-item-name">' + escapeHtmlText(name) + '</span>'
                 + '<span class="session-item-meta session-shimmer-meta"></span>'
@@ -298,11 +298,11 @@ export function getSessionRenderingScript(): string {
             var el = sessionListEl.querySelector('.session-item[data-uri="' + CSS.escape(s.uriString || '') + '"]');
             if (!el) continue;
             var icon = s.isActive ? 'codicon-record' : (s.hasTimestamps ? 'codicon-history' : 'codicon-output');
-            var iconTitle = s.isActive ? 'Actively recording' : (s.hasTimestamps ? 'Completed session' : 'Log file');
+            var iconTitle = s.isActive ? vt('viewer.session.icon.recording') : (s.hasTimestamps ? vt('viewer.session.icon.completed') : vt('viewer.session.icon.logFile'));
             var iconEl = el.querySelector('.session-item-icon');
             if (iconEl) {
                 var dot = !s.isActive && (s.updatedInLastMinute || s.updatedSinceViewed)
-                    ? '<span class="session-item-update-dot" title="' + (s.updatedInLastMinute ? 'Updated in the last minute' : 'New lines since last viewed') + '"></span>' : '';
+                    ? '<span class="session-item-update-dot" title="' + (s.updatedInLastMinute ? vt('viewer.session.dot.updatedMin') : vt('viewer.session.dot.updatedSince')) + '"></span>' : '';
                 iconEl.innerHTML = '<span class="codicon ' + icon + '"></span>' + dot;
                 iconEl.title = iconTitle;
             }
