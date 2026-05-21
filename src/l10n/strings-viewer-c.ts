@@ -152,4 +152,30 @@ export const stringsViewerC: Record<string, string> = {
     'viewer.options.resetOptions': 'Reset to default',
     'viewer.options.resetSettings.title': 'Reset all Saropa Log Capture extension settings to their original defaults',
     'viewer.options.resetSettings': 'Reset extension settings',
+
+    // ── Replay bar — host HTML (viewer-replay.ts). Speed values (0.1x…) stay literal. ─
+    'viewer.replay.region': 'Session replay controls',
+    'viewer.replay.play.title': 'Play',
+    'viewer.replay.play.label': 'Play replay',
+    'viewer.replay.pause.title': 'Pause',
+    'viewer.replay.pause.label': 'Pause replay',
+    'viewer.replay.stop.title': 'Stop and exit replay',
+    'viewer.replay.stop.label': 'Stop replay',
+    'viewer.replay.mode.title': 'Timed uses line deltas; Fast uses fixed delay',
+    'viewer.replay.mode.label': 'Replay mode',
+    'viewer.replay.mode.timed': 'Timed',
+    'viewer.replay.mode.fast': 'Fast',
+    'viewer.replay.speed.title': 'Playback speed',
+    'viewer.replay.speed.label': 'Playback speed',
+    'viewer.replay.scrubber.title': 'Seek to line',
+    'viewer.replay.scrubber.label': 'Replay position',
+
+    // ── Run navigation — host HTML (viewer-run-nav.ts) ────────────────
+    'viewer.runNav.prev.title': 'Navigate to the previous run (launch, hot restart, or hot reload)',
+    'viewer.runNav.prev': 'Prev',
+    'viewer.runNav.pos.title': 'Current run position within this log session',
+    'viewer.runNav.run': 'Run',
+    'viewer.runNav.of': 'of',
+    'viewer.runNav.next.title': 'Navigate to the next run (launch, hot restart, or hot reload)',
+    'viewer.runNav.next': 'Next',
 };
