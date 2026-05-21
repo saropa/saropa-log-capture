@@ -205,7 +205,7 @@ def _run_translate(
 
     for locale in locales:
         print(f"\n  {locale}:", end=" ", flush=True)
-        translated, kept, brand_count, errors = translate_locale(
+        translated, kept, brand_count, errors, aborted = translate_locale(
             locale, canonical, dry_run=dry_run,
         )
         total_translated += translated
@@ -226,6 +226,16 @@ def _run_translate(
                 parts.append(f"{errors} errors")
             total = translated + kept + brand_count + errors
             print(f"{', '.join(parts)} = {total}")
+
+        # Per-IP rate limiting hits every locale the same way, so stop the
+        # whole run once the breaker trips rather than burning the timeout
+        # budget on locales that will also fail.
+        if aborted:
+            print(
+                "\n  Rate-limited by the translation endpoint — stopped early. "
+                "Re-run later to fill the remaining gaps."
+            )
+            break
 
     elapsed = time.time() - t0
     print(f"\n  Done in {elapsed:.1f}s. {total_translated} translations")
