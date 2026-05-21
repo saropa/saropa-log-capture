@@ -270,13 +270,23 @@ def check_l10n_bundles() -> bool:
     total_errors = 0
 
     for locale in locales:
-        translated, _kept, _brand, errors = translate_locale(locale, canonical)
+        translated, _kept, _brand, errors, aborted = translate_locale(locale, canonical)
         total_translated += translated
         total_errors += errors
         if translated > 0:
             ok(f"l10n {locale}: {translated} string(s) translated")
         if errors > 0:
             warn(f"l10n {locale}: {errors} translation error(s), kept English")
+        # Throttling is per-IP, so once one locale trips the breaker the rest
+        # would too. Stop the publish-time pass and keep English — re-run the
+        # standalone translator later rather than hanging the release.
+        if aborted:
+            warn(
+                "l10n: translation endpoint is rate-limiting — stopped early, "
+                "kept English for remaining strings. "
+                "Re-run `python scripts/translate_l10n.py` later to fill gaps."
+            )
+            break
 
     if total_translated == 0 and total_errors == 0:
         ok("l10n translations already complete — nothing to do")
