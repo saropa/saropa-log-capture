@@ -102,4 +102,10 @@ export const stringsWebview: Record<string, string> = {
     'viewer.session.group.expand': 'Expand this session group',
     'viewer.session.group.collapse': 'Collapse this session group',
     'viewer.session.revealInOS': 'Reveal in File Explorer',
+
+    // Replay — runtime strings (viewer-replay.ts client script).
+    'viewer.replay.qualityDisabled': 'Enable the codeQuality integration to generate quality reports.',
+    'viewer.replay.qualityEnabled': 'Open session quality report (.quality.json sidecar)',
+    'viewer.replay.action.playing': 'Replay playing',
+    'viewer.replay.action.replay': 'Replay log',
 };
