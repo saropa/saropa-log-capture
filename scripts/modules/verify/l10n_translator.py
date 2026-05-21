@@ -15,6 +15,7 @@ Translations that mangle brands are rejected and retried once.
 """
 
 import json
+import socket
 import sys
 import time
 from pathlib import Path
@@ -49,6 +50,26 @@ _LOCALE_MAP: dict[str, str] = {
 # Delay between individual translate calls to avoid rate limits.
 # Google's free endpoint tolerates ~5 req/s comfortably; 0.2s is safe.
 _THROTTLE_SECONDS = 0.2
+
+# Bound every network call. deep-translator's GoogleTranslator calls
+# requests.get() with NO timeout (see deep_translator/google.py), so a
+# throttled or stalled Google response hangs the publish pipeline forever —
+# this was the "lock-up at step 9" symptom. requests falls back to the
+# process-wide socket default when given no explicit timeout, so we set that
+# around the translate loop and restore it afterward. 8s is generous for one
+# short UI string yet short enough that a stalled endpoint fails fast.
+_NETWORK_TIMEOUT_SECONDS = 8.0
+
+# A single throttle blip (429 / consent page) shouldn't permanently lose a
+# string to English. Retry transient failures once with a short backoff.
+_MAX_RETRIES = 1
+_BACKOFF_BASE_SECONDS = 2.0
+
+# Circuit breaker: once this many strings fail their network call back-to-back,
+# Google is rate-limiting us wholesale. Abort the run instead of grinding
+# through hundreds more doomed (and timeout-bounded, so slow) calls — keep
+# English for the rest and let the caller stop further locales.
+_CONSECUTIVE_FAILURE_LIMIT = 5
 
 
 def _load_bundle(locale: str) -> tuple[Path, dict[str, str]]:
@@ -111,19 +132,73 @@ def _translate_one(
     return restored
 
 
+def _translate_with_retry(translator: object, en_key: str) -> str | None:
+    """Translate one string, retrying transient endpoint failures with backoff.
+
+    Re-raises the last exception if every attempt fails so the caller can log
+    it and keep English. A returned ``None`` (brand-validation reject) is NOT a
+    network failure and is passed straight through — only raised errors retry.
+    """
+    last_exc: Exception | None = None
+    for attempt in range(_MAX_RETRIES + 1):
+        try:
+            return _translate_one(translator, en_key)
+        # Any endpoint error here (429, request error, parse miss, socket
+        # timeout) is transient enough to be worth one retry.
+        except Exception as exc:
+            last_exc = exc
+            if attempt < _MAX_RETRIES:
+                time.sleep(_BACKOFF_BASE_SECONDS * (2 ** attempt))
+    assert last_exc is not None  # loop ran at least once
+    raise last_exc
+
+
+def _apply_translation(
+    translator: object,
+    en_key: str,
+    bundle: dict[str, str],
+    locale: str,
+) -> str:
+    """Translate one key into ``bundle``; return its outcome status.
+
+    Returns one of:
+      "ok"           — translated and stored.
+      "validate_fail" — network OK but the result was rejected (kept English).
+      "net_fail"     — the network call itself failed (kept English).
+
+    Only "net_fail" feeds the circuit breaker; a "validate_fail" proves the
+    endpoint is healthy, so it must not count toward consecutive failures.
+    """
+    try:
+        result = _translate_with_retry(translator, en_key)
+    except Exception as exc:
+        # Network failed after retries — log it and keep English as fallback.
+        print(f"    WARN [{locale}]: {en_key[:50]}... -> {exc}")
+        bundle[en_key] = en_key
+        return "net_fail"
+    if result:
+        bundle[en_key] = result
+        return "ok"
+    bundle[en_key] = en_key
+    return "validate_fail"
+
+
 def translate_locale(
     locale: str,
     canonical_keys: set[str],
     *,
     dry_run: bool = False,
-) -> tuple[int, int, int, int]:
+) -> tuple[int, int, int, int, bool]:
     """Translate missing/untranslated strings for one locale.
 
-    Returns (translated, kept, brand, errors).
+    Returns (translated, kept, brand, errors, aborted).
       translated = newly translated this run.
       kept       = already had a real non-English translation.
       brand      = brand-only strings where identity IS correct.
       errors     = API call failed, kept English as fallback.
+      aborted    = circuit breaker tripped (endpoint rate-limiting); the
+                   remaining keys were left as English. Callers should stop
+                   trying further locales — throttling is per-IP, not per-locale.
     """
     try:
         from deep_translator import GoogleTranslator
@@ -133,12 +208,12 @@ def translate_locale(
             "Run: pip install deep-translator",
             file=sys.stderr,
         )
-        return 0, 0, 0, 0
+        return 0, 0, 0, 0, False
 
     target_code = _LOCALE_MAP.get(locale)
     if not target_code:
         print(f"  No translator mapping for locale '{locale}', skipping.")
-        return 0, 0, 0, 0
+        return 0, 0, 0, 0, False
 
     path, bundle = _load_bundle(locale)
     translator = GoogleTranslator(source="en", target=target_code)
@@ -147,42 +222,55 @@ def translate_locale(
     kept = 0
     brand = 0
     errors = 0
+    aborted = False
+    consecutive_failures = 0
 
-    for en_key in sorted(canonical_keys):
-        existing = bundle.get(en_key)
+    # requests has no default timeout, so without this a stalled Google
+    # response hangs forever (the original lock-up). Set the process-wide
+    # socket default for the network loop and restore it in finally so the
+    # rest of the pipeline keeps its own timeout policy. Skip for dry_run,
+    # which never touches the network.
+    prev_timeout = socket.getdefaulttimeout()
+    if not dry_run:
+        socket.setdefaulttimeout(_NETWORK_TIMEOUT_SECONDS)
+    try:
+        for en_key in sorted(canonical_keys):
+            existing = bundle.get(en_key)
 
-        # Brand-only strings: identity IS the correct translation.
-        if is_brand_only(en_key):
-            bundle[en_key] = en_key
-            brand += 1
-            continue
-
-        # Already has a real (non-English) translation — keep it.
-        if existing and existing != en_key:
-            kept += 1
-            continue
-
-        if dry_run:
-            translated += 1
-            continue
-
-        try:
-            result = _translate_one(translator, en_key)
-            if result:
-                bundle[en_key] = result
-                translated += 1
-            else:
-                # Keep original English as fallback.
+            # Brand-only strings: identity IS the correct translation.
+            if is_brand_only(en_key):
                 bundle[en_key] = en_key
-                errors += 1
-        except Exception as exc:
-            # Rate limit, network error, etc. Keep English and continue.
-            print(f"    WARN [{locale}]: {en_key[:50]}... -> {exc}")
-            bundle[en_key] = en_key
-            errors += 1
+                brand += 1
+                continue
 
-        # Throttle to stay under rate limits.
-        time.sleep(_THROTTLE_SECONDS)
+            # Already has a real (non-English) translation — keep it.
+            if existing and existing != en_key:
+                kept += 1
+                continue
+
+            if dry_run:
+                translated += 1
+                continue
+
+            status = _apply_translation(translator, en_key, bundle, locale)
+            if status == "ok":
+                translated += 1
+                consecutive_failures = 0
+            elif status == "validate_fail":
+                # Network is healthy; not a throttle signal — don't trip breaker.
+                errors += 1
+                consecutive_failures = 0
+            else:  # net_fail
+                errors += 1
+                consecutive_failures += 1
+                if consecutive_failures >= _CONSECUTIVE_FAILURE_LIMIT:
+                    aborted = True
+                    break
+
+            # Throttle to stay under rate limits.
+            time.sleep(_THROTTLE_SECONDS)
+    finally:
+        socket.setdefaulttimeout(prev_timeout)
 
     # Remove orphan keys (in bundle but not in canonical set).
     orphans = [k for k in bundle if k not in canonical_keys]
@@ -192,7 +280,7 @@ def translate_locale(
     if not dry_run:
         _save_bundle(path, bundle)
 
-    return translated, kept, brand, errors
+    return translated, kept, brand, errors, aborted
 
 
 def fix_mangled_brands(locale: str, canonical_keys: set[str]) -> int:
