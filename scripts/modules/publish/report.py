@@ -114,7 +114,8 @@ def print_success_banner(version: str, vsix_path: str) -> None:
   {C.CYAN}VSIX:{C.RESET}
     {C.WHITE}{os.path.basename(vsix_path)}{C.RESET}
 """)
-    if ask_yn("Open Marketplace in browser?", default=False):
+    # ENTER defaults to Yes so the post-publish flow opens the listing.
+    if ask_yn("Open Marketplace in browser?", default=True):
         try:
             webbrowser.open(MARKETPLACE_URL)
         except Exception:

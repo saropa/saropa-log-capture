@@ -31,7 +31,10 @@ def check_working_tree() -> bool:
         print(f"         {C.DIM}{line}{C.RESET}")
     if len(changed) > 10:
         print(f"         {C.DIM}... and {len(changed) - 10} more{C.RESET}")
-    return ask_yn("Continue with dirty working tree?", default=False)
+    # ENTER defaults to Yes so a routine build flows through without typing.
+    # The irreversible publish gate (confirm_publish) stays default-No, so a
+    # dirty tree still can't be published by accident with bare ENTERs.
+    return ask_yn("Continue with dirty working tree?", default=True)
 
 
 def _check_if_behind() -> bool:

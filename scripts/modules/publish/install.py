@@ -70,7 +70,8 @@ def prompt_install(vsix_path: str) -> None:
              "'Shell Command: Install code command in PATH'")
         return
 
-    if not ask_yn("Install via CLI now?", default=False):
+    # ENTER defaults to Yes so a routine build can install in one keystroke.
+    if not ask_yn("Install via CLI now?", default=True):
         return
 
     vsix_name = os.path.basename(vsix_path)
@@ -93,7 +94,8 @@ def prompt_open_report(report_path: str) -> None:
     Uses the platform-appropriate file opener (startfile on Windows,
     open on macOS, xdg-open on Linux).
     """
-    if not ask_yn("Open build report?", default=False):
+    # ENTER defaults to Yes so a routine build opens the report by default.
+    if not ask_yn("Open build report?", default=True):
         return
 
     # cspell:ignore startfile
