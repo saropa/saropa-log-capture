@@ -204,12 +204,22 @@ def _run_translate(
     t0 = time.time()
 
     for locale in locales:
+        # Live counter (\r) so a multi-minute network run shows motion, not a
+        # frozen prompt. Not called on dry runs (no network), so the upfront
+        # label + summary keep their original single-line format there.
+        def on_progress(done: int, total: int, _loc: str = locale) -> None:
+            print(f"\r  {_loc}: {done}/{total} translated…", end="", flush=True)
+
         print(f"\n  {locale}:", end=" ", flush=True)
         translated, kept, brand_count, errors, aborted = translate_locale(
-            locale, canonical, dry_run=dry_run,
+            locale, canonical, dry_run=dry_run, on_progress=on_progress,
         )
         total_translated += translated
         total_errors += errors
+
+        # Close the transient \r line before the per-locale summary.
+        if not dry_run and (translated or errors):
+            print()
 
         if dry_run:
             print(
