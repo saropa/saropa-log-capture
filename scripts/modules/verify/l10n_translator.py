@@ -18,6 +18,7 @@ import json
 import socket
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 from modules.verify.l10n_bundle_audit import (
@@ -188,8 +189,14 @@ def translate_locale(
     canonical_keys: set[str],
     *,
     dry_run: bool = False,
+    on_progress: Callable[[int, int], None] | None = None,
 ) -> tuple[int, int, int, int, bool]:
     """Translate missing/untranslated strings for one locale.
+
+    on_progress, if given, is called as on_progress(done, total) after every
+    network attempt so callers can render a live counter — a backlog of
+    hundreds of strings at the throttle delay takes minutes, and without
+    feedback the publish pipeline reads as a frozen "lock-up at Step 9".
 
     Returns (translated, kept, brand, errors, aborted).
       translated = newly translated this run.
@@ -224,6 +231,15 @@ def translate_locale(
     errors = 0
     aborted = False
     consecutive_failures = 0
+
+    # Strings that will need a real network call this run — the denominator
+    # for on_progress so the live counter reads "done/total", not "done/?".
+    total_todo = sum(
+        1
+        for k in canonical_keys
+        if not is_brand_only(k) and not (bundle.get(k) and bundle.get(k) != k)
+    )
+    attempted = 0
 
     # requests has no default timeout, so without this a stalled Google
     # response hangs forever (the original lock-up). Set the process-wide
@@ -263,9 +279,15 @@ def translate_locale(
             else:  # net_fail
                 errors += 1
                 consecutive_failures += 1
-                if consecutive_failures >= _CONSECUTIVE_FAILURE_LIMIT:
-                    aborted = True
-                    break
+
+            # Report progress before any early break so the final count shows.
+            attempted += 1
+            if on_progress is not None:
+                on_progress(attempted, total_todo)
+
+            if status == "net_fail" and consecutive_failures >= _CONSECUTIVE_FAILURE_LIMIT:
+                aborted = True
+                break
 
             # Throttle to stay under rate limits.
             time.sleep(_THROTTLE_SECONDS)
