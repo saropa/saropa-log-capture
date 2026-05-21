@@ -27,20 +27,21 @@
 
 import { getReplayControlsScript } from './viewer-replay-controls';
 import { getReplayTimingScript } from './viewer-replay-timing';
+import { t } from '../../l10n';
 
 export function getReplayBarHtml(): string {
     return /* html */ `
-<div id="replay-bar" class="replay-bar" role="region" aria-label="Session replay controls">
+<div id="replay-bar" class="replay-bar" role="region" aria-label="${t('viewer.replay.region')}">
     <div class="replay-btn-row">
-        <button id="replay-play" class="replay-btn" title="Play" aria-label="Play replay"><span class="codicon codicon-debug-start"></span></button>
-        <button id="replay-pause" class="replay-btn" title="Pause" aria-label="Pause replay"><span class="codicon codicon-debug-pause"></span></button>
-        <button id="replay-stop" class="replay-btn" title="Stop and exit replay" aria-label="Stop replay"><span class="codicon codicon-debug-stop"></span></button>
+        <button id="replay-play" class="replay-btn" title="${t('viewer.replay.play.title')}" aria-label="${t('viewer.replay.play.label')}"><span class="codicon codicon-debug-start"></span></button>
+        <button id="replay-pause" class="replay-btn" title="${t('viewer.replay.pause.title')}" aria-label="${t('viewer.replay.pause.label')}"><span class="codicon codicon-debug-pause"></span></button>
+        <button id="replay-stop" class="replay-btn" title="${t('viewer.replay.stop.title')}" aria-label="${t('viewer.replay.stop.label')}"><span class="codicon codicon-debug-stop"></span></button>
     </div>
-    <select id="replay-mode" class="replay-mode" title="Timed uses line deltas; Fast uses fixed delay" aria-label="Replay mode">
-        <option value="timed">Timed</option>
-        <option value="fast">Fast</option>
+    <select id="replay-mode" class="replay-mode" title="${t('viewer.replay.mode.title')}" aria-label="${t('viewer.replay.mode.label')}">
+        <option value="timed">${t('viewer.replay.mode.timed')}</option>
+        <option value="fast">${t('viewer.replay.mode.fast')}</option>
     </select>
-    <select id="replay-speed" class="replay-speed" title="Playback speed" aria-label="Playback speed">
+    <select id="replay-speed" class="replay-speed" title="${t('viewer.replay.speed.title')}" aria-label="${t('viewer.replay.speed.label')}">
         <option value="0.1">0.1x</option>
         <option value="0.25">0.25x</option>
         <option value="0.5">0.5x</option>
@@ -50,7 +51,7 @@ export function getReplayBarHtml(): string {
         <option value="5">5x</option>
         <option value="10">10x</option>
     </select>
-    <input type="range" id="replay-scrubber" class="replay-scrubber" min="0" max="1" value="0" title="Seek to line" aria-label="Replay position">
+    <input type="range" id="replay-scrubber" class="replay-scrubber" min="0" max="1" value="0" title="${t('viewer.replay.scrubber.title')}" aria-label="${t('viewer.replay.scrubber.label')}">
     <span id="replay-status" class="replay-status" aria-live="polite">0 / 0</span>
 </div>`;
 }
@@ -80,8 +81,8 @@ export function getReplayScript(): string {
     var qualityReportBtn = footerActionsPopover ? footerActionsPopover.querySelector('[data-action="open-quality-report"]') : null;
     var exportActionBtn = footerActionsPopover ? footerActionsPopover.querySelector('[data-action="export"]') : null;
 
-    var qualityReportDisabledTitle = 'Enable the codeQuality integration to generate quality reports.';
-    var qualityReportEnabledTitle = 'Open session quality report (.quality.json sidecar)';
+    var qualityReportDisabledTitle = vt('viewer.replay.qualityDisabled');
+    var qualityReportEnabledTitle = vt('viewer.replay.qualityEnabled');
 
     function applyFooterQualityReportState() {
         if (!qualityReportBtn) return;
@@ -139,8 +140,8 @@ export function getReplayScript(): string {
         var ic = replayActionBtn.querySelector('.codicon');
         var cls = playing ? 'codicon codicon-debug-pause' : 'codicon codicon-debug-start';
         if (ic) ic.className = cls;
-        replayActionBtn.title = playing ? 'Replay playing' : 'Replay log';
-        replayActionBtn.setAttribute('aria-label', playing ? 'Replay playing' : 'Replay log');
+        replayActionBtn.title = playing ? vt('viewer.replay.action.playing') : vt('viewer.replay.action.replay');
+        replayActionBtn.setAttribute('aria-label', playing ? vt('viewer.replay.action.playing') : vt('viewer.replay.action.replay'));
     }
 
     window.toggleReplayBar = function() {
