@@ -1,15 +1,16 @@
 /**
  * Run navigation: Prev run / Next run within a single log (launch, hot restart/reload).
  */
+import { t } from '../../l10n';
 
 /** Run nav is rendered inside the session nav bar (same row). Only shown when runStartIndices.length > 1. */
 export function getRunNavHtml(): string {
     return /* html */ `
 <div id="run-nav">
     <span class="nav-bar-sep" aria-hidden="true">|</span>
-    <button id="run-prev" type="button" title="Navigate to the previous run (launch, hot restart, or hot reload)" disabled>&#x25C0; Prev</button>
-    <span class="nav-bar-label" title="Current run position within this log session">Run <span id="run-current">1</span> of <span id="run-total">1</span></span>
-    <button id="run-next" type="button" title="Navigate to the next run (launch, hot restart, or hot reload)" disabled>Next &#x25B6;</button>
+    <button id="run-prev" type="button" title="${t('viewer.runNav.prev.title')}" disabled>&#x25C0; ${t('viewer.runNav.prev')}</button>
+    <span class="nav-bar-label" title="${t('viewer.runNav.pos.title')}">${t('viewer.runNav.run')} <span id="run-current">1</span> ${t('viewer.runNav.of')} <span id="run-total">1</span></span>
+    <button id="run-next" type="button" title="${t('viewer.runNav.next.title')}" disabled>${t('viewer.runNav.next')} &#x25B6;</button>
 </div>`;
 }
 
