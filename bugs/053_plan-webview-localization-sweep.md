@@ -48,30 +48,44 @@ Host-built HTML (method 1 — `t()`):
 - [x] `viewer-panels/viewer-session-panel-html.ts` (Logs panel)
 - [x] `viewer-panels/viewer-bookmark-panel.ts`
 - [x] `panels/viewer-signal-panel.ts`
-- [ ] `viewer-search-filter/viewer-search-html.ts` (17 — the in-log search bar, distinct from the toolbar flyout)
-- [ ] `viewer-panels/viewer-trash-panel.ts`, `viewer-collections-panel.ts`,
-      `panels/viewer-crashlytics-panel.ts`, `viewer-panels/viewer-about-panel.ts`,
-      `viewer-panels/viewer-sql-query-history-panel-html.ts`, `viewer-panels/viewer-options-panel*`
-- [ ] remaining ~25 smaller files (context menu, modals, decorations,
-      replay, run-nav, session-comparison, analysis-panel, etc.) — enumerate per batch.
+- [x] `viewer-search-filter/viewer-search-html.ts` (in-log search bar)
+- [x] `viewer-panels/viewer-trash-panel.ts`, `viewer-collections-panel.ts`,
+      `panels/viewer-crashlytics-panel.ts`, `viewer-panels/viewer-about-panel.ts` (chrome),
+      `viewer-panels/viewer-sql-query-history-panel-html.ts`, `viewer-panels/viewer-options-panel-html.ts`
+- [x] `viewer/viewer-replay.ts`, `viewer-nav/viewer-run-nav.ts`
+- [ ] remaining smaller files — see Progress below.
 
 Client-built JS (method 2 — `vt()`):
 - [x] stack/tree header tooltips (`viewer-data-helpers-render-stack.ts`)
 - [x] find-panel runtime result strings (`viewer-find-panel.ts`)
-- [ ] peek-chevron / dedup-fold affordances
-- [ ] divider / "N hidden" pills
-- [ ] render-time labels in `viewer-data-helpers-render*.ts`, `viewer-replay.ts`,
-      `viewer-error-classification.ts`, `viewer-root-cause-hints-script.ts`,
-      `viewer-data-add-db-detectors.ts`, `viewer-data-sql-drilldown-ui.ts`, etc.
+- [x] session list rendering (`viewer-session-panel-rendering.ts`)
+- [x] bookmark / trash / crashlytics / about runtime strings
+- [x] replay client tooltips (`viewer-replay.ts`)
+- [ ] decoration/render tooltips + context menus/modals — see Progress below.
 
-### Progress (this pass)
+### Progress
 
-Infra + automated translation + 11 files done & committed (top chrome: toolbar,
-filter drawer, search flyout, actions, icon bar, body, find panel; the Logs,
-bookmark, and signals side panels (commit `0be058b5`); plus the stack/tree
-tooltips). ~30 files remain — the rest of the side panels and the client-side
-render/decoration scripts. Every pattern needed is established and proven green;
-the remainder is mechanical continuation in the same shape.
+Infra + automated translation + the entire visible UI done & committed (all green):
+top chrome (toolbar, filter drawer, search flyout + in-log search bar, actions,
+icon bar, body), every side panel (Find, Logs/session + rendering, Bookmark,
+Signals, Trash, Collections, Crashlytics, About chrome, SQL history, Options),
+replay bar, run-nav, and stack/tree tooltips.
+
+Already-localized via their own per-feature bridges (no `t()`/`vt()` work needed):
+`viewer-root-cause-hints-script.ts` (`rchStr`/`window.rchL10n`),
+`panels/viewer-signal-panel-script.ts` (`SignalScriptStrings`).
+
+Remaining (smaller, lower-prominence; same proven patterns): decoration/render
+tooltips (`viewer-decorations.ts`, `viewer-error-classification.ts`,
+`viewer-error-hover-script.ts`, `viewer-data-helpers-render*.ts`,
+`viewer-data-add-db-detectors.ts`, `viewer-data-sql-drilldown-ui.ts`,
+`viewer-deco-settings.ts`), context menus / modals (`viewer-edit-modal`,
+`viewer-context-modal`, `viewer-quality-popover-script`, `viewer-auto-hide-modal`,
+`viewer-log-file-modal`, `viewer-goto-line`, `viewer-pin`, `viewer-context-popover-*`),
+and secondary panels (`session-comparison`, `analysis-panel-render`,
+`viewer-performance-panel`, `viewer-recurring-panel`, collections-panel script,
+`viewer-sql-query-history-panel-render`). For each client script with a runtime
+test, give its sandbox the shared `vtStub` (see session-panel test helpers).
 
 ## Translation is automated (no hand-translation, no per-string toil)
 
