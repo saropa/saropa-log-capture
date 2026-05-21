@@ -108,4 +108,23 @@ export const stringsWebview: Record<string, string> = {
     'viewer.replay.qualityEnabled': 'Open session quality report (.quality.json sidecar)',
     'viewer.replay.action.playing': 'Replay playing',
     'viewer.replay.action.replay': 'Replay log',
+
+    // Error hover popup — runtime strings (viewer-error-hover-script.ts).
+    'viewer.errorHover.critical': 'CRITICAL',
+    'viewer.errorHover.transient': 'TRANSIENT',
+    'viewer.errorHover.bug': 'BUG',
+    'viewer.errorHover.framework': '(framework)',
+    'viewer.errorHover.close': 'Close',
+    'viewer.errorHover.loadingHistory': 'Loading history…',
+    'viewer.errorHover.analyze': 'Analyze',
+    'viewer.errorHover.analyzeTitle': 'Open full analysis',
+    'viewer.errorHover.firstOccurrence': 'First occurrence',
+    'viewer.errorHover.new': 'New',
+    'viewer.errorHover.logsOne': '{0} log',
+    'viewer.errorHover.logsMany': '{0} logs',
+    'viewer.errorHover.total': '{0} total',
+    'viewer.errorHover.firstLast': 'First: {0} · Last: {1}',
+    'viewer.errorHover.introducedInCommit': 'Introduced in commit ',
+    'viewer.errorHover.lastChangedInCommit': 'Last changed in commit ',
+    'viewer.errorHover.fingerprintTitle': 'Fingerprint: {0}',
 };
