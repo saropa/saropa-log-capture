@@ -50,25 +50,25 @@ function showErrorHover(badge, lineIdx) {
 function buildErrorHoverSkeleton(item, plain) {
     var cls = item.errorClass || '';
     var level = item.level || 'error';
-    var fw = item.fw ? ' (framework)' : '';
+    var fw = item.fw ? ' ' + vt('viewer.errorHover.framework') : '';
 
     var badge = '';
-    if (cls === 'critical') { badge = '<span class="eh-badge eh-badge-critical">CRITICAL</span>'; }
-    else if (cls === 'transient') { badge = '<span class="eh-badge eh-badge-transient">TRANSIENT</span>'; }
-    else if (cls === 'bug') { badge = '<span class="eh-badge eh-badge-bug">BUG</span>'; }
+    if (cls === 'critical') { badge = '<span class="eh-badge eh-badge-critical">' + vt('viewer.errorHover.critical') + '</span>'; }
+    else if (cls === 'transient') { badge = '<span class="eh-badge eh-badge-transient">' + vt('viewer.errorHover.transient') + '</span>'; }
+    else if (cls === 'bug') { badge = '<span class="eh-badge eh-badge-bug">' + vt('viewer.errorHover.bug') + '</span>'; }
 
     var levelBadge = '<span class="eh-level eh-level-' + level + '">' + level + '</span>';
     var text = plain.length > 120 ? plain.substring(0, 120) + '\\u2026' : plain;
 
     return '<div class="eh-header">' + badge + levelBadge +
         '<span class="eh-fw">' + fw + '</span>' +
-        '<button class="eh-close" title="Close">\\u00d7</button></div>' +
+        '<button class="eh-close" title="' + vt('viewer.errorHover.close') + '">\\u00d7</button></div>' +
         '<div class="eh-text">' + escapeForAttr(text) + '</div>' +
         '<div class="eh-stats">' +
-        '<div class="eh-stat eh-stat-loading"><span class="eh-spinner"></span> Loading history\\u2026</div>' +
+        '<div class="eh-stat eh-stat-loading"><span class="eh-spinner"></span> ' + vt('viewer.errorHover.loadingHistory') + '</div>' +
         '</div>' +
         '<div class="eh-actions">' +
-        '<button class="eh-analyze-btn" title="Open full analysis">Analyze</button>' +
+        '<button class="eh-analyze-btn" title="' + vt('viewer.errorHover.analyzeTitle') + '">' + vt('viewer.errorHover.analyze') + '</button>' +
         '</div>';
 }
 
@@ -79,7 +79,7 @@ function handleErrorHoverData(msg) {
     if (!stats) return;
 
     if (msg.empty) {
-        stats.innerHTML = '<div class="eh-stat eh-stat-new">First occurrence</div>';
+        stats.innerHTML = '<div class="eh-stat eh-stat-new">' + vt('viewer.errorHover.firstOccurrence') + '</div>';
         return;
     }
 
@@ -91,34 +91,34 @@ function handleErrorHoverData(msg) {
     var ts = escapeForAttr(msg.triageStatus || 'open');
     var triage = '<span class="eh-triage eh-triage-' + ts + '">' + ts + '</span>';
     var logs = msg.sessionCount > 0
-        ? msg.sessionCount + ' log' + (msg.sessionCount !== 1 ? 's' : '')
-        : 'New';
+        ? vt(msg.sessionCount !== 1 ? 'viewer.errorHover.logsMany' : 'viewer.errorHover.logsOne', msg.sessionCount)
+        : vt('viewer.errorHover.new');
     var total = msg.totalOccurrences > 0
-        ? msg.totalOccurrences + ' total'
+        ? vt('viewer.errorHover.total', msg.totalOccurrences)
         : '';
     var seen = '';
     if (msg.firstSeen && msg.lastSeen) {
         var first = escapeForAttr((msg.firstSeen.split(/[_T]/)[0] || msg.firstSeen));
         var last = escapeForAttr((msg.lastSeen.split(/[_T]/)[0] || msg.lastSeen));
-        seen = '<div class="eh-stat">First: ' + first + ' &middot; Last: ' + last + '</div>';
+        seen = '<div class="eh-stat">' + vt('viewer.errorHover.firstLast', first, last) + '</div>';
     }
 
     var hash = escapeForAttr(msg.hash || '');
     var regressionHtml = '';
     if (msg.regressionHint && msg.regressionHint.hash) {
-        var label = msg.regressionHint.label === 'first-seen' ? 'Introduced in' : 'Last changed in';
+        var label = msg.regressionHint.label === 'first-seen' ? vt('viewer.errorHover.introducedInCommit') : vt('viewer.errorHover.lastChangedInCommit');
         var commitText = escapeForAttr(msg.regressionHint.hash);
         if (msg.regressionHint.commitUrl) {
-            regressionHtml = '<div class="eh-stat eh-regression"><span class="eh-regression-label">' + escapeForAttr(label) + ' commit </span><a class="eh-regression-link" href="' + escapeForAttr(msg.regressionHint.commitUrl) + '" target="_blank" rel="noopener noreferrer">' + commitText + '</a></div>';
+            regressionHtml = '<div class="eh-stat eh-regression"><span class="eh-regression-label">' + escapeForAttr(label) + '</span><a class="eh-regression-link" href="' + escapeForAttr(msg.regressionHint.commitUrl) + '" target="_blank" rel="noopener noreferrer">' + commitText + '</a></div>';
         } else {
-            regressionHtml = '<div class="eh-stat eh-regression">' + escapeForAttr(label) + ' commit <code>' + commitText + '</code></div>';
+            regressionHtml = '<div class="eh-stat eh-regression">' + escapeForAttr(label) + '<code>' + commitText + '</code></div>';
         }
     }
     stats.innerHTML = '<div class="eh-stat">' + category + triage + '</div>' +
         '<div class="eh-stat">' + logs + (total ? ' &middot; ' + total : '') + '</div>' +
         seen +
         regressionHtml +
-        '<div class="eh-stat eh-hash" title="Fingerprint: ' + hash + '">#' + hash + '</div>';
+        '<div class="eh-stat eh-hash" title="' + vt('viewer.errorHover.fingerprintTitle', hash) + '">#' + hash + '</div>';
 }
 
 function escapeForAttr(s) {
