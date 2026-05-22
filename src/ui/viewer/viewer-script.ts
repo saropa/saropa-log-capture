@@ -172,6 +172,22 @@ function isAsyncGapText(html) {
     return /^<asynchronous suspension>$/.test(stripTags(html).trim());
 }
 
+/** True if the line is a Flutter frame-elision summary — the single
+ *  "...     Normal element mounting (N frames)" row that Flutter substitutes
+ *  for a long run of collapsed framework frames. Like an async gap it carries
+ *  no numbered frame, so it fails isStackFrameText() and would otherwise hit
+ *  the group-close path in addToData(), shattering one logical trace into a
+ *  separate collapsed group at every elision (a #0-#262 trace splits into 5
+ *  toggles, one per "(N frames)" line — see viewer-stack-elided-summary.test).
+ *  Folded INTO the enclosing group as a framework frame row instead. Requiring
+ *  the literal "...", a descriptor, AND a trailing "(N frames)" keeps prose
+ *  ellipses out. Deliberately NOT part of isStackFrameText(): a summary must
+ *  never start a group on its own (an orphan with no active header — caller
+ *  enforces this — stays a normal line). */
+function isElidedFramesSummary(html) {
+    return /^\\.\\.\\.\\s+.*\\(\\d+\\s+frames?\\)$/.test(stripTags(html).trim());
+}
+
 function handleScroll() {
     if (typeof suppressScroll !== 'undefined' && suppressScroll) return;
     if (!logEl) return;

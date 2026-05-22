@@ -50,13 +50,22 @@ function tryIngestStackLine(html, rawText, category, ts, fw, sp, elapsedMs, qual
        to. Guarded on activeGroupHeader so a stray ")" with no open trace stays
        a normal line and never starts a group on its own. */
     var isTraceTail = !!activeGroupHeader && /^\\)$/.test(stripTags(html).trim());
+    /* Flutter elides long runs of framework frames into a single
+       "...     Normal element mounting (N frames)" summary row. It is not a
+       numbered frame, so without folding it into the OPEN group it fails
+       isStackFrameText(), hits the group-close path in addToData(), and shatters
+       one logical trace into separate collapsed segments at every elision (the
+       bug: a single #0-#262 trace split into 5 toggles, one per "(N frames)").
+       Guarded on activeGroupHeader so a stray summary with no open trace stays a
+       normal line and never starts a group on its own. */
+    var isElidedSummary = !!activeGroupHeader && typeof isElidedFramesSummary === 'function' && isElidedFramesSummary(html);
     /* Async-gap markers ("<asynchronous suspension>") fold into an OPEN stack group as
        an inline glyph on the previous frame. Without this they fail isStackFrameText(),
        hit the group-close path in addToData(), and shatter every Dart async trace into
        ~15 one-frame groups. A gap with no active group (orphan) makes this condition
        false and falls through to normal-line handling — a gap must never start a group
        on its own. */
-    if (!(isStackFrameText(html) || (activeGroupHeader && (isAsyncGap || isTraceTail)))) return false;
+    if (!(isStackFrameText(html) || (activeGroupHeader && (isAsyncGap || isTraceTail || isElidedSummary)))) return false;
     /* Trace-tail ")" is consumed silently — no row appended. Returning before the
        glyph-append branch below means we also do NOT emit a trailing icon: there is
        no async semantic to mark, the ")" is just _StringStackTrace's closing brace. */
@@ -82,6 +91,14 @@ function tryIngestStackLine(html, rawText, category, ts, fw, sp, elapsedMs, qual
         }
         return true;
     }
+    /* Elision summaries carry no app code — force the framework flag so they are
+       never counted as the "first app frame" (_appFrameIdx) and so preview-collapse
+       (which shows only app frames) hides them with the rest of the framework noise.
+       lineTier was already resolved in addToData() from the original fw, so this
+       override only affects the in-group app/framework treatment, not source-filter
+       tier. The summary then falls through to the normal frame-push block below and
+       becomes a visible, collapsible row inside the one unified group. */
+    if (isElidedSummary) fw = true;
     /* Strip leading whitespace from frame text so the viewer's CSS owns the
        indent. Raw Dart stacks emit 6 leading spaces on every continuation frame
        ("      #2  Caller …"); combined with .stack-frames .line padding-left
