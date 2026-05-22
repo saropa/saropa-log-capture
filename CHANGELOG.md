@@ -26,6 +26,12 @@ For older versions (7.1.1 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Flutter stack traces with frame-elision summaries now collapse as one group** — Flutter substitutes a single `...     Normal element mounting (N frames)` row for a long run of collapsed framework frames. That summary row was not recognized as a stack frame, so it hit the group-close path in [viewer-data-add.ts](src/ui/viewer/viewer-data-add.ts) and shattered one logical trace into a separate collapsible group at every elision — a single `#0`–`#262` trace appeared as five `▸` toggles, one per `(N frames)` line. A new `isElidedFramesSummary()` classifier in [viewer-script.ts](src/ui/viewer/viewer-script.ts) folds the summary INTO the open group (the same way `<asynchronous suspension>` markers already do), forcing the framework flag so preview-collapse hides it with the rest of the framework noise; it stays a visible, collapsible row inside the one unified group. Guarded so a stray summary with no open trace stays a normal line. See [viewer-data-add-stack-ingest.ts](src/ui/viewer/viewer-data-add-stack-ingest.ts) and tests in [viewer-stack-elided-summary.test.ts](src/test/ui/viewer-stack-elided-summary.test.ts).
+
 ## [7.13.1]
 
 ### Added
