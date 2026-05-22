@@ -88,6 +88,11 @@ function isStackFrameText(html) {
 function isAsyncGapText(html) {
     return /^<asynchronous suspension>$/.test(stripTags(html).trim());
 }
+/* Real isElidedFramesSummary so the Flutter frame-elision continuation branch in
+   tryIngestStackLine executes — exercised by viewer-stack-elided-summary.test.ts. */
+function isElidedFramesSummary(html) {
+    return /^\\.\\.\\.\\s+.*\\(\\d+\\s+frames?\\)$/.test(stripTags(html).trim());
+}
 function parseClassTags() { return []; }
 function parseLogcatTag() { return null; }
 function parseSourceTag() { return null; }
