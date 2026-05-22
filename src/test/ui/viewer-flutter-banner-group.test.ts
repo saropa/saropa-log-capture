@@ -196,14 +196,43 @@ suite('Flutter exception banner grouping', () => {
                 'all three banner positions must pull the severity dot to left: 0.15em',
             );
             // Connector ::after on banner-group rows must be re-centered under
-            // the pulled dot. The chain logic itself is now pure CSS in
-            // viewer-styles-decoration-bars.ts via :has(+ .level-bar-X)::after;
-            // banner-group rows just override the ::after's `left` position
-            // so the chain stripe paints under the pulled-in dot rather than
-            // at the default 0.89em.
+            // the pulled dot at 0.30em. WHY the selector now carries
+            // .level-bar-error:has(+ .level-bar-error): the default chain
+            // connector in viewer-styles-decoration-bars.ts is specificity
+            // (0,3,1) (it uses :has(+ .level-bar-error)::after). The earlier
+            // override was only .banner-group-*[class*="level-bar-"]::after =
+            // (0,2,1) and SILENTLY LOST, so the stripe rendered detached at the
+            // default 0.89em. Adding :has(+ .level-bar-error) lifts the override
+            // to (0,3,1)+ so it actually wins (these styles concatenate last).
             assert.ok(
-                /\.banner-group-(?:start|mid|end)\[class\*="level-bar-"\]::after[\s\S]*?left:\s*0\.30em/.test(css),
-                'banner-group ::after connector must align under the pulled dot at left: 0.30em',
+                /\.banner-group-(?:start|mid|end)\.level-bar-error:has\(\+\s*\.level-bar-error\)::after[\s\S]*?left:\s*0\.30em/.test(css),
+                'banner-group ::after connector must align under the pulled dot at left: 0.30em via a :has() selector that out-specifies the default 0.89em connector',
+            );
+        });
+
+        test('error rail and severity spine continue through the stack trace', () => {
+            // WHY: stack frames are consumed before the banner classifier, so they
+            // never carry a banner-group-* class. Without these rules the 3px rail
+            // and the 0.30em connector stop at the banner text and the left edge of
+            // the incident reads as broken across the frames. Error-level stack rows
+            // (.stack-header / .line.stack-line) must get the same rail and the same
+            // pulled-in connector so the spine is one continuous column.
+            const css = getFlutterBannerStyles();
+            // Rail: border-left on error stack rows (border-left ONLY — a padding-left
+            // here would tie the 14.25em decoration-column rule and could collapse it).
+            assert.ok(
+                /\.stack-header\.level-bar-error,\s*\.line\.stack-line\.level-bar-error\s*\{[^}]*border-left:\s*3px\s+solid/.test(css),
+                'error stack rows must carry the 3px rail so the grouping bar is unbroken across frames',
+            );
+            assert.ok(
+                !/\.stack-header\.level-bar-error,\s*\.line\.stack-line\.level-bar-error\s*\{[^}]*padding-left/.test(css),
+                'stack rail rule must NOT set padding-left (it would race the decoration-column rule and break alignment)',
+            );
+            // Spine: the connector override list must include the stack-row selectors.
+            assert.ok(
+                /\.stack-header\.level-bar-error:has\(\+\s*\.level-bar-error\)::after/.test(css)
+                && /\.line\.stack-line\.level-bar-error:has\(\+\s*\.level-bar-error\)::after/.test(css),
+                'error stack rows must share the 0.30em connector override so the spine is one column',
             );
         });
 
