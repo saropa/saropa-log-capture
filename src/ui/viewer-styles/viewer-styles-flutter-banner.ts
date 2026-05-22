@@ -45,24 +45,59 @@ export function getFlutterBannerStyles(): string {
     border-bottom-right-radius: 4px;
 }
 
+/* Continue the incident's error rail through the stack trace. Stack frames are
+   consumed before the banner classifier (so they form a collapsible group, not
+   banner-body lines) and therefore never carry a banner-group-* class — without
+   this the 3px rail stops at the banner text and restarts nowhere, so the
+   grouping bar looks broken across the frames. Scoped to .level-bar-error so the
+   rail only appears when the severity bar is on (barCls is gated on decoShowBar)
+   and never paints on a non-error trace.
+   border-left ONLY — deliberately no padding-left: the decoration-column rules
+   (.line:has(.line-decoration) / .line-deco-spacer-only) are specificity (0,2,0),
+   tied with these selectors, so a padding-left here would race them and could
+   collapse the 14.25em content column to 6px. The 3px border is purely additive
+   and shifts the frame text by the same 3px the banner body rows already shift,
+   so stack text stays column-aligned with the banner text.
+   Side effect (intended): a standalone error stack with no Flutter banner also
+   gains the rail — a continuous error spine is correct there too. */
+.stack-header.level-bar-error,
+.line.stack-line.level-bar-error {
+    border-left: 3px solid var(--vscode-editorError-foreground, #f14c4c);
+}
+
 /* Severity-dot tightening inside banner-group rows.
    WHY: the default dot sits at left: 0.74em (≈12px) measured from the .line
    padding edge, which on a banner-group row is the INNER edge of the 3px red
    rail. That left ≈12px gap reads as a misaligned stripe — the rail and the
    dotted severity column look like two competing left-side guides instead of
    one continuous spine. Pulling left to 0.15em closes the gap to ≈2-3px so
-   the rail visually flows through the dots.
-   Connector ::after width is 0.14em; re-centering it under the pulled-in dot
-   (dot center = 0.15em + 0.44em/2 = 0.37em → connector left = 0.37 - 0.07 = 0.30em)
-   keeps the same-level chain stripe aligned with the dot it joins. */
+   the rail visually flows through the dots. The matching connector ::after is
+   re-centered under the pulled-in dot in the rule below. */
 .banner-group-start[class*="level-bar-"]::before,
 .banner-group-mid[class*="level-bar-"]::before,
 .banner-group-end[class*="level-bar-"]::before {
     left: 0.15em;
 }
-.banner-group-start[class*="level-bar-"]::after,
-.banner-group-mid[class*="level-bar-"]::after,
-.banner-group-end[class*="level-bar-"]::after {
+/* Pull the chain connector under the rail (0.30em) for the WHOLE incident —
+   banner body rows AND the error stack rows that now carry the rail. This must
+   out-specify the default chain connector in viewer-styles-decoration-bars.ts
+   (.level-bar-error:not(:is(...)):has(+ .level-bar-error)::after = specificity
+   0,3,1); the earlier .banner-group-*[class*="level-bar-"]::after rule was only
+   0,2,1 and silently lost, leaving the banner stripe stranded at the default
+   0.89em. Adding :has(+ .level-bar-error) here lifts the .line.stack-line
+   selectors to 0,4,1 (win outright) and the .banner-group-* / .stack-header
+   selectors to 0,3,1 (tie the default, win on source order — these styles are
+   concatenated last). The :has guard also matches the default's "only paint when
+   the next row shares the level" behavior, so the last row of a run still
+   terminates cleanly. Only the left offset is overridden; width/top/bottom/
+   background continue to come from the default rule.
+   0.30em centers the 0.14em stripe under the 0.44em dot pulled to 0.15em
+   (dot center = 0.15 + 0.44/2 = 0.37em → stripe left = 0.37 - 0.14/2 = 0.30em). */
+.banner-group-start.level-bar-error:has(+ .level-bar-error)::after,
+.banner-group-mid.level-bar-error:has(+ .level-bar-error)::after,
+.banner-group-end.level-bar-error:has(+ .level-bar-error)::after,
+.stack-header.level-bar-error:has(+ .level-bar-error)::after,
+.line.stack-line.level-bar-error:has(+ .level-bar-error)::after {
     left: 0.30em;
 }
 
