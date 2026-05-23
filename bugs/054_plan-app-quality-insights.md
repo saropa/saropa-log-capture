@@ -14,8 +14,22 @@ and the Play Console web UI do not. Three pillars:
 3. **WOW** — editor-native features AS/Play Console can't offer (source-linking, git blame, local-log
    correlation, one-click bug reports, symbol-upload detection).
 
-Related: [bug_008](bug_008_crashlytics-enable-default-and-gcloud-path.md) (gcloud PATH + enable-by-default).
-This plan's wizard work supersedes the long-term need for the gcloud CLI; bug_008 is the short-term fix.
+**Scope boundary — this plan is UI/design only.** Everything about the *data connection* (gcloud
+resolution, authentication, the correct API host, OAuth scopes, surfacing failures instead of silent
+empties) lives in **[bug_008](bug_008_crashlytics-enable-default-and-gcloud-path.md)**. This plan
+consumes whatever bug_008's data layer returns and focuses on layout, UX, and features. Two findings
+from bug_008 that this plan depends on:
+
+- **The data source is Google Play Developer Reporting (`vitals.errors`), NOT
+  `firebasecrashlytics.googleapis.com`** — the latter's read endpoint returns a frontend HTML 404 and
+  is not a public API (verified). So both the "Firebase Crashlytics" and "Android vitals" tabs draw
+  from the same Play Reporting host; the dashboard's three-tab framing is a UI grouping, not three
+  separate APIs.
+- **Auth needs the `playdeveloperreporting` scope** and the dashboard must render error/empty states
+  distinctly (no silent "no crashes" when the call actually failed).
+
+Do not start dashboard coding until bug_008's W3 (re-point to Play Reporting) lands — there is no
+working issue feed before then.
 
 ---
 
@@ -106,7 +120,7 @@ This plan's wizard work supersedes the long-term need for the gcloud CLI; bug_00
 | Issues shown | All (scrolling) | 5 (hard cap) | Remove cap; paginate to 20+, then page through |
 | Filter bar | time/version/device/OS/signal | time = setting only | **Build in-UI filter bar** |
 | Event navigator | prev/next sample events | data exists, no UI | **Wire paging UI** |
-| Device/OS breakdown pane | yes, per issue | renderers exist, not wired | **Wire `:getStats` into right pane** |
+| Device/OS breakdown pane | yes, per issue | renderers exist (built on dead API) | **Feed right pane from Play Reporting error counts** |
 | Crashlytics stack/keys/logs | tabbed | single expanded blob | Restructure into tabs |
 | Android vitals issues | native crash/ANR clusters | none (rates only) | **New: Play `errors.issues`/`errors.reports`** |
 | Native stack traces | raw `pc/BuildId` frames | none | **New: render + (WOW) symbolicate** |
@@ -118,22 +132,27 @@ This plan's wizard work supersedes the long-term need for the gcloud CLI; bug_00
 ## Data / API reality check (verify before promising parity)
 
 Production-quality rule: do not claim pixel/number parity with AS until a live response is captured.
-AS and Play Console use privileged data paths; the public APIs may not expose everything.
+AS and Play Console use privileged data paths; the public APIs may not expose everything. **Full
+connection findings are in [bug_008](bug_008_crashlytics-enable-default-and-gcloud-path.md); the key
+ones that shape this design:**
 
-- **Crashlytics breakdown fidelity — UNVERIFIED.** The right-pane percentages depend on what
-  `issues/{id}:getStats` actually returns. `crashlytics-stats.ts` defensively reads several key shapes
-  (`deviceStats`/`devices`, `osStats`/`osVersions`) because the real shape isn't confirmed in-repo.
-  **Action (Stage 0):** capture one live `:getStats` JSON for a real issue and pin the shape with a
-  fixture test before building the pane. If the endpoint doesn't return distributions, the fallback is
-  sampled-event aggregation (`renderDeviceDistribution` over `pageSize` events) — which is an estimate
-  from N samples, **not** a true aggregate, and must be labeled as such in the UI.
-- **"Variants" and "fresh/regressed/AI" signals — UNVERIFIED** in the public response. Only `state`
-  (OPEN/CLOSED/REGRESSION) is parsed today. Don't render a glyph we can't source.
-- **Android vitals per-issue errors — NEW API SURFACE, scope-gated.** Native clusters/stacks come from
-  Play Developer Reporting `vitals.errors.issues.search` + `vitals.errors.reports.search`, which need
-  the API enabled and the right OAuth scope (`playdeveloperreporting`). The extension only calls the
-  rate metric-sets today. **Action (Stage 0):** confirm the account/scope returns error reports for
-  `com.saropamobile.app` before committing to Screen B.
+- **The Firebase Crashlytics read endpoint is dead — do NOT design against it.** VERIFIED:
+  `firebasecrashlytics.googleapis.com/.../topIssues:query` returns a Google frontend HTML 404; it is
+  not a public API. The current `crashlytics-api.ts` / `crashlytics-stats.ts` (incl. `:getStats`) are
+  built on it and will never return data. **The dashboard's data source is Google Play Developer
+  Reporting `vitals.errors`** (`errorIssues:search`, `errorReports:search`, the error count metric
+  set). Both UI tabs ("Crashlytics" and "Android vitals") draw from this one host.
+- **Breakdown fidelity — re-scope to the Play Reporting response.** Device/OS percentages and trends
+  should come from the Play Reporting error count **metric set** (dimensioned by device/version), not
+  the dead `:getStats`. Capture one live response post-scope-fix and pin the shape before building the
+  right pane. If a needed dimension isn't returned, aggregate from the sampled `errorReports` and
+  **label it an estimate** in the UI — never present a sample as a true aggregate.
+- **"Variants" and "fresh/regressed" signals — verify in the Play Reporting response** before
+  rendering a glyph. Don't show a signal we can't source.
+- **Scope + access gating (VERIFIED).** `vitals.errors` needs the `playdeveloperreporting` OAuth scope
+  (the default ADC token returns 403 ACCESS_TOKEN_SCOPE_INSUFFICIENT) and a Play Console-linked
+  account; the API may also need enabling on the project. Handled in bug_008 (W4); the dashboard must
+  render those failure states distinctly, not as empty.
 - **Native symbolication — heavy, conditional.** Raw `pc 0x… libapp.so (BuildId: …)` frames are only
   human-readable with the matching native debug symbols (NDK `.so` symbol files / `symbols.zip`) and a
   symbolizer (`ndk-stack` / `llvm-symbolizer`). Treat as an opt-in WOW feature gated on symbol
@@ -176,8 +195,8 @@ A new **editor-tab webview** (`vscode.window.createWebviewPanel`), not the sideb
 - **Middle pane:** issue header (counts, versions-affected, state badge, Close/Mute, "View on
   Firebase/Vitals"), **event navigator** (wire the existing `currentIndex` paging), device/context
   line, and **Stack trace / Keys / Logs** sub-tabs (Crashlytics) or native backtrace (vitals).
-- **Right pane:** Devices + Android Versions breakdown bars (wire `:getStats` per Stage-0 finding;
-  label estimates if sampled).
+- **Right pane:** Devices + Android Versions breakdown bars (from the Play Reporting error count
+  metric set per Stage-0 finding; label estimates if sampled).
 - **Android vitals tab (new):** Play `errors.issues`/`errors.reports` → cluster list + native stacks +
   breakdown. Gated on the Stage-0 scope check.
 - The existing sidebar stays as a lightweight triage entry point and **opens the full dashboard** — we
@@ -214,14 +233,18 @@ The editor knows the source tree, git, and the live log — AS's panel and the w
 
 ## Staged delivery
 
-- **Stage 0 — Verify data (no UI).** Capture live `:getStats`, `topIssues:query`, and Play
-  `errors.reports.search` responses; pin shapes with fixtures; confirm scopes. Decides what parity is
-  actually achievable. **Gate for everything below.**
+- **Stage 0 — Re-point to the real API + verify data (bug_008 W3/W4, no UI).** Replace the dead
+  `firebasecrashlytics` endpoints with Play Reporting `vitals.errors` (`errorIssues:search`,
+  `errorReports:search`, error count metric set); add the `playdeveloperreporting` scope; capture live
+  responses and pin shapes with fixtures. Decides what parity is achievable. **Gate for everything
+  below — there is no issue feed until this lands.**
 - **Stage 1 — Wizard redesign (Pillar 1).** Highest user value, smallest blast radius; fixes the
-  bug_008 pain. OAuth sign-in + project picker + errors-behind-disclosure.
-- **Stage 2 — Crashlytics dashboard (Pillar 2, Crashlytics tab only).** Editor-tab 3-pane; wire the
-  already-built paging + `:getStats`; remove the 5-cap; filter bar.
-- **Stage 3 — Android vitals tab.** New Play error-reports API + native stack rendering.
+  bug_008 pain. (Wizard UI shipped; OAuth sign-in + project picker still pending.)
+- **Stage 2 — Issues dashboard (Pillar 2).** Editor-tab 3-pane over the Play Reporting feed; issue
+  list with paging (remove the 5-issue cap), event navigator, breakdown pane from the count metric
+  set; filter bar.
+- **Stage 3 — Native vitals + stacks.** `errorReports` native stack rendering (the `pc/BuildId`
+  frames) on top of Stage 2.
 - **Stage 4 — WOW pass.** Source-linking++/git blame, local-log correlation, one-click bug report,
   AI triage, trends, watch/notify, symbol-upload detector.
 
