@@ -25,13 +25,27 @@ export function logCrashlytics(level: 'info' | 'error', message: string): void {
     getOutputChannel().appendLine(`${prefix} ${message}`);
 }
 
+/**
+ * True when a failed command means "executable not found". `ENOENT` covers a direct spawn, but with
+ * `shell: true` (required for the gcloud.cmd shim) a missing command is NOT ENOENT — the shell itself
+ * reports it: cmd.exe prints "'gcloud' is not recognized…" (exit 1/9009) and POSIX shells print
+ * "command not found". Without this check those land in the generic branch and the user is told the
+ * command "failed" with no hint that gcloud simply is not on PATH. (bug_008)
+ */
+function isCommandMissing(code: unknown, message: string, stderr: string): boolean {
+    if (code === 'ENOENT') { return true; }
+    const haystack = `${message} ${stderr}`.toLowerCase();
+    return haystack.includes('is not recognized') || haystack.includes('command not found');
+}
+
 /** Classify a gcloud CLI error into a user-friendly diagnostic. */
 export function classifyGcloudError(err: unknown): DiagnosticDetails {
     const code = (err as NodeJS.ErrnoException).code;
     const stderr = (err as Error & { stderr?: string }).stderr ?? '';
+    const message = err instanceof Error ? err.message : String(err);
     const checkedAt = Date.now();
-    if (code === 'ENOENT') {
-        return { step: 'gcloud', errorType: 'missing', checkedAt, message: 'Google Cloud CLI not found in PATH', technicalDetails: 'Command "gcloud" not found. Install from https://cloud.google.com/sdk/docs/install' };
+    if (isCommandMissing(code, message, stderr)) {
+        return { step: 'gcloud', errorType: 'missing', checkedAt, message: 'Google Cloud CLI not found in PATH', technicalDetails: 'Command "gcloud" not found. Install it, then fully restart VS Code so it picks up the new PATH — or set a service account key. See https://cloud.google.com/sdk/docs/install' };
     }
     if (code === 'EACCES') {
         return { step: 'gcloud', errorType: 'permission', checkedAt, message: 'Permission denied running gcloud — check file permissions', technicalDetails: stderr || `Error code: ${code}` };
@@ -46,8 +60,14 @@ export function classifyGcloudError(err: unknown): DiagnosticDetails {
 /** Classify a gcloud auth token error into a user-friendly diagnostic. */
 export function classifyTokenError(err: unknown): DiagnosticDetails {
     const stderr = (err as Error & { stderr?: string }).stderr ?? '';
+    const message = err instanceof Error ? err.message : String(err);
     const checkedAt = Date.now();
     const lower = stderr.toLowerCase();
+    // A token fetch that fails because gcloud itself is absent must report "CLI not found", not
+    // "authentication failed" — otherwise the user chases a sign-in problem that does not exist. (bug_008)
+    if (isCommandMissing((err as NodeJS.ErrnoException).code, message, stderr)) {
+        return { step: 'gcloud', errorType: 'missing', checkedAt, message: 'Google Cloud CLI not found in PATH', technicalDetails: 'gcloud is required for sign-in. Install it and fully restart VS Code, or set a service account key.' };
+    }
     if (lower.includes('no credentialed accounts') || lower.includes('could not automatically determine')) {
         return { step: 'token', errorType: 'auth', checkedAt, message: 'Not logged in — run: gcloud auth application-default login', technicalDetails: stderr };
     }

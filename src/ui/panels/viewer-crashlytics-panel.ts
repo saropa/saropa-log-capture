@@ -199,6 +199,11 @@ export function getCrashlyticsPanelScript(): string {
                     vscodeApi.postMessage({ type: 'copyToClipboard', text: lastDiagnosticCopyText });
                 } else if (action === 'crashlyticsShowOutput') {
                     vscodeApi.postMessage({ type: 'crashlyticsShowOutput' });
+                } else if (action === 'crashlyticsValidate') {
+                    // Immediate feedback so the tap is never silent while the checks run.
+                    var rep = document.getElementById('cp-conn-report');
+                    if (rep) rep.innerHTML = '<div class="cp-conn-checking">Checking connection\\u2026</div>';
+                    vscodeApi.postMessage({ type: 'crashlyticsValidate' });
                 } else if (action === 'openUrl' && setupBtn.dataset.url) {
                     vscodeApi.postMessage({ type: 'openUrl', url: setupBtn.dataset.url });
                 } else if (action === 'openFirebaseConsole') {
@@ -263,6 +268,9 @@ export function getCrashlyticsPanelScript(): string {
         else if (e.data.type === 'crashDetailReady') {
             var el = document.getElementById('cp-detail-' + e.data.issueId);
             if (el) { el.innerHTML = e.data.html; el.classList.add('expanded'); }
+        }
+        else if (e.data.type === 'crashlyticsConnectionReport') {
+            if (typeof renderConnectionReport === 'function') renderConnectionReport(e.data.report);
         }
         else if (e.data.type === 'issueActionFailed') {
             /* Could show inline feedback; for now silent */
