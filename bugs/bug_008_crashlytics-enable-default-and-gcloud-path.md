@@ -1,14 +1,16 @@
 # Bug 008 — Crashlytics off by default + gcloud "not recognized" despite being installed
 
-## Status: Investigating
+## Status: (b) Fix Ready · (a) Open (needs sign-off)
 
 <!-- Status values: Open → Investigating → Fix Ready → Fixed (pending review) → Closed -->
 
 This report covers two linked goals for getting Firebase Crashlytics working out of the box:
 
-- **(a)** Enable the Crashlytics integration by default.
+- **(a)** Enable the Crashlytics integration by default. — **Still Open.** This flips a shipped default
+  every install inherits (blast radius), so it awaits explicit sign-off before landing.
 - **(b)** Fix the `gcloud` auth path so it works when the Google Cloud CLI is installed but the
-  extension host can't resolve it on `PATH` (current real-world failure on Windows).
+  extension host can't resolve it on `PATH` (current real-world failure on Windows). — **Fix Ready**
+  (see Changes Made), plus a new step-by-step connection validator for real failure feedback.
 
 ---
 
@@ -204,15 +206,38 @@ setup hint should point at this as the no-CLI path, especially for the `saropa-m
 
 ## Changes Made
 
-<!-- Fill in when fixes land. -->
+Part (b) — connection reliability + real feedback (part (a) not yet implemented):
+
+- **`src/modules/crashlytics/gcloud-locator.ts` (new)** — `findGcloudInKnownLocations()` probes the
+  known install dirs (Windows: `%LOCALAPPDATA%`, Program Files, `~\google-cloud-sdk`; macOS/Linux:
+  `/usr/local`, `/usr/lib`, Homebrew, `~`, snap). `resolveGcloudCmd()` returns the absolute path when
+  present (robust to a stale PATH), else bare `gcloud`. Cached; `resetGcloudLocatorCache()` re-probes.
+- **`crashlytics-io.ts`** — `runCmd` now quotes an executable path containing spaces (the `Cloud SDK`
+  dir) since `shell: true` does not auto-quote the command.
+- **`crashlytics-diagnostics.ts`** — new `isCommandMissing()` recognizes shell "is not recognized"
+  (Windows) and "command not found" (POSIX) in addition to `ENOENT`; `classifyGcloudError` AND
+  `classifyTokenError` now report a missing CLI instead of a generic/auth failure (B2a).
+- **`firebase-crashlytics.ts`** — `isGcloudAvailable` and `getAccessToken` invoke `resolveGcloudCmd()`
+  (B2b); `clearIssueListCache()` resets the locator cache; exports `getLastDiagnostic()`.
+- **`crashlytics-connection-check.ts` (new)** — `runConnectionCheck()` validates gcloud/auth/config/api
+  in order, each step carrying status + plain detail + a concrete fix; `formatConnectionReport()` for
+  the output channel. Surfaced via a "Test connection" button in the wizard
+  (`viewer-crashlytics-setup.ts`), a per-step report in-panel, the output channel, and a toast
+  (`crashlytics-handlers.ts`, dispatched in `viewer-message-handler-panels.ts`).
+
+Still TODO for this bug: **(a)** add `"crashlytics"` to `saropaLogCapture.integrations.adapters`
+default (awaiting sign-off); **B2c** service-account prominence is partially addressed (the validator
+treats a configured key as the gcloud-skip path and names the setting).
 
 ## Tests Added
 
-<!-- Suggested:
-  - classifyGcloudError: Windows "is not recognized" stderr → errorType 'missing'
-  - classifyTokenError: same stderr → 'missing'/auth hint, not raw passthrough
-  - gcloud path resolver: returns absolute path when known install dir exists, undefined otherwise
-  - package.json default adapters includes "crashlytics" (guard test) -->
+`src/test/modules/crashlytics/crashlytics-connection-check.test.ts`:
+- `classifyGcloudError`: Windows "is not recognized", POSIX "command not found", and `ENOENT` all →
+  `errorType: 'missing'`; a timeout is NOT mislabeled as missing.
+- `classifyTokenError`: the token-fetch "is not recognized" case (Craig's exact log) → step `gcloud`,
+  `missing` (not `auth`); a genuine "no credentialed accounts" still → step `token`, `auth`.
+- `formatConnectionReport`: renders per-step `[PASS]`/`[FAIL]`/`[SKIP]`, fix lines, and the
+  CONNECTED / NOT CONNECTED header.
 
 ## Commits
 

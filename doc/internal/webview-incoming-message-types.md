@@ -31,6 +31,7 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `crashlyticsPanelOpened` | viewer-message-handler-panels.ts |
 | `crashlyticsRunGcloudAuth` | viewer-message-handler-panels.ts |
 | `crashlyticsShowOutput` | viewer-message-handler-panels.ts |
+| `crashlyticsValidate` | viewer-message-handler-panels.ts |
 | `createCollectionWithName` | viewer-message-handler-collection.ts |
 | `createReportFile` | viewer-message-handler-actions.ts |
 | `deleteAllBookmarks` | viewer-message-handler-session-ui.ts |
@@ -128,4 +129,4 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `viewerKeybindingRecordCancelled` | viewer-message-handler-actions.ts |
 | `viewerKeybindingRecorded` | viewer-message-handler-actions.ts |
 
-**Total:** 120 distinct types.
+**Total:** 121 distinct types.
