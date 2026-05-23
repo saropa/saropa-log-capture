@@ -108,12 +108,21 @@ The feature is wired and functional; it's simply not opted in by default.
 
 ### (b) Two compounding causes
 
-**B1 — PATH visibility (environment, not code).**
-`winget install Google.CloudSDK` is a **per-user** install that writes `gcloud` into a location like
-`%LOCALAPPDATA%\Google\Cloud SDK\google-cloud-sdk\bin` and updates the user `PATH`. A VS Code window
-(and its extension host) launched **before** that PATH update inherits the stale environment, so
-`cmd.exe` cannot resolve `gcloud`. A window *reload* does not re-read the OS environment; only a full
-VS Code restart from a fresh login environment (or machine sign-out/in) does.
+**B1 — gcloud is not on PATH at all (CORRECTED — verified on-machine).**
+Earlier framing here ("stale PATH that a full restart fixes") was **wrong**, as the reporter pointed
+out: they had restarted many times. Verified on the actual machine (2026-05-23):
+
+```
+Get-Command gcloud           -> NOT on PATH
+winget list Google.CloudSDK  -> installed, 569.0.0
+Test-Path %LOCALAPPDATA%\Google\Cloud SDK\google-cloud-sdk\bin\gcloud.cmd  -> True
+& <that path> --version      -> Google Cloud SDK 556.0.0   (runs fine)
+```
+
+So `winget install Google.CloudSDK` installs gcloud to `%LOCALAPPDATA%\…\bin\gcloud.cmd` **but never
+adds it to PATH**. A bare `gcloud` therefore never resolves, regardless of restarts — restarts can't
+fix a PATH entry that was never written. The locator fix (run gcloud by its on-disk absolute path) is
+the correct remedy and is verified to execute on the reporter's machine.
 
 **B2 — Windows error misclassification (real code bug).**
 `runCmd()` spawns with `shell: true` (`src/modules/crashlytics/crashlytics-io.ts:15`):
@@ -142,6 +151,54 @@ instead of a "CLI not found" hint.
 
 Net effect: the user is told auth failed, with no clear signal that the actual problem is "gcloud
 isn't on PATH for this process — restart VS Code or set a service account key."
+
+### (b3) CRITICAL: the Crashlytics read endpoint is not a public API (verified 2026-05-23)
+
+After fixing B1/B2 so the API call is actually reached, it fails at a **second wall**. Verified live
+against `saropa-mobile` with a working token + correct project/app from `google-services.json`:
+
+```
+POST firebasecrashlytics.googleapis.com/v1beta1/projects/saropa-mobile/apps/<appId>/reports/topIssues:query
+  -> HTTP 404, Google FRONTEND HTML ("The requested URL … was not found on this server")
+GET  firebasecrashlytics.googleapis.com/$discovery/rest?version=v1beta1   -> 403 (no public discovery)
+gcloud services list --enabled --filter crashlytics                       -> 0 items
+```
+
+An HTML frontend 404 (not a JSON API error) means the path is not a routed public method.
+**`crashlytics-api.ts` / `crashlytics-stats.ts` are built on a non-public endpoint that does not exist
+for general callers.** This is almost certainly why the feature never worked end-to-end — fixing auth
+just exposes the dead endpoint. No auth/config change can fix it.
+
+**The real public API is Google Play Developer Reporting** (`playdeveloperreporting.googleapis.com`),
+which DOES expose a `vitals.errors` resource (issues / reports / counts) — the same data the Android
+Studio "Android vitals" tab shows. Verified its discovery doc lists `vitals.errors`. The extension
+already calls this host for crash/ANR *rates* (`google-play-vitals.ts`) but not for issues/stacks.
+
+### (b4) The real API needs the Play reporting OAuth scope (verified 2026-05-23)
+
+```
+GET playdeveloperreporting.googleapis.com/v1beta1/apps/com.saropamobile.app/errorIssues:search
+  -> 403 ACCESS_TOKEN_SCOPE_INSUFFICIENT
+```
+
+The ADC token from `gcloud auth application-default print-access-token` carries `cloud-platform` but
+NOT `https://www.googleapis.com/auth/playdeveloperreporting`. Fix (single source of truth in code:
+`playReportingScopeFix`):
+
+```
+gcloud auth application-default login --scopes=https://www.googleapis.com/auth/cloud-platform,https://www.googleapis.com/auth/playdeveloperreporting
+```
+
+This also explains why the existing **vitals rate panel** likely shows N/A — same missing scope, and
+`google-play-vitals.ts` swallows the 403 (`return undefined`) with no diagnostic = silent failure.
+
+### (b5) Pervasive silent failure (the reporter's core concern)
+
+`queryTopIssues` does `catch { return []; }`; `google-play-vitals.ts` `fetchJson` returns `undefined`
+on error. A dead endpoint / missing scope / disabled API therefore surfaces as **"no crashes"** —
+success-looking emptiness — instead of guidance. Every failure path must set a diagnostic and the UI
+must distinguish "no data" from "error". The connection validator (added) is the first step; the
+data-fetch paths must stop returning bare empty on error.
 
 ---
 
