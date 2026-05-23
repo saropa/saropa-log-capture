@@ -11,8 +11,12 @@ export const apiTimeout = 10_000;
 
 /** Run a shell command and resolve with trimmed stdout, or reject on non-zero exit. */
 export function runCmd(cmd: string, args: string[]): Promise<string> {
+    // shell:true is required on Windows to run the gcloud.cmd shim, but with a shell the executable is
+    // not auto-quoted, so an absolute path containing spaces (e.g. ...\Cloud SDK\...\gcloud.cmd) would
+    // be split into two tokens and fail. Quote any unquoted path that contains a space. (bug_008)
+    const safeCmd = cmd.includes(' ') && !cmd.startsWith('"') ? `"${cmd}"` : cmd;
     return new Promise((resolve, reject) => {
-        execFile(cmd, args, { timeout: apiTimeout, shell: true }, (err, stdout, stderr) => {
+        execFile(safeCmd, args, { timeout: apiTimeout, shell: true }, (err, stdout, stderr) => {
             if (err) {
                 let error: Error;
                 if (err instanceof Error) {

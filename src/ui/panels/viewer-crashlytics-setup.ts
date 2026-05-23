@@ -23,12 +23,46 @@ export function getCrashlyticsSetupScript(): string {
         cpSetupEl.innerHTML = buildSetupIntro()
             + buildStepIndicator(stepNum)
             + getStepStatusLine(step)
+            + buildConnectionTest()
             + content
             + buildProblemDisclosure(ctx)
             + buildSetupHelp(ctx)
             + '<button class="cp-check-btn" id="cp-check-again">Check Again</button>';
         cpSetupEl.style.display = '';
         wireSetupButtons();
+    }
+
+    /* Prominent one-click validator. Runs every prerequisite and renders a per-step pass/fail report
+       with a concrete fix for each failure — the "real feedback about failures" users need after a
+       setup has failed repeatedly (plan 054). The report fills in via crashlyticsConnectionReport. */
+    function buildConnectionTest() {
+        return '<div class="cp-conn-test">'
+            + '<button class="cp-setup-btn cp-conn-test-btn" data-action="crashlyticsValidate">Test connection</button>'
+            + '<div id="cp-conn-report" class="cp-conn-report"></div></div>';
+    }
+
+    /* Render the step-by-step connection report into the wizard. Each step shows status, a
+       plain-language detail, an actionable fix on failure, and raw output behind a disclosure. */
+    function renderConnectionReport(report) {
+        var el = document.getElementById('cp-conn-report');
+        if (!el) return;
+        if (!report || !report.steps || report.steps.length === 0) {
+            el.innerHTML = '<div class="cp-conn-checking">Connection check unavailable — see the Saropa Log Capture output channel.</div>';
+            return;
+        }
+        var banner = report.ok
+            ? '<div class="cp-conn-ok">\\u2713 Connected</div>'
+            : '<div class="cp-conn-bad">\\u2717 Not connected yet — fix the steps marked below.</div>';
+        el.innerHTML = banner + report.steps.map(renderConnectionStep).join('');
+    }
+
+    function renderConnectionStep(s) {
+        var icon = s.status === 'pass' ? '\\u2713' : s.status === 'fail' ? '\\u2717' : '\\u25CB';
+        var fix = s.fix ? '<div class="cp-conn-fix">' + esc(s.fix) + '</div>' : '';
+        var tech = s.technical ? '<details class="cp-conn-tech"><summary>Details</summary><pre>' + esc(s.technical) + '</pre></details>' : '';
+        return '<div class="cp-conn-step cp-conn-' + esc(s.status) + '">'
+            + '<div class="cp-conn-head"><span class="cp-conn-icon">' + icon + '</span><span class="cp-conn-label">' + esc(s.label) + '</span></div>'
+            + '<div class="cp-conn-detail">' + esc(s.detail) + '</div>' + fix + tech + '</div>';
     }
 
     /* One friendly sentence of purpose. Second-person voice, no first person (USER_COPY_AND_TONE). */

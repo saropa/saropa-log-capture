@@ -15,6 +15,7 @@ import {
 import { renderCrashDetail } from '../../analysis/analysis-crash-detail';
 import { serializeContext } from './crashlytics-serializers';
 import { getOutputChannel } from '../../../modules/crashlytics/crashlytics-diagnostics';
+import { runConnectionCheck, formatConnectionReport } from '../../../modules/crashlytics/crashlytics-connection-check';
 
 export type PostFn = (msg: unknown) => void;
 
@@ -65,6 +66,31 @@ export async function handleCrashlyticsAction(
         else { post({ type: 'issueActionFailed', action: state }); }
     } catch {
         post({ type: 'issueActionFailed', action: state });
+    }
+}
+
+/**
+ * Run the step-by-step connection check and report results everywhere the user might look:
+ * a per-step report posted to the panel, the full text in the output channel, and a summary toast.
+ * On success, refreshes the panel so issues replace the setup wizard. Never throws.
+ */
+export async function handleCrashlyticsValidate(post: PostFn): Promise<void> {
+    try {
+        const report = await runConnectionCheck();
+        const channel = getOutputChannel();
+        channel.appendLine('');
+        channel.appendLine(formatConnectionReport(report));
+        post({ type: 'crashlyticsConnectionReport', report });
+        if (report.ok) {
+            void vscode.window.showInformationMessage(t('msg.crashlyticsConnected'));
+            await handleCrashlyticsRequest(post);
+            return;
+        }
+        const firstFail = report.steps.find(s => s.status === 'fail');
+        const summary = firstFail ? `${firstFail.label}: ${firstFail.detail}` : t('msg.crashlyticsNotConnected');
+        void vscode.window.showWarningMessage(summary, t('action.showDetails')).then(sel => { if (sel) { channel.show(); } });
+    } catch {
+        post({ type: 'crashlyticsConnectionReport', report: { steps: [], ok: false, checkedAt: Date.now() } });
     }
 }
 

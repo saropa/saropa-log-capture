@@ -42,6 +42,36 @@ export function getSetupStyles(): string {
 .cp-problem-body { margin-top: 4px; }
 
 .cp-setup-title { font-weight: 600; font-size: 1.1em; margin: 0 12px 4px; }
+
+/* --- Connection test report --- */
+.cp-conn-test { margin: 8px 12px; }
+.cp-conn-test-btn { width: 100%; text-align: center; }
+.cp-conn-report { margin-top: 8px; }
+.cp-conn-checking { font-size: 12px; opacity: 0.8; padding: 4px 0; }
+.cp-conn-ok { color: var(--vscode-testing-iconPassed, #388e3c); font-weight: 600; margin-bottom: 6px; }
+.cp-conn-bad { color: var(--vscode-errorForeground); font-weight: 600; margin-bottom: 6px; }
+.cp-conn-step {
+    padding: 6px 8px;
+    margin: 4px 0;
+    border-left: 3px solid var(--vscode-panel-border);
+    border-radius: 3px;
+    background: var(--vscode-textBlockQuote-background);
+}
+.cp-conn-pass { border-left-color: var(--vscode-testing-iconPassed, #388e3c); }
+.cp-conn-fail { border-left-color: var(--vscode-errorForeground); }
+.cp-conn-skipped { opacity: 0.7; }
+.cp-conn-head { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 12px; }
+.cp-conn-detail { font-size: 12px; opacity: 0.9; margin-top: 2px; }
+.cp-conn-fix { font-size: 11px; margin-top: 4px; }
+.cp-conn-tech { margin-top: 4px; font-size: 11px; }
+.cp-conn-tech summary { cursor: pointer; opacity: 0.8; }
+.cp-conn-tech pre {
+    white-space: pre-wrap;
+    word-break: break-all;
+    background: var(--vscode-textCodeBlock-background);
+    padding: 4px;
+    margin: 4px 0;
+}
 .cp-setup-step { margin: 8px 12px; }
 .cp-setup-step p { margin: 4px 0 8px; opacity: 0.85; line-height: 1.4; font-size: 12px; }
 .cp-setup-step code {

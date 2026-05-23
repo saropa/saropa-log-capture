@@ -3,6 +3,7 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { runCmd } from './crashlytics-io';
+import { resolveGcloudCmd, resetGcloudLocatorCache } from './gcloud-locator';
 import { getAccessTokenFromServiceAccount } from './crashlytics-service-account';
 import { logCrashlytics, classifyGcloudError, classifyTokenError, firebaseConfigSetupHint, type DiagnosticDetails } from './crashlytics-diagnostics';
 import type { CrashlyticsIssueEvents, CrashlyticsEventDetail, FirebaseContext, FirebaseConfig, SetupChecklist } from './crashlytics-types';
@@ -21,9 +22,12 @@ const tokenTtl = 30 * 60_000;
 async function isGcloudAvailable(): Promise<boolean> {
     if (gcloudAvailable !== undefined) { return gcloudAvailable; }
     try {
-        await runCmd('gcloud', ['--version']);
+        // resolveGcloudCmd() returns an absolute install path when one exists on disk, so a stale PATH
+        // (gcloud installed after VS Code launched) no longer breaks the check. (bug_008)
+        const cmd = resolveGcloudCmd();
+        await runCmd(cmd, ['--version']);
         gcloudAvailable = true;
-        logCrashlytics('info', 'Google Cloud CLI found');
+        logCrashlytics('info', cmd === 'gcloud' ? 'Google Cloud CLI found on PATH' : `Google Cloud CLI found at ${cmd}`);
     } catch (err) {
         gcloudAvailable = false;
         lastDiagnostic = classifyGcloudError(err);
@@ -31,6 +35,9 @@ async function isGcloudAvailable(): Promise<boolean> {
     }
     return gcloudAvailable;
 }
+
+/** Last diagnostic captured by gcloud/token/config steps (for the connection validator's report). */
+export function getLastDiagnostic(): DiagnosticDetails | undefined { return lastDiagnostic; }
 
 /** Resolve service account key path (absolute or relative to workspace root). */
 function resolveServiceAccountKeyPath(configuredPath: string): string | undefined {
@@ -57,7 +64,7 @@ export async function getAccessToken(): Promise<string | undefined> {
         lastDiagnostic = { step: 'token', errorType: 'auth', message: 'Service account key failed. Check path and file contents, or use gcloud.', checkedAt: Date.now() };
     }
     try {
-        const token = await runCmd('gcloud', ['auth', 'application-default', 'print-access-token']);
+        const token = await runCmd(resolveGcloudCmd(), ['auth', 'application-default', 'print-access-token']);
         if (!token) {
             lastDiagnostic = { step: 'token', errorType: 'auth', message: 'gcloud returned empty token', checkedAt: Date.now() };
             logCrashlytics('error', 'gcloud returned empty access token');
@@ -131,6 +138,9 @@ export function clearIssueListCache(): void {
     gcloudAvailable = undefined;
     cachedToken = undefined;
     lastDiagnostic = undefined;
+    // Re-probe disk for gcloud too: the user may have just installed it (the common "fix" between
+    // a failed and a successful check), so a cached "not found" must not stick. (bug_008)
+    resetGcloudLocatorCache();
     clearApiCache();
 }
 

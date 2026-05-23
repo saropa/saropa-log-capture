@@ -10,6 +10,7 @@ export {
     handleCrashlyticsRequest,
     handleCrashDetail,
     handleCrashlyticsAction,
+    handleCrashlyticsValidate,
     handleGcloudAuth,
     handleBrowseGoogleServices,
     handleOpenGoogleServicesJson,

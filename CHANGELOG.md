@@ -28,7 +28,15 @@ For older versions (7.1.1 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [Unreleased]
 
-The Crashlytics setup screen is friendlier — a clear three-step guide instead of a wall of commands and errors.
+Connecting Crashlytics is far more reliable: it now finds gcloud even when your PATH is stale, tells you exactly which step failed and how to fix it, and the setup screen reads as a guide instead of an error wall.
+
+### Added
+
+- **One-click "Test connection" with a per-step report** — the Crashlytics setup panel now has a Test connection button that runs every prerequisite in order (Google Cloud CLI → sign-in → Firebase project → a live API call) and shows a pass/fail result for each, with a concrete fix on every failure. The full report is also written to the Saropa Log Capture output channel and summarized in a toast. After repeated setup failures you can finally see which link is broken instead of one opaque "Command failed" message. New engine in [crashlytics-connection-check.ts](src/modules/crashlytics/crashlytics-connection-check.ts); wired through [crashlytics-handlers.ts](src/ui/shared/handlers/crashlytics-handlers.ts) and the wizard. Part of [plan 054](bugs/054_plan-app-quality-insights.md).
+
+### Fixed
+
+- **gcloud is found even when PATH is stale, and "not found" is reported as such** — installing gcloud via winget updates PATH, but a VS Code window opened beforehand can't see it, so every `gcloud` call failed with "'gcloud' is not recognized" — and, worse, that error was mislabeled as a generic "Command failed" (with `shell: true`, a missing command is never a Node `ENOENT`, so the only "not found" branch was dead on Windows). Now a new [gcloud-locator.ts](src/modules/crashlytics/gcloud-locator.ts) probes the known install locations on disk and runs gcloud by absolute path when PATH hasn't refreshed (so it works without a full VS Code restart), [runCmd](src/modules/crashlytics/crashlytics-io.ts) quotes paths containing spaces (the `Cloud SDK` directory), and the classifier in [crashlytics-diagnostics.ts](src/modules/crashlytics/crashlytics-diagnostics.ts) recognizes the shell "is not recognized" / "command not found" messages as a missing CLI on both the gcloud check and the token fetch. Tracked in [bug_008](bugs/bug_008_crashlytics-enable-default-and-gcloud-path.md).
 
 ### Changed
 
