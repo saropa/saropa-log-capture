@@ -2,6 +2,11 @@
  * Crashlytics panel setup wizard rendering functions.
  * Extracted from viewer-crashlytics-panel.ts to stay under the line limit.
  * Returns JS template literal fragments for the IIFE in the crashlytics panel script.
+ *
+ * Layout follows the "guide, don't dump" principle (plan 054): a friendly intro,
+ * a 3-step progress indicator, one plain-language status line, then the step's
+ * primary action. Raw diagnostics and troubleshooting are tucked behind
+ * disclosures so a failed setup reads as guidance, not an error wall.
  */
 
 /** Get the setup wizard JS functions as a template literal fragment. */
@@ -13,28 +18,62 @@ export function getCrashlyticsSetupScript(): string {
         if (!cpSetupEl) return;
         var step = ctx.setupStep || 'gcloud';
         var stepNum = step === 'gcloud' ? 1 : step === 'token' ? 2 : 3;
-        var checklistHtml = ctx.setupChecklist ? buildChecklistHtml(ctx.setupChecklist) : '';
         var content = step === 'gcloud' ? getGcloudStep(ctx)
             : step === 'token' ? getTokenStep(ctx) : getConfigStep(ctx);
-        var diagHtml = ctx.diagnosticHtml || '';
-        var tip = '<p class="cp-setup-tip">Tip: Google Cloud may prompt you to enable billing, but Crashlytics API access is free.</p>';
-        var diagActions = (ctx.diagnosticCopyText || ctx.diagnosticHtml) ? buildDiagnosticActions(ctx) : '';
-        var consoleUrl = ctx.consoleUrl || 'https://console.firebase.google.com/';
-        var openConsole = '<p class="cp-open-console"><a class="cp-setup-link" data-action="openUrl" data-url="' + esc(consoleUrl) + '">Open Firebase Console</a> to verify project or get project/app ID.</p>';
-        var forStep = (ctx.troubleshootingForStep || []).length ? buildTroubleshootingForStepHtml(ctx.troubleshootingForStep) : '';
-        var fullTable = (ctx.troubleshootingTable || []).length ? buildTroubleshootingCollapsible(ctx.troubleshootingTable) : '';
-        cpSetupEl.innerHTML = checklistHtml + '<div class="cp-setup-header">Step ' + stepNum + ' of 3</div>'
-            + content + forStep + diagHtml + tip + diagActions + fullTable + openConsole
+        cpSetupEl.innerHTML = buildSetupIntro()
+            + buildStepIndicator(stepNum)
+            + getStepStatusLine(step)
+            + content
+            + buildProblemDisclosure(ctx)
+            + buildSetupHelp(ctx)
             + '<button class="cp-check-btn" id="cp-check-again">Check Again</button>';
         cpSetupEl.style.display = '';
         wireSetupButtons();
     }
 
-    function buildChecklistHtml(checklist) {
-        var g = checklist.gcloud === 'ok' ? '\\u2713 gcloud' : '\\u2717 gcloud';
-        var t = checklist.token === 'ok' ? '\\u2713 token' : checklist.token === 'missing' ? '\\u2717 token' : '\\u25CB token';
-        var c = checklist.config === 'ok' ? '\\u2713 config' : checklist.config === 'missing' ? '\\u2717 config' : '\\u25CB config';
-        return '<div class="cp-checklist">' + esc(g) + ' \\u00b7 ' + esc(t) + ' \\u00b7 ' + esc(c) + '</div>';
+    /* One friendly sentence of purpose. Second-person voice, no first person (USER_COPY_AND_TONE). */
+    function buildSetupIntro() {
+        return '<div class="cp-setup-intro">Connect Firebase Crashlytics to triage your crashes without leaving the editor.</div>';
+    }
+
+    /* 3-step progress: completed steps fill green, the current step highlights, later steps stay muted.
+       Replaces the old "Step N of 3" + symbol checklist with one scannable row. */
+    function buildStepIndicator(stepNum) {
+        function dot(n, label) {
+            var cls = n < stepNum ? 'done' : n === stepNum ? 'active' : 'todo';
+            var mark = n < stepNum ? '\\u2713' : String(n);
+            return '<span class="cp-step cp-step-' + cls + '"><span class="cp-step-num">' + mark + '</span>' + label + '</span>';
+        }
+        return '<div class="cp-steps">' + dot(1, 'Install') + dot(2, 'Sign in') + dot(3, 'Project') + '</div>';
+    }
+
+    /* Plain-language state derived from the step, not the raw diagnostic — robust even when the
+       underlying gcloud message is unfriendly (see bug_008). */
+    function getStepStatusLine(step) {
+        var msg = step === 'gcloud' ? 'Google Cloud access is not set up yet.'
+            : step === 'token' ? 'Not signed in to Google Cloud yet.'
+            : 'Firebase project is not configured yet.';
+        return '<div class="cp-setup-status">' + msg + '</div>';
+    }
+
+    /* Collapsed "What went wrong?" — keeps the raw diagnostic and step-specific troubleshooting
+       available without making them the first thing the user sees. */
+    function buildProblemDisclosure(ctx) {
+        var diag = ctx.diagnosticHtml || '';
+        var forStep = (ctx.troubleshootingForStep || []).length ? buildTroubleshootingForStepHtml(ctx.troubleshootingForStep) : '';
+        var actions = (ctx.diagnosticCopyText || ctx.diagnosticHtml) ? buildDiagnosticActions(ctx) : '';
+        if (!diag && !forStep && !actions) return '';
+        return '<details class="cp-problem"><summary>What went wrong?</summary>'
+            + '<div class="cp-problem-body">' + diag + forStep + actions + '</div></details>';
+    }
+
+    /* Collapsed help: billing note, full troubleshooting table, and the console link. */
+    function buildSetupHelp(ctx) {
+        var tip = '<p class="cp-setup-tip">Google Cloud may prompt you to enable billing, but Crashlytics API access is free.</p>';
+        var fullTable = (ctx.troubleshootingTable || []).length ? buildTroubleshootingCollapsible(ctx.troubleshootingTable) : '';
+        var consoleUrl = ctx.consoleUrl || 'https://console.firebase.google.com/';
+        var openConsole = '<p class="cp-open-console"><a class="cp-setup-link" data-action="openUrl" data-url="' + esc(consoleUrl) + '">Open Firebase Console</a> to verify the project or copy the project / app ID.</p>';
+        return tip + fullTable + openConsole;
     }
 
     function buildTroubleTableRows(rows) {
