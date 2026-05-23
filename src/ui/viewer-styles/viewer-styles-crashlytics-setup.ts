@@ -6,14 +6,41 @@ export function getSetupStyles(): string {
     return /* css */ `
 
 /* --- Setup wizard --- */
-.cp-checklist {
-    font-size: 0.9em;
-    margin: 8px 12px 4px;
-    padding: 4px 0;
-    border-bottom: 1px solid var(--vscode-panel-border);
-    opacity: 0.9;
+.cp-setup-intro { margin: 10px 12px 4px; font-size: 13px; line-height: 1.5; }
+
+/* 3-step progress row. Each step is a numbered/checked pill: done (green), active (accent), todo (muted). */
+.cp-steps { display: flex; gap: 6px; margin: 10px 12px; }
+.cp-step { display: flex; align-items: center; gap: 5px; flex: 1; font-size: 11px; opacity: 0.6; }
+.cp-step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px solid var(--vscode-panel-border);
+    font-size: 11px;
 }
-.cp-setup-header { font-size: 0.85em; opacity: 0.6; margin: 8px 12px; }
+.cp-step-active { opacity: 1; font-weight: 600; }
+.cp-step-active .cp-step-num {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border-color: var(--vscode-button-background);
+}
+.cp-step-done { opacity: 0.9; }
+.cp-step-done .cp-step-num {
+    background: var(--vscode-testing-iconPassed, #388e3c);
+    color: var(--vscode-button-foreground);
+    border-color: transparent;
+}
+
+.cp-setup-status { margin: 6px 12px 2px; font-size: 12px; font-weight: 600; }
+
+/* Collapsed diagnostic/troubleshooting so a failed setup reads as guidance, not an error wall. */
+.cp-problem { margin: 10px 12px; font-size: 0.9em; }
+.cp-problem > summary { cursor: pointer; opacity: 0.8; padding: 4px 0; }
+.cp-problem-body { margin-top: 4px; }
+
 .cp-setup-title { font-weight: 600; font-size: 1.1em; margin: 0 12px 4px; }
 .cp-setup-step { margin: 8px 12px; }
 .cp-setup-step p { margin: 4px 0 8px; opacity: 0.85; line-height: 1.4; font-size: 12px; }

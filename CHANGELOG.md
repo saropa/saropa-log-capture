@@ -26,6 +26,16 @@ For older versions (7.1.1 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+The Crashlytics setup screen is friendlier — a clear three-step guide instead of a wall of commands and errors.
+
+### Changed
+
+- **Crashlytics setup wizard redesigned to guide instead of dump** — the panel led with raw text ("Install Google Cloud CLI", the winget command, a `gcloud check failed: Command failed…` error box, and an always-open troubleshooting table), which read as an error wall rather than onboarding. It now opens with a one-line purpose, a scannable three-step indicator (Install → Sign in → Project) that fills in green as steps complete, and a plain-language status line per step. The raw diagnostic and step-specific troubleshooting move behind a collapsed "What went wrong?" disclosure, and the billing note + full troubleshooting table sit under collapsed help — so a failed setup reads as guidance, not noise. Same actions and capabilities, reorganized: see [viewer-crashlytics-setup.ts](src/ui/panels/viewer-crashlytics-setup.ts) and [viewer-styles-crashlytics-setup.ts](src/ui/viewer-styles/viewer-styles-crashlytics-setup.ts). First step of [plan 054](bugs/054_plan-app-quality-insights.md); the status line is intentionally derived from the step (not the raw gcloud message) so it stays friendly even with the gcloud PATH error tracked in [bug_008](bugs/bug_008_crashlytics-enable-default-and-gcloud-path.md).
+
+---
+
 ## [7.13.2]
 
 ### Fixed
