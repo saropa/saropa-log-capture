@@ -191,6 +191,9 @@ export const stringsA: Record<string, string> = {
     'correlation.badgeTitle': 'Related to: {0}',
     'msg.noGoogleServicesJson': 'No google-services.json found in workspace. Add one (e.g. android/app/) or use Browse to select a file.',
     'msg.noAnalyzableTokens': 'No analyzable tokens found in this line.',
+    'msg.crashlyticsConnected': 'Crashlytics connected — loading your crash issues.',
+    'msg.crashlyticsNotConnected': 'Crashlytics is not connected yet. Open the report for the failing step.',
+    'action.showDetails': 'Show details',
 
     'saveLabel.exportLogs': 'Export Logs',
     'filter.textFiles': 'Text Files',
