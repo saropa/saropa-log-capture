@@ -84,13 +84,33 @@ export function classifyTokenError(err: unknown): DiagnosticDetails {
 /** Hint shown when Firebase config is missing or API returns 404 (single source of truth for path/settings). */
 export const firebaseConfigSetupHint = 'Add google-services.json (e.g. android/app/) or set saropaLogCapture.firebase.projectId / .appId in settings.';
 
-/** Map an HTTP status code to a user-friendly error message. */
+/** Re-auth command that grants both cloud-platform and the Play reporting scope (single source of truth). */
+export const playReportingScopeFix = 'gcloud auth application-default login --scopes=https://www.googleapis.com/auth/cloud-platform,https://www.googleapis.com/auth/playdeveloperreporting';
+
+/**
+ * Map an HTTP status code (and, when present, the response body) to an actionable message.
+ *
+ * The 403 branch decodes the two real causes seen in the field rather than guessing a single one:
+ * ACCESS_TOKEN_SCOPE_INSUFFICIENT (the ADC token lacks the Play reporting scope — the default
+ * `gcloud auth application-default login` does not request it) and SERVICE_DISABLED (the API is not
+ * enabled on the project). Both get a concrete fix so the user is never left at a bare "Permission
+ * denied". Falling back to the role hint only when neither marker is present.
+ */
 export function classifyHttpStatus(status: number, body?: string): string {
+    const b = (body ?? '').toLowerCase();
     if (status === 401) { return 'Authentication expired — token may be invalid or revoked'; }
-    if (status === 403) { return 'Permission denied — your account needs the Firebase Crashlytics Viewer role'; }
-    if (status === 404) { return `Project or app not found. ${firebaseConfigSetupHint}`; }
-    if (status === 429) { return 'Rate limited by Firebase API — try again in a few minutes'; }
-    if (status >= 500) { return `Firebase API error (HTTP ${status}) — the service may be temporarily unavailable`; }
+    if (status === 403) {
+        if (b.includes('access_token_scope_insufficient') || b.includes('insufficient authentication scopes')) {
+            return `Sign-in is missing the Play reporting scope. Re-run: ${playReportingScopeFix}`;
+        }
+        if (b.includes('service_disabled') || b.includes('has not been used in project') || b.includes('it is disabled')) {
+            return 'The required Google API is not enabled for this project — enable it in the Google Cloud Console, then retry.';
+        }
+        return 'Permission denied — your account needs access to this app in the Play Console / Firebase project.';
+    }
+    if (status === 404) { return `Endpoint or app not found (HTTP 404). ${firebaseConfigSetupHint}`; }
+    if (status === 429) { return 'Rate limited by the API — try again in a few minutes'; }
+    if (status >= 500) { return `Server error (HTTP ${status}) — the service may be temporarily unavailable`; }
     const snippet = body ? body.slice(0, 100) : '';
     return `HTTP ${status}${snippet ? `: ${snippet}` : ''}`;
 }
