@@ -7,7 +7,10 @@ import type { HighlightRule } from "../storage/highlight-rules";
  */
 export function defaultHighlightRules(): HighlightRule[] {
   return [
-    { pattern: String.raw`/\b(fatal|panic|critical)\b/i`, color: "var(--vscode-errorForeground)", bold: true, label: "Fatal" },
+    // "critical" is matched only in a severity context (critical:, [critical], critical
+    // error/failure/...) — bare "critical" highlighted whole noun phrases like "critical CSS"
+    // in error red. Mirrors criticalSeverityPattern in level-classifier.ts.
+    { pattern: String.raw`/\b(fatal|panic)\b|\[critical\]|\bcritical\s*:|\bcritical\s+(?:errors?|failures?|exceptions?|faults?)\b/i`, color: "var(--vscode-errorForeground)", bold: true, label: "Fatal" },
     { pattern: String.raw`/\b(error|exception|fail(ed|ure)?)\b/i`, color: "var(--vscode-errorForeground)", label: "Error" },
     { pattern: String.raw`/\b(warn(ing)?|caution)\b/i`, color: "var(--vscode-editorWarning-foreground)", label: "Warning" },
     { pattern: String.raw`/\b(todo|fixme|xxx)\b/i`, color: "var(--vscode-editorWarning-foreground)", italic: true, label: "TODO" },
