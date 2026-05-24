@@ -55,6 +55,7 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.maximizePanel` | %command.maximizePanel.title% |  |
 | `saropaLogCapture.newCollectionFromSessions` | %command.newCollectionFromSessions.title% |  |
 | `saropaLogCapture.open` | %command.open.title% |  |
+| `saropaLogCapture.openAppQualityInsights` | Saropa Log Capture: Open App Quality Insights |  |
 | `saropaLogCapture.openCollection` | %command.openCollection.title% |  |
 | `saropaLogCapture.openExternalLogsForSession` | %command.openExternalLogsForSession.title% |  |
 | `saropaLogCapture.openFolder` | %command.openFolder.title% |  |
@@ -99,4 +100,4 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.trashSession` | %command.trashSession.title% |  |
 | `saropaLogCapture.ungroupSession` | Saropa Log Capture: Ungroup Session |  |
 
-**Total:** 92 commands.
+**Total:** 93 commands.
