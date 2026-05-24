@@ -171,6 +171,9 @@ export function getContextMenuHtml(): string {
             <div class="context-menu-item" data-action="show-code-quality" data-line-action title="Open a popover with code quality diagnostics for this file">
                 <span class="codicon codicon-symbol-misc"></span> View Code Quality
             </div>
+            <div class="context-menu-item" data-action="show-git-history" title="Open a popover with git blame for this line and the file's recent commits">
+                <span class="codicon codicon-git-commit"></span> View Git History
+            </div>
             <div class="context-menu-item" data-action="open-drift-advisor" data-line-action data-drift-line-action title="Open this SQL line in the Drift Advisor extension">
                 <span class="codicon codicon-database"></span> Open in Drift Advisor
             </div>
