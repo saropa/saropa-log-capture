@@ -257,13 +257,38 @@ function getDashboardScript(): string {
         if (frame) { post({ type: 'openFrame', file: frame.getAttribute('data-frame-file'), line: frame.getAttribute('data-frame-line') }); }
     });
 
+    function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+    // Append source-line + git-blame annotations under the matching app frames (streamed after detail).
+    function applyFrameContexts(contexts) {
+        const frames = document.querySelectorAll('#aqi-detail .stack-frame');
+        contexts.forEach(function (ctx) {
+            for (let i = 0; i < frames.length; i++) {
+                if (frames[i].getAttribute('data-frame-file') !== ctx.file || frames[i].getAttribute('data-frame-line') !== String(ctx.line)) { continue; }
+                if (frames[i].querySelector('.aqi-frame-ctx')) { break; }
+                let html = '';
+                if (ctx.code) { html += '<code class="aqi-frame-code">' + esc(ctx.code) + '</code>'; }
+                if (ctx.blame) { html += '<span class="aqi-frame-blame">' + esc(ctx.blame) + '</span>'; }
+                const ann = document.createElement('div');
+                ann.className = 'aqi-frame-ctx';
+                ann.innerHTML = html;
+                frames[i].appendChild(ann);
+                break;
+            }
+        });
+    }
+
     window.addEventListener('message', function (e) {
         const m = e.data;
-        if (!m || m.type !== 'detail') { return; }
-        const detail = document.getElementById('aqi-detail');
-        const breakdown = document.getElementById('aqi-breakdown');
-        if (detail) { detail.innerHTML = m.detailHtml || '<div class="no-matches">No detail available.</div>'; }
-        if (breakdown) { breakdown.innerHTML = m.breakdownHtml || '<div class="aqi-empty">No breakdown for this issue.</div>'; }
+        if (!m) { return; }
+        if (m.type === 'detail') {
+            const detail = document.getElementById('aqi-detail');
+            const breakdown = document.getElementById('aqi-breakdown');
+            if (detail) { detail.innerHTML = m.detailHtml || '<div class="no-matches">No detail available.</div>'; }
+            if (breakdown) { breakdown.innerHTML = m.breakdownHtml || '<div class="aqi-empty">No breakdown for this issue.</div>'; }
+        } else if (m.type === 'frameContext') {
+            applyFrameContexts(m.contexts || []);
+        }
     });
 })();
 `;
