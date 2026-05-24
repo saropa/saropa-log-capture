@@ -12,7 +12,7 @@ actionable feedback (no silent empties).
 
 The **UI / dashboard design** — the 3-pane "App Quality Insights" view, parity with Android Studio's
 Crashlytics + Android vitals screens, the setup-wizard redesign, and the "WOW" features — is tracked
-separately in **[plan 054](054_plan-app-quality-insights.md)**. The dashboard consumes whatever this
+separately in **[plan 054](../plans/054_plan-app-quality-insights.md)**. The dashboard consumes whatever this
 bug's data layer returns. Keep connection/auth/API discussion here; keep layout/UX/feature discussion
 in plan 054.
 
