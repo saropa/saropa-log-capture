@@ -15,6 +15,9 @@ export function getCrashlyticsPanelHtml(): string {
     <div class="crashlytics-panel-header">
         <span id="cp-header-text">${t('viewer.crashlytics.region')}</span>
         <div class="crashlytics-panel-actions">
+            <button id="cp-open-dashboard" class="crashlytics-panel-action" title="${t('viewer.crashlytics.openDashboard.title')}" aria-label="${t('viewer.crashlytics.openDashboard.label')}">
+                <span class="codicon codicon-dashboard"></span>
+            </button>
             <button id="cp-refresh" class="crashlytics-panel-action" title="${t('viewer.crashlytics.refresh.title')}" aria-label="${t('viewer.crashlytics.refresh.label')}">
                 <span class="codicon codicon-refresh"></span>
             </button>
@@ -134,14 +137,12 @@ export function getCrashlyticsPanelScript(): string {
         var users = issue.userCount > 0
             ? ' \\u00b7 ' + vt(issue.userCount !== 1 ? 'viewer.crashlytics.usersMany' : 'viewer.crashlytics.usersOne', issue.userCount) : '';
         var ver = formatVersionRange(issue);
-        var actions = '<div class="cp-actions">'
-            + '<button class="cp-action-btn" data-action="crashlyticsCloseIssue" data-issue="' + esc(issue.id) + '">' + vt('viewer.crashlytics.closeIssue') + '</button>'
-            + '<button class="cp-action-btn" data-action="crashlyticsMuteIssue" data-issue="' + esc(issue.id) + '">' + vt('viewer.crashlytics.mute') + '</button>'
-            + '</div>';
+        // Close/mute removed: the Play Reporting data source is read-only, so those actions were
+        // no-ops (bug_008 / plan 054). The dashboard's "Open Firebase Console" link is the way to
+        // act on an issue.
         return '<div class="cp-item" data-issue-id="' + esc(issue.id) + '">'
             + '<div class="cp-title">' + badge + state + ' ' + esc(issue.title) + ' <span class="cp-expand-icon">\\u25B6</span></div>'
             + '<div class="cp-meta">' + esc(issue.subtitle) + ' \\u00b7 ' + vt('viewer.crashlytics.events', issue.eventCount) + users + ver + '</div>'
-            + actions
             + '<div class="cp-detail" id="cp-detail-' + esc(issue.id) + '"></div></div>';
     }
 
@@ -170,12 +171,6 @@ export function getCrashlyticsPanelScript(): string {
 
     if (cpPanelEl) {
         cpPanelEl.addEventListener('click', function(e) {
-            var actionBtn = e.target.closest('.cp-action-btn');
-            if (actionBtn) {
-                e.stopPropagation();
-                vscodeApi.postMessage({ type: actionBtn.dataset.action, issueId: actionBtn.dataset.issue });
-                return;
-            }
             var copyBtn = e.target.closest('.cp-copy-btn');
             if (copyBtn && copyBtn.dataset.copy) {
                 e.stopPropagation();
@@ -245,6 +240,11 @@ export function getCrashlyticsPanelScript(): string {
     if (refreshBtn) refreshBtn.addEventListener('click', function() {
         showLoading();
         vscodeApi.postMessage({ type: 'requestCrashlyticsData' });
+    });
+
+    var openDashBtn = document.getElementById('cp-open-dashboard');
+    if (openDashBtn) openDashBtn.addEventListener('click', function() {
+        vscodeApi.postMessage({ type: 'openAppQualityInsights' });
     });
 
     /* ---- Close / outside click ---- */

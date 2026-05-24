@@ -66,15 +66,6 @@ export async function queryTopIssues(config: FirebaseConfig, token: string, erro
     return filterByTokens(data, errorTokens);
 }
 
-/**
- * Issue state mutation (close/mute) is NOT supported by Play Developer Reporting — it is read-only.
- * Returns false and records a diagnostic so the UI surfaces this instead of failing silently.
- */
-export async function updateIssueState(_config: FirebaseConfig, _token: string, _issueId: string, _state: 'CLOSED' | 'MUTED'): Promise<boolean> {
-    lastApiDiagnostic = { step: 'api', errorType: 'config', checkedAt: Date.now(), message: 'Close/mute is not available via the Play Reporting API (read-only) — use the Play Console.' };
-    return false;
-}
-
 /** First sampled event (stack) for an issue. */
 export async function getCrashEventDetail(token: string, config: FirebaseConfig, issueId: string): Promise<CrashlyticsEventDetail | undefined> {
     const multi = await getCrashEvents(token, config, issueId);
