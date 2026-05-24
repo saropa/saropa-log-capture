@@ -62,6 +62,9 @@ export function getCrashlyticsInteractionsScript(): string {
             // View on Firebase: open the project Crashlytics console in the browser (#3).
             var consoleLink = e.target.closest('.cd-console-link');
             if (consoleLink && consoleLink.getAttribute('data-url')) { vscodeApi.postMessage({ type: 'openUrl', url: consoleLink.getAttribute('data-url') }); return; }
+            // Related PR/issue links in the "In your project" panel open in the browser (5c-3).
+            var projLink = e.target.closest('.cd-proj-link');
+            if (projLink && projLink.getAttribute('data-url')) { vscodeApi.postMessage({ type: 'openUrl', url: projLink.getAttribute('data-url') }); return; }
             // Jump to code: an app frame opens the file at its line (UX #1).
             var frame = e.target.closest('.frame-app[data-frame-file]');
             if (frame) { vscodeApi.postMessage({ type: 'crashlyticsOpenFrame', file: frame.getAttribute('data-frame-file'), line: frame.getAttribute('data-frame-line') }); }
