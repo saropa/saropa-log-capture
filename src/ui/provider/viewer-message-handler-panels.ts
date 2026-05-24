@@ -48,7 +48,7 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
         return true;
       case "requestCrashlyticsData": case "crashlyticsCheckAgain": panelHandlers.handleCrashlyticsRequest(ctx.post).catch(() => {}); return true;
       case "crashlyticsValidate": panelHandlers.handleCrashlyticsValidate(ctx.post).catch(() => {}); return true;
-      case "openAppQualityInsights": void vscode.commands.executeCommand('saropaLogCapture.openAppQualityInsights', typeof msg.issueId === 'string' ? msg.issueId : undefined); return true;
+      case "fetchCrashlyticsDetail": panelHandlers.handleCrashlyticsDetail(String(msg.issueId ?? ''), (msg.meta as Record<string, unknown>) ?? {}, ctx.post).catch(() => {}); return true;
       case "crashlyticsRunGcloudAuth": panelHandlers.handleGcloudAuth(ctx.post); return true;
       case "crashlyticsBrowseGoogleServices": panelHandlers.handleBrowseGoogleServices(ctx.post).catch(() => {}); return true;
       case "crashlyticsOpenGoogleServicesJson": panelHandlers.handleOpenGoogleServicesJson().catch(() => {}); return true;
