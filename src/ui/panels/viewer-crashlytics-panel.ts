@@ -218,6 +218,20 @@ export function getCrashlyticsPanelScript(): string {
                 vscodeApi.postMessage({ type: 'openUrl', url: console.dataset.url });
                 return;
             }
+            // Event navigator: read the current index from data-index (not the localized
+            // label) and re-fetch the adjacent event. stopPropagation keeps the click from
+            // toggling the issue card collapsed. Reuses fetchCrashDetail with an eventIndex.
+            var navBtn = e.target.closest('.crash-nav-btn');
+            if (navBtn && !navBtn.disabled) {
+                e.stopPropagation();
+                var nav = navBtn.closest('.crash-event-nav');
+                if (nav) {
+                    var cur = parseInt(nav.dataset.index || '0', 10);
+                    var dir = parseInt(navBtn.dataset.dir || '0', 10);
+                    vscodeApi.postMessage({ type: 'fetchCrashDetail', issueId: nav.dataset.issueId, eventIndex: cur + dir });
+                }
+                return;
+            }
             var item = e.target.closest('.cp-item');
             if (item) { toggleDetail(item); }
         });
