@@ -82,6 +82,11 @@ body { margin: 0; font-family: var(--vscode-font-family); font-size: var(--vscod
 .crash-log-entry { font-size: 11px; padding: 1px 0; }
 .crash-log-ts { opacity: 0.6; }
 .no-matches { opacity: 0.6; font-size: 12px; }
+
+/* Codebase enrichment shown under an app frame: the source line + git blame. */
+.aqi-frame-ctx { margin: 1px 0 6px 22px; padding: 3px 6px; border-left: 2px solid var(--vscode-panel-border); }
+.aqi-frame-code { display: block; font-family: var(--vscode-editor-font-family, monospace); font-size: 11px; white-space: pre-wrap; word-break: break-all; color: var(--vscode-foreground); }
+.aqi-frame-blame { display: block; font-size: 10px; opacity: 0.7; margin-top: 2px; }
 .crash-dist-label { font-weight: 600; font-size: 11px; margin: 8px 0 4px; }
 .crash-dist-row { display: flex; align-items: center; gap: 6px; font-size: 11px; margin: 2px 0; }
 .crash-dist-name { width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
