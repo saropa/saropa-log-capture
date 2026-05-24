@@ -32,13 +32,13 @@ function rchStr(key, fallback) {
 
 function buildRootCauseHypothesesExplainText(bundle, hy) {
     var lines = [];
-    lines.push('Log viewer root-cause hypotheses (deterministic heuristics, not verified facts):');
+    lines.push(vt('viewer.rch.explainHeader'));
     var hi;
     for (hi = 0; hi < hy.length; hi++) {
         lines.push('- ' + String(hy[hi].text || ''));
     }
     lines.push('');
-    lines.push('Session id: ' + String(bundle && bundle.sessionId ? bundle.sessionId : ''));
+    lines.push(vt('viewer.rch.explainSessionId', String(bundle && bundle.sessionId ? bundle.sessionId : '')));
     return lines.join('\\n');
 }
 
@@ -145,17 +145,17 @@ function renderRootCauseHypothesesFromCache() {
             /* Cross-session trend badge: shows ↻N if this signal type appeared in 2+ past sessions */
             var trendCount = rchCachedTrends[item.templateId];
             if (typeof trendCount === 'number' && trendCount >= 2) {
-                li += '<span class="rch-trend-badge" title="Detected in ' + trendCount + ' session' + (trendCount === 1 ? '' : 's') + '">\\u21BB' + trendCount + '</span>';
+                li += '<span class="rch-trend-badge" title="' + vt(trendCount === 1 ? 'viewer.rch.trendBadge.title.one' : 'viewer.rch.trendBadge.title.many', trendCount) + '">\\u21BB' + trendCount + '</span>';
             }
-            li += '<button type="button" class="rch-hyp-text rch-report-btn" data-rch-key="' + escapeHtml(item.hypothesisKey) + '" title="Open signal report">' + escapeHtml(item.text) + '</button>';
-            li += '<button type="button" class="rch-dismiss-btn" data-rch-dismiss="' + escapeHtml(item.hypothesisKey) + '" aria-label="Dismiss signal" title="Dismiss signal"><span class="codicon codicon-close"></span></button>';
+            li += '<button type="button" class="rch-hyp-text rch-report-btn" data-rch-key="' + escapeHtml(item.hypothesisKey) + '" title="' + vt('viewer.rch.openReport') + '">' + escapeHtml(item.text) + '</button>';
+            li += '<button type="button" class="rch-dismiss-btn" data-rch-dismiss="' + escapeHtml(item.hypothesisKey) + '" aria-label="' + vt('viewer.rch.dismiss') + '" title="' + vt('viewer.rch.dismiss') + '"><span class="codicon codicon-close"></span></button>';
             li += '</li>';
             parts.push(li);
         }
         parts.push('</ul>');
     }
     if (dismissedCount > 0) {
-        parts.push('<button type="button" class="rch-restore-btn" data-rch-restore="1">' + dismissedCount + ' dismissed \\u2014 restore all</button>');
+        parts.push('<button type="button" class="rch-restore-btn" data-rch-restore="1">' + vt('viewer.rch.restoreAll', dismissedCount) + '</button>');
     }
     host.innerHTML = parts.join('');
 }
@@ -201,7 +201,7 @@ function initRootCauseHypothesesUi() {
             ev.preventDefault();
             rchDismissedKeys[dismissBtn.dataset.rchDismiss] = true;
             renderRootCauseHypothesesFromCache();
-            showRchToast(host, 'Signal hidden for this session');
+            showRchToast(host, vt('viewer.rch.signalHidden'));
             return;
         }
         var restoreBtn = t && t.closest ? t.closest('.rch-restore-btn') : null;

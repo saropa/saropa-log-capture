@@ -28,12 +28,12 @@ suite('Related Queries popover', () => {
     });
 
     test('should show empty state when no queries found', () => {
-        assert.ok(script.includes('No related queries found'));
+        assert.ok(script.includes('viewer.relatedQueries.empty'));
     });
 
     test('should include Copy All button for non-empty results', () => {
         assert.ok(script.includes('rq-copy-all'));
-        assert.ok(script.includes('Copy All'));
+        assert.ok(script.includes('viewer.relatedQueries.copyAll'));
     });
 
     test('should close other popovers when opening', () => {

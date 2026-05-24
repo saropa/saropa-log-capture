@@ -7,6 +7,7 @@
  */
 import * as assert from "node:assert";
 import * as vm from "node:vm";
+import { vtStub } from "./viewer-session-panel-test-helpers";
 import { getViewerDataAddScript } from "../../ui/viewer/viewer-data-add";
 import { getViewerDataHelpersCore } from "../../ui/viewer/viewer-data-helpers-core";
 import { getSqlDrilldownUiScript } from "../../ui/viewer/viewer-data-sql-drilldown-ui";
@@ -118,7 +119,7 @@ function loadAnnotateSandbox(): AnnotateSandboxVm {
         getViewerDataHelpersCore() +
         getViewerDataAddScript() +
         VM_TEST_ANNOTATE_DETECTOR;
-    const ctx = vm.createContext({ console, window: {} });
+    const ctx = vm.createContext({ console, window: {}, vt: vtStub });
     vm.runInContext(code, ctx, { filename: "viewer-db-detector-annotate-line-sandbox.js", timeout: 10_000 });
     return ctx as unknown as AnnotateSandboxVm;
 }
