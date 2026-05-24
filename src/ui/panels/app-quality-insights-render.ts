@@ -36,13 +36,46 @@ function formatVersionRange(issue: CrashlyticsIssue): string {
     return ` · v${range}`;
 }
 
+/** Distinct app versions an issue spans (first + last), for the version filter. */
+function issueVersions(issue: CrashlyticsIssue): string[] {
+    return [...new Set([issue.firstVersion, issue.lastVersion].filter((v): v is string => !!v))];
+}
+
 function renderIssueRow(issue: CrashlyticsIssue): string {
     const sev = issue.isFatal ? 'aqi-sev-fatal' : 'aqi-sev-nonfatal';
     const users = issue.userCount > 0 ? ` · <b>${issue.userCount}</b> users` : '';
-    return `<div class="aqi-issue" data-issue-id="${escapeHtml(issue.id)}" tabindex="0">
+    // data-* attributes drive the client-side tab/search/version filtering (no host round-trip).
+    const search = `${issue.title} ${issue.subtitle}`.toLowerCase();
+    return `<div class="aqi-issue" data-issue-id="${escapeHtml(issue.id)}" data-kind="${issue.kind ?? 'unknown'}" data-versions="${escapeHtml(issueVersions(issue).join(','))}" data-search="${escapeHtml(search)}" tabindex="0">
         <div class="aqi-issue-head"><span class="aqi-sev ${sev}"></span><span class="aqi-issue-title">${escapeHtml(issue.title) || 'Unknown error'}</span></div>
         ${issue.subtitle ? `<div class="aqi-issue-sub">${escapeHtml(issue.subtitle)}</div>` : ''}
         <div class="aqi-issue-meta"><b>${issue.eventCount}</b> events${users}${formatVersionRange(issue)}</div>
+    </div>`;
+}
+
+/** Per-tab issue counts shown on the tab labels. */
+function kindCounts(issues: readonly CrashlyticsIssue[]): Record<string, number> {
+    const counts: Record<string, number> = { all: issues.length, crash: 0, anr: 0, nonfatal: 0 };
+    for (const issue of issues) {
+        const k = issue.kind ?? 'unknown';
+        if (counts[k] !== undefined) { counts[k]++; }
+    }
+    return counts;
+}
+
+/** Source/type tabs + text search + version dropdown. Filtering is client-side over the loaded rows. */
+function renderFilterBar(model: DashboardModel): string {
+    const counts = kindCounts(model.issues);
+    const tab = (kind: string, label: string): string =>
+        `<button class="aqi-tab${kind === 'all' ? ' selected' : ''}" data-kind="${kind}">${label} <span class="aqi-tab-count">${counts[kind] ?? 0}</span></button>`;
+    const versions = [...new Set(model.issues.flatMap(issueVersions))].sort();
+    const versionOpts = ['<option value="">All versions</option>',
+        ...versions.map(v => `<option value="${escapeHtml(v)}">v${escapeHtml(v)}</option>`)].join('');
+    return `<div class="aqi-filterbar">
+        <div class="aqi-tabs">${tab('all', 'All')}${tab('crash', 'Crashes')}${tab('anr', 'ANRs')}${tab('nonfatal', 'Non-fatals')}</div>
+        <span class="aqi-spacer"></span>
+        <input class="aqi-search" id="aqi-search" type="text" placeholder="Filter issues…" aria-label="Filter issues">
+        <select id="aqi-version" title="App version">${versionOpts}</select>
     </div>`;
 }
 
@@ -87,8 +120,9 @@ export function buildDashboardHtml(model: DashboardModel, nonce: string): string
         : '<div class="aqi-empty">No issues in this time range.</div>';
     return `<!DOCTYPE html><html><head>${head}</head><body>
 ${renderToolbar(model)}
+${renderFilterBar(model)}
 <div class="aqi-grid">
-    <div class="aqi-pane" id="aqi-issues"><div class="aqi-pane-title">Issues (${model.issues.length})</div>${list}</div>
+    <div class="aqi-pane" id="aqi-issues"><div class="aqi-pane-title">Issues (<span id="aqi-issue-count">${model.issues.length}</span>)</div>${list}</div>
     <div class="aqi-pane"><div class="aqi-pane-title">Detail</div><div id="aqi-detail"><div class="aqi-empty">Select an issue to see its stack trace.</div></div></div>
     <div class="aqi-pane"><div class="aqi-pane-title">Breakdown</div><div id="aqi-breakdown"><div class="aqi-empty">Device & version breakdown appears here.</div></div></div>
 </div>
@@ -102,6 +136,39 @@ function getDashboardScript(): string {
 (function () {
     const vscode = acquireVsCodeApi();
     function post(msg) { vscode.postMessage(msg); }
+
+    /* ---- Client-side filtering: tab (kind) ∩ search text ∩ version, over the loaded rows ---- */
+    var activeKind = 'all', searchText = '', activeVersion = '';
+    function applyFilters() {
+        var shown = 0;
+        document.querySelectorAll('.aqi-issue').forEach(function (row) {
+            var kind = row.getAttribute('data-kind');
+            var text = row.getAttribute('data-search') || '';
+            var versions = (row.getAttribute('data-versions') || '').split(',');
+            var ok = (activeKind === 'all' || kind === activeKind)
+                && (!searchText || text.indexOf(searchText) >= 0)
+                && (!activeVersion || versions.indexOf(activeVersion) >= 0);
+            row.style.display = ok ? '' : 'none';
+            if (ok) { shown++; }
+        });
+        var counter = document.getElementById('aqi-issue-count');
+        if (counter) { counter.textContent = String(shown); }
+    }
+    var tabs = document.querySelector('.aqi-tabs');
+    if (tabs) {
+        tabs.addEventListener('click', function (e) {
+            var btn = e.target.closest('.aqi-tab');
+            if (!btn) { return; }
+            tabs.querySelectorAll('.aqi-tab.selected').forEach(function (t) { t.classList.remove('selected'); });
+            btn.classList.add('selected');
+            activeKind = btn.getAttribute('data-kind');
+            applyFilters();
+        });
+    }
+    var searchEl = document.getElementById('aqi-search');
+    if (searchEl) { searchEl.addEventListener('input', function () { searchText = searchEl.value.toLowerCase(); applyFilters(); }); }
+    var versionEl = document.getElementById('aqi-version');
+    if (versionEl) { versionEl.addEventListener('change', function () { activeVersion = versionEl.value; applyFilters(); }); }
 
     const issues = document.getElementById('aqi-issues');
     if (issues) {

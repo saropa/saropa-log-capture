@@ -7,7 +7,7 @@
 
 import * as assert from 'assert';
 import {
-    mapErrorIssue, mapErrorReport, parseReportText, osVersionLabel, deviceModelLabel, issueShortId,
+    mapErrorIssue, mapErrorReport, parseReportText, osVersionLabel, deviceModelLabel, issueShortId, issueKind,
 } from '../../../modules/crashlytics/play-reporting-mappers';
 
 suite('play-reporting-mappers: mapErrorIssue', () => {
@@ -30,6 +30,7 @@ suite('play-reporting-mappers: mapErrorIssue', () => {
         assert.strictEqual(issue.eventCount, 1234);
         assert.strictEqual(issue.userCount, 321);
         assert.strictEqual(issue.isFatal, true);
+        assert.strictEqual(issue.kind, 'crash');
         assert.strictEqual(issue.state, 'UNKNOWN');
         assert.strictEqual(issue.firstVersion, '40');
         assert.strictEqual(issue.lastVersion, '52');
@@ -104,5 +105,12 @@ suite('play-reporting-mappers: label/id helpers', () => {
     test('issueShortId returns the last path segment', () => {
         assert.strictEqual(issueShortId('apps/com.x/errorIssues/4567'), '4567');
         assert.strictEqual(issueShortId('4567'), '4567');
+    });
+
+    test('issueKind maps the Play type enum to a tab category', () => {
+        assert.strictEqual(issueKind('CRASH'), 'crash');
+        assert.strictEqual(issueKind('APPLICATION_NOT_RESPONDING'), 'anr');
+        assert.strictEqual(issueKind('NON_FATAL'), 'nonfatal');
+        assert.strictEqual(issueKind('ERROR_TYPE_UNSPECIFIED'), 'unknown');
     });
 });
