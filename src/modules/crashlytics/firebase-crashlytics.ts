@@ -11,7 +11,7 @@ import { logCrashlytics, classifyGcloudError, classifyTokenError, firebaseConfig
 import type { CrashlyticsIssueEvents, CrashlyticsEventDetail, FirebaseContext, FirebaseConfig, SetupChecklist } from './crashlytics-types';
 export type { CrashlyticsIssue, CrashlyticsStackFrame, CrashlyticsEventDetail, CrashlyticsIssueEvents, FirebaseContext, SetupChecklist, SetupStepStatus } from './crashlytics-types';
 import {
-    queryTopIssues, updateIssueState as apiUpdateIssueState,
+    queryTopIssues,
     getCrashEvents as apiGetCrashEvents,
     clearApiCache, getLastApiDiagnostic,
 } from './crashlytics-api';
@@ -217,19 +217,6 @@ export async function getFirebaseContext(errorTokens: readonly string[]): Promis
         logCrashlytics('error', `getFirebaseContext failed: ${msg}`);
         lastDiagnostic = { step: 'api', errorType: 'network', message: msg, checkedAt: Date.now() };
         return { available: false, setupStep: 'gcloud', setupHint: 'Unexpected error; check Output for Saropa Crashlytics', issues: [], diagnostics: lastDiagnostic, setupChecklist: { gcloud: 'missing', token: 'pending', config: 'pending' } };
-    }
-}
-
-/** Update a Crashlytics issue state (close or mute). Returns true on success. Never throws. */
-export async function updateIssueState(issueId: string, state: 'CLOSED' | 'MUTED'): Promise<boolean> {
-    try {
-        const token = await getAccessToken();
-        if (!token) { return false; }
-        const config = await detectFirebaseConfig();
-        if (!config) { return false; }
-        return await apiUpdateIssueState(config, token, issueId, state);
-    } catch {
-        return false;
     }
 }
 
