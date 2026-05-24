@@ -6,6 +6,7 @@
  */
 
 import { getCrashlyticsSetupScript } from './viewer-crashlytics-setup';
+import { getCrashlyticsInteractionsScript } from './viewer-crashlytics-interactions-script';
 import { t } from '../../l10n';
 
 /** Generate the crashlytics panel HTML shell. */
@@ -19,6 +20,20 @@ export function getCrashlyticsPanelHtml(): string {
                 <span class="codicon codicon-refresh"></span>
             </button>
             <button id="cp-panel-close" class="crashlytics-panel-close" title="${t('viewer.crashlytics.close.title')}" aria-label="${t('viewer.crashlytics.close.label')}">&times;</button>
+        </div>
+    </div>
+    <div id="cp-filterbar" class="cp-filterbar" style="display:none">
+        <div class="cp-tabs">
+            <button class="cp-tab cp-tab-sel" data-kind="all" title="${t('viewer.crashlytics.filter.all')}">All</button>
+            <button class="cp-tab" data-kind="crash" title="${t('viewer.crashlytics.filter.crash')}">Crash</button>
+            <button class="cp-tab" data-kind="anr" title="${t('viewer.crashlytics.filter.anr')}">ANR</button>
+            <button class="cp-tab" data-kind="nonfatal" title="${t('viewer.crashlytics.filter.nonfatal')}">NF</button>
+        </div>
+        <div class="cp-fcontrols">
+            <input id="cp-search" class="cp-search" type="text" placeholder="${t('viewer.crashlytics.filter.search')}" aria-label="${t('viewer.crashlytics.filter.search')}">
+            <select id="cp-ver" class="cp-fselect" title="${t('viewer.crashlytics.filter.version')}" aria-label="${t('viewer.crashlytics.filter.version')}"><option value="">${t('viewer.crashlytics.filter.verAbbr')}</option></select>
+            <select id="cp-dev" class="cp-fselect" title="${t('viewer.crashlytics.filter.device')}" aria-label="${t('viewer.crashlytics.filter.device')}"><option value="">${t('viewer.crashlytics.filter.devAbbr')}</option></select>
+            <select id="cp-os" class="cp-fselect" title="${t('viewer.crashlytics.filter.os')}" aria-label="${t('viewer.crashlytics.filter.os')}"><option value="">${t('viewer.crashlytics.filter.osAbbr')}</option></select>
         </div>
     </div>
     <div class="crashlytics-panel-content">
@@ -35,6 +50,7 @@ export function getCrashlyticsPanelHtml(): string {
 /** Generate the crashlytics panel script. */
 export function getCrashlyticsPanelScript(): string {
     const setupScript = getCrashlyticsSetupScript();
+    const interactionsScript = getCrashlyticsInteractionsScript();
     return /* js */ `
 (function() {
     var cpPanelEl = document.getElementById('crashlytics-panel');
@@ -83,6 +99,8 @@ export function getCrashlyticsPanelScript(): string {
         if (cpIssuesEl) cpIssuesEl.innerHTML = '';
         if (cpEmptyEl) cpEmptyEl.style.display = 'none';
         if (cpConsoleEl) cpConsoleEl.style.display = 'none';
+        var fb = document.getElementById('cp-filterbar');
+        if (fb) fb.style.display = 'none';
     }
 
     /* ---- Rendering ---- */
@@ -96,6 +114,7 @@ export function getCrashlyticsPanelScript(): string {
         }
         if (ctx.issues && ctx.issues.length > 0) {
             if (cpIssuesEl) cpIssuesEl.innerHTML = ctx.issues.map(renderIssue).join('');
+            showCpFilters();
         } else if (ctx.diagnosticHtml) {
             // When query fails (e.g. 404), offer to open the config file used for projectId/appId.
             lastDiagnosticCopyText = ctx.diagnosticCopyText || '';
@@ -229,57 +248,7 @@ export function getCrashlyticsPanelScript(): string {
         });
     }
 
-    /* ---- In-viewer issue detail (fills the log area beside the sidebar) ---- */
-    var cpDetailEl = document.getElementById('crashlytics-detail');
-    var cpLogWrap = document.getElementById('log-content-wrapper');
-    var cpDetailMarkdown = '';
-
-    function openIssueDetail(id) {
-        if (!cpDetailEl) return;
-        var row = null;
-        if (cpIssuesEl) {
-            var items = cpIssuesEl.querySelectorAll('.cp-item');
-            for (var i = 0; i < items.length; i++) {
-                var sel = items[i].dataset.issueId === id;
-                items[i].classList.toggle('cp-selected', sel);
-                if (sel) row = items[i];
-            }
-        }
-        var meta = row ? { title: row.dataset.title, subtitle: row.dataset.sub, events: row.dataset.events, users: row.dataset.users, fatal: row.dataset.fatal === '1', fv: row.dataset.fv, lv: row.dataset.lv } : {};
-        cpDetailEl.innerHTML = '<div class="cd-loading">' + vt('viewer.crashlytics.detail.loading') + '</div>';
-        cpDetailEl.classList.remove('u-hidden');
-        if (cpLogWrap) cpLogWrap.classList.add('u-hidden');
-        vscodeApi.postMessage({ type: 'fetchCrashlyticsDetail', issueId: id, meta: meta });
-    }
-
-    function closeIssueDetail() {
-        if (cpDetailEl) cpDetailEl.classList.add('u-hidden');
-        if (cpLogWrap) cpLogWrap.classList.remove('u-hidden');
-    }
-
-    if (cpDetailEl) {
-        cpDetailEl.addEventListener('click', function(e) {
-            if (e.target.closest('.cd-back')) { closeIssueDetail(); return; }
-            if (e.target.closest('.cd-copy')) { vscodeApi.postMessage({ type: 'copyToClipboard', text: cpDetailMarkdown }); }
-        });
-    }
-
-    /* Append source line + git blame under matching app frames (streamed after detail). */
-    function applyFrameContexts(contexts) {
-        if (!cpDetailEl) return;
-        var frames = cpDetailEl.querySelectorAll('.stack-frame');
-        contexts.forEach(function(ctx) {
-            for (var i = 0; i < frames.length; i++) {
-                if (frames[i].getAttribute('data-frame-file') !== ctx.file || frames[i].getAttribute('data-frame-line') !== String(ctx.line)) continue;
-                if (frames[i].querySelector('.cd-frame-ctx')) break;
-                var html = '';
-                if (ctx.code) html += '<code class="cd-frame-code">' + esc(ctx.code) + '</code>';
-                if (ctx.blame) html += '<span class="cd-frame-blame">' + esc(ctx.blame) + '</span>';
-                var ann = document.createElement('div'); ann.className = 'cd-frame-ctx'; ann.innerHTML = html;
-                frames[i].appendChild(ann); break;
-            }
-        });
-    }
+    ${interactionsScript}
 
     var refreshBtn = document.getElementById('cp-refresh');
     if (refreshBtn) refreshBtn.addEventListener('click', function() {
@@ -312,6 +281,7 @@ export function getCrashlyticsPanelScript(): string {
             cpDetailMarkdown = e.data.markdown || '';
         }
         else if (e.data.type === 'crashlyticsFrameContext') { applyFrameContexts(e.data.contexts || []); }
+        else if (e.data.type === 'crashlyticsFilterIndex') { applyCpFilterIndex(e.data.index); }
         else if (e.data.type === 'crashlyticsConnectionReport') {
             if (typeof renderConnectionReport === 'function') renderConnectionReport(e.data.report);
         }

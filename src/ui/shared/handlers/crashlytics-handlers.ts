@@ -8,7 +8,7 @@
 import * as vscode from 'vscode';
 import { t } from '../../../l10n';
 import {
-    getFirebaseContext,
+    getFirebaseContext, getIssueFilterIndex,
     clearIssueListCache, gcloudInstallUrl, getGcloudInstallCommand, findBestGoogleServicesJson,
     type FirebaseContext,
 } from '../../../modules/crashlytics/firebase-crashlytics';
@@ -71,6 +71,16 @@ export async function handleCrashlyticsValidate(post: PostFn): Promise<void> {
         void vscode.window.showWarningMessage(summary, t('action.showDetails')).then(sel => { if (sel) { channel.show(); } });
     } catch {
         post({ type: 'crashlyticsConnectionReport', report: { steps: [], ok: false, checkedAt: Date.now() } });
+    }
+}
+
+/** Lazy: fetch per-issue device/OS maps for the sidebar filters and push to the webview. Never throws. */
+export async function handleCrashlyticsFilterIndex(post: PostFn): Promise<void> {
+    try {
+        const index = await getIssueFilterIndex();
+        if (index) { post({ type: 'crashlyticsFilterIndex', index }); }
+    } catch {
+        // Filters degrade to no-op dropdowns if the index can't be fetched.
     }
 }
 
