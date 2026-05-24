@@ -149,6 +149,11 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
     /* Git history needs a resolvable source ref on the line, same gate as Open Source. */
     var gitHistoryItem = contextMenuEl.querySelector('[data-action="show-git-history"]');
     if (gitHistoryItem) gitHistoryItem.style.display = hasSourceLink ? '' : 'none';
+    /* Changelog-since needs a version-like token (x.y.z or date-version) on the line. */
+    var lineTextForVersion = (hasLine && typeof stripTags === 'function') ? stripTags(lineData.html || '') : '';
+    var hasVersionToken = !!(hasLine && lineTextForVersion && typeof versionTokenRe !== 'undefined' && versionTokenRe.test(lineTextForVersion));
+    var changelogSinceItem = contextMenuEl.querySelector('[data-action="show-changelog-since"]');
+    if (changelogSinceItem) changelogSinceItem.style.display = hasVersionToken ? '' : 'none';
 
     /* Copy Error / Warning + Copy DB cluster: full grouped block before Copy & Export. */
     var ewRow = contextMenuEl.querySelector('[data-copy-error-warning-row]');
