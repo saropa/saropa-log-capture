@@ -355,8 +355,8 @@ slice; none needs the dead API):
   already existed).
 - **Filtering** inside the stack — **DONE** ("App frames only" toggle hides framework frames + folded
   groups via a body class; `.cd-appcode-only`).
-- **Context menus** on frames (Copy frame, Copy file path, Open file, Create issue from here) — **DOING
-  NEXT** (lightweight right-click popover in the detail).
+- **Context menus** on frames — **DONE** (right-click popover with Copy frame, Copy file path, Open
+  file, Create issue from frame; path/open hidden when the frame has no source ref).
 - **Groupings** — partly done (smart framework-frame fold). Extending to "other threads" + repeated-frame
   collapse remains open.
 

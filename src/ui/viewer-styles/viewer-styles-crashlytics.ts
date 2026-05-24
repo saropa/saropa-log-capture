@@ -252,6 +252,13 @@ export function getCrashlyticsPanelStyles(): string {
 /* App-only mode hides framework rows and their folded groups. */
 .cd-body.cd-appcode-only .frame-fw, .cd-body.cd-appcode-only .cd-fw-group { display: none; }
 
+/* Frame right-click context menu (#1c). z-index beats the detail overlay (200); position:fixed so it
+   escapes the overlay's overflow:hidden. */
+.cd-ctxmenu { position: fixed; z-index: 300; min-width: 160px; padding: 4px 0; font-size: 12px; border-radius: 4px; background: var(--vscode-menu-background, var(--vscode-editorWidget-background)); border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border)); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); }
+.cd-ctxmenu.u-hidden { display: none; }
+.cd-ctxitem { padding: 4px 14px; cursor: pointer; color: var(--vscode-menu-foreground, var(--vscode-foreground)); white-space: nowrap; }
+.cd-ctxitem:hover { background: var(--vscode-menu-selectionBackground, var(--vscode-list-hoverBackground)); color: var(--vscode-menu-selectionForeground, var(--vscode-foreground)); }
+
 /* Folded framework-frame run (#1 smart collapse): a quiet, dashed inline disclosure so the
    noise stays one click away without competing with the app frames it sits between. */
 .cd-body .cd-fw-group { margin: 2px 0; }
