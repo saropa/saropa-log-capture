@@ -16,7 +16,7 @@ and the Play Console web UI do not. Three pillars:
 
 **Scope boundary — this plan is UI/design only.** Everything about the *data connection* (gcloud
 resolution, authentication, the correct API host, OAuth scopes, surfacing failures instead of silent
-empties) lives in **[bug_008](bug_008_crashlytics-enable-default-and-gcloud-path.md)**. This plan
+empties) lives in **[bug_008](../bugs/bug_008_crashlytics-enable-default-and-gcloud-path.md)**. This plan
 consumes whatever bug_008's data layer returns and focuses on layout, UX, and features. Two findings
 from bug_008 that this plan depends on:
 
@@ -133,7 +133,7 @@ working issue feed before then.
 
 Production-quality rule: do not claim pixel/number parity with AS until a live response is captured.
 AS and Play Console use privileged data paths; the public APIs may not expose everything. **Full
-connection findings are in [bug_008](bug_008_crashlytics-enable-default-and-gcloud-path.md); the key
+connection findings are in [bug_008](../bugs/bug_008_crashlytics-enable-default-and-gcloud-path.md); the key
 ones that shape this design:**
 
 - **The Firebase Crashlytics read endpoint is dead — do NOT design against it.** VERIFIED:
