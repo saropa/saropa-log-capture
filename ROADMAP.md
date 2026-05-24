@@ -45,6 +45,7 @@ Open plans currently in [plans/](plans/) that are not yet scored against the roa
 | Investigate missing debug console lines | Bug: lines dropped from debug console capture | [102](plans/102_investigate-missing-debug-console-lines.md) |
 | Pubspec vibrancy report hardening | Harden the pubspec vibrancy report path | [103](plans/103_plan-pubspec-vibrancy-report-hardening.md) |
 | Static ORM code analysis | Static analysis of ORM usage | [DB_12](plans/DB_12_static-orm-code-analysis.md) |
+| Changelog + git history in the log viewer | Per-line blame/recent-commits + session "may already be fixed" (changelog-since the session's app version); generalizes the crashlytics "In your project" panel | [055](plans/055_plan-changelog-git-history-in-log-viewer.md) |
 | DB timestamp burst detector | Detect burst patterns in DB timestamps | [DB_16](plans/DB_16_db-timestamp-burst-detector.md) |
 
 ---
