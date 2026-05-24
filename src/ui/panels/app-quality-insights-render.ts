@@ -8,9 +8,8 @@
 
 import { escapeHtml } from '../../modules/capture/ansi';
 import { getDashboardStyles } from './app-quality-insights-styles';
-import { issueShortId } from '../../modules/crashlytics/play-reporting-mappers';
 import type { CrashlyticsIssue } from '../../modules/crashlytics/crashlytics-types';
-import type { StatEntry, IssueBreakdown, IssueFilterIndex } from '../../modules/crashlytics/play-reporting-metrics';
+import type { StatEntry, IssueBreakdown } from '../../modules/crashlytics/play-reporting-metrics';
 
 /** Data the dashboard page needs (kept flat so it is trivial to serialize/render). */
 export interface DashboardModel {
@@ -23,8 +22,6 @@ export interface DashboardModel {
     readonly setupHint?: string;
     /** When set, the issues are from the offline cache (not a fresh fetch) — shown as a stale banner. */
     readonly staleNote?: string;
-    /** Per-issue device/OS values (downloaded once) for the local device & OS filters. */
-    readonly filterIndex?: IssueFilterIndex;
 }
 
 const TIME_RANGES: ReadonlyArray<readonly [string, string]> = [
@@ -47,16 +44,13 @@ function issueVersions(issue: CrashlyticsIssue): string[] {
     return [...new Set([issue.firstVersion, issue.lastVersion].filter((v): v is string => !!v))];
 }
 
-function renderIssueRow(issue: CrashlyticsIssue, index?: IssueFilterIndex): string {
+function renderIssueRow(issue: CrashlyticsIssue): string {
     const sev = issue.isFatal ? 'aqi-sev-fatal' : 'aqi-sev-nonfatal';
     const users = issue.userCount > 0 ? ` · <b>${issue.userCount}</b> users` : '';
-    // data-* attributes drive the client-side filtering (no host round-trip). device/OS come from the
-    // downloaded per-issue index, keyed by the issue's short id.
+    // data-* drive client-side filtering. data-devices/data-os are added lazily (the per-issue
+    // device/OS index is only downloaded when the device/OS dropdowns are first used).
     const search = `${issue.title} ${issue.subtitle}`.toLowerCase();
-    const shortId = issueShortId(issue.id);
-    const devices = index?.devicesByIssue[shortId]?.join(',') ?? '';
-    const os = index?.osByIssue[shortId]?.join(',') ?? '';
-    return `<div class="aqi-issue" data-issue-id="${escapeHtml(issue.id)}" data-kind="${issue.kind ?? 'unknown'}" data-versions="${escapeHtml(issueVersions(issue).join(','))}" data-devices="${escapeHtml(devices)}" data-os="${escapeHtml(os)}" data-search="${escapeHtml(search)}" tabindex="0">
+    return `<div class="aqi-issue" data-issue-id="${escapeHtml(issue.id)}" data-kind="${issue.kind ?? 'unknown'}" data-versions="${escapeHtml(issueVersions(issue).join(','))}" data-search="${escapeHtml(search)}" tabindex="0">
         <div class="aqi-issue-head"><span class="aqi-sev ${sev}"></span><span class="aqi-issue-title">${escapeHtml(issue.title) || 'Unknown error'}</span></div>
         ${issue.subtitle ? `<div class="aqi-issue-sub">${escapeHtml(issue.subtitle)}</div>` : ''}
         <div class="aqi-issue-meta"><b>${issue.eventCount}</b> events${users}${formatVersionRange(issue)}</div>
@@ -71,14 +65,6 @@ function kindCounts(issues: readonly CrashlyticsIssue[]): Record<string, number>
         if (counts[k] !== undefined) { counts[k]++; }
     }
     return counts;
-}
-
-/** Sorted union of all values across a per-issue map (for populating a filter dropdown). */
-function unionValues(map: Record<string, string[]> | undefined): string[] {
-    if (!map) { return []; }
-    const set = new Set<string>();
-    for (const id of Object.keys(map)) { for (const v of map[id]) { set.add(v); } }
-    return [...set].sort();
 }
 
 /** Build a `<select>` with an "all" sentinel plus one option per value. */
@@ -99,8 +85,8 @@ function renderFilterBar(model: DashboardModel): string {
         <span class="aqi-spacer"></span>
         <input class="aqi-search" id="aqi-search" type="text" placeholder="Filter issues…" aria-label="Filter issues">
         ${selectHtml('aqi-version', 'All versions', versions, 'v')}
-        ${selectHtml('aqi-device', 'All devices', unionValues(model.filterIndex?.devicesByIssue))}
-        ${selectHtml('aqi-os', 'All OS', unionValues(model.filterIndex?.osByIssue))}
+        ${selectHtml('aqi-device', 'All devices', [])}
+        ${selectHtml('aqi-os', 'All OS', [])}
     </div>`;
 }
 
@@ -161,7 +147,7 @@ export function buildDashboardHtml(model: DashboardModel, nonce: string, initial
         return `<!DOCTYPE html><html><head>${head}</head><body>${renderToolbar(model)}${renderSetup(model)}<script nonce="${nonce}">${getDashboardScript()}</script></body></html>`;
     }
     const list = model.issues.length > 0
-        ? model.issues.map(issue => renderIssueRow(issue, model.filterIndex)).join('')
+        ? model.issues.map(renderIssueRow).join('')
         : '<div class="aqi-empty">No issues in this time range.</div>';
     return `<!DOCTYPE html><html><head>${head}</head><body>
 ${renderToolbar(model)}
@@ -223,6 +209,39 @@ function getDashboardScript(): string {
     if (deviceEl) { deviceEl.addEventListener('change', function () { activeDevice = deviceEl.value; applyFilters(); }); }
     var osEl = document.getElementById('aqi-os');
     if (osEl) { osEl.addEventListener('change', function () { activeOS = osEl.value; applyFilters(); }); }
+
+    // Lazy: only download the per-issue device/OS index when a user first opens either dropdown,
+    // so the common "open dashboard, scan issues" path skips those extra metric-set queries.
+    var filterIndexRequested = false;
+    function ensureFilterIndex() {
+        if (filterIndexRequested) { return; }
+        filterIndexRequested = true;
+        [deviceEl, osEl].forEach(function (el) { if (el && el.options[0]) { el.options[0].text = 'Loading…'; } });
+        post({ type: 'requestFilterIndex' });
+    }
+    [deviceEl, osEl].forEach(function (el) {
+        if (el) { el.addEventListener('mousedown', ensureFilterIndex); el.addEventListener('focus', ensureFilterIndex); }
+    });
+    function jsUnion(map) {
+        var set = {};
+        Object.keys(map || {}).forEach(function (k) { (map[k] || []).forEach(function (v) { set[v] = true; }); });
+        return Object.keys(set).sort();
+    }
+    function fillSelect(el, allLabel, values) {
+        if (!el) { return; }
+        var cur = el.value;
+        el.innerHTML = '<option value="">' + allLabel + '</option>' + values.map(function (v) { return '<option value="' + esc(v) + '">' + esc(v) + '</option>'; }).join('');
+        el.value = cur;
+    }
+    function applyFilterIndex(index) {
+        document.querySelectorAll('.aqi-issue').forEach(function (row) {
+            var sid = (row.getAttribute('data-issue-id') || '').split('/').pop();
+            row.setAttribute('data-devices', ((index.devicesByIssue || {})[sid] || []).join(','));
+            row.setAttribute('data-os', ((index.osByIssue || {})[sid] || []).join(','));
+        });
+        fillSelect(deviceEl, 'All devices', jsUnion(index.devicesByIssue));
+        fillSelect(osEl, 'All OS', jsUnion(index.osByIssue));
+    }
 
     const issues = document.getElementById('aqi-issues');
     function selectRow(row) {
@@ -288,6 +307,8 @@ function getDashboardScript(): string {
             if (breakdown) { breakdown.innerHTML = m.breakdownHtml || '<div class="aqi-empty">No breakdown for this issue.</div>'; }
         } else if (m.type === 'frameContext') {
             applyFrameContexts(m.contexts || []);
+        } else if (m.type === 'filterIndex') {
+            applyFilterIndex(m.index || {});
         }
     });
 })();
