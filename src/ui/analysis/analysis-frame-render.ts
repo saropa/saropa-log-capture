@@ -38,40 +38,54 @@ export function renderSmartFrameSection(frames: readonly StackFrameInfo[]): stri
     const fwCount = frames.length - appCount;
     let html = '<details class="group" open>';
     html += `<summary class="group-header">🔍 Stack Trace <span class="match-count">${frames.length} frames (${appCount} app, ${fwCount} fw)</span></summary>`;
+    // App-only toggle (#1d): a stack control outside the <summary> so clicking it doesn't collapse the
+    // group; the webview toggles a body class that hides framework frames/groups via CSS.
+    html += '<div class="cd-stack-controls"><button class="cd-apponly" aria-pressed="false">App frames only</button></div>';
     let fwRun: StackFrameInfo[] = [];
+    let fwStart = 0;
+    let idx = 0;
     const flushRun = (): void => {
         if (fwRun.length === 0) { return; }
-        html += fwRun.length <= 2 ? fwRun.map(renderFrame).join('') : renderFwRun(fwRun);
+        html += fwRun.length <= 2 ? fwRun.map((f, i) => renderFrame(f, fwStart + i)).join('') : renderFwRun(fwRun, fwStart);
         fwRun = [];
     };
     for (const f of frames) {
-        if (f.isApp) { flushRun(); html += renderFrame(f); }
-        else { fwRun.push(f); }
+        if (f.isApp) { flushRun(); html += renderFrame(f, idx); }
+        else { if (fwRun.length === 0) { fwStart = idx; } fwRun.push(f); }
+        idx++;
     }
     flushRun();
     return html + '</details>';
 }
 
 /** Wrap a run of framework frames in a collapsed <details> the reader can open. */
-function renderFwRun(run: readonly StackFrameInfo[]): string {
+function renderFwRun(run: readonly StackFrameInfo[], startIndex: number): string {
     let inner = '';
-    for (const f of run) { inner += renderFrame(f); }
+    for (let i = 0; i < run.length; i++) { inner += renderFrame(run[i], startIndex + i); }
     return `<details class="cd-fw-group"><summary class="cd-fw-summary">`
         + `⋯ ${run.length} framework frames</summary>${inner}</details>`;
 }
 
-function renderFrame(f: StackFrameInfo): string {
+/**
+ * Render one frame. When `index` is supplied (the smart/crashlytics variant) the row gains a `#N`
+ * gutter (#1a), a hover copy button (#1b), and a `data-fw` marker on framework frames (#1d app-only
+ * filter); the analysis panel calls renderFrame(f) with no index and keeps its plain rows.
+ */
+function renderFrame(f: StackFrameInfo, index?: number): string {
     const badgeCls = f.isApp ? 'frame-badge-app' : 'frame-badge-fw';
     const badgeLabel = f.isApp ? 'APP' : 'FW';
     const badge = `<span class="frame-badge ${badgeCls}">${badgeLabel}</span>`;
+    const num = index !== undefined ? `<span class="frame-num">#${index}</span>` : '';
+    const copy = index !== undefined ? `<button class="cd-frame-copy" data-copy="${escapeHtml(f.text)}" title="Copy frame">⧉</button>` : '';
+    const fwAttr = !f.isApp && index !== undefined ? ' data-fw="1"' : '';
     if (f.isApp && f.sourceRef) {
         const file = escapeHtml(f.sourceRef.filePath);
         return `<div class="stack-frame frame-app" data-frame-file="${file}" data-frame-line="${f.sourceRef.line}">`
-            + `${badge}<span class="line-text">${escapeHtml(f.text)}</span>`
+            + `${num}${badge}<span class="line-text">${escapeHtml(f.text)}</span>${copy}`
             + `<div class="frame-detail"></div></div>`;
     }
     const cls = f.isApp ? 'stack-frame frame-app-nosrc' : 'stack-frame frame-fw';
-    return `<div class="${cls}">${badge}<span class="line-text">${escapeHtml(f.text)}</span></div>`;
+    return `<div class="${cls}"${fwAttr}>${num}${badge}<span class="line-text">${escapeHtml(f.text)}</span>${copy}</div>`;
 }
 
 /** Render compact mini-analysis for a single frame (source preview + blame + annotations). */
