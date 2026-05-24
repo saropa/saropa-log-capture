@@ -22,6 +22,44 @@ export function renderFrameSection(frames: readonly StackFrameInfo[]): string {
     return html + '</details>';
 }
 
+/**
+ * Render the crash stack with framework noise folded out of the way.
+ *
+ * App frames render inline and clickable so the reader lands on their own code
+ * first; runs of consecutive framework frames collapse into a native <details>
+ * the reader expands on demand. Native <details>/<summary> means the toggle
+ * needs no extra webview JS. Runs of <=2 framework frames stay inline — folding
+ * one or two lines costs more attention than it saves. Distinct from
+ * renderFrameSection (used by the analysis panel) so that view keeps its flat
+ * "all frames at once" behavior unchanged.
+ */
+export function renderSmartFrameSection(frames: readonly StackFrameInfo[]): string {
+    const appCount = frames.filter(f => f.isApp).length;
+    const fwCount = frames.length - appCount;
+    let html = '<details class="group" open>';
+    html += `<summary class="group-header">🔍 Stack Trace <span class="match-count">${frames.length} frames (${appCount} app, ${fwCount} fw)</span></summary>`;
+    let fwRun: StackFrameInfo[] = [];
+    const flushRun = (): void => {
+        if (fwRun.length === 0) { return; }
+        html += fwRun.length <= 2 ? fwRun.map(renderFrame).join('') : renderFwRun(fwRun);
+        fwRun = [];
+    };
+    for (const f of frames) {
+        if (f.isApp) { flushRun(); html += renderFrame(f); }
+        else { fwRun.push(f); }
+    }
+    flushRun();
+    return html + '</details>';
+}
+
+/** Wrap a run of framework frames in a collapsed <details> the reader can open. */
+function renderFwRun(run: readonly StackFrameInfo[]): string {
+    let inner = '';
+    for (const f of run) { inner += renderFrame(f); }
+    return `<details class="cd-fw-group"><summary class="cd-fw-summary">`
+        + `⋯ ${run.length} framework frames</summary>${inner}</details>`;
+}
+
 function renderFrame(f: StackFrameInfo): string {
     const badgeCls = f.isApp ? 'frame-badge-app' : 'frame-badge-fw';
     const badgeLabel = f.isApp ? 'APP' : 'FW';

@@ -12,6 +12,7 @@ export function getCrashlyticsInteractionsScript(): string {
     var cpDetailEl = document.getElementById('crashlytics-detail');
     var cpLogWrap = document.getElementById('log-content-wrapper');
     var cpDetailMarkdown = '';
+    var cpDetailTitle = '';
 
     function openIssueDetail(id) {
         if (!cpDetailEl) return;
@@ -40,6 +41,8 @@ export function getCrashlyticsInteractionsScript(): string {
         cpDetailEl.addEventListener('click', function(e) {
             if (e.target.closest('.cd-back')) { closeIssueDetail(); return; }
             if (e.target.closest('.cd-copy')) { vscodeApi.postMessage({ type: 'copyToClipboard', text: cpDetailMarkdown }); return; }
+            // Create issue: open a prefilled GitHub new-issue page with the crash Markdown as the body.
+            if (e.target.closest('.cd-newissue')) { vscodeApi.postMessage({ type: 'crashlyticsCreateIssue', title: cpDetailTitle, body: cpDetailMarkdown }); return; }
             // Jump to code: an app frame opens the file at its line (UX #1).
             var frame = e.target.closest('.frame-app[data-frame-file]');
             if (frame) { vscodeApi.postMessage({ type: 'crashlyticsOpenFrame', file: frame.getAttribute('data-frame-file'), line: frame.getAttribute('data-frame-line') }); }
@@ -66,6 +69,28 @@ export function getCrashlyticsInteractionsScript(): string {
     /* ---- Sidebar filters (#5): compact, client-side over the #cp-issues rows ---- */
     var cpFilterbar = document.getElementById('cp-filterbar');
     var cpKind = 'all', cpSearchText = '', cpFVer = '', cpFDev = '', cpFOs = '', cpIndexRequested = false;
+    var cpRegexOn = false, cpRegexObj = null;
+
+    /* Recompile the search term when the text or the regex toggle changes. In regex mode an invalid
+       pattern is non-fatal: cpRegexObj stays null, the input shows the invalid outline, and the
+       search clause matches everything so the list does not blank out mid-typing. */
+    function cpUpdateSearch(raw) {
+        var input = document.getElementById('cp-search');
+        if (cpRegexOn && raw) {
+            try { cpRegexObj = new RegExp(raw, 'i'); if (input) input.classList.remove('cp-search-invalid'); }
+            catch (e) { cpRegexObj = null; if (input) input.classList.add('cp-search-invalid'); }
+            cpSearchText = '';
+        } else {
+            cpRegexObj = null; cpSearchText = raw.toLowerCase();
+            if (input) input.classList.remove('cp-search-invalid');
+        }
+        applyCpFilters();
+    }
+    function cpSearchMatch(r) {
+        var hay = r.getAttribute('data-search') || '';
+        if (cpRegexOn) { return !cpRegexObj || cpRegexObj.test(hay); }
+        return !cpSearchText || hay.indexOf(cpSearchText) >= 0;
+    }
 
     function cpHas(item, attr, want) { return !want || (item.getAttribute(attr) || '').split(',').indexOf(want) >= 0; }
     function applyCpFilters() {
@@ -74,7 +99,7 @@ export function getCrashlyticsInteractionsScript(): string {
         for (var i = 0; i < rows.length; i++) {
             var r = rows[i];
             var ok = (cpKind === 'all' || r.getAttribute('data-kind') === cpKind)
-                && (!cpSearchText || (r.getAttribute('data-search') || '').indexOf(cpSearchText) >= 0)
+                && cpSearchMatch(r)
                 && cpHas(r, 'data-versions', cpFVer) && cpHas(r, 'data-devices', cpFDev) && cpHas(r, 'data-os', cpFOs);
             r.style.display = ok ? '' : 'none';
         }
@@ -119,7 +144,14 @@ export function getCrashlyticsInteractionsScript(): string {
             tabs.querySelectorAll('.cp-tab-sel').forEach(function(t) { t.classList.remove('cp-tab-sel'); });
             b.classList.add('cp-tab-sel'); cpKind = b.getAttribute('data-kind'); applyCpFilters();
         });
-        var s = document.getElementById('cp-search'); if (s) s.addEventListener('input', function() { cpSearchText = s.value.toLowerCase(); applyCpFilters(); });
+        var s = document.getElementById('cp-search'); if (s) s.addEventListener('input', function() { cpUpdateSearch(s.value); });
+        var rx = document.getElementById('cp-regex');
+        if (rx && s) rx.addEventListener('click', function() {
+            cpRegexOn = !cpRegexOn;
+            rx.classList.toggle('cp-regex-on', cpRegexOn);
+            rx.setAttribute('aria-pressed', cpRegexOn ? 'true' : 'false');
+            cpUpdateSearch(s.value);
+        });
         var ver = document.getElementById('cp-ver'); if (ver) ver.addEventListener('change', function() { cpFVer = ver.value; applyCpFilters(); });
         var dev = document.getElementById('cp-dev'); if (dev) dev.addEventListener('change', function() { cpFDev = dev.value; applyCpFilters(); });
         var os = document.getElementById('cp-os'); if (os) os.addEventListener('change', function() { cpFOs = os.value; applyCpFilters(); });

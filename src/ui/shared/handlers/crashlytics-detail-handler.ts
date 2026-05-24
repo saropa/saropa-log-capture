@@ -8,6 +8,7 @@ import { t } from '../../../l10n';
 import { escapeHtml } from '../../../modules/capture/ansi';
 import * as vscode from 'vscode';
 import { getCrashEvents } from '../../../modules/crashlytics/firebase-crashlytics';
+import { getRepoSlug } from '../../../modules/git/github-context';
 import { getFrameContexts, resolveFile } from '../../../modules/crashlytics/crash-frame-context';
 import { renderCrashDetail, renderDeviceDistribution } from '../../analysis/analysis-crash-detail';
 import type { CrashlyticsEventDetail } from '../../../modules/crashlytics/crashlytics-types';
@@ -37,6 +38,7 @@ function versionRange(meta: IssueMeta): string {
 
 function header(meta: IssueMeta): string {
     return `<div class="cd-header"><span class="cd-title">${escapeHtml(meta.title ?? 'Issue')}</span>`
+        + `<button class="cd-newissue">${t('viewer.crashlytics.detail.newIssue')}</button>`
         + `<button class="cd-copy">${t('viewer.crashlytics.detail.copyMd')}</button>`
         + `<button class="cd-back">${t('viewer.crashlytics.detail.back')}</button></div>`;
 }
@@ -89,12 +91,30 @@ export async function handleCrashlyticsDetail(issueId: string, rawMeta: Record<s
         const body = event
             ? renderCrashDetail(event) + (multi ? renderDeviceDistribution(multi) : '')
             : '<div class="no-matches">No stack trace available for this issue.</div>';
-        post({ type: 'crashlyticsDetailReady', issueId, html: `${header(meta)}<div class="cd-body">${body}</div>`, markdown: buildMarkdown(meta, event) });
+        post({ type: 'crashlyticsDetailReady', issueId, title: meta.title ?? 'Issue', html: `${header(meta)}<div class="cd-body">${body}</div>`, markdown: buildMarkdown(meta, event) });
         if (event) {
             const contexts = await getFrameContexts(event);
             if (contexts.length > 0) { post({ type: 'crashlyticsFrameContext', issueId, contexts }); }
         }
     } catch {
-        post({ type: 'crashlyticsDetailReady', issueId, html: `${header(meta)}<div class="cd-body"><div class="no-matches">Could not load this issue.</div></div>`, markdown: '' });
+        post({ type: 'crashlyticsDetailReady', issueId, title: meta.title ?? 'Issue', html: `${header(meta)}<div class="cd-body"><div class="no-matches">Could not load this issue.</div></div>`, markdown: '' });
     }
+}
+
+/**
+ * Open a prefilled GitHub "new issue" page for the current crash (UX: file the issue without
+ * leaving the editor). Reuses the issue Markdown as the body and the workspace's origin remote
+ * for the repo. Never throws. GitHub rejects oversized query strings, so the body is capped well
+ * under the ~8 KB URL ceiling — the stack already lives in the copied Markdown if more is needed.
+ */
+export async function handleCrashlyticsCreateIssue(title: string, body: string): Promise<void> {
+    const cwd = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    const slug = cwd ? await getRepoSlug(cwd) : undefined;
+    if (!slug) {
+        void vscode.window.showWarningMessage(t('viewer.crashlytics.detail.noRemote'));
+        return;
+    }
+    const cappedBody = body.length > 6000 ? `${body.slice(0, 6000)}\n\n…(truncated — full stack copied via Copy as Markdown)` : body;
+    const url = `https://github.com/${slug}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(cappedBody)}`;
+    await vscode.env.openExternal(vscode.Uri.parse(url));
 }

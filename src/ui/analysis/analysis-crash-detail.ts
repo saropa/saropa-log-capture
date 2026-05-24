@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import { escapeHtml } from '../../modules/capture/ansi';
 import { isFrameworkFrame } from '../../modules/analysis/stack-parser';
 import { extractSourceReference } from '../../modules/source/source-linker';
-import { type StackFrameInfo, renderFrameSection } from './analysis-frame-render';
+import { type StackFrameInfo, renderSmartFrameSection } from './analysis-frame-render';
 import type { CrashlyticsEventDetail, CrashlyticsStackFrame, CrashlyticsIssueEvents } from '../../modules/crashlytics/firebase-crashlytics';
 import type { IssueStats } from '../../modules/crashlytics/crashlytics-stats';
 
@@ -27,7 +27,7 @@ export function renderCrashDetail(detail: CrashlyticsEventDetail): string {
     if (detail.crashThread) {
         html += `<div class="crash-thread-header">${escapeHtml(detail.crashThread.name)}</div>`;
         const frames = classifyFrames(detail.crashThread.frames);
-        if (frames.length > 0) { html += renderFrameSection(frames); }
+        if (frames.length > 0) { html += renderSmartFrameSection(frames); }
         else { html += '<div class="no-matches">No frames in crash thread</div>'; }
     }
     const appThreads = detail.appThreads.filter(t => {

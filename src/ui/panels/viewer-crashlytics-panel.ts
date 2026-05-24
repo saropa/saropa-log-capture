@@ -31,6 +31,7 @@ export function getCrashlyticsPanelHtml(): string {
         </div>
         <div class="cp-fcontrols">
             <input id="cp-search" class="cp-search" type="text" placeholder="${t('viewer.crashlytics.filter.search')}" aria-label="${t('viewer.crashlytics.filter.search')}">
+            <button id="cp-regex" class="cp-regex" type="button" title="${t('viewer.crashlytics.filter.regex')}" aria-label="${t('viewer.crashlytics.filter.regex')}" aria-pressed="false">.*</button>
             <select id="cp-ver" class="cp-fselect" title="${t('viewer.crashlytics.filter.version')}" aria-label="${t('viewer.crashlytics.filter.version')}"><option value="">${t('viewer.crashlytics.filter.verAbbr')}</option></select>
             <select id="cp-dev" class="cp-fselect" title="${t('viewer.crashlytics.filter.device')}" aria-label="${t('viewer.crashlytics.filter.device')}"><option value="">${t('viewer.crashlytics.filter.devAbbr')}</option></select>
             <select id="cp-os" class="cp-fselect" title="${t('viewer.crashlytics.filter.os')}" aria-label="${t('viewer.crashlytics.filter.os')}"><option value="">${t('viewer.crashlytics.filter.osAbbr')}</option></select>
@@ -280,6 +281,7 @@ export function getCrashlyticsPanelScript(): string {
         else if (e.data.type === 'crashlyticsDetailReady') {
             if (cpDetailEl) cpDetailEl.innerHTML = e.data.html;
             cpDetailMarkdown = e.data.markdown || '';
+            cpDetailTitle = e.data.title || 'Issue';
         }
         else if (e.data.type === 'crashlyticsFrameContext') { applyFrameContexts(e.data.contexts || []); }
         else if (e.data.type === 'crashlyticsFilterIndex') { applyCpFilterIndex(e.data.index); }
