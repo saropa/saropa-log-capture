@@ -5,11 +5,11 @@
 <!-- Status: Draft → Approved → In progress (Stage N) → Done. Do not start coding until a stage is approved. -->
 
 **Completion note (2026-05-24):** Stages 1–4 are implemented and committed (see CHANGELOG `[Unreleased]`).
-Stage 1 also added the configurable `saropaLogCapture.changelogPaths` setting (glob array). The **only**
-deferred item is the *optional* Pillar C "errors-since" cross-link (marking session error lines whose source
-file changed in a release after the session's version) — it is not buried: it is tracked as its own
-ROADMAP row linking this plan, pending a decision on whether the per-line git-history (Stage 2) already
-covers the need.
+Stage 1 also added the configurable `saropaLogCapture.changelogPaths` setting (glob array). The *optional*
+Pillar C "errors-since" cross-link (marking session error lines whose source file changed in a release
+after the session's version) was **closed, not deferred**: the Stage 2 per-line "View Git History"
+action (blame + recent commits for a line's source file) already lets a reader see when a given line's
+file last changed, so a separate per-error annotation was judged redundant.
 
 Goal: bring the crashlytics detail's **"In your project"** intelligence (git blame, recent commits at a
 location, and the **changelog-since-affected-version "may already be fixed"** signal) into the **main log

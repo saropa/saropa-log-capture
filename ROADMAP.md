@@ -45,7 +45,6 @@ Open plans currently in [plans/](plans/) that are not yet scored against the roa
 | Investigate missing debug console lines | Bug: lines dropped from debug console capture | [102](plans/102_investigate-missing-debug-console-lines.md) |
 | Pubspec vibrancy report hardening | Harden the pubspec vibrancy report path | [103](plans/103_plan-pubspec-vibrancy-report-hardening.md) |
 | Static ORM code analysis | Static analysis of ORM usage | [DB_12](plans/DB_12_static-orm-code-analysis.md) |
-| Errors-since cross-link (plan 055 follow-up) | Mark session error lines whose source file changed in a release after the session's app version as "touched since this version" — the optional Pillar C piece deferred when 055 Stages 1–4 shipped | [055](plans/055_plan-changelog-git-history-in-log-viewer.md) |
 | DB timestamp burst detector | Detect burst patterns in DB timestamps | [DB_16](plans/DB_16_db-timestamp-burst-detector.md) |
 
 ---
