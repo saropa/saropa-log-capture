@@ -22,7 +22,7 @@ function getQualityBadge(item) {
     var pct = item.qualityPercent;
     if (pct === undefined || pct === null) return '';
     var cls = pct >= 80 ? 'high' : (pct >= 50 ? 'med' : 'low');
-    return '<span class="quality-badge qb-' + cls + '" title="' + pct + '% line coverage">' + pct + '%</span> ';
+    return '<span class="quality-badge qb-' + cls + '" title="' + vt('viewer.qualityBadge.tooltip', pct) + '">' + pct + '%</span> ';
 }
 `;
 }

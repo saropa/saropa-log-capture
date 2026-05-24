@@ -32,6 +32,8 @@ suite('Webview element ID wiring', () => {
         'edit-modal-cancel',
         // Created via innerHTML in viewer-crashlytics-setup.ts
         'cp-check-again',
+        // Created via innerHTML in viewer-crashlytics-setup.ts buildConnectionTest()
+        'cp-conn-report',
     ]);
 
     /**

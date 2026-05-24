@@ -161,11 +161,11 @@ function buildPopoverContent(lineIdx, data) {
     var windowMs = data.windowMs || 5000;
     var windowSec = Math.round(windowMs / 1000);
     var timestamp = data.timestamp;
-    var timeStr = timestamp ? new Date(timestamp).toLocaleTimeString() : 'unknown';
+    var timeStr = timestamp ? new Date(timestamp).toLocaleTimeString() : vt('viewer.popover.unknownTime');
 
     var html = '<div class="popover-header">';
-    html += '<span class="popover-title">Context at ' + timeStr + ' (\\u00b1' + windowSec + 's)</span>';
-    html += '<button class="popover-close codicon codicon-close" title="Close" aria-label="Close"></button>';
+    html += '<span class="popover-title">' + vt('viewer.popover.contextAt', timeStr, windowSec) + '</span>';
+    html += '<button class="popover-close codicon codicon-close" title="' + vt('viewer.popover.close') + '" aria-label="' + vt('viewer.popover.close') + '"></button>';
     html += '</div>';
     html += '<div class="popover-body">';
 
@@ -175,7 +175,7 @@ function buildPopoverContent(lineIdx, data) {
     if (data.data && data.data.performance && data.data.performance.length > 0) {
         hasContent = true;
         html += '<div class="popover-section">';
-        html += '<div class="popover-section-header"><span class="popover-icon">\\u26a1</span> Performance</div>';
+        html += '<div class="popover-section-header"><span class="popover-icon">\\u26a1</span> ' + vt('viewer.popover.performance') + '</div>';
         html += '<div class="popover-section-content">';
         var perf = data.data.performance;
         if (perf.length >= 2) {
@@ -183,14 +183,14 @@ function buildPopoverContent(lineIdx, data) {
             var last = perf[perf.length - 1];
             var memDelta = last.freeMemMb - first.freeMemMb;
             var sign = memDelta >= 0 ? '+' : '';
-            html += '<div class="popover-item">Memory: ' + first.freeMemMb + 'MB \\u2192 ' + last.freeMemMb + 'MB (' + sign + memDelta + 'MB)</div>';
+            html += '<div class="popover-item">' + vt('viewer.popover.memoryDelta', first.freeMemMb, last.freeMemMb, sign + memDelta) + '</div>';
             if (first.loadAvg1 !== undefined && last.loadAvg1 !== undefined) {
-                html += '<div class="popover-item">CPU load: ' + first.loadAvg1.toFixed(2) + ' \\u2192 ' + last.loadAvg1.toFixed(2) + '</div>';
+                html += '<div class="popover-item">' + vt('viewer.popover.cpuLoadDelta', first.loadAvg1.toFixed(2), last.loadAvg1.toFixed(2)) + '</div>';
             }
         } else if (perf.length === 1) {
-            html += '<div class="popover-item">Memory: ' + perf[0].freeMemMb + 'MB free</div>';
+            html += '<div class="popover-item">' + vt('viewer.popover.memoryFree', perf[0].freeMemMb) + '</div>';
             if (perf[0].loadAvg1 !== undefined) {
-                html += '<div class="popover-item">CPU load: ' + perf[0].loadAvg1.toFixed(2) + '</div>';
+                html += '<div class="popover-item">' + vt('viewer.popover.cpuLoad', perf[0].loadAvg1.toFixed(2)) + '</div>';
             }
         }
         html += '</div></div>';
@@ -200,7 +200,7 @@ function buildPopoverContent(lineIdx, data) {
     if (data.data && data.data.http && data.data.http.length > 0) {
         hasContent = true;
         html += '<div class="popover-section">';
-        html += '<div class="popover-section-header"><span class="popover-icon">\\ud83c\\udf10</span> HTTP (' + data.data.http.length + ' request' + (data.data.http.length > 1 ? 's' : '') + ')</div>';
+        html += '<div class="popover-section-header"><span class="popover-icon">\\ud83c\\udf10</span> ' + (data.data.http.length > 1 ? vt('viewer.popover.httpHeader.many', data.data.http.length) : vt('viewer.popover.httpHeader.one', data.data.http.length)) + '</div>';
         html += '<div class="popover-section-content">';
         var httpItems = data.data.http.slice(0, 5);
         for (var i = 0; i < httpItems.length; i++) {
@@ -215,7 +215,7 @@ function buildPopoverContent(lineIdx, data) {
             html += '</div>';
         }
         if (data.data.http.length > 5) {
-            html += '<div class="popover-more">... and ' + (data.data.http.length - 5) + ' more</div>';
+            html += '<div class="popover-more">' + vt('viewer.popover.andMore', data.data.http.length - 5) + '</div>';
         }
         html += '</div></div>';
     }
@@ -224,7 +224,7 @@ function buildPopoverContent(lineIdx, data) {
     if (data.data && data.data.terminal && data.data.terminal.length > 0) {
         hasContent = true;
         html += '<div class="popover-section">';
-        html += '<div class="popover-section-header"><span class="popover-icon">\\ud83d\\udcbb</span> Terminal</div>';
+        html += '<div class="popover-section-header"><span class="popover-icon">\\ud83d\\udcbb</span> ' + vt('viewer.popover.terminal') + '</div>';
         html += '<div class="popover-section-content terminal-content">';
         var termItems = data.data.terminal.slice(0, 5);
         for (var i = 0; i < termItems.length; i++) {
@@ -233,7 +233,7 @@ function buildPopoverContent(lineIdx, data) {
             html += '<div class="popover-item terminal-line">' + escapeHtmlBasic(line) + '</div>';
         }
         if (data.data.terminal.length > 5) {
-            html += '<div class="popover-more">... and ' + (data.data.terminal.length - 5) + ' more lines</div>';
+            html += '<div class="popover-more">' + vt('viewer.popover.andMoreLines', data.data.terminal.length - 5) + '</div>';
         }
         html += '</div></div>';
     }
@@ -242,7 +242,7 @@ function buildPopoverContent(lineIdx, data) {
     if (data.data && data.data.docker && data.data.docker.length > 0) {
         hasContent = true;
         html += '<div class="popover-section">';
-        html += '<div class="popover-section-header"><span class="popover-icon">\\ud83d\\udc33</span> Docker</div>';
+        html += '<div class="popover-section-header"><span class="popover-icon">\\ud83d\\udc33</span> ' + vt('viewer.popover.docker') + '</div>';
         html += '<div class="popover-section-content">';
         for (var i = 0; i < data.data.docker.length; i++) {
             var container = data.data.docker[i];
@@ -259,7 +259,7 @@ function buildPopoverContent(lineIdx, data) {
     if (data.data && data.data.events && data.data.events.length > 0) {
         hasContent = true;
         html += '<div class="popover-section">';
-        html += '<div class="popover-section-header"><span class="popover-icon">\\ud83d\\udcdd</span> Events</div>';
+        html += '<div class="popover-section-header"><span class="popover-icon">\\ud83d\\udcdd</span> ' + vt('viewer.popover.events') + '</div>';
         html += '<div class="popover-section-content">';
         var eventItems = data.data.events.slice(0, 5);
         for (var i = 0; i < eventItems.length; i++) {
@@ -299,7 +299,7 @@ function buildPopoverContent(lineIdx, data) {
     if (driftMeta && typeof driftMeta === 'object') {
         hasContent = true;
         html += '<div class="popover-section popover-section-drift">';
-        html += '<div class="popover-section-header"><span class="popover-icon">\\ud83d\\udcbb</span> Drift Advisor</div>';
+        html += '<div class="popover-section-header"><span class="popover-icon">\\ud83d\\udcbb</span> ' + vt('viewer.drift.advisor') + '</div>';
         html += '<div class="popover-section-content">';
         var perf = driftMeta.performance;
         if (perf && typeof perf === 'object') {
@@ -307,27 +307,27 @@ function buildPopoverContent(lineIdx, data) {
             var avg = perf.avgDurationMs;
             var slow = perf.slowCount;
             if (typeof q === 'number' || typeof avg === 'number' || typeof slow === 'number') {
-                html += '<div class="popover-item">Queries: ' + (typeof q === 'number' ? q : '-') + ', avg ' + (typeof avg === 'number' ? avg.toFixed(0) : '-') + ' ms' + (typeof slow === 'number' && slow > 0 ? ', ' + slow + ' slow' : '') + '</div>';
+                html += '<div class="popover-item">' + vt('viewer.drift.queriesAvg', (typeof q === 'number' ? q : '-'), (typeof avg === 'number' ? avg.toFixed(0) : '-')) + (typeof slow === 'number' && slow > 0 ? vt('viewer.drift.slowSuffix', slow) : '') + '</div>';
             }
         }
         var health = driftMeta.health;
         if (health && typeof health === 'object' && 'ok' in health) {
-            html += '<div class="popover-item">Health: ' + (health.ok ? 'OK' : 'Issues') + '</div>';
+            html += '<div class="popover-item">' + vt('viewer.drift.health', (health.ok ? vt('viewer.drift.healthOk') : vt('viewer.drift.healthIssues'))) + '</div>';
         }
         if (driftAdvisorAvail) {
-            html += '<button class="popover-btn popover-drift-open" type="button">Open in Drift Advisor</button>';
+            html += '<button class="popover-btn popover-drift-open" type="button">' + vt('viewer.drift.openIn') + '</button>';
         }
         html += '</div></div>';
     }
 
     if (!hasContent) {
-        html += '<div class="popover-empty">No integration data in this time window</div>';
+        html += '<div class="popover-empty">' + vt('viewer.popover.noIntegrationData') + '</div>';
     }
 
     html += '</div>';
     html += '<div class="popover-footer">';
-    html += '<button class="popover-btn popover-full">View Full Context</button>';
-    html += '<button class="popover-btn popover-copy">Copy</button>';
+    html += '<button class="popover-btn popover-full">' + vt('viewer.popover.viewFullContext') + '</button>';
+    html += '<button class="popover-btn popover-copy">' + vt('viewer.popover.copy') + '</button>';
     html += '</div>';
 
     return html;

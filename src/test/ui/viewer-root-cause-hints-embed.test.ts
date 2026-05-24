@@ -14,13 +14,13 @@ test("should contain dismiss button with rch-dismiss-btn class", () => {
 test("should contain rchDismissedKeys for session dismiss state", () => {
   const chunk = getViewerRootCauseHintsScript();
   assert.ok(chunk.includes("rchDismissedKeys"), "dismissed keys object must exist");
-  assert.ok(chunk.includes("Signal hidden for this session"), "dismiss toast message must exist");
+  assert.ok(chunk.includes("viewer.rch.signalHidden"), "dismiss toast message must exist");
 });
 
 test("should contain restore button with rch-restore-btn class", () => {
   const chunk = getViewerRootCauseHintsScript();
   assert.ok(chunk.includes("rch-restore-btn"), "restore button class must exist");
-  assert.ok(chunk.includes("dismissed"), "restore button text must mention dismissed count");
+  assert.ok(chunk.includes("viewer.rch.restoreAll"), "restore button text must mention dismissed count");
 });
 
 test("should open report panel when signal text clicked", () => {

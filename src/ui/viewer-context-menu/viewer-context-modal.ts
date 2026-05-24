@@ -45,9 +45,9 @@ function openContextModal(lineIdx) {
     var start = Math.max(0, lineIdx - contextViewLines);
     var end = Math.min(allLines.length, lineIdx + contextViewLines + 1);
 
-    var html = '<div class="peek-header">Context: line ' +
-        (lineIdx + 1) + ' (' + contextViewLines + ' before/after)' +
-        '<button class="peek-close" title="Close">&#x2715;</button></div>';
+    var html = '<div class="peek-header">' +
+        vt('viewer.peek.header', lineIdx + 1, contextViewLines) +
+        '<button class="peek-close" title="' + vt('viewer.peek.close') + '">&#x2715;</button></div>';
 
     for (var i = start; i < end; i++) {
         var item = allLines[i];

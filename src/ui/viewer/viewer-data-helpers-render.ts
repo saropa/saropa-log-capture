@@ -36,7 +36,7 @@ function getCategoryBadge(item) {
     if (!showCategoryBadges || !item.category || item.category === 'console') return '';
     var label = item.category;
     var clr = categoryBadgeColors[label] || '#888';
-    return '<span class="category-badge" style="--cat-clr:' + clr + '" title="Output channel: ' + label + '">' + label + '</span> ';
+    return '<span class="category-badge" style="--cat-clr:' + clr + '" title="' + vt('viewer.deco.outputChannel', label) + '">' + label + '</span> ';
 }
 
 function renderItem(item, idx, prevVis) {
@@ -105,7 +105,7 @@ function renderItem(item, idx, prevVis) {
     if (item.type === 'marker') {
         /* Collapsed runs: markerCollapseCount > 1 → title tooltip (048 / unified collapsing). */
         var _mkTitle = (item.markerCollapseCount && item.markerCollapseCount > 1)
-            ? ' title="' + item.markerCollapseCount + ' adjacent identical markers collapsed into this one"'
+            ? ' title="' + vt('viewer.marker.collapsed', item.markerCollapseCount) + '"'
             : '';
 ` +
         VIEWER_RENDER_EMBED_MARKER_BURST_EDGE +
@@ -186,7 +186,7 @@ function renderItem(item, idx, prevVis) {
         var aiBody = html.indexOf('] ') >= 0 ? html.substring(html.indexOf('] ') + 2) : html;
         var aiCompress = '';
         if (item.compressDupCount > 1) {
-            aiCompress = '<span class="compress-dup-badge" title="' + item.compressDupCount + ' identical lines">(×' + item.compressDupCount + ')</span> ';
+            aiCompress = '<span class="compress-dup-badge" title="' + vt('viewer.deco.identicalLines', item.compressDupCount) + '">(×' + item.compressDupCount + ')</span> ';
         }
         return '<div class="line ai-line ' + aiCat + matchCls + spacingCls + '"' + idxAttr + '>' + aiPrefix + aiCompress + aiBody + '</div>';
     }
@@ -214,8 +214,8 @@ function renderItem(item, idx, prevVis) {
             ? '+' + item.contChildCount
             : '\\u2212' + item.contChildCount;
         var contTip = item.contCollapsed
-            ? 'Click to expand ' + item.contChildCount + ' continuation lines'
-            : 'Click to collapse ' + item.contChildCount + ' continuation lines';
+            ? vt('viewer.deco.contExpand', item.contChildCount)
+            : vt('viewer.deco.contCollapse', item.contChildCount);
         contBadge = '<span class="' + contCls + '" data-cont-gid="' + item.contGroupId + '" title="' + contTip + '">' + contLabel + '</span>';
     }
     /* idx is the allLines position; getDecorationPrefix prefers item.sourceLineNo (stamped at
@@ -242,7 +242,7 @@ function renderItem(item, idx, prevVis) {
     if (typeof getErrorBadge === 'function' && item.errorClass) badge = getErrorBadge(item.errorClass);
     /* ANR marker: gutter icon (absolute, .error-badge-gutter) for the same reason
        as the bug/transient badges — an inline "⏱ ANR" pill shifted the line text. */
-    if (!badge && item.isAnr) badge = '<span class="error-badge-gutter error-badge-anr" title="ANR Pattern Detected" aria-label="ANR Pattern Detected">\\u23f1</span>';
+    if (!badge && item.isAnr) badge = '<span class="error-badge-gutter error-badge-anr" title="' + vt('viewer.deco.anr') + '" aria-label="' + vt('viewer.deco.anr') + '">\\u23f1</span>';
     if (typeof getQualityBadge === 'function') badge += getQualityBadge(item);
     if (typeof getLintBadge === 'function') badge += getLintBadge(item);
     var corr = (typeof correlationByLineIndex !== 'undefined' && correlationByLineIndex[idx]);
@@ -259,7 +259,7 @@ function renderItem(item, idx, prevVis) {
         if (item.sourceTag) html = wrapTagLink(html, item.sourceTag);
     }
     if (item.recentErrorContext && item.level === 'error') {
-        var recTip = 'Recent-error context: not the primary faulting line; tinted because a real error or stack line occurred within 2 seconds above.';
+        var recTip = vt('viewer.deco.recentErrorContext');
         if (titleAttr && titleAttr.indexOf('title=\"') >= 0) {
             titleAttr = titleAttr.replace(/title=\"([^\"]*)\"/, function (_, inner) {
                 return 'title=\"' + inner + ' — ' + recTip.replace(/\"/g, '&quot;') + '\"';

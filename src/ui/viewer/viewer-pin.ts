@@ -27,13 +27,13 @@ function renderPinnedSection() {
     }
     pinnedSection.style.display = 'block';
     var sorted = Array.from(pinnedIndices).sort(function(a, b) { return a - b; });
-    var parts = ['<div class="pinned-header">Pinned (' + sorted.length + ')</div>'];
+    var parts = ['<div class="pinned-header">' + vt('viewer.pin.header', sorted.length) + '</div>'];
     for (var i = 0; i < sorted.length; i++) {
         var item = allLines[sorted[i]];
         if (!item) continue;
         var html = (typeof highlightSearchInHtml === 'function') ? highlightSearchInHtml(item.html) : item.html;
         parts.push('<div class="pinned-item" data-pin-idx="' + sorted[i] + '">'
-            + '<span class="unpin-btn" title="Unpin">\\u2715</span> '
+            + '<span class="unpin-btn" title="' + vt('viewer.pin.unpin') + '">\\u2715</span> '
             + '<span class="pinned-text">' + html + '</span>'
             + '</div>');
     }

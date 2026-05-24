@@ -22,8 +22,7 @@ suite('viewer-sql-query-history panel script', () => {
         const s = getSqlQueryHistoryPanelScript();
         assert.ok(s.includes('scrollToLineNumber'));
         assert.ok(s.includes('sqlHistoryTargetLineLikelyHidden'));
-        assert.ok(s.includes('Jumped to line'));
-        assert.ok(s.includes('hidden until filters'));
+        assert.ok(s.includes('viewer.sqlHistory.jumpedHidden'), 'hidden-line hint wired via l10n key');
     });
 
     test('DB_17: cumulative toggle wires checkbox change → setSqlQueryHistoryCumulativeEnabled', () => {
@@ -49,7 +48,7 @@ suite('viewer-sql-query-history panel script', () => {
         const s = getSqlQueryHistoryPanelScript();
         assert.ok(s.includes('computeSqlHistoryEmptyText'),
             'empty-state helper centralizes the three messages');
-        assert.ok(s.includes('Toggle Cumulative across logs'),
+        assert.ok(s.includes('viewer.sqlHistory.emptyToggleCumulative'),
             'hint suggests the toggle when other sidebar logs have data');
     });
 
@@ -86,8 +85,7 @@ suite('viewer-sql-query-history panel script', () => {
     test('header copy shows row count feedback in hint bar', () => {
         const s = getSqlQueryHistoryPanelScript();
         assert.ok(s.includes('copyVisibleSqlHistoryJson'));
-        assert.ok(s.includes('Copied '));
-        assert.ok(s.includes('to clipboard.'));
+        assert.ok(s.includes('viewer.sqlHistory.copiedRows'));
         assert.ok(s.includes('clearTimeout(sqlHistoryHintTimer)'));
     });
 
@@ -95,7 +93,7 @@ suite('viewer-sql-query-history panel script', () => {
         const s = getSqlQueryHistoryPanelScript();
         assert.ok(s.includes('data-copy-fp'));
         assert.ok(s.includes('copySingleFingerprint'));
-        assert.ok(s.includes('Copied fingerprint.'));
+        assert.ok(s.includes('viewer.sqlHistory.copiedFingerprint'));
     });
 
     test('text selection suppresses row toggle on click', () => {

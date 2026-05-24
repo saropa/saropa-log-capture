@@ -94,7 +94,7 @@ suite('Viewer DB signal marker filter', () => {
         // the "nothing hidden silently" guarantee without re-adding a text badge.
         assert.ok(data.includes('item.markerCollapseCount > 1'), 'guard still gates the count > 1 branch');
         assert.ok(
-            data.includes('adjacent identical markers collapsed into this one'),
+            data.includes('viewer.marker.collapsed'),
             'title attribute communicates the collapse count on hover',
         );
         assert.ok(

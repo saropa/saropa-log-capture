@@ -24,7 +24,7 @@ export function getStackIngestScript(): string {
    pattern (position:absolute; clip): visually hidden but kept in the DOM so
    getSelection().toString() and stripTags() both capture it on copy.
    Click toggles .expanded which swaps the icon for the readable text. */
-var ASYNC_GAP_GLYPH_HTML = '<span class="async-gap-glyph" role="button" tabindex="0" title="Async suspension &mdash; the call stack jumped microtasks across an await. Click to reveal the original marker."><span class="async-gap-text">&lt;asynchronous suspension&gt;</span></span>';
+var ASYNC_GAP_GLYPH_HTML = '<span class="async-gap-glyph" role="button" tabindex="0" title="' + vt('viewer.stackIngest.asyncGapTitle') + '"><span class="async-gap-text">&lt;asynchronous suspension&gt;</span></span>';
 
 /** Find the most recent row of the active stack group — the frame the inline
     gap glyph should attach to. Walks backwards because group rows are

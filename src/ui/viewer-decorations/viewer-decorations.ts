@@ -287,8 +287,8 @@ function getDecorationPrefix(item, idx, hiddenAfter) {
     }
     if (!isBlank && typeof showParsedPidTid !== 'undefined' && showParsedPidTid) {
         var pidParts = [];
-        if (item.parsedPid != null) pidParts.push('<span class="meta-filter-toggle" data-meta-key="pid" data-meta-value="' + item.parsedPid + '" title="Filter by PID ' + item.parsedPid + '">' + item.parsedPid + '</span>');
-        if (item.parsedTid != null) pidParts.push('<span class="meta-filter-toggle" data-meta-key="tid" data-meta-value="' + item.parsedTid + '" title="Filter by TID ' + item.parsedTid + '">' + item.parsedTid + '</span>');
+        if (item.parsedPid != null) pidParts.push('<span class="meta-filter-toggle" data-meta-key="pid" data-meta-value="' + item.parsedPid + '" title="' + vt('viewer.deco.filterByPid', item.parsedPid) + '">' + item.parsedPid + '</span>');
+        if (item.parsedTid != null) pidParts.push('<span class="meta-filter-toggle" data-meta-key="tid" data-meta-value="' + item.parsedTid + '" title="' + vt('viewer.deco.filterByTid', item.parsedTid) + '">' + item.parsedTid + '</span>');
         if (pidParts.length) parts.push('<span class="deco-pid-tid">[' + pidParts.join(':') + ']</span>');
     }
     if (!isBlank && typeof showParsedLevelPrefix !== 'undefined' && showParsedLevelPrefix && item.parsedRawLevel) {
@@ -297,7 +297,7 @@ function getDecorationPrefix(item, idx, hiddenAfter) {
     if (!isBlank && item.parsedTag
         && typeof structuredLineParsing !== 'undefined' && structuredLineParsing
         && (typeof decoShowParsedTag === 'undefined' || decoShowParsedTag)) {
-        parts.push('<span class="meta-filter-toggle deco-parsed-tag" data-meta-key="tag" data-meta-value="' + item.parsedTag.replace(/"/g, '&quot;') + '" title="Filter by tag: ' + item.parsedTag.replace(/"/g, '&quot;') + '">' + item.parsedTag + '</span>');
+        parts.push('<span class="meta-filter-toggle deco-parsed-tag" data-meta-key="tag" data-meta-value="' + item.parsedTag.replace(/"/g, '&quot;') + '" title="' + vt('viewer.deco.filterByTag', item.parsedTag.replace(/"/g, '&quot;')) + '">' + item.parsedTag + '</span>');
     }
     if (parts.length === 0) return '';
     /* WHY no '»' chevron: with --deco-prefix-width-em + hanging-indent, the

@@ -16,16 +16,16 @@ export function getPerformanceDbTabScript(): string {
         parts.push('<span class="pp-db-drift-title">Drift Advisor</span>');
         if (perf && typeof perf === 'object') {
             var tq = perf.totalQueries, sq = perf.slowCount, av = perf.avgDurationMs;
-            if (typeof tq === 'number' && isFinite(tq)) parts.push(' \\u00b7 Queries: <strong>' + fmtNum(Math.round(tq)) + '</strong>');
-            if (typeof sq === 'number' && isFinite(sq)) parts.push(' \\u00b7 Slow: <strong>' + fmtNum(Math.round(sq)) + '</strong>');
-            if (typeof av === 'number' && isFinite(av)) parts.push(' \\u00b7 Avg ms: <strong>' + Math.round(av) + '</strong>');
+            if (typeof tq === 'number' && isFinite(tq)) parts.push(' \\u00b7 ' + vt('viewer.perfDb.driftQueries', fmtNum(Math.round(tq))));
+            if (typeof sq === 'number' && isFinite(sq)) parts.push(' \\u00b7 ' + vt('viewer.perfDb.driftSlow', fmtNum(Math.round(sq))));
+            if (typeof av === 'number' && isFinite(av)) parts.push(' \\u00b7 ' + vt('viewer.perfDb.driftAvgMs', Math.round(av)));
         }
         var an = dm.anomalies;
         if (an && typeof an === 'object' && typeof an.count === 'number' && isFinite(an.count) && an.count > 0) {
-            parts.push(' \\u00b7 Anomalies: <strong>' + fmtNum(Math.round(an.count)) + '</strong>');
+            parts.push(' \\u00b7 ' + vt('viewer.perfDb.driftAnomalies', fmtNum(Math.round(an.count))));
         }
         if (typeof window !== 'undefined' && window.driftAdvisorAvailable) {
-            parts.push(' <button type="button" class="pp-db-drift-open" data-pp-db-drift-open="1">Open panel</button>');
+            parts.push(' <button type="button" class="pp-db-drift-open" data-pp-db-drift-open="1">' + vt('viewer.perfDb.openPanel') + '</button>');
         }
         parts.push('</div>');
         return parts.join('');
@@ -61,13 +61,13 @@ export function getPerformanceDbTabScript(): string {
         if (!ppDbView) return;
         bindDbViewChromeOnce();
         if (typeof dbSignalSessionRollup === 'undefined' || !dbSignalSessionRollup) {
-            ppDbView.innerHTML = '<p class="pp-db-empty">No database line rollup in this session.</p>';
+            ppDbView.innerHTML = '<p class="pp-db-empty">' + vt('viewer.perfDb.noRollup') + '</p>';
             window.ppDbTimelineMeta = null;
             return;
         }
         var keys = Object.keys(dbSignalSessionRollup);
         if (!keys.length) {
-            ppDbView.innerHTML = '<p class="pp-db-empty">No Drift SQL fingerprints recorded.</p>';
+            ppDbView.innerHTML = '<p class="pp-db-empty">' + vt('viewer.perfDb.noFingerprints') + '</p>';
             window.ppDbTimelineMeta = null;
             return;
         }
@@ -115,20 +115,20 @@ export function getPerformanceDbTabScript(): string {
         }
         var html = '';
         html += buildDriftAdvisorDbPanelHtml();
-        html += '<div class="pp-db-summary">Queries (Drift lines): <strong>' + fmtNum(totalQ) + '</strong> \\u00b7 Fingerprints: <strong>' + fmtNum(distinct) + '</strong>';
+        html += '<div class="pp-db-summary">' + vt('viewer.perfDb.summaryQueries', fmtNum(totalQ)) + ' \\u00b7 ' + vt('viewer.perfDb.summaryFingerprints', fmtNum(distinct));
         if (withDur) {
-            html += ' \\u00b7 With duration metadata: <strong>' + fmtNum(withDur) + '</strong>';
+            html += ' \\u00b7 ' + vt('viewer.perfDb.summaryWithDuration', fmtNum(withDur));
             var cntMs = entries.reduce(function(s, x) { return s + x.countWithMs; }, 0);
             var avgFp = cntMs > 0 ? Math.round(sumDurMs / cntMs) : 0;
-            if (avgFp > 0) html += ' \\u00b7 Rollup avg ms (where known): <strong>' + avgFp + '</strong>';
+            if (avgFp > 0) html += ' \\u00b7 ' + vt('viewer.perfDb.summaryRollupAvg', avgFp);
         }
         if (durLineN > 0) {
-            html += ' \\u00b7 Slow lines (\\u2265' + slowTh + 'ms): <strong>' + Math.round(100 * slowLineN / durLineN) + '%</strong> of lines with duration';
+            html += ' \\u00b7 ' + vt('viewer.perfDb.summarySlowLines', slowTh, Math.round(100 * slowLineN / durLineN));
         }
         html += '</div>';
         if (typeof dbTimeFilterActive !== 'undefined' && dbTimeFilterActive) {
-            html += '<div class="pp-db-time-filter-bar"><span class="pp-db-time-filter-label">Time filter active</span>'
-                + '<button type="button" class="pp-db-clear-time" data-pp-db-clear-time="1">Clear time filter</button></div>';
+            html += '<div class="pp-db-time-filter-bar"><span class="pp-db-time-filter-label">' + vt('viewer.perfDb.timeFilterActive') + '</span>'
+                + '<button type="button" class="pp-db-clear-time" data-pp-db-clear-time="1">' + vt('viewer.perfDb.clearTimeFilter') + '</button></div>';
         }
         var tMin = Infinity, tMax = -Infinity;
         if (typeof allLines !== 'undefined') {
@@ -166,31 +166,31 @@ export function getPerformanceDbTabScript(): string {
             }
             var maxB = 1;
             for (bi = 0; bi < bucketCount; bi++) if (buckets[bi] > maxB) maxB = buckets[bi];
-            html += '<div class="pp-db-timeline"><div class="pp-db-timeline-label">DB activity over session time <span class="pp-db-timeline-hint">(drag to filter by time)</span></div>';
-            html += '<div class="pp-db-timeline-track" title="Drag horizontally to set a time range filter">';
+            html += '<div class="pp-db-timeline"><div class="pp-db-timeline-label">' + vt('viewer.perfDb.timelineLabel') + ' <span class="pp-db-timeline-hint">' + vt('viewer.perfDb.timelineHint') + '</span></div>';
+            html += '<div class="pp-db-timeline-track" title="' + vt('viewer.perfDb.timelineTrackTitle') + '">';
             html += '<div class="pp-db-viewport-band" aria-hidden="true"></div>';
             html += '<div class="pp-db-filter-band" aria-hidden="true"></div>';
             html += '<div class="pp-db-brush-selection" aria-hidden="true"></div>';
             html += '<div class="pp-db-bars">';
             for (bi = 0; bi < bucketCount; bi++) {
                 var bh = Math.round((buckets[bi] / maxB) * 100);
-                html += '<div class="pp-db-bar-wrap" title="' + buckets[bi] + ' queries"><div class="pp-db-bar" style="height:' + bh + '%"></div></div>';
+                html += '<div class="pp-db-bar-wrap" title="' + vt('viewer.perfDb.barQueries', buckets[bi]) + '"><div class="pp-db-bar" style="height:' + bh + '%"></div></div>';
             }
             html += '</div></div></div>';
             window.ppDbTimelineMeta = { tMin: tMin, tMax: tMax, span: span, bucketCount: bucketCount };
         } else {
-            html += '<p class="pp-db-note">No time-range for a timeline (need database lines with timestamps).</p>';
+            html += '<p class="pp-db-note">' + vt('viewer.perfDb.noTimeRange') + '</p>';
             window.ppDbTimelineMeta = null;
         }
         if (h0 + h1 + h2 + h3 > 0) {
-            html += '<div class="pp-db-histo">Duration on DB lines: &lt;10ms ' + fmtNum(h0)
+            html += '<div class="pp-db-histo">' + vt('viewer.perfDb.histoLabel') + ' &lt;10ms ' + fmtNum(h0)
                 + ' \\u00b7 10\\u201350ms ' + fmtNum(h1)
                 + ' \\u00b7 50\\u2013200ms ' + fmtNum(h2)
                 + ' \\u00b7 \\u2265200ms ' + fmtNum(h3) + '</div>';
         }
         var staticSqlTab = (typeof staticSqlFromFingerprintEnabled !== 'undefined' && staticSqlFromFingerprintEnabled);
-        html += '<div class="pp-db-table-title">Top fingerprints by volume</div><table class="pp-db-table"><thead><tr><th>#</th><th>Fingerprint (truncated)</th><th>Count</th><th>Avg ms</th>';
-        if (staticSqlTab) html += '<th>Static sources</th>';
+        html += '<div class="pp-db-table-title">' + vt('viewer.perfDb.topFingerprints') + '</div><table class="pp-db-table"><thead><tr><th>#</th><th>' + vt('viewer.perfDb.colFingerprint') + '</th><th>' + vt('viewer.perfDb.colCount') + '</th><th>' + vt('viewer.perfDb.colAvgMs') + '</th>';
+        if (staticSqlTab) html += '<th>' + vt('viewer.perfDb.colStaticSources') + '</th>';
         html += '</tr></thead><tbody>';
         var maxRows = 15;
         for (bi = 0; bi < entries.length && bi < maxRows; bi++) {
@@ -199,7 +199,7 @@ export function getPerformanceDbTabScript(): string {
             var fshow = e.fp.length > 72 ? e.fp.substring(0, 69) + '...' : e.fp;
             html += '<tr><td>' + (bi + 1) + '</td><td class="pp-db-fp" title="' + esc(e.fp) + '">' + esc(fshow) + '</td><td>' + fmtNum(e.count) + '</td><td>' + avg + '</td>';
             if (staticSqlTab) {
-                html += '<td><button type="button" class="pp-db-static-src" data-pp-db-fp="' + encodeURIComponent(e.fp) + '" title="Possible Dart sources (project index; not stack trace)">Sources</button></td>';
+                html += '<td><button type="button" class="pp-db-static-src" data-pp-db-fp="' + encodeURIComponent(e.fp) + '" title="' + vt('viewer.perfDb.staticSourcesTitle') + '">' + vt('viewer.perfDb.sources') + '</button></td>';
             }
             html += '</tr>';
         }

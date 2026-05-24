@@ -1,11 +1,13 @@
 /** Inline Go to Line overlay: Ctrl+G opens, numbers-only, instant scroll. */
 
+import { t } from '../../l10n';
+
 /** Returns the HTML for the Go to Line input overlay. */
 export function getGotoLineHtml(): string {
     return /* html */ `<div id="goto-line-overlay" class="goto-line-overlay">
-    <label for="goto-line-input" class="goto-line-label">Go to Line</label>
+    <label for="goto-line-input" class="goto-line-label">${t('viewer.gotoLine.label')}</label>
     <input id="goto-line-input" type="text" inputmode="numeric"
-           placeholder="Line number" autocomplete="off" />
+           placeholder="${t('viewer.gotoLine.placeholder')}" autocomplete="off" />
 </div>`;
 }
 
@@ -67,7 +69,7 @@ function openGotoLine() {
     if (!gotoOverlay || !gotoInput) return;
     gotoSavedScroll = logEl ? logEl.scrollTop : 0;
     gotoInput.value = '';
-    gotoInput.placeholder = '1 \\u2013 ' + allLines.length;
+    gotoInput.placeholder = vt('viewer.gotoLine.rangePlaceholder', allLines.length);
     gotoOverlay.classList.add('visible');
     gotoInput.focus();
 }

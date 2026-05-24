@@ -3,19 +3,21 @@
  * Footer filename click opens this; keyboard shortcut can call window.openLogFileActionsModal.
  */
 
+import { t } from '../../l10n';
+
 /** HTML for the log file actions modal (uses shared `.modal` styles). */
 export function getLogFileModalHtml(): string {
     return /* html */ `
     <div id="log-file-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="log-file-modal-title">
     <div class="modal-content log-file-modal-content">
         <div class="modal-header">
-            <span id="log-file-modal-title">Log file</span>
-            <button type="button" class="modal-close" title="Close" aria-label="Close">&times;</button>
+            <span id="log-file-modal-title">${t('viewer.logFile.title')}</span>
+            <button type="button" class="modal-close" title="${t('viewer.popover.close')}" aria-label="${t('viewer.popover.close')}">&times;</button>
         </div>
         <div class="modal-body log-file-modal-body">
-            <button type="button" id="log-file-btn-open-editor" class="modal-btn modal-btn-primary log-file-modal-btn">Open in editor</button>
-            <button type="button" id="log-file-btn-open-folder" class="modal-btn log-file-modal-btn">Open containing folder</button>
-            <button type="button" id="log-file-btn-copy-path" class="modal-btn log-file-modal-btn">Copy path</button>
+            <button type="button" id="log-file-btn-open-editor" class="modal-btn modal-btn-primary log-file-modal-btn">${t('viewer.logFile.openEditor')}</button>
+            <button type="button" id="log-file-btn-open-folder" class="modal-btn log-file-modal-btn">${t('viewer.logFile.openFolder')}</button>
+            <button type="button" id="log-file-btn-copy-path" class="modal-btn log-file-modal-btn">${t('viewer.logFile.copyPath')}</button>
         </div>
     </div>
     </div>`;

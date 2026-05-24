@@ -1,6 +1,27 @@
 # 053 — Plan: localize the log-viewer webview (full sweep)
 
-## Status: In Progress — visible UI complete, long tail remaining
+## Status: Fixed — full webview sweep complete (sections A, B, C all done)
+
+## Resolution
+
+All remaining surfaces (sections A/B/C below) are now routed through the l10n
+pipeline. **353 English source keys added** — 200 client (`vt()`) in
+`src/l10n/strings-webview-b.ts`, 153 host (`t()`) in `src/l10n/strings-viewer-d.ts`
+(both split out to respect the 300-line file limit; wired into the `strings`
+merge and the `__VT` map in `src/l10n.ts`, and auto-discovered by the translate
+pipeline's `strings-*.ts` glob). Decoration tooltips, render labels, context
+menus / modals / popovers, and the secondary panels (performance, recurring,
+session-comparison, line-analysis, SQL history) all use `t()`/`vt()` now.
+
+Verification: raw-literal rescan of every touched file → **0** remaining
+`title`/`aria-label`/`placeholder` literals; a used-vs-defined key cross-check
+passed (every `vt`/`t` key resolves); `check-types`, `lint` (no new warnings),
+and `compile` (NLS / catalog / dist-size gates) clean; full suite **2859 passing,
+0 failing**. Test sandboxes that eval render scripts were given the `vt` stub
+(`viewer-session-panel-test-helpers.ts` `vtStub`, extended to read
+`strings-webview-b.ts`); literal-pin assertions were repointed to the wired keys.
+Translation of the 353 keys into all 11 locales happens automatically at publish
+(`scripts/translate_l10n.py`) — bundles are NOT hand-edited.
 
 Make every user-facing string in the viewer **webview** localizable. The webview
 was deliberately English-only — neither existing l10n pipeline reached it. This
@@ -67,7 +88,11 @@ picked up automatically. Do NOT hand-translate the bundles.
 
 ---
 
-## Remaining
+## Remaining — DONE (kept below as the historical work list)
+
+✅ **All items in sections A, B, C are complete** (see Resolution above). The
+original scope estimate — 24 files / 57 pure-literal attributes, ≈100–130 strings
+— resolved to **353 keys** once visible text and runtime strings were included.
 
 Accurate scan: **24 files / 57 pure-literal `title`/`aria-label`/`placeholder`
 attributes**, plus their associated visible-text and runtime strings (≈100–130
