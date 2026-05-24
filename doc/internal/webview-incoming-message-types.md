@@ -45,6 +45,7 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `explainWithAi` | viewer-message-handler-actions.ts |
 | `exportLogs` | viewer-message-handler-session-ui.ts |
 | `exportSignalsSummary` | viewer-message-handler-panels.ts |
+| `fetchCrashlyticsDetail` | viewer-message-handler-panels.ts |
 | `findNavigateMatch` | viewer-message-handler-session-ui.ts |
 | `findStaticSourcesForSqlFingerprint` | viewer-message-handler-actions.ts |
 | `generateReport` | viewer-message-handler-actions.ts |
@@ -54,7 +55,6 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `muteSignalWithReason` | viewer-message-handler-panels.ts |
 | `navigatePart` | viewer-message-handler-session-ui.ts |
 | `navigateSession` | viewer-message-handler-session-ui.ts |
-| `openAppQualityInsights` | viewer-message-handler-panels.ts |
 | `openBookmark` | viewer-message-handler-session-ui.ts |
 | `openCollectionById` | viewer-message-handler-collection.ts |
 | `openCurrentFileFolder` | viewer-message-handler-session-ui.ts |

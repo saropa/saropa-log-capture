@@ -239,11 +239,6 @@
         "title": "%command.showTimeline.title%"
       },
       {
-        "command": "saropaLogCapture.openAppQualityInsights",
-        "icon": "$(dashboard)",
-        "title": "Saropa Log Capture: Open App Quality Insights"
-      },
-      {
         "command": "saropaLogCapture.compareSessions",
         "icon": "$(diff)",
         "title": "%command.compareSessions.title%"
