@@ -4,6 +4,9 @@ import type { DiagnosticDetails } from './crashlytics-diagnostics';
 
 export interface FirebaseConfig { readonly projectId: string; readonly appId: string; }
 
+/** Issue category used by the dashboard's source tabs. Maps from the Play ErrorIssue.type. */
+export type IssueKind = 'crash' | 'anr' | 'nonfatal' | 'unknown';
+
 export interface CrashlyticsIssue {
     readonly id: string;
     readonly title: string;
@@ -11,6 +14,8 @@ export interface CrashlyticsIssue {
     readonly eventCount: number;
     readonly userCount: number;
     readonly isFatal: boolean;
+    /** Specific category (crash / ANR / non-fatal) for tab filtering; `isFatal` is the coarse flag. */
+    readonly kind?: IssueKind;
     readonly state: 'OPEN' | 'CLOSED' | 'REGRESSION' | 'UNKNOWN';
     readonly firstVersion?: string;
     readonly lastVersion?: string;

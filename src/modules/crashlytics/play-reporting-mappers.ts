@@ -6,13 +6,21 @@
  * Field names follow the published v1beta1 discovery schema (verified, not guessed).
  */
 
-import type { CrashlyticsIssue, CrashlyticsEventDetail, CrashlyticsThread } from './crashlytics-types';
+import type { CrashlyticsIssue, CrashlyticsEventDetail, CrashlyticsThread, IssueKind } from './crashlytics-types';
 
 type Json = Record<string, unknown>;
 
 /** Play ErrorIssue.type values that count as fatal (the remaining value is NON_FATAL). */
 function isFatalType(type: string): boolean {
     return type === 'CRASH' || type === 'APPLICATION_NOT_RESPONDING';
+}
+
+/** Map the Play ErrorIssue.type enum to the dashboard's tab category. */
+export function issueKind(type: string): IssueKind {
+    if (type === 'CRASH') { return 'crash'; }
+    if (type === 'APPLICATION_NOT_RESPONDING') { return 'anr'; }
+    if (type === 'NON_FATAL') { return 'nonfatal'; }
+    return 'unknown';
 }
 
 /** AppVersion → its versionCode string, or undefined. */
@@ -54,6 +62,7 @@ export function mapErrorIssue(raw: Json): CrashlyticsIssue {
         eventCount: Number(raw.errorReportCount ?? 0),
         userCount: Number(raw.distinctUsers ?? 0),
         isFatal: isFatalType(type),
+        kind: issueKind(type),
         // Play Developer Reporting has no open/closed/regression state on an issue.
         state: 'UNKNOWN',
         firstVersion: appVersionLabel(raw.firstAppVersion),
