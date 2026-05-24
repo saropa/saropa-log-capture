@@ -11,7 +11,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { getNonce } from '../provider/viewer-content';
 import { formatElapsedLabel } from '../../modules/capture/ansi';
-import { getFirebaseContext, getCrashEvents, getIssueBreakdown, clearIssueListCache } from '../../modules/crashlytics/firebase-crashlytics';
+import { getFirebaseContext, getCrashEvents, getIssueBreakdown, getIssueFilterIndex, clearIssueListCache } from '../../modules/crashlytics/firebase-crashlytics';
 import { detectPackageName } from '../../modules/misc/app-identity';
 import { renderCrashDetail, renderDeviceDistribution } from '../analysis/analysis-crash-detail';
 import { buildDashboardHtml, renderAggregateBreakdown, type DashboardModel } from './app-quality-insights-render';
@@ -51,11 +51,15 @@ async function buildModel(): Promise<DashboardModel> {
     const packageName = (await detectPackageName()) ?? '';
     const timeRange = vscode.workspace.getConfiguration('saropaLogCapture.firebase').get<string>('timeRange', 'LAST_7_DAYS');
     lastConsoleUrl = ctx.consoleUrl;
+    // Download per-issue device/OS values for the local filters (sequential so the token cache from
+    // getFirebaseContext is reused; only when connected). undefined index just hides those filters.
+    const filterIndex = ctx.available ? await getIssueFilterIndex() : undefined;
     return {
         available: ctx.available,
         issues: ctx.issues,
         packageName,
         timeRange,
+        filterIndex,
         refreshNote: ctx.queriedAt ? formatElapsedLabel(ctx.queriedAt) : '',
         consoleUrl: ctx.consoleUrl,
         setupHint: ctx.setupHint ?? ctx.diagnostics?.message,

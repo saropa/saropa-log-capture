@@ -84,6 +84,50 @@ export function parseMetricRows(json: Record<string, unknown> | undefined, dimNa
     return out.sort((a, b) => b.count - a.count).slice(0, 12);
 }
 
+/** Per-issue device + OS values, downloaded once so the dashboard can filter the list locally. */
+export interface IssueFilterIndex {
+    readonly devicesByIssue: Record<string, string[]>;
+    readonly osByIssue: Record<string, string[]>;
+}
+
+/** Read a named dimension's value off a metric-set row. */
+function rowDimValue(row: Record<string, unknown>, name: string): string {
+    const dims = (row.dimensions as Record<string, unknown>[] | undefined) ?? [];
+    return dimValue(dims.find(d => d.dimension === name));
+}
+
+/** Download the issue→{dimension values} map in one query (grouped by issueId + the dimension). */
+async function fetchIssueDimensionMap(q: PlayQuery, ts: object, dim: string): Promise<Record<string, string[]>> {
+    const body = JSON.stringify({ timelineSpec: ts, dimensions: ['reportType', 'issueId', dim], metrics: ['errorReportCount'], pageSize: 1000 });
+    const { json } = await request('errorCountMetricSet:query', q, body);
+    const map: Record<string, string[]> = {};
+    for (const row of ((json?.rows as Record<string, unknown>[] | undefined) ?? [])) {
+        const issueId = rowDimValue(row, 'issueId');
+        const value = rowDimValue(row, dim);
+        if (!issueId || !value) { continue; }
+        (map[issueId] ??= []);
+        if (!map[issueId].includes(value)) { map[issueId].push(value); }
+    }
+    return map;
+}
+
+/** Download per-issue device + OS values for local filtering. Never throws; returns empty maps on failure. */
+export async function fetchIssueFilterIndex(q: PlayQuery): Promise<IssueFilterIndex> {
+    try {
+        const end = await freshnessEnd(q);
+        const ts = { aggregationPeriod: 'FULL_RANGE', startTime: minusDays(end, rangeDays(q.timeRange)), endTime: end };
+        const [devices, os] = await Promise.all([
+            fetchIssueDimensionMap(q, ts, 'deviceBrand'),
+            fetchIssueDimensionMap(q, ts, 'apiLevel'),
+        ]);
+        const osByIssue: Record<string, string[]> = {};
+        for (const id of Object.keys(os)) { osByIssue[id] = os[id].map(v => `API ${v}`); }
+        return { devicesByIssue: devices, osByIssue };
+    } catch {
+        return { devicesByIssue: {}, osByIssue: {} };
+    }
+}
+
 async function queryDimension(q: PlayQuery, ts: object, dim: string, filter: string): Promise<{ entries: StatEntry[]; diagnostic?: DiagnosticDetails }> {
     const body = JSON.stringify({ timelineSpec: ts, dimensions: ['reportType', dim], metrics: ['errorReportCount'], filter, pageSize: 50 });
     const { json, diagnostic } = await request('errorCountMetricSet:query', q, body);

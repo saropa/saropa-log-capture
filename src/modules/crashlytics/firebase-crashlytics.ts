@@ -6,7 +6,7 @@ import { runCmd } from './crashlytics-io';
 import { resolveGcloudCmd, resetGcloudLocatorCache } from './gcloud-locator';
 import { getAccessTokenFromServiceAccount } from './crashlytics-service-account';
 import { detectPackageName } from '../misc/app-identity';
-import { fetchIssueBreakdown, type IssueBreakdown } from './play-reporting-metrics';
+import { fetchIssueBreakdown, fetchIssueFilterIndex, type IssueBreakdown, type IssueFilterIndex } from './play-reporting-metrics';
 import { logCrashlytics, classifyGcloudError, classifyTokenError, firebaseConfigSetupHint, type DiagnosticDetails } from './crashlytics-diagnostics';
 import type { CrashlyticsIssueEvents, CrashlyticsEventDetail, FirebaseContext, FirebaseConfig, SetupChecklist } from './crashlytics-types';
 export type { CrashlyticsIssue, CrashlyticsStackFrame, CrashlyticsEventDetail, CrashlyticsIssueEvents, FirebaseContext, SetupChecklist, SetupStepStatus } from './crashlytics-types';
@@ -250,6 +250,20 @@ export async function getIssueBreakdown(issueId: string): Promise<IssueBreakdown
         if (!token || !config || !packageName) { return undefined; }
         const timeRange = vscode.workspace.getConfiguration('saropaLogCapture.firebase').get<string>('timeRange', 'LAST_7_DAYS');
         return await fetchIssueBreakdown({ packageName, token, timeRange, quotaProject: config.projectId }, issueId);
+    } catch {
+        return undefined;
+    }
+}
+
+/** Per-issue device/OS maps for the dashboard's local device & OS filters. Never throws. */
+export async function getIssueFilterIndex(): Promise<IssueFilterIndex | undefined> {
+    try {
+        const token = await getAccessToken();
+        const config = await detectFirebaseConfig();
+        const packageName = await detectPackageName();
+        if (!token || !config || !packageName) { return undefined; }
+        const timeRange = vscode.workspace.getConfiguration('saropaLogCapture.firebase').get<string>('timeRange', 'LAST_7_DAYS');
+        return await fetchIssueFilterIndex({ packageName, token, timeRange, quotaProject: config.projectId });
     } catch {
         return undefined;
     }
