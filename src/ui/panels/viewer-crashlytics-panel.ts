@@ -140,11 +140,17 @@ export function getCrashlyticsPanelScript(): string {
         // no-ops (bug_008 / plan 054). The dashboard's "Open Firebase Console" link is the way to
         // act on an issue.
         // The whole row opens the detail in the viewer's main area; ↗ hints it opens a full view.
-        // data-* carry the fields the detail header + markdown need without a second lookup.
-        return '<div class="cp-item" data-issue-id="' + esc(issue.id) + '" title="' + vt('viewer.crashlytics.openDetail') + '"'
+        // data-* carry the detail-header/markdown fields AND drive the sidebar's client-side filters.
+        var sevClass = issue.isFatal ? 'cp-item-fatal' : 'cp-item-nonfatal';
+        var versions = [];
+        if (issue.firstVersion) versions.push(issue.firstVersion);
+        if (issue.lastVersion && issue.lastVersion !== issue.firstVersion) versions.push(issue.lastVersion);
+        var searchText = (issue.title + ' ' + issue.subtitle).toLowerCase();
+        return '<div class="cp-item ' + sevClass + '" data-issue-id="' + esc(issue.id) + '" title="' + vt('viewer.crashlytics.openDetail') + '"'
             + ' data-title="' + esc(issue.title) + '" data-sub="' + esc(issue.subtitle) + '"'
             + ' data-events="' + esc(String(issue.eventCount)) + '" data-users="' + esc(String(issue.userCount)) + '"'
-            + ' data-fatal="' + (issue.isFatal ? '1' : '0') + '" data-fv="' + esc(issue.firstVersion || '') + '" data-lv="' + esc(issue.lastVersion || '') + '">'
+            + ' data-fatal="' + (issue.isFatal ? '1' : '0') + '" data-fv="' + esc(issue.firstVersion || '') + '" data-lv="' + esc(issue.lastVersion || '') + '"'
+            + ' data-kind="' + esc(issue.kind || 'unknown') + '" data-versions="' + esc(versions.join(',')) + '" data-search="' + esc(searchText) + '">'
             + '<div class="cp-title">' + badge + state + ' ' + esc(issue.title) + ' <span class="cp-expand-icon">\\u2197</span></div>'
             + '<div class="cp-meta">' + esc(issue.subtitle) + ' \\u00b7 ' + vt('viewer.crashlytics.events', issue.eventCount) + users + ver + '</div></div>';
     }
@@ -278,7 +284,8 @@ export function getCrashlyticsPanelScript(): string {
     var refreshBtn = document.getElementById('cp-refresh');
     if (refreshBtn) refreshBtn.addEventListener('click', function() {
         showLoading();
-        vscodeApi.postMessage({ type: 'requestCrashlyticsData' });
+        // Refresh forces a fresh fetch; plain open reuses the cache (fast reopen).
+        vscodeApi.postMessage({ type: 'crashlyticsCheckAgain' });
     });
 
     /* ---- Close / outside click ---- */

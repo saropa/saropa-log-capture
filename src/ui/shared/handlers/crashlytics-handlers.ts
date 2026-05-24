@@ -21,10 +21,16 @@ export type PostFn = (msg: unknown) => void;
 let refreshTimer: ReturnType<typeof setInterval> | undefined;
 let terminalListener: vscode.Disposable | undefined;
 
-/** Fetch Crashlytics context and send to webview. Never throws. */
-export async function handleCrashlyticsRequest(post: PostFn): Promise<void> {
+/**
+ * Fetch Crashlytics context and send to webview. Never throws.
+ *
+ * `forceRefresh` clears the caches first (the Refresh button / "Check Again"). Opening the panel
+ * passes false so it reuses the in-memory issue cache (5 min) and gcloud token (30 min) — otherwise
+ * every reopen re-spawned gcloud and re-hit the API, which is the "long delay on second open" bug.
+ */
+export async function handleCrashlyticsRequest(post: PostFn, forceRefresh = false): Promise<void> {
     try {
-        clearIssueListCache();
+        if (forceRefresh) { clearIssueListCache(); }
         const raw = await getFirebaseContext([]);
         const ctx: FirebaseContext = raw ?? { available: false, setupHint: 'Query failed', issues: [] };
         const gcloudInstallCommand = getGcloudInstallCommand();
