@@ -9,6 +9,9 @@ import type { CrashlyticsIssue, CrashlyticsIssueEvents, CrashlyticsEventDetail, 
 
 const apiBase = 'https://firebasecrashlytics.googleapis.com/v1beta1';
 const issueListTtl = 5 * 60_000;
+// Single source for the issue page size: the request body and the post-match cap
+// must agree, otherwise we'd fetch N rows but silently drop some at render time.
+const issuePageSize = 20;
 let cachedIssueRows: { rows: Record<string, unknown>[]; expires: number } | undefined;
 
 let lastApiDiagnostic: DiagnosticDetails | undefined;
@@ -44,7 +47,7 @@ export async function queryTopIssues(config: FirebaseConfig, token: string, erro
         }
         const body = JSON.stringify({
             issueFilters: filters,
-            pageSize: 20,
+            pageSize: issuePageSize,
             eventTimePeriod: getTimeRange(),
         });
         const data = await fetchJson(url, token, body);
@@ -89,7 +92,9 @@ function matchIssues(rows: Record<string, unknown>[], errorTokens: readonly stri
             lastVersion: issue.lastSeenVersion ? String(issue.lastSeenVersion) : undefined,
         });
     }
-    return results.slice(0, 5);
+    // Was hard-capped at 5, which hid most issues even though pageSize fetches 20.
+    // Bound to the fetched page so the panel shows every issue we actually retrieved.
+    return results.slice(0, issuePageSize);
 }
 
 /** Update a Crashlytics issue state (close or mute). Returns true on success. Never throws. */
