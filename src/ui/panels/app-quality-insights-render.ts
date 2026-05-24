@@ -127,8 +127,8 @@ export function renderAggregateBreakdown(breakdown: IssueBreakdown): string {
     return `<div class="aqi-breakdown-agg">${renderDistBars('Devices', breakdown.devices)}${renderDistBars('Android versions', breakdown.os)}${most}</div>`;
 }
 
-/** Build the full dashboard page. */
-export function buildDashboardHtml(model: DashboardModel, nonce: string): string {
+/** Build the full dashboard page. `initialIssueId` (optional) is auto-selected on load. */
+export function buildDashboardHtml(model: DashboardModel, nonce: string, initialIssueId?: string): string {
     const csp = `default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';`;
     const head = `<meta http-equiv="Content-Security-Policy" content="${csp}"><style nonce="${nonce}">${getDashboardStyles()}</style>`;
     if (!model.available) {
@@ -141,7 +141,7 @@ export function buildDashboardHtml(model: DashboardModel, nonce: string): string
 ${renderToolbar(model)}
 ${renderFilterBar(model)}
 <div class="aqi-grid">
-    <div class="aqi-pane" id="aqi-issues"><div class="aqi-pane-title">Issues (<span id="aqi-issue-count">${model.issues.length}</span>)</div>${list}</div>
+    <div class="aqi-pane" id="aqi-issues" data-initial="${escapeHtml(initialIssueId ?? '')}"><div class="aqi-pane-title">Issues (<span id="aqi-issue-count">${model.issues.length}</span>)</div>${list}</div>
     <div class="aqi-pane"><div class="aqi-pane-title">Detail</div><div id="aqi-detail"><div class="aqi-empty">Select an issue to see its stack trace.</div></div></div>
     <div class="aqi-pane"><div class="aqi-pane-title">Breakdown</div><div id="aqi-breakdown"><div class="aqi-empty">Device & version breakdown appears here.</div></div></div>
 </div>
@@ -190,16 +190,24 @@ function getDashboardScript(): string {
     if (versionEl) { versionEl.addEventListener('change', function () { activeVersion = versionEl.value; applyFilters(); }); }
 
     const issues = document.getElementById('aqi-issues');
+    function selectRow(row) {
+        document.querySelectorAll('.aqi-issue.selected').forEach(function (x) { x.classList.remove('selected'); });
+        row.classList.add('selected');
+        const detail = document.getElementById('aqi-detail');
+        if (detail) { detail.innerHTML = '<div class="aqi-empty">Loading…</div>'; }
+        post({ type: 'selectIssue', issueId: row.getAttribute('data-issue-id') });
+    }
     if (issues) {
         issues.addEventListener('click', function (e) {
             const row = e.target.closest('.aqi-issue');
-            if (!row) { return; }
-            document.querySelectorAll('.aqi-issue.selected').forEach(function (x) { x.classList.remove('selected'); });
-            row.classList.add('selected');
-            const detail = document.getElementById('aqi-detail');
-            if (detail) { detail.innerHTML = '<div class="aqi-empty">Loading…</div>'; }
-            post({ type: 'selectIssue', issueId: row.getAttribute('data-issue-id') });
+            if (row) { selectRow(row); }
         });
+        // Auto-select the issue the sidebar opened us with (clicking a sidebar entry deep-links here).
+        const initial = issues.getAttribute('data-initial');
+        if (initial) {
+            const initRow = issues.querySelector('.aqi-issue[data-issue-id="' + initial.replace(/"/g, '\\\\"') + '"]');
+            if (initRow) { selectRow(initRow); initRow.scrollIntoView({ block: 'center' }); }
+        }
     }
 
     const range = document.getElementById('aqi-range');
