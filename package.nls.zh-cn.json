@@ -135,6 +135,8 @@
   "config.diagnosticCapture.title": "Log capture pipeline events (session start, output buffered/written) …",
   "config.docsScanDirs.description": "分析时扫描项目文档引用的目录（相对于工作区根目录）。",
   "config.docsScanDirs.title": "Directories to scan for project documentation references during analy…",
+  "config.changelogPaths.description": "用于定位项目 CHANGELOG 的工作区相对 glob 模式（最规范的优先）。为日志查看器中的‘可能已修复’信号和变更日志查询提供支持。",
+  "config.changelogPaths.title": "Glob patterns for locating the project CHANGELOG.",
   "config.enabled.description": "启用或禁用调试会话期间的自动日志捕获。",
   "config.enabled.title": "Enable or disable automatic log capture during debug sessions.",
   "config.errorRateBucketSize.description": "Time-bucket size for the error-rate chart. auto adapts to session length; fixed values override.",
