@@ -7,6 +7,7 @@
  * Opening the panel replays the active tab’s refresh path so **Log** reloads snapshot data after dismiss.
  * Log intro: right-click copies full text via the small context menu.
  */
+import { t } from '../../l10n';
 import { getPerformanceCurrentScript } from './viewer-performance-current';
 import { getPerformanceTrendsScript } from './viewer-performance-trends';
 import { getPerformanceSessionTabScript } from './viewer-performance-session-tab';
@@ -23,59 +24,59 @@ export function getPerformancePanelHtml(prefix?: string): string {
     return /* html */ `
 <div id="${id}" class="performance-panel">
     <div class="performance-panel-header">
-        <span>Performance</span>
+        <span>${t('viewer.perf.title')}</span>
         <div class="performance-panel-actions">
-            <button id="${pid('refresh')}" class="pp-action" title="Refresh">
+            <button id="${pid('refresh')}" class="pp-action" title="${t('viewer.perf.refresh')}">
                 <span class="codicon codicon-refresh"></span>
             </button>
-            <button id="${pid('panel-close')}" class="pp-close" title="Close">&times;</button>
+            <button id="${pid('panel-close')}" class="pp-close" title="${t('viewer.perf.close')}">&times;</button>
         </div>
     </div>
     <div class="pp-tabs">
-        <button id="${pid('tab-current')}" class="pp-tab active">Current</button>
-        <button id="${pid('tab-trends')}" class="pp-tab">Trends</button>
-        <button id="${pid('tab-session')}" class="pp-tab">Log</button>
-        <button id="${pid('tab-db')}" class="pp-tab">Database</button>
-        <button id="${pid('tab-error-rate')}" class="pp-tab">Errors</button>
+        <button id="${pid('tab-current')}" class="pp-tab active">${t('viewer.perf.tabCurrent')}</button>
+        <button id="${pid('tab-trends')}" class="pp-tab">${t('viewer.perf.tabTrends')}</button>
+        <button id="${pid('tab-session')}" class="pp-tab">${t('viewer.perf.tabLog')}</button>
+        <button id="${pid('tab-db')}" class="pp-tab">${t('viewer.perf.tabDatabase')}</button>
+        <button id="${pid('tab-error-rate')}" class="pp-tab">${t('viewer.perf.tabErrors')}</button>
     </div>
     <div class="performance-panel-content">
         <div id="${pid('current-view')}"></div>
         <div id="${pid('trends-view')}" style="display:none">
             <div id="${pid('chart-area')}" class="pp-chart-container" style="display:none">
-                <div class="pp-chart-title" id="${pid('chart-title')}">Select an operation</div>
+                <div class="pp-chart-title" id="${pid('chart-title')}">${t('viewer.perf.selectOperation')}</div>
                 <svg id="${pid('chart')}" class="pp-chart" viewBox="0 0 380 120"></svg>
             </div>
             <table class="pp-trend-table">
-                <thead><tr><th>Operation</th><th>Avg</th><th>Logs</th><th></th></tr></thead>
+                <thead><tr><th>${t('viewer.perf.colOperation')}</th><th>${t('viewer.perf.colAvg')}</th><th>${t('viewer.perf.colLogs')}</th><th></th></tr></thead>
                 <tbody id="${pid('trend-body')}"></tbody>
             </table>
         </div>
         <div id="${pid('db-view')}" style="display:none" class="pp-db-view"></div>
         <div id="${pid('session-view')}" style="display:none" class="pp-session-view">
-            <div id="${pid('session-intro')}" class="pp-session-intro pp-copyable-message" title="Right-click to copy">
-                <p class="pp-session-intro-line">This log file was saved without performance data. You can't add it to this file.</p>
-                <p class="pp-session-intro-line">For your next run: if <strong>Performance</strong> is enabled in Options → Integrations…, press F5 and the new log will include it. (For memory samples, also turn on "Sample during session" in Settings.)</p>
-                <p class="pp-session-intro-line pp-session-intro-note">Overhead: snapshot at session start is minimal; optional sampling uses a little CPU and I/O.</p>
+            <div id="${pid('session-intro')}" class="pp-session-intro pp-copyable-message" title="${t('viewer.perf.rightClickToCopy')}">
+                <p class="pp-session-intro-line">${t('viewer.perf.introNoData')}</p>
+                <p class="pp-session-intro-line">${t('viewer.perf.introNextRun')}</p>
+                <p class="pp-session-intro-line pp-session-intro-note">${t('viewer.perf.introOverhead')}</p>
             </div>
             <div class="pp-session-block">
-                <div class="pp-session-title">System snapshot</div>
-                <div id="${pid('snapshot')}" class="pp-session-value">Not recorded for this log.</div>
+                <div class="pp-session-title">${t('viewer.perf.systemSnapshot')}</div>
+                <div id="${pid('snapshot')}" class="pp-session-value">${t('viewer.perf.notRecorded')}</div>
             </div>
             <div class="pp-session-block">
-                <div class="pp-session-title">Log samples</div>
-                <div id="${pid('samples')}" class="pp-session-value">Not recorded for this log.</div>
+                <div class="pp-session-title">${t('viewer.perf.logSamples')}</div>
+                <div id="${pid('samples')}" class="pp-session-value">${t('viewer.perf.notRecorded')}</div>
             </div>
             <div class="pp-session-block">
-                <div class="pp-session-title">Profiler output</div>
-                <div id="${pid('profiler')}" class="pp-session-value">None.</div>
+                <div class="pp-session-title">${t('viewer.perf.profilerOutput')}</div>
+                <div id="${pid('profiler')}" class="pp-session-value">${t('viewer.perf.none')}</div>
             </div>
         </div>
         <div id="${pid('error-rate-view')}" style="display:none"></div>
-        <div id="${pid('empty')}" class="pp-empty">No performance events found</div>
-        <div id="${pid('loading')}" class="pp-loading" style="display:none">Loading\u2026</div>
+        <div id="${pid('empty')}" class="pp-empty">${t('viewer.perf.noEvents')}</div>
+        <div id="${pid('loading')}" class="pp-loading" style="display:none">${t('viewer.perf.loading')}</div>
     </div>
     <div id="${pid('copy-message-menu')}" class="context-menu pp-copy-message-menu">
-        <div class="context-menu-item" data-action="copy-message"><span class="codicon codicon-copy"></span> Copy message</div>
+        <div class="context-menu-item" data-action="copy-message"><span class="codicon codicon-copy"></span> ${t('viewer.perf.copyMessage')}</div>
     </div>
 </div>`;
 }

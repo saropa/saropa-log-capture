@@ -169,8 +169,8 @@ function rebuildSqlPatternChips() {
     var parts = [];
     if (chipKeys.length > 0) {
         parts.push('<span class="source-tag-actions">'
-            + '<button class="tag-action-btn" data-sqlaction="all">All</button>'
-            + '<button class="tag-action-btn" data-sqlaction="none">None</button></span>');
+            + '<button class="tag-action-btn" data-sqlaction="all">' + vt('viewer.tags.all') + '</button>'
+            + '<button class="tag-action-btn" data-sqlaction="none">' + vt('viewer.tags.none') + '</button></span>');
     }
     var j, key, active, cls, cnt;
     for (j = 0; j < chipKeys.length; j++) {
@@ -197,13 +197,13 @@ function updateSqlPatternSummary() {
         hk = chipKeys[hi];
         if (hiddenSqlVerbs[hk]) hidden++;
     }
-    var summary = total + ' command type' + (total !== 1 ? 's' : '')
-        + (hidden > 0 ? ' (' + hidden + ' hidden)' : '');
+    var summary = vt(total !== 1 ? 'viewer.sqlPatterns.commandTypes.many' : 'viewer.sqlPatterns.commandTypes.one', total)
+        + (hidden > 0 ? vt('viewer.sqlPatterns.hiddenSuffix', hidden) : '');
     el.textContent = summary;
     /* Accordion header shows concise count: "2 of 6 hidden" or total */
     var accordionText = hidden > 0
-        ? hidden + ' of ' + total + ' hidden'
-        : total + ' type' + (total !== 1 ? 's' : '');
+        ? vt('viewer.sqlPatterns.accordionHidden', hidden, total)
+        : vt(total !== 1 ? 'viewer.sqlPatterns.accordionTypes.many' : 'viewer.sqlPatterns.accordionTypes.one', total);
     if (typeof setAccordionSummary === 'function') setAccordionSummary('sql-patterns-section', accordionText);
     /* Show/hide the tab button based on whether SQL patterns exist */
     var tab = document.getElementById('filter-tab-sql-patterns');
