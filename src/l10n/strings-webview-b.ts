@@ -202,6 +202,10 @@ export const stringsWebviewB: Record<string, string> = {
     'viewer.gitHistory.recentCommits': 'Recent commits',
     'viewer.gitHistory.none': 'No git history found for this file.',
 
+    // Project state panel client states (viewer-project-state-panel.ts).
+    'viewer.projectState.loading': 'Reading project state…',
+    'viewer.projectState.empty': 'Nothing to show — no git repository or detectable app version.',
+
     // Auto-hide patterns (client badges/buttons in viewer-auto-hide-modal.ts).
     'viewer.autoHide.badgeAlways': 'always',
     'viewer.autoHide.badgeThisLog': 'this log',

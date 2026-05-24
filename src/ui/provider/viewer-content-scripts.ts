@@ -76,6 +76,7 @@ import { getSignalPanelScript } from '../panels/viewer-signal-panel';
 import { getPerformancePanelScript } from '../panels/viewer-performance-panel';
 import { getCollectionsPanelScript } from '../viewer-panels/viewer-collections-panel-script';
 import { getAboutPanelScript } from '../viewer-panels/viewer-about-panel';
+import { getProjectStatePanelScript } from '../viewer-panels/viewer-project-state-panel';
 import { getIconBarScript } from '../viewer-nav/viewer-icon-bar';
 import { getErrorBreakpointScript } from '../viewer-decorations/viewer-error-breakpoint';
 import { getStatsScript } from '../viewer/viewer-stats';
@@ -230,6 +231,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         // Performance UI lives only inside Signal panel (signal-pp-*); standalone performance-panel was removed.
         scriptTag(nonce, getPerformancePanelScript('signal-')) +
         scriptTag(nonce, getAboutPanelScript()) +
+        scriptTag(nonce, getProjectStatePanelScript()) +
         scriptTag(nonce, getViewerFormatMarkdownScript()) +
         scriptTag(nonce, getViewerFormatJsonScript()) +
         scriptTag(nonce, getViewerFormatCsvScript()) +
