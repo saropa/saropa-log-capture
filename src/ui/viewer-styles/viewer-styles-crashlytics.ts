@@ -239,6 +239,19 @@ export function getCrashlyticsPanelStyles(): string {
 .cd-body .frame-fw { opacity: 0.55; }
 .cd-body .frame-app[data-frame-file] { cursor: pointer; }
 .cd-body .frame-app[data-frame-file]:hover { background: var(--vscode-list-hoverBackground); }
+/* Per-frame line numbers (#1a), hover copy (#1b), app-only filter (#1d) in the crash stack. */
+.cd-body .stack-frame { position: relative; }
+.cd-body .frame-num { color: var(--vscode-descriptionForeground); opacity: 0.5; font-family: var(--vscode-editor-font-family, monospace); font-size: 10px; margin-right: 6px; }
+.cd-body .cd-frame-copy { position: absolute; right: 4px; top: 1px; opacity: 0; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; border-radius: 3px; font-size: 11px; padding: 0 5px; cursor: pointer; }
+.cd-body .stack-frame:hover .cd-frame-copy { opacity: 0.8; }
+.cd-body .cd-frame-copy:hover { opacity: 1; }
+.cd-stack-controls { margin: 2px 0 4px; }
+.cd-apponly { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: 1px solid var(--vscode-panel-border); border-radius: 3px; font-size: 11px; padding: 1px 8px; cursor: pointer; opacity: 0.8; }
+.cd-apponly:hover { opacity: 1; }
+.cd-apponly.cd-apponly-on { opacity: 1; background: var(--vscode-button-background); color: var(--vscode-button-foreground); border-color: var(--vscode-focusBorder); }
+/* App-only mode hides framework rows and their folded groups. */
+.cd-body.cd-appcode-only .frame-fw, .cd-body.cd-appcode-only .cd-fw-group { display: none; }
+
 /* Folded framework-frame run (#1 smart collapse): a quiet, dashed inline disclosure so the
    noise stays one click away without competing with the app frames it sits between. */
 .cd-body .cd-fw-group { margin: 2px 0; }
