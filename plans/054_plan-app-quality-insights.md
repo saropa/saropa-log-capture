@@ -378,9 +378,11 @@ That "may already be fixed" signal is the standout. Build order (boundedness × 
 - **5c-3 Related issues / PRs — DONE.** Reuses `github-context.ts` (`getGitHubContext`) keyed off the
   crashing file + error tokens (from the issue title); PRs touching the file + matching issues render
   as clickable links in the panel. Best-effort (needs `gh`); degrades to nothing if absent.
-- **5c-4 Local-log correlation — NEXT, BIGGEST.** Match a crash's signature/stack against errors in the
-  current + saved sessions ("matches an error you captured 3 runs ago"), deep-link to that log line.
-  The extension's core competency; touches session storage, so its own slice.
+- **5c-4 Local-log correlation — DONE.** Derives a distinctive token from the crash title
+  (`crashSignatureToken`, exception class preferred), searches the user's captured log sessions via the
+  existing `searchLogFiles`, and renders a "Seen in your captured logs" panel; each match deep-links to
+  that session's log at the line (`openLogLine`). Best-effort; one representative line per session,
+  recent-first, capped at 5. Pure token extractor is unit-tested.
 - **Open diff / file history** from a frame folds into 5b's context-menu actions.
 
 ### 5d — Full dashboard layout (#5, full) — OPEN (subjective; needs a steer)
