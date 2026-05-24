@@ -215,7 +215,13 @@ export function getCrashlyticsPanelStyles(): string {
     border: none; border-radius: 3px; padding: 3px 10px; font-size: 12px; cursor: pointer; flex: none;
 }
 .cd-back:hover, .cd-copy:hover, .cd-newissue:hover { background: var(--vscode-button-secondaryHoverBackground); }
-.cd-body { flex: 1; overflow-y: auto; padding: 8px 12px; }
+/* Dashboard grid (#5 full layout): small data panels tile into columns as cards; the stack, stats
+   strip, device line, and thread headers span the full width. auto-fit collapses to one column on a
+   narrow overlay, and streamed-in panels (.cd-tile) slot into the grid as they arrive. */
+.cd-body { flex: 1; overflow-y: auto; padding: 8px 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; align-content: start; }
+.cd-body > * { grid-column: 1 / -1; min-width: 0; }
+.cd-body > .cd-tile { grid-column: span 1; }
+.cd-body > .group { background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background)); border: 1px solid var(--vscode-panel-border); border-radius: 8px; padding: 6px 10px; }
 .cd-loading { padding: 16px; opacity: 0.7; animation: cp-pulse 1.5s ease-in-out infinite; }
 .cp-item.cp-selected { background: var(--vscode-list-activeSelectionBackground); color: var(--vscode-list-activeSelectionForeground); }
 

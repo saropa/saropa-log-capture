@@ -54,7 +54,7 @@ function formatEventTime(raw: string): string {
 }
 
 function renderKeysSection(keys: readonly { key: string; value: string }[]): string {
-    let html = '<details class="group"><summary class="group-header">Keys <span class="match-count">' + keys.length + '</span></summary><table class="crash-keys-table">';
+    let html = '<details class="group cd-tile"><summary class="group-header">Keys <span class="match-count">' + keys.length + '</span></summary><table class="crash-keys-table">';
     for (const kv of keys) {
         html += `<tr><td class="crash-key-name">${escapeHtml(kv.key)}</td><td class="crash-key-value">${escapeHtml(kv.value)}</td></tr>`;
     }
@@ -62,7 +62,7 @@ function renderKeysSection(keys: readonly { key: string; value: string }[]): str
 }
 
 function renderLogsSection(logs: readonly { timestamp?: string; message: string }[]): string {
-    let html = '<details class="group"><summary class="group-header">Logs <span class="match-count">' + logs.length + ' breadcrumbs</span></summary>';
+    let html = '<details class="group cd-tile"><summary class="group-header">Logs <span class="match-count">' + logs.length + ' breadcrumbs</span></summary>';
     for (const entry of logs) {
         const ts = entry.timestamp ? `<span class="crash-log-ts">${escapeHtml(entry.timestamp)}</span> ` : '';
         html += `<div class="crash-log-entry">${ts}${escapeHtml(entry.message)}</div>`;
@@ -71,7 +71,7 @@ function renderLogsSection(logs: readonly { timestamp?: string; message: string 
 }
 
 function renderAppThreads(threads: readonly { name: string; frames: readonly CrashlyticsStackFrame[] }[]): string {
-    let html = `<details class="group"><summary class="group-header">Other Threads <span class="match-count">${threads.length} with app frames</span></summary>`;
+    let html = `<details class="group cd-tile"><summary class="group-header">Other Threads <span class="match-count">${threads.length} with app frames</span></summary>`;
     for (const t of threads.slice(0, 5)) {
         html += `<div class="crash-thread-header">${escapeHtml(t.name)}</div>`;
         const frames = classifyFrames(t.frames);
@@ -99,7 +99,7 @@ export function renderDeviceDistribution(multi: CrashlyticsIssueEvents): string 
         if (ev.osVersion) { osVersions.set(ev.osVersion, (osVersions.get(ev.osVersion) ?? 0) + 1); }
     }
     if (devices.size === 0 && osVersions.size === 0) { return ''; }
-    let html = '<details class="group" open><summary class="group-header">Device Distribution <span class="match-count">' + multi.events.length + ' events</span></summary>';
+    let html = '<details class="group cd-tile" open><summary class="group-header">Device Distribution <span class="match-count">' + multi.events.length + ' events</span></summary>';
     if (devices.size > 0) { html += renderDistributionBar('Devices', devices, multi.events.length); }
     if (osVersions.size > 0) { html += renderDistributionBar('OS Versions', osVersions, multi.events.length); }
     return html + '</details>';
@@ -108,7 +108,7 @@ export function renderDeviceDistribution(multi: CrashlyticsIssueEvents): string 
 /** Render aggregate device/OS distribution from Crashlytics stats API. */
 export function renderApiDistribution(stats: IssueStats): string {
     if (stats.deviceStats.length === 0 && stats.osStats.length === 0) { return ''; }
-    let html = '<details class="group" open><summary class="group-header">Aggregate Distribution <span class="match-count">all events</span></summary>';
+    let html = '<details class="group cd-tile" open><summary class="group-header">Aggregate Distribution <span class="match-count">all events</span></summary>';
     if (stats.deviceStats.length > 0) {
         const devices = new Map(stats.deviceStats.map(e => [e.name, e.count]));
         html += renderDistributionBar('Devices', devices, stats.deviceStats.reduce((s, e) => s + e.count, 0));

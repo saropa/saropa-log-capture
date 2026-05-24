@@ -61,7 +61,7 @@ export function renderLogCorrelation(matches: readonly LogCorrelation[], token: 
         `<div class="cd-proj-row"><a class="cd-log-link" data-uri="${escapeHtml(m.uri)}" data-line="${m.line}" data-col="${m.col}">`
         + `<span class="cd-proj-sha">${escapeHtml(m.fileName)}:${m.line}</span>`
         + `<span class="cd-proj-text">${escapeHtml(m.lineText)}</span></a></div>`).join('');
-    return `<details class="group" open><summary class="group-header">${t('viewer.crashlytics.project.seenInLogs', token)}`
+    return `<details class="group cd-tile" open><summary class="group-header">${t('viewer.crashlytics.project.seenInLogs', token)}`
         + ` <span class="match-count">${matches.length}</span></summary><div class="cd-proj">${rows}</div></details>`;
 }
 
@@ -73,6 +73,6 @@ export function renderProjectInsights(insights: ProjectInsights): string {
         + annotationsSection(insights);
     if (!body) { return ''; }
     const fileNote = insights.file ? ` <span class="match-count">${escapeHtml(insights.file.split(/[\\/]/).pop() ?? '')}</span>` : '';
-    return `<details class="group" open><summary class="group-header">${t('viewer.crashlytics.project.title')}${fileNote}</summary>`
+    return `<details class="group cd-tile" open><summary class="group-header">${t('viewer.crashlytics.project.title')}${fileNote}</summary>`
         + `<div class="cd-proj">${body}</div></details>`;
 }

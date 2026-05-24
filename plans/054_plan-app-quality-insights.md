@@ -386,11 +386,14 @@ That "may already be fixed" signal is the standout. Build order (boundedness × 
   recent-first, capped at 5. Pure token extractor is unit-tested.
 - **Open diff / file history** from a frame folds into 5b's context-menu actions.
 
-### 5d — Full dashboard layout (#5, full) — OPEN (subjective; needs a steer)
+### 5d — Full dashboard layout (#5, full) — DONE
 
-Beyond stat cards: a true multi-pane in-viewer layout (summary + stack + distribution + integration as
-side-by-side panels rather than one vertical scroll). Larger structural change to the overlay; design
-direction should be agreed before building (keeps the overlay, but the body becomes a grid).
+The detail body (`.cd-body`) is now a responsive CSS grid (`repeat(auto-fit, minmax(300px, 1fr))`).
+Small data panels (`.cd-tile`: device/aggregate distribution, keys, logs, other threads, "In your
+project", "Seen in your logs") render as cards and tile into columns; the stack, stats strip, device
+line, and thread headers span the full width. Collapses to one column on a narrow overlay; streamed-in
+panels slot into the grid as they arrive. `.cd-body > .group` gets the card chrome (border, radius,
+widget background).
 
 ### Sequencing recommendation
 
