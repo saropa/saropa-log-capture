@@ -104,7 +104,10 @@ export function classifyHttpStatus(status: number, body?: string): string {
             return `Sign-in is missing the Play reporting scope. Re-run: ${playReportingScopeFix}`;
         }
         if (b.includes('service_disabled') || b.includes('has not been used in project') || b.includes('it is disabled')) {
-            return 'The required Google API is not enabled for this project — enable it in the Google Cloud Console, then retry.';
+            return 'The Play Developer Reporting API is not enabled for this project — run: gcloud services enable playdeveloperreporting.googleapis.com, then retry.';
+        }
+        if (b.includes('quota project')) {
+            return 'Sign-in has no quota project. Re-run gcloud auth application-default login, or set saropaLogCapture.firebase.projectId.';
         }
         return 'Permission denied — your account needs access to this app in the Play Console / Firebase project.';
     }
