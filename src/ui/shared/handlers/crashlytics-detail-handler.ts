@@ -23,12 +23,14 @@ interface IssueMeta {
     readonly fatal?: boolean;
     readonly fv?: string;
     readonly lv?: string;
+    readonly kind?: string;
+    readonly state?: string;
 }
 
 /** Coerce the untyped meta object posted by the webview into IssueMeta. */
 function toMeta(raw: Record<string, unknown>): IssueMeta {
     const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
-    return { title: str(raw.title), subtitle: str(raw.subtitle), events: str(raw.events), users: str(raw.users), fatal: raw.fatal === true, fv: str(raw.fv), lv: str(raw.lv) };
+    return { title: str(raw.title), subtitle: str(raw.subtitle), events: str(raw.events), users: str(raw.users), fatal: raw.fatal === true, fv: str(raw.fv), lv: str(raw.lv), kind: str(raw.kind), state: str(raw.state) };
 }
 
 function versionRange(meta: IssueMeta): string {
@@ -36,8 +38,36 @@ function versionRange(meta: IssueMeta): string {
     return meta.lv || meta.fv || '';
 }
 
-function header(meta: IssueMeta): string {
-    return `<div class="cd-header"><span class="cd-title">${escapeHtml(meta.title ?? 'Issue')}</span>`
+/** Severity label + CSS class for the stat card, derived from the issue kind (ANR) or fatal flag. */
+function severity(meta: IssueMeta): { label: string; cls: string } {
+    if (meta.kind === 'anr') { return { label: t('viewer.crashlytics.sev.anr'), cls: 'cd-sev-anr' }; }
+    if (meta.kind === 'nonfatal' || !meta.fatal) { return { label: t('viewer.crashlytics.sev.nonfatal'), cls: 'cd-sev-nf' }; }
+    return { label: t('viewer.crashlytics.sev.crash'), cls: 'cd-sev-crash' };
+}
+
+function statCard(value: string, label: string, valueCls = ''): string {
+    return `<div class="cd-stat"><span class="cd-stat-val ${valueCls}">${value}</span><span class="cd-stat-label">${label}</span></div>`;
+}
+
+/** Dashboard stat cards at the top of the detail (#4): severity, events, users, state, versions. */
+function renderStatsStrip(meta: IssueMeta): string {
+    const sev = severity(meta);
+    const cards = [statCard(sev.label, t('viewer.crashlytics.stat.severity'), sev.cls)];
+    if (meta.events) { cards.push(statCard(escapeHtml(meta.events), t('viewer.crashlytics.stat.events'))); }
+    if (meta.users) { cards.push(statCard(escapeHtml(meta.users), t('viewer.crashlytics.stat.users'))); }
+    if (meta.state && meta.state !== 'UNKNOWN') { cards.push(statCard(escapeHtml(meta.state), t('viewer.crashlytics.stat.state'))); }
+    const ver = versionRange(meta);
+    if (ver) { cards.push(statCard(escapeHtml(ver), t('viewer.crashlytics.stat.versions'))); }
+    return `<div class="cd-stats">${cards.join('')}</div>`;
+}
+
+function header(meta: IssueMeta, consoleUrl: string): string {
+    // Project-level Firebase console link (#3): only the icon goes inside the title span so the row
+    // stays compact; URL comes from the webview (single source: firebase-crashlytics.ts builds it).
+    const consoleLink = consoleUrl
+        ? ` <a class="cd-console-link" data-url="${escapeHtml(consoleUrl)}" title="${t('viewer.crashlytics.detail.viewOnline')}">↗</a>`
+        : '';
+    return `<div class="cd-header"><span class="cd-title">${escapeHtml(meta.title ?? 'Issue')}${consoleLink}</span>`
         + `<button class="cd-newissue">${t('viewer.crashlytics.detail.newIssue')}</button>`
         + `<button class="cd-copy">${t('viewer.crashlytics.detail.copyMd')}</button>`
         + `<button class="cd-back">${t('viewer.crashlytics.detail.back')}</button></div>`;
@@ -83,7 +113,7 @@ export async function openCrashFrame(file: string, line: number): Promise<void> 
  * Fetch the issue's sampled event, render its detail into the in-viewer panel, and stream code context
  * (source line + git blame) for app frames afterwards. Never throws.
  */
-export async function handleCrashlyticsDetail(issueId: string, rawMeta: Record<string, unknown>, post: PostFn): Promise<void> {
+export async function handleCrashlyticsDetail(issueId: string, rawMeta: Record<string, unknown>, post: PostFn, consoleUrl = ''): Promise<void> {
     const meta = toMeta(rawMeta);
     try {
         const multi = await getCrashEvents(issueId);
@@ -91,13 +121,13 @@ export async function handleCrashlyticsDetail(issueId: string, rawMeta: Record<s
         const body = event
             ? renderCrashDetail(event) + (multi ? renderDeviceDistribution(multi) : '')
             : '<div class="no-matches">No stack trace available for this issue.</div>';
-        post({ type: 'crashlyticsDetailReady', issueId, title: meta.title ?? 'Issue', html: `${header(meta)}<div class="cd-body">${body}</div>`, markdown: buildMarkdown(meta, event) });
+        post({ type: 'crashlyticsDetailReady', issueId, title: meta.title ?? 'Issue', html: `${header(meta, consoleUrl)}<div class="cd-body">${renderStatsStrip(meta)}${body}</div>`, markdown: buildMarkdown(meta, event) });
         if (event) {
             const contexts = await getFrameContexts(event);
             if (contexts.length > 0) { post({ type: 'crashlyticsFrameContext', issueId, contexts }); }
         }
     } catch {
-        post({ type: 'crashlyticsDetailReady', issueId, title: meta.title ?? 'Issue', html: `${header(meta)}<div class="cd-body"><div class="no-matches">Could not load this issue.</div></div>`, markdown: '' });
+        post({ type: 'crashlyticsDetailReady', issueId, title: meta.title ?? 'Issue', html: `${header(meta, consoleUrl)}<div class="cd-body"><div class="no-matches">Could not load this issue.</div></div>`, markdown: '' });
     }
 }
 

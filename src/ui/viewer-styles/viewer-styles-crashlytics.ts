@@ -197,6 +197,19 @@ export function getCrashlyticsPanelStyles(): string {
 .crashlytics-detail.u-hidden { display: none; }
 .cd-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 2px solid var(--vscode-focusBorder); background: var(--vscode-sideBar-background, var(--vscode-editor-background)); }
 .cd-title { font-weight: 600; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* "View on Firebase" link (#3): the project console opens in the browser. Icon-only to stay compact. */
+.cd-console-link { margin-left: 6px; color: var(--vscode-textLink-foreground); text-decoration: none; font-size: 12px; cursor: pointer; }
+.cd-console-link:hover { text-decoration: underline; }
+
+/* Dashboard stat cards (#4 / #5 first slice): the issue's severity + counts + state + versions read at
+   a glance instead of living only in the copied Markdown. Cards wrap on a narrow overlay. */
+.cd-stats { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 12px; }
+.cd-stat { background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background)); border: 1px solid var(--vscode-panel-border); border-radius: 6px; padding: 6px 12px; min-width: 64px; }
+.cd-stat-val { display: block; font-size: 15px; font-weight: 700; line-height: 1.2; }
+.cd-stat-label { display: block; font-size: 10px; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+.cd-sev-crash { color: var(--vscode-errorForeground); }
+.cd-sev-anr { color: var(--vscode-editorWarning-foreground, #cca700); }
+.cd-sev-nf { color: var(--vscode-descriptionForeground); }
 .cd-back, .cd-copy, .cd-newissue {
     background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground);
     border: none; border-radius: 3px; padding: 3px 10px; font-size: 12px; cursor: pointer; flex: none;
