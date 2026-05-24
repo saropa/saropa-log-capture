@@ -10,7 +10,7 @@ import * as vscode from 'vscode';
 import { getCrashEvents } from '../../../modules/crashlytics/firebase-crashlytics';
 import { getRepoSlug } from '../../../modules/git/github-context';
 import { getFrameContexts, resolveFile, topAppFrameRef } from '../../../modules/crashlytics/crash-frame-context';
-import { getProjectInsights } from '../../../modules/crashlytics/crash-project-links';
+import { getProjectInsights } from '../../../modules/git/project-links';
 import { crashSignatureToken } from '../../../modules/crashlytics/crash-signature';
 import { findCorrelatedLogLines } from '../../../modules/crashlytics/crash-log-correlation';
 import { renderProjectInsights, renderLogCorrelation } from '../../analysis/analysis-project-insights';
@@ -127,8 +127,8 @@ async function streamProjectInsights(issueId: string, event: CrashlyticsEventDet
     const top = topAppFrameRef(event);
     const insights = await getProjectInsights({
         file: top?.file,
-        crashLine: top?.line,
-        affectedVersion: meta.lv || meta.fv,
+        line: top?.line,
+        version: meta.lv || meta.fv,
         errorTokens: issueErrorTokens(meta),
     });
     if (!insights) { return; }

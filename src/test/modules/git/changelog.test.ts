@@ -1,10 +1,10 @@
 /**
- * Unit tests for the CHANGELOG parser behind the crash detail's "may already be fixed" signal
- * (plan 054 Stage 5c-1). Pure string logic — runs under `node --test`.
+ * Unit tests for the CHANGELOG parser behind the "may already be fixed" signal. Promoted with the
+ * parser from `modules/crashlytics/` to `modules/git/` (plan 055 Stage 1). Pure string logic.
  */
 
 import * as assert from 'assert';
-import { parseChangelogVersions, changelogSince } from '../../../modules/crashlytics/crash-changelog';
+import { parseChangelogVersions, changelogSince } from '../../../modules/git/changelog';
 
 const SAMPLE = [
     '# Changelog',
@@ -22,7 +22,7 @@ const SAMPLE = [
     'First tracked release.',
 ].join('\n');
 
-suite('crash-changelog', () => {
+suite('git/changelog', () => {
     test('parseChangelogVersions skips Unreleased and prose, keeps versioned headings in order', () => {
         const versions = parseChangelogVersions(SAMPLE);
         assert.deepStrictEqual(versions.map(v => v.version), ['2026.0301.01', '2026.0125.01', '2025.1120.01']);

@@ -192,6 +192,9 @@ export function getConfig(): SaropaLogCaptureConfig {
     fileTypes: ensureStringArray(cfg.get("fileTypes"), DEFAULT_FILE_TYPES),
     tailPatterns: ensureStringArray(cfg.get("tailPatterns"), ["**/*.log"]),
     docsScanDirs: ensureStringArray(cfg.get("docsScanDirs"), ["bugs", "docs"]),
+    // Default mirrors the About panel's CHANGELOG lookup (root + docs/) so the two agree on where a
+    // changelog can live; users add monorepo paths or `**/CHANGELOG*` here.
+    changelogPaths: ensureStringArray(cfg.get("changelogPaths"), ["CHANGELOG*", "docs/CHANGELOG*"]),
     includeSubfolders: ensureBoolean(cfg.get("includeSubfolders"), true),
     treeRefreshInterval: ensureNonNegative(cfg.get("treeRefreshInterval"), 0),
     sessionListPageSize: clamp(cfg.get("sessionListPageSize"), 10, 500, 100),

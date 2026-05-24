@@ -6,7 +6,7 @@
 
 import { t } from '../../l10n';
 import { escapeHtml } from '../../modules/capture/ansi';
-import type { ProjectInsights } from '../../modules/crashlytics/crash-project-links';
+import type { ProjectInsights } from '../../modules/git/project-links';
 import type { LogCorrelation } from '../../modules/crashlytics/crash-log-correlation';
 
 /** "⚠ Changed since the affected version — may already be fixed", with the count of newer releases. */
