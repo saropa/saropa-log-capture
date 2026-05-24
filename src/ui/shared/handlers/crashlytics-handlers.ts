@@ -8,7 +8,7 @@
 import * as vscode from 'vscode';
 import { t } from '../../../l10n';
 import {
-    getFirebaseContext, getCrashEvents, updateIssueState,
+    getFirebaseContext, getCrashEvents,
     clearIssueListCache, gcloudInstallUrl, getGcloudInstallCommand, findBestGoogleServicesJson,
     type FirebaseContext,
 } from '../../../modules/crashlytics/firebase-crashlytics';
@@ -53,19 +53,6 @@ export async function handleCrashDetail(issueId: string, post: PostFn): Promise<
         post({ type: 'crashDetailReady', issueId, html });
     } catch {
         post({ type: 'crashDetailReady', issueId, html: '<div class="no-matches">Crash details not available</div>' });
-    }
-}
-
-/** Close or mute a Crashlytics issue, then refresh. Never throws. */
-export async function handleCrashlyticsAction(
-    issueId: string, state: 'CLOSED' | 'MUTED', post: PostFn,
-): Promise<void> {
-    try {
-        const ok = await updateIssueState(issueId, state);
-        if (ok) { await handleCrashlyticsRequest(post); }
-        else { post({ type: 'issueActionFailed', action: state }); }
-    } catch {
-        post({ type: 'issueActionFailed', action: state });
     }
 }
 
