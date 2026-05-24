@@ -57,6 +57,13 @@ export const stringsViewerB: Record<string, string> = {
     'viewer.projectState.versionUnknown': 'not detected',
     'viewer.projectState.noGit': 'No git repository in this workspace.',
 
+    // ── Changelog-since popover (changelog-since-handler.ts) ──
+    'viewer.changelogSince.heading': 'Changed since {0} — {1} newer release(s)',
+    'viewer.changelogSince.noVersion': 'No version token in this line.',
+    'viewer.changelogSince.noChangelog': 'No changelog found in this workspace.',
+    'viewer.changelogSince.notFound': '{0} was not found in the changelog.',
+    'viewer.changelogSince.latest': '{0} is the latest release in the changelog.',
+
     // ── Body banners + breadcrumb (viewer-content-body.ts) ────────────
     'viewer.compressBanner.msg': 'Many identical lines in a row — try {0} (Options → Layout or right-click → Options).',
     'viewer.compressBanner.boldTerm': 'Compress lines',
