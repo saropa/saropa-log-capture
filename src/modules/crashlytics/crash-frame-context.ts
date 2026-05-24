@@ -42,6 +42,12 @@ function appFrameRefs(event: CrashlyticsEventDetail, wsPath: string): { file: st
     return refs;
 }
 
+/** The crash site: the first app frame with a resolvable source ref (file:line), or undefined. */
+export function topAppFrameRef(event: CrashlyticsEventDetail): { file: string; line: number } | undefined {
+    const wsPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
+    return appFrameRefs(event, wsPath)[0];
+}
+
 async function uriExists(uri: vscode.Uri): Promise<boolean> {
     try { await vscode.workspace.fs.stat(uri); return true; } catch { return false; }
 }
