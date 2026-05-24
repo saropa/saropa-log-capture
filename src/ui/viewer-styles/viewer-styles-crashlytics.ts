@@ -157,5 +157,28 @@ export function getCrashlyticsPanelStyles(): string {
 /* --- Refresh note --- */
 .cp-refresh-note { font-weight: normal; font-size: 0.85em; opacity: 0.6; margin-left: 4px; }
 
+/* ===================================================================
+   In-viewer issue detail — fills the log area beside the sidebar list.
+   Replaces the dropped editor-tab dashboard: clicking a sidebar issue
+   shows its detail here (like a session opens in the log viewer).
+   =================================================================== */
+.crashlytics-detail { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; background: var(--vscode-editor-background); }
+.crashlytics-detail.u-hidden { display: none; }
+.cd-header { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-bottom: 1px solid var(--vscode-panel-border); }
+.cd-title { font-weight: 600; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cd-back, .cd-copy {
+    background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground);
+    border: none; border-radius: 3px; padding: 3px 10px; font-size: 12px; cursor: pointer; flex: none;
+}
+.cd-back:hover, .cd-copy:hover { background: var(--vscode-button-secondaryHoverBackground); }
+.cd-body { flex: 1; overflow-y: auto; padding: 8px 12px; }
+.cd-loading { padding: 16px; opacity: 0.7; animation: cp-pulse 1.5s ease-in-out infinite; }
+.cp-item.cp-selected { background: var(--vscode-list-activeSelectionBackground); color: var(--vscode-list-activeSelectionForeground); }
+
+/* Codebase context streamed under an app frame (source line + git blame) — #8 made visible in-viewer. */
+.cd-frame-ctx { margin: 1px 0 6px 22px; padding: 3px 6px; border-left: 2px solid var(--vscode-panel-border); }
+.cd-frame-code { display: block; font-family: var(--vscode-editor-font-family, monospace); font-size: 11px; white-space: pre-wrap; word-break: break-all; }
+.cd-frame-blame { display: block; font-size: 10px; opacity: 0.7; margin-top: 2px; }
+
 ` + getSetupStyles() + getDiagnosticStyles();
 }

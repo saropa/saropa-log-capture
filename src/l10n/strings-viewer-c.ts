@@ -45,6 +45,9 @@ export const stringsViewerC: Record<string, string> = {
 
     // ── Crashlytics panel — host shell (panels/viewer-crashlytics-panel.ts) ─
     'viewer.crashlytics.region': 'Crashlytics',
+    'viewer.crashlytics.detail.region': 'Crashlytics issue detail',
+    'viewer.crashlytics.detail.back': 'Back to log',
+    'viewer.crashlytics.detail.copyMd': 'Copy as Markdown',
     'viewer.crashlytics.openDashboard.title': 'Open App Quality Insights dashboard',
     'viewer.crashlytics.openDashboard.label': 'Open App Quality Insights dashboard',
     'viewer.crashlytics.refresh.title': 'Refresh',
