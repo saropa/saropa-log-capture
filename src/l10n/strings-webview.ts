@@ -74,6 +74,7 @@ export const stringsWebview: Record<string, string> = {
     'viewer.crashlytics.queryFailed': 'Query failed',
     'viewer.crashlytics.fatal': 'FATAL',
     'viewer.crashlytics.nonfatal': 'NON-FATAL',
+    'viewer.crashlytics.openInDashboard': 'Open in App Quality Insights',
     'viewer.crashlytics.closeIssue': 'Close',
     'viewer.crashlytics.mute': 'Mute',
     'viewer.crashlytics.usersOne': '{0} user',

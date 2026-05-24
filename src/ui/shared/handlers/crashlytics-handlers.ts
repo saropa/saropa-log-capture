@@ -8,11 +8,10 @@
 import * as vscode from 'vscode';
 import { t } from '../../../l10n';
 import {
-    getFirebaseContext, getCrashEvents,
+    getFirebaseContext,
     clearIssueListCache, gcloudInstallUrl, getGcloudInstallCommand, findBestGoogleServicesJson,
     type FirebaseContext,
 } from '../../../modules/crashlytics/firebase-crashlytics';
-import { renderCrashDetail } from '../../analysis/analysis-crash-detail';
 import { serializeContext } from './crashlytics-serializers';
 import { getOutputChannel, playReportingScopeFix } from '../../../modules/crashlytics/crashlytics-diagnostics';
 import { runConnectionCheck, formatConnectionReport } from '../../../modules/crashlytics/crashlytics-connection-check';
@@ -41,18 +40,6 @@ export async function handleCrashlyticsRequest(post: PostFn): Promise<void> {
     } catch {
         const fallbackChecklist = { gcloud: 'missing' as const, token: 'pending' as const, config: 'pending' as const };
         post({ type: 'crashlyticsData', context: serializeContext({ available: false, setupHint: 'Unexpected error', setupChecklist: fallbackChecklist, issues: [] }) });
-    }
-}
-
-/** Fetch crash detail for a specific issue and send HTML to webview. Never throws. */
-export async function handleCrashDetail(issueId: string, post: PostFn): Promise<void> {
-    try {
-        const multi = await getCrashEvents(issueId);
-        const detail = multi?.events[multi.currentIndex ?? 0];
-        const html = detail ? renderCrashDetail(detail) : '<div class="no-matches">Crash details not available</div>';
-        post({ type: 'crashDetailReady', issueId, html });
-    } catch {
-        post({ type: 'crashDetailReady', issueId, html: '<div class="no-matches">Crash details not available</div>' });
     }
 }
 

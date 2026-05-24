@@ -8,7 +8,7 @@ export function appQualityCommands(): vscode.Disposable[] {
     return [
         vscode.commands.registerCommand(
             'saropaLogCapture.openAppQualityInsights',
-            () => showAppQualityInsights(),
+            (issueId?: unknown) => showAppQualityInsights(typeof issueId === 'string' ? issueId : undefined),
         ),
     ];
 }
