@@ -284,13 +284,21 @@ After the consolidation into the viewer, the user listed 10 improvements. Status
 
 **Functionality / UX**
 1. Interactive stack traces (jump to code) — **DONE**: app frames in the detail open the file at the line.
-2. Automatic symbolication / de-obfuscation (ProGuard/R8, dSYM, Flutter symbols) — **BIG, open.** Needs
-   symbol-file detection/upload + a symbolizer (`ndk-stack` / `llvm-symbolizer` / `flutter symbolize`).
-   Conditional on symbols being present; never claim symbolicated output without them.
-3. Advanced search — **partial.** Have type tabs + plain search + single-select version/device/OS.
-   Open: regex search, date-time range, multi-select.
-4. Issue-tracker integration ("Create Issue" → GitHub/Jira/Linear) — **open.** Have Copy-as-Markdown;
-   a GitHub-issue button could reuse the existing bug-report pipeline.
+2. Automatic symbolication / de-obfuscation (ProGuard/R8, dSYM, Flutter symbols) — **BIG, still open — NOT
+   started in code.** A verifiable implementation is blocked on artifacts the extension does not have:
+   the build's symbol files (`flutter build` `--split-debug-info` ELF symbols, Android NDK `.so` debug
+   `.sym`, or the R8 `mapping.txt`) plus a symbolizer binary (`flutter symbolize`, `ndk-stack`,
+   `llvm-symbolizer`, ProGuard `retrace`). Without those present in the workspace there is literally
+   nothing to resolve obfuscated frames against, and any "symbolicated" output would be fabricated.
+   Honest next step is a *detection + guidance* layer (flag obfuscated frames, point the user at the
+   symbol artifacts / upload step) — that is a separate, smaller piece and must not be sold as
+   symbolication. Never claim symbolicated output without the symbols.
+3. Advanced search — **regex DONE** (`.*` toggle in the sidebar filter, invalid-pattern outline,
+   non-blanking on partial patterns). Type tabs + plain search + single-select version/device/OS also
+   present. Open: date-time range, multi-select.
+4. Issue-tracker integration ("Create Issue" → GitHub) — **DONE**: detail header "Create issue" opens a
+   prefilled GitHub new-issue page (title + crash Markdown body) using the workspace origin remote slug;
+   warns when no GitHub remote. Jira/Linear not wired.
 5. Smart grouping / dedup — **already provided by the Play API** (issues are pre-clustered). No custom
    clustering needed unless we want cross-issue merging.
 
@@ -299,9 +307,10 @@ After the consolidation into the viewer, the user listed 10 improvements. Status
 2. Pill badges with soft tints + icons — **DONE** (⊗/⏱/⚠ pills via theme tokens).
 3. Native theme-token compliance — **DONE for the new surfaces** (badges/bars/detail use `--vscode-*`).
    Sweep: a few legacy hex values remain in older crashlytics styles.
-4. Syntax highlighting + smart noise collapse (collapse framework, keep app frames open) — **open.**
-   Overlaps the deferred "stack shows ~N frames + Show more" (renderFrameSection currently collapses
-   the whole stack into one `<details>` when >15 frames).
+4. Syntax highlighting + smart noise collapse (collapse framework, keep app frames open) — **DONE.**
+   `renderSmartFrameSection` (crashlytics only; the analysis panel keeps flat `renderFrameSection`) keeps
+   app frames inline + clickable and folds runs of >2 consecutive framework frames into a quiet dashed
+   `<details>` (`.cd-fw-group`) the reader expands on demand.
 5. Typography / spacing hierarchy — **DONE** for the sidebar list; detail spacing can be tuned further.
 
 Proceed with Stage 1 + Stage 0 next? (Or name a different stage to start with.)
