@@ -3,6 +3,7 @@
  * Extracted from viewer-sql-repeat-compression.test.ts to keep file under line limit.
  */
 import * as vm from 'node:vm';
+import { vtStub } from './viewer-session-panel-test-helpers';
 import { getViewerDataAddScript } from '../../ui/viewer/viewer-data-add';
 import { getViewerDataHelpersCore } from '../../ui/viewer/viewer-data-helpers-core';
 import { getSqlDrilldownUiScript } from '../../ui/viewer/viewer-data-sql-drilldown-ui';
@@ -127,7 +128,9 @@ export function loadViewerRepeatSandbox(): SandboxVm {
         getSqlDrilldownUiScript() +
         getViewerDataHelpersCore() +
         getViewerDataAddScript();
-    const ctx = vm.createContext({ console });
+    // vt: render scripts now resolve localized strings via vt() (plan 053); the
+    // sandbox provides the same English-resolving stub the runtime __VT bridge does.
+    const ctx = vm.createContext({ console, vt: vtStub });
     vm.runInContext(code, ctx, { filename: 'viewer-sql-repeat-compression-sandbox.js', timeout: 10_000 });
     return ctx as unknown as SandboxVm;
 }

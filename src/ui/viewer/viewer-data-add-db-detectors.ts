@@ -40,16 +40,16 @@ function applyDbSyntheticLineResults(results, scopeFilt, ts, sp, lineSource) {
                 ? sqlMeta.fingerprint.substring(0, 96) + '...'
                 : sqlMeta.fingerprint;
             n1Html = '<span class="repeat-notification n1-signal">'
-                + '\\u26a0 Potential N+1 query '
+                + '\\u26a0 ' + vt('viewer.n1Signal.title') + ' '
                 + '<span class="n1-conf n1-conf-' + signal.confidence + '">' + confLabel + '</span> '
-                + ' - ' + signal.repeats + ' repeats / ' + signal.distinctArgs + ' arg variants in ' + windowSec + 's'
+                + ' - ' + vt('viewer.n1Signal.summary', signal.repeats, signal.distinctArgs, windowSec)
                 + ' <span class="n1-fp">(' + escapeHtml(previewFingerprint) + ')</span>'
                 + ' <span class="n1-actions">'
-                + '<span class="n1-action" data-action="focus-db" title="Show only database-tagged lines">Focus DB</span>'
+                + '<span class="n1-action" data-action="focus-db" title="' + vt('viewer.n1Signal.focusDbTitle') + '">' + vt('viewer.n1Signal.focusDb') + '</span>'
                 + ' · '
-                + '<span class="n1-action" data-action="focus-fingerprint" data-fingerprint="' + escapeHtml(sqlMeta.fingerprint) + '" title="Search this SQL fingerprint">Find fingerprint</span>'
+                + '<span class="n1-action" data-action="focus-fingerprint" data-fingerprint="' + escapeHtml(sqlMeta.fingerprint) + '" title="' + vt('viewer.n1Signal.findFingerprintTitle') + '">' + vt('viewer.n1Signal.findFingerprint') + '</span>'
                 + ((typeof staticSqlFromFingerprintEnabled !== 'undefined' && staticSqlFromFingerprintEnabled)
-                    ? (' · <span class="n1-action" data-action="find-static-sources" data-fingerprint="' + escapeHtml(sqlMeta.fingerprint) + '" title="Possible Dart sources (project index; not stack trace)">Static sources</span>')
+                    ? (' · <span class="n1-action" data-action="find-static-sources" data-fingerprint="' + escapeHtml(sqlMeta.fingerprint) + '" title="' + vt('viewer.n1Signal.staticSourcesTitle') + '">' + vt('viewer.n1Signal.staticSources') + '</span>')
                     : '')
                 + '</span>'
                 + '</span>';

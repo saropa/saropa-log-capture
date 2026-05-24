@@ -37,11 +37,11 @@ suite('Continuation badge rendering', () => {
         /* Both collapsed and expanded tooltips should tell the user how many
            continuation lines are hidden/shown, so the count is accessible on hover. */
         assert.ok(
-            renderScript.includes("'Click to expand ' + item.contChildCount + ' continuation lines'"),
+            renderScript.includes("viewer.deco.contExpand"),
             'collapsed tooltip should include contChildCount',
         );
         assert.ok(
-            renderScript.includes("'Click to collapse ' + item.contChildCount + ' continuation lines'"),
+            renderScript.includes("viewer.deco.contCollapse"),
             'expanded tooltip should include contChildCount',
         );
     });

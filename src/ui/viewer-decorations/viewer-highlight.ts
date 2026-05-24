@@ -155,7 +155,7 @@ function applyHighlightStyles(html, plainText) {
         var escapedLabels = match.labels.join(', ').replace(/"/g, '&quot;');
         html = '<span class="highlight-match" style="' + match.style + '">' + html + '</span>';
         html = applyKeywordHighlights(html, plainText);
-        return { html: html, titleAttr: ' title="Highlights: ' + escapedLabels + '"' };
+        return { html: html, titleAttr: ' title="' + vt('viewer.highlight.tooltip', escapedLabels) + '"' };
     }
     html = applyKeywordHighlights(html, plainText);
     return { html: html, titleAttr: '' };

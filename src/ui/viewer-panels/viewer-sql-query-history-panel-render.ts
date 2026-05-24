@@ -52,11 +52,11 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
             var crossLogLineAttr = r.crossLog && typeof r.crossLogLine === 'number'
                 ? ' data-cross-log-line="' + r.crossLogLine + '"' : '';
             var jumpLabel = r.crossLog
-                ? (r.crossLogLine >= 0 ? ('Open log \u00b7 line ' + (r.crossLogLine + 1) + ' \\u2197') : 'Open log \\u2197')
-                : ('Line ' + (r.firstIdx + 1) + ' \\u2197');
+                ? (r.crossLogLine >= 0 ? (vt('viewer.sqlHistory.openLogLine', (r.crossLogLine + 1)) + ' \\u2197') : (vt('viewer.sqlHistory.openLog') + ' \\u2197'))
+                : (vt('viewer.sqlHistory.jumpLine', (r.firstIdx + 1)) + ' \\u2197');
             var jumpTitle = r.crossLog
-                ? 'Open the source log and jump to the first occurrence'
-                : 'Jump to first occurrence';
+                ? vt('viewer.sqlHistory.openLogTitle')
+                : vt('viewer.sqlHistory.jumpTitle');
             parts.push('<tr>'
                 + '<td class="sql-qh-cell-count"><span class="sql-query-history-count">' + r.count + '</span></td>'
                 + '<td class="sql-qh-cell-preview"><div class="sql-query-history-row" role="button" tabindex="0" aria-expanded="false"'
@@ -67,9 +67,9 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
                 + '<div class="sql-query-history-row-actions">'
                 + '<button type="button" class="sql-query-history-jump" title="' + jumpTitle + '">'
                 + jumpLabel + '</button>'
-                + '<button type="button" class="sql-qh-action-btn sql-query-history-drift" title="Open in Drift viewer (Run SQL tab)">'
+                + '<button type="button" class="sql-qh-action-btn sql-query-history-drift" title="' + vt('viewer.sqlHistory.openInDrift') + '">'
                 + '<span class="codicon codicon-link-external"></span></button>'
-                + '<button type="button" class="sql-qh-action-btn" data-copy-fp title="Copy fingerprint">'
+                + '<button type="button" class="sql-qh-action-btn" data-copy-fp title="' + vt('viewer.sqlHistory.copyFingerprint') + '">'
                 + '<span class="codicon codicon-copy"></span></button>'
                 + '</div></div>'
                 + '</div></td>'
@@ -121,7 +121,7 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
         var hidden = typeof sqlHistoryTargetLineLikelyHidden === 'function' && sqlHistoryTargetLineLikelyHidden(idx);
         if (typeof scrollToLineNumber === 'function') scrollToLineNumber(idx + 1);
         if (hidden) {
-            setSqlHistoryHint('Jumped to line ' + (idx + 1) + '. That line may be hidden until filters or layout change.', true);
+            setSqlHistoryHint(vt('viewer.sqlHistory.jumpedHidden', (idx + 1)), true);
         } else {
             setSqlHistoryHint('', false);
         }
@@ -129,14 +129,14 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
     function jumpSqlHistoryCrossLog(rowEl) {
         var uri = rowEl.getAttribute('data-cross-log-uri') || '';
         if (!uri) {
-            setSqlHistoryHint('No source log recorded for this fingerprint.', true);
+            setSqlHistoryHint(vt('viewer.sqlHistory.noSourceLog'), true);
             return;
         }
         var line = parseInt(rowEl.getAttribute('data-cross-log-line') || '-1', 10);
         if (!isFinite(line) || line < 0) line = 0;
         if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
             vscodeApi.postMessage({ type: 'sqlHistoryCrossLogJump', uriString: uri, line: line });
-            setSqlHistoryHint('Opening source log\\u2026', true);
+            setSqlHistoryHint(vt('viewer.sqlHistory.openingLog'), true);
         }
     }
     /** Show or hide the Cumulative toggle wrap based on whether the host has supplied any cross-log data. */
@@ -153,13 +153,13 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
     /** Empty-state copy distinguishes "no SQL anywhere" from "filter rejected everything" and from "toggle off + cumulative available". */
     function computeSqlHistoryEmptyText(visibleRowCount) {
         if (visibleRowCount > 0) {
-            return 'No rows match your filter.';
+            return vt('viewer.sqlHistory.emptyFilter');
         }
         var hasCum = (typeof hasSqlQueryHistoryCumulativeData === 'function') && hasSqlQueryHistoryCumulativeData();
         if (hasCum && !sqlQueryHistoryCumulativeEnabled) {
-            return 'No parsed SQL fingerprints in this log. Toggle Cumulative across logs to see fingerprints from other sidebar logs.';
+            return vt('viewer.sqlHistory.emptyToggleCumulative');
         }
-        return 'No parsed SQL fingerprints in this session yet.';
+        return vt('viewer.sqlHistory.emptySession');
     }
     function copyVisibleSqlHistoryJson() {
         var q = (searchEl && searchEl.value ? searchEl.value : '').toLowerCase().trim();
@@ -184,7 +184,7 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
         if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
             vscodeApi.postMessage({ type: 'copyToClipboard', text: text });
         }
-        setSqlHistoryHint('Copied ' + payload.length + (payload.length === 1 ? ' row' : ' rows') + ' to clipboard.', true);
+        setSqlHistoryHint(payload.length === 1 ? vt('viewer.sqlHistory.copiedRows.one', payload.length) : vt('viewer.sqlHistory.copiedRows.many', payload.length), true);
         clearTimeout(sqlHistoryHintTimer);
         sqlHistoryHintTimer = setTimeout(function() { setSqlHistoryHint('', false); }, 2000);
     }
@@ -195,7 +195,7 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
         if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
             vscodeApi.postMessage({ type: 'copyToClipboard', text: fp });
         }
-        setSqlHistoryHint('Copied fingerprint.', true);
+        setSqlHistoryHint(vt('viewer.sqlHistory.copiedFingerprint'), true);
         clearTimeout(sqlHistoryHintTimer);
         sqlHistoryHintTimer = setTimeout(function() { setSqlHistoryHint('', false); }, 2000);
     }

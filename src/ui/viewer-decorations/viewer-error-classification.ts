@@ -118,13 +118,13 @@ function getErrorBadge(classification) {
     if (!classification) return '';
 
     if (classification === 'critical') {
-        return '<span class="critical-fire-icon error-badge-interactive" title="Critical Error \\u2014 hover for details" aria-label="Critical Error">\\ud83d\\udd25</span>';
+        return '<span class="critical-fire-icon error-badge-interactive" title="' + vt('viewer.deco.critical.tooltip') + '" aria-label="' + vt('viewer.deco.critical.label') + '">\\ud83d\\udd25</span>';
     }
     if (classification === 'transient') {
-        return '<span class="error-badge-gutter error-badge-transient error-badge-interactive" title="Transient Error \\u2014 hover for details" aria-label="Transient Error">\\u26a1</span>';
+        return '<span class="error-badge-gutter error-badge-transient error-badge-interactive" title="' + vt('viewer.deco.transient.tooltip') + '" aria-label="' + vt('viewer.deco.transient.label') + '">\\u26a1</span>';
     }
     if (classification === 'bug') {
-        return '<span class="error-badge-gutter error-badge-bug error-badge-interactive" title="Likely Bug \\u2014 hover for details" aria-label="Likely Bug">\\ud83d\\udc1b</span>';
+        return '<span class="error-badge-gutter error-badge-bug error-badge-interactive" title="' + vt('viewer.deco.bug.tooltip') + '" aria-label="' + vt('viewer.deco.bug.label') + '">\\ud83d\\udc1b</span>';
     }
 
     return '';

@@ -84,7 +84,7 @@ function setExclusionsEnabled(enabled) {
 
 function updateExclusionDisplay() {
     if (exclusionCountEl) {
-        exclusionCountEl.textContent = hiddenCount > 0 ? '(' + hiddenCount + ' hidden)' : '';
+        exclusionCountEl.textContent = hiddenCount > 0 ? vt('viewer.exclusions.hiddenCount', hiddenCount) : '';
     }
     rebuildExclusionChips();
 }
@@ -113,10 +113,10 @@ function rebuildExclusionChips() {
 
     var count = exclusionRules.length;
     if (label) {
-        label.textContent = count > 0 ? 'Exclusions (' + count + ')' : 'Exclusions';
+        label.textContent = count > 0 ? vt('viewer.exclusions.labelWithCount', count) : vt('viewer.exclusions.label');
     }
     if (typeof setAccordionSummary === 'function') {
-        setAccordionSummary('exclusions-section', count > 0 ? count + ' pattern' + (count !== 1 ? 's' : '') : '');
+        setAccordionSummary('exclusions-section', count > 0 ? vt(count !== 1 ? 'viewer.exclusions.patternCount.many' : 'viewer.exclusions.patternCount.one', count) : '');
     }
     if (count === 0) { container.innerHTML = ''; container.className = 'exclusion-chips'; return; }
 
@@ -127,7 +127,7 @@ function rebuildExclusionChips() {
         parts.push(
             '<span class="exclusion-chip" data-idx="' + i + '">'
             + '<span class="exclusion-chip-text">' + src + '</span>'
-            + '<button class="exclusion-chip-remove" data-idx="' + i + '" title="Remove">&times;</button>'
+            + '<button class="exclusion-chip-remove" data-idx="' + i + '" title="' + vt('viewer.exclusions.remove') + '">&times;</button>'
             + '</span>'
         );
     }

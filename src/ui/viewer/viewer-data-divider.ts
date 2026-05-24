@@ -109,8 +109,11 @@ function getCounterAffordance(item, idx, hiddenAfter, counterHtml) {
         kind = 'dedup';
         glyph = dupExpanded ? '\\u25bc' : '\\u25b6';
         dataAttrs = ' data-dedup-survivor-idx="' + idx + '"';
-        tip = tagPart + item.compressDupCount + ' identical row' + (item.compressDupCount !== 1 ? 's' : '')
-            + (dupExpanded ? ' revealed \\u00b7 click to hide' : ' collapsed here \\u00b7 click to show');
+        var dupNoun = (item.compressDupCount !== 1)
+            ? vt('viewer.affordance.identicalRows.many', item.compressDupCount)
+            : vt('viewer.affordance.identicalRows.one', item.compressDupCount);
+        tip = tagPart + dupNoun
+            + (dupExpanded ? vt('viewer.affordance.dedupExpandedAction') : vt('viewer.affordance.dedupCollapsedAction'));
     } else if (item.type === 'stack-header' && item.frameCount > 1) {
         /* Stack-header IS a collapsed row representing N hidden frames.
            Its own line number gets the chevron — click to expand the
@@ -120,20 +123,23 @@ function getCounterAffordance(item, idx, hiddenAfter, counterHtml) {
         kind = 'stack';
         glyph = stackExpanded ? '\\u25bc' : '\\u25b6';
         dataAttrs = ' data-stack-gid="' + item.groupId + '"';
-        var frameWord = (item.frameCount === 2) ? 'frame' : 'frames';
-        tip = tagPart + 'stack trace \\u00b7 ' + (item.frameCount - 1) + ' ' + frameWord + ' \\u00b7 '
-            + (stackExpanded ? 'click to collapse' : 'click to expand');
+        var stackFrameN = item.frameCount - 1;
+        var stackNoun = (item.frameCount === 2)
+            ? vt('viewer.affordance.stackTrace.one', stackFrameN)
+            : vt('viewer.affordance.stackTrace.many', stackFrameN);
+        tip = tagPart + stackNoun
+            + (stackExpanded ? vt('viewer.affordance.stackCollapseAction') : vt('viewer.affordance.stackExpandAction'));
     } else if (hiddenAfter && hiddenAfter.count > 0) {
         kind = 'gap';
         glyph = '\\u25b6';
         dataAttrs = ' data-hidden-from="' + hiddenAfter.from + '" data-hidden-to="' + hiddenAfter.to + '"';
-        var gapTip = (typeof buildHiddenTip === 'function') ? buildHiddenTip(hiddenAfter.info) : (hiddenAfter.count + ' hidden');
-        tip = tagPart + gapTip + ' \\u00b7 click to show';
+        var gapTip = (typeof buildHiddenTip === 'function') ? buildHiddenTip(hiddenAfter.info) : vt('viewer.affordance.hiddenCount', hiddenAfter.count);
+        tip = tagPart + gapTip + vt('viewer.affordance.gapShowAction');
     } else if (item._triggeredPeekKey != null) {
         kind = 'peek';
         glyph = '\\u25bc';
         dataAttrs = ' data-peek-key="' + item._triggeredPeekKey + '"';
-        tip = tagPart + 'revealed lines below \\u00b7 click to re-collapse';
+        tip = tagPart + vt('viewer.affordance.peekRecollapse');
     }
 
     /* Always emit the chevron span with non-empty content (a non-breaking

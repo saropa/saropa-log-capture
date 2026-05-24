@@ -13,12 +13,12 @@ function applyDbMarkerResults(results, ts, sp, lineSource) {
         if (!r || r.kind !== 'marker' || !r.payload) continue;
         pl = r.payload;
         cat = pl.category || 'db-signal';
-        lbl = pl.label || 'Slow query burst';
+        lbl = pl.label || vt('viewer.dbMarker.slowQueryBurst');
         anc = pl.anchorSeq;
         anchorAttr = (typeof anc === 'number' && isFinite(anc)) ? ' data-anchor-seq="' + anc + '"' : '';
         var _burstTitle = (r.detectorId === 'db.timestamp-burst')
-            ? 'Jump to last query in this burst'
-            : 'Jump to completing slow query';
+            ? vt('viewer.dbMarker.jumpToLastInBurst')
+            : vt('viewer.dbMarker.jumpToCompletingSlow');
         html = '<span class="slow-query-burst-marker"' + anchorAttr
             + ' role="button" tabindex="0" title="' + _burstTitle + '">' + escapeHtml(lbl) + '</span>';
         try {

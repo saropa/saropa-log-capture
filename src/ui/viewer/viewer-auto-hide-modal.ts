@@ -4,6 +4,8 @@
  * Opened by double-clicking the hidden-lines counter in the footer.
  */
 
+import { t } from '../../l10n';
+
 /** Returns the JavaScript code for the auto-hide modal in the webview. */
 export function getAutoHideModalScript(): string {
     return /* javascript */ `
@@ -59,12 +61,12 @@ function populateAutoHideModal() {
     for (var i = 0; i < patterns.length; i++) {
         var p = patterns[i];
         var escaped = (p.pattern || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-        var badge = p.persistent ? '<span class="auto-hide-badge">always</span>' : '<span class="auto-hide-badge session">this log</span>';
+        var badge = p.persistent ? '<span class="auto-hide-badge">' + vt('viewer.autoHide.badgeAlways') + '</span>' : '<span class="auto-hide-badge session">' + vt('viewer.autoHide.badgeThisLog') + '</span>';
         parts.push(
             '<div class="auto-hide-item">'
             + '<span class="auto-hide-text">' + escaped + '</span>'
             + badge
-            + '<button class="auto-hide-remove" data-pattern="' + escaped + '" data-persistent="' + p.persistent + '" title="Remove">&times;</button>'
+            + '<button class="auto-hide-remove" data-pattern="' + escaped + '" data-persistent="' + p.persistent + '" title="' + vt('viewer.autoHide.remove') + '">&times;</button>'
             + '</div>'
         );
     }
@@ -81,15 +83,15 @@ if (document.readyState === 'loading') {
 
 /** Returns the HTML for the auto-hide modal element. */
 export function getAutoHideModalHtml(): string {
-    return `<div id="auto-hide-modal" class="auto-hide-modal u-hidden">
+    return /* html */ `<div id="auto-hide-modal" class="auto-hide-modal u-hidden">
     <div class="auto-hide-modal-backdrop"></div>
     <div class="auto-hide-modal-content">
         <div class="auto-hide-modal-header">
-            <span>Auto-Hide Patterns</span>
-            <button class="auto-hide-modal-close" title="Close">&times;</button>
+            <span>${t('viewer.autoHide.title')}</span>
+            <button class="auto-hide-modal-close" title="${t('viewer.popover.close')}">&times;</button>
         </div>
         <div class="auto-hide-modal-list"></div>
-        <div class="auto-hide-modal-empty u-hidden">No auto-hide patterns configured</div>
+        <div class="auto-hide-modal-empty u-hidden">${t('viewer.autoHide.empty')}</div>
     </div>
 </div>`;
 }

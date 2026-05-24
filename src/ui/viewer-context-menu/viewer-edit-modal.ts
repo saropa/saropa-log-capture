@@ -40,22 +40,22 @@ function openEditModal(lineIdx) {
 
     var plainText = stripTags(item.html);
     var warning = isSessionActive
-        ? '<div class="edit-warning">⚠️ Warning: Debug session is active. Saving may conflict with ongoing writes.</div>'
+        ? '<div class="edit-warning">⚠️ ' + vt('viewer.editModal.sessionActiveWarning') + '</div>'
         : '';
 
     var html = '<div class="edit-modal-overlay" id="edit-modal-overlay">' +
         '<div class="edit-modal-content">' +
         '<div class="edit-modal-header">' +
-        'Edit Line ' + (lineIdx + 1) +
-        '<button class="edit-modal-close" title="Close without saving changes">&#x2715;</button>' +
+        vt('viewer.editModal.title', lineIdx + 1) +
+        '<button class="edit-modal-close" title="' + vt('viewer.editModal.closeNoSave') + '">&#x2715;</button>' +
         '</div>' +
         warning +
         '<textarea id="edit-modal-textarea" rows="5">' +
         plainText.replace(/</g, '&lt;').replace(/>/g, '&gt;') +
         '</textarea>' +
         '<div class="edit-modal-footer">' +
-        '<button id="edit-modal-save" class="edit-modal-btn edit-modal-save" title="Save changes to the log file">Save</button>' +
-        '<button id="edit-modal-cancel" class="edit-modal-btn edit-modal-cancel" title="Discard changes and close">Cancel</button>' +
+        '<button id="edit-modal-save" class="edit-modal-btn edit-modal-save" title="' + vt('viewer.editModal.saveTitle') + '">' + vt('viewer.editModal.save') + '</button>' +
+        '<button id="edit-modal-cancel" class="edit-modal-btn edit-modal-cancel" title="' + vt('viewer.editModal.cancelTitle') + '">' + vt('viewer.editModal.cancel') + '</button>' +
         '</div>' +
         '</div>' +
         '</div>';

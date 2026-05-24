@@ -20,102 +20,102 @@
  *
  * Concatenated into the same script scope as viewer-script.ts.
  */
+import { t } from '../../l10n';
 
 /** Returns the HTML for the decoration settings panel element. */
 export function getDecoSettingsHtml(): string {
-    return `<div id="deco-settings" class="deco-settings-panel">
+    return /* html */ `<div id="deco-settings" class="deco-settings-panel">
     <div class="deco-settings-header">
-        Decoration Settings
-        <button class="deco-settings-close" title="Close">&times;</button>
+        ${t('viewer.decoSettings.title')}
+        <button class="deco-settings-close" title="${t('viewer.decoSettings.close')}">&times;</button>
     </div>
     <label class="deco-settings-row">
-        <input type="checkbox" id="deco-opt-dot" checked />
-        Severity dot (copy only)
+        <input type="checkbox" id="deco-opt-dot" checked /> ${t('viewer.decoSettings.severityDot')}
     </label>
     <label class="deco-settings-row">
         <input type="checkbox" id="deco-opt-counter" checked />
-        Line numbers
+        ${t('viewer.decoSettings.lineNumbers')}
     </label>
     <label class="deco-settings-row deco-indent">
-        <input type="checkbox" id="deco-opt-counter-on-blank" title="Show line number on blank lines so Go to Line matches file" />
-        Show line number on blank lines
+        <input type="checkbox" id="deco-opt-counter-on-blank" title="${t('viewer.decoSettings.lineNumbersOnBlank.title')}" />
+        ${t('viewer.decoSettings.lineNumbersOnBlank')}
     </label>
     <label class="deco-settings-row">
         <input type="checkbox" id="deco-opt-timestamp" checked />
-        Timestamp
+        ${t('viewer.decoSettings.timestamp')}
     </label>
     <label class="deco-settings-row deco-indent">
         <input type="checkbox" id="deco-opt-milliseconds" />
-        Show milliseconds
+        ${t('viewer.decoSettings.milliseconds')}
     </label>
     <label class="deco-settings-row">
         <input type="checkbox" id="deco-opt-elapsed" />
-        Elapsed time (+Nms)
+        ${t('viewer.decoSettings.elapsed')}
     </label>
     <label class="deco-settings-row">
         <input type="checkbox" id="deco-opt-session-elapsed" />
-        Session elapsed
+        ${t('viewer.decoSettings.sessionElapsed')}
     </label>
     <div class="deco-settings-separator"></div>
     <label class="deco-settings-row">
         <input type="checkbox" id="deco-opt-line-colors" checked />
-        Level text colors
+        ${t('viewer.decoSettings.levelTextColors')}
     </label>
     <div class="deco-settings-row">
-        <span>Line coloring</span>
+        <span>${t('viewer.decoSettings.lineColoring')}</span>
         <select id="deco-line-color-mode">
-            <option value="none">None</option>
-            <option value="line">Whole line</option>
+            <option value="none">${t('viewer.decoSettings.lineColoring.none')}</option>
+            <option value="line">${t('viewer.decoSettings.lineColoring.wholeLine')}</option>
         </select>
     </div>
     <label class="deco-settings-row">
         <input type="checkbox" id="deco-opt-bar" checked />
-        Severity bar (left border)
+        ${t('viewer.decoSettings.severityBar')}
     </label>
     <label class="deco-settings-row">
         <input type="checkbox" id="deco-opt-quality" checked />
-        Coverage badge
+        ${t('viewer.decoSettings.coverageBadge')}
     </label>
     <label class="deco-settings-row">
         <input type="checkbox" id="deco-opt-category-badge" />
-        Channel badge
+        ${t('viewer.decoSettings.channelBadge')}
     </label>
     <label class="deco-settings-row">
         <input type="checkbox" id="deco-opt-lint-badge" />
-        Lint badge
+        ${t('viewer.decoSettings.lintBadge')}
     </label>
     <div class="deco-settings-separator"></div>
     <label class="deco-settings-row">
         <input type="checkbox" id="deco-opt-strip-source-tag" checked />
-        Strip source tag prefix
+        ${t('viewer.decoSettings.stripSourceTag')}
     </label>
     <label class="deco-settings-row">
         <input type="checkbox" id="deco-opt-structured-parsing" checked />
-        Strip structured prefix
+        ${t('viewer.decoSettings.stripStructuredPrefix')}
     </label>
     <label class="deco-settings-row deco-indent">
         <input type="checkbox" id="deco-opt-show-pid-tid" />
-        Show PID/TID
+        ${t('viewer.decoSettings.showPidTid')}
     </label>
     <label class="deco-settings-row deco-indent">
         <input type="checkbox" id="deco-opt-show-level-prefix" />
-        Show level prefix
+        ${t('viewer.decoSettings.showLevelPrefix')}
     </label>
     <div class="deco-settings-separator"></div>
     <div class="deco-settings-row">
-        <span>Stack frames</span>
+        <span>${t('viewer.decoSettings.stackFrames')}</span>
         <select id="deco-stack-default-state">
             <!-- Order matches the JS default (stackDefaultState = true / collapsed) so the dropdown's
                  visible default lines up with runtime state before syncDecoSettingsUi() runs. Without
                  this, the panel briefly shows "Expanded" while new stacks actually arrive collapsed —
                  confusing the user when they first open Decoration Settings on a fresh session. -->
-            <option value="collapsed">Collapsed</option>
-            <option value="preview">Preview</option>
-            <option value="expanded">Expanded</option>
+            <option value="collapsed">${t('viewer.decoSettings.stackFrames.collapsed')}</option>
+            <option value="preview">${t('viewer.decoSettings.stackFrames.preview')}</option>
+            <option value="expanded">${t('viewer.decoSettings.stackFrames.expanded')}</option>
         </select>
     </div>
     <div class="deco-settings-row deco-indent">
-        <span>Preview count</span>
+        <span>${t('viewer.decoSettings.previewCount')}</span>
         <input type="number" id="deco-stack-preview-count" min="1" max="20" value="3" style="width:3.5em" />
     </div>
 </div>`;

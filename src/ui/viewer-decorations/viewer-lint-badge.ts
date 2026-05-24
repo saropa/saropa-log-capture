@@ -33,9 +33,9 @@ function getLintBadge(item) {
     var w = item.lintWarnings || 0;
     if (e === 0 && w === 0) return '';
     var parts = [];
-    if (e > 0) parts.push(e + (e > 1 ? ' errors' : ' error'));
-    if (w > 0) parts.push(w + (w > 1 ? ' warnings' : ' warning'));
-    var tip = 'Diagnostics: ' + parts.join(', ');
+    if (e > 0) parts.push(vt(e > 1 ? 'viewer.lintBadge.errors.many' : 'viewer.lintBadge.errors.one', e));
+    if (w > 0) parts.push(vt(w > 1 ? 'viewer.lintBadge.warnings.many' : 'viewer.lintBadge.warnings.one', w));
+    var tip = vt('viewer.lintBadge.tooltip', parts.join(', '));
     var cls = e > 0 ? 'lint-badge-error' : 'lint-badge-warning';
     var label = e > 0 ? e : w;
     var icon = e > 0 ? '\\u26a0' : '\\u25b3';

@@ -5,27 +5,29 @@
  * loaded; kept for reference. Styles in viewer-styles-recurring.ts are still used by Signal panel.
  */
 
+import { t } from '../../l10n';
+
 /** Generate the recurring errors panel HTML. */
 export function getRecurringPanelHtml(): string {
     return /* html */ `
 <div id="recurring-panel" class="recurring-panel">
     <div class="recurring-panel-header">
-        <span>Recurring Errors</span>
+        <span>${t('viewer.recurring.title')}</span>
         <div class="recurring-panel-actions">
-            <button id="recurring-refresh" class="recurring-panel-action" title="Refresh">
+            <button id="recurring-refresh" class="recurring-panel-action" title="${t('viewer.recurring.refresh')}">
                 <span class="codicon codicon-refresh"></span>
             </button>
-            <button id="recurring-panel-close" class="recurring-panel-close" title="Close">&times;</button>
+            <button id="recurring-panel-close" class="recurring-panel-close" title="${t('viewer.recurring.close')}">&times;</button>
         </div>
     </div>
     <div class="recurring-panel-content">
         <div id="recurring-list"></div>
-        <div id="recurring-empty" class="recurring-empty">No recurring errors found</div>
-        <div id="recurring-loading" class="recurring-loading" style="display:none">Loading error data\u2026</div>
+        <div id="recurring-empty" class="recurring-empty">${t('viewer.recurring.empty')}</div>
+        <div id="recurring-loading" class="recurring-loading" style="display:none">${t('viewer.recurring.loading')}</div>
     </div>
     <div id="recurring-footer" class="recurring-footer">
-        <span id="recurring-footer-signals">Open Full Signals</span>
-        <span id="recurring-export-summary" class="recurring-footer-action" title="Export recurring errors and hot files as CSV or JSON">Export summary</span>
+        <span id="recurring-footer-signals">${t('viewer.recurring.openFullSignals')}</span>
+        <span id="recurring-export-summary" class="recurring-footer-action" title="${t('viewer.recurring.exportSummaryTitle')}">${t('viewer.recurring.exportSummary')}</span>
     </div>
 </div>`;
 }
@@ -79,12 +81,12 @@ export function getRecurringPanelScript(): string {
 
     function renderCard(e, status) {
         var dimCls = status === 'closed' ? ' re-closed' : '';
-        var sessions = e.sessionCount === 1 ? '1 session' : e.sessionCount + ' sessions';
-        var total = e.totalOccurrences + ' total';
+        var sessions = e.sessionCount === 1 ? vt('viewer.recurring.sessionsOne') : vt('viewer.recurring.sessionsMany', e.sessionCount);
+        var total = vt('viewer.recurring.totalOccurrences', e.totalOccurrences);
         var actions = status === 'open'
-            ? '<span class="re-action" data-hash="' + esc(e.fingerprint) + '" data-status="closed">Close</span>'
-              + '<span class="re-action" data-hash="' + esc(e.fingerprint) + '" data-status="muted">Mute</span>'
-            : '<span class="re-action" data-hash="' + esc(e.fingerprint) + '" data-status="open">Re-open</span>';
+            ? '<span class="re-action" data-hash="' + esc(e.fingerprint) + '" data-status="closed">' + vt('viewer.recurring.actionClose') + '</span>'
+              + '<span class="re-action" data-hash="' + esc(e.fingerprint) + '" data-status="muted">' + vt('viewer.recurring.mute') + '</span>'
+            : '<span class="re-action" data-hash="' + esc(e.fingerprint) + '" data-status="open">' + vt('viewer.recurring.reopen') + '</span>';
         var cat = e.category
             ? '<span class="re-cat-badge re-cat-' + esc(e.category) + '">' + esc(e.category).toUpperCase() + '</span> '
             : '';
