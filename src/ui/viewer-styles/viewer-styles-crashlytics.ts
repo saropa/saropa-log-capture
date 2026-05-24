@@ -100,7 +100,15 @@ export function getCrashlyticsPanelStyles(): string {
 .cp-tab:hover { opacity: 1; }
 .cp-tab.cp-tab-sel { opacity: 1; font-weight: 700; background: var(--vscode-button-secondaryBackground); border-color: var(--vscode-focusBorder); }
 .cp-fcontrols { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
-.cp-search { flex: 1 1 100%; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, var(--vscode-panel-border)); border-radius: 3px; padding: 2px 6px; font-size: 11px; min-width: 80px; }
+/* Search shares a row with the regex toggle (flex-basis < 100% so the button does not wrap alone);
+   the version/device/OS selects wrap to the next row as before. */
+.cp-search { flex: 1 1 70%; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, var(--vscode-panel-border)); border-radius: 3px; padding: 2px 6px; font-size: 11px; min-width: 80px; }
+/* Regex toggle (#2 advanced search): monospace .* glyph; pressed state borrows the focus accent. */
+.cp-regex { flex: 0 0 auto; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: 1px solid var(--vscode-panel-border); border-radius: 3px; font-family: var(--vscode-editor-font-family, monospace); font-size: 11px; padding: 2px 6px; cursor: pointer; opacity: 0.7; }
+.cp-regex:hover { opacity: 1; }
+.cp-regex.cp-regex-on { opacity: 1; background: var(--vscode-button-background); color: var(--vscode-button-foreground); border-color: var(--vscode-focusBorder); }
+/* Invalid regex pattern: red outline so the user knows the filter is not applied. */
+.cp-search.cp-search-invalid { border-color: var(--vscode-errorForeground); }
 .cp-fselect { flex: 1 1 auto; min-width: 56px; max-width: 33%; background: var(--vscode-dropdown-background); color: var(--vscode-dropdown-foreground); border: 1px solid var(--vscode-dropdown-border, var(--vscode-panel-border)); border-radius: 3px; font-size: 11px; padding: 1px; }
 
 /* Pill badges (UI #2/#3): soft tints + crisp borders via theme tokens, so they adapt to any theme. */
@@ -189,11 +197,11 @@ export function getCrashlyticsPanelStyles(): string {
 .crashlytics-detail.u-hidden { display: none; }
 .cd-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 2px solid var(--vscode-focusBorder); background: var(--vscode-sideBar-background, var(--vscode-editor-background)); }
 .cd-title { font-weight: 600; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cd-back, .cd-copy {
+.cd-back, .cd-copy, .cd-newissue {
     background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground);
     border: none; border-radius: 3px; padding: 3px 10px; font-size: 12px; cursor: pointer; flex: none;
 }
-.cd-back:hover, .cd-copy:hover { background: var(--vscode-button-secondaryHoverBackground); }
+.cd-back:hover, .cd-copy:hover, .cd-newissue:hover { background: var(--vscode-button-secondaryHoverBackground); }
 .cd-body { flex: 1; overflow-y: auto; padding: 8px 12px; }
 .cd-loading { padding: 16px; opacity: 0.7; animation: cp-pulse 1.5s ease-in-out infinite; }
 .cp-item.cp-selected { background: var(--vscode-list-activeSelectionBackground); color: var(--vscode-list-activeSelectionForeground); }
@@ -218,6 +226,15 @@ export function getCrashlyticsPanelStyles(): string {
 .cd-body .frame-fw { opacity: 0.55; }
 .cd-body .frame-app[data-frame-file] { cursor: pointer; }
 .cd-body .frame-app[data-frame-file]:hover { background: var(--vscode-list-hoverBackground); }
+/* Folded framework-frame run (#1 smart collapse): a quiet, dashed inline disclosure so the
+   noise stays one click away without competing with the app frames it sits between. */
+.cd-body .cd-fw-group { margin: 2px 0; }
+.cd-body .cd-fw-summary {
+    cursor: pointer; font-size: 11px; opacity: 0.6; padding: 1px 0 1px 22px;
+    color: var(--vscode-descriptionForeground); list-style: none;
+}
+.cd-body .cd-fw-summary:hover { opacity: 0.95; }
+.cd-body .cd-fw-group[open] > .cd-fw-summary { opacity: 0.85; margin-bottom: 2px; }
 .cd-body .crash-key-name { color: var(--vscode-symbolIcon-propertyForeground, var(--vscode-foreground)); }
 .crash-dist-label { font-weight: 600; font-size: 11px; margin: 8px 0 4px; opacity: 0.85; }
 .crash-dist-row { display: flex; align-items: center; gap: 8px; font-size: 11px; margin: 3px 0; }
