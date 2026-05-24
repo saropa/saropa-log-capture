@@ -9,6 +9,7 @@
 import { escapeHtml } from '../../modules/capture/ansi';
 import { getDashboardStyles } from './app-quality-insights-styles';
 import type { CrashlyticsIssue } from '../../modules/crashlytics/crashlytics-types';
+import type { StatEntry, IssueBreakdown } from '../../modules/crashlytics/play-reporting-metrics';
 
 /** Data the dashboard page needs (kept flat so it is trivial to serialize/render). */
 export interface DashboardModel {
@@ -106,6 +107,24 @@ function renderSetup(model: DashboardModel): string {
         any step that fails.</p>
         <p>Then reopen this dashboard.</p>
     </div>`;
+}
+
+/** One labeled set of distribution bars (Devices / Android versions). */
+function renderDistBars(label: string, entries: readonly StatEntry[]): string {
+    if (entries.length === 0) { return ''; }
+    const total = entries.reduce((sum, e) => sum + e.count, 0) || 1;
+    const rows = entries.map(e => {
+        const pct = Math.round((e.count / total) * 100);
+        return `<div class="crash-dist-row"><span class="crash-dist-name" title="${escapeHtml(e.name)}">${escapeHtml(e.name)}</span><div class="crash-dist-bar-bg"><div class="crash-dist-bar-fill" style="width:${pct}%"></div></div><span class="crash-dist-count">${e.count} (${pct}%)</span></div>`;
+    }).join('');
+    return `<div class="crash-dist-label">${escapeHtml(label)}</div>${rows}`;
+}
+
+/** Render the true device/OS aggregate breakdown (from the Play error-count metric set). */
+export function renderAggregateBreakdown(breakdown: IssueBreakdown): string {
+    if (breakdown.devices.length === 0 && breakdown.os.length === 0) { return ''; }
+    const most = breakdown.devices[0] ? `<div class="aqi-most">Most affected device: ${escapeHtml(breakdown.devices[0].name)}</div>` : '';
+    return `<div class="aqi-breakdown-agg">${renderDistBars('Devices', breakdown.devices)}${renderDistBars('Android versions', breakdown.os)}${most}</div>`;
 }
 
 /** Build the full dashboard page. */
