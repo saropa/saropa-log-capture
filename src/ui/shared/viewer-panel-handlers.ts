@@ -8,7 +8,6 @@ export type { PostFn } from './handlers/crashlytics-handlers';
 
 export {
     handleCrashlyticsRequest,
-    handleCrashDetail,
     handleCrashlyticsValidate,
     handleGcloudAuth,
     handleBrowseGoogleServices,
