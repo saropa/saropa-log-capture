@@ -147,9 +147,10 @@ export function getCrashlyticsPanelScript(): string {
     }
 
     function renderIssue(issue) {
-        var badge = issue.isFatal
-            ? '<span class="cp-badge cp-badge-fatal">' + vt('viewer.crashlytics.fatal') + '</span>'
-            : '<span class="cp-badge cp-badge-nonfatal">' + vt('viewer.crashlytics.nonfatal') + '</span>';
+        // Pill badge by kind: icon + short label, themed via tokens (UI #2/#3). ⊗ crash, ⏱ ANR, ⚠ non-fatal.
+        var kindBadge = { crash: ['\\u2297', 'Crash', 'cp-badge-crash'], anr: ['\\u23F1', 'ANR', 'cp-badge-anr'], nonfatal: ['\\u26A0', 'Non-fatal', 'cp-badge-nf'] };
+        var kb = kindBadge[issue.kind] || (issue.isFatal ? kindBadge.crash : kindBadge.nonfatal);
+        var badge = '<span class="cp-badge ' + kb[2] + '">' + kb[0] + ' ' + kb[1] + '</span>';
         var state = issue.state !== 'UNKNOWN'
             ? ' <span class="cp-badge cp-badge-' + issue.state.toLowerCase() + '">' + esc(issue.state) + '</span>' : '';
         var users = issue.userCount > 0

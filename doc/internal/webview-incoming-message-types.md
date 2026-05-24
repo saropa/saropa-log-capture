@@ -24,6 +24,7 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `copyWithSource` | viewer-message-handler-actions.ts |
 | `crashlyticsBrowseGoogleServices` | viewer-message-handler-panels.ts |
 | `crashlyticsCheckAgain` | viewer-message-handler-panels.ts |
+| `crashlyticsOpenFrame` | viewer-message-handler-panels.ts |
 | `crashlyticsOpenGoogleServicesJson` | viewer-message-handler-panels.ts |
 | `crashlyticsPanelClosed` | viewer-message-handler-panels.ts |
 | `crashlyticsPanelOpened` | viewer-message-handler-panels.ts |
@@ -128,4 +129,4 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `viewerKeybindingRecordCancelled` | viewer-message-handler-actions.ts |
 | `viewerKeybindingRecorded` | viewer-message-handler-actions.ts |
 
-**Total:** 120 distinct types.
+**Total:** 121 distinct types.

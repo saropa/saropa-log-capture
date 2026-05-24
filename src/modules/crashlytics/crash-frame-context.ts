@@ -47,7 +47,7 @@ async function uriExists(uri: vscode.Uri): Promise<boolean> {
 }
 
 /** Resolve a frame's file to a workspace URI (absolute, workspace-relative, then basename search). */
-async function resolveFile(file: string, wsUri: vscode.Uri): Promise<vscode.Uri | undefined> {
+export async function resolveFile(file: string, wsUri: vscode.Uri): Promise<vscode.Uri | undefined> {
     if (path.isAbsolute(file)) { const u = vscode.Uri.file(file); return (await uriExists(u)) ? u : undefined; }
     const rel = vscode.Uri.joinPath(wsUri, file);
     if (await uriExists(rel)) { return rel; }
