@@ -20,18 +20,18 @@ function buildQualityPopoverContent(data) {
     }
     var m = data.metrics || {};
     var parts = [];
-    parts.push('<div class="popover-section"><strong class="popover-title">Code Quality</strong>');
+    parts.push('<div class="popover-section"><strong class="popover-title">' + vt('viewer.quality.title') + '</strong>');
     parts.push('<p class="popover-path">' + (typeof escapeHtml === 'function' ? escapeHtml(data.filePath || '') : data.filePath || '') + '</p></div>');
     if (m.linePercent !== undefined) {
         var covCls = m.linePercent >= 80 ? 'qb-high' : (m.linePercent >= 50 ? 'qb-med' : 'qb-low');
-        parts.push('<div class="popover-section"><span>Coverage</span> <span class="quality-badge ' + covCls + '">' + m.linePercent + '%</span> lines</div>');
+        parts.push('<div class="popover-section"><span>' + vt('viewer.quality.coverage') + '</span> <span class="quality-badge ' + covCls + '">' + m.linePercent + '%</span> ' + vt('viewer.quality.lines') + '</div>');
     } else {
-        parts.push('<div class="popover-section"><span>Coverage</span> —</div>');
+        parts.push('<div class="popover-section"><span>' + vt('viewer.quality.coverage') + '</span> —</div>');
     }
     var lintW = m.lintWarnings ?? 0;
     var lintE = m.lintErrors ?? 0;
     if (lintW > 0 || lintE > 0) {
-        parts.push('<div class="popover-section"><span>Lint</span> ' + lintW + ' warning(s), ' + lintE + ' error(s)</div>');
+        parts.push('<div class="popover-section"><span>' + vt('viewer.quality.lint') + '</span> ' + vt('viewer.quality.lintCounts', lintW, lintE) + '</div>');
         if (m.lintTopMessages && m.lintTopMessages.length > 0) {
             parts.push('<ul class="popover-list">');
             for (var i = 0; i < m.lintTopMessages.length; i++) {
@@ -40,14 +40,14 @@ function buildQualityPopoverContent(data) {
             parts.push('</ul>');
         }
     } else {
-        parts.push('<div class="popover-section"><span>Lint</span> 0 warnings, 0 errors</div>');
+        parts.push('<div class="popover-section"><span>' + vt('viewer.quality.lint') + '</span> ' + vt('viewer.quality.lintClean') + '</div>');
     }
     if (m.commentRatio !== undefined || (m.documentedExports !== undefined && m.totalExports !== undefined)) {
-        var docLine = 'Docs ';
-        if (m.commentRatio !== undefined) docLine += (Math.round(m.commentRatio * 100) + '% comment ratio');
+        var docLine = vt('viewer.quality.docs') + ' ';
+        if (m.commentRatio !== undefined) docLine += vt('viewer.quality.commentRatio', Math.round(m.commentRatio * 100));
         if (m.documentedExports !== undefined && m.totalExports !== undefined) {
             if (m.commentRatio !== undefined) docLine += '; ';
-            docLine += m.documentedExports + '/' + m.totalExports + ' exports documented';
+            docLine += vt('viewer.quality.exportsDocumented', m.documentedExports, m.totalExports);
         }
         parts.push('<div class="popover-section">' + docLine + '</div>');
     }
@@ -61,7 +61,7 @@ function showQualityPopover(lineIdx, data) {
     var popover = document.createElement('div');
     popover.id = 'quality-popover';
     popover.className = 'context-popover quality-popover';
-    popover.innerHTML = '<button class="popover-close" aria-label="Close">&times;</button>' + buildQualityPopoverContent(data);
+    popover.innerHTML = '<button class="popover-close" aria-label="' + vt('viewer.popover.close') + '">&times;</button>' + buildQualityPopoverContent(data);
     document.body.appendChild(popover);
     qualityPopoverEl = popover;
 

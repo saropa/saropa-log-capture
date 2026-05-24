@@ -91,11 +91,11 @@ function buildSqlRepeatNotificationRowHtml(item) {
     var expanded = !!item.sqlRepeatDrilldownOpen;
     var preview = escapeHtml(item.repeatPreviewText || '\\u2026');
     var cnt = d ? d.repeatCount : 0;
-    var label = cnt + ' × SQL repeated:';
+    var label = vt('viewer.sqlDrilldown.repeatLabel', cnt);
     var seq = item.seq;
     var ariaExp = expanded ? 'true' : 'false';
     var head = '<span class="repeat-notification repeat-sql-fp">' +
-        '<button type="button" class="sql-repeat-drilldown-toggle" data-seq="' + seq + '" aria-expanded="' + ariaExp + '" aria-label="SQL repeat details: ' + escapeHtml(label) + '">' +
+        '<button type="button" class="sql-repeat-drilldown-toggle" data-seq="' + seq + '" aria-expanded="' + ariaExp + '" aria-label="' + vt('viewer.sqlDrilldown.detailsAria', escapeHtml(label)) + '">' +
         escapeHtml(label) + '</button>' +
         ' <span class="repeat-preview">' + preview + '</span>';
     if (!expanded || !d) {
@@ -105,25 +105,25 @@ function buildSqlRepeatNotificationRowHtml(item) {
     var t0 = formatSqlRepeatDrilldownTs(d.firstTs);
     var t1 = formatSqlRepeatDrilldownTs(d.lastTs);
     var sqlEsc = escapeHtml(d.sqlSnippet || '');
-    var detail = '<div class="sql-repeat-drilldown-detail" role="region" aria-label="SQL repeat samples" tabindex="-1">' +
-        '<div class="sql-repeat-drilldown-meta"><span class="sql-repeat-drilldown-meta-label">Fingerprint</span> <code class="sql-repeat-drilldown-fp">' + fpDisp + '</code></div>' +
-        '<div class="sql-repeat-drilldown-meta">' + escapeHtml('Time') + ': ' + escapeHtml(t0) + ' \\u2013 ' + escapeHtml(t1) + '</div>' +
+    var detail = '<div class="sql-repeat-drilldown-detail" role="region" aria-label="' + vt('viewer.sqlDrilldown.samplesAria') + '" tabindex="-1">' +
+        '<div class="sql-repeat-drilldown-meta"><span class="sql-repeat-drilldown-meta-label">' + vt('viewer.sqlDrilldown.fingerprintLabel') + '</span> <code class="sql-repeat-drilldown-fp">' + fpDisp + '</code></div>' +
+        '<div class="sql-repeat-drilldown-meta">' + escapeHtml(vt('viewer.sqlDrilldown.timeLabel')) + ': ' + escapeHtml(t0) + ' \\u2013 ' + escapeHtml(t1) + '</div>' +
         '<pre class="sql-repeat-drilldown-snippet">' + sqlEsc + '</pre>' +
-        '<div class="sql-repeat-drilldown-variant-title">' + escapeHtml('Argument variants (first-seen order, capped)') + '</div>';
+        '<div class="sql-repeat-drilldown-variant-title">' + escapeHtml(vt('viewer.sqlDrilldown.variantTitle')) + '</div>';
     var vi;
     for (vi = 0; vi < (d.variants || []).length; vi++) {
         var vr = d.variants[vi];
         detail += '<div class="sql-repeat-drilldown-variant"><span class="sql-repeat-drilldown-variant-count">×' + (vr.count | 0) + '</span> <code>' + escapeHtml(vr.argsKey || '') + '</code></div>';
     }
     if (d.moreVariantCount > 0) {
-        detail += '<div class="sql-repeat-drilldown-more">' + escapeHtml('+' + d.moreVariantCount + ' more distinct arg variant(s)') + '</div>';
+        detail += '<div class="sql-repeat-drilldown-more">' + escapeHtml(vt('viewer.sqlDrilldown.moreVariants', d.moreVariantCount)) + '</div>';
     }
     if (typeof staticSqlFromFingerprintEnabled !== 'undefined' && staticSqlFromFingerprintEnabled && d.fingerprint) {
-        detail += '<div class="sql-repeat-drilldown-actions"><button type="button" class="sql-repeat-static-sources" data-fingerprint="' + escapeHtml(d.fingerprint) + '">Possible Dart sources (static index, not stack)</button></div>';
+        detail += '<div class="sql-repeat-drilldown-actions"><button type="button" class="sql-repeat-static-sources" data-fingerprint="' + escapeHtml(d.fingerprint) + '">' + vt('viewer.sqlDrilldown.staticSources') + '</button></div>';
     }
     detail += '</div>';
     return '<span class="repeat-notification repeat-sql-fp repeat-sql-fp-expanded">' +
-        '<button type="button" class="sql-repeat-drilldown-toggle" data-seq="' + seq + '" aria-expanded="true" aria-label="SQL repeat details: ' + escapeHtml(label) + '">' +
+        '<button type="button" class="sql-repeat-drilldown-toggle" data-seq="' + seq + '" aria-expanded="true" aria-label="' + vt('viewer.sqlDrilldown.detailsAria', escapeHtml(label)) + '">' +
         escapeHtml(label) + '</button>' +
         ' <span class="repeat-preview">' + preview + '</span></span>' + detail;
 }

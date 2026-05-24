@@ -16,7 +16,7 @@ function buildDatabaseQueriesPopoverSection(data) {
     }
     var items = data.data.database;
     var html = '<div class="popover-section">';
-    html += '<div class="popover-section-header"><span class="popover-icon">\\ud83d\\uddc3</span> Queries (' + items.length + ')</div>';
+    html += '<div class="popover-section-header"><span class="popover-icon">\\ud83d\\uddc3</span> ' + vt('viewer.popover.queries', items.length) + '</div>';
     html += '<div class="popover-section-content">';
     var shown = items.slice(0, 5);
     for (var qi = 0; qi < shown.length; qi++) {
@@ -26,7 +26,7 @@ function buildDatabaseQueriesPopoverSection(data) {
         html += '<div class="popover-item db-query-item">';
         html += '<span class="db-query-text" title="' + popoverEscapeAttr(q.queryText) + '">' + escapeHtmlBasic(queryShort) + '</span>';
         html += '<span class="http-duration">' + escapeHtmlBasic(dur) + '</span>';
-        html += ' <button class="popover-copy-query" type="button" data-query="' + popoverEscapeAttr(q.queryText) + '" title="Copy query">\\ud83d\\udccb</button>';
+        html += ' <button class="popover-copy-query" type="button" data-query="' + popoverEscapeAttr(q.queryText) + '" title="' + vt('viewer.contextMenu.copyQuery') + '">\\ud83d\\udccb</button>';
         html += '</div>';
     }
     if (items.length > 5) {
@@ -52,12 +52,12 @@ function closeRelatedQueriesPopover() {
 
 function buildRelatedQueriesContent(queries) {
     var html = '<div class="popover-header">';
-    html += '<span class="popover-title">Related Queries (' + queries.length + ')</span>';
-    html += '<button class="popover-close codicon codicon-close" title="Close" aria-label="Close"></button>';
+    html += '<span class="popover-title">' + vt('viewer.relatedQueries.title', queries.length) + '</span>';
+    html += '<button class="popover-close codicon codicon-close" title="' + vt('viewer.popover.close') + '" aria-label="' + vt('viewer.popover.close') + '"></button>';
     html += '</div>';
     html += '<div class="popover-body">';
     if (queries.length === 0) {
-        html += '<div class="popover-empty">No related queries found</div>';
+        html += '<div class="popover-empty">' + vt('viewer.relatedQueries.empty') + '</div>';
     } else {
         html += '<div class="popover-section">';
         html += '<div class="popover-section-content">';
@@ -68,7 +68,7 @@ function buildRelatedQueriesContent(queries) {
             html += '<div class="popover-item db-query-item">';
             html += '<span class="db-query-text" title="' + popoverEscapeAttr(q.queryText) + '">' + escapeHtmlBasic(queryShort) + '</span>';
             html += '<span class="http-duration">' + escapeHtmlBasic(dur) + '</span>';
-            html += ' <button class="popover-copy-query" type="button" data-query="' + popoverEscapeAttr(q.queryText) + '" title="Copy query">\\ud83d\\udccb</button>';
+            html += ' <button class="popover-copy-query" type="button" data-query="' + popoverEscapeAttr(q.queryText) + '" title="' + vt('viewer.contextMenu.copyQuery') + '">\\ud83d\\udccb</button>';
             html += '</div>';
         }
         html += '</div></div>';
@@ -76,7 +76,7 @@ function buildRelatedQueriesContent(queries) {
     html += '</div>';
     html += '<div class="popover-footer">';
     if (queries.length > 0) {
-        html += '<button class="popover-btn rq-copy-all">Copy All</button>';
+        html += '<button class="popover-btn rq-copy-all">' + vt('viewer.relatedQueries.copyAll') + '</button>';
     }
     html += '</div>';
     return html;
@@ -124,7 +124,7 @@ function showRelatedQueriesPopover(lineIdx, queries) {
             var allSql = [];
             for (var i = 0; i < queries.length; i++) allSql.push(queries[i].queryText);
             vscodeApi.postMessage({ type: 'copyToClipboard', text: allSql.join('\\n') });
-            showPopoverToast('Copied ' + queries.length + ' queries');
+            showPopoverToast(vt('viewer.relatedQueries.copiedToast', queries.length));
         });
     }
 
@@ -159,7 +159,7 @@ window.addEventListener('message', function(event) {
     }
     if (msg.type === 'triggerShowRelatedQueries') {
         var rqIdx = typeof focusedLineIdx !== 'undefined' && focusedLineIdx >= 0 ? focusedLineIdx : -1;
-        if (rqIdx < 0 || rqIdx >= allLines.length) { showPopoverToast('No line selected'); return; }
+        if (rqIdx < 0 || rqIdx >= allLines.length) { showPopoverToast(vt('viewer.popover.noLineSelected')); return; }
         var rqLd = allLines[rqIdx];
         vscodeApi.postMessage({ type: 'showRelatedQueries', lineIndex: rqIdx, timestamp: rqLd.ts || rqLd.timestamp, lineText: stripTags(rqLd.html || '') });
     }
@@ -174,17 +174,17 @@ function buildSecurityPopoverSection(data) {
     var secMeta = data && data.data && data.data.integrationsMeta && data.data.integrationsMeta.security;
     if (!secMeta || typeof secMeta !== 'object') { return ''; }
     var html = '<div class="popover-section">';
-    html += '<div class="popover-section-header"><span class="popover-icon">\\ud83d\\udd12</span> Security / Audit</div>';
+    html += '<div class="popover-section-header"><span class="popover-icon">\\ud83d\\udd12</span> ' + vt('viewer.popover.securityAudit') + '</div>';
     html += '<div class="popover-section-content">';
-    html += '<div class="popover-item popover-security-note">Security events are not shown inline.</div>';
+    html += '<div class="popover-item popover-security-note">' + vt('viewer.popover.securityNote') + '</div>';
     if (secMeta.summary) {
         html += '<div class="popover-item">' + escapeHtmlBasic(String(secMeta.summary)) + '</div>';
     }
     if (secMeta.securitySidecar) {
-        html += '<button class="popover-btn popover-open-sidecar" type="button" data-file="' + popoverEscapeAttr(String(secMeta.securitySidecar)) + '">Open events file</button>';
+        html += '<button class="popover-btn popover-open-sidecar" type="button" data-file="' + popoverEscapeAttr(String(secMeta.securitySidecar)) + '">' + vt('viewer.popover.openEventsFile') + '</button>';
     }
     if (secMeta.auditSidecar) {
-        html += '<button class="popover-btn popover-open-sidecar" type="button" data-file="' + popoverEscapeAttr(String(secMeta.auditSidecar)) + '">Open audit file</button>';
+        html += '<button class="popover-btn popover-open-sidecar" type="button" data-file="' + popoverEscapeAttr(String(secMeta.auditSidecar)) + '">' + vt('viewer.popover.openAuditFile') + '</button>';
     }
     html += '</div></div>';
     return html;
