@@ -11,7 +11,7 @@
  */
 
 import * as vscode from 'vscode';
-import { readCachedEvents, writeCacheEvents } from './crashlytics-io';
+import { readCachedEvents, writeCacheEvents, readCachedIssues, writeCachedIssues } from './crashlytics-io';
 import { detectPackageName } from '../misc/app-identity';
 import { fetchPlayErrorIssues, fetchPlayErrorReports } from './play-reporting-errors';
 import { logCrashlytics, type DiagnosticDetails } from './crashlytics-diagnostics';
@@ -60,8 +60,21 @@ export async function queryTopIssues(config: FirebaseConfig, token: string, erro
         return [];
     }
     const { data, diagnostic } = await fetchPlayErrorIssues({ packageName, token, timeRange: getTimeRange(), quotaProject: config?.projectId ?? '' }, issuePageSize);
-    lastApiDiagnostic = diagnostic;
-    if (diagnostic) { logCrashlytics('error', `Play errorIssues: ${diagnostic.message}`); return []; }
+    if (diagnostic) {
+        // Couldn't refresh (offline / API error): serve the last persisted list so issues stay
+        // visible, and flag it as stale rather than showing an empty list. (offline cache)
+        const cachedDisk = await readCachedIssues();
+        if (cachedDisk && cachedDisk.length > 0) {
+            lastApiDiagnostic = { step: 'api', errorType: diagnostic.errorType, checkedAt: Date.now(), message: 'Showing cached issues — could not refresh (offline or API error).' };
+            cachedIssues = { issues: cachedDisk, expires: Date.now() + issueListTtl };
+            return filterByTokens(cachedDisk, errorTokens);
+        }
+        lastApiDiagnostic = diagnostic;
+        logCrashlytics('error', `Play errorIssues: ${diagnostic.message}`);
+        return [];
+    }
+    lastApiDiagnostic = undefined;
+    writeCachedIssues(data).catch(() => {});
     cachedIssues = { issues: data, expires: Date.now() + issueListTtl };
     return filterByTokens(data, errorTokens);
 }
