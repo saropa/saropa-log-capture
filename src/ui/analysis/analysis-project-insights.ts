@@ -7,6 +7,7 @@
 import { t } from '../../l10n';
 import { escapeHtml } from '../../modules/capture/ansi';
 import type { ProjectInsights } from '../../modules/crashlytics/crash-project-links';
+import type { LogCorrelation } from '../../modules/crashlytics/crash-log-correlation';
 
 /** "⚠ Changed since the affected version — may already be fixed", with the count of newer releases. */
 function mayBeFixedBanner(insights: ProjectInsights): string {
@@ -48,6 +49,20 @@ function linkSection(links: ProjectInsights['prs'], label: string): string {
         `<div class="cd-proj-row"><a class="cd-proj-link" data-url="${escapeHtml(l.url)}">`
         + `#${l.number} ${escapeHtml(l.title)}</a></div>`).join('');
     return `<div class="cd-proj-label">${label}</div>${rows}`;
+}
+
+/**
+ * "Seen in your captured logs" panel (5c-4): each match opens that session's log at the line via the
+ * detail's .cd-log-link handler. Separate panel because it streams from its own async log search.
+ */
+export function renderLogCorrelation(matches: readonly LogCorrelation[], token: string): string {
+    if (matches.length === 0) { return ''; }
+    const rows = matches.map(m =>
+        `<div class="cd-proj-row"><a class="cd-log-link" data-uri="${escapeHtml(m.uri)}" data-line="${m.line}" data-col="${m.col}">`
+        + `<span class="cd-proj-sha">${escapeHtml(m.fileName)}:${m.line}</span>`
+        + `<span class="cd-proj-text">${escapeHtml(m.lineText)}</span></a></div>`).join('');
+    return `<details class="group" open><summary class="group-header">${t('viewer.crashlytics.project.seenInLogs', token)}`
+        + ` <span class="match-count">${matches.length}</span></summary><div class="cd-proj">${rows}</div></details>`;
 }
 
 /** The whole panel; '' when there is nothing to show so the caller can skip appending it. */

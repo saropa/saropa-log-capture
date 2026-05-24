@@ -11,7 +11,9 @@ import { getCrashEvents } from '../../../modules/crashlytics/firebase-crashlytic
 import { getRepoSlug } from '../../../modules/git/github-context';
 import { getFrameContexts, resolveFile, topAppFrameRef } from '../../../modules/crashlytics/crash-frame-context';
 import { getProjectInsights } from '../../../modules/crashlytics/crash-project-links';
-import { renderProjectInsights } from '../../analysis/analysis-project-insights';
+import { crashSignatureToken } from '../../../modules/crashlytics/crash-signature';
+import { findCorrelatedLogLines } from '../../../modules/crashlytics/crash-log-correlation';
+import { renderProjectInsights, renderLogCorrelation } from '../../analysis/analysis-project-insights';
 import { renderCrashDetail, renderDeviceDistribution } from '../../analysis/analysis-crash-detail';
 import type { CrashlyticsEventDetail } from '../../../modules/crashlytics/crashlytics-types';
 import type { PostFn } from './crashlytics-handlers';
@@ -135,6 +137,18 @@ async function streamProjectInsights(issueId: string, event: CrashlyticsEventDet
 }
 
 /**
+ * Search the user's captured log sessions for the crash's signature and stream a "Seen in your logs"
+ * panel that deep-links to the matching line. The extension's core competency. Never throws.
+ */
+async function streamLogCorrelation(issueId: string, meta: IssueMeta, post: PostFn): Promise<void> {
+    const token = crashSignatureToken(meta.title ?? '');
+    if (!token) { return; }
+    const matches = await findCorrelatedLogLines(token);
+    if (matches.length === 0) { return; }
+    post({ type: 'crashlyticsLogCorrelation', issueId, html: renderLogCorrelation(matches, token) });
+}
+
+/**
  * Fetch the issue's sampled event, render its detail into the in-viewer panel, and stream code context
  * (source line + git blame) for app frames afterwards. Never throws.
  */
@@ -152,6 +166,7 @@ export async function handleCrashlyticsDetail(issueId: string, rawMeta: Record<s
             if (contexts.length > 0) { post({ type: 'crashlyticsFrameContext', issueId, contexts }); }
             await streamProjectInsights(issueId, event, meta, post);
         }
+        await streamLogCorrelation(issueId, meta, post);
     } catch {
         post({ type: 'crashlyticsDetailReady', issueId, title: meta.title ?? 'Issue', html: `${header(meta, consoleUrl)}<div class="cd-body"><div class="no-matches">Could not load this issue.</div></div>`, markdown: '' });
     }
