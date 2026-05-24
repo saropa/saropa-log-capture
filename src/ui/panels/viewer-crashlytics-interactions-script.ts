@@ -13,6 +13,10 @@ export function getCrashlyticsInteractionsScript(): string {
     var cpLogWrap = document.getElementById('log-content-wrapper');
     var cpDetailMarkdown = '';
     var cpDetailTitle = '';
+    /* Project Firebase console URL (#3) — set in renderData from ctx.consoleUrl, forwarded with the
+       detail request so the host renders the "View on Firebase" link with localized t() copy. The URL
+       is project-level: Play Reporting issue IDs don't map to Firebase per-issue pages. */
+    var cpConsoleUrl = '';
 
     function openIssueDetail(id) {
         if (!cpDetailEl) return;
@@ -25,11 +29,11 @@ export function getCrashlyticsInteractionsScript(): string {
                 if (sel) row = items[i];
             }
         }
-        var meta = row ? { title: row.dataset.title, subtitle: row.dataset.sub, events: row.dataset.events, users: row.dataset.users, fatal: row.dataset.fatal === '1', fv: row.dataset.fv, lv: row.dataset.lv } : {};
+        var meta = row ? { title: row.dataset.title, subtitle: row.dataset.sub, events: row.dataset.events, users: row.dataset.users, fatal: row.dataset.fatal === '1', fv: row.dataset.fv, lv: row.dataset.lv, kind: row.dataset.kind, state: row.dataset.state } : {};
         cpDetailEl.innerHTML = '<div class="cd-loading">' + vt('viewer.crashlytics.detail.loading') + '</div>';
         cpDetailEl.classList.remove('u-hidden');
         if (cpLogWrap) cpLogWrap.classList.add('u-hidden');
-        vscodeApi.postMessage({ type: 'fetchCrashlyticsDetail', issueId: id, meta: meta });
+        vscodeApi.postMessage({ type: 'fetchCrashlyticsDetail', issueId: id, meta: meta, consoleUrl: cpConsoleUrl });
     }
 
     function closeIssueDetail() {
@@ -43,6 +47,9 @@ export function getCrashlyticsInteractionsScript(): string {
             if (e.target.closest('.cd-copy')) { vscodeApi.postMessage({ type: 'copyToClipboard', text: cpDetailMarkdown }); return; }
             // Create issue: open a prefilled GitHub new-issue page with the crash Markdown as the body.
             if (e.target.closest('.cd-newissue')) { vscodeApi.postMessage({ type: 'crashlyticsCreateIssue', title: cpDetailTitle, body: cpDetailMarkdown }); return; }
+            // View on Firebase: open the project Crashlytics console in the browser (#3).
+            var consoleLink = e.target.closest('.cd-console-link');
+            if (consoleLink && consoleLink.getAttribute('data-url')) { vscodeApi.postMessage({ type: 'openUrl', url: consoleLink.getAttribute('data-url') }); return; }
             // Jump to code: an app frame opens the file at its line (UX #1).
             var frame = e.target.closest('.frame-app[data-frame-file]');
             if (frame) { vscodeApi.postMessage({ type: 'crashlyticsOpenFrame', file: frame.getAttribute('data-frame-file'), line: frame.getAttribute('data-frame-line') }); }
