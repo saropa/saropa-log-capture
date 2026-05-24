@@ -87,5 +87,7 @@ body { margin: 0; font-family: var(--vscode-font-family); font-size: var(--vscod
 .crash-dist-bar-bg { flex: 1; height: 8px; background: var(--vscode-panel-border); border-radius: 4px; overflow: hidden; }
 .crash-dist-bar-fill { height: 100%; background: var(--vscode-progressBar-background, #0e70c0); }
 .crash-dist-count { width: 72px; text-align: right; opacity: 0.8; }
+.aqi-breakdown-agg { font-size: 11px; }
+.aqi-most { margin-top: 8px; font-size: 11px; opacity: 0.8; font-style: italic; }
 `;
 }
