@@ -12,7 +12,7 @@ import {
     clearIssueListCache, gcloudInstallUrl, getGcloudInstallCommand, findBestGoogleServicesJson,
     type FirebaseContext,
 } from '../../../modules/crashlytics/firebase-crashlytics';
-import { renderCrashDetail, renderDeviceDistribution } from '../../analysis/analysis-crash-detail';
+import { renderCrashDetail } from '../../analysis/analysis-crash-detail';
 import { serializeContext } from './crashlytics-serializers';
 import { getOutputChannel } from '../../../modules/crashlytics/crashlytics-diagnostics';
 import { runConnectionCheck, formatConnectionReport } from '../../../modules/crashlytics/crashlytics-connection-check';
@@ -44,44 +44,16 @@ export async function handleCrashlyticsRequest(post: PostFn): Promise<void> {
     }
 }
 
-const noDetailHtml = '<div class="no-matches">Crash details not available</div>';
-
-/**
- * Fetch one sampled event of an issue and send its HTML to the webview.
- * `eventIndex` selects which fetched event to show; the event navigator lets the
- * user page through them, and the device distribution summarizes the sample.
- * Never throws.
- */
-export async function handleCrashDetail(issueId: string, post: PostFn, eventIndex = 0): Promise<void> {
+/** Fetch crash detail for a specific issue and send HTML to webview. Never throws. */
+export async function handleCrashDetail(issueId: string, post: PostFn): Promise<void> {
     try {
         const multi = await getCrashEvents(issueId);
-        if (!multi || multi.events.length === 0) {
-            post({ type: 'crashDetailReady', issueId, html: noDetailHtml });
-            return;
-        }
-        // Clamp so an out-of-range nav click (or a shorter list on refetch) can't index past the array.
-        const idx = Math.max(0, Math.min(eventIndex, multi.events.length - 1));
-        const html = renderDeviceDistribution(multi) + buildEventNav(issueId, idx, multi.events.length) + renderCrashDetail(multi.events[idx]);
+        const detail = multi?.events[multi.currentIndex ?? 0];
+        const html = detail ? renderCrashDetail(detail) : '<div class="no-matches">Crash details not available</div>';
         post({ type: 'crashDetailReady', issueId, html });
     } catch {
-        post({ type: 'crashDetailReady', issueId, html: noDetailHtml });
+        post({ type: 'crashDetailReady', issueId, html: '<div class="no-matches">Crash details not available</div>' });
     }
-}
-
-/**
- * Prev/next navigator for paging an issue's sampled events. The current index lives
- * in `data-index` (not parsed from the label text) so the visible "Event N of M"
- * can localize freely without breaking the webview's prev/next arithmetic. Empty
- * for single-event issues, where there is nothing to page through.
- */
-function buildEventNav(issueId: string, idx: number, total: number): string {
-    if (total < 2) { return ''; }
-    const prevDisabled = idx === 0 ? ' disabled' : '';
-    const nextDisabled = idx >= total - 1 ? ' disabled' : '';
-    return `<div class="crash-event-nav" data-issue-id="${issueId}" data-index="${idx}">`
-        + `<button class="crash-nav-btn" data-dir="-1"${prevDisabled}>&lt;</button>`
-        + `<span class="crash-nav-label">${t('viewer.crashlytics.eventNav', idx + 1, total)}</span>`
-        + `<button class="crash-nav-btn" data-dir="1"${nextDisabled}>&gt;</button></div>`;
 }
 
 /** Close or mute a Crashlytics issue, then refresh. Never throws. */
