@@ -375,8 +375,9 @@ That "may already be fixed" signal is the standout. Build order (boundedness × 
   Pure parsing (`parseChangelogVersions`, `changelogSince`) is unit-tested.
 - **5c-2 Nearby annotations — DOING NOW (cheap).** Surface `TODO`/`FIXME`/`BUG` near the crash line
   (the workspace analyzer already finds these for the frame mini-analysis).
-- **5c-3 Related issues / PRs — NEXT.** Reuse `github-context.ts` (`findFilePrs`, `findIssues`) keyed
-  off the crashing file + error tokens. Best-effort (needs `gh`); degrades to nothing if absent.
+- **5c-3 Related issues / PRs — DONE.** Reuses `github-context.ts` (`getGitHubContext`) keyed off the
+  crashing file + error tokens (from the issue title); PRs touching the file + matching issues render
+  as clickable links in the panel. Best-effort (needs `gh`); degrades to nothing if absent.
 - **5c-4 Local-log correlation — NEXT, BIGGEST.** Match a crash's signature/stack against errors in the
   current + saved sessions ("matches an error you captured 3 runs ago"), deep-link to that log line.
   The extension's core competency; touches session storage, so its own slice.

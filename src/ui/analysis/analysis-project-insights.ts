@@ -41,9 +41,21 @@ function annotationsSection(insights: ProjectInsights): string {
     return `<div class="cd-proj-label">${t('viewer.crashlytics.project.annotations')}</div>${rows}`;
 }
 
+/** Clickable PR/issue rows (open in the browser via the detail's .cd-proj-link handler). */
+function linkSection(links: ProjectInsights['prs'], label: string): string {
+    if (links.length === 0) { return ''; }
+    const rows = links.map(l =>
+        `<div class="cd-proj-row"><a class="cd-proj-link" data-url="${escapeHtml(l.url)}">`
+        + `#${l.number} ${escapeHtml(l.title)}</a></div>`).join('');
+    return `<div class="cd-proj-label">${label}</div>${rows}`;
+}
+
 /** The whole panel; '' when there is nothing to show so the caller can skip appending it. */
 export function renderProjectInsights(insights: ProjectInsights): string {
-    const body = mayBeFixedBanner(insights) + changelogSection(insights) + commitsSection(insights) + annotationsSection(insights);
+    const body = mayBeFixedBanner(insights) + changelogSection(insights) + commitsSection(insights)
+        + linkSection(insights.prs, t('viewer.crashlytics.project.relatedPrs'))
+        + linkSection(insights.issues, t('viewer.crashlytics.project.relatedIssues'))
+        + annotationsSection(insights);
     if (!body) { return ''; }
     const fileNote = insights.file ? ` <span class="match-count">${escapeHtml(insights.file.split(/[\\/]/).pop() ?? '')}</span>` : '';
     return `<details class="group" open><summary class="group-header">${t('viewer.crashlytics.project.title')}${fileNote}</summary>`

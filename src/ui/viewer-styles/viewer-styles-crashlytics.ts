@@ -261,6 +261,8 @@ export function getCrashlyticsPanelStyles(): string {
 .cd-proj-date { flex: none; opacity: 0.55; min-width: 56px; }
 .cd-proj-tag { flex: none; font-weight: 700; color: var(--vscode-editorWarning-foreground, #cca700); min-width: 44px; }
 .cd-proj-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cd-proj-link { color: var(--vscode-textLink-foreground); text-decoration: none; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.cd-proj-link:hover { text-decoration: underline; }
 .crash-dist-label { font-weight: 600; font-size: 11px; margin: 8px 0 4px; opacity: 0.85; }
 .crash-dist-row { display: flex; align-items: center; gap: 8px; font-size: 11px; margin: 3px 0; }
 .crash-dist-name { width: 140px; flex: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
