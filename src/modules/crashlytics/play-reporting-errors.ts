@@ -31,6 +31,12 @@ export interface PlayQuery {
     readonly packageName: string;
     readonly token: string;
     readonly timeRange: string;
+    /**
+     * GCP project id sent as `X-Goog-User-Project`. REQUIRED for user ADC tokens (bug_008 W5):
+     * without it the API returns 403 "requires a quota project". gcloud client libraries add this
+     * automatically; raw REST calls must send it themselves.
+     */
+    readonly quotaProject: string;
 }
 
 /** Map the firebase.timeRange setting to a day count for the required reporting interval. */
@@ -52,12 +58,14 @@ function intervalQuery(days: number): string {
     return `${part(start, 'startTime')}&${part(end, 'endTime')}`;
 }
 
-/** GET a URL with a bearer token; resolves with status + raw body (status 0 = transport error). */
-function getJson(url: string, token: string): Promise<{ status: number; body: string }> {
+/** GET a URL with a bearer token + quota-project header; resolves with status + raw body (0 = transport error). */
+function getJson(url: string, token: string, quotaProject: string): Promise<{ status: number; body: string }> {
     return new Promise((resolve) => {
         const u = new URL(url);
+        const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+        if (quotaProject) { headers['X-Goog-User-Project'] = quotaProject; }
         const req = https.request(
-            { hostname: u.hostname, path: u.pathname + u.search, method: 'GET', timeout: timeoutMs, headers: { Authorization: `Bearer ${token}` } },
+            { hostname: u.hostname, path: u.pathname + u.search, method: 'GET', timeout: timeoutMs, headers },
             (res) => {
                 let data = '';
                 res.on('data', (chunk: string) => { data += chunk; });
@@ -86,7 +94,7 @@ function failure(status: number, body: string): DiagnosticDetails {
 export async function fetchPlayErrorIssues(q: PlayQuery, pageSize: number): Promise<PlayResult<CrashlyticsIssue[]>> {
     const params = `${intervalQuery(rangeDays(q.timeRange))}&pageSize=${pageSize}&orderBy=${encodeURIComponent('errorReportCount desc')}`;
     const url = `${apiBase}/apps/${encodeURIComponent(q.packageName)}/errorIssues:search?${params}`;
-    const { status, body } = await getJson(url, q.token);
+    const { status, body } = await getJson(url, q.token, q.quotaProject);
     if (status !== 200) { return { data: [], diagnostic: failure(status, body) }; }
     try {
         const json = JSON.parse(body) as { errorIssues?: Record<string, unknown>[] };
@@ -101,7 +109,7 @@ export async function fetchPlayErrorReports(q: PlayQuery, issueResourceName: str
     const filter = encodeURIComponent(`errorIssueId = ${issueShortId(issueResourceName)}`);
     const params = `${intervalQuery(rangeDays(q.timeRange))}&pageSize=${limit}&filter=${filter}`;
     const url = `${apiBase}/apps/${encodeURIComponent(q.packageName)}/errorReports:search?${params}`;
-    const { status, body } = await getJson(url, q.token);
+    const { status, body } = await getJson(url, q.token, q.quotaProject);
     if (status !== 200) { return { data: [], diagnostic: failure(status, body) }; }
     try {
         const json = JSON.parse(body) as { errorReports?: Record<string, unknown>[] };
