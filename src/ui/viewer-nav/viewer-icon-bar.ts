@@ -133,6 +133,7 @@ export function getIconBarScript(): string {
 
         collections: document.getElementById('ib-collections'),
         crashlytics: document.getElementById('ib-crashlytics'),
+        projectState: document.getElementById('ib-project-state'),
         signal: document.getElementById('ib-signal'),
         about: document.getElementById('ib-about'),
     };
@@ -147,6 +148,7 @@ export function getIconBarScript(): string {
         if (typeof closeTrashPanel === 'function') closeTrashPanel();
         if (typeof closeCollectionsPanel === 'function') closeCollectionsPanel();
         if (typeof closeCrashlyticsPanel === 'function') closeCrashlyticsPanel();
+        if (typeof closeProjectStatePanel === 'function') closeProjectStatePanel();
         if (typeof closeSignalPanel === 'function') closeSignalPanel();
         if (typeof closeAboutPanel === 'function') closeAboutPanel();
         if (typeof closeSessionPanel === 'function') closeSessionPanel();
@@ -189,6 +191,8 @@ export function getIconBarScript(): string {
             openCollectionsPanel();
         } else if (name === 'crashlytics' && typeof openCrashlyticsPanel === 'function') {
             openCrashlyticsPanel();
+        } else if (name === 'projectState' && typeof openProjectStatePanel === 'function') {
+            openProjectStatePanel();
         } else if (name === 'signal' && typeof openSignalPanel === 'function') {
             openSignalPanel();
         } else if (name === 'about' && typeof openAboutPanel === 'function') {
@@ -243,6 +247,9 @@ export function getIconBarScript(): string {
     }
     if (iconButtons.crashlytics) {
         iconButtons.crashlytics.addEventListener('click', function() { setActivePanel('crashlytics'); });
+    }
+    if (iconButtons.projectState) {
+        iconButtons.projectState.addEventListener('click', function() { setActivePanel('projectState'); });
     }
     if (iconButtons.signal) {
         iconButtons.signal.addEventListener('click', function() { setActivePanel('signal'); });

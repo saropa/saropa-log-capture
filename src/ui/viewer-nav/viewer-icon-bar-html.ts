@@ -34,6 +34,9 @@ export function getIconBarHtml(): string {
     <button id="ib-crashlytics" class="ib-icon" tabindex="0" title="${t('viewer.iconBar.crashlytics.title')}" aria-label="${t('viewer.iconBar.crashlytics.label')}">
         <span class="codicon codicon-flame"></span><span id="ib-crashlytics-badge" class="ib-badge"></span><span class="ib-label">${t('viewer.iconBar.crashlytics.text')}<span id="ib-crashlytics-count" class="ib-count"></span></span>
     </button>
+    <button id="ib-project-state" class="ib-icon" tabindex="0" title="${t('viewer.iconBar.projectState.title')}" aria-label="${t('viewer.iconBar.projectState.label')}">
+        <span class="codicon codicon-git-commit"></span><span class="ib-label">${t('viewer.iconBar.projectState.text')}</span>
+    </button>
     <button id="ib-collections" class="ib-icon" tabindex="0" title="${t('viewer.iconBar.collections.title')}" aria-label="${t('viewer.iconBar.collections.label')}">
         <span class="codicon codicon-folder-library"></span><span id="ib-collections-badge" class="ib-badge"></span><span class="ib-label">${t('viewer.iconBar.collections.text')}<span id="ib-collections-count" class="ib-count"></span></span>
     </button>

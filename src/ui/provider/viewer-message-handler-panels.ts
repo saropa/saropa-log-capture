@@ -16,6 +16,7 @@ import { handleErrorHoverRequest } from '../shared/handlers/error-hover-handler'
 import { showAnalysis } from '../analysis/analysis-panel';
 import { handleCodeQualityForFrameRequest } from '../shared/handlers/code-quality-handlers';
 import { handleGitHistoryForLine } from '../shared/handlers/git-history-handler';
+import { handleProjectStateRequest } from '../shared/handlers/project-state-handler';
 import { fetchDriftViewerHealth } from '../../modules/integrations/drift-viewer-health';
 import { logExtensionError } from '../../modules/misc/extension-logger';
 
@@ -79,6 +80,9 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
         vscode.commands.executeCommand('saropaLogCapture.addSignalItemToCollection', msg.payload);
         return true;
       case "exportSignalsSummary": vscode.commands.executeCommand('saropaLogCapture.exportSignalsSummary'); return true;
+      case "requestProjectStateData":
+        handleProjectStateRequest(ctx.post).catch(() => {});
+        return true;
       case "requestAboutContent":
         void loadAndPostAboutContent(ctx.context.extensionUri, ctx.extensionVersion, ctx.context.extension.id, ctx.post);
         return true;

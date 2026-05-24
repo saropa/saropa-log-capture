@@ -21,6 +21,7 @@ import { getCrashlyticsPanelHtml } from '../panels/viewer-crashlytics-panel';
 import { getSignalPanelHtml } from '../panels/viewer-signal-panel';
 import { getCollectionsPanelHtml } from '../viewer-panels/viewer-collections-panel';
 import { getAboutPanelHtml } from '../viewer-panels/viewer-about-panel';
+import { getProjectStatePanelHtml } from '../viewer-panels/viewer-project-state-panel';
 
 import { getScrollbarMinimapHtml } from '../viewer/viewer-scrollbar-minimap';
 import { getGotoLineHtml } from '../viewer/viewer-goto-line';
@@ -56,6 +57,7 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     ${getTrashPanelHtml()}
     ${getOptionsPanelHtml()}
     ${getCrashlyticsPanelHtml()}
+    ${getProjectStatePanelHtml()}
     ${getCollectionsPanelHtml()}
     ${getSignalPanelHtml()}
     ${getAboutPanelHtml()}
