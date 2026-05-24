@@ -76,6 +76,17 @@ export function getCrashlyticsInteractionsScript(): string {
             // "Seen in your logs" match opens that captured session at the matching line (5c-4).
             var logLink = e.target.closest('.cd-log-link');
             if (logLink && logLink.getAttribute('data-uri')) { vscodeApi.postMessage({ type: 'crashlyticsOpenLogLine', uri: logLink.getAttribute('data-uri'), line: Number(logLink.getAttribute('data-line')), col: Number(logLink.getAttribute('data-col')) }); return; }
+            // Per-frame copy (#1b): copy just this frame's text. Checked before the frame-open branch
+            // (the button sits inside the clickable frame row), so copying never also opens the file.
+            var frameCopy = e.target.closest('.cd-frame-copy');
+            if (frameCopy) { e.stopPropagation(); vscodeApi.postMessage({ type: 'copyToClipboard', text: frameCopy.getAttribute('data-copy') }); return; }
+            // App-only toggle (#1d): hide framework frames/groups via a body class (pure client-side).
+            var appOnly = e.target.closest('.cd-apponly');
+            if (appOnly) {
+                var bodyEl = cpDetailEl.querySelector('.cd-body');
+                if (bodyEl) { var on = bodyEl.classList.toggle('cd-appcode-only'); appOnly.setAttribute('aria-pressed', on ? 'true' : 'false'); appOnly.classList.toggle('cd-apponly-on', on); }
+                return;
+            }
             // Jump to code: an app frame opens the file at its line (UX #1).
             var frame = e.target.closest('.frame-app[data-frame-file]');
             if (frame) { vscodeApi.postMessage({ type: 'crashlyticsOpenFrame', file: frame.getAttribute('data-frame-file'), line: frame.getAttribute('data-frame-line') }); }

@@ -350,14 +350,15 @@ it. Six user directives (2026-05-24), grouped by size/risk.
 Borrow the log viewer's ergonomics for the stack/detail (each is a separate, independently shippable
 slice; none needs the dead API):
 
-- **Line numbers** on stack frames (frame index `#0…#n`, gutter styled like the viewer's line numbers).
-- **Clipboard copy** per frame / per section (the viewer's copy-line / copy-decorated patterns) beyond
-  the existing whole-issue Copy-as-Markdown.
-- **Context menus** on frames (Copy frame, Copy file path, Open file, Blame, Create issue from here) —
-  reuse the viewer's context-popover pattern (`viewer-context-popover-*`).
-- **Groupings** — already started (smart framework-frame fold); extend to group "other threads" and
-  collapse repeated frames the way the viewer collapses repeats.
-- **Filtering** inside the stack (app-only toggle, hide framework) mirroring the viewer's level filters.
+- **Line numbers** on stack frames — **DONE** (`#0…#n` gutter via `renderFrame` index, smart variant only).
+- **Clipboard copy** per frame — **DONE** (hover `⧉` copy button per frame; whole-issue Copy-as-Markdown
+  already existed).
+- **Filtering** inside the stack — **DONE** ("App frames only" toggle hides framework frames + folded
+  groups via a body class; `.cd-appcode-only`).
+- **Context menus** on frames (Copy frame, Copy file path, Open file, Create issue from here) — **DOING
+  NEXT** (lightweight right-click popover in the detail).
+- **Groupings** — partly done (smart framework-frame fold). Extending to "other threads" + repeated-frame
+  collapse remains open.
 
 ### 5c — Clever project integration (#2) — user picked ALL FOUR (2026-05-24 steer)
 
