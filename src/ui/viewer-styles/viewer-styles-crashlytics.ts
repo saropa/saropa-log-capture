@@ -263,6 +263,10 @@ export function getCrashlyticsPanelStyles(): string {
 .cd-proj-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cd-proj-link { color: var(--vscode-textLink-foreground); text-decoration: none; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
 .cd-proj-link:hover { text-decoration: underline; }
+/* "Seen in your logs" match row (5c-4): session:line in link color, the log text muted alongside. */
+.cd-log-link { display: flex; gap: 8px; align-items: baseline; text-decoration: none; cursor: pointer; padding: 1px 0; }
+.cd-log-link:hover { background: var(--vscode-list-hoverBackground); }
+.cd-log-link .cd-proj-text { color: var(--vscode-descriptionForeground); }
 .crash-dist-label { font-weight: 600; font-size: 11px; margin: 8px 0 4px; opacity: 0.85; }
 .crash-dist-row { display: flex; align-items: center; gap: 8px; font-size: 11px; margin: 3px 0; }
 .crash-dist-name { width: 140px; flex: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
