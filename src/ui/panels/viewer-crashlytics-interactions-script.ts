@@ -17,6 +17,17 @@ export function getCrashlyticsInteractionsScript(): string {
        detail request so the host renders the "View on Firebase" link with localized t() copy. The URL
        is project-level: Play Reporting issue IDs don't map to Firebase per-issue pages. */
     var cpConsoleUrl = '';
+    /* The issue whose detail is currently shown, so a late-arriving project-insights panel for a
+       different (since-switched) issue is dropped instead of appended to the wrong detail. */
+    var cpDetailIssueId = '';
+
+    /* Append the host-rendered "In your project" panel to the detail body once (#2 / 5c). */
+    function applyProjectInsights(id, html) {
+        if (!cpDetailEl || !html || id !== cpDetailIssueId) return;
+        var body = cpDetailEl.querySelector('.cd-body');
+        if (!body || body.querySelector('.cd-proj')) return;
+        body.insertAdjacentHTML('beforeend', html);
+    }
 
     function openIssueDetail(id) {
         if (!cpDetailEl) return;
@@ -30,6 +41,7 @@ export function getCrashlyticsInteractionsScript(): string {
             }
         }
         var meta = row ? { title: row.dataset.title, subtitle: row.dataset.sub, events: row.dataset.events, users: row.dataset.users, fatal: row.dataset.fatal === '1', fv: row.dataset.fv, lv: row.dataset.lv, kind: row.dataset.kind, state: row.dataset.state } : {};
+        cpDetailIssueId = id;
         cpDetailEl.innerHTML = '<div class="cd-loading">' + vt('viewer.crashlytics.detail.loading') + '</div>';
         cpDetailEl.classList.remove('u-hidden');
         if (cpLogWrap) cpLogWrap.classList.add('u-hidden');

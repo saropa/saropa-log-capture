@@ -286,6 +286,7 @@ export function getCrashlyticsPanelScript(): string {
             cpDetailTitle = e.data.title || 'Issue';
         }
         else if (e.data.type === 'crashlyticsFrameContext') { applyFrameContexts(e.data.contexts || []); }
+        else if (e.data.type === 'crashlyticsProjectInsights') { applyProjectInsights(e.data.issueId, e.data.html || ''); }
         else if (e.data.type === 'crashlyticsFilterIndex') { applyCpFilterIndex(e.data.index); }
         else if (e.data.type === 'crashlyticsConnectionReport') {
             if (typeof renderConnectionReport === 'function') renderConnectionReport(e.data.report);

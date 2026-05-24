@@ -359,22 +359,28 @@ slice; none needs the dead API):
   collapse repeated frames the way the viewer collapses repeats.
 - **Filtering** inside the stack (app-only toggle, hide framework) mirroring the viewer's level filters.
 
-### 5c — Clever project integration (#2) — OPEN (needs a steer on which ideas first)
+### 5c — Clever project integration (#2) — user picked ALL FOUR (2026-05-24 steer)
 
-The editor has what AS / Play Console do not: the working tree, git history, and the live/saved logs.
-Candidate links from a crash to the project (pick the high-value set before building):
+The editor has what AS / Play Console do not: the working tree, git history, the changelog, and the
+live/saved logs. User approved all four candidates, **with an added headline**: surface git history AND
+the **CHANGELOG for the affected release and SINCE then** — *"this could have already been fixed."*
+That "may already be fixed" signal is the standout. Build order (boundedness × value):
 
-- **Local-log correlation** (the extension's core competency): match a crash's signature/stack against
-  errors in the current + saved sessions ("this crash matches an error you captured 3 runs ago"),
-  deep-link to that log line.
-- **Recent-change suspicion:** for the crashing file/line, show recent commits touching it and whether
-  it changed within the "versions affected" window (blame already shows the last author; this adds the
-  commit list / "changed since vX").
-- **Nearby annotations:** surface `TODO`/`FIXME`/`BUG` near the crash site (the analyzer already finds
-  these for the frame mini-analysis).
-- **Open diff / history** for the crashing file directly from the frame.
-- **Related issues / PRs** via the existing `github-context.ts` (`findFilePrs`, `findIssues`) keyed off
-  the crashing file + error tokens.
+- **5c-1 "May already be fixed" + recent changes (HEADLINE) — DOING NOW.** For the crashing file +
+  the issue's affected version range (`firstVersion`→`lastVersion`): (a) `git log` of recent commits
+  touching the file; (b) parse the workspace `CHANGELOG*.md` (root; reverse-chron `## [x.y.z]`/`## x.y.z`
+  headings) and list versions **at/after** the affected version; (c) if either shows changes after the
+  affected version, render a **"⚠ Changed since the affected version — may already be fixed"** banner.
+  Honest fallbacks: if the affected version isn't found in the changelog, say so; git/IO best-effort.
+  Pure parsing (`parseChangelogVersions`, `changelogSince`) is unit-tested.
+- **5c-2 Nearby annotations — DOING NOW (cheap).** Surface `TODO`/`FIXME`/`BUG` near the crash line
+  (the workspace analyzer already finds these for the frame mini-analysis).
+- **5c-3 Related issues / PRs — NEXT.** Reuse `github-context.ts` (`findFilePrs`, `findIssues`) keyed
+  off the crashing file + error tokens. Best-effort (needs `gh`); degrades to nothing if absent.
+- **5c-4 Local-log correlation — NEXT, BIGGEST.** Match a crash's signature/stack against errors in the
+  current + saved sessions ("matches an error you captured 3 runs ago"), deep-link to that log line.
+  The extension's core competency; touches session storage, so its own slice.
+- **Open diff / file history** from a frame folds into 5b's context-menu actions.
 
 ### 5d — Full dashboard layout (#5, full) — OPEN (subjective; needs a steer)
 

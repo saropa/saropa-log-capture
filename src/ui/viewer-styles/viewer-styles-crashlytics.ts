@@ -249,6 +249,18 @@ export function getCrashlyticsPanelStyles(): string {
 .cd-body .cd-fw-summary:hover { opacity: 0.95; }
 .cd-body .cd-fw-group[open] > .cd-fw-summary { opacity: 0.85; margin-bottom: 2px; }
 .cd-body .crash-key-name { color: var(--vscode-symbolIcon-propertyForeground, var(--vscode-foreground)); }
+
+/* "In your project" panel (#2 / 5c): recent commits + changelog-since + annotations. */
+.cd-proj { font-size: 11px; }
+/* "May already be fixed" banner — the headline signal that newer releases exist after the affected
+   version. Warning-tinted so it reads as actionable, not error. */
+.cd-maybe-fixed { background: var(--vscode-inputValidation-warningBackground); color: var(--vscode-editorWarning-foreground, #cca700); border: 1px solid var(--vscode-inputValidation-warningBorder, var(--vscode-editorWarning-foreground)); border-radius: 5px; padding: 5px 9px; margin: 4px 0 8px; font-weight: 600; }
+.cd-proj-label { font-weight: 600; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.6; margin: 8px 0 3px; }
+.cd-proj-row { display: flex; gap: 8px; align-items: baseline; padding: 1px 0; }
+.cd-proj-ver, .cd-proj-sha { flex: none; font-family: var(--vscode-editor-font-family, monospace); color: var(--vscode-textLink-foreground); }
+.cd-proj-date { flex: none; opacity: 0.55; min-width: 56px; }
+.cd-proj-tag { flex: none; font-weight: 700; color: var(--vscode-editorWarning-foreground, #cca700); min-width: 44px; }
+.cd-proj-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .crash-dist-label { font-weight: 600; font-size: 11px; margin: 8px 0 4px; opacity: 0.85; }
 .crash-dist-row { display: flex; align-items: center; gap: 8px; font-size: 11px; margin: 3px 0; }
 .crash-dist-name { width: 140px; flex: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
