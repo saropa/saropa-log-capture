@@ -249,6 +249,11 @@ function handleLineAction(action, lineIdx) {
             vscodeApi.postMessage({ type: 'showCodeQualityForFrame', lineIndex: lineIdx, lineText: plainText });
             return true;
         }
+        case 'show-git-history': {
+            if (typeof showPopoverToast === 'function') showPopoverToast('Loading git history\u2026');
+            vscodeApi.postMessage({ type: 'showGitHistoryForLine', lineIndex: lineIdx, lineText: plainText });
+            return true;
+        }
         case 'hide-line':
             if (typeof hideLine === 'function') hideLine(lineIdx);
             return true;

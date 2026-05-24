@@ -24,6 +24,7 @@ import { getContextPopoverDbSignalScript } from './viewer-context-popover-db-sig
 import { getContextPopoverDatabaseQueriesScript, getContextPopoverSecurityScript, getRelatedQueriesPopoverScript } from './viewer-context-popover-integration-sections';
 import { getContextPopoverSharedScript } from './viewer-context-popover-shared-script';
 import { getQualityPopoverScript } from './viewer-quality-popover-script';
+import { getGitHistoryPopoverScript } from './viewer-git-history-popover-script';
 
 /**
  * Returns the JavaScript code for the context popover in the webview.
@@ -338,6 +339,7 @@ function buildPopoverContent(lineIdx, data) {
         `
 ` +
         getQualityPopoverScript() +
+        getGitHistoryPopoverScript() +
         `
 // Register message handler
 window.addEventListener('message', function(event) {
@@ -347,6 +349,9 @@ window.addEventListener('message', function(event) {
     }
     if (msg.type === 'codeQualityPopoverData') {
         handleCodeQualityPopoverData(msg);
+    }
+    if (msg.type === 'gitHistoryPopoverData') {
+        handleGitHistoryPopoverData(msg);
     }
 });
 `
