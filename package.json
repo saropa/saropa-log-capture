@@ -835,6 +835,18 @@
           "type": "array",
           "title": "%config.docsScanDirs.title%"
         },
+        "saropaLogCapture.changelogPaths": {
+          "default": [
+            "CHANGELOG*",
+            "docs/CHANGELOG*"
+          ],
+          "description": "%config.changelogPaths.description%",
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "%config.changelogPaths.title%"
+        },
         "saropaLogCapture.projectIndex.enabled": {
           "default": true,
           "description": "Enable project-wide indexing of documentation and knowledge files for faster analysis searches.",

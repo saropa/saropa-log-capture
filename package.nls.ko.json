@@ -135,6 +135,8 @@
   "config.diagnosticCapture.title": "Log capture pipeline events (session start, output buffered/written) …",
   "config.docsScanDirs.description": "분석 중 프로젝트 문서 참조를 검색할 디렉터리(작업 영역 루트에 대한 상대 경로).",
   "config.docsScanDirs.title": "Directories to scan for project documentation references during analy…",
+  "config.changelogPaths.description": "프로젝트 CHANGELOG를 찾기 위한 작업 영역 기준 glob 패턴(가장 표준적인 항목 우선). 로그 뷰어의 '이미 수정되었을 수 있음' 신호와 변경 로그 조회에 사용됩니다.",
+  "config.changelogPaths.title": "Glob patterns for locating the project CHANGELOG.",
   "config.enabled.description": "디버그 세션 중 자동 로그 캡처를 활성화하거나 비활성화합니다.",
   "config.enabled.title": "Enable or disable automatic log capture during debug sessions.",
   "config.errorRateBucketSize.description": "Time-bucket size for the error-rate chart. auto adapts to session length; fixed values override.",

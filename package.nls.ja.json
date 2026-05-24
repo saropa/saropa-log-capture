@@ -135,6 +135,8 @@
   "config.diagnosticCapture.title": "Log capture pipeline events (session start, output buffered/written) …",
   "config.docsScanDirs.description": "分析中にプロジェクトドキュメント参照をスキャンするディレクトリ（ワークスペースルートからの相対パス）。",
   "config.docsScanDirs.title": "Directories to scan for project documentation references during analy…",
+  "config.changelogPaths.description": "プロジェクトの CHANGELOG を見つけるためのワークスペース相対の glob パターン（最も標準的なものを優先）。ログビューアーの「すでに修正済みの可能性」シグナルと変更履歴の検索に使用されます。",
+  "config.changelogPaths.title": "Glob patterns for locating the project CHANGELOG.",
   "config.enabled.description": "デバッグセッション中の自動ログキャプチャを有効または無効にします。",
   "config.enabled.title": "Enable or disable automatic log capture during debug sessions.",
   "config.errorRateBucketSize.description": "Time-bucket size for the error-rate chart. auto adapts to session length; fixed values override.",
