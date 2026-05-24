@@ -1,8 +1,16 @@
 # Plan 054 — App Quality Insights: setup wizard + Crashlytics & Android vitals dashboard (parity + WOW)
 
-## Status: Draft (awaiting scope sign-off)
+## Status: In progress — architecture pivoted (see note)
 
 <!-- Status: Draft → Approved → In progress (Stage N) → Done. Do not start coding until a stage is approved. -->
+
+> **Architecture pivot (2026-05-24).** Pillar 2 below describes a separate **editor-tab 3-pane
+> dashboard**. That was built, then **deliberately removed** when the user asked "what is the point of
+> the dashboard?" The experience is now **consolidated into the log viewer**: the Crashlytics **sidebar**
+> is the issue list, and clicking a row opens the issue **detail as a full overlay inside the log
+> viewer's main area** (the way a session opens), not a separate tab. Read Pillar 2 as historical
+> design; the *live* target is **Stage 5** below (in-viewer dashboard + log-viewer parity). Treat any
+> "editor tab" / "3-pane" wording in Pillars 2–3 as superseded by the in-viewer overlay.
 
 Goal: bring the extension's Firebase Crashlytics / Android vitals experience up to Android Studio's
 **App Quality Insights** quality, then beyond it using advantages a code editor has that the AS panel
@@ -313,4 +321,69 @@ After the consolidation into the viewer, the user listed 10 improvements. Status
    `<details>` (`.cd-fw-group`) the reader expands on demand.
 5. Typography / spacing hierarchy — **DONE** for the sidebar list; detail spacing can be tuned further.
 
-Proceed with Stage 1 + Stage 0 next? (Or name a different stage to start with.)
+---
+
+## Stage 5 — in-viewer dashboard + log-viewer parity (added 2026-05-24)
+
+This stage replaces the obsolete editor-tab Pillar 2 with the *consolidated* target: turn the in-viewer
+issue **detail overlay** into a dashboard-grade surface, and pull the proven log-viewer ergonomics into
+it. Six user directives (2026-05-24), grouped by size/risk.
+
+### 5a — Dashboard-grade detail (bounded, low risk) — IN PROGRESS
+
+- **Stats strip (#4).** Render the issue's name, severity, event count, user count, state, and version
+  range as a row of dashboard **stat cards** at the top of the detail body. The data already lives on
+  the clicked row's `data-*` (and in the copy-Markdown), it was just never *rendered* in the detail —
+  only the title showed. `renderStatsStrip(meta)` in `crashlytics-detail-handler.ts`.
+- **Online console link (#3).** Surface the **project** Firebase Crashlytics console URL
+  (`…/crashlytics/app/{appId}/issues`, already computed in `firebase-crashlytics.ts` and sent to the
+  webview as `ctx.consoleUrl`) as a "View on Firebase ↗" link in the detail header. **Honest limit:**
+  Play Reporting issue IDs do **not** map to Firebase per-issue console URLs, so we link the project
+  issues list, not a fabricated per-issue deep link. Single source of truth: the webview injects the
+  stored `consoleUrl`; we do not re-build the URL host-side in the detail handler.
+- **Distinct-panel look (#5, first slice).** Style the stat strip as cards and keep the existing
+  `<details class="group">` sections (stack / distribution / keys / logs) as labeled panels, so the
+  detail reads as a dashboard rather than one scroll. Full multi-column layout is 5c.
+
+### 5b — Log-viewer parity in the detail (#1) — OPEN
+
+Borrow the log viewer's ergonomics for the stack/detail (each is a separate, independently shippable
+slice; none needs the dead API):
+
+- **Line numbers** on stack frames (frame index `#0…#n`, gutter styled like the viewer's line numbers).
+- **Clipboard copy** per frame / per section (the viewer's copy-line / copy-decorated patterns) beyond
+  the existing whole-issue Copy-as-Markdown.
+- **Context menus** on frames (Copy frame, Copy file path, Open file, Blame, Create issue from here) —
+  reuse the viewer's context-popover pattern (`viewer-context-popover-*`).
+- **Groupings** — already started (smart framework-frame fold); extend to group "other threads" and
+  collapse repeated frames the way the viewer collapses repeats.
+- **Filtering** inside the stack (app-only toggle, hide framework) mirroring the viewer's level filters.
+
+### 5c — Clever project integration (#2) — OPEN (needs a steer on which ideas first)
+
+The editor has what AS / Play Console do not: the working tree, git history, and the live/saved logs.
+Candidate links from a crash to the project (pick the high-value set before building):
+
+- **Local-log correlation** (the extension's core competency): match a crash's signature/stack against
+  errors in the current + saved sessions ("this crash matches an error you captured 3 runs ago"),
+  deep-link to that log line.
+- **Recent-change suspicion:** for the crashing file/line, show recent commits touching it and whether
+  it changed within the "versions affected" window (blame already shows the last author; this adds the
+  commit list / "changed since vX").
+- **Nearby annotations:** surface `TODO`/`FIXME`/`BUG` near the crash site (the analyzer already finds
+  these for the frame mini-analysis).
+- **Open diff / history** for the crashing file directly from the frame.
+- **Related issues / PRs** via the existing `github-context.ts` (`findFilePrs`, `findIssues`) keyed off
+  the crashing file + error tokens.
+
+### 5d — Full dashboard layout (#5, full) — OPEN (subjective; needs a steer)
+
+Beyond stat cards: a true multi-pane in-viewer layout (summary + stack + distribution + integration as
+side-by-side panels rather than one vertical scroll). Larger structural change to the overlay; design
+direction should be agreed before building (keeps the overlay, but the body becomes a grid).
+
+### Sequencing recommendation
+
+5a now (bounded, lands immediately) → then a steer on 5c (which integration ideas) and 5d (layout
+direction) → then 5b slices (log-viewer parity) one at a time. 5a is in this pass; 5b–5d await the
+steer to avoid building the wrong interpretation of "clever" / "dashboard."

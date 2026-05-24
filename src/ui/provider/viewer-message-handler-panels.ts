@@ -49,7 +49,7 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
       case "requestCrashlyticsData": panelHandlers.handleCrashlyticsRequest(ctx.post).catch(() => {}); return true;
       case "crashlyticsCheckAgain": panelHandlers.handleCrashlyticsRequest(ctx.post, true).catch(() => {}); return true;
       case "crashlyticsValidate": panelHandlers.handleCrashlyticsValidate(ctx.post).catch(() => {}); return true;
-      case "fetchCrashlyticsDetail": panelHandlers.handleCrashlyticsDetail(String(msg.issueId ?? ''), (msg.meta as Record<string, unknown>) ?? {}, ctx.post).catch(() => {}); return true;
+      case "fetchCrashlyticsDetail": panelHandlers.handleCrashlyticsDetail(String(msg.issueId ?? ''), (msg.meta as Record<string, unknown>) ?? {}, ctx.post, String(msg.consoleUrl ?? '')).catch(() => {}); return true;
       case "fetchCrashlyticsFilterIndex": panelHandlers.handleCrashlyticsFilterIndex(ctx.post).catch(() => {}); return true;
       case "crashlyticsOpenFrame": panelHandlers.openCrashFrame(String(msg.file ?? ''), Number(msg.line ?? 0)).catch(() => {}); return true;
       case "crashlyticsCreateIssue": panelHandlers.handleCrashlyticsCreateIssue(String(msg.title ?? 'Issue'), String(msg.body ?? '')).catch(() => {}); return true;

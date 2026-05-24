@@ -108,6 +108,8 @@ export function getCrashlyticsPanelScript(): string {
 
     function renderData(ctx) {
         hideAll();
+        // Store the project console URL so the in-viewer detail can link to it (#3).
+        cpConsoleUrl = ctx.consoleUrl || '';
         if (!ctx.available) { renderSetup(ctx); return; }
         if (cpHeaderEl) {
             var note = ctx.refreshNote || '';
@@ -171,7 +173,7 @@ export function getCrashlyticsPanelScript(): string {
             + ' data-title="' + esc(issue.title) + '" data-sub="' + esc(issue.subtitle) + '"'
             + ' data-events="' + esc(String(issue.eventCount)) + '" data-users="' + esc(String(issue.userCount)) + '"'
             + ' data-fatal="' + (issue.isFatal ? '1' : '0') + '" data-fv="' + esc(issue.firstVersion || '') + '" data-lv="' + esc(issue.lastVersion || '') + '"'
-            + ' data-kind="' + esc(issue.kind || 'unknown') + '" data-versions="' + esc(versions.join(',')) + '" data-search="' + esc(searchText) + '">'
+            + ' data-kind="' + esc(issue.kind || 'unknown') + '" data-state="' + esc(issue.state || 'UNKNOWN') + '" data-versions="' + esc(versions.join(',')) + '" data-search="' + esc(searchText) + '">'
             + '<div class="cp-title">' + badge + state + ' ' + esc(issue.title) + ' <span class="cp-expand-icon">\\u2197</span></div>'
             + '<div class="cp-meta">' + esc(issue.subtitle) + ' \\u00b7 ' + vt('viewer.crashlytics.events', issue.eventCount) + users + ver + '</div></div>';
     }
