@@ -19,6 +19,10 @@
 /** Get the line-scoped context menu action handler script. */
 export function getContextMenuLineActionsScript(): string {
     return /* javascript */ String.raw`
+/* Version-like token (semver x.y.z or date-version 2026.0301.01). Shared by the changelog-since menu
+   gate (viewer-context-menu.ts) and its extraction below. No 'g' flag, so .test()/.match() are stateless. */
+var versionTokenRe = /\bv?\d+\.\d+(?:\.\d+)+/;
+
 /**
  * Return the current shift+click selection range relative to lineIdx.
  * @returns {{ lo: number, hi: number, multiLine: boolean }}
@@ -252,6 +256,13 @@ function handleLineAction(action, lineIdx) {
         case 'show-git-history': {
             if (typeof showPopoverToast === 'function') showPopoverToast('Loading git history\u2026');
             vscodeApi.postMessage({ type: 'showGitHistoryForLine', lineIndex: lineIdx, lineText: plainText });
+            return true;
+        }
+        case 'show-changelog-since': {
+            var verMatch = plainText.match(versionTokenRe);
+            if (!verMatch) return true;
+            if (typeof showPopoverToast === 'function') showPopoverToast('Looking up changelog\u2026');
+            vscodeApi.postMessage({ type: 'showChangelogSince', lineIndex: lineIdx, version: verMatch[0] });
             return true;
         }
         case 'hide-line':
