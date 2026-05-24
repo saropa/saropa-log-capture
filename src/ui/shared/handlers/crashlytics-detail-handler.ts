@@ -9,7 +9,9 @@ import { escapeHtml } from '../../../modules/capture/ansi';
 import * as vscode from 'vscode';
 import { getCrashEvents } from '../../../modules/crashlytics/firebase-crashlytics';
 import { getRepoSlug } from '../../../modules/git/github-context';
-import { getFrameContexts, resolveFile } from '../../../modules/crashlytics/crash-frame-context';
+import { getFrameContexts, resolveFile, topAppFrameRef } from '../../../modules/crashlytics/crash-frame-context';
+import { getProjectInsights } from '../../../modules/crashlytics/crash-project-links';
+import { renderProjectInsights } from '../../analysis/analysis-project-insights';
 import { renderCrashDetail, renderDeviceDistribution } from '../../analysis/analysis-crash-detail';
 import type { CrashlyticsEventDetail } from '../../../modules/crashlytics/crashlytics-types';
 import type { PostFn } from './crashlytics-handlers';
@@ -110,6 +112,18 @@ export async function openCrashFrame(file: string, line: number): Promise<void> 
 }
 
 /**
+ * Compute and stream the "In your project" panel (recent commits + changelog-since + annotations) for
+ * the crash site. Streamed after the stack so the detail renders fast and this fills in. Never throws.
+ */
+async function streamProjectInsights(issueId: string, event: CrashlyticsEventDetail, meta: IssueMeta, post: PostFn): Promise<void> {
+    const top = topAppFrameRef(event);
+    const insights = await getProjectInsights({ file: top?.file, crashLine: top?.line, affectedVersion: meta.lv || meta.fv });
+    if (!insights) { return; }
+    const html = renderProjectInsights(insights);
+    if (html) { post({ type: 'crashlyticsProjectInsights', issueId, html }); }
+}
+
+/**
  * Fetch the issue's sampled event, render its detail into the in-viewer panel, and stream code context
  * (source line + git blame) for app frames afterwards. Never throws.
  */
@@ -125,6 +139,7 @@ export async function handleCrashlyticsDetail(issueId: string, rawMeta: Record<s
         if (event) {
             const contexts = await getFrameContexts(event);
             if (contexts.length > 0) { post({ type: 'crashlyticsFrameContext', issueId, contexts }); }
+            await streamProjectInsights(issueId, event, meta, post);
         }
     } catch {
         post({ type: 'crashlyticsDetailReady', issueId, title: meta.title ?? 'Issue', html: `${header(meta, consoleUrl)}<div class="cd-body"><div class="no-matches">Could not load this issue.</div></div>`, markdown: '' });
