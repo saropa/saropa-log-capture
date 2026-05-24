@@ -56,7 +56,7 @@ suite('ViewerIconBar', () => {
             const ids = [
                 'ib-sessions', 'ib-find', 'ib-bookmarks',
                 'ib-sql-query-history', 'ib-trash', 'ib-options',
-                'ib-crashlytics', 'ib-signal', 'ib-about',
+                'ib-crashlytics', 'ib-project-state', 'ib-signal', 'ib-about',
             ];
             for (const id of ids) {
                 const match = html.match(new RegExp(`id="${id}"[^>]*title="([^"]*)"`));
