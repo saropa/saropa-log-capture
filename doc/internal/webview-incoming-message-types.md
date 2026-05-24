@@ -45,7 +45,6 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `explainWithAi` | viewer-message-handler-actions.ts |
 | `exportLogs` | viewer-message-handler-session-ui.ts |
 | `exportSignalsSummary` | viewer-message-handler-panels.ts |
-| `fetchCrashDetail` | viewer-message-handler-panels.ts |
 | `findNavigateMatch` | viewer-message-handler-session-ui.ts |
 | `findStaticSourcesForSqlFingerprint` | viewer-message-handler-actions.ts |
 | `generateReport` | viewer-message-handler-actions.ts |
@@ -128,4 +127,4 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `viewerKeybindingRecordCancelled` | viewer-message-handler-actions.ts |
 | `viewerKeybindingRecorded` | viewer-message-handler-actions.ts |
 
-**Total:** 120 distinct types.
+**Total:** 119 distinct types.

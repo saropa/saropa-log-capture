@@ -140,10 +140,10 @@ export function getCrashlyticsPanelScript(): string {
         // Close/mute removed: the Play Reporting data source is read-only, so those actions were
         // no-ops (bug_008 / plan 054). The dashboard's "Open Firebase Console" link is the way to
         // act on an issue.
-        return '<div class="cp-item" data-issue-id="' + esc(issue.id) + '">'
-            + '<div class="cp-title">' + badge + state + ' ' + esc(issue.title) + ' <span class="cp-expand-icon">\\u25B6</span></div>'
-            + '<div class="cp-meta">' + esc(issue.subtitle) + ' \\u00b7 ' + vt('viewer.crashlytics.events', issue.eventCount) + users + ver + '</div>'
-            + '<div class="cp-detail" id="cp-detail-' + esc(issue.id) + '"></div></div>';
+        // The whole row opens the dashboard; the ↗ hints it launches a full view, not an inline expand.
+        return '<div class="cp-item" data-issue-id="' + esc(issue.id) + '" title="' + vt('viewer.crashlytics.openInDashboard') + '">'
+            + '<div class="cp-title">' + badge + state + ' ' + esc(issue.title) + ' <span class="cp-expand-icon">\\u2197</span></div>'
+            + '<div class="cp-meta">' + esc(issue.subtitle) + ' \\u00b7 ' + vt('viewer.crashlytics.events', issue.eventCount) + users + ver + '</div></div>';
     }
 
     function formatVersionRange(issue) {
@@ -213,27 +213,13 @@ export function getCrashlyticsPanelScript(): string {
                 vscodeApi.postMessage({ type: 'openUrl', url: console.dataset.url });
                 return;
             }
+            // Clicking an issue opens the full detail in the App Quality Insights tab (like a log
+            // line opening the log viewer) — no cramped inline expander in the narrow sidebar.
             var item = e.target.closest('.cp-item');
-            if (item) { toggleDetail(item); }
-        });
-    }
-
-    function toggleDetail(item) {
-        var id = item.dataset.issueId;
-        var det = document.getElementById('cp-detail-' + id);
-        if (!det) return;
-        if (det.classList.contains('expanded')) {
-            det.classList.remove('expanded');
-            item.classList.remove('detail-open');
-        } else {
-            if (!det.dataset.loaded) {
-                det.innerHTML = '<div class="cp-detail-loading">' + vt('viewer.crashlytics.loadingDetail') + '</div>';
-                det.dataset.loaded = '1';
-                vscodeApi.postMessage({ type: 'fetchCrashDetail', issueId: id });
+            if (item && item.dataset.issueId) {
+                vscodeApi.postMessage({ type: 'openAppQualityInsights', issueId: item.dataset.issueId });
             }
-            det.classList.add('expanded');
-            item.classList.add('detail-open');
-        }
+        });
     }
 
     var refreshBtn = document.getElementById('cp-refresh');
@@ -265,10 +251,6 @@ export function getCrashlyticsPanelScript(): string {
     window.addEventListener('message', function(e) {
         if (!e.data) return;
         if (e.data.type === 'crashlyticsData') { renderData(e.data.context); }
-        else if (e.data.type === 'crashDetailReady') {
-            var el = document.getElementById('cp-detail-' + e.data.issueId);
-            if (el) { el.innerHTML = e.data.html; el.classList.add('expanded'); }
-        }
         else if (e.data.type === 'crashlyticsConnectionReport') {
             if (typeof renderConnectionReport === 'function') renderConnectionReport(e.data.report);
         }

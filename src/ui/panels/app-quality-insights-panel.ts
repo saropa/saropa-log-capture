@@ -21,10 +21,10 @@ import type { CrashlyticsIssueEvents } from '../../modules/crashlytics/crashlyti
 let panel: vscode.WebviewPanel | undefined;
 let lastConsoleUrl: string | undefined;
 
-/** Open (or focus) the dashboard and load its data. */
-export async function showAppQualityInsights(): Promise<void> {
+/** Open (or focus) the dashboard and load its data. `initialIssueId` is auto-selected when given. */
+export async function showAppQualityInsights(initialIssueId?: string): Promise<void> {
     ensurePanel();
-    await render();
+    await render(initialIssueId);
 }
 
 /** Dispose the dashboard panel (called on extension deactivate). */
@@ -62,11 +62,34 @@ async function buildModel(): Promise<DashboardModel> {
     };
 }
 
-async function render(): Promise<void> {
+async function render(initialIssueId?: string): Promise<void> {
     if (!panel) { return; }
     panel.webview.html = loadingHtml();
-    const model = await buildModel();
-    if (panel) { panel.webview.html = buildDashboardHtml(model, getNonce()); }
+    try {
+        // Backstop so a wedged call never leaves an indefinite spinner (no silent hang). The data
+        // layer has internal timeouts; this guards anything outside them.
+        const model = await withTimeout(buildModel(), 35_000);
+        if (panel) { panel.webview.html = buildDashboardHtml(model, getNonce(), initialIssueId); }
+    } catch {
+        if (panel) { panel.webview.html = errorHtml(); }
+    }
+}
+
+/** Reject after `ms` so render() can fall back to an error + Retry instead of spinning forever. */
+function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
+    return Promise.race([work, new Promise<T>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))]);
+}
+
+/** Error page with a Retry button (posts 'refresh') for when loading fails or times out. */
+function errorHtml(): string {
+    const nonce = getNonce();
+    const csp = `default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';`;
+    return `<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="${csp}"><style nonce="${nonce}">body{font-family:var(--vscode-font-family);padding:16px;color:var(--vscode-foreground)}button{margin-top:12px;background:var(--vscode-button-background);color:var(--vscode-button-foreground);border:none;padding:6px 14px;border-radius:3px;cursor:pointer}.aqi-err{color:var(--vscode-errorForeground);font-weight:600}</style></head><body>
+<p class="aqi-err">Couldn't load App Quality Insights in time.</p>
+<p>Check the <b>Saropa Log Capture</b> output channel for the reason (gcloud, sign-in, or the Play Reporting API), then retry.</p>
+<button id="aqi-retry">Retry</button>
+<script nonce="${nonce}">var v=acquireVsCodeApi();document.getElementById('aqi-retry').addEventListener('click',function(){v.postMessage({type:'refresh'});});</script>
+</body></html>`;
 }
 
 function handleMessage(msg: Record<string, unknown>): void {
