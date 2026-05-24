@@ -59,6 +59,8 @@ async function buildModel(): Promise<DashboardModel> {
         refreshNote: ctx.queriedAt ? formatElapsedLabel(ctx.queriedAt) : '',
         consoleUrl: ctx.consoleUrl,
         setupHint: ctx.setupHint ?? ctx.diagnostics?.message,
+        // When available with a diagnostic, the list came from the offline cache (stale).
+        staleNote: ctx.available && ctx.diagnostics ? ctx.diagnostics.message : undefined,
     };
 }
 

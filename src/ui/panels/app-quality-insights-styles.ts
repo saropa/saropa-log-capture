@@ -22,6 +22,7 @@ body { margin: 0; font-family: var(--vscode-font-family); font-size: var(--vscod
 }
 .aqi-btn:hover { background: var(--vscode-button-secondaryHoverBackground); }
 .aqi-note { font-size: 11px; opacity: 0.6; }
+.aqi-stale { opacity: 1; color: var(--vscode-editorWarning-foreground, #cca700); }
 .aqi-link { color: var(--vscode-textLink-foreground); cursor: pointer; text-decoration: none; font-size: 12px; }
 .aqi-link:hover { text-decoration: underline; }
 
