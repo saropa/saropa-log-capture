@@ -24,8 +24,6 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `copyWithSource` | viewer-message-handler-actions.ts |
 | `crashlyticsBrowseGoogleServices` | viewer-message-handler-panels.ts |
 | `crashlyticsCheckAgain` | viewer-message-handler-panels.ts |
-| `crashlyticsCloseIssue` | viewer-message-handler-panels.ts |
-| `crashlyticsMuteIssue` | viewer-message-handler-panels.ts |
 | `crashlyticsOpenGoogleServicesJson` | viewer-message-handler-panels.ts |
 | `crashlyticsPanelClosed` | viewer-message-handler-panels.ts |
 | `crashlyticsPanelOpened` | viewer-message-handler-panels.ts |
@@ -57,6 +55,7 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `muteSignalWithReason` | viewer-message-handler-panels.ts |
 | `navigatePart` | viewer-message-handler-session-ui.ts |
 | `navigateSession` | viewer-message-handler-session-ui.ts |
+| `openAppQualityInsights` | viewer-message-handler-panels.ts |
 | `openBookmark` | viewer-message-handler-session-ui.ts |
 | `openCollectionById` | viewer-message-handler-collection.ts |
 | `openCurrentFileFolder` | viewer-message-handler-session-ui.ts |
@@ -129,4 +128,4 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `viewerKeybindingRecordCancelled` | viewer-message-handler-actions.ts |
 | `viewerKeybindingRecorded` | viewer-message-handler-actions.ts |
 
-**Total:** 121 distinct types.
+**Total:** 120 distinct types.
