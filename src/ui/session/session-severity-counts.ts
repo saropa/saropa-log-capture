@@ -5,7 +5,10 @@
  * to produce error/warning/performance counts for the session list.
  */
 
-const looseErrorRe = /\b(?:error|exception)(?!\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\b|\b(?:fail(?:ed|ure)?|fatal|panic|critical)\b/i;
+// "critical" is matched only in a severity context (critical:, [critical], critical
+// error/failure/...), not as a bare word, so "critical CSS"-style lines are not counted as
+// errors. Mirrors criticalSeverityPattern in level-classifier.ts.
+const looseErrorRe = /\b(?:error|exception)(?!\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\b|\b(?:fail(?:ed|ure)?|fatal|panic)\b|\[critical\]|\bcritical\s*:|\bcritical\s+(?:errors?|failures?|exceptions?|faults?)\b/i;
 const logcatErrorRe = /^[EFA]\//;
 const warnRe = /\b(?:warn(?:ing)?|caution)\b/i;
 const logcatWarnRe = /^W\//;

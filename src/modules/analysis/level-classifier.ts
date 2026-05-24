@@ -80,9 +80,21 @@ function matchesDatabaseAnnotation(plainText: string): boolean {
  * so it never reached the Errors filter and the E toggle could read zero on a log that
  * plainly contained errors. See plans/history/2026.05/2026.05.15/054_plan-viewer-stack-noise-filter-layout.md Item D.
  */
-const strictStructuralErrorPattern = /\w*(?:error|exception)\s*[:\]!(]|\[(?:error|exception|fatal|panic|critical)\]|_\w*(?:Error|Exception)\b|Null check operator/i;
+const strictStructuralErrorPattern = /\w*(?:error|exception)\s*[:\]!(]|\[(?:error|exception|fatal|panic)\]|_\w*(?:Error|Exception)\b|Null check operator/i;
 /** Loose structural error: bare `error`/`exception` with negative lookahead, Dart private types, Null check. */
 const looseStructuralErrorPattern = /\b(?:error|exception)(?!\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\b|_\w*(?:Error|Exception)\b|Null check operator/i;
+/**
+ * "critical" only signals error severity in a structural context: a colon/bracket label
+ * (`critical:`, `[critical]`) or paired with a severity noun (`critical error/failure/
+ * exception/fault`). Bare "critical" is a common adjective in non-severity noun phrases —
+ * "critical CSS", "critical path", "critical section" — and was promoting ordinary build
+ * output to error (whole rows reddened, E count inflated). So "critical" was removed from
+ * the default error keyword list and from the strict bracket group above, and gated behind
+ * this pattern in matchesError() instead. Applies in both strict and loose mode — `[critical]`
+ * was previously caught loosely via the kwError keyword, so this preserves that.
+ * Mirrored in viewer-level-classify.ts. Keep in sync.
+ */
+const criticalSeverityPattern = /\[critical\]|\bcritical\s*:|\bcritical\s+(?:errors?|failures?|exceptions?|faults?)\b/i;
 /**
  * Flutter framework exception banner: `════ Exception caught by <library> ════`.
  * Why: strict/loose patterns require `Exception:` / `[exception]` / `_Exception` shapes, so
@@ -201,6 +213,8 @@ function matchesError(plainText: string, strict: boolean): boolean {
     if (structural.test(plainText)) { return true; }
     // Flutter banner runs independently of strict/loose — it is unambiguous even in strict mode.
     if (flutterExceptionBannerPattern.test(plainText)) { return true; }
+    // "critical" is structural, not a bare keyword — see criticalSeverityPattern.
+    if (criticalSeverityPattern.test(plainText)) { return true; }
     return kwError !== null && kwError.test(plainText);
 }
 

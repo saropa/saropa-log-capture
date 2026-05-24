@@ -105,7 +105,10 @@ export function normalizeAutoTagRules(raw: unknown): AutoTagRule[] {
 }
 
 export const DEFAULT_SEVERITY_KEYWORDS: SeverityKeywords = {
-  error: ["fatal", "panic", "critical"],
+  // "critical" is intentionally absent: it is matched structurally (critical:, [critical],
+  // critical error/failure/...) in level-classifier.ts, not as a bare keyword, so noun
+  // phrases like "critical CSS"/"critical path" do not classify as error.
+  error: ["fatal", "panic"],
   warning: ["warn", "warning", "caution", "fail", "failed", "failure"],
   performance: [
     "perf", "performance", "dropped frame", "fps", "framerate",

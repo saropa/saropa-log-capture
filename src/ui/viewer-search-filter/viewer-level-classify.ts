@@ -11,8 +11,12 @@ export function getLevelClassifyScript(): string {
 // The '(' in the strict error char class catches the "<Type>Exception (detail)" shape
 // (e.g. "PermissionDeniedException (no OS grant on file)") — without it that line fell
 // through to 'info' and never reached the Errors filter. Mirrors level-classifier.ts.
-var strictStructuralErrorPattern = /\\w*(?:error|exception)\\s*[:\\]!(]|\\[(?:error|exception|fatal|panic|critical)\\]|_\\w*(?:Error|Exception)\\b|Null check operator/i;
+var strictStructuralErrorPattern = /\\w*(?:error|exception)\\s*[:\\]!(]|\\[(?:error|exception|fatal|panic)\\]|_\\w*(?:Error|Exception)\\b|Null check operator/i;
 var looseStructuralErrorPattern = /\\b(?:error|exception)(?!\\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\\b|_\\w*(?:Error|Exception)\\b|Null check operator/i;
+// "critical" only signals error in a structural context (critical:, [critical], critical
+// error/failure/exception/fault) — bare "critical" matches noun phrases like "critical CSS".
+// Mirrors criticalSeverityPattern in level-classifier.ts. Keep in sync.
+var criticalSeverityPattern = /\\[critical\\]|\\bcritical\\s*:|\\bcritical\\s+(?:errors?|failures?|exceptions?|faults?)\\b/i;
 // Flutter framework exception banner: strict/loose patterns miss 'Exception caught by <lib>'
 // because the phrase has no colon/bracket. Mirror extension-side level-classifier.ts.
 var flutterExceptionBannerPattern = /\\bException caught by\\b/i;
@@ -57,7 +61,7 @@ var logcatLetterAnywhere = /\\b([VDIWEFA])\\//;
 var threadtimeLevelPattern = /^\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\s+\\d+\\s+\\d+\\s+([VDIWEFA])\\s/;
 
 // ── Keyword patterns (rebuilt from config) ──────────────────────────
-var kwError = /\\b(fatal|panic|critical)\\b/i;
+var kwError = /\\b(fatal|panic)\\b/i;
 var kwWarn = /\\b(warn|warning|caution|fail|failed|failure)\\b/i;
 var kwPerf = /\\b(perf|performance|dropped\\s+frame|fps|framerate|jank|stutter|choreographer|doing\\s+too\\s+much\\s+work|anr|application\\s+not\\s+responding)\\b/i;
 var kwTodo = /\\b(TODO|FIXME|HACK|XXX|BUG|KLUDGE|WORKAROUND)\\b/i;
@@ -93,6 +97,8 @@ function matchesError(plainText) {
     if (sp.test(plainText)) return true;
     // Flutter banner: unambiguous error marker regardless of strict mode.
     if (flutterExceptionBannerPattern.test(plainText)) return true;
+    // "critical" is structural, not a bare keyword — see criticalSeverityPattern.
+    if (criticalSeverityPattern.test(plainText)) return true;
     return kwError !== null && kwError.test(plainText);
 }
 
