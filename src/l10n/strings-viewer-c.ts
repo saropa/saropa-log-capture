@@ -64,6 +64,8 @@ export const stringsViewerC: Record<string, string> = {
     'viewer.crashlytics.project.changelogSince': 'Changelog since the affected version',
     'viewer.crashlytics.project.recentCommits': 'Recent commits at the crash site',
     'viewer.crashlytics.project.annotations': 'Notes near the crash',
+    'viewer.crashlytics.project.relatedPrs': 'Pull requests touching this file',
+    'viewer.crashlytics.project.relatedIssues': 'Issues matching this crash',
     'viewer.crashlytics.filter.all': 'All issues',
     'viewer.crashlytics.filter.crash': 'Crashes',
     'viewer.crashlytics.filter.anr': 'ANRs (app not responding)',

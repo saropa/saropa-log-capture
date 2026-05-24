@@ -8,7 +8,15 @@
 
 import * as vscode from 'vscode';
 import { analyzeSourceFile, type GitCommit, type SourceAnnotation } from '../misc/workspace-analyzer';
+import { getGitHubContext } from '../git/github-context';
 import { parseChangelogVersions, changelogSince, type ChangelogVersion } from './crash-changelog';
+
+/** A GitHub PR or issue link surfaced beside the crash (number + title + URL). */
+export interface CrashLink {
+    readonly number: number;
+    readonly title: string;
+    readonly url: string;
+}
 
 /** Aggregated crash→project links for the in-viewer detail's "In your project" panel. */
 export interface ProjectInsights {
@@ -20,6 +28,10 @@ export interface ProjectInsights {
     readonly changelogSince: readonly ChangelogVersion[];
     /** True when newer releases exist after the affected version — the "may already be fixed" signal. */
     readonly mayBeFixed: boolean;
+    /** PRs touching the crashing file (best-effort via `gh`; empty when gh is absent/unauthed). */
+    readonly prs: readonly CrashLink[];
+    /** Issues matching the crash's error tokens (best-effort via `gh`). */
+    readonly issues: readonly CrashLink[];
 }
 
 interface InsightOptions {
@@ -27,6 +39,20 @@ interface InsightOptions {
     readonly crashLine?: number;
     readonly affectedVersion?: string;
     readonly packageHint?: string;
+    readonly errorTokens?: readonly string[];
+}
+
+/** PRs touching the file + issues matching the error tokens, via the existing gh integration. */
+async function relatedGitHub(file: string | undefined, tokens: readonly string[]): Promise<{ prs: CrashLink[]; issues: CrashLink[] }> {
+    const cwd = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    if (!cwd || (!file && tokens.length === 0)) { return { prs: [], issues: [] }; }
+    try {
+        const ctx = await getGitHubContext({ files: file ? [file] : [], errorTokens: tokens, cwd });
+        const toLink = (x: { number: number; title: string; url: string }): CrashLink => ({ number: x.number, title: x.title, url: x.url });
+        return { prs: ctx.filePrs.map(toLink), issues: ctx.issues.map(toLink) };
+    } catch {
+        return { prs: [], issues: [] };
+    }
 }
 
 /** Pick the workspace-root changelog, preferring the plain CHANGELOG over archives (shortest basename). */
@@ -64,7 +90,9 @@ export async function getProjectInsights(opts: InsightOptions): Promise<ProjectI
     const recentCommits = (info?.gitCommits ?? []).slice(0, 5);
     const annotations = (info?.annotations ?? []).slice(0, 6);
     const since = await changelogSinceAffected(opts.affectedVersion);
-    if (recentCommits.length === 0 && annotations.length === 0 && since.length === 0) { return undefined; }
+    const gh = await relatedGitHub(opts.file, opts.errorTokens ?? []);
+    const empty = recentCommits.length === 0 && annotations.length === 0 && since.length === 0 && gh.prs.length === 0 && gh.issues.length === 0;
+    if (empty) { return undefined; }
     return {
         file: info ? opts.file : undefined,
         recentCommits,
@@ -72,5 +100,7 @@ export async function getProjectInsights(opts: InsightOptions): Promise<ProjectI
         affectedVersion: opts.affectedVersion,
         changelogSince: since,
         mayBeFixed: since.length > 0,
+        prs: gh.prs.slice(0, 5),
+        issues: gh.issues.slice(0, 5),
     };
 }
