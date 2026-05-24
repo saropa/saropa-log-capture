@@ -174,6 +174,9 @@ export function getContextMenuHtml(): string {
             <div class="context-menu-item" data-action="show-git-history" title="Open a popover with git blame for this line and the file's recent commits">
                 <span class="codicon codicon-git-commit"></span> View Git History
             </div>
+            <div class="context-menu-item" data-action="show-changelog-since" title="Look up what the workspace CHANGELOG released after the version on this line">
+                <span class="codicon codicon-history"></span> What changed since this version?
+            </div>
             <div class="context-menu-item" data-action="open-drift-advisor" data-line-action data-drift-line-action title="Open this SQL line in the Drift Advisor extension">
                 <span class="codicon codicon-database"></span> Open in Drift Advisor
             </div>
