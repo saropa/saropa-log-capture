@@ -135,6 +135,8 @@
   "config.diagnosticCapture.title": "Log capture pipeline events (session start, output buffered/written) …",
   "config.docsScanDirs.description": "Directorios para escanear referencias de documentación del proyecto durante el análisis (relativos a la raíz del espacio de trabajo).",
   "config.docsScanDirs.title": "Directories to scan for project documentation references during analy…",
+  "config.changelogPaths.description": "Patrones glob relativos al área de trabajo para localizar el CHANGELOG del proyecto (el más canónico primero). Impulsa la señal 'puede que ya esté corregido' y las búsquedas de changelog en el visor de registros.",
+  "config.changelogPaths.title": "Glob patterns for locating the project CHANGELOG.",
   "config.enabled.description": "Habilitar o deshabilitar la captura automática de registros durante las sesiones de depuración.",
   "config.enabled.title": "Enable or disable automatic log capture during debug sessions.",
   "config.errorRateBucketSize.description": "Time-bucket size for the error-rate chart. auto adapts to session length; fixed values override.",
