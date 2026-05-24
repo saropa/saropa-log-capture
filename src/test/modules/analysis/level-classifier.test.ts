@@ -60,6 +60,37 @@ suite('LevelClassifier', () => {
         });
     });
 
+    suite('classifyLevel — "critical" only in severity context', () => {
+
+        test('should not classify "critical CSS" noun phrase as error', () => {
+            // Regression: "critical" was a bare error keyword, so build output like
+            // "Injecting critical CSS..." reddened whole rows and inflated the E count.
+            assert.notStrictEqual(classifyLevel('Injecting critical CSS...', 'stdout', true), 'error');
+            assert.notStrictEqual(classifyLevel('Inline critical CSS updated', 'stdout', false), 'error');
+        });
+
+        test('should not classify other "critical <noun>" phrases as error', () => {
+            assert.notStrictEqual(classifyLevel('on the critical path', 'stdout', false), 'error');
+            assert.notStrictEqual(classifyLevel('entering critical section', 'stdout', false), 'error');
+        });
+
+        test('should classify "critical:" label as error', () => {
+            assert.strictEqual(classifyLevel('CRITICAL: disk full', 'stdout', true), 'error');
+            assert.strictEqual(classifyLevel('critical: connection lost', 'stdout', false), 'error');
+        });
+
+        test('should classify "[critical]" bracket as error', () => {
+            assert.strictEqual(classifyLevel('[critical] subsystem down', 'stdout', true), 'error');
+            assert.strictEqual(classifyLevel('[critical] subsystem down', 'stdout', false), 'error');
+        });
+
+        test('should classify "critical <severity noun>" as error', () => {
+            assert.strictEqual(classifyLevel('a critical error occurred', 'stdout', true), 'error');
+            assert.strictEqual(classifyLevel('critical failure in handler', 'stdout', true), 'error');
+            assert.strictEqual(classifyLevel('critical exception thrown', 'stdout', false), 'error');
+        });
+    });
+
     suite('classifyLevel — loose mode', () => {
 
         test('should detect bare "error" keyword', () => {

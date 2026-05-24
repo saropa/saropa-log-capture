@@ -138,9 +138,11 @@ window.addEventListener('message', function(event) {
         // Check if any new lines are errors
         for (var i = 0; i < msg.lines.length; i++) {
             var ln = msg.lines[i];
-            // Check if line contains error keywords or has error category
+            // Check if line contains error keywords or has error category.
+            // "critical" only counts in a severity context (critical:, [critical], critical
+            // error/failure/...) so "critical CSS"-style lines do not trip the breakpoint.
             if ((stderrTreatAsError && ln.category === 'stderr') ||
-                /\\b(error|exception|fail(ed|ure)?|fatal|panic|critical)\\b/i.test(ln.text)) {
+                /\\b(error|exception|fail(ed|ure)?|fatal|panic)\\b|\\[critical\\]|\\bcritical\\s*:|\\bcritical\\s+(?:errors?|failures?|exceptions?|faults?)\\b/i.test(ln.text)) {
                 onErrorDetected();
                 break; // Only trigger once per batch
             }
