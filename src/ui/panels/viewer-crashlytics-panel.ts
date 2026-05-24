@@ -15,9 +15,6 @@ export function getCrashlyticsPanelHtml(): string {
     <div class="crashlytics-panel-header">
         <span id="cp-header-text">${t('viewer.crashlytics.region')}</span>
         <div class="crashlytics-panel-actions">
-            <button id="cp-open-dashboard" class="crashlytics-panel-action" title="${t('viewer.crashlytics.openDashboard.title')}" aria-label="${t('viewer.crashlytics.openDashboard.label')}">
-                <span class="codicon codicon-dashboard"></span>
-            </button>
             <button id="cp-refresh" class="crashlytics-panel-action" title="${t('viewer.crashlytics.refresh.title')}" aria-label="${t('viewer.crashlytics.refresh.label')}">
                 <span class="codicon codicon-refresh"></span>
             </button>
@@ -67,6 +64,8 @@ export function getCrashlyticsPanelScript(): string {
         if (!cpPanelEl) return;
         cpPanelEl.classList.remove('visible');
         cpPanelOpen = false;
+        // Closing the sidebar also restores the log (the in-viewer detail belongs to this panel).
+        if (typeof closeIssueDetail === 'function') closeIssueDetail();
         vscodeApi.postMessage({ type: 'crashlyticsPanelClosed' });
         if (typeof clearActivePanel === 'function') clearActivePanel('crashlytics');
         var ibBtn = document.getElementById('ib-crashlytics');
@@ -140,8 +139,12 @@ export function getCrashlyticsPanelScript(): string {
         // Close/mute removed: the Play Reporting data source is read-only, so those actions were
         // no-ops (bug_008 / plan 054). The dashboard's "Open Firebase Console" link is the way to
         // act on an issue.
-        // The whole row opens the dashboard; the ↗ hints it launches a full view, not an inline expand.
-        return '<div class="cp-item" data-issue-id="' + esc(issue.id) + '" title="' + vt('viewer.crashlytics.openInDashboard') + '">'
+        // The whole row opens the detail in the viewer's main area; ↗ hints it opens a full view.
+        // data-* carry the fields the detail header + markdown need without a second lookup.
+        return '<div class="cp-item" data-issue-id="' + esc(issue.id) + '" title="' + vt('viewer.crashlytics.openDetail') + '"'
+            + ' data-title="' + esc(issue.title) + '" data-sub="' + esc(issue.subtitle) + '"'
+            + ' data-events="' + esc(String(issue.eventCount)) + '" data-users="' + esc(String(issue.userCount)) + '"'
+            + ' data-fatal="' + (issue.isFatal ? '1' : '0') + '" data-fv="' + esc(issue.firstVersion || '') + '" data-lv="' + esc(issue.lastVersion || '') + '">'
             + '<div class="cp-title">' + badge + state + ' ' + esc(issue.title) + ' <span class="cp-expand-icon">\\u2197</span></div>'
             + '<div class="cp-meta">' + esc(issue.subtitle) + ' \\u00b7 ' + vt('viewer.crashlytics.events', issue.eventCount) + users + ver + '</div></div>';
     }
@@ -213,11 +216,61 @@ export function getCrashlyticsPanelScript(): string {
                 vscodeApi.postMessage({ type: 'openUrl', url: console.dataset.url });
                 return;
             }
-            // Clicking an issue opens the full detail in the App Quality Insights tab (like a log
-            // line opening the log viewer) — no cramped inline expander in the narrow sidebar.
+            // Clicking an issue opens its detail in the viewer's main area (like a session opening in
+            // the log viewer) — the list stays in the sidebar, detail renders aside it. No separate tab.
             var item = e.target.closest('.cp-item');
-            if (item && item.dataset.issueId) {
-                vscodeApi.postMessage({ type: 'openAppQualityInsights', issueId: item.dataset.issueId });
+            if (item && item.dataset.issueId) { openIssueDetail(item.dataset.issueId); }
+        });
+    }
+
+    /* ---- In-viewer issue detail (fills the log area beside the sidebar) ---- */
+    var cpDetailEl = document.getElementById('crashlytics-detail');
+    var cpLogWrap = document.getElementById('log-content-wrapper');
+    var cpDetailMarkdown = '';
+
+    function openIssueDetail(id) {
+        if (!cpDetailEl) return;
+        var row = null;
+        if (cpIssuesEl) {
+            var items = cpIssuesEl.querySelectorAll('.cp-item');
+            for (var i = 0; i < items.length; i++) {
+                var sel = items[i].dataset.issueId === id;
+                items[i].classList.toggle('cp-selected', sel);
+                if (sel) row = items[i];
+            }
+        }
+        var meta = row ? { title: row.dataset.title, subtitle: row.dataset.sub, events: row.dataset.events, users: row.dataset.users, fatal: row.dataset.fatal === '1', fv: row.dataset.fv, lv: row.dataset.lv } : {};
+        cpDetailEl.innerHTML = '<div class="cd-loading">' + vt('viewer.crashlytics.detail.loading') + '</div>';
+        cpDetailEl.classList.remove('u-hidden');
+        if (cpLogWrap) cpLogWrap.classList.add('u-hidden');
+        vscodeApi.postMessage({ type: 'fetchCrashlyticsDetail', issueId: id, meta: meta });
+    }
+
+    function closeIssueDetail() {
+        if (cpDetailEl) cpDetailEl.classList.add('u-hidden');
+        if (cpLogWrap) cpLogWrap.classList.remove('u-hidden');
+    }
+
+    if (cpDetailEl) {
+        cpDetailEl.addEventListener('click', function(e) {
+            if (e.target.closest('.cd-back')) { closeIssueDetail(); return; }
+            if (e.target.closest('.cd-copy')) { vscodeApi.postMessage({ type: 'copyToClipboard', text: cpDetailMarkdown }); }
+        });
+    }
+
+    /* Append source line + git blame under matching app frames (streamed after detail). */
+    function applyFrameContexts(contexts) {
+        if (!cpDetailEl) return;
+        var frames = cpDetailEl.querySelectorAll('.stack-frame');
+        contexts.forEach(function(ctx) {
+            for (var i = 0; i < frames.length; i++) {
+                if (frames[i].getAttribute('data-frame-file') !== ctx.file || frames[i].getAttribute('data-frame-line') !== String(ctx.line)) continue;
+                if (frames[i].querySelector('.cd-frame-ctx')) break;
+                var html = '';
+                if (ctx.code) html += '<code class="cd-frame-code">' + esc(ctx.code) + '</code>';
+                if (ctx.blame) html += '<span class="cd-frame-blame">' + esc(ctx.blame) + '</span>';
+                var ann = document.createElement('div'); ann.className = 'cd-frame-ctx'; ann.innerHTML = html;
+                frames[i].appendChild(ann); break;
             }
         });
     }
@@ -228,11 +281,6 @@ export function getCrashlyticsPanelScript(): string {
         vscodeApi.postMessage({ type: 'requestCrashlyticsData' });
     });
 
-    var openDashBtn = document.getElementById('cp-open-dashboard');
-    if (openDashBtn) openDashBtn.addEventListener('click', function() {
-        vscodeApi.postMessage({ type: 'openAppQualityInsights' });
-    });
-
     /* ---- Close / outside click ---- */
 
     var closeBtn = document.getElementById('cp-panel-close');
@@ -241,6 +289,7 @@ export function getCrashlyticsPanelScript(): string {
     document.addEventListener('click', function(e) {
         if (!cpPanelOpen) return;
         if (cpPanelEl && cpPanelEl.contains(e.target)) return;
+        if (cpDetailEl && cpDetailEl.contains(e.target)) return;
         var ibBtn = document.getElementById('ib-crashlytics');
         if (ibBtn && (ibBtn === e.target || ibBtn.contains(e.target))) return;
         closeCrashlyticsPanel();
@@ -251,11 +300,13 @@ export function getCrashlyticsPanelScript(): string {
     window.addEventListener('message', function(e) {
         if (!e.data) return;
         if (e.data.type === 'crashlyticsData') { renderData(e.data.context); }
+        else if (e.data.type === 'crashlyticsDetailReady') {
+            if (cpDetailEl) cpDetailEl.innerHTML = e.data.html;
+            cpDetailMarkdown = e.data.markdown || '';
+        }
+        else if (e.data.type === 'crashlyticsFrameContext') { applyFrameContexts(e.data.contexts || []); }
         else if (e.data.type === 'crashlyticsConnectionReport') {
             if (typeof renderConnectionReport === 'function') renderConnectionReport(e.data.report);
-        }
-        else if (e.data.type === 'issueActionFailed') {
-            /* Could show inline feedback; for now silent */
         }
     });
 

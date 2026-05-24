@@ -98,6 +98,7 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     ${getReplayBarHtml()}
     ${getErrorBreakpointHtml()}
     </div>
+    <div id="crashlytics-detail" class="crashlytics-detail u-hidden" role="region" aria-label="${t('viewer.crashlytics.detail.region')}"></div>
     </div>
     </div>
     ${getContextMenuHtml()}

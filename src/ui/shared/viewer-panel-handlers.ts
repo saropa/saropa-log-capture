@@ -34,6 +34,8 @@ export {
     handleRelatedQueriesRequest,
 } from './handlers/context-handlers';
 
+export { handleCrashlyticsDetail } from './handlers/crashlytics-detail-handler';
+
 export { serializeContext, buildDiagnosticHtml } from './handlers/crashlytics-serializers';
 
 /** Dispose all handlers. */
