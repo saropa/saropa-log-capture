@@ -40,6 +40,22 @@ export const stringsViewerB: Record<string, string> = {
     'viewer.iconBar.about.title': 'Click to open/close — version info, links, and help',
     'viewer.iconBar.about.label': 'About Saropa',
     'viewer.iconBar.about.text': 'About',
+    'viewer.iconBar.projectState.title': 'Click to open/close — the code state behind this log (branch, last commit, may-already-be-fixed)',
+    'viewer.iconBar.projectState.label': 'Project state',
+    'viewer.iconBar.projectState.text': 'Project',
+
+    // ── Project state panel (viewer-project-state-panel.ts, project-state-handler.ts) ──
+    'viewer.projectState.region': 'Project state',
+    'viewer.projectState.close.title': 'Close project state',
+    'viewer.projectState.close.label': 'Close project state panel',
+    'viewer.projectState.branch': 'Branch',
+    'viewer.projectState.lastCommit': 'Last commit',
+    'viewer.projectState.tree': 'Working tree',
+    'viewer.projectState.treeDirty': 'Uncommitted changes',
+    'viewer.projectState.treeClean': 'Clean',
+    'viewer.projectState.appVersion': 'Session app version',
+    'viewer.projectState.versionUnknown': 'not detected',
+    'viewer.projectState.noGit': 'No git repository in this workspace.',
 
     // ── Body banners + breadcrumb (viewer-content-body.ts) ────────────
     'viewer.compressBanner.msg': 'Many identical lines in a row — try {0} (Options → Layout or right-click → Options).',
