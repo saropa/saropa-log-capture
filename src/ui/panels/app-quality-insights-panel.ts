@@ -14,6 +14,7 @@ import { formatElapsedLabel } from '../../modules/capture/ansi';
 import { getFirebaseContext, getCrashEvents, getIssueBreakdown, getIssueFilterIndex, clearIssueListCache } from '../../modules/crashlytics/firebase-crashlytics';
 import { detectPackageName } from '../../modules/misc/app-identity';
 import { renderCrashDetail, renderDeviceDistribution } from '../analysis/analysis-crash-detail';
+import { getFrameContexts } from '../../modules/crashlytics/crash-frame-context';
 import { buildDashboardHtml, renderAggregateBreakdown, type DashboardModel } from './app-quality-insights-render';
 import type { IssueBreakdown } from '../../modules/crashlytics/play-reporting-metrics';
 import type { CrashlyticsIssueEvents } from '../../modules/crashlytics/crashlytics-types';
@@ -120,10 +121,16 @@ async function sendDetail(issueId: string): Promise<void> {
     try {
         // Stack (sampled events) and true device/OS aggregates (metric set) load in parallel.
         const [multi, breakdown] = await Promise.all([getCrashEvents(issueId), getIssueBreakdown(issueId)]);
-        const detailHtml = multi && multi.events.length > 0
-            ? renderCrashDetail(multi.events[multi.currentIndex])
+        const event = multi && multi.events.length > 0 ? multi.events[multi.currentIndex] : undefined;
+        const detailHtml = event
+            ? renderCrashDetail(event)
             : '<div class="no-matches">No stack trace available for this issue.</div>';
         panel.webview.postMessage({ type: 'detail', issueId, detailHtml, breakdownHtml: breakdownHtmlFor(breakdown, multi) });
+        // Codebase enrichment (source line + git blame per app frame) streams in after the stack renders.
+        if (event) {
+            const contexts = await getFrameContexts(event);
+            if (panel && contexts.length > 0) { panel.webview.postMessage({ type: 'frameContext', issueId, contexts }); }
+        }
     } catch {
         panel.webview.postMessage({ type: 'detail', issueId, detailHtml: '<div class="no-matches">Could not load this issue.</div>' });
     }
