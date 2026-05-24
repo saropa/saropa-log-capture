@@ -146,6 +146,9 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
     var hasSourceLink = lineData && lineData.html && lineData.html.indexOf('source-link') !== -1;
     var openSourceItem = contextMenuEl.querySelector('[data-action="open-source"]');
     if (openSourceItem) openSourceItem.style.display = hasSourceLink ? '' : 'none';
+    /* Git history needs a resolvable source ref on the line, same gate as Open Source. */
+    var gitHistoryItem = contextMenuEl.querySelector('[data-action="show-git-history"]');
+    if (gitHistoryItem) gitHistoryItem.style.display = hasSourceLink ? '' : 'none';
 
     /* Copy Error / Warning + Copy DB cluster: full grouped block before Copy & Export. */
     var ewRow = contextMenuEl.querySelector('[data-copy-error-warning-row]');

@@ -15,6 +15,7 @@ import { loadAndPostAboutContent } from "../viewer-panels/about-content-loader";
 import { handleErrorHoverRequest } from '../shared/handlers/error-hover-handler';
 import { showAnalysis } from '../analysis/analysis-panel';
 import { handleCodeQualityForFrameRequest } from '../shared/handlers/code-quality-handlers';
+import { handleGitHistoryForLine } from '../shared/handlers/git-history-handler';
 import { fetchDriftViewerHealth } from '../../modules/integrations/drift-viewer-health';
 import { logExtensionError } from '../../modules/misc/extension-logger';
 
@@ -142,6 +143,13 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
       case "showCodeQualityForFrame":
         handleCodeQualityForFrameRequest(
           ctx.currentFileUri,
+          safeLineIndex(msg.lineIndex, 0),
+          String(msg.lineText ?? msg.text ?? ''),
+          ctx.post,
+        ).catch(() => {});
+        return true;
+      case "showGitHistoryForLine":
+        handleGitHistoryForLine(
           safeLineIndex(msg.lineIndex, 0),
           String(msg.lineText ?? msg.text ?? ''),
           ctx.post,

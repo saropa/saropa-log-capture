@@ -196,6 +196,12 @@ export const stringsWebviewB: Record<string, string> = {
     'viewer.quality.commentRatio': '{0}% comment ratio',
     'viewer.quality.exportsDocumented': '{0}/{1} exports documented',
 
+    // Git-history popover (viewer-git-history-popover-script.ts).
+    'viewer.gitHistory.title': 'Git History',
+    'viewer.gitHistory.blameLabel': 'Last change to this line',
+    'viewer.gitHistory.recentCommits': 'Recent commits',
+    'viewer.gitHistory.none': 'No git history found for this file.',
+
     // Auto-hide patterns (client badges/buttons in viewer-auto-hide-modal.ts).
     'viewer.autoHide.badgeAlways': 'always',
     'viewer.autoHide.badgeThisLog': 'this log',
