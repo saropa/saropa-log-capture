@@ -11,10 +11,12 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { getNonce } from '../provider/viewer-content';
 import { formatElapsedLabel } from '../../modules/capture/ansi';
-import { getFirebaseContext, getCrashEvents, clearIssueListCache } from '../../modules/crashlytics/firebase-crashlytics';
+import { getFirebaseContext, getCrashEvents, getIssueBreakdown, clearIssueListCache } from '../../modules/crashlytics/firebase-crashlytics';
 import { detectPackageName } from '../../modules/misc/app-identity';
 import { renderCrashDetail, renderDeviceDistribution } from '../analysis/analysis-crash-detail';
-import { buildDashboardHtml, type DashboardModel } from './app-quality-insights-render';
+import { buildDashboardHtml, renderAggregateBreakdown, type DashboardModel } from './app-quality-insights-render';
+import type { IssueBreakdown } from '../../modules/crashlytics/play-reporting-metrics';
+import type { CrashlyticsIssueEvents } from '../../modules/crashlytics/crashlytics-types';
 
 let panel: vscode.WebviewPanel | undefined;
 let lastConsoleUrl: string | undefined;
@@ -87,19 +89,23 @@ async function applyTimeRange(range: string): Promise<void> {
 async function sendDetail(issueId: string): Promise<void> {
     if (!panel || !issueId) { return; }
     try {
-        const multi = await getCrashEvents(issueId);
-        if (!multi || multi.events.length === 0) {
-            panel.webview.postMessage({ type: 'detail', issueId, detailHtml: '<div class="no-matches">No stack trace available for this issue.</div>' });
-            return;
-        }
-        panel.webview.postMessage({
-            type: 'detail', issueId,
-            detailHtml: renderCrashDetail(multi.events[multi.currentIndex]),
-            breakdownHtml: renderDeviceDistribution(multi),
-        });
+        // Stack (sampled events) and true device/OS aggregates (metric set) load in parallel.
+        const [multi, breakdown] = await Promise.all([getCrashEvents(issueId), getIssueBreakdown(issueId)]);
+        const detailHtml = multi && multi.events.length > 0
+            ? renderCrashDetail(multi.events[multi.currentIndex])
+            : '<div class="no-matches">No stack trace available for this issue.</div>';
+        panel.webview.postMessage({ type: 'detail', issueId, detailHtml, breakdownHtml: breakdownHtmlFor(breakdown, multi) });
     } catch {
         panel.webview.postMessage({ type: 'detail', issueId, detailHtml: '<div class="no-matches">Could not load this issue.</div>' });
     }
+}
+
+/** Prefer true metric-set aggregates; fall back to the sampled-event estimate when unavailable. */
+function breakdownHtmlFor(breakdown: IssueBreakdown | undefined, multi: CrashlyticsIssueEvents | undefined): string {
+    if (breakdown && (breakdown.devices.length > 0 || breakdown.os.length > 0)) {
+        return renderAggregateBreakdown(breakdown);
+    }
+    return multi ? renderDeviceDistribution(multi) : '<div class="aqi-empty">No breakdown for this issue.</div>';
 }
 
 /** Best-effort open of a source frame at a line (absolute, workspace-relative, then basename search). */
