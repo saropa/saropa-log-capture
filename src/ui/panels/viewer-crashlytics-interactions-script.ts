@@ -29,6 +29,14 @@ export function getCrashlyticsInteractionsScript(): string {
         body.insertAdjacentHTML('beforeend', html);
     }
 
+    /* Append the "Seen in your captured logs" panel once (5c-4 local-log correlation). */
+    function applyLogCorrelation(id, html) {
+        if (!cpDetailEl || !html || id !== cpDetailIssueId) return;
+        var body = cpDetailEl.querySelector('.cd-body');
+        if (!body || body.querySelector('.cd-log-link')) return;
+        body.insertAdjacentHTML('beforeend', html);
+    }
+
     function openIssueDetail(id) {
         if (!cpDetailEl) return;
         var row = null;
@@ -65,6 +73,9 @@ export function getCrashlyticsInteractionsScript(): string {
             // Related PR/issue links in the "In your project" panel open in the browser (5c-3).
             var projLink = e.target.closest('.cd-proj-link');
             if (projLink && projLink.getAttribute('data-url')) { vscodeApi.postMessage({ type: 'openUrl', url: projLink.getAttribute('data-url') }); return; }
+            // "Seen in your logs" match opens that captured session at the matching line (5c-4).
+            var logLink = e.target.closest('.cd-log-link');
+            if (logLink && logLink.getAttribute('data-uri')) { vscodeApi.postMessage({ type: 'crashlyticsOpenLogLine', uri: logLink.getAttribute('data-uri'), line: Number(logLink.getAttribute('data-line')), col: Number(logLink.getAttribute('data-col')) }); return; }
             // Jump to code: an app frame opens the file at its line (UX #1).
             var frame = e.target.closest('.frame-app[data-frame-file]');
             if (frame) { vscodeApi.postMessage({ type: 'crashlyticsOpenFrame', file: frame.getAttribute('data-frame-file'), line: frame.getAttribute('data-frame-line') }); }

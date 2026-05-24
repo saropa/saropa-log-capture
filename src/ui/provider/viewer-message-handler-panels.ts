@@ -53,6 +53,7 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
       case "fetchCrashlyticsFilterIndex": panelHandlers.handleCrashlyticsFilterIndex(ctx.post).catch(() => {}); return true;
       case "crashlyticsOpenFrame": panelHandlers.openCrashFrame(String(msg.file ?? ''), Number(msg.line ?? 0)).catch(() => {}); return true;
       case "crashlyticsCreateIssue": panelHandlers.handleCrashlyticsCreateIssue(String(msg.title ?? 'Issue'), String(msg.body ?? '')).catch(() => {}); return true;
+      case "crashlyticsOpenLogLine": panelHandlers.openLogLine(String(msg.uri ?? ''), Number(msg.line ?? 0), Number(msg.col ?? 0)).catch(() => {}); return true;
       case "crashlyticsRunGcloudAuth": panelHandlers.handleGcloudAuth(ctx.post); return true;
       case "crashlyticsBrowseGoogleServices": panelHandlers.handleBrowseGoogleServices(ctx.post).catch(() => {}); return true;
       case "crashlyticsOpenGoogleServicesJson": panelHandlers.handleOpenGoogleServicesJson().catch(() => {}); return true;
