@@ -25,8 +25,17 @@ body { margin: 0; font-family: var(--vscode-font-family); font-size: var(--vscod
 .aqi-link { color: var(--vscode-textLink-foreground); cursor: pointer; text-decoration: none; font-size: 12px; }
 .aqi-link:hover { text-decoration: underline; }
 
-/* 3-pane layout fills the viewport below the toolbar. */
-.aqi-grid { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(360px, 1.6fr) minmax(220px, 0.9fr); height: calc(100vh - 42px); }
+/* Source/type tabs + filters row. */
+.aqi-filterbar { display: flex; align-items: center; gap: 10px; padding: 5px 12px; border-bottom: 1px solid var(--vscode-panel-border); flex-wrap: wrap; }
+.aqi-tabs { display: flex; gap: 2px; }
+.aqi-tab { background: transparent; color: var(--vscode-foreground); border: none; border-bottom: 2px solid transparent; padding: 4px 10px; font-size: 12px; cursor: pointer; opacity: 0.75; }
+.aqi-tab:hover { opacity: 1; }
+.aqi-tab.selected { opacity: 1; font-weight: 600; border-bottom-color: var(--vscode-focusBorder); }
+.aqi-tab-count { opacity: 0.6; font-weight: 400; font-size: 11px; }
+.aqi-search { background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, var(--vscode-panel-border)); border-radius: 3px; padding: 3px 8px; font-size: 12px; min-width: 180px; }
+
+/* 3-pane layout fills the viewport below the toolbar + filter bar. */
+.aqi-grid { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(360px, 1.6fr) minmax(220px, 0.9fr); height: calc(100vh - 84px); }
 .aqi-pane { overflow: auto; padding: 8px 10px; }
 .aqi-pane + .aqi-pane { border-left: 1px solid var(--vscode-panel-border); }
 .aqi-pane-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.6; margin: 2px 0 8px; }
