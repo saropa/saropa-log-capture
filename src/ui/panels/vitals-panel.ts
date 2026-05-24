@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 import { escapeHtml, formatElapsedLabel } from '../../modules/capture/ansi';
 import { getNonce } from '../provider/viewer-content';
-import { queryVitals, clearVitalsCache, thresholds } from '../../modules/crashlytics/google-play-vitals';
+import { queryVitals, clearVitalsCache, thresholds, getVitalsDiagnostic } from '../../modules/crashlytics/google-play-vitals';
 import type { VitalsSnapshot } from '../../modules/crashlytics/google-play-vitals-types';
 
 let refreshTimer: ReturnType<typeof setInterval> | undefined;
@@ -56,9 +56,14 @@ function buildLoadingHtml(): string {
 function buildPanelHtml(snapshot: VitalsSnapshot | undefined): string {
     const nonce = getNonce();
     if (!snapshot) {
+        // Show the actual failure reason (e.g. missing scope, with its fix) rather than a silent N/A.
+        const diag = getVitalsDiagnostic();
+        const reason = diag
+            ? `<p style="font-size:12px"><strong>Why:</strong> ${escapeHtml(diag.message)}</p>`
+            : '<p style="font-size:11px;opacity:0.8">Requires: package name (google-services.json or setting), gcloud auth with the Play reporting scope, and the Play Developer Reporting API enabled.</p>';
         return `<!DOCTYPE html><html><body style="padding:8px;font-family:var(--vscode-font-family)">
 <p>Google Play Vitals not available.</p>
-<p style="font-size:11px;opacity:0.8">Requires: package name (google-services.json or setting), gcloud auth, and Play Developer Reporting API enabled.</p>
+${reason}
 </body></html>`;
     }
     const refreshNote = `(${formatElapsedLabel(snapshot.queriedAt)})`;

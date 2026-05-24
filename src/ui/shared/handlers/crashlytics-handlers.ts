@@ -14,7 +14,7 @@ import {
 } from '../../../modules/crashlytics/firebase-crashlytics';
 import { renderCrashDetail } from '../../analysis/analysis-crash-detail';
 import { serializeContext } from './crashlytics-serializers';
-import { getOutputChannel } from '../../../modules/crashlytics/crashlytics-diagnostics';
+import { getOutputChannel, playReportingScopeFix } from '../../../modules/crashlytics/crashlytics-diagnostics';
 import { runConnectionCheck, formatConnectionReport } from '../../../modules/crashlytics/crashlytics-connection-check';
 
 export type PostFn = (msg: unknown) => void;
@@ -94,11 +94,15 @@ export async function handleCrashlyticsValidate(post: PostFn): Promise<void> {
     }
 }
 
-/** Open a terminal and run gcloud auth; auto-refresh on terminal close. */
+/**
+ * Open a terminal and run gcloud auth, requesting the Play reporting scope alongside cloud-platform;
+ * auto-refresh on terminal close. Without the playdeveloperreporting scope the errors API returns 403
+ * ACCESS_TOKEN_SCOPE_INSUFFICIENT (bug_008 W4), so we always sign in with it.
+ */
 export function handleGcloudAuth(post: PostFn): void {
     const terminal = vscode.window.createTerminal({ name: 'Google Cloud Auth' });
     terminal.show();
-    terminal.sendText('gcloud auth application-default login');
+    terminal.sendText(playReportingScopeFix);
     terminalListener?.dispose();
     terminalListener = vscode.window.onDidCloseTerminal(closed => {
         if (closed !== terminal) { return; }

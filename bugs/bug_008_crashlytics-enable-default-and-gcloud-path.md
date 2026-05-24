@@ -1,6 +1,6 @@
 # Bug 008 — Crashlytics/Vitals connection: gcloud not on PATH, dead read API, missing scope, silent failures
 
-## Status: connection partly fixed (gcloud + diagnostics landed) · data-source re-point + silent-failure cleanup open · enable-by-default open (needs sign-off)
+## Status: Fixed (pending on-machine verification) — W1–W4 + silent-failure + enable-by-default all landed; needs a scoped-token run to confirm live data
 
 <!-- Status values: Open → Investigating → Fix Ready → Fixed (pending review) → Closed -->
 
@@ -28,11 +28,16 @@ the next, which is why setup "failed 7 times" with no clear reason:
 |---|------|--------|
 | W1 | gcloud installed by winget but **never added to PATH** → bare `gcloud` never resolves | **Fixed** (locator) |
 | W2 | The "not found" error was **misclassified** as a generic "Command failed" | **Fixed** (classifier) |
-| W3 | The Crashlytics **read endpoint is not a public API** (HTML 404) | **Open** — re-point to Play Reporting |
-| W4 | The real API needs the **`playdeveloperreporting` OAuth scope** the ADC token lacks | **Open** — re-auth + detect |
-| — | Pervasive **silent failure** (`catch { return [] }`) hides W3/W4 as "no crashes" | **Open** — surface diagnostics |
+| W3 | The Crashlytics **read endpoint is not a public API** (HTML 404) | **Fixed** — re-pointed to Play Reporting `vitals.errors` |
+| W4 | The real API needs the **`playdeveloperreporting` OAuth scope** the ADC token lacks | **Fixed** — sign-in requests the scope; 403 decoded |
+| — | Pervasive **silent failure** (`catch { return [] }`) hides W3/W4 as "no crashes" | **Fixed** — every fetch sets a diagnostic |
 
-Plus **(a)** the integration is **off by default** (separate, low-risk, needs sign-off).
+Plus **(a)** the integration is now **on by default** (`"crashlytics"` in the adapters default).
+
+**Remaining:** end-to-end verification needs a token minted with the Play reporting scope (interactive
+`gcloud auth application-default login --scopes=…` — user action). The client is built against the
+published v1beta1 schema and unit-tested, but a live 200 from `errorIssues:search` for this account is
+not yet confirmed (every prior call was 403 scope). The validator will confirm on-machine.
 
 ---
 

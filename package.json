@@ -1636,7 +1636,8 @@
             "environment",
             "performance",
             "terminal",
-            "flutterCrashLogs"
+            "flutterCrashLogs",
+            "crashlytics"
           ],
           "description": "Integration adapters to enable (e.g. packages, buildCi, git, environment, testResults, coverage, crashDumps, windowsEvents, docker, performance, terminal, linuxLogs, flutterCrashLogs, crashlytics). Session adapters run at start/end; crashlytics shows the Crashlytics sidebar. Clear to disable all.",
           "items": {
