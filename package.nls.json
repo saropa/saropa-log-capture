@@ -143,6 +143,8 @@
   "config.diagnosticCapture.title": "Log capture pipeline events (session start, output buffered/written) …",
   "config.docsScanDirs.description": "Directories to scan for project documentation references during analysis (relative to workspace root).",
   "config.docsScanDirs.title": "Directories to scan for project documentation references during analy…",
+  "config.changelogPaths.description": "Workspace-relative glob patterns for locating the project CHANGELOG (most canonical first). Powers the may-already-be-fixed signal and changelog lookups in the log viewer.",
+  "config.changelogPaths.title": "Glob patterns for locating the project CHANGELOG.",
   "config.enabled.description": "Enable or disable automatic log capture during debug sessions.",
   "config.enabled.title": "Enable or disable automatic log capture during debug sessions.",
   "config.exclusions.description": "Patterns to exclude from the viewer. Plain strings match case-insensitively; /regex/ patterns are supported.",

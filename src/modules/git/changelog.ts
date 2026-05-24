@@ -1,7 +1,9 @@
 /**
- * Parse and compare CHANGELOG version headings so a crash can flag "changed since the affected
- * version — may already be fixed" (plan 054 Stage 5c-1). Pure string logic, no IO, so it is unit
- * tested directly with `node --test`.
+ * Parse and compare CHANGELOG version headings so a feature can flag "changed since version X —
+ * may already be fixed". Pure string logic, no IO, so it is unit tested directly with `node --test`.
+ *
+ * Promoted out of `modules/crashlytics/` (plan 055 Stage 1): the log viewer's session panel and
+ * per-line context reuse the same parser, so it must not live under a feature-specific folder.
  */
 
 /** One CHANGELOG version entry: the version string and the first descriptive line beneath it. */
@@ -10,7 +12,7 @@ export interface ChangelogVersion {
     readonly summary: string;
 }
 
-/** Result of locating an affected version in a changelog: whether it was found, and the newer entries. */
+/** Result of locating a version in a changelog: whether it was found, and the newer entries. */
 export interface ChangelogSince {
     readonly found: boolean;
     readonly since: readonly ChangelogVersion[];
@@ -51,9 +53,9 @@ export function parseChangelogVersions(text: string): ChangelogVersion[] {
 }
 
 /**
- * Versions newer than the affected one. Because entries are reverse-chronological, "newer" = entries
- * appearing BEFORE the affected entry in document order. `found` is false when the affected version is
- * absent — the caller must not imply "nothing changed" in that case.
+ * Versions newer than the given one. Because entries are reverse-chronological, "newer" = entries
+ * appearing BEFORE the matched entry in document order. `found` is false when the version is absent —
+ * the caller must not imply "nothing changed" in that case.
  */
 export function changelogSince(versions: readonly ChangelogVersion[], affected: string): ChangelogSince {
     const target = normalizeVersion(affected);
