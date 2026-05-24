@@ -17,6 +17,7 @@ import { showAnalysis } from '../analysis/analysis-panel';
 import { handleCodeQualityForFrameRequest } from '../shared/handlers/code-quality-handlers';
 import { handleGitHistoryForLine } from '../shared/handlers/git-history-handler';
 import { handleProjectStateRequest } from '../shared/handlers/project-state-handler';
+import { handleChangelogSinceForVersion } from '../shared/handlers/changelog-since-handler';
 import { fetchDriftViewerHealth } from '../../modules/integrations/drift-viewer-health';
 import { logExtensionError } from '../../modules/misc/extension-logger';
 
@@ -156,6 +157,13 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
         handleGitHistoryForLine(
           safeLineIndex(msg.lineIndex, 0),
           String(msg.lineText ?? msg.text ?? ''),
+          ctx.post,
+        ).catch(() => {});
+        return true;
+      case "showChangelogSince":
+        handleChangelogSinceForVersion(
+          safeLineIndex(msg.lineIndex, 0),
+          String(msg.version ?? ''),
           ctx.post,
         ).catch(() => {});
         return true;
