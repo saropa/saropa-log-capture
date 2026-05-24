@@ -2,9 +2,11 @@ import * as vscode from 'vscode';
 import { stringsA } from './l10n/strings-a';
 import { stringsB } from './l10n/strings-b';
 import { stringsWebview } from './l10n/strings-webview';
+import { stringsWebviewB } from './l10n/strings-webview-b';
 import { stringsViewer } from './l10n/strings-viewer';
 import { stringsViewerB } from './l10n/strings-viewer-b';
 import { stringsViewerC } from './l10n/strings-viewer-c';
+import { stringsViewerD } from './l10n/strings-viewer-d';
 
 /**
  * English strings keyed by symbolic ID.
@@ -19,7 +21,9 @@ const strings: Record<string, string> = {
     ...stringsViewer,
     ...stringsViewerB,
     ...stringsViewerC,
+    ...stringsViewerD,
     ...stringsWebview,
+    ...stringsWebviewB,
 };
 
 /**
@@ -41,7 +45,10 @@ export function t(key: string, ...args: (string | number | boolean)[]): string {
  */
 export function getWebviewL10nMap(): Record<string, string> {
     const map: Record<string, string> = {};
-    for (const key of Object.keys(stringsWebview)) {
+    // Both webview source files feed the client `__VT` map. Keep this in sync
+    // when adding another strings-webview-*.ts split — a key only in the merged
+    // host `strings` map but missing here would make vt() emit the raw key.
+    for (const key of [...Object.keys(stringsWebview), ...Object.keys(stringsWebviewB)]) {
         map[key] = t(key);
     }
     return map;

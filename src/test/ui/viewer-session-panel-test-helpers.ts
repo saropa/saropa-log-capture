@@ -9,13 +9,14 @@ import { getSessionTransformsScript } from '../../ui/viewer/viewer-session-trans
 import { getSessionTagsScript } from '../../ui/viewer-panels/viewer-session-tags';
 import { getSessionPanelScript } from '../../ui/viewer-panels/viewer-session-panel';
 import { stringsWebview } from '../../l10n/strings-webview';
+import { stringsWebviewB } from '../../l10n/strings-webview-b';
 
 /** Faithful stand-in for the webview's vt() (l10n bridge) — resolves a key to its
  *  English template via stringsWebview and substitutes {0},{1},… positionally.
  *  The real bridge injects __VT; the sandbox provides this so render scripts that
  *  call vt() resolve to real English text matching the runtime tests' assertions. */
 export function vtStub(key: string, ...args: (string | number)[]): string {
-    let s = stringsWebview[key] ?? key;
+    let s = stringsWebview[key] ?? stringsWebviewB[key] ?? key;
     for (let i = 0; i < args.length; i++) {
         s = s.split('{' + i + '}').join(String(args[i]));
     }

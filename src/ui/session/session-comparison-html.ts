@@ -22,15 +22,19 @@ import {
     type SessionDbFingerprintDiffRow,
 } from '../../modules/db/db-session-fingerprint-diff';
 import { escapeHtml } from '../../modules/capture/ansi';
+import { t } from '../../l10n';
 import { getComparisonStyles } from './session-comparison-styles';
 import { getSessionComparisonWebviewScript } from './session-comparison-webview-script';
 
-const DB_FP_KIND_LABELS: Record<SessionDbFingerprintDiffRow['kind'], string> = {
-    new: 'New',
-    removed: 'Gone',
-    more: 'More',
-    fewer: 'Less',
-    same: 'Same',
+// l10n keys (not literal labels) so the visible text resolves through t() at render
+// time — a module-scope t() call would freeze the locale at load and miss runtime
+// language changes.
+const DB_FP_KIND_LABEL_KEYS: Record<SessionDbFingerprintDiffRow['kind'], string> = {
+    new: 'viewer.sessionCompare.kindNew',
+    removed: 'viewer.sessionCompare.kindRemoved',
+    more: 'viewer.sessionCompare.kindMore',
+    fewer: 'viewer.sessionCompare.kindFewer',
+    same: 'viewer.sessionCompare.kindSame',
 };
 
 /** Pane stats needed to render the comparison body (avoids pulling in `vscode.Uri` here). */
@@ -93,15 +97,15 @@ export function buildSessionComparisonHtml(args: SessionComparisonHtmlArgs): str
     </style>
 </head>
 <body>
-    <div role="main" aria-label="Session Comparison">
+    <div role="main" aria-label="${t('viewer.sessionCompare.mainLabel')}">
     <div class="header">
         <div class="stats">
-            <span class="stat"><span class="unique-a-dot"></span> ${sessionA.uniqueCount} unique to A</span>
-            <span class="stat"><span class="unique-b-dot"></span> ${sessionB.uniqueCount} unique to B</span>
-            <span class="stat">${commonCount} common</span>
+            <span class="stat"><span class="unique-a-dot"></span> ${t('viewer.sessionCompare.uniqueToA', sessionA.uniqueCount)}</span>
+            <span class="stat"><span class="unique-b-dot"></span> ${t('viewer.sessionCompare.uniqueToB', sessionB.uniqueCount)}</span>
+            <span class="stat">${t('viewer.sessionCompare.common', commonCount)}</span>
         </div>
-        <button id="sync-btn" class="sync-btn ${syncScrolling ? 'active' : ''}" aria-label="Toggle sync scrolling">
-            Sync Scroll: ${syncScrolling ? 'ON' : 'OFF'}
+        <button id="sync-btn" class="sync-btn ${syncScrolling ? 'active' : ''}" aria-label="${t('viewer.sessionCompare.toggleSyncScroll')}">
+            ${t('viewer.sessionCompare.syncScroll', syncScrolling ? t('viewer.sessionCompare.on') : t('viewer.sessionCompare.off'))}
         </button>
     </div>
     ${toolbar}
@@ -133,12 +137,12 @@ function renderDbToolbar(showDbToolbar: boolean, driftInstalled: boolean): strin
         return '';
     }
     const driftBtn = driftInstalled
-        ? '<button type="button" id="btn-drift-advisor" class="sync-btn">Open Drift Advisor</button>'
+        ? `<button type="button" id="btn-drift-advisor" class="sync-btn">${t('viewer.sessionCompare.openDriftAdvisor')}</button>`
         : '';
     return /* html */ `<div class="db-toolbar">
-<button type="button" id="btn-db-baseline-a" class="sync-btn">SQL baseline: A → viewer</button>
-<button type="button" id="btn-db-baseline-b" class="sync-btn">SQL baseline: B → viewer</button>
-<button type="button" id="btn-db-baseline-clear" class="sync-btn">Clear SQL baseline</button>
+<button type="button" id="btn-db-baseline-a" class="sync-btn">${t('viewer.sessionCompare.sqlBaselineA')}</button>
+<button type="button" id="btn-db-baseline-b" class="sync-btn">${t('viewer.sessionCompare.sqlBaselineB')}</button>
+<button type="button" id="btn-db-baseline-clear" class="sync-btn">${t('viewer.sessionCompare.sqlBaselineClear')}</button>
 ${driftBtn}
 </div>`;
 }
@@ -172,8 +176,8 @@ function renderDbCompareDetectorMarkers(results: readonly DbDetectorResult[]): s
     if (!items) {
         return '';
     }
-    return /* html */ `<div class="db-compare-markers-wrap" role="region" aria-label="SQL compare detector notes">
-<p class="db-fp-hint">Detector highlights (batch compare)</p>
+    return /* html */ `<div class="db-compare-markers-wrap" role="region" aria-label="${t('viewer.sessionCompare.detectorNotesLabel')}">
+<p class="db-fp-hint">${t('viewer.sessionCompare.detectorHighlights')}</p>
 <ul class="db-compare-markers">${items}</ul>
 </div>`;
 }
@@ -187,44 +191,50 @@ function renderDatabaseFingerprintSection(
     const labelA = escapeHtml(nameA);
     const labelB = escapeHtml(nameB);
     const summaryLine = db.hasDriftSql
-        ? `Database (Drift SQL) — ${db.totalStatementsA} exec A / ${db.totalStatementsB} exec B · ${db.distinctFingerprintsA} fp A / ${db.distinctFingerprintsB} fp B`
-        : 'Database (Drift SQL)';
+        ? t(
+              'viewer.sessionCompare.dbSummaryStats',
+              db.totalStatementsA,
+              db.totalStatementsB,
+              db.distinctFingerprintsA,
+              db.distinctFingerprintsB,
+          )
+        : t('viewer.sessionCompare.dbSummary');
     const markersBlock = renderDbCompareDetectorMarkers(dbCompareDetectorResults);
     if (!db.hasDriftSql) {
         return /* html */ `<details class="db-fp-section" open>
 <summary>${escapeHtml(summaryLine)}</summary>
 ${markersBlock}
-<p class="db-fp-hint">No Drift SQL lines found in these logs (after the session header).</p>
+<p class="db-fp-hint">${t('viewer.sessionCompare.noDriftSqlLines')}</p>
 </details>`;
     }
     const rows = db.rows.slice(0, SESSION_DB_FP_COMPARE_MAX_ROWS);
     const more =
         db.rows.length > SESSION_DB_FP_COMPARE_MAX_ROWS
-            ? `<p class="db-fp-hint">Showing first ${SESSION_DB_FP_COMPARE_MAX_ROWS} of ${db.rows.length} fingerprint changes (sorted by impact).</p>`
+            ? `<p class="db-fp-hint">${t('viewer.sessionCompare.showingFirstFingerprints', SESSION_DB_FP_COMPARE_MAX_ROWS, db.rows.length)}</p>`
             : '';
     const slowHead = db.hasSlowQueryStats
-        ? `<th>Slow A</th>
-<th>Slow B</th>
-<th>Δ slow</th>
+        ? `<th>${t('viewer.sessionCompare.colSlowA')}</th>
+<th>${t('viewer.sessionCompare.colSlowB')}</th>
+<th>${t('viewer.sessionCompare.colDeltaSlow')}</th>
 `
         : '';
     const head = /* html */ `<tr>
-<th>Change</th>
-<th>Fingerprint</th>
-<th>${labelA} #</th>
-<th>${labelB} #</th>
-<th>Δ #</th>
-<th>Avg ms A</th>
-<th>Avg ms B</th>
-<th>Δ avg</th>
-${slowHead}<th>Jump</th>
+<th>${t('viewer.sessionCompare.colChange')}</th>
+<th>${t('viewer.sessionCompare.colFingerprint')}</th>
+<th>${t('viewer.sessionCompare.colCountFor', labelA)}</th>
+<th>${t('viewer.sessionCompare.colCountFor', labelB)}</th>
+<th>${t('viewer.sessionCompare.colDeltaCount')}</th>
+<th>${t('viewer.sessionCompare.colAvgMsA')}</th>
+<th>${t('viewer.sessionCompare.colAvgMsB')}</th>
+<th>${t('viewer.sessionCompare.colDeltaAvg')}</th>
+${slowHead}<th>${t('viewer.sessionCompare.colJump')}</th>
 </tr>`;
     const body = rows.map((r) => renderDbFingerprintRow(r, db.hasSlowQueryStats)).join('\n');
     return /* html */ `<details class="db-fp-section" open>
 <summary>${escapeHtml(summaryLine)}</summary>
 ${markersBlock}
 <div class="db-fp-table-wrap">
-<table class="db-fp-table" aria-label="SQL fingerprint comparison">
+<table class="db-fp-table" aria-label="${t('viewer.sessionCompare.fpTableLabel')}">
 ${head}
 ${body}
 </table>
@@ -234,7 +244,7 @@ ${more}
 }
 
 function renderDbFingerprintRow(r: SessionDbFingerprintDiffRow, showSlowColumns: boolean): string {
-    const kindLabel = DB_FP_KIND_LABELS[r.kind];
+    const kindLabel = t(DB_FP_KIND_LABEL_KEYS[r.kind]);
     const kindClass = `db-kind db-kind-${r.kind}`;
     const fpFull = escapeHtml(r.fingerprint);
     let fpShort = fpFull;

@@ -24,8 +24,8 @@ function rebuildTagChips() {
     var limit = sourceTagShowAll ? chipKeys.length : Math.min(chipKeys.length, sourceTagMaxChips);
     var parts = [
         '<span class="source-tag-actions">'
-        + '<button class="tag-action-btn" data-action="all">All</button>'
-        + '<button class="tag-action-btn" data-action="none">None</button>'
+        + '<button class="tag-action-btn" data-action="all">' + vt('viewer.tags.all') + '</button>'
+        + '<button class="tag-action-btn" data-action="none">' + vt('viewer.tags.none') + '</button>'
         + '</span>'
     ];
     for (var i = 0; i < limit; i++) {
@@ -40,7 +40,7 @@ function rebuildTagChips() {
         );
     }
     if (chipKeys.length > sourceTagMaxChips) {
-        var showLabel = sourceTagShowAll ? 'Show less' : 'Show all (' + chipKeys.length + ')';
+        var showLabel = sourceTagShowAll ? vt('viewer.tags.showLess') : vt('viewer.tags.showAll', chipKeys.length);
         parts.push('<button class="tag-show-all-btn" data-action="toggle-all">' + showLabel + '</button>');
     }
     container.innerHTML = parts.join('');
@@ -145,7 +145,7 @@ function wrapTagLink(html, sourceTag) {
         var orig = text.substring(idx, idx + sourceTag.length);
         var safe = orig.replace(/"/g, '&quot;');
         return text.substring(0, idx)
-            + '<span class="tag-link" data-tag="' + sourceTag + '" title="Click to filter: ' + safe + '" style="--tag-clr:' + color + '">' + orig + '</span>'
+            + '<span class="tag-link" data-tag="' + sourceTag + '" title="' + vt('viewer.tags.clickToFilter', safe) + '" style="--tag-clr:' + color + '">' + orig + '</span>'
             + text.substring(idx + sourceTag.length);
     });
 }
