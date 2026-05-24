@@ -202,7 +202,9 @@ export async function getFirebaseContext(errorTokens: readonly string[]): Promis
         try {
             const issues = await queryTopIssues(config, token, errorTokens);
             logCrashlytics('info', `Fetched ${issues.length} Crashlytics issues`);
-            const diag = issues.length === 0 ? (lastDiagnostic ?? getLastApiDiagnostic()) : undefined;
+            // Surface the API diagnostic even when issues exist, so an offline cache-fallback is shown
+            // as stale rather than masquerading as a fresh result. (offline cache)
+            const diag = getLastApiDiagnostic() ?? (issues.length === 0 ? lastDiagnostic : undefined);
             return { available: true, issues, consoleUrl, queriedAt: Date.now(), diagnostics: diag, setupChecklist: fullChecklist };
         } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
