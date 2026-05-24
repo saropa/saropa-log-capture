@@ -1,6 +1,6 @@
 # Bug 008 — Crashlytics/Vitals connection: gcloud not on PATH, dead read API, missing scope, silent failures
 
-## Status: Fixed (pending on-machine verification) — W1–W4 + silent-failure + enable-by-default all landed; needs a scoped-token run to confirm live data
+## Status: Fixed — verified live (errorIssues:search returned real saropa-mobile issues on 2026-05-24). W1–W6 + silent-failure + enable-by-default all landed.
 
 <!-- Status values: Open → Investigating → Fix Ready → Fixed (pending review) → Closed -->
 
@@ -30,14 +30,21 @@ the next, which is why setup "failed 7 times" with no clear reason:
 | W2 | The "not found" error was **misclassified** as a generic "Command failed" | **Fixed** (classifier) |
 | W3 | The Crashlytics **read endpoint is not a public API** (HTML 404) | **Fixed** — re-pointed to Play Reporting `vitals.errors` |
 | W4 | The real API needs the **`playdeveloperreporting` OAuth scope** the ADC token lacks | **Fixed** — sign-in requests the scope; 403 decoded |
-| — | Pervasive **silent failure** (`catch { return [] }`) hides W3/W4 as "no crashes" | **Fixed** — every fetch sets a diagnostic |
+| W5 | The real API needs the **`X-Goog-User-Project` quota-project header** for user ADC | **Fixed** — client sends `config.projectId` |
+| W6 | The **Play Developer Reporting API must be enabled** on the project | **Fixed** — `gcloud services enable` (done); 403 decoded |
+| — | Pervasive **silent failure** (`catch { return [] }`) hides the above as "no crashes" | **Fixed** — every fetch sets a diagnostic |
 
 Plus **(a)** the integration is now **on by default** (`"crashlytics"` in the adapters default).
 
-**Remaining:** end-to-end verification needs a token minted with the Play reporting scope (interactive
-`gcloud auth application-default login --scopes=…` — user action). The client is built against the
-published v1beta1 schema and unit-tested, but a live 200 from `errorIssues:search` for this account is
-not yet confirmed (every prior call was 403 scope). The validator will confirm on-machine.
+**Verified live (2026-05-24):** after the scope re-auth + `gcloud services enable
+playdeveloperreporting.googleapis.com`, `errorIssues:search` for `com.saropamobile.app` returned real
+issues (top 5 were `libflutter.so` / `MessageQueue.nativePollOnce` ANRs — matching the Android Studio
+screenshots). W5 (quota header) and W6 (API enablement) were discovered during this verification: W4's
+scope fix only exposed them, exactly the layered-wall pattern. The header fix is in code; W6 is a
+one-time per-project `gcloud services enable`.
+
+**Last step:** F5 the extension and click Test connection to confirm the panel renders the live data
+(the request the code now builds is byte-for-byte the one that returned 200 in the manual test).
 
 ---
 

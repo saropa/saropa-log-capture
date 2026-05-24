@@ -47,10 +47,10 @@ function filterByTokens(issues: readonly CrashlyticsIssue[], errorTokens: readon
 }
 
 /**
- * Top error issues via Play Developer Reporting. `config` is unused (kept for call-site compatibility).
- * Never throws; on failure sets lastApiDiagnostic and returns [].
+ * Top error issues via Play Developer Reporting. `config.projectId` is the quota project sent as
+ * X-Goog-User-Project (required for user ADC). Never throws; on failure sets lastApiDiagnostic and [].
  */
-export async function queryTopIssues(_config: FirebaseConfig, token: string, errorTokens: readonly string[]): Promise<CrashlyticsIssue[]> {
+export async function queryTopIssues(config: FirebaseConfig, token: string, errorTokens: readonly string[]): Promise<CrashlyticsIssue[]> {
     if (cachedIssues && Date.now() < cachedIssues.expires) {
         return filterByTokens(cachedIssues.issues, errorTokens);
     }
@@ -59,7 +59,7 @@ export async function queryTopIssues(_config: FirebaseConfig, token: string, err
         lastApiDiagnostic = { step: 'config', errorType: 'config', checkedAt: Date.now(), message: 'No Android package name found — add google-services.json / AndroidManifest, or set saropaLogCapture.firebase.packageName.' };
         return [];
     }
-    const { data, diagnostic } = await fetchPlayErrorIssues({ packageName, token, timeRange: getTimeRange() }, issuePageSize);
+    const { data, diagnostic } = await fetchPlayErrorIssues({ packageName, token, timeRange: getTimeRange(), quotaProject: config?.projectId ?? '' }, issuePageSize);
     lastApiDiagnostic = diagnostic;
     if (diagnostic) { logCrashlytics('error', `Play errorIssues: ${diagnostic.message}`); return []; }
     cachedIssues = { issues: data, expires: Date.now() + issueListTtl };
@@ -85,12 +85,12 @@ export async function getCrashEventDetail(token: string, config: FirebaseConfig,
  * Sampled crash reports (stacks) for an issue, cached on disk. `config` unused (Play keys off package).
  * On failure sets lastApiDiagnostic and returns undefined.
  */
-export async function getCrashEvents(token: string, _config: FirebaseConfig, issueId: string): Promise<CrashlyticsIssueEvents | undefined> {
+export async function getCrashEvents(token: string, config: FirebaseConfig, issueId: string): Promise<CrashlyticsIssueEvents | undefined> {
     const cached = await readCachedEvents(issueId);
     if (cached) { return cached; }
     const packageName = await detectPackageName();
     if (!packageName) { return undefined; }
-    const { data, diagnostic } = await fetchPlayErrorReports({ packageName, token, timeRange: getTimeRange() }, issueId, reportSampleLimit);
+    const { data, diagnostic } = await fetchPlayErrorReports({ packageName, token, timeRange: getTimeRange(), quotaProject: config?.projectId ?? '' }, issueId, reportSampleLimit);
     if (diagnostic) { lastApiDiagnostic = diagnostic; return undefined; }
     if (data.length === 0) { return undefined; }
     const result: CrashlyticsIssueEvents = { issueId, events: data, currentIndex: 0 };
