@@ -6,8 +6,9 @@
 
 import { t } from '../../../l10n';
 import { escapeHtml } from '../../../modules/capture/ansi';
+import * as vscode from 'vscode';
 import { getCrashEvents } from '../../../modules/crashlytics/firebase-crashlytics';
-import { getFrameContexts } from '../../../modules/crashlytics/crash-frame-context';
+import { getFrameContexts, resolveFile } from '../../../modules/crashlytics/crash-frame-context';
 import { renderCrashDetail, renderDeviceDistribution } from '../../analysis/analysis-crash-detail';
 import type { CrashlyticsEventDetail } from '../../../modules/crashlytics/crashlytics-types';
 import type { PostFn } from './crashlytics-handlers';
@@ -59,6 +60,21 @@ function buildMarkdown(meta: IssueMeta, event?: CrashlyticsEventDetail): string 
         lines.push('```');
     }
     return lines.join('\n');
+}
+
+/** Open a clicked stack frame's source at its line in the editor (UX #1, jump to code). Never throws. */
+export async function openCrashFrame(file: string, line: number): Promise<void> {
+    const ws = vscode.workspace.workspaceFolders?.[0];
+    if (!file || !ws) { return; }
+    const uri = await resolveFile(file, ws.uri);
+    if (!uri) { return; }
+    try {
+        const doc = await vscode.workspace.openTextDocument(uri);
+        const pos = new vscode.Position(Math.max(0, line - 1), 0);
+        await vscode.window.showTextDocument(doc, { selection: new vscode.Range(pos, pos), viewColumn: vscode.ViewColumn.One });
+    } catch {
+        // Best-effort: a stale/renamed path just doesn't open.
+    }
 }
 
 /**

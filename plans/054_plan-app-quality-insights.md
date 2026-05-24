@@ -276,4 +276,32 @@ dependency. I'm **not** starting any code until you pick the entry point.
 directly removes the gcloud/PATH pain from bug_008, it's the smallest blast radius, and a clean
 sign-in + project picker unblocks every later stage. Stage 0 (verify the APIs) runs alongside it.
 
+---
+
+## User polish/feature roadmap (added 2026-05-24)
+
+After the consolidation into the viewer, the user listed 10 improvements. Status:
+
+**Functionality / UX**
+1. Interactive stack traces (jump to code) — **DONE**: app frames in the detail open the file at the line.
+2. Automatic symbolication / de-obfuscation (ProGuard/R8, dSYM, Flutter symbols) — **BIG, open.** Needs
+   symbol-file detection/upload + a symbolizer (`ndk-stack` / `llvm-symbolizer` / `flutter symbolize`).
+   Conditional on symbols being present; never claim symbolicated output without them.
+3. Advanced search — **partial.** Have type tabs + plain search + single-select version/device/OS.
+   Open: regex search, date-time range, multi-select.
+4. Issue-tracker integration ("Create Issue" → GitHub/Jira/Linear) — **open.** Have Copy-as-Markdown;
+   a GitHub-issue button could reuse the existing bug-report pipeline.
+5. Smart grouping / dedup — **already provided by the Play API** (issues are pre-clustered). No custom
+   clustering needed unless we want cross-issue merging.
+
+**UI / aesthetics**
+1. Modernize distribution charts (rounded, gradient, accent) — **DONE** (rounded + gradient bars).
+2. Pill badges with soft tints + icons — **DONE** (⊗/⏱/⚠ pills via theme tokens).
+3. Native theme-token compliance — **DONE for the new surfaces** (badges/bars/detail use `--vscode-*`).
+   Sweep: a few legacy hex values remain in older crashlytics styles.
+4. Syntax highlighting + smart noise collapse (collapse framework, keep app frames open) — **open.**
+   Overlaps the deferred "stack shows ~N frames + Show more" (renderFrameSection currently collapses
+   the whole stack into one `<details>` when >15 frames).
+5. Typography / spacing hierarchy — **DONE** for the sidebar list; detail spacing can be tuned further.
+
 Proceed with Stage 1 + Stage 0 next? (Or name a different stage to start with.)

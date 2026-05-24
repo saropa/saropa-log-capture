@@ -39,7 +39,10 @@ export function getCrashlyticsInteractionsScript(): string {
     if (cpDetailEl) {
         cpDetailEl.addEventListener('click', function(e) {
             if (e.target.closest('.cd-back')) { closeIssueDetail(); return; }
-            if (e.target.closest('.cd-copy')) { vscodeApi.postMessage({ type: 'copyToClipboard', text: cpDetailMarkdown }); }
+            if (e.target.closest('.cd-copy')) { vscodeApi.postMessage({ type: 'copyToClipboard', text: cpDetailMarkdown }); return; }
+            // Jump to code: an app frame opens the file at its line (UX #1).
+            var frame = e.target.closest('.frame-app[data-frame-file]');
+            if (frame) { vscodeApi.postMessage({ type: 'crashlyticsOpenFrame', file: frame.getAttribute('data-frame-file'), line: frame.getAttribute('data-frame-line') }); }
         });
     }
 
