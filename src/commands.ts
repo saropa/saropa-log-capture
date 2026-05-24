@@ -14,7 +14,6 @@ import { signalsCommands } from './commands-signals';
 import { bugReportCommands } from './commands-bug-report';
 import { qualityCommands } from './commands-quality';
 import { timelineCommands } from './commands-timeline';
-import { appQualityCommands } from './commands-app-quality';
 import { trashCommands } from './commands-trash';
 import { sessionLifecycleCommands, sessionActionCommands, historyBrowseCommands, historyEditCommands } from './commands-session';
 import { exportCommands } from './commands-export';
@@ -42,7 +41,6 @@ export function registerCommands(deps: CommandDeps, captureToggle: CaptureToggle
         ...bugReportCommands({ getFileUri: () => deps.viewerProvider.getCurrentFileUri(), context }),
         ...qualityCommands({ getFileUri: () => deps.viewerProvider.getCurrentFileUri() }),
         ...timelineCommands(),
-        ...appQualityCommands(),
         ...trashCommands(deps.historyProvider, () => deps.viewerProvider.getCurrentFileUri()),
         ...registerCollectionCommands({ context, collectionStore, historyProvider: deps.historyProvider, viewerProvider: deps.viewerProvider }),
         ...toolCommands(deps),
