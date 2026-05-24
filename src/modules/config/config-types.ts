@@ -180,6 +180,12 @@ export interface SaropaLogCaptureConfig {
   readonly fileTypes: readonly string[];
   readonly tailPatterns: readonly string[];
   readonly docsScanDirs: readonly string[];
+  /**
+   * Workspace-relative globs for locating the project CHANGELOG, most-canonical first. Drives the
+   * "may already be fixed" signal and per-line/session changelog lookups. Lets monorepos and
+   * docs/-based layouts point the scan at the right file instead of a root-only match.
+   */
+  readonly changelogPaths: readonly string[];
   readonly includeSubfolders: boolean;
   readonly treeRefreshInterval: number;
   /** Logs per page in Logs panel (pagination). */
