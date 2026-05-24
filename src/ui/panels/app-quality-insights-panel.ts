@@ -52,15 +52,11 @@ async function buildModel(): Promise<DashboardModel> {
     const packageName = (await detectPackageName()) ?? '';
     const timeRange = vscode.workspace.getConfiguration('saropaLogCapture.firebase').get<string>('timeRange', 'LAST_7_DAYS');
     lastConsoleUrl = ctx.consoleUrl;
-    // Download per-issue device/OS values for the local filters (sequential so the token cache from
-    // getFirebaseContext is reused; only when connected). undefined index just hides those filters.
-    const filterIndex = ctx.available ? await getIssueFilterIndex() : undefined;
     return {
         available: ctx.available,
         issues: ctx.issues,
         packageName,
         timeRange,
-        filterIndex,
         refreshNote: ctx.queriedAt ? formatElapsedLabel(ctx.queriedAt) : '',
         consoleUrl: ctx.consoleUrl,
         setupHint: ctx.setupHint ?? ctx.diagnostics?.message,
@@ -102,12 +98,20 @@ function errorHtml(): string {
 function handleMessage(msg: Record<string, unknown>): void {
     switch (msg.type) {
         case 'selectIssue': void sendDetail(String(msg.issueId ?? '')); return;
+        case 'requestFilterIndex': void sendFilterIndex(); return;
         case 'refresh': void render(); return;
         case 'setTimeRange': void applyTimeRange(String(msg.range ?? 'LAST_7_DAYS')); return;
         case 'openConsole': if (lastConsoleUrl) { void vscode.env.openExternal(vscode.Uri.parse(lastConsoleUrl)); } return;
         case 'openFrame': void openFrame(String(msg.file ?? ''), Number(msg.line ?? 0)); return;
         default: return;
     }
+}
+
+/** Lazy: download the per-issue device/OS index on first dropdown use and push it to the webview. */
+async function sendFilterIndex(): Promise<void> {
+    if (!panel) { return; }
+    const index = await getIssueFilterIndex();
+    if (panel && index) { panel.webview.postMessage({ type: 'filterIndex', index }); }
 }
 
 async function applyTimeRange(range: string): Promise<void> {
