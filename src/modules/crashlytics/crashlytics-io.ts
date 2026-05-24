@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import { execFile } from 'node:child_process';
 import { getLogDirectoryUri, getSaropaCacheCrashlyticsUri } from '../config/config';
 import { readDirectoryIfExistsAsDirectory } from '../misc/vscode-fs-read-directory-safe';
-import type { CrashlyticsIssueEvents, CrashlyticsEventDetail } from './crashlytics-types';
+import type { CrashlyticsIssueEvents, CrashlyticsEventDetail, CrashlyticsIssue } from './crashlytics-types';
 
 /** Shared timeout (ms) for both CLI commands and HTTP requests. */
 export const apiTimeout = 10_000;
@@ -40,6 +40,36 @@ function getCacheUri(issueId: string): vscode.Uri | undefined {
     const ws = vscode.workspace.workspaceFolders?.[0];
     if (!ws) { return undefined; }
     return vscode.Uri.joinPath(getSaropaCacheCrashlyticsUri(ws), `${issueId}.json`);
+}
+
+/** On-disk path for the cached issue list (.saropa/cache/crashlytics/issues.json). */
+function getIssuesCacheUri(): vscode.Uri | undefined {
+    const ws = vscode.workspace.workspaceFolders?.[0];
+    if (!ws) { return undefined; }
+    return vscode.Uri.joinPath(getSaropaCacheCrashlyticsUri(ws), 'issues.json');
+}
+
+/** Read the last persisted issue list (so issues stay visible offline). Undefined if none/invalid. */
+export async function readCachedIssues(): Promise<CrashlyticsIssue[] | undefined> {
+    const uri = getIssuesCacheUri();
+    if (!uri) { return undefined; }
+    try {
+        const raw = await vscode.workspace.fs.readFile(uri);
+        const parsed = JSON.parse(Buffer.from(raw).toString('utf-8')) as { issues?: unknown };
+        return Array.isArray(parsed.issues) ? parsed.issues as CrashlyticsIssue[] : undefined;
+    } catch { return undefined; }
+}
+
+/** Persist the latest issue list for offline use. Never throws (cache write is non-fatal). */
+export async function writeCachedIssues(issues: readonly CrashlyticsIssue[]): Promise<void> {
+    try {
+        const uri = getIssuesCacheUri();
+        if (!uri) { return; }
+        await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(uri, '..'));
+        await vscode.workspace.fs.writeFile(uri, Buffer.from(JSON.stringify({ issues, cachedAt: Date.now() }, null, 2)));
+    } catch {
+        // Non-fatal: a failed cache write just means no offline fallback this run.
+    }
 }
 
 /** Read cached crash events from disk; migrates v1 single-event format on the fly. */

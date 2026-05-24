@@ -20,6 +20,8 @@ export interface DashboardModel {
     readonly refreshNote: string;
     readonly consoleUrl?: string;
     readonly setupHint?: string;
+    /** When set, the issues are from the offline cache (not a fresh fetch) — shown as a stale banner. */
+    readonly staleNote?: string;
 }
 
 const TIME_RANGES: ReadonlyArray<readonly [string, string]> = [
@@ -84,7 +86,9 @@ function renderToolbar(model: DashboardModel): string {
     const options = TIME_RANGES.map(([value, label]) =>
         `<option value="${value}"${value === model.timeRange ? ' selected' : ''}>${label}</option>`).join('');
     const pkg = model.packageName ? `<span class="aqi-pkg">${escapeHtml(model.packageName)}</span>` : '';
-    const note = model.refreshNote ? `<span class="aqi-note">Updated ${escapeHtml(model.refreshNote)}</span>` : '';
+    const note = model.staleNote
+        ? `<span class="aqi-note aqi-stale">${escapeHtml(model.staleNote)}</span>`
+        : model.refreshNote ? `<span class="aqi-note">Updated ${escapeHtml(model.refreshNote)}</span>` : '';
     const consoleLink = model.consoleUrl
         ? `<a class="aqi-link" data-action="openConsole">Open Firebase Console ↗</a>` : '';
     return `<div class="aqi-toolbar">
