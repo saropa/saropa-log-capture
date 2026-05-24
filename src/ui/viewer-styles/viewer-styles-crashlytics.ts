@@ -157,19 +157,5 @@ export function getCrashlyticsPanelStyles(): string {
 /* --- Refresh note --- */
 .cp-refresh-note { font-weight: normal; font-size: 0.85em; opacity: 0.6; margin-left: 4px; }
 
-/* --- Event navigator (page through an issue's sampled events) --- */
-.crash-event-nav { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 4px 12px; font-size: 12px; color: var(--vscode-descriptionForeground); }
-.crash-nav-btn { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; border-radius: 3px; padding: 1px 8px; cursor: pointer; }
-.crash-nav-btn:disabled { opacity: 0.4; cursor: default; }
-.crash-nav-label { min-width: 90px; text-align: center; }
-
-/* --- Device/OS distribution (sampled across the fetched events; not a true aggregate) --- */
-.crash-dist-label { font-size: 11px; font-weight: 600; opacity: 0.75; margin: 4px 12px 2px; }
-.crash-dist-row { display: flex; align-items: center; gap: 6px; padding: 1px 12px; font-size: 11px; }
-.crash-dist-name { flex: 0 0 38%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.crash-dist-bar-bg { flex: 1; height: 8px; background: var(--vscode-editorWidget-background); border-radius: 3px; overflow: hidden; }
-.crash-dist-bar-fill { height: 100%; background: var(--vscode-charts-blue, #4daafc); }
-.crash-dist-count { flex: 0 0 auto; opacity: 0.7; }
-
 ` + getSetupStyles() + getDiagnosticStyles();
 }
