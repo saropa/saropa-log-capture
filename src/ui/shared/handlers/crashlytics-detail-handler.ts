@@ -40,6 +40,12 @@ function versionRange(meta: IssueMeta): string {
     return meta.lv || meta.fv || '';
 }
 
+/** Distinctive words from the issue title for a GitHub issue search (e.g. the exception class name). */
+function issueErrorTokens(meta: IssueMeta): string[] {
+    const words = (meta.title ?? '').split(/[^A-Za-z0-9_.]+/).filter(w => w.length > 3);
+    return [...new Set(words)].slice(0, 3);
+}
+
 /** Severity label + CSS class for the stat card, derived from the issue kind (ANR) or fatal flag. */
 function severity(meta: IssueMeta): { label: string; cls: string } {
     if (meta.kind === 'anr') { return { label: t('viewer.crashlytics.sev.anr'), cls: 'cd-sev-anr' }; }
@@ -117,7 +123,12 @@ export async function openCrashFrame(file: string, line: number): Promise<void> 
  */
 async function streamProjectInsights(issueId: string, event: CrashlyticsEventDetail, meta: IssueMeta, post: PostFn): Promise<void> {
     const top = topAppFrameRef(event);
-    const insights = await getProjectInsights({ file: top?.file, crashLine: top?.line, affectedVersion: meta.lv || meta.fv });
+    const insights = await getProjectInsights({
+        file: top?.file,
+        crashLine: top?.line,
+        affectedVersion: meta.lv || meta.fv,
+        errorTokens: issueErrorTokens(meta),
+    });
     if (!insights) { return; }
     const html = renderProjectInsights(insights);
     if (html) { post({ type: 'crashlyticsProjectInsights', issueId, html }); }
