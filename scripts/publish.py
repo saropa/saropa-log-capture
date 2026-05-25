@@ -108,6 +108,21 @@ if sys.platform == "win32":
                 # won't pre-fill the current version for editing.
                 pass
 
+# Force UTF-8 stdout so non-ASCII output never crashes the pipeline on a legacy
+# cp1252 Windows console. Step 9 now prints the l10n manual-translation gap list
+# verbatim — em dashes, ellipses, and CJK strings — which a cp1252 stdout cannot
+# encode. Must run before colorama.init() (triggered by the project imports
+# below) so colorama wraps the already-UTF-8 stream. Mirrors translate_l10n.py.
+import io
+try:
+    if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+        sys.stdout = io.TextIOWrapper(
+            sys.stdout.buffer, encoding="utf-8", errors="replace",
+        )
+except (AttributeError, ValueError):
+    # Already-wrapped or detached stdout (e.g. under a test runner) — leave it.
+    pass
+
 # ── Project imports ──────────────────────────────────────────
 # Grouped by layer: constants/config → display → data → actions.
 from modules.publish.constants import C, ExitCode, PROJECT_ROOT
