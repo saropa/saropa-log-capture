@@ -27,6 +27,7 @@ from datetime import datetime
 from pathlib import Path
 
 from modules.verify.l10n_brands import (
+    is_acronym_only,
     is_brand_only,
     validate_brands,
 )
@@ -262,15 +263,17 @@ def run_audit() -> AuditResult:
         orphan_count = sum(
             1 for k in bundle_keys if k not in expected_values
         )
-        # Untranslated = value identical to English AND not a brand-only
-        # string. Brand-only strings (e.g. "Saropa Lints") are correctly
-        # identical to English — identity IS the translation.
+        # Untranslated = value identical to English AND neither a brand-only
+        # string nor a technical acronym. Brand-only ("Saropa Lints") and
+        # acronyms ("SQL", "ANR") are correctly identical to English — identity
+        # IS the translation, so they must not be counted as gaps.
         untranslated_keys = [
             k
             for k in bundle_keys
             if k in expected_values
             and bundle[k] == k
             and not is_brand_only(k)
+            and not is_acronym_only(k)
         ]
         # Brand-mangled = translated but a brand token got transliterated
         # or removed (e.g. "Saropa Log Capture" → "Saropa-Protokollerfassung").

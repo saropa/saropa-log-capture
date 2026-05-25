@@ -220,11 +220,57 @@ def check_file_line_limits() -> bool:
     return True
 
 
-def check_l10n_bundles() -> bool:
-    """Sync English bundle, translate all locales, then report coverage.
+def _report_l10n_manual_gaps(audit: object) -> None:
+    """List every string still equal to English per locale, and export the list.
 
-    Runs the full translate pipeline so publish always ships with up-to-date
-    translations. Requires ``pip install deep-translator``.
+    After auto-translation, a locale value can still equal English for two
+    reasons that look identical to the audit: (1) it genuinely needs a human
+    (Google could not render it), or (2) English IS correct here — acronyms
+    (ANR, SQL, OK), brand tokens (Crashlytics, Docker), or words spelled the
+    same in the target language (Error in Spanish, Pause/Terminal in German).
+    The tool cannot tell these apart, so it lists them all for human review
+    rather than guessing. A bare count is not reviewable — print each English
+    string once (deduped, with the locales it is English in) and write a CSV
+    worklist. Apply a fix by setting the value in the matching locale bundle;
+    publish keeps real translations and only ever fills English ones.
+    """
+    from modules.publish.display import info
+    from modules.verify.l10n_bundle_audit import write_gap_export
+
+    # Dedupe by English string: the same string is usually English across
+    # several locales, so show each once with the locales it is English in.
+    english_in: dict[str, list[str]] = {}
+    for lc in audit.locale_coverage:  # type: ignore[attr-defined]
+        for entry in lc.untranslated_entries:
+            english_in.setdefault(entry.en_value, []).append(lc.locale)
+    if not english_in:
+        return
+
+    warn(
+        f"l10n: {len(english_in)} string(s) are still English in one or more "
+        "locales — review and translate by hand where English is wrong:"
+    )
+    for en_val in sorted(english_in):
+        locs = ", ".join(sorted(english_in[en_val]))
+        display = en_val if len(en_val) <= 70 else en_val[:67] + "..."
+        print(f'         {C.YELLOW}"{display}"{C.RESET} — {locs}')
+
+    export = write_gap_export(audit, fmt="csv")  # type: ignore[arg-type]
+    if export:
+        rel = os.path.relpath(export, PROJECT_ROOT)
+        info(
+            f"l10n: worklist written to {rel} — apply a translation by setting "
+            "its value in the matching l10n/bundle.l10n.<locale>.json."
+        )
+
+
+def check_l10n_bundles() -> bool:
+    """Sync English bundle, fill missing translations, then surface the gaps.
+
+    Translates only strings ABSENT from each locale bundle (genuine new/changed
+    keys — changing an English source string makes a new key). Strings Google
+    leaves as English are NOT re-sent every publish; they are listed and
+    exported for manual translation. Requires ``pip install deep-translator``.
 
     Returns False only on a hard failure (English sync broke). Translation
     errors for individual locales are logged but do not block the pipeline —
@@ -284,8 +330,12 @@ def check_l10n_bundles() -> bool:
         def on_progress(done: int, total: int, _loc: str = locale) -> None:
             print(f"\r    {_loc}: {done}/{total} translated…", end="", flush=True)
 
+        # only_missing=True: publish fills genuine gaps only — keys absent from
+        # the bundle, which includes changed-English strings (they become new
+        # keys). en-copy keys (already value == English) are not re-sent every
+        # publish; recover those with `python scripts/translate_l10n.py`.
         translated, _kept, _brand, errors, aborted = translate_locale(
-            locale, canonical, on_progress=on_progress,
+            locale, canonical, only_missing=True, on_progress=on_progress,
         )
         # Close the transient \r line before any structured ok/warn output.
         if translated or errors:
@@ -310,7 +360,7 @@ def check_l10n_bundles() -> bool:
     if total_translated == 0 and total_errors == 0:
         ok("l10n translations already complete — nothing to do")
 
-    # ── Step D: report final coverage ──────────────────────────
+    # ── Step D: report final coverage + surface manual-translation gaps ──
     final = run_audit()
     for lc in final.locale_coverage:
         if lc.missing_count > 0 or lc.untranslated_count > 0:
@@ -319,6 +369,10 @@ def check_l10n_bundles() -> bool:
                 f"({lc.missing_count} missing, "
                 f"{lc.untranslated_count} untranslated)"
             )
+
+    # List + export the exact strings a human still needs to translate. A bare
+    # per-locale count is not enough to act on — the user asked to see the keys.
+    _report_l10n_manual_gaps(final)
 
     # Translation gaps are not fatal — partial coverage is fine.
     return True
