@@ -5,9 +5,12 @@ Uses ``deep-translator`` (``pip install deep-translator``) which wraps the
 public Google Translate endpoint. No API key needed. Rate limits apply but
 are generous enough for the ~300 strings x 10 locales in this project.
 
-Each locale's bundle is updated in place: missing keys are added, untranslated
-keys (value == English) are retranslated. Existing real translations are never
-overwritten.
+Each locale's bundle is updated in place: missing keys are added (this is also
+how "out of date" strings flow through — changing an English source string
+makes a new key). Untranslated keys (value == English) are retranslated only
+when only_missing is False (the deliberate translate_l10n.py run); the publish
+pipeline passes only_missing=True and leaves them alone. Existing real
+translations are never overwritten.
 
 Brand names are shielded from translation using placeholder substitution
 (see l10n_brands.py). After translation, brands are restored and validated.
@@ -26,6 +29,7 @@ from modules.verify.l10n_bundle_audit import (
     extract_all_source_strings,
 )
 from modules.verify.l10n_brands import (
+    is_acronym_only,
     is_brand_only,
     shield_brands,
     unshield_brands,
@@ -189,9 +193,20 @@ def translate_locale(
     canonical_keys: set[str],
     *,
     dry_run: bool = False,
+    only_missing: bool = False,
     on_progress: Callable[[int, int], None] | None = None,
 ) -> tuple[int, int, int, int, bool]:
     """Translate missing/untranslated strings for one locale.
+
+    only_missing scopes the run to genuine gaps: keys ABSENT from the bundle.
+    Because every bundle is keyed by the English text, changing an English
+    source string produces a NEW key — so "out of date" strings are absent
+    from the locale and ARE filled. What only_missing skips is en-copy keys
+    (already present with value == English): those were attempted before, and
+    re-sending them to Google on every publish is identical-output network
+    waste. The publish pipeline passes only_missing=True; the deliberate
+    translate_l10n.py run leaves it False so it can re-attempt en-copy and
+    recover strings whose previous translation failed to English.
 
     on_progress, if given, is called as on_progress(done, total) after every
     network attempt so callers can render a live counter — a backlog of
@@ -200,7 +215,8 @@ def translate_locale(
 
     Returns (translated, kept, brand, errors, aborted).
       translated = newly translated this run.
-      kept       = already had a real non-English translation.
+      kept       = already had a real non-English translation (or, under
+                   only_missing, an en-copy key left in place).
       brand      = brand-only strings where identity IS correct.
       errors     = API call failed, kept English as fallback.
       aborted    = circuit breaker tripped (endpoint rate-limiting); the
@@ -234,11 +250,21 @@ def translate_locale(
 
     # Strings that will need a real network call this run — the denominator
     # for on_progress so the live counter reads "done/total", not "done/?".
-    total_todo = sum(
-        1
-        for k in canonical_keys
-        if not is_brand_only(k) and not (bundle.get(k) and bundle.get(k) != k)
-    )
+    # Must mirror the per-key skip logic in the loop below, including the
+    # only_missing en-copy skip, or the counter overshoots its total.
+    def _needs_network(k: str) -> bool:
+        # Brands and acronyms are forced English (no network) regardless of any
+        # existing value — mirror the loop's order so this denominator matches.
+        if is_brand_only(k) or is_acronym_only(k):
+            return False
+        existing = bundle.get(k)
+        if existing and existing != k:
+            return False  # real, non-English translation already present
+        if only_missing and existing == k:
+            return False  # en-copy: attempted before, not re-sent on publish
+        return True
+
+    total_todo = sum(1 for k in canonical_keys if _needs_network(k))
     attempted = 0
 
     # requests has no default timeout, so without this a stalled Google
@@ -259,8 +285,26 @@ def translate_locale(
                 brand += 1
                 continue
 
+            # Technical acronyms (ANR, SQL, OS, …) are English in EVERY locale.
+            # Checked before the keep-existing branch on purpose: this overwrites
+            # any prior translation so the label is uniform across locales (no
+            # mix of "OK" and "わかりました"). Never sent to the translator.
+            if is_acronym_only(en_key):
+                bundle[en_key] = en_key
+                kept += 1
+                continue
+
             # Already has a real (non-English) translation — keep it.
             if existing and existing != en_key:
+                kept += 1
+                continue
+
+            # Publish path: skip en-copy keys (present, value == English).
+            # Genuine gaps and changed-English strings are ABSENT from the
+            # bundle and still flow through below, so "out of date" still
+            # regenerates. Re-sending en-copy every publish is identical-output
+            # network waste — recover those via translate_l10n.py instead.
+            if only_missing and existing == en_key:
                 kept += 1
                 continue
 
