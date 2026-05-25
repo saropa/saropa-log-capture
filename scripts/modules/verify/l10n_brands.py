@@ -7,9 +7,11 @@ mangles them (e.g. "Saropa Lints" → "Saropa-Fusseln" in German,
 "サロパリント" in Japanese, "Pelusas Saropa" in Spanish).
 
 Two categories:
-  - BRAND_ONLY: the entire English string IS the brand. The translation
-    must be identical to the English string. These are excluded from
-    "untranslated" counts in the audit because identity is correct.
+  - BRAND_ONLY: the entire English string IS brand name(s); the translation
+    must equal the English. is_brand_only() returns True both for the explicit
+    BRAND_ONLY_STRINGS set AND for any string made up of nothing but
+    BRAND_TOKENS (e.g. "Crashlytics", "Docker", "Google"), so single-brand
+    strings are never sent to the translator and never counted as untranslated.
   - BRAND_TOKENS: substrings that must appear verbatim inside longer
     translated strings. Used to validate translations and to shield
     brands from Google Translate via placeholder substitution.
@@ -17,12 +19,30 @@ Two categories:
 
 import re
 
-# Strings where the ENTIRE value is a brand name or technical identifier.
-# These must never be translated — the correct translation IS the English.
-# Checked with exact equality: en_value in BRAND_ONLY_STRINGS.
+# Explicit full strings that are brand-only but are NOT composed purely of
+# BRAND_TOKENS, so is_brand_only()'s token derivation can't catch them on its
+# own. "Saropa Lints" is the case in point: "Saropa" is a token but "Lints" is
+# not, so without this set it would look half-translatable. Pure-token strings
+# ("Crashlytics", "Docker", "Saropa Log Capture") do NOT need listing here.
 BRAND_ONLY_STRINGS: frozenset[str] = frozenset({
     "Saropa Lints",
-    "Saropa Log Capture",
+})
+
+# Standalone technical acronyms/initialisms that are English in every locale.
+# Judgement call (see is_acronym_only): only all-caps initialisms that are
+# universally English in developer tooling. Deliberately EXCLUDED: abbreviations
+# of translatable words (Dev, Perf, Ver) and log levels the project already
+# translates (Error→Fehler, Warning→Warnung — so FATAL/Info/Debug stay
+# translatable for consistency). Like brands, these are FORCED to English: the
+# translator overwrites any prior translation so the label is uniform across
+# locales (no mix of "OK" and "わかりました").
+ACRONYM_ONLY_STRINGS: frozenset[str] = frozenset({
+    "ANR",   # Android: Application Not Responding
+    "SQL",
+    "OS",    # Operating System
+    "DB",    # Database
+    "OK",    # universal confirm label
+    "TODO",  # source-code keyword
 })
 
 # Substrings that must survive translation verbatim. Ordered longest-first
@@ -49,6 +69,7 @@ BRAND_TOKENS: tuple[str, ...] = (
     "Cursor",
     "Claude",
     "Open VSX",
+    "YouTube",
     # Technical identifiers that look like words but must stay literal.
     ".saropa",
     ".slc",
@@ -60,8 +81,40 @@ BRAND_TOKENS: tuple[str, ...] = (
 
 
 def is_brand_only(en_value: str) -> bool:
-    """True if the entire string is a brand and must not be translated."""
-    return en_value in BRAND_ONLY_STRINGS
+    """True if the ENTIRE string is brand name(s) and must never be translated.
+
+    Two cases, both identity (the correct translation IS the English text):
+      - an explicit full string in BRAND_ONLY_STRINGS;
+      - any string that is nothing but brand tokens plus whitespace/punctuation
+        once every token is shielded — e.g. "Google", "YouTube", "Crashlytics",
+        "Docker", "Firebase Crashlytics", ".env".
+
+    Without the second case, a string that is JUST a brand gets sent to the
+    translator and then counted as "untranslated" forever (value == English),
+    which both wastes a network call and pollutes the manual-translation gap
+    report with names that must stay verbatim.
+    """
+    if en_value in BRAND_ONLY_STRINGS:
+        return True
+    shielded, replacements = shield_brands(en_value)
+    if not replacements:
+        return False  # contains no brand token at all — translate normally
+    # Drop the placeholders; if only whitespace/punctuation remains, the whole
+    # string was brand(s) and there is nothing left to translate.
+    for placeholder, _brand in replacements:
+        shielded = shielded.replace(placeholder, "")
+    return not any(ch.isalnum() for ch in shielded)
+
+
+def is_acronym_only(en_value: str) -> bool:
+    """True if the whole string is a technical acronym forced English everywhere.
+
+    Exact-match only — an acronym inside a longer sentence (e.g. "Clear SQL
+    baseline") is still translated normally; just the standalone label is forced
+    to English. Callers force identity (overwrite any prior translation) so the
+    label is uniform across all locales.
+    """
+    return en_value in ACRONYM_ONLY_STRINGS
 
 
 def validate_brands(en_value: str, translated: str) -> list[str]:
