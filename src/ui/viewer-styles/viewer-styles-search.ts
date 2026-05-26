@@ -50,7 +50,10 @@ export function getSearchStyles(): string {
 }
 #search-input {
     flex: 1;
-    min-width: 0;
+    /* Floor the textbox so trailing controls (toggles + colored badge + nav + funnel)
+       can't squeeze it down to a few characters; the shell still shrinks via the
+       container's max-width when the panel is narrow. */
+    min-width: 140px;
     background: transparent;
     color: var(--vscode-input-foreground);
     border: none;
@@ -88,19 +91,26 @@ export function getSearchStyles(): string {
 body.search-match-options-always .session-search-toggles-inline {
     display: flex;
 }
+/* Colored pill badge — mirrors .toolbar-badge / .find-summary-count pattern so the count reads as
+   a result indicator (badge_background) instead of dimmed body text. Empty span collapses so the
+   gutter has no width when there is nothing to show. */
 .session-search-match-count {
     font-size: 11px;
     line-height: 1;
     font-family: var(--vscode-font-family);
-    color: var(--vscode-input-foreground);
-    opacity: 0.85;
+    background: var(--vscode-badge-background, #4d4d4d);
+    color: var(--vscode-badge-foreground, #fff);
     white-space: nowrap;
-    max-width: 64px;
+    max-width: 140px;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding: 0 5px 0 3px;
+    padding: 3px 8px;
+    margin: 0 4px;
+    border-radius: 10px;
     user-select: none;
+    font-weight: 600;
 }
+.session-search-match-count:empty { display: none; }
 /* Borderless icon buttons — same idea as find widget / workbench toolbar */
 .session-search-icon-btn {
     display: flex;

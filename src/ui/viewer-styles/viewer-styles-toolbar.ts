@@ -131,10 +131,14 @@ export function getToolbarStyles(): string {
 .search-flyout {
     position: absolute;
     top: 0;
-    right: 0;
+    /* Indent from the right frame so the flyout doesn't hug the panel edge
+       (previously right:0 made the input feel pinned and cramped). */
+    right: 12px;
     z-index: 100;
-    width: 350px;
-    max-width: calc(100% - 16px);
+    /* Bumped width to give the textbox usable space after the case/word/regex
+       toggles, the "Showing N of M" badge, and nav/funnel buttons all share the row. */
+    width: 480px;
+    max-width: calc(100% - 24px);
     background: var(--vscode-editorWidget-background, var(--vscode-panel-background));
     color: var(--vscode-editorWidget-foreground, var(--vscode-foreground));
     border: 1px solid var(--vscode-editorWidget-border, var(--vscode-panel-border));
