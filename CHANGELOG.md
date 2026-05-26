@@ -27,6 +27,18 @@ cspell:disable
 
 ---
 
+## [7.14.1]
+
+### Fixed
+
+- **Magnifier icon in the log viewer title bar now opens the search panel** — the `$(search)` icon in the view title bar (which runs `saropaLogCapture.toggleSearchOverlay`) was setting search state and focusing the input, but the `#search-flyout` container stayed `display:none`, so nothing appeared. Mirrored the existing `closeSearch → closeSearchFlyout` wrapper with an `openSearch → openSearchFlyout` wrapper in [viewer-toolbar-script.ts](src/ui/viewer-toolbar/viewer-toolbar-script.ts), so the flyout is shown whenever `openSearch()` is called from outside the toolbar's own button.
+
+### Changed
+
+- **Search match count is now a colored badge pill** — replaced the dimmed `"4/408"` body text in the search flyout with a `"Showing 4 of 408"` pill using `--vscode-badge-background` / `--vscode-badge-foreground`, so the count reads as a result indicator (matches the badge style used by the toolbar search-count, find panel, and bookmarks). Styling lives in [viewer-styles-search.ts](src/ui/viewer-styles/viewer-styles-search.ts) (`.session-search-match-count`); text format in [viewer-search.ts](src/ui/viewer-search-filter/viewer-search.ts) `updateMatchDisplay()`.
+
+---
+
 ## [7.14.0]
 
 Crashlytics now reads crash data from the real public API (Google Play Developer Reporting) instead of a dead endpoint, finds gcloud even when it was never put on PATH, tells you exactly which step failed and how to fix it, and never silently shows "no crashes" when a call actually failed.
