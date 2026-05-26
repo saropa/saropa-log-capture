@@ -191,7 +191,9 @@ function updateMatchDisplay() {
     if (matchIndices.length === 0) {
         if (matchCountEl) matchCountEl.textContent = (searchInputEl && searchInputEl.value) ? 'No matches' : '';
     } else {
-        if (matchCountEl) matchCountEl.textContent = (currentMatchIdx + 1) + '/' + matchIndices.length;
+        /* "Showing X of N" reads as a result count badge (matches sibling panel filters
+           and the screenshot pattern); previous "X/Y" looked like a fraction in body text. */
+        if (matchCountEl) matchCountEl.textContent = 'Showing ' + (currentMatchIdx + 1) + ' of ' + matchIndices.length;
     }
     var sp = document.getElementById('search-prev');
     var sn = document.getElementById('search-next');

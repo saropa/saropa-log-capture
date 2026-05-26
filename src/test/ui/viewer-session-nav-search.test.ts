@@ -99,6 +99,32 @@ suite('Viewer toolbar search', () => {
         );
     });
 
+    /* Title-bar $(search) icon → toggleSearchOverlay command → triggerToggleSearch
+       → toggleSearchPanel() → openSearch(). Without this wrapper the input is
+       focused while the flyout is still `display:none`, so the search UI never
+       becomes visible. Mirrors the closeSearch wrapper above. */
+    test('toolbar script hooks openSearch to also open flyout', () => {
+        const src = readSrc('ui/viewer-toolbar/viewer-toolbar-script.ts');
+        assert.ok(
+            src.includes('_origOpenSearch') && src.includes('openSearchFlyout'),
+            'toolbar script should hook openSearch to open flyout so the title-bar magnifier works',
+        );
+    });
+
+    test('search match count uses "Showing N of M" format and badge styling', () => {
+        const searchSrc = readSrc('ui/viewer-search-filter/viewer-search.ts');
+        assert.ok(
+            searchSrc.includes("'Showing ' + (currentMatchIdx + 1) + ' of ' + matchIndices.length"),
+            'updateMatchDisplay should emit "Showing N of M" text',
+        );
+        const cssSrc = readSrc('ui/viewer-styles/viewer-styles-search.ts');
+        assert.ok(
+            cssSrc.includes('--vscode-badge-background')
+            && cssSrc.includes('.session-search-match-count'),
+            '.session-search-match-count should use --vscode-badge-background',
+        );
+    });
+
     test('session header has no smart-sticky logic', () => {
         const src = readSrc('ui/viewer-nav/viewer-session-header.ts');
         assert.ok(

@@ -198,6 +198,21 @@ export function getToolbarScript(): string {
         closeSearch = function() { _origCloseSearch(); closeSearchFlyout(); };
     }
 
+    /* ---- Sync openSearch → show flyout ----
+       Title-bar $(search) icon → toggleSearchOverlay command → triggerToggleSearch
+       → toggleSearchPanel() → openSearch(). Without this wrapper the input is
+       focused while still display:none, so the search UI never becomes visible. */
+
+    var _origOpenSearch = typeof openSearch === 'function' ? openSearch : null;
+    if (_origOpenSearch) {
+        openSearch = function() {
+            _origOpenSearch();
+            if (searchFlyout && searchFlyout.classList.contains('u-hidden')) {
+                openSearchFlyout();
+            }
+        };
+    }
+
     /* ---- Backward-compat aliases ---- */
 
     window.openFiltersPanel = function() { if (typeof setActivePanel === 'function') setActivePanel('filters'); };
