@@ -134,6 +134,65 @@ function isUrlPort(match: string, context: string): boolean {
     return /\/\/[^/]*$/.test(before);
 }
 
+/**
+ * Bare absolute paths (no `:line[:col]` tail), e.g. Claude Code Edit/Write
+ * tool calls that surface as `[AI Edit] d:/src/contacts/lib/foo.dart` rows.
+ *
+ * Conservative pattern — must START with either a Windows drive letter
+ * (`d:/`, `D:\`) or a POSIX root (`/`). Bare relative paths and single
+ * filenames are intentionally NOT matched: linkifying prose mentions
+ * like "see foo.dart" or "lib/foo.dart for context" causes false
+ * positives and contradicts the deliberate negative-case in
+ * `linkifyHtml` ("see foo.dart 42 description" must stay plain).
+ *
+ * Negative lookbehind `(?<![\w./\\:~-])` ensures the path starts at a
+ * word/path boundary — without it the leading `/` could attach itself
+ * mid-string and falsely match the `/foo.dart` inside `lib/foo.dart`
+ * (relative path) or `https://example.com/foo.dart` (URL).
+ *
+ * Branches A/B in `linkifyHtml` still own paths that carry a line/col
+ * tail; this branch only fires for the bare-path case those branches
+ * deliberately skip. Opens at line 1 (the only sensible default).
+ */
+const BARE_PATH_PATTERN_SRC =
+    `(?<![\\w./\\\\:~-])(?:[A-Za-z]:[\\\\/]|/)[\\w./\\\\:~-]+\\.(EXT_SET)\\b`;
+
+function buildBarePathPattern(): RegExp {
+    const extAlt = [...sourceExtensions].join('|');
+    const src = BARE_PATH_PATTERN_SRC.replace(/EXT_SET/g, extAlt);
+    return new RegExp(src, 'g');
+}
+
+const barePathRegex = buildBarePathPattern();
+
+/**
+ * Wrap bare absolute paths in `<a class="source-link">` tags. Used for AI
+ * activity lines (`[AI Edit] d:/src/contacts/lib/foo.dart`) which lack the
+ * `:line` tail the stack-frame linkifier requires. Splits on HTML tags so
+ * already-wrapped content (e.g. existing source-links from `linkifyHtml`)
+ * is not double-linkified.
+ */
+export function linkifyBarePaths(html: string): string {
+    if (!html) { return html; }
+    return html.replace(/(<[^>]*>)|([^<]+)/g, (_match, tag: string | undefined, text: string | undefined) => {
+        if (tag) {
+            return tag;
+        }
+        return linkifyBarePathSegment(text!);
+    });
+}
+
+function linkifyBarePathSegment(text: string): string {
+    barePathRegex.lastIndex = 0;
+    return text.replace(barePathRegex, (match: string) => {
+        // Normalize backslashes for display; original match still wraps the
+        // path verbatim so the click handler receives the unmodified path.
+        const safePath = escapeHtml(match);
+        const pathSpans = buildPathSegmentSpans(match.replace(/\\/g, '/'));
+        return `<a class="source-link" data-path="${safePath}" data-line="1">${pathSpans}</a>`;
+    });
+}
+
 /** A parsed source reference from a log line. */
 export interface SourceReference {
     readonly filePath: string;

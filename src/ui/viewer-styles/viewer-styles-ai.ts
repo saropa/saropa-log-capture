@@ -17,8 +17,13 @@ export function getAiStyles(): string {
 
 .line.ai-line {
     border-left: 3px solid var(--vscode-terminal-ansiMagenta, #bc3fbc);
-    padding-left: 13px;
     opacity: 0.85;
+}
+/* Decoration-off rows have no .line-decoration prefix, so they don't inherit
+   the regular hanging-indent padding from viewer-styles-decoration.ts. Without
+   this fallback the message would butt directly against the 3px accent rail. */
+.line.ai-line:not(:has(.line-decoration)) {
+    padding-left: 13px;
 }
 
 /* --- User prompt breadcrumbs --- */
