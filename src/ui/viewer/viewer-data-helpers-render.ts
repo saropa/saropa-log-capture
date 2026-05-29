@@ -188,7 +188,16 @@ function renderItem(item, idx, prevVis) {
         if (item.compressDupCount > 1) {
             aiCompress = '<span class="compress-dup-badge" title="' + vt('viewer.deco.identicalLines', item.compressDupCount) + '">(×' + item.compressDupCount + ')</span> ';
         }
-        return '<div class="line ai-line ' + aiCat + matchCls + spacingCls + '"' + idxAttr + '>' + aiPrefix + aiCompress + aiBody + '</div>';
+        /* Prefix chain parity: regular rows render deco (line-number + timestamp
+           gutter) + elapsed (+Nms badge) + slow-gap divider before the message.
+           AI rows previously skipped all three, which left [AI Bash]/[AI Edit]
+           text slammed against the left edge and out of the line-number column
+           the rest of the log occupies. The .ai-line border-left rail still
+           draws via the .line:has(.line-decoration) padding-left override
+           (decoration column takes precedence) and the .ai-line padding-left
+           fallback in viewer-styles-ai.ts covers decoration-off mode. */
+        var _aiGap = (typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '', _aiDeco = (typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item, idx, item._hiddenAfter) : '', _aiElapsed = (typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '';
+        return _aiGap + '<div class="line ai-line ' + aiCat + matchCls + spacingCls + '"' + idxAttr + '>' + _aiDeco + _aiElapsed + aiPrefix + aiCompress + aiBody + '</div>';
     }
     var cat = (item.category === 'stderr' && stderrTreatAsError) ? ' cat-stderr' : '';
     var lcOn = (typeof lineColorsEnabled !== 'undefined' && lineColorsEnabled);

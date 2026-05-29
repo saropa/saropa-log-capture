@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { linkifyHtml, linkifyUrls } from '../../../modules/source/source-linker';
+import { linkifyHtml, linkifyUrls, linkifyBarePaths } from '../../../modules/source/source-linker';
 
 suite('linkifyHtml', () => {
     test('should linkify simple file:line pattern', () => {
@@ -240,5 +240,70 @@ suite('linkifyUrls', () => {
     test('should not double-linkify existing source-link anchors', () => {
         const input = '<a class="source-link" data-path="file.ts" data-line="1">file.ts:1</a>';
         assert.strictEqual(linkifyUrls(input), input);
+    });
+});
+
+suite('linkifyBarePaths', () => {
+    test('should linkify Windows drive-letter path with forward slashes', () => {
+        const result = linkifyBarePaths('[AI Edit] d:/src/contacts/lib/views/home/home_tab.dart');
+        assert.ok(result.includes('class="source-link"'));
+        assert.ok(result.includes('data-path="d:/src/contacts/lib/views/home/home_tab.dart"'));
+        assert.ok(result.includes('data-line="1"'));
+    });
+
+    test('should linkify Windows drive-letter path with backslashes', () => {
+        const result = linkifyBarePaths('[AI Read] D:\\src\\contacts\\lib\\main.dart');
+        // data-path keeps the raw text; segment spans normalize for display.
+        assert.ok(result.includes('class="source-link"'));
+        assert.ok(result.includes('D:\\src\\contacts\\lib\\main.dart'));
+    });
+
+    test('should linkify POSIX absolute path', () => {
+        const result = linkifyBarePaths('[AI Write] /usr/local/src/app.ts');
+        assert.ok(result.includes('class="source-link"'));
+        assert.ok(result.includes('data-path="/usr/local/src/app.ts"'));
+    });
+
+    test('should NOT linkify bare filename in prose (no leading root)', () => {
+        // Critical: keeps the existing "see foo.dart 42 description" guarantee
+        // intact for prose mentions on regular log lines.
+        const result = linkifyBarePaths('the file foo.dart contains');
+        assert.ok(!result.includes('source-link'));
+    });
+
+    test('should NOT linkify relative path without leading root', () => {
+        // `lib/foo.dart` could appear in prose ("touched lib/foo.dart") — too
+        // ambiguous to wrap automatically. AI tool calls use absolute paths.
+        const result = linkifyBarePaths('the file lib/foo.dart needs review');
+        assert.ok(!result.includes('source-link'));
+    });
+
+    test('should not double-wrap inside existing HTML tags', () => {
+        const input = '<a data-x="d:/foo.dart">text</a>';
+        const result = linkifyBarePaths(input);
+        // The attribute value sits inside a tag, so the tag-split regex skips it.
+        assert.strictEqual(result, input);
+    });
+
+    test('should reject URL-like context (preceding //)', () => {
+        const result = linkifyBarePaths('see https://example.com/foo.dart for docs');
+        assert.ok(!result.includes('source-link'));
+    });
+
+    test('should handle empty string', () => {
+        assert.strictEqual(linkifyBarePaths(''), '');
+    });
+
+    test('should not match unsupported extension', () => {
+        const result = linkifyBarePaths('/tmp/build.log');
+        // .log is not in the source-extension allowlist.
+        assert.ok(!result.includes('source-link'));
+    });
+
+    test('should linkify only the path, leaving surrounding text untouched', () => {
+        const result = linkifyBarePaths('[AI Edit] d:/src/app.ts (modified)');
+        assert.ok(result.startsWith('[AI Edit] '));
+        assert.ok(result.endsWith(' (modified)'));
+        assert.ok(result.includes('class="source-link"'));
     });
 });
