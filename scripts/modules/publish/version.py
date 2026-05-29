@@ -175,11 +175,13 @@ def _write_package_version(version: str) -> bool:
 
 
 def _stamp_changelog(version: str) -> bool:
-    """Replace '## [Unreleased]' or '## [version] - Unreleased' with '## [version]', then add new Unreleased.
+    """Replace '## [Unreleased]' or '## [version] - Unreleased' with '## [version]'.
 
     Version-only heading (no date). Called during validation so the
-    CHANGELOG is finalized before packaging. After stamping, inserts a
-    fresh '## [Unreleased]' section at the top for future development.
+    CHANGELOG is finalized before packaging. A fresh '## [Unreleased]'
+    is NOT injected here — the next publish run's `_ensure_unreleased_section`
+    adds one only if real changelog entries accumulated, so we don't pre-seed
+    empty placeholder sections that pollute the diff.
     """
     changelog_path = _resolve_changelog_path()
     try:
@@ -202,10 +204,6 @@ def _stamp_changelog(version: str) -> bool:
     if count == 0:
         fail("Could not find '## [Unreleased]' or '## [version] - Unreleased' in CHANGELOG.md")
         return False
-
-    # Insert a new ## [Unreleased] section before the just-stamped version
-    new_unreleased = "## [Unreleased]\n\n---\n\n"
-    updated = updated.replace(replacement, new_unreleased + replacement, 1)
 
     if not _try_write_changelog_file(changelog_path, updated):
         return False
