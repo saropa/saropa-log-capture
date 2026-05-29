@@ -2696,7 +2696,7 @@
   "dependencies": {
     "google-auth-library": "^9.15.0",
     "jszip": "^3.10.1",
-    "ws": "^8.20.0"
+    "ws": "^8.20.1"
   },
   "overrides": {
     "serialize-javascript": "^7.0.3",
