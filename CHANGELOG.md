@@ -27,6 +27,14 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Log Viewer rows no longer ghost previous content as a colored shadow** — recycling a virtualized row slot from one level (e.g. `level-info`, blue) to another (`level-database`, green) via `viewportEl.innerHTML = …` could leave Chromium with un-invalidated paint inside the row's bounding box: the new green text drew correctly but faint blue pixels of the old text stayed visible until a `:hover` repaint cleared the layer. Most visible on the Drift disconnect line because it sat in a slot that had just held an `Application finished.` info line. Added `transform: translateZ(0)` to the `.line, .stack-header` base rule in [viewer-styles-lines.ts](src/ui/viewer-styles/viewer-styles-lines.ts) so every visible row gets its own compositor layer and paints atomically on row recycle. Virtualization keeps ~50 rows live at a time, so the GPU-memory hit is bounded.
+
+---
+
 ## [7.14.1]
 
 ### Fixed
