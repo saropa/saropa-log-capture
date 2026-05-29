@@ -87,6 +87,28 @@ test("url-link reveals blue on hover", () => {
 
 // --- Recent-error-context border ---
 
+// --- Compositor-layer isolation on every row ---
+
+test(".line, .stack-header carry transform: translateZ(0) for compositor isolation", () => {
+  /* Without this, Chromium can leave un-invalidated paint inside a virtualized
+     row slot when the slot is recycled (e.g. level-info → level-database via
+     innerHTML replace), so faint pixels of the previous row's text ghost
+     through the new text until a :hover repaint clears the layer. The fix is
+     per-row compositor promotion; pinning it here so a future "drop the
+     transform — it looks redundant next to isolation: isolate" cleanup is
+     caught (the two do different things: isolation is stacking-context only). */
+  const css = getLineStyles();
+  const rule = css.match(/\.line,\s*\.stack-header\s*\{[^}]*\}/s)?.[0] ?? "";
+  assert.ok(
+    rule.length > 0,
+    ".line, .stack-header base rule must exist",
+  );
+  assert.ok(
+    /transform:\s*translateZ\(0\)/.test(rule),
+    ".line, .stack-header must declare transform: translateZ(0) to prevent stale-pixel ghosting on virtualized row recycle",
+  );
+});
+
 test("recent-error-context uses box-shadow, not border-left (no layout shift)", () => {
   const css = getLineStyles();
   const rule = css.match(/\.line\.recent-error-context\s*\{[^}]*\}/s)?.[0] ?? "";
