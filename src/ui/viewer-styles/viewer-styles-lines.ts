@@ -58,10 +58,22 @@ export function getLineStyles(): string {
    With per-row isolation, each row paints atomically in document order: the
    previous row paints first (including its overshoot), the current row
    paints over it. The dot is in the current row's stacking context, so it
-   wins over any other row's overshooting stripe at every overlap point. */
+   wins over any other row's overshooting stripe at every overlap point.
+
+   transform: translateZ(0) promotes each row to its own compositor layer,
+   which forces Chromium to invalidate paint per-row when the virtualized
+   viewport recycles row slots via innerHTML replacement. Without it, a
+   recycled slot that previously held a level-info (blue) line and now holds
+   a level-database (green) line could keep faint blue pixels of the old
+   text visible until any :hover repaint cleared them — the user saw
+   "DRIFT: Drift debug server disconnected" rendered with the prior row's
+   blue text ghosting through, fixing itself only on mouseover. Per-row
+   compositor isolation also costs nothing meaningful at our row count
+   (virtualization keeps ~50 rows live), so the GPU-memory hit is bounded. */
 .line, .stack-header {
     position: relative;
     isolation: isolate;
+    transform: translateZ(0);
 }
 #copy-float {
     display: none;
