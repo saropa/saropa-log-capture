@@ -15,6 +15,7 @@ import { escapeHtml } from "../../modules/capture/ansi";
 import { buildLogLineHtmlWithOptionalDriftArgsDim } from "../../modules/db/drift-log-line-args-fold";
 import type { DiagnosticCache } from "../../modules/diagnostics/diagnostic-cache";
 import { LineData } from "../../modules/session/session-manager";
+import { linkifyBarePaths } from "../../modules/source/source-linker";
 import { type PendingLine } from "../viewer/viewer-file-loader";
 import { type ThreadDumpState, processLineForThreadDump, flushThreadDump } from "../viewer/viewer-thread-grouping";
 import * as helpers from "./viewer-provider-helpers";
@@ -43,6 +44,14 @@ export function buildPendingLineFromLineData(
 ): PendingLine {
     let html = data.isMarker ? escapeHtml(data.text) : buildLogLineHtmlWithOptionalDriftArgsDim(data.text);
     if (!data.isMarker) { html = helpers.tryFormatThreadHeader(data.text, html); }
+    // AI activity rows (Claude Code [AI Edit] / [AI Read] / [AI Write]) surface
+    // bare absolute paths with no `:line` tail, so linkifyHtml (called inside
+    // buildLogLineHtmlWithOptionalDriftArgsDim) leaves them as plain text. The
+    // bare-path pass only fires for ai-* categories to avoid linkifying prose
+    // mentions ("see lib/foo.dart for context") on regular log lines.
+    if (!data.isMarker && data.category && data.category.startsWith('ai-')) {
+        html = linkifyBarePaths(html);
+    }
     const tier = helpers.classifyFrame(data.text);
     const fw = tier !== undefined ? tier !== 'flutter' : undefined;
     const qualityPercent = data.isMarker ? undefined : helpers.lookupQuality(data.text, tier);
