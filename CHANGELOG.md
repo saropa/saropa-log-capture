@@ -27,7 +27,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [7.15.0]
+
+Log viewer rows no longer ghost their previous color when scrolling, AI activity rows (`[AI Bash]`, `[AI Edit]`, `[AI Read]`) line up in the same column as regular log lines with `+Nms` badges and slow-gap dividers, and the file paths in those AI rows are now clickable. [log](https://github.com/saropa/saropa-log-capture/blob/v7.15.0/CHANGELOG.md)
 
 ### Fixed
 
@@ -38,9 +40,17 @@ cspell:disable
 - **AI activity rows now share the regular line gutter** — Claude Code `[AI Bash]` / `[AI Edit]` / `[AI Read]` lines used to render with no decoration prefix, no elapsed badge, and no slow-gap divider, so they were left-flush against the viewer edge and the rest of the log shifted past them. The AI render branch in [viewer-data-helpers-render.ts](src/ui/viewer/viewer-data-helpers-render.ts) now emits the same `getDecorationPrefix` (line number / timestamp column) + `getElapsedPrefix` (+Nms badge) + `getSlowGapHtml` prefix chain as regular rows, so columns align and a "── 1h gap ──" divider draws when AI tool calls sit inside a long-quiet stretch of log. The `[AI Bash]` etc. text remains as the existing `.ai-prefix` tag — no change to the color scheme. Padding fallback in [viewer-styles-ai.ts](src/ui/viewer-styles/viewer-styles-ai.ts) keeps the 13px gutter only when no `.line-decoration` is present (decoration-off mode).
 - **AI Edit/Read file paths are now clickable** — `[AI Edit] d:/src/contacts/lib/views/home/home_tab.dart` rows had no link wrapper because the stack-frame linkifier requires a `:line` tail. Added [`linkifyBarePaths()`](src/modules/source/source-linker.ts) (conservative: only Windows drive letters and POSIX absolute paths, so prose like "see foo.dart" stays plain). Wired into [log-viewer-provider-batch.ts](src/ui/provider/log-viewer-provider-batch.ts) gated on `category.startsWith('ai-')` so regular log lines remain unaffected. Click opens the file at line 1.
 
+<details>
+<summary>Maintenance</summary>
+
+- **Publish script no longer inserts an empty `## [Unreleased]` block after stamping a version** — `_stamp_changelog()` in [scripts/modules/publish/version.py](scripts/modules/publish/version.py) used to write `## [Unreleased]\n\n---\n\n` directly above the just-stamped `## [x.y.z]` heading, producing a placeholder section with no entries that polluted the post-publish diff (visible right after the version prompt as `CHANGELOG: [Unreleased] -> [7.14.2]`). Removed the re-insertion — the next publish run's `_ensure_unreleased_section()` already adds `## [Unreleased]` if missing, so the heading only appears once real entries have accumulated.
+</details>
+
 ---
 
 ## [7.14.1]
+
+The magnifier icon in the log viewer title bar now actually opens the search panel, and the search match count shows as a clearer `Showing 4 of 408` badge pill. [log](https://github.com/saropa/saropa-log-capture/blob/v7.14.1/CHANGELOG.md)
 
 ### Fixed
 
@@ -54,7 +64,7 @@ cspell:disable
 
 ## [7.14.0]
 
-Crashlytics now reads crash data from the real public API (Google Play Developer Reporting) instead of a dead endpoint, finds gcloud even when it was never put on PATH, tells you exactly which step failed and how to fix it, and never silently shows "no crashes" when a call actually failed.
+Crashlytics now reads crash data from the real public API (Google Play Developer Reporting) instead of a dead endpoint, finds gcloud even when it was never put on PATH, tells you exactly which step failed and how to fix it, and never silently shows "no crashes" when a call actually failed. [log](https://github.com/saropa/saropa-log-capture/blob/v7.14.0/CHANGELOG.md)
 
 ### Added
 
@@ -103,6 +113,8 @@ Crashlytics now reads crash data from the real public API (Google Play Developer
 
 ## [7.13.2]
 
+Flutter stack traces with elided-frames summaries no longer fragment into multiple collapsible groups, and an error incident's left rail and severity spine run continuously through the whole stack trace instead of breaking at the banner. [log](https://github.com/saropa/saropa-log-capture/blob/v7.13.2/CHANGELOG.md)
+
 ### Fixed
 
 - **Flutter stack traces with frame-elision summaries now collapse as one group** — Flutter substitutes a single `...     Normal element mounting (N frames)` row for a long run of collapsed framework frames. That summary row was not recognized as a stack frame, so it hit the group-close path in [viewer-data-add.ts](src/ui/viewer/viewer-data-add.ts) and shattered one logical trace into a separate collapsible group at every elision — a single `#0`–`#262` trace appeared as five `▸` toggles, one per `(N frames)` line. A new `isElidedFramesSummary()` classifier in [viewer-script.ts](src/ui/viewer/viewer-script.ts) folds the summary INTO the open group (the same way `<asynchronous suspension>` markers already do), forcing the framework flag so preview-collapse hides it with the rest of the framework noise; it stays a visible, collapsible row inside the one unified group. Guarded so a stray summary with no open trace stays a normal line. See [viewer-data-add-stack-ingest.ts](src/ui/viewer/viewer-data-add-stack-ingest.ts) and tests in [viewer-stack-elided-summary.test.ts](src/test/ui/viewer-stack-elided-summary.test.ts).
@@ -110,27 +122,33 @@ Crashlytics now reads crash data from the real public API (Google Play Developer
 
 ## [7.13.1]
 
+The log viewer is now localizable into the 10 packaged locales, render-tree descendant dumps collapse into a single group, Dart app stack frames read symbol-first (so the method name lines up at the left instead of getting shoved across the screen by long paths), `dart:async` SDK frames fold into the stack trace they belong to, and every printed copy of a Flutter exception (not just the stderr one) now groups. [log](https://github.com/saropa/saropa-log-capture/blob/v7.13.1/CHANGELOG.md)
+
 ### Added
 
 - **Log viewer is now localizable** — the webview was English-only; neither existing l10n pipeline (`package.nls*` for `package.json`, `vscode.l10n.t()` for extension-host UI) reached it. A new bridge ([viewer-l10n-inject.ts](src/ui/provider/viewer-l10n-inject.ts)) resolves webview string keys host-side and ships them into the iframe as `__VT` with a client-side `vt(key, …args)` helper, so render-time strings (built where `vscode.l10n.t()` can't run) become localizable; host-assembled HTML uses `t()` directly. The whole visible UI now routes through this — toolbar, filter drawer, search (flyout + in-log bar), actions menu, icon bar, body banners, and every side panel (Logs/session, Find, Bookmarks, Signals, Trash, Collections, Crashlytics, About chrome, SQL history, Options), plus the replay bar, run-nav, and stack/tree tooltips. English source strings only (brand/marketing copy and proper nouns stay English by design); the publish pipeline machine-translates the bundles across all 10 locales, and missing keys fall back to English (no behavior change today). Tracked sweep in [plan 053](plans/history/2026.05/2026.05.23/053_plan-webview-localization-sweep.md).
 - **Render-tree descendant dumps are now a collapsible group** — a Flutter layout exception appends `This RenderObject had the following descendants (showing up to depth N):` followed by 15–40 indented `child…` rows (in a real 4,793-line log: 30 such dumps, 438 child rows). These had no handling and rendered as plain lines, burying the actual error. A new detector [viewer-data-add-tree-ingest.ts](src/ui/viewer/viewer-data-add-tree-ingest.ts) folds the dump into one collapsible group, reusing the existing stack-group machinery (`stack-header` + `stack-frame` types) so the chevron, `toggleStackGroup`, preview mode, and height/visibility calc all apply with no new render code. A `treeGroup` flag re-words the header tooltip to "Render tree" / "nodes" in [viewer-data-helpers-render-stack.ts](src/ui/viewer/viewer-data-helpers-render-stack.ts). Child indentation is preserved (it carries the hierarchy). It owns a separate `activeTreeHeader` lifecycle so stack dedup never silently hides a tree, reset on marker / clear / trim. Consumed before the banner classifier (like stack frames), so the tree forms its own group inside the exception band. See [plan 052](bugs/052_plan-flutter-exception-grouping.md).
 
-### Changed
-
-- **Publish-pipeline build prompts now default to Yes on ENTER (dev tooling, no product change)** — the reversible build-flow confirmations let you tap ENTER through a routine build instead of typing `y`: "Continue with dirty working tree?" ([checks_git.py](scripts/modules/publish/checks_git.py)), "Install via CLI now?" and "Open build report?" ([install.py](scripts/modules/publish/install.py)), and the post-publish "Open Marketplace in browser?" ([report.py](scripts/modules/publish/report.py)). The irreversible **"Proceed with publish?"** gate ([publish_confirm.py](scripts/modules/publish/publish_confirm.py)) deliberately stays default-No — a marketplace publish can't be undone, so bare ENTERs build and stop at that gate rather than shipping by accident.
-
 ### Fixed
 
-- **Publish pipeline no longer locks up at Step 9 during l10n translation (dev tooling, no product change)** — Step 9 machine-translates ~468 newly-synced strings × 10 locales through `deep-translator`'s free Google endpoint, which calls `requests.get()` with **no timeout** ([deep_translator/google.py](https://github.com/nidhaloff/deep-translator)). Once Google throttled the burst, a single call blocked forever and the release hung — the on-screen `… No translation was found using the current translator. Try another translator?` was the text of a caught `TranslationNotFound` exception, not an interactive prompt. [l10n_translator.py](scripts/modules/verify/l10n_translator.py) now (1) bounds every call via the process-wide socket default timeout (8s, set around the translate loop and restored after), (2) retries a transient failure once with backoff so a throttle blip doesn't permanently lose a string to English, and (3) trips a circuit breaker after 5 consecutive **network** failures (a brand-validation reject proves the endpoint is healthy and does not count) — keeping English for the rest and signaling the caller to stop the remaining locales, since throttling is per-IP. Both callers ([checks_build.py](scripts/modules/publish/checks_build.py), [translate_l10n.py](scripts/translate_l10n.py)) now unpack the new `aborted` flag and stop early with a "re-run `scripts/translate_l10n.py` later" notice instead of hanging the release. The translate step also streams a per-locale `done/total` counter (`translate_locale` gained an `on_progress` callback): right after a big English-bundle sync the backlog is ~4,680 calls that previously ran **silently** for 15+ minutes — visually indistinguishable from the hang — so Step 9 now shows continuous forward motion, and the run is announced up front as a network step that can take several minutes.
 - **Error "Related Lines" in signal reports now read like every other signal type** — the `err::` branch rendered its own per-fingerprint-group markup instead of the shared list convention the other six branches (warnings, network, memory, permissions, slow ops, classified) use. As a result it showed no single "N error(s)" aggregate, leaked the raw excerpt into the group summary even when a fuller log line was available, and never rendered the "...and N more" overflow notice. It now flattens to one row per error through the same `wrapList` + `itemRow` path — aggregate count, log-line-preferred text, a category badge per row, and the overflow cap — so the error section is consistent with the rest. Fingerprint collapse was evaluated but is incompatible with the section's overflow contract (the cap counts occurrences, not distinct fingerprints), and the cap already bounds a flood of repeats. See [bug 006](bugs/bug_006_signal-report-error-related-rendering.md). ([signal-report-related.ts](src/ui/signals/signal-report-related.ts))
-- **Decoration-styles regression test no longer false-fails (test-only, no product change)** — the "no standalone `.deco-counter` color rule" guard in [viewer-muted-decorations.test.ts](src/test/ui/viewer-muted-decorations.test.ts) used a plain substring check that also matched the legitimate `.deco-counter-row` collapse-affordance class, so it tripped even though the bare `.deco-counter { … }` color rule it forbids is genuinely gone. Tightened to a word-boundary regex (`/\.deco-counter(?![\w-])/`) that ignores `-row` and any other suffix. See [bug 007](bugs/bug_007_deco-counter-test-substring-collision.md).
 - **`dart:async` SDK frames no longer leak out of their stack trace** — Dart's `stack_trace` package emits SDK frames as a bare library padded out to align the member, e.g. `dart:async                Future.timeout.<fn>`. With no `/path line:col`, these matched none of the stack-frame patterns ([isStackFrameText](src/ui/viewer/viewer-script.ts) / [isStackFrameLine](src/modules/analysis/stack-parser.ts)), so they fell through to the normal-line path: rendered with the raw padding intact (library on the left, member shoved far right by `white-space: pre-wrap`) **and** closing the open stack group, fragmenting every trace. A dedicated `dart:<lib>  member` branch now classifies them as real frames so they fold into the trace like every other frame. When shown, [formatFrameMemberFirst](src/ui/viewer/viewer-data-helpers-core.ts) leads with the member and moves the library to a muted, right-aligned `.frame-lib-src` source tag (padding trimmed); `rawText` is kept verbatim so copy/search are unaffected.
 - **App stack frames now read symbol-first, not path-first** — Dart's `stack_trace` `Trace.toString()` emits app frames as `<path> <line:col>  <Member>` and right-pads the path column to the width of the *longest* frame, so a long `./lib/...` path (e.g. the 70-char `activity_drift_extensions_io.dart`) shoved the meaningful method name far to the right behind a wall of spaces under `white-space: pre`. The viewer rendered them verbatim — only `dart:` SDK frames had been reordered. [formatFrameMemberFirst](src/ui/viewer/viewer-data-helpers-core.ts) now also reorders **app** frames: the member leads and the file location moves to the muted, right-aligned `.frame-lib-src` source tag, collapsing the alignment gap. Unlike `dart:` frames (rebuilt from plain text), app frames arrive already linkified as `<a class="source-link">…</a>` carrying click-to-open and Ctrl+click-to-filter data, so the link element is lifted **intact** via an HTML regex rather than rebuilt — a plain-text rebuild would `escapeHtml` the link away and silently kill both affordances. Display-only: `plainFrame`, `rawText`, and the repeat-collapse comparison still use the original html, so dedup, search, and raw copy are unchanged.
 - **Every printed copy of a Flutter exception now groups, not just the stderr one** — a single layout exception is logged once per sink in slightly different shapes, but the banner detector in [viewer-data-add-flutter-banner.ts](src/ui/viewer/viewer-data-add-flutter-banner.ts) only matched the stderr form `════ Exception caught by …`. The console / wrapped copies — `══╡ EXCEPTION CAUGHT BY … ╞══`, `FlutterErrorDetails (══╡ …`, and `Potential Null Check Operator Error Detected: ══╡ …` — were never grouped (real log: 16 of 46 headers grouped, 30 left ungrouped). The console shapes break a pure-`═` run after only two chars with the corner glyphs `╡` (U+2561) / `╞` (U+255E), so the old `/═{4,}\s+/` anchor never fit them. Open regex broadened to `/[═╡╞]{2,}\s*Exception caught by\b/i`: the phrase is the discriminator, the leading box-run guards against prose. ANSI is already converted to `<span>` upstream and stripped via `slp.msg`/`stripTags`, so the existing close-rule detection fires for every copy. Each copy now gets its own band. See [plan 052](bugs/052_plan-flutter-exception-grouping.md).
 
+<details>
+<summary>Maintenance</summary>
+
+- **Publish-pipeline build prompts now default to Yes on ENTER** — the reversible build-flow confirmations let you tap ENTER through a routine build instead of typing `y`: "Continue with dirty working tree?" ([checks_git.py](scripts/modules/publish/checks_git.py)), "Install via CLI now?" and "Open build report?" ([install.py](scripts/modules/publish/install.py)), and the post-publish "Open Marketplace in browser?" ([report.py](scripts/modules/publish/report.py)). The irreversible **"Proceed with publish?"** gate ([publish_confirm.py](scripts/modules/publish/publish_confirm.py)) deliberately stays default-No — a marketplace publish can't be undone, so bare ENTERs build and stop at that gate rather than shipping by accident.
+- **Publish pipeline no longer locks up at Step 9 during l10n translation** — Step 9 machine-translates ~468 newly-synced strings × 10 locales through `deep-translator`'s free Google endpoint, which calls `requests.get()` with **no timeout** ([deep_translator/google.py](https://github.com/nidhaloff/deep-translator)). Once Google throttled the burst, a single call blocked forever and the release hung — the on-screen `… No translation was found using the current translator. Try another translator?` was the text of a caught `TranslationNotFound` exception, not an interactive prompt. [l10n_translator.py](scripts/modules/verify/l10n_translator.py) now (1) bounds every call via the process-wide socket default timeout (8s, set around the translate loop and restored after), (2) retries a transient failure once with backoff so a throttle blip doesn't permanently lose a string to English, and (3) trips a circuit breaker after 5 consecutive **network** failures (a brand-validation reject proves the endpoint is healthy and does not count) — keeping English for the rest and signaling the caller to stop the remaining locales, since throttling is per-IP. Both callers ([checks_build.py](scripts/modules/publish/checks_build.py), [translate_l10n.py](scripts/translate_l10n.py)) now unpack the new `aborted` flag and stop early with a "re-run `scripts/translate_l10n.py` later" notice instead of hanging the release. The translate step also streams a per-locale `done/total` counter (`translate_locale` gained an `on_progress` callback): right after a big English-bundle sync the backlog is ~4,680 calls that previously ran **silently** for 15+ minutes — visually indistinguishable from the hang — so Step 9 now shows continuous forward motion, and the run is announced up front as a network step that can take several minutes.
+- **Decoration-styles regression test no longer false-fails** — the "no standalone `.deco-counter` color rule" guard in [viewer-muted-decorations.test.ts](src/test/ui/viewer-muted-decorations.test.ts) used a plain substring check that also matched the legitimate `.deco-counter-row` collapse-affordance class, so it tripped even though the bare `.deco-counter { … }` color rule it forbids is genuinely gone. Tightened to a word-boundary regex (`/\.deco-counter(?![\w-])/`) that ignores `-row` and any other suffix. See [bug 007](bugs/bug_007_deco-counter-test-substring-collision.md).
+</details>
+
 ---
 
 ## [7.13.0]
+
+Info lines near an error no longer get tinted red, Dart `stack_trace` `Trace.toString()` output is recognized as frames (with click-to-open paths), Shift+arrow keys extend the row selection in the log viewer, and Ctrl+clicking a folder segment in a path link filters the log to lines containing that prefix. [log](https://github.com/saropa/saropa-log-capture/blob/v7.13.0/CHANGELOG.md)
 
 ### Fixed
 
@@ -148,7 +166,7 @@ Crashlytics now reads crash data from the real public API (Google Play Developer
 
 ## [7.12.1]
 
-- Version bump for publication only
+Version bump for publication only — no user-facing changes. [log](https://github.com/saropa/saropa-log-capture/blob/v7.12.1/CHANGELOG.md)
 
 ---
 
@@ -246,7 +264,7 @@ Signals get a lot smarter — the panel now learns from the levels you switch of
 
 ## [7.10.0]
 
-Expanding "N × SQL repeated:" no longer overlaps the rows below, chip rows align to the same content column as decorated lines, the redundant `»` separator is gone from line decorations, and the **About Saropa** panel now renders the changelog as formatted markdown (headings, bullets, bold, italic, code, rules) with selectable text, plus a press-and-hold on the "Saropa Log Capture vX.Y.Z" title copies the title to the clipboard. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+Expanding "N × SQL repeated:" no longer overlaps the rows below, chip rows align to the same content column as decorated lines, the redundant `»` separator is gone from line decorations, and the **About Saropa** panel now renders the changelog as formatted markdown (headings, bullets, bold, italic, code, rules) with selectable text, plus a press-and-hold on the "Saropa Log Capture vX.Y.Z" title copies the title to the clipboard. [log](https://github.com/saropa/saropa-log-capture/blob/v7.10.0/CHANGELOG.md)
 
 ### Added
 - **About panel: long-press title to copy "Saropa Log Capture vX.Y.Z"** — Press and hold the title row in the About Saropa panel for half a second to copy the full product name + version string to the clipboard; the existing copy toast confirms what landed. Useful for pasting into bug reports without retyping the version. Mouse and touch are both wired, and the row dims briefly during the press so the gesture is discoverable.
@@ -268,7 +286,7 @@ Expanding "N × SQL repeated:" no longer overlaps the rows below, chip rows alig
 
 ## [7.9.0]
 
-Navigator arrows now use proper VS Code icons and fade when the panel is in the background, signal reports get a two-column layout with collapsible sections and visual polish, and several rendering bugs are squashed. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+Navigator arrows now use proper VS Code icons and fade when the panel is in the background, signal reports get a two-column layout with collapsible sections and visual polish, and several rendering bugs are squashed. [log](https://github.com/saropa/saropa-log-capture/blob/v7.9.0/CHANGELOG.md)
 
 ### Changed
 - **Navigator arrows use codicon chevrons** — Replaced Unicode block arrows (⬆/⬇) with `codicon-chevron-up` / `codicon-chevron-down` so the top/bottom jump buttons look like intentional UI, not stray lines.
