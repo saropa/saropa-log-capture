@@ -22,12 +22,19 @@ export interface SessionMetadata {
     readonly autoTags?: string[];
     readonly correlationTags?: string[];
     readonly durationMs?: number;
+    // Severity buckets sourced from classifyLevel() (modules/analysis/level-classifier.ts).
+    // `fwCount` is V1-only; see SessionMeta for the schema-version note.
     readonly errorCount?: number;
     readonly warningCount?: number;
     readonly perfCount?: number;
     readonly anrCount?: number;
+    /** @deprecated V1 sidecar field; never written by the V2 scan. */
     readonly fwCount?: number;
     readonly infoCount?: number;
+    readonly debugCount?: number;
+    readonly databaseCount?: number;
+    readonly todoCount?: number;
+    readonly noticeCount?: number;
     readonly hasTimestamps?: boolean;
     readonly partNumber?: number;
     readonly trashed?: boolean;
@@ -39,6 +46,9 @@ export interface SessionMetadata {
     /** DAP debug adapter type (e.g. "dart", "node"). Set only on the debug-session's main log file.
      *  Used by `getPrimaryMember()` to pick which file represents the group at a glance. */
     readonly debugAdapterType?: string;
+    /** Explicit kind override from `SessionMeta.kind`. Read by `classifySessionKind` —
+     *  absence means "let the classifier decide". */
+    readonly kind?: 'project' | 'report';
 }
 
 /** Group of split files under a single parent session. */

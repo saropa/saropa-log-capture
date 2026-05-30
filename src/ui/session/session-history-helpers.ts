@@ -8,15 +8,24 @@
 import * as vscode from 'vscode';
 import { SessionMetadata, formatSize } from './session-history-grouping';
 import { formatMtime, formatMtimeTimeOnly, formatRelativeTime } from './session-display';
-import { countSeverities, extractBody } from './session-severity-counts';
-
 /** Regex to extract line count from the SESSION END footer. */
 const footerCountRe = /===\s*SESSION END\b.*?(\d[\d,]*)\s+lines\s*===/;
 /** Regex to extract ISO date from the SESSION END footer. */
 const footerDateRe = /===\s*SESSION END[\s\u2014\u2013-]+(\d{4}-\d{2}-\d{2}T[\d:.]+Z?)/;
 
-/** Parse header fields, footer line count, and timestamp presence from a log file. Skips severity scan when counts are already cached in the sidecar. */
-export async function parseHeader(uri: vscode.Uri, base: SessionMetadata, skipSeverityScan = false): Promise<SessionMetadata> {
+/**
+ * Parse header fields, footer line count, and timestamp presence from a log file.
+ *
+ * **Never scans the body for severities.** The list panel must display fast on first
+ * paint (large log files were blocking the streaming path on a multi-MB body scan).
+ * Severity counts are produced separately by the deferred worker \u2014 see
+ * `session-severity-scan.ts` \u2014 and posted to the webview as a follow-up update.
+ *
+ * Reads the whole file because the footer (line count + end timestamp) lives at
+ * the tail. Trade-off: a single fs.readFile is cheaper than seek+tail, and the
+ * file is hot for the deferred scan that follows.
+ */
+export async function parseHeader(uri: vscode.Uri, base: SessionMetadata): Promise<SessionMetadata> {
     try {
         const raw = await vscode.workspace.fs.readFile(uri);
         const text = Buffer.from(raw).toString('utf-8');
@@ -26,16 +35,7 @@ export async function parseHeader(uri: vscode.Uri, base: SessionMetadata, skipSe
         const lineCount = parseLineCount(text);
         const fields = extractFields(block);
         const durationMs = parseDuration(text, fields.date);
-        if (skipSeverityScan) {
-            return { ...base, ...fields, hasTimestamps, lineCount, durationMs };
-        }
-        const sev = countSeverities(extractBody(text));
-        return {
-            ...base, ...fields, hasTimestamps, lineCount, durationMs,
-            errorCount: sev.errors, warningCount: sev.warnings, perfCount: sev.perfs,
-            anrCount: sev.anrs > 0 ? sev.anrs : undefined,
-            fwCount: sev.frameworks, infoCount: sev.infos,
-        };
+        return { ...base, ...fields, hasTimestamps, lineCount, durationMs };
     } catch {
         return base;
     }

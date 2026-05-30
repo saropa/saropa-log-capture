@@ -89,13 +89,19 @@ export function getSessionGroupRenderingScript(): string {
             copy.anrCount = agg.anrCount;
             copy.fwCount = agg.fwCount;
             copy.infoCount = agg.infoCount;
+            copy.debugCount = agg.debugCount;
+            copy.databaseCount = agg.databaseCount;
+            copy.todoCount = agg.todoCount;
+            copy.noticeCount = agg.noticeCount;
         }
         return copy;
     }
 
-    /** Sum severity counts across members, used to populate a collapsed primary's badges. */
+    /** Sum severity counts across members, used to populate a collapsed primary's badges.
+     *  fwCount summed from V1 cached sidecars (always 0 for V2 scans). */
     function aggregateGroupCounts(members) {
-        var sum = { errorCount: 0, warningCount: 0, perfCount: 0, anrCount: 0, fwCount: 0, infoCount: 0 };
+        var sum = { errorCount: 0, warningCount: 0, perfCount: 0, anrCount: 0, fwCount: 0,
+                    infoCount: 0, debugCount: 0, databaseCount: 0, todoCount: 0, noticeCount: 0 };
         for (var i = 0; i < members.length; i++) {
             var m = members[i];
             sum.errorCount += m.errorCount || 0;
@@ -104,6 +110,10 @@ export function getSessionGroupRenderingScript(): string {
             sum.anrCount += m.anrCount || 0;
             sum.fwCount += m.fwCount || 0;
             sum.infoCount += m.infoCount || 0;
+            sum.debugCount += m.debugCount || 0;
+            sum.databaseCount += m.databaseCount || 0;
+            sum.todoCount += m.todoCount || 0;
+            sum.noticeCount += m.noticeCount || 0;
         }
         return sum;
     }
