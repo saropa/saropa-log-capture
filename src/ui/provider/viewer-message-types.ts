@@ -40,4 +40,5 @@ export interface ViewerMessageContext {
     readonly onSessionAction?: (a: string, uriStrings: string[], filenames: string[]) => void;
     readonly onBrowseSessionRoot?: () => Promise<void>;
     readonly onClearSessionRoot?: () => Promise<void>;
+    readonly onExportSessionListJson?: () => Promise<void>;
 }

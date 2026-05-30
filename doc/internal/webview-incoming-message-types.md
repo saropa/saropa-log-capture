@@ -47,6 +47,7 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `explainRootCauseHypothesesEmpty` | viewer-message-handler-root-cause.ts |
 | `explainWithAi` | viewer-message-handler-actions.ts |
 | `exportLogs` | viewer-message-handler-session-ui.ts |
+| `exportSessionListJson` | viewer-message-handler-session-ui.ts |
 | `exportSignalsSummary` | viewer-message-handler-panels.ts |
 | `fetchCrashlyticsDetail` | viewer-message-handler-panels.ts |
 | `fetchCrashlyticsFilterIndex` | viewer-message-handler-panels.ts |
@@ -134,4 +135,4 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `viewerKeybindingRecordCancelled` | viewer-message-handler-actions.ts |
 | `viewerKeybindingRecorded` | viewer-message-handler-actions.ts |
 
-**Total:** 126 distinct types.
+**Total:** 127 distinct types.
