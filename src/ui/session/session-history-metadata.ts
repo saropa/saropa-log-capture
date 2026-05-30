@@ -50,7 +50,8 @@ export async function loadBatch(
     return results;
 }
 
-/** Load and cache metadata for a single session file. */
+/** Load and cache metadata for a single session file.
+ *  Never scans the body — severities arrive later from the deferred worker. */
 async function loadMetadata(
     target: LoadMetadataTarget,
     logDir: vscode.Uri,
@@ -64,10 +65,14 @@ async function loadMetadata(
     if (cached) { return cached; }
     const relKey = vscode.workspace.asRelativePath(uri).replace(/\\/g, '/');
     const sidecar = centralMeta.get(relKey) ?? {};
-    const hasCachedSev = sidecar.errorCount !== undefined && sidecar.fwCount !== undefined;
+    // V2 schema gate: require `debugCount` (new bucket added when classifyLevel
+    // replaced the V1 quick-scanner). V1 sidecars have errorCount but not
+    // debugCount, so they re-scan via the deferred worker to backfill the new
+    // buckets — otherwise debug/database/todo/notice would stay permanently 0.
+    const hasCachedSev = sidecar.errorCount !== undefined && sidecar.debugCount !== undefined;
     let meta: SessionMetadata = { uri, filename, size: stat.size, mtime: stat.mtime };
-    meta = await parseHeader(uri, meta, hasCachedSev);
-    meta = applySidecar(target, meta, sidecar, { uri, hasCachedSev });
+    meta = await parseHeader(uri, meta);
+    meta = applySidecar(meta, sidecar, hasCachedSev);
     target.metaCache.set(cacheKey, meta);
     return meta;
 }
@@ -77,11 +82,12 @@ function hasPerformanceData(sidecar: SessionMeta): boolean {
     return hasMeaningfulPerformanceData(sidecar.integrations?.performance);
 }
 
-/** Merge sidecar metadata into the parsed session metadata. */
+/** Merge sidecar metadata into the parsed session metadata.
+ *  Severities are applied ONLY when V2-cached. Files without cached counts get
+ *  no severity fields here — the deferred worker computes them and posts an
+ *  update. No write-back path: parseHeader no longer produces counts. */
 function applySidecar(
-    target: LoadMetadataTarget,
-    meta: SessionMetadata, sidecar: SessionMeta,
-    ctx: { uri: vscode.Uri; hasCachedSev: boolean },
+    meta: SessionMetadata, sidecar: SessionMeta, hasCachedSev: boolean,
 ): SessionMetadata {
     let result = meta;
     if (sidecar.displayName) { result = { ...result, displayName: sidecar.displayName }; }
@@ -94,12 +100,18 @@ function applySidecar(
     // (set only on the DAP main log) drive tree coalescing and primary-member selection.
     if (sidecar.groupId) { result = { ...result, groupId: sidecar.groupId }; }
     if (sidecar.debugAdapterType) { result = { ...result, debugAdapterType: sidecar.debugAdapterType }; }
-    if (ctx.hasCachedSev) {
-        return { ...result, errorCount: sidecar.errorCount, warningCount: sidecar.warningCount, perfCount: sidecar.perfCount, anrCount: sidecar.anrCount, fwCount: sidecar.fwCount, infoCount: sidecar.infoCount };
-    }
-    if (result.errorCount !== undefined) {
-        const toSave = { ...sidecar, errorCount: result.errorCount, warningCount: result.warningCount, perfCount: result.perfCount, anrCount: result.anrCount, fwCount: result.fwCount, infoCount: result.infoCount };
-        target.metaStore.saveMetadata(ctx.uri, toSave).catch(() => {});
+    // Explicit kind override is opt-in metadata — propagate untouched so the classifier
+    // can see it before applying its rules. Absent kind means "let the classifier decide".
+    if (sidecar.kind === 'project' || sidecar.kind === 'report') { result = { ...result, kind: sidecar.kind }; }
+    if (hasCachedSev) {
+        return {
+            ...result,
+            errorCount: sidecar.errorCount, warningCount: sidecar.warningCount,
+            perfCount: sidecar.perfCount, anrCount: sidecar.anrCount,
+            fwCount: sidecar.fwCount, infoCount: sidecar.infoCount,
+            debugCount: sidecar.debugCount, databaseCount: sidecar.databaseCount,
+            todoCount: sidecar.todoCount, noticeCount: sidecar.noticeCount,
+        };
     }
     return result;
 }

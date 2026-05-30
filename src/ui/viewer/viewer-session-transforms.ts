@@ -100,14 +100,27 @@ function formatSessionDuration(ms) {
     return Math.round(ms / 1000) + 's';
 }
 
+/* Render the severity-dot chips that appear in each session row's meta line.
+ * Order mirrors the viewer's top-bar so the same file reads consistently in both panels.
+ * Each chip renders only when its count > 0 to keep crowded rows readable.
+ * "Other" is the residual (lineCount minus all classified buckets) so structural rows
+ * the classifier skipped — separators, stack frames — still appear as a count.
+ * fwCount is V1-only (legacy "framework" bucket pre-classifyLevel migration) and
+ * renders only when a stale V1 sidecar value is still around. */
 function renderSeverityDots(s) {
     var parts = [];
     if (s.errorCount > 0) parts.push('<span class="sev-pair" title="Errors"><span class="sev-dot sev-error"></span>' + s.errorCount + '</span>');
     if (s.warningCount > 0) parts.push('<span class="sev-pair" title="Warnings"><span class="sev-dot sev-warning"></span>' + s.warningCount + '</span>');
     if (s.infoCount > 0) parts.push('<span class="sev-pair" title="Info"><span class="sev-dot sev-info"></span>' + s.infoCount + '</span>');
+    if (s.debugCount > 0) parts.push('<span class="sev-pair" title="Debug"><span class="sev-dot sev-debug"></span>' + s.debugCount + '</span>');
+    if (s.databaseCount > 0) parts.push('<span class="sev-pair" title="Database"><span class="sev-dot sev-database"></span>' + s.databaseCount + '</span>');
     if (s.perfCount > 0) parts.push('<span class="sev-pair" title="Performance"><span class="sev-dot sev-perf"></span>' + s.perfCount + '</span>');
+    if (s.todoCount > 0) parts.push('<span class="sev-pair" title="Todo"><span class="sev-dot sev-todo"></span>' + s.todoCount + '</span>');
+    if (s.noticeCount > 0) parts.push('<span class="sev-pair" title="Notice"><span class="sev-dot sev-notice"></span>' + s.noticeCount + '</span>');
     if (s.fwCount > 0) parts.push('<span class="sev-pair" title="Framework"><span class="sev-dot sev-fw"></span>' + s.fwCount + '</span>');
-    var categorized = (s.errorCount || 0) + (s.warningCount || 0) + (s.perfCount || 0) + (s.fwCount || 0) + (s.infoCount || 0);
+    var categorized = (s.errorCount || 0) + (s.warningCount || 0) + (s.perfCount || 0)
+        + (s.fwCount || 0) + (s.infoCount || 0) + (s.debugCount || 0)
+        + (s.databaseCount || 0) + (s.todoCount || 0) + (s.noticeCount || 0);
     var other = (s.lineCount || 0) - categorized;
     if (other > 0) parts.push('<span class="sev-pair" title="Other lines"><span class="sev-dot sev-other"></span>' + other + '</span>');
     if (parts.length === 0) return '';
@@ -130,27 +143,34 @@ function formatTime12hFromParts(hours, minutes) {
     return h + ':' + pad2(minutes) + ' ' + ampm;
 }
 
-/** Mark the newest session per unique display name as isLatestOfName. */
+/* Mark each session that is the newest entry under its visible display name.
+   Key choice: this used to apply transforms to the FULL stored path (which may
+   carry a subfolder prefix added during disambiguation). The rendered row
+   shows only the basename, so two files with the same basename in different
+   subfolders displayed as the same name yet were tracked under different keys
+   here — both ended up flagged as "latest" and the "Latest only" filter
+   surfaced both. Always key on the basename so this matches what renderItem
+   shows, and what the user therefore reads as "the same name".
+
+   isLatestOfName powers the "Latest only" filter (which must include singles
+   too — a name with one entry IS the latest of that name). hasNamesakes is a
+   separate flag used purely for the rendered badge so the dim "(latest)"
+   chrome only appears when there is more than one to disambiguate from. */
 function markLatestByName(sessions, applyOptions) {
     var byName = {};
+    var counts = {};
     for (var i = 0; i < sessions.length; i++) {
         var s = sessions[i];
         if (s.trashed) continue;
-        var name = applyOptions(s.displayName || s.filename);
+        var name = applyOptions(getSessionBasename(s.displayName || s.filename));
+        counts[name] = (counts[name] || 0) + 1;
         if (!byName[name] || (s.mtime || 0) > (byName[name].mtime || 0)) byName[name] = s;
-    }
-    var hasDupes = {};
-    for (var j = 0; j < sessions.length; j++) {
-        var sj = sessions[j];
-        if (sj.trashed) continue;
-        var nj = applyOptions(sj.displayName || sj.filename);
-        if (!hasDupes[nj]) hasDupes[nj] = 0;
-        hasDupes[nj]++;
     }
     for (var k = 0; k < sessions.length; k++) {
         var sk = sessions[k];
-        var nk = applyOptions(sk.displayName || sk.filename);
-        sk.isLatestOfName = !sk.trashed && hasDupes[nk] > 1 && byName[nk] === sk;
+        var nk = applyOptions(getSessionBasename(sk.displayName || sk.filename));
+        sk.isLatestOfName = !sk.trashed && byName[nk] === sk;
+        sk.hasNamesakes = !sk.trashed && (counts[nk] || 0) > 1;
     }
 }
 
