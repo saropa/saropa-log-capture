@@ -2,8 +2,10 @@
  * Session panel: toggle buttons, resize, session list events, close/refresh/pagination/tags,
  * outside click, header path, and message listener. Inlined into the same IIFE as viewer-session-panel.
  */
+import { getSessionOptionsMenuScript } from './viewer-session-options-menu';
+
 export function getSessionPanelEventsScript(): string {
-  return `
+  return getSessionOptionsMenuScript() + `
     function syncToggleButtons() {
         var ids = {
             'session-toggle-strip': !sessionDisplayOptions.stripDatetime,
@@ -14,11 +16,20 @@ export function getSessionPanelEventsScript(): string {
         };
         for (var id in ids) {
             var el = document.getElementById(id);
-            if (el) el.classList.toggle('active', ids[id]);
+            if (el) {
+                el.classList.toggle('active', ids[id]);
+                /* role="menuitemcheckbox" rows: keep aria-checked in sync with
+                   the visual switch so screen readers report state. */
+                el.setAttribute('aria-checked', ids[id] ? 'true' : 'false');
+            }
         }
         var sortBtn = document.getElementById('session-toggle-reverse');
         if (sortBtn) {
-            var icon = sortBtn.querySelector('.codicon');
+            /* Icon span in the new options-menu markup carries
+               .session-options-toggle-icon; falling back to .codicon would still
+               work but matching the more specific class avoids picking up the
+               wrong icon if the row ever grows additional codicon siblings. */
+            var icon = sortBtn.querySelector('.session-options-toggle-icon');
             if (icon) icon.style.transform = sessionDisplayOptions.reverseSort ? 'scaleY(-1)' : '';
         }
         var dateRangeEl = document.getElementById('session-date-range');
