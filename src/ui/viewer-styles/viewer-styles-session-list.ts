@@ -163,6 +163,10 @@ export function getSessionListStyles(): string {
     display: none;
 }
 
+/* Reports bucket / newer-log banner / per-row unread-dot styles live in
+   viewer-styles-session-newer.ts — composed alongside this stylesheet by
+   viewer-styles-session.ts. Extracted to keep this file under the 300-line limit. */
+
 /* --- Session list pagination --- */
 .session-list-pagination {
     display: flex;
@@ -275,6 +279,12 @@ export function getSessionListStyles(): string {
 /* Info dot follows the level palette: Info=blue (rotated from green when the
    level palette became Info=blue / Notice=cyan / Database=green). */
 .sev-info { background: var(--vscode-charts-blue, #2196f3); }
+/* Debug / Database / Todo / Notice colors mirror the viewer's top-bar palette
+   so the same file reads consistently across the list badge and the open log. */
+.sev-debug { background: var(--vscode-charts-foreground, #aaaaaa); opacity: 0.7; }
+.sev-database { background: var(--vscode-charts-green, #4caf50); }
+.sev-todo { background: var(--vscode-charts-orange, #ff9800); }
+.sev-notice { background: var(--vscode-charts-cyan, #00bcd4); }
 .sev-other { background: var(--vscode-descriptionForeground, #888); opacity: 0.5; }
 `;
 }

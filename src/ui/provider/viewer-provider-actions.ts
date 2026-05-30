@@ -50,7 +50,7 @@ export async function updateLastViewed(context: vscode.ExtensionContext, uri: vs
 }
 
 /** Shared type for session metadata fields needed to build a webview record. */
-type Meta = { filename: string; displayName?: string; adapter?: string; size: number; mtime: number; date?: string; hasTimestamps?: boolean; lineCount?: number; durationMs?: number; errorCount?: number; warningCount?: number; perfCount?: number; fwCount?: number; infoCount?: number; uri: { toString(): string }; trashed?: boolean; tags?: string[]; autoTags?: string[]; correlationTags?: string[]; hasPerformanceData?: boolean; groupId?: string };
+type Meta = { filename: string; displayName?: string; adapter?: string; size: number; mtime: number; date?: string; hasTimestamps?: boolean; lineCount?: number; durationMs?: number; errorCount?: number; warningCount?: number; perfCount?: number; anrCount?: number; fwCount?: number; infoCount?: number; debugCount?: number; databaseCount?: number; todoCount?: number; noticeCount?: number; uri: { toString(): string }; trashed?: boolean; tags?: string[]; autoTags?: string[]; correlationTags?: string[]; hasPerformanceData?: boolean; groupId?: string };
 
 /** Extra fields written onto session-group member records so the webview can render groupings. */
 type GroupRenderExtras = { groupId?: string; isGroupPrimary?: boolean; groupSize?: number };
@@ -81,7 +81,10 @@ export async function buildSessionItemRecord(
         hasTimestamps: m.hasTimestamps ?? false, lineCount: m.lineCount ?? 0,
         durationMs: m.durationMs ?? 0, errorCount: m.errorCount ?? 0,
         warningCount: m.warningCount ?? 0, perfCount: m.perfCount ?? 0,
+        anrCount: m.anrCount ?? 0,
         fwCount: m.fwCount ?? 0, infoCount: m.infoCount ?? 0,
+        debugCount: m.debugCount ?? 0, databaseCount: m.databaseCount ?? 0,
+        todoCount: m.todoCount ?? 0, noticeCount: m.noticeCount ?? 0,
         isActive,
         updatedSinceViewed,
         updatedInLastMinute,
