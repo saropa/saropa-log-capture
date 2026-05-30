@@ -19,6 +19,8 @@ import { openLogAtLine } from "../../modules/search/log-search";
 import { showAnalysis } from "../analysis/analysis-panel";
 import { loadPresets, promptSavePreset } from "../../modules/storage/filter-presets";
 import { buildSessionListPayload, buildSessionItemRecord, openSourceFile, LOG_LAST_VIEWED_KEY, type SessionListPayloadOptions } from "./viewer-provider-helpers";
+import { runDeferredSeverityScan } from "../session/session-severity-scan";
+import { getConfig } from "../../modules/config/config";
 import type { BookmarkStore } from "../../modules/storage/bookmark-store";
 import { wireBookmarkHandlers } from "./viewer-handler-bookmarks";
 import { handleSessionAction } from "./viewer-handler-sessions";
@@ -235,9 +237,41 @@ function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void
     if (allRecords.length === 0 && items.length > 0) {
       const payload = await buildSessionListPayload(items, historyProvider.getActiveUri(), opts);
       sendFinalList(payload);
+      kickDeferredSeverityScan(items, activeStr, opts);
       return;
     }
     sendFinalList(allRecords);
+    kickDeferredSeverityScan(items, activeStr, opts);
+  };
+
+  /**
+   * Deferred severity scan: runs AFTER the final list has shipped to the webview
+   * so the panel paints immediately even when no V2-cached counts exist. Each
+   * file's result is persisted to the central session-metadata store (so the
+   * next launch reads counts without any scan) and re-posted via
+   * `sessionListBatch` so the existing `updateSessionBatchItems` handler
+   * replaces the row in place — no new webview message type needed.
+   *
+   * Fire-and-forget by design: the user's panel is already useful; the badges
+   * fill in best-effort. Errors are logged via the worker's own catch.
+   */
+  const kickDeferredSeverityScan = (
+    items: readonly TreeItem[],
+    activeStr: string | undefined,
+    payloadOpts: SessionListPayloadOptions,
+  ): void => {
+    const strict = getConfig().levelDetection === 'strict';
+    void runDeferredSeverityScan(items, {
+      metaStore: historyProvider.metaStore,
+      metaCache: historyProvider.metaCache,
+      strict,
+      onScanned: async (updated) => {
+        try {
+          const rec = await buildSessionItemRecord(updated, activeStr, payloadOpts);
+          broadcaster.postToWebview({ type: 'sessionListBatch', items: [rec] });
+        } catch { /* webview gone or post failed — counts still cached on disk */ }
+      },
+    });
   };
 
   let firstLoadFired = false;
