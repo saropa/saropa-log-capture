@@ -27,6 +27,16 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+Opening the Logs side panel now lands on the file currently shown in the viewer instead of leaving the list scrolled wherever it sat last time.
+
+### Fixed
+
+- **Logs panel now opens scrolled to the active file** — opening the panel from the icon bar used to leave the list at whichever scroll offset the previous open had ended at (often the bottom, after a rerender pushed the prior content down), so a user reopening to switch logs had to scroll back up to find the file they were viewing. [viewer-session-panel.ts](src/ui/viewer-panels/viewer-session-panel.ts) now sets a one-shot `pendingScrollOnOpen` flag in `openSessionPanel`, consumed by `renderSessionList` in [viewer-session-panel-rendering.ts](src/ui/viewer-panels/viewer-session-panel-rendering.ts) once the full list arrives: the panel scrolls the row matching the viewer's current file into the center of view, or to the top (where the newest entry sits under the default descending sort) when no file is loaded or no row matches (filtered out, paginated away, or trashed). Matching uses basename so subfolder-disambiguated `data-filename` values still resolve against the workspace-relative `currentFilename`. Subsequent rerenders (filter toggles, pagination, refresh) clear the flag and leave the user's scroll alone.
+
+---
+
 ## [7.15.0]
 
 Log viewer rows no longer ghost their previous color when scrolling, AI activity rows (`[AI Bash]`, `[AI Edit]`, `[AI Read]`) line up in the same column as regular log lines with `+Nms` badges and slow-gap dividers, and the file paths in those AI rows are now clickable. [log](https://github.com/saropa/saropa-log-capture/blob/v7.15.0/CHANGELOG.md)
