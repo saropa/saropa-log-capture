@@ -179,8 +179,11 @@ suite('LevelClassifier', () => {
         });
 
         test('should handle empty category', () => {
-            const result = classifyLevel('error: test', '', true);
-            // Empty category is not stderr, so should classify by text
+            // Strict mode label catcher is case-sensitive on "Error/Exception" to keep
+            // lowercase prose "error:" (e.g. "classification error: rule lumps …" inside
+            // saropa-lint report comments) classified as info. Empty category is not
+            // stderr, so the line should still classify by text via the PascalCase label.
+            const result = classifyLevel('Error: test', '', true);
             assert.strictEqual(result, 'error');
         });
 
