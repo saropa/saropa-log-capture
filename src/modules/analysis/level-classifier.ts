@@ -72,17 +72,35 @@ function matchesDatabaseAnnotation(plainText: string): boolean {
 }
 
 /**
- * Strict structural error: keyword in label position (`Error:`, `[error]`), Dart private
- * types, Null check.
+ * Strict structural error: keyword in label position (`Error:`), Dart private types,
+ * Null check. Case-sensitive on `Error`/`Exception` so prose like
+ * `classification error: rule lumps …` (lowercase mid-sentence) stays as `info` —
+ * Dart label and type conventions are always PascalCase, so requiring an uppercase
+ * `E` distinguishes log labels from English nouns without losing real cases like
+ * `TypeError:` or `PermissionDeniedException (no OS grant)`.
+ * Private-type alt requires `_[A-Z]…` to avoid matching snake_case identifiers like
+ * `avoid_print_error` (rule names in lint reports), which the previous `_\w*` form
+ * matched because `\w` includes `_`. Dart private types are always `_PascalCase`.
  * The `(` in the char class catches the `<Type>Exception (detail)` / `<Type>Error (detail)`
  * shape — e.g. `PermissionDeniedException (no OS grant on file)`. Without it, an exception
  * object printed with a parenthesized detail (no trailing colon) fell through to `info`,
  * so it never reached the Errors filter and the E toggle could read zero on a log that
  * plainly contained errors. See plans/history/2026.05/2026.05.15/054_plan-viewer-stack-noise-filter-layout.md Item D.
  */
-const strictStructuralErrorPattern = /\w*(?:error|exception)\s*[:\]!(]|\[(?:error|exception|fatal|panic)\]|_\w*(?:Error|Exception)\b|Null check operator/i;
-/** Loose structural error: bare `error`/`exception` with negative lookahead, Dart private types, Null check. */
-const looseStructuralErrorPattern = /\b(?:error|exception)(?!\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\b|_\w*(?:Error|Exception)\b|Null check operator/i;
+const strictStructuralErrorPattern = /\w*(?:Error|Exception)\s*[:\]!(]|_[A-Z]\w*(?:Error|Exception)\b|Null check operator/;
+/**
+ * Bracket label form is case-insensitive — explicit log tags like `[ERROR]`, `[error]`,
+ * `[fatal]` are unambiguous error markers regardless of case. Kept separate from
+ * `strictStructuralErrorPattern` because the latter dropped the `/i` flag to filter out
+ * lowercase `error:` in prose; bracket tags don't have that ambiguity.
+ */
+const strictBracketErrorPattern = /\[(?:error|exception|fatal|panic)\]/i;
+/**
+ * Loose structural error: bare `error`/`exception` with negative lookahead, Dart private
+ * types, Null check. Private-type alt requires `_[A-Z]…` (PascalCase) for the same reason
+ * as `strictStructuralErrorPattern`: avoid matching snake_case identifiers.
+ */
+const looseStructuralErrorPattern = /\b(?:error|exception)(?!\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\b|_[A-Z]\w*(?:Error|Exception)\b|Null check operator/i;
 /**
  * "critical" only signals error severity in a structural context: a colon/bracket label
  * (`critical:`, `[critical]`) or paired with a severity noun (`critical error/failure/
@@ -111,9 +129,15 @@ const flutterExceptionBannerPattern = /\bException caught by\b/i;
  * `databaseDecode: could not decode "{…}" as DatabaseValueType.Json` — a real,
  * actionable failure that otherwise classified as `info` and vanished under the level
  * filter. Requires a following word so a bare trailing "cannot." does not match.
+ *
+ * Negative lookahead for perception / cognition verbs: in prose comments like
+ * `rule's single-method scope cannot see the pair`, "cannot see" is metaphorical, not
+ * an actionable failure. Real failures always pair with an I/O / system-action verb
+ * (open/read/connect/parse/...), never with perception verbs. Without the exclusion,
+ * lint-report comments embedded in saropa-lint output classified as warnings.
  * See plans/history/2026.05/2026.05.15/054_plan-viewer-stack-noise-filter-layout.md Item D.
  */
-const structuralWarnPattern = /\b(?:could\s*not|couldn't|cannot|unable\s+to|failed\s+to)\s+\w/i;
+const structuralWarnPattern = /\b(?:could\s*not|couldn't|cannot|unable\s+to|failed\s+to)\s+(?!(?:see|tell|say|imagine|think|know|believe|recall|remember|hear|feel|guess|understand|wait|help)\b)\w/i;
 
 /** Performance patterns that use regex features (quantifiers, alternation) and can't be simple keywords. */
 const structuralPerfPattern = /\b(skipped\s+\d+\s+frames?|gc\s+(?:pause|freed|concurrent))\b/i;
@@ -211,6 +235,11 @@ export function isActionableLevel(level: SeverityLevel): boolean {
 function matchesError(plainText: string, strict: boolean): boolean {
     const structural = strict ? strictStructuralErrorPattern : looseStructuralErrorPattern;
     if (structural.test(plainText)) { return true; }
+    // Bracket label form (`[error]`, `[ERROR]`) is case-insensitive and only needed in
+    // strict mode — loose mode already matches via the bare `\berror\b` keyword. Strict
+    // dropped `/i` on the main structural pattern to filter lowercase `error:` in prose,
+    // so brackets need a separate /i regex to stay unambiguous.
+    if (strict && strictBracketErrorPattern.test(plainText)) { return true; }
     // Flutter banner runs independently of strict/loose — it is unambiguous even in strict mode.
     if (flutterExceptionBannerPattern.test(plainText)) { return true; }
     // "critical" is structural, not a bare keyword — see criticalSeverityPattern.
