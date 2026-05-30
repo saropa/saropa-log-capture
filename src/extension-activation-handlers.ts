@@ -14,7 +14,7 @@ import type { ViewerBroadcaster } from './ui/provider/viewer-broadcaster';
 import { openSignalTab } from './ui/viewer-panels/signal-tab-panel';
 import { updateLastViewed } from './ui/provider/viewer-provider-helpers';
 import { searchLogFilesConcurrent } from './modules/search/log-search';
-import { maybeSuggestSmartBookmark } from './extension-activation-helpers';
+import { maybeSuggestSmartBookmark, type SmartBookmarkSession } from './extension-activation-helpers';
 import { refreshCumulativeSqlFingerprintBaseline } from './modules/db/cumulative-sql-fingerprint-refresh';
 
 interface ViewerHandlerDeps {
@@ -42,12 +42,18 @@ export function wireViewerSpecificHandlers(deps: ViewerHandlerDeps): { updateSes
         viewerProvider.setSessionNavInfo(!!adj.prev, !!adj.next, adj.index, adj.total);
     };
 
-    const smartBookmarkSuggestedForUri = new Set<string>();
+    const smartBookmarkSession: SmartBookmarkSession = {
+        promptedUris: new Set<string>(),
+        ignoredErrorTexts: new Set<string>(),
+    };
+    const smartBookmarkViewer = {
+        scrollToLine: (line: number) => viewerProvider.scrollToLine(line),
+    };
     viewerProvider.setFileLoadedHandler((uri, loadResult) => {
         void updateSessionNav();
         const isActive = historyProvider.getActiveUri()?.toString() === uri.toString();
         if (isActive) {
-            void maybeSuggestSmartBookmark(uri, loadResult, bookmarkStore, smartBookmarkSuggestedForUri);
+            void maybeSuggestSmartBookmark(uri, loadResult, bookmarkStore, smartBookmarkSession, smartBookmarkViewer);
         }
         /* DB_17: refresh cumulative SQL fingerprint baseline whenever the active log changes,
            so the SQL History panel's `Cumulative` toggle reflects every OTHER sidebar log
