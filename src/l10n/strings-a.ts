@@ -134,6 +134,8 @@ export const stringsA: Record<string, string> = {
     'msg.exportedLinesTo': 'Exported {0} line{1}{2} to {3}',
     'msg.failedEditLine': 'Failed to edit line: {0}',
     'msg.failedExportLogs': 'Failed to export logs: {0}',
+    'msg.sessionListExported': 'Exported {0} session record(s) to {1}',
+    'msg.sessionListExportFailed': 'Failed to export session list: {0}',
     'prompt.goToLine': 'Go to line number',
     'prompt.goToLineValidate': 'Enter a number',
     'prompt.annotateLine': 'Annotate line {0}',

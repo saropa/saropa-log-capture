@@ -9,6 +9,20 @@
 
 import { t } from '../../l10n';
 
+/* One toggle row inside the kebab options menu. Button ids stay identical to
+   the prior toolbar so existing syncToggleButtons/bindToggle wiring keeps
+   working without code changes. */
+function renderOptionToggle(buttonId: string, codicon: string, key: string): string {
+    const title = t(`viewer.session.${key}.title`);
+    const label = t(`viewer.session.${key}.label`);
+    const text = t(`viewer.session.${key}.text`);
+    return `<button id="${buttonId}" class="session-options-toggle" type="button" role="menuitemcheckbox" aria-checked="false" title="${title}" aria-label="${label}">
+            <span class="session-options-toggle-icon codicon codicon-${codicon}"></span>
+            <span class="session-options-toggle-text">${text}</span>
+            <span class="session-options-toggle-switch" aria-hidden="true"><span class="session-options-toggle-thumb"></span></span>
+        </button>`;
+}
+
 /** Generate the session panel HTML. */
 export function getSessionPanelHtml(): string {
     return /* html */ `
@@ -26,28 +40,42 @@ export function getSessionPanelHtml(): string {
             <button id="session-refresh" class="session-panel-action" type="button" title="${t('viewer.session.refresh.title')}" aria-label="${t('viewer.session.refresh.label')}">
                 <span class="codicon codicon-refresh"></span>
             </button>
+            <button id="session-options-toggle" class="session-panel-action" type="button" title="${t('viewer.session.options.title')}" aria-label="${t('viewer.session.options.label')}" aria-haspopup="true" aria-expanded="false">
+                <span class="codicon codicon-kebab-vertical"></span>
+            </button>
             <button id="session-close" class="session-panel-close" type="button" title="${t('viewer.session.close.title')}" aria-label="${t('viewer.session.close.label')}"><span class="codicon codicon-close"></span></button>
         </div>
     </div>
-    <div class="session-panel-toggles">
-        <select id="session-date-range" class="session-date-range-select" title="${t('viewer.session.dateRange.title')}" aria-label="${t('viewer.session.dateRange.label')}">
-            <option value="1h">${t('viewer.session.range.1h')}</option>
-            <option value="4h">${t('viewer.session.range.4h')}</option>
-            <option value="8h">${t('viewer.session.range.8h')}</option>
-            <option value="1d">${t('viewer.session.range.1d')}</option>
-            <option value="7d">${t('viewer.session.range.7d')}</option>
-            <option value="30d">${t('viewer.session.range.30d')}</option>
-            <option value="3m">${t('viewer.session.range.3m')}</option>
-            <option value="6m">${t('viewer.session.range.6m')}</option>
-            <option value="1y">${t('viewer.session.range.1y')}</option>
-            <option value="all" selected>${t('viewer.session.range.all')}</option>
-        </select>
-        <button id="session-toggle-strip" class="session-toggle-btn" type="button" title="${t('viewer.session.toggleStrip.title')}" aria-label="${t('viewer.session.toggleStrip.label')}"><span class="codicon codicon-calendar"></span> ${t('viewer.session.toggleStrip.text')}</button>
-        <button id="session-toggle-normalize" class="session-toggle-btn" type="button" title="${t('viewer.session.toggleNormalize.title')}" aria-label="${t('viewer.session.toggleNormalize.label')}"><span class="codicon codicon-edit"></span> ${t('viewer.session.toggleNormalize.text')}</button>
-        <button id="session-toggle-headings" class="session-toggle-btn" type="button" title="${t('viewer.session.toggleHeadings.title')}" aria-label="${t('viewer.session.toggleHeadings.label')}"><span class="codicon codicon-list-tree"></span> ${t('viewer.session.toggleHeadings.text')}</button>
-        <button id="session-toggle-reverse" class="session-toggle-btn session-sort-btn" type="button" title="${t('viewer.session.toggleReverse.title')}" aria-label="${t('viewer.session.toggleReverse.label')}"><span class="codicon codicon-sort-precedence"></span></button>
-        <button id="session-toggle-latest" class="session-toggle-btn" type="button" title="${t('viewer.session.toggleLatest.title')}" aria-label="${t('viewer.session.toggleLatest.label')}"><span class="codicon codicon-pinned"></span> ${t('viewer.session.toggleLatest.text')}</button>
-        <button id="session-filter-tags" class="session-toggle-btn" type="button" title="${t('viewer.session.filterTags.title')}" aria-label="${t('viewer.session.filterTags.label')}"><span class="codicon codicon-filter"></span> ${t('viewer.session.filterTags.text')}</button>
+    <!-- Display options popover. The previous toolbar row hid the Tags filter on
+         narrow panels because the buttons overflowed; consolidating them here
+         frees the header row and makes every option scannable in one place. -->
+    <div id="session-options-menu" class="session-options-menu" role="menu" aria-label="${t('viewer.session.options.label')}" style="display:none">
+        <div class="session-options-row">
+            <label class="session-options-row-label" for="session-date-range">${t('viewer.session.dateRange.label')}</label>
+            <select id="session-date-range" class="session-date-range-select" title="${t('viewer.session.dateRange.title')}" aria-label="${t('viewer.session.dateRange.label')}">
+                <option value="1h">${t('viewer.session.range.1h')}</option>
+                <option value="4h">${t('viewer.session.range.4h')}</option>
+                <option value="8h">${t('viewer.session.range.8h')}</option>
+                <option value="1d">${t('viewer.session.range.1d')}</option>
+                <option value="7d">${t('viewer.session.range.7d')}</option>
+                <option value="30d">${t('viewer.session.range.30d')}</option>
+                <option value="3m">${t('viewer.session.range.3m')}</option>
+                <option value="6m">${t('viewer.session.range.6m')}</option>
+                <option value="1y">${t('viewer.session.range.1y')}</option>
+                <option value="all" selected>${t('viewer.session.range.all')}</option>
+            </select>
+        </div>
+        ${renderOptionToggle('session-toggle-strip', 'calendar', 'toggleStrip')}
+        ${renderOptionToggle('session-toggle-normalize', 'edit', 'toggleNormalize')}
+        ${renderOptionToggle('session-toggle-headings', 'list-tree', 'toggleHeadings')}
+        ${renderOptionToggle('session-toggle-reverse', 'sort-precedence', 'toggleReverse')}
+        ${renderOptionToggle('session-toggle-latest', 'pinned', 'toggleLatest')}
+        ${renderOptionToggle('session-filter-tags', 'filter', 'filterTags')}
+        <hr class="session-options-sep" />
+        <button id="session-export-list" type="button" class="session-options-action" role="menuitem" title="${t('viewer.session.exportList.title')}" aria-label="${t('viewer.session.exportList.label')}">
+            <span class="codicon codicon-save"></span>
+            <span class="session-options-action-text">${t('viewer.session.exportList.text')}</span>
+        </button>
     </div>
     <div id="session-tags-section" class="session-tags-section" style="display:none">
         <div id="session-tag-chips" class="session-tag-chips"></div>
