@@ -4,10 +4,11 @@
  * Includes pagination: only the current page of sessions is rendered; bar shows "Showing X–Y of Z" and Prev/Next when total > pageSize.
  */
 import { getSessionGroupRenderingScript } from './viewer-session-panel-rendering-groups';
+import { getReportsBucketAndBannerScript } from './viewer-session-panel-reports-bucket';
 
 /** Get the session panel rendering script fragment. */
 export function getSessionRenderingScript(): string {
-    return getSessionGroupRenderingScript() + /* javascript */ `
+    return getSessionGroupRenderingScript() + getReportsBucketAndBannerScript() + /* javascript */ `
     /* escapeAttr and escapeHtmlText are provided by the session panel IIFE bootstrap. */
     function renderSessionList(sessions) {
         if (sessionLoadingEl) sessionLoadingEl.style.display = 'none';
@@ -182,7 +183,12 @@ export function getSessionRenderingScript(): string {
             + groupChevron
             + '<span class="session-item-icon" title="' + iconTitle + '"><span class="codicon ' + icon + '"></span>' + updateDot + '</span>'
             + '<div class="session-item-info">'
-            + '<span class="session-item-name">' + escapeHtmlText(name) + (s.isLatestOfName ? ' <span class="session-latest">' + vt('viewer.session.latest') + '</span>' : '') + groupCount + perfBadge + '</span>'
+            /* "(latest)" badge only appears when more than one session shares
+               this normalised basename. For a single entry it would be visual
+               noise — though isLatestOfName itself stays set on the lone entry
+               so the "Latest only" filter keeps it (a singleton IS, trivially,
+               the latest of its name). */
+            + '<span class="session-item-name">' + escapeHtmlText(name) + ((s.isLatestOfName && s.hasNamesakes) ? ' <span class="session-latest">' + vt('viewer.session.latest') + '</span>' : '') + groupCount + perfBadge + '</span>'
             + (meta ? '<span class="session-item-meta">' + meta + '</span>' : '')
             + '</div>'
             + renderSessionRowActions()
