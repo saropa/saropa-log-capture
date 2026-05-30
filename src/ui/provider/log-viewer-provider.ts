@@ -74,6 +74,7 @@ export class LogViewerProvider
   private onSessionAction?: (action: string, uriStrings: string[], filenames: string[]) => void;
   private onBrowseSessionRoot?: () => Promise<void>;
   private onClearSessionRoot?: () => Promise<void>;
+  private onExportSessionListJson?: () => Promise<void>;
   private onBecameVisibleHandler?: () => void;
   private onWatchAcknowledged?: () => void;
   private readonly seenCategories = new Set<string>();
@@ -152,6 +153,7 @@ export class LogViewerProvider
   setSessionActionHandler(handler: (action: string, uriStrings: string[], filenames: string[]) => void): void { this.onSessionAction = handler; }
   setBrowseSessionRootHandler(handler: () => Promise<void>): void { this.onBrowseSessionRoot = handler; }
   setClearSessionRootHandler(handler: () => Promise<void>): void { this.onClearSessionRoot = handler; }
+  setExportSessionListJsonHandler(handler: () => Promise<void>): void { this.onExportSessionListJson = handler; }
   setBecameVisibleHandler(handler: () => void): void { this.onBecameVisibleHandler = handler; }
   setWatchAcknowledgedHandler(handler: () => void): void { this.onWatchAcknowledged = handler; }
   /** Reset badge + watcher counts when the user sees the panel — consolidated so they cannot drift out of sync. */
@@ -333,6 +335,7 @@ export class LogViewerProvider
       onFindNavigateMatch: this.onFindNavigateMatch, onBookmarkAction: this.onBookmarkAction,
       onSessionNavigate: this.onSessionNavigate, onSessionAction: this.onSessionAction,
       onBrowseSessionRoot: this.onBrowseSessionRoot, onClearSessionRoot: this.onClearSessionRoot,
+      onExportSessionListJson: this.onExportSessionListJson,
     };
     dispatchViewerMessage(msg, ctx);
   }

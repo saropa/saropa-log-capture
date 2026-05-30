@@ -29,6 +29,7 @@ export interface PopOutHandlerCallbacks {
     onSessionAction?: (action: string, uriStrings: string[], filenames: string[]) => void;
     onBrowseSessionRoot?: () => Promise<void>;
     onClearSessionRoot?: () => Promise<void>;
+    onExportSessionListJson?: () => Promise<void>;
 }
 
 /** Panel state needed for building message context. */
