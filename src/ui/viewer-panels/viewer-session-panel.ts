@@ -26,6 +26,12 @@ export function getSessionPanelScript(): string {
         The panel lingers briefly so a follow-up selection (viewing another file)
         doesn't require reopening it. null = no countdown in flight. */
     var sessionAutoCloseTimer = null;
+    /** Set when openSessionPanel runs; renderSessionList consumes it once to scroll
+        the panel to the file currently open in the viewer (so the user lands on the
+        row they care about instead of the previous scroll position, which after a
+        rerender stayed at the bottom of the previous content). Cleared after one use
+        so subsequent rerenders (filter toggles, pagination) don't fight the user's scroll. */
+    var pendingScrollOnOpen = false;
 
     var sessionDisplayOptions = {
         stripDatetime: true, normalizeNames: true, showDayHeadings: true,
@@ -83,12 +89,51 @@ export function getSessionPanelScript(): string {
         if (typeof hideOtherPanelsInSlot === 'function') { hideOtherPanelsInSlot(sessionPanelEl); }
         sessionPanelOpen = true;
         sessionPanelEl.classList.add('visible');
+        /* Request a scroll-to-current after the next full list render. The panel may
+           already be populated from a prior open and a fresh sessionList may not change
+           anything; setting the flag here covers both the populated and refetch cases. */
+        pendingScrollOnOpen = true;
         requestSessionList();
         requestAnimationFrame(function() {
             var first = sessionPanelEl.querySelector('button[id="session-close"], #session-date-range, button.session-panel-action');
             if (first) first.focus();
         });
     };
+
+    /** Extract the basename from a path that may contain forward or backward slashes.
+        currentFilename is workspace-relative (forward slashes from asRelativePath); session
+        rows' data-filename may carry a subfolder prefix from disambiguation. Comparing by
+        basename keeps the match working regardless of which form either side uses. */
+    function getLogBasename(path) {
+        if (!path) return '';
+        /* Double-backslash inside this TS template literal collapses to a single backslash
+           in the emitted JS, which is what we need to look up Windows path separators. */
+        var i = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\\\'));
+        return i >= 0 ? path.substring(i + 1) : path;
+    }
+
+    /** Scroll the session list to the row matching the file currently loaded in the
+        viewer. If no file is loaded, or no row matches (filtered out, on another page,
+        in trash), scroll to the top — which holds the newest entry under the default
+        descending sort and is the right landing spot when there's nothing to anchor to. */
+    function scrollSessionListToCurrentOrTop() {
+        var content = sessionPanelEl ? sessionPanelEl.querySelector('.session-panel-content') : null;
+        if (!content) return;
+        var currentBn = getLogBasename(typeof currentFilename !== 'undefined' ? currentFilename : '');
+        if (currentBn && sessionListEl) {
+            var items = sessionListEl.querySelectorAll('.session-item');
+            for (var i = 0; i < items.length; i++) {
+                if (getLogBasename(items[i].getAttribute('data-filename') || '') === currentBn) {
+                    /* block:'center' so the row lands mid-panel; behavior:'auto' to avoid
+                       a smooth-scroll animation on open (jarring when the user expects
+                       the panel to appear pre-positioned). */
+                    items[i].scrollIntoView({ block: 'center', behavior: 'auto' });
+                    return;
+                }
+            }
+        }
+        content.scrollTop = 0;
+    }
 
     /** Closes panel and returns focus to icon bar for a11y. */
     window.closeSessionPanel = function() {

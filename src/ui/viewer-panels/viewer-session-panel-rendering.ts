@@ -83,6 +83,8 @@ export function getSessionRenderingScript(): string {
                     + '<button type="button" id="session-pagination-next" class="session-list-pagination-btn" title="' + vt('viewer.session.pagination.next') + '" ' + (sessionListPage >= totalPages - 1 ? ' disabled' : '') + '><span class="codicon codicon-chevron-right"></span></button>';
             }
         }
+        /* One-shot scroll on panel open — see scrollSessionListToCurrentOrTop for rationale. */
+        if (pendingScrollOnOpen) { pendingScrollOnOpen = false; scrollSessionListToCurrentOrTop(); }
     }
 
     /** Update the name filter bar: show label + clear button when active, hide when not. */
