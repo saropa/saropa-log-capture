@@ -24,6 +24,7 @@ import { getConfig } from "../../modules/config/config";
 import type { BookmarkStore } from "../../modules/storage/bookmark-store";
 import { wireBookmarkHandlers } from "./viewer-handler-bookmarks";
 import { handleSessionAction } from "./viewer-handler-sessions";
+import { exportSessionListToJson } from "./viewer-session-list-export";
 
 /** Workspace state: Logs panel root folder override (URI string). */
 export const SESSION_PANEL_ROOT_KEY = "sessionPanelRootFolder";
@@ -49,6 +50,7 @@ interface HandlerTarget {
   setBookmarkActionHandler(h: (msg: Record<string, unknown>) => void): void;
   setBrowseSessionRootHandler?(h: () => Promise<void>): void;
   setClearSessionRootHandler?(h: () => Promise<void>): void;
+  setExportSessionListJsonHandler?(h: () => Promise<void>): void;
 }
 
 /** Dependencies needed by the shared handler wiring. */
@@ -317,6 +319,17 @@ function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void
       await deps.context.workspaceState.update(SESSION_PANEL_LAST_BROWSE_KEY, defaultLogUri.toString());
     }
     await refreshSessionList();
+  });
+  target.setExportSessionListJsonHandler?.(async () => {
+    /* Re-read the override URI fresh — the user may have browsed to a different
+       root between opening the panel and clicking export. */
+    const overrideUriStr = deps.context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
+    const overrideRoot = overrideUriStr ? vscode.Uri.parse(overrideUriStr) : undefined;
+    await exportSessionListToJson({
+      historyProvider,
+      payloadOptions: makePayloadOptions(deps),
+      overrideRoot,
+    });
   });
   target.setSessionActionHandler((action, uriStrings, filenames) => {
     void handleSessionAction(action, uriStrings, filenames, {

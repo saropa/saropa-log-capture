@@ -142,6 +142,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setSessionActionHandler(h: (a: string, uriStrings: string[], filenames: string[]) => void): void { this.handlers.onSessionAction = h; }
   setBrowseSessionRootHandler(h: () => Promise<void>): void { this.handlers.onBrowseSessionRoot = h; }
   setClearSessionRootHandler(h: () => Promise<void>): void { this.handlers.onClearSessionRoot = h; }
+  setExportSessionListJsonHandler(h: () => Promise<void>): void { this.handlers.onExportSessionListJson = h; }
   // -- ViewerTarget state methods --
   addLine(data: LineData): void {
     // During hydrate, capture all lines (even if panel not visible yet) so we don't drop or duplicate vs file load.

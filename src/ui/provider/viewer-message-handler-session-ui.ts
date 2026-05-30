@@ -127,6 +127,7 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
       return true;
     case "browseSessionRoot": ctx.onBrowseSessionRoot?.()?.then(undefined, () => {}); return true;
     case "clearSessionRoot": ctx.onClearSessionRoot?.()?.then(undefined, () => {}); return true;
+    case "exportSessionListJson": ctx.onExportSessionListJson?.()?.then(undefined, () => {}); return true;
     case "openSessionFromPanel": ctx.onOpenSessionFromPanel?.(msgStr(msg, "uriString")); return true;
     case "sqlHistoryCrossLogJump": {
       /* DB_17: SQL History panel row jump where the fingerprint's first occurrence is in
