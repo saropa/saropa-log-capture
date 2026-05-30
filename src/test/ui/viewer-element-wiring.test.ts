@@ -37,6 +37,19 @@ suite('Webview element ID wiring', () => {
     ]);
 
     /**
+     * IDs referenced by webview scripts whose matching HTML element is part of
+     * a pending feature integration. The script guards on `!el` and no-ops
+     * until the HTML lands, so this is a known wip gap, not a regression.
+     */
+    const pendingIntegrationIds = new Set([
+        // renderNewerLogBanner in viewer-session-panel-reports-bucket.ts (wip
+        // commit 2758b480). Plan bugs/001 line 185 explicitly defers the
+        // matching <div id="session-newer-banner"> in viewer-session-panel-html.ts
+        // until the rest of the integration glue lands.
+        'session-newer-banner',
+    ]);
+
+    /**
      * IDs from removed UI that are still referenced in scripts but guarded
      * by null checks (harmless no-ops). Should be cleaned up over time.
      */
@@ -64,7 +77,7 @@ suite('Webview element ID wiring', () => {
     ]);
 
     /** Combined allowlist of IDs that aren't expected in static HTML. */
-    const allowlist = new Set([...dynamicIds, ...staleIds]);
+    const allowlist = new Set([...dynamicIds, ...staleIds, ...pendingIntegrationIds]);
 
     function extractHtmlIds(html: string): Set<string> {
         const bodyEnd = html.indexOf('<script');
