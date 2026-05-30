@@ -35,13 +35,31 @@ export interface SessionMeta {
     /** Performance fingerprints extracted from log content. */
     perfFingerprints?: PerfFingerprintEntry[];
     annotations?: Annotation[];
-    /** Cached severity line counts from content scanning. */
+    /**
+     * Cached severity line counts. Buckets match `classifyLevel()` in
+     * modules/analysis/level-classifier.ts so the list badges agree with the
+     * viewer's E/W/I/D/etc. counts for the same file.
+     *
+     * `fwCount` is V1-only: the legacy quick-scan classifier had a "frameworks"
+     * bucket (non-flutter logcat tags); classifyLevel() collapses those into
+     * info/debug, so the new producer never writes it. Kept in the type so
+     * V1 sidecars deserialise; readers should treat absence as 0.
+     *
+     * `debugCount` presence is the V2-schema gate
+     * (ui/session/session-history-metadata.ts `hasCachedSev`). V1 sidecars (no
+     * debugCount) are re-scanned by the deferred worker to backfill new buckets.
+     */
     errorCount?: number;
     warningCount?: number;
     perfCount?: number;
     anrCount?: number;
+    /** @deprecated V1 only — classifyLevel() has no framework bucket. */
     fwCount?: number;
     infoCount?: number;
+    debugCount?: number;
+    databaseCount?: number;
+    todoCount?: number;
+    noticeCount?: number;
     /** ANR risk level computed by anr-risk-scorer.ts on session finalization. */
     anrRiskLevel?: 'low' | 'medium' | 'high';
     /** App version detected at session finalization (e.g. from pubspec.yaml). */
@@ -64,6 +82,16 @@ export interface SessionMeta {
      * Undefined = ungrouped (renders as a standalone entry in the Logs list).
      */
     groupId?: string;
+    /**
+     * Optional explicit kind override. Absence means "let `classifySessionKind`
+     * decide from `debugAdapterType`, header `Project:`, and report-name
+     * patterns". Set by a future per-session "Treat as project / Treat as
+     * report" context-menu action — never written automatically. The
+     * classifier is the engine; this field is the user's manual override
+     * lever, persisted alongside the rest of `SessionMeta` so it survives
+     * panel reloads.
+     */
+    kind?: 'project' | 'report';
 }
 
 // MetaMap type imported from session-metadata-io.ts
