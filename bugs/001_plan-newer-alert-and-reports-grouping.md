@@ -138,3 +138,66 @@ Treat as report" context-menu action writes this field.
 - Capture a log while panel is open and unfocused → banner appears at top;
   dot appears on the new row. Focus panel → banner stays until dismissed;
   dot stays until that file is opened.
+
+---
+
+## Finish Report (2026-05-30)
+
+**Status**: Partial — stable pieces parked on `feat/reports-bucket-and-newer-alert` (commit `2758b480`). Three-file integration glue pending re-application in a fresh session.
+
+### What landed on this branch
+
+5 files, +605 lines, all type-clean, 14 tests passing:
+
+- `bugs/001_plan-newer-alert-and-reports-grouping.md` — this plan.
+- `src/modules/session/session-kind-classifier.ts` — pure classifier mapping `(kind | debugAdapterType | header Project | displayName)` → `project | report`. Fail-open: unknowns stay inline as project rows. Compiled regex patterns are cached per payload (callers compile once, builder reuses).
+- `src/test/modules/session/session-kind-classifier.test.ts` — 14 tests across rule precedence, invalid-pattern resilience, case-insensitive workspace match, and the fail-open default. All passing via `npm run test:file`.
+- `src/ui/viewer-panels/viewer-session-panel-reports-bucket.ts` — webview IIFE-scoped script exporting `getReportsBucketAndBannerScript()`. Provides `renderDayGroup` (partitions project vs report rows), `renderReportsBucket` (per-day collapsible `Reports (N)` row), `renderNewerLogBanner` (sticky top banner). Currently dormant — not yet imported by the panel renderer.
+- `src/ui/viewer-styles/viewer-styles-session-newer.ts` — CSS for the bucket heading, sticky banner, and per-row unread dot. Theme-token-driven with sensible fallbacks. Currently dormant — not yet composed into `getSessionPanelStyles()`.
+
+### Why this is partial, not finished
+
+A parallel Claude session was active in this repo while this work was in progress. Evidence: three commits landed mid-session that I did not author (`0cb01fb8 feat(logs-panel): consolidate display options behind kebab menu and add JSON export`, `dd58cda4 feat(bookmarks): smart-bookmark prompt → modal with five actions`, `4ce26f9d fix(viewer): unify list and viewer severity counts via classifyLevel + deferred caching`). The first overlaps heavily with my work area (`viewer-session-panel-*.ts`, `viewer-styles-session*.ts`). My uncommitted edits to three files were repeatedly clobbered by the other session writing stale copies back over them. Three re-applies in this session were each undone within a turn or two.
+
+### What still needs re-applying (three files, ~50 lines total)
+
+Each block is small and self-contained. The plan above (`## Design` section) is the spec; the parked modules in this commit are the executable form. Re-applying:
+
+1. **`src/ui/provider/viewer-provider-actions.ts`** — add the classifier import + `buildClassifierInputs` helper + `classifyMeta` helper + `BuildRecordOptions` bundle type + `unreadSinceFocus` + `kind` fields in the returned record + `getDismissedAt` plumbing on `SessionListPayloadOptions`. Bundle `extras` and `classifier` into one options arg so the function stays under the 4-param lint cap. Also export `LOGS_PANEL_DISMISSED_AT_KEY`.
+
+2. **`src/ui/viewer-panels/viewer-session-panel-rendering.ts`** — `import { getReportsBucketAndBannerScript }` and append it to the returned script string. Inside `renderSessionList`, call `renderNewerLogBanner(sorted)` after the list HTML is set. Inside `renderItem`, add the per-row unread dot inside the icon wrapper next to the existing update dot (gated on `s.unreadSinceFocus && !s.isActive && !s.updatedInLastMinute && !s.updatedSinceViewed` and the `sessionDisplayOptions.newerLogDotEnabled !== false` setting).
+
+3. **`src/ui/viewer-styles/viewer-styles-session.ts`** — `import { getSessionNewerStyles }` and compose it into `getSessionPanelStyles()`.
+
+### Additional edits that did NOT make this commit (deferred along with the glue)
+
+These survived in the working tree as `M` (modified) but were intentionally NOT staged because they reference symbols the glue is supposed to add — landing them without the glue would break the type-check on `main`. They are all small and described in the plan:
+
+- `src/modules/session/session-metadata.ts` — `kind?: 'project' | 'report'` field on `SessionMeta`.
+- `src/ui/session/session-history-grouping.ts` — same field on `SessionMetadata`.
+- `src/ui/session/session-history-metadata.ts` — `applySidecar` propagates `kind`.
+- `src/ui/session/session-display.ts` — `ReportsBucketState`, `reportsBucketState`, `expandedReportBuckets`, `newerLogBannerEnabled`, `newerLogDotEnabled` fields.
+- `src/modules/config/config-types.ts` + `src/modules/config/config.ts` — `ReportsClassifierConfig`, `NewerLogAlertConfig` types + reader.
+- `package.json` — 4 new settings (`reportsKindPatterns`, `reportsBucketDefault`, `newerLogBanner`, `newerLogDot`).
+- `src/extension-activation.ts` — display options seeded from `reportsClassifier.bucketDefault` + `newerLogAlert.{bannerEnabled,dotEnabled}`.
+- `src/ui/viewer-panels/viewer-session-panel.ts` — `expandedReportBuckets` IIFE state.
+- `src/ui/viewer-panels/viewer-session-panel-events.ts` — bucket-toggle handler + banner-button handler (Open / Dismiss).
+- `src/ui/viewer-panels/viewer-session-panel-html.ts` — `<div id="session-newer-banner">` element.
+- `src/ui/viewer-styles/viewer-styles-session-list.ts` — extraction pointer comment.
+- `src/ui/provider/viewer-handler-wiring.ts` — `getDismissedAt` in `makePayloadOptions`, seeded to activation-time on first install.
+- `src/ui/provider/viewer-message-handler-session-ui.ts` — `acknowledgeUnreadLogs` case.
+- `src/ui/provider/viewer-provider-helpers.ts` — re-export `LOGS_PANEL_DISMISSED_AT_KEY`.
+- `src/l10n/strings-webview.ts` — bucket-label and banner-text keys.
+
+### Quality gates run on the branch HEAD
+
+- `npm run check-types` — clean (zero errors).
+- `npm run test:file -- out/test/modules/session/session-kind-classifier.test.js` — 14/14 passing.
+- `npm run compile` (run earlier with all glue in place) — all verify steps green (NLS, webview catalog, host outbound catalog, commands list, dist size).
+
+### Resumption notes for the next session
+
+- Pull latest `main` before re-applying. Several `viewer-session-panel-*.ts` files were rewritten by `0cb01fb8` — context-line patches from this session will not apply; re-derive the edits from the plan and the dormant modules in this commit.
+- Do NOT amend commit `2758b480`. The integration glue belongs in its own commit so `git log` carries a clean "this is what shipped" record once the feature is fully wired.
+- After re-applying, run the standard quality gate: `npm run compile` → `npm run lint` → `npm run test:smoke`. Then add a CHANGELOG entry under the unreleased heading.
+- Manual verification per the `## Verification` section above: a day with 1 debug + 3 report captures should render 1 debug row + `Reports (3)` collapsed; a captured log while the panel is unfocused should produce both the banner and the per-row dot.
