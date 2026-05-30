@@ -11,8 +11,14 @@ export function getLevelClassifyScript(): string {
 // The '(' in the strict error char class catches the "<Type>Exception (detail)" shape
 // (e.g. "PermissionDeniedException (no OS grant on file)") — without it that line fell
 // through to 'info' and never reached the Errors filter. Mirrors level-classifier.ts.
-var strictStructuralErrorPattern = /\\w*(?:error|exception)\\s*[:\\]!(]|\\[(?:error|exception|fatal|panic)\\]|_\\w*(?:Error|Exception)\\b|Null check operator/i;
-var looseStructuralErrorPattern = /\\b(?:error|exception)(?!\\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\\b|_\\w*(?:Error|Exception)\\b|Null check operator/i;
+// Strict drops /i on Error/Exception so prose like "classification error:" (lowercase)
+// stays info — Dart label/type conventions are PascalCase. Bracket form (case-insensitive)
+// is split into strictBracketErrorPattern so explicit [ERROR]/[error] tags still match.
+// Private-type alt requires _[A-Z]… (PascalCase) to avoid matching snake_case identifiers
+// like avoid_print_error — Dart private types are always _PascalCase.
+var strictStructuralErrorPattern = /\\w*(?:Error|Exception)\\s*[:\\]!(]|_[A-Z]\\w*(?:Error|Exception)\\b|Null check operator/;
+var strictBracketErrorPattern = /\\[(?:error|exception|fatal|panic)\\]/i;
+var looseStructuralErrorPattern = /\\b(?:error|exception)(?!\\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\\b|_[A-Z]\\w*(?:Error|Exception)\\b|Null check operator/i;
 // "critical" only signals error in a structural context (critical:, [critical], critical
 // error/failure/exception/fault) — bare "critical" matches noun phrases like "critical CSS".
 // Mirrors criticalSeverityPattern in level-classifier.ts. Keep in sync.
@@ -49,7 +55,9 @@ function matchesDatabaseAnnotation(plainText) {
 var structuralPerfPattern = /\\b(skipped\\s+\\d+\\s+frames?|gc\\s+(?:pause|freed|concurrent))\\b/i;
 // Structural warning: "could not / unable to / failed to / cannot <verb>" failure phrasing
 // with no warn/fail keyword (e.g. "databaseDecode: could not decode …"). Mirrors level-classifier.ts.
-var structuralWarnPattern = /\\b(?:could\\s*not|couldn't|cannot|unable\\s+to|failed\\s+to)\\s+\\w/i;
+// Negative lookahead excludes perception/cognition verbs ("cannot see/tell/think") so
+// prose comments embedded in saropa-lint reports don't classify as warnings.
+var structuralWarnPattern = /\\b(?:could\\s*not|couldn't|cannot|unable\\s+to|failed\\s+to)\\s+(?!(?:see|tell|say|imagine|think|know|believe|recall|remember|hear|feel|guess|understand|wait|help)\\b)\\w/i;
 var strictLevelDetection = true;
 var stderrTreatAsError = false;
 var flutterDartContextRe = /(?:^[VDIW]\\/(?:flutter|dart)[\\s:]|package\\/(?:flutter|dart)\\b)/i;
@@ -95,6 +103,10 @@ function isDriftSqlStatementLine(plainText) {
 function matchesError(plainText) {
     var sp = strictLevelDetection ? strictStructuralErrorPattern : looseStructuralErrorPattern;
     if (sp.test(plainText)) return true;
+    // Bracket label form only fires in strict mode — loose mode already matches via the
+    // bare \\berror\\b keyword. Strict drops /i to filter lowercase "error:" in prose,
+    // so brackets need their own /i regex to stay unambiguous.
+    if (strictLevelDetection && strictBracketErrorPattern.test(plainText)) return true;
     // Flutter banner: unambiguous error marker regardless of strict mode.
     if (flutterExceptionBannerPattern.test(plainText)) return true;
     // "critical" is structural, not a bare keyword — see criticalSeverityPattern.
