@@ -12,8 +12,16 @@
 export function getSessionOptionsMenuStyles(): string {
     return /* css */ `
 
-/* --- Display options menu (kebab popover) --- */
+/* --- Display options menu (kebab popover) ---
+   Visibility is class-driven: the popover is display:none by default and only
+   shows when .open is present. The previous design used inline style="display:none"
+   + JS toggling element.style.display, which left the popover one stray
+   element.style.display='' (or .cssText reset) away from rendering visible — and
+   on first integration that's exactly what happened: the menu started open on
+   panel load even though no code path explicitly opened it. Class toggling is
+   side-effect-free and survives any future style-attribute clear. */
 .session-options-menu {
+    display: none;
     position: absolute;
     top: 100%;
     right: 8px;
@@ -28,6 +36,7 @@ export function getSessionOptionsMenuStyles(): string {
     border-radius: 4px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
+.session-options-menu.open { display: flex; }
 
 .session-options-row {
     display: flex;
