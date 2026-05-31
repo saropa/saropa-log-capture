@@ -27,6 +27,14 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Logs panel kebab menu no longer appears already-open when the panel is shown** — the popover's visibility was driven by `style="display:none"` plus JS toggling `element.style.display`. The 7.16.1 anchor fix exposed a latent bug where the popover rendered visible the first time the Logs panel opened, even though no code path explicitly opened it (the previous off-screen clipping bug had been hiding it). Switched to class-based visibility in [viewer-styles-session-options.ts](src/ui/viewer-styles/viewer-styles-session-options.ts): the CSS rule defaults `.session-options-menu` to `display: none` and `.session-options-menu.open` switches to `display: flex`. The toggle in [viewer-session-options-menu.ts](src/ui/viewer-panels/viewer-session-options-menu.ts) now flips the `.open` class instead of the inline style, so nothing short of adding `.open` exposes the popover.
+
+---
+
 ## [7.16.1]
 
 ### Fixed
