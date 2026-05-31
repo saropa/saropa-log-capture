@@ -8,7 +8,7 @@ All notable changes to Saropa Log Capture will be documented in this file.
 
 **GitHub Source Code** - [github.com / saropa / saropa-log-capture](https://github.com/saropa/saropa-log-capture)
 
-For older versions (7.5.2 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
+For older versions (7.7.0 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
 
 <!-- MAINTENANCE NOTES -- IMPORTANT --
 
@@ -27,7 +27,7 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [7.16.2]
 
 ### Fixed
 
@@ -463,121 +463,6 @@ Right-click → Copy & Export → Copy Line now copies the line you actually rig
 - **Copy Error / Copy Warning** — On error or warning lines, the main context menu (above **Copy & Export**) gains **Copy Error** or **Copy Warning** (`codicon-error` / `codicon-warning`). It copies plain text for the **full adjacent error/warning run** (until severity breaks), **Flutter `════ Exception caught by … ════` blocks** by `bannerGroupId` (full render-overflow / layout dumps, including long stdout bodies), continuation fragments (split long lines), and stack groups with the preceding message line when those touch that band.
 
 - **Copy DB cluster** — On any row that belongs to a **DB timestamp burst** framed block (cyan top/bottom rails and boxed SQL lines), the same menu gains **Copy DB cluster** (`codicon-database`). It copies plain text for the **whole burst** in order: both rail headings plus every clustered database line inside the frame. **Copy Error** / **Warning** and **Copy DB cluster** share one separator strip before **Copy & Export** when either applies; both commands now show the same multi-line copy toast (`Copied lines …`) as Copy Line ranges.
-
 ---
 
-## [7.7.0]
-
-Each expand/collapse in the log viewer now has its own dedicated control instead of overloading the severity dot, the Counter toggle is renamed Line numbers and moved to Layout, the permanent 99+ badge on the Logs icon is gone, dragged-in context lines (stack frames, repeat chips) mute correctly under level filters, and within-line text selection in the viewer works again. [log](https://github.com/saropa/saropa-log-capture/blob/v7.7.0/CHANGELOG.md)
-
-### Changed
-
-- **Severity gutter is now read-only — every expand/collapse has its own affordance** — The outlined severity dot was overloaded with four different meanings (filter-hidden gap, expanded peek group, dedup-fold survivor, collapsed stack header) and the dot looked identical for "click to expand" and "click to collapse". That overload is gone. The gutter now shows severity only; clicks pass through. Each concept gets a dedicated, self-describing control:
-  - **Filter-hidden gap** — a thin row between the two visible lines reads `── 12 hidden lines · show ──`. Click expands.
-  - **Expanded peek group** — leading `── hide 12 revealed · collapse ──` row above the range AND a trailing `── hide 12 revealed (above) · collapse ──` row below it. Either click collapses the whole group, so the user can re-hide from wherever they scrolled to without scrolling back to the top.
-  - **Dedup-fold survivor** — inline `×12` pill at the end of the survivor row's text. Click expands the folded duplicates and the badge mutates to `×12 hide`. Click again collapses.
-  - **Collapsed / preview stack** — inline `▶` / `▼` chevron inside the stack-header text (IDE convention). Preview-mode also gets a `── 8 more stack frames hidden · show all ──` row below the last visible app frame.
-
-  Plan: `bugs/048_plan-severity-gutter-decoupling.md`. Supersedes the surgical `× hide revealed lines` pill from the prior commit.
-- **Line numbers toggle** — Renamed the **Counter** checkbox to **Line numbers** in both the *Options* panel and the *Decorations* panel, and moved the Options-panel row from *Display* into *Layout*. Same underlying toggle (`decoShowCounter`) and same line-number rendering — clearer label, more discoverable spot for a structural layout choice.
-- **Removed the count badge from the Logs icon** — Any project with real history sat permanently at "99+", so the badge conveyed nothing and just added clutter. The actual session count is still visible inside the Logs panel.
-
-### Fixed
-
-- **Level filter context lines** — Stack frames, stack headers, repeat chips ("N × SQL repeated"), and N+1 signal chips that were dragged in as context for nearby errors rendered at full color/opacity, looking like primary content even when only **Error** was enabled. They now mute correctly via `.context-line` (opacity 0.4) and drop their level color, so context reads as background. Synthetic analysis chips ("N × SQL repeated", "⚠ Potential N+1 query") are also no longer eligible as context anchors — they describe the surrounding SQL rather than show what led to an error, so the ±N window walks past them to real log lines (stack frames, info lines) that actually carry causality.
-- **Log viewer selection** — Restored within-line text selection and stopped the flicker/jump that made selection unusable. Drag-select now only takes over when the cursor leaves the start row (multi-row intent); within-row drags fall through to native browser text selection so half-line, word, and SQL-token selections work again. Live capture's auto-scroll-to-bottom is also paused while a selection is in progress, so streaming lines no longer rewrite the viewport DOM mid-drag and wipe what you were selecting.
-
----
-
-## [7.6.0]
-
-Native tooltips and an F1 shortcuts hint across the log viewer, a workspace setting for visual spacing; fixes blank lines that were rendering at full height instead of quarter height in the viewer and HTML exports; clicking the footer filename now opens a unified Log file dialog with editor / folder / copy actions. [log](https://github.com/saropa/saropa-log-capture/blob/v7.6.0/CHANGELOG.md)
-
-### Added
-
-- **Log viewer discoverability** — Native tooltips on the log surface, scroll map, session count, and file name explain right-click line actions, long-press to copy session metadata, minimap right-click options, the log file modal, and **F1** for in-viewer shortcuts (defaults).
-- **Workspace setting `saropaLogCapture.logViewerVisualSpacing`** — Persists log viewer visual spacing (same behavior as **V** / Options). Host seeds the webview on load and on config change; toggling in the viewer updates the workspace setting.
-
-### Fixed
-
-- **Log viewer blank lines now render at quarter height.** `calcItemHeight` already used quarter height for scroll math, but `.line` CSS forced every row to full line-box height, so whitespace-only lines looked full-sized and could skew scroll totals. `.line.line-blank` now matches the JS contract (`max(4px, ~¼ of the normal line box)`).
-- **Blank-line detection** — NBSP, ZWSP, BOM, common `&nbsp;` / `&#160;` spellings, HTML numeric/hex entities that denote Unicode whitespace (e.g. `&#32;`, `&#x20;`), and similar invisibles are normalized before a line counts as blank, so quarter height and “hide blank lines” match real tool output.
-- **Structured format mode (Format on)** — Markdown / JSON / CSV / HTML preview rows now get `line-blank` when empty, so quarter-height CSS applies the same as in plain log mode.
-
-### Changed
-
-- **Log file path in the viewer footer** — Clicking the log filename (or **Ctrl+Shift+E**) opens a **Log file** dialog with **Open in editor**, **Open containing folder**, and **Copy path**, replacing separate click / long-press / double-click gestures on the footer name.
-- **Visual spacing defaults off** — The log viewer starts in a denser, IDE-like layout; **V** / Options toggle breathing room between sections. The choice is stored in workspace setting `saropaLogCapture.logViewerVisualSpacing` (default off).
-- **Interactive HTML export** — Blank body lines use the same quarter-height `.line.line-blank` styling as the viewer.
-- **Simple HTML export** (`Export HTML`) — Body lines are emitted as `#log-content` rows with class `line` / `line-blank` instead of a single `<pre>`, matching quarter-height blanks and the same decoration model as the viewer / interactive export.
-- **Scroll map (minimap)** — Quarter-height blank lines no longer paint severity ticks, so the strip reflects substantive lines more closely.
-
-<details>
-<summary>Maintenance</summary>
-
-- **Contributor / agent tooling** — `engines.node` (≥22) with `.nvmrc` and `.node-version`; Dev Container (`.devcontainer/devcontainer.json`); [doc/AGENTS.md](doc/AGENTS.md); auto-generated [doc/internal/webview-incoming-message-types.md](doc/internal/webview-incoming-message-types.md) via `npm run generate:webview-catalog` with `verify:webview-catalog` on `npm run compile`; `verify:dist-size` guard on `dist/extension.js`; `npm run analyze-bundle` for esbuild metafile analysis; GitHub PR template and bug report issue form.
-- **More dev workflow hardening** — `tsconfig.json` **`noEmit: true`** with test builds using `--noEmit false --outDir out`; [doc/internal/webview-outbound-message-types.md](doc/internal/webview-outbound-message-types.md) + `verify:host-outbound-catalog`; [doc/internal/proposed-api.md](doc/internal/proposed-api.md); `npm run doctor`, `test:file`, **`test:smoke`**, **`preflight`**, **`clean`**, **`verify:node-toolchain`**, [doc/internal/contributes-commands.md](doc/internal/contributes-commands.md) + **`verify:list-commands`**; `verify:release-version`, `verify:release-tag`; Dependabot production patch group; feature-request issue template + issue chooser links; Gitleaks in CI; extension activation smoke test.
-</details>
-
----
-
-## [7.5.7]
-
-Session-group primary row favors the app log whose `Project:` header matches the workspace folder that contains the log directory when several captures share a session group, instead of picking only by timestamp; repeated identical stack headers collapse into an `N × stack repeated` chip; copy on collapsed SQL-repeat rows expands to the full underlying lines. [log](https://github.com/saropa/saropa-log-capture/blob/v7.5.7/CHANGELOG.md)
-
-### Changed
-
-- **Session group primary row** — When several captures share a session group, the tree’s primary row **prefers the log whose header `Project:` matches the workspace folder that contains the log directory** (case-insensitive), resolved via `getWorkspaceFolder(logDir)`. If no member’s header matches, behavior is unchanged (DAP `debugAdapterType` first, then earliest `mtime`). This avoids showing an integration sidecar (e.g. logcat) as the main row when your app log lists the open project but has a later file timestamp.
-
-### Fixed
-
-- **Repeated identical stacks now collapse into an `N × stack repeated` chip.** Stack headers previously bypassed repeat collapse because they returned early in `viewer-data-add.ts`. New stack-header repeat handling hides the anchor/group, emits a repeat notification row, and restores state correctly on cleanup boundaries.
-- **Copy on collapsed SQL-repeat rows now expands to the underlying SQL lines.** Copy paths now use captured hidden-anchor text and repeat count so clipboard output includes all repeated lines (not just the header), with selection/toast counts updated accordingly.
-
----
-
-## [7.5.5]
-
-Toolbar footer level chips show letter codes beside each dot, DB-signal markers honor level filters, prefixless Android `system_server` noise respects Device tier, and drag-select / streaming tail rendering are more reliable. [log](https://github.com/saropa/saropa-log-capture/blob/v7.5.5/CHANGELOG.md)
-
-### Changed
-
-- **Toolbar level filter dots now include letter labels (`E`, `W`, `I`, `P`, `T`, `N`, `D`, `DB`).** This improves readability and accessibility versus color-only dots. Footer chips now show dot+letter+count, disabled levels fade, and click/double-click behavior is unchanged.
-
-### Fixed
-
-- **DB-signal markers now respect level filters.** Orphaned markers (missing SQL anchors in `allLines`) no longer stay visible under filtered views. `isDbSignalLevelDisabled()` now gates marker visibility in recalc and marker creation.
-- **Prefixless Android `system_server` lines now hide under Device filters.** Common framework messages now classify as `device-other` (instead of falling back to Flutter tier), while explicit logcat prefixes still win.
-- **Plain mouse drag now selects log lines for copy.** Drag selection now uses the indexed selection model with thresholding, robust row hit-testing, and edge autoscroll, so selection survives virtualized re-renders.
-- **Drag-select now releases safely on focus-loss and missed mouseup scenarios.** This prevents stuck drag state and runaway autoscroll after out-of-window mouseup events.
-- **Viewer no longer flickers near bottom during streaming.** After auto-scroll snap, a second viewport render now runs in the same frame so large batches paint correctly at the tail.
-
----
-
-## [7.5.4]
-
-Tones down minimap colors after the v7.5.3 per-pixel paint change made the severity, performance, database, and SQL bands too bright. [log](https://github.com/saropa/saropa-log-capture/blob/v7.5.4/CHANGELOG.md)
-
-### Changed
-
-- **Minimap colors rebalanced for per-pixel paint.** Color alphas in `initMmColors` were tuned for the old overdraw model and became too bright after per-pixel reduction. Alphas were lowered across severity/perf/database/SQL bands, and the SQL-density test now pins hue only so alpha can continue to be tuned.
-
----
-
-## [7.5.3]
-
-Minimap now uses deterministic per-pixel severity reduction so high-severity signals stay visible even when info/debug are hidden, the `Open Log` action on the post-capture notification opens the Log Viewer instead of a hidden editor tab, and the native scrollbar toggle hides and shows reliably. [log](https://github.com/saropa/saropa-log-capture/blob/v7.5.3/CHANGELOG.md)
-
-### Changed
-
-- **Minimap now uses deterministic per-pixel severity reduction.** Instead of stamping every source line and relying on blend behavior, the minimap now stores one winning level per pixel row and paints once. This removes saturation artifacts, keeps bar spacing predictable, and preserves higher-severity signals even when info/debug are hidden.
-
-### Fixed
-
-- **`Open Log` in the `Log Captured` notification now opens the Log Viewer, not a hidden editor tab.** The action was routed through `showTextDocument`; it now calls `saropaLogCapture.openSession` (with fallback to `saropaLogCapture.open`).
-- **Native scrollbar hide/show now uses clipping layout instead of pseudo-element toggling.** Chromium cached the `::-webkit-scrollbar` layer, so class toggles were unreliable. A `.log-content-clip` wrapper now controls visibility via box layout, with jump-button inset logic updated to read the clip bounds.
-
-
----
-
-For older versions (7.5.2 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
+For older versions (7.7.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
