@@ -14,20 +14,26 @@
 export function getSessionOptionsMenuScript(): string {
     return /* javascript */ `
     /* Header kebab opens the consolidated options menu. CSS positions the menu
-       under the header, so this only flips display + the toggle's
+       under the header, so this only toggles the .open class + the toggle's
        aria-expanded state. Outside-click dismissal is wired below in the same
-       module so all menu lifecycle lives in one place. */
+       module so all menu lifecycle lives in one place.
+       Class-based instead of style.display: the previous inline-style approach
+       had the menu rendering open on initial panel load — any code path that
+       cleared the element's style attribute (or a CSS rule with display:flex
+       cascading in) would expose it. The CSS rule defaults to display:none and
+       .open switches to display:flex, so nothing short of adding .open shows
+       the menu. */
     function setOptionsMenuOpen(open) {
         var menu = document.getElementById('session-options-menu');
         var btn = document.getElementById('session-options-toggle');
         if (!menu || !btn) return;
-        menu.style.display = open ? 'flex' : 'none';
+        menu.classList.toggle('open', open);
         btn.setAttribute('aria-expanded', open ? 'true' : 'false');
         btn.classList.toggle('active', open);
     }
     function isOptionsMenuOpen() {
         var menu = document.getElementById('session-options-menu');
-        return !!(menu && menu.style.display !== 'none');
+        return !!(menu && menu.classList.contains('open'));
     }
 
     var optionsToggleBtn = document.getElementById('session-options-toggle');
