@@ -53,7 +53,7 @@ export function getSessionPanelHtml(): string {
              A sibling placement (the original layout) fell through to the initial
              containing block, and .session-panel { overflow:hidden } then clipped
              the popover entirely so clicking the kebab appeared to do nothing. -->
-        <div id="session-options-menu" class="session-options-menu" role="menu" aria-label="${t('viewer.session.options.label')}" style="display:none">
+        <div id="session-options-menu" class="session-options-menu" role="menu" aria-label="${t('viewer.session.options.label')}">
         <div class="session-options-row">
             <label class="session-options-row-label" for="session-date-range">${t('viewer.session.dateRange.label')}</label>
             <select id="session-date-range" class="session-date-range-select" title="${t('viewer.session.dateRange.title')}" aria-label="${t('viewer.session.dateRange.label')}">
