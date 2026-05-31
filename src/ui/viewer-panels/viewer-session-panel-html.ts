@@ -45,11 +45,15 @@ export function getSessionPanelHtml(): string {
             </button>
             <button id="session-close" class="session-panel-close" type="button" title="${t('viewer.session.close.title')}" aria-label="${t('viewer.session.close.label')}"><span class="codicon codicon-close"></span></button>
         </div>
-    </div>
-    <!-- Display options popover. The previous toolbar row hid the Tags filter on
-         narrow panels because the buttons overflowed; consolidating them here
-         frees the header row and makes every option scannable in one place. -->
-    <div id="session-options-menu" class="session-options-menu" role="menu" aria-label="${t('viewer.session.options.label')}" style="display:none">
+        <!-- Display options popover. The previous toolbar row hid the Tags filter on
+             narrow panels because the buttons overflowed; consolidating them here
+             frees the header row and makes every option scannable in one place.
+             MUST stay nested inside .session-panel-header — that header carries the
+             position:relative anchor that makes top:100% land below the header.
+             A sibling placement (the original layout) fell through to the initial
+             containing block, and .session-panel { overflow:hidden } then clipped
+             the popover entirely so clicking the kebab appeared to do nothing. -->
+        <div id="session-options-menu" class="session-options-menu" role="menu" aria-label="${t('viewer.session.options.label')}" style="display:none">
         <div class="session-options-row">
             <label class="session-options-row-label" for="session-date-range">${t('viewer.session.dateRange.label')}</label>
             <select id="session-date-range" class="session-date-range-select" title="${t('viewer.session.dateRange.title')}" aria-label="${t('viewer.session.dateRange.label')}">
@@ -76,6 +80,7 @@ export function getSessionPanelHtml(): string {
             <span class="codicon codicon-save"></span>
             <span class="session-options-action-text">${t('viewer.session.exportList.text')}</span>
         </button>
+        </div>
     </div>
     <div id="session-tags-section" class="session-tags-section" style="display:none">
         <div id="session-tag-chips" class="session-tag-chips"></div>
