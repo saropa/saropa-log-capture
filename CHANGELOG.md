@@ -27,6 +27,14 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Logs panel kebab menu now actually opens** — the popover added in 7.16.0 was placed as a sibling of `.session-panel-header` in [viewer-session-panel-html.ts](src/ui/viewer-panels/viewer-session-panel-html.ts) even though its CSS relies on `top: 100%; right: 8px` anchoring against the header's `position: relative`. With no positioned ancestor the popover fell through to the initial containing block, and `.session-panel { overflow: hidden }` then clipped it entirely so clicking the kebab appeared to do nothing. Nested the popover inside `.session-panel-header` so the anchor takes effect and the menu lands directly under the kebab as intended.
+
+---
+
 ## [7.16.0]
 
 Opening the Logs side panel now lands on the file currently shown in the viewer instead of leaving the list scrolled wherever it sat last time. Lint-report rule names and code-comment prose no longer get reddened or flagged as warnings by the severity classifier. Logs-list severity badges now agree with the viewer's top-bar counts for the same file. The smart-bookmark prompt that fires during active logging now shows the actual error text in a modal and offers Focus / Copy / Bookmark / Ignore / Dismiss instead of a silent two-button popup. The Logs panel header consolidates its display options behind a kebab menu so the Tags filter no longer disappears off the edge on narrow panels, and the "Latest only" filter now correctly includes logs that exist only once. A new "Export session list to JSON" action saves the current list of sessions to the reports folder.
