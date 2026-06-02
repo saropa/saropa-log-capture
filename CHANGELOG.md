@@ -27,6 +27,14 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Log viewer: text from a recycled row could ghost through the next row's text** — virtualized rows are swapped in bulk on scroll; Chromium could leave un-invalidated paint inside a slot's bounding box, so the new row's text rendered on top of stale pixels from the prior occupant. Most visible when the slot transitioned between severity colors (e.g. info-blue → database-green): a `DRIFT: Drift debug server disconnected` row showed faint blue characters of the previous row's text bleeding through, fixing itself only on hover. The previous attempt (`transform: translateZ(0)` per-row compositor hint, v7.2.0) shipped in v7.17.0 but was empirically insufficient — Chromium coalesces tiny row layers back into a shared raster. Two layered fixes that don't rely on browser heuristics: (1) `.line, .stack-header` now paints an opaque `var(--vscode-editor-background)` fill rect before the text content so any stale pixels are physically covered (same color as the parent so visually invisible, but the browser DOES rasterize the fill); (2) the viewport renderer in [viewer-data-viewport.ts](src/ui/viewer/viewer-data-viewport.ts) now swaps DOM via a detached `<template>` + `replaceChildren()` + `appendChild(template.content)` instead of `viewportEl.innerHTML = …`, forcing full disposal of prior child nodes so the new rows have no paint-cache lineage with whatever previously occupied the slot. Full attempt history in [bugs/viewer-row-paint-ghosting-attempts.md](bugs/viewer-row-paint-ghosting-attempts.md).
+
+---
+
 ## [7.17.0]
 
 The footer-filename "Log file" modal now shows the filename, gives a toast when a copy succeeds, and adds Copy filename, Copy relative path, Open beside, Reveal in Explorer view, and Open folder in terminal. Captures with a SAROPA LOG CAPTURE header now show an (i) icon next to the filename — click it to open a structured view of every line in that header.
