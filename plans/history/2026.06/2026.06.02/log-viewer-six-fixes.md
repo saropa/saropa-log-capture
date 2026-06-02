@@ -80,9 +80,9 @@ src/ui/viewer-decorations/viewer-deco-settings.ts
 src/ui/viewer-styles/viewer-styles-ai.ts
 src/ui/viewer-styles/viewer-styles-content.ts
 src/ui/viewer/viewer-data-helpers-render.ts
-plan/history/2026.06/2026.06.02/log-viewer-six-fixes.md (this file)
+plans/history/2026.06/2026.06.02/log-viewer-six-fixes.md (this file)
 ```
 
 Bug archive: `No bug archive — task did not close a bugs/*.md file` (`SKIPPED [NO-BUG-FIXED]` — user reported the six issues directly in chat, no prior bug file).
 
-Finish report saved: `plan/history/2026.06/2026.06.02/log-viewer-six-fixes.md`.
+Finish report saved: `plans/history/2026.06/2026.06.02/log-viewer-six-fixes.md`.
