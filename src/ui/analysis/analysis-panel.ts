@@ -13,8 +13,7 @@ import type { SectionData } from '../../modules/analysis/analysis-relevance';
 import { type RelatedLinesResult, scanRelatedLines } from '../../modules/analysis/related-lines-scanner';
 import { renderRelatedLinesSection } from './analysis-related-render';
 import { getCrashEvents } from '../../modules/crashlytics/firebase-crashlytics';
-import { getIssueStats } from '../../modules/crashlytics/crashlytics-stats';
-import { renderCrashDetail, renderDeviceDistribution, renderApiDistribution } from './analysis-crash-detail';
+import { renderCrashDetail, renderDeviceDistribution } from './analysis-crash-detail';
 import { generateCrashSummary } from '../../modules/crashlytics/crashlytics-ai-summary';
 import { mergeResults, postPendingSlots, postFinalization } from './analysis-panel-helpers';
 import { buildProgressiveShell, emptySlot } from './analysis-panel-render';
@@ -145,15 +144,14 @@ async function fetchCrashDetail(issueId: string, eventIndex = 0): Promise<void> 
     const html = renderCrashDetail(detail);
     const dist = renderDeviceDistribution(multi);
     const nav = multi.events.length > 1 ? `<div class="crash-event-nav" data-issue-id="${issueId}"><button class="crash-nav-btn" data-dir="-1" ${idx === 0 ? 'disabled' : ''}>&lt;</button> <span class="crash-nav-label">Event ${idx + 1} of ${multi.events.length}</span> <button class="crash-nav-btn" data-dir="1" ${idx >= multi.events.length - 1 ? 'disabled' : ''}>&gt;</button></div>` : '';
-    const statsSlot = `<div id="crash-stats-${issueId}"></div>`;
-    panel?.webview.postMessage({ type: 'crashDetailReady', issueId, html: statsSlot + dist + nav + html });
+    // bug_008 W7: per-issue aggregate device/OS distribution previously came from the dead
+    // firebasecrashlytics `:getStats` endpoint (HTML 404, silently swallowed). Removed here.
+    // Plan 054 (App Quality Insights) owns the proper replacement against Play Reporting's
+    // errorCountMetricSet with deviceModel / apiLevel dimensions.
+    panel?.webview.postMessage({ type: 'crashDetailReady', issueId, html: dist + nav + html });
     // AI summary — async, arrives after the initial render.
     generateCrashSummary(detail).then(summary => {
         if (summary) { panel?.webview.postMessage({ type: 'crashAiSummary', issueId, html: `<div class="crash-ai-summary">${escapeHtml(summary)}</div>` }); }
-    }).catch(() => {});
-    // Aggregate stats — async, cached per issue to avoid redundant API calls on event nav.
-    getIssueStats(issueId).then(stats => {
-        if (stats) { panel?.webview.postMessage({ type: 'issueStatsReady', issueId, html: renderApiDistribution(stats) }); }
     }).catch(() => {});
 }
 function postFrameResult(file: string, line: number, html: string): void {
