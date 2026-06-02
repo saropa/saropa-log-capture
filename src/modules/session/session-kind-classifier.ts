@@ -1,7 +1,7 @@
 /**
  * Classify a captured log as `project` (debug-session / app code) or `report`
  * (auxiliary lint / audit / bundle output). Drives the Logs panel's
- * Reports-bucket grouping — see [bugs/001_plan-newer-alert-and-reports-grouping.md].
+ * Reports-bucket grouping — see [plans/history/2026.06/2026.06.02/001_plan-newer-alert-and-reports-grouping.md].
  *
  * Pure function. No I/O. Called per-row during tree refresh.
  *

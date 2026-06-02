@@ -105,9 +105,21 @@ export const stringsWebview: Record<string, string> = {
     'viewer.session.perfAvailable': 'Performance data available',
     'viewer.session.dot.updatedMin': 'Updated in the last minute',
     'viewer.session.dot.updatedSince': 'New lines since last viewed',
+    'viewer.session.dot.unread': 'Unread — captured after Logs panel last had focus',
     'viewer.session.group.expand': 'Expand this session group',
     'viewer.session.group.collapse': 'Collapse this session group',
     'viewer.session.revealInOS': 'Reveal in File Explorer',
+    // Reports bucket and newer-log banner — see [plans/history/2026.06/2026.06.02/001_plan-newer-alert-and-reports-grouping.md].
+    // {0}=count of report rows in the bucket. The label collapses N entries (lint reports,
+    // bundle audits, etc.) under a single fold-out heading so the day's debug-session rows
+    // stay scannable.
+    'viewer.session.reports.bucketLabel': 'Reports ({0})',
+    // {0}=newest unread log's display name, {1}=human time (relative or absolute).
+    'viewer.session.newerBanner.singular': 'New log · {0} · {1}',
+    // {0}=newest log name, {1}=time, {2}=count of additional unread logs (>=1).
+    'viewer.session.newerBanner.plural': 'New logs · {0} · {1} (+{2} more)',
+    'viewer.session.newerBanner.open': 'Open',
+    'viewer.session.newerBanner.dismiss': 'Dismiss',
 
     // Replay — runtime strings (viewer-replay.ts client script).
     'viewer.replay.qualityDisabled': 'Enable the codeQuality integration to generate quality reports.',

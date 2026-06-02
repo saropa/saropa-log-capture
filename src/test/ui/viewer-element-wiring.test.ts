@@ -40,14 +40,12 @@ suite('Webview element ID wiring', () => {
      * IDs referenced by webview scripts whose matching HTML element is part of
      * a pending feature integration. The script guards on `!el` and no-ops
      * until the HTML lands, so this is a known wip gap, not a regression.
+     *
+     * Empty since plan 001 landed: `session-newer-banner` is now a static HTML
+     * element in viewer-session-panel-html.ts; the allowlist-stale test would
+     * fire if it were still listed here.
      */
-    const pendingIntegrationIds = new Set([
-        // renderNewerLogBanner in viewer-session-panel-reports-bucket.ts (wip
-        // commit 2758b480). Plan bugs/001 line 185 explicitly defers the
-        // matching <div id="session-newer-banner"> in viewer-session-panel-html.ts
-        // until the rest of the integration glue lands.
-        'session-newer-banner',
-    ]);
+    const pendingIntegrationIds = new Set<string>([]);
 
     /**
      * IDs from removed UI that are still referenced in scripts but guarded
