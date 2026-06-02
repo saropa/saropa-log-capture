@@ -10,6 +10,13 @@ export type SessionDateRange =
     | '1h' | '4h' | '8h' | '1d' | '7d' | '30d'
     | '3m' | '6m' | '1y' | 'all';
 
+/** Per-day Reports bucket default state.
+ *  `collapsed` — bucket visible but folded; click to expand (default behavior).
+ *  `expanded`  — bucket auto-expanded so every report row renders inline.
+ *  `hidden`    — bucket emits nothing; reports vanish from the panel entirely.
+ *  See [plans/history/2026.06/2026.06.02/001_plan-newer-alert-and-reports-grouping.md]. */
+export type ReportsBucketState = 'collapsed' | 'expanded' | 'hidden';
+
 /** Persisted display options for the session list. */
 export interface SessionDisplayOptions {
     readonly stripDatetime: boolean;
@@ -26,6 +33,19 @@ export interface SessionDisplayOptions {
     readonly collapsedDays?: Readonly<Record<string, boolean>>;
     /** Session groups the user has collapsed in the session list, keyed by groupId. */
     readonly collapsedGroups?: Readonly<Record<string, boolean>>;
+    /** Panel-wide default for the per-day Reports bucket. Seeded from
+     *  `saropaLogCapture.reportsBucketDefault` at activation. */
+    readonly reportsBucketState?: ReportsBucketState;
+    /** Per-day Reports bucket expansion override, keyed by YYYY-MM-DD. Wins over
+     *  `reportsBucketState` for that day. Persists so a day the user expanded
+     *  stays expanded across reloads. */
+    readonly expandedReportBuckets?: Readonly<Record<string, boolean>>;
+    /** Sticky newer-log banner above the day list. Seeded from
+     *  `saropaLogCapture.newerLogBanner`. Default true. */
+    readonly newerLogBannerEnabled?: boolean;
+    /** Per-row blue unread dot. Seeded from `saropaLogCapture.newerLogDot`.
+     *  Default true. */
+    readonly newerLogDotEnabled?: boolean;
 }
 
 /** Default display options. */
@@ -37,6 +57,9 @@ export const defaultDisplayOptions: SessionDisplayOptions = {
     showLatestOnly: false,
     dateRange: 'all',
     sessionListPageSize: 100,
+    reportsBucketState: 'collapsed',
+    newerLogBannerEnabled: true,
+    newerLogDotEnabled: true,
 };
 
 const shortMonths = [
