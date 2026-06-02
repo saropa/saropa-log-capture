@@ -18,7 +18,7 @@ new attempts-log + a CHANGELOG entry:
 - [src/ui/viewer-styles/viewer-styles-lines.ts](../../../../src/ui/viewer-styles/viewer-styles-lines.ts) — added `background: var(--vscode-editor-background)` to the `.line, .stack-header` base rule and rewrote the comment block to log attempts #1 and #2 inline.
 - [src/ui/viewer/viewer-data-viewport.ts](../../../../src/ui/viewer/viewer-data-viewport.ts) — replaced `viewportEl.innerHTML = parts.join('')` with a detached `<template>` parse + `viewportEl.replaceChildren()` + `viewportEl.appendChild(_vTmpl.content)` so the DOM swap is atomic.
 - [src/test/ui/viewer-muted-decorations.test.ts](../../../../src/test/ui/viewer-muted-decorations.test.ts) — added two regression tests: opaque-background pin on `.line, .stack-header`, and renderer-uses-replaceChildren / never-innerHTML pin.
-- [bugs/viewer-row-paint-ghosting-attempts.md](../../../../bugs/viewer-row-paint-ghosting-attempts.md) — new perpetual failure log per the global "after 2+ failed attempts, document prior failures FIRST" rule. Stays in `bugs/` so attempt #3 (if ever needed) reads it first.
+- [viewer-row-paint-ghosting-attempts.md](./viewer-row-paint-ghosting-attempts.md) — perpetual failure log per the global "after 2+ failed attempts, document prior failures FIRST" rule. Lives alongside this finish report in `plans/history/2026.06/2026.06.02/` (moved from `bugs/` at user request) so attempt #3 (if ever needed) reads it first.
 - [CHANGELOG.md](../../../../CHANGELOG.md) — `### Fixed` entry under a new `## [Unreleased]` section above 7.17.0.
 
 ### Root cause (recap from attempt #1)
@@ -59,7 +59,7 @@ Both defenses compose. Even if browser layer-promotion (defense #1 in the CSS co
 
 - **`contain: paint`** — would clip the severity-gutter `::after` connector stripe (`bottom: -50%` overshoot, painted by [viewer-styles-decoration-bars.ts](../../../../src/ui/viewer-styles/viewer-styles-decoration-bars.ts)) and break the dot-to-dot rail. Documented in the CSS comment so a future cleanup doesn't try it.
 - **`will-change: contents`** — also a hint; the whole point of attempt #2 is to stop relying on hints.
-- **Keyed per-row virtualizer** — would eliminate the slot-recycle path entirely, but is a much larger refactor. Reserved for attempt #3 if attempt #2 also fails; documented in [bugs/viewer-row-paint-ghosting-attempts.md](../../../../bugs/viewer-row-paint-ghosting-attempts.md).
+- **Keyed per-row virtualizer** — would eliminate the slot-recycle path entirely, but is a much larger refactor. Reserved for attempt #3 if attempt #2 also fails; documented in [viewer-row-paint-ghosting-attempts.md](./viewer-row-paint-ghosting-attempts.md).
 - **Dropping `transform: translateZ(0)`** — empirically insufficient on its own but free in combination, and the regression test in [viewer-muted-decorations.test.ts](../../../../src/test/ui/viewer-muted-decorations.test.ts) pins it. Kept.
 
 ### Risks considered
@@ -98,11 +98,11 @@ Reload the Extension Development Host (Ctrl+R) and reopen [D:/src/contacts/repor
 - `docs/LAUNCH_TEST.md` — not present in this project (same as attempt #1's report noted).
 - `doc/guides/` — not present in this project.
 - `ROADMAP.md` — SKIPPED [out-of-scope]; this fix is reactive, not a roadmap item.
-- Bug archival — SKIPPED [NO-BUG-FIXED]. No closeable `bugs/*.md` opened by this task; the new [bugs/viewer-row-paint-ghosting-attempts.md](../../../../bugs/viewer-row-paint-ghosting-attempts.md) is a perpetual attempt log and stays in `bugs/` so attempt #3 (if ever needed) reads it first.
+- Bug archival — SKIPPED [NO-BUG-FIXED]. No closeable `bugs/*.md` opened by this task. The perpetual attempt log [viewer-row-paint-ghosting-attempts.md](./viewer-row-paint-ghosting-attempts.md) was initially created in `bugs/` per the global "2+ failed attempts" rule; the user (2026-06-02) directed it be moved into `plans/history/2026.06/2026.06.02/` alongside this finish report, where it lives so attempt #3 (if ever needed) reads it first.
 
 ### Outstanding
 
-None — the fix lands complete. If the user still sees ghosting after reloading the Extension Host on the verification log, attempt #3 (keyed-row virtualizer refactor) is queued in [bugs/viewer-row-paint-ghosting-attempts.md](../../../../bugs/viewer-row-paint-ghosting-attempts.md) but should not be started until and unless attempt #2 is observed to have failed.
+None — the fix lands complete. If the user still sees ghosting after reloading the Extension Host on the verification log, attempt #3 (keyed-row virtualizer refactor) is queued in [viewer-row-paint-ghosting-attempts.md](./viewer-row-paint-ghosting-attempts.md) but should not be started until and unless attempt #2 is observed to have failed.
 
 Bug archived: No bug archive — task did not close a `bugs/*.md` file.
 
