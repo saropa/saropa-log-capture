@@ -50,7 +50,8 @@ export function getLineStyles(): string {
 
 /* --- Floating copy icon (single overlay pinned to right edge of #log-content) --- */
 /* Ghost-paint defense for virtualized row recycle — see
-   bugs/viewer-row-paint-ghosting-attempts.md for the full history.
+   plans/history/2026.06/2026.06.02/viewer-row-paint-ghosting-attempts.md
+   for the full history.
 
    Symptom: the viewport renderer used to swap visible rows via
    \`viewportEl.innerHTML = …\`. When a slot recycled from one severity (e.g.
