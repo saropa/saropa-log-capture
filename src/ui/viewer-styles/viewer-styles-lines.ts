@@ -49,31 +49,58 @@ export function getLineStyles(): string {
    on every row (stack-header or regular), so no compensating spacer is needed. */
 
 /* --- Floating copy icon (single overlay pinned to right edge of #log-content) --- */
-/* isolation: isolate creates a fresh stacking context per row so each row's
-   own pseudo-elements (dot ::before z-index: 2, chain stripe ::after z-index: 1)
-   resolve their z-order WITHIN the row. Without this, a chain stripe ::after
-   from the PREVIOUS row that overflows into THIS row's space (via
-   overflow: visible) would render against the global stacking context — and
-   in some browsers paint on top of this row's dot at the overlap point.
-   With per-row isolation, each row paints atomically in document order: the
-   previous row paints first (including its overshoot), the current row
-   paints over it. The dot is in the current row's stacking context, so it
-   wins over any other row's overshooting stripe at every overlap point.
+/* Ghost-paint defense for virtualized row recycle — see
+   bugs/viewer-row-paint-ghosting-attempts.md for the full history.
 
-   transform: translateZ(0) promotes each row to its own compositor layer,
-   which forces Chromium to invalidate paint per-row when the virtualized
-   viewport recycles row slots via innerHTML replacement. Without it, a
-   recycled slot that previously held a level-info (blue) line and now holds
-   a level-database (green) line could keep faint blue pixels of the old
-   text visible until any :hover repaint cleared them — the user saw
-   "DRIFT: Drift debug server disconnected" rendered with the prior row's
-   blue text ghosting through, fixing itself only on mouseover. Per-row
-   compositor isolation also costs nothing meaningful at our row count
-   (virtualization keeps ~50 rows live), so the GPU-memory hit is bounded. */
+   Symptom: the viewport renderer used to swap visible rows via
+   \`viewportEl.innerHTML = …\`. When a slot recycled from one severity (e.g.
+   level-info blue) to another (level-database green), Chromium could leave
+   un-invalidated pixels of the prior row's text inside the slot's bounding
+   box, so faint blue characters ghost through the new green text. The
+   user-visible repro is "DRIFT: Drift debug server disconnected" rendered
+   with the prior info row's blue text bleeding through; a :hover repaint
+   clears it. Four layered defenses sit here, each addressing a different
+   point in the paint pipeline:
+
+   1. position: relative + isolation: isolate — gives each row its own
+      stacking context so the severity dot's ::before (z-index 2) and the
+      chain-stripe ::after (z-index 1) from a *previous* row that overflows
+      into this row's space (via overflow: visible) resolve INSIDE the row.
+      Without it, an overshooting ::after composed against the global
+      stacking context could paint over this row's dot at the overlap.
+
+   2. transform: translateZ(0) — attempt #1 (commit 49297d75). A
+      compositor-layer hint promoting each row to its own GPU layer so paint
+      invalidation is per-row on row recycle. By itself this turned out to
+      be insufficient in production v7.17.0 — the user still saw ghosting on
+      the DRIFT disconnect line. Kept here because it is a cheap hint that
+      can still help on Chromium versions where the heuristic honors it; it
+      composes with (3) and (4) below.
+
+   3. background: var(--vscode-editor-background) — attempt #2 (this
+      commit). Each row paints an opaque fill rect before its text content,
+      so any stale pixels left behind by Chromium's paint cache are
+      physically overwritten by the row's own background. Same color as
+      the editor panel parent, so visually invisible, but the fill DOES get
+      rasterized, which is the point. This is the most reliable defense
+      because it does not depend on browser layer-promotion heuristics.
+
+   4. Atomic DOM swap via <template> + replaceChildren()/appendChild() in
+      viewer-data-viewport.ts replaces the innerHTML fast path entirely.
+      Forces full disposal of the prior child nodes before fresh nodes
+      attach, so the new row has no paint-cache lineage with whatever
+      previously occupied that physical slot.
+
+   Bounded cost: virtualization keeps ~50 rows live, so the GPU/compositor
+   footprint stays small regardless of how many of these the browser
+   actually materializes. The opaque background also does NOT clip the
+   severity-gutter ::after stripe overshoot (bottom: -50%) — only
+   contain: paint would, which is why we deliberately avoid it. */
 .line, .stack-header {
     position: relative;
     isolation: isolate;
     transform: translateZ(0);
+    background: var(--vscode-editor-background);
 }
 #copy-float {
     display: none;
