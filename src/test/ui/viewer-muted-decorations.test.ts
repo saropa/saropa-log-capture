@@ -123,7 +123,7 @@ test(".line, .stack-header carry opaque background to obscure recycled-slot ghos
      so the row looks identical, but the browser DOES rasterize the fill —
      which is the point. Pinning so a future "rows have no background — why
      is this here?" cleanup is caught. See
-     bugs/viewer-row-paint-ghosting-attempts.md. */
+     plans/history/2026.06/2026.06.02/viewer-row-paint-ghosting-attempts.md. */
   const css = getLineStyles();
   const rule = css.match(/\.line,\s*\.stack-header\s*\{[^}]*\}/s)?.[0] ?? "";
   assert.ok(
@@ -135,7 +135,7 @@ test(".line, .stack-header carry opaque background to obscure recycled-slot ghos
 test("renderViewport swaps DOM via <template> + replaceChildren/appendChild, never via innerHTML on the live viewport", () => {
   /* Attempt #3 of the ghost-paint fix (attempts #1 transform: translateZ(0)
      and #2 opaque background documented in viewer-styles-lines.ts and
-     bugs/viewer-row-paint-ghosting-attempts.md). The innerHTML setter takes a
+     plans/history/2026.06/2026.06.02/viewer-row-paint-ghosting-attempts.md). The innerHTML setter takes a
      Chromium fast path that can reuse prior child paint records for a slot;
      attempts #1 and #2 layer compositor/paint defenses on top of that, but
      the deterministic fix is to detach + dispose every prior child via
