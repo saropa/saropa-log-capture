@@ -1,6 +1,6 @@
 # Logs Panel: Kebab Menu Did Not Open (Anchor Fix)
 
-The user reported: *"the kebab menu in the log list (session history) is not showing anything when i click on the icon."* This is the kebab popover added in 7.16.0 ([plan/history/2026.05/2026.05.30/logs-panel-kebab-and-latest-filter-fix.md](../2026.05.30/logs-panel-kebab-and-latest-filter-fix.md)) that consolidated the previous toolbar's display toggles, date-range select, and the new JSON export action. Clicking the kebab silently opened a menu the user never saw.
+The user reported: *"the kebab menu in the log list (session history) is not showing anything when i click on the icon."* This is the kebab popover added in 7.16.0 ([plans/history/2026.05/2026.05.30/logs-panel-kebab-and-latest-filter-fix.md](../2026.05.30/logs-panel-kebab-and-latest-filter-fix.md)) that consolidated the previous toolbar's display toggles, date-range select, and the new JSON export action. Clicking the kebab silently opened a menu the user never saw.
 
 ## Finish Report (2026-05-31)
 
@@ -46,7 +46,7 @@ The popover CSS in [viewer-styles-session-options.ts](../../../../src/ui/viewer-
 
 - `src/ui/viewer-panels/viewer-session-panel-html.ts` — moved `#session-options-menu` inside `.session-panel-header`; added explanatory comment.
 - `CHANGELOG.md` — added `## [Unreleased]` section with the Fixed entry.
-- `plan/history/2026.05/2026.05.31/logs-panel-kebab-menu-anchor-fix.md` — this finish report.
+- `plans/history/2026.05/2026.05.31/logs-panel-kebab-menu-anchor-fix.md` — this finish report.
 
 ### Outstanding
 
@@ -56,4 +56,4 @@ None. The fix is self-contained.
 
 No bug archive — task did not close a `bugs/*.md` file. The user reported the issue conversationally.
 
-Finish report saved: `plan/history/2026.05/2026.05.31/logs-panel-kebab-menu-anchor-fix.md`
+Finish report saved: `plans/history/2026.05/2026.05.31/logs-panel-kebab-menu-anchor-fix.md`
