@@ -111,6 +111,8 @@ window.addEventListener('message', function(event) {
         case 'setSessionInfo':
             if (typeof applySessionInfo === 'function') applySessionInfo(msg.info);
             break;
+        /* setSessionHeaderLines: stash raw header lines for the (i) info modal; window-global so init order does not matter. */
+        case 'setSessionHeaderLines': if (typeof window !== 'undefined') { window.__sessionHeaderLines = Array.isArray(msg.headerLines) ? msg.headerLines : []; if (typeof window.__applySessionHeaderLines === 'function') window.__applySessionHeaderLines(window.__sessionHeaderLines); } break;
         case 'setHasPerformanceData':
             var perfChip = document.getElementById('session-perf-chip');
             if (perfChip) perfChip.classList.toggle('u-hidden', !msg.has);

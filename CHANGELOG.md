@@ -29,7 +29,11 @@ cspell:disable
 
 ## [Unreleased]
 
-The footer-filename "Log file" modal now shows the filename, gives a toast when a copy succeeds, and adds Copy filename, Copy relative path, Open beside, Reveal in Explorer view, and Open folder in terminal.
+The footer-filename "Log file" modal now shows the filename, gives a toast when a copy succeeds, and adds Copy filename, Copy relative path, Open beside, Reveal in Explorer view, and Open folder in terminal. Captures with a SAROPA LOG CAPTURE header now show an (i) icon next to the filename — click it to open a structured view of every line in that header.
+
+### Added
+
+- **Session info modal (i) icon next to the filename** — captures that begin with a `=== SAROPA LOG CAPTURE — SESSION START ===` block now expose an info icon in the top-right of the log viewer. Clicking it opens a modal that re-groups the flat header into Session / Launch configuration / Environment / Git / System / Integrations sections, with the launch.json sub-keys indented under their parent. URLs (Git Remote, Drift Advisor) become click-to-open links, and launch-config path values (`program`, `cwd`, `projectRootPath`, `flutterSdkPath`, `dartSdkPath`) become click-to-reveal links into the OS file explorer. Long-press (~0.5s) any row to copy `key: value` to the clipboard. The long "Uncommitted: 77 file(s) — …" line is folded behind a details/summary so the modal stays compact. See [viewer-session-info-modal.ts](src/ui/viewer/viewer-session-info-modal.ts), [viewer-session-info-modal-render.ts](src/ui/viewer/viewer-session-info-modal-render.ts), [viewer-styles-session-info-modal.ts](src/ui/viewer-styles/viewer-styles-session-info-modal.ts).
 
 ### Fixed
 

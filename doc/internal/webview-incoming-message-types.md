@@ -106,6 +106,7 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `resetAllSettings` | viewer-message-handler-panels.ts |
 | `revealLogFile` | viewer-message-handler-session-ui.ts |
 | `revealLogFileInExplorer` | viewer-message-handler-session-ui.ts |
+| `revealPath` | viewer-message-handler-session-ui.ts |
 | `rootCauseBundle` | viewer-message-handler-root-cause.ts |
 | `runCommand` | viewer-message-handler-session-ui.ts |
 | `saveLevelFilters` | viewer-message-handler-session-ui.ts |
@@ -140,4 +141,4 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `viewerKeybindingRecordCancelled` | viewer-message-handler-actions.ts |
 | `viewerKeybindingRecorded` | viewer-message-handler-actions.ts |
 
-**Total:** 132 distinct types.
+**Total:** 133 distinct types.
