@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { linkifyHtml, linkifyUrls, linkifyBarePaths } from '../../../modules/source/source-linker';
+import { linkifyHtml, linkifyUrls, linkifyBarePaths, linkifyRelativePaths } from '../../../modules/source/source-linker';
 
 suite('linkifyHtml', () => {
     test('should linkify simple file:line pattern', () => {
@@ -305,5 +305,74 @@ suite('linkifyBarePaths', () => {
         assert.ok(result.startsWith('[AI Edit] '));
         assert.ok(result.endsWith(' (modified)'));
         assert.ok(result.includes('class="source-link"'));
+    });
+});
+
+suite('linkifyRelativePaths', () => {
+    test('should linkify bare relative path anchored at lib/', () => {
+        // Tool output like `git add lib/components/x.dart` — slipped through
+        // both linkifyHtml (no :line tail) and linkifyBarePaths (no absolute root).
+        const result = linkifyRelativePaths('git add lib/components/primitive/common_expansion_tile.dart');
+        assert.ok(result.includes('class="source-link"'));
+        assert.ok(result.includes('data-path="lib/components/primitive/common_expansion_tile.dart"'));
+        assert.ok(result.includes('data-line="1"'));
+    });
+
+    test('should linkify bare relative path anchored at src/', () => {
+        const result = linkifyRelativePaths('dart format src/foo.ts');
+        assert.ok(result.includes('class="source-link"'));
+        assert.ok(result.includes('data-path="src/foo.ts"'));
+    });
+
+    test('should linkify bare relative path anchored at test/', () => {
+        const result = linkifyRelativePaths('test/utils/parser.dart failed');
+        assert.ok(result.includes('class="source-link"'));
+    });
+
+    test('should NOT linkify bare filename in prose (no folder prefix)', () => {
+        // Anchoring at a known project folder is the false-positive guard —
+        // bare filename mentions in prose must stay plain text.
+        const result = linkifyRelativePaths('see foo.dart for context');
+        assert.ok(!result.includes('source-link'));
+    });
+
+    test('should NOT linkify unknown-folder relative path', () => {
+        // "config/foo.dart" — `config` isn't in the project-folder allowlist,
+        // so this stays plain. Only well-known build-system roots qualify.
+        const result = linkifyRelativePaths('config/foo.dart updated');
+        assert.ok(!result.includes('source-link'));
+    });
+
+    test('should NOT linkify lib/foo inside already-wrapped absolute path', () => {
+        // Negative lookbehind: when `lib/` appears as a SUBPATH of an absolute
+        // path like `d:/src/lib/foo.dart`, the preceding `/` blocks the match.
+        // (linkifyBarePaths owns the absolute path; we must not re-wrap inside.)
+        const result = linkifyRelativePaths('d:/src/lib/foo.dart');
+        assert.ok(!result.includes('source-link'));
+    });
+
+    test('should NOT linkify unsupported extension', () => {
+        const result = linkifyRelativePaths('lib/build.log written');
+        assert.ok(!result.includes('source-link'));
+    });
+
+    test('should handle empty string', () => {
+        assert.strictEqual(linkifyRelativePaths(''), '');
+    });
+
+    test('should not double-wrap inside existing HTML tags', () => {
+        // Input where lib/foo.dart sits inside an existing <a> tag attribute —
+        // the tag-splitter skips the path because it's inside the angle brackets.
+        const input = '<a data-x="lib/foo.dart">text</a>';
+        const result = linkifyRelativePaths(input);
+        assert.strictEqual(result, input);
+    });
+
+    test('should linkify multiple bare relative paths in one line', () => {
+        // git status / git add output frequently lists several paths.
+        const result = linkifyRelativePaths('git add lib/a.dart lib/b.dart');
+        // Two anchors expected — the per-match replace fires twice.
+        const matches = result.match(/class="source-link"/g) ?? [];
+        assert.strictEqual(matches.length, 2);
     });
 });
