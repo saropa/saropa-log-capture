@@ -39,6 +39,19 @@ function isAllowedExternalUrl(url: string): boolean {
   return /^https?:\/\//i.test(trimmed) || /^vscode:\/\//i.test(trimmed);
 }
 
+/* Reveal an arbitrary absolute path (from the session header — e.g. main.dart,
+   cwd) in the OS file explorer. Validates the path before invoking the
+   built-in 'revealFileInOS' command so a hostile webview payload cannot
+   coerce a path traversal. */
+function runRevealPath(msg: Record<string, unknown>): void {
+  const path = msgStr(msg, "path").trim();
+  if (path.length === 0 || path.length > 2048) {
+    logExtensionWarn('viewerMessage', 'revealPath rejected: empty or too long');
+    return;
+  }
+  vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(path)).then(undefined, () => {});
+}
+
 function runSessionAction(msg: Record<string, unknown>, ctx: ViewerMessageContext): void {
   const uriStrings = Array.isArray(msg.uriStrings) ? (msg.uriStrings as string[]) : [msgStr(msg, "uriString")];
   const filenames = Array.isArray(msg.filenames) ? (msg.filenames as string[]) : [msgStr(msg, "filename")];
@@ -80,6 +93,7 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
       ctx.onLinkClick?.(msgStr(msg, "path"), Number(msg.line ?? 1), Number(msg.col ?? 1), Boolean(msg.splitEditor));
       return true;
     case "openUrl": runOpenUrl(msg); return true;
+    case "revealPath": runRevealPath(msg); return true;
     case "navigatePart": ctx.onPartNavigate?.(Math.max(1, safeLineIndex(msg.part, 1))); return true;
     case "navigateSession": { const d = Number(msg.direction); ctx.onSessionNavigate?.(d < 0 ? -1 : 1); return true; }
     case "savePresetRequest":

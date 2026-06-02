@@ -53,5 +53,37 @@ suite('log viewer provider load', () => {
     assert.ok(texts.some((t) => t.includes('first-part')), 'expected first split part line');
     assert.ok(texts.some((t) => t.includes('second-part-error')), 'expected second split part line');
   });
+
+  test('emits setSessionHeaderLines with the raw header block so the info modal can render it', async () => {
+    /* The (i) info modal reads window.__sessionHeaderLines populated by this
+       message. If executeLoadContent stops emitting it, the icon stays hidden
+       and the modal renders empty even when the file has a proper header. */
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'saropa-viewer-load-hdr-'));
+    const logDir = path.join(tmpDir, 'reports', '20260323');
+    await fs.mkdir(logDir, { recursive: true });
+
+    const logPath = path.join(logDir, '20260323_120000_demo.log');
+    await fs.writeFile(logPath, makeHeader('2026-03-23T12:00:00.000Z') + '[12:00:01.000] [console] body\n', 'utf-8');
+
+    const messages: unknown[] = [];
+    const target = {
+      postMessage: (msg: unknown) => { messages.push(msg); },
+      setFilename: (_name: string) => {},
+      setSessionInfo: (_info: Record<string, string> | null) => {},
+      getSeenCategories: () => new Set<string>(),
+      setHasPerformanceData: (_has: boolean) => {},
+      setCodeQualityPayload: (_payload: unknown) => {},
+    };
+    await executeLoadContent(target, vscode.Uri.file(logPath), () => true);
+
+    const hdrMsg = messages.find((m) => typeof m === 'object' && m !== null && (m as Record<string, unknown>).type === 'setSessionHeaderLines') as Record<string, unknown> | undefined;
+    assert.ok(hdrMsg, 'expected setSessionHeaderLines after a load with a session header');
+    const lines = hdrMsg.headerLines as string[];
+    assert.ok(Array.isArray(lines), 'headerLines should be an array');
+    assert.ok(lines.some((l) => l.includes('SAROPA LOG CAPTURE')), 'banner line preserved for the modal title');
+    assert.ok(lines.some((l) => l.startsWith('Date:')), 'header field preserved');
+    assert.ok(lines.some((l) => l.startsWith('Project:')), 'header field preserved');
+    assert.ok(!lines.some((l) => l === ''), 'blank trailing line was stripped');
+  });
 });
 

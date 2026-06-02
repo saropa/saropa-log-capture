@@ -200,6 +200,11 @@ export function setAutoHidePatternsImpl(target: ProviderStateTarget, patterns: r
 }
 export function setSessionInfoImpl(target: ProviderStateTarget, info: Record<string, string> | null): void {
   target.postMessage({ type: "setSessionInfo", info });
+  // Reset the raw-header companion when session info clears, so the info-modal
+  // (i) icon hides between captures instead of holding the previous file's data.
+  if (info === null) {
+    target.postMessage({ type: "setSessionHeaderLines", headerLines: [] });
+  }
 }
 export function setHasPerformanceDataImpl(target: ProviderStateTarget, has: boolean): void {
   target.postMessage({ type: "setHasPerformanceData", has });
