@@ -54,6 +54,21 @@ export const stringsViewerD: Record<string, string> = {
     'viewer.logFile.copyRelativePath': 'Copy relative path',
     'viewer.logFile.copyFullPath': 'Copy full path',
 
+    // Session info modal (viewer-session-info-modal.ts) and its toolbar trigger.
+    'viewer.toolbar.sessionInfo.title': 'Session info — view the capture header (long-press a row to copy)',
+    'viewer.toolbar.sessionInfo.label': 'Show session info',
+    'viewer.sessionInfo.title': 'Session information',
+    'viewer.sessionInfo.empty': 'No session header found in this log.',
+    'viewer.sessionInfo.copyHint': 'Tip: long-press (hold ~0.5s) any row to copy it to the clipboard. Click a link to open it.',
+    'viewer.sessionInfo.openInBrowser': 'Open in browser',
+    'viewer.sessionInfo.revealInExplorer': 'Reveal in OS file explorer',
+    'viewer.sessionInfo.section.session': 'Session',
+    'viewer.sessionInfo.section.launch': 'Launch configuration',
+    'viewer.sessionInfo.section.environment': 'Environment',
+    'viewer.sessionInfo.section.git': 'Git',
+    'viewer.sessionInfo.section.system': 'System',
+    'viewer.sessionInfo.section.integrations': 'Integrations',
+
     // Go-to-line modal (viewer-goto-line.ts host shell).
     'viewer.gotoLine.label': 'Go to Line',
     'viewer.gotoLine.placeholder': 'Line number',

@@ -82,6 +82,9 @@ export function getToolbarHtml(opts: ToolbarHtmlOptions): string {
     </div>
     <div class="toolbar-right">
         <span id="session-details-inline" class="session-details-inline" aria-label="${t('viewer.toolbar.sessionDetails.label')}" title="${t('viewer.toolbar.sessionDetails.title')}"></span>
+        <button type="button" id="session-info-btn" class="toolbar-icon-btn session-info-btn" style="display:none" title="${t('viewer.toolbar.sessionInfo.title')}" aria-label="${t('viewer.toolbar.sessionInfo.label')}">
+            <span class="codicon codicon-info" aria-hidden="true"></span>
+        </button>
         <span id="footer-text" data-version="${ver}" class="toolbar-filename" title="${t('viewer.toolbar.filename.title')}"></span>
     </div>
 </div>`;

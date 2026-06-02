@@ -79,6 +79,7 @@ Heuristic index of `type` fields on objects passed to `this.postMessage` / `targ
 | `setRootCauseHintHostFields` | src/ui/provider/log-viewer-provider-load.ts |
 | `setRootCauseHintL10n` | src/ui/provider/log-viewer-provider-setup.ts |
 | `setScopeContext` | src/ui/provider/log-viewer-provider-state.ts |
+| `setSessionHeaderLines` | src/ui/provider/log-viewer-provider-load.ts, src/ui/provider/log-viewer-provider-state.ts |
 | `setSessionInfo` | src/ui/provider/log-viewer-provider-state.ts |
 | `setShowElapsed` | src/ui/provider/log-viewer-provider-state.ts |
 | `setSources` | src/ui/provider/log-viewer-provider-load-group.ts |
@@ -101,4 +102,4 @@ Heuristic index of `type` fields on objects passed to `this.postMessage` / `targ
 | `updateWatchCounts` | src/ui/provider/log-viewer-provider.ts |
 | `viewerKeybindingRecordMode` | src/ui/provider/viewer-message-handler-actions.ts |
 
-**Total:** 94 distinct types.
+**Total:** 95 distinct types.

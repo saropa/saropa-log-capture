@@ -99,6 +99,17 @@ export async function executeLoadContent(
 
   if (Object.keys(fields).length > 0) { target.setSessionInfo(fields); }
 
+  // Send the raw header lines (slice up to the closing divider) so the info modal
+  // can render the original groupings, nested launch-config sub-keys, and hotlinks
+  // that the flattened Record<string, string> would otherwise lose.
+  const headerEndIdx = findHeaderEnd(sessionParts[0].lines);
+  if (headerEndIdx > 0) {
+    const headerLines = sessionParts[0].lines.slice(0, headerEndIdx).filter((l) => l !== '');
+    target.postMessage({ type: 'setSessionHeaderLines', headerLines });
+  } else {
+    target.postMessage({ type: 'setSessionHeaderLines', headerLines: [] });
+  }
+
   const perfResult = await loadPerfAndCodeQualityPayload(target, uri, checkGen);
   if (perfResult.cancelled) {
     return { sessionMidnightMs: 0, contentLength: 0 };
