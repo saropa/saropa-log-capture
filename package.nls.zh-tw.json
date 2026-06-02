@@ -54,6 +54,7 @@
   "command.expandAllSections.title": "展開所有區段",
   "command.maximizePanel.title": "最大化面板",
   "command.toggleSearchOverlay.title": "切換搜尋",
+  "command.gotoLineInViewer.title": "前往行",
   "command.refreshHistory.title": "重新整理記錄歷程",
   "command.removeFromCollection.title": "從調查移除",
   "command.renameSession.title": "重新命名記錄",

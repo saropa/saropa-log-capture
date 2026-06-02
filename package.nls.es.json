@@ -54,6 +54,7 @@
   "command.expandAllSections.title": "Expandir todas las secciones",
   "command.maximizePanel.title": "Maximizar panel",
   "command.toggleSearchOverlay.title": "Alternar busqueda",
+  "command.gotoLineInViewer.title": "Ir a la línea",
   "command.refreshHistory.title": "Actualizar historial de registros",
   "command.removeFromCollection.title": "Eliminar de investigación",
   "command.renameSession.title": "Renombrar registro",
