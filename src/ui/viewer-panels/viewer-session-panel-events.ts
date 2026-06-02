@@ -3,9 +3,10 @@
  * outside click, header path, and message listener. Inlined into the same IIFE as viewer-session-panel.
  */
 import { getSessionOptionsMenuScript } from './viewer-session-options-menu';
+import { getNewerLogEventsScript } from './viewer-session-panel-events-newer';
 
 export function getSessionPanelEventsScript(): string {
-  return getSessionOptionsMenuScript() + `
+  return getSessionOptionsMenuScript() + getNewerLogEventsScript() + `
     function syncToggleButtons() {
         var ids = {
             'session-toggle-strip': !sessionDisplayOptions.stripDatetime,
@@ -284,6 +285,14 @@ export function getSessionPanelEventsScript(): string {
                 collapsedGroups = Object.create(null);
                 for (var gk in opts.collapsedGroups) {
                     if (opts.collapsedGroups[gk]) collapsedGroups[gk] = true;
+                }
+            }
+            /* Restore persisted per-day Reports bucket expansion state. Same pattern as
+               collapsedDays — only keep truthy entries so the object stays small. Plan: 001. */
+            if (opts.expandedReportBuckets) {
+                expandedReportBuckets = Object.create(null);
+                for (var rk in opts.expandedReportBuckets) {
+                    if (opts.expandedReportBuckets[rk]) expandedReportBuckets[rk] = true;
                 }
             }
             sessionListPage = 0;

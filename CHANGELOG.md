@@ -27,11 +27,11 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [7.17.1]
 
 ### Added
 
-- **Logs panel: per-day Reports bucket + newer-log alert** — completes plan [001](bugs/001_plan-newer-alert-and-reports-grouping.md) by wiring the previously-parked classifier + dormant UI modules into the panel. Each day now renders debug-session captures inline and folds auxiliary captures (Saropa Lint Report, Json Bundle Audit/Translate, Audit Matrix) into a collapsible `Reports (N)` row that respects the new `reportsBucketDefault` setting and a per-day expansion override. A sticky banner above the day list announces logs newer than the panel's last dismiss cursor, with Open / Dismiss buttons; a small blue dot appears on each affected row (gated separately so users can keep one signal without the other). Settings: `reportsKindPatterns`, `reportsBucketDefault`, `newerLogBanner`, `newerLogDot`. Dismiss state persists per workspace and seeds to activation time on first install so pre-existing logs don't carpet-bomb the banner.
+- **Logs panel: per-day Reports bucket + newer-log alert** — completes plan [001](plans/history/2026.06/2026.06.02/001_plan-newer-alert-and-reports-grouping.md) by wiring the previously-parked classifier + dormant UI modules into the panel. Each day now renders debug-session captures inline and folds auxiliary captures (Saropa Lint Report, Json Bundle Audit/Translate, Audit Matrix) into a collapsible `Reports (N)` row that respects the new `reportsBucketDefault` setting and a per-day expansion override. A sticky banner above the day list announces logs newer than the panel's last dismiss cursor, with Open / Dismiss buttons; a small blue dot appears on each affected row (gated separately so users can keep one signal without the other). Settings: `reportsKindPatterns`, `reportsBucketDefault`, `newerLogBanner`, `newerLogDot`. Dismiss state persists per workspace and seeds to activation time on first install so pre-existing logs don't carpet-bomb the banner.
 
 ### Fixed
 

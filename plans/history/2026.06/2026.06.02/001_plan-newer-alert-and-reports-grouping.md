@@ -1,6 +1,6 @@
 # Plan 001 — Newer-log alert and Reports-vs-Project grouping
 
-## Status: In Progress
+## Status: Fixed (2026-06-02)
 
 ## Problem
 
@@ -201,3 +201,53 @@ These survived in the working tree as `M` (modified) but were intentionally NOT 
 - Do NOT amend commit `2758b480`. The integration glue belongs in its own commit so `git log` carries a clean "this is what shipped" record once the feature is fully wired.
 - After re-applying, run the standard quality gate: `npm run compile` → `npm run lint` → `npm run test:smoke`. Then add a CHANGELOG entry under the unreleased heading.
 - Manual verification per the `## Verification` section above: a day with 1 debug + 3 report captures should render 1 debug row + `Reports (3)` collapsed; a captured log while the panel is unfocused should produce both the banner and the per-row dot.
+
+---
+
+## Finish Report (2026-06-02)
+
+**Status**: Done — all remaining integration glue has been re-applied on top of the 2026-05-30 parked work, on branch `feat/reports-bucket-and-newer-alert`. Quality gates clean.
+
+### What landed in this session
+
+Beyond the 5 files committed on 2026-05-30 (`2758b480`), the integration now covers ~14 additional files plus 2 new modules and a CHANGELOG entry. Highlights:
+
+- **Data layer**
+  - [src/ui/provider/viewer-provider-actions.ts](../src/ui/provider/viewer-provider-actions.ts) — imports the classifier; `buildClassifierInputs(patterns, folderName)` compiles patterns once per payload and returns a `ClassifyMeta` callable. `SessionListPayloadOptions` gains `getDismissedAt` + `classifyMeta`. `Meta` widened to include `project`, `debugAdapterType`, `kind`. Per-record output now carries `unreadSinceFocus: boolean` and `kind: 'project' | 'report'`. Exports `LOGS_PANEL_DISMISSED_AT_KEY = 'saropaLogCapture.logsPanelDismissedAt'`.
+  - [src/ui/provider/viewer-provider-helpers.ts](../src/ui/provider/viewer-provider-helpers.ts) — re-exports `LOGS_PANEL_DISMISSED_AT_KEY`, `buildClassifierInputs`, `ClassifyMeta`.
+  - [src/ui/provider/viewer-handler-wiring.ts](../src/ui/provider/viewer-handler-wiring.ts) — `makePayloadOptions` reads / seeds the dismiss cursor (first-install seed to `Date.now()` so the banner doesn't carpet-bomb pre-existing logs), reads config + workspace folder name, builds `classifyMeta`, and hands both into the options object.
+  - [src/ui/provider/viewer-message-handler-session-ui.ts](../src/ui/provider/viewer-message-handler-session-ui.ts) — new `acknowledgeUnreadLogs` case: advances the dismiss cursor to `Date.now()` and triggers `onSessionListRequest` so the banner clears without a manual refresh.
+
+- **Settings & config**
+  - [package.json](../package.json) — 4 new settings: `saropaLogCapture.reportsKindPatterns` (regex list), `saropaLogCapture.reportsBucketDefault` (`collapsed`/`expanded`/`hidden`), `saropaLogCapture.newerLogBanner` (boolean), `saropaLogCapture.newerLogDot` (boolean).
+  - [src/modules/config/config-types.ts](../src/modules/config/config-types.ts) — `ReportsClassifierConfig` + `NewerLogAlertConfig` interfaces, added to `SaropaLogCaptureConfig`.
+  - [src/modules/config/config.ts](../src/modules/config/config.ts) — reader populates `reportsClassifier` (with `defaultReportsKindPatterns` fallback) and `newerLogAlert`.
+  - [src/ui/session/session-display.ts](../src/ui/session/session-display.ts) — `ReportsBucketState` type + 4 new optional fields on `SessionDisplayOptions` (`reportsBucketState`, `expandedReportBuckets`, `newerLogBannerEnabled`, `newerLogDotEnabled`) and corresponding defaults.
+  - [src/extension-activation.ts](../src/extension-activation.ts) — seeds those 4 fields from config when no per-workspace persisted state exists.
+
+- **UI / webview**
+  - [src/ui/viewer-panels/viewer-session-panel-html.ts](../src/ui/viewer-panels/viewer-session-panel-html.ts) — adds the sticky `<div id="session-newer-banner">` between the name-filter bar and the list.
+  - [src/ui/viewer-panels/viewer-session-panel.ts](../src/ui/viewer-panels/viewer-session-panel.ts) — IIFE-scope `expandedReportBuckets` state + defaults for the 3 new display-options keys.
+  - [src/ui/viewer-panels/viewer-session-panel-events.ts](../src/ui/viewer-panels/viewer-session-panel-events.ts) — restores `expandedReportBuckets` from incoming `sessionDisplayOptions` message.
+  - [src/ui/viewer-panels/viewer-session-panel-events-newer.ts](../src/ui/viewer-panels/viewer-session-panel-events-newer.ts) (new) — bucket-toggle click handler + banner Open/Dismiss buttons. Extracted so events.ts stays under the 300-line code limit.
+  - [src/ui/viewer-panels/viewer-session-panel-rendering.ts](../src/ui/viewer-panels/viewer-session-panel-rendering.ts) — calls `renderNewerLogBanner(sorted)` after each list render; adds the per-row blue unread dot (gated on `unreadSinceFocus && !isActive && !updatedInLastMinute && !updatedSinceViewed && sessionDisplayOptions.newerLogDotEnabled !== false`); drops the local `renderDayGroup` so the bucket-aware version from `getReportsBucketAndBannerScript()` wins (function-hoisting precedence — see comment at the removal site).
+  - [src/ui/viewer-panels/viewer-session-panel-rendering-stream.ts](../src/ui/viewer-panels/viewer-session-panel-rendering-stream.ts) (new) — extracted `renderSessionListPreview` + `updateSessionBatchItems` from rendering.ts so that file stays under the 300-line code limit. The streaming hydration path also paints the unread dot to keep parity with the full re-render.
+  - [src/l10n/strings-webview.ts](../src/l10n/strings-webview.ts) — 6 new keys: `viewer.session.reports.bucketLabel`, `viewer.session.newerBanner.singular` / `.plural` / `.open` / `.dismiss`, `viewer.session.dot.unread`.
+
+- **Catalogs regenerated**
+  - [doc/internal/webview-incoming-message-types.md](../doc/internal/webview-incoming-message-types.md) — now lists `acknowledgeUnreadLogs`.
+  - [doc/internal/webview-outbound-message-types.md](../doc/internal/webview-outbound-message-types.md) — re-verified clean.
+
+### Quality gates run on the final state
+
+- `npm run check-types` — clean (zero errors).
+- `npm run lint` — 8 warnings, all pre-existing (parameter counts, file-length on test/viewer-script-messages, curly braces). The two warnings my edits had transiently introduced (events.ts + rendering.ts crossing max-lines) were resolved by extracting `viewer-session-panel-events-newer.ts` and `viewer-session-panel-rendering-stream.ts`; the rendering.ts max-lines warning that existed on `main` is also gone.
+- `npm run compile` — green (check-types, lint, verify-nls, verify:webview-catalog, verify:host-outbound-catalog, verify:list-commands, verify:dist-size all OK).
+- `npm run test:file -- out/test/modules/session/session-kind-classifier.test.js` — 14/14 passing.
+- `npm run test:smoke` — passing.
+
+### Resumption notes (next session)
+
+- The branch is no longer "WIP"; the feature is complete pending the user's preference on commit shape (single feat commit vs. layered).
+- Manual verification still owed per the `## Verification` section above (synthetic day with mixed debug + report captures; captured log while panel is unfocused → banner + dot appear; clicking Dismiss → both clear).
+- Parallel work in unrelated areas (crashlytics-stats.ts, analysis-panel-script.ts, analysis-panel.ts, bug_008_crashlytics-enable-default-and-gcloud-path.md) showed up as modified during this session — those changes are NOT part of plan 001 and were left untouched.

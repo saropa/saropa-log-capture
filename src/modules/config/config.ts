@@ -18,6 +18,7 @@ import {
   type SaropaLogCaptureConfig,
   type ViewerDbDetectorToggles,
 } from "./config-types";
+import { defaultReportsKindPatterns } from "../session/session-kind-classifier";
 import {
   DEFAULT_CATEGORIES,
   DEFAULT_FILE_TYPES,
@@ -220,6 +221,16 @@ export function getConfig(): SaropaLogCaptureConfig {
       // 10s after session end catches late-flushed sidecars (e.g. adb-logcat writes .logcat.log in
       // its onSessionEnd hook, after the DAP session has already terminated).
       afterSeconds: clamp(cfg.get("sessionGroups.afterSeconds"), 0, 600, 10),
+    },
+    reportsClassifier: {
+      // Fail-open default: user's regex list is preferred, but defaults cover the common
+      // built-in report names without per-install configuration.
+      kindPatterns: ensureStringArray(cfg.get("reportsKindPatterns"), [...defaultReportsKindPatterns]),
+      bucketDefault: ensureEnum(cfg.get("reportsBucketDefault"), ["collapsed", "expanded", "hidden"], "collapsed"),
+    },
+    newerLogAlert: {
+      bannerEnabled: ensureBoolean(cfg.get("newerLogBanner"), true),
+      dotEnabled: ensureBoolean(cfg.get("newerLogDot"), true),
     },
   };
 }

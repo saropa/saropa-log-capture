@@ -36,6 +36,12 @@ export function getSessionPanelScript(): string {
     var sessionDisplayOptions = {
         stripDatetime: true, normalizeNames: true, showDayHeadings: true,
         reverseSort: false, showLatestOnly: false, panelWidth: 0, dateRange: 'all',
+        /* Reports bucket + newer-log alert defaults — overridden once the host posts its
+           setSessionDisplayOptions message. Defaults here match defaultDisplayOptions on the
+           host so the very first paint (before the message round-trip) doesn't briefly hide
+           the banner / show the bucket expanded against the user's setting. Plan: 001. */
+        reportsBucketState: 'collapsed',
+        newerLogBannerEnabled: true, newerLogDotEnabled: true,
     };
     /* Match the CSS .session-panel min-width (viewer-styles-session-panel.ts).
        Earlier the CSS dropped to 420 but this JS gate stayed at 560, so the
@@ -46,6 +52,11 @@ export function getSessionPanelScript(): string {
     var collapsedDays = Object.create(null);
     /** Track which session groups are collapsed (keyed by groupId). */
     var collapsedGroups = Object.create(null);
+    /** Per-day expansion override for the Reports bucket (keyed by YYYY-MM-DD).
+        Wins over sessionDisplayOptions.reportsBucketState — the user's per-day
+        click survives panel re-renders and is persisted through the
+        setSessionDisplayOptions round-trip just like collapsedDays. Plan: 001. */
+    var expandedReportBuckets = Object.create(null);
     window.__sharedPanelWidth = MIN_PANEL_WIDTH;
 
     /**
