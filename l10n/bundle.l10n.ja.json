@@ -1184,5 +1184,9 @@
   "Session information": "セッション情報",
   "Show session info": "セッション情報を表示",
   "System": "システム",
-  "Tip: long-press (hold ~0.5s) any row to copy it to the clipboard. Click a link to open it.": "ヒント: 任意の行を長押し (約 0.5 秒間押し続ける) して、その行をクリップボードにコピーします。リンクをクリックして開きます。"
+  "Tip: long-press (hold ~0.5s) any row to copy it to the clipboard. Click a link to open it.": "ヒント: 任意の行を長押し (約 0.5 秒間押し続ける) して、その行をクリップボードにコピーします。リンクをクリックして開きます。",
+  "New log · {0} · {1}": "新しいログ · {0} · {1}",
+  "New logs · {0} · {1} (+{2} more)": "新しいログ · {0} · {1} (+{2} 件)",
+  "Reports ({0})": "レポート ({0})",
+  "Unread — captured after Logs panel last had focus": "未読 — ログパネルに最後にフォーカスがあった後にキャプチャされました"
 }
