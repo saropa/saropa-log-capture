@@ -127,6 +127,7 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `setMinimapWidth` | viewer-message-handler-session-ui.ts |
 | `setRecurringErrorStatus` | viewer-message-handler-panels.ts |
 | `setSessionDisplayOptions` | viewer-message-handler-session-ui.ts |
+| `setShowElapsed` | viewer-workspace-bool-message-map.ts (boolean toggles → config update) |
 | `setShowScrollbar` | viewer-workspace-bool-message-map.ts (boolean toggles → config update) |
 | `showChangelogSince` | viewer-message-handler-panels.ts |
 | `showCodeQualityForFrame` | viewer-message-handler-panels.ts |
@@ -141,4 +142,4 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `viewerKeybindingRecordCancelled` | viewer-message-handler-actions.ts |
 | `viewerKeybindingRecorded` | viewer-message-handler-actions.ts |
 
-**Total:** 133 distinct types.
+**Total:** 134 distinct types.
