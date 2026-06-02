@@ -18,7 +18,9 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `checkDriftViewerHealth` | viewer-message-handler-panels.ts |
 | `clearSessionRoot` | viewer-message-handler-session-ui.ts |
 | `copyAllFiltered` | viewer-message-handler-actions.ts |
+| `copyCurrentFileName` | viewer-message-handler-session-ui.ts |
 | `copyCurrentFilePath` | viewer-message-handler-session-ui.ts |
+| `copyCurrentFileRelativePath` | viewer-message-handler-session-ui.ts |
 | `copySourcePath` | viewer-message-handler-actions.ts |
 | `copyToClipboard` | viewer-message-handler-actions.ts |
 | `copyWithSource` | viewer-message-handler-actions.ts |
@@ -70,6 +72,8 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `openGcloudInstall` | viewer-message-handler-panels.ts |
 | `openKeybindings` | viewer-message-handler-actions.ts |
 | `openLintRule` | viewer-message-handler-panels.ts |
+| `openLogFileBeside` | viewer-message-handler-session-ui.ts |
+| `openLogFileFolderInTerminal` | viewer-message-handler-session-ui.ts |
 | `openLogFileInEditor` | viewer-message-handler-session-ui.ts |
 | `openQualityReport` | viewer-message-handler-panels.ts |
 | `openSessionForSignalType` | viewer-message-handler-session-ui.ts |
@@ -101,6 +105,7 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `requestSignalData` | viewer-message-handler-panels.ts |
 | `resetAllSettings` | viewer-message-handler-panels.ts |
 | `revealLogFile` | viewer-message-handler-session-ui.ts |
+| `revealLogFileInExplorer` | viewer-message-handler-session-ui.ts |
 | `rootCauseBundle` | viewer-message-handler-root-cause.ts |
 | `runCommand` | viewer-message-handler-session-ui.ts |
 | `saveLevelFilters` | viewer-message-handler-session-ui.ts |
@@ -135,4 +140,4 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `viewerKeybindingRecordCancelled` | viewer-message-handler-actions.ts |
 | `viewerKeybindingRecorded` | viewer-message-handler-actions.ts |
 
-**Total:** 127 distinct types.
+**Total:** 132 distinct types.

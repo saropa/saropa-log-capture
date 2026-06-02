@@ -16,6 +16,7 @@ import { getInteractionTracker } from '../../modules/learning/learning-runtime';
 import { showKeyboardShortcutsPanel } from '../panels/keyboard-shortcuts-panel';
 import { handleOpenSessionForSignalType } from '../shared/handlers/recurring-handlers';
 import { SAROPA_BOOL_SETTING_BY_MSG_TYPE } from "./viewer-workspace-bool-message-map";
+import { handleLogFileAction } from "./viewer-log-file-actions";
 
 /** Coerce message field to string; never stringify objects (avoids '[object Object]'). */
 function msgStr(m: Record<string, unknown>, key: string, fallback = ""): string {
@@ -174,25 +175,16 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
       if (ctx.currentFileUri && ctx.onRevealLogFile) { Promise.resolve(ctx.onRevealLogFile(ctx.currentFileUri.toString())).catch(() => {}); }
       return true;
     case "openLogFileInEditor":
-      if (ctx.currentFileUri) {
-        vscode.window.showTextDocument(ctx.currentFileUri, { preview: true }).then(() => {}, () => {});
-      }
-      return true;
-    // Hold-to-copy path: show status bar confirmation so users get visible feedback.
-    case "copyCurrentFilePath":
-      if (ctx.currentFileUri) {
-        vscode.env.clipboard.writeText(ctx.currentFileUri.fsPath).then(
-          () => { vscode.window.setStatusBarMessage(t('msg.filePathCopied'), 2000); },
-          () => {},
-        );
-      }
-      return true;
-    // Reveal current file in OS so the containing folder opens (not the parent folder).
+    case "openLogFileBeside":
     case "openCurrentFileFolder":
-      if (ctx.currentFileUri) {
-        vscode.commands.executeCommand('revealFileInOS', ctx.currentFileUri).then(() => {}, () => {});
-      }
-      return true;
+    case "revealLogFileInExplorer":
+    case "openLogFileFolderInTerminal":
+    case "copyCurrentFilePath":
+    case "copyCurrentFileName":
+    case "copyCurrentFileRelativePath":
+      /* All log-file modal actions: centralized to avoid silent no-ops when
+         currentFileUri is unset, and to give visible toast feedback on copy. */
+      return handleLogFileAction(type, ctx);
     case "showKeyboardShortcuts":
       showKeyboardShortcutsPanel();
       return true;
