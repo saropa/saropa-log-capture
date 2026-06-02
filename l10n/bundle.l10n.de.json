@@ -1184,5 +1184,9 @@
   "Session information": "Sitzungsinformationen",
   "Show session info": "Sitzungsinformationen anzeigen",
   "System": "System",
-  "Tip: long-press (hold ~0.5s) any row to copy it to the clipboard. Click a link to open it.": "Tipp: Halten Sie eine beliebige Zeile lange gedrückt (ca. 0,5 Sekunden gedrückt), um sie in die Zwischenablage zu kopieren. Klicken Sie auf einen Link, um ihn zu öffnen."
+  "Tip: long-press (hold ~0.5s) any row to copy it to the clipboard. Click a link to open it.": "Tipp: Halten Sie eine beliebige Zeile lange gedrückt (ca. 0,5 Sekunden gedrückt), um sie in die Zwischenablage zu kopieren. Klicken Sie auf einen Link, um ihn zu öffnen.",
+  "New log · {0} · {1}": "Neues Protokoll · {0} · {1}",
+  "New logs · {0} · {1} (+{2} more)": "Neue Protokolle · {0} · {1} (+{2} weitere)",
+  "Reports ({0})": "Berichte ({0})",
+  "Unread — captured after Logs panel last had focus": "Ungelesen – erfasst, nachdem das Bedienfeld „Protokolle“ zuletzt den Fokus hatte"
 }

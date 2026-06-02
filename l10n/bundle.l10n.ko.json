@@ -1184,5 +1184,9 @@
   "Session information": "세션 정보",
   "Show session info": "세션 정보 표시",
   "System": "체계",
-  "Tip: long-press (hold ~0.5s) any row to copy it to the clipboard. Click a link to open it.": "팁: 행을 길게 눌러(0.5초 동안 유지) 클립보드에 복사하세요. 링크를 클릭하여 엽니다."
+  "Tip: long-press (hold ~0.5s) any row to copy it to the clipboard. Click a link to open it.": "팁: 행을 길게 눌러(0.5초 동안 유지) 클립보드에 복사하세요. 링크를 클릭하여 엽니다.",
+  "New log · {0} · {1}": "새 로그 · {0} · {1}",
+  "New logs · {0} · {1} (+{2} more)": "새 로그 · {0} · {1}(+{2}개 이상)",
+  "Reports ({0})": "보고서({0})",
+  "Unread — captured after Logs panel last had focus": "읽지 않음 - 로그 패널에 마지막으로 초점이 맞춰진 후에 캡처됨"
 }

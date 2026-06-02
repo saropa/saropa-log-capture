@@ -1184,5 +1184,9 @@
   "Session information": "会议信息",
   "Show session info": "显示会话信息",
   "System": "系统",
-  "Tip: long-press (hold ~0.5s) any row to copy it to the clipboard. Click a link to open it.": "提示：长按（按住约 0.5 秒）任意行可将其复制到剪贴板。单击链接将其打开。"
+  "Tip: long-press (hold ~0.5s) any row to copy it to the clipboard. Click a link to open it.": "提示：长按（按住约 0.5 秒）任意行可将其复制到剪贴板。单击链接将其打开。",
+  "New log · {0} · {1}": "新日志 · {0} · {1}",
+  "New logs · {0} · {1} (+{2} more)": "新日志·{0}·{1}（+{2} 个）",
+  "Reports ({0})": "报告 ({0})",
+  "Unread — captured after Logs panel last had focus": "未读 — 在日志面板最后一次获得焦点后捕获"
 }
