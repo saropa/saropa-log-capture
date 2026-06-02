@@ -48,6 +48,7 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.exportSlc` | %command.exportSlc.title% |  |
 | `saropaLogCapture.exportToLoki` | %command.exportToLoki.title% |  |
 | `saropaLogCapture.generateReport` | %command.generateReport.title% |  |
+| `saropaLogCapture.gotoLineInViewer` | %command.gotoLineInViewer.title% |  |
 | `saropaLogCapture.groupSelectedSessions` | Saropa Log Capture: Group Selected Sessions |  |
 | `saropaLogCapture.importSlc` | %command.importSlc.title% |  |
 | `saropaLogCapture.insertMarker` | %command.insertMarker.title% |  |
@@ -99,4 +100,4 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.trashSession` | %command.trashSession.title% |  |
 | `saropaLogCapture.ungroupSession` | Saropa Log Capture: Ungroup Session |  |
 
-**Total:** 92 commands.
+**Total:** 93 commands.

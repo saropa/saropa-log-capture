@@ -54,6 +54,7 @@
   "command.expandAllSections.title": "Развернуть все разделы",
   "command.maximizePanel.title": "Максимизировать панель",
   "command.toggleSearchOverlay.title": "Переключить поиск",
+  "command.gotoLineInViewer.title": "Перейти к строке",
   "command.refreshHistory.title": "Обновить историю журналов",
   "command.removeFromCollection.title": "Удалить из расследования",
   "command.renameSession.title": "Переименовать журнал",

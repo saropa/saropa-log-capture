@@ -56,6 +56,7 @@
   "command.expandAllSections.title": "Expand All Sections",
   "command.maximizePanel.title": "Maximize Panel",
   "command.toggleSearchOverlay.title": "Toggle Search",
+  "command.gotoLineInViewer.title": "Go to Line",
   "command.refreshHistory.title": "Refresh Log History",
   "command.removeFromCollection.title": "Remove from Collection",
   "command.renameSession.title": "Rename Log",

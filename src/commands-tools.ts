@@ -144,6 +144,13 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
         vscode.commands.registerCommand('saropaLogCapture.toggleSearchOverlay', () => {
             broadcaster.postToWebview({ type: 'triggerToggleSearch' });
         }),
+        /* Ctrl+G in the log viewer: VS Code's built-in workbench.action.gotoLine has no
+           `when` clause, so without this it preempts the webview keydown handler and opens
+           Quick Open instead. The package.json keybinding scopes Ctrl+G to the log viewer
+           view + pop-out panel; this command then forwards to the webview's openGotoLine(). */
+        vscode.commands.registerCommand('saropaLogCapture.gotoLineInViewer', () => {
+            broadcaster.postToWebview({ type: 'triggerGotoLine' });
+        }),
         vscode.commands.registerCommand('saropaLogCapture.popOutViewer', async () => { await popOutPanel.open(); }),
         vscode.commands.registerCommand('saropaLogCapture.searchLogs', async () => {
             const match = await showSearchQuickPick();

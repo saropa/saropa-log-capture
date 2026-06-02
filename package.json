@@ -177,6 +177,11 @@
         "title": "%command.toggleSearchOverlay.title%"
       },
       {
+        "command": "saropaLogCapture.gotoLineInViewer",
+        "icon": "$(go-to-file)",
+        "title": "%command.gotoLineInViewer.title%"
+      },
+      {
         "command": "saropaLogCapture.showSignals",
         "icon": "$(pulse)",
         "title": "%command.showSignals.title%"
@@ -2565,6 +2570,14 @@
       },
       "title": "%config.title%"
     },
+    "keybindings": [
+      {
+        "command": "saropaLogCapture.gotoLineInViewer",
+        "key": "ctrl+g",
+        "mac": "cmd+g",
+        "when": "focusedView == saropaLogCapture.logViewer || activeWebviewPanelId == saropaLogCapture.popOutViewer"
+      }
+    ],
     "menus": {
       "view/title": [
         {

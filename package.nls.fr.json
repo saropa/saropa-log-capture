@@ -54,6 +54,7 @@
   "command.expandAllSections.title": "Développer toutes les sections",
   "command.maximizePanel.title": "Maximiser le panneau",
   "command.toggleSearchOverlay.title": "Basculer la recherche",
+  "command.gotoLineInViewer.title": "Atteindre la ligne",
   "command.refreshHistory.title": "Actualiser l'historique des journaux",
   "command.removeFromCollection.title": "Retirer de l'enquête",
   "command.renameSession.title": "Renommer le journal",
