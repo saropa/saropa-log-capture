@@ -182,22 +182,21 @@ function renderItem(item, idx, prevVis) {
     }
     if (item.category && item.category.indexOf('ai-') === 0) {
         var aiCat = item.category;
-        var aiPrefix = '<span class="ai-prefix">' + escapeHtml(stripTags(html).split(']')[0] + ']') + '</span>';
-        var aiBody = html.indexOf('] ') >= 0 ? html.substring(html.indexOf('] ') + 2) : html;
-        var aiCompress = '';
-        if (item.compressDupCount > 1) {
-            aiCompress = '<span class="compress-dup-badge" title="' + vt('viewer.deco.identicalLines', item.compressDupCount) + '">(×' + item.compressDupCount + ')</span> ';
+        // Regex-match leading [LABEL] only when present. Prior split-on-']' captured the whole body and fabricated a ']' when stripSourceTagPrefix had already removed the bracket (line 65) — caused AI rows to render the body twice.
+        var _aiBracketMatch = /^((?:<[^>]*>)*)\\[([^\\]]+)\\]\\s*/.exec(html);
+        var aiPrefix = '', aiBody = html;
+        if (_aiBracketMatch) {
+            aiPrefix = _aiBracketMatch[1] + '<span class="ai-prefix">[' + escapeHtml(_aiBracketMatch[2]) + ']</span>';
+            aiBody = html.substring(_aiBracketMatch[0].length);
         }
-        /* Prefix chain parity: regular rows render deco (line-number + timestamp
-           gutter) + elapsed (+Nms badge) + slow-gap divider before the message.
-           AI rows previously skipped all three, which left [AI Bash]/[AI Edit]
-           text slammed against the left edge and out of the line-number column
-           the rest of the log occupies. The .ai-line border-left rail still
-           draws via the .line:has(.line-decoration) padding-left override
-           (decoration column takes precedence) and the .ai-line padding-left
-           fallback in viewer-styles-ai.ts covers decoration-off mode. */
+        var aiCompress = '';
+        if (item.compressDupCount > 1) { aiCompress = '<span class="compress-dup-badge" title="' + vt('viewer.deco.identicalLines', item.compressDupCount) + '">(×' + item.compressDupCount + ')</span> '; }
+        // Prefix chain parity. .ai-line rail draws via box-shadow:inset (viewer-styles-ai.ts) — out of flow, doesn't shift line-number column.
         var _aiGap = (typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '', _aiDeco = (typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item, idx, item._hiddenAfter) : '', _aiElapsed = (typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '';
-        return _aiGap + '<div class="line ai-line ' + aiCat + matchCls + spacingCls + '"' + idxAttr + '>' + _aiDeco + _aiElapsed + aiPrefix + aiCompress + aiBody + '</div>';
+        // Severity classes parity with regular branch — AI rows now show gutter dot + tint when classifyLevel tagged them (prior AI branch silently suppressed both).
+        var _aiBar = (typeof decoShowBar !== 'undefined' && decoShowBar && !item.isContext && item.level) ? ' level-bar-' + item.level : '';
+        var _aiLvlCls = ((typeof lineColorsEnabled !== 'undefined' && lineColorsEnabled) && item.level && !item.isContext) ? ' level-' + item.level : '';
+        return _aiGap + '<div class="line ai-line ' + aiCat + matchCls + spacingCls + _aiBar + _aiLvlCls + '"' + idxAttr + '>' + _aiDeco + _aiElapsed + aiPrefix + aiCompress + aiBody + '</div>';
     }
     var cat = (item.category === 'stderr' && stderrTreatAsError) ? ' cat-stderr' : '';
     var lcOn = (typeof lineColorsEnabled !== 'undefined' && lineColorsEnabled);

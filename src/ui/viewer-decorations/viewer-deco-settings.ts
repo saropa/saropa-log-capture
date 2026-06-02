@@ -309,6 +309,7 @@ function onDecoOptionChange() {
     decoShowTimestamp = ts ? ts.checked : true;
     showMilliseconds = ms ? ms.checked : false;
     showElapsed = elapsed ? elapsed.checked : false;
+    if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) { vscodeApi.postMessage({ type: 'setShowElapsed', value: showElapsed }); } // Persist setShowElapsed → workspace setShowElapsed → showElapsedTime mapping
     decoShowSessionElapsed = sessEl ? sessEl.checked : false;
     decoShowBar = bar ? bar.checked : false;
     decoShowQuality = quality ? quality.checked : true;
@@ -323,8 +324,7 @@ function onDecoOptionChange() {
     if (typeof structuredLineParsing !== 'undefined') structuredLineParsing = structParse ? structParse.checked : true;
     if (typeof showParsedPidTid !== 'undefined') showParsedPidTid = showPT ? showPT.checked : false;
     if (typeof showParsedLevelPrefix !== 'undefined') showParsedLevelPrefix = showLP ? showLP.checked : false;
-    var stackState = document.getElementById('deco-stack-default-state');
-    var stackPreview = document.getElementById('deco-stack-preview-count');
+    var stackState = document.getElementById('deco-stack-default-state'), stackPreview = document.getElementById('deco-stack-preview-count');
     var sv = stackState ? stackState.value : 'expanded';
     stackDefaultState = sv === 'collapsed' ? true : (sv === 'preview' ? 'preview' : false);
     stackPreviewCount = stackPreview ? Math.max(1, Math.min(20, parseInt(stackPreview.value, 10) || 3)) : 3;
