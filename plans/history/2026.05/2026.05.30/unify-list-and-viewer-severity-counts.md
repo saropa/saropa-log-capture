@@ -148,12 +148,12 @@ touched, no ARB files modified.
 
 ### 7. Persist Finish Report
 
-`Finish report saved: plan/history/2026.05/2026.05.30/unify-list-and-viewer-severity-counts.md`
+`Finish report saved: plans/history/2026.05/2026.05.30/unify-list-and-viewer-severity-counts.md`
 
 ### 8. Files Changed
 
 - **Added:** `src/ui/session/session-severity-scan.ts` (new deferred worker, 125 lines).
-- **Added:** `plan/history/2026.05/2026.05.30/unify-list-and-viewer-severity-counts.md` (this file).
+- **Added:** `plans/history/2026.05/2026.05.30/unify-list-and-viewer-severity-counts.md` (this file).
 - **Modified producer / schema:**
   - `src/ui/session/session-severity-counts.ts` — rewritten around `classifyLevel()`; 8-bucket output.
   - `src/modules/session/session-metadata.ts` — V2 schema: `debugCount`, `databaseCount`, `todoCount`, `noticeCount`; `fwCount` deprecated.

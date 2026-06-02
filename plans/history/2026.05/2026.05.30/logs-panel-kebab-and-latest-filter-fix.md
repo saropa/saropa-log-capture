@@ -62,4 +62,4 @@ These changes were edited by another workstream during this session and are not 
 
 No bug archive — task did not close a `bugs/*.md` file.
 
-Finish report saved: plan/history/2026.05/2026.05.30/logs-panel-kebab-and-latest-filter-fix.md
+Finish report saved: plans/history/2026.05/2026.05.30/logs-panel-kebab-and-latest-filter-fix.md
