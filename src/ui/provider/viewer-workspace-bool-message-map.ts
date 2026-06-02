@@ -11,4 +11,11 @@ export const SAROPA_BOOL_SETTING_BY_MSG_TYPE: Readonly<Record<string, string>> =
   setMinimapShowInfoMarkers: "minimapShowInfoMarkers",
   setMinimapViewportRedOutline: "minimapViewportRedOutline",
   setMinimapViewportOutsideArrow: "minimapViewportOutsideArrow",
+  /* showElapsedTime: persisted via the same message type the host broadcasts
+     to the webview on startup (extension-lifecycle.ts:71). When the options
+     panel toggles the elapsed checkbox, the webview posts the bool here and
+     this map routes it through getConfiguration().update so the next session
+     starts with the same state. Without this entry the toggle was session-
+     local and reset to the workspace default on every reload. */
+  setShowElapsed: "showElapsedTime",
 };
