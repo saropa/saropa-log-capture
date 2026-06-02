@@ -213,8 +213,8 @@ export function getModalStyles(): string {
 
 /* Log file path actions (footer filename) */
 .log-file-modal-content {
-    min-width: 280px;
-    max-width: 400px;
+    min-width: 320px;
+    max-width: 440px;
 }
 .log-file-modal-body {
     display: flex;
@@ -226,6 +226,27 @@ export function getModalStyles(): string {
 .log-file-modal-btn {
     width: 100%;
     text-align: center;
+}
+/* Filename shown above the copy actions so users see what will be copied.
+   word-break keeps very long names from forcing horizontal scroll. */
+.log-file-modal-filename {
+    font-family: var(--vscode-editor-font-family, monospace);
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+    background: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.1));
+    padding: 6px 10px;
+    border-radius: 2px;
+    margin-bottom: 4px;
+    word-break: break-all;
+    user-select: text;
+}
+/* Dim separator between Copy group and Open group. Uses panel-border at lowered
+   opacity so it sits quieter than .modal-header's full-strength border. */
+.log-file-modal-divider {
+    border: none;
+    border-top: 1px solid var(--vscode-panel-border);
+    opacity: 0.5;
+    margin: 4px 0;
 }
 `;
 }
