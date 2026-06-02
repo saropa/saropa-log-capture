@@ -54,6 +54,7 @@
   "command.expandAllSections.title": "Alle Abschnitte aufklappen",
   "command.maximizePanel.title": "Panel maximieren",
   "command.toggleSearchOverlay.title": "Suche umschalten",
+  "command.gotoLineInViewer.title": "Gehe zu Zeile",
   "command.refreshHistory.title": "Protokollverlauf aktualisieren",
   "command.removeFromCollection.title": "Aus Untersuchung entfernen",
   "command.renameSession.title": "Protokoll umbenennen",

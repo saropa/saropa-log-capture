@@ -54,6 +54,7 @@
   "command.expandAllSections.title": "모든 섹션 펼치기",
   "command.maximizePanel.title": "패널 최대화",
   "command.toggleSearchOverlay.title": "검색 전환",
+  "command.gotoLineInViewer.title": "줄로 이동",
   "command.refreshHistory.title": "로그 기록 새로고침",
   "command.removeFromCollection.title": "조사에서 제거",
   "command.renameSession.title": "로그 이름 바꾸기",
