@@ -46,8 +46,13 @@ export const stringsViewerD: Record<string, string> = {
     // Log-file modal (viewer-log-file-modal.ts).
     'viewer.logFile.title': 'Log file',
     'viewer.logFile.openEditor': 'Open in editor',
+    'viewer.logFile.openBeside': 'Open beside',
     'viewer.logFile.openFolder': 'Open containing folder',
-    'viewer.logFile.copyPath': 'Copy path',
+    'viewer.logFile.revealInExplorer': 'Reveal in Explorer view',
+    'viewer.logFile.openInTerminal': 'Open folder in terminal',
+    'viewer.logFile.copyFilename': 'Copy filename',
+    'viewer.logFile.copyRelativePath': 'Copy relative path',
+    'viewer.logFile.copyFullPath': 'Copy full path',
 
     // Go-to-line modal (viewer-goto-line.ts host shell).
     'viewer.gotoLine.label': 'Go to Line',
