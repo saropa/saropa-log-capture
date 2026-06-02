@@ -146,7 +146,8 @@ function renderViewport(force) {
        fragment forces the browser to detach + dispose every prior child
        node before inserting fresh nodes whose paint records have no
        relationship to the old ones — closing the recycle path at its
-       source. See bugs/viewer-row-paint-ghosting-attempts.md. */
+       source. See
+       plans/history/2026.06/2026.06.02/viewer-row-paint-ghosting-attempts.md. */
     var _vTmpl = document.createElement('template');
     _vTmpl.innerHTML = parts.join('');
     viewportEl.replaceChildren();
