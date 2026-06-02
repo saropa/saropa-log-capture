@@ -34,6 +34,7 @@ import { getExportModalHtml } from '../viewer-panels/viewer-export';
 import { getEditModalHtml } from '../viewer-context-menu/viewer-edit-modal';
 import { getAutoHideModalHtml } from '../viewer/viewer-auto-hide-modal';
 import { getLogFileModalHtml } from '../viewer/viewer-log-file-modal';
+import { getSessionInfoModalHtml } from '../viewer/viewer-session-info-modal';
 import { getIconBarHtml } from '../viewer-nav/viewer-icon-bar';
 import { t } from '../../l10n';
 import { escapeHtml } from '../../modules/capture/ansi';
@@ -109,6 +110,7 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     ${getDecoSettingsHtml()}
     ${getExportModalHtml()}
     ${getLogFileModalHtml()}
+    ${getSessionInfoModalHtml()}
     ${getEditModalHtml()}
     ${getAutoHideModalHtml()}
     </div>
