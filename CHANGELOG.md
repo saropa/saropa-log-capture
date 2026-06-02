@@ -27,6 +27,23 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+The footer-filename "Log file" modal now shows the filename, gives a toast when a copy succeeds, and adds Copy filename, Copy relative path, Open beside, Reveal in Explorer view, and Open folder in terminal.
+
+### Fixed
+
+- **Copy path in the Log file modal had no visible confirmation and could silently no-op** — the host handler used `vscode.window.setStatusBarMessage`, which writes to the status bar at the bottom of VS Code and is easy to miss, and the path was simply not copied at all when `currentFileUri` was unset (the modal still closed because the close runs client-side before the message is posted). Switched all log-file actions to a single dispatcher [viewer-log-file-actions.ts](src/ui/provider/viewer-log-file-actions.ts) that (a) emits `showInformationMessage` toasts naming the exact string copied, (b) emits a warning toast when no log file is active, and (c) emits an error toast if the clipboard write itself fails — so the action can no longer fail silently.
+
+### Added
+
+- **Log file modal: filename shown above the actions** — a dimmed monospace block displays the filename so users can see exactly what the copy buttons will operate on. Read live from the footer at open time to avoid stale values. See [viewer-log-file-modal.ts](src/ui/viewer/viewer-log-file-modal.ts).
+- **Log file modal: Copy filename and Copy relative path** — alongside Copy full path (renamed from Copy path). Relative path uses `vscode.workspace.asRelativePath` and falls back to the absolute path when the file is outside any workspace.
+- **Log file modal: Open beside, Reveal in Explorer view, Open folder in terminal** — three additional open options for distinct workflows: split-view editing, navigation in the VS Code sidebar tree, and shell tooling at the log's folder.
+- **Log file modal: buttons are grouped Copy → divider → Open** — copy actions sit at the top with a dim horizontal rule separating them from the open actions, so the most common action (Open in editor) keeps its primary styling and the copies are obvious.
+
+---
+
 ## [7.16.2]
 
 ### Fixed
