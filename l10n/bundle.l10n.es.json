@@ -1184,5 +1184,9 @@
   "Session information": "Información de la sesión",
   "Show session info": "Mostrar información de la sesión",
   "System": "Sistema",
-  "Tip: long-press (hold ~0.5s) any row to copy it to the clipboard. Click a link to open it.": "Consejo: mantenga presionada (mantenga presionada ~0,5 s) cualquier fila para copiarla al portapapeles. Haga clic en un enlace para abrirlo."
+  "Tip: long-press (hold ~0.5s) any row to copy it to the clipboard. Click a link to open it.": "Consejo: mantenga presionada (mantenga presionada ~0,5 s) cualquier fila para copiarla al portapapeles. Haga clic en un enlace para abrirlo.",
+  "New log · {0} · {1}": "Nuevo registro · {0} · {1}",
+  "New logs · {0} · {1} (+{2} more)": "Nuevos registros · {0} · {1} (+{2} más)",
+  "Reports ({0})": "Informes ({0})",
+  "Unread — captured after Logs panel last had focus": "No leído: capturado después de que el panel Registros tuviera foco por última vez"
 }

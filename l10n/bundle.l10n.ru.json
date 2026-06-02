@@ -1184,5 +1184,9 @@
   "Session information": "Информация о сеансе",
   "Show session info": "Показать информацию о сеансе",
   "System": "Система",
-  "Tip: long-press (hold ~0.5s) any row to copy it to the clipboard. Click a link to open it.": "Совет: нажмите и удерживайте (около 0,5 с) любую строку, чтобы скопировать ее в буфер обмена. Щелкните ссылку, чтобы открыть ее."
+  "Tip: long-press (hold ~0.5s) any row to copy it to the clipboard. Click a link to open it.": "Совет: нажмите и удерживайте (около 0,5 с) любую строку, чтобы скопировать ее в буфер обмена. Щелкните ссылку, чтобы открыть ее.",
+  "New log · {0} · {1}": "Новый журнал · {0} · {1}",
+  "New logs · {0} · {1} (+{2} more)": "Новые журналы · {0} · {1} (и еще {2})",
+  "Reports ({0})": "Отчеты ({0})",
+  "Unread — captured after Logs panel last had focus": "Непрочитано — захвачено после того, как панель «Журналы» в последний раз находилась в фокусе."
 }
