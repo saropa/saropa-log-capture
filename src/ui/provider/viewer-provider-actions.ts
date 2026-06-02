@@ -10,6 +10,12 @@ import { formatMtime, formatMtimeTimeOnly, formatRelativeTime } from "../session
 import { getConfig } from "../../modules/config/config";
 import { getGitBlame } from "../../modules/git/git-blame";
 import { getCommitUrl } from "../../modules/integrations/providers/git-source-code";
+import {
+    classifySessionKind,
+    compileReportPatterns,
+    type SessionKind,
+    type SessionKindInput,
+} from "../../modules/session/session-kind-classifier";
 
 function isValidMtime(mtime: number | undefined): mtime is number {
     return typeof mtime === 'number' && Number.isFinite(mtime) && mtime > 0;
@@ -33,12 +39,39 @@ async function resolveMtime(
 /** Workspace state key for "last viewed" timestamps per log URI (Record<uriString, number>). */
 export const LOG_LAST_VIEWED_KEY = 'saropaLogCapture.logLastViewed';
 
-/** Options for recent-updates indicators (orange = since last viewed, red = last minute). */
+/** Workspace state key for the Logs panel's "newer-log dismiss" cursor (single number ms).
+ *  A log is unread (drives the newer-log banner and per-row dot) when its mtime is greater
+ *  than this cursor. Acknowledged via the `acknowledgeUnreadLogs` webview message; seeded
+ *  to activation-time on first install so the user isn't carpet-bombed with "newer" cues
+ *  for pre-existing logs. See [plans/history/2026.06/2026.06.02/001_plan-newer-alert-and-reports-grouping.md]. */
+export const LOGS_PANEL_DISMISSED_AT_KEY = 'saropaLogCapture.logsPanelDismissedAt';
+
+/** Pre-built classifier callable handed to every per-record build. Pattern compile + folder
+ *  lookup happen once per payload, not once per row — `buildClassifierInputs()` is the factory. */
+export type ClassifyMeta = (input: SessionKindInput) => SessionKind;
+
+/** Build a `classifyMeta` callable from the user's regex list + the active workspace folder name.
+ *  Returns a no-op project-fallback when the inputs are unavailable so callers never need a null check. */
+export function buildClassifierInputs(
+    kindPatterns: readonly string[],
+    workspaceFolderName: string | undefined,
+): ClassifyMeta {
+    const compiled = compileReportPatterns(kindPatterns);
+    return (input) => classifySessionKind(input, compiled, workspaceFolderName);
+}
+
+/** Options for recent-updates indicators (orange = since last viewed, red = last minute) and
+ *  the newer-log banner / per-row dot (blue = newer than the panel's dismiss cursor). */
 export interface SessionListPayloadOptions {
     /** Returns last write time (ms) for the active session, if any. */
     getActiveLastWriteTime?: () => number | undefined;
     /** Returns last viewed time (ms) for a log URI. */
     getLastViewedAt?: (uri: string) => number | undefined;
+    /** Returns the Logs panel's "newer-log dismiss" cursor (ms). Logs with mtime greater than this
+     *  carry `unreadSinceFocus: true` and trigger the banner + per-row dot. Undefined disables both. */
+    getDismissedAt?: () => number | undefined;
+    /** Pre-built `classifySessionKind` callable. Omitted = every record falls back to 'project'. */
+    classifyMeta?: ClassifyMeta;
 }
 
 /** Update "last viewed" timestamp for a log (used for "updated since last viewed" indicator). Best-effort per-uri; concurrent opens may race. */
@@ -50,7 +83,14 @@ export async function updateLastViewed(context: vscode.ExtensionContext, uri: vs
 }
 
 /** Shared type for session metadata fields needed to build a webview record. */
-type Meta = { filename: string; displayName?: string; adapter?: string; size: number; mtime: number; date?: string; hasTimestamps?: boolean; lineCount?: number; durationMs?: number; errorCount?: number; warningCount?: number; perfCount?: number; anrCount?: number; fwCount?: number; infoCount?: number; debugCount?: number; databaseCount?: number; todoCount?: number; noticeCount?: number; uri: { toString(): string }; trashed?: boolean; tags?: string[]; autoTags?: string[]; correlationTags?: string[]; hasPerformanceData?: boolean; groupId?: string };
+type Meta = { filename: string; displayName?: string; adapter?: string; size: number; mtime: number; date?: string; hasTimestamps?: boolean; lineCount?: number; durationMs?: number; errorCount?: number; warningCount?: number; perfCount?: number; anrCount?: number; fwCount?: number; infoCount?: number; debugCount?: number; databaseCount?: number; todoCount?: number; noticeCount?: number; uri: { toString(): string }; trashed?: boolean; tags?: string[]; autoTags?: string[]; correlationTags?: string[]; hasPerformanceData?: boolean; groupId?: string;
+    /** Parsed log header `Project:` value — feeds the session-kind classifier's workspace-match rule. */
+    project?: string;
+    /** DAP adapter type ("dart", "node", …) — feeds the session-kind classifier's debug-session rule. */
+    debugAdapterType?: string;
+    /** Explicit kind override (user's manual decision) — the classifier reads this first. */
+    kind?: SessionKind;
+};
 
 /** Extra fields written onto session-group member records so the webview can render groupings. */
 type GroupRenderExtras = { groupId?: string; isGroupPrimary?: boolean; groupSize?: number };
@@ -62,7 +102,7 @@ export async function buildSessionItemRecord(
     options?: SessionListPayloadOptions,
     extras?: GroupRenderExtras,
 ): Promise<Record<string, unknown>> {
-    const { getActiveLastWriteTime, getLastViewedAt } = options ?? {};
+    const { getActiveLastWriteTime, getLastViewedAt, getDismissedAt, classifyMeta } = options ?? {};
     const uri = m.uri instanceof vscode.Uri ? m.uri : vscode.Uri.parse(m.uri.toString());
     const mtime = await resolveMtime(uri, m.mtime);
     const uriStr = m.uri.toString();
@@ -74,6 +114,17 @@ export async function buildSessionItemRecord(
     const oneMinuteAgo = Date.now() - 60_000;
     const updatedInLastMinute = lastUpdatedAt >= oneMinuteAgo;
     const updatedSinceViewed = lastViewedAt !== undefined && lastUpdatedAt > lastViewedAt;
+    // Newer-log unread state: any log whose mtime exceeds the dismiss cursor AND that the user
+    // hasn't viewed since then. We don't AND with `lastViewedAt`: a never-viewed-but-old log
+    // shouldn't keep nagging if the user has already cleared it from the banner. The cursor
+    // moves to Date.now() on dismiss, so "older than cursor" reliably means "user moved past it".
+    const dismissedAt = getDismissedAt?.();
+    const unreadSinceFocus = typeof dismissedAt === 'number' && lastUpdatedAt > dismissedAt;
+    // Session kind (project vs report) — drives the per-day Reports bucket. classifyMeta is built
+    // once per payload (compiled patterns + workspace folder), then called per record.
+    const kind: SessionKind = classifyMeta
+        ? classifyMeta({ kind: m.kind, debugAdapterType: m.debugAdapterType, project: m.project, displayName: m.displayName })
+        : 'project';
     return {
         filename: m.filename, displayName: m.displayName ?? m.filename, adapter: m.adapter,
         size: m.size, mtime, formattedMtime: formatMtime(mtime),
@@ -88,6 +139,8 @@ export async function buildSessionItemRecord(
         isActive,
         updatedSinceViewed,
         updatedInLastMinute,
+        unreadSinceFocus,
+        kind,
         uriString: uriStr, trashed: m.trashed ?? false, tags: m.tags ?? [],
         autoTags: m.autoTags ?? [], correlationTags: m.correlationTags ?? [],
         hasPerformanceData: m.hasPerformanceData ?? false,

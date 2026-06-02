@@ -5,10 +5,11 @@
  */
 import { getSessionGroupRenderingScript } from './viewer-session-panel-rendering-groups';
 import { getReportsBucketAndBannerScript } from './viewer-session-panel-reports-bucket';
+import { getSessionStreamingScript } from './viewer-session-panel-rendering-stream';
 
 /** Get the session panel rendering script fragment. */
 export function getSessionRenderingScript(): string {
-    return getSessionGroupRenderingScript() + getReportsBucketAndBannerScript() + /* javascript */ `
+    return getSessionGroupRenderingScript() + getReportsBucketAndBannerScript() + getSessionStreamingScript() + /* javascript */ `
     /* escapeAttr and escapeHtmlText are provided by the session panel IIFE bootstrap. */
     function renderSessionList(sessions) {
         if (sessionLoadingEl) sessionLoadingEl.style.display = 'none';
@@ -70,6 +71,10 @@ export function getSessionRenderingScript(): string {
         var pageSessions = sorted.slice(start, start + pageSize);
         var html = sessionDisplayOptions.showDayHeadings ? renderGrouped(pageSessions, basenameCounts) : renderFlat(pageSessions, basenameCounts);
         sessionListEl.innerHTML = html;
+        /* Newer-log banner: flips visibility based on unreadSinceFocus on any rendered row.
+           Called against the SORTED list (post-filter, post-page) so the banner only fires
+           when an unread log is actually visible — hiding it would surprise the user. Plan: 001. */
+        if (typeof renderNewerLogBanner === 'function') renderNewerLogBanner(sorted);
         renderNameFilterBar();
         /* Pagination: show bar only when multiple pages; render "Showing X–Y of Z" and Prev/Next. */
         if (sessionListPaginationEl) {
@@ -138,16 +143,10 @@ export function getSessionRenderingScript(): string {
         return groups.join('');
     }
 
-    /** Wrap a day heading and its items (run through group-coalescing) in a collapsible container. */
-    function renderDayGroup(dateKey, dayRecords, bnCounts) {
-        var collapsed = !!collapsedDays[dateKey];
-        var cls = 'session-day-group' + (collapsed ? ' collapsed' : '');
-        var itemsHtml = renderItemsWithGroupBlocks(dayRecords, bnCounts);
-        return '<div class="' + cls + '" data-day-key="' + escapeAttr(dateKey) + '">'
-            + renderDayHeading(dateKey, collapsed, dayRecords.length)
-            + '<div class="session-day-items">' + itemsHtml + '</div>'
-            + '</div>';
-    }
+    /* renderDayGroup is now provided by getReportsBucketAndBannerScript() — that version
+       partitions each day's records into project rows + a per-day Reports bucket. The old
+       local implementation was removed because function declarations hoist and the later
+       declaration would win, silently undoing the Reports-bucket split. Plan: 001. */
 
     function renderItem(s, bnCounts) {
         var icon = s.isActive ? 'codicon-record' : (s.hasTimestamps ? 'codicon-history' : 'codicon-output');
@@ -170,6 +169,15 @@ export function getSessionRenderingScript(): string {
         var perfBadge = s.hasPerformanceData ? '<span class="session-item-perf" title="' + vt('viewer.session.perfAvailable') + '"><span class="codicon codicon-graph-line"></span></span>' : '';
         /* Dot: red = updated in last minute, orange = new since last viewed; only for non-active logs. */
         var updateDot = !s.isActive && (s.updatedInLastMinute || s.updatedSinceViewed) ? '<span class="session-item-update-dot" title="' + (s.updatedInLastMinute ? vt('viewer.session.dot.updatedMin') : vt('viewer.session.dot.updatedSince')) + '"></span>' : '';
+        /* Per-row unread dot (blue). Gated so it never doubles up with the red/orange update
+           dot above — those signals already convey "this row changed recently"; the unread
+           dot is for logs the user has never seen since their last panel focus. The
+           newerLogDotEnabled setting lets users turn off this cue entirely. Plan: 001. */
+        var unreadDot = '';
+        if (s.unreadSinceFocus && !s.isActive && !s.updatedInLastMinute && !s.updatedSinceViewed
+            && sessionDisplayOptions.newerLogDotEnabled !== false) {
+            unreadDot = '<span class="session-item-unread-dot" title="' + vt('viewer.session.dot.unread') + '"></span>';
+        }
         /* Group primary: leading chevron (flips on collapse) and a "+N" badge after the name. */
         var groupChevron = '', groupCount = '';
         if (groupRole === 'primary') {
@@ -181,7 +189,7 @@ export function getSessionRenderingScript(): string {
         }
         return '<div class="' + cls + '" data-uri="' + escapeAttr(s.uriString || '') + '" data-filename="' + escapeAttr(s.filename || '') + '">'
             + groupChevron
-            + '<span class="session-item-icon" title="' + iconTitle + '"><span class="codicon ' + icon + '"></span>' + updateDot + '</span>'
+            + '<span class="session-item-icon" title="' + iconTitle + '"><span class="codicon ' + icon + '"></span>' + updateDot + unreadDot + '</span>'
             + '<div class="session-item-info">'
             /* "(latest)" badge only appears when more than one session shares
                this normalised basename. For a single entry it would be visual
@@ -271,56 +279,9 @@ export function getSessionRenderingScript(): string {
         return result;
     }
 
-    /**
-     * Render a lightweight preview list (filenames only, shimmer on metadata).
-     * Called once per directory level during streaming scan — appends to existing
-     * items so the first filenames appear immediately while subdirectories continue loading.
-     */
-    function renderSessionListPreview(previews) {
-        if (sessionLoadingEl) sessionLoadingEl.style.display = 'none';
-        if (!sessionListEl) return;
-        if (!previews || previews.length === 0) return;
-        if (sessionEmptyEl) sessionEmptyEl.style.display = 'none';
-        if (sessionListPaginationEl) sessionListPaginationEl.style.display = 'none';
-        var html = previews.map(function(p) {
-            var bn = getSessionBasename(p.filename);
-            var name = applySessionDisplayOptions(bn);
-            return '<div class="session-item" data-uri="' + escapeAttr(p.uriString || '') + '" data-filename="' + escapeAttr(p.filename || '') + '">'
-                + '<span class="session-item-icon" title="' + vt('viewer.session.icon.logFile') + '"><span class="codicon codicon-output"></span></span>'
-                + '<div class="session-item-info">'
-                + '<span class="session-item-name">' + escapeHtmlText(name) + '</span>'
-                + '<span class="session-item-meta session-shimmer-meta"></span>'
-                + '</div>'
-                + renderSessionRowActions()
-                + '</div>';
-        }).join('');
-        /* Append instead of replace — multiple batches arrive as directories are scanned. */
-        sessionListEl.insertAdjacentHTML('beforeend', html);
-    }
-
-    /** Update preview items in-place with resolved metadata (progressive loading). */
-    function updateSessionBatchItems(items) {
-        if (!sessionListEl || !items) return;
-        for (var i = 0; i < items.length; i++) {
-            var s = items[i];
-            var el = sessionListEl.querySelector('.session-item[data-uri="' + CSS.escape(s.uriString || '') + '"]');
-            if (!el) continue;
-            var icon = s.isActive ? 'codicon-record' : (s.hasTimestamps ? 'codicon-history' : 'codicon-output');
-            var iconTitle = s.isActive ? vt('viewer.session.icon.recording') : (s.hasTimestamps ? vt('viewer.session.icon.completed') : vt('viewer.session.icon.logFile'));
-            var iconEl = el.querySelector('.session-item-icon');
-            if (iconEl) {
-                var dot = !s.isActive && (s.updatedInLastMinute || s.updatedSinceViewed)
-                    ? '<span class="session-item-update-dot" title="' + (s.updatedInLastMinute ? vt('viewer.session.dot.updatedMin') : vt('viewer.session.dot.updatedSince')) + '"></span>' : '';
-                iconEl.innerHTML = '<span class="codicon ' + icon + '"></span>' + dot;
-                iconEl.title = iconTitle;
-            }
-            var metaEl = el.querySelector('.session-item-meta');
-            if (metaEl) {
-                metaEl.classList.remove('session-shimmer-meta');
-                var dots = renderSeverityDots(s);
-                metaEl.innerHTML = buildSessionMeta(s, dots, null);
-            }
-        }
-    }
+    /* renderSessionListPreview and updateSessionBatchItems are now provided by
+       getSessionStreamingScript() — see viewer-session-panel-rendering-stream.ts. They live
+       in a sibling fragment so this file stays under the 300-line code limit while the
+       Reports-bucket + newer-log additions landed inline. */
 `;
 }

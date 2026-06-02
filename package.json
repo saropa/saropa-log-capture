@@ -2489,6 +2489,43 @@
           "type": "number",
           "title": "Session Groups: After Seconds"
         },
+        "saropaLogCapture.reportsKindPatterns": {
+          "default": [
+            "^Saropa Lint Report\\b",
+            "^Json Bundle\\b",
+            "^Lint Report\\b",
+            "^Audit Matrix\\b"
+          ],
+          "description": "Regex patterns (case-insensitive) matched against a log's display name. Matches are classified as reports and folded into a per-day Reports bucket so debug sessions stay scannable. Defaults cover Saropa Lint Report, Json Bundle Audit/Translate, and Audit Matrix; invalid patterns are dropped silently.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "Logs Panel: Reports Kind Patterns"
+        },
+        "saropaLogCapture.reportsBucketDefault": {
+          "default": "collapsed",
+          "description": "Default state for the per-day Reports bucket in the Logs panel. \"collapsed\" shows the bucket folded with a count badge; \"expanded\" auto-expands every report row inline; \"hidden\" removes report rows from the panel entirely (they remain on disk).",
+          "enum": [
+            "collapsed",
+            "expanded",
+            "hidden"
+          ],
+          "type": "string",
+          "title": "Logs Panel: Reports Bucket Default"
+        },
+        "saropaLogCapture.newerLogBanner": {
+          "default": true,
+          "description": "When on, the Logs panel shows a sticky banner above the day list whenever a newer log has arrived since the panel last had focus. Click Open to jump to it; Dismiss to clear the alert.",
+          "type": "boolean",
+          "title": "Logs Panel: Newer-Log Banner"
+        },
+        "saropaLogCapture.newerLogDot": {
+          "default": true,
+          "description": "When on, each Logs panel row carries a small blue dot on its icon while the log is newer than the panel's last focus. The dot persists after the banner is dismissed so the user always has a visible cue per row.",
+          "type": "boolean",
+          "title": "Logs Panel: Newer-Log Dot"
+        },
         "saropaLogCapture.verboseDap": {
           "default": false,
           "description": "%config.verboseDap.description%",

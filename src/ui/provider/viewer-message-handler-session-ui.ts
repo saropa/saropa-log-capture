@@ -137,6 +137,16 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
       return true;
     case "requestBookmarks": case "deleteBookmark": case "deleteFileBookmarks": case "deleteAllBookmarks": case "editBookmarkNote": case "openBookmark": ctx.onBookmarkAction?.(msg); return true;
     case "requestSessionList": ctx.onSessionListRequest?.(); return true;
+    case "acknowledgeUnreadLogs": {
+      /* Newer-log banner Dismiss / focus-acknowledgement: advance the panel's "dismiss cursor"
+         to now so every previously-flagged row drops `unreadSinceFocus`. A subsequent
+         `requestSessionList` rebuilds the payload with the new cursor; we trigger it here so
+         the user sees the banner clear without needing to reopen the panel. The cursor key
+         must stay in sync with viewer-handler-wiring.ts (LOGS_PANEL_DISMISSED_AT_KEY). */
+      ctx.context.workspaceState.update("saropaLogCapture.logsPanelDismissedAt", Date.now())
+        .then(() => { ctx.onSessionListRequest?.(); }, () => {});
+      return true;
+    }
     case "runCommand":
       vscode.commands.executeCommand(msgStr(msg, "command"), ...(Array.isArray(msg.args) ? msg.args : [])).then(undefined, () => {});
       return true;

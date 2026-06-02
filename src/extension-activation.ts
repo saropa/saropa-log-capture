@@ -160,6 +160,13 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         ...defaultDisplayOptions,
         ...stored,
         sessionListPageSize: stored.sessionListPageSize ?? initCfg.sessionListPageSize ?? defaultDisplayOptions.sessionListPageSize ?? 100,
+        // Reports bucket + newer-log alert: persisted user state wins; otherwise fall back to the
+        // per-workspace setting; otherwise to the global default. Reading the setting at activation
+        // (not per-render) is fine because the webview also receives sendDisplayOptions whenever
+        // the user flips one of these via the toolbar. Plan: 001.
+        reportsBucketState: stored.reportsBucketState ?? initCfg.reportsClassifier.bucketDefault,
+        newerLogBannerEnabled: stored.newerLogBannerEnabled ?? initCfg.newerLogAlert.bannerEnabled,
+        newerLogDotEnabled: stored.newerLogDotEnabled ?? initCfg.newerLogAlert.dotEnabled,
     };
     historyProvider.setDisplayOptions(displayOpts);
     broadcaster.sendDisplayOptions(displayOpts);

@@ -8,6 +8,7 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `type` | Referenced in |
 |--------|----------------|
 | `acceptFilterSuggestion` | viewer-message-handler-panels.ts |
+| `acknowledgeUnreadLogs` | viewer-message-handler-session-ui.ts |
 | `addAutoHidePattern` | viewer-message-handler-actions.ts |
 | `addBookmark` | viewer-message-handler-session-ui.ts |
 | `addSignalItemToCollection` | viewer-message-handler-panels.ts |
@@ -142,4 +143,4 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `viewerKeybindingRecordCancelled` | viewer-message-handler-actions.ts |
 | `viewerKeybindingRecorded` | viewer-message-handler-actions.ts |
 
-**Total:** 134 distinct types.
+**Total:** 135 distinct types.

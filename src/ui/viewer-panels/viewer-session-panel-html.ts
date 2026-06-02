@@ -86,6 +86,10 @@ export function getSessionPanelHtml(): string {
         <div id="session-tag-chips" class="session-tag-chips"></div>
     </div>
     <div id="session-name-filter-bar" class="session-name-filter-bar" style="display:none" aria-live="polite"></div>
+    <!-- Sticky newer-log banner. Sits between the toolbar/name-filter and the day list so
+         scrolling the list doesn't hide it. Hidden by default; renderNewerLogBanner() flips
+         display when any rendered record carries unreadSinceFocus:true. Plan: 001. -->
+    <div id="session-newer-banner" class="session-newer-banner" style="display:none" role="status" aria-live="polite"></div>
     <div class="session-panel-content">
         <div id="session-list"></div>
         <div id="session-list-pagination" class="session-list-pagination" style="display:none" aria-label="${t('viewer.session.pagination.label')}"></div>
