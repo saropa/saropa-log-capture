@@ -2,6 +2,7 @@ import * as assert from 'node:assert';
 import { getGotoLineScript } from '../../ui/viewer/viewer-goto-line';
 import { getCopyScript } from '../../ui/viewer/viewer-copy';
 import { getSearchScript } from '../../ui/viewer-search-filter/viewer-search';
+import { getViewerScriptMessageHandler } from '../../ui/viewer/viewer-script-messages';
 
 suite('Webview script null guards – interaction', () => {
 
@@ -49,6 +50,23 @@ suite('Webview script null guards – interaction', () => {
             assert.ok(
                 block.includes('if (jumpBtn) jumpBtn.style'),
                 'scrollToLineNumber should guard jumpBtn.style',
+            );
+        });
+
+        /* Ctrl+G fix: VS Code's built-in workbench.action.gotoLine has no `when` clause
+           so it preempts the webview keydown handler. The fix routes Ctrl+G through a
+           contributes.keybindings entry → saropaLogCapture.gotoLineInViewer command →
+           triggerGotoLine broadcast → this dispatcher case → openGotoLine(). Pin the
+           dispatcher leg so a refactor that drops the case is caught immediately. */
+        test('message handler should dispatch triggerGotoLine to openGotoLine', () => {
+            const handler = getViewerScriptMessageHandler();
+            assert.ok(
+                handler.includes("case 'triggerGotoLine'"),
+                'message handler must handle triggerGotoLine',
+            );
+            assert.ok(
+                handler.includes('openGotoLine()'),
+                'triggerGotoLine must call openGotoLine()',
             );
         });
     });

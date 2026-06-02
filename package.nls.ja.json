@@ -54,6 +54,7 @@
   "command.expandAllSections.title": "すべてのセクションを展開",
   "command.maximizePanel.title": "パネルを最大化",
   "command.toggleSearchOverlay.title": "検索の切替",
+  "command.gotoLineInViewer.title": "行へ移動",
   "command.refreshHistory.title": "ログ履歴を更新",
   "command.removeFromCollection.title": "調査から削除",
   "command.renameSession.title": "ログの名前を変更",
