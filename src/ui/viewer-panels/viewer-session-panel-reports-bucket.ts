@@ -7,7 +7,7 @@
  * `renderDayHeading`.
  *
  * Extracted from viewer-session-panel-rendering.ts to keep that file
- * under the 300-line limit. See [bugs/001_plan-newer-alert-and-reports-grouping.md].
+ * under the 300-line limit. See [plans/history/2026.06/2026.06.02/001_plan-newer-alert-and-reports-grouping.md].
  */
 
 export function getReportsBucketAndBannerScript(): string {
