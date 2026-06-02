@@ -27,7 +27,7 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [7.17.0]
 
 The footer-filename "Log file" modal now shows the filename, gives a toast when a copy succeeds, and adds Copy filename, Copy relative path, Open beside, Reveal in Explorer view, and Open folder in terminal. Captures with a SAROPA LOG CAPTURE header now show an (i) icon next to the filename — click it to open a structured view of every line in that header.
 
