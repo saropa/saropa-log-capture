@@ -64,6 +64,21 @@ function handleLineAction(action, lineIdx) {
     var plainText = stripTags(lineData.html || '');
 
     switch (action) {
+        case 'copy-json': {
+            /* JSON analog of "Copy Line": structured one-object-per-line output. Uses the
+               shift-click selection when the right-clicked row is inside it (sel.multiLine),
+               otherwise just this line. linesToJson lives in viewer-copy.ts (same scope). */
+            var jsonSel = getSelectionRange(lineIdx);
+            var jsonLines = (jsonSel.multiLine && typeof getSelectedLines === 'function') ? getSelectedLines() : [lineData];
+            var jsonText = typeof linesToJson === 'function' ? linesToJson(jsonLines) : plainText;
+            vscodeApi.postMessage({ type: 'copyToClipboard', text: jsonText });
+            if (jsonText.length > 0 && typeof showCopyToast === 'function') {
+                showCopyToast(jsonSel.multiLine
+                    ? formatCopyToastMessage('lines', jsonSel.lo + 1, jsonSel.hi + 1, jsonText.length)
+                    : formatCopyToastMessage('line', lineIdx + 1, lineIdx + 1, jsonText.length));
+            }
+            return true;
+        }
         case 'copy': {
             /* Only treat this as a multi-line copy when the right-clicked line is INSIDE the
                shift-click selection (sel.multiLine). Without this guard, a stale selection
