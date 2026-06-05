@@ -45,6 +45,7 @@ document.addEventListener('keydown', function(e) {
         if (nTxt.trim()) { e.preventDefault(); vscodeApi.postMessage({ type: 'copyToClipboard', text: nTxt }); return; }
         return;
     }
+    if (action === 'copyJson') { e.preventDefault(); if (typeof copyAsJson === 'function') copyAsJson(); return; }
     if (action === 'copyMarkdown') { e.preventDefault(); if (typeof copyAsMarkdown === 'function') copyAsMarkdown(); return; }
     if (action === 'copyAll') { e.preventDefault(); if (typeof copyAllToClipboard === 'function') copyAllToClipboard(); return; }
     if (action === 'copyRaw') { e.preventDefault(); if (typeof copyAsRawText === 'function') copyAsRawText(); return; }
