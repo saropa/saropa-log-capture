@@ -152,8 +152,10 @@ function lineActionRows(m: Record<string, string>): Row[] {
 
 function copyRows(m: Record<string, string>): Row[] {
     return [
-        ['copyPlain', key(m, 'copyPlain', 'ctrl+c'), 'Copy selection',
-            'Copies the currently selected log lines as plain text — no severity dots, no timestamps, no formatting. Each line\'s raw text content is placed on the clipboard separated by newlines. If no lines are explicitly selected, falls back to the native browser text selection.'],
+        ['copyJson', key(m, 'copyJson', 'ctrl+c'), 'Copy as JSON',
+            'The default copy. Copies the selected log lines (or the visible viewport when nothing is selected) as a structured JSON array — one object per line carrying the line number, ISO timestamp, severity level, category, parsed tag, stream source, and the plain text. Empty fields are omitted. A raw sub-line text drag-selection is copied verbatim instead, since a fragment cannot be split into fields.'],
+        ['copyPlain', key(m, 'copyPlain', ''), 'Copy selection (plain text)',
+            'Copies the currently selected log lines as plain text — no severity dots, no timestamps, no formatting. Each line\'s raw text content is placed on the clipboard separated by newlines. Unassigned by default (Ctrl+C now copies JSON); rebindable, and still available as "Copy Line" on the right-click menu.'],
         ['copyMarkdown', key(m, 'copyMarkdown', 'ctrl+shift+c'), 'Copy as markdown',
             'Copies the selected lines wrapped in a markdown fenced code block (```...```). The result is ready to paste directly into GitHub issues, Slack messages, or documentation and will render as a formatted code block.'],
         ['copyRaw', key(m, 'copyRaw', 'ctrl+alt+c'), 'Copy as raw text',

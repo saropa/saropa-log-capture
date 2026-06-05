@@ -27,6 +27,21 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Log viewer: Copy to JSON is now the default copy** — `Ctrl+C` (and the new top-most **Copy to JSON** item in the Copy & Export menu) copies the selected lines — or the visible viewport when nothing is selected — as a structured JSON array. Each line becomes one object carrying its 1-based viewer row `line`, ISO `timestamp`, `level`, `category`, parsed `tag`, stream `source`, and `text`; empty fields are omitted so a bare `print()` line stays compact. A raw sub-line text drag-selection is still copied verbatim, since a fragment can't be split into fields. Plain-text copy (`Copy selection`) remains on the right-click menu as **Copy Line** and is rebindable, but loses its default `Ctrl+C` binding to JSON. ([viewer-copy.ts](src/ui/viewer/viewer-copy.ts), [viewer-keybindings.ts](src/ui/viewer/viewer-keybindings.ts), [viewer-context-menu-html.ts](src/ui/viewer-context-menu/viewer-context-menu-html.ts))
+
+<details>
+<summary>Maintenance</summary>
+
+- **`scripts/publish.py` summary prompt now defaults to Yes** — `Proceed with publish? [Y/n]` instead of `[y/N]`. The user has already invoked the publish script and read the full irreversible-action summary; a bare Enter should proceed. Ctrl+C / explicit `n` still aborts. ([publish_confirm.py](scripts/modules/publish/publish_confirm.py))
+
+</details>
+
+---
+
 ## [7.17.1]
 
 ### Added
