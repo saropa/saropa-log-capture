@@ -27,7 +27,7 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [7.17.2]
 
 ### Added
 
