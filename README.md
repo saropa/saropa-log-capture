@@ -201,6 +201,47 @@ All settings are prefixed with `saropaLogCapture.` — see [docs/CONFIGURATION.m
 
 ---
 
+## Log Tag Vocabulary
+
+Prefix a log line with a recognized **bracket tag** to route it to a severity level the viewer's filter dots control. The classifier already auto-detects framework database lines (Drift SQL, `[Drift]`/`[Isar]` tags, `DRIFT:` prefixes); tags let you route your **own** lines — the ones using app vocabulary the heuristic can't read — into the same groups.
+
+```text
+[db] bulkPreload wrote 185 rows          → database level (hidden by the DB dot)
+[perf:cold start] first frame 1840ms     → performance level
+[todo:DRIFT-412] backfill missing rows   → todo level
+```
+
+**Format:** `[TAG]` or `[TAG:metadata]`. The tag name is everything **before the first colon**; the metadata after it stays visible inline (extra debug context). So `[db:phase 2]` and `[db:retry]` both group as `db`. The tag is matched at the **start of the line**, tolerating logcat (`I/flutter`), threadtime, and Flutter `[log]` prefixes. An explicit tag wins over keyword guesses (`[db] … failed` stays database, not warning), but a real error still wins over the tag (`[db] Error: …` stays error).
+
+Unlisted bracket tags still work — they become free-form **Message-Tag chips** in the filter drawer (they just don't change the severity level).
+
+**Tags that set a severity level** (case-insensitive):
+
+- **database** — `db` `database` `sql` `query` `drift` `isar` `sqlite` `sqlite3` `sqflite` `hive` `realm` `postgres` `mysql` `mongo` `mongodb` `dynamodb` `redis` `orm` `dao` `prisma` `sequelize` `migration` `rowcount`
+- **error** — `err` `error` `fatal` `panic` `crash` `exception` `abort`
+- **warning** — `warn` `warning` `caution` `deprecated` `retry` `fallback` `degraded`
+- **performance** — `perf` `performance` `slow` `latency` `timing` `profile` `jank` `frame` `fps` `gc` `memory` `bench` `benchmark`
+- **todo** — `todo` `fixme` `hack` `xxx` `kludge` `workaround` `tech-debt`
+- **notice** — `notice` `note` `important` `banner` `milestone` `lifecycle`
+- **debug** — `debug` `trace` `verbose` `breadcrumb` `dump` `spew` `devlog`
+
+**Recommended neutral tags** (stay `info` — no level change, but they group as filterable chips, so use whatever your domain needs):
+
+- network / http — `net` `network` `http` `https` `api` `request` `response` `rest` `graphql` `ws` `websocket` `socket` `grpc` `rpc` `fetch` `download` `upload`
+- auth / security — `auth` `login` `logout` `session` `token` `jwt` `oauth` `sso` `perm` `permission` `acl` `role` `crypto` `sign` `verify` `security`
+- ui / render — `ui` `ux` `widget` `render` `paint` `layout` `theme` `anim` `animation` `gesture` `focus` `scroll` `view` `screen` `page`
+- navigation — `nav` `route` `router` `deeplink` `tab` `redirect`
+- sync / state — `sync` `state` `store` `redux` `bloc` `provider` `riverpod` `getx` `reducer` `hydrate` `persist`
+- data / serialize — `json` `parse` `serialize` `deserialize` `encode` `decode` `mapper` `schema` `validation` `form`
+- lifecycle / system — `init` `boot` `startup` `shutdown` `config` `env` `version` `build` `release` `feature-flag` `flag` `experiment` `plugin` `native` `platform` `isolate` `thread` `worker` `queue` `job` `scheduler` `timer`
+- media / device — `media` `image` `photo` `audio` `video` `camera` `file` `fs` `io` `disk` `location` `gps` `geo` `map` `bluetooth` `ble` `nfc` `sensor` `battery`
+- product / domain — `analytics` `telemetry` `metrics` `event` `track` `notification` `push` `fcm` `apns` `badge` `billing` `purchase` `iap` `payment` `subscription` `ads` `share` `social` `onboarding` `search` `filter` `pagination`
+- i18n / format — `i18n` `l10n` `locale` `intl` `currency` `date` `tz` `timezone`
+
+See [docs/SOURCE_LOGGER_BEST_PRACTICES.md](docs/SOURCE_LOGGER_BEST_PRACTICES.md) for emit examples, and [docs/correlation-tags.md](docs/correlation-tags.md) for the separate mid-line `type:value` correlation tags.
+
+---
+
 ## Extension API
 
 Other VS Code extensions can consume a typed API from Saropa Log Capture:
