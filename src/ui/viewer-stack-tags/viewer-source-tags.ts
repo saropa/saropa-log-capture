@@ -108,7 +108,11 @@ function parseSourceTag(plainText) {
     if (m) {
         var raw = m[2] || m[3];
         if (raw) {
-            var tag = raw.toLowerCase();
+            // Bracket tags support [TAG:metadata] — derived name is everything before the first
+            // colon so [db:phase 2] and [db:retry] both group as 'db'; the metadata stays visible
+            // inline (we only read plainText). Logcat tags (m[2]) can't contain a colon, so the
+            // split applies to the bracket capture only. Mirrors source-tag-parser.ts.
+            var tag = m[3] ? m[3].split(':')[0].trim().toLowerCase() : raw.toLowerCase();
             var body = plainText.slice(m[0].length);
             if (driftStatementPattern.test(body)) return 'database';
             if (m[2] && genericLogcatTags[tag]) {
