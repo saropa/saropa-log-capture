@@ -4,8 +4,10 @@
  * Sends clipboard content to extension via postMessage.
  * Concatenated into the same script scope as viewer-script.ts.
  */
+import { getCopyJsonScript } from './viewer-copy-json';
+
 export function getCopyScript(): string {
-    return /* javascript */ `
+    return getCopyJsonScript() + /* javascript */ `
 var selectionStart = -1;
 var selectionEnd = -1;
 

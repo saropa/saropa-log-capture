@@ -89,7 +89,8 @@ function getPowerShortcutsHtml(): string {
             <table class="shortcuts-table">
                 <thead><tr><th>Key</th><th>Action</th><th>Description</th></tr></thead>
                 <tbody>
-                    <tr data-action-id="copyPlain"><td><kbd>Ctrl+C</kbd></td><td>Copy selection</td><td>Copy selected lines as plain text</td></tr>
+                    <tr data-action-id="copyJson"><td><kbd>Ctrl+C</kbd></td><td>Copy as JSON</td><td>Copy selected (or visible) lines as a structured JSON array — one object per line with number, timestamp, level, category, tag, source, and text</td></tr>
+                    <tr data-action-id="copyPlain"><td><kbd>—</kbd></td><td>Copy selection (plain text)</td><td>Copy selected lines as plain text — unassigned by default; rebindable</td></tr>
                     <tr data-action-id="copyMarkdown"><td><kbd>Ctrl+Shift+C</kbd></td><td>Copy as markdown</td><td>Copy selected lines formatted as a markdown code block</td></tr>
                     <tr data-action-id="copyRaw"><td><kbd>Ctrl+Alt+C</kbd></td><td>Copy as raw text</td><td>Copy selected lines with original decorations intact</td></tr>
                     <tr data-action-id="copyAll"><td><kbd>Ctrl+Shift+A</kbd></td><td>Copy all visible</td><td>Copy every visible (non-filtered) line to the clipboard</td></tr>
