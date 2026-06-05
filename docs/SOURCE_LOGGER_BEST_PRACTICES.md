@@ -98,6 +98,33 @@ log('[DB] Query completed in 42ms');
 
 Good tags are short (3-8 chars), consistent, and unique per library/subsystem.
 
+### Severity tags
+
+A bracket tag at the **start** of a line that matches the recognized vocabulary
+also routes the line to a **severity level** the viewer's filter dots control.
+This is how you make your app's own DB / perf / todo lines group with the
+framework ones the classifier already detects.
+
+```dart
+log('[db] bulkPreload wrote $rows rows');        // → database level
+log('[perf:cold start] first frame ${ms}ms');    // → performance level
+log('[todo:DRIFT-412] backfill missing rows');   // → todo level
+```
+
+**Format:** `[TAG]` or `[TAG:metadata]`. The tag name is everything **before the
+first colon**; the metadata after it is left untouched and stays visible inline in
+the line (use it for extra debug context). The match is anchored to the start of
+the line but tolerates logcat (`I/flutter`), threadtime, and Flutter `[log]`
+prefixes. An explicit tag beats keyword guesses (`[db] … failed` stays database,
+not warning), but a structural error still beats the tag (`[db] Error: …` stays
+error). The full recognized vocabulary is published in the project README under
+**Log Tag Vocabulary**; unlisted bracket tags stay free-form source-tag chips.
+
+This is distinct from the mid-line `type:value` **correlation tags** in
+[correlation-tags.md](correlation-tags.md): a severity tag sits at the head of the
+line and changes its level; a correlation tag sits inside the message and links
+related lines without changing the level.
+
 ### Avoid duplicating viewer decorations
 
 Do not embed these in message text — the viewer provides them:

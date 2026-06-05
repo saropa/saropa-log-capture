@@ -72,6 +72,39 @@ suite('SourceTagParser', () => {
         });
     });
 
+    suite('parseSourceTag — [TAG:metadata] colon split', () => {
+
+        // The tag name is everything before the first colon; the metadata after it is
+        // ignored for grouping (it stays inline in the rendered line). So differing
+        // metadata must NOT fragment the tag count.
+        test('should derive tag name before the first colon', () => {
+            assert.strictEqual(parseSourceTag('[db:phase 2] bulkPreload wrote 185 rows'), 'db');
+        });
+
+        test('should group differing metadata under the same tag', () => {
+            assert.strictEqual(parseSourceTag('[db:phase 2] start'), 'db');
+            assert.strictEqual(parseSourceTag('[db:retry] again'), 'db');
+        });
+
+        test('should handle a non-db tag with metadata', () => {
+            assert.strictEqual(parseSourceTag('[perf:cold start] first frame 1840ms'), 'perf');
+        });
+
+        test('should leave colon-free bracket tags unchanged', () => {
+            assert.strictEqual(parseSourceTag('[log] message'), 'log');
+            assert.strictEqual(parseSourceTag('[My Tag] message'), 'my tag');
+        });
+
+        // Drift SQL is detected via the statement pattern in the body, never the bracket
+        // capture, so the colon split must not regress it.
+        test('should still classify [log]-wrapped Drift SQL as database', () => {
+            assert.strictEqual(
+                parseSourceTag('[log] Drift SELECT: SELECT * FROM "contacts" WHERE id = ?'),
+                'database',
+            );
+        });
+    });
+
     suite('parseSourceTag — no match', () => {
 
         test('should return null for plain text', () => {
