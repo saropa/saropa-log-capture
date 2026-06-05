@@ -16,6 +16,8 @@
  * The same logic is mirrored in viewer-source-tags.ts for webview-side use.
  */
 
+import { tagNameBeforeColon } from "../analysis/tag-level-dictionary";
+
 /** Logcat/bracket source tag pattern. Groups: 1=level, 2=logcat tag, 3=bracket tag. */
 const sourceTagPattern = /^(?:([VDIWEFA])\/([^(:\s]+)\s*(?:\(\s*\d+\))?:\s|\[([^\]]+)\]\s)/;
 
@@ -55,7 +57,12 @@ export function parseSourceTag(plainText: string): string | null {
     if (!m) { return null; }
     const raw = m[2] ?? m[3];
     if (!raw) { return null; }
-    const tag = raw.toLowerCase();
+    // Bracket tags support `[TAG:metadata]` — the derived tag name is everything before the
+    // first colon (tagNameBeforeColon lowercases + trims), so `[db:phase 2]` and `[db:retry]`
+    // both group as `db`. The metadata stays visible inline in the line (this parser only reads
+    // plainText, never rewrites it). Logcat tags (m[2]) can't contain a colon — the pattern's
+    // `[^(:\s]+` class excludes it — so the split applies to the bracket capture only.
+    const tag = m[3] ? tagNameBeforeColon(m[3]) : raw.toLowerCase();
     const body = plainText.slice(m[0].length);
     if (driftStatementPattern.test(body)) {
         return 'database';
