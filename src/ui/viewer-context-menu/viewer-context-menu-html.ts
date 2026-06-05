@@ -74,9 +74,12 @@ export function getContextMenuHtml(): string {
         <span class="codicon codicon-clippy"></span> Copy & Export
         <span class="context-menu-arrow codicon codicon-chevron-right"></span>
         <div class="context-menu-submenu-content">
+            <div class="context-menu-item" data-action="copy-json" data-line-action title="Copy this line (or the selection) as a structured JSON array — number, timestamp, level, category, tag, source, text">
+                <span class="codicon codicon-json"></span> Copy to JSON
+                <span class="context-menu-shortcut">Ctrl+C</span>
+            </div>
             <div class="context-menu-item" data-action="copy-selection" title="Copy the selected text to the clipboard">
                 <span class="codicon codicon-copy"></span> Copy
-                <span class="context-menu-shortcut">Ctrl+C</span>
             </div>
             <div class="context-menu-item" data-action="copy" data-line-action title="Copy this line as plain text">
                 <span class="codicon codicon-copy"></span> Copy Line
