@@ -11,6 +11,7 @@ export const VIEWER_KEYBINDING_ACTION_IDS = [
   'openSearch',
   'openFindPanel',
   'escape',
+  'copyJson',
   'copyPlain',
   'copyMarkdown',
   'copyAll',
@@ -67,7 +68,11 @@ const DEFAULT_ACTION_TO_KEY: Record<ViewerKeybindingActionId, string> = {
   openSearch: 'ctrl+f',
   openFindPanel: 'ctrl+shift+f',
   escape: 'escape',
-  copyPlain: 'ctrl+c',
+  copyJson: 'ctrl+c',
+  // Plain-text copy lost its default Ctrl+C to copyJson (structured JSON is now the
+  // default copy). Left unbound by default — still reachable via the per-line "Copy Line"
+  // menu item and fully rebindable. Empty descriptor never matches a real keystroke.
+  copyPlain: '',
   copyMarkdown: 'ctrl+shift+c',
   copyAll: 'ctrl+shift+a',
   selectAll: 'ctrl+a',
@@ -121,7 +126,8 @@ export const VIEWER_ACTION_LABELS: Record<ViewerKeybindingActionId, string> = {
   openSearch: 'Focus log search',
   openFindPanel: 'Open find panel',
   escape: 'Escape',
-  copyPlain: 'Copy selection',
+  copyJson: 'Copy as JSON',
+  copyPlain: 'Copy selection (plain text)',
   copyMarkdown: 'Copy as markdown',
   copyAll: 'Copy all visible',
   selectAll: 'Select all',

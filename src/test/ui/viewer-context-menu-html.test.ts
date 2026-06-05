@@ -340,7 +340,7 @@ suite('ViewerContextMenuHtml', () => {
             /* Each shortcut hint uses context-menu-shortcut class with the key text.
                Verify by finding the action, then checking the shortcut span follows. */
             const expected: [string, string][] = [
-                ['copy-selection', 'Ctrl+C'],
+                ['copy-json', 'Ctrl+C'],
                 ['copy-all', 'Ctrl+Shift+A'],
                 ['select-all', 'Ctrl+A'],
                 ['pin', 'P'],
