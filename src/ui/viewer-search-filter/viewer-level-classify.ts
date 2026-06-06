@@ -23,7 +23,11 @@ var TAG_LEVEL_MAP = ${tagLevelMapJson()};
 // is split into strictBracketErrorPattern so explicit [ERROR]/[error] tags still match.
 // Private-type alt requires _[A-Z]… (PascalCase) to avoid matching snake_case identifiers
 // like avoid_print_error — Dart private types are always _PascalCase.
-var strictStructuralErrorPattern = /\\w*(?:Error|Exception)\\s*[:\\]!(]|_[A-Z]\\w*(?:Error|Exception)\\b|Null check operator/;
+// First alt is (?:Error|Exception)…, NOT \\w*(?:Error|Exception)… : the leading \\w* is
+// redundant for an unanchored .test() (TypeError: still matches via Error: at offset 4) but
+// caused O(n²) backtracking on long word-runs (~2.3 s for one 50 KB base64 line), freezing the
+// host scan (issue #30). Dropping it is boolean-equivalent + linear. Mirrors level-classifier.ts.
+var strictStructuralErrorPattern = /(?:Error|Exception)\\s*[:\\]!(]|_[A-Z]\\w*(?:Error|Exception)\\b|Null check operator/;
 var strictBracketErrorPattern = /\\[(?:error|exception|fatal|panic)\\]/i;
 var looseStructuralErrorPattern = /\\b(?:error|exception)(?!\\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\\b|_[A-Z]\\w*(?:Error|Exception)\\b|Null check operator/i;
 // "critical" only signals error in a structural context (critical:, [critical], critical
