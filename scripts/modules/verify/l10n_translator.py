@@ -31,6 +31,7 @@ from modules.verify.l10n_bundle_audit import (
 from modules.verify.l10n_brands import (
     is_acronym_only,
     is_brand_only,
+    is_no_translatable_content,
     shield_brands,
     unshield_brands,
     validate_brands,
@@ -253,9 +254,10 @@ def translate_locale(
     # Must mirror the per-key skip logic in the loop below, including the
     # only_missing en-copy skip, or the counter overshoots its total.
     def _needs_network(k: str) -> bool:
-        # Brands and acronyms are forced English (no network) regardless of any
-        # existing value — mirror the loop's order so this denominator matches.
-        if is_brand_only(k) or is_acronym_only(k):
+        # Brands, acronyms, and symbol-only strings are forced English (no
+        # network) regardless of any existing value — mirror the loop's order so
+        # this denominator matches.
+        if is_brand_only(k) or is_acronym_only(k) or is_no_translatable_content(k):
             return False
         existing = bundle.get(k)
         if existing and existing != k:
@@ -290,6 +292,15 @@ def translate_locale(
             # any prior translation so the label is uniform across locales (no
             # mix of "OK" and "わかりました"). Never sent to the translator.
             if is_acronym_only(en_key):
+                bundle[en_key] = en_key
+                kept += 1
+                continue
+
+            # Symbol-only strings ("1 - {0}", "{0} #", "Δ #") have no word to
+            # translate; identity is correct in every locale. Forced English like
+            # acronyms so a value==English audit never re-flags them and the
+            # translator never round-trips them to Google for identical output.
+            if is_no_translatable_content(en_key):
                 bundle[en_key] = en_key
                 kept += 1
                 continue
