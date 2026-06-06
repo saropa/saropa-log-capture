@@ -88,8 +88,17 @@ function matchesDatabaseAnnotation(plainText: string): boolean {
  * object printed with a parenthesized detail (no trailing colon) fell through to `info`,
  * so it never reached the Errors filter and the E toggle could read zero on a log that
  * plainly contained errors. See plans/history/2026.05/2026.05.15/054_plan-viewer-stack-noise-filter-layout.md Item D.
+ *
+ * The first alternative is `(?:Error|Exception)…`, NOT `\w*(?:Error|Exception)…`. A leading
+ * `\w*` is redundant for an unanchored `.test()` (the engine already retries at every offset,
+ * so `TypeError:` still matches via `Error:` at index 4) but it caused catastrophic O(n²)
+ * backtracking: on a long unbroken word-run (base64 blob / hash / minified JSON, no spaces)
+ * `\w*` greedily consumed the run at every start position, ~2.3 s for a single 50 KB line.
+ * That pegged the extension host during the deferred severity scan (issue #30). Dropping the
+ * `\w*` is boolean-equivalent and linear. The `_[A-Z]\w*…` alt keeps its `\w*` — anchored by
+ * `_[A-Z]`, it starts in at most one place per line, so it stays single-pass O(n).
  */
-const strictStructuralErrorPattern = /\w*(?:Error|Exception)\s*[:\]!(]|_[A-Z]\w*(?:Error|Exception)\b|Null check operator/;
+const strictStructuralErrorPattern = /(?:Error|Exception)\s*[:\]!(]|_[A-Z]\w*(?:Error|Exception)\b|Null check operator/;
 /**
  * Bracket label form is case-insensitive — explicit log tags like `[ERROR]`, `[error]`,
  * `[fatal]` are unambiguous error markers regardless of case. Kept separate from

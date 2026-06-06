@@ -37,33 +37,61 @@ export interface SeverityCounts {
  *  misses logcat/threadtime/database-vendor patterns that are anchored to ^. */
 const timestampPrefixRe = /^\[[\d:.]+\]\s*\[\w+\]\s?/;
 
-/** Count error/warning/perf/info/debug/database/todo/notice lines in the body text.
- *  Skips blank lines and bare separator/marker rows (`---…`, `===…`) so footers
- *  and section dividers don't inflate the info bucket. */
-export function countSeverities(bodyText: string, strict = true): SeverityCounts {
-    let errors = 0, warnings = 0, perfs = 0, anrs = 0, infos = 0;
-    let debugs = 0, databases = 0, todos = 0, notices = 0;
-    const lines = bodyText.split('\n');
-    for (const line of lines) {
-        if (line.length === 0 || line.startsWith('---') || line.startsWith('===')) { continue; }
-        const msg = line.replace(timestampPrefixRe, '');
-        // Pass empty category: list scan has no DAP context. stderrTreatAsError is
-        // left false here on purpose — the viewer applies it at render time based
-        // on per-line DAP categories; we only have plain text.
-        const level = classifyLevel(msg, '', strict, false);
-        switch (level) {
-            case 'error': errors++; break;
-            case 'warning': warnings++; break;
-            case 'performance': perfs++; if (isAnrLine(msg)) { anrs++; } break;
-            case 'debug': debugs++; break;
-            case 'database': databases++; break;
-            case 'todo': todos++; break;
-            case 'notice': notices++; break;
-            case 'info':
-            default: infos++; break;
-        }
+/** Mutable accumulator shared by the sync and chunked counters. */
+interface Tally {
+    errors: number; warnings: number; perfs: number; anrs: number; infos: number;
+    debugs: number; databases: number; todos: number; notices: number;
+}
+
+function newTally(): Tally {
+    return { errors: 0, warnings: 0, perfs: 0, anrs: 0, infos: 0, debugs: 0, databases: 0, todos: 0, notices: 0 };
+}
+
+/** Classify one body line and increment its bucket. Blank lines and bare separator/marker
+ *  rows (`---…`, `===…`) are skipped so footers and dividers don't inflate `infos`. */
+function tallyLine(line: string, strict: boolean, t: Tally): void {
+    if (line.length === 0 || line.startsWith('---') || line.startsWith('===')) { return; }
+    const msg = line.replace(timestampPrefixRe, '');
+    // Pass empty category: list scan has no DAP context. stderrTreatAsError is left false
+    // on purpose — the viewer applies it at render time from per-line DAP categories; here
+    // we only have plain text.
+    const level = classifyLevel(msg, '', strict, false);
+    switch (level) {
+        case 'error': t.errors++; break;
+        case 'warning': t.warnings++; break;
+        case 'performance': t.perfs++; if (isAnrLine(msg)) { t.anrs++; } break;
+        case 'debug': t.debugs++; break;
+        case 'database': t.databases++; break;
+        case 'todo': t.todos++; break;
+        case 'notice': t.notices++; break;
+        default: t.infos++; break;
     }
-    return { errors, warnings, perfs, anrs, infos, debugs, databases, todos, notices };
+}
+
+/** Count error/warning/perf/info/debug/database/todo/notice lines in the body text.
+ *  Synchronous — keep for small slices (run summaries). For whole files prefer
+ *  {@link countSeveritiesChunked}, which yields so a large log can't block the host. */
+export function countSeverities(bodyText: string, strict = true): SeverityCounts {
+    const t = newTally();
+    for (const line of bodyText.split('\n')) { tallyLine(line, strict, t); }
+    return t;
+}
+
+/** Identical counts to {@link countSeverities}, but yields to the event loop after every
+ *  `chunkLines` lines so scanning a very large log file doesn't peg the extension-host
+ *  thread and make VS Code unresponsive (issue #30). `setImmediate` (not `setTimeout`)
+ *  drains pending I/O between chunks with minimal added latency; the boundary is checked
+ *  AFTER tallying so files under one chunk never pay a yield. */
+export async function countSeveritiesChunked(
+    bodyText: string, strict = true, chunkLines = 2000,
+): Promise<SeverityCounts> {
+    const lines = bodyText.split('\n');
+    const t = newTally();
+    for (let i = 0; i < lines.length; i++) {
+        tallyLine(lines[i], strict, t);
+        if ((i + 1) % chunkLines === 0) { await new Promise<void>((resolve) => setImmediate(resolve)); }
+    }
+    return t;
 }
 
 /** Extract the body text from a full log file (everything after the header separator). */
