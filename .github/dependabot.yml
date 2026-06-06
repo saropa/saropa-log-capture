@@ -14,10 +14,14 @@ updates:
         update-types:
           - "minor"
           - "patch"
-      # Keep production patch bumps batched (majors stay individual for review)
-      prod-patch:
+      # Batch production minor + patch bumps into one PR; majors stay
+      # individual so a breaking-change review is never auto-batched away.
+      # Minor was previously ungrouped, so every prod minor (undici, ws, qs…)
+      # opened its own PR and the backlog drifted into lockfile conflicts.
+      prod-minor-patch:
         dependency-type: "production"
         update-types:
+          - "minor"
           - "patch"
     open-pull-requests-limit: 10
     commit-message:
