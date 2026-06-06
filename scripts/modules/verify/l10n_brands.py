@@ -117,6 +117,40 @@ def is_acronym_only(en_value: str) -> bool:
     return en_value in ACRONYM_ONLY_STRINGS
 
 
+# Format placeholders like {0}, {1}, {count} are substituted at runtime and are
+# not translatable text. Drop them before deciding whether a word remains.
+_PLACEHOLDER_RE = re.compile(r"\{[^}]*\}")
+
+
+def is_no_translatable_content(en_value: str) -> bool:
+    """True if the string has no translatable word — only symbols, digits,
+    punctuation, and {n} placeholders (e.g. "1 - {0}", "{0} #", "Δ #").
+
+    Like brands/acronyms, identity IS the correct rendering: there is nothing to
+    translate, so the value equals English in every locale. Without this skip a
+    value==English check counts these as untranslated forever, and the translator
+    round-trips them to Google for identical output on every publish.
+
+    Translatable content = any ASCII letter (a real word or single-letter label
+    that could differ per locale, e.g. a column header "A"), OR a run of two or
+    more Unicode letters (a non-Latin word). A lone letter-shaped symbol such as
+    "Δ" (used here as the math delta, not a word) is NOT translatable — hence the
+    2+ run requirement for the non-ASCII case.
+    """
+    stripped = _PLACEHOLDER_RE.sub("", en_value)
+    if any("a" <= ch.lower() <= "z" for ch in stripped):
+        return False  # contains ASCII letters — a real word or label
+    run = 0
+    for ch in stripped:
+        if ch.isalpha():
+            run += 1
+            if run >= 2:
+                return False  # a non-Latin word (2+ consecutive letters)
+        else:
+            run = 0
+    return True
+
+
 def validate_brands(en_value: str, translated: str) -> list[str]:
     """Return list of brand tokens present in English but missing from translation."""
     missing: list[str] = []
