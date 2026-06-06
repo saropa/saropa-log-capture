@@ -19,7 +19,7 @@ import * as vscode from 'vscode';
 import type { SessionMeta, SessionMetadataStore } from '../../modules/session/session-metadata';
 import { TreeItem, isSplitGroup, isSessionGroup } from './session-history-grouping';
 import { SessionMetadata } from './session-history-grouping';
-import { countSeverities, extractBody } from './session-severity-counts';
+import { countSeveritiesChunked, extractBody } from './session-severity-counts';
 import { logExtensionError } from '../../modules/misc/extension-logger';
 
 /** Callback fired when a file's severity scan completes and was persisted. */
@@ -75,7 +75,9 @@ async function scanOne(meta: SessionMetadata, opts: DeferredScanOptions): Promis
     try {
         const raw = await vscode.workspace.fs.readFile(meta.uri);
         const text = Buffer.from(raw).toString('utf-8');
-        const counts = countSeverities(extractBody(text), opts.strict);
+        // Chunked + yielding: a single large reports file must not block the host thread
+        // mid-scan (issue #30). Bounded concurrency above still caps parallel readers.
+        const counts = await countSeveritiesChunked(extractBody(text), opts.strict);
         const updated: SessionMetadata = {
             ...meta,
             errorCount: counts.errors,
