@@ -27,6 +27,22 @@ cspell:disable
 
 ---
 
+## [7.17.3]
+
+### Fixed
+
+- **High CPU / unresponsive while counting severities on large logs (issue [#30](https://github.com/saropa/saropa-log-capture/issues/30))** — the background scan that fills the session-list error/warning/perf badges classified every line of a log file with a regex bank, and one of those patterns (`\w*(?:Error|Exception)…`) backtracked quadratically on a long unbroken word-run — a base64 blob, hash, or minified-JSON line could take ~2.3 s by itself. On top of that the whole-file scan ran synchronously, so a big report froze the extension host until it finished. The error pattern is now linear (the redundant leading `\w*` is dropped — classifications are unchanged), and the scan yields to the event loop every 2000 lines so even a very large file no longer blocks VS Code. ([level-classifier.ts](src/modules/analysis/level-classifier.ts), [viewer-level-classify.ts](src/ui/viewer-search-filter/viewer-level-classify.ts), [session-severity-counts.ts](src/ui/session/session-severity-counts.ts), [session-severity-scan.ts](src/ui/session/session-severity-scan.ts))
+
+<details>
+<summary>Maintenance</summary>
+
+- **Test split: `viewer-context-menu-html.test.ts` back under the 300-line limit** — the toggle-structure, label, tooltip, keyboard-shortcut, and scroll-chrome (`getScrollChromeContextMenuHtml`) cases moved to a sibling [viewer-context-menu-html-toggles.test.ts](src/test/ui/viewer-context-menu-html-toggles.test.ts); the original keeps the structure/copy/hide-submenu cases. Same suite hierarchy, no assertion changes. ([viewer-context-menu-html.test.ts](src/test/ui/viewer-context-menu-html.test.ts))
+- **l10n audit no longer flags symbol-only strings as untranslated** — strings with no translatable word (`1 – {0}`, `{0} #`, `Δ #`) are identical to English in every locale because there is nothing to translate, yet the value==English check counted them as gaps on every publish and the translator round-tripped them to Google for identical output. A new `is_no_translatable_content()` predicate shields them the same way `is_brand_only()` shields brands — applied in both the bundle audit's untranslated filter and the translator's force-English path. Removes ~14 recurring false-positive WARN lines (ko/ru/zh-cn/zh-tw now read a true 0 untranslated). ([l10n_brands.py](scripts/modules/verify/l10n_brands.py), [l10n_bundle_audit.py](scripts/modules/verify/l10n_bundle_audit.py), [l10n_translator.py](scripts/modules/verify/l10n_translator.py))
+
+</details>
+
+---
+
 ## [7.17.2]
 
 ### Added
