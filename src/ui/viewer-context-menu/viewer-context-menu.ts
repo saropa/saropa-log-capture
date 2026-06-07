@@ -26,6 +26,7 @@ export { getContextMenuHtml, getScrollChromeContextMenuHtml } from './viewer-con
 import { getDbTimestampBurstRangeBrowserScript } from './viewer-context-menu-db-burst-range';
 import { getIncidentRangeBrowserScript } from './viewer-context-menu-incident-range';
 import { getContextMenuSourcesScript } from './viewer-context-menu-sources';
+import { getContextMenuPositionScript } from './viewer-context-menu-position';
 import { getContextMenuActionsScript } from './viewer-context-menu-actions';
 
 /** Get the context menu script with click handlers and keyboard shortcuts. */
@@ -35,6 +36,7 @@ export function getContextMenuScript(): string {
         + getIncidentRangeBrowserScript()
         + getDbTimestampBurstRangeBrowserScript()
         + getContextMenuUiScript()
+        + getContextMenuPositionScript()
         + getContextMenuActionsScript();
 }
 
@@ -79,6 +81,14 @@ function initContextMenu() {
     }
     wireMenuClicks(contextMenuEl);
     wireMenuClicks(scrollChromeContextMenuEl);
+    /* Each submenu flyout is positioned against the live viewport when its trigger is
+       entered (see positionSubmenu). mouseenter fires once per trigger and does not bubble. */
+    if (contextMenuEl) {
+        var submenus = contextMenuEl.querySelectorAll('.context-menu-submenu');
+        for (var s = 0; s < submenus.length; s++) {
+            submenus[s].addEventListener('mouseenter', function() { positionSubmenu(this); });
+        }
+    }
 }
 
 /** Disable/enable a single context menu item by action id. */
@@ -259,60 +269,6 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
 
     syncContextMenuToggles();
     positionContextMenu(x, y);
-    window.isContextMenuOpen = true;
-}
-
-/** Place menu at (x,y), clamp to viewport, and set flip classes so submenus stay on screen. */
-function positionContextMenu(x, y) {
-    contextMenuEl.style.left = x + 'px';
-    contextMenuEl.style.top = y + 'px';
-    contextMenuEl.classList.add('visible');
-    var rect = contextMenuEl.getBoundingClientRect();
-    var newX = x;
-    var newY = y;
-    if (rect.right > window.innerWidth) newX = Math.max(0, window.innerWidth - rect.width);
-    if (rect.bottom > window.innerHeight) newY = Math.max(0, window.innerHeight - rect.height);
-    contextMenuEl.style.left = newX + 'px';
-    contextMenuEl.style.top = newY + 'px';
-    rect = contextMenuEl.getBoundingClientRect();
-    contextMenuEl.classList.toggle('flip-submenu', rect.right + 160 > window.innerWidth);
-    var submenuMaxH = 220; /* max height of any submenu panel; flip vertical when near bottom */
-    contextMenuEl.classList.toggle('flip-submenu-vertical', rect.bottom + submenuMaxH > window.innerHeight);
-    /* Near top: push submenu flyout down so its top is not cropped (e.g. terminal tab bar, toolbar). 48px clears typical panel header height; threshold 100px. */
-    var safeTopPx = 48;
-    var nearTopThresholdPx = 100;
-    var nearTop = rect.top < nearTopThresholdPx;
-    contextMenuEl.classList.toggle('flip-submenu-vertical-top', nearTop);
-    if (nearTop) {
-        var submenuContentTop = Math.max(0, safeTopPx - rect.top);
-        contextMenuEl.style.setProperty('--submenu-content-top', submenuContentTop + 'px');
-    } else {
-        contextMenuEl.style.removeProperty('--submenu-content-top');
-    }
-}
-
-function hideContextMenu() {
-    if (contextMenuEl) contextMenuEl.classList.remove('visible');
-    if (scrollChromeContextMenuEl) scrollChromeContextMenuEl.classList.remove('visible');
-    contextMenuLineIdx = -1;
-    window.isContextMenuOpen = false;
-}
-
-/** Right-click on minimap strip / native scrollbar: compact menu for scroll map + scrollbar settings. */
-function showScrollChromeContextMenu(x, y) {
-    if (!scrollChromeContextMenuEl) return;
-    if (contextMenuEl) contextMenuEl.classList.remove('visible');
-    syncContextMenuToggles();
-    scrollChromeContextMenuEl.style.left = x + 'px';
-    scrollChromeContextMenuEl.style.top = y + 'px';
-    scrollChromeContextMenuEl.classList.add('visible');
-    var rect = scrollChromeContextMenuEl.getBoundingClientRect();
-    var newX = x;
-    var newY = y;
-    if (rect.right > window.innerWidth) newX = Math.max(0, window.innerWidth - rect.width);
-    if (rect.bottom > window.innerHeight) newY = Math.max(0, window.innerHeight - rect.height);
-    scrollChromeContextMenuEl.style.left = newX + 'px';
-    scrollChromeContextMenuEl.style.top = newY + 'px';
     window.isContextMenuOpen = true;
 }
 

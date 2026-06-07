@@ -282,17 +282,24 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes('innerHeight - rect.height'));
         });
 
-        test('should flip submenus vertically when menu is near bottom so flyouts stay on screen', () => {
+        test('should position each submenu flyout from its own trigger rect on mouseenter', () => {
             const script = getContextMenuScript();
-            assert.ok(script.includes('flip-submenu-vertical'));
-            assert.ok(script.includes('rect.bottom + submenuMaxH > window.innerHeight'));
+            // Per-submenu placement replaced the old global flip-submenu* classes.
+            assert.ok(script.includes('function positionSubmenu'));
+            assert.ok(script.includes("addEventListener('mouseenter'"));
+            assert.ok(script.includes('.context-menu-submenu-content'));
+            // Direction chosen from the trigger's live rect, not a single root-menu class.
+            assert.ok(script.includes('submenuEl.getBoundingClientRect()'));
+            // The dead global model must be gone so it cannot override per-submenu placement.
+            assert.ok(!script.includes('flip-submenu-vertical'));
+            assert.ok(!script.includes('--submenu-content-top'));
         });
 
-        test('should push submenu content down when menu is near top so flyout top is not cropped', () => {
+        test('should cap a too-tall submenu flyout to the available space so it scrolls instead of clipping', () => {
             const script = getContextMenuScript();
-            assert.ok(script.includes('flip-submenu-vertical-top'));
-            assert.ok(script.includes('--submenu-content-top'));
-            assert.ok(script.includes('rect.top <'));
+            assert.ok(script.includes('style.maxHeight'));
+            assert.ok(script.includes('spaceBelow'));
+            assert.ok(script.includes('spaceAbove'));
         });
 
         test('should disable show-code-quality when codeQuality adapter is off (open report is footer-only)', () => {
