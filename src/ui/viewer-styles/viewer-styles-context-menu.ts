@@ -71,7 +71,12 @@ export function getContextMenuStyles(): string {
 .context-menu-submenu .codicon { font-size: 14px; opacity: 0.8; }
 .context-menu-arrow { margin-left: auto; font-size: 12px !important; opacity: 0.6; }
 
-/* --- Submenu flyout panel --- */
+/* --- Submenu flyout panel ---
+   left:100% / top:0 are the natural (open-right, grow-down) defaults. positionSubmenu()
+   in viewer-context-menu.ts overrides left/right/top/bottom and (when the flyout is taller
+   than the viewport) max-height with inline styles on each trigger's mouseenter, so the
+   panel is placed against the live viewport per-submenu instead of via global flip classes.
+   overflow-y:auto makes a capped flyout scroll instead of clipping off-screen. */
 .context-menu-submenu-content {
     display: none;
     position: absolute;
@@ -86,18 +91,10 @@ export function getContextMenuStyles(): string {
     width: max-content;
     padding: 4px 0;
     white-space: nowrap;
+    overflow-y: auto;
+    overscroll-behavior: contain; /* a scroll inside the flyout must not bubble to the log list */
 }
 .context-menu-submenu:hover > .context-menu-submenu-content { display: block; }
-/* Flip submenus left when context menu is near right viewport edge */
-.context-menu.flip-submenu .context-menu-submenu-content { left: auto; right: 100%; }
-/* When menu is near top, push submenu content down so top is not cropped (e.g. terminal tab bar, toolbar). */
-.context-menu.flip-submenu-vertical-top .context-menu-submenu-content {
-    top: var(--submenu-content-top, 0);
-    bottom: auto;
-}
-/* Near bottom only: align submenu bottom with trigger so flyout opens upward. Must not apply when
-   flip-submenu-vertical-top is also set — short panels often need both JS flags, and the top offset must win. */
-.context-menu.flip-submenu-vertical:not(.flip-submenu-vertical-top) .context-menu-submenu-content { top: auto; bottom: 0; }
 
 /* --- Toggle items (checkmark + label) --- */
 /* Check sits left of the label (VS Code convention): icon → ✓ → label.
