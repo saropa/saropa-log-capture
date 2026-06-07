@@ -47,10 +47,16 @@ def ask_yn(question: str, default: bool = True) -> bool:
     Handles EOF and Ctrl+C gracefully by returning the default.
     """
     hint = "Y/n" if default else "y/N"
+    # Print the colored question on its own line, then read with a plain
+    # ASCII prompt. The Windows readline shim (pyreadline3) measures prompt
+    # width by raw character count and does NOT strip ANSI escape codes, so a
+    # colored input() prompt is mismeasured: it stays hidden ("obscured")
+    # until a keypress forces a redraw, and that redraw does a carriage-return
+    # reprint that erases whatever was printed on the line above. Keeping the
+    # editable line free of escapes confines readline's redraw to its own line.
+    print(f"  {C.YELLOW}{question} [{hint}]:{C.RESET}")
     try:
-        answer = input(
-            f"  {C.YELLOW}{question} [{hint}]: {C.RESET}",
-        ).strip().lower()
+        answer = input("  > ").strip().lower()
     except (EOFError, KeyboardInterrupt):
         print()
         return default
