@@ -37,12 +37,20 @@ cspell:disable
 ### Fixed
 
 - **Column choices now stick across reloads** — the Columns toggles (line numbers, timestamp, session elapsed, tag) reset to their defaults every time the log viewer reloaded. They now persist to view-local webview state, so your column layout survives a reload or VS Code restart. ([viewer-deco-settings.ts](src/ui/viewer-decorations/viewer-deco-settings.ts))
+- **Hidden lines after a stack trace no longer vanish without a trace** — device-tier lines default to "warnings & errors only", so an info-level device line (logcat, Awesome Notifications, …) that lands right after an app stack trace was hidden — but its "▶ show hidden" chevron was attached to the trace's last frame row, which doesn't draw a gutter, so the chevron was dropped and the line disappeared with no way to reveal it. Reading the trace then looked like collapsing it had "eaten" unrelated lines. Stack-frame rows now render that reveal chevron (click to show the hidden lines), routed through the same peek control as everywhere else. ([viewer-data-helpers-render-stack.ts](src/ui/viewer/viewer-data-helpers-render-stack.ts))
 - **Stack-trace frames are clickable across the whole row** — after the member-first redesign, only the file path (floated hard-right, dimmed) was a link; the prominent member name was plain text, and in a narrow sidebar the path link clipped off-screen, so clicking a frame appeared to do nothing. Clicking anywhere on a stack frame now opens its source at the right line:col (Ctrl/Cmd+click opens beside the current editor). Clicks on the more specific targets a frame can carry — the path link itself, the async-suspension glyph — still route as before, and dragging to select frame text is not hijacked into an open. ([viewer-script-click-handlers.ts](src/ui/viewer/viewer-script-click-handlers.ts))
 - **Right-click menu submenus no longer render off-screen** — hovering a submenu like **Copy & Export** could push its flyout partly or wholly past the top or right edge of the panel, making it unusable on short or narrow layouts. Placement was driven by coarse "flip" classes toggled once from the whole menu's position and applied to every flyout uniformly, with no height cap — so a tall flyout simply ran off the screen. Each submenu flyout is now placed against the live viewport from its own trigger position (opens left or right, up or down by available room) and, when taller than the space available, caps its height and scrolls instead of clipping. ([viewer-context-menu.ts](src/ui/viewer-context-menu/viewer-context-menu.ts), [viewer-context-menu-position.ts](src/ui/viewer-context-menu/viewer-context-menu-position.ts), [viewer-styles-context-menu.ts](src/ui/viewer-styles/viewer-styles-context-menu.ts))
 
 ### Changed
 
 - **ASCII art banners shimmer twice, then settle** — the highlight sweep across grouped ASCII-art log blocks looped forever, reading as a perpetual "loading" state that competed with live log lines for attention. It now sweeps twice on arrival and goes static. ([viewer-styles-ascii-art.ts](src/ui/viewer-styles/viewer-styles-ascii-art.ts))
+
+<details>
+<summary>Maintenance</summary>
+
+- **`scripts/publish.py` prompts no longer hide their question on Windows** — every interactive prompt in the publish pipeline passed ANSI color codes inside the `input()` prompt string. On Windows the readline shim (pyreadline3) measures prompt width by raw character count and never strips the escape bytes, so the question stayed hidden until a keypress (Escape) forced a redraw — and that redraw's carriage-return reprint erased the context line printed just above it. All four prompts (`ask_yn`, the test-failure choice, the store choice, the version bump) now read with a plain-ASCII input line and print their colored question/options on their own line above it, confining readline's redraw to the editable line. ([display.py](scripts/modules/publish/display.py), [orchestrator.py](scripts/modules/publish/orchestrator.py), [version.py](scripts/modules/publish/version.py))
+
+</details>
 
 ---
 
