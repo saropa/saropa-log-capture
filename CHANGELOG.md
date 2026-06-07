@@ -27,7 +27,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [7.17.4]
+
+Each signal in the Signals panel now has a Copy button that puts a paste-ready block on the clipboard, summary signals like "Drift Advisor issues" are clickable to open their detail, your Columns choices stick across reloads, info lines hidden after a stack trace can be revealed again, you can click anywhere on a stack frame to open its source, and right-click submenus stop running off the edge of the panel. [log](https://github.com/saropa/saropa-log-capture/blob/v7.17.4/CHANGELOG.md)
 
 ### Added
 
@@ -49,12 +51,15 @@ cspell:disable
 <summary>Maintenance</summary>
 
 - **`scripts/publish.py` interactive prompts no longer corrupt on Windows** — the publish pipeline imported `pyreadline3` (a Windows readline shim) so the version prompt could pre-fill the current version. But merely importing it routes every `input()` through it, and in the VS Code integrated terminal it cannot track the cursor — it mispositioned onto the line above and rendered the cursor mid-word (`Proceed with publish?` → `Pr_ceed`), hiding or garbling every prompt. The shim is now removed entirely; prompts use native `input()`, which writes straight to the terminal so ANSI color and the cursor render correctly. Trade-off: the version-bump prompt no longer pre-fills the current version for in-place editing — it is shown in the prompt and Enter accepts it. ([publish.py](scripts/publish.py), [display.py](scripts/modules/publish/display.py), [orchestrator.py](scripts/modules/publish/orchestrator.py), [version.py](scripts/modules/publish/version.py))
+- **`scripts/publish.py` no longer re-offers an already-published version (no-op republish)** — when `package.json` sat at the latest released version (e.g. `7.17.3`) and the CHANGELOG carried a plain `## [Unreleased]` section of new work, the version step suggested that same already-live `7.17.3` instead of bumping. The republish chain then collapsed silently: `package.json` stayed put, the existing `v7.17.3` git tag made the run treat it as a re-publish so `## [Unreleased]` was never stamped, the stores already had `7.17.3` so the propagation check passed instantly, and the success banner printed "v7.17.3 is live!" — yet the new commits never shipped. The suggestion now bumps the patch (`7.17.4`) whenever a plain `## [Unreleased]` section accompanies a `package.json` that is not ahead of the latest released heading; a pinned `## [x.y.z] - Unreleased` heading still wins as the explicit author intent. ([version.py](scripts/modules/publish/version.py))
 
 </details>
 
 ---
 
 ## [7.17.3]
+
+Big log files no longer freeze VS Code or peg the CPU while the session list counts up its error and warning badges. [log](https://github.com/saropa/saropa-log-capture/blob/v7.17.3/CHANGELOG.md)
 
 ### Fixed
 
@@ -74,6 +79,8 @@ cspell:disable
 
 ## [7.17.2]
 
+Tag a log line with a bracket like `[db]` or `[perf:cold start]` and it's routed to that severity level, three more database engines are recognized automatically, and Ctrl+C now copies the selected lines as structured JSON by default. [log](https://github.com/saropa/saropa-log-capture/blob/v7.17.2/CHANGELOG.md)
+
 ### Added
 
 - **Log viewer: recognized severity tags from app logs** — prefix a log line with a bracket tag (`[db] bulkPreload wrote 185 rows`, `[perf:cold start] first frame 1840ms`, `[todo:DRIFT-412] backfill`) and the line is routed to that severity level so the existing filter dots group it — including your app's own database-adjacent lines the content heuristic can't detect on its own. Format is `[TAG]` or `[TAG:metadata]`: the tag name is everything before the first colon, the metadata after it stays visible inline. An explicit tag beats keyword guesses (`[db] … failed` stays database), but a real error still wins (`[db] Error: …` stays error). The full vocabulary is published in the README under **Log Tag Vocabulary**; unlisted bracket tags still work as free-form source-tag chips. ([tag-level-dictionary.ts](src/modules/analysis/tag-level-dictionary.ts), [level-classifier.ts](src/modules/analysis/level-classifier.ts), [viewer-level-classify.ts](src/ui/viewer-search-filter/viewer-level-classify.ts))
@@ -92,6 +99,8 @@ cspell:disable
 
 ## [7.17.1]
 
+The Logs panel now folds report captures (lint reports, audits) into a collapsible Reports row under each day and shows a banner when newer logs arrive, a dead Crashlytics endpoint no longer leaves the device/OS pane silently empty, and recycled viewer rows no longer ghost faint text from the line that used to sit there. [log](https://github.com/saropa/saropa-log-capture/blob/v7.17.1/CHANGELOG.md)
+
 ### Added
 
 - **Logs panel: per-day Reports bucket + newer-log alert** — completes plan [001](plans/history/2026.06/2026.06.02/001_plan-newer-alert-and-reports-grouping.md) by wiring the previously-parked classifier + dormant UI modules into the panel. Each day now renders debug-session captures inline and folds auxiliary captures (Saropa Lint Report, Json Bundle Audit/Translate, Audit Matrix) into a collapsible `Reports (N)` row that respects the new `reportsBucketDefault` setting and a per-day expansion override. A sticky banner above the day list announces logs newer than the panel's last dismiss cursor, with Open / Dismiss buttons; a small blue dot appears on each affected row (gated separately so users can keep one signal without the other). Settings: `reportsKindPatterns`, `reportsBucketDefault`, `newerLogBanner`, `newerLogDot`. Dismiss state persists per workspace and seeds to activation time on first install so pre-existing logs don't carpet-bomb the banner.
@@ -105,7 +114,7 @@ cspell:disable
 
 ## [7.17.0]
 
-The footer-filename "Log file" modal now shows the filename, gives a toast when a copy succeeds, and adds Copy filename, Copy relative path, Open beside, Reveal in Explorer view, and Open folder in terminal. Captures with a SAROPA LOG CAPTURE header now show an (i) icon next to the filename — click it to open a structured view of every line in that header.
+The footer-filename "Log file" modal now shows the filename, gives a toast when a copy succeeds, and adds Copy filename, Copy relative path, Open beside, Reveal in Explorer view, and Open folder in terminal. Captures with a SAROPA LOG CAPTURE header now show an (i) icon next to the filename — click it to open a structured view of every line in that header. [log](https://github.com/saropa/saropa-log-capture/blob/v7.17.0/CHANGELOG.md)
 
 ### Added
 
@@ -130,6 +139,8 @@ The footer-filename "Log file" modal now shows the filename, gives a toast when 
 
 ## [7.16.2]
 
+The Logs panel kebab menu no longer pops open by itself the first time you open the panel. [log](https://github.com/saropa/saropa-log-capture/blob/v7.16.2/CHANGELOG.md)
+
 ### Fixed
 
 - **Logs panel kebab menu no longer appears already-open when the panel is shown** — the popover's visibility was driven by `style="display:none"` plus JS toggling `element.style.display`. The 7.16.1 anchor fix exposed a latent bug where the popover rendered visible the first time the Logs panel opened, even though no code path explicitly opened it (the previous off-screen clipping bug had been hiding it). Switched to class-based visibility in [viewer-styles-session-options.ts](src/ui/viewer-styles/viewer-styles-session-options.ts): the CSS rule defaults `.session-options-menu` to `display: none` and `.session-options-menu.open` switches to `display: flex`. The toggle in [viewer-session-options-menu.ts](src/ui/viewer-panels/viewer-session-options-menu.ts) now flips the `.open` class instead of the inline style, so nothing short of adding `.open` exposes the popover.
@@ -137,6 +148,8 @@ The footer-filename "Log file" modal now shows the filename, gives a toast when 
 ---
 
 ## [7.16.1]
+
+The Logs panel kebab menu now actually opens when you click it. [log](https://github.com/saropa/saropa-log-capture/blob/v7.16.1/CHANGELOG.md)
 
 ### Fixed
 
