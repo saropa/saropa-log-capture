@@ -31,6 +31,8 @@ import { getTimingScript } from '../viewer/viewer-timing';
 import { getReplayScript } from '../viewer/viewer-replay';
 import { getDecorationsScript } from '../viewer-decorations/viewer-decorations';
 import { getDecoSettingsScript } from '../viewer-decorations/viewer-deco-settings';
+import { getColumnPrefsScript } from '../viewer-decorations/viewer-deco-column-prefs';
+import { getDecoSettingsSyncScript } from '../viewer-decorations/viewer-deco-settings-sync';
 import { getDecoSettingsListenersScript } from '../viewer-decorations/viewer-deco-settings-listeners';
 import { getQualityBadgeScript } from '../viewer-decorations/viewer-quality-badge';
 import { getLintBadgeScript } from '../viewer-decorations/viewer-lint-badge';
@@ -183,6 +185,8 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getTimingScript()) +
         scriptTag(nonce, getReplayScript()) +
         scriptTag(nonce, getDecoSettingsScript()) +
+        scriptTag(nonce, getColumnPrefsScript()) +
+        scriptTag(nonce, getDecoSettingsSyncScript()) +
         scriptTag(nonce, getDecorationsScript()) +
         scriptTag(nonce, getDecoSettingsListenersScript()) +
         scriptTag(nonce, getQualityBadgeScript()) +
