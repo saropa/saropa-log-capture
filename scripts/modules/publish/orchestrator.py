@@ -64,7 +64,9 @@ def _prompt_on_test_failure() -> str:
     print("    [S]kip tests and continue")
     print("    S[t]op pipeline")
     try:
-        raw = input(f"  Choice [t]: {C.RESET}").strip().lower()
+        # Plain ASCII prompt — no ANSI. pyreadline3 mismeasures escape codes
+        # in input() prompts and its redraw erases the option lines above.
+        raw = input("  Choice [t]: ").strip().lower()
     except (EOFError, KeyboardInterrupt):
         print()
         return "stop"
@@ -223,7 +225,9 @@ def ask_publish_stores() -> str:
     print("    2 = Open VSX only (Cursor / VSCodium)")
     print("    3 = both")
     try:
-        raw = input(f"  Choice [3]: {C.RESET}").strip() or "3"
+        # Plain ASCII prompt — no ANSI. pyreadline3 mismeasures escape codes
+        # in input() prompts and its redraw erases the option lines above.
+        raw = input("  Choice [3]: ").strip() or "3"
     except (EOFError, KeyboardInterrupt):
         print()
         return "both"
