@@ -125,6 +125,7 @@ VS Code deletes your Debug Console the moment you stop debugging. Every `print`,
 ### Signals
 - **Signals panel:** Single icon-bar panel (lightbulb). Accordion sections: Collections (named groups of logs/files), All Signals (unified cross-session list sorted by severity), Frequently Modified Files, and Performance (current, trends, database, errors).
 - **Signal reports:** Evidence-backed reports for each detected signal with confidence labels, line links, and action buttons.
+- **Copy a signal:** Each signal row has a 📋 Copy action that puts a paste-ready markdown block on the clipboard — the signal's metadata, raw example, and full supporting log lines — ready to drop into an analysis engine.
 - **Database signals:** N+1 detection, slow query burst markers, baseline volume hints, and session SQL comparison — each independently togglable.
 
 ### Display & Layout
