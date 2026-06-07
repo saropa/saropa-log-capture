@@ -64,8 +64,9 @@ def _prompt_on_test_failure() -> str:
     print("    [S]kip tests and continue")
     print("    S[t]op pipeline")
     try:
-        # Plain ASCII prompt — no ANSI. pyreadline3 mismeasures escape codes
-        # in input() prompts and its redraw erases the option lines above.
+        # The colored options print on their own lines above; this prompt is a
+        # plain ASCII choice marker. Native input() (no readline — see the
+        # bootstrap note in scripts/publish.py) keeps it on its own line.
         raw = input("  Choice [t]: ").strip().lower()
     except (EOFError, KeyboardInterrupt):
         print()
@@ -225,8 +226,9 @@ def ask_publish_stores() -> str:
     print("    2 = Open VSX only (Cursor / VSCodium)")
     print("    3 = both")
     try:
-        # Plain ASCII prompt — no ANSI. pyreadline3 mismeasures escape codes
-        # in input() prompts and its redraw erases the option lines above.
+        # The colored options print on their own lines above; this prompt is a
+        # plain ASCII choice marker. Native input() (no readline — see the
+        # bootstrap note in scripts/publish.py) keeps it on its own line.
         raw = input("  Choice [3]: ").strip() or "3"
     except (EOFError, KeyboardInterrupt):
         print()
