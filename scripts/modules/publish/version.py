@@ -246,7 +246,14 @@ def _prompt_version(suggested: str, min_version: str) -> str | None:
     if not sys.stdin.isatty():
         return suggested
 
-    prompt = f"  {C.YELLOW}Version{C.RESET} (Enter = {C.WHITE}{suggested}{C.RESET}): "
+    # Print the colored question on its own line; the input() prompt stays
+    # plain ASCII. pyreadline3 (Windows readline shim) measures prompt width
+    # by raw character count and does not strip ANSI escapes, so a colored
+    # input() prompt is hidden until a keypress and its redraw erases the line
+    # above. The suggested version is pre-filled into the editable buffer below
+    # via the readline startup hook, so the user can edit it in place.
+    print(f"  {C.YELLOW}Version{C.RESET} (Enter = {C.WHITE}{suggested}{C.RESET}):")
+    prompt = "  > "
     rl = _load_readline_module()
     if rl is not None:
         def prefill():
