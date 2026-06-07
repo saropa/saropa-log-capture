@@ -16,7 +16,11 @@ suite('Stack-frame whole-row click-to-open', () => {
     test('routes a .stack-line frame click to the embedded source-link', () => {
         const i = script.indexOf(".closest('.stack-line')");
         assert.ok(i >= 0, 'frame-row branch should target .stack-line');
-        const branch = script.slice(i, i + 900);
+        // Window spans the whole frame branch (it ends ~1287 chars in, where
+        // the .stack-header branch begins) without bleeding into the next
+        // branch. The deco-counter-row guard comment pushed linkClicked past a
+        // tighter 900-char window, so size to the branch, not a round number.
+        const branch = script.slice(i, i + 1200);
         assert.ok(branch.includes(".querySelector('.source-link')"), 'finds the frame source-link');
         assert.ok(branch.includes("type: 'linkClicked'"), 'posts a linkClicked message');
         assert.ok(branch.includes('splitEditor'), 'honors Ctrl/Cmd split-editor');
@@ -24,7 +28,7 @@ suite('Stack-frame whole-row click-to-open', () => {
 
     test('guards the frame click on a collapsed text selection', () => {
         const i = script.indexOf(".closest('.stack-line')");
-        const branch = script.slice(i, i + 900);
+        const branch = script.slice(i, i + 1200);
         assert.ok(branch.includes('getSelection'), 'reads the current selection');
         assert.ok(branch.includes('isCollapsed'), 'only opens when nothing is selected');
     });
