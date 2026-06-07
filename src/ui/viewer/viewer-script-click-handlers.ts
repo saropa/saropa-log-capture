@@ -142,6 +142,35 @@ if (viewportEl) viewportEl.addEventListener('click', function(e) {
         asyncGlyph.classList.toggle('expanded');
         return;
     }
+    /* Whole stack-FRAME row opens its source. The member-first render
+       (formatFrameMemberFirst) leaves the member as plain text and floats the
+       path link (.frame-lib-src) hard right at opacity 0.6, where a narrow
+       sidebar clips it off-screen — so clicking the obvious member name did
+       nothing and the trace read as "not clickable / useless" (user report
+       2026-06-07). Clicking anywhere on the frame (after the more specific
+       branches above: source-link, async-gap glyph, meta tags) now routes to
+       the frame's own embedded .source-link. Guarded on a collapsed selection
+       so drag-to-select frame text is never hijacked into an open-file. Headers
+       (.stack-header, handled below) keep whole-row toggle; their path link
+       still opens via the .source-link branch above. */
+    var frameRow = e.target.closest('.stack-line');
+    if (frameRow) {
+        var _fsel = (typeof window !== 'undefined' && window.getSelection) ? window.getSelection() : null;
+        if (!_fsel || _fsel.isCollapsed) {
+            var frameLink = frameRow.querySelector('.source-link');
+            if (frameLink) {
+                e.preventDefault();
+                vscodeApi.postMessage({
+                    type: 'linkClicked',
+                    path: frameLink.dataset.path || '',
+                    line: parseInt(frameLink.dataset.line || '1'),
+                    col: parseInt(frameLink.dataset.col || '1'),
+                    splitEditor: e.ctrlKey || e.metaKey,
+                });
+                return;
+            }
+        }
+    }
     var header = e.target.closest('.stack-header');
     if (header && header.dataset.gid !== undefined) {
         /* If the click landed on the .deco-counter-row (line number + chevron)
