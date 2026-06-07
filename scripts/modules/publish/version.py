@@ -212,63 +212,26 @@ def _stamp_changelog(version: str) -> bool:
     return True
 
 
-def _load_readline_module():
-    """Try to import `readline` (or `pyreadline3` on Windows)."""
-    try:
-        import readline as rl
-
-        return rl
-    except ImportError:
-        if sys.platform != "win32":
-            return None
-        try:
-            import pyreadline3 as rl  # type: ignore[no-redef]
-
-            return rl
-        except ImportError:
-            return None
-
-
-def _clear_readline_startup_hook(rl) -> None:
-    """Clear startup hook; readline implementations may throw."""
-    try:
-        rl.set_startup_hook()
-    except Exception:
-        pass
-
-
 def _prompt_version(suggested: str, min_version: str) -> str | None:
     """Prompt user to accept suggested version or enter custom.
 
-    Prompt shows default; empty Enter accepts it. Readline pre-fills when available.
+    The suggested version is shown in the prompt; an empty Enter accepts it.
     The chosen version must be >= min_version.
     """
     if not sys.stdin.isatty():
         return suggested
 
-    # Print the colored question on its own line; the input() prompt stays
-    # plain ASCII. pyreadline3 (Windows readline shim) measures prompt width
-    # by raw character count and does not strip ANSI escapes, so a colored
-    # input() prompt is hidden until a keypress and its redraw erases the line
-    # above. The suggested version is pre-filled into the editable buffer below
-    # via the readline startup hook, so the user can edit it in place.
-    print(f"  {C.YELLOW}Version{C.RESET} (Enter = {C.WHITE}{suggested}{C.RESET}):")
-    prompt = "  > "
-    rl = _load_readline_module()
-    if rl is not None:
-        def prefill():
-            rl.insert_text(suggested)
-            rl.redisplay()
-        rl.set_startup_hook(prefill)
-
+    # Single-line colored prompt handed straight to native input(). We do NOT
+    # use readline/pyreadline3: importing it corrupts every prompt in the VS
+    # Code terminal (see the bootstrap note in scripts/publish.py). Dropping it
+    # removes the in-place pre-fill, so the suggested version is shown in the
+    # prompt text and a bare Enter accepts it; the user types a different value.
+    prompt = f"  {C.YELLOW}Version{C.RESET} (Enter = {C.WHITE}{suggested}{C.RESET}): "
     try:
         answer = input(prompt).strip()
     except (EOFError, KeyboardInterrupt):
         print()
         return None
-    finally:
-        if rl is not None:
-            _clear_readline_startup_hook(rl)
 
     if not answer:
         return suggested

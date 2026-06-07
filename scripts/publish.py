@@ -83,30 +83,16 @@ except ImportError:
         capture_output=True,
     )
 
-# Python's readline module enables input() pre-fill and history editing.
-# On Windows, the stdlib readline doesn't exist — pyreadline3 provides
-# a drop-in replacement so the version-bump prompt can pre-populate the
-# current version for the user to edit in-place.
-if sys.platform == "win32":
-    try:
-        import readline  # noqa: F401
-    except ImportError:
-        try:
-            import pyreadline3  # noqa: F401
-        except ImportError:
-            subprocess.run(
-                [sys.executable, "-m", "pip", "install", "pyreadline3", "-q"],
-                check=False,
-                capture_output=True,
-            )
-            try:
-                # Re-import after install so readline is available for
-                # this session without requiring a script restart.
-                import pyreadline3  # noqa: F401
-            except ImportError:
-                # Non-fatal: the version prompt will still work, it just
-                # won't pre-fill the current version for editing.
-                pass
+# Deliberately NOT importing readline / pyreadline3. The pyreadline3 shim is
+# the only "readline" available on Windows, and merely importing it makes
+# Python's input() route through it for EVERY prompt. In the VS Code integrated
+# terminal pyreadline3 cannot track the cursor: it mismeasures prompt width and
+# repositions onto the line above, so the question is hidden or overwritten and
+# the cursor lands mid-word in a printed line (corrupting "Proceed with
+# publish?" → "Pr_ceed"). Native input() writes the prompt straight to the
+# terminal, which renders ANSI color and tracks the cursor correctly.
+# Trade-off: the version-bump prompt no longer pre-fills the current version for
+# in-place editing — it is shown in the prompt instead and Enter accepts it.
 
 # Force UTF-8 stdout so non-ASCII output never crashes the pipeline on a legacy
 # cp1252 Windows console. Step 9 now prints the l10n manual-translation gap list
