@@ -154,7 +154,13 @@ if (viewportEl) viewportEl.addEventListener('click', function(e) {
        (.stack-header, handled below) keep whole-row toggle; their path link
        still opens via the .source-link branch above. */
     var frameRow = e.target.closest('.stack-line');
-    if (frameRow) {
+    if (frameRow && !e.target.closest('.deco-counter-row[data-affordance-kind]')) {
+        /* The .deco-counter-row guard mirrors the .stack-header branch below: a
+           frame can now carry a reveal chevron for a hidden gap beneath it
+           (getDecorationPrefix), handled by the separate peek listener
+           (viewer-peek-chevron.ts) on the SAME viewport element. stopPropagation
+           there does not stop this sibling listener, so without this guard a
+           chevron click would BOTH peek the gap AND open the frame's source. */
         var _fsel = (typeof window !== 'undefined' && window.getSelection) ? window.getSelection() : null;
         if (!_fsel || _fsel.isCollapsed) {
             var frameLink = frameRow.querySelector('.source-link');
