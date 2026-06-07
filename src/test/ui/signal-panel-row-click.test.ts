@@ -134,3 +134,44 @@ suite('Signal panel per-signal copy', () => {
         assert.doesNotThrow(() => new Function(getSignalScriptPartD()), 'part D must parse as JS');
     });
 });
+
+/**
+ * Pins the "click to see detail" affordance for summary signals (e.g. the Drift Advisor issues
+ * classified signal) that carry a detail string but no lineIndices. Before this, a non-jumpable
+ * in-log row had no click behavior and its detail was never shown — clicking did nothing. Such
+ * rows now toggle an inline detail body; jump-to-line rows are unaffected.
+ */
+suite('Signal panel summary-signal detail toggle', () => {
+
+    test('non-jumpable in-log rows with a detail become detail-toggle rows', () => {
+        const script = getSignalScriptPartB(90);
+        /* A row is jumpable only when it has lineIndices; otherwise a detail makes it a toggle row.
+           This branch is the gate that fixed the dead-click on "Drift Advisor issues". */
+        assert.ok(
+            script.includes("jumpable ? ' signal-jumpable' : (hasDetail ? ' signal-detail-toggle' : '')"),
+            'in-log row class must fall back to signal-detail-toggle when it has a detail but no line',
+        );
+        assert.ok(
+            script.includes("'<div class=\"signal-detail-body\" hidden>'"),
+            'a hidden inline detail body must be emitted for non-jumpable detail rows',
+        );
+        assert.ok(
+            script.includes("' — click to see detail'"),
+            'the row title must advertise the click-to-see-detail affordance',
+        );
+    });
+
+    test('in-log click handler toggles the detail body and intercepts copy first', () => {
+        const script = getSignalScriptPartD();
+        /* Copy must be checked before the jump/toggle branches so the button never also toggles. */
+        const copyIdx = script.indexOf("copySignalFromButton(copyBtn, signalDataCache.signalsInThisLog)");
+        const toggleIdx = script.indexOf("e.target.closest('.signal-detail-toggle')");
+        assert.ok(copyIdx !== -1, 'in-log handler must handle the copy button');
+        assert.ok(toggleIdx !== -1, 'in-log handler must handle detail-toggle rows');
+        assert.ok(copyIdx < toggleIdx, 'copy interception must come before the detail-toggle branch');
+        assert.ok(
+            script.includes('body.hidden = !body.hidden') && script.includes("classList.toggle('signal-detail-open'"),
+            'clicking a detail-toggle row flips the body hidden state and the open class',
+        );
+    });
+});
