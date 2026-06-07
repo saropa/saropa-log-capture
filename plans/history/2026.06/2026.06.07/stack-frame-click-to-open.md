@@ -49,3 +49,61 @@ This finish pass ships **complaint #3 only** (stack-frame clickability), the one
 - `src/test/ui/viewer-stack-frame-click.test.ts` (new test)
 - `CHANGELOG.md` (Unreleased → Fixed entry)
 - `plans/history/2026.06/2026.06.07/stack-frame-click-to-open.md` (this report)
+
+## Follow-up — #1/#2 root cause FOUND and fixed (2026-06-07, same day)
+
+The user challenged "did you really find the issues?" — correctly. The first pass
+declared #1/#2 "filter-state dependent, grouping correct" because the standalone
+reproduction ran with the WRONG filter defaults (`showDevice='all'`). Re-running
+with the REAL defaults found the actual bug.
+
+### Root cause (reproduced in the DEFAULT out-of-the-box state, no manual filter)
+- `viewer-stack-tags/viewer-stack-filter.ts:20` defaults `showDevice='warnplus'`
+  (and `showExternal='warnplus'`). So info-level **device-other** lines are hidden
+  by default — including the "Awesome Notifications" / logcat rows interleaved in
+  the app log flow.
+- When such a hidden line falls immediately AFTER an app stack trace,
+  `computeRowAffordances` stamps the reveal `_hiddenAfter` on the trace's LAST
+  **stack-frame** row. But `renderStackFrame`/`getDecorationPrefix` rendered NO
+  decoration prefix for stack-frame rows (column alignment), so the `▶` reveal
+  chevron was computed and thrown away. The hidden line vanished with no control
+  to surface it, and reading the trace looked like the collapse had "eaten"
+  unrelated lines (= complaint #1). The lost reveal also reads as confusing
+  structure around the trace (= complaint #2).
+- Verified deterministically: feeding the real log slice with real tier
+  classification + DB signals on + `showDevice='warnplus'`, the 3 Awesome
+  Notification rows were `height=0` and the gap was hosted on a stack-frame whose
+  chevron never rendered.
+
+### Fix
+`src/ui/viewer/viewer-data-helpers-render-stack.ts` — `renderStackFrame` now
+derives its own gutter: when the frame carries `_hiddenAfter` (a hidden gap below
+it), it renders the affordance chevron ONLY (empty counter — frames have no line
+number) wrapped in `.line-decoration`, and drops `line-deco-spacer-only` so the
+column doesn't double-indent. The chevron carries `data-affordance-kind="gap"` +
+`data-hidden-from/to`, routing through the existing `handleCounterRowClick` →
+`peekChevron(from,to,'filter')` peek control. No change to grouping/continuation
+logic, `getDecorationPrefix`, or `computeRowAffordances`. Kept the logic in
+render-stack.ts (had headroom) rather than growing `getDecorationPrefix` /
+`renderItem`, which would have tripped the 300-line `max-lines` gate.
+
+### Test
+`src/test/ui/viewer-stack-frame-hidden-gap.test.ts` (Mocha) — 2 cases: (1) the
+last frame before a warnplus-hidden device line renders the gap chevron with the
+hidden range and drops the spacer; (2) a frame with nothing hidden after it
+renders no chevron and keeps the spacer. Both validated here via shimmed
+suite/test globals (Mocha runs in CI). Gates: check-types clean, eslint clean
+(no max-lines warnings), `npm run compile` green.
+
+### Still genuinely open
+- Whether the user ALSO sees this with `showDevice='all'` (device lines visible).
+  In that state the device lines are NOT hidden and the collapse cannot affect
+  them — if the user still sees hiding there, that is a different bug and needs
+  their exact filter state. Needs on-device confirmation (F5).
+- The deeper UX question of whether interleaved device-info lines SHOULD be
+  warnplus-hidden by default mid-app-flow is a product decision, not changed here.
+
+### Additional files changed (this follow-up)
+- `src/ui/viewer/viewer-data-helpers-render-stack.ts` (fix)
+- `src/test/ui/viewer-stack-frame-hidden-gap.test.ts` (new test)
+- `CHANGELOG.md` (second Unreleased → Fixed entry)
