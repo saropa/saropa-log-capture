@@ -69,6 +69,25 @@ def _get_changelog_max_version() -> str | None:
     return max(versions, key=_parse_semver)
 
 
+def _get_versioned_unreleased_version() -> str | None:
+    """Return the version in '## [x.y.z] - Unreleased', or None if absent.
+
+    A developer can pin the next release number by writing the heading with a
+    '- Unreleased' suffix. When present we honor that exact number rather than
+    guessing a bump — it is the author's explicit intent.
+    """
+    changelog_path = _resolve_changelog_path()
+    try:
+        with open(changelog_path, encoding="utf-8") as f:
+            for line in f:
+                m = _VERSIONED_UNRELEASED_RE.match(line)
+                if m:
+                    return m.group(1)
+    except OSError:
+        pass
+    return None
+
+
 def _changelog_has_unpublished_heading() -> bool:
     """True if CHANGELOG has ## [Unreleased], [Unpublished], [Undefined], or ## [x.y.z] - Unreleased."""
     changelog_path = _resolve_changelog_path()
@@ -250,11 +269,34 @@ def _prompt_version(suggested: str, min_version: str) -> str | None:
     return answer
 
 
-def _suggest_version(pkg_version: str, max_cl: str | None) -> str:
-    """Pick the version we should start from."""
+def _suggest_version(
+    pkg_version: str,
+    max_cl: str | None,
+    pinned_unreleased: str | None,
+    has_plain_unreleased: bool,
+) -> str:
+    """Pick the version to suggest as the next release.
+
+    Order of authority:
+    1. '## [x.y.z] - Unreleased' pins the next number explicitly -> use it.
+    2. CHANGELOG released heading ahead of package.json -> the dev already wrote
+       the number, use it as-is (don't bump it again).
+    3. Plain '## [Unreleased]' work sitting on top of the latest release, with
+       package.json NOT ahead of any released heading -> re-offering the package
+       version would suggest an ALREADY-PUBLISHED number. That republishes
+       nothing, leaves [Unreleased] unstamped, and the new commits never ship
+       while the banner still prints "live!" (the 7.17.3 no-op republish,
+       2026-06-07). Bump the patch off the highest released version instead.
+    4. Otherwise package.json already holds the intended next release.
+    """
+    if pinned_unreleased:
+        return pinned_unreleased
     if max_cl and _parse_semver(pkg_version) < _parse_semver(max_cl):
-        # CHANGELOG ahead of package: assume dev wants the changelog version, don't bump again
         return max_cl
+    # pkg_version >= max_cl here (case 2 returned early). Equal + pending
+    # unreleased work means the working version is the last-published one.
+    if has_plain_unreleased and max_cl and _parse_semver(pkg_version) <= _parse_semver(max_cl):
+        return _bump_patch(max_cl)
     return pkg_version
 
 
@@ -318,8 +360,15 @@ def validate_version_changelog() -> tuple[str, bool]:
     max_cl = _get_changelog_max_version()
     min_version = max_cl if max_cl else "0.0.0"
 
+    # A pinned '## [x.y.z] - Unreleased' wins; a plain '## [Unreleased]' only
+    # signals that pending work needs a fresh number (the bump case).
+    pinned_unreleased = _get_versioned_unreleased_version()
+    has_plain_unreleased = has_unreleased_section() and pinned_unreleased is None
+
     info(f"package.json v{pkg_version}, CHANGELOG max v{max_cl}")
-    suggested = _suggest_version(pkg_version, max_cl)
+    suggested = _suggest_version(
+        pkg_version, max_cl, pinned_unreleased, has_plain_unreleased
+    )
 
     version, ok_to_continue = _resolve_version(suggested, min_version, pkg_version)
     if not ok_to_continue:
