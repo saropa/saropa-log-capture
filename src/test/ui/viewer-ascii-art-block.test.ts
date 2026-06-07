@@ -199,6 +199,24 @@ suite('ASCII art block grouping', () => {
         });
     });
 
+    suite('shimmer settles (finite, not perpetual)', () => {
+        // Before: the shimmer swept on an `infinite` loop, so every art block
+        // animated forever and read as a perpetual "loading" state competing
+        // with live log lines. After: it sweeps exactly twice on arrival and
+        // holds the final (off-screen) keyframe via `forwards`, then goes static.
+        test('CSS runs the shimmer twice with forwards fill, never infinite', () => {
+            const css = getAsciiArtStyles();
+            assert.ok(
+                css.includes('animation: art-block-shimmer 4s ease-in-out 2 forwards;'),
+                'shimmer must run a finite 2 iterations and hold the final frame',
+            );
+            assert.ok(
+                !css.includes('art-block-shimmer 4s ease-in-out infinite'),
+                'shimmer must not loop forever (perpetual loading look)',
+            );
+        });
+    });
+
     suite('generalized ASCII art detector (plan 046)', () => {
         test('should define feedAsciiArtDetector gated by viewerDetectAsciiArt', () => {
             const script = getViewerDataAddScript();

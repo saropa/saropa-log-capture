@@ -27,6 +27,14 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **ASCII art banners shimmer twice, then settle** — the highlight sweep across grouped ASCII-art log blocks looped forever, reading as a perpetual "loading" state that competed with live log lines for attention. It now sweeps twice on arrival and goes static. ([viewer-styles-ascii-art.ts](src/ui/viewer-styles/viewer-styles-ascii-art.ts))
+
+---
+
 ## [7.17.3]
 
 ### Fixed
