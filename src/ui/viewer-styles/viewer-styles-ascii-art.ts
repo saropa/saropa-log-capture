@@ -106,7 +106,12 @@ export function getAsciiArtStyles(): string {
         transparent 100%
     );
     background-size: 300% 100%;
-    animation: art-block-shimmer 4s ease-in-out infinite;
+    /* Shimmer twice on arrival, then settle — an infinite loop on every art
+       block reads as a perpetual "loading" state and competes for attention
+       with live log lines. Two sweeps announce the block, then it goes static.
+       'forwards' holds the final keyframe so the sweep ends off-screen rather
+       than snapping the gradient back to its start position. */
+    animation: art-block-shimmer 4s ease-in-out 2 forwards;
 }
 
 /* Stagger shimmer across rows for a cascading wave effect */
