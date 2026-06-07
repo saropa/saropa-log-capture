@@ -246,22 +246,19 @@ export function getSignalSectionsStyles(): string {
 /* Fu3: inline evidence preview under a signal title. Three compact lines of raw log text so the
    user can verify what the signal is pointing at without clicking through. Width is constrained
    so long lines truncate rather than push the meta column out of the row. */
-.signal-evidence-preview {
-    width: 100%;
-    margin-top: 3px;
-    padding-left: 18px;
-    font-size: 11px;
-    opacity: 0.75;
-    line-height: 1.35;
-}
-.signal-evidence-line {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: var(--vscode-descriptionForeground, var(--vscode-foreground));
-}
+.signal-evidence-preview { width: 100%; margin-top: 3px; padding-left: 18px; font-size: 11px; opacity: 0.75; line-height: 1.35; }
+.signal-evidence-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--vscode-descriptionForeground, var(--vscode-foreground)); }
 /* Force the row to wrap so the preview drops below the icon/meta cells instead of breaking flex. */
 .signal-in-log-row { flex-wrap: wrap; }
+
+/* Non-jumpable in-log signal rows that carry a detail (e.g. "Drift Advisor issues") are clickable
+   to reveal that detail inline — same pointer/hover affordance as jumpable rows so the row reads as
+   interactive even though there is no log line to scroll to. */
+.signal-detail-toggle { cursor: pointer; }
+.signal-detail-toggle:hover { background: var(--vscode-list-hoverBackground, rgba(255,255,255,0.04)); }
+/* Inline detail body, full-width so it drops below the wrapped row rather than squeezing the meta
+   column. pre-wrap keeps multi-part summaries (e.g. "1 error, 2 warnings") readable. */
+.signal-detail-body { width: 100%; margin-top: 3px; padding-left: 18px; font-size: 11px; opacity: 0.85; line-height: 1.4; white-space: pre-wrap; color: var(--vscode-descriptionForeground, var(--vscode-foreground)); }
 
 /* Fu2: scroll-lock pulse. Brief highlight on lines around the jump target so the eye lands on
    the right place. Keyframes fade in then out so the cue is clearly transient — no leftover

@@ -29,6 +29,11 @@ cspell:disable
 
 ## [Unreleased]
 
+### Added
+
+- **Copy a single signal's full details from the Signals panel** — each signal row (both "Signals in this log" and the cross-session "All signals" list) now has a **📋 Copy** action that puts a paste-ready markdown block on the clipboard: the signal's metadata (kind, severity, occurrences, durations, category, trend, fingerprint), its raw example, and the full untruncated supporting log lines. Drop one signal straight into an analysis engine without copying the whole panel. ([viewer-signal-panel-script-part-b.ts](src/ui/panels/viewer-signal-panel-script-part-b.ts), [viewer-signal-panel-script-part-d.ts](src/ui/panels/viewer-signal-panel-script-part-d.ts))
+- **Click "Drift Advisor issues" (and other summary signals) to see their detail** — signals in "Signals in this log" that aren't tied to a single log line (e.g. the Drift Advisor issues summary like "1 error, 2 warnings") had no jump target, so clicking them did nothing and their detail was never shown. These rows are now clickable to expand an inline detail body, with the same pointer/hover affordance as jump-to-line rows. The 📋 Copy action still copies the full block. ([viewer-signal-panel-script-part-b.ts](src/ui/panels/viewer-signal-panel-script-part-b.ts), [viewer-signal-panel-script-part-d.ts](src/ui/panels/viewer-signal-panel-script-part-d.ts), [viewer-styles-signal-sections.ts](src/ui/viewer-styles/viewer-styles-signal-sections.ts))
+
 ### Changed
 
 - **ASCII art banners shimmer twice, then settle** — the highlight sweep across grouped ASCII-art log blocks looped forever, reading as a perpetual "loading" state that competed with live log lines for attention. It now sweeps twice on arrival and goes static. ([viewer-styles-ascii-art.ts](src/ui/viewer-styles/viewer-styles-ascii-art.ts))
