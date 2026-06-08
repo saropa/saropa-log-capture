@@ -199,7 +199,7 @@ body[data-icon-bar="right"] #panel-slot > * {
     border-left: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
     box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
 }
-body[data-icon-bar="right"] .session-panel-resize {
+body[data-icon-bar="right"] .panel-slot-resize {
     left: -3px; right: auto;
 }
 `;

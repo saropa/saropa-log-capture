@@ -70,7 +70,7 @@ export function getSessionPanelEventsScript(): string {
         if (cachedSessions) renderSessionList(cachedSessions);
     });
 
-    initSessionPanelResize(sessionPanelEl, function(w) {
+    initPanelSlotResize(function(w) {
         if (w > 0) {
             sessionDisplayOptions.panelWidth = w;
             window.__sharedPanelWidth = w;
