@@ -1188,5 +1188,6 @@
   "New log · {0} · {1}": "Nouveau journal · {0} · {1}",
   "New logs · {0} · {1} (+{2} more)": "Nouveaux journaux · {0} · {1} (+{2} de plus)",
   "Reports ({0})": "Rapports ({0})",
-  "Unread — captured after Logs panel last had focus": "Non lu : capturé après la dernière mise au point du panneau Journaux"
+  "Unread — captured after Logs panel last had focus": "Non lu : capturé après la dernière mise au point du panneau Journaux",
+  "No SQL queries captured yet — nothing to sort.": "Aucune requête SQL capturée pour l'instant — rien à trier."
 }

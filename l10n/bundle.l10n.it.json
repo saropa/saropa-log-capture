@@ -1188,5 +1188,6 @@
   "New log · {0} · {1}": "Nuovo registro · {0} · {1}",
   "New logs · {0} · {1} (+{2} more)": "Nuovi registri · {0} · {1} (+{2} altri)",
   "Reports ({0})": "Rapporti ({0})",
-  "Unread — captured after Logs panel last had focus": "Non letto: acquisito dopo l'ultima messa a fuoco del pannello Log"
+  "Unread — captured after Logs panel last had focus": "Non letto: acquisito dopo l'ultima messa a fuoco del pannello Log",
+  "No SQL queries captured yet — nothing to sort.": "Nessuna query SQL ancora acquisita: niente da ordinare."
 }
