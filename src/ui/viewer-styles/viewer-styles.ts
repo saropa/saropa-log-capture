@@ -139,6 +139,22 @@ body[data-icon-bar=”right”] #panel-content-row {
     overflow: visible;
 }
 
+/* Drag handle to resize the shared slide-out width. Anchored to the persistent
+   #panel-slot (not inside any one panel) so EVERY slide-out is resizable from the
+   same edge — the slot is position:relative, so right:-3px lands on its right edge
+   (left:-3px under a right-side icon bar, see viewer-styles-icon-bar.ts). The slot's
+   overflow:hidden (until .open) keeps the handle hidden while no panel is open.
+   The 420px drag floor lives in the JS resize handler / MIN_PANEL_WIDTH. */
+.panel-slot-resize {
+    position: absolute; right: -3px; top: 0; bottom: 0; width: 6px;
+    cursor: col-resize; z-index: 1;
+}
+.panel-slot-resize:hover,
+.panel-slot-resize.dragging {
+    background: var(--vscode-focusBorder);
+    opacity: 0.5;
+}
+
 /* ===================================================================
    Log Content Wrapper
    Flex row containing the scrollable log area and the minimap panel.

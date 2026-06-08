@@ -24,16 +24,6 @@ export function getSessionPanelLayoutStyles(): string {
     overflow: hidden;
 }
 
-.session-panel-resize {
-    position: absolute; right: -3px; top: 0; bottom: 0; width: 6px;
-    cursor: col-resize; z-index: 1;
-}
-.session-panel-resize:hover,
-.session-panel-resize.dragging {
-    background: var(--vscode-focusBorder);
-    opacity: 0.5;
-}
-
 .session-panel.visible {
     display: flex;
 }
