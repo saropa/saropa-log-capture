@@ -45,12 +45,15 @@ suite('Session panel script runtime', () => {
         const { sandbox, messageHandlers, elements } = buildSandbox();
         bootPanel(sandbox);
 
+        /* Previews now carry mtime: the host's cheap stat pass supplies it so the
+           skeleton day-groups in the SAME structure as the final list (no flat→grouped
+           reflow). mtime is the only field grouping needs. */
         const previewMessage = {
             data: {
                 type: 'sessionListPreview',
                 previews: [
-                    { filename: 'alpha.log', uriString: 'file:///alpha.log' },
-                    { filename: 'beta.log', uriString: 'file:///beta.log' },
+                    { filename: 'alpha.log', uriString: 'file:///alpha.log', mtime: Date.now() },
+                    { filename: 'beta.log', uriString: 'file:///beta.log', mtime: Date.now() },
                 ],
             },
         };
@@ -61,8 +64,9 @@ suite('Session panel script runtime', () => {
         const listEl = elements.get('session-list');
         const html = String(listEl?.innerHTML ?? '');
         assert.ok(html.includes('session-shimmer-meta'), 'Preview items should have shimmer meta class');
-        assert.ok(html.includes('alpha.log'), 'Preview should contain first filename');
-        assert.ok(html.includes('beta.log'), 'Preview should contain second filename');
+        assert.ok(html.includes('session-day-heading'), 'Preview should render day-grouped, not flat');
+        assert.ok(html.includes('data-filename="alpha.log"'), 'Preview should contain first filename');
+        assert.ok(html.includes('data-filename="beta.log"'), 'Preview should contain second filename');
         assert.ok(html.includes('data-uri="file:///alpha.log"'), 'Preview items should have data-uri');
     });
 
@@ -101,7 +105,7 @@ suite('Session panel script runtime', () => {
             handler({
                 data: {
                     type: 'sessionListPreview',
-                    previews: [{ filename: 'alpha.log', uriString: 'file:///alpha.log' }],
+                    previews: [{ filename: 'alpha.log', uriString: 'file:///alpha.log', mtime: Date.now() }],
                 },
             });
         }
@@ -118,7 +122,7 @@ suite('Session panel script runtime', () => {
             handler({
                 data: {
                     type: 'sessionListPreview',
-                    previews: [{ filename: 'alpha.log', uriString: 'file:///alpha.log' }],
+                    previews: [{ filename: 'alpha.log', uriString: 'file:///alpha.log', mtime: Date.now() }],
                 },
             });
         }
@@ -150,7 +154,7 @@ suite('Session panel script runtime', () => {
             handler({
                 data: {
                     type: 'sessionListPreview',
-                    previews: [{ filename: 'alpha.log', uriString: 'file:///alpha.log' }],
+                    previews: [{ filename: 'alpha.log', uriString: 'file:///alpha.log', mtime: Date.now() }],
                 },
             });
         }

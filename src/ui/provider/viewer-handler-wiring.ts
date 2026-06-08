@@ -12,6 +12,7 @@ import { getInteractionTracker } from "../../modules/learning/learning-runtime";
 import type { SessionManagerImpl } from "../../modules/session/session-manager";
 import type { SessionHistoryProvider } from "../session/session-history-provider";
 import type { SessionMetadata, TreeItem } from "../session/session-history-grouping";
+import type { SessionPreviewRecord } from "../session/session-history-metadata";
 import type { ViewerBroadcaster } from "./viewer-broadcaster";
 import { getLogDirectoryUri } from "../../modules/config/config";
 import { showSearchQuickPick } from "../../modules/search/log-search-ui";
@@ -217,13 +218,15 @@ function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void
     broadcaster.sendSessionList(records, { label: rootLabel, path: rootLabel, isDefault: !overrideUriStr });
   };
 
-  /** Streaming refresh: sends items to webview progressively as metadata loads. */
+  /** Streaming refresh: paints a day-grouped skeleton from the cheap stat pass, then
+   *  hydrates each row as its (slow, whole-file) metadata loads. The FINAL list is always
+   *  the grouped payload built from the coalesced items — identical to the cache/poll path —
+   *  so the panel never reflows between a flat and a grouped structure. */
   const refreshSessionListStreaming = async (): Promise<void> => {
     const overrideUriStr = deps.context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
     const overrideUri = overrideUriStr ? vscode.Uri.parse(overrideUriStr) : undefined;
     const activeStr = historyProvider.getActiveUri()?.toString();
     const opts = makePayloadOptions(deps);
-    const allRecords: Record<string, unknown>[] = [];
     /* Serialize UI updates: 8 workers load files in parallel, but only one
      * posts to the webview at a time. Each post is followed by a macrotask
      * yield (setTimeout) so the webview can render before the next update.
@@ -233,7 +236,6 @@ function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void
     const onItemLoaded = async (item: SessionMetadata): Promise<void> => {
       try {
         const rec = await buildSessionItemRecord(item, activeStr, opts);
-        allRecords.push(rec);
         sendChain = sendChain.then(() => {
           broadcaster.postToWebview({ type: 'sessionListBatch', items: [rec] });
           return new Promise<void>(r => setTimeout(r, 0));
@@ -241,22 +243,18 @@ function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void
         await sendChain;
       } catch { /* non-critical — row keeps its shimmer */ }
     };
-    const onFilesFound = (files: readonly string[], logDir: vscode.Uri): void => {
-      const previews = files.map(f => ({
-        filename: f,
-        uriString: vscode.Uri.joinPath(logDir, f).toString(),
-      }));
-      broadcaster.postToWebview({ type: 'sessionListPreview', previews });
+    /* mtime is all the webview needs to day-group, so the skeleton can paint before any
+       file body is read. uriString must match the per-file batch record's so hydration
+       patches the right row. */
+    const onItemPreview = (previews: readonly SessionPreviewRecord[]): void => {
+      broadcaster.postToWebview({
+        type: 'sessionListPreview',
+        previews: previews.map(p => ({ filename: p.filename, uriString: p.uri.toString(), mtime: p.mtime })),
+      });
     };
-    const items = await historyProvider.getAllChildrenStreaming(onItemLoaded, overrideUri, onFilesFound);
-    // When cache was hit, callbacks never fired — build payload from returned items.
-    if (allRecords.length === 0 && items.length > 0) {
-      const payload = await buildSessionListPayload(items, historyProvider.getActiveUri(), opts);
-      sendFinalList(payload);
-      kickDeferredSeverityScan(items, activeStr, opts);
-      return;
-    }
-    sendFinalList(allRecords);
+    const items = await historyProvider.getAllChildrenStreaming(onItemLoaded, overrideUri, onItemPreview);
+    const payload = await buildSessionListPayload(items, historyProvider.getActiveUri(), opts);
+    sendFinalList(payload);
     kickDeferredSeverityScan(items, activeStr, opts);
   };
 
