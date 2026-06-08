@@ -27,7 +27,7 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [7.17.5]
 
 The highlight sweep across grouped ASCII-art log blocks now plays just once on arrival instead of twice. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
 

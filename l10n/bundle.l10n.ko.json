@@ -1188,5 +1188,6 @@
   "New log · {0} · {1}": "새 로그 · {0} · {1}",
   "New logs · {0} · {1} (+{2} more)": "새 로그 · {0} · {1}(+{2}개 이상)",
   "Reports ({0})": "보고서({0})",
-  "Unread — captured after Logs panel last had focus": "읽지 않음 - 로그 패널에 마지막으로 초점이 맞춰진 후에 캡처됨"
+  "Unread — captured after Logs panel last had focus": "읽지 않음 - 로그 패널에 마지막으로 초점이 맞춰진 후에 캡처됨",
+  "No SQL queries captured yet — nothing to sort.": "아직 캡처된 SQL 쿼리가 없습니다. 정렬할 항목이 없습니다."
 }
