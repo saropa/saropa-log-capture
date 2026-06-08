@@ -9,7 +9,16 @@ export function signalsCommands(deps: CommandDeps): vscode.Disposable[] {
     return [
         vscode.commands.registerCommand(
             'saropaLogCapture.showSignals',
-            () => {
+            async () => {
+                // The Log Viewer is a webview *view* (sidebar/panel), not an editor tab. It is
+                // normally closed right after a capture finishes — exactly when the recurring-signal
+                // toast's "Open Signals" button fires this. Focus creates/reveals the view, but the
+                // WebviewView resolves asynchronously, so posting immediately would hit an empty view
+                // set and be silently dropped (the dead-button bug). Wait (≤1s) for a view to resolve.
+                await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
+                for (let i = 0; i < 20 && !deps.viewerProvider.getView(); i++) {
+                    await new Promise<void>((resolve) => setTimeout(resolve, 50));
+                }
                 deps.viewerProvider.postMessage({ type: 'openSignalPanel', tab: 'recurring' });
             },
         ),
