@@ -143,6 +143,14 @@ export function getSqlQueryHistoryPanelStyles(): string {
     outline-offset: -2px;
 }
 
+/* No captured queries: headers are inert. Dim them and drop the pointer cursor so they don't
+   look clickable; the JS handler also returns early on aria-disabled. */
+.sql-qh-header-disabled {
+    opacity: 0.4;
+    cursor: default;
+    pointer-events: none;
+}
+
 /* Order: Count | SQL | Slow — fixed-width numeric columns; SQL column takes remaining space. */
 .sql-qh-header-count,
 .sql-qh-cell-count {
