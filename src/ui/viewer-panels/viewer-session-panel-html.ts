@@ -27,7 +27,6 @@ function renderOptionToggle(buttonId: string, codicon: string, key: string): str
 export function getSessionPanelHtml(): string {
     return /* html */ `
 <div id="session-panel" class="session-panel" role="region" aria-label="${t('viewer.session.region')}">
-    <div id="session-resize" class="session-panel-resize" aria-hidden="true"></div>
     <div class="session-panel-header">
         <span id="session-header-clickable" class="session-header-clickable" title="${t('viewer.session.header.title')}">
             <span class="session-panel-title">${t('viewer.session.title')}</span>
