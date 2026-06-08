@@ -1188,5 +1188,6 @@
   "New log · {0} · {1}": "新日誌 · {0} · {1}",
   "New logs · {0} · {1} (+{2} more)": "新日誌·{0}·{1}（+{2} 個）",
   "Reports ({0})": "報告 ({0})",
-  "Unread — captured after Logs panel last had focus": "未讀 — 在日誌面板最後一次獲得焦點後捕獲"
+  "Unread — captured after Logs panel last had focus": "未讀 — 在日誌面板最後一次獲得焦點後捕獲",
+  "No SQL queries captured yet — nothing to sort.": "尚未捕獲任何 SQL 查詢 — 沒有任何可排序的內容。"
 }

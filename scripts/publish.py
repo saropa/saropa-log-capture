@@ -83,6 +83,8 @@ except ImportError:
         capture_output=True,
     )
 
+# cspell:ignore mismeasures Pr_ceed
+
 # Deliberately NOT importing readline / pyreadline3. The pyreadline3 shim is
 # the only "readline" available on Windows, and merely importing it makes
 # Python's input() route through it for EVERY prompt. In the VS Code integrated

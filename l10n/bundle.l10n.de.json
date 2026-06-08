@@ -1188,5 +1188,6 @@
   "New log · {0} · {1}": "Neues Protokoll · {0} · {1}",
   "New logs · {0} · {1} (+{2} more)": "Neue Protokolle · {0} · {1} (+{2} weitere)",
   "Reports ({0})": "Berichte ({0})",
-  "Unread — captured after Logs panel last had focus": "Ungelesen – erfasst, nachdem das Bedienfeld „Protokolle“ zuletzt den Fokus hatte"
+  "Unread — captured after Logs panel last had focus": "Ungelesen – erfasst, nachdem das Bedienfeld „Protokolle“ zuletzt den Fokus hatte",
+  "No SQL queries captured yet — nothing to sort.": "Noch keine SQL-Abfragen erfasst – nichts zum Sortieren."
 }
