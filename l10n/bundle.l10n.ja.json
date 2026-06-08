@@ -1188,5 +1188,6 @@
   "New log · {0} · {1}": "新しいログ · {0} · {1}",
   "New logs · {0} · {1} (+{2} more)": "新しいログ · {0} · {1} (+{2} 件)",
   "Reports ({0})": "レポート ({0})",
-  "Unread — captured after Logs panel last had focus": "未読 — ログパネルに最後にフォーカスがあった後にキャプチャされました"
+  "Unread — captured after Logs panel last had focus": "未読 — ログパネルに最後にフォーカスがあった後にキャプチャされました",
+  "No SQL queries captured yet — nothing to sort.": "SQL クエリはまだキャプチャされておらず、並べ替える必要はありません。"
 }
