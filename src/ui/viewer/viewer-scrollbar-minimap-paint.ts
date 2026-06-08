@@ -47,8 +47,13 @@ function initMmColors() {
         sqlSlowDensity: 'rgba(255, 189, 89, 0.6)',
         searchMatch: v('--vscode-editorOverviewRuler-findMatchForeground', 'rgba(234,92,0,0.85)'),
         currentMatch: 'rgba(255,150,50,1)',
-        /* Full-canvas base under SQL bands and severity ticks. */
-        track: v('--vscode-scrollbarSlider-background', 'rgba(100, 100, 100, 0.26)')
+        /* Full-canvas base under SQL bands and severity ticks. Must be the
+           editor background (an opaque dark surface), NOT the scrollbar-slider
+           color: the slider color is a translucent grey meant to sit ON TOP of
+           content, so filling the whole canvas with it painted a light-grey
+           wash over the entire minimap. VS Code's own minimap uses the editor
+           background as its base, so this matches that. */
+        track: v('--vscode-editor-background', '#1e1e1e')
     };
 }
 
@@ -90,7 +95,7 @@ function paintMinimap() {
     resizeMmCanvas();
     mmCtx.clearRect(0, 0, mmW, mmH);
     mmCtx.globalAlpha = 1;
-    mmCtx.fillStyle = mmColors.track || 'rgba(100, 100, 100, 0.26)';
+    mmCtx.fillStyle = mmColors.track || '#1e1e1e';
     mmCtx.fillRect(0, 0, mmW, mmH);
     if (mmH < 10 || allLines.length === 0) return;
 
