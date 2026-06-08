@@ -54,6 +54,13 @@ export function getNewerLogEventsScript(): string {
                 var uri = btn.getAttribute('data-newer-uri') || '';
                 if (uri) vscodeApi.postMessage({ type: 'openSessionFromPanel', uriString: uri });
             } else if (action === 'dismiss') {
+                /* Hide the banner immediately for instant feedback — the host round-trip
+                   (advance dismiss cursor, re-send list) clears unreadSinceFocus on every
+                   row, but waiting for it makes the button feel dead. The re-sent list keeps
+                   the banner hidden because nothing is unread anymore, so this never flickers
+                   back. */
+                newerBannerEl.style.display = 'none';
+                newerBannerEl.innerHTML = '';
                 vscodeApi.postMessage({ type: 'acknowledgeUnreadLogs' });
             }
             e.stopPropagation();

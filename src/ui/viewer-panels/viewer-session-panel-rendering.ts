@@ -197,7 +197,13 @@ export function getSessionRenderingScript(): string {
                so the "Latest only" filter keeps it (a singleton IS, trivially,
                the latest of its name). */
             + '<span class="session-item-name">' + escapeHtmlText(name) + ((s.isLatestOfName && s.hasNamesakes) ? ' <span class="session-latest">' + vt('viewer.session.latest') + '</span>' : '') + groupCount + perfBadge + '</span>'
-            + (meta ? '<span class="session-item-meta">' + meta + '</span>' : '')
+            /* Skeleton rows (mtime-only, from the stat pass) carry _preview until their
+               metadata loads — render the shimmer bar so the grouped structure is visible
+               immediately while bodies are still being read. updateSessionBatchItems swaps
+               in the real meta in place once each file resolves. */
+            + (s._preview
+                ? '<span class="session-item-meta session-shimmer-meta"></span>'
+                : (meta ? '<span class="session-item-meta">' + meta + '</span>' : ''))
             + '</div>'
             + renderSessionRowActions()
             + '</div>';
