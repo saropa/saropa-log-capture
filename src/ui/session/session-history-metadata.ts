@@ -19,48 +19,86 @@ export interface LoadMetadataTarget {
  * file so each item can be sent to the webview before the next one starts. */
 export type OnItemLoaded = (item: SessionMetadata, index: number) => void | Promise<void>;
 
+/** A file's stat result paired with its identity — the cheap groupable skeleton
+ *  emitted before any file body is read. mtime is all the webview needs to day-group. */
+export interface SessionPreviewRecord {
+    readonly uri: vscode.Uri;
+    readonly filename: string;
+    readonly size: number;
+    readonly mtime: number;
+}
+
 /** Options for loadBatch beyond the required parameters. */
 export interface LoadBatchOptions {
     readonly centralMeta: ReadonlyMap<string, SessionMeta>;
     readonly onItemLoaded?: OnItemLoaded;
+    /** Fired once after the cheap stat pass with mtime/size for every file. Lets the
+     *  webview paint a day-grouped skeleton (grouping needs only mtime) before the
+     *  expensive parseHeader pass — parseHeader reads the whole file, so emitting the
+     *  grouped structure up-front is what makes the panel feel instant. */
+    readonly onItemPreview?: (previews: readonly SessionPreviewRecord[]) => void;
 }
 
-/** Load metadata for all files with bounded concurrency (max 8 parallel). */
+/** Run an async worker over indices [0, count) with bounded concurrency (max 8). */
+async function mapBounded(count: number, work: (i: number) => Promise<void>): Promise<void> {
+    let index = 0;
+    const run = async (): Promise<void> => {
+        while (index < count) { await work(index++); }
+    };
+    await Promise.all(Array.from({ length: Math.min(8, count) }, () => run()));
+}
+
+/** Cheap stat for every file → groupable skeleton records (mtime/size only).
+ *  Files that fail to stat (deleted between listing and load) yield undefined and
+ *  are skipped downstream rather than aborting the whole batch. */
+async function statAll(logDir: vscode.Uri, files: readonly string[]): Promise<(SessionPreviewRecord | undefined)[]> {
+    const out: (SessionPreviewRecord | undefined)[] = new Array(files.length);
+    await mapBounded(files.length, async (i) => {
+        const uri = vscode.Uri.joinPath(logDir, files[i]);
+        try {
+            const stat = await vscode.workspace.fs.stat(uri);
+            out[i] = { uri, filename: files[i], size: stat.size, mtime: stat.mtime };
+        } catch { out[i] = undefined; }
+    });
+    return out;
+}
+
+/** Load metadata for all files: a fast stat pass (emits the grouped preview) followed
+ *  by the slow parseHeader pass (emits per-item hydration). Bounded concurrency on both. */
 export async function loadBatch(
     target: LoadMetadataTarget,
     logDir: vscode.Uri,
     files: readonly string[],
     opts: LoadBatchOptions,
 ): Promise<SessionMetadata[]> {
-    const { centralMeta, onItemLoaded } = opts;
+    const { centralMeta, onItemLoaded, onItemPreview } = opts;
+    const stats = await statAll(logDir, files);
+    /* Emit the skeleton before any file body is read so the panel paints immediately. */
+    if (onItemPreview) {
+        onItemPreview(stats.filter((s): s is SessionPreviewRecord => s !== undefined));
+    }
     const results: SessionMetadata[] = new Array(files.length);
-    const limit = 8;
-    let index = 0;
-    const run = async (): Promise<void> => {
-        while (index < files.length) {
-            const i = index++;
-            results[i] = await loadMetadata(target, logDir, files[i], centralMeta);
-            /* Await the callback so each item reaches the webview before the
-             * worker moves on to the next file — gives progressive UI updates. */
-            await onItemLoaded?.(results[i], i);
-        }
-    };
-    const count = Math.min(limit, files.length);
-    await Promise.all(Array.from({ length: count }, () => run()));
-    return results;
+    await mapBounded(files.length, async (i) => {
+        const base = stats[i];
+        if (!base) { return; }
+        results[i] = await loadMetadata(target, centralMeta, base);
+        /* Await the callback so each item reaches the webview before the
+         * worker moves on to the next file — gives progressive UI updates. */
+        await onItemLoaded?.(results[i], i);
+    });
+    /* Drop holes left by failed stats so callers never see undefined rows. */
+    return results.filter((r): r is SessionMetadata => r !== undefined);
 }
 
-/** Load and cache metadata for a single session file.
+/** Load and cache metadata for a single session file from its prefetched stat.
  *  Never scans the body — severities arrive later from the deferred worker. */
 async function loadMetadata(
     target: LoadMetadataTarget,
-    logDir: vscode.Uri,
-    filename: string,
     centralMeta: ReadonlyMap<string, SessionMeta>,
+    base: SessionPreviewRecord,
 ): Promise<SessionMetadata> {
-    const uri = vscode.Uri.joinPath(logDir, filename);
-    const stat = await vscode.workspace.fs.stat(uri);
-    const cacheKey = `${uri.toString()}|${stat.mtime}|${stat.size}`;
+    const { uri, filename } = base;
+    const cacheKey = `${uri.toString()}|${base.mtime}|${base.size}`;
     const cached = target.metaCache.get(cacheKey);
     if (cached) { return cached; }
     const relKey = vscode.workspace.asRelativePath(uri).replace(/\\/g, '/');
@@ -70,7 +108,7 @@ async function loadMetadata(
     // debugCount, so they re-scan via the deferred worker to backfill the new
     // buckets — otherwise debug/database/todo/notice would stay permanently 0.
     const hasCachedSev = sidecar.errorCount !== undefined && sidecar.debugCount !== undefined;
-    let meta: SessionMetadata = { uri, filename, size: stat.size, mtime: stat.mtime };
+    let meta: SessionMetadata = { uri, filename, size: base.size, mtime: base.mtime };
     meta = await parseHeader(uri, meta);
     meta = applySidecar(meta, sidecar, hasCachedSev);
     target.metaCache.set(cacheKey, meta);
