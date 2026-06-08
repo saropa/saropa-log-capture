@@ -57,6 +57,8 @@ export function getSqlQueryHistoryPanelScript(): string {
             (function(el) {
                 function handleSortActivate(e) {
                     if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+                    /* Disabled when there's no captured SQL — ignore so the header can't silently no-op. */
+                    if (el.getAttribute('aria-disabled') === 'true') return;
                     e.preventDefault();
                     var key = el.getAttribute('data-sql-qh-sort');
                     if (!key) return;
@@ -130,7 +132,9 @@ export function getSqlQueryHistoryPanelScript(): string {
         }
         driftStatusEl.classList.remove('u-hidden');
         var parts = ['Drift viewer (from log): ' + d.baseUrl];
-        if (d.version) parts.push('banner v' + d.version);
+        /* Join is '' below, so every part after the base URL must carry its own ' · ' separator.
+           Without it the banner version abutted the URL ("…8642banner v3.5.1"). */
+        if (d.version) parts.push(' · banner v' + d.version);
         if (d.health) {
             if (d.health.ok) {
                 parts.push(d.health.version ? (' · server ' + d.health.version + ' · reachable') : ' · reachable');

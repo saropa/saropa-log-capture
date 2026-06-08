@@ -35,6 +35,11 @@ The highlight sweep across grouped ASCII-art log blocks now plays just once on a
 
 - **ASCII art banners shimmer once, then settle** — the highlight sweep across grouped ASCII-art log blocks played twice on arrival; it now sweeps a single time and goes static. ([viewer-styles-ascii-art.ts](src/ui/viewer-styles/viewer-styles-ascii-art.ts))
 
+### Fixed
+
+- **SQL Query History drift status no longer mangles the URL** — the "Drift viewer (from log)" status line joined its parts with no separator, so the banner version ran straight into the base URL (`…8642banner v3.5.1`). The version now reads `… · banner v3.5.1 · unreachable (fetch failed)`. ([viewer-sql-query-history-panel-script.ts](src/ui/viewer-panels/viewer-sql-query-history-panel-script.ts))
+- **SQL Query History column headers disable when there's nothing to sort** — Count / SQL / Slow looked clickable even with zero captured queries, where a click silently did nothing. With no data they now render dimmed and inert with a "No SQL queries captured yet — nothing to sort." tooltip, and re-enable as soon as a query is captured. ([viewer-sql-query-history-panel-helpers.ts](src/ui/viewer-panels/viewer-sql-query-history-panel-helpers.ts), [viewer-styles-sql-query-history.ts](src/ui/viewer-styles/viewer-styles-sql-query-history.ts))
+
 ---
 
 ## [7.17.4]

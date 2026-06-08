@@ -109,6 +109,20 @@ suite('viewer-sql-query-history panel script', () => {
         assert.ok(!s.includes('sql-query-history-sort'), 'should not reference removed sort select');
     });
 
+    test('sort headers disable with explanatory tooltip when no SQL captured', () => {
+        const s = getSqlQueryHistoryPanelScript();
+        assert.ok(s.includes('sql-qh-header-disabled'), 'toggles disabled class on headers');
+        assert.ok(s.includes('viewer.sqlHistory.sortDisabled'), 'disabled tooltip wired via l10n key');
+        assert.ok(s.includes("getAttribute('aria-disabled') === 'true'"), 'sort handler ignores disabled header');
+    });
+
+    test('drift status banner version carries its own separator', () => {
+        const s = getSqlQueryHistoryPanelScript();
+        // Parts join on '' so banner must prefix ' · ' or it abuts the base URL (…8642banner v…).
+        assert.ok(s.includes("' · banner v'"), 'banner part prefixes a separator');
+        assert.ok(!s.includes("'banner v'"), 'no separator-less banner part remains');
+    });
+
     test('clicking count/duration cells still toggles the row', () => {
         const s = getSqlQueryHistoryPanelScript();
         assert.ok(s.includes("e.target.closest('#sql-query-history-tbody tr')"));

@@ -273,4 +273,5 @@ export const stringsWebviewB: Record<string, string> = {
     'viewer.sqlHistory.copiedRows.one': 'Copied {0} row to clipboard.',
     'viewer.sqlHistory.copiedRows.many': 'Copied {0} rows to clipboard.',
     'viewer.sqlHistory.copiedFingerprint': 'Copied fingerprint.',
+    'viewer.sqlHistory.sortDisabled': 'No SQL queries captured yet — nothing to sort.',
 };
