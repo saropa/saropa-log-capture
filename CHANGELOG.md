@@ -27,6 +27,16 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+The highlight sweep across grouped ASCII-art log blocks now plays just once on arrival instead of twice. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+
+### Changed
+
+- **ASCII art banners shimmer once, then settle** — the highlight sweep across grouped ASCII-art log blocks played twice on arrival; it now sweeps a single time and goes static. ([viewer-styles-ascii-art.ts](src/ui/viewer-styles/viewer-styles-ascii-art.ts))
+
+---
+
 ## [7.17.4]
 
 Each signal in the Signals panel now has a Copy button that puts a paste-ready block on the clipboard, summary signals like "Drift Advisor issues" are clickable to open their detail, your Columns choices stick across reloads, info lines hidden after a stack trace can be revealed again, you can click anywhere on a stack frame to open its source, and right-click submenus stop running off the edge of the panel. [log](https://github.com/saropa/saropa-log-capture/blob/v7.17.4/CHANGELOG.md)
