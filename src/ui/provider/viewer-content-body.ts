@@ -50,6 +50,14 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     <div id="main-content" role="main">
     <div id="panel-content-row">
     <div id="panel-slot">
+    <!-- Single resize handle for the shared slide-out width. It lives on the
+         persistent #panel-slot (not inside any one panel) so EVERY panel is
+         resizable from the same edge — previously the handle sat inside the
+         session panel markup, which is display:none whenever another panel
+         (SQL history, bookmarks, etc.) was the active one, so only Sessions
+         could be dragged. The slot width is the single shared width all panels
+         render into at width:100%. -->
+    <div id="panel-slot-resize" class="panel-slot-resize" aria-hidden="true"></div>
     ${getSessionPanelHtml()}
     ${getSessionContextMenuHtml()}
     ${getFindPanelHtml()}

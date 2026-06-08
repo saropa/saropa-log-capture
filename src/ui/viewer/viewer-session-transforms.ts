@@ -174,11 +174,13 @@ function markLatestByName(sessions, applyOptions) {
     }
 }
 
-/* --- Panel resize (controls slot width; panels fill via CSS width:100%) --- */
-function initSessionPanelResize(panelEl, saveWidth) {
-    var handle = document.getElementById('session-resize');
+/* --- Panel resize (controls slot width; every panel fills via CSS width:100%) ---
+   The handle lives on #panel-slot, not inside any single panel, so resizing
+   applies to whichever panel is currently shown. Bound once at startup. */
+function initPanelSlotResize(saveWidth) {
+    var handle = document.getElementById('panel-slot-resize');
     var slotEl = document.getElementById('panel-slot');
-    if (!handle || !panelEl || !slotEl) return;
+    if (!handle || !slotEl) return;
     var dragging = false;
     /* Anchor the drag to where it started. The old code set the width from the
        absolute mouse X (e.clientX, or vw - e.clientX on a right icon bar), which
