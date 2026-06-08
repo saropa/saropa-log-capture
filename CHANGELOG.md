@@ -27,6 +27,18 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+The "Open Signals" button on the recurring-signal notification now actually opens the Signals panel. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+
+### Fixed
+
+- **Every sidebar slide-out is now resizable, not just Sessions** — the drag handle lived inside the Session History panel, which is hidden whenever another panel (SQL Query History, Bookmarks, Trash, Options, Filters, Crashlytics, Collections, Project State, Signals, About, Find) is the active one, so only Sessions could be widened. The single handle now sits on the shared `#panel-slot` container and resizes whichever panel is open. ([viewer-content-body.ts](src/ui/provider/viewer-content-body.ts), [viewer-session-transforms.ts](src/ui/viewer/viewer-session-transforms.ts), [viewer-styles.ts](src/ui/viewer-styles/viewer-styles.ts))
+- **"Open Signals" on the recurring-signal toast now works** — the notification fires right after a capture finishes, when the Log Viewer view is closed, and the button only posted a message to an already-open view, so it landed nowhere. The command now reveals the view and waits for it to resolve before posting. ([commands-signals.ts](src/commands-signals.ts), [log-viewer-provider.ts](src/ui/provider/log-viewer-provider.ts))
+- **Scroll-map minimap no longer washed in light grey** — the minimap painted its full-canvas base with the translucent scrollbar-slider color (`rgba(100,100,100,0.26)`), a grey meant to sit on top of content, so the whole minimap read as a light-grey overlay over the severity ticks and SQL bands. The base now uses the editor background like VS Code's own minimap. ([viewer-scrollbar-minimap-paint.ts](src/ui/viewer/viewer-scrollbar-minimap-paint.ts))
+
+---
+
 ## [7.17.5]
 
 The highlight sweep across grouped ASCII-art log blocks now plays just once on arrival instead of twice. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)

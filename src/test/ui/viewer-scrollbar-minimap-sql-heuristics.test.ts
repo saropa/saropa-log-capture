@@ -147,6 +147,22 @@ suite('viewer-scrollbar-minimap-sql-heuristics', () => {
             assert.ok(script.includes('lvEnum = LV_PRESENCE'), 'demotion writes presence priority');
         });
 
+        test('full-canvas track base uses editor background, not the translucent slider grey', () => {
+            const script = getScrollbarMinimapScript();
+            // Regression: the track was --vscode-scrollbarSlider-background (a translucent grey meant
+            // to sit ON TOP of content). Filling the whole canvas with it painted a light-grey wash
+            // over the entire minimap. The base must be the opaque editor background, like VS Code's
+            // own minimap, so ticks/SQL bands sit on a dark surface with no grey overlay.
+            assert.ok(
+                /track:\s*v\('--vscode-editor-background'/.test(script),
+                'track base reads --vscode-editor-background',
+            );
+            assert.ok(
+                !script.includes("track: v('--vscode-scrollbarSlider-background'"),
+                'track must NOT use the translucent scrollbar-slider grey',
+            );
+        });
+
         test('hover title explains scroll map in plain language', () => {
             const script = getScrollbarMinimapScript();
             assert.ok(script.includes('Scroll map — click or drag'), 'plain hover explanation');
