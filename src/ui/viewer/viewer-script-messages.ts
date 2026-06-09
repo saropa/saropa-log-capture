@@ -158,7 +158,11 @@ window.addEventListener('message', function(event) {
             currentFilename = msg.filename || '';
             updateFooterText();
             break;
-        case 'setFileMode': fileMode = msg.mode || 'log'; formatEnabled = false; if (typeof updateFormatToggleVisibility === 'function') updateFormatToggleVisibility(); break;
+        /* Structured documents (markdown reports, JSON, CSV) auto-enable formatting:
+           opening one and seeing raw text behind a hidden toggle reads as "not rendered".
+           The layout build (buildMdSections etc.) is deferred to loadComplete because
+           setFileMode is posted before any content lines arrive, so allLines is empty here. */
+        case 'setFileMode': fileMode = msg.mode || 'log'; formatEnabled = (fileMode !== 'log'); if (typeof updateFormatToggleVisibility === 'function') updateFormatToggleVisibility(); break;
         case 'setSources':
             if (typeof window !== 'undefined') { window.availableSources = Array.isArray(msg.sources) ? msg.sources : []; window.enabledSources = Array.isArray(msg.enabledSources) ? msg.enabledSources : null; }
             /* Log Sources tab is always visible — no need to toggle panel display */
@@ -240,6 +244,15 @@ window.addEventListener('message', function(event) {
                 autoScroll = false; if (jumpBtn) jumpBtn.style.display = 'block'; renderViewport(true);
             }
             updateFooterText();
+            /* All content has arrived: build the structured-mode layout now that allLines
+               is populated, then re-measure and repaint so auto-enabled formatting (set in
+               setFileMode) renders headings/fences/tables instead of raw text. */
+            if (typeof formatEnabled !== 'undefined' && formatEnabled && typeof fileMode !== 'undefined' && fileMode !== 'log') {
+                if (typeof window.buildFormatModeLayout === 'function') window.buildFormatModeLayout();
+                if (typeof recalcHeights === 'function') recalcHeights();
+                if (typeof buildPrefixSums === 'function') buildPrefixSums();
+                if (typeof renderViewport === 'function') renderViewport(true);
+            }
             if (typeof window.setReplayEnabled === 'function') {
                 window.setReplayEnabled(isViewingFile, isSessionActive);
                 // Defer again so replay bar visibility is applied after loadComplete layout has settled.
