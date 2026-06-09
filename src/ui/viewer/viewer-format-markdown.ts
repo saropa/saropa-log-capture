@@ -207,10 +207,12 @@ function formatMarkdownLine(item, idx) {
         var cText = escapeHtml(stripTags(html));
         var blk = mdCommentBlocks[idx];
         if ((cmt.role === 'open') && blk) {
-            var cChevron = '<span class="md-chevron">' + (blk.collapsed ? '\\u25b8' : '\\u25be') + '</span>';
+            /* Inline leading chevron (not a flex/right-aligned one): the comment line is a normal
+               inline row and may sit after the line-number gutter, so a flex layout would drop the
+               text below the gutter. A leading chevron stays inline and reads as expand/collapse. */
+            var cChevron = '<span class="md-comment-chevron">' + (blk.collapsed ? '\\u25b8' : '\\u25be') + '</span> ';
             var cBadge = blk.collapsed ? ' <span class="md-collapse-badge">(' + (blk.endIndex - idx) + ' lines)</span>' : '';
-            return '<span class="md-comment md-comment-open" data-md-comment="' + idx + '">'
-                + '<span class="md-htext">' + cText + cBadge + '</span>' + cChevron + '</span>';
+            return '<span class="md-comment md-comment-open" data-md-comment="' + idx + '">' + cChevron + cText + cBadge + '</span>';
         }
         return '<span class="md-comment">' + cText + '</span>';
     }
