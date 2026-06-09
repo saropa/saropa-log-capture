@@ -260,6 +260,9 @@ export interface ReportsClassifierConfig {
   readonly kindPatterns: readonly string[];
   /** Default state for the per-day Reports bucket when there's no per-day override. */
   readonly bucketDefault: 'collapsed' | 'expanded' | 'hidden';
+  /** displayName strings the user pinned as Controllers (the day's tree root that peripherals nest
+   *  under). Matched case-insensitively. Augments the automatic workspace-folder-name detection. */
+  readonly controllerNames: readonly string[];
 }
 
 /**

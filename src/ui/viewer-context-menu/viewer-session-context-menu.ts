@@ -82,6 +82,16 @@ export function getSessionContextMenuHtml(): string {
          the group the targeted log belongs to. Both are always visible in the normal context; the
          group label pluralises when multi-select is active, and Ungroup is a friendly no-op on an
          ungrouped target. -->
+    <!-- Controller/Peripheral role override: a Controller is the day's tree root that peripheral
+         logs (lint, translate, advisor) nest beneath. Detection is automatic (workspace-folder-name
+         match); these let the user pin or demote a specific log. Persisted to the sidecar. -->
+    <div class="context-menu-separator session-normal-only"></div>
+    <div class="context-menu-item session-normal-only" data-session-action="markAsController">
+        <span class="codicon codicon-circuit-board"></span> Set as Controller
+    </div>
+    <div class="context-menu-item session-normal-only" data-session-action="markAsPeripheral">
+        <span class="codicon codicon-list-tree"></span> Mark as Peripheral
+    </div>
     <div class="context-menu-separator session-normal-only"></div>
     <div class="context-menu-item session-normal-only" data-session-action="group">
         <span class="codicon codicon-layers-active"></span> <span class="session-group-label">Group Selected Sessions</span>

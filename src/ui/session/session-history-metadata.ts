@@ -141,6 +141,9 @@ function applySidecar(
     // Explicit kind override is opt-in metadata — propagate untouched so the classifier
     // can see it before applying its rules. Absent kind means "let the classifier decide".
     if (sidecar.kind === 'project' || sidecar.kind === 'report') { result = { ...result, kind: sidecar.kind }; }
+    // Explicit Controller/Peripheral override — propagate untouched so `classifySessionRole` sees
+    // it before its detection rules. Absent role means "let the classifier decide".
+    if (sidecar.role === 'controller' || sidecar.role === 'peripheral') { result = { ...result, role: sidecar.role }; }
     if (hasCachedSev) {
         return {
             ...result,

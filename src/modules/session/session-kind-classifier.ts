@@ -100,3 +100,56 @@ export function classifySessionKind(
     }
     return 'project';
 }
+
+/** Controller = the day's tree root (the workspace's own session); peripherals nest under it. */
+export type SessionRole = 'controller' | 'peripheral';
+
+/** Inputs the role classifier reads. Adds the user's `role` override to the kind inputs. */
+export interface SessionRoleInput extends SessionKindInput {
+    /** Explicit Controller/Peripheral override from `SessionMeta.role`. */
+    readonly role?: SessionRole;
+}
+
+/** True when a candidate name (header `Project:` or displayName) matches the workspace folder name. */
+function matchesWorkspaceFolder(candidate: string | undefined, workspaceFolderName: string | undefined): boolean {
+    if (!workspaceFolderName || !candidate) { return false; }
+    return normalize(candidate) === normalize(workspaceFolderName);
+}
+
+/**
+ * Decide whether a session is the day's Controller (the workspace's own app/debug session that
+ * peripheral tool logs nest beneath) or a Peripheral.
+ *
+ * Rule order matters — earlier wins:
+ *   1. Explicit `role` override (user's manual decision via context menu).
+ *   2. displayName appears in the user's `controllerNames` list → controller.
+ *   3. header `Project:` OR displayName matches the workspace folder name → controller.
+ *      (This is what makes the "Contacts" log a controller but "Contacts Drift Advisor" — whose
+ *      displayName differs and whose header project is the analysed project — a peripheral.)
+ *   4. Default → peripheral. Fail-safe: an unmatched log nests rather than becoming a stray root,
+ *      so a misclassification can only ever demote, never spawn a spurious top-level controller.
+ *      This default subsumes the "report ⇒ peripheral" case (a `kind: 'report'` log never matches
+ *      the controller rules above), so no separate kind check is needed.
+ *
+ * @param controllerNames Normalized-on-read list of displayName strings the user pinned as controllers.
+ * @param workspaceFolderName Active workspace folder name for the header/displayName match.
+ */
+export function classifySessionRole(
+    input: SessionRoleInput,
+    controllerNames: readonly string[],
+    workspaceFolderName?: string,
+): SessionRole {
+    if (input.role === 'controller' || input.role === 'peripheral') {
+        return input.role;
+    }
+    const name = input.displayName;
+    if (typeof name === 'string' && name.length > 0) {
+        const normalizedName = normalize(name);
+        if (controllerNames.some(c => normalize(c) === normalizedName)) { return 'controller'; }
+    }
+    if (matchesWorkspaceFolder(input.project, workspaceFolderName)
+        || matchesWorkspaceFolder(input.displayName, workspaceFolderName)) {
+        return 'controller';
+    }
+    return 'peripheral';
+}
