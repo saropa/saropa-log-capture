@@ -72,3 +72,40 @@ single sweep across rows.
 ### Outstanding
 
 None. No bug archived — task did not close a `bugs/*.md` file.
+
+## Follow-up (2026-06-08) — iteration count was not the lever; gate on first render
+
+**User report:** "failed. the shimmer never stops."
+
+**Root cause (this is the real fix):** the iteration-count change above (and the
+prior `infinite`→`2` change) could never settle the shimmer. `renderViewport()`
+in `src/ui/viewer/viewer-data-viewport.ts` does an atomic full-DOM rebuild of the
+visible range on every scroll and every incoming log line (`replaceChildren()` +
+fresh `<template>` fragment — deliberate, to kill row paint-ghosting). Every
+rebuild creates brand-new art-block nodes, and a CSS `::after` animation on a
+freshly-created node restarts from iteration 0. So `1`, `2`, and `infinite` all
+look identical: perpetual, because the node keeps getting recreated under a live
+log stream.
+
+**Fix:** play the shimmer only on a row's FIRST render, latched per item.
+
+- `src/ui/viewer/viewer-data-helpers-render.ts` — when an art-block row is
+  rendered and `!item._artShimmered`, add a dedicated `art-shimmer-play` class and
+  set `item._artShimmered = true`. Later viewport rebuilds re-render the same item
+  with the latch already set, so the class (and thus the animation) is omitted.
+- `src/ui/viewer-styles/viewer-styles-ascii-art.ts` — the shimmer `::after` block
+  and the staggered `animation-delay` rules are now gated behind
+  `.art-shimmer-play` (`.line.art-block-start.art-shimmer-play::after`, etc.). The
+  bare `art-block-*` class carries only static styling (color, tint, gutter), so a
+  rebuilt-but-already-shimmered row paints no `::after` and no animation. The
+  `4s ease-in-out 1 forwards` timing is retained for the single sweep.
+
+**Tests added** (`src/test/ui/viewer-ascii-art-block.test.ts`, "shimmer settles"
+suite, now 27 passing total):
+- CSS gates `::after` behind `.art-shimmer-play` and the bare `art-block-start::after`
+  no longer carries the shimmer.
+- Renderer emits `art-shimmer-play` only when `!item._artShimmered` and sets the latch.
+
+**Verification:** `npx mocha out/test/ui/viewer-ascii-art-block.test.js --ui tdd`
+→ 27 passing; `npm run check-types` → clean. On-device confirmation that the sweep
+plays once and stops under a live stream is still pending the user (F5).
