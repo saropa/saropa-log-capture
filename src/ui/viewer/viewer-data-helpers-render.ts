@@ -192,6 +192,18 @@ function renderItem(item, idx, prevVis) {
     if (abp === 'start') sepCls += ' art-block-start';
     else if (abp === 'middle') sepCls += ' art-block-middle';
     else if (abp === 'end') sepCls += ' art-block-end';
+    /* Shimmer-once gate. renderViewport() rebuilds the whole visible DOM from
+       scratch on every scroll / incoming-line render (atomic replaceChildren
+       swap — see viewer-data-viewport.ts), so a CSS animation on the bare
+       art-block-* class would restart from iteration 0 on every rebuild and
+       read as a perpetual sweep no matter its iteration-count. Emit the
+       shimmer-triggering class only the FIRST time a row is rendered, latched
+       by a per-item flag, so the single sweep plays on arrival and never
+       re-triggers when the row is recreated by a later viewport rebuild. */
+    if (abp && !item._artShimmered) {
+        sepCls += ' art-shimmer-play';
+        item._artShimmered = true;
+    }
     var isArtCont = (abp === 'middle' || abp === 'end');
     var gap = isArtCont ? '' : ((typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '');
     var elapsed = isArtCont ? '' : ((typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '');
