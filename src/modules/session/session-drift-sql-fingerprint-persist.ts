@@ -9,6 +9,7 @@ import {
   summaryMapToPersistedV1,
   trimSummaryForPersistence,
 } from "../db/drift-sql-fingerprint-summary-persist";
+import { updateCumulativeSqlIndexForFinalizedLog } from "../db/cumulative-sql-fingerprint-index-store";
 import type { SessionMetadataStore } from "./session-metadata";
 
 /** Scan log UTF-8 and write `driftSqlFingerprintSummary` v1 (bounded key count). */
@@ -29,6 +30,9 @@ export async function scanAndPersistDriftSqlFingerprintSummary(
     const trimmed = trimSummaryForPersistence(summary, firstLineByFingerprint);
     const persisted = summaryMapToPersistedV1(trimmed.summary, trimmed.firstLineByFingerprint);
     await metadataStore.setDriftSqlFingerprintSummary(logUri, persisted);
+    // DB_18: fold this finalized log into the cross-log index so the SQL History panel stays cheap
+    // to refresh (one index read on load instead of re-scanning every metadata file).
+    await updateCumulativeSqlIndexForFinalizedLog(logUri, persisted, outputChannel);
     outputChannel.appendLine(`Drift SQL fingerprints: ${trimmed.summary.size} patterns (persisted)`);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
