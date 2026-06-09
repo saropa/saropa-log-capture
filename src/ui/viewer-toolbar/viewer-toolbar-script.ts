@@ -264,6 +264,8 @@ export function getToolbarScript(): string {
         if (formatBtn) formatBtn.classList.toggle('toolbar-icon-btn-active', formatEnabled);
         /* Build the mode-specific layout data only when turning formatting on. */
         if (formatEnabled) window.buildFormatModeLayout();
+        /* Apply/restore the comfortable markdown document line height (re-renders internally). */
+        if (typeof applyMarkdownTypography === 'function') applyMarkdownTypography();
         if (typeof recalcHeights === 'function') recalcHeights();
         if (typeof buildPrefixSums === 'function') buildPrefixSums();
         if (typeof renderViewport === 'function') renderViewport(true);
