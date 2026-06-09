@@ -2514,6 +2514,15 @@
           "type": "string",
           "title": "Logs Panel: Reports Bucket Default"
         },
+        "saropaLogCapture.controllerNames": {
+          "default": [],
+          "description": "Display names to treat as Controllers in the Logs panel — the day's tree root that peripheral logs (lint, translate, advisor) nest beneath. Matched case-insensitively. The project's own log is detected automatically by matching the workspace folder name; add entries here only to pin extra controllers or override the automatic choice.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "Logs Panel: Controller Names"
+        },
         "saropaLogCapture.newerLogBanner": {
           "default": true,
           "description": "When on, the Logs panel shows a sticky banner above the day list whenever a newer log has arrived since the panel last had focus. Click Open to jump to it; Dismiss to clear the alert.",
