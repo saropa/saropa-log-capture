@@ -152,10 +152,18 @@ function formatTime12hFromParts(hours, minutes) {
    surfaced both. Always key on the basename so this matches what renderItem
    shows, and what the user therefore reads as "the same name".
 
-   isLatestOfName powers the "Latest only" filter (which must include singles
+   isLatestOfName powers the "Latest only" view (which must include singles
    too — a name with one entry IS the latest of that name). hasNamesakes is a
    separate flag used purely for the rendered badge so the dim "(latest)"
-   chrome only appears when there is more than one to disambiguate from. */
+   chrome only appears when there is more than one to disambiguate from.
+
+   In "Latest only" mode the older namesakes are no longer hard-filtered out of
+   the list (they used to vanish without a trace). Instead each latest row keeps
+   _canonName (the exact key these counts were bucketed under, so render and the
+   "+N older" expand toggle agree) and _olderCount (how many older same-name
+   rows are hidden behind it). The render layer shows "+N older" on the latest
+   row and reveals the hidden rows on click — discoverability the hard filter
+   destroyed. */
 function markLatestByName(sessions, applyOptions) {
     var byName = {};
     var counts = {};
@@ -169,8 +177,12 @@ function markLatestByName(sessions, applyOptions) {
     for (var k = 0; k < sessions.length; k++) {
         var sk = sessions[k];
         var nk = applyOptions(getSessionBasename(sk.displayName || sk.filename));
+        sk._canonName = nk;
         sk.isLatestOfName = !sk.trashed && byName[nk] === sk;
         sk.hasNamesakes = !sk.trashed && (counts[nk] || 0) > 1;
+        // Older-count lives on the LATEST row only (the one that renders the badge); every
+        // namesake minus the latest itself. 0 on trashed rows and on names with no namesakes.
+        sk._olderCount = (sk.isLatestOfName && !sk.trashed) ? Math.max(0, (counts[nk] || 0) - 1) : 0;
     }
 }
 

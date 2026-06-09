@@ -161,6 +161,31 @@ export async function handleSessionAction(
                 await vscode.commands.executeCommand('saropaLogCapture.addGroupToCollection', items[0], items);
             }
             break;
+        // Controller/Peripheral role override. Writes the role to each selected log's sidecar so it
+        // survives reloads, then the refresh below re-runs the day grouping with the new roots.
+        case 'markAsController':
+        case 'markAsPeripheral': {
+            await setSessionRoles(action === 'markAsController' ? 'controller' : 'peripheral', items, ctx);
+            break;
+        }
     }
-    if (mutating.includes(action) || action === 'group' || action === 'ungroup') { await ctx.refreshList(); }
+    const roleActions = action === 'markAsController' || action === 'markAsPeripheral';
+    if (mutating.includes(action) || action === 'group' || action === 'ungroup' || roleActions) { await ctx.refreshList(); }
+}
+
+/** Persist a Controller/Peripheral role override on each selected log and confirm with a named toast. */
+async function setSessionRoles(
+    role: 'controller' | 'peripheral',
+    items: readonly { uri: vscode.Uri; filename: string }[],
+    ctx: SessionActionContext,
+): Promise<void> {
+    if (items.length === 0) { return; }
+    const store = ctx.historyProvider.getMetaStore();
+    for (const item of items) { await store.setRole(item.uri, role); }
+    // Name the affected log(s) so the user can tie the change to a specific row, per UX copy rules.
+    const firstName = items[0].filename.replace(/\.[^.]+$/, '');
+    const msgKey = role === 'controller' ? 'msg.sessionMarkedController' : 'msg.sessionMarkedPeripheral';
+    vscode.window.showInformationMessage(
+        items.length === 1 ? t(msgKey, firstName) : t(msgKey, `${firstName} +${items.length - 1}`),
+    );
 }

@@ -19,7 +19,7 @@ import { showSearchQuickPick } from "../../modules/search/log-search-ui";
 import { openLogAtLine } from "../../modules/search/log-search";
 import { showAnalysis } from "../analysis/analysis-panel";
 import { loadPresets, promptSavePreset } from "../../modules/storage/filter-presets";
-import { buildSessionListPayload, buildSessionItemRecord, openSourceFile, LOG_LAST_VIEWED_KEY, LOGS_PANEL_DISMISSED_AT_KEY, buildClassifierInputs, type SessionListPayloadOptions } from "./viewer-provider-helpers";
+import { buildSessionListPayload, buildSessionItemRecord, openSourceFile, LOG_LAST_VIEWED_KEY, LOGS_PANEL_DISMISSED_AT_KEY, buildClassifierInputs, buildRoleClassifier, type SessionListPayloadOptions } from "./viewer-provider-helpers";
 import { runDeferredSeverityScan } from "../session/session-severity-scan";
 import { getConfig } from "../../modules/config/config";
 import type { BookmarkStore } from "../../modules/storage/bookmark-store";
@@ -187,11 +187,13 @@ function makePayloadOptions(deps: HandlerDeps): SessionListPayloadOptions {
   const cfg = getConfig();
   const folderName = vscode.workspace.workspaceFolders?.[0]?.name;
   const classifyMeta = buildClassifierInputs(cfg.reportsClassifier.kindPatterns, folderName);
+  const classifyRole = buildRoleClassifier(cfg.reportsClassifier.controllerNames, folderName);
   return {
     getActiveLastWriteTime: () => deps.sessionManager.getActiveLastWriteTime?.(),
     getLastViewedAt: (uri) => lastViewedMap[uri],
     getDismissedAt: () => dismissedAt,
     classifyMeta,
+    classifyRole,
   };
 }
 

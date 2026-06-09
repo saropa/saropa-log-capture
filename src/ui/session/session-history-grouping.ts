@@ -49,6 +49,9 @@ export interface SessionMetadata {
     /** Explicit kind override from `SessionMeta.kind`. Read by `classifySessionKind` —
      *  absence means "let the classifier decide". */
     readonly kind?: 'project' | 'report';
+    /** Explicit Controller/Peripheral override from `SessionMeta.role`. Read by
+     *  `classifySessionRole` — absence means "let the classifier decide". */
+    readonly role?: 'controller' | 'peripheral';
 }
 
 /** Group of split files under a single parent session. */

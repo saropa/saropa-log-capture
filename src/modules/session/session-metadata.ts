@@ -92,6 +92,20 @@ export interface SessionMeta {
      * panel reloads.
      */
     kind?: 'project' | 'report';
+    /**
+     * Optional explicit Controller/Peripheral role override. Absence means "let
+     * `classifySessionRole` decide from the `controllerNames` list, a header
+     * `Project:` / displayName match against the workspace folder, and the
+     * `kind` classification". Set by the per-session "Set as Controller / Mark
+     * as Peripheral" context-menu action — never written automatically.
+     *
+     * Distinct from `kind`: `kind` answers project-vs-report (drives severity
+     * heuristics); `role` answers which session is the day's tree root that
+     * peripherals nest under. A `kind: 'report'` log is always a peripheral, but
+     * a `kind: 'project'` log (e.g. "Contacts Drift Advisor") is only a
+     * controller when it is the workspace's OWN session.
+     */
+    role?: 'controller' | 'peripheral';
 }
 
 // MetaMap type imported from session-metadata-io.ts
@@ -175,6 +189,14 @@ export class SessionMetadataStore {
     async setTags(logUri: vscode.Uri, tags: string[]): Promise<void> {
         const meta = await this.loadMetadata(logUri);
         meta.tags = tags;
+        await this.saveMetadata(logUri, meta);
+    }
+
+    /** Persist the Controller/Peripheral role override. `undefined` clears it so the log reverts to
+     *  automatic detection (workspace-folder match) on the next refresh. */
+    async setRole(logUri: vscode.Uri, role: 'controller' | 'peripheral' | undefined): Promise<void> {
+        const meta = await this.loadMetadata(logUri);
+        meta.role = role;
         await this.saveMetadata(logUri, meta);
     }
 

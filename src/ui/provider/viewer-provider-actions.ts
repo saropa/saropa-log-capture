@@ -12,9 +12,12 @@ import { getGitBlame } from "../../modules/git/git-blame";
 import { getCommitUrl } from "../../modules/integrations/providers/git-source-code";
 import {
     classifySessionKind,
+    classifySessionRole,
     compileReportPatterns,
     type SessionKind,
     type SessionKindInput,
+    type SessionRole,
+    type SessionRoleInput,
 } from "../../modules/session/session-kind-classifier";
 
 function isValidMtime(mtime: number | undefined): mtime is number {
@@ -60,6 +63,19 @@ export function buildClassifierInputs(
     return (input) => classifySessionKind(input, compiled, workspaceFolderName);
 }
 
+/** Pre-built role classifier callable. Like `ClassifyMeta`, the folder lookup + list happen once
+ *  per payload (via `buildRoleClassifier`), then it's called per row. */
+export type ClassifyRole = (input: SessionRoleInput) => SessionRole;
+
+/** Build a `classifyRole` callable from the user's controller-name list + the active workspace
+ *  folder name. The folder-name match is what makes the project's own log the day's Controller. */
+export function buildRoleClassifier(
+    controllerNames: readonly string[],
+    workspaceFolderName: string | undefined,
+): ClassifyRole {
+    return (input) => classifySessionRole(input, controllerNames, workspaceFolderName);
+}
+
 /** Options for recent-updates indicators (orange = since last viewed, red = last minute) and
  *  the newer-log banner / per-row dot (blue = newer than the panel's dismiss cursor). */
 export interface SessionListPayloadOptions {
@@ -72,6 +88,9 @@ export interface SessionListPayloadOptions {
     getDismissedAt?: () => number | undefined;
     /** Pre-built `classifySessionKind` callable. Omitted = every record falls back to 'project'. */
     classifyMeta?: ClassifyMeta;
+    /** Pre-built `classifySessionRole` callable. Omitted = every record falls back to 'peripheral'
+     *  (so with no controllers detected the day renders as a flat list — the safe degradation). */
+    classifyRole?: ClassifyRole;
 }
 
 /** Update "last viewed" timestamp for a log (used for "updated since last viewed" indicator). Best-effort per-uri; concurrent opens may race. */
@@ -90,6 +109,8 @@ type Meta = { filename: string; displayName?: string; adapter?: string; size: nu
     debugAdapterType?: string;
     /** Explicit kind override (user's manual decision) — the classifier reads this first. */
     kind?: SessionKind;
+    /** Explicit Controller/Peripheral override (user's manual decision) — the role classifier reads this first. */
+    role?: SessionRole;
 };
 
 /** Extra fields written onto session-group member records so the webview can render groupings. */
@@ -102,7 +123,7 @@ export async function buildSessionItemRecord(
     options?: SessionListPayloadOptions,
     extras?: GroupRenderExtras,
 ): Promise<Record<string, unknown>> {
-    const { getActiveLastWriteTime, getLastViewedAt, getDismissedAt, classifyMeta } = options ?? {};
+    const { getActiveLastWriteTime, getLastViewedAt, getDismissedAt, classifyMeta, classifyRole } = options ?? {};
     const uri = m.uri instanceof vscode.Uri ? m.uri : vscode.Uri.parse(m.uri.toString());
     const mtime = await resolveMtime(uri, m.mtime);
     const uriStr = m.uri.toString();
@@ -125,6 +146,12 @@ export async function buildSessionItemRecord(
     const kind: SessionKind = classifyMeta
         ? classifyMeta({ kind: m.kind, debugAdapterType: m.debugAdapterType, project: m.project, displayName: m.displayName })
         : 'project';
+    // Controller vs peripheral — the day's tree root that peripherals nest under. Defaults to
+    // peripheral when no classifier is supplied so the panel degrades to a flat list rather than
+    // promoting an arbitrary row to a controller root.
+    const role: SessionRole = classifyRole
+        ? classifyRole({ role: m.role, kind: m.kind, debugAdapterType: m.debugAdapterType, project: m.project, displayName: m.displayName })
+        : 'peripheral';
     return {
         filename: m.filename, displayName: m.displayName ?? m.filename, adapter: m.adapter,
         size: m.size, mtime, formattedMtime: formatMtime(mtime),
@@ -141,6 +168,7 @@ export async function buildSessionItemRecord(
         updatedInLastMinute,
         unreadSinceFocus,
         kind,
+        role,
         uriString: uriStr, trashed: m.trashed ?? false, tags: m.tags ?? [],
         autoTags: m.autoTags ?? [], correlationTags: m.correlationTags ?? [],
         hasPerformanceData: m.hasPerformanceData ?? false,

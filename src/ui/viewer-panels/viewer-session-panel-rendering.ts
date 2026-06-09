@@ -4,12 +4,13 @@
  * Includes pagination: only the current page of sessions is rendered; bar shows "Showing X–Y of Z" and Prev/Next when total > pageSize.
  */
 import { getSessionGroupRenderingScript } from './viewer-session-panel-rendering-groups';
-import { getReportsBucketAndBannerScript } from './viewer-session-panel-reports-bucket';
+import { getControllerGroupingScript } from './viewer-session-panel-controllers';
+import { getNewerLogBannerScript } from './viewer-session-panel-reports-bucket';
 import { getSessionStreamingScript } from './viewer-session-panel-rendering-stream';
 
 /** Get the session panel rendering script fragment. */
 export function getSessionRenderingScript(): string {
-    return getSessionGroupRenderingScript() + getReportsBucketAndBannerScript() + getSessionStreamingScript() + /* javascript */ `
+    return getSessionGroupRenderingScript() + getControllerGroupingScript() + getNewerLogBannerScript() + getSessionStreamingScript() + /* javascript */ `
     /* escapeAttr and escapeHtmlText are provided by the session panel IIFE bootstrap. */
     function renderSessionList(sessions) {
         if (sessionLoadingEl) sessionLoadingEl.style.display = 'none';
@@ -27,7 +28,10 @@ export function getSessionRenderingScript(): string {
         if (typeof rebuildSessionTagChips === 'function') rebuildSessionTagChips(sessions);
         markLatestByName(sessions, applySessionDisplayOptions);
         var active = sessions.filter(function(s) { return !s.trashed; });
-        if (sessionDisplayOptions.showLatestOnly) active = active.filter(function(s) { return !!s.isLatestOfName; });
+        /* "Latest only" no longer drops older rows here — that hid them with no trace. The day
+           grouping keeps the latest row visible and folds older namesakes behind a clickable
+           "+N older" badge (see visibleUnits / renderOlderBadge). markLatestByName above stamped
+           isLatestOfName / _olderCount that those use. */
         if (typeof filterSessionsByTags === 'function') active = filterSessionsByTags(active);
         /* Date range filter: keep sessions with mtime >= (now - range). */
         var range = sessionDisplayOptions.dateRange || 'all';
@@ -124,7 +128,9 @@ export function getSessionRenderingScript(): string {
         return list;
     }
 
-    function renderFlat(sessions, bnCounts) { return renderItemsWithGroupBlocks(sessions, bnCounts); }
+    /* Flat (day-headings-off) view still groups by controller and honors Latest-only collapse —
+       renderControllerList treats the whole list as one pseudo-day for the nearest-earlier attach. */
+    function renderFlat(sessions, bnCounts) { return renderControllerList(sessions, bnCounts); }
 
     function renderGrouped(sessions, bnCounts) {
         var groups = [], currentKey = '', dayRecords = [];
@@ -156,7 +162,8 @@ export function getSessionRenderingScript(): string {
         /* selectedSessionUris is defined in session panel IIFE; multi-select state for Ctrl-click. Update dots only for non-active logs. */
         var groupRole = s._groupRole || '';
         var groupClass = groupRole === 'primary' ? ' session-item-primary'
-            : groupRole === 'secondary' ? ' session-item-secondary' : '';
+            : groupRole === 'secondary' ? ' session-item-secondary'
+            : groupRole === 'controller' ? ' session-item-controller' : '';
         var cls = 'session-item' + groupClass + (s.isActive ? ' session-item-active' : '') + (!s.isActive && s.updatedInLastMinute ? ' session-item-updated-recent' : '') + (!s.isActive && s.updatedSinceViewed && !s.updatedInLastMinute ? ' session-item-updated-since-viewed' : '') + (typeof selectedSessionUris !== 'undefined' && selectedSessionUris[s.uriString] ? ' session-item-selected' : '');
         var rawName = s.displayName || s.filename;
         var bn = getSessionBasename(rawName);
@@ -186,7 +193,19 @@ export function getSessionRenderingScript(): string {
             groupChevron = '<span class="session-group-chevron" role="button" tabindex="0" title="' + chevTitle + '" aria-label="' + chevTitle + '"><span class="codicon ' + chev + '"></span></span>';
             var secCount = Math.max(0, (s.groupSize || 1) - 1);
             if (secCount > 0) groupCount = ' <span class="session-group-count">+' + secCount + '</span>';
+        } else if (groupRole === 'controller') {
+            /* Controller row: distinct chevron class (.session-controller-chevron) + collapse map so
+               its closest() target never collides with a peripheral that is itself a real
+               session-group nested in the children container. The "+N" badge counts attached
+               peripherals (children), not session-group siblings. */
+            var cChev = s._ctrlCollapsed ? 'codicon-chevron-right' : 'codicon-chevron-down';
+            var cTitle = s._ctrlCollapsed ? vt('viewer.session.group.expand') : vt('viewer.session.group.collapse');
+            groupChevron = '<span class="session-controller-chevron" role="button" tabindex="0" title="' + cTitle + '" aria-label="' + cTitle + '"><span class="codicon ' + cChev + '"></span></span>';
+            var childCount = Math.max(0, s._ctrlChildCount || 0);
+            if (childCount > 0) groupCount = ' <span class="session-group-count">+' + childCount + '</span>';
         }
+        /* "+N older" badge (Latest-only mode): keeps hidden older namesakes discoverable. */
+        var olderBadge = (typeof renderOlderBadge === 'function') ? renderOlderBadge(s) : '';
         return '<div class="' + cls + '" data-uri="' + escapeAttr(s.uriString || '') + '" data-filename="' + escapeAttr(s.filename || '') + '">'
             + groupChevron
             + '<span class="session-item-icon" title="' + iconTitle + '"><span class="codicon ' + icon + '"></span>' + updateDot + unreadDot + '</span>'
@@ -196,7 +215,7 @@ export function getSessionRenderingScript(): string {
                noise — though isLatestOfName itself stays set on the lone entry
                so the "Latest only" filter keeps it (a singleton IS, trivially,
                the latest of its name). */
-            + '<span class="session-item-name">' + escapeHtmlText(name) + ((s.isLatestOfName && s.hasNamesakes) ? ' <span class="session-latest">' + vt('viewer.session.latest') + '</span>' : '') + groupCount + perfBadge + '</span>'
+            + '<span class="session-item-name">' + escapeHtmlText(name) + ((s.isLatestOfName && s.hasNamesakes) ? ' <span class="session-latest">' + vt('viewer.session.latest') + '</span>' : '') + groupCount + olderBadge + perfBadge + '</span>'
             /* Skeleton rows (mtime-only, from the stat pass) carry _preview until their
                metadata loads — render the shimmer bar so the grouped structure is visible
                immediately while bodies are still being read. updateSessionBatchItems swaps

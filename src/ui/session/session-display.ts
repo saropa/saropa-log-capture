@@ -33,6 +33,8 @@ export interface SessionDisplayOptions {
     readonly collapsedDays?: Readonly<Record<string, boolean>>;
     /** Session groups the user has collapsed in the session list, keyed by groupId. */
     readonly collapsedGroups?: Readonly<Record<string, boolean>>;
+    /** Controller blocks the user has collapsed in the session list, keyed by "ctrl:<uriString>". */
+    readonly collapsedControllers?: Readonly<Record<string, boolean>>;
     /** Panel-wide default for the per-day Reports bucket. Seeded from
      *  `saropaLogCapture.reportsBucketDefault` at activation. */
     readonly reportsBucketState?: ReportsBucketState;
@@ -54,7 +56,10 @@ export const defaultDisplayOptions: SessionDisplayOptions = {
     normalizeNames: true,
     showDayHeadings: true,
     reverseSort: false,
-    showLatestOnly: false,
+    // ON by default: the Logs list shows the newest log per name and folds older runs behind a
+    // "+N older" badge (Controller-rooted tree), so a busy reports folder stays scannable while
+    // older logs stay one click away rather than vanishing.
+    showLatestOnly: true,
     dateRange: 'all',
     sessionListPageSize: 100,
     reportsBucketState: 'collapsed',
