@@ -27,12 +27,18 @@ export function getSqlQueryHistoryPanelHtml(): string {
     </div>
     <div class="sql-query-history-toolbar">
         <input id="sql-query-history-search" type="search" placeholder="${t('viewer.sqlHistory.search.placeholder')}" />
-        <label id="sql-query-history-cumulative-wrap" class="sql-qh-cumulative u-hidden" title="${t('viewer.sqlHistory.cumulative.title')}">
-            <input id="sql-query-history-cumulative" type="checkbox" />
-            <span>${t('viewer.sqlHistory.cumulative.label')}</span>
+        <label id="sql-query-history-cumulative-wrap" class="sql-qh-cumulative u-hidden" title="${t('viewer.sqlHistory.currentSessionOnly.title')}">
+            <input id="sql-query-history-current-session-only" type="checkbox" />
+            <span>${t('viewer.sqlHistory.currentSessionOnly.label')}</span>
         </label>
     </div>
     <div id="sql-query-history-drift-status" class="sql-query-history-drift-status u-hidden" role="status" aria-live="polite"></div>
+    <div id="sql-query-history-dashboard" class="sql-qh-dashboard u-hidden">
+        <div id="sql-query-history-stats" class="sql-qh-stats"></div>
+        <div id="sql-query-history-chart" class="sql-qh-chart"></div>
+        <div id="sql-query-history-issues" class="sql-qh-issues u-hidden"></div>
+        <div id="sql-query-history-lint" class="sql-qh-lint u-hidden"></div>
+    </div>
     <div id="sql-query-history-hint" class="sql-query-history-hint u-hidden" role="status" aria-live="polite"></div>
     <div id="sql-query-history-list" class="sql-query-history-list">
         <table class="sql-query-history-table">

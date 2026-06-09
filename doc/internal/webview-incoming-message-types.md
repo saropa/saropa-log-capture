@@ -44,6 +44,7 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `deleteFileBookmarks` | viewer-message-handler-session-ui.ts |
 | `editBookmarkNote` | viewer-message-handler-session-ui.ts |
 | `editLine` | viewer-message-handler-session-ui.ts |
+| `enableDriftLintPack` | viewer-message-handler-panels.ts |
 | `exclusionAdded` | viewer-message-handler-actions.ts |
 | `exclusionRemoved` | viewer-message-handler-actions.ts |
 | `explainRootCauseHypotheses` | viewer-message-handler-root-cause.ts |
@@ -54,6 +55,8 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `exportSignalsSummary` | viewer-message-handler-panels.ts |
 | `fetchCrashlyticsDetail` | viewer-message-handler-panels.ts |
 | `fetchCrashlyticsFilterIndex` | viewer-message-handler-panels.ts |
+| `fetchDriftDbIssues` | viewer-message-handler-panels.ts |
+| `fetchDriftLintViolations` | viewer-message-handler-panels.ts |
 | `findNavigateMatch` | viewer-message-handler-session-ui.ts |
 | `findStaticSourcesForSqlFingerprint` | viewer-message-handler-actions.ts |
 | `generateReport` | viewer-message-handler-actions.ts |
@@ -143,4 +146,4 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `viewerKeybindingRecordCancelled` | viewer-message-handler-actions.ts |
 | `viewerKeybindingRecorded` | viewer-message-handler-actions.ts |
 
-**Total:** 135 distinct types.
+**Total:** 138 distinct types.

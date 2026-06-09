@@ -126,6 +126,8 @@ window.addEventListener('message', function(event) {
             if (typeof window !== 'undefined') window.driftAdvisorDbPanelMeta = (msg.payload != null) ? msg.payload : null; break;
         case 'driftViewerHealth':
             if (typeof applyDriftViewerHealthFromHost === 'function') applyDriftViewerHealthFromHost(msg); break;
+        case 'driftDbIssues': if (typeof applyDriftDbIssuesFromHost === 'function') applyDriftDbIssuesFromHost(msg); break;
+        case 'driftLintViolations': if (typeof applyDriftLintViolationsFromHost === 'function') applyDriftLintViolationsFromHost(msg); break;
         case 'rootCauseHypothesesResult':
             if (typeof handleRootCauseHypothesesResult === 'function') handleRootCauseHypothesesResult(msg.hypotheses, msg.trends); break;
         case 'setRootCauseHintHostFields':
