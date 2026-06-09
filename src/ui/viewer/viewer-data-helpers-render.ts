@@ -17,28 +17,10 @@ import { VIEWER_RENDER_EMBED_RUN_SEPARATOR } from "./viewer-data-helpers-render-
 
 export function getViewerDataHelpersRender(): string {
     return /* javascript */ `
-/** Whether to show output channel badges on log lines (toggled from Decorations panel). */
-var showCategoryBadges = false;
-
-/** Channel badge colors keyed by DAP category. */
-var categoryBadgeColors = {
-    stdout: '#4ec9b0',
-    stderr: '#f48771',
-    'ai-bash': '#ce9178',
-    'ai-edit': '#d7ba7d',
-    logcat: '#9cdcfe',
-    'db-signal': '#c586c0',
-    system: '#b5cea8'
-};
-
-/** Return a small inline badge for the line's output channel, or empty string. */
-function getCategoryBadge(item) {
-    if (!showCategoryBadges || !item.category || item.category === 'console') return '';
-    var label = item.category;
-    var clr = categoryBadgeColors[label] || '#888';
-    return '<span class="category-badge" style="--cat-clr:' + clr + '" title="' + vt('viewer.deco.outputChannel', label) + '">' + label + '</span> ';
-}
-
+/* getCategoryBadge / categoryBadgeColors / showCategoryBadges moved to
+   viewer-deco-content.ts (plan 055) to keep this file under the 300-LOC cap.
+   They remain global in the shared webview scope, so renderItem still calls
+   getCategoryBadge() below. */
 function renderItem(item, idx, prevVis) {
     var idxAttr = ' data-idx="' + idx + '"';
     /* Structured file formatting (plan 051): when format toggle is on for
@@ -236,15 +218,10 @@ function renderItem(item, idx, prevVis) {
        chevron treatment via item.compressDupCount, peek-trigger rows via
        item._triggeredPeekKey — see getCounterAffordance for the priority
        order. No floating chips, no tag replacement, no overlay collisions. */
-    var deco = isArtCont ? '' : ((typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item, idx, item._hiddenAfter) : '');
-    /* Splice continuation badge into the trailing whitespace of the decoration
-       prefix (the prefix now ends '&nbsp;&nbsp;</span>' after the chevron was
-       removed). The badge then sits inside the .line-decoration span, just
-       before the closing tag, immediately right of the timestamp. */
-    if (contBadge && deco) {
-        deco = deco.replace('&nbsp;&nbsp;</span>', '&nbsp;' + contBadge + '&nbsp;</span>');
-        contBadge = '';
-    }
+    /* Grid column model (plan 055): emit one clipping .deco-cell per part. The
+       continuation badge no longer splices into the prefix — it renders at the
+       start of the .line-msg cell below. */
+    var deco = isArtCont ? '' : ((typeof getDecorationCells === 'function') ? getDecorationCells(item, idx, item._hiddenAfter) : '');
     var annHtml = (typeof getAnnotationHtml === 'function') ? getAnnotationHtml(idx) : '';
     var badge = '';
     if (typeof getErrorBadge === 'function' && item.errorClass) badge = getErrorBadge(item.errorClass);
@@ -307,8 +284,19 @@ function renderItem(item, idx, prevVis) {
         /* javascript */ `
     /* Dedup-fold affordance now lives in the line-number column (chevron
        wrapper in deco). No trailing chip after html anymore — see the
-       counter-row affordance in getDecorationPrefix. */
-    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + bannerCls + dbTsBurstCls + '"' + idxAttr + titleAttr + '>' + stackGutter + deco + contBadge + elapsed + badge + catBadge + html + '</div>' + annHtml;
+       counter-row affordance in buildDecoParts. */
+    var baseCls = 'line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + bannerCls + dbTsBurstCls;
+    var msgInner = contBadge + elapsed + badge + catBadge + html;
+    /* Art-block continuation rows (middle/end) keep the legacy flat structure:
+       they carry no decoration and have bespoke continuous-block CSS that the
+       gutter grid would disrupt. Not yet migrated to .cols (plan 055 phasing). */
+    if (isArtCont) {
+        return gap + '<div class="' + baseCls + '"' + idxAttr + titleAttr + '>' + stackGutter + deco + msgInner + '</div>' + annHtml;
+    }
+    /* Grid column model: each decoration datum is its own clipping cell; the
+       message is a separate .line-msg cell (min-width:0) so nothing can paint
+       over it. See viewer-styles-columns.ts. */
+    return gap + '<div class="' + baseCls + ' cols log-cols"' + idxAttr + titleAttr + '>' + deco + '<span class="line-msg">' + msgInner + '</span></div>' + annHtml;
 }
 `;
 }
