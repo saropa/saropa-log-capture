@@ -27,7 +27,10 @@ export function getFormatStyles(): string {
 .line.fmt-md-h1, .line.fmt-md-h2, .line.fmt-md-h3,
 .line.fmt-md-h4, .line.fmt-md-h5, .line.fmt-md-h6 {
     display: flex;
-    align-items: center;
+    /* flex-end: the row's extra height (mdHeadingRowHeight allocates ~0.6*fontEm of padding)
+       lands ABOVE the text, giving generous top spacing that detaches the heading from the
+       content above it while keeping it close to the section it introduces below. */
+    align-items: flex-end;
     overflow: hidden;
 }
 
@@ -46,13 +49,13 @@ export function getFormatStyles(): string {
    gutter; heading rows are flex, so the gutter is just the first flex item. ---- */
 .line.fmt-markdown.md-has-gutter { padding-left: 0; }
 .line.fmt-markdown.md-has-gutter:not([class*="fmt-md-h"]) {
-    padding-left: var(--md-gutter-width, 5.5em);
-    text-indent: calc(-1 * var(--md-gutter-width, 5.5em));
+    padding-left: var(--md-gutter-width, 6.75em);
+    text-indent: calc(-1 * var(--md-gutter-width, 6.75em));
 }
 .md-gutter {
     display: inline-block;
     flex: 0 0 auto;
-    width: var(--md-gutter-width, 5.5em);
+    width: var(--md-gutter-width, 6.75em);
     box-sizing: border-box;
     text-indent: 0;
     padding-right: 0.75em;
@@ -64,7 +67,8 @@ export function getFormatStyles(): string {
     vertical-align: top;
 }
 .md-gutter-num { display: inline-block; width: 3em; text-align: right; }
-.md-gutter-tag { display: inline-block; width: 2.2em; text-align: right; opacity: 0.75; }
+/* Wider so the structure tags (H1, code ‹›, table ▦, quote ❝, bullet •) are clearly readable. */
+.md-gutter-tag { display: inline-block; width: 3.5em; text-align: right; opacity: 0.8; }
 
 .md-htext {
     flex: 1 1 auto;
@@ -77,13 +81,15 @@ export function getFormatStyles(): string {
     line-height: 1.35;
 }
 
-/* Font sizes MUST match the per-level fontEm in calcItemHeight (heading row height is computed
-   from them); the line's own font-size stays at base so the pinned px height is exact. */
-.md-h1 .md-htext { font-size: 1.45em; }
-.md-h2 .md-htext { font-size: 1.3em; }
-.md-h3 .md-htext { font-size: 1.2em; }
-.md-h4 .md-htext { font-size: 1.05em; }
-.md-h5 .md-htext { font-size: 1.0em; }
+/* Font sizes MUST match the per-level fontEm in mdHeadingRowHeight (heading row height is
+   computed from them); the line's own font-size stays at base so the pinned px height is exact.
+   Per-level colors give scannable hierarchy; the minimap mirrors these (keep MM_HEADING_COLORS
+   in viewer-scrollbar-minimap-paint.ts in sync with these hex fallbacks). */
+.md-h1 .md-htext { font-size: 1.45em; color: var(--vscode-charts-blue, #4fc1ff); }
+.md-h2 .md-htext { font-size: 1.3em; color: var(--vscode-charts-green, #89d185); }
+.md-h3 .md-htext { font-size: 1.2em; color: var(--vscode-charts-purple, #b180d7); }
+.md-h4 .md-htext { font-size: 1.05em; color: var(--vscode-charts-orange, #d18616); }
+.md-h5 .md-htext { font-size: 1.0em; color: var(--vscode-charts-yellow, #cca700); }
 .md-h6 .md-htext { font-size: 1.0em; color: var(--vscode-descriptionForeground, #888); }
 
 /* Subtle, right-aligned collapse affordance. */
@@ -135,6 +141,22 @@ export function getFormatStyles(): string {
     text-decoration: underline;
     color: var(--vscode-textLink-foreground, #3794ff);
 }
+
+/* HTML comments render muted + italic (the conventional "this is a comment" treatment, theme-safe
+   across light/dark). A multi-line comment's opening line is a collapse toggle with a right chevron. */
+.md-comment {
+    color: var(--vscode-descriptionForeground, #6a9955);
+    font-style: italic;
+    opacity: 0.85;
+}
+.md-comment-open {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    cursor: pointer;
+}
+.md-comment-open .md-htext { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.md-comment-open:hover { opacity: 1; }
 
 /* Tables render as aligned columns: each cell is a fixed-ch-width inline-block (width set
    per column in buildMdTables), so columns line up in the monospace font. The header row is
