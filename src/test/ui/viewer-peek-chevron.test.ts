@@ -54,13 +54,14 @@ suite("Counter-row affordance — chevron right of the line number", () => {
         );
     });
 
-    test("stack branch fires on multi-frame stack-header rows themselves", () => {
-        // The chevron lives on the stack-header row's own line number,
-        // not on the previous log line. Clicking the line number OR the
+    test("stack branch fires on multi-frame stack-header rows AND owner log lines", () => {
+        // The chevron lives on the stack-header row's own line number — OR, when a
+        // log line was promoted to its trace's owner ("the message IS the toggle",
+        // item._stackOwner), on that message line. Clicking the line number or the
         // chevron toggles the trace via toggleStackGroup(item.groupId).
         assert.ok(
-            aff.includes("item.type === 'stack-header' && item.frameCount > 1"),
-            "stack branch must fire when the row IS a multi-frame stack-header",
+            aff.includes("(item.type === 'stack-header' || item._stackOwner) && item.frameCount > 1"),
+            "stack branch must fire when the row IS a multi-frame stack-header OR a stack owner line",
         );
         assert.ok(
             aff.includes("data-stack-gid"),
