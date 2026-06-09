@@ -116,12 +116,17 @@ suite('ViewerContextMenuHtml', () => {
         test('should place Copy Error, Copy DB cluster, and grouped separator immediately before Copy & Export', () => {
             const html = getContextMenuHtml();
             const ewIdx = html.indexOf('data-action="copy-error-warning-block"');
+            const jsonIdx = html.indexOf('data-action="copy-error-warning-json"');
             const dbIdx = html.indexOf('data-action="copy-db-cluster-block"');
             const sepIdx = html.indexOf('data-grouped-block-copy-separator');
             const copyExportIdx = html.indexOf('id="copy-export-submenu"');
-            assert.ok(ewIdx > 0 && dbIdx > ewIdx && sepIdx > dbIdx && copyExportIdx > sepIdx);
+            /* Order: Copy Error block → Copy Error JSON → Copy DB cluster → separator → Copy & Export. */
+            assert.ok(ewIdx > 0 && jsonIdx > ewIdx && dbIdx > jsonIdx && sepIdx > dbIdx && copyExportIdx > sepIdx);
             assert.ok(html.includes('data-ew-copy-label'));
             assert.ok(html.includes('data-ew-copy-icon'));
+            /* JSON variant shares the data-copy-error-warning-row gate and carries its own label hook. */
+            assert.ok(html.includes('data-ew-json-label'));
+            assert.ok((html.match(/data-copy-error-warning-row/g) || []).length === 2);
             assert.ok(html.includes('codicon-error'));
             assert.ok(html.includes('Copy DB cluster'));
         });

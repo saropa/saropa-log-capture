@@ -13,6 +13,7 @@
  */
 
 import * as vscode from "vscode";
+import * as path from "path";
 import { t } from "../../l10n";
 import * as helpers from "./viewer-provider-helpers";
 import { showBugReport } from '../panels/bug-report-panel';
@@ -146,6 +147,41 @@ function runCreateReportFile(msg: Record<string, unknown>, ctx: ViewerMessageCon
   }).catch(() => {});
 }
 
+/**
+ * Build the Copy Error JSON payload and write it to the clipboard.
+ *
+ * The webview can only supply the block text + session metadata; the absolute log path lives on the
+ * host (currentFileUri), so the JSON object is assembled here. The error block goes last because it is
+ * the long multi-line field — keeping logPath/level/line-range/session scannable at the top is what
+ * makes the paste useful to an analyst triaging from the file alone.
+ */
+function runCopyErrorWarningJson(msg: Record<string, unknown>, ctx: ViewerMessageContext): void {
+  const errorText = msgStr(msg, "errorText");
+  if (errorText.length === 0) {
+    vscode.window.showWarningMessage(t("msg.logCopyEmpty")).then(undefined, () => {});
+    return;
+  }
+  const uri = ctx.currentFileUri;
+  const payload = {
+    logPath: uri ? uri.fsPath : null,
+    logFile: uri ? path.basename(uri.fsPath) : null,
+    level: msgStr(msg, "level", "error"),
+    lineStart: typeof msg.lineStart === "number" ? msg.lineStart : null,
+    lineEnd: typeof msg.lineEnd === "number" ? msg.lineEnd : null,
+    timestamp: typeof msg.timestamp === "string" ? msg.timestamp : null,
+    session: (msg.sessionInfo as Record<string, string>) ?? {},
+    error: errorText,
+  };
+  const json = JSON.stringify(payload, null, 2);
+  void vscode.env.clipboard.writeText(json).then(
+    () => { vscode.window.setStatusBarMessage(t("msg.logCopyStatus", json.length), 2500); },
+    (err) => {
+      const detail = err instanceof Error ? err.message : String(err);
+      vscode.window.showErrorMessage(t("msg.logCopyFailed", detail)).then(undefined, () => {});
+    },
+  );
+}
+
 function handleCopyAndSettingsActions(type: string, msg: Record<string, unknown>, ctx: ViewerMessageContext): boolean {
   switch (type) {
     case "insertMarker": ctx.onMarkerRequest?.(); return true;
@@ -182,6 +218,7 @@ function handleCopyAndSettingsActions(type: string, msg: Record<string, unknown>
       return true;
     }
     case "copyWithSource": runCopyWithSource(msg); return true;
+    case "copyErrorWarningJson": runCopyErrorWarningJson(msg, ctx); return true;
     case "presetApplied":
       if (msg.name) { ctx.context.workspaceState.update("saropaLogCapture.lastUsedPresetName", msgStr(msg, "name")).then(undefined, () => {}); }
       return true;
