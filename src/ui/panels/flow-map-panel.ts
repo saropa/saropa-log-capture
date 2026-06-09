@@ -24,6 +24,8 @@ export interface FlowMapPanelParams {
     readonly logUri: vscode.Uri;
     /** Reveal a 1-based line in the open log viewer ("navigate to that part of the log"). */
     readonly revealLine: (line: number) => void;
+    /** Regenerate the report from the current log and re-render the panel. */
+    readonly refresh: () => void;
 }
 
 let current: vscode.WebviewPanel | undefined;
@@ -43,22 +45,41 @@ function esc(s: string): string {
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-/** Inline download glyph (no codicon font asset / no CSP font-src needed). */
-const SAVE_SVG = '<svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" '
-    + 'stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
-    + '<path d="M8 1.7v7.6"/><path d="M4.7 6.3 8 9.6l3.3-3.3"/><path d="M2.7 13.3h10.6"/></svg>';
+// Inline glyphs (no codicon font asset / no CSP font-src needed).
+const ICON = 'width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" '
+    + 'stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
+const SAVE_SVG = `<svg ${ICON}><path d="M8 1.7v7.6"/><path d="M4.7 6.3 8 9.6l3.3-3.3"/><path d="M2.7 13.3h10.6"/></svg>`;
+const REFRESH_SVG = `<svg ${ICON}><path d="M13.4 8a5.4 5.4 0 1 1-1.5-3.8"/><path d="M13.6 2.6v3h-3"/></svg>`;
+const LOG_SVG = `<svg ${ICON}><path d="M4 1.6h5l3 3v9.8H4z"/><path d="M9 1.6v3h3"/><path d="M6 8h4M6 10.5h4"/></svg>`;
 
-/** Full HTML document: CSP, styles, top bar (pills + save), report body, script. */
+/** One icon button for the top bar. */
+function iconButton(id: string, label: string, svg: string): string {
+    const t9 = esc(label);
+    return `<button type="button" id="${id}" class="icon-btn" title="${t9}" aria-label="${t9}">${svg}</button>`;
+}
+
+/** The report title, shown first (before the pill/action bar). */
+function titleHtml(params: FlowMapPanelParams): string {
+    const project = params.parsed.header.project;
+    const suffix = project ? ` — ${esc(project)}` : '';
+    return `<h1 class="report-title">🧭 ${esc(t('flowMap.panelTitle'))}${suffix}</h1>`;
+}
+
+/** Full HTML document: CSP, styles, title, top bar (pills + actions), report body, script. */
 function buildHtml(params: FlowMapPanelParams, nonce: string): string {
     const body = buildFlowMapBody(params.parsed, params.graph);
     const pills = statPillsHtml(params.parsed, params.graph);
     const csp = `default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';`;
-    const saveLabel = esc(t('flowMap.saveMarkdownBtn'));
+    const actions = '<div class="topbar-actions">'
+        + iconButton('showlog-fm', t('flowMap.showLogBtn'), LOG_SVG)
+        + iconButton('refresh-fm', t('flowMap.refreshBtn'), REFRESH_SVG)
+        + iconButton('save-md', t('flowMap.saveMarkdownBtn'), SAVE_SVG)
+        + '</div>';
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="${csp}">
 ${flowMapStyles(nonce)}</head><body>
-<div class="topbar"><div class="pills">${pills}</div>
-<button type="button" id="save-md" class="save-icon" title="${saveLabel}" aria-label="${saveLabel}">${SAVE_SVG}</button></div>
+${titleHtml(params)}
+<div class="topbar"><div class="pills">${pills}</div>${actions}</div>
 ${body}
 ${flowMapScript(nonce)}</body></html>`;
 }
@@ -111,6 +132,11 @@ function handleMessage(msg: { type?: string; file?: string; line?: number }): vo
     if (!p) { return; }
     if (msg.type === 'saveMarkdown') {
         void saveMarkdown(p);
+    } else if (msg.type === 'refreshFlowMap') {
+        p.refresh();
+    } else if (msg.type === 'showFlowLog') {
+        // The report's source log is the open viewer log; reveal it at the top.
+        p.revealLine(1);
     } else if (msg.type === 'openFlowMapSource' && msg.file) {
         void openSource(p.parsed.header.projectRoot, msg.file, msg.line ?? 1);
     } else if (msg.type === 'revealLogLine' && msg.line) {
