@@ -10,6 +10,7 @@
 
 import * as vscode from 'vscode';
 import { t } from '../../l10n';
+import { getLogDirectoryUri } from '../../modules/config/config';
 import { logExtensionError } from '../../modules/misc/extension-logger';
 
 /** Hard ceiling on a downloaded log. A reports archive can be huge, but a single log streamed over
@@ -68,11 +69,16 @@ async function fetchBounded(url: string): Promise<Uint8Array> {
     }
 }
 
-/** Write the downloaded bytes under globalStorage/downloaded/<sanitized-name> and return its URI. */
+/** Write the downloaded bytes into the project's reports folder so the file lands alongside the
+ *  user's other logs (and shows up in the Logs list). Falls back to globalStorage when no workspace
+ *  folder is open. Returns the written file's URI. */
 async function stageDownload(
     url: string, bytes: Uint8Array, context: vscode.ExtensionContext,
 ): Promise<vscode.Uri> {
-    const dir = vscode.Uri.joinPath(context.globalStorageUri, 'downloaded');
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    const dir = folder
+        ? getLogDirectoryUri(folder)
+        : vscode.Uri.joinPath(context.globalStorageUri, 'downloaded');
     await vscode.workspace.fs.createDirectory(dir);
     const target = vscode.Uri.joinPath(dir, fileNameFromUrl(url));
     await vscode.workspace.fs.writeFile(target, bytes);

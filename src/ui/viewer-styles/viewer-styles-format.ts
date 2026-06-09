@@ -32,14 +32,15 @@ export function getFormatStyles(): string {
 .line.fmt-md-h1, .line.fmt-md-h2, .line.fmt-md-h3,
 .line.fmt-md-h4, .line.fmt-md-h5, .line.fmt-md-h6 {
     display: flex;
-    align-items: flex-start;
-    overflow: hidden;
-    /* Explicit top padding (inside the border-box height that mdHeadingRowHeight allocates for
-       it) gives each heading clear breathing room above — robust, not dependent on flex free
-       space. The bottom pad keeps the heading just off the section content it introduces. */
+    /* CENTER, not flex-start: mdHeadingRowHeight allocates a row strictly TALLER than the glyph
+       box, and centering splits that slack top+bottom. flex-start put all slack at the bottom and
+       still clipped descenders on sub-pixel rounding (bugs/markdown_render_spacing_attempts.md #3). */
+    align-items: center;
+    /* NO vertical overflow:hidden here — that is exactly what cropped the heading glyphs. Horizontal
+       truncation/ellipsis lives on .md-htext instead, so the row never clips the text vertically. */
     box-sizing: border-box;
-    padding-top: 0.85em;
-    padding-bottom: 0.2em;
+    padding-top: 0.6em;
+    padding-bottom: 0.25em;
 }
 
 .md-heading {
@@ -85,9 +86,10 @@ export function getFormatStyles(): string {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    /* Tight, fixed line height so the larger heading font's line box stays within the row that
-       calcItemHeight allocated (fontEm * 1.5 * base). Must match the 1.35 factor used there. */
-    line-height: 1.35;
+    /* Line height generous enough to clear the monospace glyph cap+descender at heading sizes so
+       overflow:hidden (horizontal ellipsis) never crops the glyphs vertically. MUST match the 1.5
+       factor in mdHeadingRowHeight (the row height is derived from it). */
+    line-height: 1.5;
 }
 
 /* Font sizes MUST match the per-level fontEm in mdHeadingRowHeight (heading row height is
