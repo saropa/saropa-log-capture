@@ -95,13 +95,13 @@ export const stringsViewerC: Record<string, string> = {
     'viewer.sqlHistory.copy.title': 'Copy visible rows as JSON',
     'viewer.sqlHistory.close.title': 'Close',
     'viewer.sqlHistory.search.placeholder': 'Filter by fingerprint or preview…',
-    'viewer.sqlHistory.cumulative.title': 'Aggregate SQL fingerprints across every sidebar log (excludes the active log to avoid double-counting). Cross-log rows show the fingerprint only — readable SQL text comes in Step 2.',
-    'viewer.sqlHistory.cumulative.label': 'Cumulative across logs',
+    'viewer.sqlHistory.currentSessionOnly.title': 'Show only SQL fingerprints from the active log. Off (default) merges fingerprints aggregated across every sidebar log so the panel stays useful even when the active session has no SQL.',
+    'viewer.sqlHistory.currentSessionOnly.label': 'Current session only',
     'viewer.sqlHistory.col.count': 'Count',
     'viewer.sqlHistory.col.sql': 'SQL',
     'viewer.sqlHistory.col.slow': 'Slow',
     'viewer.sqlHistory.col.slow.title': 'Slowest duration in milliseconds',
-    'viewer.sqlHistory.empty': 'No parsed SQL fingerprints in this session yet.',
+    'viewer.sqlHistory.empty': 'No parsed SQL fingerprints in any captured log yet.',
 
     // ── Options panel — host HTML (viewer-options-panel-html.ts) ──────
     // Numeric select values (0.5s, 1s, …; px widths) stay literal as symbolic units.

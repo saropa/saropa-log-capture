@@ -15,9 +15,9 @@ import { getSqlQueryHistoryRuntimeScript } from '../../ui/viewer-stack-tags/view
 
 interface CumulativeSandbox {
     sqlQueryHistoryCumulative: unknown;
-    sqlQueryHistoryCumulativeEnabled: boolean;
+    sqlQueryHistoryCurrentSessionOnly: boolean;
     setSqlQueryHistoryCumulativeFromHost: (payload: unknown) => void;
-    setSqlQueryHistoryCumulativeEnabled: (on: boolean) => void;
+    setSqlQueryHistoryCurrentSessionOnly: (on: boolean) => void;
     hasSqlQueryHistoryCumulativeData: () => boolean;
 }
 
@@ -33,9 +33,9 @@ suite('viewer SQL history cumulative VM (DB_17 Step 1)', () => {
     test('runtime defines all cumulative helpers even without vscodeApi', () => {
         const ctx = loadCumulativeRuntime();
         assert.strictEqual(typeof ctx.setSqlQueryHistoryCumulativeFromHost, 'function');
-        assert.strictEqual(typeof ctx.setSqlQueryHistoryCumulativeEnabled, 'function');
+        assert.strictEqual(typeof ctx.setSqlQueryHistoryCurrentSessionOnly, 'function');
         assert.strictEqual(typeof ctx.hasSqlQueryHistoryCumulativeData, 'function');
-        assert.strictEqual(ctx.sqlQueryHistoryCumulativeEnabled, false, 'default off');
+        assert.strictEqual(ctx.sqlQueryHistoryCurrentSessionOnly, false, 'default off — cumulative merged by default');
         assert.strictEqual(ctx.sqlQueryHistoryCumulative, null, 'default null payload');
     });
 
@@ -56,12 +56,12 @@ suite('viewer SQL history cumulative VM (DB_17 Step 1)', () => {
         assert.strictEqual(ctx.hasSqlQueryHistoryCumulativeData(), true);
     });
 
-    test('setSqlQueryHistoryCumulativeEnabled toggles the in-memory flag (state persistence is best-effort)', () => {
+    test('setSqlQueryHistoryCurrentSessionOnly toggles the in-memory flag (state persistence is best-effort)', () => {
         const ctx = loadCumulativeRuntime();
-        ctx.setSqlQueryHistoryCumulativeEnabled(true);
-        assert.strictEqual(ctx.sqlQueryHistoryCumulativeEnabled, true);
-        ctx.setSqlQueryHistoryCumulativeEnabled(false);
-        assert.strictEqual(ctx.sqlQueryHistoryCumulativeEnabled, false);
+        ctx.setSqlQueryHistoryCurrentSessionOnly(true);
+        assert.strictEqual(ctx.sqlQueryHistoryCurrentSessionOnly, true);
+        ctx.setSqlQueryHistoryCurrentSessionOnly(false);
+        assert.strictEqual(ctx.sqlQueryHistoryCurrentSessionOnly, false);
     });
 
     test('null payload clears prior cumulative data (host signals "no other logs contribute")', () => {
