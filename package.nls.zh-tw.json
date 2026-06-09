@@ -47,6 +47,7 @@
   "command.openQualityReport.title": "Saropa Log Capture: Open quality report",
   "command.openSession.title": "開啟記錄檔",
   "command.openLogFile.title": "Saropa Log Capture: 開啟記錄檔…",
+  "command.openLogFromUrl.title": "Saropa Log Capture: 從 URL 開啟記錄檔…",
   "command.openSqlQueryHistory.title": "Saropa Log Capture: Open SQL Query History",
   "command.openTailedFile.title": "Saropa Log Capture：開啟尾隨檔案",
   "command.openWalkthrough.title": "Saropa Log Capture：開始使用",
