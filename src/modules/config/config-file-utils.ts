@@ -8,6 +8,15 @@ export function isTrackedFile(name: string, fileTypes: readonly string[]): boole
   return fileTypes.some(ext => name.endsWith(ext));
 }
 
+/** True when the file is line-oriented log content worth severity-scanning (.log/.txt).
+ *  Report sidecars (.json/.csv/.html/.jsonl/.md) carry no log-style severities — running
+ *  classifyLevel over them reads hundreds of MB to classify nothing (a reports archive holds
+ *  multi-MB JSON/CSV), so the deferred severity scan skips them. Tracked-for-listing is a
+ *  separate question (isTrackedFile) — reports still appear in the list, just without badges. */
+export function isLogContentFile(name: string): boolean {
+  return /\.(log|txt)$/i.test(name);
+}
+
 const maxScanDepth = 10;
 
 /** List tracked files, optionally recursing into subdirectories. Returns relative paths. */
