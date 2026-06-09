@@ -170,8 +170,8 @@ export function buildFlowMapBody(parsed: ParsedLog, graph: FlowGraph): string {
         + section('sec-dwell', '⏱️ Screen dwell', dwellTableHtml(graph))
         + section('sec-perf', '📊 Performance · warnings · errors', issueTableHtml(parsed))
         + '</div>';
+    // The <h1> title is rendered by the panel (above the pill/action bar), so the body starts at facts.
     return [
-        '<h1>🧭 Saropa Flow Map — ' + esc(parsed.header.project ?? 'session') + '</h1>',
         factsHtml(parsed),
         tocHtml(),
         '<div class="report-row">' + diagramCol + detailCol + '</div>',
