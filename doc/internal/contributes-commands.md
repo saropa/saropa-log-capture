@@ -39,6 +39,7 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.explainRootCauseHypotheses` | %command.explainRootCauseHypotheses.title% |  |
 | `saropaLogCapture.exportCollection` | %command.exportCollection.title% |  |
 | `saropaLogCapture.exportCsv` | %command.exportCsv.title% |  |
+| `saropaLogCapture.exportFlowMap` | %command.exportFlowMap.title% |  |
 | `saropaLogCapture.exportGitHubIssue` | %command.exportGitHubIssue.title% |  |
 | `saropaLogCapture.exportHtml` | %command.exportHtml.title% |  |
 | `saropaLogCapture.exportHtmlInteractive` | %command.exportHtmlInteractive.title% |  |
@@ -59,6 +60,7 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.openCollection` | %command.openCollection.title% |  |
 | `saropaLogCapture.openExternalLogsForSession` | %command.openExternalLogsForSession.title% |  |
 | `saropaLogCapture.openFolder` | %command.openFolder.title% |  |
+| `saropaLogCapture.openLogFile` | %command.openLogFile.title% |  |
 | `saropaLogCapture.openQualityReport` | %command.openQualityReport.title% |  |
 | `saropaLogCapture.openSession` | %command.openSession.title% |  |
 | `saropaLogCapture.openSessionGroup` | Saropa Log Capture: Open Session Group (Merged) |  |
@@ -100,4 +102,4 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.trashSession` | %command.trashSession.title% |  |
 | `saropaLogCapture.ungroupSession` | Saropa Log Capture: Ungroup Session |  |
 
-**Total:** 93 commands.
+**Total:** 95 commands.

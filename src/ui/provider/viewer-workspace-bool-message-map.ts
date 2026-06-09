@@ -19,3 +19,19 @@ export const SAROPA_BOOL_SETTING_BY_MSG_TYPE: Readonly<Record<string, string>> =
      local and reset to the workspace default on every reload. */
   setShowElapsed: "showElapsedTime",
 };
+
+/**
+ * Maps webview `postMessage` `type` strings to `saropaLogCapture.*` boolean keys that must be
+ * written at the USER (Global) configuration level, not Workspace. The viewer's per-line Columns
+ * (line numbers, timestamp, session elapsed, source tag) are a personal display preference the
+ * user wants to follow them across projects: toggling a column in the viewer updates the user
+ * default so every newly opened log shows the chosen layout. The host handler picks the Global
+ * target for these (see viewer-message-handler-session-ui). Defaults are baked into the webview
+ * at build time from these same settings (viewer-deco-settings.ts).
+ */
+export const SAROPA_GLOBAL_BOOL_SETTING_BY_MSG_TYPE: Readonly<Record<string, string>> = {
+  setViewerColumnLineNumbers: "viewerColumnLineNumbers",
+  setViewerColumnTimestamp: "viewerColumnTimestamp",
+  setViewerColumnSessionElapsed: "viewerColumnSessionElapsed",
+  setViewerColumnParsedTag: "viewerColumnParsedTag",
+};

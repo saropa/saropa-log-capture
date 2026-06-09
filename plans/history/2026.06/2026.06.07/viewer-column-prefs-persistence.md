@@ -4,6 +4,8 @@
 
 The log viewer's Columns submenu (line numbers, timestamp, session elapsed, tag) toggled webview globals that reset to their compiled-in defaults on every viewer reload / VS Code restart. The user's column layout never stuck. This task makes those four choices durable.
 
+> **SUPERSEDED (2026-06-09).** The first approach below (view-local `getState/setState`) did not meet the requirement: a newly opened log builds a fresh webview that ignores per-instance state, so new logs still showed the compiled-in defaults. The user clarified they want a **user setting** that new logs default to. Reworked as `saropaLogCapture.viewerColumn*` settings (baked into each freshly-built viewer; toggles write back at User/Global scope). See the **Update (2026-06-09)** section at the end of this file. The getState module (`viewer-deco-column-prefs.ts`) was removed.
+
 ## Finish Report (2026-06-07)
 
 This work will be reviewed by another AI.
@@ -53,3 +55,26 @@ Persistence uses view-local webview `getState/setState` — the same mechanism a
 ### Out of scope / untouched
 
 The working tree contains a parallel context-menu workstream (`viewer-context-menu*.ts`, `viewer-context-menu-position.ts`, `repro-affordance.test.ts`, `bugs/context-menu-submenu-offscreen_attempts.md`). None of it is mine; it is excluded from this commit and its tests were not run or judged.
+
+---
+
+## Update (2026-06-09) — reworked as a user setting
+
+**Triggered by:** user feedback — "its not working. this needs to be a user setting so that NEW logs show the columns i default to."
+
+The 2026-06-07 `getState/setState` approach is view-instance-local; a newly opened log builds a fresh webview from `buildViewerHtml` whose deco vars are hardcoded, so new logs ignored the saved choice. Replaced with real configuration.
+
+### Design
+- Four user settings: `saropaLogCapture.viewerColumnLineNumbers` / `viewerColumnTimestamp` / `viewerColumnSessionElapsed` / `viewerColumnParsedTag` (defaults on/on/off/on — the historical webview defaults).
+- **Read path (defaults for new logs):** `getDecoSettingsScript(columns)` interpolates the config booleans into the `var decoShow* = …` initializers. The viewer HTML is built per view creation from `getConfig()` (`log-viewer-provider-setup.ts`, `pop-out-panel.ts`), so every newly built viewer opens with the user's layout. Threaded via `ViewerHtmlOptions.viewerColumns` → `ViewerScriptsOptions.viewerColumns`.
+- **Write path (toggle saves the default):** each `toggle*()` and the deco-panel `onDecoOptionChange()` call `postColumnPref('setViewerColumn*', value)`; the host routes those message types via the new `SAROPA_GLOBAL_BOOL_SETTING_BY_MSG_TYPE` map and writes `ConfigurationTarget.Global` (User scope) so the layout follows the user across projects.
+- Removed `viewer-deco-column-prefs.ts` (the getState module) and its script-tag wiring.
+
+### Files (2026-06-09 rework)
+package.json (+4 settings); package.nls*.json ×11 (+8 keys, English); config-types.ts, config.ts (+4 fields/readers); viewer-content.ts, viewer-content-scripts.ts (thread `viewerColumns`, `ViewerColumnDefaults` type); viewer-deco-settings.ts (baked initializers + `postColumnPref` + toggles); viewer-deco-settings-sync.ts (onDecoOptionChange posts 3); viewer-workspace-bool-message-map.ts (+Global map); viewer-message-handler-session-ui.ts (Global-target branch); log-viewer-provider-setup.ts, pop-out-panel.ts (pass cfg columns); doc/internal/webview-incoming-message-types.md (regenerated); src/test/ui/viewer-column-prefs-persistence.test.ts (rewritten, 5 passing); CHANGELOG.md. Deleted: viewer-deco-column-prefs.ts.
+
+### Gates
+check-types clean; eslint clean on all changed files; `npm run compile` green (NLS 476 keys aligned ×11, webview catalog regenerated + verified, esbuild, dist-size); tests: column-prefs 5, deco master-switch 17, workspace-bool 2 — all passing.
+
+### Not committed in this pass
+The working tree concurrently holds an unrelated in-progress workstream (flow-map / drop-to-open: `src/modules/flow-map/`, `viewer-drop-to-open.ts`, plus toolbar/command/strings edits) that shares `viewer-content-scripts.ts` (a parallel `getDropToOpenScript` import referencing an untracked file). Committing my set would either bundle that unfinished feature or break the build. Left uncommitted pending the user's call on how to isolate.

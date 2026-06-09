@@ -101,9 +101,12 @@ function onDecoOptionChange() {
     stackDefaultState = sv === 'collapsed' ? true : (sv === 'preview' ? 'preview' : false);
     stackPreviewCount = stackPreview ? Math.max(1, Math.min(20, parseInt(stackPreview.value, 10) || 3)) : 3;
     // The deco panel's counter / timestamp / session-elapsed checkboxes drive the same
-    // Columns toggles as the context menu, so persist here too — otherwise a change made
-    // in the panel would not survive a reload while the same change via the menu would.
-    persistColumnPrefs();
+    // Columns settings as the context menu, so persist here too — otherwise a change made
+    // in the panel would not become the default for new logs while the menu's would.
+    // (parsedTag has no panel checkbox, so it is not posted here.)
+    postColumnPref('setViewerColumnLineNumbers', decoShowCounter);
+    postColumnPref('setViewerColumnTimestamp', decoShowTimestamp);
+    postColumnPref('setViewerColumnSessionElapsed', decoShowSessionElapsed);
     if (typeof updateDecoButton === 'function') updateDecoButton();
     renderViewport(true);
 }

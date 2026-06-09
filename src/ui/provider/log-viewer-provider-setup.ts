@@ -59,6 +59,12 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
     viewerSlowBurstThresholds: cfg.viewerSlowBurstThresholds,
     signalSlowOpThresholdMs: cfg.signalSlowOpThresholdMs,
     accessibilityShowCollapseDividerLabels: cfg.accessibilityShowCollapseDividerLabels,
+    viewerColumns: {
+      lineNumbers: cfg.viewerColumnLineNumbers,
+      timestamp: cfg.viewerColumnTimestamp,
+      sessionElapsed: cfg.viewerColumnSessionElapsed,
+      parsedTag: cfg.viewerColumnParsedTag,
+    },
   });
   webviewView.webview.onDidReceiveMessage((msg: Record<string, unknown>) => target.handleMessage(msg));
   target.startBatchTimer();

@@ -1,66 +1,72 @@
 /**
  * Column-visibility persistence tests.
  *
- * The four Columns toggles (line numbers, timestamp, session elapsed, tag) must
- * survive a viewer reload / VS Code restart. They persist to webview state via
- * vscodeApi.getState()/setState() — the same view-local mechanism used by the
- * icon-bar and filter-tab label prefs — rather than a workspace setting, because
- * they are per-view display choices, not project config.
+ * The four Columns toggles (line numbers, timestamp, session elapsed, tag) are backed by
+ * user settings (`saropaLogCapture.viewerColumn*`): their initial state is baked into each
+ * freshly-built viewer from config, and toggling a column writes the setting back at User
+ * (Global) scope so newly opened logs default to the chosen layout.
  *
- * The persist/restore helpers live in viewer-deco-column-prefs.ts; the toggle
- * functions that call them live in viewer-deco-settings.ts. These tests pin both
- * halves: the helpers exist and use webview state, restore runs at init (so the
- * opening paint reflects the saved choice), and every path that flips a Columns
- * toggle persists afterwards.
+ * These tests pin both halves: the baked defaults (script init reads injected values) and
+ * the write path (each toggle + the deco panel post the matching setViewerColumn* message),
+ * plus the host map that routes those messages to Global-scope config keys.
  */
 import * as assert from 'node:assert';
 import { getDecoSettingsScript } from '../../ui/viewer-decorations/viewer-deco-settings';
-import { getColumnPrefsScript } from '../../ui/viewer-decorations/viewer-deco-column-prefs';
 import { getDecoSettingsSyncScript } from '../../ui/viewer-decorations/viewer-deco-settings-sync';
+import { SAROPA_GLOBAL_BOOL_SETTING_BY_MSG_TYPE } from '../../ui/provider/viewer-workspace-bool-message-map';
 
 suite('ViewerColumnPrefsPersistence', () => {
-    const settings = getDecoSettingsScript();
-    const prefs = getColumnPrefsScript();
-    const sync = getDecoSettingsSyncScript();
-
-    test('defines persistColumnPrefs and restoreColumnPrefs using webview state', () => {
-        assert.ok(prefs.includes('function persistColumnPrefs()'), 'persist helper must exist');
-        assert.ok(prefs.includes('function restoreColumnPrefs()'), 'restore helper must exist');
-        assert.ok(/persistColumnPrefs[\s\S]*?api\.setState/.test(prefs), 'persist must write to setState');
-        assert.ok(/restoreColumnPrefs[\s\S]*?api\.getState/.test(prefs), 'restore must read from getState');
+    test('column defaults are baked into the script from injected config', () => {
+        // Non-default values must appear verbatim in the var initializers.
+        const script = getDecoSettingsScript({
+            lineNumbers: false,
+            timestamp: false,
+            sessionElapsed: true,
+            parsedTag: false,
+        });
+        assert.ok(/var decoShowCounter = false;/.test(script), 'lineNumbers default baked');
+        assert.ok(/var decoShowTimestamp = false;/.test(script), 'timestamp default baked');
+        assert.ok(/var decoShowSessionElapsed = true;/.test(script), 'sessionElapsed default baked');
+        assert.ok(/var decoShowParsedTag = false;/.test(script), 'parsedTag default baked');
     });
 
-    test('persists all four Columns toggles under columnPrefs', () => {
-        const block = prefs.slice(
-            prefs.indexOf('function persistColumnPrefs()'),
-            prefs.indexOf('function restoreColumnPrefs()'),
-        );
-        assert.ok(block.includes('st.columnPrefs'), 'must store under columnPrefs key');
-        for (const field of ['decoShowCounter', 'decoShowTimestamp', 'decoShowSessionElapsed', 'decoShowParsedTag']) {
-            assert.ok(block.includes(field), `persist must include ${field}`);
-        }
+    test('omitting columns falls back to historical hardcoded defaults', () => {
+        const script = getDecoSettingsScript();
+        assert.ok(/var decoShowCounter = true;/.test(script));
+        assert.ok(/var decoShowTimestamp = true;/.test(script));
+        assert.ok(/var decoShowSessionElapsed = false;/.test(script));
+        assert.ok(/var decoShowParsedTag = true;/.test(script));
     });
 
-    test('restore runs once at init, before any render', () => {
-        // The bare call (not inside a function body) makes restore execute during the
-        // initial synchronous script eval, ahead of the first renderViewport.
-        assert.ok(/\nrestoreColumnPrefs\(\);/.test(prefs), 'restoreColumnPrefs() must be called at top level');
-    });
-
-    test('every Columns toggle persists after flipping its variable', () => {
-        for (const fn of ['toggleLineNumbers', 'toggleTimestamp', 'toggleSessionElapsed', 'toggleParsedTag']) {
-            const start = settings.indexOf(`function ${fn}()`);
+    test('every Columns toggle posts its setViewerColumn* setting', () => {
+        const script = getDecoSettingsScript();
+        const cases: Array<[string, string]> = [
+            ['toggleLineNumbers', 'setViewerColumnLineNumbers'],
+            ['toggleTimestamp', 'setViewerColumnTimestamp'],
+            ['toggleSessionElapsed', 'setViewerColumnSessionElapsed'],
+            ['toggleParsedTag', 'setViewerColumnParsedTag'],
+        ];
+        for (const [fn, msg] of cases) {
+            const start = script.indexOf(`function ${fn}()`);
             assert.ok(start >= 0, `${fn} must exist`);
-            const body = settings.slice(start, settings.indexOf('}', start));
-            assert.ok(body.includes('persistColumnPrefs()'), `${fn} must call persistColumnPrefs()`);
+            const body = script.slice(start, script.indexOf('}', start));
+            assert.ok(body.includes(`postColumnPref('${msg}'`), `${fn} must post ${msg}`);
         }
     });
 
-    test('onDecoOptionChange persists (panel checkboxes drive the same toggles)', () => {
-        // onDecoOptionChange lives in the extracted sync module, not the main settings script.
+    test('deco panel (onDecoOptionChange) posts the three columns it controls', () => {
+        const sync = getDecoSettingsSyncScript();
         const start = sync.indexOf('function onDecoOptionChange()');
-        assert.ok(start >= 0, 'onDecoOptionChange must exist');
         const body = sync.slice(start);
-        assert.ok(body.includes('persistColumnPrefs()'), 'onDecoOptionChange must call persistColumnPrefs()');
+        assert.ok(body.includes("postColumnPref('setViewerColumnLineNumbers'"));
+        assert.ok(body.includes("postColumnPref('setViewerColumnTimestamp'"));
+        assert.ok(body.includes("postColumnPref('setViewerColumnSessionElapsed'"));
+    });
+
+    test('host map routes all four messages to Global-scope config keys', () => {
+        assert.strictEqual(SAROPA_GLOBAL_BOOL_SETTING_BY_MSG_TYPE.setViewerColumnLineNumbers, 'viewerColumnLineNumbers');
+        assert.strictEqual(SAROPA_GLOBAL_BOOL_SETTING_BY_MSG_TYPE.setViewerColumnTimestamp, 'viewerColumnTimestamp');
+        assert.strictEqual(SAROPA_GLOBAL_BOOL_SETTING_BY_MSG_TYPE.setViewerColumnSessionElapsed, 'viewerColumnSessionElapsed');
+        assert.strictEqual(SAROPA_GLOBAL_BOOL_SETTING_BY_MSG_TYPE.setViewerColumnParsedTag, 'viewerColumnParsedTag');
     });
 });

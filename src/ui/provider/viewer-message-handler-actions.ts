@@ -271,6 +271,9 @@ function handleCopyAndSettingsActions(type: string, msg: Record<string, unknown>
       if (ctx.currentFileUri) { showBugReport(msgStr(msg, "text"), safeLineIndex(msg.lineIndex, 0), ctx.currentFileUri, ctx.context).catch(() => {}); }
       return true;
     case "createReportFile": runCreateReportFile(msg, ctx); return true;
+    case "exportFlowMap":
+      vscode.commands.executeCommand("saropaLogCapture.exportFlowMap").then(undefined, () => {});
+      return true;
     case "explainWithAi": runExplainWithAi(msg, ctx); return true;
     case "findStaticSourcesForSqlFingerprint":
       void runFindStaticSourcesForSqlFingerprint(msgStr(msg, "fingerprint"));

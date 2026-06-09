@@ -121,21 +121,39 @@ export function getDecoSettingsHtml(): string {
 </div>`;
 }
 
+/**
+ * Default visibility of the per-line Columns, baked into the webview at build time.
+ * Sourced from the `saropaLogCapture.viewerColumn*` user settings so every newly built
+ * viewer opens with the user's chosen column layout; a toggle in the viewer writes the
+ * setting back (see the post* calls below + the host bool map). Optional fields fall back
+ * to the historical hardcoded defaults so existing callers and tests need no changes.
+ */
+export interface ViewerColumnDefaults {
+    readonly lineNumbers?: boolean;
+    readonly timestamp?: boolean;
+    readonly sessionElapsed?: boolean;
+    readonly parsedTag?: boolean;
+}
+
 /** Returns the JavaScript code for the decoration settings panel. */
-export function getDecoSettingsScript(): string {
+export function getDecoSettingsScript(columns?: ViewerColumnDefaults): string {
+    const colLineNumbers = columns?.lineNumbers ?? true;
+    const colTimestamp = columns?.timestamp ?? true;
+    const colSessionElapsed = columns?.sessionElapsed ?? false;
+    const colParsedTag = columns?.parsedTag ?? true;
     return /* javascript */ `
 /** Sub-toggle: show colored severity dot in decoration prefix. */
 var decoShowDot = true;
-/** Sub-toggle: show sequential counter in decoration prefix. */
-var decoShowCounter = true;
+/** Sub-toggle: show sequential counter in decoration prefix. Baked from saropaLogCapture.viewerColumnLineNumbers. */
+var decoShowCounter = ${colLineNumbers};
 /** Sub-toggle: show counter on blank lines (file line number); off by default. */
 var decoShowCounterOnBlank = false;
-/** Sub-toggle: show wall-clock timestamp in decoration prefix. */
-var decoShowTimestamp = true;
+/** Sub-toggle: show wall-clock timestamp in decoration prefix. Baked from saropaLogCapture.viewerColumnTimestamp. */
+var decoShowTimestamp = ${colTimestamp};
 /** Sub-toggle: show elapsed time (+Nms) between log lines. */
 var showElapsed = false;
-/** Sub-toggle: show session elapsed time (e.g. 5m 15s) from first log line. */
-var decoShowSessionElapsed = false;
+/** Sub-toggle: show session elapsed time (e.g. 5m 15s) from first log line. Baked from saropaLogCapture.viewerColumnSessionElapsed. */
+var decoShowSessionElapsed = ${colSessionElapsed};
 /** Line coloring mode: 'none' (default) or 'line' (whole-line tint). */
 var decoLineColorMode = 'none';
 /** Show severity bar (colored left border). */
@@ -147,8 +165,8 @@ var stripSourceTagPrefix = true;
 /** Show the parsed source tag column (e.g. flutter, HWUI) in the decoration prefix.
  *  Independent of structuredLineParsing — that toggle controls whether the prefix
  *  is stripped from the message text; this toggle controls whether the chip is
- *  rendered in the reserved tag column. */
-var decoShowParsedTag = true;
+ *  rendered in the reserved tag column. Baked from saropaLogCapture.viewerColumnParsedTag. */
+var decoShowParsedTag = ${colParsedTag};
 /** Default collapsed state for new stack groups: false (expanded), true (collapsed), 'preview'.
  *  Out-of-the-box default is true (collapsed) — a noisy log (Drift SELECT flood, logcat
  *  debug spam, full Dart call chains on every log() if the app starts emitting structured
@@ -165,9 +183,14 @@ var stackPreviewCount = 3;
 /** Whether the settings panel popover is currently visible. */
 var decoSettingsOpen = false;
 
-/* persistColumnPrefs() / restoreColumnPrefs() are defined in viewer-deco-column-prefs.ts
-   (loaded immediately after this script). The toggles below call persistColumnPrefs by its
-   global name; restore runs at that script's init to override the defaults declared above. */
+/* Persist a Columns choice to the user's settings (host writes saropaLogCapture.viewerColumn*
+   at Global scope) so newly built viewers default to it. The initial state of each column is
+   baked into the var declarations above from those same settings; this is the write path. */
+function postColumnPref(type, value) {
+    if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
+        vscodeApi.postMessage({ type: type, value: value });
+    }
+}
 
 /**
  * Position and show the settings panel above the gear button.
@@ -208,7 +231,7 @@ function toggleDecoSettings() {
  */
 function toggleTimestamp() {
     decoShowTimestamp = !decoShowTimestamp;
-    persistColumnPrefs();
+    postColumnPref('setViewerColumnTimestamp', decoShowTimestamp);
     if (typeof updateDecoButton === 'function') updateDecoButton();
     syncDecoSettingsUi();
     if (typeof renderViewport === 'function') renderViewport(true);
@@ -220,7 +243,7 @@ function toggleTimestamp() {
  */
 function toggleSessionElapsed() {
     decoShowSessionElapsed = !decoShowSessionElapsed;
-    persistColumnPrefs();
+    postColumnPref('setViewerColumnSessionElapsed', decoShowSessionElapsed);
     if (typeof updateDecoButton === 'function') updateDecoButton();
     syncDecoSettingsUi();
     if (typeof renderViewport === 'function') renderViewport(true);
@@ -232,7 +255,7 @@ function toggleSessionElapsed() {
  */
 function toggleLineNumbers() {
     decoShowCounter = !decoShowCounter;
-    persistColumnPrefs();
+    postColumnPref('setViewerColumnLineNumbers', decoShowCounter);
     if (typeof updateDecoButton === 'function') updateDecoButton();
     syncDecoSettingsUi();
     if (typeof renderViewport === 'function') renderViewport(true);
@@ -244,7 +267,7 @@ function toggleLineNumbers() {
  */
 function toggleParsedTag() {
     decoShowParsedTag = !decoShowParsedTag;
-    persistColumnPrefs();
+    postColumnPref('setViewerColumnParsedTag', decoShowParsedTag);
     if (typeof updateDecoButton === 'function') updateDecoButton();
     syncDecoSettingsUi();
     if (typeof renderViewport === 'function') renderViewport(true);
