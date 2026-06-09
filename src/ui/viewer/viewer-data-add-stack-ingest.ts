@@ -120,6 +120,41 @@ function tryIngestStackLine(html, rawText, category, ts, fw, sp, elapsedMs, qual
        copy are unchanged. */
     var displayHtml = (typeof formatFrameMemberFirst === 'function') ? formatFrameMemberFirst(html) : html;
 
+    /* "The message IS the toggle" (one level — no separate stack-header sub-row).
+       When a trace immediately follows a normal log line (its logical owner),
+       promote THAT line to the stack group's header rather than emitting a
+       separate stack-header from the first frame. The message then carries the
+       collapse chevron and ALL frames fold under it as a single level. Falls
+       through to the first-frame-header path below when there is no eligible
+       owner (trace at file start, after a marker/separator, or after another
+       trace) so a standalone trace still groups as its own single unit. */
+    if (!activeGroupHeader) {
+        var _prevItem = allLines.length > 0 ? allLines[allLines.length - 1] : null;
+        /* Skip database / SQL lines: Drift interceptor traces follow a "Drift:
+           Sent SELECT…" line and are handled by the dedicated SQL + stack-header
+           repeat-collapse machinery (bug_003). Promoting that SQL line to an
+           owner would bypass repeat-collapse and regress the Drift view. Every
+           other normal log line is eligible. */
+        var _ownerOk = !!_prevItem && _prevItem.type === 'line' && !_prevItem.isSeparator
+            && _prevItem.groupId === -1
+            && _prevItem.sourceTag !== 'database' && !_prevItem.sqlVerb
+            && (typeof isLineContentBlank !== 'function' || !isLineContentBlank(_prevItem));
+        if (_ownerOk) {
+            var ogid = nextGroupId++;
+            _prevItem.groupId = ogid;
+            _prevItem._stackOwner = true;
+            _prevItem.collapsed = (typeof stackDefaultState !== 'undefined') ? stackDefaultState : true;
+            _prevItem.previewCount = (typeof stackPreviewCount !== 'undefined') ? stackPreviewCount : 3;
+            /* frameCount counts the owner (header slot) + children, mirroring
+               stack-header semantics so the tooltip shows frameCount-1 frames. */
+            _prevItem.frameCount = 1;
+            if (!_prevItem._appFrameCount) _prevItem._appFrameCount = 0;
+            if (!_prevItem.classTags) _prevItem.classTags = [];
+            groupHeaderMap[ogid] = _prevItem;
+            activeGroupHeader = _prevItem;
+        }
+    }
+
     if (activeGroupHeader) {
         if (!activeGroupHeader._appFrameCount) activeGroupHeader._appFrameCount = 0;
         var appIdx = fw ? -1 : activeGroupHeader._appFrameCount;
