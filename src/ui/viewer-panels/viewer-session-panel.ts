@@ -106,7 +106,17 @@ export function getSessionPanelScript(): string {
            already be populated from a prior open and a fresh sessionList may not change
            anything; setting the flag here covers both the populated and refetch cases. */
         pendingScrollOnOpen = true;
-        requestSessionList();
+        /* Instant re-open: the panel lives in a retainContextWhenHidden webview, so cachedSessions
+           survives hide/show. Re-render the already-loaded list immediately instead of clearing it
+           and re-scanning the whole reports tree on every open — that re-scan is what made a
+           months-deep archive (thousands of files) stall for seconds on EVERY open. Only call the
+           host when there is nothing cached (first open). The refresh button and the active-session
+           poll still pull fresh data on demand. */
+        if (Array.isArray(cachedSessions) && cachedSessions.length > 0) {
+            renderSessionList(cachedSessions);
+        } else {
+            requestSessionList();
+        }
         requestAnimationFrame(function() {
             var first = sessionPanelEl.querySelector('button[id="session-close"], #session-date-range, button.session-panel-action');
             if (first) first.focus();
