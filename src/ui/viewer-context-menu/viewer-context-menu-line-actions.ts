@@ -63,6 +63,10 @@ function handleLineAction(action, lineIdx) {
     var lineData = allLines[lineIdx];
     var plainText = stripTags(lineData.html || '');
 
+    /* Grouped-block copy actions (Copy Error/Warning, Copy Error/Warning JSON, Copy DB cluster) live in
+       viewer-context-menu-block-copy.ts to keep this file under the line limit. Short-circuit here. */
+    if (typeof handleBlockCopyAction === 'function' && handleBlockCopyAction(action, lineIdx, lineData)) return true;
+
     switch (action) {
         case 'copy-json': {
             /* JSON analog of "Copy Line": structured one-object-per-line output. Uses the
@@ -145,36 +149,6 @@ function handleLineAction(action, lineIdx) {
             if (!tsVal) return true;
             vscodeApi.postMessage({ type: 'copyToClipboard', text: new Date(tsVal).toISOString() });
             if (typeof showCopyToast === 'function') showCopyToast(formatCopyToastMessage('timestamp', 0, 0, 0));
-            return true;
-        }
-        case 'copy-error-warning-block': {
-            var inc = (typeof computeIncidentLineRange === 'function') ? computeIncidentLineRange(lineIdx) : null;
-            if (!inc) return true;
-            var partsEw = [];
-            for (var ii = inc.lo; ii <= inc.hi; ii++) {
-                var li = allLines[ii];
-                if (li && li.html != null) partsEw.push(stripTags(li.html));
-            }
-            var textEw = partsEw.join(String.fromCharCode(10));
-            vscodeApi.postMessage({ type: 'copyToClipboard', text: textEw });
-            if (textEw.length > 0 && typeof showCopyToast === 'function') {
-                showCopyToast(formatCopyToastMessage('lines', inc.lo + 1, inc.hi + 1, textEw.length));
-            }
-            return true;
-        }
-        case 'copy-db-cluster-block': {
-            var dbR = (typeof computeDbTimestampBurstLineRange === 'function') ? computeDbTimestampBurstLineRange(lineIdx) : null;
-            if (!dbR) return true;
-            var partsDb = [];
-            for (var dj = dbR.lo; dj <= dbR.hi; dj++) {
-                var lj = allLines[dj];
-                if (lj && lj.html != null) partsDb.push(stripTags(lj.html));
-            }
-            var textDb = partsDb.join(String.fromCharCode(10));
-            vscodeApi.postMessage({ type: 'copyToClipboard', text: textDb });
-            if (textDb.length > 0 && typeof showCopyToast === 'function') {
-                showCopyToast(formatCopyToastMessage('lines', dbR.lo + 1, dbR.hi + 1, textDb.length));
-            }
             return true;
         }
         case 'copy-to-search':
