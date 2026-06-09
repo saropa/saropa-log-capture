@@ -19,6 +19,8 @@ export const stringsA: Record<string, string> = {
     'msg.deleteFileConfirm': 'Delete {0}?',
     'msg.renameSessionPrompt': 'Enter new name for this log (also renames file)',
     'msg.enterTagsPrompt': 'Enter tags (comma-separated)',
+    'msg.sessionMarkedController': 'Set as Controller: {0}',
+    'msg.sessionMarkedPeripheral': 'Marked as Peripheral: {0}',
     'msg.exportedTo': 'Exported to {0}',
     'msg.foundCorrelationTags': 'Found {0} correlation tag{1}.',
     'msg.filePathCopied': 'File path copied to clipboard',

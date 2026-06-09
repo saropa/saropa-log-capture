@@ -1,76 +1,16 @@
 /**
- * Webview-side script for the per-day Reports bucket and the newer-log
- * sticky banner. Inlined into the same IIFE as viewer-session-panel so it
- * shares the IIFE's `sessionDisplayOptions`, `collapsedDays`,
- * `expandedReportBuckets`, `vt`, `escapeAttr`, `escapeHtmlText`, and
- * helper functions like `renderItemsWithGroupBlocks` and
- * `renderDayHeading`.
+ * Webview-side script for the newer-log sticky banner. Inlined into the same IIFE as
+ * viewer-session-panel so it shares the IIFE's `sessionDisplayOptions`, `vt`, `escapeAttr`,
+ * `escapeHtmlText`, and helpers like `applySessionDisplayOptions` / `getSessionBasename`.
  *
- * Extracted from viewer-session-panel-rendering.ts to keep that file
- * under the 300-line limit. See [plans/history/2026.06/2026.06.02/001_plan-newer-alert-and-reports-grouping.md].
+ * The per-day Reports bucket that used to live here was superseded by the Controller-rooted
+ * tree (viewer-session-panel-controllers.ts) — reports now nest under their Controller as
+ * peripherals instead of in a separate bucket. See
+ * [plans/history/2026.06/2026.06.09/controller-rooted-session-tree.md].
  */
 
-export function getReportsBucketAndBannerScript(): string {
+export function getNewerLogBannerScript(): string {
     return /* javascript */ `
-    /** Wrap a day heading and its items (run through group-coalescing) in a collapsible container.
-     *
-     * Project (debug-session) and Report (lint / audit / bundle) rows render into separate
-     * blocks inside the same day. The Reports block is itself a collapsible bucket — controlled
-     * by sessionDisplayOptions.reportsBucketState ('collapsed' default | 'expanded' | 'hidden')
-     * and the per-day override expandedReportBuckets[dateKey]. A day with 0 reports renders
-     * exactly as before; a day with 0 projects renders just the Reports bucket. */
-    function renderDayGroup(dateKey, dayRecords, bnCounts) {
-        var collapsed = !!collapsedDays[dateKey];
-        var cls = 'session-day-group' + (collapsed ? ' collapsed' : '');
-        var split = partitionReports(dayRecords);
-        var projectHtml = renderItemsWithGroupBlocks(split.projects, bnCounts);
-        var bucketHtml = renderReportsBucket(dateKey, split.reports, bnCounts);
-        return '<div class="' + cls + '" data-day-key="' + escapeAttr(dateKey) + '">'
-            + renderDayHeading(dateKey, collapsed, dayRecords.length)
-            + '<div class="session-day-items">' + projectHtml + bucketHtml + '</div>'
-            + '</div>';
-    }
-
-    /** Split a day's records into project and report buckets per the host-classified \`kind\` field. */
-    function partitionReports(records) {
-        var projects = [], reports = [];
-        for (var i = 0; i < records.length; i++) {
-            if (records[i] && records[i].kind === 'report') { reports.push(records[i]); }
-            else { projects.push(records[i]); }
-        }
-        return { projects: projects, reports: reports };
-    }
-
-    /** Resolve effective bucket state for a day. Per-day expansion override wins; otherwise the panel-wide setting. */
-    function reportsBucketStateFor(dateKey) {
-        if (expandedReportBuckets && expandedReportBuckets[dateKey]) { return 'expanded'; }
-        var s = sessionDisplayOptions && sessionDisplayOptions.reportsBucketState;
-        return (s === 'expanded' || s === 'hidden') ? s : 'collapsed';
-    }
-
-    /** Render the per-day Reports bucket. Returns '' when there are no reports OR the bucket
-     *  is hidden. A single report renders inline (no bucket-of-one). */
-    function renderReportsBucket(dateKey, reports, bnCounts) {
-        if (!reports || reports.length === 0) return '';
-        var state = reportsBucketStateFor(dateKey);
-        if (state === 'hidden') return '';
-        if (reports.length === 1) return renderItemsWithGroupBlocks(reports, bnCounts);
-        var expanded = (state === 'expanded');
-        var chev = expanded ? 'codicon-chevron-down' : 'codicon-chevron-right';
-        var headLabel = (typeof vt === 'function')
-            ? vt('viewer.session.reports.bucketLabel', reports.length)
-            : ('Reports (' + reports.length + ')');
-        var itemsHtml = renderItemsWithGroupBlocks(reports, bnCounts);
-        var bucketCls = 'session-reports-bucket' + (expanded ? '' : ' collapsed');
-        return '<div class="' + bucketCls + '" data-bucket-day="' + escapeAttr(dateKey) + '">'
-            + '<div class="session-reports-bucket-heading" role="button" tabindex="0" aria-expanded="' + expanded + '">'
-            + '<span class="session-reports-bucket-chevron codicon ' + chev + '"></span>'
-            + '<span class="session-reports-bucket-label">' + escapeHtmlText(headLabel) + '</span>'
-            + '</div>'
-            + '<div class="session-reports-bucket-items">' + itemsHtml + '</div>'
-            + '</div>';
-    }
-
     /** Newer-log sticky banner. Shown when ANY rendered record has unreadSinceFocus:true.
      *  The banner offers two actions: Open (focuses the newest unread log) and Dismiss
      *  (advances LOGS_PANEL_DISMISSED_AT_KEY host-side so unreadSinceFocus flips off). */

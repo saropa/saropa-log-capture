@@ -227,6 +227,9 @@ export function getConfig(): SaropaLogCaptureConfig {
       // built-in report names without per-install configuration.
       kindPatterns: ensureStringArray(cfg.get("reportsKindPatterns"), [...defaultReportsKindPatterns]),
       bucketDefault: ensureEnum(cfg.get("reportsBucketDefault"), ["collapsed", "expanded", "hidden"], "collapsed"),
+      // No defaults: the workspace-folder-name match in classifySessionRole covers the common case
+      // (the project's own log). This list is purely the user's manual additions.
+      controllerNames: ensureStringArray(cfg.get("controllerNames"), []),
     },
     newerLogAlert: {
       bannerEnabled: ensureBoolean(cfg.get("newerLogBanner"), true),
