@@ -274,18 +274,14 @@ function calcItemHeight(item) {
     /* Markdown table separator row (|---|): collapse to nothing. The header row carries a
        bottom border as the divider, so a full-height empty separator would only add a gap. */
     if (item._mdTableSep && typeof formatEnabled !== 'undefined' && formatEnabled && typeof fileMode !== 'undefined' && fileMode === 'markdown') return 0;
-    /* Markdown headings get a taller row for the larger font + vertical breathing room.
-       renderItem sets this exact value as the line's inline height, so the rendered DOM
-       height matches this scroll-math value precisely (no prefix-sum drift). */
+    /* Markdown headings get a taller row for the larger font + vertical breathing room on top
+       of the comfortable document line height (applyMarkdownTypography). Body spacing itself
+       comes from that line height, NOT a per-line multiplier — so this only adds heading
+       hierarchy. renderItem pins this exact value as the line's inline height, so the rendered
+       DOM height matches this scroll-math value precisely (no prefix-sum drift). */
     if (item._mdHeadingLevel && typeof formatEnabled !== 'undefined' && formatEnabled && typeof fileMode !== 'undefined' && fileMode === 'markdown') {
         var _hl = item._mdHeadingLevel;
-        return ROW_HEIGHT * ((_hl === 1) ? 2.2 : (_hl === 2) ? 2.0 : (_hl === 3) ? 1.7 : 1.4);
-    }
-    /* Every ordinary markdown line (body text, bullets, blockquote, table rows) gets ~60%
-       more vertical room than a dense log line so a report reads as a document. Code-fence
-       lines are excluded (code reads better tight); blanks and separators returned above. */
-    if (!item._mdFence && typeof formatEnabled !== 'undefined' && formatEnabled && typeof fileMode !== 'undefined' && fileMode === 'markdown' && item.type === 'line') {
-        return ROW_HEIGHT * 1.6;
+        return ROW_HEIGHT * ((_hl === 1) ? 1.6 : (_hl === 2) ? 1.4 : (_hl === 3) ? 1.25 : 1.1);
     }
     if (item.type === 'marker') {
         /* markerHidden / markerCollapsed are set by applyDbSignalMarkerVisibility and
