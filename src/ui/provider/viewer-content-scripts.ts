@@ -96,6 +96,7 @@ import { getRunNavScript } from '../viewer-nav/viewer-run-nav';
 import { getStructuredLineParserScript } from '../viewer/viewer-structured-line-parser';
 import { getMetadataFilterScript } from '../viewer-search-filter/viewer-metadata-filter';
 import { getViewerFormatMarkdownScript } from '../viewer/viewer-format-markdown';
+import { getViewerFormatMarkdownLayoutScript } from '../viewer/viewer-format-markdown-layout';
 import { getViewerFormatJsonScript } from '../viewer/viewer-format-json';
 import { getViewerFormatCsvScript } from '../viewer/viewer-format-csv';
 
@@ -246,6 +247,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getProjectStatePanelScript()) +
         scriptTag(nonce, getChangelogPopoverScript()) +
         scriptTag(nonce, getViewerFormatMarkdownScript()) +
+        scriptTag(nonce, getViewerFormatMarkdownLayoutScript()) +
         scriptTag(nonce, getViewerFormatJsonScript()) +
         scriptTag(nonce, getViewerFormatCsvScript()) +
         scriptTag(nonce, getIconBarScript()) +

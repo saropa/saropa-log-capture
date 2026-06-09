@@ -34,12 +34,37 @@ export function getFormatStyles(): string {
 .md-heading {
     display: flex;
     align-items: center;
-    width: 100%;
+    flex: 1 1 auto;
     min-width: 0;
     font-weight: bold;
     cursor: pointer;
 }
 .md-heading:hover { opacity: 0.85; }
+
+/* ---- Markdown gutter (line number + type tag) — shown when line-number decorations are on.
+   Non-heading rows use a hanging indent so wrapped lines align under the content, not the
+   gutter; heading rows are flex, so the gutter is just the first flex item. ---- */
+.line.fmt-markdown.md-has-gutter { padding-left: 0; }
+.line.fmt-markdown.md-has-gutter:not([class*="fmt-md-h"]) {
+    padding-left: var(--md-gutter-width, 5.5em);
+    text-indent: calc(-1 * var(--md-gutter-width, 5.5em));
+}
+.md-gutter {
+    display: inline-block;
+    flex: 0 0 auto;
+    width: var(--md-gutter-width, 5.5em);
+    box-sizing: border-box;
+    text-indent: 0;
+    padding-right: 0.75em;
+    font-size: 0.85em;
+    color: var(--vscode-editorLineNumber-foreground, #858585);
+    user-select: none;
+    white-space: nowrap;
+    overflow: hidden;
+    vertical-align: top;
+}
+.md-gutter-num { display: inline-block; width: 3em; text-align: right; }
+.md-gutter-tag { display: inline-block; width: 2.2em; text-align: right; opacity: 0.75; }
 
 .md-htext {
     flex: 1 1 auto;
@@ -47,16 +72,19 @@ export function getFormatStyles(): string {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    /* Tight, fixed line height so the larger heading font's line box stays within the row that
+       calcItemHeight allocated (fontEm * 1.5 * base). Must match the 1.35 factor used there. */
+    line-height: 1.35;
 }
 
-/* Font size lives on the text span, NOT the line — the line's font-size must stay at the
-   base so its pinned px height (a multiple of ROW_HEIGHT) is not thrown off by em scaling. */
-.md-h1 .md-htext { font-size: 1.5em; }
+/* Font sizes MUST match the per-level fontEm in calcItemHeight (heading row height is computed
+   from them); the line's own font-size stays at base so the pinned px height is exact. */
+.md-h1 .md-htext { font-size: 1.45em; }
 .md-h2 .md-htext { font-size: 1.3em; }
-.md-h3 .md-htext { font-size: 1.15em; }
-.md-h4 .md-htext { font-size: 1.0em; }
-.md-h5 .md-htext { font-size: 0.95em; }
-.md-h6 .md-htext { font-size: 0.9em; color: var(--vscode-descriptionForeground, #888); }
+.md-h3 .md-htext { font-size: 1.2em; }
+.md-h4 .md-htext { font-size: 1.05em; }
+.md-h5 .md-htext { font-size: 1.0em; }
+.md-h6 .md-htext { font-size: 1.0em; color: var(--vscode-descriptionForeground, #888); }
 
 /* Subtle, right-aligned collapse affordance. */
 .md-chevron {

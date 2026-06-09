@@ -38,16 +38,10 @@ function renderItem(item, idx, prevVis) {
            pin the row to its computed height so the taller heading row matches the scroll
            math calcItemHeight() produced — block-flow rows derive position from real DOM
            height, so an unpinned heading would drift the prefix sums. */
-        var _hCls = '', _hStyle = '';
-        /* Headings carry their level class (font + flex centering) and pin their taller row
-           height inline so it matches the scroll math exactly (block-flow rows derive position
-           from real DOM height — an unpinned tall row would drift the prefix sums). Body line
-           spacing comes from the document line height, not a per-line class. */
-        if (fileMode === 'markdown' && item._mdHeadingLevel) {
-            _hCls = ' fmt-md-h' + item._mdHeadingLevel;
-            if (item.height > 0) _hStyle = ' style="height:' + item.height + 'px"';
-        }
-        return '<div class="line fmt-' + fileMode + _fmtBlankCls + _hCls + '"' + idxAttr + _hStyle + '>' + fmtHtml + '</div>';
+        /* Markdown heading class + pinned height + line-number/type gutter are built in the
+           markdown module (mdLineDecorate) so this generic renderer stays format-agnostic. */
+        var _md = (fileMode === 'markdown' && typeof mdLineDecorate === 'function') ? mdLineDecorate(item, idx) : { cls: '', style: '', gutter: '' };
+        return '<div class="line fmt-' + fileMode + _fmtBlankCls + _md.cls + (_md.gutter ? ' md-has-gutter' : '') + '"' + idxAttr + _md.style + '>' + _md.gutter + fmtHtml + '</div>';
     }
     var rawHtml = item.html;
     /* Structured line parsing: strip the detected prefix (timestamp, PID, TID, level, tag).
