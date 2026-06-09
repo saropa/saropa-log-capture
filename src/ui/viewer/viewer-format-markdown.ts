@@ -210,7 +210,10 @@ function formatMarkdownLine(item, idx) {
        collapse toggle; body + closing lines fold under it (data-md-comment drives the handler). */
     var cmt = mdComments[idx];
     if (cmt) {
-        var cText = escapeHtml(stripTags(html));
+        /* Strip the <!-- / --> delimiters — the green color + // tag already signal "comment",
+           so the literal HTML markers are redundant noise. A close-only line becomes empty. */
+        var cRaw = stripTags(html).replace(/^\\s*<!--\\s?/, '').replace(/\\s?-->\\s*$/, '');
+        var cText = escapeHtml(cRaw);
         var blk = mdCommentBlocks[idx];
         if ((cmt.role === 'open') && blk) {
             /* Inline leading chevron (not a flex/right-aligned one): the comment line is a normal
