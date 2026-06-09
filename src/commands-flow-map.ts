@@ -8,11 +8,18 @@ import { buildReport } from './modules/flow-map/flow-map-report';
 import { scanProjectScreens } from './modules/flow-map/flow-map-source-scan';
 import { showFlowMapPanel, type FlowMapPanelParams } from './ui/panels/flow-map-panel';
 
+/** The viewer surface the flow map drives to reveal log lines. */
+export interface FlowMapViewer {
+    loadFromFile(uri: vscode.Uri): Promise<void>;
+    scrollToLine(line: number): void;
+    getCurrentFileUri(): vscode.Uri | undefined;
+}
+
 /** Callbacks the flow-map command needs. */
 export interface FlowMapCommandDeps {
     readonly getFileUri: () => vscode.Uri | undefined;
-    /** Scroll the open log viewer to a 1-based line (used by the report's log links). */
-    readonly revealLine: (line: number) => void;
+    /** The log viewer — used to load the report's source log before scrolling to a line. */
+    readonly viewer: FlowMapViewer;
 }
 
 /** Default save URI: `<log-basename>-flow-map.md` next to the source log. */
@@ -56,13 +63,21 @@ async function runExport(deps: FlowMapCommandDeps): Promise<void> {
         void vscode.window.showInformationMessage(t('msg.noActiveSession'));
         return;
     }
+    // Reveal a log line, first loading the report's source log into the viewer if a different log
+    // (or none) is currently shown — otherwise scrollToLine would scroll the wrong content (#5).
+    const revealLine = async (line: number): Promise<void> => {
+        if (deps.viewer.getCurrentFileUri()?.toString() !== logUri.toString()) {
+            await deps.viewer.loadFromFile(logUri);
+        }
+        deps.viewer.scrollToLine(line);
+    };
     // `render` re-reads the log each call, so the Refresh button picks up new content; it passes
     // itself as the panel's `refresh` callback.
     const render = async (): Promise<void> => {
         try {
             const report = await vscode.window.withProgress(
                 { location: vscode.ProgressLocation.Notification, title: t('flowMap.progress') },
-                () => generateReport(logUri, deps.revealLine),
+                () => generateReport(logUri, revealLine),
             );
             showFlowMapPanel({ ...report, refresh: () => { void render(); } });
         } catch (err) {
