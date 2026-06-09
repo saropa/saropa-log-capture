@@ -249,15 +249,21 @@ export function getToolbarScript(): string {
         }
     };
 
+    /* Build the layout data for the active structured mode. Shared by the manual
+       toggle and the auto-enable-on-load path (viewer-script-messages loadComplete),
+       so both stay in sync if a mode's build step changes. Modes are mutually
+       exclusive, so else-if is correct. */
+    window.buildFormatModeLayout = function() {
+        if (fileMode === 'markdown' && typeof buildMdSections === 'function') buildMdSections();
+        else if (fileMode === 'json' && typeof buildJsonBracePairs === 'function') buildJsonBracePairs();
+        else if (fileMode === 'csv' && typeof buildCsvLayout === 'function') buildCsvLayout();
+    };
+
     function toggleFormat() {
         formatEnabled = !formatEnabled;
         if (formatBtn) formatBtn.classList.toggle('toolbar-icon-btn-active', formatEnabled);
-        /* Build or clear the mode-specific layout data. */
-        if (formatEnabled) {
-            if (fileMode === 'markdown' && typeof buildMdSections === 'function') buildMdSections();
-            if (fileMode === 'json' && typeof buildJsonBracePairs === 'function') buildJsonBracePairs();
-            if (fileMode === 'csv' && typeof buildCsvLayout === 'function') buildCsvLayout();
-        }
+        /* Build the mode-specific layout data only when turning formatting on. */
+        if (formatEnabled) window.buildFormatModeLayout();
         if (typeof recalcHeights === 'function') recalcHeights();
         if (typeof buildPrefixSums === 'function') buildPrefixSums();
         if (typeof renderViewport === 'function') renderViewport(true);

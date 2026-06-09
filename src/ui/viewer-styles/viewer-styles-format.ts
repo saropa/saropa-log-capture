@@ -78,6 +78,33 @@ export function getFormatStyles(): string {
     color: var(--vscode-descriptionForeground, #666);
 }
 
+/* Fenced code blocks (triple-backtick + language). Body lines render verbatim in a
+   monospace, tinted block; the open/close delimiters become thin rules so the block
+   reads as one unit. */
+.md-fence-body {
+    display: inline-block;
+    width: 100%;
+    background: var(--vscode-textCodeBlock-background, rgba(255, 255, 255, 0.06));
+    font-family: var(--vscode-editor-font-family);
+    white-space: pre;
+    padding: 0 6px;
+}
+.md-fence-open,
+.md-fence-close {
+    display: block;
+    background: var(--vscode-textCodeBlock-background, rgba(255, 255, 255, 0.06));
+    border-top: 1px solid var(--vscode-editorWidget-border, #454545);
+}
+/* Close has no label, so collapse it to a thin closing rule. Open auto-sizes to its
+   language label below. */
+.md-fence-close { height: 4px; }
+.md-fence-lang {
+    font-family: var(--vscode-editor-font-family);
+    font-size: 0.8em;
+    color: var(--vscode-descriptionForeground, #888);
+    padding: 0 6px;
+}
+
 /* ---- JSON ---- */
 
 .json-line {
