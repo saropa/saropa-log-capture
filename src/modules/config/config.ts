@@ -141,6 +141,12 @@ export function getConfig(): SaropaLogCaptureConfig {
     minimapViewportOutsideArrow: ensureBoolean(cfg.get("minimapViewportOutsideArrow"), false),
     minimapWidth: ensureEnum(cfg.get("minimapWidth"), ["xsmall", "small", "medium", "large", "xlarge"], "medium"),
     showScrollbar: ensureBoolean(cfg.get("showScrollbar"), false),
+    /* Column defaults baked into each freshly-built viewer; defaults mirror the historical
+       hardcoded webview values (tag/line-numbers/timestamp on, session-elapsed off). */
+    viewerColumnLineNumbers: ensureBoolean(cfg.get("viewerColumnLineNumbers"), true),
+    viewerColumnTimestamp: ensureBoolean(cfg.get("viewerColumnTimestamp"), true),
+    viewerColumnSessionElapsed: ensureBoolean(cfg.get("viewerColumnSessionElapsed"), false),
+    viewerColumnParsedTag: ensureBoolean(cfg.get("viewerColumnParsedTag"), true),
     /* 4–42 px matches HTML slider min/max and webview setFontSize() guard. */
     logFontSize: clamp(cfg.get("logFontSize"), 4, 42, 13),
     /* 0.5–4.0 matches HTML slider min/max and webview setLineHeight() guard. Default 1.1

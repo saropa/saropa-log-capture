@@ -17,6 +17,7 @@ export function getToolbarScript(): string {
     var searchFlyout = document.getElementById('search-flyout');
     var signalsHost = document.getElementById('root-cause-hypotheses');
     var searchBtn = document.getElementById('toolbar-search-btn');
+    var flowmapBtn = document.getElementById('toolbar-flowmap-btn');
     var filterBtn = document.getElementById('toolbar-filter-btn');
     var signalsBtn = document.getElementById('toolbar-signals-btn');
     var actionsBtn = document.getElementById('toolbar-actions-btn');
@@ -162,7 +163,13 @@ export function getToolbarScript(): string {
 
     /* ---- Button wiring ---- */
 
-    if (searchBtn) searchBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleSearchFlyout(); });
+    // The old toolbar search button was redundant with the editor title-bar $(search) command
+    // (which still opens the same #search-flyout); it was replaced by the flow-map export button.
+    // searchBtn stays looked-up (now null) so the flyout's aria-expanded guards no-op harmlessly.
+    if (flowmapBtn) flowmapBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (typeof vscodeApi !== 'undefined') { vscodeApi.postMessage({ type: 'exportFlowMap' }); }
+    });
     if (filterBtn) filterBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleFilterPanel(); });
     if (signalsBtn) signalsBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleSignalsPanel(); });
     if (actionsBtn) actionsBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleActionsDropdown(); });

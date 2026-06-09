@@ -51,6 +51,7 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `explainRootCauseHypotheses` | viewer-message-handler-root-cause.ts |
 | `explainRootCauseHypothesesEmpty` | viewer-message-handler-root-cause.ts |
 | `explainWithAi` | viewer-message-handler-actions.ts |
+| `exportFlowMap` | viewer-message-handler-actions.ts |
 | `exportLogs` | viewer-message-handler-session-ui.ts |
 | `exportSessionListJson` | viewer-message-handler-session-ui.ts |
 | `exportSignalsSummary` | viewer-message-handler-panels.ts |
@@ -71,12 +72,14 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `openCollectionById` | viewer-message-handler-collection.ts |
 | `openCurrentFileFolder` | viewer-message-handler-session-ui.ts |
 | `openDriftAdvisor` | viewer-message-handler-panels.ts |
+| `openDroppedLog` | viewer-message-handler-session-ui.ts |
 | `openErrorAnalysis` | viewer-message-handler-panels.ts |
 | `openFindResult` | viewer-message-handler-session-ui.ts |
 | `openFullIntegrationContext` | viewer-message-handler-panels.ts |
 | `openGcloudInstall` | viewer-message-handler-panels.ts |
 | `openKeybindings` | viewer-message-handler-actions.ts |
 | `openLintRule` | viewer-message-handler-panels.ts |
+| `openLogFile` | viewer-message-handler-session-ui.ts |
 | `openLogFileBeside` | viewer-message-handler-session-ui.ts |
 | `openLogFileFolderInTerminal` | viewer-message-handler-session-ui.ts |
 | `openLogFileInEditor` | viewer-message-handler-session-ui.ts |
@@ -134,6 +137,10 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `setSessionDisplayOptions` | viewer-message-handler-session-ui.ts |
 | `setShowElapsed` | viewer-workspace-bool-message-map.ts (boolean toggles → config update) |
 | `setShowScrollbar` | viewer-workspace-bool-message-map.ts (boolean toggles → config update) |
+| `setViewerColumnLineNumbers` | viewer-workspace-bool-message-map.ts (boolean toggles → config update) |
+| `setViewerColumnParsedTag` | viewer-workspace-bool-message-map.ts (boolean toggles → config update) |
+| `setViewerColumnSessionElapsed` | viewer-workspace-bool-message-map.ts (boolean toggles → config update) |
+| `setViewerColumnTimestamp` | viewer-workspace-bool-message-map.ts (boolean toggles → config update) |
 | `showChangelogSince` | viewer-message-handler-panels.ts |
 | `showCodeQualityForFrame` | viewer-message-handler-panels.ts |
 | `showGitHistoryForLine` | viewer-message-handler-panels.ts |
@@ -147,4 +154,4 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `viewerKeybindingRecordCancelled` | viewer-message-handler-actions.ts |
 | `viewerKeybindingRecorded` | viewer-message-handler-actions.ts |
 
-**Total:** 139 distinct types.
+**Total:** 146 distinct types.

@@ -15,8 +15,9 @@ import { handleQuickExportLogs } from './viewer-quick-export';
 import { getInteractionTracker } from '../../modules/learning/learning-runtime';
 import { showKeyboardShortcutsPanel } from '../panels/keyboard-shortcuts-panel';
 import { handleOpenSessionForSignalType } from '../shared/handlers/recurring-handlers';
-import { SAROPA_BOOL_SETTING_BY_MSG_TYPE } from "./viewer-workspace-bool-message-map";
+import { SAROPA_BOOL_SETTING_BY_MSG_TYPE, SAROPA_GLOBAL_BOOL_SETTING_BY_MSG_TYPE } from "./viewer-workspace-bool-message-map";
 import { handleLogFileAction } from "./viewer-log-file-actions";
+import { handleOpenDroppedLog } from "./viewer-dropped-log";
 
 /** Coerce message field to string; never stringify objects (avoids '[object Object]'). */
 function msgStr(m: Record<string, unknown>, key: string, fallback = ""): string {
@@ -67,6 +68,15 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
   if (boolKey) {
     vscode.workspace.getConfiguration("saropaLogCapture")
       .update(boolKey, Boolean(msg.value), vscode.ConfigurationTarget.Workspace);
+    return true;
+  }
+  // Viewer Columns: write at User (Global) scope so the chosen column layout becomes the
+  // user's cross-project default for newly opened logs (see SAROPA_GLOBAL_BOOL_SETTING_BY_MSG_TYPE).
+  const globalBoolKey = SAROPA_GLOBAL_BOOL_SETTING_BY_MSG_TYPE[type];
+  if (globalBoolKey) {
+    vscode.workspace.getConfiguration("saropaLogCapture")
+      .update(globalBoolKey, Boolean(msg.value), vscode.ConfigurationTarget.Global)
+      .then(undefined, () => {});
     return true;
   }
   /* Minimap drag-to-resize: persist custom pixel width to workspace state */
@@ -153,6 +163,10 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
     case "browseSessionRoot": ctx.onBrowseSessionRoot?.()?.then(undefined, () => {}); return true;
     case "clearSessionRoot": ctx.onClearSessionRoot?.()?.then(undefined, () => {}); return true;
     case "exportSessionListJson": ctx.onExportSessionListJson?.()?.then(undefined, () => {}); return true;
+    // Kebab "Open log file…" delegates to the command so the picker logic lives in one place.
+    case "openLogFile": vscode.commands.executeCommand("saropaLogCapture.openLogFile").then(undefined, () => {}); return true;
+    // OS file dropped onto the viewer — load by path, or stage transferred content to a temp file.
+    case "openDroppedLog": handleOpenDroppedLog(msg, ctx).then(undefined, () => {}); return true;
     case "openSessionFromPanel": ctx.onOpenSessionFromPanel?.(msgStr(msg, "uriString")); return true;
     case "sqlHistoryCrossLogJump": {
       /* DB_17: SQL History panel row jump where the fingerprint's first occurrence is in

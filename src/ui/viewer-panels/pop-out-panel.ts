@@ -280,6 +280,12 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       viewerSlowBurstThresholds: cfg.viewerSlowBurstThresholds,
       signalSlowOpThresholdMs: cfg.signalSlowOpThresholdMs,
       accessibilityShowCollapseDividerLabels: cfg.accessibilityShowCollapseDividerLabels,
+      viewerColumns: {
+        lineNumbers: cfg.viewerColumnLineNumbers,
+        timestamp: cfg.viewerColumnTimestamp,
+        sessionElapsed: cfg.viewerColumnSessionElapsed,
+        parsedTag: cfg.viewerColumnParsedTag,
+      },
     });
     wv.onDidReceiveMessage((msg: Record<string, unknown>) => this.handleMessage(msg));
     this.startBatchTimer();
