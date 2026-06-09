@@ -263,11 +263,13 @@ suite('Session panel script runtime', () => {
 
         test('should filter by name in "only" mode without ReferenceError', () => {
             const { sandbox, elements } = bootWithSessions(testSessions);
-            /* Show only sessions named "vibrancy". */
+            /* Show only sessions named "vibrancy". a1 and a2 are both PERIPHERAL "vibrancy" runs
+               (no controller role), so with "Latest only" on by default the older a2 folds behind
+               the latest a1's "+N older" badge — latest-only thins peripherals. b1 is filtered by name. */
             (sandbox.setSessionNameFilter as (m: string, n: string) => void)('only', '20260413_120000_vibrancy.log');
             const html = String(elements.get('session-list')?.innerHTML ?? '');
-            assert.ok(html.includes('file:///a1.log'), 'Matching session a1 should be visible');
-            assert.ok(html.includes('file:///a2.log'), 'Matching session a2 should be visible');
+            assert.ok(html.includes('file:///a1.log'), 'Latest matching session a1 should be visible');
+            assert.ok(!html.includes('file:///a2.log'), 'Older matching peripheral a2 is folded by Latest only');
             assert.ok(!html.includes('file:///b1.log'), 'Non-matching session should be hidden');
         });
 
@@ -319,6 +321,36 @@ suite('Session panel script runtime', () => {
             const html = String(elements.get('session-list')?.innerHTML ?? '');
             assert.ok(html.includes('No sessions match'), 'Should show filtered-empty hint');
             assert.ok(!html.includes('file:///a1.log'), 'No sessions should be rendered');
+        });
+    });
+
+    /* "Latest only" thins peripheral logs but must NEVER fold a Controller (the project's own
+       session, e.g. "contacts"). Every controller run stays visible whether grouped or not;
+       only peripheral namesakes collapse behind the latest. */
+    suite('latest-only controller exemption', () => {
+        function bootLatestOnly(sessions: Array<Record<string, unknown>>): Map<string, Record<string, unknown>> {
+            const { sandbox, messageHandlers, elements } = buildSandbox();
+            bootPanel(sandbox);
+            for (const handler of messageHandlers) {
+                handler({ data: { type: 'sessionList', sessions } });
+            }
+            return elements;
+        }
+
+        /* Two controller "contacts" runs + two peripheral "lint" runs, Latest only on by default. */
+        const mixed = [
+            { uriString: 'file:///c1.log', filename: '20260413_120000_contacts.log', displayName: '20260413_120000_contacts.log', mtime: Date.now() - 60000, trashed: false, role: 'controller' },
+            { uriString: 'file:///c2.log', filename: '20260413_110000_contacts.log', displayName: '20260413_110000_contacts.log', mtime: Date.now() - 120000, trashed: false, role: 'controller' },
+            { uriString: 'file:///p1.log', filename: '20260413_120500_lint.log', displayName: '20260413_120500_lint.log', mtime: Date.now() - 30000, trashed: false, role: 'peripheral' },
+            { uriString: 'file:///p2.log', filename: '20260413_110500_lint.log', displayName: '20260413_110500_lint.log', mtime: Date.now() - 90000, trashed: false, role: 'peripheral' },
+        ];
+
+        test('keeps every controller run visible while folding older peripheral namesakes', () => {
+            const html = String(bootLatestOnly(mixed).get('session-list')?.innerHTML ?? '');
+            assert.ok(html.includes('file:///c1.log'), 'Latest controller run should be visible');
+            assert.ok(html.includes('file:///c2.log'), 'Older controller run must NOT be folded by Latest only');
+            assert.ok(html.includes('file:///p1.log'), 'Latest peripheral run should be visible');
+            assert.ok(!html.includes('file:///p2.log'), 'Older peripheral namesake should fold behind +N older');
         });
     });
 
