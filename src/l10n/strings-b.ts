@@ -54,6 +54,8 @@ export const stringsB: Record<string, string> = {
     'msg.openLogFile.openLabel': 'Open log',
     'msg.droppedLogTooLarge': 'Cannot read "{0}" via drag-and-drop because it is too large. Use the kebab menu → Open log file… to open it by path instead.',
     'msg.droppedLogReadFailed': 'Could not read the dropped file "{0}".',
+    'msg.droppedLogEmpty': 'Drag-and-drop could not read the file. Use the Logs panel kebab menu → Open log file… to open it by path.',
+    'msg.droppedLogLoaded': 'Opened "{0}" in the log viewer.',
     'prompt.selectSessionsForCollection': 'Select logs to add to the new collection',
     'msg.deleteCollectionConfirm': 'Delete collection "{0}"? This cannot be undone.',
     'msg.collectionDeleted': 'Collection "{0}" deleted.',
