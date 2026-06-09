@@ -7,10 +7,11 @@ import { getSessionGroupRenderingScript } from './viewer-session-panel-rendering
 import { getControllerGroupingScript } from './viewer-session-panel-controllers';
 import { getNewerLogBannerScript } from './viewer-session-panel-reports-bucket';
 import { getSessionStreamingScript } from './viewer-session-panel-rendering-stream';
+import { getNameFilterBarScript } from './viewer-session-panel-rendering-name-filter';
 
 /** Get the session panel rendering script fragment. */
 export function getSessionRenderingScript(): string {
-    return getSessionGroupRenderingScript() + getControllerGroupingScript() + getNewerLogBannerScript() + getSessionStreamingScript() + /* javascript */ `
+    return getSessionGroupRenderingScript() + getControllerGroupingScript() + getNewerLogBannerScript() + getSessionStreamingScript() + getNameFilterBarScript() + /* javascript */ `
     /* escapeAttr and escapeHtmlText are provided by the session panel IIFE bootstrap. */
     function renderSessionList(sessions) {
         if (sessionLoadingEl) sessionLoadingEl.style.display = 'none';
@@ -41,15 +42,16 @@ export function getSessionRenderingScript(): string {
             var cutoff = Date.now() - (rangeMs[range] || 0);
             active = active.filter(function(s) { return (s.mtime || 0) >= cutoff; });
         }
-        /* Name filter: hide or show-only sessions matching a canonical name.
-           Recompute the canonical target from rawBasename each render so the filter
-           adapts when the user toggles stripDatetime or normalizeNames. */
-        if (sessionNameFilter) {
+        /* Name filter: hide or show-only sessions matching ANY filtered canonical
+           name. Recompute each canonical target from its raw basename every render
+           so the filter adapts when the user toggles stripDatetime or normalizeNames. */
+        if (sessionNameFilter && sessionNameFilter.names.length) {
             var nfMode = sessionNameFilter.mode;
-            var nfTarget = applySessionDisplayOptions(sessionNameFilter.rawBasename);
+            var nfTargets = sessionNameFilter.names.map(function(n) { return applySessionDisplayOptions(n); });
             active = active.filter(function(s) {
                 var cn = applySessionDisplayOptions(getSessionRawBasename(s));
-                return nfMode === 'only' ? cn === nfTarget : cn !== nfTarget;
+                var matches = nfTargets.indexOf(cn) !== -1;
+                return nfMode === 'only' ? matches : !matches;
             });
         }
         /* When all filters produce zero results, show a hint instead of a blank list. */
@@ -97,27 +99,9 @@ export function getSessionRenderingScript(): string {
         if (pendingScrollOnOpen) { pendingScrollOnOpen = false; scrollSessionListToCurrentOrTop(); }
     }
 
-    /** Update the name filter bar: show label + clear button when active, hide when not. */
-    function renderNameFilterBar() {
-        var nameFilterBarEl = document.getElementById('session-name-filter-bar');
-        if (!nameFilterBarEl) return;
-        if (!sessionNameFilter) {
-            nameFilterBarEl.style.display = 'none';
-            nameFilterBarEl.innerHTML = '';
-            return;
-        }
-        /* Display label uses current display-option transforms so it matches
-           what the user sees in the list (adapts when Dates/Tidy change). */
-        var nfLabel = applySessionDisplayOptions(sessionNameFilter.rawBasename);
-        var verb = sessionNameFilter.mode === 'only' ? vt('viewer.session.nameFilter.only', nfLabel) : vt('viewer.session.nameFilter.hiding', nfLabel);
-        nameFilterBarEl.innerHTML = '<span class="session-name-filter-label">'
-            + '<span class="codicon codicon-filter"></span> '
-            + escapeHtmlText(verb)
-            + '</span>'
-            + '<button type="button" id="session-name-filter-clear" class="session-name-filter-clear" title="' + vt('viewer.session.nameFilter.clear.title') + '" aria-label="' + vt('viewer.session.nameFilter.clear.title') + '">'
-            + '<span class="codicon codicon-close"></span> ' + vt('viewer.session.nameFilter.showAll') + '</button>';
-        nameFilterBarEl.style.display = '';
-    }
+    /* renderNameFilterBar and renderNameFilterPills are provided by
+       getNameFilterBarScript() — a sibling fragment in the same IIFE scope.
+       Extracted to keep this file under the 300-line code limit. */
 
     function sortSessions(sessions) {
         var list = sessions.slice();
