@@ -7,18 +7,24 @@
  * `contextMenuLineIdx`, `window.isContextMenuOpen`); function declarations are hoisted
  * across the combined script, so declaration order between modules does not matter.
  *
- * ## Why submenus are positioned per-trigger, not via global flip classes
- * The previous model toggled `flip-submenu*` classes ONCE from the root menu's rect and
- * applied them to every flyout uniformly. A mid-screen trigger and a near-bottom trigger
- * got the same direction, a tall flyout forced upward clipped at the top, and nothing
- * capped flyout height — so tall submenus (Copy & Export) ran off-screen on short panels.
- * `positionSubmenu()` now decides from each trigger's OWN rect and caps height with scroll.
+ * ## Why submenus are positioned per-trigger against the viewport (position:fixed)
+ * The first model toggled `flip-submenu*` classes ONCE from the root menu's rect and applied
+ * them to every flyout uniformly — a tall flyout clipped at the top. The second model anchored
+ * each flyout to its trigger box (top:0 / bottom:0) and capped to the room on ONE side, so a
+ * tall flyout or a near-bottom trigger got a tiny scrollable strip with empty screen beside it.
+ * `positionSubmenu()` now positions each flyout in viewport coordinates (position:fixed): it
+ * spans the FULL viewport height, slides fully on-screen, and scrolls only when it cannot fit.
+ * `repositionOpenContextMenu()` re-runs placement on window resize so the open menu and its
+ * flyout stay correct and re-maximize their height when the panel is resized while open.
  */
 export function getContextMenuPositionScript(): string {
     return /* javascript */ `
 /** Place the root menu at (x,y) and clamp it inside the viewport. Submenu flyouts are
     positioned independently in positionSubmenu() on hover. */
 function positionContextMenu(x, y) {
+    /* Cap the root menu to the viewport (minus a small margin) so a long menu on a short
+       panel scrolls via overflow-y:auto instead of running off the bottom edge with no scroll. */
+    contextMenuEl.style.maxHeight = (window.innerHeight - 16) + 'px';
     contextMenuEl.style.left = x + 'px';
     contextMenuEl.style.top = y + 'px';
     contextMenuEl.classList.add('visible');
@@ -32,42 +38,54 @@ function positionContextMenu(x, y) {
 }
 
 /** Position one submenu flyout against the live viewport, run on the trigger's mouseenter.
-    Each flyout decides from its OWN trigger rect and caps its height with a scroll so it
-    can never exceed the viewport regardless of item count or panel size. */
+    Uses position:fixed so placement is computed in viewport coordinates (not the trigger box),
+    spans the FULL available height, and slides fully on-screen instead of clipping. */
 function positionSubmenu(submenuEl) {
     var flyout = submenuEl.querySelector('.context-menu-submenu-content');
     if (!flyout) return;
     var marginPx = 8; /* keep a small gap from the viewport edge */
     /* Clear any prior placement so measurements reflect the natural panel, not last hover. */
     flyout.style.cssText = '';
+    flyout.style.position = 'fixed'; /* place against the live viewport, not the trigger's box */
     flyout.style.display = 'block'; /* force layout for measurement even before :hover settles */
     var tr = submenuEl.getBoundingClientRect();
-    var flyoutWidth = flyout.offsetWidth;
-    var flyoutHeight = flyout.scrollHeight;
     var vw = window.innerWidth;
     var vh = window.innerHeight;
-    /* Horizontal: open right unless it would overflow the right edge, then open left. */
-    if (tr.right + flyoutWidth + marginPx <= vw) {
-        flyout.style.left = '100%';
-    } else {
-        flyout.style.right = '100%';
-    }
-    /* Vertical: a flyout anchored top:0 aligns to the trigger top and grows DOWN;
-       anchored bottom:0 aligns to the trigger bottom and grows UP. */
-    var spaceBelow = vh - tr.top - marginPx;
-    var spaceAbove = tr.bottom - marginPx;
-    if (flyoutHeight <= spaceBelow) {
-        flyout.style.top = '0';
-    } else if (flyoutHeight <= spaceAbove) {
-        flyout.style.bottom = '0';
-    } else if (spaceBelow >= spaceAbove) {
-        flyout.style.top = '0';
-        flyout.style.maxHeight = spaceBelow + 'px'; /* taller than the viewport: cap + scroll */
-    } else {
-        flyout.style.bottom = '0';
-        flyout.style.maxHeight = spaceAbove + 'px';
-    }
+    var flyoutWidth = flyout.offsetWidth;
+    var naturalHeight = flyout.scrollHeight;
+    /* Height is maximized to the FULL viewport (minus margins), not the room on one side of the
+       trigger. The prior model anchored to the trigger and capped to the room above OR below it, so a
+       tall flyout (Copy & Export) or a near-bottom trigger (Columns) got a tiny scrollable strip
+       even when the screen had ample room. We use the whole viewport and only scroll if it cannot fit. */
+    var availableHeight = vh - marginPx * 2;
+    var usedHeight = Math.min(naturalHeight, availableHeight);
+    /* Horizontal: open to the right of the trigger; flip left if it would overflow the right edge. */
+    var left = tr.right;
+    if (left + flyoutWidth + marginPx > vw) left = tr.left - flyoutWidth;
+    if (left < marginPx) left = marginPx;
+    /* Vertical: align the flyout top to the trigger, then slide it fully on-screen so a
+       near-bottom trigger never clips — cap + scroll only when it truly exceeds the viewport. */
+    var top = tr.top;
+    if (top + usedHeight > vh - marginPx) top = vh - marginPx - usedHeight;
+    if (top < marginPx) top = marginPx;
+    flyout.style.left = left + 'px';
+    flyout.style.top = top + 'px';
+    if (naturalHeight > availableHeight) flyout.style.maxHeight = availableHeight + 'px';
     flyout.style.removeProperty('display'); /* hand visibility back to the CSS :hover rule */
+}
+
+/** Re-clamp the open root menu and reposition its open submenu after a viewport resize, so
+    the menu stays fully on-screen and re-maximizes its height when the panel is resized while open.
+    Responsive: dragging the panel taller widens a previously-scrolled flyout to use the new room. */
+function repositionOpenContextMenu() {
+    if (!window.isContextMenuOpen || !contextMenuEl) return;
+    if (contextMenuEl.classList.contains('visible')) {
+        var r = contextMenuEl.getBoundingClientRect();
+        positionContextMenu(r.left, r.top);
+    }
+    /* :hover still matches the entered trigger because the pointer has not moved on resize. */
+    var openSub = contextMenuEl.querySelector('.context-menu-submenu:hover');
+    if (openSub) positionSubmenu(openSub);
 }
 
 function hideContextMenu() {

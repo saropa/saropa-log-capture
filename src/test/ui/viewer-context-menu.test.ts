@@ -298,11 +298,22 @@ suite('ViewerContextMenu', () => {
             assert.ok(!script.includes('--submenu-content-top'));
         });
 
-        test('should cap a too-tall submenu flyout to the available space so it scrolls instead of clipping', () => {
+        test('should maximize a submenu flyout to the full viewport height and scroll only if it cannot fit', () => {
             const script = getContextMenuScript();
+            // Fixed positioning + full-viewport height replaced the trigger-anchored one-sided cap.
+            assert.ok(script.includes("flyout.style.position = 'fixed'"));
+            assert.ok(script.includes('availableHeight'));
             assert.ok(script.includes('style.maxHeight'));
-            assert.ok(script.includes('spaceBelow'));
-            assert.ok(script.includes('spaceAbove'));
+            // The old one-sided trigger-room model is gone so it cannot strand half the screen.
+            assert.ok(!script.includes('spaceBelow'));
+            assert.ok(!script.includes('spaceAbove'));
+        });
+
+        test('should reposition the open context menu and submenu on viewport resize (responsive)', () => {
+            const script = getContextMenuScript();
+            assert.ok(script.includes("addEventListener('resize'"));
+            assert.ok(script.includes('function repositionOpenContextMenu'));
+            assert.ok(script.includes('.context-menu-submenu:hover'));
         });
 
         test('should disable show-code-quality when codeQuality adapter is off (open report is footer-only)', () => {
