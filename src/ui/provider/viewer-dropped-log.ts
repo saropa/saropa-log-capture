@@ -29,6 +29,14 @@ export async function handleOpenDroppedLog(
         void vscode.window.showWarningMessage(t('msg.droppedLogReadFailed', name));
         return;
     }
+    // text/uri-list delivery: VS Code hands a dropped file over as a file:// URI string.
+    const uriStr = typeof msg.uri === 'string' ? msg.uri : '';
+    if (uriStr) {
+        const uri = vscode.Uri.parse(uriStr);
+        await focusAndLoad(uri, ctx);
+        void vscode.window.showInformationMessage(t('msg.droppedLogLoaded', basename(uri.fsPath)));
+        return;
+    }
     const path = typeof msg.path === 'string' ? msg.path : '';
     if (path) {
         await focusAndLoad(vscode.Uri.file(path), ctx);
