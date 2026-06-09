@@ -52,10 +52,10 @@ export function getSqlQueryHistoryPanelHelpersScript(): string {
                 lastSeen: row.lastSeen, preview: row.preview || '', sampleSql: row.sampleSql || '',
                 maxDur: row.maxDur, crossLog: false });
         }
-        /* DB_17: when toggle is on, layer in fingerprints from sidebar logs other than the active one.
-           Skip any fingerprint already present in the live map (that fingerprint exists in the active log
-           and the live row's preview is more readable than a bare fingerprint hash). */
-        if (sqlQueryHistoryCumulativeEnabled
+        /* DB_18: cross-log fingerprints are merged by DEFAULT — only the inverted "current session only"
+           filter suppresses them. Skip any fingerprint already present in the live map (it exists in the
+           active log, where the live row's preview/sample is more readable than the normalized fingerprint). */
+        if (!sqlQueryHistoryCurrentSessionOnly
             && typeof hasSqlQueryHistoryCumulativeData === 'function'
             && hasSqlQueryHistoryCumulativeData()) {
             var cum = sqlQueryHistoryCumulative.fingerprints;
