@@ -42,7 +42,7 @@ export function registerCommands(deps: CommandDeps, captureToggle: CaptureToggle
         ...bugReportCommands({ getFileUri: () => deps.viewerProvider.getCurrentFileUri(), context }),
         ...flowMapCommands({
             getFileUri: () => deps.viewerProvider.getCurrentFileUri(),
-            revealLine: (line: number) => deps.viewerProvider.scrollToLine(line),
+            viewer: deps.viewerProvider,
         }),
         ...qualityCommands({ getFileUri: () => deps.viewerProvider.getCurrentFileUri() }),
         ...timelineCommands(),

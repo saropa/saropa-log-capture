@@ -90,12 +90,15 @@ export function statPillsHtml(parsed: ParsedLog, graph: FlowGraph): string {
     ].map(pill).join('');
 }
 
-/** Header facts block — every field comes from the session-start banner; click reveals it (log line 1). */
-function factsHtml(parsed: ParsedLog): string {
+/** Labeled session-info grid (project, branch, device, …) for the collapsible section. */
+function sessionInfoHtml(parsed: ParsedLog): string {
     const h = parsed.header;
-    return '<div class="facts facts-link" role="link" tabindex="0" data-line="1" title="Reveal session header in log">'
-        + `<strong>${esc(h.project ?? 'session')}</strong> · ${esc(h.branch ?? '?')} @ ${esc(h.commit ?? '?')}`
-        + ` · ${esc(h.device ?? 'unknown device')} · ${esc(h.captureStartClock ?? '?')} → ${esc(parsed.lastClock ?? '?')}`
+    const row = (k: string, v?: string) =>
+        v ? `<div class="si-k">${k}</div><div class="si-v">${esc(v)}</div>` : '';
+    return '<div class="session-info">'
+        + row('Project', h.project) + row('Branch', h.branch) + row('Commit', h.commit)
+        + row('Device', h.device) + row('Version', h.version)
+        + row('Captured', `${h.captureStartClock ?? '?'} → ${parsed.lastClock ?? '?'}`)
         + '</div>';
 }
 
@@ -147,7 +150,7 @@ function section(id: string, title: string, body: string): string {
 /** Section table of contents (jumps to and expands a section). */
 function tocHtml(): string {
     const items: [string, string][] = [
-        ['sec-flow', '🗺️ Flow'], ['sec-narrative', '📝 Narrative'],
+        ['sec-flow', '🗺️ Flow'], ['sec-narrative', '📝 Narrative'], ['sec-session', '🧾 Session info'],
         ['sec-dwell', '⏱️ Screen dwell'], ['sec-perf', '📊 Performance'],
     ];
     return '<nav class="toc">'
@@ -167,12 +170,12 @@ export function buildFlowMapBody(parsed: ParsedLog, graph: FlowGraph): string {
         + '</div>';
     const detailCol = '<div class="detail-col">'
         + section('sec-narrative', '📝 Narrative', '<p>' + esc(buildNarrative(parsed, graph)) + '</p>')
+        + section('sec-session', '🧾 Session info', sessionInfoHtml(parsed))
         + section('sec-dwell', '⏱️ Screen dwell', dwellTableHtml(graph))
         + section('sec-perf', '📊 Performance · warnings · errors', issueTableHtml(parsed))
         + '</div>';
-    // The <h1> title is rendered by the panel (above the pill/action bar), so the body starts at facts.
+    // Title + clickable log path are rendered by the panel above the bar; the body starts at the TOC.
     return [
-        factsHtml(parsed),
         tocHtml(),
         '<div class="report-row">' + diagramCol + detailCol + '</div>',
     ].join('\n');
