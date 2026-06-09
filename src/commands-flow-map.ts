@@ -6,28 +6,37 @@ import { parseLog } from './modules/flow-map/flow-map-log-parser';
 import { buildGraph } from './modules/flow-map/flow-map-builder';
 import { buildReport } from './modules/flow-map/flow-map-report';
 import { scanProjectScreens } from './modules/flow-map/flow-map-source-scan';
+import { showFlowMapPanel, type FlowMapPanelParams } from './ui/panels/flow-map-panel';
 
 /** Callbacks the flow-map command needs. */
 export interface FlowMapCommandDeps {
     readonly getFileUri: () => vscode.Uri | undefined;
+    /** Scroll the open log viewer to a 1-based line (used by the report's log links). */
+    readonly revealLine: (line: number) => void;
 }
 
-/** Default output URI: `<log-basename>-flow-map.md` next to the source log. */
+/** Default save URI: `<log-basename>-flow-map.md` next to the source log. */
 function defaultReportUri(logUri: vscode.Uri): vscode.Uri {
     const dir = vscode.Uri.joinPath(logUri, '..');
     const base = (logUri.path.split('/').pop() ?? 'session').replace(/\.[^.]+$/, '');
     return vscode.Uri.joinPath(dir, `${base}-flow-map.md`);
 }
 
-/** Read the log, build the report markdown. Separated so it is easy to test/observe in isolation. */
-async function generateReportMarkdown(logUri: vscode.Uri): Promise<string> {
+/** Read the log and build the report model + markdown. Separated for isolated testing/observation. */
+async function generateReport(logUri: vscode.Uri, revealLine: (line: number) => void): Promise<FlowMapPanelParams> {
     const bytes = await vscode.workspace.fs.readFile(logUri);
     const lines = Buffer.from(bytes).toString('utf-8').split(/\r?\n/);
     const parsed = parseLog(lines);
     // Source 3 — non-fatal; empty index yields a runtime-only map.
     const scan = await scanProjectScreens(parsed.header.projectRoot);
     const graph = buildGraph(parsed, scan);
-    return buildReport(parsed, graph);
+    return {
+        parsed, graph,
+        markdown: buildReport(parsed, graph),
+        defaultUri: defaultReportUri(logUri),
+        logUri,
+        revealLine,
+    };
 }
 
 /** Register the export-flow-map command. */
@@ -37,7 +46,7 @@ export function flowMapCommands(deps: FlowMapCommandDeps): vscode.Disposable[] {
     ];
 }
 
-/** Generate the report, prompt for a save location, write it, and offer to open it. */
+/** Build the report and open it in the native flow-map webview (Save-as-Markdown lives there). */
 async function runExport(deps: FlowMapCommandDeps): Promise<void> {
     const logUri = deps.getFileUri();
     if (!logUri) {
@@ -45,26 +54,11 @@ async function runExport(deps: FlowMapCommandDeps): Promise<void> {
         return;
     }
     try {
-        const markdown = await vscode.window.withProgress(
+        const report = await vscode.window.withProgress(
             { location: vscode.ProgressLocation.Notification, title: t('flowMap.progress') },
-            () => generateReportMarkdown(logUri),
+            () => generateReport(logUri, deps.revealLine),
         );
-        const target = await vscode.window.showSaveDialog({
-            defaultUri: defaultReportUri(logUri),
-            filters: { Markdown: ['md'] },
-            title: t('flowMap.saveTitle'),
-        });
-        if (!target) {
-            return;
-        }
-        await vscode.workspace.fs.writeFile(target, Buffer.from(markdown, 'utf-8'));
-        const open = await vscode.window.showInformationMessage(
-            t('msg.exportedTo', target.fsPath.split(/[\\/]/).pop() ?? ''),
-            t('action.open'),
-        );
-        if (open === t('action.open')) {
-            await vscode.window.showTextDocument(target);
-        }
+        showFlowMapPanel(report);
     } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         void vscode.window.showWarningMessage(t('flowMap.failed', msg));
