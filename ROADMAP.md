@@ -28,6 +28,7 @@ Single table: **Wow** (High → Medium → Low), then **Effort** (Low → Medium
 | Medium | Medium | Session comparison (3-way) | Compare three sessions side by side | [031](plans/031_plan-session-comparison-three-way.md) |
 | Low | Medium | Incremental index for search | "Search in all logs" with scalable index | [029](plans/029_plan-incremental-index-search.md) |
 | High | Medium | Structured line parsing | Auto-detect log formats (logcat, syslog, Python, etc.), extract and strip prefix metadata (timestamp, PID, TID, level, tag), click-to-filter, tooltips | [047](plans/047_plan-structured-line-parsing.md) |
+| High | Medium | Session flow map | Directed screen-transition diagram — boxes per screen/tab/dialog, one-way counted arrows, dwell times, crash overlay. Mermaid export now, interactive webview graph next. Consumes [052](plans/052_plan-semantic-timeline-capture-and-signal-expansion.md) nav events | [056](plans/056_plan-session-flow-map.md) |
 | Low | High | Integration adapters | database, externalLogs, http, browser, security — full implementation from specs | [001](plans/integrations/001_integration-specs-index.md) · [009](plans/integrations/009_integration-spec-application-file-logs.md)–[013](plans/integrations/013_integration-spec-security-audit-logs.md) |
 
 ### Unscored — needs Wow/Effort assignment
