@@ -103,7 +103,13 @@ fudge. If the decoration renders at the line's own font size instead of
 | `/0.85` divisor, em estimates per part | `ch` exact for fixed parts |
 | `:has(.line-decoration)` selector dependency | none |
 
-## DOM contract change
+## DOM contract change — every part is its own cell, from the start
+
+A two-column `decoration-blob | message` grid is explicitly **rejected**: it only
+protects the message and leaves every decoration part (counter, timestamp, tag, …)
+merged in one shared cell, where a wide timestamp can still spill over the tag.
+That is the exact anti-pattern the overlap bug exposed. The invariant is **no two
+distinct data ever share a box** — so each part gets its own track immediately.
 
 **Before** (`renderItem` tail, [viewer-data-helpers-render.ts:311](../src/ui/viewer/viewer-data-helpers-render.ts#L311)):
 
@@ -111,34 +117,44 @@ fudge. If the decoration renders at the line's own font size instead of
 '<div class="line …">' + stackGutter + deco + contBadge + elapsed + badge + catBadge + html + '</div>'
 ```
 
-**After** (two grid cells; everything post-decoration wrapped in `.line-msg`):
+**After** — `.line` is the grid; each decoration part is a `.deco-cell` grid
+item; the message is `.line-msg`. The existing `.line-decoration` wrapper becomes
+`display: contents` so its per-part children participate directly in the parent
+grid (keeps the wrapper for JS hooks/measurement without adding a nesting level):
 
 ```
-'<div class="line …">' + deco + '<span class="line-msg">' + elapsed + badge + catBadge + html + '</span></div>'
+<div class="line …">
+  <span class="deco-bar"></span>                      <!-- severity track, 1.25em -->
+  <span class="line-decoration" style="display:contents">
+    <span class="deco-cell deco-cell-num">  1115</span>
+    <span class="deco-cell deco-cell-time">T10:56:00</span>
+    <span class="deco-cell deco-cell-tag" title="gralloc4">gralloc4</span>
+  </span>
+  <span class="line-msg">…elapsed/badges/text/×N…</span>
+</div>
 ```
 
-Phase 1 keeps `deco` (the `.line-decoration` span) as a single grid cell and
-only adds the `.line-msg` wrapper — the minimal change that makes overlap
-impossible. Phase 2 splits `.line-decoration` internals into per-part
-`.deco-cell` grid items for exact independent clipping.
+`grid-template-columns` lists a track per **present** part only (driven by the
+existing enabled×`decoSeen` flags). Each `.deco-cell` is `overflow: hidden`; the
+tag cell adds `text-overflow: ellipsis`. `.line-msg { min-width: 0 }`. No part
+can paint over another, and none can paint over the message — structurally.
 
-## Phasing (ship the overlap-killer first, refine internals after)
+Fixed-content cells take **exact `ch` widths** from known char counts in this same
+pass (counter digits, `"T10:56:00"`=9ch / `+13ch` with ms, elapsed, level); only
+the variable tag cell is capped (`7em`) and clips. So fixed parts never even clip.
 
-**Phase 1 — two-column grid (highest value, lowest risk).**
-- Add `viewer-styles-columns.ts`: `.line { display:grid; grid-template-columns: var(--deco-prefix-width-em) 1fr }`, `.line-msg { min-width:0 }`, `.line-decoration { overflow:hidden }`.
-- Wrap post-decoration content in `.line-msg` in every render path (list D below).
-- Keep `applyDecorationLayoutWidth` as-is (still emits `--deco-prefix-width-em`); the value now sizes a grid track instead of `padding-left`.
-- Remove the hanging-indent rules (`padding-left` + negative `text-indent` + `:has()` + inline-block width + `/0.85`) from `viewer-styles-decoration.ts`.
-- **Result:** decoration that exceeds its track clips (ellipsis) instead of overlapping the message. Overlap is gone even before widths are made exact.
+## Phasing (full column model from day one; risk managed by rollout, not by merging)
 
-**Phase 2 — per-part exact columns.**
-- Split `.line-decoration` into `.deco-cell` grid items (bar / num / time / elapsed / pid / level / tag).
-- Rewrite `applyDecorationLayoutWidth` to emit a full `grid-template-columns` string in `ch`/`em`, tracks present only for enabled+seen parts.
-- `getDecorationPrefix` emits per-cell spans instead of one `.line-decoration` blob joined by `&nbsp;`.
+**Phase 1 — the grid column model, rolled out path-by-path.**
+- Add `viewer-styles-columns.ts`: `.line { display:grid; grid-template-columns: var(--grid-cols) }`, `.deco-cell { overflow:hidden }`, tag-cell ellipsis, `.line-msg { min-width:0 }`, `.line-decoration { display:contents }`.
+- Rewrite `applyDecorationLayoutWidth` to emit `--grid-cols` (a full `grid-template-columns` string) — a track per enabled+seen part, `ch`-exact for fixed parts, `7em` for the tag, `1fr` for the message.
+- Rewrite `getDecorationPrefix` to emit per-part `.deco-cell` spans instead of one `&nbsp;`-joined blob.
+- Migrate render paths **one at a time** (regular line → AI line → chips → stack header/frame → banner/art-block → structured-file), keeping the suite green between each. This is where the blast radius is contained: incremental rollout, not a weaker design.
+- Remove the hanging-indent rules (`padding-left` + negative `text-indent` + `:has()` + inline-block width + `/0.85`) from `viewer-styles-decoration.ts` as each path moves over.
 
-**Phase 3 — cleanup + tests.**
-- Delete dead CSS vars (`--deco-content-indent-em`, the `/0.85` rule).
-- Rewrite [viewer-column-layout.test.ts](../src/test/ui/viewer-column-layout.test.ts) to pin the grid model (assert `display:grid`, `.line-msg{min-width:0}`, exact `ch` tracks) instead of the inline-block model.
+**Phase 2 — cleanup + tests.**
+- Delete dead CSS vars (`--deco-content-indent-em`, `--deco-prefix-width-em`, the `/0.85` rule) once no path references them.
+- Rewrite [viewer-column-layout.test.ts](../src/test/ui/viewer-column-layout.test.ts) to pin the grid model: `.line{display:grid}`, one `.deco-cell` per part, `.line-msg{min-width:0}`, exact `ch` time/number tracks, tag-cell ellipsis.
 - Update `doc/internal` if any column contract is documented.
 
 ## Render paths to migrate (all share or mirror the `.line` contract)
@@ -186,8 +202,8 @@ From the original spec, all still required:
 
 ## Risks
 
-- **High blast radius.** `.line` is the shared contract for ~10 render paths; a grid rule on `.line` hits all of them at once. Mitigation: Phase 1's `.line-msg` wrap is mechanical and uniform; migrate path-by-path with the existing tests green between each.
-- **`renderItem` LOC cap.** Already near 300; Phase 2 likely forces a module split (extract the cell-emitter).
+- **High blast radius.** `.line` is the shared contract for ~10 render paths; a grid rule on `.line` hits all of them at once. Mitigation: land the CSS + `getDecorationPrefix`/`applyDecorationLayoutWidth` cell emitter first, then convert render paths **one at a time** with the suite green between each — risk is contained by rollout order, not by a weaker (merged-cell) intermediate design.
+- **`renderItem` LOC cap.** Already near 300; the per-cell emitter likely forces a module split (extract the cell builder).
 - **Wrapped/multi-line height (pre-existing, out of scope).** Grid does not fix the `calcItemHeight` one-row assumption for `pre-wrap` content or embedded-`\n` live events. Do not let the rewrite *worsen* it; track separately.
 - **Baseline alignment.** `align-items: baseline` across cells of different font sizes (if D2 keeps 0.85em) can drift; 1em decoration sidesteps it.
 
