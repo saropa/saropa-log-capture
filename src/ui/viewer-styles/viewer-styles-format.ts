@@ -21,6 +21,11 @@ export function getFormatStyles(): string {
    for the ragged left edge that per-heading borders/padding used to cause. */
 .line.fmt-markdown { padding-left: 1em; }
 
+/* Markdown is a document: prose must always wrap, even when the log view is in no-wrap mode
+   (which otherwise sets white-space:pre and clips long lines off the right edge). Tables, code
+   fences, and headings keep their own nowrap via their inner spans. */
+#log-content.nowrap .line.fmt-markdown { white-space: pre-wrap; }
+
 /* Headings: no left border (it broke alignment). The row is pinned to a taller height
    (calcItemHeight + inline style); flex-centering the text inside it yields the vertical
    padding, and the collapse chevron is pushed to the right edge. */
