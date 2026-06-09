@@ -109,6 +109,13 @@ export const stringsWebview: Record<string, string> = {
     'viewer.session.group.expand': 'Expand this session group',
     'viewer.session.group.collapse': 'Collapse this session group',
     'viewer.session.revealInOS': 'Reveal in File Explorer',
+    // {0}=count of hidden older runs sharing this name. Appears on the latest row when "Latest only"
+    // is on, so older logs stay discoverable (and one click expands them) instead of vanishing.
+    'viewer.session.olderCount': '+{0} older',
+    'viewer.session.older.expand': 'Show older logs with this name',
+    'viewer.session.older.collapse': 'Hide older logs with this name',
+    // Title on a Controller row's icon — the day's tree root that peripheral logs nest beneath.
+    'viewer.session.controller': 'Controller — peripheral logs nest under this session',
     // Reports bucket and newer-log banner — see [plans/history/2026.06/2026.06.02/001_plan-newer-alert-and-reports-grouping.md].
     // {0}=count of report rows in the bucket. The label collapses N entries (lint reports,
     // bundle audits, etc.) under a single fold-out heading so the day's debug-session rows

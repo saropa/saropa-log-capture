@@ -25,7 +25,7 @@ import { migrateCrashlyticsCacheToSaropa } from './modules/crashlytics/crashlyti
 import { migrateSidecarsInDirectory } from './modules/session/session-metadata';
 import { ProjectIndexer, setGlobalProjectIndexer } from './modules/project-indexer/project-indexer';
 import { BookmarkStore } from './modules/storage/bookmark-store';
-import { buildSessionListPayload, LOG_LAST_VIEWED_KEY } from './ui/provider/viewer-provider-helpers';
+import { buildSessionListPayload, buildClassifierInputs, buildRoleClassifier, LOG_LAST_VIEWED_KEY } from './ui/provider/viewer-provider-helpers';
 import { registerDebugLifecycle } from './extension-lifecycle';
 import { SessionGroupTracker } from './modules/session/session-group-tracker';
 import { setRetentionGroupContext } from './modules/config/file-retention';
@@ -111,9 +111,16 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         broadcaster.sendSessionListLoading(defaultLabel);
         const items = await historyProvider.getAllChildren();
         const lastViewedMap = context.workspaceState.get<Record<string, number>>(LOG_LAST_VIEWED_KEY, {});
+        // Classify kind + role here too (not just in makePayloadOptions): this tree-change refresh
+        // feeds the same panel, so omitting the classifiers would flatten every Controller back to a
+        // peripheral on the next refresh and flicker the tree. Folder name drives the controller match.
+        const cfg = getConfig();
+        const refreshFolderName = folder?.name;
         const payload = await buildSessionListPayload(items, historyProvider.getActiveUri(), {
             getActiveLastWriteTime: () => sessionManager.getActiveLastWriteTime?.(),
             getLastViewedAt: (uri) => lastViewedMap[uri],
+            classifyMeta: buildClassifierInputs(cfg.reportsClassifier.kindPatterns, refreshFolderName),
+            classifyRole: buildRoleClassifier(cfg.reportsClassifier.controllerNames, refreshFolderName),
         });
         broadcaster.sendSessionList(payload, { label: defaultLabel, path: defaultLabel, isDefault: true });
     });
