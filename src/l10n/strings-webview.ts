@@ -97,8 +97,11 @@ export const stringsWebview: Record<string, string> = {
     'viewer.session.icon.logFile': 'Log file',
     'viewer.session.icon.updatedMin': 'Log updated in the last minute',
     'viewer.session.icon.updatedSince': 'Log has new lines since last viewed',
-    'viewer.session.nameFilter.only': 'Showing only: {0}',
-    'viewer.session.nameFilter.hiding': 'Hiding: {0}',
+    // Verb labels precede one removable pill per filtered name (no {0}: the names
+    // render as pills, so several can be hidden / shown at once).
+    'viewer.session.nameFilter.only': 'Showing only:',
+    'viewer.session.nameFilter.hiding': 'Hiding:',
+    'viewer.session.nameFilter.remove.title': 'Remove {0} from the filter',
     'viewer.session.nameFilter.clear.title': 'Clear name filter',
     'viewer.session.nameFilter.showAll': 'Show All',
     'viewer.session.latest': '(latest)',

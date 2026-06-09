@@ -22,10 +22,6 @@ export function getSessionPanelScript(): string {
     var sessionLoadingEl = document.getElementById('session-loading');
     var cachedSessions = null;
     var sessionListPage = 0;
-    /** Pending auto-close countdown started when a file is opened from the panel.
-        The panel lingers briefly so a follow-up selection (viewing another file)
-        doesn't require reopening it. null = no countdown in flight. */
-    var sessionAutoCloseTimer = null;
     /** Set when openSessionPanel runs; renderSessionList consumes it once to scroll
         the panel to the file currently open in the viewer (so the user lands on the
         row they care about instead of the previous scroll position, which after a
@@ -63,13 +59,15 @@ export function getSessionPanelScript(): string {
 
     /**
      * Name-based filter for the session list.
-     * mode 'hide' = hide all sessions matching this canonical name.
-     * mode 'only' = show only sessions matching this canonical name.
-     * rawBasename stores the pre-transform basename so the filter adapts
-     * when display options (stripDatetime, normalizeNames) change.
+     * mode 'hide' = hide every session matching ANY canonical name in the list.
+     * mode 'only' = show only sessions matching ANY canonical name in the list.
+     * names is a cumulative array of pre-transform basenames so a user can hide
+     * (or show-only) several names at once; each renders as a removable pill.
+     * Storing the raw basenames keeps the filter correct when display options
+     * (stripDatetime, normalizeNames) change after the filter was set.
      * null = no name filter active.
      */
-    var sessionNameFilter = null; /* { mode: 'hide'|'only', rawBasename: string } */
+    var sessionNameFilter = null; /* { mode: 'hide'|'only', names: string[] } */
 
     /** Get the raw (pre-transform) basename for a session record. */
     function getSessionRawBasename(s) {
@@ -77,17 +75,37 @@ export function getSessionPanelScript(): string {
     }
 
     /**
-     * Set name filter from context menu and re-render.
+     * Add a name to the filter from the context menu and re-render.
      * Accepts the raw basename (before display-option transforms) so the
      * filter stays correct when the user toggles Dates/Tidy after filtering.
+     * Cumulative within a mode: repeated calls stack names into one filter.
+     * Switching mode (hide <-> only) starts a fresh list — the two modes are
+     * mutually exclusive, so mixing their names would be ambiguous.
      */
     window.setSessionNameFilter = function(mode, rawBasename) {
-        sessionNameFilter = { mode: mode, rawBasename: rawBasename };
+        if (!sessionNameFilter || sessionNameFilter.mode !== mode) {
+            sessionNameFilter = { mode: mode, names: [rawBasename] };
+        } else if (sessionNameFilter.names.indexOf(rawBasename) === -1) {
+            sessionNameFilter.names.push(rawBasename);
+        }
         sessionListPage = 0;
         if (cachedSessions) renderSessionList(cachedSessions);
     };
 
-    /** Clear the name filter and re-render. */
+    /**
+     * Remove one name (a pill's [x]) from the active filter and re-render.
+     * Dropping the last name clears the filter entirely so the bar disappears.
+     */
+    window.removeSessionNameFilter = function(rawBasename) {
+        if (!sessionNameFilter) return;
+        var idx = sessionNameFilter.names.indexOf(rawBasename);
+        if (idx !== -1) sessionNameFilter.names.splice(idx, 1);
+        if (sessionNameFilter.names.length === 0) sessionNameFilter = null;
+        sessionListPage = 0;
+        if (cachedSessions) renderSessionList(cachedSessions);
+    };
+
+    /** Clear the whole name filter ("Show All") and re-render. */
     window.clearSessionNameFilter = function() {
         sessionNameFilter = null;
         sessionListPage = 0;
@@ -161,9 +179,6 @@ export function getSessionPanelScript(): string {
     /** Closes panel and returns focus to icon bar for a11y. */
     window.closeSessionPanel = function() {
         if (!sessionPanelEl) return;
-        /* A manual/explicit close cancels any pending auto-close so the timer
-           can't fire later and re-close an already-reopened panel. */
-        if (sessionAutoCloseTimer) { clearTimeout(sessionAutoCloseTimer); sessionAutoCloseTimer = null; }
         sessionPanelEl.classList.remove('visible');
         sessionPanelOpen = false;
         if (typeof clearActivePanel === 'function') clearActivePanel('sessions');
