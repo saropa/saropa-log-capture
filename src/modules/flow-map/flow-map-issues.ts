@@ -7,11 +7,12 @@
 
 import type { IssueEvent, IssueSeverity, SourceAnchor } from './flow-map-model';
 
-/** A detected slow query: duration plus the interceptor source anchor. */
+/** A detected slow query: duration plus the interceptor source anchor and its log line. */
 export interface SlowQuery {
     readonly ms: number;
     readonly kind: string;
     readonly source?: SourceAnchor;
+    logLine?: number;
 }
 
 /** Pull the `(./lib/…/foo.dart:NN:CC)` anchor Drift appends, as a project-relative SourceAnchor. */
@@ -72,10 +73,10 @@ const WARNINGS: { re: RegExp; category: string; severity: IssueSeverity; detail:
 ];
 
 /** Classify a line as a warning IssueEvent, or undefined. Category dedup is the caller's job. */
-export function classifyWarning(line: string, tsMs: number, clock: string): IssueEvent | undefined {
+export function classifyWarning(line: string, tsMs: number, clock: string, logLine: number): IssueEvent | undefined {
     for (const w of WARNINGS) {
         if (w.re.test(line)) {
-            return { tsMs, clock, severity: w.severity, category: w.category, detail: w.detail };
+            return { tsMs, clock, severity: w.severity, category: w.category, detail: w.detail, logLine };
         }
     }
     return undefined;
