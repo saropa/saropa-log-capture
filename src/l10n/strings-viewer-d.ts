@@ -54,6 +54,9 @@ export const stringsViewerD: Record<string, string> = {
     'viewer.logFile.copyRelativePath': 'Copy relative path',
     'viewer.logFile.copyFullPath': 'Copy full path',
 
+    // Files dialog (viewer-files-list-modal.ts) — cumulative cross-session feed (plan 057).
+    'viewer.files.title': 'Files in this view',
+
     // Session info modal (viewer-session-info-modal.ts) and its toolbar trigger.
     'viewer.toolbar.sessionInfo.title': 'Session info — view the capture header (long-press a row to copy)',
     'viewer.toolbar.sessionInfo.label': 'Show session info',

@@ -68,6 +68,7 @@ export function buildPendingLineFromLineData(
         isMarker: data.isMarker, lineCount: data.lineCount,
         category: data.category, timestamp: data.timestamp.getTime(),
         tier, fw, sourcePath: data.sourcePath,
+        ...(data.logFileUri !== undefined ? { logFileUri: data.logFileUri } : {}),
         ...(qualityPercent !== undefined ? { qualityPercent } : {}),
         ...(lint?.errors ? { lintErrors: lint.errors } : {}),
         ...(lint?.warnings ? { lintWarnings: lint.warnings } : {}),

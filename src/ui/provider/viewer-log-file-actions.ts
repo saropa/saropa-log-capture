@@ -50,10 +50,15 @@ function relativeOrAbsolute(uri: vscode.Uri): string {
  *
  * Why a single dispatcher: keeps the missing-URI guard in one place so no
  * future action accidentally re-introduces the silent no-op behavior.
+ *
+ * `targetPath` (plan 057): the files dialog opens these same actions for an
+ * arbitrary accumulated file (a letter A/B/…), not just the tailed file. When a
+ * valid absolute path is supplied it overrides `ctx.currentFileUri`; otherwise
+ * the tailed file is used, preserving the original single-file behavior.
  */
-export function handleLogFileAction(type: string, ctx: ViewerMessageContext): boolean {
+export function handleLogFileAction(type: string, ctx: ViewerMessageContext, targetPath?: string): boolean {
     if (!(LOG_FILE_ACTION_TYPES as readonly string[]).includes(type)) { return false; }
-    const uri = ctx.currentFileUri;
+    const uri = targetPath ? vscode.Uri.file(targetPath) : ctx.currentFileUri;
     if (!uri) { warnNoLogFile(); return true; }
     switch (type) {
         case "openLogFileInEditor":
