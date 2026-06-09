@@ -114,8 +114,11 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes("case 'show-context':"));
             assert.ok(script.includes("case 'copy-line-number':"));
             assert.ok(script.includes("case 'copy-timestamp':"));
-            assert.ok(script.includes("case 'copy-error-warning-block':"));
-            assert.ok(script.includes("case 'copy-db-cluster-block':"));
+            /* Grouped-block copy actions moved to viewer-context-menu-block-copy.ts (handleBlockCopyAction),
+               so they dispatch via `if (action === ...)` rather than a switch case. The JSON variant is new. */
+            assert.ok(script.includes("action === 'copy-error-warning-block'"));
+            assert.ok(script.includes("action === 'copy-error-warning-json'"));
+            assert.ok(script.includes("action === 'copy-db-cluster-block'"));
         });
 
         test('should define incident range helpers before showContextMenu uses them', () => {

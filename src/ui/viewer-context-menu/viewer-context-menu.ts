@@ -165,29 +165,33 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
     var changelogSinceItem = contextMenuEl.querySelector('[data-action="show-changelog-since"]');
     if (changelogSinceItem) changelogSinceItem.style.display = hasVersionToken ? '' : 'none';
 
-    /* Copy Error / Warning + Copy DB cluster: full grouped block before Copy & Export. */
-    var ewRow = contextMenuEl.querySelector('[data-copy-error-warning-row]');
+    /* Copy Error / Warning (plain + JSON) + Copy DB cluster: full grouped block before Copy & Export.
+       Both error/warning rows share the data-copy-error-warning-row marker, so toggle all matches
+       (querySelectorAll, not querySelector — the latter would hide only the first and strand the JSON row). */
+    var ewRows = contextMenuEl.querySelectorAll('[data-copy-error-warning-row]');
     var dbClusterRow = contextMenuEl.querySelector('[data-copy-db-cluster-row]');
     var groupedBlockSep = contextMenuEl.querySelector('[data-grouped-block-copy-separator]');
     var ewRange = (hasLine && typeof computeIncidentLineRange === 'function') ? computeIncidentLineRange(lineIdx) : null;
     var dbBurstRange = (hasLine && typeof computeDbTimestampBurstLineRange === 'function') ? computeDbTimestampBurstLineRange(lineIdx) : null;
     var showEw = !!(hasLine && ewRange);
     var showDbCluster = !!(hasLine && dbBurstRange);
-    if (ewRow) ewRow.style.display = showEw ? '' : 'none';
+    ewRows.forEach(function(r) { r.style.display = showEw ? '' : 'none'; });
     if (dbClusterRow) dbClusterRow.style.display = showDbCluster ? '' : 'none';
     if (groupedBlockSep) groupedBlockSep.style.display = (showEw || showDbCluster) ? '' : 'none';
-    if (showEw && ewRow) {
+    if (showEw) {
         var ewLevel = lineData && typeof effectiveErrorWarningLevel === 'function' ? effectiveErrorWarningLevel(lineData) : null;
         if (!ewLevel && ewRange) {
             for (var ewi = ewRange.lo; ewi <= ewRange.hi && !ewLevel; ewi++) {
                 ewLevel = effectiveErrorWarningLevel(allLines[ewi]);
             }
         }
-        var ewLabelEl = ewRow.querySelector('[data-ew-copy-label]');
-        var ewIconEl = ewRow.querySelector('[data-ew-copy-icon]');
         var ewIsWarn = ewLevel === 'warning';
+        var ewLabelEl = contextMenuEl.querySelector('[data-ew-copy-label]');
+        var ewIconEl = contextMenuEl.querySelector('[data-ew-copy-icon]');
+        var ewJsonLabelEl = contextMenuEl.querySelector('[data-ew-json-label]');
         if (ewLabelEl) ewLabelEl.textContent = ewIsWarn ? 'Copy Warning' : 'Copy Error';
         if (ewIconEl) ewIconEl.className = 'codicon ' + (ewIsWarn ? 'codicon-warning' : 'codicon-error');
+        if (ewJsonLabelEl) ewJsonLabelEl.textContent = ewIsWarn ? 'Copy Warning JSON' : 'Copy Error JSON';
     }
 
     /* Copy Timestamp hides when the line carries no epoch (markers, synthetic rows). Both .timestamp
