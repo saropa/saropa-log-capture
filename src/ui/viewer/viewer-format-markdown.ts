@@ -174,6 +174,12 @@ function buildMdSections() {
         /* calcItemHeight + renderItem read this to allocate a taller, padded heading row. */
         allLines[cur.idx]._mdHeadingLevel = cur.level;
     }
+    /* Flag TOP-LEVEL list items (no leading indent) so each gets extra top space — separates
+       multi-line bullets that otherwise blur into one wall. Nested items (indented) are skipped. */
+    for (var b = 0; b < allLines.length; b++) {
+        if (mdComments[b] || mdFences[b] || mdTables[b] || allLines[b]._mdHeadingLevel) { allLines[b]._mdBulletTop = false; continue; }
+        allLines[b]._mdBulletTop = /^([\\-\\*]|\\d+\\.)\\s+/.test(stripTags(allLines[b].html));
+    }
 }
 
 /** Toggle a markdown section collapse. Called from click handler on heading lines. */
