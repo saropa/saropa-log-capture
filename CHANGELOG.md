@@ -75,11 +75,11 @@ SQL Query History now spans every log you've captured (not just the open one) an
 
 ## [7.17.5]
 
-The highlight sweep across grouped ASCII-art log blocks now plays just once on arrival instead of twice. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+The highlight sweep across grouped ASCII-art log blocks now plays just once when the block arrives and then stays static, instead of sweeping forever. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
 
-### Changed
+### Fixed
 
-- **ASCII art banners shimmer once, then settle** — the highlight sweep across grouped ASCII-art log blocks played twice on arrival; it now sweeps a single time and goes static. ([viewer-styles-ascii-art.ts](src/ui/viewer-styles/viewer-styles-ascii-art.ts))
+- **ASCII art banner shimmer no longer sweeps forever** — the highlight sweep across grouped ASCII-art log blocks kept animating perpetually even though its CSS was set to a finite iteration count. The log viewport rebuilds its whole visible DOM on every scroll and every incoming log line, which restarted the animation from the beginning each time, so it never settled. The shimmer is now triggered only on a row's first render (latched per row), so it sweeps once on arrival and then holds static through later rebuilds. ([viewer-data-helpers-render.ts](src/ui/viewer/viewer-data-helpers-render.ts), [viewer-styles-ascii-art.ts](src/ui/viewer-styles/viewer-styles-ascii-art.ts))
 
 ### Fixed
 
