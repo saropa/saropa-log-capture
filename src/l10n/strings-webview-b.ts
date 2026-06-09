@@ -28,6 +28,10 @@ export const stringsWebviewB: Record<string, string> = {
     'viewer.deco.anr': 'ANR Pattern Detected',
     'viewer.deco.recentErrorContext': 'Recent-error context: not the primary faulting line; tinted because a real error or stack line occurred within 2 seconds above.',
 
+    // Files dialog + footer counter — cumulative cross-session feed (plan 057).
+    'viewer.files.counterTooltip': '{0} files in this view — click to list',
+    'viewer.files.lineCount': '{0} lines',
+
     // Meta-filter tooltips (viewer-decorations.ts).
     'viewer.deco.filterByPid': 'Filter by PID {0}',
     'viewer.deco.filterByTid': 'Filter by TID {0}',

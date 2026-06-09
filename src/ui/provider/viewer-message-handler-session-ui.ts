@@ -221,8 +221,10 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
     case "copyCurrentFileName":
     case "copyCurrentFileRelativePath":
       /* All log-file modal actions: centralized to avoid silent no-ops when
-         currentFileUri is unset, and to give visible toast feedback on copy. */
-      return handleLogFileAction(type, ctx);
+         currentFileUri is unset, and to give visible toast feedback on copy.
+         An optional `path` (plan 057 files dialog) targets a specific accumulated
+         file instead of the tailed one. */
+      return handleLogFileAction(type, ctx, msgStr(msg, "path") || undefined);
     case "showKeyboardShortcuts":
       showKeyboardShortcutsPanel();
       return true;

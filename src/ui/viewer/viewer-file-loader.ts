@@ -53,6 +53,11 @@ export interface PendingLine {
         the displayed number maps to the user's open file, not the in-memory array index
         (which counts hidden stack frames, async-gap markers, and synthetic chip rows). */
     readonly sourceLineNo?: number;
+    /** Absolute path of the .log file this line came from. Lets the cumulative live feed
+        group lines by origin file and assign per-file letter codes (A, B, …) in the gutter.
+        Only set for live broadcast lines; lines parsed from a single loaded file share one
+        file and omit it (the feed is single-file, so no letter is shown). */
+    readonly logFileUri?: string;
 }
 
 /** Context for parsing file lines — bundles parameters to stay within limits. */

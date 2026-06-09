@@ -13,6 +13,7 @@ import { getViewerDataScript } from '../viewer/viewer-data';
 import { getViewerRootCauseHintsScript } from '../viewer/viewer-root-cause-hints-script';
 import { getViewerScript } from '../viewer/viewer-script';
 import { getLogFileModalScript } from '../viewer/viewer-log-file-modal';
+import { getFilesListModalScript } from '../viewer/viewer-files-list-modal';
 import { getSessionInfoModalScript } from '../viewer/viewer-session-info-modal';
 import { getViewerVisibilityScript } from '../viewer/viewer-visibility';
 import { getScrollAnchorScript } from '../viewer/viewer-scroll-anchor';
@@ -172,6 +173,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
             getViewerVisibilityScript(),
         ) +
         scriptTag(nonce, getLogFileModalScript()) +
+        scriptTag(nonce, getFilesListModalScript()) +
         scriptTag(nonce, getSessionInfoModalScript()) +
         scriptTag(nonce, getScrollAnchorScript()) +
         scriptTag(nonce, getFilterScript()) +
