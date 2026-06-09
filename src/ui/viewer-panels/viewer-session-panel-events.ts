@@ -4,9 +4,10 @@
  */
 import { getSessionOptionsMenuScript } from './viewer-session-options-menu';
 import { getNewerLogEventsScript } from './viewer-session-panel-events-newer';
+import { getControllerEventsScript } from './viewer-session-panel-events-controllers';
 
 export function getSessionPanelEventsScript(): string {
-  return getSessionOptionsMenuScript() + getNewerLogEventsScript() + `
+  return getSessionOptionsMenuScript() + getNewerLogEventsScript() + getControllerEventsScript() + `
     function syncToggleButtons() {
         var ids = {
             'session-toggle-strip': !sessionDisplayOptions.stripDatetime,
@@ -287,12 +288,12 @@ export function getSessionPanelEventsScript(): string {
                     if (opts.collapsedGroups[gk]) collapsedGroups[gk] = true;
                 }
             }
-            /* Restore persisted per-day Reports bucket expansion state. Same pattern as
-               collapsedDays — only keep truthy entries so the object stays small. Plan: 001. */
-            if (opts.expandedReportBuckets) {
-                expandedReportBuckets = Object.create(null);
-                for (var rk in opts.expandedReportBuckets) {
-                    if (opts.expandedReportBuckets[rk]) expandedReportBuckets[rk] = true;
+            /* Restore persisted collapsed-controller state. Same pattern as collapsedGroups —
+               only keep truthy entries so the object stays small. */
+            if (opts.collapsedControllers) {
+                collapsedControllers = Object.create(null);
+                for (var rk in opts.collapsedControllers) {
+                    if (opts.collapsedControllers[rk]) collapsedControllers[rk] = true;
                 }
             }
             sessionListPage = 0;

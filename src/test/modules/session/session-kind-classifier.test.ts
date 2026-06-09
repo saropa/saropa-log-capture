@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import {
     classifySessionKind,
+    classifySessionRole,
     compileReportPatterns,
     defaultReportsKindPatterns,
 } from '../../../modules/session/session-kind-classifier';
@@ -126,6 +127,63 @@ suite('session-kind-classifier', () => {
                 undefined,
             );
             assert.strictEqual(result, 'report');
+        });
+    });
+
+    suite('classifySessionRole', () => {
+        test('explicit role override wins over all detection', () => {
+            // A peripheral override must hold even when the displayName matches the folder.
+            assert.strictEqual(
+                classifySessionRole({ role: 'peripheral', displayName: 'Contacts' }, [], 'Contacts'),
+                'peripheral',
+            );
+            assert.strictEqual(
+                classifySessionRole({ role: 'controller', displayName: 'Saropa Lint Report' }, [], 'Contacts'),
+                'controller',
+            );
+        });
+
+        test('name in controllerNames list → controller', () => {
+            const result = classifySessionRole(
+                { displayName: 'My Custom Runner' }, ['my custom runner'], 'Contacts',
+            );
+            assert.strictEqual(result, 'controller');
+        });
+
+        test('displayName matches workspace folder → controller', () => {
+            assert.strictEqual(
+                classifySessionRole({ displayName: 'Contacts' }, [], 'contacts'),
+                'controller',
+            );
+        });
+
+        test('header project matches workspace folder → controller', () => {
+            assert.strictEqual(
+                classifySessionRole({ project: 'Contacts', displayName: 'Contacts dart' }, [], 'Contacts'),
+                'controller',
+            );
+        });
+
+        test('report-like peripheral name → peripheral (fail-safe default)', () => {
+            // "Saropa Lint Report" neither matches the folder nor the controllerNames list, so it
+            // nests as a peripheral rather than becoming a stray controller root.
+            assert.strictEqual(
+                classifySessionRole({ displayName: 'Saropa Lint Report' }, [], 'Contacts'),
+                'peripheral',
+            );
+        });
+
+        test('a differently-named project log is still a peripheral', () => {
+            // "Contacts Drift Advisor" runs against Contacts but its displayName ≠ folder, so it is
+            // a peripheral under the real Contacts controller — the core grouping intent.
+            assert.strictEqual(
+                classifySessionRole({ displayName: 'Contacts Drift Advisor' }, [], 'Contacts'),
+                'peripheral',
+            );
+        });
+
+        test('no workspace folder + no list → peripheral', () => {
+            assert.strictEqual(classifySessionRole({ displayName: 'Contacts' }, [], undefined), 'peripheral');
         });
     });
 });
