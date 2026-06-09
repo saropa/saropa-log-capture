@@ -3,6 +3,9 @@
  * Merged in ../l10n.ts.
  */
 export const stringsB: Record<string, string> = {
+    'flowMap.progress': 'Building session flow map…',
+    'flowMap.saveTitle': 'Save Session Flow Map',
+    'flowMap.failed': 'Could not build flow map: {0}',
     'action.delete': 'Delete',
     'action.open': 'Open',
     'action.reset': 'Reset',
@@ -42,6 +45,11 @@ export const stringsB: Record<string, string> = {
     'msg.noActiveCollection': 'No active collection.',
     'msg.noSourcesInCollection': 'No sources in this collection.',
     'msg.noSessionsToAdd': 'No logs found to add.',
+    'msg.openLogFile.filter': 'Log files',
+    'msg.openLogFile.allFiles': 'All files',
+    'msg.openLogFile.openLabel': 'Open log',
+    'msg.droppedLogTooLarge': 'Cannot read "{0}" via drag-and-drop because it is too large. Use the kebab menu → Open log file… to open it by path instead.',
+    'msg.droppedLogReadFailed': 'Could not read the dropped file "{0}".',
     'prompt.selectSessionsForCollection': 'Select logs to add to the new collection',
     'msg.deleteCollectionConfirm': 'Delete collection "{0}"? This cannot be undone.',
     'msg.collectionDeleted': 'Collection "{0}" deleted.',

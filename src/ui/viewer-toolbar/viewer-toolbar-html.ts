@@ -38,9 +38,8 @@ export function getToolbarHtml(opts: ToolbarHtmlOptions): string {
         </button>
         ${getRunNavHtml()}
         <span class="toolbar-sep"></span>
-        <button type="button" id="toolbar-search-btn" class="toolbar-icon-btn" title="${t('viewer.toolbar.search.title')}" aria-label="${t('viewer.toolbar.search.label')}" aria-expanded="false">
-            <span class="codicon codicon-search" aria-hidden="true"></span>
-            <span id="toolbar-search-count" class="toolbar-badge" title="${t('viewer.toolbar.searchCount.title')}"></span>
+        <button type="button" id="toolbar-flowmap-btn" class="toolbar-icon-btn" title="${t('viewer.toolbar.flowMap.title')}" aria-label="${t('viewer.toolbar.flowMap.label')}">
+            <span class="codicon codicon-type-hierarchy" aria-hidden="true"></span>
         </button>
         <button type="button" id="toolbar-filter-btn" class="toolbar-icon-btn" title="${t('viewer.toolbar.filter.title')}" aria-label="${t('viewer.toolbar.filter.label')}" aria-expanded="false">
             <span class="codicon codicon-filter" aria-hidden="true"></span>

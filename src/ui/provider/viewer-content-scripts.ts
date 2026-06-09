@@ -22,6 +22,7 @@ import { getPinScript } from '../viewer/viewer-pin';
 import { getExclusionScript } from '../viewer-search-filter/viewer-exclusions';
 import { getCopyScript } from '../viewer/viewer-copy';
 import { getCopyDragSelectScript } from '../viewer/viewer-copy-drag-select';
+import { getDropToOpenScript } from '../viewer/viewer-drop-to-open';
 import { getSelectionKeyboardScript } from '../viewer/viewer-selection-keyboard';
 import { getHiddenLinesScript } from '../viewer/viewer-hidden-lines';
 import { getPeekChevronScript } from '../viewer/viewer-peek-chevron';
@@ -30,8 +31,7 @@ import { getAnnotationScript } from '../viewer/viewer-annotations';
 import { getTimingScript } from '../viewer/viewer-timing';
 import { getReplayScript } from '../viewer/viewer-replay';
 import { getDecorationsScript } from '../viewer-decorations/viewer-decorations';
-import { getDecoSettingsScript } from '../viewer-decorations/viewer-deco-settings';
-import { getColumnPrefsScript } from '../viewer-decorations/viewer-deco-column-prefs';
+import { getDecoSettingsScript, type ViewerColumnDefaults } from '../viewer-decorations/viewer-deco-settings';
 import { getDecoSettingsSyncScript } from '../viewer-decorations/viewer-deco-settings-sync';
 import { getDecoSettingsListenersScript } from '../viewer-decorations/viewer-deco-settings-listeners';
 import { getQualityBadgeScript } from '../viewer-decorations/viewer-quality-badge';
@@ -126,6 +126,8 @@ export interface ViewerScriptsOptions {
     readonly signalSlowOpThresholdMs?: number;
     /** When true, divider rows show the "─── N hidden · show ───" pill (`accessibility.showCollapseDividerLabels`). */
     readonly accessibilityShowCollapseDividerLabels?: boolean;
+    /** Default per-line column visibility baked into the viewer (saropaLogCapture.viewerColumn*). */
+    readonly viewerColumns?: ViewerColumnDefaults;
 }
 
 /** Build all script tags in the order required by the viewer. */
@@ -144,6 +146,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         viewerDbDetectorToggles,
         signalSlowOpThresholdMs,
         accessibilityShowCollapseDividerLabels,
+        viewerColumns,
     } = opts;
     return (
         scriptTag(nonce, getErrorHandlerScript()) +
@@ -177,6 +180,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getExclusionScript()) +
         scriptTag(nonce, getCopyScript()) +
         scriptTag(nonce, getCopyDragSelectScript()) +
+        scriptTag(nonce, getDropToOpenScript()) +
         scriptTag(nonce, getSelectionKeyboardScript()) +
         scriptTag(nonce, getHiddenLinesScript()) +
         scriptTag(nonce, getPeekChevronScript()) +
@@ -184,8 +188,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getAnnotationScript()) +
         scriptTag(nonce, getTimingScript()) +
         scriptTag(nonce, getReplayScript()) +
-        scriptTag(nonce, getDecoSettingsScript()) +
-        scriptTag(nonce, getColumnPrefsScript()) +
+        scriptTag(nonce, getDecoSettingsScript(viewerColumns)) +
         scriptTag(nonce, getDecoSettingsSyncScript()) +
         scriptTag(nonce, getDecorationsScript()) +
         scriptTag(nonce, getDecoSettingsListenersScript()) +

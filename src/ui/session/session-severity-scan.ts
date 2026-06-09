@@ -71,8 +71,31 @@ function collectScannableFiles(items: readonly TreeItem[]): SessionMetadata[] {
     return out;
 }
 
+/* Above this size the deferred scan would read the whole body into memory just to tally
+   severities — for a multi-hundred-MB JSON/CSV report (which is not line-oriented log
+   output anyway) that risks an out-of-memory spike across the 4 parallel readers. Persist
+   a zeroed V2 marker instead so the row stops re-scanning every refresh; the gate
+   (`debugCount !== undefined`) then treats it as cached. Mirrors the quick-scan threshold
+   in session-history-helpers.ts but larger — async body reads tolerate more than the
+   blocking list pass. */
+const maxSeverityScanBytes = 25 * 1024 * 1024;
+
+/** All-zero V2 counts (debugCount set, so the cache gate marks the row scanned). anrCount
+ *  stays undefined because 0 ANRs means "no badge", not "scanned and found none". */
+function zeroSeverityCounts(): Partial<SessionMetadata> {
+    return {
+        errorCount: 0, warningCount: 0, perfCount: 0, anrCount: undefined,
+        infoCount: 0, debugCount: 0, databaseCount: 0, todoCount: 0, noticeCount: 0,
+    };
+}
+
 async function scanOne(meta: SessionMetadata, opts: DeferredScanOptions): Promise<void> {
     try {
+        // Skip the body read for oversized reports; cache a zeroed marker so it isn't rescanned.
+        if (meta.size > maxSeverityScanBytes) {
+            await persistAndPublish(meta, { ...meta, ...zeroSeverityCounts() }, opts);
+            return;
+        }
         const raw = await vscode.workspace.fs.readFile(meta.uri);
         const text = Buffer.from(raw).toString('utf-8');
         // Chunked + yielding: a single large reports file must not block the host thread
