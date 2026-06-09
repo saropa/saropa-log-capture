@@ -10,6 +10,7 @@ import type { FlowGraph, FlowNode, IssueEvent, ParsedLog, SourceAnchor } from '.
 import { anchorText, formatActions, formatDwellMs, stripAnsi } from './flow-map-format';
 import { renderSvg } from './flow-map-svg';
 import { buildNarrative } from './flow-map-report';
+import { activityChartHtml } from './flow-map-activity-chart';
 
 /** Escape text for HTML. */
 function esc(s: string): string {
@@ -66,39 +67,25 @@ function durationText(parsed: ParsedLog): string {
     return mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
 }
 
-/** A stat pill spec. `line` (when set) makes the pill reveal that log line on click. */
-interface Pill { readonly icon: string; readonly value: string; readonly label: string; readonly tone: string; readonly line?: number; }
-
-/** Render one colored stat pill. */
-function pill(p: Pill): string {
-    const link = p.line ? ` pill-link" role="link" tabindex="0" data-line="${p.line}" title="Reveal in log` : '';
-    return `<span class="pill pill-${p.tone}${link}">${p.icon} <b>${esc(p.value)}</b> ${esc(p.label)}</span>`;
-}
-
-/** Compact colored stat pills for the top bar (exported — placed next to the save button). */
-export function statPillsHtml(parsed: ParsedLog, graph: FlowGraph): string {
-    const screens = graph.nodes.filter(n => n.walked && n.kind !== 'launch').length;
-    // Each number traces to a log line: duration → the session-start banner, slow → the worst query,
-    // crash → the exception. Screens/repeat have no single representative line, so they stay static.
-    const slowLine = parsed.issues.find(i => i.category === 'Slow query')?.logLine;
-    return [
-        { icon: '🧭', value: String(screens), label: 'screens', tone: 'green' },
-        { icon: '⏱️', value: durationText(parsed), label: 'duration', tone: 'blue', line: 1 },
-        { icon: '🐢', value: String(parsed.slowQueryCount), label: 'slow', tone: 'amber', line: slowLine },
-        { icon: '🔁', value: String(parsed.repeatBatchCount), label: 'repeat', tone: 'purple' },
-        { icon: parsed.crash ? '💥' : '✓', value: parsed.crash ? '1' : '0', label: 'crash', tone: parsed.crash ? 'red' : 'green', line: parsed.crash?.logLine },
-    ].map(pill).join('');
-}
-
-/** Labeled session-info grid (project, branch, device, …) for the collapsible section. */
-function sessionInfoHtml(parsed: ParsedLog): string {
+/** Labeled session-info grid: the clickable log path, build/device facts, and the session stats. */
+function sessionInfoHtml(parsed: ParsedLog, graph: FlowGraph, logPath?: string): string {
     const h = parsed.header;
     const row = (k: string, v?: string) =>
         v ? `<div class="si-k">${k}</div><div class="si-v">${esc(v)}</div>` : '';
+    const screens = graph.nodes.filter(n => n.walked && n.kind !== 'launch').length;
+    const pathRow = logPath
+        ? `<div class="si-k">Log</div><div class="si-v"><span class="logpath" role="link" tabindex="0" `
+            + `title="Open this log in the viewer">${esc(logPath)}</span></div>`
+        : '';
     return '<div class="session-info">'
+        + pathRow
         + row('Project', h.project) + row('Branch', h.branch) + row('Commit', h.commit)
         + row('Device', h.device) + row('Version', h.version)
         + row('Captured', `${h.captureStartClock ?? '?'} → ${parsed.lastClock ?? '?'}`)
+        + row('Screens', String(screens)) + row('Duration', durationText(parsed))
+        + row('Slow queries', String(parsed.slowQueryCount))
+        + row('Repeat batches', String(parsed.repeatBatchCount))
+        + row('Crashes', parsed.crash ? '1' : '0')
         + '</div>';
 }
 
@@ -151,7 +138,7 @@ function section(id: string, title: string, body: string): string {
 function tocHtml(): string {
     const items: [string, string][] = [
         ['sec-flow', '🗺️ Flow'], ['sec-narrative', '📝 Narrative'], ['sec-session', '🧾 Session info'],
-        ['sec-dwell', '⏱️ Screen dwell'], ['sec-perf', '📊 Performance'],
+        ['sec-activity', '📈 Activity'], ['sec-dwell', '⏱️ Screen dwell'], ['sec-perf', '📊 Performance'],
     ];
     return '<nav class="toc">'
         + items.map(([id, label]) => `<a href="#${id}" data-target="${id}">${label}</a>`).join('')
@@ -159,7 +146,7 @@ function tocHtml(): string {
 }
 
 /** Build the inner webview body (the panel adds doctype/CSP/styles/topbar). */
-export function buildFlowMapBody(parsed: ParsedLog, graph: FlowGraph): string {
+export function buildFlowMapBody(parsed: ParsedLog, graph: FlowGraph, logPath?: string): string {
     // Two-column report: the (potentially very tall) diagram on the left; the narrative and both
     // tables stacked in a right column so they stay visible alongside the diagram, not buried under
     // it. The row wraps to a single column when the panel is narrow.
@@ -170,7 +157,8 @@ export function buildFlowMapBody(parsed: ParsedLog, graph: FlowGraph): string {
         + '</div>';
     const detailCol = '<div class="detail-col">'
         + section('sec-narrative', '📝 Narrative', '<p>' + esc(buildNarrative(parsed, graph)) + '</p>')
-        + section('sec-session', '🧾 Session info', sessionInfoHtml(parsed))
+        + section('sec-session', '🧾 Session info', sessionInfoHtml(parsed, graph, logPath))
+        + section('sec-activity', '📈 Activity', activityChartHtml(parsed, clockOf))
         + section('sec-dwell', '⏱️ Screen dwell', dwellTableHtml(graph))
         + section('sec-perf', '📊 Performance · warnings · errors', issueTableHtml(parsed))
         + '</div>';

@@ -37,6 +37,10 @@ export function flowMapScript(nonce: string): string {
   document.querySelectorAll('.pill-link').forEach(function(el){
     onActivate(el, function(){ var ln = parseInt(el.getAttribute('data-line') || '0', 10); if (ln) send('revealLogLine', { line: ln }); });
   });
+  // Activity-chart points jump the log to the first line in that time bin.
+  document.querySelectorAll('.ac-link').forEach(function(el){
+    onActivate(el, function(){ var ln = parseInt(el.getAttribute('data-line') || '0', 10); if (ln) send('revealLogLine', { line: ln }); });
+  });
 
   // Clicking a diagram node highlights its table row and jumps the log to where it was entered.
   document.querySelectorAll('.fm-node').forEach(function(g){
