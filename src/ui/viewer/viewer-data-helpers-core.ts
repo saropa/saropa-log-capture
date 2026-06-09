@@ -271,6 +271,16 @@ function calcItemHeight(item) {
     if (item.artBlockPos === 'middle') return logFontSize;
     /* Structured file collapse (plan 051): markdown sections and JSON brace pairs. */
     if (item._mdSectionHidden || item._jsonSectionHidden) return 0;
+    /* Markdown table separator row (|---|): collapse to nothing. The header row carries a
+       bottom border as the divider, so a full-height empty separator would only add a gap. */
+    if (item._mdTableSep && typeof formatEnabled !== 'undefined' && formatEnabled && typeof fileMode !== 'undefined' && fileMode === 'markdown') return 0;
+    /* Markdown headings get a taller row for the larger font + vertical breathing room.
+       renderItem sets this exact value as the line's inline height, so the rendered DOM
+       height matches this scroll-math value precisely (no prefix-sum drift). */
+    if (item._mdHeadingLevel && typeof formatEnabled !== 'undefined' && formatEnabled && typeof fileMode !== 'undefined' && fileMode === 'markdown') {
+        var _hl = item._mdHeadingLevel;
+        return ROW_HEIGHT * ((_hl === 1) ? 2.2 : (_hl === 2) ? 2.0 : (_hl === 3) ? 1.7 : 1.4);
+    }
     if (item.type === 'marker') {
         /* markerHidden / markerCollapsed are set by applyDbSignalMarkerVisibility and
            applyConsecutiveDbMarkerCollapse (viewer-data-marker-filter). Honouring them here

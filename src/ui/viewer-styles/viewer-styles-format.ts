@@ -16,20 +16,57 @@ export function getFormatStyles(): string {
 
 /* ---- Markdown ---- */
 
+/* All markdown lines share one left edge. The 1.85em log gutter (severity bars) is
+   irrelevant in markdown mode, so trim it to a small uniform margin — this is the fix
+   for the ragged left edge that per-heading borders/padding used to cause. */
+.line.fmt-markdown { padding-left: 1em; }
+
+/* Headings: no left border (it broke alignment). The row is pinned to a taller height
+   (calcItemHeight + inline style); flex-centering the text inside it yields the vertical
+   padding, and the collapse chevron is pushed to the right edge. */
+.line.fmt-md-h1, .line.fmt-md-h2, .line.fmt-md-h3,
+.line.fmt-md-h4, .line.fmt-md-h5, .line.fmt-md-h6 {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+}
+
 .md-heading {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
     font-weight: bold;
     cursor: pointer;
-    display: inline-block;
-    width: 100%;
 }
-.md-heading:hover { opacity: 0.8; }
+.md-heading:hover { opacity: 0.85; }
 
-.md-h1 { font-size: 1.4em; border-left: 3px solid var(--vscode-textLink-foreground, #3794ff); padding-left: 6px; }
-.md-h2 { font-size: 1.25em; border-left: 3px solid var(--vscode-textLink-foreground, #3794ff); padding-left: 6px; }
-.md-h3 { font-size: 1.1em; border-left: 2px solid var(--vscode-descriptionForeground, #888); padding-left: 6px; }
-.md-h4 { font-size: 1.0em; }
-.md-h5 { font-size: 0.95em; }
-.md-h6 { font-size: 0.9em; color: var(--vscode-descriptionForeground, #888); }
+.md-htext {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Font size lives on the text span, NOT the line — the line's font-size must stay at the
+   base so its pinned px height (a multiple of ROW_HEIGHT) is not thrown off by em scaling. */
+.md-h1 .md-htext { font-size: 1.5em; }
+.md-h2 .md-htext { font-size: 1.3em; }
+.md-h3 .md-htext { font-size: 1.15em; }
+.md-h4 .md-htext { font-size: 1.0em; }
+.md-h5 .md-htext { font-size: 0.95em; }
+.md-h6 .md-htext { font-size: 0.9em; color: var(--vscode-descriptionForeground, #888); }
+
+/* Subtle, right-aligned collapse affordance. */
+.md-chevron {
+    flex: 0 0 auto;
+    margin-left: 8px;
+    opacity: 0.35;
+    font-size: 0.7em;
+    color: var(--vscode-descriptionForeground, #888);
+}
+.md-heading:hover .md-chevron { opacity: 0.7; }
 
 .md-collapse-badge {
     font-size: 0.8em;
@@ -54,8 +91,9 @@ export function getFormatStyles(): string {
     font-style: italic;
 }
 
+/* Top-level bullets align to the body left edge; only nested items indent (by depth). */
 .md-bullet {
-    padding-left: calc(var(--md-indent, 0) * 12px + 16px);
+    padding-left: calc(var(--md-indent, 0) * 12px);
 }
 
 .md-code {
@@ -70,12 +108,33 @@ export function getFormatStyles(): string {
     color: var(--vscode-textLink-foreground, #3794ff);
 }
 
+/* Tables render as aligned columns: each cell is a fixed-ch-width inline-block (width set
+   per column in buildMdTables), so columns line up in the monospace font. The header row is
+   bold with a bottom border; the |---| separator row is collapsed to 0 height upstream. */
 .md-table-row {
     font-family: var(--vscode-editor-font-family);
+    white-space: nowrap;
 }
 
-.md-table-sep {
-    color: var(--vscode-descriptionForeground, #666);
+.md-table-header {
+    font-weight: bold;
+    border-bottom: 1px solid var(--vscode-editorWidget-border, #454545);
+}
+
+.md-td {
+    display: inline-block;
+    box-sizing: border-box;
+    vertical-align: top;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 1ch;
+}
+
+.md-table-rule {
+    display: block;
+    border-top: 1px solid var(--vscode-editorWidget-border, #454545);
+    height: 0;
 }
 
 /* Fenced code blocks (triple-backtick + language). Body lines render verbatim in a
