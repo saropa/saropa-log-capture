@@ -44,21 +44,24 @@ export function getDropToOpenScript(): string {
         }
         function showOverlay(on) { ensureOverlay().style.display = on ? 'flex' : 'none'; }
 
-        /* Only react to drags that actually carry files; ignore in-page text/element drags
-           (those belong to drag-select and SQL collection drag handlers). */
-        function hasFiles(e) {
+        /* True only for an in-page drag that carries its OWN mime types (drag-select, SQL/collection
+           drags). An OS file drag, by contrast, usually exposes NO types during dragover (the browser
+           hides file data until drop for security) — so an empty type list means "let it through".
+           Gating dragover on a positive 'Files' check (attempts 1 & 2) is exactly why the drop never
+           fired: types was empty during dragover, so preventDefault never ran and Chromium suppressed
+           the drop. */
+        function isInPageTypedDrag(e) {
             var dt = e.dataTransfer; if (!dt) return false;
             var types = dt.types || [];
-            for (var i = 0; i < types.length; i++) { if (types[i] === 'Files') return true; }
-            return false;
+            if (types.length === 0) return false;            // OS file drag with hidden types — allow
+            for (var i = 0; i < types.length; i++) { if (types[i] === 'Files') return false; }
+            return true;                                     // has types, none are Files — internal drag
         }
 
-        /* Capture phase on window: the workbench registers its own drag handlers, so firing in
-           capture at the window level runs our preventDefault FIRST — otherwise the editor-drop
-           overlay swallows the file before the content frame sees it. dragenter AND dragover must
-           both preventDefault or Chromium never fires the drop event. */
+        /* Capture phase on window so our preventDefault runs before the workbench's own handlers.
+           dragenter AND dragover must both preventDefault or Chromium never fires drop. */
         function allowDrag(e) {
-            if (!hasFiles(e)) return;
+            if (isInPageTypedDrag(e)) return;
             e.preventDefault(); e.stopPropagation();
             if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
             showOverlay(true);
@@ -70,18 +73,46 @@ export function getDropToOpenScript(): string {
             if (!e.relatedTarget) showOverlay(false);
         }, true);
         window.addEventListener('drop', function (e) {
-            if (!hasFiles(e)) return;
+            if (isInPageTypedDrag(e)) return;
             e.preventDefault(); e.stopPropagation();
             showOverlay(false);
-            var files = (e.dataTransfer && e.dataTransfer.files) || [];
-            if (files.length === 0) {
-                /* The drop reached us but the sandbox exposed no File object — tell the user and
-                   point them at the picker so the gesture isn't a silent dead end. */
-                vscodeApi.postMessage({ type: 'openDroppedLog', empty: true });
-                return;
-            }
-            loadDroppedFile(files[0]);
+            handleDrop(e.dataTransfer);
         }, true);
+
+        /* A dropped OS file can arrive three ways in a webview; try each. VS Code commonly hands the
+           file over as a file:// URI in text/uri-list (neither earlier attempt read that), not as a
+           File in files[]. */
+        function handleDrop(dt) {
+            if (!dt) { vscodeApi.postMessage({ type: 'openDroppedLog', empty: true }); return; }
+            var uriList = '';
+            try { uriList = dt.getData('text/uri-list') || dt.getData('text/plain') || ''; } catch (e) { uriList = ''; }
+            var uri = firstFileUri(uriList);
+            if (uri) { vscodeApi.postMessage({ type: 'openDroppedLog', uri: uri }); return; }
+            var file = (dt.files && dt.files[0]) || itemAsFile(dt);
+            if (file) { loadDroppedFile(file); return; }
+            /* Drop reached us but exposed neither a URI nor a File — guide the user to the picker. */
+            vscodeApi.postMessage({ type: 'openDroppedLog', empty: true });
+        }
+
+        /* First file:// line from a text/uri-list payload (comment lines start with '#'). */
+        function firstFileUri(text) {
+            if (!text) return '';
+            var lines = text.split(/[\\r\\n]+/);
+            for (var i = 0; i < lines.length; i++) {
+                var line = lines[i].trim();
+                if (line && line.charAt(0) !== '#' && line.indexOf('file:') === 0) return line;
+            }
+            return '';
+        }
+
+        /* Pull a File out of DataTransferItemList when files[] is empty (some Electron builds). */
+        function itemAsFile(dt) {
+            var items = dt.items || [];
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].kind === 'file') { var f = items[i].getAsFile(); if (f) return f; }
+            }
+            return null;
+        }
 
         function loadDroppedFile(file) {
             /* Prefer the OS path when the host exposes it — no content transfer, any size. */
