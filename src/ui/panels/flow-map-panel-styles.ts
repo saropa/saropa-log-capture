@@ -28,9 +28,12 @@ export function flowMapStyles(nonce: string): string {
   .icon-btn { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 7px; border: 1px solid var(--vscode-button-border, transparent); background: var(--vscode-button-background); color: var(--vscode-button-foreground); cursor: pointer; }
   .icon-btn:hover { background: var(--vscode-button-hoverBackground); }
 
-  .toc { display: flex; flex-wrap: wrap; gap: 0.4rem 0.5rem; margin: 0.2rem 0 1rem; font-size: 0.88em; }
-  .toc a { color: var(--vscode-textLink-foreground); text-decoration: none; padding: 0.16rem 0.7rem; border: 1px solid var(--vscode-panel-border); border-radius: 999px; background: var(--vscode-editorWidget-background); }
-  .toc a:hover { background: var(--vscode-list-hoverBackground); border-color: var(--vscode-textLink-foreground); text-decoration: underline; }
+  .report-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  /* TOC entries are navigation — styled like the (info) stat chips but never underlined, so the two
+     reads as distinct surfaces (nav chips vs info pills). */
+  .toc { display: flex; flex-wrap: wrap; gap: 0.4rem 0.5rem; margin: 0.4rem 0 1rem; font-size: 0.88em; }
+  .toc a { color: var(--vscode-foreground); text-decoration: none; padding: 0.18rem 0.75rem; border-radius: 999px; background: rgba(127,127,127,0.12); border: 1px solid transparent; }
+  .toc a:hover, .toc a:focus-visible { background: rgba(127,127,127,0.22); border-color: var(--vscode-focusBorder); outline: none; }
 
   .logpath { color: var(--vscode-textLink-foreground); font-family: var(--vscode-editor-font-family); font-size: 0.85em; cursor: pointer; margin: 0 0 0.7rem; word-break: break-all; }
   .logpath:hover { text-decoration: underline; color: var(--vscode-textLink-activeForeground); }
@@ -73,6 +76,18 @@ export function flowMapStyles(nonce: string): string {
   .loglink:hover { text-decoration: underline; }
   .logcopy { cursor: pointer; margin-left: 0.45rem; opacity: 0.55; }
   .logcopy:hover { opacity: 1; }
+
+  /* Activity line chart: scales to the detail column width; theme-aware strokes/fills. */
+  .activity-wrap { max-width: 680px; padding: 0.3rem 0 0.4rem; }
+  .activity-chart { width: 100%; height: auto; }
+  .ac-empty { color: var(--vscode-descriptionForeground); font-size: 0.92em; }
+  .ac-axis { stroke: var(--vscode-panel-border); stroke-width: 1; }
+  .ac-grid { stroke: var(--vscode-panel-border); stroke-width: 1; opacity: 0.4; }
+  .ac-num, .ac-clock { fill: var(--vscode-descriptionForeground); font-size: 11px; font-variant-numeric: tabular-nums; font-family: var(--vscode-font-family); }
+  .ac-line { fill: none; stroke: var(--vscode-charts-blue, #58a6ff); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .ac-pt { fill: var(--vscode-charts-blue, #58a6ff); }
+  .ac-link { cursor: pointer; }
+  .ac-link:hover, .ac-link:focus { fill: var(--vscode-charts-orange, #d29922); r: 5.5; outline: none; }
 
   .dwell { min-width: 110px; }
   .dwell-bar { display: inline-block; height: 0.62em; border-radius: 3px; background: linear-gradient(90deg, #2ea043, #58a6ff); vertical-align: middle; margin-right: 0.45rem; }

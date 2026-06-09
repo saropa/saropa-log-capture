@@ -7,6 +7,7 @@ import { deriveScreenIdentity } from '../../../modules/flow-map/flow-map-presets
 import { extractDartFileAnchor, parseErrorCausingWidget } from '../../../modules/flow-map/error-causing-widget-parser';
 import { renderSvg } from '../../../modules/flow-map/flow-map-svg';
 import { buildFlowMapBody } from '../../../modules/flow-map/flow-map-html';
+import { activityChartHtml } from '../../../modules/flow-map/flow-map-activity-chart';
 import type { FlowGraph } from '../../../modules/flow-map/flow-map-model';
 
 /** Representative session: doubled-backslash root, restart, actions, leaf view, slow query, crash. */
@@ -163,6 +164,28 @@ suite('FlowMap', () => {
             assert.ok(body.includes('<svg'));
             assert.ok(/<span class="src"[^>]*data-file="lib\/views\/x_dialog.dart"[^>]*data-line="42"/.test(body));
             assert.strictEqual((body.match(/<table>/g) ?? []).length, 2);
+        });
+
+        test('webview body has an activity chart above the dwell section, with clickable points', () => {
+            const body = buildFlowMapBody(parseLog(FIXTURE), graph);
+            // The Activity section must precede Screen dwell (the requested placement).
+            assert.ok(body.indexOf('id="sec-activity"') < body.indexOf('id="sec-dwell"'), 'activity before dwell');
+            assert.ok(body.includes('<svg class="activity-chart"'), 'chart svg present');
+            assert.ok(body.includes('<polyline class="ac-line"'), 'activity line present');
+            // At least one point links to a log line (the click-to-reveal target).
+            assert.ok(/<circle class="ac-pt ac-link"[^>]*data-line="\d+"/.test(body), 'clickable point');
+            // Both axes carry numbering — count (ac-num) and time (ac-clock).
+            assert.ok(body.includes('class="ac-num"'), 'count axis labels');
+            assert.ok(body.includes('class="ac-clock"'), 'time axis labels');
+        });
+    });
+
+    suite('activityChart', () => {
+        test('renders a note when fewer than two timed samples exist', () => {
+            const empty = parseLog(['=== SAROPA LOG CAPTURE — SESSION START ===', 'Project: demo']);
+            const html = activityChartHtml(empty, () => '00:00:00');
+            assert.ok(html.includes('ac-empty'), 'shows the not-enough-data note');
+            assert.ok(!html.includes('<svg'), 'no chart drawn');
         });
     });
 });
