@@ -22,6 +22,7 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `copyCurrentFileName` | viewer-message-handler-session-ui.ts |
 | `copyCurrentFilePath` | viewer-message-handler-session-ui.ts |
 | `copyCurrentFileRelativePath` | viewer-message-handler-session-ui.ts |
+| `copyErrorWarningJson` | viewer-message-handler-actions.ts |
 | `copySourcePath` | viewer-message-handler-actions.ts |
 | `copyToClipboard` | viewer-message-handler-actions.ts |
 | `copyWithSource` | viewer-message-handler-actions.ts |
@@ -146,4 +147,4 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `viewerKeybindingRecordCancelled` | viewer-message-handler-actions.ts |
 | `viewerKeybindingRecorded` | viewer-message-handler-actions.ts |
 
-**Total:** 138 distinct types.
+**Total:** 139 distinct types.
