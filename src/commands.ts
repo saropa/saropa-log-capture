@@ -40,7 +40,10 @@ export function registerCommands(deps: CommandDeps, captureToggle: CaptureToggle
         ...correlationCommands(deps),
         ...signalsCommands(deps),
         ...bugReportCommands({ getFileUri: () => deps.viewerProvider.getCurrentFileUri(), context }),
-        ...flowMapCommands({ getFileUri: () => deps.viewerProvider.getCurrentFileUri() }),
+        ...flowMapCommands({
+            getFileUri: () => deps.viewerProvider.getCurrentFileUri(),
+            revealLine: (line: number) => deps.viewerProvider.scrollToLine(line),
+        }),
         ...qualityCommands({ getFileUri: () => deps.viewerProvider.getCurrentFileUri() }),
         ...timelineCommands(),
         ...trashCommands(deps.historyProvider, () => deps.viewerProvider.getCurrentFileUri()),

@@ -5,7 +5,7 @@
  */
 
 import type { FlowEdge, FlowGraph, FlowNode } from './flow-map-model';
-import { anchorText, formatActions, formatDwellMs } from './flow-map-format';
+import { kindIcon, nodeDisplayLines, nodeHasError } from './flow-map-format';
 
 const CLASS_DEFS = [
     'classDef start fill:#2d333b,stroke:#888,color:#ddd;',
@@ -21,23 +21,15 @@ function safeLabel(text: string): string {
 
 /** The CSS class for a node: crash > launch > walked > unwalked. */
 function nodeClass(node: FlowNode): string {
-    if (node.issues.some(i => i.severity === 'error')) { return 'crash'; }
+    if (nodeHasError(node)) { return 'crash'; }
     if (node.kind === 'launch') { return 'start'; }
     return node.walked ? 'walked' : 'unwalked';
 }
 
-/** Build the multi-line label for a node: name, counters, actions, source. */
+/** Build the multi-line label for a node: kind icon + name, counters, actions, source. */
 function nodeLabel(node: FlowNode): string {
-    const lines: string[] = [node.label];
-    if (node.kind !== 'launch') {
-        const dwell = node.walked ? ` · ${formatDwellMs(node.dwellMs)}` : '';
-        lines.push(`×${node.visits}${dwell}`);
-    }
-    const actions = formatActions(node);
-    if (actions) { lines.push(actions); }
-    if (node.issues.some(i => i.severity === 'error')) { lines.push('💥 crash'); }
-    const src = anchorText(node.source);
-    if (src) { lines.push(src); }
+    const lines = nodeDisplayLines(node);
+    lines[0] = `${kindIcon(node)} ${lines[0]}`;
     return safeLabel(lines.join('<br/>'));
 }
 

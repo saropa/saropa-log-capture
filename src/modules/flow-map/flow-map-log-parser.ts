@@ -10,8 +10,10 @@ import {
 import { classifyBreadcrumb } from './flow-map-breadcrumbs';
 import { classifyWarning, isRepeatBatch, parseSlowQuery, type SlowQuery } from './flow-map-issues';
 import { parseErrorCausingWidget } from './error-causing-widget-parser';
+import { stripAnsi } from './flow-map-format';
 
 const CLOCK_RE = /^\[(\d{2}):(\d{2}):(\d{2})\.(\d{3})\]/;
+
 
 /** Parse the leading `[HH:MM:SS.mmm]` stamp into ms-of-day + a display clock, or undefined. */
 function parseClock(line: string): { tsMs: number; clock: string } | undefined {
@@ -61,7 +63,7 @@ function detectCrash(lines: readonly string[], projectRoot?: string): CrashInfo 
     }
     // Message = first prose line after the banner that is not the "assertion was thrown" preamble.
     for (let i = bannerIdx + 1; i < Math.min(bannerIdx + 8, lines.length); i++) {
-        const content = stripPrefix(lines[i]);
+        const content = stripAnsi(stripPrefix(lines[i]));
         if (!content || /was thrown during|^={3,}/.test(content)) {
             continue;
         }
@@ -73,6 +75,7 @@ function detectCrash(lines: readonly string[], projectRoot?: string): CrashInfo 
             message: content,
             widget: widget?.widget,
             source: widget?.source,
+            logLine: i + 1,
         };
     }
     return undefined;
@@ -89,24 +92,34 @@ interface ScanState {
     lastClock?: string;
 }
 
+/** One timestamped line's parsed coordinates. */
+interface LineContext {
+    readonly text: string;
+    readonly tsMs: number;
+    readonly clock: string;
+    readonly logLine: number;
+}
+
 /** Fold one timestamped line's breadcrumb / slow-query / warning content into the scan state. */
-function scanLine(line: string, tsMs: number, clock: string, state: ScanState): void {
-    state.lastClock = clock;
-    const event = classifyBreadcrumb(line, tsMs, clock);
+function scanLine(ctx: LineContext, state: ScanState): void {
+    state.lastClock = ctx.clock;
+    // Strip ANSI color codes first so they never leak into node labels or break anchored matchers.
+    const text = stripAnsi(ctx.text);
+    const event = classifyBreadcrumb(text, ctx.tsMs, ctx.clock, ctx.logLine);
     if (event) {
         state.events.push(event);
     }
-    const slow = parseSlowQuery(line);
+    const slow = parseSlowQuery(text);
     if (slow) {
         state.slowCount++;
         if (!state.worstSlow || slow.ms > state.worstSlow.ms) {
-            state.worstSlow = slow;
+            state.worstSlow = { ...slow, logLine: ctx.logLine };
         }
     }
-    if (isRepeatBatch(line)) {
+    if (isRepeatBatch(text)) {
         state.repeatCount++;
     }
-    const warn = classifyWarning(line, tsMs, clock);
+    const warn = classifyWarning(text, ctx.tsMs, ctx.clock, ctx.logLine);
     if (warn && !state.seenWarnings.has(warn.category)) {
         state.seenWarnings.add(warn.category);
         state.issues.push(warn);
@@ -129,10 +142,10 @@ export function parseLog(lines: readonly string[], projectRootOverride?: string)
         events: [], issues: [], seenWarnings: new Set(), slowCount: 0, repeatCount: 0,
     };
 
-    for (const line of lines) {
-        const clk = parseClock(line);
+    for (let i = 0; i < lines.length; i++) {
+        const clk = parseClock(lines[i]);
         if (clk) {
-            scanLine(line, clk.tsMs, clk.clock, state);
+            scanLine({ text: lines[i], tsMs: clk.tsMs, clock: clk.clock, logLine: i + 1 }, state);
         }
     }
 
@@ -167,6 +180,7 @@ function appendWorstSlow(state: ScanState): void {
         category: 'Slow query',
         detail: `Drift SLOW ${w.ms}ms ${w.kind} — worst of session`,
         source: w.source,
+        logLine: w.logLine,
     });
 }
 
@@ -179,6 +193,7 @@ function crashIssue(crash: CrashInfo): IssueEvent {
         category: 'Crash',
         detail: crash.message,
         source: crash.source,
+        logLine: crash.logLine,
     };
 }
 

@@ -36,6 +36,8 @@ export interface FlowNode {
     readonly actionCounts: Record<string, number>;
     readonly issues: IssueEvent[];
     source?: SourceAnchor;
+    /** 1-based line number in the source log where this node was first entered. */
+    logLine?: number;
     /** True when the session actually visited this node (vs. static-only/possible). */
     walked: boolean;
     /** True when joined to a source file via the static scan or crash report. */
@@ -68,6 +70,8 @@ export interface TimelineEvent {
     readonly label: string;
     /** For actions: the category (Favorite, Emergency, …) used for per-node counts. */
     readonly actionCategory?: string;
+    /** 1-based line number in the source log — lets the report jump back to the raw line. */
+    readonly logLine?: number;
 }
 
 /** A performance / warning / error event for the issue overlay and table. */
@@ -78,6 +82,8 @@ export interface IssueEvent {
     readonly category: string;
     readonly detail: string;
     source?: SourceAnchor;
+    /** 1-based line number in the source log. */
+    logLine?: number;
 }
 
 /** Parsed session header fields from the SESSION START banner. */
@@ -98,6 +104,8 @@ export interface CrashInfo {
     readonly message: string;
     readonly widget?: string;
     source?: SourceAnchor;
+    /** 1-based line number in the source log where the exception message appears. */
+    logLine?: number;
 }
 
 /** Everything the log parser extracts from one session log. */
