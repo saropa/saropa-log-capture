@@ -27,11 +27,14 @@ export function getFormatStyles(): string {
 .line.fmt-md-h1, .line.fmt-md-h2, .line.fmt-md-h3,
 .line.fmt-md-h4, .line.fmt-md-h5, .line.fmt-md-h6 {
     display: flex;
-    /* flex-end: the row's extra height (mdHeadingRowHeight allocates ~0.6*fontEm of padding)
-       lands ABOVE the text, giving generous top spacing that detaches the heading from the
-       content above it while keeping it close to the section it introduces below. */
-    align-items: flex-end;
+    align-items: flex-start;
     overflow: hidden;
+    /* Explicit top padding (inside the border-box height that mdHeadingRowHeight allocates for
+       it) gives each heading clear breathing room above — robust, not dependent on flex free
+       space. The bottom pad keeps the heading just off the section content it introduces. */
+    box-sizing: border-box;
+    padding-top: 0.85em;
+    padding-bottom: 0.2em;
 }
 
 .md-heading {
@@ -49,13 +52,13 @@ export function getFormatStyles(): string {
    gutter; heading rows are flex, so the gutter is just the first flex item. ---- */
 .line.fmt-markdown.md-has-gutter { padding-left: 0; }
 .line.fmt-markdown.md-has-gutter:not([class*="fmt-md-h"]) {
-    padding-left: var(--md-gutter-width, 6.75em);
-    text-indent: calc(-1 * var(--md-gutter-width, 6.75em));
+    padding-left: var(--md-gutter-width, 8.5em);
+    text-indent: calc(-1 * var(--md-gutter-width, 8.5em));
 }
 .md-gutter {
     display: inline-block;
     flex: 0 0 auto;
-    width: var(--md-gutter-width, 6.75em);
+    width: var(--md-gutter-width, 8.5em);
     box-sizing: border-box;
     text-indent: 0;
     padding-right: 0.75em;
@@ -66,9 +69,10 @@ export function getFormatStyles(): string {
     overflow: hidden;
     vertical-align: top;
 }
-.md-gutter-num { display: inline-block; width: 3em; text-align: right; }
-/* Wider so the structure tags (H1, code ‹›, table ▦, quote ❝, bullet •) are clearly readable. */
-.md-gutter-tag { display: inline-block; width: 3.5em; text-align: right; opacity: 0.8; }
+.md-gutter-num { display: inline-block; width: 3em; text-align: right; padding-right: 1em; }
+/* Left-aligned and wide so the structure tags (H1, //, code ‹›, table ▦, quote ❝, bullet •)
+   read clearly, like the log line-number column. */
+.md-gutter-tag { display: inline-block; width: 4em; text-align: left; opacity: 0.85; }
 
 .md-htext {
     flex: 1 1 auto;
@@ -142,21 +146,18 @@ export function getFormatStyles(): string {
     color: var(--vscode-textLink-foreground, #3794ff);
 }
 
-/* HTML comments render muted + italic (the conventional "this is a comment" treatment, theme-safe
-   across light/dark). A multi-line comment's opening line is a collapse toggle with a right chevron. */
+/* HTML comments render in the conventional comment green + italic so they are clearly distinct
+   from prose and from the gray line numbers. A multi-line comment's opening line is a collapse
+   toggle with a right chevron. */
+/* Canonical comment green, hardcoded so it stays distinct from the H2 heading color (which uses
+   charts-green); italic reinforces "this is a comment". */
 .md-comment {
-    color: var(--vscode-descriptionForeground, #6a9955);
+    color: #6a9955;
     font-style: italic;
-    opacity: 0.85;
 }
-.md-comment-open {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    cursor: pointer;
-}
-.md-comment-open .md-htext { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.md-comment-open:hover { opacity: 1; }
+.md-comment-open { cursor: pointer; }
+.md-comment-chevron { opacity: 0.8; color: var(--vscode-descriptionForeground, #888); }
+.md-comment-open:hover .md-comment-chevron { opacity: 1; }
 
 /* Tables render as aligned columns: each cell is a fixed-ch-width inline-block (width set
    per column in buildMdTables), so columns line up in the monospace font. The header row is
