@@ -27,7 +27,11 @@ function handleTypographyMessages(msg) {
         case 'setLogLineHeight':
             if (typeof msg.height === 'number' && Number.isFinite(msg.height)) {
                 logLineHeightDefault = msg.height;
-                if (typeof setLineHeight === 'function') setLineHeight(msg.height);
+                /* While a markdown document is open it runs at its own comfortable line height
+                   (applyMarkdownTypography). A settings-seeded host message must NOT clobber that
+                   — record the default (so exiting markdown restores it) but don't apply it now. */
+                var mdActive = (typeof fileMode !== 'undefined' && fileMode === 'markdown' && typeof formatEnabled !== 'undefined' && formatEnabled);
+                if (!mdActive && typeof setLineHeight === 'function') setLineHeight(msg.height);
             }
             return true;
         case 'logViewerVisualSpacing': {

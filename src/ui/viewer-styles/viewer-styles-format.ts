@@ -134,6 +134,13 @@ export function getFormatStyles(): string {
     padding-left: calc(var(--md-indent, 0) * 12px);
 }
 
+/* Each top-level list item gets top space (inside its border-box height, which calcItemHeight
+   enlarged by the same 0.4 row) so consecutive multi-line bullets read as separate items. */
+.line.fmt-md-bullet-top {
+    box-sizing: border-box;
+    padding-top: calc(0.4 * var(--log-line-height, 1.1) * 1em);
+}
+
 .md-code {
     background: var(--vscode-textCodeBlock-background, rgba(255, 255, 255, 0.06));
     border-radius: 3px;
