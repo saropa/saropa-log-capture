@@ -80,10 +80,11 @@ function mdHeadingRowHeight(item, rowHeight, lineH) {
     var hl = item._mdHeadingLevel;
     var fEm = (hl === 1) ? 1.45 : (hl === 2) ? 1.3 : (hl === 3) ? 1.2 : (hl === 4) ? 1.05 : 1.0;
     var lh = (lineH > 0) ? lineH : 1.1;
-    /* 1.95 (was 1.5): the heading line box is fontEm * 1.35, so the extra ~0.6 * fontEm is
-       padding. CSS aligns the text to the bottom of the row, so that padding lands ABOVE the
-       heading — the requested generous TOP spacing that separates a section from what precedes. */
-    return Math.max(rowHeight, Math.ceil(fEm * 1.95 * rowHeight / lh));
+    /* Row = content line box (fontEm * 1.35) + fixed padding (0.85em top + 0.2em bottom), all in
+       base em. The CSS uses box-sizing:border-box with exactly padding-top:0.85em /
+       padding-bottom:0.2em, so the content lands 0.85em below the row top — guaranteed visible
+       TOP spacing that does not depend on flex free-space distribution. base px = rowHeight / lh. */
+    return Math.max(rowHeight, Math.ceil((fEm * 1.35 + 1.05) * rowHeight / lh));
 }
 
 /**
@@ -112,7 +113,7 @@ function mdLineDecorate(item, idx) {
  */
 function mdGutterTag(item, idx) {
     if (item._mdHeadingLevel) return 'H' + item._mdHeadingLevel;
-    if (item._mdComment) return '\\u270e';
+    if (item._mdComment) return '//';
     if (item._mdFence) return '\\u2039\\u203a';
     if (item._mdTable) return '\\u25a6';
     var plain = stripTags(item.html);
