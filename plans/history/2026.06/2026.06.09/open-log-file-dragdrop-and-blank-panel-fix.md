@@ -57,3 +57,33 @@ This work will be reviewed by another AI.
 1. Unit test for `parseHeader` head+tail quick scan (Extension-Host fixture) — recommended.
 2. Optional README command-table entry for "Open Log File…".
 3. This task's code is committed mixed with the Viewer Columns workstream in `66694903`; if a clean per-feature history is wanted, that is a manual re-split decision for the user.
+
+## Follow-up: drag-and-drop hardening (2026-06-09)
+
+**Triggered by (user, verbatim):** "drag and dropping of files does not work".
+
+**Scope:** (B) VS Code extension (TypeScript). This work will be reviewed by another AI.
+
+**Root causes found (code-level):** the original drop handler (`viewer-drop-to-open.ts`) (a) handled only `dragover`, but Chromium requires `preventDefault` on BOTH `dragenter` and `dragover` or the `drop` event never fires; and (b) attached bubble-phase listeners on `document`, where the workbench's own drag handling can intercept the OS file drop before the content frame sees it.
+
+**Fix (`d7a40a41`):**
+- Listen on `window` in **capture phase** for `dragenter` / `dragover` / `dragleave` / `drop`; `dragenter`+`dragover` both `preventDefault` so the drop fires and the editor-drop overlay can't swallow it.
+- Feedback so the gesture is never silent: on success a toast names the opened file (`msg.droppedLogLoaded`); when the drop arrives but the sandbox exposes no `File` object, a new `{ type: 'openDroppedLog', empty: true }` message triggers a warning pointing to the kebab → Open log file… picker (`msg.droppedLogEmpty`). Host handler `handleOpenDroppedLog` gained the `empty` branch + a `basename()` helper for the success toast.
+- Files: [viewer-drop-to-open.ts](../../../../src/ui/viewer/viewer-drop-to-open.ts), [viewer-dropped-log.ts](../../../../src/ui/provider/viewer-dropped-log.ts), [strings-b.ts](../../../../src/l10n/strings-b.ts), CHANGELOG (the existing unreleased drag-drop Added entry was updated to describe the hardened behavior).
+
+**Deep review:** capture-phase window listeners are the earliest point in the content frame; `hasFiles()` still gates on `dataTransfer.types` containing `Files` so in-page drag-select / SQL-collection drags are untouched; the dropped filename is still sanitized before staging to `globalStorage/dropped/`; `basename()` handles both path separators.
+
+**Testing:** grepped `src/test/` for `viewer-drop-to-open`, `viewer-dropped-log`, `openDroppedLog`, `handleOpenDroppedLog`, `getDropToOpenScript`, `droppedLog` → **no test references any of them**; no existing assertion to update. `check-types` clean; `compile` clean (all verify steps, dist-size OK); `eslint` clean on the three changed source files. Full `npm run test` → 3108 passing, 11 failing — verified every failure (`Viewer toolbar tooltips`, `Webview element ID wiring`, `SessionManagerImpl`, 8× `processApiWriteLine`) belongs to the concurrent Viewer-Columns / log-session workstreams (mid-edit, uncommitted), NOT this change; my drag-drop change added zero failures.
+
+**VERIFICATION STATUS — UNVERIFIED AT RUNTIME.** This is a code-level fix for the most probable causes; whether OS file drops actually reach the VS Code webview content frame could not be exercised in this environment. The user was asked to reload and report which of three outcomes occurs (success toast / "could not read" warning / no overlay at all) and ran `/finish` before reporting. The fix is **landed but not confirmed working on device.** If outcome 2 (events fire, sandbox strips the File) or 3 (workbench eats the drop at the outer frame) occurs, a different transfer mechanism is required — the added feedback toasts make that next test conclusive.
+
+**No automated test added:** OS drag-and-drop is webview-event-driven and not exercisable in the current Mocha/node harness (no DOM drag-event simulation). Recommended follow-up: a harness that dispatches synthetic `drop` events at the assembled main-viewer script to assert the `openDroppedLog` message is posted.
+
+**Bug archive:** `No bug archive — task did not close a bugs/*.md file` (reported in chat).
+
+**Commit status:** `d7a40a41` (drag-drop hardening) — scoped to only its 4 files; the concurrent workstreams' uncommitted files were excluded.
+
+**Outstanding (follow-up):**
+1. On-device confirmation of which drop outcome occurs (user) — the fix is unverified until then.
+2. If the drop still doesn't reach the webview, switch to an alternative (editor-level drop target, or rely on the working "Open log file…" picker).
+3. Synthetic-drop-event test harness (above).
