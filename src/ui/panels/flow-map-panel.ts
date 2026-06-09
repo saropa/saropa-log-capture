@@ -8,7 +8,7 @@
 import * as vscode from 'vscode';
 import { t } from '../../l10n';
 import type { FlowGraph, ParsedLog } from '../../modules/flow-map/flow-map-model';
-import { buildFlowMapBody, statPillsHtml } from '../../modules/flow-map/flow-map-html';
+import { buildFlowMapBody } from '../../modules/flow-map/flow-map-html';
 import { flowMapStyles } from './flow-map-panel-styles';
 import { flowMapScript } from './flow-map-panel-script';
 
@@ -65,10 +65,10 @@ function titleHtml(params: FlowMapPanelParams): string {
     return `<h1 class="report-title">🧭 ${esc(t('flowMap.panelTitle'))}${suffix}</h1>`;
 }
 
-/** Full HTML document: CSP, styles, title, top bar (pills + actions), report body, script. */
+/** Full HTML document: CSP, styles, header (title + action buttons), report body, script. */
 function buildHtml(params: FlowMapPanelParams, nonce: string): string {
-    const body = buildFlowMapBody(params.parsed, params.graph);
-    const pills = statPillsHtml(params.parsed, params.graph);
+    // Stats and the log path now live as rows in the Session-info section (info ≠ navigation).
+    const body = buildFlowMapBody(params.parsed, params.graph, params.logUri.fsPath);
     const csp = `default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';`;
     const actions = '<div class="topbar-actions">'
         + iconButton('showlog-fm', t('flowMap.showLogBtn'), LOG_SVG)
@@ -78,9 +78,7 @@ function buildHtml(params: FlowMapPanelParams, nonce: string): string {
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="${csp}">
 ${flowMapStyles(nonce)}</head><body>
-${titleHtml(params)}
-<div class="logpath" role="link" tabindex="0" title="Open this log in the viewer">${esc(params.logUri.fsPath)}</div>
-<div class="topbar"><div class="pills">${pills}</div>${actions}</div>
+<div class="report-head">${titleHtml(params)}${actions}</div>
 ${body}
 ${flowMapScript(nonce)}</body></html>`;
 }
