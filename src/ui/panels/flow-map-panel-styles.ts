@@ -11,8 +11,6 @@ export function flowMapStyles(nonce: string): string {
   h1 { font-size: 1.5em; margin: 0.4rem 0 0.25rem; }
   .report-title { margin: 0.6rem 0 0.5rem; }
   h3 { font-size: 1.02em; margin: 0 0 0.4rem; }
-  .facts { color: var(--vscode-descriptionForeground); font-size: 0.92em; margin: 0 0 0.6rem; }
-  .facts strong { color: var(--vscode-foreground); }
   .legend { color: var(--vscode-descriptionForeground); font-size: 0.9em; margin: 0.2rem 0 0.5rem; }
 
   .topbar { position: sticky; top: 0; z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 0.55rem 0; margin-bottom: 0.4rem; background: var(--vscode-editor-background); border-bottom: 1px solid var(--vscode-panel-border); }
@@ -21,8 +19,6 @@ export function flowMapStyles(nonce: string): string {
   .pill b { font-variant-numeric: tabular-nums; }
   .pill-link { cursor: pointer; }
   .pill-link:hover { filter: brightness(1.2); }
-  .facts-link { cursor: pointer; }
-  .facts-link:hover { color: var(--vscode-foreground); text-decoration: underline; }
   .pill-green { background: rgba(63,185,80,0.16); border-color: rgba(63,185,80,0.4); }
   .pill-blue { background: rgba(88,166,255,0.16); border-color: rgba(88,166,255,0.4); }
   .pill-amber { background: rgba(210,153,34,0.16); border-color: rgba(210,153,34,0.4); }
@@ -32,15 +28,23 @@ export function flowMapStyles(nonce: string): string {
   .icon-btn { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 7px; border: 1px solid var(--vscode-button-border, transparent); background: var(--vscode-button-background); color: var(--vscode-button-foreground); cursor: pointer; }
   .icon-btn:hover { background: var(--vscode-button-hoverBackground); }
 
-  .toc { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin: 0.2rem 0 1rem; font-size: 0.9em; }
-  .toc a { color: var(--vscode-textLink-foreground); text-decoration: none; }
-  .toc a:hover { text-decoration: underline; }
+  .toc { display: flex; flex-wrap: wrap; gap: 0.4rem 0.5rem; margin: 0.2rem 0 1rem; font-size: 0.88em; }
+  .toc a { color: var(--vscode-textLink-foreground); text-decoration: none; padding: 0.16rem 0.7rem; border: 1px solid var(--vscode-panel-border); border-radius: 999px; background: var(--vscode-editorWidget-background); }
+  .toc a:hover { background: var(--vscode-list-hoverBackground); border-color: var(--vscode-textLink-foreground); text-decoration: underline; }
+
+  .logpath { color: var(--vscode-textLink-foreground); font-family: var(--vscode-editor-font-family); font-size: 0.85em; cursor: pointer; margin: 0 0 0.7rem; word-break: break-all; }
+  .logpath:hover { text-decoration: underline; color: var(--vscode-textLink-activeForeground); }
+
+  .session-info { display: grid; grid-template-columns: max-content 1fr; gap: 0.2rem 0.9rem; font-size: 0.92em; }
+  .si-k { color: var(--vscode-descriptionForeground); }
 
   .sec { margin: 1.1rem 0; }
-  .sec > summary { font-size: 1.16em; font-weight: 600; cursor: pointer; padding: 0.3rem 0 0.3rem 0.55rem; border-left: 3px solid var(--vscode-textLink-foreground); list-style: none; user-select: none; }
+  /* No always-on marker on the left; a chevron fades in on the right only when the header is hovered. */
+  .sec > summary { position: relative; font-size: 1.16em; font-weight: 600; cursor: pointer; padding: 0.3rem 1.5rem 0.3rem 0.55rem; border-left: 3px solid var(--vscode-textLink-foreground); list-style: none; user-select: none; }
   .sec > summary::-webkit-details-marker { display: none; }
-  .sec > summary::before { content: '▾'; display: inline-block; width: 1em; color: var(--vscode-descriptionForeground); }
-  .sec:not([open]) > summary::before { content: '▸'; }
+  .sec > summary::after { content: '▾'; position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%); font-size: 0.8em; color: var(--vscode-descriptionForeground); opacity: 0; transition: opacity 0.12s; }
+  .sec > summary:hover::after, .sec > summary:focus-visible::after { opacity: 0.8; }
+  .sec:not([open]) > summary::after { content: '▸'; }
   .sec-body { padding: 0.5rem 0 0.2rem; }
 
   /* Diagram on the left; narrative + tables stacked in the right column so they stay visible
