@@ -86,21 +86,26 @@ export function getDropToOpenScript(): string {
             if (!dt) { vscodeApi.postMessage({ type: 'openDroppedLog', empty: true }); return; }
             var uriList = '';
             try { uriList = dt.getData('text/uri-list') || dt.getData('text/plain') || ''; } catch (e) { uriList = ''; }
-            var uri = firstFileUri(uriList);
-            if (uri) { vscodeApi.postMessage({ type: 'openDroppedLog', uri: uri }); return; }
+            /* A local file (dragged from the file manager) comes as file://; a web link (dragged from a
+               browser tab/address bar) comes as http(s):// — route the latter to the URL download path. */
+            var fileUri = firstUriOfScheme(uriList, 'file:');
+            if (fileUri) { vscodeApi.postMessage({ type: 'openDroppedLog', uri: fileUri }); return; }
+            var webUri = firstUriOfScheme(uriList, 'http');
+            if (webUri) { vscodeApi.postMessage({ type: 'openDroppedLog', url: webUri }); return; }
             var file = (dt.files && dt.files[0]) || itemAsFile(dt);
             if (file) { loadDroppedFile(file); return; }
             /* Drop reached us but exposed neither a URI nor a File — guide the user to the picker. */
             vscodeApi.postMessage({ type: 'openDroppedLog', empty: true });
         }
 
-        /* First file:// line from a text/uri-list payload (comment lines start with '#'). */
-        function firstFileUri(text) {
+        /* First line of a text/uri-list payload whose scheme matches the prefix (comment lines start
+           with '#'). 'http' matches both http: and https:. */
+        function firstUriOfScheme(text, prefix) {
             if (!text) return '';
             var lines = text.split(/[\\r\\n]+/);
             for (var i = 0; i < lines.length; i++) {
                 var line = lines[i].trim();
-                if (line && line.charAt(0) !== '#' && line.indexOf('file:') === 0) return line;
+                if (line && line.charAt(0) !== '#' && line.indexOf(prefix) === 0) return line;
             }
             return '';
         }

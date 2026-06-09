@@ -8,6 +8,7 @@
 import * as vscode from 'vscode';
 import { t } from '../../l10n';
 import type { ViewerMessageContext } from './viewer-message-types';
+import { downloadAndLoadUrl } from './viewer-url-log';
 import { logExtensionError } from '../../modules/misc/extension-logger';
 
 /** Route a dropped-log message to the right load path, or surface a warning. */
@@ -27,6 +28,12 @@ export async function handleOpenDroppedLog(
     }
     if (msg.error === true) {
         void vscode.window.showWarningMessage(t('msg.droppedLogReadFailed', name));
+        return;
+    }
+    // A dropped web link (http/https) is downloaded to temp then rendered, same as the URL command.
+    const droppedUrl = typeof msg.url === 'string' ? msg.url : '';
+    if (droppedUrl) {
+        await downloadAndLoadUrl(droppedUrl, ctx.load, ctx.context);
         return;
     }
     // text/uri-list delivery: VS Code hands a dropped file over as a file:// URI string.
