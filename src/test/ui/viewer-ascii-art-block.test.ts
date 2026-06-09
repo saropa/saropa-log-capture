@@ -157,6 +157,23 @@ suite('ASCII art block grouping', () => {
             assert.ok(!css.includes('margin-bottom: 6px'), 'art-block-end must not use margin-bottom');
         });
 
+        test('art-block rows carry NO severity gutter rail (border-left + margin-left removed)', () => {
+            // The continuous border-left + margin-left:0.82em drawn on every
+            // art-block row shifted the box and read as a stray vertical line
+            // that broke the layout — removed. Severity now reads from the
+            // yellow tint + rounded border, not a gutter rail. Guard against
+            // re-introduction.
+            const css = getAsciiArtStyles();
+            assert.ok(
+                !css.includes('border-left: 0.14em solid var(--bar-color)'),
+                'art-block rows must NOT draw a border-left gutter rail',
+            );
+            assert.ok(
+                !css.includes('margin-left: 0.82em'),
+                'the rail-paired margin-left:0.82em must be gone too',
+            );
+        });
+
         test('calcItemHeight returns compact logFontSize-based heights for art-block rows', () => {
             const core = getViewerDataHelpersCore();
             assert.ok(
