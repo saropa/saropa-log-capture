@@ -39,14 +39,12 @@ function renderItem(item, idx, prevVis) {
            math calcItemHeight() produced — block-flow rows derive position from real DOM
            height, so an unpinned heading would drift the prefix sums. */
         var _hCls = '', _hStyle = '';
-        if (fileMode === 'markdown') {
-            /* Heading rows carry their level class (font + flex centering); other non-code,
-               non-blank lines get the padded class for readable line spacing. Either way the
-               row height is pinned inline to the value calcItemHeight() produced so the taller
-               rows match the scroll math exactly (block-flow rows derive position from real
-               DOM height — an unpinned tall row would drift the prefix sums). */
-            if (item._mdHeadingLevel) _hCls = ' fmt-md-h' + item._mdHeadingLevel;
-            else if (!item._mdFence && !_fmtBlank) _hCls = ' fmt-md-pad';
+        /* Headings carry their level class (font + flex centering) and pin their taller row
+           height inline so it matches the scroll math exactly (block-flow rows derive position
+           from real DOM height — an unpinned tall row would drift the prefix sums). Body line
+           spacing comes from the document line height, not a per-line class. */
+        if (fileMode === 'markdown' && item._mdHeadingLevel) {
+            _hCls = ' fmt-md-h' + item._mdHeadingLevel;
             if (item.height > 0) _hStyle = ' style="height:' + item.height + 'px"';
         }
         return '<div class="line fmt-' + fileMode + _fmtBlankCls + _hCls + '"' + idxAttr + _hStyle + '>' + fmtHtml + '</div>';
