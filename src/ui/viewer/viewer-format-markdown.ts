@@ -211,19 +211,11 @@ function formatMarkdownLine(item, idx) {
     var cmt = mdComments[idx];
     if (cmt) {
         /* Strip the <!-- / --> delimiters — the green color + // tag already signal "comment",
-           so the literal HTML markers are redundant noise. A close-only line becomes empty. */
+           so the literal HTML markers are redundant noise. A close-only line becomes empty.
+           No collapse chevron: comments render in full as plain green italic text. The chevron
+           was unwanted noise (user request) — every comment line is just shown as-is. */
         var cRaw = stripTags(html).replace(/^\\s*<!--\\s?/, '').replace(/\\s?-->\\s*$/, '');
-        var cText = escapeHtml(cRaw);
-        var blk = mdCommentBlocks[idx];
-        if ((cmt.role === 'open') && blk) {
-            /* Inline leading chevron (not a flex/right-aligned one): the comment line is a normal
-               inline row and may sit after the line-number gutter, so a flex layout would drop the
-               text below the gutter. A leading chevron stays inline and reads as expand/collapse. */
-            var cChevron = '<span class="md-comment-chevron">' + (blk.collapsed ? '\\u25b8' : '\\u25be') + '</span> ';
-            var cBadge = blk.collapsed ? ' <span class="md-collapse-badge">(' + (blk.endIndex - idx) + ' lines)</span>' : '';
-            return '<span class="md-comment md-comment-open" data-md-comment="' + idx + '">' + cChevron + cText + cBadge + '</span>';
-        }
-        return '<span class="md-comment">' + cText + '</span>';
+        return '<span class="md-comment">' + escapeHtml(cRaw) + '</span>';
     }
 
     /* Fenced code block: render verbatim (escaped, no inline markdown), so diagram
