@@ -58,15 +58,19 @@ already does).
 ### Per-row `display: grid`, exact `ch` columns, clipping message cell
 
 ```
-.line {
+.line.log-cols {                        /* OPT-IN: log rows only, never bare .line */
   display: grid;
   grid-template-columns: var(--grid-cols, max-content 1fr);
   align-items: baseline;
 }
-.line-msg { min-width: 0; }            /* clips the column boundary — kills overlap */
-.deco-cell { overflow: hidden; }       /* each fixed cell clips, never spills */
-.deco-cell-tag { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.line.log-cols .line-msg { min-width: 0; }   /* clips the column boundary — kills overlap */
+.line.log-cols .deco-cell { overflow: hidden; }
+.line.log-cols .deco-cell-tag { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 ```
+
+**The grid is opt-in via `.log-cols`, not a rule on bare `.line`** — see "Special /
+structured-file renderers" below. Format rows (markdown/json/csv/future) keep
+block layout and own their content; they never get `.log-cols`.
 
 `--grid-cols` is emitted by the rewritten `applyDecorationLayoutWidth` from the
 **enabled × data-present** flags it already computes (`decoSeen`), e.g.:
@@ -123,7 +127,7 @@ item; the message is `.line-msg`. The existing `.line-decoration` wrapper become
 grid (keeps the wrapper for JS hooks/measurement without adding a nesting level):
 
 ```
-<div class="line …">
+<div class="line log-cols …">                        <!-- log rows opt in; format rows do not -->
   <span class="deco-bar"></span>                      <!-- severity track, 1.25em -->
   <span class="line-decoration" style="display:contents">
     <span class="deco-cell deco-cell-num">  1115</span>
@@ -146,7 +150,8 @@ the variable tag cell is capped (`7em`) and clips. So fixed parts never even cli
 ## Phasing (full column model from day one; risk managed by rollout, not by merging)
 
 **Phase 1 — the grid column model, rolled out path-by-path.**
-- Add `viewer-styles-columns.ts`: `.line { display:grid; grid-template-columns: var(--grid-cols) }`, `.deco-cell { overflow:hidden }`, tag-cell ellipsis, `.line-msg { min-width:0 }`, `.line-decoration { display:contents }`.
+- Add `viewer-styles-columns.ts`: `.line.log-cols { display:grid; grid-template-columns: var(--grid-cols) }`, `.deco-cell { overflow:hidden }`, tag-cell ellipsis, `.line-msg { min-width:0 }`, `.line-decoration { display:contents }`. The grid is **gated on `.log-cols`** so format/marker/chip rows are unaffected.
+- `renderItem` adds `log-cols` to the class list **only on the log-row branches** (regular, AI, stack); the `fileMode !== 'log'` format branch and marker/chip rows never get it.
 - Rewrite `applyDecorationLayoutWidth` to emit `--grid-cols` (a full `grid-template-columns` string) — a track per enabled+seen part, `ch`-exact for fixed parts, `7em` for the tag, `1fr` for the message.
 - Rewrite `getDecorationPrefix` to emit per-part `.deco-cell` spans instead of one `&nbsp;`-joined blob.
 - Migrate render paths **one at a time** (regular line → AI line → chips → stack header/frame → banner/art-block → structured-file), keeping the suite green between each. This is where the blast radius is contained: incremental rollout, not a weaker design.
@@ -169,8 +174,45 @@ Each must wrap its message body in `.line-msg` (Phase 1) and stay grid-aligned:
 - run-separator rows
 - art-block continuation rows (`art-block-start/-middle/-end`)
 - banner-group rows (`banner-group-start/-mid/-end`)
-- structured-file mode rows (markdown/json/csv `fmt-*`)
+- structured-file mode rows (`fmt-markdown/-json/-csv`) — **excluded** from the grid (see next section); the migration must ensure they do NOT receive `.log-cols`
 - `viewer-data.ts` copy/strip path (~line 177) that mirrors `renderItem`'s prefix strip — keep in sync
+
+## Special / structured-file renderers (markdown / json / csv / future)
+
+These are a **different row archetype** and must stay outside the decoration grid.
+A format row is a single formatter-owned content area, not a gutter+message log
+row. Routed by the `fileMode !== 'log' && formatEnabled` branch at the top of
+[renderItem](../src/ui/viewer/viewer-data-helpers-render.ts#L44-L56), it returns
+`<div class="line fmt-…">fmtHtml</div>` with **no decoration cells** (format files
+have no timestamps/tags/PIDs).
+
+Contract:
+- **Format rows never get `.log-cols`.** They keep block/flow layout owned by
+  their formatter. Because the grid is opt-in (not on bare `.line`), this is the
+  default — a new renderer added later is block automatically and cannot be
+  silently broken by the gutter grid.
+- **A format that is itself columnar owns its own grid, scoped to its own
+  classes — never the log gutter columns.** Concretely:
+  - Markdown already emits columnar/structured content:
+    [viewer-format-markdown.ts](../src/ui/viewer/viewer-format-markdown.ts) returns
+    `md-heading`, `md-table-row` (`| col | col |`), `md-table-sep`, `md-bullet`,
+    `md-blockquote`. Today `md-table-row` is a raw escaped string; if it ever
+    becomes a real table it gets a `.md-table` grid, independent of `--grid-cols`.
+  - CSV is inherently tabular and is the most likely next consumer of a real
+    column grid — but a CSV column grid is `.csv-row { display:grid }` with its
+    own template, **not** the log `--grid-cols`. The log gutter (severity / line# /
+    time / tag) and a CSV data grid are different column systems that must not be
+    conflated.
+  - JSON is a tree, not columns — stays block.
+- **Future renderers** (HTML, logfmt, key-value, …) inherit the same rule: block
+  by default; opt into a *scoped* grid only if their own content is columnar.
+- Format rows currently carry **no line-number gutter**; the grid change must not
+  add or remove that. (If per-format gutters are wanted later, that is a separate
+  per-renderer decision, not part of the log decoration grid.)
+
+The single shared idea worth factoring is "a clipping cell never lets content
+overlap a neighbor" — but the *templates* (log gutter vs CSV data vs md table)
+stay separate, each scoped to its own row class.
 
 ## Constraints to preserve (regression gate)
 
@@ -188,7 +230,7 @@ From the original spec, all still required:
 
 - **D1.** Confirm `.line` font is monospace (required for `ch` exactness). Check `viewer-styles-lines.ts` / content. If not strictly monospace, fixed columns need a measured char-width var instead of `ch`.
 - **D2.** Render decoration at the line's 1em (drop `0.85em`) so `ch` maps 1:1, or keep `0.85em` and scale tracks by `calc(... * 0.85)`. Recommend dropping to 1em for simplicity unless the smaller deco size is a deliberate visual.
-- **D3.** Marker / chip rows: single 1-col grid, or opt out of grid via a class. Recommend a `.line-nogrid` opt-out for rows with no decoration to avoid empty-track math.
+- **D3 (resolved).** Marker / chip / format rows: the grid is **opt-in via `.log-cols`**, so these simply don't receive it and stay block — no opt-out class, no empty-track math. Chips that visually align to the message column keep doing so via a left-padding var (today's `line-deco-spacer-only`), not a grid track.
 
 ## Files
 
@@ -215,6 +257,9 @@ From the original spec, all still required:
   (`GraphicBufferAllocator`, `MediaSessionCompat`) + timestamp + tag columns on
   → tag clips with ellipsis, **never** paints over the message; toggling each
   column adds/removes its track with columns staying aligned top-to-bottom.
+- Manual regression: open a `.md` and a `.csv` with format mode ON → format rows
+  render in their own layout (headings, bullets, md tables, CSV) and are **not**
+  pulled into the log gutter grid (no `.log-cols`, no stray empty columns).
 
 ---
 
