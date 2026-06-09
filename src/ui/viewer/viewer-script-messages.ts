@@ -3,9 +3,10 @@
 import { getViewerScriptDbMessageHandler } from './viewer-script-messages-db';
 import { getViewerScriptTypographyMessageHandler } from './viewer-script-messages-typography';
 import { getSourceLineStampScript } from './viewer-source-line-stamp';
+import { getFileCodeStampScript } from './viewer-file-code-stamp';
 
 export function getViewerScriptMessageHandler(): string {
-    return getViewerScriptDbMessageHandler() + getViewerScriptTypographyMessageHandler() + getSourceLineStampScript() + /* javascript */ `
+    return getViewerScriptDbMessageHandler() + getViewerScriptTypographyMessageHandler() + getSourceLineStampScript() + getFileCodeStampScript() + /* javascript */ `
 window.addEventListener('message', function(event) {
     var msg = event.data;
     /* Pre-handlers return true when they've dispatched the message; skip the switch on hit. */
@@ -15,7 +16,7 @@ window.addEventListener('message', function(event) {
             var isHidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';
             for (var i = 0; i < msg.lines.length; i++) {
                 var ln = msg.lines[i], beforeAddLen = allLines.length;
-                addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw, ln.sourcePath, ln.elapsedMs, ln.qualityPercent, ln.source, ln.rawText, ln.tier); stampSourceLineNoOnNewItems(beforeAddLen, ln.sourceLineNo);
+                addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw, ln.sourcePath, ln.elapsedMs, ln.qualityPercent, ln.source, ln.rawText, ln.tier); stampSourceLineNoOnNewItems(beforeAddLen, ln.sourceLineNo); stampFileCodeOnNewItems(beforeAddLen, ln.logFileUri, ln.timestamp);
                 if (typeof applyLintDataToLastLine === 'function') applyLintDataToLastLine(ln);
             }
             trimData();
@@ -62,7 +63,7 @@ window.addEventListener('message', function(event) {
             if (currentFilename && !autoScroll) { scrollMemory[currentFilename] = logEl.scrollTop; }
             autoScroll = true;
             fileMode = 'log'; formatEnabled = false; if (typeof updateFormatToggleVisibility === 'function') updateFormatToggleVisibility();
-            allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null; nextSeq = 1; sessionStartTs = 0; if (typeof resetDecoSeen === 'function') resetDecoSeen(); if (typeof resetTreeDetector === 'function') resetTreeDetector();
+            allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null; nextSeq = 1; sessionStartTs = 0; if (typeof resetDecoSeen === 'function') resetDecoSeen(); if (typeof resetTreeDetector === 'function') resetTreeDetector(); if (typeof resetFileCodes === 'function') resetFileCodes();
             if (typeof applyDecorationLayoutWidth === 'function') applyDecorationLayoutWidth();
             lastStart = -1; lastEnd = -1; groupHeaderMap = {}; prefixSums = null;
             if (typeof resetContinuationState === 'function') resetContinuationState();

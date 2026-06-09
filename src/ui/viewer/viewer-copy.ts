@@ -5,9 +5,10 @@
  * Concatenated into the same script scope as viewer-script.ts.
  */
 import { getCopyJsonScript } from './viewer-copy-json';
+import { getCopyFileCodesScript } from './viewer-copy-file-codes';
 
 export function getCopyScript(): string {
-    return getCopyJsonScript() + /* javascript */ `
+    return getCopyJsonScript() + getCopyFileCodesScript() + /* javascript */ `
 var selectionStart = -1;
 var selectionEnd = -1;
 
@@ -62,12 +63,12 @@ function getVisibleLines() {
 function lineToPlainText(item) {
     if (isExpandableRepeatNotification(item)) {
         var n = repeatCountForExpansion(item);
-        var txt = item.collapsedLineText || stripTags(item.collapsedRawText || '');
+        var txt = copyCodePrefix(item) + (item.collapsedLineText || stripTags(item.collapsedRawText || ''));
         var parts = new Array(n);
         for (var k = 0; k < n; k++) parts[k] = txt;
         return parts.join('\\n');
     }
-    return stripTags(item.html);
+    return copyCodePrefix(item) + stripTags(item.html);
 }
 
 function linesToPlainText(lines) {
@@ -75,7 +76,7 @@ function linesToPlainText(lines) {
     for (var i = 0; i < lines.length; i++) {
         parts.push(lineToPlainText(lines[i]));
     }
-    return parts.join('\\n');
+    return copyCodeLegend(lines) + parts.join('\\n');
 }
 
 /* Count how many output lines linesToPlainText will actually produce so the
@@ -129,12 +130,12 @@ function getAllCopyableLines() {
 function lineToRawText(item) {
     if (isExpandableRepeatNotification(item)) {
         var n = repeatCountForExpansion(item);
-        var txt = item.collapsedRawText != null ? item.collapsedRawText : (item.collapsedLineText || '');
+        var txt = copyCodePrefix(item) + (item.collapsedRawText != null ? item.collapsedRawText : (item.collapsedLineText || ''));
         var parts = new Array(n);
         for (var k = 0; k < n; k++) parts[k] = txt;
         return parts.join('\\n');
     }
-    return item.rawText != null ? item.rawText : stripTags(item.html);
+    return copyCodePrefix(item) + (item.rawText != null ? item.rawText : stripTags(item.html));
 }
 
 function linesToRawText(lines) {
@@ -142,7 +143,7 @@ function linesToRawText(lines) {
     for (var i = 0; i < lines.length; i++) {
         parts.push(lineToRawText(lines[i]));
     }
-    return parts.join('\\n');
+    return copyCodeLegend(lines) + parts.join('\\n');
 }
 
 function copyAsRawText() {
@@ -183,8 +184,8 @@ function decorateLine(item, overrideText) {
         var ts = formatDecoTimestamp(item.timestamp);
         if (ts) parts.push(ts);
     }
-    if (parts.length > 0) return parts.join('  ') + '  \\u00BB ' + text;
-    return text;
+    if (parts.length > 0) return copyCodePrefix(item) + parts.join('  ') + '  \\u00BB ' + text;
+    return copyCodePrefix(item) + text;
 }
 
 function linesToDecoratedText(lines) {
@@ -204,7 +205,7 @@ function linesToDecoratedText(lines) {
             parts.push(decorateLine(it));
         }
     }
-    return parts.join('\\n');
+    return copyCodeLegend(lines) + parts.join('\\n');
 }
 
 function copyAllDecorated() {

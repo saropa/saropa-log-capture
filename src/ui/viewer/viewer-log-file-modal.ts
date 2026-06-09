@@ -59,6 +59,10 @@ export function getLogFileModalScript(): string {
     if (!modal || !vscodeApi) return;
 
     var filenameEl = document.getElementById('log-file-modal-filename');
+    /* Plan 057: when opened for a specific accumulated file (a letter from the files
+       dialog) this holds that file's absolute path so the action buttons target it via
+       a path field. Null = act on the tailed file (original single-file behavior). */
+    var currentModalPath = null;
 
     function refreshFilename() {
         if (!filenameEl) return;
@@ -70,8 +74,17 @@ export function getLogFileModalScript(): string {
         filenameEl.style.display = name ? '' : 'none';
     }
 
-    function openLogFileActionsModal() {
-        refreshFilename();
+    function openLogFileActionsModal(target) {
+        if (target && target.path) {
+            currentModalPath = target.path;
+            if (filenameEl) {
+                filenameEl.textContent = target.name || target.path;
+                filenameEl.style.display = '';
+            }
+        } else {
+            currentModalPath = null;
+            refreshFilename();
+        }
         modal.classList.add('visible');
     }
     function closeLogFileModal() {
@@ -99,7 +112,9 @@ export function getLogFileModalScript(): string {
         if (!btn) return;
         btn.addEventListener('click', function() {
             closeLogFileModal();
-            vscodeApi.postMessage({ type: pair[1] });
+            /* Carry the target path when opened for a specific file (plan 057);
+               omit it for the tailed file so the host uses currentFileUri. */
+            vscodeApi.postMessage(currentModalPath ? { type: pair[1], path: currentModalPath } : { type: pair[1] });
         });
     });
 
