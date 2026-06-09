@@ -62,7 +62,7 @@ const MATCHERS: { re: RegExp; build: (m: RegExpExecArray) => Omit<TimelineEvent,
 ];
 
 /** Classify a decorated log line into a TimelineEvent, or undefined when it is not a breadcrumb. */
-export function classifyBreadcrumb(line: string, tsMs: number, clock: string): TimelineEvent | undefined {
+export function classifyBreadcrumb(line: string, tsMs: number, clock: string, logLine: number): TimelineEvent | undefined {
     const payload = logPayload(line);
     if (payload === undefined) {
         return undefined;
@@ -70,7 +70,7 @@ export function classifyBreadcrumb(line: string, tsMs: number, clock: string): T
     for (const { re, build } of MATCHERS) {
         const m = re.exec(payload);
         if (m) {
-            return { tsMs, clock, ...build(m) };
+            return { tsMs, clock, logLine, ...build(m) };
         }
     }
     return undefined;

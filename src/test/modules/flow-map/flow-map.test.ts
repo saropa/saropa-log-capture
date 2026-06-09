@@ -5,6 +5,8 @@ import { renderMermaid } from '../../../modules/flow-map/flow-map-mermaid';
 import { buildReport } from '../../../modules/flow-map/flow-map-report';
 import { deriveScreenIdentity } from '../../../modules/flow-map/flow-map-presets';
 import { extractDartFileAnchor, parseErrorCausingWidget } from '../../../modules/flow-map/error-causing-widget-parser';
+import { renderSvg } from '../../../modules/flow-map/flow-map-svg';
+import { buildFlowMapBody } from '../../../modules/flow-map/flow-map-html';
 import type { FlowGraph } from '../../../modules/flow-map/flow-map-model';
 
 /** Representative session: doubled-backslash root, restart, actions, leaf view, slow query, crash. */
@@ -54,6 +56,14 @@ suite('FlowMap', () => {
             assert.strictEqual(parsed.crash?.widget, 'ListView');
             assert.strictEqual(parsed.crash?.source?.file, 'lib/views/x_dialog.dart');
             assert.strictEqual(parsed.crash?.source?.line, 42);
+        });
+
+        test('strips ANSI color codes from breadcrumb labels', () => {
+            // Flutter colorizes output; without stripping, the ESC sequence leaks as `□[32m…`.
+            const ansiLine = '[08:00:01.000] [console] [log] [32mHome Screen Reached[0m: ok';
+            const ev = parseLog([ansiLine]).events.find(e => e.kind === 'reached');
+            assert.strictEqual(ev?.label, 'Home');
+            assert.ok(![...(ev?.label ?? '')].some(c => c.charCodeAt(0) === 27), 'no ESC byte in label');
         });
 
         test('promotes the worst slow query and the crash into issue rows', () => {
@@ -137,6 +147,22 @@ suite('FlowMap', () => {
                 assert.ok(md.includes(heading), `missing ${heading}`);
             }
             assert.ok(md.includes('x_dialog.dart:42'));
+        });
+
+        test('svg draws one rect per node plus an arrow marker', () => {
+            const svg = renderSvg(graph);
+            assert.ok(svg.startsWith('<svg'));
+            assert.strictEqual((svg.match(/<rect /g) ?? []).length, graph.nodes.length);
+            assert.ok(svg.includes('fm-arrow'), 'arrow marker defined');
+            assert.ok(svg.includes('#3a1a1a'), 'crash node colored');
+        });
+
+        test('webview body has the diagram and clickable source cells', () => {
+            const body = buildFlowMapBody(parseLog(FIXTURE), graph);
+            assert.ok(body.includes('class="diagram"'));
+            assert.ok(body.includes('<svg'));
+            assert.ok(/<span class="src"[^>]*data-file="lib\/views\/x_dialog.dart"[^>]*data-line="42"/.test(body));
+            assert.strictEqual((body.match(/<table>/g) ?? []).length, 2);
         });
     });
 });

@@ -311,3 +311,56 @@ A workstream is **not done** until every check passes.
 where loops form, which node carries the crash. Repetition (Favorite toggled six times, Home entered
 three times across hot restarts) is noise in a linear list and **signal** in a graph: it becomes a
 counter on one node instead of six scattered lines. That collapse is the whole value.
+
+## Finish Report (2026-06-09)
+
+**Scope:** (B) VS Code extension (TypeScript). This pass built out the **S1 webview panel** beyond the
+initial command — the native dashboard report — plus a series of UX iterations requested
+interactively. S2 (interactive graph as a standalone panel) remains **proposed/open**, so this plan
+stays active.
+
+**Reviewed by another AI.**
+
+### What landed in this pass
+- **Native report panel** (`src/ui/panels/flow-map-panel.ts` + `-styles.ts` + `-script.ts`) — opens
+  the report in VS Code instead of forcing a file save; a top-right save icon writes the portable
+  `.md` on demand.
+- **Self-generated SVG diagram** (`flow-map-svg.ts`) — no Mermaid/dagre dependency, offline; the
+  saved `.md` keeps the Mermaid block for GitHub rendering. Per-kind node icons; pulsing crash node.
+- **Dashboard polish** — colored stat pills in a sticky top bar, section TOC, collapsible `<details>`
+  sections, clean row-separator tables (no grid), proportional dwell bars, severity-accented rows,
+  responsive flow/narrative two-column layout.
+- **Log linking (R5 extended to the log)** — log line numbers are threaded through model → parser →
+  builder; every dwell/issue row and each diagram node links to its source `file:line` (opens in
+  editor) AND its originating log line (reveal in the viewer via `scrollToLine`, or copy the raw
+  line).
+- **Toolbar entry point** — the redundant in-log search icon was replaced by a flow-map button
+  (committed earlier in `66694903`).
+- **ANSI corruption fix** — Flutter colorizes output (`allowAnsiColorOutput`), so breadcrumbs arrived
+  wrapped in `[..m` codes that rendered as `□[32m…` and broke anchored matchers. `stripAnsi`
+  now runs at ingest (parser) and again defensively at render (`flow-map-format`, `flow-map-html`).
+  Verified: 0 ESC bytes in the rendered body against the real log.
+- **Tall-diagram fix** — `.diagram` is height-capped (`max-height: 70vh`, `overflow:auto`, user
+  `resize: vertical`) so a very tall flowchart scrolls in its own pane instead of pushing the tables
+  off-screen; the TOC and collapsible sections also reach them.
+
+### Verification
+- `npm run check-types` — 0 errors. New/changed flow-map files lint clean and under the 300-line cap.
+- Flow-map unit test (`src/test/modules/flow-map/flow-map.test.ts`) — **16 cases passing**, incl. a
+  new ANSI-stripping regression case and SVG/webview-body assertions.
+- `npm run compile` — NLS 476 keys ×11 aligned, webview + command catalogs match, `dist/extension.js`
+  4.60 MiB (no dependency added).
+- End-to-end against `d:\src\contacts\reports\20260609\20260609_080242_contacts.log`: 5 clean nodes,
+  crash anchored to `culture_religion_picker_dialog.dart:101`, 11 log links, 0 ESC.
+
+### Not committed here (intentional)
+- `CHANGELOG.md` is shared with a concurrent **"Open Log File / loaded-files-history"** workstream
+  (its entry sits alongside the flow-map entry). To avoid bundling another workstream's code, the
+  flow-map CHANGELOG entry is written but left uncommitted in this pass.
+- The session-list / `loaded-files-history` files in the working tree belong to that other
+  workstream and are **excluded** from this commit.
+
+### Outstanding
+- **S2** — interactive graph (pan/zoom, live filtering) remains proposed.
+- On-device/manual verification of the live panel interactions (reveal-in-log, copy, collapse, TOC,
+  resize) is the user's F5 check — see the "What to test" handoff.
