@@ -25,14 +25,14 @@ suite('viewer-sql-query-history panel script', () => {
         assert.ok(s.includes('viewer.sqlHistory.jumpedHidden'), 'hidden-line hint wired via l10n key');
     });
 
-    test('DB_17: cumulative toggle wires checkbox change → setSqlQueryHistoryCumulativeEnabled', () => {
+    test('DB_18: current-session-only filter wires checkbox change → setSqlQueryHistoryCurrentSessionOnly', () => {
         const s = getSqlQueryHistoryPanelScript();
-        assert.ok(s.includes("getElementById('sql-query-history-cumulative')"),
-            'panel script must look up the toggle checkbox');
-        assert.ok(s.includes('setSqlQueryHistoryCumulativeEnabled'),
+        assert.ok(s.includes("getElementById('sql-query-history-current-session-only')"),
+            'panel script must look up the current-session-only checkbox');
+        assert.ok(s.includes('setSqlQueryHistoryCurrentSessionOnly'),
             'change listener must update the persisted preference flag');
         assert.ok(s.includes('updateSqlHistoryCumulativeUi'),
-            'render must show/hide the toggle wrap based on host-supplied data');
+            'render must show/hide the filter wrap based on host-supplied data');
     });
 
     test('DB_17: cross-log row jump posts sqlHistoryCrossLogJump instead of scrolling locally', () => {
@@ -44,12 +44,12 @@ suite('viewer-sql-query-history panel script', () => {
         assert.ok(s.includes('data-cross-log-uri'), 'rows carry the source log uri for the host to load');
     });
 
-    test('DB_17: empty-state copy distinguishes per-log empty vs filter mismatch vs cumulative-available', () => {
+    test('DB_18: empty-state copy distinguishes filter mismatch vs current-session-only vs nothing captured', () => {
         const s = getSqlQueryHistoryPanelScript();
         assert.ok(s.includes('computeSqlHistoryEmptyText'),
             'empty-state helper centralizes the three messages');
-        assert.ok(s.includes('viewer.sqlHistory.emptyToggleCumulative'),
-            'hint suggests the toggle when other sidebar logs have data');
+        assert.ok(s.includes('viewer.sqlHistory.emptyCurrentSessionOnly'),
+            'hint suggests unchecking the filter when other sidebar logs have data');
     });
 
     test('Escape closes panel from search input and panel keydown', () => {

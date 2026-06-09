@@ -27,9 +27,20 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [7.18.0]
 
-The "Open Signals" button on the recurring-signal notification now actually opens the Signals panel. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+SQL Query History now spans every log you've captured (not just the open one) and opens with a stats dashboard, live Drift Advisor database issues show up alongside it, every sidebar slide-out is resizable, the session list stops flashing two layouts while it loads, and the "Open Signals" notification button actually opens the panel. [log](https://github.com/saropa/saropa-log-capture/blob/v7.18.0/CHANGELOG.md)
+
+### Changed
+
+- **SQL Query History is now useful across every log, not just the open one** — the panel used to reset to "No parsed SQL fingerprints in this session yet" whenever the active log had no Drift output, even when your other logs had captured plenty. It now merges fingerprints aggregated across **all** your captured logs by default. A new **"Current session only"** filter (in the panel toolbar) scopes the view back to just the active log when you want that. ([viewer-sql-query-history-core.ts](src/ui/viewer-stack-tags/viewer-sql-query-history-core.ts), [viewer-sql-query-history-panel-html.ts](src/ui/viewer-panels/viewer-sql-query-history-panel-html.ts), [viewer-sql-query-history-panel-render.ts](src/ui/viewer-panels/viewer-sql-query-history-panel-render.ts), [viewer-sql-query-history-panel-helpers.ts](src/ui/viewer-panels/viewer-sql-query-history-panel-helpers.ts))
+
+### Added
+
+- **Cross-log SQL history stays fast as your log count grows** — the cumulative view is backed by a persisted index (`.saropa/cumulative-sql-index.json`) that updates incrementally as each session finalizes, so opening the panel reads one small file instead of re-scanning every session's metadata on every log switch. The index rebuilds itself automatically if it is missing, corrupt, or a log it tracked was deleted. ([cumulative-sql-fingerprint-index.ts](src/modules/db/cumulative-sql-fingerprint-index.ts), [cumulative-sql-fingerprint-index-store.ts](src/modules/db/cumulative-sql-fingerprint-index-store.ts), [cumulative-sql-fingerprint-refresh.ts](src/modules/db/cumulative-sql-fingerprint-refresh.ts), [session-drift-sql-fingerprint-persist.ts](src/modules/session/session-drift-sql-fingerprint-persist.ts))
+- **SQL Query History now opens with a dashboard** — a compact strip at the top of the panel shows headline stats (distinct queries, total executions, slowest duration, logs covered) and a "Top queries by count" bar chart, all computed from the queries already in view so it adds no extra work. ([viewer-sql-query-history-dashboard.ts](src/ui/viewer-panels/viewer-sql-query-history-dashboard.ts), [viewer-styles-sql-query-history-dashboard.ts](src/ui/viewer-styles/viewer-styles-sql-query-history-dashboard.ts))
+- **Live database issues from Drift Advisor surface in the SQL dashboard** — when a Saropa Drift Advisor debug server is reachable, the panel pulls its merged `/api/issues` list (missing-index suggestions and data anomalies) and lists them under the stats, each with a one-click "open the suggested SQL in the Drift viewer" action. The section stays hidden when no server is running. ([drift-advisor-issues-fetch.ts](src/modules/integrations/drift-advisor-issues-fetch.ts), [viewer-message-handler-panels.ts](src/ui/provider/viewer-message-handler-panels.ts))
+- **Static Drift code issues from Saropa Lints, with a "turn the linters on" nudge** — the dashboard also reads Saropa Lints findings (extension API, or `reports/.saropa_lints/violations.json`) and lists Drift source-code rule violations (e.g. `WHERE`-less updates, unclosed databases). When the project clearly uses Drift but no Drift-rule findings are present — the Drift rule pack is off by default — it shows an "Enable Drift linters" action that opens a terminal pre-filled with the `saropa_lints` command (you press Enter; nothing runs automatically). ([drift-lint-violations.ts](src/modules/misc/drift-lint-violations.ts), [viewer-sql-query-history-dashboard.ts](src/ui/viewer-panels/viewer-sql-query-history-dashboard.ts))
 
 ### Fixed
 

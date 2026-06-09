@@ -83,9 +83,9 @@ export interface ViewerTarget {
     entries: Readonly<Record<string, PersistedDriftSqlFingerprintEntryV1>> | null,
   ): void;
   /**
-   * Plan **DB_17**: aggregate of persisted SQL fingerprint summaries from every sidebar log
-   * EXCEPT the currently displayed one. Webview overlays this on top of its live per-log
-   * rollup when the SQL History panel's `Cumulative across logs` toggle is on.
+   * Plan **DB_18**: aggregate of persisted SQL fingerprint summaries from every sidebar log
+   * EXCEPT the currently displayed one. The webview merges this on top of its live per-log
+   * rollup by DEFAULT; the panel's `Current session only` filter suppresses it.
    * Pass `null` to clear (e.g. when no sidebar logs have persisted summaries).
    */
   setCumulativeSqlFingerprintSummary(payload: CumulativeSqlFingerprintPayload | null): void;

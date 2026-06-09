@@ -280,7 +280,8 @@ export function getSqlQueryHistoryPanelStyles(): string {
     white-space: pre-line;
 }
 
-/* DB_17: Cumulative across logs toggle, lives in the toolbar next to the search input. */
+/* DB_18: "Current session only" filter, lives in the toolbar next to the search input.
+   Class name kept (.sql-qh-cumulative) so existing layout/spacing rules apply unchanged. */
 .sql-qh-cumulative {
     display: inline-flex;
     align-items: center;
