@@ -78,24 +78,61 @@ export async function loadBatch(
         onItemPreview(stats.filter((s): s is SessionPreviewRecord => s !== undefined));
     }
     const results: SessionMetadata[] = new Array(files.length);
+    /* Header-cache misses accumulate here and are written back in ONE central write below —
+     * persisting per file would be O(files) writes and defeat the cache's purpose. */
+    const headerWriteback = new Map<string, ParsedHeaderCache>();
     await mapBounded(files.length, async (i) => {
         const base = stats[i];
         if (!base) { return; }
-        results[i] = await loadMetadata(target, centralMeta, base);
+        results[i] = await loadMetadata(target, centralMeta, base, headerWriteback);
         /* Await the callback so each item reaches the webview before the
          * worker moves on to the next file — gives progressive UI updates. */
         await onItemLoaded?.(results[i], i);
     });
+    /* Single write-back for every freshly-parsed header (best-effort: a failed write just
+     * means the next load re-parses those files). */
+    if (headerWriteback.size > 0) {
+        await target.metaStore.saveParsedHeaderBatch(logDir, headerWriteback).catch(() => { /* non-critical */ });
+    }
     /* Drop holes left by failed stats so callers never see undefined rows. */
     return results.filter((r): r is SessionMetadata => r !== undefined);
 }
 
+/** Persisted header-cache shape (see SessionMeta.parsedHeader). */
+type ParsedHeaderCache = NonNullable<SessionMeta['parsedHeader']>;
+
+/** True when the sidecar's cached header was computed for this exact file revision. */
+function headerCacheValid(sidecar: SessionMeta, base: SessionPreviewRecord): boolean {
+    const ph = sidecar.parsedHeader;
+    return !!ph && ph.mtime === base.mtime && ph.size === base.size;
+}
+
+/** Populate the tree item's header fields from the cached header (no file read). */
+function applyCachedHeader(meta: SessionMetadata, ph: ParsedHeaderCache): SessionMetadata {
+    return {
+        ...meta,
+        date: ph.date, project: ph.project, adapter: ph.adapter,
+        lineCount: ph.lineCount, hasTimestamps: ph.hasTimestamps, durationMs: ph.durationMs,
+    };
+}
+
+/** Build a cache entry from a freshly-parsed header, stamped with the revision it is valid for. */
+function parsedHeaderFrom(meta: SessionMetadata, base: SessionPreviewRecord): ParsedHeaderCache {
+    return {
+        mtime: base.mtime, size: base.size,
+        date: meta.date, project: meta.project, adapter: meta.adapter,
+        lineCount: meta.lineCount, hasTimestamps: meta.hasTimestamps, durationMs: meta.durationMs,
+    };
+}
+
 /** Load and cache metadata for a single session file from its prefetched stat.
- *  Never scans the body — severities arrive later from the deferred worker. */
+ *  Never scans the body — severities arrive later from the deferred worker.
+ *  On a header-cache miss, queues a write-back into `writeback` (flushed once by loadBatch). */
 async function loadMetadata(
     target: LoadMetadataTarget,
     centralMeta: ReadonlyMap<string, SessionMeta>,
     base: SessionPreviewRecord,
+    writeback: Map<string, ParsedHeaderCache>,
 ): Promise<SessionMetadata> {
     const { uri, filename } = base;
     const cacheKey = `${uri.toString()}|${base.mtime}|${base.size}`;
@@ -109,7 +146,15 @@ async function loadMetadata(
     // buckets — otherwise debug/database/todo/notice would stay permanently 0.
     const hasCachedSev = sidecar.errorCount !== undefined && sidecar.debugCount !== undefined;
     let meta: SessionMetadata = { uri, filename, size: base.size, mtime: base.mtime };
-    meta = await parseHeader(uri, meta);
+    // Persistent header cache: reuse the stored header while mtime+size still match, so a
+    // multi-thousand-file archive doesn't re-open every file on each panel load. Misses re-parse
+    // and queue a write-back, which loadBatch flushes as a SINGLE central write.
+    if (headerCacheValid(sidecar, base)) {
+        meta = applyCachedHeader(meta, sidecar.parsedHeader!);
+    } else {
+        meta = await parseHeader(uri, meta);
+        writeback.set(relKey, parsedHeaderFrom(meta, base));
+    }
     meta = applySidecar(meta, sidecar, hasCachedSev);
     target.metaCache.set(cacheKey, meta);
     return meta;
