@@ -9,8 +9,9 @@
  *
  * Path 1 deliberately KEEPS the existing padding-left / text-indent model so
  * wrapped SQL and error lines still align; it does NOT introduce a flex
- * .line-cols / .line-msg DOM rewrite (that was path 2, set aside — preserved as
- * plans/deferred/055_plan-viewer-row-dom-grid-rewrite.md). See
+ * .line-cols / .line-msg DOM rewrite (that was path 2, now reactivated as
+ * plans/055_plan-viewer-row-grid-rewrite.md — this test is rewritten there in
+ * Phase 3 to pin the grid model). See
  * plans/history/2026.05/2026.05.15/054_plan-viewer-stack-noise-filter-layout.md Item E.
  */
 import * as assert from 'node:assert';
