@@ -43,3 +43,25 @@ inline, and give the heading text a tight fixed line-height. Then the heading ro
 its own content — no overlap whether the document line height is 1.1 or 1.7. Body readability
 still depends on `applyMarkdownTypography` setting the comfortable line height; verify that
 path actually fires on the user's reload before tuning further.
+
+3. **Independent heading row height + tight 1.35 line-height** (the "next attempt" above, shipped).
+   FIXED the overlap, but introduced a NEW symptom (user screenshot): heading GLYPHS are clipped
+   top and bottom — the caps and descenders of `Security Policy` / `Reporting a Vulnerability` are
+   cut off. Cause: the row height was computed as an EXACT fit (content area == `fEm × 1.35` line
+   box), the text used `align-items: flex-start` + `overflow: hidden`, and `line-height: 1.35` is
+   too tight for the monospace glyph extent at heading sizes — so any sub-pixel rounding clips the
+   line box that `overflow: hidden` then crops.
+
+## Attempt 4 (why it differs from 3)
+
+Stop fitting the row EXACTLY to the glyph and stop vertically clipping it:
+- `.md-htext` line-height 1.35 → **1.5** (comfortably above glyph cap+descender).
+- Heading row `align-items: flex-start` → **center**, so any slack is split top+bottom instead of
+  all-bottom (flex-start clipped the descenders).
+- Remove `overflow: hidden` from the heading ROW (keep it on `.md-htext` for horizontal ellipsis
+  only) so vertical glyph extent is NEVER cropped — at worst a heading nudges its neighbor by a
+  pixel, which is readable; cropping is not.
+- `mdHeadingRowHeight`: factor 1.35 → **1.5** (match the CSS) plus more padding allowance
+  (1.05 → 1.2 base-em) so the centered text has real slack. Row is now strictly taller than the
+  glyph box, so centering + no-row-clip guarantees the glyphs are fully visible regardless of font
+  metrics or sub-pixel rounding.
