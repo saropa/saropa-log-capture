@@ -18,6 +18,10 @@ export function flowMapStyles(nonce: string): string {
   .pills { display: flex; flex-wrap: wrap; gap: 0.4rem; flex: 1 1 auto; }
   .pill { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.18rem 0.65rem; border-radius: 999px; font-size: 0.85em; background: rgba(127,127,127,0.12); border: 1px solid transparent; white-space: nowrap; }
   .pill b { font-variant-numeric: tabular-nums; }
+  .pill-link { cursor: pointer; }
+  .pill-link:hover { filter: brightness(1.2); }
+  .facts-link { cursor: pointer; }
+  .facts-link:hover { color: var(--vscode-foreground); text-decoration: underline; }
   .pill-green { background: rgba(63,185,80,0.16); border-color: rgba(63,185,80,0.4); }
   .pill-blue { background: rgba(88,166,255,0.16); border-color: rgba(88,166,255,0.4); }
   .pill-amber { background: rgba(210,153,34,0.16); border-color: rgba(210,153,34,0.4); }
@@ -37,13 +41,13 @@ export function flowMapStyles(nonce: string): string {
   .sec:not([open]) > summary::before { content: '▸'; }
   .sec-body { padding: 0.5rem 0 0.2rem; }
 
-  .flow-row { display: flex; flex-wrap: wrap; gap: 1.75rem; align-items: flex-start; }
-  .flow-col { flex: 0 1 auto; }
-  .narr-col { flex: 1 1 300px; min-width: 280px; }
-  .narr-col p { max-width: 50ch; font-size: 1.02em; }
-  /* Cap the diagram height so a very tall flowchart scrolls within its own pane instead of pushing
-     the dwell/issue tables far below the fold. The TOC and collapsible sections also reach them. */
-  .diagram { overflow: auto; max-height: 70vh; padding: 0.4rem 0 1rem; resize: vertical; }
+  /* Diagram on the left; narrative + tables stacked in the right column so they stay visible
+     alongside a tall diagram instead of being pushed below it. Wraps to one column when narrow. */
+  .report-row { display: flex; flex-wrap: wrap; gap: 1.75rem; align-items: flex-start; }
+  .diagram-col { flex: 0 1 auto; min-width: 260px; max-width: 100%; }
+  .detail-col { flex: 1 1 420px; min-width: 320px; }
+  .detail-col p { max-width: 60ch; }
+  .diagram { overflow-x: auto; max-width: 100%; padding: 0.4rem 0 1rem; }
 
   table { border-collapse: collapse; width: auto; max-width: 100%; font-size: 0.95em; margin-top: 0.4rem; }
   th, td { padding: 0.45rem 0.95rem; text-align: left; vertical-align: top; }
