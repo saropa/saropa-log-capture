@@ -89,6 +89,8 @@ function initContextMenu() {
             submenus[s].addEventListener('mouseenter', function() { positionSubmenu(this); });
         }
     }
+    /* Keep the open menu/submenu correct when the panel is resized while open (responsive). */
+    window.addEventListener('resize', function() { repositionOpenContextMenu(); });
 }
 
 /** Disable/enable a single context menu item by action id. */
