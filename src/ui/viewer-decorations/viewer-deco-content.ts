@@ -69,6 +69,13 @@ function buildDecoParts(item, idx, hiddenAfter) {
         var lineNoSrc = (typeof item.sourceLineNo === 'number') ? item.sourceLineNo
             : ((typeof idx === 'number') ? (idx + 1) : (item.seq !== undefined ? item.seq : '?'));
         var seqStr = String(lineNoSrc);
+        /* Cumulative cross-session feed (plan 057): when ≥2 distinct origin files are
+           present, prefix the per-file ordinal with the file's letter code (A1139, B12)
+           so the gutter number maps to a specific .log file. The pair is what copy emits
+           and the files dialog resolves. Single-file feeds keep the bare number. */
+        if (typeof fileCodeCount === 'function' && fileCodeCount() >= 2 && item.fileLetter) {
+            seqStr = item.fileLetter + (typeof item.fileLineNo === 'number' ? item.fileLineNo : '');
+        }
         /* getCounterAffordance returns either '' (plain counter) or the full
            clickable counter+chevron HTML with data-affordance-* attrs the click
            delegate routes on; the digits live inside so the whole numeric column

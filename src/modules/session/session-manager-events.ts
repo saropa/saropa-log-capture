@@ -63,7 +63,7 @@ export function processOutputEvent(
         session.appendLine(summary, 'system', now);
         target.broadcastLine({
             text: summary, isMarker: false, lineCount: session.lineCount,
-            category: 'system', timestamp: now,
+            category: 'system', timestamp: now, logFileUri: session.fileUri.fsPath,
         });
     }
 
@@ -73,7 +73,7 @@ export function processOutputEvent(
     target.counters.categoryCounts[category] = (target.counters.categoryCounts[category] ?? 0) + 1;
     target.broadcastLine({
         text, isMarker: false, lineCount: session.lineCount,
-        category, timestamp: now,
+        category, timestamp: now, logFileUri: session.fileUri.fsPath,
         sourcePath: body.source?.path, sourceLine: body.line,
     });
 }
@@ -129,7 +129,7 @@ function writeOneLine(
             session.appendLine(summary, 'system', timestamp);
             target.broadcastLine({
                 text: summary, isMarker: false, lineCount: session.lineCount,
-                category: 'system', timestamp,
+                category: 'system', timestamp, logFileUri: session.fileUri.fsPath,
             });
         }
     }
@@ -137,7 +137,7 @@ function writeOneLine(
     target.counters.categoryCounts[category] = (target.counters.categoryCounts[category] ?? 0) + 1;
     target.broadcastLine({
         text, isMarker: false, lineCount: session.lineCount,
-        category, timestamp,
+        category, timestamp, logFileUri: session.fileUri.fsPath,
     });
 }
 
