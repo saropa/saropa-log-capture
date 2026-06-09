@@ -106,8 +106,8 @@ suite('Severity bar connector (CSS sibling architecture)', () => {
         // ::after; both rules on the same element would replace the shimmer
         // with a static stripe. The :not(:is(.art-block-start, .art-block-middle,
         // .art-block-end)) qualifier on the chain rule keeps art-block ::after
-        // free for shimmer use. art-block rows already paint a continuous
-        // border-left as their gutter rail.
+        // free for shimmer use. (Art blocks no longer paint a gutter rail at all —
+        // the left border was removed because it broke the box layout.)
         assert.ok(
             /:not\(:is\(\.art-block-start,\s*\.art-block-middle,\s*\.art-block-end\)\)/.test(decoStyles),
             'connector must exclude art-block rows so shimmer ::after is preserved',

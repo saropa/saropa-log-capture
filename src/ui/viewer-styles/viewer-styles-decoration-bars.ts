@@ -127,10 +127,10 @@ export function getDecorationBarStyles(): string {
    One selector per level — listed individually because CSS has no "same
    class as me" combinator. Order doesn't matter; specificity is identical.
    :not(:is(.art-block-start, .art-block-middle, .art-block-end)) excludes
-   ASCII-art rows — those already paint a continuous border-left for their
-   gutter rail (viewer-styles-ascii-art.ts) and reuse ::after for the
-   shimmer animation, so the chain connector must NOT also claim ::after
-   there or it would replace the shimmer with a static stripe. */
+   ASCII-art rows — they reuse ::after for the shimmer animation (and carry no
+   gutter rail of their own; the old border-left was removed because it broke
+   the box layout), so the chain connector must NOT also claim ::after there or
+   it would replace the shimmer with a static stripe. */
 .level-bar-error:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-error)::after,
 .level-bar-error-recent-context:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-error-recent-context)::after,
 .level-bar-warning:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-warning)::after,
