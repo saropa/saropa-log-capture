@@ -82,6 +82,11 @@
         "title": "%command.openLogFile.title%"
       },
       {
+        "command": "saropaLogCapture.openLogFromUrl",
+        "icon": "$(cloud-download)",
+        "title": "%command.openLogFromUrl.title%"
+      },
+      {
         "command": "saropaLogCapture.deleteSession",
         "icon": "$(trash)",
         "title": "%command.deleteSession.title%"
