@@ -279,9 +279,10 @@ function calcItemHeight(item) {
        comes from that line height, NOT a per-line multiplier — so this only adds heading
        hierarchy. renderItem pins this exact value as the line's inline height, so the rendered
        DOM height matches this scroll-math value precisely (no prefix-sum drift). */
-    if (item._mdHeadingLevel && typeof formatEnabled !== 'undefined' && formatEnabled && typeof fileMode !== 'undefined' && fileMode === 'markdown') {
-        var _hl = item._mdHeadingLevel;
-        return ROW_HEIGHT * ((_hl === 1) ? 1.6 : (_hl === 2) ? 1.4 : (_hl === 3) ? 1.25 : 1.1);
+    /* Heading rows are sized from the heading's own font requirement (mdHeadingRowHeight) so
+       they fit the larger font without overlap; renderItem pins this exact value inline. */
+    if (item._mdHeadingLevel && typeof formatEnabled !== 'undefined' && formatEnabled && typeof fileMode !== 'undefined' && fileMode === 'markdown' && typeof mdHeadingRowHeight === 'function') {
+        return mdHeadingRowHeight(item, ROW_HEIGHT, (typeof logLineHeight === 'number' ? logLineHeight : 1.1));
     }
     if (item.type === 'marker') {
         /* markerHidden / markerCollapsed are set by applyDbSignalMarkerVisibility and
