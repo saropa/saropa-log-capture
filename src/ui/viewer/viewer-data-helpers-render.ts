@@ -34,7 +34,16 @@ function renderItem(item, idx, prevVis) {
         /* Same .line.line-blank quarter-height as plain log mode (viewer-styles-decoration-bars). */
         var _fmtBlank = typeof isLineContentBlank === 'function' && isLineContentBlank(item);
         var _fmtBlankCls = _fmtBlank ? ' line-blank' : '';
-        return '<div class="line fmt-' + fileMode + _fmtBlankCls + '"' + idxAttr + '>' + fmtHtml + '</div>';
+        /* Markdown headings: tag the line with its level (CSS sizes/centers the text) and
+           pin the row to its computed height so the taller heading row matches the scroll
+           math calcItemHeight() produced — block-flow rows derive position from real DOM
+           height, so an unpinned heading would drift the prefix sums. */
+        var _hCls = '', _hStyle = '';
+        if (item._mdHeadingLevel && fileMode === 'markdown') {
+            _hCls = ' fmt-md-h' + item._mdHeadingLevel;
+            if (item.height > 0) _hStyle = ' style="height:' + item.height + 'px"';
+        }
+        return '<div class="line fmt-' + fileMode + _fmtBlankCls + _hCls + '"' + idxAttr + _hStyle + '>' + fmtHtml + '</div>';
     }
     var rawHtml = item.html;
     /* Structured line parsing: strip the detected prefix (timestamp, PID, TID, level, tag).
