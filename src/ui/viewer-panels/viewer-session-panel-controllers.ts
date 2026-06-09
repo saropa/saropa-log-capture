@@ -86,7 +86,10 @@ export function getControllerGroupingScript(): string {
         var out = [];
         for (var i = 0; i < units.length; i++) {
             var u = units[i];
-            if (u.latest || (u.canon && expandedOlderNames[u.canon])) out.push(u);
+            // "Latest only" thins peripheral logs only. A Controller is the project's own session
+            // (e.g. "contacts") — every run of it stays visible, never folded behind "+N older".
+            // Controllers are exempt whether grouped or not; the filter applies to peripherals only.
+            if (u.role === 'controller' || u.latest || (u.canon && expandedOlderNames[u.canon])) out.push(u);
         }
         return out;
     }
@@ -161,6 +164,9 @@ export function getControllerGroupingScript(): string {
      *  fragment via data-older-name) toggles that name into expandedOlderNames and re-renders. */
     function renderOlderBadge(s) {
         if (!sessionDisplayOptions.showLatestOnly) return '';
+        // Controllers are never folded by "Latest only" (see visibleUnits), so every older run is
+        // already a visible top-level row — a "+N older" badge would be a no-op that hides nothing.
+        if (s.role === 'controller' || s._groupRole === 'controller') return '';
         var n = s._olderCount || 0;
         if (n <= 0) return '';
         var name = s._canonName || '';
