@@ -3,8 +3,9 @@
  *
  * Art blocks are consecutive separator lines sharing the same timestamp, tagged by
  * `finalizeArtBlock()` with `artBlockPos` = 'start' | 'middle' | 'end'. The first line
- * keeps its decoration; continuation lines show only art content. The gutter uses a solid
- * `border-left` (not bar-up/bar-down `::after` pseudo — that is reserved for the shimmer).
+ * keeps its decoration; continuation lines show only art content. There is NO severity
+ * gutter rail — a left border shifted the block and read as a stray vertical line that
+ * broke the box layout, so it was removed; `::after` stays reserved for the shimmer.
  */
 export function getAsciiArtStyles(): string {
     return /* css */ `
@@ -72,14 +73,10 @@ export function getAsciiArtStyles(): string {
     vertical-align: top;
 }
 
-/* Continuous gutter bar via border-left (avoids ::after conflict with shimmer).
-   Uses --bar-color set by the level-bar-* class (always info for separator lines). */
-.line.art-block-start[class*="level-bar-"],
-.line.art-block-middle[class*="level-bar-"],
-.line.art-block-end[class*="level-bar-"] {
-    border-left: 0.14em solid var(--bar-color);
-    margin-left: 0.82em;
-}
+/* No severity gutter bar on art blocks: the box-drawing art is its own visual
+   unit, and a left border + margin-left shifted the block and read as a stray
+   vertical line breaking the layout. Severity for the block is conveyed by the
+   yellow tint/border-radius, not a gutter rail. */
 
 /* Suppress severity dot on continuation lines (start keeps its dot) */
 .line.art-block-middle[class*="level-bar-"]::before,
