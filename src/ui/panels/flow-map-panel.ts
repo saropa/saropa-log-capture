@@ -79,6 +79,7 @@ function buildHtml(params: FlowMapPanelParams, nonce: string): string {
 <meta http-equiv="Content-Security-Policy" content="${csp}">
 ${flowMapStyles(nonce)}</head><body>
 ${titleHtml(params)}
+<div class="logpath" role="link" tabindex="0" title="Open this log in the viewer">${esc(params.logUri.fsPath)}</div>
 <div class="topbar"><div class="pills">${pills}</div>${actions}</div>
 ${body}
 ${flowMapScript(nonce)}</body></html>`;
