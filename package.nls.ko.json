@@ -47,6 +47,7 @@
   "command.openQualityReport.title": "Saropa Log Capture: Open quality report",
   "command.openSession.title": "로그 파일 열기",
   "command.openLogFile.title": "Saropa Log Capture: 로그 파일 열기…",
+  "command.openLogFromUrl.title": "Saropa Log Capture: URL에서 로그 열기…",
   "command.openSqlQueryHistory.title": "Saropa Log Capture: Open SQL Query History",
   "command.openTailedFile.title": "Saropa Log Capture: 테일 파일 열기",
   "command.openWalkthrough.title": "Saropa Log Capture: 시작하기",
