@@ -54,7 +54,7 @@ function toggleMdComment(openIdx) {
 /** Comfortable line height applied while a markdown document is rendered. Markdown reads as
     prose, so it drives the viewer's existing uniform line-height control rather than a parallel
     per-line multiplier (which would compound with the user's line-height choice). */
-var MD_LINE_HEIGHT = 1.7;
+var MD_LINE_HEIGHT = 1.85;
 
 /**
  * Apply (or restore) the document line height for markdown view. When markdown formatting is
@@ -94,10 +94,11 @@ function mdHeadingRowHeight(item, rowHeight, lineH) {
  */
 function mdLineDecorate(item, idx) {
     var cls = '', style = '', gutter = '';
-    if (item._mdHeadingLevel) {
-        cls = ' fmt-md-h' + item._mdHeadingLevel;
-        if (item.height > 0) style = ' style="height:' + item.height + 'px"';
-    }
+    /* Headings and top-level bullets both pin their (taller) row height inline so the reserved
+       top spacing matches the scroll math exactly — block-flow height must equal calcItemHeight. */
+    if (item._mdHeadingLevel) cls = ' fmt-md-h' + item._mdHeadingLevel;
+    else if (item._mdBulletTop) cls = ' fmt-md-bullet-top';
+    if ((item._mdHeadingLevel || item._mdBulletTop) && item.height > 0) style = ' style="height:' + item.height + 'px"';
     var blank = (typeof isLineContentBlank === 'function') && isLineContentBlank(item);
     if (typeof decoShowCounter !== 'undefined' && decoShowCounter && item.type === 'line' && !blank) {
         var ln = (item.sourceLineNo != null) ? item.sourceLineNo : (idx + 1);
