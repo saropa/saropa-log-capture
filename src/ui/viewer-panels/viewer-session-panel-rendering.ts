@@ -221,7 +221,7 @@ export function getSessionRenderingScript(): string {
                immediately while bodies are still being read. updateSessionBatchItems swaps
                in the real meta in place once each file resolves. */
             + (s._preview
-                ? '<span class="session-item-meta session-shimmer-meta"></span>'
+                ? '<span class="session-item-meta session-shimmer-meta">' + (s.size ? escapeHtmlText(formatSessionSize(s.size)) : '') + '</span>'
                 : (meta ? '<span class="session-item-meta">' + meta + '</span>' : ''))
             + '</div>'
             + renderSessionRowActions()
