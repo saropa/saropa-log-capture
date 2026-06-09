@@ -87,10 +87,14 @@ export function getAsciiArtStyles(): string {
     display: none;
 }
 
-/* Shimmer sweep across the art block */
-.line.art-block-start::after,
-.line.art-block-middle::after,
-.line.art-block-end::after {
+/* Shimmer sweep across the art block. Gated behind .art-shimmer-play, which
+   the renderer adds only on a row's FIRST render (latched by item._artShimmered
+   in viewer-data-helpers-render.ts). Without the gate the sweep would restart
+   every time renderViewport() rebuilds the visible DOM (every scroll / incoming
+   line), reading as a perpetual animation regardless of iteration-count. */
+.line.art-block-start.art-shimmer-play::after,
+.line.art-block-middle.art-shimmer-play::after,
+.line.art-block-end.art-shimmer-play::after {
     content: '';
     position: absolute;
     inset: 0;
@@ -115,8 +119,8 @@ export function getAsciiArtStyles(): string {
 }
 
 /* Stagger shimmer across rows for a cascading wave effect */
-.line.art-block-middle::after { animation-delay: 0.12s; }
-.line.art-block-end::after { animation-delay: 0.24s; }
+.line.art-block-middle.art-shimmer-play::after { animation-delay: 0.12s; }
+.line.art-block-end.art-shimmer-play::after { animation-delay: 0.24s; }
 
 @keyframes art-block-shimmer {
     0% { background-position: 300% 0; }
