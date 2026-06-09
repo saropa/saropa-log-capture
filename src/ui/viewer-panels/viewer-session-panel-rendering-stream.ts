@@ -45,7 +45,7 @@ export function getSessionStreamingScript(): string {
         /* _preview flags the row as a skeleton so renderItem draws the shimmer meta bar
            until updateSessionBatchItems swaps in real metadata. */
         cachedSessions = previews.map(function(p) {
-            return { uriString: p.uriString, filename: p.filename, mtime: p.mtime, _preview: true };
+            return { uriString: p.uriString, filename: p.filename, mtime: p.mtime, size: p.size, _preview: true };
         });
         sessionListPage = 0;
         renderSessionList(cachedSessions);
