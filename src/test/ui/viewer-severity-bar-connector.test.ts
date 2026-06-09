@@ -344,15 +344,15 @@ suite('Stack header level CSS class in renderItem', () => {
 suite('Stack header column alignment CSS', () => {
     const css = getDecorationStyles();
 
-    test('shared :has(.line-decoration) rule covers both .line and .stack-header', () => {
-        // Stack-headers now render their own .line-decoration prefix (line
-        // number + chevron). The padding-left + text-indent rule that gives
-        // regular .line rows their hanging indent must also apply to
-        // stack-headers, otherwise the stack-header text juts to the left
-        // of the message column.
+    test('legacy :has(.line-decoration) rule covers .line:not(.cols) and .stack-header', () => {
+        // The legacy hanging-indent rule is now scoped to :not(.cols) (plan 055)
+        // so rows migrated to the grid column model opt out, while un-migrated
+        // paths — multi-frame stack-headers among them — still get the
+        // padding-left + text-indent treatment, otherwise their text juts to the
+        // left of the message column. Stack-headers are not yet on the grid.
         assert.ok(
-            /\.line:has\(\.line-decoration\)[^{]*\.stack-header:has\(\.line-decoration\)/.test(css),
-            'the padding-left rule must include both .line and .stack-header selectors',
+            /\.line:not\(\.cols\):has\(\.line-decoration\)[^{]*\.stack-header:has\(\.line-decoration\)/.test(css),
+            'the legacy padding-left rule must include both .line:not(.cols) and .stack-header selectors',
         );
     });
 });
