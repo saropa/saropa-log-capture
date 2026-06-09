@@ -255,14 +255,15 @@ suite('Session panel script runtime', () => {
         });
     });
 
-    /* The Logs panel used to start a 5-second auto-close countdown after a file was
-       opened from it, which closed the panel out from under a user browsing several
-       files in a row. That behavior was removed: the panel now stays open until an
-       explicit close (icon, outside click, Escape). These assertions pin the removal
-       so the timer can't silently return — a behavioral runtime test isn't possible
-       because the test harness stubs addEventListener as a no-op and defines no
-       setTimeout, so the click handler never fires in the sandbox. */
-    suite('no auto-close after opening a file', () => {
+    /* The Logs panel had two auto-hide mechanisms, both removed: (1) a 5-second
+       auto-close countdown armed after opening a file, and (2) a document-level
+       outside-click handler that closed the panel whenever the user clicked in the
+       log viewer. The panel now stays open until an EXPLICIT close — its close
+       button, the Logs icon toggle, Escape, or opening another panel. These
+       assertions pin the removal so neither mechanism silently returns; a behavioral
+       runtime test isn't possible because the test harness stubs addEventListener as
+       a no-op and defines no setTimeout, so the handlers never fire in the sandbox. */
+    suite('no auto-hide for the Logs panel', () => {
         const script = getSessionPanelScript();
 
         test('does not declare or arm the auto-close timer', () => {
@@ -270,6 +271,13 @@ suite('Session panel script runtime', () => {
                 'Auto-close timer variable must not be reintroduced');
             assert.ok(!script.includes('setTimeout'),
                 'Opening a session must not schedule any deferred panel close');
+        });
+
+        test('does not close the panel on an outside (in-viewer) click', () => {
+            /* The removed handler was the only place that called closeSessionPanel
+               from a document-level click after testing sessionPanelEl.contains(). */
+            assert.ok(!script.includes('sessionPanelEl.contains'),
+                'Outside-click auto-hide (sessionPanelEl.contains guard) must not return');
         });
 
         test('still opens the file and keeps an explicit close path', () => {

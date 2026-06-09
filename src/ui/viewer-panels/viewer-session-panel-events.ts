@@ -161,11 +161,11 @@ export function getSessionPanelEventsScript(): string {
             selectedSessionUris = Object.create(null);
             if (cachedSessions) renderSessionList(cachedSessions);
             vscodeApi.postMessage({ type: 'openSessionFromPanel', uriString: uri });
-            /* renderSessionList above rebuilt the list DOM, so the clicked node
-               is now detached. If this click bubbled to the document-level
-               outside-click handler, sessionPanelEl.contains() would test a
-               detached node, get false, and close the panel instantly. Stop
-               propagation so the panel stays open after a selection. */
+            /* Keep the open-click from bubbling to the document. renderSessionList
+               above rebuilt the list DOM, so the clicked node is now detached; other
+               document-level click listeners (context menus, popovers, peer-panel
+               dismissers) would test a detached node and could mis-fire. The panel
+               itself no longer has an outside-click auto-hide. */
             e.stopPropagation();
         });
         /* Keyboard support: Enter/Space on focused day heading toggles collapse. */
@@ -227,15 +227,11 @@ export function getSessionPanelEventsScript(): string {
         if (typeof toggleSessionTagsSection === 'function') toggleSessionTagsSection();
     });
 
-    document.addEventListener('click', function(e) {
-        if (!sessionPanelOpen) return;
-        if (sessionPanelEl && sessionPanelEl.contains(e.target)) return;
-        var ibBtn = document.getElementById('ib-sessions');
-        if (ibBtn && (ibBtn === e.target || ibBtn.contains(e.target))) return;
-        var ctxMenu = document.getElementById('session-context-menu');
-        if (ctxMenu && ctxMenu.contains(e.target)) return;
-        closeSessionPanel();
-    });
+    /* No outside-click auto-hide: clicking in the log viewer (or anywhere outside
+       the panel) must NOT close the Logs list — users browse the viewer while the
+       list stays open. The panel closes only on an explicit action: its close
+       button (above), the Logs icon toggle, Escape, or opening another panel (all
+       handled in the icon bar). */
 
     function updateHeaderPath(rootLabel, isDefault) {
         var headerPathEl = document.getElementById('session-header-path');
