@@ -53,24 +53,35 @@ export function getDropToOpenScript(): string {
             return false;
         }
 
-        document.addEventListener('dragover', function (e) {
+        /* Capture phase on window: the workbench registers its own drag handlers, so firing in
+           capture at the window level runs our preventDefault FIRST — otherwise the editor-drop
+           overlay swallows the file before the content frame sees it. dragenter AND dragover must
+           both preventDefault or Chromium never fires the drop event. */
+        function allowDrag(e) {
             if (!hasFiles(e)) return;
             e.preventDefault(); e.stopPropagation();
-            e.dataTransfer.dropEffect = 'copy';
+            if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
             showOverlay(true);
-        });
-        document.addEventListener('dragleave', function (e) {
+        }
+        window.addEventListener('dragenter', allowDrag, true);
+        window.addEventListener('dragover', allowDrag, true);
+        window.addEventListener('dragleave', function (e) {
             /* relatedTarget null = the cursor left the window entirely. */
             if (!e.relatedTarget) showOverlay(false);
-        });
-        document.addEventListener('drop', function (e) {
+        }, true);
+        window.addEventListener('drop', function (e) {
             if (!hasFiles(e)) return;
             e.preventDefault(); e.stopPropagation();
             showOverlay(false);
-            var files = e.dataTransfer.files;
-            if (!files || files.length === 0) return;
+            var files = (e.dataTransfer && e.dataTransfer.files) || [];
+            if (files.length === 0) {
+                /* The drop reached us but the sandbox exposed no File object — tell the user and
+                   point them at the picker so the gesture isn't a silent dead end. */
+                vscodeApi.postMessage({ type: 'openDroppedLog', empty: true });
+                return;
+            }
             loadDroppedFile(files[0]);
-        });
+        }, true);
 
         function loadDroppedFile(file) {
             /* Prefer the OS path when the host exposes it — no content transfer, any size. */
