@@ -54,6 +54,25 @@ function syncDecoSettingsUi() {
     var stackPreview = document.getElementById('deco-stack-preview-count');
     if (stackState) stackState.value = stackDefaultState === true ? 'collapsed' : (stackDefaultState === 'preview' ? 'preview' : 'expanded');
     if (stackPreview) stackPreview.value = String(stackPreviewCount);
+    hideDecoOptionsForFileMode();
+}
+
+/**
+ * Structured documents (markdown / JSON / CSV) carry no severity, timestamps, PID/TID, tags or
+ * source-tag prefixes, so those decoration options are meaningless there. Hide their rows when a
+ * non-log file is open, leaving only the line-number options that do apply. Runs on panel sync.
+ */
+function hideDecoOptionsForFileMode() {
+    var nonLog = (typeof fileMode !== 'undefined' && fileMode !== 'log');
+    var ids = ['deco-opt-dot', 'deco-opt-timestamp', 'deco-opt-milliseconds', 'deco-opt-elapsed',
+        'deco-opt-session-elapsed', 'deco-opt-bar', 'deco-opt-quality', 'deco-opt-category-badge',
+        'deco-opt-lint-badge', 'deco-opt-line-colors', 'deco-line-color-mode', 'deco-opt-strip-source-tag',
+        'deco-opt-structured-parsing', 'deco-opt-show-pid-tid', 'deco-opt-show-level-prefix'];
+    for (var i = 0; i < ids.length; i++) {
+        var el = document.getElementById(ids[i]);
+        var row = (el && el.closest) ? el.closest('.deco-settings-row') : null;
+        if (row) row.style.display = nonLog ? 'none' : '';
+    }
 }
 
 /**

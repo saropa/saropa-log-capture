@@ -24,6 +24,14 @@ var mdFences = {};
     block, so cells render as fixed-ch-width inline-blocks that line up in the monospace font. */
 var mdTables = {};
 
+/** HTML-comment map: lineIndex → { role: 'single'|'open'|'body'|'close' }. Comment lines render
+    verbatim in a muted color and skip all other markdown formatting. */
+var mdComments = {};
+
+/** Collapsible multi-line comment blocks: openIndex → { collapsed, endIndex }.
+    buildMdComments() / toggleMdComment() that populate these live in viewer-format-markdown-layout.ts. */
+var mdCommentBlocks = {};
+
 /** Split a markdown table row into trimmed cells, dropping the empty edges that a
     leading/trailing pipe produces (\\\`| a | b |\\\` → ['a','b']). */
 function splitTableCells(plain) {
@@ -60,10 +68,11 @@ function buildMdTables() {
     if (fileMode !== 'markdown') return;
     var i = 0;
     while (i < allLines.length) {
-        var plain0 = mdFences[i] ? '' : stripTags(allLines[i].html);
-        if (!mdFences[i] && isMdTableRow(plain0)) {
+        var skip0 = mdFences[i] || mdComments[i];
+        var plain0 = skip0 ? '' : stripTags(allLines[i].html);
+        if (!skip0 && isMdTableRow(plain0)) {
             var rows = [];
-            while (i < allLines.length && !mdFences[i]) {
+            while (i < allLines.length && !mdFences[i] && !mdComments[i]) {
                 var p = stripTags(allLines[i].html);
                 if (!isMdTableRow(p)) break;
                 rows.push({ idx: i, plain: p, sep: isMdTableSep(p) });
@@ -110,6 +119,8 @@ function buildMdFences() {
     if (fileMode !== 'markdown') return;
     var inFence = false;
     for (var i = 0; i < allLines.length; i++) {
+        /* A fence marker inside a comment is not a real fence. */
+        if (mdComments[i]) { allLines[i]._mdFence = false; continue; }
         var plain = stripTags(allLines[i].html);
         var fm = /^\\s*(\\x60{3,}|~{3,})\\s*([\\w-]*)\\s*$/.exec(plain);
         if (fm) {
@@ -136,12 +147,15 @@ function buildMdFences() {
 function buildMdSections() {
     mdSections = {};
     if (fileMode !== 'markdown') return;
-    /* Fences first: heading + table detection must ignore lines inside code blocks. */
+    /* Comments first (so a marker inside a comment isn't real structure), then fences/tables;
+       heading detection ignores lines inside any of them. buildMdComments lives in the layout
+       chunk (loads after this one) — guard the cross-chunk call. */
+    if (typeof buildMdComments === 'function') buildMdComments();
     buildMdFences();
     buildMdTables();
     var headings = [];
     for (var i = 0; i < allLines.length; i++) {
-        if (mdFences[i]) continue;
+        if (mdFences[i] || mdComments[i]) continue;
         var plain = stripTags(allLines[i].html);
         var m = /^(#{1,6})\\s/.exec(plain);
         if (m) headings.push({ idx: i, level: m[1].length });
@@ -184,6 +198,22 @@ function toggleMdSection(headingIdx) {
  */
 function formatMarkdownLine(item, idx) {
     var html = item.html;
+
+    /* HTML comment: render verbatim in a muted color, no inline formatting (the maintenance
+       notes inside a comment are not real bold/links). A multi-line comment's opening line is a
+       collapse toggle; body + closing lines fold under it (data-md-comment drives the handler). */
+    var cmt = mdComments[idx];
+    if (cmt) {
+        var cText = escapeHtml(stripTags(html));
+        var blk = mdCommentBlocks[idx];
+        if ((cmt.role === 'open') && blk) {
+            var cChevron = '<span class="md-chevron">' + (blk.collapsed ? '\\u25b8' : '\\u25be') + '</span>';
+            var cBadge = blk.collapsed ? ' <span class="md-collapse-badge">(' + (blk.endIndex - idx) + ' lines)</span>' : '';
+            return '<span class="md-comment md-comment-open" data-md-comment="' + idx + '">'
+                + '<span class="md-htext">' + cText + cBadge + '</span>' + cChevron + '</span>';
+        }
+        return '<span class="md-comment">' + cText + '</span>';
+    }
 
     /* Fenced code block: render verbatim (escaped, no inline markdown), so diagram
        source like \\x60\\x60\\x60mermaid and table/SQL snippets are not mangled by bold/italic/

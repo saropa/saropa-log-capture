@@ -13,6 +13,44 @@
 export function getViewerFormatMarkdownLayoutScript(): string {
     return /* javascript */ `
 
+/**
+ * Scan allLines for HTML comment regions (\\\`<!-- ... -->\\\`) and populate mdComments +
+ * mdCommentBlocks (declared in viewer-format-markdown.ts). Built FIRST (before fences/tables/
+ * headings) so a '#', '|', or fence marker inside a comment is not mistaken for real structure.
+ * Multi-line comments become collapsible: the opening line is the toggle, body + close fold under it.
+ */
+function buildMdComments() {
+    mdComments = {};
+    mdCommentBlocks = {};
+    if (fileMode !== 'markdown') return;
+    var openIdx = -1;
+    for (var i = 0; i < allLines.length; i++) {
+        var p = stripTags(allLines[i].html);
+        if (openIdx < 0) {
+            if (p.indexOf('<!--') === -1) { allLines[i]._mdComment = false; continue; }
+            /* Opens here: single line if it also closes, else start of a multi-line block. */
+            if (p.indexOf('-->') > -1) { mdComments[i] = { role: 'single' }; }
+            else { mdComments[i] = { role: 'open' }; openIdx = i; }
+            allLines[i]._mdComment = true;
+        } else {
+            mdComments[i] = { role: (p.indexOf('-->') > -1) ? 'close' : 'body' };
+            allLines[i]._mdComment = true;
+            if (p.indexOf('-->') > -1) { mdCommentBlocks[openIdx] = { collapsed: false, endIndex: i }; openIdx = -1; }
+        }
+    }
+}
+
+/** Toggle a multi-line comment block collapse (mirrors toggleMdSection). */
+function toggleMdComment(openIdx) {
+    var blk = mdCommentBlocks[openIdx];
+    if (!blk) return;
+    blk.collapsed = !blk.collapsed;
+    for (var i = openIdx + 1; i <= blk.endIndex && i < allLines.length; i++) allLines[i]._mdCommentHidden = blk.collapsed;
+    if (typeof recalcHeights === 'function') recalcHeights();
+    if (typeof buildPrefixSums === 'function') buildPrefixSums();
+    if (typeof renderViewport === 'function') renderViewport(true);
+}
+
 /** Comfortable line height applied while a markdown document is rendered. Markdown reads as
     prose, so it drives the viewer's existing uniform line-height control rather than a parallel
     per-line multiplier (which would compound with the user's line-height choice). */
@@ -42,7 +80,10 @@ function mdHeadingRowHeight(item, rowHeight, lineH) {
     var hl = item._mdHeadingLevel;
     var fEm = (hl === 1) ? 1.45 : (hl === 2) ? 1.3 : (hl === 3) ? 1.2 : (hl === 4) ? 1.05 : 1.0;
     var lh = (lineH > 0) ? lineH : 1.1;
-    return Math.max(rowHeight, Math.ceil(fEm * 1.5 * rowHeight / lh));
+    /* 1.95 (was 1.5): the heading line box is fontEm * 1.35, so the extra ~0.6 * fontEm is
+       padding. CSS aligns the text to the bottom of the row, so that padding lands ABOVE the
+       heading — the requested generous TOP spacing that separates a section from what precedes. */
+    return Math.max(rowHeight, Math.ceil(fEm * 1.95 * rowHeight / lh));
 }
 
 /**
@@ -71,6 +112,7 @@ function mdLineDecorate(item, idx) {
  */
 function mdGutterTag(item, idx) {
     if (item._mdHeadingLevel) return 'H' + item._mdHeadingLevel;
+    if (item._mdComment) return '\\u270e';
     if (item._mdFence) return '\\u2039\\u203a';
     if (item._mdTable) return '\\u25a6';
     var plain = stripTags(item.html);
