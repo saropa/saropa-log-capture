@@ -15,6 +15,33 @@ export function getViewerFormatMarkdownScript(): string {
 /** Markdown section collapse map: headingIndex → { level, collapsed, endIndex }. */
 var mdSections = {};
 
+/** Fenced-code map: lineIndex → { role: 'open'|'close'|'body', lang }. Lines inside a
+    \\x60\\x60\\x60 fence are verbatim code, so they must skip inline/heading formatting. */
+var mdFences = {};
+
+/**
+ * Scan allLines for fenced code blocks (\\x60\\x60\\x60 or ~~~, 3+ chars) and populate
+ * mdFences. A fence opens on the first delimiter and closes on the next; the
+ * opening delimiter carries the language. Called from buildMdSections so the
+ * heading scan can skip lines that live inside a fence (a '#' in code is not a heading).
+ */
+function buildMdFences() {
+    mdFences = {};
+    if (fileMode !== 'markdown') return;
+    var inFence = false;
+    for (var i = 0; i < allLines.length; i++) {
+        var plain = stripTags(allLines[i].html);
+        var fm = /^\\s*(\\x60{3,}|~{3,})\\s*([\\w-]*)\\s*$/.exec(plain);
+        if (fm) {
+            /* Opening delimiter records the language; closing delimiter has none. */
+            mdFences[i] = { role: inFence ? 'close' : 'open', lang: inFence ? '' : fm[2] };
+            inFence = !inFence;
+        } else if (inFence) {
+            mdFences[i] = { role: 'body', lang: '' };
+        }
+    }
+}
+
 /**
  * Build the markdown section map from allLines. Each heading line stores
  * its level (1–6) and the index of the last line before the next heading
@@ -23,8 +50,11 @@ var mdSections = {};
 function buildMdSections() {
     mdSections = {};
     if (fileMode !== 'markdown') return;
+    /* Fences first: heading detection below must ignore '#' lines inside code blocks. */
+    buildMdFences();
     var headings = [];
     for (var i = 0; i < allLines.length; i++) {
+        if (mdFences[i]) continue;
         var plain = stripTags(allLines[i].html);
         var m = /^(#{1,6})\\s/.exec(plain);
         if (m) headings.push({ idx: i, level: m[1].length });
@@ -65,6 +95,20 @@ function toggleMdSection(headingIdx) {
  */
 function formatMarkdownLine(item, idx) {
     var html = item.html;
+
+    /* Fenced code block: render verbatim (escaped, no inline markdown), so diagram
+       source like \\x60\\x60\\x60mermaid and table/SQL snippets are not mangled by bold/italic/
+       link rules. stripTags() decodes entities, escapeHtml() re-encodes them cleanly. */
+    var fence = mdFences[idx];
+    if (fence) {
+        if (fence.role === 'open') {
+            var lang = fence.lang ? '<span class="md-fence-lang">' + escapeHtml(fence.lang) + '</span>' : '';
+            return '<span class="md-fence md-fence-open">' + lang + '</span>';
+        }
+        if (fence.role === 'close') return '<span class="md-fence md-fence-close"></span>';
+        return '<span class="md-fence md-fence-body">' + escapeHtml(stripTags(html)) + '</span>';
+    }
+
     var plain = stripTags(html);
 
     /* Heading: # through ###### */
