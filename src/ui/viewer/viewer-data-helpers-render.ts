@@ -205,6 +205,12 @@ function renderItem(item, idx, prevVis) {
         item._artShimmered = true;
     }
     var isArtCont = (abp === 'middle' || abp === 'end');
+    /* ALL art-block rows (start/middle/end) stay on the legacy flat layout, NOT
+       the gutter grid: the block draws a continuous left border + box-drawing
+       glyphs that must align edge-to-edge, which the grid's padding + columns
+       break. Migrating only the start row (as the first cut did) split the box —
+       its top sat in the grid while the sides stayed flat. Gate the whole block. */
+    var isArtBlock = abp === 'start' || isArtCont;
     var gap = isArtCont ? '' : ((typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '');
     var elapsed = isArtCont ? '' : ((typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '');
     /* Compute continuation badge early so it can be injected into the
@@ -232,8 +238,12 @@ function renderItem(item, idx, prevVis) {
        order. No floating chips, no tag replacement, no overlay collisions. */
     /* Grid column model (plan 055): emit one clipping .deco-cell per part. The
        continuation badge no longer splices into the prefix — it renders at the
-       start of the .line-msg cell below. */
-    var deco = isArtCont ? '' : ((typeof getDecorationCells === 'function') ? getDecorationCells(item, idx, item._hiddenAfter) : '');
+       start of the .line-msg cell below. Art-block-start keeps the LEGACY inline
+       prefix (it renders on the flat, non-grid path with its sibling rows). */
+    var deco = isArtCont ? ''
+        : (isArtBlock
+            ? ((typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item, idx, item._hiddenAfter) : '')
+            : ((typeof getDecorationCells === 'function') ? getDecorationCells(item, idx, item._hiddenAfter) : ''));
     var annHtml = (typeof getAnnotationHtml === 'function') ? getAnnotationHtml(idx) : '';
     var badge = '';
     if (typeof getErrorBadge === 'function' && item.errorClass) badge = getErrorBadge(item.errorClass);
@@ -299,10 +309,10 @@ function renderItem(item, idx, prevVis) {
        counter-row affordance in buildDecoParts. */
     var baseCls = 'line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + bannerCls + dbTsBurstCls;
     var msgInner = contBadge + elapsed + badge + catBadge + html;
-    /* Art-block continuation rows (middle/end) keep the legacy flat structure:
-       they carry no decoration and have bespoke continuous-block CSS that the
-       gutter grid would disrupt. Not yet migrated to .cols (plan 055 phasing). */
-    if (isArtCont) {
+    /* Art-block rows (start/middle/end) keep the legacy flat structure: their
+       continuous border + box-drawing alignment break under the gutter grid.
+       Not migrated to .cols (plan 055 phasing). */
+    if (isArtBlock) {
         return gap + '<div class="' + baseCls + '"' + idxAttr + titleAttr + '>' + stackGutter + deco + msgInner + '</div>' + annHtml;
     }
     /* Grid column model: each decoration datum is its own clipping cell; the
