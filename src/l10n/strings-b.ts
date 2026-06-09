@@ -10,6 +10,8 @@ export const stringsB: Record<string, string> = {
     'flowMap.saveMarkdownBtn': 'Save as Markdown',
     'flowMap.sourceNotFound': 'Could not open source: {0}',
     'flowMap.logCopied': 'Copied log line {0}',
+    'flowMap.refreshBtn': 'Refresh from log',
+    'flowMap.showLogBtn': 'Show the related log',
     'action.delete': 'Delete',
     'action.open': 'Open',
     'action.reset': 'Reset',

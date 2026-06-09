@@ -9,6 +9,7 @@ export function flowMapStyles(nonce: string): string {
     return `<style nonce="${nonce}">
   body { font-family: var(--vscode-font-family); font-size: 13.5px; color: var(--vscode-foreground); padding: 0 1.5rem 2.5rem; line-height: 1.55; }
   h1 { font-size: 1.5em; margin: 0.4rem 0 0.25rem; }
+  .report-title { margin: 0.6rem 0 0.5rem; }
   h3 { font-size: 1.02em; margin: 0 0 0.4rem; }
   .facts { color: var(--vscode-descriptionForeground); font-size: 0.92em; margin: 0 0 0.6rem; }
   .facts strong { color: var(--vscode-foreground); }
@@ -27,8 +28,9 @@ export function flowMapStyles(nonce: string): string {
   .pill-amber { background: rgba(210,153,34,0.16); border-color: rgba(210,153,34,0.4); }
   .pill-purple { background: rgba(163,113,247,0.16); border-color: rgba(163,113,247,0.4); }
   .pill-red { background: rgba(224,82,82,0.2); border-color: rgba(224,82,82,0.45); }
-  .save-icon { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 7px; border: 1px solid var(--vscode-button-border, transparent); background: var(--vscode-button-background); color: var(--vscode-button-foreground); cursor: pointer; }
-  .save-icon:hover { background: var(--vscode-button-hoverBackground); }
+  .topbar-actions { flex: 0 0 auto; display: flex; gap: 0.4rem; }
+  .icon-btn { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 7px; border: 1px solid var(--vscode-button-border, transparent); background: var(--vscode-button-background); color: var(--vscode-button-foreground); cursor: pointer; }
+  .icon-btn:hover { background: var(--vscode-button-hoverBackground); }
 
   .toc { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin: 0.2rem 0 1rem; font-size: 0.9em; }
   .toc a { color: var(--vscode-textLink-foreground); text-decoration: none; }

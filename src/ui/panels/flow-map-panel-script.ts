@@ -17,6 +17,10 @@ export function flowMapScript(nonce: string): string {
 
   var save = document.getElementById('save-md');
   if (save) save.addEventListener('click', function(){ send('saveMarkdown'); });
+  var refresh = document.getElementById('refresh-fm');
+  if (refresh) refresh.addEventListener('click', function(){ send('refreshFlowMap'); });
+  var showLog = document.getElementById('showlog-fm');
+  if (showLog) showLog.addEventListener('click', function(){ send('showFlowLog'); });
 
   document.querySelectorAll('.src').forEach(function(el){
     onActivate(el, function(){ send('openFlowMapSource', { file: el.getAttribute('data-file'), line: parseInt(el.getAttribute('data-line') || '1', 10) }); });

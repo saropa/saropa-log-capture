@@ -22,8 +22,11 @@ function defaultReportUri(logUri: vscode.Uri): vscode.Uri {
     return vscode.Uri.joinPath(dir, `${base}-flow-map.md`);
 }
 
+/** The report params minus `refresh` (the command supplies the refresh closure). */
+type ReportData = Omit<FlowMapPanelParams, 'refresh'>;
+
 /** Read the log and build the report model + markdown. Separated for isolated testing/observation. */
-async function generateReport(logUri: vscode.Uri, revealLine: (line: number) => void): Promise<FlowMapPanelParams> {
+async function generateReport(logUri: vscode.Uri, revealLine: (line: number) => void): Promise<ReportData> {
     const bytes = await vscode.workspace.fs.readFile(logUri);
     const lines = Buffer.from(bytes).toString('utf-8').split(/\r?\n/);
     const parsed = parseLog(lines);
@@ -53,14 +56,19 @@ async function runExport(deps: FlowMapCommandDeps): Promise<void> {
         void vscode.window.showInformationMessage(t('msg.noActiveSession'));
         return;
     }
-    try {
-        const report = await vscode.window.withProgress(
-            { location: vscode.ProgressLocation.Notification, title: t('flowMap.progress') },
-            () => generateReport(logUri, deps.revealLine),
-        );
-        showFlowMapPanel(report);
-    } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        void vscode.window.showWarningMessage(t('flowMap.failed', msg));
-    }
+    // `render` re-reads the log each call, so the Refresh button picks up new content; it passes
+    // itself as the panel's `refresh` callback.
+    const render = async (): Promise<void> => {
+        try {
+            const report = await vscode.window.withProgress(
+                { location: vscode.ProgressLocation.Notification, title: t('flowMap.progress') },
+                () => generateReport(logUri, deps.revealLine),
+            );
+            showFlowMapPanel({ ...report, refresh: () => { void render(); } });
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            void vscode.window.showWarningMessage(t('flowMap.failed', msg));
+        }
+    };
+    await render();
 }
