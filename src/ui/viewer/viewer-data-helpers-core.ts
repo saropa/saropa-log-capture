@@ -284,6 +284,11 @@ function calcItemHeight(item) {
     if (item._mdHeadingLevel && typeof formatEnabled !== 'undefined' && formatEnabled && typeof fileMode !== 'undefined' && fileMode === 'markdown' && typeof mdHeadingRowHeight === 'function') {
         return mdHeadingRowHeight(item, ROW_HEIGHT, (typeof logLineHeight === 'number' ? logLineHeight : 1.1));
     }
+    /* Top-level list item: add ~0.4 row of top space (rendered as padding-top, border-box) so
+       consecutive multi-line bullets are visually separated. */
+    if (item._mdBulletTop && typeof formatEnabled !== 'undefined' && formatEnabled && typeof fileMode !== 'undefined' && fileMode === 'markdown') {
+        return ROW_HEIGHT + Math.ceil(0.4 * ROW_HEIGHT);
+    }
     if (item.type === 'marker') {
         /* markerHidden / markerCollapsed are set by applyDbSignalMarkerVisibility and
            applyConsecutiveDbMarkerCollapse (viewer-data-marker-filter). Honouring them here
