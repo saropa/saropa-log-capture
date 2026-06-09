@@ -79,6 +79,11 @@ export function getSessionPanelHtml(): string {
             <span class="codicon codicon-save"></span>
             <span class="session-options-action-text">${t('viewer.session.exportList.text')}</span>
         </button>
+        <hr class="session-options-sep" />
+        <button id="session-open-file" type="button" class="session-options-action" role="menuitem" title="${t('viewer.session.openFile.title')}" aria-label="${t('viewer.session.openFile.label')}">
+            <span class="codicon codicon-folder-opened"></span>
+            <span class="session-options-action-text">${t('viewer.session.openFile.text')}</span>
+        </button>
         </div>
     </div>
     <div id="session-tags-section" class="session-tags-section" style="display:none">
