@@ -65,6 +65,10 @@ export function getContextMenuHtml(): string {
         <span class="codicon codicon-error" data-ew-copy-icon aria-hidden="true"></span>
         <span data-ew-copy-label>Copy Error</span>
     </div>
+    <div class="context-menu-item" data-action="copy-error-warning-json" data-copy-error-warning-row style="display:none" title="Copy the error or warning block as JSON with the full log path and session details (for analysts)">
+        <span class="codicon codicon-json" aria-hidden="true"></span>
+        <span data-ew-json-label>Copy Error JSON</span>
+    </div>
     <div class="context-menu-item" data-action="copy-db-cluster-block" data-copy-db-cluster-row style="display:none" title="Copy all SQL lines in this database timestamp burst">
         <span class="codicon codicon-database"></span> Copy DB cluster
     </div>
