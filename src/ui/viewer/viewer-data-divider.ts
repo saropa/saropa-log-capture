@@ -114,11 +114,12 @@ function getCounterAffordance(item, idx, hiddenAfter, counterHtml) {
             : vt('viewer.affordance.identicalRows.one', item.compressDupCount);
         tip = tagPart + dupNoun
             + (dupExpanded ? vt('viewer.affordance.dedupExpandedAction') : vt('viewer.affordance.dedupCollapsedAction'));
-    } else if (item.type === 'stack-header' && item.frameCount > 1) {
-        /* Stack-header IS a collapsed row representing N hidden frames.
-           Its own line number gets the chevron — click to expand the
-           trace. ▶ when collapsed or in preview mode (some frames
-           hidden); ▼ when fully expanded (all frames visible). */
+    } else if ((item.type === 'stack-header' || item._stackOwner) && item.frameCount > 1) {
+        /* Stack-header — OR a log line promoted to its trace's owner ("the message
+           IS the toggle", see viewer-data-add-stack-ingest.ts) — represents N
+           hidden frames. Its own line number gets the chevron — click to expand
+           the trace. ▶ when collapsed or in preview mode (some frames hidden);
+           ▼ when fully expanded (all frames visible). */
         var stackExpanded = (item.collapsed === false);
         kind = 'stack';
         glyph = stackExpanded ? '\\u25bc' : '\\u25b6';
