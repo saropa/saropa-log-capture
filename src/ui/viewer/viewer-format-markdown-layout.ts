@@ -80,11 +80,12 @@ function mdHeadingRowHeight(item, rowHeight, lineH) {
     var hl = item._mdHeadingLevel;
     var fEm = (hl === 1) ? 1.45 : (hl === 2) ? 1.3 : (hl === 3) ? 1.2 : (hl === 4) ? 1.05 : 1.0;
     var lh = (lineH > 0) ? lineH : 1.1;
-    /* Row = content line box (fontEm * 1.35) + fixed padding (0.85em top + 0.2em bottom), all in
-       base em. The CSS uses box-sizing:border-box with exactly padding-top:0.85em /
-       padding-bottom:0.2em, so the content lands 0.85em below the row top — guaranteed visible
-       TOP spacing that does not depend on flex free-space distribution. base px = rowHeight / lh. */
-    return Math.max(rowHeight, Math.ceil((fEm * 1.35 + 1.05) * rowHeight / lh));
+    /* Row = glyph line box (fontEm * 1.5, matching .md-htext line-height) + padding/slack allowance
+       (1.2 base em, covering the 0.6em+0.25em CSS padding plus ~0.35em spare). The row is therefore
+       strictly TALLER than the glyph box; the CSS centers the text in it and does NOT clip vertically,
+       so the heading glyphs are always fully visible regardless of font metrics or rounding
+       (bugs/markdown_render_spacing_attempts.md #4). base px = rowHeight / lh. */
+    return Math.max(rowHeight, Math.ceil((fEm * 1.5 + 1.2) * rowHeight / lh));
 }
 
 /**
