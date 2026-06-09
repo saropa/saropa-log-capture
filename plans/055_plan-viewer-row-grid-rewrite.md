@@ -1,6 +1,10 @@
 # PLAN 055: Viewer row grid/column rewrite (Item E Path 2)
 
-Status: **ACTIVE** — reactivated 2026-06-09. Was `plans/deferred/055_plan-viewer-row-dom-grid-rewrite.md`.
+Status: **ACTIVE** — Phase 1 landed 2026-06-09 (regular log rows on the grid; art
+blocks intentionally kept legacy). Phases 2+ (AI rows, multi-frame stack headers,
+chips → grid; then CSV/markdown `.cols` adoption; then legacy-CSS removal) remain.
+Reactivated 2026-06-09; was `plans/deferred/055_plan-viewer-row-dom-grid-rewrite.md`.
+See the Finish Report at the bottom for what shipped.
 
 ## Reactivation note (2026-06-09)
 
@@ -294,3 +298,59 @@ optional decorations (elapsed, quality badge, source tag, PID/TID, parsed-level
 prefix, parsed tag) · Col N message text (flex, wraps). Use CSS grid or flex with
 fixed-width children. Background / full Item E history: archived plan
 [plans/history/2026.05/2026.05.15/054_plan-viewer-stack-noise-filter-layout.md](history/2026.05/2026.05.15/054_plan-viewer-stack-noise-filter-layout.md).
+
+---
+
+## Finish Report (2026-06-09)
+
+This work will be reviewed by another AI.
+
+**Scope:** (B) VS Code extension (TypeScript) — webview render scripts + CSS. No
+Flutter/Dart, no docs-only. l10n SKIPPED [B-NOT-IN-SCOPE].
+
+### What shipped (Phase 1)
+
+Commits on `feat/reports-bucket-and-newer-alert`:
+- `f3c06b75` feat(viewer): grid column model for log rows — overlap-proof gutter
+- `b4fcbfc8` fix(viewer): keep whole ascii art-block on legacy layout, not just middle/end
+- (plan/design commits: `6b8f5817`, `a149c086`, `757436ab`, `c8ecb880`)
+
+Replaced the inline-block + hanging-indent decoration prefix — which accepted
+decoration-over-message overlap "by design" ([viewer-styles-decoration.ts:84-88])
+— with a per-row CSS grid. Each decoration datum is its own clipping `.deco-cell`;
+the message is a `.line-msg` cell (`min-width:0`); nothing can paint over a
+neighbor or the message. The root cause of the original user report (timestamp
+overlapping message + missing tag) was actually `structuredLineParsing` toggled
+off at runtime, NOT a width miss — but the investigation confirmed the layout's
+overlap-by-design fragility, which this rewrite removes structurally.
+
+### Files changed
+- NEW `src/ui/viewer-styles/viewer-styles-columns.ts` — `.cols` primitive, `.log-cols`, `.deco-cell` (clip), `.line-msg`, fixed `grid-column` placement.
+- NEW `src/ui/viewer-decorations/viewer-deco-content.ts` — `getCategoryBadge` + `buildDecoParts` (shared source of truth) + `getDecorationPrefix` (legacy) + `getDecorationCells` (grid). Extracted to keep both edited files under the 300-LOC cap.
+- `src/ui/viewer-decorations/viewer-decorations.ts` — `applyDecorationLayoutWidth` now also emits a 7-track `--grid-cols`; removed the moved builders; wired `getDecoContentScript()`.
+- `src/ui/viewer/viewer-data-helpers-render.ts` — regular log-line branch → `.line.cols.log-cols` + `.line-msg`; moved `getCategoryBadge` out; art-block rows (start/middle/end) gated to the legacy flat path.
+- `src/ui/viewer-styles/viewer-styles.ts` — wire `getColumnStyles()`.
+- `src/ui/viewer-styles/viewer-styles-decoration.ts` — legacy hanging-indent rules scoped `:not(.cols)`.
+- `CHANGELOG.md` — Unreleased › Changed entry.
+- Tests: `viewer-column-layout.test.ts` (rewritten to pin the grid model), `viewer-continuation-badge-render.test.ts` (badge now leads `.line-msg`), `viewer-severity-bar-connector.test.ts` (legacy rule now `:not(.cols)`-scoped).
+
+### Core logic summary (for the Reviewer AI)
+- `buildDecoParts()` returns `[{key, html}]`; `getDecorationPrefix()` joins them legacy-style, `getDecorationCells()` wraps each in a keyed `.deco-cell`. One source of truth → the two renderers can't diverge.
+- `--grid-cols` ALWAYS emits all six deco tracks (absent → `0`) + `1fr`, so the fixed `grid-column` indices (`.deco-cell-num`=1 … `.deco-cell-tag`=6, `.line-msg`=7) stay valid on rows that omit a part. This is what keeps columns aligned when a console line has no tag while the tag column is shown file-wide.
+- Per-part em widths reused from the legacy sum (clipping cells make a too-narrow estimate clip, not overlap). `ch`-exact widths are a follow-up, not in this phase.
+- Migration is path-by-path: regular lines + single-frame stack-headers (fall-through) are on the grid; AI rows, multi-frame stack-headers, chips, and art blocks stay on the legacy model (scoped `:not(.cols)`), so they still render correctly during the transition.
+
+### Testing
+- `npm run check-types` — clean.
+- `npm run lint` — 0 errors; 0 NEW warnings (the two `max-lines` warnings I introduced were resolved by the `viewer-deco-content.ts` extraction; remaining warnings are pre-existing and unrelated).
+- `npm run compile` — clean (esbuild + all verify steps + dist size OK).
+- Tests via a Mocha-global node shim (pure CSS/JS string assertions): **column-layout rewritten (8 pass)**; full UI sweep **590 pass / 0 fail** across 70 shim-runnable files; art-block-adjacent + render sweep **139 pass / 0 fail**. Generated webview scripts parse via `new Function(...)`.
+- **Not executed here:** 59 UI test files + the master-switch test require the Extension Host (`vscode` module) and cannot run in the node shim. Their assertions against my changed symbols were audited by inspection (e.g. `viewer-decorations-master-switch` — all assertions still hold). The full `vscode-test` Extension Host suite was not run in this environment.
+
+### Open / follow-up
+- **Runtime/visual (F5) not verified by me** — needs on-device confirmation that regular log rows no longer overlap and columns align.
+- **User re-test pending** for two reported regions after the art-block fix: line ~235 (Drift SLOW `db-ts-burst` box — a 2px-border grouped box, not reproducible headlessly) and the flutter_map block 335-352 (the `    We want…` indentation is the log file's OWN leading spaces, `I/flutter ( 7562):     We want…`, preserved by `pre-wrap` exactly as the old layout — NOT a grid regression; awaiting confirmation it's expected).
+- **Phases 2+:** migrate AI rows / multi-frame stack headers / chips to `.cols`; adopt `.cols` for CSV (`--csv-cols`) and markdown tables (`--md-table-cols`); then delete the legacy `:not(.cols)` CSS and dead `--deco-*-em` vars.
+
+`No bug archive — task did not close a bugs/*.md file (plan-tracked work).`
+`Finish report appended: plans/055_plan-viewer-row-grid-rewrite.md`
