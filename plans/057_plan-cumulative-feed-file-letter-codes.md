@@ -91,3 +91,96 @@ a per-file running line number on each line item in `addToData`.
 `npm run check-types`, `npm run lint`, `npm run compile`, tests pass. Manual F5: run two debug
 sessions, confirm gutter shows `A…`/`B…`, footer shows `(2)`, dialog lists both, copy carries
 legend + codes.
+
+## Finish Report (2026-06-09)
+
+**Reviewed by another AI.**
+
+### Scope
+
+(B) VS Code extension (TypeScript). No Flutter/Dart (A) and not docs-only (C) — so the
+Flutter l10n section and the Linter-integrity section are out of scope.
+
+### Trigger
+
+User report: the live Logs viewer showed "Log 2265 of 2266" under a footer naming
+`reports/20260609/20260609_115123_contacts.log`, but that file held only 87 lines. Diagnosis
+confirmed the file was complete for its (short, mostly-idle) session; the viewer never clears
+at debug-session boundaries, so it accumulates every run's broadcast lines under one filename
+header. The user chose to keep the cumulative feed and fix the labeling with per-file letter
+codes, and asked how copied line numbers / paths reconcile across files.
+
+### Deep review notes
+
+- **Logic & safety:** `fileCodeLetter` is bijective base-26 (verified A/Z/AA/AB/AZ/BA). The
+  per-file counter lives on the registry entry, not a global, so interleaved files keep
+  independent ordinals. `stampFileCodeOnNewItems` is a no-op when `logFileUri` is absent
+  (loaded single file / in-memory stream), so it cannot disturb the existing single-file path.
+  Stamp guards `fileLineNo` to content rows (`line`/`doc`/`stack-header`); markers and
+  synthetic chips inherit the letter only.
+- **Architecture:** mirrors the established post-hoc stamp pattern (`stampSourceLineNoOnNewItems`)
+  and the modal-script pattern (`viewer-log-file-modal.ts`). Reused the existing single-file
+  actions modal by generalizing `handleLogFileAction` with an optional `targetPath` instead of
+  forking a second handler. Copy helpers were extracted to `viewer-copy-file-codes.ts` to keep
+  `viewer-copy.ts` under the 300-LOC cap.
+- **Performance:** registry is two small structures keyed by path; lookups are O(1). No extra
+  per-render scans — letters/numbers are stamped once at line arrival and read during render.
+- **Error boundary:** every webview call site guards with `typeof fn === 'function'` so a
+  missing helper degrades to the prior bare-number behavior rather than throwing.
+- **Refactoring:** no out-of-scope cleanups taken.
+
+### Testing
+
+- **Audit of existing tests (mandatory):** grepped for the touched symbols — `LineData`,
+  `PendingLine`, `buildPendingLineFromLineData`, `handleLogFileAction`, `getLogFileModalScript`,
+  `openLogFileActionsModal`, `getDecorationPrefix`/`buildDecoParts`, `lineToPlainText`/
+  `lineToRawText`/`linesToDecoratedText`, `updateFooterText`. Ran the affected suites via
+  `npm run test:file`: `viewer-log-file-modal` (7 pass, incl. the now-generalized
+  `openLogFileActionsModal`), `viewer-script-null-guards` (21 pass, incl. footer + modal
+  guards), `viewer-copy-decorated` (9), `viewer-sql-repeat-copy-expansion` (4),
+  `viewer-copy-all-filtered` (6), `extension-smoke` (1). No assertion pinned a value this change
+  altered (the copy prefix/legend are inert for single-file feeds, which is what those tests
+  exercise).
+- **New behavior:** added `src/test/ui/viewer-file-code-stamp.test.ts` (5 cases) covering the
+  base-26 letters, first-seen letter assignment + per-file line-number reset, the ≥2-file gate
+  on copy prefix/legend, registry reset, and the unstamped single-file path. All pass via
+  `npm run test:file`.
+- **Gates:** `check-types` clean; `lint` 0 errors (9 pre-existing warnings, none introduced —
+  `viewer-copy.ts` pulled back under 300 LOC by the extraction); full `compile` with all verify
+  steps (NLS 476 keys, webview catalogs, host-outbound catalog, command list, dist-size) green.
+
+### Files changed
+
+Feature commit `b916c032` (21 files):
+`src/modules/session/session-event-bus.ts`, `src/modules/session/session-manager-events.ts`,
+`src/ui/provider/log-viewer-provider-batch.ts`, `src/ui/viewer/viewer-file-loader.ts`,
+`src/ui/viewer/viewer-file-code-stamp.ts` (new), `src/ui/viewer/viewer-script-messages.ts`,
+`src/ui/viewer-decorations/viewer-deco-content.ts`, `src/ui/viewer/viewer-script-footer.ts`,
+`src/ui/viewer/viewer-files-list-modal.ts` (new), `src/ui/provider/viewer-content-body.ts`,
+`src/ui/provider/viewer-content-scripts.ts`, `src/ui/provider/viewer-log-file-actions.ts`,
+`src/ui/provider/viewer-message-handler-session-ui.ts`, `src/ui/viewer/viewer-log-file-modal.ts`,
+`src/ui/viewer/viewer-copy.ts`, `src/ui/viewer/viewer-copy-file-codes.ts` (new),
+`src/l10n/strings-viewer-d.ts`, `src/l10n/strings-webview-b.ts`,
+`src/ui/viewer-styles/viewer-styles-modal.ts`, `CHANGELOG.md`,
+`plans/057_plan-cumulative-feed-file-letter-codes.md` (this file).
+Finish commit (follow-up): `src/test/ui/viewer-file-code-stamp.test.ts` (new) + this report.
+
+### Maintenance
+
+- CHANGELOG: updated (Unreleased → Added).
+- README verified — no updates needed (feature documented in CHANGELOG; README is product overview).
+- `package.json` / lockfile: unchanged (no release / dependency change).
+- guides reviewed — no user-facing guide affected.
+- `docs/LAUNCH_TEST.md`: not present in this repo (VS Code extension, no Flutter launch-test doc) — SKIPPED [B-NOT-IN-SCOPE].
+- Roadmap: SKIPPED [B-NOT-IN-SCOPE].
+- Bug archival: No bug archive — task did not close a `bugs/*.md` file (originated from a chat report; no bug file existed).
+
+### Outstanding
+
+None functionally. Accepted limitation (documented above): `A1139` is a stable handle inside
+the Saropa viewer; opening the raw `.log` in a plain editor will not land on physical line 1139
+(header/DAP/fold offset). The legend's absolute path + the copied text carry the provenance;
+only jump-to-line in a non-Saropa editor does not transfer. On-device/manual F5 walkthrough is
+the user's to run (see "What to test").
+
+Finish report appended: plans/057_plan-cumulative-feed-file-letter-codes.md
