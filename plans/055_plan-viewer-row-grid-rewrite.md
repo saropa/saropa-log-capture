@@ -58,19 +58,25 @@ already does).
 ### Per-row `display: grid`, exact `ch` columns, clipping message cell
 
 ```
-.line.log-cols {                        /* OPT-IN: log rows only, never bare .line */
-  display: grid;
-  grid-template-columns: var(--grid-cols, max-content 1fr);
-  align-items: baseline;
-}
-.line.log-cols .line-msg { min-width: 0; }   /* clips the column boundary — kills overlap */
-.line.log-cols .deco-cell { overflow: hidden; }
-.line.log-cols .deco-cell-tag { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Shared, reusable column PRIMITIVE — overlap-proof by construction.
+   Used by the log gutter AND (later) CSV / markdown tables. */
+.cols { display: grid; align-items: baseline; }
+.cols > * { min-width: 0; overflow: hidden; }   /* every cell clips its own box — no neighbor overlap */
+.cols > .ellipsis { text-overflow: ellipsis; white-space: nowrap; }
+
+/* Consumers share the primitive and differ ONLY in their template var,
+   because the COLUMNS MEAN DIFFERENT THINGS — they are not the same axis. */
+.log-cols { grid-template-columns: var(--grid-cols); }      /* bar / line# / time / … / tag / 1fr msg */
+.csv-cols { grid-template-columns: var(--csv-cols); }       /* future: one track per CSV field */
+.md-table { grid-template-columns: var(--md-table-cols); }  /* future: real markdown table */
 ```
 
-**The grid is opt-in via `.log-cols`, not a rule on bare `.line`** — see "Special /
-structured-file renderers" below. Format rows (markdown/json/csv/future) keep
-block layout and own their content; they never get `.log-cols`.
+A log row is `class="line cols log-cols"`. The **primitive** (`.cols`: grid +
+clipping cells) is reusable everywhere; the **template** (`--grid-cols` vs
+`--csv-cols` vs `--md-table-cols`) is per-consumer and never shared, since the
+log gutter axis and a CSV data axis are different column systems. The grid is
+still opt-in (a bare `.line` is not `.cols`) — see "Special / structured-file
+renderers."
 
 `--grid-cols` is emitted by the rewritten `applyDecorationLayoutWidth` from the
 **enabled × data-present** flags it already computes (`decoSeen`), e.g.:
@@ -179,40 +185,46 @@ Each must wrap its message body in `.line-msg` (Phase 1) and stay grid-aligned:
 
 ## Special / structured-file renderers (markdown / json / csv / future)
 
-These are a **different row archetype** and must stay outside the decoration grid.
-A format row is a single formatter-owned content area, not a gutter+message log
-row. Routed by the `fileMode !== 'log' && formatEnabled` branch at the top of
+These are a **different row archetype**: they stay outside the log *gutter*
+template (`--grid-cols`), but they MAY reuse the shared `.cols` primitive with
+their own template var (see CSV/md below). A format row is a single
+formatter-owned content area, not a gutter+message log row. Routed by the
+`fileMode !== 'log' && formatEnabled` branch at the top of
 [renderItem](../src/ui/viewer/viewer-data-helpers-render.ts#L44-L56), it returns
 `<div class="line fmt-…">fmtHtml</div>` with **no decoration cells** (format files
 have no timestamps/tags/PIDs).
 
 Contract:
-- **Format rows never get `.log-cols`.** They keep block/flow layout owned by
-  their formatter. Because the grid is opt-in (not on bare `.line`), this is the
-  default — a new renderer added later is block automatically and cannot be
-  silently broken by the gutter grid.
-- **A format that is itself columnar owns its own grid, scoped to its own
-  classes — never the log gutter columns.** Concretely:
-  - Markdown already emits columnar/structured content:
-    [viewer-format-markdown.ts](../src/ui/viewer/viewer-format-markdown.ts) returns
-    `md-heading`, `md-table-row` (`| col | col |`), `md-table-sep`, `md-bullet`,
-    `md-blockquote`. Today `md-table-row` is a raw escaped string; if it ever
-    becomes a real table it gets a `.md-table` grid, independent of `--grid-cols`.
-  - CSV is inherently tabular and is the most likely next consumer of a real
-    column grid — but a CSV column grid is `.csv-row { display:grid }` with its
-    own template, **not** the log `--grid-cols`. The log gutter (severity / line# /
-    time / tag) and a CSV data grid are different column systems that must not be
-    conflated.
+- **Format rows never get `.log-cols`** (the gutter template). They are block by
+  default, or `.cols` + their own template var if columnar (CSV/md-table). Because
+  the gutter grid is opt-in (not on bare `.line`), a new renderer is block
+  automatically and cannot be silently broken by the gutter columns.
+- **A columnar format REUSES the `.cols` primitive with its OWN template var —
+  never the log gutter template.** This is the answer to "can CSV/md use the
+  grid?": yes, the same overlap-proof mechanism, a different `grid-template-columns`:
+  - CSV is inherently tabular and is the prime consumer. A CSV row becomes
+    `class="line cols csv-cols"` with `--csv-cols` = one `<n>ch` track per field
+    (widths computed once from the parsed data, set on the container so columns
+    align down the file — same shared-template alignment trick the log gutter
+    uses). This is an **upgrade**: today `formatCsvLine` emits a raw string; with
+    `.cols` the fields become real aligned, clipping columns. `--csv-cols` is NOT
+    `--grid-cols` — different axis, different file, different widths.
+  - Markdown tables likewise: `md-table-row` (today a raw `| col | col |` string)
+    can become `class="cols md-table"` with `--md-table-cols`. Headings, bullets,
+    blockquotes stay block (not columnar).
   - JSON is a tree, not columns — stays block.
-- **Future renderers** (HTML, logfmt, key-value, …) inherit the same rule: block
-  by default; opt into a *scoped* grid only if their own content is columnar.
+- **Future renderers** (HTML, logfmt, key-value, …): block by default; if their
+  content is columnar they adopt `.cols` + their own template var, never the
+  gutter template.
 - Format rows currently carry **no line-number gutter**; the grid change must not
   add or remove that. (If per-format gutters are wanted later, that is a separate
-  per-renderer decision, not part of the log decoration grid.)
+  per-renderer decision.)
 
-The single shared idea worth factoring is "a clipping cell never lets content
-overlap a neighbor" — but the *templates* (log gutter vs CSV data vs md table)
-stay separate, each scoped to its own row class.
+So the factoring is: **one reusable primitive (`.cols` = grid + clipping cells),
+many templates.** The overlap-proof discipline is shared everywhere; the column
+*axes* (log gutter vs CSV fields vs md-table columns) stay separate, each its own
+`--*-cols` var on its own row class. Conflating two axes into one template is the
+one thing forbidden.
 
 ## Constraints to preserve (regression gate)
 
