@@ -115,6 +115,12 @@ if (viewportEl) viewportEl.addEventListener('click', function(e) {
         toggleMdSection(parseInt(mdHeading.dataset.mdSection));
         return;
     }
+    /* Markdown multi-line comment collapse. */
+    var mdComment = e.target.closest('[data-md-comment]');
+    if (mdComment && typeof toggleMdComment === 'function') {
+        toggleMdComment(parseInt(mdComment.dataset.mdComment));
+        return;
+    }
     /* JSON brace-pair collapse (plan 051). */
     var jsonNode = e.target.closest('[data-json-section]');
     if (jsonNode && typeof toggleJsonSection === 'function') {
