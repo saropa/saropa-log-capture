@@ -27,6 +27,14 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **New "Copy Error JSON" right-click action for analysts** — alongside the existing "Copy Error" / "Copy Warning" item, right-clicking an error or warning block now also offers "Copy Error JSON" (labelled "Copy Warning JSON" on warnings). It copies a structured JSON object with the full error block in an `error` field plus the absolute `logPath`, `logFile`, severity `level`, 1-based `lineStart`/`lineEnd`, the block's first `timestamp`, and the captured `session` details — so the full context travels in a single paste. ([viewer-context-menu-html.ts](src/ui/viewer-context-menu/viewer-context-menu-html.ts), [viewer-context-menu.ts](src/ui/viewer-context-menu/viewer-context-menu.ts), [viewer-context-menu-line-actions.ts](src/ui/viewer-context-menu/viewer-context-menu-line-actions.ts), [viewer-message-handler-actions.ts](src/ui/provider/viewer-message-handler-actions.ts))
+
+---
+
 ## [7.18.0]
 
 SQL Query History now spans every log you've captured (not just the open one) and opens with a stats dashboard, live Drift Advisor database issues show up alongside it, every sidebar slide-out is resizable, the session list stops flashing two layouts while it loads, and the "Open Signals" notification button actually opens the panel. [log](https://github.com/saropa/saropa-log-capture/blob/v7.18.0/CHANGELOG.md)
