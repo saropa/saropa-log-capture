@@ -167,15 +167,6 @@ export function getSessionPanelEventsScript(): string {
                detached node, get false, and close the panel instantly. Stop
                propagation so the panel stays open after a selection. */
             e.stopPropagation();
-            /* Then close it on a short delay rather than keeping it open
-               indefinitely — long enough that picking another file to view
-               doesn't require reopening the panel. Each selection resets the
-               countdown. */
-            if (sessionAutoCloseTimer) clearTimeout(sessionAutoCloseTimer);
-            sessionAutoCloseTimer = setTimeout(function() {
-                sessionAutoCloseTimer = null;
-                closeSessionPanel();
-            }, 5000);
         });
         /* Keyboard support: Enter/Space on focused day heading toggles collapse. */
         sessionListEl.addEventListener('keydown', function(e) {
@@ -202,10 +193,17 @@ export function getSessionPanelEventsScript(): string {
         });
     }
 
-    /* Name filter bar: clear button uses event delegation because the bar content is dynamic. */
+    /* Name filter bar: event delegation because the bar content (pills + buttons)
+       is rebuilt on every render. A per-pill [x] removes just that name; the
+       trailing "Show All" button clears the whole filter. */
     var nameFilterBarEl = document.getElementById('session-name-filter-bar');
     if (nameFilterBarEl) {
         nameFilterBarEl.addEventListener('click', function(e) {
+            var pill = e.target.closest('.session-name-filter-pill-remove');
+            if (pill && typeof removeSessionNameFilter === 'function') {
+                removeSessionNameFilter(pill.getAttribute('data-name') || '');
+                return;
+            }
             var btn = e.target.closest('#session-name-filter-clear');
             if (btn && typeof clearSessionNameFilter === 'function') clearSessionNameFilter();
         });
