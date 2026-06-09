@@ -62,7 +62,7 @@ window.addEventListener('message', function(event) {
             if (typeof window.exitReplayMode === 'function') window.exitReplayMode();
             if (currentFilename && !autoScroll) { scrollMemory[currentFilename] = logEl.scrollTop; }
             autoScroll = true;
-            fileMode = 'log'; formatEnabled = false; if (typeof updateFormatToggleVisibility === 'function') updateFormatToggleVisibility();
+            fileMode = 'log'; formatEnabled = false; if (typeof updateFormatToggleVisibility === 'function') updateFormatToggleVisibility(); if (typeof applyMarkdownTypography === 'function') applyMarkdownTypography();
             allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null; nextSeq = 1; sessionStartTs = 0; if (typeof resetDecoSeen === 'function') resetDecoSeen(); if (typeof resetTreeDetector === 'function') resetTreeDetector(); if (typeof resetFileCodes === 'function') resetFileCodes();
             if (typeof applyDecorationLayoutWidth === 'function') applyDecorationLayoutWidth();
             lastStart = -1; lastEnd = -1; groupHeaderMap = {}; prefixSums = null;
@@ -163,7 +163,7 @@ window.addEventListener('message', function(event) {
            opening one and seeing raw text behind a hidden toggle reads as "not rendered".
            The layout build (buildMdSections etc.) is deferred to loadComplete because
            setFileMode is posted before any content lines arrive, so allLines is empty here. */
-        case 'setFileMode': fileMode = msg.mode || 'log'; formatEnabled = (fileMode !== 'log'); if (typeof updateFormatToggleVisibility === 'function') updateFormatToggleVisibility(); break;
+        case 'setFileMode': fileMode = msg.mode || 'log'; formatEnabled = (fileMode !== 'log'); if (typeof updateFormatToggleVisibility === 'function') updateFormatToggleVisibility(); if (typeof applyMarkdownTypography === 'function') applyMarkdownTypography(); break;
         case 'setSources':
             if (typeof window !== 'undefined') { window.availableSources = Array.isArray(msg.sources) ? msg.sources : []; window.enabledSources = Array.isArray(msg.enabledSources) ? msg.enabledSources : null; }
             /* Log Sources tab is always visible — no need to toggle panel display */
@@ -249,6 +249,7 @@ window.addEventListener('message', function(event) {
                is populated, then re-measure and repaint so auto-enabled formatting (set in
                setFileMode) renders headings/fences/tables instead of raw text. */
             if (typeof formatEnabled !== 'undefined' && formatEnabled && typeof fileMode !== 'undefined' && fileMode !== 'log') {
+                if (typeof applyMarkdownTypography === 'function') applyMarkdownTypography();
                 if (typeof window.buildFormatModeLayout === 'function') window.buildFormatModeLayout();
                 if (typeof recalcHeights === 'function') recalcHeights();
                 if (typeof buildPrefixSums === 'function') buildPrefixSums();
