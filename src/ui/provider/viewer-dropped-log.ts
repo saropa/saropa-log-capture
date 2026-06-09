@@ -15,6 +15,12 @@ export async function handleOpenDroppedLog(
     msg: Record<string, unknown>, ctx: ViewerMessageContext,
 ): Promise<void> {
     const name = typeof msg.name === 'string' ? msg.name : '';
+    // The drop reached the webview but the sandbox exposed no File — guide the user to the picker
+    // so the gesture is never a silent dead end.
+    if (msg.empty === true) {
+        void vscode.window.showWarningMessage(t('msg.droppedLogEmpty'));
+        return;
+    }
     if (msg.tooLarge === true) {
         void vscode.window.showWarningMessage(t('msg.droppedLogTooLarge', name));
         return;
@@ -26,11 +32,20 @@ export async function handleOpenDroppedLog(
     const path = typeof msg.path === 'string' ? msg.path : '';
     if (path) {
         await focusAndLoad(vscode.Uri.file(path), ctx);
+        void vscode.window.showInformationMessage(t('msg.droppedLogLoaded', basename(path)));
         return;
     }
     if (typeof msg.content === 'string') {
-        await openFromContent(name || 'dropped.log', msg.content, ctx);
+        const safeName = name || 'dropped.log';
+        await openFromContent(safeName, msg.content, ctx);
+        void vscode.window.showInformationMessage(t('msg.droppedLogLoaded', safeName));
     }
+}
+
+/** Last path segment, handling both separators (a dropped path may be Windows- or POSIX-style). */
+function basename(p: string): string {
+    const parts = p.split(/[\\/]/);
+    return parts[parts.length - 1] || p;
 }
 
 async function focusAndLoad(uri: vscode.Uri, ctx: ViewerMessageContext): Promise<void> {
