@@ -215,6 +215,36 @@ suite('ASCII art block grouping', () => {
                 'shimmer must not loop forever (perpetual loading look)',
             );
         });
+
+        // The viewport rebuilds the whole visible DOM on every scroll / incoming
+        // line (atomic replaceChildren swap), so a CSS animation on the bare
+        // art-block-* class restarts from iteration 0 on every rebuild — looking
+        // perpetual regardless of iteration-count. The shimmer ::after is gated
+        // behind .art-shimmer-play, which the renderer emits only on a row's
+        // first render and latches via item._artShimmered.
+        test('shimmer ::after is gated behind .art-shimmer-play (survives DOM rebuild)', () => {
+            const css = getAsciiArtStyles();
+            assert.ok(
+                css.includes('.line.art-block-start.art-shimmer-play::after'),
+                'shimmer ::after must require the one-shot .art-shimmer-play class',
+            );
+            assert.ok(
+                !css.includes('.line.art-block-start::after'),
+                'bare art-block-start::after must not carry the shimmer (would restart every rebuild)',
+            );
+        });
+
+        test('renderer emits art-shimmer-play once per row, latched by _artShimmered', () => {
+            const render = getViewerDataHelpersRender();
+            assert.ok(
+                render.includes('!item._artShimmered'),
+                'shimmer class must be gated on the per-item latch',
+            );
+            assert.ok(
+                render.includes("' art-shimmer-play'") && render.includes('item._artShimmered = true'),
+                'first render adds art-shimmer-play and sets the latch so later rebuilds skip it',
+            );
+        });
     });
 
     suite('generalized ASCII art detector (plan 046)', () => {
