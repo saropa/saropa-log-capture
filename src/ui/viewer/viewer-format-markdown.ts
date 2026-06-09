@@ -92,8 +92,10 @@ function assignMdTableBlock(rows) {
         var role = rows[k].sep ? 'sep' : (headerSeen ? 'body' : 'header');
         if (!rows[k].sep) headerSeen = true;
         mdTables[rows[k].idx] = { cols: widths, role: role };
-        /* calcItemHeight reads this flag to collapse the separator row to zero height. */
+        /* calcItemHeight reads _mdTableSep to collapse the separator row; the gutter tag
+           reads _mdTable to mark table rows. */
         allLines[rows[k].idx]._mdTableSep = rows[k].sep;
+        allLines[rows[k].idx]._mdTable = !rows[k].sep;
     }
 }
 
@@ -158,25 +160,6 @@ function buildMdSections() {
         /* calcItemHeight + renderItem read this to allocate a taller, padded heading row. */
         allLines[cur.idx]._mdHeadingLevel = cur.level;
     }
-}
-
-/** Comfortable line height applied while a markdown document is rendered. Markdown reads as
-    prose, so it drives the viewer's existing uniform line-height control rather than a
-    parallel per-line multiplier (which would compound with the user's line-height choice). */
-var MD_LINE_HEIGHT = 1.7;
-
-/**
- * Apply (or restore) the document line height for markdown view. When markdown formatting is
- * active, bump the viewer's line height to MD_LINE_HEIGHT; otherwise restore the user's
- * configured default. setLineHeight() re-measures ROW_HEIGHT and re-renders, so body spacing
- * comes from the real typography control and stays adjustable by the font / line-height tools.
- */
-function applyMarkdownTypography() {
-    if (typeof setLineHeight !== 'function' || typeof logLineHeight === 'undefined') return;
-    var active = (fileMode === 'markdown' && typeof formatEnabled !== 'undefined' && formatEnabled);
-    var target = active ? MD_LINE_HEIGHT : (typeof logLineHeightDefault === 'number' ? logLineHeightDefault : 1.1);
-    /* Only act on a real change so this is safe to call from every mode transition. */
-    if (logLineHeight !== target) setLineHeight(target);
 }
 
 /** Toggle a markdown section collapse. Called from click handler on heading lines. */
