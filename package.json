@@ -77,6 +77,11 @@
         "title": "%command.openSession.title%"
       },
       {
+        "command": "saropaLogCapture.openLogFile",
+        "icon": "$(folder-opened)",
+        "title": "%command.openLogFile.title%"
+      },
+      {
         "command": "saropaLogCapture.deleteSession",
         "icon": "$(trash)",
         "title": "%command.deleteSession.title%"
@@ -210,6 +215,11 @@
         "command": "saropaLogCapture.copyHandoffBundle",
         "icon": "$(comment-discussion)",
         "title": "%command.copyHandoffBundle.title%"
+      },
+      {
+        "command": "saropaLogCapture.exportFlowMap",
+        "icon": "$(type-hierarchy)",
+        "title": "%command.exportFlowMap.title%"
       },
       {
         "command": "saropaLogCapture.explainRootCauseHypotheses",
@@ -785,6 +795,30 @@
           "default": false,
           "description": "%config.showScrollbar.description%",
           "title": "%config.showScrollbar.title%",
+          "type": "boolean"
+        },
+        "saropaLogCapture.viewerColumnLineNumbers": {
+          "default": true,
+          "description": "%config.viewerColumnLineNumbers.description%",
+          "title": "%config.viewerColumnLineNumbers.title%",
+          "type": "boolean"
+        },
+        "saropaLogCapture.viewerColumnTimestamp": {
+          "default": true,
+          "description": "%config.viewerColumnTimestamp.description%",
+          "title": "%config.viewerColumnTimestamp.title%",
+          "type": "boolean"
+        },
+        "saropaLogCapture.viewerColumnSessionElapsed": {
+          "default": false,
+          "description": "%config.viewerColumnSessionElapsed.description%",
+          "title": "%config.viewerColumnSessionElapsed.title%",
+          "type": "boolean"
+        },
+        "saropaLogCapture.viewerColumnParsedTag": {
+          "default": true,
+          "description": "%config.viewerColumnParsedTag.description%",
+          "title": "%config.viewerColumnParsedTag.title%",
           "type": "boolean"
         },
         "saropaLogCapture.logFontSize": {

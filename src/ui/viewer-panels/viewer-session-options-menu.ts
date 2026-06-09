@@ -47,6 +47,12 @@ export function getSessionOptionsMenuScript(): string {
         vscodeApi.postMessage({ type: 'exportSessionListJson' });
         setOptionsMenuOpen(false);
     });
+    var openFileBtn = document.getElementById('session-open-file');
+    if (openFileBtn) openFileBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        vscodeApi.postMessage({ type: 'openLogFile' });
+        setOptionsMenuOpen(false);
+    });
     /* Outside-click dismissal of the menu. Registered here (not in events.ts)
        so all menu wiring is colocated; the events file's panel-wide
        outside-click handler still runs separately to close the panel itself. */

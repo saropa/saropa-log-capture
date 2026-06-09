@@ -14,6 +14,7 @@ import type { ViewerSlowBurstThresholds } from '../../modules/db/drift-db-slow-b
 import type { ViewerDbDetectorToggles } from '../../modules/config/config-types';
 import { getViewerBodyHtml } from './viewer-content-body';
 import { getViewerScriptTags } from './viewer-content-scripts';
+import type { ViewerColumnDefaults } from '../viewer-decorations/viewer-deco-settings';
 
 /** Fallback viewer cap when buildViewerHtml is called without explicit viewerMaxLines. */
 export const DEFAULT_VIEWER_LINES = 100000;
@@ -56,6 +57,8 @@ export interface ViewerHtmlOptions {
   readonly signalSlowOpThresholdMs?: number;
   /** Log viewer divider row text captions (`accessibility.showCollapseDividerLabels`, default true). */
   readonly accessibilityShowCollapseDividerLabels?: boolean;
+  /** Default per-line column visibility (saropaLogCapture.viewerColumn*), baked into the viewer. */
+  readonly viewerColumns?: ViewerColumnDefaults;
 }
 
 /**
@@ -96,6 +99,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
            prior `=== true` coerced undefined to false and contradicted the
            default after the flip. */
         accessibilityShowCollapseDividerLabels: opts.accessibilityShowCollapseDividerLabels ?? true,
+        viewerColumns: opts.viewerColumns,
     });
     return /* html */ `<!DOCTYPE html>
 <html lang="en">
