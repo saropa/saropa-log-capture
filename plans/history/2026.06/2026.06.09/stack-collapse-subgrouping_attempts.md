@@ -74,3 +74,70 @@ guard, affordance + click wiring); updated `viewer-stack-unwrapped-dart`,
 shim; check-types / eslint / `npm run compile` clean.
 
 NOT yet verified on a running device — needs F5 visual confirmation.
+
+## Finish Report (2026-06-09)
+
+**This work will be reviewed by another AI.**
+
+### Scope
+**(B)** VS Code extension (TypeScript webview scripts + tests). No Flutter/Dart, no docs-only.
+
+### Deep review
+- Logic/safety: owner promotion runs only when `!activeGroupHeader` and the
+  immediately-preceding item is an eligible normal line; null-guarded; no
+  recursion. The child-push path is reused (no duplicated frame logic). Fallback
+  to first-frame-header preserves standalone-trace grouping (R2).
+- Guards: database/SQL preceding lines are skipped so Drift repeat-collapse
+  (bug_003) is untouched; blank lines and separators are excluded; an already-
+  promoted line (`groupId !== -1`) is not re-promoted.
+- Click safety: whole-row owner toggle is selection-guarded (`isCollapsed`) and
+  skips `.deco-counter-row` (chevron handled by the peek listener) so a single
+  click never both toggles and opens; source-link/url clicks still resolve first.
+- Architecture: reuses `groupHeaderMap` + `toggleStackGroup` + `calcItemHeight`
+  unchanged (frame visibility keyed off the owner's `collapsed`). `getCounterAffordance`
+  gained one `|| item._stackOwner` term. No render.ts edit (kept under the 300-LOC cap).
+- Perf: one extra backward look at `allLines[length-1]` per first-frame ingest — O(1).
+
+### Testing
+- Audit (mandatory): grepped tests for `stack-header`, `_stackOwner`,
+  `getCounterAffordance`, `addToData`, the changed condition string. Affected:
+  `viewer-stack-unwrapped-dart` (fed message+frames → updated to owner-mode),
+  `viewer-stack-header-repeat` (plain-line-break tests → marker break / owner
+  assertions), `viewer-peek-chevron` (pinned the exact condition string → updated
+  to the owner-inclusive form). Unaffected (feed frames directly, fallback path):
+  `viewer-stack-async-gap`, `viewer-stack-elided-summary`, `viewer-dart-frame-format`,
+  `viewer-stack-detection-parity`, `viewer-stack-frame-click`, `viewer-stack-frame-hidden-gap`.
+- New: `viewer-stack-owner-toggle.test.ts` (promotion, no-owner fallback, database
+  guard, affordance condition, whole-row click wiring).
+- Run: full stack suite via a Mocha-globals shim (vscode stubbed) — 101 → after
+  updates all green; owner-toggle + peek-chevron = 27 pass / 0 fail. Mocha/Extension-
+  Host execution happens in CI / `npm run test` (not run in this environment).
+- Gates: `npm run check-types` clean; eslint clean on all touched files (line-count
+  + max-params resolved); `npm run compile` green (NLS, webview catalogs, host-outbound,
+  list-commands, dist-size 4.55 MiB).
+
+### l10n
+SKIPPED [B-NOT-IN-SCOPE] — extension TS, no Flutter ARB. The stack tooltip strings
+reuse existing `viewer.affordance.stack*` keys (unchanged).
+
+### Maintenance
+- CHANGELOG: entry under `[Unreleased] → Fixed`.
+- README: verified — no update needed (collapse behavior described generically; line 96
+  collapse-cycle text still accurate).
+- guides reviewed; `docs/LAUNCH_TEST.md` not present in repo — SKIPPED.
+- Bug archived: bugs/stack-collapse-subgrouping_attempts.md → plans/history/2026.06/2026.06.09/stack-collapse-subgrouping_attempts.md
+- Finish report appended: plans/history/2026.06/2026.06.09/stack-collapse-subgrouping_attempts.md
+
+### Files changed (this fix — commit 3e26a780, archival follow-up commit)
+- src/ui/viewer/viewer-data-add-stack-ingest.ts (owner promotion + guards)
+- src/ui/viewer/viewer-data-divider.ts (getCounterAffordance owner condition)
+- src/ui/viewer/viewer-script-click-handlers.ts (owner whole-row toggle)
+- src/test/ui/viewer-stack-owner-toggle.test.ts (new)
+- src/test/ui/viewer-stack-unwrapped-dart.test.ts, viewer-stack-header-repeat.test.ts, viewer-peek-chevron.test.ts (updated)
+- CHANGELOG.md (Unreleased → Fixed)
+- (already in HEAD from prior session) viewer-data-helpers-render-stack.ts gap-reveal chevron; viewer-script-click-handlers.ts frame click-to-open
+
+### Outstanding
+- On-device (F5) visual confirmation pending — code-verified only.
+- Whether the user ALSO wants Drift `database` traces in owner-mode is deferred
+  (currently guarded to preserve repeat-collapse).
