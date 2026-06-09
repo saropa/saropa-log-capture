@@ -106,6 +106,25 @@ export interface SessionMeta {
      * controller when it is the workspace's OWN session.
      */
     role?: 'controller' | 'peripheral';
+    /**
+     * Cached `parseHeader()` output, valid ONLY while `mtime` + `size` still match the file on
+     * disk. The Logs list otherwise re-opens every file to read its header on each panel load;
+     * across a months-deep archive (thousands of files) that re-read dominates load time. Storing
+     * the parsed header here lets a re-load read the central JSON once and skip per-file reads —
+     * the "instant recall" path. A changed file (different mtime/size) invalidates the entry and
+     * is re-parsed + re-cached. Severity counts stay in their own fields (computed separately by
+     * the deferred scan), so this is purely the header pass's cache.
+     */
+    parsedHeader?: {
+        mtime: number;
+        size: number;
+        date?: string;
+        project?: string;
+        adapter?: string;
+        lineCount?: number;
+        hasTimestamps?: boolean;
+        durationMs?: number;
+    };
 }
 
 // MetaMap type imported from session-metadata-io.ts
@@ -167,6 +186,25 @@ export class SessionMetadataStore {
         const key = relativeKey(logUri);
         const data = await readCentral(centralUri);
         data[key] = meta;
+        await writeCentral(centralUri, data);
+    }
+
+    /** Persist freshly-parsed header fields for many files in ONE central write.
+     *  The list refresh calls this once per refresh (not per file), so caching the header
+     *  costs a single read-merge-write of the central JSON — never N writes. `logDir` resolves
+     *  to the same central store `loadAllMetadata` reads, and keys are the same relative keys. */
+    async saveParsedHeaderBatch(
+        logDir: vscode.Uri,
+        entries: ReadonlyMap<string, NonNullable<SessionMeta['parsedHeader']>>,
+    ): Promise<void> {
+        if (entries.size === 0) { return; }
+        const centralUri = getCentralMetaUri(logDir);
+        if (!centralUri) { return; }
+        const data = await readCentral(centralUri);
+        // Merge so existing severity counts / tags / overrides on each entry survive.
+        for (const [key, parsedHeader] of entries) {
+            data[key] = { ...(data[key] ?? {}), parsedHeader };
+        }
         await writeCentral(centralUri, data);
     }
 
