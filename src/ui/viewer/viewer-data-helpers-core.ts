@@ -281,6 +281,12 @@ function calcItemHeight(item) {
         var _hl = item._mdHeadingLevel;
         return ROW_HEIGHT * ((_hl === 1) ? 2.2 : (_hl === 2) ? 2.0 : (_hl === 3) ? 1.7 : 1.4);
     }
+    /* Every ordinary markdown line (body text, bullets, blockquote, table rows) gets ~60%
+       more vertical room than a dense log line so a report reads as a document. Code-fence
+       lines are excluded (code reads better tight); blanks and separators returned above. */
+    if (!item._mdFence && typeof formatEnabled !== 'undefined' && formatEnabled && typeof fileMode !== 'undefined' && fileMode === 'markdown' && item.type === 'line') {
+        return ROW_HEIGHT * 1.6;
+    }
     if (item.type === 'marker') {
         /* markerHidden / markerCollapsed are set by applyDbSignalMarkerVisibility and
            applyConsecutiveDbMarkerCollapse (viewer-data-marker-filter). Honouring them here

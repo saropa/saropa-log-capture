@@ -21,6 +21,12 @@ export function getFormatStyles(): string {
    for the ragged left edge that per-heading borders/padding used to cause. */
 .line.fmt-markdown { padding-left: 1em; }
 
+/* Ordinary markdown lines (body, bullets, blockquote, table rows) get ~60% more line
+   height than dense log output so a report is readable as a document. The factor matches
+   the 1.6x row height calcItemHeight() allocates, so single-line content sits centered in
+   its row. Code-fence lines deliberately keep the base (tight) spacing. */
+.line.fmt-md-pad { line-height: calc(var(--log-line-height, 1.1) * 1.6); }
+
 /* Headings: no left border (it broke alignment). The row is pinned to a taller height
    (calcItemHeight + inline style); flex-centering the text inside it yields the vertical
    padding, and the collapse chevron is pushed to the right edge. */

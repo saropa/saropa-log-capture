@@ -114,8 +114,14 @@ function buildMdFences() {
             /* Opening delimiter records the language; closing delimiter has none. */
             mdFences[i] = { role: inFence ? 'close' : 'open', lang: inFence ? '' : fm[2] };
             inFence = !inFence;
+            allLines[i]._mdFence = true;
         } else if (inFence) {
             mdFences[i] = { role: 'body', lang: '' };
+            allLines[i]._mdFence = true;
+        } else {
+            /* Code lines keep dense spacing; calcItemHeight reads this to skip the extra
+               vertical room it gives ordinary markdown lines. */
+            allLines[i]._mdFence = false;
         }
     }
 }
