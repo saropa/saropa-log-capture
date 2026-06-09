@@ -20,6 +20,7 @@ import type { SessionMeta, SessionMetadataStore } from '../../modules/session/se
 import { TreeItem, isSplitGroup, isSessionGroup } from './session-history-grouping';
 import { SessionMetadata } from './session-history-grouping';
 import { countSeveritiesChunked, extractBody } from './session-severity-counts';
+import { isLogContentFile } from '../../modules/config/config';
 import { logExtensionError } from '../../modules/misc/extension-logger';
 
 /** Callback fired when a file's severity scan completes and was persisted. */
@@ -65,6 +66,10 @@ function collectScannableFiles(items: readonly TreeItem[]): SessionMetadata[] {
         if (isSplitGroup(item)) { item.parts.forEach(visit); return; }
         // debugCount is the V2 schema marker. Presence => already cached, skip.
         if (item.debugCount !== undefined) { return; }
+        // Reports (.json/.csv/.html/.jsonl/.md) carry no log severities — scanning them reads
+        // hundreds of MB to classify nothing. A reports archive can hold thousands of such files
+        // (observed: 1,244 reports incl. 50 files >2 MB), so this skip is the dominant load-time win.
+        if (!isLogContentFile(item.filename)) { return; }
         out.push(item);
     };
     items.forEach(visit);
