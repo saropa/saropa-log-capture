@@ -227,6 +227,22 @@ function paintMinimap() {
         }
     }
 
+    /* Markdown headings: a full-width tick in the per-level color so the document outline is
+       scannable on the scroll map. Iterates every line (headings are few) rather than the
+       sampled step so no heading is skipped. MM_HEADING_COLORS mirrors the .md-hN colors in
+       viewer-styles-format.ts — keep the two in sync. */
+    if (typeof fileMode !== 'undefined' && fileMode === 'markdown') {
+        var MM_HEADING_COLORS = [null, '#4fc1ff', '#89d185', '#b180d7', '#d18616', '#cca700', '#888888'];
+        for (var hi = 0; hi < allLines.length; hi++) {
+            var hit = allLines[hi];
+            if (!hit._mdHeadingLevel || hit.height === 0) continue;
+            var hpy = Math.round((mmLineOffset(hi, hasPfx, cumH) / total) * mmH);
+            if (hpy < 0 || hpy >= mmH) continue;
+            mmCtx.fillStyle = MM_HEADING_COLORS[hit._mdHeadingLevel] || MM_HEADING_COLORS[6];
+            mmCtx.fillRect(0, hpy, mmW, (hit._mdHeadingLevel <= 2) ? 3 : 2);
+        }
+    }
+
     // Paint search markers on top (higher visual priority)
     paintSearchMarkers(hasPfx, cumH, total, mmW, mmH, barH);
 

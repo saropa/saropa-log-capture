@@ -269,8 +269,8 @@ function calcItemHeight(item) {
        than the rendered block, producing drift in subsequent row positions. */
     if (item.artBlockPos === 'start' || item.artBlockPos === 'end') return logFontSize + 6;
     if (item.artBlockPos === 'middle') return logFontSize;
-    /* Structured file collapse (plan 051): markdown sections and JSON brace pairs. */
-    if (item._mdSectionHidden || item._jsonSectionHidden) return 0;
+    /* Structured file collapse (plan 051): markdown sections, JSON brace pairs, comment blocks. */
+    if (item._mdSectionHidden || item._jsonSectionHidden || item._mdCommentHidden) return 0;
     /* Markdown table separator row (|---|): collapse to nothing. The header row carries a
        bottom border as the divider, so a full-height empty separator would only add a gap. */
     if (item._mdTableSep && typeof formatEnabled !== 'undefined' && formatEnabled && typeof fileMode !== 'undefined' && fileMode === 'markdown') return 0;
