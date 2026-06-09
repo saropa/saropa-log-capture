@@ -197,6 +197,24 @@ function makePayloadOptions(deps: HandlerDeps): SessionListPayloadOptions {
   };
 }
 
+/**
+ * Buffer webview records and post them in chunks. The streaming refresh and the deferred severity
+ * scan both used to post ONE row per message; for a months-deep archive that is thousands of
+ * postMessage round-trips (the streaming path also slept a macrotask between each), which is the
+ * dominant load-time stall. The webview's `patchSessionRow` already loops over multi-item batches,
+ * so chunking is a pure win. Call `flush()` once the producing pass completes.
+ */
+function makeRowBatcher(
+  post: (rows: Record<string, unknown>[]) => void,
+  chunk = 100,
+): { add: (rec: Record<string, unknown>) => void; flush: () => void } {
+  let buffer: Record<string, unknown>[] = [];
+  return {
+    add(rec) { buffer.push(rec); if (buffer.length >= chunk) { post(buffer); buffer = []; } },
+    flush() { if (buffer.length > 0) { post(buffer); buffer = []; } },
+  };
+}
+
 /** Wire session list, browse root, clear root, and session action handlers. */
 function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void {
   const { historyProvider, broadcaster, sessionManager } = deps;
@@ -229,32 +247,27 @@ function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void
     const overrideUri = overrideUriStr ? vscode.Uri.parse(overrideUriStr) : undefined;
     const activeStr = historyProvider.getActiveUri()?.toString();
     const opts = makePayloadOptions(deps);
-    /* Serialize UI updates: 8 workers load files in parallel, but only one
-     * posts to the webview at a time. Each post is followed by a macrotask
-     * yield (setTimeout) so the webview can render before the next update.
-     * Without serialization, all 8 workers finish near-simultaneously and
-     * the webview receives a burst that renders as a single pop-in. */
-    let sendChain = Promise.resolve();
+    /* Hydration is BATCHED: the previous design posted one row per message with a setTimeout(0)
+     * yield between each, costing ~N macrotasks — seconds of stall for a months-deep archive
+     * (thousands of files). patchSessionRow handles multi-item batches, so chunking the posts is a
+     * pure latency win with no rendering downside. */
+    const hydratePoster = makeRowBatcher((rows) => broadcaster.postToWebview({ type: 'sessionListBatch', items: rows }));
     const onItemLoaded = async (item: SessionMetadata): Promise<void> => {
       try {
-        const rec = await buildSessionItemRecord(item, activeStr, opts);
-        sendChain = sendChain.then(() => {
-          broadcaster.postToWebview({ type: 'sessionListBatch', items: [rec] });
-          return new Promise<void>(r => setTimeout(r, 0));
-        }).catch(() => { /* keep chain alive if one post fails */ });
-        await sendChain;
+        hydratePoster.add(await buildSessionItemRecord(item, activeStr, opts));
       } catch { /* non-critical — row keeps its shimmer */ }
     };
-    /* mtime is all the webview needs to day-group, so the skeleton can paint before any
-       file body is read. uriString must match the per-file batch record's so hydration
-       patches the right row. */
+    /* mtime day-groups the skeleton; size lets the skeleton show the file size immediately (it is
+       free from the stat pass) instead of shimmering until the body loads. uriString must match the
+       per-file batch record's so hydration patches the right row. */
     const onItemPreview = (previews: readonly SessionPreviewRecord[]): void => {
       broadcaster.postToWebview({
         type: 'sessionListPreview',
-        previews: previews.map(p => ({ filename: p.filename, uriString: p.uri.toString(), mtime: p.mtime })),
+        previews: previews.map(p => ({ filename: p.filename, uriString: p.uri.toString(), mtime: p.mtime, size: p.size })),
       });
     };
     const items = await historyProvider.getAllChildrenStreaming(onItemLoaded, overrideUri, onItemPreview);
+    hydratePoster.flush();
     const payload = await buildSessionListPayload(items, historyProvider.getActiveUri(), opts);
     sendFinalList(payload);
     kickDeferredSeverityScan(items, activeStr, opts);
@@ -277,17 +290,19 @@ function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void
     payloadOpts: SessionListPayloadOptions,
   ): void => {
     const strict = getConfig().levelDetection === 'strict';
-    void runDeferredSeverityScan(items, {
+    /* Batched like the hydration pass: a per-file post here meant another ~N messages after paint
+       (one per scanned .log). Chunk them and flush when the scan finishes. */
+    const scanPoster = makeRowBatcher((rows) => broadcaster.postToWebview({ type: 'sessionListBatch', items: rows }), 50);
+    runDeferredSeverityScan(items, {
       metaStore: historyProvider.metaStore,
       metaCache: historyProvider.metaCache,
       strict,
       onScanned: async (updated) => {
         try {
-          const rec = await buildSessionItemRecord(updated, activeStr, payloadOpts);
-          broadcaster.postToWebview({ type: 'sessionListBatch', items: [rec] });
+          scanPoster.add(await buildSessionItemRecord(updated, activeStr, payloadOpts));
         } catch { /* webview gone or post failed — counts still cached on disk */ }
       },
-    });
+    }).then(() => scanPoster.flush(), () => scanPoster.flush());
   };
 
   let firstLoadFired = false;
