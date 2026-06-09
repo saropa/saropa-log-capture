@@ -66,27 +66,34 @@ function durationText(parsed: ParsedLog): string {
     return mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
 }
 
-/** One colored stat pill. */
-function pill(icon: string, value: string, label: string, tone: string): string {
-    return `<span class="pill pill-${tone}">${icon} <b>${esc(value)}</b> ${esc(label)}</span>`;
+/** A stat pill spec. `line` (when set) makes the pill reveal that log line on click. */
+interface Pill { readonly icon: string; readonly value: string; readonly label: string; readonly tone: string; readonly line?: number; }
+
+/** Render one colored stat pill. */
+function pill(p: Pill): string {
+    const link = p.line ? ` pill-link" role="link" tabindex="0" data-line="${p.line}" title="Reveal in log` : '';
+    return `<span class="pill pill-${p.tone}${link}">${p.icon} <b>${esc(p.value)}</b> ${esc(p.label)}</span>`;
 }
 
 /** Compact colored stat pills for the top bar (exported — placed next to the save button). */
 export function statPillsHtml(parsed: ParsedLog, graph: FlowGraph): string {
     const screens = graph.nodes.filter(n => n.walked && n.kind !== 'launch').length;
+    // Each number traces to a log line: duration → the session-start banner, slow → the worst query,
+    // crash → the exception. Screens/repeat have no single representative line, so they stay static.
+    const slowLine = parsed.issues.find(i => i.category === 'Slow query')?.logLine;
     return [
-        pill('🧭', String(screens), 'screens', 'green'),
-        pill('⏱️', durationText(parsed), 'duration', 'blue'),
-        pill('🐢', String(parsed.slowQueryCount), 'slow', 'amber'),
-        pill('🔁', String(parsed.repeatBatchCount), 'repeat', 'purple'),
-        pill(parsed.crash ? '💥' : '✓', parsed.crash ? '1' : '0', 'crash', parsed.crash ? 'red' : 'green'),
-    ].join('');
+        { icon: '🧭', value: String(screens), label: 'screens', tone: 'green' },
+        { icon: '⏱️', value: durationText(parsed), label: 'duration', tone: 'blue', line: 1 },
+        { icon: '🐢', value: String(parsed.slowQueryCount), label: 'slow', tone: 'amber', line: slowLine },
+        { icon: '🔁', value: String(parsed.repeatBatchCount), label: 'repeat', tone: 'purple' },
+        { icon: parsed.crash ? '💥' : '✓', value: parsed.crash ? '1' : '0', label: 'crash', tone: parsed.crash ? 'red' : 'green', line: parsed.crash?.logLine },
+    ].map(pill).join('');
 }
 
-/** Header facts block. */
+/** Header facts block — every field comes from the session-start banner; click reveals it (log line 1). */
 function factsHtml(parsed: ParsedLog): string {
     const h = parsed.header;
-    return '<div class="facts">'
+    return '<div class="facts facts-link" role="link" tabindex="0" data-line="1" title="Reveal session header in log">'
         + `<strong>${esc(h.project ?? 'session')}</strong> · ${esc(h.branch ?? '?')} @ ${esc(h.commit ?? '?')}`
         + ` · ${esc(h.device ?? 'unknown device')} · ${esc(h.captureStartClock ?? '?')} → ${esc(parsed.lastClock ?? '?')}`
         + '</div>';
@@ -140,7 +147,8 @@ function section(id: string, title: string, body: string): string {
 /** Section table of contents (jumps to and expands a section). */
 function tocHtml(): string {
     const items: [string, string][] = [
-        ['sec-flow', '🗺️ Flow'], ['sec-dwell', '⏱️ Screen dwell'], ['sec-perf', '📊 Performance'],
+        ['sec-flow', '🗺️ Flow'], ['sec-narrative', '📝 Narrative'],
+        ['sec-dwell', '⏱️ Screen dwell'], ['sec-perf', '📊 Performance'],
     ];
     return '<nav class="toc">'
         + items.map(([id, label]) => `<a href="#${id}" data-target="${id}">${label}</a>`).join('')
@@ -149,19 +157,23 @@ function tocHtml(): string {
 
 /** Build the inner webview body (the panel adds doctype/CSP/styles/topbar). */
 export function buildFlowMapBody(parsed: ParsedLog, graph: FlowGraph): string {
-    // Flow diagram and narrative share a row that wraps to one column when the panel is narrow.
-    const flowBody = '<div class="flow-row">'
-        + '<div class="flow-col"><p class="legend">Solid = walked · dashed = recovered indirectly · 💥 = fault.'
-        + ' Click a node to find its row and jump the log; click a source to open it.</p>'
-        + '<div class="diagram">' + renderSvg(graph) + '</div></div>'
-        + '<div class="narr-col"><h3>📝 Narrative</h3><p>' + esc(buildNarrative(parsed, graph)) + '</p></div>'
+    // Two-column report: the (potentially very tall) diagram on the left; the narrative and both
+    // tables stacked in a right column so they stay visible alongside the diagram, not buried under
+    // it. The row wraps to a single column when the panel is narrow.
+    const legend = '<p class="legend">Solid = walked · dashed = recovered indirectly · 💥 = fault.'
+        + ' Click a node to find its row and jump the log; click a source to open it.</p>';
+    const diagramCol = '<div class="diagram-col">'
+        + section('sec-flow', '🗺️ Flow', legend + '<div class="diagram">' + renderSvg(graph) + '</div>')
+        + '</div>';
+    const detailCol = '<div class="detail-col">'
+        + section('sec-narrative', '📝 Narrative', '<p>' + esc(buildNarrative(parsed, graph)) + '</p>')
+        + section('sec-dwell', '⏱️ Screen dwell', dwellTableHtml(graph))
+        + section('sec-perf', '📊 Performance · warnings · errors', issueTableHtml(parsed))
         + '</div>';
     return [
         '<h1>🧭 Saropa Flow Map — ' + esc(parsed.header.project ?? 'session') + '</h1>',
         factsHtml(parsed),
         tocHtml(),
-        section('sec-flow', '🗺️ Flow', flowBody),
-        section('sec-dwell', '⏱️ Screen dwell', dwellTableHtml(graph)),
-        section('sec-perf', '📊 Performance · warnings · errors', issueTableHtml(parsed)),
+        '<div class="report-row">' + diagramCol + detailCol + '</div>',
     ].join('\n');
 }
