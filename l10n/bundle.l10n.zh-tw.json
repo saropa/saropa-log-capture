@@ -1556,5 +1556,13 @@
   "{0} source": "{0} 源的時間",
   "{0} sources": "{0} 源的使用",
   "{0}h ago": "⁇ PH0_h 年前",
-  "{0}w ago": "⁇ PH0__w 年前"
+  "{0}w ago": "⁇ PH0__w 年前",
+  "Reload": "重新載入",
+  "Compare Log to Commit": "將日誌與提交比較",
+  "Could not resolve Git ref \"{0}\". Use a commit SHA, tag, or HEAD~1.": "無法解析 Git 參考「{0}」。請使用提交 SHA、標籤或 HEAD~1。",
+  "Enter a Git ref (commit SHA, tag, or HEAD~1) to use as the baseline": "輸入要作為基準的 Git 參考（提交 SHA、標籤或 HEAD~1）",
+  "Log \"{0}\" was changed on disk. Reload to see the current content?": "日誌「{0}」已在磁碟上變更。是否重新載入以查看目前的內容?",
+  "Log \"{0}\" was deleted on disk. Showing the last loaded snapshot.": "日誌「{0}」已從磁碟刪除。正在顯示上次載入的快照。",
+  "No saved log matches commit \"{0}\". Capture a session at that commit, or use \"Compare Logs\" to pick two manually.": "沒有符合提交「{0}」的已儲存日誌。請在該提交擷取工作階段，或使用「比較日誌」手動選擇兩個。",
+  "Open a log in the viewer first, then compare it to a commit.": "請先在檢視器中開啟日誌，然後將其與提交比較。"
 }

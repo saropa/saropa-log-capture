@@ -1556,5 +1556,13 @@
   "{0} source": "{0} sorgente di origine",
   "{0} sources": "fonti {0}.",
   "{0}h ago": "{0}h fa h.",
-  "{0}w ago": "{0}w ago ago (PHO) - Il mondo è un'altra cosa"
+  "{0}w ago": "{0}w ago ago (PHO) - Il mondo è un'altra cosa",
+  "Reload": "Ricarica",
+  "Compare Log to Commit": "Confronta registro con commit",
+  "Could not resolve Git ref \"{0}\". Use a commit SHA, tag, or HEAD~1.": "Impossibile risolvere il riferimento Git «{0}». Usa uno SHA di commit, un tag o HEAD~1.",
+  "Enter a Git ref (commit SHA, tag, or HEAD~1) to use as the baseline": "Immetti un riferimento Git (SHA di commit, tag o HEAD~1) da usare come base",
+  "Log \"{0}\" was changed on disk. Reload to see the current content?": "Il registro «{0}» è stato modificato sul disco. Ricaricare per visualizzare il contenuto corrente?",
+  "Log \"{0}\" was deleted on disk. Showing the last loaded snapshot.": "Il registro «{0}» è stato eliminato dal disco. Viene visualizzata l'ultima istantanea caricata.",
+  "No saved log matches commit \"{0}\". Capture a session at that commit, or use \"Compare Logs\" to pick two manually.": "Nessun registro salvato corrisponde al commit «{0}». Acquisisci una sessione su quel commit oppure usa «Confronta i registri» per sceglierne due manualmente.",
+  "Open a log in the viewer first, then compare it to a commit.": "Apri prima un registro nel visualizzatore, quindi confrontalo con un commit."
 }

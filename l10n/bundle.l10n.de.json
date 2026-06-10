@@ -1556,5 +1556,13 @@
   "{0} source": "{0} Quelle ist die _PH0_-Quelle.",
   "{0} sources": "{0}-Quellen sind die Quelle von _PH0_.",
   "{0}h ago": "Vor einer Stunde {0}h.",
-  "{0}w ago": "{0}w vor ein paar Jahren."
+  "{0}w ago": "{0}w vor ein paar Jahren.",
+  "Reload": "Neu laden",
+  "Compare Log to Commit": "Protokoll mit Commit vergleichen",
+  "Could not resolve Git ref \"{0}\". Use a commit SHA, tag, or HEAD~1.": "Git-Ref „{0}“ konnte nicht aufgelöst werden. Verwenden Sie einen Commit-SHA, ein Tag oder HEAD~1.",
+  "Enter a Git ref (commit SHA, tag, or HEAD~1) to use as the baseline": "Geben Sie einen Git-Ref (Commit-SHA, Tag oder HEAD~1) als Basis ein",
+  "Log \"{0}\" was changed on disk. Reload to see the current content?": "Protokoll „{0}“ wurde auf dem Datenträger geändert. Neu laden, um den aktuellen Inhalt anzuzeigen?",
+  "Log \"{0}\" was deleted on disk. Showing the last loaded snapshot.": "Protokoll „{0}“ wurde auf dem Datenträger gelöscht. Der zuletzt geladene Stand wird angezeigt.",
+  "No saved log matches commit \"{0}\". Capture a session at that commit, or use \"Compare Logs\" to pick two manually.": "Kein gespeichertes Protokoll passt zu Commit „{0}“. Zeichnen Sie eine Sitzung bei diesem Commit auf oder verwenden Sie „Protokolle vergleichen“, um zwei manuell auszuwählen.",
+  "Open a log in the viewer first, then compare it to a commit.": "Öffnen Sie zuerst ein Protokoll im Viewer und vergleichen Sie es dann mit einem Commit."
 }
