@@ -21,6 +21,8 @@ export const stringsA: Record<string, string> = {
     'msg.enterTagsPrompt': 'Enter tags (comma-separated)',
     'msg.sessionMarkedController': 'Set as Controller: {0}',
     'msg.sessionMarkedPeripheral': 'Marked as Peripheral: {0}',
+    'msg.sessionPinned': 'Pinned to top: {0}',
+    'msg.sessionUnpinned': 'Unpinned: {0}',
     'msg.exportedTo': 'Exported to {0}',
     'msg.foundCorrelationTags': 'Found {0} correlation tag{1}.',
     'msg.filePathCopied': 'File path copied to clipboard',
