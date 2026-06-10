@@ -203,6 +203,8 @@ export function getConfig(): SaropaLogCaptureConfig {
     // changelog can live; users add monorepo paths or `**/CHANGELOG*` here.
     changelogPaths: ensureStringArray(cfg.get("changelogPaths"), ["CHANGELOG*", "docs/CHANGELOG*"]),
     includeSubfolders: ensureBoolean(cfg.get("includeSubfolders"), true),
+    reloadOnExternalChange: ensureBoolean(cfg.get("reloadOnExternalChange"), true),
+    reloadPromptOnExternalChange: ensureBoolean(cfg.get("reloadPromptOnExternalChange"), false),
     treeRefreshInterval: ensureNonNegative(cfg.get("treeRefreshInterval"), 0),
     sessionListPageSize: clamp(cfg.get("sessionListPageSize"), 10, 500, 100),
     iconBarPosition: ensureEnum(cfg.get("iconBarPosition"), ["left", "right"], "left"),

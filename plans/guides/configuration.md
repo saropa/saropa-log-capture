@@ -64,6 +64,8 @@ All settings are prefixed with `saropaLogCapture.`
 | `maxLogFiles`        | `10`             | Max log files to retain (0 = unlimited)                                                                                                          |
 | `organizeFolders`    | `true`           | Move flat log files into `yyyymmdd/` date subfolders on session start                                                                            |
 | `includeSubfolders`  | `true`           | Include log files from date subfolders in session history, search, and analysis                                                                   |
+| `reloadOnExternalChange` | `true`       | Reload the open log when another process rewrites/truncates/deletes it on disk (live append-growth is always followed regardless)                  |
+| `reloadPromptOnExternalChange` | `false` | When an external rewrite triggers a reload, ask "File changed on disk. Reload?" first instead of reloading silently                                |
 | `gitignoreCheck`     | `true`           | Offer to add log directory to .gitignore on first run                                                                                            |
 | `redactEnvVars`      | `[]`             | Env var patterns to redact from headers. **Tip:** Add `API_KEY`, `SECRET_*`, `*_TOKEN` to keep secrets out of session context headers.            |
 | `autoTagRules`       | `[]`             | Rules for auto-tagging sessions by content patterns                                                                                              |

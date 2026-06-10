@@ -1480,6 +1480,18 @@
           "type": "boolean",
           "title": "%config.includeSubfolders.title%"
         },
+        "saropaLogCapture.reloadOnExternalChange": {
+          "default": true,
+          "description": "%config.reloadOnExternalChange.description%",
+          "type": "boolean",
+          "title": "%config.reloadOnExternalChange.title%"
+        },
+        "saropaLogCapture.reloadPromptOnExternalChange": {
+          "default": false,
+          "description": "%config.reloadPromptOnExternalChange.description%",
+          "type": "boolean",
+          "title": "%config.reloadPromptOnExternalChange.title%"
+        },
         "saropaLogCapture.includeTimestamp": {
           "default": true,
           "description": "%config.includeTimestamp.description%",

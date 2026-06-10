@@ -197,6 +197,17 @@ export interface SaropaLogCaptureConfig {
    */
   readonly changelogPaths: readonly string[];
   readonly includeSubfolders: boolean;
+  /**
+   * When the open log file is rewritten/truncated/deleted on disk by another process (plan 039b),
+   * reload it into the viewer instead of leaving stale content. Append-growth is always tailed live
+   * regardless of this flag; this governs only the non-append (shrink/rewrite) full-reload path.
+   */
+  readonly reloadOnExternalChange: boolean;
+  /**
+   * When `reloadOnExternalChange` triggers, prompt "File changed on disk. [Reload] [Ignore]" instead
+   * of reloading silently. Off by default so live external edits reflect immediately without a click.
+   */
+  readonly reloadPromptOnExternalChange: boolean;
   readonly treeRefreshInterval: number;
   /** Logs per page in Logs panel (pagination). */
   readonly sessionListPageSize: number;
