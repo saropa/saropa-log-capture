@@ -158,6 +158,26 @@ suite('viewer-sql-query-history panel script', () => {
         assert.ok(s.includes("emptyEl.classList.remove('u-hidden')"));
         assert.ok(!s.includes("emptyEl.style.display"), 'should not use inline display');
     });
+
+    test('DB_18b 1c: render is scale-gated — full below cap, windowed above', () => {
+        const s = getSqlQueryHistoryPanelScript();
+        assert.ok(s.includes('SQL_HISTORY_RENDER_CAP = 2000'), 'defines the render cap threshold');
+        // renderCount equals filtered.length below the cap (unchanged behavior) and is
+        // clamped to the window only when the filtered set exceeds the cap.
+        assert.ok(s.includes('filtered.length > SQL_HISTORY_RENDER_CAP'), 'gates windowing on the cap');
+        assert.ok(s.includes('Math.min(filtered.length, sqlHistoryRenderLimit)'), 'clamps to the window');
+        assert.ok(s.includes('for (i = 0; i < renderCount; i++)'), 'loop honors the windowed count, not filtered.length');
+    });
+
+    test('DB_18b 1c: pager row + show-more wiring only when window hides rows', () => {
+        const s = getSqlQueryHistoryPanelScript();
+        assert.ok(s.includes('renderCount < filtered.length'), 'pager appears only when rows are hidden');
+        assert.ok(s.includes('sql-qh-show-more'), 'renders the show-more button');
+        assert.ok(s.includes('viewer.sqlHistory.showingCapped'), 'capped notice wired via l10n key');
+        assert.ok(s.includes('viewer.sqlHistory.showMore'), 'show-more label wired via l10n key');
+        assert.ok(s.includes('showMoreSqlHistoryRows'), 'show-more click grows the window');
+        assert.ok(s.includes('sqlHistoryPreserveLimit = true'), 'growing the window preserves the limit across re-render');
+    });
 });
 
 suite('formatSqlForExpand (VM)', () => {

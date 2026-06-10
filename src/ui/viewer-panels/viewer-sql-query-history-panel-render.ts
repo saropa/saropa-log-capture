@@ -6,6 +6,17 @@
 /** Returns render, open/close, jump, and copy functions for the SQL history panel. */
 export function getSqlQueryHistoryPanelRenderScript(): string {
     return /* javascript */ `
+    /* DB_18b item 1c: scale-gated render window. The panel builds the whole <tbody> in one
+       innerHTML pass (no virtualization like the main log view). Distinct fingerprint counts are
+       bounded in practice (hundreds-to-low-thousands), so below SQL_HISTORY_RENDER_CAP we render
+       every filtered row — identical to the pre-1c behavior, zero change. Only once a workspace
+       surfaces a multi-thousand-row panel do we cap the DOM build and offer a "Show more" pager,
+       avoiding the jank of materializing thousands of <tr> at once. */
+    var SQL_HISTORY_RENDER_CAP = 2000;
+    var sqlHistoryRenderLimit = SQL_HISTORY_RENDER_CAP;
+    /* When true, the next render keeps the grown limit (set by "Show more"); otherwise each render
+       resets to the cap so a fresh search/sort starts from the top of the window again. */
+    var sqlHistoryPreserveLimit = false;
     function renderSqlQueryHistoryPanel() {
         if (!listEl || !tbodyEl || !emptyEl) return;
         /* DB_17: show/hide the Cumulative toggle wrap based on whether the host has supplied
@@ -41,8 +52,17 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
             var efp = openRows[j].getAttribute('data-fingerprint');
             if (efp) expandedFps[efp] = true;
         }
+        /* Reset the window to the cap on every render unless "Show more" asked to preserve the
+           grown limit — keeps a new search/sort from inheriting a stale, oversized window. */
+        if (!sqlHistoryPreserveLimit) sqlHistoryRenderLimit = SQL_HISTORY_RENDER_CAP;
+        sqlHistoryPreserveLimit = false;
+        /* Below the cap, render everything (renderCount === filtered.length). Above it, cap the
+           number of <tr> built this pass; the pager row below offers the next window. */
+        var renderCount = filtered.length > SQL_HISTORY_RENDER_CAP
+            ? Math.min(filtered.length, sqlHistoryRenderLimit)
+            : filtered.length;
         var parts = [];
-        for (i = 0; i < filtered.length; i++) {
+        for (i = 0; i < renderCount; i++) {
             r = filtered[i];
             var durTxt = r.maxDur !== undefined ? String(r.maxDur) : '\u2014';
             var expandSrc = (r.sampleSql && r.sampleSql.length) ? r.sampleSql : r.fp;
@@ -79,6 +99,17 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
                 + '<td class="sql-qh-cell-dur"><span class="sql-query-history-dur">' + escapeHtml(durTxt) + '</span></td>'
                 + '</tr>');
         }
+        /* Pager row: only present when the window hid some rows. Spans all three columns; carries no
+           .sql-query-history-row so the expand/restore loops skip it. The remaining count tells the
+           user how many more "Show more" would reveal (capped at one window). */
+        if (renderCount < filtered.length) {
+            var remaining = filtered.length - renderCount;
+            var nextChunk = Math.min(remaining, SQL_HISTORY_RENDER_CAP);
+            parts.push('<tr class="sql-qh-pager-row"><td colspan="3" class="sql-qh-pager-cell">'
+                + '<span class="sql-qh-pager-note">' + escapeHtml(vt('viewer.sqlHistory.showingCapped', renderCount, filtered.length)) + '</span>'
+                + '<button type="button" class="sql-qh-show-more">' + escapeHtml(vt('viewer.sqlHistory.showMore', nextChunk)) + '</button>'
+                + '</td></tr>');
+        }
         tbodyEl.innerHTML = parts.join('');
         var newRows = tbodyEl.querySelectorAll('.sql-query-history-row');
         for (var j = 0; j < newRows.length; j++) {
@@ -86,6 +117,13 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
             if (nfp && expandedFps[nfp]) toggleSqlHistoryRow(newRows[j]);
         }
         updateSqlHistorySortHeaders();
+    }
+    /* Grow the render window by one cap-sized chunk and re-render, preserving the grown limit
+       (the default render path would otherwise reset it back to the cap). */
+    function showMoreSqlHistoryRows() {
+        sqlHistoryRenderLimit += SQL_HISTORY_RENDER_CAP;
+        sqlHistoryPreserveLimit = true;
+        renderSqlQueryHistoryPanel();
     }
     window.refreshSqlQueryHistoryPanelIfOpen = function() {
         if (sqlQueryHistoryPanelOpen) renderSqlQueryHistoryPanel();

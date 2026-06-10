@@ -300,5 +300,30 @@ export function getSqlQueryHistoryPanelStyles(): string {
 .sql-qh-cumulative:hover {
     color: var(--vscode-foreground);
 }
+
+/* DB_18b 1c: pager row shown only when the scale-gated window hides rows (>2000 filtered). */
+.sql-qh-pager-cell {
+    padding: 10px 12px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+}
+
+.sql-qh-pager-note { margin-right: 8px; }
+
+.sql-qh-show-more {
+    background: none;
+    border: 1px solid var(--vscode-button-border, var(--vscode-contrastBorder, transparent));
+    color: var(--vscode-textLink-foreground, var(--vscode-focusBorder));
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 10px;
+    border-radius: 3px;
+}
+
+.sql-qh-show-more:hover {
+    color: var(--vscode-foreground);
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
 `;
 }
