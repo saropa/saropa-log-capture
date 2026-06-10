@@ -78,7 +78,7 @@ If shipping a subset rather than the full quick-win pass, in this order:
 | **Route push/pop/replace** | ✗ unless app manually prints it | ✓ |
 | **UI actions (button taps, gestures)** | ✗ unless app manually prints it | ✓ |
 | **Semantic events (`checkout_started`, `payment_failed`)** | ✗ unless app manually prints it | ✓ |
-| **Outgoing HTTP requests + statuses** | ▲ partial — planned in [integrations/010_integration-spec-http-network.md](integrations/010_integration-spec-http-network.md) | ✓ via SDK and/or HAR |
+| **Outgoing HTTP requests + statuses** | ▲ partial — planned in [010_integration-spec-http-network.md](010_integration-spec-http-network.md) | ✓ via SDK and/or HAR |
 | **Screenshot references at error time** | ✗ no rendering path | ✓ optional, opt-in |
 
 Three observations follow from the gap:
@@ -411,7 +411,7 @@ Adding event types unlocks a class of **structural** signals that don't reduce t
 
 ### Workstream G — HTTP integration completion
 
-The existing spec at [plans/integrations/010_integration-spec-http-network.md](integrations/010_integration-spec-http-network.md) is marked **Partial**. Several items are in its "Deferred" list. Workstream F signals depend on these being completed.
+The existing spec at [plans/010_integration-spec-http-network.md](010_integration-spec-http-network.md) is marked **Partial**. Several items are in its "Deferred" list. Workstream F signals depend on these being completed.
 
 #### G1. Body preview with size cap and redaction
 - The deferred item already names size cap + redaction as constraints. Implement both. Default cap: 2 KB per body. Redaction: see Workstream I.
