@@ -357,8 +357,9 @@ slice; none needs the dead API):
   groups via a body class; `.cd-appcode-only`).
 - **Context menus** on frames — **DONE** (right-click popover with Copy frame, Copy file path, Open
   file, Create issue from frame; path/open hidden when the frame has no source ref).
-- **Groupings** — partly done (smart framework-frame fold). Extending to "other threads" + repeated-frame
-  collapse remains open.
+- **Groupings** — smart framework-frame fold + **repeated-frame collapse DONE** (2026-06-10; identical
+  consecutive frames render as one row with a ↻×N badge — see Finish Report). Extending to "other
+  threads" grouping remains open.
 
 ### 5c — Clever project integration (#2) — user picked ALL FOUR (2026-05-24 steer)
 
@@ -400,3 +401,29 @@ widget background).
 5a now (bounded, lands immediately) → then a steer on 5c (which integration ideas) and 5d (layout
 direction) → then 5b slices (log-viewer parity) one at a time. 5a is in this pass; 5b–5d await the
 steer to avoid building the wrong interpretation of "clever" / "dashboard."
+
+## Finish Report (2026-06-10) — Stage 5b repeated-frame collapse
+
+This work will be reviewed by another AI.
+
+**Scope:** (B) VS Code extension (TypeScript — crash-detail stack renderer + CSS + test). No Dart/Flutter.
+
+**Context.** Stage 5 is largely shipped (5a stats strip / console link, 5c-1..5c-4 project integration, 5d dashboard grid, most of 5b's log-viewer-parity slices). The one explicitly-open 5b grouping item that's bounded and additive was **repeated-frame collapse**; this pass builds it. ("Other threads" grouping and symbolication remain open and larger.)
+
+**What shipped.** `renderSmartFrameSection` (the crashlytics smart stack) now pre-folds runs of identical consecutive frames before the existing framework-run fold:
+- New `collapseRepeats(frames)` turns consecutive same-`text` frames into `{frame, count, index}` units. The original first-frame index is preserved for the `#N` gutter.
+- The app/framework rendering loop runs over units. A unit with `count > 1` renders the frame once plus a **↻ ×N** badge (`renderFrame`'s new `repeatCount` param). A 4,000-frame self-recursion becomes one row + "↻ ×4000" instead of 4,000 identical lines.
+- The framework-run `<details>` summary now reports the **true** frame total (`frameTotal`, summing unit counts), and the section header still shows the original `frames.length` — the collapse never lies about how deep the stack was.
+- Purely additive: distinct frames are unaffected (no badge); the framework fold, app-only toggle, per-frame copy, and clickable app frames all behave as before.
+
+**Files changed:**
+- `src/ui/analysis/analysis-frame-render.ts` — `collapseRepeats`, `FrameRun`, unit-based loop, `renderFrame` repeat badge, `renderFwRun` true-total summary.
+- `src/ui/viewer-styles/viewer-styles-crashlytics.ts` — `.frame-repeat` badge style (theme tokens).
+- `src/test/ui/analysis/analysis-smart-frame.test.ts` — 3 new cases (collapse + honest total, no-badge for distinct, fw-run collapse).
+- `CHANGELOG.md` — `[Unreleased]` Changed entry.
+
+**Tests:** `analysis-smart-frame.test.js` → 8 passing (+3 new; the 5 pre-existing fold/count tests still pass, confirming no regression to the framework-fold behavior). `npm run check-types` clean; `npm run lint` no warnings on changed files; `npm run compile` passes all verify gates.
+
+**Outstanding (plan stays active):** Stage 5b "other threads" grouping; roadmap #2 symbolication (BIG, blocked on absent symbol artifacts — honest detection/guidance layer is the next step, not symbolication); date-time range + multi-select search; the legacy-hex theme-token sweep in older crashlytics styles. On-device (F5) confirmation of the badge rendering on a real recursive crash is the user's check.
+
+**Finish report appended:** plans/054_plan-app-quality-insights.md

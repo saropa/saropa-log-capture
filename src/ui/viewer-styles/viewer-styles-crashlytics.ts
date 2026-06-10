@@ -251,6 +251,8 @@ export function getCrashlyticsPanelStyles(): string {
 .cd-body .cd-frame-copy { position: absolute; right: 4px; top: 1px; opacity: 0; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; border-radius: 3px; font-size: 11px; padding: 0 5px; cursor: pointer; }
 .cd-body .stack-frame:hover .cd-frame-copy { opacity: 0.8; }
 .cd-body .cd-frame-copy:hover { opacity: 1; }
+/* Plan 054 5b: ↻×N badge on a frame that stands in for a run of identical (recursive) frames. */
+.cd-body .frame-repeat { margin-left: 8px; padding: 0 5px; border-radius: 3px; font-size: 10px; font-weight: 700; color: var(--vscode-badge-foreground); background: var(--vscode-badge-background); }
 .cd-stack-controls { margin: 2px 0 4px; }
 .cd-apponly { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: 1px solid var(--vscode-panel-border); border-radius: 3px; font-size: 11px; padding: 1px 8px; cursor: pointer; opacity: 0.8; }
 .cd-apponly:hover { opacity: 1; }

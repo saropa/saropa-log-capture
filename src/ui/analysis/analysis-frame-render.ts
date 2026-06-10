@@ -41,51 +41,83 @@ export function renderSmartFrameSection(frames: readonly StackFrameInfo[]): stri
     // App-only toggle (#1d): a stack control outside the <summary> so clicking it doesn't collapse the
     // group; the webview toggles a body class that hides framework frames/groups via CSS.
     html += '<div class="cd-stack-controls"><button class="cd-apponly" aria-pressed="false">App frames only</button></div>';
-    let fwRun: StackFrameInfo[] = [];
-    let fwStart = 0;
-    let idx = 0;
+    // Plan 054 5b: collapse consecutive IDENTICAL frames (recursion / stack-overflow loops) into one
+    // row carrying a ↻×N badge, BEFORE the framework-run fold. A 4000-frame self-recursive overflow
+    // otherwise renders 4000 identical lines; one row + a count is the readable form. The original
+    // frame index is preserved for the #N gutter and the badge keeps the true total honest.
+    const runs = collapseRepeats(frames);
+    let fwRun: FrameRun[] = [];
     const flushRun = (): void => {
         if (fwRun.length === 0) { return; }
-        html += fwRun.length <= 2 ? fwRun.map((f, i) => renderFrame(f, fwStart + i)).join('') : renderFwRun(fwRun, fwStart);
+        html += fwRun.length <= 2
+            ? fwRun.map(r => renderFrame(r.frame, r.index, r.count)).join('')
+            : renderFwRun(fwRun);
         fwRun = [];
     };
-    for (const f of frames) {
-        if (f.isApp) { flushRun(); html += renderFrame(f, idx); }
-        else { if (fwRun.length === 0) { fwStart = idx; } fwRun.push(f); }
-        idx++;
+    for (const r of runs) {
+        if (r.frame.isApp) { flushRun(); html += renderFrame(r.frame, r.index, r.count); }
+        else { fwRun.push(r); }
     }
     flushRun();
     return html + '</details>';
 }
 
-/** Wrap a run of framework frames in a collapsed <details> the reader can open. */
-function renderFwRun(run: readonly StackFrameInfo[], startIndex: number): string {
+/** One render unit: a frame plus how many identical copies it stands in for (≥1). */
+interface FrameRun {
+    readonly frame: StackFrameInfo;
+    readonly count: number;
+    /** Original index of the run's first frame (drives the `#N` gutter). */
+    readonly index: number;
+}
+
+/** Fold runs of consecutive identical frames (same text) into counted units. */
+function collapseRepeats(frames: readonly StackFrameInfo[]): FrameRun[] {
+    const runs: FrameRun[] = [];
+    for (let i = 0; i < frames.length; i++) {
+        const last = runs[runs.length - 1];
+        if (last && last.frame.text === frames[i].text) {
+            runs[runs.length - 1] = { frame: last.frame, count: last.count + 1, index: last.index };
+        } else {
+            runs.push({ frame: frames[i], count: 1, index: i });
+        }
+    }
+    return runs;
+}
+
+/** Wrap a run of framework frame-units in a collapsed <details> the reader can open. */
+function renderFwRun(run: readonly FrameRun[]): string {
     let inner = '';
-    for (let i = 0; i < run.length; i++) { inner += renderFrame(run[i], startIndex + i); }
+    let frameTotal = 0;
+    for (const r of run) { inner += renderFrame(r.frame, r.index, r.count); frameTotal += r.count; }
     return `<details class="cd-fw-group"><summary class="cd-fw-summary">`
-        + `⋯ ${run.length} framework frames</summary>${inner}</details>`;
+        + `⋯ ${frameTotal} framework frames</summary>${inner}</details>`;
 }
 
 /**
  * Render one frame. When `index` is supplied (the smart/crashlytics variant) the row gains a `#N`
  * gutter (#1a), a hover copy button (#1b), and a `data-fw` marker on framework frames (#1d app-only
  * filter); the analysis panel calls renderFrame(f) with no index and keeps its plain rows.
+ * `repeatCount` (>1) renders a `↻ ×N` badge when this row stands in for a run of identical frames
+ * collapsed by {@link collapseRepeats} (plan 054 5b).
  */
-function renderFrame(f: StackFrameInfo, index?: number): string {
+function renderFrame(f: StackFrameInfo, index?: number, repeatCount?: number): string {
     const badgeCls = f.isApp ? 'frame-badge-app' : 'frame-badge-fw';
     const badgeLabel = f.isApp ? 'APP' : 'FW';
     const badge = `<span class="frame-badge ${badgeCls}">${badgeLabel}</span>`;
     const num = index !== undefined ? `<span class="frame-num">#${index}</span>` : '';
+    const repeat = repeatCount && repeatCount > 1
+        ? `<span class="frame-repeat" title="${repeatCount} identical consecutive frames (e.g. recursion)">↻ ×${repeatCount}</span>`
+        : '';
     const copy = index !== undefined ? `<button class="cd-frame-copy" data-copy="${escapeHtml(f.text)}" title="Copy frame">⧉</button>` : '';
     const fwAttr = !f.isApp && index !== undefined ? ' data-fw="1"' : '';
     if (f.isApp && f.sourceRef) {
         const file = escapeHtml(f.sourceRef.filePath);
         return `<div class="stack-frame frame-app" data-frame-file="${file}" data-frame-line="${f.sourceRef.line}">`
-            + `${num}${badge}<span class="line-text">${escapeHtml(f.text)}</span>${copy}`
+            + `${num}${badge}<span class="line-text">${escapeHtml(f.text)}</span>${repeat}${copy}`
             + `<div class="frame-detail"></div></div>`;
     }
     const cls = f.isApp ? 'stack-frame frame-app-nosrc' : 'stack-frame frame-fw';
-    return `<div class="${cls}"${fwAttr}>${num}${badge}<span class="line-text">${escapeHtml(f.text)}</span>${copy}</div>`;
+    return `<div class="${cls}"${fwAttr}>${num}${badge}<span class="line-text">${escapeHtml(f.text)}</span>${repeat}${copy}</div>`;
 }
 
 /** Render compact mini-analysis for a single frame (source preview + blame + annotations). */
