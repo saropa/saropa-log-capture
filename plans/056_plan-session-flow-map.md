@@ -243,6 +243,35 @@ S1 first, then S2 — S2 *adds* the interactive lens; it does not replace the re
    attribute to the last known node or an explicit `?` node? Default: last known node, flagged
    `inferred` — but the error-causing-widget parser often resolves it to a real source node first.
 
+## Project log-tag protocol — `[flowmap]` (implemented)
+
+To capture **every** screen/tab/dialog/sheet reliably — not just the ones that happen to emit an
+app-specific breadcrumb, and with the source file even for surfaces the screen scan can't resolve
+(ad-hoc dialogs) — a project emits one log line per surface entered:
+
+```
+[flowmap] enter <screen|tab|dialog|sheet|inline> "<Name>" [<lib/path/to/file.dart:line>]
+```
+
+Examples:
+
+```
+[flowmap] enter tab    "Home"           lib/views/home/home_tab.dart:131
+[flowmap] enter screen "Contact View"   lib/views/contact/contact_view_screen.dart:226
+[flowmap] enter dialog "Culture Picker" lib/components/contact/culture/culture_religion_picker_dialog.dart:101
+```
+
+The parser ([flow-map-breadcrumbs.ts](../src/modules/flow-map/flow-map-breadcrumbs.ts)) recognizes
+the tag and produces a node-creating event carrying the declared **kind** and **source** anchor; the
+builder honors both (the explicit tag is the highest-confidence signal, above the static scan and
+ad-hoc breadcrumbs). The `file:line` is optional — names still produce nodes without it — but
+supplying it makes every node navigable to code.
+
+Recommended emission: a `NavigatorObserver` (push/pop) logs the tag for screens/tabs automatically;
+`showDialog` / `showModalBottomSheet` wrappers log it for dialogs/sheets. This is the lightweight,
+no-SDK path; [plan 052](052_plan-semantic-timeline-capture-and-signal-expansion.md)'s structured
+`[slc:nav]` events are the richer long-term form.
+
 ## Files touched (anticipated)
 
 - **New** (extension)
@@ -364,3 +393,30 @@ stays active.
 - **S2** — interactive graph (pan/zoom, live filtering) remains proposed.
 - On-device/manual verification of the live panel interactions (reveal-in-log, copy, collapse, TOC,
   resize) is the user's F5 check — see the "What to test" handoff.
+
+## Finish Report (2026-06-09) — diagram + parser (#4–#7, `[flowmap]` tag)
+
+**Scope:** (B) VS Code extension. The diagram/parser half of a 7-request refinement round; the panel
+half (#1 stats→Session-info rows, #2 TOC chips, #3 top log path) shipped in commit `4e157361`
+alongside the concurrently-built Activity chart. Reviewed by another AI. S2 stays proposed.
+
+- **#4** circular visit badge on each node's top-right corner, replacing inline `×N`
+  ([flow-map-svg.ts](../src/modules/flow-map/flow-map-svg.ts) `visitBadge`).
+- **#5** dropped the confusing "View" action — `Viewed Contact Detail` is now `lifecycle`, so a
+  screen shows only its visit count, not a duplicate `1 View`
+  ([flow-map-breadcrumbs.ts](../src/modules/flow-map/flow-map-breadcrumbs.ts)).
+- **#6** `[flowmap] enter <kind> "<Name>" [file:line]` capture tag — parser → node event with
+  declared kind + source; builder honors both (highest-confidence). Captures dialogs/sheets the
+  screen scan can't resolve, with source. Protocol documented above. (`flow-map-breadcrumbs.ts`,
+  `flow-map-builder.ts`, `flow-map-model.ts`.)
+- **#7** dwell moved onto the edges (time on the source screen labels the connecting line);
+  `nodeDisplayLines(withCounter=false)` drops the node's inline counter for the SVG, Mermaid keeps it
+  (`flow-map-format.ts`, `flow-map-svg.ts`).
+
+Note: an interleaved Claude session transiently reverted then restored these files mid-session; final
+state verified present and stable.
+
+**Verification:** `check-types` clean; `flow-map.test.js` **18 passing**; functional run confirms no
+`View` action, `[flowmap]`→dialog node with source, badges render, edge dwell labels present.
+**Not committed:** unrelated concurrent workstreams (session-list, loaded-files, name-filter,
+about, URL-open) and shared `CHANGELOG.md` / `strings-*.ts` / `doc/internal/*`.

@@ -5,7 +5,32 @@
  * lines return undefined and are ignored by the builder.
  */
 
-import type { TimelineEvent } from './flow-map-model';
+import type { NodeKind, SourceAnchor, TimelineEvent } from './flow-map-model';
+
+/**
+ * Explicit project tag for complete, source-anchored capture (plan 056, #6). Apps emit one line per
+ * screen/tab/dialog/sheet entered so the map captures EVERY surface (not just ones with ad-hoc
+ * breadcrumbs) and gets the source file for free — including dialogs the screen scan can't resolve.
+ *
+ *   [flowmap] enter <screen|tab|dialog|sheet> "<Name>" [<lib/path/file.dart:line>]
+ *
+ * e.g.  [flowmap] enter dialog "Culture Picker" lib/components/.../culture_religion_picker_dialog.dart:101
+ */
+const FLOWMAP_TAG = /\[flowmap\]\s+enter\s+(screen|tab|dialog|sheet|inline)\s+"([^"]+)"(?:\s+(\S+\.dart):(\d+))?/i;
+
+const TAG_KIND: Record<string, NodeKind> = {
+    screen: 'screen', tab: 'tab', dialog: 'dialog', sheet: 'dialog', inline: 'inline',
+};
+
+/** Parse a `[flowmap] enter …` project tag, or undefined. Carries the declared kind + source. */
+function parseFlowMapTag(line: string, tsMs: number, clock: string, logLine: number): TimelineEvent | undefined {
+    const m = FLOWMAP_TAG.exec(line);
+    if (!m) {
+        return undefined;
+    }
+    const source: SourceAnchor | undefined = m[3] ? { file: m[3].replace(/^\.\//, ''), line: parseInt(m[4], 10) } : undefined;
+    return { tsMs, clock, logLine, kind: 'nav', label: m[2].trim(), nodeKind: TAG_KIND[m[1].toLowerCase()], source };
+}
 
 /** Strip the trailing `[sar-…uuid…]` and surrounding whitespace the app appends to breadcrumbs. */
 function cleanLabel(raw: string): string {
@@ -49,10 +74,12 @@ const MATCHERS: { re: RegExp; build: (m: RegExpExecArray) => Omit<TimelineEvent,
         re: /^Viewed (?!Contact Detail)(.+?):/,
         build: (m) => ({ kind: 'viewed', label: cleanLabel(m[1]) }),
     },
-    // "Viewed Contact Detail: NativeImport" → a viewed action (the matching nav event makes the node).
+    // "Viewed Contact Detail: …" → a redundant nav signal (the matching "Screen Navigation" event
+    // makes the Contact View node). Treated as lifecycle so it does NOT add a confusing "View" action
+    // count alongside the visit count (#5).
     {
         re: /^Viewed Contact Detail\b/,
-        build: () => ({ kind: 'action', label: 'Contact Detail', actionCategory: 'View' }),
+        build: () => ({ kind: 'lifecycle', label: 'Contact Detail' }),
     },
     // App lifecycle — used to explain repeated Home entries (hot restarts).
     {
@@ -63,6 +90,11 @@ const MATCHERS: { re: RegExp; build: (m: RegExpExecArray) => Omit<TimelineEvent,
 
 /** Classify a decorated log line into a TimelineEvent, or undefined when it is not a breadcrumb. */
 export function classifyBreadcrumb(line: string, tsMs: number, clock: string, logLine: number): TimelineEvent | undefined {
+    // Explicit project tag wins — it carries the declared kind and source (most reliable).
+    const tagged = parseFlowMapTag(line, tsMs, clock, logLine);
+    if (tagged) {
+        return tagged;
+    }
     const payload = logPayload(line);
     if (payload === undefined) {
         return undefined;
