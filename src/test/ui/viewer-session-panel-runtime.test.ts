@@ -232,13 +232,19 @@ suite('Session panel script runtime', () => {
         function bootLatestOnly(sessions: Array<Record<string, unknown>>): Map<string, Record<string, unknown>> {
             const { sandbox, messageHandlers, elements } = buildSandbox();
             bootPanel(sandbox);
+            /* "Latest only" is OFF by default now, so this suite enables it explicitly to exercise
+               the folding + controller-exemption logic. Options arrive before the list so the first
+               render already honors the toggle. */
+            for (const handler of messageHandlers) {
+                handler({ data: { type: 'sessionDisplayOptions', options: { showLatestOnly: true, dateRange: 'all', showDayHeadings: true, stripDatetime: true, normalizeNames: true } } });
+            }
             for (const handler of messageHandlers) {
                 handler({ data: { type: 'sessionList', sessions } });
             }
             return elements;
         }
 
-        /* Two controller "contacts" runs + two peripheral "lint" runs, Latest only on by default. */
+        /* Two controller "contacts" runs + two peripheral "lint" runs, Latest only enabled above. */
         const mixed = [
             { uriString: 'file:///c1.log', filename: '20260413_120000_contacts.log', displayName: '20260413_120000_contacts.log', mtime: Date.now() - 60000, trashed: false, role: 'controller' },
             { uriString: 'file:///c2.log', filename: '20260413_110000_contacts.log', displayName: '20260413_110000_contacts.log', mtime: Date.now() - 120000, trashed: false, role: 'controller' },

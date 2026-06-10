@@ -8,6 +8,14 @@ suite('session-display', () => {
             assert.strictEqual(defaultDisplayOptions.dateRange, 'all');
         });
 
+        test('includes sizeRange with value "all" (no size filter by default)', () => {
+            assert.strictEqual(defaultDisplayOptions.sizeRange, 'all');
+        });
+
+        test('showLatestOnly is OFF by default (auto-folding older runs confused users)', () => {
+            assert.strictEqual(defaultDisplayOptions.showLatestOnly, false);
+        });
+
         test('has all required display option fields', () => {
             assert.strictEqual(typeof defaultDisplayOptions.stripDatetime, 'boolean');
             assert.strictEqual(typeof defaultDisplayOptions.normalizeNames, 'boolean');
