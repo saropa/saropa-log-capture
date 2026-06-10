@@ -31,9 +31,10 @@ export const stringsViewerC: Record<string, string> = {
     'viewer.collections.mergeCancel': 'Cancel',
     'viewer.collections.loading': 'Loading…',
 
-    // ── About panel — UI chrome only (viewer-about-panel.ts).
-    // Taglines, product blurbs, and link titles/badges/descriptions are brand /
-    // marketing copy and proper nouns — left English by design (not auto-translated).
+    // ── About panel (viewer-about-panel.ts). Chrome + marketing prose are
+    // localized. Proper nouns stay English via the translate pipeline's brand
+    // shielding: link TITLES/BADGES (product names, "GitHub", version, URLs) and
+    // the Debug section (developer file paths/usages) are deliberately NOT keyed.
     'viewer.about.region': 'About Saropa',
     'viewer.about.close.title': 'Close',
     'viewer.about.close.label': 'Close About',
@@ -44,6 +45,17 @@ export const stringsViewerC: Record<string, string> = {
     'viewer.about.projects': 'Projects',
     'viewer.about.connect': 'Connect',
     'viewer.about.debug': 'Debug — extension files & folders',
+    // Marketing prose — now localized (product NAMES in the text are shielded).
+    'viewer.about.tagline': 'Built for Resilience. Designed for Peace of Mind.',
+    'viewer.about.blurb': 'A technology firm rooted in financial services and online security. We build digital safeguards — developer extensions that just work and a crisis management platform trusted by 50,000+ users.',
+    'viewer.about.project.contacts.desc': 'The superpower your address book is missing. An Intelligent Address Book with Business Card Mode, 252+ medical tips, global emergency numbers for 195+ countries, and biometric locking.',
+    'viewer.about.project.logCapture.desc': 'The Debugger’s Safety Net. Automatically saves all Debug Console output to persistent log files. No setup required — just hit F5 and your logs are safe.',
+    'viewer.about.project.lints.desc': '1700+ custom rules. Catch memory leaks, security vulnerabilities (mapped to OWASP Top 10), and runtime crashes. Includes AI-ready diagnostics for faster repairs.',
+    'viewer.about.project.dartUtils.desc': 'The Swiss Army library. 280+ production-hardened extension methods for Strings, Dates, and Lists extracted from real-world apps.',
+    'viewer.about.connect.github.desc': 'Source, issues, discussions',
+    'viewer.about.connect.medium.desc': 'Exploring the architecture of connection — psychology of relationships, social values, and resilient tech practices.',
+    'viewer.about.connect.bluesky.desc': 'News feed',
+    'viewer.about.connect.linkedin.desc': 'Financial services, online security, and secure web communications.',
 
     // ── Crashlytics panel — host shell (panels/viewer-crashlytics-panel.ts) ─
     'viewer.crashlytics.region': 'Crashlytics',
