@@ -116,6 +116,28 @@ export function getSessionOptionsMenuStyles(): string {
     margin: 4px 4px;
 }
 
+/* --- Grouped submenu triggers (Filter / Display / Actions) ---
+   The flyout panel + ▸ arrow styling is inherited from .context-menu-submenu /
+   .context-menu-submenu-content (already shared with the session context menu in this panel),
+   so grouping the long option list into a few submenus keeps the top-level menu short enough to
+   fit a short panel. These overrides align the trigger row with the menu's other rows (matching
+   padding/radius) and let the label fill the row so the arrow sits far-right. The flyout itself is
+   placed by positionSessionOptionsSubmenu() in viewport coordinates so it is never cropped. */
+.session-options-submenu { padding: 6px; border-radius: 3px; }
+.session-options-submenu-label { flex: 1; font-size: 12px; }
+/* Active-filter dot on the Filter group row: sits just left of the ▸ arrow, shown only when the
+   trigger carries .has-active-filters (toggled in renderNameFilterBar for an active date/size
+   filter). Mirrors the kebab dot's color so the two read as the same "filter is on" signal. */
+.session-options-filter-dot {
+    display: none;
+    width: 6px;
+    height: 6px;
+    margin-right: 4px;
+    border-radius: 50%;
+    background: var(--vscode-textLink-foreground, #3794ff);
+}
+.session-options-submenu.has-active-filters .session-options-filter-dot { display: inline-block; }
+
 .session-options-action {
     display: flex;
     align-items: center;
@@ -135,6 +157,50 @@ export function getSessionOptionsMenuStyles(): string {
     color: var(--vscode-menu-selectionForeground, inherit);
 }
 .session-options-action .codicon { font-size: 14px; opacity: 0.85; }
+
+/* --- Recently-opened-files shortcut list (under the kebab's last separator) ---
+   Caps height at ~10 rows and scrolls past that so the popover never grows taller than the panel.
+   Each row mirrors .session-options-action's hover/padding so the list reads as part of the menu. */
+.session-loaded-files-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+.session-loaded-files-empty {
+    padding: 4px 6px;
+    font-size: 11px;
+    font-style: italic;
+    color: var(--vscode-descriptionForeground);
+    opacity: 0.75;
+}
+.session-loaded-file-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 5px 6px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    color: var(--vscode-foreground);
+    font-size: 12px;
+    cursor: pointer;
+    text-align: left;
+}
+.session-loaded-file-item:hover {
+    background: var(--vscode-menu-selectionBackground, var(--vscode-list-hoverBackground));
+    color: var(--vscode-menu-selectionForeground, inherit);
+}
+.session-loaded-file-item .codicon { font-size: 14px; opacity: 0.85; flex-shrink: 0; }
+/* Long filenames truncate with an ellipsis rather than widening the popover. */
+.session-loaded-file-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 
 /* Highlight the kebab button while the menu is open so the popover origin
    is obvious. Mirrors .session-toggle-btn.active appearance. */
