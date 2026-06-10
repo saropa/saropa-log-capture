@@ -72,6 +72,10 @@ export interface TimelineEvent {
     readonly actionCategory?: string;
     /** 1-based line number in the source log — lets the report jump back to the raw line. */
     readonly logLine?: number;
+    /** From an explicit `[flowmap]` tag: the declared node kind (screen/tab/dialog/…). */
+    readonly nodeKind?: NodeKind;
+    /** From an explicit `[flowmap]` tag: the source file the surface lives in. */
+    readonly source?: SourceAnchor;
 }
 
 /** A performance / warning / error event for the issue overlay and table. */
