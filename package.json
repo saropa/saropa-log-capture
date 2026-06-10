@@ -2804,7 +2804,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "25.x",
-    "@types/vscode": "^1.120.0",
+    "@types/vscode": "^1.105.0",
     "@types/ws": "^8.18.1",
     "@vscode/codicons": "^0.0.45",
     "@vscode/test-cli": "^0.0.12",
@@ -2888,5 +2888,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "8.0.1"
+  "version": "8.0.2"
 }
