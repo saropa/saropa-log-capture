@@ -8,10 +8,11 @@ import { getControllerGroupingScript } from './viewer-session-panel-controllers'
 import { getNewerLogBannerScript } from './viewer-session-panel-reports-bucket';
 import { getSessionStreamingScript } from './viewer-session-panel-rendering-stream';
 import { getNameFilterBarScript } from './viewer-session-panel-rendering-name-filter';
+import { getPinnedRenderingScript } from './viewer-session-panel-rendering-pinned';
 
 /** Get the session panel rendering script fragment. */
 export function getSessionRenderingScript(): string {
-    return getSessionGroupRenderingScript() + getControllerGroupingScript() + getNewerLogBannerScript() + getSessionStreamingScript() + getNameFilterBarScript() + /* javascript */ `
+    return getSessionGroupRenderingScript() + getControllerGroupingScript() + getNewerLogBannerScript() + getSessionStreamingScript() + getNameFilterBarScript() + getPinnedRenderingScript() + /* javascript */ `
     /* escapeAttr and escapeHtmlText are provided by the session panel IIFE bootstrap. */
     function renderSessionList(sessions) {
         if (sessionLoadingEl) sessionLoadingEl.style.display = 'none';
@@ -29,6 +30,11 @@ export function getSessionRenderingScript(): string {
         if (typeof rebuildSessionTagChips === 'function') rebuildSessionTagChips(sessions);
         markLatestByName(sessions, applySessionDisplayOptions);
         var active = sessions.filter(function(s) { return !s.trashed; });
+        /* Pinned rows are lifted out BEFORE any filter runs: a pin means "always keep this at the
+           top of the list", so the date / size / name / tag filters must never hide it. They render
+           in their own section above the day list, newest pin first. */
+        var pinnedRows = sortPinned(active.filter(function(s) { return s.pinned; }));
+        active = active.filter(function(s) { return !s.pinned; });
         /* "Latest only" no longer drops older rows here — that hid them with no trace. The day
            grouping keeps the latest row visible and folds older namesakes behind a clickable
            "+N older" badge (see visibleUnits / renderOlderBadge). markLatestByName above stamped
@@ -42,6 +48,17 @@ export function getSessionRenderingScript(): string {
             var cutoff = Date.now() - (rangeMs[range] || 0);
             active = active.filter(function(s) { return (s.mtime || 0) >= cutoff; });
         }
+        /* Minimum-size filter: keep sessions whose size is at least the chosen
+           lower bound. Built to surface large logs, so thresholds are minimums,
+           not bands. Skeleton preview rows carry size from the stat pass, so this
+           filters correctly even before bodies finish loading. */
+        var sizeRange = sessionDisplayOptions.sizeRange || 'all';
+        if (sizeRange !== 'all') {
+            var kb = 1024, mb = 1024 * kb;
+            var sizeMin = { '25k': 25*kb, '50k': 50*kb, '100k': 100*kb, '500k': 500*kb, '1m': mb, '5m': 5*mb, '10m': 10*mb, '50m': 50*mb };
+            var minBytes = sizeMin[sizeRange] || 0;
+            active = active.filter(function(s) { return (s.size || 0) >= minBytes; });
+        }
         /* Name filter: hide or show-only sessions matching ANY filtered canonical
            name. Recompute each canonical target from its raw basename every render
            so the filter adapts when the user toggles stripDatetime or normalizeNames. */
@@ -54,9 +71,10 @@ export function getSessionRenderingScript(): string {
                 return nfMode === 'only' ? matches : !matches;
             });
         }
-        /* When all filters produce zero results, show a hint instead of a blank list. */
+        /* When the filters drop every non-pinned row, still show the pinned section if there is one;
+           otherwise show the no-match hint instead of a blank list. */
         if (active.length === 0) {
-            sessionListEl.innerHTML = '<div class="session-empty-filtered">' + vt('viewer.session.noMatch') + '</div>';
+            sessionListEl.innerHTML = renderPinnedSection(pinnedRows, {}) || ('<div class="session-empty-filtered">' + vt('viewer.session.noMatch') + '</div>');
             if (sessionListPaginationEl) sessionListPaginationEl.style.display = 'none';
             renderNameFilterBar();
             return;
@@ -75,8 +93,10 @@ export function getSessionRenderingScript(): string {
         sessionListPage = Math.min(Math.max(0, sessionListPage), totalPages - 1);
         var start = sessionListPage * pageSize;
         var pageSessions = sorted.slice(start, start + pageSize);
-        var html = sessionDisplayOptions.showDayHeadings ? renderGrouped(pageSessions, basenameCounts) : renderFlat(pageSessions, basenameCounts);
-        sessionListEl.innerHTML = html;
+        /* Pinned section is prepended to the (paginated, filtered) day list so pins stay put
+           regardless of which page or filter is active. */
+        var dayHtml = sessionDisplayOptions.showDayHeadings ? renderGrouped(pageSessions, basenameCounts) : renderFlat(pageSessions, basenameCounts);
+        sessionListEl.innerHTML = renderPinnedSection(pinnedRows, basenameCounts) + dayHtml;
         /* Newer-log banner: flips visibility based on unreadSinceFocus on any rendered row.
            Called against the SORTED list (post-filter, post-page) so the banner only fires
            when an unread log is actually visible — hiding it would surprise the user. Plan: 001. */
@@ -158,6 +178,9 @@ export function getSessionRenderingScript(): string {
         var dots = renderSeverityDots(s);
         var meta = buildSessionMeta(s, dots, fileTime);
         var perfBadge = s.hasPerformanceData ? '<span class="session-item-perf" title="' + vt('viewer.session.perfAvailable') + '"><span class="codicon codicon-graph-line"></span></span>' : '';
+        /* Loaded-via-picker rows sit under their LOAD day, not the file's mtime — this badge
+           tells the user why an external file shows up here (otherwise it looks misplaced). */
+        var loadedBadge = s.loadedManually ? '<span class="session-item-loaded" title="' + vt('viewer.session.loadedManually') + '"><span class="codicon codicon-folder-opened"></span></span>' : '';
         /* Dot: red = updated in last minute, orange = new since last viewed; only for non-active logs. */
         var updateDot = !s.isActive && (s.updatedInLastMinute || s.updatedSinceViewed) ? '<span class="session-item-update-dot" title="' + (s.updatedInLastMinute ? vt('viewer.session.dot.updatedMin') : vt('viewer.session.dot.updatedSince')) + '"></span>' : '';
         /* Per-row unread dot (blue). Gated so it never doubles up with the red/orange update
@@ -199,7 +222,7 @@ export function getSessionRenderingScript(): string {
                noise — though isLatestOfName itself stays set on the lone entry
                so the "Latest only" filter keeps it (a singleton IS, trivially,
                the latest of its name). */
-            + '<span class="session-item-name">' + escapeHtmlText(name) + ((s.isLatestOfName && s.hasNamesakes) ? ' <span class="session-latest">' + vt('viewer.session.latest') + '</span>' : '') + groupCount + olderBadge + perfBadge + '</span>'
+            + '<span class="session-item-name">' + escapeHtmlText(name) + ((s.isLatestOfName && s.hasNamesakes) ? ' <span class="session-latest">' + vt('viewer.session.latest') + '</span>' : '') + groupCount + olderBadge + perfBadge + loadedBadge + '</span>'
             /* Skeleton rows (mtime-only, from the stat pass) carry _preview until their
                metadata loads — render the shimmer bar so the grouped structure is visible
                immediately while bodies are still being read. updateSessionBatchItems swaps
