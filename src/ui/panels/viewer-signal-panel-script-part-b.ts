@@ -221,6 +221,17 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
                 });
             }
         }
+        /* Fu5: chronological sort is opt-in. 'severity' keeps the producer's order (already
+           severity-ranked) so the default is unchanged; 'time' sorts a copy ascending by the
+           signal's representative timestamp (signals with no timestamp sink to the end). */
+        if (signalsInLogSortMode === 'time') {
+            signals = signals.slice().sort(function(a, b) {
+                var ta = signalRepTs(a), tb = signalRepTs(b);
+                if (ta <= 0) { return tb <= 0 ? 0 : 1; }
+                if (tb <= 0) { return -1; }
+                return ta - tb;
+            });
+        }
         var summaryWindowLabel = (signalsInLogWindowMs != null && signals.length !== signalsAll.length) ? (' of ' + signalsAll.length) : '';
         if (summaryEl) summaryEl.textContent = signalsAll.length === 0
             ? 'Signals in this log'
