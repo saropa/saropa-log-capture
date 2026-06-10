@@ -59,7 +59,7 @@ If shipping a subset rather than the full quick-win pass, in this order:
 
 ### Skip — low leverage even at low cost
 
-- **Fu5** Sort toggle (severity ↔ chronological). Two comparators and a button — cheap, but the existing severity sort handles 95% of cases. Save for a cleanup pass.
+- [x] **Fu5** Sort toggle (severity ↔ chronological). **Shipped 2026-06-10** — a toggle under the time-window chips flips "Signals in this log" between By severity (default) and By time; see Finish Report below.
 - **Fu8** Pin signals to collections. Nice-to-have integration; doesn't move the needle on signal discovery or triage. Save for a cleanup pass.
 
 ---
@@ -684,3 +684,32 @@ This list is anticipatory; concrete file changes will be confirmed per workstrea
 A smaller plan would land just the Crash Context Summary (E1) by parsing existing print statements heuristically. That works, sort of, for apps that already emit structured prints — and gives up on the long tail of apps that don't. Worse, it hard-codes the parser to whatever print format we find today, with no extensibility.
 
 A typed wire format + SDK is more upfront work, but it produces a stable contract that downstream signals and reports can rely on. Once the contract is fixed, each new signal in Workstream F is a small isolated addition — not a parser rewrite.
+
+## Finish Report (2026-06-10) — Fu5 sort toggle (severity ↔ chronological)
+
+This work will be reviewed by another AI.
+
+**Scope:** (B) VS Code extension (TypeScript — Signals panel webview HTML/script/CSS + l10n + test). No Dart/Flutter.
+
+**Context.** Audit confirmed every other quick-win in this plan (Tier 1 Fu7/Fu3/Fu2/Fu4, Tier 2 F10/F9/F14/F7/F8, Tier 3 E3/E4) is already shipped and checked off against live code. The only unbuilt low-cost quick-win was **Fu5**, previously parked under "Skip — save for a cleanup pass." This pass builds it.
+
+**What shipped.** A sort toggle for the "Signals in this log" list, sitting just under the Fu7 time-window chips:
+- **Default unchanged:** `signalsInLogSortMode` starts `'severity'`, which keeps the producer's existing (severity-ranked) order — the render path is byte-for-byte the same as before in the default mode.
+- **Time mode:** sorts a *copy* of the (already window-filtered) signals ascending by `signalRepTs`; signals with no timestamp sink to the end. Sorting a copy means the cached `signalsInThisLog` array is never mutated.
+- **Toggle button** reuses the `.signal-tw-chip` style, carries both localized labels (By severity / By time) as data attributes so the webview script can swap them without a round-trip, and flips `aria-pressed` for assistive tech.
+
+**Files changed:**
+- `src/ui/panels/viewer-signal-panel.ts` — toggle button markup (both labels as data attrs).
+- `src/ui/panels/viewer-signal-panel-script-part-a.ts` — `signalsInLogSortMode` state.
+- `src/ui/panels/viewer-signal-panel-script-part-b.ts` — time-mode sort in `renderSignalsInThisLog`.
+- `src/ui/panels/viewer-signal-panel-script-part-d.ts` — toggle click handler.
+- `src/ui/viewer-styles/viewer-styles-signal-sections.ts` — `.signal-sort-toggle` layout.
+- `src/l10n/strings-viewer-b.ts` — 5 new keys (labels + aria/title).
+- `src/test/ui/signal-panel-row-click.test.ts` — 2 new Fu5 cases.
+- `CHANGELOG.md` — `[Unreleased]` Changed entry.
+
+**Tests:** `signal-panel-row-click.test.js` → 12 passing (+2 new), including the existing "generated part B + part D parse as valid JS" guard, so the added script is syntactically sound. `npm run check-types` clean; `npm run lint` no warnings on changed files; `npm run compile` passes all verify gates.
+
+**Outstanding:** The rest of plan 052 (Workstreams A–D — wire-format protocol, app-side SDK, structured ingestion, full viewer rendering; plus Fu8 pin-to-collections and the SDK-gated signals F1/F2/F3/F4/F11/F12/F13 and network signals) remains. Plan stays active. On-device (F5) confirmation of the toggle is the user's check.
+
+**Finish report appended:** plans/052_plan-semantic-timeline-capture-and-signal-expansion.md
