@@ -102,7 +102,7 @@ export async function updateLastViewed(context: vscode.ExtensionContext, uri: vs
 }
 
 /** Shared type for session metadata fields needed to build a webview record. */
-type Meta = { filename: string; displayName?: string; adapter?: string; size: number; mtime: number; date?: string; hasTimestamps?: boolean; lineCount?: number; durationMs?: number; errorCount?: number; warningCount?: number; perfCount?: number; anrCount?: number; fwCount?: number; infoCount?: number; debugCount?: number; databaseCount?: number; todoCount?: number; noticeCount?: number; uri: { toString(): string }; trashed?: boolean; tags?: string[]; autoTags?: string[]; correlationTags?: string[]; hasPerformanceData?: boolean; groupId?: string;
+type Meta = { filename: string; displayName?: string; adapter?: string; size: number; mtime: number; date?: string; hasTimestamps?: boolean; lineCount?: number; durationMs?: number; errorCount?: number; warningCount?: number; perfCount?: number; anrCount?: number; fwCount?: number; infoCount?: number; debugCount?: number; databaseCount?: number; todoCount?: number; noticeCount?: number; uri: { toString(): string }; trashed?: boolean; pinned?: boolean; pinnedAt?: number; tags?: string[]; autoTags?: string[]; correlationTags?: string[]; hasPerformanceData?: boolean; groupId?: string;
     /** Parsed log header `Project:` value — feeds the session-kind classifier's workspace-match rule. */
     project?: string;
     /** DAP adapter type ("dart", "node", …) — feeds the session-kind classifier's debug-session rule. */
@@ -111,6 +111,8 @@ type Meta = { filename: string; displayName?: string; adapter?: string; size: nu
     kind?: SessionKind;
     /** Explicit Controller/Peripheral override (user's manual decision) — the role classifier reads this first. */
     role?: SessionRole;
+    /** True for rows injected from the loaded-files history (Open Log File picker). */
+    loadedManually?: boolean;
 };
 
 /** Extra fields written onto session-group member records so the webview can render groupings. */
@@ -169,7 +171,9 @@ export async function buildSessionItemRecord(
         unreadSinceFocus,
         kind,
         role,
-        uriString: uriStr, trashed: m.trashed ?? false, tags: m.tags ?? [],
+        uriString: uriStr, trashed: m.trashed ?? false,
+        pinned: m.pinned ?? false, pinnedAt: m.pinnedAt ?? 0,
+        tags: m.tags ?? [],
         autoTags: m.autoTags ?? [], correlationTags: m.correlationTags ?? [],
         hasPerformanceData: m.hasPerformanceData ?? false,
         // Session-group render hints. `groupId` prefers the explicit extras value (from a
@@ -178,6 +182,8 @@ export async function buildSessionItemRecord(
         groupId: extras?.groupId ?? m.groupId,
         isGroupPrimary: extras?.isGroupPrimary ?? false,
         groupSize: extras?.groupSize ?? 0,
+        // Flags rows sourced from the loaded-files history so the webview can mark them.
+        loadedManually: m.loadedManually ?? false,
     };
 }
 
