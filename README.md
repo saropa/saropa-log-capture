@@ -387,6 +387,7 @@ See [plans/walkthrough/keyboard-shortcuts.md](plans/walkthrough/keyboard-shortcu
 - **Empty or near-empty log files:** If the Debug Console has output but the open log shows only a header, use **Prev/Next** in the viewer and enable `diagnosticCapture` to inspect the pipeline. See [Runbook: Missing or empty log files](plans/010_runbook-missing-or-empty-logs.md).
 - **Viewer line cap:** The viewer shows the first N lines (`viewerMaxLines`, default 50,000). The full file is kept on disk up to `maxLines` (default 100,000). Toolbar shows "Showing first X of Y lines" when truncated.
 - **Debug Console only:** The main capture stream is from the VS Code Debug Console (DAP). Enable the `terminal` integration adapter to also capture Integrated Terminal output.
+- **Some Debug Console lines are not capturable:** A few lines are rendered into the Debug Console by VS Code itself (e.g. adapter-internal logging or process stdout shown directly), not delivered to extensions as DAP `output` events. The Debug Adapter Protocol is the only channel this extension receives, so those lines cannot be captured. Separately, when `captureAll` is off, lines whose DAP category is not in `saropaLogCapture.categories` are filtered out — the first time each such category is dropped, the **Saropa Log Capture** output channel logs the category name and how to capture it. Enable `captureAll` (the default) to capture every category.
 
 ### Accessibility
 
