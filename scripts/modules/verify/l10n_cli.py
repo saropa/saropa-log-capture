@@ -55,12 +55,16 @@ def prompt_locale_codes() -> list[str] | None:
 def _resolve_menu_default(audit: AuditResult) -> tuple[str, str]:
     """Pick the menu default + hint from what the audit found needs doing."""
     has_english_issues = bool(audit.missing_from_bundle or audit.orphan_in_bundle)
+    has_low_quality = any(lc.low_quality_count > 0 for lc in audit.locale_coverage)
     if has_english_issues and audit.has_gaps:
-        return "3", "sync + translate"
+        return "3", "sync + translate gaps"
     if has_english_issues:
         return "2", "sync"
     if audit.has_gaps:
-        return "3", "translate"
+        return "3", "translate gaps"
+    # No gaps left — point at upgrading the weak/untracked translations.
+    if has_low_quality:
+        return "5", "upgrade low-quality"
     return "1", "nothing to do"
 
 
@@ -69,20 +73,24 @@ def _print_menu() -> None:
     header("Actions")
     print("  1  Audit only (already shown above)")
     print("  2  Sync English bundle (add missing, remove orphans)")
-    print("  3  Sync + translate ALL locales")
-    print("  4  Sync + translate SPECIFIC locales")
+    print("  3  Sync + translate GAPS — all locales")
+    print("  4  Sync + translate GAPS — specific locales")
+    print("  5  Sync + upgrade LOW-QUALITY → NLLB — all locales")
+    print("  6  Sync + upgrade LOW-QUALITY → NLLB — specific locales")
     print("  0  Exit")
 
 
-def _sync_translate_reaudit(locales_to_translate: list[str] | None) -> int:
-    """Sync, optionally translate, then re-audit and offer a gap export.
+def _sync_translate_reaudit(
+    locales_to_translate: list[str] | None, scope: str = "gaps",
+) -> int:
+    """Sync, optionally translate under ``scope``, then re-audit and offer export.
 
     ``locales_to_translate`` is None for sync-only (menu option 2); a list for
-    options 3 (all locales) and 4 (specific).
+    the gaps (3/4) and low-quality upgrade (5/6) options.
     """
     run_sync()
     if locales_to_translate is not None:
-        run_translate(locales_to_translate)
+        run_translate(locales_to_translate, scope=scope)
     final = run_audit()
     print()
     print_audit(final)
@@ -112,13 +120,21 @@ def interactive_menu() -> int:
     if choice == "2":
         return _sync_translate_reaudit(None)
     if choice == "3":
-        return _sync_translate_reaudit(get_translation_locales())
+        return _sync_translate_reaudit(get_translation_locales(), "gaps")
     if choice == "4":
         codes = prompt_locale_codes()
         if not codes:
             print(yellow("  Cancelled."))
             return 2
-        return _sync_translate_reaudit(codes)
+        return _sync_translate_reaudit(codes, "gaps")
+    if choice == "5":
+        return _sync_translate_reaudit(get_translation_locales(), "low_quality")
+    if choice == "6":
+        codes = prompt_locale_codes()
+        if not codes:
+            print(yellow("  Cancelled."))
+            return 2
+        return _sync_translate_reaudit(codes, "low_quality")
     print(red(f"  Unknown choice: {choice}"))
     return 1
 
@@ -142,6 +158,16 @@ def _parse_args() -> argparse.Namespace:
         type=str,
         default="",
         help="Comma-separated locale codes (default: all).",
+    )
+    p.add_argument(
+        "--scope",
+        choices=["gaps", "low_quality"],
+        default="gaps",
+        help=(
+            "translate mode: 'gaps' (default) fills untranslated strings; "
+            "'low_quality' re-translates existing low-quality / untracked "
+            "strings with NLLB (Google → NLLB upgrade)."
+        ),
     )
     p.add_argument(
         "--dry-run",
@@ -191,7 +217,7 @@ def run_non_interactive() -> int:
         targets = _resolve_targets(args)
         if targets is None:
             return 1
-        run_translate(targets, dry_run=args.dry_run)
+        run_translate(targets, dry_run=args.dry_run, scope=args.scope)
 
     final = run_audit()
     print()
