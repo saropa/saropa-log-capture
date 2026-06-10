@@ -1,5 +1,5 @@
 /**
- * `doc/internal/contributes-commands.md` is generated from package.json for keybinding reference.
+ * `plans/reference/contributes-commands.md` is generated from package.json for keybinding reference.
  */
 import * as assert from "node:assert";
 import * as fs from "node:fs";
@@ -11,7 +11,7 @@ function repoRoot(): string {
 
 suite("contributes commands doc (generated)", () => {
     test("committed commands reference is present and auto-generated", () => {
-        const p = path.join(repoRoot(), "doc", "internal", "contributes-commands.md");
+        const p = path.join(repoRoot(), "plans", "reference", "contributes-commands.md");
         assert.ok(fs.existsSync(p));
         const text = fs.readFileSync(p, "utf8");
         assert.ok(text.includes("AUTO-GENERATED"), "banner");

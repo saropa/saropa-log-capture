@@ -37,6 +37,17 @@ suite('Webview element ID wiring', () => {
     ]);
 
     /**
+     * IDs referenced by webview scripts whose matching HTML element is part of
+     * a pending feature integration. The script guards on `!el` and no-ops
+     * until the HTML lands, so this is a known wip gap, not a regression.
+     *
+     * Empty since plan 001 landed: `session-newer-banner` is now a static HTML
+     * element in viewer-session-panel-html.ts; the allowlist-stale test would
+     * fire if it were still listed here.
+     */
+    const pendingIntegrationIds = new Set<string>([]);
+
+    /**
      * IDs from removed UI that are still referenced in scripts but guarded
      * by null checks (harmless no-ops). Should be cleaned up over time.
      */
@@ -52,6 +63,13 @@ suite('Webview element ID wiring', () => {
         'ib-performance',
         'ib-sql-filter',
         'ib-sql-filter-count-short',
+        // Old toolbar search button + its match-count badge — the button was
+        // redundant with the editor title-bar $(search) command and was replaced
+        // by the flow-map export button (see viewer-toolbar-script.ts). The scripts
+        // keep null-guarded lookups (searchBtn / toolbarSearchBadge) so the
+        // flyout's aria-expanded and badge updates no-op harmlessly.
+        'toolbar-search-btn',
+        'toolbar-search-count',
         // Old footer toggle buttons — not in current HTML
         'audio-toggle',
         'deco-toggle',
@@ -64,7 +82,7 @@ suite('Webview element ID wiring', () => {
     ]);
 
     /** Combined allowlist of IDs that aren't expected in static HTML. */
-    const allowlist = new Set([...dynamicIds, ...staleIds]);
+    const allowlist = new Set([...dynamicIds, ...staleIds, ...pendingIntegrationIds]);
 
     function extractHtmlIds(html: string): Set<string> {
         const bodyEnd = html.indexOf('<script');

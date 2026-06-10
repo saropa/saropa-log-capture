@@ -7,10 +7,73 @@
 /** Returns JS that attaches click handlers to signal trend rows. */
 export function getSignalScriptPartD(): string {
     return /* js */ `
+    /** Re-find a signal object by fingerprint (preferred) or label (fallback). Needed because
+     *  the copy button only carries lightweight data attributes, not the full signal — but the
+     *  detail block needs lineIndices/timeline that live on the cached object. */
+    function findSignalByKey(arr, fp, label) {
+        if (!arr) return null;
+        if (fp) { for (var i = 0; i < arr.length; i++) { if (arr[i] && arr[i].fingerprint === fp) return arr[i]; } }
+        if (label) { for (var j = 0; j < arr.length; j++) { if (arr[j] && arr[j].label === label) return arr[j]; } }
+        return null;
+    }
+
+    /** Collect the full (untruncated) text of a signal's supporting log lines from allLines.
+     *  Unlike buildEvidencePreviewHtml (3 lines, 90-char cap, HTML), this returns complete line
+     *  text for pasting into an analysis engine. Capped at 50 lines to bound the clipboard payload. */
+    function collectSignalEvidenceLines(s) {
+        var out = [];
+        if (typeof allLines === 'undefined' || !allLines || !s || !s.lineIndices || s.lineIndices.length === 0) return out;
+        var seen = {};
+        for (var e = 0; e < s.lineIndices.length && out.length < 50; e++) {
+            var idx = s.lineIndices[e];
+            if (seen[idx]) continue;
+            seen[idx] = 1;
+            var li = allLines[idx];
+            if (!li) continue;
+            /* rawText is null on collapsed/repeat items — fall back to stripping the rendered HTML. */
+            var plain = (li.rawText != null ? li.rawText : (typeof stripTags === 'function' ? stripTags(li.html || '') : (li.html || ''))).replace(/\\s+$/, '');
+            if (plain) out.push(plain);
+        }
+        return out;
+    }
+
+    /** Build a paste-ready markdown detail block for one signal (metadata + raw example +
+     *  full supporting log lines). This is the per-signal counterpart to buildSignalMarkdown,
+     *  which dumps the whole panel. Empty string when no signal is resolved. */
+    function buildSignalDetailText(s) {
+        if (!s) return '';
+        var L = ['## Signal: ' + (s.label || s.detail || '(unlabeled)'), ''];
+        L.push('- Kind: ' + s.kind);
+        if (s.severity) { L.push('- Severity: ' + s.severity); }
+        if (typeof s.totalOccurrences === 'number') { L.push('- Occurrences: ' + s.totalOccurrences + 'x'); }
+        if (typeof s.sessionCount === 'number') { L.push('- Sessions: ' + s.sessionCount); }
+        if (s.avgDurationMs) { L.push('- Avg duration: ' + fmtMs(s.avgDurationMs)); }
+        if (s.maxDurationMs) { L.push('- Max duration: ' + fmtMs(s.maxDurationMs)); }
+        if (s.category) { L.push('- Category: ' + s.category); }
+        if (s.trend) { L.push('- Trend: ' + s.trend); }
+        if (s.firstSeen) { L.push('- First seen: ' + s.firstSeen); }
+        if (s.lastSeen) { L.push('- Last seen: ' + s.lastSeen); }
+        if (s.fingerprint) { L.push('- Fingerprint: ' + s.fingerprint); }
+        if (s.detail) { L.push('', '### Example', '', '\`\`\`', String(s.detail).trim(), '\`\`\`'); }
+        var ev = collectSignalEvidenceLines(s);
+        if (ev.length > 0) { L.push('', '### Supporting log lines (' + ev.length + ')', '', '\`\`\`'); L.push.apply(L, ev); L.push('\`\`\`'); }
+        return L.join('\\n').trim();
+    }
+
+    /** Resolve the clicked copy button to a signal in the given cache array and copy its detail. */
+    function copySignalFromButton(btn, arr) {
+        var sig = findSignalByKey(arr, btn.dataset.fingerprint, btn.dataset.label);
+        var txt = buildSignalDetailText(sig);
+        if (txt) { vscodeApi.postMessage({ type: 'copyToClipboard', text: txt }); }
+    }
+
     /* Signal trend rows — click to open the most recent session with this signal type */
     var signalTrendsEl = document.getElementById('signal-trends-list');
     if (signalTrendsEl) {
         signalTrendsEl.addEventListener('click', function(e) {
+            /* Copy detail — checked first so it never falls through to the row open-session click */
+            var copyBtn = e.target.closest('.signal-copy-btn');
+            if (copyBtn) { e.stopPropagation(); copySignalFromButton(copyBtn, signalDataCache.allSignals); return; }
             /* Lint rule link — opens VS Code settings search for the saropa_lints rule */
             var lintLink = e.target.closest('.signal-lint-link');
             if (lintLink && lintLink.dataset.rule) {
@@ -125,14 +188,28 @@ export function getSignalScriptPartD(): string {
     var signalsInLogEl = document.getElementById('signals-in-log-list');
     if (signalsInLogEl) {
         signalsInLogEl.addEventListener('click', function(e) {
-            var row = e.target.closest('.signal-jumpable');
-            if (!row || !row.dataset.line) return;
-            e.stopPropagation();
-            var lineIdx = parseInt(row.dataset.line, 10);
-            if (isNaN(lineIdx)) return;
-            /* scrollToLineNumber is defined in viewer-goto-line.ts — scrolls to the given 1-based line number */
-            if (typeof scrollToLineNumber === 'function') { scrollToLineNumber(lineIdx + 1); }
-            pulseLinesAround(lineIdx);
+            /* Copy detail — checked before the jump/toggle handlers so the button doesn't also act on the row */
+            var copyBtn = e.target.closest('.signal-copy-btn');
+            if (copyBtn) { e.stopPropagation(); copySignalFromButton(copyBtn, signalDataCache.signalsInThisLog); return; }
+            var jumpRow = e.target.closest('.signal-jumpable');
+            if (jumpRow && jumpRow.dataset.line) {
+                e.stopPropagation();
+                var lineIdx = parseInt(jumpRow.dataset.line, 10);
+                if (isNaN(lineIdx)) return;
+                /* scrollToLineNumber is defined in viewer-goto-line.ts — scrolls to the given 1-based line number */
+                if (typeof scrollToLineNumber === 'function') { scrollToLineNumber(lineIdx + 1); }
+                pulseLinesAround(lineIdx);
+                return;
+            }
+            /* Detail-toggle row (e.g. Drift Advisor issues): no log line to jump to, so clicking
+               expands/collapses the inline detail body instead. This is the "click to see detail"
+               affordance for classified/summary signals that aren't anchored to a single line. */
+            var toggleRow = e.target.closest('.signal-detail-toggle');
+            if (toggleRow) {
+                e.stopPropagation();
+                var body = toggleRow.querySelector('.signal-detail-body');
+                if (body) { body.hidden = !body.hidden; toggleRow.classList.toggle('signal-detail-open', !body.hidden); }
+            }
         });
     }
 

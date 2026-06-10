@@ -13,10 +13,11 @@
  */
 
 import { getContextMenuLineActionsScript } from './viewer-context-menu-line-actions';
+import { getContextMenuBlockCopyScript } from './viewer-context-menu-block-copy';
 
 /** Get the context menu action handler script. */
 export function getContextMenuActionsScript(): string {
-    return getContextMenuLineActionsScript() + /* javascript */ String.raw`
+    return getContextMenuBlockCopyScript() + getContextMenuLineActionsScript() + /* javascript */ String.raw`
 function handleGlobalAction(action, savedLineIdx) {
     if (action === 'copy-selection') {
         var sel = window.getSelection();

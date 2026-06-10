@@ -4,12 +4,13 @@
  */
 import { getSqlQueryHistoryPanelHelpersScript } from './viewer-sql-query-history-panel-helpers';
 import { getSqlQueryHistoryPanelRenderScript } from './viewer-sql-query-history-panel-render';
+import { getSqlQueryHistoryDashboardScript } from './viewer-sql-query-history-dashboard';
 
 /** Returns the full SQL query history panel JavaScript (IIFE). */
 export function getSqlQueryHistoryPanelScript(): string {
     return /* javascript */ `
 (function() {
-` + getSqlQueryHistoryPanelHelpersScript() + getSqlQueryHistoryPanelRenderScript() + /* javascript */ `
+` + getSqlQueryHistoryPanelHelpersScript() + getSqlQueryHistoryDashboardScript() + getSqlQueryHistoryPanelRenderScript() + /* javascript */ `
     if (listEl) {
         listEl.addEventListener('click', function(e) {
             var driftBtn = e.target.closest('.sql-query-history-drift');
@@ -57,6 +58,8 @@ export function getSqlQueryHistoryPanelScript(): string {
             (function(el) {
                 function handleSortActivate(e) {
                     if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+                    /* Disabled when there's no captured SQL — ignore so the header can't silently no-op. */
+                    if (el.getAttribute('aria-disabled') === 'true') return;
                     e.preventDefault();
                     var key = el.getAttribute('data-sql-qh-sort');
                     if (!key) return;
@@ -80,14 +83,15 @@ export function getSqlQueryHistoryPanelScript(): string {
             if (e.key === 'Escape') { e.preventDefault(); closeSqlQueryHistoryPanel(); }
         });
     }
-    /* DB_17: cumulative toggle. Initial checked state mirrors the persisted preference loaded
-       in viewer-sql-query-history-core.ts. The wrap is shown/hidden by updateSqlHistoryCumulativeUi
-       depending on whether the host has supplied any cumulative data. */
-    var cumulativeEl = document.getElementById('sql-query-history-cumulative');
-    if (cumulativeEl) {
-        cumulativeEl.checked = !!sqlQueryHistoryCumulativeEnabled;
-        cumulativeEl.addEventListener('change', function() {
-            setSqlQueryHistoryCumulativeEnabled(!!cumulativeEl.checked);
+    /* DB_18: "Current session only" filter (inverts DB_17's cumulative toggle — cumulative is now the
+       default). Initial checked state mirrors the persisted preference loaded in
+       viewer-sql-query-history-core.ts. The wrap is shown/hidden by updateSqlHistoryCumulativeUi
+       depending on whether the host has supplied any cross-log data. */
+    var currentSessionOnlyEl = document.getElementById('sql-query-history-current-session-only');
+    if (currentSessionOnlyEl) {
+        currentSessionOnlyEl.checked = !!sqlQueryHistoryCurrentSessionOnly;
+        currentSessionOnlyEl.addEventListener('change', function() {
+            setSqlQueryHistoryCurrentSessionOnly(!!currentSessionOnlyEl.checked);
             renderSqlQueryHistoryPanel();
         });
     }
@@ -106,7 +110,23 @@ export function getSqlQueryHistoryPanelScript(): string {
     }
 
     if (panelEl) {
-        panelEl.addEventListener('click', function(e) { e.stopPropagation(); });
+        panelEl.addEventListener('click', function(e) {
+            e.stopPropagation();
+            /* Phase 2: "Open fix in Drift" on a dashboard issue row opens the suggested SQL in the
+               Drift viewer's Run SQL tab (same openUrl path the per-row Drift button uses). */
+            var fixBtn = e.target.closest('.sql-qh-issue-fix');
+            if (fixBtn) {
+                var sql = fixBtn.getAttribute('data-issue-sql') || '';
+                if (sql && typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
+                    vscodeApi.postMessage({ type: 'openUrl', url: driftViewerBaseUrl() + '/?sql=' + encodeURIComponent(sql) });
+                }
+                return;
+            }
+            /* Phase 3: "Enable Drift linters" opens a terminal pre-filled with the saropa_lints CLI. */
+            if (e.target.closest('.sql-qh-lint-enable') && typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
+                vscodeApi.postMessage({ type: 'enableDriftLintPack' });
+            }
+        });
         panelEl.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') { e.preventDefault(); closeSqlQueryHistoryPanel(); }
         });
@@ -130,7 +150,9 @@ export function getSqlQueryHistoryPanelScript(): string {
         }
         driftStatusEl.classList.remove('u-hidden');
         var parts = ['Drift viewer (from log): ' + d.baseUrl];
-        if (d.version) parts.push('banner v' + d.version);
+        /* Join is '' below, so every part after the base URL must carry its own ' · ' separator.
+           Without it the banner version abutted the URL ("…8642banner v3.5.1"). */
+        if (d.version) parts.push(' · banner v' + d.version);
         if (d.health) {
             if (d.health.ok) {
                 parts.push(d.health.version ? (' · server ' + d.health.version + ' · reachable') : ' · reachable');

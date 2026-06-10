@@ -20,29 +20,31 @@ export function getSqlQueryHistoryRuntimeScript(maxFp: number = SQL_QUERY_HISTOR
     return /* javascript */ `
 var sqlQueryHistoryByFp = {};
 var SQL_QUERY_HISTORY_MAX_FP = ${cap};
-/** DB_17: cumulative payload from the host (sidebar logs minus the active log). null = none. */
+/** DB_18: cross-log fingerprint payload from the host (sidebar logs minus the active log). null = none. */
 var sqlQueryHistoryCumulative = null;
-/** DB_17: user toggle for layering cumulative rows under live ones. Persists via vscodeApi.setState. */
-var sqlQueryHistoryCumulativeEnabled = false;
-/** DB_17 init: read prior toggle preference once at script load. */
-(function loadSqlQueryHistoryCumulativePref() {
+/* DB_18: cumulative across logs is the DEFAULT view (supersedes DB_17's opt-in toggle). This flag
+   INVERTS that — when true the panel shows only the active log's live rows. Default false so the
+   panel stays useful even when the active session captured no SQL. Persists via vscodeApi.setState. */
+var sqlQueryHistoryCurrentSessionOnly = false;
+/** DB_18 init: read prior filter preference once at script load. */
+(function loadSqlQueryHistoryCurrentSessionOnlyPref() {
     try {
         if (typeof vscodeApi === 'undefined' || !vscodeApi.getState) return;
         var st = vscodeApi.getState();
-        if (st && typeof st.sqlHistoryCumulativeEnabled === 'boolean') {
-            sqlQueryHistoryCumulativeEnabled = st.sqlHistoryCumulativeEnabled;
+        if (st && typeof st.sqlHistoryCurrentSessionOnly === 'boolean') {
+            sqlQueryHistoryCurrentSessionOnly = st.sqlHistoryCurrentSessionOnly;
         }
     } catch (_e) { /* state read is best-effort */ }
 })();
 function setSqlQueryHistoryCumulativeFromHost(payload) {
     sqlQueryHistoryCumulative = payload || null;
 }
-function setSqlQueryHistoryCumulativeEnabled(on) {
-    sqlQueryHistoryCumulativeEnabled = !!on;
+function setSqlQueryHistoryCurrentSessionOnly(on) {
+    sqlQueryHistoryCurrentSessionOnly = !!on;
     try {
         if (typeof vscodeApi !== 'undefined' && vscodeApi.setState) {
             var st = vscodeApi.getState() || {};
-            st.sqlHistoryCumulativeEnabled = sqlQueryHistoryCumulativeEnabled;
+            st.sqlHistoryCurrentSessionOnly = sqlQueryHistoryCurrentSessionOnly;
             vscodeApi.setState(st);
         }
     } catch (_e) { /* state write is best-effort */ }

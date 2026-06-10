@@ -12,6 +12,7 @@ import { scanForCorrelationTags } from './modules/analysis/correlation-scanner';
 import { comparisonCommands } from './commands-comparison';
 import { signalsCommands } from './commands-signals';
 import { bugReportCommands } from './commands-bug-report';
+import { flowMapCommands } from './commands-flow-map';
 import { qualityCommands } from './commands-quality';
 import { timelineCommands } from './commands-timeline';
 import { trashCommands } from './commands-trash';
@@ -39,6 +40,10 @@ export function registerCommands(deps: CommandDeps, captureToggle: CaptureToggle
         ...correlationCommands(deps),
         ...signalsCommands(deps),
         ...bugReportCommands({ getFileUri: () => deps.viewerProvider.getCurrentFileUri(), context }),
+        ...flowMapCommands({
+            getFileUri: () => deps.viewerProvider.getCurrentFileUri(),
+            viewer: deps.viewerProvider,
+        }),
         ...qualityCommands({ getFileUri: () => deps.viewerProvider.getCurrentFileUri() }),
         ...timelineCommands(),
         ...trashCommands(deps.historyProvider, () => deps.viewerProvider.getCurrentFileUri()),

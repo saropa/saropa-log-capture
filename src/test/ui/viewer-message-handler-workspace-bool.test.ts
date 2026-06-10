@@ -15,6 +15,10 @@ suite("viewer-message-handler workspace bool messages", () => {
         assert.strictEqual(SAROPA_BOOL_SETTING_BY_MSG_TYPE.setMinimapShowInfoMarkers, "minimapShowInfoMarkers");
         assert.strictEqual(SAROPA_BOOL_SETTING_BY_MSG_TYPE.setMinimapViewportRedOutline, "minimapViewportRedOutline");
         assert.strictEqual(SAROPA_BOOL_SETTING_BY_MSG_TYPE.setMinimapViewportOutsideArrow, "minimapViewportOutsideArrow");
+        // setShowElapsed → showElapsedTime persists the Options-panel "Show elapsed time" toggle.
+        // Mapped via the bool-handler so onDecoOptionChange's postMessage round-trips to workspace
+        // config and the toggle survives reloads (extension-lifecycle.ts:71 re-broadcasts on startup).
+        assert.strictEqual(SAROPA_BOOL_SETTING_BY_MSG_TYPE.setShowElapsed, "showElapsedTime");
     });
 
     test("does not include unrelated message types", () => {

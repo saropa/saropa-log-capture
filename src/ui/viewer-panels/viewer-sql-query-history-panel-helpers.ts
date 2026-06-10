@@ -52,10 +52,10 @@ export function getSqlQueryHistoryPanelHelpersScript(): string {
                 lastSeen: row.lastSeen, preview: row.preview || '', sampleSql: row.sampleSql || '',
                 maxDur: row.maxDur, crossLog: false });
         }
-        /* DB_17: when toggle is on, layer in fingerprints from sidebar logs other than the active one.
-           Skip any fingerprint already present in the live map (that fingerprint exists in the active log
-           and the live row's preview is more readable than a bare fingerprint hash). */
-        if (sqlQueryHistoryCumulativeEnabled
+        /* DB_18: cross-log fingerprints are merged by DEFAULT — only the inverted "current session only"
+           filter suppresses them. Skip any fingerprint already present in the live map (it exists in the
+           active log, where the live row's preview/sample is more readable than the normalized fingerprint). */
+        if (!sqlQueryHistoryCurrentSessionOnly
             && typeof hasSqlQueryHistoryCumulativeData === 'function'
             && hasSqlQueryHistoryCumulativeData()) {
             var cum = sqlQueryHistoryCumulative.fingerprints;
@@ -102,15 +102,38 @@ export function getSqlQueryHistoryPanelHelpersScript(): string {
         }
         return out;
     }
+    /* Disable a sort header when there is nothing to sort. Stash the original title once so we can
+       restore it when data returns — only the Slow header ships a title, the others have none. */
+    function setSqlHistoryHeaderEnabled(el, enabled) {
+        if (!el.hasAttribute('data-orig-title')) {
+            el.setAttribute('data-orig-title', el.getAttribute('title') || '');
+        }
+        el.classList.toggle('sql-qh-header-disabled', !enabled);
+        if (enabled) {
+            el.removeAttribute('aria-disabled');
+            el.setAttribute('tabindex', '0');
+            var orig = el.getAttribute('data-orig-title');
+            if (orig) { el.setAttribute('title', orig); } else { el.removeAttribute('title'); }
+        } else {
+            el.setAttribute('aria-disabled', 'true');
+            el.setAttribute('tabindex', '-1');
+            el.setAttribute('title', vt('viewer.sqlHistory.sortDisabled'));
+        }
+    }
     function updateSqlHistorySortHeaders() {
         if (!sortHeaderEls) return;
+        /* Headers are interactive sort toggles; with zero captured queries a click is a silent no-op,
+           so render them visibly disabled with an explanatory tooltip instead of looking clickable. */
+        var hasData = typeof getSqlQueryHistoryRowsForRender === 'function'
+            && getSqlQueryHistoryRowsForRender().length > 0;
         for (var i = 0; i < sortHeaderEls.length; i++) {
             var el = sortHeaderEls[i];
             var key = el.getAttribute('data-sql-qh-sort');
             el.classList.remove('sql-qh-header-sorted-asc', 'sql-qh-header-sorted-desc');
-            if (key === sortKey) {
+            if (hasData && key === sortKey) {
                 el.classList.add(sortDir === 'asc' ? 'sql-qh-header-sorted-asc' : 'sql-qh-header-sorted-desc');
             }
+            setSqlHistoryHeaderEnabled(el, hasData);
         }
     }
     function formatSqlForExpand(sql) {

@@ -1,0 +1,142 @@
+/**
+ * Assembles the combined Session Report (plan 056, S1): one markdown document with the flow
+ * diagram, the screen-dwell table, the perf/warnings/errors table, and a generated narrative.
+ * This is the exact artifact `saropaLogCapture.exportFlowMap` writes beside the log.
+ */
+
+import type { FlowGraph, FlowNode, IssueEvent, ParsedLog } from './flow-map-model';
+import { anchorText, formatActions, formatDwellMs } from './flow-map-format';
+import { renderMermaid } from './flow-map-mermaid';
+
+/** Convert ms-of-day back to an HH:MM:SS clock. */
+function clockOf(tsMs: number): string {
+    const s = Math.floor(tsMs / 1000);
+    const hh = String(Math.floor(s / 3600)).padStart(2, '0');
+    const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+    const ss = String(s % 60).padStart(2, '0');
+    return `${hh}:${mm}:${ss}`;
+}
+
+const SEV_ICON: Record<IssueEvent['severity'], string> = {
+    info: 'ℹ️', warn: '⚠️ warn', perf: '🐢 perf', error: '💥 **error**',
+};
+
+const KIND_LABEL: Record<FlowNode['kind'], string> = {
+    launch: '—', screen: 'screen', tab: 'tab', dialog: 'dialog', inline: 'inline', external: 'external', unknown: '—',
+};
+
+/** Header facts line. */
+function facts(parsed: ParsedLog): string {
+    const h = parsed.header;
+    const span = `${h.captureStartClock ?? '?'} → ${parsed.lastClock ?? '?'}`;
+    return [
+        `**Session:** ${h.project ?? 'unknown'} · \`${h.branch ?? '?'}\` @ \`${h.commit ?? '?'}\``,
+        `**Device:** ${h.device ?? 'unknown'} · Flutter`,
+        `**Captured:** ${span} · Saropa Log Capture ${h.version ?? ''}`.trim(),
+        `**Outcome:** ${parsed.crash ? '💥 1 unhandled exception' : '✓ no crash'} · `
+            + `${parsed.slowQueryCount} slow queries`,
+    ].join('  \n');
+}
+
+/** Dwell table over walked nodes, in entry order. */
+function dwellTable(graph: FlowGraph): string {
+    const rows = graph.nodes
+        .filter(n => n.walked && n.kind !== 'launch')
+        .sort((a, b) => (a.firstTsMs ?? 0) - (b.firstTsMs ?? 0))
+        .map(n => {
+            const entered = n.firstTsMs !== undefined ? clockOf(n.firstTsMs) : '';
+            const actions = formatActions(n);
+            const label = actions ? `${n.label} · ${actions}` : n.label;
+            const src = anchorText(n.source) || '—';
+            return `| ${label} | ${KIND_LABEL[n.kind]} | ${entered} | ${formatDwellMs(n.dwellMs)} | ${n.visits} | \`${src}\` |`;
+        });
+    const head = '| Screen / phase | Type | Entered | Duration | Visits | Source |\n'
+        + '|---|---|---|---|---|---|';
+    return `${head}\n${rows.join('\n')}`;
+}
+
+/** Issue table over all parsed issues, in time order. */
+function issueTable(parsed: ParsedLog): string {
+    const rows = parsed.issues.map(i => {
+        const time = i.clock || '—';
+        const src = anchorText(i.source);
+        const srcCell = src ? `\`${src}\`` : '—';
+        return `| ${time} | ${SEV_ICON[i.severity]} | ${i.category} | ${i.detail} | ${srcCell} |`;
+    });
+    const head = '| Time | Sev | What | Detail | Source |\n|---|---|---|---|---|';
+    const totals = `\n\n**Totals:** ${parsed.slowQueryCount} \`Drift SLOW\` + `
+        + `${parsed.repeatBatchCount} \`REPEAT\` batches.`;
+    return `${head}\n${rows.join('\n')}${totals}`;
+}
+
+/** Pick the walked node with the most dwell (the session's center of gravity). */
+function dominantNode(graph: FlowGraph): FlowNode | undefined {
+    return graph.nodes
+        .filter(n => n.walked && n.kind !== 'launch')
+        .sort((a, b) => b.dwellMs - a.dwellMs)[0];
+}
+
+/** Generated narrative paragraph, data-driven. Shared by the markdown report and the webview. */
+export function buildNarrative(parsed: ParsedLog, graph: FlowGraph): string {
+    const screens = graph.nodes.filter(n => n.walked && n.kind !== 'launch').length;
+    const dom = dominantNode(graph);
+    const parts: string[] = [
+        `A ${parsed.header.project ?? 'app'} session on ${parsed.header.device ?? 'a device'}, `
+        + `reaching ${screens} screen${screens === 1 ? '' : 's'}.`,
+    ];
+    if (dom) {
+        const actions = formatActions(dom);
+        parts.push(`Most time was spent on **${dom.label}** (${formatDwellMs(dom.dwellMs)}`
+            + `${actions ? `, ${actions}` : ''}).`);
+    }
+    if (parsed.crash) {
+        const at = anchorText(parsed.crash.source);
+        const message = parsed.crash.message.replace(/[.\s]+$/, '');
+        parts.push(`The session's one fault: ${message}${at ? ` — \`${at}\`` : ''}.`);
+    }
+    parts.push(`${parsed.slowQueryCount} slow queries and ${parsed.repeatBatchCount} repeat batches `
+        + `were logged (mostly repeated preference reads).`);
+    // Severity breakdown gives the reader the shape of the issue log at a glance before the table.
+    const errors = parsed.issues.filter(i => i.severity === 'error').length;
+    const warns = parsed.issues.filter(i => i.severity === 'warn').length;
+    const perf = parsed.issues.filter(i => i.severity === 'perf').length;
+    const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`;
+    parts.push(`The issue log holds ${plural(errors, 'error')}, ${plural(warns, 'warning')}, `
+        + `and ${plural(perf, 'performance flag')}.`);
+    // Closing one-line verdict so the summary ends on the session's overall health, not a raw count.
+    parts.push(`Overall, the session ${parsed.crash
+        ? 'ended with an unhandled fault that needs attention'
+        : 'completed without a crash'}.`);
+    return parts.join(' ');
+}
+
+/** Build the full markdown report for a parsed log + its graph. */
+export function buildReport(parsed: ParsedLog, graph: FlowGraph): string {
+    return [
+        `# Saropa Flow Map — ${parsed.header.project ?? 'session'}`,
+        '',
+        '> Generated by Saropa Log Capture · `exportFlowMap`. Diagram, tables, and narrative are'
+            + ' built from one session log; source `file:line` anchors are relative to the project root.',
+        '',
+        facts(parsed),
+        '',
+        '## Flow',
+        '',
+        'Solid = walked this session. Dotted = recovered indirectly. ↗️ = off-app handoff (external app / API). 💥 = fault on this node.',
+        '',
+        renderMermaid(graph),
+        '',
+        '## Screen Visit Log',
+        '',
+        dwellTable(graph),
+        '',
+        '## Issue Report',
+        '',
+        issueTable(parsed),
+        '',
+        '## Executive Summary',
+        '',
+        buildNarrative(parsed, graph),
+        '',
+    ].join('\n');
+}

@@ -37,22 +37,27 @@ const MESSAGE = 'PermissionDeniedException: location permission denied';
 const GAP = '&lt;asynchronous suspension&gt;';
 
 suite('unwrapped Dart stack ingestion (bug_001)', () => {
-    test('three unwrapped #N frames collapse into ONE stack-header', () => {
+    test('three unwrapped #N frames collapse into ONE group under the message owner', () => {
         const vm = loadStackHeaderRepeatSandbox();
-        addLine(vm, MESSAGE, 1000); // normal line — anchors the trace
-        addLine(vm, FRAME_0, 1000); // becomes the stack-header
-        addLine(vm, FRAME_1, 1000); // frame in group 0
-        addLine(vm, FRAME_2, 1000); // frame in group 0
+        addLine(vm, MESSAGE, 1000); // normal line — promoted to the trace's stack OWNER
+        addLine(vm, FRAME_0, 1000); // child frame of the owner
+        addLine(vm, FRAME_1, 1000); // child frame
+        addLine(vm, FRAME_2, 1000); // child frame
 
+        /* "The message IS the toggle": the owning log line carries the group, so
+           there is NO separate stack-header row; all three frames fold under it. */
         const headers = vm.allLines.filter((i) => i.type === 'stack-header');
-        assert.strictEqual(headers.length, 1, 'expected exactly one stack-header — unwrapped frames must group');
+        assert.strictEqual(headers.length, 0, 'message owns the trace — no separate stack-header row');
+
+        const owner = vm.allLines.find((i) => (i as { _stackOwner?: boolean })._stackOwner);
+        assert.ok(owner, 'the preceding message line was promoted to the stack owner');
+        assert.strictEqual(owner!.frameCount, 4, 'frameCount = owner + 3 real frames (tooltip shows 3)');
 
         const gids = new Set(
-            vm.allLines.filter((i) => i.type === 'stack-frame' || i.type === 'stack-header').map((i) => i.groupId),
+            vm.allLines.filter((i) => i.type === 'stack-frame').map((i) => i.groupId),
         );
         assert.strictEqual(gids.size, 1, 'every frame must share one groupId — no shattering on missing wrapper');
-
-        assert.strictEqual(headers[0].frameCount, 3, 'frameCount must be header + 2 real frames');
+        assert.strictEqual([...gids][0], owner!.groupId, 'frames belong to the owner group');
     });
 
     test('no orphan ")" tail row appears after the trace', () => {
@@ -81,8 +86,12 @@ suite('unwrapped Dart stack ingestion (bug_001)', () => {
         addLine(vm, GAP, 1000); // async gap — must NOT close the group, no row added
         addLine(vm, FRAME_2, 1000); // frame still in same group
 
+        /* Owner-mode: the message owns the trace, so no separate stack-header row;
+           the gap must still not shatter the single owner group. */
         const headers = vm.allLines.filter((i) => i.type === 'stack-header');
-        assert.strictEqual(headers.length, 1, 'unwrapped + gap must not shatter the group');
+        assert.strictEqual(headers.length, 0, 'message owns the trace — no separate stack-header row');
+        const owner = vm.allLines.find((i) => (i as { _stackOwner?: boolean })._stackOwner);
+        assert.ok(owner, 'the message line was promoted to the stack owner');
 
         // The gap is folded inline — no extra row. Before-after delta should be 1 (only FRAME_2).
         assert.strictEqual(
@@ -100,9 +109,9 @@ suite('unwrapped Dart stack ingestion (bug_001)', () => {
         );
 
         assert.strictEqual(
-            headers[0].frameCount,
-            3,
-            'frameCount must count header + 2 real frames only — gap excluded',
+            owner!.frameCount,
+            4,
+            'frameCount = owner + 3 real frames; the gap is excluded',
         );
     });
 });
