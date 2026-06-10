@@ -20,6 +20,10 @@ export interface OutputEventDeps {
     readonly config: SaropaLogCaptureConfig;
     readonly exclusionRules: readonly ExclusionRule[];
     readonly floodGuard: FloodGuard;
+    /** Output channel for diagnostics (e.g. categories dropped by the captureAll whitelist). */
+    readonly outputChannel?: { appendLine(message: string): void };
+    /** Per-session memo of categories already reported as dropped, to log each at most once. */
+    readonly droppedCategoriesLogged?: Set<string>;
 }
 
 /** Mutable counters updated during output processing. */
@@ -50,7 +54,15 @@ export function processOutputEvent(
     const text = body.output.replace(/[\r\n]+$/, '');
     if (text.length === 0) { return; }
 
-    if (!deps.config.captureAll && !deps.config.categories.includes(category)) { return; }
+    if (!deps.config.captureAll && !deps.config.categories.includes(category)) {
+        // Plan 102 Step 3: a missing Debug Console line is most often dropped here —
+        // captureAll is off and the line's DAP category is not in the whitelist, so it
+        // vanishes with no trace. Surface each unrecognized category once to the output
+        // channel (memoized to avoid flooding) so users can diagnose the filtering gap
+        // instead of assuming capture is broken.
+        reportDroppedCategory(deps, category);
+        return;
+    }
     if (testExclusion(text, deps.exclusionRules)) { return; }
 
     const floodResult = deps.floodGuard.check(text);
@@ -76,6 +88,22 @@ export function processOutputEvent(
         category, timestamp: now, logFileUri: session.fileUri.fsPath,
         sourcePath: body.source?.path, sourceLine: body.line,
     });
+}
+
+/**
+ * Log a DAP category that was dropped by the captureAll whitelist, at most once per
+ * category. The first time a category is filtered out, users get an actionable hint in
+ * the Saropa Log Capture output channel naming the category and how to capture it.
+ */
+function reportDroppedCategory(deps: OutputEventDeps, category: string): void {
+    const logged = deps.droppedCategoriesLogged;
+    if (!logged || logged.has(category)) { return; }
+    logged.add(category);
+    deps.outputChannel?.appendLine(
+        `[capture] Dropped DAP output category "${category}" — captureAll is off and this ` +
+        `category is not in saropaLogCapture.categories, so its lines are not captured. ` +
+        `Enable saropaLogCapture.captureAll, or add "${category}" to saropaLogCapture.categories.`,
+    );
 }
 
 /** Dependencies for API writeLine processing (subset of OutputEventDeps). */

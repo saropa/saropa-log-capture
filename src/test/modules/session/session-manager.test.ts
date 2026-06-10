@@ -52,6 +52,29 @@ describe("SessionManagerImpl", () => {
     );
   });
 
+  it("should log a dropped DAP category once to the output channel (plan 102)", () => {
+    // Plan 102 Step 3: a category filtered out by the captureAll whitelist must be
+    // surfaced (once) so a "missing line" is diagnosable, not silently lost.
+    const logged: string[] = [];
+    const mgr = new SessionManagerImpl(
+      mockStatusBar as any,
+      { appendLine: (m: string) => logged.push(m) } as any,
+    );
+    mgr.refreshConfig(makeConfig({
+      captureAll: false, enabled: true, categories: ["console"], exclusions: [],
+    }));
+    mgr["sessions"].set("test", { appendLine: () => {}, lineCount: 1, fileUri: { fsPath: "test.log" } } as any);
+    // Two stdout lines (not whitelisted) plus one stderr line: each unrecognized
+    // category should log exactly once, regardless of how many lines it drops.
+    mgr.onOutputEvent("test", { output: "a", category: "stdout" });
+    mgr.onOutputEvent("test", { output: "b", category: "stdout" });
+    mgr.onOutputEvent("test", { output: "c", category: "stderr" });
+    const dropMsgs = logged.filter((m) => m.includes("Dropped DAP output category"));
+    assert.strictEqual(dropMsgs.length, 2, "each dropped category logs exactly once");
+    assert.ok(dropMsgs.some((m) => m.includes('"stdout"')), "names the stdout category");
+    assert.ok(dropMsgs.some((m) => m.includes('"stderr"')), "names the stderr category");
+  });
+
   it("writeLine should no-op when no active session exists", () => {
     const mgr = makeSessionManager();
     let captured = false;
