@@ -72,12 +72,13 @@ export function kindIcon(node: FlowNode): string {
 }
 
 /**
- * The display lines for a node, shared by the Mermaid export and the SVG diagram so both surfaces
- * read identically: name, visit/dwell counter, action summary, crash flag, compact source.
+ * The display lines for a node: name, optional visit/dwell counter, action summary, crash flag,
+ * compact source. The SVG passes `withCounter: false` because it shows visits as a corner badge and
+ * dwell on the edges; the Mermaid export keeps the inline counter (it has no badges/edge labels).
  */
-export function nodeDisplayLines(node: FlowNode): string[] {
+export function nodeDisplayLines(node: FlowNode, withCounter = true): string[] {
     const lines: string[] = [node.label];
-    if (node.kind !== 'launch') {
+    if (withCounter && node.kind !== 'launch') {
         const dwell = node.walked ? ` · ${formatDwellMs(node.dwellMs)}` : '';
         lines.push(`×${node.visits}${dwell}`);
     }
