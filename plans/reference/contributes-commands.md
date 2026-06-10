@@ -25,6 +25,7 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.compareLogToCommit` | %command.compareLogToCommit.title% |  |
 | `saropaLogCapture.compareLogToPreviousCommit` | %command.compareLogToPreviousCommit.title% |  |
 | `saropaLogCapture.compareSessions` | %command.compareSessions.title% |  |
+| `saropaLogCapture.compareThreeSessions` | %command.compareThreeSessions.title% |  |
 | `saropaLogCapture.compareWithMarked` | %command.compareWithMarked.title% |  |
 | `saropaLogCapture.configureIntegrations` | %command.configureIntegrations.title% |  |
 | `saropaLogCapture.copyAllFilteredLines` | %command.copyAllFilteredLines.title% |  |
@@ -106,4 +107,4 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.trashSession` | %command.trashSession.title% |  |
 | `saropaLogCapture.ungroupSession` | Saropa Log Capture: Ungroup Session |  |
 
-**Total:** 99 commands.
+**Total:** 100 commands.

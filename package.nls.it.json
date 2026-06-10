@@ -484,5 +484,6 @@
   "walkthrough.useKeyboardShortcuts.title": "Scorciatoie da tastiera",
   "command.clearGlobalAggregates.title": "Saropa Log Capture: Clear Cross-Workspace Noise Patterns",
   "config.learning.globalAggregates.description": "Share high-confidence framework-noise filter patterns across your workspaces so a new project starts with less noise. Off by default. Only the pattern text and its category are stored on this machine — never file paths, project names, or usernames. Use 'Clear Cross-Workspace Noise Patterns' to wipe them.",
-  "config.learning.globalAggregates.title": "Share noise patterns across workspaces"
+  "config.learning.globalAggregates.title": "Share noise patterns across workspaces",
+  "command.compareThreeSessions.title": "Saropa Log Capture: Compare 3 Logs"
 }

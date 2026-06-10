@@ -10,7 +10,7 @@
  */
 
 import * as vscode from 'vscode';
-import { stripAnsi } from '../capture/ansi';
+import { normalizeLine } from './line-normalize';
 import { getConfig } from '../config/config';
 import {
     compareScannedSaropaDbFingerprints,
@@ -188,18 +188,7 @@ export async function compareLogSessionsWithDbFingerprints(
  * Normalize a line for comparison.
  * Strips ANSI codes, timestamps, and extra whitespace.
  */
-function normalizeLine(text: string): string {
-    let normalized = stripAnsi(text);
-
-    // Remove leading timestamp patterns like [HH:MM:SS.mmm] or HH:MM:SS
-    normalized = normalized.replace(/^\[?\d{2}:\d{2}:\d{2}(?:\.\d{3})?\]?\s*/, '');
-
-    // Remove leading ISO timestamp
-    normalized = normalized.replace(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z?\s*/, '');
-
-    // Normalize whitespace
-    return normalized.trim().toLowerCase();
-}
+// normalizeLine moved to ./line-normalize (shared with the N-way comparer) — see import above.
 
 /**
  * Extract timestamp from a log line if present.
