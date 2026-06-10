@@ -1,6 +1,6 @@
 # Plan 056 — Session Flow Map (screen-transition diagram)
 
-## Status: S1 implemented · S2 proposed
+## Status: S1 implemented · S2 in progress (pan/zoom + jump-to-crash shipped 2026-06-10; live log-filtering still proposed)
 
 **S1 (the combined session report) shipped** as the `saropaLogCapture.exportFlowMap` command —
 log parser, error-causing-widget parser, static source scan (contacts preset), graph builder
@@ -420,3 +420,30 @@ state verified present and stable.
 `View` action, `[flowmap]`→dialog node with source, badges render, edge dwell labels present.
 **Not committed:** unrelated concurrent workstreams (session-list, loaded-files, name-filter,
 about, URL-open) and shared `CHANGELOG.md` / `strings-*.ts` / `plans/reference/*`.
+
+## Finish Report (2026-06-10) — S2 first interactive increment (pan/zoom + jump-to-crash)
+
+This work will be reviewed by another AI.
+
+**Scope:** (B) VS Code extension (TypeScript — flow-map webview panel HTML/CSS/JS + l10n + test). No Dart/Flutter app code.
+
+**What shipped.** The flow-map panel already rendered a self-generated SVG (no Mermaid/dagre dependency) with click-to-code and reveal-in-log. The diagram was static, though. S2's headline — "a live lens a static document can't be" — now has its first interactive increment, with **no new dependency** (Open Question 1's layout-dependency decision stays deferred; the hand-rolled SVG already solves layout):
+- **Pan** — drag the diagram background to pan (viewBox translate). Node clicks are untouched: panning only starts when the pointer-down target is not inside a `.fm-node`, and a drag that moved past a 3px threshold suppresses the trailing click so a node underneath the release isn't triggered.
+- **Zoom** — mouse wheel zooms cursor-anchored (the point under the cursor stays fixed); +/− overlay buttons zoom about the center. Clamped to 0.2×–3× of the author viewBox so the graph can't invert or vanish.
+- **Reset / fit** — `⧉` restores the author viewBox (the fit-to-content state).
+- **Jump to crash** — `💥` centers the viewBox on the `.fm-crash` node (with a little zoom) and flashes it; the control only renders when a node carries an error, so it is never dead.
+- All of this is **purely additive** over the existing horizontal-scroll fallback and the node-click → row-highlight + log-jump behavior, which are unchanged.
+
+**Files changed:**
+- `src/modules/flow-map/flow-map-html.ts` — overlay zoom toolbar inside `.diagram` (jump-to-crash gated on `graph.nodes.some(nodeHasError)`); imports `t` + `nodeHasError`.
+- `src/ui/panels/flow-map-panel-script.ts` — viewBox pan/zoom engine, wheel + pointer-drag handlers, toolbar wiring, crash-centering with flash.
+- `src/ui/panels/flow-map-panel-styles.ts` — `.diagram` positioned; `.fm-zoom-toolbar` / `.fm-zoom-btn` styles; grab/grabbing cursors; `fm-flash` keyframe (+ reduced-motion exemption).
+- `src/l10n/strings-b.ts` — `flowMap.zoomInBtn`, `zoomOutBtn`, `resetViewBtn`, `jumpToCrashBtn`.
+- `src/test/modules/flow-map/flow-map.test.ts` — 2 new cases (toolbar present + crash control gating).
+- `CHANGELOG.md` — `[Unreleased]` Changed entry.
+
+**Tests:** `flow-map.test.js` → 23 passing (+2 new). `npm run check-types` clean; `npm run lint` no new warnings (changed files under the 300-line cap); `npm run compile` passes all verify gates; no dependency added (`dist/extension.js` 4.61 MiB).
+
+**Outstanding (S2 still proposed):** click-a-node → filter the *main log viewer* to that node's dwell windows (cross-webview into the viewer's filter pipeline); interactive possible-vs-walked overlay toggle; and the 30-node layout/perf check. The pan/zoom interactions are verified by unit tests at the HTML/wiring level but not yet exercised on a device — that is the user's F5 check. Plan stays active.
+
+**Finish report appended:** plans/056_plan-session-flow-map.md
