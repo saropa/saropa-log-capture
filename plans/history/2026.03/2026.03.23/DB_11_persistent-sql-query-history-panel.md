@@ -1,5 +1,7 @@
 # DB_11 Persistent SQL Query History Panel
 
+> **Status: Shipped 2026-03-23 (archived 2026-06-10).** Implemented and later extended by DB_17 (cross-log) and DB_18 (cumulative-default dashboard). Shipped surface: `viewer-sql-query-history-core.ts` (session-scoped LRU fingerprint rollup, cap 500, preview + line refs + aggregates), `viewer-sql-query-history-panel*.ts` (slide-out: sort by count/recency/duration, search filter, jump-to-line, copy fingerprint, copy-visible-JSON export, empty states), plus 8 test files (`viewer-sql-query-history-core.test.ts`, `-panel-script.test.ts`, `-panel-html.test.ts`, `-vm.test.ts`, etc.). Archived during plan-backlog triage on 2026-06-10 — the spec below is the original design record.
+
 ## Goal
 Provide a durable, scrollable view of parsed SQL activity for the **current capture session** that survives line compression and viewport scrolling—complementing inline drilldown (`DB_06`). History lives in memory for that session only; **persisting or reopening history for saved sessions is out of scope for v1** (would pair with session restore work later).
 

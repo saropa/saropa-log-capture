@@ -1,5 +1,7 @@
 # Plan 051: Structured File Modes
 
+> **Status: Shipped 2026-04-18 (archived 2026-06-10).** Implemented. `detectFileMode(uri)` in `log-viewer-provider-load.ts` posts `setFileMode` to the webview; `viewer-data-add.ts` gates the log pipeline with `if (fileMode !== 'log')`; format renderers `viewer-format-json.ts`, `viewer-format-csv.ts`, `viewer-format-markdown.ts` + `-layout.ts` provide per-mode display; tested in `file-mode-detection.test.ts`. Archived during plan-backlog triage on 2026-06-10 — the spec below is the original design record.
+
 **Problem:** The default tracked file types include `.md`, `.json`, `.csv`, and `.html` alongside `.log` and `.txt`. When the viewer opens any of these, the full log analysis pipeline runs — producing false error/warning levels, phantom SQL fingerprints, bogus signals, and broken repeat detection. These are structured documents, not event streams. The pipeline should know the difference.
 
 **Root cause:** `addToData()` treats every line identically regardless of file type. There is no concept of "this file is not a log."
