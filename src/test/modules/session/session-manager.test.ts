@@ -30,7 +30,8 @@ describe("SessionManagerImpl", () => {
     }));
     let captured = false;
     mgr.addLineListener(() => { captured = true; });
-    mgr["sessions"].set("test", { appendLine: () => {}, lineCount: 1 } as any);
+    // fileUri is required: broadcastLine reads session.fileUri.fsPath (added in b916c032).
+    mgr["sessions"].set("test", { appendLine: () => {}, lineCount: 1, fileUri: { fsPath: "test.log" } } as any);
     mgr.onOutputEvent("test", { output: "foo", category: "system" });
     assert.ok(captured, "Output should be captured when captureAll is true");
   });
@@ -42,7 +43,8 @@ describe("SessionManagerImpl", () => {
     }));
     let captured = false;
     mgr.addLineListener(() => { captured = true; });
-    mgr["sessions"].set("test", { appendLine: () => {}, lineCount: 1 } as any);
+    // fileUri is required: broadcastLine reads session.fileUri.fsPath (added in b916c032).
+    mgr["sessions"].set("test", { appendLine: () => {}, lineCount: 1, fileUri: { fsPath: "test.log" } } as any);
     mgr.onOutputEvent("test", { output: "foo", category: "system" });
     assert.ok(
       !captured,
@@ -65,7 +67,8 @@ describe("SessionManagerImpl", () => {
     }));
     let captured = false;
     mgr.addLineListener(() => { captured = true; });
-    mgr["sessions"].set("test", { appendLine: () => {}, lineCount: 1 } as any);
+    // fileUri is required: broadcastLine reads session.fileUri.fsPath (added in b916c032).
+    mgr["sessions"].set("test", { appendLine: () => {}, lineCount: 1, fileUri: { fsPath: "test.log" } } as any);
     const { parseExclusionPattern } = require("../../../modules/features/exclusion-matcher");
     mgr["exclusionRules"] = [parseExclusionPattern("foo")];
     mgr.onOutputEvent("test", { output: "foo", category: "console" });
