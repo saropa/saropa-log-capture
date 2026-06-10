@@ -86,6 +86,7 @@ function showRelatedQueriesPopover(lineIdx, queries) {
     closeRelatedQueriesPopover();
     closeContextPopover();
     closeQualityPopover();
+    if (typeof closeRelatedRequestsPopover === 'function') closeRelatedRequestsPopover();
     var popover = document.createElement('div');
     popover.id = 'related-queries-popover';
     popover.className = 'context-popover';
@@ -162,6 +163,147 @@ window.addEventListener('message', function(event) {
         if (rqIdx < 0 || rqIdx >= allLines.length) { showPopoverToast(vt('viewer.popover.noLineSelected')); return; }
         var rqLd = allLines[rqIdx];
         vscodeApi.postMessage({ type: 'showRelatedQueries', lineIndex: rqIdx, timestamp: rqLd.ts || rqLd.timestamp, lineText: stripTags(rqLd.html || '') });
+    }
+});
+`;
+}
+
+/**
+ * Returns the JavaScript for the dedicated "Related Requests" popover (HTTP).
+ * Mirrors the Related Queries popover: the host correlates by request ID (when the
+ * configured pattern matches the line) and otherwise by the context time window, then
+ * posts `relatedRequestsData`. Each row shows method, URL, status, and duration.
+ */
+export function getRelatedRequestsPopoverScript(): string {
+    return /* javascript */ `
+var relatedRequestsPopoverEl = null;
+
+function closeRelatedRequestsPopover() {
+    if (relatedRequestsPopoverEl) {
+        relatedRequestsPopoverEl.remove();
+        relatedRequestsPopoverEl = null;
+    }
+}
+
+function buildRelatedRequestsContent(requests) {
+    var html = '<div class="popover-header">';
+    html += '<span class="popover-title">' + vt('viewer.relatedRequests.title', requests.length) + '</span>';
+    html += '<button class="popover-close codicon codicon-close" title="' + vt('viewer.popover.close') + '" aria-label="' + vt('viewer.popover.close') + '"></button>';
+    html += '</div>';
+    html += '<div class="popover-body">';
+    if (requests.length === 0) {
+        html += '<div class="popover-empty">' + vt('viewer.relatedRequests.empty') + '</div>';
+    } else {
+        html += '<div class="popover-section"><div class="popover-section-content">';
+        for (var ri = 0; ri < requests.length; ri++) {
+            var rq = requests[ri];
+            var rqUrl = rq.url && rq.url.length > 60 ? rq.url.substring(0, 57) + '...' : (rq.url || '');
+            var statusClass = (typeof rq.status === 'number' && rq.status >= 400) ? 'status-error'
+                : (typeof rq.status === 'number' && rq.status >= 300) ? 'status-redirect' : '';
+            var rqDur = typeof rq.durationMs === 'number' ? ' (' + rq.durationMs + 'ms)' : '';
+            html += '<div class="popover-item http-item">';
+            html += '<span class="http-method">' + escapeHtmlBasic(String(rq.method || '')) + '</span> ';
+            html += '<span class="http-url" title="' + popoverEscapeAttr(String(rq.url || '')) + '">' + escapeHtmlBasic(rqUrl) + '</span> ';
+            html += '<span class="http-status ' + statusClass + '">' + escapeHtmlBasic(String(rq.status != null ? rq.status : '')) + '</span>';
+            html += '<span class="http-duration">' + escapeHtmlBasic(rqDur) + '</span>';
+            html += ' <button class="popover-copy-request" type="button" data-request="' + popoverEscapeAttr(String(rq.url || '')) + '" title="' + vt('viewer.relatedRequests.copyAll') + '">\\ud83d\\udccb</button>';
+            html += '</div>';
+        }
+        html += '</div></div>';
+    }
+    html += '</div>';
+    html += '<div class="popover-footer">';
+    if (requests.length > 0) {
+        html += '<button class="popover-btn rr-copy-all">' + vt('viewer.relatedRequests.copyAll') + '</button>';
+    }
+    html += '</div>';
+    return html;
+}
+
+function showRelatedRequestsPopover(lineIdx, requests) {
+    closeRelatedRequestsPopover();
+    closeContextPopover();
+    closeQualityPopover();
+    if (typeof closeRelatedQueriesPopover === 'function') closeRelatedQueriesPopover();
+    var popover = document.createElement('div');
+    popover.id = 'related-requests-popover';
+    popover.className = 'context-popover';
+    popover.innerHTML = buildRelatedRequestsContent(requests);
+    document.body.appendChild(popover);
+    relatedRequestsPopoverEl = popover;
+
+    var lineEl = document.querySelector('[data-idx="' + lineIdx + '"]');
+    var anchorX = 100, anchorY = 100;
+    if (lineEl) {
+        var rect = lineEl.getBoundingClientRect();
+        anchorX = rect.left + 20;
+        anchorY = rect.bottom;
+    }
+    var pRect = popover.getBoundingClientRect();
+    var left = anchorX + 10;
+    var top = anchorY + 10;
+    if (left + pRect.width > window.innerWidth - 20) left = window.innerWidth - pRect.width - 20;
+    if (top + pRect.height > window.innerHeight - 20) top = anchorY - pRect.height - 10;
+    if (left < 10) left = 10;
+    if (top < 10) top = 10;
+    popover.style.left = left + 'px';
+    popover.style.top = top + 'px';
+
+    var closeBtn = popover.querySelector('.popover-close');
+    if (closeBtn) closeBtn.addEventListener('click', function(e) { e.stopPropagation(); closeRelatedRequestsPopover(); });
+
+    attachPopoverDataBtnHandlers(popover, '.popover-copy-request', 'data-request', function(val) {
+        vscodeApi.postMessage({ type: 'copyToClipboard', text: val });
+    });
+
+    var copyAllBtn = popover.querySelector('.rr-copy-all');
+    if (copyAllBtn) {
+        copyAllBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var allReq = [];
+            for (var i = 0; i < requests.length; i++) {
+                var rq = requests[i];
+                allReq.push((rq.method || '') + ' ' + (rq.url || '') + ' -> ' + (rq.status != null ? rq.status : '') + (typeof rq.durationMs === 'number' ? ' (' + rq.durationMs + 'ms)' : ''));
+            }
+            vscodeApi.postMessage({ type: 'copyToClipboard', text: allReq.join('\\n') });
+            showPopoverToast(vt('viewer.relatedRequests.copiedToast', requests.length));
+        });
+    }
+
+    setTimeout(function() {
+        document.addEventListener('click', function onOut(e) {
+            if (relatedRequestsPopoverEl && !relatedRequestsPopoverEl.contains(e.target)) {
+                document.removeEventListener('click', onOut);
+                closeRelatedRequestsPopover();
+            }
+        });
+        document.addEventListener('keydown', function onEsc(e) {
+            if (e.key === 'Escape') {
+                document.removeEventListener('keydown', onEsc);
+                closeRelatedRequestsPopover();
+            }
+        });
+    }, 0);
+}
+
+function handleRelatedRequestsPopoverData(msg) {
+    if (msg.error) {
+        showPopoverToast(msg.error);
+        return;
+    }
+    showRelatedRequestsPopover(msg.lineIndex || 0, msg.requests || []);
+}
+
+window.addEventListener('message', function(event) {
+    var msg = event.data;
+    if (msg.type === 'relatedRequestsData') {
+        handleRelatedRequestsPopoverData(msg);
+    }
+    if (msg.type === 'triggerShowRelatedRequests') {
+        var rrIdx = typeof focusedLineIdx !== 'undefined' && focusedLineIdx >= 0 ? focusedLineIdx : -1;
+        if (rrIdx < 0 || rrIdx >= allLines.length) { showPopoverToast(vt('viewer.popover.noLineSelected')); return; }
+        var rrLd = allLines[rrIdx];
+        vscodeApi.postMessage({ type: 'showRelatedRequests', lineIndex: rrIdx, timestamp: rrLd.ts || rrLd.timestamp, lineText: stripTags(rrLd.html || '') });
     }
 });
 `;
