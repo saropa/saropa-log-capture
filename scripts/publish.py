@@ -20,7 +20,7 @@
 #     Step 7:  Compile (type-check + lint + esbuild)
 #     Step 8:  Tests (npm run test)
 #     Step 9:  Quality checks (300-line file limit)
-#     Step 10: Version & CHANGELOG (resolve version, stamp CHANGELOG)
+#     Step 10: Version & CHANGELOG (resolve version, stamp CHANGELOG, verify release intro + log link)
 #
 #   Analyze-only mode (--analyze-only):
 #     → Package .vsix, show install instructions, offer local install
