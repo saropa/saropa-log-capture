@@ -64,14 +64,37 @@ def _print_locale_summary(
     print(f"{', '.join(parts)} = {total}")
 
 
+# Width of the live translation progress bar, in characters. Matches the audit
+# coverage table's bar so the two read as the same widget.
+_PROGRESS_BAR_WIDTH = 24
+
+
+def _print_progress_bar(locale: str, done: int, total: int) -> None:
+    """Render a single-line \r progress bar for one locale's translation pass.
+
+    Reprints the whole line each tick (cheap, and robust to terminals that ignore
+    partial \r redraws). A CPU NLLB run translates string-by-string over minutes;
+    without a visible bar the gap between the per-locale header and its summary
+    reads as a hang even though work is steadily progressing.
+    """
+    fraction = (done / total) if total else 1.0
+    filled = int(fraction * _PROGRESS_BAR_WIDTH)
+    bar = "#" * filled + "." * (_PROGRESS_BAR_WIDTH - filled)
+    print(
+        f"\r  {cyan(locale)}: [{bar}] {fraction * 100:5.1f}%  {done}/{total}",
+        end="",
+        flush=True,
+    )
+
+
 def _translate_one_locale(
     locale: str, canonical: set[str], *, dry_run: bool, scope: str,
 ) -> tuple[int, int, bool]:
     """Translate one locale under ``scope``. Returns (translated, errors, aborted)."""
-    # Live counter (\r) so a multi-minute run shows motion, not a frozen prompt.
+    # Live bar (\r) so a multi-minute run shows motion, not a frozen prompt.
     # Default arg binds the loop's current locale into the closure.
     def on_progress(done: int, total: int, _loc: str = locale) -> None:
-        print(f"\r  {_loc}: {done}/{total} translated…", end="", flush=True)
+        _print_progress_bar(_loc, done, total)
 
     print(f"\n  {cyan(locale)}:", end=" ", flush=True)
     translated, kept, brand_count, errors, aborted = translate_locale(
@@ -107,20 +130,29 @@ def run_translate(
     total_translated = 0
     total_errors = 0
     t0 = time.time()
-    for locale in locales:
-        translated, errors, aborted = _translate_one_locale(
-            locale, canonical, dry_run=dry_run, scope=scope,
-        )
-        total_translated += translated
-        total_errors += errors
-        # Per-IP rate limiting hits every locale the same way, so stop the whole
-        # run once the breaker trips rather than burning the timeout budget.
-        if aborted:
-            print(red(
-                "\n  Rate-limited by the translation endpoint — stopped early. "
-                "Re-run later to fill the remaining gaps."
-            ))
-            break
+    # CTRL-C is a graceful pause, not a crash: translate_locale's finally has
+    # already saved the in-progress locale, so a re-run resumes where it stopped.
+    # Catch it here to print a clean message instead of dumping a traceback.
+    try:
+        for locale in locales:
+            translated, errors, aborted = _translate_one_locale(
+                locale, canonical, dry_run=dry_run, scope=scope,
+            )
+            total_translated += translated
+            total_errors += errors
+            # Per-IP rate limiting hits every locale the same way, so stop the
+            # whole run once the breaker trips rather than burn the timeout budget.
+            if aborted:
+                print(red(
+                    "\n  Rate-limited by the translation endpoint — stopped early. "
+                    "Re-run later to fill the remaining gaps."
+                ))
+                break
+    except KeyboardInterrupt:
+        print(yellow(
+            "\n  Cancelled — progress saved for the locale in flight. "
+            "Re-run to resume where you left off."
+        ))
 
     elapsed = time.time() - t0
     print(f"\n  Done in {elapsed:.1f}s. {green(f'{total_translated} translations')}")
