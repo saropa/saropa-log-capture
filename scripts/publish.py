@@ -182,6 +182,7 @@ _STEP_EXIT_CODES = {
     "git": ExitCode.PREREQUISITE_FAILED,
     "GitHub CLI": ExitCode.PREREQUISITE_FAILED,
     "VS Code CLI": ExitCode.PREREQUISITE_FAILED,
+    "Manifest compat": ExitCode.PREREQUISITE_FAILED,
     "vsce PAT": ExitCode.PREREQUISITE_FAILED,
     "Global npm pkgs": ExitCode.PREREQUISITE_FAILED,
     "VS Code extensions": ExitCode.PREREQUISITE_FAILED,
