@@ -63,6 +63,13 @@ suite('Webview element ID wiring', () => {
         'ib-performance',
         'ib-sql-filter',
         'ib-sql-filter-count-short',
+        // Old toolbar search button + its match-count badge — the button was
+        // redundant with the editor title-bar $(search) command and was replaced
+        // by the flow-map export button (see viewer-toolbar-script.ts). The scripts
+        // keep null-guarded lookups (searchBtn / toolbarSearchBadge) so the
+        // flyout's aria-expanded and badge updates no-op harmlessly.
+        'toolbar-search-btn',
+        'toolbar-search-count',
         // Old footer toggle buttons — not in current HTML
         'audio-toggle',
         'deco-toggle',
