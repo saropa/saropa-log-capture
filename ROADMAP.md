@@ -23,11 +23,11 @@ Single table: **Wow** (High → Medium → Low), then **Effort** (Low → Medium
 | High | Low | Voice / TTS | Read selected lines or errors aloud | [036](plans/deferred/036_plan-voice-tts.md) (deferred) |
 | High | Medium | Live collaboration | Share session; others see same log and scroll position | [033](plans/033_plan-live-collaboration.md) |
 | Medium | Low | Docker polish | `includeInspect` sidecar; `--until` on logs | [007](plans/007_plan-docker-inspect-and-until.md) |
-| Medium | Low | Bidirectional sync | Reload/merge when log file is modified externally | [039](plans/039_plan-bidirectional-sync.md) |
+| Medium | Low | Bidirectional sync | Append-only live-tail **shipped 2026-03-01**; full reload on truncate/rewrite remains | [039 (archived)](plans/history/2026.03/2026.03.01/039_plan-bidirectional-sync.md) · [039b (active)](plans/039b_plan-tail-watcher-full-reload.md) |
 | Medium | Medium | Log diff from Git | Compare session to previous commit — **shipped 2026-06-10** | [035](plans/history/2026.06/2026.06.10/035_plan-log-diff-from-git.md) |
 | Medium | Medium | Session comparison (3-way) | Compare three sessions side by side | [031](plans/031_plan-session-comparison-three-way.md) |
 | Low | Medium | Incremental index for search | "Search in all logs" with scalable index | [029](plans/029_plan-incremental-index-search.md) |
-| High | Medium | Structured line parsing | Auto-detect log formats (logcat, syslog, Python, etc.), extract and strip prefix metadata (timestamp, PID, TID, level, tag), click-to-filter, tooltips | [047](plans/047_plan-structured-line-parsing.md) |
+| High | Medium | Structured line parsing | Auto-detect log formats (logcat, syslog, Python, etc.), extract and strip prefix metadata (timestamp, PID, TID, level, tag), click-to-filter, tooltips — **shipped 2026-04-12** | [047 (archived)](plans/history/2026.04/2026.04.12/047_plan-structured-line-parsing.md) |
 | High | Medium | Session flow map | Directed screen-transition diagram — boxes per screen/tab/dialog, one-way counted arrows, dwell times, crash overlay. Mermaid export now, interactive webview graph next. Consumes [052](plans/052_plan-semantic-timeline-capture-and-signal-expansion.md) nav events | [056](plans/056_plan-session-flow-map.md) |
 | Low | High | Integration adapters | database, externalLogs, http, browser, security — full implementation from specs | [001](plans/integrations/001_integration-specs-index.md) · [009](plans/integrations/009_integration-spec-application-file-logs.md)–[013](plans/integrations/013_integration-spec-security-audit-logs.md) |
 
@@ -38,7 +38,7 @@ Open plans currently in [plans/](plans/) that are not yet scored against the roa
 | Feature | Description | Plan |
 |---------|-------------|------|
 | Toolbar filter drawer | Consolidated drawer UX for viewer filters | [041](plans/041_plan-toolbar-filter-drawer.md) |
-| SQL UX overhaul | Rework Drift SQL surfaces in the viewer | [043](plans/043_plan-sql-ux-overhaul.md) |
+| SQL UX overhaul | Rework Drift SQL surfaces in the viewer — **shipped 2026-03-23** (verb chips + continuation collapse) | [043 (archived)](plans/history/2026.03/2026.03.23/043_plan-sql-ux-overhaul.md) |
 | Perf line signal detection | Detect performance-related signal lines | [048](plans/048_plan-perf-line-signal-detection.md) |
 | Recurring device-other demotion | Demote recurring noise from device-other tier | [050](plans/050_plan-warning-recurring-device-other-demotion.md) |
 | Structured file modes | Alternate viewing modes for structured log files | [051](plans/051_plan-structured-file-modes.md) |
@@ -47,7 +47,7 @@ Open plans currently in [plans/](plans/) that are not yet scored against the roa
 | Pubspec vibrancy report hardening | Harden the pubspec vibrancy report path | [103](plans/103_plan-pubspec-vibrancy-report-hardening.md) |
 | Expand translation locales | Add the next 15 developer languages (10 → 25); GPU NLLB + graceful-cancel groundwork done, RTL gated | [058](plans/058_plan-expand-translation-locales.md) |
 | Static ORM code analysis | Static analysis of ORM usage | [DB_12](plans/DB_12_static-orm-code-analysis.md) |
-| DB timestamp burst detector | Detect burst patterns in DB timestamps | [DB_16](plans/DB_16_db-timestamp-burst-detector.md) |
+| DB timestamp burst detector | Detect burst patterns in DB timestamps — **shipped 2026-04-12** | [DB_16 (archived)](plans/history/2026.04/2026.04.12/DB_16_db-timestamp-burst-detector.md) |
 
 ---
 
