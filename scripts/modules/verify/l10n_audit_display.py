@@ -113,7 +113,13 @@ def _print_provenance_table(audit: AuditResult) -> None:
 
 
 def print_untranslated_detail(audit: AuditResult) -> None:
-    """Print per-locale untranslated entries so the user can see what's left."""
+    """Print per-locale untranslated entries so the user can see what's left.
+
+    NOT part of the default ``print_audit`` output — that stays a compact
+    count-table view. The same per-string detail is always written to the JSON
+    audit report (``write_audit_report``); this console dump is opt-in for
+    callers that explicitly want it on screen.
+    """
     for lc in audit.locale_coverage:
         if not lc.untranslated_entries:
             continue
@@ -128,7 +134,12 @@ def print_untranslated_detail(audit: AuditResult) -> None:
 
 
 def print_audit(audit: AuditResult) -> None:
-    """Print the full audit: status header, bundle issues, coverage, gap detail."""
+    """Print the compact audit: status header, bundle issues, coverage + provenance.
+
+    Count tables only — the verbose per-locale gap listing is deliberately NOT
+    dumped here (it lives in the written JSON report; use
+    ``print_untranslated_detail`` explicitly if it's wanted on screen).
+    """
     header("l10n Bundle Status")
     print()
     print(f"  Source strings (TS):  {cyan(str(audit.source_key_count))}")
@@ -136,4 +147,3 @@ def print_audit(audit: AuditResult) -> None:
     _print_bundle_issues(audit)
     _print_coverage_table(audit)
     _print_provenance_table(audit)
-    print_untranslated_detail(audit)
