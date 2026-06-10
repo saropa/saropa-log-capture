@@ -224,6 +224,12 @@ export function getSignalSectionsStyles(): string {
     margin: 4px 0 6px;
     flex-wrap: wrap;
 }
+/* Fu5 sort toggle sits just under the time-window chips, sharing the chip style. */
+.signal-sort-toggle {
+    display: flex;
+    gap: 4px;
+    margin: 0 0 6px;
+}
 .signal-tw-chip {
     background: transparent;
     color: var(--vscode-foreground);

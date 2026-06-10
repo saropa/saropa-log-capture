@@ -255,6 +255,23 @@ export function getSignalScriptPartD(): string {
         })(twChips[ti]);
     }
 
+    /* Fu5: sort toggle for "Signals in this log". Flips severity ↔ time, swaps the button label
+       (both localized labels travel as data attributes), and re-renders. aria-pressed reflects
+       the non-default ('time') state for assistive tech. */
+    var sortToggleBtn = document.getElementById('signal-sort-toggle-btn');
+    if (sortToggleBtn) {
+        sortToggleBtn.addEventListener('click', function() {
+            signalsInLogSortMode = (signalsInLogSortMode === 'time') ? 'severity' : 'time';
+            var isTime = signalsInLogSortMode === 'time';
+            sortToggleBtn.textContent = isTime
+                ? (sortToggleBtn.getAttribute('data-label-time') || 'By time')
+                : (sortToggleBtn.getAttribute('data-label-severity') || 'By severity');
+            sortToggleBtn.classList.toggle('signal-tw-chip-active', isTime);
+            sortToggleBtn.setAttribute('aria-pressed', isTime ? 'true' : 'false');
+            if (typeof renderSignalsInThisLog === 'function') renderSignalsInThisLog();
+        });
+    }
+
     /** Render co-occurring signal pairs in the "Related signals" block. */
     function renderCoOccurrences() {
         var blockEl = document.getElementById('signal-cooccurrence-block');

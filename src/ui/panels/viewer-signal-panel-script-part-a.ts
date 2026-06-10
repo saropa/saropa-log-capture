@@ -24,6 +24,9 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
     /* Fu7 time-window filter state. null = "All" (no filter); otherwise ms window from session-latest-ts.
        Lives in part-a so it survives across panel renders without resetting on signalData refresh. */
     var signalsInLogWindowMs = null;
+    /* Fu5 sort toggle state for "Signals in this log": 'severity' (default, the producer's order)
+       or 'time' (chronological by representative timestamp). Lives in part-a so it survives renders. */
+    var signalsInLogSortMode = 'severity';
     /* Plan 053-A: pending noise-learning suggestions cached from the extension host.
        Refreshed when the panel opens (sent in the signalData payload). Each entry has
        { id, pattern, description, confidence, impact: { linesAffected, percentageReduction },
