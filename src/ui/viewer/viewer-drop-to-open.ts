@@ -23,9 +23,15 @@ export function getDropToOpenScript(): string {
         if (typeof document === 'undefined') return;
         var MAX_BYTES = ${droppedContentMaxBytes};
         var overlay = null;
+        /* dragenter/dragleave fire once per element boundary the cursor crosses, so a leave handler
+           that hides on the first 'leave' flickers the overlay off the moment the cursor moves from
+           the body onto any child. Track nesting depth instead: +1 per enter, -1 per leave, hide
+           only at zero. This is the standard robust drop-zone pattern. */
+        var dragDepth = 0;
 
         /* Lazily build the drop hint overlay. Inline styles (not a CSS class) avoid a
-           separate stylesheet module and any style-CSP nonce concerns. */
+           separate stylesheet module and any style-CSP nonce concerns. pointer-events:none keeps the
+           overlay out of the hit-test so it never becomes its own drag target and corrupts dragDepth. */
         function ensureOverlay() {
             if (overlay) return overlay;
             overlay = document.createElement('div');
@@ -43,6 +49,10 @@ export function getDropToOpenScript(): string {
             return overlay;
         }
         function showOverlay(on) { ensureOverlay().style.display = on ? 'flex' : 'none'; }
+        /* Force the drag state back to neutral. Needed because a drag can end without ever firing a
+           drop or a matching leave on us — Esc-cancel, release outside the window, or the host
+           swallowing the drop — which would otherwise strand the overlay on screen and desync dragDepth. */
+        function resetDrag() { dragDepth = 0; showOverlay(false); }
 
         /* True only for an in-page drag that carries its OWN mime types (drag-select, SQL/collection
            drags). An OS file drag, by contrast, usually exposes NO types during dragover (the browser
@@ -58,26 +68,46 @@ export function getDropToOpenScript(): string {
             return true;                                     // has types, none are Files — internal drag
         }
 
-        /* Capture phase on window so our preventDefault runs before the workbench's own handlers.
-           dragenter AND dragover must both preventDefault or Chromium never fires drop. */
-        function allowDrag(e) {
-            if (isInPageTypedDrag(e)) return;
-            e.preventDefault(); e.stopPropagation();
+        /* preventDefault on BOTH dragenter and dragover or Chromium never fires drop. No stopPropagation:
+           the workbench drop handler lives in the PARENT frame (cross-frame events don't bubble to it,
+           so stopping propagation here cannot reach it), and stopping it inside our own frame risks
+           starving VS Code's webview-internal drag plumbing — preventDefault alone arms the drop. */
+        function armDrop(e) {
+            e.preventDefault();
             if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
-            showOverlay(true);
         }
-        window.addEventListener('dragenter', allowDrag, true);
-        window.addEventListener('dragover', allowDrag, true);
-        window.addEventListener('dragleave', function (e) {
-            /* relatedTarget null = the cursor left the window entirely. */
-            if (!e.relatedTarget) showOverlay(false);
-        }, true);
-        window.addEventListener('drop', function (e) {
+        function onDragEnter(e) {
             if (isInPageTypedDrag(e)) return;
-            e.preventDefault(); e.stopPropagation();
-            showOverlay(false);
+            armDrop(e); dragDepth++; showOverlay(true);
+        }
+        function onDragOver(e) {
+            if (isInPageTypedDrag(e)) return;
+            armDrop(e);                                       // must keep firing preventDefault throughout
+        }
+        function onDragLeave(e) {
+            if (isInPageTypedDrag(e)) return;
+            if (dragDepth > 0) dragDepth--;
+            if (dragDepth === 0) showOverlay(false);
+        }
+        function onDrop(e) {
+            if (isInPageTypedDrag(e)) return;
+            e.preventDefault();
+            resetDrag();
             handleDrop(e.dataTransfer);
-        }, true);
+        }
+        /* Event handlers must never throw (project rule); a thrown drag handler would also leave the
+           overlay stuck and the page in a half-armed state. Swallow and reset on any failure. */
+        function guard(fn) {
+            return function (e) { try { fn(e); } catch (err) { resetDrag(); } };
+        }
+        /* Capture phase on window so our preventDefault runs before any in-page handler. */
+        window.addEventListener('dragenter', guard(onDragEnter), true);
+        window.addEventListener('dragover', guard(onDragOver), true);
+        window.addEventListener('dragleave', guard(onDragLeave), true);
+        window.addEventListener('drop', guard(onDrop), true);
+        /* A drag that ends without a drop on us (Esc, release outside the window, tab blur) clears here. */
+        window.addEventListener('dragend', guard(resetDrag), true);
+        window.addEventListener('blur', guard(resetDrag), true);
 
         /* A dropped OS file can arrive three ways in a webview; try each. VS Code commonly hands the
            file over as a file:// URI in text/uri-list (neither earlier attempt read that), not as a
