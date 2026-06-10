@@ -165,6 +165,92 @@ suite('LevelClassifier (special formats)', () => {
         });
     });
 
+    suite('classifyLevel — lint-report false positives (snake_case, prose)', () => {
+
+        // Saropa Lints reports embed yaml-style rule lists and code-comment frames
+        // (`  | # …`) inside the log viewer. The pre-fix patterns hit three families
+        // of false positive in these reports — verify each family stays as info.
+
+        test('should not promote snake_case "_exception" rule name to error', () => {
+            // Pre-fix: `_\w*Exception\b` matched because `\w` includes `_` — the
+            // regex engine found `_catching_generic_exception` and treated it as a
+            // Dart private type. Dart private types are `_PascalCase`, never snake_case.
+            assert.strictEqual(
+                classifyLevel('    - avoid_catching_generic_exception', 'stdout', true),
+                'info',
+            );
+        });
+
+        test('should not promote snake_case "_error" rule names to error', () => {
+            assert.strictEqual(
+                classifyLevel('    - avoid_clearing_form_on_error', 'stdout', true),
+                'info',
+            );
+            assert.strictEqual(
+                classifyLevel('    - avoid_print_error', 'stdout', true),
+                'info',
+            );
+        });
+
+        test('should not promote lowercase "error:" mid-sentence prose to error', () => {
+            // Pre-fix: `\w*(?:error|exception)\s*[:\]!(]` with /i matched lowercase
+            // "error:" anywhere. Dart label conventions are PascalCase ("Error:"),
+            // so dropping /i on this branch keeps the label catcher real-label-only.
+            assert.strictEqual(
+                classifyLevel('  | # Structural classification error: rule lumps FutureBuilder, StreamBuilder,', 'stdout', true),
+                'info',
+            );
+        });
+
+        test('should still detect "Error:" / "TypeError:" / "Exception:" labels (PascalCase)', () => {
+            // Regression guard: the case-sensitive tightening must preserve real labels.
+            assert.strictEqual(classifyLevel('Error: something broke', 'stdout', true), 'error');
+            assert.strictEqual(classifyLevel('TypeError: foo is not a function', 'stdout', true), 'error');
+            assert.strictEqual(classifyLevel('NullPointerException: null', 'stdout', true), 'error');
+            assert.strictEqual(
+                classifyLevel('PermissionDeniedException (no OS grant on file)', 'stdout', true),
+                'error',
+            );
+        });
+
+        test('should still detect "_PascalCaseError" Dart private types', () => {
+            assert.strictEqual(classifyLevel('_TypeError (null)', 'stdout', true), 'error');
+            assert.strictEqual(classifyLevel('_HttpException: connection lost', 'stdout', true), 'error');
+            assert.strictEqual(classifyLevel('_RangeError thrown', 'stdout', true), 'error');
+        });
+
+        test('should still detect bracket-tag error labels regardless of case', () => {
+            // strictBracketErrorPattern keeps /i so [ERROR]/[error]/[fatal] all match.
+            assert.strictEqual(classifyLevel('[error] bad input', 'stdout', true), 'error');
+            assert.strictEqual(classifyLevel('[ERROR] system failure', 'stdout', true), 'error');
+            assert.strictEqual(classifyLevel('[fatal] shutdown', 'stdout', true), 'error');
+        });
+
+        test('should not promote "cannot see/tell/think" prose to warning', () => {
+            // Pre-fix: structuralWarnPattern matched any verb after cannot — "cannot
+            // see the pair" in a code comment classified as warning. Negative
+            // lookahead now excludes perception/cognition verbs.
+            assert.strictEqual(
+                classifyLevel("  | # hand off close to a caller; rule's single-method scope cannot see the pair.", 'stdout', true),
+                'info',
+            );
+            assert.strictEqual(classifyLevel('we cannot tell which one matched', 'stdout', true), 'info');
+            assert.strictEqual(classifyLevel('cannot know without inspecting the source', 'stdout', true), 'info');
+        });
+
+        test('should still detect "could not / cannot / unable to / failed to <action-verb>" failures', () => {
+            // Regression guard: real actionable failures must still classify as warning.
+            assert.strictEqual(
+                classifyLevel('databaseDecode: could not decode "{…}" as DatabaseValueType.Json', 'stdout', true),
+                'warning',
+            );
+            assert.strictEqual(classifyLevel('cannot open file: permission denied', 'stdout', true), 'warning');
+            assert.strictEqual(classifyLevel('unable to connect to server', 'stdout', true), 'warning');
+            assert.strictEqual(classifyLevel('failed to parse response', 'stdout', true), 'warning');
+            assert.strictEqual(classifyLevel("couldn't allocate buffer", 'stdout', true), 'warning');
+        });
+    });
+
     suite('classifyLevel — generic SQL (non-Drift)', () => {
 
         test('should classify SELECT...FROM as database', () => {

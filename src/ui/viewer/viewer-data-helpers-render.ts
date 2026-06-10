@@ -17,28 +17,10 @@ import { VIEWER_RENDER_EMBED_RUN_SEPARATOR } from "./viewer-data-helpers-render-
 
 export function getViewerDataHelpersRender(): string {
     return /* javascript */ `
-/** Whether to show output channel badges on log lines (toggled from Decorations panel). */
-var showCategoryBadges = false;
-
-/** Channel badge colors keyed by DAP category. */
-var categoryBadgeColors = {
-    stdout: '#4ec9b0',
-    stderr: '#f48771',
-    'ai-bash': '#ce9178',
-    'ai-edit': '#d7ba7d',
-    logcat: '#9cdcfe',
-    'db-signal': '#c586c0',
-    system: '#b5cea8'
-};
-
-/** Return a small inline badge for the line's output channel, or empty string. */
-function getCategoryBadge(item) {
-    if (!showCategoryBadges || !item.category || item.category === 'console') return '';
-    var label = item.category;
-    var clr = categoryBadgeColors[label] || '#888';
-    return '<span class="category-badge" style="--cat-clr:' + clr + '" title="' + vt('viewer.deco.outputChannel', label) + '">' + label + '</span> ';
-}
-
+/* getCategoryBadge / categoryBadgeColors / showCategoryBadges moved to
+   viewer-deco-content.ts (plan 055) to keep this file under the 300-LOC cap.
+   They remain global in the shared webview scope, so renderItem still calls
+   getCategoryBadge() below. */
 function renderItem(item, idx, prevVis) {
     var idxAttr = ' data-idx="' + idx + '"';
     /* Structured file formatting (plan 051): when format toggle is on for
@@ -52,7 +34,14 @@ function renderItem(item, idx, prevVis) {
         /* Same .line.line-blank quarter-height as plain log mode (viewer-styles-decoration-bars). */
         var _fmtBlank = typeof isLineContentBlank === 'function' && isLineContentBlank(item);
         var _fmtBlankCls = _fmtBlank ? ' line-blank' : '';
-        return '<div class="line fmt-' + fileMode + _fmtBlankCls + '"' + idxAttr + '>' + fmtHtml + '</div>';
+        /* Markdown headings: tag the line with its level (CSS sizes/centers the text) and
+           pin the row to its computed height so the taller heading row matches the scroll
+           math calcItemHeight() produced — block-flow rows derive position from real DOM
+           height, so an unpinned heading would drift the prefix sums. */
+        /* Markdown heading class + pinned height + line-number/type gutter are built in the
+           markdown module (mdLineDecorate) so this generic renderer stays format-agnostic. */
+        var _md = (fileMode === 'markdown' && typeof mdLineDecorate === 'function') ? mdLineDecorate(item, idx) : { cls: '', style: '', gutter: '' };
+        return '<div class="line fmt-' + fileMode + _fmtBlankCls + _md.cls + (_md.gutter ? ' md-has-gutter' : '') + '"' + idxAttr + _md.style + '>' + _md.gutter + fmtHtml + '</div>';
     }
     var rawHtml = item.html;
     /* Structured line parsing: strip the detected prefix (timestamp, PID, TID, level, tag).
@@ -182,22 +171,21 @@ function renderItem(item, idx, prevVis) {
     }
     if (item.category && item.category.indexOf('ai-') === 0) {
         var aiCat = item.category;
-        var aiPrefix = '<span class="ai-prefix">' + escapeHtml(stripTags(html).split(']')[0] + ']') + '</span>';
-        var aiBody = html.indexOf('] ') >= 0 ? html.substring(html.indexOf('] ') + 2) : html;
-        var aiCompress = '';
-        if (item.compressDupCount > 1) {
-            aiCompress = '<span class="compress-dup-badge" title="' + vt('viewer.deco.identicalLines', item.compressDupCount) + '">(×' + item.compressDupCount + ')</span> ';
+        // Regex-match leading [LABEL] only when present. Prior split-on-']' captured the whole body and fabricated a ']' when stripSourceTagPrefix had already removed the bracket (line 65) — caused AI rows to render the body twice.
+        var _aiBracketMatch = /^((?:<[^>]*>)*)\\[([^\\]]+)\\]\\s*/.exec(html);
+        var aiPrefix = '', aiBody = html;
+        if (_aiBracketMatch) {
+            aiPrefix = _aiBracketMatch[1] + '<span class="ai-prefix">[' + escapeHtml(_aiBracketMatch[2]) + ']</span>';
+            aiBody = html.substring(_aiBracketMatch[0].length);
         }
-        /* Prefix chain parity: regular rows render deco (line-number + timestamp
-           gutter) + elapsed (+Nms badge) + slow-gap divider before the message.
-           AI rows previously skipped all three, which left [AI Bash]/[AI Edit]
-           text slammed against the left edge and out of the line-number column
-           the rest of the log occupies. The .ai-line border-left rail still
-           draws via the .line:has(.line-decoration) padding-left override
-           (decoration column takes precedence) and the .ai-line padding-left
-           fallback in viewer-styles-ai.ts covers decoration-off mode. */
+        var aiCompress = '';
+        if (item.compressDupCount > 1) { aiCompress = '<span class="compress-dup-badge" title="' + vt('viewer.deco.identicalLines', item.compressDupCount) + '">(×' + item.compressDupCount + ')</span> '; }
+        // Prefix chain parity. .ai-line rail draws via box-shadow:inset (viewer-styles-ai.ts) — out of flow, doesn't shift line-number column.
         var _aiGap = (typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '', _aiDeco = (typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item, idx, item._hiddenAfter) : '', _aiElapsed = (typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '';
-        return _aiGap + '<div class="line ai-line ' + aiCat + matchCls + spacingCls + '"' + idxAttr + '>' + _aiDeco + _aiElapsed + aiPrefix + aiCompress + aiBody + '</div>';
+        // Severity classes parity with regular branch — AI rows now show gutter dot + tint when classifyLevel tagged them (prior AI branch silently suppressed both).
+        var _aiBar = (typeof decoShowBar !== 'undefined' && decoShowBar && !item.isContext && item.level) ? ' level-bar-' + item.level : '';
+        var _aiLvlCls = ((typeof lineColorsEnabled !== 'undefined' && lineColorsEnabled) && item.level && !item.isContext) ? ' level-' + item.level : '';
+        return _aiGap + '<div class="line ai-line ' + aiCat + matchCls + spacingCls + _aiBar + _aiLvlCls + '"' + idxAttr + '>' + _aiDeco + _aiElapsed + aiPrefix + aiCompress + aiBody + '</div>';
     }
     var cat = (item.category === 'stderr' && stderrTreatAsError) ? ' cat-stderr' : '';
     var lcOn = (typeof lineColorsEnabled !== 'undefined' && lineColorsEnabled);
@@ -211,7 +199,25 @@ function renderItem(item, idx, prevVis) {
     if (abp === 'start') sepCls += ' art-block-start';
     else if (abp === 'middle') sepCls += ' art-block-middle';
     else if (abp === 'end') sepCls += ' art-block-end';
+    /* Shimmer-once gate. renderViewport() rebuilds the whole visible DOM from
+       scratch on every scroll / incoming-line render (atomic replaceChildren
+       swap — see viewer-data-viewport.ts), so a CSS animation on the bare
+       art-block-* class would restart from iteration 0 on every rebuild and
+       read as a perpetual sweep no matter its iteration-count. Emit the
+       shimmer-triggering class only the FIRST time a row is rendered, latched
+       by a per-item flag, so the single sweep plays on arrival and never
+       re-triggers when the row is recreated by a later viewport rebuild. */
+    if (abp && !item._artShimmered) {
+        sepCls += ' art-shimmer-play';
+        item._artShimmered = true;
+    }
     var isArtCont = (abp === 'middle' || abp === 'end');
+    /* ALL art-block rows (start/middle/end) stay on the legacy flat layout, NOT
+       the gutter grid: the block draws a continuous left border + box-drawing
+       glyphs that must align edge-to-edge, which the grid's padding + columns
+       break. Migrating only the start row (as the first cut did) split the box —
+       its top sat in the grid while the sides stayed flat. Gate the whole block. */
+    var isArtBlock = abp === 'start' || isArtCont;
     var gap = isArtCont ? '' : ((typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '');
     var elapsed = isArtCont ? '' : ((typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '');
     /* Compute continuation badge early so it can be injected into the
@@ -237,15 +243,14 @@ function renderItem(item, idx, prevVis) {
        chevron treatment via item.compressDupCount, peek-trigger rows via
        item._triggeredPeekKey — see getCounterAffordance for the priority
        order. No floating chips, no tag replacement, no overlay collisions. */
-    var deco = isArtCont ? '' : ((typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item, idx, item._hiddenAfter) : '');
-    /* Splice continuation badge into the trailing whitespace of the decoration
-       prefix (the prefix now ends '&nbsp;&nbsp;</span>' after the chevron was
-       removed). The badge then sits inside the .line-decoration span, just
-       before the closing tag, immediately right of the timestamp. */
-    if (contBadge && deco) {
-        deco = deco.replace('&nbsp;&nbsp;</span>', '&nbsp;' + contBadge + '&nbsp;</span>');
-        contBadge = '';
-    }
+    /* Grid column model (plan 055): emit one clipping .deco-cell per part. The
+       continuation badge no longer splices into the prefix — it renders at the
+       start of the .line-msg cell below. Art-block-start keeps the LEGACY inline
+       prefix (it renders on the flat, non-grid path with its sibling rows). */
+    var deco = isArtCont ? ''
+        : (isArtBlock
+            ? ((typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item, idx, item._hiddenAfter) : '')
+            : ((typeof getDecorationCells === 'function') ? getDecorationCells(item, idx, item._hiddenAfter) : ''));
     var annHtml = (typeof getAnnotationHtml === 'function') ? getAnnotationHtml(idx) : '';
     var badge = '';
     if (typeof getErrorBadge === 'function' && item.errorClass) badge = getErrorBadge(item.errorClass);
@@ -308,8 +313,19 @@ function renderItem(item, idx, prevVis) {
         /* javascript */ `
     /* Dedup-fold affordance now lives in the line-number column (chevron
        wrapper in deco). No trailing chip after html anymore — see the
-       counter-row affordance in getDecorationPrefix. */
-    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + bannerCls + dbTsBurstCls + '"' + idxAttr + titleAttr + '>' + stackGutter + deco + contBadge + elapsed + badge + catBadge + html + '</div>' + annHtml;
+       counter-row affordance in buildDecoParts. */
+    var baseCls = 'line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + bannerCls + dbTsBurstCls;
+    var msgInner = contBadge + elapsed + badge + catBadge + html;
+    /* Art-block rows (start/middle/end) keep the legacy flat structure: their
+       continuous border + box-drawing alignment break under the gutter grid.
+       Not migrated to .cols (plan 055 phasing). */
+    if (isArtBlock) {
+        return gap + '<div class="' + baseCls + '"' + idxAttr + titleAttr + '>' + stackGutter + deco + msgInner + '</div>' + annHtml;
+    }
+    /* Grid column model: each decoration datum is its own clipping cell; the
+       message is a separate .line-msg cell (min-width:0) so nothing can paint
+       over it. See viewer-styles-columns.ts. */
+    return gap + '<div class="' + baseCls + ' cols log-cols"' + idxAttr + titleAttr + '>' + deco + '<span class="line-msg">' + msgInner + '</span></div>' + annHtml;
 }
 `;
 }

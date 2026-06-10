@@ -19,6 +19,8 @@ import { handleGitHistoryForLine } from '../shared/handlers/git-history-handler'
 import { handleProjectStateRequest } from '../shared/handlers/project-state-handler';
 import { handleChangelogSinceForVersion } from '../shared/handlers/changelog-since-handler';
 import { fetchDriftViewerHealth } from '../../modules/integrations/drift-viewer-health';
+import { fetchDriftDbIssues } from '../../modules/integrations/drift-advisor-issues-fetch';
+import { getDriftLintViolations } from '../../modules/misc/drift-lint-violations';
 import { logExtensionError } from '../../modules/misc/extension-logger';
 
 /** Clamp numeric param to safe integer range for line/part indices (0 .. 10M). */
@@ -85,7 +87,7 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
         handleProjectStateRequest(ctx.post).catch(() => {});
         return true;
       case "requestAboutContent":
-        void loadAndPostAboutContent(ctx.context.extensionUri, ctx.extensionVersion, ctx.context.extension.id, ctx.post);
+        void loadAndPostAboutContent(ctx.context, ctx.extensionVersion, ctx.post);
         return true;
       case "resetAllSettings":
         void vscode.commands.executeCommand('saropaLogCapture.resetAllSettings');
@@ -192,6 +194,45 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
             error: r.error,
           });
         });
+        return true;
+      }
+      case "fetchDriftDbIssues": {
+        // DB_18 Phase 2: SQL History dashboard asks for the Drift server's merged issues list
+        // (index suggestions + anomalies). Best-effort — an unreachable server posts ok=false.
+        const baseUrl = String((msg as { baseUrl?: unknown }).baseUrl ?? "").trim();
+        if (!baseUrl || !/^https?:\/\//i.test(baseUrl)) {
+          return true;
+        }
+        void fetchDriftDbIssues(baseUrl).then((r) => {
+          ctx.post({ type: "driftDbIssues", baseUrl, ok: r.ok, issues: r.issues, error: r.error });
+        });
+        return true;
+      }
+      case "fetchDriftLintViolations": {
+        // DB_18 Phase 3: Drift static-code rule findings from Saropa Lints (source-level), plus the
+        // "Drift pack is off" signal when the project uses Drift but has no Drift-rule findings.
+        const wsRoot = vscode.workspace.workspaceFolders?.[0]?.uri;
+        if (!wsRoot) {
+          return true;
+        }
+        const usesDrift = !!(msg as { usesDrift?: unknown }).usesDrift;
+        void getDriftLintViolations(wsRoot, usesDrift).then((r) => {
+          ctx.post({
+            type: "driftLintViolations",
+            hasExport: r.hasExport,
+            violations: r.violations,
+            suggestEnablePack: r.suggestEnablePack,
+            tier: r.tier,
+          });
+        });
+        return true;
+      }
+      case "enableDriftLintPack": {
+        // Open a terminal pre-filled with the documented CLI; sendText(false) types it WITHOUT running
+        // so the user reviews before it mutates analysis_options.yaml. No surprise file changes.
+        const term = vscode.window.createTerminal("Saropa Lints");
+        term.show();
+        term.sendText("dart run saropa_lints:init --tier recommended --enable-pack drift", false);
         return true;
       }
       case "showRelatedQueries":

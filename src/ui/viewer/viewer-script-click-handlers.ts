@@ -115,6 +115,12 @@ if (viewportEl) viewportEl.addEventListener('click', function(e) {
         toggleMdSection(parseInt(mdHeading.dataset.mdSection));
         return;
     }
+    /* Markdown multi-line comment collapse. */
+    var mdComment = e.target.closest('[data-md-comment]');
+    if (mdComment && typeof toggleMdComment === 'function') {
+        toggleMdComment(parseInt(mdComment.dataset.mdComment));
+        return;
+    }
     /* JSON brace-pair collapse (plan 051). */
     var jsonNode = e.target.closest('[data-json-section]');
     if (jsonNode && typeof toggleJsonSection === 'function') {
@@ -142,6 +148,41 @@ if (viewportEl) viewportEl.addEventListener('click', function(e) {
         asyncGlyph.classList.toggle('expanded');
         return;
     }
+    /* Whole stack-FRAME row opens its source. The member-first render
+       (formatFrameMemberFirst) leaves the member as plain text and floats the
+       path link (.frame-lib-src) hard right at opacity 0.6, where a narrow
+       sidebar clips it off-screen — so clicking the obvious member name did
+       nothing and the trace read as "not clickable / useless" (user report
+       2026-06-07). Clicking anywhere on the frame (after the more specific
+       branches above: source-link, async-gap glyph, meta tags) now routes to
+       the frame's own embedded .source-link. Guarded on a collapsed selection
+       so drag-to-select frame text is never hijacked into an open-file. Headers
+       (.stack-header, handled below) keep whole-row toggle; their path link
+       still opens via the .source-link branch above. */
+    var frameRow = e.target.closest('.stack-line');
+    if (frameRow && !e.target.closest('.deco-counter-row[data-affordance-kind]')) {
+        /* The .deco-counter-row guard mirrors the .stack-header branch below: a
+           frame can now carry a reveal chevron for a hidden gap beneath it
+           (getDecorationPrefix), handled by the separate peek listener
+           (viewer-peek-chevron.ts) on the SAME viewport element. stopPropagation
+           there does not stop this sibling listener, so without this guard a
+           chevron click would BOTH peek the gap AND open the frame's source. */
+        var _fsel = (typeof window !== 'undefined' && window.getSelection) ? window.getSelection() : null;
+        if (!_fsel || _fsel.isCollapsed) {
+            var frameLink = frameRow.querySelector('.source-link');
+            if (frameLink) {
+                e.preventDefault();
+                vscodeApi.postMessage({
+                    type: 'linkClicked',
+                    path: frameLink.dataset.path || '',
+                    line: parseInt(frameLink.dataset.line || '1'),
+                    col: parseInt(frameLink.dataset.col || '1'),
+                    splitEditor: e.ctrlKey || e.metaKey,
+                });
+                return;
+            }
+        }
+    }
     var header = e.target.closest('.stack-header');
     if (header && header.dataset.gid !== undefined) {
         /* If the click landed on the .deco-counter-row (line number + chevron)
@@ -163,6 +204,26 @@ if (viewportEl) viewportEl.addEventListener('click', function(e) {
         if (_hdr && _hdr.frameCount > 1) {
             toggleStackGroup(_gid);
             return;
+        }
+    }
+    /* "The message IS the toggle": a log line promoted to its trace's stack owner
+       (viewer-data-add-stack-ingest.ts, item._stackOwner) collapses/expands its
+       frames on a whole-row click — same affordance as a .stack-header row, but
+       the owner renders through the normal .line path so it has no data-gid attr;
+       resolve it via data-idx → allLines. Skip when the click is on the counter
+       chevron (the peek listener already toggled it) or on a source/url link
+       (handled above), and guard on a collapsed selection so drag-to-select the
+       message text is not hijacked into a toggle. */
+    var ownerRow = e.target.closest('.line[data-idx]');
+    if (ownerRow && !e.target.closest('.deco-counter-row[data-affordance-kind]')) {
+        var _oidx = parseInt(ownerRow.dataset.idx, 10);
+        var _oit = (!isNaN(_oidx) && allLines[_oidx]) ? allLines[_oidx] : null;
+        if (_oit && _oit._stackOwner && _oit.frameCount > 1 && typeof toggleStackGroup === 'function') {
+            var _osel = (typeof window !== 'undefined' && window.getSelection) ? window.getSelection() : null;
+            if (!_osel || _osel.isCollapsed) {
+                toggleStackGroup(_oit.groupId);
+                return;
+            }
         }
     }
     var contBadge = e.target.closest('.cont-badge');

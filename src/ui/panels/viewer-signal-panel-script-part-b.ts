@@ -134,6 +134,10 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
             else if (s.trend === 'decreasing') { trendBadge = ' <span class="signal-trend-down" title="Decreasing">\u2193</span>'; }
             else if (s.trend === 'stable') { trendBadge = ' <span class="signal-trend-stable" title="Stable">\u2014</span>'; }
             var triageHtml = buildTriageHtml(s);
+            /* Per-row copy: emits a paste-ready detail block (metadata + example + supporting
+               log lines) so the user can drop one signal into an analysis engine without
+               copying the whole panel. Handler lives in part D, keyed by fingerprint/label. */
+            var copyBtn = ' <span class="re-action signal-copy-btn" role="button" title="Copy signal details for analysis" data-fingerprint="' + esc(s.fingerprint) + '" data-label="' + esc(s.label) + '">\\uD83D\\uDCCB Copy</span>';
             var dimCls = (signalDataCache.statuses || {})[s.fingerprint] === 'closed' ? ' re-closed' : '';
             /* data-fingerprint + data-label + data-detail travel to the click handler so the host
                can resolve to the specific session containing this fingerprint and the webview can
@@ -148,7 +152,7 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
                 + '" data-detail="' + esc(s.detail || '')
                 + '" title="' + esc(s.label) + '">'
                 + '<span>' + icon + recurBadge + trendBadge + ' ' + esc(text) + '</span>'
-                + '<span class="signal-hotfile-meta">' + meta + '</span>' + lintBtn + daBtn + triageHtml + '</div>';
+                + '<span class="signal-hotfile-meta">' + meta + '</span>' + lintBtn + daBtn + copyBtn + triageHtml + '</div>';
         }).join('');
     }
 
@@ -228,12 +232,29 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
             var icon = kindLabels[s.kind] || '\u2139\uFE0F', text = s.label.length > 50 ? s.label.slice(0, 47) + '...' : s.label;
             var meta = s.totalOccurrences + 'x' + (s.avgDurationMs ? ', avg ' + fmtMs(s.avgDurationMs) : '');
             var lineAttr = s.lineIndices && s.lineIndices.length > 0 ? ' data-line="' + s.lineIndices[0] + '"' : '';
-            var clickCls = lineAttr ? ' signal-jumpable' : '';
+            /* A row is jumpable when it points at a log line. Otherwise, if it carries a detail
+               (e.g. the "Drift Advisor issues" classified signal, which summarizes DA diagnostics
+               and has no single source line), it becomes a detail-toggle row so the user can still
+               click to read the detail inline. Rows with neither stay inert. */
+            var jumpable = !!lineAttr;
+            var hasDetail = !!(s.detail && String(s.detail).trim());
+            var clickCls = jumpable ? ' signal-jumpable' : (hasDetail ? ' signal-detail-toggle' : '');
+            var titleSuffix = jumpable ? ' — click to jump' : (hasDetail ? ' — click to see detail' : '');
             var preview = buildEvidencePreviewHtml(s);
-            return '<div class="signal-env-row signal-in-log-row' + clickCls + '"' + lineAttr + ' title="' + esc(s.label) + (lineAttr ? ' — click to jump' : '') + '">'
+            /* fingerprint + label travel on the row so the part-D copy handler can re-find this
+               exact signal object (which carries lineIndices) to build the detail block. */
+            var copyBtn = ' <span class="re-action signal-copy-btn" role="button" title="Copy signal details for analysis" data-fingerprint="' + esc(s.fingerprint || '') + '" data-label="' + esc(s.label) + '">\\uD83D\\uDCCB Copy</span>';
+            /* Inline detail body, hidden until the row is clicked. Only emitted for non-jumpable
+               rows that have a detail — jumpable rows reveal context by scrolling to the line. */
+            var detailBlock = (!jumpable && hasDetail)
+                ? '<div class="signal-detail-body" hidden>' + esc(String(s.detail).trim()) + '</div>'
+                : '';
+            return '<div class="signal-env-row signal-in-log-row' + clickCls + '"' + lineAttr + ' data-fingerprint="' + esc(s.fingerprint || '') + '" data-label="' + esc(s.label) + '" title="' + esc(s.label) + titleSuffix + '">'
                 + '<span>' + icon + ' ' + esc(text) + '</span>'
                 + '<span class="signal-hotfile-meta">' + meta + '</span>'
+                + copyBtn
                 + preview
+                + detailBlock
                 + '</div>';
         }).join('');
     }

@@ -230,12 +230,13 @@ export function getContentStyles(): string {
     opacity: 0.7;
     border-top: 1px dashed var(--vscode-editorWarning-foreground, rgba(252, 192, 0, 0.3));
 }
-/* Per-line elapsed time label (e.g. "+1.2s") */
+/* Per-line elapsed time label (e.g. "+1.2s"). text-align:right + min-width line up varying values ("17s", "3m 31s") on the "s". */
 .elapsed-time {
     color: var(--vscode-descriptionForeground);
     font-size: 10px;
     min-width: 50px;
     display: inline-block;
+    text-align: right;
     opacity: 0.7;
 }
 

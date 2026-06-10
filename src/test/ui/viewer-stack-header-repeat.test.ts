@@ -58,19 +58,24 @@ suite('viewer stack-header repeat collapse (bug_003)', () => {
         assert.strictEqual(headers[0].collapsed, true, 'anchor collapsed=true so its frames hide via calcItemHeight');
     });
 
-    test('plain-line content between isolated matching headers breaks the streak', () => {
+    test('plain-line content between isolated matching headers breaks the streak (2nd trace owned by the line)', () => {
         const s = loadStackHeaderRepeatSandbox();
         const t0 = 1_000_000;
         addIsolatedFrame(s, FRAME, t0);
         /* A real non-frame line arriving here hits the shouldShowNormalLine branch and calls
-           resetStackHdrRepeatTracker — that reset is the streak break, not the null of
-           activeGroupHeader (which happens for any non-frame content). */
+           resetStackHdrRepeatTracker — that reset is the streak break. The line is then
+           promoted to the OWNER of the trace that follows ("the message IS the toggle",
+           viewer-data-add-stack-ingest.ts), so the second trace is no longer a separate
+           stack-header at all — it folds under the plain line. Either way the streak is
+           broken: no repeat chip, first anchor stays visible. */
         addPlainLine(s, 'some unrelated log output', t0 + 50);
         addIsolatedFrame(s, FRAME, t0 + 100);
 
         const headers = s.allLines.filter((l: StackItemVm) => l.type === 'stack-header');
         const chips = s.allLines.filter((l: StackItemVm) => l.type === 'repeat-notification' && l.stackHdrRepeat);
-        assert.strictEqual(headers.length, 2, 'both headers must remain as separate stack groups');
+        const owners = s.allLines.filter((l: StackItemVm) => (l as { _stackOwner?: boolean })._stackOwner);
+        assert.strictEqual(headers.length, 1, 'only the first isolated trace is a stack-header; the second folds under the plain line owner');
+        assert.strictEqual(owners.length, 1, 'the plain line became the owner of the trace that followed it');
         assert.strictEqual(chips.length, 0, 'no repeat chip should be produced when content breaks the streak');
         assert.strictEqual(headers[0].repeatHidden, undefined, 'first anchor must stay visible — streak was broken');
     });
@@ -134,13 +139,19 @@ suite('viewer stack-header repeat collapse (bug_003)', () => {
         assert.ok(stackChips[0].html?.includes('3 × stack repeated:'), 'stack streak should reach 3 across the SQL chip');
     });
 
-    test('tracker resets after plain-line break so new streaks start at count 2', () => {
+    test('tracker resets after a content-break marker so new streaks start at count 2', () => {
         const s = loadStackHeaderRepeatSandbox();
         const t0 = 1_000_000;
         addIsolatedFrame(s, FRAME, t0);
         addIsolatedFrame(s, FRAME, t0 + 100);
-        /* Plain line — resets the stack-header tracker via the normal-line push branch. */
-        addPlainLine(s, 'break', t0 + 150);
+        /* Marker break — resets the stack-header tracker via cleanupTrailingRepeats.
+           A marker (not a normal line) is used as the boundary because a plain log
+           line followed by a trace is now promoted to that line's stack owner
+           ("the message IS the toggle", viewer-data-add-stack-ingest.ts), which
+           would absorb the next frame instead of starting a fresh repeat streak.
+           The real Drift repeat-collapse boundary is a database SQL line, which
+           the owner-promotion guard skips, so this path stays intact in practice. */
+        s.addToData('--- break ---', true, 'marker', t0 + 150, false, null, undefined, undefined, 'debug');
         addIsolatedFrame(s, FRAME, t0 + 200);
         addIsolatedFrame(s, FRAME, t0 + 300);
 
