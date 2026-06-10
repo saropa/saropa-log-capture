@@ -26,6 +26,7 @@ import {
   type LoadContentResultLike,
 } from "./log-viewer-provider-load-helpers";
 import { readSessionLogParts } from "./log-viewer-provider-load-parts";
+import { classifyTailChange } from "./tail-change-classify";
 
 export interface LogViewerLoadTarget {
   postMessage(msg: unknown): void;
@@ -44,6 +45,19 @@ export interface LogViewerTailTarget extends LogViewerLoadTarget {
   setTailLastLineCount(n: number): void;
   getTailUpdateInProgress(): boolean;
   setTailUpdateInProgress(v: boolean): void;
+  /** Clear + re-read + re-tail the file. Used by the 039b external-reload hook on truncate/rewrite. */
+  loadFromFile(uri: vscode.Uri, options?: { tail?: boolean; replay?: boolean }): Promise<void>;
+}
+
+/**
+ * Behavior the tail watcher invokes for non-append external changes (plan 039b), injected by the
+ * caller so the watcher stays decoupled from the provider's reload machinery.
+ */
+export interface TailExternalHooks {
+  /** File shrank/was rewritten or recreated — reload it (honoring `reloadOnExternalChange`). */
+  onExternalReload(uri: vscode.Uri): void;
+  /** File was deleted on disk — keep the last snapshot and warn. */
+  onExternalDelete(uri: vscode.Uri): void;
 }
 
 /** Load result for smart bookmark suggestion (first error/warning in this log). */
@@ -219,41 +233,86 @@ export async function executeLoadContent(
   };
 }
 
-/** Create a file watcher that appends new lines to the viewer. Caller must dispose when done. */
-export function createTailWatcher(
+/**
+ * Append newly-written tail lines to the viewer. Precondition: the file grew past `lastCount`.
+ *
+ * The first new content line sits at file position `headerEnd + lastCount` (0-based);
+ * parseRawLinesToPending adds 1 to produce the 1-based gutter number so the tailed line numbers
+ * continue the same source-file numbering the initial load used.
+ */
+function appendTailLines(
+  sessionMidnightMs: number,
+  target: LogViewerTailTarget,
+  contentLines: readonly string[],
+  headerEnd: number,
+): void {
+  const lastCount = target.getTailLastLineCount();
+  const newLines = contentLines.slice(lastCount);
+  const ctx = { classifyFrame: (t: string) => helpers.classifyFrame(t), sessionMidnightMs, sourceLineOffset: headerEnd + lastCount };
+  const pending = parseRawLinesToPending(newLines, ctx);
+  target.setTailLastLineCount(contentLines.length);
+  target.postMessage({ type: "addLines", lines: pending, lineCount: contentLines.length });
+  helpers.sendNewCategories(pending, target.getSeenCategories(), (msg) => target.postMessage(msg));
+}
+
+/**
+ * Handle one `onDidChange`: read the file, then act on {@link classifyTailChange}. The shrink branch
+ * hands off to a host-driven full reload; growth appends; an unchanged count is a no-op.
+ */
+async function handleTailChange(
   uri: vscode.Uri,
   sessionMidnightMs: number,
-  initialLineCount: number,
   target: LogViewerTailTarget,
-): vscode.Disposable {
-  target.setTailLastLineCount(initialLineCount);
+  hooks: TailExternalHooks,
+): Promise<void> {
+  const raw = await vscode.workspace.fs.readFile(uri);
+  const rawLines = Buffer.from(raw).toString("utf-8").split(/\r?\n/);
+  const headerEnd = findHeaderEnd(rawLines);
+  const contentLines = rawLines.slice(headerEnd);
+  const action = classifyTailChange(target.getTailLastLineCount(), contentLines.length);
+  if (action === "reload") {
+    hooks.onExternalReload(uri);
+    return;
+  }
+  if (action === "noop") { return; }
+  appendTailLines(sessionMidnightMs, target, contentLines, headerEnd);
+}
+
+/** Inputs for {@link createTailWatcher}. Bundled to stay within the 4-param limit. */
+export interface TailWatcherOptions {
+  readonly uri: vscode.Uri;
+  readonly sessionMidnightMs: number;
+  readonly initialLineCount: number;
+  readonly target: LogViewerTailTarget;
+  readonly hooks: TailExternalHooks;
+}
+
+/**
+ * Create a file watcher that keeps the viewer in sync with external writes (plan 039b):
+ * append on growth, full reload on truncate/rewrite/recreate, snapshot-keep + warn on delete.
+ * Caller must dispose when done.
+ */
+export function createTailWatcher(o: TailWatcherOptions): vscode.Disposable {
+  const { uri, sessionMidnightMs, target, hooks } = o;
+  target.setTailLastLineCount(o.initialLineCount);
+  const isCurrent = () => target.getCurrentFileUri()?.fsPath === uri.fsPath;
   const watcher = vscode.workspace.createFileSystemWatcher(uri.fsPath);
   watcher.onDidChange(async () => {
-    if (target.getCurrentFileUri()?.fsPath !== uri.fsPath || !target.getView()) { return; }
+    if (!isCurrent() || !target.getView()) { return; }
     // Guard re-entrancy: rapid file changes can fire onDidChange again before we finish.
     if (target.getTailUpdateInProgress()) { return; }
     target.setTailUpdateInProgress(true);
     try {
-      const raw = await vscode.workspace.fs.readFile(uri);
-      const rawLines = Buffer.from(raw).toString("utf-8").split(/\r?\n/);
-      const headerEnd = findHeaderEnd(rawLines);
-      const contentLines = rawLines.slice(headerEnd);
-      const lastCount = target.getTailLastLineCount();
-      if (contentLines.length <= lastCount) { return; }
-      const newLines = contentLines.slice(lastCount);
-      // Tail append: the first new content line sits at file position `headerEnd + lastCount`
-      // (0-based). parseRawLinesToPending adds 1 to produce the 1-based gutter number so the
-      // tailed line numbers continue the same source-file numbering the initial load used.
-      const ctx = { classifyFrame: (t: string) => helpers.classifyFrame(t), sessionMidnightMs, sourceLineOffset: headerEnd + lastCount };
-      const pending = parseRawLinesToPending(newLines, ctx);
-      target.setTailLastLineCount(contentLines.length);
-      target.postMessage({ type: "addLines", lines: pending, lineCount: contentLines.length });
-      helpers.sendNewCategories(pending, target.getSeenCategories(), (msg) => target.postMessage(msg));
+      await handleTailChange(uri, sessionMidnightMs, target, hooks);
     } catch {
-      // File may be locked or deleted
+      // File may be locked or mid-write; the next onDidChange retries.
     } finally {
       target.setTailUpdateInProgress(false);
     }
   });
+  // Recreate (a tool that unlinks-then-writes) reads as an external rewrite — reload, don't append.
+  watcher.onDidCreate(() => { if (isCurrent()) { hooks.onExternalReload(uri); } });
+  // Delete: keep the last in-memory snapshot (don't blank the viewer) and warn once.
+  watcher.onDidDelete(() => { if (isCurrent()) { hooks.onExternalDelete(uri); } });
   return watcher;
 }
