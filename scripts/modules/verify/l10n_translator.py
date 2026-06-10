@@ -50,6 +50,11 @@ from modules.verify.l10n_nllb_engine import (
     cache_hint as nllb_cache_hint,
     is_available as is_nllb_available,
 )
+from modules.verify.l10n_provenance import (
+    is_low_quality,
+    load_provenance,
+    save_provenance,
+)
 
 # VS Code l10n bundle locale codes -> deep-translator target codes.
 # deep-translator uses standard ISO codes; VS Code bundles use lowercase
@@ -178,28 +183,38 @@ def _apply_translation(
     en_key: str,
     bundle: dict[str, str],
     locale: str,
+    *,
+    keep_existing_on_failure: bool = False,
 ) -> str:
     """Translate one key into ``bundle``; return its outcome status.
 
     Returns one of:
       "ok"           — translated and stored.
-      "validate_fail" — network OK but the result was rejected (kept English).
-      "net_fail"     — the network call itself failed (kept English).
+      "validate_fail" — network OK but the result was rejected.
+      "net_fail"     — the network call itself failed.
 
     Only "net_fail" feeds the circuit breaker; a "validate_fail" proves the
     endpoint is healthy, so it must not count toward consecutive failures.
+
+    ``keep_existing_on_failure`` controls the failure path. Default False writes
+    English as a fallback — correct when filling a gap (the slot was empty or
+    English anyway). True LEAVES the current value untouched — required by the
+    low-quality upgrade pass: a failed NLLB upgrade of an existing Google
+    translation must keep the Google text, never overwrite a real translation
+    with English (which would be strictly worse than the value it replaced).
     """
     try:
         result = _translate_with_retry(translator, en_key)
     except Exception as exc:
-        # Network failed after retries — log it and keep English as fallback.
         print(f"    WARN [{locale}]: {en_key[:50]}... -> {exc}")
-        bundle[en_key] = en_key
+        if not keep_existing_on_failure:
+            bundle[en_key] = en_key
         return "net_fail"
     if result:
         bundle[en_key] = result
         return "ok"
-    bundle[en_key] = en_key
+    if not keep_existing_on_failure:
+        bundle[en_key] = en_key
     return "validate_fail"
 
 
@@ -267,47 +282,76 @@ def _make_translator(locale: str) -> tuple[object, str] | None:
     return GoogleTranslator(source="en", target=target_code), "google"
 
 
+_TRANSLATE_SCOPES = ("missing", "gaps", "low_quality")
+
+
+def _key_action(
+    en_key: str,
+    existing: str | None,
+    *,
+    scope: str,
+    provenance: dict[str, str],
+) -> str:
+    """Decide what to do with one key under the active scope.
+
+    Returns "identity" (force English — brand/acronym/symbol), "translate"
+    (send to the engine), or "keep" (leave as-is). Scope semantics:
+      - "missing"     translate only keys ABSENT from the bundle.
+      - "gaps"        translate absent keys AND en-copy (value == English).
+      - "low_quality" translate ONLY existing real translations whose
+                      provenance engine is low quality or untracked (upgrade).
+    """
+    if is_brand_only(en_key) or is_acronym_only(en_key) or is_no_translatable_content(en_key):
+        return "identity"
+    really_translated = bool(existing) and existing != en_key
+    if scope == "low_quality":
+        # Upgrade only real translations the quality model marks as weak.
+        if really_translated and is_low_quality(provenance.get(en_key)):
+            return "translate"
+        return "keep"
+    # gaps / missing: fill where there is no real translation yet.
+    if really_translated:
+        return "keep"
+    # en-copy (present, value == English) is skipped only in the narrow
+    # "missing" scope the publish pipeline uses to avoid re-sending it each run.
+    if scope == "missing" and existing is not None:
+        return "keep"
+    return "translate"
+
+
 def translate_locale(
     locale: str,
     canonical_keys: set[str],
     *,
     dry_run: bool = False,
-    only_missing: bool = False,
+    scope: str = "gaps",
     on_progress: Callable[[int, int], None] | None = None,
 ) -> tuple[int, int, int, int, bool]:
-    """Translate missing/untranslated strings for one locale.
+    """Translate strings for one locale under ``scope`` (see ``_key_action``).
 
-    only_missing scopes the run to genuine gaps: keys ABSENT from the bundle.
-    Because every bundle is keyed by the English text, changing an English
-    source string produces a NEW key — so "out of date" strings are absent
-    from the locale and ARE filled. What only_missing skips is en-copy keys
-    (already present with value == English): those were attempted before, and
-    re-sending them to Google on every publish is identical-output network
-    waste. The publish pipeline passes only_missing=True; the deliberate
-    translate_l10n.py run leaves it False so it can re-attempt en-copy and
-    recover strings whose previous translation failed to English.
+    ``scope`` is one of "missing" (absent keys only — the publish pipeline),
+    "gaps" (absent + en-copy — the deliberate translate_l10n.py run), or
+    "low_quality" (re-translate existing low-quality / untracked output — the
+    Google → NLLB upgrade pass). Every successful translation records its engine
+    in the locale's provenance sidecar; a failed low-quality upgrade keeps the
+    existing value rather than overwriting a real translation with English.
 
     on_progress, if given, is called as on_progress(done, total) after every
-    network attempt so callers can render a live counter — a backlog of
-    hundreds of strings at the throttle delay takes minutes, and without
-    feedback the publish pipeline reads as a frozen "lock-up at Step 9".
+    translation attempt so callers can render a live counter.
 
     Returns (translated, kept, brand, errors, aborted).
-      translated = newly translated this run.
-      kept       = already had a real non-English translation (or, under
-                   only_missing, an en-copy key left in place).
+      translated = newly translated (or upgraded) this run.
+      kept       = left as-is (real translation, identity, or out-of-scope).
       brand      = brand-only strings where identity IS correct.
-      errors     = API call failed, kept English as fallback.
-      aborted    = circuit breaker tripped (endpoint rate-limiting); the
-                   remaining keys were left as English. Callers should stop
-                   trying further locales — throttling is per-IP, not per-locale.
+      errors     = translation attempt failed.
+      aborted    = circuit breaker tripped (endpoint rate-limiting); remaining
+                   keys left untouched. Callers should stop further locales.
     """
-    made = _make_translator(locale)
-    if made is None:
-        return 0, 0, 0, 0, False
-    translator, engine = made
-
     path, bundle = _load_bundle(locale)
+    # Loaded once; the low-quality scope reads it to find weak keys, and every
+    # scope appends the engine of each new translation to provenance_updates.
+    provenance = load_provenance(locale)
+    provenance_updates: dict[str, str] = {}
 
     translated = 0
     kept = 0
@@ -316,25 +360,25 @@ def translate_locale(
     aborted = False
     consecutive_failures = 0
 
-    # Strings that will need a real network call this run — the denominator
-    # for on_progress so the live counter reads "done/total", not "done/?".
-    # Must mirror the per-key skip logic in the loop below, including the
-    # only_missing en-copy skip, or the counter overshoots its total.
-    def _needs_network(k: str) -> bool:
-        # Brands, acronyms, and symbol-only strings are forced English (no
-        # network) regardless of any existing value — mirror the loop's order so
-        # this denominator matches.
-        if is_brand_only(k) or is_acronym_only(k) or is_no_translatable_content(k):
-            return False
-        existing = bundle.get(k)
-        if existing and existing != k:
-            return False  # real, non-English translation already present
-        if only_missing and existing == k:
-            return False  # en-copy: attempted before, not re-sent on publish
-        return True
-
-    total_todo = sum(1 for k in canonical_keys if _needs_network(k))
+    # Denominator for on_progress — mirror the loop's per-key decision exactly,
+    # so the live counter reads "done/total" and never overshoots its total.
+    total_todo = sum(
+        1 for k in canonical_keys
+        if _key_action(k, bundle.get(k), scope=scope, provenance=provenance) == "translate"
+    )
     attempted = 0
+
+    # Build the engine only when there is real work AND we will write. Building
+    # NllbTranslator loads the ~7 GB model and runs a probe translation, so a
+    # dry run or a no-op locale (e.g. an upgrade pass with no weak keys) must
+    # never construct it — translator stays None on those paths and is unused.
+    translator: object | None = None
+    engine = "dry-run" if dry_run else "none"
+    if not dry_run and total_todo > 0:
+        made = _make_translator(locale)
+        if made is None:
+            return 0, 0, 0, 0, False
+        translator, engine = made
 
     # requests has no default timeout, so without this a stalled Google
     # response hangs forever (the original lock-up). Set the process-wide
@@ -349,42 +393,23 @@ def translate_locale(
     try:
         for en_key in sorted(canonical_keys):
             existing = bundle.get(en_key)
+            action = _key_action(en_key, existing, scope=scope, provenance=provenance)
 
-            # Brand-only strings: identity IS the correct translation.
-            if is_brand_only(en_key):
+            # Forced-English identity (brand / acronym / symbol). No provenance
+            # is stamped — classify_translated_keys infers "identity" by shape,
+            # so these never count as upgrade candidates. Brand-only feeds the
+            # brand counter; acronym/symbol count as kept (matches prior tallies).
+            if action == "identity":
                 bundle[en_key] = en_key
-                brand += 1
+                if is_brand_only(en_key):
+                    brand += 1
+                else:
+                    kept += 1
                 continue
 
-            # Technical acronyms (ANR, SQL, OS, …) are English in EVERY locale.
-            # Checked before the keep-existing branch on purpose: this overwrites
-            # any prior translation so the label is uniform across locales (no
-            # mix of "OK" and "わかりました"). Never sent to the translator.
-            if is_acronym_only(en_key):
-                bundle[en_key] = en_key
-                kept += 1
-                continue
-
-            # Symbol-only strings ("1 - {0}", "{0} #", "Δ #") have no word to
-            # translate; identity is correct in every locale. Forced English like
-            # acronyms so a value==English audit never re-flags them and the
-            # translator never round-trips them to Google for identical output.
-            if is_no_translatable_content(en_key):
-                bundle[en_key] = en_key
-                kept += 1
-                continue
-
-            # Already has a real (non-English) translation — keep it.
-            if existing and existing != en_key:
-                kept += 1
-                continue
-
-            # Publish path: skip en-copy keys (present, value == English).
-            # Genuine gaps and changed-English strings are ABSENT from the
-            # bundle and still flow through below, so "out of date" still
-            # regenerates. Re-sending en-copy every publish is identical-output
-            # network waste — recover those via translate_l10n.py instead.
-            if only_missing and existing == en_key:
+            # Out of scope this run: a real translation we are keeping, a
+            # high-quality one the upgrade pass skips, or en-copy under "missing".
+            if action == "keep":
                 kept += 1
                 continue
 
@@ -392,12 +417,18 @@ def translate_locale(
                 translated += 1
                 continue
 
-            status = _apply_translation(translator, en_key, bundle, locale)
+            # keep_existing_on_failure for the upgrade pass: a failed NLLB
+            # upgrade must not overwrite a real Google translation with English.
+            status = _apply_translation(
+                translator, en_key, bundle, locale,
+                keep_existing_on_failure=(scope == "low_quality"),
+            )
             if status == "ok":
                 translated += 1
                 consecutive_failures = 0
+                provenance_updates[en_key] = engine
             elif status == "validate_fail":
-                # Network is healthy; not a throttle signal — don't trip breaker.
+                # Engine is healthy; not a throttle signal — don't trip breaker.
                 errors += 1
                 consecutive_failures = 0
             else:  # net_fail
@@ -427,6 +458,9 @@ def translate_locale(
 
     if not dry_run:
         _save_bundle(path, bundle)
+        # Record which engine produced each new/upgraded translation so the
+        # audit can report quality and a later pass can target the weak ones.
+        save_provenance(locale, provenance_updates)
 
     return translated, kept, brand, errors, aborted
 

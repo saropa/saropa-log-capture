@@ -65,9 +65,9 @@ def _print_locale_summary(
 
 
 def _translate_one_locale(
-    locale: str, canonical: set[str], *, dry_run: bool,
+    locale: str, canonical: set[str], *, dry_run: bool, scope: str,
 ) -> tuple[int, int, bool]:
-    """Translate one locale. Returns (translated, errors, aborted)."""
+    """Translate one locale under ``scope``. Returns (translated, errors, aborted)."""
     # Live counter (\r) so a multi-minute run shows motion, not a frozen prompt.
     # Default arg binds the loop's current locale into the closure.
     def on_progress(done: int, total: int, _loc: str = locale) -> None:
@@ -75,7 +75,7 @@ def _translate_one_locale(
 
     print(f"\n  {cyan(locale)}:", end=" ", flush=True)
     translated, kept, brand_count, errors, aborted = translate_locale(
-        locale, canonical, dry_run=dry_run, on_progress=on_progress,
+        locale, canonical, dry_run=dry_run, scope=scope, on_progress=on_progress,
     )
     # Close the transient \r line before the per-locale summary.
     if not dry_run and (translated or errors):
@@ -84,23 +84,32 @@ def _translate_one_locale(
     return translated, errors, aborted
 
 
-def run_translate(locales: list[str], *, dry_run: bool = False) -> None:
-    """Translate missing strings for the given locales, with live progress."""
+def run_translate(
+    locales: list[str], *, dry_run: bool = False, scope: str = "gaps",
+) -> None:
+    """Translate the given locales under ``scope`` (gaps / low_quality), live.
+
+    ``scope="gaps"`` fills untranslated strings; ``scope="low_quality"`` re-does
+    existing low-quality / untracked translations with NLLB (the upgrade pass).
+    """
     canonical = get_canonical_keys()
-    # Fix mangled brands first — resets bad translations to English so
-    # translate_locale() retranslates them with brand shielding.
-    if not dry_run:
+    # Brand-reset is a gap-fill concern (resets mangled brands to English so they
+    # refill). The upgrade pass re-translates mangled brands directly — they
+    # classify as low quality — so skip the reset there.
+    if not dry_run and scope != "low_quality":
         _reset_mangled_brands(locales, canonical)
 
-    label = "Translate (dry run)" if dry_run else "Translating"
-    header(f"{label}: {len(locales)} locale(s), {len(canonical)} strings")
+    verb = "Upgrading low-quality → NLLB" if scope == "low_quality" else "Translating gaps"
+    if dry_run:
+        verb += " (dry run)"
+    header(f"{verb}: {len(locales)} locale(s), {len(canonical)} strings")
 
     total_translated = 0
     total_errors = 0
     t0 = time.time()
     for locale in locales:
         translated, errors, aborted = _translate_one_locale(
-            locale, canonical, dry_run=dry_run,
+            locale, canonical, dry_run=dry_run, scope=scope,
         )
         total_translated += translated
         total_errors += errors
