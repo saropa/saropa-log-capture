@@ -13,7 +13,8 @@
  * each flyout to its trigger box (top:0 / bottom:0) and capped to the room on ONE side, so a
  * tall flyout or a near-bottom trigger got a tiny scrollable strip with empty screen beside it.
  * `positionSubmenu()` now positions each flyout in viewport coordinates (position:fixed): it
- * spans the FULL viewport height, slides fully on-screen, and scrolls only when it cannot fit.
+ * spans the FULL viewport height AND width, slides fully on-screen, and scrolls only when it cannot
+ * fit — the width cap closes the "off the right edge in a narrow split" symptom the height cap missed.
  * `repositionOpenContextMenu()` re-runs placement on window resize so the open menu and its
  * flyout stay correct and re-maximize their height when the panel is resized while open.
  */
@@ -51,14 +52,20 @@ function positionSubmenu(submenuEl) {
     var tr = submenuEl.getBoundingClientRect();
     var vw = window.innerWidth;
     var vh = window.innerHeight;
-    var flyoutWidth = flyout.offsetWidth;
-    var naturalHeight = flyout.scrollHeight;
-    /* Height is maximized to the FULL viewport (minus margins), not the room on one side of the
-       trigger. The prior model anchored to the trigger and capped to the room above OR below it, so a
-       tall flyout (Copy & Export) or a near-bottom trigger (Columns) got a tiny scrollable strip
-       even when the screen had ample room. We use the whole viewport and only scroll if it cannot fit. */
+    /* Height and width are each maximized to the FULL viewport (minus margins), not the room on one
+       side of the trigger. The prior model anchored to the trigger and capped to the room above OR
+       below it, so a tall flyout (Copy & Export) or a near-bottom trigger (Columns) got a tiny strip
+       even with ample screen. We use the whole viewport and scroll only when content cannot fit. */
     var availableHeight = vh - marginPx * 2;
-    var usedHeight = Math.min(naturalHeight, availableHeight);
+    var availableWidth = vw - marginPx * 2;
+    /* Cap height BEFORE measuring width: a scrolling flyout grows by its scrollbar width, and we
+       must include that in flyoutWidth so the horizontal flip/clamp below never runs off the edge. */
+    if (flyout.scrollHeight > availableHeight) flyout.style.maxHeight = availableHeight + 'px';
+    /* Width cap + horizontal scroll for a panel narrower than the flyout — the original
+       "off the right edge, worst in a narrow split" symptom that the vertical cap never covered. */
+    if (flyout.offsetWidth > availableWidth) { flyout.style.maxWidth = availableWidth + 'px'; flyout.style.overflowX = 'auto'; }
+    var flyoutWidth = Math.min(flyout.offsetWidth, availableWidth);
+    var usedHeight = Math.min(flyout.scrollHeight, availableHeight);
     /* Horizontal: open to the right of the trigger; flip left if it would overflow the right edge. */
     var left = tr.right;
     if (left + flyoutWidth + marginPx > vw) left = tr.left - flyoutWidth;
@@ -70,7 +77,6 @@ function positionSubmenu(submenuEl) {
     if (top < marginPx) top = marginPx;
     flyout.style.left = left + 'px';
     flyout.style.top = top + 'px';
-    if (naturalHeight > availableHeight) flyout.style.maxHeight = availableHeight + 'px';
     flyout.style.removeProperty('display'); /* hand visibility back to the CSS :hover rule */
 }
 

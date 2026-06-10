@@ -27,6 +27,23 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+The Flow Map can now show where you left the app for an external app or API, right-click submenus also fit narrow panels, dragging a log file in is more dependable, plus an internal localization-tooling change. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+
+### Added
+
+- **Flow Map shows off-app handoffs** — when the app emits the new `[flowmap] handoff <api|app> "Name"` tag, leaving for an external application (maps, dialer, browser, share sheet) or making an outbound API call now appears in the Flow Map as a distinct ↗️ leaf node off the screen it left from, with its source link, instead of vanishing from the journey. Handoffs are leaf side-exits: the screen they branch from keeps its own dwell, visit count, and the edge to wherever the user goes next, so a handoff never steals the screen's time. `api` handoffs read distinctly from `app` launches (the type rides in the label) and external nodes get their own dashed style across the diagram, SVG, and report tables. See [plans/guides/flowmap-tag-navigation.md](plans/guides/flowmap-tag-navigation.md). ([flow-map-model.ts](src/modules/flow-map/flow-map-model.ts), [flow-map-breadcrumbs.ts](src/modules/flow-map/flow-map-breadcrumbs.ts), [flow-map-builder.ts](src/modules/flow-map/flow-map-builder.ts), [flow-map-format.ts](src/modules/flow-map/flow-map-format.ts), [flow-map-mermaid.ts](src/modules/flow-map/flow-map-mermaid.ts), [flow-map-svg.ts](src/modules/flow-map/flow-map-svg.ts))
+
+### Fixed
+
+- **Dragging a log file onto the Logs panel is more reliable** — the drop hint overlay no longer flickers off the moment the cursor passes over a row (it now tracks drag enter/leave depth instead of hiding on the first boundary crossing), and a drag you cancel with Escape or release outside the window no longer strands the dashed overlay on screen (drag-end, window-blur, and any handler error all reset it). The drop still loads the file by its OS path, by `file://`/`http(s)://` URI in the drag payload, or by reading the dropped contents — whichever the host exposes. ([viewer-drop-to-open.ts](src/ui/viewer/viewer-drop-to-open.ts))
+- **Right-click submenus no longer run off the right edge in a narrow panel** — the submenu placement maximized height to the whole window and scrolled when too tall, but did the same for width only on the side that fit; a flyout wider than a narrow terminal split (or with a scrollbar) still clipped off the right edge. Width is now treated the same as height: the flyout is capped to the window width and scrolls horizontally instead of clipping, and the height cap is applied before the width is measured so a scrolling flyout's scrollbar is counted in the flip/clamp. ([viewer-context-menu-position.ts](src/ui/viewer-context-menu/viewer-context-menu-position.ts))
+
+### Changed
+
+- **Translation pipeline can now use offline NLLB-200-3.3B for higher-quality locale strings** — `translate_l10n.py` automatically prefers Meta's offline NLLB-200-3.3B model (via CTranslate2) over Google Translate when the model is cached, with Google as an automatic fallback and the rest of the pipeline (brand shielding, validation, bundle merge, audit) unchanged. The model is never auto-downloaded; enable it with `pip install ctranslate2 sentencepiece huggingface_hub` + a one-time `huggingface-cli download JustFrederik/nllb-200-3.3B-ct2-float16`, or set `SAROPA_SKIP_NLLB=1` to force Google. Build tooling only; no regenerated translations ship in this change. ([l10n_nllb_engine.py](scripts/modules/verify/l10n_nllb_engine.py), [l10n_translator.py](scripts/modules/verify/l10n_translator.py), [translate_l10n.py](scripts/translate_l10n.py))
+
 ## [8.0.0]
 
 The Logs panel got a big overhaul — pin logs to the top, see active filters as chips, find big logs with a size filter, and runs now nest under their project as a tree; you can open any log by path or URL (or just drag one in), every run shows by default with "Latest only" as an opt-in, the new Export Session Flow Map command turns a log into a screen-journey report with an activity chart, markdown reports render properly on open, and deep reports folders load much faster. [log](https://github.com/saropa/saropa-log-capture/blob/v8.0.0/CHANGELOG.md)

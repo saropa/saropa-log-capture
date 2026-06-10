@@ -1,6 +1,8 @@
 # Context menu submenu renders off-screen — attempt history
 
-Status: Fixed (code-verified; on-device confirmation pending — see What to test)
+Status: Fixed and archived (2026-06-09). Height AND width are now both maximized to the
+viewport with scroll-on-overflow; resize-responsive. Archived to `plans/history/2026.06/2026.06.09/`
+at the user's instruction once the reliability gap was closed.
 
 ## Symptom
 
@@ -195,3 +197,42 @@ user-facing strings added or changed — menu labels untouched).
 - `src/test/ui/viewer-context-menu.test.ts` — rewrote the too-tall-cap test; added a resize test.
 - `CHANGELOG.md` — Fixed entry.
 - `bugs/context-menu-submenu-offscreen_attempts.md` — recurrence #2 record + this finish report.
+
+---
+
+## Reliability hardening (2026-06-09) — width never capped, only height
+
+### Gap closed
+Recurrences #1 and #2 fully solved the **vertical** axis (full-viewport height + cap + scroll +
+resize-responsive) but left the **horizontal** axis half-done: `positionSubmenu()` measured the
+flyout's natural width and flipped right→left on overflow, but never *capped* it. A flyout wider than
+a narrow terminal split still ran off the right edge with no scroll — exactly the original symptom's
+"off the right edge … worst in a short/narrow panel" wording, which every prior pass read as a
+vertical problem. A second, quieter defect: width was measured *before* the height cap applied, so a
+flyout that scrolls vertically grew by its scrollbar width *after* placement and could nudge past the
+right edge.
+
+### Fix (different from #1/#2 — a new axis, not a re-tune)
+`positionSubmenu()` now treats width symmetrically with height:
+- Apply the height cap (`maxHeight`) **before** measuring `offsetWidth`, so a vertical scrollbar's
+  width is included in the horizontal flip/clamp math.
+- If the flyout is wider than `innerWidth - 2*margin`, cap `maxWidth` and set `overflowX:auto` so it
+  scrolls horizontally instead of clipping off-screen; clamp `flyoutWidth` to the available width so
+  the flip/clamp can never place it past the edge.
+
+Files: `src/ui/viewer-context-menu/viewer-context-menu-position.ts` (positionSubmenu width cap +
+measure-order; module doc-comment), `src/test/ui/viewer-context-menu.test.ts` (new width-cap test),
+`CHANGELOG.md` (Fixed entry under `[Unreleased]`).
+
+### Verification
+`npm run check-types` reports only `src/modules/flow-map/*` errors from another workstream's
+**uncommitted** working-tree changes (not touched here); the context-menu files are clean. Those
+flow-map errors block `tsc` emit, so the vscode-test suite could not be emitted; the change was instead
+verified by bundling `viewer-context-menu.ts` with esbuild (which pulls in only its own imports, not
+flow-map) and asserting the generated script string carries `availableWidth`, `maxWidth`,
+`overflowX:auto`, and that the height cap precedes the width measure — all green.
+
+### Outstanding
+The flow-map type errors belong to that workstream's in-progress changes and should be resolved there
+to restore the full `tsc` test gate. On-device confirmation of the narrow-split case is the only manual
+check left for this menu.
