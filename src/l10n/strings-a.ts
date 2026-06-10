@@ -56,6 +56,11 @@ export const stringsA: Record<string, string> = {
     'prompt.selectSecondSession': 'Select SECOND log to compare',
     'title.compareSessions1': 'Compare Logs (1/2)',
     'title.compareSessions2': 'Compare Logs (2/2)',
+    'title.compareToCommit': 'Compare Log to Commit',
+    'prompt.compareToCommit': 'Enter a Git ref (commit SHA, tag, or HEAD~1) to use as the baseline',
+    'msg.gitCompareNoCurrentLog': 'Open a log in the viewer first, then compare it to a commit.',
+    'msg.gitCompareBadRef': 'Could not resolve Git ref "{0}". Use a commit SHA, tag, or HEAD~1.',
+    'msg.gitCompareNoBaseline': 'No saved log matches commit "{0}". Capture a session at that commit, or use "Compare Logs" to pick two manually.',
 
     'msg.gitignoreLogPrompt': "Saropa Log Capture saves logs to '{0}/'. Add it to .gitignore to prevent accidental commits?",
     'msg.gitignoreSaropaPrompt': "Saropa Log Capture stores indexes and caches in '.saropa/'. Add it to .gitignore?",
