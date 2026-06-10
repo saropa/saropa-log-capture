@@ -5,7 +5,8 @@
  */
 
 import * as vscode from "vscode";
-import { createTailWatcher } from "./log-viewer-provider-load";
+import { createTailWatcher, type TailExternalHooks, type LogViewerTailTarget } from "./log-viewer-provider-load";
+import { reloadOnExternalChange, warnExternalDelete } from "./log-viewer-provider-external-reload";
 
 /** Mutable tailing state held by LogViewerProvider. */
 export interface TailState {
@@ -39,7 +40,7 @@ export interface StartTailOptions {
     uri: vscode.Uri;
     sessionMidnightMs: number;
     initialLineCount: number;
-    target: Parameters<typeof createTailWatcher>[3];
+    target: LogViewerTailTarget;
 }
 
 /** Start tailing a log file URI for new content. */
@@ -47,5 +48,19 @@ export function startTailing(ts: TailState, opts: StartTailOptions): void {
     stopTailing(ts);
     ts.tailUri = opts.uri;
     ts.tailSessionMidnightMs = opts.sessionMidnightMs;
-    ts.tailWatcher = createTailWatcher(opts.uri, opts.sessionMidnightMs, opts.initialLineCount, opts.target);
+    // Plan 039b: non-append external changes (truncate/rewrite/delete) are routed through these hooks
+    // rather than handled in the watcher, so the reload-vs-warn policy lives in one place.
+    const hooks: TailExternalHooks = {
+        onExternalReload: (u) => void reloadOnExternalChange(
+            opts.target.getCurrentFileUri(), u, (x) => opts.target.loadFromFile(x, { tail: true }),
+        ),
+        onExternalDelete: (u) => warnExternalDelete(u),
+    };
+    ts.tailWatcher = createTailWatcher({
+        uri: opts.uri,
+        sessionMidnightMs: opts.sessionMidnightMs,
+        initialLineCount: opts.initialLineCount,
+        target: opts.target,
+        hooks,
+    });
 }
