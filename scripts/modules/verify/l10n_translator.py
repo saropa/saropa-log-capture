@@ -1,9 +1,17 @@
 # -*- coding: utf-8 -*-
-"""Translate missing l10n bundle entries via Google Translate (free tier).
+"""Translate missing l10n bundle entries — offline NLLB first, Google fallback.
 
-Uses ``deep-translator`` (``pip install deep-translator``) which wraps the
-public Google Translate endpoint. No API key needed. Rate limits apply but
-are generous enough for the ~300 strings x 10 locales in this project.
+Engine selection is per run: when the offline NLLB-200-3.3B model is cached and
+its deps are installed, ``NllbTranslator`` is used for materially higher quality
+with no rate limits; otherwise the pipeline falls back to Google Translate via
+``deep-translator`` (``pip install deep-translator``), which wraps the public
+Google endpoint (no API key, generous rate limits for ~300 strings x 10
+locales). See ``l10n_nllb_engine`` for the NLLB engine and how to enable it.
+
+Both engines expose the same ``.translate(text)`` shape, so the brand-shielding,
+validation, and bundle-merge logic below is engine-agnostic. Only the
+network-specific safeguards (socket timeout, throttle, rate-limit circuit
+breaker) are gated to the Google path — NLLB is local and never throttles.
 
 Each locale's bundle is updated in place: missing keys are added (this is also
 how "out of date" strings flow through — changing an English source string
@@ -35,6 +43,12 @@ from modules.verify.l10n_brands import (
     shield_brands,
     unshield_brands,
     validate_brands,
+)
+from modules.verify.l10n_nllb_engine import (
+    NllbTranslator,
+    NllbUnavailable,
+    cache_hint as nllb_cache_hint,
+    is_available as is_nllb_available,
 )
 
 # VS Code l10n bundle locale codes -> deep-translator target codes.
@@ -189,6 +203,70 @@ def _apply_translation(
     return "validate_fail"
 
 
+# Set once the run's engine has been announced, so the banner prints a single
+# time across the multi-locale loop (and across the publish pipeline) rather
+# than once per locale.
+_engine_announced = False
+
+
+def _announce_engine(engine: str) -> None:
+    """Print the chosen translation engine once per process.
+
+    Why: NLLB is selected silently when available and the pipeline falls back to
+    Google just as silently. A run that quietly used Google would defeat the
+    whole point of enabling NLLB without the operator ever noticing — so the
+    engine, and the reason for any fallback, is surfaced exactly once.
+    """
+    global _engine_announced  # noqa: PLW0603
+    if _engine_announced:
+        return
+    _engine_announced = True
+    if engine == "nllb":
+        print("  Engine: NLLB-200-3.3B (offline, higher quality, no rate limits)")
+    else:
+        print(f"  Engine: Google Translate — {nllb_cache_hint()}")
+
+
+def _make_translator(locale: str) -> tuple[object, str] | None:
+    """Build the best available translator for a locale.
+
+    Prefers the offline NLLB-200-3.3B engine (higher quality, no rate limits)
+    when its model is cached and deps are installed; otherwise falls back to
+    Google Translate. Returns ``(translator, engine_name)`` where engine_name is
+    "nllb" or "google", or None when neither engine can serve the locale.
+
+    Engine choice drives the network safeguards in ``translate_locale``: the
+    socket timeout, the inter-call throttle, and the rate-limit circuit breaker
+    apply only to the Google path. NLLB runs locally and never throttles.
+    """
+    # NLLB only when its model is already cached on disk — a machine without it
+    # transparently uses Google rather than triggering a 7 GB download.
+    if is_nllb_available():
+        try:
+            translator = NllbTranslator(locale)
+            _announce_engine("nllb")
+            return translator, "nllb"
+        except NllbUnavailable as exc:
+            print(f"  NLLB unavailable for '{locale}' ({exc}); using Google.")
+
+    try:
+        from deep_translator import GoogleTranslator
+    except ImportError:
+        print(
+            "  deep-translator not installed. "
+            "Run: pip install deep-translator",
+            file=sys.stderr,
+        )
+        return None
+
+    target_code = _LOCALE_MAP.get(locale)
+    if not target_code:
+        print(f"  No translator mapping for locale '{locale}', skipping.")
+        return None
+    _announce_engine("google")
+    return GoogleTranslator(source="en", target=target_code), "google"
+
+
 def translate_locale(
     locale: str,
     canonical_keys: set[str],
@@ -224,23 +302,12 @@ def translate_locale(
                    remaining keys were left as English. Callers should stop
                    trying further locales — throttling is per-IP, not per-locale.
     """
-    try:
-        from deep_translator import GoogleTranslator
-    except ImportError:
-        print(
-            "  deep-translator not installed. "
-            "Run: pip install deep-translator",
-            file=sys.stderr,
-        )
+    made = _make_translator(locale)
+    if made is None:
         return 0, 0, 0, 0, False
-
-    target_code = _LOCALE_MAP.get(locale)
-    if not target_code:
-        print(f"  No translator mapping for locale '{locale}', skipping.")
-        return 0, 0, 0, 0, False
+    translator, engine = made
 
     path, bundle = _load_bundle(locale)
-    translator = GoogleTranslator(source="en", target=target_code)
 
     translated = 0
     kept = 0
@@ -272,10 +339,12 @@ def translate_locale(
     # requests has no default timeout, so without this a stalled Google
     # response hangs forever (the original lock-up). Set the process-wide
     # socket default for the network loop and restore it in finally so the
-    # rest of the pipeline keeps its own timeout policy. Skip for dry_run,
-    # which never touches the network.
+    # rest of the pipeline keeps its own timeout policy. Skip for dry_run
+    # (no network) and for NLLB, which runs locally — clamping the socket
+    # timeout there would needlessly cap unrelated I/O while NLLB has its own
+    # per-string wall-clock deadline inside the engine.
     prev_timeout = socket.getdefaulttimeout()
-    if not dry_run:
+    if not dry_run and engine == "google":
         socket.setdefaulttimeout(_NETWORK_TIMEOUT_SECONDS)
     try:
         for en_key in sorted(canonical_keys):
@@ -344,8 +413,10 @@ def translate_locale(
                 aborted = True
                 break
 
-            # Throttle to stay under rate limits.
-            time.sleep(_THROTTLE_SECONDS)
+            # Throttle to stay under Google's per-IP rate limit. NLLB is local
+            # and never rate-limits, so the delay would only slow the run.
+            if engine == "google":
+                time.sleep(_THROTTLE_SECONDS)
     finally:
         socket.setdefaulttimeout(prev_timeout)
 

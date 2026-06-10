@@ -33,9 +33,15 @@
 #   external translation tools or AI-assisted batch translation.
 #
 # .NOTES
-#   Version:   1.2.0
+#   Version:   1.3.0
 #   Requires:  Python 3.10+
-#   Translate: pip install deep-translator
+#   Translate: Offline NLLB-200-3.3B is used automatically when its model is
+#              cached (higher quality, no rate limits); otherwise the pipeline
+#              falls back to Google Translate.
+#                NLLB:   pip install ctranslate2 sentencepiece huggingface_hub
+#                        huggingface-cli download JustFrederik/nllb-200-3.3B-ct2-float16
+#                Google: pip install deep-translator
+#              Set SAROPA_SKIP_NLLB=1 to force the Google path.
 #
 # Exit Codes:
 #   0  Success
