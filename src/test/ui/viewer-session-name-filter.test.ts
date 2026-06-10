@@ -51,13 +51,12 @@ suite('Session panel name filter', () => {
 
     test('should filter by name in "only" mode without ReferenceError', () => {
         const { sandbox, elements } = bootWithSessions(testSessions);
-        /* Show only sessions named "vibrancy". a1 and a2 are both PERIPHERAL "vibrancy" runs
-           (no controller role), so with "Latest only" on by default the older a2 folds behind
-           the latest a1's "+N older" badge — latest-only thins peripherals. b1 is filtered by name. */
+        /* Show only sessions named "vibrancy". With "Latest only" OFF by default, BOTH vibrancy runs
+           (a1 and a2) stay visible — name filtering does not fold same-name runs. b1 is filtered out. */
         (sandbox.setSessionNameFilter as (m: string, n: string) => void)('only', '20260413_120000_vibrancy.log');
         const html = String(elements.get('session-list')?.innerHTML ?? '');
-        assert.ok(html.includes('file:///a1.log'), 'Latest matching session a1 should be visible');
-        assert.ok(!html.includes('file:///a2.log'), 'Older matching peripheral a2 is folded by Latest only');
+        assert.ok(html.includes('file:///a1.log'), 'Matching session a1 should be visible');
+        assert.ok(html.includes('file:///a2.log'), 'Other matching vibrancy run a2 should also be visible (no latest-only folding)');
         assert.ok(!html.includes('file:///b1.log'), 'Non-matching session should be hidden');
     });
 
@@ -150,6 +149,22 @@ suite('Session panel name filter', () => {
         (sandbox.removeSessionNameFilter as (n: string) => void)('20260413_120000_vibrancy.log');
         const filterBar = elements.get('session-name-filter-bar') as Record<string, Record<string, string>>;
         assert.strictEqual(filterBar.style.display, 'none', 'Bar hides once no names remain');
+    });
+
+    test('should show a removable chip + reveal the bar when a size filter is active', () => {
+        /* The active-filters bar must surface dropdown filters (date/size), not just name filters,
+           so the user sees WHY rows are missing. A non-default sizeRange yields a chip whose [x]
+           clears sizeRange — a distinct class from name pills so the two never get conflated. */
+        const { messageHandlers, elements } = bootWithSessions(testSessions);
+        for (const handler of messageHandlers) {
+            handler({ data: { type: 'sessionDisplayOptions', options: { sizeRange: '1m', dateRange: 'all' } } });
+        }
+        const filterBar = elements.get('session-name-filter-bar') as Record<string, Record<string, string>>;
+        const barHtml = String((filterBar as unknown as Record<string, string>).innerHTML ?? '');
+        assert.notStrictEqual(filterBar.style.display, 'none', 'Bar should be visible with only a size filter active');
+        assert.ok(barHtml.includes('session-filter-chip-remove'), 'Size filter should render a removable chip');
+        assert.ok(barHtml.includes('data-filter-clear="sizeRange"'), 'Chip [x] should target sizeRange');
+        assert.ok(!barHtml.includes('session-name-filter-pill-remove'), 'No name pills when only a size filter is set');
     });
 
     test('should reset names when switching between hide and only modes', () => {
