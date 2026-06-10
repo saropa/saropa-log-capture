@@ -34,7 +34,7 @@ export function getFormatStyles(): string {
     display: flex;
     /* CENTER, not flex-start: mdHeadingRowHeight allocates a row strictly TALLER than the glyph
        box, and centering splits that slack top+bottom. flex-start put all slack at the bottom and
-       still clipped descenders on sub-pixel rounding (bugs/markdown_render_spacing_attempts.md #3). */
+       still clipped descenders on sub-pixel rounding (plans/history/2026.06/2026.06.09/markdown_render_spacing_attempts.md #3). */
     align-items: center;
     /* NO vertical overflow:hidden here — that is exactly what cropped the heading glyphs. Horizontal
        truncation/ellipsis lives on .md-htext instead, so the row never clips the text vertically. */

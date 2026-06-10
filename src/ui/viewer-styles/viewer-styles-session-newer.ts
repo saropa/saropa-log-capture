@@ -114,5 +114,25 @@ export function getSessionNewerStyles(): string {
     border: 1px solid var(--vscode-sideBar-background, var(--vscode-editor-background));
     pointer-events: none;
 }
+
+/* --- Pinned section (top-of-list quick access) ---
+ * Sits above the day list. Heading mirrors the day heading's sticky style but uses an accent
+ * left border so the pinned block reads as a distinct, always-present group. A faint background
+ * tint on the section ties its rows together visually without re-styling each row. */
+.session-pinned-section {
+    border-bottom: 1px solid var(--vscode-panel-border);
+    background: var(--vscode-list-inactiveSelectionBackground, transparent);
+}
+.session-pinned-heading {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--vscode-textLink-foreground, #3794ff);
+    border-left: 2px solid var(--vscode-textLink-foreground, #3794ff);
+    user-select: none;
+}
     `;
 }

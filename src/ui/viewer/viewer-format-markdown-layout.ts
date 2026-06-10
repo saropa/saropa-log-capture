@@ -4,7 +4,7 @@
  * Split out of viewer-format-markdown.ts (line-limit) and consumed by the generic renderer
  * (renderItem) and height calc (calcItemHeight) so those stay format-agnostic:
  * - applyMarkdownTypography: drives the viewer's line-height control for comfortable prose.
- * - mdHeadingRowHeight: overlap-proof heading row height (bugs/markdown_render_spacing_attempts.md).
+ * - mdHeadingRowHeight: overlap-proof heading row height (plans/history/2026.06/2026.06.09/markdown_render_spacing_attempts.md).
  * - mdLineDecorate: per-line heading class + pinned height + line-number/type gutter.
  * - mdGutterTag: compact structure indicator for the gutter.
  */
@@ -74,7 +74,7 @@ function applyMarkdownTypography() {
  * Heading row height in px. Computed from the heading's OWN font requirement (fontEm * 1.5 *
  * base px, base = rowHeight / lineHeight) so the row fits the larger font whether or not the
  * comfortable document line height took effect — prevents the overlap regression
- * (bugs/markdown_render_spacing_attempts.md). Font factors MUST match the CSS .md-hN sizes.
+ * (plans/history/2026.06/2026.06.09/markdown_render_spacing_attempts.md). Font factors MUST match the CSS .md-hN sizes.
  */
 function mdHeadingRowHeight(item, rowHeight, lineH) {
     var hl = item._mdHeadingLevel;
@@ -84,7 +84,7 @@ function mdHeadingRowHeight(item, rowHeight, lineH) {
        (1.2 base em, covering the 0.6em+0.25em CSS padding plus ~0.35em spare). The row is therefore
        strictly TALLER than the glyph box; the CSS centers the text in it and does NOT clip vertically,
        so the heading glyphs are always fully visible regardless of font metrics or rounding
-       (bugs/markdown_render_spacing_attempts.md #4). base px = rowHeight / lh. */
+       (plans/history/2026.06/2026.06.09/markdown_render_spacing_attempts.md #4). base px = rowHeight / lh. */
     return Math.max(rowHeight, Math.ceil((fEm * 1.5 + 1.2) * rowHeight / lh));
 }
 

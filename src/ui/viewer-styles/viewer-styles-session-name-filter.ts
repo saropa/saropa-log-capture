@@ -85,5 +85,66 @@ export function getSessionNameFilterStyles(): string {
 .session-name-filter-clear:hover {
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
+/* Verb word ("Hiding:" / "Showing only:") now sits between the dropdown-filter chips and the
+   name pills, so it gets its own non-shrinking span instead of riding inside the lead label. */
+.session-name-filter-verb {
+    flex-shrink: 0;
+}
+
+/* --- Dropdown-filter chips (date range, minimum size) ---
+ * Same removable-pill affordance as the name pills so the user learns one interaction, but a
+ * distinct neutral fill so "a value I picked from a menu" reads differently from "a name I hid".
+ * The [x] resets that dropdown to its 'all' default (see clearFilterOption). */
+.session-filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+    padding: 1px 2px 1px 6px;
+    border-radius: 9px;
+    background: var(--vscode-badge-background, rgba(120, 120, 120, 0.3));
+    color: var(--vscode-badge-foreground, var(--vscode-foreground));
+}
+.session-filter-chip .codicon {
+    font-size: 12px;
+    opacity: 0.8;
+}
+.session-filter-chip-remove {
+    display: inline-flex;
+    align-items: center;
+    background: none;
+    border: none;
+    padding: 1px;
+    margin: 0;
+    color: inherit;
+    cursor: pointer;
+    opacity: 0.7;
+    border-radius: 50%;
+}
+.session-filter-chip-remove:hover {
+    opacity: 1;
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
+.session-filter-chip-remove .codicon {
+    font-size: 12px;
+}
+
+/* Kebab (⋮) "active filters" dot: a small accent dot on the options button when any filter
+   (date / size / name) is non-default, so the user sees filters are on even after the bar
+   scrolls away and knows where to adjust them. Toggled in renderNameFilterBar on every render. */
+.session-panel-action.has-active-filters {
+    position: relative;
+}
+.session-panel-action.has-active-filters::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--vscode-textLink-foreground, #3794ff);
+    border: 1px solid var(--vscode-sideBar-background, var(--vscode-editor-background));
+}
 `;
 }

@@ -6,6 +6,8 @@
 import * as vscode from "vscode";
 import { t } from "../../l10n";
 import { generateDeepLink } from "../../modules/features/deep-links";
+import { getConfig } from "../../modules/config/config";
+import { pinSession, unpinSession } from "../session/session-pin";
 import type { SessionHistoryProvider } from "../session/session-history-provider";
 
 /** Context for dispatching session actions. */
@@ -168,9 +170,44 @@ export async function handleSessionAction(
             await setSessionRoles(action === 'markAsController' ? 'controller' : 'peripheral', items, ctx);
             break;
         }
+        // Pin/unpin to the top of the Logs panel. Pinning captures the file's full metadata into the
+        // central store (see setSessionPinned) so the pinned row lists with no file read thereafter.
+        case 'pin':
+        case 'unpin': {
+            await setSessionPinned(action === 'pin', items, ctx);
+            break;
+        }
     }
     const roleActions = action === 'markAsController' || action === 'markAsPeripheral';
-    if (mutating.includes(action) || action === 'group' || action === 'ungroup' || roleActions) { await ctx.refreshList(); }
+    const pinActions = action === 'pin' || action === 'unpin';
+    if (mutating.includes(action) || action === 'group' || action === 'ungroup' || roleActions || pinActions) { await ctx.refreshList(); }
+}
+
+/**
+ * Pin or unpin each selected log. Pinning reads the file once to snapshot its
+ * header + severity counts into the central store, guaranteeing the pinned row
+ * lists instantly from cache; unpinning just clears the flags. The metaCache
+ * entry is invalidated so the refresh below re-reads the freshly-written counts.
+ */
+async function setSessionPinned(
+    pinned: boolean,
+    items: readonly { uri: vscode.Uri; filename: string }[],
+    ctx: SessionActionContext,
+): Promise<void> {
+    if (items.length === 0) { return; }
+    const store = ctx.historyProvider.getMetaStore();
+    const strict = getConfig().levelDetection === 'strict';
+    for (const item of items) {
+        if (pinned) { await pinSession(item.uri, item.filename, store, strict); }
+        else { await unpinSession(item.uri, store); }
+        ctx.historyProvider.invalidateMeta(item.uri);
+    }
+    // Name the affected log(s) so the user can tie the change to a specific row, per UX copy rules.
+    const firstName = items[0].filename.replace(/\.[^.]+$/, '');
+    const msgKey = pinned ? 'msg.sessionPinned' : 'msg.sessionUnpinned';
+    vscode.window.showInformationMessage(
+        items.length === 1 ? t(msgKey, firstName) : t(msgKey, `${firstName} +${items.length - 1}`),
+    );
 }
 
 /** Persist a Controller/Peripheral role override on each selected log and confirm with a named toast. */

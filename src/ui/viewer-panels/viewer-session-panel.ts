@@ -31,11 +31,11 @@ export function getSessionPanelScript(): string {
 
     var sessionDisplayOptions = {
         stripDatetime: true, normalizeNames: true, showDayHeadings: true,
-        /* showLatestOnly defaults ON: the list shows the newest log per name with a "+N older"
-           badge for the rest, so a busy reports folder stays scannable without burying older runs
-           (they expand on click). Matches defaultDisplayOptions on the host so the first paint —
-           before the setSessionDisplayOptions round-trip — already collapses correctly. */
-        reverseSort: false, showLatestOnly: true, panelWidth: 0, dateRange: 'all',
+        /* showLatestOnly defaults OFF: auto-folding older same-name runs behind a "+N older" badge
+           read as missing logs and confused users, so every run shows until the user opts in via the
+           toggle. Must match defaultDisplayOptions on the host so the first paint — before the
+           setSessionDisplayOptions round-trip — already matches the persisted state. */
+        reverseSort: false, showLatestOnly: false, panelWidth: 0, dateRange: 'all',
         newerLogBannerEnabled: true, newerLogDotEnabled: true,
     };
     /* Match the CSS .session-panel min-width (viewer-styles-session-panel.ts).
