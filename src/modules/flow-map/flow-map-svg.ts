@@ -6,7 +6,7 @@
  */
 
 import type { FlowEdge, FlowGraph, FlowNode } from './flow-map-model';
-import { kindIcon, nodeDisplayLines, nodeHasError } from './flow-map-format';
+import { formatDwellMs, kindIcon, nodeDisplayLines, nodeHasError } from './flow-map-format';
 
 const BOX_W = 236;
 const LINE_H = 17;
@@ -66,7 +66,7 @@ function rowsByDepth(graph: FlowGraph, depth: Map<string, number>): FlowNode[][]
 function layout(graph: FlowGraph): { placed: Map<string, Placed>; width: number; height: number } {
     const rows = rowsByDepth(graph, computeDepths(graph));
     const built = rows.map(row => row.map(node => {
-        const raw = nodeDisplayLines(node);
+        const raw = nodeDisplayLines(node, false);
         raw[0] = `${kindIcon(node)} ${raw[0]}`;
         const lines = raw.map(clip);
         return { node, lines, x: 0, y: 0, w: BOX_W, h: PAD_Y * 2 + lines.length * LINE_H };
@@ -113,10 +113,34 @@ function renderNode(p: Placed): string {
         + `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="7" `
         + `fill="${pal.fill}" stroke="${pal.stroke}" stroke-width="1.5"${dash}/>`
         + `<text x="${cx}" y="${p.y}" text-anchor="middle" fill="${pal.text}" `
-        + `font-family="var(--vscode-font-family)">${tspans}</text></g>`;
+        + `font-family="var(--vscode-font-family)">${tspans}</text>${visitBadge(p, pal)}</g>`;
 }
 
-/** Render one edge as a line from the source's bottom to the target's top, with an optional label. */
+/** A circular visit-count badge straddling the node's top-right corner (e.g. ②). Walked, non-launch. */
+function visitBadge(p: Placed, pal: Palette): string {
+    if (p.node.kind === 'launch' || !p.node.walked || p.node.visits < 1) {
+        return '';
+    }
+    const cx = p.x + p.w;
+    const cy = p.y;
+    return `<circle cx="${cx}" cy="${cy}" r="11" fill="${pal.stroke}" stroke="#0d1117" stroke-width="2"/>`
+        + `<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" fill="#0d1117" `
+        + `font-size="11" font-weight="700" font-family="var(--vscode-font-family)">${p.node.visits}</text>`;
+}
+
+/** The edge label: dwell on the source node (time before this transition), plus count / "opens". */
+function edgeLabel(edge: FlowEdge, from: Placed): string {
+    const parts: string[] = [];
+    // Dwell is meaningful leaving a real screen, not the synthetic launch node.
+    if (from.node.kind !== 'launch' && from.node.dwellMs >= 1000) {
+        parts.push(formatDwellMs(from.node.dwellMs));
+    }
+    if (edge.count > 1) { parts.push(`×${edge.count}`); }
+    if (edge.inferred) { parts.push('opens'); }
+    return parts.join(' · ');
+}
+
+/** Render one edge: a line from the source's bottom to the target's top, with the dwell/count label. */
 function renderEdge(edge: FlowEdge, placed: Map<string, Placed>): string {
     const from = placed.get(edge.from);
     const to = placed.get(edge.to);
@@ -126,9 +150,9 @@ function renderEdge(edge: FlowEdge, placed: Map<string, Placed>): string {
     const x2 = to.x + to.w / 2;
     const y2 = to.y;
     const dash = edge.walked ? '' : ' stroke-dasharray="5 4"';
-    const label = edge.count > 1 ? `×${edge.count}` : edge.inferred ? 'opens' : '';
     const line = `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#8b949e" `
         + `stroke-width="1.5"${dash} marker-end="url(#fm-arrow)"/>`;
+    const label = edgeLabel(edge, from);
     if (!label) { return line; }
     const mx = (x1 + x2) / 2;
     const my = (y1 + y2) / 2;
