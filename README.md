@@ -384,7 +384,7 @@ See [plans/walkthrough/keyboard-shortcuts.md](plans/walkthrough/keyboard-shortcu
 
 ## Known Limitations
 
-- **Empty or near-empty log files:** If the Debug Console has output but the open log shows only a header, use **Prev/Next** in the viewer and enable `diagnosticCapture` to inspect the pipeline. See [Runbook: Missing or empty log files](plans/integrations/010_runbook-missing-or-empty-logs.md).
+- **Empty or near-empty log files:** If the Debug Console has output but the open log shows only a header, use **Prev/Next** in the viewer and enable `diagnosticCapture` to inspect the pipeline. See [Runbook: Missing or empty log files](plans/010_runbook-missing-or-empty-logs.md).
 - **Viewer line cap:** The viewer shows the first N lines (`viewerMaxLines`, default 50,000). The full file is kept on disk up to `maxLines` (default 100,000). Toolbar shows "Showing first X of Y lines" when truncated.
 - **Debug Console only:** The main capture stream is from the VS Code Debug Console (DAP). Enable the `terminal` integration adapter to also capture Integrated Terminal output.
 
@@ -414,7 +414,7 @@ The extension ships localized UI strings for 11 locales: Chinese (Simplified & T
 | --- | --- |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Developer setup, code standards, and how to contribute |
 | [CHANGELOG.md](CHANGELOG.md) | Version history and release notes |
-| [ROADMAP.md](ROADMAP.md) | Links to feature plans and completed work |
+| [ROADMAP.md](ROADMAP.md) | Pointer to the plans folder, where feature plans live |
 | [plans/guides/configuration.md](plans/guides/configuration.md) | Full settings reference |
 | [plans/guides/style-guide.md](plans/guides/style-guide.md) | Code style conventions and patterns |
 
