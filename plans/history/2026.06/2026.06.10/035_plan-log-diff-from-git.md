@@ -116,7 +116,7 @@ Implement as explicit steps; stop at first success.
 
 ## Finish Report (2026-06-10)
 
-**Status:** Implemented (MVP + MVP+). The "Later" tier (3-way / error-set-only) stays out of scope by design — it lives in [031_plan-session-comparison-three-way.md](../031_plan-session-comparison-three-way.md). The "Out of scope" tier (`git show <ref>:path` unified diff for arbitrary tracked paths) was not built, as planned.
+**Status:** Implemented (MVP + MVP+). The "Later" tier (3-way / error-set-only) stays out of scope by design — it lives in [031_plan-session-comparison-three-way.md](../../../031_plan-session-comparison-three-way.md). The "Out of scope" tier (`git show <ref>:path` unified diff for arbitrary tracked paths) was not built, as planned.
 
 **This work will be reviewed by another AI.**
 
