@@ -96,6 +96,17 @@ export function buildNarrative(parsed: ParsedLog, graph: FlowGraph): string {
     }
     parts.push(`${parsed.slowQueryCount} slow queries and ${parsed.repeatBatchCount} repeat batches `
         + `were logged (mostly repeated preference reads).`);
+    // Severity breakdown gives the reader the shape of the issue log at a glance before the table.
+    const errors = parsed.issues.filter(i => i.severity === 'error').length;
+    const warns = parsed.issues.filter(i => i.severity === 'warn').length;
+    const perf = parsed.issues.filter(i => i.severity === 'perf').length;
+    const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`;
+    parts.push(`The issue log holds ${plural(errors, 'error')}, ${plural(warns, 'warning')}, `
+        + `and ${plural(perf, 'performance flag')}.`);
+    // Closing one-line verdict so the summary ends on the session's overall health, not a raw count.
+    parts.push(`Overall, the session ${parsed.crash
+        ? 'ended with an unhandled fault that needs attention'
+        : 'completed without a crash'}.`);
     return parts.join(' ');
 }
 
@@ -115,15 +126,15 @@ export function buildReport(parsed: ParsedLog, graph: FlowGraph): string {
         '',
         renderMermaid(graph),
         '',
-        '## Screen dwell',
+        '## Screen Visit Log',
         '',
         dwellTable(graph),
         '',
-        '## Performance · warnings · errors',
+        '## Issue Report',
         '',
         issueTable(parsed),
         '',
-        '## Narrative',
+        '## Executive Summary',
         '',
         buildNarrative(parsed, graph),
         '',

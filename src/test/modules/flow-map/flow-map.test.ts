@@ -144,7 +144,7 @@ suite('FlowMap', () => {
 
         test('report has all four sections and the crash anchor', () => {
             const md = buildReport(parseLog(FIXTURE), graph);
-            for (const heading of ['## Flow', '## Screen dwell', '## Performance', '## Narrative']) {
+            for (const heading of ['## Flow', '## Screen Visit Log', '## Issue Report', '## Executive Summary']) {
                 assert.ok(md.includes(heading), `missing ${heading}`);
             }
             assert.ok(md.includes('x_dialog.dart:42'));
@@ -163,7 +163,8 @@ suite('FlowMap', () => {
             assert.ok(body.includes('class="diagram"'));
             assert.ok(body.includes('<svg'));
             assert.ok(/<span class="src"[^>]*data-file="lib\/views\/x_dialog.dart"[^>]*data-line="42"/.test(body));
-            assert.strictEqual((body.match(/<table>/g) ?? []).length, 2);
+            // Two tables: the (bare) Screen Visit Log table and the sortable Issue Report table.
+            assert.strictEqual((body.match(/<table[ >]/g) ?? []).length, 2);
         });
 
         test('webview body has an activity chart above the dwell section, with clickable points', () => {

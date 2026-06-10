@@ -64,5 +64,90 @@ export function flowMapScript(nonce: string): string {
       if (el) { el.open = true; el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     });
   });
+
+  // Executive-summary copy button: send the rendered paragraph's plain text to the host clipboard.
+  var copyBtn = document.querySelector('.copy-narrative');
+  if (copyBtn) copyBtn.addEventListener('click', function(){
+    var p = document.getElementById('narrative-text');
+    var text = p ? (p.textContent || '').trim() : '';
+    if (text) send('copyText', { text: text });
+  });
+
+  // --- Column resize: drag the divider to trade diagram width for detail width. ---
+  var row = document.querySelector('.report-row');
+  var diagram = document.querySelector('.diagram-col');
+  var resizer = document.querySelector('.col-resize');
+  var st0 = (v.getState && v.getState()) || {};
+  if (diagram && st0.diagramW) diagram.style.setProperty('--diagram-w', st0.diagramW + 'px');
+  if (resizer && row && diagram) {
+    var dragging = false;
+    resizer.addEventListener('pointerdown', function(e){
+      dragging = true; resizer.classList.add('dragging');
+      resizer.setPointerCapture(e.pointerId); e.preventDefault();
+    });
+    resizer.addEventListener('pointermove', function(e){
+      if (!dragging) return;
+      // Width = pointer offset from the diagram's left edge, clamped so the detail column keeps room.
+      var left = diagram.getBoundingClientRect().left;
+      var w = Math.max(200, e.clientX - left);
+      var max = row.getBoundingClientRect().width - 280;
+      if (max > 200) w = Math.min(w, max);
+      diagram.style.setProperty('--diagram-w', Math.round(w) + 'px');
+    });
+    function endDrag(){
+      if (!dragging) return;
+      dragging = false; resizer.classList.remove('dragging');
+      var st = (v.getState && v.getState()) || {};
+      st.diagramW = parseInt(diagram.style.getPropertyValue('--diagram-w'), 10) || st.diagramW;
+      if (v.setState) v.setState(st);
+    }
+    resizer.addEventListener('pointerup', endDrag);
+    resizer.addEventListener('pointercancel', endDrag);
+  }
+
+  // --- Column auto-collapse: a column whose sections are all closed shrinks to its headers. ---
+  function updateColCollapse(){
+    var cols = document.querySelectorAll('.report-row > .diagram-col, .report-row > .detail-col');
+    cols.forEach(function(col){
+      var secs = col.querySelectorAll('details.sec');
+      var anyOpen = false;
+      secs.forEach(function(d){ if (d.open) anyOpen = true; });
+      col.classList.toggle('col-collapsed', secs.length > 0 && !anyOpen);
+    });
+    // With either side fully collapsed there is nothing to resize against — neutralize the divider.
+    var anyCollapsed = document.querySelector('.report-row > .col-collapsed');
+    if (row) row.classList.toggle('no-resize', !!anyCollapsed);
+  }
+  document.querySelectorAll('details.sec').forEach(function(d){ d.addEventListener('toggle', updateColCollapse); });
+  updateColCollapse();
+
+  // --- Sortable tables (Issue Report): click a header to sort; aria-sort drives the chevron. ---
+  function cellVal(tr, idx, numeric){
+    var cell = tr.children[idx];
+    var txt = cell ? (cell.textContent || '').trim() : '';
+    if (!numeric) return txt.toLowerCase();
+    var m = /^(\\d{2}):(\\d{2}):(\\d{2})$/.exec(txt);
+    if (m) return (+m[1]) * 3600 + (+m[2]) * 60 + (+m[3]);
+    var f = parseFloat(txt.replace(/[^0-9.-]/g, ''));
+    return isNaN(f) ? -Infinity : f;
+  }
+  function sortBy(table, th, idx){
+    var asc = th.getAttribute('aria-sort') !== 'ascending';
+    table.querySelectorAll('thead th').forEach(function(o){ o.removeAttribute('aria-sort'); });
+    th.setAttribute('aria-sort', asc ? 'ascending' : 'descending');
+    var numeric = th.classList.contains('num');
+    var tbody = table.querySelector('tbody');
+    var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+    rows.sort(function(a, b){
+      var x = cellVal(a, idx, numeric), y = cellVal(b, idx, numeric);
+      return x < y ? (asc ? -1 : 1) : x > y ? (asc ? 1 : -1) : 0;
+    });
+    rows.forEach(function(r){ tbody.appendChild(r); });
+  }
+  document.querySelectorAll('table.sortable').forEach(function(table){
+    table.querySelectorAll('thead th').forEach(function(th, idx){
+      th.addEventListener('click', function(){ sortBy(table, th, idx); });
+    });
+  });
 })();</script>`;
 }
