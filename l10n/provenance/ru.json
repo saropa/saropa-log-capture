@@ -26,6 +26,7 @@
   "Building session flow map…": "nllb",
   "Built for Resilience. Designed for Peace of Mind.": "nllb",
   "Cannot read \"{0}\" via drag-and-drop because it is too large. Use the kebab menu → Open log file… to open it by path instead.": "nllb",
+  "Choose session capture adapters (header lines and sidecars), third-party tools (Crashlytics, Drift, etc.), and in-editor features like Explain with AI. Each row notes performance impact and when you might turn it off.": "manual",
   "Clear the {0} filter": "nllb",
   "Close / dismiss": "nllb",
   "Close search, inline peek, go-to-line, or any open panel": "nllb",
