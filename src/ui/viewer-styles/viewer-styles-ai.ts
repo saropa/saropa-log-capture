@@ -29,8 +29,11 @@ export function getAiStyles(): string {
 }
 /* Decoration-off rows have no .line-decoration prefix, so they don't inherit
    the regular hanging-indent padding from viewer-styles-decoration.ts. Without
-   this fallback the message would butt directly against the 3px accent rail. */
-.line.ai-line:not(:has(.line-decoration)) {
+   this fallback the message would butt directly against the 3px accent rail.
+   Scoped :not(.cols) — grid AI rows (plan 055 Phase 2) already get the shared
+   1.25em clearance from .line.cols, so this legacy fallback must not stack a
+   second indent on top of it. */
+.line.ai-line:not(.cols):not(:has(.line-decoration)) {
     padding-left: 13px;
 }
 
