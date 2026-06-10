@@ -16,8 +16,10 @@ suite('session-severity-counts', () => {
         });
     });
 
-    suite('countSeverities', () => {
-        test('should count error lines', () => {
+    suite('countSeverities (classifyLevel-backed)', () => {
+        test('should count strict structural error lines', () => {
+            // Default strict mode requires structural shape: `Error:`, `_FooException`, etc.
+            // A bare "fatal crash" matches the kwError keyword pattern.
             const body = 'normal line\nError: something broke\nfatal crash happened\nanother line';
             const counts = countSeverities(body);
             assert.strictEqual(counts.errors, 2);
@@ -26,7 +28,13 @@ suite('session-severity-counts', () => {
             assert.strictEqual(counts.infos, 2);
         });
 
-        test('should count warning lines', () => {
+        test('should catch Flutter "Exception caught by" banner (V1 missed this)', () => {
+            const body = '════ Exception caught by widgets library ════\nnormal output';
+            const counts = countSeverities(body);
+            assert.strictEqual(counts.errors, 1);
+        });
+
+        test('should count warning lines from keyword', () => {
             const body = 'Warning: low disk space\ncaution: overheating\nnormal line';
             const counts = countSeverities(body);
             assert.strictEqual(counts.warnings, 2);
@@ -34,24 +42,58 @@ suite('session-severity-counts', () => {
             assert.strictEqual(counts.infos, 1);
         });
 
-        test('should count performance lines', () => {
-            const body = 'Skipped 45 frames! Application doing too much work\njank detected\nnormal';
+        test('should catch structural "could not / unable to / failed to" warnings (V1 missed these)', () => {
+            const body = 'databaseDecode: could not decode payload\nrenderer: unable to render frame\nnormal output';
+            const counts = countSeverities(body);
+            assert.strictEqual(counts.warnings, 2);
+        });
+
+        test('should count performance lines (structural perf + ANR)', () => {
+            const body = 'Skipped 45 frames!\nApplication Not Responding\nnormal';
             const counts = countSeverities(body);
             assert.strictEqual(counts.perfs, 2);
+            assert.strictEqual(counts.anrs, 1);
             assert.strictEqual(counts.infos, 1);
         });
 
-        test('should handle logcat error prefixes', () => {
+        test('should handle logcat error/warning prefixes', () => {
             const body = 'E/MediaCodec: Service not found\nW/System: Clock skew\nI/flutter: ok';
             const counts = countSeverities(body);
             assert.strictEqual(counts.errors, 1);
             assert.strictEqual(counts.warnings, 1);
-            assert.strictEqual(counts.frameworks, 0);
+            assert.strictEqual(counts.infos, 1);
+        });
+
+        test('should map logcat V/D to debug bucket (V1 lumped this in info/framework)', () => {
+            const body = 'D/AudioManager: stream changed\nV/RenderThread: frame ready\nI/flutter: ok';
+            const counts = countSeverities(body);
+            assert.strictEqual(counts.debugs, 2);
+            assert.strictEqual(counts.infos, 1);
+        });
+
+        test('should map non-flutter logcat I/ to info (V1 split as "framework")', () => {
+            const body = 'I/ActivityManager: process started\nI/flutter: tap';
+            const counts = countSeverities(body);
+            assert.strictEqual(counts.infos, 2);
+            assert.strictEqual(counts.debugs, 0);
+        });
+
+        test('should classify Drift SQL statements as database', () => {
+            const body = 'Drift: Sent SELECT * FROM users\nDrift: Sent INSERT INTO logs VALUES(1)\nnormal';
+            const counts = countSeverities(body);
+            assert.strictEqual(counts.databases, 2);
+            assert.strictEqual(counts.infos, 1);
+        });
+
+        test('should classify TODO/FIXME as todo', () => {
+            const body = 'TODO: revisit this\nFIXME: race condition\nnormal';
+            const counts = countSeverities(body);
+            assert.strictEqual(counts.todos, 2);
             assert.strictEqual(counts.infos, 1);
         });
 
         test('should skip marker and separator lines', () => {
-            const body = '---MARKER: test---\n=== SESSION END\nerror in normal line';
+            const body = '---MARKER: test---\n=== SESSION END\nError: in normal line';
             const counts = countSeverities(body);
             assert.strictEqual(counts.errors, 1);
         });
@@ -61,8 +103,11 @@ suite('session-severity-counts', () => {
             assert.strictEqual(counts.errors, 0);
             assert.strictEqual(counts.warnings, 0);
             assert.strictEqual(counts.perfs, 0);
-            assert.strictEqual(counts.frameworks, 0);
             assert.strictEqual(counts.infos, 0);
+            assert.strictEqual(counts.debugs, 0);
+            assert.strictEqual(counts.databases, 0);
+            assert.strictEqual(counts.todos, 0);
+            assert.strictEqual(counts.notices, 0);
         });
 
         test('should not false-positive on error handling terms', () => {
@@ -75,41 +120,23 @@ suite('session-severity-counts', () => {
         test('should strip timestamp prefix before matching', () => {
             const body = '[10:30:00.123] [stderr] connection failed';
             const counts = countSeverities(body);
-            assert.strictEqual(counts.errors, 1);
+            // "failed" is a kwWarn keyword — strict classifier routes to warning
+            assert.strictEqual(counts.warnings, 1);
         });
 
-        test('should count framework logcat lines (non-flutter tags)', () => {
-            const body = 'D/AudioManager: stream changed\nI/ActivityManager: process started\nV/RenderThread: frame ready';
+        test('should classify every line into exactly one bucket', () => {
+            const body = 'Error: crash\nWarning: low mem\nSkipped 30 frames!\nD/Zygote: init\nI/flutter: hello\nDrift: Sent SELECT * FROM x\nTODO: cleanup\nnormal output';
             const counts = countSeverities(body);
-            assert.strictEqual(counts.frameworks, 3);
-            assert.strictEqual(counts.infos, 0);
-            assert.strictEqual(counts.errors, 0);
-        });
-
-        test('should count flutter logcat lines as info, not framework', () => {
-            const body = 'I/flutter: user tapped button\nD/flutter: rebuilding widget';
-            const counts = countSeverities(body);
-            assert.strictEqual(counts.infos, 2);
-            assert.strictEqual(counts.frameworks, 0);
-        });
-
-        test('should count launch boilerplate as framework', () => {
-            const body = 'Connecting to VM Service at ws://127.0.0.1:5678\nLaunching lib/main.dart in debug mode';
-            const counts = countSeverities(body);
-            assert.strictEqual(counts.frameworks, 2);
-            assert.strictEqual(counts.infos, 0);
-        });
-
-        test('should classify all lines exhaustively', () => {
-            const body = 'Error: crash\nWarning: low mem\nSkipped 30 frames!\nD/Zygote: init\nI/flutter: hello\nnormal output';
-            const counts = countSeverities(body);
-            const total = counts.errors + counts.warnings + counts.perfs + counts.frameworks + counts.infos;
-            assert.strictEqual(total, 6);
+            const total = counts.errors + counts.warnings + counts.perfs + counts.infos
+                + counts.debugs + counts.databases + counts.todos + counts.notices;
+            assert.strictEqual(total, 8);
             assert.strictEqual(counts.errors, 1);
             assert.strictEqual(counts.warnings, 1);
             assert.strictEqual(counts.perfs, 1);
-            assert.strictEqual(counts.frameworks, 1);
+            assert.strictEqual(counts.debugs, 1);
             assert.strictEqual(counts.infos, 2);
+            assert.strictEqual(counts.databases, 1);
+            assert.strictEqual(counts.todos, 1);
         });
     });
 });

@@ -15,7 +15,7 @@ import { escapeHtml } from "../../modules/capture/ansi";
 import { buildLogLineHtmlWithOptionalDriftArgsDim } from "../../modules/db/drift-log-line-args-fold";
 import type { DiagnosticCache } from "../../modules/diagnostics/diagnostic-cache";
 import { LineData } from "../../modules/session/session-manager";
-import { linkifyBarePaths } from "../../modules/source/source-linker";
+import { linkifyBarePaths, linkifyRelativePaths } from "../../modules/source/source-linker";
 import { type PendingLine } from "../viewer/viewer-file-loader";
 import { type ThreadDumpState, processLineForThreadDump, flushThreadDump } from "../viewer/viewer-thread-grouping";
 import * as helpers from "./viewer-provider-helpers";
@@ -49,8 +49,13 @@ export function buildPendingLineFromLineData(
     // buildLogLineHtmlWithOptionalDriftArgsDim) leaves them as plain text. The
     // bare-path pass only fires for ai-* categories to avoid linkifying prose
     // mentions ("see lib/foo.dart for context") on regular log lines.
+    // linkifyRelativePaths picks up project-folder-anchored paths like
+    // `lib/components/x.dart` that tool output (git, dart analyze) emits with
+    // no absolute root AND no :line tail — those slipped through both
+    // linkifyHtml (no :line) and linkifyBarePaths (no absolute root) before.
     if (!data.isMarker && data.category && data.category.startsWith('ai-')) {
         html = linkifyBarePaths(html);
+        html = linkifyRelativePaths(html);
     }
     const tier = helpers.classifyFrame(data.text);
     const fw = tier !== undefined ? tier !== 'flutter' : undefined;
@@ -63,6 +68,7 @@ export function buildPendingLineFromLineData(
         isMarker: data.isMarker, lineCount: data.lineCount,
         category: data.category, timestamp: data.timestamp.getTime(),
         tier, fw, sourcePath: data.sourcePath,
+        ...(data.logFileUri !== undefined ? { logFileUri: data.logFileUri } : {}),
         ...(qualityPercent !== undefined ? { qualityPercent } : {}),
         ...(lint?.errors ? { lintErrors: lint.errors } : {}),
         ...(lint?.warnings ? { lintWarnings: lint.warnings } : {}),

@@ -1,6 +1,14 @@
 /**
- * Modal for log file path actions: open in editor, open containing folder, copy path.
- * Footer filename click opens this; keyboard shortcut can call window.openLogFileActionsModal.
+ * Modal for log file path actions. Layout:
+ *   header (title • close)
+ *   filename display (monospace, dimmed)
+ *   copy actions: Copy filename, Copy relative path, Copy full path
+ *   divider (dimmed)
+ *   open actions: editor, beside, containing folder, Explorer view, terminal
+ *
+ * Filename click in the footer opens this; keyboard shortcut can call
+ * window.openLogFileActionsModal. The current filename is read live from
+ * the footer DOM at open time so a stale value can't be displayed.
  */
 
 import { t } from '../../l10n';
@@ -15,13 +23,32 @@ export function getLogFileModalHtml(): string {
             <button type="button" class="modal-close" title="${t('viewer.popover.close')}" aria-label="${t('viewer.popover.close')}">&times;</button>
         </div>
         <div class="modal-body log-file-modal-body">
+            <div id="log-file-modal-filename" class="log-file-modal-filename" aria-live="polite"></div>
+            <button type="button" id="log-file-btn-copy-name" class="modal-btn log-file-modal-btn">${t('viewer.logFile.copyFilename')}</button>
+            <button type="button" id="log-file-btn-copy-rel" class="modal-btn log-file-modal-btn">${t('viewer.logFile.copyRelativePath')}</button>
+            <button type="button" id="log-file-btn-copy-path" class="modal-btn log-file-modal-btn">${t('viewer.logFile.copyFullPath')}</button>
+            <hr class="log-file-modal-divider" />
             <button type="button" id="log-file-btn-open-editor" class="modal-btn modal-btn-primary log-file-modal-btn">${t('viewer.logFile.openEditor')}</button>
+            <button type="button" id="log-file-btn-open-beside" class="modal-btn log-file-modal-btn">${t('viewer.logFile.openBeside')}</button>
             <button type="button" id="log-file-btn-open-folder" class="modal-btn log-file-modal-btn">${t('viewer.logFile.openFolder')}</button>
-            <button type="button" id="log-file-btn-copy-path" class="modal-btn log-file-modal-btn">${t('viewer.logFile.copyPath')}</button>
+            <button type="button" id="log-file-btn-reveal-explorer" class="modal-btn log-file-modal-btn">${t('viewer.logFile.revealInExplorer')}</button>
+            <button type="button" id="log-file-btn-open-terminal" class="modal-btn log-file-modal-btn">${t('viewer.logFile.openInTerminal')}</button>
         </div>
     </div>
     </div>`;
 }
+
+/** Map of button id → outbound message type. Kept in one table so the dispatch list is auditable. */
+const BUTTON_MESSAGE_PAIRS: ReadonlyArray<readonly [string, string]> = [
+    ['log-file-btn-copy-name', 'copyCurrentFileName'],
+    ['log-file-btn-copy-rel', 'copyCurrentFileRelativePath'],
+    ['log-file-btn-copy-path', 'copyCurrentFilePath'],
+    ['log-file-btn-open-editor', 'openLogFileInEditor'],
+    ['log-file-btn-open-beside', 'openLogFileBeside'],
+    ['log-file-btn-open-folder', 'openCurrentFileFolder'],
+    ['log-file-btn-reveal-explorer', 'revealLogFileInExplorer'],
+    ['log-file-btn-open-terminal', 'openLogFileFolderInTerminal'],
+];
 
 /** Webview script: wire modal, footer click, and global openLogFileActionsModal for keybindings. */
 export function getLogFileModalScript(): string {
@@ -31,7 +58,33 @@ export function getLogFileModalScript(): string {
     var vscodeApi = window._vscodeApi;
     if (!modal || !vscodeApi) return;
 
-    function openLogFileActionsModal() {
+    var filenameEl = document.getElementById('log-file-modal-filename');
+    /* Plan 057: when opened for a specific accumulated file (a letter from the files
+       dialog) this holds that file's absolute path so the action buttons target it via
+       a path field. Null = act on the tailed file (original single-file behavior). */
+    var currentModalPath = null;
+
+    function refreshFilename() {
+        if (!filenameEl) return;
+        var footerText = document.getElementById('footer-text');
+        var fnEl = footerText ? footerText.querySelector('.footer-filename') : null;
+        /* Strip whitespace; the footer renders the filename as text content. */
+        var name = fnEl && fnEl.textContent ? fnEl.textContent.trim() : '';
+        filenameEl.textContent = name;
+        filenameEl.style.display = name ? '' : 'none';
+    }
+
+    function openLogFileActionsModal(target) {
+        if (target && target.path) {
+            currentModalPath = target.path;
+            if (filenameEl) {
+                filenameEl.textContent = target.name || target.path;
+                filenameEl.style.display = '';
+            }
+        } else {
+            currentModalPath = null;
+            refreshFilename();
+        }
         modal.classList.add('visible');
     }
     function closeLogFileModal() {
@@ -53,27 +106,17 @@ export function getLogFileModalScript(): string {
         }
     });
 
-    var openEditor = document.getElementById('log-file-btn-open-editor');
-    var openFolder = document.getElementById('log-file-btn-open-folder');
-    var copyPath = document.getElementById('log-file-btn-copy-path');
-    if (openEditor) {
-        openEditor.addEventListener('click', function() {
+    var pairs = ${JSON.stringify(BUTTON_MESSAGE_PAIRS)};
+    pairs.forEach(function(pair) {
+        var btn = document.getElementById(pair[0]);
+        if (!btn) return;
+        btn.addEventListener('click', function() {
             closeLogFileModal();
-            vscodeApi.postMessage({ type: 'openLogFileInEditor' });
+            /* Carry the target path when opened for a specific file (plan 057);
+               omit it for the tailed file so the host uses currentFileUri. */
+            vscodeApi.postMessage(currentModalPath ? { type: pair[1], path: currentModalPath } : { type: pair[1] });
         });
-    }
-    if (openFolder) {
-        openFolder.addEventListener('click', function() {
-            closeLogFileModal();
-            vscodeApi.postMessage({ type: 'openCurrentFileFolder' });
-        });
-    }
-    if (copyPath) {
-        copyPath.addEventListener('click', function() {
-            closeLogFileModal();
-            vscodeApi.postMessage({ type: 'copyCurrentFilePath' });
-        });
-    }
+    });
 
     var footerText = document.getElementById('footer-text');
     if (footerText) {

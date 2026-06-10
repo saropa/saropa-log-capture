@@ -21,6 +21,7 @@ import { getSessionPanelStyles } from './viewer-styles-session';
 import { getFindPanelStyles } from './viewer-styles-find';
 import { getBookmarkPanelStyles } from './viewer-styles-bookmarks';
 import { getSqlQueryHistoryPanelStyles } from './viewer-styles-sql-query-history';
+import { getSqlQueryHistoryDashboardStyles } from './viewer-styles-sql-query-history-dashboard';
 import { getTrashPanelStyles } from './viewer-styles-trash';
 import { getAboutPanelStyles } from './viewer-styles-about';
 import { getCollectionsPanelStyles } from './viewer-styles-collections';
@@ -37,6 +38,7 @@ import { getRootCauseHypothesesStyles } from './viewer-styles-root-cause-hints';
 import { getToolbarStyles } from './viewer-styles-toolbar';
 import { getFilterDrawerStyles } from './viewer-styles-filter-drawer';
 import { getLineStyles } from './viewer-styles-lines';
+import { getColumnStyles } from './viewer-styles-columns';
 import { getAsciiArtStyles } from './viewer-styles-ascii-art';
 import { getFormatStyles } from './viewer-styles-format';
 import { getFlutterBannerStyles } from './viewer-styles-flutter-banner';
@@ -139,6 +141,22 @@ body[data-icon-bar=”right”] #panel-content-row {
     overflow: visible;
 }
 
+/* Drag handle to resize the shared slide-out width. Anchored to the persistent
+   #panel-slot (not inside any one panel) so EVERY slide-out is resizable from the
+   same edge — the slot is position:relative, so right:-3px lands on its right edge
+   (left:-3px under a right-side icon bar, see viewer-styles-icon-bar.ts). The slot's
+   overflow:hidden (until .open) keeps the handle hidden while no panel is open.
+   The 420px drag floor lives in the JS resize handler / MIN_PANEL_WIDTH. */
+.panel-slot-resize {
+    position: absolute; right: -3px; top: 0; bottom: 0; width: 6px;
+    cursor: col-resize; z-index: 1;
+}
+.panel-slot-resize:hover,
+.panel-slot-resize.dragging {
+    background: var(--vscode-focusBorder);
+    opacity: 0.5;
+}
+
 /* ===================================================================
    Log Content Wrapper
    Flex row containing the scrollable log area and the minimap panel.
@@ -222,5 +240,5 @@ body.scrollbar-visible #log-content {
     background: var(--vscode-scrollbarSlider-hoverBackground);
 }
 #log-content::-webkit-scrollbar-track { background: transparent; }
-` + getLineStyles() + getAsciiArtStyles() + getContentStyles() + getNPlusOneSignalStyles() + getSqlRepeatDrilldownStyles() + getReplayStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getSqlQueryHistoryPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCollectionsPanelStyles() + getCrashlyticsPanelStyles() + getProjectStatePanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getSignalPanelStyles() + getAiStyles() + getRunSeparatorStyles() + getContextPopoverStyles() + getRootCauseHypothesesStyles() + getToolbarStyles() + getFilterDrawerStyles() + getFormatStyles() + getFlutterBannerStyles();
+` + getLineStyles() + getColumnStyles() + getAsciiArtStyles() + getContentStyles() + getNPlusOneSignalStyles() + getSqlRepeatDrilldownStyles() + getReplayStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getSqlQueryHistoryPanelStyles() + getSqlQueryHistoryDashboardStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCollectionsPanelStyles() + getCrashlyticsPanelStyles() + getProjectStatePanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getSignalPanelStyles() + getAiStyles() + getRunSeparatorStyles() + getContextPopoverStyles() + getRootCauseHypothesesStyles() + getToolbarStyles() + getFilterDrawerStyles() + getFormatStyles() + getFlutterBannerStyles();
 }

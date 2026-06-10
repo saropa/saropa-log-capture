@@ -107,5 +107,66 @@ export function getSessionGroupStyles(): string {
     font-size: 12px;
     line-height: 1;
 }
+
+/* --- Controller block (Controller-rooted day tree) ---
+   The Controller is the workspace's own session; peripheral logs (lint, translate, advisor) nest
+   under it in .session-controller-children. Distinct class + chevron from .session-group so a
+   peripheral that is itself a real session-group keeps its own independent collapse. */
+.session-controller-group {
+    background: transparent;
+}
+
+/* Subtle left accent marks the controller header row as the day's tree root without shouting. */
+.session-item-controller {
+    border-left: 2px solid var(--vscode-textLink-foreground, #3794ff);
+}
+.session-item-controller .session-item-icon {
+    /* Leave room for the leading chevron, matching the group primary. */
+    padding-left: 0;
+}
+
+/* Controller chevron mirrors the session-group chevron exactly so the two read as one vocabulary. */
+.session-controller-chevron {
+    display: inline-flex;
+    align-items: center;
+    width: 16px;
+    margin-right: 2px;
+    flex-shrink: 0;
+    cursor: pointer;
+    color: var(--vscode-icon-foreground);
+    opacity: 0.85;
+}
+.session-controller-chevron:hover { opacity: 1; }
+.session-controller-chevron .codicon { font-size: 12px; line-height: 1; }
+
+/* Children indent so the eye reads them as nested under the controller. The tether line is drawn
+   on the container's left edge rather than per-row (rows here may be plain items OR nested
+   .session-group blocks, so a per-row ::before like the secondary rows use won't line up). */
+.session-controller-children {
+    padding-left: 16px;
+    border-left: 1px solid var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.35));
+    margin-left: 8px;
+}
+.session-controller-group[data-collapsed="true"] .session-controller-children {
+    display: none;
+}
+
+/* "+N older" badge: a quiet, clickable chip that keeps Latest-only's hidden namesakes reachable. */
+.session-older-toggle {
+    margin-left: 4px;
+    padding: 0 4px;
+    border-radius: 3px;
+    color: var(--vscode-descriptionForeground);
+    font-size: 0.85em;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.session-older-toggle:hover {
+    color: var(--vscode-foreground);
+    background: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.2));
+}
+.session-older-toggle.expanded {
+    color: var(--vscode-foreground);
+}
 `;
 }

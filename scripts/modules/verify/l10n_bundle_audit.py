@@ -29,7 +29,13 @@ from pathlib import Path
 from modules.verify.l10n_brands import (
     is_acronym_only,
     is_brand_only,
+    is_no_translatable_content,
+    is_verified_identical,
     validate_brands,
+)
+from modules.verify.l10n_provenance import (
+    classify_translated_keys,
+    quality_split,
 )
 
 # Resolve project root from this file: scripts/modules/verify/l10n_bundle_audit.py
@@ -178,12 +184,26 @@ class LocaleCoverage:
     untranslated_entries: list[UntranslatedEntry] = field(
         default_factory=list,
     )
+    # Provenance: engine -> count among the really-translated keys. The
+    # "untracked" bucket is a translated key with no provenance record, treated
+    # as low quality. Populated by run_audit from the per-locale sidecar.
+    engine_counts: dict[str, int] = field(default_factory=dict)
 
     @property
     def pct(self) -> float:
         if self.total_keys == 0:
             return 0.0
         return (self.translated_count / self.total_keys) * 100
+
+    @property
+    def high_quality_count(self) -> int:
+        """Translated keys from NLLB / manual / identity / other strong engines."""
+        return quality_split(self.engine_counts)[0]
+
+    @property
+    def low_quality_count(self) -> int:
+        """Translated keys from a weak engine OR untracked — upgrade candidates."""
+        return quality_split(self.engine_counts)[1]
 
 
 @dataclass
@@ -263,10 +283,13 @@ def run_audit() -> AuditResult:
         orphan_count = sum(
             1 for k in bundle_keys if k not in expected_values
         )
-        # Untranslated = value identical to English AND neither a brand-only
-        # string nor a technical acronym. Brand-only ("Saropa Lints") and
-        # acronyms ("SQL", "ANR") are correctly identical to English — identity
-        # IS the translation, so they must not be counted as gaps.
+        # Untranslated = value identical to English AND none of: a brand-only
+        # string, a technical acronym, a symbol-only string with no word, or a
+        # per-locale human-verified cognate. Brand-only ("Saropa Lints"),
+        # acronyms ("SQL", "ANR"), and symbol-only ("1 - {0}", "{0} #", "Δ #")
+        # are correctly identical in EVERY locale; is_verified_identical covers
+        # the per-locale cases (Spanish "Error", German "Pause") a reviewer
+        # confirmed. Identity IS the translation, so none count as gaps.
         untranslated_keys = [
             k
             for k in bundle_keys
@@ -274,6 +297,8 @@ def run_audit() -> AuditResult:
             and bundle[k] == k
             and not is_brand_only(k)
             and not is_acronym_only(k)
+            and not is_no_translatable_content(k)
+            and not is_verified_identical(k, locale)
         ]
         # Brand-mangled = translated but a brand token got transliterated
         # or removed (e.g. "Saropa Log Capture" → "Saropa-Protokollerfassung").
@@ -290,6 +315,16 @@ def run_audit() -> AuditResult:
             - len(untranslated_keys)
             - len(brand_mangled_keys)
         )
+        # Classify the really-translated keys by the engine that produced them
+        # (no provenance record -> "untracked", counted as low quality). This is
+        # what surfaces "1,198 untracked Google strings to upgrade" in the audit.
+        translated_keys = (
+            expected_values
+            - set(missing_keys)
+            - set(untranslated_keys)
+            - set(brand_mangled_keys)
+        )
+        engine_counts = classify_translated_keys(locale, translated_keys)
 
         # Build per-string detail for everything NOT correctly translated.
         entries: list[UntranslatedEntry] = []
@@ -327,6 +362,7 @@ def run_audit() -> AuditResult:
                 orphan_count=orphan_count,
                 translated_count=translated_count,
                 untranslated_entries=entries,
+                engine_counts=engine_counts,
             )
         )
 
@@ -377,6 +413,11 @@ def write_audit_report(audit: AuditResult) -> Path:
             "untranslated": lc.untranslated_count,
             "orphan": lc.orphan_count,
             "pct": round(lc.pct, 1),
+            # Provenance: per-engine breakdown of translated keys plus the
+            # high/low quality split (untracked counts as low). schema_version 2.
+            "engines": dict(sorted(lc.engine_counts.items())),
+            "high_quality": lc.high_quality_count,
+            "low_quality": lc.low_quality_count,
             "entries": entries_out,
         }
 
@@ -386,7 +427,7 @@ def write_audit_report(audit: AuditResult) -> Path:
     )
 
     payload: dict[str, object] = {
-        "schema_version": 1,
+        "schema_version": 2,
         "generated": now.isoformat(timespec="seconds"),
         "source_key_count": audit.source_key_count,
         "bundle_key_count": audit.bundle_key_count,

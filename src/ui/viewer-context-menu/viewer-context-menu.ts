@@ -26,6 +26,7 @@ export { getContextMenuHtml, getScrollChromeContextMenuHtml } from './viewer-con
 import { getDbTimestampBurstRangeBrowserScript } from './viewer-context-menu-db-burst-range';
 import { getIncidentRangeBrowserScript } from './viewer-context-menu-incident-range';
 import { getContextMenuSourcesScript } from './viewer-context-menu-sources';
+import { getContextMenuPositionScript } from './viewer-context-menu-position';
 import { getContextMenuActionsScript } from './viewer-context-menu-actions';
 
 /** Get the context menu script with click handlers and keyboard shortcuts. */
@@ -35,6 +36,7 @@ export function getContextMenuScript(): string {
         + getIncidentRangeBrowserScript()
         + getDbTimestampBurstRangeBrowserScript()
         + getContextMenuUiScript()
+        + getContextMenuPositionScript()
         + getContextMenuActionsScript();
 }
 
@@ -79,6 +81,16 @@ function initContextMenu() {
     }
     wireMenuClicks(contextMenuEl);
     wireMenuClicks(scrollChromeContextMenuEl);
+    /* Each submenu flyout is positioned against the live viewport when its trigger is
+       entered (see positionSubmenu). mouseenter fires once per trigger and does not bubble. */
+    if (contextMenuEl) {
+        var submenus = contextMenuEl.querySelectorAll('.context-menu-submenu');
+        for (var s = 0; s < submenus.length; s++) {
+            submenus[s].addEventListener('mouseenter', function() { positionSubmenu(this); });
+        }
+    }
+    /* Keep the open menu/submenu correct when the panel is resized while open (responsive). */
+    window.addEventListener('resize', function() { repositionOpenContextMenu(); });
 }
 
 /** Disable/enable a single context menu item by action id. */
@@ -155,29 +167,33 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
     var changelogSinceItem = contextMenuEl.querySelector('[data-action="show-changelog-since"]');
     if (changelogSinceItem) changelogSinceItem.style.display = hasVersionToken ? '' : 'none';
 
-    /* Copy Error / Warning + Copy DB cluster: full grouped block before Copy & Export. */
-    var ewRow = contextMenuEl.querySelector('[data-copy-error-warning-row]');
+    /* Copy Error / Warning (plain + JSON) + Copy DB cluster: full grouped block before Copy & Export.
+       Both error/warning rows share the data-copy-error-warning-row marker, so toggle all matches
+       (querySelectorAll, not querySelector — the latter would hide only the first and strand the JSON row). */
+    var ewRows = contextMenuEl.querySelectorAll('[data-copy-error-warning-row]');
     var dbClusterRow = contextMenuEl.querySelector('[data-copy-db-cluster-row]');
     var groupedBlockSep = contextMenuEl.querySelector('[data-grouped-block-copy-separator]');
     var ewRange = (hasLine && typeof computeIncidentLineRange === 'function') ? computeIncidentLineRange(lineIdx) : null;
     var dbBurstRange = (hasLine && typeof computeDbTimestampBurstLineRange === 'function') ? computeDbTimestampBurstLineRange(lineIdx) : null;
     var showEw = !!(hasLine && ewRange);
     var showDbCluster = !!(hasLine && dbBurstRange);
-    if (ewRow) ewRow.style.display = showEw ? '' : 'none';
+    ewRows.forEach(function(r) { r.style.display = showEw ? '' : 'none'; });
     if (dbClusterRow) dbClusterRow.style.display = showDbCluster ? '' : 'none';
     if (groupedBlockSep) groupedBlockSep.style.display = (showEw || showDbCluster) ? '' : 'none';
-    if (showEw && ewRow) {
+    if (showEw) {
         var ewLevel = lineData && typeof effectiveErrorWarningLevel === 'function' ? effectiveErrorWarningLevel(lineData) : null;
         if (!ewLevel && ewRange) {
             for (var ewi = ewRange.lo; ewi <= ewRange.hi && !ewLevel; ewi++) {
                 ewLevel = effectiveErrorWarningLevel(allLines[ewi]);
             }
         }
-        var ewLabelEl = ewRow.querySelector('[data-ew-copy-label]');
-        var ewIconEl = ewRow.querySelector('[data-ew-copy-icon]');
         var ewIsWarn = ewLevel === 'warning';
+        var ewLabelEl = contextMenuEl.querySelector('[data-ew-copy-label]');
+        var ewIconEl = contextMenuEl.querySelector('[data-ew-copy-icon]');
+        var ewJsonLabelEl = contextMenuEl.querySelector('[data-ew-json-label]');
         if (ewLabelEl) ewLabelEl.textContent = ewIsWarn ? 'Copy Warning' : 'Copy Error';
         if (ewIconEl) ewIconEl.className = 'codicon ' + (ewIsWarn ? 'codicon-warning' : 'codicon-error');
+        if (ewJsonLabelEl) ewJsonLabelEl.textContent = ewIsWarn ? 'Copy Warning JSON' : 'Copy Error JSON';
     }
 
     /* Copy Timestamp hides when the line carries no epoch (markers, synthetic rows). Both .timestamp
@@ -259,60 +275,6 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
 
     syncContextMenuToggles();
     positionContextMenu(x, y);
-    window.isContextMenuOpen = true;
-}
-
-/** Place menu at (x,y), clamp to viewport, and set flip classes so submenus stay on screen. */
-function positionContextMenu(x, y) {
-    contextMenuEl.style.left = x + 'px';
-    contextMenuEl.style.top = y + 'px';
-    contextMenuEl.classList.add('visible');
-    var rect = contextMenuEl.getBoundingClientRect();
-    var newX = x;
-    var newY = y;
-    if (rect.right > window.innerWidth) newX = Math.max(0, window.innerWidth - rect.width);
-    if (rect.bottom > window.innerHeight) newY = Math.max(0, window.innerHeight - rect.height);
-    contextMenuEl.style.left = newX + 'px';
-    contextMenuEl.style.top = newY + 'px';
-    rect = contextMenuEl.getBoundingClientRect();
-    contextMenuEl.classList.toggle('flip-submenu', rect.right + 160 > window.innerWidth);
-    var submenuMaxH = 220; /* max height of any submenu panel; flip vertical when near bottom */
-    contextMenuEl.classList.toggle('flip-submenu-vertical', rect.bottom + submenuMaxH > window.innerHeight);
-    /* Near top: push submenu flyout down so its top is not cropped (e.g. terminal tab bar, toolbar). 48px clears typical panel header height; threshold 100px. */
-    var safeTopPx = 48;
-    var nearTopThresholdPx = 100;
-    var nearTop = rect.top < nearTopThresholdPx;
-    contextMenuEl.classList.toggle('flip-submenu-vertical-top', nearTop);
-    if (nearTop) {
-        var submenuContentTop = Math.max(0, safeTopPx - rect.top);
-        contextMenuEl.style.setProperty('--submenu-content-top', submenuContentTop + 'px');
-    } else {
-        contextMenuEl.style.removeProperty('--submenu-content-top');
-    }
-}
-
-function hideContextMenu() {
-    if (contextMenuEl) contextMenuEl.classList.remove('visible');
-    if (scrollChromeContextMenuEl) scrollChromeContextMenuEl.classList.remove('visible');
-    contextMenuLineIdx = -1;
-    window.isContextMenuOpen = false;
-}
-
-/** Right-click on minimap strip / native scrollbar: compact menu for scroll map + scrollbar settings. */
-function showScrollChromeContextMenu(x, y) {
-    if (!scrollChromeContextMenuEl) return;
-    if (contextMenuEl) contextMenuEl.classList.remove('visible');
-    syncContextMenuToggles();
-    scrollChromeContextMenuEl.style.left = x + 'px';
-    scrollChromeContextMenuEl.style.top = y + 'px';
-    scrollChromeContextMenuEl.classList.add('visible');
-    var rect = scrollChromeContextMenuEl.getBoundingClientRect();
-    var newX = x;
-    var newY = y;
-    if (rect.right > window.innerWidth) newX = Math.max(0, window.innerWidth - rect.width);
-    if (rect.bottom > window.innerHeight) newY = Math.max(0, window.innerHeight - rect.height);
-    scrollChromeContextMenuEl.style.left = newX + 'px';
-    scrollChromeContextMenuEl.style.top = newY + 'px';
     window.isContextMenuOpen = true;
 }
 

@@ -1,0 +1,54 @@
+/**
+ * Webview-side script for the newer-log sticky banner. Inlined into the same IIFE as
+ * viewer-session-panel so it shares the IIFE's `sessionDisplayOptions`, `vt`, `escapeAttr`,
+ * `escapeHtmlText`, and helpers like `applySessionDisplayOptions` / `getSessionBasename`.
+ *
+ * The per-day Reports bucket that used to live here was superseded by the Controller-rooted
+ * tree (viewer-session-panel-controllers.ts) — reports now nest under their Controller as
+ * peripherals instead of in a separate bucket. See
+ * [plans/history/2026.06/2026.06.09/controller-rooted-session-tree.md].
+ */
+
+export function getNewerLogBannerScript(): string {
+    return /* javascript */ `
+    /** Newer-log sticky banner. Shown when ANY rendered record has unreadSinceFocus:true.
+     *  The banner offers two actions: Open (focuses the newest unread log) and Dismiss
+     *  (advances LOGS_PANEL_DISMISSED_AT_KEY host-side so unreadSinceFocus flips off). */
+    function renderNewerLogBanner(sorted) {
+        var banner = document.getElementById('session-newer-banner');
+        if (!banner) return;
+        if (!sessionDisplayOptions || sessionDisplayOptions.newerLogBannerEnabled === false) {
+            banner.style.display = 'none';
+            banner.innerHTML = '';
+            return;
+        }
+        var unread = (sorted || []).filter(function(s) { return !!(s && s.unreadSinceFocus); });
+        if (unread.length === 0) {
+            banner.style.display = 'none';
+            banner.innerHTML = '';
+            return;
+        }
+        /* Newest unread = highest mtime among the unread set. Used by both the
+           visible label and the Open button's target URI. */
+        var newest = unread[0];
+        for (var i = 1; i < unread.length; i++) {
+            if ((unread[i].mtime || 0) > (newest.mtime || 0)) newest = unread[i];
+        }
+        var nameRaw = newest.displayName || newest.filename || '';
+        var nameDisplay = applySessionDisplayOptions(getSessionBasename(nameRaw));
+        var when = newest.relativeTime || newest.formattedTime || newest.formattedMtime || '';
+        var text = (unread.length === 1)
+            ? (typeof vt === 'function' ? vt('viewer.session.newerBanner.singular', nameDisplay, when) : ('New log · ' + nameDisplay + ' · ' + when))
+            : (typeof vt === 'function' ? vt('viewer.session.newerBanner.plural', nameDisplay, when, unread.length - 1) : ('New logs · ' + nameDisplay + ' · ' + when + ' (+' + (unread.length - 1) + ' more)'));
+        var openLabel = typeof vt === 'function' ? vt('viewer.session.newerBanner.open') : 'Open';
+        var dismissLabel = typeof vt === 'function' ? vt('viewer.session.newerBanner.dismiss') : 'Dismiss';
+        banner.innerHTML = '<span class="session-newer-banner-icon codicon codicon-bell"></span>'
+            + '<span class="session-newer-banner-text">' + escapeHtmlText(text) + '</span>'
+            + '<span class="session-newer-banner-actions">'
+            +   '<button type="button" class="session-newer-banner-action primary" data-newer-action="open" data-newer-uri="' + escapeAttr(newest.uriString || '') + '">' + escapeHtmlText(openLabel) + '</button>'
+            +   '<button type="button" class="session-newer-banner-action" data-newer-action="dismiss">' + escapeHtmlText(dismissLabel) + '</button>'
+            + '</span>';
+        banner.style.display = '';
+    }
+    `;
+}

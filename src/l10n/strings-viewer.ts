@@ -26,6 +26,8 @@ export const stringsViewer: Record<string, string> = {
     'viewer.toolbar.search.title': 'Open search to find text in the current log (Ctrl+F)',
     'viewer.toolbar.search.label': 'Toggle search',
     'viewer.toolbar.searchCount.title': 'Number of search matches',
+    'viewer.toolbar.flowMap.title': 'Export a session flow map report — screens, dwell times, and errors as a diagram',
+    'viewer.toolbar.flowMap.label': 'Export session flow map',
     'viewer.toolbar.filter.title': 'Open filter drawer to show/hide log levels, streams, and exclusions',
     'viewer.toolbar.filter.label': 'Toggle filter drawer',
     'viewer.toolbar.filterCount.title': 'Number of active filters',
