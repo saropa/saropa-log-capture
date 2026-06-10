@@ -495,6 +495,11 @@
         "title": "%command.clearLearningData.title%"
       },
       {
+        "command": "saropaLogCapture.clearGlobalAggregates",
+        "icon": "$(globe)",
+        "title": "%command.clearGlobalAggregates.title%"
+      },
+      {
         "command": "saropaLogCapture.checkFilterSuggestions",
         "icon": "$(bell)",
         "title": "%command.checkFilterSuggestions.title%"
@@ -631,6 +636,12 @@
           "minimum": 80,
           "type": "number",
           "title": "%config.learning.maxStoredLineLength.title%"
+        },
+        "saropaLogCapture.learning.globalAggregates": {
+          "default": false,
+          "description": "%config.learning.globalAggregates.description%",
+          "type": "boolean",
+          "title": "%config.learning.globalAggregates.title%"
         },
         "saropaLogCapture.viewerKeybindings": {
           "default": {},
