@@ -278,6 +278,8 @@ export const stringsWebviewB: Record<string, string> = {
     'viewer.sqlHistory.copiedRows.many': 'Copied {0} rows to clipboard.',
     'viewer.sqlHistory.copiedFingerprint': 'Copied fingerprint.',
     'viewer.sqlHistory.sortDisabled': 'No SQL queries captured yet — nothing to sort.',
+    'viewer.sqlHistory.showingCapped': 'Showing {0} of {1} rows — refine your search to narrow.',
+    'viewer.sqlHistory.showMore': 'Show {0} more',
     'viewer.sqlHistory.stat.queries': 'Distinct queries',
     'viewer.sqlHistory.stat.executions': 'Executions',
     'viewer.sqlHistory.stat.slowest': 'Slowest (ms)',

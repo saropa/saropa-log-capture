@@ -36,6 +36,10 @@ When "App Only" is off but a category isn't whitelisted, the output channel now 
 
 - **Dropped-category diagnostics:** When `captureAll` is off and a DAP output category is not in `saropaLogCapture.categories`, the first dropped line of each category now logs an actionable hint to the **Saropa Log Capture** output channel (category name + how to capture it), instead of vanishing silently. Documents the DAP-only capture boundary under README → Known Limitations (plan 102).
 
+### Changed
+
+- **SQL query history panel scales to large workspaces:** The Database panel's query-history table now renders every row as before up to 2,000 distinct fingerprints; beyond that it windows the table and shows a "Show more" pager, avoiding the jank of building thousands of rows in one pass. No change for normal-sized logs (DB_18b item 1c).
+
 ## [8.0.3]
 
 The viewer now refreshes itself when something outside the editor rewrites, truncates, or deletes the log you're watching, and you can diff your current log against the version captured at an earlier Git commit. [log](https://github.com/saropa/saropa-log-capture/blob/v8.0.3/CHANGELOG.md)
