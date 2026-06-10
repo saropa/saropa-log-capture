@@ -7,8 +7,9 @@
  */
 
 import type { FlowGraph, FlowNode, IssueEvent, ParsedLog, SourceAnchor } from './flow-map-model';
-import { anchorText, formatActions, formatDwellMs, stripAnsi } from './flow-map-format';
+import { anchorText, formatActions, formatDwellMs, nodeHasError, stripAnsi } from './flow-map-format';
 import { renderSvg } from './flow-map-svg';
+import { t } from '../../l10n';
 import { buildNarrative } from './flow-map-report';
 import { activityChartHtml } from './flow-map-activity-chart';
 
@@ -165,8 +166,18 @@ export function buildFlowMapBody(parsed: ParsedLog, graph: FlowGraph, logPath?: 
     // it. The row wraps to a single column when the panel is narrow.
     const legend = '<p class="legend">Solid = walked · dashed = recovered indirectly · ↗️ = off-app handoff · 💥 = fault.'
         + ' Click a node to find its row and jump the log; click a source to open it.</p>';
+    // S2: an overlay toolbar gives the otherwise-static SVG a live lens — zoom/pan/fit, plus a
+    // one-click center on the fault node. The jump-to-crash control only renders when a node carries
+    // an error, so it never sits dead. Glyphs are symbols (exempt from l10n); titles are localized.
+    const hasCrash = graph.nodes.some(nodeHasError);
+    const zoomToolbar = '<div class="fm-zoom-toolbar">'
+        + `<button class="fm-zoom-btn" data-zoom="in" title="${t('flowMap.zoomInBtn')}" aria-label="${t('flowMap.zoomInBtn')}">+</button>`
+        + `<button class="fm-zoom-btn" data-zoom="out" title="${t('flowMap.zoomOutBtn')}" aria-label="${t('flowMap.zoomOutBtn')}">−</button>`
+        + `<button class="fm-zoom-btn" data-zoom="reset" title="${t('flowMap.resetViewBtn')}" aria-label="${t('flowMap.resetViewBtn')}">⧉</button>`
+        + (hasCrash ? `<button class="fm-zoom-btn fm-zoom-crash" data-zoom="crash" title="${t('flowMap.jumpToCrashBtn')}" aria-label="${t('flowMap.jumpToCrashBtn')}">💥</button>` : '')
+        + '</div>';
     const diagramCol = '<div class="diagram-col">'
-        + section('sec-flow', '🗺️ Flow', legend + '<div class="diagram">' + renderSvg(graph) + '</div>')
+        + section('sec-flow', '🗺️ Flow', legend + '<div class="diagram">' + zoomToolbar + renderSvg(graph) + '</div>')
         + '</div>';
     const detailCol = '<div class="detail-col">'
         + section('sec-narrative', '📝 Executive Summary', narrativeSectionHtml(parsed, graph))

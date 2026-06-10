@@ -39,6 +39,7 @@ When "App Only" is off but a category isn't whitelisted, the output channel now 
 
 ### Changed
 
+- **Flow map diagram is now an interactive lens:** The Session Flow Map panel's diagram pans (drag the background) and zooms (mouse wheel or the new +/− buttons), with a fit-to-view reset and — when the session faulted — a one-click **💥** button that centers and flashes the crash node. Node clicks (highlight row + jump to log) and the horizontal-scroll fallback are unchanged (plan 056 Stage 2).
 - **SQL query history panel scales to large workspaces:** The Database panel's query-history table now renders every row as before up to 2,000 distinct fingerprints; beyond that it windows the table and shows a "Show more" pager, avoiding the jank of building thousands of rows in one pass. No change for normal-sized logs (DB_18b item 1c).
 
 ## [8.0.3]
