@@ -55,4 +55,37 @@ suite('renderSmartFrameSection', () => {
         ]);
         assert.ok(html.includes('cd-fw-group'), 'trailing fw run folds (flush after loop)');
     });
+
+    test('5b: collapses a run of identical frames into one row with a ↻×N badge', () => {
+        // A self-recursive overflow: 5 identical app frames collapse to a single clickable row.
+        const html = renderSmartFrameSection([
+            app('MyApp.recurse', 'lib/r.dart', 9), app('MyApp.recurse', 'lib/r.dart', 9),
+            app('MyApp.recurse', 'lib/r.dart', 9), app('MyApp.recurse', 'lib/r.dart', 9),
+            app('MyApp.recurse', 'lib/r.dart', 9),
+        ]);
+        assert.ok(html.includes('frame-repeat'), 'identical run gets a repeat badge');
+        assert.ok(html.includes('×5'), 'badge reports the run length');
+        // Exactly one app row is emitted despite five identical frames (count the row marker, not
+        // the text — the frame text also appears in each row's copy-button data attribute).
+        assert.strictEqual((html.match(/data-frame-file="lib\/r\.dart"/g) || []).length, 1, 'one collapsed row');
+        // The summary still counts all five original frames (honest total).
+        assert.ok(html.includes('5 frames (5 app, 0 fw)'), 'summary keeps the true frame count');
+    });
+
+    test('5b: distinct consecutive frames get no repeat badge', () => {
+        const html = renderSmartFrameSection([
+            app('a', 'lib/a.dart'), app('b', 'lib/b.dart'),
+        ]);
+        assert.ok(!html.includes('frame-repeat'), 'no badge when frames differ');
+    });
+
+    test('5b: identical framework frames collapse and the fold count stays the true total', () => {
+        // 4 identical fw frames are ONE run unit, so they render inline (not a >2 fold), once, ↻×4.
+        const html = renderSmartFrameSection([
+            app('top', 'lib/t.dart'), fw('fw.loop'), fw('fw.loop'), fw('fw.loop'), fw('fw.loop'),
+        ]);
+        assert.ok(html.includes('frame-repeat') && html.includes('×4'), 'identical fw run is counted');
+        // One fw row emitted (count the data-fw marker; the text also appears in the copy data attr).
+        assert.strictEqual((html.match(/data-fw="1"/g) || []).length, 1, 'one collapsed fw row');
+    });
 });
