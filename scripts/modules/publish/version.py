@@ -10,7 +10,7 @@ import re
 import sys
 
 from modules.publish.constants import C, PROJECT_ROOT
-from modules.publish.display import fail, fix, info, ok
+from modules.publish.display import fail, fix, info, ok, warn
 from modules.publish.utils import read_package_version, run
 from modules.publish.publish_git import is_version_tagged
 
@@ -27,6 +27,15 @@ _VERSIONED_UNRELEASED_RE = re.compile(
 
 # First release heading: ## [x.y.z]
 _FIRST_RELEASE_HEADING_RE = re.compile(r'^##\s*\[\d+\.\d+\.\d+\]', re.MULTILINE)
+
+# The "log" link that closes every release intro line (see CHANGELOG.md
+# maintenance notes). The blob ref is either a published tag (vX.Y.Z) or
+# `main` for the in-progress section; at publish time it must point at the
+# tag for the version being released.
+_LOG_LINK_RE = re.compile(
+    r'log\]\(https://github\.com/saropa/saropa-log-capture/blob/'
+    r'(?:v\d+\.\d+\.\d+|main)/CHANGELOG\.md\)'
+)
 
 _CHANGELOG_FILENAME = "CHANGELOG.md"
 _CHANGELOG_PATH_ROOT = os.path.join(PROJECT_ROOT, _CHANGELOG_FILENAME)
@@ -231,6 +240,134 @@ def _stamp_changelog(version: str) -> bool:
     return True
 
 
+def _log_link_for(version: str) -> str:
+    """The exact log link an intro line must end with for `version`."""
+    return (
+        f'log](https://github.com/saropa/saropa-log-capture/blob/'
+        f'v{version}/CHANGELOG.md)'
+    )
+
+
+def _find_intro_line(lines: list[str], version: str) -> int | None:
+    """Index of the intro line under '## [version]', or None if absent.
+
+    The intro is the first non-blank line after the heading. If that line is
+    itself a sub-heading ('###') or a section rule ('---'), the release opened
+    straight into its change list with no plain-language summary — treated as
+    no intro.
+    """
+    heading = re.compile(rf'^##\s*\[{re.escape(version)}\]\s*$')
+    for i, line in enumerate(lines):
+        if not heading.match(line.strip()):
+            continue
+        for j in range(i + 1, len(lines)):
+            stripped = lines[j].strip()
+            if not stripped:
+                continue
+            if stripped.startswith("#") or stripped.startswith("---"):
+                return None
+            return j
+        return None
+    return None
+
+
+def _check_and_fix_intro(version: str) -> str:
+    """Check the intro line for `version`; repoint its log link if needed.
+
+    Returns 'ok' when an intro line with a log link exists (the link is
+    rewritten to v{version} if it pointed at `main` or an older tag), or
+    'missing' when the section has no intro line or the intro carries no log
+    link. A read/write failure also returns 'missing' so the caller prompts.
+    """
+    changelog_path = _resolve_changelog_path()
+    try:
+        with open(changelog_path, encoding="utf-8") as f:
+            content = f.read()
+    except OSError:
+        fail("Could not read CHANGELOG.md")
+        return "missing"
+
+    lines = content.splitlines(keepends=True)
+    idx = _find_intro_line(lines, version)
+    if idx is None:
+        return "missing"
+
+    intro = lines[idx]
+    # An intro paragraph with no log link is incomplete — treat as missing.
+    if not _LOG_LINK_RE.search(intro):
+        return "missing"
+
+    wanted = _log_link_for(version)
+    if wanted in intro:
+        ok(f"CHANGELOG intro + log link target v{version}")
+        return "ok"
+
+    # Repoint an existing log link (main, or an older tag) at this release.
+    lines[idx] = _LOG_LINK_RE.sub(wanted, intro)
+    if not _try_write_changelog_file(changelog_path, "".join(lines)):
+        return "missing"
+    fix(f"CHANGELOG log link -> v{version}")
+    return "ok"
+
+
+def _prompt_intro_missing() -> str:
+    """Ask how to proceed when the release intro line is missing.
+
+    Returns 'retry', 'ignore', or 'abort'. Default (Enter / EOF) is 'retry' so
+    the developer can add the intro line in their editor and continue without
+    losing the pipeline run.
+    """
+    print(f"\n  {C.YELLOW}Release intro line not found in CHANGELOG.md.{C.RESET}")
+    print("    [R]etry  — re-read CHANGELOG after you add the intro line")
+    print("    [I]gnore — continue without an intro")
+    print("    [A]bort  — stop the pipeline")
+    try:
+        # Native input() (no readline — see the bootstrap note in
+        # scripts/publish.py) keeps the choice marker on its own line.
+        raw = input("  Choice [r]: ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return "retry"
+    if raw in ("i", "ignore"):
+        return "ignore"
+    if raw in ("a", "abort"):
+        return "abort"
+    return "retry"
+
+
+def _verify_release_intro(version: str) -> bool:
+    """Require the '## [version]' section to open with an intro + log link.
+
+    Each release opens with one human-readable line that ends with a
+    `log](…/blob/vX.Y.Z/CHANGELOG.md)` link (CHANGELOG.md maintenance notes).
+    We require it before publishing so every shipped release has a plain-language
+    summary, and the link is rewritten to the version being released.
+
+    Missing intro -> prompt retry/ignore/abort (default retry). Returns True to
+    continue the pipeline, False to abort.
+    """
+    # Non-interactive runs can't retry an editor edit, so a missing intro is a
+    # warning rather than an infinite prompt loop. PUBLISH_YES (set by --yes) is
+    # the module's explicit CI signal — see _resolve_version; a non-tty stdin is
+    # the implicit one. Checked once up front so the retry loop is reached only
+    # when a human can actually act on the prompt.
+    non_interactive = bool(os.environ.get("PUBLISH_YES")) or not sys.stdin.isatty()
+    while True:
+        if _check_and_fix_intro(version) == "ok":
+            return True
+        if non_interactive:
+            warn("CHANGELOG release intro missing; continuing (non-interactive).")
+            return True
+        action = _prompt_intro_missing()
+        if action == "ignore":
+            warn("Continuing without a release intro line.")
+            return True
+        if action == "abort":
+            fail("Release intro line required; aborting.")
+            return False
+        info("Re-reading CHANGELOG.md…")
+
+
 def _prompt_version(suggested: str, min_version: str) -> str | None:
     """Prompt user to accept suggested version or enter custom.
 
@@ -351,6 +488,7 @@ def validate_version_changelog() -> tuple[str, bool]:
     3. ONE prompt: user accepts or enters custom version (must be >= minimum)
     4. Check tag is available
     5. Stamp CHANGELOG
+    6. Verify the release intro line + log link (repoint main -> vX.Y.Z)
     """
     pkg_version = read_package_version()
     if pkg_version == "unknown":
@@ -382,6 +520,11 @@ def validate_version_changelog() -> tuple[str, bool]:
     # Only stamp changelog if this version doesn't already have an entry
     version_in_changelog = version in _get_changelog_versions()
     if not _maybe_stamp_changelog(version, is_republish, version_in_changelog):
+        return version, False
+
+    # The heading is now '## [version]'; require its intro line + log link and
+    # repoint the link (main -> vX.Y.Z) at the version being released.
+    if not _verify_release_intro(version):
         return version, False
 
     ok(f"Version {C.WHITE}{version}{C.RESET} validated")
