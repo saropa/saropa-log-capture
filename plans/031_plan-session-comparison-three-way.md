@@ -2,6 +2,8 @@
 
 **Feature:** Compare three sessions side by side (e.g. diff-style or aligned by time) to see what changed between runs.
 
+**Status (2026-06-10): MVP shipped** — the comparison engine + a "Compare 3 Logs" command + a Markdown triage report. The richer 3-column linked-scroll webview and timestamp alignment remain (see Finish Report).
+
 ---
 
 ## What exists
@@ -55,3 +57,29 @@
 ## Effort
 
 **7–10 days** for 3-way view with timestamp or line alignment and basic diff.
+
+---
+
+## Finish Report (2026-06-10) — 3-way comparison MVP (engine + command + report)
+
+This work will be reviewed by another AI.
+
+**Scope:** (B) VS Code extension (TypeScript) + package.json/NLS command. No Dart/Flutter.
+
+**What shipped (the plan's MVP: "align by content, simple diff, basic summary").** The existing 2-way comparison (`diff-engine.ts` + `session-comparison.ts` webview) is untouched; this adds a 3-way path end to end:
+- **`src/modules/compare/session-compare.ts`** — pure `compareThreeSessions(input)`: indexes each session's lines by a normalized key, buckets every distinct line by presence (`A`/`B`/`C`/`AB`/`AC`/`BC`/`ABC`), and computes the triage summary — **new errors in B vs baseline A**, **new errors in C vs A**, and **errors resolved** (baseline-A errors absent from both runs). Error detection is an injectable predicate (default regex) so the engine stays pure and the caller can pass the project classifier.
+- **`src/modules/misc/line-normalize.ts`** — extracted the line normalizer out of `diff-engine.ts` into a shared pure module so the 2-way and 3-way comparers normalize identically (a line judged equal by one is judged equal by the other) and the 3-way engine is host-free / unit-testable.
+- **`src/modules/compare/session-compare-markdown.ts`** — pure renderer: triage summary table first (new/resolved errors), then per-presence line buckets, each capped at 50 lines with an "… and N more" note so a huge log can't produce a multi-megabyte document.
+- **`saropaLogCapture.compareThreeSessions`** command ("Compare 3 Logs") — picks baseline + run B + run C via three exclusion-filtered Quick Picks (mirrors the 2-way picker), reads the files best-effort, runs the engine, and opens the report as a Markdown document with the preview shown.
+
+**Why a Markdown report, not the 3-column webview.** The plan estimates the full linked-scroll 3-column viewer at L effort; a Markdown document is the lightweight MVP surface (no webview, reuses VS Code's preview) that delivers the actual decision value — "did this run introduce errors / fix them?" — immediately. The richer viewer is the deliberate follow-up.
+
+**Files changed/created:**
+- New: `session-compare.ts`, `session-compare-markdown.ts`, `line-normalize.ts`, test `session-compare.test.ts`.
+- Modified: `diff-engine.ts` (use the shared normalizer; dropped its private copy + now-unused stripAnsi import), `commands-comparison.ts` (command + 3-session picker + report opener), `package.json` + `package.nls*.json` (×11) (command), `strings-a.ts` (picker prompts/titles/warning), `plans/reference/contributes-commands.md` (regenerated), `CHANGELOG.md`.
+
+**Tests:** `session-compare.test.js` → 10 passing (presence buckets, pairwise membership, timestamp-insensitive matching, new-errors-in-B/C, resolved errors, custom predicate, blank-line skip, plus Markdown report structure/deltas/empty-bucket). `diff-engine.test.js` → 4 passing (no regression from the normalizer move). `npm run check-types` clean; `npm run lint` no warnings on changed files; `npm run compile` passes all verify gates (NLS 11-locale aligned, command catalog matches, dist size OK).
+
+**Outstanding (plan stays active):** the 3-column **linked-scroll webview** with side-by-side columns and inline diff coloring; **timestamp alignment** (the engine currently aligns by content membership, not wall-clock); fuzzy content matching; and windowing/streaming for very large logs (the engine reads full files — fine for typical sessions, a concern at extreme sizes). On-device (F5) confirmation of the command + report is the user's check.
+
+**Finish report appended:** plans/031_plan-session-comparison-three-way.md
