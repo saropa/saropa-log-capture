@@ -6,7 +6,7 @@ import * as vscode from "vscode";
 import { t } from "../../l10n";
 import type { ViewerBroadcaster } from "../../ui/provider/viewer-broadcaster";
 import { showFilterSuggestionsQuickPick } from "../../ui/panels/filter-suggestions-ui";
-import { flushLearningBuffer, getLearningStore } from "./learning-runtime";
+import { flushLearningBuffer, getGlobalAggregateStore, getLearningStore } from "./learning-runtime";
 import { SuggestionEngine } from "./suggestion-engine";
 
 export async function maybeShowLearningSuggestionPrompt(broadcaster: ViewerBroadcaster): Promise<void> {
@@ -29,7 +29,7 @@ export async function maybeShowLearningSuggestionPrompt(broadcaster: ViewerBroad
     }
     // Flush only when we may prompt (avoids persisting batches on every cooldown check).
     await flushLearningBuffer();
-    const engine = new SuggestionEngine(store);
+    const engine = new SuggestionEngine(store, getGlobalAggregateStore());
     const pending = await engine.refreshAndListPending();
     const minC = cfg.get<number>("learning.minConfidence", 0.8);
     const good = pending.filter((s) => s.confidence >= minC);

@@ -166,4 +166,6 @@ export const stringsB: Record<string, string> = {
     'learning.clearConfirm': 'Clear all noise-learning data for this workspace (interactions and suggestions)?',
     'learning.clearConfirmYes': 'Clear',
     'learning.cleared': 'Noise-learning data cleared for this workspace.',
+    'learning.clearGlobalConfirm': 'Clear all cross-workspace noise patterns shared on this machine? Other workspaces will stop receiving them as suggestions.',
+    'learning.globalCleared': 'Cross-workspace noise patterns cleared.',
 };

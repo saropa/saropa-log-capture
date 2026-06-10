@@ -9,6 +9,7 @@ import * as vscode from "vscode";
 import { t } from "../../l10n";
 import type { RuleSuggestion } from "../../modules/learning/suggestion-engine";
 import { LearningStore } from "../../modules/learning/learning-store";
+import { promoteAcceptedSuggestion } from "../../modules/learning/learning-runtime";
 
 export async function showFilterSuggestionsQuickPick(
     suggestions: readonly RuleSuggestion[],
@@ -53,6 +54,9 @@ export async function showFilterSuggestionsQuickPick(
         }
         applyExclusionPatterns(next);
         await store.setSuggestionStatus(picked.sid, "accepted");
+        // Plan 053-D: an accepted framework-class pattern may be promoted to cross-workspace
+        // storage (no-op unless the user opted in and the deny-list passes).
+        await promoteAcceptedSuggestion(picked.sid);
         void vscode.window.showInformationMessage(t("learning.accepted", picked.pattern));
     } else if (action === t("learning.reject")) {
         await store.setSuggestionStatus(picked.sid, "rejected");

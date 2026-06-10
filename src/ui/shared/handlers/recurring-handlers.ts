@@ -21,7 +21,7 @@ import type { SessionMeta } from '../../../modules/session/session-metadata';
 import { enrichSignalsWithLintContext } from '../../../modules/diagnostics/signal-lint-enricher';
 import { enrichSignalsWithDaContext } from '../../../modules/diagnostics/signal-da-enricher';
 import { buildRegressionSignalEntries, detectRegressions } from '../../../modules/signals/regression-detector';
-import { getLearningStore } from '../../../modules/learning/learning-runtime';
+import { getLearningStore, promoteAcceptedSuggestion } from '../../../modules/learning/learning-runtime';
 import { SuggestionEngine, type RuleSuggestion } from '../../../modules/learning/suggestion-engine';
 import type { PostFn } from './crashlytics-handlers';
 
@@ -169,6 +169,8 @@ export async function handleAcceptFilterSuggestion(id: string, pattern: string, 
     }
     const store = getLearningStore();
     if (store) { await store.setSuggestionStatus(id, 'accepted'); }
+    // Plan 053-D: promote to cross-workspace storage when eligible (no-op unless opted in).
+    await promoteAcceptedSuggestion(id);
     await handleSignalDataRequest(post, currentFileUri);
 }
 
