@@ -6,12 +6,15 @@ All prerequisites are blocking — the pipeline halts on the first failure
 so the user gets a clear message about what to install.
 """
 
+import json
+import os
+import re
 import shutil
 import subprocess
 import sys
 
 from modules.publish.constants import C, PROJECT_ROOT
-from modules.publish.display import fail, info, ok, warn
+from modules.publish.display import fail, fix, info, ok, prompt_fix_action, warn
 from modules.publish.utils import get_ovsx_pat, run
 
 
@@ -160,3 +163,154 @@ def check_ovsx_token() -> bool:
     info(f"  Set in shell, or add to {C.WHITE}.env{C.RESET}: {C.YELLOW}OVSX_PAT=your-token{C.RESET}")
     info(f"  Token: {C.WHITE}https://open-vsx.org/user-settings/tokens{C.RESET}")
     return True
+
+
+# Leading range operators in an npm version spec ("^1.120.0", ">=1.105.0").
+# Stripped so the bare numeric version can be parsed for comparison.
+_RANGE_PREFIX_RE = re.compile(r"^[\^~>=<\s]*")
+
+_PKG_PATH = os.path.join(PROJECT_ROOT, "package.json")
+
+
+def _range_version(spec: str) -> tuple[int, ...] | None:
+    """Parse the numeric version out of an npm range spec like '^1.120.0'.
+
+    Missing minor/patch components default to 0 so two- and three-part specs
+    (e.g. '^1.120' and '^1.120.0') compare correctly.
+    """
+    cleaned = _RANGE_PREFIX_RE.sub("", spec.strip())
+    m = re.match(r"(\d+)(?:\.(\d+))?(?:\.(\d+))?", cleaned)
+    if not m:
+        return None
+    return tuple(int(g) for g in m.groups(default="0"))
+
+
+def _types_vscode_spec(data: dict) -> str | None:
+    """Return the declared @types/vscode range from package.json, or None."""
+    # vsce reads the DECLARED range (devDependencies, then dependencies),
+    # not what is installed in node_modules, so we read it the same way.
+    for section in ("devDependencies", "dependencies"):
+        deps = data.get(section) or {}
+        if "@types/vscode" in deps:
+            return str(deps["@types/vscode"])
+    return None
+
+
+def _align_types_to_engine(engine_spec: str) -> bool:
+    """Rewrite devDependencies['@types/vscode'] to the engines.vscode range.
+
+    Targeted regex (like _write_package_version in version.py) so key order and
+    formatting in package.json are untouched. Setting the @types range equal to
+    engines.vscode preserves the committed compatibility floor — the safe
+    direction, since raising the engine would silently drop users on older
+    VS Code builds.
+    """
+    try:
+        with open(_PKG_PATH, encoding="utf-8") as f:
+            content = f.read()
+    except OSError:
+        fail("Could not read package.json to align @types/vscode.")
+        return False
+
+    updated, count = re.subn(
+        r'("@types/vscode"\s*:\s*")([^"]+)(")',
+        rf"\g<1>{engine_spec}\3",
+        content,
+        count=1,
+    )
+    if count == 0:
+        fail("Could not find @types/vscode in package.json to align it.")
+        return False
+
+    try:
+        with open(_PKG_PATH, "w", encoding="utf-8") as f:
+            f.write(updated)
+    except OSError:
+        fail("Could not write package.json to align @types/vscode.")
+        return False
+    fix(f"package.json: @types/vscode -> {engine_spec} (matches engines.vscode)")
+    return True
+
+
+def _handle_manifest_mismatch(engine_spec: str, types_spec: str) -> str:
+    """Report the @types/vscode > engines.vscode mismatch; resolve via prompt.
+
+    Returns 'accept' (fix applied — caller re-checks), 'retry', 'ignore', or
+    'exit'. Non-interactive runs (CI / --yes / piped stdin) cannot answer a
+    prompt, so they fail fast with the diagnosis rather than loop forever.
+    """
+    problem = (
+        f"@types/vscode {types_spec} is newer than engines.vscode {engine_spec}. "
+        "vsce refuses to package this and only checks it at the Package step — "
+        "after the version bump and CHANGELOG stamp are already written, which is "
+        "how the last run abandoned a half-finished release."
+    )
+    suggestions = [
+        f"Lower @types/vscode to the engine floor ({engine_spec.strip()}) — keeps "
+        "support for every VS Code at or above the committed floor (recommended).",
+        "Or raise engines.vscode to the @types/vscode version — only if you intend "
+        "to drop users on older VS Code builds.",
+    ]
+    accept_label = f"set @types/vscode to {engine_spec.strip()} to match engines.vscode"
+
+    non_interactive = bool(os.environ.get("PUBLISH_YES")) or not sys.stdin.isatty()
+    if non_interactive:
+        fail("Manifest mismatch: " + problem)
+        for line in suggestions:
+            info(line)
+        return "exit"
+
+    action = prompt_fix_action(problem, suggestions, accept_label)
+    if action != "accept":
+        return action
+    return "accept" if _align_types_to_engine(engine_spec) else "exit"
+
+
+def check_manifest_compat() -> bool:
+    """Gate the @types/vscode <-> engines.vscode contract before any mutation.
+
+    vsce will not package when the declared @types/vscode version is newer than
+    engines.vscode (e.g. types ^1.120.0 vs engine ^1.105.0), but it only enforces
+    this at the Package step — after Step 10 has bumped package.json and stamped
+    CHANGELOG. A failure there leaves a half-mutated, abandoned release (the 8.0.2
+    incident, 2026-06-10). Running the same static comparison here, in
+    prerequisites, means the pipeline self-heals or stops before anything is
+    written. Aligning @types/vscode down also makes ensure_dependencies (Step 6)
+    re-install, so the real compatibility question surfaces at Compile, not at
+    Package.
+    """
+    while True:
+        try:
+            with open(_PKG_PATH, encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            fail("Could not read package.json for the manifest compatibility check.")
+            return False
+
+        engine_spec = (data.get("engines") or {}).get("vscode")
+        types_spec = _types_vscode_spec(data)
+        # Nothing for vsce to reject when either side of the contract is absent.
+        if not engine_spec or not types_spec:
+            ok("Manifest compatibility — no @types/vscode / engines.vscode constraint")
+            return True
+
+        engine_v = _range_version(engine_spec)
+        types_v = _range_version(types_spec)
+        # Unparseable range — defer to vsce rather than block on a bad guess.
+        if engine_v is None or types_v is None:
+            ok("Manifest compatibility — version ranges not comparable")
+            return True
+
+        if types_v <= engine_v:
+            ok(f"Manifest compatibility — @types/vscode {types_spec} <= engines.vscode {engine_spec}")
+            return True
+
+        decision = _handle_manifest_mismatch(engine_spec, types_spec)
+        if decision == "ignore":
+            warn("Continuing despite @types/vscode > engines.vscode; vsce packaging may fail.")
+            return True
+        if decision == "exit":
+            fail("Manifest version mismatch; stopping before any release mutation.")
+            return False
+        # 'accept' (fix written) and 'retry' (manual edit) both re-read and re-check.
+        info("Re-reading package.json…")
