@@ -8,11 +8,11 @@ All notable changes to Saropa Log Capture will be documented in this file.
 
 **GitHub Source Code** - [github.com / saropa / saropa-log-capture](https://github.com/saropa/saropa-log-capture)
 
-For older versions (7.7.0 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
+For older versions (7.11.2 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
 
 <!-- MAINTENANCE NOTES -- IMPORTANT --
 
-    The format is based on [Keep a Changelog](https://keepachangelog.com/).
+    The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
     Each release (and [Unreleased]) opens with one plain-language line for humans—user-facing only, casual wording—then end it with:
     [log](https://github.com/saropa/saropa-log-capture/blob/vX.Y.Z/CHANGELOG.md)
@@ -22,6 +22,8 @@ For older versions (7.7.0 and prior), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
     **Published version**: See field "version": "x.y.z" in [package.json](./package.json)
 
+    NOTE: try to keep this file to approx 500 lines
+    
 cspell:disable
 -->
 
@@ -43,6 +45,8 @@ The Flow Map can now show where you left the app for an external app or API, rig
 ### Changed
 
 - **Translation pipeline can now use offline NLLB-200-3.3B for higher-quality locale strings** — `translate_l10n.py` automatically prefers Meta's offline NLLB-200-3.3B model (via CTranslate2) over Google Translate when the model is cached, with Google as an automatic fallback and the rest of the pipeline (brand shielding, validation, bundle merge, audit) unchanged. The model is never auto-downloaded; enable it with `pip install ctranslate2 sentencepiece huggingface_hub` + a one-time `huggingface-cli download JustFrederik/nllb-200-3.3B-ct2-float16`, or set `SAROPA_SKIP_NLLB=1` to force Google. Build tooling only; no regenerated translations ship in this change. ([l10n_nllb_engine.py](scripts/modules/verify/l10n_nllb_engine.py), [l10n_translator.py](scripts/modules/verify/l10n_translator.py), [translate_l10n.py](scripts/translate_l10n.py))
+- **`translate_l10n.py` can now be cancelled gracefully — CTRL-C saves progress and resumes** — a multi-hour run no longer loses the locale in flight when interrupted. `translate_locale` moved its orphan-prune + bundle/provenance save into a `finally`, so `KeyboardInterrupt` (a `BaseException`, so the retry/apply `except Exception` blocks never swallow it) persists everything translated so far before propagating; `run_translate` catches it and prints `Cancelled — progress saved… Re-run to resume` instead of a traceback. Because a re-run keeps already-translated keys (`gaps` skips non-English values, `low_quality` skips `nllb`-provenance keys), cancellation is now a pause, not a loss. Build tooling only. ([l10n_translator.py](scripts/modules/verify/l10n_translator.py), [l10n_actions.py](scripts/modules/verify/l10n_actions.py))
+- **`translate_l10n.py` NLLB now runs on the GPU, shows a live progress bar, and no longer looks hung or crashed** — the engine now registers the pip-installed CUDA runtime DLL directories (`site-packages/nvidia/*/bin`) with the Windows loader via `os.add_dll_directory` before the device cascade. `ctranslate2` lazy-loads `cublas64_12.dll` at first inference but ships only cuDNN, so without this the CUDA device loaded yet the first translation failed and the run silently dropped to (much slower) CPU; cuBLAS comes from the already-present `nvidia-cublas-cu12` wheel, which Python 3.8+ never finds on `PATH` alone. Each locale's pass now renders a `\r` progress bar (`[####....] 42.0%  654/1558`) matching the audit coverage table, the one-time ~7 GB model load prints `[nllb] Loading NLLB-200-3.3B model (one-time, may take a minute)…` before the blocking load, and the device-cascade fallback line was reworded from `load failed` to `unavailable, trying next fallback` so a CUDA→CPU step no longer reads as a crash. Build tooling only. ([l10n_actions.py](scripts/modules/verify/l10n_actions.py), [l10n_nllb_engine.py](scripts/modules/verify/l10n_nllb_engine.py))
 - **`translate_l10n.py` is colorized and split into focused modules** — the translation CLI now prints colored output (green = complete, yellow = gap, red = missing/error, cyan = headers) reusing the shared `modules.publish.constants` palette, and the ~300-line monolith was broken into `l10n_console.py` (color helpers), `l10n_audit_display.py` (status/coverage/gap rendering), `l10n_actions.py` (sync/translate/report), and `l10n_cli.py` (menu + `--run-mode`), leaving `translate_l10n.py` a thin launcher. Behavior is unchanged; build tooling only. ([l10n_console.py](scripts/modules/verify/l10n_console.py), [l10n_audit_display.py](scripts/modules/verify/l10n_audit_display.py), [l10n_actions.py](scripts/modules/verify/l10n_actions.py), [l10n_cli.py](scripts/modules/verify/l10n_cli.py), [translate_l10n.py](scripts/translate_l10n.py))
 - **Quieter test runs — `min` reporter instead of the full per-test list** — `npm run test` no longer floods the terminal with hundreds of passing `✔` lines; the Mocha reporter is set to `min`, which prints only the run summary and any failure details (with full stack traces). Test tooling only; no shipped behavior change. ([.vscode-test.mjs](.vscode-test.mjs))
 - **Test fix: session-manager mock gained the `fileUri` it now requires** — the `SessionManagerImpl` "capture all output" test mocked a session without a `fileUri`, but `broadcastLine` started reading `session.fileUri.fsPath` in b916c032 (per-file letter codes), so the test threw `Cannot read properties of undefined (reading 'fsPath')`. The mock now supplies a `fileUri`. Test only; no shipped behavior change. ([session-manager.test.ts](src/test/modules/session/session-manager.test.ts))
@@ -462,229 +466,4 @@ Right-click → **Columns** is now its own submenu where you can flip the per-li
 
 ---
 
-## [7.11.2]
-
-Expanded Dart stack frames line up with their header instead of drifting a column to the right, the noisy `<asynchronous suspension>` markers shrink to a tiny broken-chain glyph (with the original phrase still searchable), the severity gutter shows a clear break where adjacent rows have different colors, and gutter line numbers now match the raw file line — not the in-memory position that drifted with every folded stack. [log](https://github.com/saropa/saropa-log-capture/blob/v7.11.2/CHANGELOG.md)
-
-### Fixed
-- **Expanded stack frames now line up with the header** — Dart's `StackTrace.toString()` prefixes every continuation frame with six spaces (`      #2  Caller …`), which combined with the viewer's own `.stack-frames .line` padding shifted `#2`, `#3`, … further right than `#1` on the header line. Expanded traces read as if the frames had jumped a column. `tryIngestStackLine` now strips leading whitespace from the frame `html` so the viewer's CSS owns the indent. The regex preserves any leading ANSI dim `<span>` wrapper so framework frames stay dimmed.
-- **`<asynchronous suspension>` markers render as a compact broken-chain glyph** — Dart emits one suspension marker between nearly every async frame, so a typical expanded Drift trace was dominated by ~25-char `<asynchronous suspension>` lines and the actual frames were hard to find. Expanded gap markers now show a small `⛓️‍💥` glyph with a hover tooltip explaining what an async suspension is. The original phrase is preserved on the line's `rawText` so search ("asynchronous suspension") still hits the row.
-- **Severity gutter break at color transitions reads as a break** — the level-mismatch logic in the connector loop correctly stops stamping `bar-up`/`bar-down` when adjacent dots have different levels, leaving an empty row's worth of gutter between them. But the stripe was painted at 45% opacity, faint enough that the 1-row empty gap blended into a continuous-looking faint line and users perceived the gutter as "joining between colors." Bumped to 70% — the stripe is vivid enough now that its absence at a chain boundary is unmistakably empty space. Same-color chains still connect.
-- **Gutter line numbers now match the raw file** — the displayed counter showed the position in the in-memory `allLines` array (which counts hidden stack frames, folded async-gap markers, and synthetic repeat chips), so for the contacts sample log the gutter "537" mapped to file line 583 and drifted further with every stack trace. Plumbed a `sourceLineNo` field through `PendingLine` from the parser (offset by `findHeaderEnd` so the number references the user's raw file, not the post-header content slice), stamped it onto every item a single `addToData` call pushes (handles synthetic chips and stack-frame folds), and updated `getDecorationPrefix` to prefer it over `idx + 1`. Multi-part sessions fall back to the in-memory ordinal because a single offset cannot represent concatenated source files. Test: `viewer-file-loader.test.ts` (3 cases for offset and marker behavior).
-
-### Tests
-- **Regression coverage for unwrapped Dart stacks (bug_001)** — the contacts project's `debug()` helper stopped passing `stackTrace:` to `dart:developer.log()` and now embeds the trace as plain `#N` lines in the message body, killing the `_StringStackTrace (…)` wrapper VS Code's debug console rendered. Production already grouped these correctly via `isStackFrameText`'s `^#\d+\s` rule, but the test suite was written entirely against the wrapped fixture. Added `viewer-stack-unwrapped-dart.test.ts` to pin: three unwrapped `#N` frames collapse to one stack-header, no orphan `)` row appears, and an async-gap mid-trace still folds into the group. Also added a `source-linker` test for the workspace-relative `./lib/foo.dart:42:9` shape contacts now emits, so a future regex tightening can't silently break click-to-source. The wrapper-compensation code (`isTraceTail`) is intentionally kept — other Dart projects still emit the wrapped form. No runtime/user-facing change.
-
----
-
-## [7.11.1]
-
-Stack traces, severity gutters, and the session panel all line up where they should now — long logcat tags get trimmed instead of overlapping the message, the session panel shows your most recent files first and stays open after you pick one, error pills moved into their own gutter column so they stop pushing the log text sideways, and loaded log files with leading timestamps (ISO, syslog, epoch, and more) are recognized and stripped from the message. [log](https://github.com/saropa/saropa-log-capture/blob/v7.11.1/CHANGELOG.md)
-
-### Fixed
-- **Test pinning a removed ANSI-foreground span no longer fails CI** — `viewer-broadcaster-live-line.test.ts` asserted that processing `\x1b[31m` (foreground red) produced a `color:` style, but commit `156aab44` deliberately stopped rendering ANSI foreground colors so they cannot disagree with the level-* palette. The test was orphaned: a green `npm test` would never produce a `color:` span, so the assertion could never pass. Swapped to background SGR 41 (still rendered) and added an `\x1b`-absence assertion that exercises the live conversion path. No runtime/user-facing change.
-- **Stack-trace headers now align with the message column** — a `_StringStackTrace (#1 …)` header carries no decoration prefix, so it sat at the bare `.stack-header` indent (16px) while every decorated log line starts at the much larger `--deco-prefix-width-em` column. The header jutted far out to the left of the message text and read as corrupted, especially where it wrapped. Stack headers now reserve the same left padding as decorated lines (the `line-deco-spacer-only` affordance already used by repeat chips, gated on decorations being on), so the header's chevron and text land in the content column with its frames.
-- **Severity gutter connector no longer runs through unrelated content** — `findNextDotSibling` skipped non-leveled content rows when searching for the next dot, so a connector chain could reach *over* a stack frame or plain output line and stamp `bar-down`/`bar-up` stubs onto same-level dots beyond it — the gutter line appeared to run through content (and across changing colors) it had nothing to do with. It now returns the next real (non-blank, non-divider) row regardless of level; a non-leveled row yields `null`, the same-level check fails, and the chain breaks cleanly at that row. Blank lines and `.viewer-divider` control rows are still skipped so same-level dots pair across genuine gaps. This completes the intent commit `11cb4ca7` documented but never applied to the function.
-- **The `)` closing a Dart `_StringStackTrace` no longer renders as a junk line** — Dart's `log(…, stackTrace:)` prints the trace as an object dump that ends with a bare `)` on its own line. That `)` is not a stack frame or async-gap marker, so it failed the stack-frame test, closed the active group, and rendered as a stray `)` row after every trace. It now folds into the open stack group as an `fw=true` continuation frame (same treatment as `<asynchronous suspension>`): hidden while the header is collapsed or in preview, revealed only on full expand. An orphan `)` with no active group still renders as a normal line, and it is excluded from the header's frame count.
-- **Long logcat tags no longer overlap the message text** — the type/tag column (`flutter`, `MediaSessionCompat`, `WindowExtensionsImpl`) is a fixed `7em` reservation, but a tag wider than that had no clip and spilled straight over the start of the message (`MediaSessionComCouldn't find…`). The tag is now an inline-block capped at `7em` with `overflow: hidden` and an ellipsis, so it stays inside its column; the full tag remains available on the hover tooltip.
-- **Session panel streaming preview now shows recent files first** — the panel's streaming scan walked report directories in the order the filesystem returned them (ascending), so it shimmered through the oldest date folders (`2026.04.13/…`) before reaching the recent ones (`2026.05.14/…`) that the user almost always wants. The scan now visits date-stamped folders and files newest-first (reverse-alphabetical, which for date stamps is reverse-chronological), so the first shimmers fill in with the most relevant files. The final tree order is still mtime-sorted — only the order shimmers appear during the scan changed.
-- **Session panel no longer collapses the instant you open a file** — selecting a file rebuilt the list DOM, which detached the clicked node; the click then bubbled to the outside-click handler, whose `panel.contains(node)` test failed on the detached node and closed the panel immediately. The click no longer bubbles past the list, and the panel now stays open for a few seconds after a selection so picking another file to view doesn't require reopening it. Each selection resets that countdown; a manual close cancels it.
-- **Session panel resize no longer jumps sideways when grabbed** — the resize drag set the slot width from the absolute mouse X, which is not the slot's current width (it is off by the icon-bar width and any left offset), so the panel snapped sideways the moment the handle was grabbed. The drag now tracks a delta from the start position, so the first move is a no-op and the panel resizes smoothly from where it was.
-- **Async-gap markers no longer shatter Dart stack traces** — `<asynchronous suspension>` lines failed the stack-frame test, so each one closed the active stack group; a typical Drift async trace was split into ~15 separate one-frame groups instead of one collapsible block. They now fold into the enclosing stack group as continuation frames — hidden while the header is collapsed or in preview, revealed on full expand so await boundaries stay inspectable. An orphan gap with no active group still renders as a normal line. Stack-line ingestion was extracted from `addToData` into `viewer-data-add-stack-ingest.ts` to stay within the file-size limit.
-- **Severity color now always matches the level filter** — a line painted by source ANSI foreground color could read as an error while being classified `info`, so it never appeared under the matching level toggle (and the toggle's count could read zero on a log full of errors). ANSI foreground color is no longer rendered at all — severity color is owned entirely by the line's classified level, so the on-row color and the level filter can never disagree. ANSI background, bold, dim, italic, and underline are still honored. The error classifier was also tightened: a thrown exception printed in call form (`PermissionDeniedException (no OS grant on file)`) and structural failure phrasing (`could not decode …`, `unable to …`, `failed to …`) are now classified instead of silently falling through to `info`.
-- **Audit/report `file:line` lists no longer collapse under bogus stack headers** — the generic indented stack-frame rule matched any `  file.ext:line` token, so an audit/analyzer report line like `  foo_utils.dart:11  SomeMethod` (a `file:line` followed by a prose description) was misread as a stack frame and whole report sections were swallowed into one fake collapsed stack block. The rule now requires the line number to be followed by a column, a frame suffix (` +0x…` Go offset, ` (`), a closing bracket, or end-of-line — so real frames (including Go tracebacks) still match while prose lists do not.
-- **Error-classification markers no longer shift the line text** — the bug, transient, and ANR badges rendered as inline `🐛 BUG` / `⚡ TRANSIENT` / `⏱ ANR` pills, so every classified line's text was pushed right and broke alignment with the surrounding lines. All three now render as a single emoji in their own absolutely-positioned gutter column — the same treatment `critical` already had — so the log text stays put. The full label is in the hover tooltip and the analysis popover.
-- **Decoration prefix column now sizes to the columns actually in use** — the prefix-column width was a static worst-case that always reserved space for the timestamp, PID/TID, and tag columns even when only the line-number counter was shown, leaving a large empty gap between the severity bar and the message text — and that gap got dramatically worse on files that carry none of that data (a markdown or lint-report file has no timestamps, PIDs, or tags at all). The width is now computed from the parts that will *actually render*: a column is reserved only when its toggle is on **and** the loaded log actually contains that data. Each non-rendering part contributes zero, so the gap shrinks to exactly what is shown. The prefix span is pinned to that width (`display: inline-block`) so the message text starts at the same x on every decorated line; the existing `padding-left` / `text-indent` model is otherwise unchanged, so wrapped SQL and error lines still align under the message column.
-- **Leading timestamps in loaded log files are now detected across many formats** — files whose lines are prefixed with a timestamp (`2026-05-14T11:50:51.135Z  [CACHE]  HIT  …`, as produced by report tools) had no matching parse rule, so the whole line — timestamp included — fell through to the raw fallback: the timestamp showed inline in the message text and the line carried no timestamp at all (empty time decoration column, no chronological ordering). The file loader now detects a leading timestamp in any of these forms — ISO-8601 (`…T…Z` / `±HH:MM`), space-separated date+time (`YYYY-MM-DD HH:MM:SS.mmm`), clock-time-only (`HH:MM:SS.mmm`), syslog (`Mon DD HH:MM:SS`), bracketed (`[…]`), and Unix epoch (10/13-digit) — parses it into the line's timestamp, and strips it from the message so it shows in the time column instead. The detector runs after the explicit `[bracket]` formats so a bracketed category is never mis-read, and every candidate is validated before it is committed so prose is never mis-stripped. The same detection now also strips the timestamp from external sidecar lines (previously it was parsed but left inline in the text).
-
----
-
-## [7.11.0]
-
-Signals get a lot smarter — the panel now learns from the levels you switch off, flags brand-new crash types and resolved ones across recent sessions, lets you mute a signal with a reason, and gains three new detectors (severity escalation, silence-then-burst, and frame-budget clusters). The Signals panel adds a time-window filter, inline evidence previews under each row, and a pulse highlight when you jump to a line. Two new one-click bug-report formats land too: GitHub Issue Markdown and a compact handoff bundle for chat. [log](https://github.com/saropa/saropa-log-capture/blob/v7.11.0/CHANGELOG.md)
-
-### Added
-- **Noise-learning Phase 4 — filter-out emission + Insights panel suggestions section** — Two coordinated additions plan 053 promised:
-  - **`filter-out` emission wired (053-B)** — Previously the `'filter-out'` `InteractionType` enum value had no emitter site. Now every time the user disables a severity level (single toggle, Select None, or Solo-Level), the Signals viewer emits up to 50 `filter-out` interactions for the lines that just became hidden (per-toggle cap, index-based dedupe). The noise-learning extractor was already prepared to consume this type — it just had no source until now.
-  - **Filter-suggestions section in the Insights panel (053-A)** — A new collapsible block inside "Across your logs" surfaces pending noise-learning suggestions with Accept and Reject buttons inline. Section self-hides when no pending suggestions exist (no empty-header noise). Accept updates `saropaLogCapture.exclusions` and marks the suggestion accepted; Reject only marks rejected. The existing QuickPick command and notification entry points remain — this is an always-visible *additional* surface, not a replacement.
-- **Cross-session regression detector + recovery signal** — Two new entries surface at the top of "Signals in this log" when the open session is compared against the previous 10 sessions.
-  - **🆕 New error type (F7)** — error fingerprint present in the current session but absent from the lookback window. High severity. Surfaces as "you just introduced a new crash" — almost always either a real regression or a newly-reachable code path.
-  - **✅ Resolved (F8)** — error fingerprint present in past sessions but absent from the current one. Low severity (positive signal, deliberately doesn't crowd out actionable problems). Includes "last seen N sessions ago" so the user knows how recent the fix-or-disappearance was. This is the first **positive** signal in the panel — everything else surfaces problems.
-  - Both share storage and queries — same set-difference both ways against persisted error fingerprints (`SessionMeta.fingerprints`). Each side caps at 5 entries to keep the panel scannable.
-- **Mute signal with reason** — Right-clicking the "Mute" triage action on an error/warning signal now prompts for a free-text reason (≤80 chars, optional). Pressing OK with a reason mutes the signal AND feeds the reason as a labeled `add-exclusion` interaction into the already-shipped noise-learning system (`src/modules/learning/`); pressing OK with no reason is the existing anonymous mute; pressing Escape cancels the mute entirely (no partial state). The signal label is sent alongside the reason so the pattern extractor has both the signal content and the user's framing of why it's noise.
-- **Two new bug-report variants for fast sharing** — Both reuse the same data-collection pipeline as the full report, but format the output differently and send it to the clipboard instead of writing a file.
-  - **`Saropa Log Capture: Copy GitHub Issue Markdown`** (E3) — Section ordering and headings match GitHub's default issue template (Summary / Steps to Reproduce / Expected / Actual / Logs / Environment), so paste lands in the right slots. Full output goes inside a `<details>` block which GitHub renders collapsed.
-  - **`Saropa Log Capture: Copy Compact Handoff Bundle`** (E4) — Three-section markdown subset (~30 lines target): What happened / Where / What to look at next. Includes the last 12 raw log lines. Designed for paste into a Slack/Discord/Teams "can you look at this?" message without scrolling.
-- **Signals panel: time-window filter, inline evidence preview, scroll-lock pulse** — three UX additions to the "Signals in this log" section. Each ships on data already present in the webview, no new collector or extension-host plumbing.
-  - **Time-window filter (Fu7)** — Four chips above "Signals in this log": All, Last 5s, Last 30s, Last 5min. Reference time is the latest log line's timestamp in the current session, not wall-clock, so the filter works for both live and replay viewing. Signals lacking a timestamp are hidden under any active window. Cross-session "All signals" further down the panel is intentionally not filtered (no meaningful single-session anchor across sessions).
-  - **Inline evidence preview (Fu3)** — Up to three supporting log lines render in a compact sub-block under each signal title, stripped of HTML and truncated at 90 chars. Removes the click-through to verify what the signal is pointing at. Lines with no `lineIndices` (e.g. ANR risk score signals) render without a preview, as expected.
-  - **Scroll-lock pulse (Fu2)** — Clicking a "signal-jumpable" row now applies a brief 900ms pulse highlight to lines within ±10 of the jump target, using the existing `--vscode-editor-findMatchHighlightBackground` color. Cue is transient: CSS keyframe returns to transparent at the end, no leftover visual debt.
-- **Three new signals on existing log data** — The Signals panel now surfaces three patterns that previously required reading the log line by line. Each runs as a one-pass webview scan and posts results to the host hypothesis builder so the existing UI renders them with no extra wiring. Settings unchanged; thresholds match the rationale in `plans/052_plan-semantic-timeline-capture-and-signal-expansion.md`.
-  - **Severity escalation chain (F10)** — When ≥2 warnings precede an error within 5s, the panel reports "Severity escalation: N warnings preceded the error within Xs". Evidence links to the error first, then the warnings in chronological order, so clicking the report goes straight to the failure.
-  - **Silence-then-burst (F9)** — Catches frozen-UI unwinds and watchdog events that are invisible to a regular scroll because the *gap* is the signal. Detects a ≥10s silence followed by ≥20 lines in <1s. Confidence promotes from medium → high when the silence reaches ≥30s (that range is hard to explain as user idle).
-  - **Frame-budget cluster (F14)** — Builds on the existing slow-operation detector (plan 048): a single 500ms op is forgivable, but ≥5 within 10s is jank visible to the user. Reuses `rchExtractDuration` from the general collector so the PERF regex doesn't get duplicated.
-
----
-
-## [7.10.0]
-
-Expanding "N × SQL repeated:" no longer overlaps the rows below, chip rows align to the same content column as decorated lines, the redundant `»` separator is gone from line decorations, and the **About Saropa** panel now renders the changelog as formatted markdown (headings, bullets, bold, italic, code, rules) with selectable text, plus a press-and-hold on the "Saropa Log Capture vX.Y.Z" title copies the title to the clipboard. [log](https://github.com/saropa/saropa-log-capture/blob/v7.10.0/CHANGELOG.md)
-
-### Added
-- **About panel: long-press title to copy "Saropa Log Capture vX.Y.Z"** — Press and hold the title row in the About Saropa panel for half a second to copy the full product name + version string to the clipboard; the existing copy toast confirms what landed. Useful for pasting into bug reports without retyping the version. Mouse and touch are both wired, and the row dims briefly during the press so the gesture is discoverable.
-- **About panel: changelog now renders as formatted markdown** — Recent changes used to show as a plain-text `<pre>` block; the panel now parses headings (`#` through `######`), `**bold**`, `*italic*`, `` `inline code` ``, `-`/`*` bullets, blockquotes, and `---` horizontal rules into styled HTML. Inline `[text](url)` links render as plain underlined text (the "Full changelog on Marketplace" link above remains the single authorized external nav from the panel). Raw HTML inside the changelog is escaped before formatting runs, so untrusted angle brackets can't inject markup.
-- **About panel: changelog text is now selectable** — The global `body { user-select: none }` rule (which confines native selection to the main `#viewport`) was suppressing drag-to-select inside the About panel. The changelog container and all its descendants now opt back in to `user-select: text` with a `cursor: text` affordance, so you can highlight a line and use the platform copy menu.
-
-### Fixed
-- **N+1 signal confidence badge was double-boxed** — The confidence label (LOW/MEDIUM/HIGH) on "Potential N+1 query" rows had both square brackets in the text and a CSS border on the `.n1-conf` span, producing a redundant double-box. Removed the brackets so only the styled border remains.
-- **SQL repeat drilldown no longer overlaps later rows** — Clicking "N × SQL repeated:" expanded an inline panel inside a `.line` element with a strict 1em CSS height; the block-level drilldown overflowed via `overflow: visible` and painted on top of the next several log rows. The row now grows to fit the panel via a new `.line.line-has-block` rule, and `estimateSqlRepeatDrilldownExtraHeight()` baseline jumped from 44 → 122px to match the actual rendered panel (container margins + two meta rows + snippet pre + variant title), so the virtual scroller's prefix sums no longer undercount.
-- **Chip rows align to the content column when decorations are on** — Repeat-notification and N+1 chips skipped the decoration prefix and rendered at the left edge of the viewer, breaking the tabular column that decorated lines establish. A new `.line.line-deco-spacer-only` class is applied to chip rows whenever decorations are globally on, so the chip label and any embedded drilldown panel sit at the same content column as message text on regular lines.
-
-### Changed
-- **Flutter exception banner: severity dots tucked into the red rail** — Inside a Flutter `══ Exception caught by …` block the per-line severity dot used to sit ~12px right of the banner's red left rail, so the rail and the dot column read as two competing left-side guides. Pulled the dot's `left` from `0.74em` to `0.15em` (and re-centered the `bar-up` / `bar-down` connector under it at `0.30em`) only for `.banner-group-*` rows, closing the gap to ~2-3px so the rail visually flows through the dots.
-- **Severity connector now breaks at real content rows** — The connector bar between two same-level dots used to color the gutter of EVERY intermediate row, including non-blank rows that lacked their own severity (stack frames, unleveled stdout, repeat-notification chips). A warning chain that crossed a stack frame painted a continuous yellow line right through that stack frame, falsely claiming it as part of the warning sequence. The bridge loop in `viewer-data-viewport.ts` now only paints across truly empty rows (`.line-blank` and `.viewer-divider`). When a real content row sits between two same-level dots the `bar-down` / `bar-up` stubs on the dots themselves still fire (so the chain reads as "almost connected") but the middle row's gutter is left untouched — producing the clean visual break the user expected when the line crossed color or content boundaries.
-- **Flutter banner body/footer rows: line number + timestamp hidden** — Inside a banner block, the same wall-clock timestamp repeats on every row (the whole RenderFlex dump emits in one frame) and the per-row counter on a 50-line block adds noise without information. The `.line-decoration` span on `.banner-group-mid` and `.banner-group-end` is now `visibility: hidden` — the span still occupies its full width (so the `.line:has(.line-decoration)` rule keeps the 14.25em padding-left + hanging-indent and message text stays column-aligned with the banner header) and the idx-based counter still advances, so Copy with decorations / Copy Error continue to produce correctly numbered output. Only the leading header row in each banner shows the visible counter + time.
-- **Decoration prefix drops the `»` chevron** — With the hanging-indent content column the separator was visually redundant; trailing whitespace alone now marks the column boundary. Copy output still emits `»` because plain-text paste has no columns to anchor against. The continuation badge splice now targets the trailing `&nbsp;&nbsp;</span>` inside `.line-decoration` instead of the old chevron sentinel.
-
----
-
-## [7.9.0]
-
-Navigator arrows now use proper VS Code icons and fade when the panel is in the background, signal reports get a two-column layout with collapsible sections and visual polish, and several rendering bugs are squashed. [log](https://github.com/saropa/saropa-log-capture/blob/v7.9.0/CHANGELOG.md)
-
-### Changed
-- **Navigator arrows use codicon chevrons** — Replaced Unicode block arrows (⬆/⬇) with `codicon-chevron-up` / `codicon-chevron-down` so the top/bottom jump buttons look like intentional UI, not stray lines.
-- **Navigator buttons dim when viewer is unfocused** — Jump-to-top and jump-to-bottom buttons now render at 50% opacity until the log viewer panel has focus, then raise to 85% (full on hover). Reduces visual noise when the panel is in the background.
-
-### Added
-- **Signal report two-column layout** — On wide monitors (900px+), the report splits into a primary column (overview, evidence, details, related) and a secondary column (signals, history, recommendations, ecosystem). Stacks to single-column on narrow panels.
-- **Signal report collapsible sections** — Every section is now a `<details>` toggle that can be collapsed/expanded. Collapse state persists across tab-group moves.
-- **Session start/end timestamps in overview** — The Session Overview now shows formatted start and end times (e.g. `2026-05-13 10:35:40`) alongside the existing duration and outcome fields.
-- **Signal report visual polish** — Subtle left-border accent colors per section category, confidence badge glow, hover lift on stat cards, styled evidence metadata, and shadow on evidence blocks.
-- **Signal report loading shimmer** — Loading placeholders now pulse with a shimmer animation so the report looks alive while sections populate, not frozen.
-- **Signal report toast notifications** — Copy Report and Save Report now show an in-panel toast (success/error) instead of the barely-visible status bar message.
-
-### Fixed
-- **Signal report lost content on tab move** — Moving the Signal Report panel to another editor group destroyed and recreated the webview, reverting all sections to loading placeholders. Sections are now persisted via `setState`/`getState` so content survives tab-group moves.
-- **Non-error stack traces no longer default to error-red** — Stack headers (e.g. Drift SQL interceptor traces) inherited the error foreground color as their CSS default, making database-level and info-level traces appear red regardless of their actual severity. The base `.stack-header` color is now neutral (`inherit`); error-red is applied only via an explicit `.level-error` rule.
-- **Keyword filter clicks broken on collapsible rows** — Clicking a metadata keyword (PID, TID, tag) inside a stack header toggled the collapse instead of activating the filter. The stack-header click handler was checked before the metadata handler, swallowing the event. Reordered so metadata clicks are handled first.
-- **1-frame stack headers showed a misleading collapse chevron** — Single-frame stacks (e.g. a lone `GeolocatorAndroid.getLastKnownPosition` trace) rendered a ▶ toggle with nothing to expand. Clicking changed internal state but had zero visual effect. The chevron and toggle are now omitted when `frameCount === 1`; the dedup badge `(xN)` still shows as information.
-- **Dedup-hidden stack groups reappeared after filter changes** — `finalizeStackGroup` hid duplicate stacks by setting `height = 0` directly, but `calcItemHeight` had no flag to check, so any `recalcHeights()` call (from toggling filters, expanding groups, etc.) would silently un-hide them. Hidden duplicates now carry `stackDedupHidden = true` so they persist through recalculation.
-- **N+1 signal confidence badge was double-boxed** — The confidence label (LOW/MEDIUM/HIGH) on N+1 query signals had both square brackets in the text and a CSS border, creating a redundant double-box. Removed the brackets so only the styled border remains.
-- **DB toggle left Drift stack traces visible** — Stack headers like `DriftDebugInterceptor._log` had no recognizable source tag, so they fell into the "other" bucket and stayed visible when the Database source tag was hidden. Stack headers now inherit `sourceTag` from the preceding log line when the frame text has no tag of its own.
-
-<details>
-<summary>Maintenance</summary>
-
-- **README conciseness overhaul** — Merged redundant Overview and intro sections into a single "Why Use This?" list. Replaced the detailed Features accordion with high-level category bullets. Moved the full settings tables to `docs/CONFIGURATION.md` (README now shows only the three key settings). Removed the Power Shortcuts and Key Commands tables (README links to `docs/walkthrough/keyboard-shortcuts.md` and keeps only the top 3 shortcuts). Condensed "Full Debug Console Capture" to a tip box, "Remote Development" to two sentences, and the Contributing section.
-- **README terminology updated to v7.x** — Replaced "Investigation" with "Collection", "Insights" with "Signals", and "Log Inputs" with "Log Sources" throughout the README per the terminology dictionary.
-- **README covers recent features** — Added bullets for structured file support (.md/.json/.csv/.html), floating search overlay, post-capture toasts, typography controls, and the Collections panel.
-</details>
-
----
-
-## [7.8.4]
-
-The keyword watch badge now resets when you look at the panel, so it only shows hits you haven't seen. [log](https://github.com/saropa/saropa-log-capture/blob/v7.8.4/CHANGELOG.md)
-
-### Fixed
-
-- **Watch badge now shows only unseen hits** — The keyword watch badge on the Saropa Log Capture tab previously showed a cumulative total that kept climbing and never meaningfully reset. Now when the panel gains focus, both the badge and the underlying watcher counts reset, so the badge only reflects hits since the user last looked.
-
----
-
-## [7.8.3]
-
-Post-capture toast gains Always Open and Don't Ask Again buttons, the l10n translation pipeline now auto-syncs and translates all 10 locale bundles with brand-name protection, and context menu items show keyboard shortcut hints. [log](https://github.com/saropa/saropa-log-capture/blob/v7.8.3/CHANGELOG.md)
-
-### Added
-
-- **End-of-capture toast: "Always Open" and "Don't Ask Again" buttons** — The post-capture notification now has four actions: Copy Log Path, Open Log, Always Open, and Don't Ask Again. "Always Open" persists the preference to auto-open future logs in the viewer without asking. "Don't Ask Again" suppresses the notification entirely. Both write to the new `afterCaptureAction` setting.
-- **`afterCaptureAction` setting** — Replaces the boolean `autoOpen` setting with a three-way enum: `"ask"` (show notification, default), `"openLog"` (auto-open in the viewer), `"nothing"` (suppress notification). Existing `autoOpen: true` is automatically migrated to `"openLog"`.
-
-<details>
-<summary>Maintenance</summary>
-
-- **Organized `scripts/modules/` into subfolders** — Split the flat `scripts/modules/` directory (35+ files) into six purpose-based subfolders: `publish/` (Python publish pipeline), `verify/` (CI verification), `generate/` (code/catalog generators), `test/` (test tooling), `build/` (bundle/clean), and `fix/` (fixers and diagnostics). Updated all Python imports, `package.json` script paths, runtime cross-references, and auto-generated doc headers.
-- **l10n translation pipeline** — Added `scripts/translate_l10n.py` to audit, sync, and translate l10n bundles. Audits English bundle against TS source strings, syncs missing/orphan keys, and translates all locale bundles via Google Translate (free tier, `deep-translator`). The publish pipeline (Step 9) now automatically syncs and translates instead of just warning. Brand names (Saropa, GitHub, Loki, etc.) are shielded from translation via placeholder substitution; existing mangled brand translations are automatically detected, reset, and retranslated. Writes timestamped audit reports and gap exports (CSV/JSON) to `reports/`.
-- **Publish script: push failure on remote changes** — When `git push` was rejected (non-fast-forward) in Step 11, the fallback `git pull --no-edit` used merge, which could conflict on files both sides touched (e.g. `package.json` version field after a prior publish). Switched to `git pull --rebase` so the release commit is replayed on top of remote changes. If the rebase itself conflicts, it aborts cleanly and tells the user to resolve manually.
-</details>
-
----
-
-## [7.8.2]
-
-Context menu gets positive toggle language, "View" prefixes for navigation actions, tooltips on every item, keyboard shortcut hints, and a renamed "Tall rows" option; icon bar is wider and the session panel shrinks narrower. [log](https://github.com/saropa/saropa-log-capture/blob/v7.8.2/CHANGELOG.md)
-
-### Changed
-
-- **Session panel minimum width reduced** — Lowered the session panel minimum width from 560px to 420px (25% narrower) so users with tight layouts can shrink the panel further via the resize handle. Default width unchanged.
-- **Context menu: positive toggle language** — The "Hide blank lines" toggle in the Hide submenu is now "Show blank lines" with inverted checkmark logic (checked = blank lines visible). Reduces confusion between one-shot hide actions and on/off toggles.
-- **Context menu: "View" for navigation actions** — Renamed "Show Context", "Show Integration Context", "Show Related Queries", and "Show code quality" to "View Context", "View Integration Context", "View Related Queries", and "View Code Quality". Reserves "Show" for toggle semantics only.
-- **Context menu tooltips** — Every context menu item now carries a `title` tooltip describing what it does: copy actions, search actions, hide actions, layout toggles, and all Actions submenu items.
-- **"Tall rows" label** — Renamed "Comfortable line height" to "Tall rows" in the Layout submenu. The tooltip explains the actual effect (1.2 → 2.0 line-height).
-- **Keyboard shortcut hints in context menus** — Menu items that have keyboard shortcuts now show a right-aligned dimmed hint (e.g. `W`, `Ctrl+C`, `Ctrl+Shift+Scroll`). Covers Copy, Select All, Pin, Bookmark, Word wrap, Visual spacing, Tall rows, Compress, and Show blank lines.
-
-### Fixed
-
-- **Icon bar too narrow** — Widened icon bar from 36px to 44px (closer to VS Code's native 48px activity bar) so icons have horizontal breathing room instead of looking crushed.
-- **Orphan separator in Copy & Export** — The horizontal rule between the per-line copy items (Copy Line, Copy Timestamp, etc.) and the "Copy All" group was missing `data-line-action`, so it stayed visible as a top-edge line when right-clicking empty space with no line targeted.
-
----
-
-## [7.8.1]
-
-Fixes icon bar layout when a horizontal scrollbar is present, a signal panel crash on the PERFORMANCE link, and adds line numbers to the Layout submenu. [log](https://github.com/saropa/saropa-log-capture/blob/v7.8.1/CHANGELOG.md)
-
-### Fixed
-
-- **Icon bar crushed when horizontal scrollbar visible** — Added `min-width` to the icon bar so Chromium's flex layout cannot compress it below its declared width when wide log lines trigger a horizontal scrollbar.
-- **Signal panel crash on PERFORMANCE link** — Removed stale calls to `renderRecurringInLog`, `renderErrorsInLog`, and `renderThisLogEmptyState` that were deleted in the signals consolidation refactor but left behind in `applyStateAB`, causing a `ReferenceError` when the panel rendered with an active log.
-
-### Changed
-
-- **Lighter severity gutter** — Severity dots reduced from `0.54em` to `0.44em` and connector stripes from `0.23em` to `0.14em` so the gutter reads as a subtle guide rather than competing with log text for attention.
-- **Layout submenu grouping** — Added horizontal separators in the right-click → Layout submenu to visually group related toggles: text display (Word wrap, Line numbers), time (Timestamp, Session elapsed), spacing (Visual spacing, Comfortable line height), and compression (consecutive / non-consecutive dupes).
-
-### Added
-
-- **Line numbers in Layout submenu** — The right-click → Layout submenu now includes a **Line numbers** toggle (checkmark mirrors the Options panel checkbox). Previously only accessible from the Options or Decorations panels.
-
-### Removed
-
-- **Scroll map & scrollbar submenu** — Removed the **Scroll map & scrollbar** submenu from the main right-click context menu. The same toggles remain accessible via right-click directly on the scroll map or native scrollbar.
-
-<details>
-<summary>Maintenance</summary>
-
-- **Report organizer script** — Added `reports/organize_reports.py` (shared across Saropa projects) and `.gitignore` exception so the script is version-controlled while report output remains ignored.
-</details>
-
----
-
-## [7.8.0]
-
-Right-click → Copy & Export → Copy Line now copies the line you actually right-clicked, even if there's a stale shift-click selection from earlier in the session, and every copy from the context menu shows an instant in-viewer toast (e.g. `Copied lines 116-225 (1,247 characters)`) so you can confirm what landed on the clipboard at a glance. [log](https://github.com/saropa/saropa-log-capture/blob/v7.8.0/CHANGELOG.md)
-
-### Fixed
-
-- **Severity gutter dot vs vertical connector** — The continuous left gutter stripe (`.bar-down` / `.bar-up` `::after`) used `opacity: 0.45`, which could make Chromium/WebKit paint the stripe on top of the severity dot where they overlap. The stripe now uses `color-mix` for the same translucency so the dot (`::before`, higher `z-index`) stays visually in front.
-- **Recent-error proximity band chaining** — The 2-second “recent error context” gutter/tint could chain forward indefinitely (each tinted line becoming the next anchor), so unrelated lines—including normal console output near startup—could stay error-colored. Proximity anchors now skip prior context rows and synthetic/stack-frame neighbors; callers require a primary `error` anchor, finite timestamps, and stack-headers inherit level from the line before a context row. Regression tests guard the embedded script strings.
-- **Row selection highlight vs injected dividers** — After a virtual-scroll pass, the blue shift-click / drag-select stripe was reapplied using **viewport child position** (`lastStart + i`) instead of each row’s `data-idx`. Injected `.viewer-divider` rows (hidden-line gaps from filters, peek groups, preview-trimmed stack frames, etc.) sit between real log lines, so indices drifted: the wrong rows picked up `.selected` and the line you were trying to work on no longer matched the stripe—making within-line text selection feel broken next to collapsed or folded ranges. The stripe now keys only on `data-idx`; dividers never receive `.selected`.
-- **Copy Line hijacked by stale shift-click selection** — Right-click → Copy & Export → **Copy Line** (and **Copy Line Decorated**) silently copied the previously shift-click-selected range whenever you right-clicked any other row, instead of the line you actually targeted. Multi-line clipboard output now triggers only when the right-click target row is **inside** the active shift-click range (`sel.multiLine`), so line 50 → Copy Line copies line 50 — not lines 5-10 from a selection you made earlier.
-
-### Changed
-
-- **Copy toast feedback** — Every Copy & Export action (`Copy`, `Copy Line`, `Copy Line Decorated`, `Copy Line Number`, `Copy Timestamp`) now flashes an in-viewer toast: `Copied line 178 (87 characters)`, `Copied lines 116-225 (1,247 characters)`, `Copied line number 178`, `Copied timestamp`. The toast is rendered on the webview side for instant feedback (no host round-trip), in addition to the existing status-bar message.
-
-- **DB timestamp burst framing** — Same-time-query bursts no longer render as one green slab after the last SELECT; the viewer adds **database-colored** top and bottom rails with the burst label twice, connects them with cyan left/right borders and a light tint on each included log line so the whole cluster reads as one framed block.
-
-### Added
-
-- **Accessibility: collapse divider captions** — Divider rows between filtered/peek/stack-preview collapsed ranges hide the redundant `─── N hidden lines · show ───` style pill **by default** (the gutter chevron and clickable row remain). Settings → search **Accessibility: show collapse divider captions** or set `saropaLogCapture.accessibility.showCollapseDividerLabels` to restore the pill.
-- **Copy Error / Copy Warning** — On error or warning lines, the main context menu (above **Copy & Export**) gains **Copy Error** or **Copy Warning** (`codicon-error` / `codicon-warning`). It copies plain text for the **full adjacent error/warning run** (until severity breaks), **Flutter `════ Exception caught by … ════` blocks** by `bannerGroupId` (full render-overflow / layout dumps, including long stdout bodies), continuation fragments (split long lines), and stack groups with the preceding message line when those touch that band.
-
-- **Copy DB cluster** — On any row that belongs to a **DB timestamp burst** framed block (cyan top/bottom rails and boxed SQL lines), the same menu gains **Copy DB cluster** (`codicon-database`). It copies plain text for the **whole burst** in order: both rail headings plus every clustered database line inside the frame. **Copy Error** / **Warning** and **Copy DB cluster** share one separator strip before **Copy & Export** when either applies; both commands now show the same multi-line copy toast (`Copied lines …`) as Copy Line ranges.
----
-
-For older versions (7.7.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
+For older versions (7.11.2 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
