@@ -41,7 +41,7 @@ Open plans currently in [plans/](plans/) that are not yet scored against the roa
 | SQL UX overhaul | Rework Drift SQL surfaces in the viewer — **shipped 2026-03-23** (verb chips + continuation collapse) | [043 (archived)](plans/history/2026.03/2026.03.23/043_plan-sql-ux-overhaul.md) |
 | Perf line signal detection | Detect performance-related signal lines | [048](plans/048_plan-perf-line-signal-detection.md) |
 | Recurring device-other demotion | Demote recurring noise from device-other tier | [050](plans/050_plan-warning-recurring-device-other-demotion.md) |
-| Structured file modes | Alternate viewing modes for structured log files | [051](plans/051_plan-structured-file-modes.md) |
+| Structured file modes | Alternate viewing modes for structured log files — **shipped 2026-04-18** | [051 (archived)](plans/history/2026.04/2026.04.18/051_plan-structured-file-modes.md) |
 | Semantic timeline capture | Capture and broaden signal expansion in the timeline | [052](plans/052_plan-semantic-timeline-capture-and-signal-expansion.md) |
 | Investigate missing debug console lines | Bug: lines dropped from debug console capture | [102](plans/102_investigate-missing-debug-console-lines.md) |
 | Pubspec vibrancy report hardening | Harden the pubspec vibrancy report path | [103](plans/103_plan-pubspec-vibrancy-report-hardening.md) |
