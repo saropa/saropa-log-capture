@@ -136,6 +136,31 @@ suite('Signal panel per-signal copy', () => {
 });
 
 /**
+ * Pins the Fu5 sort toggle (severity ↔ chronological) for "Signals in this log". Severity is the
+ * default (producer order, unchanged); time mode sorts a copy by representative timestamp so
+ * signals lacking a timestamp sink to the end and the default render is never reordered.
+ */
+suite('Signal panel Fu5 sort toggle', () => {
+    test('renderSignalsInThisLog sorts by time only in time mode, leaving severity untouched', () => {
+        const script = getSignalScriptPartB(90);
+        assert.ok(script.includes("signalsInLogSortMode === 'time'"), 'time sort is gated on the mode');
+        assert.ok(script.includes('signals.slice().sort('), 'time mode sorts a COPY, not the cached array');
+        assert.ok(script.includes('signalRepTs(a)') && script.includes('signalRepTs(b)'),
+            'time sort compares the representative timestamps');
+    });
+
+    test('part D wires the sort toggle button to flip the mode, label, and re-render', () => {
+        const script = getSignalScriptPartD();
+        assert.ok(script.includes("getElementById('signal-sort-toggle-btn')"), 'toggle button is wired');
+        assert.ok(script.includes("signalsInLogSortMode = (signalsInLogSortMode === 'time') ? 'severity' : 'time'"),
+            'clicking flips the sort mode');
+        assert.ok(script.includes("getAttribute('data-label-time')") && script.includes("getAttribute('data-label-severity')"),
+            'the button swaps between the two localized labels carried as data attributes');
+        assert.ok(script.includes('renderSignalsInThisLog()'), 'toggling re-renders the list');
+    });
+});
+
+/**
  * Pins the "click to see detail" affordance for summary signals (e.g. the Drift Advisor issues
  * classified signal) that carry a detail string but no lineIndices. Before this, a non-jumpable
  * in-log row had no click behavior and its detail was never shown — clicking did nothing. Such
