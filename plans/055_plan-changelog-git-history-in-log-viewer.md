@@ -22,7 +22,7 @@ This generalizes work already shipped for Crashlytics (plan 054 Stage 5c):
 changelog-since + related PRs/issues), and
 [analysis-project-insights.ts](../src/ui/analysis/analysis-project-insights.ts) (renderer).
 
-**Sibling plan:** [035 — Log diff from Git](035_plan-log-diff-from-git.md) compares a *session* to a
+**Sibling plan:** [035 — Log diff from Git](history/2026.06/2026.06.10/035_plan-log-diff-from-git.md) compares a *session* to a
 previous *commit*. This plan is complementary: it links *individual lines* and the *session's app version*
 to git history + the changelog. Keep them distinct; share the git plumbing where possible.
 
