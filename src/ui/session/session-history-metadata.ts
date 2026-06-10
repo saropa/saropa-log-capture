@@ -178,6 +178,9 @@ function applySidecar(
     if (sidecar.autoTags?.length) { result = { ...result, autoTags: sidecar.autoTags }; }
     if (sidecar.correlationTags?.length) { result = { ...result, correlationTags: sidecar.correlationTags }; }
     if (sidecar.trashed) { result = { ...result, trashed: true }; }
+    // Pin state: propagate the flag and the pin timestamp so the panel can lift pinned rows to the
+    // top. The header/counts on a pinned sidecar are already merged via the normal cache path above.
+    if (sidecar.pinned) { result = { ...result, pinned: true, pinnedAt: sidecar.pinnedAt }; }
     if (hasPerformanceData(sidecar)) { result = { ...result, hasPerformanceData: true }; }
     // Session-group propagation: groupId (shared across the group's members) and debugAdapterType
     // (set only on the DAP main log) drive tree coalescing and primary-member selection.

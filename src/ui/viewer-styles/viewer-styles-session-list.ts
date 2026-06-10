@@ -80,6 +80,15 @@ export function getSessionListStyles(): string {
 }
 .session-item-perf .codicon { font-size: 12px; }
 
+.session-item-loaded {
+    display: inline-flex;
+    margin-left: 4px;
+    vertical-align: middle;
+    color: var(--vscode-descriptionForeground);
+    font-size: 12px;
+}
+.session-item-loaded .codicon { font-size: 12px; }
+
 .session-item-meta {
     font-size: 10px;
     color: var(--vscode-descriptionForeground);

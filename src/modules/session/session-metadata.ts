@@ -70,6 +70,16 @@ export interface SessionMeta {
     debugTarget?: string;
     /** Hidden from the Logs tree; permanently deleted on "Empty Trash". */
     trashed?: boolean;
+    /**
+     * Pinned to the top of the Logs panel for quick access. When set, the pin's
+     * `parsedHeader` + severity counts are captured at pin time (see
+     * ui/session/session-pin.ts) so a pinned row always lists from cache with no
+     * file read — the explicit "fastest loading/listing" requirement.
+     */
+    pinned?: boolean;
+    /** Epoch ms the file was pinned. Drives newest-pin-first ordering within the
+     *  pinned section. Cleared on unpin. */
+    pinnedAt?: number;
     /** Integration provider payloads keyed by provider id (e.g. buildCi, windowsEvents). */
     integrations?: Record<string, unknown>;
     /** Drift `Sent` SQL fingerprint rollup (plan DB_10); validate `schemaVersion` on read. */
