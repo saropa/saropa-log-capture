@@ -40,8 +40,10 @@ export const stringsViewerC: Record<string, string> = {
     'viewer.about.copyHint': 'Press and hold to copy',
     'viewer.about.recentChanges': 'Recent changes',
     'viewer.about.fullChangelog': 'Full changelog on Marketplace',
+    'viewer.about.openChangelog': 'Open the changelog in the log viewer',
     'viewer.about.projects': 'Projects',
     'viewer.about.connect': 'Connect',
+    'viewer.about.debug': 'Debug — extension files & folders',
 
     // ── Crashlytics panel — host shell (panels/viewer-crashlytics-panel.ts) ─
     'viewer.crashlytics.region': 'Crashlytics',
