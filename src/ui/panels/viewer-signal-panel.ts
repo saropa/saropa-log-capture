@@ -69,6 +69,11 @@ export function getSignalPanelHtml(): string {
                         <button type="button" class="signal-tw-chip" data-tw="30000" aria-pressed="false">${t('signal.panel.tw.30s')}</button>
                         <button type="button" class="signal-tw-chip" data-tw="300000" aria-pressed="false">${t('signal.panel.tw.5min')}</button>
                     </div>
+                    <!-- Sort toggle (Fu5): severity (default) ↔ chronological. The severity order
+                         covers most triage; time order helps reconstruct "what fired when". -->
+                    <div class="signal-sort-toggle" role="group" aria-label="${t('signal.panel.sort.label')}">
+                        <button type="button" id="signal-sort-toggle-btn" class="signal-tw-chip" aria-pressed="false" title="${t('signal.panel.sort.toggleTitle')}" data-label-severity="${t('signal.panel.sort.bySeverity')}" data-label-time="${t('signal.panel.sort.byTime')}">${t('signal.panel.sort.bySeverity')}</button>
+                    </div>
                     <div id="signals-in-log-list" class="signal-hotfiles-list"></div>
                 </div>
             </div>
