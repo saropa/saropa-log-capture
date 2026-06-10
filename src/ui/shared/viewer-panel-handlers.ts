@@ -32,8 +32,12 @@ export {
     handlePerformanceRequest,
     handleIntegrationContextRequest,
     handleIntegrationContextDocument,
-    handleRelatedQueriesRequest,
 } from './handlers/context-handlers';
+
+export {
+    handleRelatedQueriesRequest,
+    handleRelatedRequestsRequest,
+} from './handlers/context-related-handlers';
 
 export { handleCrashlyticsDetail, openCrashFrame, handleCrashlyticsCreateIssue } from './handlers/crashlytics-detail-handler';
 
