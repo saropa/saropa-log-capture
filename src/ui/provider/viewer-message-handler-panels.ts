@@ -87,7 +87,7 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
         handleProjectStateRequest(ctx.post).catch(() => {});
         return true;
       case "requestAboutContent":
-        void loadAndPostAboutContent(ctx.context.extensionUri, ctx.extensionVersion, ctx.context.extension.id, ctx.post);
+        void loadAndPostAboutContent(ctx.context, ctx.extensionVersion, ctx.post);
         return true;
       case "resetAllSettings":
         void vscode.commands.executeCommand('saropaLogCapture.resetAllSettings');
