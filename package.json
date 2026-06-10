@@ -264,6 +264,11 @@
         "title": "%command.compareSessions.title%"
       },
       {
+        "command": "saropaLogCapture.compareThreeSessions",
+        "icon": "$(diff-multiple)",
+        "title": "%command.compareThreeSessions.title%"
+      },
+      {
         "command": "saropaLogCapture.markForComparison",
         "icon": "$(bookmark)",
         "title": "%command.markForComparison.title%"
