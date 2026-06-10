@@ -91,6 +91,37 @@ def _resolve_test_failure_action(args: argparse.Namespace) -> str:
     return "ask"
 
 
+def _prompt_on_l10n_gap() -> str:
+    """Ask the user how to proceed when the l10n audit finds translation gaps.
+
+    Publish never translates (an unattended NLLB/GPU job once locked the
+    machine), so the only paths forward are: re-run the audit after filling
+    gaps by hand with scripts/translate_l10n.py, ignore the gaps and continue
+    the release, or abort. Default (Enter) is retry.
+
+    Returns one of: 'retry', 'ignore', 'abort'.
+    """
+    print(f"\n  {C.YELLOW}l10n bundles have untranslated strings. Choose next action:{C.RESET}")
+    print("    [R]etry audit (after running scripts/translate_l10n.py by hand)")
+    print("    [I]gnore gaps and continue the release")
+    print("    [A]bort release")
+    try:
+        # Native input() (no readline — see the bootstrap note in publish.py).
+        raw = input("  Choice [r]: ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        # Non-interactive / piped stdin: ignore so CI neither hangs on input
+        # nor loops forever on retry. l10n coverage has always been non-fatal
+        # at publish time, so continuing preserves prior behavior.
+        print()
+        return "ignore"
+
+    if raw in ("i", "ignore"):
+        return "ignore"
+    if raw in ("a", "abort"):
+        return "abort"
+    return "retry"
+
+
 def run_prerequisites(
     args: argparse.Namespace,
     results: list[tuple[str, bool, float]],
@@ -189,9 +220,23 @@ def run_build_and_validate(
     heading("Step 9 · Quality Checks")
     if not run_step("File line limits", check_file_line_limits, results):
         return "", False
-    # l10n: sync English bundle + translate all locales. Non-fatal — partial
-    # coverage does not block the pipeline. Manual: python scripts/translate_l10n.py
-    run_step("l10n bundle alignment", check_l10n_bundles, results)
+    # l10n is AUDIT-ONLY here: publish never runs a translation pass (an
+    # unattended NLLB/GPU job once locked the machine mid-release).
+    # check_l10n_bundles re-syncs the English source and reports gaps; when any
+    # locale is still incomplete it returns False and we prompt the user.
+    # Fill gaps by hand with `python scripts/translate_l10n.py`.
+    while True:
+        if run_step("l10n bundle alignment", check_l10n_bundles, results):
+            break
+        action = _prompt_on_l10n_gap()
+        if action == "retry":
+            warn("Re-auditing l10n bundles…")
+            continue
+        if action == "ignore":
+            warn("Ignoring l10n gaps by user choice; continuing pipeline.")
+            break
+        warn("Aborting release due to l10n gaps by user choice.")
+        return "", False
 
     heading("Step 10 · Version & CHANGELOG")
     if getattr(args, "yes", False):
