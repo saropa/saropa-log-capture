@@ -164,4 +164,18 @@ export const stringsWebview: Record<string, string> = {
     'viewer.errorHover.introducedInCommit': 'Introduced in commit ',
     'viewer.errorHover.lastChangedInCommit': 'Last changed in commit ',
     'viewer.errorHover.fingerprintTitle': 'Fingerprint: {0}',
+
+    // ── Collections panel — webview runtime (viewer-collections-panel-script.ts) ──
+    'viewer.collections.empty': 'No collections yet.',
+    'viewer.collections.sourceOne': '{0} source',
+    'viewer.collections.sourceMany': '{0} sources',
+    'viewer.collections.justNow': 'just now',
+    'viewer.collections.minAgo': '{0} min ago',
+    'viewer.collections.hAgo': '{0}h ago',
+    'viewer.collections.daysAgo': '{0} days ago',
+    'viewer.collections.wAgo': '{0}w ago',
+    'viewer.collections.rename': 'Rename',
+    'viewer.collections.open': 'Open',
+    'viewer.collections.delete': 'Delete',
+    'viewer.collections.mergeError': 'Source and target must be different',
 };
