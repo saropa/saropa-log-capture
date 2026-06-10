@@ -419,4 +419,4 @@ state verified present and stable.
 **Verification:** `check-types` clean; `flow-map.test.js` **18 passing**; functional run confirms no
 `View` action, `[flowmap]`→dialog node with source, badges render, edge dwell labels present.
 **Not committed:** unrelated concurrent workstreams (session-list, loaded-files, name-filter,
-about, URL-open) and shared `CHANGELOG.md` / `strings-*.ts` / `doc/internal/*`.
+about, URL-open) and shared `CHANGELOG.md` / `strings-*.ts` / `plans/reference/*`.
