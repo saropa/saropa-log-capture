@@ -1,5 +1,9 @@
 # DB_16: DB Timestamp Burst Detector
 
+> **Status: Shipped 2026-04-12** (commit `b8873db9`). Archived 2026-06-10 during plan-backlog triage — the original "Solution"/"Files" sections below were the spec; the feature is fully implemented and wired.
+>
+> **Shipped surface:** `drift-db-timestamp-burst-detector.ts` (+ thresholds), the webview embed in `viewer-db-detector-timestamp-burst-embed.ts`, the `timestampBurstEnabled` config toggle, context menus (`viewer-context-menu-db-burst-range.ts`), l10n strings, and 12 passing unit tests in `drift-db-timestamp-burst-detector.test.ts`. The plan file's header had read "Not started" — that was stale.
+
 ## Problem
 
 Multiple database queries firing at the exact same millisecond timestamp is a code smell — it suggests missing caching, redundant lookups, or unnecessary parallel DB hits. The existing detectors don't catch this:

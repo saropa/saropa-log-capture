@@ -1,5 +1,7 @@
 # Plan: Bidirectional sync (reload/merge when log file is modified externally)
 
+> **Status: Core shipped 2026-03-01 (commit `ad370180`); archived 2026-06-10 via split.** The append-only live-tail half is implemented — `createTailWatcher` in [log-viewer-provider-load.ts](../../../../src/ui/provider/log-viewer-provider-load.ts) watches the open log file and appends new lines with a re-entrancy guard. The remaining scope (full reload on truncate/rewrite/delete, the reload prompt, and the `reloadOnExternalChange` / `askBeforeReload` settings) was extracted into the active plan **[039b — External-change full reload](../../../039b_plan-tail-watcher-full-reload.md)**. This file is the original combined design record.
+
 **Feature:** When the log file is modified on disk (e.g. by another process or tool), reload or merge the changes into the viewer so the user always sees up-to-date content.
 
 ---

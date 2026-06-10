@@ -1,5 +1,11 @@
 # 043 — SQL UX Overhaul: Command-Type Filters + Continuation Collapsing
 
+> **Status: Shipped (archived 2026-06-10).** Both parts are implemented:
+> - **Part A — verb-category chips** (SELECT / INSERT / UPDATE / DELETE / Transaction / Other SQL): `src/ui/viewer-stack-tags/viewer-sql-pattern-tags.ts` (shipped 2026-03-23, commit `c39eb8a5`), replacing the old fingerprint chip system.
+> - **Part B — continuation collapsing** (long SQL batches split across logcat lines collapse behind a `[+N lines]` badge): `src/ui/viewer/viewer-data-add-continuation.ts`.
+>
+> Archived during plan-backlog triage on 2026-06-10. The "Problem" spec below is the original design record.
+
 ## Problem
 
 1. **SQL pattern chips are useless.** The chips show truncated parameterized SQL (`SELECT * FROM ? WHERE ? = ? LIMIT ?...`). There are 13+ chips that all look similar. You can't read them, and even if you could, the parameterized shape isn't what you care about — you care about the *operation type*: SELECT, INSERT, UPDATE, DELETE, BEGIN, COMMIT.
