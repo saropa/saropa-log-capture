@@ -62,6 +62,11 @@ export const stringsA: Record<string, string> = {
     'msg.gitCompareBadRef': 'Could not resolve Git ref "{0}". Use a commit SHA, tag, or HEAD~1.',
     'msg.gitCompareNoBaseline': 'No saved log matches commit "{0}". Capture a session at that commit, or use "Compare Logs" to pick two manually.',
 
+    'action.reload': 'Reload',
+    'action.ignore': 'Ignore',
+    'msg.logChangedOnDisk': 'Log "{0}" was changed on disk. Reload to see the current content?',
+    'msg.logDeletedOnDisk': 'Log "{0}" was deleted on disk. Showing the last loaded snapshot.',
+
     'msg.gitignoreLogPrompt': "Saropa Log Capture saves logs to '{0}/'. Add it to .gitignore to prevent accidental commits?",
     'msg.gitignoreSaropaPrompt': "Saropa Log Capture stores indexes and caches in '.saropa/'. Add it to .gitignore?",
     'msg.failedUpdateGitignore': 'Failed to update .gitignore: {0}',
