@@ -23,6 +23,7 @@ from modules.publish.utils import (
 from modules.publish.checks_prereqs import (
     check_gh_cli,
     check_git,
+    check_manifest_compat,
     check_node,
     check_npm,
     check_ovsx_token,
@@ -106,6 +107,10 @@ def run_prerequisites(
         ("npm", check_npm),
         ("git", check_git),
         ("VS Code CLI", check_vscode_cli),
+        # Static manifest gate: catch the @types/vscode > engines.vscode
+        # mismatch vsce only reports at Package time, BEFORE Step 10 mutates
+        # package.json / CHANGELOG — so a late reject never abandons a release.
+        ("Manifest compat", check_manifest_compat),
     ]:
         if not run_step(name, fn, results):
             return False

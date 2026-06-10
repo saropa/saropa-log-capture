@@ -62,6 +62,49 @@ def ask_yn(question: str, default: bool = True) -> bool:
     return answer in ("y", "yes")
 
 
+def prompt_fix_action(
+    problem: str,
+    suggestions: list[str],
+    accept_label: str,
+) -> str:
+    """Show a detected problem + suggested fixes; ask how to proceed.
+
+    Returns one of: 'accept', 'retry', 'ignore', 'exit'.
+
+    Used by gating checks that detect a packaging blocker BEFORE any
+    irreversible step runs (version bump, CHANGELOG stamp, git push, publish),
+    so a late failure never abandons a half-mutated release. 'accept' applies
+    the recommended remedy; 'retry' re-checks after the user edits the file by
+    hand; 'ignore' proceeds unchanged (the same failure may resurface
+    downstream); 'exit' stops the pipeline with nothing mutated. Default
+    (bare Enter) is 'accept' since the recommended remedy is the safe one;
+    EOF / Ctrl+C maps to 'exit' so a non-answer never silently mutates.
+    """
+    print(f"\n  {C.RED}Problem:{C.RESET} {problem}")
+    if suggestions:
+        print(f"  {C.YELLOW}Suggested solutions:{C.RESET}")
+        for line in suggestions:
+            print(f"    - {line}")
+    print(f"    [A]ccept  — {accept_label}")
+    print("    [R]etry   — re-check after you edit the file yourself")
+    print("    [I]gnore  — continue anyway (the same failure may resurface)")
+    print("    [E]xit    — stop now (nothing has been changed yet)")
+    try:
+        # Native input() (no readline — see the bootstrap note in
+        # scripts/publish.py) keeps the choice marker on its own line.
+        raw = input("  Choice [a]: ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return "exit"
+    if raw in ("r", "retry"):
+        return "retry"
+    if raw in ("i", "ignore"):
+        return "ignore"
+    if raw in ("e", "exit", "q", "quit"):
+        return "exit"
+    return "accept"
+
+
 # cSpell:disable
 def show_logo(version: str) -> None:
     """Print the Saropa rainbow-gradient logo and script version."""
