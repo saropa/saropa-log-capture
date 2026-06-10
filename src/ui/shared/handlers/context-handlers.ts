@@ -111,8 +111,9 @@ function formatIntegrationEntry(key: string, value: unknown): string[] {
 
 /**
  * Get the center time for context filtering from session metadata.
+ * Exported for the related-popover handlers in `context-related-handlers.ts`.
  */
-function getSessionCenterTime(integrations: Record<string, unknown> | undefined): number {
+export function getSessionCenterTime(integrations: Record<string, unknown> | undefined): number {
     if (!integrations) { return 0; }
     for (const value of Object.values(integrations)) {
         const data = value as Record<string, unknown>;
@@ -251,46 +252,11 @@ export async function handleIntegrationContextRequest(
 }
 
 /**
- * Load database queries related to a specific log line and post them to the webview.
- * Uses time-window and optional request-ID correlation (same logic as the integration
- * context popover, but returns only database entries with no cap).
- */
-export async function handleRelatedQueriesRequest(
-    logUri: vscode.Uri | undefined,
-    lineIndex: number,
-    post: PostFn,
-    options?: { timestamp?: number; lineText?: string },
-): Promise<void> {
-    if (!logUri) {
-        post({ type: 'relatedQueriesData', error: t('msg.noIntegrationContext') });
-        return;
-    }
-    try {
-        const store = new SessionMetadataStore();
-        const meta = await store.loadMetadata(logUri);
-        const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
-        const windowMs = cfg.get<number>('contextWindowSeconds', 5) * 1000;
-        const centerTime = (options?.timestamp && options.timestamp > 0)
-            ? options.timestamp
-            : getSessionCenterTime(meta.integrations);
-        if (centerTime === 0) {
-            post({ type: 'relatedQueriesData', lineIndex, queries: [] });
-            return;
-        }
-        const requestId = extractRequestIdFromLine(options?.lineText, cfg);
-        const window: ContextWindow = { centerTime, windowMs, ...(requestId ? { requestId } : {}) };
-        const contextData = await loadContextData(logUri, window);
-        post({ type: 'relatedQueriesData', lineIndex, queries: contextData.database ?? [] });
-    } catch {
-        post({ type: 'relatedQueriesData', error: t('msg.noIntegrationContext') });
-    }
-}
-
-/**
  * Extract a request ID from a log line using configured requestIdPattern settings.
  * Tries database, HTTP, and browser patterns; returns first match or undefined.
+ * Exported for the related-popover handlers in `context-related-handlers.ts`.
  */
-function extractRequestIdFromLine(
+export function extractRequestIdFromLine(
     lineText: string | undefined,
     cfg: vscode.WorkspaceConfiguration,
 ): string | undefined {

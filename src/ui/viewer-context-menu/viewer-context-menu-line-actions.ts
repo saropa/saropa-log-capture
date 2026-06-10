@@ -237,6 +237,11 @@ function handleLineAction(action, lineIdx) {
             vscodeApi.postMessage({ type: 'showRelatedQueries', lineIndex: lineIdx, timestamp: rqTs, lineText: plainText });
             return true;
         }
+        case 'show-related-requests': {
+            var rrTs = lineData.ts || lineData.timestamp;
+            vscodeApi.postMessage({ type: 'showRelatedRequests', lineIndex: lineIdx, timestamp: rrTs, lineText: plainText });
+            return true;
+        }
         case 'show-code-quality': {
             if (typeof showPopoverToast === 'function') showPopoverToast('Loading code quality\u2026');
             vscodeApi.postMessage({ type: 'showCodeQualityForFrame', lineIndex: lineIdx, lineText: plainText });

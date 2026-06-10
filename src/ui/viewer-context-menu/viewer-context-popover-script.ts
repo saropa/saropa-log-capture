@@ -21,7 +21,7 @@
 
 import { getContextPopoverBrowserScript } from './viewer-context-popover-browser';
 import { getContextPopoverDbSignalScript } from './viewer-context-popover-db-signal';
-import { getContextPopoverDatabaseQueriesScript, getContextPopoverSecurityScript, getRelatedQueriesPopoverScript } from './viewer-context-popover-integration-sections';
+import { getContextPopoverDatabaseQueriesScript, getContextPopoverSecurityScript, getRelatedQueriesPopoverScript, getRelatedRequestsPopoverScript } from './viewer-context-popover-integration-sections';
 import { getContextPopoverSharedScript } from './viewer-context-popover-shared-script';
 import { getQualityPopoverScript } from './viewer-quality-popover-script';
 import { getGitHistoryPopoverScript } from './viewer-git-history-popover-script';
@@ -30,7 +30,7 @@ import { getGitHistoryPopoverScript } from './viewer-git-history-popover-script'
  * Returns the JavaScript code for the context popover in the webview.
  */
 export function getContextPopoverScript(): string {
-    return getContextPopoverBrowserScript() + getContextPopoverDbSignalScript() + getContextPopoverDatabaseQueriesScript() + getContextPopoverSecurityScript() + getRelatedQueriesPopoverScript() + (
+    return getContextPopoverBrowserScript() + getContextPopoverDbSignalScript() + getContextPopoverDatabaseQueriesScript() + getContextPopoverSecurityScript() + getRelatedQueriesPopoverScript() + getRelatedRequestsPopoverScript() + (
         /* javascript */ `
 var contextPopoverEl = null;
 var contextPopoverLineIdx = -1;
@@ -38,6 +38,7 @@ var contextPopoverLineIdx = -1;
 function showContextPopover(lineIdx, anchorX, anchorY, data) {
     closeContextPopover();
     closeRelatedQueriesPopover();
+    closeRelatedRequestsPopover();
     contextPopoverLineIdx = lineIdx;
 
     var popover = document.createElement('div');

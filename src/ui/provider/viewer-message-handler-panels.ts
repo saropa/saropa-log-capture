@@ -246,6 +246,17 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
           },
         ).catch(() => {});
         return true;
+      case "showRelatedRequests":
+        panelHandlers.handleRelatedRequestsRequest(
+          ctx.currentFileUri,
+          safeLineIndex(msg.lineIndex, 0),
+          ctx.post,
+          {
+            timestamp: msg.timestamp as number | undefined,
+            lineText: typeof msg.lineText === 'string' ? msg.lineText : undefined,
+          },
+        ).catch(() => {});
+        return true;
       default:
         return false;
     }
