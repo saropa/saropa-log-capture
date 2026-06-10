@@ -180,12 +180,12 @@ function renderItem(item, idx, prevVis) {
         }
         var aiCompress = '';
         if (item.compressDupCount > 1) { aiCompress = '<span class="compress-dup-badge" title="' + vt('viewer.deco.identicalLines', item.compressDupCount) + '">(×' + item.compressDupCount + ')</span> '; }
-        // Prefix chain parity. .ai-line rail draws via box-shadow:inset (viewer-styles-ai.ts) — out of flow, doesn't shift line-number column.
-        var _aiGap = (typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '', _aiDeco = (typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item, idx, item._hiddenAfter) : '', _aiElapsed = (typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '';
+        // Plan 055 Phase 2: AI rows join the gutter grid (.cols.log-cols) — getDecorationCells (clipping cells, same source as regular rows) + a min-width:0 .line-msg; rail is box-shadow:inset (out of flow).
+        var _aiGap = (typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '', _aiDeco = (typeof getDecorationCells === 'function') ? getDecorationCells(item, idx, item._hiddenAfter) : '', _aiElapsed = (typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '';
         // Severity classes parity with regular branch — AI rows now show gutter dot + tint when classifyLevel tagged them (prior AI branch silently suppressed both).
         var _aiBar = (typeof decoShowBar !== 'undefined' && decoShowBar && !item.isContext && item.level) ? ' level-bar-' + item.level : '';
         var _aiLvlCls = ((typeof lineColorsEnabled !== 'undefined' && lineColorsEnabled) && item.level && !item.isContext) ? ' level-' + item.level : '';
-        return _aiGap + '<div class="line ai-line ' + aiCat + matchCls + spacingCls + _aiBar + _aiLvlCls + '"' + idxAttr + '>' + _aiDeco + _aiElapsed + aiPrefix + aiCompress + aiBody + '</div>';
+        return _aiGap + '<div class="line ai-line cols log-cols ' + aiCat + matchCls + spacingCls + _aiBar + _aiLvlCls + '"' + idxAttr + '>' + _aiDeco + '<span class="line-msg">' + _aiElapsed + aiPrefix + aiCompress + aiBody + '</span></div>';
     }
     var cat = (item.category === 'stderr' && stderrTreatAsError) ? ' cat-stderr' : '';
     var lcOn = (typeof lineColorsEnabled !== 'undefined' && lineColorsEnabled);

@@ -354,3 +354,27 @@ overlap-by-design fragility, which this rewrite removes structurally.
 
 `No bug archive — task did not close a bugs/*.md file (plan-tracked work).`
 `Finish report appended: plans/055_plan-viewer-row-grid-rewrite.md`
+
+## Finish Report (2026-06-10) — Phase 2: AI rows migrated to the grid
+
+This work will be reviewed by another AI.
+
+**Scope:** (B) VS Code extension (TypeScript — webview render script + CSS + test). No Dart/Flutter, no docs-only. l10n SKIPPED [B-NOT-IN-SCOPE].
+
+**What shipped.** Phase 1 put regular log rows and single-frame stack headers on the overlap-proof gutter grid; AI rows, multi-frame stack headers, and chips stayed on the legacy `:not(.cols)` model during the transition. This pass migrates the **AI row path** — one render path at a time, as the plan's Phase-2 rollout prescribes:
+- The `.ai-line` branch in `renderItem` now emits `class="line ai-line cols log-cols …"`, builds its decoration from `getDecorationCells` (clipping `.deco-cell` grid items, the same `buildDecoParts` source of truth the regular path uses), and wraps its message (`elapsed + AI prefix + compress badge + body`) in a `min-width:0` `.line-msg` cell. Result: AI decoration columns clip to their own tracks and can never paint over the message — structurally, like regular rows.
+- The legacy AI decoration-off fallback `.line.ai-line:not(:has(.line-decoration)) { padding-left:13px }` is now scoped `:not(.cols)` so grid AI rows take only the shared `1.25em` clearance (no double indent).
+
+**Deliberately NOT migrated** (consistent with the plan): chips (`repeat-notification` / `n-plus-one`) stay block-flow and align via the left-padding spacer per resolved decision **D3** (they are not gutter rows); art blocks stay legacy (continuous border/box-drawing breaks under the grid); multi-frame stack headers, CSV (`--csv-cols`) / markdown-table (`--md-table-cols`) adoption, and the eventual legacy-CSS removal remain Phase-2+ work.
+
+**Files changed:**
+- `src/ui/viewer/viewer-data-helpers-render.ts` — AI branch → `.cols.log-cols` + `getDecorationCells` + `.line-msg` (net-zero on the file's line count; the file's pre-existing >300 max-lines warning is unchanged and is the module-split flagged in the plan's Risks).
+- `src/ui/viewer-styles/viewer-styles-ai.ts` — decoration-off padding fallback scoped `:not(.cols)`.
+- `src/test/ui/viewer-column-layout.test.ts` — new Phase-2 test pinning AI rows on the grid; updated the legacy-scope comment (AI no longer in the un-migrated list).
+- `CHANGELOG.md` — `[Unreleased]` Changed entry.
+
+**Tests:** `viewer-column-layout` 9 passing (+1 new); `viewer-continuation-badge-render` 11, `viewer-severity-bar-connector` 29, `viewer-ascii-art-block` 28, `viewer-flutter-banner-group` 19, `viewer-data-helpers-render-fw-muted` 3, `viewer-error-badge-gutter` 3, `viewer-context-line-muting` 5, `viewer-bracket-prefix-strip` 8, `viewer-severity-gutter-decoupling` 10 — all passing (no regression). `npm run check-types` clean; `npm run lint` no new warnings; `npm run compile` passes all verify gates.
+
+**Outstanding (Phase 2 continues, plan stays active):** multi-frame stack headers → grid; CSV/markdown-table `.cols` adoption; then delete the legacy `:not(.cols)` rules + dead `--deco-*-em` vars once every gutter path is migrated. On-device (F5) confirmation that AI rows render aligned with no overlap is the user's check.
+
+**Finish report appended:** plans/055_plan-viewer-row-grid-rewrite.md
