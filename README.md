@@ -236,7 +236,7 @@ Fully supports Remote SSH, WSL, and Dev Containers. Use a relative `logDirectory
 
 ## Configuration
 
-All settings are prefixed with `saropaLogCapture.` — see [plans/guides/CONFIGURATION.md](plans/guides/CONFIGURATION.md) for the full settings reference.
+All settings are prefixed with `saropaLogCapture.` — see [plans/guides/configuration.md](plans/guides/configuration.md) for the full settings reference.
 
 **Key settings:**
 
@@ -287,7 +287,7 @@ Unlisted bracket tags still work — they become free-form **Message-Tag chips**
 - product / domain — `analytics` `telemetry` `metrics` `event` `track` `notification` `push` `fcm` `apns` `badge` `billing` `purchase` `iap` `payment` `subscription` `ads` `share` `social` `onboarding` `search` `filter` `pagination`
 - i18n / format — `i18n` `l10n` `locale` `intl` `currency` `date` `tz` `timezone`
 
-See [plans/guides/SOURCE_LOGGER_BEST_PRACTICES.md](plans/guides/SOURCE_LOGGER_BEST_PRACTICES.md) for emit examples, and [plans/guides/correlation-tags.md](plans/guides/correlation-tags.md) for the separate mid-line `type:value` correlation tags.
+See [plans/guides/source-logger-best-practices.md](plans/guides/source-logger-best-practices.md) for emit examples, and [plans/guides/correlation-tags.md](plans/guides/correlation-tags.md) for the separate mid-line `type:value` correlation tags.
 
 ---
 
@@ -414,8 +414,8 @@ The extension ships localized UI strings for 11 locales: Chinese (Simplified & T
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Developer setup, code standards, and how to contribute |
 | [CHANGELOG.md](CHANGELOG.md) | Version history and release notes |
 | [ROADMAP.md](ROADMAP.md) | Links to feature plans and completed work |
-| [plans/guides/CONFIGURATION.md](plans/guides/CONFIGURATION.md) | Full settings reference |
-| [plans/guides/STYLE_GUIDE.md](plans/guides/STYLE_GUIDE.md) | Code style conventions and patterns |
+| [plans/guides/configuration.md](plans/guides/configuration.md) | Full settings reference |
+| [plans/guides/style-guide.md](plans/guides/style-guide.md) | Code style conventions and patterns |
 
 ---
 
