@@ -319,6 +319,30 @@ def _key_action(
     return "translate"
 
 
+def _finalize_locale(
+    path: Path,
+    bundle: dict[str, str],
+    canonical_keys: set[str],
+    locale: str,
+    provenance_updates: dict[str, str],
+    *,
+    dry_run: bool,
+) -> None:
+    """Prune orphan keys and persist the bundle + provenance for one locale.
+
+    Called from ``translate_locale``'s ``finally`` so a graceful CTRL-C still
+    writes everything translated so far. A multi-hour run must be resumable, not
+    lost: a re-run keeps already-translated keys (``gaps`` skips value != English;
+    ``low_quality`` skips ``nllb`` provenance), so cancellation becomes a pause.
+    """
+    orphans = [k for k in bundle if k not in canonical_keys]
+    for k in orphans:
+        del bundle[k]
+    if not dry_run:
+        _save_bundle(path, bundle)
+        save_provenance(locale, provenance_updates)
+
+
 def translate_locale(
     locale: str,
     canonical_keys: set[str],
@@ -449,18 +473,18 @@ def translate_locale(
             if engine == "google":
                 time.sleep(_THROTTLE_SECONDS)
     finally:
+        # Runs on normal completion, circuit-breaker abort, AND KeyboardInterrupt
+        # (which is BaseException, so the retry/_apply_translation `except
+        # Exception` blocks never swallow it — it propagates straight here). That
+        # makes a CTRL-C save in-progress work and re-raise cleanly: the operator
+        # can pause a 20-hour run and resume it later without losing the locale.
         socket.setdefaulttimeout(prev_timeout)
-
-    # Remove orphan keys (in bundle but not in canonical set).
-    orphans = [k for k in bundle if k not in canonical_keys]
-    for k in orphans:
-        del bundle[k]
-
-    if not dry_run:
-        _save_bundle(path, bundle)
-        # Record which engine produced each new/upgraded translation so the
-        # audit can report quality and a later pass can target the weak ones.
-        save_provenance(locale, provenance_updates)
+        # Record which engine produced each new/upgraded translation so the audit
+        # can report quality and a later pass can target the weak ones.
+        _finalize_locale(
+            path, bundle, canonical_keys, locale, provenance_updates,
+            dry_run=dry_run,
+        )
 
     return translated, kept, brand, errors, aborted
 

@@ -45,6 +45,7 @@ Open plans currently in [plans/](plans/) that are not yet scored against the roa
 | Semantic timeline capture | Capture and broaden signal expansion in the timeline | [052](plans/052_plan-semantic-timeline-capture-and-signal-expansion.md) |
 | Investigate missing debug console lines | Bug: lines dropped from debug console capture | [102](plans/102_investigate-missing-debug-console-lines.md) |
 | Pubspec vibrancy report hardening | Harden the pubspec vibrancy report path | [103](plans/103_plan-pubspec-vibrancy-report-hardening.md) |
+| Expand translation locales | Add the next 15 developer languages (10 → 25); GPU NLLB + graceful-cancel groundwork done, RTL gated | [058](plans/058_plan-expand-translation-locales.md) |
 | Static ORM code analysis | Static analysis of ORM usage | [DB_12](plans/DB_12_static-orm-code-analysis.md) |
 | DB timestamp burst detector | Detect burst patterns in DB timestamps | [DB_16](plans/DB_16_db-timestamp-burst-detector.md) |
 
