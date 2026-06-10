@@ -8,6 +8,7 @@
   "command.clearShareHistory.title": "Clear share history",
   "command.closeCollection.title": "Saropa Log Capture: Close Collection",
   "command.compareSessions.title": "Saropa Log Capture: Compare Logs",
+  "command.compareThreeSessions.title": "Saropa Log Capture: Compare 3 Logs",
   "command.compareWithMarked.title": "Compare with Marked Log",
   "command.compareLogToPreviousCommit.title": "Saropa Log Capture: Compare Log to Previous Commit",
   "command.compareLogToCommit.title": "Saropa Log Capture: Compare Log to Commit…",
