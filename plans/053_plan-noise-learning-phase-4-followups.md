@@ -1,10 +1,10 @@
 # Plan 053 — Noise Learning Phase 4 Follow-ups
 
-## Status: Partial (A + B shipped, C + D pending)
+## Status: Partial (A + B + C shipped, D pending)
 
 - [x] **Workstream A** — Insights panel suggestions section (filter suggestions render in the panel with Accept/Reject)
 - [x] **Workstream B** — `filter-out` emission from level/category toggles (emitter wired in `viewer-level-filter.ts`)
-- [ ] **Workstream C** — Confidence feedback loop
+- [x] **Workstream C** — Confidence feedback loop (2026-06-10; `confidence-feedback.ts` + engine wiring)
 - [ ] **Workstream D** — Optional cross-workspace global aggregates
 
 ## Goal
@@ -247,3 +247,30 @@ A workstream is not done until every check below passes.
 ## Why these splits and not one big follow-up
 
 A single "noise learning v2" plan would conflate UI work (A), tracker wiring (B), algorithm tuning (C), and a privacy-sensitive cross-workspace feature (D). Each has a different reviewer profile and a different failure mode. Keeping them as four workstreams in one plan lets each ship and be verified independently while keeping the audit trail (this file → 025 → the live module) coherent.
+
+## Finish Report (2026-06-10) — Workstream C (confidence feedback loop)
+
+This work will be reviewed by another AI.
+
+**Scope:** (B) VS Code extension (TypeScript, learning module + test). No Dart/Flutter, no docs-only. l10n SKIPPED [B-NOT-IN-SCOPE] (no user-facing strings added).
+
+**What shipped (C1–C4).** Accept/reject history was persisted but never read back into scoring, so a rejected pattern was as likely to be re-suggested. Now it feeds confidence:
+- **New `src/modules/learning/confidence-feedback.ts`** — pure, side-effect-free:
+  - `applyFeedback(rawConfidence, feedback)` — multiplier model (C3): ×1.15 per exact accept, ×0.6 per exact reject, half-deviation for >80%-overlap *similar* patterns (×1.075 / ×0.8); multiplier clamped to [0.1, 1.5], result clamped to [0, 1].
+  - `patternSimilarity(a, b)` — deterministic substring-overlap ratio (1.0 identical; shorter/longer length when contained; else 0).
+  - `buildFeedback(pattern, history)` — tallies exact vs. similar accepts/rejects from the persisted suggestion rows (the accept/reject record the plan calls `feedback`).
+- **`suggestion-engine.ts` wiring** — `refreshAndListPending` now adjusts each candidate's extracted confidence via `applyFeedback(p.confidence, buildFeedback(p.pattern, existing))`, then drops candidates whose adjusted confidence falls below `learning.minConfidence`. That is the mechanism by which rejecting one pattern suppresses the near-twins the extractor keeps re-emitting (C1's intent), realized through scoring rather than a session counter.
+
+**Design note / deviation from the plan letter:** C1 also describes "re-suggest suppression for ≥10 sessions unless interaction count doubles." The existing `LearningStore.updateSuggestionsAfterExtract` already suppresses an *exactly*-rejected pattern permanently (it filters rejected patterns out of fresh pending), which is stricter than the 10-session window — so I did not add a weaker session-window path that would regress that. The new value C adds is the *similar*-pattern damping and the accept *reinforcement*, neither of which existed. The session-counter variant is left unbuilt deliberately; noted here rather than silently dropped.
+
+**Files changed/created:**
+- `src/modules/learning/confidence-feedback.ts` — **new** (pure feedback math).
+- `src/modules/learning/suggestion-engine.ts` — apply feedback to candidate confidence + floor filter.
+- `src/test/modules/learning/confidence-feedback.test.ts` — **new**, 12 cases (accept boost, reject penalty, similar half-effect, ceiling/floor clamps, similarity ratios, buildFeedback exact-vs-similar tallies).
+- `CHANGELOG.md` — `[Unreleased]` Changed entry.
+
+**Tests:** `confidence-feedback.test.js` → 12 passing. `npm run check-types` clean; `npm run lint` no warnings on changed files; `npm run compile` passes all verify gates.
+
+**Outstanding:** Workstream **D** (optional cross-workspace global aggregates) remains — privacy-critical, deny-list-gated; tracked as item 7. Plan stays active for D. Coefficient tuning from real acceptance data is a future refinement (the constants are documented as a starting point).
+
+**Finish report appended:** plans/053_plan-noise-learning-phase-4-followups.md
