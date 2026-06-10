@@ -1288,7 +1288,7 @@
   "Bookmark Line": "ブックマークラインは,ブックマーク線です.",
   "Bookmark line": "ブックマークのラインは,ブックマーク線です.",
   "Built for Resilience. Designed for Peace of Mind.": "耐久性のために作られ,心の平安を目的として設計された.",
-  "Choose session capture adapters (header lines and sidecars), third-party tools (Crashlytics, Drift, etc.), and in-editor features like Explain with AI. Each row notes performance impact and when you might turn it off.": "Choose session capture adapters (header lines and sidecars), third-party tools (Crashlytics, Drift, etc.), and in-editor features like Explain with AI. Each row notes performance impact and when you might turn it off.",
+  "Choose session capture adapters (header lines and sidecars), third-party tools (Crashlytics, Drift, etc.), and in-editor features like Explain with AI. Each row notes performance impact and when you might turn it off.": "セッションキャプチャアダプター（ヘッダー行とサイドカー）、サードパーティツール（Crashlytics、Drift など）、Explain with AI のようなエディター内機能を選択します。各行には、パフォーマンスへの影響と、無効にするとよい場合が記載されています。",
   "Close / dismiss": "閉じる/解雇する",
   "Close search, inline peek, go-to-line, or any open panel": "近く検索,インラインピーク,ゴーツーライン,またはオープンパネルなどで検索できます.",
   "Collapse consecutive identical lines into one row with a count badge": "連続した同一の線をカウントバッジが付いている1列に崩す.",
