@@ -14,8 +14,12 @@ const maxScanDepth = 10;
 export function isOurSidecar(obj: unknown): boolean {
     if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) { return false; }
     const rec = obj as Record<string, unknown>;
+    // V1 sidecars used errorCount/warningCount/perfCount/anrCount/fwCount/infoCount.
+    // V2 adds debugCount/databaseCount/todoCount/noticeCount. Detect either by any
+    // recognised count field so migration covers both schemas.
     return typeof rec['errorCount'] === 'number' || typeof rec['infoCount'] === 'number'
-        || typeof rec['fwCount'] === 'number' || typeof rec['warningCount'] === 'number';
+        || typeof rec['fwCount'] === 'number' || typeof rec['warningCount'] === 'number'
+        || typeof rec['debugCount'] === 'number' || typeof rec['databaseCount'] === 'number';
 }
 
 /**

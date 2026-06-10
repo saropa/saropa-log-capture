@@ -13,6 +13,9 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
         updateSqlHistoryCumulativeUi();
         var q = (searchEl && searchEl.value ? searchEl.value : '').toLowerCase().trim();
         var rows = getSqlQueryHistoryRowsForRender();
+        /* Phase 2 dashboard reflects the full merged set (search-independent), so render it from the
+           unfiltered rows before the search filter narrows the table below. */
+        if (typeof renderSqlHistoryDashboard === 'function') renderSqlHistoryDashboard(rows);
         /* Update icon bar badge with total distinct SQL query count (unfiltered). */
         if (typeof updateIconBadge === 'function') updateIconBadge('ib-sql-badge', 'ib-sql-count', rows.length);
         rows = sortSqlHistoryRows(rows);
@@ -97,6 +100,10 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
         if (typeof window !== 'undefined' && typeof window.updateSqlQueryHistoryDriftStatus === 'function') {
             window.updateSqlQueryHistoryDriftStatus();
         }
+        /* Phase 2: pull the Drift server's issues list when a reachable server is known. */
+        if (typeof maybeFetchDriftDbIssues === 'function') maybeFetchDriftDbIssues();
+        /* Phase 3: pull Saropa Lints Drift-rule findings + the enable-pack advice signal. */
+        if (typeof maybeFetchDriftLintViolations === 'function') maybeFetchDriftLintViolations();
         if (searchEl) searchEl.focus();
     };
     window.closeSqlQueryHistoryPanel = function() {
@@ -139,25 +146,27 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
             setSqlHistoryHint(vt('viewer.sqlHistory.openingLog'), true);
         }
     }
-    /** Show or hide the Cumulative toggle wrap based on whether the host has supplied any cross-log data. */
+    /* Show the "Current session only" filter only when cross-log data exists — with nothing to scope
+       down to, the filter is meaningless. Keep the checkbox in sync with the persisted flag. */
     function updateSqlHistoryCumulativeUi() {
         var wrap = document.getElementById('sql-query-history-cumulative-wrap');
-        var checkbox = document.getElementById('sql-query-history-cumulative');
+        var checkbox = document.getElementById('sql-query-history-current-session-only');
         if (!wrap) return;
         var has = (typeof hasSqlQueryHistoryCumulativeData === 'function') && hasSqlQueryHistoryCumulativeData();
         wrap.classList.toggle('u-hidden', !has);
-        if (checkbox && checkbox.checked !== !!sqlQueryHistoryCumulativeEnabled) {
-            checkbox.checked = !!sqlQueryHistoryCumulativeEnabled;
+        if (checkbox && checkbox.checked !== !!sqlQueryHistoryCurrentSessionOnly) {
+            checkbox.checked = !!sqlQueryHistoryCurrentSessionOnly;
         }
     }
-    /** Empty-state copy distinguishes "no SQL anywhere" from "filter rejected everything" and from "toggle off + cumulative available". */
+    /* Empty-state copy distinguishes "filter rejected everything" from "scoped to current session but it has
+       none (other logs do)" from "no SQL captured anywhere". */
     function computeSqlHistoryEmptyText(visibleRowCount) {
         if (visibleRowCount > 0) {
             return vt('viewer.sqlHistory.emptyFilter');
         }
         var hasCum = (typeof hasSqlQueryHistoryCumulativeData === 'function') && hasSqlQueryHistoryCumulativeData();
-        if (hasCum && !sqlQueryHistoryCumulativeEnabled) {
-            return vt('viewer.sqlHistory.emptyToggleCumulative');
+        if (hasCum && sqlQueryHistoryCurrentSessionOnly) {
+            return vt('viewer.sqlHistory.emptyCurrentSessionOnly');
         }
         return vt('viewer.sqlHistory.emptySession');
     }

@@ -87,7 +87,7 @@ $iterations = [math]::Floor($TotalMinutes * 60 / $IntervalSeconds) + 1
 $reportsDir = Join-Path $repoRoot "reports"
 if (-not (Test-Path $reportsDir)) { New-Item -ItemType Directory -Path $reportsDir | Out-Null }
 $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
-$logPath = Join-Path $reportsDir "store_version_check_$stamp.log"
+$logPath = Join-Path $reportsDir "${stamp}_store_version_check.log"
 
 function Test-PropagationOk {
     param([string]$Ov, [string]$Mp)

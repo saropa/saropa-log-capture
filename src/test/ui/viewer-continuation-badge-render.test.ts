@@ -46,13 +46,14 @@ suite('Continuation badge rendering', () => {
         );
     });
 
-    test('should place contBadge right after deco in render output', () => {
-        /* The badge must come right after the decoration prefix (deco) so it sits
-           next to the line counter, not at the end of the line where it overlaps text.
+    test('should place contBadge at the start of the message cell (not after html)', () => {
+        /* Grid model (plan 055): the badge leads the .line-msg cell content
+           (contBadge + elapsed + badge + … + html), so it sits next to the
+           decoration cells, not at the end of the line where it overlapped text.
            Previously contBadge was appended after html, causing overlap. */
         assert.ok(
-            renderScript.includes('deco + contBadge +'),
-            'contBadge should follow immediately after deco in the render string',
+            renderScript.includes('var msgInner = contBadge +'),
+            'contBadge must lead the message-cell content (adjacent to the decoration column)',
         );
         assert.ok(
             !renderScript.includes('html + contBadge'),

@@ -15,6 +15,16 @@ export function getSessionContextMenuHtml(): string {
     <div class="context-menu-item" data-session-action="replay">
         <span class="codicon codicon-debug-start"></span> Replay
     </div>
+    <div class="context-menu-separator session-pin-row"></div>
+    <!-- Pin/Unpin: mutually exclusive — only one shows, picked by the targeted row's pinned state in
+         showSessionContextMenu (kept out of the trashed view). Pinning snapshots the file's metadata
+         into the central store so the pinned row lists with no file read. -->
+    <div class="context-menu-item session-pin-row" data-session-action="pin">
+        <span class="codicon codicon-pin"></span> Pin to Top
+    </div>
+    <div class="context-menu-item session-pin-row" data-session-action="unpin">
+        <span class="codicon codicon-pinned"></span> Unpin from Top
+    </div>
     <div class="context-menu-separator"></div>
     <div class="context-menu-item" data-session-action="rename">
         <span class="codicon codicon-edit"></span> Rename...
@@ -82,6 +92,16 @@ export function getSessionContextMenuHtml(): string {
          the group the targeted log belongs to. Both are always visible in the normal context; the
          group label pluralises when multi-select is active, and Ungroup is a friendly no-op on an
          ungrouped target. -->
+    <!-- Controller/Peripheral role override: a Controller is the day's tree root that peripheral
+         logs (lint, translate, advisor) nest beneath. Detection is automatic (workspace-folder-name
+         match); these let the user pin or demote a specific log. Persisted to the sidecar. -->
+    <div class="context-menu-separator session-normal-only"></div>
+    <div class="context-menu-item session-normal-only" data-session-action="markAsController">
+        <span class="codicon codicon-circuit-board"></span> Set as Controller
+    </div>
+    <div class="context-menu-item session-normal-only" data-session-action="markAsPeripheral">
+        <span class="codicon codicon-list-tree"></span> Mark as Peripheral
+    </div>
     <div class="context-menu-separator session-normal-only"></div>
     <div class="context-menu-item session-normal-only" data-session-action="group">
         <span class="codicon codicon-layers-active"></span> <span class="session-group-label">Group Selected Sessions</span>
@@ -134,6 +154,22 @@ export function getSessionContextMenuScript(): string {
         var trashedItems = sessionCtxMenu.querySelectorAll('.session-trashed-only');
         for (var i = 0; i < normalItems.length; i++) normalItems[i].style.display = trashed ? 'none' : '';
         for (var j = 0; j < trashedItems.length; j++) trashedItems[j].style.display = trashed ? '' : 'none';
+        /* Pin row: hidden entirely in the trashed view; otherwise show exactly one of Pin/Unpin
+           based on the targeted row's pinned flag (looked up from cachedSessions by URI). The
+           shared separator follows the same visibility as the action items. */
+        var isPinned = false;
+        var pinTarget = sessionCtxUris[0] || '';
+        if (typeof cachedSessions !== 'undefined' && cachedSessions) {
+            for (var pi = 0; pi < cachedSessions.length; pi++) {
+                if (cachedSessions[pi].uriString === pinTarget) { isPinned = !!cachedSessions[pi].pinned; break; }
+            }
+        }
+        var pinRows = sessionCtxMenu.querySelectorAll('.session-pin-row');
+        for (var pk = 0; pk < pinRows.length; pk++) {
+            var act = pinRows[pk].getAttribute('data-session-action');
+            var showRow = !trashed && (act === 'pin' ? !isPinned : act === 'unpin' ? isPinned : true);
+            pinRows[pk].style.display = showRow ? '' : 'none';
+        }
         /* Pluralize Copy submenu labels when multiple sessions are selected.
            Targets the dedicated <span> wrappers inside the Copy flyout so the codicon sibling
            is not overwritten. */

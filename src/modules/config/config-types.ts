@@ -125,6 +125,16 @@ export interface SaropaLogCaptureConfig {
   readonly minimapWidth: "xsmall" | "small" | "medium" | "large" | "xlarge";
   /** When true, show the native vertical scrollbar in the log viewer (default: false). */
   readonly showScrollbar: boolean;
+  /**
+   * Default visibility of the log viewer's per-line Columns for newly built viewers (line numbers,
+   * timestamp, session elapsed, source tag). User-level settings: a column toggle in the viewer
+   * writes back to these (Global scope) so the user's chosen layout becomes the default for new logs.
+   * Baked into the webview script at build time; see viewer-deco-settings.ts.
+   */
+  readonly viewerColumnLineNumbers: boolean;
+  readonly viewerColumnTimestamp: boolean;
+  readonly viewerColumnSessionElapsed: boolean;
+  readonly viewerColumnParsedTag: boolean;
   /** Default font size in pixels for log viewer text (4–42, default 13). */
   readonly logFontSize: number;
   /** Default line height multiplier for log viewer text (0.5–4.0, default 1.1). */
@@ -219,6 +229,10 @@ export interface SaropaLogCaptureConfig {
   readonly replay: ReplayConfig;
   /** Auto-group related log files into logical Sessions (see SessionGroupsConfig). */
   readonly sessionGroups: SessionGroupsConfig;
+  /** Reports bucket classifier — splits auxiliary lint/audit/bundle captures from project debug sessions. */
+  readonly reportsClassifier: ReportsClassifierConfig;
+  /** Newer-log alert — sticky banner + per-row dot for captures arriving after the panel was last focused. */
+  readonly newerLogAlert: NewerLogAlertConfig;
 }
 
 /** Bundled error-classification settings pushed to each viewer target. */
@@ -243,6 +257,32 @@ export interface ViewerDbDetectorToggles {
   readonly slowBurstEnabled: boolean;
   readonly baselineHintsEnabled: boolean;
   readonly timestampBurstEnabled: boolean;
+}
+
+/**
+ * Reports vs Project classifier — see [plans/history/2026.06/2026.06.02/001_plan-newer-alert-and-reports-grouping.md].
+ * Splits auxiliary captures (Saropa Lint Report, Json Bundle Audit, etc.) from the
+ * debug-session logs the user is actively investigating, into a per-day collapsible bucket.
+ */
+export interface ReportsClassifierConfig {
+  /** Regex strings matched against displayName (case-insensitive). A match flips kind to 'report'.
+   *  Fail-open: invalid regex strings are dropped silently — never blanks the panel. */
+  readonly kindPatterns: readonly string[];
+  /** Default state for the per-day Reports bucket when there's no per-day override. */
+  readonly bucketDefault: 'collapsed' | 'expanded' | 'hidden';
+  /** displayName strings the user pinned as Controllers (the day's tree root that peripherals nest
+   *  under). Matched case-insensitively. Augments the automatic workspace-folder-name detection. */
+  readonly controllerNames: readonly string[];
+}
+
+/**
+ * Newer-log alert — see [plans/history/2026.06/2026.06.02/001_plan-newer-alert-and-reports-grouping.md].
+ * `bannerEnabled` toggles the sticky top banner; `dotEnabled` toggles the per-row blue dot.
+ * Both default true; users can disable either independently if they find the cue intrusive.
+ */
+export interface NewerLogAlertConfig {
+  readonly bannerEnabled: boolean;
+  readonly dotEnabled: boolean;
 }
 
 /**

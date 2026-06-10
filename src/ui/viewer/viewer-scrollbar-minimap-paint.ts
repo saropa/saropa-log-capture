@@ -47,8 +47,13 @@ function initMmColors() {
         sqlSlowDensity: 'rgba(255, 189, 89, 0.6)',
         searchMatch: v('--vscode-editorOverviewRuler-findMatchForeground', 'rgba(234,92,0,0.85)'),
         currentMatch: 'rgba(255,150,50,1)',
-        /* Full-canvas base under SQL bands and severity ticks. */
-        track: v('--vscode-scrollbarSlider-background', 'rgba(100, 100, 100, 0.26)')
+        /* Full-canvas base under SQL bands and severity ticks. Must be the
+           editor background (an opaque dark surface), NOT the scrollbar-slider
+           color: the slider color is a translucent grey meant to sit ON TOP of
+           content, so filling the whole canvas with it painted a light-grey
+           wash over the entire minimap. VS Code's own minimap uses the editor
+           background as its base, so this matches that. */
+        track: v('--vscode-editor-background', '#1e1e1e')
     };
 }
 
@@ -90,7 +95,7 @@ function paintMinimap() {
     resizeMmCanvas();
     mmCtx.clearRect(0, 0, mmW, mmH);
     mmCtx.globalAlpha = 1;
-    mmCtx.fillStyle = mmColors.track || 'rgba(100, 100, 100, 0.26)';
+    mmCtx.fillStyle = mmColors.track || '#1e1e1e';
     mmCtx.fillRect(0, 0, mmW, mmH);
     if (mmH < 10 || allLines.length === 0) return;
 
@@ -219,6 +224,22 @@ function paintMinimap() {
         for (var yy = 0; yy < mmH; yy++) {
             if (bucketLv[yy] !== lvIdx) continue;
             mmCtx.fillRect(0, yy, mmW * bucketW[yy], fillHeights[yy]);
+        }
+    }
+
+    /* Markdown headings: a full-width tick in the per-level color so the document outline is
+       scannable on the scroll map. Iterates every line (headings are few) rather than the
+       sampled step so no heading is skipped. MM_HEADING_COLORS mirrors the .md-hN colors in
+       viewer-styles-format.ts — keep the two in sync. */
+    if (typeof fileMode !== 'undefined' && fileMode === 'markdown') {
+        var MM_HEADING_COLORS = [null, '#4fc1ff', '#89d185', '#b180d7', '#d18616', '#cca700', '#888888'];
+        for (var hi = 0; hi < allLines.length; hi++) {
+            var hit = allLines[hi];
+            if (!hit._mdHeadingLevel || hit.height === 0) continue;
+            var hpy = Math.round((mmLineOffset(hi, hasPfx, cumH) / total) * mmH);
+            if (hpy < 0 || hpy >= mmH) continue;
+            mmCtx.fillStyle = MM_HEADING_COLORS[hit._mdHeadingLevel] || MM_HEADING_COLORS[6];
+            mmCtx.fillRect(0, hpy, mmW, (hit._mdHeadingLevel <= 2) ? 3 : 2);
         }
     }
 

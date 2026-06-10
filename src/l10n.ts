@@ -7,6 +7,9 @@ import { stringsViewer } from './l10n/strings-viewer';
 import { stringsViewerB } from './l10n/strings-viewer-b';
 import { stringsViewerC } from './l10n/strings-viewer-c';
 import { stringsViewerD } from './l10n/strings-viewer-d';
+import { stringsViewerE } from './l10n/strings-viewer-e';
+import { stringsViewerF } from './l10n/strings-viewer-f';
+import { stringsViewerG } from './l10n/strings-viewer-g';
 
 /**
  * English strings keyed by symbolic ID.
@@ -22,6 +25,9 @@ const strings: Record<string, string> = {
     ...stringsViewerB,
     ...stringsViewerC,
     ...stringsViewerD,
+    ...stringsViewerE,
+    ...stringsViewerF,
+    ...stringsViewerG,
     ...stringsWebview,
     ...stringsWebviewB,
 };

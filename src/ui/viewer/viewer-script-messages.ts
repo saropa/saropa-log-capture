@@ -3,9 +3,10 @@
 import { getViewerScriptDbMessageHandler } from './viewer-script-messages-db';
 import { getViewerScriptTypographyMessageHandler } from './viewer-script-messages-typography';
 import { getSourceLineStampScript } from './viewer-source-line-stamp';
+import { getFileCodeStampScript } from './viewer-file-code-stamp';
 
 export function getViewerScriptMessageHandler(): string {
-    return getViewerScriptDbMessageHandler() + getViewerScriptTypographyMessageHandler() + getSourceLineStampScript() + /* javascript */ `
+    return getViewerScriptDbMessageHandler() + getViewerScriptTypographyMessageHandler() + getSourceLineStampScript() + getFileCodeStampScript() + /* javascript */ `
 window.addEventListener('message', function(event) {
     var msg = event.data;
     /* Pre-handlers return true when they've dispatched the message; skip the switch on hit. */
@@ -15,7 +16,7 @@ window.addEventListener('message', function(event) {
             var isHidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';
             for (var i = 0; i < msg.lines.length; i++) {
                 var ln = msg.lines[i], beforeAddLen = allLines.length;
-                addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw, ln.sourcePath, ln.elapsedMs, ln.qualityPercent, ln.source, ln.rawText, ln.tier); stampSourceLineNoOnNewItems(beforeAddLen, ln.sourceLineNo);
+                addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw, ln.sourcePath, ln.elapsedMs, ln.qualityPercent, ln.source, ln.rawText, ln.tier); stampSourceLineNoOnNewItems(beforeAddLen, ln.sourceLineNo); stampFileCodeOnNewItems(beforeAddLen, ln.logFileUri, ln.timestamp);
                 if (typeof applyLintDataToLastLine === 'function') applyLintDataToLastLine(ln);
             }
             trimData();
@@ -61,8 +62,8 @@ window.addEventListener('message', function(event) {
             if (typeof window.exitReplayMode === 'function') window.exitReplayMode();
             if (currentFilename && !autoScroll) { scrollMemory[currentFilename] = logEl.scrollTop; }
             autoScroll = true;
-            fileMode = 'log'; formatEnabled = false; if (typeof updateFormatToggleVisibility === 'function') updateFormatToggleVisibility();
-            allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null; nextSeq = 1; sessionStartTs = 0; if (typeof resetDecoSeen === 'function') resetDecoSeen(); if (typeof resetTreeDetector === 'function') resetTreeDetector();
+            fileMode = 'log'; formatEnabled = false; if (typeof updateFormatToggleVisibility === 'function') updateFormatToggleVisibility(); if (typeof applyMarkdownTypography === 'function') applyMarkdownTypography();
+            allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null; nextSeq = 1; sessionStartTs = 0; if (typeof resetDecoSeen === 'function') resetDecoSeen(); if (typeof resetTreeDetector === 'function') resetTreeDetector(); if (typeof resetFileCodes === 'function') resetFileCodes();
             if (typeof applyDecorationLayoutWidth === 'function') applyDecorationLayoutWidth();
             lastStart = -1; lastEnd = -1; groupHeaderMap = {}; prefixSums = null;
             if (typeof resetContinuationState === 'function') resetContinuationState();
@@ -111,6 +112,8 @@ window.addEventListener('message', function(event) {
         case 'setSessionInfo':
             if (typeof applySessionInfo === 'function') applySessionInfo(msg.info);
             break;
+        /* setSessionHeaderLines: stash raw header lines for the (i) info modal; window-global so init order does not matter. */
+        case 'setSessionHeaderLines': if (typeof window !== 'undefined') { window.__sessionHeaderLines = Array.isArray(msg.headerLines) ? msg.headerLines : []; if (typeof window.__applySessionHeaderLines === 'function') window.__applySessionHeaderLines(window.__sessionHeaderLines); } break;
         case 'setHasPerformanceData':
             var perfChip = document.getElementById('session-perf-chip');
             if (perfChip) perfChip.classList.toggle('u-hidden', !msg.has);
@@ -124,6 +127,8 @@ window.addEventListener('message', function(event) {
             if (typeof window !== 'undefined') window.driftAdvisorDbPanelMeta = (msg.payload != null) ? msg.payload : null; break;
         case 'driftViewerHealth':
             if (typeof applyDriftViewerHealthFromHost === 'function') applyDriftViewerHealthFromHost(msg); break;
+        case 'driftDbIssues': if (typeof applyDriftDbIssuesFromHost === 'function') applyDriftDbIssuesFromHost(msg); break;
+        case 'driftLintViolations': if (typeof applyDriftLintViolationsFromHost === 'function') applyDriftLintViolationsFromHost(msg); break;
         case 'rootCauseHypothesesResult':
             if (typeof handleRootCauseHypothesesResult === 'function') handleRootCauseHypothesesResult(msg.hypotheses, msg.trends); break;
         case 'setRootCauseHintHostFields':
@@ -143,6 +148,7 @@ window.addEventListener('message', function(event) {
         case 'triggerCollapseAllSections': if (typeof collapseAllSections === 'function') collapseAllSections(); break;
         case 'triggerExpandAllSections': if (typeof expandAllSections === 'function') expandAllSections(); break;
         case 'triggerToggleSearch': if (typeof toggleSearchPanel === 'function') toggleSearchPanel(); break;
+        case 'triggerGotoLine': if (typeof openGotoLine === 'function') openGotoLine(); break;
         case 'triggerExplainRootCauseHypotheses':
             if (typeof runTriggerExplainRootCauseHypothesesFromHost === 'function') runTriggerExplainRootCauseHypothesesFromHost();
             break;
@@ -153,7 +159,11 @@ window.addEventListener('message', function(event) {
             currentFilename = msg.filename || '';
             updateFooterText();
             break;
-        case 'setFileMode': fileMode = msg.mode || 'log'; formatEnabled = false; if (typeof updateFormatToggleVisibility === 'function') updateFormatToggleVisibility(); break;
+        /* Structured documents (markdown reports, JSON, CSV) auto-enable formatting:
+           opening one and seeing raw text behind a hidden toggle reads as "not rendered".
+           The layout build (buildMdSections etc.) is deferred to loadComplete because
+           setFileMode is posted before any content lines arrive, so allLines is empty here. */
+        case 'setFileMode': fileMode = msg.mode || 'log'; formatEnabled = (fileMode !== 'log'); if (typeof updateFormatToggleVisibility === 'function') updateFormatToggleVisibility(); if (typeof applyMarkdownTypography === 'function') applyMarkdownTypography(); break;
         case 'setSources':
             if (typeof window !== 'undefined') { window.availableSources = Array.isArray(msg.sources) ? msg.sources : []; window.enabledSources = Array.isArray(msg.enabledSources) ? msg.enabledSources : null; }
             /* Log Sources tab is always visible — no need to toggle panel display */
@@ -235,6 +245,16 @@ window.addEventListener('message', function(event) {
                 autoScroll = false; if (jumpBtn) jumpBtn.style.display = 'block'; renderViewport(true);
             }
             updateFooterText();
+            /* All content has arrived: build the structured-mode layout now that allLines
+               is populated, then re-measure and repaint so auto-enabled formatting (set in
+               setFileMode) renders headings/fences/tables instead of raw text. */
+            if (typeof formatEnabled !== 'undefined' && formatEnabled && typeof fileMode !== 'undefined' && fileMode !== 'log') {
+                if (typeof applyMarkdownTypography === 'function') applyMarkdownTypography();
+                if (typeof window.buildFormatModeLayout === 'function') window.buildFormatModeLayout();
+                if (typeof recalcHeights === 'function') recalcHeights();
+                if (typeof buildPrefixSums === 'function') buildPrefixSums();
+                if (typeof renderViewport === 'function') renderViewport(true);
+            }
             if (typeof window.setReplayEnabled === 'function') {
                 window.setReplayEnabled(isViewingFile, isSessionActive);
                 // Defer again so replay bar visibility is applied after loadComplete layout has settled.

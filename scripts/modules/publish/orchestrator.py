@@ -64,7 +64,10 @@ def _prompt_on_test_failure() -> str:
     print("    [S]kip tests and continue")
     print("    S[t]op pipeline")
     try:
-        raw = input(f"  Choice [t]: {C.RESET}").strip().lower()
+        # The colored options print on their own lines above; this prompt is a
+        # plain ASCII choice marker. Native input() (no readline — see the
+        # bootstrap note in scripts/publish.py) keeps it on its own line.
+        raw = input("  Choice [t]: ").strip().lower()
     except (EOFError, KeyboardInterrupt):
         print()
         return "stop"
@@ -223,7 +226,10 @@ def ask_publish_stores() -> str:
     print("    2 = Open VSX only (Cursor / VSCodium)")
     print("    3 = both")
     try:
-        raw = input(f"  Choice [3]: {C.RESET}").strip() or "3"
+        # The colored options print on their own lines above; this prompt is a
+        # plain ASCII choice marker. Native input() (no readline — see the
+        # bootstrap note in scripts/publish.py) keeps it on its own line.
+        raw = input("  Choice [3]: ").strip() or "3"
     except (EOFError, KeyboardInterrupt):
         print()
         return "both"

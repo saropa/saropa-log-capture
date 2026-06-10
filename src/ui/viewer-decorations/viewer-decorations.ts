@@ -18,6 +18,7 @@
  * Concatenated into the same script scope as viewer-script.ts.
  */
 import { getDecorationsStateScript } from './viewer-decorations-state';
+import { getDecoContentScript } from './viewer-deco-content';
 
 export function getDecorationsScript(): string {
     return /* javascript */ `
@@ -194,6 +195,21 @@ function applyDecorationLayoutWidth() {
     var totalPaddingEm = 1.25 + contentIndentEm; // 1.25em keeps severity bar clear.
     root.style.setProperty('--deco-content-indent-em', contentIndentEm + 'em');
     root.style.setProperty('--deco-prefix-width-em', totalPaddingEm + 'em');
+    /* Grid template (plan 055): one track per decoration part — ALWAYS all six
+       tracks emitted (absent parts at width 0) so the fixed grid-column indices
+       in viewer-styles-columns.ts stay valid even on rows that omit a part, plus
+       a 1fr message track. Same per-part em widths as the legacy sum above; the
+       cells clip, so a too-narrow estimate clips rather than overlapping. */
+    var gridCols = [
+        hasCounter ? (digits * 0.62 + 0.5 + 1.0) + 'em' : '0',
+        hasTime ? (showMilliseconds ? 7.5 : 5.5) + 'em' : '0',
+        hasSessionElapsed ? '6.5em' : '0',
+        hasPid ? '7em' : '0',
+        hasLvl ? '1.6em' : '0',
+        hasTag ? '7em' : '0',
+        '1fr',
+    ];
+    root.style.setProperty('--grid-cols', gridCols.join(' '));
     lastAppliedDecoSig = sig;
 }
 
@@ -226,91 +242,10 @@ function measureTagColumnPosition() {
     document.documentElement.style.setProperty('--deco-tag-position-px', leftPx + 'px');
 }
 
-/**
- * Build the decoration prefix HTML for a single log line.
- * Only includes parts whose sub-toggle is enabled.
- * Returns empty string for markers, stack-frame sub-lines, or when off.
- * Blank lines: no prefix by default; optional decoShowCounterOnBlank shows file line number.
- * Counter uses file line number (idx+1) when available so sequencing never skips.
- *
- * Example output: <span class="line-decoration"><span class="deco-counter">    1</span> T07:23:36 » </span>
- * (Emoji dot is only used in Copy with decorations, not in the viewer.)
- */
-/**
- * hiddenAfter — when present, info about lines hidden BETWEEN this visible row
- * and the next. Drives the small ▶ chevron rendered immediately right of the
- * line number (see chevronInfo below). The chevron + counter form one click
- * target — the whole line-number area is interactive when any following
- * content is collapsed (filter-hidden gap, dedup-fold, stack collapse, etc.).
- * No floating chips, no tag replacement, no overlay collisions.
- */
-function getDecorationPrefix(item, idx, hiddenAfter) {
-    if (!areDecorationsOn()) return '';
-    if (!item || item.type === 'marker' || item.type === 'stack-frame') return '';
-
-    var isBlank = typeof isLineContentBlank === 'function' && isLineContentBlank(item);
-    if (isBlank && (typeof decoShowCounterOnBlank === 'undefined' || !decoShowCounterOnBlank)) return '';
-
-    var parts = [];
-    // Emoji dots are NOT shown in the visual prefix — the CSS severity bar
-    // (level-bar-*) is the visual indicator. Emoji dots appear only in
-    // decorated copy format (see decorateLine() in viewer-copy.ts).
-    /* Show counter when Counter is on, or when blank and "Show line number on blank lines" is on. */
-    if (decoShowCounter || (isBlank && decoShowCounterOnBlank)) {
-        // Prefer the source-file line number stamped at line arrival in viewer-script-messages.ts.
-        // idx is the position in allLines, which counts hidden stack-frame items, folded
-        // async-gap markers, and synthetic chip rows — so idx+1 does NOT track the user's raw
-        // file line. Fall back to idx+1 only when no source line is available (e.g. multi-part
-        // sessions or in-memory streams where a single offset cannot represent the source).
-        var lineNoSrc = (typeof item.sourceLineNo === 'number') ? item.sourceLineNo
-            : ((typeof idx === 'number') ? (idx + 1) : (item.seq !== undefined ? item.seq : '?'));
-        var seqStr = String(lineNoSrc);
-        /* Build the chevron when this row owns any kind of hidden-content
-           expand/collapse — a filter-hidden gap follows it, a stack-header
-           with collapsed/preview frames, a dedup-fold survivor, etc.
-           getCounterAffordance returns either an empty string (no chevron,
-           plain counter) or the full clickable counter+chevron HTML with
-           data-affordance-action / data-affordance-arg / title attrs the
-           click delegate routes on. The line-number digits themselves are
-           inside the wrapper so the whole numeric column is clickable. */
-        var counterHtml = '<span class="deco-counter">' + seqStr.padStart(getCounterDigitsForLayout(), '\\u00a0') + '</span>';
-        var affordance = (typeof getCounterAffordance === 'function')
-            ? getCounterAffordance(item, idx, hiddenAfter, counterHtml) : '';
-        parts.push(affordance || counterHtml);
-    }
-    if (!isBlank && decoShowTimestamp) {
-        var ts = formatDecoTimestamp(item.timestamp);
-        if (ts) parts.push(ts);
-    }
-    if (!isBlank && decoShowSessionElapsed && item.timestamp && sessionStartTs) {
-        parts.push(formatSessionElapsed(item.timestamp - sessionStartTs));
-    }
-    if (!isBlank && typeof showParsedPidTid !== 'undefined' && showParsedPidTid) {
-        var pidParts = [];
-        if (item.parsedPid != null) pidParts.push('<span class="meta-filter-toggle" data-meta-key="pid" data-meta-value="' + item.parsedPid + '" title="' + vt('viewer.deco.filterByPid', item.parsedPid) + '">' + item.parsedPid + '</span>');
-        if (item.parsedTid != null) pidParts.push('<span class="meta-filter-toggle" data-meta-key="tid" data-meta-value="' + item.parsedTid + '" title="' + vt('viewer.deco.filterByTid', item.parsedTid) + '">' + item.parsedTid + '</span>');
-        if (pidParts.length) parts.push('<span class="deco-pid-tid">[' + pidParts.join(':') + ']</span>');
-    }
-    if (!isBlank && typeof showParsedLevelPrefix !== 'undefined' && showParsedLevelPrefix && item.parsedRawLevel) {
-        parts.push('<span class="deco-level-prefix">' + item.parsedRawLevel + '</span>');
-    }
-    if (!isBlank && item.parsedTag
-        && typeof structuredLineParsing !== 'undefined' && structuredLineParsing
-        && (typeof decoShowParsedTag === 'undefined' || decoShowParsedTag)) {
-        parts.push('<span class="meta-filter-toggle deco-parsed-tag" data-meta-key="tag" data-meta-value="' + item.parsedTag.replace(/"/g, '&quot;') + '" title="' + vt('viewer.deco.filterByTag', item.parsedTag.replace(/"/g, '&quot;')) + '">' + item.parsedTag + '</span>');
-    }
-    if (parts.length === 0) return '';
-    /* WHY no '»' chevron: with --deco-prefix-width-em + hanging-indent, the
-       content column is visually obvious without a separator glyph. The chevron
-       was redundant and added noise on every line. Two trailing &nbsp; keep a
-       small whitespace gap between the prefix and the message body so the
-       columns don't visually touch when the timestamp ends in a digit.
-       Copy output (viewer-copy.ts) still emits '»' because plain text has no
-       columns to anchor against — the chevron survives there as a separator. */
-    return '<span class="line-decoration">'
-        + parts.join('&nbsp; ') + '&nbsp;&nbsp;'
-        + '</span>';
-}
+/* Decoration content builders (getCategoryBadge, buildDecoParts,
+   getDecorationPrefix, getDecorationCells) live in viewer-deco-content.ts —
+   concatenated below via getDecoContentScript() — to keep this file under the
+   300-LOC cap after the grid-cell renderer was added (plan 055). */
 
 /**
  * Return a CSS class for whole-line severity tinting.
@@ -322,5 +257,5 @@ function getLineTintClass(item) {
     if (item.level) return ' line-tint-' + item.level;
     return '';
 }
-` + getDecorationsStateScript();
+` + getDecoContentScript() + getDecorationsStateScript();
 }

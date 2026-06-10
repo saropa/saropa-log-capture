@@ -18,6 +18,7 @@ import {
   type SaropaLogCaptureConfig,
   type ViewerDbDetectorToggles,
 } from "./config-types";
+import { defaultReportsKindPatterns } from "../session/session-kind-classifier";
 import {
   DEFAULT_CATEGORIES,
   DEFAULT_FILE_TYPES,
@@ -140,6 +141,12 @@ export function getConfig(): SaropaLogCaptureConfig {
     minimapViewportOutsideArrow: ensureBoolean(cfg.get("minimapViewportOutsideArrow"), false),
     minimapWidth: ensureEnum(cfg.get("minimapWidth"), ["xsmall", "small", "medium", "large", "xlarge"], "medium"),
     showScrollbar: ensureBoolean(cfg.get("showScrollbar"), false),
+    /* Column defaults baked into each freshly-built viewer; defaults mirror the historical
+       hardcoded webview values (tag/line-numbers/timestamp on, session-elapsed off). */
+    viewerColumnLineNumbers: ensureBoolean(cfg.get("viewerColumnLineNumbers"), true),
+    viewerColumnTimestamp: ensureBoolean(cfg.get("viewerColumnTimestamp"), true),
+    viewerColumnSessionElapsed: ensureBoolean(cfg.get("viewerColumnSessionElapsed"), false),
+    viewerColumnParsedTag: ensureBoolean(cfg.get("viewerColumnParsedTag"), true),
     /* 4–42 px matches HTML slider min/max and webview setFontSize() guard. */
     logFontSize: clamp(cfg.get("logFontSize"), 4, 42, 13),
     /* 0.5–4.0 matches HTML slider min/max and webview setLineHeight() guard. Default 1.1
@@ -221,6 +228,19 @@ export function getConfig(): SaropaLogCaptureConfig {
       // its onSessionEnd hook, after the DAP session has already terminated).
       afterSeconds: clamp(cfg.get("sessionGroups.afterSeconds"), 0, 600, 10),
     },
+    reportsClassifier: {
+      // Fail-open default: user's regex list is preferred, but defaults cover the common
+      // built-in report names without per-install configuration.
+      kindPatterns: ensureStringArray(cfg.get("reportsKindPatterns"), [...defaultReportsKindPatterns]),
+      bucketDefault: ensureEnum(cfg.get("reportsBucketDefault"), ["collapsed", "expanded", "hidden"], "collapsed"),
+      // No defaults: the workspace-folder-name match in classifySessionRole covers the common case
+      // (the project's own log). This list is purely the user's manual additions.
+      controllerNames: ensureStringArray(cfg.get("controllerNames"), []),
+    },
+    newerLogAlert: {
+      bannerEnabled: ensureBoolean(cfg.get("newerLogBanner"), true),
+      dotEnabled: ensureBoolean(cfg.get("newerLogDot"), true),
+    },
   };
 }
 
@@ -235,6 +255,26 @@ export function getLogDirectoryUri(
     return vscode.Uri.file(path.join(process.cwd(), config.logDirectory));
   }
   return vscode.Uri.joinPath(workspaceFolder.uri, config.logDirectory);
+}
+
+/**
+ * The log directory the Logs panel is ACTUALLY showing: the browsed override root if the user
+ * set one, otherwise the primary workspace folder's configured log dir. Returns undefined only
+ * when there is neither an override nor a workspace folder.
+ *
+ * WHY this exists: loaded-files recording, the About Debug paths, and the session-list injection
+ * must all agree on ONE directory. Keying off `workspaceFolders[0]` alone broke when the panel
+ * was pointed at a browsed override root (no workspace folder open) — recording wrote nowhere and
+ * the Debug list resolved empty. This mirrors `getLogDir()` in viewer-handler-wiring.ts.
+ */
+export function getActiveLogDirectoryUri(
+  context: vscode.ExtensionContext,
+): vscode.Uri | undefined {
+  // 'sessionPanelRootFolder' === SESSION_PANEL_ROOT_KEY in viewer-handler-wiring.ts (the override).
+  const override = context.workspaceState.get<string>("sessionPanelRootFolder");
+  if (override) { return vscode.Uri.parse(override); }
+  const folder = vscode.workspace.workspaceFolders?.[0];
+  return folder ? getLogDirectoryUri(folder) : undefined;
 }
 
 /** URI for the bug report output folder. */
@@ -288,4 +328,4 @@ export function errorRateConfigFromConfig(cfg: SaropaLogCaptureConfig): ErrorRat
   };
 }
 
-export { isTrackedFile, readTrackedFiles, readTrackedFilesStreaming, getFileTypeGlob, shouldRedactEnvVar } from './config-file-utils';
+export { isTrackedFile, isLogContentFile, readTrackedFiles, readTrackedFilesStreaming, getFileTypeGlob, shouldRedactEnvVar } from './config-file-utils';

@@ -213,8 +213,8 @@ export function getModalStyles(): string {
 
 /* Log file path actions (footer filename) */
 .log-file-modal-content {
-    min-width: 280px;
-    max-width: 400px;
+    min-width: 320px;
+    max-width: 440px;
 }
 .log-file-modal-body {
     display: flex;
@@ -226,6 +226,74 @@ export function getModalStyles(): string {
 .log-file-modal-btn {
     width: 100%;
     text-align: center;
+}
+/* Filename shown above the copy actions so users see what will be copied.
+   word-break keeps very long names from forcing horizontal scroll. */
+.log-file-modal-filename {
+    font-family: var(--vscode-editor-font-family, monospace);
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+    background: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.1));
+    padding: 6px 10px;
+    border-radius: 2px;
+    margin-bottom: 4px;
+    word-break: break-all;
+    user-select: text;
+}
+/* Dim separator between Copy group and Open group. Uses panel-border at lowered
+   opacity so it sits quieter than .modal-header's full-strength border. */
+.log-file-modal-divider {
+    border: none;
+    border-top: 1px solid var(--vscode-panel-border);
+    opacity: 0.5;
+    margin: 4px 0;
+}
+
+/* Files dialog (cumulative cross-session feed, plan 057). Reuses .modal + .modal-btn;
+   rows lay out the letter badge, filename, and per-file meta on one line. */
+.files-list-modal-content {
+    min-width: 340px;
+    max-width: 520px;
+}
+.files-list-modal-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 4px;
+    padding-bottom: 12px;
+    max-height: 50vh;
+    overflow-y: auto;
+}
+.files-list-modal-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
+}
+/* Monospace letter chip so A/B/… line up and read as the gutter code they mirror. */
+.files-list-letter {
+    font-family: var(--vscode-editor-font-family, monospace);
+    font-weight: 600;
+    min-width: 2.2em;
+    color: var(--vscode-textLink-foreground);
+}
+.files-list-name {
+    flex: 1 1 auto;
+    word-break: break-all;
+}
+.files-list-meta {
+    flex: 0 0 auto;
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+}
+/* Footer (n) counter: a quiet, clickable affordance next to the filename. */
+.footer-file-count {
+    cursor: pointer;
+    color: var(--vscode-textLink-foreground);
+}
+.footer-file-count:hover {
+    text-decoration: underline;
 }
 `;
 }

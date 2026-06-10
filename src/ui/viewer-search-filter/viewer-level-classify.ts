@@ -1,18 +1,35 @@
 // cspell:disable
 
+import { tagLevelMapJson } from '../../modules/analysis/tag-level-dictionary';
+
 /**
  * Level classification patterns and the classifyLevel() webview function.
  * Mirrors level-classifier.ts (extension side). Keep structural patterns in sync.
  * Keyword patterns are rebuilt at runtime when severityKeywords config arrives.
+ * TAG_LEVEL_MAP is baked in from tag-level-dictionary.ts (the single source of truth)
+ * because this script is a string template and cannot import at webview runtime.
  */
 export function getLevelClassifyScript(): string {
     return /* javascript */ `
+// App-emitted head-tag dictionary, injected from tag-level-dictionary.ts. Keep the
+// lookup mirror (headBracketTagPattern/matchesTagLevel below) in sync with that module.
+var TAG_LEVEL_MAP = ${tagLevelMapJson()};
 // ── Structural patterns (hardcoded) ─────────────────────────────────
 // The '(' in the strict error char class catches the "<Type>Exception (detail)" shape
 // (e.g. "PermissionDeniedException (no OS grant on file)") — without it that line fell
 // through to 'info' and never reached the Errors filter. Mirrors level-classifier.ts.
-var strictStructuralErrorPattern = /\\w*(?:error|exception)\\s*[:\\]!(]|\\[(?:error|exception|fatal|panic)\\]|_\\w*(?:Error|Exception)\\b|Null check operator/i;
-var looseStructuralErrorPattern = /\\b(?:error|exception)(?!\\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\\b|_\\w*(?:Error|Exception)\\b|Null check operator/i;
+// Strict drops /i on Error/Exception so prose like "classification error:" (lowercase)
+// stays info — Dart label/type conventions are PascalCase. Bracket form (case-insensitive)
+// is split into strictBracketErrorPattern so explicit [ERROR]/[error] tags still match.
+// Private-type alt requires _[A-Z]… (PascalCase) to avoid matching snake_case identifiers
+// like avoid_print_error — Dart private types are always _PascalCase.
+// First alt is (?:Error|Exception)…, NOT \\w*(?:Error|Exception)… : the leading \\w* is
+// redundant for an unanchored .test() (TypeError: still matches via Error: at offset 4) but
+// caused O(n²) backtracking on long word-runs (~2.3 s for one 50 KB base64 line), freezing the
+// host scan (issue #30). Dropping it is boolean-equivalent + linear. Mirrors level-classifier.ts.
+var strictStructuralErrorPattern = /(?:Error|Exception)\\s*[:\\]!(]|_[A-Z]\\w*(?:Error|Exception)\\b|Null check operator/;
+var strictBracketErrorPattern = /\\[(?:error|exception|fatal|panic)\\]/i;
+var looseStructuralErrorPattern = /\\b(?:error|exception)(?!\\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\\b|_[A-Z]\\w*(?:Error|Exception)\\b|Null check operator/i;
 // "critical" only signals error in a structural context (critical:, [critical], critical
 // error/failure/exception/fault) — bare "critical" matches noun phrases like "critical CSS".
 // Mirrors criticalSeverityPattern in level-classifier.ts. Keep in sync.
@@ -23,7 +40,7 @@ var flutterExceptionBannerPattern = /\\bException caught by\\b/i;
 var driftStatementPattern = /\\bDrift(?:\\:\\s+Sent|\\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\s*\\:)\\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\b/i;
 // Curated DB-vendor tokens. Mirrors level-classifier.ts. Bare "DB" / "SQL"
 // are excluded to avoid false positives on common English text.
-var databaseVendorTokensSrc = '(?:Drift|Isar|Sqlite|Sqflite|Hive|Realm|Postgres|MySQL|MongoDB?)';
+var databaseVendorTokensSrc = '(?:Drift|Isar|Sqlite3|Sqlite|Sqflite|Hive|Realm|Postgres|MySQL|MongoDB?|Prisma|DynamoDB)';
 // Bracket tag at line head containing a DB vendor token (e.g. "[IsarDriftRowCountAudit] ...").
 // Anchored to line start (after optional logcat/threadtime/[log] shells) so a
 // mid-message "[Drift]" mention does not promote the whole line to database.
@@ -46,10 +63,34 @@ function matchesDatabaseAnnotation(plainText) {
     return databaseBracketTagPattern.test(plainText)
         || databaseColonPrefixPattern.test(plainText);
 }
+// App-emitted head bracket tag → level. Mirrors headBracketTagPattern/matchesTagLevel in
+// tag-level-dictionary.ts; same optional logcat/threadtime/[log] shells, captures the first
+// [tag] inner text (group 1) and splits on the first colon so [db:phase 2] resolves to 'db'.
+var headBracketTagPattern = new RegExp(
+    '^(?:[VDIWEFA]\\\\/[^:]*:\\\\s*)?'
+    + '(?:\\\\d{2}-\\\\d{2}\\\\s+\\\\d{2}:\\\\d{2}:\\\\d{2}\\\\.\\\\d{3}\\\\s+\\\\d+\\\\s+\\\\d+\\\\s+[VDIWEFA]\\\\s+[^:]*:\\\\s*)?'
+    + '(?:\\\\[log\\\\]\\\\s*)?'
+    + '\\\\[([^\\\\]]+)\\\\]',
+);
+function tagNameBeforeColon(rawTag) {
+    var colon = rawTag.indexOf(':');
+    var name = colon === -1 ? rawTag : rawTag.slice(0, colon);
+    return name.trim().toLowerCase();
+}
+function lookupTagLevel(tagName) {
+    return TAG_LEVEL_MAP[tagName.toLowerCase()] || null;
+}
+function matchesTagLevel(plainText) {
+    var m = headBracketTagPattern.exec(plainText);
+    if (!m || !m[1]) return null;
+    return lookupTagLevel(tagNameBeforeColon(m[1]));
+}
 var structuralPerfPattern = /\\b(skipped\\s+\\d+\\s+frames?|gc\\s+(?:pause|freed|concurrent))\\b/i;
 // Structural warning: "could not / unable to / failed to / cannot <verb>" failure phrasing
 // with no warn/fail keyword (e.g. "databaseDecode: could not decode …"). Mirrors level-classifier.ts.
-var structuralWarnPattern = /\\b(?:could\\s*not|couldn't|cannot|unable\\s+to|failed\\s+to)\\s+\\w/i;
+// Negative lookahead excludes perception/cognition verbs ("cannot see/tell/think") so
+// prose comments embedded in saropa-lint reports don't classify as warnings.
+var structuralWarnPattern = /\\b(?:could\\s*not|couldn't|cannot|unable\\s+to|failed\\s+to)\\s+(?!(?:see|tell|say|imagine|think|know|believe|recall|remember|hear|feel|guess|understand|wait|help)\\b)\\w/i;
 var strictLevelDetection = true;
 var stderrTreatAsError = false;
 var flutterDartContextRe = /(?:^[VDIW]\\/(?:flutter|dart)[\\s:]|package\\/(?:flutter|dart)\\b)/i;
@@ -95,6 +136,10 @@ function isDriftSqlStatementLine(plainText) {
 function matchesError(plainText) {
     var sp = strictLevelDetection ? strictStructuralErrorPattern : looseStructuralErrorPattern;
     if (sp.test(plainText)) return true;
+    // Bracket label form only fires in strict mode — loose mode already matches via the
+    // bare \\berror\\b keyword. Strict drops /i to filter lowercase "error:" in prose,
+    // so brackets need their own /i regex to stay unambiguous.
+    if (strictLevelDetection && strictBracketErrorPattern.test(plainText)) return true;
     // Flutter banner: unambiguous error marker regardless of strict mode.
     if (flutterExceptionBannerPattern.test(plainText)) return true;
     // "critical" is structural, not a bare keyword — see criticalSeverityPattern.
@@ -126,21 +171,25 @@ function classifyLevel(plainText, category) {
         if (L === 'V' || L === 'D') return 'debug';
         if (kwDebug && kwDebug.test(plainText)) return 'debug';
         if (kwNotice && kwNotice.test(plainText)) return 'notice';
-        // DB-vendor annotation runs before genericSqlPattern so an I/flutter line
-        // like "[Drift] connection pool warming" with no SQL keyword still
-        // classifies as database. Stays after W-warning short-circuit on
-        // purpose: an explicit W/ from logcat is a stronger signal than a tag.
+        // App-emitted head tag and DB-vendor annotation run before genericSqlPattern so an
+        // I/flutter line like "[db] connection pool warming" / "[Drift] …" with no SQL keyword
+        // still classifies by tag. Both stay after the W-warning short-circuit on purpose: an
+        // explicit W/ from logcat is a stronger signal than a vendor or app tag.
+        var lcTagLevel = matchesTagLevel(plainText);
+        if (lcTagLevel) return lcTagLevel;
         if (matchesDatabaseAnnotation(plainText)) return 'database';
         if (genericSqlPattern.test(plainText)) return 'database';
         return 'info';
     }
     if (matchesError(plainText)) return 'error';
-    // DB-vendor bracket tags and "Vendor:" prefixes promote to database BEFORE the
-    // generic warning/perf keyword sweep — without this, lines like
-    // "DRIFT: VM Service WebSocket connect failed" classify as 'warning' (via
-    // the "failed" keyword) and "[IsarDriftRowCountAudit] ..." as 'info', so
-    // the Database level filter could not hide them as a group. Error still
-    // wins above this check.
+    // Explicit app-emitted head tag ([db] …, [perf:phase 2] …) wins over the generic
+    // warning/perf keyword sweep so "[db] bulkPreload failed" is database, not warning.
+    // Runs AFTER the error check so "[db] Error: lost connection" still classifies as error.
+    var tagLevel = matchesTagLevel(plainText);
+    if (tagLevel) return tagLevel;
+    // matchesDatabaseAnnotation keeps the non-bracket "Vendor:" colon-prefix arm (e.g.
+    // "DRIFT: VM Service WebSocket connect failed"); the head-tag dictionary above
+    // supersedes its bracket arm. Both sit ahead of the keyword sweep for the same reason.
     if (matchesDatabaseAnnotation(plainText)) return 'database';
     if (memoryPhraseRe.test(plainText) && !flutterDartContextRe.test(plainText)) return 'info';
     if (kwWarn && kwWarn.test(plainText)) return 'warning';

@@ -53,11 +53,11 @@ export function getCollectionsPanelScript(): string {
     function formatAgo(ms) {
         if (ms == null || !Number.isFinite(ms)) return '';
         var d = Date.now() - ms;
-        if (d < 60000) return 'just now';
-        if (d < 3600000) return Math.floor(d / 60000) + ' min ago';
-        if (d < 86400000) return Math.floor(d / 3600000) + 'h ago';
-        if (d < 604800000) return Math.floor(d / 86400000) + ' days ago';
-        return Math.floor(d / 604800000) + 'w ago';
+        if (d < 60000) return vt('viewer.collections.justNow');
+        if (d < 3600000) return vt('viewer.collections.minAgo', Math.floor(d / 60000));
+        if (d < 86400000) return vt('viewer.collections.hAgo', Math.floor(d / 3600000));
+        if (d < 604800000) return vt('viewer.collections.daysAgo', Math.floor(d / 86400000));
+        return vt('viewer.collections.wAgo', Math.floor(d / 604800000));
     }
 
     /* ---- Render ---- */
@@ -74,14 +74,14 @@ export function getCollectionsPanelScript(): string {
         if (mergeSection) mergeSection.style.display = collectionsData.length >= 2 ? '' : 'none';
 
         if (collectionsData.length === 0) {
-            listEl.innerHTML = '<p class="collections-empty">No collections yet.</p>';
+            listEl.innerHTML = '<p class="collections-empty">' + vt('viewer.collections.empty') + '</p>';
             return;
         }
 
         listEl.innerHTML = collectionsData.map(function(c) {
             var isActive = c.id === activeId;
             var srcCount = c.sourceCount != null ? c.sourceCount : 0;
-            var srcText = srcCount + ' source' + (srcCount === 1 ? '' : 's');
+            var srcText = vt(srcCount === 1 ? 'viewer.collections.sourceOne' : 'viewer.collections.sourceMany', srcCount);
             var agoText = c.updatedAt ? formatAgo(c.updatedAt) : '';
             var meta = [srcText, agoText].filter(Boolean).join(' \\u00b7 ');
             var activeCls = isActive ? ' collections-item-active' : '';
@@ -93,10 +93,10 @@ export function getCollectionsPanelScript(): string {
                 + '</div>'
                 + '<div class="collections-item-meta">' + esc(meta) + '</div>'
                 + '<div class="collections-item-actions">'
-                + '<button class="collections-action-btn collections-rename-btn" data-id="' + esc(c.id) + '" data-name="' + esc(c.name) + '" title="Rename">\\u270E</button>'
-                + '<button class="collections-action-btn collections-open-btn" data-id="' + esc(c.id) + '" title="Open">'
+                + '<button class="collections-action-btn collections-rename-btn" data-id="' + esc(c.id) + '" data-name="' + esc(c.name) + '" title="' + vt('viewer.collections.rename') + '">\\u270E</button>'
+                + '<button class="collections-action-btn collections-open-btn" data-id="' + esc(c.id) + '" title="' + vt('viewer.collections.open') + '">'
                 + '<span class="codicon codicon-folder-opened"></span></button>'
-                + '<button class="collections-action-btn collections-delete-btn" data-id="' + esc(c.id) + '" title="Delete">'
+                + '<button class="collections-action-btn collections-delete-btn" data-id="' + esc(c.id) + '" title="' + vt('viewer.collections.delete') + '">'
                 + '<span class="codicon codicon-trash"></span></button>'
                 + '</div>'
                 + '</div>';
@@ -171,7 +171,7 @@ export function getCollectionsPanelScript(): string {
         var sourceId = mergeSource.value;
         var targetId = mergeTarget.value;
         if (sourceId === targetId) {
-            if (mergeError) { mergeError.textContent = 'Source and target must be different'; mergeError.style.display = ''; }
+            if (mergeError) { mergeError.textContent = vt('viewer.collections.mergeError'); mergeError.style.display = ''; }
             return;
         }
         vscodeApi.postMessage({ type: 'mergeCollections', sourceId: sourceId, targetId: targetId });

@@ -269,8 +269,26 @@ function calcItemHeight(item) {
        than the rendered block, producing drift in subsequent row positions. */
     if (item.artBlockPos === 'start' || item.artBlockPos === 'end') return logFontSize + 6;
     if (item.artBlockPos === 'middle') return logFontSize;
-    /* Structured file collapse (plan 051): markdown sections and JSON brace pairs. */
-    if (item._mdSectionHidden || item._jsonSectionHidden) return 0;
+    /* Structured file collapse (plan 051): markdown sections, JSON brace pairs, comment blocks. */
+    if (item._mdSectionHidden || item._jsonSectionHidden || item._mdCommentHidden) return 0;
+    /* Markdown table separator row (|---|): collapse to nothing. The header row carries a
+       bottom border as the divider, so a full-height empty separator would only add a gap. */
+    if (item._mdTableSep && typeof formatEnabled !== 'undefined' && formatEnabled && typeof fileMode !== 'undefined' && fileMode === 'markdown') return 0;
+    /* Markdown headings get a taller row for the larger font + vertical breathing room on top
+       of the comfortable document line height (applyMarkdownTypography). Body spacing itself
+       comes from that line height, NOT a per-line multiplier — so this only adds heading
+       hierarchy. renderItem pins this exact value as the line's inline height, so the rendered
+       DOM height matches this scroll-math value precisely (no prefix-sum drift). */
+    /* Heading rows are sized from the heading's own font requirement (mdHeadingRowHeight) so
+       they fit the larger font without overlap; renderItem pins this exact value inline. */
+    if (item._mdHeadingLevel && typeof formatEnabled !== 'undefined' && formatEnabled && typeof fileMode !== 'undefined' && fileMode === 'markdown' && typeof mdHeadingRowHeight === 'function') {
+        return mdHeadingRowHeight(item, ROW_HEIGHT, (typeof logLineHeight === 'number' ? logLineHeight : 1.1));
+    }
+    /* Top-level list item: add ~0.4 row of top space (rendered as padding-top, border-box) so
+       consecutive multi-line bullets are visually separated. */
+    if (item._mdBulletTop && typeof formatEnabled !== 'undefined' && formatEnabled && typeof fileMode !== 'undefined' && fileMode === 'markdown') {
+        return ROW_HEIGHT + Math.ceil(0.4 * ROW_HEIGHT);
+    }
     if (item.type === 'marker') {
         /* markerHidden / markerCollapsed are set by applyDbSignalMarkerVisibility and
            applyConsecutiveDbMarkerCollapse (viewer-data-marker-filter). Honouring them here

@@ -17,7 +17,7 @@ import { scanForPerfFingerprints } from '../misc/perf-fingerprint';
 import { scanAnrRisk } from '../analysis/anr-risk-scorer';
 import { detectAppVersion } from '../misc/app-version';
 import { detectTargetDevice } from '../misc/device-detector';
-import { countSeverities, extractBody } from '../../ui/session/session-severity-counts';
+import { countSeveritiesChunked, extractBody } from '../../ui/session/session-severity-counts';
 import {
     generateSummary, showSummaryNotification, withLogUri, SessionStats,
 } from './session-summary';
@@ -252,7 +252,7 @@ function scanAnrRiskForSession(
         const body = extractBody(Buffer.from(raw).toString('utf-8'));
         const risk = scanAnrRisk(body);
         if (risk.score === 0) { return; }
-        const sev = countSeverities(body);
+        const sev = await countSeveritiesChunked(body);
         const meta = await store.loadMetadata(fileUri);
         meta.anrCount = sev.anrs;
         meta.anrRiskLevel = risk.level;

@@ -41,8 +41,15 @@ export async function loadUnifiedSessionJsonlContent(
   try {
     const mainLogPath = uri.fsPath.slice(0, -UNIFIED_SESSION_LOG_SUFFIX.length) + ".log";
     const mainRaw = await vscode.workspace.fs.readFile(vscode.Uri.file(mainLogPath));
-    const mainFields = parseHeaderFields(Buffer.from(mainRaw).toString("utf-8").split(/\r?\n/));
+    const mainLines = Buffer.from(mainRaw).toString("utf-8").split(/\r?\n/);
+    const mainFields = parseHeaderFields(mainLines);
     sessionMidnightMs = computeSessionMidnight(mainFields["Date"] ?? "");
+    // Also surface the raw header lines so the info modal can render groupings.
+    const headerEndIdx = findHeaderEnd(mainLines);
+    if (headerEndIdx > 0) {
+      const headerLines = mainLines.slice(0, headerEndIdx).filter((l) => l !== '');
+      postUnified({ type: 'setSessionHeaderLines', headerLines });
+    }
   } catch {
     sessionMidnightMs = 0;
   }

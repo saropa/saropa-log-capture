@@ -24,16 +24,6 @@ export function getSessionPanelLayoutStyles(): string {
     overflow: hidden;
 }
 
-.session-panel-resize {
-    position: absolute; right: -3px; top: 0; bottom: 0; width: 6px;
-    cursor: col-resize; z-index: 1;
-}
-.session-panel-resize:hover,
-.session-panel-resize.dragging {
-    background: var(--vscode-focusBorder);
-    opacity: 0.5;
-}
-
 .session-panel.visible {
     display: flex;
 }
@@ -121,51 +111,11 @@ export function getSessionPanelLayoutStyles(): string {
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 
-/* --- Session panel display toggles --- */
-.session-panel-toggles {
-    display: flex;
-    gap: 4px;
-    align-items: center;
-    padding: 4px 12px;
-    border-bottom: 1px solid var(--vscode-panel-border);
-}
-
-/* Date range filter dropdown (All time / Last 7 days / Last 30 days). */
-.session-date-range-select {
-    font-size: 12px;
-    padding: 2px 6px;
-    border-radius: 3px;
-    border: 1px solid var(--vscode-input-border, transparent);
-    background: var(--vscode-input-background, transparent);
-    color: var(--vscode-input-foreground, var(--vscode-foreground));
-    margin-right: 4px;
-}
-
-.session-toggle-btn {
-    background: none;
-    border: 1px solid transparent;
-    color: var(--vscode-descriptionForeground);
-    cursor: pointer;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.session-toggle-btn:hover {
-    color: var(--vscode-foreground);
-    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
-}
-
-.session-sort-btn { margin-left: auto; }
-
-.session-toggle-btn.active {
-    color: var(--vscode-foreground);
-    background: var(--vscode-button-secondaryBackground, rgba(90, 93, 94, 0.31));
-    border-color: var(--vscode-focusBorder);
-}
+/* Anchor for the kebab options popover (defined in viewer-styles-session-options.ts).
+   The popover positions itself relative to the header via top:100%, so the header
+   MUST be the nearest positioned ancestor — without this it falls through to the
+   document body and lands in the wrong corner. */
+.session-panel-header { position: relative; }
 
 .session-panel-content {
     flex: 1;

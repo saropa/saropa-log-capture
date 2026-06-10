@@ -13,6 +13,17 @@ function updateFooterText() {
         /* Keep in sync with #footer-text title in viewer-toolbar-html.ts */
         fn.className = 'footer-filename'; fn.textContent = currentFilename; fn.title = 'Log file — click the name for actions (open in editor, folder, copy path). Press F1 in the viewer (default) for the shortcut list.';
         footerTextEl.appendChild(fn);
+        /* Cumulative cross-session feed (plan 057): when the live view holds lines from
+           ≥2 origin files, show a clickable (n) counter of accumulated files. Clicking it
+           opens the files dialog (letter A/B/… → per-file actions). The filename itself
+           still opens the single-file actions modal for the current file. */
+        if (typeof fileCodeCount === 'function' && fileCodeCount() >= 2) {
+            var cnt = document.createElement('span');
+            cnt.className = 'footer-file-count';
+            cnt.textContent = ' (' + fileCodeCount() + ')';
+            cnt.title = (typeof vt === 'function') ? vt('viewer.files.counterTooltip', fileCodeCount()) : ('' + fileCodeCount() + ' files in this view');
+            footerTextEl.appendChild(cnt);
+        }
     }
     if (loadTruncatedInfo) {
         footerTextEl.appendChild(document.createTextNode(' \\u00b7 Showing first ' + formatNumber(loadTruncatedInfo.shown) + ' of ' + formatNumber(loadTruncatedInfo.total) + ' lines'));

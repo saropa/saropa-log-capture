@@ -15,7 +15,9 @@ import { handleQuickExportLogs } from './viewer-quick-export';
 import { getInteractionTracker } from '../../modules/learning/learning-runtime';
 import { showKeyboardShortcutsPanel } from '../panels/keyboard-shortcuts-panel';
 import { handleOpenSessionForSignalType } from '../shared/handlers/recurring-handlers';
-import { SAROPA_BOOL_SETTING_BY_MSG_TYPE } from "./viewer-workspace-bool-message-map";
+import { SAROPA_BOOL_SETTING_BY_MSG_TYPE, SAROPA_GLOBAL_BOOL_SETTING_BY_MSG_TYPE } from "./viewer-workspace-bool-message-map";
+import { handleLogFileAction } from "./viewer-log-file-actions";
+import { handleOpenDroppedLog } from "./viewer-dropped-log";
 
 /** Coerce message field to string; never stringify objects (avoids '[object Object]'). */
 function msgStr(m: Record<string, unknown>, key: string, fallback = ""): string {
@@ -38,6 +40,19 @@ function isAllowedExternalUrl(url: string): boolean {
   return /^https?:\/\//i.test(trimmed) || /^vscode:\/\//i.test(trimmed);
 }
 
+/* Reveal an arbitrary absolute path (from the session header — e.g. main.dart,
+   cwd) in the OS file explorer. Validates the path before invoking the
+   built-in 'revealFileInOS' command so a hostile webview payload cannot
+   coerce a path traversal. */
+function runRevealPath(msg: Record<string, unknown>): void {
+  const path = msgStr(msg, "path").trim();
+  if (path.length === 0 || path.length > 2048) {
+    logExtensionWarn('viewerMessage', 'revealPath rejected: empty or too long');
+    return;
+  }
+  vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(path)).then(undefined, () => {});
+}
+
 function runSessionAction(msg: Record<string, unknown>, ctx: ViewerMessageContext): void {
   const uriStrings = Array.isArray(msg.uriStrings) ? (msg.uriStrings as string[]) : [msgStr(msg, "uriString")];
   const filenames = Array.isArray(msg.filenames) ? (msg.filenames as string[]) : [msgStr(msg, "filename")];
@@ -53,6 +68,15 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
   if (boolKey) {
     vscode.workspace.getConfiguration("saropaLogCapture")
       .update(boolKey, Boolean(msg.value), vscode.ConfigurationTarget.Workspace);
+    return true;
+  }
+  // Viewer Columns: write at User (Global) scope so the chosen column layout becomes the
+  // user's cross-project default for newly opened logs (see SAROPA_GLOBAL_BOOL_SETTING_BY_MSG_TYPE).
+  const globalBoolKey = SAROPA_GLOBAL_BOOL_SETTING_BY_MSG_TYPE[type];
+  if (globalBoolKey) {
+    vscode.workspace.getConfiguration("saropaLogCapture")
+      .update(globalBoolKey, Boolean(msg.value), vscode.ConfigurationTarget.Global)
+      .then(undefined, () => {});
     return true;
   }
   /* Minimap drag-to-resize: persist custom pixel width to workspace state */
@@ -79,6 +103,7 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
       ctx.onLinkClick?.(msgStr(msg, "path"), Number(msg.line ?? 1), Number(msg.col ?? 1), Boolean(msg.splitEditor));
       return true;
     case "openUrl": runOpenUrl(msg); return true;
+    case "revealPath": runRevealPath(msg); return true;
     case "navigatePart": ctx.onPartNavigate?.(Math.max(1, safeLineIndex(msg.part, 1))); return true;
     case "navigateSession": { const d = Number(msg.direction); ctx.onSessionNavigate?.(d < 0 ? -1 : 1); return true; }
     case "savePresetRequest":
@@ -122,11 +147,28 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
       return true;
     case "requestBookmarks": case "deleteBookmark": case "deleteFileBookmarks": case "deleteAllBookmarks": case "editBookmarkNote": case "openBookmark": ctx.onBookmarkAction?.(msg); return true;
     case "requestSessionList": ctx.onSessionListRequest?.(); return true;
+    case "acknowledgeUnreadLogs": {
+      /* Newer-log banner Dismiss / focus-acknowledgement: advance the panel's "dismiss cursor"
+         to now so every previously-flagged row drops `unreadSinceFocus`. A subsequent
+         `requestSessionList` rebuilds the payload with the new cursor; we trigger it here so
+         the user sees the banner clear without needing to reopen the panel. The cursor key
+         must stay in sync with viewer-handler-wiring.ts (LOGS_PANEL_DISMISSED_AT_KEY). */
+      ctx.context.workspaceState.update("saropaLogCapture.logsPanelDismissedAt", Date.now())
+        .then(() => { ctx.onSessionListRequest?.(); }, () => {});
+      return true;
+    }
     case "runCommand":
       vscode.commands.executeCommand(msgStr(msg, "command"), ...(Array.isArray(msg.args) ? msg.args : [])).then(undefined, () => {});
       return true;
     case "browseSessionRoot": ctx.onBrowseSessionRoot?.()?.then(undefined, () => {}); return true;
     case "clearSessionRoot": ctx.onClearSessionRoot?.()?.then(undefined, () => {}); return true;
+    case "exportSessionListJson": ctx.onExportSessionListJson?.()?.then(undefined, () => {}); return true;
+    // Kebab "Open log file…" delegates to the command so the picker logic lives in one place.
+    case "openLogFile": vscode.commands.executeCommand("saropaLogCapture.openLogFile").then(undefined, () => {}); return true;
+    // Kebab "Open log from URL…" delegates to the command (prompts, downloads, renders).
+    case "openLogFromUrl": vscode.commands.executeCommand("saropaLogCapture.openLogFromUrl").then(undefined, () => {}); return true;
+    // OS file dropped onto the viewer — load by path, or stage transferred content to a temp file.
+    case "openDroppedLog": handleOpenDroppedLog(msg, ctx).then(undefined, () => {}); return true;
     case "openSessionFromPanel": ctx.onOpenSessionFromPanel?.(msgStr(msg, "uriString")); return true;
     case "sqlHistoryCrossLogJump": {
       /* DB_17: SQL History panel row jump where the fingerprint's first occurrence is in
@@ -172,26 +214,26 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
     case "revealLogFile":
       if (ctx.currentFileUri && ctx.onRevealLogFile) { Promise.resolve(ctx.onRevealLogFile(ctx.currentFileUri.toString())).catch(() => {}); }
       return true;
+    case "revealPathInOS": {
+      // About panel Debug section: reveal an arbitrary meta file/folder (e.g. the reports dir)
+      // in the OS file explorer. Distinct from revealLogFile, which only targets the open log.
+      const revealUri = msgStr(msg, "uriString");
+      if (revealUri) { void vscode.commands.executeCommand("revealFileInOS", vscode.Uri.parse(revealUri)); }
+      return true;
+    }
     case "openLogFileInEditor":
-      if (ctx.currentFileUri) {
-        vscode.window.showTextDocument(ctx.currentFileUri, { preview: true }).then(() => {}, () => {});
-      }
-      return true;
-    // Hold-to-copy path: show status bar confirmation so users get visible feedback.
-    case "copyCurrentFilePath":
-      if (ctx.currentFileUri) {
-        vscode.env.clipboard.writeText(ctx.currentFileUri.fsPath).then(
-          () => { vscode.window.setStatusBarMessage(t('msg.filePathCopied'), 2000); },
-          () => {},
-        );
-      }
-      return true;
-    // Reveal current file in OS so the containing folder opens (not the parent folder).
+    case "openLogFileBeside":
     case "openCurrentFileFolder":
-      if (ctx.currentFileUri) {
-        vscode.commands.executeCommand('revealFileInOS', ctx.currentFileUri).then(() => {}, () => {});
-      }
-      return true;
+    case "revealLogFileInExplorer":
+    case "openLogFileFolderInTerminal":
+    case "copyCurrentFilePath":
+    case "copyCurrentFileName":
+    case "copyCurrentFileRelativePath":
+      /* All log-file modal actions: centralized to avoid silent no-ops when
+         currentFileUri is unset, and to give visible toast feedback on copy.
+         An optional `path` (plan 057 files dialog) targets a specific accumulated
+         file instead of the tailed one. */
+      return handleLogFileAction(type, ctx, msgStr(msg, "path") || undefined);
     case "showKeyboardShortcuts":
       showKeyboardShortcutsPanel();
       return true;

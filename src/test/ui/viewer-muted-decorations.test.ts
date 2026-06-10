@@ -1,5 +1,8 @@
 /**
- * Regression tests for muted decoration/link styling.
+ * Regression tests for muted decoration/link styling AND for the
+ * virtualized-row ghost-paint defenses (CSS + viewport renderer). The two
+ * groups share a file because both are about preventing a future cleanup
+ * from removing rules whose purpose is non-obvious from the diff alone.
  *
  * Decorations (counter, timestamp, elapsed, separator) and clickable links
  * (source-link, url-link) must render in grey (editorLineNumber token) so
@@ -10,6 +13,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { getDecorationStyles } from "../../ui/viewer-styles/viewer-styles-decoration";
 import { getLineStyles } from "../../ui/viewer-styles/viewer-styles-lines";
+import { getViewportRenderScript } from "../../ui/viewer/viewer-data-viewport";
 
 // --- Decoration prefix ---
 
@@ -106,6 +110,54 @@ test(".line, .stack-header carry transform: translateZ(0) for compositor isolati
   assert.ok(
     /transform:\s*translateZ\(0\)/.test(rule),
     ".line, .stack-header must declare transform: translateZ(0) to prevent stale-pixel ghosting on virtualized row recycle",
+  );
+});
+
+test(".line, .stack-header carry opaque background to obscure recycled-slot ghost pixels", () => {
+  /* Attempt #1 (transform: translateZ(0)) shipped in v7.17.0 was empirically
+     insufficient on the user's machine — they still saw "DRIFT: Drift debug
+     server disconnected" rendered with prior info-row blue text ghosting
+     through. Attempt #2 adds an opaque fill rect on every row, painted
+     before the text content, so any stale pixels Chromium leaves in the
+     recycled slot are physically covered. Same color as the editor parent
+     so the row looks identical, but the browser DOES rasterize the fill —
+     which is the point. Pinning so a future "rows have no background — why
+     is this here?" cleanup is caught. See
+     plans/history/2026.06/2026.06.02/viewer-row-paint-ghosting-attempts.md. */
+  const css = getLineStyles();
+  const rule = css.match(/\.line,\s*\.stack-header\s*\{[^}]*\}/s)?.[0] ?? "";
+  assert.ok(
+    /background:\s*var\(--vscode-editor-background\)/.test(rule),
+    ".line, .stack-header must declare background: var(--vscode-editor-background) to physically obscure ghost pixels left by Chromium's paint cache on virtualized row recycle",
+  );
+});
+
+test("renderViewport swaps DOM via <template> + replaceChildren/appendChild, never via innerHTML on the live viewport", () => {
+  /* Attempt #3 of the ghost-paint fix (attempts #1 transform: translateZ(0)
+     and #2 opaque background documented in viewer-styles-lines.ts and
+     plans/history/2026.06/2026.06.02/viewer-row-paint-ghosting-attempts.md). The innerHTML setter takes a
+     Chromium fast path that can reuse prior child paint records for a slot;
+     attempts #1 and #2 layer compositor/paint defenses on top of that, but
+     the deterministic fix is to detach + dispose every prior child via
+     replaceChildren() and attach a fresh DocumentFragment so the new row
+     has no paint-cache lineage with whatever previously occupied the slot.
+
+     This test guards against a future "let's go back to innerHTML for perf"
+     cleanup — replaceChildren has slightly more overhead but is the load-
+     bearing defense, the perf difference is negligible at ~50 visible rows,
+     and reverting it would silently re-open the ghost-paint regression. */
+  const js = getViewportRenderScript();
+  assert.ok(
+    /viewportEl\.replaceChildren\(\)/.test(js),
+    "renderViewport must clear the live viewport with replaceChildren() before attaching the new fragment",
+  );
+  assert.ok(
+    /viewportEl\.appendChild\(\s*_vTmpl\.content\s*\)/.test(js),
+    "renderViewport must attach the new rows via appendChild(template.content) so the fragment moves in one atomic operation",
+  );
+  assert.ok(
+    !/viewportEl\.innerHTML\s*=/.test(js),
+    "renderViewport must NOT assign to viewportEl.innerHTML — that path can reuse prior paint records and was the original source of the ghost-pixel bug",
   );
 });
 

@@ -6,38 +6,102 @@
  */
 
 import * as vscode from 'vscode';
+import { open } from 'node:fs/promises';
 import { SessionMetadata, formatSize } from './session-history-grouping';
 import { formatMtime, formatMtimeTimeOnly, formatRelativeTime } from './session-display';
-import { countSeverities, extractBody } from './session-severity-counts';
-
 /** Regex to extract line count from the SESSION END footer. */
 const footerCountRe = /===\s*SESSION END\b.*?(\d[\d,]*)\s+lines\s*===/;
 /** Regex to extract ISO date from the SESSION END footer. */
 const footerDateRe = /===\s*SESSION END[\s\u2014\u2013-]+(\d{4}-\d{2}-\d{2}T[\d:.]+Z?)/;
 
-/** Parse header fields, footer line count, and timestamp presence from a log file. Skips severity scan when counts are already cached in the sidecar. */
-export async function parseHeader(uri: vscode.Uri, base: SessionMetadata, skipSeverityScan = false): Promise<SessionMetadata> {
+/* Above this size the blocking list-refresh pass reads only the head + tail of the file
+   instead of the whole body. A `reports/` folder can hold multi-hundred-MB sidecars
+   (117 MB l10n_failures.json was observed); reading them in full on every refresh
+   exhausted memory and the whole fetch fell into its catch-all, blanking the panel
+   ("No sessions found"). The header (Date/Project/Adapter) sits in the head and the
+   SESSION END footer (line count + end timestamp) sits in the tail, so a head+tail
+   read recovers everything the list needs without ever materializing the body. Files
+   at or below this size keep the exact whole-file parse (newline-count fallback intact). */
+const quickScanThresholdBytes = 2 * 1024 * 1024;
+const headScanBytes = 64 * 1024;
+const tailScanBytes = 64 * 1024;
+
+/**
+ * Parse header fields, footer line count, and timestamp presence from a log file.
+ *
+ * **Never scans the body for severities.** The list panel must display fast on first
+ * paint (large log files were blocking the streaming path on a multi-MB body scan).
+ * Severity counts are produced separately by the deferred worker \u2014 see
+ * `session-severity-scan.ts` \u2014 and posted to the webview as a follow-up update.
+ *
+ * Reads the whole file because the footer (line count + end timestamp) lives at
+ * the tail. Trade-off: a single fs.readFile is cheaper than seek+tail, and the
+ * file is hot for the deferred scan that follows.
+ */
+export async function parseHeader(uri: vscode.Uri, base: SessionMetadata): Promise<SessionMetadata> {
     try {
-        const raw = await vscode.workspace.fs.readFile(uri);
-        const text = Buffer.from(raw).toString('utf-8');
-        const headerEnd = text.indexOf('==================');
-        const block = headerEnd > 0 ? text.slice(0, headerEnd) : text.slice(0, 800);
-        const hasTimestamps = detectTimestamps(text, headerEnd);
-        const lineCount = parseLineCount(text);
-        const fields = extractFields(block);
-        const durationMs = parseDuration(text, fields.date);
-        if (skipSeverityScan) {
-            return { ...base, ...fields, hasTimestamps, lineCount, durationMs };
+        // Large files get the head+tail quick scan; everything else keeps the exact whole-file parse.
+        if (base.size > quickScanThresholdBytes) {
+            return await parseHeaderQuick(uri, base);
         }
-        const sev = countSeverities(extractBody(text));
-        return {
-            ...base, ...fields, hasTimestamps, lineCount, durationMs,
-            errorCount: sev.errors, warningCount: sev.warnings, perfCount: sev.perfs,
-            anrCount: sev.anrs > 0 ? sev.anrs : undefined,
-            fwCount: sev.frameworks, infoCount: sev.infos,
-        };
+        const raw = await vscode.workspace.fs.readFile(uri);
+        return parseHeaderFromText(Buffer.from(raw).toString('utf-8'), base);
     } catch {
         return base;
+    }
+}
+
+/** Parse header/footer fields from the full file text (small-file path). */
+function parseHeaderFromText(text: string, base: SessionMetadata): SessionMetadata {
+    const headerEnd = text.indexOf('==================');
+    const block = headerEnd > 0 ? text.slice(0, headerEnd) : text.slice(0, 800);
+    const hasTimestamps = detectTimestamps(text, headerEnd);
+    const lineCount = parseLineCount(text);
+    const fields = extractFields(block);
+    const durationMs = parseDuration(text, fields.date);
+    return { ...base, ...fields, hasTimestamps, lineCount, durationMs };
+}
+
+/**
+ * Quick scan for large files: read only the head (header block + first content line)
+ * and the tail (SESSION END footer). The exact line count is available only when the
+ * footer is present — a footerless giant file (e.g. a raw JSON report) leaves lineCount
+ * undefined here; the deferred worker fills counts it can derive. Never materializes the
+ * body, so a 117 MB file costs ~128 KB of reads instead of 117 MB.
+ */
+async function parseHeaderQuick(uri: vscode.Uri, base: SessionMetadata): Promise<SessionMetadata> {
+    const { head, tail } = await readHeadAndTail(uri.fsPath, headScanBytes, tailScanBytes);
+    const headerEnd = head.indexOf('==================');
+    const block = headerEnd > 0 ? head.slice(0, headerEnd) : head.slice(0, 800);
+    const fields = extractFields(block);
+    const hasTimestamps = detectTimestamps(head, headerEnd);
+    const lineCount = footerLineCount(tail);
+    const durationMs = parseDuration(tail, fields.date);
+    return { ...base, ...fields, hasTimestamps, lineCount, durationMs };
+}
+
+/**
+ * Read the first `headBytes` and last `tailBytes` of a file via a positional read —
+ * vscode.workspace.fs.readFile has no range API, so node fs is the only way to avoid
+ * loading the whole body. A torn multibyte char at a chunk edge decodes to a single
+ * replacement char; the header and footer lines sit well inside their chunk, so the
+ * parsed fields are unaffected.
+ */
+async function readHeadAndTail(
+    fsPath: string, headBytes: number, tailBytes: number,
+): Promise<{ head: string; tail: string }> {
+    const handle = await open(fsPath, 'r');
+    try {
+        const { size } = await handle.stat();
+        const headLen = Math.min(headBytes, size);
+        const headBuf = Buffer.alloc(headLen);
+        await handle.read(headBuf, 0, headLen, 0);
+        const tailLen = Math.min(tailBytes, size);
+        const tailBuf = Buffer.alloc(tailLen);
+        await handle.read(tailBuf, 0, tailLen, size - tailLen);
+        return { head: headBuf.toString('utf-8'), tail: tailBuf.toString('utf-8') };
+    } finally {
+        await handle.close();
     }
 }
 
@@ -53,10 +117,17 @@ function detectTimestamps(text: string, headerEnd: number): boolean {
  * Extract line count: prefer footer (exact), fall back to newline count.
  * The footer is written by LogSession.stop(): `=== SESSION END — {date} — N lines ===`
  */
-function parseLineCount(text: string): number {
+/** Exact line count from the SESSION END footer, or undefined when no footer is present.
+ *  The quick-scan path uses this directly (no body to count newlines in). */
+function footerLineCount(text: string): number | undefined {
     const footerMatch = text.match(footerCountRe);
-    if (footerMatch) {
-        return parseInt(footerMatch[1].replace(/,/g, ''), 10);
+    return footerMatch ? parseInt(footerMatch[1].replace(/,/g, ''), 10) : undefined;
+}
+
+function parseLineCount(text: string): number {
+    const fromFooter = footerLineCount(text);
+    if (fromFooter !== undefined) {
+        return fromFooter;
     }
     // Fallback: count newlines after the header
     const headerEnd = text.indexOf('==================');
