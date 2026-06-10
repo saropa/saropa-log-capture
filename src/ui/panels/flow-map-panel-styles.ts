@@ -51,12 +51,46 @@ export function flowMapStyles(nonce: string): string {
   .sec-body { padding: 0.5rem 0 0.2rem; }
 
   /* Diagram on the left; narrative + tables stacked in the right column so they stay visible
-     alongside a tall diagram instead of being pushed below it. Wraps to one column when narrow. */
-  .report-row { display: flex; flex-wrap: wrap; gap: 1.75rem; align-items: flex-start; }
-  .diagram-col { flex: 0 1 auto; min-width: 260px; max-width: 100%; }
+     alongside a tall diagram instead of being pushed below it. Wraps to one column when narrow.
+     The gap is 0 here because the .col-resize divider supplies the visual gutter (and the drag
+     target); a flex gap would otherwise double the space and split the hit area. */
+  .report-row { display: flex; flex-wrap: wrap; gap: 0; align-items: flex-start; }
+  /* Width is driven by --diagram-w (set by the resize drag); auto until the user drags. */
+  .diagram-col { flex: 0 0 auto; width: var(--diagram-w, auto); min-width: 260px; max-width: 100%; }
   .detail-col { flex: 1 1 420px; min-width: 320px; }
   .detail-col p { max-width: 60ch; }
   .diagram { overflow-x: auto; max-width: 100%; padding: 0.4rem 0 1rem; }
+
+  /* Draggable column divider. A wide invisible hit area around a thin visible rule keeps the grab
+     forgiving without a fat gutter. Highlights on hover/drag so the affordance is discoverable. */
+  .col-resize { flex: 0 0 auto; align-self: stretch; width: 1.75rem; cursor: col-resize; position: relative; touch-action: none; }
+  .col-resize::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; transform: translateX(-50%); background: var(--vscode-panel-border); transition: background 0.12s; }
+  .col-resize:hover::before, .col-resize.dragging::before { background: var(--vscode-focusBorder); width: 3px; }
+
+  /* When every section in a column is collapsed, the column shrinks to its headers so the open
+     column claims the freed width — symmetric for the single-section flow side and the detail side. */
+  .diagram-col.col-collapsed { width: auto; min-width: 0; }
+  .detail-col.col-collapsed { flex: 0 0 auto; min-width: 0; }
+  /* A fully-collapsed column has no content to resize against — hide the divider so it can't strand. */
+  .report-row.no-resize .col-resize { pointer-events: none; }
+  .report-row.no-resize .col-resize::before { opacity: 0.4; }
+  /* Single-column (wrapped) layout: the divider is meaningless, so it folds away. */
+  @media (max-width: 720px) { .col-resize { display: none; } .diagram-col { width: auto; } }
+
+  /* Sortable headers (Issue Report): a chevron fades in on hover; the active sort key shows its
+     direction persistently. Cursor + user-select make the click target read as interactive. */
+  table.sortable th { cursor: pointer; user-select: none; }
+  table.sortable th::after { content: '↕'; margin-left: 0.35rem; opacity: 0; font-size: 0.85em; }
+  table.sortable th:hover::after { opacity: 0.55; }
+  table.sortable th[aria-sort="ascending"]::after { content: '▲'; opacity: 0.9; }
+  table.sortable th[aria-sort="descending"]::after { content: '▼'; opacity: 0.9; }
+
+  /* Executive-summary copy button: parked top-right of the block, invisible until the block is
+     hovered or the button itself is focused (keyboard reachability). */
+  .narrative-block { position: relative; }
+  .copy-narrative { position: absolute; top: 0; right: 0; border: none; background: transparent; color: var(--vscode-descriptionForeground); cursor: pointer; font-size: 1.05em; padding: 0.1rem 0.3rem; border-radius: 5px; opacity: 0; transition: opacity 0.12s; }
+  .narrative-block:hover .copy-narrative, .copy-narrative:focus-visible { opacity: 0.85; }
+  .copy-narrative:hover { background: var(--vscode-toolbar-hoverBackground, rgba(127,127,127,0.18)); opacity: 1; }
 
   table { border-collapse: collapse; width: auto; max-width: 100%; font-size: 0.95em; margin-top: 0.4rem; }
   th, td { padding: 0.45rem 0.95rem; text-align: left; vertical-align: top; }

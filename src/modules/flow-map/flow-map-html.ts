@@ -125,8 +125,21 @@ function issueTableHtml(parsed: ParsedLog): string {
             + `<td class="nowrap">${esc(stripAnsi(i.category))}</td><td>${esc(stripAnsi(i.detail))}</td>`
             + `${sourceCell(i.source)}${logCell(i.logLine)}</tr>`;
     }).join('');
-    return '<table><thead><tr><th class="num">Time</th><th>Sev</th><th>What</th><th>Detail</th>'
+    // `sortable` opts the table into client-side column sorting (script wires the headers). The Time
+    // header carries `num` so the sorter compares parsed HH:MM:SS, not raw text.
+    return '<table class="sortable"><thead><tr><th class="num">Time</th><th>Sev</th><th>What</th><th>Detail</th>'
         + `<th>Source</th><th>Log</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+/**
+ * Executive-summary body: the generated narrative plus a copy button that reveals on hover. The
+ * button has no inline text payload — the script reads the rendered paragraph's textContent and
+ * asks the host to copy it, so the clipboard gets clean prose without the HTML escaping.
+ */
+function narrativeSectionHtml(parsed: ParsedLog, graph: FlowGraph): string {
+    return '<div class="narrative-block">'
+        + '<button type="button" class="copy-narrative" title="Copy summary" aria-label="Copy summary">⧉</button>'
+        + '<p id="narrative-text">' + esc(buildNarrative(parsed, graph)) + '</p></div>';
 }
 
 /** A collapsible section. */
@@ -137,8 +150,8 @@ function section(id: string, title: string, body: string): string {
 /** Section table of contents (jumps to and expands a section). */
 function tocHtml(): string {
     const items: [string, string][] = [
-        ['sec-flow', '🗺️ Flow'], ['sec-narrative', '📝 Narrative'], ['sec-session', '🧾 Session info'],
-        ['sec-activity', '📈 Activity'], ['sec-dwell', '⏱️ Screen dwell'], ['sec-perf', '📊 Performance'],
+        ['sec-flow', '🗺️ Flow'], ['sec-narrative', '📝 Executive Summary'], ['sec-session', '🧾 Session info'],
+        ['sec-activity', '📈 Activity Timeline'], ['sec-dwell', '⏱️ Screen Visit Log'], ['sec-perf', '📊 Issue Report'],
     ];
     return '<nav class="toc">'
         + items.map(([id, label]) => `<a href="#${id}" data-target="${id}">${label}</a>`).join('')
@@ -156,15 +169,19 @@ export function buildFlowMapBody(parsed: ParsedLog, graph: FlowGraph, logPath?: 
         + section('sec-flow', '🗺️ Flow', legend + '<div class="diagram">' + renderSvg(graph) + '</div>')
         + '</div>';
     const detailCol = '<div class="detail-col">'
-        + section('sec-narrative', '📝 Narrative', '<p>' + esc(buildNarrative(parsed, graph)) + '</p>')
+        + section('sec-narrative', '📝 Executive Summary', narrativeSectionHtml(parsed, graph))
         + section('sec-session', '🧾 Session info', sessionInfoHtml(parsed, graph, logPath))
-        + section('sec-activity', '📈 Activity', activityChartHtml(parsed, clockOf))
-        + section('sec-dwell', '⏱️ Screen dwell', dwellTableHtml(graph))
-        + section('sec-perf', '📊 Performance · warnings · errors', issueTableHtml(parsed))
+        + section('sec-activity', '📈 Activity Timeline', activityChartHtml(parsed, clockOf))
+        + section('sec-dwell', '⏱️ Screen Visit Log', dwellTableHtml(graph))
+        + section('sec-perf', '📊 Issue Report', issueTableHtml(parsed))
         + '</div>';
+    // A draggable divider between the two columns lets the reader trade diagram width for detail
+    // width; the script persists the chosen split. It hides when the row wraps to a single column.
+    const resizer = '<div class="col-resize" role="separator" aria-orientation="vertical" '
+        + 'tabindex="-1" title="Drag to resize"></div>';
     // Title + clickable log path are rendered by the panel above the bar; the body starts at the TOC.
     return [
         tocHtml(),
-        '<div class="report-row">' + diagramCol + detailCol + '</div>',
+        '<div class="report-row">' + diagramCol + resizer + detailCol + '</div>',
     ].join('\n');
 }
