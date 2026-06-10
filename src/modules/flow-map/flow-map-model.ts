@@ -16,8 +16,12 @@ export interface SourceAnchor {
     readonly line?: number;
 }
 
-/** Kind of node, drives box styling and the dwell-table "Type" column. */
-export type NodeKind = 'launch' | 'screen' | 'tab' | 'dialog' | 'inline' | 'unknown';
+/**
+ * Kind of node, drives box styling and the dwell-table "Type" column. `external` is an off-app
+ * handoff (a launched external application or an outbound API call) — a leaf side-exit, never a
+ * destination the session returns into reliably (bug 009).
+ */
+export type NodeKind = 'launch' | 'screen' | 'tab' | 'dialog' | 'inline' | 'external' | 'unknown';
 
 /** Severity of an issue surfaced on the timeline. */
 export type IssueSeverity = 'info' | 'warn' | 'perf' | 'error';
@@ -65,10 +69,11 @@ export interface FlowGraph {
 export interface TimelineEvent {
     readonly tsMs: number;
     readonly clock: string;
-    readonly kind: 'nav' | 'action' | 'reached' | 'viewed' | 'lifecycle';
+    readonly kind: 'nav' | 'action' | 'reached' | 'viewed' | 'handoff' | 'lifecycle';
     /** Display label hint for the target node, already cleaned of the breadcrumb prefix. */
     readonly label: string;
-    /** For actions: the category (Favorite, Emergency, …) used for per-node counts. */
+    /** For actions: the category (Favorite, Emergency, …) used for per-node counts. For handoffs: the
+     * handoff type (`api` for an outbound request, `app` for a launched external application). */
     readonly actionCategory?: string;
     /** 1-based line number in the source log — lets the report jump back to the raw line. */
     readonly logLine?: number;

@@ -29,7 +29,7 @@ const SEV_ICON: Record<IssueEvent['severity'], string> = {
 };
 
 const KIND_LABEL: Record<FlowNode['kind'], string> = {
-    launch: '—', screen: 'screen', tab: 'tab', dialog: 'dialog', inline: 'inline', unknown: '—',
+    launch: '—', screen: 'screen', tab: 'tab', dialog: 'dialog', inline: 'inline', external: 'external', unknown: '—',
 };
 
 /** A clickable source `file:line` cell (opens in editor), or an em-dash. */
@@ -163,7 +163,7 @@ export function buildFlowMapBody(parsed: ParsedLog, graph: FlowGraph, logPath?: 
     // Two-column report: the (potentially very tall) diagram on the left; the narrative and both
     // tables stacked in a right column so they stay visible alongside the diagram, not buried under
     // it. The row wraps to a single column when the panel is narrow.
-    const legend = '<p class="legend">Solid = walked · dashed = recovered indirectly · 💥 = fault.'
+    const legend = '<p class="legend">Solid = walked · dashed = recovered indirectly · ↗️ = off-app handoff · 💥 = fault.'
         + ' Click a node to find its row and jump the log; click a source to open it.</p>';
     const diagramCol = '<div class="diagram-col">'
         + section('sec-flow', '🗺️ Flow', legend + '<div class="diagram">' + renderSvg(graph) + '</div>')
