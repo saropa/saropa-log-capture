@@ -34,6 +34,7 @@ When "App Only" is off but a category isn't whitelisted, the output channel now 
 
 ### Added
 
+- **"View Related Requests" popover:** Right-click any log line → **View Related Requests** to open a dedicated popover listing the HTTP requests correlated to that line (by request ID when your `integrations.http.requestIdPattern` matches, otherwise by the context time window), each showing method, URL, status, and duration, with per-row and Copy All actions. Complements the existing inline HTTP section in the integration-context popover (plan 010).
 - **Dropped-category diagnostics:** When `captureAll` is off and a DAP output category is not in `saropaLogCapture.categories`, the first dropped line of each category now logs an actionable hint to the **Saropa Log Capture** output channel (category name + how to capture it), instead of vanishing silently. Documents the DAP-only capture boundary under README → Known Limitations (plan 102).
 
 ### Changed

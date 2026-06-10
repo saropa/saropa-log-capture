@@ -90,6 +90,8 @@ export const stringsViewerG: Record<string, string> = {
     'viewer.ctx.showIntegrationContext.title': 'Open a popover with integration adapter data for this line',
     'viewer.ctx.showRelatedQueries.label': 'View Related Queries',
     'viewer.ctx.showRelatedQueries.title': 'Open a popover listing SQL queries related to this line',
+    'viewer.ctx.showRelatedRequests.label': 'View Related Requests',
+    'viewer.ctx.showRelatedRequests.title': 'Open a popover listing HTTP requests related to this line',
     'viewer.ctx.showCodeQuality.label': 'View Code Quality',
     'viewer.ctx.showCodeQuality.title': 'Open a popover with code quality diagnostics for this file',
     'viewer.ctx.showGitHistory.label': 'View Git History',
