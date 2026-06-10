@@ -165,6 +165,8 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
     case "exportSessionListJson": ctx.onExportSessionListJson?.()?.then(undefined, () => {}); return true;
     // Kebab "Open log file…" delegates to the command so the picker logic lives in one place.
     case "openLogFile": vscode.commands.executeCommand("saropaLogCapture.openLogFile").then(undefined, () => {}); return true;
+    // Kebab "Open log from URL…" delegates to the command (prompts, downloads, renders).
+    case "openLogFromUrl": vscode.commands.executeCommand("saropaLogCapture.openLogFromUrl").then(undefined, () => {}); return true;
     // OS file dropped onto the viewer — load by path, or stage transferred content to a temp file.
     case "openDroppedLog": handleOpenDroppedLog(msg, ctx).then(undefined, () => {}); return true;
     case "openSessionFromPanel": ctx.onOpenSessionFromPanel?.(msgStr(msg, "uriString")); return true;
@@ -212,6 +214,13 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
     case "revealLogFile":
       if (ctx.currentFileUri && ctx.onRevealLogFile) { Promise.resolve(ctx.onRevealLogFile(ctx.currentFileUri.toString())).catch(() => {}); }
       return true;
+    case "revealPathInOS": {
+      // About panel Debug section: reveal an arbitrary meta file/folder (e.g. the reports dir)
+      // in the OS file explorer. Distinct from revealLogFile, which only targets the open log.
+      const revealUri = msgStr(msg, "uriString");
+      if (revealUri) { void vscode.commands.executeCommand("revealFileInOS", vscode.Uri.parse(revealUri)); }
+      return true;
+    }
     case "openLogFileInEditor":
     case "openLogFileBeside":
     case "openCurrentFileFolder":
