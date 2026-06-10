@@ -21,6 +21,9 @@ interface Palette { readonly fill: string; readonly stroke: string; readonly tex
 function paletteOf(node: FlowNode): Palette {
     if (nodeHasError(node)) { return { fill: '#3a1a1a', stroke: '#e05252', text: '#ffd7d7', dashed: false }; }
     if (node.kind === 'launch') { return { fill: '#2d333b', stroke: '#8b949e', text: '#e6edf3', dashed: false }; }
+    // External handoffs are walked but get a distinct purple dashed leaf style (bug 009) — checked
+    // before the walked branch so they don't fall through to the solid green screen style.
+    if (node.kind === 'external') { return { fill: '#2b2440', stroke: '#a371f7', text: '#e6e0ff', dashed: true }; }
     if (node.walked) { return { fill: '#16321f', stroke: '#3fb950', text: '#e6edf3', dashed: false }; }
     return { fill: '#22272e', stroke: '#555', text: '#9aa4ad', dashed: true };
 }

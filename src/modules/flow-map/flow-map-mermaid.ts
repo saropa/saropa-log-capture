@@ -11,6 +11,7 @@ const CLASS_DEFS = [
     'classDef start fill:#2d333b,stroke:#888,color:#ddd;',
     'classDef walked fill:#1f3a2a,stroke:#3fb950,color:#e6edf3;',
     'classDef crash fill:#3a1a1a,stroke:#e05252,color:#ffd7d7;',
+    'classDef external fill:#2b2440,stroke:#a371f7,color:#e6e0ff,stroke-dasharray:4 3;',
     'classDef unwalked fill:#22272e,stroke:#444,color:#666,stroke-dasharray:3 3;',
 ];
 
@@ -19,10 +20,13 @@ function safeLabel(text: string): string {
     return text.replace(/"/g, "'").replace(/[[\]{}|]/g, '');
 }
 
-/** The CSS class for a node: crash > launch > walked > unwalked. */
+/** The CSS class for a node: crash > launch > external > walked > unwalked. */
 function nodeClass(node: FlowNode): string {
     if (nodeHasError(node)) { return 'crash'; }
     if (node.kind === 'launch') { return 'start'; }
+    // External handoffs are walked, so they must be classed before the walked fall-through to keep
+    // their distinct dashed leaf style instead of the solid green screen style (bug 009).
+    if (node.kind === 'external') { return 'external'; }
     return node.walked ? 'walked' : 'unwalked';
 }
 
@@ -33,10 +37,15 @@ function nodeLabel(node: FlowNode): string {
     return safeLabel(lines.join('<br/>'));
 }
 
-/** Choose node bracket shape: launch is a stadium, everything else a box. */
+/** Choose node bracket shape: launch is a stadium, external a parallelogram (off-app leaf), else a box. */
 function renderNode(id: string, node: FlowNode): string {
     const label = nodeLabel(node);
-    const body = node.kind === 'launch' ? `(["${label}"])` : `["${label}"]`;
+    let body = `["${label}"]`;
+    if (node.kind === 'launch') {
+        body = `(["${label}"])`;
+    } else if (node.kind === 'external') {
+        body = `[/"${label}"/]`;
+    }
     return `  ${id}${body}:::${nodeClass(node)}`;
 }
 

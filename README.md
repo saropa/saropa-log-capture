@@ -94,6 +94,7 @@ VS Code deletes your Debug Console the moment you stop debugging — every `prin
 - **Executive Summary** — a two-to-three sentence plain-language recap, with a hover copy icon to grab the whole thing.
 - **Activity Timeline** — a chart of log volume over the session, so bursts and quiet stretches are obvious at a glance.
 - **Screen Visit Log** — which screens were entered, in what order, and how long each was on top, with visit badges and edge-dwell timing.
+- **Off-app handoffs** — when the app emits the `[flowmap] handoff` tag, exits to an external app (maps, dialer, browser, share sheet) or outbound API calls appear as distinct ↗️ leaf nodes off the screen they left from, so the journey shows where the user went, not just where they stayed.
 - **Issue Report** — every performance warning and error in one sortable table; click any header (time, severity, source…) to re-sort.
 
 Collapse any column's sections to shrink that column aside and give the open side the room.
