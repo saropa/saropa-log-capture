@@ -217,6 +217,29 @@ suite('FlowMap', () => {
             assert.strictEqual((body.match(/<table[ >]/g) ?? []).length, 2);
         });
 
+        test('S2: webview body has the zoom/pan toolbar with a crash-jump when a fault exists', () => {
+            const body = buildFlowMapBody(parseLog(FIXTURE), graph);
+            assert.ok(body.includes('class="fm-zoom-toolbar"'), 'overlay zoom toolbar present');
+            assert.ok(body.includes('data-zoom="in"'), 'zoom-in control');
+            assert.ok(body.includes('data-zoom="out"'), 'zoom-out control');
+            assert.ok(body.includes('data-zoom="reset"'), 'reset-view control');
+            // The fixture crashes (x_dialog), so the jump-to-crash control must render.
+            assert.ok(body.includes('data-zoom="crash"'), 'jump-to-crash control present when a fault exists');
+            // The toolbar sits before the SVG so it overlays the diagram's top-right.
+            assert.ok(body.indexOf('fm-zoom-toolbar') < body.indexOf('<svg'), 'toolbar precedes the svg');
+        });
+
+        test('S2: no jump-to-crash control when the session has no fault', () => {
+            // A clean two-screen session (no error markers) must not render a dead crash button.
+            const clean = ['=== SAROPA LOG CAPTURE — SESSION START ===', 'Project: demo',
+                '[flowmap] enter screen "Home" lib/views/home.dart:1',
+                '[flowmap] enter screen "Settings" lib/views/settings.dart:1'];
+            const cleanGraph = buildGraph(parseLog(clean));
+            const body = buildFlowMapBody(parseLog(clean), cleanGraph);
+            assert.ok(body.includes('class="fm-zoom-toolbar"'), 'zoom toolbar still present');
+            assert.ok(!body.includes('data-zoom="crash"'), 'no crash control without a fault');
+        });
+
         test('webview body has an activity chart above the dwell section, with clickable points', () => {
             const body = buildFlowMapBody(parseLog(FIXTURE), graph);
             // The Activity section must precede Screen dwell (the requested placement).

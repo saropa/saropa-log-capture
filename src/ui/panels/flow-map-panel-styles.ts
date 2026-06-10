@@ -59,7 +59,24 @@ export function flowMapStyles(nonce: string): string {
   .diagram-col { flex: 0 0 auto; width: var(--diagram-w, auto); min-width: 260px; max-width: 100%; }
   .detail-col { flex: 1 1 420px; min-width: 320px; }
   .detail-col p { max-width: 60ch; }
-  .diagram { overflow-x: auto; max-width: 100%; padding: 0.4rem 0 1rem; }
+  .diagram { position: relative; overflow-x: auto; max-width: 100%; padding: 0.4rem 0 1rem; }
+  /* S2 zoom/pan: a grab cursor signals the diagram is draggable; while panning we switch to grabbing. */
+  .diagram svg { cursor: grab; touch-action: none; }
+  .diagram.fm-panning svg { cursor: grabbing; }
+
+  /* Overlay zoom toolbar — pinned top-right of the diagram so it stays put while the SVG pans. */
+  .fm-zoom-toolbar { position: absolute; top: 0.5rem; right: 0.6rem; z-index: 2; display: flex; gap: 0.25rem; }
+  .fm-zoom-btn {
+    width: 1.7rem; height: 1.7rem; padding: 0; line-height: 1; font-size: 0.95rem;
+    display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+    color: var(--vscode-foreground); background: var(--vscode-button-secondaryBackground, rgba(90, 93, 94, 0.4));
+    border: 1px solid var(--vscode-panel-border); border-radius: 4px;
+  }
+  .fm-zoom-btn:hover { background: var(--vscode-button-secondaryHoverBackground, rgba(90, 93, 94, 0.6)); }
+  .fm-zoom-btn:focus-visible { outline: 1px solid var(--vscode-focusBorder); outline-offset: 1px; }
+  /* Brief flash when "center the fault" lands so the eye catches the crash node after the pan. */
+  .fm-node.fm-flash rect { animation: fm-flash 0.9s ease 2; }
+  @keyframes fm-flash { 0%, 100% { stroke-width: 1.5; } 50% { stroke-width: 4.5; } }
 
   /* Draggable column divider. A wide invisible hit area around a thin visible rule keeps the grab
      forgiving without a fat gutter. Highlights on hover/drag so the affordance is discoverable. */
@@ -138,6 +155,6 @@ export function flowMapStyles(nonce: string): string {
   tr.sev-perf td:first-child { box-shadow: inset 3px 0 0 #3fb950; }
   @keyframes fm-fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @keyframes fm-pulse { 0%,100% { stroke-opacity: 1; } 50% { stroke-opacity: 0.3; } }
-  @media (prefers-reduced-motion: reduce) { .diagram svg, .fm-crash rect { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .diagram svg, .fm-crash rect, .fm-node.fm-flash rect { animation: none; } }
 </style>`;
 }
