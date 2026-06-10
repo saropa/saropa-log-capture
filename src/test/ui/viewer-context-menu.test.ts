@@ -309,6 +309,18 @@ suite('ViewerContextMenu', () => {
             assert.ok(!script.includes('spaceAbove'));
         });
 
+        test('should cap a submenu flyout to the viewport WIDTH so a narrow panel never clips it off the right edge', () => {
+            const script = getContextMenuScript();
+            // Width is treated symmetrically with height: cap + horizontal scroll, not clip off-screen.
+            assert.ok(script.includes('availableWidth'));
+            assert.ok(script.includes('style.maxWidth'));
+            assert.ok(script.includes("flyout.style.overflowX = 'auto'"));
+            // Height must be capped BEFORE width is measured so a scrollbar-widened flyout is counted.
+            const heightCap = script.indexOf('flyout.style.maxHeight = availableHeight');
+            const widthMeasure = script.indexOf('Math.min(flyout.offsetWidth, availableWidth)');
+            assert.ok(heightCap >= 0 && widthMeasure > heightCap, 'height cap must precede width measure');
+        });
+
         test('should reposition the open context menu and submenu on viewport resize (responsive)', () => {
             const script = getContextMenuScript();
             assert.ok(script.includes("addEventListener('resize'"));
