@@ -10,6 +10,7 @@ tells the operator where the work is. No mutation, no I/O beyond stdout.
 
 from modules.verify.l10n_bundle_audit import AuditResult
 from modules.verify.l10n_console import bold, cyan, dim, green, header, red, yellow
+from modules.verify.l10n_provenance import ENGINE_DISPLAY_ORDER, is_low_quality
 
 
 def _truncate(text: str, limit: int = 60, hard: int = 63) -> str:
@@ -74,6 +75,43 @@ def _print_coverage_table(audit: AuditResult) -> None:
         print(f"  {lc.locale:<10} [{bar}] {pct_str}  {status}")
 
 
+def _engine_breakdown(engine_counts: dict[str, int]) -> str:
+    """Format an engine→count map: low/untracked engines red, strong ones green."""
+    if not engine_counts:
+        return dim("none")
+    # Known engines in quality order first, then any unrecognized name.
+    ordered = [e for e in ENGINE_DISPLAY_ORDER if e in engine_counts]
+    ordered += [e for e in engine_counts if e not in ENGINE_DISPLAY_ORDER]
+    parts = []
+    for engine in ordered:
+        label = f"{engine}:{engine_counts[engine]}"
+        parts.append(red(label) if is_low_quality(engine) else green(label))
+    return ", ".join(parts)
+
+
+def _print_provenance_table(audit: AuditResult) -> None:
+    """Print the per-locale engine provenance + high/low quality split.
+
+    Untracked (no provenance record) counts as low quality, so a locale full of
+    old un-attributed Google strings reads as a large red Low-Q figure — the
+    signal that an "upgrade low-quality" pass has work to do.
+    """
+    if not audit.locale_coverage:
+        return
+    print(
+        f"\n  {cyan('Translation Provenance')}  "
+        f"{dim('(untracked = low quality / upgrade candidates)')}"
+    )
+    print(f"  {'Locale':<10} {'High-Q':>7} {'Low-Q':>7}  Engines")
+    print(dim(f"  {'-' * 10} {'-' * 7} {'-' * 7}  {'-' * 38}"))
+    for lc in audit.locale_coverage:
+        low = lc.low_quality_count
+        hi_cell = green(f"{lc.high_quality_count:>7}")
+        # Padded to width BEFORE coloring so the ANSI codes don't break columns.
+        low_cell = (red if low > 0 else green)(f"{low:>7}")
+        print(f"  {lc.locale:<10} {hi_cell} {low_cell}  {_engine_breakdown(lc.engine_counts)}")
+
+
 def print_untranslated_detail(audit: AuditResult) -> None:
     """Print per-locale untranslated entries so the user can see what's left."""
     for lc in audit.locale_coverage:
@@ -97,4 +135,5 @@ def print_audit(audit: AuditResult) -> None:
     print(f"  English bundle keys: {cyan(str(audit.bundle_key_count))}")
     _print_bundle_issues(audit)
     _print_coverage_table(audit)
+    _print_provenance_table(audit)
     print_untranslated_detail(audit)
