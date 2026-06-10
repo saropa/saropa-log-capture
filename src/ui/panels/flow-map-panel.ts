@@ -126,7 +126,7 @@ async function copyLogLine(logUri: vscode.Uri, line: number): Promise<void> {
 }
 
 /** Dispatch one webview message against the latest shown report. */
-function handleMessage(msg: { type?: string; file?: string; line?: number }): void {
+function handleMessage(msg: { type?: string; file?: string; line?: number; text?: string }): void {
     const p = currentParams;
     if (!p) { return; }
     if (msg.type === 'saveMarkdown') {
@@ -142,6 +142,10 @@ function handleMessage(msg: { type?: string; file?: string; line?: number }): vo
         p.revealLine(msg.line);
     } else if (msg.type === 'copyLogLine' && msg.line) {
         void copyLogLine(p.logUri, msg.line);
+    } else if (msg.type === 'copyText' && msg.text) {
+        // The Executive-Summary copy button sends the rendered prose; write it straight to clipboard.
+        void vscode.env.clipboard.writeText(msg.text);
+        vscode.window.setStatusBarMessage(t('flowMap.summaryCopied'), 2000);
     }
 }
 
