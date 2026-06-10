@@ -8,6 +8,10 @@ import type { PersistedRuleSuggestion } from "./learning-store";
 import { LearningStore } from "./learning-store";
 import { extractPatterns, type ExtractedPattern } from "./pattern-extractor";
 import { applyFeedback, buildFeedback } from "./confidence-feedback";
+import type { GlobalAggregateStore } from "./global-aggregates";
+
+/** Label prepended to a suggestion sourced from the user's other workspaces (plan 053-D). */
+const GLOBAL_SOURCE_LABEL = "Suggested from your other workspaces: ";
 
 export interface RuleSuggestion {
     id: string;
@@ -23,7 +27,16 @@ export interface RuleSuggestion {
 }
 
 export class SuggestionEngine {
-    constructor(private readonly store: LearningStore) {}
+    /**
+     * @param store   workspace-scoped learning store (required).
+     * @param globalStore optional cross-workspace store; when present AND the user has opted in
+     *        (`learning.globalAggregates`), promoted patterns from other workspaces are merged in
+     *        as labeled pending suggestions (plan 053-D). Omitted → workspace-only behavior.
+     */
+    constructor(
+        private readonly store: LearningStore,
+        private readonly globalStore?: GlobalAggregateStore,
+    ) {}
 
     private describePattern(p: ExtractedPattern): string {
         switch (p.category) {
@@ -90,6 +103,11 @@ export class SuggestionEngine {
             // this is how rejecting one pattern suppresses the similar ones the extractor re-emits.
             .filter((c) => c.confidence >= minConfidence);
 
+        // Plan 053-D: merge in patterns promoted from the user's OTHER workspaces (opt-in). They
+        // join as normal pending candidates, so accept/reject use the existing path — and a reject
+        // is recorded in workspace state, suppressing it HERE only (other workspaces still see it).
+        this.appendGlobalCandidates(candidates, pendingByPattern, cfg);
+
         await this.store.updateSuggestionsAfterExtract(candidates);
 
         const pending = await this.store.listSuggestions();
@@ -104,6 +122,36 @@ export class SuggestionEngine {
                 sampleLines: s.sampleLines,
                 impact: this.impact(s.matchCount, totalLines),
             }));
+    }
+
+    /**
+     * Append promoted cross-workspace patterns as pending candidates (in place). No-op unless a
+     * global store is wired AND the user opted in. Patterns already present locally are skipped;
+     * the rest become normal pending rows (reuse a prior id/createdAt when one exists) labeled as
+     * coming from other workspaces. matchCount is 0 (no local sample), so impact shows as minimal.
+     */
+    private appendGlobalCandidates(
+        candidates: PersistedRuleSuggestion[],
+        pendingByPattern: Map<string, PersistedRuleSuggestion>,
+        cfg: vscode.WorkspaceConfiguration,
+    ): void {
+        if (!this.globalStore || cfg.get<boolean>("learning.globalAggregates", false) !== true) { return; }
+        const present = new Set(candidates.map((c) => c.pattern));
+        for (const g of this.globalStore.list()) {
+            if (present.has(g.pattern)) { continue; }
+            const prev = pendingByPattern.get(g.pattern);
+            candidates.push({
+                id: prev?.id ?? crypto.randomUUID(),
+                pattern: g.pattern,
+                description: GLOBAL_SOURCE_LABEL + g.pattern,
+                confidence: 0.95, // cleared the >0.95 promotion bar in its origin workspace
+                status: "pending",
+                createdAt: prev?.createdAt ?? Date.now(),
+                sampleLines: [],
+                category: g.category,
+                matchCount: 0,
+            });
+        }
     }
 
     async listPendingSuggestions(): Promise<RuleSuggestion[]> {
