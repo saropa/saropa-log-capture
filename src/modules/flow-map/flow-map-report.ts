@@ -22,7 +22,7 @@ const SEV_ICON: Record<IssueEvent['severity'], string> = {
 };
 
 const KIND_LABEL: Record<FlowNode['kind'], string> = {
-    launch: '—', screen: 'screen', tab: 'tab', dialog: 'dialog', inline: 'inline', unknown: '—',
+    launch: '—', screen: 'screen', tab: 'tab', dialog: 'dialog', inline: 'inline', external: 'external', unknown: '—',
 };
 
 /** Header facts line. */
@@ -122,7 +122,7 @@ export function buildReport(parsed: ParsedLog, graph: FlowGraph): string {
         '',
         '## Flow',
         '',
-        'Solid = walked this session. Dotted = recovered indirectly. 💥 = fault on this node.',
+        'Solid = walked this session. Dotted = recovered indirectly. ↗️ = off-app handoff (external app / API). 💥 = fault on this node.',
         '',
         renderMermaid(graph),
         '',

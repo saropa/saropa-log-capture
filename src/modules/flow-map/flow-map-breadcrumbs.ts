@@ -22,14 +22,43 @@ const TAG_KIND: Record<string, NodeKind> = {
     screen: 'screen', tab: 'tab', dialog: 'dialog', sheet: 'dialog', inline: 'inline',
 };
 
+/**
+ * Off-app handoff tag (bug 009) — the moment the user leaves the app for an external application or
+ * the app makes an outbound API call. Parallel to `enter`; same source-anchor handling.
+ *
+ *   [flowmap] handoff <api|app> "<Name>" [<lib/path/file.dart:line>]
+ *
+ * e.g.  [flowmap] handoff app "Google Maps" lib/utils/lat_lng_map_utils.dart:42
+ */
+const FLOWMAP_HANDOFF = /\[flowmap\]\s+handoff\s+(api|app)\s+"([^"]+)"(?:\s+(\S+\.dart):(\d+))?/i;
+
+/** Parse a leading `./`-stripped `file.dart:line` anchor from a `[flowmap]` tag match, or undefined. */
+function tagSource(file?: string, line?: string): SourceAnchor | undefined {
+    return file ? { file: file.replace(/^\.\//, ''), line: parseInt(line ?? '', 10) } : undefined;
+}
+
 /** Parse a `[flowmap] enter …` project tag, or undefined. Carries the declared kind + source. */
 function parseFlowMapTag(line: string, tsMs: number, clock: string, logLine: number): TimelineEvent | undefined {
     const m = FLOWMAP_TAG.exec(line);
     if (!m) {
         return undefined;
     }
-    const source: SourceAnchor | undefined = m[3] ? { file: m[3].replace(/^\.\//, ''), line: parseInt(m[4], 10) } : undefined;
-    return { tsMs, clock, logLine, kind: 'nav', label: m[2].trim(), nodeKind: TAG_KIND[m[1].toLowerCase()], source };
+    return { tsMs, clock, logLine, kind: 'nav', label: m[2].trim(), nodeKind: TAG_KIND[m[1].toLowerCase()], source: tagSource(m[3], m[4]) };
+}
+
+/**
+ * Parse a `[flowmap] handoff …` tag, or undefined. The declared `api`/`app` type rides on
+ * `actionCategory` so the renderer can distinguish the two; the node kind is always `external`.
+ */
+function parseFlowMapHandoff(line: string, tsMs: number, clock: string, logLine: number): TimelineEvent | undefined {
+    const m = FLOWMAP_HANDOFF.exec(line);
+    if (!m) {
+        return undefined;
+    }
+    return {
+        tsMs, clock, logLine, kind: 'handoff', nodeKind: 'external',
+        actionCategory: m[1].toLowerCase(), label: m[2].trim(), source: tagSource(m[3], m[4]),
+    };
 }
 
 /** Strip the trailing `[sar-…uuid…]` and surrounding whitespace the app appends to breadcrumbs. */
@@ -90,10 +119,14 @@ const MATCHERS: { re: RegExp; build: (m: RegExpExecArray) => Omit<TimelineEvent,
 
 /** Classify a decorated log line into a TimelineEvent, or undefined when it is not a breadcrumb. */
 export function classifyBreadcrumb(line: string, tsMs: number, clock: string, logLine: number): TimelineEvent | undefined {
-    // Explicit project tag wins — it carries the declared kind and source (most reliable).
+    // Explicit project tags win — they carry the declared kind and source (most reliable).
     const tagged = parseFlowMapTag(line, tsMs, clock, logLine);
     if (tagged) {
         return tagged;
+    }
+    const handoff = parseFlowMapHandoff(line, tsMs, clock, logLine);
+    if (handoff) {
+        return handoff;
     }
     const payload = logPayload(line);
     if (payload === undefined) {

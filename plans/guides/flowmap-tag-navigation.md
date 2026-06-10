@@ -48,6 +48,43 @@ Matching is **case-insensitive** on both the tag and the kind.
 | `sheet`   | dialog        | A bottom sheet (rendered as a dialog node). |
 | `inline`  | inline (leaf) | An in-screen sub-view that is not a route of its own. |
 
+## The `handoff` verb — off-app exits
+
+`enter` records a surface *inside* the app. `handoff` records the moment the user (or the app) leaves
+it — opening an external application or making an outbound API call. These are part of the journey,
+so the Flow Map needs them, but they are **leaf side-exits**: the app is backgrounded and the return
+is not reliably logged. A handoff therefore draws an edge *from* the active screen to an `external`
+node but never becomes the current surface — the screen keeps its dwell, visits, and the edge to
+wherever the user goes next.
+
+```
+[flowmap] handoff <api|app> "<Name>" [<lib/path/to/file.dart:line>]
+```
+
+- **`handoff`** — the literal verb (parallel to `enter`).
+- **`<api|app>`** — `app` = launched an external application (maps, dialer, browser, share sheet);
+  `api` = an outbound network request. Both become an `external` node; the type is preserved and
+  shown so the two read distinctly (an `api` handoff's label is prefixed with `api:`).
+- **`"<Name>"`** — the target, in **double quotes** (required): `"Google Maps"`, `"tel: dialer"`,
+  `"wikipedia.search"`.
+- **`<file.dart:line>`** — optional, handled exactly like `enter` (leading `./` stripped).
+
+Matching is **case-insensitive**, like `enter`.
+
+```
+[12:07:18.120] [console] [log] [flowmap] handoff app "Google Maps" lib/utils/lat_lng_map_utils.dart:42
+[12:07:55.700] [console] [log] [flowmap] handoff app "Share sheet" lib/utils/share_utils.dart:30
+[12:08:31.004] [console] [log] [flowmap] handoff api "wikipedia.search"
+```
+
+| Tag kind     | Flow Map node    | Use it for |
+|--------------|------------------|------------|
+| `handoff app`| external (leaf)  | Opening an external app (maps, dialer, browser, share). |
+| `handoff api`| external (leaf)  | A deliberate, user-triggered outbound API call. |
+
+External nodes render with a distinct dashed purple style and an ↗️ glyph so an off-app exit never
+looks like an in-app screen or a recovered (dotted) edge.
+
 ## Guidance for the calling project
 
 - **Emit the tag at the moment the surface becomes visible** (e.g. in the route's `initState` /
@@ -62,7 +99,9 @@ Matching is **case-insensitive** on both the tag and the kind.
 
 ## Where this is parsed (for maintainers)
 
-The tag is recognized in
+The tags are recognized in
 [flow-map-breadcrumbs.ts](../../src/modules/flow-map/flow-map-breadcrumbs.ts) — see the
-`FLOWMAP_TAG` regex and `parseFlowMapTag()`. The explicit tag is checked first in
-`classifyBreadcrumb()` and takes precedence over the heuristic matchers below it.
+`FLOWMAP_TAG` / `FLOWMAP_HANDOFF` regexes and `parseFlowMapTag()` / `parseFlowMapHandoff()`. The
+explicit tags are checked first in `classifyBreadcrumb()` and take precedence over the heuristic
+matchers below them. The handoff's leaf semantics live in `applyHandoff()` in
+[flow-map-builder.ts](../../src/modules/flow-map/flow-map-builder.ts).
