@@ -7,6 +7,7 @@ import * as vscode from "vscode";
 import type { PersistedRuleSuggestion } from "./learning-store";
 import { LearningStore } from "./learning-store";
 import { extractPatterns, type ExtractedPattern } from "./pattern-extractor";
+import { applyFeedback, buildFeedback } from "./confidence-feedback";
 
 export interface RuleSuggestion {
     id: string;
@@ -67,20 +68,27 @@ export class SuggestionEngine {
             existing.filter((s) => s.status === "pending").map((s) => [s.pattern, s]),
         );
 
-        const candidates: PersistedRuleSuggestion[] = patterns.map((p) => {
-            const prev = pendingByPattern.get(p.pattern);
-            return {
-                id: prev?.id ?? crypto.randomUUID(),
-                pattern: p.pattern,
-                description: this.describePattern(p),
-                confidence: p.confidence,
-                status: "pending" as const,
-                createdAt: prev?.createdAt ?? Date.now(),
-                sampleLines: p.sampleLines.slice(0, 3),
-                category: p.category,
-                matchCount: p.matchCount,
-            };
-        });
+        const candidates: PersistedRuleSuggestion[] = patterns
+            .map((p) => {
+                const prev = pendingByPattern.get(p.pattern);
+                // Plan 053-C: fold the user's prior accept/reject judgments into confidence so a
+                // rejected pattern (and its near-twins) is damped, an accepted one is reinforced.
+                const adjusted = applyFeedback(p.confidence, buildFeedback(p.pattern, existing));
+                return {
+                    id: prev?.id ?? crypto.randomUUID(),
+                    pattern: p.pattern,
+                    description: this.describePattern(p),
+                    confidence: adjusted,
+                    status: "pending" as const,
+                    createdAt: prev?.createdAt ?? Date.now(),
+                    sampleLines: p.sampleLines.slice(0, 3),
+                    category: p.category,
+                    matchCount: p.matchCount,
+                };
+            })
+            // A pattern penalized below the confidence floor by feedback drops out entirely —
+            // this is how rejecting one pattern suppresses the similar ones the extractor re-emits.
+            .filter((c) => c.confidence >= minConfidence);
 
         await this.store.updateSuggestionsAfterExtract(candidates);
 
