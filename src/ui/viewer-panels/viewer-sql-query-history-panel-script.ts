@@ -38,6 +38,13 @@ export function getSqlQueryHistoryPanelScript(): string {
                 copySingleFingerprint(copyBtn.closest('.sql-query-history-row'));
                 return;
             }
+            /* DB_18b 1c: grow the scale-gated render window when the table is capped. */
+            var moreBtn = e.target.closest('.sql-qh-show-more');
+            if (moreBtn) {
+                e.stopPropagation();
+                showMoreSqlHistoryRows();
+                return;
+            }
             var sel = window.getSelection();
             if (sel && sel.toString().length > 0) return;
             var row = e.target.closest('.sql-query-history-row');
