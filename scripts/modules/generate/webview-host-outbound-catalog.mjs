@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * Generates doc/internal/webview-outbound-message-types.md from TypeScript sources.
+ * Generates plans/reference/webview-outbound-message-types.md from TypeScript sources.
  * Outbound = extension host → log viewer webview messages (`postMessage` / `post` payloads with `type`).
  *
  * Heuristic: within 800 chars after `{` following postMessage/post(, first `type: 'x' | type: "x"`.
@@ -16,7 +16,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..", "..", "..");
-const outRel = "doc/internal/webview-outbound-message-types.md";
+const outRel = "plans/reference/webview-outbound-message-types.md";
 const outPath = path.join(root, outRel);
 
 const WINDOW = 800;

@@ -17,7 +17,7 @@ Enable users to relate multiple log sessions together — tracking a bug across 
 ## Related plans
 
 - **`DB_11_persistent-query-history-panel.md`** — session-scoped SQL history; cross-session history is explicitly out of scope for v1 there; multi-log concatenation may later need agreed behavior for DB rollups across boundaries.
-- **`ECOSYSTEM_KNOWLEDGE_FILES.md`** — ecosystem index for other feature docs.
+- **`ecosystem-knowledge-files.md`** — ecosystem index for other feature docs.
 
 ## Implementation Roadmap
 
