@@ -24,7 +24,7 @@ Single table: **Wow** (High → Medium → Low), then **Effort** (Low → Medium
 | High | Medium | Live collaboration | Share session; others see same log and scroll position | [033](plans/033_plan-live-collaboration.md) |
 | Medium | Low | Docker polish | `includeInspect` sidecar; `--until` on logs | [007](plans/007_plan-docker-inspect-and-until.md) |
 | Medium | Low | Bidirectional sync | Reload/merge when log file is modified externally | [039](plans/039_plan-bidirectional-sync.md) |
-| Medium | Medium | Log diff from Git | Compare session to previous commit | [035](plans/035_plan-log-diff-from-git.md) |
+| Medium | Medium | Log diff from Git | Compare session to previous commit — **shipped 2026-06-10** | [035](plans/history/2026.06/2026.06.10/035_plan-log-diff-from-git.md) |
 | Medium | Medium | Session comparison (3-way) | Compare three sessions side by side | [031](plans/031_plan-session-comparison-three-way.md) |
 | Low | Medium | Incremental index for search | "Search in all logs" with scalable index | [029](plans/029_plan-incremental-index-search.md) |
 | High | Medium | Structured line parsing | Auto-detect log formats (logcat, syslog, Python, etc.), extract and strip prefix metadata (timestamp, PID, TID, level, tag), click-to-filter, tooltips | [047](plans/047_plan-structured-line-parsing.md) |

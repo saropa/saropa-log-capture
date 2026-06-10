@@ -28,6 +28,18 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Compare the current log to a Git commit baseline** (plan 035) — two new commands, **Compare Log to Previous Commit** (`HEAD~1`) and **Compare Log to Commit…** (prompts for any commit SHA, tag, or ref), open the existing two-log comparison panel against the saved session captured at that commit. The commit is used as a *time label*: the baseline is resolved by matching the commit against the `git` / `buildCi` SHA recorded in each session's metadata (most recent capture wins on ties), not by `git show` — most logs live only under the log directory and are never tracked in Git. When no saved session matches the commit, the command says so and points at "Compare Logs" for a manual pick rather than silently diffing an arbitrary previous file. Short session SHAs (`rev-parse --short`) match the full resolved ref by prefix. ([commands-comparison-git.ts](src/commands-comparison-git.ts), [git-rev-resolve.ts](src/modules/git/git-rev-resolve.ts), [git-baseline.ts](src/modules/compare/git-baseline.ts), [baseline-match.ts](src/modules/compare/baseline-match.ts), [session-commit-from-meta.ts](src/modules/session/session-commit-from-meta.ts))
+
+### Changed
+
+- **`publish.py` Step 9 no longer runs any translation — it audits locale bundles and stops** — the l10n step used to fill missing strings by calling the machine-translation pipeline (offline NLLB, else Google) during every release. That is removed: `check_l10n_bundles` now only re-syncs the English source bundle (mechanical key alignment, not translation) and reports the missing / still-English strings plus a CSV worklist. When any locale is incomplete the step returns False and the orchestrator prompts **retry / ignore / abort** (default retry): retry re-audits after you fill gaps by hand with `python scripts/translate_l10n.py`, ignore continues the release with gaps, abort stops it. Non-interactive / piped runs ignore gaps (preserving the prior non-fatal behavior) instead of hanging on input or looping on retry. Reason: an unattended NLLB/GPU translation job must never start as a side effect of publishing. Build tooling only. ([checks_build.py](scripts/modules/publish/checks_build.py), [orchestrator.py](scripts/modules/publish/orchestrator.py), [publish.py](scripts/publish.py))
+
+---
+
 ## [8.0.2]
 
 The viewer interface now ships translations in 10 languages, plus internal translation-tooling polish and a security dependency bump. [log](https://github.com/saropa/saropa-log-capture/blob/v8.0.2/CHANGELOG.md)

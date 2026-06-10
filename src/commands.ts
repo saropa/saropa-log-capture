@@ -10,6 +10,7 @@ import { t } from './l10n';
 import type { CommandDeps } from './commands-deps';
 import { scanForCorrelationTags } from './modules/analysis/correlation-scanner';
 import { comparisonCommands } from './commands-comparison';
+import { comparisonGitCommands } from './commands-comparison-git';
 import { signalsCommands } from './commands-signals';
 import { bugReportCommands } from './commands-bug-report';
 import { flowMapCommands } from './commands-flow-map';
@@ -37,6 +38,11 @@ export function registerCommands(deps: CommandDeps, captureToggle: CaptureToggle
         ...historyEditCommands(deps),
         ...exportCommands(deps),
         ...comparisonCommands(context.extensionUri, deps.broadcaster),
+        ...comparisonGitCommands({
+            extensionUri: context.extensionUri,
+            broadcaster: deps.broadcaster,
+            getFileUri: () => deps.viewerProvider.getCurrentFileUri(),
+        }),
         ...correlationCommands(deps),
         ...signalsCommands(deps),
         ...bugReportCommands({ getFileUri: () => deps.viewerProvider.getCurrentFileUri(), context }),

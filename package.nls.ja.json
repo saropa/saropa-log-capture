@@ -11,6 +11,8 @@
   "command.closeCollection.title": "Saropa Log Capture: 調査を閉じる",
   "command.compareSessions.title": "Saropa Log Capture: ログを比較",
   "command.compareWithMarked.title": "マークされたログと比較",
+  "command.compareLogToPreviousCommit.title": "Saropa Log Capture: Compare Log to Previous Commit",
+  "command.compareLogToCommit.title": "Saropa Log Capture: Compare Log to Commit…",
   "command.configureIntegrations.title": "統合を構成",
   "command.copyAllFilteredLines.title": "Saropa Log Capture: フィルター済みの全行をコピー",
   "command.copyDeepLink.title": "ディープリンクをコピー",

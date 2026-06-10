@@ -274,6 +274,16 @@
         "title": "%command.compareWithMarked.title%"
       },
       {
+        "command": "saropaLogCapture.compareLogToPreviousCommit",
+        "icon": "$(git-commit)",
+        "title": "%command.compareLogToPreviousCommit.title%"
+      },
+      {
+        "command": "saropaLogCapture.compareLogToCommit",
+        "icon": "$(git-commit)",
+        "title": "%command.compareLogToCommit.title%"
+      },
+      {
         "command": "saropaLogCapture.applyTemplate",
         "icon": "$(package)",
         "title": "%command.applyTemplate.title%"
