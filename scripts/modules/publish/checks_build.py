@@ -322,7 +322,7 @@ def check_l10n_bundles() -> bool:
     from modules.publish.display import info
     info(
         f"l10n: translating missing strings across {len(locales)} locale(s) "
-        "via Google Translate (network — can take several minutes)…"
+        "(offline NLLB when available, else Google — can take several minutes)…"
     )
 
     for locale in locales:
@@ -330,12 +330,12 @@ def check_l10n_bundles() -> bool:
         def on_progress(done: int, total: int, _loc: str = locale) -> None:
             print(f"\r    {_loc}: {done}/{total} translated…", end="", flush=True)
 
-        # only_missing=True: publish fills genuine gaps only — keys absent from
+        # scope="missing": publish fills genuine gaps only — keys absent from
         # the bundle, which includes changed-English strings (they become new
         # keys). en-copy keys (already value == English) are not re-sent every
         # publish; recover those with `python scripts/translate_l10n.py`.
         translated, _kept, _brand, errors, aborted = translate_locale(
-            locale, canonical, only_missing=True, on_progress=on_progress,
+            locale, canonical, scope="missing", on_progress=on_progress,
         )
         # Close the transient \r line before any structured ok/warn output.
         if translated or errors:
