@@ -2,7 +2,8 @@
  * Session history panel HTML template for the webview.
  * Used by viewer-session-panel.ts.
  * Header: "Logs" plus optional " · <path>" (hidden when default folder); whole header span is clickable.
- * Includes a date-range select (1h / 4h / 24h / 7d / 30d / 3m / 6m / 1y / All time) persisted with session display options.
+ * Includes a date-range select (1h / 4h / 24h / 7d / 30d / 3m / 6m / 1y / All time) and a
+ * minimum-size select (Any / >25 KB / >50 KB / >100 KB / >500 KB / >1 MB / >5 MB / >10 MB / >50 MB), both persisted with session display options.
  *
  * User-facing strings resolve through t() (host-built HTML) — see strings-viewer-b.ts.
  */
@@ -21,6 +22,31 @@ function renderOptionToggle(buttonId: string, codicon: string, key: string): str
             <span class="session-options-toggle-text">${text}</span>
             <span class="session-options-toggle-switch" aria-hidden="true"><span class="session-options-toggle-thumb"></span></span>
         </button>`;
+}
+
+/* A grouped submenu inside the kebab menu. Reuses the .context-menu-submenu flyout pattern (already
+   styled for the session context menu in this panel) so the top-level menu stays short on narrow/short
+   panels; positionSessionOptionsSubmenu() (options-menu script) places the flyout in viewport
+   coordinates so it can never be cropped. `inner` is the flyout's row markup. */
+function renderOptionsSubmenu(
+    codicon: string,
+    labelKey: string,
+    inner: string,
+    opts?: { id?: string; indicator?: boolean },
+): string {
+    const label = t(labelKey);
+    const idAttr = opts?.id ? ` id="${opts.id}"` : '';
+    // A dot the JS lights (.has-active-filters on the trigger) when this group holds an active
+    // setting — used on the Filter group so an applied date/size filter is visible at the group it
+    // lives under, not just on the kebab. Hidden by default via CSS.
+    const dot = opts?.indicator ? '<span class="session-options-filter-dot" aria-hidden="true"></span>' : '';
+    return `<div${idAttr} class="context-menu-submenu session-options-submenu" role="menuitem" aria-haspopup="true" tabindex="0" aria-label="${label}">
+            <span class="codicon codicon-${codicon}"></span>
+            <span class="session-options-submenu-label">${label}</span>
+            ${dot}
+            <span class="context-menu-arrow codicon codicon-chevron-right"></span>
+            <div class="context-menu-submenu-content session-options-submenu-content">${inner}</div>
+        </div>`;
 }
 
 /** Generate the session panel HTML. */
@@ -53,37 +79,67 @@ export function getSessionPanelHtml(): string {
              containing block, and .session-panel { overflow:hidden } then clipped
              the popover entirely so clicking the kebab appeared to do nothing. -->
         <div id="session-options-menu" class="session-options-menu" role="menu" aria-label="${t('viewer.session.options.label')}">
-        <div class="session-options-row">
-            <label class="session-options-row-label" for="session-date-range">${t('viewer.session.dateRange.label')}</label>
-            <select id="session-date-range" class="session-date-range-select" title="${t('viewer.session.dateRange.title')}" aria-label="${t('viewer.session.dateRange.label')}">
-                <option value="1h">${t('viewer.session.range.1h')}</option>
-                <option value="4h">${t('viewer.session.range.4h')}</option>
-                <option value="8h">${t('viewer.session.range.8h')}</option>
-                <option value="1d">${t('viewer.session.range.1d')}</option>
-                <option value="7d">${t('viewer.session.range.7d')}</option>
-                <option value="30d">${t('viewer.session.range.30d')}</option>
-                <option value="3m">${t('viewer.session.range.3m')}</option>
-                <option value="6m">${t('viewer.session.range.6m')}</option>
-                <option value="1y">${t('viewer.session.range.1y')}</option>
-                <option value="all" selected>${t('viewer.session.range.all')}</option>
-            </select>
+        ${renderOptionsSubmenu('filter', 'viewer.session.group.filter', `
+            <div class="session-options-row">
+                <label class="session-options-row-label" for="session-date-range">${t('viewer.session.dateRange.label')}</label>
+                <select id="session-date-range" class="session-date-range-select" title="${t('viewer.session.dateRange.title')}" aria-label="${t('viewer.session.dateRange.label')}">
+                    <option value="1h">${t('viewer.session.range.1h')}</option>
+                    <option value="4h">${t('viewer.session.range.4h')}</option>
+                    <option value="8h">${t('viewer.session.range.8h')}</option>
+                    <option value="1d">${t('viewer.session.range.1d')}</option>
+                    <option value="7d">${t('viewer.session.range.7d')}</option>
+                    <option value="30d">${t('viewer.session.range.30d')}</option>
+                    <option value="3m">${t('viewer.session.range.3m')}</option>
+                    <option value="6m">${t('viewer.session.range.6m')}</option>
+                    <option value="1y">${t('viewer.session.range.1y')}</option>
+                    <option value="all" selected>${t('viewer.session.range.all')}</option>
+                </select>
+            </div>
+            <div class="session-options-row">
+                <label class="session-options-row-label" for="session-size-range">${t('viewer.session.sizeRange.label')}</label>
+                <select id="session-size-range" class="session-date-range-select" title="${t('viewer.session.sizeRange.title')}" aria-label="${t('viewer.session.sizeRange.label')}">
+                    <option value="all" selected>${t('viewer.session.size.all')}</option>
+                    <option value="25k">${t('viewer.session.size.25k')}</option>
+                    <option value="50k">${t('viewer.session.size.50k')}</option>
+                    <option value="100k">${t('viewer.session.size.100k')}</option>
+                    <option value="500k">${t('viewer.session.size.500k')}</option>
+                    <option value="1m">${t('viewer.session.size.1m')}</option>
+                    <option value="5m">${t('viewer.session.size.5m')}</option>
+                    <option value="10m">${t('viewer.session.size.10m')}</option>
+                    <option value="50m">${t('viewer.session.size.50m')}</option>
+                </select>
+            </div>
+            ${renderOptionToggle('session-filter-tags', 'filter', 'filterTags')}`, { id: 'session-filter-group', indicator: true })}
+        ${renderOptionsSubmenu('settings-gear', 'viewer.session.group.display', `
+            ${renderOptionToggle('session-toggle-strip', 'calendar', 'toggleStrip')}
+            ${renderOptionToggle('session-toggle-normalize', 'edit', 'toggleNormalize')}
+            ${renderOptionToggle('session-toggle-headings', 'list-tree', 'toggleHeadings')}
+            ${renderOptionToggle('session-toggle-reverse', 'sort-precedence', 'toggleReverse')}
+            ${renderOptionToggle('session-toggle-latest', 'pinned', 'toggleLatest')}`)}
+        <hr class="session-options-sep" />
+        ${renderOptionsSubmenu('list-unordered', 'viewer.session.group.actions', `
+            <button id="session-export-list" type="button" class="session-options-action" role="menuitem" title="${t('viewer.session.exportList.title')}" aria-label="${t('viewer.session.exportList.label')}">
+                <span class="codicon codicon-save"></span>
+                <span class="session-options-action-text">${t('viewer.session.exportList.text')}</span>
+            </button>
+            <button id="session-open-file" type="button" class="session-options-action" role="menuitem" title="${t('viewer.session.openFile.title')}" aria-label="${t('viewer.session.openFile.label')}">
+                <span class="codicon codicon-folder-opened"></span>
+                <span class="session-options-action-text">${t('viewer.session.openFile.text')}</span>
+            </button>
+            <button id="session-open-url" type="button" class="session-options-action" role="menuitem" title="${t('viewer.session.openUrl.title')}" aria-label="${t('viewer.session.openUrl.label')}">
+                <span class="codicon codicon-cloud-download"></span>
+                <span class="session-options-action-text">${t('viewer.session.openUrl.text')}</span>
+            </button>`)}
+        <hr class="session-options-sep" />
+        <!-- Recently-opened-files shortcut list. Populated client-side by renderLoadedFilesMenu()
+             from the session records flagged loadedManually (files opened via the Open Log File /
+             URL pickers, which the directory scan can't surface). Capped at the 10 most recent by
+             load time so a user can re-open an out-of-folder log without re-browsing for it. The
+             empty notice shows until the first manual open records a row. -->
+        <div class="session-loaded-files" role="group" aria-label="${t('viewer.session.loadedFiles.aria')}">
+            <div id="session-loaded-files-empty" class="session-loaded-files-empty">${t('viewer.session.loadedFiles.empty')}</div>
+            <div id="session-loaded-files-list" class="session-loaded-files-list"></div>
         </div>
-        ${renderOptionToggle('session-toggle-strip', 'calendar', 'toggleStrip')}
-        ${renderOptionToggle('session-toggle-normalize', 'edit', 'toggleNormalize')}
-        ${renderOptionToggle('session-toggle-headings', 'list-tree', 'toggleHeadings')}
-        ${renderOptionToggle('session-toggle-reverse', 'sort-precedence', 'toggleReverse')}
-        ${renderOptionToggle('session-toggle-latest', 'pinned', 'toggleLatest')}
-        ${renderOptionToggle('session-filter-tags', 'filter', 'filterTags')}
-        <hr class="session-options-sep" />
-        <button id="session-export-list" type="button" class="session-options-action" role="menuitem" title="${t('viewer.session.exportList.title')}" aria-label="${t('viewer.session.exportList.label')}">
-            <span class="codicon codicon-save"></span>
-            <span class="session-options-action-text">${t('viewer.session.exportList.text')}</span>
-        </button>
-        <hr class="session-options-sep" />
-        <button id="session-open-file" type="button" class="session-options-action" role="menuitem" title="${t('viewer.session.openFile.title')}" aria-label="${t('viewer.session.openFile.label')}">
-            <span class="codicon codicon-folder-opened"></span>
-            <span class="session-options-action-text">${t('viewer.session.openFile.text')}</span>
-        </button>
         </div>
     </div>
     <div id="session-tags-section" class="session-tags-section" style="display:none">
