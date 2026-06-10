@@ -25,15 +25,27 @@ export function getAboutPanelHtml(): string {
         </div>
         <p class="ab-tagline">Built for Resilience. Designed for Peace of Mind.</p>
         <p class="ab-blurb">A technology firm rooted in financial services and online security. We build digital safeguards\u2009\u2014\u2009developer extensions that just work and a crisis management platform trusted by 50,000+ users.</p>
-        <div class="ab-section">${t('viewer.about.recentChanges')}</div>
-        <a id="about-changelog-link" href="#" class="ab-changelog-link" data-url="#">${t('viewer.about.fullChangelog')}</a>
-        <div id="about-changelog" class="ab-changelog"><span class="ab-changelog-loading">${t('viewer.about.changelogLoading')}</span></div>
-        <div class="ab-section">${t('viewer.about.projects')}</div>
-        ${getProjectLinksHtml()}
-        <div class="ab-section">${t('viewer.about.connect')}</div>
-        ${getConnectLinksHtml()}
+        ${sectionHeaderHtml('changes', t('viewer.about.recentChanges'))}
+        <div class="ab-section-body" data-section-body="changes">
+            <a id="about-changelog-link" href="#" class="ab-changelog-link" data-uri="">${t('viewer.about.openChangelog')}</a>
+        </div>
+        ${sectionHeaderHtml('projects', t('viewer.about.projects'))}
+        <div class="ab-section-body" data-section-body="projects">${getProjectLinksHtml()}</div>
+        ${sectionHeaderHtml('connect', t('viewer.about.connect'))}
+        <div class="ab-section-body" data-section-body="connect">${getConnectLinksHtml()}</div>
+        ${sectionHeaderHtml('debug', t('viewer.about.debug'))}
+        <div class="ab-section-body" data-section-body="debug">
+            <div id="about-debug-list" class="ab-debug-list"><span class="ab-debug-loading">${t('viewer.about.debugLoading')}</span></div>
+        </div>
     </div>
 </div>`;
+}
+
+/** A collapsible section header: a clickable row with a chevron that toggles the matching
+ *  `data-section-body`. Every section is collapsible (user request); all start expanded. */
+function sectionHeaderHtml(id: string, label: string): string {
+    return `<div class="ab-section ab-section-toggle" data-section="${id}" role="button" tabindex="0" aria-expanded="true">`
+        + `<span class="ab-section-chevron codicon codicon-chevron-down"></span>${label}</div>`;
 }
 
 /** Generate the about panel script. */
@@ -59,12 +71,56 @@ export function getAboutPanelScript(): string {
         if (!aboutPanelEl) return;
         aboutPanelEl.classList.remove('visible');
         aboutPanelOpen = false;
-        var cl = document.getElementById('about-changelog');
-        if (cl) cl.innerHTML = '<span class="ab-changelog-loading">' + vt('viewer.about.changelogLoading') + '</span>';
         if (typeof clearActivePanel === 'function') clearActivePanel('about');
         var ibBtn = document.getElementById('ib-about');
         if (ibBtn) ibBtn.focus();
     };
+
+    /* Toggle a collapsible section: flip the header's collapsed class + chevron and hide/show
+       the matching body. Keyed by data-section / data-section-body so headers and bodies are
+       siblings (no wrapper needed), which keeps the existing flat content flow. */
+    function toggleAboutSection(header) {
+        var id = header.getAttribute('data-section');
+        if (!id || !aboutPanelEl) return;
+        var collapsed = header.classList.toggle('ab-section-collapsed');
+        var body = aboutPanelEl.querySelector('[data-section-body="' + id + '"]');
+        if (body) body.classList.toggle('ab-section-body-hidden', collapsed);
+        var chev = header.querySelector('.ab-section-chevron');
+        if (chev) {
+            chev.classList.toggle('codicon-chevron-right', collapsed);
+            chev.classList.toggle('codicon-chevron-down', !collapsed);
+        }
+        header.setAttribute('aria-expanded', String(!collapsed));
+    }
+
+    function escAboutHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    function escAboutAttr(s) { return escAboutHtml(s).replace(/"/g, '&quot;'); }
+
+    /* Render the Debug section: one row per meta file/folder the extension uses, showing its
+       live present/missing state and usage. Files open in the log viewer on click; the reports
+       folder reveals in the OS explorer. The whole point is to make the on-disk state visible
+       (e.g. whether .loaded-files-history.json was actually written) instead of guessing. */
+    function renderAboutDebugList(metaPaths) {
+        var listEl = document.getElementById('about-debug-list');
+        if (!listEl) return;
+        if (!metaPaths || !metaPaths.length) { listEl.textContent = vt('viewer.about.debugNoPaths'); return; }
+        var html = '';
+        for (var i = 0; i < metaPaths.length; i++) {
+            var m = metaPaths[i];
+            var stateCls = m.exists ? 'ab-debug-present' : 'ab-debug-missing';
+            var stateTxt = m.exists ? vt('viewer.about.debugPresent') : vt('viewer.about.debugMissing');
+            var title = m.kind === 'folder' ? vt('viewer.about.revealInOS') : vt('viewer.about.openInViewer');
+            var icon = m.kind === 'folder' ? 'codicon-folder' : 'codicon-file';
+            html += '<div class="ab-debug-row" data-uri="' + escAboutAttr(m.uriString) + '" data-kind="' + m.kind + '"'
+                + ' role="button" tabindex="0" title="' + escAboutAttr(title) + '">'
+                + '<span class="ab-debug-label"><span class="codicon ' + icon + '"></span> ' + escAboutHtml(m.label)
+                + ' <span class="ab-debug-state ' + stateCls + '">' + stateTxt + '</span></span>'
+                + '<span class="ab-debug-usage">' + escAboutHtml(m.usage) + '</span>'
+                + '<span class="ab-debug-path">' + escAboutHtml(m.fsPath) + '</span>'
+                + '</div>';
+        }
+        listEl.innerHTML = html;
+    }
 
     function injectVersion() {
         var toolbar = document.getElementById('viewer-toolbar');
@@ -77,76 +133,12 @@ export function getAboutPanelScript(): string {
         if (!e.data || e.data.type !== 'aboutContent') return;
         var badge = document.getElementById('ab-version-badge');
         if (badge && e.data.version) badge.textContent = e.data.version;
-        var chunk = document.getElementById('about-changelog');
-        if (chunk) {
-            /* WHY innerHTML: we render trusted CHANGELOG.md content through a
-               minimal allowlist formatter (escapes raw HTML first, then re-inserts
-               only known-safe spans/divs/strong/em/code/hr/ul/li). Using a <pre>
-               with textContent would block bold/italic/headings — the user's whole
-               ask for this change. */
-            if (e.data.changelogExcerpt) {
-                chunk.innerHTML = formatAboutMarkdown(e.data.changelogExcerpt);
-            } else {
-                chunk.textContent = vt('viewer.about.changelogUnavailable');
-            }
-        }
+        /* Changelog now opens in the log viewer (markdown-rendered) rather than being dumped
+           inline — stash its URI on the link; the click handler posts openSessionFromPanel. */
         var link = document.getElementById('about-changelog-link');
-        if (link && e.data.changelogUrl) link.setAttribute('data-url', e.data.changelogUrl);
+        if (link) link.setAttribute('data-uri', e.data.changelogUriString || '');
+        renderAboutDebugList(e.data.metaPaths);
     });
-
-    /* ---- Markdown formatter (CHANGELOG-scoped subset) ----
-       Block-level: # headings (1–6), --- horizontal rules, - / * bullets,
-       > blockquotes, blank lines collapse adjacent bullets. Inline: **bold**,
-       *italic*, \`code\`, [text](url) (text only, links are not clickable here —
-       the "Full changelog on Marketplace" link is the authorized exit point). */
-    function formatAboutMarkdown(md) {
-        var lines = String(md).split('\\n');
-        var out = [];
-        var inList = false;
-        function flushList() { if (inList) { out.push('</ul>'); inList = false; } }
-        for (var i = 0; i < lines.length; i++) {
-            var line = lines[i];
-            var trimmed = line.replace(/\\s+$/, '');
-            if (trimmed === '') { flushList(); continue; }
-            if (/^\\s*(\\-{3,}|\\*{3,}|_{3,})\\s*$/.test(trimmed)) { flushList(); out.push('<hr class="ab-md-hr">'); continue; }
-            var h = /^(#{1,6})\\s+(.*)$/.exec(trimmed);
-            if (h) { flushList(); out.push('<div class="ab-md-h ab-md-h' + h[1].length + '">' + applyAboutInline(escapeAboutHtml(h[2])) + '</div>'); continue; }
-            var bq = /^>\\s?(.*)$/.exec(trimmed);
-            if (bq) { flushList(); out.push('<div class="ab-md-bq">' + applyAboutInline(escapeAboutHtml(bq[1])) + '</div>'); continue; }
-            var ul = /^\\s*[\\-\\*]\\s+(.*)$/.exec(trimmed);
-            if (ul) {
-                if (!inList) { out.push('<ul class="ab-md-ul">'); inList = true; }
-                out.push('<li>' + applyAboutInline(escapeAboutHtml(ul[1])) + '</li>');
-                continue;
-            }
-            flushList();
-            out.push('<div class="ab-md-p">' + applyAboutInline(escapeAboutHtml(trimmed)) + '</div>');
-        }
-        flushList();
-        return out.join('');
-    }
-
-    function escapeAboutHtml(s) {
-        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
-
-    function applyAboutInline(s) {
-        /* Inline code first: must run before bold/italic so a backtick block
-           containing * or _ characters isn't shredded into <strong>/<em>.
-           \\x60 = backtick literal (this whole script is inside a TS template literal). */
-        var btRe = new RegExp('\\x60([^\\x60]+)\\x60', 'g');
-        s = s.replace(btRe, '<code class="ab-md-code">$1</code>');
-        s = s.replace(/\\*\\*([^*]+)\\*\\*/g, '<strong>$1</strong>');
-        s = s.replace(/__([^_]+)__/g, '<strong>$1</strong>');
-        s = s.replace(/\\*([^*]+)\\*/g, '<em>$1</em>');
-        /* Single-underscore italic must not fire inside identifiers (foo_bar_baz);
-           the surrounding lookarounds reject when adjacent to word chars. */
-        s = s.replace(/(?<![\\w])_([^_\\n]+)_(?![\\w])/g, '<em>$1</em>');
-        /* Links: keep the visible text, drop the URL — the Marketplace link above
-           the changelog is the single authorized external nav from this panel. */
-        s = s.replace(/\\[([^\\]]+)\\]\\([^)]+\\)/g, '<span class="ab-md-link">$1</span>');
-        return s;
-    }
 
     /* ---- Long-press on the title to copy "Saropa Log Capture vX.Y.Z" ----
        500 ms threshold matches the platform mobile long-press convention and is
@@ -202,32 +194,50 @@ export function getAboutPanelScript(): string {
 
     if (aboutPanelEl) {
         aboutPanelEl.addEventListener('click', function(e) {
-            var link = e.target.closest('.ab-link');
+            /* Collapsible section header toggle takes precedence over any link inside it. */
+            var sectionHeader = e.target.closest('.ab-section-toggle');
+            if (sectionHeader) { toggleAboutSection(sectionHeader); return; }
+            /* Changelog: open CHANGELOG.md in the log viewer (markdown view) to the side. */
             var changelogLink = e.target.closest('#about-changelog-link');
             if (changelogLink) {
                 e.preventDefault();
-                var url = changelogLink.getAttribute('data-url');
-                if (url && url !== '#' && typeof vscodeApi !== 'undefined') vscodeApi.postMessage({ type: 'openUrl', url: url });
+                var cu = changelogLink.getAttribute('data-uri');
+                if (cu && typeof vscodeApi !== 'undefined') vscodeApi.postMessage({ type: 'openSessionFromPanel', uriString: cu });
                 return;
             }
+            /* Debug rows: files open in the viewer, the reports folder reveals in the OS. */
+            var debugRow = e.target.closest('.ab-debug-row');
+            if (debugRow && typeof vscodeApi !== 'undefined') {
+                var du = debugRow.getAttribute('data-uri');
+                if (du) {
+                    var kind = debugRow.getAttribute('data-kind');
+                    vscodeApi.postMessage(kind === 'folder'
+                        ? { type: 'revealPathInOS', uriString: du }
+                        : { type: 'openSessionFromPanel', uriString: du });
+                }
+                return;
+            }
+            var link = e.target.closest('.ab-link');
             if (!link) return;
             var url = link.getAttribute('data-url');
             if (url) vscodeApi.postMessage({ type: 'openUrl', url: url });
         });
+        /* Keyboard parity for section headers and debug rows (both are role="button"). */
+        aboutPanelEl.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            var sh = e.target.closest('.ab-section-toggle');
+            if (sh) { e.preventDefault(); toggleAboutSection(sh); return; }
+            var dr = e.target.closest('.ab-debug-row');
+            if (dr) { e.preventDefault(); dr.click(); }
+        });
     }
 
-    /* ---- Close / outside click ---- */
+    /* ---- Close ---- only via the X button. Clicking outside no longer closes the panel
+       (user request): the About screen stays open until explicitly dismissed, so you can
+       click into the viewer to inspect a debug file without it vanishing. */
 
     var closeBtn = document.getElementById('about-panel-close');
     if (closeBtn) closeBtn.addEventListener('click', closeAboutPanel);
-
-    document.addEventListener('click', function(e) {
-        if (!aboutPanelOpen) return;
-        if (aboutPanelEl && aboutPanelEl.contains(e.target)) return;
-        var ibBtn = document.getElementById('ib-about');
-        if (ibBtn && (ibBtn === e.target || ibBtn.contains(e.target))) return;
-        closeAboutPanel();
-    });
 })();
 `;
 }
