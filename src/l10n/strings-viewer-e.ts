@@ -37,4 +37,24 @@ export const stringsViewerE: Record<string, string> = {
     'viewer.export.quickSave.title': 'Save current view as-is to the reports folder (no extra filtering)',
     'viewer.export.cancel': 'Cancel',
     'viewer.export.confirm': 'Export to File',
+
+    // ── Integrations panel — host HTML (viewer-integrations-panel-html.ts) ──
+    // Per-adapter metadata (label / descriptionLong / performanceNote /
+    // whenToDisable) comes from INTEGRATION_ADAPTERS in integrations-ui.ts and
+    // is localized there, not here.
+    'viewer.integrations.region': 'Integrations',
+    'viewer.integrations.back': 'Back to Options',
+    'viewer.integrations.intro': 'Choose session capture adapters (header lines and sidecars), third-party tools (Crashlytics, Drift, etc.), and in-editor features like Explain with AI. Each row notes performance impact and when you might turn it off.',
+    'viewer.integrations.searchPlaceholder': 'Search integrations…',
+    'viewer.integrations.searchLabel': 'Search integrations',
+    'viewer.integrations.companionHeading': 'Companion extensions',
+    'viewer.integrations.companionIntro': 'These Saropa extensions unlock richer diagnostics when installed alongside Log Capture. Each is fully optional.',
+    'viewer.integrations.installSuite': 'Install all with the Saropa Suite extension pack',
+    'viewer.integrations.viewInMarketplace': 'View in Marketplace',
+    'viewer.integrations.perfWarningLabel': 'Performance warning',
+    'viewer.integrations.perfLabel': 'Performance:',
+    'viewer.integrations.whenToDisable': 'When to disable:',
+    'viewer.integrations.more': 'more',
+    'viewer.integrations.companion.lints.benefit': 'Lint violations in bug reports, OWASP summaries, health scores, and one-click Explain Rule.',
+    'viewer.integrations.companion.drift.benefit': 'Query stats, schema health, anomaly counts, index suggestions, and Open in Drift Advisor.',
 };

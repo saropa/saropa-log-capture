@@ -8,6 +8,7 @@
  * and are synced from window.integrationAdapters; changes post setIntegrationsAdapters to host.
  */
 import { escapeHtml } from '../../modules/capture/ansi';
+import { t } from '../../l10n';
 import type { IntegrationAdapterMeta } from '../../modules/integrations/integrations-ui';
 import { INTEGRATION_ADAPTERS } from '../../modules/integrations/integrations-ui';
 import { buildItemUrl } from '../../modules/marketplace-url';
@@ -36,8 +37,10 @@ function splitPerformanceWarning(performanceNote?: string): { warningEmoji: stri
 /** Companion extensions that enhance Log Capture when installed. */
 interface CompanionExtension {
     readonly extensionId: string;
+    /** Brand/product name — stays English. */
     readonly label: string;
-    readonly benefit: string;
+    /** l10n key for the benefit prose (resolved via t() at render). */
+    readonly benefitKey: string;
 }
 
 /** Extensions that unlock deeper integration features in Log Capture. */
@@ -45,12 +48,12 @@ const COMPANION_EXTENSIONS: readonly CompanionExtension[] = [
     {
         extensionId: SAROPA_LINTS_EXTENSION_ID,
         label: 'Saropa Lints',
-        benefit: 'Lint violations in bug reports, OWASP summaries, health scores, and one-click Explain Rule.',
+        benefitKey: 'viewer.integrations.companion.lints.benefit',
     },
     {
         extensionId: DRIFT_ADVISOR_EXTENSION_ID,
         label: 'Saropa Drift Advisor',
-        benefit: 'Query stats, schema health, anomaly counts, index suggestions, and Open in Drift Advisor.',
+        benefitKey: 'viewer.integrations.companion.drift.benefit',
     },
 ];
 
@@ -61,16 +64,16 @@ function renderCompanionExtensionsHtml(): string {
         const url = escapeHtml(buildItemUrl(c.extensionId));
         return `<div class="integrations-companion-row">
             <span class="integrations-companion-label">${escapeHtml(c.label)}</span>
-            <span class="integrations-companion-benefit">${escapeHtml(c.benefit)}</span>
-            <a class="integrations-companion-link" data-url="${url}" href="#">View in Marketplace</a>
+            <span class="integrations-companion-benefit">${escapeHtml(t(c.benefitKey))}</span>
+            <a class="integrations-companion-link" data-url="${url}" href="#">${t('viewer.integrations.viewInMarketplace')}</a>
         </div>`;
     }).join('\n');
     return `<div class="integrations-companion-section">
-        <div class="integrations-companion-heading">Companion extensions</div>
-        <p class="integrations-intro">These Saropa extensions unlock richer diagnostics when installed alongside Log Capture. Each is fully optional.</p>
+        <div class="integrations-companion-heading">${t('viewer.integrations.companionHeading')}</div>
+        <p class="integrations-intro">${t('viewer.integrations.companionIntro')}</p>
         ${rows}
         <div class="integrations-companion-row integrations-companion-suite">
-            <a class="integrations-companion-link" data-url="${suiteUrl}" href="#">Install all with the Saropa Suite extension pack</a>
+            <a class="integrations-companion-link" data-url="${suiteUrl}" href="#">${t('viewer.integrations.installSuite')}</a>
         </div>
     </div>`;
 }
@@ -80,17 +83,17 @@ function renderIntegrationRow(a: IntegrationAdapterMeta): string {
     const longDesc = a.descriptionLong ?? a.description;
     const perfNote = splitPerformanceWarning(a.performanceNote);
     const labelWarning = perfNote.warningEmoji
-        ? ` <span class="integrations-perf-warning" aria-label="Performance warning">${escapeHtml(perfNote.warningEmoji)}</span>`
+        ? ` <span class="integrations-perf-warning" aria-label="${t('viewer.integrations.perfWarningLabel')}">${escapeHtml(perfNote.warningEmoji)}</span>`
         : '';
     let perf = '';
     if (a.performanceNote) {
         perf = `<div class="integrations-note integrations-perf">
-            <span class="integrations-note-label">Performance:</span>
+            <span class="integrations-note-label">${t('viewer.integrations.perfLabel')}</span>
             <span>${escapeHtml(perfNote.text)}</span>
         </div>`;
     }
     const when = a.whenToDisable
-        ? `<div class="integrations-note integrations-when">When to disable: ${escapeHtml(a.whenToDisable)}</div>`
+        ? `<div class="integrations-note integrations-when">${t('viewer.integrations.whenToDisable')} ${escapeHtml(a.whenToDisable)}</div>`
         : '';
     const searchText = [a.label, longDesc, a.performanceNote ?? '', a.whenToDisable ?? ''].join(' ').toLowerCase();
     const escapedLongDesc = escapeHtml(longDesc);
@@ -108,7 +111,7 @@ function renderIntegrationRow(a: IntegrationAdapterMeta): string {
                     ${perf}
                     ${when}
                 </div>
-                <button type="button" class="integrations-desc-toggle" data-expanded="false" aria-expanded="false">more</button>
+                <button type="button" class="integrations-desc-toggle" data-expanded="false" aria-expanded="false">${t('viewer.integrations.more')}</button>
             </div>`
         : `<div class="integrations-desc">
                 <span class="integrations-desc-only">${escapedLongDesc}</span>
@@ -129,16 +132,16 @@ export function getIntegrationsPanelHtml(): string {
         .map(renderIntegrationRow)
         .join('\n');
     return `
-    <div id="integrations-view" class="integrations-view integrations-view-hidden" role="region" aria-label="Integrations" aria-hidden="true">
+    <div id="integrations-view" class="integrations-view integrations-view-hidden" role="region" aria-label="${t('viewer.integrations.region')}" aria-hidden="true">
         <div class="integrations-header">
-            <button type="button" id="integrations-back" class="integrations-back" title="Back to Options" aria-label="Back to Options"><span class="codicon codicon-arrow-left"></span></button>
-            <span class="integrations-title">Integrations</span>
+            <button type="button" id="integrations-back" class="integrations-back" title="${t('viewer.integrations.back')}" aria-label="${t('viewer.integrations.back')}"><span class="codicon codicon-arrow-left"></span></button>
+            <span class="integrations-title">${t('viewer.integrations.region')}</span>
         </div>
         <div class="integrations-content">
-            <p class="integrations-intro">Choose session capture adapters (header lines and sidecars), third-party tools (Crashlytics, Drift, etc.), and in-editor features like Explain with AI. Each row notes performance impact and when you might turn it off.</p>
+            <p class="integrations-intro">${t('viewer.integrations.intro')}</p>
             ${renderCompanionExtensionsHtml()}
             <div class="integrations-search-wrapper">
-                <input id="integrations-search" type="text" placeholder="Search integrations…" aria-label="Search integrations" />
+                <input id="integrations-search" type="text" placeholder="${t('viewer.integrations.searchPlaceholder')}" aria-label="${t('viewer.integrations.searchLabel')}" />
             </div>
             <div class="options-section" id="integrations-section">
                 ${rows}
