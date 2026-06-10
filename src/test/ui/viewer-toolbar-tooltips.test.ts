@@ -16,8 +16,7 @@ suite('Viewer toolbar tooltips', () => {
         // Nav buttons
         assert.ok(html.includes('title="Navigate to the previous'), 'prev button needs descriptive tooltip');
         assert.ok(html.includes('title="Navigate to the next'), 'next button needs descriptive tooltip');
-        // Icon buttons
-        assert.ok(html.includes('title="Open search to find text'), 'search button needs descriptive tooltip');
+        // Icon buttons (search moved out of the toolbar in 66694903 — flowmap took its slot)
         assert.ok(html.includes('title="Open filter drawer'), 'filter button needs descriptive tooltip');
         assert.ok(html.includes('title="Open actions menu'), 'actions button needs descriptive tooltip');
         // Level dots
