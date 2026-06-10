@@ -1,45 +1,13 @@
 /**
- * Toggle rows for scroll map + scrollbar settings — embedded in the main menu and in
- * `#scroll-chrome-context-menu` (right-click on minimap / native scrollbar).
- *
- * Labels + tooltips localized via t() (keys in strings-viewer-g.ts). codicon
- * names, data-action values, and `.context-menu-shortcut` key hints stay literal.
+ * Log content context menu HTML. The shared minimap/scrollbar toggle rows live in
+ * `viewer-context-menu-scroll-toggles.ts` (extracted to keep this file under the 300-line
+ * cap). Labels + tooltips localized via t() (keys in strings-viewer-g.ts); codicon names,
+ * data-action values, and `.context-menu-shortcut` key hints stay literal.
  */
 import { t } from "../../l10n";
+import { getScrollChromeMenuTogglesHtml } from "./viewer-context-menu-scroll-toggles";
 
-export function getScrollChromeMenuTogglesHtml(): string {
-    return `
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-proportional" title="${t('viewer.ctx.minimapProportional')}">
-                <span class="codicon codicon-graph" aria-hidden="true"></span>
-                <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">${t('viewer.ctx.minimapProportional')}</span>
-            </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-show-scrollbar" title="${t('viewer.ctx.showScrollbar')}">
-                <span class="codicon codicon-layout" aria-hidden="true"></span>
-                <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">${t('viewer.ctx.showScrollbar')}</span>
-            </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-info-markers" title="${t('viewer.ctx.minimapInfoMarkers')}">
-                <span class="codicon codicon-info" aria-hidden="true"></span>
-                <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">${t('viewer.ctx.minimapInfoMarkers')}</span>
-            </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-sql-density" title="${t('viewer.ctx.minimapSqlDensity')}">
-                <span class="codicon codicon-database"></span>
-                <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">${t('viewer.ctx.minimapSqlDensity')}</span>
-            </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-viewport-red-outline" title="${t('viewer.ctx.minimapRedOutline')}">
-                <span class="codicon codicon-circle-outline" aria-hidden="true"></span>
-                <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">${t('viewer.ctx.minimapRedOutline')}</span>
-            </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-outside-arrow" title="${t('viewer.ctx.minimapOutsideArrow')}">
-                <span class="codicon codicon-arrow-right" aria-hidden="true"></span>
-                <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">${t('viewer.ctx.minimapOutsideArrow')}</span>
-            </div>`;
-}
+export { getScrollChromeMenuTogglesHtml };
 
 /** Compact menu: same toggles as the Scroll map & scrollbar submenu (minimap / scrollbar right-click). */
 export function getScrollChromeContextMenuHtml(): string {
@@ -179,6 +147,9 @@ export function getContextMenuHtml(): string {
             </div>
             <div class="context-menu-item" data-action="show-related-queries" data-line-action title="${t('viewer.ctx.showRelatedQueries.title')}">
                 <span class="codicon codicon-database"></span> ${t('viewer.ctx.showRelatedQueries.label')}
+            </div>
+            <div class="context-menu-item" data-action="show-related-requests" data-line-action title="${t('viewer.ctx.showRelatedRequests.title')}">
+                <span class="codicon codicon-globe"></span> ${t('viewer.ctx.showRelatedRequests.label')}
             </div>
             <div class="context-menu-item" data-action="show-code-quality" data-line-action title="${t('viewer.ctx.showCodeQuality.title')}">
                 <span class="codicon codicon-symbol-misc"></span> ${t('viewer.ctx.showCodeQuality.label')}
