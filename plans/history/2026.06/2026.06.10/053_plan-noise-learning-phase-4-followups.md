@@ -1,11 +1,11 @@
 # Plan 053 — Noise Learning Phase 4 Follow-ups
 
-## Status: Partial (A + B + C shipped, D pending)
+## Status: COMPLETE (A + B + C + D shipped) — archived 2026-06-10
 
 - [x] **Workstream A** — Insights panel suggestions section (filter suggestions render in the panel with Accept/Reject)
 - [x] **Workstream B** — `filter-out` emission from level/category toggles (emitter wired in `viewer-level-filter.ts`)
 - [x] **Workstream C** — Confidence feedback loop (2026-06-10; `confidence-feedback.ts` + engine wiring)
-- [ ] **Workstream D** — Optional cross-workspace global aggregates
+- [x] **Workstream D** — Optional cross-workspace global aggregates (2026-06-10; `global-aggregates.ts` + deny-list + opt-in + clear command)
 
 ## Goal
 
@@ -272,5 +272,34 @@ This work will be reviewed by another AI.
 **Tests:** `confidence-feedback.test.js` → 12 passing. `npm run check-types` clean; `npm run lint` no warnings on changed files; `npm run compile` passes all verify gates.
 
 **Outstanding:** Workstream **D** (optional cross-workspace global aggregates) remains — privacy-critical, deny-list-gated; tracked as item 7. Plan stays active for D. Coefficient tuning from real acceptance data is a future refinement (the constants are documented as a starting point).
+
+**Finish report appended:** plans/053_plan-noise-learning-phase-4-followups.md
+
+## Finish Report (2026-06-10) — Workstream D (optional cross-workspace global aggregates)
+
+This work will be reviewed by another AI.
+
+**Scope:** (B) VS Code extension (TypeScript) + package.json/NLS config. No Dart/Flutter. New user-facing strings added (setting + clear command) — localized via the package.nls catalog (English source + placeholders synced to all 11 locales; translation is the separate pipeline, not run here).
+
+**Privacy posture first (D1/D4).** This is the privacy-critical workstream. The load-bearing control is the **deny-list** (`global-aggregates-denylist.ts`): a pattern is only eligible to leave the workspace if it carries no workspace-identifying content (Windows/UNC/POSIX absolute paths, `file://` URIs, `%USERPROFILE%`/`Users\…`, emails, git remotes, `package:` imports). It is conservative by design — a false reject only means a generic pattern isn't shared; a false accept could leak a project name. The feature is **OFF by default** (`learning.globalAggregates: false`).
+
+**What shipped:**
+- **`global-aggregates-denylist.ts`** — `checkPromotionDenyList` / `isPromotable` (pure).
+- **`global-aggregates.ts`** — `GlobalAggregateStore` (VS Code `globalState`, schema v1, 200-pattern FIFO cap by `lastPromotedAt`, `promote`/`list`/`clear`); pure gates `canPromote` (opt-in + framework-class + ≥0.95 confidence + deny-list) and `isFrameworkClass` (`framework`/`verbose`/`repetitive`, never `noise`).
+- **`learning-runtime.ts`** — constructs the global store from `context.globalState`; `promoteAcceptedSuggestion(id)` looks the row up, gates via `canPromote`, and de-dupes per workspace using a **workspace-state** memo (so global state never holds a workspace identifier) before promoting.
+- **Promotion wiring** — both accept paths (`filter-suggestions-ui.ts` QuickPick + `recurring-handlers.ts` Insights panel) call `promoteAcceptedSuggestion` after a successful accept.
+- **Consumption (D3)** — `SuggestionEngine` takes an optional global store; when opted in, `appendGlobalCandidates` merges promoted patterns from other workspaces as labeled pending candidates ("Suggested from your other workspaces: …"). They use the normal accept/reject path; a reject is recorded in workspace state, suppressing the pattern **here only** (other workspaces still see it) — exactly D3. Wired at the two `refreshAndListPending` call sites (command + notification).
+- **Clear command (D4)** — `saropaLogCapture.clearGlobalAggregates` ("Clear Cross-Workspace Noise Patterns"), modal-confirmed, wipes the global key.
+- **Settings copy (D4)** — the setting description states exactly what is shared (pattern text + category only) and what is not (paths, project names, usernames).
+
+**Files changed/created:**
+- New: `global-aggregates.ts`, `global-aggregates-denylist.ts`, plus tests `global-aggregates.test.ts` (10) + `global-aggregates-denylist.test.ts` (16).
+- Modified: `learning-runtime.ts`, `suggestion-engine.ts`, `commands-learning.ts`, `filter-suggestions-ui.ts`, `recurring-handlers.ts`, `learning-notifications.ts`, `package.json` (setting + command), `package.nls*.json` (×11), `strings-b.ts` (clear-command l10n), `plans/reference/contributes-commands.md` (regenerated), `CHANGELOG.md`.
+
+**Tests:** deny-list 16 passing (every identifying-content class rejected; generic noise allowed), store/canPromote 10 passing (opt-in gate, category gate, confidence bar, deny-list gate, FIFO cap, clear). `npm run check-types` clean; `npm run lint` no warnings on changed files; `npm run compile` passes all verify gates (NLS 11×486 aligned, command catalog matches, dist size OK).
+
+**Verification checklist (D5):** default off ✅; deny-list rejects paths/users/project content ✅; promotion only for framework/verbose/repetitive ✅; clear command wipes the key ✅; settings copy lists what is shared ✅. The "two workspaces accept → third sees it" end-to-end is covered by the store + consumption unit paths; full multi-workspace device verification is the user's F5 check.
+
+**Plan complete.** A+B (prior) + C + D all shipped; this file is archived to `plans/history/2026.06/2026.06.10/`.
 
 **Finish report appended:** plans/053_plan-noise-learning-phase-4-followups.md

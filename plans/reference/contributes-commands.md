@@ -17,6 +17,7 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.clearBuildCiAzurePat` | Saropa: Clear Build/CI Azure PAT |  |
 | `saropaLogCapture.clearBuildCiGithubToken` | Saropa: Clear Build/CI GitHub Token |  |
 | `saropaLogCapture.clearBuildCiGitlabToken` | Saropa: Clear Build/CI GitLab Token |  |
+| `saropaLogCapture.clearGlobalAggregates` | %command.clearGlobalAggregates.title% |  |
 | `saropaLogCapture.clearLearningData` | %command.clearLearningData.title% |  |
 | `saropaLogCapture.clearShareHistory` | %command.clearShareHistory.title% |  |
 | `saropaLogCapture.closeCollection` | %command.closeCollection.title% |  |
@@ -105,4 +106,4 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.trashSession` | %command.trashSession.title% |  |
 | `saropaLogCapture.ungroupSession` | Saropa Log Capture: Ungroup Session |  |
 
-**Total:** 98 commands.
+**Total:** 99 commands.
