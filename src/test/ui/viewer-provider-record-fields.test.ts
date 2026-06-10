@@ -67,6 +67,22 @@ suite('viewer-provider-actions: newer-log + kind fields', () => {
         });
     });
 
+    suite('pin fields', () => {
+
+        test('default record is not pinned and has pinnedAt 0', async () => {
+            const rec = await buildSessionItemRecord(fakeMeta() as never, undefined, {});
+            assert.strictEqual(rec.pinned, false);
+            assert.strictEqual(rec.pinnedAt, 0);
+        });
+
+        test('propagates pinned + pinnedAt from the meta (the persisted pin state)', async () => {
+            const meta = fakeMeta({ pinned: true, pinnedAt: 1_700_000_500_000 });
+            const rec = await buildSessionItemRecord(meta as never, undefined, {});
+            assert.strictEqual(rec.pinned, true);
+            assert.strictEqual(rec.pinnedAt, 1_700_000_500_000);
+        });
+    });
+
     suite('kind classification', () => {
 
         test('defaults to project when classifyMeta is omitted (fail-open)', async () => {

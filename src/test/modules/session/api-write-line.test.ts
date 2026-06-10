@@ -11,6 +11,8 @@ function mockSession() {
         lines,
         lineCount: 0,
         state: 'recording' as const,
+        // writeOneLine reads session.fileUri.fsPath when building the broadcast payload.
+        fileUri: { fsPath: '/mock/session.log' },
         appendLine(text: string) { lines.push(text); this.lineCount++; },
     };
 }
