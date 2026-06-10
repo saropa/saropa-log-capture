@@ -1556,5 +1556,13 @@
   "{0} source": "{0} 源泉である",
   "{0} sources": "{0} ソース",
   "{0}h ago": "{0}h前から",
-  "{0}w ago": "{0}w 前にしました."
+  "{0}w ago": "{0}w 前にしました.",
+  "Reload": "再読み込み",
+  "Compare Log to Commit": "ログをコミットと比較",
+  "Could not resolve Git ref \"{0}\". Use a commit SHA, tag, or HEAD~1.": "Git 参照「{0}」を解決できませんでした。コミット SHA、タグ、または HEAD~1 を使用してください。",
+  "Enter a Git ref (commit SHA, tag, or HEAD~1) to use as the baseline": "基準として使用する Git 参照 (コミット SHA、タグ、または HEAD~1) を入力してください",
+  "Log \"{0}\" was changed on disk. Reload to see the current content?": "ログ「{0}」がディスク上で変更されました。現在の内容を表示するために再読み込みしますか?",
+  "Log \"{0}\" was deleted on disk. Showing the last loaded snapshot.": "ログ「{0}」がディスク上で削除されました。最後に読み込んだスナップショットを表示しています。",
+  "No saved log matches commit \"{0}\". Capture a session at that commit, or use \"Compare Logs\" to pick two manually.": "コミット「{0}」に一致する保存済みログがありません。そのコミットでセッションをキャプチャするか、「ログの比較」を使用して手動で 2 つ選択してください。",
+  "Open a log in the viewer first, then compare it to a commit.": "最初にビューアーでログを開き、次にコミットと比較してください。"
 }
