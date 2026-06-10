@@ -257,6 +257,26 @@ export function getLogDirectoryUri(
   return vscode.Uri.joinPath(workspaceFolder.uri, config.logDirectory);
 }
 
+/**
+ * The log directory the Logs panel is ACTUALLY showing: the browsed override root if the user
+ * set one, otherwise the primary workspace folder's configured log dir. Returns undefined only
+ * when there is neither an override nor a workspace folder.
+ *
+ * WHY this exists: loaded-files recording, the About Debug paths, and the session-list injection
+ * must all agree on ONE directory. Keying off `workspaceFolders[0]` alone broke when the panel
+ * was pointed at a browsed override root (no workspace folder open) — recording wrote nowhere and
+ * the Debug list resolved empty. This mirrors `getLogDir()` in viewer-handler-wiring.ts.
+ */
+export function getActiveLogDirectoryUri(
+  context: vscode.ExtensionContext,
+): vscode.Uri | undefined {
+  // 'sessionPanelRootFolder' === SESSION_PANEL_ROOT_KEY in viewer-handler-wiring.ts (the override).
+  const override = context.workspaceState.get<string>("sessionPanelRootFolder");
+  if (override) { return vscode.Uri.parse(override); }
+  const folder = vscode.workspace.workspaceFolders?.[0];
+  return folder ? getLogDirectoryUri(folder) : undefined;
+}
+
 /** URI for the bug report output folder. */
 export function getReportFolderUri(
   workspaceFolder: vscode.WorkspaceFolder | undefined | null,
