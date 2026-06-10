@@ -265,29 +265,26 @@ def _report_l10n_manual_gaps(audit: object) -> None:
 
 
 def check_l10n_bundles() -> bool:
-    """Sync English bundle, fill missing translations, then surface the gaps.
+    """Audit locale bundles for translation gaps — NEVER runs translation.
 
-    Translates only strings ABSENT from each locale bundle (genuine new/changed
-    keys — changing an English source string makes a new key). Strings Google
-    leaves as English are NOT re-sent every publish; they are listed and
-    exported for manual translation. Requires ``pip install deep-translator``.
+    Publish must not trigger any machine-translation pass: an unattended
+    NLLB/GPU job once locked the machine mid-release. This step only (A)
+    re-syncs the English source bundle — mechanical key alignment, not
+    translation — so the gap count reflects genuine non-English work, then
+    (B) reports the missing / still-English strings and exports a worklist.
+    Fill gaps by hand with ``python scripts/translate_l10n.py``.
 
-    Returns False only on a hard failure (English sync broke). Translation
-    errors for individual locales are logged but do not block the pipeline —
-    partial coverage is better than blocking a release.
+    Returns True when every locale is fully covered, False when any gap
+    remains so the orchestrator can prompt the user (retry / ignore / abort).
+    The English-sync write is the only hard-failure path.
     """
     from modules.verify.l10n_bundle_audit import run_audit, sync_english_bundle
-    from modules.verify.l10n_translator import (
-        fix_mangled_brands,
-        get_canonical_keys,
-        get_translation_locales,
-        translate_locale,
-    )
 
-    # ── Step A: audit before sync ──────────────────────────────
+    # ── Step A: sync English source bundle (key alignment only) ──
+    # This copies English source strings into the bundle and prunes orphans.
+    # It is NOT translation — without it, every changed English string would
+    # show as a permanent gap the audit could never clear.
     audit = run_audit()
-
-    # ── Step B: sync English bundle ────────────────────────────
     if audit.missing_from_bundle or audit.orphan_in_bundle:
         added, kept, removed = sync_english_bundle()
         if added > 0 or removed > 0:
@@ -299,71 +296,12 @@ def check_l10n_bundles() -> bool:
     else:
         ok("l10n English bundle already in sync")
 
-    # ── Step C: fix mangled brands + translate ─────────────────
-    canonical = get_canonical_keys()
-    locales = get_translation_locales()
-
-    # Reset translations that mangled brand names so they get retranslated
-    # with brand shielding on the next pass.
-    total_brand_fixes = 0
-    for locale in locales:
-        fixed = fix_mangled_brands(locale, canonical)
-        total_brand_fixes += fixed
-    if total_brand_fixes > 0:
-        ok(f"l10n: reset {total_brand_fixes} mangled brand translation(s)")
-
-    total_translated = 0
-    total_errors = 0
-
-    # Translation is a network step: a backlog of hundreds of strings × the
-    # throttle delay takes minutes. Announce it and stream a per-locale counter
-    # so a long run reads as progress, not the "lock-up at Step 9" it looked
-    # like before. (Counter resolves to "already complete" below when empty.)
-    from modules.publish.display import info
-    info(
-        f"l10n: translating missing strings across {len(locales)} locale(s) "
-        "(offline NLLB when available, else Google — can take several minutes)…"
-    )
-
-    for locale in locales:
-        # In-place counter (\r) so each locale shows forward motion live.
-        def on_progress(done: int, total: int, _loc: str = locale) -> None:
-            print(f"\r    {_loc}: {done}/{total} translated…", end="", flush=True)
-
-        # scope="missing": publish fills genuine gaps only — keys absent from
-        # the bundle, which includes changed-English strings (they become new
-        # keys). en-copy keys (already value == English) are not re-sent every
-        # publish; recover those with `python scripts/translate_l10n.py`.
-        translated, _kept, _brand, errors, aborted = translate_locale(
-            locale, canonical, scope="missing", on_progress=on_progress,
-        )
-        # Close the transient \r line before any structured ok/warn output.
-        if translated or errors:
-            print()
-        total_translated += translated
-        total_errors += errors
-        if translated > 0:
-            ok(f"l10n {locale}: {translated} string(s) translated")
-        if errors > 0:
-            warn(f"l10n {locale}: {errors} translation error(s), kept English")
-        # Throttling is per-IP, so once one locale trips the breaker the rest
-        # would too. Stop the publish-time pass and keep English — re-run the
-        # standalone translator later rather than hanging the release.
-        if aborted:
-            warn(
-                "l10n: translation endpoint is rate-limiting — stopped early, "
-                "kept English for remaining strings. "
-                "Re-run `python scripts/translate_l10n.py` later to fill gaps."
-            )
-            break
-
-    if total_translated == 0 and total_errors == 0:
-        ok("l10n translations already complete — nothing to do")
-
-    # ── Step D: report final coverage + surface manual-translation gaps ──
+    # ── Step B: report final coverage + surface manual-translation gaps ──
     final = run_audit()
+    has_gaps = False
     for lc in final.locale_coverage:
         if lc.missing_count > 0 or lc.untranslated_count > 0:
+            has_gaps = True
             warn(
                 f"l10n {lc.locale}: {lc.pct:.0f}% "
                 f"({lc.missing_count} missing, "
@@ -371,8 +309,12 @@ def check_l10n_bundles() -> bool:
             )
 
     # List + export the exact strings a human still needs to translate. A bare
-    # per-locale count is not enough to act on — the user asked to see the keys.
+    # per-locale count is not enough to act on — print the keys + write a CSV.
     _report_l10n_manual_gaps(final)
 
-    # Translation gaps are not fatal — partial coverage is fine.
-    return True
+    if not has_gaps:
+        ok("l10n translations complete — every locale fully covered")
+
+    # Gaps are surfaced to the orchestrator (which prompts retry/ignore/abort);
+    # no translation is run from here.
+    return not has_gaps
