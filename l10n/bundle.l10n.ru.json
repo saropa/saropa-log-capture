@@ -1556,5 +1556,13 @@
   "{0} source": "{0} источник - это _PH0_.",
   "{0} sources": "{0} источники - это",
   "{0}h ago": "{0}h год назад.",
-  "{0}w ago": "{0}w ago (англ.) - несколько лет назад."
+  "{0}w ago": "{0}w ago (англ.) - несколько лет назад.",
+  "Reload": "Перезагрузить",
+  "Compare Log to Commit": "Сравнить журнал с коммитом",
+  "Could not resolve Git ref \"{0}\". Use a commit SHA, tag, or HEAD~1.": "Не удалось разрешить ссылку Git «{0}». Используйте SHA коммита, тег или HEAD~1.",
+  "Enter a Git ref (commit SHA, tag, or HEAD~1) to use as the baseline": "Введите ссылку Git (SHA коммита, тег или HEAD~1) для использования в качестве базовой",
+  "Log \"{0}\" was changed on disk. Reload to see the current content?": "Журнал «{0}» был изменён на диске. Перезагрузить, чтобы увидеть текущее содержимое?",
+  "Log \"{0}\" was deleted on disk. Showing the last loaded snapshot.": "Журнал «{0}» был удалён с диска. Показан последний загруженный снимок.",
+  "No saved log matches commit \"{0}\". Capture a session at that commit, or use \"Compare Logs\" to pick two manually.": "Ни один сохранённый журнал не соответствует коммиту «{0}». Запишите сеанс на этом коммите или используйте «Сравнить журналы», чтобы выбрать два вручную.",
+  "Open a log in the viewer first, then compare it to a commit.": "Сначала откройте журнал в средстве просмотра, затем сравните его с коммитом."
 }

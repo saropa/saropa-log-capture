@@ -1556,5 +1556,13 @@
   "{0} source": "{0} source de la source",
   "{0} sources": "Les sources {0} sont des sources de _PH0_.",
   "{0}h ago": "Il y a une heure,",
-  "{0}w ago": "Il y a une semaine, {0}w."
+  "{0}w ago": "Il y a une semaine, {0}w.",
+  "Reload": "Recharger",
+  "Compare Log to Commit": "Comparer le journal à une validation",
+  "Could not resolve Git ref \"{0}\". Use a commit SHA, tag, or HEAD~1.": "Impossible de résoudre la référence Git « {0} ». Utilisez un SHA de validation, une étiquette ou HEAD~1.",
+  "Enter a Git ref (commit SHA, tag, or HEAD~1) to use as the baseline": "Entrez une référence Git (SHA de validation, étiquette ou HEAD~1) à utiliser comme référence de base",
+  "Log \"{0}\" was changed on disk. Reload to see the current content?": "Le journal « {0} » a été modifié sur le disque. Recharger pour afficher le contenu actuel ?",
+  "Log \"{0}\" was deleted on disk. Showing the last loaded snapshot.": "Le journal « {0} » a été supprimé du disque. Affichage du dernier instantané chargé.",
+  "No saved log matches commit \"{0}\". Capture a session at that commit, or use \"Compare Logs\" to pick two manually.": "Aucun journal enregistré ne correspond à la validation « {0} ». Capturez une session sur cette validation ou utilisez « Comparer les journaux » pour en choisir deux manuellement.",
+  "Open a log in the viewer first, then compare it to a commit.": "Ouvrez d'abord un journal dans la visionneuse, puis comparez-le à une validation."
 }
