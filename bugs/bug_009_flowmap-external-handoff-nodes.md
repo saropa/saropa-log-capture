@@ -1,6 +1,6 @@
 # Bug 009 — Flow Map cannot show off-app handoffs (no `external` node kind)
 
-## Status: Fix Ready (extension side) — contacts emit side pending user scope decision
+## Status: Closed — extension side shipped; emit side handed off to contacts
 
 <!-- Status values: Open → Investigating → Fix Ready → Fixed (pending review) → Closed -->
 <!-- Type: feature extension of plan 056 Session Flow Map, filed as a bug per request. -->
@@ -216,11 +216,16 @@ permission, and the API-call scope (a/b/c) below is still an open user decision.
 - `npm run compile` — succeeds; all verify scripts (NLS, webview catalogs, command list, dist-size)
   pass.
 
-### Not done — needs the user
+### Closed in this repo — emit side handed off to contacts
 
 The acceptance criteria are met for the extension: a log line
 `[flowmap] handoff app "Google Maps" lib/x.dart:10` now renders an `external` leaf node off the
 active screen with a source link, the screen keeps its dwell/visits/edges, and `api`/`app` read
-distinctly. But no contacts session emits the tag yet — that requires editing `d:\src\contacts`
-(separate project, needs permission) AND resolving the OPEN scope decision (a) external app opens
-only / (b) + all outbound API calls / (c) curated API subset.
+distinctly. The `handoff` verb is fully documented for any calling project in
+[flowmap-tag-navigation.md](../plans/guides/flowmap-tag-navigation.md) — that guide is the contract
+and is sufficient on its own to instrument the emit side.
+
+This bug is **Closed**: this repo's work shipped, and nothing further here depends on the calling
+app. The contacts emit side (the `breadcrumbHandoff` helper, the `launchExternalUrl` wrapper, and
+the (a)/(b)/(c) API scope decision) is tracked as its own bug in that project —
+`d:\src\contacts\bugs\flowmap_handoff_emit_offapp.md` — and is not a condition for closing this one.
