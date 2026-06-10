@@ -3,8 +3,9 @@
  *
  * Art blocks are consecutive separator lines sharing the same timestamp, tagged by
  * `finalizeArtBlock()` with `artBlockPos` = 'start' | 'middle' | 'end'. The first line
- * keeps its decoration; continuation lines show only art content. The gutter uses a solid
- * `border-left` (not bar-up/bar-down `::after` pseudo — that is reserved for the shimmer).
+ * keeps its decoration; continuation lines show only art content. There is NO severity
+ * gutter rail — a left border shifted the block and read as a stray vertical line that
+ * broke the box layout, so it was removed; `::after` stays reserved for the shimmer.
  */
 export function getAsciiArtStyles(): string {
     return /* css */ `
@@ -72,14 +73,10 @@ export function getAsciiArtStyles(): string {
     vertical-align: top;
 }
 
-/* Continuous gutter bar via border-left (avoids ::after conflict with shimmer).
-   Uses --bar-color set by the level-bar-* class (always info for separator lines). */
-.line.art-block-start[class*="level-bar-"],
-.line.art-block-middle[class*="level-bar-"],
-.line.art-block-end[class*="level-bar-"] {
-    border-left: 0.14em solid var(--bar-color);
-    margin-left: 0.82em;
-}
+/* No severity gutter bar on art blocks: the box-drawing art is its own visual
+   unit, and a left border + margin-left shifted the block and read as a stray
+   vertical line breaking the layout. Severity for the block is conveyed by the
+   yellow tint/border-radius, not a gutter rail. */
 
 /* Suppress severity dot on continuation lines (start keeps its dot) */
 .line.art-block-middle[class*="level-bar-"]::before,
@@ -87,10 +84,14 @@ export function getAsciiArtStyles(): string {
     display: none;
 }
 
-/* Shimmer sweep across the art block */
-.line.art-block-start::after,
-.line.art-block-middle::after,
-.line.art-block-end::after {
+/* Shimmer sweep across the art block. Gated behind .art-shimmer-play, which
+   the renderer adds only on a row's FIRST render (latched by item._artShimmered
+   in viewer-data-helpers-render.ts). Without the gate the sweep would restart
+   every time renderViewport() rebuilds the visible DOM (every scroll / incoming
+   line), reading as a perpetual animation regardless of iteration-count. */
+.line.art-block-start.art-shimmer-play::after,
+.line.art-block-middle.art-shimmer-play::after,
+.line.art-block-end.art-shimmer-play::after {
     content: '';
     position: absolute;
     inset: 0;
@@ -106,12 +107,17 @@ export function getAsciiArtStyles(): string {
         transparent 100%
     );
     background-size: 300% 100%;
-    animation: art-block-shimmer 4s ease-in-out infinite;
+    /* Shimmer once on arrival, then settle — an infinite loop on every art
+       block reads as a perpetual "loading" state and competes for attention
+       with live log lines. A single sweep announces the block, then it goes
+       static. 'forwards' holds the final keyframe so the sweep ends off-screen
+       rather than snapping the gradient back to its start position. */
+    animation: art-block-shimmer 4s ease-in-out 1 forwards;
 }
 
 /* Stagger shimmer across rows for a cascading wave effect */
-.line.art-block-middle::after { animation-delay: 0.12s; }
-.line.art-block-end::after { animation-delay: 0.24s; }
+.line.art-block-middle.art-shimmer-play::after { animation-delay: 0.12s; }
+.line.art-block-end.art-shimmer-play::after { animation-delay: 0.24s; }
 
 @keyframes art-block-shimmer {
     0% { background-position: 300% 0; }

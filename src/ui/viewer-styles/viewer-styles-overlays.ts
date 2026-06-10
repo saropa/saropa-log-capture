@@ -8,9 +8,10 @@ import { getContextMenuStyles } from './viewer-styles-context-menu';
 import { getDecorationStyles } from './viewer-styles-decoration';
 import { getEditModalStyles } from './viewer-styles-edit-modal';
 import { getModalStyles } from './viewer-styles-modal';
+import { getSessionInfoModalStyles } from './viewer-styles-session-info-modal';
 
 export function getOverlayStyles(): string {
-    return getDecorationStyles() + getEditModalStyles() + getModalStyles() + getContextMenuStyles() + /* css */ `
+    return getDecorationStyles() + getEditModalStyles() + getModalStyles() + getSessionInfoModalStyles() + getContextMenuStyles() + /* css */ `
 
 /* ===================================================================
    Navigation Bars (Split Breadcrumb + Session Nav)

@@ -64,12 +64,14 @@ export function getDecorationStyles(): string {
 /* Stack-headers now render the same .line-decoration prefix (counter + chevron)
    as regular log rows so they get a clickable line-number column, instead of
    the prior bespoke .line-deco-spacer-only padding + inline chevron. */
-.line:has(.line-decoration),
+/* Legacy hanging-indent model — scoped to :not(.cols) so rows migrated to the
+   grid column model (plan 055) opt out cleanly while un-migrated paths keep it. */
+.line:not(.cols):has(.line-decoration),
 .stack-header:has(.line-decoration) {
     padding-left: var(--deco-prefix-width-em, 14.25em); /* 1.25em bar clearance + dynamic decoration width */
     text-indent: calc(-1 * var(--deco-content-indent-em, 13em));
 }
-.line:has(.line-decoration) .line-decoration,
+.line:not(.cols):has(.line-decoration) .line-decoration,
 .stack-header:has(.line-decoration) .line-decoration {
     /* Pulled right of severity bar by padding; indent pulls decoration start to 1.25em */
     margin-right: 0;

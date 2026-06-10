@@ -13,8 +13,9 @@ def confirm_publish(version: str) -> bool:
     """Show publish summary and require explicit confirmation.
 
     Lists every irreversible action that will happen, so the user
-    can make an informed decision. Defaults to "no" since marketplace
-    publishes cannot be undone.
+    can make an informed decision. Defaults to "yes" so a bare Enter
+    proceeds — the user has already invoked the publish script and
+    read the summary above.
     """
     print(f"\n  {C.BOLD}{C.YELLOW}Publish Summary{C.RESET}")
     print(f"  {'-' * 40}")
@@ -28,4 +29,4 @@ def confirm_publish(version: str) -> bool:
     print(f"    4. Publish to Open VSX (Cursor / VSCodium, if OVSX_PAT set)")
     print(f"    5. Create GitHub release with .vsix")
     print(f"\n  {C.RED}These actions are irreversible.{C.RESET}")
-    return ask_yn("Proceed with publish?", default=False)
+    return ask_yn("Proceed with publish?", default=True)

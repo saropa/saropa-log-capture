@@ -20,7 +20,7 @@ suite('viewer-sql-query-history panel HTML', () => {
     test('exposes empty state and list containers for no-SQL session', () => {
         const html = getSqlQueryHistoryPanelHtml();
         assert.ok(html.includes('id="sql-query-history-empty"'));
-        assert.ok(html.includes('No parsed SQL fingerprints in this session yet'));
+        assert.ok(html.includes('No parsed SQL fingerprints in any captured log yet'));
         assert.ok(html.includes('id="sql-query-history-list"'));
         assert.ok(html.includes('id="sql-query-history-search"'));
         assert.ok(html.includes('id="sql-query-history-tbody"'), 'table body mount should exist');
@@ -52,13 +52,13 @@ suite('viewer-sql-query-history panel HTML', () => {
         assert.ok(html.includes('id="sql-query-history-open-viewer"'));
     });
 
-    test('DB_17: cumulative-across-logs toggle is present and starts hidden', () => {
+    test('DB_18: current-session-only filter is present and starts hidden', () => {
         const html = getSqlQueryHistoryPanelHtml();
         assert.ok(html.includes('id="sql-query-history-cumulative-wrap"'),
-            'toggle wrap mount must exist for show/hide via updateSqlHistoryCumulativeUi');
+            'filter wrap mount must exist for show/hide via updateSqlHistoryCumulativeUi');
         assert.ok(html.includes('class="sql-qh-cumulative u-hidden"'),
-            'wrap starts hidden until host posts cumulative payload');
-        assert.ok(html.includes('id="sql-query-history-cumulative"'), 'checkbox input present');
-        assert.ok(html.includes('Cumulative across logs'), 'user-facing label uses agreed wording');
+            'wrap starts hidden until host posts cross-log payload');
+        assert.ok(html.includes('id="sql-query-history-current-session-only"'), 'checkbox input present');
+        assert.ok(html.includes('Current session only'), 'user-facing label uses agreed wording');
     });
 });

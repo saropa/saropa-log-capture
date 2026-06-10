@@ -28,6 +28,10 @@ export const stringsWebviewB: Record<string, string> = {
     'viewer.deco.anr': 'ANR Pattern Detected',
     'viewer.deco.recentErrorContext': 'Recent-error context: not the primary faulting line; tinted because a real error or stack line occurred within 2 seconds above.',
 
+    // Files dialog + footer counter — cumulative cross-session feed (plan 057).
+    'viewer.files.counterTooltip': '{0} files in this view — click to list',
+    'viewer.files.lineCount': '{0} lines',
+
     // Meta-filter tooltips (viewer-decorations.ts).
     'viewer.deco.filterByPid': 'Filter by PID {0}',
     'viewer.deco.filterByTid': 'Filter by TID {0}',
@@ -268,9 +272,21 @@ export const stringsWebviewB: Record<string, string> = {
     'viewer.sqlHistory.noSourceLog': 'No source log recorded for this fingerprint.',
     'viewer.sqlHistory.openingLog': 'Opening source log…',
     'viewer.sqlHistory.emptyFilter': 'No rows match your filter.',
-    'viewer.sqlHistory.emptyToggleCumulative': 'No parsed SQL fingerprints in this log. Toggle Cumulative across logs to see fingerprints from other sidebar logs.',
-    'viewer.sqlHistory.emptySession': 'No parsed SQL fingerprints in this session yet.',
+    'viewer.sqlHistory.emptyCurrentSessionOnly': 'No parsed SQL fingerprints in the active log. Uncheck "Current session only" to see fingerprints aggregated across your other logs.',
+    'viewer.sqlHistory.emptySession': 'No parsed SQL fingerprints in any captured log yet.',
     'viewer.sqlHistory.copiedRows.one': 'Copied {0} row to clipboard.',
     'viewer.sqlHistory.copiedRows.many': 'Copied {0} rows to clipboard.',
     'viewer.sqlHistory.copiedFingerprint': 'Copied fingerprint.',
+    'viewer.sqlHistory.sortDisabled': 'No SQL queries captured yet — nothing to sort.',
+    'viewer.sqlHistory.stat.queries': 'Distinct queries',
+    'viewer.sqlHistory.stat.executions': 'Executions',
+    'viewer.sqlHistory.stat.slowest': 'Slowest (ms)',
+    'viewer.sqlHistory.stat.logs': 'Logs',
+    'viewer.sqlHistory.chart.title': 'Top queries by count',
+    'viewer.sqlHistory.issues.title': 'Database issues (Drift Advisor)',
+    'viewer.sqlHistory.issues.openFix': 'Open the suggested SQL in the Drift viewer',
+    'viewer.sqlHistory.lint.title': 'Static code issues (Saropa Lints)',
+    'viewer.sqlHistory.lint.advice': 'Drift database linters look turned off. Turn them on to catch WHERE-less updates, enum-index reorders, and unclosed databases.',
+    'viewer.sqlHistory.lint.enableBtn': 'Enable Drift linters',
+    'viewer.sqlHistory.lint.enableTitle': 'Open a terminal with the Saropa Lints command that enables the Drift rule pack',
 };

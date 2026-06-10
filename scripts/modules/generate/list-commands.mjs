@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * Generates doc/internal/contributes-commands.md from package.json contributes.commands.
+ * Generates plans/reference/contributes-commands.md from package.json contributes.commands.
  *
  *   node scripts/modules/generate/list-commands.mjs
  *   node scripts/modules/generate/list-commands.mjs --check
@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..", "..", "..");
-const outRel = "doc/internal/contributes-commands.md";
+const outRel = "plans/reference/contributes-commands.md";
 const outPath = path.join(root, outRel);
 
 const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));

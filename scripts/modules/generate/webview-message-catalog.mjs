@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * Generates doc/internal/webview-incoming-message-types.md from TypeScript handler sources.
+ * Generates plans/reference/webview-incoming-message-types.md from TypeScript handler sources.
  * Incoming = Log Viewer (and related) webview postMessage `type` values handled in extension host.
  *
  * Usage:
@@ -13,7 +13,7 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..", "..", "..");
-const outRel = "doc/internal/webview-incoming-message-types.md";
+const outRel = "plans/reference/webview-incoming-message-types.md";
 const outPath = path.join(root, outRel);
 
 /** @param {string} text */

@@ -134,11 +134,26 @@ function renderStackFrame(item, idx, html, matchCls, barCls, idxAttr, stackGutte
        renderStackHeader). line-deco-spacer-only reserves the same left padding so
        the expanded frames nest UNDER the header instead of jutting out past it.
        Gated on areDecorationsOn() to match the header's gate. */
+    /* A frame that is the last visible row before a filter-hidden gap must still
+       surface the reveal chevron, or those hidden lines (typically device
+       'warnplus' rows — Awesome Notifications, logcat — that fall right after an
+       app trace) are silently swallowed and the collapse looks like it "ate"
+       unrelated lines (user report 2026-06-07). Frames have no line number, so
+       render the affordance ONLY (empty counter) wrapped in .line-decoration. */
+    var sfGutter = stackGutter || '';
+    if (item._hiddenAfter && item._hiddenAfter.count > 0
+        && typeof areDecorationsOn === 'function' && areDecorationsOn()
+        && typeof getCounterAffordance === 'function') {
+        sfGutter = '<span class="line-decoration">' + getCounterAffordance(item, idx, item._hiddenAfter, '') + '</span>';
+    }
+    /* line-deco-spacer-only reserves the empty decoration column so frames nest
+       under the header. When sfGutter carries the reveal chevron it IS the column
+       content; adding the spacer too would double the indent. Drop it then. */
     var sfDecoCls = (typeof areDecorationsOn === 'function' && areDecorationsOn())
-        ? ' line-deco-spacer-only' : '';
+        ? (sfGutter ? '' : ' line-deco-spacer-only') : '';
     return '<div class="line stack-line' + (item.fw ? ' framework-frame' : '')
         + matchCls + barCls + sfHeat + sfCtxCls + sfDecoCls + '"' + idxAttr + '>'
-        + stackGutter + sfQb + html + sfDupBadge + '</div>';
+        + sfGutter + sfQb + html + sfDupBadge + '</div>';
 }
 `;
 }
