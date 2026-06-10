@@ -153,6 +153,61 @@ def _resolve_model_path() -> str | None:
     return None
 
 
+# Set once the CUDA DLL directories have been registered with the Windows
+# loader, so the (cheap) scan runs a single time per process rather than before
+# every device attempt.
+_cuda_dll_dirs_registered = False
+
+
+def _register_cuda_dll_dirs() -> None:
+    """Put pip-installed NVIDIA CUDA runtime DLLs on the Windows loader path.
+
+    ctranslate2's CUDA build lazy-loads cuBLAS (``cublas64_12.dll``) at the first
+    ``translate_batch`` call, but the wheel ships cuDNN only — cuBLAS comes from
+    the separate ``nvidia-cublas-cu12`` package, which unpacks the DLL under
+    ``site-packages/nvidia/cublas/bin`` without putting it on any search path.
+    Since Python 3.8, Windows no longer loads dependent DLLs from ``PATH``, so the
+    CUDA device constructs fine but the first inference crashes with
+    "cublas64_12.dll is not found" unless that bin dir is registered via
+    ``os.add_dll_directory``. We register every ``nvidia/*/bin`` dir (cuBLAS pulls
+    in siblings like ``cublasLt64_12.dll``) and also prepend to ``PATH`` because
+    different loaders consult different search paths. No-op off Windows and where
+    the wheels are absent — a CPU-only install simply falls through the cascade.
+    """
+    global _cuda_dll_dirs_registered  # noqa: PLW0603
+    if _cuda_dll_dirs_registered or not hasattr(os, "add_dll_directory"):
+        return
+    _cuda_dll_dirs_registered = True
+
+    # nvidia-cublas-cu12 installs as a sibling of ctranslate2 in the same
+    # site-packages, so derive the root from ctranslate2's own location (robust
+    # across venv / --target / global installs); fall back to site.getsitepackages.
+    roots: list[Path] = []
+    try:
+        import ctranslate2
+        roots.append(Path(ctranslate2.__file__).resolve().parent.parent)
+    except Exception:  # noqa: BLE001 — import miss handled by the CPU fallback
+        pass
+    try:
+        import site
+        roots.extend(Path(p) for p in site.getsitepackages())
+    except Exception:  # noqa: BLE001 — some embeds lack getsitepackages
+        pass
+
+    seen: set[str] = set()
+    for root in roots:
+        for bin_dir in (root / "nvidia").glob("*/bin"):
+            key = str(bin_dir)
+            if key in seen or not bin_dir.is_dir():
+                continue
+            seen.add(key)
+            os.environ["PATH"] = key + os.pathsep + os.environ.get("PATH", "")
+            try:
+                os.add_dll_directory(key)
+            except OSError:
+                continue
+
+
 def _device_attempts() -> list[tuple[str, str]]:
     """Build the (device, compute_type) cascade: best quality -> most portable.
 
@@ -206,7 +261,12 @@ def _try_load_device(
         )
         return translator
     except (RuntimeError, OSError, MemoryError) as err:
-        sys.stderr.write(f"[nllb] {device}/{compute} load failed: {err}\n")
+        # Not fatal: this is the device cascade trying its next fallback (e.g.
+        # CUDA -> CPU when cuBLAS is absent). Phrase it as a step, not a crash —
+        # the operator otherwise reads "load failed" as the whole run dying.
+        sys.stderr.write(
+            f"[nllb] {device}/{compute} unavailable, trying next fallback: {err}\n"
+        )
         return None
 
 
@@ -231,6 +291,16 @@ def _ensure_model() -> tuple[object, object]:
             raise NllbUnavailable("NLLB model not cached on disk")
         sp = sentencepiece.SentencePieceProcessor()
         sp.Load(str(os.path.join(model_path, "sentencepiece.bpe.model")))
+        # Register the pip-installed CUDA runtime DLLs before the CUDA attempt,
+        # else cuBLAS is missing at inference and the run silently drops to CPU.
+        _register_cuda_dll_dirs()
+        # The cascade below loads the ~7 GB model and runs a probe translation in
+        # one blocking call that prints nothing. On the first locale that silence
+        # reads as a hang, so announce the one-time load before it starts.
+        sys.stderr.write(
+            "[nllb] Loading NLLB-200-3.3B model (one-time, may take a minute)…\n"
+        )
+        sys.stderr.flush()
         for device, compute in _device_attempts():
             translator = _try_load_device(model_path, sp, device, compute)
             if translator is not None:
