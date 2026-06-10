@@ -56,6 +56,8 @@ export class SessionManagerImpl implements SessionManager {
     private readonly floodGuard = new FloodGuard();
     private exclusionRules: ExclusionRule[] = [];
     private categoryCounts: Record<string, number> = {};
+    /** Categories already reported as dropped by the captureAll whitelist (log each once). */
+    private readonly droppedCategoriesLogged = new Set<string>();
     private sessionStartTime = 0;
     private floodSuppressedTotal = 0;
     private autoTagger: AutoTagger | null = null;
@@ -126,7 +128,11 @@ export class SessionManagerImpl implements SessionManager {
         });
         const counters = { categoryCounts: this.categoryCounts, floodSuppressedTotal: this.floodSuppressedTotal };
         processOutputEvent(
-            { sessions: this.sessions, earlyBuffer: this.earlyBuffer, config: this.cachedConfig, exclusionRules: this.exclusionRules, floodGuard: this.floodGuard },
+            {
+                sessions: this.sessions, earlyBuffer: this.earlyBuffer, config: this.cachedConfig,
+                exclusionRules: this.exclusionRules, floodGuard: this.floodGuard,
+                outputChannel: this.outputChannel, droppedCategoriesLogged: this.droppedCategoriesLogged,
+            },
             { counters, broadcastLine: (data) => this.broadcastLine(data) }, effectiveSessionId, body,
         );
         this.floodSuppressedTotal = counters.floodSuppressedTotal;

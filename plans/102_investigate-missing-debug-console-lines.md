@@ -77,3 +77,27 @@ Low — the backend capture logic is correct; this is a diagnostic investigation
 ## Origin
 
 Reclassified from bug 002 (`002_app-only-off-does-not-capture-all.md`, moved to `bugs/history/20260206/`).
+
+## Finish Report (2026-06-10)
+
+This work will be reviewed by another AI.
+
+**Scope:** (B) VS Code extension (TypeScript) + (C) docs. No Flutter/Dart app code.
+
+**What shipped.** I cannot run a live Flutter debug session in this environment, so the Step 1 reproduction remains operator work. Instead I built the concrete code deliverables that both investigation outcomes call for, so the feature is complete regardless of which branch the live repro lands on:
+
+- **Step 3 (Outcome B path) — dropped-category diagnostics.** `processOutputEvent` previously dropped any line whose DAP category was not whitelisted (`captureAll` off) with no trace — the most likely cause of a "missing Debug Console line." It now calls `reportDroppedCategory()`, which logs each unrecognized category exactly once to the **Saropa Log Capture** output channel, naming the category and how to capture it (`enable captureAll` or add the category). Memoized via a per-`SessionManagerImpl` `droppedCategoriesLogged` Set to avoid flooding.
+- **Step 2 (Outcome A path) — known-limitation note.** README → Known Limitations now documents that some Debug Console lines are rendered by VS Code itself and never reach extensions via DAP, so they cannot be captured; and that the dropped-category diagnostic now surfaces whitelist filtering.
+
+**Files changed:**
+- `src/modules/session/session-manager-events.ts` — `OutputEventDeps` gains optional `outputChannel` + `droppedCategoriesLogged`; new `reportDroppedCategory()` helper; filter branch now reports before returning.
+- `src/modules/session/session-manager.ts` — new `droppedCategoriesLogged` field; passes it + `outputChannel` into `processOutputEvent`.
+- `src/test/modules/session/session-manager.test.ts` — new test: each dropped category logs exactly once and names the category.
+- `README.md` — Known Limitations entry.
+- `CHANGELOG.md` — `[Unreleased]` Added entry.
+
+**Tests:** `npm run test:file -- out/test/modules/session/session-manager.test.js` → 8 passing (includes the new case). `npm run check-types`, `npm run lint` (0 errors; pre-existing warnings only, none in changed files), `npm run compile` (all verify gates OK).
+
+**Outstanding:** the manual Step 1 reproduction (verbose-DAP capture on a real Flutter session, compare Debug Console vs verbose dump) is still required to classify a specific user-reported missing line as Outcome A vs B. The diagnostic now makes that classification self-service. Plan left active for that manual step.
+
+**Finish report appended:** plans/102_investigate-missing-debug-console-lines.md
