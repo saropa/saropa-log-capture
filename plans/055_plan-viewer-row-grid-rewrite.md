@@ -170,7 +170,7 @@ the variable tag cell is capped (`7em`) and clips. So fixed parts never even cli
 **Phase 2 — cleanup + tests.**
 - Delete dead CSS vars (`--deco-content-indent-em`, `--deco-prefix-width-em`, the `/0.85` rule) once no path references them.
 - Rewrite [viewer-column-layout.test.ts](../src/test/ui/viewer-column-layout.test.ts) to pin the grid model: `.line{display:grid}`, one `.deco-cell` per part, `.line-msg{min-width:0}`, exact `ch` time/number tracks, tag-cell ellipsis.
-- Update `doc/internal` if any column contract is documented.
+- Update `plans/reference` if any column contract is documented.
 
 ## Render paths to migrate (all share or mirror the `.line` contract)
 

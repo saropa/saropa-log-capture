@@ -223,7 +223,7 @@ If you add or rename a **`postMessage` `type`** handled in `src/ui/provider/view
 npm run generate:webview-catalog
 ```
 
-`npm run compile` runs **`verify:webview-catalog`** and fails when `doc/internal/webview-incoming-message-types.md` is out of date.
+`npm run compile` runs **`verify:webview-catalog`** and fails when `plans/reference/webview-incoming-message-types.md` is out of date.
 
 ### Extension → webview message catalog
 
@@ -233,7 +233,7 @@ Host code that posts into webviews (`this.postMessage`, `target.postMessage`, `c
 npm run generate:host-outbound-catalog
 ```
 
-`npm run compile` runs **`verify:host-outbound-catalog`** against `doc/internal/webview-outbound-message-types.md`.
+`npm run compile` runs **`verify:host-outbound-catalog`** against `plans/reference/webview-outbound-message-types.md`.
 
 ### TypeScript emit
 
@@ -299,7 +299,7 @@ Remove stale **`out/`** test emit: **`npm run clean`** (optional **`--dist`** / 
 
 Activation smoke only: **`npm run test:smoke`** (requires **`npm run compile-tests`** first).
 
-If you add **`contributes.commands`** entries, run **`npm run generate:list-commands`** and commit **`doc/internal/contributes-commands.md`**.
+If you add **`contributes.commands`** entries, run **`npm run generate:list-commands`** and commit **`plans/reference/contributes-commands.md`**.
 
 ### Release version vs changelog
 
