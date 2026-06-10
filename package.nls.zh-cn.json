@@ -11,6 +11,8 @@
   "command.closeCollection.title": "Saropa Log Capture: 关闭调查",
   "command.compareSessions.title": "Saropa Log Capture: 比较日志",
   "command.compareWithMarked.title": "与标记的日志比较",
+  "command.compareLogToPreviousCommit.title": "Saropa Log Capture: Compare Log to Previous Commit",
+  "command.compareLogToCommit.title": "Saropa Log Capture: Compare Log to Commit…",
   "command.configureIntegrations.title": "配置集成",
   "command.copyAllFilteredLines.title": "Saropa Log Capture: 复制所有已过滤的行",
   "command.copyDeepLink.title": "复制深层链接",

@@ -11,6 +11,8 @@
   "command.closeCollection.title": "Saropa Log Capture: 조사 닫기",
   "command.compareSessions.title": "Saropa Log Capture: 로그 비교",
   "command.compareWithMarked.title": "표시된 로그와 비교",
+  "command.compareLogToPreviousCommit.title": "Saropa Log Capture: Compare Log to Previous Commit",
+  "command.compareLogToCommit.title": "Saropa Log Capture: Compare Log to Commit…",
   "command.configureIntegrations.title": "통합 구성",
   "command.copyAllFilteredLines.title": "Saropa Log Capture: 필터된 모든 줄 복사",
   "command.copyDeepLink.title": "딥 링크 복사",

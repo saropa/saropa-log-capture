@@ -11,6 +11,8 @@
   "command.closeCollection.title": "Saropa Log Capture: Untersuchung schließen",
   "command.compareSessions.title": "Saropa Log Capture: Protokolle vergleichen",
   "command.compareWithMarked.title": "Mit markiertem Protokoll vergleichen",
+  "command.compareLogToPreviousCommit.title": "Saropa Log Capture: Compare Log to Previous Commit",
+  "command.compareLogToCommit.title": "Saropa Log Capture: Compare Log to Commit…",
   "command.configureIntegrations.title": "Integrationen konfigurieren",
   "command.copyAllFilteredLines.title": "Saropa Log Capture: Alle gefilterten Zeilen kopieren",
   "command.copyDeepLink.title": "Deeplink kopieren",

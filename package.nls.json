@@ -9,6 +9,8 @@
   "command.closeCollection.title": "Saropa Log Capture: Close Collection",
   "command.compareSessions.title": "Saropa Log Capture: Compare Logs",
   "command.compareWithMarked.title": "Compare with Marked Log",
+  "command.compareLogToPreviousCommit.title": "Saropa Log Capture: Compare Log to Previous Commit",
+  "command.compareLogToCommit.title": "Saropa Log Capture: Compare Log to Commit…",
   "command.configureIntegrations.title": "Configure integrations",
   "command.copyDeepLink.title": "Copy Deep Link",
   "command.copyFilePath.title": "Copy File Path",
