@@ -1,6 +1,8 @@
 # Plan 047 — Structured line parsing and metadata extraction
 
-## Status: Open
+## Status: Shipped 2026-04-12 (archived 2026-06-10)
+
+> Implemented and wired. Shipped surface: `src/modules/analysis/structured-line-parser.ts` + `structured-line-sniffer.ts` (format sniffing), `src/ui/viewer/viewer-structured-line-parser.ts`, decoration integration (`viewer-deco-content.ts`, `viewer-deco-settings*.ts`), and unit tests `structured-line-parser.test.ts` + `structured-line-sniffer.test.ts`. Archived during plan-backlog triage on 2026-06-10 — the "Open" status below was stale.
 
 ## Goal
 
