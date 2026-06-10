@@ -67,6 +67,7 @@ export function kindIcon(node: FlowNode): string {
         case 'screen': return '📄';
         case 'dialog': return '🪟';
         case 'inline': return '🔎';
+        case 'external': return '↗️';
         default: return '•';
     }
 }
