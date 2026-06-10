@@ -111,3 +111,58 @@ Implement as explicit steps; stop at first success.
 | Optional: versioned log path in repo | +1–2 days |
 
 **Total:** about **5–8 days** depending on how strict the commit→metadata contract must be and how many edge cases (monorepo, multiple log roots) you support in v1.
+
+---
+
+## Finish Report (2026-06-10)
+
+**Status:** Implemented (MVP + MVP+). The "Later" tier (3-way / error-set-only) stays out of scope by design — it lives in [031_plan-session-comparison-three-way.md](../031_plan-session-comparison-three-way.md). The "Out of scope" tier (`git show <ref>:path` unified diff for arbitrary tracked paths) was not built, as planned.
+
+**This work will be reviewed by another AI.**
+
+### Scope
+(B) VS Code extension (TypeScript). No Flutter/Dart, no docs-only.
+
+### What shipped
+Two commands compare the log currently shown in the viewer against the saved session captured at a Git commit, reusing the existing two-log `SessionComparisonPanel` (no second bespoke diff UI):
+
+- `saropaLogCapture.compareLogToPreviousCommit` — baseline = `HEAD~1`.
+- `saropaLogCapture.compareLogToCommit` — prompts for any ref (SHA / tag / `HEAD~1`).
+
+The commit is a **time label**, not `git show`: the baseline session is found by matching the resolved full SHA against the `git` / `buildCi` commit recorded in each session's metadata, most-recent-on-ties. A miss surfaces a specific message and points at "Compare Logs" — never a silent wrong baseline.
+
+### Files created
+- `src/modules/git/git-rev-resolve.ts` — `resolveGitRef(ref, cwd)` → full SHA via `git rev-parse --verify --quiet <ref>^{commit}`.
+- `src/modules/session/session-commit-from-meta.ts` — `getSessionCommit(integrations)` normalizer (single source for reading commit off `SessionMeta.integrations`).
+- `src/modules/compare/baseline-match.ts` — pure `commitsMatch` (short↔full prefix, min 7) + `pickBaselineKey` (most-recent winner).
+- `src/modules/compare/git-baseline.ts` — `resolveBaselineForCommit(opts)`: lists tracked logs, batch-reads central metadata once, builds candidates (excludes current log), returns `{ uri?, reason }`.
+- `src/commands-comparison-git.ts` — the two command registrations + shared `compareToRef`.
+- `src/test/modules/compare/git-baseline-match.test.ts` — 13 cases over the pure logic.
+
+### Files modified
+- `src/commands.ts` — register `comparisonGitCommands` with `getFileUri` = viewer current URI.
+- `package.json` — two `contributes.commands` entries (`$(git-commit)`).
+- `package.nls.json` + 10 locale files — two title keys (English placeholder in non-en; translate pipeline fills later — NOT run here).
+- `src/l10n/strings-a.ts` — 5 runtime strings (1 title, 1 prompt, 3 error messages).
+- `CHANGELOG.md` — `[Unreleased] → Added`.
+- `plans/reference/contributes-commands.md` — regenerated via `generate:list-commands`.
+
+### Key design decisions
+- **Short-vs-full SHA matching:** the `git` integration stores `rev-parse --short HEAD` while `resolveGitRef` returns the full 40-char hash, so `commitsMatch` accepts either being a prefix of the other, floored at git's 7-char minimum to avoid fragment collisions.
+- **Metadata key mismatch fixed:** `readTrackedFiles` returns log-dir-relative paths; the central store keys on workspace-relative (`relativeKey`). `buildCandidates` looks up metadata via `relativeKey(uri)` while keeping the log-dir-relative name (timestamp-prefixed) for ordering and `joinPath`.
+- **No silent fallback:** plan §"Explicit fallback" honored — three distinct `reason` codes (`no-sessions`, `no-commit-match`, `matched`); the command never substitutes "previous in list order."
+
+### Quality gates
+- `npm run check-types` — clean.
+- `npm run lint` — new files clean (the 9 `max-lines` warnings are pre-existing in viewer files not touched here).
+- `npm run compile` — passes, incl. `verify:list-commands`, `verify-nls` (479 keys × 11 files aligned), outbound/incoming catalogs, dist-size.
+- `node --test git-baseline-match.test.js` — 13/13 pass.
+- `npm run test:file -- …contributes-commands-doc.test.js` — 1 passing (command doc matches package.json after regen).
+
+### Test audit (Section 4A)
+Grepped `src/test/` for every touched symbol/file. The only test pinning touched output is `contributes-commands-doc.test.ts` (asserts the generated command doc matches `package.json`) — regenerated the doc, ran it through vscode-test, passes. Other grep hits (`baseline` in `drift-db-baseline-volume-compare-detector`, `compareSessions` substrings in db/correlation tests) are coincidental and unaffected. No existing assertion broke.
+
+### Not done / outstanding
+- On-device (Extension Host F5) manual exercise — see "What to test".
+- 3-way comparison ("Later" tier) — separate plan 031.
+- `git show`-based unified diff for tracked paths — out of scope by plan.
