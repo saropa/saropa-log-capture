@@ -236,3 +236,58 @@ flow-map) and asserting the generated script string carries `availableWidth`, `m
 The flow-map type errors belong to that workstream's in-progress changes and should be resolved there
 to restore the full `tsc` test gate. On-device confirmation of the narrow-split case is the only manual
 check left for this menu.
+
+## Finish Report (2026-06-09)
+
+**This work will be reviewed by another AI.**
+
+### Scope
+(B) VS Code extension — TypeScript webview script + one test. No Flutter/Dart; l10n N/A (no
+user-facing strings added or changed — menu labels untouched).
+
+### Deep review
+- **Logic/safety:** `positionSubmenu()` keeps its missing-flyout guard (`if (!flyout) return`). The new
+  width branch is one synchronous read + style write; no new loops, recursion, or async. The height
+  cap is applied before the width is measured so a vertical scrollbar's width is included in the
+  horizontal flip/clamp — the only ordering invariant the change introduces, and it is pinned by a test.
+  `flyout.style.cssText = ''` at entry still resets all prior placement (including the new `maxWidth`/
+  `overflowX`) so a re-hover never inherits a stale width cap.
+- **Architecture:** placement stays isolated in `viewer-context-menu-position.ts`; no new module, no new
+  shared primitive, no API surface change. The sibling components `viewer-styles-session-list.ts` /
+  `viewer-session-context-menu.ts` keep their own independent `flip-submenu` logic — untouched.
+- **Performance/UX:** still one `getBoundingClientRect` + a couple of `offsetWidth`/`scrollHeight`
+  reads per hover (one forced layout flush) — negligible. Horizontal scroll on a flyout is a last
+  resort that only engages when the panel is narrower than the menu's natural width; it is strictly
+  better than the prior clip-off-screen behavior.
+- **Refactoring:** none beyond scope. Width is now handled symmetrically with height, which removes the
+  asymmetry that was the actual code smell.
+
+### Tests
+- **Audited** `src/test/ui/viewer-context-menu.test.ts` (the only test referencing the changed symbols).
+  The recurrence-#2 test pinned `position='fixed'`, `availableHeight`, `style.maxHeight`, and the absence
+  of `spaceBelow`/`spaceAbove` — all still true, left intact. Added a new case pinning `availableWidth`,
+  `style.maxWidth`, `overflowX='auto'`, and that the height cap precedes the width measure.
+- **Ran** the assertions against the real generated script by bundling `viewer-context-menu.ts` with
+  esbuild (pulls in only its own imports, not the broken flow-map workstream) — all green. The full
+  vscode-test suite could not be emitted because another workstream's **uncommitted** `flow-map/*`
+  type errors block `tsc` emit tree-wide; that is not this task's code.
+
+### Maintenance
+- CHANGELOG: added a `### Fixed` entry under `[Unreleased]` and updated the human summary line.
+- README verified — no updates needed (behavior fix, no product-fact change). No `docs/LAUNCH_TEST.md`
+  in this repo — N/A.
+- `package.json` untouched.
+- Bug archived: `bugs/context-menu-submenu-offscreen_attempts.md` →
+  `plans/history/2026.06/2026.06.09/context-menu-submenu-offscreen_attempts.md` (this file).
+
+### Files changed (commit bf592a2f + this report's follow-up commit)
+- `src/ui/viewer-context-menu/viewer-context-menu-position.ts` — `positionSubmenu` width cap +
+  overflow-x + height-cap-before-width-measure ordering; module doc-comment updated.
+- `src/test/ui/viewer-context-menu.test.ts` — new viewport-width cap test.
+- `CHANGELOG.md` — `### Fixed` entry under `[Unreleased]`.
+- `bugs/context-menu-submenu-offscreen_attempts.md` → `plans/history/2026.06/2026.06.09/…` — archived
+  with this recurrence record + finish report.
+
+### Outstanding (finish report)
+On-device confirmation of the narrow-split / scrolling-flyout case. The full `tsc`/vscode-test gate is
+blocked by another workstream's uncommitted flow-map type errors, not by this change.
