@@ -122,5 +122,34 @@ class AvailabilityGateTests(unittest.TestCase):
                 os.environ["SAROPA_SKIP_NLLB"] = previous
 
 
+class CudaDllRegistrationTests(unittest.TestCase):
+    """``_register_cuda_dll_dirs`` is safe to call and runs at most once.
+
+    Registers the pip-installed CUDA runtime DLL dirs so the CUDA inference path
+    finds cuBLAS. It must never raise (a missing wheel / non-Windows host simply
+    falls through to the CPU cascade) and must be idempotent — it is called once
+    per model load but guarded so the site-packages scan does not repeat.
+    """
+
+    def setUp(self) -> None:
+        # Reset the one-shot guard so the test exercises the real first-call path
+        # regardless of whether an earlier import already registered the dirs.
+        self._prev = engine._cuda_dll_dirs_registered
+        engine._cuda_dll_dirs_registered = False
+
+    def tearDown(self) -> None:
+        engine._cuda_dll_dirs_registered = self._prev
+
+    def test_first_call_sets_guard_and_does_not_raise(self) -> None:
+        engine._register_cuda_dll_dirs()
+        self.assertTrue(engine._cuda_dll_dirs_registered)
+
+    def test_second_call_is_a_noop(self) -> None:
+        engine._register_cuda_dll_dirs()
+        # Second call returns immediately on the guard — must still not raise.
+        engine._register_cuda_dll_dirs()
+        self.assertTrue(engine._cuda_dll_dirs_registered)
+
+
 if __name__ == "__main__":
     unittest.main()
