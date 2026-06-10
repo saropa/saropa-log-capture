@@ -38,6 +38,11 @@ export interface SessionMetadata {
     readonly hasTimestamps?: boolean;
     readonly partNumber?: number;
     readonly trashed?: boolean;
+    /** Pinned to the top of the Logs panel. Pinned rows carry fully-cached metadata
+     *  (see ui/session/session-pin.ts) so they list with no file read. */
+    readonly pinned?: boolean;
+    /** Epoch ms the file was pinned; newest pin sorts first in the pinned section. */
+    readonly pinnedAt?: number;
     readonly mtime: number; // File modification time (epoch ms)
     /** True when session meta has performance integration data (snapshot or samples). */
     readonly hasPerformanceData?: boolean;
@@ -52,6 +57,11 @@ export interface SessionMetadata {
     /** Explicit Controller/Peripheral override from `SessionMeta.role`. Read by
      *  `classifySessionRole` — absence means "let the classifier decide". */
     readonly role?: 'controller' | 'peripheral';
+    /** True for rows injected from the loaded-files history (a file opened via the
+     *  "Open Log File" picker, not found by the directory scan). Such a row's `mtime`
+     *  is the LOAD time, so it day-groups under when it was loaded; the flag lets the
+     *  webview mark it so the user can tell why an external file appears in the list. */
+    readonly loadedManually?: boolean;
 }
 
 /** Group of split files under a single parent session. */
