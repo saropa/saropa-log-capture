@@ -18,6 +18,7 @@ import { getDecorationStyles } from '../../ui/viewer-styles/viewer-styles-decora
 import { getColumnStyles } from '../../ui/viewer-styles/viewer-styles-columns';
 import { getDecorationsScript } from '../../ui/viewer-decorations/viewer-decorations';
 import { getViewerDataAddScript } from '../../ui/viewer/viewer-data-add';
+import { getViewerDataHelpersRender } from '../../ui/viewer/viewer-data-helpers-render';
 
 suite('viewer column layout (plan 055 — grid column model)', () => {
     test('.cols is a grid and every decoration cell clips its own track', () => {
@@ -80,6 +81,19 @@ suite('viewer column layout (plan 055 — grid column model)', () => {
             'each part is wrapped in a keyed .deco-cell span');
     });
 
+    test('Phase 2: AI rows render on the grid (.cols.log-cols + .line-msg, grid deco cells)', () => {
+        const script = getViewerDataHelpersRender();
+        // The AI branch must opt into the gutter grid like regular rows...
+        assert.ok(/class="line ai-line cols log-cols /.test(script),
+            'AI rows must carry .cols.log-cols so the grid template applies');
+        // ...use the grid cell emitter (not the legacy inline-block prefix)...
+        assert.ok(/_aiDeco = \(typeof getDecorationCells === 'function'\)/.test(script),
+            'AI decoration must come from getDecorationCells (grid), not getDecorationPrefix');
+        // ...and wrap its message body in the clipping .line-msg cell.
+        assert.ok(/'<span class="line-msg">' \+ _aiElapsed \+ aiPrefix \+ aiCompress \+ aiBody \+ '<\/span><\/div>'/.test(script),
+            'AI message body must live in the .line-msg cell so nothing can paint over it');
+    });
+
     test('decoSeen data-presence flags are tracked at ingestion and reset on clear', () => {
         const decoScript = getDecorationsScript();
         assert.ok(/var decoSeen\s*=\s*\{/.test(decoScript), 'decoSeen must be declared in the decorations script');
@@ -90,8 +104,9 @@ suite('viewer column layout (plan 055 — grid column model)', () => {
 
     test('legacy hanging-indent model is retained but scoped to :not(.cols)', () => {
         const css = getDecorationStyles();
-        // Un-migrated paths (AI rows, multi-frame stack headers, chips) still use
-        // the inline-block model; it must skip rows that opted into the grid.
+        // Un-migrated paths (multi-frame stack headers, chips) still use the
+        // inline-block model; it must skip rows that opted into the grid. (AI rows
+        // moved to the grid in Phase 2.)
         assert.ok(
             /\.line:not\(\.cols\):has\(\.line-decoration\)/.test(css),
             'the legacy .line:has(.line-decoration) rule must be scoped :not(.cols) so grid rows opt out',
