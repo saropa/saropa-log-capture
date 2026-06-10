@@ -47,10 +47,13 @@ def ask_yn(question: str, default: bool = True) -> bool:
     Handles EOF and Ctrl+C gracefully by returning the default.
     """
     hint = "Y/n" if default else "y/N"
+    # Single-line colored prompt via native input(). We avoid readline
+    # (pyreadline3) entirely — importing it corrupts prompts in the VS Code
+    # terminal (see the bootstrap note in scripts/publish.py). Native input()
+    # writes the prompt straight to the terminal, which renders the color and
+    # tracks the cursor correctly, so the question and cursor stay on one line.
     try:
-        answer = input(
-            f"  {C.YELLOW}{question} [{hint}]: {C.RESET}",
-        ).strip().lower()
+        answer = input(f"  {C.YELLOW}{question} [{hint}]: {C.RESET}").strip().lower()
     except (EOFError, KeyboardInterrupt):
         print()
         return default

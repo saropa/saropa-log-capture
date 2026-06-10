@@ -10,6 +10,19 @@ export type SessionDateRange =
     | '1h' | '4h' | '8h' | '1d' | '7d' | '30d'
     | '3m' | '6m' | '1y' | 'all';
 
+/** Minimum-size filter for the session list. Each value is a lower bound on
+ *  file size, so the list keeps only logs at least that big — built to surface
+ *  the large files a user is hunting for, not to bucket by exact size band. */
+export type SessionSizeRange =
+    | 'all' | '25k' | '50k' | '100k' | '500k' | '1m' | '5m' | '10m' | '50m';
+
+/** Per-day Reports bucket default state.
+ *  `collapsed` — bucket visible but folded; click to expand (default behavior).
+ *  `expanded`  — bucket auto-expanded so every report row renders inline.
+ *  `hidden`    — bucket emits nothing; reports vanish from the panel entirely.
+ *  See [plans/history/2026.06/2026.06.02/001_plan-newer-alert-and-reports-grouping.md]. */
+export type ReportsBucketState = 'collapsed' | 'expanded' | 'hidden';
+
 /** Persisted display options for the session list. */
 export interface SessionDisplayOptions {
     readonly stripDatetime: boolean;
@@ -20,12 +33,31 @@ export interface SessionDisplayOptions {
     readonly panelWidth?: number;
     /** Filter sessions by modified time: all, last 7 days, or last 30 days. */
     readonly dateRange?: SessionDateRange;
+    /** Filter sessions by minimum file size (lower bound). 'all' keeps every
+     *  log; the other values hide anything smaller than the chosen threshold so
+     *  large logs are easy to find. */
+    readonly sizeRange?: SessionSizeRange;
     /** Logs per page in Logs panel (pagination). Default 100. */
     readonly sessionListPageSize?: number;
     /** Day groups the user has collapsed in the session list, keyed by YYYY-MM-DD. */
     readonly collapsedDays?: Readonly<Record<string, boolean>>;
     /** Session groups the user has collapsed in the session list, keyed by groupId. */
     readonly collapsedGroups?: Readonly<Record<string, boolean>>;
+    /** Controller blocks the user has collapsed in the session list, keyed by "ctrl:<uriString>". */
+    readonly collapsedControllers?: Readonly<Record<string, boolean>>;
+    /** Panel-wide default for the per-day Reports bucket. Seeded from
+     *  `saropaLogCapture.reportsBucketDefault` at activation. */
+    readonly reportsBucketState?: ReportsBucketState;
+    /** Per-day Reports bucket expansion override, keyed by YYYY-MM-DD. Wins over
+     *  `reportsBucketState` for that day. Persists so a day the user expanded
+     *  stays expanded across reloads. */
+    readonly expandedReportBuckets?: Readonly<Record<string, boolean>>;
+    /** Sticky newer-log banner above the day list. Seeded from
+     *  `saropaLogCapture.newerLogBanner`. Default true. */
+    readonly newerLogBannerEnabled?: boolean;
+    /** Per-row blue unread dot. Seeded from `saropaLogCapture.newerLogDot`.
+     *  Default true. */
+    readonly newerLogDotEnabled?: boolean;
 }
 
 /** Default display options. */
@@ -34,9 +66,16 @@ export const defaultDisplayOptions: SessionDisplayOptions = {
     normalizeNames: true,
     showDayHeadings: true,
     reverseSort: false,
+    // OFF by default: folding older same-name runs behind a "+N older" badge surprised users who
+    // expected every run to show — the collapsed count read as missing logs. Opt-in via the toggle
+    // instead; the default list shows every run so nothing appears to vanish.
     showLatestOnly: false,
     dateRange: 'all',
+    sizeRange: 'all',
     sessionListPageSize: 100,
+    reportsBucketState: 'collapsed',
+    newerLogBannerEnabled: true,
+    newerLogDotEnabled: true,
 };
 
 const shortMonths = [

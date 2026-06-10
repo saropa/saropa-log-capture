@@ -6,7 +6,42 @@ import { getConfig, getLogDirectoryUri } from './modules/config/config';
 import type { CommandDeps } from './commands-deps';
 import { handleDeleteCommand } from './modules/features/delete-command';
 import { updateLastViewed } from './ui/provider/viewer-provider-helpers';
+import { downloadAndLoadUrl, isDownloadableUrl } from './ui/provider/viewer-url-log';
 import type { CaptureToggleStatusBar } from './ui/shared/capture-toggle-status-bar';
+
+/** Show a native file picker scoped to the configured log file types, defaulting to the
+ *  log directory. Returns the chosen file URI, or undefined if the user cancelled. */
+async function pickLogFile(): Promise<vscode.Uri | undefined> {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    const defaultUri = folder ? getLogDirectoryUri(folder) : undefined;
+    // showOpenDialog filters take bare extensions (no leading dot).
+    const exts = getConfig().fileTypes.map(e => e.replace(/^\./, '')).filter(Boolean);
+    const filters = exts.length > 0
+        ? { [t('msg.openLogFile.filter')]: exts, [t('msg.openLogFile.allFiles')]: ['*'] }
+        : undefined;
+    const uris = await vscode.window.showOpenDialog({
+        canSelectFiles: true,
+        canSelectFolders: false,
+        canSelectMany: false,
+        defaultUri,
+        filters,
+        openLabel: t('msg.openLogFile.openLabel'),
+    });
+    return uris?.[0];
+}
+
+/** Prompt for an http/https URL to download a log from. Returns the trimmed URL, or undefined if
+ *  cancelled or empty. Validates the scheme inline so the user gets immediate feedback. */
+async function promptForLogUrl(): Promise<string | undefined> {
+    const url = await vscode.window.showInputBox({
+        title: t('msg.urlLog.inputTitle'),
+        prompt: t('msg.urlLog.inputPrompt'),
+        placeHolder: t('msg.urlLog.inputPlaceholder'),
+        validateInput: (v) => (v.trim().length === 0 || isDownloadableUrl(v) ? undefined : t('msg.urlLog.badUrl')),
+    });
+    const trimmed = url?.trim();
+    return trimmed ? trimmed : undefined;
+}
 
 export function sessionLifecycleCommands(
     deps: CommandDeps,
@@ -95,6 +130,23 @@ export function historyBrowseCommands(deps: CommandDeps): vscode.Disposable[] {
             await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
             await viewerProvider.loadFromFile(item.uri);
             await updateLastViewed(deps.context, item.uri);
+        }),
+        // Open-a-file entry point: a native picker that loads ANY log directly into the viewer,
+        // bypassing the folder-scan session list. Reaches files outside the configured reports
+        // directory (e.g. another project's logs) which the list-root browse can't open by path.
+        vscode.commands.registerCommand('saropaLogCapture.openLogFile', async () => {
+            const uri = await pickLogFile();
+            if (!uri) { return; }
+            await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
+            await viewerProvider.loadFromFile(uri);
+            await updateLastViewed(deps.context, uri);
+        }),
+        // Download a log from a URL into temp storage and render it — for logs shared as a link
+        // (CI artifact, gist raw, internal dashboard) without saving them by hand first.
+        vscode.commands.registerCommand('saropaLogCapture.openLogFromUrl', async () => {
+            const url = await promptForLogUrl();
+            if (!url) { return; }
+            await downloadAndLoadUrl(url, (uri) => viewerProvider.loadFromFile(uri), deps.context);
         }),
         vscode.commands.registerCommand('saropaLogCapture.replay', async () => {
             await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');

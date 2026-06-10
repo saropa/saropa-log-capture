@@ -114,8 +114,11 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes("case 'show-context':"));
             assert.ok(script.includes("case 'copy-line-number':"));
             assert.ok(script.includes("case 'copy-timestamp':"));
-            assert.ok(script.includes("case 'copy-error-warning-block':"));
-            assert.ok(script.includes("case 'copy-db-cluster-block':"));
+            /* Grouped-block copy actions moved to viewer-context-menu-block-copy.ts (handleBlockCopyAction),
+               so they dispatch via `if (action === ...)` rather than a switch case. The JSON variant is new. */
+            assert.ok(script.includes("action === 'copy-error-warning-block'"));
+            assert.ok(script.includes("action === 'copy-error-warning-json'"));
+            assert.ok(script.includes("action === 'copy-db-cluster-block'"));
         });
 
         test('should define incident range helpers before showContextMenu uses them', () => {
@@ -282,17 +285,47 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes('innerHeight - rect.height'));
         });
 
-        test('should flip submenus vertically when menu is near bottom so flyouts stay on screen', () => {
+        test('should position each submenu flyout from its own trigger rect on mouseenter', () => {
             const script = getContextMenuScript();
-            assert.ok(script.includes('flip-submenu-vertical'));
-            assert.ok(script.includes('rect.bottom + submenuMaxH > window.innerHeight'));
+            // Per-submenu placement replaced the old global flip-submenu* classes.
+            assert.ok(script.includes('function positionSubmenu'));
+            assert.ok(script.includes("addEventListener('mouseenter'"));
+            assert.ok(script.includes('.context-menu-submenu-content'));
+            // Direction chosen from the trigger's live rect, not a single root-menu class.
+            assert.ok(script.includes('submenuEl.getBoundingClientRect()'));
+            // The dead global model must be gone so it cannot override per-submenu placement.
+            assert.ok(!script.includes('flip-submenu-vertical'));
+            assert.ok(!script.includes('--submenu-content-top'));
         });
 
-        test('should push submenu content down when menu is near top so flyout top is not cropped', () => {
+        test('should maximize a submenu flyout to the full viewport height and scroll only if it cannot fit', () => {
             const script = getContextMenuScript();
-            assert.ok(script.includes('flip-submenu-vertical-top'));
-            assert.ok(script.includes('--submenu-content-top'));
-            assert.ok(script.includes('rect.top <'));
+            // Fixed positioning + full-viewport height replaced the trigger-anchored one-sided cap.
+            assert.ok(script.includes("flyout.style.position = 'fixed'"));
+            assert.ok(script.includes('availableHeight'));
+            assert.ok(script.includes('style.maxHeight'));
+            // The old one-sided trigger-room model is gone so it cannot strand half the screen.
+            assert.ok(!script.includes('spaceBelow'));
+            assert.ok(!script.includes('spaceAbove'));
+        });
+
+        test('should cap a submenu flyout to the viewport WIDTH so a narrow panel never clips it off the right edge', () => {
+            const script = getContextMenuScript();
+            // Width is treated symmetrically with height: cap + horizontal scroll, not clip off-screen.
+            assert.ok(script.includes('availableWidth'));
+            assert.ok(script.includes('style.maxWidth'));
+            assert.ok(script.includes("flyout.style.overflowX = 'auto'"));
+            // Height must be capped BEFORE width is measured so a scrollbar-widened flyout is counted.
+            const heightCap = script.indexOf('flyout.style.maxHeight = availableHeight');
+            const widthMeasure = script.indexOf('Math.min(flyout.offsetWidth, availableWidth)');
+            assert.ok(heightCap >= 0 && widthMeasure > heightCap, 'height cap must precede width measure');
+        });
+
+        test('should reposition the open context menu and submenu on viewport resize (responsive)', () => {
+            const script = getContextMenuScript();
+            assert.ok(script.includes("addEventListener('resize'"));
+            assert.ok(script.includes('function repositionOpenContextMenu'));
+            assert.ok(script.includes('.context-menu-submenu:hover'));
         });
 
         test('should disable show-code-quality when codeQuality adapter is off (open report is footer-only)', () => {

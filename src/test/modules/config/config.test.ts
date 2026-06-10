@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { isTrackedFile, shouldRedactEnvVar, getFileTypeGlob } from '../../../modules/config/config';
+import { isTrackedFile, isLogContentFile, shouldRedactEnvVar, getFileTypeGlob } from '../../../modules/config/config';
 
 suite('Config Module', () => {
 
@@ -47,6 +47,22 @@ suite('Config Module', () => {
 
         test('should handle files with multiple dots', () => {
             assert.strictEqual(isTrackedFile('my.session.log', defaultTypes), true);
+        });
+    });
+
+    suite('isLogContentFile', () => {
+        test('should treat .log and .txt as log content (severity-scannable)', () => {
+            assert.strictEqual(isLogContentFile('session.log'), true);
+            assert.strictEqual(isLogContentFile('output.txt'), true);
+            assert.strictEqual(isLogContentFile('SESSION.LOG'), true);
+        });
+
+        test('should treat report sidecars as non-log (skip severity scan)', () => {
+            assert.strictEqual(isLogContentFile('l10n_failures.json'), false);
+            assert.strictEqual(isLogContentFile('bundle.csv'), false);
+            assert.strictEqual(isLogContentFile('report.html'), false);
+            assert.strictEqual(isLogContentFile('stream.jsonl'), false);
+            assert.strictEqual(isLogContentFile('notes.md'), false);
         });
     });
 

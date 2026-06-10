@@ -45,6 +45,49 @@ ACRONYM_ONLY_STRINGS: frozenset[str] = frozenset({
     "TODO",  # source-code keyword
 })
 
+# Strings whose CORRECT translation in a SPECIFIC locale happens to equal the
+# English source — verified by a human, so the audit stops counting them as
+# "untranslated" (value == English).
+#
+# This is fundamentally different from brands/acronyms above, which are forced
+# English in EVERY locale. These are per-locale coincidences: "Error" is correct
+# Spanish but wrong German ("Fehler"); "Pause" is correct in de/fr but not
+# Japanese. A global force-English set would mistranslate the locales that DO
+# differ, so each entry names the exact locale it was checked against. Audit-only
+# — the translator's publish path already leaves en-copy keys in place, so these
+# are never re-sent to Google.
+#
+# Add an entry ONLY after confirming the word is genuinely identical in that
+# locale (a true cognate, loanword, proper noun, or abbreviation), not merely
+# still-English-because-nobody-translated-it. Removing the wrong translation that
+# silenced a real gap is far cheaper than shipping it.
+VERIFIED_IDENTICAL: dict[str, frozenset[str]] = {
+    "de": frozenset({
+        "Export", "in {0}", "Filter…", "Ver", "Perf", "Info", "Audio",
+        "Layout", "Trends", "Terminal", "Pause", "Git", "System",
+    }),
+    "es": frozenset({
+        "local", "FATAL", "Ver", "Error", "{0} error", "Audio", "Terminal",
+        "{0} total",
+    }),
+    "fr": frozenset({
+        "{0} commit", "FATAL", "Ver", "Versions", "Flutter DAP", "Exclusions",
+        "Exclusions ({0})", "Collections", "Audio", "Performance", "Sources",
+        "Terminal", "Pause", "Dates", "Git", "Session", "{0} types",
+    }),
+    "it": frozenset({
+        "Dev", "— stdout, stderr, console", "Perf", "file", "Debug",
+        "Timestamp", "Display", "Audio", "Volume:",
+        "Database (Drift SQL) — {0} exec A / {1} exec B · {2} fp A / {3} fp B",
+    }),
+    "ja": frozenset({
+        "Git",
+    }),
+    "pt-br": frozenset({
+        "local", "FATAL", "Ver", "Volume:", "{0} total", "Git",
+    }),
+}
+
 # Substrings that must survive translation verbatim. Ordered longest-first
 # so "Saropa Log Capture" is matched before "Saropa" during placeholder
 # substitution.
@@ -115,6 +158,51 @@ def is_acronym_only(en_value: str) -> bool:
     label is uniform across all locales.
     """
     return en_value in ACRONYM_ONLY_STRINGS
+
+
+def is_verified_identical(en_value: str, locale: str) -> bool:
+    """True if a human verified English is the correct rendering in this locale.
+
+    Per-locale (unlike is_brand_only/is_acronym_only, which hold for every
+    locale): the same string may be a verified cognate in one locale and a real
+    gap in another. The audit uses this to skip counting a known-good en-copy as
+    untranslated, so genuine gaps stay visible while reviewed ones go quiet.
+    """
+    return en_value in VERIFIED_IDENTICAL.get(locale, frozenset())
+
+
+# Format placeholders like {0}, {1}, {count} are substituted at runtime and are
+# not translatable text. Drop them before deciding whether a word remains.
+_PLACEHOLDER_RE = re.compile(r"\{[^}]*\}")
+
+
+def is_no_translatable_content(en_value: str) -> bool:
+    """True if the string has no translatable word — only symbols, digits,
+    punctuation, and {n} placeholders (e.g. "1 - {0}", "{0} #", "Δ #").
+
+    Like brands/acronyms, identity IS the correct rendering: there is nothing to
+    translate, so the value equals English in every locale. Without this skip a
+    value==English check counts these as untranslated forever, and the translator
+    round-trips them to Google for identical output on every publish.
+
+    Translatable content = any ASCII letter (a real word or single-letter label
+    that could differ per locale, e.g. a column header "A"), OR a run of two or
+    more Unicode letters (a non-Latin word). A lone letter-shaped symbol such as
+    "Δ" (used here as the math delta, not a word) is NOT translatable — hence the
+    2+ run requirement for the non-ASCII case.
+    """
+    stripped = _PLACEHOLDER_RE.sub("", en_value)
+    if any("a" <= ch.lower() <= "z" for ch in stripped):
+        return False  # contains ASCII letters — a real word or label
+    run = 0
+    for ch in stripped:
+        if ch.isalpha():
+            run += 1
+            if run >= 2:
+                return False  # a non-Latin word (2+ consecutive letters)
+        else:
+            run = 0
+    return True
 
 
 def validate_brands(en_value: str, translated: str) -> list[str]:

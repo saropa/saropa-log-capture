@@ -12,16 +12,20 @@ import { getInteractionTracker } from "../../modules/learning/learning-runtime";
 import type { SessionManagerImpl } from "../../modules/session/session-manager";
 import type { SessionHistoryProvider } from "../session/session-history-provider";
 import type { SessionMetadata, TreeItem } from "../session/session-history-grouping";
+import type { SessionPreviewRecord } from "../session/session-history-metadata";
 import type { ViewerBroadcaster } from "./viewer-broadcaster";
 import { getLogDirectoryUri } from "../../modules/config/config";
 import { showSearchQuickPick } from "../../modules/search/log-search-ui";
 import { openLogAtLine } from "../../modules/search/log-search";
 import { showAnalysis } from "../analysis/analysis-panel";
 import { loadPresets, promptSavePreset } from "../../modules/storage/filter-presets";
-import { buildSessionListPayload, buildSessionItemRecord, openSourceFile, LOG_LAST_VIEWED_KEY, type SessionListPayloadOptions } from "./viewer-provider-helpers";
+import { buildSessionListPayload, buildSessionItemRecord, openSourceFile, LOG_LAST_VIEWED_KEY, LOGS_PANEL_DISMISSED_AT_KEY, buildClassifierInputs, buildRoleClassifier, type SessionListPayloadOptions } from "./viewer-provider-helpers";
+import { runDeferredSeverityScan } from "../session/session-severity-scan";
+import { getConfig } from "../../modules/config/config";
 import type { BookmarkStore } from "../../modules/storage/bookmark-store";
 import { wireBookmarkHandlers } from "./viewer-handler-bookmarks";
 import { handleSessionAction } from "./viewer-handler-sessions";
+import { exportSessionListToJson } from "./viewer-session-list-export";
 
 /** Workspace state: Logs panel root folder override (URI string). */
 export const SESSION_PANEL_ROOT_KEY = "sessionPanelRootFolder";
@@ -47,6 +51,7 @@ interface HandlerTarget {
   setBookmarkActionHandler(h: (msg: Record<string, unknown>) => void): void;
   setBrowseSessionRootHandler?(h: () => Promise<void>): void;
   setClearSessionRootHandler?(h: () => Promise<void>): void;
+  setExportSessionListJsonHandler?(h: () => Promise<void>): void;
 }
 
 /** Dependencies needed by the shared handler wiring. */
@@ -170,9 +175,43 @@ function getSessionRootPath(context: vscode.ExtensionContext): string {
 /** Build the options object used for session payload records. */
 function makePayloadOptions(deps: HandlerDeps): SessionListPayloadOptions {
   const lastViewedMap = deps.context.workspaceState.get<Record<string, number>>(LOG_LAST_VIEWED_KEY, {});
+  // Seed the dismiss cursor to "now" on first install. Without a seed, every pre-existing log on
+  // the user's disk would arrive flagged as "newer than focus" on the very first panel open —
+  // which is the carpet-bombing failure mode the banner is supposed to avoid. We persist the
+  // seed so subsequent reads observe the same baseline (idempotent on re-read).
+  let dismissedAt = deps.context.workspaceState.get<number>(LOGS_PANEL_DISMISSED_AT_KEY);
+  if (typeof dismissedAt !== 'number') {
+    dismissedAt = Date.now();
+    void deps.context.workspaceState.update(LOGS_PANEL_DISMISSED_AT_KEY, dismissedAt);
+  }
+  const cfg = getConfig();
+  const folderName = vscode.workspace.workspaceFolders?.[0]?.name;
+  const classifyMeta = buildClassifierInputs(cfg.reportsClassifier.kindPatterns, folderName);
+  const classifyRole = buildRoleClassifier(cfg.reportsClassifier.controllerNames, folderName);
   return {
     getActiveLastWriteTime: () => deps.sessionManager.getActiveLastWriteTime?.(),
     getLastViewedAt: (uri) => lastViewedMap[uri],
+    getDismissedAt: () => dismissedAt,
+    classifyMeta,
+    classifyRole,
+  };
+}
+
+/**
+ * Buffer webview records and post them in chunks. The streaming refresh and the deferred severity
+ * scan both used to post ONE row per message; for a months-deep archive that is thousands of
+ * postMessage round-trips (the streaming path also slept a macrotask between each), which is the
+ * dominant load-time stall. The webview's `patchSessionRow` already loops over multi-item batches,
+ * so chunking is a pure win. Call `flush()` once the producing pass completes.
+ */
+function makeRowBatcher(
+  post: (rows: Record<string, unknown>[]) => void,
+  chunk = 100,
+): { add: (rec: Record<string, unknown>) => void; flush: () => void } {
+  let buffer: Record<string, unknown>[] = [];
+  return {
+    add(rec) { buffer.push(rec); if (buffer.length >= chunk) { post(buffer); buffer = []; } },
+    flush() { if (buffer.length > 0) { post(buffer); buffer = []; } },
   };
 }
 
@@ -199,45 +238,71 @@ function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void
     broadcaster.sendSessionList(records, { label: rootLabel, path: rootLabel, isDefault: !overrideUriStr });
   };
 
-  /** Streaming refresh: sends items to webview progressively as metadata loads. */
+  /** Streaming refresh: paints a day-grouped skeleton from the cheap stat pass, then
+   *  hydrates each row as its (slow, whole-file) metadata loads. The FINAL list is always
+   *  the grouped payload built from the coalesced items — identical to the cache/poll path —
+   *  so the panel never reflows between a flat and a grouped structure. */
   const refreshSessionListStreaming = async (): Promise<void> => {
     const overrideUriStr = deps.context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
     const overrideUri = overrideUriStr ? vscode.Uri.parse(overrideUriStr) : undefined;
     const activeStr = historyProvider.getActiveUri()?.toString();
     const opts = makePayloadOptions(deps);
-    const allRecords: Record<string, unknown>[] = [];
-    /* Serialize UI updates: 8 workers load files in parallel, but only one
-     * posts to the webview at a time. Each post is followed by a macrotask
-     * yield (setTimeout) so the webview can render before the next update.
-     * Without serialization, all 8 workers finish near-simultaneously and
-     * the webview receives a burst that renders as a single pop-in. */
-    let sendChain = Promise.resolve();
+    /* Hydration is BATCHED: the previous design posted one row per message with a setTimeout(0)
+     * yield between each, costing ~N macrotasks — seconds of stall for a months-deep archive
+     * (thousands of files). patchSessionRow handles multi-item batches, so chunking the posts is a
+     * pure latency win with no rendering downside. */
+    const hydratePoster = makeRowBatcher((rows) => broadcaster.postToWebview({ type: 'sessionListBatch', items: rows }));
     const onItemLoaded = async (item: SessionMetadata): Promise<void> => {
       try {
-        const rec = await buildSessionItemRecord(item, activeStr, opts);
-        allRecords.push(rec);
-        sendChain = sendChain.then(() => {
-          broadcaster.postToWebview({ type: 'sessionListBatch', items: [rec] });
-          return new Promise<void>(r => setTimeout(r, 0));
-        }).catch(() => { /* keep chain alive if one post fails */ });
-        await sendChain;
+        hydratePoster.add(await buildSessionItemRecord(item, activeStr, opts));
       } catch { /* non-critical — row keeps its shimmer */ }
     };
-    const onFilesFound = (files: readonly string[], logDir: vscode.Uri): void => {
-      const previews = files.map(f => ({
-        filename: f,
-        uriString: vscode.Uri.joinPath(logDir, f).toString(),
-      }));
-      broadcaster.postToWebview({ type: 'sessionListPreview', previews });
+    /* mtime day-groups the skeleton; size lets the skeleton show the file size immediately (it is
+       free from the stat pass) instead of shimmering until the body loads. uriString must match the
+       per-file batch record's so hydration patches the right row. */
+    const onItemPreview = (previews: readonly SessionPreviewRecord[]): void => {
+      broadcaster.postToWebview({
+        type: 'sessionListPreview',
+        previews: previews.map(p => ({ filename: p.filename, uriString: p.uri.toString(), mtime: p.mtime, size: p.size })),
+      });
     };
-    const items = await historyProvider.getAllChildrenStreaming(onItemLoaded, overrideUri, onFilesFound);
-    // When cache was hit, callbacks never fired — build payload from returned items.
-    if (allRecords.length === 0 && items.length > 0) {
-      const payload = await buildSessionListPayload(items, historyProvider.getActiveUri(), opts);
-      sendFinalList(payload);
-      return;
-    }
-    sendFinalList(allRecords);
+    const items = await historyProvider.getAllChildrenStreaming(onItemLoaded, overrideUri, onItemPreview);
+    hydratePoster.flush();
+    const payload = await buildSessionListPayload(items, historyProvider.getActiveUri(), opts);
+    sendFinalList(payload);
+    kickDeferredSeverityScan(items, activeStr, opts);
+  };
+
+  /**
+   * Deferred severity scan: runs AFTER the final list has shipped to the webview
+   * so the panel paints immediately even when no V2-cached counts exist. Each
+   * file's result is persisted to the central session-metadata store (so the
+   * next launch reads counts without any scan) and re-posted via
+   * `sessionListBatch` so the existing `updateSessionBatchItems` handler
+   * replaces the row in place — no new webview message type needed.
+   *
+   * Fire-and-forget by design: the user's panel is already useful; the badges
+   * fill in best-effort. Errors are logged via the worker's own catch.
+   */
+  const kickDeferredSeverityScan = (
+    items: readonly TreeItem[],
+    activeStr: string | undefined,
+    payloadOpts: SessionListPayloadOptions,
+  ): void => {
+    const strict = getConfig().levelDetection === 'strict';
+    /* Batched like the hydration pass: a per-file post here meant another ~N messages after paint
+       (one per scanned .log). Chunk them and flush when the scan finishes. */
+    const scanPoster = makeRowBatcher((rows) => broadcaster.postToWebview({ type: 'sessionListBatch', items: rows }), 50);
+    runDeferredSeverityScan(items, {
+      metaStore: historyProvider.metaStore,
+      metaCache: historyProvider.metaCache,
+      strict,
+      onScanned: async (updated) => {
+        try {
+          scanPoster.add(await buildSessionItemRecord(updated, activeStr, payloadOpts));
+        } catch { /* webview gone or post failed — counts still cached on disk */ }
+      },
+    }).then(() => scanPoster.flush(), () => scanPoster.flush());
   };
 
   let firstLoadFired = false;
@@ -283,6 +348,17 @@ function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void
       await deps.context.workspaceState.update(SESSION_PANEL_LAST_BROWSE_KEY, defaultLogUri.toString());
     }
     await refreshSessionList();
+  });
+  target.setExportSessionListJsonHandler?.(async () => {
+    /* Re-read the override URI fresh — the user may have browsed to a different
+       root between opening the panel and clicking export. */
+    const overrideUriStr = deps.context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
+    const overrideRoot = overrideUriStr ? vscode.Uri.parse(overrideUriStr) : undefined;
+    await exportSessionListToJson({
+      historyProvider,
+      payloadOptions: makePayloadOptions(deps),
+      overrideRoot,
+    });
   });
   target.setSessionActionHandler((action, uriStrings, filenames) => {
     void handleSessionAction(action, uriStrings, filenames, {

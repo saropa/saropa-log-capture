@@ -80,6 +80,15 @@ export function getSessionListStyles(): string {
 }
 .session-item-perf .codicon { font-size: 12px; }
 
+.session-item-loaded {
+    display: inline-flex;
+    margin-left: 4px;
+    vertical-align: middle;
+    color: var(--vscode-descriptionForeground);
+    font-size: 12px;
+}
+.session-item-loaded .codicon { font-size: 12px; }
+
 .session-item-meta {
     font-size: 10px;
     color: var(--vscode-descriptionForeground);
@@ -163,6 +172,10 @@ export function getSessionListStyles(): string {
     display: none;
 }
 
+/* Reports bucket / newer-log banner / per-row unread-dot styles live in
+   viewer-styles-session-newer.ts — composed alongside this stylesheet by
+   viewer-styles-session.ts. Extracted to keep this file under the 300-line limit. */
+
 /* --- Session list pagination --- */
 .session-list-pagination {
     display: flex;
@@ -207,43 +220,9 @@ export function getSessionListStyles(): string {
     text-align: center;
 }
 
-/* --- Name filter bar --- */
-.session-name-filter-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px 12px;
-    background: var(--vscode-editorInfo-background, rgba(55, 148, 255, 0.1));
-    border-bottom: 1px solid var(--vscode-panel-border);
-    font-size: 11px;
-    color: var(--vscode-foreground);
-}
-.session-name-filter-label {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
-.session-name-filter-clear {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    background: none;
-    border: 1px solid var(--vscode-button-border, transparent);
-    color: var(--vscode-textLink-foreground);
-    cursor: pointer;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 11px;
-    flex-shrink: 0;
-}
-.session-name-filter-clear:hover {
-    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
-}
+/* --- Name filter bar --- styles live in viewer-styles-session-name-filter.ts,
+   extracted to keep this file under the 300-line limit. Composed alongside this
+   stylesheet by viewer-styles-session.ts in the same <style> block. */
 
 /* --- Session context menu --- */
 /* overflow must stay "visible" — the Copy and Export flyout submenus are absolutely-positioned
@@ -275,6 +254,12 @@ export function getSessionListStyles(): string {
 /* Info dot follows the level palette: Info=blue (rotated from green when the
    level palette became Info=blue / Notice=cyan / Database=green). */
 .sev-info { background: var(--vscode-charts-blue, #2196f3); }
+/* Debug / Database / Todo / Notice colors mirror the viewer's top-bar palette
+   so the same file reads consistently across the list badge and the open log. */
+.sev-debug { background: var(--vscode-charts-foreground, #aaaaaa); opacity: 0.7; }
+.sev-database { background: var(--vscode-charts-green, #4caf50); }
+.sev-todo { background: var(--vscode-charts-orange, #ff9800); }
+.sev-notice { background: var(--vscode-charts-cyan, #00bcd4); }
 .sev-other { background: var(--vscode-descriptionForeground, #888); opacity: 0.5; }
 `;
 }

@@ -15,6 +15,130 @@ export function getViewerFormatMarkdownScript(): string {
 /** Markdown section collapse map: headingIndex → { level, collapsed, endIndex }. */
 var mdSections = {};
 
+/** Fenced-code map: lineIndex → { role: 'open'|'close'|'body', lang }. Lines inside a
+    \\x60\\x60\\x60 fence are verbatim code, so they must skip inline/heading formatting. */
+var mdFences = {};
+
+/** Table map: lineIndex → { cols: [visibleCharWidth...], role: 'header'|'sep'|'body' }.
+    Column widths are the max VISIBLE (post-inline-format) char count per column across the
+    block, so cells render as fixed-ch-width inline-blocks that line up in the monospace font. */
+var mdTables = {};
+
+/** HTML-comment map: lineIndex → { role: 'single'|'open'|'body'|'close' }. Comment lines render
+    verbatim in a muted color and skip all other markdown formatting. */
+var mdComments = {};
+
+/** Collapsible multi-line comment blocks: openIndex → { collapsed, endIndex }.
+    buildMdComments() / toggleMdComment() that populate these live in viewer-format-markdown-layout.ts. */
+var mdCommentBlocks = {};
+
+/** Split a markdown table row into trimmed cells, dropping the empty edges that a
+    leading/trailing pipe produces (\\\`| a | b |\\\` → ['a','b']). */
+function splitTableCells(plain) {
+    var cells = plain.split('|');
+    if (cells.length && cells[0].trim() === '') cells.shift();
+    if (cells.length && cells[cells.length - 1].trim() === '') cells.pop();
+    return cells.map(function (c) { return c.trim(); });
+}
+
+/** A separator row is the \\\`|---|:--:|\\\` line under the header: only pipes, dashes, colons, spaces. */
+function isMdTableSep(plain) {
+    return plain.indexOf('-') > -1 && /^\\s*\\|?[\\s\\-:|]+\\|?\\s*$/.test(plain);
+}
+
+/** Visible width of a cell = length AFTER inline formatting strips markers (backticks,
+    asterisks, link syntax). Measured via the real render path so width matches what shows. */
+function mdCellVisibleLen(cell) {
+    return stripTags(applyMdInline(escapeHtml(cell))).length;
+}
+
+/** True if a stripped line looks like a table row: starts with a pipe and has 2+ pipes total
+    (indexOf('|') is always 0 for a leading pipe, so count pipes instead of checking position). */
+function isMdTableRow(plain) {
+    return /^\\s*\\|/.test(plain) && (plain.match(/\\|/g) || []).length >= 2;
+}
+
+/**
+ * Scan allLines for contiguous table blocks (outside fences) and populate mdTables with
+ * per-column widths + each row's role. The first non-separator row is the header; the
+ * \\\`|---|\\\` row is the separator (hidden via calcItemHeight); the rest are body rows.
+ */
+function buildMdTables() {
+    mdTables = {};
+    if (fileMode !== 'markdown') return;
+    var i = 0;
+    while (i < allLines.length) {
+        var skip0 = mdFences[i] || mdComments[i];
+        var plain0 = skip0 ? '' : stripTags(allLines[i].html);
+        if (!skip0 && isMdTableRow(plain0)) {
+            var rows = [];
+            while (i < allLines.length && !mdFences[i] && !mdComments[i]) {
+                var p = stripTags(allLines[i].html);
+                if (!isMdTableRow(p)) break;
+                rows.push({ idx: i, plain: p, sep: isMdTableSep(p) });
+                i++;
+            }
+            assignMdTableBlock(rows);
+        } else {
+            i++;
+        }
+    }
+}
+
+/** Compute column widths for one collected table block and record role + widths per row. */
+function assignMdTableBlock(rows) {
+    var widths = [];
+    for (var r = 0; r < rows.length; r++) {
+        if (rows[r].sep) continue;
+        var cells = splitTableCells(rows[r].plain);
+        for (var c = 0; c < cells.length; c++) {
+            var w = mdCellVisibleLen(cells[c]);
+            if (!widths[c] || w > widths[c]) widths[c] = w;
+        }
+    }
+    var headerSeen = false;
+    for (var k = 0; k < rows.length; k++) {
+        var role = rows[k].sep ? 'sep' : (headerSeen ? 'body' : 'header');
+        if (!rows[k].sep) headerSeen = true;
+        mdTables[rows[k].idx] = { cols: widths, role: role };
+        /* calcItemHeight reads _mdTableSep to collapse the separator row; the gutter tag
+           reads _mdTable to mark table rows. */
+        allLines[rows[k].idx]._mdTableSep = rows[k].sep;
+        allLines[rows[k].idx]._mdTable = !rows[k].sep;
+    }
+}
+
+/**
+ * Scan allLines for fenced code blocks (\\x60\\x60\\x60 or ~~~, 3+ chars) and populate
+ * mdFences. A fence opens on the first delimiter and closes on the next; the
+ * opening delimiter carries the language. Called from buildMdSections so the
+ * heading scan can skip lines that live inside a fence (a '#' in code is not a heading).
+ */
+function buildMdFences() {
+    mdFences = {};
+    if (fileMode !== 'markdown') return;
+    var inFence = false;
+    for (var i = 0; i < allLines.length; i++) {
+        /* A fence marker inside a comment is not a real fence. */
+        if (mdComments[i]) { allLines[i]._mdFence = false; continue; }
+        var plain = stripTags(allLines[i].html);
+        var fm = /^\\s*(\\x60{3,}|~{3,})\\s*([\\w-]*)\\s*$/.exec(plain);
+        if (fm) {
+            /* Opening delimiter records the language; closing delimiter has none. */
+            mdFences[i] = { role: inFence ? 'close' : 'open', lang: inFence ? '' : fm[2] };
+            inFence = !inFence;
+            allLines[i]._mdFence = true;
+        } else if (inFence) {
+            mdFences[i] = { role: 'body', lang: '' };
+            allLines[i]._mdFence = true;
+        } else {
+            /* Code lines keep dense spacing; calcItemHeight reads this to skip the extra
+               vertical room it gives ordinary markdown lines. */
+            allLines[i]._mdFence = false;
+        }
+    }
+}
+
 /**
  * Build the markdown section map from allLines. Each heading line stores
  * its level (1–6) and the index of the last line before the next heading
@@ -23,8 +147,15 @@ var mdSections = {};
 function buildMdSections() {
     mdSections = {};
     if (fileMode !== 'markdown') return;
+    /* Comments first (so a marker inside a comment isn't real structure), then fences/tables;
+       heading detection ignores lines inside any of them. buildMdComments lives in the layout
+       chunk (loads after this one) — guard the cross-chunk call. */
+    if (typeof buildMdComments === 'function') buildMdComments();
+    buildMdFences();
+    buildMdTables();
     var headings = [];
     for (var i = 0; i < allLines.length; i++) {
+        if (mdFences[i] || mdComments[i]) continue;
         var plain = stripTags(allLines[i].html);
         var m = /^(#{1,6})\\s/.exec(plain);
         if (m) headings.push({ idx: i, level: m[1].length });
@@ -40,6 +171,14 @@ function buildMdSections() {
             }
         }
         mdSections[cur.idx] = { level: cur.level, collapsed: false, endIndex: endIdx };
+        /* calcItemHeight + renderItem read this to allocate a taller, padded heading row. */
+        allLines[cur.idx]._mdHeadingLevel = cur.level;
+    }
+    /* Flag TOP-LEVEL list items (no leading indent) so each gets extra top space — separates
+       multi-line bullets that otherwise blur into one wall. Nested items (indented) are skipped. */
+    for (var b = 0; b < allLines.length; b++) {
+        if (mdComments[b] || mdFences[b] || mdTables[b] || allLines[b]._mdHeadingLevel) { allLines[b]._mdBulletTop = false; continue; }
+        allLines[b]._mdBulletTop = /^([\\-\\*]|\\d+\\.)\\s+/.test(stripTags(allLines[b].html));
     }
 }
 
@@ -65,6 +204,33 @@ function toggleMdSection(headingIdx) {
  */
 function formatMarkdownLine(item, idx) {
     var html = item.html;
+
+    /* HTML comment: render verbatim in a muted color, no inline formatting (the maintenance
+       notes inside a comment are not real bold/links). A multi-line comment's opening line is a
+       collapse toggle; body + closing lines fold under it (data-md-comment drives the handler). */
+    var cmt = mdComments[idx];
+    if (cmt) {
+        /* Strip the <!-- / --> delimiters — the green color + // tag already signal "comment",
+           so the literal HTML markers are redundant noise. A close-only line becomes empty.
+           No collapse chevron: comments render in full as plain green italic text. The chevron
+           was unwanted noise (user request) — every comment line is just shown as-is. */
+        var cRaw = stripTags(html).replace(/^\\s*<!--\\s?/, '').replace(/\\s?-->\\s*$/, '');
+        return '<span class="md-comment">' + escapeHtml(cRaw) + '</span>';
+    }
+
+    /* Fenced code block: render verbatim (escaped, no inline markdown), so diagram
+       source like \\x60\\x60\\x60mermaid and table/SQL snippets are not mangled by bold/italic/
+       link rules. stripTags() decodes entities, escapeHtml() re-encodes them cleanly. */
+    var fence = mdFences[idx];
+    if (fence) {
+        if (fence.role === 'open') {
+            var lang = fence.lang ? '<span class="md-fence-lang">' + escapeHtml(fence.lang) + '</span>' : '';
+            return '<span class="md-fence md-fence-open">' + lang + '</span>';
+        }
+        if (fence.role === 'close') return '<span class="md-fence md-fence-close"></span>';
+        return '<span class="md-fence md-fence-body">' + escapeHtml(stripTags(html)) + '</span>';
+    }
+
     var plain = stripTags(html);
 
     /* Heading: # through ###### */
@@ -78,13 +244,16 @@ function formatMarkdownLine(item, idx) {
         var chevron = '';
         var badge = '';
         if (sec) {
-            chevron = sec.collapsed ? '\\u25b6 ' : '\\u25bc ';
+            /* Subtle, right-aligned collapse affordance (md-chevron is floated via flex). */
+            chevron = '<span class="md-chevron">' + (sec.collapsed ? '\\u25b8' : '\\u25be') + '</span>';
             if (sec.collapsed) {
                 var count = sec.endIndex - idx;
                 badge = ' <span class="md-collapse-badge">(' + count + ' lines)</span>';
             }
         }
-        return '<span class="md-heading md-h' + hLevel + '" data-md-section="' + idx + '">' + chevron + hText + badge + '</span>';
+        /* data-md-section on the wrapper so a click on the text OR the chevron collapses. */
+        return '<span class="md-heading md-h' + hLevel + '" data-md-section="' + idx + '">'
+            + '<span class="md-htext">' + hText + badge + '</span>' + chevron + '</span>';
     }
 
     /* Horizontal rule: ---, ***, ___ (3+ chars, optionally with spaces) */
@@ -117,13 +286,22 @@ function formatMarkdownLine(item, idx) {
         return '<span class="md-bullet" style="--md-indent:' + olIndent + '">' + olNum + '. ' + olText + '</span>';
     }
 
-    /* Table row: | col | col | */
-    if (/^\\s*\\|/.test(plain) && plain.indexOf('|') > -1) {
-        /* Table separator rows (|---|---| etc.) render as thin lines */
-        if (/^\\s*\\|[\\s\\-:|]+\\|\\s*$/.test(plain)) {
-            return '<span class="md-table-sep">' + escapeHtml(plain) + '</span>';
+    /* Table row: render cells as fixed-ch-width inline-blocks so columns align (see buildMdTables). */
+    var tbl = mdTables[idx];
+    if (tbl) {
+        /* Separator row is collapsed to 0 height by calcItemHeight; the header's bottom
+           border is the divider. Still return a thin rule as a fallback if it does render. */
+        if (tbl.role === 'sep') return '<span class="md-table-rule"></span>';
+        var cells = splitTableCells(plain);
+        var out = '';
+        for (var c = 0; c < tbl.cols.length; c++) {
+            var cellTxt = (c < cells.length) ? cells[c] : '';
+            /* +2 ch gives a column gutter; width in ch lines up in the monospace font. */
+            out += '<span class="md-td" style="width:' + (tbl.cols[c] + 2) + 'ch">'
+                + applyMdInline(escapeHtml(cellTxt)) + '</span>';
         }
-        return '<span class="md-table-row">' + escapeHtml(plain) + '</span>';
+        var rowCls = (tbl.role === 'header') ? 'md-table-row md-table-header' : 'md-table-row';
+        return '<span class="' + rowCls + '">' + out + '</span>';
     }
 
     /* Plain text with inline formatting */

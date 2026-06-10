@@ -7,13 +7,19 @@
  */
 import { getSessionPanelLayoutStyles } from './viewer-styles-session-panel';
 import { getSessionListStyles } from './viewer-styles-session-list';
+import { getSessionNameFilterStyles } from './viewer-styles-session-name-filter';
 import { getSessionTagsLoadingStyles } from './viewer-styles-session-tags-loading';
 import { getSessionGroupStyles } from './viewer-styles-session-group';
+import { getSessionNewerStyles } from './viewer-styles-session-newer';
+import { getSessionOptionsMenuStyles } from './viewer-styles-session-options';
 
 /** Return CSS for the session panel and its list items. */
 export function getSessionPanelStyles(): string {
     return getSessionPanelLayoutStyles()
+        + getSessionOptionsMenuStyles()
         + getSessionListStyles()
+        + getSessionNameFilterStyles()
+        + getSessionNewerStyles()
         + getSessionTagsLoadingStyles()
         + getSessionGroupStyles();
 }

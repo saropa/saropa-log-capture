@@ -131,7 +131,27 @@ function renderViewport(force) {
 
         prevVis = allLines[i];
     }
-    viewportEl.innerHTML = parts.join('');
+    /* Atomic DOM swap via <template> + replaceChildren()/appendChild(fragment)
+       instead of the innerHTML-setter fast path on the live viewport. That
+       fast path can recycle prior child nodes' GPU paint cache when a
+       slot's bounding box and tag name match the incoming markup — Chromium
+       then composites the new text on top of un-invalidated pixels from the
+       previous row that occupied that slot, and we saw faint blue characters
+       of an info-level row ghost through the green text of the next
+       database-level row ("DRIFT: Drift debug server disconnected") until a
+       :hover repaint cleared the layer. Attempt #1 tried per-row compositor
+       promotion via transform: translateZ(0) (commit 49297d75); it did not
+       eliminate the artifact in production (v7.17.0 dist). Parsing into a
+       detached <template>, clearing the live viewport, and appending the
+       fragment forces the browser to detach + dispose every prior child
+       node before inserting fresh nodes whose paint records have no
+       relationship to the old ones — closing the recycle path at its
+       source. See
+       plans/history/2026.06/2026.06.02/viewer-row-paint-ghosting-attempts.md. */
+    var _vTmpl = document.createElement('template');
+    _vTmpl.innerHTML = parts.join('');
+    viewportEl.replaceChildren();
+    viewportEl.appendChild(_vTmpl.content);
     /* Severity-gutter connector: the line between consecutive same-level dots
        is purely CSS, painted by viewer-styles-decoration-bars.ts via a
        :has(+ .level-bar-X) selector on each row. No JS chain walking, no
@@ -145,7 +165,7 @@ function renderViewport(force) {
        .deco-parsed-tag and write its actual left offset to
        --deco-tag-position-px. Consumed by the .viewer-divider chips /
        .dedup-badge / .stack-toggle so they sit in the exact same x-column
-       as real tags. Doing this AFTER innerHTML update (not inside
+       as real tags. Doing this AFTER the DOM swap (not inside
        applyDecorationLayoutWidth which runs at the TOP of renderViewport)
        means the measurement reflects the just-rendered tag positions, not
        the previous render's stale state. */

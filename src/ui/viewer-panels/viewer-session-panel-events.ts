@@ -2,8 +2,13 @@
  * Session panel: toggle buttons, resize, session list events, close/refresh/pagination/tags,
  * outside click, header path, and message listener. Inlined into the same IIFE as viewer-session-panel.
  */
+import { getSessionOptionsMenuScript } from './viewer-session-options-menu';
+import { getNewerLogEventsScript } from './viewer-session-panel-events-newer';
+import { getControllerEventsScript } from './viewer-session-panel-events-controllers';
+import { getSessionMessageListenerScript } from './viewer-session-panel-events-messages';
+
 export function getSessionPanelEventsScript(): string {
-  return `
+  return getSessionOptionsMenuScript() + getNewerLogEventsScript() + getControllerEventsScript() + `
     function syncToggleButtons() {
         var ids = {
             'session-toggle-strip': !sessionDisplayOptions.stripDatetime,
@@ -14,15 +19,26 @@ export function getSessionPanelEventsScript(): string {
         };
         for (var id in ids) {
             var el = document.getElementById(id);
-            if (el) el.classList.toggle('active', ids[id]);
+            if (el) {
+                el.classList.toggle('active', ids[id]);
+                /* role="menuitemcheckbox" rows: keep aria-checked in sync with
+                   the visual switch so screen readers report state. */
+                el.setAttribute('aria-checked', ids[id] ? 'true' : 'false');
+            }
         }
         var sortBtn = document.getElementById('session-toggle-reverse');
         if (sortBtn) {
-            var icon = sortBtn.querySelector('.codicon');
+            /* Icon span in the new options-menu markup carries
+               .session-options-toggle-icon; falling back to .codicon would still
+               work but matching the more specific class avoids picking up the
+               wrong icon if the row ever grows additional codicon siblings. */
+            var icon = sortBtn.querySelector('.session-options-toggle-icon');
             if (icon) icon.style.transform = sessionDisplayOptions.reverseSort ? 'scaleY(-1)' : '';
         }
         var dateRangeEl = document.getElementById('session-date-range');
         if (dateRangeEl && dateRangeEl.value !== (sessionDisplayOptions.dateRange || 'all')) dateRangeEl.value = sessionDisplayOptions.dateRange || 'all';
+        var sizeRangeEl = document.getElementById('session-size-range');
+        if (sizeRangeEl && sizeRangeEl.value !== (sessionDisplayOptions.sizeRange || 'all')) sizeRangeEl.value = sessionDisplayOptions.sizeRange || 'all';
     }
 
     function toggleOption(key) {
@@ -47,18 +63,26 @@ export function getSessionPanelEventsScript(): string {
     bindToggle('session-toggle-reverse', 'reverseSort');
     bindToggle('session-toggle-latest', 'showLatestOnly');
 
-    var dateRangeSelect = document.getElementById('session-date-range');
-    if (dateRangeSelect) dateRangeSelect.addEventListener('change', function() {
-        var copy = {};
-        for (var k in sessionDisplayOptions) copy[k] = sessionDisplayOptions[k];
-        copy.dateRange = dateRangeSelect.value;
-        sessionDisplayOptions = copy;
-        sessionListPage = 0;
-        vscodeApi.postMessage({ type: 'setSessionDisplayOptions', options: sessionDisplayOptions });
-        if (cachedSessions) renderSessionList(cachedSessions);
-    });
+    /* Filter dropdowns (date range, minimum size) share one binding: clone the options, write the
+       selected value under the given key, reset to page 0, persist, and re-render. Cloning keeps the
+       persisted object a fresh reference so the host's merge-and-rebroadcast sees a changed value. */
+    function bindSelectOption(id, key) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('change', function() {
+            var copy = {};
+            for (var k in sessionDisplayOptions) copy[k] = sessionDisplayOptions[k];
+            copy[key] = el.value;
+            sessionDisplayOptions = copy;
+            sessionListPage = 0;
+            vscodeApi.postMessage({ type: 'setSessionDisplayOptions', options: sessionDisplayOptions });
+            if (cachedSessions) renderSessionList(cachedSessions);
+        });
+    }
+    bindSelectOption('session-date-range', 'dateRange');
+    bindSelectOption('session-size-range', 'sizeRange');
 
-    initSessionPanelResize(sessionPanelEl, function(w) {
+    initPanelSlotResize(function(w) {
         if (w > 0) {
             sessionDisplayOptions.panelWidth = w;
             window.__sharedPanelWidth = w;
@@ -148,21 +172,12 @@ export function getSessionPanelEventsScript(): string {
             selectedSessionUris = Object.create(null);
             if (cachedSessions) renderSessionList(cachedSessions);
             vscodeApi.postMessage({ type: 'openSessionFromPanel', uriString: uri });
-            /* renderSessionList above rebuilt the list DOM, so the clicked node
-               is now detached. If this click bubbled to the document-level
-               outside-click handler, sessionPanelEl.contains() would test a
-               detached node, get false, and close the panel instantly. Stop
-               propagation so the panel stays open after a selection. */
+            /* Keep the open-click from bubbling to the document. renderSessionList
+               above rebuilt the list DOM, so the clicked node is now detached; other
+               document-level click listeners (context menus, popovers, peer-panel
+               dismissers) would test a detached node and could mis-fire. The panel
+               itself no longer has an outside-click auto-hide. */
             e.stopPropagation();
-            /* Then close it on a short delay rather than keeping it open
-               indefinitely — long enough that picking another file to view
-               doesn't require reopening the panel. Each selection resets the
-               countdown. */
-            if (sessionAutoCloseTimer) clearTimeout(sessionAutoCloseTimer);
-            sessionAutoCloseTimer = setTimeout(function() {
-                sessionAutoCloseTimer = null;
-                closeSessionPanel();
-            }, 5000);
         });
         /* Keyboard support: Enter/Space on focused day heading toggles collapse. */
         sessionListEl.addEventListener('keydown', function(e) {
@@ -189,10 +204,33 @@ export function getSessionPanelEventsScript(): string {
         });
     }
 
-    /* Name filter bar: clear button uses event delegation because the bar content is dynamic. */
+    /* Reset a dropdown filter (date range / minimum size) back to 'all' from its chip [x].
+       syncToggleButtons resyncs the dropdown's displayed value; the persist + re-render mirror
+       the select-change path so the chip, the dropdown, and the list stay consistent. */
+    function clearFilterOption(key) {
+        var copy = {};
+        for (var k in sessionDisplayOptions) copy[k] = sessionDisplayOptions[k];
+        copy[key] = 'all';
+        sessionDisplayOptions = copy;
+        sessionListPage = 0;
+        syncToggleButtons();
+        vscodeApi.postMessage({ type: 'setSessionDisplayOptions', options: sessionDisplayOptions });
+        if (cachedSessions) renderSessionList(cachedSessions);
+    }
+
+    /* Active-filters bar: event delegation because the bar content (chips + pills + buttons) is
+       rebuilt on every render. A date/size chip [x] resets that dropdown; a name pill [x] removes
+       just that name; the trailing "Show All" button clears the whole name filter. */
     var nameFilterBarEl = document.getElementById('session-name-filter-bar');
     if (nameFilterBarEl) {
         nameFilterBarEl.addEventListener('click', function(e) {
+            var chip = e.target.closest('.session-filter-chip-remove');
+            if (chip) { clearFilterOption(chip.getAttribute('data-filter-clear') || ''); return; }
+            var pill = e.target.closest('.session-name-filter-pill-remove');
+            if (pill && typeof removeSessionNameFilter === 'function') {
+                removeSessionNameFilter(pill.getAttribute('data-name') || '');
+                return;
+            }
             var btn = e.target.closest('#session-name-filter-clear');
             if (btn && typeof clearSessionNameFilter === 'function') clearSessionNameFilter();
         });
@@ -216,74 +254,13 @@ export function getSessionPanelEventsScript(): string {
         if (typeof toggleSessionTagsSection === 'function') toggleSessionTagsSection();
     });
 
-    document.addEventListener('click', function(e) {
-        if (!sessionPanelOpen) return;
-        if (sessionPanelEl && sessionPanelEl.contains(e.target)) return;
-        var ibBtn = document.getElementById('ib-sessions');
-        if (ibBtn && (ibBtn === e.target || ibBtn.contains(e.target))) return;
-        var ctxMenu = document.getElementById('session-context-menu');
-        if (ctxMenu && ctxMenu.contains(e.target)) return;
-        closeSessionPanel();
-    });
+    /* No outside-click auto-hide: clicking in the log viewer (or anywhere outside
+       the panel) must NOT close the Logs list — users browse the viewer while the
+       list stays open. The panel closes only on an explicit action: its close
+       button (above), the Logs icon toggle, Escape, or opening another panel (all
+       handled in the icon bar). */
 
-    function updateHeaderPath(rootLabel, isDefault) {
-        var headerPathEl = document.getElementById('session-header-path');
-        var pathText = document.getElementById('session-path-text');
-        var resetBtn = document.getElementById('session-reset-root');
-        if (headerPathEl) headerPathEl.style.display = isDefault ? 'none' : '';
-        if (pathText) pathText.textContent = isDefault ? '' : (rootLabel || 'No workspace');
-        if (resetBtn) resetBtn.style.display = isDefault ? 'none' : '';
-    }
-
-    var headerClickableEl = document.getElementById('session-header-clickable');
-    if (headerClickableEl) headerClickableEl.addEventListener('click', function() { vscodeApi.postMessage({ type: 'browseSessionRoot' }); });
-    var resetRootBtn = document.getElementById('session-reset-root');
-    if (resetRootBtn) resetRootBtn.addEventListener('click', function(e) { e.stopPropagation(); vscodeApi.postMessage({ type: 'clearSessionRoot' }); });
-
-    window.addEventListener('message', function(e) {
-        if (!e.data) return;
-        if (e.data.type === 'sessionListLoading') {
-            var labelEl = document.getElementById('session-loading-label');
-            if (labelEl) labelEl.textContent = (e.data.folderPath ? 'Loading ' + e.data.folderPath + '…' : 'Loading…');
-        }
-        if (e.data.type === 'sessionListPreview') {
-            renderSessionListPreview(e.data.previews);
-        }
-        if (e.data.type === 'sessionListBatch') {
-            updateSessionBatchItems(e.data.items);
-        }
-        if (e.data.type === 'sessionList') {
-            cachedSessions = e.data.sessions;
-            sessionListPage = 0;
-            renderSessionList(e.data.sessions);
-            if (typeof e.data.isDefault !== 'undefined') { updateHeaderPath(e.data.label, e.data.isDefault); }
-        }
-        if (e.data.type === 'sessionDisplayOptions') {
-            var opts = e.data.options || sessionDisplayOptions;
-            sessionDisplayOptions = opts.dateRange !== undefined ? opts : Object.assign({}, opts, { dateRange: 'all' });
-            /* Restore persisted collapsed-day state from options. */
-            if (opts.collapsedDays) {
-                collapsedDays = Object.create(null);
-                for (var dk in opts.collapsedDays) {
-                    if (opts.collapsedDays[dk]) collapsedDays[dk] = true;
-                }
-            }
-            /* Restore persisted collapsed-group state from options. */
-            if (opts.collapsedGroups) {
-                collapsedGroups = Object.create(null);
-                for (var gk in opts.collapsedGroups) {
-                    if (opts.collapsedGroups[gk]) collapsedGroups[gk] = true;
-                }
-            }
-            sessionListPage = 0;
-            window.__sharedPanelWidth = Math.max(MIN_PANEL_WIDTH, sessionDisplayOptions.panelWidth || 0);
-            var slot = document.getElementById('panel-slot');
-            if (slot && parseInt(slot.style.width, 10) > 0) {
-                slot.style.width = window.__sharedPanelWidth + 'px';
-            }
-            syncToggleButtons();
-            if (cachedSessions) renderSessionList(cachedSessions);
-        }
-    });
-`;
+    /* Header-path updater + inbound (host → webview) message listener live in
+       getSessionMessageListenerScript(), concatenated below into this same IIFE. */
+` + getSessionMessageListenerScript();
 }

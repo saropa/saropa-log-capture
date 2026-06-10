@@ -64,6 +64,12 @@ export const stringsWebview: Record<string, string> = {
     'viewer.about.changelogLoading': 'Loading…',
     'viewer.about.changelogUnavailable': 'Changelog unavailable.',
     'viewer.about.copied': 'Copied: {0}',
+    'viewer.about.debugLoading': 'Resolving paths…',
+    'viewer.about.debugNoPaths': 'No log directory resolved — open a workspace folder, or browse a Logs root in the panel header.',
+    'viewer.about.debugPresent': 'present',
+    'viewer.about.debugMissing': 'missing',
+    'viewer.about.openInViewer': 'Open in the log viewer',
+    'viewer.about.revealInOS': 'Reveal in the file explorer',
 
     // Crashlytics panel — runtime strings built client-side.
     'viewer.crashlytics.headerBase': 'Crashlytics',
@@ -97,17 +103,42 @@ export const stringsWebview: Record<string, string> = {
     'viewer.session.icon.logFile': 'Log file',
     'viewer.session.icon.updatedMin': 'Log updated in the last minute',
     'viewer.session.icon.updatedSince': 'Log has new lines since last viewed',
-    'viewer.session.nameFilter.only': 'Showing only: {0}',
-    'viewer.session.nameFilter.hiding': 'Hiding: {0}',
+    // Verb labels precede one removable pill per filtered name (no {0}: the names
+    // render as pills, so several can be hidden / shown at once).
+    'viewer.session.nameFilter.only': 'Showing only:',
+    'viewer.session.nameFilter.hiding': 'Hiding:',
+    'viewer.session.nameFilter.remove.title': 'Remove {0} from the filter',
+    'viewer.session.filterChip.remove.title': 'Clear the {0} filter',
     'viewer.session.nameFilter.clear.title': 'Clear name filter',
     'viewer.session.nameFilter.showAll': 'Show All',
     'viewer.session.latest': '(latest)',
+    'viewer.session.pinned.heading': 'Pinned',
     'viewer.session.perfAvailable': 'Performance data available',
+    'viewer.session.loadedManually': 'Opened via Open Log File · grouped by load date',
     'viewer.session.dot.updatedMin': 'Updated in the last minute',
     'viewer.session.dot.updatedSince': 'New lines since last viewed',
+    'viewer.session.dot.unread': 'Unread — captured after Logs panel last had focus',
     'viewer.session.group.expand': 'Expand this session group',
     'viewer.session.group.collapse': 'Collapse this session group',
     'viewer.session.revealInOS': 'Reveal in File Explorer',
+    // {0}=count of hidden older runs sharing this name. Appears on the latest row when "Latest only"
+    // is on, so older logs stay discoverable (and one click expands them) instead of vanishing.
+    'viewer.session.olderCount': '+{0} older',
+    'viewer.session.older.expand': 'Show older logs with this name',
+    'viewer.session.older.collapse': 'Hide older logs with this name',
+    // Title on a Controller row's icon — the day's tree root that peripheral logs nest beneath.
+    'viewer.session.controller': 'Controller — peripheral logs nest under this session',
+    // Reports bucket and newer-log banner — see [plans/history/2026.06/2026.06.02/001_plan-newer-alert-and-reports-grouping.md].
+    // {0}=count of report rows in the bucket. The label collapses N entries (lint reports,
+    // bundle audits, etc.) under a single fold-out heading so the day's debug-session rows
+    // stay scannable.
+    'viewer.session.reports.bucketLabel': 'Reports ({0})',
+    // {0}=newest unread log's display name, {1}=human time (relative or absolute).
+    'viewer.session.newerBanner.singular': 'New log · {0} · {1}',
+    // {0}=newest log name, {1}=time, {2}=count of additional unread logs (>=1).
+    'viewer.session.newerBanner.plural': 'New logs · {0} · {1} (+{2} more)',
+    'viewer.session.newerBanner.open': 'Open',
+    'viewer.session.newerBanner.dismiss': 'Dismiss',
 
     // Replay — runtime strings (viewer-replay.ts client script).
     'viewer.replay.qualityDisabled': 'Enable the codeQuality integration to generate quality reports.',
@@ -133,4 +164,18 @@ export const stringsWebview: Record<string, string> = {
     'viewer.errorHover.introducedInCommit': 'Introduced in commit ',
     'viewer.errorHover.lastChangedInCommit': 'Last changed in commit ',
     'viewer.errorHover.fingerprintTitle': 'Fingerprint: {0}',
+
+    // ── Collections panel — webview runtime (viewer-collections-panel-script.ts) ──
+    'viewer.collections.empty': 'No collections yet.',
+    'viewer.collections.sourceOne': '{0} source',
+    'viewer.collections.sourceMany': '{0} sources',
+    'viewer.collections.justNow': 'just now',
+    'viewer.collections.minAgo': '{0} min ago',
+    'viewer.collections.hAgo': '{0}h ago',
+    'viewer.collections.daysAgo': '{0} days ago',
+    'viewer.collections.wAgo': '{0}w ago',
+    'viewer.collections.rename': 'Rename',
+    'viewer.collections.open': 'Open',
+    'viewer.collections.delete': 'Delete',
+    'viewer.collections.mergeError': 'Source and target must be different',
 };

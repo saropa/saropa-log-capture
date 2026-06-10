@@ -9,9 +9,11 @@
 
 import type { SeverityKeywords } from "../config/config-types";
 import { DEFAULT_SEVERITY_KEYWORDS } from "../config/config-normalizers";
+import { matchesTagLevel, type SeverityLevel } from "./tag-level-dictionary";
 
-/** Valid severity levels. */
-export type SeverityLevel = 'info' | 'warning' | 'error' | 'performance' | 'todo' | 'debug' | 'notice' | 'database';
+// SeverityLevel now lives in tag-level-dictionary.ts (shared with the dictionary).
+// Re-exported here so existing importers of this module keep working unchanged.
+export type { SeverityLevel };
 
 // ── Structural patterns (hardcoded, not user-configurable) ──────────────
 
@@ -30,7 +32,7 @@ const driftStatementPattern = /\bDrift(?::\s+Sent|\s+(?:SELECT|INSERT|UPDATE|DEL
  * security advisory). Add new vendors only when the token is unambiguous in
  * isolation.
  */
-const databaseVendorTokens = '(?:Drift|Isar|Sqlite|Sqflite|Hive|Realm|Postgres|MySQL|MongoDB?)';
+const databaseVendorTokens = '(?:Drift|Isar|Sqlite3|Sqlite|Sqflite|Hive|Realm|Postgres|MySQL|MongoDB?|Prisma|DynamoDB)';
 
 /**
  * Bracket tag at line head containing a DB vendor token, e.g.:
@@ -72,17 +74,44 @@ function matchesDatabaseAnnotation(plainText: string): boolean {
 }
 
 /**
- * Strict structural error: keyword in label position (`Error:`, `[error]`), Dart private
- * types, Null check.
+ * Strict structural error: keyword in label position (`Error:`), Dart private types,
+ * Null check. Case-sensitive on `Error`/`Exception` so prose like
+ * `classification error: rule lumps …` (lowercase mid-sentence) stays as `info` —
+ * Dart label and type conventions are always PascalCase, so requiring an uppercase
+ * `E` distinguishes log labels from English nouns without losing real cases like
+ * `TypeError:` or `PermissionDeniedException (no OS grant)`.
+ * Private-type alt requires `_[A-Z]…` to avoid matching snake_case identifiers like
+ * `avoid_print_error` (rule names in lint reports), which the previous `_\w*` form
+ * matched because `\w` includes `_`. Dart private types are always `_PascalCase`.
  * The `(` in the char class catches the `<Type>Exception (detail)` / `<Type>Error (detail)`
  * shape — e.g. `PermissionDeniedException (no OS grant on file)`. Without it, an exception
  * object printed with a parenthesized detail (no trailing colon) fell through to `info`,
  * so it never reached the Errors filter and the E toggle could read zero on a log that
  * plainly contained errors. See plans/history/2026.05/2026.05.15/054_plan-viewer-stack-noise-filter-layout.md Item D.
+ *
+ * The first alternative is `(?:Error|Exception)…`, NOT `\w*(?:Error|Exception)…`. A leading
+ * `\w*` is redundant for an unanchored `.test()` (the engine already retries at every offset,
+ * so `TypeError:` still matches via `Error:` at index 4) but it caused catastrophic O(n²)
+ * backtracking: on a long unbroken word-run (base64 blob / hash / minified JSON, no spaces)
+ * `\w*` greedily consumed the run at every start position, ~2.3 s for a single 50 KB line.
+ * That pegged the extension host during the deferred severity scan (issue #30). Dropping the
+ * `\w*` is boolean-equivalent and linear. The `_[A-Z]\w*…` alt keeps its `\w*` — anchored by
+ * `_[A-Z]`, it starts in at most one place per line, so it stays single-pass O(n).
  */
-const strictStructuralErrorPattern = /\w*(?:error|exception)\s*[:\]!(]|\[(?:error|exception|fatal|panic)\]|_\w*(?:Error|Exception)\b|Null check operator/i;
-/** Loose structural error: bare `error`/`exception` with negative lookahead, Dart private types, Null check. */
-const looseStructuralErrorPattern = /\b(?:error|exception)(?!\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\b|_\w*(?:Error|Exception)\b|Null check operator/i;
+const strictStructuralErrorPattern = /(?:Error|Exception)\s*[:\]!(]|_[A-Z]\w*(?:Error|Exception)\b|Null check operator/;
+/**
+ * Bracket label form is case-insensitive — explicit log tags like `[ERROR]`, `[error]`,
+ * `[fatal]` are unambiguous error markers regardless of case. Kept separate from
+ * `strictStructuralErrorPattern` because the latter dropped the `/i` flag to filter out
+ * lowercase `error:` in prose; bracket tags don't have that ambiguity.
+ */
+const strictBracketErrorPattern = /\[(?:error|exception|fatal|panic)\]/i;
+/**
+ * Loose structural error: bare `error`/`exception` with negative lookahead, Dart private
+ * types, Null check. Private-type alt requires `_[A-Z]…` (PascalCase) for the same reason
+ * as `strictStructuralErrorPattern`: avoid matching snake_case identifiers.
+ */
+const looseStructuralErrorPattern = /\b(?:error|exception)(?!\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\b|_[A-Z]\w*(?:Error|Exception)\b|Null check operator/i;
 /**
  * "critical" only signals error severity in a structural context: a colon/bracket label
  * (`critical:`, `[critical]`) or paired with a severity noun (`critical error/failure/
@@ -111,9 +140,15 @@ const flutterExceptionBannerPattern = /\bException caught by\b/i;
  * `databaseDecode: could not decode "{…}" as DatabaseValueType.Json` — a real,
  * actionable failure that otherwise classified as `info` and vanished under the level
  * filter. Requires a following word so a bare trailing "cannot." does not match.
+ *
+ * Negative lookahead for perception / cognition verbs: in prose comments like
+ * `rule's single-method scope cannot see the pair`, "cannot see" is metaphorical, not
+ * an actionable failure. Real failures always pair with an I/O / system-action verb
+ * (open/read/connect/parse/...), never with perception verbs. Without the exclusion,
+ * lint-report comments embedded in saropa-lint output classified as warnings.
  * See plans/history/2026.05/2026.05.15/054_plan-viewer-stack-noise-filter-layout.md Item D.
  */
-const structuralWarnPattern = /\b(?:could\s*not|couldn't|cannot|unable\s+to|failed\s+to)\s+\w/i;
+const structuralWarnPattern = /\b(?:could\s*not|couldn't|cannot|unable\s+to|failed\s+to)\s+(?!(?:see|tell|say|imagine|think|know|believe|recall|remember|hear|feel|guess|understand|wait|help)\b)\w/i;
 
 /** Performance patterns that use regex features (quantifiers, alternation) and can't be simple keywords. */
 const structuralPerfPattern = /\b(skipped\s+\d+\s+frames?|gc\s+(?:pause|freed|concurrent))\b/i;
@@ -186,13 +221,15 @@ export function classifyLevel(
     const lcm = logcatLevelPattern.exec(plainText) ?? threadtimeLevelPattern.exec(plainText);
     if (lcm) { return classifyLogcat(lcm[1], plainText, strict); }
     if (matchesError(plainText, strict)) { return 'error'; }
-    // DB-vendor bracket tags and `Vendor:` prefixes promote to database BEFORE the
-    // generic warning/perf keyword sweep — without this, lines like
-    // "DRIFT: VM Service WebSocket connect failed" would be classified as
-    // 'warning' (via the "failed" keyword) and "[IsarDriftRowCountAudit] ..."
-    // as 'info', so the Database level filter could not hide them as a group.
-    // Error still wins above this check so a `[Drift] Error: lost connection`
-    // stays an error.
+    // Explicit app-emitted head tag (`[db] …`, `[perf:phase 2] …`) wins over the generic
+    // warning/perf keyword sweep so `[db] bulkPreload failed` is database, not warning. Runs
+    // AFTER the error check so `[db] Error: lost connection` still classifies as error.
+    const tagLevel = matchesTagLevel(plainText);
+    if (tagLevel) { return tagLevel; }
+    // matchesDatabaseAnnotation keeps the non-bracket `Vendor:` colon-prefix arm
+    // (e.g. "DRIFT: VM Service WebSocket connect failed"); the head-tag dictionary above
+    // supersedes its bracket arm. Both still sit ahead of the keyword sweep for the same
+    // reason: a "failed"/"warning" word in a DB line must not outrank the DB grouping.
     if (matchesDatabaseAnnotation(plainText)) { return 'database'; }
     return classifyNonError(plainText);
 }
@@ -211,6 +248,11 @@ export function isActionableLevel(level: SeverityLevel): boolean {
 function matchesError(plainText: string, strict: boolean): boolean {
     const structural = strict ? strictStructuralErrorPattern : looseStructuralErrorPattern;
     if (structural.test(plainText)) { return true; }
+    // Bracket label form (`[error]`, `[ERROR]`) is case-insensitive and only needed in
+    // strict mode — loose mode already matches via the bare `\berror\b` keyword. Strict
+    // dropped `/i` on the main structural pattern to filter lowercase `error:` in prose,
+    // so brackets need a separate /i regex to stay unambiguous.
+    if (strict && strictBracketErrorPattern.test(plainText)) { return true; }
     // Flutter banner runs independently of strict/loose — it is unambiguous even in strict mode.
     if (flutterExceptionBannerPattern.test(plainText)) { return true; }
     // "critical" is structural, not a bare keyword — see criticalSeverityPattern.
@@ -239,10 +281,12 @@ function classifyLogcat(prefix: string, plainText: string, strict: boolean): Sev
     if (kwTodo?.test(plainText)) { return 'todo'; }
     if (prefix === 'V' || prefix === 'D' || kwDebug?.test(plainText)) { return 'debug'; }
     if (kwNotice?.test(plainText)) { return 'notice'; }
-    // DB-vendor annotation runs before genericSqlPattern so an I/flutter line
-    // like "[Drift] connection pool warming" without a SQL keyword still
-    // classifies as database. Stays after W-warning short-circuit on purpose:
-    // an explicit W/ from logcat is a stronger signal than a vendor tag.
+    // App-emitted head tag and DB-vendor annotation run before genericSqlPattern so an
+    // I/flutter line like "[db] connection pool warming" / "[Drift] …" without a SQL keyword
+    // still classifies by tag. Both stay after the W-warning short-circuit on purpose: an
+    // explicit W/ from logcat is a stronger signal than a vendor or app tag.
+    const tagLevel = matchesTagLevel(plainText);
+    if (tagLevel) { return tagLevel; }
     if (matchesDatabaseAnnotation(plainText)) { return 'database'; }
     if (genericSqlPattern.test(plainText)) { return 'database'; }
     return 'info';

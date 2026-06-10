@@ -21,6 +21,14 @@ export interface LineData {
     readonly sourcePath?: string;
     readonly sourceLine?: number;
     readonly watchHits?: string[];
+    /**
+     * Absolute path of the .log file this line was written to. Carried so the
+     * cumulative cross-session viewer can group lines by origin file and assign
+     * per-file letter codes (A, B, …) — the global display index alone matches no
+     * single file. Set from the appending session's current fileUri (changes on
+     * mid-session split, so it is stamped per line, not once per session).
+     */
+    readonly logFileUri?: string;
 }
 
 /** Callback for lines written to the log file (used by the viewer). */

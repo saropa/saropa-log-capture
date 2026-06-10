@@ -143,6 +143,14 @@ export function getSqlQueryHistoryPanelStyles(): string {
     outline-offset: -2px;
 }
 
+/* No captured queries: headers are inert. Dim them and drop the pointer cursor so they don't
+   look clickable; the JS handler also returns early on aria-disabled. */
+.sql-qh-header-disabled {
+    opacity: 0.4;
+    cursor: default;
+    pointer-events: none;
+}
+
 /* Order: Count | SQL | Slow — fixed-width numeric columns; SQL column takes remaining space. */
 .sql-qh-header-count,
 .sql-qh-cell-count {
@@ -272,7 +280,8 @@ export function getSqlQueryHistoryPanelStyles(): string {
     white-space: pre-line;
 }
 
-/* DB_17: Cumulative across logs toggle, lives in the toolbar next to the search input. */
+/* DB_18: "Current session only" filter, lives in the toolbar next to the search input.
+   Class name kept (.sql-qh-cumulative) so existing layout/spacing rules apply unchanged. */
 .sql-qh-cumulative {
     display: inline-flex;
     align-items: center;

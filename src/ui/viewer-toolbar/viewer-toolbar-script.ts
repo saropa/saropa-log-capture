@@ -17,6 +17,7 @@ export function getToolbarScript(): string {
     var searchFlyout = document.getElementById('search-flyout');
     var signalsHost = document.getElementById('root-cause-hypotheses');
     var searchBtn = document.getElementById('toolbar-search-btn');
+    var flowmapBtn = document.getElementById('toolbar-flowmap-btn');
     var filterBtn = document.getElementById('toolbar-filter-btn');
     var signalsBtn = document.getElementById('toolbar-signals-btn');
     var actionsBtn = document.getElementById('toolbar-actions-btn');
@@ -162,7 +163,13 @@ export function getToolbarScript(): string {
 
     /* ---- Button wiring ---- */
 
-    if (searchBtn) searchBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleSearchFlyout(); });
+    // The old toolbar search button was redundant with the editor title-bar $(search) command
+    // (which still opens the same #search-flyout); it was replaced by the flow-map export button.
+    // searchBtn stays looked-up (now null) so the flyout's aria-expanded guards no-op harmlessly.
+    if (flowmapBtn) flowmapBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (typeof vscodeApi !== 'undefined') { vscodeApi.postMessage({ type: 'exportFlowMap' }); }
+    });
     if (filterBtn) filterBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleFilterPanel(); });
     if (signalsBtn) signalsBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleSignalsPanel(); });
     if (actionsBtn) actionsBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleActionsDropdown(); });
@@ -242,15 +249,23 @@ export function getToolbarScript(): string {
         }
     };
 
+    /* Build the layout data for the active structured mode. Shared by the manual
+       toggle and the auto-enable-on-load path (viewer-script-messages loadComplete),
+       so both stay in sync if a mode's build step changes. Modes are mutually
+       exclusive, so else-if is correct. */
+    window.buildFormatModeLayout = function() {
+        if (fileMode === 'markdown' && typeof buildMdSections === 'function') buildMdSections();
+        else if (fileMode === 'json' && typeof buildJsonBracePairs === 'function') buildJsonBracePairs();
+        else if (fileMode === 'csv' && typeof buildCsvLayout === 'function') buildCsvLayout();
+    };
+
     function toggleFormat() {
         formatEnabled = !formatEnabled;
         if (formatBtn) formatBtn.classList.toggle('toolbar-icon-btn-active', formatEnabled);
-        /* Build or clear the mode-specific layout data. */
-        if (formatEnabled) {
-            if (fileMode === 'markdown' && typeof buildMdSections === 'function') buildMdSections();
-            if (fileMode === 'json' && typeof buildJsonBracePairs === 'function') buildJsonBracePairs();
-            if (fileMode === 'csv' && typeof buildCsvLayout === 'function') buildCsvLayout();
-        }
+        /* Build the mode-specific layout data only when turning formatting on. */
+        if (formatEnabled) window.buildFormatModeLayout();
+        /* Apply/restore the comfortable markdown document line height (re-renders internally). */
+        if (typeof applyMarkdownTypography === 'function') applyMarkdownTypography();
         if (typeof recalcHeights === 'function') recalcHeights();
         if (typeof buildPrefixSums === 'function') buildPrefixSums();
         if (typeof renderViewport === 'function') renderViewport(true);

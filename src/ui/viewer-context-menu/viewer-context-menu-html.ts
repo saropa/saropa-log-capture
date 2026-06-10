@@ -1,44 +1,49 @@
 /**
  * Toggle rows for scroll map + scrollbar settings — embedded in the main menu and in
  * `#scroll-chrome-context-menu` (right-click on minimap / native scrollbar).
+ *
+ * Labels + tooltips localized via t() (keys in strings-viewer-g.ts). codicon
+ * names, data-action values, and `.context-menu-shortcut` key hints stay literal.
  */
+import { t } from "../../l10n";
+
 export function getScrollChromeMenuTogglesHtml(): string {
     return `
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-proportional" title="Proportional line width (minimap)">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-proportional" title="${t('viewer.ctx.minimapProportional')}">
                 <span class="codicon codicon-graph" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">Proportional line width (minimap)</span>
+                <span class="context-menu-label">${t('viewer.ctx.minimapProportional')}</span>
             </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-show-scrollbar" title="Show native scrollbar">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-show-scrollbar" title="${t('viewer.ctx.showScrollbar')}">
                 <span class="codicon codicon-layout" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">Show native scrollbar</span>
+                <span class="context-menu-label">${t('viewer.ctx.showScrollbar')}</span>
             </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-info-markers" title="Info / debug / notice on minimap">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-info-markers" title="${t('viewer.ctx.minimapInfoMarkers')}">
                 <span class="codicon codicon-info" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">Info / debug / notice on minimap</span>
+                <span class="context-menu-label">${t('viewer.ctx.minimapInfoMarkers')}</span>
             </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-sql-density" title="SQL density on minimap">
-                <span class="codicon codicon-database" aria-hidden="true"></span>
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-sql-density" title="${t('viewer.ctx.minimapSqlDensity')}">
+                <span class="codicon codicon-database"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">SQL density on minimap</span>
+                <span class="context-menu-label">${t('viewer.ctx.minimapSqlDensity')}</span>
             </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-viewport-red-outline" title="Red outline on viewport">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-viewport-red-outline" title="${t('viewer.ctx.minimapRedOutline')}">
                 <span class="codicon codicon-circle-outline" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">Red outline on viewport</span>
+                <span class="context-menu-label">${t('viewer.ctx.minimapRedOutline')}</span>
             </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-outside-arrow" title="Yellow arrow outside minimap">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-outside-arrow" title="${t('viewer.ctx.minimapOutsideArrow')}">
                 <span class="codicon codicon-arrow-right" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">Yellow arrow outside minimap</span>
+                <span class="context-menu-label">${t('viewer.ctx.minimapOutsideArrow')}</span>
             </div>`;
 }
 
 /** Compact menu: same toggles as the Scroll map & scrollbar submenu (minimap / scrollbar right-click). */
 export function getScrollChromeContextMenuHtml(): string {
-    return `<div id="scroll-chrome-context-menu" class="context-menu" role="menu" aria-label="Scroll map and scrollbar">
+    return `<div id="scroll-chrome-context-menu" class="context-menu" role="menu" aria-label="${t('viewer.ctx.scrollChrome.region')}">
 ${getScrollChromeMenuTogglesHtml()}
 </div>`;
 }
@@ -51,253 +56,260 @@ ${getScrollChromeMenuTogglesHtml()}
  */
 export function getContextMenuHtml(): string {
     return `<div id="context-menu" class="context-menu">
-    <div class="context-menu-item" data-action="open-source-link" data-source-action title="Open this source file in the editor">
-        <span class="codicon codicon-go-to-file"></span> Open File
+    <div class="context-menu-item" data-action="open-source-link" data-source-action title="${t('viewer.ctx.openFile.title')}">
+        <span class="codicon codicon-go-to-file"></span> ${t('viewer.ctx.openFile.label')}
     </div>
-    <div class="context-menu-item" data-action="copy-relative-path" data-source-action title="Copy the workspace-relative file path">
-        <span class="codicon codicon-copy"></span> Copy Relative Path
+    <div class="context-menu-item" data-action="copy-relative-path" data-source-action title="${t('viewer.ctx.copyRelPath.title')}">
+        <span class="codicon codicon-copy"></span> ${t('viewer.ctx.copyRelPath.label')}
     </div>
-    <div class="context-menu-item" data-action="copy-full-path" data-source-action title="Copy the absolute file path">
-        <span class="codicon codicon-copy"></span> Copy Full Path
+    <div class="context-menu-item" data-action="copy-full-path" data-source-action title="${t('viewer.ctx.copyFullPath.title')}">
+        <span class="codicon codicon-copy"></span> ${t('viewer.ctx.copyFullPath.label')}
     </div>
     <div class="context-menu-separator" data-source-action></div>
-    <div class="context-menu-item" data-action="copy-error-warning-block" data-copy-error-warning-row style="display:none" title="Copy the full adjacent error or warning block">
+    <div class="context-menu-item" data-action="copy-error-warning-block" data-copy-error-warning-row style="display:none" title="${t('viewer.ctx.copyEwBlock.title')}">
         <span class="codicon codicon-error" data-ew-copy-icon aria-hidden="true"></span>
-        <span data-ew-copy-label>Copy Error</span>
+        <span data-ew-copy-label>${t('viewer.ctx.copyEwBlock.label')}</span>
     </div>
-    <div class="context-menu-item" data-action="copy-db-cluster-block" data-copy-db-cluster-row style="display:none" title="Copy all SQL lines in this database timestamp burst">
-        <span class="codicon codicon-database"></span> Copy DB cluster
+    <div class="context-menu-item" data-action="copy-error-warning-json" data-copy-error-warning-row style="display:none" title="${t('viewer.ctx.copyEwJson.title')}">
+        <span class="codicon codicon-json" aria-hidden="true"></span>
+        <span data-ew-json-label>${t('viewer.ctx.copyEwJson.label')}</span>
+    </div>
+    <div class="context-menu-item" data-action="copy-db-cluster-block" data-copy-db-cluster-row style="display:none" title="${t('viewer.ctx.copyDbCluster.title')}">
+        <span class="codicon codicon-database"></span> ${t('viewer.ctx.copyDbCluster.label')}
     </div>
     <div class="context-menu-separator" data-grouped-block-copy-separator style="display:none"></div>
     <!-- Copy & Export submenu: shortens main menu so it fits on screen; Copy to Search after separator (line-only). -->
     <div class="context-menu-submenu" id="copy-export-submenu">
-        <span class="codicon codicon-clippy"></span> Copy & Export
+        <span class="codicon codicon-clippy"></span> ${t('viewer.ctx.submenu.copyExport')}
         <span class="context-menu-arrow codicon codicon-chevron-right"></span>
         <div class="context-menu-submenu-content">
-            <div class="context-menu-item" data-action="copy-selection" title="Copy the selected text to the clipboard">
-                <span class="codicon codicon-copy"></span> Copy
+            <div class="context-menu-item" data-action="copy-json" data-line-action title="${t('viewer.ctx.copyJson.title')}">
+                <span class="codicon codicon-json"></span> ${t('viewer.ctx.copyJson.label')}
                 <span class="context-menu-shortcut">Ctrl+C</span>
             </div>
-            <div class="context-menu-item" data-action="copy" data-line-action title="Copy this line as plain text">
-                <span class="codicon codicon-copy"></span> Copy Line
+            <div class="context-menu-item" data-action="copy-selection" title="${t('viewer.ctx.copySelection.title')}">
+                <span class="codicon codicon-copy"></span> ${t('viewer.ctx.copySelection.label')}
             </div>
-            <div class="context-menu-item" data-action="copy-decorated" data-line-action title="Copy this line with its decoration prefix (dot, line number, timestamp)">
-                <span class="codicon codicon-copy"></span> Copy Line Decorated
+            <div class="context-menu-item" data-action="copy" data-line-action title="${t('viewer.ctx.copy.title')}">
+                <span class="codicon codicon-copy"></span> ${t('viewer.ctx.copy.label')}
             </div>
-            <div class="context-menu-item" data-action="copy-line-number" data-line-action title="Copy this line's number to the clipboard">
-                <span class="codicon codicon-list-ordered"></span> Copy Line Number
+            <div class="context-menu-item" data-action="copy-decorated" data-line-action title="${t('viewer.ctx.copyDecorated.title')}">
+                <span class="codicon codicon-copy"></span> ${t('viewer.ctx.copyDecorated.label')}
             </div>
-            <div class="context-menu-item" data-action="copy-timestamp" data-line-action data-timestamp-action title="Copy this line's wall-clock timestamp">
-                <span class="codicon codicon-clock"></span> Copy Timestamp
+            <div class="context-menu-item" data-action="copy-line-number" data-line-action title="${t('viewer.ctx.copyLineNumber.title')}">
+                <span class="codicon codicon-list-ordered"></span> ${t('viewer.ctx.copyLineNumber.label')}
+            </div>
+            <div class="context-menu-item" data-action="copy-timestamp" data-line-action data-timestamp-action title="${t('viewer.ctx.copyTimestamp.title')}">
+                <span class="codicon codicon-clock"></span> ${t('viewer.ctx.copyTimestamp.label')}
             </div>
             <div class="context-menu-separator" data-line-action></div>
-            <div class="context-menu-item" data-action="copy-all" title="Copy every line in the log as plain text">
-                <span class="codicon codicon-clippy"></span> Copy All
+            <div class="context-menu-item" data-action="copy-all" title="${t('viewer.ctx.copyAll.title')}">
+                <span class="codicon codicon-clippy"></span> ${t('viewer.ctx.copyAll.label')}
                 <span class="context-menu-shortcut">Ctrl+Shift+A</span>
             </div>
-            <div class="context-menu-item" data-action="copy-all-decorated" title="Copy every line with decoration prefixes">
-                <span class="codicon codicon-clippy"></span> Copy All Decorated
+            <div class="context-menu-item" data-action="copy-all-decorated" title="${t('viewer.ctx.copyAllDecorated.title')}">
+                <span class="codicon codicon-clippy"></span> ${t('viewer.ctx.copyAllDecorated.label')}
             </div>
-            <div class="context-menu-item" data-action="copy-as-snippet" title="Copy as a fenced code block for GitHub or GitLab">
-                <span class="codicon codicon-markdown"></span> Copy as snippet (GitHub/GitLab)
+            <div class="context-menu-item" data-action="copy-as-snippet" title="${t('viewer.ctx.copyAsSnippet.title')}">
+                <span class="codicon codicon-markdown"></span> ${t('viewer.ctx.copyAsSnippet.label')}
             </div>
             <div class="context-menu-separator"></div>
-            <div class="context-menu-item" data-action="copy-with-source" title="Copy the selection together with the matching source filename and code">
-                <span class="codicon codicon-file-code"></span> Copy with source (filename + source code)
+            <div class="context-menu-item" data-action="copy-with-source" title="${t('viewer.ctx.copyWithSource.title')}">
+                <span class="codicon codicon-file-code"></span> ${t('viewer.ctx.copyWithSource.label')}
             </div>
-            <div class="context-menu-item" data-action="select-all" title="Select all lines in the viewport">
-                <span class="codicon codicon-list-flat"></span> Select All
+            <div class="context-menu-item" data-action="select-all" title="${t('viewer.ctx.selectAll.title')}">
+                <span class="codicon codicon-list-flat"></span> ${t('viewer.ctx.selectAll.label')}
                 <span class="context-menu-shortcut">Ctrl+A</span>
             </div>
-            <div class="context-menu-item" data-action="export-current-view" title="Export filtered log content to a file">
-                <span class="codicon codicon-export"></span> Export current view…
+            <div class="context-menu-item" data-action="export-current-view" title="${t('viewer.ctx.exportCurrentView.title')}">
+                <span class="codicon codicon-export"></span> ${t('viewer.ctx.exportCurrentView.label')}
             </div>
             <div class="context-menu-separator" data-line-action></div>
-            <div class="context-menu-item" data-action="copy-to-search" data-line-action title="Paste this line's text into the search bar">
-                <span class="codicon codicon-search"></span> Copy to Search
+            <div class="context-menu-item" data-action="copy-to-search" data-line-action title="${t('viewer.ctx.copyToSearch.title')}">
+                <span class="codicon codicon-search"></span> ${t('viewer.ctx.copyToSearch.label')}
             </div>
         </div>
     </div>
-    <div class="context-menu-item" data-action="open-source" data-line-action title="Open the source file referenced in this line">
-        <span class="codicon codicon-go-to-file"></span> Open Source File
+    <div class="context-menu-item" data-action="open-source" data-line-action title="${t('viewer.ctx.openSource.title')}">
+        <span class="codicon codicon-go-to-file"></span> ${t('viewer.ctx.openSource.label')}
     </div>
     <div class="context-menu-separator" data-line-action></div>
     <div class="context-menu-submenu" data-line-action>
-        <span class="codicon codicon-search"></span> Search
+        <span class="codicon codicon-search"></span> ${t('viewer.ctx.submenu.search')}
         <span class="context-menu-arrow codicon codicon-chevron-right"></span>
         <div class="context-menu-submenu-content">
-            <div class="context-menu-item" data-action="search-codebase" title="Search the workspace source code for this line's text">
-                <span class="codicon codicon-search"></span> Search Codebase
+            <div class="context-menu-item" data-action="search-codebase" title="${t('viewer.ctx.searchCodebase.title')}">
+                <span class="codicon codicon-search"></span> ${t('viewer.ctx.searchCodebase.label')}
             </div>
-            <div class="context-menu-item" data-action="search-sessions" title="Search all saved logs for this line's text">
-                <span class="codicon codicon-history"></span> Search Past Logs
+            <div class="context-menu-item" data-action="search-sessions" title="${t('viewer.ctx.searchSessions.title')}">
+                <span class="codicon codicon-history"></span> ${t('viewer.ctx.searchSessions.label')}
             </div>
             <div class="context-menu-separator"></div>
-            <div class="context-menu-item" data-action="analyze-line" title="Find this line's pattern across all saved logs">
-                <span class="codicon codicon-search-fuzzy"></span> Analyze Across Logs
+            <div class="context-menu-item" data-action="analyze-line" title="${t('viewer.ctx.analyzeLine.title')}">
+                <span class="codicon codicon-search-fuzzy"></span> ${t('viewer.ctx.analyzeLine.label')}
             </div>
-            <div class="context-menu-item" data-action="generate-report" title="Generate a markdown bug report from the current context">
-                <span class="codicon codicon-report"></span> Generate Bug Report
+            <div class="context-menu-item" data-action="generate-report" title="${t('viewer.ctx.generateReport.title')}">
+                <span class="codicon codicon-report"></span> ${t('viewer.ctx.generateReport.label')}
             </div>
-            <div class="context-menu-item" data-action="create-report-file" title="Create a bug report file in the workspace">
-                <span class="codicon codicon-new-file"></span> Create Bug Report File
+            <div class="context-menu-item" data-action="create-report-file" title="${t('viewer.ctx.createReportFile.title')}">
+                <span class="codicon codicon-new-file"></span> ${t('viewer.ctx.createReportFile.label')}
             </div>
         </div>
     </div>
     <div class="context-menu-submenu" data-line-action>
-        <span class="codicon codicon-tools"></span> Actions
+        <span class="codicon codicon-tools"></span> ${t('viewer.ctx.submenu.actions')}
         <span class="context-menu-arrow codicon codicon-chevron-right"></span>
         <div class="context-menu-submenu-content">
-            <div class="context-menu-item" data-action="pin" title="Pin this line to a sticky header strip at the top of the viewer">
-                <span class="codicon codicon-pin"></span> Pin Line
+            <div class="context-menu-item" data-action="pin" title="${t('viewer.ctx.pin.title')}">
+                <span class="codicon codicon-pin"></span> ${t('viewer.ctx.pin.label')}
                 <span class="context-menu-shortcut">P</span>
             </div>
-            <div class="context-menu-item" data-action="bookmark" title="Save this line to the Bookmarks panel for quick navigation">
-                <span class="codicon codicon-bookmark"></span> Bookmark Line
+            <div class="context-menu-item" data-action="bookmark" title="${t('viewer.ctx.bookmark.title')}">
+                <span class="codicon codicon-bookmark"></span> ${t('viewer.ctx.bookmark.label')}
                 <span class="context-menu-shortcut">Ctrl+B</span>
             </div>
-            <div class="context-menu-item" data-action="edit" title="Edit this line's text in place">
-                <span class="codicon codicon-edit"></span> Edit Line
+            <div class="context-menu-item" data-action="edit" title="${t('viewer.ctx.edit.title')}">
+                <span class="codicon codicon-edit"></span> ${t('viewer.ctx.edit.label')}
             </div>
-            <div class="context-menu-item" data-action="show-context" title="Open a popover with surrounding log lines for this line">
-                <span class="codicon codicon-list-flat"></span> View Context
+            <div class="context-menu-item" data-action="show-context" title="${t('viewer.ctx.showContext.title')}">
+                <span class="codicon codicon-list-flat"></span> ${t('viewer.ctx.showContext.label')}
             </div>
-            <div class="context-menu-item" data-action="show-integration-context" title="Open a popover with integration adapter data for this line">
-                <span class="codicon codicon-layers"></span> View Integration Context
+            <div class="context-menu-item" data-action="show-integration-context" title="${t('viewer.ctx.showIntegrationContext.title')}">
+                <span class="codicon codicon-layers"></span> ${t('viewer.ctx.showIntegrationContext.label')}
             </div>
-            <div class="context-menu-item" data-action="show-related-queries" data-line-action title="Open a popover listing SQL queries related to this line">
-                <span class="codicon codicon-database"></span> View Related Queries
+            <div class="context-menu-item" data-action="show-related-queries" data-line-action title="${t('viewer.ctx.showRelatedQueries.title')}">
+                <span class="codicon codicon-database"></span> ${t('viewer.ctx.showRelatedQueries.label')}
             </div>
-            <div class="context-menu-item" data-action="show-code-quality" data-line-action title="Open a popover with code quality diagnostics for this file">
-                <span class="codicon codicon-symbol-misc"></span> View Code Quality
+            <div class="context-menu-item" data-action="show-code-quality" data-line-action title="${t('viewer.ctx.showCodeQuality.title')}">
+                <span class="codicon codicon-symbol-misc"></span> ${t('viewer.ctx.showCodeQuality.label')}
             </div>
-            <div class="context-menu-item" data-action="show-git-history" title="Open a popover with git blame for this line and the file's recent commits">
-                <span class="codicon codicon-git-commit"></span> View Git History
+            <div class="context-menu-item" data-action="show-git-history" title="${t('viewer.ctx.showGitHistory.title')}">
+                <span class="codicon codicon-git-commit"></span> ${t('viewer.ctx.showGitHistory.label')}
             </div>
-            <div class="context-menu-item" data-action="show-changelog-since" title="Look up what the workspace CHANGELOG released after the version on this line">
-                <span class="codicon codicon-history"></span> What changed since this version?
+            <div class="context-menu-item" data-action="show-changelog-since" title="${t('viewer.ctx.showChangelogSince.title')}">
+                <span class="codicon codicon-history"></span> ${t('viewer.ctx.showChangelogSince.label')}
             </div>
-            <div class="context-menu-item" data-action="open-drift-advisor" data-line-action data-drift-line-action title="Open this SQL line in the Drift Advisor extension">
-                <span class="codicon codicon-database"></span> Open in Drift Advisor
+            <div class="context-menu-item" data-action="open-drift-advisor" data-line-action data-drift-line-action title="${t('viewer.ctx.openDriftAdvisor.title')}">
+                <span class="codicon codicon-database"></span> ${t('viewer.ctx.openDriftAdvisor.label')}
             </div>
-            <div class="context-menu-item" data-action="find-static-sources-line" data-line-action data-static-sql-line-action title="Search Dart source files for code that could emit this SQL">
-                <span class="codicon codicon-search"></span> Find possible Dart sources (static)
+            <div class="context-menu-item" data-action="find-static-sources-line" data-line-action data-static-sql-line-action title="${t('viewer.ctx.findStaticSources.title')}">
+                <span class="codicon codicon-search"></span> ${t('viewer.ctx.findStaticSources.label')}
             </div>
-            <div class="context-menu-item" data-action="explain-with-ai" data-line-action title="Ask an AI model to explain this log line">
-                <span class="codicon codicon-sparkle"></span> Explain with AI
+            <div class="context-menu-item" data-action="explain-with-ai" data-line-action title="${t('viewer.ctx.explainWithAi.title')}">
+                <span class="codicon codicon-sparkle"></span> ${t('viewer.ctx.explainWithAi.label')}
             </div>
-            <div class="context-menu-item" data-action="explain-root-cause-hypotheses" data-line-action title="Ask an AI model to hypothesize root causes from detected signals">
-                <span class="codicon codicon-lightbulb"></span> Explain signals
+            <div class="context-menu-item" data-action="explain-root-cause-hypotheses" data-line-action title="${t('viewer.ctx.explainSignals.title')}">
+                <span class="codicon codicon-lightbulb"></span> ${t('viewer.ctx.explainSignals.label')}
             </div>
             <div class="context-menu-separator"></div>
-            <div class="context-menu-item" data-action="add-watch" title="Add this line's text as a watch pattern for live-capture alerts">
-                <span class="codicon codicon-eye"></span> Add to Watch List
+            <div class="context-menu-item" data-action="add-watch" title="${t('viewer.ctx.addWatch.title')}">
+                <span class="codicon codicon-eye"></span> ${t('viewer.ctx.addWatch.label')}
             </div>
         </div>
     </div>
     <div class="context-menu-submenu" id="hide-lines-submenu">
-        <span class="codicon codicon-eye-closed"></span> Hide
+        <span class="codicon codicon-eye-closed"></span> ${t('viewer.ctx.submenu.hide')}
         <span class="context-menu-arrow codicon codicon-chevron-right"></span>
         <div class="context-menu-submenu-content">
-            <div class="context-menu-item" data-action="hide-line" data-line-action title="Hide this single line from the viewer">
-                <span class="codicon codicon-eye-closed"></span> Hide This Line
+            <div class="context-menu-item" data-action="hide-line" data-line-action title="${t('viewer.ctx.hideLine.title')}">
+                <span class="codicon codicon-eye-closed"></span> ${t('viewer.ctx.hideLine.label')}
             </div>
-            <div class="context-menu-item" data-action="unhide-line" data-line-action data-requires-hidden title="Restore this hidden line">
-                <span class="codicon codicon-eye"></span> Unhide This Line
+            <div class="context-menu-item" data-action="unhide-line" data-line-action data-requires-hidden title="${t('viewer.ctx.unhideLine.title')}">
+                <span class="codicon codicon-eye"></span> ${t('viewer.ctx.unhideLine.label')}
             </div>
             <div class="context-menu-separator" data-selection-action></div>
-            <div class="context-menu-item" data-action="hide-selection" data-selection-action title="Hide all lines in the current shift-click selection">
-                <span class="codicon codicon-eye-closed"></span> Hide Selection
+            <div class="context-menu-item" data-action="hide-selection" data-selection-action title="${t('viewer.ctx.hideSelection.title')}">
+                <span class="codicon codicon-eye-closed"></span> ${t('viewer.ctx.hideSelection.label')}
             </div>
-            <div class="context-menu-item" data-action="unhide-selection" data-selection-action data-requires-hidden title="Restore hidden lines in the current selection">
-                <span class="codicon codicon-eye"></span> Unhide Selection
+            <div class="context-menu-item" data-action="unhide-selection" data-selection-action data-requires-hidden title="${t('viewer.ctx.unhideSelection.title')}">
+                <span class="codicon codicon-eye"></span> ${t('viewer.ctx.unhideSelection.label')}
             </div>
             <div class="context-menu-separator" data-text-selection-action></div>
-            <div class="context-menu-item" data-action="hide-text-session" data-text-selection-action title="Hide lines matching the selected text for this log only">
-                <span class="codicon codicon-eye-closed"></span> Hide Selection (This Log)
+            <div class="context-menu-item" data-action="hide-text-session" data-text-selection-action title="${t('viewer.ctx.hideTextSession.title')}">
+                <span class="codicon codicon-eye-closed"></span> ${t('viewer.ctx.hideTextSession.label')}
             </div>
-            <div class="context-menu-item" data-action="hide-text-always" data-text-selection-action title="Add the selected text as a permanent exclusion pattern">
-                <span class="codicon codicon-eye-closed"></span> Hide Selection (Always)
+            <div class="context-menu-item" data-action="hide-text-always" data-text-selection-action title="${t('viewer.ctx.hideTextAlways.title')}">
+                <span class="codicon codicon-eye-closed"></span> ${t('viewer.ctx.hideTextAlways.label')}
             </div>
-            <div class="context-menu-item" data-action="add-exclusion" data-line-action title="Add this line's text as a permanent exclusion pattern">
-                <span class="codicon codicon-eye-closed"></span> Hide This Text (Always)
-            </div>
-            <div class="context-menu-separator"></div>
-            <div class="context-menu-item" data-action="hide-all-visible" title="Hide every currently visible line">
-                <span class="codicon codicon-eye-closed"></span> Hide All Visible
-            </div>
-            <div class="context-menu-item" data-action="unhide-all" data-requires-any-hidden title="Restore all hidden lines">
-                <span class="codicon codicon-eye"></span> Unhide All
+            <div class="context-menu-item" data-action="add-exclusion" data-line-action title="${t('viewer.ctx.addExclusion.title')}">
+                <span class="codicon codicon-eye-closed"></span> ${t('viewer.ctx.addExclusion.label')}
             </div>
             <div class="context-menu-separator"></div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-show-blank-lines" title="Show or hide lines that are empty or whitespace-only">
+            <div class="context-menu-item" data-action="hide-all-visible" title="${t('viewer.ctx.hideAllVisible.title')}">
+                <span class="codicon codicon-eye-closed"></span> ${t('viewer.ctx.hideAllVisible.label')}
+            </div>
+            <div class="context-menu-item" data-action="unhide-all" data-requires-any-hidden title="${t('viewer.ctx.unhideAll.title')}">
+                <span class="codicon codicon-eye"></span> ${t('viewer.ctx.unhideAll.label')}
+            </div>
+            <div class="context-menu-separator"></div>
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-show-blank-lines" title="${t('viewer.ctx.toggleBlankLines.title')}">
                 <span class="codicon codicon-whitespace" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">Show blank lines</span>
+                <span class="context-menu-label">${t('viewer.ctx.toggleBlankLines.label')}</span>
                 <span class="context-menu-shortcut">H</span>
             </div>
         </div>
     </div>
     <div class="context-menu-submenu">
-        <span class="codicon codicon-table"></span> Columns
+        <span class="codicon codicon-table"></span> ${t('viewer.ctx.submenu.columns')}
         <span class="context-menu-arrow codicon codicon-chevron-right"></span>
         <div class="context-menu-submenu-content">
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-line-numbers" title="Show the line number at the start of each row">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-line-numbers" title="${t('viewer.ctx.toggleLineNumbers.title')}">
                 <span class="codicon codicon-list-ordered" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">Line numbers</span>
+                <span class="context-menu-label">${t('viewer.ctx.toggleLineNumbers.label')}</span>
             </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-timestamp" title="Show the wall-clock timestamp in each line's decoration prefix">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-timestamp" title="${t('viewer.ctx.toggleTimestamp.title')}">
                 <span class="codicon codicon-clock" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">Timestamp</span>
+                <span class="context-menu-label">${t('viewer.ctx.toggleTimestamp.label')}</span>
             </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-session-elapsed" title="Show elapsed time since the first log line (e.g. 5m 15s)">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-session-elapsed" title="${t('viewer.ctx.toggleSessionElapsed.title')}">
                 <span class="codicon codicon-watch" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">Session elapsed</span>
+                <span class="context-menu-label">${t('viewer.ctx.toggleSessionElapsed.label')}</span>
             </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-parsed-tag" title="Show the parsed source tag column (e.g. flutter, HWUI)">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-parsed-tag" title="${t('viewer.ctx.toggleParsedTag.title')}">
                 <span class="codicon codicon-tag" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">Tag</span>
+                <span class="context-menu-label">${t('viewer.ctx.toggleParsedTag.label')}</span>
             </div>
         </div>
     </div>
     <div class="context-menu-submenu">
-        <span class="codicon codicon-settings-gear"></span> Layout
+        <span class="codicon codicon-settings-gear"></span> ${t('viewer.ctx.submenu.layout')}
         <span class="context-menu-arrow codicon codicon-chevron-right"></span>
         <div class="context-menu-submenu-content">
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-wrap" title="Wrap long lines to fit the viewer width">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-wrap" title="${t('viewer.ctx.toggleWrap.title')}">
                 <span class="codicon codicon-word-wrap" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">Word wrap</span>
+                <span class="context-menu-label">${t('viewer.ctx.toggleWrap.label')}</span>
                 <span class="context-menu-shortcut">W</span>
             </div>
             <div class="context-menu-separator"></div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-spacing" title="Add extra vertical gaps between markers and level changes">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-spacing" title="${t('viewer.ctx.toggleSpacing.title')}">
                 <span class="codicon codicon-layout-panel" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">Visual spacing</span>
+                <span class="context-menu-label">${t('viewer.ctx.toggleSpacing.label')}</span>
                 <span class="context-menu-shortcut">V</span>
             </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-line-height" title="Double each row's height for easier reading (1.2 → 2.0 line-height)">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-line-height" title="${t('viewer.ctx.toggleLineHeight.title')}">
                 <span class="codicon codicon-unfold" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">Tall rows</span>
+                <span class="context-menu-label">${t('viewer.ctx.toggleLineHeight.label')}</span>
                 <span class="context-menu-shortcut">Ctrl+Shift+Scroll</span>
             </div>
             <div class="context-menu-separator"></div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-compress-lines" title="Collapse runs of identical consecutive lines into one row with a count badge">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-compress-lines" title="${t('viewer.ctx.toggleCompressLines.title')}">
                 <span class="codicon codicon-fold" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">Compress lines (consecutive dupes)</span>
+                <span class="context-menu-label">${t('viewer.ctx.toggleCompressLines.label')}</span>
                 <span class="context-menu-shortcut">C</span>
             </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-compress-lines-global" title="Also collapse duplicate lines that are not adjacent to each other">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-compress-lines-global" title="${t('viewer.ctx.toggleCompressLinesGlobal.title')}">
                 <span class="codicon codicon-fold-down" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">Compress lines (non-consecutive dupes)</span>
+                <span class="context-menu-label">${t('viewer.ctx.toggleCompressLinesGlobal.label')}</span>
             </div>
         </div>
     </div>

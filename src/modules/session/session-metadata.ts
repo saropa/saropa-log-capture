@@ -35,13 +35,31 @@ export interface SessionMeta {
     /** Performance fingerprints extracted from log content. */
     perfFingerprints?: PerfFingerprintEntry[];
     annotations?: Annotation[];
-    /** Cached severity line counts from content scanning. */
+    /**
+     * Cached severity line counts. Buckets match `classifyLevel()` in
+     * modules/analysis/level-classifier.ts so the list badges agree with the
+     * viewer's E/W/I/D/etc. counts for the same file.
+     *
+     * `fwCount` is V1-only: the legacy quick-scan classifier had a "frameworks"
+     * bucket (non-flutter logcat tags); classifyLevel() collapses those into
+     * info/debug, so the new producer never writes it. Kept in the type so
+     * V1 sidecars deserialise; readers should treat absence as 0.
+     *
+     * `debugCount` presence is the V2-schema gate
+     * (ui/session/session-history-metadata.ts `hasCachedSev`). V1 sidecars (no
+     * debugCount) are re-scanned by the deferred worker to backfill new buckets.
+     */
     errorCount?: number;
     warningCount?: number;
     perfCount?: number;
     anrCount?: number;
+    /** @deprecated V1 only — classifyLevel() has no framework bucket. */
     fwCount?: number;
     infoCount?: number;
+    debugCount?: number;
+    databaseCount?: number;
+    todoCount?: number;
+    noticeCount?: number;
     /** ANR risk level computed by anr-risk-scorer.ts on session finalization. */
     anrRiskLevel?: 'low' | 'medium' | 'high';
     /** App version detected at session finalization (e.g. from pubspec.yaml). */
@@ -52,6 +70,16 @@ export interface SessionMeta {
     debugTarget?: string;
     /** Hidden from the Logs tree; permanently deleted on "Empty Trash". */
     trashed?: boolean;
+    /**
+     * Pinned to the top of the Logs panel for quick access. When set, the pin's
+     * `parsedHeader` + severity counts are captured at pin time (see
+     * ui/session/session-pin.ts) so a pinned row always lists from cache with no
+     * file read — the explicit "fastest loading/listing" requirement.
+     */
+    pinned?: boolean;
+    /** Epoch ms the file was pinned. Drives newest-pin-first ordering within the
+     *  pinned section. Cleared on unpin. */
+    pinnedAt?: number;
     /** Integration provider payloads keyed by provider id (e.g. buildCi, windowsEvents). */
     integrations?: Record<string, unknown>;
     /** Drift `Sent` SQL fingerprint rollup (plan DB_10); validate `schemaVersion` on read. */
@@ -64,6 +92,49 @@ export interface SessionMeta {
      * Undefined = ungrouped (renders as a standalone entry in the Logs list).
      */
     groupId?: string;
+    /**
+     * Optional explicit kind override. Absence means "let `classifySessionKind`
+     * decide from `debugAdapterType`, header `Project:`, and report-name
+     * patterns". Set by a future per-session "Treat as project / Treat as
+     * report" context-menu action — never written automatically. The
+     * classifier is the engine; this field is the user's manual override
+     * lever, persisted alongside the rest of `SessionMeta` so it survives
+     * panel reloads.
+     */
+    kind?: 'project' | 'report';
+    /**
+     * Optional explicit Controller/Peripheral role override. Absence means "let
+     * `classifySessionRole` decide from the `controllerNames` list, a header
+     * `Project:` / displayName match against the workspace folder, and the
+     * `kind` classification". Set by the per-session "Set as Controller / Mark
+     * as Peripheral" context-menu action — never written automatically.
+     *
+     * Distinct from `kind`: `kind` answers project-vs-report (drives severity
+     * heuristics); `role` answers which session is the day's tree root that
+     * peripherals nest under. A `kind: 'report'` log is always a peripheral, but
+     * a `kind: 'project'` log (e.g. "Contacts Drift Advisor") is only a
+     * controller when it is the workspace's OWN session.
+     */
+    role?: 'controller' | 'peripheral';
+    /**
+     * Cached `parseHeader()` output, valid ONLY while `mtime` + `size` still match the file on
+     * disk. The Logs list otherwise re-opens every file to read its header on each panel load;
+     * across a months-deep archive (thousands of files) that re-read dominates load time. Storing
+     * the parsed header here lets a re-load read the central JSON once and skip per-file reads —
+     * the "instant recall" path. A changed file (different mtime/size) invalidates the entry and
+     * is re-parsed + re-cached. Severity counts stay in their own fields (computed separately by
+     * the deferred scan), so this is purely the header pass's cache.
+     */
+    parsedHeader?: {
+        mtime: number;
+        size: number;
+        date?: string;
+        project?: string;
+        adapter?: string;
+        lineCount?: number;
+        hasTimestamps?: boolean;
+        durationMs?: number;
+    };
 }
 
 // MetaMap type imported from session-metadata-io.ts
@@ -128,6 +199,25 @@ export class SessionMetadataStore {
         await writeCentral(centralUri, data);
     }
 
+    /** Persist freshly-parsed header fields for many files in ONE central write.
+     *  The list refresh calls this once per refresh (not per file), so caching the header
+     *  costs a single read-merge-write of the central JSON — never N writes. `logDir` resolves
+     *  to the same central store `loadAllMetadata` reads, and keys are the same relative keys. */
+    async saveParsedHeaderBatch(
+        logDir: vscode.Uri,
+        entries: ReadonlyMap<string, NonNullable<SessionMeta['parsedHeader']>>,
+    ): Promise<void> {
+        if (entries.size === 0) { return; }
+        const centralUri = getCentralMetaUri(logDir);
+        if (!centralUri) { return; }
+        const data = await readCentral(centralUri);
+        // Merge so existing severity counts / tags / overrides on each entry survive.
+        for (const [key, parsedHeader] of entries) {
+            data[key] = { ...(data[key] ?? {}), parsedHeader };
+        }
+        await writeCentral(centralUri, data);
+    }
+
     /** Remove metadata for a log file (e.g. after permanent delete or rename). */
     async deleteMetadata(logUri: vscode.Uri): Promise<void> {
         const centralUri = getCentralMetaUri(logUri);
@@ -147,6 +237,14 @@ export class SessionMetadataStore {
     async setTags(logUri: vscode.Uri, tags: string[]): Promise<void> {
         const meta = await this.loadMetadata(logUri);
         meta.tags = tags;
+        await this.saveMetadata(logUri, meta);
+    }
+
+    /** Persist the Controller/Peripheral role override. `undefined` clears it so the log reverts to
+     *  automatic detection (workspace-folder match) on the next refresh. */
+    async setRole(logUri: vscode.Uri, role: 'controller' | 'peripheral' | undefined): Promise<void> {
+        const meta = await this.loadMetadata(logUri);
+        meta.role = role;
         await this.saveMetadata(logUri, meta);
     }
 

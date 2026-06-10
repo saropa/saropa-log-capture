@@ -16,20 +16,102 @@ export function getFormatStyles(): string {
 
 /* ---- Markdown ---- */
 
+/* All markdown lines share one left edge. The 1.85em log gutter (severity bars) is
+   irrelevant in markdown mode, so trim it to a small uniform margin — this is the fix
+   for the ragged left edge that per-heading borders/padding used to cause. */
+.line.fmt-markdown { padding-left: 1em; }
+
+/* Markdown is a document: prose must always wrap, even when the log view is in no-wrap mode
+   (which otherwise sets white-space:pre and clips long lines off the right edge). Tables, code
+   fences, and headings keep their own nowrap via their inner spans. */
+#log-content.nowrap .line.fmt-markdown { white-space: pre-wrap; }
+
+/* Headings: no left border (it broke alignment). The row is pinned to a taller height
+   (calcItemHeight + inline style); flex-centering the text inside it yields the vertical
+   padding, and the collapse chevron is pushed to the right edge. */
+.line.fmt-md-h1, .line.fmt-md-h2, .line.fmt-md-h3,
+.line.fmt-md-h4, .line.fmt-md-h5, .line.fmt-md-h6 {
+    display: flex;
+    /* CENTER, not flex-start: mdHeadingRowHeight allocates a row strictly TALLER than the glyph
+       box, and centering splits that slack top+bottom. flex-start put all slack at the bottom and
+       still clipped descenders on sub-pixel rounding (plans/history/2026.06/2026.06.09/markdown_render_spacing_attempts.md #3). */
+    align-items: center;
+    /* NO vertical overflow:hidden here — that is exactly what cropped the heading glyphs. Horizontal
+       truncation/ellipsis lives on .md-htext instead, so the row never clips the text vertically. */
+    box-sizing: border-box;
+    padding-top: 0.6em;
+    padding-bottom: 0.25em;
+}
+
 .md-heading {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
     font-weight: bold;
     cursor: pointer;
-    display: inline-block;
-    width: 100%;
 }
-.md-heading:hover { opacity: 0.8; }
+.md-heading:hover { opacity: 0.85; }
 
-.md-h1 { font-size: 1.4em; border-left: 3px solid var(--vscode-textLink-foreground, #3794ff); padding-left: 6px; }
-.md-h2 { font-size: 1.25em; border-left: 3px solid var(--vscode-textLink-foreground, #3794ff); padding-left: 6px; }
-.md-h3 { font-size: 1.1em; border-left: 2px solid var(--vscode-descriptionForeground, #888); padding-left: 6px; }
-.md-h4 { font-size: 1.0em; }
-.md-h5 { font-size: 0.95em; }
-.md-h6 { font-size: 0.9em; color: var(--vscode-descriptionForeground, #888); }
+/* ---- Markdown gutter (line number + type tag) — shown when line-number decorations are on.
+   Non-heading rows use a hanging indent so wrapped lines align under the content, not the
+   gutter; heading rows are flex, so the gutter is just the first flex item. ---- */
+.line.fmt-markdown.md-has-gutter { padding-left: 0; }
+.line.fmt-markdown.md-has-gutter:not([class*="fmt-md-h"]) {
+    padding-left: var(--md-gutter-width, 8.5em);
+    text-indent: calc(-1 * var(--md-gutter-width, 8.5em));
+}
+.md-gutter {
+    display: inline-block;
+    flex: 0 0 auto;
+    width: var(--md-gutter-width, 8.5em);
+    box-sizing: border-box;
+    text-indent: 0;
+    padding-right: 0.75em;
+    font-size: 0.85em;
+    color: var(--vscode-editorLineNumber-foreground, #858585);
+    user-select: none;
+    white-space: nowrap;
+    overflow: hidden;
+    vertical-align: top;
+}
+.md-gutter-num { display: inline-block; width: 3em; text-align: right; padding-right: 1em; }
+/* Left-aligned and wide so the structure tags (H1, //, code ‹›, table ▦, quote ❝, bullet •)
+   read clearly, like the log line-number column. */
+.md-gutter-tag { display: inline-block; width: 4em; text-align: left; opacity: 0.85; }
+
+.md-htext {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    /* Line height generous enough to clear the monospace glyph cap+descender at heading sizes so
+       overflow:hidden (horizontal ellipsis) never crops the glyphs vertically. MUST match the 1.5
+       factor in mdHeadingRowHeight (the row height is derived from it). */
+    line-height: 1.5;
+}
+
+/* Font sizes MUST match the per-level fontEm in mdHeadingRowHeight (heading row height is
+   computed from them); the line's own font-size stays at base so the pinned px height is exact.
+   Per-level colors give scannable hierarchy; the minimap mirrors these (keep MM_HEADING_COLORS
+   in viewer-scrollbar-minimap-paint.ts in sync with these hex fallbacks). */
+.md-h1 .md-htext { font-size: 1.45em; color: var(--vscode-charts-blue, #4fc1ff); }
+.md-h2 .md-htext { font-size: 1.3em; color: var(--vscode-charts-green, #89d185); }
+.md-h3 .md-htext { font-size: 1.2em; color: var(--vscode-charts-purple, #b180d7); }
+.md-h4 .md-htext { font-size: 1.05em; color: var(--vscode-charts-orange, #d18616); }
+.md-h5 .md-htext { font-size: 1.0em; color: var(--vscode-charts-yellow, #cca700); }
+.md-h6 .md-htext { font-size: 1.0em; color: var(--vscode-descriptionForeground, #888); }
+
+/* Subtle, right-aligned collapse affordance. */
+.md-chevron {
+    flex: 0 0 auto;
+    margin-left: 8px;
+    opacity: 0.35;
+    font-size: 0.7em;
+    color: var(--vscode-descriptionForeground, #888);
+}
+.md-heading:hover .md-chevron { opacity: 0.7; }
 
 .md-collapse-badge {
     font-size: 0.8em;
@@ -54,8 +136,16 @@ export function getFormatStyles(): string {
     font-style: italic;
 }
 
+/* Top-level bullets align to the body left edge; only nested items indent (by depth). */
 .md-bullet {
-    padding-left: calc(var(--md-indent, 0) * 12px + 16px);
+    padding-left: calc(var(--md-indent, 0) * 12px);
+}
+
+/* Each top-level list item gets top space (inside its border-box height, which calcItemHeight
+   enlarged by the same 0.4 row) so consecutive multi-line bullets read as separate items. */
+.line.fmt-md-bullet-top {
+    box-sizing: border-box;
+    padding-top: calc(0.4 * var(--log-line-height, 1.1) * 1em);
 }
 
 .md-code {
@@ -70,12 +160,73 @@ export function getFormatStyles(): string {
     color: var(--vscode-textLink-foreground, #3794ff);
 }
 
+/* HTML comments render in the conventional comment green + italic so they are clearly distinct
+   from prose and from the gray line numbers. A multi-line comment's opening line is a collapse
+   toggle with a right chevron. */
+/* Canonical comment green, hardcoded so it stays distinct from the H2 heading color (which uses
+   charts-green); italic reinforces "this is a comment". */
+.md-comment {
+    color: #6a9955;
+    font-style: italic;
+}
+.md-comment-open { cursor: pointer; }
+.md-comment-chevron { opacity: 0.8; color: var(--vscode-descriptionForeground, #888); }
+.md-comment-open:hover .md-comment-chevron { opacity: 1; }
+
+/* Tables render as aligned columns: each cell is a fixed-ch-width inline-block (width set
+   per column in buildMdTables), so columns line up in the monospace font. The header row is
+   bold with a bottom border; the |---| separator row is collapsed to 0 height upstream. */
 .md-table-row {
     font-family: var(--vscode-editor-font-family);
+    white-space: nowrap;
 }
 
-.md-table-sep {
-    color: var(--vscode-descriptionForeground, #666);
+.md-table-header {
+    font-weight: bold;
+    border-bottom: 1px solid var(--vscode-editorWidget-border, #454545);
+}
+
+.md-td {
+    display: inline-block;
+    box-sizing: border-box;
+    vertical-align: top;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 1ch;
+}
+
+.md-table-rule {
+    display: block;
+    border-top: 1px solid var(--vscode-editorWidget-border, #454545);
+    height: 0;
+}
+
+/* Fenced code blocks (triple-backtick + language). Body lines render verbatim in a
+   monospace, tinted block; the open/close delimiters become thin rules so the block
+   reads as one unit. */
+.md-fence-body {
+    display: inline-block;
+    width: 100%;
+    background: var(--vscode-textCodeBlock-background, rgba(255, 255, 255, 0.06));
+    font-family: var(--vscode-editor-font-family);
+    white-space: pre;
+    padding: 0 6px;
+}
+.md-fence-open,
+.md-fence-close {
+    display: block;
+    background: var(--vscode-textCodeBlock-background, rgba(255, 255, 255, 0.06));
+    border-top: 1px solid var(--vscode-editorWidget-border, #454545);
+}
+/* Close has no label, so collapse it to a thin closing rule. Open auto-sizes to its
+   language label below. */
+.md-fence-close { height: 4px; }
+.md-fence-lang {
+    font-family: var(--vscode-editor-font-family);
+    font-size: 0.8em;
+    color: var(--vscode-descriptionForeground, #888);
+    padding: 0 6px;
 }
 
 /* ---- JSON ---- */

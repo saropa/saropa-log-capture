@@ -157,6 +157,23 @@ suite('ASCII art block grouping', () => {
             assert.ok(!css.includes('margin-bottom: 6px'), 'art-block-end must not use margin-bottom');
         });
 
+        test('art-block rows carry NO severity gutter rail (border-left + margin-left removed)', () => {
+            // The continuous border-left + margin-left:0.82em drawn on every
+            // art-block row shifted the box and read as a stray vertical line
+            // that broke the layout — removed. Severity now reads from the
+            // yellow tint + rounded border, not a gutter rail. Guard against
+            // re-introduction.
+            const css = getAsciiArtStyles();
+            assert.ok(
+                !css.includes('border-left: 0.14em solid var(--bar-color)'),
+                'art-block rows must NOT draw a border-left gutter rail',
+            );
+            assert.ok(
+                !css.includes('margin-left: 0.82em'),
+                'the rail-paired margin-left:0.82em must be gone too',
+            );
+        });
+
         test('calcItemHeight returns compact logFontSize-based heights for art-block rows', () => {
             const core = getViewerDataHelpersCore();
             assert.ok(
@@ -195,6 +212,54 @@ suite('ASCII art block grouping', () => {
             assert.ok(
                 css.includes('width: calc(var(--deco-content-indent-em, 13em) / 0.85)'),
                 'slot width must divide by 0.85 to account for decoration font-size',
+            );
+        });
+    });
+
+    suite('shimmer settles (finite, not perpetual)', () => {
+        // Before: the shimmer swept on an `infinite` loop, so every art block
+        // animated forever and read as a perpetual "loading" state competing
+        // with live log lines. After: it sweeps exactly once on arrival and
+        // holds the final (off-screen) keyframe via `forwards`, then goes static.
+        test('CSS runs the shimmer once with forwards fill, never infinite', () => {
+            const css = getAsciiArtStyles();
+            assert.ok(
+                css.includes('animation: art-block-shimmer 4s ease-in-out 1 forwards;'),
+                'shimmer must run a finite single iteration and hold the final frame',
+            );
+            assert.ok(
+                !css.includes('art-block-shimmer 4s ease-in-out infinite'),
+                'shimmer must not loop forever (perpetual loading look)',
+            );
+        });
+
+        // The viewport rebuilds the whole visible DOM on every scroll / incoming
+        // line (atomic replaceChildren swap), so a CSS animation on the bare
+        // art-block-* class restarts from iteration 0 on every rebuild — looking
+        // perpetual regardless of iteration-count. The shimmer ::after is gated
+        // behind .art-shimmer-play, which the renderer emits only on a row's
+        // first render and latches via item._artShimmered.
+        test('shimmer ::after is gated behind .art-shimmer-play (survives DOM rebuild)', () => {
+            const css = getAsciiArtStyles();
+            assert.ok(
+                css.includes('.line.art-block-start.art-shimmer-play::after'),
+                'shimmer ::after must require the one-shot .art-shimmer-play class',
+            );
+            assert.ok(
+                !css.includes('.line.art-block-start::after'),
+                'bare art-block-start::after must not carry the shimmer (would restart every rebuild)',
+            );
+        });
+
+        test('renderer emits art-shimmer-play once per row, latched by _artShimmered', () => {
+            const render = getViewerDataHelpersRender();
+            assert.ok(
+                render.includes('!item._artShimmered'),
+                'shimmer class must be gated on the per-item latch',
+            );
+            assert.ok(
+                render.includes("' art-shimmer-play'") && render.includes('item._artShimmered = true'),
+                'first render adds art-shimmer-play and sets the latch so later rebuilds skip it',
             );
         });
     });

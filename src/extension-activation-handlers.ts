@@ -14,8 +14,13 @@ import type { ViewerBroadcaster } from './ui/provider/viewer-broadcaster';
 import { openSignalTab } from './ui/viewer-panels/signal-tab-panel';
 import { updateLastViewed } from './ui/provider/viewer-provider-helpers';
 import { searchLogFilesConcurrent } from './modules/search/log-search';
-import { maybeSuggestSmartBookmark } from './extension-activation-helpers';
+import { maybeSuggestSmartBookmark, type SmartBookmarkSession } from './extension-activation-helpers';
 import { refreshCumulativeSqlFingerprintBaseline } from './modules/db/cumulative-sql-fingerprint-refresh';
+import { recordLoadedFile } from './modules/session/loaded-files-history';
+import { computeLoadedFileMetadata } from './modules/session/loaded-file-metadata';
+import { getConfig, getActiveLogDirectoryUri } from './modules/config/config';
+import { logExtensionError } from './modules/misc/extension-logger';
+import { t } from './l10n';
 
 interface ViewerHandlerDeps {
     readonly viewerProvider: LogViewerProvider;
@@ -26,6 +31,45 @@ interface ViewerHandlerDeps {
     readonly outputChannel: vscode.OutputChannel;
     readonly context: vscode.ExtensionContext;
     readonly version: string;
+}
+
+/**
+ * Record a file opened from OUTSIDE the configured reports directory into the loaded-files
+ * history, so it shows in the Logs list grouped by the day it was loaded. Files INSIDE the
+ * reports folder are skipped — the directory scan already lists them; recording them would
+ * bloat the history and they'd be deduped out of the injected rows anyway.
+ *
+ * Fire-and-forget: a recording failure must never disrupt the load the user asked for.
+ */
+async function recordExternalLoad(
+    deps: { historyProvider: SessionHistoryProvider; broadcaster: ViewerBroadcaster; context: vscode.ExtensionContext },
+    uri: vscode.Uri,
+): Promise<void> {
+    try {
+        // Only real on-disk files have a stable path to record + re-read later.
+        if (uri.scheme !== 'file') { return; }
+        // Resolve the SAME directory the Logs panel reads (override root, else workspace default).
+        // Keying off this — not workspaceFolders[0] — is what makes recording work when the panel
+        // is pointed at a browsed override root with no workspace folder open.
+        const logDir = getActiveLogDirectoryUri(deps.context);
+        if (!logDir) { return; }
+        // In-folder files are already scanned into the list; case-insensitive prefix match
+        // because Windows paths are case-insensitive and the URI casing can differ.
+        if (uri.fsPath.toLowerCase().startsWith(logDir.fsPath.toLowerCase())) { return; }
+        const strict = getConfig().levelDetection === 'strict';
+        const meta = await computeLoadedFileMetadata(uri, strict);
+        if (!meta) { return; }
+        await recordLoadedFile(logDir, { ...meta, loadedAt: Date.now() });
+        // Visible outcome for a file action (no silent async): names the file just tracked so
+        // the user sees it landed in the Logs history, and so this path is observable at runtime.
+        void vscode.window.showInformationMessage(t('msg.loadedFileTracked', meta.filename));
+        // Tree refreshes via cache invalidation; the webview Logs panel needs an explicit
+        // re-request nudge (it has no host-push channel for the session list otherwise).
+        deps.historyProvider.refresh();
+        deps.broadcaster.postToWebview({ type: 'refreshSessionList' });
+    } catch (err) {
+        logExtensionError('recordExternalLoad', err instanceof Error ? err : new Error(String(err)));
+    }
 }
 
 /**
@@ -42,13 +86,24 @@ export function wireViewerSpecificHandlers(deps: ViewerHandlerDeps): { updateSes
         viewerProvider.setSessionNavInfo(!!adj.prev, !!adj.next, adj.index, adj.total);
     };
 
-    const smartBookmarkSuggestedForUri = new Set<string>();
+    const smartBookmarkSession: SmartBookmarkSession = {
+        promptedUris: new Set<string>(),
+        ignoredErrorTexts: new Set<string>(),
+    };
+    const smartBookmarkViewer = {
+        scrollToLine: (line: number) => viewerProvider.scrollToLine(line),
+    };
     viewerProvider.setFileLoadedHandler((uri, loadResult) => {
         void updateSessionNav();
         const isActive = historyProvider.getActiveUri()?.toString() === uri.toString();
         if (isActive) {
-            void maybeSuggestSmartBookmark(uri, loadResult, bookmarkStore, smartBookmarkSuggestedForUri);
+            void maybeSuggestSmartBookmark(uri, loadResult, bookmarkStore, smartBookmarkSession, smartBookmarkViewer);
         }
+        /* Record EVERY load here — this is the single chokepoint all open paths flow through
+           (kebab "Open log file", drag-and-drop, URI handlers, session-nav), so no entry point
+           can be missed the way per-command hooks were. recordExternalLoad self-filters to files
+           outside the reports folder; in-folder sessions are already in the directory scan. */
+        if (!isActive) { void recordExternalLoad({ historyProvider, broadcaster, context }, uri); }
         /* DB_17: refresh cumulative SQL fingerprint baseline whenever the active log changes,
            so the SQL History panel's `Cumulative` toggle reflects every OTHER sidebar log
            except the one now in view (active log feeds `sqlQueryHistoryByFp` live). */

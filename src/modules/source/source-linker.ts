@@ -193,6 +193,64 @@ function linkifyBarePathSegment(text: string): string {
     });
 }
 
+/**
+ * Bare RELATIVE paths anchored at a project-folder name (lib, src, test, ...).
+ * Complements `linkifyBarePaths` (absolute root required) and `linkifyHtml`
+ * (`:line[:col]` tail required).
+ *
+ * Tool output like `git add lib/components/x.dart` or `dart format
+ * src/foo.dart` surfaces paths that have no absolute root AND no line:col
+ * tail — those slipped through both prior linkifiers, so the path text on
+ * AI activity rows was unclickable.
+ *
+ * Anchoring at a known project-folder prefix gives a narrow surface that
+ * avoids the false-positive risk `linkifyBarePaths`'s comment cited
+ * ("see foo.dart for context") — bare relative paths in prose stay plain;
+ * only `lib/…`, `src/…`, etc. are picked up. Negative lookbehind ensures
+ * the prefix folder isn't itself a path tail (so `/usr/local/lib/foo.dart`
+ * — already handled by the absolute branch — doesn't double-match).
+ */
+const RELATIVE_PROJECT_FOLDERS = [
+    'lib', 'src', 'test', 'tests', 'bin', 'tool', 'tools',
+    'scripts', 'packages', 'docs', 'out', 'dist', 'build',
+    'app', 'pkg', 'cmd', 'internal', 'modules',
+];
+
+const RELATIVE_PROJECT_PATH_PATTERN_SRC =
+    `(?<![\\w./\\\\:~-])(?:${RELATIVE_PROJECT_FOLDERS.join('|')})/[\\w./-]+\\.(EXT_SET)\\b`;
+
+function buildRelativePathPattern(): RegExp {
+    const extAlt = [...sourceExtensions].join('|');
+    const src = RELATIVE_PROJECT_PATH_PATTERN_SRC.replace(/EXT_SET/g, extAlt);
+    return new RegExp(src, 'g');
+}
+
+const relativePathRegex = buildRelativePathPattern();
+
+/**
+ * Wrap bare relative paths anchored at a project folder in `<a
+ * class="source-link">` tags. Pair with `linkifyBarePaths` on AI rows where
+ * tool output emits multiple paths per line without `:line` tails.
+ */
+export function linkifyRelativePaths(html: string): string {
+    if (!html) { return html; }
+    return html.replace(/(<[^>]*>)|([^<]+)/g, (_match, tag: string | undefined, text: string | undefined) => {
+        if (tag) {
+            return tag;
+        }
+        return linkifyRelativePathSegment(text!);
+    });
+}
+
+function linkifyRelativePathSegment(text: string): string {
+    relativePathRegex.lastIndex = 0;
+    return text.replace(relativePathRegex, (match: string) => {
+        const safePath = escapeHtml(match);
+        const pathSpans = buildPathSegmentSpans(match);
+        return `<a class="source-link" data-path="${safePath}" data-line="1">${pathSpans}</a>`;
+    });
+}
+
 /** A parsed source reference from a log line. */
 export interface SourceReference {
     readonly filePath: string;
