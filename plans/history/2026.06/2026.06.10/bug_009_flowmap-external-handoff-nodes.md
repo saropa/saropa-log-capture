@@ -1,6 +1,6 @@
 # Bug 009 — Flow Map cannot show off-app handoffs (no `external` node kind)
 
-## Status: Closed — extension side shipped; emit side handed off to contacts
+## Status: Fixed — extension side shipped; emit side handed off to contacts
 
 <!-- Status values: Open → Investigating → Fix Ready → Fixed (pending review) → Closed -->
 <!-- Type: feature extension of plan 056 Session Flow Map, filed as a bug per request. -->
@@ -178,33 +178,33 @@ permission, and the API-call scope (a/b/c) below is still an open user decision.
 
 ### What landed (extension)
 
-- **Model** ([flow-map-model.ts](../src/modules/flow-map/flow-map-model.ts)): `NodeKind` gained
+- **Model** ([flow-map-model.ts](../../../../src/modules/flow-map/flow-map-model.ts)): `NodeKind` gained
   `'external'`; `TimelineEvent.kind` gained `'handoff'`; documented that `actionCategory` carries the
   `api`/`app` type for handoffs.
-- **Parser** ([flow-map-breadcrumbs.ts](../src/modules/flow-map/flow-map-breadcrumbs.ts)): added
+- **Parser** ([flow-map-breadcrumbs.ts](../../../../src/modules/flow-map/flow-map-breadcrumbs.ts)): added
   `FLOWMAP_HANDOFF` regex (`handoff (api|app) "Name" (file:line)?`, case-insensitive) and
   `parseFlowMapHandoff()`; checked in `classifyBreadcrumb()` right after the `enter` tag. Factored the
   shared `./`-stripping anchor parse into `tagSource()`.
-- **Builder** ([flow-map-builder.ts](../src/modules/flow-map/flow-map-builder.ts)): extracted the
+- **Builder** ([flow-map-builder.ts](../../../../src/modules/flow-map/flow-map-builder.ts)): extracted the
   leaf-branch logic into `applyLeaf()` (now shared by `applyBranch` and the new `applyHandoff`);
   `applyHandoff` prefixes `api:` onto the label and uses `event.nodeKind` (`external`). `buildGraph`
   routes `kind === 'handoff'` to `applyHandoff` and deliberately keeps it OUT of `transitionEvents`
   so a handoff never becomes current or seeds launch — it stays a leaf side-exit (same guard inline
   views already rely on).
-- **Renderers**: `kindIcon` → `↗️` for external ([flow-map-format.ts](../src/modules/flow-map/flow-map-format.ts));
-  `KIND_LABEL` external entry in [flow-map-html.ts](../src/modules/flow-map/flow-map-html.ts) and
-  [flow-map-report.ts](../src/modules/flow-map/flow-map-report.ts) (compiler-enforced exhaustive
+- **Renderers**: `kindIcon` → `↗️` for external ([flow-map-format.ts](../../../../src/modules/flow-map/flow-map-format.ts));
+  `KIND_LABEL` external entry in [flow-map-html.ts](../../../../src/modules/flow-map/flow-map-html.ts) and
+  [flow-map-report.ts](../../../../src/modules/flow-map/flow-map-report.ts) (compiler-enforced exhaustive
   records); Mermaid gained a dashed-purple `external` classDef + parallelogram shape
-  ([flow-map-mermaid.ts](../src/modules/flow-map/flow-map-mermaid.ts)); SVG gained a distinct
-  dashed-purple external palette ([flow-map-svg.ts](../src/modules/flow-map/flow-map-svg.ts)).
+  ([flow-map-mermaid.ts](../../../../src/modules/flow-map/flow-map-mermaid.ts)); SVG gained a distinct
+  dashed-purple external palette ([flow-map-svg.ts](../../../../src/modules/flow-map/flow-map-svg.ts)).
   Both diagram legends note `↗️ = off-app handoff` so it isn't confused with the dotted
   recovered-edge style.
-- **Tests** ([flow-map.test.ts](../src/test/modules/flow-map/flow-map.test.ts)): a `handoff` suite —
+- **Tests** ([flow-map.test.ts](../../../../src/test/modules/flow-map/flow-map.test.ts)): a `handoff` suite —
   parses app + api (case-insensitive, source optional), builds external leaf nodes with edges from
   the active screen (screen stays current, external is a leaf, api node is `api:`-prefixed), and
   asserts the distinct render style across mermaid/svg/report with no fall-through to `unknown`.
 - **Docs**: `handoff` verb documented in
-  [flowmap-tag-navigation.md](../plans/guides/flowmap-tag-navigation.md); README Flow Map bullet;
+  [flowmap-tag-navigation.md](../../../../plans/guides/flowmap-tag-navigation.md); README Flow Map bullet;
   `### Added` CHANGELOG entry under `[Unreleased]`.
 
 ### Verification
@@ -222,10 +222,47 @@ The acceptance criteria are met for the extension: a log line
 `[flowmap] handoff app "Google Maps" lib/x.dart:10` now renders an `external` leaf node off the
 active screen with a source link, the screen keeps its dwell/visits/edges, and `api`/`app` read
 distinctly. The `handoff` verb is fully documented for any calling project in
-[flowmap-tag-navigation.md](../plans/guides/flowmap-tag-navigation.md) — that guide is the contract
+[flowmap-tag-navigation.md](../../../../plans/guides/flowmap-tag-navigation.md) — that guide is the contract
 and is sufficient on its own to instrument the emit side.
 
 This bug is **Closed**: this repo's work shipped, and nothing further here depends on the calling
 app. The contacts emit side (the `breadcrumbHandoff` helper, the `launchExternalUrl` wrapper, and
 the (a)/(b)/(c) API scope decision) is tracked as its own bug in that project —
 `d:\src\contacts\bugs\flowmap_handoff_emit_offapp.md` — and is not a condition for closing this one.
+
+## Finish Report (2026-06-10)
+
+**Scope: (C) docs/scripts only.** This session did NOT touch extension code — the parser/builder/
+renderer work (and its tests) shipped in the 2026-06-09 finish pass above and is unchanged. This pass
+is the administrative closure the user requested ("this should be closed. do not wait for an external
+project to finish") plus the cross-project handoff of the emit work.
+
+### What landed this session
+
+- **Verified** the extension side against source before closing (not trusting the prior report):
+  `NodeKind` `'external'` and `TimelineEvent.kind` `'handoff'` in
+  [flow-map-model.ts](../../../../src/modules/flow-map/flow-map-model.ts); `FLOWMAP_HANDOFF` +
+  `parseFlowMapHandoff()` wired into `classifyBreadcrumb()` in
+  [flow-map-breadcrumbs.ts](../../../../src/modules/flow-map/flow-map-breadcrumbs.ts); `applyHandoff()` via
+  shared `applyLeaf()`, routed by `kind === 'handoff'` and deliberately kept out of `transitionEvents`
+  in [flow-map-builder.ts](../../../../src/modules/flow-map/flow-map-builder.ts); `external` handled in all of
+  format / html / report / mermaid / svg. All present and correct.
+- **Closed the bug** — flipped `Status:` to `Fixed` and added the "Closed in this repo" section above,
+  pointing at [flowmap-tag-navigation.md](../../../../plans/guides/flowmap-tag-navigation.md) as the sufficient
+  published contract (commit `c51157ca` set the prior "Closed" wording; this finish pass set the
+  archival-standard `Fixed`).
+- **Handed off the emit side** to a standalone bug in the contacts repo
+  (`d:\src\contacts\bugs\flowmap_handoff_emit_offapp.md`) — wire format, the ~12 launch sites, the
+  single-`launchExternalUrl`-wrapper recommendation, and the (a)/(b)/(c) API scope decision. No
+  contacts code was edited (cross-project work is delivered as a bug report, never as edits).
+
+### Verification
+
+- No extension code changed this session → no test impact. Grep of `src/test/` for the only files
+  this session touched (markdown bug doc + the contacts bug doc) finds no references; nothing to
+  re-run. The flow-map suite (21 passing, 3 handoff cases) was green in the 2026-06-09 pass and the
+  code under it is byte-for-byte unchanged.
+- CHANGELOG: the `### Added` handoff entry shipped in the prior pass; no new user-facing behavior this
+  session, so no new entry.
+- README / guides: handoff bullet + `flowmap-tag-navigation.md` `handoff` section already present from
+  the prior pass; reviewed, no updates needed.
