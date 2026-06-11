@@ -253,6 +253,10 @@ export function getCrashlyticsPanelStyles(): string {
 .cd-body .cd-frame-copy:hover { opacity: 1; }
 /* Plan 054 5b: ↻×N badge on a frame that stands in for a run of identical (recursive) frames. */
 .cd-body .frame-repeat { margin-left: 8px; padding: 0 5px; border-radius: 3px; font-size: 10px; font-weight: 700; color: var(--vscode-badge-foreground); background: var(--vscode-badge-background); }
+/* Plan 054 5b: Other-Threads grouping — ×N badge for collapsed identical threads, sibling names, overflow. */
+.cd-body .cd-thread-count { padding: 0 5px; border-radius: 3px; font-size: 10px; font-weight: 700; color: var(--vscode-badge-foreground); background: var(--vscode-badge-background); }
+.cd-body .crash-thread-names { font-size: 10px; color: var(--vscode-descriptionForeground); margin: 0 0 4px 6px; }
+.cd-body .crash-thread-more { font-size: 11px; color: var(--vscode-descriptionForeground); margin: 6px 0 0 6px; font-style: italic; }
 .cd-stack-controls { margin: 2px 0 4px; }
 .cd-apponly { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: 1px solid var(--vscode-panel-border); border-radius: 3px; font-size: 11px; padding: 1px 8px; cursor: pointer; opacity: 0.8; }
 .cd-apponly:hover { opacity: 1; }
