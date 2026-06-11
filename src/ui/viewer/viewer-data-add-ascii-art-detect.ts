@@ -151,6 +151,10 @@ function feedAsciiArtDetector(plainText, lineIndex, timestamp) {
             else if (bi === endIdx) bItem.artBlockPos = 'end';
             else bItem.artBlockPos = 'middle';
         }
+        /* Row count on the start row drives the collapse chevron's "N lines"
+           label — same contract as finalizeArtBlock so both detection paths feed
+           toggleAsciiArtBlock identically. */
+        if (allLines[startIdx]) allLines[startIdx].artBlockCount = (endIdx - startIdx + 1);
         /* Reset tracker so it does not double-process these lines. */
         artBlockTracker.startIdx = -1;
         artBlockTracker.count = 0;
@@ -164,6 +168,30 @@ function feedAsciiArtDetector(plainText, lineIndex, timestamp) {
 /** Reset detector state (called on clear / new session). */
 function resetAsciiArtDetector() {
     aaWindow = [];
+}
+
+/**
+ * Collapse / expand the ASCII art block containing @lineIdx (clicked via the
+ * .art-collapse-chevron on the start row). Both detection paths tag a contiguous
+ * run of rows with artBlockPos, so the block is the maximal neighbourhood whose
+ * rows all carry artBlockPos. We flip artCollapsed on EVERY row of the block (not
+ * just the start) so calcItemHeight can gate each middle/end row locally without a
+ * back-reference to the start index. Default state is expanded (artCollapsed unset).
+ */
+function toggleAsciiArtBlock(lineIdx) {
+    if (lineIdx < 0 || lineIdx >= allLines.length) return;
+    var anchor = allLines[lineIdx];
+    if (!anchor || !anchor.artBlockPos) return;
+    var lo = lineIdx;
+    var hi = lineIdx;
+    while (lo > 0 && allLines[lo - 1] && allLines[lo - 1].artBlockPos) lo--;
+    while (hi < allLines.length - 1 && allLines[hi + 1] && allLines[hi + 1].artBlockPos) hi++;
+    var nowCollapsed = !allLines[lo].artCollapsed;
+    for (var i = lo; i <= hi; i++) {
+        if (allLines[i]) allLines[i].artCollapsed = nowCollapsed;
+    }
+    if (typeof recalcAndRender === 'function') { recalcAndRender(); }
+    else { recalcHeights(); renderViewport(true); }
 }
 `;
 }

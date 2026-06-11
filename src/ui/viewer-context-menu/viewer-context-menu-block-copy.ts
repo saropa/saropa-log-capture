@@ -5,7 +5,8 @@
  * Extracted from viewer-context-menu-line-actions.ts to keep that file under the 300-line limit.
  * Concatenated into the same webview script scope, so it relies on globals defined elsewhere
  * (allLines, stripTags, vscodeApi, showCopyToast, formatCopyToastMessage, sessionInfoData,
- * computeIncidentLineRange, computeDbTimestampBurstLineRange, effectiveErrorWarningLevel).
+ * computeIncidentLineRange, computeDbTimestampBurstLineRange, computeAsciiArtBlockLineRange,
+ * effectiveErrorWarningLevel).
  */
 
 /** Get the grouped-block copy handler script. */
@@ -82,6 +83,11 @@ function handleBlockCopyAction(action, lineIdx, lineData) {
     if (action === 'copy-db-cluster-block') {
         var dbR = (typeof computeDbTimestampBurstLineRange === 'function') ? computeDbTimestampBurstLineRange(lineIdx) : null;
         if (dbR) copyLineRangePlain(dbR.lo, dbR.hi);
+        return true;
+    }
+    if (action === 'copy-ascii-art-block') {
+        var artR = (typeof computeAsciiArtBlockLineRange === 'function') ? computeAsciiArtBlockLineRange(lineIdx) : null;
+        if (artR) copyLineRangePlain(artR.lo, artR.hi);
         return true;
     }
     return false;
