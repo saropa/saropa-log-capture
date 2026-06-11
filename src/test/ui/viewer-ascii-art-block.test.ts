@@ -176,17 +176,19 @@ suite('ASCII art block grouping', () => {
 
         test('calcItemHeight returns compact logFontSize-based heights for art-block rows', () => {
             const core = getViewerDataHelpersCore();
+            /* Collapse-aware (see viewer-ascii-art-collapse.test.ts): start always renders at
+               +6 padding; end matches it only while expanded; middle is the bare font height. */
             assert.ok(
-                core.includes("item.artBlockPos === 'start' || item.artBlockPos === 'end'"),
-                'start and end must resolve together with +6 padding',
+                core.includes("item.artBlockPos === 'start') return logFontSize + 6"),
+                'start height must be logFontSize + 6px to match CSS padding',
             );
             assert.ok(
-                core.includes('return logFontSize + 6'),
-                'start/end height must be logFontSize + 6px to match CSS padding',
+                core.includes("item.artBlockPos === 'end') return item.artCollapsed ? 0 : logFontSize + 6"),
+                'expanded end height must be logFontSize + 6px to match CSS padding',
             );
             assert.ok(
-                core.includes("item.artBlockPos === 'middle'") && core.includes('return logFontSize'),
-                'middle height must be logFontSize (no padding)',
+                core.includes("item.artBlockPos === 'middle') return item.artCollapsed ? 0 : logFontSize"),
+                'expanded middle height must be logFontSize (no padding)',
             );
         });
     });
