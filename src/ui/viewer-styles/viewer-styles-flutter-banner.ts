@@ -14,7 +14,9 @@
  * redundant with the per-row severity dots/connectors that already mark the block
  * as error-level. The block is collapsed to its header by default (see
  * `bannerHeaderMap` in viewer-data-add-flutter-banner.ts); the tint on the
- * always-visible header signals an error incident the user can expand.
+ * always-visible header signals an error incident the user can expand. When
+ * collapsed, the header also shows a ▶ chevron and a hidden-line count pill
+ * (.banner-chevron / .banner-count) so the folded block says how much it hides.
  */
 export function getFlutterBannerStyles(): string {
     return /* css */ `
@@ -37,6 +39,19 @@ export function getFlutterBannerStyles(): string {
     margin-right: 0.35em;
     color: var(--vscode-editorError-foreground, #f14c4c);
     cursor: pointer;
+    user-select: none;
+}
+
+/* Hidden-line count shown on a collapsed banner header ("47 lines"), so the folded
+   block still tells the user how much it hides. Muted error-toned pill. */
+.banner-count {
+    display: inline-block;
+    margin-right: 0.4em;
+    padding: 0 0.35em;
+    border-radius: 0.25em;
+    font-size: 0.85em;
+    color: var(--vscode-descriptionForeground, #888);
+    background: color-mix(in srgb, var(--vscode-editorError-foreground, #f14c4c) 16%, transparent);
     user-select: none;
 }
 
