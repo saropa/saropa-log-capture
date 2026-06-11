@@ -58,9 +58,12 @@ suite('Collapse / expand all sections', () => {
         });
 
         test('expandAllSections should call recalcAndRender or recalcHeights+renderViewport', () => {
+            /* Slice to the next function rather than a fixed offset: expandAllSections
+               grew (it now expands Flutter banner groups too), so a fixed +500 window
+               clipped the re-render call at the end of the body. */
             const expandBlock = script.slice(
                 script.indexOf('function expandAllSections()'),
-                script.indexOf('function expandAllSections()') + 500,
+                script.indexOf('function toggleStackGroup'),
             );
             assert.ok(
                 expandBlock.includes('recalcAndRender') || expandBlock.includes('recalcHeights'),

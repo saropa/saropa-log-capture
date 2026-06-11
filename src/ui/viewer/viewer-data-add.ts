@@ -242,11 +242,17 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
            the vast majority of lines where no demotion occurs (plan 050). */
         if (preDemotionLevel !== lvl) lineItem.originalLevel = preDemotionLevel;
         /* Attach Flutter banner group membership: consumed by the rendering pipeline
-           (banner-group-start/mid/end CSS classes) so the whole exception block is
-           visually cohesive — left border, background tint, rounded top/bottom. */
+           (banner-group-start/mid/end CSS classes for the background tint + header
+           chevron) and by calcItemHeight for collapse. The header is registered in
+           bannerHeaderMap and starts collapsed so a 40+ line RenderFlex dump folds to
+           a single clickable title by default, like stack/continuation groups. */
         if (bannerInfo.groupId !== -1) {
             lineItem.bannerGroupId = bannerInfo.groupId;
             lineItem.bannerRole = bannerInfo.role;
+            if (bannerInfo.role === 'header') {
+                lineItem.bannerCollapsed = true;
+                bannerHeaderMap[bannerInfo.groupId] = lineItem;
+            }
         }
         lineItem.viewerLineIndex = allLines.length;
         allLines.push(lineItem);

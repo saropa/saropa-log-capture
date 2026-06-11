@@ -56,6 +56,10 @@ function finalizeArtBlock() {
         else if (ai === end) it.artBlockPos = 'end';
         else it.artBlockPos = 'middle';
     }
+    /* Stamp the row count on the start row so the collapse chevron can show
+       "N lines" without re-walking the block on every render (toggle lives in
+       toggleAsciiArtBlock; height gating in calcItemHeight reads artCollapsed). */
+    allLines[artBlockTracker.startIdx].artBlockCount = artBlockTracker.count;
     artBlockTracker.startIdx = -1;
     artBlockTracker.count = 0;
 }
@@ -255,6 +259,15 @@ function calcItemHeight(item) {
         var contHdr = contHeaderMap[item.contGroupId];
         if (contHdr && contHdr.contCollapsed) return 0;
     }
+    /* Flutter exception banner collapse: hide body/footer rows when the group's
+       header is collapsed (collapsed by default). The header (bannerRole 'header')
+       always renders so the user keeps a clickable title. Placed after the filter
+       gates above (with peekOverride) because this is an explicit user collapse, not
+       a filter — same treatment as the continuation-collapse gate above it. */
+    if (item.bannerGroupId !== undefined && item.bannerGroupId >= 0 && item.bannerRole !== 'header' && typeof bannerHeaderMap !== 'undefined') {
+        var bHdr = bannerHeaderMap[item.bannerGroupId];
+        if (bHdr && bHdr.bannerCollapsed) return 0;
+    }
     /* Blank lines always render at quarter height — compact enough to not
      * waste space, tall enough to preserve paragraph breaks. Placed after
      * the continuation-collapse gate so collapsed children stay fully hidden. */
@@ -267,8 +280,12 @@ function calcItemHeight(item) {
        line-height 1. Returning ROW_HEIGHT here would leave ~0.5em of empty
        space below each art row and the scroller's prefix sums would be taller
        than the rendered block, producing drift in subsequent row positions. */
-    if (item.artBlockPos === 'start' || item.artBlockPos === 'end') return logFontSize + 6;
-    if (item.artBlockPos === 'middle') return logFontSize;
+    /* Collapse (toggleAsciiArtBlock sets artCollapsed on every row of the block):
+       the start row stays visible as the toggle anchor + "N lines" affordance;
+       middle/end rows hide entirely. Default (artCollapsed falsy) = fully expanded. */
+    if (item.artBlockPos === 'start') return logFontSize + 6;
+    if (item.artBlockPos === 'end') return item.artCollapsed ? 0 : logFontSize + 6;
+    if (item.artBlockPos === 'middle') return item.artCollapsed ? 0 : logFontSize;
     /* Structured file collapse (plan 051): markdown sections, JSON brace pairs, comment blocks. */
     if (item._mdSectionHidden || item._jsonSectionHidden || item._mdCommentHidden) return 0;
     /* Markdown table separator row (|---|): collapse to nothing. The header row carries a
