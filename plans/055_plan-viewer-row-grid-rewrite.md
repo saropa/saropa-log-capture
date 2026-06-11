@@ -1,10 +1,11 @@
 # PLAN 055: Viewer row grid/column rewrite (Item E Path 2)
 
 Status: **ACTIVE** — Phase 1 landed 2026-06-09 (regular log rows on the grid; art
-blocks intentionally kept legacy). Phases 2+ (AI rows, multi-frame stack headers,
-chips → grid; then CSV/markdown `.cols` adoption; then legacy-CSS removal) remain.
+blocks intentionally kept legacy). Phase 2 migrated AI rows (2026-06-10) and
+multi-frame stack headers + frames (2026-06-10). Remaining: chips → grid (or keep
+as block per D3), CSV/markdown `.cols` adoption, then legacy-CSS removal.
 Reactivated 2026-06-09; was `plans/deferred/055_plan-viewer-row-dom-grid-rewrite.md`.
-See the Finish Report at the bottom for what shipped.
+See the Finish Reports at the bottom for what shipped.
 
 ## Reactivation note (2026-06-09)
 
@@ -376,5 +377,33 @@ This work will be reviewed by another AI.
 **Tests:** `viewer-column-layout` 9 passing (+1 new); `viewer-continuation-badge-render` 11, `viewer-severity-bar-connector` 29, `viewer-ascii-art-block` 28, `viewer-flutter-banner-group` 19, `viewer-data-helpers-render-fw-muted` 3, `viewer-error-badge-gutter` 3, `viewer-context-line-muting` 5, `viewer-bracket-prefix-strip` 8, `viewer-severity-gutter-decoupling` 10 — all passing (no regression). `npm run check-types` clean; `npm run lint` no new warnings; `npm run compile` passes all verify gates.
 
 **Outstanding (Phase 2 continues, plan stays active):** multi-frame stack headers → grid; CSV/markdown-table `.cols` adoption; then delete the legacy `:not(.cols)` rules + dead `--deco-*-em` vars once every gutter path is migrated. On-device (F5) confirmation that AI rows render aligned with no overlap is the user's check.
+
+**Finish report appended:** plans/055_plan-viewer-row-grid-rewrite.md
+
+## Finish Report (2026-06-10) — Phase 2: multi-frame stack headers + frames migrated to the grid
+
+This work will be reviewed by another AI.
+
+**Scope:** (B) VS Code extension (TypeScript — webview render script + CSS + 2 tests). No Dart/Flutter, no docs-only. l10n SKIPPED [B-NOT-IN-SCOPE].
+
+**What shipped.** The last log-row gutter paths still on the legacy inline-block + hanging-indent model were the multi-frame stack header and its frames. This pass migrates both, one path as the plan's rollout prescribes, with the suite green:
+- **`renderStackHeader`** (multi-frame) now emits `class="stack-header cols log-cols …"`, builds its line-number + chevron via `getDecorationCells` (clipping `.deco-cell` counter cell, same `buildDecoParts` source as regular rows) instead of the legacy `getDecorationPrefix` blob, and wraps the header text/badges/dedup-badge in a `min-width:0` `.line-msg` cell pinned to the message track. `.stack-header` (not `.line`) is kept so the whole-row `data-gid` collapse click handler still applies.
+- **`renderStackFrame`** now emits `class="line stack-line cols log-cols …"` + a `.line-msg` cell. A frame carries no decoration → no `.deco-cell` → its `.line-msg` lands in the message column (track 7) and nests under the parent header automatically — the `line-deco-spacer-only` left-padding hack is retired. The one exception (a frame that is the last visible row before a filter-hidden gap must surface the reveal chevron — user report 2026-06-07) now emits the affordance as a counter-column `.deco-cell` so the click target stays in the gutter.
+- **CSS:** the gutter selectors in `viewer-styles-columns.ts` (`.line.cols` padding, `.line.log-cols` template, `.line.cols .line-msg`) now also name `.stack-header.cols` / `.stack-header.log-cols` / `.stack-header.cols .line-msg` — same `--grid-cols` var and overlap-proof contract, so a stack header aligns under the same columns as the rows around it.
+- **Legacy-scope fix (important):** the hanging-indent rule in `viewer-styles-decoration.ts` scoped only `.line` with `:not(.cols)` but left `.stack-header:has(.line-decoration)` unscoped. Now that headers are `.cols` and emit a `.line-decoration`, that rule was scoped `.stack-header:not(.cols)` too — otherwise its 14.25em padding + negative text-indent would stack on top of the grid and shove the header's columns off-screen.
+
+**Deliberately NOT migrated** (consistent with the plan): chips (`repeat-notification` / `n-plus-one`) stay block-flow per resolved decision D3; art blocks stay legacy (continuous border + box-drawing break under the grid); CSV (`--csv-cols`) / markdown-table (`--md-table-cols`) adoption and the eventual legacy-CSS deletion remain Phase-2+ work.
+
+**Files changed:**
+- `src/ui/viewer/viewer-data-helpers-render-stack.ts` — `renderStackHeader` + `renderStackFrame` → grid; retired the `line-deco-spacer-only` nesting comment + code.
+- `src/ui/viewer-styles/viewer-styles-columns.ts` — gutter selectors also name `.stack-header.cols` / `.stack-header.log-cols`.
+- `src/ui/viewer-styles/viewer-styles-decoration.ts` — legacy hanging-indent rule scoped `.stack-header:not(.cols)`.
+- `src/test/ui/viewer-column-layout.test.ts` — new Phase-2 stack test (header + frames on the grid); two pre-existing grid-CSS regexes widened to tolerate the now-combined selector list; stale "un-migrated" comments updated.
+- `src/test/ui/viewer-severity-bar-connector.test.ts` — the two stack-header tests updated to pin the grid intent (`getDecorationCells` + grid classes; legacy rule scopes both `.line:not(.cols)` and `.stack-header:not(.cols)`).
+- `CHANGELOG.md` — `[8.0.4]` Changed entry.
+
+**Tests:** ran every stack-referencing / grid-adjacent shim-runnable suite — `viewer-column-layout` (10, +1 new Phase-2 stack test), `viewer-severity-bar-connector` (updated 2), `viewer-flutter-banner-group`, `viewer-context-line-muting`, `viewer-peek-chevron`, `viewer-muted-decorations`, `viewer-ascii-art-block`, `viewer-continuation-badge-render`, `viewer-error-badge-gutter`, `viewer-severity-gutter-decoupling`, `viewer-bracket-prefix-strip`, `viewer-data-add-embed`, `viewer-context-menu-incident-range` — **176 pass / 0 fail** across the two shim runs. `viewer-decorations-master-switch` requires the Extension Host (vscode module) and was audited by inspection (its `getDecorationPrefix`/`areDecorationsOn` assertions are unchanged — `getDecorationPrefix` still serves the art-block path). `npm run check-types` clean; `npm run lint` 0 warnings on changed files; `npm run compile` passes all verify gates (dist 4.63 MiB, no dependency added).
+
+**Outstanding (Phase 2 continues, plan stays active):** chips (decision D3 — likely stay block); CSV/markdown-table `.cols` adoption; then delete the legacy `:not(.cols)` rules + dead `--deco-*-em` vars once every gutter path is migrated. On-device (F5) confirmation that a multi-frame trace renders with its header and frames aligned and no overlap (logcat-heavy file with long tags + a Dart/Flutter stack) is the user's check.
 
 **Finish report appended:** plans/055_plan-viewer-row-grid-rewrite.md

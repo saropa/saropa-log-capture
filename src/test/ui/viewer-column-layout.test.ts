@@ -19,6 +19,7 @@ import { getColumnStyles } from '../../ui/viewer-styles/viewer-styles-columns';
 import { getDecorationsScript } from '../../ui/viewer-decorations/viewer-decorations';
 import { getViewerDataAddScript } from '../../ui/viewer/viewer-data-add';
 import { getViewerDataHelpersRender } from '../../ui/viewer/viewer-data-helpers-render';
+import { getStackHeaderRenderScript } from '../../ui/viewer/viewer-data-helpers-render-stack';
 
 suite('viewer column layout (plan 055 — grid column model)', () => {
     test('.cols is a grid and every decoration cell clips its own track', () => {
@@ -37,7 +38,9 @@ suite('viewer column layout (plan 055 — grid column model)', () => {
 
     test('the message cell is its own track with min-width:0 (cannot be overlapped)', () => {
         const css = getColumnStyles();
-        const msg = /\.line\.cols\s+\.line-msg\s*\{[^}]*\}/s.exec(css);
+        // The rule also names .stack-header.cols .line-msg (Phase 2) in the same
+        // selector list, so allow any selector continuation before the brace.
+        const msg = /\.line\.cols\s+\.line-msg[^{]*\{[^}]*\}/s.exec(css);
         assert.ok(msg, 'expected a ".line.cols .line-msg" rule');
         // min-width:0 lets the 1fr message track shrink/wrap inside its column so
         // it never pushes — or is pushed over — the decoration cells.
@@ -55,7 +58,7 @@ suite('viewer column layout (plan 055 — grid column model)', () => {
             const re = new RegExp(`\\.deco-cell-${cls}\\s*\\{[^}]*grid-column:\\s*${col}`, 's');
             assert.ok(re.test(css), `.deco-cell-${cls} must be pinned to grid-column ${col}`);
         }
-        assert.ok(/\.line\.log-cols\s*\{[^}]*grid-template-columns:\s*var\(--grid-cols/s.test(css),
+        assert.ok(/\.line\.log-cols[^{]*\{[^}]*grid-template-columns:\s*var\(--grid-cols/s.test(css),
             '.log-cols must drive its template from --grid-cols');
     });
 
@@ -102,11 +105,31 @@ suite('viewer column layout (plan 055 — grid column model)', () => {
         assert.ok(/decoSeen\.tag\s*=\s*true/.test(add), 'addToData must record when tag data is seen');
     });
 
+    test('Phase 2: multi-frame stack headers and frames render on the grid', () => {
+        const stack = getStackHeaderRenderScript();
+        // Header opts into the gutter grid (.stack-header keeps the collapse click
+        // handler; .cols/.log-cols give it the overlap-proof template) and routes
+        // its decoration through getDecorationCells, with the header text in a
+        // clipping .line-msg cell — no more legacy getDecorationPrefix blob.
+        assert.ok(/class="stack-header cols log-cols/.test(stack),
+            'multi-frame stack headers must carry .cols.log-cols so the grid template applies');
+        assert.ok(/getDecorationCells\(item, idx, null\)/.test(stack),
+            'renderStackHeader must build its decoration via getDecorationCells (grid), not getDecorationPrefix');
+        assert.ok(/<span class="line-msg">' \+ hdrQb \+ html\.trim\(\)/.test(stack),
+            'the stack-header text must live in the .line-msg cell so it cannot paint over the gutter');
+        // Frames carry no decoration → no .deco-cell → their .line-msg lands in the
+        // message column and nests under the header automatically (no spacer hack).
+        assert.ok(/class="line stack-line cols log-cols/.test(stack),
+            'stack frames must carry .cols.log-cols so they share the message column');
+        assert.ok(!/line-deco-spacer-only/.test(stack),
+            'the line-deco-spacer-only nesting hack is retired — frames nest via the grid message track');
+    });
+
     test('legacy hanging-indent model is retained but scoped to :not(.cols)', () => {
         const css = getDecorationStyles();
-        // Un-migrated paths (multi-frame stack headers, chips) still use the
-        // inline-block model; it must skip rows that opted into the grid. (AI rows
-        // moved to the grid in Phase 2.)
+        // Un-migrated paths (chips, art blocks) still use the inline-block model; it
+        // must skip rows that opted into the grid. (Regular, AI, and stack-header/
+        // frame rows are all on the grid as of Phase 2.)
         assert.ok(
             /\.line:not\(\.cols\):has\(\.line-decoration\)/.test(css),
             'the legacy .line:has(.line-decoration) rule must be scoped :not(.cols) so grid rows opt out',
