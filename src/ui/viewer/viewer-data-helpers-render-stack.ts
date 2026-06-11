@@ -93,10 +93,19 @@ function renderStackHeader(item, idx, html, spacingCls, matchCls, barCls, idxAtt
        _hasChildren gate: 1-frame stacks have nothing to expand, so
        getCounterAffordance returns the bare counter + empty chevron
        spacer (same layout, no interactivity). */
-    var hdrDeco = (typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item, idx, null) : '';
-    return '<div class="stack-header' + hdrLevelCls + matchCls + spacingCls + barCls
+    /* Plan 055 Phase 2: multi-frame stack headers join the overlap-proof gutter
+       grid. getDecorationCells emits the line-number + chevron as a clipping
+       counter-column .deco-cell (same buildDecoParts source as regular rows), and
+       the header text/badges live in a min-width:0 .line-msg cell pinned to the
+       message track — so a long header can never paint over the gutter and aligns
+       under the same column as the surrounding log rows. .stack-header (not .line)
+       keeps the whole-row collapse click handler; the .cols/.log-cols selectors in
+       viewer-styles-columns.ts name .stack-header too. */
+    var hdrDeco = (typeof getDecorationCells === 'function') ? getDecorationCells(item, idx, null) : '';
+    return '<div class="stack-header cols log-cols' + hdrLevelCls + matchCls + spacingCls + barCls
         + hdrHeat + hdrCtxCls + '"' + idxAttr + hdrTitleAttr
-        + ' data-gid="' + item.groupId + '">' + hdrDeco + hdrQb + html.trim() + dup + '</div>';
+        + ' data-gid="' + item.groupId + '">' + hdrDeco
+        + '<span class="line-msg">' + hdrQb + html.trim() + dup + '</span></div>';
 }
 
 /** Render a single stack-frame row. Called from renderItem() when item.type === 'stack-frame'.
@@ -128,32 +137,24 @@ function renderStackFrame(item, idx, html, matchCls, barCls, idxAttr, stackGutte
        dragged in 3 rows before an unrelated error reads as background, not a
        participating frame. */
     var sfCtxCls = item.isContext ? ' context-line' + (item.isContextFirst ? ' context-first' : '') : '';
-    /* Column alignment: stack frames carry no .line-decoration prefix either, so
-       without help they sit at the bare .line indent — LEFT of their own header
-       once the header is pulled into the content column (see hdrDecoCls in
-       renderStackHeader). line-deco-spacer-only reserves the same left padding so
-       the expanded frames nest UNDER the header instead of jutting out past it.
-       Gated on areDecorationsOn() to match the header's gate. */
-    /* A frame that is the last visible row before a filter-hidden gap must still
-       surface the reveal chevron, or those hidden lines (typically device
-       'warnplus' rows — Awesome Notifications, logcat — that fall right after an
-       app trace) are silently swallowed and the collapse looks like it "ate"
-       unrelated lines (user report 2026-06-07). Frames have no line number, so
-       render the affordance ONLY (empty counter) wrapped in .line-decoration. */
-    var sfGutter = stackGutter || '';
-    if (item._hiddenAfter && item._hiddenAfter.count > 0
+    /* Plan 055 Phase 2: frames join the gutter grid. A frame carries no
+       decoration, so it emits NO .deco-cell and its .line-msg lands in the message
+       track (column 7) — nesting under the parent header's message automatically,
+       no left-padding spacer to keep in sync. The one exception: a frame that is
+       the last visible row before a filter-hidden gap must still surface the
+       reveal chevron (or those hidden device rows are silently swallowed — user
+       report 2026-06-07). Emit it as a counter-column .deco-cell so the click
+       target stays in the gutter rather than in front of the frame text. */
+    var sfDeco = '';
+    if ((stackGutter || (item._hiddenAfter && item._hiddenAfter.count > 0))
         && typeof areDecorationsOn === 'function' && areDecorationsOn()
         && typeof getCounterAffordance === 'function') {
-        sfGutter = '<span class="line-decoration">' + getCounterAffordance(item, idx, item._hiddenAfter, '') + '</span>';
+        var sfAfford = stackGutter ? stackGutter : getCounterAffordance(item, idx, item._hiddenAfter, '');
+        sfDeco = '<span class="line-decoration"><span class="deco-cell deco-cell-num">' + sfAfford + '</span></span>';
     }
-    /* line-deco-spacer-only reserves the empty decoration column so frames nest
-       under the header. When sfGutter carries the reveal chevron it IS the column
-       content; adding the spacer too would double the indent. Drop it then. */
-    var sfDecoCls = (typeof areDecorationsOn === 'function' && areDecorationsOn())
-        ? (sfGutter ? '' : ' line-deco-spacer-only') : '';
-    return '<div class="line stack-line' + (item.fw ? ' framework-frame' : '')
-        + matchCls + barCls + sfHeat + sfCtxCls + sfDecoCls + '"' + idxAttr + '>'
-        + sfGutter + sfQb + html + sfDupBadge + '</div>';
+    return '<div class="line stack-line cols log-cols' + (item.fw ? ' framework-frame' : '')
+        + matchCls + barCls + sfHeat + sfCtxCls + '"' + idxAttr + '>'
+        + sfDeco + '<span class="line-msg">' + sfQb + html + sfDupBadge + '</span></div>';
 }
 `;
 }
