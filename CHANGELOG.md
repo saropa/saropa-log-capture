@@ -28,9 +28,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [8.0.4]
 
-When "App Only" is off but a category isn't whitelisted, the output channel now tells you exactly which Debug Console lines were skipped and how to capture them. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+When "App Only" is off but a category isn't whitelisted, the output channel now tells you exactly which Debug Console lines were skipped and how to capture them. [log](https://github.com/saropa/saropa-log-capture/blob/v8.0.4/CHANGELOG.md)
 
 ### Added
 
@@ -38,6 +38,7 @@ When "App Only" is off but a category isn't whitelisted, the output channel now 
 - **Optional cross-workspace noise patterns (off by default):** Turn on **Share noise patterns across workspaces** (`saropaLogCapture.learning.globalAggregates`) to let a high-confidence framework-noise filter you accept in one project start suppressing the same noise in your other projects. Only the pattern text and category are stored on your machine — never paths, project names, or usernames (enforced by a deny-list) — and the new **Clear Cross-Workspace Noise Patterns** command wipes them at any time (plan 053 Workstream D).
 - **"View Related Requests" popover:** Right-click any log line → **View Related Requests** to open a dedicated popover listing the HTTP requests correlated to that line (by request ID when your `integrations.http.requestIdPattern` matches, otherwise by the context time window), each showing method, URL, status, and duration, with per-row and Copy All actions. Complements the existing inline HTTP section in the integration-context popover (plan 010).
 - **Dropped-category diagnostics:** When `captureAll` is off and a DAP output category is not in `saropaLogCapture.categories`, the first dropped line of each category now logs an actionable hint to the **Saropa Log Capture** output channel (category name + how to capture it), instead of vanishing silently. Documents the DAP-only capture boundary under README → Known Limitations (plan 102).
+- **Localized the new compare-3-logs, related-requests, flow-map, signal-sort, and cross-workspace-clear strings** — the 24 new user-facing strings from this release's features (the 3-way comparison titles and pickers, the "View Related Requests" popover labels, the flow-map zoom / reset / center-fault controls, the signal sort toggle, the cross-workspace noise clear prompt, and the SQL-history pager) are now hand-translated into all 10 non-English locales (de, es, fr, it, ja, ko, pt-br, ru, zh-cn, zh-tw), bringing every bundle back to 1590/1590 keys. Provenance is recorded as `manual` (high-quality tier).
 
 ### Changed
 
