@@ -118,6 +118,8 @@ suite('Stack-frame reveal chevron for a hidden device gap', () => {
     const renderStackFrame = ctx.renderStackFrame as (...a: unknown[]) => string;
     const out = renderStackFrame(frame, idx, frame.html, '', '', ' data-idx="' + idx + '"', '');
     assert.ok(!out.includes('data-affordance-kind'), 'no reveal chevron when nothing is hidden after the frame');
-    assert.ok(out.includes('line-deco-spacer-only'), 'keeps the alignment spacer');
+    /* Plan 055 Phase 2: a no-gap frame carries NO decoration cell — it nests in the
+       message track via the grid, so there is no alignment spacer to keep in sync. */
+    assert.ok(!out.includes('line-decoration'), 'no decoration cell when nothing is hidden after the frame');
   });
 });
