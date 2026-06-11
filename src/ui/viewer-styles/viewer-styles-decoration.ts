@@ -65,14 +65,17 @@ export function getDecorationStyles(): string {
    as regular log rows so they get a clickable line-number column, instead of
    the prior bespoke .line-deco-spacer-only padding + inline chevron. */
 /* Legacy hanging-indent model — scoped to :not(.cols) so rows migrated to the
-   grid column model (plan 055) opt out cleanly while un-migrated paths keep it. */
+   grid column model (plan 055) opt out cleanly while un-migrated paths keep it.
+   Multi-frame stack headers are on the grid as of Phase 2, so .stack-header is
+   scoped :not(.cols) too — otherwise this 14.25em padding + negative text-indent
+   would apply on top of the grid and shove the header's columns off-screen. */
 .line:not(.cols):has(.line-decoration),
-.stack-header:has(.line-decoration) {
+.stack-header:not(.cols):has(.line-decoration) {
     padding-left: var(--deco-prefix-width-em, 14.25em); /* 1.25em bar clearance + dynamic decoration width */
     text-indent: calc(-1 * var(--deco-content-indent-em, 13em));
 }
 .line:not(.cols):has(.line-decoration) .line-decoration,
-.stack-header:has(.line-decoration) .line-decoration {
+.stack-header:not(.cols):has(.line-decoration) .line-decoration {
     /* Pulled right of severity bar by padding; indent pulls decoration start to 1.25em */
     margin-right: 0;
     /* Fixed-width prefix column. The hanging-indent rule above already ASSUMES
