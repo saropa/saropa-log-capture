@@ -251,7 +251,14 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
             lineItem.bannerRole = bannerInfo.role;
             if (bannerInfo.role === 'header') {
                 lineItem.bannerCollapsed = true;
+                lineItem.bannerMemberCount = 0;
                 bannerHeaderMap[bannerInfo.groupId] = lineItem;
+            } else {
+                /* Count body/footer rows so the collapsed header can show how many
+                   lines it hides. The header re-renders each frame, so the visible
+                   count grows as the streamed block arrives. */
+                var _bHdr = bannerHeaderMap[bannerInfo.groupId];
+                if (_bHdr) _bHdr.bannerMemberCount = (_bHdr.bannerMemberCount || 0) + 1;
             }
         }
         lineItem.viewerLineIndex = allLines.length;
