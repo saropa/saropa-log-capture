@@ -28,9 +28,13 @@ export function getColumnStyles(): string {
 .cols .line-decoration { display: contents; }
 
 /* Log-gutter consumer: 6 decoration tracks + message, sized by --grid-cols.
-   padding-left reserves the severity-bar clearance (matches the old 1.25em). */
-.line.cols { padding-left: 1.25em; }
-.line.log-cols { grid-template-columns: var(--grid-cols, 0 0 0 0 0 0 1fr); }
+   padding-left reserves the severity-bar clearance (matches the old 1.25em).
+   Multi-frame stack-header rows are NOT .line (they carry .stack-header for the
+   collapse click handler), so the gutter selectors name both — same template var,
+   same overlap-proof contract, so a stack header's message aligns under the same
+   column as the regular log rows around it (plan 055 Phase 2). */
+.line.cols, .stack-header.cols { padding-left: 1.25em; }
+.line.log-cols, .stack-header.log-cols { grid-template-columns: var(--grid-cols, 0 0 0 0 0 0 1fr); }
 
 /* Each decoration datum is its own clipping cell — no merged content, no spill. */
 .deco-cell {
@@ -53,8 +57,10 @@ export function getColumnStyles(): string {
 
 /* Message track: pinned last, min-width:0 so it wraps inside its column and can
    never push or be pushed over the decoration cells. Keeps the row's own
-   white-space (pre-wrap / nowrap mode) for the message text. */
-.line.cols .line-msg {
+   white-space (pre-wrap / nowrap mode) for the message text. Stack-header and
+   stack-frame rows share the column so their message/frame text aligns under the
+   same track as the regular rows above them. */
+.line.cols .line-msg, .stack-header.cols .line-msg {
     grid-column: 7;
     min-width: 0;
 }

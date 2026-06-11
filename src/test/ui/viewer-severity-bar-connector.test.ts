@@ -313,30 +313,26 @@ suite('Stack header level CSS class in renderItem', () => {
 
     test('should include hdrLevelCls in stack-header class list', () => {
         assert.ok(
-            renderChunk.includes("stack-header' + hdrLevelCls + matchCls"),
-            'stack-header div must include the level class before other class concatenations',
+            renderChunk.includes("stack-header cols log-cols' + hdrLevelCls + matchCls"),
+            'stack-header div must carry .cols.log-cols (Phase 2 grid) then the level class before other class concatenations',
         );
     });
 
-    test('stack-header gets its own .line-decoration prefix (line number + chevron)', () => {
-        // Stack-headers now render through getDecorationPrefix like regular
-        // log rows, so they get a clickable line-number column with a chevron.
-        // The shared CSS rule .line:has(.line-decoration), .stack-header:has(.line-decoration)
-        // in viewer-styles-decoration.ts gives them the same padding-left +
-        // text-indent treatment, replacing the bespoke .line-deco-spacer-only
-        // class that used to handle stack-header indent in isolation.
+    test('stack-header gets its own decoration cell (line number + chevron) on the grid', () => {
+        // Plan 055 Phase 2: stack-headers render through getDecorationCells like
+        // regular grid rows, so they get a clickable line-number column with a
+        // chevron as a clipping .deco-cell, and their text lives in a .line-msg
+        // cell pinned to the message column. The bespoke .line-deco-spacer-only
+        // indent and the legacy getDecorationPrefix blob are both gone.
         assert.ok(
-            renderChunk.includes('getDecorationPrefix(item, idx, null)'),
-            'renderStackHeader must call getDecorationPrefix so the row gets a counter-row chevron',
+            renderChunk.includes('getDecorationCells(item, idx, null)'),
+            'renderStackHeader must call getDecorationCells so the row gets a grid counter-row chevron',
         );
-        // Stack-FRAMES still use line-deco-spacer-only (they don't render
-        // their own decoration prefix); only the HEADER stops using it.
-        // Verify by checking the renderStackHeader function specifically.
         const headerFnMatch = /function renderStackHeader\([^{]*\{[\s\S]*?\n\}/.exec(renderChunk);
         assert.ok(headerFnMatch, 'renderStackHeader function must exist');
         assert.ok(
             !headerFnMatch![0].includes('line-deco-spacer-only'),
-            'line-deco-spacer-only must be retired from renderStackHeader — the shared :has(.line-decoration) rule handles it now',
+            'line-deco-spacer-only must be retired from renderStackHeader — the grid message track handles nesting now',
         );
     });
 });
@@ -344,15 +340,15 @@ suite('Stack header level CSS class in renderItem', () => {
 suite('Stack header column alignment CSS', () => {
     const css = getDecorationStyles();
 
-    test('legacy :has(.line-decoration) rule covers .line:not(.cols) and .stack-header', () => {
-        // The legacy hanging-indent rule is now scoped to :not(.cols) (plan 055)
-        // so rows migrated to the grid column model opt out, while un-migrated
-        // paths — multi-frame stack-headers among them — still get the
-        // padding-left + text-indent treatment, otherwise their text juts to the
-        // left of the message column. Stack-headers are not yet on the grid.
+    test('legacy :has(.line-decoration) rule scopes BOTH .line and .stack-header to :not(.cols)', () => {
+        // Plan 055 Phase 2: multi-frame stack-headers are on the grid, so the
+        // legacy hanging-indent rule must scope .stack-header :not(.cols) too —
+        // otherwise the 14.25em padding-left + negative text-indent would stack on
+        // top of the grid and shove the header's columns off-screen. Un-migrated
+        // paths (chips, art blocks) keep the legacy treatment.
         assert.ok(
-            /\.line:not\(\.cols\):has\(\.line-decoration\)[^{]*\.stack-header:has\(\.line-decoration\)/.test(css),
-            'the legacy padding-left rule must include both .line:not(.cols) and .stack-header selectors',
+            /\.line:not\(\.cols\):has\(\.line-decoration\)[^{]*\.stack-header:not\(\.cols\):has\(\.line-decoration\)/.test(css),
+            'the legacy padding-left rule must scope both .line:not(.cols) and .stack-header:not(.cols)',
         );
     });
 });
