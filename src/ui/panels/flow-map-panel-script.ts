@@ -1,7 +1,9 @@
 /**
  * Client script for the flow-map webview panel (extracted to keep flow-map-panel.ts under the line
  * limit). Wires: save button, source `file:line` open, log-line reveal/copy, diagram node →
- * row-highlight + log jump, and TOC links that expand+scroll their section.
+ * row-highlight + log jump, and TOC links that expand+scroll their section. The diagram lens
+ * (zoom/pan/pop-out/node-detail popup) lives in flow-map-panel-zoom-script.ts and reuses the
+ * `window.__fmSend` bridge exposed here (acquireVsCodeApi may be acquired only once per webview).
  */
 
 /** The full `<script>` block for the panel, nonce-guarded for CSP. */
@@ -9,6 +11,9 @@ export function flowMapScript(nonce: string): string {
     return `<script nonce="${nonce}">(function(){
   var v = acquireVsCodeApi();
   function send(type, data){ data = data || {}; data.type = type; v.postMessage(data); }
+  // Expose the post bridge so sibling scripts (the diagram lens) can message without re-acquiring
+  // the (single-use) vscode API.
+  window.__fmSend = send;
   function onActivate(el, fn){
     el.addEventListener('click', fn);
     el.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn(); } });
@@ -87,11 +92,15 @@ export function flowMapScript(nonce: string): string {
     });
     resizer.addEventListener('pointermove', function(e){
       if (!dragging) return;
-      // Width = pointer offset from the diagram's left edge, clamped so the detail column keeps room.
+      // Width = pointer offset from the diagram's left edge. The only clamp is a 20px floor on
+      // each side so the gripper never disappears under a zero-width column; otherwise the user
+      // sets any ratio and the columns crop their content (overflow:hidden in CSS) rather than
+      // refusing to shrink below the widest cell.
       var left = diagram.getBoundingClientRect().left;
-      var w = Math.max(200, e.clientX - left);
-      var max = row.getBoundingClientRect().width - 280;
-      if (max > 200) w = Math.min(w, max);
+      var resizerW = resizer.getBoundingClientRect().width;
+      var w = Math.max(20, e.clientX - left);
+      var max = row.getBoundingClientRect().width - resizerW - 20;
+      if (max > 20) w = Math.min(w, max);
       diagram.style.setProperty('--diagram-w', Math.round(w) + 'px');
     });
     function endDrag(){
@@ -149,70 +158,5 @@ export function flowMapScript(nonce: string): string {
       th.addEventListener('click', function(){ sortBy(table, th, idx); });
     });
   });
-
-  // --- S2 interactive lens: pan/zoom the flow SVG via its viewBox. Purely additive over the
-  // existing scroll fallback — node clicks still fire (we only pan when the drag starts on the
-  // background and moves past a small threshold, so a click on a node is never swallowed). ---
-  var diagram = document.querySelector('.diagram');
-  var svg = diagram && diagram.querySelector('svg');
-  if (svg) {
-    // The author viewBox is the "fit" state; reset returns to it. Clamp zoom so the graph can't
-    // invert (w<=0) or shrink to a dot.
-    var base = (svg.getAttribute('viewBox') || '').split(' ').map(Number);
-    var vb = base.length === 4 ? { x: base[0], y: base[1], w: base[2], h: base[3] } : null;
-    var MIN_W = vb ? vb.w * 0.2 : 0, MAX_W = vb ? vb.w * 3 : 0;
-    function applyVb(){ if (vb) svg.setAttribute('viewBox', vb.x + ' ' + vb.y + ' ' + vb.w + ' ' + vb.h); }
-    // Convert a client point to SVG user units under the current viewBox, so zoom stays cursor-anchored.
-    function toSvg(clientX, clientY){
-      var r = svg.getBoundingClientRect();
-      return { x: vb.x + (clientX - r.left) / r.width * vb.w, y: vb.y + (clientY - r.top) / r.height * vb.h };
-    }
-    function zoomAt(factor, clientX, clientY){
-      if (!vb) return;
-      var nw = Math.min(MAX_W, Math.max(MIN_W, vb.w * factor));
-      factor = nw / vb.w; // honor the clamp when recentering
-      var p = toSvg(clientX, clientY);
-      vb.x = p.x - (p.x - vb.x) * factor; vb.y = p.y - (p.y - vb.y) * factor;
-      vb.w = nw; vb.h = vb.h * factor; applyVb();
-    }
-    var rect = svg.getBoundingClientRect();
-    svg.addEventListener('wheel', function(e){ e.preventDefault(); zoomAt(e.deltaY < 0 ? 0.85 : 1.18, e.clientX, e.clientY); }, { passive: false });
-
-    var panning = false, moved = false, sx = 0, sy = 0, ovx = 0, ovy = 0;
-    svg.addEventListener('pointerdown', function(e){
-      if (!vb || e.button !== 0 || e.target.closest('.fm-node')) return; // leave node clicks alone
-      panning = true; moved = false; sx = e.clientX; sy = e.clientY; ovx = vb.x; ovy = vb.y;
-      rect = svg.getBoundingClientRect();
-      svg.setPointerCapture(e.pointerId); diagram.classList.add('fm-panning');
-    });
-    svg.addEventListener('pointermove', function(e){
-      if (!panning) return;
-      if (Math.abs(e.clientX - sx) + Math.abs(e.clientY - sy) > 3) moved = true;
-      vb.x = ovx - (e.clientX - sx) / rect.width * vb.w;
-      vb.y = ovy - (e.clientY - sy) / rect.height * vb.h; applyVb();
-    });
-    function endPan(){ panning = false; diagram.classList.remove('fm-panning'); }
-    svg.addEventListener('pointerup', endPan);
-    svg.addEventListener('pointercancel', endPan);
-    // A pan that moved must not also trigger the node-click underneath when released over a node.
-    svg.addEventListener('click', function(e){ if (moved) { e.stopPropagation(); moved = false; } }, true);
-
-    function resetView(){ if (vb && base.length === 4) { vb = { x: base[0], y: base[1], w: base[2], h: base[3] }; applyVb(); } }
-    // Center the viewBox on the crash node (with a little zoom) and flash it so the eye lands on it.
-    function centerCrash(){
-      var crash = svg.querySelector('.fm-node.fm-crash');
-      if (!crash || !vb) return;
-      var b = crash.getBBox();
-      vb.w = Math.max(MIN_W, b.width * 3.2); vb.h = vb.w * (base[3] / base[2]);
-      vb.x = b.x + b.width / 2 - vb.w / 2; vb.y = b.y + b.height / 2 - vb.h / 2; applyVb();
-      crash.classList.remove('fm-flash'); void crash.getBBox(); crash.classList.add('fm-flash');
-    }
-    var ZOOM = { in: function(){ zoomAt(0.8, rect.left + rect.width / 2, rect.top + rect.height / 2); },
-      out: function(){ zoomAt(1.25, rect.left + rect.width / 2, rect.top + rect.height / 2); },
-      reset: resetView, crash: centerCrash };
-    document.querySelectorAll('.fm-zoom-btn').forEach(function(btn){
-      btn.addEventListener('click', function(){ rect = svg.getBoundingClientRect(); var fn = ZOOM[btn.getAttribute('data-zoom')]; if (fn) fn(); });
-    });
-  }
 })();</script>`;
 }

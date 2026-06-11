@@ -14,6 +14,10 @@ const PAD_Y = 13;
 const ROW_GAP = 54;
 const COL_GAP = 36;
 const MARGIN = 26;
+/** Gap from an edge's midpoint to its dwell label, kept to the right of the shaft so it stays legible. */
+const EDGE_LABEL_GAP = 8;
+/** How far a back (return) edge bows to the right of the boxes so it clears the forward arrow. */
+const BACK_BULGE = 22;
 
 interface Palette { readonly fill: string; readonly stroke: string; readonly text: string; readonly dashed: boolean; }
 
@@ -45,6 +49,9 @@ function computeDepths(graph: FlowGraph): Map<string, number> {
     for (let pass = 0; pass < graph.nodes.length; pass++) {
         let changed = false;
         for (const e of graph.edges) {
+            // Back edges close cycles (B returns to ancestor A); skipping them keeps longest-path
+            // layering a DAG so depths can't run away and rows stay top-down.
+            if (e.back) { continue; }
             const d = (depth.get(e.from) ?? 0) + 1;
             if (d > (depth.get(e.to) ?? 0)) { depth.set(e.to, d); changed = true; }
         }
@@ -97,6 +104,31 @@ function rowKeyOf(node: FlowNode): string {
     return nodeHasError(node) ? 'crash' : node.key;
 }
 
+/**
+ * Serialize every fact known about a node into a `data-detail` JSON attribute. The webview reads it
+ * on double-click to build the exhaustive detail popup — keeping all node data on the element means
+ * no separate JSON island (which the strict nonce-only CSP would otherwise complicate). esc() turns
+ * the JSON quotes into &quot;, which the browser decodes back before JSON.parse.
+ */
+function detailAttr(node: FlowNode): string {
+    const detail = {
+        label: node.label,
+        kind: node.kind,
+        visits: node.visits,
+        dwellMs: node.dwellMs,
+        firstTsMs: node.firstTsMs ?? null,
+        lastTsMs: node.lastTsMs ?? null,
+        file: node.source?.file ?? null,
+        fileLine: node.source?.line ?? null,
+        logLine: node.logLine ?? null,
+        walked: node.walked,
+        resolved: node.resolved,
+        actions: node.actionCounts,
+        issues: node.issues.map(i => ({ sev: i.severity, cat: i.category, detail: i.detail, clock: i.clock, log: i.logLine ?? null })),
+    };
+    return ` data-detail="${esc(JSON.stringify(detail))}"`;
+}
+
 /** Render one node as an interactive group: box + stacked text lines, tagged for cross-highlight. */
 function renderNode(p: Placed): string {
     const pal = paletteOf(p.node);
@@ -112,7 +144,7 @@ function renderNode(p: Placed): string {
     }).join('');
     const cls = nodeHasError(p.node) ? 'fm-node fm-crash' : 'fm-node';
     const logAttr = p.node.logLine ? ` data-logline="${p.node.logLine}"` : '';
-    return `<g class="${cls}" data-rowkey="${esc(rowKeyOf(p.node))}"${logAttr} tabindex="0" role="button">`
+    return `<g class="${cls}" data-rowkey="${esc(rowKeyOf(p.node))}"${logAttr}${detailAttr(p.node)} tabindex="0" role="button">`
         + `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="7" `
         + `fill="${pal.fill}" stroke="${pal.stroke}" stroke-width="1.5"${dash}/>`
         + `<text x="${cx}" y="${p.y}" text-anchor="middle" fill="${pal.text}" `
@@ -143,11 +175,30 @@ function edgeLabel(edge: FlowEdge, from: Placed): string {
     return parts.join(' · ');
 }
 
+/**
+ * A return-to-caller edge: the user closed the surface(s) above an ancestor and went back to it.
+ * Bowed to the RIGHT of the boxes (so it never overlaps the forward arrow running down the middle)
+ * and drawn dashed-blue with its own marker so it reads as "back", not another forward step.
+ */
+function renderBackEdge(from: Placed, to: Placed, edge: FlowEdge): string {
+    const x1 = from.x + from.w;
+    const y1 = from.y + from.h / 2;
+    const x2 = to.x + to.w;
+    const y2 = to.y + to.h / 2;
+    const bx = Math.max(x1, x2) + BACK_BULGE;
+    const path = `<path d="M${x1},${y1} C${bx},${y1} ${bx},${y2} ${x2},${y2}" fill="none" `
+        + `stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="2 4" marker-end="url(#fm-back)"/>`;
+    if (edge.count <= 1) { return path; }
+    return path + `<text x="${bx + 4}" y="${(y1 + y2) / 2}" text-anchor="start" dominant-baseline="middle" `
+        + `fill="#58a6ff" font-size="10" font-family="var(--vscode-font-family)">×${edge.count}</text>`;
+}
+
 /** Render one edge: a line from the source's bottom to the target's top, with the dwell/count label. */
 function renderEdge(edge: FlowEdge, placed: Map<string, Placed>): string {
     const from = placed.get(edge.from);
     const to = placed.get(edge.to);
     if (!from || !to) { return ''; }
+    if (edge.back) { return renderBackEdge(from, to, edge); }
     const x1 = from.x + from.w / 2;
     const y1 = from.y + from.h;
     const x2 = to.x + to.w / 2;
@@ -159,19 +210,27 @@ function renderEdge(edge: FlowEdge, placed: Map<string, Placed>): string {
     if (!label) { return line; }
     const mx = (x1 + x2) / 2;
     const my = (y1 + y2) / 2;
-    return line + `<text x="${mx}" y="${my}" text-anchor="middle" fill="#c9d1d9" font-size="11" `
-        + `font-family="var(--vscode-font-family)" paint-order="stroke" stroke="#1c2128" `
-        + `stroke-width="3">${esc(label)}</text>`;
+    // Park the dwell label to the RIGHT of the shaft (anchor start + gap), vertically centered on the
+    // midpoint, so the time is never painted on top of the arrow where it was unreadable.
+    return line + `<text x="${mx + EDGE_LABEL_GAP}" y="${my}" text-anchor="start" dominant-baseline="middle" `
+        + `fill="#c9d1d9" font-size="11" font-family="var(--vscode-font-family)" paint-order="stroke" `
+        + `stroke="#1c2128" stroke-width="3">${esc(label)}</text>`;
 }
 
 /** Render the whole graph as an `<svg>` element string. */
 export function renderSvg(graph: FlowGraph): string {
     const { placed, width, height } = layout(graph);
-    const defs = '<defs><marker id="fm-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" '
-        + 'markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8b949e"/></marker></defs>';
+    // Reserve room on the right for any back-edge bulge so the curve is never clipped by the canvas.
+    const canvasW = graph.edges.some(e => e.back) ? width + BACK_BULGE + 10 : width;
+    const defs = '<defs>'
+        + '<marker id="fm-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" '
+        + 'markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8b949e"/></marker>'
+        + '<marker id="fm-back" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" '
+        + 'markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#58a6ff"/></marker>'
+        + '</defs>';
     const edges = graph.edges.map(e => renderEdge(e, placed)).join('');
     const nodes = [...placed.values()].map(renderNode).join('');
-    return `<svg viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" `
+    return `<svg viewBox="0 0 ${canvasW} ${height}" width="${canvasW}" height="${height}" `
         + `xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Session flow diagram">`
         + `${defs}${edges}${nodes}</svg>`;
 }
