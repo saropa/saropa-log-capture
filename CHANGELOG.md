@@ -28,7 +28,7 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [8.0.5]
 
 The Session Flow Map's diagram now centers, scrolls instead of cropping when you zoom in, opens in its own pop-out panel, and shows a full detail card when you double-click a node — plus return-to-caller navigation draws a distinct back arrow. Flutter exception blocks now fold to their title (collapsed by default) and the left accent rail on error blocks is gone, keeping the log columns aligned. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
 
@@ -47,6 +47,10 @@ The Session Flow Map's diagram now centers, scrolls instead of cropping when you
 - **Flutter exception blocks now collapse to their title, collapsed by default:** A Flutter framework exception (the `════ Exception caught by … ════` block, including the long RenderFlex/constraints dump) now folds to just its header line with a ▶ disclosure triangle and a hidden-line count (e.g. "47 lines") — click the header to expand or re-collapse, and Collapse All / Expand All include them. So a 40+ line layout-error dump no longer floods the log; you see one red-tinted title that tells you how much it hides and open it on demand.
 - **Removed the left accent rail on error/exception blocks:** Flutter exception blocks and error stack traces no longer draw a continuous colored border down their left edge. The rail pushed those rows out of column with every other line (breaking the new gutter grid) and just duplicated the per-row severity dots that already mark the block as an error. The block now reads via a faint background tint instead, staying perfectly column-aligned.
 - **Jump-to-line highlight no longer nudges the target row:** The accent stripe on the line you jump or peek to is now painted as an inset shadow instead of a real left border, so the highlighted row's line number and text stay aligned with every other row instead of shifting 3px right (same fix already used by AI activity rows).
+
+### Fixed
+
+- **Stale viewer render tests:** Two webview-render assertions still expected the pre-grid output and were failing — the stack-frame test expected the dropped `line-deco-spacer-only` alignment spacer (Plan 055 frames now nest in the message track with no decoration cell), and the continuation-badge test expected `contBadge` to be the literal first token of `msgInner` before the new Flutter-exception `bannerChevron` was prepended ahead of it. Both now assert the current shipped behavior.
 
 ## [8.0.4]
 

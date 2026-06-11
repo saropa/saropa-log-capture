@@ -48,11 +48,13 @@ suite('Continuation badge rendering', () => {
 
     test('should place contBadge at the start of the message cell (not after html)', () => {
         /* Grid model (plan 055): the badge leads the .line-msg cell content
-           (contBadge + elapsed + badge + … + html), so it sits next to the
-           decoration cells, not at the end of the line where it overlapped text.
-           Previously contBadge was appended after html, causing overlap. */
+           (bannerChevron + contBadge + elapsed + badge + … + html), so it sits next
+           to the decoration cells, not at the end of the line where it overlapped
+           text. The Flutter-exception bannerChevron is the only thing ahead of it
+           (a header-row disclosure triangle); contBadge still leads the actual
+           message body. Previously contBadge was appended after html, causing overlap. */
         assert.ok(
-            renderScript.includes('var msgInner = contBadge +'),
+            renderScript.includes('contBadge + elapsed +'),
             'contBadge must lead the message-cell content (adjacent to the decoration column)',
         );
         assert.ok(
