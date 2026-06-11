@@ -23,6 +23,7 @@
  * them so we never call `onContextMenuAction` for blocked commands.
  */
 export { getContextMenuHtml, getScrollChromeContextMenuHtml } from './viewer-context-menu-html';
+import { getAsciiArtRangeBrowserScript } from './viewer-context-menu-ascii-art-range';
 import { getDbTimestampBurstRangeBrowserScript } from './viewer-context-menu-db-burst-range';
 import { getIncidentRangeBrowserScript } from './viewer-context-menu-incident-range';
 import { getContextMenuSourcesScript } from './viewer-context-menu-sources';
@@ -35,6 +36,7 @@ export function getContextMenuScript(): string {
         + getContextMenuSourcesScript()
         + getIncidentRangeBrowserScript()
         + getDbTimestampBurstRangeBrowserScript()
+        + getAsciiArtRangeBrowserScript()
         + getContextMenuUiScript()
         + getContextMenuPositionScript()
         + getContextMenuActionsScript();
@@ -172,14 +174,19 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
        (querySelectorAll, not querySelector — the latter would hide only the first and strand the JSON row). */
     var ewRows = contextMenuEl.querySelectorAll('[data-copy-error-warning-row]');
     var dbClusterRow = contextMenuEl.querySelector('[data-copy-db-cluster-row]');
+    var asciiArtRow = contextMenuEl.querySelector('[data-copy-ascii-art-row]');
     var groupedBlockSep = contextMenuEl.querySelector('[data-grouped-block-copy-separator]');
     var ewRange = (hasLine && typeof computeIncidentLineRange === 'function') ? computeIncidentLineRange(lineIdx) : null;
     var dbBurstRange = (hasLine && typeof computeDbTimestampBurstLineRange === 'function') ? computeDbTimestampBurstLineRange(lineIdx) : null;
+    /* Copy ASCII art shows only when the right-clicked row is part of a tagged art block. */
+    var asciiArtRange = (hasLine && typeof computeAsciiArtBlockLineRange === 'function') ? computeAsciiArtBlockLineRange(lineIdx) : null;
     var showEw = !!(hasLine && ewRange);
     var showDbCluster = !!(hasLine && dbBurstRange);
+    var showAsciiArt = !!(hasLine && asciiArtRange);
     ewRows.forEach(function(r) { r.style.display = showEw ? '' : 'none'; });
     if (dbClusterRow) dbClusterRow.style.display = showDbCluster ? '' : 'none';
-    if (groupedBlockSep) groupedBlockSep.style.display = (showEw || showDbCluster) ? '' : 'none';
+    if (asciiArtRow) asciiArtRow.style.display = showAsciiArt ? '' : 'none';
+    if (groupedBlockSep) groupedBlockSep.style.display = (showEw || showDbCluster || showAsciiArt) ? '' : 'none';
     if (showEw) {
         var ewLevel = lineData && typeof effectiveErrorWarningLevel === 'function' ? effectiveErrorWarningLevel(lineData) : null;
         if (!ewLevel && ewRange) {
