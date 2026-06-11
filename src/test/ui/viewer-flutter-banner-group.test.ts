@@ -13,6 +13,7 @@ import { getViewerDataHelpersRender } from '../../ui/viewer/viewer-data-helpers-
 import { getViewerDataHelpersCore } from '../../ui/viewer/viewer-data-helpers-core';
 import { getViewportRenderScript } from '../../ui/viewer/viewer-data-viewport';
 import { getFlutterBannerStyles } from '../../ui/viewer-styles/viewer-styles-flutter-banner';
+import { getWebviewL10nMap } from '../../l10n';
 
 suite('Flutter exception banner grouping', () => {
 
@@ -277,6 +278,36 @@ suite('Flutter exception banner grouping', () => {
             assert.ok(
                 render.includes('item.bannerCollapsed !== false'),
                 'chevron glyph must reflect the collapsed state',
+            );
+        });
+
+        test('addToData counts banner members for the hidden-line count', () => {
+            const script = getViewerDataAddScript();
+            assert.ok(
+                /_bHdr\.bannerMemberCount = \(_bHdr\.bannerMemberCount \|\| 0\) \+ 1/.test(script),
+                'body/footer rows must increment the header member count',
+            );
+        });
+
+        test('collapsed header renders a localized hidden-line count', () => {
+            const render = getViewerDataHelpersRender();
+            assert.ok(render.includes('banner-count'), 'collapsed header must render a count pill');
+            assert.ok(
+                render.includes("vt('viewer.meta.lines'"),
+                'count must use the localized viewer.meta.lines key, not a hardcoded string',
+            );
+        });
+
+        test('banner header tooltip keys exist in the webview l10n map', () => {
+            const map = getWebviewL10nMap();
+            assert.ok(
+                /\{0\}/.test(map['viewer.bannerHeader.collapsed']),
+                'collapsed tooltip must carry a {0} placeholder for the line count',
+            );
+            assert.strictEqual(
+                typeof map['viewer.bannerHeader.expanded'],
+                'string',
+                'expanded tooltip key must be registered',
             );
         });
     });
