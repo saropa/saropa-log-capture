@@ -49,12 +49,17 @@ function renderNode(id: string, node: FlowNode): string {
     return `  ${id}${body}:::${nodeClass(node)}`;
 }
 
-/** Render one edge; inferred edges are dotted with a note, walked solid, static-only dotted. */
+/** Render one edge; back returns are dotted with a ↩, inferred dotted "opens", walked solid. */
 function renderEdge(edge: FlowEdge, idOf: Map<string, string>): string | undefined {
     const from = idOf.get(edge.from);
     const to = idOf.get(edge.to);
     if (!from || !to) {
         return undefined;
+    }
+    // A return-to-caller edge reads as "↩" (with ×N when repeated) and is dotted so it never looks
+    // like another forward step in the top-down chart.
+    if (edge.back) {
+        return `  ${from} -.->|"${edge.count > 1 ? `↩ ×${edge.count}` : '↩'}"| ${to}`;
     }
     const label = edge.count > 1 ? `|"×${edge.count}"|` : edge.inferred ? '|"opens"|' : '';
     const arrow = edge.walked ? '-->' : '-.->';

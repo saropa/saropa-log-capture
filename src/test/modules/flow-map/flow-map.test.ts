@@ -6,7 +6,7 @@ import { buildReport } from '../../../modules/flow-map/flow-map-report';
 import { deriveScreenIdentity } from '../../../modules/flow-map/flow-map-presets';
 import { extractDartFileAnchor, parseErrorCausingWidget } from '../../../modules/flow-map/error-causing-widget-parser';
 import { renderSvg } from '../../../modules/flow-map/flow-map-svg';
-import { buildFlowMapBody } from '../../../modules/flow-map/flow-map-html';
+import { buildFlowDiagramBody, buildFlowMapBody } from '../../../modules/flow-map/flow-map-html';
 import { activityChartHtml } from '../../../modules/flow-map/flow-map-activity-chart';
 import type { FlowGraph } from '../../../modules/flow-map/flow-map-model';
 
@@ -120,6 +120,48 @@ suite('FlowMap', () => {
         });
     });
 
+    suite('back navigation (return to caller)', () => {
+        // Launch → Home → A → B, then back to Home: closing A and B is a return to the ancestor Home.
+        const RETURN: readonly string[] = [
+            '=== SAROPA LOG CAPTURE — SESSION START ===',
+            'Project:        demo',
+            '[08:00:01.000] [console] [log] [flowmap] enter screen "Home" lib/views/home.dart:1',
+            '[08:00:02.000] [console] [log] [flowmap] enter screen "Alpha" lib/views/alpha.dart:1',
+            '[08:00:03.000] [console] [log] [flowmap] enter screen "Beta" lib/views/beta.dart:1',
+            '[08:00:09.000] [console] [log] [flowmap] enter screen "Home" lib/views/home.dart:1',
+        ];
+
+        test('a deep return to an open ancestor emits a back edge (not just an immediate pop)', () => {
+            const graph = buildGraph(parseLog(RETURN));
+            const back = graph.edges.find(e => e.back);
+            assert.ok(back, 'a back edge exists');
+            assert.strictEqual(back?.from, 'beta');
+            assert.strictEqual(back?.to, 'home');
+            // The forward chain is untouched and stays acyclic for layering.
+            assert.ok(graph.edges.some(e => !e.back && e.from === 'home' && e.to === 'alpha'));
+            assert.ok(graph.edges.some(e => !e.back && e.from === 'alpha' && e.to === 'beta'));
+        });
+
+        test('an immediate re-entry to the previous screen is also recorded as a back edge', () => {
+            // The base fixture goes Home → Contact View → Home → Contact View.
+            const graph = buildGraph(parseLog(FIXTURE));
+            assert.ok(graph.edges.some(e => e.back && e.from === 'contact view' && e.to === 'home'));
+            assert.ok(!graph.edges.some(e => e.from === e.to), 'still no self-loops');
+        });
+
+        test('the svg draws the back arrow with its own marker and node detail attributes', () => {
+            const svg = renderSvg(buildGraph(parseLog(FIXTURE)));
+            assert.ok(svg.includes('id="fm-back"'), 'back marker defined');
+            assert.ok(svg.includes('url(#fm-back)'), 'a back edge uses the back marker');
+            assert.ok(svg.includes('data-detail='), 'nodes carry detail for the double-click popup');
+        });
+
+        test('mermaid marks the return edge with a return glyph', () => {
+            const m = renderMermaid(buildGraph(parseLog(FIXTURE)));
+            assert.ok(m.includes('↩'), 'return glyph present on the back edge');
+        });
+    });
+
     suite('handoff (bug 009 — off-app external nodes)', () => {
         // A session that enters a screen, then hands off to Google Maps (app) and an API (api).
         const HANDOFF: readonly string[] = [
@@ -227,6 +269,21 @@ suite('FlowMap', () => {
             assert.ok(body.includes('data-zoom="crash"'), 'jump-to-crash control present when a fault exists');
             // The toolbar sits before the SVG so it overlays the diagram's top-right.
             assert.ok(body.indexOf('fm-zoom-toolbar') < body.indexOf('<svg'), 'toolbar precedes the svg');
+        });
+
+        test('S3: the diagram sits in a scroll container and offers a pop-out control', () => {
+            const body = buildFlowMapBody(parseLog(FIXTURE), graph);
+            assert.ok(body.includes('class="diagram-scroll"'), 'svg lives in a scroll box (zoom scrolls, not crops)');
+            assert.ok(body.includes('data-zoom="popout"'), 'pop-out control present in the report');
+        });
+
+        test('S3: the pop-out body is diagram-only and never offers a nested pop-out', () => {
+            const body = buildFlowDiagramBody(graph);
+            assert.ok(body.includes('class="diagram-only"'), 'diagram-only wrapper present');
+            assert.ok(body.includes('class="diagram-scroll"'), 'still a scroll box');
+            assert.ok(body.includes('<svg'), 'the diagram is rendered');
+            assert.ok(!body.includes('data-zoom="popout"'), 'no nested pop-out inside the pop-out');
+            assert.ok(!body.includes('<table'), 'no tables in the diagram-only view');
         });
 
         test('S2: no jump-to-crash control when the session has no fault', () => {

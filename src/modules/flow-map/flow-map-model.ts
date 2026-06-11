@@ -57,6 +57,12 @@ export interface FlowEdge {
     walked: boolean;
     /** True when the transition was recovered indirectly (e.g. crash widget), not from a breadcrumb. */
     inferred?: boolean;
+    /**
+     * True when this edge is a return to an already-open ancestor screen — the user closed the
+     * surface(s) above it and navigated back to the caller. Rendered as a distinct "back" arrow and
+     * excluded from depth layering (it would otherwise close a cycle and break the DAG layout).
+     */
+    back?: boolean;
 }
 
 /** The assembled graph. */
