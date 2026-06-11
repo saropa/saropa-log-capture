@@ -138,7 +138,13 @@ export function getUiStyles(): string {
 .peek-close:hover { color: var(--vscode-errorForeground, #f44); }
 .peek-target {
     background: var(--vscode-editor-lineHighlightBackground, rgba(255, 255, 0, 0.15));
-    border-left: 3px solid var(--vscode-editorLineNumber-activeForeground, #c6c6c6);
+    /* Accent rail via inset box-shadow, NOT border-left: a real 3px border-left
+       adds to the row's box and shifts the jumped-to line's content (line number +
+       message) 3px right of every other row, breaking the gutter column grid on
+       exactly the line the user is looking at. box-shadow:inset paints the same
+       stripe inside the row's left edge without changing its width, so columns stay
+       straight. Same fix the AI rail uses (viewer-styles-ai.ts). */
+    box-shadow: inset 3px 0 0 var(--vscode-editorLineNumber-activeForeground, #c6c6c6);
 }
 .peek-context { opacity: 0.7; }
 
