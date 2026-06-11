@@ -67,6 +67,7 @@ window.addEventListener('message', function(event) {
             if (typeof applyDecorationLayoutWidth === 'function') applyDecorationLayoutWidth();
             lastStart = -1; lastEnd = -1; groupHeaderMap = {}; prefixSums = null;
             if (typeof resetContinuationState === 'function') resetContinuationState();
+            if (typeof resetFlutterBannerDetector === 'function') resetFlutterBannerDetector();
             cachedVisibleCount = 0; if (typeof window !== 'undefined') window.__visibleCountDirty = false;
             isPaused = false; isViewingFile = false; if (footerEl) footerEl.classList.remove('paused');
             if (typeof window.setReplayEnabled === 'function') window.setReplayEnabled(false, isSessionActive);

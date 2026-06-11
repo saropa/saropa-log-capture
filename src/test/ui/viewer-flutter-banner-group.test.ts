@@ -10,6 +10,7 @@ import * as assert from 'node:assert';
 import { getViewerDataAddScript } from '../../ui/viewer/viewer-data-add';
 import { getFlutterBannerScript } from '../../ui/viewer/viewer-data-add-flutter-banner';
 import { getViewerDataHelpersRender } from '../../ui/viewer/viewer-data-helpers-render';
+import { getViewerDataHelpersCore } from '../../ui/viewer/viewer-data-helpers-core';
 import { getViewportRenderScript } from '../../ui/viewer/viewer-data-viewport';
 import { getFlutterBannerStyles } from '../../ui/viewer-styles/viewer-styles-flutter-banner';
 
@@ -172,67 +173,46 @@ suite('Flutter exception banner grouping', () => {
             );
         });
 
-        test('banner CSS must define the three positional classes', () => {
+        test('banner CSS defines the three positional classes with a tint and NO left rail', () => {
             const css = getFlutterBannerStyles();
             assert.ok(css.includes('.banner-group-start'), 'start class must be styled');
             assert.ok(css.includes('.banner-group-mid'), 'mid class must be styled');
             assert.ok(css.includes('.banner-group-end'), 'end class must be styled');
-            // Left accent rail is the primary visual connector — required on all three.
+            // The block now reads via a faint background wash, not a left rail.
             assert.ok(
-                /border-left:\s*3px\s+solid/.test(css),
-                'banner group must use a left accent rail to visually connect rows',
+                /\.banner-group-start[\s\S]*?background-color:/.test(css),
+                'banner group must use a background tint to connect rows',
+            );
+            // The 3px left accent rail was removed: it shifted every banner row right
+            // of the gutter grid (breaking column alignment) and duplicated the
+            // per-row severity dots. It must NOT come back.
+            assert.ok(
+                !/border-left:\s*3px\s+solid/.test(css),
+                'banner group must NOT use a left rail — it breaks the columnar layout',
+            );
+            // No padding-left either — without a rail to clear, padding would only
+            // push banner text out of column with ordinary lines.
+            assert.ok(
+                !/padding-left/.test(css),
+                'banner group must NOT add padding-left — it misaligns columns',
             );
         });
 
-        test('severity dot is pulled into the banner rail (tight gap)', () => {
-            // WHY pin both numbers: the rail visually "joins" the dot column
-            // only when both the dot ::before AND the chain-connector ::after
-            // are pulled in together. If a future tweak moves one but not the
-            // other, the connector visibly offsets from the dot it joins.
+        test('banner CSS defines the collapse chevron affordance', () => {
             const css = getFlutterBannerStyles();
-            // Dot ::before override applies to all three banner positions.
             assert.ok(
-                /\.banner-group-start\[class\*="level-bar-"\]::before[\s\S]*?\.banner-group-mid\[class\*="level-bar-"\]::before[\s\S]*?\.banner-group-end\[class\*="level-bar-"\]::before[\s\S]*?left:\s*0\.15em/.test(css),
-                'all three banner positions must pull the severity dot to left: 0.15em',
-            );
-            // Connector ::after on banner-group rows must be re-centered under
-            // the pulled dot at 0.30em. WHY the selector now carries
-            // .level-bar-error:has(+ .level-bar-error): the default chain
-            // connector in viewer-styles-decoration-bars.ts is specificity
-            // (0,3,1) (it uses :has(+ .level-bar-error)::after). The earlier
-            // override was only .banner-group-*[class*="level-bar-"]::after =
-            // (0,2,1) and SILENTLY LOST, so the stripe rendered detached at the
-            // default 0.89em. Adding :has(+ .level-bar-error) lifts the override
-            // to (0,3,1)+ so it actually wins (these styles concatenate last).
-            assert.ok(
-                /\.banner-group-(?:start|mid|end)\.level-bar-error:has\(\+\s*\.level-bar-error\)::after[\s\S]*?left:\s*0\.30em/.test(css),
-                'banner-group ::after connector must align under the pulled dot at left: 0.30em via a :has() selector that out-specifies the default 0.89em connector',
+                /\.banner-chevron\s*\{[\s\S]*?cursor:\s*pointer/.test(css),
+                'banner header must carry a clickable collapse chevron',
             );
         });
 
-        test('error rail and severity spine continue through the stack trace', () => {
-            // WHY: stack frames are consumed before the banner classifier, so they
-            // never carry a banner-group-* class. Without these rules the 3px rail
-            // and the 0.30em connector stop at the banner text and the left edge of
-            // the incident reads as broken across the frames. Error-level stack rows
-            // (.stack-header / .line.stack-line) must get the same rail and the same
-            // pulled-in connector so the spine is one continuous column.
+        test('error stack rows no longer carry the banner rail', () => {
+            // The rail that used to continue through stack frames is gone with the
+            // banner rail; the per-row severity dots/connectors already mark the spine.
             const css = getFlutterBannerStyles();
-            // Rail: border-left on error stack rows (border-left ONLY — a padding-left
-            // here would tie the 14.25em decoration-column rule and could collapse it).
             assert.ok(
-                /\.stack-header\.level-bar-error,\s*\.line\.stack-line\.level-bar-error\s*\{[^}]*border-left:\s*3px\s+solid/.test(css),
-                'error stack rows must carry the 3px rail so the grouping bar is unbroken across frames',
-            );
-            assert.ok(
-                !/\.stack-header\.level-bar-error,\s*\.line\.stack-line\.level-bar-error\s*\{[^}]*padding-left/.test(css),
-                'stack rail rule must NOT set padding-left (it would race the decoration-column rule and break alignment)',
-            );
-            // Spine: the connector override list must include the stack-row selectors.
-            assert.ok(
-                /\.stack-header\.level-bar-error:has\(\+\s*\.level-bar-error\)::after/.test(css)
-                && /\.line\.stack-line\.level-bar-error:has\(\+\s*\.level-bar-error\)::after/.test(css),
-                'error stack rows must share the 0.30em connector override so the spine is one column',
+                !/\.stack-header\.level-bar-error/.test(css),
+                'error stack rows must NOT carry a banner rail anymore',
             );
         });
 
@@ -253,6 +233,50 @@ suite('Flutter exception banner grouping', () => {
             assert.ok(
                 !/\.banner-group-start\s*>\s*\.line-decoration[^}]*visibility:\s*hidden/.test(css),
                 'banner header (start) must keep its visible counter + timestamp',
+            );
+        });
+    });
+
+    suite('collapse — collapsed by default, like stack/continuation groups', () => {
+        test('banner script defines bannerHeaderMap and a toggle, resetting the map', () => {
+            const script = getFlutterBannerScript();
+            assert.ok(script.includes('var bannerHeaderMap'), 'header map must be declared');
+            assert.ok(
+                script.includes('function toggleFlutterBanner('),
+                'toggle must exist so a header click can fold/unfold the block',
+            );
+            assert.ok(
+                /resetFlutterBannerDetector[\s\S]*?bannerHeaderMap = \{\}/.test(script),
+                'reset must clear bannerHeaderMap so a new session drops stale headers',
+            );
+        });
+
+        test('addToData registers the header collapsed by default', () => {
+            const script = getViewerDataAddScript();
+            assert.ok(
+                script.includes('lineItem.bannerCollapsed = true'),
+                'banner header must start collapsed so the block folds to its title',
+            );
+            assert.ok(
+                script.includes('bannerHeaderMap[bannerInfo.groupId] = lineItem'),
+                'header must be registered so calcItemHeight can find its collapse state',
+            );
+        });
+
+        test('calcItemHeight hides body/footer rows when the header is collapsed', () => {
+            const core = getViewerDataHelpersCore();
+            assert.ok(
+                /item\.bannerRole !== 'header'[\s\S]*?bannerHeaderMap\[item\.bannerGroupId\][\s\S]*?bannerCollapsed[\s\S]*?return 0/.test(core),
+                'non-header banner rows must collapse to height 0 when the header is collapsed',
+            );
+        });
+
+        test('renderer emits the header chevron reflecting collapse state', () => {
+            const render = getViewerDataHelpersRender();
+            assert.ok(render.includes('banner-chevron'), 'header must render a disclosure chevron');
+            assert.ok(
+                render.includes('item.bannerCollapsed !== false'),
+                'chevron glyph must reflect the collapsed state',
             );
         });
     });

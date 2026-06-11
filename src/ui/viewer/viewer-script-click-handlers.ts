@@ -30,6 +30,19 @@ if (viewportEl) viewportEl.addEventListener('click', function(e) {
         vscodeApi.postMessage({ type: 'openUrl', url: urlLink.dataset.url || '' });
         return;
     }
+    /* ASCII art block collapse: the chevron on the start row toggles the whole
+       block (toggleAsciiArtBlock resolves the contiguous range from the row idx).
+       Runs early so the click is not consumed by a later whole-row handler. */
+    var artToggleEl = e.target.closest('.art-collapse-chevron');
+    if (artToggleEl) {
+        e.preventDefault();
+        e.stopPropagation();
+        var artRow = artToggleEl.closest('[data-idx]');
+        if (artRow && typeof toggleAsciiArtBlock === 'function') {
+            toggleAsciiArtBlock(parseInt(artRow.dataset.idx, 10));
+        }
+        return;
+    }
     var burstMk = e.target.closest('.slow-query-burst-marker[data-anchor-seq]');
     if (burstMk) {
         e.preventDefault();
@@ -222,6 +235,23 @@ if (viewportEl) viewportEl.addEventListener('click', function(e) {
             var _osel = (typeof window !== 'undefined' && window.getSelection) ? window.getSelection() : null;
             if (!_osel || _osel.isCollapsed) {
                 toggleStackGroup(_oit.groupId);
+                return;
+            }
+        }
+    }
+    /* Flutter exception banner header: whole-row click collapses/expands the block
+       (same "the message IS the toggle" affordance as a stack owner). The header
+       renders through the normal .line path with banner-group-start, so resolve the
+       item via data-idx. Guard on a collapsed selection so drag-to-select the header
+       text is not hijacked into a toggle. */
+    var bannerRow = e.target.closest('.line[data-idx].banner-group-start');
+    if (bannerRow && typeof toggleFlutterBanner === 'function') {
+        var _bIdx = parseInt(bannerRow.dataset.idx, 10);
+        var _bItem = (!isNaN(_bIdx) && allLines[_bIdx]) ? allLines[_bIdx] : null;
+        if (_bItem && _bItem.bannerRole === 'header' && _bItem.bannerGroupId >= 0) {
+            var _bSel = (typeof window !== 'undefined' && window.getSelection) ? window.getSelection() : null;
+            if (!_bSel || _bSel.isCollapsed) {
+                toggleFlutterBanner(_bItem.bannerGroupId);
                 return;
             }
         }
