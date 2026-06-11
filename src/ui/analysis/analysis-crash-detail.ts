@@ -7,6 +7,13 @@ import { extractSourceReference } from '../../modules/source/source-linker';
 import { type StackFrameInfo, renderSmartFrameSection } from './analysis-frame-render';
 import type { CrashlyticsEventDetail, CrashlyticsStackFrame, CrashlyticsIssueEvents } from '../../modules/crashlytics/firebase-crashlytics';
 import type { IssueStats } from '../../modules/crashlytics/crashlytics-stats';
+import { groupCrashThreads, type ThreadGroup } from '../../modules/crashlytics/crashlytics-thread-grouping';
+import type { CrashlyticsThread } from '../../modules/crashlytics/crashlytics-types';
+
+/** Cap on distinct thread groups rendered, so a 100-thread dump can't flood the panel. */
+const maxThreadGroups = 8;
+/** Cap on frames shown per thread group — enough to identify the stack without a wall. */
+const maxThreadFrames = 10;
 
 /** Classify Crashlytics stack frames as app or framework using workspace context. */
 function classifyFrames(frames: readonly CrashlyticsStackFrame[]): StackFrameInfo[] {
@@ -30,11 +37,7 @@ export function renderCrashDetail(detail: CrashlyticsEventDetail): string {
         if (frames.length > 0) { html += renderSmartFrameSection(frames); }
         else { html += '<div class="no-matches">No frames in crash thread</div>'; }
     }
-    const appThreads = detail.appThreads.filter(t => {
-        const wsPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-        return t.frames.some(f => !isFrameworkFrame(f.text, wsPath));
-    });
-    if (appThreads.length > 0) { html += renderAppThreads(appThreads); }
+    if (detail.appThreads.length > 0) { html += renderOtherThreads(detail.appThreads); }
     if (detail.customKeys && detail.customKeys.length > 0) { html += renderKeysSection(detail.customKeys); }
     if (detail.logs && detail.logs.length > 0) { html += renderLogsSection(detail.logs); }
     return html;
@@ -70,23 +73,55 @@ function renderLogsSection(logs: readonly { timestamp?: string; message: string 
     return html + '</details>';
 }
 
-function renderAppThreads(threads: readonly { name: string; frames: readonly CrashlyticsStackFrame[] }[]): string {
-    let html = `<details class="group cd-tile"><summary class="group-header">Other Threads <span class="match-count">${threads.length} with app frames</span></summary>`;
-    for (const t of threads.slice(0, 5)) {
-        html += `<div class="crash-thread-header">${escapeHtml(t.name)}</div>`;
-        const frames = classifyFrames(t.frames);
-        const appFrames = frames.filter(f => f.isApp);
-        for (const f of appFrames.slice(0, 10)) {
-            const badge = '<span class="frame-badge frame-badge-app">APP</span>';
-            if (f.sourceRef) {
-                const file = escapeHtml(f.sourceRef.filePath);
-                html += `<div class="stack-frame frame-app" data-frame-file="${file}" data-frame-line="${f.sourceRef.line}">${badge}<span class="line-text">${escapeHtml(f.text)}</span></div>`;
-            } else {
-                html += `<div class="stack-frame frame-app-nosrc">${badge}<span class="line-text">${escapeHtml(f.text)}</span></div>`;
-            }
-        }
+/**
+ * Render the "Other Threads" panel: every non-crash thread, collapsed by identical stack so the few
+ * distinct threads stand out instead of being buried under dozens of identical native/waiting ones
+ * (plan 054 Stage 5b). Groups beyond the cap are summarized rather than dropped silently.
+ */
+function renderOtherThreads(threads: readonly CrashlyticsThread[]): string {
+    const groups = groupCrashThreads(threads);
+    const count = `<span class="match-count">${threads.length} threads · ${groups.length} unique</span>`;
+    let html = `<details class="group cd-tile"><summary class="group-header">Other Threads ${count}</summary>`;
+    for (const g of groups.slice(0, maxThreadGroups)) { html += renderThreadGroup(g); }
+    if (groups.length > maxThreadGroups) {
+        html += `<div class="crash-thread-more">+${groups.length - maxThreadGroups} more unique threads</div>`;
     }
     return html + '</details>';
+}
+
+/** One thread group: header (name + `×N` collapse badge + the other names), then its frames. */
+function renderThreadGroup(g: ThreadGroup): string {
+    const badge = g.count > 1
+        ? ` <span class="cd-thread-count" title="${g.count} threads with an identical stack">×${g.count}</span>`
+        : '';
+    let html = `<div class="crash-thread-header">${escapeHtml(g.rep.name)}${badge}</div>`;
+    // List the collapsed siblings so a reader can confirm what got merged (capped to stay compact).
+    if (g.count > 1) {
+        const others = g.names.slice(1, 6).map(escapeHtml).join(', ');
+        const overflow = g.count > 6 ? `, +${g.count - 6}` : '';
+        html += `<div class="crash-thread-names">${others}${overflow}</div>`;
+    }
+    return html + renderThreadFrames(g.rep.frames);
+}
+
+/** Show a thread's app frames (actionable); fall back to its top native frames so a native-only
+ * thread still shows what it was doing rather than rendering an empty header. */
+function renderThreadFrames(frames: readonly CrashlyticsStackFrame[]): string {
+    const classified = classifyFrames(frames);
+    const appFrames = classified.filter(f => f.isApp);
+    const show = appFrames.length > 0 ? appFrames.slice(0, maxThreadFrames) : classified.slice(0, 3);
+    return show.map(renderThreadFrame).join('');
+}
+
+/** Render one frame row inside an Other-Threads group (app frames stay click-to-source). */
+function renderThreadFrame(f: StackFrameInfo): string {
+    const badge = `<span class="frame-badge ${f.isApp ? 'frame-badge-app' : 'frame-badge-fw'}">${f.isApp ? 'APP' : 'FW'}</span>`;
+    if (f.isApp && f.sourceRef) {
+        const file = escapeHtml(f.sourceRef.filePath);
+        return `<div class="stack-frame frame-app" data-frame-file="${file}" data-frame-line="${f.sourceRef.line}">${badge}<span class="line-text">${escapeHtml(f.text)}</span></div>`;
+    }
+    const cls = f.isApp ? 'stack-frame frame-app-nosrc' : 'stack-frame frame-fw';
+    return `<div class="${cls}">${badge}<span class="line-text">${escapeHtml(f.text)}</span></div>`;
 }
 
 /** Render device/OS distribution summary across all events in an issue. */
