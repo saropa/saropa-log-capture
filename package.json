@@ -2895,6 +2895,8 @@
   "scripts": {
     "check-types": "tsc --noEmit",
     "verify-nls": "node scripts/modules/verify/verify-nls.js",
+    "generate:nls-coverage": "node scripts/modules/generate/nls-coverage.mjs",
+    "verify:nls-coverage": "node scripts/modules/generate/nls-coverage.mjs --check",
     "verify:webview-catalog": "node scripts/modules/generate/webview-message-catalog.mjs --check",
     "generate:webview-catalog": "node scripts/modules/generate/webview-message-catalog.mjs",
     "verify:host-outbound-catalog": "node scripts/modules/generate/webview-host-outbound-catalog.mjs --check",
@@ -2913,7 +2915,7 @@
     "clean": "node scripts/modules/build/clean.mjs",
     "preflight": "npm run doctor && npm run check-types && npm run verify-nls",
     "generate:db-detector-embed-merge": "node scripts/modules/generate/generate-db-detector-embed-merge.mjs",
-    "compile": "npm run generate:db-detector-embed-merge && npm run verify:node-toolchain && npm run check-types && npm run lint && npm run verify-nls && npm run verify:webview-catalog && npm run verify:host-outbound-catalog && npm run verify:list-commands && node esbuild.js && npm run verify:dist-size",
+    "compile": "npm run generate:db-detector-embed-merge && npm run verify:node-toolchain && npm run check-types && npm run lint && npm run verify-nls && npm run verify:nls-coverage && npm run verify:webview-catalog && npm run verify:host-outbound-catalog && npm run verify:list-commands && node esbuild.js && npm run verify:dist-size",
     "compile-tests": "node -e \"require('fs').rmSync('out', { recursive: true, force: true })\" && tsc -p . --outDir out --noEmit false",
     "lint": "eslint src",
     "package": "npm run verify:node-toolchain && npm run check-types && npm run lint && npm run verify:webview-catalog && npm run verify:host-outbound-catalog && npm run verify:list-commands && node esbuild.js --production && npm run verify:dist-size",
@@ -2927,5 +2929,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "8.0.4"
+  "version": "8.0.5"
 }

@@ -148,6 +148,10 @@ export const stringsA: Record<string, string> = {
     'action.ignoreError': 'Ignore',
     'msg.errorCopied': 'Error copied to clipboard',
     'msg.bookmarkAdded': 'Bookmark added at line {0}. Open the Bookmarks panel in the viewer toolbar to find it.',
+    // Shown once per display language when the editor runs in a locale whose manifest
+    // (command titles, settings, menus) is largely untranslated. {0} = language name,
+    // {1} = coverage percent. The log viewer itself is fully localized; only the chrome lags.
+    'msg.nlsPartialCoverage': "Saropa Log Capture's menus are about {1}% translated into {0}; some commands and settings appear in English. The log viewer itself is fully localized.",
     'action.enable': 'Enable',
     'action.copyAiPrompt': 'Copy prompt for external chat',
     'action.openAiSettings': 'Open AI settings',
