@@ -8,11 +8,13 @@
 import * as vscode from 'vscode';
 import { t } from '../../l10n';
 import type { FlowGraph, ParsedLog } from '../../modules/flow-map/flow-map-model';
-import { buildFlowMapBody } from '../../modules/flow-map/flow-map-html';
+import { buildFlowDiagramBody, buildFlowMapBody } from '../../modules/flow-map/flow-map-html';
 import { flowMapStyles } from './flow-map-panel-styles';
 import { flowMapScript } from './flow-map-panel-script';
+import { flowMapZoomScript } from './flow-map-panel-zoom-script';
 
 const VIEW_TYPE = 'saropaFlowMap';
+const POPOUT_VIEW_TYPE = 'saropaFlowMapDiagram';
 
 /** Inputs needed to render and to service the panel's buttons/links. */
 export interface FlowMapPanelParams {
@@ -31,6 +33,8 @@ export interface FlowMapPanelParams {
 let current: vscode.WebviewPanel | undefined;
 // Latest report shown — the message handler (wired once) reads this so reveals don't stack listeners.
 let currentParams: FlowMapPanelParams | undefined;
+// The optional "pop-out" panel showing only the diagram at full size (plan 056, S3).
+let popout: vscode.WebviewPanel | undefined;
 
 /** Cryptographically-irrelevant nonce for the CSP script/style allowlist. */
 function getNonce(): string {
@@ -80,7 +84,35 @@ function buildHtml(params: FlowMapPanelParams, nonce: string): string {
 ${flowMapStyles(nonce)}</head><body>
 <div class="report-head">${titleHtml(params)}${actions}</div>
 ${body}
-${flowMapScript(nonce)}</body></html>`;
+${flowMapScript(nonce)}
+${flowMapZoomScript(nonce)}</body></html>`;
+}
+
+/** The pop-out panel's HTML: diagram only, full bleed, same lens/popup scripts (no nested pop-out). */
+function buildDiagramHtml(params: FlowMapPanelParams, nonce: string): string {
+    const csp = `default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';`;
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="${csp}">
+${flowMapStyles(nonce)}</head><body>
+<div class="report-head">${titleHtml(params)}</div>
+${buildFlowDiagramBody(params.graph)}
+${flowMapScript(nonce)}
+${flowMapZoomScript(nonce)}</body></html>`;
+}
+
+/** Open (or reveal) the diagram-only pop-out panel beside the report. */
+function showFlowDiagramPanel(params: FlowMapPanelParams): void {
+    if (!popout) {
+        popout = vscode.window.createWebviewPanel(
+            POPOUT_VIEW_TYPE, panelTitle(params), vscode.ViewColumn.Beside,
+            { enableScripts: true, localResourceRoots: [], retainContextWhenHidden: true },
+        );
+        popout.onDidDispose(() => { popout = undefined; });
+        popout.webview.onDidReceiveMessage(handleMessage);
+    }
+    popout.title = panelTitle(params);
+    popout.webview.html = buildDiagramHtml(params, getNonce());
+    popout.reveal(vscode.ViewColumn.Beside);
 }
 
 /** Save the markdown report via a save dialog, then offer to open it. */
@@ -131,6 +163,8 @@ function handleMessage(msg: { type?: string; file?: string; line?: number; text?
     if (!p) { return; }
     if (msg.type === 'saveMarkdown') {
         void saveMarkdown(p);
+    } else if (msg.type === 'popOutFlow') {
+        showFlowDiagramPanel(p);
     } else if (msg.type === 'refreshFlowMap') {
         p.refresh();
     } else if (msg.type === 'showFlowLog') {
@@ -170,10 +204,17 @@ export function showFlowMapPanel(params: FlowMapPanelParams): void {
     current.title = title;
     current.webview.html = buildHtml(params, getNonce());
     current.reveal(vscode.ViewColumn.Active);
+    // Keep an open pop-out diagram in sync after a refresh (it shares the same report).
+    if (popout) {
+        popout.title = title;
+        popout.webview.html = buildDiagramHtml(params, getNonce());
+    }
 }
 
-/** Dispose the panel on extension deactivate. */
+/** Dispose the panel(s) on extension deactivate. */
 export function disposeFlowMapPanel(): void {
     current?.dispose();
     current = undefined;
+    popout?.dispose();
+    popout = undefined;
 }
