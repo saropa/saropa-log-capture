@@ -63,6 +63,11 @@ var flutterBannerCloseRe = /^[\\s\\u2550]*\\u2550{20,}[\\s\\u2550]*$/;
 var activeFlutterBanner = null;
 /* Monotonic id so multiple banners in one session stay distinct; groupId=-1 means no banner. */
 var nextBannerGroupId = 1;
+/* Header line item per groupId. calcItemHeight reads header.bannerCollapsed to
+   hide body/footer rows; the click handler + toggleFlutterBanner flip it. Mirrors
+   the contHeaderMap / groupHeaderMap pattern so banners collapse like stack and
+   continuation groups. Banners are collapsed by default (set in addToData). */
+var bannerHeaderMap = {};
 
 /** True if plain text is the banner's opening rule. */
 function isFlutterBannerOpenLine(plainText) {
@@ -115,9 +120,22 @@ function classifyFlutterBannerLine(plainText) {
     return { groupId: cur, role: 'body' };
 }
 
+/** Toggle a banner group's collapsed state (header stays, body/footer hide/show). */
+function toggleFlutterBanner(groupId) {
+    var hdr = bannerHeaderMap[groupId];
+    if (!hdr) return;
+    /* Two-state flip; default is collapsed (true), so a first click expands. */
+    hdr.bannerCollapsed = (hdr.bannerCollapsed === false);
+    if (typeof recalcAndRender === 'function') { recalcAndRender(); }
+    else { recalcHeights(); renderViewport(true); }
+}
+
 /** Reset banner state (called on clear / new session). */
 function resetFlutterBannerDetector() {
     activeFlutterBanner = null;
+    /* Drop header references so a cleared session does not retain dead line items;
+       allLines is emptied on clear, so any retained header would be stale anyway. */
+    bannerHeaderMap = {};
     /* Keep nextBannerGroupId monotonic across resets so lingering references in
        the DOM never collide with a fresh banner of the same numeric id. */
 }

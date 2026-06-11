@@ -34,6 +34,15 @@ function collapseAllSections() {
             }
         }
     }
+    /* Flutter exception banners collapse with everything else so Collapse All folds
+       error blocks to their headers too. */
+    if (typeof bannerHeaderMap !== 'undefined') {
+        for (gid in bannerHeaderMap) {
+            if (bannerHeaderMap[gid] && bannerHeaderMap[gid].bannerCollapsed !== true) {
+                bannerHeaderMap[gid].bannerCollapsed = true;
+            }
+        }
+    }
     for (var ci = 0; ci < allLines.length; ci++) {
         var cit = allLines[ci];
         if (cit && cit.sqlRepeatDrilldownOpen) {
@@ -58,6 +67,14 @@ function expandAllSections() {
         for (gid in contHeaderMap) {
             if (contHeaderMap[gid] && contHeaderMap[gid].contCollapsed) {
                 contHeaderMap[gid].contCollapsed = false;
+            }
+        }
+    }
+    /* Expand Flutter exception banners too, so Expand All reveals error blocks. */
+    if (typeof bannerHeaderMap !== 'undefined') {
+        for (gid in bannerHeaderMap) {
+            if (bannerHeaderMap[gid] && bannerHeaderMap[gid].bannerCollapsed) {
+                bannerHeaderMap[gid].bannerCollapsed = false;
             }
         }
     }
