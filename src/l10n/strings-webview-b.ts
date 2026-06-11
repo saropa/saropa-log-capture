@@ -25,6 +25,8 @@ export const stringsWebviewB: Record<string, string> = {
     'viewer.deco.identicalLines': '{0} identical lines',
     'viewer.deco.contExpand': 'Click to expand {0} continuation lines',
     'viewer.deco.contCollapse': 'Click to collapse {0} continuation lines',
+    'viewer.art.expand': 'Click to expand this ASCII art block ({0} lines)',
+    'viewer.art.collapse': 'Click to collapse this ASCII art block',
     'viewer.deco.anr': 'ANR Pattern Detected',
     'viewer.deco.recentErrorContext': 'Recent-error context: not the primary faulting line; tinted because a real error or stack line occurred within 2 seconds above.',
 

@@ -73,6 +73,41 @@ export function getAsciiArtStyles(): string {
     vertical-align: top;
 }
 
+/* Collapsed start row: the hidden end row no longer supplies the bottom corners,
+   so round all four so the lone visible row reads as a closed tab, not an open box. */
+.line.art-block-start.art-collapsed {
+    border-radius: 6px;
+}
+
+/* Collapse chevron: pinned to the block's top-right corner, absolutely positioned
+   (the row is position:relative) so it never shifts the white-space:pre box art.
+   overflow:hidden on the row clips at the rounded corner — keep the chevron inset
+   far enough that the glyph stays fully visible. */
+.line.art-block-start .art-collapse-chevron {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    z-index: 1;
+    cursor: pointer;
+    opacity: 0.55;
+    font-size: 0.9em;
+    line-height: 1;
+    color: var(--vscode-terminal-ansiYellow, #dcdcaa);
+    user-select: none;
+}
+
+.line.art-block-start .art-collapse-chevron:hover {
+    opacity: 1;
+}
+
+/* Row count shown only while collapsed ("▸ 7") — muted, sits left of nothing; the
+   glyph + count together announce how many lines fold away. */
+.line.art-block-start .art-collapse-count {
+    margin-left: 0.3em;
+    font-size: 0.85em;
+    opacity: 0.85;
+}
+
 /* No severity gutter bar on art blocks: the box-drawing art is its own visual
    unit, and a left border + margin-left shifted the block and read as a stray
    vertical line breaking the layout. Severity for the block is conveyed by the

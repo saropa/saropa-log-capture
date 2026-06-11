@@ -31,6 +31,8 @@ export const stringsViewerG: Record<string, string> = {
     'viewer.ctx.copyEwJson.title': 'Copy the error or warning block as JSON with the full log path and session details (for analysts)',
     'viewer.ctx.copyDbCluster.label': 'Copy DB cluster',
     'viewer.ctx.copyDbCluster.title': 'Copy all SQL lines in this database timestamp burst',
+    'viewer.ctx.copyAsciiArt.label': 'Copy ASCII art',
+    'viewer.ctx.copyAsciiArt.title': 'Copy every line of this ASCII art block',
 
     // ── Copy & Export submenu ───────────────────────────────────────
     'viewer.ctx.submenu.copyExport': 'Copy & Export',
