@@ -26,6 +26,10 @@ export const stringsWebview: Record<string, string> = {
     'viewer.stackHeader.expanded': 'Stack trace expanded · click to collapse',
     'viewer.stackHeader.preview': 'Stack trace · preview mode · click to expand all',
 
+    // Collapsible Flutter exception banner header tooltips (RenderFlex/assertion dumps).
+    'viewer.bannerHeader.collapsed': 'Exception collapsed · {0} lines · click to expand',
+    'viewer.bannerHeader.expanded': 'Exception expanded · click to collapse',
+
     // Collapsible render-tree descendant-dump header tooltips (plan 052).
     'viewer.treeHeader.single': 'Render tree',
     'viewer.treeHeader.collapsed': 'Render tree collapsed · {0} nodes · click to expand',
