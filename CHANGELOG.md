@@ -28,6 +28,22 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+The Session Flow Map's diagram now centers, scrolls instead of cropping when you zoom in, opens in its own pop-out panel, and shows a full detail card when you double-click a node — plus return-to-caller navigation draws a distinct back arrow. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+
+### Added
+
+- **Double-click a flow node for full detail:** Double-clicking any node in the Session Flow Map diagram opens a detail card listing everything known about that surface — type, walked/source-resolved state, visit count, time on screen, first-entered and last-seen clocks, the source `file:line`, the originating log line, the in-screen action breakdown, and any attached issues. The source and log line are clickable (open in editor / reveal in log). Close with Esc, the ✕, or a click outside (plan 056, S3).
+- **Pop the flow chart into its own panel:** A new ⤢ button in the diagram's overlay toolbar opens the flow chart full-bleed in a panel beside the report, so a tall or wide chart gets the whole panel to itself. It stays in sync when you refresh the report (plan 056, S3).
+- **Return-to-caller back arrows:** When a session closes a screen (or several) and navigates back to an earlier screen, the diagram now draws a distinct dashed-blue back arrow (with ×N when the return repeats) from the closed surface to the caller, recovered from a navigation stack so returns of any depth are detected — not just an immediate A→B→A pop. The Markdown/Mermaid export marks the same edge with a ↩ (plan 056).
+
+### Changed
+
+- **Flow map diagram centers and scrolls instead of cropping when zoomed:** The diagram now lives in a scroll container and zoom scales the SVG's real size, so zooming in grows scrollbars rather than clipping the chart at the panel edge, and the chart is centered (and fit to view) when it is smaller than the viewport. **Center the fault** no longer zooms the whole chart away — it scrolls to the crash node at a readable zoom and flashes it (plan 056, S3).
+- **Flow edge time labels moved off the arrow:** The "time on screen" (dwell) label on each transition is now parked to the right of the arrow shaft instead of painted on top of it, where it was unreadable (plan 056).
+- **Flow map column splitter no longer locks to content width:** Dragging the divider between the Session Flow Map's diagram and detail columns previously stopped at the intrinsic width of the widest cell (a ~260px diagram floor and ~280px detail reserve). It now honors any ratio down to a 20px sliver on each side — the columns crop overflow (`overflow: hidden`, wrap-then-clip) rather than refusing to shrink, and the 20px floor keeps the gripper grabbable so you can always drag back (plan 056).
+
 ## [8.0.4]
 
 When "App Only" is off but a category isn't whitelisted, the output channel now tells you exactly which Debug Console lines were skipped and how to capture them. [log](https://github.com/saropa/saropa-log-capture/blob/v8.0.4/CHANGELOG.md)

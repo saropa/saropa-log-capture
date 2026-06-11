@@ -55,14 +55,23 @@ export function flowMapStyles(nonce: string): string {
      The gap is 0 here because the .col-resize divider supplies the visual gutter (and the drag
      target); a flex gap would otherwise double the space and split the hit area. */
   .report-row { display: flex; flex-wrap: wrap; gap: 0; align-items: flex-start; }
-  /* Width is driven by --diagram-w (set by the resize drag); auto until the user drags. */
-  .diagram-col { flex: 0 0 auto; width: var(--diagram-w, auto); min-width: 260px; max-width: 100%; }
-  .detail-col { flex: 1 1 420px; min-width: 320px; }
+  /* Width is driven by --diagram-w (set by the resize drag); auto until the user drags.
+     min-width is 20px (not the content width) so the user can drag the splitter to any ratio —
+     each column crops what doesn't fit (overflow:hidden) instead of pinning the divider to the
+     widest cell. 20px keeps a sliver of column under the gripper so it stays grabbable. */
+  .diagram-col { flex: 0 0 auto; width: var(--diagram-w, auto); min-width: 20px; max-width: 100%; overflow: hidden; }
+  .detail-col { flex: 1 1 420px; min-width: 20px; overflow: hidden; }
   .detail-col p { max-width: 60ch; }
-  .diagram { position: relative; overflow-x: auto; max-width: 100%; padding: 0.4rem 0 1rem; }
-  /* S2 zoom/pan: a grab cursor signals the diagram is draggable; while panning we switch to grabbing. */
-  .diagram svg { cursor: grab; touch-action: none; }
-  .diagram.fm-panning svg { cursor: grabbing; }
+  .diagram { position: relative; max-width: 100%; padding: 0.4rem 0 1rem; }
+  /* The SVG lives in its own scroll box so zoom (which scales the SVG element's width/height) grows
+     REAL scrollbars instead of clipping the chart, and margin:auto centers it when it is smaller
+     than the box. The toolbar sits in .diagram (not the scroll box) so it stays pinned while panning. */
+  .diagram-scroll { overflow: auto; max-height: 78vh; }
+  .diagram-scroll svg { display: block; margin: 0 auto; cursor: grab; touch-action: none; }
+  .diagram-scroll.fm-panning svg { cursor: grabbing; }
+  /* Pop-out panel: the diagram claims the full panel height. */
+  .diagram-only { padding: 0 1.5rem; }
+  .diagram-only .diagram-scroll { max-height: calc(100vh - 96px); }
 
   /* Overlay zoom toolbar — pinned top-right of the diagram so it stays put while the SVG pans. */
   .fm-zoom-toolbar { position: absolute; top: 0.5rem; right: 0.6rem; z-index: 2; display: flex; gap: 0.25rem; }
@@ -155,6 +164,22 @@ export function flowMapStyles(nonce: string): string {
   tr.sev-perf td:first-child { box-shadow: inset 3px 0 0 #3fb950; }
   @keyframes fm-fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @keyframes fm-pulse { 0%,100% { stroke-opacity: 1; } 50% { stroke-opacity: 0.3; } }
-  @media (prefers-reduced-motion: reduce) { .diagram svg, .fm-crash rect, .fm-node.fm-flash rect { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .diagram-scroll svg, .fm-crash rect, .fm-node.fm-flash rect { animation: none; } }
+
+  /* Node detail popup (double-click a node): a centered modal card over a dimmed backdrop, listing
+     everything known about the surface — type, dwell, times, source, log line, actions, issues. */
+  .fmd-overlay { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(0,0,0,0.5); }
+  .fmd-card { position: relative; max-width: 560px; max-height: 82vh; overflow: auto; background: var(--vscode-editor-background); border: 1px solid var(--vscode-panel-border); border-radius: 10px; padding: 1.1rem 1.3rem; box-shadow: 0 10px 34px rgba(0,0,0,0.5); }
+  .fmd-close { position: absolute; top: 0.5rem; right: 0.5rem; border: none; background: transparent; color: var(--vscode-descriptionForeground); cursor: pointer; font-size: 1rem; padding: 0.15rem 0.4rem; border-radius: 5px; }
+  .fmd-close:hover { background: var(--vscode-toolbar-hoverBackground, rgba(127,127,127,0.18)); color: var(--vscode-foreground); }
+  .fmd-title { font-size: 1.2em; margin: 0 1.6rem 0.7rem 0; word-break: break-word; }
+  .fmd-grid { display: grid; grid-template-columns: max-content 1fr; gap: 0.3rem 0.9rem; font-size: 0.92em; }
+  .fmd-k { color: var(--vscode-descriptionForeground); }
+  .fmd-v { word-break: break-word; }
+  .fmd-h3 { font-size: 1em; margin: 0.9rem 0 0.4rem; }
+  .fmd-issues { margin: 0; padding-left: 1.1rem; font-size: 0.9em; }
+  .fmd-issues li { margin: 0.2rem 0; }
+  .fmd-link { color: var(--vscode-textLink-foreground); cursor: pointer; font-family: var(--vscode-editor-font-family); }
+  .fmd-link:hover { text-decoration: underline; color: var(--vscode-textLink-activeForeground); }
 </style>`;
 }
