@@ -300,21 +300,33 @@ function renderItem(item, idx, prevVis) {
         blankCls += ' recent-error-context';
     }
     var catBadge = getCategoryBadge(item);
-    /* Flutter exception banner grouping: visually connect the header/body/footer
-       lines of an \`════ Exception caught by … ════\` block via banner-group-*
-       CSS classes (left accent rail + background tint, rounded top/bottom).
-       Applied here — not on a wrapper div — so virtualized viewport rendering
-       stays a flat list and no layout reflow happens during expand/scroll. */
+    /* Flutter exception banner grouping: tag the header/body/footer lines of an
+       \`════ Exception caught by … ════\` block via banner-group-* CSS classes (a
+       faint background tint — no left rail) and add a collapse chevron + hidden-line
+       count to the header. Applied here — not on a wrapper div — so virtualized
+       viewport rendering stays a flat list and no layout reflow happens during
+       expand/scroll. */
     var bannerCls = '';
     var bannerChevron = '';
     if (item.bannerGroupId !== undefined && item.bannerGroupId >= 0) {
         if (item.bannerRole === 'header') {
             bannerCls = ' banner-group-start';
-            /* Disclosure triangle reflecting the group's collapse state (collapsed
-               by default). Symbol only — no text — so no l10n is required; the whole
-               header row is the click target (viewer-script-click-handlers.ts). */
+            /* Disclosure triangle reflecting the group's collapse state (collapsed by
+               default). The whole header row is the click target (viewer-script-click-handlers.ts). */
             var _bCollapsed = (item.bannerCollapsed !== false);
-            bannerChevron = '<span class="banner-chevron">' + (_bCollapsed ? '\\u25b6' : '\\u25bc') + '</span>';
+            var _bCount = item.bannerMemberCount || 0;
+            /* Tooltip mirrors the stack-header pattern: collapsed names the hidden
+               count + how to expand. Full sentence via vt() — never concatenated. */
+            var _bTip = (typeof vt === 'function')
+                ? vt(_bCollapsed ? 'viewer.bannerHeader.collapsed' : 'viewer.bannerHeader.expanded', _bCount)
+                : '';
+            var _bTipAttr = _bTip ? ' title="' + _bTip + '"' : '';
+            bannerChevron = '<span class="banner-chevron"' + _bTipAttr + '>' + (_bCollapsed ? '\\u25b6' : '\\u25bc') + '</span>';
+            /* Visible hidden-line count when collapsed, so the folded block still tells
+               the user how much it hides (reuses the existing viewer.meta.lines key). */
+            if (_bCollapsed && _bCount > 0 && typeof vt === 'function') {
+                bannerChevron += '<span class="banner-count">' + vt('viewer.meta.lines', _bCount) + '</span>';
+            }
         }
         else if (item.bannerRole === 'footer') bannerCls = ' banner-group-end';
         else bannerCls = ' banner-group-mid';
