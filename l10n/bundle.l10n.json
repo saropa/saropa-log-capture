@@ -123,6 +123,7 @@
   "Copy": "Copy",
   "Error copied to clipboard": "Error copied to clipboard",
   "Bookmark added at line {0}. Open the Bookmarks panel in the viewer toolbar to find it.": "Bookmark added at line {0}. Open the Bookmarks panel in the viewer toolbar to find it.",
+  "Saropa Log Capture's menus are about {1}% translated into {0}; some commands and settings appear in English. The log viewer itself is fully localized.": "Saropa Log Capture's menus are about {1}% translated into {0}; some commands and settings appear in English. The log viewer itself is fully localized.",
   "Enable": "Enable",
   "Copy prompt for external chat": "Copy prompt for external chat",
   "Open AI settings": "Open AI settings",

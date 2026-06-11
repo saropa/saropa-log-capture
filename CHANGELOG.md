@@ -30,7 +30,7 @@ cspell:disable
 
 ## [8.0.5]
 
-The Session Flow Map's diagram now centers, scrolls instead of cropping when you zoom in, opens in its own pop-out panel, and shows a full detail card when you double-click a node — plus return-to-caller navigation draws a distinct back arrow. Flutter exception blocks now fold to their title (collapsed by default) and the left accent rail on error blocks is gone, keeping the log columns aligned. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+The Session Flow Map's diagram now centers, scrolls instead of cropping when you zoom in, opens in its own pop-out panel, and shows a full detail card when you double-click a node — plus return-to-caller navigation draws a distinct back arrow. Flutter exception blocks now fold to their title (collapsed by default) and the left accent rail on error blocks is gone, keeping the log columns aligned. [log](https://github.com/saropa/saropa-log-capture/blob/v8.0.5/CHANGELOG.md)
 
 ### Added
 
@@ -38,6 +38,7 @@ The Session Flow Map's diagram now centers, scrolls instead of cropping when you
 - **Double-click a flow node for full detail:** Double-clicking any node in the Session Flow Map diagram opens a detail card listing everything known about that surface — type, walked/source-resolved state, visit count, time on screen, first-entered and last-seen clocks, the source `file:line`, the originating log line, the in-screen action breakdown, and any attached issues. The source and log line are clickable (open in editor / reveal in log). Close with Esc, the ✕, or a click outside (plan 056, S3).
 - **Pop the flow chart into its own panel:** A new ⤢ button in the diagram's overlay toolbar opens the flow chart full-bleed in a panel beside the report, so a tall or wide chart gets the whole panel to itself. It stays in sync when you refresh the report (plan 056, S3).
 - **Return-to-caller back arrows:** When a session closes a screen (or several) and navigates back to an earlier screen, the diagram now draws a distinct dashed-blue back arrow (with ×N when the return repeats) from the closed surface to the caller, recovered from a navigation stack so returns of any depth are detected — not just an immediate A→B→A pop. The Markdown/Mermaid export marks the same edge with a ↩ (plan 056).
+- **Honest notice when your editor's language is largely untranslated:** When the extension runs in a display language whose menus and settings are still mostly English (currently every shipped non-English locale, at 22–37% translated), it now shows a one-time notice naming the language and its coverage percent, and reassures that the log viewer itself is fully localized. Shown once per language, never repeated. Backed by a new translation audit (`npm run generate:nls-coverage`) that measures how many manifest strings are actually translated per locale — not just that the keys exist — so the percent can never overstate reality.
 
 ### Changed
 

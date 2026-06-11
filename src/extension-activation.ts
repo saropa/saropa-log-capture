@@ -40,6 +40,7 @@ import { setupWebviewProviders, registerNoRestoreSerializers } from './activatio
 import { setupLineListeners, setupConfigListener, setupScopeContextListener, setupDiagnosticListener } from './activation-listeners';
 import { DiagnosticCache } from './modules/diagnostics/diagnostic-cache';
 import { autoLoadLatest, showWalkthroughOnFirstInstall } from './extension-activation-helpers';
+import { maybeNotifyPartialNlsCoverage } from './l10n/nls-coverage-notice';
 import { initLearningRuntime, flushLearningBuffer } from './modules/learning/learning-runtime';
 import { scheduleLearningSuggestionCheck } from './modules/learning/learning-notifications';
 import { scheduleMaybeAutoEnableAiFromLanguageModels } from './modules/ai/ai-auto-enable';
@@ -258,6 +259,9 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     }
 
     showWalkthroughOnFirstInstall(context);
+
+    // Tell the user once if their editor's display language has largely-English chrome.
+    maybeNotifyPartialNlsCoverage(context);
 
     scheduleMaybeAutoEnableAiFromLanguageModels();
 
