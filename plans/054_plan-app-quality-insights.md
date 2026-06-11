@@ -358,8 +358,9 @@ slice; none needs the dead API):
 - **Context menus** on frames — **DONE** (right-click popover with Copy frame, Copy file path, Open
   file, Create issue from frame; path/open hidden when the frame has no source ref).
 - **Groupings** — smart framework-frame fold + **repeated-frame collapse DONE** (2026-06-10; identical
-  consecutive frames render as one row with a ↻×N badge — see Finish Report). Extending to "other
-  threads" grouping remains open.
+  consecutive frames render as one row with a ↻×N badge) + **"other threads" grouping DONE** (2026-06-10;
+  the Other Threads panel collapses non-crash threads with identical stacks into one ×N row — see Finish
+  Reports).
 
 ### 5c — Clever project integration (#2) — user picked ALL FOUR (2026-05-24 steer)
 
@@ -425,5 +426,29 @@ This work will be reviewed by another AI.
 **Tests:** `analysis-smart-frame.test.js` → 8 passing (+3 new; the 5 pre-existing fold/count tests still pass, confirming no regression to the framework-fold behavior). `npm run check-types` clean; `npm run lint` no warnings on changed files; `npm run compile` passes all verify gates.
 
 **Outstanding (plan stays active):** Stage 5b "other threads" grouping; roadmap #2 symbolication (BIG, blocked on absent symbol artifacts — honest detection/guidance layer is the next step, not symbolication); date-time range + multi-select search; the legacy-hex theme-token sweep in older crashlytics styles. On-device (F5) confirmation of the badge rendering on a real recursive crash is the user's check.
+
+**Finish report appended:** plans/054_plan-app-quality-insights.md
+
+## Finish Report (2026-06-10) — Stage 5b "other threads" grouping
+
+This work will be reviewed by another AI.
+
+**Scope:** (B) VS Code extension (TypeScript — pure grouping module + crash-detail renderer + CSS in both style surfaces + test). No Dart/Flutter app code.
+
+**Context.** This closes the last explicitly-open 5b grouping item. The crash detail already had an "Other Threads" panel, but it (a) listed only threads that contained app frames, hiding the native/waiting threads entirely, and (b) rendered each thread separately, so a real 60-thread dump of identical binder/pool/GC waiters was a wall of duplicates. Symbolication and the wider search/theme items remain open and larger.
+
+**Design decision (the "grouping" fork).** "Other threads grouping" was under-specified, so the concrete choice: collapse **all** non-crash threads by identical stack signature (frame texts joined; thread name ignored so `pool-1-thread-3`/`pool-1-thread-7` on the same stack merge), one representative row per distinct stack with a **×N** badge — the same idiom as the shipped repeated-frame collapse. Broadening to all threads (not just app-frame ones) is safe precisely because grouping collapses the native duplicates that motivated the panel; caps prevent flooding.
+
+**What shipped.**
+- New pure module `crashlytics-thread-grouping.ts` — `groupCrashThreads(threads)` returns `ThreadGroup[]` (`rep`, `count`, `names`) in first-seen order (Map insertion order). No vscode dependency → unit-testable.
+- `analysis-crash-detail.ts` — `renderCrashDetail` now passes every non-crash thread to the new `renderOtherThreads`, which groups, headers "N threads · M unique", renders one row per group with the ×N badge + collapsed sibling names (capped), caps display at 8 groups with a "+K more unique threads" note, and shows app frames when present else the thread's top native frames. Split into `renderThreadGroup` / `renderThreadFrames` / `renderThreadFrame` to keep every function ≤30 lines.
+- CSS for `.cd-thread-count`, `.crash-thread-names`, `.crash-thread-more` added to **both** crash-detail style surfaces (`viewer-styles-crashlytics.ts` cd-body overlay — the live path — and `analysis-panel-styles.ts` editor-tab path), reusing the badge token look.
+- `CHANGELOG.md` — `[8.0.4]` Changed entry.
+
+**Note on l10n:** the crash-detail renderer is hardcoded English throughout (every label: "Other Threads", "Keys", "Logs", "Device Distribution", …); the new strings follow that existing file convention for consistency. Retrofitting the whole panel to the NLS pipeline is a separate, larger task, not part of this plan.
+
+**Tests:** `crashlytics-thread-grouping.test.js` → 6 passing (collapse-with-count, distinct stays separate, group-by-stack-ignoring-name, first-seen order preserved, empty-frame threads group, empty input). `npm run check-types` clean; `npm run lint` no warnings on changed files; `analysis-crash-detail.ts` is 166 lines (under the 300 cap).
+
+**Outstanding (plan stays active):** roadmap #2 symbolication (blocked on absent symbol artifacts); date-time range + multi-select search; the legacy-hex theme-token sweep in older crashlytics styles. On-device (F5) confirmation of the grouped panel rendering on a real multi-thread crash is the user's check.
 
 **Finish report appended:** plans/054_plan-app-quality-insights.md

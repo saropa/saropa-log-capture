@@ -130,6 +130,10 @@ details[open] > .group-header::before { content: '▼ '; }
 .crash-detail { overflow: hidden; max-height: 0; transition: max-height 0.3s ease; }
 .crash-detail.expanded { max-height: 2000px; padding: 4px 0; border-top: 1px solid var(--vscode-panel-border); }
 .crash-thread-header { padding: 4px 12px; font-size: 11px; font-weight: 600; color: var(--vscode-descriptionForeground); }
+/* Plan 054 5b: Other-Threads grouping — collapsed-thread count badge, sibling names, overflow note. */
+.cd-thread-count { padding: 0 5px; border-radius: 3px; font-size: 10px; font-weight: 700; color: var(--vscode-badge-foreground); background: var(--vscode-badge-background); }
+.crash-thread-names { padding: 0 12px 4px; font-size: 10px; color: var(--vscode-descriptionForeground); }
+.crash-thread-more { padding: 6px 12px 0; font-size: 11px; color: var(--vscode-descriptionForeground); font-style: italic; }
 .crash-loading { padding: 6px 24px; font-size: 12px; display: flex; align-items: center; gap: 8px; color: var(--vscode-descriptionForeground); }
 .crash-expand-icon { float: right; font-size: 10px; color: var(--vscode-descriptionForeground); transition: transform 0.2s; }
 .fb-item.detail-open .crash-expand-icon { transform: rotate(90deg); }
