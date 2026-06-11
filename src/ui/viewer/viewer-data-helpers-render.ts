@@ -199,6 +199,9 @@ function renderItem(item, idx, prevVis) {
     if (abp === 'start') sepCls += ' art-block-start';
     else if (abp === 'middle') sepCls += ' art-block-middle';
     else if (abp === 'end') sepCls += ' art-block-end';
+    /* Collapsed start row: full rounded border (its hidden end row no longer
+       supplies the bottom corners) so the lone visible row reads as a closed tab. */
+    if (abp === 'start' && item.artCollapsed) sepCls += ' art-collapsed';
     /* Shimmer-once gate. renderViewport() rebuilds the whole visible DOM from
        scratch on every scroll / incoming-line render (atomic replaceChildren
        swap — see viewer-data-viewport.ts), so a CSS animation on the bare
@@ -303,8 +306,16 @@ function renderItem(item, idx, prevVis) {
        Applied here — not on a wrapper div — so virtualized viewport rendering
        stays a flat list and no layout reflow happens during expand/scroll. */
     var bannerCls = '';
+    var bannerChevron = '';
     if (item.bannerGroupId !== undefined && item.bannerGroupId >= 0) {
-        if (item.bannerRole === 'header') bannerCls = ' banner-group-start';
+        if (item.bannerRole === 'header') {
+            bannerCls = ' banner-group-start';
+            /* Disclosure triangle reflecting the group's collapse state (collapsed
+               by default). Symbol only — no text — so no l10n is required; the whole
+               header row is the click target (viewer-script-click-handlers.ts). */
+            var _bCollapsed = (item.bannerCollapsed !== false);
+            bannerChevron = '<span class="banner-chevron">' + (_bCollapsed ? '\\u25b6' : '\\u25bc') + '</span>';
+        }
         else if (item.bannerRole === 'footer') bannerCls = ' banner-group-end';
         else bannerCls = ' banner-group-mid';
     }
@@ -315,12 +326,25 @@ function renderItem(item, idx, prevVis) {
        wrapper in deco). No trailing chip after html anymore — see the
        counter-row affordance in buildDecoParts. */
     var baseCls = 'line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + bannerCls + dbTsBurstCls;
-    var msgInner = contBadge + elapsed + badge + catBadge + html;
+    var msgInner = bannerChevron + contBadge + elapsed + badge + catBadge + html;
+    /* Collapse affordance — start row only. Absolutely positioned (CSS) over the
+       block's top-right corner so it never shifts the white-space:pre box art.
+       Collapsed shows ▸ + the row count ("N"); expanded shows ▾. The whole block
+       toggles via toggleAsciiArtBlock (click handler keys on .art-collapse-chevron). */
+    var artChevron = '';
+    if (abp === 'start') {
+        var _artCol = !!item.artCollapsed;
+        var _artGlyph = _artCol ? '\\u25B8' : '\\u25BE';
+        var _artCnt = item.artBlockCount || 0;
+        var _artCntHtml = (_artCol && _artCnt > 0) ? '<span class="art-collapse-count">' + _artCnt + '</span>' : '';
+        var _artTip = _artCol ? vt('viewer.art.expand', _artCnt) : vt('viewer.art.collapse');
+        artChevron = '<span class="art-collapse-chevron" data-art-toggle="1" title="' + _artTip + '">' + _artGlyph + _artCntHtml + '</span>';
+    }
     /* Art-block rows (start/middle/end) keep the legacy flat structure: their
        continuous border + box-drawing alignment break under the gutter grid.
        Not migrated to .cols (plan 055 phasing). */
     if (isArtBlock) {
-        return gap + '<div class="' + baseCls + '"' + idxAttr + titleAttr + '>' + stackGutter + deco + msgInner + '</div>' + annHtml;
+        return gap + '<div class="' + baseCls + '"' + idxAttr + titleAttr + '>' + artChevron + stackGutter + deco + msgInner + '</div>' + annHtml;
     }
     /* Grid column model: each decoration datum is its own clipping cell; the
        message is a separate .line-msg cell (min-width:0) so nothing can paint
