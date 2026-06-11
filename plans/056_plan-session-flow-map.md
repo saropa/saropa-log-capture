@@ -1,6 +1,6 @@
 # Plan 056 — Session Flow Map (screen-transition diagram)
 
-## Status: S1 implemented · S2 in progress (pan/zoom + jump-to-crash shipped 2026-06-10; live log-filtering still proposed)
+## Status: S1 implemented · S2 shipped · S3 shipped (2026-06-11: CSS-size zoom that scrolls instead of cropping + centers/fits, fixed center-on-fault, diagram pop-out panel, double-click node detail card, return-to-caller back arrows, edge time labels off the arrow, splitter floors lowered to 20px) · live log-filtering still proposed
 
 **S1 (the combined session report) shipped** as the `saropaLogCapture.exportFlowMap` command —
 log parser, error-causing-widget parser, static source scan (contacts preset), graph builder
