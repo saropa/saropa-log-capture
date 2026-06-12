@@ -3,7 +3,7 @@
 import { getAccessToken } from './firebase-crashlytics';
 import { detectPackageName } from '../misc/app-identity';
 import { classifyHttpStatus, logCrashlytics, type DiagnosticDetails } from './crashlytics-diagnostics';
-import type { VitalsQueryResponse, VitalsSnapshot } from './google-play-vitals-types';
+import type { VitalsQueryResponse, VitalsRow, VitalsSnapshot } from './google-play-vitals-types';
 
 const apiBase = 'https://playdeveloperreporting.googleapis.com/v1beta1';
 const cacheTtl = 15 * 60_000;
@@ -38,6 +38,8 @@ export async function queryVitals(): Promise<VitalsSnapshot | undefined> {
     const snapshot: VitalsSnapshot = {
         crashRate: extractLatestRate(crashData),
         anrRate: extractLatestRate(anrData),
+        crashRateSeries: extractSeries(crashData),
+        anrRateSeries: extractSeries(anrData),
         queriedAt: Date.now(),
         packageName,
     };
@@ -66,14 +68,25 @@ async function queryMetricSet(
     return fetchJson(url, token, body) as Promise<VitalsQueryResponse | undefined>;
 }
 
-function extractLatestRate(data: VitalsQueryResponse | undefined): number | undefined {
-    if (!data?.rows || data.rows.length === 0) { return undefined; }
-    const last = data.rows[data.rows.length - 1];
-    const metric = last.metrics ? Object.values(last.metrics)[0] : undefined;
+/** Read one row's first metric as a percent (rate * 100), or undefined when absent/non-numeric. */
+function rowRate(row: VitalsRow): number | undefined {
+    const metric = row.metrics ? Object.values(row.metrics)[0] : undefined;
     const raw = metric?.decimalValue?.value;
     if (!raw) { return undefined; }
     const val = parseFloat(raw);
     return isNaN(val) ? undefined : val * 100;
+}
+
+function extractLatestRate(data: VitalsQueryResponse | undefined): number | undefined {
+    if (!data?.rows || data.rows.length === 0) { return undefined; }
+    return rowRate(data.rows[data.rows.length - 1]);
+}
+
+/** The full daily series (oldest→newest, percent). Rows with no numeric metric are dropped. */
+function extractSeries(data: VitalsQueryResponse | undefined): number[] | undefined {
+    if (!data?.rows || data.rows.length === 0) { return undefined; }
+    const series = data.rows.map(rowRate).filter((v): v is number => v !== undefined);
+    return series.length > 0 ? series : undefined;
 }
 
 function daysAgo(n: number): { year: number; month: number; day: number } {

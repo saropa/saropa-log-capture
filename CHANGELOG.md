@@ -30,6 +30,10 @@ cspell:disable
 
 ## [Unreleased]
 
+### Added
+
+- **Trend sparkline on the Vitals panel:** The Crash Rate and ANR Rate cards now show a small line chart of the last several days beneath the number, so you can see at a glance whether a rate is climbing, falling, or steady — not just today's value. The data was already being fetched and thrown away; nothing new is requested from Google Play.
+
 ### Changed
 
 - **The "Open in Firebase" arrow now deep-links to the exact issue:** Clicking ↗ beside a crash's name previously could only open the whole issues list. It now opens that specific issue in the Firebase Crashlytics console (the issue ids match between the two), so you land on the crash you were looking at instead of hunting for it.

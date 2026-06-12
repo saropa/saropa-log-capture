@@ -24,6 +24,13 @@ export interface VitalsQueryResponse {
 export interface VitalsSnapshot {
     readonly crashRate?: number;
     readonly anrRate?: number;
+    /**
+     * Daily rate series (oldest→newest, percent) over the queried window, for the trend sparkline.
+     * The DAILY query already returns one row per day; this keeps the whole series instead of
+     * discarding all but the last row. Empty/undefined when the API returned no rows.
+     */
+    readonly crashRateSeries?: readonly number[];
+    readonly anrRateSeries?: readonly number[];
     readonly queriedAt: number;
     readonly packageName: string;
 }
