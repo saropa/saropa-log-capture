@@ -1369,6 +1369,12 @@
           "type": "number",
           "title": "%config.firebase.refreshInterval.title%"
         },
+        "saropaLogCapture.firebase.notifyNewIssues": {
+          "default": false,
+          "description": "%config.firebase.notifyNewIssues.description%",
+          "type": "boolean",
+          "title": "%config.firebase.notifyNewIssues.title%"
+        },
         "saropaLogCapture.firebase.versionFilter": {
           "default": "",
           "description": "%config.firebase.versionFilter.description%",
