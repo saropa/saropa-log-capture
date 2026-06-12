@@ -72,12 +72,36 @@ ${reason}
 <div role="main" aria-label="Vitals">
 <div class="vt-toolbar"><span class="vt-title">Vitals ${refreshNote}</span><button class="vt-refresh" onclick="postMsg('refresh')" aria-label="Refresh Vitals data">Refresh</button></div>
 <div class="vt-pkg">${escapeHtml(snapshot.packageName)}</div>
+${renderCrashFree(snapshot.crashRate, snapshot.crashRateSeries)}
 ${renderMetric('Crash Rate', snapshot.crashRate, thresholds.crashRate, snapshot.crashRateSeries)}
 ${renderMetric('ANR Rate', snapshot.anrRate, thresholds.anrRate, snapshot.anrRateSeries)}
 <div class="vt-footer" onclick="postMsg('openPlayConsole')">Open Play Console</div>
 </div>
 <script nonce="${nonce}">const v=acquireVsCodeApi();function postMsg(t){v.postMessage({type:t})}</script>
 </body></html>`;
+}
+
+/**
+ * Headline "crash-free sessions" figure — the single number a team checks daily, mirroring the
+ * Firebase console. Derived as 100 − crashRate (session-denominated). Labeled "sessions" on purpose:
+ * Firebase's separate crash-free *users* metric uses a distinct-user denominator we do not query here
+ * (that is a separate add), so this must not be presented as crash-free users. The period delta is
+ * computed from the daily series (first day → latest); a RISING crash-free % is good (green ↑).
+ */
+function renderCrashFree(crashRate: number | undefined, series?: readonly number[]): string {
+    if (crashRate === undefined) { return ''; }
+    const free = 100 - crashRate;
+    let delta = '';
+    if (series && series.length >= 2) {
+        // crash-free delta = drop in crash rate over the window (start rate − latest rate).
+        const change = series[0] - series[series.length - 1];
+        if (Math.abs(change) >= 0.005) {
+            const up = change >= 0;
+            delta = `<span class="vt-cf-delta ${up ? 'vt-cf-up' : 'vt-cf-down'}">${up ? '↑' : '↓'} ${Math.abs(change).toFixed(2)}%</span>`;
+        }
+    }
+    return `<div class="vt-crashfree"><span class="vt-cf-label">Crash-free sessions</span>`
+        + `<span class="vt-cf-value">${free.toFixed(2)}%</span>${delta}</div>`;
 }
 
 function renderMetric(label: string, rate: number | undefined, threshold: number, series?: readonly number[]): string {
@@ -101,6 +125,12 @@ function getStyles(): string {
 .vt-good .vt-value{color:var(--vscode-testing-iconPassed, #388e3c)}
 .vt-bad .vt-value{color:var(--vscode-errorForeground)}
 .vt-na{opacity:0.5;font-style:italic}
+.vt-crashfree{border:1px solid var(--vscode-panel-border);border-radius:4px;padding:8px;margin-bottom:8px;display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}
+.vt-cf-label{font-weight:600;flex:1}
+.vt-cf-value{font-size:1.6em;font-weight:700;color:var(--vscode-testing-iconPassed,#388e3c)}
+.vt-cf-delta{font-size:11px;font-weight:600}
+.vt-cf-up{color:var(--vscode-testing-iconPassed,#388e3c)}
+.vt-cf-down{color:var(--vscode-errorForeground)}
 .vt-spark{width:100%;height:18px;margin-top:4px;opacity:0.85}
 .vt-good .vt-spark{color:var(--vscode-testing-iconPassed,#388e3c)}
 .vt-bad .vt-spark{color:var(--vscode-errorForeground)}
