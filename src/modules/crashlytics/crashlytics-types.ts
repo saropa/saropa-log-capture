@@ -19,6 +19,11 @@ export interface CrashlyticsIssue {
     readonly state: 'OPEN' | 'CLOSED' | 'REGRESSION' | 'UNKNOWN';
     readonly firstVersion?: string;
     readonly lastVersion?: string;
+    /**
+     * Locally-derived (NOT from the API): the issue spans more than one app version, i.e. it has
+     * recurred across at least one release. Set by `deriveIssueSignals`; undefined until derived.
+     */
+    readonly repetitive?: boolean;
 }
 
 /** Per-step status for the setup checklist (ok, missing, or not yet checked because a prior step failed). */
