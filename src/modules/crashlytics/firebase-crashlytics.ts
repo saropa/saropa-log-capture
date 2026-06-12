@@ -7,7 +7,7 @@ import { resolveGcloudCmd, resetGcloudLocatorCache } from './gcloud-locator';
 import { getAccessTokenFromServiceAccount } from './crashlytics-service-account';
 import { detectPackageName } from '../misc/app-identity';
 import { deriveIssueSignals } from './crashlytics-issue-signals';
-import { fetchIssueBreakdown, fetchIssueFilterIndex, fetchIssueTrends, type IssueBreakdown, type IssueFilterIndex } from './play-reporting-metrics';
+import { fetchIssueBreakdown, fetchIssueFilterIndex, fetchIssueTrends, fetchProcessStates, type IssueBreakdown, type IssueFilterIndex, type StatEntry } from './play-reporting-metrics';
 import { logCrashlytics, classifyGcloudError, classifyTokenError, firebaseConfigSetupHint, type DiagnosticDetails } from './crashlytics-diagnostics';
 import type { CrashlyticsIssueEvents, CrashlyticsEventDetail, FirebaseContext, FirebaseConfig, SetupChecklist } from './crashlytics-types';
 export type { CrashlyticsIssue, CrashlyticsStackFrame, CrashlyticsEventDetail, CrashlyticsIssueEvents, FirebaseContext, SetupChecklist, SetupStepStatus } from './crashlytics-types';
@@ -267,6 +267,20 @@ export async function getIssueBreakdown(issueId: string): Promise<IssueBreakdown
         return await fetchIssueBreakdown({ packageName, token, timeRange, quotaProject: config.projectId }, issueId);
     } catch {
         return undefined;
+    }
+}
+
+/** Foreground/background split for one issue (the "Device states" panel). Never throws; [] on failure. */
+export async function getProcessStates(issueId: string): Promise<StatEntry[]> {
+    try {
+        const token = await getAccessToken();
+        const config = await detectFirebaseConfig();
+        const packageName = await detectPackageName();
+        if (!token || !config || !packageName) { return []; }
+        const timeRange = vscode.workspace.getConfiguration('saropaLogCapture.firebase').get<string>('timeRange', 'LAST_7_DAYS');
+        return await fetchProcessStates({ packageName, token, timeRange, quotaProject: config.projectId }, issueId);
+    } catch {
+        return [];
     }
 }
 
