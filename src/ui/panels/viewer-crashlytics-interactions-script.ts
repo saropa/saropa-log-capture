@@ -162,6 +162,10 @@ export function getCrashlyticsInteractionsScript(): string {
     var cpFilterbar = document.getElementById('cp-filterbar');
     var cpKind = 'all', cpSearchText = '', cpFVer = '', cpFDev = '', cpFOs = '', cpIndexRequested = false;
     var cpRegexOn = false, cpRegexObj = null;
+    /* Sort key for the issue list. The API returns issues already ordered by event count desc, so
+       'events' reproduces the server order; 'users' re-sorts client-side. Sorting reorders the DOM
+       rows (appendChild moves nodes); it is independent of the per-row display filter above. */
+    var cpSort = 'events';
 
     /* Recompile the search term when the text or the regex toggle changes. In regex mode an invalid
        pattern is non-fatal: cpRegexObj stays null, the input shows the invalid outline, and the
@@ -182,6 +186,16 @@ export function getCrashlyticsInteractionsScript(): string {
         var hay = r.getAttribute('data-search') || '';
         if (cpRegexOn) { return !cpRegexObj || cpRegexObj.test(hay); }
         return !cpSearchText || hay.indexOf(cpSearchText) >= 0;
+    }
+
+    /* Reorder the issue rows by the chosen metric (descending). appendChild moves existing nodes, so
+       this just rearranges; it never rebuilds rows or touches their filter display state. */
+    function applyCpSort() {
+        if (!cpIssuesEl) return;
+        var attr = cpSort === 'users' ? 'data-users' : 'data-events';
+        var rows = Array.prototype.slice.call(cpIssuesEl.querySelectorAll('.cp-item'));
+        rows.sort(function(a, b) { return (Number(b.getAttribute(attr)) || 0) - (Number(a.getAttribute(attr)) || 0); });
+        rows.forEach(function(r) { cpIssuesEl.appendChild(r); });
     }
 
     function cpHas(item, attr, want) { return !want || (item.getAttribute(attr) || '').split(',').indexOf(want) >= 0; }
@@ -216,6 +230,7 @@ export function getCrashlyticsInteractionsScript(): string {
         cpIndexRequested = false;
         var rows = cpIssuesEl ? cpIssuesEl.querySelectorAll('.cp-item') : [];
         cpFillSelect(document.getElementById('cp-ver'), cpUnion(rows, 'data-versions'));
+        applyCpSort();
         applyCpFilters();
     }
     function applyCpFilterIndex(index) {
@@ -247,6 +262,7 @@ export function getCrashlyticsInteractionsScript(): string {
         var ver = document.getElementById('cp-ver'); if (ver) ver.addEventListener('change', function() { cpFVer = ver.value; applyCpFilters(); });
         var dev = document.getElementById('cp-dev'); if (dev) dev.addEventListener('change', function() { cpFDev = dev.value; applyCpFilters(); });
         var os = document.getElementById('cp-os'); if (os) os.addEventListener('change', function() { cpFOs = os.value; applyCpFilters(); });
+        var sort = document.getElementById('cp-sort'); if (sort) sort.addEventListener('change', function() { cpSort = sort.value; applyCpSort(); });
         function ensureIndex() { if (cpIndexRequested) return; cpIndexRequested = true; vscodeApi.postMessage({ type: 'fetchCrashlyticsFilterIndex' }); }
         [dev, os].forEach(function(el) { if (el) { el.addEventListener('mousedown', ensureIndex); el.addEventListener('focus', ensureIndex); } });
     })();
