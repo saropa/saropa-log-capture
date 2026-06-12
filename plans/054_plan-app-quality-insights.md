@@ -599,6 +599,7 @@ query and belongs after 6a proves the sparkline rendering.
 ### Stage 6 build log
 
 - **6a app-level sparkline — DONE (2026-06-12).** See "Finish Report (2026-06-12) — Stage 6a" below.
+- **6b crash-free % headline — DONE (2026-06-12).** Headline "Crash-free sessions" (100 − crashRate) + period-delta arrow added above the rate cards in `vitals-panel.ts`; rate cards retained. Hardcoded English per the file's existing convention (panel has no `t()`; full l10n retrofit is separate). Display-only arithmetic; the delta-sign invariant (rising crash-free = falling rate = good) is commented at `renderCrashFree`. Crash-free *users* exact parity is deferred to T3.3.
 
 ## Finish Report (2026-06-12) — Stage 6a app-level trend sparkline
 
