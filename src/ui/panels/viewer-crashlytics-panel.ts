@@ -160,6 +160,9 @@ export function getCrashlyticsPanelScript(): string {
         // Locally-derived "Repetitive" tag (recurs across >1 app version); the API has no such signal.
         var rep = issue.repetitive
             ? ' <span class="cp-badge cp-badge-repetitive" title="' + vt('viewer.crashlytics.badge.repetitiveTip') + '">' + vt('viewer.crashlytics.badge.repetitive') + '</span>' : '';
+        // Locally-derived "Regressed" tag (gone in the previous scan, back now); also not in the API.
+        var regr = issue.regressed
+            ? ' <span class="cp-badge cp-badge-regressed" title="' + vt('viewer.crashlytics.badge.regressedTip') + '">' + vt('viewer.crashlytics.badge.regressed') + '</span>' : '';
         var users = issue.userCount > 0
             ? ' \\u00b7 ' + vt(issue.userCount !== 1 ? 'viewer.crashlytics.usersMany' : 'viewer.crashlytics.usersOne', issue.userCount) : '';
         var ver = formatVersionRange(issue);
@@ -178,7 +181,7 @@ export function getCrashlyticsPanelScript(): string {
             + ' data-events="' + esc(String(issue.eventCount)) + '" data-users="' + esc(String(issue.userCount)) + '"'
             + ' data-fatal="' + (issue.isFatal ? '1' : '0') + '" data-fv="' + esc(issue.firstVersion || '') + '" data-lv="' + esc(issue.lastVersion || '') + '"'
             + ' data-kind="' + esc(issue.kind || 'unknown') + '" data-state="' + esc(issue.state || 'UNKNOWN') + '" data-versions="' + esc(versions.join(',')) + '" data-search="' + esc(searchText) + '">'
-            + '<div class="cp-title">' + badge + state + rep + ' ' + esc(issue.title) + ' <span class="cp-expand-icon">\\u2197</span></div>'
+            + '<div class="cp-title">' + badge + state + regr + rep + ' ' + esc(issue.title) + ' <span class="cp-expand-icon">\\u2197</span></div>'
             + '<div class="cp-meta">' + esc(issue.subtitle) + ' \\u00b7 ' + vt('viewer.crashlytics.events', issue.eventCount) + users + ver + '</div></div>';
     }
 
