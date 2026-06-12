@@ -1607,5 +1607,20 @@
   "Visits": "방문을 위한 방문",
   "not walked": "걷지 않고 걸었다.",
   "walked": "걸어서 걸어다니며",
-  "walked · source-resolved": "걸어갔고 · 소스-해결된"
+  "walked · source-resolved": "걸어갔고 · 소스-해결된",
+  "View": "보기",
+  "Archived “{0}”. Turn on “Show archived” to find it again.": "「{0}」을(를) 보관했습니다. 다시 찾으려면 '보관됨 표시'를 켜세요.",
+  "{0} new or returned Crashlytics issue(s) detected.": "새로 발생했거나 다시 나타난 Crashlytics 문제 {0}건이 감지되었습니다.",
+  "{0} new Crashlytics issue(s) since you last looked.": "마지막으로 확인한 이후 새로운 Crashlytics 문제 {0}건이 있습니다.",
+  "Restored “{0}” to the issue list.": "「{0}」을(를) 문제 목록으로 복원했습니다.",
+  "Archive (hide locally)": "보관 (로컬에서 숨기기)",
+  "Regressed": "재발생",
+  "Came back after disappearing in an earlier scan": "이전 스캔에서 사라졌다가 다시 나타났습니다",
+  "Repetitive": "반복됨",
+  "Seen across more than one app version": "두 개 이상의 앱 버전에서 발견됨",
+  "Show archived": "보관됨 표시",
+  "Most events": "이벤트 많은 순",
+  "Sort issues by": "문제 정렬 기준",
+  "Most users": "사용자 많은 순",
+  "Unarchive": "보관 해제"
 }
