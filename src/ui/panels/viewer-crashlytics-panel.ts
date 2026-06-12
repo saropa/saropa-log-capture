@@ -35,6 +35,7 @@ export function getCrashlyticsPanelHtml(): string {
             <select id="cp-ver" class="cp-fselect" title="${t('viewer.crashlytics.filter.version')}" aria-label="${t('viewer.crashlytics.filter.version')}"><option value="">${t('viewer.crashlytics.filter.verAbbr')}</option></select>
             <select id="cp-dev" class="cp-fselect" title="${t('viewer.crashlytics.filter.device')}" aria-label="${t('viewer.crashlytics.filter.device')}"><option value="">${t('viewer.crashlytics.filter.devAbbr')}</option></select>
             <select id="cp-os" class="cp-fselect" title="${t('viewer.crashlytics.filter.os')}" aria-label="${t('viewer.crashlytics.filter.os')}"><option value="">${t('viewer.crashlytics.filter.osAbbr')}</option></select>
+            <select id="cp-sort" class="cp-fselect" title="${t('viewer.crashlytics.sort.label')}" aria-label="${t('viewer.crashlytics.sort.label')}"><option value="events">${t('viewer.crashlytics.sort.events')}</option><option value="users">${t('viewer.crashlytics.sort.users')}</option></select>
         </div>
     </div>
     <div class="crashlytics-panel-content">
