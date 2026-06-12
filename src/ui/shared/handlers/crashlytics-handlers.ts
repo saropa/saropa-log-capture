@@ -8,10 +8,11 @@
 import * as vscode from 'vscode';
 import { t } from '../../../l10n';
 import {
-    getFirebaseContext, getIssueFilterIndex,
+    getFirebaseContext, getIssueFilterIndex, getIssueTrends,
     clearIssueListCache, gcloudInstallUrl, getGcloudInstallCommand, findBestGoogleServicesJson,
     type FirebaseContext,
 } from '../../../modules/crashlytics/firebase-crashlytics';
+import { renderSparkline } from '../../panels/vitals-sparkline';
 import { serializeContext } from './crashlytics-serializers';
 import { readArchivedIds, setIssueArchived } from '../../../modules/crashlytics/crashlytics-io';
 import { getOutputChannel, playReportingScopeFix } from '../../../modules/crashlytics/crashlytics-diagnostics';
@@ -87,6 +88,24 @@ export async function handleCrashlyticsValidate(post: PostFn): Promise<void> {
         void vscode.window.showWarningMessage(summary, t('action.showDetails')).then(sel => { if (sel) { channel.show(); } });
     } catch {
         post({ type: 'crashlyticsConnectionReport', report: { steps: [], ok: false, checkedAt: Date.now() } });
+    }
+}
+
+/**
+ * Lazy: fetch per-issue daily trend series, render each to a compact SVG sparkline (host-side, reusing
+ * the tested renderer), and push a {shortIssueId → svg} map to the webview. Never throws.
+ */
+export async function handleCrashlyticsTrends(post: PostFn): Promise<void> {
+    try {
+        const trends = await getIssueTrends();
+        const svgByIssue: Record<string, string> = {};
+        for (const [issueId, series] of Object.entries(trends)) {
+            const svg = renderSparkline(series, 56, 14);
+            if (svg) { svgByIssue[issueId] = svg; }
+        }
+        if (Object.keys(svgByIssue).length > 0) { post({ type: 'crashlyticsTrends', trends: svgByIssue }); }
+    } catch {
+        // Trends are decorative; failure leaves rows without a mini-chart.
     }
 }
 

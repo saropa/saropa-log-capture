@@ -7,7 +7,7 @@ import { resolveGcloudCmd, resetGcloudLocatorCache } from './gcloud-locator';
 import { getAccessTokenFromServiceAccount } from './crashlytics-service-account';
 import { detectPackageName } from '../misc/app-identity';
 import { deriveIssueSignals } from './crashlytics-issue-signals';
-import { fetchIssueBreakdown, fetchIssueFilterIndex, type IssueBreakdown, type IssueFilterIndex } from './play-reporting-metrics';
+import { fetchIssueBreakdown, fetchIssueFilterIndex, fetchIssueTrends, type IssueBreakdown, type IssueFilterIndex } from './play-reporting-metrics';
 import { logCrashlytics, classifyGcloudError, classifyTokenError, firebaseConfigSetupHint, type DiagnosticDetails } from './crashlytics-diagnostics';
 import type { CrashlyticsIssueEvents, CrashlyticsEventDetail, FirebaseContext, FirebaseConfig, SetupChecklist } from './crashlytics-types';
 export type { CrashlyticsIssue, CrashlyticsStackFrame, CrashlyticsEventDetail, CrashlyticsIssueEvents, FirebaseContext, SetupChecklist, SetupStepStatus } from './crashlytics-types';
@@ -267,6 +267,20 @@ export async function getIssueBreakdown(issueId: string): Promise<IssueBreakdown
         return await fetchIssueBreakdown({ packageName, token, timeRange, quotaProject: config.projectId }, issueId);
     } catch {
         return undefined;
+    }
+}
+
+/** Per-issue daily event-count series (issueId → counts) for the list trend mini-chart. Never throws. */
+export async function getIssueTrends(): Promise<Record<string, number[]>> {
+    try {
+        const token = await getAccessToken();
+        const config = await detectFirebaseConfig();
+        const packageName = await detectPackageName();
+        if (!token || !config || !packageName) { return {}; }
+        const timeRange = vscode.workspace.getConfiguration('saropaLogCapture.firebase').get<string>('timeRange', 'LAST_7_DAYS');
+        return await fetchIssueTrends({ packageName, token, timeRange, quotaProject: config.projectId });
+    } catch {
+        return {};
     }
 }
 

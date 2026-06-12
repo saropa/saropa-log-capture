@@ -10,6 +10,7 @@
 import * as https from 'https';
 import { classifyHttpStatus, type DiagnosticDetails } from './crashlytics-diagnostics';
 import { issueShortId } from './play-reporting-mappers';
+import { buildTrends } from './play-reporting-trends';
 import type { PlayQuery } from './play-reporting-errors';
 
 const apiBase = 'https://playdeveloperreporting.googleapis.com/v1beta1';
@@ -125,6 +126,19 @@ export async function fetchIssueFilterIndex(q: PlayQuery): Promise<IssueFilterIn
         return { devicesByIssue: devices, osByIssue };
     } catch {
         return { devicesByIssue: {}, osByIssue: {} };
+    }
+}
+
+/** Per-issue daily event-count series over the window (issueId → counts). Never throws; {} on failure. */
+export async function fetchIssueTrends(q: PlayQuery): Promise<Record<string, number[]>> {
+    try {
+        const end = await freshnessEnd(q);
+        const ts = { aggregationPeriod: 'DAILY', startTime: minusDays(end, rangeDays(q.timeRange)), endTime: end };
+        const body = JSON.stringify({ timelineSpec: ts, dimensions: ['reportType', 'issueId'], metrics: ['errorReportCount'], pageSize: 1000 });
+        const { json } = await request('errorCountMetricSet:query', q, body);
+        return buildTrends(json);
+    } catch {
+        return {};
     }
 }
 
