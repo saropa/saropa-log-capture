@@ -32,6 +32,7 @@ cspell:disable
 
 ### Added
 
+- **Crash-free sessions headline on the Vitals panel:** A prominent "Crash-free sessions" figure (100 − crash rate) now sits at the top of the Vitals panel — the single daily-health number the Firebase console leads with — alongside a period change arrow (↑ green when improving). The existing Crash Rate and ANR Rate cards stay below it. (Labeled "sessions": crash-free *users* uses a different denominator and is a separate addition.)
 - **Trend sparkline on the Vitals panel:** The Crash Rate and ANR Rate cards now show a small line chart of the last several days beneath the number, so you can see at a glance whether a rate is climbing, falling, or steady — not just today's value. The data was already being fetched and thrown away; nothing new is requested from Google Play.
 
 ### Changed
