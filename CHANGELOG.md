@@ -32,6 +32,7 @@ cspell:disable
 
 ### Added
 
+- **Device states (foreground vs background) on the issue detail:** The crash detail now shows a "Device states" panel with the true foreground/background split for the issue (from Google Play's aggregate data, not a sample) — so you can tell a crash that happens while users are actively in the app from one that fires in the background.
 - **Per-issue trend mini-charts in the list:** Each crash issue now shows a small sparkline of its daily event count over the selected period, so you can spot a spiking issue versus a flat one without opening it. Fetched once when the list loads.
 - **Archive crash issues locally:** Each issue row now has an archive button to hide issues you've already triaged. A **Show archived** toggle in the filter bar reveals them again, each with an unarchive button. Archiving is local to your workspace (the Play Reporting data is read-only, so this doesn't close the issue in Firebase) and archived issues are skipped by the background new-issue alerts.
 - **Background alerts for new and returned crashes:** Turn on **Notify on new Crashlytics issues** (off by default) and the extension checks for new or returned crash issues in the background — no need to open the panel — and shows a notification plus a status-bar badge when one appears, with a **View** action that opens the sidebar. Each issue alerts once; an issue that disappears and comes back alerts again.
