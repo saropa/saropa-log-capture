@@ -197,7 +197,16 @@ export async function getFirebaseContext(errorTokens: readonly string[]): Promis
         if (!config) {
             return safeEmpty('config', firebaseConfigSetupHint, { gcloud: 'ok', token: 'ok', config: 'missing' });
         }
-        const consoleUrl = `https://console.firebase.google.com/project/${config.projectId}/crashlytics/app/${config.appId}/issues`;
+        // The Crashlytics console deep link's `app/` segment is the platform-prefixed package name
+        // (`android:com.example.app`), NOT the mobilesdk_app_id (`1:NNN:android:HEX`). Passing the
+        // app id produced "This app does not exist or you do not have permission to view it" because
+        // the console can't resolve that path segment (verified against the user's working URL,
+        // 2026-06-12). The Play Reporting data source is Android-only, so the platform is `android`.
+        // Omit the `/u/N/` account-index prefix on purpose — Google's redirect inserts the correct
+        // account, whereas hardcoding `/u/0/` would send multi-account users to the wrong one.
+        const packageName = await detectPackageName();
+        const appSegment = packageName ? `android:${packageName}` : config.appId;
+        const consoleUrl = `https://console.firebase.google.com/project/${config.projectId}/crashlytics/app/${appSegment}/issues`;
         const fullChecklist: SetupChecklist = { gcloud: 'ok', token: 'ok', config: 'ok' };
         try {
             const issues = await queryTopIssues(config, token, errorTokens);
