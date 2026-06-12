@@ -32,6 +32,7 @@ cspell:disable
 
 ### Added
 
+- **Archive crash issues locally:** Each issue row now has an archive button to hide issues you've already triaged. A **Show archived** toggle in the filter bar reveals them again, each with an unarchive button. Archiving is local to your workspace (the Play Reporting data is read-only, so this doesn't close the issue in Firebase) and archived issues are skipped by the background new-issue alerts.
 - **Background alerts for new and returned crashes:** Turn on **Notify on new Crashlytics issues** (off by default) and the extension checks for new or returned crash issues in the background — no need to open the panel — and shows a notification plus a status-bar badge when one appears, with a **View** action that opens the sidebar. Each issue alerts once; an issue that disappears and comes back alerts again.
 - **"Regressed" tag on crashes that came back:** Issues that disappeared in an earlier refresh and have since reappeared now carry a "Regressed" badge. This is tracked locally across refreshes (a short history of past scans is now kept under `.saropa/cache/crashlytics/`), since the Play Reporting API doesn't expose issue state.
 - **"Repetitive" tag on recurring crashes:** Issues seen across more than one app version now carry a "Repetitive" badge in the list, so a crash that has survived a release stands out from a one-off. Derived locally from the version range (the Play Reporting API has no such signal).

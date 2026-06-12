@@ -13,6 +13,7 @@ import {
     type FirebaseContext,
 } from '../../../modules/crashlytics/firebase-crashlytics';
 import { serializeContext } from './crashlytics-serializers';
+import { readArchivedIds, setIssueArchived } from '../../../modules/crashlytics/crashlytics-io';
 import { getOutputChannel, playReportingScopeFix } from '../../../modules/crashlytics/crashlytics-diagnostics';
 import { runConnectionCheck, formatConnectionReport } from '../../../modules/crashlytics/crashlytics-connection-check';
 
@@ -42,11 +43,26 @@ export async function handleCrashlyticsRequest(post: PostFn, forceRefresh = fals
                 workspaceGoogleServicesPath = ws ? vscode.workspace.asRelativePath(uri) : uri.fsPath;
             }
         }
-        post({ type: 'crashlyticsData', context: serializeContext(ctx, { gcloudInstallCommand, workspaceGoogleServicesPath }) });
+        const archivedIds = await readArchivedIds();
+        post({ type: 'crashlyticsData', context: serializeContext(ctx, { gcloudInstallCommand, workspaceGoogleServicesPath, archivedIds }) });
     } catch {
         const fallbackChecklist = { gcloud: 'missing' as const, token: 'pending' as const, config: 'pending' as const };
         post({ type: 'crashlyticsData', context: serializeContext({ available: false, setupHint: 'Unexpected error', setupChecklist: fallbackChecklist, issues: [] }) });
     }
+}
+
+/**
+ * Archive or unarchive an issue locally (the Play API is read-only, so this is a local view filter,
+ * not an upstream resolution). Confirms with a toast naming the issue, then refreshes the panel so the
+ * row hides/returns. Never throws.
+ */
+export async function handleCrashlyticsArchive(id: string, title: string, archived: boolean, post: PostFn): Promise<void> {
+    if (!id) { return; }
+    await setIssueArchived(id, archived);
+    const name = title || id;
+    const msg = archived ? t('msg.crashlyticsArchived', name) : t('msg.crashlyticsUnarchived', name);
+    void vscode.window.showInformationMessage(msg);
+    await handleCrashlyticsRequest(post);
 }
 
 /**

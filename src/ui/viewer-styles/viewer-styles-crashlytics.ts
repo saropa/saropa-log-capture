@@ -130,6 +130,10 @@ export function getCrashlyticsPanelStyles(): string {
 .cp-badge-closed { background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); }
 .cp-badge-open { background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); }
 .cp-badge-repetitive { background: var(--vscode-inputValidation-warningBackground); color: var(--vscode-editorWarning-foreground); border-color: var(--vscode-inputValidation-warningBorder, var(--vscode-editorWarning-foreground)); }
+.cp-archive-btn { background: transparent; border: none; color: var(--vscode-descriptionForeground); cursor: pointer; padding: 0 4px; opacity: 0; flex: 0 0 auto; }
+.cp-item:hover .cp-archive-btn, .cp-item.cp-item-archived .cp-archive-btn { opacity: 0.85; }
+.cp-archive-btn:hover { color: var(--vscode-foreground); }
+.cp-item-archived { opacity: 0.55; }
 
 .cp-actions { display: flex; gap: 4px; margin-top: 4px; }
 
