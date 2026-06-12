@@ -96,6 +96,8 @@ export const stringsViewerC: Record<string, string> = {
     'viewer.crashlytics.sort.label': 'Sort issues by',
     'viewer.crashlytics.sort.events': 'Most events',
     'viewer.crashlytics.sort.users': 'Most users',
+    'viewer.crashlytics.badge.repetitive': 'Repetitive',
+    'viewer.crashlytics.badge.repetitiveTip': 'Seen across more than one app version',
     'viewer.crashlytics.openDashboard.title': 'Open App Quality Insights dashboard',
     'viewer.crashlytics.openDashboard.label': 'Open App Quality Insights dashboard',
     'viewer.crashlytics.refresh.title': 'Refresh',
