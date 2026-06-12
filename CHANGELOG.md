@@ -28,6 +28,16 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+The Crashlytics issue-list labels and alerts that shipped in 8.1.0 are now translated in every supported language instead of falling back to English. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+
+### Changed
+
+- **Crashlytics strings localized across all 10 locales:** The 15 new Crashlytics issue-list strings from 8.1.0 (archive/unarchive actions and toasts, the "Regressed" / "Repetitive" badges and their tooltips, the sort-by labels, "Show archived", and the new-issue alerts) are now hand-translated for German, Spanish, French, Italian, Japanese, Korean, Portuguese (Brazil), Russian, Simplified Chinese, and Traditional Chinese. Brings every locale bundle back to 100% coverage.
+
+---
+
 ## [8.1.0]
 
 The Crashlytics and Vitals panels get a big upgrade: crash-free users and sessions headline figures, trend sparklines on the cards and on every issue row, foreground/background device states, and a polished theme-aware look. You can archive issues you've triaged, get background alerts when a new or returned crash shows up, sort the list by events or affected users, and spot crashes tagged "Regressed" or "Repetitive" — plus the "Open in Firebase" arrow now deep-links straight to the exact issue. [log](https://github.com/saropa/saropa-log-capture/blob/v8.1.0/CHANGELOG.md)

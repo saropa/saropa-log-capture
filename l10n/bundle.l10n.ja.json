@@ -1607,5 +1607,20 @@
   "Visits": "訪問する,訪ねる",
   "not walked": "歩いたのではなく,歩き出した.",
   "walked": "歩いて行きました.",
-  "walked · source-resolved": "歩いた · source-resolved - ソースで解決した"
+  "walked · source-resolved": "歩いた · source-resolved - ソースで解決した",
+  "View": "表示",
+  "Archived “{0}”. Turn on “Show archived” to find it again.": "「{0}」をアーカイブしました。再表示するには「アーカイブを表示」をオンにしてください。",
+  "{0} new or returned Crashlytics issue(s) detected.": "新規または再発した Crashlytics の問題が {0} 件検出されました。",
+  "{0} new Crashlytics issue(s) since you last looked.": "前回の確認以降、{0} 件の新しい Crashlytics の問題があります。",
+  "Restored “{0}” to the issue list.": "「{0}」を問題リストに復元しました。",
+  "Archive (hide locally)": "アーカイブ（ローカルで非表示）",
+  "Regressed": "再発",
+  "Came back after disappearing in an earlier scan": "以前のスキャンで消えた後に再発しました",
+  "Repetitive": "繰り返し",
+  "Seen across more than one app version": "複数のアプリバージョンで確認されました",
+  "Show archived": "アーカイブを表示",
+  "Most events": "イベント数順",
+  "Sort issues by": "問題の並べ替え",
+  "Most users": "ユーザー数順",
+  "Unarchive": "アーカイブ解除"
 }
