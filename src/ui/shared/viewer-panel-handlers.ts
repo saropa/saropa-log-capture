@@ -11,6 +11,7 @@ export {
     handleCrashlyticsArchive,
     handleCrashlyticsValidate,
     handleCrashlyticsFilterIndex,
+    handleCrashlyticsTrends,
     handleGcloudAuth,
     handleBrowseGoogleServices,
     handleOpenGoogleServicesJson,
