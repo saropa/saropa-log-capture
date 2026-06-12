@@ -237,6 +237,18 @@ export function getCrashlyticsInteractionsScript(): string {
         applyCpSort();
         applyCpFilters();
     }
+    /* Inject the host-rendered trend sparkline SVG into each row by short issue id (5c / T3.1). */
+    function applyCpTrends(map) {
+        if (!cpIssuesEl || !map) return;
+        var rows = cpIssuesEl.querySelectorAll('.cp-item');
+        for (var i = 0; i < rows.length; i++) {
+            var sid = (rows[i].getAttribute('data-issue-id') || '').split('/').pop();
+            var svg = map[sid];
+            if (!svg) continue;
+            var slot = rows[i].querySelector('.cp-trend');
+            if (slot) slot.innerHTML = svg;
+        }
+    }
     function applyCpFilterIndex(index) {
         if (!cpIssuesEl || !index) return;
         var rows = cpIssuesEl.querySelectorAll('.cp-item');
