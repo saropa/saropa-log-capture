@@ -231,6 +231,8 @@ export const stringsA: Record<string, string> = {
     'msg.crashlyticsNotConnected': 'Crashlytics is not connected yet. Open the report for the failing step.',
     'msg.crashlyticsNewIssues': '{0} new or returned Crashlytics issue(s) detected.',
     'msg.crashlyticsNewIssuesTip': '{0} new Crashlytics issue(s) since you last looked.',
+    'msg.crashlyticsArchived': 'Archived “{0}”. Turn on “Show archived” to find it again.',
+    'msg.crashlyticsUnarchived': 'Restored “{0}” to the issue list.',
     'action.showDetails': 'Show details',
     'action.view': 'View',
 

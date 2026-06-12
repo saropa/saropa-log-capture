@@ -166,6 +166,8 @@ export function getCrashlyticsInteractionsScript(): string {
        'events' reproduces the server order; 'users' re-sorts client-side. Sorting reorders the DOM
        rows (appendChild moves nodes); it is independent of the per-row display filter above. */
     var cpSort = 'events';
+    /* When false (default), locally-archived issues are hidden; the "Show archived" toggle reveals them. */
+    var cpShowArchived = false;
 
     /* Recompile the search term when the text or the regex toggle changes. In regex mode an invalid
        pattern is non-fatal: cpRegexObj stays null, the input shows the invalid outline, and the
@@ -204,7 +206,9 @@ export function getCrashlyticsInteractionsScript(): string {
         var rows = cpIssuesEl.querySelectorAll('.cp-item');
         for (var i = 0; i < rows.length; i++) {
             var r = rows[i];
-            var ok = (cpKind === 'all' || r.getAttribute('data-kind') === cpKind)
+            var archivedOk = cpShowArchived || r.getAttribute('data-archived') !== '1';
+            var ok = archivedOk
+                && (cpKind === 'all' || r.getAttribute('data-kind') === cpKind)
                 && cpSearchMatch(r)
                 && cpHas(r, 'data-versions', cpFVer) && cpHas(r, 'data-devices', cpFDev) && cpHas(r, 'data-os', cpFOs);
             r.style.display = ok ? '' : 'none';
@@ -263,6 +267,13 @@ export function getCrashlyticsInteractionsScript(): string {
         var dev = document.getElementById('cp-dev'); if (dev) dev.addEventListener('change', function() { cpFDev = dev.value; applyCpFilters(); });
         var os = document.getElementById('cp-os'); if (os) os.addEventListener('change', function() { cpFOs = os.value; applyCpFilters(); });
         var sort = document.getElementById('cp-sort'); if (sort) sort.addEventListener('change', function() { cpSort = sort.value; applyCpSort(); });
+        var showArch = document.getElementById('cp-show-archived');
+        if (showArch) showArch.addEventListener('click', function() {
+            cpShowArchived = !cpShowArchived;
+            showArch.classList.toggle('cp-regex-on', cpShowArchived);
+            showArch.setAttribute('aria-pressed', cpShowArchived ? 'true' : 'false');
+            applyCpFilters();
+        });
         function ensureIndex() { if (cpIndexRequested) return; cpIndexRequested = true; vscodeApi.postMessage({ type: 'fetchCrashlyticsFilterIndex' }); }
         [dev, os].forEach(function(el) { if (el) { el.addEventListener('mousedown', ensureIndex); el.addEventListener('focus', ensureIndex); } });
     })();

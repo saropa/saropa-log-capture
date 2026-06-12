@@ -36,6 +36,7 @@ export function getCrashlyticsPanelHtml(): string {
             <select id="cp-dev" class="cp-fselect" title="${t('viewer.crashlytics.filter.device')}" aria-label="${t('viewer.crashlytics.filter.device')}"><option value="">${t('viewer.crashlytics.filter.devAbbr')}</option></select>
             <select id="cp-os" class="cp-fselect" title="${t('viewer.crashlytics.filter.os')}" aria-label="${t('viewer.crashlytics.filter.os')}"><option value="">${t('viewer.crashlytics.filter.osAbbr')}</option></select>
             <select id="cp-sort" class="cp-fselect" title="${t('viewer.crashlytics.sort.label')}" aria-label="${t('viewer.crashlytics.sort.label')}"><option value="events">${t('viewer.crashlytics.sort.events')}</option><option value="users">${t('viewer.crashlytics.sort.users')}</option></select>
+            <button id="cp-show-archived" class="cp-regex" type="button" title="${t('viewer.crashlytics.showArchived')}" aria-label="${t('viewer.crashlytics.showArchived')}" aria-pressed="false"><span class="codicon codicon-archive"></span></button>
         </div>
     </div>
     <div class="crashlytics-panel-content">
@@ -172,16 +173,24 @@ export function getCrashlyticsPanelScript(): string {
         // The whole row opens the detail in the viewer's main area; ↗ hints it opens a full view.
         // data-* carry the detail-header/markdown fields AND drive the sidebar's client-side filters.
         var sevClass = issue.isFatal ? 'cp-item-fatal' : 'cp-item-nonfatal';
+        if (issue.archived) sevClass += ' cp-item-archived';
         var versions = [];
         if (issue.firstVersion) versions.push(issue.firstVersion);
         if (issue.lastVersion && issue.lastVersion !== issue.firstVersion) versions.push(issue.lastVersion);
         var searchText = (issue.title + ' ' + issue.subtitle).toLowerCase();
+        // Archive / unarchive toggle (local view filter — the Play API is read-only). stopPropagation
+        // in the click handler stops it from also opening the issue detail.
+        var arch = issue.archived ? '1' : '0';
+        var archiveBtn = '<button class="cp-archive-btn" data-archived="' + arch + '" title="'
+            + vt(issue.archived ? 'viewer.crashlytics.unarchive' : 'viewer.crashlytics.archive') + '" aria-label="'
+            + vt(issue.archived ? 'viewer.crashlytics.unarchive' : 'viewer.crashlytics.archive') + '">'
+            + '<span class="codicon codicon-' + (issue.archived ? 'inbox' : 'archive') + '"></span></button>';
         return '<div class="cp-item ' + sevClass + '" data-issue-id="' + esc(issue.id) + '" title="' + vt('viewer.crashlytics.openDetail') + '"'
             + ' data-title="' + esc(issue.title) + '" data-sub="' + esc(issue.subtitle) + '"'
             + ' data-events="' + esc(String(issue.eventCount)) + '" data-users="' + esc(String(issue.userCount)) + '"'
             + ' data-fatal="' + (issue.isFatal ? '1' : '0') + '" data-fv="' + esc(issue.firstVersion || '') + '" data-lv="' + esc(issue.lastVersion || '') + '"'
-            + ' data-kind="' + esc(issue.kind || 'unknown') + '" data-state="' + esc(issue.state || 'UNKNOWN') + '" data-versions="' + esc(versions.join(',')) + '" data-search="' + esc(searchText) + '">'
-            + '<div class="cp-title">' + badge + state + regr + rep + ' ' + esc(issue.title) + ' <span class="cp-expand-icon">\\u2197</span></div>'
+            + ' data-kind="' + esc(issue.kind || 'unknown') + '" data-state="' + esc(issue.state || 'UNKNOWN') + '" data-versions="' + esc(versions.join(',')) + '" data-search="' + esc(searchText) + '" data-archived="' + arch + '">'
+            + '<div class="cp-title">' + badge + state + regr + rep + ' ' + esc(issue.title) + ' <span class="cp-expand-icon">\\u2197</span>' + archiveBtn + '</div>'
             + '<div class="cp-meta">' + esc(issue.subtitle) + ' \\u00b7 ' + vt('viewer.crashlytics.events', issue.eventCount) + users + ver + '</div></div>';
     }
 
@@ -250,6 +259,16 @@ export function getCrashlyticsPanelScript(): string {
             var console = e.target.closest('.cp-console');
             if (console && console.dataset.url) {
                 vscodeApi.postMessage({ type: 'openUrl', url: console.dataset.url });
+                return;
+            }
+            // Archive / unarchive button: toggle local archive state without opening the detail.
+            var archiveBtn = e.target.closest('.cp-archive-btn');
+            if (archiveBtn) {
+                e.stopPropagation();
+                var arItem = archiveBtn.closest('.cp-item');
+                if (arItem && arItem.dataset.issueId) {
+                    vscodeApi.postMessage({ type: 'crashlyticsArchiveIssue', issueId: arItem.dataset.issueId, title: arItem.dataset.title || '', archived: archiveBtn.dataset.archived !== '1' });
+                }
                 return;
             }
             // Clicking an issue opens its detail in the viewer's main area (like a session opening in
