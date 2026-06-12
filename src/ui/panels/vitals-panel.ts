@@ -72,8 +72,7 @@ ${reason}
 <div role="main" aria-label="Vitals">
 <div class="vt-toolbar"><span class="vt-title">Vitals ${refreshNote}</span><button class="vt-refresh" onclick="postMsg('refresh')" aria-label="Refresh Vitals data">Refresh</button></div>
 <div class="vt-pkg">${escapeHtml(snapshot.packageName)}</div>
-${renderCrashFree(snapshot.crashRate, snapshot.crashRateSeries)}
-${renderCrashFreeUsers(snapshot.userCrashRate)}
+<div class="vt-hero">${renderCrashFreeUsers(snapshot.userCrashRate)}${renderCrashFree(snapshot.crashRate, snapshot.crashRateSeries)}</div>
 ${renderMetric('Crash Rate', snapshot.crashRate, thresholds.crashRate, snapshot.crashRateSeries)}
 ${renderMetric('ANR Rate', snapshot.anrRate, thresholds.anrRate, snapshot.anrRateSeries)}
 <div class="vt-footer" onclick="postMsg('openPlayConsole')">Open Play Console</div>
@@ -131,19 +130,25 @@ function getStyles(): string {
 .vt-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .vt-title{font-weight:600;font-size:1.1em}
 .vt-refresh{background:var(--vscode-button-background);color:var(--vscode-button-foreground);border:none;padding:2px 8px;cursor:pointer;border-radius:2px}
-.vt-pkg{font-size:11px;opacity:0.7;margin-bottom:8px;font-family:var(--vscode-editor-font-family,monospace)}
-.vt-metric{border:1px solid var(--vscode-panel-border);border-radius:4px;padding:8px;margin-bottom:6px;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px}
+.vt-pkg{font-size:11px;opacity:0.7;margin-bottom:10px;font-family:var(--vscode-editor-font-family,monospace)}
+.vt-refresh:hover{background:var(--vscode-button-hoverBackground,var(--vscode-button-background))}
+/* Hero crash-free figures, side by side; collapses to one column when narrow / single-metric. */
+.vt-hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px;margin-bottom:10px}
+.vt-crashfree{background:var(--vscode-editorWidget-background,var(--vscode-editor-background));border:1px solid var(--vscode-widget-border,var(--vscode-panel-border));border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.vt-cf-label{font-size:10px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;opacity:0.72}
+.vt-cf-value{font-size:1.9em;font-weight:700;line-height:1.1;color:var(--vscode-testing-iconPassed,#388e3c)}
+.vt-cf-delta{font-size:11px;font-weight:600}
+.vt-cf-up{color:var(--vscode-testing-iconPassed,#388e3c)}
+.vt-cf-down{color:var(--vscode-errorForeground)}
+/* Rate cards share the card chrome with a severity-colored left accent. */
+.vt-metric{background:var(--vscode-editorWidget-background,var(--vscode-editor-background));border:1px solid var(--vscode-widget-border,var(--vscode-panel-border));border-left:3px solid var(--vscode-panel-border);border-radius:6px;padding:8px 10px;margin-bottom:6px;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px}
+.vt-good{border-left-color:var(--vscode-testing-iconPassed,#388e3c)}
+.vt-bad{border-left-color:var(--vscode-errorForeground)}
 .vt-label{font-weight:600;flex:1}.vt-value{font-size:1.2em;font-weight:700}
 .vt-threshold{font-size:10px;opacity:0.6;width:100%}
 .vt-good .vt-value{color:var(--vscode-testing-iconPassed, #388e3c)}
 .vt-bad .vt-value{color:var(--vscode-errorForeground)}
 .vt-na{opacity:0.5;font-style:italic}
-.vt-crashfree{border:1px solid var(--vscode-panel-border);border-radius:4px;padding:8px;margin-bottom:8px;display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}
-.vt-cf-label{font-weight:600;flex:1}
-.vt-cf-value{font-size:1.6em;font-weight:700;color:var(--vscode-testing-iconPassed,#388e3c)}
-.vt-cf-delta{font-size:11px;font-weight:600}
-.vt-cf-up{color:var(--vscode-testing-iconPassed,#388e3c)}
-.vt-cf-down{color:var(--vscode-errorForeground)}
 .vt-spark{width:100%;height:18px;margin-top:4px;opacity:0.85}
 .vt-good .vt-spark{color:var(--vscode-testing-iconPassed,#388e3c)}
 .vt-bad .vt-spark{color:var(--vscode-errorForeground)}

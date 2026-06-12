@@ -83,9 +83,11 @@ export function getCrashlyticsPanelStyles(): string {
     padding: 9px 12px;
     cursor: pointer;
     font-size: 12px;
+    transition: background-color 0.12s ease, box-shadow 0.12s ease;
 }
 
-.cp-item:hover { background: var(--vscode-list-hoverBackground); }
+/* Hover lifts the row with a soft inset accent on the left edge (refined-native, no layout shift). */
+.cp-item:hover { background: var(--vscode-list-hoverBackground); box-shadow: inset 2px 0 0 var(--vscode-focusBorder); }
 /* Severity accent stripe so the list reads at a glance (color, #1). */
 .cp-item-fatal { border-left: 3px solid var(--vscode-errorForeground); padding-left: 9px; }
 .cp-item-nonfatal { border-left: 3px solid var(--vscode-editorWarning-foreground, #cca700); padding-left: 9px; }
@@ -120,6 +122,7 @@ export function getCrashlyticsPanelStyles(): string {
     padding: 1px 7px;
     border-radius: 9px;
     font-weight: 600;
+    letter-spacing: 0.02em;
     border: 1px solid transparent;
     vertical-align: middle;
 }
@@ -130,12 +133,14 @@ export function getCrashlyticsPanelStyles(): string {
 .cp-badge-closed { background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); }
 .cp-badge-open { background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); }
 .cp-badge-repetitive { background: var(--vscode-inputValidation-warningBackground); color: var(--vscode-editorWarning-foreground); border-color: var(--vscode-inputValidation-warningBorder, var(--vscode-editorWarning-foreground)); }
-.cp-archive-btn { background: transparent; border: none; color: var(--vscode-descriptionForeground); cursor: pointer; padding: 0 4px; opacity: 0; flex: 0 0 auto; }
+.cp-archive-btn { background: transparent; border: none; color: var(--vscode-descriptionForeground); cursor: pointer; padding: 0 4px; opacity: 0; flex: 0 0 auto; transition: opacity 0.12s ease, color 0.12s ease; }
 .cp-item:hover .cp-archive-btn, .cp-item.cp-item-archived .cp-archive-btn { opacity: 0.85; }
 .cp-archive-btn:hover { color: var(--vscode-foreground); }
 .cp-item-archived { opacity: 0.55; }
-.cp-trend { display: inline-block; margin-left: 6px; vertical-align: middle; color: var(--vscode-charts-blue, var(--vscode-textLink-foreground)); }
-.cp-trend svg { vertical-align: middle; }
+/* Trend sparkline reads as a contained mini-chart chip at the end of the meta line. */
+.cp-trend { display: inline-flex; align-items: center; margin-left: 6px; padding: 1px 4px; vertical-align: middle; border-radius: 4px; background: var(--vscode-textBlockQuote-background, transparent); color: var(--vscode-charts-blue, var(--vscode-textLink-foreground)); }
+.cp-trend:empty { display: none; }
+.cp-trend svg { vertical-align: middle; display: block; }
 
 .cp-actions { display: flex; gap: 4px; margin-top: 4px; }
 

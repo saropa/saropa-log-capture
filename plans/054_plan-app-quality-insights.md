@@ -596,6 +596,10 @@ and can ship any time, but 6e must respect 6f's archived set, so if both are pla
 the watcher has an archive to consult. The per-issue trend column (last table row) needs a real new
 query and belongs after 6a proves the sparkline rendering.
 
+### Stage 6 beauty pass — DONE (2026-06-12)
+
+A "refined native" UX/UI polish pass (user-chosen direction; theme-token only, no hardcoded color, per the style guide). **Vitals panel** (`vitals-panel.ts`): the two crash-free figures became a side-by-side `.vt-hero` grid with uppercase micro-labels + large values; rate cards gained shared card chrome (`editorWidget-background` + `widget-border`) with a severity-colored left accent; refresh-button hover. **Issue list** (`viewer-styles-crashlytics.ts`): smooth row transitions + a hover lift (inset focus accent, no layout shift), crisper pills (letter-spacing), the trend sparkline in a contained chip, and a transitioned archive-button reveal. **Issue detail** was already refined-native from Stage 5a/5d (stat cards, color-coded severity values, gradient distribution bars, grid tiles) and was deliberately left untouched. Pure presentation — no behavior change, no tests pin these surfaces; verified by compile.
+
 ### Stage 6 build log — ALL ITEMS DONE (2026-06-12)
 
 All eleven Tier 1–3 items shipped (plus the earlier console-URL fix + per-issue deep link). Each landed with tests where a pure unit existed, a CHANGELOG entry, and a commit. The plan stays active because earlier-stage work remains (roadmap #2 symbolication, date-time range + multi-select search, the legacy-hex theme sweep). Only the "Early crashes" tag was confirmed not feasible (no session-timing field in the `ErrorReport` schema).
