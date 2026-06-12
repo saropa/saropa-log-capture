@@ -134,6 +134,8 @@ export function getCrashlyticsPanelStyles(): string {
 .cp-item:hover .cp-archive-btn, .cp-item.cp-item-archived .cp-archive-btn { opacity: 0.85; }
 .cp-archive-btn:hover { color: var(--vscode-foreground); }
 .cp-item-archived { opacity: 0.55; }
+.cp-trend { display: inline-block; margin-left: 6px; vertical-align: middle; color: var(--vscode-charts-blue, var(--vscode-textLink-foreground)); }
+.cp-trend svg { vertical-align: middle; }
 
 .cp-actions { display: flex; gap: 4px; margin-top: 4px; }
 
