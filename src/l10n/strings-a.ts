@@ -229,7 +229,10 @@ export const stringsA: Record<string, string> = {
     'msg.noAnalyzableTokens': 'No analyzable tokens found in this line.',
     'msg.crashlyticsConnected': 'Crashlytics connected — loading your crash issues.',
     'msg.crashlyticsNotConnected': 'Crashlytics is not connected yet. Open the report for the failing step.',
+    'msg.crashlyticsNewIssues': '{0} new or returned Crashlytics issue(s) detected.',
+    'msg.crashlyticsNewIssuesTip': '{0} new Crashlytics issue(s) since you last looked.',
     'action.showDetails': 'Show details',
+    'action.view': 'View',
 
     'saveLabel.exportLogs': 'Export Logs',
     'filter.textFiles': 'Text Files',

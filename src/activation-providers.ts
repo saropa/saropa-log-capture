@@ -7,6 +7,7 @@
 import * as vscode from 'vscode';
 import { LogViewerProvider } from './ui/provider/log-viewer-provider';
 import { VitalsPanelProvider } from './ui/panels/vitals-panel';
+import { CrashlyticsWatcher } from './modules/crashlytics/crashlytics-watcher';
 import { CrashlyticsCodeLensProvider } from './ui/shared/crashlytics-codelens';
 import { InlineDecorationsProvider } from './ui/viewer-decorations/inline-decorations';
 
@@ -44,6 +45,11 @@ export function setupWebviewProviders(
 
     const crashCodeLens = new CrashlyticsCodeLensProvider();
     context.subscriptions.push(vscode.languages.registerCodeLensProvider({ scheme: 'file' }, crashCodeLens));
+
+    // Background new-issue / regression watcher (off unless saropaLogCapture.firebase.notifyNewIssues).
+    const crashWatcher = new CrashlyticsWatcher(context);
+    context.subscriptions.push(crashWatcher);
+    crashWatcher.start();
 
     return { viewerProvider, vitalsPanel, crashCodeLens, inlineDecorations };
 }

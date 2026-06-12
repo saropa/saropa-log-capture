@@ -8,11 +8,19 @@
 
 import { test } from 'node:test';
 import * as assert from 'assert';
-import { toSnapshot, appendSnapshot } from '../../../modules/crashlytics/crashlytics-issue-history';
+import {
+    toSnapshot, appendSnapshot, newSinceLastSnapshot, selectAlerts,
+} from '../../../modules/crashlytics/crashlytics-issue-history';
+import type { IssueSnapshot } from '../../../modules/crashlytics/crashlytics-issue-history';
 import type { CrashlyticsIssue } from '../../../modules/crashlytics/crashlytics-types';
 
 function issue(id: string, eventCount: number): CrashlyticsIssue {
     return { id, title: id, subtitle: '', eventCount, userCount: 1, isFatal: true, state: 'UNKNOWN' };
+}
+
+/** Snapshot from a list of ids (counts irrelevant to the diff). */
+function snap(cachedAt: number, ids: string[]): IssueSnapshot {
+    return { cachedAt, issues: ids.map(id => ({ id, eventCount: 1 })) };
 }
 
 test('toSnapshot: keeps only id + eventCount', () => {
@@ -40,4 +48,28 @@ test('appendSnapshot: caps to max, dropping the oldest', () => {
     assert.strictEqual(h.length, 3);
     assert.strictEqual(h[0].cachedAt, 2, 'oldest two dropped');
     assert.strictEqual(h[2].cachedAt, 4, 'newest kept');
+});
+
+test('newSinceLastSnapshot: ids in the latest snapshot but not the previous one', () => {
+    const news = newSinceLastSnapshot([snap(1, ['a']), snap(2, ['a', 'b'])]);
+    assert.ok(news.has('b') && !news.has('a'));
+    assert.strictEqual(newSinceLastSnapshot([snap(1, ['a'])]).size, 0, 'needs >=2 snapshots');
+});
+
+test('selectAlerts: alerts a new id once, not again while it persists', () => {
+    const history = [snap(1, ['a']), snap(2, ['a', 'b'])];
+    const first = selectAlerts(history, []);
+    assert.deepStrictEqual(first.toAlert, ['b']);
+    // Same history, b already alerted → nothing new.
+    const second = selectAlerts(history, first.nextAlerted);
+    assert.deepStrictEqual(second.toAlert, []);
+});
+
+test('selectAlerts: a vanished id is pruned from the gate, so its return re-alerts', () => {
+    // Step 1: b present and already alerted, then b vanishes → pruned from the gate.
+    const afterVanish = selectAlerts([snap(1, ['a', 'b']), snap(2, ['a'])], ['a', 'b']);
+    assert.ok(!afterVanish.nextAlerted.includes('b'), 'b pruned when it vanishes');
+    // Step 2: b returns → re-alerts because it is no longer in the gate.
+    const afterReturn = selectAlerts([snap(2, ['a']), snap(3, ['a', 'b'])], afterVanish.nextAlerted);
+    assert.deepStrictEqual(afterReturn.toAlert, ['b']);
 });
