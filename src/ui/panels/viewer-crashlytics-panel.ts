@@ -120,6 +120,8 @@ export function getCrashlyticsPanelScript(): string {
         if (ctx.issues && ctx.issues.length > 0) {
             if (cpIssuesEl) cpIssuesEl.innerHTML = ctx.issues.map(renderIssue).join('');
             showCpFilters();
+            // Lazily fetch per-issue trend sparklines (one extra API query); injected when they arrive.
+            vscodeApi.postMessage({ type: 'fetchCrashlyticsTrends' });
         } else if (ctx.diagnosticHtml) {
             // When query fails (e.g. 404), offer to open the config file used for projectId/appId.
             lastDiagnosticCopyText = ctx.diagnosticCopyText || '';
@@ -191,7 +193,7 @@ export function getCrashlyticsPanelScript(): string {
             + ' data-fatal="' + (issue.isFatal ? '1' : '0') + '" data-fv="' + esc(issue.firstVersion || '') + '" data-lv="' + esc(issue.lastVersion || '') + '"'
             + ' data-kind="' + esc(issue.kind || 'unknown') + '" data-state="' + esc(issue.state || 'UNKNOWN') + '" data-versions="' + esc(versions.join(',')) + '" data-search="' + esc(searchText) + '" data-archived="' + arch + '">'
             + '<div class="cp-title">' + badge + state + regr + rep + ' ' + esc(issue.title) + ' <span class="cp-expand-icon">\\u2197</span>' + archiveBtn + '</div>'
-            + '<div class="cp-meta">' + esc(issue.subtitle) + ' \\u00b7 ' + vt('viewer.crashlytics.events', issue.eventCount) + users + ver + '</div></div>';
+            + '<div class="cp-meta">' + esc(issue.subtitle) + ' \\u00b7 ' + vt('viewer.crashlytics.events', issue.eventCount) + users + ver + '<span class="cp-trend"></span></div></div>';
     }
 
     function formatVersionRange(issue) {
@@ -315,6 +317,7 @@ export function getCrashlyticsPanelScript(): string {
         else if (e.data.type === 'crashlyticsProjectInsights') { applyProjectInsights(e.data.issueId, e.data.html || ''); }
         else if (e.data.type === 'crashlyticsLogCorrelation') { applyLogCorrelation(e.data.issueId, e.data.html || ''); }
         else if (e.data.type === 'crashlyticsFilterIndex') { applyCpFilterIndex(e.data.index); }
+        else if (e.data.type === 'crashlyticsTrends') { applyCpTrends(e.data.trends || {}); }
         else if (e.data.type === 'crashlyticsConnectionReport') {
             if (typeof renderConnectionReport === 'function') renderConnectionReport(e.data.report);
         }
