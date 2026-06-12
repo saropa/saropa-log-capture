@@ -335,12 +335,22 @@ it. Six user directives (2026-05-24), grouped by size/risk.
   range as a row of dashboard **stat cards** at the top of the detail body. The data already lives on
   the clicked row's `data-*` (and in the copy-Markdown), it was just never *rendered* in the detail —
   only the title showed. `renderStatsStrip(meta)` in `crashlytics-detail-handler.ts`.
-- **Online console link (#3).** Surface the **project** Firebase Crashlytics console URL
-  (`…/crashlytics/app/{appId}/issues`, already computed in `firebase-crashlytics.ts` and sent to the
-  webview as `ctx.consoleUrl`) as a "View on Firebase ↗" link in the detail header. **Honest limit:**
-  Play Reporting issue IDs do **not** map to Firebase per-issue console URLs, so we link the project
-  issues list, not a fabricated per-issue deep link. Single source of truth: the webview injects the
-  stored `consoleUrl`; we do not re-build the URL host-side in the detail handler.
+- **Online console link (#3).** Surface the Firebase Crashlytics console URL as a "View on Firebase ↗"
+  link in the detail header. The base is built in `firebase-crashlytics.ts` and sent to the webview as
+  `ctx.consoleUrl`.
+  - **Correction (2026-06-12).** Two earlier claims here were wrong:
+    1. The base URL used `…/crashlytics/app/{appId}/issues` with the Firebase **mobilesdk_app_id**
+       (`1:NNN:android:HEX`). The console rejects that with *"This app does not exist or you do not have
+       permission."* The `app/` segment must be the platform-prefixed package name
+       (`android:com.example.app`). **Fixed** — `getFirebaseContext` now builds it from
+       `detectPackageName()`.
+    2. *"Play Reporting issue IDs do not map to Firebase per-issue console URLs"* was **false** (asserted
+       without checking). Verified against the live local cache (`.saropa/cache/crashlytics/issues.json`):
+       our Play Reporting issue ids are 32-char hex (e.g. `7e7936dad4cdb0a53859be193b898e81`) — the same
+       namespace as the Firebase console issue id in `…/issues/{hex}`. So the arrow now **deep-links to
+       the exact issue**: `issueConsoleUrl()` in `crashlytics-detail-handler.ts` appends the issue hex
+       (`issueShortId`) to the per-app base. (This means the host DOES append the id — the old "we do not
+       re-build host-side" note is superseded.)
 - **Distinct-panel look (#5, first slice).** Style the stat strip as cards and keep the existing
   `<details class="group">` sections (stack / distribution / keys / logs) as labeled panels, so the
   detail reads as a dashboard rather than one scroll. Full multi-column layout is 5c.
@@ -486,9 +496,22 @@ signals are derivable locally — for two of the three Firebase tags.
   ≥2 snapshots to compare: an issue absent/near-zero in an older snapshot but present/spiking now.
   Change the cache from single-overwrite to a **timestamped, retention-bounded history**
   (`issues-{cachedAt}.json` or an append log), then diff by issue `id` and set `state: 'REGRESSION'`.
-- **Early crashes — genuinely NOT derivable.** This is per-event *session-lifecycle* position (crash
-  soon after launch), which Firebase computes from the event's session timing. The Play `errorReports`
-  payload doesn't carry it and our archive can't reconstruct it. Out of scope; do not fake it.
+- **Early crashes — NOT derivable (now VERIFIED against the schema, not assumed).** This is per-event
+  *session-lifecycle* position (crash in the first second of the session), which Firebase computes from
+  SDK session timing. Verified 2026-06-12 against the official Play Reporting `ErrorReport` discovery
+  schema (`vitals.errors.reports#ErrorReport`): the returned fields are `name`, `type`, `reportText`,
+  `issue`, `eventTime` (hour-level only), `deviceModel`, `osVersion`, `appVersion`, `vcsInformation` —
+  **no time-since-session-start / session-duration field**, and no such filter dimension either. So the
+  "Early crashes" badge cannot be sourced. Out of scope; do not fake it. *(This bullet originally
+  asserted "not derivable" without reading the schema — the schema read confirms the conclusion but the
+  earlier version was an unverified guess; corrected per the no-blocker-without-analysis rule.)*
+- **Device states (foreground/background) — derivable, newly found in the same schema read.** The
+  `vitals.errors.reports/search` and `errorCountMetricSet` surfaces expose `appProcessState`
+  (`FOREGROUND` / `BACKGROUND`) and `isUserPerceived` as filter/dimension fields. That is the "Device
+  states · % background" panel in the Firebase issue detail. It is buildable the **same way** as the
+  device/OS breakdown (add `appProcessState` as an `errorCountMetricSet` grouping dimension — see
+  `play-reporting-metrics.ts` `queryDimension`). Distinct from "Early crashes" (process state ≠ session
+  timing); this one we can source, so it is a candidate panel, not a blocked one.
 
 Derivation runs host-side (where the archive lives), setting `state` / a repetitive flag on
 `CrashlyticsIssue` before it reaches the webview — `mapErrorIssue` stays the API mapper; a new local
