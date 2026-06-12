@@ -600,6 +600,7 @@ query and belongs after 6a proves the sparkline rendering.
 
 - **6a app-level sparkline — DONE (2026-06-12).** See "Finish Report (2026-06-12) — Stage 6a" below.
 - **6b crash-free % headline — DONE (2026-06-12).** Headline "Crash-free sessions" (100 − crashRate) + period-delta arrow added above the rate cards in `vitals-panel.ts`; rate cards retained. Hardcoded English per the file's existing convention (panel has no `t()`; full l10n retrofit is separate). Display-only arithmetic; the delta-sign invariant (rising crash-free = falling rate = good) is commented at `renderCrashFree`. Crash-free *users* exact parity is deferred to T3.3.
+- **6c issue-list sorting — DONE (2026-06-12).** A `#cp-sort` select (Most events / Most users) in the filter bar; `applyCpSort()` reorders the `.cp-item` rows by `data-events`/`data-users` desc (no new fetch — the counts are already on every row). New runtime l10n keys `viewer.crashlytics.sort.{label,events,users}` in `strings-viewer-c.ts`. No unit test: the sort is DOM reordering in the webview template and there is no jsdom harness; the sibling filters (search/version/device/OS) are likewise manual/F5-verified. Compile + all verify gates clean.
 
 ## Finish Report (2026-06-12) — Stage 6a app-level trend sparkline
 
