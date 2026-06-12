@@ -1607,5 +1607,20 @@
   "Visits": "訪問 訪談 這裡",
   "not walked": "不是走過 沒有行走",
   "walked": "走過了, 這裡是行走的路",
-  "walked · source-resolved": "走過 · 在源頭解決"
+  "walked · source-resolved": "走過 · 在源頭解決",
+  "View": "檢視",
+  "Archived “{0}”. Turn on “Show archived” to find it again.": "已封存「{0}」。開啟「顯示已封存」即可重新找到它。",
+  "{0} new or returned Crashlytics issue(s) detected.": "偵測到 {0} 個新增或重新出現的 Crashlytics 問題。",
+  "{0} new Crashlytics issue(s) since you last looked.": "自上次查看以來有 {0} 個新的 Crashlytics 問題。",
+  "Restored “{0}” to the issue list.": "已將「{0}」還原至問題清單。",
+  "Archive (hide locally)": "封存（在本機隱藏）",
+  "Regressed": "重新出現",
+  "Came back after disappearing in an earlier scan": "在先前掃描中消失後又重新出現",
+  "Repetitive": "重複出現",
+  "Seen across more than one app version": "在多個應用程式版本中出現",
+  "Show archived": "顯示已封存",
+  "Most events": "事件最多",
+  "Sort issues by": "問題排序方式",
+  "Most users": "使用者最多",
+  "Unarchive": "取消封存"
 }

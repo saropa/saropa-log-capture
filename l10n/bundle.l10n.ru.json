@@ -1607,5 +1607,20 @@
   "Visits": "Посещения посещений.",
   "not walked": "Не ходил, а шел.",
   "walked": "Ходил, ходил и шел.",
-  "walked · source-resolved": "ходил · источник-решенный"
+  "walked · source-resolved": "ходил · источник-решенный",
+  "View": "Просмотр",
+  "Archived “{0}”. Turn on “Show archived” to find it again.": "«{0}» архивировано. Включите «Показать архивные», чтобы найти снова.",
+  "{0} new or returned Crashlytics issue(s) detected.": "Обнаружено новых или вернувшихся проблем Crashlytics: {0}.",
+  "{0} new Crashlytics issue(s) since you last looked.": "Новых проблем Crashlytics с момента последнего просмотра: {0}.",
+  "Restored “{0}” to the issue list.": "«{0}» восстановлено в списке проблем.",
+  "Archive (hide locally)": "Архивировать (скрыть локально)",
+  "Regressed": "Вернулась",
+  "Came back after disappearing in an earlier scan": "Вернулась после исчезновения при предыдущем сканировании",
+  "Repetitive": "Повторяющаяся",
+  "Seen across more than one app version": "Обнаружена в нескольких версиях приложения",
+  "Show archived": "Показать архивные",
+  "Most events": "Больше всего событий",
+  "Sort issues by": "Сортировать проблемы по",
+  "Most users": "Больше всего пользователей",
+  "Unarchive": "Извлечь из архива"
 }
