@@ -28,6 +28,12 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **"Open in Firebase" arrow now reaches the Crashlytics console:** The ↗ link beside a crash issue's name (and the panel's "Open Firebase Console" link) built its URL from the Firebase *app id* (`1:NNN:android:HEX`), which the console rejects with "This app does not exist or you do not have permission to view it." The link now uses the platform-prefixed package name (`android:com.example.app`) the console actually expects, so it opens your project's Crashlytics issues list as intended.
+
 ## [8.0.5]
 
 The Session Flow Map's diagram now centers, scrolls instead of cropping when you zoom in, opens in its own pop-out panel, and shows a full detail card when you double-click a node — plus return-to-caller navigation draws a distinct back arrow. Flutter exception blocks now fold to their title (collapsed by default) and the left accent rail on error blocks is gone, keeping the log columns aligned. [log](https://github.com/saropa/saropa-log-capture/blob/v8.0.5/CHANGELOG.md)
