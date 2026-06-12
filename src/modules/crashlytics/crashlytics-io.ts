@@ -6,6 +6,7 @@ import { getLogDirectoryUri, getSaropaCacheCrashlyticsUri } from '../config/conf
 import { readDirectoryIfExistsAsDirectory } from '../misc/vscode-fs-read-directory-safe';
 import type { CrashlyticsIssueEvents, CrashlyticsEventDetail, CrashlyticsIssue } from './crashlytics-types';
 import { type IssueSnapshot, toSnapshot, appendSnapshot } from './crashlytics-issue-history';
+import { toggleArchivedId } from './crashlytics-archive';
 
 /** Shared timeout (ms) for both CLI commands and HTTP requests. */
 export const apiTimeout = 10_000;
@@ -48,6 +49,37 @@ function getIssuesCacheUri(): vscode.Uri | undefined {
     const ws = vscode.workspace.workspaceFolders?.[0];
     if (!ws) { return undefined; }
     return vscode.Uri.joinPath(getSaropaCacheCrashlyticsUri(ws), 'issues.json');
+}
+
+/** On-disk path for the locally-archived issue ids (.saropa/cache/crashlytics/archived.json). */
+function getArchivedUri(): vscode.Uri | undefined {
+    const ws = vscode.workspace.workspaceFolders?.[0];
+    if (!ws) { return undefined; }
+    return vscode.Uri.joinPath(getSaropaCacheCrashlyticsUri(ws), 'archived.json');
+}
+
+/** Read the set of locally-archived issue ids. Empty array if none/invalid. Never throws. */
+export async function readArchivedIds(): Promise<string[]> {
+    const uri = getArchivedUri();
+    if (!uri) { return []; }
+    try {
+        const raw = await vscode.workspace.fs.readFile(uri);
+        const parsed = JSON.parse(Buffer.from(raw).toString('utf-8')) as { ids?: unknown };
+        return Array.isArray(parsed.ids) ? parsed.ids as string[] : [];
+    } catch { return []; }
+}
+
+/** Archive or unarchive an issue locally (the Play API is read-only). Never throws. */
+export async function setIssueArchived(id: string, archived: boolean): Promise<void> {
+    try {
+        const uri = getArchivedUri();
+        if (!uri || !id) { return; }
+        const next = toggleArchivedId(await readArchivedIds(), id, archived);
+        await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(uri, '..'));
+        await vscode.workspace.fs.writeFile(uri, Buffer.from(JSON.stringify({ ids: next }, null, 2)));
+    } catch {
+        // Non-fatal: a failed archive write just means the issue stays in its current visibility.
+    }
 }
 
 /** On-disk path for the issue snapshot history (.saropa/cache/crashlytics/issues-history.json). */

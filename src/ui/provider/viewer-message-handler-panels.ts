@@ -56,6 +56,7 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
       case "crashlyticsValidate": panelHandlers.handleCrashlyticsValidate(ctx.post).catch(() => {}); return true;
       case "fetchCrashlyticsDetail": panelHandlers.handleCrashlyticsDetail(String(msg.issueId ?? ''), (msg.meta as Record<string, unknown>) ?? {}, ctx.post, String(msg.consoleUrl ?? '')).catch(() => {}); return true;
       case "fetchCrashlyticsFilterIndex": panelHandlers.handleCrashlyticsFilterIndex(ctx.post).catch(() => {}); return true;
+      case "crashlyticsArchiveIssue": panelHandlers.handleCrashlyticsArchive(String(msg.issueId ?? ''), String(msg.title ?? ''), msg.archived === true, ctx.post).catch(() => {}); return true;
       case "crashlyticsOpenFrame": panelHandlers.openCrashFrame(String(msg.file ?? ''), Number(msg.line ?? 0)).catch(() => {}); return true;
       case "crashlyticsCreateIssue": panelHandlers.handleCrashlyticsCreateIssue(String(msg.title ?? 'Issue'), String(msg.body ?? '')).catch(() => {}); return true;
       case "crashlyticsOpenLogLine": panelHandlers.openLogLine(String(msg.uri ?? ''), Number(msg.line ?? 0), Number(msg.col ?? 0)).catch(() => {}); return true;

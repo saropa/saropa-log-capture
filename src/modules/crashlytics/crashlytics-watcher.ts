@@ -11,7 +11,7 @@
 
 import * as vscode from 'vscode';
 import { getFirebaseContext } from './firebase-crashlytics';
-import { readIssueHistory } from './crashlytics-io';
+import { readIssueHistory, readArchivedIds } from './crashlytics-io';
 import { selectAlerts } from './crashlytics-issue-history';
 import { logCrashlytics } from './crashlytics-diagnostics';
 import { t } from '../../l10n';
@@ -59,7 +59,10 @@ export class CrashlyticsWatcher implements vscode.Disposable {
             const already = this.context.workspaceState.get<string[]>(alertedKey, []);
             const { toAlert, nextAlerted } = selectAlerts(history, already);
             await this.context.workspaceState.update(alertedKey, nextAlerted);
-            if (toAlert.length > 0) { this.notify(toAlert.length); }
+            // Archived issues are "don't tell me again" — skip them from the alert count.
+            const archived = new Set(await readArchivedIds());
+            const visible = toAlert.filter(id => !archived.has(id));
+            if (visible.length > 0) { this.notify(visible.length); }
         } catch (err) {
             logCrashlytics('error', `Watcher scan failed: ${err instanceof Error ? err.message : String(err)}`);
         }

@@ -17,6 +17,8 @@ export interface SerializeContextExtras {
     gcloudInstallCommand?: string;
     /** Relative path to workspace google-services.json when config step and file exists. */
     workspaceGoogleServicesPath?: string;
+    /** Locally-archived issue ids, so the webview can mark/hide them. */
+    archivedIds?: readonly string[];
 }
 
 /** Build plain-text diagnostic for copy/paste (support ticket or run in terminal). Includes step, message, optional technical details, and hints (e.g. gcloud test command, proxy note). */
@@ -51,6 +53,7 @@ export function serializeContext(ctx: FirebaseContext, extras?: SerializeContext
     const diagnosticCopyText = buildDiagnosticCopyText(ctx);
     const setupChecklist = ctx.setupChecklist;
     const setupStep = ctx.setupStep;
+    const archivedSet = new Set(extras?.archivedIds ?? []);
     // In-panel troubleshooting and help (no external doc): table + step-specific rows + full help sections.
     const troubleshootingTable = CRASHLYTICS_TROUBLESHOOTING_TABLE.map(r => ({
         symptom: r.symptom,
@@ -71,6 +74,7 @@ export function serializeContext(ctx: FirebaseContext, extras?: SerializeContext
             isFatal: i.isFatal, state: i.state, repetitive: i.repetitive, regressed: i.regressed,
             eventCount: i.eventCount, userCount: i.userCount,
             firstVersion: i.firstVersion, lastVersion: i.lastVersion,
+            archived: archivedSet.has(i.id),
         })),
         consoleUrl: ctx.consoleUrl,
         diagnosticHtml,
