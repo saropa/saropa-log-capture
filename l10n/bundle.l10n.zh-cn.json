@@ -1607,5 +1607,20 @@
   "Visits": "访问 参观",
   "not walked": "不是走路,而是行走.",
   "walked": "走了,走了 在路上",
-  "walked · source-resolved": "走了 ·源解决的"
+  "walked · source-resolved": "走了 ·源解决的",
+  "View": "查看",
+  "Archived “{0}”. Turn on “Show archived” to find it again.": "已归档“{0}”。打开“显示已归档”可重新找到它。",
+  "{0} new or returned Crashlytics issue(s) detected.": "检测到 {0} 个新增或重新出现的 Crashlytics 问题。",
+  "{0} new Crashlytics issue(s) since you last looked.": "自上次查看以来有 {0} 个新的 Crashlytics 问题。",
+  "Restored “{0}” to the issue list.": "已将“{0}”恢复到问题列表。",
+  "Archive (hide locally)": "归档（在本地隐藏）",
+  "Regressed": "重新出现",
+  "Came back after disappearing in an earlier scan": "在先前扫描中消失后又重新出现",
+  "Repetitive": "重复出现",
+  "Seen across more than one app version": "在多个应用版本中出现",
+  "Show archived": "显示已归档",
+  "Most events": "事件最多",
+  "Sort issues by": "问题排序方式",
+  "Most users": "用户最多",
+  "Unarchive": "取消归档"
 }

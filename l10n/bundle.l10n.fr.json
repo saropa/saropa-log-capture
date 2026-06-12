@@ -1607,5 +1607,20 @@
   "Visits": "Les visites sont des visites.",
   "not walked": "Il n'a pas marché, il est allé.",
   "walked": "Il marchait, il marchait.",
-  "walked · source-resolved": "marche · résolu à la source."
+  "walked · source-resolved": "marche · résolu à la source.",
+  "View": "Afficher",
+  "Archived “{0}”. Turn on “Show archived” to find it again.": "« {0} » archivé. Activez « Afficher les archivés » pour le retrouver.",
+  "{0} new or returned Crashlytics issue(s) detected.": "{0} problème(s) Crashlytics nouveau(x) ou réapparu(s) détecté(s).",
+  "{0} new Crashlytics issue(s) since you last looked.": "{0} nouveau(x) problème(s) Crashlytics depuis votre dernière consultation.",
+  "Restored “{0}” to the issue list.": "« {0} » restauré dans la liste des problèmes.",
+  "Archive (hide locally)": "Archiver (masquer localement)",
+  "Regressed": "Réapparu",
+  "Came back after disappearing in an earlier scan": "Réapparu après avoir disparu lors d'une analyse précédente",
+  "Repetitive": "Répétitif",
+  "Seen across more than one app version": "Observé sur plusieurs versions de l'application",
+  "Show archived": "Afficher les archivés",
+  "Most events": "Plus d'événements",
+  "Sort issues by": "Trier les problèmes par",
+  "Most users": "Plus d'utilisateurs",
+  "Unarchive": "Désarchiver"
 }

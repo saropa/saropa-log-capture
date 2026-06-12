@@ -411,5 +411,20 @@
   "{0} sources": "nllb",
   "{0}h ago": "nllb",
   "{0}w ago": "nllb",
-  "— stdout, stderr, console": "nllb"
+  "— stdout, stderr, console": "nllb",
+  "View": "manual",
+  "Archived “{0}”. Turn on “Show archived” to find it again.": "manual",
+  "{0} new or returned Crashlytics issue(s) detected.": "manual",
+  "{0} new Crashlytics issue(s) since you last looked.": "manual",
+  "Restored “{0}” to the issue list.": "manual",
+  "Archive (hide locally)": "manual",
+  "Regressed": "manual",
+  "Came back after disappearing in an earlier scan": "manual",
+  "Repetitive": "manual",
+  "Seen across more than one app version": "manual",
+  "Show archived": "manual",
+  "Most events": "manual",
+  "Sort issues by": "manual",
+  "Most users": "manual",
+  "Unarchive": "manual"
 }
