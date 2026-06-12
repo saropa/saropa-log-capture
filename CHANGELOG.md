@@ -28,7 +28,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [8.1.0]
+
+The Crashlytics and Vitals panels get a big upgrade: crash-free users and sessions headline figures, trend sparklines on the cards and on every issue row, foreground/background device states, and a polished theme-aware look. You can archive issues you've triaged, get background alerts when a new or returned crash shows up, sort the list by events or affected users, and spot crashes tagged "Regressed" or "Repetitive" — plus the "Open in Firebase" arrow now deep-links straight to the exact issue. [log](https://github.com/saropa/saropa-log-capture/blob/v8.1.0/CHANGELOG.md)
 
 ### Added
 
