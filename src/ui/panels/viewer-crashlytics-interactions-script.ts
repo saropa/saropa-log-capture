@@ -37,6 +37,14 @@ export function getCrashlyticsInteractionsScript(): string {
         body.insertAdjacentHTML('beforeend', html);
     }
 
+    /* Append the foreground/background "Device states" panel once (T3.2). */
+    function applyDeviceStates(id, html) {
+        if (!cpDetailEl || !html || id !== cpDetailIssueId) return;
+        var body = cpDetailEl.querySelector('.cd-body');
+        if (!body || body.querySelector('.cd-device-states')) return;
+        body.insertAdjacentHTML('beforeend', html);
+    }
+
     function openIssueDetail(id) {
         if (!cpDetailEl) return;
         var row = null;
