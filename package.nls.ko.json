@@ -172,6 +172,8 @@
   "config.firebase.projectId.title": "Firebase project ID for Crashlytics queries (auto-detected from googl…",
   "config.firebase.refreshInterval.description": "Crashlytics 사이드바 패널의 자동 새로고침 간격(초). 0이면 자동 새로고침 비활성화.",
   "config.firebase.refreshInterval.title": "Auto-refresh interval (seconds) for the Crashlytics sidebar panel.",
+  "config.firebase.notifyNewIssues.description": "Show a notification when a new or returned crash issue is detected in the background. Off by default.",
+  "config.firebase.notifyNewIssues.title": "Notify on new Crashlytics issues",
   "config.firebase.serviceAccountKeyPath.description": "Path to a Google Cloud service account JSON key file (absolute or relative to workspace root). When set, used instead of gcloud for Crashlytics API access. Useful when gcloud is not available (e.g. CI, locked-down machines). Do not commit the key file to the repo.",
   "config.firebase.serviceAccountKeyPath.title": "Path to a Google Cloud service account JSON key file (absolute or rel…",
   "config.firebase.timeRange.description": "Crashlytics 이슈 쿼리를 위한 시간 범위.",
