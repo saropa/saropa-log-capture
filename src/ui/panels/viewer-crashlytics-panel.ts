@@ -316,6 +316,7 @@ export function getCrashlyticsPanelScript(): string {
         else if (e.data.type === 'crashlyticsFrameContext') { applyFrameContexts(e.data.contexts || []); }
         else if (e.data.type === 'crashlyticsProjectInsights') { applyProjectInsights(e.data.issueId, e.data.html || ''); }
         else if (e.data.type === 'crashlyticsLogCorrelation') { applyLogCorrelation(e.data.issueId, e.data.html || ''); }
+        else if (e.data.type === 'crashlyticsDeviceStates') { applyDeviceStates(e.data.issueId, e.data.html || ''); }
         else if (e.data.type === 'crashlyticsFilterIndex') { applyCpFilterIndex(e.data.index); }
         else if (e.data.type === 'crashlyticsTrends') { applyCpTrends(e.data.trends || {}); }
         else if (e.data.type === 'crashlyticsConnectionReport') {

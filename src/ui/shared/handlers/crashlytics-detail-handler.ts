@@ -7,7 +7,7 @@
 import { t } from '../../../l10n';
 import { escapeHtml } from '../../../modules/capture/ansi';
 import * as vscode from 'vscode';
-import { getCrashEvents } from '../../../modules/crashlytics/firebase-crashlytics';
+import { getCrashEvents, getProcessStates } from '../../../modules/crashlytics/firebase-crashlytics';
 import { getRepoSlug } from '../../../modules/git/github-context';
 import { getFrameContexts, resolveFile, topAppFrameRef } from '../../../modules/crashlytics/crash-frame-context';
 import { getProjectInsights } from '../../../modules/git/project-links';
@@ -15,7 +15,7 @@ import { crashSignatureToken } from '../../../modules/crashlytics/crash-signatur
 import { issueShortId } from '../../../modules/crashlytics/play-reporting-mappers';
 import { findCorrelatedLogLines } from '../../../modules/crashlytics/crash-log-correlation';
 import { renderProjectInsights, renderLogCorrelation } from '../../analysis/analysis-project-insights';
-import { renderCrashDetail, renderDeviceDistribution } from '../../analysis/analysis-crash-detail';
+import { renderCrashDetail, renderDeviceDistribution, renderProcessStates } from '../../analysis/analysis-crash-detail';
 import type { CrashlyticsEventDetail } from '../../../modules/crashlytics/crashlytics-types';
 import type { PostFn } from './crashlytics-handlers';
 
@@ -164,6 +164,16 @@ async function streamLogCorrelation(issueId: string, meta: IssueMeta, post: Post
 }
 
 /**
+ * Fetch the issue's foreground/background split (a true aggregate from the Play metric set) and stream
+ * the "Device states" panel into the detail. Streamed so the stack renders first. Never throws.
+ */
+async function streamDeviceStates(issueId: string, post: PostFn): Promise<void> {
+    const states = await getProcessStates(issueId);
+    const html = renderProcessStates(states);
+    if (html) { post({ type: 'crashlyticsDeviceStates', issueId, html }); }
+}
+
+/**
  * Fetch the issue's sampled event, render its detail into the in-viewer panel, and stream code context
  * (source line + git blame) for app frames afterwards. Never throws.
  */
@@ -183,6 +193,7 @@ export async function handleCrashlyticsDetail(issueId: string, rawMeta: Record<s
             if (contexts.length > 0) { post({ type: 'crashlyticsFrameContext', issueId, contexts }); }
             await streamProjectInsights(issueId, event, meta, post);
         }
+        await streamDeviceStates(issueId, post);
         await streamLogCorrelation(issueId, meta, post);
     } catch {
         post({ type: 'crashlyticsDetailReady', issueId, title: meta.title ?? 'Issue', html: `${header(meta, deepLink)}<div class="cd-body"><div class="no-matches">Could not load this issue.</div></div>`, markdown: '' });
