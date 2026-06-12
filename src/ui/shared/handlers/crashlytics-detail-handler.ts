@@ -12,6 +12,7 @@ import { getRepoSlug } from '../../../modules/git/github-context';
 import { getFrameContexts, resolveFile, topAppFrameRef } from '../../../modules/crashlytics/crash-frame-context';
 import { getProjectInsights } from '../../../modules/git/project-links';
 import { crashSignatureToken } from '../../../modules/crashlytics/crash-signature';
+import { issueShortId } from '../../../modules/crashlytics/play-reporting-mappers';
 import { findCorrelatedLogLines } from '../../../modules/crashlytics/crash-log-correlation';
 import { renderProjectInsights, renderLogCorrelation } from '../../analysis/analysis-project-insights';
 import { renderCrashDetail, renderDeviceDistribution } from '../../analysis/analysis-crash-detail';
@@ -71,9 +72,23 @@ function renderStatsStrip(meta: IssueMeta): string {
     return `<div class="cd-stats">${cards.join('')}</div>`;
 }
 
+/**
+ * Per-issue Firebase console deep link. The webview passes the project issues-list URL
+ * (`…/crashlytics/app/android:{pkg}/issues`); appending the issue's hex short id deep-links to the
+ * exact issue. Verified 2026-06-12: our Play Reporting issue ids are 32-char hex (e.g.
+ * `7e7936dad4cdb0a53859be193b898e81`), the same namespace as the Firebase console issue id in
+ * `…/issues/{hex}`. Falls back to the list URL when either piece is missing (never a broken link).
+ */
+function issueConsoleUrl(listUrl: string, issueId: string): string {
+    if (!listUrl) { return ''; }
+    const shortId = issueShortId(issueId);
+    return shortId ? `${listUrl}/${shortId}` : listUrl;
+}
+
 function header(meta: IssueMeta, consoleUrl: string): string {
-    // Project-level Firebase console link (#3): only the icon goes inside the title span so the row
-    // stays compact; URL comes from the webview (single source: firebase-crashlytics.ts builds it).
+    // Firebase console deep link (#3): only the icon goes inside the title span so the row stays
+    // compact; consoleUrl is the per-issue URL from issueConsoleUrl() (single source for the host:
+    // firebase-crashlytics.ts builds the app/ base, issueConsoleUrl appends the issue hex).
     const consoleLink = consoleUrl
         ? ` <a class="cd-console-link" data-url="${escapeHtml(consoleUrl)}" title="${t('viewer.crashlytics.detail.viewOnline')}">↗</a>`
         : '';
@@ -154,13 +169,15 @@ async function streamLogCorrelation(issueId: string, meta: IssueMeta, post: Post
  */
 export async function handleCrashlyticsDetail(issueId: string, rawMeta: Record<string, unknown>, post: PostFn, consoleUrl = ''): Promise<void> {
     const meta = toMeta(rawMeta);
+    // Deep-link the header arrow to this specific issue, not the project issues list.
+    const deepLink = issueConsoleUrl(consoleUrl, issueId);
     try {
         const multi = await getCrashEvents(issueId);
         const event = multi && multi.events.length > 0 ? multi.events[multi.currentIndex] : undefined;
         const body = event
             ? renderCrashDetail(event) + (multi ? renderDeviceDistribution(multi) : '')
             : '<div class="no-matches">No stack trace available for this issue.</div>';
-        post({ type: 'crashlyticsDetailReady', issueId, title: meta.title ?? 'Issue', html: `${header(meta, consoleUrl)}<div class="cd-body">${renderStatsStrip(meta)}${body}</div>`, markdown: buildMarkdown(meta, event) });
+        post({ type: 'crashlyticsDetailReady', issueId, title: meta.title ?? 'Issue', html: `${header(meta, deepLink)}<div class="cd-body">${renderStatsStrip(meta)}${body}</div>`, markdown: buildMarkdown(meta, event) });
         if (event) {
             const contexts = await getFrameContexts(event);
             if (contexts.length > 0) { post({ type: 'crashlyticsFrameContext', issueId, contexts }); }
@@ -168,7 +185,7 @@ export async function handleCrashlyticsDetail(issueId: string, rawMeta: Record<s
         }
         await streamLogCorrelation(issueId, meta, post);
     } catch {
-        post({ type: 'crashlyticsDetailReady', issueId, title: meta.title ?? 'Issue', html: `${header(meta, consoleUrl)}<div class="cd-body"><div class="no-matches">Could not load this issue.</div></div>`, markdown: '' });
+        post({ type: 'crashlyticsDetailReady', issueId, title: meta.title ?? 'Issue', html: `${header(meta, deepLink)}<div class="cd-body"><div class="no-matches">Could not load this issue.</div></div>`, markdown: '' });
     }
 }
 
