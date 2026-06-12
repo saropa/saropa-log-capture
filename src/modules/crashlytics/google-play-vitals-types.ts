@@ -23,6 +23,8 @@ export interface VitalsQueryResponse {
 /** Parsed Vitals snapshot for display. */
 export interface VitalsSnapshot {
     readonly crashRate?: number;
+    /** Distinct-user crash rate (userPerceivedCrashRate, percent) — basis for "crash-free users". */
+    readonly userCrashRate?: number;
     readonly anrRate?: number;
     /**
      * Daily rate series (oldest→newest, percent) over the queried window, for the trend sparkline.
