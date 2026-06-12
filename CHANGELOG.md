@@ -45,6 +45,7 @@ cspell:disable
 
 ### Changed
 
+- **Polished Crashlytics & Vitals visuals:** The Vitals panel now leads with side-by-side "Crash-free users" and "Crash-free sessions" hero figures, and the crash/ANR cards share a cohesive card style with a color-coded left edge and an inline trend line. In the issue list, rows lift on hover with a soft accent, the status pills are crisper, and each issue's trend sparkline sits in a tidy chip. All theme-aware (adapts to your VS Code color theme).
 - **The "Open in Firebase" arrow now deep-links to the exact issue:** Clicking ↗ beside a crash's name previously could only open the whole issues list. It now opens that specific issue in the Firebase Crashlytics console (the issue ids match between the two), so you land on the crash you were looking at instead of hunting for it.
 
 ### Fixed
