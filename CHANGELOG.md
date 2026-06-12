@@ -32,6 +32,7 @@ cspell:disable
 
 ### Added
 
+- **"Regressed" tag on crashes that came back:** Issues that disappeared in an earlier refresh and have since reappeared now carry a "Regressed" badge. This is tracked locally across refreshes (a short history of past scans is now kept under `.saropa/cache/crashlytics/`), since the Play Reporting API doesn't expose issue state.
 - **"Repetitive" tag on recurring crashes:** Issues seen across more than one app version now carry a "Repetitive" badge in the list, so a crash that has survived a release stands out from a one-off. Derived locally from the version range (the Play Reporting API has no such signal).
 - **Sort the Crashlytics issue list by events or users:** A new sort dropdown in the issue-list filter bar lets you order issues by most events (the default, matching the server order) or most affected users — useful for telling "noisy for one user" apart from "hitting many people." Sorting is instant and client-side.
 - **Crash-free sessions headline on the Vitals panel:** A prominent "Crash-free sessions" figure (100 − crash rate) now sits at the top of the Vitals panel — the single daily-health number the Firebase console leads with — alongside a period change arrow (↑ green when improving). The existing Crash Rate and ANR Rate cards stay below it. (Labeled "sessions": crash-free *users* uses a different denominator and is a separate addition.)

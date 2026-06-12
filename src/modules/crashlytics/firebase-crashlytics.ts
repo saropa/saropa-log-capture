@@ -2,7 +2,7 @@
 
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { runCmd } from './crashlytics-io';
+import { runCmd, readIssueHistory } from './crashlytics-io';
 import { resolveGcloudCmd, resetGcloudLocatorCache } from './gcloud-locator';
 import { getAccessTokenFromServiceAccount } from './crashlytics-service-account';
 import { detectPackageName } from '../misc/app-identity';
@@ -210,9 +210,12 @@ export async function getFirebaseContext(errorTokens: readonly string[]): Promis
         const consoleUrl = `https://console.firebase.google.com/project/${config.projectId}/crashlytics/app/${appSegment}/issues`;
         const fullChecklist: SetupChecklist = { gcloud: 'ok', token: 'ok', config: 'ok' };
         try {
-            // Layer locally-derived signals (e.g. "repetitive") the API does not provide onto the
+            // Layer locally-derived signals (repetitive / regressed) the API does not provide onto the
             // mapped issues. mapErrorIssue stays the faithful API mapper; signals are computed here.
-            const issues = deriveIssueSignals(await queryTopIssues(config, token, errorTokens));
+            // queryTopIssues already recorded the current snapshot, so the history's last entry is
+            // "now" and regression detection sees the full sequence.
+            const rawIssues = await queryTopIssues(config, token, errorTokens);
+            const issues = deriveIssueSignals(rawIssues, await readIssueHistory());
             logCrashlytics('info', `Fetched ${issues.length} Crashlytics issues`);
             // Surface the API diagnostic even when issues exist, so an offline cache-fallback is shown
             // as stale rather than masquerading as a fresh result. (offline cache)
