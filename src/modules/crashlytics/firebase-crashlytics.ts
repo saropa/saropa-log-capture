@@ -6,6 +6,7 @@ import { runCmd } from './crashlytics-io';
 import { resolveGcloudCmd, resetGcloudLocatorCache } from './gcloud-locator';
 import { getAccessTokenFromServiceAccount } from './crashlytics-service-account';
 import { detectPackageName } from '../misc/app-identity';
+import { deriveIssueSignals } from './crashlytics-issue-signals';
 import { fetchIssueBreakdown, fetchIssueFilterIndex, type IssueBreakdown, type IssueFilterIndex } from './play-reporting-metrics';
 import { logCrashlytics, classifyGcloudError, classifyTokenError, firebaseConfigSetupHint, type DiagnosticDetails } from './crashlytics-diagnostics';
 import type { CrashlyticsIssueEvents, CrashlyticsEventDetail, FirebaseContext, FirebaseConfig, SetupChecklist } from './crashlytics-types';
@@ -209,7 +210,9 @@ export async function getFirebaseContext(errorTokens: readonly string[]): Promis
         const consoleUrl = `https://console.firebase.google.com/project/${config.projectId}/crashlytics/app/${appSegment}/issues`;
         const fullChecklist: SetupChecklist = { gcloud: 'ok', token: 'ok', config: 'ok' };
         try {
-            const issues = await queryTopIssues(config, token, errorTokens);
+            // Layer locally-derived signals (e.g. "repetitive") the API does not provide onto the
+            // mapped issues. mapErrorIssue stays the faithful API mapper; signals are computed here.
+            const issues = deriveIssueSignals(await queryTopIssues(config, token, errorTokens));
             logCrashlytics('info', `Fetched ${issues.length} Crashlytics issues`);
             // Surface the API diagnostic even when issues exist, so an offline cache-fallback is shown
             // as stale rather than masquerading as a fresh result. (offline cache)

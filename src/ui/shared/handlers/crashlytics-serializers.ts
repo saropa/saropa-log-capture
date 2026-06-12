@@ -68,7 +68,7 @@ export function serializeContext(ctx: FirebaseContext, extras?: SerializeContext
         setupChecklist: setupChecklist ? { gcloud: setupChecklist.gcloud, token: setupChecklist.token, config: setupChecklist.config } : undefined,
         issues: ctx.issues.map(i => ({
             id: i.id, title: i.title, subtitle: i.subtitle,
-            isFatal: i.isFatal, state: i.state,
+            isFatal: i.isFatal, state: i.state, repetitive: i.repetitive,
             eventCount: i.eventCount, userCount: i.userCount,
             firstVersion: i.firstVersion, lastVersion: i.lastVersion,
         })),
