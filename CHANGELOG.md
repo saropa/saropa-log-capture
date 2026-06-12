@@ -30,9 +30,13 @@ cspell:disable
 
 ## [Unreleased]
 
+### Changed
+
+- **The "Open in Firebase" arrow now deep-links to the exact issue:** Clicking ↗ beside a crash's name previously could only open the whole issues list. It now opens that specific issue in the Firebase Crashlytics console (the issue ids match between the two), so you land on the crash you were looking at instead of hunting for it.
+
 ### Fixed
 
-- **"Open in Firebase" arrow now reaches the Crashlytics console:** The ↗ link beside a crash issue's name (and the panel's "Open Firebase Console" link) built its URL from the Firebase *app id* (`1:NNN:android:HEX`), which the console rejects with "This app does not exist or you do not have permission to view it." The link now uses the platform-prefixed package name (`android:com.example.app`) the console actually expects, so it opens your project's Crashlytics issues list as intended.
+- **"Open in Firebase" arrow now reaches the Crashlytics console:** The ↗ link beside a crash issue's name (and the panel's "Open Firebase Console" link) built its URL from the Firebase *app id* (`1:NNN:android:HEX`), which the console rejects with "This app does not exist or you do not have permission to view it." The link now uses the platform-prefixed package name (`android:com.example.app`) the console actually expects, so it opens the right project.
 
 ## [8.0.5]
 
