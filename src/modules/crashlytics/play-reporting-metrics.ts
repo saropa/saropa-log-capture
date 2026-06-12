@@ -148,6 +148,21 @@ async function queryDimension(q: PlayQuery, ts: object, dim: string, filter: str
     return { entries: diagnostic ? [] : parseMetricRows(json, dim), diagnostic };
 }
 
+/**
+ * Foreground/background split for one issue, from the `appProcessState` dimension of the error-count
+ * metric set. This is the "Device states" panel Firebase shows. Never throws; [] on failure.
+ */
+export async function fetchProcessStates(q: PlayQuery, issueResourceName: string): Promise<StatEntry[]> {
+    try {
+        const end = await freshnessEnd(q);
+        const ts = { aggregationPeriod: 'FULL_RANGE', startTime: minusDays(end, rangeDays(q.timeRange)), endTime: end };
+        const { entries } = await queryDimension(q, ts, 'appProcessState', `issueId = ${issueShortId(issueResourceName)}`);
+        return entries;
+    } catch {
+        return [];
+    }
+}
+
 /** Fetch true device + OS aggregates for one issue. Never throws; diagnostic set on failure. */
 export async function fetchIssueBreakdown(q: PlayQuery, issueResourceName: string): Promise<IssueBreakdown> {
     const end = await freshnessEnd(q);

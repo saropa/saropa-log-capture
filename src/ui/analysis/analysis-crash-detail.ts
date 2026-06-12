@@ -7,6 +7,7 @@ import { extractSourceReference } from '../../modules/source/source-linker';
 import { type StackFrameInfo, renderSmartFrameSection } from './analysis-frame-render';
 import type { CrashlyticsEventDetail, CrashlyticsStackFrame, CrashlyticsIssueEvents } from '../../modules/crashlytics/firebase-crashlytics';
 import type { IssueStats } from '../../modules/crashlytics/crashlytics-stats';
+import type { StatEntry } from '../../modules/crashlytics/play-reporting-metrics';
 import { groupCrashThreads, type ThreadGroup } from '../../modules/crashlytics/crashlytics-thread-grouping';
 import type { CrashlyticsThread } from '../../modules/crashlytics/crashlytics-types';
 
@@ -153,6 +154,25 @@ export function renderApiDistribution(stats: IssueStats): string {
         html += renderDistributionBar('OS Versions', os, stats.osStats.reduce((s, e) => s + e.count, 0));
     }
     return html + '</details>';
+}
+
+/** Friendly label for a Play `appProcessState` enum value. */
+function processStateLabel(raw: string): string {
+    if (raw === 'FOREGROUND') { return 'Foreground'; }
+    if (raw === 'BACKGROUND') { return 'Background'; }
+    return raw;
+}
+
+/**
+ * Render the foreground/background "Device states" panel from the Play appProcessState dimension —
+ * a true aggregate (not a sample). Empty when there is no data. Streamed into the detail.
+ */
+export function renderProcessStates(states: readonly StatEntry[]): string {
+    const total = states.reduce((sum, e) => sum + e.count, 0);
+    if (total === 0) { return ''; }
+    const counts = new Map(states.map(e => [processStateLabel(e.name), e.count] as const));
+    return '<details class="group cd-tile cd-device-states" open><summary class="group-header">Device states <span class="match-count">all events</span></summary>'
+        + renderDistributionBar('App state', counts, total) + '</details>';
 }
 
 function renderDistributionBar(label: string, counts: Map<string, number>, total: number): string {
