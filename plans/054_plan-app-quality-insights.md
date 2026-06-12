@@ -429,6 +429,150 @@ This work will be reviewed by another AI.
 
 **Finish report appended:** plans/054_plan-app-quality-insights.md
 
+## Stage 6 — Aggregate-dashboard parity from data we already have (added 2026-06-12)
+
+**Why this stage exists.** A side-by-side of our Crashlytics surface vs. the Firebase web console showed
+the two solve different halves of the same problem: theirs is an **aggregate health dashboard**
+(crash-free %, trends over time, regression signals, sorting); ours is a **deep single-crash inspector**
+(913-frame native stack, app/fw split, per-thread grouping, in-editor source-linking). The honest gaps
+in ours are the time dimension and the fleet-wide rollup. This stage closes the ones that are reachable
+**without any new API surface or auth work** — the data is already fetched-and-discarded or already on
+the issue object. Verified by reading the data layer (`google-play-vitals.ts`, `play-reporting-*.ts`,
+`crashlytics-io.ts`, `viewer-crashlytics-panel.ts`), not assumed.
+
+This supersedes the vague "Trends & regressions" line in Pillar 3 #6 with code-grounded, separately
+shippable slices, and **resolves the open caveat** in the "Data / API reality check" above ("verify
+fresh/regressed in the Play Reporting response before rendering a glyph") — by sourcing those signals
+**from our own local archive instead of the API**, which the API genuinely does not provide.
+
+### 6a — App-level trend sparkline (cheapest; zero new API calls)
+
+The vitals query already pulls a **daily time series and throws all but the last row away**:
+`queryMetricSet` in `google-play-vitals.ts` requests `aggregationPeriod: 'DAILY'` over a 7-day window,
+then `extractLatestRate` reads only `rows[rows.length - 1]`. Keep the full `rows[]` on `VitalsSnapshot`
+(add `crashRateSeries` / `anrRateSeries: number[]`) and draw an inline SVG/CSS sparkline in
+`vitals-panel.ts` (`renderMetric`). No new request, no new scope. This is the highest wow-per-effort item.
+
+### 6b — Crash-free % reframe (display-only)
+
+`VitalsSnapshot` already carries `crashRate`. Firebase's headline "crash-free sessions %" is
+`100 − crashRate`. Reframe `renderMetric` to show "Crash-free: 98.8%" with the period delta (derivable
+once 6a keeps the series). **Honest limit:** Firebase's *crash-free **users*** uses a distinct-user
+denominator, not the session-based crash rate — exact parity needs the user-perceived metric added to
+the query (small change). Ship the free "crash-free sessions" framing first; label it as sessions, not
+users, so we never present one as the other.
+
+### 6c — Issue-list sorting (pure client-side)
+
+The list arrives pre-sorted server-side (`fetchPlayErrorIssues` hardcodes `orderBy=errorReportCount
+desc`). Every row already emits `data-events` and `data-users` (`renderIssue` in
+`viewer-crashlytics-panel.ts`), and each `CrashlyticsIssue` carries both counts. Add a sort control
+(Events / Users) to the existing `cp-filterbar` next to the version/device/OS selects; sort the rows in
+JS. No new fetch, no data gap.
+
+### 6d — Regressed / Repetitive tags from the local archive (the corrected "impossible")
+
+The Play Reporting API has no open/closed/regression state — `mapErrorIssue` is the single site that
+hardcodes `state: 'UNKNOWN'`, and `renderIssue` already emits a `state` badge whenever
+`state !== 'UNKNOWN'` (the slot is wired and dormant). The first read of this plan called these tags
+impossible. That was wrong: **`crashlytics-io.ts` keeps a local archive** of issue snapshots, so the
+signals are derivable locally — for two of the three Firebase tags.
+
+- **Repetitive — derivable NOW, no cache change.** A single snapshot already proves it: an issue whose
+  `firstVersion ≠ lastVersion` spanning multiple releases is recurring. Set a repetitive flag in the
+  local-derivation pass and render the dormant badge.
+- **Regressed — derivable WITH a snapshot history.** Today `writeCachedIssues` **overwrites**
+  `issues.json` on every refresh (one snapshot on disk, stamped `cachedAt`). Regression detection needs
+  ≥2 snapshots to compare: an issue absent/near-zero in an older snapshot but present/spiking now.
+  Change the cache from single-overwrite to a **timestamped, retention-bounded history**
+  (`issues-{cachedAt}.json` or an append log), then diff by issue `id` and set `state: 'REGRESSION'`.
+- **Early crashes — genuinely NOT derivable.** This is per-event *session-lifecycle* position (crash
+  soon after launch), which Firebase computes from the event's session timing. The Play `errorReports`
+  payload doesn't carry it and our archive can't reconstruct it. Out of scope; do not fake it.
+
+Derivation runs host-side (where the archive lives), setting `state` / a repetitive flag on
+`CrashlyticsIssue` before it reaches the webview — `mapErrorIssue` stays the API mapper; a new local
+pass (e.g. `crashlytics-issue-signals.ts`) layers the derived signals on top. Never render a signal we
+can't source: Repetitive and Regressed yes (sourced locally), Early no.
+
+### 6e — Background new-issue detection + alert (no manual panel open)
+
+**Motivation.** Firebase already emails a "Trending stability issues" digest ("Issues rapidly gaining
+momentum") so the developer learns about a spiking crash without opening any dashboard. We can do the
+same in-IDE — and better, because we hold the prior scans locally and never need a manual click into the
+Crashlytics panel.
+
+**What exists vs. what's missing (verified).** There is already a periodic refresh
+(`startCrashlyticsAutoRefresh` in `crashlytics-handlers.ts`, on `saropaLogCapture.firebase.refreshInterval`,
+default 300s), but it takes a `PostFn` that posts into the **webview** — it only runs while the panel is
+open, and its only output is re-rendering the open list. There is **no host-side, panel-independent scan
+and no notification path.** That's the gap.
+
+**Design.**
+- A host-side **watcher** registered at activation (not webview-coupled), reusing `fetchPlayErrorIssues`
+  on the same interval setting, that runs whenever auth is configured — independent of whether the panel
+  is open.
+- Diff the fresh result against the **prior local snapshot** (`readCachedIssues()` — the 6d archive):
+  *new* = issue `id` present now, absent before; *regressed/spiking* reuses the 6d comparison. This is
+  the same diff machinery 6d builds, so 6e should land on top of 6d, not duplicate it.
+- On a new/regressed issue, fire a **single gated `vscode.window.showInformationMessage`** (toast) with a
+  "View in Crashlytics" action that opens the panel to that issue, plus a **status-bar badge** with the
+  new-issue count. Gate per issue `id` so the same crash never re-alerts (per the proactive-next-step UX
+  rule — offer once, never nag).
+- New setting `saropaLogCapture.firebase.notifyNewIssues` (default off until the signal proves itself,
+  per the signals-stay-passive house rule) + reuse `refreshInterval` for cadence. **Honest limits:** the
+  watcher needs auth/scope already set up (stays silent otherwise — no nag); cadence is bounded by the
+  Play Reporting freshness window (it is not real-time), so "rapidly gaining momentum" means
+  "since the last scan," not live.
+- **Archived issues (6f) must not re-alert** — the watcher consults the archive set before firing.
+
+### 6f — Local archive / unarchive of issues
+
+**Why local.** The data source (Play Reporting) is **read-only** — this is exactly why the old
+Close/Mute buttons were removed (they were upstream no-ops; see the comment in `renderIssue`,
+`viewer-crashlytics-panel.ts`). A **local** archive restores a real, useful action without pretending to
+write to Firebase: "I've triaged this; hide it and stop alerting me," reversible via unarchive.
+
+**Design (mirrors the existing signal-triage store).** The signals panel already persists per-item
+triage state locally (`error-status-store.ts`, `setErrorStatus`/`getErrorStatusBatch`, open/muted). Reuse
+that pattern: a persisted set of archived issue `id`s in `.saropa/cache/crashlytics/` (e.g.
+`archived.json`), written through `crashlytics-io.ts` alongside the snapshot cache.
+- **List behavior:** archived issues are filtered out of the sidebar by default; a **"Show archived"**
+  toggle in `cp-filterbar` reveals them (greyed/badged) with an **Unarchive** action per row.
+- **Actions:** archive from an issue row / the detail header; unarchive from the archived view. Both emit
+  a visible confirmation toast naming the issue (per the UX "name the thing" rule), never a silent state
+  flip.
+- **Interaction with 6e:** archive = "don't tell me again." The watcher skips archived ids; unarchiving
+  re-enables alerting for that id.
+- **Honest scope:** this is local-only state — it does not close the issue in Firebase/Play, and a
+  fresh-clone/another-machine won't see it (it lives in the workspace cache). Label it as a local view
+  filter, not an upstream resolution.
+
+### Feasibility summary (verified against code, 2026-06-12)
+
+| Item | Feasible? | Cost | Evidence |
+|---|---|---|---|
+| 6a app-level sparkline | Yes | Zero new fetch — daily rows already discarded | `google-play-vitals.ts` `extractLatestRate` reads only the last row |
+| 6b crash-free % (sessions) | Yes | Display reframe | `crashRate` already on `VitalsSnapshot` |
+| 6c sorting | Yes | Pure client-side JS | `data-events`/`data-users` already on every row |
+| 6d Repetitive tag | Yes, now | Single-snapshot derivation | `firstVersion`/`lastVersion` on `CrashlyticsIssue` |
+| 6d Regressed tag | Yes | Overwrite→history cache change + diff | `crashlytics-io.ts` `writeCachedIssues` currently overwrites |
+| 6b crash-free *users* (exact) | Yes | Small query addition | distinct-user metric not yet queried |
+| 6d Early-crashes tag | **No** | — | Session-lifecycle data absent from `errorReports` + archive |
+| 6e background new-issue alert | Yes | Host-side watcher + diff vs. archive + toast/badge | Existing refresh is webview-coupled (`startCrashlyticsAutoRefresh`); no host-side scan/notify path yet |
+| 6f local archive / unarchive | Yes | Local id set + list filter + toggle | `error-status-store.ts` is the proven local-triage pattern; API is read-only |
+| Real per-issue trend column | Yes (later) | One new DAILY `errorCountMetricSet` query | `play-reporting-metrics.ts` already does the grouped-by-issue shape |
+
+### Sequencing
+
+6a → 6b → 6c are independent, additive, and need no API/auth work — ship in any order. 6d Repetitive
+ships with them (single-snapshot). 6d Regressed is the one notch up (the cache-history change) and
+should land last among the data-derivation slices. **6e (background alert) depends on 6d's snapshot
+history** — it reuses the same diff — so it follows 6d Regressed. **6f (local archive) is independent**
+and can ship any time, but 6e must respect 6f's archived set, so if both are planned, land 6f first so
+the watcher has an archive to consult. The per-issue trend column (last table row) needs a real new
+query and belongs after 6a proves the sparkline rendering.
+
 ## Finish Report (2026-06-10) — Stage 5b "other threads" grouping
 
 This work will be reviewed by another AI.
