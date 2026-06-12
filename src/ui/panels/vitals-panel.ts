@@ -5,6 +5,7 @@ import { escapeHtml, formatElapsedLabel } from '../../modules/capture/ansi';
 import { getNonce } from '../provider/viewer-content';
 import { queryVitals, clearVitalsCache, thresholds, getVitalsDiagnostic } from '../../modules/crashlytics/google-play-vitals';
 import type { VitalsSnapshot } from '../../modules/crashlytics/google-play-vitals-types';
+import { renderSparkline } from './vitals-sparkline';
 
 let refreshTimer: ReturnType<typeof setInterval> | undefined;
 
@@ -71,21 +72,21 @@ ${reason}
 <div role="main" aria-label="Vitals">
 <div class="vt-toolbar"><span class="vt-title">Vitals ${refreshNote}</span><button class="vt-refresh" onclick="postMsg('refresh')" aria-label="Refresh Vitals data">Refresh</button></div>
 <div class="vt-pkg">${escapeHtml(snapshot.packageName)}</div>
-${renderMetric('Crash Rate', snapshot.crashRate, thresholds.crashRate)}
-${renderMetric('ANR Rate', snapshot.anrRate, thresholds.anrRate)}
+${renderMetric('Crash Rate', snapshot.crashRate, thresholds.crashRate, snapshot.crashRateSeries)}
+${renderMetric('ANR Rate', snapshot.anrRate, thresholds.anrRate, snapshot.anrRateSeries)}
 <div class="vt-footer" onclick="postMsg('openPlayConsole')">Open Play Console</div>
 </div>
 <script nonce="${nonce}">const v=acquireVsCodeApi();function postMsg(t){v.postMessage({type:t})}</script>
 </body></html>`;
 }
 
-function renderMetric(label: string, rate: number | undefined, threshold: number): string {
+function renderMetric(label: string, rate: number | undefined, threshold: number, series?: readonly number[]): string {
     if (rate === undefined) { return `<div class="vt-metric"><span class="vt-label">${label}</span><span class="vt-na">N/A</span></div>`; }
     const pct = rate.toFixed(2) + '%';
     const bad = rate > threshold;
     const cls = bad ? ' vt-bad' : ' vt-good';
     const icon = bad ? '\u26a0' : '\u2713';
-    return `<div class="vt-metric${cls}"><span class="vt-label">${label}</span><span class="vt-value">${icon} ${pct}</span><span class="vt-threshold">threshold: ${threshold}%</span></div>`;
+    return `<div class="vt-metric${cls}"><span class="vt-label">${label}</span><span class="vt-value">${icon} ${pct}</span><span class="vt-threshold">threshold: ${threshold}%</span>${renderSparkline(series)}</div>`;
 }
 
 function getStyles(): string {
@@ -100,5 +101,8 @@ function getStyles(): string {
 .vt-good .vt-value{color:var(--vscode-testing-iconPassed, #388e3c)}
 .vt-bad .vt-value{color:var(--vscode-errorForeground)}
 .vt-na{opacity:0.5;font-style:italic}
+.vt-spark{width:100%;height:18px;margin-top:4px;opacity:0.85}
+.vt-good .vt-spark{color:var(--vscode-testing-iconPassed,#388e3c)}
+.vt-bad .vt-spark{color:var(--vscode-errorForeground)}
 .vt-footer{margin-top:8px;text-align:center;cursor:pointer;color:var(--vscode-textLink-foreground);font-size:12px}`;
 }
