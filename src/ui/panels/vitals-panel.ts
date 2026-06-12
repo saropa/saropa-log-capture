@@ -73,6 +73,7 @@ ${reason}
 <div class="vt-toolbar"><span class="vt-title">Vitals ${refreshNote}</span><button class="vt-refresh" onclick="postMsg('refresh')" aria-label="Refresh Vitals data">Refresh</button></div>
 <div class="vt-pkg">${escapeHtml(snapshot.packageName)}</div>
 ${renderCrashFree(snapshot.crashRate, snapshot.crashRateSeries)}
+${renderCrashFreeUsers(snapshot.userCrashRate)}
 ${renderMetric('Crash Rate', snapshot.crashRate, thresholds.crashRate, snapshot.crashRateSeries)}
 ${renderMetric('ANR Rate', snapshot.anrRate, thresholds.anrRate, snapshot.anrRateSeries)}
 <div class="vt-footer" onclick="postMsg('openPlayConsole')">Open Play Console</div>
@@ -102,6 +103,18 @@ function renderCrashFree(crashRate: number | undefined, series?: readonly number
     }
     return `<div class="vt-crashfree"><span class="vt-cf-label">Crash-free sessions</span>`
         + `<span class="vt-cf-value">${free.toFixed(2)}%</span>${delta}</div>`;
+}
+
+/**
+ * Crash-free USERS = 100 − userPerceivedCrashRate (distinct-user denominator). Distinct from crash-free
+ * sessions above; this is the metric Firebase headlines as "Crash-free users". Hidden when the API
+ * didn't return the user-perceived rate.
+ */
+function renderCrashFreeUsers(userCrashRate: number | undefined): string {
+    if (userCrashRate === undefined) { return ''; }
+    const free = 100 - userCrashRate;
+    return `<div class="vt-crashfree"><span class="vt-cf-label">Crash-free users</span>`
+        + `<span class="vt-cf-value">${free.toFixed(2)}%</span></div>`;
 }
 
 function renderMetric(label: string, rate: number | undefined, threshold: number, series?: readonly number[]): string {
