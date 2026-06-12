@@ -5,6 +5,7 @@ import { execFile } from 'node:child_process';
 import { getLogDirectoryUri, getSaropaCacheCrashlyticsUri } from '../config/config';
 import { readDirectoryIfExistsAsDirectory } from '../misc/vscode-fs-read-directory-safe';
 import type { CrashlyticsIssueEvents, CrashlyticsEventDetail, CrashlyticsIssue } from './crashlytics-types';
+import { type IssueSnapshot, toSnapshot, appendSnapshot } from './crashlytics-issue-history';
 
 /** Shared timeout (ms) for both CLI commands and HTTP requests. */
 export const apiTimeout = 10_000;
@@ -47,6 +48,42 @@ function getIssuesCacheUri(): vscode.Uri | undefined {
     const ws = vscode.workspace.workspaceFolders?.[0];
     if (!ws) { return undefined; }
     return vscode.Uri.joinPath(getSaropaCacheCrashlyticsUri(ws), 'issues.json');
+}
+
+/** On-disk path for the issue snapshot history (.saropa/cache/crashlytics/issues-history.json). */
+function getIssueHistoryUri(): vscode.Uri | undefined {
+    const ws = vscode.workspace.workspaceFolders?.[0];
+    if (!ws) { return undefined; }
+    return vscode.Uri.joinPath(getSaropaCacheCrashlyticsUri(ws), 'issues-history.json');
+}
+
+/** Read the issue snapshot history (oldest→newest). Empty array if none/invalid. Never throws. */
+export async function readIssueHistory(): Promise<IssueSnapshot[]> {
+    const uri = getIssueHistoryUri();
+    if (!uri) { return []; }
+    try {
+        const raw = await vscode.workspace.fs.readFile(uri);
+        const parsed = JSON.parse(Buffer.from(raw).toString('utf-8')) as { snapshots?: unknown };
+        return Array.isArray(parsed.snapshots) ? parsed.snapshots as IssueSnapshot[] : [];
+    } catch { return []; }
+}
+
+/**
+ * Append the current issue list to the on-disk snapshot history (collapsing identical consecutive
+ * states, capped). Enables regression detection and new-issue alerts. Never throws (cache write is
+ * non-fatal). `cachedAt` is stamped here, at the I/O boundary, so the history shaper stays pure.
+ */
+export async function recordIssueSnapshot(issues: readonly CrashlyticsIssue[]): Promise<void> {
+    try {
+        const uri = getIssueHistoryUri();
+        if (!uri) { return; }
+        const history = await readIssueHistory();
+        const next = appendSnapshot(history, toSnapshot(issues, Date.now()));
+        await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(uri, '..'));
+        await vscode.workspace.fs.writeFile(uri, Buffer.from(JSON.stringify({ snapshots: next }, null, 2)));
+    } catch {
+        // Non-fatal: a failed history write just means no baseline for the next regression/new check.
+    }
 }
 
 /** Read the last persisted issue list (so issues stay visible offline). Undefined if none/invalid. */
