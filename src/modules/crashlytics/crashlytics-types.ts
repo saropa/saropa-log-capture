@@ -24,6 +24,12 @@ export interface CrashlyticsIssue {
      * recurred across at least one release. Set by `deriveIssueSignals`; undefined until derived.
      */
     readonly repetitive?: boolean;
+    /**
+     * Locally-derived (NOT from the API): the issue went away then came back (present in an earlier
+     * local snapshot, absent in the previous one, present now). Set by `deriveIssueSignals` from the
+     * snapshot history; undefined until derived.
+     */
+    readonly regressed?: boolean;
 }
 
 /** Per-step status for the setup checklist (ok, missing, or not yet checked because a prior step failed). */
