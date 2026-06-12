@@ -596,6 +596,34 @@ and can ship any time, but 6e must respect 6f's archived set, so if both are pla
 the watcher has an archive to consult. The per-issue trend column (last table row) needs a real new
 query and belongs after 6a proves the sparkline rendering.
 
+### Stage 6 build log
+
+- **6a app-level sparkline — DONE (2026-06-12).** See "Finish Report (2026-06-12) — Stage 6a" below.
+
+## Finish Report (2026-06-12) — Stage 6a app-level trend sparkline
+
+This work will be reviewed by another AI.
+
+**Scope:** (B) VS Code extension (TypeScript — Vitals data layer + panel render + a new pure module + node test). No Dart/Flutter.
+
+**What shipped.** The Google Play Vitals query (`google-play-vitals.ts`) requests a `DAILY` time series but previously kept only the last row (`extractLatestRate`), discarding the rest. It now also keeps the full daily series: a new `rowRate` helper reads one row's percent, `extractLatestRate` reuses it, and a new `extractSeries` maps every row (dropping non-numeric ones). `VitalsSnapshot` gained `crashRateSeries` / `anrRateSeries` (oldest→newest, percent). The Vitals panel renders a trend line beneath each metric's number.
+
+**Reuse decision.** The SVG sparkline math was extracted into a new vscode-free module `src/ui/panels/vitals-sparkline.ts` (`renderSparkline(series, width?, height?)`) rather than inlined in the panel, because the per-issue trend mini-chart (Stage 6 / T3.1) needs the identical renderer. Keeping it vscode-free makes it unit-testable under `node --test`. Convention: oldest→newest, higher value = higher line (y inverted), stretched to the box via `preserveAspectRatio="none"`, color via `currentColor` so the caller's good/bad CSS class colors it.
+
+**Files changed:**
+- `src/modules/crashlytics/google-play-vitals-types.ts` — `crashRateSeries` / `anrRateSeries` on `VitalsSnapshot`.
+- `src/modules/crashlytics/google-play-vitals.ts` — `rowRate`, `extractSeries`, set series on the snapshot, import `VitalsRow`.
+- `src/ui/panels/vitals-sparkline.ts` — NEW pure renderer.
+- `src/ui/panels/vitals-panel.ts` — import + render the sparkline; sparkline CSS (`.vt-spark` + good/bad color).
+- `src/test/ui/panels/vitals-sparkline.test.ts` — NEW `node:test` (4 cases).
+- `CHANGELOG.md` — `[Unreleased]` Added entry.
+
+**Tests:** `node --test out/test/ui/panels/vitals-sparkline.test.js` → 4 passing (empty for <2 points, one point per value, y-inversion, flat-series no divide-by-zero). Test audit: grep of `src/test` for `vitals` / `VitalsSnapshot` / `extractLatestRate` / `renderMetric` / `crashRate` / `anrRate` returned no existing references — nothing to repair. `npm run check-types` clean; `npm run compile-tests` clean.
+
+**Outstanding:** none for 6a. On-device (F5) confirmation of the rendered sparkline against a real multi-day Vitals response is the user's check.
+
+**Finish report appended:** plans/054_plan-app-quality-insights.md
+
 ## Finish Report (2026-06-10) — Stage 5b "other threads" grouping
 
 This work will be reviewed by another AI.
