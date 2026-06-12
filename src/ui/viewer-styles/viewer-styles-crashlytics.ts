@@ -129,6 +129,7 @@ export function getCrashlyticsPanelStyles(): string {
 .cp-badge-regression, .cp-badge-regressed { background: var(--vscode-inputValidation-errorBackground); color: var(--vscode-errorForeground); }
 .cp-badge-closed { background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); }
 .cp-badge-open { background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); }
+.cp-badge-repetitive { background: var(--vscode-inputValidation-warningBackground); color: var(--vscode-editorWarning-foreground); border-color: var(--vscode-inputValidation-warningBorder, var(--vscode-editorWarning-foreground)); }
 
 .cp-actions { display: flex; gap: 4px; margin-top: 4px; }
 
