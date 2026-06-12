@@ -98,6 +98,8 @@ export const stringsViewerC: Record<string, string> = {
     'viewer.crashlytics.sort.users': 'Most users',
     'viewer.crashlytics.badge.repetitive': 'Repetitive',
     'viewer.crashlytics.badge.repetitiveTip': 'Seen across more than one app version',
+    'viewer.crashlytics.badge.regressed': 'Regressed',
+    'viewer.crashlytics.badge.regressedTip': 'Came back after disappearing in an earlier scan',
     'viewer.crashlytics.openDashboard.title': 'Open App Quality Insights dashboard',
     'viewer.crashlytics.openDashboard.label': 'Open App Quality Insights dashboard',
     'viewer.crashlytics.refresh.title': 'Refresh',
