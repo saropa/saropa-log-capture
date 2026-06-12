@@ -3,7 +3,8 @@
 import { getAccessToken } from './firebase-crashlytics';
 import { detectPackageName } from '../misc/app-identity';
 import { classifyHttpStatus, logCrashlytics, type DiagnosticDetails } from './crashlytics-diagnostics';
-import type { VitalsQueryResponse, VitalsRow, VitalsSnapshot } from './google-play-vitals-types';
+import type { VitalsQueryResponse, VitalsSnapshot } from './google-play-vitals-types';
+import { latestMetric, metricSeries } from './vitals-metrics';
 
 const apiBase = 'https://playdeveloperreporting.googleapis.com/v1beta1';
 const cacheTtl = 15 * 60_000;
@@ -36,10 +37,11 @@ export async function queryVitals(): Promise<VitalsSnapshot | undefined> {
         queryMetricSet(packageName, 'anrRateMetricSet', token),
     ]);
     const snapshot: VitalsSnapshot = {
-        crashRate: extractLatestRate(crashData),
-        anrRate: extractLatestRate(anrData),
-        crashRateSeries: extractSeries(crashData),
-        anrRateSeries: extractSeries(anrData),
+        crashRate: latestMetric(crashData, 'crashRate'),
+        userCrashRate: latestMetric(crashData, 'userPerceivedCrashRate'),
+        anrRate: latestMetric(anrData, 'anrRate'),
+        crashRateSeries: metricSeries(crashData, 'crashRate'),
+        anrRateSeries: metricSeries(anrData, 'anrRate'),
         queriedAt: Date.now(),
         packageName,
     };
@@ -60,33 +62,15 @@ async function queryMetricSet(
     packageName: string, metricSet: string, token: string,
 ): Promise<VitalsQueryResponse | undefined> {
     const url = `${apiBase}/apps/${packageName}/${metricSet}:query`;
+    // Crash query also asks for the distinct-user rate (userPerceivedCrashRate) so the panel can show
+    // crash-free USERS alongside crash-free sessions — both come back in one call.
+    const metrics = metricSet === 'crashRateMetricSet' ? ['crashRate', 'userPerceivedCrashRate'] : ['anrRate'];
     const body = JSON.stringify({
         timelineSpec: { aggregationPeriod: 'DAILY', startTime: daysAgo(7), endTime: today() },
-        metrics: [metricSet === 'crashRateMetricSet' ? 'crashRate' : 'anrRate'],
+        metrics,
         dimensions: [],
     });
     return fetchJson(url, token, body) as Promise<VitalsQueryResponse | undefined>;
-}
-
-/** Read one row's first metric as a percent (rate * 100), or undefined when absent/non-numeric. */
-function rowRate(row: VitalsRow): number | undefined {
-    const metric = row.metrics ? Object.values(row.metrics)[0] : undefined;
-    const raw = metric?.decimalValue?.value;
-    if (!raw) { return undefined; }
-    const val = parseFloat(raw);
-    return isNaN(val) ? undefined : val * 100;
-}
-
-function extractLatestRate(data: VitalsQueryResponse | undefined): number | undefined {
-    if (!data?.rows || data.rows.length === 0) { return undefined; }
-    return rowRate(data.rows[data.rows.length - 1]);
-}
-
-/** The full daily series (oldest→newest, percent). Rows with no numeric metric are dropped. */
-function extractSeries(data: VitalsQueryResponse | undefined): number[] | undefined {
-    if (!data?.rows || data.rows.length === 0) { return undefined; }
-    const series = data.rows.map(rowRate).filter((v): v is number => v !== undefined);
-    return series.length > 0 ? series : undefined;
 }
 
 function daysAgo(n: number): { year: number; month: number; day: number } {

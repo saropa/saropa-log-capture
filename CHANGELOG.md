@@ -32,6 +32,7 @@ cspell:disable
 
 ### Added
 
+- **Crash-free users on the Vitals panel:** Alongside crash-free sessions, the panel now shows crash-free **users** (the share of people who didn't hit a crash) — the headline number the Firebase console leads with, using the distinct-user rate from Google Play.
 - **Device states (foreground vs background) on the issue detail:** The crash detail now shows a "Device states" panel with the true foreground/background split for the issue (from Google Play's aggregate data, not a sample) — so you can tell a crash that happens while users are actively in the app from one that fires in the background.
 - **Per-issue trend mini-charts in the list:** Each crash issue now shows a small sparkline of its daily event count over the selected period, so you can spot a spiking issue versus a flat one without opening it. Fetched once when the list loads.
 - **Archive crash issues locally:** Each issue row now has an archive button to hide issues you've already triaged. A **Show archived** toggle in the filter bar reveals them again, each with an unarchive button. Archiving is local to your workspace (the Play Reporting data is read-only, so this doesn't close the issue in Firebase) and archived issues are skipped by the background new-issue alerts.
