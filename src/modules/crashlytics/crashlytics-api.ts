@@ -11,7 +11,7 @@
  */
 
 import * as vscode from 'vscode';
-import { readCachedEvents, writeCacheEvents, readCachedIssues, writeCachedIssues } from './crashlytics-io';
+import { readCachedEvents, writeCacheEvents, readCachedIssues, writeCachedIssues, recordIssueSnapshot } from './crashlytics-io';
 import { detectPackageName } from '../misc/app-identity';
 import { fetchPlayErrorIssues, fetchPlayErrorReports } from './play-reporting-errors';
 import { logCrashlytics, type DiagnosticDetails } from './crashlytics-diagnostics';
@@ -75,6 +75,8 @@ export async function queryTopIssues(config: FirebaseConfig, token: string, erro
     }
     lastApiDiagnostic = undefined;
     writeCachedIssues(data).catch(() => {});
+    // Record a compact timestamped snapshot so regression / new-issue detection has a baseline.
+    recordIssueSnapshot(data).catch(() => {});
     cachedIssues = { issues: data, expires: Date.now() + issueListTtl };
     return filterByTokens(data, errorTokens);
 }
