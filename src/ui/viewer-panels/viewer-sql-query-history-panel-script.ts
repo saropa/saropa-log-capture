@@ -26,6 +26,19 @@ export function getSqlQueryHistoryPanelScript(): string {
                 }
                 return;
             }
+            /* R5: "Explain this query" → Drift Advisor's EXPLAIN command (host allowlists the id). */
+            var explainBtn = e.target.closest('.sql-query-history-explain');
+            if (explainBtn) {
+                e.stopPropagation();
+                var exRow = explainBtn.closest('.sql-query-history-row');
+                var exFp = exRow && exRow.getAttribute('data-fingerprint');
+                var exEnt = exFp && sqlQueryHistoryByFp[exFp];
+                var exSql = (exEnt && exEnt.sampleSql) ? exEnt.sampleSql : (exFp || '');
+                if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage && exSql) {
+                    vscodeApi.postMessage({ type: 'runSiblingDeepLink', command: 'driftViewer.openExplainForSql', args: { sql: exSql } });
+                }
+                return;
+            }
             var jumpBtn = e.target.closest('.sql-query-history-jump');
             if (jumpBtn) {
                 e.stopPropagation();
@@ -126,6 +139,15 @@ export function getSqlQueryHistoryPanelScript(): string {
                 var sql = fixBtn.getAttribute('data-issue-sql') || '';
                 if (sql && typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
                     vscodeApi.postMessage({ type: 'openUrl', url: driftViewerBaseUrl() + '/?sql=' + encodeURIComponent(sql) });
+                }
+                return;
+            }
+            /* R5: "Show rule" on a Lints row → Saropa Lints' rule-explanation command (host allowlists the id). */
+            var ruleBtn = e.target.closest('.sql-qh-rule-explain');
+            if (ruleBtn) {
+                var ruleId = ruleBtn.getAttribute('data-rule') || '';
+                if (ruleId && typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
+                    vscodeApi.postMessage({ type: 'runSiblingDeepLink', command: 'saropaLints.explainRule', args: { ruleId: ruleId } });
                 }
                 return;
             }
