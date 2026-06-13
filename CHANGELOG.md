@@ -32,15 +32,22 @@ cspell:disable
 
 ### Changed
 
-- **Recurring Errors category badges now follow the theme:** The Fatal / ANR / OOM / Native crash-category badges in the Recurring Errors panel previously used fixed colors with white text that washed out on light themes. They now use the same theme-aware pill styling as the Crashlytics panel's badges, so they stay readable and consistent across light, dark, and high-contrast themes.
 - **Test-coverage quality badges now follow the theme:** The green / yellow / red coverage badges and their row heatmap on stack-frame lines previously used fixed semi-transparent colors that assumed a dark editor and faded out on light and high-contrast themes. Their tint is now derived from the matching theme color, so the badges and heatmap stay legible across light, dark, and high-contrast themes.
+- **Consistent text sizing across the Crashlytics, Performance, and Signal panels:** Text in these panels had drifted across roughly a dozen different sizes (and mixed relative units that rendered differently depending on nesting), so headings, rows, and labels didn't line up. Sizes now follow one consistent scale — heading, body, and small-label — across all three panels, and the Signal panel's close button and the SQL History stat cards now match their siblings.
 - **Build script no longer defaults to installing the .vsix:** The `publish.py` "Install via CLI now?" prompt now defaults to No (press ENTER to skip), so a routine build doesn't replace the running extension without an explicit yes. Use `--auto-install` for unattended/CI installs.
 
 ### Fixed
 
+- **SQL Query History now shows progress and failures for its Drift checks:** The dashboard's database-issue and static-code (Saropa Lints) checks ran silently — while a check was in flight you saw nothing, and a check that failed looked identical to "nothing found." Each section now shows a "Checking…" line while it loads and a clear error line (with the reason) if the check fails, so a reachable Drift server whose request errors is no longer mistaken for a clean result.
 - **Sessions that run past midnight no longer scramble the Session Flow Map and timeline:** Log lines carry only a clock (`HH:MM:SS`), not a date, so a session crossing midnight used to place after-midnight events *before* the evening's — producing negative durations and an empty time span on the flow map. The flow map now reconstructs a continuous timeline across midnight, keeping events in the order they happened.
 - **Android logcat lines no longer jump ~12 months into the future:** logcat timestamps omit the year, so a log captured in December and opened the following January was stamped with the new year and sorted ~12 months ahead. Year-less logcat dates that would land in the future now roll back to the correct year.
 - **Time-only timestamps resolve to the correct day in both directions:** a bare clock time near midnight is now matched to the nearest day relative to the log's start — a just-before-midnight line while the session began just after midnight is no longer pushed a full day into the future (previously the day-rollover only corrected forward).
+
+### Security
+
+- **Imported `.slc` bundles can no longer write outside the log folder:** importing a collection bundle (including via a shared `vscode://…/import?gist=` link) now verifies every extracted file resolves inside the workspace log directory and refuses the whole import if any entry uses a `../` path-traversal name — closing a path that could have written attacker-controlled files elsewhere on disk.
+- **Removed an over-broad "run command" message from the log viewer:** the webview could previously ask the extension to run any VS Code command with any arguments; no feature used it, so it is gone. "Reveal in OS file explorer" now requires a valid, length-bounded `file:` path, and "open link" accepts only `http(s)` (the `vscode:` deep-link scheme is no longer opened).
+- **Webview security nonces now use a cryptographically secure generator:** the Content-Security-Policy nonces for the log viewer and the comparison panel are generated from `crypto` random bytes instead of `Math.random()`, so they can't be predicted.
 
 ---
 

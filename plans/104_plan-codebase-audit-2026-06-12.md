@@ -149,11 +149,11 @@ No allowlist. Any command ID + args the webview sends runs unchecked (`workbench
 
 Each item lists the fix and its **verification** (a check that proves it landed). Sequence honors the project rule: each item stable before the next; tests scoped to touched files only.
 
-### WS-1 — Security hardening (do first)
-1. **C1 Zip-Slip containment** — basename-confine + post-`joinPath` workspace-root prefix assertion in `slc-collection.ts`. *Verify:* new test feeds a `../`-laden manifest and asserts the write is rejected and stays under `logDir`.
-2. **C3 `runCommand` / `revealPathInOS`** — grep the full webview tree for emitters; delete `runCommand` if none, else allowlist; add the length/empty guard to `revealPathInOS`. *Verify:* unit test that a non-allowlisted command is dropped.
-3. **H8 nonce CSPRNG** — `crypto.randomBytes` in `getNonce` (both copies). *Verify:* type-check + smoke that the webview still loads.
-4. **L7/L8** — drop `vscode:` from `isAllowedExternalUrl`; emit `media-src 'none'` fallback.
+### WS-1 — Security hardening (do first) — **DONE 2026-06-13**
+1. ~~**C1 Zip-Slip containment**~~ **DONE** — `isWithinDir()` in `slc-collection.ts` rejects the whole import when any extracted target resolves outside `logDir` (post-`joinPath` `path.relative` containment check); new l10n key `msg.slcImportUnsafePath`. *Verified:* 5-case `slc-collection.test.ts` (inside / nested / `../` escape / dir-itself / sibling) passing.
+2. ~~**C3 `runCommand` / `revealPathInOS`**~~ **DONE** — full-tree grep found **no** `runCommand` emitter, so the handler was deleted outright (not allowlisted); `revealPathInOS` now requires a length-bounded `file:` URI.
+3. ~~**H8 nonce CSPRNG**~~ **DONE** — `getNonce` (viewer-content.ts) and `generateWebviewNonce` (session-comparison-html.ts) now use `crypto.randomBytes(16).toString('base64')`. *Verified:* viewer-script-syntax (17) + viewer-element-wiring (2) passing.
+4. ~~**L7/L8**~~ **DONE** — `isAllowedExternalUrl` accepts `http(s)` only (`vscode:` dropped); CSP `media-src` falls back to `'none'` instead of `vscode-resource:`.
 
 ### WS-2 — Data integrity / capture
 1. **C2 stream error handlers + backpressure** in `log-session.ts` / `log-session-split.ts`. *Verify:* test that simulates a stream `error` and asserts the host logs + nulls the stream rather than throwing.
@@ -193,8 +193,8 @@ Each item lists the fix and its **verification** (a check that proves it landed)
 ## 8. Open questions (saved for later — do not block)
 
 1. **H3:** Is the sidecar `freememMb` field free or used memory? The fix direction depends on the producer's semantics.
-2. **C3:** Confirm there is genuinely no `runCommand` emitter anywhere in the webview tree before deleting (vs allowlisting).
-3. **C1:** The import deep-link triggers `importFromGist` with only VS Code's generic URI consent — is an explicit "import this shared collection?" prompt desired in addition to the path-containment fix?
+2. ~~**C3:** Confirm there is genuinely no `runCommand` emitter before deleting.~~ **Resolved 2026-06-13 — full-tree grep found none; handler deleted (WS-1).**
+3. **C1:** The path-containment fix shipped (WS-1). Still open as a hardening option: add an explicit "import this shared collection?" prompt to the `vscode://…/import?gist=` deep-link path, on top of VS Code's generic URI consent?
 4. ~~**H4:** Are overnight / cross-year sessions a supported case?~~ **Resolved 2026-06-12 — yes, handled (fixed; see WS-3).**
 5. **M15 (`excerptKey`):** is last-80-chars deliberate (group by trailing stack location) or should it be leading 80?
 6. **L9:** Is the LAN server's bind-all + no-auth the intended threat model?
