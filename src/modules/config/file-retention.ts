@@ -89,7 +89,9 @@ export async function enforceFileRetention(
     const candidateNames = selectFilesToTrash(fileStats, maxLogFiles);
     if (candidateNames.length === 0) { return 0; }
 
-    const expanded = expandGroupsForTrash(candidateNames, metaMap, groupCtx?.getActiveGroupId());
+    // Re-key metadata to log-dir-relative names so group lookups actually hit (see buildMetaByName).
+    const metaByName = buildMetaByName(fileStats, metaMap);
+    const expanded = expandGroupsForTrash(candidateNames, metaByName, groupCtx?.getActiveGroupId());
     if (expanded.size === 0) { return 0; }
 
     let trashed = 0;
@@ -114,12 +116,20 @@ export async function enforceFileRetention(
     return trashed;
 }
 
+/** A tracked log file's name (log-dir-relative) paired with its metadata key (workspace-relative). */
+export interface RetentionFileStat {
+    readonly name: string;
+    readonly mtime: number;
+    /** Workspace-relative key used to look this file up in the metadata map. */
+    readonly relKey: string;
+}
+
 /** Stat every tracked file, skip trashed ones, return the subset with valid mtimes. */
 async function collectFileStats(
     logDirUri: vscode.Uri,
     logFiles: readonly string[],
     metaMap: ReadonlyMap<string, SessionMeta>,
-): Promise<{ name: string; mtime: number }[]> {
+): Promise<RetentionFileStat[]> {
     const results = await Promise.all(logFiles.map(async (name) => {
         try {
             const uri = vscode.Uri.joinPath(logDirUri, name);
@@ -127,10 +137,34 @@ async function collectFileStats(
             const meta = metaMap.get(relKey);
             if (meta?.trashed) { return undefined; }
             const stat = await vscode.workspace.fs.stat(uri);
-            return { name, mtime: stat.mtime };
+            return { name, mtime: stat.mtime, relKey };
         } catch { return undefined; }
     }));
-    return results.filter((r): r is { name: string; mtime: number } => r !== undefined);
+    return results.filter((r): r is RetentionFileStat => r !== undefined);
+}
+
+/**
+ * Re-key the metadata map from workspace-relative keys to the log-dir-relative NAMES the retention
+ * candidate list and the trashing loop use.
+ *
+ * The metadata map is keyed by `asRelativePath` (e.g. `reports/20260612/foo.log`), but
+ * `selectFilesToTrash` and the trash loop work in log-dir-relative names (e.g. `20260612/foo.log`,
+ * joined back via `Uri.joinPath(logDirUri, name)`). Looking a candidate name up directly in the
+ * workspace-relative map always missed, so session-group retention (skip the active group, expand a
+ * closed group atomically) silently never fired — it treated every file as ungrouped. This builds a
+ * name-keyed view so `expandGroupsForTrash` sees the groups. Only currently-tracked files appear, so
+ * already-trashed/untracked metadata entries can't resurrect as trash targets.
+ */
+export function buildMetaByName(
+    fileStats: readonly RetentionFileStat[],
+    metaMap: ReadonlyMap<string, SessionMeta>,
+): Map<string, SessionMeta> {
+    const byName = new Map<string, SessionMeta>();
+    for (const f of fileStats) {
+        const meta = metaMap.get(f.relKey);
+        if (meta) { byName.set(f.name, meta); }
+    }
+    return byName;
 }
 
 /**

@@ -20,6 +20,7 @@ import {
     computeElapsed as computeElapsedMs,
 } from './log-session-helpers';
 import { getPartFileName, performFileSplit } from './log-session-split';
+import { logExtensionError } from '../misc/extension-logger';
 export type { SessionContext } from './log-session-helpers';
 
 export type SessionState = 'recording' | 'paused' | 'stopped';
@@ -83,6 +84,23 @@ export class LogSession {
         this.onSplit = callback;
     }
 
+    /**
+     * Attach a permanent `'error'` listener to a write stream.
+     *
+     * A Node stream that emits `'error'` with NO listener throws an uncaught exception that takes
+     * down the extension host — so disk-full, a revoked permission, or the file being deleted by an
+     * external tool mid-capture would crash the whole pipeline instead of degrading. The file on disk
+     * is append-only and never truncated, so everything written before the failure survives; here we
+     * just log and drop the stream so subsequent appends no-op (appendLine guards on `!writeStream`)
+     * rather than throw. Must be attached to every stream the moment it is created.
+     */
+    private attachStreamErrorHandler(stream: fs.WriteStream): void {
+        stream.on('error', (err) => {
+            logExtensionError('logSession.writeStream', err);
+            if (this.writeStream === stream) { this.writeStream = undefined; }
+        });
+    }
+
     /** Create log directory, open first part file, write context header (and optional integration header lines). */
     async start(extraHeaderLines?: readonly string[]): Promise<void> {
         const logDirUri = getLogDirUri(this.context, this.config);
@@ -100,6 +118,7 @@ export class LogSession {
             flags: 'a',
             encoding: 'utf-8',
         });
+        this.attachStreamErrorHandler(this.writeStream);
 
         const header = generateContextHeader(this.context, this.config, extraHeaderLines);
         this.writeStream.write(header);
@@ -289,6 +308,10 @@ export class LogSession {
             }, reason);
 
             this.writeStream = result.newStream;
+            // Re-arm crash protection on the freshly opened part. The new stream's writes (including
+            // the continuation header written inside performFileSplit) emit 'error' asynchronously,
+            // so attaching here — synchronously after the await resolves — wins the race.
+            this.attachStreamErrorHandler(this.writeStream);
             this._fileUri = result.newFileUri;
             this._partNumber = result.newPartNumber;
             this._bytesWritten = result.headerBytes;
@@ -332,9 +355,12 @@ export class LogSession {
             const footer = `\n=== SESSION END — ${new Date().toISOString()} — ${this._lineCount} lines ===\n`;
             this.writeStream.write(footer);
 
-            await new Promise<void>((resolve, reject) => {
+            // Resolve on end OR error: the permanent error handler already logged/dropped the stream,
+            // so a final-flush failure must still let stop() complete rather than reject and leave the
+            // session finalize path hanging. `once` avoids leaking the listener on the happy path.
+            await new Promise<void>((resolve) => {
+                this.writeStream!.once('error', () => resolve());
                 this.writeStream!.end(() => resolve());
-                this.writeStream!.on('error', reject);
             });
         }
 

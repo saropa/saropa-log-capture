@@ -170,7 +170,10 @@ export function getDecorationStyles(): string {
     cursor: pointer;
     padding: 0 4px;
 }
-.deco-settings-close:hover { color: var(--vscode-errorForeground, #f44); }
+.deco-settings-close:hover {
+    color: var(--vscode-errorForeground, #f44);
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
 .deco-settings-row {
     display: flex;
     align-items: center;

@@ -135,7 +135,10 @@ export function getUiStyles(): string {
     cursor: pointer;
     padding: 0 4px;
 }
-.peek-close:hover { color: var(--vscode-errorForeground, #f44); }
+.peek-close:hover {
+    color: var(--vscode-errorForeground, #f44);
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
 .peek-target {
     background: var(--vscode-editor-lineHighlightBackground, rgba(255, 255, 0, 0.15));
     /* Accent rail via inset box-shadow, NOT border-left: a real 3px border-left
@@ -246,7 +249,10 @@ body.mm-resizing, body.mm-resizing * { cursor: col-resize !important; }
     border-bottom: 1px solid var(--vscode-panel-border);
 }
 .auto-hide-modal-close { background: none; border: none; color: var(--vscode-descriptionForeground); font-size: 18px; cursor: pointer; padding: 0 4px; }
-.auto-hide-modal-close:hover { color: var(--vscode-errorForeground, #f44); }
+.auto-hide-modal-close:hover {
+    color: var(--vscode-errorForeground, #f44);
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
 .auto-hide-modal-list { overflow-y: auto; max-height: 50vh; padding: 4px 0; }
 .auto-hide-item {
     display: flex; align-items: center; gap: 6px; padding: 4px 12px; font-size: 12px;
