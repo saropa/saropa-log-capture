@@ -28,9 +28,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [8.1.1]
 
-The Crashlytics issue-list labels and alerts that shipped in 8.1.0 are now translated in every supported language instead of falling back to English. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+The Crashlytics issue-list labels and alerts that shipped in 8.1.0 are now translated in every supported language instead of falling back to English. [log](https://github.com/saropa/saropa-log-capture/blob/v8.1.1/CHANGELOG.md)
 
 ### Changed
 
