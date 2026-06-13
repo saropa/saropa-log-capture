@@ -30,7 +30,10 @@ export function getModalStyles(): string {
     border: 1px solid var(--vscode-panel-border);
     border-radius: 4px;
     padding: 0;
-    min-width: 450px;
+    /* Cap the min-width floor to the viewport so modals don't run off the edge (clipping their
+       content) when the log-viewer panel is narrower than the floor. Applies to every dialog that
+       uses .modal-content; the per-dialog overrides below get the same treatment. */
+    min-width: min(450px, calc(100vw - 24px));
     max-width: 600px;
     max-height: 80vh;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
@@ -216,7 +219,7 @@ export function getModalStyles(): string {
 
 /* Log file path actions (footer filename) */
 .log-file-modal-content {
-    min-width: 320px;
+    min-width: min(320px, calc(100vw - 24px));
     max-width: 440px;
 }
 .log-file-modal-body {
@@ -255,7 +258,7 @@ export function getModalStyles(): string {
 /* Files dialog (cumulative cross-session feed, plan 057). Reuses .modal + .modal-btn;
    rows lay out the letter badge, filename, and per-file meta on one line. */
 .files-list-modal-content {
-    min-width: 340px;
+    min-width: min(340px, calc(100vw - 24px));
     max-width: 520px;
 }
 .files-list-modal-list {

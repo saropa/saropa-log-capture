@@ -374,7 +374,21 @@ const filtersDrawer = () => `
   </div>
 </div>`;
 
+// Generic .modal-content dialog — verifies the base min-width viewport cap at narrow widths.
+const baseModal = () => `
+<div class="modal visible" style="min-height:100vh">
+  <div class="modal-content" style="padding:16px">
+    <div style="font-weight:600;font-size:13px;margin-bottom:8px">Reset all filters?</div>
+    <div style="font-size:12px;color:var(--vscode-descriptionForeground);line-height:1.5;margin-bottom:12px">This clears every active filter, level toggle, and exclusion pattern and shows all log lines. This cannot be undone.</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="options-action-btn">Cancel</button>
+      <button class="cp-action-btn" style="background:var(--vscode-button-background);color:var(--vscode-button-foreground)">Reset all</button>
+    </div>
+  </div>
+</div>`;
+
 export const SURFACES = [
+    { name: 'base-modal', html: baseModal() },
     { name: 'sql-history', html: sqlPanel(false) },
     { name: 'sql-history-loading', html: sqlPanel(true) },
     { name: 'crashlytics', html: crashlyticsPanel(false) },
