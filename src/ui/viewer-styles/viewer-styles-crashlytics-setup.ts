@@ -6,7 +6,7 @@ export function getSetupStyles(): string {
     return /* css */ `
 
 /* --- Setup wizard --- */
-.cp-setup-intro { margin: 10px 12px 4px; font-size: 13px; line-height: 1.5; }
+.cp-setup-intro { margin: 10px 12px 4px; font-size: 12px; line-height: 1.5; }
 
 /* 3-step progress row. Each step is a numbered/checked pill: done (green), active (accent), todo (muted). */
 .cp-steps { display: flex; gap: 6px; margin: 10px 12px; }
@@ -37,11 +37,11 @@ export function getSetupStyles(): string {
 .cp-setup-status { margin: 6px 12px 2px; font-size: 12px; font-weight: 600; }
 
 /* Collapsed diagnostic/troubleshooting so a failed setup reads as guidance, not an error wall. */
-.cp-problem { margin: 10px 12px; font-size: 0.9em; }
+.cp-problem { margin: 10px 12px; font-size: 11px; }
 .cp-problem > summary { cursor: pointer; opacity: 0.8; padding: 4px 0; }
 .cp-problem-body { margin-top: 4px; }
 
-.cp-setup-title { font-weight: 600; font-size: 1.1em; margin: 0 12px 4px; }
+.cp-setup-title { font-weight: 600; font-size: 12px; margin: 0 12px 4px; }
 
 /* --- Connection test report --- */
 .cp-conn-test { margin: 8px 12px; }
@@ -98,7 +98,7 @@ export function getSetupStyles(): string {
 
 .cp-setup-why {
     margin-top: 8px;
-    font-size: 0.9em;
+    font-size: 11px;
     opacity: 0.75;
     font-style: italic;
 }
@@ -111,7 +111,7 @@ export function getSetupStyles(): string {
     padding: 6px 14px;
     cursor: pointer;
     border-radius: 3px;
-    font-size: 13px;
+    font-size: 12px;
     display: block;
     margin: 8px 0;
 }
@@ -137,7 +137,7 @@ export function getSetupStyles(): string {
 
 .cp-setup-tip {
     margin: 16px 12px 8px;
-    font-size: 0.9em;
+    font-size: 11px;
     opacity: 0.6;
     font-style: italic;
 }
@@ -167,12 +167,12 @@ export function getDiagnosticStyles(): string {
     background: var(--vscode-inputValidation-warningBackground);
     border-left: 3px solid var(--vscode-inputValidation-warningBorder);
     border-radius: 3px;
-    font-size: 0.9em;
+    font-size: 11px;
 }
 
 .cp-diag-msg { margin-bottom: 4px; }
-.cp-diag-status { font-size: 0.85em; opacity: 0.8; margin-top: 2px; }
-.cp-diag-tech { margin-top: 6px; font-size: 0.85em; }
+.cp-diag-status { font-size: 10px; opacity: 0.8; margin-top: 2px; }
+.cp-diag-tech { margin-top: 6px; font-size: 10px; }
 .cp-diag-tech summary { cursor: pointer; opacity: 0.8; }
 .cp-diag-tech pre {
     margin: 4px 0;
@@ -180,12 +180,12 @@ export function getDiagnosticStyles(): string {
     background: var(--vscode-textCodeBlock-background);
     overflow-x: auto;
     font-family: var(--vscode-editor-font-family);
-    font-size: 0.9em;
+    font-size: 11px;
     white-space: pre-wrap;
     word-break: break-all;
 }
 
-.cp-diag-time { font-size: 0.8em; margin-top: 6px; opacity: 0.6; font-style: italic; }
+.cp-diag-time { font-size: 10px; margin-top: 6px; opacity: 0.6; font-style: italic; }
 .cp-diag-actions { margin: 10px 12px 4px; }
 .cp-diag-actions-row {
     margin: 10px 12px 4px;
@@ -209,13 +209,13 @@ export function getDiagnosticStyles(): string {
     background: var(--vscode-textBlockQuote-background);
     border-left: 3px solid var(--vscode-focusBorder);
     border-radius: 3px;
-    font-size: 0.9em;
+    font-size: 11px;
 }
 .cp-trouble-step-title { font-weight: 600; margin-bottom: 6px; }
 .cp-trouble-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.85em;
+    font-size: 10px;
 }
 .cp-trouble-table th, .cp-trouble-table td {
     padding: 4px 8px;
@@ -227,7 +227,7 @@ export function getDiagnosticStyles(): string {
 .cp-trouble-symptom { font-family: var(--vscode-editor-font-family); }
 .cp-trouble-details {
     margin: 10px 12px;
-    font-size: 0.9em;
+    font-size: 11px;
 }
 .cp-trouble-details summary {
     cursor: pointer;
@@ -239,7 +239,7 @@ export function getDiagnosticStyles(): string {
 /* --- In-panel Help (full doc content) --- */
 .cp-help-details {
     margin: 10px 12px 12px;
-    font-size: 0.9em;
+    font-size: 11px;
     border-top: 1px solid var(--vscode-widget-border);
     padding-top: 8px;
 }
@@ -251,12 +251,12 @@ export function getDiagnosticStyles(): string {
 .cp-help-section { margin: 10px 0; }
 .cp-help-section-title { font-weight: 600; margin-bottom: 4px; }
 .cp-help-section-body {
-    font-size: 0.95em;
+    font-size: 11px;
     line-height: 1.4;
 }
 .cp-help-section-body p { margin: 6px 0; }
 .cp-help-section-body ol, .cp-help-section-body ul { margin: 6px 0; padding-left: 20px; }
-.cp-help-section-body code { font-family: var(--vscode-editor-font-family); font-size: 0.9em; }
+.cp-help-section-body code { font-family: var(--vscode-editor-font-family); font-size: 11px; }
 .cp-help-link { color: var(--vscode-textLink-foreground); text-decoration: underline; }
 .cp-help-link:hover { color: var(--vscode-textLink-activeForeground); }
 `;

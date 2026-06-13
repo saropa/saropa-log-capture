@@ -37,7 +37,9 @@ function runOpenUrl(msg: Record<string, unknown>): void {
 function isAllowedExternalUrl(url: string): boolean {
   const trimmed = url.trim();
   if (trimmed.length === 0 || trimmed.length > 2048) { return false; }
-  return /^https?:\/\//i.test(trimmed) || /^vscode:\/\//i.test(trimmed);
+  // Only http(s). `vscode:` was allowed but lets a hostile webview deep-link into other installed
+  // extensions (`vscode://publisher.ext/…`) — an unexpected capability for "open a link from a log".
+  return /^https?:\/\//i.test(trimmed);
 }
 
 /* Reveal an arbitrary absolute path (from the session header — e.g. main.dart,
@@ -157,9 +159,9 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
         .then(() => { ctx.onSessionListRequest?.(); }, () => {});
       return true;
     }
-    case "runCommand":
-      vscode.commands.executeCommand(msgStr(msg, "command"), ...(Array.isArray(msg.args) ? msg.args : [])).then(undefined, () => {});
-      return true;
+    // SECURITY: a generic "run any command with any args" sink let a compromised webview invoke
+    // arbitrary VS Code commands (terminal input, file writes, etc.). No webview code ever emitted
+    // it, so it is removed rather than allowlisted; specific actions have their own named cases.
     case "browseSessionRoot": ctx.onBrowseSessionRoot?.()?.then(undefined, () => {}); return true;
     case "clearSessionRoot": ctx.onClearSessionRoot?.()?.then(undefined, () => {}); return true;
     case "exportSessionListJson": ctx.onExportSessionListJson?.()?.then(undefined, () => {}); return true;
@@ -215,10 +217,15 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
       if (ctx.currentFileUri && ctx.onRevealLogFile) { Promise.resolve(ctx.onRevealLogFile(ctx.currentFileUri.toString())).catch(() => {}); }
       return true;
     case "revealPathInOS": {
-      // About panel Debug section: reveal an arbitrary meta file/folder (e.g. the reports dir)
-      // in the OS file explorer. Distinct from revealLogFile, which only targets the open log.
-      const revealUri = msgStr(msg, "uriString");
-      if (revealUri) { void vscode.commands.executeCommand("revealFileInOS", vscode.Uri.parse(revealUri)); }
+      // About panel Debug section: reveal a meta file/folder (e.g. the reports dir) in the OS file
+      // explorer. Validate before parsing so a hostile webview payload can't coerce an arbitrary
+      // reveal: bound the length and require a file: URI (revealFileInOS only handles file paths).
+      const revealUri = msgStr(msg, "uriString").trim();
+      if (revealUri.length === 0 || revealUri.length > 2048 || !/^file:/i.test(revealUri)) {
+        logExtensionWarn('viewerMessage', 'revealPathInOS rejected: empty, too long, or non-file scheme');
+        return true;
+      }
+      void vscode.commands.executeCommand("revealFileInOS", vscode.Uri.parse(revealUri));
       return true;
     }
     case "openLogFileInEditor":

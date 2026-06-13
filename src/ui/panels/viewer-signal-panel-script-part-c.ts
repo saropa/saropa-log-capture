@@ -16,8 +16,11 @@ export function getSignalScriptPartC(): string {
             return;
         }
         var parts = [];
-        if (typeof heroErrorCount === 'number') parts.push('\\uD83D\\uDD34 Errors: ' + heroErrorCount);
-        if (typeof heroWarningCount === 'number') parts.push('\\uD83D\\uDFE1 Warnings: ' + heroWarningCount);
+        // The count is the headline of the hero — wrap the number so CSS can give it weight + severity
+        // color, so "5" reads before its label instead of the whole line being flat same-size text.
+        // heroErrorCount/heroWarningCount are numbers from the payload, so no escaping is needed.
+        if (typeof heroErrorCount === 'number') parts.push('\\uD83D\\uDD34 Errors: <span class="signal-hero-num signal-hero-num-error">' + heroErrorCount + '</span>');
+        if (typeof heroWarningCount === 'number') parts.push('\\uD83D\\uDFE1 Warnings: <span class="signal-hero-num signal-hero-num-warn">' + heroWarningCount + '</span>');
         if (parts.length === 0 && hasLog && typeof heroErrorCount !== 'number' && typeof heroWarningCount !== 'number') parts.push(esc(SIGNAL_STRINGS.heroNoErrorsWarnings || 'No errors or warnings recorded'));
         if (heroSnapshotSummary) parts.push(heroSnapshotSummary);
         var hasSparkline = heroSparklineData && Array.isArray(heroSparklineData.freememMb) && heroSparklineData.freememMb.length >= 2;

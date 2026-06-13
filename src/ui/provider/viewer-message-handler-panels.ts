@@ -218,15 +218,24 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
           return true;
         }
         const usesDrift = !!(msg as { usesDrift?: unknown }).usesDrift;
-        void getDriftLintViolations(wsRoot, usesDrift).then((r) => {
-          ctx.post({
-            type: "driftLintViolations",
-            hasExport: r.hasExport,
-            violations: r.violations,
-            suggestEnablePack: r.suggestEnablePack,
-            tier: r.tier,
+        void getDriftLintViolations(wsRoot, usesDrift)
+          .then((r) => {
+            ctx.post({
+              type: "driftLintViolations",
+              hasExport: r.hasExport,
+              violations: r.violations,
+              suggestEnablePack: r.suggestEnablePack,
+              tier: r.tier,
+            });
+          })
+          // Signal failure so the panel can show its lint error state instead of a spinner that never
+          // resolves — without this catch a thrown scan left the "Checking…" line up indefinitely.
+          .catch((e: unknown) => {
+            ctx.post({
+              type: "driftLintViolations",
+              error: e instanceof Error ? e.message : String(e),
+            });
           });
-        });
         return true;
       }
       case "enableDriftLintPack": {

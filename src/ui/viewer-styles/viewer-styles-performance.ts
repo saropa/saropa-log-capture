@@ -113,7 +113,7 @@ export function getPerformancePanelStyles(): string {
 .pp-group:not(.pp-collapsed) .pp-group-arrow::after { content: '\\25BC'; }
 
 .pp-group-count {
-    font-size: 0.8em;
+    font-size: 10px;
     opacity: 0.7;
     margin-left: auto;
     color: var(--vscode-debugConsole-infoForeground, #b695f8);
@@ -167,7 +167,7 @@ export function getPerformancePanelStyles(): string {
 .pp-chart-line { fill: none; stroke: var(--vscode-debugConsole-infoForeground, #b695f8); stroke-width: 2; }
 .pp-chart-dot { fill: var(--vscode-debugConsole-infoForeground, #b695f8); }
 .pp-chart-axis { stroke: var(--vscode-panel-border); stroke-width: 1; }
-.pp-chart-label { fill: var(--vscode-descriptionForeground); font-size: 9px; }
+.pp-chart-label { fill: var(--vscode-descriptionForeground); font-size: 10px; }
 
 /* --- Session tab (snapshot, samples, profiler) --- */
 .pp-session-view { padding: 8px 12px; }
