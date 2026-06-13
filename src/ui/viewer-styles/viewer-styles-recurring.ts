@@ -148,19 +148,34 @@ export function getRecurringPanelStyles(): string {
 }
 .recurring-footer-action:hover { text-decoration: underline; }
 
-/* --- Category badges --- */
+/* --- Category badges ---
+   Theme-token pills matching the Crashlytics panel's .cp-badge treatment so the two
+   crash surfaces read as one design language. Raw Material hex (#d32f2f + #fff text) was
+   replaced with inputValidation tints + badge tokens: the old white-on-color text failed
+   WCAG contrast on light themes, and the fixed hex ignored the active VS Code theme. These
+   tokens carry their own foreground/border so the badges adapt to light, dark, and
+   high-contrast themes. */
 .re-cat-badge {
+    display: inline-flex;
+    align-items: center;
     font-size: 0.7em;
-    padding: 1px 4px;
-    border-radius: 2px;
-    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 9px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    border: 1px solid transparent;
     vertical-align: middle;
     margin-right: 4px;
 }
 
-.re-cat-fatal { background: #d32f2f; color: #fff; }
-.re-cat-anr { background: #f57c00; color: #fff; }
-.re-cat-oom { background: #7b1fa2; color: #fff; }
-.re-cat-native { background: #757575; color: #fff; }
+/* Fatal → error tint (mirrors .cp-badge-crash). */
+.re-cat-fatal { background: var(--vscode-inputValidation-errorBackground); color: var(--vscode-errorForeground); border-color: var(--vscode-inputValidation-errorBorder, var(--vscode-errorForeground)); }
+/* ANR → warning tint (mirrors .cp-badge-anr). */
+.re-cat-anr { background: var(--vscode-inputValidation-warningBackground); color: var(--vscode-editorWarning-foreground); border-color: var(--vscode-inputValidation-warningBorder, var(--vscode-editorWarning-foreground)); }
+/* OOM → neutral badge fill with a purple foreground so it stays distinct from fatal/anr
+   without a dedicated inputValidation token (none exists for purple). */
+.re-cat-oom { background: var(--vscode-badge-background); color: var(--vscode-charts-purple, var(--vscode-debugConsole-infoForeground)); border-color: var(--vscode-charts-purple, var(--vscode-contrastBorder, transparent)); }
+/* Native → neutral badge tokens (mirrors .cp-badge-nf). */
+.re-cat-native { background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); }
 `;
 }

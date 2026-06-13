@@ -1,7 +1,7 @@
 /**
  * CSS for quality coverage badges on stack frame lines.
- * Colour thresholds: green (>=80%), yellow (50-79%), red (<50%).
- * Uses VS Code theme CSS variables for dark/light compatibility.
+ * Color thresholds: green (>=80%), yellow (50-79%), red (<50%).
+ * Uses VS Code theme CSS variables for dark/light/high-contrast compatibility.
  */
 
 /** Returns the CSS for quality badge styling. */
@@ -16,31 +16,37 @@ export function getQualityBadgeStyles(): string {
     font-weight: 600;
     vertical-align: middle;
 }
+/* Background and border are derived from each badge's own foreground token via color-mix
+   (the project's established tint idiom, see viewer-styles-decoration-bars.ts). Hardcoded
+   rgba green/yellow/red assumed a dark canvas and stayed invisible on light/high-contrast
+   themes — the style guide requires every color come from a --vscode-* variable. The tint
+   now tracks whatever the active theme paints the matching severity foreground. */
 .qb-high {
-    background: rgba(0, 200, 83, 0.15);
     color: var(--vscode-debugConsole-sourceForeground, #89d185);
-    border: 1px solid rgba(0, 200, 83, 0.3);
+    background: color-mix(in srgb, var(--vscode-debugConsole-sourceForeground, #89d185) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--vscode-debugConsole-sourceForeground, #89d185) 30%, transparent);
 }
 .qb-med {
-    background: rgba(255, 165, 0, 0.15);
     color: var(--vscode-debugConsole-warningForeground, #cca700);
-    border: 1px solid rgba(255, 165, 0, 0.3);
+    background: color-mix(in srgb, var(--vscode-debugConsole-warningForeground, #cca700) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--vscode-debugConsole-warningForeground, #cca700) 30%, transparent);
 }
 .qb-low {
-    background: rgba(255, 0, 0, 0.15);
     color: var(--vscode-errorForeground, #f48771);
-    border: 1px solid rgba(255, 0, 0, 0.3);
+    background: color-mix(in srgb, var(--vscode-errorForeground, #f48771) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--vscode-errorForeground, #f48771) 30%, transparent);
 }
 
-/* Heatmap: subtle line background for stack frames by coverage (when quality badge is shown). */
+/* Heatmap: subtle line background for stack frames by coverage (when quality badge is shown).
+   Same theme-derived tint, at a lower percentage so it reads as a faint wash behind the row. */
 .line-quality-high {
-    background: rgba(0, 200, 83, 0.06);
+    background: color-mix(in srgb, var(--vscode-debugConsole-sourceForeground, #89d185) 7%, transparent);
 }
 .line-quality-med {
-    background: rgba(255, 165, 0, 0.06);
+    background: color-mix(in srgb, var(--vscode-debugConsole-warningForeground, #cca700) 7%, transparent);
 }
 .line-quality-low {
-    background: rgba(255, 0, 0, 0.06);
+    background: color-mix(in srgb, var(--vscode-errorForeground, #f48771) 7%, transparent);
 }
 `;
 }

@@ -30,6 +30,18 @@ suite('StructuredLineParser', () => {
             assert.ok(result);
             assert.strictEqual(result.level, 'warning');
         });
+
+        test('should not stamp a year-less logcat date in the far future (year rollback)', () => {
+            // Logcat omits the year. Assuming the current year for a December line read the next January
+            // threw the timestamp ~12 months ahead; the parser now rolls the year back when the
+            // current-year date lands in the future. Invariant: never more than a day past now.
+            const result = parseStructuredLine('12-31 23:59:59.999  100  100 I Test: end of year');
+            assert.ok(result?.timestamp);
+            assert.ok(
+                (result.timestamp as number) <= Date.now() + 24 * 60 * 60 * 1000,
+                'year-less timestamp is not parsed into the far future',
+            );
+        });
     });
 
     suite('parseStructuredLine — logcat shorthand', () => {
