@@ -92,6 +92,12 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
                 + jumpLabel + '</button>'
                 + '<button type="button" class="sql-qh-action-btn sql-query-history-drift" title="' + vt('viewer.sqlHistory.openInDrift') + '">'
                 + '<span class="codicon codicon-link-external"></span></button>'
+                /* R5: jump to this query's EXPLAIN in Drift Advisor. Rendered only when that command is
+                   live (suiteDeepLink.explainSql), so an uninstalled/old sibling shows no dead button. */
+                + ((typeof suiteDeepLink !== 'undefined' && suiteDeepLink.explainSql)
+                    ? '<button type="button" class="sql-qh-action-btn sql-query-history-explain" title="' + vt('viewer.sqlHistory.explainInDrift') + '">'
+                        + '<span class="codicon codicon-search"></span></button>'
+                    : '')
                 + '<button type="button" class="sql-qh-action-btn" data-copy-fp title="' + vt('viewer.sqlHistory.copyFingerprint') + '">'
                 + '<span class="codicon codicon-copy"></span></button>'
                 + '</div></div>'
@@ -171,6 +177,8 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
         if (typeof maybeFetchDriftDbIssues === 'function') maybeFetchDriftDbIssues();
         /* Phase 3: pull Saropa Lints Drift-rule findings + the enable-pack advice signal. */
         if (typeof maybeFetchDriftLintViolations === 'function') maybeFetchDriftLintViolations();
+        /* R5: ask the host which sibling deep-link buttons (Explain in Drift / Show rule) are live. */
+        if (typeof maybeRequestSuiteDeepLinks === 'function') maybeRequestSuiteDeepLinks();
         if (searchEl) searchEl.focus();
     };
     window.closeSqlQueryHistoryPanel = function() {
