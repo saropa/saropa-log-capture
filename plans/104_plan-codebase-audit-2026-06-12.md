@@ -172,7 +172,7 @@ Each item lists the fix and its **verification** (a check that proves it landed)
 
 ### WS-4 — Robustness
 1. **H11/M7 ReDoS guards** (shared input-length cap helper). *Verify:* test a pathological pattern returns within a bounded time.
-2. **H10/M9 shared content sanitizer** (`fenceSafe`, `csvSafe`). *Verify:* tests with ``` and `=`-leading inputs.
+2. ~~**H10/M9 shared content sanitizer**~~ **DONE 2026-06-13** — new `modules/misc/outbound-content-safety.ts` with `fencedBlock()` (fence longer than the longest inner backtick run) applied at all 7 bug-report fence sites, and `csvFormulaSafe()` (apostrophe-prefix `= + - @`/tab/CR leads, pure numbers passed through) wired into `escapeCsvField`. *Verified:* outbound-content-safety (6) + export-formats (19, incl. new formula cases) passing.
 3. **H9/L-nit path & credential redaction** in bug-report.
 4. **M10/M11/M12** search-index content-freshness, indexer size/depth caps, report-file collision.
 

@@ -19,10 +19,13 @@ export function getSignalScriptPartC(): string {
         // The count is the headline of the hero — wrap the number so CSS can give it weight + severity
         // color, so "5" reads before its label instead of the whole line being flat same-size text.
         // heroErrorCount/heroWarningCount are numbers from the payload, so no escaping is needed.
-        if (typeof heroErrorCount === 'number') parts.push('\\uD83D\\uDD34 Errors: <span class="signal-hero-num signal-hero-num-error">' + heroErrorCount + '</span>');
-        if (typeof heroWarningCount === 'number') parts.push('\\uD83D\\uDFE1 Warnings: <span class="signal-hero-num signal-hero-num-warn">' + heroWarningCount + '</span>');
-        if (parts.length === 0 && hasLog && typeof heroErrorCount !== 'number' && typeof heroWarningCount !== 'number') parts.push(esc(SIGNAL_STRINGS.heroNoErrorsWarnings || 'No errors or warnings recorded'));
-        if (heroSnapshotSummary) parts.push(heroSnapshotSummary);
+        // Each metric is a nowrap unit so the panel can wrap BETWEEN them but never split an emoji
+        // from its count ("🟡" landing on a line above "Warnings: 3") — the old ' · '-joined string
+        // wrapped mid-metric on a narrow panel.
+        if (typeof heroErrorCount === 'number') parts.push('<span class="signal-hero-metric">\\uD83D\\uDD34 Errors: <span class="signal-hero-num signal-hero-num-error">' + heroErrorCount + '</span></span>');
+        if (typeof heroWarningCount === 'number') parts.push('<span class="signal-hero-metric">\\uD83D\\uDFE1 Warnings: <span class="signal-hero-num signal-hero-num-warn">' + heroWarningCount + '</span></span>');
+        if (parts.length === 0 && hasLog && typeof heroErrorCount !== 'number' && typeof heroWarningCount !== 'number') parts.push('<span class="signal-hero-metric">' + esc(SIGNAL_STRINGS.heroNoErrorsWarnings || 'No errors or warnings recorded') + '</span>');
+        if (heroSnapshotSummary) parts.push('<span class="signal-hero-metric signal-hero-snapshot">' + heroSnapshotSummary + '</span>');
         var hasSparkline = heroSparklineData && Array.isArray(heroSparklineData.freememMb) && heroSparklineData.freememMb.length >= 2;
         var sparklineHtml = '';
         if (hasSparkline) {
@@ -45,7 +48,9 @@ export function getSignalScriptPartC(): string {
         var hintHtml = '';
         if (!hasSparkline && parts.length === 0) hintHtml = '<span class="signal-hero-hint">' + esc(SIGNAL_STRINGS.heroNoSamplingHint) + '</span>';
         if (parts.length === 0 && !sparklineHtml && !hintHtml) { heroEl.style.display = 'none'; heroEl.innerHTML = ''; heroEl.parentElement && heroEl.parentElement.classList.remove('signal-hero-has-errors', 'signal-hero-has-warnings'); return; }
-        heroEl.innerHTML = sparklineHtml + (parts.length > 0 ? '<span class="signal-hero-metrics">' + parts.join(' \\u00b7 ') + '</span>' : '') + hintHtml;
+        // Counts lead (they're the headline), trend sparkline follows. Metrics join with '' — the
+        // flex gap on .signal-hero-metrics provides spacing, so wrapped units don't drag a stray '·'.
+        heroEl.innerHTML = (parts.length > 0 ? '<span class="signal-hero-metrics">' + parts.join('') + '</span>' : '') + sparklineHtml + hintHtml;
         heroEl.style.display = '';
         var heroBlock = document.getElementById('signal-hero-block');
         if (heroBlock) {

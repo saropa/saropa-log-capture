@@ -18,6 +18,7 @@
 
 import type { ReportFileData } from './report-file-formatter';
 import { buildItemUrl } from '../marketplace-url';
+import { fencedBlock } from '../misc/outbound-content-safety';
 
 const MAX_HANDOFF_FULL_LINES = 12; // Cap raw log lines in handoff so the bundle stays small.
 const MAX_GH_FULL_LINES = 80;      // GitHub issues collapse <details> so this can run longer.
@@ -43,9 +44,9 @@ export function formatGitHubIssue(data: ReportFileData): string {
 
     sections.push('## Actual Behavior');
     if (data.selectedText.trim()) {
-        sections.push('Selected output:\n\n```\n' + data.selectedText.trim() + '\n```');
+        sections.push('Selected output:\n\n' + fencedBlock(data.selectedText.trim()));
     } else if (d.errorLine) {
-        sections.push('```\n' + d.errorLine + '\n```');
+        sections.push(fencedBlock(d.errorLine));
     } else {
         sections.push('*What actually happened?*');
     }
@@ -78,7 +79,7 @@ export function formatHandoffBundle(data: ReportFileData): string {
     if (d.errorLine) {
         sections.push('Error: `' + truncate(d.errorLine, 160) + '`');
     } else if (data.selectedText.trim()) {
-        sections.push('Selected output:\n```\n' + truncate(data.selectedText.trim(), 240) + '\n```');
+        sections.push('Selected output:\n' + fencedBlock(truncate(data.selectedText.trim(), 240)));
     } else {
         sections.push('*No error captured — describe what you saw.*');
     }
@@ -116,7 +117,7 @@ export function formatHandoffBundle(data: ReportFileData): string {
 
     if (data.fullOutput.trim()) {
         const tail = takeLastLines(data.fullOutput, MAX_HANDOFF_FULL_LINES);
-        sections.push('```\n' + tail + '\n```');
+        sections.push(fencedBlock(tail));
     }
 
     return sections.join('\n\n');
@@ -130,7 +131,7 @@ function formatLogsBlock(data: ReportFileData, maxLines: number): string {
     const truncated = lines.length > maxLines;
     const slice = truncated ? lines.slice(-maxLines).join('\n') : data.fullOutput;
     const summary = truncated ? `Last ${maxLines} of ${lines.length} lines` : `${lines.length} lines`;
-    return `<details><summary>${summary}</summary>\n\n\`\`\`\n${slice}\n\`\`\`\n\n</details>`;
+    return `<details><summary>${summary}</summary>\n\n${fencedBlock(slice)}\n\n</details>`;
 }
 
 function formatEnvTable(data: ReportFileData): string {

@@ -89,11 +89,15 @@ export function getSignalSectionsStyles(): string {
     margin-bottom: 6px;
 }
 
-/* Compact Performance hero (sparkline + Errors · Warnings · Snapshot) */
+/* Compact Performance hero (Errors / Warnings / Snapshot counts, then the trend sparkline).
+   flex-wrap lets the count block and the sparkline drop to separate lines on a narrow panel as
+   whole blocks, instead of the old single non-wrapping row that forced the metrics to break mid-item
+   (emoji stranded above its count, "512 MB free" on its own line). */
 .signal-performance-hero {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
+    gap: 4px 14px;
     font-size: 11px;
     color: var(--vscode-descriptionForeground);
     margin-bottom: 8px;
@@ -118,7 +122,20 @@ export function getSignalSectionsStyles(): string {
 }
 
 .signal-hero-metrics {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 12px;
     min-width: 0;
+}
+
+/* Each count (🔴 Errors: 7 / 🟡 Warnings: 3 / Snapshot: 512 MB free) is one nowrap unit so it never
+   breaks internally; the metrics container wraps between units instead. */
+.signal-hero-metric {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+    white-space: nowrap;
 }
 
 .signal-hero-hint {

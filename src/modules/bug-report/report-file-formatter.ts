@@ -7,6 +7,7 @@
 
 import type { BugReportData } from './bug-report-collector';
 import { buildItemUrl } from '../marketplace-url';
+import { fencedBlock } from '../misc/outbound-content-safety';
 import {
     formatCrossSession, formatProductionImpact, formatFooter,
 } from './bug-report-sections';
@@ -58,7 +59,7 @@ function formatSelectedText(data: ReportFileData): string {
     return [
         '## Part 1: Selected Text',
         `> ${range} in \`${data.bugReportData.logFilename}\``,
-        `\`\`\`\n${data.selectedText}\n\`\`\``,
+        fencedBlock(data.selectedText),
     ].join('\n\n');
 }
 
@@ -84,9 +85,8 @@ function formatFullOutput(data: ReportFileData): string {
         '## Part 3: Full Session Output',
         `<details><summary>Full output (${count} lines, decorated)</summary>`,
         '',
-        '```',
-        data.fullOutput,
-        '```',
+        // fencedBlock so a ``` run in the captured output can't terminate the fence early.
+        fencedBlock(data.fullOutput),
         '',
         '</details>',
     ].join('\n');

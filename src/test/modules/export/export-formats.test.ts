@@ -28,6 +28,22 @@ suite('ExportFormats', () => {
         test('should escape strings with multiple special chars', () => {
             assert.strictEqual(escapeCsvField('a, "b", c'), '"a, ""b"", c"');
         });
+
+        // Formula-injection guard: a field starting with = + - @ executes as a spreadsheet formula
+        // on open, so it is prefixed with an apostrophe to force text.
+        test('should neutralize a leading formula trigger', () => {
+            assert.strictEqual(escapeCsvField('=cmd|calc'), "'=cmd|calc");
+            assert.strictEqual(escapeCsvField('@SUM(A1)'), "'@SUM(A1)");
+        });
+
+        test('should both neutralize and quote when the formula field also has a comma', () => {
+            assert.strictEqual(escapeCsvField('=1+1,2'), '"\'=1+1,2"');
+        });
+
+        test('should leave genuine numbers (incl. negatives) untouched', () => {
+            assert.strictEqual(escapeCsvField('-5'), '-5');
+            assert.strictEqual(escapeCsvField('+12.5'), '+12.5');
+        });
     });
 
     suite('Level inference (classifyLevel aligned with export)', () => {
