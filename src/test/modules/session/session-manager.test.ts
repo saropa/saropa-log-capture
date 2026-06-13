@@ -75,6 +75,29 @@ describe("SessionManagerImpl", () => {
     assert.ok(dropMsgs.some((m) => m.includes('"stderr"')), "names the stderr category");
   });
 
+  it("should log an excluded line once per pattern to the output channel (plan 102)", () => {
+    // Plan 102: with captureAll ON, an exclusion match is the only silent in-extension
+    // drop once a line clears the category gate — surface the matching pattern once so a
+    // "missing Debug Console line" is diagnosable rather than looking like broken capture.
+    const logged: string[] = [];
+    const mgr = new SessionManagerImpl(
+      mockStatusBar as any,
+      { appendLine: (m: string) => logged.push(m) } as any,
+    );
+    mgr.refreshConfig(makeConfig({
+      captureAll: true, enabled: true, categories: [], exclusions: ["noise"],
+    }));
+    // exclusionRules is normally built on session start; set it directly for the unit test.
+    mgr["exclusionRules"] = [{ source: "noise", text: "noise" }];
+    mgr["sessions"].set("test", { appendLine: () => {}, lineCount: 1, fileUri: { fsPath: "test.log" } } as any);
+    // Two distinct lines hit the same pattern; the pattern is reported exactly once.
+    mgr.onOutputEvent("test", { output: "noise line 1", category: "stdout" });
+    mgr.onOutputEvent("test", { output: "noise line 2", category: "stdout" });
+    const hidMsgs = logged.filter((m) => m.includes("matching exclusion pattern"));
+    assert.strictEqual(hidMsgs.length, 1, "each exclusion pattern logs exactly once");
+    assert.ok(hidMsgs[0].includes('"noise"'), "names the matching pattern");
+  });
+
   it("writeLine should no-op when no active session exists", () => {
     const mgr = makeSessionManager();
     let captured = false;
