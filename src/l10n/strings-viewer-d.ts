@@ -61,10 +61,9 @@ export const stringsViewerD: Record<string, string> = {
     'viewer.toolbar.sessionInfo.title': 'Session info — view the capture header (long-press a row to copy)',
     'viewer.toolbar.sessionInfo.label': 'Show session info',
     'viewer.sessionInfo.title': 'Session information',
-    'viewer.sessionInfo.empty': 'No session header found in this log.',
+    // sessionInfo.empty / openInBrowser / revealInExplorer moved to strings-webview.ts: the modal
+    // renders them client-side via vt(), which only sees the webview __VT map (were raw keys here).
     'viewer.sessionInfo.copyHint': 'Tip: long-press (hold ~0.5s) any row to copy it to the clipboard. Click a link to open it.',
-    'viewer.sessionInfo.openInBrowser': 'Open in browser',
-    'viewer.sessionInfo.revealInExplorer': 'Reveal in OS file explorer',
     'viewer.sessionInfo.section.session': 'Session',
     'viewer.sessionInfo.section.launch': 'Launch configuration',
     'viewer.sessionInfo.section.environment': 'Environment',
