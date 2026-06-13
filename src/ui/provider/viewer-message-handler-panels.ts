@@ -21,6 +21,7 @@ import { handleChangelogSinceForVersion } from '../shared/handlers/changelog-sin
 import { fetchDriftViewerHealth } from '../../modules/integrations/drift-viewer-health';
 import { fetchDriftDbIssues } from '../../modules/integrations/drift-advisor-issues-fetch';
 import { getDriftLintViolations } from '../../modules/misc/drift-lint-violations';
+import { getSuiteDeepLinkAvailability, runSiblingDeepLink } from '../../modules/diagnostics/suite-deeplink';
 import { logExtensionError } from '../../modules/misc/extension-logger';
 
 /** Clamp numeric param to safe integer range for line/part indices (0 .. 10M). */
@@ -181,6 +182,15 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
         return true;
       case "openDriftAdvisor":
         void vscode.commands.executeCommand(DRIFT_ADVISOR_OPEN_COMMAND).then(undefined, () => {});
+        return true;
+      case "requestSuiteDeepLinkAvailability":
+        // R5: tell the SQL panel which sibling deep-link buttons are safe to show (never a dead action).
+        void getSuiteDeepLinkAvailability().then((a) => ctx.post({ type: "suiteDeepLinkAvailability", ...a }));
+        return true;
+      case "runSiblingDeepLink":
+        // R5: a SQL/diagnostic row button asked to jump into Drift Advisor / Saropa Lints. The id is
+        // allowlisted inside runSiblingDeepLink; args are the documented payload for that command.
+        void runSiblingDeepLink(String(msg.command ?? ''), msg.args);
         return true;
       case "checkDriftViewerHealth": {
         const baseUrl = String((msg as { baseUrl?: unknown }).baseUrl ?? "").trim();

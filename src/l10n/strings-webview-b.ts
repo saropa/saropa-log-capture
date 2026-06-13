@@ -301,4 +301,9 @@ export const stringsWebviewB: Record<string, string> = {
     'viewer.sqlHistory.lint.advice': 'Drift database linters look turned off. Turn them on to catch WHERE-less updates, enum-index reorders, and unclosed databases.',
     'viewer.sqlHistory.lint.enableBtn': 'Enable Drift linters',
     'viewer.sqlHistory.lint.enableTitle': 'Open a terminal with the Saropa Lints command that enables the Drift rule pack',
+    // R5 suite deep-links. Brand names stay literal in every locale (see project memory).
+    'viewer.sqlHistory.explainInDrift': 'Explain this query in Drift Advisor',
+    'viewer.sqlHistory.lint.showRuleTitle': 'Show this rule in Saropa Lints',
+    'viewer.sqlHistory.source.advisor': 'Drift Advisor',
+    'viewer.sqlHistory.source.lints': 'Saropa Lints',
 };
