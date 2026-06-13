@@ -206,8 +206,14 @@ export async function getFirebaseContext(errorTokens: readonly string[]): Promis
         // Omit the `/u/N/` account-index prefix on purpose — Google's redirect inserts the correct
         // account, whereas hardcoding `/u/0/` would send multi-account users to the wrong one.
         const packageName = await detectPackageName();
-        const appSegment = packageName ? `android:${packageName}` : config.appId;
-        const consoleUrl = `https://console.firebase.google.com/project/${config.projectId}/crashlytics/app/${appSegment}/issues`;
+        // Only build the deep link when the platform-prefixed package name (the segment the console
+        // accepts) is known. Falling back to config.appId (the mobilesdk_app_id) ships the exact URL
+        // the console rejects with "This app does not exist…" — so when the package name is missing we
+        // omit consoleUrl; every consumer guards it (the setup screen falls back to the generic console
+        // root), which is strictly better than a link that always errors.
+        const consoleUrl = packageName
+            ? `https://console.firebase.google.com/project/${config.projectId}/crashlytics/app/android:${packageName}/issues`
+            : undefined;
         const fullChecklist: SetupChecklist = { gcloud: 'ok', token: 'ok', config: 'ok' };
         try {
             // Layer locally-derived signals (repetitive / regressed) the API does not provide onto the

@@ -233,8 +233,13 @@ export function buildHypotheses(bundle: RootCauseHintBundle): RootCauseHypothesi
   ];
 
   const merged = mergeErrorsIntoAnr(dedupeAndMerge(parts));
+  // Order by tier, then by confidence (high → low), then alphabetically. Confidence MUST rank above
+  // the key: within a tier there are often more hypotheses than MAX_BULLETS, and a purely alphabetical
+  // tiebreak could drop a high-confidence hint in favor of a low-confidence one with an earlier key.
   merged.sort((a, b) => {
     if (a.tier !== b.tier) { return a.tier - b.tier; }
+    const confDiff = (confRank[b.confidence ?? ''] ?? 0) - (confRank[a.confidence ?? ''] ?? 0);
+    if (confDiff !== 0) { return confDiff; }
     return a.hypothesisKey.localeCompare(b.hypothesisKey);
   });
 
