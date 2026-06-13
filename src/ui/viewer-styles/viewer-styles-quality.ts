@@ -23,18 +23,18 @@ export function getQualityBadgeStyles(): string {
    now tracks whatever the active theme paints the matching severity foreground. */
 .qb-high {
     color: var(--vscode-debugConsole-sourceForeground, #89d185);
-    background: color-mix(in srgb, var(--vscode-debugConsole-sourceForeground, #89d185) 15%, transparent);
-    border: 1px solid color-mix(in srgb, var(--vscode-debugConsole-sourceForeground, #89d185) 30%, transparent);
+    background: color-mix(in srgb, var(--vscode-debugConsole-sourceForeground, #89d185) 22%, transparent);
+    border: 1px solid color-mix(in srgb, var(--vscode-debugConsole-sourceForeground, #89d185) 55%, transparent);
 }
 .qb-med {
     color: var(--vscode-debugConsole-warningForeground, #cca700);
-    background: color-mix(in srgb, var(--vscode-debugConsole-warningForeground, #cca700) 15%, transparent);
-    border: 1px solid color-mix(in srgb, var(--vscode-debugConsole-warningForeground, #cca700) 30%, transparent);
+    background: color-mix(in srgb, var(--vscode-debugConsole-warningForeground, #cca700) 22%, transparent);
+    border: 1px solid color-mix(in srgb, var(--vscode-debugConsole-warningForeground, #cca700) 55%, transparent);
 }
 .qb-low {
     color: var(--vscode-errorForeground, #f48771);
-    background: color-mix(in srgb, var(--vscode-errorForeground, #f48771) 15%, transparent);
-    border: 1px solid color-mix(in srgb, var(--vscode-errorForeground, #f48771) 30%, transparent);
+    background: color-mix(in srgb, var(--vscode-errorForeground, #f48771) 22%, transparent);
+    border: 1px solid color-mix(in srgb, var(--vscode-errorForeground, #f48771) 55%, transparent);
 }
 
 /* Heatmap: subtle line background for stack frames by coverage (when quality badge is shown).

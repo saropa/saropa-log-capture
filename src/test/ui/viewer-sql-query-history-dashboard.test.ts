@@ -82,6 +82,14 @@ suite('viewer SQL history dashboard (DB_18 Phase 2)', () => {
         assert.ok(html.includes('id="sql-query-history-issues"'), 'issues mount exists');
     });
 
+    test('issues fetch shows a loading state and surfaces failures instead of hiding silently', () => {
+        const s = getSqlQueryHistoryPanelScript();
+        assert.ok(s.includes('setSqlHistoryAsyncState'), 'async loading/error state helper is present');
+        assert.ok(s.includes('viewer.sqlHistory.issues.loading'), 'a loading line shows while the issues fetch is in flight');
+        assert.ok(s.includes('msg.ok === false'), 'an ok=false reply renders the error state rather than hiding the section');
+        assert.ok(s.includes('viewer.sqlHistory.issues.error'), 'the issues error state has its own message');
+    });
+
     test('Saropa Lints section is wired: fetch trigger, host-apply hook, enable action, and HTML mount', () => {
         const s = getSqlQueryHistoryPanelScript();
         assert.ok(s.includes("type: 'fetchDriftLintViolations'"), 'panel requests Drift lint findings');
@@ -90,5 +98,12 @@ suite('viewer SQL history dashboard (DB_18 Phase 2)', () => {
         assert.ok(s.includes("type: 'enableDriftLintPack'"), 'enable button posts the enable-pack action');
         const html = getSqlQueryHistoryPanelHtml();
         assert.ok(html.includes('id="sql-query-history-lint"'), 'lint mount exists');
+    });
+
+    test('lint fetch shows a loading state and surfaces failures', () => {
+        const s = getSqlQueryHistoryPanelScript();
+        assert.ok(s.includes('viewer.sqlHistory.lint.loading'), 'a loading line shows while the lint fetch is in flight');
+        assert.ok(s.includes('msg.error'), 'a host { error } reply renders the lint error state');
+        assert.ok(s.includes('viewer.sqlHistory.lint.error'), 'the lint error state has its own message');
     });
 });

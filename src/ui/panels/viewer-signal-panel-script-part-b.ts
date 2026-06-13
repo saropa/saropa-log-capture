@@ -152,7 +152,8 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
                 + '" data-detail="' + esc(s.detail || '')
                 + '" title="' + esc(s.label) + '">'
                 + '<span>' + icon + recurBadge + trendBadge + ' ' + esc(text) + '</span>'
-                + '<span class="signal-hotfile-meta">' + meta + '</span>' + lintBtn + daBtn + copyBtn + triageHtml + '</div>';
+                + '<span class="signal-hotfile-meta">' + meta + '</span>'
+                + '<span class="signal-row-actions">' + lintBtn + daBtn + copyBtn + triageHtml + '</span></div>';
         }).join('');
     }
 
@@ -263,7 +264,7 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
             return '<div class="signal-env-row signal-in-log-row' + clickCls + '"' + lineAttr + ' data-fingerprint="' + esc(s.fingerprint || '') + '" data-label="' + esc(s.label) + '" title="' + esc(s.label) + titleSuffix + '">'
                 + '<span>' + icon + ' ' + esc(text) + '</span>'
                 + '<span class="signal-hotfile-meta">' + meta + '</span>'
-                + copyBtn
+                + '<span class="signal-row-actions">' + copyBtn + '</span>'
                 + preview
                 + detailBlock
                 + '</div>';
