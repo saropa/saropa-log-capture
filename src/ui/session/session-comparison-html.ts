@@ -14,6 +14,7 @@
  * the outer template stay the single source of truth for executable content.
  */
 
+import { randomBytes } from 'crypto';
 import type { DiffLine } from '../../modules/misc/diff-engine';
 import type { DbDetectorResult } from '../../modules/db/db-detector-types';
 import {
@@ -60,13 +61,12 @@ export interface SessionComparisonHtmlArgs {
     readonly sessionB: SessionComparisonPaneViewModel;
 }
 
+/**
+ * CSP nonce for the comparison webview. Must be unpredictable per page load — it gates which scripts
+ * run — so use a CSPRNG (Node `crypto`), not the predictable `Math.random()`. 16 bytes, base64.
+ */
 export function generateWebviewNonce(): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < 32; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
+    return randomBytes(16).toString('base64');
 }
 
 export function buildSessionComparisonHtml(args: SessionComparisonHtmlArgs): string {

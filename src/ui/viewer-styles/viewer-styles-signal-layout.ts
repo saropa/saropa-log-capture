@@ -65,7 +65,9 @@ export function getSignalLayoutStyles(): string {
     border: none;
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
-    font-size: 18px;
+    /* 16px matches the close glyph in the Performance and Crashlytics panels; 18px here made
+       the Signal panel's close button visibly larger than its siblings (inconsistent affordance). */
+    font-size: 16px;
     line-height: 1;
     padding: 2px 6px;
     border-radius: 3px;

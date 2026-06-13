@@ -20,14 +20,17 @@ export function getSqlQueryHistoryDashboardStyles(): string {
     gap: 6px;
 }
 
-/* Each card is a flexible equal-share column so 2-4 cards fill the strip without horizontal scroll. */
+/* Each card is a flexible equal-share column so 2-4 cards fill the strip without horizontal scroll.
+   Border + 6px radius match the Crashlytics detail stat cards (.cd-stat) so a "stat card" reads
+   as one consistent pattern across dashboards instead of two slightly different treatments. */
 .sql-qh-stat {
     flex: 1 1 64px;
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 4px 6px;
-    border-radius: 4px;
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 6px;
     background: var(--vscode-editorWidget-background, rgba(127, 127, 127, 0.1));
 }
 
@@ -157,6 +160,29 @@ export function getSqlQueryHistoryDashboardStyles(): string {
 .sql-qh-issue-fix:hover {
     color: var(--vscode-textLink-activeForeground);
 }
+
+/* --- Async loading / error states for the Drift enrichment fetches (issues + lint) --- */
+/* Body tier (11px) matches the issue rows; loading pulses to read as in-progress, error uses the
+   theme error color so a failed fetch is visibly distinct from an empty (hidden) section. */
+.sql-qh-async {
+    font-size: 11px;
+    padding: 2px 6px;
+}
+
+.sql-qh-async-loading {
+    color: var(--vscode-descriptionForeground);
+    animation: sql-qh-async-pulse 1.5s ease-in-out infinite;
+}
+
+.sql-qh-async-error {
+    color: var(--vscode-errorForeground, #f48771);
+}
+
+.sql-qh-async-detail {
+    opacity: 0.7;
+}
+
+@keyframes sql-qh-async-pulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 0.3; } }
 
 /* --- Saropa Lints static-code section (Drift-rule violations + enable-pack advice) --- */
 .sql-qh-lint {

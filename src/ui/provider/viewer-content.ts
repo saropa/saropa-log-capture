@@ -12,6 +12,7 @@ import { getLintBadgeStyles } from '../viewer-styles/viewer-styles-lint-badge';
 import type { ViewerRepeatThresholds } from '../../modules/db/drift-db-repeat-thresholds';
 import type { ViewerSlowBurstThresholds } from '../../modules/db/drift-db-slow-burst-thresholds';
 import type { ViewerDbDetectorToggles } from '../../modules/config/config-types';
+import { randomBytes } from 'crypto';
 import { getViewerBodyHtml } from './viewer-content-body';
 import { getViewerScriptTags } from './viewer-content-scripts';
 import type { ViewerColumnDefaults } from '../viewer-decorations/viewer-deco-settings';
@@ -19,14 +20,15 @@ import type { ViewerColumnDefaults } from '../viewer-decorations/viewer-deco-set
 /** Fallback viewer cap when buildViewerHtml is called without explicit viewerMaxLines. */
 export const DEFAULT_VIEWER_LINES = 100000;
 
-/** Generate a random nonce for Content Security Policy. */
+/**
+ * Generate a random nonce for the Content Security Policy.
+ *
+ * The nonce is the only barrier between the webview's trusted (nonce-tagged) scripts and any script
+ * an attacker manages to inject, so it must be unpredictable per page load. `Math.random()` is not
+ * a CSPRNG and is predictable; use Node `crypto`. 16 random bytes (128 bits) base64-encoded.
+ */
 export function getNonce(): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < 32; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
+    return randomBytes(16).toString('base64');
 }
 
 export interface ViewerHtmlOptions {
@@ -107,7 +109,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy"
-          content="default-src 'none'; script-src 'nonce-${nonce}'; ${styleSrc} ${fontSrc} media-src ${cspSource || extensionUri || 'vscode-resource:'};">
+          content="default-src 'none'; script-src 'nonce-${nonce}'; ${styleSrc} ${fontSrc} media-src ${cspSource || extensionUri || "'none'"};">
     ${codiconLink}
     <style nonce="${nonce}">
         ${getViewerStyles()}
