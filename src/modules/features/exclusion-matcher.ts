@@ -32,10 +32,17 @@ export function parseExclusionPattern(pattern: string): ExclusionRule | undefine
     return { source: trimmed, text: trimmed.toLowerCase() };
 }
 
-/** Test whether a line of text matches any of the given exclusion rules. */
-export function testExclusion(text: string, rules: readonly ExclusionRule[]): boolean {
+/**
+ * Find the first exclusion rule that matches the text, or undefined if none do.
+ * Returns the rule (not just a bool) so callers can name the matching pattern in
+ * diagnostics — e.g. telling a user which exclusion hid a "missing" Debug Console line.
+ */
+export function findExclusionMatch(
+    text: string,
+    rules: readonly ExclusionRule[],
+): ExclusionRule | undefined {
     if (rules.length === 0) {
-        return false;
+        return undefined;
     }
     const lower = text.toLowerCase();
     // Bound the line once for regex rules — a greedy user pattern on a very long line could hang.
@@ -44,11 +51,16 @@ export function testExclusion(text: string, rules: readonly ExclusionRule[]): bo
         if (rule.regex) {
             rule.regex.lastIndex = 0;
             if (rule.regex.test(bounded)) {
-                return true;
+                return rule;
             }
         } else if (rule.text && lower.includes(rule.text)) {
-            return true;
+            return rule;
         }
     }
-    return false;
+    return undefined;
+}
+
+/** Test whether a line of text matches any of the given exclusion rules. */
+export function testExclusion(text: string, rules: readonly ExclusionRule[]): boolean {
+    return findExclusionMatch(text, rules) !== undefined;
 }

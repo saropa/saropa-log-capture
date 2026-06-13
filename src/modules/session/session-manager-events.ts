@@ -9,7 +9,7 @@ import { SourceLocation } from '../capture/log-session-helpers';
 import { SaropaLogCaptureConfig } from '../config/config';
 import { DapOutputBody } from '../capture/tracker';
 import { FloodGuard } from '../capture/flood-guard';
-import { ExclusionRule, testExclusion } from '../features/exclusion-matcher';
+import { ExclusionRule, testExclusion, findExclusionMatch } from '../features/exclusion-matcher';
 import { DapMessage, DapDirection, formatDapMessage } from '../capture/dap-formatter';
 import { LineData, EarlyOutputBuffer } from './session-event-bus';
 
@@ -24,6 +24,8 @@ export interface OutputEventDeps {
     readonly outputChannel?: { appendLine(message: string): void };
     /** Per-session memo of categories already reported as dropped, to log each at most once. */
     readonly droppedCategoriesLogged?: Set<string>;
+    /** Per-session memo of exclusion patterns already reported, to log each at most once. */
+    readonly excludedRulesLogged?: Set<string>;
 }
 
 /** Mutable counters updated during output processing. */
@@ -63,7 +65,16 @@ export function processOutputEvent(
         reportDroppedCategory(deps, category);
         return;
     }
-    if (testExclusion(text, deps.exclusionRules)) { return; }
+    const excludedBy = findExclusionMatch(text, deps.exclusionRules);
+    if (excludedBy) {
+        // Plan 102 (captureAll: true path): once a line clears the category gate, exclusion is
+        // the only in-extension drop that stays silent — flood drops surface a FLOOD SUPPRESSED
+        // summary, but an exclusion match leaves no trace. A user chasing a "missing Debug Console
+        // line" with captureAll ON sees nothing here, so report each matching pattern once
+        // (memoized) naming the rule that hid the line.
+        reportExcludedLine(deps, excludedBy.source);
+        return;
+    }
 
     const floodResult = deps.floodGuard.check(text);
     if (!floodResult.allow) { return; }
@@ -103,6 +114,22 @@ function reportDroppedCategory(deps: OutputEventDeps, category: string): void {
         `[capture] Dropped DAP output category "${category}" — captureAll is off and this ` +
         `category is not in saropaLogCapture.categories, so its lines are not captured. ` +
         `Enable saropaLogCapture.captureAll, or add "${category}" to saropaLogCapture.categories.`,
+    );
+}
+
+/**
+ * Log that an exclusion pattern hid a Debug Console line, at most once per pattern.
+ * This is the captureAll-on counterpart to {@link reportDroppedCategory}: exclusion is the
+ * only silent in-extension drop when every category is captured, so naming the matching
+ * pattern (once) makes a "missing line" diagnosable instead of looking like broken capture.
+ */
+function reportExcludedLine(deps: OutputEventDeps, pattern: string): void {
+    const logged = deps.excludedRulesLogged;
+    if (!logged || logged.has(pattern)) { return; }
+    logged.add(pattern);
+    deps.outputChannel?.appendLine(
+        `[capture] Hid a Debug Console line matching exclusion pattern "${pattern}" ` +
+        `(saropaLogCapture.exclusions). Remove or adjust the pattern to capture these lines.`,
     );
 }
 

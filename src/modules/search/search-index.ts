@@ -131,15 +131,31 @@ export class SearchIndexManager {
         }
     }
 
-    /** Get the index if fresh enough, or rebuild. */
+    /** Get the index if fresh AND still matching what's on disk, or rebuild. */
     async getOrRebuild(maxAgeMs: number = 60000): Promise<SearchIndex> {
         const existing = await this.load();
 
-        if (existing && Date.now() - existing.buildTime < maxAgeMs) {
+        // Age alone is not freshness: within the age window a file could have been added, removed, or
+        // edited, leaving getTotalLineCount/getTotalSize reporting stale numbers. Re-stat (cheap) and
+        // only rebuild (reads every file) when the tracked set or a file's stat actually changed.
+        if (existing && Date.now() - existing.buildTime < maxAgeMs && !(await this.isStale(existing))) {
             return existing;
         }
 
         return this.rebuild();
+    }
+
+    /** True if the tracked-file set differs from the index or any indexed file changed on disk. */
+    private async isStale(existing: SearchIndex): Promise<boolean> {
+        const { fileTypes, includeSubfolders } = getConfig();
+        const tracked = await readTrackedFiles(this.logDirUri, fileTypes, includeSubfolders);
+        const trackedUris = tracked.map(rel => vscode.Uri.joinPath(this.logDirUri, rel));
+        const indexed = new Set(existing.files.map(f => f.uri));
+        if (trackedUris.length !== indexed.size || trackedUris.some(u => !indexed.has(u.toString()))) {
+            return true;
+        }
+        const changed = await Promise.all(trackedUris.map(u => this.hasFileChanged(u)));
+        return changed.some(Boolean);
     }
 
     /** Get total line count across all indexed files. */

@@ -58,6 +58,8 @@ export class SessionManagerImpl implements SessionManager {
     private categoryCounts: Record<string, number> = {};
     /** Categories already reported as dropped by the captureAll whitelist (log each once). */
     private readonly droppedCategoriesLogged = new Set<string>();
+    /** Exclusion patterns already reported as having hidden a line (log each once). */
+    private readonly excludedRulesLogged = new Set<string>();
     private sessionStartTime = 0;
     private floodSuppressedTotal = 0;
     private autoTagger: AutoTagger | null = null;
@@ -132,6 +134,7 @@ export class SessionManagerImpl implements SessionManager {
                 sessions: this.sessions, earlyBuffer: this.earlyBuffer, config: this.cachedConfig,
                 exclusionRules: this.exclusionRules, floodGuard: this.floodGuard,
                 outputChannel: this.outputChannel, droppedCategoriesLogged: this.droppedCategoriesLogged,
+                excludedRulesLogged: this.excludedRulesLogged,
             },
             { counters, broadcastLine: (data) => this.broadcastLine(data) }, effectiveSessionId, body,
         );
