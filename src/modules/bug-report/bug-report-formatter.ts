@@ -165,8 +165,12 @@ function formatLinkedFrames(frames: readonly StackFrame[], ctx: ReportCtx): stri
     if (appFrames.length === 0) { return undefined; }
     const items = appFrames.map(f => {
         const ref = f.sourceRef!;
-        const display = `${ref.filePath}:${ref.line}${ref.col ? ':' + ref.col : ''}`;
         const gitCtx = makeGitCtx(ctx, ref.filePath);
+        // Never put the raw absolute path in the report text — it leaks the user's home dir
+        // (e.g. C:\Users\<name>\...) into a report bound for GitHub/Slack. Show the repo-relative
+        // path when we have it (same value the clickable [[GIT]] link uses), else just the basename.
+        const rel = gitCtx?.relativePath ?? shortName(ref.filePath);
+        const display = `${rel}:${ref.line}${ref.col ? ':' + ref.col : ''}`;
         return `- ${buildMarkdownFileLink(display, undefined, { line: ref.line, col: ref.col, gitContext: gitCtx })}`;
     });
     return `**Linked app frames:**\n${items.join('\n')}`;
