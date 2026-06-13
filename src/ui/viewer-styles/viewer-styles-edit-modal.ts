@@ -29,7 +29,8 @@ export function getEditModalStyles(): string {
     border: 1px solid var(--vscode-panel-border);
     border-radius: 4px;
     padding: 0;
-    min-width: 500px;
+    /* Cap the floor to the viewport so the edit dialog doesn't clip on a narrow viewer panel. */
+    min-width: min(500px, calc(100vw - 24px));
     max-width: 80vw;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
     display: flex;
