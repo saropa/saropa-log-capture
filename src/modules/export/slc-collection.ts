@@ -3,6 +3,7 @@
  */
 
 import * as vscode from 'vscode';
+import * as nodePath from 'path';
 import JSZip from 'jszip';
 import { t } from '../../l10n';
 import { getLogDirectoryUri } from '../config/config';
@@ -20,6 +21,21 @@ import {
     type SlcManifestCollection,
     type ImportCollectionResult,
 } from './slc-types';
+
+/**
+ * Zip-Slip guard. A `.slc` bundle is untrusted input (it can arrive via the public
+ * `vscode://…/import?gist=` deep link), and its manifest/entry names are attacker-controlled.
+ * A name like `../../../evil` is normalized by `vscode.Uri.joinPath` to a path OUTSIDE the log
+ * directory, turning an import into an arbitrary file write. Confirm the resolved target stays
+ * strictly inside `dir` before any write. Uses `path.relative` for pure path math (no I/O); there
+ * is no `vscode` API for a containment test, so node `path` is the right tool here.
+ *
+ * @returns true only when `target` is a descendant of `dir` (never `dir` itself, never an escape).
+ */
+export function isWithinDir(dir: vscode.Uri, target: vscode.Uri): boolean {
+    const rel = nodePath.relative(dir.fsPath, target.fsPath);
+    return rel.length > 0 && !rel.startsWith('..') && !nodePath.isAbsolute(rel);
+}
 
 async function resolveCollectionSourceUris(
     source: CollectionFileSource,
@@ -182,6 +198,12 @@ export async function importCollectionFromSlc(
             if (!entry) { continue; }
             const name = path.slice(SOURCES_FOLDER.length + 1);
             const targetUri = vscode.Uri.joinPath(logDir, name);
+            // Reject the whole import on any entry that would escape the log dir — a traversal
+            // entry means the bundle is hostile, so abort rather than partially extract it.
+            if (!isWithinDir(logDir, targetUri)) {
+                vscode.window.showErrorMessage(t('msg.slcImportUnsafePath', name));
+                return undefined;
+            }
             try {
                 const data = await entry.async('nodebuffer');
                 await vscode.workspace.fs.writeFile(targetUri, Buffer.from(data));
