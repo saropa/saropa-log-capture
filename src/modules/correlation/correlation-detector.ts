@@ -120,27 +120,30 @@ function matchCorrelationPattern(
     return undefined;
 }
 
+/**
+ * Two correlations have the SAME anchor when their primary event (events[0], the error the
+ * correlation is built around — see buildCorrelation) is the same file+timestamp. Matching on any
+ * shared event instead would merge two distinct anchors that merely share a co-located secondary
+ * event (e.g. the same HTTP failure correlated once with error A and once with error B).
+ */
+function sameAnchor(a: Correlation, b: Correlation): boolean {
+    const aa = a.events[0];
+    const ba = b.events[0];
+    return !!aa && !!ba && aa.location.file === ba.location.file && aa.timestamp === ba.timestamp;
+}
+
 /** Deduplicate: when two correlations share an anchor and overlap in time, keep higher confidence. */
 export function deduplicateCorrelations(correlations: Correlation[]): Correlation[] {
     const kept: Correlation[] = [];
     for (const c of correlations) {
-        const overlap = kept.some(k => {
-            const sameAnchor = c.events.some(ce => k.events.some(ke =>
-                ke.location.file === ce.location.file && ke.timestamp === ce.timestamp
-            ));
-            if (!sameAnchor) { return false; }
-            const timeOverlap = Math.abs(c.timestamp - k.timestamp) < 5000;
-            return timeOverlap;
-        });
-        if (!overlap) { kept.push(c); }
-        else {
-            const existing = kept.find(k => k.events.some(ke => c.events.some(ce =>
-                ke.location.file === ce.location.file && ke.timestamp === ce.timestamp
-            )));
-            if (existing && CONFIDENCE_ORDER[c.confidence] > CONFIDENCE_ORDER[existing.confidence]) {
-                const idx = kept.indexOf(existing);
-                kept[idx] = c;
-            }
+        // Find the kept correlation with the SAME anchor within the time window — match once so the
+        // replace step below targets exactly that entry (the old any-shared-event test could swap
+        // the wrong one).
+        const idx = kept.findIndex(k => sameAnchor(c, k) && Math.abs(c.timestamp - k.timestamp) < 5000);
+        if (idx < 0) {
+            kept.push(c);
+        } else if (CONFIDENCE_ORDER[c.confidence] > CONFIDENCE_ORDER[kept[idx].confidence]) {
+            kept[idx] = c;
         }
     }
     return kept;

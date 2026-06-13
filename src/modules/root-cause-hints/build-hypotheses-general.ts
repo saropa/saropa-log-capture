@@ -67,7 +67,8 @@ export function networkHypotheses(bundle: RootCauseHintBundle, maxLen: number): 
     /* HTTP 4xx codes get low confidence — they may be expected app behavior
        (e.g., 404 on an optional resource check). 5xx and transport-level
        patterns stay medium because they always indicate a real problem. */
-    const isHttp4xx = /^4\d{2}\s/.test(key);
+    // \b not \s: a key of "404" or "404:" (no trailing space) is still a 4xx and must score low.
+    const isHttp4xx = /^4\d{2}\b/.test(key);
     const confidence: RootCauseHypothesisConfidence = isHttp4xx ? 'low' : 'medium';
 
     out.push({
