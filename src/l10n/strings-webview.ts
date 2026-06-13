@@ -96,6 +96,18 @@ export const stringsWebview: Record<string, string> = {
     'viewer.crashlytics.usersMany': '{0} users',
     'viewer.crashlytics.events': '{0} events',
     'viewer.crashlytics.loadingDetail': 'Loading crash details…',
+    // These four crash-badge labels and the three session-info strings below are rendered
+    // CLIENT-SIDE via vt(), so they must live in a webview strings file to enter the __VT map.
+    // They were previously in host strings (strings-viewer-c.ts / strings-viewer-d.ts), where vt()
+    // could not resolve them and rendered the raw key (e.g. "viewer.crashlytics.badge.regressed")
+    // to users. Surfaced by the visual harness (test/visual). Keep client-rendered keys here.
+    'viewer.crashlytics.badge.repetitive': 'Repetitive',
+    'viewer.crashlytics.badge.repetitiveTip': 'Seen across more than one app version',
+    'viewer.crashlytics.badge.regressed': 'Regressed',
+    'viewer.crashlytics.badge.regressedTip': 'Came back after disappearing in an earlier scan',
+    'viewer.sessionInfo.empty': 'No session header found in this log.',
+    'viewer.sessionInfo.openInBrowser': 'Open in browser',
+    'viewer.sessionInfo.revealInExplorer': 'Reveal in OS file explorer',
 
     // Session (Logs) list — runtime strings built client-side (viewer-session-panel-rendering.ts).
     'viewer.session.noMatch': 'No sessions match the current filters',
