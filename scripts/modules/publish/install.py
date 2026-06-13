@@ -70,8 +70,9 @@ def prompt_install(vsix_path: str) -> None:
              "'Shell Command: Install code command in PATH'")
         return
 
-    # ENTER defaults to Yes so a routine build can install in one keystroke.
-    if not ask_yn("Install via CLI now?", default=True):
+    # ENTER defaults to No — installing the .vsix is an explicit opt-in so a
+    # routine build doesn't replace the running extension without confirmation.
+    if not ask_yn("Install via CLI now?", default=False):
         return
 
     vsix_name = os.path.basename(vsix_path)
