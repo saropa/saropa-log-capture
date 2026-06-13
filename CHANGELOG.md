@@ -32,7 +32,15 @@ cspell:disable
 
 ### Changed
 
+- **Recurring Errors category badges now follow the theme:** The Fatal / ANR / OOM / Native crash-category badges in the Recurring Errors panel previously used fixed colors with white text that washed out on light themes. They now use the same theme-aware pill styling as the Crashlytics panel's badges, so they stay readable and consistent across light, dark, and high-contrast themes.
+- **Test-coverage quality badges now follow the theme:** The green / yellow / red coverage badges and their row heatmap on stack-frame lines previously used fixed semi-transparent colors that assumed a dark editor and faded out on light and high-contrast themes. Their tint is now derived from the matching theme color, so the badges and heatmap stay legible across light, dark, and high-contrast themes.
 - **Build script no longer defaults to installing the .vsix:** The `publish.py` "Install via CLI now?" prompt now defaults to No (press ENTER to skip), so a routine build doesn't replace the running extension without an explicit yes. Use `--auto-install` for unattended/CI installs.
+
+### Fixed
+
+- **Sessions that run past midnight no longer scramble the Session Flow Map and timeline:** Log lines carry only a clock (`HH:MM:SS`), not a date, so a session crossing midnight used to place after-midnight events *before* the evening's — producing negative durations and an empty time span on the flow map. The flow map now reconstructs a continuous timeline across midnight, keeping events in the order they happened.
+- **Android logcat lines no longer jump ~12 months into the future:** logcat timestamps omit the year, so a log captured in December and opened the following January was stamped with the new year and sorted ~12 months ahead. Year-less logcat dates that would land in the future now roll back to the correct year.
+- **Time-only timestamps resolve to the correct day in both directions:** a bare clock time near midnight is now matched to the nearest day relative to the log's start — a just-before-midnight line while the session began just after midnight is no longer pushed a full day into the future (previously the day-rollover only corrected forward).
 
 ---
 

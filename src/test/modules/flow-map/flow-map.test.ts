@@ -73,6 +73,20 @@ suite('FlowMap', () => {
             assert.strictEqual(slow?.source?.file, 'lib/db/drift_debug_interceptor.dart');
             assert.ok(parsed.issues.some(i => i.category === 'Crash' && i.severity === 'error'));
         });
+
+        test('keeps event times monotonic across a midnight rollover (no negative span)', () => {
+            // Clock-only stamps carry no date; before the rollover fix the after-midnight line had a
+            // smaller ms-of-day than the before-midnight line, yielding a negative dwell / broken span.
+            const overnight = [
+                '[23:59:58.000] [console] [log] Home Screen Reached: stream initialized',
+                '[00:00:03.000] [console] [log] Screen Navigation: Contact View [sar-1]',
+            ];
+            const evs = parseLog(overnight).events;
+            assert.strictEqual(evs.length, 2, 'both breadcrumb lines produce events');
+            assert.ok(evs[1].tsMs > evs[0].tsMs, 'after-midnight event sorts after the earlier one');
+            // 23:59:58 → 00:00:03 is 5 seconds, not ~24h backwards.
+            assert.strictEqual(evs[1].tsMs - evs[0].tsMs, 5000);
+        });
     });
 
     suite('deriveScreenIdentity', () => {

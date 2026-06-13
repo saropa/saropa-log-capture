@@ -13,6 +13,7 @@ import { parseErrorCausingWidget } from './error-causing-widget-parser';
 import { stripAnsi } from './flow-map-format';
 
 const CLOCK_RE = /^\[(\d{2}):(\d{2}):(\d{2})\.(\d{3})\]/;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 
 /** Parse the leading `[HH:MM:SS.mmm]` stamp into ms-of-day + a display clock, or undefined. */
@@ -24,6 +25,33 @@ function parseClock(line: string): { tsMs: number; clock: string } | undefined {
     const [, hh, mm, ss, ms] = m;
     const tsMs = (((+hh * 60) + +mm) * 60 + +ss) * 1000 + +ms;
     return { tsMs, clock: `${hh}:${mm}:${ss}` };
+}
+
+/**
+ * Resolve every line's clock-only stamp into a monotonic ms value across the whole session.
+ *
+ * The log carries only `[HH:MM:SS.mmm]` (ms-of-day, no date). A session that runs past midnight
+ * would otherwise have a later event with a *smaller* ms-of-day, producing negative dwell times
+ * and a broken activity-chart span (maxTs < minTs). We detect midnight by a large backward jump in
+ * the clock — a real rollover is always a ~24h step back, while cross-thread reordering is sub-second
+ * — and add a day's worth of ms per rollover so the resulting timeline is monotonic. The values stay
+ * relative (ms since the first day's midnight); all flow-map consumers use differences, not epochs.
+ *
+ * @returns Array parallel to `lines`; `undefined` where a line has no parseable clock.
+ */
+function resolveClockTimeline(lines: readonly string[]): (number | undefined)[] {
+    const out = new Array<number | undefined>(lines.length);
+    let dayOffset = 0;
+    let prevMs = -1;
+    for (let i = 0; i < lines.length; i++) {
+        const clk = parseClock(lines[i]);
+        if (!clk) { out[i] = undefined; continue; }
+        // A backward step over half a day means we crossed midnight; sub-second reordering never does.
+        if (prevMs >= 0 && prevMs - clk.tsMs > DAY_MS / 2) { dayOffset += DAY_MS; }
+        prevMs = clk.tsMs;
+        out[i] = clk.tsMs + dayOffset;
+    }
+    return out;
 }
 
 /** Read a quoted value (`key: "value"`) or bare trailing value (`key:   value`) from header lines. */
@@ -56,7 +84,11 @@ function stripPrefix(line: string): string {
 }
 
 /** Locate the rendering-exception block and recover its message + crashing-widget anchor. */
-function detectCrash(lines: readonly string[], projectRoot?: string): CrashInfo | undefined {
+function detectCrash(
+    lines: readonly string[],
+    lineTimes: readonly (number | undefined)[],
+    projectRoot?: string,
+): CrashInfo | undefined {
     const bannerIdx = lines.findIndex(l => /Exception caught by [\w ]+library/i.test(l));
     if (bannerIdx === -1) {
         return undefined;
@@ -70,7 +102,8 @@ function detectCrash(lines: readonly string[], projectRoot?: string): CrashInfo 
         const clk = parseClock(lines[i]);
         const widget = parseErrorCausingWidget(lines, projectRoot);
         return {
-            tsMs: clk?.tsMs ?? 0,
+            // Use the rollover-resolved time so an after-midnight crash sorts after earlier events.
+            tsMs: lineTimes[i] ?? clk?.tsMs ?? 0,
             clock: clk?.clock ?? '',
             message: content,
             widget: widget?.widget,
@@ -142,14 +175,16 @@ export function parseLog(lines: readonly string[], projectRootOverride?: string)
         events: [], issues: [], seenWarnings: new Set(), slowCount: 0, repeatCount: 0,
     };
 
+    // Resolve clocks once so events crossing midnight stay in monotonic order (no negative dwell).
+    const lineTimes = resolveClockTimeline(lines);
     for (let i = 0; i < lines.length; i++) {
         const clk = parseClock(lines[i]);
         if (clk) {
-            scanLine({ text: lines[i], tsMs: clk.tsMs, clock: clk.clock, logLine: i + 1 }, state);
+            scanLine({ text: lines[i], tsMs: lineTimes[i] ?? clk.tsMs, clock: clk.clock, logLine: i + 1 }, state);
         }
     }
 
-    const crash = detectCrash(lines, projectRoot);
+    const crash = detectCrash(lines, lineTimes, projectRoot);
     appendWorstSlow(state);
     if (crash) {
         state.issues.push(crashIssue(crash));

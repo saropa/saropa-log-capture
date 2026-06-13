@@ -63,15 +63,22 @@ function mapTextLevel(raw: string): SeverityLevel {
 
 /**
  * Parse a logcat-style MM-DD HH:MM:SS.mmm timestamp to epoch ms.
- * Uses the current year since logcat doesn't include it.
+ *
+ * Logcat omits the year. Assuming the current year mis-stamps a December line read in January
+ * (e.g. a captured log opened the next year) ~12 months into the future, which breaks chronological
+ * ordering. So if the current-year date lands in the future, roll the year back one. A one-day margin
+ * absorbs clock skew / timezone offset around "now" without spuriously rolling a genuine same-day line.
  */
 function parseLogcatTimestamp(ts: string): number {
-    const year = new Date().getFullYear();
+    const now = Date.now();
+    const thisYear = new Date(now).getFullYear();
     const [datePart, timePart] = ts.trim().split(/\s+/);
     const [month, day] = datePart.split('-').map(Number);
     const [h, m, rest] = timePart.split(':');
     const [s, ms] = rest.split('.');
-    return new Date(year, month - 1, day, +h, +m, +s, +ms).getTime();
+    const build = (year: number): number => new Date(year, month - 1, day, +h, +m, +s, +ms).getTime();
+    const result = build(thisYear);
+    return result > now + 24 * 60 * 60 * 1000 ? build(thisYear - 1) : result;
 }
 
 /** Parse an ISO-ish timestamp (with T or space separator) to epoch ms. */
