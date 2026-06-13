@@ -1,0 +1,210 @@
+# 104 — Full Codebase Audit & Remediation Plan (2026-06-12)
+
+Status: **Open — findings verified, not yet actioned**
+
+Deep audit of the whole extension (1,143 TS files, ~152K LOC across ~48 modules). Method: static gates + 8 parallel per-cluster deep reads (capture, db/sql/correlation, viewer-render, provider/security, analysis/ai/flow-map, integrations/crashlytics, export/git/commands, l10n/ui), then first-hand source verification of every Critical and the load-bearing High findings.
+
+---
+
+## 1. Health snapshot
+
+The codebase is in **good structural health**. What's clean:
+
+- **Static gates pass.** `npm run check-types` (exit 0) and `npm run lint` (exit 0). Zero type errors, zero lint warnings.
+- **Strong type discipline.** Only 6 `as any` / `: any` in non-test code across 152K LOC.
+- **File-size discipline enforced.** Largest real source file is 413 LOC; the 300-LOC ceiling is respected throughout via module extraction.
+- **Localization plumbing is excellent.** Runtime l10n bundles: all 10 locales at exactly 1624 keys, 0 missing / 0 extra vs English. Manifest NLS: all 10 locales at 489 keys, full parity, 0 unused. `t()`/`vt()` fall back to English correctly.
+- **CSP is real defense-in-depth.** `default-src 'none'`, nonce-gated `script-src`, no `unsafe-inline` / `unsafe-eval`, scoped `localResourceRoots`. Hot-path HTML escapers escape all five characters and strip control chars.
+- **Git/shell layer is injection-free.** `execFile` with argument arrays throughout; ref resolution via `--verify --quiet` / `^{commit}`.
+- **Command registration is clean.** Every `registerCommand` disposed via `context.subscriptions`; no duplicate IDs.
+
+The problems are concentrated, not pervasive: a handful of genuinely serious **security and data-integrity** bugs, a recurring class of **clock/timestamp** errors in the analysis layer, and **localization drift** in newer UI panels that never adopted `t()`/`vt()`.
+
+Findings: **3 Critical · ~12 High · ~18 Medium · ~14 Low/Nit.**
+
+---
+
+## 2. Critical findings (verified by direct read)
+
+### C1 — Zip-Slip arbitrary file write from an untrusted `.slc` bundle, remotely triggerable
+`src/modules/export/slc-collection.ts:183-184`
+
+`importCollectionFromSlc` writes each ZIP entry to a path built from the bundle's own entry/manifest name with no containment check:
+```ts
+const name = path.slice(SOURCES_FOLDER.length + 1);
+const targetUri = vscode.Uri.joinPath(logDir, name);     // name can be "../../../evil"
+await vscode.workspace.fs.writeFile(targetUri, Buffer.from(data));
+```
+The filter at line 176 matches on `path === sources/${src.filename}`, and both the zip entry path and `src.filename` are attacker-controlled. `vscode.Uri.joinPath` normalizes `..` segments, so a crafted entry escapes `logDir` and writes attacker bytes anywhere the host can write.
+
+**Remote trigger confirmed:** `extension-activation.ts:141` registers the UriHandler → `deep-links.ts:218-227` `handleUri` invokes `importFromGist(gistId)` with no containment gate → `gist-importer.ts` → `importSlcBundle` → `importCollectionFromSlc`. The public link shape (`gist-uploader.ts:101`) is `vscode://saropa.saropa-log-capture/import?gist=<id>` — clickable from a web page or email. The only gate is VS Code's generic "an extension wants to open this URI" consent, which does not convey "this will write files to disk."
+
+**Fix:** after `joinPath`, assert the resolved `fsPath` is still under `logDir.fsPath` (normalize then prefix-check); strip path separators from `name` and reduce to a basename; reject any entry whose sanitized basename differs from the original. Add a regression test with a `../` manifest entry. (Session import in `slc-session.ts` is immune — it generates its own filenames.)
+
+### C2 — Write stream has no persistent `'error'` handler; an I/O error crashes the extension host
+`src/modules/capture/log-session.ts:99` and `src/modules/capture/log-session-split.ts:57`
+
+```ts
+this.writeStream = fs.createWriteStream(filePath, { flags: 'a', encoding: 'utf-8' });
+// ...no .on('error', ...) ever attached
+this.writeStream.write(lineData);
+```
+Node throws an uncaught exception when a stream emits `'error'` with no listener. Disk full (`ENOSPC`), permission revoked mid-session, the file deleted by an external tool, or the path going read-only emits `error` during a normal `appendLine` write — taking down the whole capture pipeline and host. An `error` listener is attached only transiently inside `stop()` / `performFileSplit()`, and only *after* `.end()`. This directly violates the product's "never lose data" guarantee — it fails by crashing rather than degrading.
+
+**Fix:** attach a permanent `this.writeStream.on('error', e => { logExtensionError('logSession.write', e); this.writeStream = undefined; })` immediately after every `createWriteStream` (main writer and splitter). Attach the `error` listener *before* `.end()` in `stop()`/`performFileSplit()`, and honor `write()` backpressure (await `'drain'`) for large writes so the footer/tail isn't dropped on a slow disk.
+
+### C3 — Webview `runCommand` executes arbitrary VS Code commands with arbitrary args
+`src/ui/provider/viewer-message-handler-session-ui.ts:160-162`
+
+```ts
+case "runCommand":
+  vscode.commands.executeCommand(msgStr(msg, "command"), ...(Array.isArray(msg.args) ? msg.args : [])).then(undefined, () => {});
+  return true;
+```
+No allowlist. Any command ID + args the webview sends runs unchecked (`workbench.action.terminal.sendSequence`, `vscode.open`, file-writing extension commands, etc.). The CSP (nonce scripts, `default-src 'none'`) makes injecting a script into the webview hard, so this is **defense-in-depth rather than directly exploitable today** — but it is the single most powerful sink in the host layer and there is **no webview-side emitter of `runCommand`** in the codebase.
+
+**Fix:** replace with an explicit allowlist of the specific command IDs the viewer needs, or delete the handler outright (a full-tree grep should confirm no emitter). Sibling issue same file, `revealPathInOS` (line 217-222): `vscode.Uri.parse(uriString)` → `revealFileInOS` with zero validation — mirror the length/empty guard that `runRevealPath` already uses.
+
+---
+
+## 3. High findings
+
+### Data integrity / capture
+- **H1 — Session-group retention rules never fire (key-space mismatch).** `file-retention.ts:163` does `metaMap.get(name)` where the candidate `name` is log-dir-relative but `metaMap` is keyed workspace-relative (e.g. `reports/20260612/foo.log`). Every lookup misses → the active-group skip and closed-group atomic expansion are dead code, so retention can trash a file from the *currently recording* group or half-delete a closed group — the exact two outcomes the function exists to prevent. Fix: convert `name` to the workspace-relative key (as `collectFileStats` already does) before the lookup. **Add a regression test** proving an active-group file is skipped and a closed group expands atomically.
+- **H2 — Marker / DAP / header lines bypass the ordered append queue.** `log-session.ts:223,245,258` call `this.writeStream.write(...)` synchronously while `appendLine` enqueues and drains asynchronously (awaits between split-check and write). A marker (or `verboseDap` line) can land out of order relative to queued lines, and these direct writes mutate `_lineCount` mid-flight and skip `splitBeforeNextLineIfNeeded`, so a part can overshoot `maxLines`/byte limits. Fix: route everything through the one queue.
+
+### Analysis correctness
+- **H3 — Memory-spike detection is inverted.** `correlation/anomaly-detection.ts:17-28,72-79`: `extractMemoryMb` returns `freememMb` (FREE memory), and `isMemorySpike` fires on `memMb > 500` (or `> avg + 2σ`). High *free* memory means healthy, so the `error-memory` correlation fires on the wrong events. Fix: compute used = total − free, or invert to "spike = low free memory"; for the text path, parse the labeled drop/used value, not the first MB-adjacent integer.
+- **H4 — Clock-only timestamps break across midnight / year-end (3 sites).** `flow-map/flow-map-log-parser.ts:25` builds ms-of-day with no date → overnight sessions produce negative spans and `durationText` returns `—`. `analysis/structured-line-formats.ts:71-76` stamps year-less logcat lines with the *current* year → a Dec line read in Jan jumps ~12 months forward. `timeline/timestamp-parser.ts:73-76` only rolls forward (+24h), never back. Fix: a shared "reconstruct absolute time from clock-only stamp + rolling date base" helper, clamped to the known session window.
+- **H5 — Root-cause hypothesis ranking ignores confidence.** `root-cause-hints/build-hypotheses.ts:236-239` sorts by tier then `localeCompare(hypothesisKey)`; `slice(0, MAX_BULLETS)` then drops a tier-0 *high*-confidence hypothesis in favor of a *low*-confidence one with an alphabetically-earlier key. Fix: add `confRank` as the tiebreaker before `localeCompare`. Related (`build-hypotheses.ts:148-152`): the ANR-merge gate keys on `confidence === 'high'` but ANR is only `high` at score > 50, so moderate ANRs (20-50) re-surface as duplicate bullets — gate on the key alone.
+- **H6 — Firebase "Open in Firebase" deep-link ships the known-broken URL on fallback.** `crashlytics/firebase-crashlytics.ts:209`: `appSegment = packageName ? android:${packageName} : config.appId`. The comment immediately above (dated 2026-06-12) documents that `config.appId` produces "This app does not exist or you do not have permission to view it." When `detectPackageName()` returns nothing, the link silently reverts to that broken form. Fix: when the package name is absent, omit the link (or show a setup hint) — never emit `app/${appId}`.
+- **H7 — Vitals query sends an unclamped `endTime: today()`.** `crashlytics/google-play-vitals.ts:68-81` does not clamp the end date to the metric set's freshness, while the sibling `play-reporting-metrics.ts` documents and implements exactly that clamp (else the Play Reporting API returns 400). The crash-free-users/sessions panel can come back empty. Fix: mirror `freshnessEnd()`.
+
+### Security / robustness
+- **H8 — CSP nonce uses `Math.random()`, not a CSPRNG.** `viewer-content.ts:23-30` (and `session-comparison-html.ts:67`). The nonce is the only barrier between trusted and injected scripts; `Math.random()` is predictable. This matches the older VS Code sample, but the current best practice is `crypto.randomBytes(16).toString('base64')` (Node `crypto` is available in the host). Fix: switch the generator.
+- **H9 — Bug-report leaks absolute paths / usernames.** `bug-report/bug-report-formatter.ts:168` emits raw `${ref.filePath}` (routinely `C:\Users\<name>\...`) in "Linked app frames", while the Sources/Affected-Files lists correctly use `shortName()`. The report targets GitHub/Slack — this violates the no-paths/usernames promise. Fix: run linked-frame paths through `shortName()` / relativize.
+- **H10 — Markdown fence breakout in bug reports.** `report-file-formatter.ts:87-89`, `report-file-variants.ts:46/48/81/119`, `bug-report-sections.ts:22/44`, `bug-report-formatter.ts:143/153` build ``` fences around raw log text with no backtick handling. A log line containing ``` ends the fence early; everything after renders as live Markdown (injected images/links). Fix: fence with (longest-backtick-run + 1) backticks.
+- **H11 — User regex compiled with no ReDoS guard (4 sites).** `search/log-search.ts:114`, `collection/collection-search.ts:32`, plus `features/keyword-watcher.ts:75` and `features/exclusion-matcher.ts:41` run user-supplied regex per line over every tracked file/line with no complexity or input-length cap. A pasted `(a+)+$` freezes the extension host. Fix: cap input length before `.test()`, and run matching with a timeout/worker or reject nested unbounded quantifiers.
+
+### Localization
+- **H12 — Whole UI panels ship English in every locale.** The catalog plumbing is clean, but several newer surfaces never call `t()`/`vt()`: `panels/keyboard-shortcuts-panel.ts` (entire), `panels/vitals-panel.ts` (entire), `panels/viewer-crashlytics-setup.ts` (entire), the `signals/*` report panel (~0% localized), `analysis/` sub-modules (regressed from the localized `analysis-panel-render.ts`), and session-history TreeItem text (`Date:`/`Modified:`/`Lines:`/`Open`). Fix: route these through `t()`/`vt()`.
+
+---
+
+## 4. Medium findings
+
+- **M1 — Broadcast `lineCount` read synchronously after async enqueue.** `session/session-manager-events.ts:84-90` reads `session.lineCount` right after `appendLine` (which only enqueues), so the viewer/status-bar count lags the file. Centralize count reporting in the queue's `onLineCountChanged`.
+- **M2 — Early-output buffer silently drops past 500 lines.** `EarlyOutputBuffer.add` discards beyond `maxEarlyBuffer` with no marker. Write a `[N early lines dropped]` marker, or raise/remove the cap now that a write queue backs it.
+- **M3 — Crashlytics in-memory issue cache not keyed on project/package.** `crashlytics/crashlytics-api.ts:54-56` serves the previous project's issues for up to 5 min after a settings fix (background watcher/panel don't clear it). Key the cache on `packageName`+`projectId` or invalidate on the existing `firebase` config-change handler.
+- **M4 — `refreshInterval` has no floor.** `crashlytics-watcher.ts:44` + `package.json` setting `minimum: 0`. A value of 1-299 polls aggressively (full token+fetch+snapshot each tick). Clamp to `Math.max(60, value)` when > 0.
+- **M5 — No 429/5xx backoff.** Errors map to friendly messages but the watcher keeps polling at the fixed interval, potentially extending a rate-limit. Add exponential-ish backoff on 429/5xx in the watcher.
+- **M6 — Correlation dedup matches on any shared event, not the anchor.** `correlation/correlation-detector.ts:124-146`: `sameAnchor` returns true on any shared file+timestamp, so distinct anchors that share a secondary event merge and the wrong one is replaced. Tag the anchor explicitly (`events[0]` file:timestamp) and dedup on equal anchor keys.
+- **M7 — DB queryBlockPattern / requestIdPattern: no ReDoS guard.** `integrations/database-query-logs.ts:75-80` runs a user regex line-by-line over the whole log. Validate/compile once and cap input lines.
+- **M8 — `package:` URI resolution drops `lib/`.** `source/source-resolver.ts:16`: `package:foo/bar.dart` → `<root>/bar.dart`, but Dart sources live under `lib/`. Source links for `package:` frames point at non-existent files. Insert `lib/` and resolve the package name against its actual root.
+- **M9 — CSV export has no formula-injection guard.** `export/export-formats.ts:212-226` (reused by `signals-export-formats.ts`): a message starting `=`, `+`, `-`, `@` opens as a live formula in Excel/Sheets. Prefix such fields with `'`.
+- **M10 — Search index freshness is age-based, not content-based.** `search/search-index.ts:116-143`: `getOrRebuild` checks only age, never `hasFileChanged` or set membership, so counts/sizes are stale within the 60s window. Compare the tracked-file set + per-file change.
+- **M11 — Project-indexer reads whole files with no size cap.** `project-indexer/project-indexer.ts:217` buffers the entire matched file; `stat.size` is fetched but unused. `token-extractor-config.ts:33` recurses per nesting depth (stack risk on deep JSON). Add a size ceiling before `readFile` and a depth limit to `walkJsonTokens`.
+- **M12 — Report file overwrites a same-second collision.** `bug-report/report-file-writer.ts:58-59`: second-resolution timestamp + no existence check; two reports in the same second destroy the first. `stat` first and append a counter (or include ms).
+- **M13 — AI JSONL dedup keyed by regex-scanned message ID.** `ai/ai-jsonl-parser.ts:50-53`: a line embedding another message's ID wins the last-index race and drops a genuine entry. Parse JSON and read `message.id` (as `parseAssistantEntry` already does).
+- **M14 — Error-rate alert reports a count labeled "rate" with inconsistent window units.** `features/error-rate-alert.ts:105-109` passes `entries.length` where a rate is promised, and `windowMs` to one path / `windowSec` to another. Pick one unit; pass `getCurrentRate()` or rename.
+- **M15 — `excerptKey` dedups on the last 80 chars.** `root-cause-hints/build-hypotheses-text.ts:16`: distinct warnings sharing a common trailing boilerplate collapse into one. The discriminating content is usually at the front — take leading 80 chars.
+- **M16 — 4xx confidence regex requires trailing whitespace.** `build-hypotheses-general.ts:70`: `/^4\d{2}\s/` mis-scores `"404"`/`"404:"`. Use `/^4\d{2}\b/`.
+- **M17 — Cumulative SQL fingerprint subtraction is asymmetric.** `db/cumulative-sql-fingerprint-index.ts:148-156`: active log's slow count isn't subtracted when the aggregate row has none, and `maxDurationMs` passes through unchanged (can reflect only the now-excluded active log). Subtract slow consistently; document `maxDurationMs` as an upper bound.
+- **M18 — Crashlytics concurrent refresh has no single-flight.** Background watcher scan and foreground panel refresh can interleave read-modify-write on the snapshot/archive cache (last-writer-wins). Add a single-flight guard on the watcher scan.
+
+## 5. Low / Nit findings
+
+- **L1 — Browser correlation does substring `requestId` match.** `context/context-sidecar-parsers.ts:137`: a short/numeric id substring-matches unrelated text. Require a word-boundary match; skip the substring path for short ids. (HTTP/DB parsers correctly use exact equality.)
+- **L2 — DB sidecar entries with `timestamp 0` always pass the window filter** (`context-sidecar-parsers.ts:171`), unlike HTTP/browser loaders — floods unrelated DB context onto every error. Make the untimed-entry policy consistent across loaders.
+- **L3 — Crashlytics regression / new-issue alerts false-positive on the top-20 paging boundary.** `crashlytics/crashlytics-issue-signals.ts:32-44`: an issue that merely drops out of the top 20 and returns is tagged "Regressed"/"new." Document the limitation in the UI, or derive from an unpaged signal.
+- **L4 — Highlight-rule style values injected into `style="..."` unescaped** (`viewer-decorations/viewer-highlight.ts:108-126`) and **`data-tag` built from a log-derived tag without attribute-escaping** (`viewer-stack-tags/viewer-source-tags-ui.ts:148`). Self-inflicted (config) for the former, log-derived for the latter — escape `"`/`;`/`<` when compiling rules and `"` in `data-tag`.
+- **L5 — `getAnnotationHtml` escapes `<`/`>` but not `&`** (`viewer/viewer-annotations.ts:22`) — rendering glitch on literal `&`, not injection. Use the shared `escapeHtml`.
+- **L6 — Source-link click opens any absolute path from log text** (`viewer-provider-actions.ts` / `source-resolver.ts:7-22`). Gated behind a user click and read-only, but it is arbitrary-read-by-click. Consider constraining to workspace roots or warning on out-of-workspace targets.
+- **L7 — `openUrl` allows the `vscode:` scheme to `openExternal`** (`viewer-message-handler-session-ui.ts:28-35`) — lets a hostile webview deep-link into other extensions. Drop `vscode:` unless needed.
+- **L8 — CSP `media-src` falls back to `vscode-resource:`** when no `cspSource` (`viewer-content.ts:104-110`). Production callers pass it, so latent; emit `media-src 'none'` instead.
+- **L9 — LAN share server binds all interfaces, no auth, no auto-stop** (`share/lan-server.ts:44-56`). Add a random path segment and an idle timeout.
+- **L10 — `commitsMatch` accepts a 7-char prefix match** (`compare/baseline-match.ts:30-39`) — a short SHA can prefix a different full commit, selecting the wrong baseline. Prefer full-40 equality when available.
+- **L11 — `findFilePrs` passes file names wrapped in literal quotes to `execFile`** (`git/github-context.ts:60`) — correctness bug (stray `"` in the search arg), not injection. Drop the manual quotes.
+- **L12 — `saropaLogCapture.replay` registered but unreachable** (`commands-session.ts:151`) — not in `contributes.commands`, no menu, no internal caller. Contribute it or remove it.
+- **L13 — String concatenation around dynamic parts of translatable sentences** (~12 sites in `panels/viewer-error-rate-tab.ts`, `viewer-signal-panel-script-part-{b,c,d}.ts`, `analysis-frame-render.ts`, `signal-report-*.ts`, `session-comparison-webview-script.ts:95`). Word order can't be reordered by translators — use `{0}` interpolation.
+- **L14 — Plural-suffix-as-token catalog keys** (`strings-a.ts:27/140/163`: `tag{1}`, `bookmark{1}`, `line{1}`) — non-English locales can't pluralize the stem. Convert to `.one`/`.many` variants as the rest of the catalog already does.
+- **Nits:** `capture/deduplication.ts` is dead code (process() never called); node `fs`/`path` in the capture writer is justified (streaming append) but lacks an explanatory comment; `fs.readFileSync` in `http-network.ts:35` / `database-query-logs.ts:115` blocks the host; `~8 divergent escapeHtml copies` (some `&<>`-only) — consolidate behind one helper, ensuring attribute contexts use a quote-escaping variant; `correlation-detector.ts:84` module-global ID counter; `db-session-fingerprint-diff.ts:60` conflates line index with `timestampMs`.
+
+---
+
+## 6. Cross-cutting themes (root causes worth fixing once)
+
+1. **Clock-only timestamps with no date** — recurs in flow-map, logcat, and timeline parsing (H4). One shared "absolute time from clock + rolling date base, clamped to session window" helper fixes the whole class.
+2. **No shared sanitizer for outbound/shared content** — bug-report, HTML export, and CSV export each hand-roll escaping. A single layer (`fenceSafe()`, `csvSafe()`, `redactPath()`, `inlineCodeSafe()`) closes H9/H10/M9 uniformly.
+3. **Untrusted-bundle ingestion trusts filenames** — both Gist and URL import land in the same Zip-Slip extractor (C1). Treat every name from a bundle as hostile, project-wide.
+4. **Birth-height parity is hand-maintained and has drifted** — `computeLineBirthHeight` mirrors only part of `calcItemHeight`'s flag list; `sourceFiltered` has no safety net, so source-tag-hidden lines stream in at full height. Derive birth height by calling `calcItemHeight(item)` after the item is populated, rather than keeping a parallel gate list. (Medium; documented domain rule.)
+5. **Stream error handling is absent where it matters most** (C2) — for a "never lose data" tool this is the highest-impact bug class.
+6. **Truncated top-N lists drive "regression"/"new" signals** — paging-boundary churn produces false positives in Crashlytics alerts (L3, M18-adjacent). Derive cross-refresh state from an unpaged signal.
+7. **User-supplied regex has no ReDoS guard anywhere** (H11, M7) — a line-length cap before `.test()` is the cheap mitigation across all call sites.
+8. **Untimed entries (`timestamp 0`) handled inconsistently** across context loaders (L1/L2). Pick one policy.
+
+---
+
+## 7. Remediation plan (ordered workstreams)
+
+Each item lists the fix and its **verification** (a check that proves it landed). Sequence honors the project rule: each item stable before the next; tests scoped to touched files only.
+
+### WS-1 — Security hardening (do first)
+1. **C1 Zip-Slip containment** — basename-confine + post-`joinPath` workspace-root prefix assertion in `slc-collection.ts`. *Verify:* new test feeds a `../`-laden manifest and asserts the write is rejected and stays under `logDir`.
+2. **C3 `runCommand` / `revealPathInOS`** — grep the full webview tree for emitters; delete `runCommand` if none, else allowlist; add the length/empty guard to `revealPathInOS`. *Verify:* unit test that a non-allowlisted command is dropped.
+3. **H8 nonce CSPRNG** — `crypto.randomBytes` in `getNonce` (both copies). *Verify:* type-check + smoke that the webview still loads.
+4. **L7/L8** — drop `vscode:` from `isAllowedExternalUrl`; emit `media-src 'none'` fallback.
+
+### WS-2 — Data integrity / capture
+1. **C2 stream error handlers + backpressure** in `log-session.ts` / `log-session-split.ts`. *Verify:* test that simulates a stream `error` and asserts the host logs + nulls the stream rather than throwing.
+2. **H1 retention key mismatch** — workspace-relative key in `expandGroupsForTrash`. *Verify:* regression test (active-group file skipped; closed group expands atomically).
+3. **H2 marker/DAP/header through the queue.** *Verify:* test asserting ordering vs interleaved markers.
+4. **M1/M2** — count from `onLineCountChanged`; early-buffer drop marker.
+
+### WS-3 — Analysis correctness
+1. **H3 memory-spike inversion** (confirm `freememMb` semantics with producer first — see Q1).
+2. ~~**H4 shared clock+date helper**, applied to flow-map / logcat / timeline.~~ **DONE 2026-06-12** — fixed per-site (the 3 sites needed different shapes): flow-map now resolves a monotonic in-session timeline across midnight (`resolveClockTimeline`), logcat rolls the year back when a year-less date lands in the future, and the timeline time-only parser does bidirectional nearest-day rollover. Tests added (overnight flow-map, year-end logcat, both-direction time-only); check-types + the 3 suites pass (30 passing).
+3. **H5 root-cause ranking + ANR-merge gate.** *Verify:* test that a high-confidence tier-0 hypothesis survives `slice`.
+4. **H6 Firebase deep-link fallback** — hide link when package name absent.
+5. **H7 Vitals freshness clamp.**
+6. **M3/M4/M5/M18** crashlytics: cache keying, interval floor, backoff, single-flight.
+7. **M6/M8/M13/M15/M16/M17** correlation/source/AI/root-cause fixes.
+
+### WS-4 — Robustness
+1. **H11/M7 ReDoS guards** (shared input-length cap helper). *Verify:* test a pathological pattern returns within a bounded time.
+2. **H10/M9 shared content sanitizer** (`fenceSafe`, `csvSafe`). *Verify:* tests with ``` and `=`-leading inputs.
+3. **H9/L-nit path & credential redaction** in bug-report.
+4. **M10/M11/M12** search-index content-freshness, indexer size/depth caps, report-file collision.
+
+### WS-5 — Localization completeness
+1. **H12** — route the hardcoded panels through `t()`/`vt()`: keyboard-shortcuts, vitals, crashlytics-setup, signals report, analysis sub-modules, session-history tree. *Verify:* `npm run verify:nls-coverage` + add source keys (do **not** run the MT pipeline — add English source keys only).
+2. **L13** — interpolation instead of concatenation.
+3. **L14 (approved 2026-06-12)** — convert the `{1}`-plural-suffix keys (`tag{1}`, `bookmark{1}`, `line{1}`) to `.one`/`.many` variant keys, updating the 4 call sites + adding 3 key pairs.
+4. **Brand rule (decided 2026-06-12):** "Saropa" and "Saropa Log Capture" are NEVER localized — they stay literal inside catalog values (and are excluded from any future MT pass). When wrapping a panel string that contains the brand, keep the brand token literal in the English source value rather than splitting it out.
+
+### WS-6 — Cleanup (low risk)
+- Consolidate `escapeHtml` behind one helper (text + attribute variants).
+- Remove dead `deduplication.ts` and the unreachable `replay` command (or contribute it).
+- Add the explanatory comment justifying node `fs` streaming in the writer; replace `fs.readFileSync` in the two integration providers.
+- L4/L5/L6/L10/L11 minor correctness/escaping fixes.
+
+---
+
+## 8. Open questions (saved for later — do not block)
+
+1. **H3:** Is the sidecar `freememMb` field free or used memory? The fix direction depends on the producer's semantics.
+2. **C3:** Confirm there is genuinely no `runCommand` emitter anywhere in the webview tree before deleting (vs allowlisting).
+3. **C1:** The import deep-link triggers `importFromGist` with only VS Code's generic URI consent — is an explicit "import this shared collection?" prompt desired in addition to the path-containment fix?
+4. ~~**H4:** Are overnight / cross-year sessions a supported case?~~ **Resolved 2026-06-12 — yes, handled (fixed; see WS-3).**
+5. **M15 (`excerptKey`):** is last-80-chars deliberate (group by trailing stack location) or should it be leading 80?
+6. **L9:** Is the LAN server's bind-all + no-auth the intended threat model?
+7. ~~**L14 / localization:** convert the `{1}`-plural-suffix keys to `.one`/`.many`?~~ **Resolved 2026-06-12 — yes, approved.**
+8. Crashlytics "Copy as Markdown" / GitHub-issue body and the integration-context dump are English-by-convention copy/paste artifacts — localize or leave English?
+
+> **Localization constraint (decided 2026-06-12):** brand names — "Saropa" and "Saropa Log Capture" — are non-localizable and stay literal in catalog values; never translate them.
+
+---
+
+## Notes on method & confidence
+- All 3 Criticals and Highs H1/H3/H6 were verified by direct source read during this audit; the remaining findings come from methodical per-cluster reads and are cited to exact `file:line`.
+- Findings explicitly **not** bugs (verified clean): learning reinforcement clamp `[0.1, 1.5]`/`[0,1]`; flow-map nav-stack underflow safety; regression set-difference math; SQL ReDoS (empirically tested pathological inputs, all linear); virtualization off-by-one (`renderViewport` inclusive bound + overscan is correct); `calcItemHeight` as single source of truth; disposable registration; config snapshot/refresh.
