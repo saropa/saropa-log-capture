@@ -84,3 +84,36 @@ like an "invisible badge" bug; concatenating both CSS sources fixed it. Run with
 On-device rendering inside a live Extension Development Host was not performed; verification
 was via the standalone render harness, which mirrors the shipped CSS but not the full
 webview runtime.
+
+## Finish Report (2026-06-13) — responsive dialogs + remaining-surface coverage
+
+A follow-on pass extended the render harness to the remaining in-scope surfaces (Options panel,
+Performance Database tab, SQL repeat-drilldown, context menu, session-info dialog, N+1 signal
+row, root-cause hints strip, filters drawer) and reviewed each rendered output. Visual review
+surfaced one defect not detectable from CSS source: every modal dialog used a fixed `min-width`
+floor, so when the log-viewer panel was narrower than that floor the dialog ran off the left edge
+and clipped its section titles, field labels, and buttons.
+
+### Changes
+- `viewer-styles-session-info-modal.ts`, `viewer-styles-modal.ts`, `viewer-styles-edit-modal.ts`:
+  every `*-modal-content` min-width floor (session-info 480px, base `.modal-content` 450px, edit
+  500px, file-path 320px, Files 340px) now reads `min(Npx, calc(100vw - 24px))`, so the floor
+  applies only when the viewport has room and the dialog shrinks (its values wrap) on a narrow
+  panel instead of clipping. The 24px subtrahend preserves a 12px gutter each side of the centered
+  dialog.
+- `scripts/ui-preview/surfaces.mjs`: added markup for the surfaces above plus a generic
+  `.modal-content` confirm dialog, so the harness now covers the full in-scope surface set.
+
+The inline log-content surfaces (SQL repeat-drilldown, JSON collapsible) were confirmed to use
+relative `em` sizing intentionally — they scale with the user-adjustable `--log-font-size`, so
+they were left as `em` rather than converted to the fixed px scale used for the chrome panels.
+
+### Verification
+- `tsc --noEmit`: zero errors.
+- Node unit suite: exit 0, zero failures, including three new tests in
+  `viewer-modal-responsive-styles.test.ts` that pin each modal-content min-width to the
+  `min(…, calc(100vw - …))` viewport cap (regression guard against reintroducing a fixed floor).
+- `eslint` clean on every touched file.
+- `node esbuild.js`: clean.
+- Re-rendered the session-info and generic dialogs at 320px and confirmed they sit fully on
+  screen with a gutter (titles, labels, and buttons all visible; long values wrap).
