@@ -21,8 +21,19 @@ const issueListTtl = 5 * 60_000;
 const issuePageSize = 20;
 const reportSampleLimit = 5;
 
-let cachedIssues: { issues: CrashlyticsIssue[]; expires: number } | undefined;
+let cachedIssues: { issues: CrashlyticsIssue[]; expires: number; key: string } | undefined;
 let lastApiDiagnostic: DiagnosticDetails | undefined;
+
+/**
+ * Identity of the data the in-memory cache holds. Keyed on the inputs that change WHICH issues come
+ * back — the package-name setting, the time range, and the quota project — so a settings fix
+ * (e.g. correcting a wrong project/package) invalidates the cache instead of serving the old project's
+ * issues for up to the TTL. Uses synchronous config reads only, so it adds no I/O on a cache hit.
+ */
+function issueCacheKey(config: FirebaseConfig): string {
+    const cfg = vscode.workspace.getConfiguration('saropaLogCapture.firebase');
+    return `${cfg.get<string>('packageName', '')}|${getTimeRange()}|${config?.projectId ?? ''}`;
+}
 
 /** Last diagnostic from an API operation (for the caller's error reporting / validator). */
 export function getLastApiDiagnostic(): DiagnosticDetails | undefined { return lastApiDiagnostic; }
@@ -51,7 +62,8 @@ function filterByTokens(issues: readonly CrashlyticsIssue[], errorTokens: readon
  * X-Goog-User-Project (required for user ADC). Never throws; on failure sets lastApiDiagnostic and [].
  */
 export async function queryTopIssues(config: FirebaseConfig, token: string, errorTokens: readonly string[]): Promise<CrashlyticsIssue[]> {
-    if (cachedIssues && Date.now() < cachedIssues.expires) {
+    const key = issueCacheKey(config);
+    if (cachedIssues && cachedIssues.key === key && Date.now() < cachedIssues.expires) {
         return filterByTokens(cachedIssues.issues, errorTokens);
     }
     const packageName = await detectPackageName();
@@ -66,7 +78,7 @@ export async function queryTopIssues(config: FirebaseConfig, token: string, erro
         const cachedDisk = await readCachedIssues();
         if (cachedDisk && cachedDisk.length > 0) {
             lastApiDiagnostic = { step: 'api', errorType: diagnostic.errorType, checkedAt: Date.now(), message: 'Showing cached issues — could not refresh (offline or API error).' };
-            cachedIssues = { issues: cachedDisk, expires: Date.now() + issueListTtl };
+            cachedIssues = { issues: cachedDisk, expires: Date.now() + issueListTtl, key };
             return filterByTokens(cachedDisk, errorTokens);
         }
         lastApiDiagnostic = diagnostic;
@@ -77,7 +89,7 @@ export async function queryTopIssues(config: FirebaseConfig, token: string, erro
     writeCachedIssues(data).catch(() => {});
     // Record a compact timestamped snapshot so regression / new-issue detection has a baseline.
     recordIssueSnapshot(data).catch(() => {});
-    cachedIssues = { issues: data, expires: Date.now() + issueListTtl };
+    cachedIssues = { issues: data, expires: Date.now() + issueListTtl, key };
     return filterByTokens(data, errorTokens);
 }
 

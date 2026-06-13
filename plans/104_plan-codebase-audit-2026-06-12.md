@@ -167,7 +167,7 @@ Each item lists the fix and its **verification** (a check that proves it landed)
 3. ~~**H5 root-cause ranking**~~ **DONE 2026-06-13** — sort now ranks confidence (high→low) ahead of the alphabetical key within a tier, so `slice(0, MAX_BULLETS)` can't drop a high-confidence hint. (Reused existing `confRank`.) build-hypotheses suite passing. *(ANR-merge gate `=== 'high'` left as a follow-up — separate, lower-impact.)*
 4. ~~**H6 Firebase deep-link fallback**~~ **DONE 2026-06-13** — `consoleUrl` is omitted (undefined) when the package name can't be detected, so no consumer renders the known-broken app-id URL; the setup screen already falls back to the generic console root.
 5. ~~**H7 Vitals freshness clamp**~~ **DONE 2026-06-13** — `queryMetricSet` reads the metric-set descriptor's DAILY freshness (`freshnessEnd`, 2-day fallback) and clamps `endTime` to it instead of `today()`, mirroring `play-reporting-metrics`. vitals-metrics suite passing.
-6. **M3/M4/M5/M18** crashlytics: cache keying, interval floor, backoff, single-flight.
+6. ~~**M3/M4/M5/M18** crashlytics~~ **DONE 2026-06-13** — M3: in-memory issue cache now keyed on package/timeRange/project (`issueCacheKey`), so a settings fix invalidates it. M4: watcher interval floored at 60s. M5: watcher backs off (exponential-ish, capped 5x) on 429/5xx via the returned diagnostic. M18: single-flight guard so a slow scan can't overlap the next tick. Verified by check-types + eslint + inspection (these network/timer modules have no unit-test harness in the repo).
 7. **M6/M8/M13/M15/M16/M17** correlation/source/AI/root-cause fixes.
 
 ### WS-4 — Robustness
