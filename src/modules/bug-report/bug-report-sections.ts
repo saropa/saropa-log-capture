@@ -10,6 +10,7 @@ import { type SectionData, scoreRelevance } from '../analysis/analysis-relevance
 import { extractDateFromFilename } from '../analysis/stack-parser';
 import { countOwaspCategories } from './bug-report-owasp-section';
 import { buildVscodeFileUri, buildGitHubCommitUrl, buildMarkdownFileLink, type GitLinkContext } from '../source/link-helpers';
+import { fencedBlock } from '../misc/outbound-content-safety';
 
 export interface ReportCtx {
     readonly remote?: string;
@@ -19,7 +20,7 @@ export interface ReportCtx {
 export function formatLogContext(context: readonly string[]): string {
     if (context.length === 0) { return '## Log Context\n\n*No preceding log lines.*'; }
     const block = context.map(l => l.trimEnd()).join('\n');
-    return `## Log Context (${context.length} lines before error)\n\n\`\`\`\n${block}\n\`\`\``;
+    return `## Log Context (${context.length} lines before error)\n\n${fencedBlock(block)}`;
 }
 
 export function formatEnvironment(env: Record<string, string>): string {
@@ -41,7 +42,7 @@ export function formatSourceCode(preview: SourceCodePreview): string {
         const marker = l.num === preview.targetLine ? '-->' : '   ';
         return `${marker} ${String(l.num).padStart(4)} | ${l.text}`;
     });
-    return `## Source Code\n\n\`\`\`\n${lines.join('\n')}\n\`\`\``;
+    return `## Source Code\n\n${fencedBlock(lines.join('\n'))}`;
 }
 
 export function formatBlame(blame: BlameLine, ctx: ReportCtx): string {
