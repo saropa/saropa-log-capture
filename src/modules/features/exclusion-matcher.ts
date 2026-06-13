@@ -4,6 +4,8 @@
  * (delimited by / like /pattern/flags).
  */
 
+import { boundForUserRegex } from '../misc/regex-safety';
+
 /** A resolved exclusion rule ready for matching. */
 export interface ExclusionRule {
     readonly source: string;
@@ -36,9 +38,12 @@ export function testExclusion(text: string, rules: readonly ExclusionRule[]): bo
         return false;
     }
     const lower = text.toLowerCase();
+    // Bound the line once for regex rules — a greedy user pattern on a very long line could hang.
+    const bounded = boundForUserRegex(text);
     for (const rule of rules) {
         if (rule.regex) {
-            if (rule.regex.test(text)) {
+            rule.regex.lastIndex = 0;
+            if (rule.regex.test(bounded)) {
                 return true;
             }
         } else if (rule.text && lower.includes(rule.text)) {

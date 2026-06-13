@@ -61,6 +61,8 @@ cspell:disable
 - **Webview security nonces now use a cryptographically secure generator:** the Content-Security-Policy nonces for the log viewer and the comparison panel are generated from `crypto` random bytes instead of `Math.random()`, so they can't be predicted.
 - **Bug reports can't be hijacked by a log line that contains triple-backticks:** a captured line containing a ``` ``` ``` run used to close the report's code block early, letting the rest of the log render as live Markdown (e.g. an injected image or link). Code blocks now use a fence longer than anything inside them, so all captured output stays inert text.
 - **CSV exports neutralize spreadsheet formula injection:** a log message beginning with `=`, `+`, `-`, or `@` could execute as a formula when the exported CSV was opened in Excel or Google Sheets. Such fields are now prefixed so the cell is treated as text (genuine numbers are left alone).
+- **Bug reports no longer leak your home-directory path:** the "Linked app frames" list printed the full absolute file path (e.g. `C:\Users\<name>\…`) into a report meant for GitHub/Slack. It now shows the repository-relative path (or just the file name), matching the rest of the report; the clickable GitHub link is unchanged.
+- **A long log line can no longer freeze capture through a custom keyword/exclusion pattern:** keyword-watch and exclusion regexes run on every captured line, and a greedy pattern hitting a very long line (a minified bundle, a huge JSON dump) could backtrack long enough to hang the extension. The line length fed to those patterns is now bounded.
 
 ---
 
