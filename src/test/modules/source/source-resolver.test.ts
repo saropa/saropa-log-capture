@@ -24,12 +24,15 @@ suite('resolveSourceUri', () => {
         assert.ok(uri);
     });
 
-    test('should strip Dart package prefix', () => {
-        // Without a workspace folder, this returns undefined
-        // but the prefix stripping logic is still exercised
+    test('should map a Dart package URI under the package lib/ directory', () => {
+        // package: URIs resolve to the package's lib/ dir, so package:my_app/src/widget.dart maps to
+        // <root>/lib/src/widget.dart — NOT <root>/src/widget.dart (which doesn't exist). Use uri.path
+        // (forward-slash normalized) so the assertion holds on Windows too. May be undefined when no
+        // workspace folder is set; the test environment does provide one.
         const uri = resolveSourceUri('package:my_app/src/widget.dart');
-        // May be undefined if no workspace folder is set in test environment
-        // The important thing is it doesn't throw
-        assert.ok(uri === undefined || uri.fsPath.includes('widget.dart'));
+        assert.ok(
+            uri === undefined || uri.path.includes('/lib/src/widget.dart'),
+            `expected package: URI to map under lib/, got ${uri?.path}`,
+        );
     });
 });
