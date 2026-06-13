@@ -7,6 +7,7 @@ import * as vscode from 'vscode';
 import { stripAnsi } from '../capture/ansi';
 import { classifyLevel } from '../analysis/level-classifier';
 import { getConfig } from '../config/config';
+import { csvFormulaSafe } from '../misc/outbound-content-safety';
 
 /** A parsed log entry. */
 export interface LogEntry {
@@ -216,12 +217,15 @@ function formatCsvRow(entry: LogEntry): string {
 }
 
 /**
- * Escape a field for CSV (quote if contains comma, quote, or newline).
+ * Escape a field for CSV: neutralize spreadsheet formula injection, then quote per RFC 4180
+ * (when the value contains a comma, quote, or newline).
  * Exported for use by signals-export-formats and tests.
  */
 export function escapeCsvField(value: string): string {
-    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-        return `"${value.replace(/"/g, '""')}"`;
+    // Formula-injection guard FIRST so the apostrophe prefix is inside any quoting that follows.
+    const safe = csvFormulaSafe(value);
+    if (safe.includes(',') || safe.includes('"') || safe.includes('\n')) {
+        return `"${safe.replace(/"/g, '""')}"`;
     }
-    return value;
+    return safe;
 }
