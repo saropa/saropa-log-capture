@@ -296,6 +296,84 @@ const sqlDrilldown = () => `
   </div>
 </div>`;
 
+// position:static override so the normally fixed/floating menu renders in-flow for the shot.
+const contextMenu = () => `
+<div style="padding:16px;min-height:100vh">
+  <div class="context-menu visible" style="position:static;animation:none;display:inline-block">
+    <div class="context-menu-item">Copy line</div>
+    <div class="context-menu-item">Copy with timestamp <span class="context-menu-shortcut">Ctrl+Shift+C</span></div>
+    <div class="context-menu-separator"></div>
+    <div class="context-menu-item context-menu-toggle checked"><span class="context-menu-check">✓</span><span class="context-menu-label">Pin line</span></div>
+    <div class="context-menu-item context-menu-toggle"><span class="context-menu-check">✓</span><span class="context-menu-label">Wrap this line</span></div>
+    <div class="context-menu-separator"></div>
+    <div class="context-menu-submenu"><span class="context-menu-label">Search codebase</span><span class="context-menu-arrow">▸</span></div>
+    <div class="context-menu-item is-disabled">Jump to source (unavailable)</div>
+  </div>
+</div>`;
+
+const sessionInfoModal = () => `
+<div class="modal visible" style="min-height:100vh">
+  <div class="modal-content session-info-modal-content">
+    <div class="session-info-modal-body">
+      <div class="session-info-content">
+        <details open class="session-info-section">
+          <summary class="session-info-section-title">Session</summary>
+          <div class="session-info-section-body">
+            <div class="session-info-row"><span class="session-info-key">Captured</span><span class="session-info-value">2026-06-13 14:02:11</span></div>
+            <div class="session-info-row"><span class="session-info-key">Device</span><span class="session-info-value">Pixel 8 Pro · Android 15</span></div>
+            <div class="session-info-row"><span class="session-info-key">App version</span><span class="session-info-value">3.7.2 (build 412)</span></div>
+          </div>
+        </details>
+        <details open class="session-info-section">
+          <summary class="session-info-section-title">Launch config</summary>
+          <div class="session-info-section-body">
+            <div class="session-info-row"><span class="session-info-key">launch.json</span><span class="session-info-value">flutter run --debug</span></div>
+            <div class="session-info-row"><span class="session-info-key">flavor</span><span class="session-info-value">staging</span></div>
+          </div>
+        </details>
+      </div>
+      <div class="session-info-hint">Long-press any row to copy its value.</div>
+    </div>
+  </div>
+</div>`;
+
+const nPlusOneSignal = () => `
+<div style="padding:10px 12px;font-family:var(--vscode-editor-font-family);font-size:var(--log-font-size,13px)">
+  <span class="n1-signal">N+1 query pattern — 48 SELECTs on \`contacts\` inside a loop</span>
+  <span class="n1-conf n1-conf-high">high</span>
+  <span class="n1-fp">fp a3f9c2</span>
+  <span class="n1-actions"><span class="n1-action">view samples</span></span>
+</div>`;
+
+const rootCauseHints = () => `
+<div style="padding:10px">
+  <div class="root-cause-hypotheses">
+    <ul class="root-cause-hypotheses-list">
+      <li><span class="root-cause-hyp-conf">🔴</span><span class="rch-trend-badge">↻3</span><button class="rch-report-btn">Database opened on the main isolate is blocking frame rendering — 3 jank spikes correlate with query bursts</button><button class="rch-dismiss-btn">${ICON.close}</button></li>
+      <li><span class="root-cause-hyp-conf">🟡</span><button class="rch-report-btn">Repeated auth-token refresh suggests a clock-skew or cache-miss loop</button><button class="rch-dismiss-btn">${ICON.close}</button></li>
+    </ul>
+  </div>
+</div>`;
+
+const filtersDrawer = () => `
+<div class="filters-panel visible" style="height:100vh">
+  <div class="filters-panel-header"><span>Filters</span><button class="filters-panel-close">${ICON.close}</button></div>
+  <div class="filter-drawer-levels"><div class="filter-drawer-level-row"><span class="level-flyup-header"><button class="active">All</button><button>None</button></span></div></div>
+  <div class="filter-tab-layout">
+    <div class="filter-tab-bar ftb-labels-visible">
+      <button class="filter-tab" aria-selected="true"><span class="filter-tab-label">Sources</span><span class="filter-tab-count">6</span></button>
+      <button class="filter-tab"><span class="filter-tab-label">Keywords</span><span class="filter-tab-count">3</span></button>
+      <button class="filter-tab"><span class="filter-tab-label">Exclusions</span><span class="filter-tab-count"></span></button>
+      <button class="filter-tab"><span class="filter-tab-label">Scope</span></button>
+    </div>
+    <div class="filter-tab-panels"><div class="filter-tab-panel">
+      <label class="options-row"><input type="checkbox" checked /><span>Flutter</span></label>
+      <label class="options-row"><input type="checkbox" checked /><span>Dart VM</span></label>
+      <label class="options-row"><input type="checkbox" /><span>Platform channel</span></label>
+    </div></div>
+  </div>
+</div>`;
+
 export const SURFACES = [
     { name: 'sql-history', html: sqlPanel(false) },
     { name: 'sql-history-loading', html: sqlPanel(true) },
@@ -307,4 +385,9 @@ export const SURFACES = [
     { name: 'sql-drilldown', html: sqlDrilldown() },
     { name: 'signals', html: signalPanel() },
     { name: 'quality-badges', html: qualityLines() },
+    { name: 'context-menu', html: contextMenu() },
+    { name: 'session-info-modal', html: sessionInfoModal() },
+    { name: 'n-plus-one', html: nPlusOneSignal() },
+    { name: 'root-cause-hints', html: rootCauseHints() },
+    { name: 'filters-drawer', html: filtersDrawer() },
 ];

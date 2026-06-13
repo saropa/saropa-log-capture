@@ -13,7 +13,9 @@ export function getSessionInfoModalStyles(): string {
    (sections, indenting, hotlinks, long-press copy).
    =================================================================== */
 .session-info-modal-content {
-    min-width: 480px;
+    /* Cap the 480px floor to the viewport so the modal doesn't clip its left edge (section titles
+       + key labels run off-screen) when the log-viewer panel is narrower than 480px. */
+    min-width: min(480px, calc(100vw - 24px));
     max-width: 720px;
 }
 .session-info-modal-body { padding: 12px 16px 16px; }
