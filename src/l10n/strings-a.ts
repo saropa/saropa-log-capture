@@ -25,6 +25,7 @@ export const stringsA: Record<string, string> = {
     'msg.sessionUnpinned': 'Unpinned: {0}',
     'msg.exportedTo': 'Exported to {0}',
     'msg.foundCorrelationTags': 'Found {0} correlation tag{1}.',
+    'msg.suiteDeepLinkFailed': 'Could not open {0}. The Saropa sibling extension may be out of date or disabled.',
     'msg.filePathCopied': 'File path copied to clipboard',
     'msg.fileNameCopied': 'Filename copied: {0}',
     'msg.fileRelativePathCopied': 'Relative path copied: {0}',

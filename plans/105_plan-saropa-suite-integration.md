@@ -13,9 +13,14 @@
   malformed-safe (R2 reader); deep-link **in** via the two public commands `saropaLogCapture.openSignal`
   and `saropaLogCapture.openSqlHistoryForFingerprint` with webview focus/flash (R4); crash-family
   **signatures** emitted on crash diagnostics for the Lints mapping (R3 producer half). Unit-tested.
-- **Not yet:** deep-link **out** inline actions (R5), typed envelope rows replacing today's bespoke
-  Advisor/Lints rows in SQL History + Signal panel (R2 render), the Lints-side crash-to-rule mapping
-  (R3 consumer half), and the joined Drift Health panel.
+- **Shipped (deep-link out + attribution):** SQL Query History rows now offer a gated **Explain this
+  query in Drift Advisor** action and Lints finding rows a gated **Show rule in Saropa Lints** action
+  (R5) — each shown only when the sibling command is actually registered (`getCommands` probe), never a
+  dead action; the host executor allowlists the four sibling command ids. The Advisor-issue and
+  Lints-violation rows carry a **source tag** chip (R2 render, attribution slice).
+- **Not yet:** typed envelope rows reading the offline `advisor.json`/`lints.json` mirrors as a data
+  source (R2 render still uses today's live fetches), the Lints-side crash-to-rule mapping (R3 consumer
+  half, owned by Lints), and the joined Drift Health panel (owned by Advisor).
 
 ## Goal
 

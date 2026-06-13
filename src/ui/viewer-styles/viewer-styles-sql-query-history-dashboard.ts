@@ -133,6 +133,21 @@ export function getSqlQueryHistoryDashboardStyles(): string {
     border-left-color: var(--vscode-charts-blue, var(--vscode-editorInfo-foreground));
 }
 
+/* R2-render: source attribution chip so a row reads as the sibling tool's finding (Drift Advisor /
+   Saropa Lints), not a Log Capture one. Uses the theme badge tokens so it tracks light/dark/high-contrast. */
+.sql-qh-src-badge {
+    flex: 0 0 auto;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0 5px;
+    border-radius: 8px;
+    line-height: 15px;
+    background: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+}
+
 .sql-qh-issue-loc {
     flex: 0 0 auto;
     font-family: var(--vscode-editor-font-family, monospace);
