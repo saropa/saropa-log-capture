@@ -70,9 +70,16 @@ export function parseTimestamp(text: string, sessionStart?: number): number | un
             baseDate.setMilliseconds(0);
         }
         const result = baseDate.getTime();
-        // Handle day rollover: if time is much earlier than session start, it's likely next day
-        if (sessionStart !== undefined && result < sessionStart - 12 * 60 * 60 * 1000) {
-            return result + 24 * 60 * 60 * 1000;
+        // A clock-only stamp lands on the day of sessionStart, but the real event may sit on the
+        // adjacent day when the session spans midnight. Pick the nearest day in either direction:
+        // much earlier than start → next day (rolled past midnight); much later → previous day
+        // (a just-before-midnight line while the session started just after). The earlier code only
+        // rolled forward, leaving before-midnight stamps mis-ordered ~24h in the future.
+        const DAY_MS = 24 * 60 * 60 * 1000;
+        const HALF_DAY_MS = 12 * 60 * 60 * 1000;
+        if (sessionStart !== undefined) {
+            if (result < sessionStart - HALF_DAY_MS) { return result + DAY_MS; }
+            if (result > sessionStart + HALF_DAY_MS) { return result - DAY_MS; }
         }
         return result;
     }
