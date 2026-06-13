@@ -1,6 +1,13 @@
 # Investigate: Missing Debug Console Lines Not Captured via DAP
 
-## Status: Open — investigation needed
+## Status: Partly shipped — manual reproduction still open
+
+**Done (shipped v8.0.4):** the dropped-category diagnostic for the `captureAll: false` case (Step 3, Outcome B path) and the README "Known Limitations" note (Step 2, Outcome A path). See the Finish Report below.
+
+**Still open:**
+
+1. **The actual investigation (Step 1) — not done.** Classifying a real missing line as Outcome A ("VS Code never delivers it via DAP, so it cannot be captured") vs Outcome B ("we received it but filtered it out") requires running a live Flutter/Dart debug session with `verboseDap` on and comparing the Debug Console to the verbose dump. This is operator work; it cannot be done from a code-only environment.
+**Done since the original finish report — `captureAll: true` exclusion diagnostic.** The original dropped-category diagnostic only fired when `captureAll` was **false**, so it emitted nothing for the reported scenario (App Only OFF = `captureAll: true`). With `captureAll` on, the only in-extension drop that leaves no trace is an `saropaLogCapture.exclusions` match — flood suppression already surfaces a `[FLOOD SUPPRESSED: N]` summary in the log, and only triggers on 100+ identical lines/sec, so it can't explain a single missing line. `processOutputEvent` now reports each matching exclusion pattern once to the **Saropa Log Capture** output channel, naming the pattern and how to recover the lines. Files: `src/modules/features/exclusion-matcher.ts` (new `findExclusionMatch` returning the matched rule), `src/modules/session/session-manager-events.ts` (`reportExcludedLine` + `excludedRulesLogged` memo), `src/modules/session/session-manager.ts` (field wiring), test in `src/test/modules/session/session-manager.test.ts`, README + CHANGELOG.
 
 ## Summary
 
