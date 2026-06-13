@@ -246,6 +246,7 @@ export const stringsA: Record<string, string> = {
     'msg.slcImportInvalidManifest': 'Invalid .slc: invalid or unsupported manifest',
     'msg.slcImportNoWorkspace': 'Open a workspace folder to import .slc bundles.',
     'msg.slcImportMissingLog': 'Invalid .slc: missing log file "{0}"',
+    'msg.slcImportUnsafePath': 'Blocked an unsafe .slc bundle: entry "{0}" tries to write outside the log folder.',
     'msg.openLogFirst': 'Open a log file first.',
     'title.importSlc': 'Import .slc log bundle(s)',
     'progress.exportSlc': 'Exporting .slc bundle\u2026',

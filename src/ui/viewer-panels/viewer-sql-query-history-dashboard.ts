@@ -78,12 +78,24 @@ export function getSqlQueryHistoryDashboardScript(): string {
         renderSqlHistoryIssuesSection();
         renderSqlHistoryLintSection();
     }
+    /* Loading / error states for the two async Drift enrichment fetches. Without these, an in-flight
+       fetch showed nothing and a failed one was silently hidden (violates "no silent async") — so a
+       reachable Drift server whose issues request errored looked identical to "no issues found". The
+       status line above reports server reachability; these report the enrichment requests themselves. */
+    function setSqlHistoryAsyncState(elId, cls, text, detail) {
+        var el = document.getElementById(elId);
+        if (!el) return;
+        el.classList.remove('u-hidden');
+        el.innerHTML = '<div class="sql-qh-async ' + cls + '">' + escapeHtml(text)
+            + (detail ? ' <span class="sql-qh-async-detail">(' + escapeHtml(detail) + ')</span>' : '') + '</div>';
+    }
     /* Ask the host for the Drift server's issues, but only when we already know a server is reachable
        (its health check passed) — avoids firing a fetch at a dead default port on every panel open. */
     function maybeFetchDriftDbIssues() {
         var d = (typeof window !== 'undefined') ? window.driftDebugServerFromLog : null;
         if (!d || !d.baseUrl || !d.health || !d.health.ok) return;
         if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
+            setSqlHistoryAsyncState('sql-query-history-issues', 'sql-qh-async-loading', vt('viewer.sqlHistory.issues.loading'), '');
             vscodeApi.postMessage({ type: 'fetchDriftDbIssues', baseUrl: d.baseUrl });
         }
     }
@@ -91,6 +103,13 @@ export function getSqlQueryHistoryDashboardScript(): string {
        Guarded so the script still loads in the bare VM used by unit tests (no window there). */
     if (typeof window !== 'undefined') {
         window.applyDriftDbIssuesFromHost = function(msg) {
+            /* ok===false is an explicit fetch failure (unreachable mid-request, bad response). Surface it
+               instead of hiding, so the user knows suggestions are missing because of an error, not absence. */
+            if (msg && msg.ok === false) {
+                sqlHistoryDriftDbIssues = null;
+                setSqlHistoryAsyncState('sql-query-history-issues', 'sql-qh-async-error', vt('viewer.sqlHistory.issues.error'), msg.error || '');
+                return;
+            }
             sqlHistoryDriftDbIssues = (msg && msg.ok && msg.issues && msg.issues.length) ? msg.issues : null;
             renderSqlHistoryIssuesSection();
         };
@@ -125,11 +144,19 @@ export function getSqlQueryHistoryDashboardScript(): string {
     function maybeFetchDriftLintViolations() {
         var usesDrift = (typeof getSqlQueryHistoryRowsForRender === 'function') && getSqlQueryHistoryRowsForRender().length > 0;
         if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
+            setSqlHistoryAsyncState('sql-query-history-lint', 'sql-qh-async-loading', vt('viewer.sqlHistory.lint.loading'), '');
             vscodeApi.postMessage({ type: 'fetchDriftLintViolations', usesDrift: usesDrift });
         }
     }
     if (typeof window !== 'undefined') {
         window.applyDriftLintViolationsFromHost = function(msg) {
+            /* The host posts { error } when the lint scan throws (e.g. project read failed). Surface it
+               rather than leaving the loading line spinning or the section silently empty. */
+            if (msg && msg.error) {
+                sqlHistoryDriftLint = null;
+                setSqlHistoryAsyncState('sql-query-history-lint', 'sql-qh-async-error', vt('viewer.sqlHistory.lint.error'), msg.error);
+                return;
+            }
             sqlHistoryDriftLint = msg || null;
             renderSqlHistoryLintSection();
         };
