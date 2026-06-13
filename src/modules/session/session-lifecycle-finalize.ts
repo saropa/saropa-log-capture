@@ -34,6 +34,8 @@ import { getLastSignalBundle, getLastSignalHypotheses } from '../../ui/provider/
 import { extractSignalSummary } from '../root-cause-hints/signal-summary-extract';
 import { scanForGeneralSignals } from '../analysis/general-signal-scanner';
 import { aggregateSignals } from '../misc/cross-session-aggregator';
+import { writeLogCaptureDiagnostics } from '../diagnostics/diagnostics-producer';
+import { getSessionCommit } from './session-commit-from-meta';
 
 /** Parameters for session finalization. */
 export interface FinalizeSessionParams {
@@ -190,6 +192,9 @@ export async function finalizeSession(
         params.onReportsIndexReady?.(logSession.fileUri);
         // Notify user about recurring signals that hit the 5+ session threshold
         notifyRecurringSignals(outputChannel);
+        // Suite integration (R1): write the offline diagnostic mirror only after scans
+        // settle, so the envelope reflects this session's freshly-persisted signals.
+        writeSessionDiagnosticEnvelope(logSession.fileUri, metadataStore, outputChannel);
     }).catch(() => {});
 
     scanAnrRiskForSession(logSession.fileUri, metadataStore, outputChannel);
@@ -240,6 +245,30 @@ function notifyRecurringSignals(out: vscode.OutputChannel): void {
             }
         });
     }).catch(() => {});
+}
+
+/**
+ * Write the Saropa Diagnostic Envelope mirror for the suite (R1). Reads the session's
+ * commit off its integration metadata so siblings can correlate per commit. Fully
+ * best-effort: any failure is logged and swallowed — it must never break finalization.
+ */
+function writeSessionDiagnosticEnvelope(
+    fileUri: vscode.Uri,
+    store: SessionMetadataStore,
+    out: vscode.OutputChannel,
+): void {
+    store.loadMetadata(fileUri).then(async (meta) => {
+        const commitSha = getSessionCommit(meta.integrations);
+        const wrote = await writeLogCaptureDiagnostics({
+            commitSha,
+            generatedAt: new Date().toISOString(),
+        });
+        if (wrote) {
+            out.appendLine('Wrote .saropa/diagnostics/log-capture.json (suite diagnostic mirror)');
+        }
+    }).catch((err: unknown) => {
+        out.appendLine(`Failed to write diagnostic envelope: ${err}`);
+    });
 }
 
 /** Async: scan log file for ANR risk patterns and store results in metadata. */

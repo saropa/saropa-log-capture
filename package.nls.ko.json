@@ -51,6 +51,8 @@
   "command.openLogFile.title": "Saropa Log Capture: 로그 파일 열기…",
   "command.openLogFromUrl.title": "Saropa Log Capture: URL에서 로그 열기…",
   "command.openSqlQueryHistory.title": "Saropa Log Capture: Open SQL Query History",
+  "command.openSignal.title": "Saropa Log Capture: Open Signal",
+  "command.openSqlHistoryForFingerprint.title": "Saropa Log Capture: Open SQL Query History for Query",
   "command.openTailedFile.title": "Saropa Log Capture: 테일 파일 열기",
   "command.openWalkthrough.title": "Saropa Log Capture: 시작하기",
   "command.pause.title": "Saropa Log Capture: 캡처 일시정지/재개",

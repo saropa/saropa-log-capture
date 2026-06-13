@@ -24,6 +24,7 @@ import { registerCollectionCommands } from './commands-collection';
 import { externalLogsCommands } from './commands-external-logs';
 import { learningCommands } from './commands-learning';
 import { sessionGroupCommands } from './commands-session-groups';
+import { suiteIntegrationCommands } from './commands-suite';
 import type { CaptureToggleStatusBar } from './ui/shared/capture-toggle-status-bar';
 
 export type { CommandDeps } from './commands-deps';
@@ -58,6 +59,7 @@ export function registerCommands(deps: CommandDeps, captureToggle: CaptureToggle
         ...externalLogsCommands(deps),
         ...learningCommands(deps),
         ...sessionGroupCommands(deps.historyProvider, deps.viewerProvider, deps.collectionStore),
+        ...suiteIntegrationCommands(deps),
         walkthroughCommand(),
     );
 }
