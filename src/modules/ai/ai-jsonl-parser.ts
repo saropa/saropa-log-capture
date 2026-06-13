@@ -17,8 +17,20 @@ const relevantTools = new Set([
 /** Tags injected by the IDE that aren't real user prompts. */
 const ideTagPattern = /^<ide_\w+>/;
 
-/** Regex to extract assistant message ID without a full JSON parse. */
-const msgIdPattern = /"id"\s*:\s*"(msg_[^"]+)"/;
+/**
+ * Assistant message id from a JSONL line, read from the structured `message.id` field.
+ *
+ * A raw-text regex (the previous approach) matched the first `"id":"msg_…"` anywhere in the line, so
+ * a line embedding a different message's id in a nested payload could be deduplicated against the
+ * wrong message and drop a genuine entry. Parsing and reading `message.id` is unambiguous.
+ */
+function assistantMessageId(line: string): string | undefined {
+    try {
+        const obj = JSON.parse(line) as { message?: { id?: unknown } };
+        const id = obj.message?.id;
+        return typeof id === 'string' && id.startsWith('msg_') ? id : undefined;
+    } catch { return undefined; }
+}
 
 /**
  * Parse a chunk of JSONL text into AI activity entries.
@@ -40,16 +52,19 @@ export function parseJsonlChunk(chunk: string): AiActivityEntry[] {
 function deduplicateAssistantLines(lines: string[]): string[] {
     const lastIndex = new Map<string, number>();
     const trimmed: string[] = [];
+    const ids: (string | undefined)[] = [];
     for (const raw of lines) {
         const t = raw.trim();
         if (!t) { continue; }
+        const id = assistantMessageId(t);
+        ids.push(id);
         trimmed.push(t);
-        const m = msgIdPattern.exec(t);
-        if (m) { lastIndex.set(m[1], trimmed.length - 1); }
+        if (id) { lastIndex.set(id, trimmed.length - 1); }
     }
-    return trimmed.filter((line, idx) => {
-        const m = msgIdPattern.exec(line);
-        return !m || lastIndex.get(m[1]) === idx;
+    // Keep a line if it has no message id, or if it is the last occurrence of that id (most complete).
+    return trimmed.filter((_, idx) => {
+        const id = ids[idx];
+        return !id || lastIndex.get(id) === idx;
     });
 }
 
