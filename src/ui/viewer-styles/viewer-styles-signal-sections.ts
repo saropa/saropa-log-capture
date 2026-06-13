@@ -254,5 +254,12 @@ export function getSignalSectionsStyles(): string {
 .signal-trend-row:hover .signal-row-actions,
 .signal-in-log-row:hover .signal-row-actions,
 .signal-row-actions:focus-within { opacity: 1; }
+/* Transient highlight when a deep-link (saropaLogCapture.openSignal) scrolls to a signal,
+   so the user sees which row the jump landed on. Removed by script after ~2s. */
+.signal-focus-flash {
+    background: var(--vscode-list-hoverBackground);
+    outline: 1px solid var(--vscode-focusBorder);
+    outline-offset: -1px;
+}
 `;
 }

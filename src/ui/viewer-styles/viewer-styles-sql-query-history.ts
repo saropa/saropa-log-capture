@@ -214,6 +214,14 @@ export function getSqlQueryHistoryPanelStyles(): string {
     outline: none;
 }
 
+/* Transient highlight when a deep-link (saropaLogCapture.openSqlHistoryForFingerprint)
+   scrolls to a query, so the user sees which row the jump landed on. Removed by script after ~2s. */
+.sql-qh-focus-flash {
+    background: var(--vscode-list-hoverBackground);
+    outline: 1px solid var(--vscode-focusBorder);
+    outline-offset: -1px;
+}
+
 .sql-query-history-count {
     font-weight: 600;
     color: var(--vscode-foreground);

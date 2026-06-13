@@ -129,6 +129,35 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
         if (sqlQueryHistoryPanelOpen) renderSqlQueryHistoryPanel();
     };
 
+    /* Deep-link target for saropaLogCapture.openSqlHistoryForFingerprint: find the row whose
+       normalized fingerprint matches, expand it, scroll to it, and flash it. Deferred a frame
+       so the panel's render pass (triggered by setActivePanel) has built the rows first.
+       Compares the attribute directly so SQL fingerprints with quotes/spaces need no escaping.
+       No-op when the row is outside the current render window (rare; bounded by the cap). */
+    window.focusSqlHistoryFingerprint = function(fp) {
+        if (!fp || !tbodyEl) return;
+        setTimeout(function() {
+            var rows = tbodyEl.querySelectorAll('.sql-query-history-row');
+            for (var i = 0; i < rows.length; i++) {
+                if (rows[i].getAttribute('data-fingerprint') !== fp) continue;
+                if (rows[i].getAttribute('aria-expanded') !== 'true') toggleSqlHistoryRow(rows[i]);
+                rows[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                rows[i].classList.add('sql-qh-focus-flash');
+                (function(r) { setTimeout(function() { r.classList.remove('sql-qh-focus-flash'); }, 2000); })(rows[i]);
+                return;
+            }
+        }, 80);
+    };
+    /* Own message listener for the deep-link's focus payload, kept here (not in the shared
+       message switch) so the over-budget viewer-script-messages module need not grow. The
+       'openSqlQueryHistoryPanel' message's main handler already activated the panel; this
+       fires in addition and defers, so the rows exist by the time we scroll. */
+    window.addEventListener('message', function(e) {
+        if (e.data && e.data.type === 'openSqlQueryHistoryPanel' && e.data.focusFingerprint) {
+            window.focusSqlHistoryFingerprint(e.data.focusFingerprint);
+        }
+    });
+
     window.openSqlQueryHistoryPanel = function() {
         if (!panelEl) return;
         sqlQueryHistoryPanelOpen = true;
