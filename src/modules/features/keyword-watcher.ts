@@ -3,6 +3,8 @@
  * Tracks hit counts per pattern and returns matches for each line.
  */
 
+import { boundForUserRegex } from '../misc/regex-safety';
+
 /** A single watch pattern with its alert behavior. */
 export interface WatchPatternConfig {
     readonly keyword: string;
@@ -41,9 +43,12 @@ export class KeywordWatcher {
     /** Test a line against all patterns. Returns hits (may be empty). */
     testLine(text: string): WatchHit[] {
         const hits: WatchHit[] = [];
+        // Bound the line length once: user patterns run on every captured line, and a greedy pattern
+        // on a pathologically long line could backtrack long enough to freeze the host.
+        const bounded = boundForUserRegex(text);
         for (const p of this.patterns) {
             p.regex.lastIndex = 0;
-            if (p.regex.test(text)) {
+            if (p.regex.test(bounded)) {
                 this.counts.set(p.label, (this.counts.get(p.label) ?? 0) + 1);
                 hits.push({ label: p.label, alert: p.alert });
             }
