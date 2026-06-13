@@ -156,9 +156,9 @@ Each item lists the fix and its **verification** (a check that proves it landed)
 4. ~~**L7/L8**~~ **DONE** — `isAllowedExternalUrl` accepts `http(s)` only (`vscode:` dropped); CSP `media-src` falls back to `'none'` instead of `vscode-resource:`.
 
 ### WS-2 — Data integrity / capture
-1. **C2 stream error handlers + backpressure** in `log-session.ts` / `log-session-split.ts`. *Verify:* test that simulates a stream `error` and asserts the host logs + nulls the stream rather than throwing.
-2. **H1 retention key mismatch** — workspace-relative key in `expandGroupsForTrash`. *Verify:* regression test (active-group file skipped; closed group expands atomically).
-3. **H2 marker/DAP/header through the queue.** *Verify:* test asserting ordering vs interleaved markers.
+1. ~~**C2 stream error handlers**~~ **DONE 2026-06-13** — permanent `'error'` listener attached to every write stream (`attachStreamErrorHandler`, wired in `start()` and `performSplit()`); `stop()` and the split helper resolve (not reject) on a final-flush error. *Verified:* `log-session.test.ts` emits a synthetic stream error and asserts no throw + stream dropped (4 passing). Backpressure (await `'drain'`) intentionally deferred — separate perf item, not the crash bug.
+2. ~~**H1 retention key mismatch**~~ **DONE 2026-06-13** — root cause was the *caller* passing log-dir-relative candidates against a workspace-relative `metaMap`; new pure `buildMetaByName()` re-keys metadata to the candidate names before `expandGroupsForTrash`. The pure function was already correct (its test used one key space, which is why the bug hid). *Verified:* `file-retention.test.ts` two-key-space cases (14 passing).
+3. **H2 marker/DAP/header through the queue.** *Verify:* test asserting ordering vs interleaved markers. *(Note: `appendMarker` returns its text synchronously today — routing through the async queue changes that contract, so this needs caller analysis; own pass.)*
 4. **M1/M2** — count from `onLineCountChanged`; early-buffer drop marker.
 
 ### WS-3 — Analysis correctness

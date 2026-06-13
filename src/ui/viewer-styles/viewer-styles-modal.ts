@@ -59,7 +59,10 @@ export function getModalStyles(): string {
     height: 20px;
     line-height: 1;
 }
-.modal-close:hover { color: var(--vscode-foreground); }
+.modal-close:hover {
+    color: var(--vscode-errorForeground, #f44);
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
 
 .modal-body {
     padding: 16px;

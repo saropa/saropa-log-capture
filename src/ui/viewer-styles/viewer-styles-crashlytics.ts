@@ -69,7 +69,10 @@ export function getCrashlyticsPanelStyles(): string {
     padding: 0 4px;
 }
 
-.crashlytics-panel-close:hover { color: var(--vscode-errorForeground, #f44); }
+.crashlytics-panel-close:hover {
+    color: var(--vscode-errorForeground, #f44);
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
 
 .crashlytics-panel-content {
     flex: 1;
