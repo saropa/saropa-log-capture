@@ -200,6 +200,44 @@ export function getSignalSectionsStyles(): string {
     white-space: nowrap;
 }
 
+/* The label cell takes the slack and truncates so the meta + action cluster hold a stable right
+   column. Scoped to signal rows so the shared env / hot-file / co-occurrence rows keep their layout. */
+.signal-trend-row > span:first-child,
+.signal-in-log-row > span:first-child { flex: 1 1 auto; min-width: 0; }
+
+/* On a tight panel the verbose meta ("6 sessions, 23 total [fatal]") must NOT swallow the row and
+   collapse the label to nothing — the label is what the signal IS, the meta is secondary. Cap the
+   meta at half the row and let it truncate so the label always keeps the other half. The shared base
+   .signal-hotfile-meta is flex-shrink:0; this higher-specificity rule overrides it for signal rows. */
+.signal-trend-row > .signal-hotfile-meta,
+.signal-in-log-row > .signal-hotfile-meta {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 50%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Row action buttons (Copy / Close / Mute / DA / Rule) are grouped into one cluster and hidden until
+   the row is hovered or keyboard-focused. Before this they were loose inline siblings — always
+   visible, ragged at different widths per row, and crowding/overlapping the meta text on a narrow
+   panel. Hover-reveal (same idiom as the Crashlytics archive button) keeps the resting row clean
+   (icon · label · meta) and gives one aligned action cluster; focus-within keeps them keyboard
+   reachable. Width stays reserved so revealing causes no layout shift. */
+.signal-row-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex: 0 0 auto;
+    margin-left: 4px;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+}
+.signal-trend-row:hover .signal-row-actions,
+.signal-in-log-row:hover .signal-row-actions,
+.signal-row-actions:focus-within { opacity: 1; }
+
 /* Signal trend rows — clickable to open the most recent matching session */
 .signal-signal-trend-row { cursor: pointer; border-radius: 3px; }
 .signal-signal-trend-row:hover { background: var(--vscode-list-hoverBackground); }
