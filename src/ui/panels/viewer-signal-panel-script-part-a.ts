@@ -148,6 +148,25 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
         else if (tab === 'recurring') { setSectionExpanded('across-logs', true); renderSectionAccordion('across-logs'); var el = document.getElementById('signal-section-across-logs'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
     };
 
+    /* Deep-link target for saropaLogCapture.openSignal: after the recurring section is
+       expanded, scroll to the row carrying this fingerprint and flash it. Deferred a frame
+       so the freshly-rendered rows exist before we query. Compares the attribute directly
+       (no querySelector) so SQL fingerprints with quotes/spaces need no CSS escaping. */
+    window.focusSignalFingerprint = function(fp) {
+        if (!fp || !signalPanel) return;
+        setTimeout(function() {
+            var rows = signalPanel.querySelectorAll('.signal-trend-row, .signal-in-log-row');
+            for (var i = 0; i < rows.length; i++) {
+                if (rows[i].getAttribute('data-fingerprint') === fp) {
+                    rows[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    rows[i].classList.add('signal-focus-flash');
+                    (function(r) { setTimeout(function() { r.classList.remove('signal-focus-flash'); }, 2000); })(rows[i]);
+                    return;
+                }
+            }
+        }, 60);
+    };
+
     var closeBtn = document.getElementById('signal-panel-close');
     if (closeBtn) closeBtn.addEventListener('click', closeSignalPanel);
 
