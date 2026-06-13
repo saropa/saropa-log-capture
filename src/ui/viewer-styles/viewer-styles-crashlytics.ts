@@ -92,7 +92,7 @@ export function getCrashlyticsPanelStyles(): string {
 .cp-item-fatal { border-left: 3px solid var(--vscode-errorForeground); padding-left: 9px; }
 .cp-item-nonfatal { border-left: 3px solid var(--vscode-editorWarning-foreground, #cca700); padding-left: 9px; }
 /* Typography hierarchy (UI #5): bold primary, muted metadata, room to breathe. */
-.cp-title { font-weight: 600; font-size: 12.5px; line-height: 1.45; margin-bottom: 3px; }
+.cp-title { font-weight: 600; font-size: 12px; line-height: 1.45; margin-bottom: 3px; }
 .cp-meta { font-size: 11px; opacity: 0.65; line-height: 1.4; }
 
 /* --- Compact sidebar filter bar (#5): icons/abbreviations for the narrow panel --- */
@@ -118,7 +118,7 @@ export function getCrashlyticsPanelStyles(): string {
     display: inline-flex;
     align-items: center;
     gap: 3px;
-    font-size: 0.7em;
+    font-size: 10px;
     padding: 1px 7px;
     border-radius: 9px;
     font-weight: 600;
@@ -167,7 +167,7 @@ export function getCrashlyticsPanelStyles(): string {
 .cp-console:hover { text-decoration: underline; }
 
 .cp-empty { padding: 16px 12px; opacity: 0.7; font-style: italic; text-align: center; font-size: 12px; }
-.cp-error { color: var(--vscode-errorForeground); font-size: 0.9em; padding: 6px 12px; }
+.cp-error { color: var(--vscode-errorForeground); font-size: 11px; padding: 6px 12px; }
 
 /* --- Crash detail (loaded into issue card) --- */
 .cp-detail { overflow: hidden; max-height: 0; transition: max-height 0.3s ease; }
@@ -194,7 +194,7 @@ export function getCrashlyticsPanelStyles(): string {
 }
 
 /* --- Refresh note --- */
-.cp-refresh-note { font-weight: normal; font-size: 0.85em; opacity: 0.6; margin-left: 4px; }
+.cp-refresh-note { font-weight: normal; font-size: 10px; opacity: 0.6; margin-left: 4px; }
 
 /* ===================================================================
    In-viewer issue detail — fills the log area beside the sidebar list.
@@ -208,7 +208,7 @@ export function getCrashlyticsPanelStyles(): string {
 .crashlytics-detail { position: absolute; inset: 0; z-index: 200; display: flex; flex-direction: column; overflow: hidden; background: var(--vscode-editor-background); }
 .crashlytics-detail.u-hidden { display: none; }
 .cd-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 2px solid var(--vscode-focusBorder); background: var(--vscode-sideBar-background, var(--vscode-editor-background)); }
-.cd-title { font-weight: 600; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cd-title { font-weight: 600; font-size: 12px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* "View on Firebase" link (#3): the project console opens in the browser. Icon-only to stay compact. */
 .cd-console-link { margin-left: 6px; color: var(--vscode-textLink-foreground); text-decoration: none; font-size: 12px; cursor: pointer; }
 .cd-console-link:hover { text-decoration: underline; }
@@ -250,7 +250,7 @@ export function getCrashlyticsPanelStyles(): string {
 .cd-body .crash-thread-header { font-weight: 600; font-size: 12px; margin: 10px 0 4px; padding-left: 6px; border-left: 3px solid var(--vscode-errorForeground); }
 .cd-body .group-header { color: var(--vscode-textLink-foreground); font-weight: 600; cursor: pointer; }
 .cd-body .group-header .match-count { color: var(--vscode-descriptionForeground); font-weight: 400; }
-.cd-body .frame-badge { font-size: 9px; padding: 0 4px; border-radius: 3px; margin-right: 6px; font-weight: 700; }
+.cd-body .frame-badge { font-size: 10px; padding: 0 4px; border-radius: 3px; margin-right: 6px; font-weight: 700; }
 .cd-body .frame-badge-app { background: var(--vscode-charts-blue, #4daafc); color: var(--vscode-editor-background); }
 .cd-body .frame-badge-fw { background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); opacity: 0.7; }
 .cd-body .frame-app .line-text, .cd-body .frame-app-nosrc .line-text { color: var(--vscode-foreground); }
@@ -299,7 +299,7 @@ export function getCrashlyticsPanelStyles(): string {
 /* "May already be fixed" banner — the headline signal that newer releases exist after the affected
    version. Warning-tinted so it reads as actionable, not error. */
 .cd-maybe-fixed { background: var(--vscode-inputValidation-warningBackground); color: var(--vscode-editorWarning-foreground, #cca700); border: 1px solid var(--vscode-inputValidation-warningBorder, var(--vscode-editorWarning-foreground)); border-radius: 5px; padding: 5px 9px; margin: 4px 0 8px; font-weight: 600; }
-.cd-proj-label { font-weight: 600; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.6; margin: 8px 0 3px; }
+.cd-proj-label { font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.6; margin: 8px 0 3px; }
 .cd-proj-row { display: flex; gap: 8px; align-items: baseline; padding: 1px 0; }
 .cd-proj-ver, .cd-proj-sha { flex: none; font-family: var(--vscode-editor-font-family, monospace); color: var(--vscode-textLink-foreground); }
 .cd-proj-date { flex: none; opacity: 0.55; min-width: 56px; }
