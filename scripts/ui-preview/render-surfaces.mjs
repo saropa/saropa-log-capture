@@ -20,7 +20,7 @@
 
 import { build } from 'esbuild';
 import { chromium } from 'playwright';
-import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdirSync, rmSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -29,10 +29,21 @@ const repoRoot = join(__dirname, '..', '..');
 const outDir = 'd:/tmp/ui-shots';
 const tmpStyles = join(__dirname, '.tmp-viewer-styles.mjs');
 
-/* ---- 1. Bundle getViewerStyles() so we get the EXACT shipped CSS string ---- */
+/* ---- 1. Bundle the shipped CSS so we get the EXACT strings the webview uses ----
+   getViewerStyles() is the main bundle; the quality-badge CSS is injected separately by
+   viewer-content.ts, so we must concatenate it too or the badges render unstyled (a harness
+   artifact that once looked like a real "invisible badge" defect — it was not). */
 async function loadCss() {
     await build({
-        entryPoints: [join(repoRoot, 'src/ui/viewer-styles/viewer-styles.ts')],
+        stdin: {
+            contents: `
+                import { getViewerStyles } from './src/ui/viewer-styles/viewer-styles';
+                import { getQualityBadgeStyles } from './src/ui/viewer-styles/viewer-styles-quality';
+                export function getAllCss() { return getViewerStyles() + '\\n' + getQualityBadgeStyles(); }
+            `,
+            resolveDir: repoRoot,
+            loader: 'ts',
+        },
         bundle: true,
         format: 'esm',
         platform: 'node',
@@ -41,7 +52,7 @@ async function loadCss() {
         logLevel: 'silent',
     });
     const mod = await import(pathToFileURL(tmpStyles).href + '?t=' + Date.now());
-    return mod.getViewerStyles();
+    return mod.getAllCss();
 }
 
 /* ---- 2. Real VS Code theme variable maps (only the bare/no-fallback vars need defining) ---- */

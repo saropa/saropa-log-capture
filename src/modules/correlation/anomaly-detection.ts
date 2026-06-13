@@ -69,13 +69,25 @@ export function extractHttpDuration(event: TimelineEvent): number | undefined {
     return undefined;
 }
 
+/** Free-memory low-water mark (MB) below which a perf sample counts as memory pressure (no baseline). */
+const LOW_FREE_MEMORY_MB = 256;
+
+/**
+ * True when a perf sample shows memory PRESSURE worth correlating with a nearby error.
+ *
+ * `extractMemoryMb` returns FREE/available memory (the `freememMb` field / the "N MB free" perf-sample
+ * text), so pressure is LOW free memory — not high. The earlier code tested `memMb > 500`, which fired
+ * on the *healthiest* samples (plenty of memory free) and never on real pressure, so `error-memory`
+ * correlations pointed at the wrong events. With a session baseline, pressure is free memory well
+ * BELOW the average; without one, free memory under a conservative low-water mark.
+ */
 export function isMemorySpike(event: TimelineEvent, baseline?: PerfBaseline): boolean {
-    const memMb = extractMemoryMb(event);
-    if (memMb === undefined) { return false; }
+    const freeMb = extractMemoryMb(event);
+    if (freeMb === undefined) { return false; }
     if (baseline) {
-        return memMb > baseline.avgMemory + 2 * baseline.stdDevMemory;
+        return freeMb < baseline.avgMemory - 2 * baseline.stdDevMemory;
     }
-    return memMb > 500;
+    return freeMb < LOW_FREE_MEMORY_MB;
 }
 
 export function isCpuSpike(event: TimelineEvent, baseline?: PerfBaseline): boolean {

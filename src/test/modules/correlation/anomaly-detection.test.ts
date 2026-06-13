@@ -135,23 +135,24 @@ suite('AnomalyDetection', () => {
 
     suite('isMemorySpike', () => {
 
-        test('should return true when memory exceeds 500 MB without baseline', () => {
-            const event = makeEvent('Memory: 600 MB');
+        // extractMemoryMb returns FREE memory, so pressure is LOW free memory (< 256 MB), not high.
+        test('should return true when free memory is low (pressure) without baseline', () => {
+            const event = makeEvent('Memory: 100 MB');
             assert.strictEqual(isMemorySpike(event), true);
         });
 
-        test('should return false when memory is under 500 MB without baseline', () => {
-            const event = makeEvent('Memory: 300 MB');
+        test('should return false when free memory is ample without baseline', () => {
+            const event = makeEvent('Memory: 600 MB');
             assert.strictEqual(isMemorySpike(event), false);
         });
 
-        test('should use baseline for spike detection when provided', () => {
+        test('should use baseline for pressure detection when provided', () => {
             const baseline = { avgMemory: 200, stdDevMemory: 50, avgCpu: 0.5, stdDevCpu: 0.1 };
-            // 350 > 200 + 2*50 = 300 → spike
-            const spike = makeEvent('Memory: 350 MB');
+            // free 80 < 200 - 2*50 = 100 → pressure (free memory well below the session average)
+            const spike = makeEvent('Memory: 80 MB');
             assert.strictEqual(isMemorySpike(spike, baseline), true);
-            // 280 < 300 → not a spike
-            const normal = makeEvent('Memory: 280 MB');
+            // free 150 >= 100 → not pressure
+            const normal = makeEvent('Memory: 150 MB');
             assert.strictEqual(isMemorySpike(normal, baseline), false);
         });
 

@@ -162,11 +162,11 @@ Each item lists the fix and its **verification** (a check that proves it landed)
 4. **M1/M2** — count from `onLineCountChanged`; early-buffer drop marker.
 
 ### WS-3 — Analysis correctness
-1. **H3 memory-spike inversion** (confirm `freememMb` semantics with producer first — see Q1).
+1. ~~**H3 memory-spike inversion**~~ **DONE 2026-06-13** — confirmed `extractMemoryMb` returns FREE memory (`os.freemem`-derived); `isMemorySpike` now fires on LOW free memory (below baseline−2σ, or a 256 MB low-water mark) instead of high. Tests retargeted (anomaly-detection, 44 passing).
 2. ~~**H4 shared clock+date helper**, applied to flow-map / logcat / timeline.~~ **DONE 2026-06-12** — fixed per-site (the 3 sites needed different shapes): flow-map now resolves a monotonic in-session timeline across midnight (`resolveClockTimeline`), logcat rolls the year back when a year-less date lands in the future, and the timeline time-only parser does bidirectional nearest-day rollover. Tests added (overnight flow-map, year-end logcat, both-direction time-only); check-types + the 3 suites pass (30 passing).
-3. **H5 root-cause ranking + ANR-merge gate.** *Verify:* test that a high-confidence tier-0 hypothesis survives `slice`.
-4. **H6 Firebase deep-link fallback** — hide link when package name absent.
-5. **H7 Vitals freshness clamp.**
+3. ~~**H5 root-cause ranking**~~ **DONE 2026-06-13** — sort now ranks confidence (high→low) ahead of the alphabetical key within a tier, so `slice(0, MAX_BULLETS)` can't drop a high-confidence hint. (Reused existing `confRank`.) build-hypotheses suite passing. *(ANR-merge gate `=== 'high'` left as a follow-up — separate, lower-impact.)*
+4. ~~**H6 Firebase deep-link fallback**~~ **DONE 2026-06-13** — `consoleUrl` is omitted (undefined) when the package name can't be detected, so no consumer renders the known-broken app-id URL; the setup screen already falls back to the generic console root.
+5. ~~**H7 Vitals freshness clamp**~~ **DONE 2026-06-13** — `queryMetricSet` reads the metric-set descriptor's DAILY freshness (`freshnessEnd`, 2-day fallback) and clamps `endTime` to it instead of `today()`, mirroring `play-reporting-metrics`. vitals-metrics suite passing.
 6. **M3/M4/M5/M18** crashlytics: cache keying, interval floor, backoff, single-flight.
 7. **M6/M8/M13/M15/M16/M17** correlation/source/AI/root-cause fixes.
 
@@ -192,7 +192,7 @@ Each item lists the fix and its **verification** (a check that proves it landed)
 
 ## 8. Open questions (saved for later — do not block)
 
-1. **H3:** Is the sidecar `freememMb` field free or used memory? The fix direction depends on the producer's semantics.
+1. ~~**H3:** Is the sidecar `freememMb` field free or used memory?~~ **Resolved 2026-06-13 — FREE memory (producer is `os.freemem()` in performance-snapshot.ts); H3 fixed accordingly (WS-3).**
 2. ~~**C3:** Confirm there is genuinely no `runCommand` emitter before deleting.~~ **Resolved 2026-06-13 — full-tree grep found none; handler deleted (WS-1).**
 3. **C1:** The path-containment fix shipped (WS-1). Still open as a hardening option: add an explicit "import this shared collection?" prompt to the `vscode://…/import?gist=` deep-link path, on top of VS Code's generic URI consent?
 4. ~~**H4:** Are overnight / cross-year sessions a supported case?~~ **Resolved 2026-06-12 — yes, handled (fixed; see WS-3).**
