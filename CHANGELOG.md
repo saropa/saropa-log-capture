@@ -30,6 +30,12 @@ cspell:disable
 
 ## [Unreleased]
 
+### Added
+
+- **Saropa suite integration — shared diagnostics (groundwork):** Log Capture now speaks the cross-tool "Saropa Diagnostic Envelope" so a slow query or crash it sees at runtime can line up with the live database state (Drift Advisor) and the static rule that governs it (Saropa Lints). On session end it writes its current Drift/SQL and crash signals to `.saropa/diagnostics/log-capture.json` (stamped with the session's commit) for the sibling extensions to read, and it can read their `advisor.json` / `lints.json` mirrors back. Parsing is tolerant — an absent, truncated, or newer-schema sibling file is ignored rather than erroring.
+- **Deep-link in:** Two stable commands let a sibling tool jump straight to the right place in Log Capture: `saropaLogCapture.openSignal` (reveals and flashes a specific signal) and `saropaLogCapture.openSqlHistoryForFingerprint` (opens SQL Query History on a specific query, by literal SQL or fingerprint). Both are integration entry points, hidden from the command palette.
+- **Crash-family signatures:** Parsed crash families (StateError on an empty list, RangeError index, the null-check operator, late-init, concurrent modification, cast errors, ANR, out-of-memory, and more) now carry a stable signature so Saropa Lints can map them to the rule that would have prevented them.
+
 ### Changed
 
 - **Close buttons behave the same everywhere:** The × close control across every viewer panel and dialog (Crashlytics, Performance, Options, Signal, Find, Sessions, Bookmarks, Trash, Collections, the Export/Edit dialogs, and more) now shares one hover treatment — a red accent with a subtle background highlight — instead of some turning red, some gray, and only a few showing the background lift. Dismiss controls now read consistently no matter which panel you're in.

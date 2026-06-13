@@ -164,6 +164,10 @@ export function getSignalScriptPartC(): string {
         if (e.data.type === 'openSignalPanel') {
             openSignalPanel();
             if (e.data.tab) setSignalTab(e.data.tab);
+            // Deep-link (saropaLogCapture.openSignal) carries the target fingerprint to scroll to.
+            if (e.data.focusFingerprint && typeof window.focusSignalFingerprint === 'function') {
+                window.focusSignalFingerprint(e.data.focusFingerprint);
+            }
             return;
         }
         if (e.data.type === 'currentLogChanged') {
