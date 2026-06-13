@@ -57,6 +57,10 @@ export function getSqlQueryHistoryPanelStyles(): string {
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 
+/* The × is a dismiss control, so it takes the shared red-accent close treatment; the action
+   buttons keep the neutral foreground-on-hover from the rule above. */
+.sql-query-history-close:hover { color: var(--vscode-errorForeground, #f44); }
+
 .sql-query-history-drift-status {
     padding: 6px 12px;
     font-size: 11px;
@@ -64,7 +68,9 @@ export function getSqlQueryHistoryPanelStyles(): string {
     color: var(--vscode-descriptionForeground);
     border-bottom: 1px solid var(--vscode-panel-border);
     background: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.08));
-    word-break: break-all;
+    /* anywhere (not break-all): lets the long server URL wrap when it must, WITHOUT chopping
+       ordinary words mid-character — break-all split "reachable" into "reac"/"hable" at narrow widths. */
+    overflow-wrap: anywhere;
 }
 
 .sql-query-history-toolbar {
