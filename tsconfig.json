@@ -13,5 +13,15 @@
 		"noImplicitReturns": true,
 		"noFallthroughCasesInSwitch": true,
 		"noUnusedParameters": true
-	}
+	},
+	/* Top-level test/ holds standalone harness tooling (test/visual, Playwright) that imports src via
+	   esbuild and lives outside rootDir "src"; the real extension tests are under src/test. Exclude
+	   build artifacts and the harness so a bare `tsc` doesn't fail rootDir or scan generated output. */
+	"exclude": [
+		"node_modules",
+		"out",
+		"dist",
+		".vscode-test",
+		"test"
+	]
 }
