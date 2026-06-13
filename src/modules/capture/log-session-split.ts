@@ -45,9 +45,12 @@ export async function performFileSplit(
     const splitMarker = `\n=== SPLIT: ${formatSplitReason(reason)} — Continued in part ${nextPart + 1} ===\n`;
     ctx.writeStream.write(splitMarker);
 
-    await new Promise<void>((resolve, reject) => {
+    // Resolve on end OR error: the caller (LogSession) holds a permanent 'error' listener on this
+    // stream that already logs the failure, and a flush error on the closing part must not abort the
+    // split — we still want to open the next part rather than reject and strand a dead writeStream.
+    await new Promise<void>((resolve) => {
+        ctx.writeStream.once('error', () => resolve());
         ctx.writeStream.end(() => resolve());
-        ctx.writeStream.on('error', reject);
     });
 
     const newFileName = getPartFileName(ctx.baseFileName, nextPart);

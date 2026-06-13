@@ -40,7 +40,10 @@ export function getCollectionsPanelStyles(): string {
     padding: 2px 4px;
     font-size: 14px;
 }
-.collections-panel-close:hover { color: var(--vscode-errorForeground); }
+.collections-panel-close:hover {
+    color: var(--vscode-errorForeground, #f44);
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
 
 .collections-panel-content {
     flex: 1;

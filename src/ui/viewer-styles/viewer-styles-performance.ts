@@ -64,7 +64,10 @@ export function getPerformancePanelStyles(): string {
     padding: 0 4px;
 }
 
-.pp-close:hover { color: var(--vscode-errorForeground, #f44); }
+.pp-close:hover {
+    color: var(--vscode-errorForeground, #f44);
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
 
 /* --- Tabs --- */
 .pp-tabs {
