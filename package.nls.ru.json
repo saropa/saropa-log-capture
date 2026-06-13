@@ -51,6 +51,8 @@
   "command.openLogFile.title": "Saropa Log Capture: Открыть файл журнала…",
   "command.openLogFromUrl.title": "Saropa Log Capture: Открыть журнал из URL…",
   "command.openSqlQueryHistory.title": "Saropa Log Capture: Open SQL Query History",
+  "command.openSignal.title": "Saropa Log Capture: Open Signal",
+  "command.openSqlHistoryForFingerprint.title": "Saropa Log Capture: Open SQL Query History for Query",
   "command.openTailedFile.title": "Saropa Log Capture: Открыть файл в режиме tail",
   "command.openWalkthrough.title": "Saropa Log Capture: Начало работы",
   "command.pause.title": "Saropa Log Capture: Пауза / Продолжить",

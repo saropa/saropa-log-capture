@@ -69,7 +69,9 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.openQualityReport` | %command.openQualityReport.title% |  |
 | `saropaLogCapture.openSession` | %command.openSession.title% |  |
 | `saropaLogCapture.openSessionGroup` | Saropa Log Capture: Open Session Group (Merged) |  |
+| `saropaLogCapture.openSignal` | %command.openSignal.title% |  |
 | `saropaLogCapture.openSignalsInTab` | %command.openSignalsInTab.title% |  |
+| `saropaLogCapture.openSqlHistoryForFingerprint` | %command.openSqlHistoryForFingerprint.title% |  |
 | `saropaLogCapture.openSqlQueryHistory` | %command.openSqlQueryHistory.title% |  |
 | `saropaLogCapture.openTailedFile` | %command.openTailedFile.title% |  |
 | `saropaLogCapture.openWalkthrough` | %command.openWalkthrough.title% |  |
@@ -107,4 +109,4 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.trashSession` | %command.trashSession.title% |  |
 | `saropaLogCapture.ungroupSession` | Saropa Log Capture: Ungroup Session |  |
 
-**Total:** 100 commands.
+**Total:** 102 commands.

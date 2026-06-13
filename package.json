@@ -237,6 +237,16 @@
         "title": "%command.openSqlQueryHistory.title%"
       },
       {
+        "command": "saropaLogCapture.openSignal",
+        "icon": "$(pulse)",
+        "title": "%command.openSignal.title%"
+      },
+      {
+        "command": "saropaLogCapture.openSqlHistoryForFingerprint",
+        "icon": "$(database)",
+        "title": "%command.openSqlHistoryForFingerprint.title%"
+      },
+      {
         "command": "saropaLogCapture.showRelatedQueries",
         "icon": "$(database)",
         "title": "%command.showRelatedQueries.title%"
@@ -2795,6 +2805,16 @@
       }
     ],
     "menus": {
+      "commandPalette": [
+        {
+          "command": "saropaLogCapture.openSignal",
+          "when": "false"
+        },
+        {
+          "command": "saropaLogCapture.openSqlHistoryForFingerprint",
+          "when": "false"
+        }
+      ],
       "view/title": [
         {
           "command": "saropaLogCapture.toggleSearchOverlay",
