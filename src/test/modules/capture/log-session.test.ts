@@ -70,6 +70,27 @@ suite('LogSession queue safety', () => {
     assert.ok(!/\(x\d+\)/.test(body), 'capture side must not stamp an (xN) suffix');
   });
 
+  test('a write-stream error is caught and the stream dropped, not thrown (crash safety)', async () => {
+    /* A Node stream that emits 'error' with no listener throws an uncaught exception that kills the
+       extension host (disk full, revoked permission, file deleted mid-capture). The permanent
+       'error' handler must catch it, log, and null the stream so the session degrades instead of
+       crashing — the file on disk keeps everything written before the failure (append-only). */
+    const tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'saropa-log-err-'));
+    const session = new LogSession(makeSessionContext(tmpRoot), makeSessionConfig('reports', 1000), () => {});
+    await session.start();
+
+    const internal = session as unknown as { writeStream?: { emit(ev: string, e: Error): boolean } };
+    assert.ok(internal.writeStream, 'stream open after start');
+    // With no listener this emit would throw synchronously; the handler must absorb it.
+    assert.doesNotThrow(() => internal.writeStream!.emit('error', new Error('ENOSPC: simulated disk full')));
+
+    const dropped = session as unknown as { writeStream?: unknown };
+    assert.strictEqual(dropped.writeStream, undefined, 'stream dropped after error so appends no-op');
+    // Subsequent activity must stay safe: appends are ignored and stop() still resolves cleanly.
+    session.appendLine('after-error', 'console', new Date());
+    await session.stop();
+  });
+
   test('maxLines rotates parts and preserves newest lines', async () => {
     const tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'saropa-log-split-'));
     const session = new LogSession(makeSessionContext(tmpRoot), makeSessionConfig('reports', 3), () => {});
