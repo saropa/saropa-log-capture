@@ -18,6 +18,35 @@ export function getSqlQueryHistoryDashboardScript(): string {
     var sqlHistoryDriftDbIssues = null;
     /* DB_18 Phase 3: last Saropa Lints Drift-rule result { violations, suggestEnablePack, tier }. */
     var sqlHistoryDriftLint = null;
+    /* R5 (suite deep-link OUT): which sibling commands the host says are live. Defaults all-off so
+       no button renders until the host confirms the target command exists — never a dead action. */
+    var suiteDeepLink = { explainSql: false, openTable: false, explainRule: false, enableRule: false };
+    /* Ask the host which sibling deep-link buttons are safe to show. Called on each panel open. */
+    function maybeRequestSuiteDeepLinks() {
+        if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
+            vscodeApi.postMessage({ type: 'requestSuiteDeepLinkAvailability' });
+        }
+    }
+    if (typeof window !== 'undefined') {
+        window.applySuiteDeepLinkAvailability = function(msg) {
+            suiteDeepLink = {
+                explainSql: !!(msg && msg.explainSql), openTable: !!(msg && msg.openTable),
+                explainRule: !!(msg && msg.explainRule), enableRule: !!(msg && msg.enableRule),
+            };
+            /* Re-render the enrichment sections so newly-available buttons appear without a reopen. */
+            renderSqlHistoryIssuesSection();
+            renderSqlHistoryLintSection();
+            if (typeof renderSqlQueryHistoryPanel === 'function') renderSqlQueryHistoryPanel();
+        };
+        /* Own message listener, kept out of the over-budget central message switch. */
+        window.addEventListener('message', function(e) {
+            if (e.data && e.data.type === 'suiteDeepLinkAvailability') window.applySuiteDeepLinkAvailability(e.data);
+        });
+    }
+    /* Source attribution chip so a row reads as the sibling tool's finding, not a Log Capture one. */
+    function sqlHistorySourceBadge(labelKey) {
+        return '<span class="sql-qh-src-badge">' + escapeHtml(vt(labelKey)) + '</span>';
+    }
     /* Number of distinct logs feeding the panel: cross-log contributors plus the active log when it
        has live rows. Scoped to just the active log when the "Current session only" filter is on. */
     function computeSqlHistoryLogCount() {
@@ -122,6 +151,7 @@ export function getSqlQueryHistoryDashboardScript(): string {
                 + '" title="' + escapeHtml(vt('viewer.sqlHistory.issues.openFix')) + '"><span class="codicon codicon-link-external"></span></button>'
             : '';
         return '<div class="sql-qh-issue ' + sevClass + '">'
+            + sqlHistorySourceBadge('viewer.sqlHistory.source.advisor')
             + (loc ? '<span class="sql-qh-issue-loc">' + escapeHtml(loc) + '</span>' : '')
             + '<span class="sql-qh-issue-msg">' + escapeHtml(issue.message) + '</span>' + fixBtn + '</div>';
     }
@@ -164,8 +194,16 @@ export function getSqlQueryHistoryDashboardScript(): string {
     function sqlHistoryLintRow(v) {
         var sev = 'sql-qh-issue-' + (v.severity === 'error' || v.severity === 'warning' ? 'warning' : 'info');
         var loc = v.file ? (v.line ? (v.file + ':' + v.line) : v.file) : '';
-        return '<div class="sql-qh-issue ' + sev + '"><span class="sql-qh-issue-loc">' + escapeHtml(v.rule)
-            + '</span><span class="sql-qh-issue-msg" title="' + escapeHtml(loc) + '">' + escapeHtml(v.message) + '</span></div>';
+        /* R5: "Show rule" jumps into Saropa Lints' rule explanation. Shown only when that command is
+           live (suiteDeepLink.explainRule) AND the row names a rule — otherwise it would be a dead action. */
+        var ruleBtn = (suiteDeepLink.explainRule && v.rule)
+            ? '<button type="button" class="sql-qh-action-btn sql-qh-rule-explain" data-rule="' + escapeHtml(v.rule)
+                + '" title="' + escapeHtml(vt('viewer.sqlHistory.lint.showRuleTitle')) + '"><span class="codicon codicon-link-external"></span></button>'
+            : '';
+        return '<div class="sql-qh-issue ' + sev + '">'
+            + sqlHistorySourceBadge('viewer.sqlHistory.source.lints')
+            + '<span class="sql-qh-issue-loc">' + escapeHtml(v.rule)
+            + '</span><span class="sql-qh-issue-msg" title="' + escapeHtml(loc) + '">' + escapeHtml(v.message) + '</span>' + ruleBtn + '</div>';
     }
     /* Render the static-code (Saropa Lints) section: Drift-rule violations and/or the "enable the Drift
        pack" advice. Hidden when there is neither. The enable button posts enableDriftLintPack. */
