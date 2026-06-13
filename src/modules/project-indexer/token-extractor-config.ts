@@ -2,38 +2,43 @@ import { addNormalizedToken, collectTokens, MAX_TOKENS_PER_FILE, normalizeQuoted
 
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
-function walkJsonTokens(value: JsonValue, pathSegments: string[], into: Set<string>, cap: number): void {
-    if (into.size >= cap) { return; }
-    if (Array.isArray(value)) {
-        for (const child of value) {
-            if (into.size >= cap) { return; }
-            walkJsonTokens(child, pathSegments, into, cap);
-        }
-        return;
-    }
-    if (value && typeof value === 'object') {
-        for (const [key, child] of Object.entries(value)) {
-            if (into.size >= cap) { return; }
-            collectTokens(key, into, cap);
-            const nextPath = [...pathSegments, key];
-            addNormalizedToken(nextPath.join('.'), into, cap);
-            walkJsonTokens(child, nextPath, into, cap);
-        }
-        return;
-    }
-    if (typeof value === 'string') {
-        collectTokens(value, into, cap);
-    }
-}
+/** Max JSON nesting walked. The token cap bounds breadth; this bounds DEPTH so a pathologically
+ *  nested document can't overflow the recursion stack. 64 is far deeper than any real config. */
+const MAX_JSON_DEPTH = 64;
 
 /** Extract tokens from JSON: keys, key paths, and string values. */
 export function extractTokensFromJson(content: string): string[] {
     const set = new Set<string>();
+    const cap = MAX_TOKENS_PER_FILE;
+    // Closure over `set`/`cap` keeps the recursive walker to 3 params (value, path, depth) and bounds
+    // recursion depth so a pathologically nested document can't overflow the stack.
+    const walk = (value: JsonValue, pathSegments: string[], depth: number): void => {
+        if (set.size >= cap || depth > MAX_JSON_DEPTH) { return; }
+        if (Array.isArray(value)) {
+            for (const child of value) {
+                if (set.size >= cap) { return; }
+                walk(child, pathSegments, depth + 1);
+            }
+            return;
+        }
+        if (value && typeof value === 'object') {
+            for (const [key, child] of Object.entries(value)) {
+                if (set.size >= cap) { return; }
+                collectTokens(key, set, cap);
+                const nextPath = [...pathSegments, key];
+                addNormalizedToken(nextPath.join('.'), set, cap);
+                walk(child, nextPath, depth + 1);
+            }
+            return;
+        }
+        if (typeof value === 'string') {
+            collectTokens(value, set, cap);
+        }
+    };
     try {
-        const parsed = JSON.parse(content) as JsonValue;
-        walkJsonTokens(parsed, [], set, MAX_TOKENS_PER_FILE);
+        walk(JSON.parse(content) as JsonValue, [], 0);
     } catch {
-        collectTokens(content, set, MAX_TOKENS_PER_FILE);
+        collectTokens(content, set, cap);
     }
     return [...set];
 }
