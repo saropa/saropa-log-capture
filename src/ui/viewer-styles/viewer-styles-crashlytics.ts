@@ -169,7 +169,9 @@ export function getCrashlyticsPanelStyles(): string {
 
 .cp-console:hover { text-decoration: underline; }
 
-.cp-empty { padding: 16px 12px; opacity: 0.7; font-style: italic; text-align: center; font-size: 12px; }
+/* Empty state: centered muted regular text (not italic) to match VS Code's own "No results" surfaces;
+   roomier top padding so it reads as an intentional empty state, not stranded text under the filters. */
+.cp-empty { padding: 28px 16px; color: var(--vscode-descriptionForeground); text-align: center; font-size: 12px; line-height: 1.5; }
 .cp-error { color: var(--vscode-errorForeground); font-size: 11px; padding: 6px 12px; }
 
 /* --- Crash detail (loaded into issue card) --- */

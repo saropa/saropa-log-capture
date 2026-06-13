@@ -65,28 +65,46 @@ async function queryMetricSet(
     // Crash query also asks for the distinct-user rate (userPerceivedCrashRate) so the panel can show
     // crash-free USERS alongside crash-free sessions — both come back in one call.
     const metrics = metricSet === 'crashRateMetricSet' ? ['crashRate', 'userPerceivedCrashRate'] : ['anrRate'];
+    // The API rejects (400) any timelineSpec.endTime later than the metric set's freshness, which lags
+    // "today" by 1-2 days — so query up to the descriptor's reported freshness, not today(). Without
+    // this clamp the crash-free panel comes back empty whenever the latest day isn't aggregated yet.
+    const end = await freshnessEnd(packageName, metricSet, token);
     const body = JSON.stringify({
-        timelineSpec: { aggregationPeriod: 'DAILY', startTime: daysAgo(7), endTime: today() },
+        timelineSpec: { aggregationPeriod: 'DAILY', startTime: minusDays(end, 7), endTime: end },
         metrics,
         dimensions: [],
     });
     return fetchJson(url, token, body) as Promise<VitalsQueryResponse | undefined>;
 }
 
-function daysAgo(n: number): { year: number; month: number; day: number } {
+type Ymd = { year: number; month: number; day: number };
+
+/** DAILY freshness end date from the metric-set descriptor; falls back to two days ago if unavailable. */
+async function freshnessEnd(packageName: string, metricSet: string, token: string): Promise<Ymd> {
+    const json = await fetchJson(`${apiBase}/apps/${packageName}/${metricSet}`, token);
+    const freshnesses = (json?.freshnessInfo as { freshnesses?: { aggregationPeriod?: string; latestEndTime?: Ymd }[] } | undefined)?.freshnesses ?? [];
+    const daily = freshnesses.find((f) => f.aggregationPeriod === 'DAILY') ?? freshnesses[0];
+    return daily?.latestEndTime ?? daysAgo(2);
+}
+
+function daysAgo(n: number): Ymd {
     const d = new Date(Date.now() - n * 86400000);
     return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() };
 }
 
-function today(): { year: number; month: number; day: number } { return daysAgo(0); }
+function minusDays(end: Ymd, n: number): Ymd {
+    const d = new Date(Date.UTC(end.year, end.month - 1, end.day) - n * 86400000);
+    return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() };
+}
 
-function fetchJson(url: string, token: string, body: string): Promise<Record<string, unknown> | undefined> {
+function fetchJson(url: string, token: string, body?: string): Promise<Record<string, unknown> | undefined> {
     return new Promise((resolve) => {
         const https = require('https') as typeof import('https');
         const parsed = new URL(url);
+        // POST a query body when one is given; otherwise GET (used to read a metric-set descriptor).
         const req = https.request({
             hostname: parsed.hostname, path: parsed.pathname + parsed.search,
-            method: 'POST', timeout: apiTimeout,
+            method: body === undefined ? 'GET' : 'POST', timeout: apiTimeout,
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         }, (res) => {
             let data = '';
@@ -110,7 +128,7 @@ function fetchJson(url: string, token: string, body: string): Promise<Record<str
             resolve(undefined);
         });
         req.on('timeout', () => { req.destroy(); lastVitalsDiagnostic = { step: 'api', errorType: 'timeout', checkedAt: Date.now(), message: 'Vitals request timed out' }; resolve(undefined); });
-        req.write(body);
+        if (body !== undefined) { req.write(body); }
         req.end();
     });
 }
