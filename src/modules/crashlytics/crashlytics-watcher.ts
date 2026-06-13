@@ -24,6 +24,11 @@ const revealViewerCommand = 'saropaLogCapture.logViewer.focus';
 export class CrashlyticsWatcher implements vscode.Disposable {
     private timer: ReturnType<typeof setInterval> | undefined;
     private status: vscode.StatusBarItem | undefined;
+    /** Single-flight guard: a scan slower than the interval must not overlap the next tick. */
+    private scanning = false;
+    /** Consecutive failed scans, and the timestamp before which scans are skipped (backoff). */
+    private consecutiveFailures = 0;
+    private backoffUntil = 0;
 
     constructor(private readonly context: vscode.ExtensionContext) {}
 
@@ -41,7 +46,9 @@ export class CrashlyticsWatcher implements vscode.Disposable {
     private intervalMs(): number {
         const cfg = vscode.workspace.getConfiguration('saropaLogCapture.firebase');
         if (!cfg.get<boolean>('notifyNewIssues', false)) { return 0; }
-        return cfg.get<number>('refreshInterval', 300) * 1000;
+        // Floor at 60s: the manifest allows refreshInterval down to 0 (disable), so a small positive
+        // value (1-59) would otherwise hammer the API with a full token+fetch+snapshot every few seconds.
+        return Math.max(60, cfg.get<number>('refreshInterval', 300)) * 1000;
     }
 
     private reschedule(): void {
@@ -53,19 +60,42 @@ export class CrashlyticsWatcher implements vscode.Disposable {
     /** One scan: refresh (records a snapshot), diff against history, alert on genuinely new ids. */
     private async scan(): Promise<void> {
         if (this.intervalMs() === 0) { this.stop(); return; }
+        // Skip while a prior scan is still running (single-flight) or while backing off after failures.
+        if (this.scanning || Date.now() < this.backoffUntil) { return; }
+        this.scanning = true;
         try {
-            await getFirebaseContext([]);
-            const history = await readIssueHistory();
-            const already = this.context.workspaceState.get<string[]>(alertedKey, []);
-            const { toAlert, nextAlerted } = selectAlerts(history, already);
-            await this.context.workspaceState.update(alertedKey, nextAlerted);
-            // Archived issues are "don't tell me again" — skip them from the alert count.
-            const archived = new Set(await readArchivedIds());
-            const visible = toAlert.filter(id => !archived.has(id));
-            if (visible.length > 0) { this.notify(visible.length); }
+            const ctx = await getFirebaseContext([]);
+            const status = ctx.diagnostics?.httpStatus ?? 0;
+            // Back off on rate-limit / server error instead of re-hitting at the fixed interval, which
+            // would only extend a 429. Reset the streak on a clean fetch.
+            if (status === 429 || status >= 500) { this.recordFailure(); return; }
+            this.consecutiveFailures = 0;
+            this.backoffUntil = 0;
+            await this.processAlerts();
         } catch (err) {
+            this.recordFailure();
             logCrashlytics('error', `Watcher scan failed: ${err instanceof Error ? err.message : String(err)}`);
+        } finally {
+            this.scanning = false;
         }
+    }
+
+    /** Bump the failure streak and push the next allowed scan out (exponential-ish, capped at 5x). */
+    private recordFailure(): void {
+        this.consecutiveFailures++;
+        this.backoffUntil = Date.now() + this.intervalMs() * Math.min(this.consecutiveFailures, 5);
+    }
+
+    /** Diff the snapshot history against already-alerted ids and toast genuinely new, non-archived ids. */
+    private async processAlerts(): Promise<void> {
+        const history = await readIssueHistory();
+        const already = this.context.workspaceState.get<string[]>(alertedKey, []);
+        const { toAlert, nextAlerted } = selectAlerts(history, already);
+        await this.context.workspaceState.update(alertedKey, nextAlerted);
+        // Archived issues are "don't tell me again" — skip them from the alert count.
+        const archived = new Set(await readArchivedIds());
+        const visible = toAlert.filter(id => !archived.has(id));
+        if (visible.length > 0) { this.notify(visible.length); }
     }
 
     private notify(count: number): void {
