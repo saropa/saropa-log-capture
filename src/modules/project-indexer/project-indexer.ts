@@ -25,6 +25,8 @@ export type { DocIndexEntry, ReportIndexEntry, IndexEntry, SourceIndexFile, Mani
 
 const INDEX_VERSION = 1;
 const BATCH_SIZE = 10;
+/** Skip indexing a doc larger than this — tokenizing a multi-MB dump buffers it all into memory. */
+const MAX_DOC_INDEX_BYTES = 2 * 1024 * 1024;
 
 export class ProjectIndexer {
     private manifest: IndexManifest | undefined;
@@ -210,6 +212,9 @@ export class ProjectIndexer {
     private async indexDocFile(uri: vscode.Uri, existingByPath: Map<string, IndexEntry>, relativePath: string): Promise<DocIndexEntry | null> {
         try {
             const stat = await vscode.workspace.fs.stat(uri);
+            // Skip oversized docs before reading: stat.size is known here, so a huge matched file
+            // (a big .json/.sql/.txt) is never buffered into memory just to tokenize it.
+            if (stat.size > MAX_DOC_INDEX_BYTES) { return null; }
             const existing = existingByPath.get(relativePath) as DocIndexEntry | undefined;
             if (existing && existing.mtime === stat.mtime && existing.sizeBytes === stat.size) {
                 return existing;

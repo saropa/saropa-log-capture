@@ -55,12 +55,35 @@ export async function createBugReportFile(params: CreateReportFileParams): Promi
     const folderUri = getReportFolderUri(vscode.workspace.workspaceFolders?.[0]);
 
     await vscode.workspace.fs.createDirectory(folderUri);
-    const fileUri = vscode.Uri.joinPath(folderUri, filename);
+    // The filename is second-resolution, so two reports in the same second with the same keywords
+    // would collide and the second silently overwrite the first. Resolve a non-colliding name instead.
+    const fileUri = await uniqueReportUri(folderUri, filename);
     await vscode.workspace.fs.writeFile(fileUri, Buffer.from(markdown, 'utf-8'));
 
     const doc = await vscode.workspace.openTextDocument(fileUri);
     await vscode.window.showTextDocument(doc);
-    vscode.window.showInformationMessage(t('msg.reportFileCreated', filename));
+    const finalName = fileUri.path.split('/').pop() ?? filename;
+    vscode.window.showInformationMessage(t('msg.reportFileCreated', finalName));
+}
+
+/** True if a file already exists at `uri`. */
+async function reportFileExists(uri: vscode.Uri): Promise<boolean> {
+    try { await vscode.workspace.fs.stat(uri); return true; } catch { return false; }
+}
+
+/** Resolve a non-colliding report URI by appending `_2`, `_3`, … to the stem when needed. */
+async function uniqueReportUri(folderUri: vscode.Uri, filename: string): Promise<vscode.Uri> {
+    const dot = filename.lastIndexOf('.');
+    const stem = dot > 0 ? filename.slice(0, dot) : filename;
+    const ext = dot > 0 ? filename.slice(dot) : '';
+    let candidate = vscode.Uri.joinPath(folderUri, filename);
+    let n = 2;
+    // Sequential by nature: each candidate depends on whether the previous one was taken.
+    while (await reportFileExists(candidate)) {
+        candidate = vscode.Uri.joinPath(folderUri, `${stem}_${n}${ext}`);
+        n++;
+    }
+    return candidate;
 }
 
 function buildFilename(keywords: readonly string[]): string {

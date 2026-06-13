@@ -32,6 +32,7 @@ cspell:disable
 
 ### Added
 
+- **Excluded lines now tell you which pattern hid them:** When "App Only" is off (capture everything) and a Debug Console line silently disappears, an exclusion pattern is the only thing inside the extension that could have dropped it without a trace. The first time each `saropaLogCapture.exclusions` pattern hides a line, the **Saropa Log Capture** output channel now names the pattern and how to recover those lines — so a "missing line" is diagnosable instead of looking like broken capture (plan 102).
 - **Saropa suite integration — shared diagnostics (groundwork):** Log Capture now speaks the cross-tool "Saropa Diagnostic Envelope" so a slow query or crash it sees at runtime can line up with the live database state (Drift Advisor) and the static rule that governs it (Saropa Lints). On session end it writes its current Drift/SQL and crash signals to `.saropa/diagnostics/log-capture.json` (stamped with the session's commit) for the sibling extensions to read, and it can read their `advisor.json` / `lints.json` mirrors back. Parsing is tolerant — an absent, truncated, or newer-schema sibling file is ignored rather than erroring.
 - **Deep-link in:** Two stable commands let a sibling tool jump straight to the right place in Log Capture: `saropaLogCapture.openSignal` (reveals and flashes a specific signal) and `saropaLogCapture.openSqlHistoryForFingerprint` (opens SQL Query History on a specific query, by literal SQL or fingerprint). Both are integration entry points, hidden from the command palette.
 - **Crash-family signatures:** Parsed crash families (StateError on an empty list, RangeError index, the null-check operator, late-init, concurrent modification, cast errors, ANR, out-of-memory, and more) now carry a stable signature so Saropa Lints can map them to the rule that would have prevented them.
@@ -69,6 +70,9 @@ cspell:disable
 - **HTTP 404-style hints score correctly:** a hint keyed `404` or `404:` (no trailing space) was scored medium instead of the intended low confidence for 4xx codes. The match no longer requires a trailing space.
 - **Error correlations no longer merge two unrelated errors:** the dedup treated two correlations as the same when they merely shared a nearby secondary event (e.g. the same HTTP failure linked to two different errors), so one could be dropped or replaced by the wrong one. It now compares the actual anchor error.
 - **AI activity de-duplication reads the real message id:** streaming-message de-duplication scanned the raw line text for an id, which could match a different message's id embedded in a nested payload. It now reads the structured `message.id`.
+- **Search totals refresh when log files change:** the search index was reused for up to a minute based only on its age, so a file added, removed, or edited in that window left the total line/size counts stale. The index now also checks the tracked-file set and each file's timestamp/size and rebuilds when anything actually changed.
+- **Project indexing skips oversized files and survives deeply-nested config:** indexing a matched doc no longer reads a multi-megabyte file fully into memory (files past ~2 MB are skipped), and a pathologically deep JSON/config file no longer risks a stack overflow (nesting is walked to a bounded depth).
+- **Two bug reports created in the same second no longer overwrite each other:** report filenames are second-resolution, so a rapid second report with the same keywords replaced the first. A numeric suffix is now added when the name is already taken.
 
 ### Security
 
