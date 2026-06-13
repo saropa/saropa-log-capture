@@ -223,12 +223,88 @@ const qualityLines = () => `
   <div style="padding:2px 4px"><span class="quality-badge qb-high">88%</span> at MessageBus.dispatch (message_bus.dart:24)</div>
 </div>`;
 
+const optionsPanel = () => `
+<div class="options-panel visible" style="height:100vh">
+  <div class="options-header"><span>Options</span><button class="options-close">${ICON.close}</button></div>
+  <div class="options-search-wrapper"><input id="options-search" placeholder="Search settings…" /><button class="options-search-clear visible">${ICON.close}</button></div>
+  <div class="options-content">
+    <div class="options-section">
+      <div class="options-section-title">Display</div>
+      <label class="options-row"><input type="checkbox" checked /><span>Wrap long lines</span></label>
+      <label class="options-row"><input type="checkbox" /><span>Show timestamps</span></label>
+      <div class="options-row"><span>Row density</span><select><option>Comfortable</option></select></div>
+      <div class="options-hint">Adjusts spacing between log lines</div>
+    </div>
+    <div class="options-section">
+      <div class="options-section-title">Log Sources</div>
+      <fieldset class="tier-radio-group"><legend>Flutter <span class="tier-hint">app + framework</span></legend>
+        <label><input type="radio" name="t" checked />All</label>
+        <label><input type="radio" name="t" />App only</label>
+      </fieldset>
+      <fieldset class="tier-radio-group tier-radio-group-spaced"><legend>Device <span class="tier-hint">OS + platform</span></legend>
+        <label><input type="radio" name="d" checked />All</label>
+        <label><input type="radio" name="d" />None</label>
+      </fieldset>
+    </div>
+    <div class="options-section">
+      <div class="options-section-title">Actions</div>
+      <button class="options-action-btn">Reset to default</button>
+      <button class="options-integrations-btn">${ICON.refresh} Integrations…</button>
+    </div>
+  </div>
+</div>`;
+
+const performanceDbTab = () => `
+<div class="performance-panel visible" style="height:100vh">
+  <div class="performance-panel-header"><span>Performance</span><div class="performance-panel-actions"><button class="pp-action">${ICON.refresh}</button><button class="pp-close">${ICON.close}</button></div></div>
+  <div class="pp-tabs"><button class="pp-tab">Trends</button><button class="pp-tab">Session</button><button class="pp-tab active">Database</button><button class="pp-tab">Error rate</button></div>
+  <div class="performance-panel-content">
+    <div class="pp-db-view">
+      <div class="pp-db-drift-row"><span class="pp-db-drift-title">Schema drift detected.</span> The running database is 3 migrations behind the bundled schema. <button class="pp-db-drift-open">Open</button></div>
+      <div class="pp-db-time-filter-bar"><span>Showing 14:02–14:09 (7 min)</span><button class="pp-db-clear-time">Clear</button></div>
+      <div class="pp-db-summary">128 distinct queries · 4,512 executions · slowest 842 ms</div>
+      <div class="pp-db-timeline">
+        <div class="pp-db-timeline-label">Query volume <span class="pp-db-timeline-hint">(drag to filter)</span></div>
+        <div class="pp-db-timeline-track"><div class="pp-db-bars">
+          ${[30, 55, 40, 80, 62, 95, 48, 70, 35, 58, 42, 88].map((h) => `<div class="pp-db-bar-wrap"><div class="pp-db-bar" style="height:${h}%"></div></div>`).join('')}
+        </div></div>
+      </div>
+      <div class="pp-db-table-title">Slowest queries</div>
+      <table class="pp-db-table"><thead><tr><th>Query</th><th>Count</th><th>Max</th></tr></thead><tbody>
+        <tr><td>SELECT * FROM contacts WHERE org_id = ?</td><td>1,204</td><td>312</td></tr>
+        <tr><td>INSERT INTO events (type, payload, ts) VALUES (?, ?, ?)</td><td>455</td><td>842</td></tr>
+        <tr><td>UPDATE sync_state SET ts = ? WHERE k = ?</td><td>742</td><td>88</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</div>`;
+
+// Inline log-content surface: renders at the user-adjustable --log-font-size, so its drilldown
+// detail intentionally uses relative em sizing. Body wrapper mimics a log row.
+const sqlDrilldown = () => `
+<div style="padding:10px 12px;font-family:var(--vscode-editor-font-family);font-size:var(--log-font-size,13px);color:var(--vscode-foreground)">
+  <div>SQL fingerprint repeated 47× &nbsp;<button class="sql-repeat-drilldown-toggle">hide samples</button></div>
+  <div class="sql-repeat-drilldown-detail">
+    <div class="sql-repeat-drilldown-meta"><span class="sql-repeat-drilldown-meta-label">First:</span>14:02:11<span class="sql-repeat-drilldown-meta-label" style="margin-left:10px">Last:</span>14:09:48</div>
+    <div class="sql-repeat-drilldown-fp">fp: a3f9c2e1b7d4</div>
+    <div class="sql-repeat-drilldown-snippet">SELECT * FROM contacts WHERE org_id = ? AND archived = 0 ORDER BY updated_at DESC</div>
+    <div class="sql-repeat-drilldown-variant-title">Variants (3)</div>
+    <div class="sql-repeat-drilldown-variant"><span class="sql-repeat-drilldown-variant-count">22×</span>org_id = 5</div>
+    <div class="sql-repeat-drilldown-variant"><span class="sql-repeat-drilldown-variant-count">15×</span>org_id = 12</div>
+    <div class="sql-repeat-drilldown-more">…and 1 more variant</div>
+    <div class="sql-repeat-drilldown-actions"><button class="sql-repeat-static-sources">Find in source</button></div>
+  </div>
+</div>`;
+
 export const SURFACES = [
     { name: 'sql-history', html: sqlPanel(false) },
     { name: 'sql-history-loading', html: sqlPanel(true) },
     { name: 'crashlytics', html: crashlyticsPanel(false) },
     { name: 'crashlytics-empty', html: crashlyticsPanel(true) },
     { name: 'performance', html: performancePanel() },
+    { name: 'performance-db', html: performanceDbTab() },
+    { name: 'options', html: optionsPanel() },
+    { name: 'sql-drilldown', html: sqlDrilldown() },
     { name: 'signals', html: signalPanel() },
     { name: 'quality-badges', html: qualityLines() },
 ];
