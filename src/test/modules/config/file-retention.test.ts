@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { selectFilesToTrash, expandGroupsForTrash } from '../../../modules/config/file-retention';
+import { selectFilesToTrash, expandGroupsForTrash, buildMetaByName } from '../../../modules/config/file-retention';
 import type { SessionMeta } from '../../../modules/session/session-metadata';
 
 suite('File retention', () => {
@@ -116,6 +116,51 @@ suite('File retention', () => {
             // c is ungrouped \u2192 passes through. Result: {b1, b2, c}.
             const out = expandGroupsForTrash(['a1.log', 'b1.log', 'c.log'], meta, 'open');
             assert.deepStrictEqual([...out].sort(), ['b1.log', 'b2.log', 'c.log']);
+        });
+    });
+
+    suite('buildMetaByName (key-space re-keying)', () => {
+
+        // Regression for the bug where group retention silently never fired: candidate names are
+        // log-dir-relative (e.g. "a.log", "20260613/b.log") but the metadata map is keyed
+        // workspace-relative (e.g. "reports/a.log"), so the direct metaMap.get(name) always missed.
+        test('re-keys workspace-relative metadata to log-dir-relative names so groups resolve', () => {
+            const fileStats = [
+                { name: 'a.log', mtime: 1, relKey: 'reports/a.log' },
+                { name: '20260613/b.log', mtime: 2, relKey: 'reports/20260613/b.log' },
+            ];
+            const metaMap = new Map<string, SessionMeta>([
+                ['reports/a.log', { groupId: 'g1' }],
+                ['reports/20260613/b.log', { groupId: 'g1' }],
+            ]);
+            const byName = buildMetaByName(fileStats, metaMap);
+            // Lookup by the candidate NAME now succeeds (it returned undefined before the fix).
+            assert.strictEqual(byName.get('a.log')?.groupId, 'g1');
+            assert.strictEqual(byName.get('20260613/b.log')?.groupId, 'g1');
+            // And a single candidate now expands to every group member, in log-dir-relative names.
+            const out = expandGroupsForTrash(['a.log'], byName, undefined);
+            assert.deepStrictEqual([...out].sort(), ['20260613/b.log', 'a.log']);
+        });
+
+        test('the active group is skipped once metadata is correctly keyed', () => {
+            const fileStats = [
+                { name: 'a.log', mtime: 1, relKey: 'reports/a.log' },
+                { name: 'c.log', mtime: 2, relKey: 'reports/c.log' },
+            ];
+            const metaMap = new Map<string, SessionMeta>([
+                ['reports/a.log', { groupId: 'g1' }],
+                ['reports/c.log', {}],
+            ]);
+            const byName = buildMetaByName(fileStats, metaMap);
+            // 'a.log' belongs to the active group g1 → skipped; only the ungrouped 'c.log' is trashed.
+            const out = expandGroupsForTrash(['a.log', 'c.log'], byName, 'g1');
+            assert.deepStrictEqual([...out].sort(), ['c.log']);
+        });
+
+        test('omits files with no metadata entry (untracked / already trashed)', () => {
+            const fileStats = [{ name: 'a.log', mtime: 1, relKey: 'reports/a.log' }];
+            const byName = buildMetaByName(fileStats, new Map<string, SessionMeta>());
+            assert.strictEqual(byName.size, 0);
         });
     });
 });

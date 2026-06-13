@@ -61,7 +61,8 @@ export function getEditModalStyles(): string {
 }
 
 .edit-modal-close:hover {
-    color: var(--vscode-foreground);
+    color: var(--vscode-errorForeground, #f44);
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 
 .edit-warning {
