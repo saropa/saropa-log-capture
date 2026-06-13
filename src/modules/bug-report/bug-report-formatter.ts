@@ -11,6 +11,7 @@ import { getConfig } from '../config/config';
 import { buildMarkdownFileLink } from '../source/link-helpers';
 import { buildItemUrl } from '../marketplace-url';
 import { formatHealthScoreLine, type HealthScoreParams } from '../misc/health-score';
+import { fencedBlock } from '../misc/outbound-content-safety';
 import { formatLintSection } from './bug-report-lint-section';
 import { formatOwaspSection } from './bug-report-owasp-section';
 import { formatThreadGroupedLines } from './bug-report-thread-format';
@@ -140,7 +141,8 @@ function formatCollectionContext(inv: CollectionContext): string {
 }
 
 function formatError(errorLine: string, fingerprint: string): string {
-    return `## Error\n\n\`\`\`\n${errorLine}\n\`\`\`\n\n**Fingerprint:** \`${fingerprint}\``;
+    // fencedBlock so an error line containing a ``` run can't break out of the code block.
+    return `## Error\n\n${fencedBlock(errorLine)}\n\n**Fingerprint:** \`${fingerprint}\``;
 }
 
 function formatStackTrace(frames: readonly StackFrame[], ctx: ReportCtx): string {
@@ -150,7 +152,7 @@ function formatStackTrace(frames: readonly StackFrame[], ctx: ReportCtx): string
     const lines = formatThreadGroupedLines(frames);
     const parts = [
         '## Stack Trace',
-        `\`\`\`\n${lines.join('\n')}\n\`\`\``,
+        fencedBlock(lines.join('\n')),
         `${frames.length} frames (${appCount} app, ${fwCount} framework) — \`>>>\` marks app code`,
     ];
     const linked = formatLinkedFrames(frames, ctx);
