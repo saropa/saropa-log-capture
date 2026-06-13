@@ -28,6 +28,14 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Build script no longer defaults to installing the .vsix:** The `publish.py` "Install via CLI now?" prompt now defaults to No (press ENTER to skip), so a routine build doesn't replace the running extension without an explicit yes. Use `--auto-install` for unattended/CI installs.
+
+---
+
 ## [8.1.1]
 
 The Crashlytics issue-list labels and alerts that shipped in 8.1.0 are now translated in every supported language instead of falling back to English. [log](https://github.com/saropa/saropa-log-capture/blob/v8.1.1/CHANGELOG.md)
