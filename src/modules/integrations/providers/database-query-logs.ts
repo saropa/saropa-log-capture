@@ -13,10 +13,10 @@ import * as fs from 'fs';
 import type { IntegrationProvider, IntegrationContext, IntegrationEndContext, Contribution } from '../types';
 import type { IntegrationDatabaseConfig } from '../../config/config-types-integrations';
 import { resolveWorkspaceFileUri } from '../workspace-path';
-import { parseQueryBlocks, parseTextQueryLog, detectQueryLogFormat } from './database-query-parsing';
+import { parseQueryBlocks, parseTextQueryLog, detectQueryLogFormat, redactQueryRecord } from './database-query-parsing';
 
 // Re-export pure parsing so tests and callers have a single entry point.
-export { parseQueryBlocks, parseTextQueryLog, detectQueryLogFormat } from './database-query-parsing';
+export { parseQueryBlocks, parseTextQueryLog, detectQueryLogFormat, redactSqlLiterals } from './database-query-parsing';
 export type { QueryEntry } from './database-query-parsing';
 
 /**
@@ -73,7 +73,11 @@ function extractFileQueries(lines: readonly string[], cfg: IntegrationDatabaseCo
 /** Build the meta + sidecar contributions for a set of parsed queries. */
 function queryContributions(context: IntegrationEndContext, queries: unknown[], mode: 'file' | 'parse'): Contribution[] {
     const filename = `${context.baseFileName}.queries.json`;
-    const sidecarContent = JSON.stringify({ queries }, null, 2);
+    // Redact literal values from SQL before it lands in the shared sidecar; opt-in (default off) per privacy concerns.
+    const safeQueries = context.config.integrationsDatabase.redactLiterals
+        ? queries.map(redactQueryRecord)
+        : queries;
+    const sidecarContent = JSON.stringify({ queries: safeQueries }, null, 2);
     const payload = { sidecar: filename, count: queries.length, mode };
     return [
         { kind: 'meta', key: 'database', payload },
