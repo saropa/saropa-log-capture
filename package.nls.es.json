@@ -498,5 +498,6 @@
   "config.learning.globalAggregates.description": "Share high-confidence framework-noise filter patterns across your workspaces so a new project starts with less noise. Off by default. Only the pattern text and its category are stored on this machine — never file paths, project names, or usernames. Use 'Clear Cross-Workspace Noise Patterns' to wipe them.",
   "config.learning.globalAggregates.title": "Share noise patterns across workspaces",
   "command.compareThreeSessions.title": "Saropa Log Capture: Compare 3 Logs",
-  "config.integrations.database.redactLiterals.title": "Redact SQL literal values in the queries sidecar."
+  "config.integrations.database.redactLiterals.title": "Redact SQL literal values in the queries sidecar.",
+  "config.integrations.database.liveTail.title": "Stream new queries live during the session (file mode)."
 }
