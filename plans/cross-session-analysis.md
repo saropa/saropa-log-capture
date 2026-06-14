@@ -261,15 +261,11 @@ Bundle related sessions into named investigations. Shared analysis auto-highligh
 
 ## Feature Ideas — Magical
 
-### 9. Predictive Error Surfacing — NOT BUILT
+### ~~9. Predictive Error Surfacing~~ — DONE
 
-Before the user even clicks "Analyze Line," the extension has already computed which errors are interesting. On session end (or file save), automatically compute relevance scores for all errors in the log. Surface the top 3 in the status bar or as a notification.
+Implemented in [session-signal-surfacing.ts](src/modules/session/session-signal-surfacing.ts) (+ pure [session-signal-surfacing-format.ts](src/modules/session/session-signal-surfacing-format.ts) for the testable variant/truncation logic), wired into session finalization ([session-lifecycle-finalize.ts](src/modules/session/session-lifecycle-finalize.ts)). After the fingerprint scans settle on session end, it composes two already-persisted sources — new error patterns (the regression detector's F7 against the previous sessions) and this session's error fingerprints that recur across 5+ sessions (the cross-session aggregator) — into one toast: "Session signals — new error patterns: 1, recurring: 2 · top: …", with an "Open Signals" action. Stays silent when nothing is actionable.
 
-"Your latest session has 2 recurring errors and 1 new error in recently-changed code."
-
-**The magic:** The user doesn't have to hunt for errors. The extension tells them what's important before they ask.
-
-**Implementation:** After session end, run fingerprint scanning → cross-reference against `aggregateInsights()` → score relevance → post a VS Code notification with quick-actions to analyze each one. The scoring ([analysis-relevance.ts](src/modules/analysis/analysis-relevance.ts)) and regression detection ([regression-detector.ts](src/modules/signals/regression-detector.ts)) pieces exist; the session-end trigger + surfacing do not.
+This supersedes the older recurring-only notification (one toast per session end, strictly more information). Per-error quick-actions beyond "Open Signals" are not built; the panel already lists each item.
 
 ### 10. "What Changed?" Regression Detector — PARTIAL
 
@@ -463,7 +459,7 @@ Fix Velocity: 3 errors resolved this week, 1 persisting
 | ~~Error trend chart~~ | ~~Medium~~ | ~~High~~ | ~~High~~ | **Done** |
 | ~~Session groups (automatic)~~ | ~~Medium~~ | ~~Medium~~ | ~~Medium~~ | **Done** |
 | ~~Regression signals (new/gone errors)~~ | ~~Medium~~ | ~~High~~ | ~~High~~ | **Done** |
-| Predictive error surfacing (session-end trigger) | Medium | Very High | Very High | Next |
+| ~~Predictive error surfacing (session-end trigger)~~ | ~~Medium~~ | ~~Very High~~ | ~~Very High~~ | **Done** |
 | "What Changed?" auto-summary on session end | Medium | Very High | Very High | Next |
 | Curated/named investigations | Medium | Medium | Medium | Next |
 | Ghost errors reliability sparkline | Low | Medium | High | Soon |

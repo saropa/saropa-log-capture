@@ -2240,6 +2240,12 @@
           "type": "number",
           "title": "%config.integrations.database.maxQueriesPerLookup.title%"
         },
+        "saropaLogCapture.integrations.database.redactLiterals": {
+          "default": false,
+          "description": "Replace string and numeric literals in captured SQL with ? before writing the queries sidecar, so values (potential PII/secrets) are not shared. Table and column names are kept.",
+          "type": "boolean",
+          "title": "%config.integrations.database.redactLiterals.title%"
+        },
         "saropaLogCapture.integrations.http.requestLogPath": {
           "default": "",
           "description": "Path to an HTTP request log or HAR file (relative to workspace or absolute) to correlate with debug output.",

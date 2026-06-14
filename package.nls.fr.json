@@ -108,7 +108,7 @@
   "config.autoHidePatterns.description": "Motifs de texte à masquer automatiquement dans la vue. Les lignes contenant un motif (insensible à la casse) sont masquées automatiquement. Gérer via clic droit > Masquer > Masquer la sélection (toujours).",
   "config.autoHidePatterns.title": "Text patterns to auto-hide in the viewer.",
   "config.afterCaptureAction.description": "Action à la fin d'une capture. \"ask\" affiche une notification. \"openLog\" ouvre le journal automatiquement. \"nothing\" supprime la notification.",
-  "config.afterCaptureAction.title": "Action après la capture",
+  "config.afterCaptureAction.title": "Action after capture ends",
   "config.afterCaptureAction.enum.ask": "Afficher une notification avec les boutons Ouvrir le journal et Copier le chemin",
   "config.afterCaptureAction.enum.openLog": "Ouvrir automatiquement le journal dans le visualiseur",
   "config.afterCaptureAction.enum.nothing": "Ne rien faire — pas de notification, pas d'ouverture automatique",
@@ -460,7 +460,7 @@
   "config.viewerKeybindings.description": "Override viewer panel power shortcuts (e.g. openSearch, togglePause). Keys are action IDs; values are key descriptors (e.g. \"ctrl+f\", \"space\"). Change from Options → Keyboard shortcuts by double-clicking a power shortcut row.",
   "config.viewerKeybindings.title": "Viewer Keybindings",
   "config.viewerMaxLines.description": "Maximum lines shown in the viewer (0 = default 50,000). Must not exceed maxLines.",
-  "config.viewerMaxLines.title": "Maximum lines shown in the viewer (0 = default 50,000).",
+  "config.viewerMaxLines.title": "Maximum lines shown in the viewer (0 = use maxLines).",
   "config.viewerPreserveAsciiBoxArt.description": "When enabled, log lines that look like Unicode box banners (text between paired vertical bars \"│ … │\" on the same line) are shown as normal lines, not stack frames, so stack preview does not collapse them with \"[+N more]\". Reload the log viewer after changing.",
   "config.viewerPreserveAsciiBoxArt.title": "Preserve ASCII/Unicode box-art lines in the log viewer",
   "config.viewerSlowBurstCooldownMs.description": "Minimum log time (milliseconds) between burst markers per session. Use 0 to disable cooldown.",
@@ -497,5 +497,6 @@
   "command.clearGlobalAggregates.title": "Saropa Log Capture: Clear Cross-Workspace Noise Patterns",
   "config.learning.globalAggregates.description": "Share high-confidence framework-noise filter patterns across your workspaces so a new project starts with less noise. Off by default. Only the pattern text and its category are stored on this machine — never file paths, project names, or usernames. Use 'Clear Cross-Workspace Noise Patterns' to wipe them.",
   "config.learning.globalAggregates.title": "Share noise patterns across workspaces",
-  "command.compareThreeSessions.title": "Saropa Log Capture: Compare 3 Logs"
+  "command.compareThreeSessions.title": "Saropa Log Capture: Compare 3 Logs",
+  "config.integrations.database.redactLiterals.title": "Redact SQL literal values in the queries sidecar."
 }

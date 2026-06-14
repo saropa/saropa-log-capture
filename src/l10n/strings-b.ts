@@ -43,6 +43,7 @@ export const stringsB: Record<string, string> = {
     'action.deleteAll': 'Delete All',
     'action.alwaysOpen': 'Always Open',
     'action.openLog': 'Open Log',
+    'action.openSignals': 'Open Signals',
     'action.copyLogPath': 'Copy Log Path',
     'action.add': 'Add',
     'action.clear': 'Clear',
@@ -100,6 +101,12 @@ export const stringsB: Record<string, string> = {
     'title.recentShares': 'Recent shares',
     'msg.noRecentShares': 'No recent shares.',
     'msg.shareHistoryCleared': 'Share history cleared.',
+    // Predictive error surfacing (cross-session idea #1): one composite toast on session end.
+    // Counts are phrased as values (not pluralized words) so the strings translate cleanly via vscode.l10n.t, which has no plural support.
+    'msg.sessionSignals.both': 'Session signals — new error patterns: {0}, recurring: {1}',
+    'msg.sessionSignals.newOnly': 'Session signals — new error patterns: {0}',
+    'msg.sessionSignals.recurringOnly': 'Session signals — recurring errors: {0}',
+    'msg.sessionSignals.top': '{0} · top: {1}',
     'action.shareCollection': 'Share',
     'action.recentShares': 'Recent shares…',
     'action.clearShareHistory': 'Clear share history',
