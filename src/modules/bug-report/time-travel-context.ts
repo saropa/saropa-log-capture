@@ -36,15 +36,17 @@ export function findLargestContextGap(lines: readonly string[]): ContextGap | un
     let prevTs: number | undefined;
     let best: ContextGap | undefined;
     for (const line of lines) {
-        const ts = parseTimestamp(line);
-        if (ts === undefined) { continue; }
+        // extractTimestamp (not parseTimestamp) because context lines carry a timestamp PREFIX
+        // followed by the message — the anchored parseTimestamp would reject the whole line.
+        const extracted = extractTimestamp(line);
+        if (extracted === undefined) { continue; }
         if (prevTs !== undefined) {
-            const gapMs = ts - prevTs;
+            const gapMs = extracted.timestamp - prevTs;
             if (gapMs >= GAP_THRESHOLD_MS && (!best || gapMs > best.gapMs)) {
                 best = { gapMs, afterLine: line.trim() };
             }
         }
-        prevTs = ts;
+        prevTs = extracted.timestamp;
     }
     return best;
 }
