@@ -6,6 +6,8 @@
 import * as vscode from 'vscode';
 import { getFirebaseContext } from '../crashlytics/firebase-crashlytics';
 import { isAdbAvailable } from './adb-logcat-capture';
+import { isCrashlyticsApplicable } from '../crashlytics/crashlytics-applicability';
+import { hasAndroidApp } from '../misc/workspace-app-detection';
 
 /** Check if Crashlytics is ready and return an issue string if not. */
 async function checkCrashlyticsPrep(): Promise<string | undefined> {
@@ -27,11 +29,14 @@ export async function runIntegrationPrepCheck(adapterIds: string[]): Promise<voi
         if (!Array.isArray(adapterIds) || adapterIds.length === 0) { return; }
         const ids = adapterIds.filter((id): id is string => typeof id === 'string');
         const issues: string[] = [];
-        if (ids.includes('crashlytics')) {
+        // Both checks are gated on app evidence: a library / package project (no Firebase app, no
+        // Android app module — its only manifest is the bundled example/ app) can act on neither
+        // hint, so surfacing them there is pure noise. See workspace-app-detection.
+        if (ids.includes('crashlytics') && await isCrashlyticsApplicable()) {
             const issue = await checkCrashlyticsPrep();
             if (issue) { issues.push(issue); }
         }
-        if (ids.includes('adbLogcat') && !isAdbAvailable()) {
+        if (ids.includes('adbLogcat') && await hasAndroidApp() && !isAdbAvailable()) {
             issues.push('adb Logcat: `adb` not found on PATH. Install Android SDK Platform-Tools.');
         }
         if (issues.length > 0) {

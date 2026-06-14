@@ -28,9 +28,11 @@ cspell:disable
 
 ## [9.0.1]
 
+Saropa Log Capture now keeps quiet about app-only extras like Crashlytics and Android device logs on projects that aren't apps — so your utility packages and libraries stop getting setup nudges they can't act on. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.1/CHANGELOG.md)
+
 ### Changed
 
-- **Crashlytics sidebar stays hidden on projects that ship no app:** The Crashlytics view (and its "Add google-services.json…" setup hint) no longer appears on library or package projects that have no Firebase app — so a Dart/npm package is never nagged to configure crash reporting it can't use. The icon shows as soon as there's app evidence: `saropaLogCapture.firebase.*` settings, a `google-services.json`, or an `AndroidManifest.xml` in the workspace. The adapter remains enabled in settings; only the on-screen surface is gated.
+- **App-only integrations stay quiet on library / package projects:** The Crashlytics view, the "Integration setup" warning ("Add google-services.json…", "adb not found…"), and the offer to enable adb Logcat no longer appear on projects that ship no debuggable app — so a Dart/npm utility package is never nagged to configure crash reporting or device logging it can't use. App evidence is `saropaLogCapture.firebase.*` settings, a real `google-services.json`, or an Android application module (`android/app/…`); a package's bundled `example/` app no longer counts as making the package an app. The adb Logcat suggestion (previously fired by any `flutter` dependency, which every Flutter package declares) now requires an actual Android app. Adapters stay enabled in settings; only the unsolicited surfaces are gated.
 
 ---
 
