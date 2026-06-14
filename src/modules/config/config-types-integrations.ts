@@ -141,6 +141,8 @@ export interface IntegrationDatabaseConfig {
   readonly redactLiterals: boolean;
   /** When true (file mode), tail the query log during the session and stream new queries live into the viewer. */
   readonly liveTail: boolean;
+  /** API mode: endpoint that returns queries for a session time range. Token is read from SecretStorage. */
+  readonly apiUrl: string;
 }
 
 export interface IntegrationHttpConfig {

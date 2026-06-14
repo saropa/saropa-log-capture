@@ -345,6 +345,16 @@
         "title": "%command.setLokiApiKey.title%"
       },
       {
+        "command": "saropaLogCapture.setDatabaseApiToken",
+        "icon": "$(key)",
+        "title": "Saropa Log Capture: Set Database API Token"
+      },
+      {
+        "command": "saropaLogCapture.clearDatabaseApiToken",
+        "icon": "$(trash)",
+        "title": "Saropa Log Capture: Clear Database API Token"
+      },
+      {
         "command": "saropaLogCapture.setBuildCiGithubToken",
         "icon": "$(key)",
         "title": "Saropa: Set Build/CI GitHub Token"
@@ -2251,6 +2261,12 @@
           "description": "File mode only: tail the query log during the session and stream new queries live into the viewer (interleaved with app output). The end-of-session queries sidecar is written regardless.",
           "type": "boolean",
           "title": "%config.integrations.database.liveTail.title%"
+        },
+        "saropaLogCapture.integrations.database.apiUrl": {
+          "default": "",
+          "description": "API mode only: HTTPS endpoint that returns queries for a session time range. Saropa Log Capture POSTs {startTime,endTime} (epoch ms) and expects {\"queries\":[...]} back. The bearer token is stored via the 'Set Database API Token' command, never in settings.",
+          "type": "string",
+          "title": "%config.integrations.database.apiUrl.title%"
         },
         "saropaLogCapture.integrations.http.requestLogPath": {
           "default": "",
