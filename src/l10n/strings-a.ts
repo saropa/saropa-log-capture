@@ -21,6 +21,11 @@ export const stringsA: Record<string, string> = {
     'msg.deleteFileConfirm': 'Delete {0}?',
     'msg.renameSessionPrompt': 'Enter new name for this log (also renames file)',
     'msg.enterTagsPrompt': 'Enter tags (comma-separated)',
+    // Session note (idea #7): {0} is the note text the user entered.
+    'msg.sessionNotePrompt': 'Add a note for this log (leave empty to clear)',
+    'msg.sessionNotePlaceholder': 'e.g. Fixed by updating the API key; regression from PR #142',
+    'msg.sessionNoteSaved': 'Note saved: {0}',
+    'msg.sessionNoteCleared': 'Note cleared.',
     'msg.sessionMarkedController': 'Set as Controller: {0}',
     'msg.sessionMarkedPeripheral': 'Marked as Peripheral: {0}',
     'msg.sessionPinned': 'Pinned to top: {0}',

@@ -6,6 +6,7 @@ import { getConfig, getLogDirectoryUri, readTrackedFiles } from './modules/confi
 import { SessionMetadataStore } from './modules/session/session-metadata';
 import { SessionHistoryProvider } from './ui/session/session-history-provider';
 import { getGlobalProjectIndexer } from './modules/project-indexer/project-indexer';
+import { getGlobalSearchIndex } from './modules/search/search-index-global';
 
 /** Register trash-related commands. */
 export function trashCommands(
@@ -76,6 +77,8 @@ async function emptyTrash(metaStore: SessionMetadataStore): Promise<number> {
         try {
             await vscode.workspace.fs.delete(uri);
             await metaStore.deleteMetadata(uri);
+            // Drop the trigram entry too so a permanently deleted log stops counting toward the cap.
+            getGlobalSearchIndex()?.removeFile(uri).catch(() => {});
             deleted++;
         } catch { /* file may be locked */ }
     }
