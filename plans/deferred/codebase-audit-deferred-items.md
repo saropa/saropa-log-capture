@@ -2,31 +2,15 @@
 
 Carved out of the full codebase audit so the consciously-not-done items are not lost when the audit
 itself was closed and archived. Every other audit finding (3 Critical · ~12 High · ~18 Medium · ~14
-Low) was fixed; the items below are the ones deliberately deferred to future work or accepted as
-won't-fix with a recorded rationale.
+Low) was fixed. Of the items below, one (D3) remains deferred — blocked on an API capability — four
+(D1, D2, D4, D5) were reassessed and built on 2026-06-14, and four (A1–A4) are accepted won't-fix with
+a recorded rationale.
 
 Source (closed + archived): `plans/history/2026.06/2026.06.14/104_plan-codebase-audit-2026-06-12.md`.
 
 ---
 
 ## Deferred — future work that may be revisited
-
-### D1 — Write-stream backpressure (`await 'drain'`) — perf, capture
-`src/modules/capture/log-session.ts` (and `log-session-split.ts`)
-
-The crash-class bug (no persistent `'error'` listener) was fixed (audit C2). Still deferred as a
-separate performance item: large writes don't honor `write()` backpressure, so on a slow disk a big
-footer/tail block could be dropped or buffer without awaiting `'drain'`. Add backpressure handling
-(await the `'drain'` event) for large writes. Low urgency — the data-loss-on-error path is already
-closed; this is throughput hygiene under disk pressure.
-
-### D2 — ANR-merge gate keys on `confidence === 'high'` — duplicate root-cause bullets
-`src/modules/root-cause-hints/build-hypotheses.ts:148-152`
-
-The ANR-merge gate keys on `confidence === 'high'`, but an ANR hypothesis is only `high` above score
-50, so moderate ANRs (score 20–50) bypass the merge and re-surface as duplicate bullets. Gate the
-merge on the hypothesis key alone (not the confidence). Lower-impact follow-up split off from the
-H5 root-cause-ranking fix (which shipped).
 
 ### D3 — Crashlytics regression / new-issue false positives at the top-N paging boundary
 `src/modules/crashlytics/crashlytics-issue-signals.ts` (`detectRegressedIds`, `newSinceLastSnapshot`)
@@ -37,26 +21,49 @@ stop-and-restart because snapshots hold only the fetched top issues and don't re
 was truncated. Shipped mitigation: the "Regressed" badge tooltip states the caveat
 (`viewer.crashlytics.badge.regressedTip`) and both derivation paths carry a KNOWN LIMITATION comment.
 A true fix needs an **unpaged issue feed (or a total/truncation signal) from the API**, which the
-current Crashlytics read path does not expose — hence deferred.
+current Crashlytics read path does not expose — hence still deferred (it is blocked on an API
+capability, not on effort).
 
-### D4 — Consolidate the divergent `escapeHtml` copies behind one helper
-~8 webview files under `src/ui/`
+---
 
-There are several near-duplicate `escapeHtml` implementations across the webview render files, some
-escaping only `&<>` and some also `"`. The genuinely risky divergence — attribute-context escapers
-that omitted quote-escaping — was already fixed (audit L4). What remains is a full consolidation
-behind a single helper with explicit text vs attribute variants. Deferred: a large mechanical refactor
-touching many files for low remaining correctness value now that the unsafe cases are closed.
+## Shipped 2026-06-14 — built after the audit closed
 
-### D5 — Contribute the `saropaLogCapture.replay` command (or remove it)
-`src/modules/commands/commands-session.ts` (registration; no `contributes.commands` entry)
+Four items originally deferred for "low value / effort" reasons were reassessed and built; only the
+API-blocked D3 above remains.
 
-`saropaLogCapture.replay` is registered but not contributed, so it has no command-palette entry and no
-menu. Replay is already reachable via the viewer's replay controls, so it is not dead — just an
-un-surfaced palette shortcut. Contributing it properly requires an NLS command title added across all
-11 `package.nls*.json` locale files, which is disproportionate for a Low. Deferred: either contribute
-it with the locale titles, or remove the unreachable registration (the no-delete convention argues for
-contributing rather than removing).
+### D1 — Write-stream backpressure (`await 'drain'`) — BUILT
+`src/modules/capture/log-session.ts`
+
+Added `writeBackpressured()`: the serialized append queue now awaits `'drain'` when `write()` reports
+a full buffer, so a fast producer on a slow disk no longer grows Node's internal buffer without bound.
+Resolves on `'error'`/`'close'` as well so a dying stream can't hang the queue. Applied to the header,
+queued-line, and queued-raw writes (the footer was already flushed by `end()`). Covered by a
+high-volume integrity test plus deterministic drain/error-resolution tests in `log-session.test.ts`.
+
+### D2 — ANR-merge gate — BUILT
+`src/modules/root-cause-hints/build-hypotheses.ts`
+
+`mergeErrorsIntoAnr` now gates on the `anr::risk` key alone instead of `confidence === 'high'`, so a
+moderate ANR also folds its dump lines into the single ANR hypothesis rather than echoing them as
+duplicate "Error:" bullets. The tradeoff (a coincident unrelated error folds under a moderate ANR) is
+documented in-code and bounded — no evidence line is dropped, and a session with no ANR leaves errors
+untouched. Tests in `build-hypotheses.test.ts` pin both the new merge and the no-ANR survival path.
+
+### D4 — `escapeHtml` consolidation — BUILT
+`src/ui/escape-html-script.ts` (new) + host copies in `ansi.ts` consumers
+
+Host side: the duplicate `escapeHtml` copies in `ai-explain-panel.ts` and `crashlytics-help-content.ts`
+now import the single exported helper from `ansi.ts`. Webview side: a new `escapeHtmlScript(fnName)`
+factory emits one correct `& < > " '` escaper into each isolated webview bundle under its existing
+local name (`escapeHtml` / `escapeHtmlText` / `escapeHtmlBasic`), replacing nine hand-written copies so
+the escaping can't drift per panel. (The full text-vs-attribute split was not needed — the single
+escaper is safe for both contexts; `escapeAttr` helpers were left as-is.)
+
+### D5 — `saropaLogCapture.replay` command — BUILT
+`package.json` `contributes.commands` + 11 `package.nls*.json` titles
+
+Contributed the replay command with a translated **Saropa Log Capture: Replay Log** title in all 11
+locale files; the command-list reference and NLS parity/coverage gates pass.
 
 ---
 
