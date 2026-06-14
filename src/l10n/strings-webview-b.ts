@@ -39,6 +39,9 @@ export const stringsWebviewB: Record<string, string> = {
     'viewer.deco.filterByTid': 'Filter by TID {0}',
     'viewer.deco.filterByTag': 'Filter by tag: {0}',
 
+    // Per-line database-query badge (viewer-data-helpers-render.ts).
+    'viewer.deco.relatedQueries': '{0} related database queries — click to view',
+
     // Run separator snip labels (viewer-data-helpers-render-run-separator-snip.ts).
     'viewer.runSeparator.errors': 'Errors',
     'viewer.runSeparator.warnings': 'Warnings',

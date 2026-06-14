@@ -110,6 +110,8 @@ var fileMode = 'log';
 /** Whether the format toggle is on for the current non-log file. */
 var formatEnabled = false;
 var correlationByLineIndex = {};
+/* Per-line database-query counts (content index -> count) for the DB badge; set by setDatabaseQueryLines. */
+var databaseQueryLinesByIndex = {};
 /* When true, paired "│ … │" banner rows are not stack frames (see isStackFrameText). Baked from host config. */
 var viewerPreserveAsciiBoxArt = ${viewerPreserveAsciiBoxArt ? 'true' : 'false'};
 /* When true, consecutive separator lines with the same timestamp are grouped into a visual block. */
