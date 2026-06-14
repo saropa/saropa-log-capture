@@ -1,5 +1,9 @@
 import * as assert from 'assert';
-import { parseQueryBlocks } from '../../../modules/integrations/providers/database-query-logs';
+import {
+    parseQueryBlocks,
+    parseTextQueryLog,
+    detectQueryLogFormat,
+} from '../../../modules/integrations/providers/database-query-logs';
 
 suite('database-query-logs', () => {
     suite('parseQueryBlocks', () => {
@@ -103,6 +107,84 @@ suite('database-query-logs', () => {
             ];
             const result = parseQueryBlocks(lines, '', '', 100);
             assert.strictEqual(result.length, 4);
+        });
+    });
+
+    suite('detectQueryLogFormat', () => {
+        test('should detect JSON when first non-empty line opens with a brace', () => {
+            const lines = ['', '   ', '{"query":"SELECT 1"}'];
+            assert.strictEqual(detectQueryLogFormat(lines), 'json');
+        });
+
+        test('should detect text for a plain SQL / server-log line', () => {
+            const lines = ['2026-06-14 10:00:00 UTC LOG:  statement: SELECT 1'];
+            assert.strictEqual(detectQueryLogFormat(lines), 'text');
+        });
+
+        test('should default to json for an all-empty file', () => {
+            assert.strictEqual(detectQueryLogFormat(['', '   ']), 'json');
+        });
+    });
+
+    suite('parseTextQueryLog', () => {
+        test('should parse a PostgreSQL log_min_duration_statement line', () => {
+            const lines = [
+                '2026-06-14 10:00:00.123 UTC [1234] LOG:  duration: 1.234 ms  statement: SELECT * FROM users WHERE id = 1;',
+            ];
+            const result = parseTextQueryLog(lines, '', 100);
+            assert.strictEqual(result.length, 1);
+            assert.ok(result[0].queryText.startsWith('SELECT * FROM users'));
+            assert.strictEqual(result[0].durationMs, 1.234);
+            assert.strictEqual(typeof result[0].timestamp, 'number');
+        });
+
+        test('should attach MySQL slow-log Query_time (seconds) to the following SQL', () => {
+            const lines = [
+                '# Time: 2026-06-14T10:00:00.000000Z',
+                '# User@Host: app[app] @ localhost []',
+                '# Query_time: 0.250000  Lock_time: 0.000100',
+                'SET timestamp=1718359200;',
+                'SELECT name FROM accounts WHERE active = 1;',
+            ];
+            const result = parseTextQueryLog(lines, '', 100);
+            assert.strictEqual(result.length, 1);
+            assert.ok(result[0].queryText.startsWith('SELECT name FROM accounts'));
+            // 0.25 s carried from the Query_time header → 250 ms.
+            assert.strictEqual(result[0].durationMs, 250);
+        });
+
+        test('should not bleed a Query_time header onto an unrelated later statement', () => {
+            const lines = [
+                '# Query_time: 0.100000',
+                'SELECT 1;',
+                'some unrelated log line',
+                'SELECT 2;',
+            ];
+            const result = parseTextQueryLog(lines, '', 100);
+            assert.strictEqual(result.length, 2);
+            assert.strictEqual(result[0].durationMs, 100);
+            assert.strictEqual(result[1].durationMs, undefined);
+        });
+
+        test('should extract requestId from nearby lines', () => {
+            const lines = [
+                'requestId=req-42 incoming',
+                'SELECT * FROM jobs;',
+            ];
+            const result = parseTextQueryLog(lines, 'requestId=(\\S+)', 100);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].requestId, 'req-42');
+        });
+
+        test('should respect the maxQueries cap', () => {
+            const lines = Array.from({ length: 30 }, (_, i) => `SELECT ${i} FROM t;`);
+            const result = parseTextQueryLog(lines, '', 5);
+            assert.strictEqual(result.length, 5);
+        });
+
+        test('should return empty when no SQL is present', () => {
+            const lines = ['2026-06-14 10:00:00 UTC LOG:  connection received'];
+            assert.strictEqual(parseTextQueryLog(lines, '', 100).length, 0);
         });
     });
 });
