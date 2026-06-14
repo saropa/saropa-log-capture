@@ -90,6 +90,12 @@ export const stringsA: Record<string, string> = {
     'msg.deepLinkCopied': 'Deep link copied{0}',
     'msg.deepLinkLocalCopied': 'Link copied. Recipient: Collection panel → Open .slc file → select the file.',
     'msg.importLinkMissingParams': 'Import link missing gist or url parameter.',
+    // Modal consent shown before a /import deep link downloads and writes files (audit C1 hardening).
+    // "GitHub Gist" is a brand and stays literal; {0} names the source so the user can judge trust.
+    'msg.confirmImport.message': 'Import a shared collection from this link?',
+    'msg.confirmImport.detailGist': 'This downloads collection {0} from a GitHub Gist and writes its files into your workspace. Only continue if you trust the source of this link.',
+    'msg.confirmImport.detailUrl': 'This downloads a collection from {0} and writes its files into your workspace. Only continue if you trust the source of this link.',
+    'msg.confirmImport.proceed': 'Import',
     'msg.importFailed': 'Failed to import: {0}',
     'msg.importGistNotFound': 'Gist not found or not accessible.',
     'msg.importGistInvalid': 'Invalid collection gist: missing .slc file.',
