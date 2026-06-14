@@ -154,6 +154,36 @@ export const stringsWebview: Record<string, string> = {
     'viewer.crashlytics.setup.browseGsj': 'Browse for google-services.json',
     'viewer.crashlytics.setup.orConfigureSettings': 'Or configure in settings',
 
+    // Signal panel cross-session report — rendered CLIENT-SIDE via vt() in
+    // viewer-signal-panel-script-part-{b,c,d}.ts. Count-bearing labels use {0}/{1} interpolation
+    // (not English concatenation) and pick a .one / .many key by the count, matching the existing
+    // crashlytics usersOne/usersMany idiom, so plural and word order stay translatable.
+    'viewer.signal.time.justNow': 'just now',
+    'viewer.signal.time.minAgo': '{0} min ago',
+    'viewer.signal.time.hoursAgo': '{0}h ago',
+    'viewer.signal.time.daysAgo': '{0} days ago',
+    'viewer.signal.time.weeksAgo': '{0}w ago',
+    'viewer.signal.suggestions.summary': 'Filter suggestions ({0})',
+    'viewer.signal.hotfiles.summaryEmpty': 'Frequently modified files',
+    'viewer.signal.hotfiles.summaryOne': '{0} file frequently modified',
+    'viewer.signal.hotfiles.summaryMany': '{0} files frequently modified',
+    'viewer.signal.hotfiles.sessionsOne': '{0} session',
+    'viewer.signal.hotfiles.sessionsMany': '{0} sessions',
+    'viewer.signal.env.platforms': 'Platforms',
+    'viewer.signal.env.sdkRuntime': 'SDK / runtime',
+    'viewer.signal.env.debugAdapters': 'Debug adapters',
+    'viewer.signal.env.summaryEmpty': 'Environment',
+    'viewer.signal.env.summary': 'Environment ({0} entries)',
+    'viewer.signal.env.empty': 'No environment data across sessions.',
+    'viewer.signal.all.summaryEmpty': 'All signals',
+    'viewer.signal.all.summary': 'All signals ({0})',
+    'viewer.signal.inLog.summaryEmpty': 'Signals in this log',
+    'viewer.signal.inLog.summary': 'Signals in this log ({0})',
+    'viewer.signal.inLog.summaryWindow': 'Signals in this log ({0} of {1})',
+    'viewer.signal.noLogOpen': 'No log open',
+    'viewer.signal.related.summaryOne': 'Related signals ({0} pair)',
+    'viewer.signal.related.summaryMany': 'Related signals ({0} pairs)',
+
     // Session (Logs) list — runtime strings built client-side (viewer-session-panel-rendering.ts).
     'viewer.session.noMatch': 'No sessions match the current filters',
     'viewer.session.pagination.showing': 'Showing {0}–{1} of {2}',
