@@ -2136,6 +2136,35 @@
           "type": "number",
           "title": "%config.integrations.windowsEvents.maxEvents.title%"
         },
+        "saropaLogCapture.integrations.externalLogs.paths": {
+          "default": [],
+          "description": "External log files to tail during a debug session, relative to the workspace root or absolute (e.g. logs/app.log, logs/nginx/error.log). Enable the Application / file logs integration in Configure integrations for these to be tailed.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "%config.integrations.externalLogs.paths.title%"
+        },
+        "saropaLogCapture.integrations.externalLogs.writeSidecars": {
+          "default": true,
+          "description": "Write tailed external log content to sidecar files next to the main session log.",
+          "type": "boolean",
+          "title": "%config.integrations.externalLogs.writeSidecars.title%"
+        },
+        "saropaLogCapture.integrations.externalLogs.prefixLines": {
+          "default": true,
+          "description": "Prefix each sidecar line with its source label (e.g. [app] ) for clarity in merged views.",
+          "type": "boolean",
+          "title": "%config.integrations.externalLogs.prefixLines.title%"
+        },
+        "saropaLogCapture.integrations.externalLogs.maxLinesPerFile": {
+          "default": 10000,
+          "description": "Cap lines tailed per external file; oldest lines drop when the cap is exceeded.",
+          "minimum": 100,
+          "maximum": 1000000,
+          "type": "number",
+          "title": "%config.integrations.externalLogs.maxLinesPerFile.title%"
+        },
         "saropaLogCapture.integrations.security.windowsSecurityLog": {
           "default": false,
           "description": "Query the Windows Security event log during sessions (Windows only, opt-in).",
