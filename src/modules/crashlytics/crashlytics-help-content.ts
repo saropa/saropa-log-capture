@@ -3,6 +3,8 @@
  * All content is rendered inside the Crashlytics panel.
  */
 
+import { escapeHtml } from '../capture/ansi';
+
 const GCLOUD_INSTALL_URL = 'https://docs.cloud.google.com/sdk/docs/install-sdk';
 
 export interface HelpSection {
@@ -12,14 +14,6 @@ export interface HelpSection {
 
 function link(url: string, text: string): string {
     return `<a class="cp-help-link" href="#" data-action="openUrl" data-url="${escapeAttr(url)}">${escapeHtml(text)}</a>`;
-}
-
-function escapeHtml(s: string): string {
-    return s
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
 }
 
 function escapeAttr(s: string): string {

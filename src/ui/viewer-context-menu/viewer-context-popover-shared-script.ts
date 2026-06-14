@@ -1,8 +1,8 @@
+import { escapeHtmlScript } from '../escape-html-script';
+
 export function getContextPopoverSharedScript(): string {
     return /* javascript */ `
-function escapeHtmlBasic(text) {
-    return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
+${escapeHtmlScript('escapeHtmlBasic')}
 
 function copyPopoverContent() {
     var content = contextPopoverEl ? contextPopoverEl.innerText : '';

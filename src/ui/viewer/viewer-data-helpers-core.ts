@@ -4,16 +4,11 @@
  * SQL drilldown UI functions (DB_06) live in viewer-data-sql-drilldown-ui.ts.
  * Drift N+1 burst detection lives in viewer-data-n-plus-one-script.ts.
  */
+import { escapeHtmlScript } from '../escape-html-script';
+
 export function getViewerDataHelpersCore(): string {
     return /* javascript */ `
-function escapeHtml(text) {
-    return text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
+${escapeHtmlScript('escapeHtml')}
 var repeatTracker = {
     lastHash: null,
     lastPlainText: null,

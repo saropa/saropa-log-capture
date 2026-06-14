@@ -66,3 +66,33 @@ export function traceBackendUrl(template: string, traceId: string): string | und
     if (!template || !template.includes('{traceId}')) { return undefined; }
     return template.replace(/\{traceId\}/g, encodeURIComponent(traceId));
 }
+
+/** A content line's trace id and the backend URL to open for it. */
+export interface TraceLineLink {
+    readonly traceId: string;
+    readonly url: string;
+}
+
+/**
+ * Map content-line index -> { traceId, url } for lines that carry a trace id,
+ * for the clickable in-viewer trace badge. Empty when no URL template is set
+ * (a trace id with no backend link is not worth badging).
+ */
+export function traceLineLinks(
+    contentLines: readonly string[],
+    traceUrlTemplate: string,
+    traceIdPattern: string,
+): Record<number, TraceLineLink> {
+    if (!traceUrlTemplate) { return {}; }
+    let userRe: RegExp | undefined;
+    if (traceIdPattern) { try { userRe = new RegExp(traceIdPattern, 'i'); } catch { userRe = undefined; } }
+
+    const out: Record<number, TraceLineLink> = {};
+    for (let i = 0; i < contentLines.length; i++) {
+        const traceId = extractTraceId(boundForUserRegex(contentLines[i]), userRe);
+        if (!traceId) { continue; }
+        const url = traceBackendUrl(traceUrlTemplate, traceId);
+        if (url) { out[i] = { traceId, url }; }
+    }
+    return out;
+}

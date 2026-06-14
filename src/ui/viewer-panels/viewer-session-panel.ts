@@ -5,6 +5,7 @@
 export { getSessionPanelHtml } from './viewer-session-panel-html';
 import { getSessionPanelEventsScript } from './viewer-session-panel-events';
 import { getSessionRenderingScript } from './viewer-session-panel-rendering';
+import { escapeHtmlScript } from '../escape-html-script';
 
 /** Generate the session panel script. */
 export function getSessionPanelScript(): string {
@@ -12,7 +13,7 @@ export function getSessionPanelScript(): string {
 (function() {
     /* Shared helpers for inlined fragments (rendering, events, etc.). Do not remove; fragments rely on these. */
     function escapeAttr(str) { return (str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
-    function escapeHtmlText(str) { return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    ${escapeHtmlScript('escapeHtmlText')}
 
     var sessionPanelOpen = false;
     var sessionPanelEl = document.getElementById('session-panel');

@@ -215,6 +215,7 @@ export const stringsB: Record<string, string> = {
     'signal.hotfilesSummaryMany': '{0} files frequently modified',
     'signal.hotfilesSessionsOne': '{0} session',
     'signal.hotfilesSessionsMany': '{0} sessions',
+    'signal.hotfilesChangedDaysAgo': 'changed {0}d ago',
     'signal.envPlatforms': 'Platforms',
     'signal.envSdkRuntime': 'SDK / runtime',
     'signal.envDebugAdapters': 'Debug adapters',
