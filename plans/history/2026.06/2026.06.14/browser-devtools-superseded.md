@@ -1,5 +1,18 @@
 # Integration: Browser and DevTools
 
+> **SUPERSEDED (2026-06-14).** This is an early pre-implementation design draft, kept for
+> history only — do not implement from it. The browser adapter has fully shipped (file mode
+> and CDP mode, viewer tab, interleaved lines, context popover, request-ID correlation).
+> Several details here never shipped or shipped differently: the real settings live under
+> `saropaLogCapture.integrations.browser.*` (this draft says `saropaLogCapture.browser.*`);
+> `maxEvents` defaults to `500` not `10000`; `browserLogFormat` is `"jsonl" | "text"` not
+> `"jsonl" | "json"`; the shipped `requestIdPattern` and `timeWindowSeconds` settings are
+> absent here; and "Mode C — companion extension" is its own plan
+> ([014_integration-spec-browser-companion-extension.md](../../../014_integration-spec-browser-companion-extension.md)).
+> The accurate, as-shipped spec is **[012_integration-spec-browser-devtools.md](../../../012_integration-spec-browser-devtools.md)**;
+> the implementation is in `src/modules/integrations/providers/browser-devtools.ts` and
+> `src/modules/integrations/providers/browser-cdp-capture.ts`.
+
 ## Problem and Goal
 
 When debugging **web applications**, the failure picture often spans two places: the **Debug Console** (e.g. Node backend or test runner) and the **browser** (console errors, network failures, DOM issues). Developers switch between VS Code and the browser DevTools to correlate "backend said X" with "frontend threw Y." This integration allows **correlating browser console and network activity** with the captured debug log—by capturing browser logs (via Chrome DevTools Protocol or a companion extension) and attaching them to the session as a sidecar or a second timeline, so that one place shows both backend and frontend context.
