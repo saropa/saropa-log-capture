@@ -165,6 +165,18 @@ window.addEventListener('message', function(event) {
         vscodeApi.postMessage({ type: 'showRelatedQueries', lineIndex: rqIdx, timestamp: rqLd.ts || rqLd.timestamp, lineText: stripTags(rqLd.html || '') });
     }
 });
+
+/* Per-line DB badge click: request the related-queries popover for that line.
+   Delegated so it covers badges added by virtual-scroll re-renders. */
+document.addEventListener('click', function(e) {
+    var badge = e.target && e.target.closest ? e.target.closest('.db-query-badge') : null;
+    if (!badge) return;
+    e.stopPropagation();
+    var dbIdx = parseInt(badge.getAttribute('data-db-idx'), 10);
+    if (isNaN(dbIdx) || dbIdx < 0 || dbIdx >= allLines.length) return;
+    var dbLd = allLines[dbIdx];
+    vscodeApi.postMessage({ type: 'showRelatedQueries', lineIndex: dbIdx, timestamp: dbLd.ts || dbLd.timestamp, lineText: stripTags(dbLd.html || '') });
+});
 `;
 }
 

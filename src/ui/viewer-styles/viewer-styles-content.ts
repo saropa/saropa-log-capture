@@ -174,6 +174,10 @@ export function getContentStyles(): string {
 .correlation-badge { color: var(--vscode-textLink-foreground); cursor: pointer; margin-left: 2px; }
 .correlation-badge:hover { text-decoration: underline; }
 
+/* DB badge: line has correlated database queries (click opens the related-queries popover) */
+.db-query-badge { cursor: pointer; margin-left: 2px; opacity: 0.7; font-size: 0.85em; }
+.db-query-badge:hover { opacity: 1; }
+
 /* ===================================================================
    Jump-to-Top / Jump-to-Bottom Buttons
    Position and inset come from syncJumpButtonInset() (fixed + viewport rects). Opacity-only
