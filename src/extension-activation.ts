@@ -41,6 +41,7 @@ import { setupLineListeners, setupConfigListener, setupScopeContextListener, set
 import { DiagnosticCache } from './modules/diagnostics/diagnostic-cache';
 import { autoLoadLatest, showWalkthroughOnFirstInstall } from './extension-activation-helpers';
 import { maybeNotifyPartialNlsCoverage } from './l10n/nls-coverage-notice';
+import { maybeRecommendAdapters } from './modules/integrations/recommend-adapters-notice';
 import { initLearningRuntime, flushLearningBuffer } from './modules/learning/learning-runtime';
 import { scheduleLearningSuggestionCheck } from './modules/learning/learning-notifications';
 import { scheduleMaybeAutoEnableAiFromLanguageModels } from './modules/ai/ai-auto-enable';
@@ -256,6 +257,8 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         checkGitignoreSaropa(context, folder).catch(() => {});
         // Clean up orphan .meta.json sidecars left by older versions (scans workspace root).
         migrateSidecarsInDirectory(folder.uri, folder).catch(() => {});
+        // Offer to turn on integration adapters the workspace's pubspec packages imply.
+        void maybeRecommendAdapters(context, folder);
     }
 
     showWalkthroughOnFirstInstall(context);
