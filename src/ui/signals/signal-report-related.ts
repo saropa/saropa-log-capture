@@ -7,6 +7,7 @@
  */
 
 import { escapeHtml } from '../../modules/capture/ansi';
+import { t } from '../../l10n';
 import type {
   RootCauseHintBundle,
   RootCauseHypothesis,
@@ -32,13 +33,13 @@ export function buildRelatedHtml(
     return buildWarningRelated(key.slice(6), bundle, logLines);
   }
   if (key.startsWith('net::')) {
-    return buildItemListHtml('network failure', bundle.networkFailures, logLines);
+    return buildItemListHtml('signals.related.label.networkFailure', bundle.networkFailures, logLines);
   }
   if (key.startsWith('mem::')) {
-    return buildItemListHtml('memory event', bundle.memoryEvents, logLines);
+    return buildItemListHtml('signals.related.label.memoryEvent', bundle.memoryEvents, logLines);
   }
   if (key.startsWith('perm::')) {
-    return buildItemListHtml('permission denial', bundle.permissionDenials, logLines);
+    return buildItemListHtml('signals.related.label.permissionDenial', bundle.permissionDenials, logLines);
   }
   if (key.startsWith('slow::')) {
     return buildSlowOpRelated(bundle, logLines);
@@ -47,7 +48,7 @@ export function buildRelatedHtml(
     return buildClassifiedRelated(bundle, logLines);
   }
 
-  return '<div class="no-data">No additional related lines found</div>';
+  return `<div class="no-data">${escapeHtml(t('signals.related.none'))}</div>`;
 }
 
 /**
@@ -67,14 +68,14 @@ function buildErrorRelated(bundle: RootCauseHintBundle, logLines: readonly strin
   const errors = bundle.errors;
   const valid = (errors ?? []).filter((e): e is RootCauseHintError => !!e);
   if (valid.length === 0) {
-    return '<div class="no-data">No error details available</div>';
+    return `<div class="no-data">${escapeHtml(t('signals.related.noErrorDetails'))}</div>`;
   }
   // category is the per-row badge — the highest-signal classification the error
   // carries; mirrors how the classified / slow branches badge their rows.
   const rows = valid
     .slice(0, maxItems)
     .map(e => itemRow(e.lineIndex, resolveText(logLines, e.lineIndex, e.excerpt), e.category));
-  return wrapList(`${valid.length} error(s)`, rows, valid.length);
+  return wrapList(t('signals.related.errorSummary', valid.length), rows, valid.length);
 }
 
 /** Show all occurrences of the matching warning group with actual log lines. */
@@ -84,18 +85,18 @@ function buildWarningRelated(
   logLines: readonly string[],
 ): string {
   const groups = bundle.warningGroups;
-  if (!groups) { return '<div class="no-data">No warning details available</div>'; }
+  if (!groups) { return `<div class="no-data">${escapeHtml(t('signals.related.noWarningDetails'))}</div>`; }
   const parts: string[] = [];
   for (const g of groups) {
     if (!g || excerptKey(g.excerpt) !== warnKey) { continue; }
     const rows = g.lineIndices
       .slice(0, maxItems)
       .map(idx => itemRow(idx, resolveText(logLines, idx, g.excerpt)));
-    const summary = `Warning repeated ${g.count} time(s) across ${g.lineIndices.length} location(s)`;
+    const summary = t('signals.related.warningSummary', g.count, g.lineIndices.length);
     parts.push(wrapList(summary, rows, g.lineIndices.length));
   }
   if (parts.length === 0) {
-    return '<div class="no-data">No matching warning groups found</div>';
+    return `<div class="no-data">${escapeHtml(t('signals.related.noWarningGroups'))}</div>`;
   }
   return parts.join('');
 }
@@ -104,7 +105,7 @@ function buildWarningRelated(
 function buildSlowOpRelated(bundle: RootCauseHintBundle, logLines: readonly string[]): string {
   const ops = bundle.slowOperations;
   if (!ops || ops.length === 0) {
-    return '<div class="no-data">No slow operation details available</div>';
+    return `<div class="no-data">${escapeHtml(t('signals.related.noSlowDetails'))}</div>`;
   }
   const sorted = ops.slice().sort((a, b) => b.durationMs - a.durationMs);
   const rows = sorted
@@ -115,14 +116,14 @@ function buildSlowOpRelated(bundle: RootCauseHintBundle, logLines: readonly stri
       const text = resolveText(logLines, op.lineIndex, op.operationName ?? op.excerpt);
       return itemRow(op.lineIndex, text, `${sec}s`);
     });
-  return wrapList(`${ops.length} slow operation(s) detected`, rows, ops.length);
+  return wrapList(t('signals.related.slowSummary', ops.length), rows, ops.length);
 }
 
 /** Show classified errors with their severity label (critical / bug). */
 function buildClassifiedRelated(bundle: RootCauseHintBundle, logLines: readonly string[]): string {
   const classified = bundle.classifiedErrors;
   if (!classified || classified.length === 0) {
-    return '<div class="no-data">No classified error details available</div>';
+    return `<div class="no-data">${escapeHtml(t('signals.related.noClassifiedDetails'))}</div>`;
   }
   const rows = classified
     .slice(0, maxItems)
@@ -131,7 +132,7 @@ function buildClassifiedRelated(bundle: RootCauseHintBundle, logLines: readonly 
       const text = resolveText(logLines, c.lineIndex, c.excerpt);
       return itemRow(c.lineIndex, text, c.classification);
     });
-  return wrapList(`${classified.length} classified error(s)`, rows, classified.length);
+  return wrapList(t('signals.related.classifiedSummary', classified.length), rows, classified.length);
 }
 
 /** Common shape for signal items that have lineIndex + excerpt. */
@@ -140,20 +141,21 @@ interface SimpleSignalItem {
   readonly excerpt: string;
 }
 
-/** Generic list builder for signal items with lineIndex + excerpt. */
+/** Generic list builder for signal items with lineIndex + excerpt. `labelKey` is an l10n key. */
 function buildItemListHtml(
-  label: string,
+  labelKey: string,
   items: readonly SimpleSignalItem[] | undefined,
   logLines: readonly string[],
 ): string {
+  const label = t(labelKey);
   if (!items || items.length === 0) {
-    return `<div class="no-data">No ${escapeHtml(label)} details available</div>`;
+    return `<div class="no-data">${escapeHtml(t('signals.related.itemNoData', label))}</div>`;
   }
   const rows = items
     .slice(0, maxItems)
     .filter((x): x is NonNullable<typeof x> => !!x)
     .map(x => itemRow(x.lineIndex, resolveText(logLines, x.lineIndex, x.excerpt)));
-  return wrapList(`${items.length} ${label}(s) detected`, rows, items.length);
+  return wrapList(t('signals.related.itemSummary', items.length, label), rows, items.length);
 }
 
 /** Use actual log line content when available, falling back to the bundle excerpt. */
@@ -170,7 +172,7 @@ function itemRow(lineIndex: number, text: string, badge?: string): string {
     : '';
   return (
     `<div class="related-item">` +
-    `<span class="related-line-num">Line ${lineNum}</span>${badgeHtml}` +
+    `<span class="related-line-num">${escapeHtml(t('signals.related.line', lineNum))}</span>${badgeHtml}` +
     `<span class="related-excerpt">${escapeHtml(text)}</span>` +
     `</div>`
   );
@@ -184,7 +186,7 @@ function wrapList(summary: string, rows: string[], totalCount: number): string {
     ...rows,
   ];
   if (totalCount > maxItems) {
-    parts.push(`<div class="related-overflow">...and ${totalCount - maxItems} more</div>`);
+    parts.push(`<div class="related-overflow">${escapeHtml(t('signals.related.andMore', totalCount - maxItems))}</div>`);
   }
   parts.push('</div>');
   return parts.join('');

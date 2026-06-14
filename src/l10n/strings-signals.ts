@@ -83,5 +83,32 @@ export const stringsSignals: Record<string, string> = {
     'signals.recCat.oom': 'This is an out-of-memory error. Profile heap usage, check for retained references, and consider reducing allocation in hot paths.',
     'signals.recCat.native': 'This is a native crash (SIGSEGV/SIGABRT). Check for use-after-free, null pointer dereference, or incompatible native library versions.',
     'signals.recCat.non-fatal': 'This is a non-fatal error. Check for null/undefined values at the call site shown in the stack trace.',
+
+    // Related Lines section
+    'signals.related.line': 'Line {0}',
+    'signals.related.andMore': '...and {0} more',
+    'signals.related.none': 'No additional related lines found',
+    'signals.related.noErrorDetails': 'No error details available',
+    'signals.related.noWarningDetails': 'No warning details available',
+    'signals.related.noWarningGroups': 'No matching warning groups found',
+    'signals.related.noSlowDetails': 'No slow operation details available',
+    'signals.related.noClassifiedDetails': 'No classified error details available',
+    'signals.related.itemNoData': 'No {0} details available',
+    'signals.related.errorSummary': '{0} error(s)',
+    'signals.related.warningSummary': 'Warning repeated {0} time(s) across {1} location(s)',
+    'signals.related.slowSummary': '{0} slow operation(s) detected',
+    'signals.related.classifiedSummary': '{0} classified error(s)',
+    'signals.related.itemSummary': '{0} {1}(s) detected',
+    'signals.related.label.networkFailure': 'network failure',
+    'signals.related.label.memoryEvent': 'memory event',
+    'signals.related.label.permissionDenial': 'permission denial',
+
+    // Panel toasts
+    'signals.toast.copied': 'Report copied to clipboard',
+    'signals.toast.copyFailed': 'Failed to copy report',
+    'signals.toast.buildFailed': 'Failed to build report',
+    'signals.toast.saved': 'Report saved to {0}',
+    'signals.toast.saveFailed': 'Failed to save report',
 };
+
 
