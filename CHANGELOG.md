@@ -28,6 +28,8 @@ cspell:disable
 
 ## [9.0.0]
 
+Saropa Log Capture now spots patterns across your sessions at a glance — a workspace pulse and fix-rate show whether you're clearing errors faster than they pile up, cross-session search is faster, bug reports explain why something probably broke and who depends on the crashing file, and new integrations link traces, database queries, and the rest of the Saropa suite into your logs. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.0/CHANGELOG.md)
+
 ### Added
 
 - **A workspace pulse at the top of the Signal panel:** When you open the Signal panel for a log, a compact one-line strip now summarizes how the project is trending across sessions — how many error types are improving (resolved and no longer appearing), worsening (new this session), and stable (recurring), plus your fix rate — with a green/red accent when the balance tips improving or worsening. It reuses the panel's existing data (no separate view to open) and stays hidden when there's nothing notable to show.
