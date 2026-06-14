@@ -24,6 +24,7 @@ import { checkGitignoreSaropa } from './modules/config/gitignore-checker';
 import { migrateCrashlyticsCacheToSaropa } from './modules/crashlytics/crashlytics-io';
 import { migrateSidecarsInDirectory } from './modules/session/session-metadata';
 import { ProjectIndexer, setGlobalProjectIndexer } from './modules/project-indexer/project-indexer';
+import { TrigramSearchIndex, setGlobalSearchIndex } from './modules/search/search-trigram-index';
 import { BookmarkStore } from './modules/storage/bookmark-store';
 import { buildSessionListPayload, buildClassifierInputs, buildRoleClassifier, LOG_LAST_VIEWED_KEY } from './ui/provider/viewer-provider-helpers';
 import { registerDebugLifecycle } from './extension-lifecycle';
@@ -76,6 +77,13 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         sessionManager.setProjectIndexer(projectIndexer);
         projectIndexer.startWatching();
         context.subscriptions.push({ dispose: () => { projectIndexer?.dispose(); projectIndexer = null; setGlobalProjectIndexer(null); } });
+    }
+
+    // Trigram search index (plan 029): registered whenever a workspace folder is open; the
+    // searchIndex.enabled setting is checked per-operation, so toggling it needs no reactivation.
+    if (folder) {
+        setGlobalSearchIndex(new TrigramSearchIndex(folder));
+        context.subscriptions.push({ dispose: () => setGlobalSearchIndex(null) });
     }
 
     registerAllIntegrations();
