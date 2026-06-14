@@ -19,4 +19,7 @@ export const stringsWebviewC: Record<string, string> = {
     'viewer.signalPanel.sessionMeta': '{0} session(s), {1} total',
     'viewer.signalPanel.recurringTitle': 'Recurring in {0} sessions',
     'viewer.signalPanel.heroErrors': 'Errors: {0}',
+    'viewer.signalPanel.heroWarnings': 'Warnings: {0}',
+    'viewer.signalPanel.avg': ', avg {0}',
+    'viewer.signalPanel.max': ', max {0}',
 };

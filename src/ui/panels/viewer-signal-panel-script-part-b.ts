@@ -39,7 +39,7 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
             var sample = (s.sampleLines && s.sampleLines[0]) ? s.sampleLines[0] : '';
             var sampleCompact = sample.length > 90 ? sample.slice(0, 87) + '\\u2026' : sample;
             return '<div class="signal-suggestion-row" data-sid="' + esc(s.id) + '">'
-                + '<div class="signal-suggestion-head"><code class="signal-suggestion-pattern" title="' + esc(s.pattern) + '">' + esc(pat) + '</code><span class="signal-suggestion-impact">~' + lines + ' lines (' + pct + '%)</span></div>'
+                + '<div class="signal-suggestion-head"><code class="signal-suggestion-pattern" title="' + esc(s.pattern) + '">' + esc(pat) + '</code><span class="signal-suggestion-impact">' + esc(vt('viewer.signalPanel.suggestionImpact', lines, pct)) + '</span></div>'
                 + (sampleCompact ? '<div class="signal-suggestion-sample" title="' + esc(sample) + '">' + esc(sampleCompact) + '</div>' : '')
                 + '<div class="signal-suggestion-actions">'
                 +   '<button type="button" class="signal-suggestion-accept" data-sid="' + esc(s.id) + '" data-pattern="' + escapeAttr(s.pattern) + '">Accept</button>'
@@ -121,14 +121,14 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
         if (listEl) listEl.innerHTML = allSignals.map(function(s) {
             var icon = kindLabels[s.kind] || '\u2139\uFE0F';
             var text = s.label.length > 60 ? s.label.slice(0, 57) + '...' : s.label;
-            var meta = s.sessionCount + ' session' + (s.sessionCount === 1 ? '' : 's') + ', ' + s.totalOccurrences + ' total';
-            if (s.avgDurationMs) { meta += ', avg ' + fmtMs(s.avgDurationMs); }
-            if (s.maxDurationMs) { meta += ', max ' + fmtMs(s.maxDurationMs); }
+            var meta = vt('viewer.signalPanel.sessionMeta', s.sessionCount, s.totalOccurrences);
+            if (s.avgDurationMs) { meta += vt('viewer.signalPanel.avg', fmtMs(s.avgDurationMs)); }
+            if (s.maxDurationMs) { meta += vt('viewer.signalPanel.max', fmtMs(s.maxDurationMs)); }
             if (s.category) { meta += ' [' + esc(s.category) + ']'; }
             var lintBtn = buildLintRuleLink(s.detail || '');
             var daBtn = s.kind === 'sql' ? ' <span class="re-action signal-da-link" role="button" title="Open Drift Advisor">\\uD83D\\uDD0D DA</span>' : '';
             var sevCls = s.severity === 'critical' ? ' signal-sev-critical' : s.severity === 'high' ? ' signal-sev-high' : '';
-            var recurBadge = s.recurring ? ' <span class="signal-recurring-badge" title="Recurring in ' + s.sessionCount + ' sessions">\u21BB</span>' : '';
+            var recurBadge = s.recurring ? ' <span class="signal-recurring-badge" title="' + esc(vt('viewer.signalPanel.recurringTitle', s.sessionCount)) + '">\u21BB</span>' : '';
             var trendBadge = '';
             if (s.trend === 'increasing') { trendBadge = ' <span class="signal-trend-up" title="Increasing">\u2191</span>'; }
             else if (s.trend === 'decreasing') { trendBadge = ' <span class="signal-trend-down" title="Decreasing">\u2193</span>'; }
