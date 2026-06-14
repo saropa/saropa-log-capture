@@ -1,6 +1,7 @@
 /** Render Crashlytics crash event detail — frame classification and HTML output. */
 
 import * as vscode from 'vscode';
+import { t } from '../../l10n';
 import { escapeHtml } from '../../modules/capture/ansi';
 import { isFrameworkFrame } from '../../modules/analysis/stack-parser';
 import { extractSourceReference } from '../../modules/source/source-linker';
@@ -135,31 +136,31 @@ export function renderDeviceDistribution(multi: CrashlyticsIssueEvents): string 
         if (ev.osVersion) { osVersions.set(ev.osVersion, (osVersions.get(ev.osVersion) ?? 0) + 1); }
     }
     if (devices.size === 0 && osVersions.size === 0) { return ''; }
-    let html = '<details class="group cd-tile" open><summary class="group-header">Device Distribution <span class="match-count">' + multi.events.length + ' events</span></summary>';
-    if (devices.size > 0) { html += renderDistributionBar('Devices', devices, multi.events.length); }
-    if (osVersions.size > 0) { html += renderDistributionBar('OS Versions', osVersions, multi.events.length); }
+    let html = '<details class="group cd-tile" open><summary class="group-header">' + t('viewer.analysis.deviceDistribution') + ' <span class="match-count">' + t('viewer.analysis.eventsCount', multi.events.length) + '</span></summary>';
+    if (devices.size > 0) { html += renderDistributionBar(t('viewer.analysis.distDevices'), devices, multi.events.length); }
+    if (osVersions.size > 0) { html += renderDistributionBar(t('viewer.analysis.distOsVersions'), osVersions, multi.events.length); }
     return html + '</details>';
 }
 
 /** Render aggregate device/OS distribution from Crashlytics stats API. */
 export function renderApiDistribution(stats: IssueStats): string {
     if (stats.deviceStats.length === 0 && stats.osStats.length === 0) { return ''; }
-    let html = '<details class="group cd-tile" open><summary class="group-header">Aggregate Distribution <span class="match-count">all events</span></summary>';
+    let html = '<details class="group cd-tile" open><summary class="group-header">' + t('viewer.analysis.aggregateDistribution') + ' <span class="match-count">' + t('viewer.analysis.allEvents') + '</span></summary>';
     if (stats.deviceStats.length > 0) {
         const devices = new Map(stats.deviceStats.map(e => [e.name, e.count]));
-        html += renderDistributionBar('Devices', devices, stats.deviceStats.reduce((s, e) => s + e.count, 0));
+        html += renderDistributionBar(t('viewer.analysis.distDevices'), devices, stats.deviceStats.reduce((s, e) => s + e.count, 0));
     }
     if (stats.osStats.length > 0) {
         const os = new Map(stats.osStats.map(e => [e.name, e.count]));
-        html += renderDistributionBar('OS Versions', os, stats.osStats.reduce((s, e) => s + e.count, 0));
+        html += renderDistributionBar(t('viewer.analysis.distOsVersions'), os, stats.osStats.reduce((s, e) => s + e.count, 0));
     }
     return html + '</details>';
 }
 
 /** Friendly label for a Play `appProcessState` enum value. */
 function processStateLabel(raw: string): string {
-    if (raw === 'FOREGROUND') { return 'Foreground'; }
-    if (raw === 'BACKGROUND') { return 'Background'; }
+    if (raw === 'FOREGROUND') { return t('viewer.analysis.processForeground'); }
+    if (raw === 'BACKGROUND') { return t('viewer.analysis.processBackground'); }
     return raw;
 }
 
@@ -171,8 +172,8 @@ export function renderProcessStates(states: readonly StatEntry[]): string {
     const total = states.reduce((sum, e) => sum + e.count, 0);
     if (total === 0) { return ''; }
     const counts = new Map(states.map(e => [processStateLabel(e.name), e.count] as const));
-    return '<details class="group cd-tile cd-device-states" open><summary class="group-header">Device states <span class="match-count">all events</span></summary>'
-        + renderDistributionBar('App state', counts, total) + '</details>';
+    return '<details class="group cd-tile cd-device-states" open><summary class="group-header">' + t('viewer.analysis.deviceStates') + ' <span class="match-count">' + t('viewer.analysis.allEvents') + '</span></summary>'
+        + renderDistributionBar(t('viewer.analysis.distAppState'), counts, total) + '</details>';
 }
 
 function renderDistributionBar(label: string, counts: Map<string, number>, total: number): string {
