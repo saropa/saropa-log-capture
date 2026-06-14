@@ -2,6 +2,7 @@
 
 import * as vscode from 'vscode';
 import { escapeHtml, formatElapsedLabel } from '../../modules/capture/ansi';
+import { t } from '../../l10n';
 import { getNonce } from '../provider/viewer-content';
 import { queryVitals, clearVitalsCache, thresholds, getVitalsDiagnostic } from '../../modules/crashlytics/google-play-vitals';
 import type { VitalsSnapshot } from '../../modules/crashlytics/google-play-vitals-types';
@@ -51,7 +52,7 @@ export class VitalsPanelProvider implements vscode.WebviewViewProvider, vscode.D
 }
 
 function buildLoadingHtml(): string {
-    return `<!DOCTYPE html><html><body style="padding:8px;font-family:var(--vscode-font-family)"><p>Loading Vitals data\u2026</p></body></html>`;
+    return `<!DOCTYPE html><html><body style="padding:8px;font-family:var(--vscode-font-family)"><p>${t('vitals.loading')}</p></body></html>`;
 }
 
 function buildPanelHtml(snapshot: VitalsSnapshot | undefined): string {
@@ -60,22 +61,22 @@ function buildPanelHtml(snapshot: VitalsSnapshot | undefined): string {
         // Show the actual failure reason (e.g. missing scope, with its fix) rather than a silent N/A.
         const diag = getVitalsDiagnostic();
         const reason = diag
-            ? `<p style="font-size:12px"><strong>Why:</strong> ${escapeHtml(diag.message)}</p>`
-            : '<p style="font-size:11px;opacity:0.8">Requires: package name (google-services.json or setting), gcloud auth with the Play reporting scope, and the Play Developer Reporting API enabled.</p>';
+            ? `<p style="font-size:12px"><strong>${t('vitals.whyLabel')}</strong> ${escapeHtml(diag.message)}</p>`
+            : `<p style="font-size:11px;opacity:0.8">${t('vitals.requires')}</p>`;
         return `<!DOCTYPE html><html><body style="padding:8px;font-family:var(--vscode-font-family)">
-<p>Google Play Vitals not available.</p>
+<p>${t('vitals.notAvailable')}</p>
 ${reason}
 </body></html>`;
     }
     const refreshNote = `(${formatElapsedLabel(snapshot.queriedAt)})`;
     return `<!DOCTYPE html><html><head><style nonce="${nonce}">${getStyles()}</style></head><body>
-<div role="main" aria-label="Vitals">
-<div class="vt-toolbar"><span class="vt-title">Vitals ${refreshNote}</span><button class="vt-refresh" onclick="postMsg('refresh')" aria-label="Refresh Vitals data">Refresh</button></div>
+<div role="main" aria-label="${t('vitals.title')}">
+<div class="vt-toolbar"><span class="vt-title">${t('vitals.title')} ${refreshNote}</span><button class="vt-refresh" onclick="postMsg('refresh')" aria-label="${t('vitals.refreshAria')}">${t('vitals.refreshBtn')}</button></div>
 <div class="vt-pkg">${escapeHtml(snapshot.packageName)}</div>
 <div class="vt-hero">${renderCrashFreeUsers(snapshot.userCrashRate)}${renderCrashFree(snapshot.crashRate, snapshot.crashRateSeries)}</div>
-${renderMetric('Crash Rate', snapshot.crashRate, thresholds.crashRate, snapshot.crashRateSeries)}
-${renderMetric('ANR Rate', snapshot.anrRate, thresholds.anrRate, snapshot.anrRateSeries)}
-<div class="vt-footer" onclick="postMsg('openPlayConsole')">Open Play Console</div>
+${renderMetric(t('vitals.crashRate'), snapshot.crashRate, thresholds.crashRate, snapshot.crashRateSeries)}
+${renderMetric(t('vitals.anrRate'), snapshot.anrRate, thresholds.anrRate, snapshot.anrRateSeries)}
+<div class="vt-footer" onclick="postMsg('openPlayConsole')">${t('vitals.openPlayConsole')}</div>
 </div>
 <script nonce="${nonce}">const v=acquireVsCodeApi();function postMsg(t){v.postMessage({type:t})}</script>
 </body></html>`;
@@ -100,7 +101,7 @@ function renderCrashFree(crashRate: number | undefined, series?: readonly number
             delta = `<span class="vt-cf-delta ${up ? 'vt-cf-up' : 'vt-cf-down'}">${up ? '↑' : '↓'} ${Math.abs(change).toFixed(2)}%</span>`;
         }
     }
-    return `<div class="vt-crashfree"><span class="vt-cf-label">Crash-free sessions</span>`
+    return `<div class="vt-crashfree"><span class="vt-cf-label">${t('vitals.crashFreeSessions')}</span>`
         + `<span class="vt-cf-value">${free.toFixed(2)}%</span>${delta}</div>`;
 }
 
@@ -112,17 +113,17 @@ function renderCrashFree(crashRate: number | undefined, series?: readonly number
 function renderCrashFreeUsers(userCrashRate: number | undefined): string {
     if (userCrashRate === undefined) { return ''; }
     const free = 100 - userCrashRate;
-    return `<div class="vt-crashfree"><span class="vt-cf-label">Crash-free users</span>`
+    return `<div class="vt-crashfree"><span class="vt-cf-label">${t('vitals.crashFreeUsers')}</span>`
         + `<span class="vt-cf-value">${free.toFixed(2)}%</span></div>`;
 }
 
 function renderMetric(label: string, rate: number | undefined, threshold: number, series?: readonly number[]): string {
-    if (rate === undefined) { return `<div class="vt-metric"><span class="vt-label">${label}</span><span class="vt-na">N/A</span></div>`; }
+    if (rate === undefined) { return `<div class="vt-metric"><span class="vt-label">${label}</span><span class="vt-na">${t('vitals.na')}</span></div>`; }
     const pct = rate.toFixed(2) + '%';
     const bad = rate > threshold;
     const cls = bad ? ' vt-bad' : ' vt-good';
     const icon = bad ? '\u26a0' : '\u2713';
-    return `<div class="vt-metric${cls}"><span class="vt-label">${label}</span><span class="vt-value">${icon} ${pct}</span><span class="vt-threshold">threshold: ${threshold}%</span>${renderSparkline(series)}</div>`;
+    return `<div class="vt-metric${cls}"><span class="vt-label">${label}</span><span class="vt-value">${icon} ${pct}</span><span class="vt-threshold">${t('vitals.threshold', String(threshold))}</span>${renderSparkline(series)}</div>`;
 }
 
 function getStyles(): string {

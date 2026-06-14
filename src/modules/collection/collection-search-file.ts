@@ -11,6 +11,7 @@ import {
     SKIP_SIDECAR_EXTENSIONS,
     MAX_SEARCH_FILE_SIZE,
 } from './collection-types';
+import { boundForUserRegex } from '../misc/regex-safety';
 
 /** Gather surrounding context lines around an index, truncated to 200 chars. */
 export function gatherContext(
@@ -120,7 +121,8 @@ export async function searchFile(
 
         const line = lines[i];
         regex.lastIndex = 0;
-        const match = regex.exec(line);
+        // Bound the input so a user regex can't catastrophically backtrack on a very long line.
+        const match = regex.exec(boundForUserRegex(line));
 
         if (match) {
             if (matches.length >= maxResults) {
@@ -180,7 +182,7 @@ export async function searchJsonSidecar(
         const line = lines[i];
         regex.lastIndex = 0;
 
-        if (regex.test(line)) {
+        if (regex.test(boundForUserRegex(line))) {
             if (matches.length >= maxResults) {
                 truncated = true;
                 break;

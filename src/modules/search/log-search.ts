@@ -5,6 +5,7 @@
 
 import * as vscode from 'vscode';
 import { getConfig, getLogDirectoryUri, readTrackedFiles } from '../config/config';
+import { boundForUserRegex } from '../misc/regex-safety';
 
 /** A single search match within a log file. */
 export interface SearchMatch {
@@ -140,7 +141,9 @@ async function searchFile(
             const line = lines[i];
             // Reset lastIndex for global regex
             pattern.lastIndex = 0;
-            const match = pattern.exec(line);
+            // Bound the input so a user-authored pattern can't catastrophically backtrack on a very
+            // long line; match positions/display use the original line (which is sliced for display).
+            const match = pattern.exec(boundForUserRegex(line));
 
             if (match) {
                 matches.push({
@@ -200,7 +203,7 @@ async function countFileMatches(uri: vscode.Uri, pattern: RegExp): Promise<FileS
         let matchCount = 0;
         for (let i = 0; i < lines.length; i++) {
             pattern.lastIndex = 0;
-            if (pattern.test(lines[i])) { matchCount++; }
+            if (pattern.test(boundForUserRegex(lines[i]))) { matchCount++; }
         }
         if (matchCount === 0) { return undefined; }
         const filename = uri.fsPath.split(/[\\/]/).pop() ?? '';
