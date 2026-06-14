@@ -13,11 +13,11 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
     function formatUpdatedAgo(ms) {
         if (ms == null || !Number.isFinite(ms)) return '';
         var d = Date.now() - ms;
-        if (d < 60000) return 'just now';
-        if (d < 3600000) return Math.floor(d / 60000) + ' min ago';
-        if (d < 86400000) return Math.floor(d / 3600000) + 'h ago';
-        if (d < 604800000) return Math.floor(d / 86400000) + ' days ago';
-        return Math.floor(d / 604800000) + 'w ago';
+        if (d < 60000) return vt('viewer.signal.time.justNow');
+        if (d < 3600000) return vt('viewer.signal.time.minAgo', Math.floor(d / 60000));
+        if (d < 86400000) return vt('viewer.signal.time.hoursAgo', Math.floor(d / 3600000));
+        if (d < 604800000) return vt('viewer.signal.time.daysAgo', Math.floor(d / 86400000));
+        return vt('viewer.signal.time.weeksAgo', Math.floor(d / 604800000));
     }
 
     /** Plan 053-A: render the pending filter-suggestions section inside the Insights panel.
@@ -31,7 +31,7 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
         if (!blockEl || !listEl) return;
         if (items.length === 0) { blockEl.style.display = 'none'; listEl.innerHTML = ''; return; }
         blockEl.style.display = '';
-        if (summaryEl) summaryEl.textContent = 'Filter suggestions (' + items.length + ')';
+        if (summaryEl) summaryEl.textContent = vt('viewer.signal.suggestions.summary', items.length);
         listEl.innerHTML = items.slice(0, 8).map(function(s) {
             var pat = s.pattern.length > 64 ? s.pattern.slice(0, 61) + '\\u2026' : s.pattern;
             var pct = (s.impact && typeof s.impact.percentageReduction === 'number') ? s.impact.percentageReduction : 0;
@@ -54,12 +54,12 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
         var emptyEl = document.getElementById('signal-hotfiles-empty');
         var listEl = document.getElementById('signal-hotfiles-list');
         var files = signalDataCache.hotFiles || [];
-        if (summaryEl) summaryEl.textContent = files.length === 0 ? 'Frequently modified files' : (files.length + ' file' + (files.length === 1 ? '' : 's') + ' frequently modified');
+        if (summaryEl) summaryEl.textContent = files.length === 0 ? vt('viewer.signal.hotfiles.summaryEmpty') : vt(files.length === 1 ? 'viewer.signal.hotfiles.summaryOne' : 'viewer.signal.hotfiles.summaryMany', files.length);
         var toShow = files.slice(0, 5);
         if (emptyEl) emptyEl.style.display = toShow.length === 0 ? '' : 'none';
         if (listEl) {
             listEl.innerHTML = toShow.length === 0 ? '' : toShow.map(function(f) {
-                return '<div class="signal-hotfile-item"><span class="signal-hotfile-name">' + esc(f.filename) + '</span><span class="signal-hotfile-meta">' + (f.sessionCount || 0) + ' session' + (f.sessionCount === 1 ? '' : 's') + '</span></div>';
+                return '<div class="signal-hotfile-item"><span class="signal-hotfile-name">' + esc(f.filename) + '</span><span class="signal-hotfile-meta">' + vt(f.sessionCount === 1 ? 'viewer.signal.hotfiles.sessionsOne' : 'viewer.signal.hotfiles.sessionsMany', (f.sessionCount || 0)) + '</span></div>';
             }).join('');
         }
     }
@@ -73,10 +73,10 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
         var listEl = document.getElementById('signal-environment-list');
         var platforms = signalDataCache.platforms || [], sdks = signalDataCache.sdkVersions || [], adapters = signalDataCache.debugAdapters || [];
         var total = platforms.length + sdks.length + adapters.length;
-        if (summaryEl) summaryEl.textContent = total === 0 ? 'Environment' : ('Environment (' + total + ' entries)');
+        if (summaryEl) summaryEl.textContent = total === 0 ? vt('viewer.signal.env.summaryEmpty') : vt('viewer.signal.env.summary', total);
         if (!listEl) return;
-        var parts = [envGroupHtml('Platforms', platforms), envGroupHtml('SDK / runtime', sdks), envGroupHtml('Debug adapters', adapters)].filter(Boolean);
-        listEl.innerHTML = parts.length === 0 ? '<p class="signal-hotfiles-empty">No environment data across sessions.</p>' : parts.join('');
+        var parts = [envGroupHtml(vt('viewer.signal.env.platforms'), platforms), envGroupHtml(vt('viewer.signal.env.sdkRuntime'), sdks), envGroupHtml(vt('viewer.signal.env.debugAdapters'), adapters)].filter(Boolean);
+        listEl.innerHTML = parts.length === 0 ? '<p class="signal-hotfiles-empty">' + vt('viewer.signal.env.empty') + '</p>' : parts.join('');
     }
 
     /** Human-readable labels for signal kinds. */
@@ -115,7 +115,7 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
             if (s.kind !== 'error' && s.kind !== 'warning') return true;
             return (signalDataCache.statuses || {})[s.fingerprint] !== 'muted';
         }).slice(0, 30);
-        if (summaryEl) summaryEl.textContent = allSignals.length === 0 ? 'All signals' : 'All signals (' + allSignals.length + ')';
+        if (summaryEl) summaryEl.textContent = allSignals.length === 0 ? vt('viewer.signal.all.summaryEmpty') : vt('viewer.signal.all.summary', allSignals.length);
         if (allSignals.length === 0) { if (listEl) listEl.innerHTML = ''; if (emptyEl) emptyEl.style.display = ''; return; }
         if (emptyEl) emptyEl.style.display = 'none';
         if (listEl) listEl.innerHTML = allSignals.map(function(s) {
@@ -233,10 +233,12 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
                 return ta - tb;
             });
         }
-        var summaryWindowLabel = (signalsInLogWindowMs != null && signals.length !== signalsAll.length) ? (' of ' + signalsAll.length) : '';
+        var hasWindow = (signalsInLogWindowMs != null && signals.length !== signalsAll.length);
         if (summaryEl) summaryEl.textContent = signalsAll.length === 0
-            ? 'Signals in this log'
-            : 'Signals in this log (' + signals.length + summaryWindowLabel + ')';
+            ? vt('viewer.signal.inLog.summaryEmpty')
+            : (hasWindow
+                ? vt('viewer.signal.inLog.summaryWindow', signals.length, signalsAll.length)
+                : vt('viewer.signal.inLog.summary', signals.length));
         if (emptyBlock) emptyBlock.style.display = signalsAll.length === 0 ? '' : 'none';
         if (!listEl) { return; }
         if (signals.length === 0) { listEl.innerHTML = ''; return; }

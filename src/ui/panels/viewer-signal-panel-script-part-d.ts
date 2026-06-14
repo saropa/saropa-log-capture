@@ -281,7 +281,7 @@ export function getSignalScriptPartD(): string {
         if (!blockEl || !listEl) return;
         if (pairs.length === 0) { blockEl.style.display = 'none'; return; }
         blockEl.style.display = '';
-        if (summaryEl) summaryEl.textContent = 'Related signals (' + pairs.length + ' pair' + (pairs.length === 1 ? '' : 's') + ')';
+        if (summaryEl) summaryEl.textContent = vt(pairs.length === 1 ? 'viewer.signal.related.summaryOne' : 'viewer.signal.related.summaryMany', pairs.length);
         listEl.innerHTML = pairs.map(function(p) {
             var pct = Math.round(p.jaccard * 100);
             var lA = p.labelA.length > 40 ? p.labelA.slice(0, 37) + '...' : p.labelA;

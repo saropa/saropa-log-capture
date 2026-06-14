@@ -203,4 +203,21 @@ export const stringsViewerD: Record<string, string> = {
     'viewer.analysis.matchesInFiles.one': '{0} match in {1} files',
     'viewer.analysis.matchesInFiles.many': '{0} matches in {1} files',
     'viewer.analysis.noMatchesOtherSessions': 'No matches in other sessions',
+
+    // Crashlytics crash-detail distribution panels (analysis-crash-detail.ts) + analysis error-action
+    // toasts (analysis-error-actions.ts), built host-side via t(). "OS" / "AI" are acronyms shielded by
+    // the MT pipeline; the {0} carries the event count.
+    'viewer.analysis.deviceDistribution': 'Device Distribution',
+    'viewer.analysis.aggregateDistribution': 'Aggregate Distribution',
+    'viewer.analysis.deviceStates': 'Device states',
+    'viewer.analysis.eventsCount': '{0} events',
+    'viewer.analysis.allEvents': 'all events',
+    'viewer.analysis.distDevices': 'Devices',
+    'viewer.analysis.distOsVersions': 'OS Versions',
+    'viewer.analysis.distAppState': 'App state',
+    'viewer.analysis.processForeground': 'Foreground',
+    'viewer.analysis.processBackground': 'Background',
+    'viewer.analysis.errorContextCopied': 'Error context copied to clipboard',
+    'viewer.analysis.noLogForBugReport': 'No log file available for bug report',
+    'viewer.analysis.aiUnavailable': 'AI explanation is not available',
 };
