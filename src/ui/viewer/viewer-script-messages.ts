@@ -7,6 +7,17 @@ import { getFileCodeStampScript } from './viewer-file-code-stamp';
 
 export function getViewerScriptMessageHandler(): string {
     return getViewerScriptDbMessageHandler() + getViewerScriptTypographyMessageHandler() + getSourceLineStampScript() + getFileCodeStampScript() + /* javascript */ `
+/* Crashlytics icon shows only when the adapter is enabled AND the workspace looks like a deployable
+   app (host posts 'crashlyticsApplicable'). Both signals arrive as separate messages, so this single
+   helper re-derives visibility whenever either changes. Default is hidden until the host confirms
+   applicability, so a library / package project never flashes the icon. */
+function syncCrashlyticsIconVisibility() {
+    var ibCrash = document.getElementById('ib-crashlytics');
+    if (!ibCrash) return;
+    var enabled = Array.isArray(window.integrationAdapters) && window.integrationAdapters.indexOf('crashlytics') >= 0;
+    var applicable = window.crashlyticsApplicable === true;
+    ibCrash.classList.toggle('ib-integration-enabled', enabled && applicable);
+}
 window.addEventListener('message', function(event) {
     var msg = event.data;
     /* Pre-handlers return true when they've dispatched the message; skip the switch on hit. */
@@ -321,11 +332,16 @@ window.addEventListener('message', function(event) {
         case 'integrationsAdapters':
             window.integrationAdapters = Array.isArray(msg.adapterIds) ? msg.adapterIds : [];
             if (typeof syncIntegrationsUi === 'function') syncIntegrationsUi();
-            var ibCrash = document.getElementById('ib-crashlytics');
-            if (ibCrash) ibCrash.classList.toggle('ib-integration-enabled', window.integrationAdapters.indexOf('crashlytics') >= 0);
+            syncCrashlyticsIconVisibility();
             var ibPerf = document.getElementById('ib-performance');
             if (ibPerf) ibPerf.classList.toggle('ib-integration-enabled', window.integrationAdapters.indexOf('performance') >= 0);
             if (typeof window.applyFooterQualityReportState === 'function') window.applyFooterQualityReportState();
+            break;
+        case 'crashlyticsApplicable':
+            // Library / package projects (no app evidence) keep the icon hidden even when the
+            // crashlytics adapter is enabled, so the setup hint never nags where it cannot apply.
+            window.crashlyticsApplicable = msg.applicable !== false;
+            syncCrashlyticsIconVisibility();
             break;
         case 'errorHoverData':
             if (typeof handleErrorHoverData === 'function') handleErrorHoverData(msg);
