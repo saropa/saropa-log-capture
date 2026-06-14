@@ -220,6 +220,7 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
       queryBlockPattern: readTrimmedStringOrDefault(cfg, 'integrations.database.queryBlockPattern', ''),
       timeWindowSeconds: clamp(cfg.get('integrations.database.timeWindowSeconds'), 1, 120, 5),
       maxQueriesPerLookup: clamp(cfg.get('integrations.database.maxQueriesPerLookup'), 1, 200, 20),
+      redactLiterals: ensureBoolean(cfg.get('integrations.database.redactLiterals'), false),
     },
     integrationsHttp: {
       requestIdPattern: readTrimmedStringOrDefault(cfg, 'integrations.http.requestIdPattern', ''),

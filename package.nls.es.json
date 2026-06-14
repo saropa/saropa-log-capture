@@ -108,7 +108,7 @@
   "config.autoHidePatterns.description": "Patrones de texto para ocultar automáticamente en el visor. Las líneas que contienen cualquier patrón (sin distinción de mayúsculas/minúsculas) se ocultan automáticamente. Gestionar mediante clic derecho > Ocultar > Ocultar selección (siempre).",
   "config.autoHidePatterns.title": "Text patterns to auto-hide in the viewer.",
   "config.afterCaptureAction.description": "Qué hacer cuando termina una captura. \"ask\" muestra una notificación. \"openLog\" abre el registro automáticamente. \"nothing\" suprime la notificación.",
-  "config.afterCaptureAction.title": "Acción después de la captura",
+  "config.afterCaptureAction.title": "Action after capture ends",
   "config.afterCaptureAction.enum.ask": "Mostrar notificación con botones Abrir registro y Copiar ruta",
   "config.afterCaptureAction.enum.openLog": "Abrir automáticamente el registro en el visor",
   "config.afterCaptureAction.enum.nothing": "No hacer nada — sin notificación, sin apertura automática",
@@ -497,5 +497,6 @@
   "command.clearGlobalAggregates.title": "Saropa Log Capture: Clear Cross-Workspace Noise Patterns",
   "config.learning.globalAggregates.description": "Share high-confidence framework-noise filter patterns across your workspaces so a new project starts with less noise. Off by default. Only the pattern text and its category are stored on this machine — never file paths, project names, or usernames. Use 'Clear Cross-Workspace Noise Patterns' to wipe them.",
   "config.learning.globalAggregates.title": "Share noise patterns across workspaces",
-  "command.compareThreeSessions.title": "Saropa Log Capture: Compare 3 Logs"
+  "command.compareThreeSessions.title": "Saropa Log Capture: Compare 3 Logs",
+  "config.integrations.database.redactLiterals.title": "Redact SQL literal values in the queries sidecar."
 }

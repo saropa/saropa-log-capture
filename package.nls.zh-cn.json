@@ -108,7 +108,7 @@
   "config.autoHidePatterns.description": "在查看器中自动隐藏的文本模式。包含任何模式的行（不区分大小写）将自动隐藏。通过右键单击 > 隐藏 > 隐藏选择（始终）进行管理。",
   "config.autoHidePatterns.title": "Text patterns to auto-hide in the viewer.",
   "config.afterCaptureAction.description": "捕获结束时的操作。\"ask\" 显示通知。\"openLog\" 自动打开日志。\"nothing\" 不显示通知。",
-  "config.afterCaptureAction.title": "捕获结束后的操作",
+  "config.afterCaptureAction.title": "Action after capture ends",
   "config.afterCaptureAction.enum.ask": "显示带有“打开日志”和“复制路径”按钮的通知",
   "config.afterCaptureAction.enum.openLog": "在查看器中自动打开日志",
   "config.afterCaptureAction.enum.nothing": "不执行任何操作 — 无通知，无自动打开",
@@ -460,7 +460,7 @@
   "config.viewerKeybindings.description": "Override viewer panel power shortcuts (e.g. openSearch, togglePause). Keys are action IDs; values are key descriptors (e.g. \"ctrl+f\", \"space\"). Change from Options → Keyboard shortcuts by double-clicking a power shortcut row.",
   "config.viewerKeybindings.title": "Viewer Keybindings",
   "config.viewerMaxLines.description": "查看器中显示的最大行数（0 = 默认 50,000）。不得超过 maxLines。",
-  "config.viewerMaxLines.title": "Maximum lines shown in the viewer (0 = default 50,000).",
+  "config.viewerMaxLines.title": "Maximum lines shown in the viewer (0 = use maxLines).",
   "config.viewerPreserveAsciiBoxArt.description": "When enabled, log lines that look like Unicode box banners (text between paired vertical bars \"│ … │\" on the same line) are shown as normal lines, not stack frames, so stack preview does not collapse them with \"[+N more]\". Reload the log viewer after changing.",
   "config.viewerPreserveAsciiBoxArt.title": "Preserve ASCII/Unicode box-art lines in the log viewer",
   "config.viewerSlowBurstCooldownMs.description": "Minimum log time (milliseconds) between burst markers per session. Use 0 to disable cooldown.",
@@ -497,5 +497,6 @@
   "command.clearGlobalAggregates.title": "Saropa Log Capture: Clear Cross-Workspace Noise Patterns",
   "config.learning.globalAggregates.description": "Share high-confidence framework-noise filter patterns across your workspaces so a new project starts with less noise. Off by default. Only the pattern text and its category are stored on this machine — never file paths, project names, or usernames. Use 'Clear Cross-Workspace Noise Patterns' to wipe them.",
   "config.learning.globalAggregates.title": "Share noise patterns across workspaces",
-  "command.compareThreeSessions.title": "Saropa Log Capture: Compare 3 Logs"
+  "command.compareThreeSessions.title": "Saropa Log Capture: Compare 3 Logs",
+  "config.integrations.database.redactLiterals.title": "Redact SQL literal values in the queries sidecar."
 }
