@@ -3,6 +3,7 @@ import { stringsA } from './l10n/strings-a';
 import { stringsB } from './l10n/strings-b';
 import { stringsWebview } from './l10n/strings-webview';
 import { stringsWebviewB } from './l10n/strings-webview-b';
+import { stringsWebviewC } from './l10n/strings-webview-c';
 import { stringsViewer } from './l10n/strings-viewer';
 import { stringsViewerB } from './l10n/strings-viewer-b';
 import { stringsViewerC } from './l10n/strings-viewer-c';
@@ -36,6 +37,7 @@ const strings: Record<string, string> = {
     ...stringsAnalysis,
     ...stringsWebview,
     ...stringsWebviewB,
+    ...stringsWebviewC,
 };
 
 /**
@@ -60,7 +62,7 @@ export function getWebviewL10nMap(): Record<string, string> {
     // Both webview source files feed the client `__VT` map. Keep this in sync
     // when adding another strings-webview-*.ts split — a key only in the merged
     // host `strings` map but missing here would make vt() emit the raw key.
-    for (const key of [...Object.keys(stringsWebview), ...Object.keys(stringsWebviewB)]) {
+    for (const key of [...Object.keys(stringsWebview), ...Object.keys(stringsWebviewB), ...Object.keys(stringsWebviewC)]) {
         map[key] = t(key);
     }
     return map;

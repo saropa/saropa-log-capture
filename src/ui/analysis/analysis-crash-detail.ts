@@ -30,14 +30,14 @@ function classifyFrames(frames: readonly CrashlyticsStackFrame[]): StackFrameInf
 /** Render crash event detail with classified stack frames, device metadata, keys, and logs. */
 export function renderCrashDetail(detail: CrashlyticsEventDetail): string {
     if (!detail.crashThread && detail.appThreads.length === 0 && !detail.customKeys?.length && !detail.logs?.length) {
-        return '<div class="no-matches">No stack trace available</div>';
+        return '<div class="no-matches">' + t('viewer.analysis.noStackTrace') + '</div>';
     }
     let html = renderDeviceMeta(detail);
     if (detail.crashThread) {
         html += `<div class="crash-thread-header">${escapeHtml(detail.crashThread.name)}</div>`;
         const frames = classifyFrames(detail.crashThread.frames);
         if (frames.length > 0) { html += renderSmartFrameSection(frames); }
-        else { html += '<div class="no-matches">No frames in crash thread</div>'; }
+        else { html += '<div class="no-matches">' + t('viewer.analysis.noCrashFrames') + '</div>'; }
     }
     if (detail.appThreads.length > 0) { html += renderOtherThreads(detail.appThreads); }
     if (detail.customKeys && detail.customKeys.length > 0) { html += renderKeysSection(detail.customKeys); }
@@ -59,7 +59,7 @@ function formatEventTime(raw: string): string {
 }
 
 function renderKeysSection(keys: readonly { key: string; value: string }[]): string {
-    let html = '<details class="group cd-tile"><summary class="group-header">Keys <span class="match-count">' + keys.length + '</span></summary><table class="crash-keys-table">';
+    let html = '<details class="group cd-tile"><summary class="group-header">' + t('viewer.analysis.keysHeader') + ' <span class="match-count">' + keys.length + '</span></summary><table class="crash-keys-table">';
     for (const kv of keys) {
         html += `<tr><td class="crash-key-name">${escapeHtml(kv.key)}</td><td class="crash-key-value">${escapeHtml(kv.value)}</td></tr>`;
     }
@@ -67,7 +67,7 @@ function renderKeysSection(keys: readonly { key: string; value: string }[]): str
 }
 
 function renderLogsSection(logs: readonly { timestamp?: string; message: string }[]): string {
-    let html = '<details class="group cd-tile"><summary class="group-header">Logs <span class="match-count">' + logs.length + ' breadcrumbs</span></summary>';
+    let html = '<details class="group cd-tile"><summary class="group-header">' + t('viewer.analysis.logsHeader') + ' <span class="match-count">' + t('viewer.analysis.breadcrumbs', logs.length) + '</span></summary>';
     for (const entry of logs) {
         const ts = entry.timestamp ? `<span class="crash-log-ts">${escapeHtml(entry.timestamp)}</span> ` : '';
         html += `<div class="crash-log-entry">${ts}${escapeHtml(entry.message)}</div>`;
@@ -82,11 +82,11 @@ function renderLogsSection(logs: readonly { timestamp?: string; message: string 
  */
 function renderOtherThreads(threads: readonly CrashlyticsThread[]): string {
     const groups = groupCrashThreads(threads);
-    const count = `<span class="match-count">${threads.length} threads · ${groups.length} unique</span>`;
-    let html = `<details class="group cd-tile"><summary class="group-header">Other Threads ${count}</summary>`;
+    const count = `<span class="match-count">${t('viewer.analysis.threadsUnique', threads.length, groups.length)}</span>`;
+    let html = `<details class="group cd-tile"><summary class="group-header">${t('viewer.analysis.otherThreads')} ${count}</summary>`;
     for (const g of groups.slice(0, maxThreadGroups)) { html += renderThreadGroup(g); }
     if (groups.length > maxThreadGroups) {
-        html += `<div class="crash-thread-more">+${groups.length - maxThreadGroups} more unique threads</div>`;
+        html += `<div class="crash-thread-more">${t('viewer.analysis.moreUniqueThreads', groups.length - maxThreadGroups)}</div>`;
     }
     return html + '</details>';
 }
@@ -94,7 +94,7 @@ function renderOtherThreads(threads: readonly CrashlyticsThread[]): string {
 /** One thread group: header (name + `×N` collapse badge + the other names), then its frames. */
 function renderThreadGroup(g: ThreadGroup): string {
     const badge = g.count > 1
-        ? ` <span class="cd-thread-count" title="${g.count} threads with an identical stack">×${g.count}</span>`
+        ? ` <span class="cd-thread-count" title="${t('viewer.analysis.identicalStackTitle', g.count)}">×${g.count}</span>`
         : '';
     let html = `<div class="crash-thread-header">${escapeHtml(g.rep.name)}${badge}</div>`;
     // List the collapsed siblings so a reader can confirm what got merged (capped to stay compact).
