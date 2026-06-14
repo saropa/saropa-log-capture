@@ -139,6 +139,8 @@ export interface IntegrationDatabaseConfig {
   readonly maxQueriesPerLookup: number;
   /** When true, replace string/numeric literals in captured SQL with ? before writing the queries sidecar. */
   readonly redactLiterals: boolean;
+  /** When true (file mode), tail the query log during the session and stream new queries live into the viewer. */
+  readonly liveTail: boolean;
 }
 
 export interface IntegrationHttpConfig {
