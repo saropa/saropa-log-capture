@@ -138,17 +138,28 @@ function dedupeAndMerge(work: WorkingHypothesis[]): WorkingHypothesis[] {
 }
 
 /**
- * Bug 002 fix: when a high-confidence ANR hypothesis exists, error-recent
- * hypotheses are almost certainly ANR dump lines (CPU stats, IO pressure,
- * process list). Instead of showing them as separate reports, merge their
- * evidence line IDs into the ANR hypothesis so the single ANR report links
- * to the actual dump lines. No information is lost — the user sees one
- * consolidated report instead of three overlapping ones.
+ * Bug 002 fix: when an ANR hypothesis exists, error-recent hypotheses are
+ * almost certainly ANR dump lines (CPU stats, IO pressure, process list).
+ * Instead of showing them as separate reports, merge their evidence line IDs
+ * into the ANR hypothesis so the single ANR report links to the actual dump
+ * lines. No information is lost — the evidence lines still resolve from the ANR
+ * bullet; the user sees one consolidated root cause instead of three
+ * overlapping ones.
+ *
+ * Gate on the `anr::risk` key alone, NOT on `confidence === 'high'`. The ANR
+ * scorer marks `high` only above score 50, so a moderate ANR (score
+ * ROOT_CAUSE_ANR_MIN_SCORE–50) previously bypassed this merge and its dump
+ * lines re-surfaced as duplicate "Error:" bullets. An ANR is the root cause at
+ * any confidence above the emit threshold; the errors logged during it are its
+ * consequences. Tradeoff: a genuinely-unrelated error that happens to coincide
+ * with a moderate ANR is folded under it rather than shown on its own bullet —
+ * accepted, because the dump lines themselves are far more common than an
+ * unrelated coincident error, and the evidence line is never dropped (it stays
+ * reachable from the ANR report). When no ANR is present, error-recent
+ * hypotheses are untouched (see the early return below).
  */
 function mergeErrorsIntoAnr(work: WorkingHypothesis[]): WorkingHypothesis[] {
-  const anrIdx = work.findIndex(
-    (h) => h.hypothesisKey === 'anr::risk' && h.confidence === 'high',
-  );
+  const anrIdx = work.findIndex((h) => h.hypothesisKey === 'anr::risk');
   if (anrIdx < 0) { return work; }
 
   // Collect all error-recent evidence line IDs into the ANR hypothesis.

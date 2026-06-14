@@ -120,6 +120,10 @@ export interface IntegrationExternalLogsConfig {
   readonly writeSidecars: boolean;
   readonly prefixLines: boolean;
   readonly maxLinesPerFile: number;
+  /** Create a missing log file (and parent dirs) at session start so it can be tailed immediately. */
+  readonly createIfMissing: boolean;
+  /** Re-tail from the start when the file is rotated (recreated/truncated) or a newer glob match appears. */
+  readonly followRotation: boolean;
 }
 
 export interface IntegrationSecurityConfig {
