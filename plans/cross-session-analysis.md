@@ -324,7 +324,7 @@ Group: "Network connectivity issues"
 
 **Implementation:** Pattern library mapping error class names to semantic categories. `SocketException`, `TimeoutException`, `HttpException`, `ClientException` → "network". `FileNotFoundException`, `PathNotFoundException` → "filesystem". `FormatException`, `RangeError`, `TypeError` → "data validation".
 
-### 14. Debugging Velocity Score — NOT BUILT
+### ~~14. Debugging Velocity Score~~ — DONE
 
 Track how many sessions it takes to resolve an error. Show the developer their "fix rate."
 
@@ -337,7 +337,7 @@ This Week:
 
 **The magic:** Turns debugging into a game. Developers can see their progress. Managers can see blockers. The metric is computed purely from existing data — no manual tracking.
 
-**Implementation:** An error is "resolved" when its fingerprint stops appearing in new sessions. Track the session window. Compute fix velocity as `resolved / (resolved + persisting)`. The disappeared-error detection in [regression-detector.ts](src/modules/signals/regression-detector.ts) supplies the "resolved" signal.
+**Status:** Shipped. [debugging-velocity.ts](src/modules/compare/debugging-velocity.ts) computes, from the per-session error-fingerprint history (oldest → newest), how many distinct errors are resolved (gone from the latest session) versus persisting (still present), the fix-rate percentage `resolved / (resolved + persisting)`, and the average number of sessions a resolved error lingered (its first→last span). Session finalization logs a "Debugging velocity: N resolved, M persisting (P% fixed; resolved errors lasted ~X sessions)" line to the **Saropa Log Capture** output channel ([session-lifecycle-finalize.ts](src/modules/session/session-lifecycle-finalize.ts)), reusing the metadata it already loads for the "what changed" summary. Stays silent with fewer than two sessions or no errors. **Note:** rendered to the output channel; a status-bar/progress-bar "fix velocity" widget is not built.
 
 ### ~~15. Time-Travel Debugging Context~~ — DONE (gap highlight; full timeline pending)
 
@@ -476,7 +476,7 @@ Fix Velocity: 3 errors resolved this week, 1 persisting
 | ~~Environment diff (env-specific)~~ | ~~Medium~~ | ~~Medium~~ | ~~High~~ | **Done** (session delta) |
 | ~~Time-travel debugging context~~ | ~~Low~~ | ~~Medium~~ | ~~Medium~~ | **Done** (gap highlight) |
 | Workspace pulse dashboard | High | Very High | Very High | Future |
-| Debugging velocity score | Medium | Medium | High | Future |
+| ~~Debugging velocity score~~ | ~~Medium~~ | ~~Medium~~ | ~~High~~ | **Done** (output channel) |
 | "Show Log History" for source files | Low | Medium | Low | Future |
 | N-way cross-session diff | High | Medium | Medium | Future |
 
@@ -814,3 +814,32 @@ A generated bug report now carries an "Attention Score" section: a composite ran
 ### Pending
 
 Running the scorer per-error to re-order the analysis panel's error list (the panel re-rank). The FIXME-nearby and common-SDK factors are defined in the scorer but not yet fed by the bug report, which has no annotation field on its file analyses.
+
+---
+
+## Finish Report (2026-06-14) — Debugging velocity (idea #14)
+
+### What shipped
+
+After each session ends, the **Saropa Log Capture** output channel logs a debugging-velocity line: how many distinct error fingerprints are resolved (no longer in the latest session) versus persisting, the fix-rate percentage, and the average number of sessions a resolved error lingered before disappearing. It turns the cross-session fingerprint history into a simple "are errors being cleared faster than they pile up" signal.
+
+### How it works
+
+`computeDebuggingVelocity(sessionHashes)` (pure, `src/modules/compare/debugging-velocity.ts`) takes each session's error-fingerprint hashes in chronological order, records each fingerprint's first and last appearance, and counts a fingerprint as persisting when its last appearance is the latest session, resolved otherwise. Velocity is `resolved / (resolved + persisting)` as a percent; `avgSessionsToResolve` is the mean inclusive first→last span of the resolved set. Returns undefined below two sessions. Session finalization maps the metadata it already loads (for the "what changed" summary) into ordered hash lists and logs the formatted line, staying silent when there's too little history or no errors.
+
+### Files changed
+
+- `src/modules/compare/debugging-velocity.ts` — NEW. Pure velocity computation (node:test-able).
+- `src/modules/session/session-lifecycle-finalize.ts` — `formatVelocityLine()` helper logged alongside the session delta, reusing the already-loaded metas.
+- `src/test/modules/compare/debugging-velocity.test.ts` — NEW. 5 cases (too-few-sessions, resolved-vs-persisting, span average, 0%, 100%).
+- `CHANGELOG.md`, `plans/cross-session-analysis.md` — idea #14 marked done; this report.
+
+### Verification
+
+- `npm run check-types` — clean (full tree).
+- `eslint` on the touched files — clean.
+- `node --test` on the new test — 5/5 pass.
+
+### Note
+
+Rendered to the output channel; a status-bar / progress-bar "fix velocity" widget is not built.
