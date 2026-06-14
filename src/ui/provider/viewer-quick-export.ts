@@ -98,11 +98,9 @@ export async function handleQuickExportLogs(
 		await vscode.workspace.fs.writeFile(fileUri, Buffer.from(content, "utf-8"));
 		const config = getConfig();
 		vscode.window.showInformationMessage(
-			t("msg.exportedLinesTo",
-				String(metadata.visibleLines),
-				metadata.visibleLines === 1 ? "" : "s",
-				"",
-				`${config.logDirectory}/${filename}`),
+			metadata.visibleLines === 1
+				? t("msg.exportedLinesTo.one", String(metadata.visibleLines), "", `${config.logDirectory}/${filename}`)
+				: t("msg.exportedLinesTo.many", String(metadata.visibleLines), "", `${config.logDirectory}/${filename}`),
 		);
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err);
