@@ -1,129 +1,134 @@
-# Integration: Database Query Logs
+# Database Query Logs — Deferred Work
 
-## Problem and Goal
+The core integration is **shipped**. Authoritative spec:
+[011_integration-spec-database-query-logs.md](011_integration-spec-database-query-logs.md).
+Implementation: [database-query-logs.ts](../src/modules/integrations/providers/database-query-logs.ts).
 
-Many applications log **request IDs**, **transaction IDs**, or **query identifiers** in their debug output while the same identifiers appear in **database query logs** (slow query logs, general logs, or APM tools). When debugging a failure, correlating a log line like "Request abc123 failed" with the exact SQL that ran (and its duration, plan, or errors) is invaluable. Today that correlation is manual: open DB logs, search by ID or time. This integration allows **linking debug log lines to database query log entries** (or to a local query log file / exporter) so that "what the app said" and "what the DB did" are visible together.
+What ships today: a `database` integration provider (gated by
+`saropaLogCapture.integrations.adapters` containing `"database"`) that runs at
+**session end** in `parse` mode (scan captured output for SQL blocks) or `file`
+mode (read an external query log), writes a `*.queries.json` sidecar, and
+exposes a related-queries popover/command plus a status-bar "DB" indicator.
+File mode auto-detects JSON-lines vs plain text and parses PostgreSQL
+`log_min_duration_statement` and MySQL slow query logs, reading only the last
+512 KB of large or rotated logs.
 
-**Goal:** Enable correlation between Saropa-captured debug output and database activity by (1) **ingesting or tailing** a database query log (file or stream), and (2) **aligning** log lines with queries via shared identifiers (request ID, correlation ID, timestamp) or by time windows, so that the viewer or export can show "related queries" for a selected line or time range.
+This file tracks only the items the original design raised that are **not built
+and not already in spec 011's "Deferred" list** (which covers multi-database
+support, EXPLAIN/plan display, slow-query highlighting, and aggregated stats —
+do not duplicate those here).
 
----
-
-## Data Sources
-
-| Source | Format | How to get it |
-|--------|--------|----------------|
-| **App-generated query log file** | Project writes SQL + request ID to a file (e.g. `logs/sql.log`) | User configures path; extension tails or reads on demand |
-| **Database server log** | MySQL general/slow log, PostgreSQL log, SQL Server trace | Often requires DB access or export; user exports to file or uses agent |
-| **APM / observability** | Datadog, New Relic, Application Insights SQL events | API or export; match by request ID / trace ID from app logs |
-| **ORM / framework logs** | TypeORM, Sequelize, Entity Framework logging to console | Already in Debug Console; can be **parsed** and indexed as "queries" within the same log |
-| **Custom correlation** | App logs `[requestId=xyz] SELECT ...` in stdout | Parser extracts requestId + query; store in sidecar index for lookup |
-
-The most portable and low-friction approach is **file-based**: the app (or a middleware) writes a dedicated query log file with request/correlation IDs and optionally timestamps; the extension tails or indexes it and correlates by ID or time with the main debug log.
-
----
-
-## Integration Approach
-
-### 1. Modes of operation
-
-- **Mode A — Tail query log file:** User sets `saropaLogCapture.database.queryLogPath` (e.g. `logs/sql.log`). During a debug session, the extension tails this file (or reads it at session end). Lines are parsed (e.g. JSON: `{ requestId, query, duration, time }` or regex). Build an in-memory index: requestId → [queries]. When the user selects a log line in the viewer, if the line contains a request ID (from a configurable regex), look up queries and show them in a "Related queries" panel or hover.
-- **Mode B — Parse from same log:** The debug console already contains SQL (e.g. from ORM). A **parser** (regex or structured) identifies "query blocks" in the captured log (e.g. "Executing (default): SELECT ..."). Store line ranges or snippets in a sidecar index. Viewer can "Highlight query blocks" or "Show query at this line" (expand/collapse). No separate file needed.
-- **Mode C — External API:** User configures an API endpoint (e.g. Application Insights query) that accepts request ID or time range and returns query list. Extension calls it when user clicks "Related queries" (with consent and token). More setup; document as advanced.
-
-**Recommended first step:** Mode B (parse from same log) for zero config; then Mode A (query log file) for teams that already write a SQL log file.
-
-### 2. Correlation keys
-
-- **Request ID / correlation ID:** App logs `[req=abc-123] Error ...`; query log has `requestId: "abc-123"`. Match by exact string. Config: `saropaLogCapture.database.requestIdPattern` (regex to extract from log line).
-- **Timestamp:** No ID; correlate by time window (e.g. "queries in the 5 seconds before this line"). Less precise but works when no ID is logged.
-- **Line proximity:** For Mode B, "query block" is defined as a contiguous range of lines; "related" = the query block containing this line or the previous block.
-
-### 3. Where to show correlated data
-
-- **Viewer panel:** "Related queries" section: when the user selects a line (or right-clicks "Show related queries"), show a list of queries (text, duration, time) in a panel below or beside the log. Click to copy or open in a scratch SQL file.
-- **Header / sidecar:** Optional: at session end, write a `*.queries.json` sidecar with all parsed queries and their line numbers or request IDs, for export or external tools.
-- **Bug report:** Option to include "Related queries (last N)" in the bug report when the selected line has associated queries.
+> **Done (was items 1 and 4):** plain-text file formats and the read-size /
+> rotation cap shipped together — file mode auto-detects JSON vs text, parses
+> Postgres `log_min_duration_statement` and MySQL slow logs, and tail-reads the
+> last 512 KB. See [database-query-parsing.ts](../src/modules/integrations/providers/database-query-parsing.ts)
+> (`parseTextQueryLog`, `detectQueryLogFormat`) and the `readTailUtf8` cap in
+> [database-query-logs.ts](../src/modules/integrations/providers/database-query-logs.ts).
 
 ---
 
-## User Experience
+## Deferred items
 
-### Settings (under `saropaLogCapture.database.*`)
+### 1. External API mode (Mode C)
+Call an observability backend (Datadog, New Relic, Application Insights) with a
+request/trace ID or time range and return the query list on demand. The `mode`
+enum is `"parse" | "file"` today; this would add `"api"`. Requires a configured
+endpoint + token in VS Code **secret storage** (never a plain setting), explicit
+user consent before any network call, and clear documentation as an advanced
+mode. Heaviest option by setup cost; lowest priority.
 
-| Setting | Type | Default | Description |
-|--------|------|--------|-------------|
-| `enabled` | boolean | `false` | Enable database query correlation |
-| `mode` | `"parse"` \| `"file"` \| `"api"` | `"parse"` | Parse from log, tail file, or call API |
-| `queryLogPath` | string | `""` | Relative to workspace: path to query log file (Mode A) |
-| `queryLogFormat` | `"json"` \| `"text"` | `"json"` | Each line is JSON or plain text (regex extraction) |
-| `requestIdPattern` | string | `""` | Regex to extract request/correlation ID from log line (one capture group) |
-| `queryBlockPattern` | string | `""` | Regex to detect start of a query block in log (Mode B); optional |
-| `timeWindowSeconds` | number | `5` | For time-based correlation: window before selected line |
-| `maxQueriesPerLookup` | number | `20` | Cap queries shown per "Related queries" request |
-| `includeInBugReport` | boolean | `false` | Include related queries in bug report when available |
+### 2. Live tailing during the session
+Today all work happens at session end (deliberate — see spec 011 "Performance":
+no work at session start). A live mode would tail the query log with `fs.watch`
+and stream correlated queries into the viewer as the session runs. Cost: a
+file-watch lifecycle tied to capture start/stop. Only pursue if users ask for
+in-session correlation.
 
-### Commands
+### 3. Per-line DB indicator in the viewer
+A small DB badge/icon next to the line number when a line has correlated
+queries, so users can see at a glance which lines have DB activity without
+invoking the popover. Pure UX affordance over data the provider already
+produces; gated on the indicator not adding per-row render cost (see the
+viewer's `calcItemHeight` single-source-of-truth rule).
 
-- **"Saropa Log Capture: Show related queries"** — From viewer with selected line (or current line), show "Related queries" panel with queries correlated by request ID or time.
-- **"Saropa Log Capture: Copy query"** — Copy the selected query text to clipboard.
+### 4. Sensitive-SQL redaction
+The `*.queries.json` sidecar and any bug-report inclusion currently write **raw
+SQL**, which can contain literal PII/secrets. Deferred: an opt-in redaction pass
+that replaces string/number literals with `?` placeholders before the SQL
+leaves the session (sidecar and bug report). This is a privacy decision, not
+just a feature — worth resolving before query text is surfaced anywhere it can
+be shared.
 
-### UI
-
-- **Viewer:** Context menu on a line: "Show related queries." Panel shows query text, duration, timestamp; optional "Copy all."
-- **Indicator:** When a line has correlated queries, show a small icon or badge (e.g. DB icon) next to the line number.
-
----
-
-## Implementation Outline
-
-### Components
-
-1. **Query log parser (Mode B)**
-   - **Log line analyzer:** In `line-analyzer` or a new `query-parser.ts`, scan captured lines for known patterns (e.g. "Executing (default):", "query:", "SQL:") and extract query text (multiline). Store in a structure: `{ lineStart, lineEnd, requestId?, queryText, duration? }`. Index by line number and optionally by requestId.
-   - **Configurable patterns:** Use `queryBlockPattern` and a second regex for request ID extraction from surrounding lines. Default patterns for common ORMs (TypeORM, Sequelize) can be shipped; user can override.
-
-2. **Query log file tailer (Mode A)**
-   - When session starts and `mode === "file"` and `queryLogPath` is set, start **tailing** the file (using `fs.watch` + read new content, or read full file at session end). Parse each line as JSON or text. Build map: requestId → queries (or time → queries). Store in memory and optionally in sidecar `*.queries.json` at session end.
-   - **Path:** Resolve `queryLogPath` relative to workspace root; support single file only for v1.
-
-3. **Correlation engine**
-   - Given (log line index, line text), extract request ID with `requestIdPattern` or use line timestamp. Look up in query index. Return list of queries (and optionally highlight in viewer the lines that "contain" those queries in Mode B).
-   - **Viewer message:** New message type from extension to webview: `relatedQueries: { queries: Array<{ text, duration?, time? }> }`. Webview shows panel.
-
-4. **Sidecar and bug report**
-   - At session end (Mode A or B), optionally write `basename.queries.json`: `{ requestIds: { [id]: queries }, byLine: { [line]: queries } }` for offline use. Bug report section "Related queries" reads from current selection’s correlation result.
-
-### Performance and safety
-
-- **Tail only when session active:** Do not tail when capture is off; avoid reading huge files—cap at last N lines or size.
-- **Parsing:** Avoid blocking main thread; parse in chunks or on session end. For Mode B, parsing can be incremental as lines arrive (single pass).
-- **No DB connection:** Extension never connects to a database; it only reads files or calls an optional HTTP API with user-configured token.
+### 5. OpenTelemetry trace-ID correlation
+If the app emits OTel trace IDs in its logs, correlate to a trace backend
+(Jaeger, Tempo) for a full distributed-trace view rather than just local
+queries. This is a **separate integration**, not an extension of this provider;
+recorded here only so the idea isn't lost.
 
 ---
 
-## Configuration Summary
+## Rejected (record the reason, do not build)
 
-- **Extension settings:** `saropaLogCapture.database.*` as above.
-- **Security:** If API mode is used, store token in secret storage; document that query log files may contain sensitive SQL (redact in bug report option?).
-
----
-
-## Risks and Alternatives
-
-| Risk | Mitigation |
-|------|------------|
-| Query log file huge or binary | Tail only; read last 500 KB or 5000 lines; support rotation (new file per run) |
-| Request ID not in log | Fall back to time-window correlation; document pattern requirements |
-| Sensitive SQL in bug report | Option to redact (e.g. replace literals with ?) or exclude from bug report |
-| Multiple query log formats | Start with JSON lines; add "text" with regex for common formats |
-
-**Alternatives:**
-
-- **Direct DB connection:** Extension connects to DB and runs "SHOW FULL PROCESSLIST" or reads from information_schema. Adds dependency and security concerns; not recommended for v1.
-- **Trace ID from OpenTelemetry:** If app uses OTel and exports trace IDs in logs, correlate with trace backend (Jaeger, etc.) for full trace view; can be a separate integration.
+- **Direct database connection** (extension opens a DB connection, runs
+  `SHOW FULL PROCESSLIST` / reads `information_schema`). Adds a driver
+  dependency and a live-credential security surface to what is otherwise a
+  read-files-only extension. The file/parse/API approaches all avoid a DB
+  connection by design — keep it that way.
 
 ---
 
-## References
+## Finish Report (2026-06-14)
 
-- Existing: `line-analyzer.ts`, stack trace parsing; bug report sections. No existing DB code in extension.
+### Scope
+VS Code extension (TypeScript). No Flutter/Dart code, no webview message or
+command-catalog changes, no new settings.
+
+### What shipped
+File mode of the Database Query Logs integration previously understood only
+JSON-lines query logs; a real PostgreSQL or MySQL server log was silently
+ignored, and the whole file was loaded into memory before slicing the last 2000
+lines. File mode now auto-detects the format from the first non-empty line and
+parses plain-text DB server logs in addition to JSON, while bounding memory by
+reading only the tail of large or rotated logs.
+
+- **Pure parsing extracted** to `database-query-parsing.ts` (no `vscode`/`fs`
+  imports, unit-testable in isolation). It holds the existing `parseQueryBlocks`
+  (parse mode) plus the new `parseTextQueryLog` and `detectQueryLogFormat`.
+  `database-query-logs.ts` keeps only the I/O and the provider, and re-exports
+  the parsing symbols so callers/tests have one entry point.
+- **Plain-text formats:** PostgreSQL `log_min_duration_statement`
+  (`duration: N ms … statement: <SQL>`) and MySQL slow query logs (a
+  `# Query_time:` header in seconds is carried onto the statement that follows).
+  Each entry captures the SQL text, duration (ms), and a leading ISO timestamp
+  when present, matching the `QueryEntry` shape the related-queries popover
+  already consumes.
+- **Format auto-detection:** a first non-empty line opening with `{`/`[` is
+  treated as JSON; otherwise text. No new `queryLogFormat` setting was added —
+  detection is automatic, matching spec 011's intent.
+- **Read-size cap:** `readTailUtf8` reads at most the last 512 KB via node `fs`
+  (workspace.fs has no ranged read; same pattern as `package-lockfile.ts` /
+  `external-log-tailer.ts`), dropping the partial first line on a tail read.
+  This handles unbounded growth and per-run rotation by keeping the most recent
+  entries. Result count is capped at `maxQueriesPerLookup * 10` for both
+  formats.
+
+### Verification
+- `npm run check-types` — clean.
+- `npx eslint` on the three changed files — clean.
+- `npm run test:file -- out/test/modules/integrations/database-query-logs.test.js`
+  — 19 passing (10 pre-existing `parseQueryBlocks`, 3 new `detectQueryLogFormat`,
+  6 new `parseTextQueryLog` covering Postgres parsing, MySQL Query_time carry,
+  the no-bleed guard, request-ID extraction, the cap, and the no-SQL case).
+
+### Compatibility
+The `.queries.json` sidecar shape (`{ queries: [...] }`) is unchanged. The
+file-mode meta payload gained a `mode: 'file'` field (additive); the related-
+queries popover reads the sidecar, not that field. Text-mode entries now carry
+real timestamps, which improves time-window correlation that JSON mode depended
+on.
+
+### Plan status
+Closes deferred items 1 (plain-text file formats) and 4 (read-size / rotation
+caps). Five deferred items remain (API mode, live tailing, per-line DB
+indicator, sensitive-SQL redaction, OpenTelemetry trace correlation), so this
+plan stays active.
