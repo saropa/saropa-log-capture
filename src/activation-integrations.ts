@@ -19,6 +19,7 @@ import { linuxLogsProvider } from './modules/integrations/providers/linux-logs';
 import { externalLogsProvider } from './modules/integrations/providers/external-logs';
 import { securityAuditProvider } from './modules/integrations/providers/security-audit';
 import { databaseQueryLogsProvider } from './modules/integrations/providers/database-query-logs';
+import { otelTracesProvider } from './modules/integrations/providers/otel-traces';
 import { httpNetworkProvider } from './modules/integrations/providers/http-network';
 import { browserDevtoolsProvider } from './modules/integrations/providers/browser-devtools';
 import { codeQualityMetricsProvider } from './modules/integrations/providers/code-quality-metrics';
@@ -47,6 +48,7 @@ export function registerAllIntegrations(): void {
     registry.register(externalLogsProvider);
     registry.register(securityAuditProvider);
     registry.register(databaseQueryLogsProvider);
+    registry.register(otelTracesProvider);
     registry.register(httpNetworkProvider);
     registry.register(browserDevtoolsProvider);
     registry.register(adbLogcatProvider);
