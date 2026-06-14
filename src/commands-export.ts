@@ -14,6 +14,7 @@ import {
     setBuildCiAzurePat, deleteBuildCiAzurePat,
     setBuildCiGitlabToken, deleteBuildCiGitlabToken,
 } from './modules/integrations/providers/build-ci';
+import { setDatabaseApiToken, deleteDatabaseApiToken } from './modules/integrations/providers/database-api';
 import { exportSignalsSummaryCmd } from './commands-export-signals';
 import { htmlExportCmd, fileExportCmd, buildCiTokenCmd, importCollectionFromSlc } from './commands-export-helpers';
 
@@ -116,5 +117,24 @@ export function exportCommands(deps: CommandDeps): vscode.Disposable[] {
         buildCiTokenCmd(context, { commandId: 'clearBuildCiAzurePat', label: 'Azure PAT', clearFn: deleteBuildCiAzurePat }),
         buildCiTokenCmd(context, { commandId: 'setBuildCiGitlabToken', label: 'GitLab', setFn: setBuildCiGitlabToken }),
         buildCiTokenCmd(context, { commandId: 'clearBuildCiGitlabToken', label: 'GitLab', clearFn: deleteBuildCiGitlabToken }),
+        vscode.commands.registerCommand('saropaLogCapture.setDatabaseApiToken', async () => {
+            const token = await vscode.window.showInputBox({
+                prompt: t('prompt.databaseApiToken'),
+                password: true,
+                placeHolder: t('prompt.databaseApiTokenPlaceholder'),
+            });
+            if (token === undefined) { return; }
+            const trimmed = token.trim();
+            if (!trimmed) {
+                void vscode.window.showWarningMessage(t('msg.databaseApiTokenEmpty'));
+                return;
+            }
+            await setDatabaseApiToken(context, trimmed);
+            void vscode.window.showInformationMessage(t('msg.databaseApiTokenStored'));
+        }),
+        vscode.commands.registerCommand('saropaLogCapture.clearDatabaseApiToken', async () => {
+            await deleteDatabaseApiToken(context);
+            void vscode.window.showInformationMessage(t('msg.databaseApiTokenCleared'));
+        }),
     ];
 }

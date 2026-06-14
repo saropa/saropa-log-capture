@@ -12,6 +12,7 @@ export const stringsSignals: Record<string, string> = {
     'signals.overview.logFile': 'Log file',
     'signals.overview.logLines': 'Log lines',
     'signals.overview.session': 'Session',
+    'signals.overview.health': 'Health',
     'signals.overview.started': 'Started',
     'signals.overview.ended': 'Ended',
     'signals.overview.duration': 'Duration',

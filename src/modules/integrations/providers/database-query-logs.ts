@@ -15,6 +15,7 @@ import type { IntegrationDatabaseConfig } from '../../config/config-types-integr
 import { resolveWorkspaceFileUri } from '../workspace-path';
 import { startDatabaseQueryTail, stopDatabaseQueryTail } from '../database-query-tailer';
 import { parseQueryBlocks, parseTextQueryLog, detectQueryLogFormat, redactQueryRecord } from './database-query-parsing';
+import { getDatabaseApiToken, fetchSessionQueries } from './database-api';
 
 // Re-export pure parsing so tests and callers have a single entry point.
 export { parseQueryBlocks, parseTextQueryLog, detectQueryLogFormat, redactSqlLiterals } from './database-query-parsing';
@@ -71,8 +72,11 @@ function extractFileQueries(lines: readonly string[], cfg: IntegrationDatabaseCo
     return queries.slice(-cap);
 }
 
+/** Token read is started at session start (when extensionContext is available) and awaited at end. */
+let apiTokenPromise: Promise<string | undefined> | undefined;
+
 /** Build the meta + sidecar contributions for a set of parsed queries. */
-function queryContributions(context: IntegrationEndContext, queries: unknown[], mode: 'file' | 'parse'): Contribution[] {
+function queryContributions(context: IntegrationEndContext, queries: unknown[], mode: 'file' | 'parse' | 'api'): Contribution[] {
     const filename = `${context.baseFileName}.queries.json`;
     // Redact literal values from SQL before it lands in the shared sidecar; opt-in (default off) per privacy concerns.
     const safeQueries = context.config.integrationsDatabase.redactLiterals
@@ -121,11 +125,50 @@ async function readParseMode(context: IntegrationEndContext): Promise<Contributi
     }
 }
 
+/**
+ * API mode: POST the session time range to the configured endpoint and write
+ * the returned queries as the sidecar. The bearer token is read at session
+ * start (apiTokenPromise) because extensionContext is not available at end.
+ */
+async function readApiMode(context: IntegrationEndContext): Promise<Contribution[] | undefined> {
+    const cfg = context.config.integrationsDatabase;
+    if (!cfg.apiUrl) { return undefined; }
+    try {
+        const token = apiTokenPromise ? await apiTokenPromise : undefined;
+        const queries = await fetchSessionQueries({
+            apiUrl: cfg.apiUrl,
+            token,
+            startTime: context.sessionStartTime,
+            endTime: context.sessionEndTime,
+            outputChannel: context.outputChannel,
+        });
+        if (queries.length === 0) { return undefined; }
+        return queryContributions(context, queries, 'api');
+    } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        context.outputChannel.appendLine(`[database] API mode failed: ${msg}`);
+        return undefined;
+    }
+}
+
 export const databaseQueryLogsProvider: IntegrationProvider = {
     id: 'database',
 
     isEnabled(context: IntegrationContext): boolean {
         return isEnabled(context);
+    },
+
+    /**
+     * API mode reads its bearer token here, at session start, because
+     * extensionContext (and thus SecretStorage) is only wired into the start
+     * context — not the end context. The promise is awaited in readApiMode.
+     */
+    async onSessionStartAsync(context: IntegrationContext): Promise<Contribution[] | undefined> {
+        apiTokenPromise = undefined;
+        if (isEnabled(context) && context.config.integrationsDatabase.mode === 'api' && context.extensionContext) {
+            apiTokenPromise = getDatabaseApiToken(context.extensionContext);
+        }
+        return undefined;
     },
 
     /**
@@ -152,8 +195,14 @@ export const databaseQueryLogsProvider: IntegrationProvider = {
         stopDatabaseQueryTail();
         if (!isEnabled(context)) { return undefined; }
         const cfg = context.config.integrationsDatabase;
-        if (cfg.mode === 'file') { return readFileMode(context); }
-        if (cfg.mode === 'parse') { return readParseMode(context); }
-        return undefined;
+        try {
+            if (cfg.mode === 'file') { return await readFileMode(context); }
+            if (cfg.mode === 'parse') { return await readParseMode(context); }
+            if (cfg.mode === 'api') { return await readApiMode(context); }
+            return undefined;
+        } finally {
+            // Release the per-session token promise so it never leaks into the next session.
+            apiTokenPromise = undefined;
+        }
     },
 };

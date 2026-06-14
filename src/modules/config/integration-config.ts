@@ -222,6 +222,7 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
       maxQueriesPerLookup: clamp(cfg.get('integrations.database.maxQueriesPerLookup'), 1, 200, 20),
       redactLiterals: ensureBoolean(cfg.get('integrations.database.redactLiterals'), false),
       liveTail: ensureBoolean(cfg.get('integrations.database.liveTail'), false),
+      apiUrl: readTrimmedStringOrDefault(cfg, 'integrations.database.apiUrl', ''),
     },
     integrationsHttp: {
       requestIdPattern: readTrimmedStringOrDefault(cfg, 'integrations.http.requestIdPattern', ''),

@@ -397,7 +397,7 @@ Combine all available signals into a narrative:
 
 **Status:** Template-based hypotheses are shipped — [build-hypotheses.ts](src/modules/root-cause-hints/build-hypotheses.ts) (+ SQL-burst, ANR, network, text variants) emit rule-driven hints. **Remaining:** the prose narrative that weaves blame, commit messages, cross-session frequency, and import changes into a single readable story.
 
-### 19. Session Health Score — PARTIAL
+### ~~19. Session Health Score~~ — DONE (history trend arrows pending)
 
 Rate each debug session with a simple health score:
 
@@ -411,7 +411,7 @@ Session 2025-01-16 14:30 — Health: 72/100
 
 **The magic:** Developers can glance at the session history and see trend arrows. A score dropping from 85 to 60 over three sessions means something is getting worse.
 
-**Status:** [health-score.ts](src/modules/misc/health-score.ts) computes a weighted score, but from lint-violation impact tiers for bug reports — not a per-session score with the error/warning/volume breakdown above. **Remaining:** the session-scoped scoring model and the session-history trend arrows.
+**Status:** Shipped. [session-health.ts](src/modules/misc/session-health.ts) computes a 0–100 per-session score from the session's detected signals (errors −10 each, ANR −25, memory −8, network −5, slow ops −3, warnings −2, each capped so one noisy category can't dominate), with a factor breakdown. The Signal Report overview shows a "Health: N/100" row, and the markdown export appends the factor breakdown. This is distinct from the pre-existing lint-impact [health-score.ts](src/modules/misc/health-score.ts) used by bug reports. **Pending:** session-history trend arrows (the score is computed per session but not yet persisted per-session for a worsening/improving trend across the Logs list).
 
 ### 20. Workspace Pulse Dashboard — NOT BUILT
 
