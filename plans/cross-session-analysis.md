@@ -339,7 +339,7 @@ This Week:
 
 **Implementation:** An error is "resolved" when its fingerprint stops appearing in new sessions. Track the session window. Compute fix velocity as `resolved / (resolved + persisting)`. The disappeared-error detection in [regression-detector.ts](src/modules/signals/regression-detector.ts) supplies the "resolved" signal.
 
-### 15. Time-Travel Debugging Context — NOT BUILT
+### ~~15. Time-Travel Debugging Context~~ — DONE (gap highlight; full timeline pending)
 
 When analyzing an error, show what the output looked like at the moment the error occurred — not the full log, but a reconstruction of what was on screen.
 
@@ -353,7 +353,7 @@ When analyzing an error, show what the output looked like at the moment the erro
 14:32:07  Stack trace...
 ```
 
-**Implementation:** Already have log context extraction in [bug-report-collector.ts](src/modules/bug-report/bug-report-collector.ts) (15 lines before error). Extend to use timestamp parsing for smarter boundaries (group by second, highlight time gaps).
+**Status:** Shipped (the time-gap signal). [time-travel-context.ts](src/modules/bug-report/time-travel-context.ts) scans the pre-error context lines, extracts each line's leading timestamp (via the dependency-free `extractTimestamp`), and finds the largest pause (≥1s) between consecutive lines. The bug report's Log Context section appends a "⏱ Largest pause in this context: 5.2s before `<line>`" note, telling the developer the error followed a wait (operation boundary) rather than a tight burst. Omitted when no two lines carry timestamps or no gap reaches the threshold. **Pending:** the full reconstructed "last N messages with a YOU ARE HERE marker" timeline view — the gap highlight is the highest-signal slice; the annotated mini-timeline render is not built.
 
 ### ~~16. Environment Diff~~ — DONE (in the session delta)
 
@@ -474,7 +474,7 @@ Fix Velocity: 3 errors resolved this week, 1 persisting
 | Session annotations UI | Low | Medium | Low | Backlog |
 | Smart context boundaries | Low | Medium | Low | Backlog |
 | ~~Environment diff (env-specific)~~ | ~~Medium~~ | ~~Medium~~ | ~~High~~ | **Done** (session delta) |
-| Time-travel debugging context | Low | Medium | Medium | Future |
+| ~~Time-travel debugging context~~ | ~~Low~~ | ~~Medium~~ | ~~Medium~~ | **Done** (gap highlight) |
 | Workspace pulse dashboard | High | Very High | Very High | Future |
 | Debugging velocity score | Medium | Medium | High | Future |
 | "Show Log History" for source files | Low | Medium | Low | Future |
@@ -756,3 +756,32 @@ The "Since last session:" summary (the output-channel auto-summary from idea #10
 ### Note
 
 This diffs the persisted-metadata environment (app version / adapter / device), not a full SDK-version cross-reference computed against each individual error's presence; raw line-content diffing of two sessions remains available in `session-compare.ts`.
+
+---
+
+## Finish Report (2026-06-14) — Time-travel context: pre-error pause (idea #15)
+
+### What shipped
+
+The markdown bug report's Log Context section now highlights the largest pause among the lines that precede the error — "⏱ Largest pause in this context: 5.2s before `<line>`". A long pause is an operation boundary (the app waited on a network call, a lock, a frame) and the error followed the wait; surfacing it tells the developer the failure was downstream of a wait rather than part of a tight burst.
+
+### How it works
+
+`findLargestContextGap(lines)` (pure, `src/modules/bug-report/time-travel-context.ts`) walks the context lines, pulls each line's leading timestamp with the dependency-free `extractTimestamp` (not the anchored `parseTimestamp`, which would reject a full log line), and returns the largest consecutive gap ≥ 1s plus the line that follows it. Untimed lines are skipped without resetting the previous timestamp, so an interleaved untimed line can't hide a real gap. `formatContextGapNote` renders the one-line note in seconds, or '' when nothing qualifies; the bug report appends it under the Log Context block.
+
+### Files changed
+
+- `src/modules/bug-report/time-travel-context.ts` — NEW. Pure gap finder + note formatter (node:test-able).
+- `src/modules/bug-report/bug-report-sections.ts` — `formatLogContext` appends the gap note.
+- `src/test/modules/bug-report/time-travel-context.test.ts` — NEW. 5 cases (largest gap + following line, no timestamps, sub-threshold, note rendering, empty).
+- `CHANGELOG.md`, `plans/cross-session-analysis.md` — idea #15 marked done; this report.
+
+### Verification
+
+- `npm run check-types` — clean (full tree).
+- `eslint` on the touched files — clean.
+- `node --test` on the new test — 5/5 pass.
+
+### Pending
+
+The full reconstructed "last N messages with a YOU ARE HERE marker" mini-timeline view is not built — the largest-pause highlight is the highest-signal slice; the annotated timeline render remains.
