@@ -229,3 +229,43 @@ Each item lists the fix and its **verification** (a check that proves it landed)
 ## Notes on method & confidence
 - All 3 Criticals and Highs H1/H3/H6 were verified by direct source read during this audit; the remaining findings come from methodical per-cluster reads and are cited to exact `file:line`.
 - Findings explicitly **not** bugs (verified clean): learning reinforcement clamp `[0.1, 1.5]`/`[0,1]`; flow-map nav-stack underflow safety; regression set-difference math; SQL ReDoS (empirically tested pathological inputs, all linear); virtualization off-by-one (`renderViewport` inclusive bound + overscan is correct); `calcItemHeight` as single source of truth; disposable registration; config snapshot/refresh.
+
+## Finish Report (2026-06-14)
+
+Closes the final three open findings (M1, M2, L3); all audit findings are now fixed or explicitly accepted-as-deferred, and the plan status is Closed.
+
+### Scope
+VS Code extension (TypeScript) plus tracking docs. No Flutter/Dart, no dependency or release-version change.
+
+### M1 — active-session line count lagged the file
+The status bar already reported the write-time line count through the write queue's `onLineCountChanged` callback, but the Logs tree's active-session count read `data.lineCount` from the per-line listener — the value of `session.lineCount` at enqueue time. Because `LogSession._lineCount` is incremented when an item is drained and written (not when it is enqueued), that read trails the file by the depth of the pending write queue. The two count consumers therefore disagreed during bursts.
+
+A single authoritative source now drives both. `SessionManager.setActiveLineCountObserver()` registers an observer (the same setter pattern as `setProjectIndexer`); the write-queue callback constructed in `session-manager-start.ts` invokes both the status bar and that observer, and the lagging per-line `historyProvider.setActiveLineCount(data.lineCount)` was removed from the line listener. `onActiveLineCount` is threaded as an optional field through `StartSessionDeps` and `StartSequenceDeps`, so existing deps construction is unaffected. The observer is wired in `extension-activation.ts` to feed `historyProvider.setActiveLineCount`.
+
+### M2 — early output silently discarded past the cap
+`EarlyOutputBuffer` buffers DAP output that arrives before a log session exists, capped at 500 events per session to bound memory if `initializeSession` never completes. Events past the cap were dropped with no record, so a session that began with a large burst showed no indication that its first lines were lost.
+
+The buffer now counts overflow per session (`droppedCount`) and, at drain time, appends a synthetic notice as the last replayed event: `[Saropa Log Capture] N early output line(s) dropped before capture started (pre-session buffer cap 500 reached).`. The notice is placed after the kept prefix because the cap retains the earliest events and drops later ones, so the gap sits between the buffered prefix and the start of normal capture. The notice is log content (English, consistent with the `=== SESSION END ===` footer), not UI chrome. The 500 cap is unchanged. Both `drain` and `drainAll` emit the notice once and clear the counter; `delete`/`clear` clear it too.
+
+### L3 — Crashlytics regression/new-issue signals false-positive at the paging boundary
+Regression and new-issue signals are derived from local top-N issue snapshots. A snapshot records only the fetched (ranked, paged) top issues and does not record whether the page was truncated, so an issue that slipped below the tracked cutoff and later returned is indistinguishable from one that genuinely stopped and restarted. No unpaged or total signal is available to disambiguate.
+
+The limitation is now documented where it is observed and where it is implemented: the "Regressed" badge tooltip (`viewer.crashlytics.badge.regressedTip`) states that the signal can also reflect a return across the tracked cutoff rather than only a true regression, and `detectRegressedIds` and `newSinceLastSnapshot` carry a KNOWN LIMITATION comment. A definitive fix would require an unpaged issue feed from the API.
+
+### Files changed
+- `src/activation-listeners.ts` — removed the lagging per-line `setActiveLineCount`; comment explaining the new source.
+- `src/extension-activation.ts` — wired `setActiveLineCountObserver` to the history provider.
+- `src/modules/session/session-manager.ts` — observer field + `setActiveLineCountObserver`; `onActiveLineCount` passed into the orchestrator deps.
+- `src/modules/session/session-manager-start.ts` — `onActiveLineCount` on `StartSessionDeps`; write-queue callback drives status bar + observer.
+- `src/modules/session/session-manager-start-sequence.ts` — `onActiveLineCount` on `StartSequenceDeps`; forwarded into start deps.
+- `src/modules/session/session-event-bus.ts` — overflow counting + drop-notice on drain.
+- `src/test/modules/session/session-event-bus.test.ts` — pins 500-kept-plus-notice, no-notice-under-cap, and drainAll-per-session.
+- `src/modules/crashlytics/crashlytics-issue-signals.ts` / `crashlytics-issue-history.ts` — KNOWN LIMITATION comments.
+- `src/l10n/strings-webview.ts` — expanded `regressedTip` tooltip.
+- `CHANGELOG.md`, `plans/104_plan-codebase-audit-2026-06-12.md`.
+
+### Verification
+- Full compile gate green: `npm run compile` (check-types, lint, verify-nls, verify:nls-coverage, webview catalogs, list-commands, `verify:l10n-keys` at 2257 keys all resolving, esbuild, dist-size 4.79 MiB).
+- `session-event-bus` suite: 10 passing (run via `npx mocha --ui tdd out/test/modules/session/session-event-bus.test.js`).
+- `crashlytics-issue-signals` + `crashlytics-issue-history`: passing (comments-only change; no assertion references the touched lines).
+- `session-manager-start` test requires the Extension Host (imports `vscode`) and was not executed here; the M1 change there is an optional deps field that cannot alter existing construction.
