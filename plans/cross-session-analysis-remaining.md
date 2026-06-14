@@ -1,0 +1,65 @@
+# Cross-Session Analysis — Remaining Work
+
+The cross-session analysis roadmap (20 feature ideas) is complete except for the two items below.
+The full history — the other 18 ideas, the architecture, design principles, and per-feature finish
+reports — lives in the archived roadmap at
+[plans/history/2026.06/2026.06.14/cross-session-analysis.md](history/2026.06/2026.06.14/cross-session-analysis.md).
+
+This file tracks only the still-open scope so the active `plans/` tree reflects what's left to build.
+
+---
+
+## 1. Smart Context Boundaries — NOT BUILT
+
+Instead of always showing a fixed N lines before an error, use blank lines, timestamp gaps, and
+log-level changes to find the logical boundary of the operation the error belongs to.
+
+**Example:** if there's a blank line (or a >1s timestamp gap) three lines before the error, the
+relevant context probably starts there — not 15 lines back in a different operation.
+
+**Implementation:** a pure helper that walks backward from the error line, tracking blank lines,
+timestamp gaps (reusing `extractTimestamp` from `src/modules/timeline/timestamp-parser.ts`), and
+log-level transitions, and returns the index of the first boundary. Surface in the bug report's Log
+Context section (host markdown, like the idea-#15 pause note that already lives there) — show the
+trimmed-to-boundary context, or annotate where the operation boundary is. Keep the existing fixed
+window as the fallback when no boundary is detected (do not shrink existing behavior). This overlaps
+the already-shipped idea-#15 "largest pause" note; build it as a refinement of that context section,
+not a parallel mechanism.
+
+**Effort/impact:** Low effort, Medium impact. Pure core is unit-testable; the bug-report render is
+verifiable by reading a generated report.
+
+---
+
+## 2. Investigation Groups — curated/named layer (automatic grouping already shipped)
+
+Bundle related sessions into named investigations with a custom title and notes, so a multi-session
+debugging effort reads as one thing:
+
+```
+"Bug #42: Payment timeout"
+├── session_2026-01-15_1430.log  (first occurrence)
+├── session_2026-01-15_1630.log  (after fix attempt 1)
+├── session_2026-01-16_0900.log  (after fix attempt 2 — clean!)
+└── notes: "Root cause was connection pool exhaustion"
+```
+
+**Already shipped (do not rebuild):** automatic session grouping by time window / DAP boundary —
+`src/modules/session/session-groups.ts` + `session-group-tracker.ts`, with manual group/ungroup
+commands. The session note (idea #7) also already attaches free-text notes to a single session.
+
+**Remaining:** the curated layer on top of automatic grouping —
+- A human-named investigation (custom title) spanning chosen sessions, distinct from the
+  auto-assigned `groupId`.
+- Investigation-level notes (the auto-grouping has no title/notes of its own).
+- Persistence: workspace state vs a shareable `reports/.investigations.json` (open question — a
+  shareable file is git-committable and travels with the repo; workspace state is private/simpler).
+- A surface to create/name an investigation and add sessions to it (Logs panel context menu, mirroring
+  the existing group/note actions), and to display the investigation as a tree parent.
+
+**Effort/impact:** Medium effort, Medium impact. Larger than item 1 — it needs a storage decision,
+a new metadata shape (named investigations are not the same as `groupId`), and webview/tree UI, so
+it warrants its own design pass before implementation.
+
+**Open question (carried from the roadmap):** should investigation groups persist in workspace
+state or in a `reports/.investigations.json` file shareable via git?
