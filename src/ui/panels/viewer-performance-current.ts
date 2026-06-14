@@ -77,7 +77,7 @@ export function getPerformanceCurrentScript(): string {
     function renderJankGroup(items) {
         var worst = items[0].value;
         var total = items.reduce(function(s, it) { return s + it.value; }, 0);
-        var stats = 'Worst: ' + fmtNum(worst) + ' frames \\u00b7 Total: ' + fmtNum(total) + ' frames';
+        var stats = vt('viewer.perf.framesStats', fmtNum(worst), fmtNum(total));
         var rows = items.map(function(it) {
             return '<div class="pp-event-row" data-idx="' + it.idx + '"><span class="pp-event-metric">' + fmtNum(it.value) + ' frames</span><span class="pp-event-time">' + fmtTs(it.ts) + '</span></div>';
         }).join('');
@@ -87,7 +87,7 @@ export function getPerformanceCurrentScript(): string {
     function renderGcGroup(items) {
         var avgMs = Math.round(items.reduce(function(s, it) { return s + it.value; }, 0) / items.length);
         var totalFreed = items.reduce(function(s, it) { return s + (it.freed || 0); }, 0);
-        var stats = 'Avg: ' + avgMs + 'ms \\u00b7 Freed: ' + fmtKB(totalFreed);
+        var stats = vt('viewer.perf.memStats', avgMs, fmtKB(totalFreed));
         var rows = items.map(function(it) {
             return '<div class="pp-event-row" data-idx="' + it.idx + '"><span class="pp-event-metric">freed ' + fmtNum(it.freed || 0) + 'KB \\u00b7 ' + Math.round(it.value) + 'ms</span><span class="pp-event-time">' + fmtTs(it.ts) + '</span></div>';
         }).join('');

@@ -25,22 +25,22 @@ export function getPerformanceSessionTabScript(): string {
         if (ppSnapshot) {
             if (hasData) {
                 var s = snap;
-                var txt = s.cpus + ' CPUs, ' + (s.totalMemMb || 0) + ' MB RAM (' + (s.freeMemMb || 0) + ' MB free)';
-                if (s.processMemMb != null) txt += '; process: ' + s.processMemMb + ' MB';
+                var txt = vt('viewer.perf.system', s.cpus, (s.totalMemMb || 0), (s.freeMemMb || 0));
+                if (s.processMemMb != null) txt += vt('viewer.perf.process', s.processMemMb);
                 ppSnapshot.textContent = txt;
             } else {
-                ppSnapshot.textContent = 'Not recorded for this log.';
+                ppSnapshot.textContent = vt('viewer.perf.notRecorded');
             }
         }
         if (ppSamples) {
             if (sessionData && sessionData.samplesFile && sessionData.sampleCount != null) {
-                ppSamples.textContent = sessionData.sampleCount + ' samples in ' + sessionData.samplesFile + '. Use "Open log folder" to view.';
+                ppSamples.textContent = vt('viewer.perf.samples', sessionData.sampleCount, sessionData.samplesFile);
             } else {
-                ppSamples.textContent = 'Not recorded for this log.';
+                ppSamples.textContent = vt('viewer.perf.notRecorded');
             }
         }
         if (ppProfiler) {
-            ppProfiler.textContent = 'None.';
+            ppProfiler.textContent = vt('viewer.perf.none');
         }
     }
 `;
