@@ -363,7 +363,7 @@ When an error appears in session A but not session B, automatically diff the ses
 
 **Status:** Shipped as part of the session delta ([session-delta.ts](src/modules/compare/session-delta.ts)). The "Since last session:" summary now also reports environment fields that changed versus the previous session — app version, debug adapter, and target device — as "app version: 1.1.0 → 1.2.0" lines, so an environment change that coincides with new/resolved errors is visible right next to them. A field newly populated (absent in the previous session) is not treated as a change, to avoid noise. **Note:** this is the persisted-metadata environment (app version / adapter / device), not a full SDK-version cross-reference against each error's presence; raw line-content diffing remains in [session-compare.ts](src/modules/compare/session-compare.ts).
 
-### 17. Error Attention Score — NOT BUILT
+### ~~17. Error Attention Score~~ — DONE (scorer + bug report; panel re-ranking pending)
 
 Not all errors deserve attention. Rank them by a composite score:
 
@@ -380,7 +380,7 @@ Not all errors deserve attention. Rank them by a composite score:
 
 **The magic:** The analysis panel re-orders errors by attention score. The most actionable error is always at the top.
 
-**Implementation:** Extend [analysis-relevance.ts](src/modules/analysis/analysis-relevance.ts) scoring (today it scores analysis *sections* for collapse, not individual errors) to work per-error, run against each error fingerprint in the session.
+**Status:** Shipped (the scorer + a bug-report surface). [error-attention.ts](src/modules/analysis/error-attention.ts) computes the composite from the factor table above (app code +3, recently changed +3, recurring +2, FIXME nearby +2, first-time +1, in docs +1, common SDK −1, framework-only −2), clamped to a floor of 0, with an ordered factor breakdown. The markdown bug report shows an "Attention Score" section ([bug-report-formatter.ts](src/modules/bug-report/bug-report-formatter.ts)) built from the signals it already collects (app frames, line-range history, cross-session count, doc matches). **Pending:** running it per-error to re-order the analysis panel's error list (the scorer is ready; the panel re-rank + the FIXME-nearby and common-SDK inputs remain). The FIXME-nearby and common-SDK factors are defined in the scorer but not yet fed by the bug report (no annotation field on its file analyses).
 
 ### ~~18. "Why Did This Break?" Story Mode~~ — DONE (in the bug report)
 
@@ -468,7 +468,7 @@ Fix Velocity: 3 errors resolved this week, 1 persisting
 | ~~Session health score (per-session model)~~ | ~~Medium~~ | ~~High~~ | ~~High~~ | **Done** |
 | ~~"Why Did This Break?" narrative prose~~ | ~~High~~ | ~~Very High~~ | ~~Very High~~ | **Done** (bug report) |
 | Code freshness heatmap | Low | High | High | Backlog |
-| Error attention score | Medium | High | Very High | Backlog |
+| ~~Error attention score~~ | ~~Medium~~ | ~~High~~ | ~~Very High~~ | **Done** (scorer + bug report) |
 | Caller graph | Medium | Medium | Medium | Backlog |
 | ~~Semantic error grouping~~ | ~~Medium~~ | ~~Medium~~ | ~~High~~ | **Done** (classifier + label) |
 | Session annotations UI | Low | Medium | Low | Backlog |
@@ -785,3 +785,32 @@ The markdown bug report's Log Context section now highlights the largest pause a
 ### Pending
 
 The full reconstructed "last N messages with a YOU ARE HERE marker" mini-timeline view is not built — the largest-pause highlight is the highest-signal slice; the annotated timeline render remains.
+
+---
+
+## Finish Report (2026-06-14) — Error attention score (idea #17)
+
+### What shipped
+
+A generated bug report now carries an "Attention Score" section: a composite ranking of how actionable the error is, built from signals the report already collects — whether the stack trace reaches app code, whether the referenced code changed recently, whether the error recurs across sessions, whether it's first-seen, and whether it's referenced in documentation. The factor breakdown is shown so the number is explainable.
+
+### How it works
+
+`scoreErrorAttention(factors)` (pure, `src/modules/analysis/error-attention.ts`) sums the weighted factors from the idea's table (app code +3, recently changed +3, recurring +2, FIXME nearby +2, first-time +1, in docs +1, common SDK −1, framework-only −2) and clamps to a floor of 0 so a net-negative error reads as "no attention needed" rather than a confusing negative. It returns the score plus an ordered (most-positive-first) contribution list. The bug report formatter derives the booleans from `BugReportData` (app frames, line-range history, cross-session count, doc matches) and renders the section, omitting it when no factor is active.
+
+### Files changed
+
+- `src/modules/analysis/error-attention.ts` — NEW. Pure weighted scorer + breakdown (node:test-able).
+- `src/modules/bug-report/bug-report-formatter.ts` — `formatAttention()` derives factors and renders the section.
+- `src/test/modules/analysis/error-attention.test.ts` — NEW. 5 cases (empty, summation, negative floor, net-above-floor, ordering).
+- `CHANGELOG.md`, `plans/cross-session-analysis.md` — idea #17 marked done; this report.
+
+### Verification
+
+- `npm run check-types` — clean (full tree).
+- `eslint` on the touched files — clean.
+- `node --test` on the new test — 5/5 pass.
+
+### Pending
+
+Running the scorer per-error to re-order the analysis panel's error list (the panel re-rank). The FIXME-nearby and common-SDK factors are defined in the scorer but not yet fed by the bug report, which has no annotation field on its file analyses.
