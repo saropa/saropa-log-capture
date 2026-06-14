@@ -1,6 +1,8 @@
 # Investigate: Missing Debug Console Lines Not Captured via DAP
 
-## Status: Partly shipped — manual reproduction still open
+## Status: Archived 2026-06-14 — diagnostic tooling shipped; manual repro is a documented reactive procedure
+
+The code deliverables are complete and shipped (see the two Finish Reports below): the dropped-category diagnostic, the `captureAll: true` exclusion-drop diagnostic, the per-line fate trace under `diagnosticCapture`, and the in-viewer toggle that enables it. The only remaining step is the manual Step 1 reproduction, which is not standing work — it is a reactive procedure to run when a specific missing-line report arrives (turn on the **Diagnose missing lines** toggle, reproduce, and read the trace to classify the line as Outcome A vs B). The steps below remain as that procedure.
 
 **Done (shipped v8.0.4):** the dropped-category diagnostic for the `captureAll: false` case (Step 3, Outcome B path) and the README "Known Limitations" note (Step 2, Outcome A path). See the Finish Report below.
 
