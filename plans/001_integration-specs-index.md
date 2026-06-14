@@ -7,7 +7,7 @@ Folder navigation:
 - Folder guide and canonical links: [README.md](README.md)
 - Task ordering and rough effort: [TASK_BREAKDOWN_AND_EASE.md](TASK_BREAKDOWN_AND_EASE.md)
 - Runbook for empty/missing capture logs: [010_runbook-missing-or-empty-logs.md](010_runbook-missing-or-empty-logs.md)
-- Long-form design docs (background): `application-file-logs.md`, `http-network.md`, `browser-devtools.md`, `security-audit-logs.md` (the database-query-logs deferred-work doc is complete and archived under `history/2026.06/2026.06.14/`)
+- Long-form design docs (background): `http-network.md`, `browser-devtools.md`, `security-audit-logs.md`. The `application-file-logs.md` (v1 complete; deferred items in active `application-file-logs-advanced.md`) and `database-query-logs.md` deferred-work docs are complete and archived under `history/2026.06/2026.06.14/`.
 
 Implemented adapters are marked **Done** and documented in the spec (or provider code); **Partial** and **Pending** rows link to active plans/specs.
 
