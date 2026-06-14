@@ -231,11 +231,11 @@ Instead of always showing the 15 lines before an error, use blank lines and log-
 
 **Implementation:** Walk backward from the error line, tracking blank lines, timestamp gaps (>1s), and log level transitions. Stop at the first "boundary" indicator. [blank-line-text.ts](src/modules/misc/blank-line-text.ts) exists but is not yet used for error context.
 
-### 6. "Show Log History" for Source Files — NOT BUILT
+### ~~6. "Show Log History" for Source Files~~ — DONE
 
 Right-click any source file in VS Code's Explorer → "Show Log References" → see every session that mentioned this file, with the specific lines.
 
-**Implementation:** New command registered in [package.json](package.json). Uses the cross-session search in [log-search.ts](src/modules/search/log-search.ts) with the filename. Groups results by session, shows matching lines. [log-search-ui.ts](src/modules/search/log-search-ui.ts) exists but does not yet expose an Explorer context-menu entry.
+**Status:** Shipped. A new `saropaLogCapture.showLogReferences` command ([commands-tools.ts](src/commands-tools.ts)) is wired to an Explorer context-menu entry (non-folder files, in [package.json](package.json) `menus.explorer/context`, hidden from the command palette). It takes the right-clicked file, derives its basename, and opens the existing cross-session search Quick Pick ([log-search-ui.ts](src/modules/search/log-search-ui.ts)) pre-filled with that name — which already groups matches by session file and shows each matching line — then opens the chosen match at its line via `openLogAtLine`. Title localized as `command.showLogReferences.title` across all 11 NLS locale files. **Note:** the command wiring delegates to the already-shipped search Quick Pick; the Explorer menu placement needs manual verification in the Extension Host.
 
 ### 7. Session Annotations — PARTIAL
 
@@ -477,7 +477,7 @@ Fix Velocity: 3 errors resolved this week, 1 persisting
 | ~~Time-travel debugging context~~ | ~~Low~~ | ~~Medium~~ | ~~Medium~~ | **Done** (gap highlight) |
 | Workspace pulse dashboard | High | Very High | Very High | Future |
 | ~~Debugging velocity score~~ | ~~Medium~~ | ~~Medium~~ | ~~High~~ | **Done** (output channel) |
-| "Show Log History" for source files | Low | Medium | Low | Future |
+| ~~"Show Log History" for source files~~ | ~~Low~~ | ~~Medium~~ | ~~Low~~ | **Done** |
 | N-way cross-session diff | High | Medium | Medium | Future |
 
 ---
@@ -910,3 +910,35 @@ A generated bug report now lists the workspace files that import the crashing so
 ### Note
 
 Rendered in the bug report (host markdown). A live "who calls this file" section in the analysis panel is not built. Folder-level ambiguity (two files sharing a basename) is not resolved — the matcher is basename-based by design; a same-name file in a different folder would also match.
+
+---
+
+## Finish Report (2026-06-14) — "Show Log References" Explorer command (idea #6)
+
+### What shipped
+
+Right-clicking a source file in the VS Code Explorer now offers **Show Log References**, which searches every captured session for that file's name and shows the matches grouped by session, with each matching line; selecting one opens that log at the line. It answers "which sessions ever mentioned this file?" without leaving the editor.
+
+### How it works
+
+The `saropaLogCapture.showLogReferences` command (`commands-tools.ts`) receives the right-clicked resource URI from the Explorer context menu, derives the basename, and delegates to the existing cross-session search Quick Pick (`showSearchQuickPick`, which already groups results by session file and lists matching lines) with the basename pre-filled, then opens the chosen match via `openLogAtLine`. `package.json` registers the command, adds an `explorer/context` menu entry gated to non-folder resources (`!explorerResourceIsFolder`), and hides it from the command palette (it requires a resource argument). The title is localized as `command.showLogReferences.title` in all 11 NLS locale files.
+
+### Files changed
+
+- `src/commands-tools.ts` — register `showLogReferences` (basename → search Quick Pick → open).
+- `package.json` — command entry, `explorer/context` menu, command-palette hide.
+- `package.nls.json` + 10 locale files — `command.showLogReferences.title` (English value for key parity).
+- `plans/reference/contributes-commands.md` — regenerated.
+- `CHANGELOG.md`, `plans/cross-session-analysis.md` — idea #6 marked done; this report.
+
+### Verification
+
+- `npm run check-types` — clean.
+- `npm run verify-nls` — passed (508 keys aligned across 11 files).
+- `npm run verify:list-commands` — OK (reference matches package.json).
+- `eslint` on `commands-tools.ts` — clean.
+- No new pure logic to unit-test: the command is thin wiring that delegates to the already-shipped `showSearchQuickPick` / `openLogAtLine`.
+
+### Pending
+
+Manual Extension-Host verification that the **Show Log References** item appears in the Explorer right-click menu for files (not folders) and that the search Quick Pick opens pre-filled with the filename.
