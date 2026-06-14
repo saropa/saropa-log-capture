@@ -163,6 +163,21 @@ suite('BugReportFormatter', () => {
             assert.ok(md.includes('Report generated from collection context'));
         });
 
+        test('should include security summary section when present', () => {
+            const md = formatBugReport(minimalData({
+                securitySummary: '3 logon, 1 failed logon',
+            }));
+            assert.ok(md.includes('## Security / Audit'));
+            assert.ok(md.includes('3 logon, 1 failed logon'));
+            // Guard the privacy contract: the section must say counts-only, never raw events.
+            assert.ok(md.includes('Counts only'));
+        });
+
+        test('should omit security section when summary absent', () => {
+            const md = formatBugReport(minimalData());
+            assert.ok(!md.includes('## Security / Audit'));
+        });
+
         test('should include cross-session data when present', () => {
             const md = formatBugReport(minimalData({
                 crossSessionMatch: {

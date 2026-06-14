@@ -70,6 +70,17 @@ export function formatCodeQualitySection(entries: readonly QualitySummaryEntry[]
     ].join('\n');
 }
 
+export function formatSecuritySection(summary: string): string {
+    // Counts only by design — the raw, redacted events stay in the session sidecar and are
+    // never reproduced here, so a shared bug report cannot leak logon identifiers or IPs.
+    return [
+        '## Security / Audit',
+        `Security events captured for this session: **${summary}**.`,
+        '',
+        '*Counts only. Raw events remain in the session security sidecar, not in this report.*',
+    ].join('\n');
+}
+
 export function formatCrossSession(match: CrossSessionMatch): string {
     const sessions = match.sessionCount === 1 ? '1 session' : `${match.sessionCount} sessions`;
     const total = match.totalOccurrences === 1 ? '1 occurrence' : `${match.totalOccurrences} occurrences`;
