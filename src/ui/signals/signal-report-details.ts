@@ -5,6 +5,7 @@
  */
 
 import { escapeHtml } from '../../modules/capture/ansi';
+import { t } from '../../l10n';
 import type {
   RootCauseHintBundle,
   RootCauseHypothesis,
@@ -70,15 +71,15 @@ function buildNPlusOne(hypothesis: RootCauseHypothesis, bundle: RootCauseHintBun
     // Show summary of all N+1 hints if can't match specific one
     const rows = hints.slice(0, 5)
       .filter((h): h is NonNullable<typeof h> => !!h)
-      .map(h => detailRow(h.fingerprint, `${h.repeats} repeats, ${h.distinctArgs} distinct args`));
+      .map(h => detailRow(h.fingerprint, t('signals.details.nPlusOneSummary', h.repeats, h.distinctArgs)));
     return wrapGrid(rows);
   }
   return wrapGrid([
-    detailRow('Query fingerprint', match.fingerprint),
-    detailRow('Repetitions', String(match.repeats)),
-    detailRow('Distinct arguments', String(match.distinctArgs)),
-    detailRow('Window span', `${(match.windowSpanMs / 1000).toFixed(1)}s`),
-    detailRow('Confidence', match.confidence),
+    detailRow(t('signals.details.queryFingerprint'), match.fingerprint),
+    detailRow(t('signals.details.repetitions'), String(match.repeats)),
+    detailRow(t('signals.details.distinctArguments'), String(match.distinctArgs)),
+    detailRow(t('signals.details.windowSpan'), t('signals.details.seconds', (match.windowSpanMs / 1000).toFixed(1))),
+    detailRow(t('signals.details.confidence'), match.confidence),
   ]);
 }
 
@@ -89,8 +90,8 @@ function buildSqlBurst(bundle: RootCauseHintBundle): string {
   const rows: string[] = [];
   for (const b of bursts.slice(0, 5)) {
     if (!b) { continue; }
-    const window = b.windowMs ? ` in ${(b.windowMs / 1000).toFixed(1)}s` : '';
-    rows.push(detailRow(b.fingerprint, `${b.count} queries${window}`));
+    const window = b.windowMs ? t('signals.details.inSeconds', (b.windowMs / 1000).toFixed(1)) : '';
+    rows.push(detailRow(b.fingerprint, t('signals.details.sqlQueries', b.count, window)));
   }
   return wrapGrid(rows);
 }
@@ -102,7 +103,7 @@ function buildFpLeader(bundle: RootCauseHintBundle): string {
   const rows: string[] = [];
   for (const f of leaders.slice(0, 5)) {
     if (!f) { continue; }
-    rows.push(detailRow(f.fingerprint, `${f.count} occurrences (sample: line ${f.sampleLineIndex + 1})`));
+    rows.push(detailRow(f.fingerprint, t('signals.details.fpOccurrences', f.count, f.sampleLineIndex + 1)));
   }
   return wrapGrid(rows);
 }
@@ -112,11 +113,11 @@ function buildAnr(bundle: RootCauseHintBundle): string {
   const anr = bundle.anrRisk;
   if (!anr) { return ''; }
   const rows: string[] = [
-    detailRow('ANR score', String(anr.score)),
-    detailRow('Risk level', anr.level),
+    detailRow(t('signals.details.anrScore'), String(anr.score)),
+    detailRow(t('signals.details.riskLevel'), anr.level),
   ];
   if (anr.signals.length > 0) {
-    rows.push('<div class="detail-subheading">Contributing factors</div>');
+    rows.push(`<div class="detail-subheading">${escapeHtml(t('signals.details.contributingFactors'))}</div>`);
     for (const sig of anr.signals) {
       rows.push(`<div class="detail-factor">${escapeHtml(sig)}</div>`);
     }
@@ -129,10 +130,10 @@ function buildDriftAdvisor(bundle: RootCauseHintBundle): string {
   const da = bundle.driftAdvisorSummary;
   if (!da || da.issueCount <= 0) { return ''; }
   const rows: string[] = [
-    detailRow('Issues found', String(da.issueCount)),
+    detailRow(t('signals.details.issuesFound'), String(da.issueCount)),
   ];
   if (da.topRuleId) {
-    rows.push(detailRow('Top rule', da.topRuleId));
+    rows.push(detailRow(t('signals.details.topRule'), da.topRuleId));
   }
   return wrapGrid(rows);
 }
@@ -142,7 +143,7 @@ function buildSessionDiff(bundle: RootCauseHintBundle): string {
   const diff = bundle.sessionDiffSummary;
   if (!diff?.regressionFingerprints || diff.regressionFingerprints.length === 0) { return ''; }
   const rows = diff.regressionFingerprints.slice(0, 10)
-    .map(fp => detailRow('Regression', fp));
+    .map(fp => detailRow(t('signals.details.regression'), fp));
   return wrapGrid(rows);
 }
 
@@ -152,7 +153,11 @@ interface DistributionData {
   readonly first: number;
   readonly last: number;
   readonly span: number;
+  /** English pattern label — used by the markdown export. */
   readonly pattern: string;
+  /** l10n key + args for the same label — used by the panel. */
+  readonly patternKey: string;
+  readonly patternArgs: readonly (string | number)[];
 }
 
 /** Extract distribution data, or undefined if fewer than 2 occurrences. */
@@ -166,7 +171,7 @@ function getDistributionData(
   const first = sorted[0];
   const last = sorted[sorted.length - 1];
   const span = last - first;
-  return { first, last, span, pattern: analyzePattern(sorted, span) };
+  return { first, last, span, ...analyzePattern(sorted, span) };
 }
 
 /** Build distribution HTML as a detail grid. */
@@ -177,10 +182,10 @@ function buildDistribution(
   const dist = getDistributionData(hypothesis, bundle);
   if (!dist) { return ''; }
   return wrapGrid([
-    detailRow('First occurrence', `Line ${dist.first + 1}`),
-    detailRow('Last occurrence', `Line ${dist.last + 1}`),
-    detailRow('Span', `${dist.span} lines`),
-    detailRow('Pattern', dist.pattern),
+    detailRow(t('signals.details.firstOccurrence'), t('signals.details.lineValue', dist.first + 1)),
+    detailRow(t('signals.details.lastOccurrence'), t('signals.details.lineValue', dist.last + 1)),
+    detailRow(t('signals.details.span'), t('signals.details.spanLines', dist.span)),
+    detailRow(t('signals.details.pattern'), t(dist.patternKey, ...dist.patternArgs)),
   ]);
 }
 
@@ -205,9 +210,17 @@ function collectIndices(hypothesis: RootCauseHypothesis, bundle: RootCauseHintBu
   return [...hypothesis.evidenceLineIds];
 }
 
+interface PatternLabel {
+  readonly pattern: string;
+  readonly patternKey: string;
+  readonly patternArgs: readonly (string | number)[];
+}
+
 /** Determine whether occurrences are clustered in one region or spread across the log. */
-function analyzePattern(sorted: number[], span: number): string {
-  if (span === 0) { return 'All on the same line'; }
+function analyzePattern(sorted: number[], span: number): PatternLabel {
+  if (span === 0) {
+    return { pattern: 'All on the same line', patternKey: 'signals.details.patternSameLine', patternArgs: [] };
+  }
   // Divide the span into 10 equal buckets and check if >50% fall in one bucket
   const bucketSize = Math.max(1, Math.ceil(span / 10));
   const buckets = new Map<number, number>();
@@ -218,9 +231,10 @@ function analyzePattern(sorted: number[], span: number): string {
   const maxBucket = Math.max(...buckets.values());
   const ratio = maxBucket / sorted.length;
   if (ratio > 0.5 && sorted.length >= 3) {
-    return `Clustered (${Math.round(ratio * 100)}% in one region)`;
+    const pct = Math.round(ratio * 100);
+    return { pattern: `Clustered (${pct}% in one region)`, patternKey: 'signals.details.patternClustered', patternArgs: [pct] };
   }
-  return 'Spread across the log';
+  return { pattern: 'Spread across the log', patternKey: 'signals.details.patternSpread', patternArgs: [] };
 }
 
 /** Append type-specific markdown for the export report. */

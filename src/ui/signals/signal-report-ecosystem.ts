@@ -7,6 +7,7 @@
 
 import * as vscode from 'vscode';
 import { escapeHtml } from '../../modules/capture/ansi';
+import { t } from '../../l10n';
 import { buildItemUrl } from '../../modules/marketplace-url';
 import { DRIFT_ADVISOR_EXTENSION_ID } from '../../modules/integrations/drift-advisor-constants';
 import { SAROPA_LINTS_EXTENSION_ID } from '../../modules/misc/saropa-lints-api';
@@ -26,13 +27,13 @@ function isDriftProject(bundle: RootCauseHintBundle): boolean {
     return false;
 }
 
-/** Build a clickable install prompt for a missing extension. */
-function installPromptHtml(label: string, extensionId: string, benefit: string): string {
+/** Build a clickable install prompt for a missing extension. `benefitKey` is an l10n key. */
+function installPromptHtml(label: string, extensionId: string, benefitKey: string): string {
     const url = escapeHtml(buildItemUrl(extensionId));
     return `<div class="ecosystem-prompt">
-        <span class="ecosystem-prompt-label">${escapeHtml(label)} is not installed.</span>
-        <span class="ecosystem-prompt-benefit">${escapeHtml(benefit)}</span>
-        <a class="ecosystem-prompt-link" data-url="${url}" href="#">Install from Marketplace</a>
+        <span class="ecosystem-prompt-label">${escapeHtml(t('signals.eco.notInstalled', label))}</span>
+        <span class="ecosystem-prompt-benefit">${escapeHtml(t(benefitKey))}</span>
+        <a class="ecosystem-prompt-link" data-url="${url}" href="#">${escapeHtml(t('signals.eco.installLink'))}</a>
     </div>`;
 }
 
@@ -55,7 +56,7 @@ function buildDriftHtml(bundle: RootCauseHintBundle): string {
         return installPromptHtml(
             'Saropa Drift Advisor',
             DRIFT_ADVISOR_EXTENSION_ID,
-            'Adds schema health, query stats, index suggestions, and anomaly detection to your signal reports.',
+            'signals.eco.driftBenefit',
         );
     }
 
@@ -64,13 +65,13 @@ function buildDriftHtml(bundle: RootCauseHintBundle): string {
     if (!da || da.issueCount <= 0) {
         return `<div class="ecosystem-status">` +
             `<span class="ecosystem-status-icon">\u2713</span>` +
-            `<span>Drift Advisor connected \u2014 no issues detected this session.</span>` +
+            `<span>${escapeHtml(t('signals.eco.driftNoIssues'))}</span>` +
             `</div>`;
     }
     const parts: string[] = [];
-    parts.push(dataRow('Issues found', String(da.issueCount)));
+    parts.push(dataRow(t('signals.eco.issuesFound'), String(da.issueCount)));
     if (da.topRuleId) {
-        parts.push(dataRow('Top rule', da.topRuleId));
+        parts.push(dataRow(t('signals.eco.topRule'), da.topRuleId));
     }
     return `<div class="ecosystem-data">${parts.join('')}</div>`;
 }
@@ -82,7 +83,7 @@ function buildLintsHtml(): string {
         return installPromptHtml(
             'Saropa Lints',
             SAROPA_LINTS_EXTENSION_ID,
-            'Adds lint violations, OWASP summaries, and health scores to bug reports generated from signal context.',
+            'signals.eco.lintsBenefit',
         );
     }
 
@@ -92,7 +93,7 @@ function buildLintsHtml(): string {
         // Extension installed but not active or no API — still show connected status
         return `<div class="ecosystem-status">` +
             `<span class="ecosystem-status-icon">\u2713</span>` +
-            `<span>Saropa Lints installed.</span>` +
+            `<span>${escapeHtml(t('signals.eco.lintsInstalled'))}</span>` +
             `</div>`;
     }
 
@@ -101,7 +102,7 @@ function buildLintsHtml(): string {
     if (total <= 0) {
         return `<div class="ecosystem-status">` +
             `<span class="ecosystem-status-icon">\u2713</span>` +
-            `<span>Saropa Lints connected \u2014 no violations detected.</span>` +
+            `<span>${escapeHtml(t('signals.eco.lintsNoViolations'))}</span>` +
             `</div>`;
     }
 
@@ -109,10 +110,10 @@ function buildLintsHtml(): string {
     const byImpact = data?.summary?.byImpact;
     const critical = (byImpact?.critical ?? 0) + (byImpact?.high ?? 0);
     const parts: string[] = [];
-    parts.push(dataRow('Total violations', String(total)));
-    parts.push(dataRow('Analysis tier', tier));
+    parts.push(dataRow(t('signals.eco.totalViolations'), String(total)));
+    parts.push(dataRow(t('signals.eco.analysisTier'), tier));
     if (critical > 0) {
-        parts.push(dataRow('Critical + High', String(critical)));
+        parts.push(dataRow(t('signals.eco.criticalHigh'), String(critical)));
     }
     return `<div class="ecosystem-data">${parts.join('')}</div>`;
 }
