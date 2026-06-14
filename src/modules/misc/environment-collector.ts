@@ -72,8 +72,9 @@ export function formatDevEnvironment(env: DevEnvironment): Record<string, string
     return result;
 }
 
+/** Strip `user[:pass]@` credentials from every URL in a string (global, not just the first). */
 function stripCredentials(url: string): string {
-    return url.replace(/\/\/[^@]+@/, '//');
+    return url.replace(/\/\/[^/@\s]+@/g, '//');
 }
 
 function listDebugExtensions(): string[] {
