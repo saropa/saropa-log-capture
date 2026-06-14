@@ -103,12 +103,12 @@ function matchHighlightRules(text) {
         return null;
     }
 
-    // Build inline CSS style string
+    // Build inline CSS style string (cssVal strips chars that could break out of style="…")
     var styleParts = [];
-    if (color) { styleParts.push('color: ' + color); }
-    if (backgroundColor) { styleParts.push('background-color: ' + backgroundColor); }
-    if (fontWeight) { styleParts.push('font-weight: ' + fontWeight); }
-    if (fontStyle) { styleParts.push('font-style: ' + fontStyle); }
+    if (color) { styleParts.push('color: ' + cssVal(color)); }
+    if (backgroundColor) { styleParts.push('background-color: ' + cssVal(backgroundColor)); }
+    if (fontWeight) { styleParts.push('font-weight: ' + cssVal(fontWeight)); }
+    if (fontStyle) { styleParts.push('font-style: ' + cssVal(fontStyle)); }
 
     return {
         style: styleParts.length > 0 ? styleParts.join('; ') + ';' : '',
@@ -116,13 +116,19 @@ function matchHighlightRules(text) {
     };
 }
 
+/** Strip characters from a user-configured CSS value that could break out of a style="…" attribute
+ *  or inject extra declarations. Highlight-rule colors/weights are user config, but still untrusted. */
+function cssVal(v) {
+    return String(v).replace(/["<>;]/g, '');
+}
+
 /** Build inline CSS from a single rule's style properties. */
 function buildRuleStyle(rule) {
     var parts = [];
-    if (rule.color) parts.push('color: ' + rule.color);
-    if (rule.backgroundColor) parts.push('background-color: ' + rule.backgroundColor);
-    if (rule.fontWeight) parts.push('font-weight: ' + rule.fontWeight);
-    if (rule.fontStyle) parts.push('font-style: ' + rule.fontStyle);
+    if (rule.color) parts.push('color: ' + cssVal(rule.color));
+    if (rule.backgroundColor) parts.push('background-color: ' + cssVal(rule.backgroundColor));
+    if (rule.fontWeight) parts.push('font-weight: ' + cssVal(rule.fontWeight));
+    if (rule.fontStyle) parts.push('font-style: ' + cssVal(rule.fontStyle));
     return parts.length > 0 ? parts.join('; ') + ';' : '';
 }
 

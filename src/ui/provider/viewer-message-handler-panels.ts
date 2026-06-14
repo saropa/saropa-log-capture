@@ -107,6 +107,16 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
         });
         return true;
       }
+      case "setDiagnosticCapture": {
+        // Per-line fate trace (plan 102) — write to Workspace so the running session picks it up;
+        // echo back so the Options checkbox reflects the persisted value.
+        const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+        const enabled = msg.enabled === true;
+        void cfg.update('diagnosticCapture', enabled, vscode.ConfigurationTarget.Workspace).then(() => {
+          ctx.post({ type: 'diagnosticCapture', enabled });
+        });
+        return true;
+      }
       case "setIntegrationsAdapters": {
         const raw = msg.adapterIds;
         const adapterIds = Array.isArray(raw)

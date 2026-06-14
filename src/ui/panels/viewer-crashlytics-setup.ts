@@ -27,7 +27,7 @@ export function getCrashlyticsSetupScript(): string {
             + content
             + buildProblemDisclosure(ctx)
             + buildSetupHelp(ctx)
-            + '<button class="cp-check-btn" id="cp-check-again">Check Again</button>';
+            + '<button class="cp-check-btn" id="cp-check-again">' + vt('viewer.crashlytics.setup.checkAgain') + '</button>';
         cpSetupEl.style.display = '';
         wireSetupButtons();
     }
@@ -37,7 +37,7 @@ export function getCrashlyticsSetupScript(): string {
        setup has failed repeatedly (plan 054). The report fills in via crashlyticsConnectionReport. */
     function buildConnectionTest() {
         return '<div class="cp-conn-test">'
-            + '<button class="cp-setup-btn cp-conn-test-btn" data-action="crashlyticsValidate">Test connection</button>'
+            + '<button class="cp-setup-btn cp-conn-test-btn" data-action="crashlyticsValidate">' + vt('viewer.crashlytics.setup.testConnection') + '</button>'
             + '<div id="cp-conn-report" class="cp-conn-report"></div></div>';
     }
 
@@ -47,19 +47,19 @@ export function getCrashlyticsSetupScript(): string {
         var el = document.getElementById('cp-conn-report');
         if (!el) return;
         if (!report || !report.steps || report.steps.length === 0) {
-            el.innerHTML = '<div class="cp-conn-checking">Connection check unavailable — see the Saropa Log Capture output channel.</div>';
+            el.innerHTML = '<div class="cp-conn-checking">' + vt('viewer.crashlytics.setup.connUnavailable') + '</div>';
             return;
         }
         var banner = report.ok
-            ? '<div class="cp-conn-ok">\\u2713 Connected</div>'
-            : '<div class="cp-conn-bad">\\u2717 Not connected yet — fix the steps marked below.</div>';
+            ? '<div class="cp-conn-ok">\\u2713 ' + vt('viewer.crashlytics.setup.connected') + '</div>'
+            : '<div class="cp-conn-bad">\\u2717 ' + vt('viewer.crashlytics.setup.notConnected') + '</div>';
         el.innerHTML = banner + report.steps.map(renderConnectionStep).join('');
     }
 
     function renderConnectionStep(s) {
         var icon = s.status === 'pass' ? '\\u2713' : s.status === 'fail' ? '\\u2717' : '\\u25CB';
         var fix = s.fix ? '<div class="cp-conn-fix">' + esc(s.fix) + '</div>' : '';
-        var tech = s.technical ? '<details class="cp-conn-tech"><summary>Details</summary><pre>' + esc(s.technical) + '</pre></details>' : '';
+        var tech = s.technical ? '<details class="cp-conn-tech"><summary>' + vt('viewer.crashlytics.setup.details') + '</summary><pre>' + esc(s.technical) + '</pre></details>' : '';
         return '<div class="cp-conn-step cp-conn-' + esc(s.status) + '">'
             + '<div class="cp-conn-head"><span class="cp-conn-icon">' + icon + '</span><span class="cp-conn-label">' + esc(s.label) + '</span></div>'
             + '<div class="cp-conn-detail">' + esc(s.detail) + '</div>' + fix + tech + '</div>';
@@ -67,7 +67,7 @@ export function getCrashlyticsSetupScript(): string {
 
     /* One friendly sentence of purpose. Second-person voice, no first person (USER_COPY_AND_TONE). */
     function buildSetupIntro() {
-        return '<div class="cp-setup-intro">Connect Firebase Crashlytics to triage your crashes without leaving the editor.</div>';
+        return '<div class="cp-setup-intro">' + vt('viewer.crashlytics.setup.intro') + '</div>';
     }
 
     /* 3-step progress: completed steps fill green, the current step highlights, later steps stay muted.
@@ -78,15 +78,15 @@ export function getCrashlyticsSetupScript(): string {
             var mark = n < stepNum ? '\\u2713' : String(n);
             return '<span class="cp-step cp-step-' + cls + '"><span class="cp-step-num">' + mark + '</span>' + label + '</span>';
         }
-        return '<div class="cp-steps">' + dot(1, 'Install') + dot(2, 'Sign in') + dot(3, 'Project') + '</div>';
+        return '<div class="cp-steps">' + dot(1, vt('viewer.crashlytics.setup.stepInstall')) + dot(2, vt('viewer.crashlytics.setup.stepSignIn')) + dot(3, vt('viewer.crashlytics.setup.stepProject')) + '</div>';
     }
 
     /* Plain-language state derived from the step, not the raw diagnostic — robust even when the
        underlying gcloud message is unfriendly (see bug_008). */
     function getStepStatusLine(step) {
-        var msg = step === 'gcloud' ? 'Google Cloud access is not set up yet.'
-            : step === 'token' ? 'Not signed in to Google Cloud yet.'
-            : 'Firebase project is not configured yet.';
+        var msg = step === 'gcloud' ? vt('viewer.crashlytics.setup.statusGcloud')
+            : step === 'token' ? vt('viewer.crashlytics.setup.statusToken')
+            : vt('viewer.crashlytics.setup.statusConfig');
         return '<div class="cp-setup-status">' + msg + '</div>';
     }
 
@@ -97,16 +97,16 @@ export function getCrashlyticsSetupScript(): string {
         var forStep = (ctx.troubleshootingForStep || []).length ? buildTroubleshootingForStepHtml(ctx.troubleshootingForStep) : '';
         var actions = (ctx.diagnosticCopyText || ctx.diagnosticHtml) ? buildDiagnosticActions(ctx) : '';
         if (!diag && !forStep && !actions) return '';
-        return '<details class="cp-problem"><summary>What went wrong?</summary>'
+        return '<details class="cp-problem"><summary>' + vt('viewer.crashlytics.setup.whatWentWrong') + '</summary>'
             + '<div class="cp-problem-body">' + diag + forStep + actions + '</div></details>';
     }
 
     /* Collapsed help: billing note, full troubleshooting table, and the console link. */
     function buildSetupHelp(ctx) {
-        var tip = '<p class="cp-setup-tip">Google Cloud may prompt you to enable billing, but Crashlytics API access is free.</p>';
+        var tip = '<p class="cp-setup-tip">' + vt('viewer.crashlytics.setup.billingTip') + '</p>';
         var fullTable = (ctx.troubleshootingTable || []).length ? buildTroubleshootingCollapsible(ctx.troubleshootingTable) : '';
         var consoleUrl = ctx.consoleUrl || 'https://console.firebase.google.com/';
-        var openConsole = '<p class="cp-open-console"><a class="cp-setup-link" data-action="openUrl" data-url="' + esc(consoleUrl) + '">Open Firebase Console</a> to verify the project or copy the project / app ID.</p>';
+        var openConsole = '<p class="cp-open-console"><a class="cp-setup-link" data-action="openUrl" data-url="' + esc(consoleUrl) + '">' + vt('viewer.crashlytics.openConsole') + '</a> ' + vt('viewer.crashlytics.setup.consoleVerifyHint') + '</p>';
         return tip + fullTable + openConsole;
     }
 
@@ -120,53 +120,53 @@ export function getCrashlyticsSetupScript(): string {
     function buildTroubleshootingForStepHtml(rows) {
         var body = buildTroubleTableRows(rows);
         if (!body) return '';
-        return '<div class="cp-trouble-step"><div class="cp-trouble-step-title">If this doesn\\'t work</div><table class="cp-trouble-table"><tbody>' + body + '</tbody></table></div>';
+        return '<div class="cp-trouble-step"><div class="cp-trouble-step-title">' + vt('viewer.crashlytics.setup.ifThisDoesntWork') + '</div><table class="cp-trouble-table"><tbody>' + body + '</tbody></table></div>';
     }
 
     function buildTroubleshootingCollapsible(table) {
         var body = buildTroubleTableRows(table);
         if (!body) return '';
-        return '<details class="cp-trouble-details"><summary>Troubleshooting</summary><table class="cp-trouble-table"><thead><tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr></thead><tbody>' + body + '</tbody></table></details>';
+        return '<details class="cp-trouble-details"><summary>' + vt('viewer.crashlytics.setup.troubleshooting') + '</summary><table class="cp-trouble-table"><thead><tr><th>' + vt('viewer.crashlytics.setup.thSymptom') + '</th><th>' + vt('viewer.crashlytics.setup.thCause') + '</th><th>' + vt('viewer.crashlytics.setup.thFix') + '</th></tr></thead><tbody>' + body + '</tbody></table></details>';
     }
 
     function getGcloudStep(ctx) {
         var installCmd = (ctx.gcloudInstallCommand || '').trim();
         var installLine = installCmd
-            ? '<p class="cp-install-via">Install via: <code class="cp-install-code">' + esc(installCmd) + '</code>'
-            + ' <button class="cp-copy-btn" data-copy="' + esc(installCmd) + '" title="Copy">Copy</button></p>'
+            ? '<p class="cp-install-via">' + vt('viewer.crashlytics.setup.installVia') + ' <code class="cp-install-code">' + esc(installCmd) + '</code>'
+            + ' <button class="cp-copy-btn" data-copy="' + esc(installCmd) + '" title="' + vt('viewer.crashlytics.setup.copy') + '">' + vt('viewer.crashlytics.setup.copy') + '</button></p>'
             : '';
-        var why = '<p class="cp-setup-why">If <code>gcloud</code> is not in PATH after installing, restart the terminal or VS Code.</p>';
-        return '<div class="cp-setup-step"><div class="cp-setup-title">Install Google Cloud CLI</div>'
-            + '<p>The <code>gcloud</code> CLI is needed to authenticate with Firebase Crashlytics.</p>'
+        var why = '<p class="cp-setup-why">' + vt('viewer.crashlytics.setup.gcloudPathHint') + '</p>';
+        return '<div class="cp-setup-step"><div class="cp-setup-title">' + vt('viewer.crashlytics.setup.installTitle') + '</div>'
+            + '<p>' + vt('viewer.crashlytics.setup.gcloudNeeded') + '</p>'
             + installLine
-            + '<a class="cp-setup-link" data-action="openGcloudInstall">Download Google Cloud CLI</a>'
+            + '<a class="cp-setup-link" data-action="openGcloudInstall">' + vt('viewer.crashlytics.setup.downloadGcloud') + '</a>'
             + why + '</div>';
     }
 
     function getTokenStep(ctx) {
         var authCmd = 'gcloud auth application-default login';
-        var externalHint = '<p class="cp-setup-why">If sign-in fails in the VS Code terminal, run the command below in an external terminal (where <code>gcloud</code> is in PATH), then click Check Again.</p>'
+        var externalHint = '<p class="cp-setup-why">' + vt('viewer.crashlytics.setup.signInExternalHint') + '</p>'
             + '<p class="cp-install-via"><code class="cp-install-code">' + esc(authCmd) + '</code>'
-            + ' <button class="cp-copy-btn" data-copy="' + esc(authCmd) + '" title="Copy">Copy</button></p>';
-        var why = '<p class="cp-setup-why">If you see &quot;Permission denied&quot;, your account needs the Firebase Crashlytics Viewer role on the project.</p>';
-        var saHint = '<p class="cp-setup-why">Alternatively, set <code>saropaLogCapture.firebase.serviceAccountKeyPath</code> to a service account JSON key file (e.g. when gcloud is not available).</p>';
-        return '<div class="cp-setup-step"><div class="cp-setup-title">Sign in to Google Cloud</div>'
-            + '<p>Authenticate with your Google account to access Crashlytics data.</p>'
-            + '<button class="cp-setup-btn" data-action="crashlyticsRunGcloudAuth">Sign in to Google Cloud</button>'
+            + ' <button class="cp-copy-btn" data-copy="' + esc(authCmd) + '" title="' + vt('viewer.crashlytics.setup.copy') + '">' + vt('viewer.crashlytics.setup.copy') + '</button></p>';
+        var why = '<p class="cp-setup-why">' + vt('viewer.crashlytics.setup.permissionDeniedHint') + '</p>';
+        var saHint = '<p class="cp-setup-why">' + vt('viewer.crashlytics.setup.serviceAccountHint') + '</p>';
+        return '<div class="cp-setup-step"><div class="cp-setup-title">' + vt('viewer.crashlytics.setup.signInTitle') + '</div>'
+            + '<p>' + vt('viewer.crashlytics.setup.signInBody') + '</p>'
+            + '<button class="cp-setup-btn" data-action="crashlyticsRunGcloudAuth">' + vt('viewer.crashlytics.setup.signInTitle') + '</button>'
             + externalHint + why + saHint + '</div>';
     }
 
     function getConfigStep(ctx) {
         var workspacePath = (ctx.workspaceGoogleServicesPath || '').trim();
         var useExisting = workspacePath
-            ? '<p class="cp-use-existing"><button class="cp-setup-btn" data-action="crashlyticsUseWorkspaceConfig">Use existing file: ' + esc(workspacePath) + '</button></p>'
+            ? '<p class="cp-use-existing"><button class="cp-setup-btn" data-action="crashlyticsUseWorkspaceConfig">' + vt('viewer.crashlytics.setup.useExistingFile', esc(workspacePath)) + '</button></p>'
             : '';
-        var why = '<p class="cp-setup-why">Find project ID and app ID in Firebase Console under Project Settings &rarr; General.</p>';
-        return '<div class="cp-setup-step"><div class="cp-setup-title">Add Firebase Config</div>'
-            + '<p>Provide your <code>google-services.json</code> file or configure the project manually.</p>'
+        var why = '<p class="cp-setup-why">' + vt('viewer.crashlytics.setup.findIdsHint') + '</p>';
+        return '<div class="cp-setup-step"><div class="cp-setup-title">' + vt('viewer.crashlytics.setup.addConfigTitle') + '</div>'
+            + '<p>' + vt('viewer.crashlytics.setup.provideConfig') + '</p>'
             + useExisting
-            + '<button class="cp-setup-btn" data-action="crashlyticsBrowseGoogleServices">Browse for google-services.json</button>'
-            + '<a class="cp-setup-settings" data-action="openCrashlyticsSettings">Or configure in settings</a>'
+            + '<button class="cp-setup-btn" data-action="crashlyticsBrowseGoogleServices">' + vt('viewer.crashlytics.setup.browseGsj') + '</button>'
+            + '<a class="cp-setup-settings" data-action="openCrashlyticsSettings">' + vt('viewer.crashlytics.setup.orConfigureSettings') + '</a>'
             + why + '</div>';
     }
 

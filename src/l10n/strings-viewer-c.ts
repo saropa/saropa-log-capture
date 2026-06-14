@@ -139,6 +139,8 @@ export const stringsViewerC: Record<string, string> = {
     'viewer.options.section.capture': 'Capture',
     'viewer.options.captureEnabled.title': 'Enable or disable automatic log capture during debug sessions (F5). When off, no log files are created.',
     'viewer.options.captureEnabled': 'Enable log capture',
+    'viewer.options.diagnosticCapture.title': 'Trace every Debug Console line the extension receives to the Saropa Log Capture output channel, with what happened to it (captured, or dropped and why). Turn on to diagnose lines that appear in the Debug Console but are missing from the log.',
+    'viewer.options.diagnosticCapture': 'Diagnose missing lines (log capture pipeline)',
     'viewer.options.section.display': 'Display',
     'viewer.options.fontSize': 'Font size:',
     'viewer.options.fontSize.title': 'Adjust the font size for log text',
