@@ -126,7 +126,11 @@ export function buildSessionComparisonHtml(args: SessionComparisonHtmlArgs): str
     </div>
     </div>
     <script nonce="${nonce}">
-        ${getSessionComparisonWebviewScript(syncScrolling, driftInstalled)}
+        ${getSessionComparisonWebviewScript(syncScrolling, driftInstalled, {
+        syncTemplate: t('viewer.sessionCompare.syncScroll'),
+        on: t('viewer.sessionCompare.on'),
+        off: t('viewer.sessionCompare.off'),
+    })}
     </script>
 </body>
 </html>`;

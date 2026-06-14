@@ -463,7 +463,7 @@ Fix Velocity: 3 errors resolved this week, 1 persisting
 | ~~"What Changed?" auto-summary on session end~~ | ~~Medium~~ | ~~Very High~~ | ~~Very High~~ | **Done** |
 | Curated/named investigations | Medium | Medium | Medium | Next |
 | ~~Ghost errors reliability tag~~ | ~~Low~~ | ~~Medium~~ | ~~High~~ | **Done** |
-| Session health score (per-session model) | Medium | High | High | Soon |
+| ~~Session health score (per-session model)~~ | ~~Medium~~ | ~~High~~ | ~~High~~ | **Done** |
 | "Why Did This Break?" narrative prose | High | Very High | Very High | Soon |
 | Code freshness heatmap | Low | High | High | Backlog |
 | Error attention score | Medium | High | Very High | Backlog |
@@ -637,3 +637,34 @@ Each cross-session signal in the Signal panel's "All signals" list now displays 
 ### Not done
 
 A dedicated spark-line glyph for reliability was not added — the existing recurring badge and trend arrow already mark frequency, and the percentage/tier text carries the ghost-error signal without new CSS.
+
+---
+
+## Finish Report (2026-06-14) — Per-session health score (idea #19)
+
+### What shipped
+
+The Signal Report overview now shows a "Health: N/100" score that condenses a session's detected signals into one gauge (100 = clean). It is computed from the session's errors, ANR risk, memory events, network failures, slow operations, and warnings, each contributing a capped penalty so a single noisy category cannot sink the score alone. The markdown export appends the factor breakdown behind the score.
+
+### How it works
+
+`computeSessionHealth(input)` (pure, `src/modules/misc/session-health.ts`) starts at 100 and subtracts a per-signal-type penalty (errors −10, ANR −25 once for any positive risk, memory −8, network −5, slow ops −3, warnings −2) capped per type, then clamps to [0, 100] and returns the score plus an ordered factor breakdown. The Signal Report overview maps the root-cause bundle's signal counts into that input and renders a health row (HTML) and a markdown line carrying the breakdown. This is intentionally separate from the pre-existing `health-score.ts`, which scores lint-violation impact for bug reports — a different input and purpose.
+
+### Files changed
+
+- `src/modules/misc/session-health.ts` — NEW. Pure scoring + capped weighting policy + factor breakdown.
+- `src/ui/signals/signal-report-overview.ts` — health row in the panel overview; score + breakdown in the markdown export; bundle→input mapping helper.
+- `src/l10n/strings-signals.ts` — `signals.overview.health` label.
+- `src/test/modules/misc/session-health.test.ts` — NEW. 5 cases (clean, per-error penalty, per-type cap, ANR once, clamp + ordering).
+- `CHANGELOG.md`, `plans/cross-session-analysis.md` — idea #19 marked done; this report.
+
+### Verification
+
+- `npm run check-types` — clean.
+- `eslint` on the touched files — clean.
+- `npm run verify:l10n-keys` — OK (`signals.overview.health` resolves).
+- `node --test` on the new test — 5/5 pass.
+
+### Pending
+
+Session-history trend arrows (a worsening/improving indicator across the Logs list) are not built — the score is computed per session for the report but not yet persisted per session for cross-session trend rendering.
