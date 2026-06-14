@@ -35,6 +35,8 @@ import {
     findHeaderEnd,
 } from './bug-report-collector-helpers';
 import type { SourceCodePreview, GitCommit } from '../misc/workspace-analyzer';
+import { findInWorkspace } from '../misc/workspace-analyzer';
+import { findCallers, type CallerRef } from '../source/find-callers';
 import type { BlameLine } from '../git/git-blame';
 
 /** Collection context for bug report when a collection is active. */
@@ -132,6 +134,16 @@ export interface BugReportData {
     readonly qualitySummary?: readonly QualitySummaryEntry[];
     /** Count-only security event summary (e.g. "3 logon, 1 failed logon") when security.includeInBugReport. */
     readonly securitySummary?: string;
+    /** Workspace files that import the crashing source file (idea #4 — reverse import lookup). */
+    readonly callers?: readonly CallerRef[];
+}
+
+/** Resolve the crashing source file and find the workspace files that import it. Best-effort. */
+async function collectCallers(filePath?: string): Promise<readonly CallerRef[]> {
+    if (!filePath) { return []; }
+    const basename = filePath.split(/[/\\]/).pop() ?? filePath;
+    const uri = await findInWorkspace(basename).catch(() => undefined);
+    return uri ? findCallers(uri).catch(() => []) : [];
 }
 
 const LOW_COVERAGE_THRESHOLD = 80;
@@ -231,7 +243,7 @@ export async function collectBugReportData(
     if (wsFolder) {
         await offerSaropaLintRefreshIfNeeded(wsFolder.uri, stackTrace);
     }
-    const [wsData, devEnv, docMatches, resolvedSymbols, fileAnalyses, fbCtx, lintMatches, lintHealthScoreParams, collectionContext, qualitySummary, securitySummary] = await Promise.all([
+    const [wsData, devEnv, docMatches, resolvedSymbols, fileAnalyses, fbCtx, lintMatches, lintHealthScoreParams, collectionContext, qualitySummary, securitySummary, callers] = await Promise.all([
         collectWorkspaceData(sourceRef?.filePath, sourceRef?.line, fingerprint),
         collectDevEnvironment().then(formatDevEnvironment).catch(() => ({})),
         wsFolder ? scanDocsForTokens(tokenNames, wsFolder).catch(() => undefined) : Promise.resolve(undefined),
@@ -243,6 +255,7 @@ export async function collectBugReportData(
         collectionPromise,
         collectQualitySummary(fileUri, referencedPaths),
         collectSecuritySummary(fileUri),
+        collectCallers(sourceRef?.filePath),
     ]);
     const [sourcePreview, blame, gitHistory, crossSessionMatch, lineRangeHistory, imports] = wsData;
     const topIssue = fbCtx?.issues[0];
@@ -258,7 +271,7 @@ export async function collectBugReportData(
         resolvedSymbols, fileAnalyses, primarySourcePath: sourceRef?.filePath,
         logFilename, lineNumber: fileLineIndex + 1, firebaseMatch, lintMatches,
         lintHealthScoreParams,
-        collectionContext, qualitySummary, securitySummary,
+        collectionContext, qualitySummary, securitySummary, callers,
     };
 }
 
