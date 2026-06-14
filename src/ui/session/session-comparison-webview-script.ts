@@ -10,11 +10,21 @@
  * so the button is inert when the extension is not installed.
  */
 
-export function getSessionComparisonWebviewScript(syncScrolling: boolean, driftInstalled: boolean): string {
+export function getSessionComparisonWebviewScript(
+    syncScrolling: boolean,
+    driftInstalled: boolean,
+    syncLabels: { syncTemplate: string; on: string; off: string },
+): string {
     const driftJs = driftInstalled ? 'true' : 'false';
     return /* javascript */ `
 const vscodeApi = acquireVsCodeApi();
 let syncEnabled = ${syncScrolling};
+// Localized sync-toggle label parts, injected so the client re-localizes the button on toggle
+// instead of concatenating English fragments. The {0} slot takes the ON/OFF state word, so word
+// order stays translatable (e.g. a locale can render the state before the label).
+const SYNC_TEMPLATE = ${JSON.stringify(syncLabels.syncTemplate)};
+const SYNC_ON = ${JSON.stringify(syncLabels.on)};
+const SYNC_OFF = ${JSON.stringify(syncLabels.off)};
 let scrolling = false;
 
 function toggleSync() {
@@ -92,7 +102,7 @@ window.addEventListener('message', function(event) {
         syncEnabled = msg.enabled;
         const btn = document.getElementById('sync-btn');
         if (btn) {
-            btn.textContent = 'Sync Scroll: ' + (syncEnabled ? 'ON' : 'OFF');
+            btn.textContent = SYNC_TEMPLATE.split('{0}').join(syncEnabled ? SYNC_ON : SYNC_OFF);
             btn.classList.toggle('active', syncEnabled);
         }
     }
