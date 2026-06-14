@@ -37,6 +37,7 @@ import { scanForGeneralSignals } from '../analysis/general-signal-scanner';
 import { surfacePredictiveSignals } from './session-signal-surfacing';
 import { loadFilteredMetas, parseSessionDate, type LoadedMeta } from './metadata-loader';
 import { computeSessionDelta, formatSessionDelta } from '../compare/session-delta';
+import { computeDebuggingVelocity } from '../compare/debugging-velocity';
 import { writeLogCaptureDiagnostics } from '../diagnostics/diagnostics-producer';
 import { getSessionCommit } from './session-commit-from-meta';
 
@@ -247,7 +248,21 @@ function logWhatChanged(
         const previous = pickPreviousMeta(allMetas, path.basename(fileUri.fsPath));
         const summary = formatSessionDelta(computeSessionDelta(current, previous?.meta));
         if (summary) { out.appendLine(summary); }
+        // Debugging velocity (idea #14): fix rate across all sessions, reusing the metas just loaded.
+        const velocity = formatVelocityLine(allMetas);
+        if (velocity) { out.appendLine(velocity); }
     }).catch(() => { /* metadata may be absent for a brand-new session — nothing to compare */ });
+}
+
+/** Format the cross-session fix-rate line (idea #14), or '' when there's too little history. */
+function formatVelocityLine(metas: readonly LoadedMeta[]): string {
+    const ordered = [...metas]
+        .sort((a, b) => parseSessionDate(a.filename) - parseSessionDate(b.filename))
+        .map((m) => (m.meta.fingerprints ?? []).map((f) => f.h).filter(Boolean));
+    const v = computeDebuggingVelocity(ordered);
+    if (!v || v.resolved + v.persisting === 0) { return ''; }
+    return `Debugging velocity: ${v.resolved} resolved, ${v.persisting} persisting `
+        + `(${v.velocityPct}% fixed; resolved errors lasted ~${v.avgSessionsToResolve} sessions)`;
 }
 
 /** The session chronologically just before `currentFilename`. Falls back to the most recent other
