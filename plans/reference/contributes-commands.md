@@ -82,6 +82,7 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.refreshHistory` | %command.refreshHistory.title% |  |
 | `saropaLogCapture.removeFromCollection` | %command.removeFromCollection.title% |  |
 | `saropaLogCapture.renameSession` | %command.renameSession.title% |  |
+| `saropaLogCapture.replay` | %command.replay.title% |  |
 | `saropaLogCapture.rescanTags` | %command.rescanTags.title% |  |
 | `saropaLogCapture.resetAllSettings` | %command.resetAllSettings.title% |  |
 | `saropaLogCapture.restoreSession` | %command.restoreSession.title% |  |
@@ -111,4 +112,4 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.trashSession` | %command.trashSession.title% |  |
 | `saropaLogCapture.ungroupSession` | Saropa Log Capture: Ungroup Session |  |
 
-**Total:** 104 commands.
+**Total:** 105 commands.

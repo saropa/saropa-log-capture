@@ -259,17 +259,36 @@ test("buildHypotheses: high-confidence ANR absorbs error-recent evidence lines",
   assert.strictEqual(hy.filter((h) => h.templateId === "error-recent").length, 0);
 });
 
-test("buildHypotheses: medium-confidence ANR does NOT merge error-recent hypotheses", () => {
+test("buildHypotheses: medium-confidence ANR also absorbs error-recent (dump artifacts)", () => {
+  const hy = buildHypotheses({
+    ...base,
+    errors: [
+      { lineIndex: 10, excerpt: "74% 3935/com.saropamobile.app: 23% user + 51% kernel" },
+    ],
+    // score 30 → medium confidence (≤50). A moderate ANR is still the root cause; its dump
+    // lines must fold into the single ANR report, not re-surface as a duplicate "Error:" bullet.
+    anrRisk: { score: 30, level: "medium", signals: ["1 Choreographer warning"] },
+  });
+  const anr = hy.find((h) => h.templateId === "anr-risk");
+  assert.ok(anr, "ANR hypothesis should be present");
+  assert.ok(anr.evidenceLineIds.includes(10), "moderate ANR should carry merged error line 10");
+  assert.strictEqual(hy.filter((h) => h.templateId === "error-recent").length, 0);
+});
+
+test("buildHypotheses: with NO ANR, error-recent hypotheses survive untouched", () => {
+  // Guards the merge tradeoff: folding error-recent into ANR happens ONLY when an ANR is present.
+  // A genuine error in a session with no ANR keeps its own dedicated bullet.
   const hy = buildHypotheses({
     ...base,
     errors: [
       { lineIndex: 10, excerpt: "RenderFlex overflowed by 42 pixels on the right" },
     ],
-    // score 30 → medium confidence (≤50), errors stay separate
-    anrRisk: { score: 30, level: "medium", signals: ["1 Choreographer warning"] },
   });
-  assert.ok(hy.some((h) => h.templateId === "anr-risk"));
-  assert.ok(hy.some((h) => h.templateId === "error-recent"));
+  assert.ok(!hy.some((h) => h.templateId === "anr-risk"), "no ANR expected");
+  assert.ok(
+    hy.some((h) => h.templateId === "error-recent"),
+    "the genuine error must remain its own hypothesis when no ANR exists",
+  );
 });
 
 test("buildHypotheses: high ANR merge does not affect non-error hypothesis types", () => {

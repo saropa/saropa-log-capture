@@ -87,6 +87,11 @@
         "title": "%command.openLogFromUrl.title%"
       },
       {
+        "command": "saropaLogCapture.replay",
+        "icon": "$(debug-restart)",
+        "title": "%command.replay.title%"
+      },
+      {
         "command": "saropaLogCapture.deleteSession",
         "icon": "$(trash)",
         "title": "%command.deleteSession.title%"
@@ -2174,6 +2179,18 @@
           "maximum": 1000000,
           "type": "number",
           "title": "%config.integrations.externalLogs.maxLinesPerFile.title%"
+        },
+        "saropaLogCapture.integrations.externalLogs.createIfMissing": {
+          "default": false,
+          "description": "If a configured external log file does not exist at session start, create an empty file (and parent folders) so it can be tailed as soon as the app writes to it. Ignored for glob paths.",
+          "type": "boolean",
+          "title": "%config.integrations.externalLogs.createIfMissing.title%"
+        },
+        "saropaLogCapture.integrations.externalLogs.followRotation": {
+          "default": false,
+          "description": "Keep tailing across log rotation: when the tailed file is recreated or truncated (or a newer file matches a glob path like logs/*.log), continue from the new file's start.",
+          "type": "boolean",
+          "title": "%config.integrations.externalLogs.followRotation.title%"
         },
         "saropaLogCapture.integrations.security.windowsSecurityLog": {
           "default": false,

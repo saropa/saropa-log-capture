@@ -104,6 +104,37 @@ export class LogSession {
         });
     }
 
+    /**
+     * Write to `stream` honoring backpressure.
+     *
+     * When the OS write buffer is full, `write()` returns `false`. The append queue here is strictly
+     * serialized (one `processPendingLines` loop at a time), so without awaiting `'drain'` a fast
+     * producer on a slow disk keeps calling `write()` and Node grows its internal buffer without
+     * bound — memory pressure that can spike the extension host on a large, sustained log burst.
+     * Awaiting `'drain'` paces the queue to actual disk throughput. (This is throughput/memory
+     * hygiene, not data loss — Node still buffers and eventually flushes; the crash-on-error path is
+     * handled separately by the permanent `'error'` listener.)
+     *
+     * Resolve on `'error'`/`'close'` as well as `'drain'`: if the stream dies mid-await (disk full,
+     * file removed by an external tool), `'drain'` will never fire, so waiting only on it would hang
+     * the queue forever. The permanent error handler has already logged and nulled the stream by then,
+     * and every append guards on a missing stream, so resolving early here is safe.
+     */
+    private async writeBackpressured(stream: fs.WriteStream, data: string): Promise<void> {
+        if (stream.write(data)) { return; }
+        await new Promise<void>((resolve) => {
+            const done = (): void => {
+                stream.removeListener('drain', done);
+                stream.removeListener('error', done);
+                stream.removeListener('close', done);
+                resolve();
+            };
+            stream.on('drain', done);
+            stream.on('error', done);
+            stream.on('close', done);
+        });
+    }
+
     /** Create log directory, open first part file, write context header (and optional integration header lines). */
     async start(extraHeaderLines?: readonly string[]): Promise<void> {
         const logDirUri = getLogDirUri(this.context, this.config);

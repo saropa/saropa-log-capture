@@ -6,7 +6,7 @@
 
 import * as fs from 'node:fs';
 import type { IntegrationProvider, IntegrationContext, IntegrationEndContext, Contribution } from '../types';
-import { resolveWorkspaceFileUri } from '../workspace-path';
+import { resolveExternalLogPath } from '../external-log-glob';
 import {
     stopExternalLogTailers,
     getExternalLogBuffers,
@@ -36,9 +36,11 @@ function readFallbackSidecars(
     const contributions: Contribution[] = [];
     const sidecars: string[] = [];
     for (const relPath of cfg.paths) {
-        const uri = resolveWorkspaceFileUri(context.workspaceFolder, relPath);
+        // Resolve globs to the latest match so the fallback matches what the tailer would read.
+        const resolved = resolveExternalLogPath(context.workspaceFolder, relPath);
+        if (!resolved) { continue; }
         try {
-            const lines = readLastLines(uri.fsPath, cfg.maxLinesPerFile);
+            const lines = readLastLines(resolved, cfg.maxLinesPerFile);
             if (lines.length === 0) { continue; }
             const label = pathToLabel(relPath);
             const prefix = cfg.prefixLines ? `[${label}] ` : '';
