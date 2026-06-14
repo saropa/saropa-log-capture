@@ -14,6 +14,7 @@ import { formatHealthScoreLine, type HealthScoreParams } from '../misc/health-sc
 import { fencedBlock } from '../misc/outbound-content-safety';
 import { buildWhyNarrative } from './why-narrative';
 import { classifyErrorSemantics } from '../analysis/error-semantics';
+import { scoreErrorAttention } from '../analysis/error-attention';
 import { formatLintSection } from './bug-report-lint-section';
 import { formatOwaspSection } from './bug-report-owasp-section';
 import { formatThreadGroupedLines } from './bug-report-thread-format';
@@ -30,10 +31,12 @@ export function formatBugReport(data: BugReportData): string {
     const ctx = extractReportCtx(data);
     const summary = formatExecutiveSummary(data);
     const why = formatWhyNarrative(data);
+    const attention = formatAttention(data);
     const sections = [
         formatHeader(data.lintMatches, data.lintHealthScoreParams),
         formatSources(data, ctx),
         ...(summary ? [summary] : []),
+        ...(attention ? [attention] : []),
         ...(why ? [why] : []),
         formatError(data.errorLine, data.fingerprint),
         formatStackTrace(data.stackTrace, ctx),
@@ -66,6 +69,26 @@ export function formatBugReport(data: BugReportData): string {
 
 function extractReportCtx(data: BugReportData): ReportCtx {
     return { remote: data.devEnvironment['Git Remote'], branch: data.devEnvironment['Git Branch'] };
+}
+
+/** Attention score (idea #17): rank how actionable this error is from the signals already
+ *  collected. Omitted when there are no contributing factors (e.g. no stack trace, no history). */
+function formatAttention(data: BugReportData): string {
+    const inAppCode = data.stackTrace.some((f) => f.isApp);
+    const sessionCount = data.crossSessionMatch?.sessionCount ?? 0;
+    const result = scoreErrorAttention({
+        inAppCode,
+        frameworkOnly: data.stackTrace.length > 0 && !inAppCode,
+        recentlyChanged: data.lineRangeHistory.length > 0,
+        recurring: sessionCount > 1,
+        firstTimeSeen: sessionCount <= 1,
+        inDocumentation: (data.docMatches?.matches.length ?? 0) > 0,
+    });
+    if (result.contributions.length === 0) { return ''; }
+    const factors = result.contributions
+        .map((c) => `${c.key} (${c.weight > 0 ? '+' : ''}${c.weight})`)
+        .join(', ');
+    return `## Attention Score\n\n**${result.score}** — ${factors}`;
 }
 
 /** "Why did this break?" narrative (idea #18): a prose synthesis of blame + recurrence + churn.
