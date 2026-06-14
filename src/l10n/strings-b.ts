@@ -202,4 +202,26 @@ export const stringsB: Record<string, string> = {
     'vitals.crashFreeUsers': 'Crash-free users',
     'vitals.na': 'N/A',
     'vitals.threshold': 'threshold: {0}%',
+
+    // Logs (session-history) TreeView item descriptions + tooltips, built host-side
+    // (session-history-{grouping,helpers,provider}.ts). Each "Label: {0}" keeps the value as a {0}
+    // placeholder so word order stays translatable. "ANR" is an acronym, shielded by the MT pipeline.
+    'sessionTree.splitParts': '{0} split parts',
+    'sessionTree.parts': '{0} parts',
+    'sessionTree.date': 'Date: {0}',
+    'sessionTree.modified': 'Modified: {0}',
+    'sessionTree.project': 'Project: {0}',
+    'sessionTree.adapter': 'Adapter: {0}',
+    'sessionTree.lines': 'Lines: {0}',
+    'sessionTree.totalLines': 'Total lines: {0}',
+    'sessionTree.duration': 'Duration: {0}',
+    'sessionTree.size': 'Size: {0}',
+    'sessionTree.totalSize': 'Total size: {0}',
+    'sessionTree.anr': 'ANR: {0}',
+    'sessionTree.anrPatterns': 'ANR patterns: {0}',
+    'sessionTree.timestamps': 'Timestamps: {0}',
+    'sessionTree.descLines': '{0} lines',
+    'sessionTree.active': 'ACTIVE',
+    'sessionTree.yes': 'Yes',
+    'sessionTree.no': 'No',
 };
