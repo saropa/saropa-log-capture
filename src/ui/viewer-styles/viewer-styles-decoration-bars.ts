@@ -211,5 +211,11 @@ export function getDecorationBarStyles(): string {
    alone acts as the gutter indicator — no duplicated dot, no double-width gutter. */
 .line:has(.critical-fire-icon)[class*="level-bar-"]::before,
 .line:has(.error-badge-gutter)[class*="level-bar-"]::before { display: none; }
+
+/* DB badge: inline indicator that a line has correlated database queries.
+   Inline (not gutter-absolute) so it sits with the other inline badges; click
+   opens the related-queries popover. */
+.db-query-badge { cursor: pointer; margin-left: 2px; opacity: 0.7; font-size: 0.85em; }
+.db-query-badge:hover { opacity: 1; }
 `;
 }
