@@ -12,9 +12,16 @@
  * `npm run compile-tests`).
  */
 import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { listNodeTestFiles } from './node-test-files.mjs';
 
 const files = listNodeTestFiles();
+
+// Preloaded into the test process so a transitive `require('vscode')` — e.g. a
+// localized module reaching `src/l10n.ts`, which imports `vscode` for
+// `l10n.t()` — resolves to a stub instead of crashing. `vscode` only exists
+// inside the Extension Development Host, not under plain `node --test`.
+const vscodeStub = fileURLToPath(new URL('./vscode-stub.cjs', import.meta.url));
 
 if (files.length === 0) {
   // No compiled node:test files — almost always a missing build, not "nothing to
@@ -25,7 +32,7 @@ if (files.length === 0) {
 
 const result = spawnSync(
   process.execPath,
-  ['--test', '--test-reporter=dot', ...files],
+  ['--require', vscodeStub, '--test', '--test-reporter=dot', ...files],
   { stdio: 'inherit' },
 );
 
