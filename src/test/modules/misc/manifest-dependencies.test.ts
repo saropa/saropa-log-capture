@@ -1,5 +1,8 @@
 import * as assert from 'assert';
-import { parsePubspecDependencies } from '../../../modules/misc/manifest-dependencies';
+import {
+    parsePubspecDependencies,
+    parsePackageJsonDependencies,
+} from '../../../modules/misc/manifest-dependencies';
 
 suite('manifest-dependencies', () => {
     suite('parsePubspecDependencies', () => {
@@ -90,6 +93,33 @@ suite('manifest-dependencies', () => {
             ].join('\n');
             const deps = parsePubspecDependencies(text);
             assert.strictEqual(deps.size, 0);
+        });
+    });
+
+    suite('parsePackageJsonDependencies', () => {
+        test('should collect names from dependencies and devDependencies', () => {
+            const text = JSON.stringify({
+                name: 'app',
+                dependencies: { axios: '^1.0.0', pg: '^8.0.0' },
+                devDependencies: { jest: '^29.0.0' },
+            });
+            const deps = parsePackageJsonDependencies(text);
+            assert.ok(deps.has('axios'));
+            assert.ok(deps.has('pg'));
+            assert.ok(deps.has('jest'));
+        });
+
+        test('should ignore non-object dependency fields', () => {
+            const text = JSON.stringify({ dependencies: 'not-an-object', devDependencies: { vitest: '^1.0.0' } });
+            const deps = parsePackageJsonDependencies(text);
+            assert.ok(deps.has('vitest'));
+            assert.strictEqual(deps.size, 1);
+        });
+
+        test('should return an empty set for malformed JSON', () => {
+            assert.strictEqual(parsePackageJsonDependencies('{ not valid').size, 0);
+            assert.strictEqual(parsePackageJsonDependencies('"a string"').size, 0);
+            assert.strictEqual(parsePackageJsonDependencies('').size, 0);
         });
     });
 });

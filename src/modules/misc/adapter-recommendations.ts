@@ -36,26 +36,61 @@ const pubspecAdapterMap: ReadonlyMap<string, readonly string[]> = new Map([
     ['test', ['testResults']],
     ['integration_test', ['testResults']],
     ['coverage', ['coverage']],
-    // The Flutter SDK marker implies a mobile target worth wiring device + crash capture for.
-    ['flutter', ['adbLogcat', 'flutterCrashLogs']],
+    // The Flutter SDK marker implies an Android/mobile target worth streaming device logs for.
+    // Only adbLogcat is suggested: flutterCrashLogs is a registered provider but absent from the
+    // integrations picker (INTEGRATION_ADAPTERS), so recommending it would name a raw id the user
+    // could not then manage. Adding it to the picker is a separate product decision, not this feature.
+    ['flutter', ['adbLogcat']],
 ]);
 
 /**
- * Given the dependency names declared in a pubspec and the adapters already
- * enabled, return the adapters worth suggesting — each paired with the
- * dependency that triggered it, deduped by adapter (first trigger wins), and
- * excluding anything already enabled. Empty result means "offer nothing".
+ * npm dependency name (exact match) → adapter ids it implies. Mirrors the
+ * pubspec table for JavaScript/TypeScript projects. crashlytics is intentionally
+ * absent: that adapter is Firebase/mobile-specific, not a fit for a Node/web app.
  */
-export function suggestAdaptersFromPubspec(
+const packageJsonAdapterMap: ReadonlyMap<string, readonly string[]> = new Map([
+    ['jest', ['testResults']],
+    ['vitest', ['testResults']],
+    ['mocha', ['testResults']],
+    ['ava', ['testResults']],
+    ['axios', ['http']],
+    ['node-fetch', ['http']],
+    ['got', ['http']],
+    ['undici', ['http']],
+    ['pg', ['database']],
+    ['mysql', ['database']],
+    ['mysql2', ['database']],
+    ['better-sqlite3', ['database']],
+    ['sqlite3', ['database']],
+    ['sequelize', ['database']],
+    ['typeorm', ['database']],
+    ['prisma', ['database']],
+    ['knex', ['database']],
+    ['mongodb', ['database']],
+    ['mongoose', ['database']],
+    ['puppeteer', ['browser']],
+    ['playwright', ['browser']],
+    ['@playwright/test', ['browser']],
+    ['cypress', ['browser']],
+    ['selenium-webdriver', ['browser']],
+]);
+
+/**
+ * Shared core: map dependency names through `adapterMap`, pair each implied
+ * adapter with the dependency that triggered it, dedupe by adapter (first
+ * trigger wins), and drop anything already enabled. Empty means "offer nothing".
+ */
+function suggestFromMap(
     dependencies: ReadonlySet<string>,
     enabledAdapters: readonly string[],
+    adapterMap: ReadonlyMap<string, readonly string[]>,
 ): AdapterRecommendation[] {
     const enabled = new Set(enabledAdapters);
     const seen = new Set<string>();
     const out: AdapterRecommendation[] = [];
 
     for (const dep of dependencies) {
-        const adapters = pubspecAdapterMap.get(dep);
+        const adapters = adapterMap.get(dep);
         if (!adapters) { continue; }
         for (const adapter of adapters) {
             if (enabled.has(adapter) || seen.has(adapter)) { continue; }
@@ -64,4 +99,20 @@ export function suggestAdaptersFromPubspec(
         }
     }
     return out;
+}
+
+/** Recommend adapters implied by a pubspec.yaml's dependency names. */
+export function suggestAdaptersFromPubspec(
+    dependencies: ReadonlySet<string>,
+    enabledAdapters: readonly string[],
+): AdapterRecommendation[] {
+    return suggestFromMap(dependencies, enabledAdapters, pubspecAdapterMap);
+}
+
+/** Recommend adapters implied by a package.json's dependency names. */
+export function suggestAdaptersFromPackageJson(
+    dependencies: ReadonlySet<string>,
+    enabledAdapters: readonly string[],
+): AdapterRecommendation[] {
+    return suggestFromMap(dependencies, enabledAdapters, packageJsonAdapterMap);
 }
