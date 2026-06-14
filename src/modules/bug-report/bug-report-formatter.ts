@@ -18,7 +18,7 @@ import { formatThreadGroupedLines } from './bug-report-thread-format';
 import {
     type ReportCtx, shortName,
     formatLogContext, formatEnvironment, formatDevEnvSection, formatSourceCode,
-    formatBlame, formatGitHistory, formatCodeQualitySection, formatCrossSession, formatProductionImpact,
+    formatBlame, formatGitHistory, formatCodeQualitySection, formatSecuritySection, formatCrossSession, formatProductionImpact,
     formatLineRangeHistory, formatAffectedFiles, formatImports, formatDocMatches,
     formatSymbolDefs, formatExecutiveSummary, formatFooter, makeGitCtx,
 } from './bug-report-sections';
@@ -53,6 +53,7 @@ export function formatBugReport(data: BugReportData): string {
     }
     if (data.collectionContext) { sections.push(formatCollectionContext(data.collectionContext)); }
     if (data.qualitySummary?.length) { sections.push(formatCodeQualitySection(data.qualitySummary)); }
+    if (data.securitySummary) { sections.push(formatSecuritySection(data.securitySummary)); }
     if (data.crossSessionMatch) { sections.push(formatCrossSession(data.crossSessionMatch)); }
     if (data.firebaseMatch) { sections.push(formatProductionImpact(data.firebaseMatch)); }
     sections.push(formatFooter(data.logFilename, data.lineNumber));

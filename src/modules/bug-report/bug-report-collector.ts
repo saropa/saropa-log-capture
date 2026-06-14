@@ -13,6 +13,7 @@ import { getConfig } from '../config/config';
 import { parseJSONOrDefault } from '../misc/safe-json';
 import type { CodeQualityPayload } from '../integrations/providers/quality-types';
 import { normalizeForLookup } from '../integrations/providers/quality-types';
+import { buildEventSummary, type SecurityEvent } from '../integrations/providers/security-audit';
 import { extractSourceReference, type SourceReference } from '../source/source-linker';
 import { normalizeLine, hashFingerprint } from '../analysis/error-fingerprint';
 import { collectDevEnvironment, formatDevEnvironment } from '../misc/environment-collector';
@@ -129,6 +130,8 @@ export interface BugReportData {
     readonly collectionContext?: CollectionContext;
     /** Quality summary for referenced files with low coverage or lint issues (when includeInBugReport). */
     readonly qualitySummary?: readonly QualitySummaryEntry[];
+    /** Count-only security event summary (e.g. "3 logon, 1 failed logon") when security.includeInBugReport. */
+    readonly securitySummary?: string;
 }
 
 const LOW_COVERAGE_THRESHOLD = 80;
@@ -170,6 +173,25 @@ async function collectQualitySummary(
     return entries.length > 0 ? entries : undefined;
 }
 
+/**
+ * Build a count-only security summary for the bug report when includeInBugReport is true.
+ * Reuses buildEventSummary, which derives categories from event IDs alone — it never reads
+ * the (already-redacted) message field, so no user names or IPs can leak into the report.
+ */
+async function collectSecuritySummary(fileUri: vscode.Uri): Promise<string | undefined> {
+    const config = getConfig();
+    if (!config.integrationsSecurity.includeInBugReport) { return undefined; }
+    if (!(config.integrationsAdapters ?? []).includes('security')) { return undefined; }
+    const sidecarPath = path.join(path.dirname(fileUri.fsPath), `${path.basename(fileUri.fsPath)}.security-events.json`);
+    try {
+        const content = await vscode.workspace.fs.readFile(vscode.Uri.file(sidecarPath));
+        const events = parseJSONOrDefault<SecurityEvent[]>(Buffer.from(content).toString('utf-8'), []);
+        return Array.isArray(events) && events.length > 0 ? buildEventSummary(events) : undefined;
+    } catch {
+        return undefined;
+    }
+}
+
 /** Collect all bug report data for an error line. */
 export async function collectBugReportData(
     errorText: string, lineIndex: number, fileUri: vscode.Uri,
@@ -209,7 +231,7 @@ export async function collectBugReportData(
     if (wsFolder) {
         await offerSaropaLintRefreshIfNeeded(wsFolder.uri, stackTrace);
     }
-    const [wsData, devEnv, docMatches, resolvedSymbols, fileAnalyses, fbCtx, lintMatches, lintHealthScoreParams, collectionContext, qualitySummary] = await Promise.all([
+    const [wsData, devEnv, docMatches, resolvedSymbols, fileAnalyses, fbCtx, lintMatches, lintHealthScoreParams, collectionContext, qualitySummary, securitySummary] = await Promise.all([
         collectWorkspaceData(sourceRef?.filePath, sourceRef?.line, fingerprint),
         collectDevEnvironment().then(formatDevEnvironment).catch(() => ({})),
         wsFolder ? scanDocsForTokens(tokenNames, wsFolder).catch(() => undefined) : Promise.resolve(undefined),
@@ -220,6 +242,7 @@ export async function collectBugReportData(
         wsFolder ? getHealthScoreParamsForWorkspace(wsFolder.uri).catch(() => undefined) : Promise.resolve(undefined),
         collectionPromise,
         collectQualitySummary(fileUri, referencedPaths),
+        collectSecuritySummary(fileUri),
     ]);
     const [sourcePreview, blame, gitHistory, crossSessionMatch, lineRangeHistory, imports] = wsData;
     const topIssue = fbCtx?.issues[0];
@@ -235,7 +258,7 @@ export async function collectBugReportData(
         resolvedSymbols, fileAnalyses, primarySourcePath: sourceRef?.filePath,
         logFilename, lineNumber: fileLineIndex + 1, firebaseMatch, lintMatches,
         lintHealthScoreParams,
-        collectionContext, qualitySummary,
+        collectionContext, qualitySummary, securitySummary,
     };
 }
 
