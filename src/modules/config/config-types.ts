@@ -29,7 +29,7 @@ import type {
   IntegrationUnifiedLogConfig,
   IntegrationFlutterCrashLogsConfig,
 } from "./config-types-integrations";
-import type { ProjectIndexConfig } from "./config-types-project-index";
+import type { ProjectIndexConfig, SearchIndexConfig } from "./config-types-project-index";
 
 /** User-configurable keyword lists per severity level. Each keyword is matched as a case-insensitive whole word. */
 export interface SeverityKeywords {
@@ -239,6 +239,8 @@ export interface SaropaLogCaptureConfig {
   readonly integrationsUnifiedLog: IntegrationUnifiedLogConfig;
   readonly integrationsFlutterCrashLogs: IntegrationFlutterCrashLogsConfig;
   readonly projectIndex: ProjectIndexConfig;
+  /** Incremental trigram search index for cross-session log search (plan 029). */
+  readonly searchIndex: SearchIndexConfig;
   readonly replay: ReplayConfig;
   /** Auto-group related log files into logical Sessions (see SessionGroupsConfig). */
   readonly sessionGroups: SessionGroupsConfig;
@@ -348,5 +350,6 @@ export type {
 export type {
   ProjectIndexSourceConfig,
   ProjectIndexConfig,
+  SearchIndexConfig,
 } from "./config-types-project-index";
 
