@@ -5,6 +5,8 @@
  * filtering, time scrubber, minimap, and keyboard navigation.
  */
 
+import { escapeHtmlScript } from '../escape-html-script';
+
 export function getAdvancedScript(eventsJson: string, sessionStart: number, sessionEnd: number): string {
     return `(function() {
     var vscode = acquireVsCodeApi();
@@ -53,7 +55,7 @@ export function getAdvancedScript(eventsJson: string, sessionStart: number, sess
     }
 
     function formatTime(ts) { var d = new Date(ts); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':' + String(d.getSeconds()).padStart(2,'0'); }
-    function escapeHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    ${escapeHtmlScript('escapeHtml')}
     function escapeAttr(s) { return s.replace(/"/g,'&quot;'); }
     var sourceColors = {debug:'var(--vscode-debugIcon-startForeground,#89d185)',terminal:'var(--vscode-terminal-foreground,#ccc)',http:'var(--vscode-charts-green,#4dc9a2)',perf:'var(--vscode-charts-purple,#b267e6)',docker:'var(--vscode-charts-blue,#75beff)',events:'var(--vscode-charts-orange,#d18616)',database:'var(--vscode-charts-yellow,#dcdcaa)',browser:'var(--vscode-charts-red,#f14c4c)'};
     var sourceLabels = {debug:'Debug',terminal:'Terminal',http:'HTTP',perf:'Perf',docker:'Docker',events:'Events',database:'DB',browser:'Browser'};

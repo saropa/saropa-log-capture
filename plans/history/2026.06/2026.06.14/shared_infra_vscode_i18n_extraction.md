@@ -1,11 +1,21 @@
 # Shared-infra extraction task: `saropa-vscode-i18n`
 
 **Type:** Cross-repo shared-infrastructure extraction (tracked under `bugs/` as an actionable task).
-**Status:** Open — plan only, no code moved. Blocked on one cross-repo decision: the dependency
-mechanism (see below).
+**Status:** Won't Do — extraction rejected as over-engineering. Closed 2026-06-14.
 **This repo's role:** Consumer. The canonical seed and cross-repo coordination live in `saropa_lints`
 (`plans/SAROPA_SUITE_INTEGRATION.md` shared-infra section + `plans/SHARED_INFRA_VSCODE_I18N.md`).
 **Created:** 2026-06-14
+
+## Resolution: WON'T DO (2026-06-14)
+
+Extraction rejected as over-engineering. Three new publishable packages for three in-house consumers
+cost more in versioning, publishing, and release coordination than the duplication they remove, with
+no user-facing benefit. The duplication is accepted as a known trade-off; if a shared bug recurs, a
+single path-dep module or a sync script is preferred over a new published unit. Full rationale in
+`saropa_drift_advisor/plans/67-saropa-suite-integration.md` §7, mirrored in
+`saropa_lints/plans/history/2026.06/2026.06.14/SHARED_INFRA_VSCODE_I18N.md` and recorded in this
+repo's `plans/105_plan-saropa-suite-integration.md` shared-infra section. The original task plan is
+retained below as the record of what was considered.
 
 ## What it is
 

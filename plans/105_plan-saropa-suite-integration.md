@@ -141,7 +141,16 @@ Capture is responsible for:
   Saropa Lints in one click; a parsed crash family produces an "enable rule X" prompt in Lints; all
   three tools' diagnostics align by `commitSha`.
 
-## Shared infrastructure (cross-repo — identical Section in all three docs)
+## Shared infrastructure (cross-repo — identical Section in all three docs) — WON'T DO (rejected 2026-06-14)
+
+**Decision: not extracting shared packages.** Three new publishable packages for three in-house
+consumers cost more in versioning, publishing, and release coordination than the duplication they
+remove, with zero user-facing benefit. The duplication below is real but accepted as a known
+trade-off; if a shared bug recurs, a single path-dep module or a sync script is preferred over a new
+published unit. Canonical rationale: `saropa_drift_advisor/plans/67-saropa-suite-integration.md` §7,
+mirrored in `saropa_lints`. This repo's three consumer task files are closed Won't Do and archived to
+`plans/history/2026.06/2026.06.14/`. The package descriptions below are retained as the record of what
+was considered:
 
 Duplicated across the three TypeScript extensions; extract to internal shared packages (path/git
 deps, not a monorepo merge):

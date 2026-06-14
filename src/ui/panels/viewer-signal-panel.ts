@@ -178,6 +178,7 @@ export function getSignalPanelScript(): string {
         hotfilesSummaryMany: t('signal.hotfilesSummaryMany'),
         hotfilesSessionsOne: t('signal.hotfilesSessionsOne'),
         hotfilesSessionsMany: t('signal.hotfilesSessionsMany'),
+        hotfilesChangedDaysAgo: t('signal.hotfilesChangedDaysAgo'),
         envPlatforms: t('signal.envPlatforms'),
         envSdkRuntime: t('signal.envSdkRuntime'),
         envDebugAdapters: t('signal.envDebugAdapters'),

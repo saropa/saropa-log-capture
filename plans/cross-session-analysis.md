@@ -294,7 +294,7 @@ Intermittent errors are often the hardest bugs. Making their pattern visible is 
 
 **Status:** Shipped. [signal-reliability.ts](src/modules/misc/signal-reliability.ts) classifies each signal's cross-session frequency into a percentage + tier (consistent ≥80%, intermittent 25–79%, rare <25%), and [recurring-signal-builder.ts](src/modules/misc/recurring-signal-builder.ts) now stamps `sessionPercentage` + `reliability` onto every `RecurringSignalEntry` (denominator = total sessions considered). The Signals panel's cross-session list renders the tier inline next to each signal's session count (e.g. "60% of sessions — intermittent"). A dedicated spark-line glyph was not added — the existing recurring badge + trend arrow already mark frequency, and the percentage/tier text carries the ghost-error signal without new CSS.
 
-### 12. Code Freshness Heatmap — NOT BUILT
+### ~~12. Code Freshness Heatmap~~ — DONE
 
 Overlay git commit recency onto the source file mentions. Files that are both frequently-logged AND recently-changed are prime suspects.
 
@@ -306,7 +306,7 @@ api_client.dart         ████          15 mentions  🟡 changed 8 days a
 
 **The magic:** One glance shows where log noise meets code churn. That intersection is almost always where the bug lives.
 
-**Implementation:** Combine hot-file data from [cross-session-aggregator.ts](src/modules/misc/cross-session-aggregator.ts) with `git log --format=%ai -1 -- <file>` for each hot file. Sort by combined score.
+**Status:** Shipped. [code-freshness.ts](src/modules/misc/code-freshness.ts) maps days-since-last-commit to a tier (recent ≤7d, moderate ≤30d, stale beyond); [hot-file-freshness.ts](src/modules/misc/hot-file-freshness.ts) resolves each hot file to a workspace path (`findInWorkspace`), reads its last commit date (`getGitHistory(uri, 1)`, `--date=short`), and stamps `lastCommitDaysAgo` + `freshness` onto the top 5 hot files (bounded + best-effort, run when the signal panel requests data). The Signal panel's hot-file rows show a 🔴/🟡/🟢 dot + "changed Nd ago" next to the mention count, so a frequently-logged + recently-changed file stands out. **Note:** the webview render (the dot + tier label) needs manual verification in the Extension Host; the recency classifier and day math are unit-tested.
 
 ### ~~13. Semantic Error Grouping~~ — DONE (classifier + label; list grouping pending)
 
@@ -467,7 +467,7 @@ Fix Velocity: 3 errors resolved this week, 1 persisting
 | ~~Ghost errors reliability tag~~ | ~~Low~~ | ~~Medium~~ | ~~High~~ | **Done** |
 | ~~Session health score (per-session model)~~ | ~~Medium~~ | ~~High~~ | ~~High~~ | **Done** |
 | ~~"Why Did This Break?" narrative prose~~ | ~~High~~ | ~~Very High~~ | ~~Very High~~ | **Done** (bug report) |
-| Code freshness heatmap | Low | High | High | Backlog |
+| ~~Code freshness heatmap~~ | ~~Low~~ | ~~High~~ | ~~High~~ | **Done** |
 | ~~Error attention score~~ | ~~Medium~~ | ~~High~~ | ~~Very High~~ | **Done** (scorer + bug report) |
 | Caller graph | Medium | Medium | Medium | Backlog |
 | ~~Semantic error grouping~~ | ~~Medium~~ | ~~Medium~~ | ~~High~~ | **Done** (classifier + label) |

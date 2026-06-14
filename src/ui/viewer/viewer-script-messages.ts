@@ -55,6 +55,10 @@ window.addEventListener('message', function(event) {
             databaseQueryLinesByIndex = msg.databaseQueryLines || {};
             if (typeof renderViewport === 'function') renderViewport(true);
             break;
+        case 'setTraceLineLinks':
+            traceLinksByIndex = msg.traceLines || {};
+            if (typeof renderViewport === 'function') renderViewport(true);
+            break;
         case 'updateLintData':
             if (typeof handleUpdateLintData === 'function') handleUpdateLintData(msg);
             break;
@@ -62,6 +66,7 @@ window.addEventListener('message', function(event) {
             loadTruncatedInfo = null;
             correlationByLineIndex = {};
             databaseQueryLinesByIndex = {};
+            traceLinksByIndex = {};
             MAX_LINES = MAX_LINES_DEFAULT;
             if (typeof window !== 'undefined') { window.enabledSources = null; window.availableSources = []; }
             if (typeof window.exitReplayMode === 'function') window.exitReplayMode();

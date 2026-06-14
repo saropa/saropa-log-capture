@@ -217,5 +217,9 @@ export function getDecorationBarStyles(): string {
    opens the related-queries popover. */
 .db-query-badge { cursor: pointer; margin-left: 2px; opacity: 0.7; font-size: 0.85em; }
 .db-query-badge:hover { opacity: 1; }
+
+/* OpenTelemetry trace badge: line carries a trace id; click opens the backend trace. */
+.trace-link-badge { cursor: pointer; margin-left: 2px; opacity: 0.7; font-size: 0.85em; }
+.trace-link-badge:hover { opacity: 1; }
 `;
 }

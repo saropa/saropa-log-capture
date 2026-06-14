@@ -42,6 +42,9 @@ export const stringsWebviewB: Record<string, string> = {
     // Per-line database-query badge (viewer-data-helpers-render.ts).
     'viewer.deco.relatedQueries': '{0} related database queries — click to view',
 
+    // Per-line OpenTelemetry trace badge (viewer-data-helpers-render.ts).
+    'viewer.deco.openTrace': 'Open trace {0} in your trace backend',
+
     // Run separator snip labels (viewer-data-helpers-render-run-separator-snip.ts).
     'viewer.runSeparator.errors': 'Errors',
     'viewer.runSeparator.warnings': 'Warnings',

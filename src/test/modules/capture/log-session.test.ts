@@ -2,6 +2,7 @@ import * as assert from 'node:assert';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
+import { EventEmitter } from 'node:events';
 import * as vscode from 'vscode';
 import { LogSession } from '../../../modules/capture/log-session';
 import { defaultSplitRules } from '../../../modules/misc/file-splitter';
@@ -132,6 +133,71 @@ suite('LogSession queue safety', () => {
     for (let i = 0; i < 7; i++) {
       assert.ok(merged.includes(`roll-line-${i}`), `expected roll-line-${i} across split parts`);
     }
+  });
+
+  test('high-volume writes preserve order and completeness under backpressure', async () => {
+    /* D1 backpressure: a fast producer on a slow disk makes write() return false. The serialized
+       append queue now awaits 'drain' before the next write. This must change pacing only — never
+       drop or reorder a line. Writing thousands of large lines overruns the default ~16KB stream
+       buffer many times, exercising the drain path; every line must still reach disk in order. */
+    const tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'saropa-log-volume-'));
+    const session = new LogSession(makeSessionContext(tmpRoot), makeSessionConfig('reports', 100000), () => {});
+    await session.start();
+    const count = 3000;
+    const pad = 'x'.repeat(200); // big lines so total (~650KB) dwarfs the stream buffer
+    for (let i = 0; i < count; i++) {
+      session.appendLine(`vol-${i}-${pad}`, 'console', new Date('2026-03-23T10:05:00.000Z'));
+    }
+    await session.stop();
+
+    // Merge across any split parts (size rules may rotate the file under this volume).
+    const dir = path.dirname(session.fileUri.fsPath);
+    const names = (await fs.readdir(dir)).filter((n) => n.endsWith('.log')).sort();
+    let merged = '';
+    for (const name of names) {
+      merged += await fs.readFile(path.join(dir, name), 'utf-8');
+    }
+    assert.ok(merged.includes('vol-0-'), 'first line present after backpressured writes');
+    assert.ok(merged.includes(`vol-${count - 1}-`), 'last line present after backpressured writes');
+    assert.ok(merged.indexOf('vol-0-') < merged.indexOf(`vol-${count - 1}-`), 'order preserved');
+    for (let i = 0; i < count; i += 250) {
+      assert.ok(merged.includes(`vol-${i}-`), `vol-${i} must reach disk`);
+    }
+  });
+
+  /** A stream whose write() always reports a full buffer, so writeBackpressured must await an event. */
+  function alwaysBackpressuredStream(): EventEmitter & { write(d: string): boolean } {
+    const em = new EventEmitter() as EventEmitter & { write(d: string): boolean };
+    em.write = (): boolean => false;
+    return em;
+  }
+
+  test('writeBackpressured waits for drain, then resolves and unhooks listeners', async () => {
+    const session = new LogSession(makeSessionContext(os.tmpdir()), makeSessionConfig('reports'), () => {});
+    const helper = session as unknown as { writeBackpressured(s: unknown, d: string): Promise<void> };
+    const stream = alwaysBackpressuredStream();
+    let resolved = false;
+    const p = helper.writeBackpressured(stream, 'payload').then(() => { resolved = true; });
+    await Promise.resolve(); // let the helper register its listeners
+    assert.strictEqual(resolved, false, 'must not resolve while the buffer is full (write() === false)');
+    stream.emit('drain');
+    await p;
+    assert.ok(resolved, 'resolves once drain fires');
+    assert.strictEqual(stream.listenerCount('drain'), 0, 'drain listener removed');
+    assert.strictEqual(stream.listenerCount('error'), 0, 'error listener removed');
+    assert.strictEqual(stream.listenerCount('close'), 0, 'close listener removed');
+  });
+
+  test('writeBackpressured resolves on error so a dying stream cannot hang the queue', async () => {
+    const session = new LogSession(makeSessionContext(os.tmpdir()), makeSessionConfig('reports'), () => {});
+    const helper = session as unknown as { writeBackpressured(s: unknown, d: string): Promise<void> };
+    const stream = alwaysBackpressuredStream();
+    const p = helper.writeBackpressured(stream, 'payload');
+    // Stream dies before 'drain' could ever fire — the helper must still resolve, not wait forever.
+    stream.emit('error', new Error('ENOSPC: simulated disk full'));
+    await p;
+    assert.strictEqual(stream.listenerCount('error'), 0, 'temporary error listener removed after resolve');
+    assert.strictEqual(stream.listenerCount('drain'), 0, 'drain listener removed after resolve');
   });
 });
 

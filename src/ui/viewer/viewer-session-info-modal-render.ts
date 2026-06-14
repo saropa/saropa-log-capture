@@ -5,6 +5,8 @@
  * viewer-session-info-modal.ts can stay under the line limit.
  */
 
+import { escapeHtmlScript } from '../escape-html-script';
+
 /** Returns the webview JS that defines parseHeaderRecords / groupRecords /
  *  renderSessionInfo. The shell script in viewer-session-info-modal calls
  *  renderSessionInfo(rootEl, headerLines) at open time. */
@@ -82,11 +84,7 @@ export function getSessionInfoRenderScript(): string {
     var PATH_KEYS = { program: 1, cwd: 1, projectRootPath: 1, flutterSdkPath: 1, dartSdkPath: 1 };
     function isPathKey(key) { return Object.prototype.hasOwnProperty.call(PATH_KEYS, key); }
 
-    function escapeHtml(s) {
-        return String(s)
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    }
+    ${escapeHtmlScript('escapeHtml')}
 
     function renderValueWithLinks(rec) {
         var raw = rec.value;
