@@ -102,7 +102,7 @@ export async function updateLastViewed(context: vscode.ExtensionContext, uri: vs
 }
 
 /** Shared type for session metadata fields needed to build a webview record. */
-type Meta = { filename: string; displayName?: string; adapter?: string; size: number; mtime: number; date?: string; hasTimestamps?: boolean; lineCount?: number; durationMs?: number; errorCount?: number; warningCount?: number; perfCount?: number; anrCount?: number; fwCount?: number; infoCount?: number; debugCount?: number; databaseCount?: number; todoCount?: number; noticeCount?: number; uri: { toString(): string }; trashed?: boolean; pinned?: boolean; pinnedAt?: number; tags?: string[]; autoTags?: string[]; correlationTags?: string[]; hasPerformanceData?: boolean; groupId?: string;
+type Meta = { filename: string; displayName?: string; note?: string; adapter?: string; size: number; mtime: number; date?: string; hasTimestamps?: boolean; lineCount?: number; durationMs?: number; errorCount?: number; warningCount?: number; perfCount?: number; anrCount?: number; fwCount?: number; infoCount?: number; debugCount?: number; databaseCount?: number; todoCount?: number; noticeCount?: number; uri: { toString(): string }; trashed?: boolean; pinned?: boolean; pinnedAt?: number; tags?: string[]; autoTags?: string[]; correlationTags?: string[]; hasPerformanceData?: boolean; groupId?: string;
     /** Parsed log header `Project:` value — feeds the session-kind classifier's workspace-match rule. */
     project?: string;
     /** DAP adapter type ("dart", "node", …) — feeds the session-kind classifier's debug-session rule. */
@@ -155,7 +155,7 @@ export async function buildSessionItemRecord(
         ? classifyRole({ role: m.role, kind: m.kind, debugAdapterType: m.debugAdapterType, project: m.project, displayName: m.displayName })
         : 'peripheral';
     return {
-        filename: m.filename, displayName: m.displayName ?? m.filename, adapter: m.adapter,
+        filename: m.filename, displayName: m.displayName ?? m.filename, note: m.note, adapter: m.adapter,
         size: m.size, mtime, formattedMtime: formatMtime(mtime),
         formattedTime: formatMtimeTimeOnly(mtime), relativeTime: formatRelativeTime(mtime), date: m.date,
         hasTimestamps: m.hasTimestamps ?? false, lineCount: m.lineCount ?? 0,
