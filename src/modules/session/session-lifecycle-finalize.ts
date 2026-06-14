@@ -33,7 +33,7 @@ import { scanAndPersistDriftSqlFingerprintSummary } from './session-drift-sql-fi
 import { getLastSignalBundle, getLastSignalHypotheses } from '../../ui/provider/viewer-message-handler-actions';
 import { extractSignalSummary } from '../root-cause-hints/signal-summary-extract';
 import { scanForGeneralSignals } from '../analysis/general-signal-scanner';
-import { aggregateSignals } from '../misc/cross-session-aggregator';
+import { surfacePredictiveSignals } from './session-signal-surfacing';
 import { writeLogCaptureDiagnostics } from '../diagnostics/diagnostics-producer';
 import { getSessionCommit } from './session-commit-from-meta';
 
@@ -190,8 +190,9 @@ export async function finalizeSession(
 
     Promise.allSettled([pCorr, pFp, pWarnFp, pPerf, pDriftSql, pSignal]).then(() => {
         params.onReportsIndexReady?.(logSession.fileUri);
-        // Notify user about recurring signals that hit the 5+ session threshold
-        notifyRecurringSignals(outputChannel);
+        // Predictive surfacing (idea #1): proactively flag this session's new + recurring errors
+        // in one toast. Runs after scans settle so fingerprints are persisted for the comparison.
+        surfacePredictiveSignals(logSession.fileUri, outputChannel);
         // Suite integration (R1): write the offline diagnostic mirror only after scans
         // settle, so the envelope reflects this session's freshly-persisted signals.
         writeSessionDiagnosticEnvelope(logSession.fileUri, metadataStore, outputChannel);
@@ -224,27 +225,6 @@ export async function finalizeSession(
     } else if (config.afterCaptureAction === 'ask') {
         showSummaryNotification(withLogUri(generateSummary(filename, stats), logSession.fileUri));
     }
-}
-
-/** Notify user about recurring signals after scans complete.
- *  Fires once per session — shows the most severe recurring signal if any hit 5+ sessions. */
-function notifyRecurringSignals(out: vscode.OutputChannel): void {
-    aggregateSignals('all').then(aggregated => {
-        const recurring = aggregated.allSignals.filter(s => s.recurring);
-        if (recurring.length === 0) { return; }
-        // Pick the most severe recurring signal for the notification
-        const top = recurring[0];
-        const label = top.label.length > 60 ? top.label.slice(0, 57) + '...' : top.label;
-        const msg = `Recurring signal: ${label} (${top.sessionCount} sessions)`;
-        out.appendLine(msg);
-        void vscode.window.showInformationMessage(
-            msg, 'Open Signals',
-        ).then(action => {
-            if (action === 'Open Signals') {
-                void vscode.commands.executeCommand('saropaLogCapture.showSignals');
-            }
-        });
-    }).catch(() => {});
 }
 
 /**

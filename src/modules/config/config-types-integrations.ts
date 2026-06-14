@@ -137,6 +137,8 @@ export interface IntegrationDatabaseConfig {
   readonly queryBlockPattern: string;
   readonly timeWindowSeconds: number;
   readonly maxQueriesPerLookup: number;
+  /** When true, replace string/numeric literals in captured SQL with ? before writing the queries sidecar. */
+  readonly redactLiterals: boolean;
 }
 
 export interface IntegrationHttpConfig {
