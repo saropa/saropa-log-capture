@@ -51,12 +51,17 @@ window.addEventListener('message', function(event) {
             correlationByLineIndex = msg.correlationByLineIndex || {};
             if (typeof renderViewport === 'function') renderViewport(true);
             break;
+        case 'setDatabaseQueryLines':
+            databaseQueryLinesByIndex = msg.databaseQueryLines || {};
+            if (typeof renderViewport === 'function') renderViewport(true);
+            break;
         case 'updateLintData':
             if (typeof handleUpdateLintData === 'function') handleUpdateLintData(msg);
             break;
         case 'clear':
             loadTruncatedInfo = null;
             correlationByLineIndex = {};
+            databaseQueryLinesByIndex = {};
             MAX_LINES = MAX_LINES_DEFAULT;
             if (typeof window !== 'undefined') { window.enabledSources = null; window.availableSources = []; }
             if (typeof window.exitReplayMode === 'function') window.exitReplayMode();
