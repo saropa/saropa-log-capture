@@ -220,4 +220,15 @@ export const stringsViewerD: Record<string, string> = {
     'viewer.analysis.errorContextCopied': 'Error context copied to clipboard',
     'viewer.analysis.noLogForBugReport': 'No log file available for bug report',
     'viewer.analysis.aiUnavailable': 'AI explanation is not available',
+    // Crash-detail section headers + empty states (analysis-crash-detail.ts). "Android" stays literal
+    // (brand/OS name); the APP/FW frame badges stay literal (technical, matching analysis-frame-render).
+    'viewer.analysis.noStackTrace': 'No stack trace available',
+    'viewer.analysis.noCrashFrames': 'No frames in crash thread',
+    'viewer.analysis.keysHeader': 'Keys',
+    'viewer.analysis.logsHeader': 'Logs',
+    'viewer.analysis.breadcrumbs': '{0} breadcrumbs',
+    'viewer.analysis.otherThreads': 'Other Threads',
+    'viewer.analysis.threadsUnique': '{0} threads · {1} unique',
+    'viewer.analysis.moreUniqueThreads': '+{0} more unique threads',
+    'viewer.analysis.identicalStackTitle': '{0} threads with an identical stack',
 };

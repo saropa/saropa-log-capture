@@ -111,9 +111,9 @@ function getRenderFunctions(): string {
         var totalE = 0, totalW = 0, spikeCount = 0;
         for (var i = 0; i < buckets.length; i++) { totalE += buckets[i].errors; totalW += buckets[i].warnings; }
         for (var s = 0; s < spikes.length; s++) { if (spikes[s]) spikeCount++; }
-        var parts = ['<span class="pp-er-count pp-er-count-error">' + fmtNum(totalE) + ' error' + (totalE !== 1 ? 's' : '') + '</span>'];
-        if (erShowWarnings) parts.push('<span class="pp-er-count pp-er-count-warning">' + fmtNum(totalW) + ' warning' + (totalW !== 1 ? 's' : '') + '</span>');
-        if (spikeCount) parts.push('<span class="pp-er-count pp-er-count-spike">' + spikeCount + ' spike' + (spikeCount !== 1 ? 's' : '') + '</span>');
+        var parts = ['<span class="pp-er-count pp-er-count-error">' + vt('viewer.errorRate.errors', fmtNum(totalE)) + '</span>'];
+        if (erShowWarnings) parts.push('<span class="pp-er-count pp-er-count-warning">' + vt('viewer.errorRate.warnings', fmtNum(totalW)) + '</span>');
+        if (spikeCount) parts.push('<span class="pp-er-count pp-er-count-spike">' + vt('viewer.errorRate.spikes', spikeCount) + '</span>');
         return '<div class="pp-er-summary">' + parts.join(' \\u00b7 ') + '</div>';
     }
 
@@ -185,9 +185,9 @@ function getRenderFunctions(): string {
 
     function barTooltip(bucket) {
         var parts = [];
-        if (bucket.errors) parts.push(bucket.errors + ' error' + (bucket.errors !== 1 ? 's' : ''));
-        if (bucket.warnings) parts.push(bucket.warnings + ' warning' + (bucket.warnings !== 1 ? 's' : ''));
-        return parts.join(', ') + ' at ' + fmtTs(bucket.startMs);
+        if (bucket.errors) parts.push(vt('viewer.errorRate.errors', bucket.errors));
+        if (bucket.warnings) parts.push(vt('viewer.errorRate.warnings', bucket.warnings));
+        return vt('viewer.errorRate.tooltipAt', parts.join(', '), fmtTs(bucket.startMs));
     }
 
     function bindErrorRateClicks(view, buckets) {

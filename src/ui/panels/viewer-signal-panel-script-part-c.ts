@@ -217,7 +217,7 @@ export function getSignalScriptPartC(): string {
             var labelEl = document.getElementById('signal-current-log-label');
             if (scopeEl && labelEl) {
                 if (hasLog && currentLogLabel) { labelEl.textContent = currentLogLabel; scopeEl.style.display = ''; }
-                else if (hasLog) { labelEl.textContent = 'No log open'; scopeEl.style.display = ''; }
+                else if (hasLog) { labelEl.textContent = vt('viewer.signal.noLogOpen'); scopeEl.style.display = ''; }
                 else { scopeEl.style.display = 'none'; }
             }
             renderPerformanceHero();
