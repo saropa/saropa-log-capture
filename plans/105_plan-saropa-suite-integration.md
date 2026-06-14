@@ -168,3 +168,79 @@ deps, not a monorepo merge):
 - Internal: `DB_12_static-orm-code-analysis.md` (the "Find in codebase" entry point R5 extends),
   `DB_17_cumulative-sql-history-across-logs.md`, `054_plan-app-quality-insights.md`,
   `001_integration-specs-index.md` (add a suite row), `058_plan-expand-translation-locales.md`.
+
+## Finish Report (2026-06-13)
+
+### What shipped
+
+The Log-Capture side of the three-tool Saropa suite integration is implemented. Log Capture is now
+both a producer and consumer of the **Saropa Diagnostic Envelope** — the typed, versioned shape
+(`source`, `severity`, `category`, `ruleId`, `sql`, `table`, `fix`, `commitSha`) that the three tools
+exchange so a runtime signal can correlate with the live database state (Drift Advisor) and the static
+rule that governs it (Saropa Lints). Requirements R1, R2, R3 (producer half), R4, and R5 are complete.
+
+A new module group under `src/modules/diagnostics/` carries the protocol:
+
+- `saropa-diagnostic-envelope.ts` — the canonical `Diagnostic`/`DiagnosticEnvelope` types, the
+  `schemaVersion` gate (`isReadableSchema`), and the `.saropa/diagnostics/<source>.json` path contract.
+- `signal-to-diagnostic.ts` — pure serialization from Log Capture's internal `RecurringSignalEntry`
+  to the shared shape: four-level internal severity collapses to the suite triple, signal kinds map to
+  shared categories, SQL fingerprints yield `sql`+`table`, and a v1 category filter keeps the mirror to
+  drift/crash/performance.
+- `crash-signature.ts` — a frozen set of stable crash-family ids (StateError no-element, RangeError
+  index, null-check operator, late-init, concurrent-modification, cast error, FormatException,
+  NoSuchMethod, assertion, stack-overflow, OOM, ANR) derived from runtime text and emitted as the
+  diagnostic `ruleId` (`crash:<id>`) for Saropa Lints to map (R3 producer half).
+- `envelope-parse.ts` / `envelope-io.ts` — tolerant parsing and `vscode.workspace.fs` read/write;
+  an absent, truncated, or higher-major sibling file yields `undefined` rather than throwing, and
+  malformed individual diagnostics are dropped.
+- `diagnostics-producer.ts` — assembles the envelope from the current cross-session signals and writes
+  `.saropa/diagnostics/log-capture.json`; invoked from `session-lifecycle-finalize.ts` after the
+  post-session scans settle, stamped with the session commit read via `getSessionCommit`.
+- `suite-deeplink.ts` — the four sibling command ids, a live-registry availability probe
+  (`getCommands`, so a deep-link button is shown only when its target command actually exists), and an
+  allowlisted executor that surfaces a failure as a toast rather than a silent no-op.
+- `suite-mirror-read.ts` — reads the sibling `advisor.json`/`lints.json` mirrors, narrowed to
+  DB-relevant categories, as the fallback data source for the SQL panel.
+
+Deep-link **in** (R4): two palette-hidden public commands, `saropaLogCapture.openSignal` (reveals and
+flashes a signal by id) and `saropaLogCapture.openSqlHistoryForFingerprint` (focuses SQL Query History
+on a query by literal SQL or fingerprint), registered in `commands-suite.ts` with webview focus-flash
+on both panels.
+
+Deep-link **out** (R5) and attribution (R2 render): SQL query rows gain a gated "Explain this query in
+Drift Advisor" button; Saropa Lints finding rows gain a gated "Show this rule in Saropa Lints" button;
+Drift Advisor and Saropa Lints rows carry a source-tag chip. The panel reads the typed offline mirrors
+as a fallback (live Drift server / live Lints export preferred), rendering each mirror diagnostic as a
+typed row with severity color and a fix button when the diagnostic's `fix.command` is allowlisted and
+live.
+
+### Verification
+
+- `npm run check-types` — clean.
+- ESLint on every touched file — clean (the one `max-lines` warning on `viewer-script-messages.ts` is
+  pre-existing at 352 lines; the deep-link dispatch was moved into the SQL render module's own message
+  listener so that file was not grown).
+- Unit tests: 30 new pure tests across `crash-signature`, `signal-to-diagnostic`, and `envelope-parse`.
+- Extension-Host tests for the touched webview surfaces pass: SQL-history dashboard (9), SQL-history
+  panel-html (6), signal-panel-row-click (12), panel-slot-mutex (3), viewer-icon-bar (10).
+- NLS parity (`verify-nls`, 491 keys across 11 locale files) and coverage check pass; webview incoming
+  and host-outbound message catalogs and the contributed-commands reference regenerated.
+
+### Plan status (A-MOVE decision)
+
+This plan stays **active** rather than being archived to `plans/history/`. The v1 implementation
+requirements (R1–R5) are complete, but the plan retains open scope — the "Later" items (non-Drift
+performance signals, broader signal categories, the cross-commit timeline UI) and the cross-repo
+"Shared infrastructure" extraction — and it is the canonical Log-Capture-side coordination document
+referenced by absolute path from the two sibling repositories' just-filed hand-off specs. Archiving it
+now would break those external references and bury live coordination context while the sibling halves
+are unbuilt. The completed-vs-open state is recorded in the Progress section at the top.
+
+The Saropa Lints and Drift Advisor halves are not in this repository; their exact interoperation
+contract was written to each sibling repo as a hand-off spec
+(`bugs/infra_suite_integration_contract_from_log_capture.md` in `saropa_lints` and
+`saropa_drift_advisor`). Until those land, the "Explain this query" and "Show rule" buttons stay
+hidden by the availability gate — intended behavior, not a defect.
+
+Bug archive: none — this task did not close a `bugs/*.md` file.
