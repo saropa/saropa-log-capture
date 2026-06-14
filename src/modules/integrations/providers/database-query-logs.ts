@@ -15,7 +15,7 @@ import type { IntegrationDatabaseConfig } from '../../config/config-types-integr
 import { resolveWorkspaceFileUri } from '../workspace-path';
 import { startDatabaseQueryTail, stopDatabaseQueryTail } from '../database-query-tailer';
 import { parseQueryBlocks, parseTextQueryLog, detectQueryLogFormat, redactQueryRecord } from './database-query-parsing';
-import { getDatabaseApiToken, fetchSessionQueries } from './database-api';
+import { getDatabaseApiToken, fetchSessionQueries, ensureApiConsent } from './database-api';
 
 // Re-export pure parsing so tests and callers have a single entry point.
 export { parseQueryBlocks, parseTextQueryLog, detectQueryLogFormat, redactSqlLiterals } from './database-query-parsing';
@@ -74,6 +74,8 @@ function extractFileQueries(lines: readonly string[], cfg: IntegrationDatabaseCo
 
 /** Token read is started at session start (when extensionContext is available) and awaited at end. */
 let apiTokenPromise: Promise<string | undefined> | undefined;
+/** Per-endpoint consent, resolved at session start; the POST is skipped unless it grants. */
+let apiConsentPromise: Promise<boolean> | undefined;
 
 /** Build the meta + sidecar contributions for a set of parsed queries. */
 function queryContributions(context: IntegrationEndContext, queries: unknown[], mode: 'file' | 'parse' | 'api'): Contribution[] {
@@ -134,6 +136,11 @@ async function readApiMode(context: IntegrationEndContext): Promise<Contribution
     const cfg = context.config.integrationsDatabase;
     if (!cfg.apiUrl) { return undefined; }
     try {
+        // Outbound network call: only proceed once the user has consented to this endpoint.
+        if (!(apiConsentPromise ? await apiConsentPromise : false)) {
+            context.outputChannel.appendLine('[database] API mode skipped — endpoint not yet allowed.');
+            return undefined;
+        }
         const token = apiTokenPromise ? await apiTokenPromise : undefined;
         const queries = await fetchSessionQueries({
             apiUrl: cfg.apiUrl,
@@ -165,8 +172,12 @@ export const databaseQueryLogsProvider: IntegrationProvider = {
      */
     async onSessionStartAsync(context: IntegrationContext): Promise<Contribution[] | undefined> {
         apiTokenPromise = undefined;
-        if (isEnabled(context) && context.config.integrationsDatabase.mode === 'api' && context.extensionContext) {
+        apiConsentPromise = undefined;
+        const cfg = context.config.integrationsDatabase;
+        if (isEnabled(context) && cfg.mode === 'api' && cfg.apiUrl && context.extensionContext) {
             apiTokenPromise = getDatabaseApiToken(context.extensionContext);
+            // Prompt now (start), while interaction is sensible; readApiMode gates on the result at end.
+            apiConsentPromise = ensureApiConsent(context.extensionContext, cfg.apiUrl);
         }
         return undefined;
     },
@@ -201,8 +212,9 @@ export const databaseQueryLogsProvider: IntegrationProvider = {
             if (cfg.mode === 'api') { return await readApiMode(context); }
             return undefined;
         } finally {
-            // Release the per-session token promise so it never leaks into the next session.
+            // Release the per-session promises so they never leak into the next session.
             apiTokenPromise = undefined;
+            apiConsentPromise = undefined;
         }
     },
 };

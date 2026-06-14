@@ -28,6 +28,7 @@ import {
 import { readSessionLogParts } from "./log-viewer-provider-load-parts";
 import { classifyTailChange } from "./tail-change-classify";
 import { computeDatabaseQueryLineCounts } from "./database-line-badges";
+import { traceLineLinks } from "../../modules/integrations/providers/otel-trace-parse";
 
 export interface LogViewerLoadTarget {
   postMessage(msg: unknown): void;
@@ -229,6 +230,14 @@ export async function executeLoadContent(
   );
   if (checkGen() && Object.keys(databaseQueryLines).length > 0) {
     post({ type: "setDatabaseQueryLines", databaseQueryLines });
+  }
+
+  // Clickable OpenTelemetry trace links: badge content lines carrying a trace id (needs a URL template).
+  if (checkGen() && (cfg.integrationsAdapters ?? []).includes("otel") && cfg.integrationsOtel.traceUrlTemplate) {
+    const traceLines = traceLineLinks(contentLines, cfg.integrationsOtel.traceUrlTemplate, cfg.integrationsOtel.traceIdPattern);
+    if (Object.keys(traceLines).length > 0) {
+      post({ type: "setTraceLineLinks", traceLines });
+    }
   }
 
   const smart = getSmartBookmarksFirstErrorAndWarning(cfg, contentLines);

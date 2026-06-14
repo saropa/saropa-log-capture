@@ -68,5 +68,13 @@ document.addEventListener('click', function(e) {
     var dbLd = allLines[dbIdx];
     vscodeApi.postMessage({ type: 'showRelatedQueries', lineIndex: dbIdx, timestamp: dbLd.ts || dbLd.timestamp, lineText: stripTags(dbLd.html || '') });
 });
+// OpenTelemetry trace badge: open the trace's backend URL via the host's scheme-validated openUrl handler.
+document.addEventListener('click', function(e) {
+    var tb = e.target && e.target.closest ? e.target.closest('.trace-link-badge') : null;
+    if (!tb) return;
+    e.stopPropagation();
+    var url = tb.getAttribute('data-trace-url');
+    if (url) vscodeApi.postMessage({ type: 'openUrl', url: url });
+});
 `;
 }
