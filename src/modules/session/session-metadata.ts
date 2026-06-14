@@ -22,6 +22,8 @@ export interface Annotation {
 /** Metadata for a log session. Stored in <logDir>/.session-metadata.json (not sidecars). */
 export interface SessionMeta {
     displayName?: string;
+    /** Free-text session note (idea #7) — e.g. "Fixed by updating the API key". User-entered. */
+    note?: string;
     /** Manually applied tags. */
     tags?: string[];
     /** Automatically applied tags from auto-tag rules. */
@@ -237,6 +239,13 @@ export class SessionMetadataStore {
     async setTags(logUri: vscode.Uri, tags: string[]): Promise<void> {
         const meta = await this.loadMetadata(logUri);
         meta.tags = tags;
+        await this.saveMetadata(logUri, meta);
+    }
+
+    /** Set (or clear, when empty) the free-text session note. */
+    async setNote(logUri: vscode.Uri, note: string): Promise<void> {
+        const meta = await this.loadMetadata(logUri);
+        meta.note = note.trim() === '' ? undefined : note.trim();
         await this.saveMetadata(logUri, meta);
     }
 
