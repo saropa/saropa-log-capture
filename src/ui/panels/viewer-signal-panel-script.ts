@@ -52,6 +52,9 @@ export interface SignalScriptStrings {
     suggestionImpact: string;
     sessionMeta: string;
     recurringTitle: string;
+    reliabilityConsistent: string;
+    reliabilityIntermittent: string;
+    reliabilityRare: string;
     heroErrors: string;
     heroWarnings: string;
     metaAvg: string;
@@ -118,6 +121,9 @@ const DEFAULT_SIGNAL_STRINGS: SignalScriptStrings = {
     suggestionImpact: '~{0} lines ({1}%)',
     sessionMeta: '{0} session(s), {1} total',
     recurringTitle: 'Recurring in {0} sessions',
+    reliabilityConsistent: '{0}% of sessions — consistent',
+    reliabilityIntermittent: '{0}% of sessions — intermittent',
+    reliabilityRare: '{0}% of sessions — rare',
     heroErrors: 'Errors: {0}',
     heroWarnings: 'Warnings: {0}',
     metaAvg: ', avg {0}',
