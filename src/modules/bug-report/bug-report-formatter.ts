@@ -13,6 +13,7 @@ import { buildItemUrl } from '../marketplace-url';
 import { formatHealthScoreLine, type HealthScoreParams } from '../misc/health-score';
 import { fencedBlock } from '../misc/outbound-content-safety';
 import { buildWhyNarrative } from './why-narrative';
+import { classifyErrorSemantics } from '../analysis/error-semantics';
 import { formatLintSection } from './bug-report-lint-section';
 import { formatOwaspSection } from './bug-report-owasp-section';
 import { formatThreadGroupedLines } from './bug-report-thread-format';
@@ -162,7 +163,12 @@ function formatCollectionContext(inv: CollectionContext): string {
 
 function formatError(errorLine: string, fingerprint: string): string {
     // fencedBlock so an error line containing a ``` run can't break out of the code block.
-    return `## Error\n\n${fencedBlock(errorLine)}\n\n**Fingerprint:** \`${fingerprint}\``;
+    const parts = [`## Error`, fencedBlock(errorLine), `**Fingerprint:** \`${fingerprint}\``];
+    // Semantic category (idea #13): meaning-based grouping (network / filesystem / …) beyond the
+    // exact-text fingerprint. Omitted when nothing matches, to avoid a noisy "other" label.
+    const category = classifyErrorSemantics(errorLine);
+    if (category !== 'other') { parts.push(`**Category:** ${category}`); }
+    return parts.join('\n\n');
 }
 
 function formatStackTrace(frames: readonly StackFrame[], ctx: ReportCtx): string {
