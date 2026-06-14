@@ -31,6 +31,15 @@ export interface SessionDelta {
     readonly resolvedErrors: readonly string[];
     /** Source files referenced this session that the previous session never mentioned. */
     readonly newSourceFiles: readonly string[];
+    /** Environment fields that changed vs the previous session (idea #16), e.g. SDK/app version. */
+    readonly environmentChanges: readonly EnvironmentChange[];
+}
+
+/** A single changed environment field, with both values for the "X → Y" summary. */
+export interface EnvironmentChange {
+    readonly label: string;
+    readonly from: string;
+    readonly to: string;
 }
 
 /** Hash set of a session's error fingerprints, skipping malformed entries. */
@@ -60,6 +69,26 @@ function sourceFiles(meta: SessionMeta | undefined): Set<string> {
     return set;
 }
 
+/** Environment fields compared between sessions — a change here (e.g. SDK version) is a prime
+ *  suspect when an error appears in one session but not the other. */
+const ENV_FIELDS: readonly { readonly key: 'appVersion' | 'debugAdapterType' | 'debugTarget'; readonly label: string }[] = [
+    { key: 'appVersion', label: 'app version' },
+    { key: 'debugAdapterType', label: 'debug adapter' },
+    { key: 'debugTarget', label: 'target device' },
+];
+
+/** Diff the tracked environment fields between two sessions. Only fields present in both and
+ *  differing are reported — a field newly populated (absent before) is not a "change". */
+function environmentChanges(current: SessionMeta, previous: SessionMeta): EnvironmentChange[] {
+    const out: EnvironmentChange[] = [];
+    for (const { key, label } of ENV_FIELDS) {
+        const from = previous[key];
+        const to = current[key];
+        if (from && to && from !== to) { out.push({ label, from, to }); }
+    }
+    return out;
+}
+
 /**
  * Diff the current session against its predecessor. With no predecessor, returns a zeroed delta
  * flagged `hasPrevious: false` so the caller can stay silent rather than reporting a non-comparison.
@@ -73,6 +102,7 @@ export function computeSessionDelta(current: SessionMeta, previous: SessionMeta 
             newErrors: [],
             resolvedErrors: [],
             newSourceFiles: [],
+            environmentChanges: [],
         };
     }
 
@@ -90,6 +120,7 @@ export function computeSessionDelta(current: SessionMeta, previous: SessionMeta 
         newErrors: [...curHashes].filter((h) => !prevHashes.has(h)).map((h) => curExamples.get(h) ?? h),
         resolvedErrors: [...prevHashes].filter((h) => !curHashes.has(h)).map((h) => prevExamples.get(h) ?? h),
         newSourceFiles: [...curFiles].filter((f) => !prevFiles.has(f)),
+        environmentChanges: environmentChanges(current, previous),
     };
 }
 
@@ -100,7 +131,8 @@ export function isEmptyDelta(d: SessionDelta): boolean {
             && d.warningCountDelta === 0
             && d.newErrors.length === 0
             && d.resolvedErrors.length === 0
-            && d.newSourceFiles.length === 0);
+            && d.newSourceFiles.length === 0
+            && d.environmentChanges.length === 0);
 }
 
 /** Render a signed count (e.g. `+3`, `-1`, `0`) for the summary line. */
@@ -119,5 +151,6 @@ export function formatSessionDelta(d: SessionDelta): string {
     if (d.newErrors.length > 0) { lines.push(`  ${d.newErrors.length} new error type(s): ${d.newErrors[0]}`); }
     if (d.resolvedErrors.length > 0) { lines.push(`  ${d.resolvedErrors.length} error type(s) no longer present`); }
     if (d.newSourceFiles.length > 0) { lines.push(`  new source files: ${d.newSourceFiles.slice(0, 5).join(', ')}`); }
+    for (const e of d.environmentChanges) { lines.push(`  ${e.label}: ${e.from} → ${e.to}`); }
     return lines.join('\n');
 }

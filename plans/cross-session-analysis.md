@@ -355,13 +355,13 @@ When analyzing an error, show what the output looked like at the moment the erro
 
 **Implementation:** Already have log context extraction in [bug-report-collector.ts](src/modules/bug-report/bug-report-collector.ts) (15 lines before error). Extend to use timestamp parsing for smarter boundaries (group by second, highlight time gaps).
 
-### 16. Environment Diff — PARTIAL
+### ~~16. Environment Diff~~ — DONE (in the session delta)
 
 When an error appears in session A but not session B, automatically diff the session environments.
 
 "This error appeared when using Dart SDK 3.2.1 but not when using 3.1.0. The SDK version may be relevant."
 
-**Status:** Session headers carry environment data, and the comparison engine in [session-compare.ts](src/modules/compare/session-compare.ts) / [session-comparison.ts](src/ui/session/session-comparison.ts) diffs line content. **Remaining:** an environment-specific diff (SDK version, platform) cross-referenced with error presence rather than raw line diffing.
+**Status:** Shipped as part of the session delta ([session-delta.ts](src/modules/compare/session-delta.ts)). The "Since last session:" summary now also reports environment fields that changed versus the previous session — app version, debug adapter, and target device — as "app version: 1.1.0 → 1.2.0" lines, so an environment change that coincides with new/resolved errors is visible right next to them. A field newly populated (absent in the previous session) is not treated as a change, to avoid noise. **Note:** this is the persisted-metadata environment (app version / adapter / device), not a full SDK-version cross-reference against each error's presence; raw line-content diffing remains in [session-compare.ts](src/modules/compare/session-compare.ts).
 
 ### 17. Error Attention Score — NOT BUILT
 
@@ -473,7 +473,7 @@ Fix Velocity: 3 errors resolved this week, 1 persisting
 | ~~Semantic error grouping~~ | ~~Medium~~ | ~~Medium~~ | ~~High~~ | **Done** (classifier + label) |
 | Session annotations UI | Low | Medium | Low | Backlog |
 | Smart context boundaries | Low | Medium | Low | Backlog |
-| Environment diff (env-specific) | Medium | Medium | High | Future |
+| ~~Environment diff (env-specific)~~ | ~~Medium~~ | ~~Medium~~ | ~~High~~ | **Done** (session delta) |
 | Time-travel debugging context | Low | Medium | Medium | Future |
 | Workspace pulse dashboard | High | Very High | Very High | Future |
 | Debugging velocity score | Medium | Medium | High | Future |
@@ -728,3 +728,31 @@ Error lines are now classified into a meaning-based category — network, filesy
 ### Pending
 
 Using the category to visually group the "all errors" / cross-session signal lists under semantic headings — the classifier is ready; only the grouped list render remains.
+
+---
+
+## Finish Report (2026-06-14) — Environment diff in the session delta (idea #16)
+
+### What shipped
+
+The "Since last session:" summary (the output-channel auto-summary from idea #10) now also reports environment fields that changed versus the previous session — app version, debug adapter, and target device — rendered as "app version: 1.1.0 → 1.2.0" lines. This puts an environment change right next to any errors that appeared or disappeared, so a coincidence (an error showing up the same run the SDK/app version changed) is easy to spot.
+
+### How it works
+
+`computeSessionDelta` (pure, `src/modules/compare/session-delta.ts`) gained an `environmentChanges` field. `environmentChanges()` compares a fixed set of persisted `SessionMeta` fields (`appVersion`, `debugAdapterType`, `debugTarget`) and reports only fields present in both sessions and differing — a field newly populated (absent before) is not a "change", avoiding noise on first capture. The change participates in `isEmptyDelta` (so an env-only change still surfaces) and `formatSessionDelta` (one "label: from → to" line each).
+
+### Files changed
+
+- `src/modules/compare/session-delta.ts` — `SessionDelta` gains `environmentChanges: EnvironmentChange[]`; new `environmentChanges()` helper; wired into compute, empty-check, and formatting.
+- `src/test/modules/compare/session-delta.test.ts` — +3 cases (changed field reported, newly-populated not a change, env-only change is non-empty and formatted).
+- `CHANGELOG.md`, `plans/cross-session-analysis.md` — idea #16 marked done; this report.
+
+### Verification
+
+- `npm run check-types` — clean (full tree).
+- `eslint` on the touched files — clean.
+- `node --test` on the session-delta test — 9/9 pass (6 prior + 3 new).
+
+### Note
+
+This diffs the persisted-metadata environment (app version / adapter / device), not a full SDK-version cross-reference computed against each individual error's presence; raw line-content diffing of two sessions remains available in `session-compare.ts`.
