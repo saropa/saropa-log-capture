@@ -20,6 +20,7 @@ import {
 } from '../integrations';
 import { startTerminalCapture } from '../integrations/terminal-capture';
 import { startExternalLogTailers } from '../integrations/external-log-tailer';
+import { updateExternalLogTailStatus } from '../../ui/shared/external-log-tail-status';
 import { collectDevEnvironment } from '../misc/environment-collector';
 
 /** Result of initializing a new log session. */
@@ -125,9 +126,9 @@ export async function initializeSession(
         if (config.integrationsAdapters?.includes('externalLogs') && config.integrationsExternalLogs.paths.length > 0) {
             startExternalLogTailers(
                 workspaceFolder,
-                config.integrationsExternalLogs.paths,
                 config.integrationsExternalLogs,
                 outputChannel,
+                updateExternalLogTailStatus,
             );
         }
         // Streaming providers (e.g. adb logcat) spawn child processes and
