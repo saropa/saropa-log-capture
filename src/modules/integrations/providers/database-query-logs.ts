@@ -2,31 +2,45 @@
  * Database query logs integration: at session end, either read an external
  * query log file (file mode) or scan the captured session log for inline
  * query blocks (parse mode). Writes a .queries.json sidecar.
+ *
+ * File mode auto-detects JSON-lines vs plain text (MySQL slow log, PostgreSQL
+ * log_min_duration_statement, app-emitted SQL) and bounds memory by reading
+ * only the tail of large or rotated logs.
  */
 
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 import type { IntegrationProvider, IntegrationContext, IntegrationEndContext, Contribution } from '../types';
+import type { IntegrationDatabaseConfig } from '../../config/config-types-integrations';
 import { resolveWorkspaceFileUri } from '../workspace-path';
-import { boundForUserRegex } from '../../misc/regex-safety';
+import { parseQueryBlocks, parseTextQueryLog, detectQueryLogFormat } from './database-query-parsing';
 
-/** Shape of a single query entry written to the sidecar. */
-export interface QueryEntry {
-    lineStart: number;
-    lineEnd: number;
-    queryText: string;
-    requestId?: string;
-    durationMs?: number;
-    timestamp?: number;
-}
+// Re-export pure parsing so tests and callers have a single entry point.
+export { parseQueryBlocks, parseTextQueryLog, detectQueryLogFormat } from './database-query-parsing';
+export type { QueryEntry } from './database-query-parsing';
 
-/** Built-in regex for detecting SQL statement starts. */
-const builtinSqlPattern = /^\s*(?:SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|MERGE|TRUNCATE|EXPLAIN|WITH)\b/i;
+/**
+ * Cap bytes read from an external query log. DB logs grow without bound and may
+ * be rotated per run; reading only the tail keeps the most recent entries while
+ * bounding memory. workspace.fs has no ranged read, so node fs is used here
+ * (same pattern as package-lockfile.ts / external-log-tailer.ts).
+ */
+const fileModeMaxReadBytes = 512 * 1024;
 
-/** Duration pattern: common ORM/log formats like "123ms", "1.5s", "Duration: 42ms". */
-const durationPattern = /(?:duration|elapsed|took|time)[=:\s]*(\d+(?:\.\d+)?)\s*(ms|s)\b/i;
-
-function isEnabled(context: IntegrationContext): boolean {
-    return (context.config.integrationsAdapters ?? []).includes('database');
+/** Read at most fileModeMaxReadBytes from the END of a file, dropping a partial leading line on tail reads. */
+function readTailUtf8(absPath: string): string {
+    const fd = fs.openSync(absPath, 'r');
+    try {
+        const size = fs.fstatSync(fd).size;
+        const start = Math.max(0, size - fileModeMaxReadBytes);
+        const buf = Buffer.alloc(size - start);
+        const bytesRead = fs.readSync(fd, buf, 0, buf.length, start);
+        const text = buf.subarray(0, bytesRead).toString('utf-8');
+        // A mid-file offset usually lands inside a line; drop that first partial fragment.
+        return start > 0 ? text.slice(text.indexOf('\n') + 1) : text;
+    } finally {
+        fs.closeSync(fd);
+    }
 }
 
 /** Try to parse a JSON string as an object, returning undefined on failure. */
@@ -37,96 +51,46 @@ function tryParseJsonObject(line: string): Record<string, unknown> | undefined {
     } catch { return undefined; }
 }
 
-/** Extract duration in ms from a line of text. */
-function extractDuration(text: string): number | undefined {
-    const m = durationPattern.exec(text);
-    if (!m) { return undefined; }
-    const val = parseFloat(m[1]);
-    return m[2] === 's' ? val * 1000 : val;
+function isEnabled(context: IntegrationContext): boolean {
+    return (context.config.integrationsAdapters ?? []).includes('database');
 }
 
-/**
- * Scan nearby lines (up to 5 above the query start) for a request ID.
- * Returns the first match or undefined.
- */
-function findRequestId(
-    lines: readonly string[],
-    queryLineStart: number,
-    requestIdRe: RegExp,
-): string | undefined {
-    const searchStart = Math.max(0, queryLineStart - 5);
-    for (let i = queryLineStart; i >= searchStart; i--) {
-        const m = requestIdRe.exec(boundForUserRegex(lines[i]));
-        if (m) { return m[1] ?? m[0]; }
+/** Auto-detect JSON-lines vs plain text and parse the file's queries; result is capped to bound the sidecar. */
+function extractFileQueries(lines: readonly string[], cfg: IntegrationDatabaseConfig): unknown[] {
+    const cap = cfg.maxQueriesPerLookup * 10;
+    if (detectQueryLogFormat(lines) === 'text') {
+        return parseTextQueryLog(lines, cfg.requestIdPattern, cap);
     }
-    return undefined;
-}
-
-/**
- * Parse mode: scan captured session log lines for inline query blocks.
- * Uses queryBlockPattern (user regex) or built-in SQL detection.
- */
-export function parseQueryBlocks(
-    lines: readonly string[],
-    queryBlockPattern: string,
-    requestIdPattern: string,
-    maxQueries: number,
-): QueryEntry[] {
-    const blockRe = queryBlockPattern
-        ? new RegExp(queryBlockPattern, 'i')
-        : builtinSqlPattern;
-    const requestIdRe = requestIdPattern
-        ? new RegExp(requestIdPattern, 'i')
-        : undefined;
-
-    const queries: QueryEntry[] = [];
-    let i = 0;
-    while (i < lines.length && queries.length < maxQueries) {
-        if (!blockRe.test(boundForUserRegex(lines[i]))) { i++; continue; }
-
-        const lineStart = i;
-        const parts = [lines[i]];
-        i++;
-        // Continuation: lines starting with whitespace or common SQL
-        while (i < lines.length && /^\s+\S/.test(lines[i]) && !blockRe.test(boundForUserRegex(lines[i]))) {
-            parts.push(lines[i]);
-            i++;
-        }
-        const lineEnd = i - 1;
-        const queryText = parts.join('\n').trim();
-        if (!queryText) { continue; }
-
-        const entry: QueryEntry = { lineStart, lineEnd, queryText };
-        entry.durationMs = extractDuration(lines[lineEnd]) ?? extractDuration(lines[Math.min(lineEnd + 1, lines.length - 1)]);
-        if (requestIdRe) {
-            entry.requestId = findRequestId(lines, lineStart, requestIdRe);
-        }
-        queries.push(entry);
+    const queries: unknown[] = [];
+    for (const line of lines) {
+        const obj = tryParseJsonObject(line);
+        if (obj) { queries.push(obj); }
     }
-    return queries;
+    // Keep the most recent entries when a JSON log holds more than the cap.
+    return queries.slice(-cap);
 }
 
-/** File mode: read external query log file (JSON lines). */
+/** Build the meta + sidecar contributions for a set of parsed queries. */
+function queryContributions(context: IntegrationEndContext, queries: unknown[], mode: 'file' | 'parse'): Contribution[] {
+    const filename = `${context.baseFileName}.queries.json`;
+    const sidecarContent = JSON.stringify({ queries }, null, 2);
+    const payload = { sidecar: filename, count: queries.length, mode };
+    return [
+        { kind: 'meta', key: 'database', payload },
+        { kind: 'sidecar', filename, content: sidecarContent, contentType: 'json' },
+    ];
+}
+
+/** File mode: read external query log (JSON lines or plain-text DB server log). */
 async function readFileMode(context: IntegrationEndContext): Promise<Contribution[] | undefined> {
     const cfg = context.config.integrationsDatabase;
     if (!cfg.queryLogPath) { return undefined; }
     try {
-        const uri = resolveWorkspaceFileUri(context.workspaceFolder, cfg.queryLogPath);
-        // Async, non-blocking read via the workspace fs (consistent with parse mode below).
-        const raw = Buffer.from(await vscode.workspace.fs.readFile(uri)).toString('utf-8');
-        const lines = raw.split(/\r?\n/).filter(Boolean);
-        const queries: unknown[] = [];
-        for (const line of lines.slice(-2000)) {
-            const obj = tryParseJsonObject(line);
-            if (obj) { queries.push(obj); }
-        }
+        const absPath = resolveWorkspaceFileUri(context.workspaceFolder, cfg.queryLogPath).fsPath;
+        const lines = readTailUtf8(absPath).split(/\r?\n/).filter(Boolean);
+        const queries = extractFileQueries(lines, cfg);
         if (queries.length === 0) { return undefined; }
-        const sidecarContent = JSON.stringify({ queries }, null, 2);
-        const payload = { sidecar: `${context.baseFileName}.queries.json`, count: queries.length };
-        return [
-            { kind: 'meta', key: 'database', payload },
-            { kind: 'sidecar', filename: `${context.baseFileName}.queries.json`, content: sidecarContent, contentType: 'json' },
-        ];
+        return queryContributions(context, queries, 'file');
     } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         context.outputChannel.appendLine(`[database] Query log read failed: ${msg}`);
@@ -144,12 +108,7 @@ async function readParseMode(context: IntegrationEndContext): Promise<Contributi
         const maxQueries = cfg.maxQueriesPerLookup * 10;
         const queries = parseQueryBlocks(lines, cfg.queryBlockPattern, cfg.requestIdPattern, maxQueries);
         if (queries.length === 0) { return undefined; }
-        const sidecarContent = JSON.stringify({ queries }, null, 2);
-        const payload = { sidecar: `${context.baseFileName}.queries.json`, count: queries.length, mode: 'parse' };
-        return [
-            { kind: 'meta', key: 'database', payload },
-            { kind: 'sidecar', filename: `${context.baseFileName}.queries.json`, content: sidecarContent, contentType: 'json' },
-        ];
+        return queryContributions(context, queries, 'parse');
     } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         context.outputChannel.appendLine(`[database] Parse mode failed: ${msg}`);
