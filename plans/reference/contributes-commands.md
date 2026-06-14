@@ -8,6 +8,7 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 |------------|-------|----------|
 | `saropaLogCapture.addExternalLogPath` | %command.addExternalLogPath.title% |  |
 | `saropaLogCapture.addGroupToCollection` | Saropa Log Capture: Add Group to Collection |  |
+| `saropaLogCapture.addSessionNote` | %command.addSessionNote.title% |  |
 | `saropaLogCapture.addSignalItemToCollection` | %command.addSignalItemToCollection.title% |  |
 | `saropaLogCapture.addToCollection` | %command.addToCollection.title% |  |
 | `saropaLogCapture.applyPreset` | %command.applyPreset.title% |  |
@@ -114,4 +115,4 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.trashSession` | %command.trashSession.title% |  |
 | `saropaLogCapture.ungroupSession` | Saropa Log Capture: Ungroup Session |  |
 
-**Total:** 107 commands.
+**Total:** 108 commands.
