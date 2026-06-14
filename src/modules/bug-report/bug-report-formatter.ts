@@ -12,6 +12,7 @@ import { buildMarkdownFileLink } from '../source/link-helpers';
 import { buildItemUrl } from '../marketplace-url';
 import { formatHealthScoreLine, type HealthScoreParams } from '../misc/health-score';
 import { fencedBlock } from '../misc/outbound-content-safety';
+import { buildWhyNarrative } from './why-narrative';
 import { formatLintSection } from './bug-report-lint-section';
 import { formatOwaspSection } from './bug-report-owasp-section';
 import { formatThreadGroupedLines } from './bug-report-thread-format';
@@ -27,10 +28,12 @@ import {
 export function formatBugReport(data: BugReportData): string {
     const ctx = extractReportCtx(data);
     const summary = formatExecutiveSummary(data);
+    const why = formatWhyNarrative(data);
     const sections = [
         formatHeader(data.lintMatches, data.lintHealthScoreParams),
         formatSources(data, ctx),
         ...(summary ? [summary] : []),
+        ...(why ? [why] : []),
         formatError(data.errorLine, data.fingerprint),
         formatStackTrace(data.stackTrace, ctx),
         ...formatAffectedFiles(data.fileAnalyses, ctx),
@@ -62,6 +65,22 @@ export function formatBugReport(data: BugReportData): string {
 
 function extractReportCtx(data: BugReportData): ReportCtx {
     return { remote: data.devEnvironment['Git Remote'], branch: data.devEnvironment['Git Branch'] };
+}
+
+/** "Why did this break?" narrative (idea #18): a prose synthesis of blame + recurrence + churn.
+ *  Returns '' when there is too little history to say anything, so the section is omitted. */
+function formatWhyNarrative(data: BugReportData): string {
+    const body = buildWhyNarrative({
+        errorExcerpt: data.errorLine.slice(0, 200),
+        blameAuthor: data.blame?.author,
+        blameDate: data.blame?.date,
+        blameMessage: data.blame?.message,
+        blameHashShort: data.blame?.hash?.slice(0, 7),
+        sessionCount: data.crossSessionMatch?.sessionCount,
+        firstSeen: data.crossSessionMatch?.firstSeen,
+        lineRangeChanges: data.lineRangeHistory.length,
+    });
+    return body ? `## Why this might have broken\n\n${body}` : '';
 }
 
 function formatHeader(lintData?: LintReportData, lintHealthScoreParams?: HealthScoreParams): string {
