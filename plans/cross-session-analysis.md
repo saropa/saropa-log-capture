@@ -843,3 +843,38 @@ After each session ends, the **Saropa Log Capture** output channel logs a debugg
 ### Note
 
 Rendered to the output channel; a status-bar / progress-bar "fix velocity" widget is not built.
+
+---
+
+## Finish Report (2026-06-14) — Code freshness heatmap (idea #12)
+
+### What shipped
+
+The Signal panel's frequently-modified (hot) files list now overlays git commit recency: each of the top files shows a freshness dot (🔴 recent ≤7 days, 🟡 moderate ≤30 days, 🟢 stale beyond) and "changed Nd ago" next to its session count. A file that is both heavily logged and recently changed — churn meeting noise — stands out at a glance, which is typically where a bug lives.
+
+### How it works
+
+`code-freshness.ts` (pure) maps days-since-last-commit to a tier and computes whole-day age from a `YYYY-MM-DD` date with an injected `now` (future dates clamp to 0). `hot-file-freshness.ts` (host) resolves each hot file to a workspace path via `findInWorkspace`, reads its last commit date via `getGitHistory(uri, 1)` (`--date=short`), and stamps `lastCommitDaysAgo` + `freshness` onto the top 5 entries — bounded and best-effort, so an unresolvable or non-git file is simply left unlabeled. The signal-data handler enriches the hot-file payload with `Date.now()` before posting, falling back to the un-enriched list on any failure. The webview hot-file row renders the dot + localized "changed Nd ago" when a tier is present.
+
+### Files changed
+
+- `src/modules/misc/code-freshness.ts` — NEW. Pure tier classifier + day math (node:test-able).
+- `src/modules/misc/hot-file-freshness.ts` — NEW. Host enrichment (workspace resolve + git date), bounded to top 5, best-effort.
+- `src/modules/misc/cross-session-aggregator.ts` — `HotFile` gains optional `lastCommitDaysAgo` + `freshness`.
+- `src/ui/shared/handlers/recurring-handlers.ts` — enrich the hot-file payload before posting `signalData`.
+- `src/ui/panels/viewer-signal-panel-script-part-b.ts` — render the freshness dot + label on the hot-file row.
+- `src/ui/panels/viewer-signal-panel-script.ts`, `viewer-signal-panel.ts`, `src/l10n/strings-b.ts` — `hotfilesChangedDaysAgo` string (interface, default, localized call site, catalog key).
+- `src/test/modules/misc/code-freshness.test.ts` — NEW. 5 cases (day math, unparseable date, future-clamp, tier boundaries, unknown).
+- `CHANGELOG.md`, `plans/cross-session-analysis.md` — idea #12 marked done; this report.
+
+### Verification
+
+- `npm run check-types` — clean (full tree).
+- `eslint` on the nine touched files — clean.
+- `npm run verify:l10n-keys` — OK (the new key resolves).
+- `node --test` on the new classifier test — 5/5 pass.
+- Not unit-tested: the git enrichment (`hot-file-freshness.ts`) and the webview render — these need manual verification in the Extension Host (no app-run harness in the build loop).
+
+### Pending
+
+Manual Extension-Host verification of the freshness dot + "changed Nd ago" render on the hot-file rows (dark mode, narrow panel), and that git resolution works for the project's `file:`-tag filename forms.
