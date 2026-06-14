@@ -152,6 +152,13 @@ export interface IntegrationHttpConfig {
   readonly maxRequestsPerSession: number;
 }
 
+export interface IntegrationOtelConfig {
+  /** Backend deep-link template with a {traceId} placeholder (e.g. Jaeger/Tempo trace URL). */
+  readonly traceUrlTemplate: string;
+  /** Optional regex override (capture group 1 = trace id) for non-standard trace-id log formats. */
+  readonly traceIdPattern: string;
+}
+
 export interface IntegrationBrowserConfig {
   readonly mode: "file" | "cdp";
   readonly browserLogPath: string;
