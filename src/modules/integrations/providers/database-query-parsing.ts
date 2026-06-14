@@ -182,3 +182,38 @@ export function detectQueryLogFormat(lines: readonly string[]): 'json' | 'text' 
     const trimmed = firstNonEmpty.trim();
     return trimmed.startsWith('{') || trimmed.startsWith('[') ? 'json' : 'text';
 }
+
+/** Single-quoted string literal, tolerating doubled-quote ('') escapes inside. */
+const sqlStringLiteral = /'(?:[^']|'')*'/g;
+/** A numeric literal not embedded in an identifier (avoids matching e.g. the "1" in "table1" or "int4"). */
+const sqlNumberLiteral = /(?<![\w.$])\d+(?:\.\d+)?(?![\w.$])/g;
+
+/**
+ * Replace string and numeric literals in a SQL statement with `?` so the
+ * structured query record can be written to a shared sidecar / bug report
+ * without leaking PII or secrets embedded in literal values. Only single-quoted
+ * strings are redacted — double quotes are identifiers in standard SQL/Postgres,
+ * so touching them would corrupt column/table names. The statement shape (which
+ * tables/columns are queried) is preserved deliberately; only the values go.
+ */
+export function redactSqlLiterals(sql: string): string {
+    return sql.replace(sqlStringLiteral, '?').replace(sqlNumberLiteral, '?');
+}
+
+/** Keys on a query record that may hold raw SQL; redacted in place when redaction is on. */
+const sqlBearingKeys = ['queryText', 'query', 'sql', 'statement'];
+
+/**
+ * Return a copy of a query record (QueryEntry or a raw JSON log object) with any
+ * SQL-bearing string field redacted. Non-object inputs pass through unchanged.
+ */
+export function redactQueryRecord(record: unknown): unknown {
+    if (!record || typeof record !== 'object') { return record; }
+    const copy = { ...(record as Record<string, unknown>) };
+    for (const key of sqlBearingKeys) {
+        if (typeof copy[key] === 'string') {
+            copy[key] = redactSqlLiterals(copy[key] as string);
+        }
+    }
+    return copy;
+}

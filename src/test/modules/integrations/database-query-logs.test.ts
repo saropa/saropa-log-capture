@@ -3,6 +3,7 @@ import {
     parseQueryBlocks,
     parseTextQueryLog,
     detectQueryLogFormat,
+    redactSqlLiterals,
 } from '../../../modules/integrations/providers/database-query-logs';
 
 suite('database-query-logs', () => {
@@ -185,6 +186,33 @@ suite('database-query-logs', () => {
         test('should return empty when no SQL is present', () => {
             const lines = ['2026-06-14 10:00:00 UTC LOG:  connection received'];
             assert.strictEqual(parseTextQueryLog(lines, '', 100).length, 0);
+        });
+    });
+
+    suite('redactSqlLiterals', () => {
+        test('should replace single-quoted string literals with ?', () => {
+            const out = redactSqlLiterals("SELECT * FROM users WHERE email = 'a@b.com'");
+            assert.strictEqual(out, 'SELECT * FROM users WHERE email = ?');
+        });
+
+        test('should replace numeric literals with ?', () => {
+            const out = redactSqlLiterals('SELECT * FROM orders WHERE id = 42 AND total > 9.5');
+            assert.strictEqual(out, 'SELECT * FROM orders WHERE id = ? AND total > ?');
+        });
+
+        test('should preserve table and column identifiers containing digits', () => {
+            const out = redactSqlLiterals('SELECT col1 FROM table2 WHERE col1 = 7');
+            assert.strictEqual(out, 'SELECT col1 FROM table2 WHERE col1 = ?');
+        });
+
+        test('should keep doubled-quote escapes inside a literal as one redaction', () => {
+            const out = redactSqlLiterals("INSERT INTO t (name) VALUES ('O''Brien')");
+            assert.strictEqual(out, 'INSERT INTO t (name) VALUES (?)');
+        });
+
+        test('should not touch double-quoted identifiers', () => {
+            const out = redactSqlLiterals('SELECT "userId" FROM "Accounts" WHERE "userId" = 3');
+            assert.strictEqual(out, 'SELECT "userId" FROM "Accounts" WHERE "userId" = ?');
         });
     });
 });
