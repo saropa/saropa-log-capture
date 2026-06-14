@@ -125,6 +125,14 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
             if (s.avgDurationMs) { meta += fillSignalString(SIGNAL_STRINGS.metaAvg, fmtMs(s.avgDurationMs)); }
             if (s.maxDurationMs) { meta += fillSignalString(SIGNAL_STRINGS.metaMax, fmtMs(s.maxDurationMs)); }
             if (s.category) { meta += ' [' + esc(s.category) + ']'; }
+            /* Reliability tag (idea #11): how many of all sessions this signal appears in. Makes
+               intermittent "ghost" signals visible — the hardest bugs hide in the middle band. */
+            if (s.reliability && typeof s.sessionPercentage === 'number') {
+                var relTpl = s.reliability === 'consistent' ? SIGNAL_STRINGS.reliabilityConsistent
+                    : s.reliability === 'intermittent' ? SIGNAL_STRINGS.reliabilityIntermittent
+                    : SIGNAL_STRINGS.reliabilityRare;
+                meta += ' · ' + esc(fillSignalString(relTpl, s.sessionPercentage));
+            }
             var lintBtn = buildLintRuleLink(s.detail || '');
             var daBtn = s.kind === 'sql' ? ' <span class="re-action signal-da-link" role="button" title="' + esc(SIGNAL_STRINGS.openDriftAdvisorTitle) + '">\\uD83D\\uDD0D DA</span>' : '';
             var sevCls = s.severity === 'critical' ? ' signal-sev-critical' : s.severity === 'high' ? ' signal-sev-high' : '';

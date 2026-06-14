@@ -194,6 +194,10 @@ export const stringsB: Record<string, string> = {
     'signal.suggestionImpact': '~{0} lines ({1}%)',
     'signal.sessionMeta': '{0} session(s), {1} total',
     'signal.recurringTitle': 'Recurring in {0} sessions',
+    // Reliability tiers (idea #11): {0} is the whole-number percent of sessions the signal appears in.
+    'signal.reliabilityConsistent': '{0}% of sessions — consistent',
+    'signal.reliabilityIntermittent': '{0}% of sessions — intermittent',
+    'signal.reliabilityRare': '{0}% of sessions — rare',
     'signal.heroErrors': 'Errors: {0}',
     'signal.heroWarnings': 'Warnings: {0}',
     'signal.metaAvg': ', avg {0}',

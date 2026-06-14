@@ -13,6 +13,7 @@ import {
     accumulateSummaryCounts, accumulateDriftAdvisor,
     type Accum,
 } from './signal-accumulator';
+import { classifyReliability, type SignalReliability } from './signal-reliability';
 
 /** Every detection type in the unified signal system. */
 export type SignalKind = 'error' | 'warning' | 'perf' | 'sql' | 'network' | 'memory' | 'slow-op' | 'anr' | 'permission' | 'classified';
@@ -43,6 +44,10 @@ export interface RecurringSignalEntry {
     readonly severity: SignalSeverity;
     /** True if this signal appears in 5+ sessions — flagged for attention. */
     readonly recurring: boolean;
+    /** Share of all considered sessions this signal appears in (0–100, rounded). Idea #11. */
+    readonly sessionPercentage?: number;
+    /** Reliability band derived from sessionPercentage — consistent / intermittent / rare. */
+    readonly reliability?: SignalReliability;
     /** Trend direction based on comparing older vs newer half of timeline. */
     readonly trend?: SignalTrend;
     /** Top line indices from the current session for jump-to-line navigation (single-session signals only). */
@@ -78,7 +83,8 @@ export function buildAllRecurringSignals(metas: readonly LoadedMeta[]): Recurrin
         accumulateDriftAdvisor(map, meta, filename);
     }
 
-    return rankSignals(map);
+    // Total sessions considered is the denominator for each signal's reliability percentage (idea #11).
+    return rankSignals(map, metas.length);
 }
 
 const recurringThreshold = 5;
@@ -119,7 +125,7 @@ function computeTrend(timeline: readonly { count: number }[]): SignalTrend | und
 }
 
 /** Rank signals by cross-session impact and finalize the output. */
-function rankSignals(map: Map<string, Accum>): RecurringSignalEntry[] {
+function rankSignals(map: Map<string, Accum>, totalSessions: number): RecurringSignalEntry[] {
     return [...map.entries()]
         .map(([fp, a]) => {
             // Sort timeline chronologically so firstSeen/lastSeen are accurate
@@ -127,6 +133,7 @@ function rankSignals(map: Map<string, Accum>): RecurringSignalEntry[] {
             a.timeline.sort((x, y) => parseSessionDate(x.session) - parseSessionDate(y.session));
             const sessionCount = a.timeline.length;
             const sev = classifySeverity(a.kind, sessionCount, a.category);
+            const reliability = classifyReliability(sessionCount, totalSessions);
             return {
                 kind: a.kind,
                 // Strip the "kind::" prefix so fingerprint is the raw identifier
@@ -146,6 +153,8 @@ function rankSignals(map: Map<string, Accum>): RecurringSignalEntry[] {
                 maxDurationMs: a.maxMs,
                 severity: sev,
                 recurring: sessionCount >= recurringThreshold,
+                sessionPercentage: reliability?.percentage,
+                reliability: reliability?.tier,
                 trend: computeTrend(a.timeline),
                 lineIndices: a.lineIdxs,
                 timeline: a.timeline,
