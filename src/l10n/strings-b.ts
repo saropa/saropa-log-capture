@@ -224,4 +224,20 @@ export const stringsB: Record<string, string> = {
     'sessionTree.active': 'ACTIVE',
     'sessionTree.yes': 'Yes',
     'sessionTree.no': 'No',
+
+    // Collection panel search / history UI — these keys were referenced by t() in
+    // collection-panel-html.ts / collection-panel-handlers.ts but never defined, so the panel showed
+    // the raw key strings instead of text (caught by the l10n-key verification, not a visual check).
+    'action.searchHistory': 'Search history',
+    'action.searchOptions': 'Search options',
+    'action.clearHistory': 'Clear history',
+    'label.caseSensitive': 'Case sensitive',
+    'label.useRegex': 'Use regex',
+    'label.contextLines': 'Context lines',
+    'msg.searchingFile': 'Searching {0}/{1}…',
+    'msg.searchCancelled': 'Search canceled',
+    'msg.largeFileWarning': 'Large file — search may be slow.',
+    'msg.resultsTruncated': 'Results truncated.',
+    'msg.noSearchHistory': 'No search history yet.',
+    'msg.sourceFileMissing': 'Source file not found.',
 };
