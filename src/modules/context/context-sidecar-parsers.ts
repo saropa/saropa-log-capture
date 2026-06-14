@@ -113,8 +113,20 @@ export function loadTerminalContext(content: string, window: ContextWindow): Par
 /**
  * Load and filter browser console events from .browser.json sidecar.
  * Includes entries within the time window OR matching the request ID
- * (by field or substring in message text).
+ * (by field or as a whole token in the message text).
  */
+
+/**
+ * True if `id` appears as a WHOLE token in `message` (not as part of a larger word). A plain
+ * `includes()` would let a short/numeric id (e.g. `42`) match unrelated log text and pull noise into
+ * the correlated context; ids shorter than 4 chars are matched by field only.
+ */
+function messageMentionsId(message: string, id: string): boolean {
+    if (id.length < 4) { return false; }
+    const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`(^|[^\\w-])${escaped}([^\\w-]|$)`).test(message);
+}
+
 export function loadBrowserContext(content: string, window: ContextWindow): Partial<ContextData> {
     const parsed = parseJSONOrDefault<unknown>(content, null);
     if (!parsed) { return {}; }
@@ -134,7 +146,7 @@ export function loadBrowserContext(content: string, window: ContextWindow): Part
         if (!message) { continue; }
         const reqId = item.requestId ? String(item.requestId) : undefined;
         const inWindow = timestamp > 0 && timestamp >= minTime && timestamp <= maxTime;
-        const idMatch = targetId && (reqId === targetId || message.includes(targetId));
+        const idMatch = targetId && (reqId === targetId || messageMentionsId(message, targetId));
         if (!inWindow && !idMatch) { continue; }
         filtered.push({
             timestamp,
@@ -168,6 +180,9 @@ export function loadDatabaseContext(content: string, window: ContextWindow): Par
         const queryText = String(q.queryText || q.query || '');
         if (!queryText) { continue; }
         const reqId = q.requestId ? String(q.requestId) : undefined;
+        // DB queries in parse mode often have no parseable timestamp (extractTimestamp returns 0), so
+        // — unlike the browser/HTTP loaders — a timestamp of 0 is treated as in-window rather than
+        // dropped. The result is capped to 50 below, so untimed queries can't flood the popover.
         const inWindow = timestamp === 0 || (timestamp >= minTime && timestamp <= maxTime);
         const idMatch = targetId && reqId === targetId;
         if (!inWindow && !idMatch) { continue; }

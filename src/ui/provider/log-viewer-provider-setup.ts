@@ -76,6 +76,7 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
   });
   queueMicrotask(() => target.postMessage({ type: 'setDriftAdvisorAvailable', available: !!vscode.extensions.getExtension(DRIFT_ADVISOR_EXTENSION_ID) }));
   queueMicrotask(() => target.postMessage({ type: 'captureEnabled', enabled: getConfig().enabled }));
+  queueMicrotask(() => target.postMessage({ type: 'diagnosticCapture', enabled: getConfig().diagnosticCapture }));
   /* Seed typography from user settings so webview boots with configured font size / line height
      instead of its hard-coded defaults. Handler on the webview also updates the reset target so
      Ctrl+0 / Ctrl+Shift+0 return to the *user's* configured value, not the hard-coded fallback. */

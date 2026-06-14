@@ -299,6 +299,10 @@ window.addEventListener('message', function(event) {
             window.captureEnabled = msg.enabled !== false;
             if (typeof syncCaptureEnabledUi === 'function') syncCaptureEnabledUi();
             break;
+        case 'diagnosticCapture':
+            window.diagnosticCapture = msg.enabled === true;
+            if (typeof syncDiagnosticCaptureUi === 'function') syncDiagnosticCaptureUi();
+            break;
         case 'setLearningOptions':
             learningEnabled = msg.enabled !== false;
             learningMaxLineLen = typeof msg.maxLineLength === 'number' && msg.maxLineLength >= 80 ? msg.maxLineLength : 2000;

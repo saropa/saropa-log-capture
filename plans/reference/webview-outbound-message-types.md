@@ -20,6 +20,7 @@ Heuristic index of `type` fields on objects passed to `this.postMessage` / `targ
 | `createCollectionError` | src/ui/provider/viewer-message-handler-collection.ts |
 | `createCollectionSucceeded` | src/ui/provider/viewer-message-handler-collection.ts |
 | `currentLogChanged` | src/ui/provider/log-viewer-provider.ts |
+| `diagnosticCapture` | src/ui/provider/log-viewer-provider-setup.ts, src/ui/provider/viewer-message-handler-panels.ts |
 | `driftDbIssues` | src/ui/provider/viewer-message-handler-panels.ts |
 | `driftLintViolations` | src/ui/provider/viewer-message-handler-panels.ts |
 | `driftViewerHealth` | src/ui/provider/viewer-message-handler-panels.ts |
@@ -105,4 +106,4 @@ Heuristic index of `type` fields on objects passed to `this.postMessage` / `targ
 | `updateWatchCounts` | src/ui/provider/log-viewer-provider.ts |
 | `viewerKeybindingRecordMode` | src/ui/provider/viewer-message-handler-actions.ts |
 
-**Total:** 98 distinct types.
+**Total:** 99 distinct types.

@@ -39,6 +39,10 @@ export function getOptionsPanelHtml(): string {
                 <input type="checkbox" id="opt-capture-enabled" />
                 <span>${t('viewer.options.captureEnabled')}</span>
             </label>
+            <label class="options-row" title="${t('viewer.options.diagnosticCapture.title')}">
+                <input type="checkbox" id="opt-diagnostic-capture" />
+                <span>${t('viewer.options.diagnosticCapture')}</span>
+            </label>
         </div>
 
         <!-- Display Section -->

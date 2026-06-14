@@ -12,6 +12,13 @@ if (optCaptureEnabled) optCaptureEnabled.addEventListener('change', function(e) 
     vscodeApi.postMessage({ type: 'setCaptureEnabled', enabled: enabled });
 });
 
+// Diagnostic capture (per-line fate trace) toggle
+var optDiagnosticCapture = document.getElementById('opt-diagnostic-capture');
+if (optDiagnosticCapture) optDiagnosticCapture.addEventListener('change', function(e) {
+    var enabled = !!e.target.checked;
+    vscodeApi.postMessage({ type: 'setDiagnosticCapture', enabled: enabled });
+});
+
 // Options search filter
 var optionsSearchInput = document.getElementById('options-search');
 var optionsSearchClear = document.getElementById('options-search-clear');
