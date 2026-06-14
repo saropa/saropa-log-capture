@@ -2,7 +2,19 @@
 
 ## Status
 
-**Not started.** Plan only — no code written yet. Approved 2026-06-14.
+**Implemented 2026-06-14.** All five slices landed:
+
+- Slice 1 — `readPubspecDependencies` + pure `parsePubspecDependencies` ([manifest-dependencies.ts](../src/modules/misc/manifest-dependencies.ts)), unit-tested.
+- Slice 2 — pure engine `suggestAdaptersFromPubspec` ([adapter-recommendations.ts](../src/modules/misc/adapter-recommendations.ts)), unit-tested.
+- Slice 3 — gated activation toast `maybeRecommendAdapters` ([recommend-adapters-notice.ts](../src/modules/integrations/recommend-adapters-notice.ts)), wired in [extension-activation.ts](../src/extension-activation.ts).
+- Slice 4 — l10n keys `msg.adapterRecommend.*` in [strings-a.ts](../src/l10n/strings-a.ts) (English source only).
+- Slice 5 — `package.json` reader + `suggestAdaptersFromPackageJson`, merged in the notice.
+
+Deviation from the plan: the `flutter` marker maps to `adbLogcat` only, **not** `flutterCrashLogs`.
+A guard test surfaced that `flutterCrashLogs` is a registered provider but absent from the
+integrations picker table (`INTEGRATION_ADAPTERS`), so recommending it would name a raw id the user
+could not then manage. Adding it to the picker is a separate product decision, deliberately not taken
+here.
 
 ## Goal
 

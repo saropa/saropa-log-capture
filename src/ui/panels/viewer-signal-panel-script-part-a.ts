@@ -8,6 +8,16 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
     const storageKeyJson = JSON.stringify(storageKey);
     return /* js */ `
     var SIGNAL_STRINGS = ${scriptStringsJson};
+    /* Fill {0}/{1}/{2} placeholders in a SIGNAL_STRINGS template. SIGNAL_STRINGS holds plain strings
+       (the panel-standalone alternative to the global vt() map), so this is the panel's own positional
+       substitution — keeps the row scripts on one localization mechanism instead of mixing in vt(). */
+    function fillSignalString(tpl, a0, a1, a2) {
+        var s = tpl;
+        if (a0 !== undefined) { s = s.split('{0}').join(a0); }
+        if (a1 !== undefined) { s = s.split('{1}').join(a1); }
+        if (a2 !== undefined) { s = s.split('{2}').join(a2); }
+        return s;
+    }
     window.__signalPerfIdPrefix = 'signal-';
     var signalPanel = document.getElementById('signal-panel');
     var heroBlock = document.getElementById('signal-hero-block');

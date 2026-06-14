@@ -11,8 +11,12 @@
 import * as vscode from 'vscode';
 import { t } from '../../l10n';
 import { getConfig } from '../config/config';
-import { readPubspecDependencies } from '../misc/manifest-dependencies';
-import { suggestAdaptersFromPubspec, type AdapterRecommendation } from '../misc/adapter-recommendations';
+import { readPubspecDependencies, readPackageJsonDependencies } from '../misc/manifest-dependencies';
+import {
+    suggestAdaptersFromPubspec,
+    suggestAdaptersFromPackageJson,
+    type AdapterRecommendation,
+} from '../misc/adapter-recommendations';
 import { INTEGRATION_ADAPTERS, showIntegrationsPicker } from './integrations-ui';
 
 const SECTION = 'saropaLogCapture';
@@ -28,6 +32,18 @@ function adapterLabel(id: string): string {
 /** Join a list for display with ", " — used for both trigger packages and adapter labels. */
 function joinForDisplay(values: readonly string[]): string {
     return values.join(', ');
+}
+
+/** Concatenate recommendation lists, keeping the first occurrence of each adapter id. */
+function mergeRecommendations(...lists: readonly AdapterRecommendation[][]): AdapterRecommendation[] {
+    const seen = new Set<string>();
+    const out: AdapterRecommendation[] = [];
+    for (const rec of lists.flat()) {
+        if (seen.has(rec.adapter)) { continue; }
+        seen.add(rec.adapter);
+        out.push(rec);
+    }
+    return out;
 }
 
 /** Append recommended adapter ids to the workspace setting (union, preserving existing order). */
@@ -57,11 +73,19 @@ export async function maybeRecommendAdapters(
     folder: vscode.WorkspaceFolder,
 ): Promise<void> {
     try {
-        const deps = await readPubspecDependencies(folder.uri);
-        if (deps.size === 0) { return; }
-
         const enabled = getConfig().integrationsAdapters ?? [];
-        const recs = suggestAdaptersFromPubspec(deps, enabled);
+
+        // Inspect both manifests; a polyglot repo (Flutter app + Node tooling) can imply both sets.
+        const [pubspecDeps, packageJsonDeps] = await Promise.all([
+            readPubspecDependencies(folder.uri),
+            readPackageJsonDependencies(folder.uri),
+        ]);
+
+        // Pubspec first so a Dart/Flutter repo's recommendation wins the per-adapter dedupe.
+        const recs = mergeRecommendations(
+            suggestAdaptersFromPubspec(pubspecDeps, enabled),
+            suggestAdaptersFromPackageJson(packageJsonDeps, enabled),
+        );
         if (recs.length === 0) { return; }
 
         // Key the gate on the sorted suggested ids so an unchanged set never re-nags (R5).
