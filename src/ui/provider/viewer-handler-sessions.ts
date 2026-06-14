@@ -32,7 +32,7 @@ export async function handleSessionAction(
         return uri ? { uri, filename } : undefined;
     }).filter((x): x is { uri: vscode.Uri; filename: string } => x !== undefined);
 
-    const mutating = ['trash', 'restore', 'emptyTrash', 'deletePermanently', 'rename', 'tag'];
+    const mutating = ['trash', 'restore', 'emptyTrash', 'deletePermanently', 'rename', 'tag', 'note'];
     switch (action) {
         case 'open':
             for (const item of items) {
@@ -72,6 +72,12 @@ export async function handleSessionAction(
         case 'tag':
             for (const item of items) {
                 await vscode.commands.executeCommand('saropaLogCapture.tagSession', item);
+            }
+            break;
+        case 'note':
+            // Idea #7: a session note is single-target — note the first selected item only.
+            if (items[0]) {
+                await vscode.commands.executeCommand('saropaLogCapture.addSessionNote', items[0]);
             }
             break;
         case 'exportHtml':

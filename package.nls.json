@@ -506,5 +506,6 @@
   "walkthrough.startDebugging.title": "Start a Debug Session",
   "walkthrough.useKeyboardShortcuts.description": "Use **Space** to pause, **Ctrl+F** to search, **P** to pin lines, **N** to annotate, and **M** to insert markers.",
   "walkthrough.useKeyboardShortcuts.title": "Master Keyboard Shortcuts",
-  "command.showLogReferences.title": "Show Log References"
+  "command.showLogReferences.title": "Show Log References",
+  "command.addSessionNote.title": "Add Note to Log"
 }

@@ -117,6 +117,11 @@
         "title": "%command.tagSession.title%"
       },
       {
+        "command": "saropaLogCapture.addSessionNote",
+        "icon": "$(note)",
+        "title": "%command.addSessionNote.title%"
+      },
+      {
         "command": "saropaLogCapture.rescanTags",
         "icon": "$(sync)",
         "title": "%command.rescanTags.title%"

@@ -32,6 +32,9 @@ export function getSessionContextMenuHtml(): string {
     <div class="context-menu-item" data-session-action="tag">
         <span class="codicon codicon-tag"></span> Tag...
     </div>
+    <div class="context-menu-item" data-session-action="note">
+        <span class="codicon codicon-note"></span> Add Note...
+    </div>
     <div class="context-menu-separator"></div>
     <!-- Export flyout submenu: 6 export targets (HTML, CSV, JSON, JSONL, .slc Bundle, Loki) -->
     <div class="context-menu-submenu" id="session-export-submenu">
