@@ -66,6 +66,28 @@ test("identical sessions produce an empty delta and no summary text", () => {
   assert.equal(formatSessionDelta(d), "");
 });
 
+// -------- environment changes (idea #16) --------
+
+test("a changed environment field is reported with both values", () => {
+  const d = computeSessionDelta(
+    meta({ appVersion: "1.2.0", debugAdapterType: "dart" }),
+    meta({ appVersion: "1.1.0", debugAdapterType: "dart" }),
+  );
+  assert.deepEqual(d.environmentChanges, [{ label: "app version", from: "1.1.0", to: "1.2.0" }]);
+});
+
+test("a field newly populated (absent before) is not counted as a change", () => {
+  const d = computeSessionDelta(meta({ debugTarget: "Pixel 7" }), meta({}));
+  assert.deepEqual(d.environmentChanges, []);
+  assert.ok(isEmptyDelta(d));
+});
+
+test("environment changes alone make the delta non-empty and appear in the summary", () => {
+  const d = computeSessionDelta(meta({ appVersion: "2.0" }), meta({ appVersion: "1.0" }));
+  assert.ok(!isEmptyDelta(d));
+  assert.match(formatSessionDelta(d), /app version: 1\.0 → 2\.0/);
+});
+
 test("a non-empty delta formats one fact per line led by a header", () => {
   const d = computeSessionDelta(
     meta({ errorCount: 2, fingerprints: [fp("h1", "NewErr")] }),
