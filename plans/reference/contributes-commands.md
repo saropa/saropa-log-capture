@@ -17,6 +17,7 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.clearBuildCiAzurePat` | Saropa: Clear Build/CI Azure PAT |  |
 | `saropaLogCapture.clearBuildCiGithubToken` | Saropa: Clear Build/CI GitHub Token |  |
 | `saropaLogCapture.clearBuildCiGitlabToken` | Saropa: Clear Build/CI GitLab Token |  |
+| `saropaLogCapture.clearDatabaseApiToken` | Saropa Log Capture: Clear Database API Token |  |
 | `saropaLogCapture.clearGlobalAggregates` | %command.clearGlobalAggregates.title% |  |
 | `saropaLogCapture.clearLearningData` | %command.clearLearningData.title% |  |
 | `saropaLogCapture.clearShareHistory` | %command.clearShareHistory.title% |  |
@@ -90,6 +91,7 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.setBuildCiAzurePat` | Saropa: Set Build/CI Azure PAT |  |
 | `saropaLogCapture.setBuildCiGithubToken` | Saropa: Set Build/CI GitHub Token |  |
 | `saropaLogCapture.setBuildCiGitlabToken` | Saropa: Set Build/CI GitLab Token |  |
+| `saropaLogCapture.setDatabaseApiToken` | Saropa Log Capture: Set Database API Token |  |
 | `saropaLogCapture.setLokiApiKey` | %command.setLokiApiKey.title% |  |
 | `saropaLogCapture.shareCollection` | %command.shareCollection.title% |  |
 | `saropaLogCapture.showCodeQualityForFrame` | %command.showCodeQualityForFrame.title% |  |
@@ -109,4 +111,4 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.trashSession` | %command.trashSession.title% |  |
 | `saropaLogCapture.ungroupSession` | Saropa Log Capture: Ungroup Session |  |
 
-**Total:** 102 commands.
+**Total:** 104 commands.

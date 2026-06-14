@@ -268,6 +268,12 @@ export const stringsA: Record<string, string> = {
     'prompt.lokiApiKey': 'Loki API key (Bearer token). Stored in Secret Storage.',
     'prompt.lokiApiKeyPlaceholder': 'Paste your Grafana Cloud or Loki API key',
 
+    'prompt.databaseApiToken': 'Database API token (Bearer). Stored in Secret Storage and sent with the query lookup request.',
+    'prompt.databaseApiTokenPlaceholder': 'Paste the API token for your query endpoint',
+    'msg.databaseApiTokenStored': 'Database API token stored. It will be sent with the query lookup in API mode.',
+    'msg.databaseApiTokenEmpty': 'No token entered. Use this command again to store your database API token.',
+    'msg.databaseApiTokenCleared': 'Database API token cleared.',
+
     'msg.noIntegrationContext': 'No integration context available for this line.',
     'msg.noIntegrationData': 'No integration data captured for this log. Enable integrations in settings.',
     'msg.noIntegrationDataInWindow': 'No integration data in this time window.',
