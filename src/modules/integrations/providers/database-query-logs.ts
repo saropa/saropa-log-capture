@@ -8,6 +8,7 @@ import * as fs from 'fs';
 import * as vscode from 'vscode';
 import type { IntegrationProvider, IntegrationContext, IntegrationEndContext, Contribution } from '../types';
 import { resolveWorkspaceFileUri } from '../workspace-path';
+import { boundForUserRegex } from '../../misc/regex-safety';
 
 /** Shape of a single query entry written to the sidecar. */
 export interface QueryEntry {
@@ -56,7 +57,7 @@ function findRequestId(
 ): string | undefined {
     const searchStart = Math.max(0, queryLineStart - 5);
     for (let i = queryLineStart; i >= searchStart; i--) {
-        const m = requestIdRe.exec(lines[i]);
+        const m = requestIdRe.exec(boundForUserRegex(lines[i]));
         if (m) { return m[1] ?? m[0]; }
     }
     return undefined;
@@ -82,13 +83,13 @@ export function parseQueryBlocks(
     const queries: QueryEntry[] = [];
     let i = 0;
     while (i < lines.length && queries.length < maxQueries) {
-        if (!blockRe.test(lines[i])) { i++; continue; }
+        if (!blockRe.test(boundForUserRegex(lines[i]))) { i++; continue; }
 
         const lineStart = i;
         const parts = [lines[i]];
         i++;
         // Continuation: lines starting with whitespace or common SQL
-        while (i < lines.length && /^\s+\S/.test(lines[i]) && !blockRe.test(lines[i])) {
+        while (i < lines.length && /^\s+\S/.test(lines[i]) && !blockRe.test(boundForUserRegex(lines[i]))) {
             parts.push(lines[i]);
             i++;
         }
