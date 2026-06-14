@@ -179,6 +179,8 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
         if (typeof maybeFetchDriftLintViolations === 'function') maybeFetchDriftLintViolations();
         /* R5: ask the host which sibling deep-link buttons (Explain in Drift / Show rule) are live. */
         if (typeof maybeRequestSuiteDeepLinks === 'function') maybeRequestSuiteDeepLinks();
+        /* R2 render: pull the typed advisor.json/lints.json mirrors as a fallback source for the sections. */
+        if (typeof maybeRequestSuiteMirror === 'function') maybeRequestSuiteMirror();
         if (searchEl) searchEl.focus();
     };
     window.closeSqlQueryHistoryPanel = function() {

@@ -142,6 +142,19 @@ export function getSqlQueryHistoryPanelScript(): string {
                 }
                 return;
             }
+            /* R2 render: a typed mirror row's fix button carries its own command + args (allowlisted host
+               side). Parse the args JSON defensively — a malformed attribute must not throw in the handler. */
+            var diagFixBtn = e.target.closest('.sql-qh-diag-fix');
+            if (diagFixBtn) {
+                var cmd = diagFixBtn.getAttribute('data-cmd') || '';
+                var rawArgs = diagFixBtn.getAttribute('data-args') || '[]';
+                var parsedArgs;
+                try { parsedArgs = JSON.parse(rawArgs); } catch (err) { parsedArgs = []; }
+                if (cmd && typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
+                    vscodeApi.postMessage({ type: 'runSiblingDeepLink', command: cmd, args: parsedArgs });
+                }
+                return;
+            }
             /* R5: "Show rule" on a Lints row → Saropa Lints' rule-explanation command (host allowlists the id). */
             var ruleBtn = e.target.closest('.sql-qh-rule-explain');
             if (ruleBtn) {

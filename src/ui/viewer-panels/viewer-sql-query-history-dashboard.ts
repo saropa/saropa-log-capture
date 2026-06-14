@@ -47,6 +47,56 @@ export function getSqlQueryHistoryDashboardScript(): string {
     function sqlHistorySourceBadge(labelKey) {
         return '<span class="sql-qh-src-badge">' + escapeHtml(vt(labelKey)) + '</span>';
     }
+    /* R2 render: typed Diagnostic[] read from the sibling offline mirrors (.saropa/diagnostics/*.json),
+       used as the FALLBACK source when the live Drift server / live Lints export is unavailable. */
+    var sqlHistoryMirrorAdvisor = null;
+    var sqlHistoryMirrorLints = null;
+    function maybeRequestSuiteMirror() {
+        if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
+            vscodeApi.postMessage({ type: 'requestSuiteMirrorDiagnostics' });
+        }
+    }
+    /* Map a sibling command id to the availability flag the host reported, so a typed row's fix button
+       renders only when its command is actually live (never a dead action). */
+    function suiteCmdAvailable(cmd) {
+        if (cmd === 'driftViewer.openExplainForSql') return suiteDeepLink.explainSql;
+        if (cmd === 'driftViewer.openTable') return suiteDeepLink.openTable;
+        if (cmd === 'saropaLints.explainRule') return suiteDeepLink.explainRule;
+        if (cmd === 'saropaLints.enableRule') return suiteDeepLink.enableRule;
+        return false;
+    }
+    /* Render one typed envelope Diagnostic as a panel row: source badge, severity color, location, and
+       a fix button when the diagnostic carries a runnable (allowlisted + live) fix.command. */
+    function sqlHistoryDiagnosticRow(d) {
+        var sev = 'sql-qh-issue-' + (d.severity === 'error' || d.severity === 'warning' ? 'warning' : 'info');
+        var badgeKey = d.source === 'advisor' ? 'viewer.sqlHistory.source.advisor'
+            : (d.source === 'lints' ? 'viewer.sqlHistory.source.lints' : '');
+        var loc = '';
+        if (d.location && d.location.file) loc = d.location.line ? (d.location.file + ':' + d.location.line) : d.location.file;
+        else if (d.table) loc = d.table;
+        var fixBtn = '';
+        if (d.fix && d.fix.command && d.fix.title && suiteCmdAvailable(d.fix.command)) {
+            fixBtn = '<button type="button" class="sql-qh-action-btn sql-qh-diag-fix" data-cmd="' + escapeHtml(d.fix.command)
+                + '" data-args="' + escapeHtml(JSON.stringify(d.fix.args || [])) + '" title="' + escapeHtml(d.fix.title)
+                + '"><span class="codicon codicon-link-external"></span></button>';
+        }
+        return '<div class="sql-qh-issue ' + sev + '">'
+            + (badgeKey ? sqlHistorySourceBadge(badgeKey) : '')
+            + (loc ? '<span class="sql-qh-issue-loc">' + escapeHtml(loc) + '</span>' : '')
+            + '<span class="sql-qh-issue-msg" title="' + escapeHtml(d.detail || d.title) + '">' + escapeHtml(d.title) + '</span>' + fixBtn + '</div>';
+    }
+    if (typeof window !== 'undefined') {
+        window.applySuiteMirrorDiagnostics = function(msg) {
+            sqlHistoryMirrorAdvisor = (msg && Array.isArray(msg.advisor) && msg.advisor.length) ? msg.advisor : null;
+            sqlHistoryMirrorLints = (msg && Array.isArray(msg.lints) && msg.lints.length) ? msg.lints : null;
+            renderSqlHistoryIssuesSection();
+            renderSqlHistoryLintSection();
+        };
+        /* Own message listener, kept out of the over-budget central message switch. */
+        window.addEventListener('message', function(e) {
+            if (e.data && e.data.type === 'suiteMirrorDiagnostics') window.applySuiteMirrorDiagnostics(e.data);
+        });
+    }
     /* Number of distinct logs feeding the panel: cross-log contributors plus the active log when it
        has live rows. Scoped to just the active log when the "Current session only" filter is on. */
     function computeSqlHistoryLogCount() {
@@ -159,15 +209,25 @@ export function getSqlQueryHistoryDashboardScript(): string {
     function renderSqlHistoryIssuesSection() {
         var el = document.getElementById('sql-query-history-issues');
         if (!el) return;
-        if (!sqlHistoryDriftDbIssues || sqlHistoryDriftDbIssues.length === 0) {
-            el.classList.add('u-hidden');
-            el.innerHTML = '';
+        var title = '<div class="sql-qh-issues-title">' + escapeHtml(vt('viewer.sqlHistory.issues.title')) + '</div>';
+        /* Prefer the live Drift server's issues (freshest). Fall back to the typed advisor.json mirror
+           when the server isn't running, so the section still reflects the last recorded scan. */
+        if (sqlHistoryDriftDbIssues && sqlHistoryDriftDbIssues.length) {
+            el.classList.remove('u-hidden');
+            var parts = [title];
+            for (var i = 0; i < sqlHistoryDriftDbIssues.length; i++) parts.push(sqlHistoryIssueRow(sqlHistoryDriftDbIssues[i]));
+            el.innerHTML = parts.join('');
             return;
         }
-        el.classList.remove('u-hidden');
-        var parts = ['<div class="sql-qh-issues-title">' + escapeHtml(vt('viewer.sqlHistory.issues.title')) + '</div>'];
-        for (var i = 0; i < sqlHistoryDriftDbIssues.length; i++) parts.push(sqlHistoryIssueRow(sqlHistoryDriftDbIssues[i]));
-        el.innerHTML = parts.join('');
+        if (sqlHistoryMirrorAdvisor && sqlHistoryMirrorAdvisor.length) {
+            el.classList.remove('u-hidden');
+            var mp = [title];
+            for (var k = 0; k < sqlHistoryMirrorAdvisor.length; k++) mp.push(sqlHistoryDiagnosticRow(sqlHistoryMirrorAdvisor[k]));
+            el.innerHTML = mp.join('');
+            return;
+        }
+        el.classList.add('u-hidden');
+        el.innerHTML = '';
     }
     /* Phase 3: ask the host for Saropa Lints Drift-rule findings. usesDrift = the panel has captured
        Drift SQL, which is a strong signal the project uses Drift (drives the enable-pack advice). */
@@ -213,9 +273,23 @@ export function getSqlQueryHistoryDashboardScript(): string {
         var data = sqlHistoryDriftLint;
         var hasViol = !!(data && data.violations && data.violations.length);
         var suggest = !!(data && data.suggestEnablePack);
-        if (!hasViol && !suggest) { el.classList.add('u-hidden'); el.innerHTML = ''; return; }
+        var title = '<div class="sql-qh-lint-title">' + escapeHtml(vt('viewer.sqlHistory.lint.title')) + '</div>';
+        /* Prefer the live Saropa Lints export. Fall back to the typed lints.json mirror when there is no
+           live export, so the section still reflects the last recorded static-code findings. */
+        if (!hasViol && !suggest) {
+            if (sqlHistoryMirrorLints && sqlHistoryMirrorLints.length) {
+                el.classList.remove('u-hidden');
+                var mp = [title];
+                for (var k = 0; k < sqlHistoryMirrorLints.length; k++) mp.push(sqlHistoryDiagnosticRow(sqlHistoryMirrorLints[k]));
+                el.innerHTML = mp.join('');
+                return;
+            }
+            el.classList.add('u-hidden');
+            el.innerHTML = '';
+            return;
+        }
         el.classList.remove('u-hidden');
-        var parts = ['<div class="sql-qh-lint-title">' + escapeHtml(vt('viewer.sqlHistory.lint.title')) + '</div>'];
+        var parts = [title];
         if (suggest) {
             parts.push('<div class="sql-qh-lint-advice"><span class="sql-qh-lint-advice-msg">' + escapeHtml(vt('viewer.sqlHistory.lint.advice'))
                 + '</span><button type="button" class="sql-qh-lint-enable" title="' + escapeHtml(vt('viewer.sqlHistory.lint.enableTitle')) + '">'

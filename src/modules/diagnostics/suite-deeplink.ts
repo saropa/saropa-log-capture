@@ -64,8 +64,12 @@ export async function runSiblingDeepLink(command: string, args: unknown): Promis
   if (!ALLOWED_COMMANDS.has(command)) {
     return;
   }
+  // The envelope's `fix.args` is a spread array (VS Code `executeCommand(id, ...args)` semantics),
+  // but the inline R5 buttons pass a single options object. Normalize both: an array spreads, a
+  // lone object becomes a one-element arg list, undefined means no args.
+  const argList = Array.isArray(args) ? args : args === undefined ? [] : [args];
   try {
-    await vscode.commands.executeCommand(command, args);
+    await vscode.commands.executeCommand(command, ...argList);
   } catch {
     // Toast (not silent) so a tap that does nothing is explained — the sibling tool may be
     // out of date or was disabled after the button was rendered.

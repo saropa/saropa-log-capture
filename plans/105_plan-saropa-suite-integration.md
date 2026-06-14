@@ -18,9 +18,14 @@
   (R5) — each shown only when the sibling command is actually registered (`getCommands` probe), never a
   dead action; the host executor allowlists the four sibling command ids. The Advisor-issue and
   Lints-violation rows carry a **source tag** chip (R2 render, attribution slice).
-- **Not yet:** typed envelope rows reading the offline `advisor.json`/`lints.json` mirrors as a data
-  source (R2 render still uses today's live fetches), the Lints-side crash-to-rule mapping (R3 consumer
-  half, owned by Lints), and the joined Drift Health panel (owned by Advisor).
+- **Shipped (R2 render complete):** the SQL panel now reads the typed offline mirrors
+  (`.saropa/diagnostics/advisor.json` / `lints.json`) via the envelope reader and renders them as typed
+  rows — live Drift server / live Lints export preferred, the mirror as fallback when the live source is
+  absent. Each typed row carries its source tag, severity color, and a fix button when the diagnostic's
+  `fix.command` is allowlisted and live. **The entire Log-Capture side of this plan (R1, R2, R3 producer,
+  R4, R5) is now implemented.**
+- **Not in this repo:** the Lints-side crash-to-rule mapping (R3 consumer half, `saropa_lints`) and the
+  joined Drift Health panel (R4 there, `saropa_drift_advisor`) — tracked in the sibling plans.
 
 ## Goal
 
