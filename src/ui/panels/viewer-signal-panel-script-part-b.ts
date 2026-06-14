@@ -42,8 +42,8 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
                 + '<div class="signal-suggestion-head"><code class="signal-suggestion-pattern" title="' + esc(s.pattern) + '">' + esc(pat) + '</code><span class="signal-suggestion-impact">' + esc(vt('viewer.signalPanel.suggestionImpact', lines, pct)) + '</span></div>'
                 + (sampleCompact ? '<div class="signal-suggestion-sample" title="' + esc(sample) + '">' + esc(sampleCompact) + '</div>' : '')
                 + '<div class="signal-suggestion-actions">'
-                +   '<button type="button" class="signal-suggestion-accept" data-sid="' + esc(s.id) + '" data-pattern="' + escapeAttr(s.pattern) + '">Accept</button>'
-                +   '<button type="button" class="signal-suggestion-reject" data-sid="' + esc(s.id) + '">Reject</button>'
+                +   '<button type="button" class="signal-suggestion-accept" data-sid="' + esc(s.id) + '" data-pattern="' + escapeAttr(s.pattern) + '">' + esc(SIGNAL_STRINGS.accept) + '</button>'
+                +   '<button type="button" class="signal-suggestion-reject" data-sid="' + esc(s.id) + '">' + esc(SIGNAL_STRINGS.reject) + '</button>'
                 + '</div>'
                 + '</div>';
         }).join('');
@@ -96,15 +96,15 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
         var m = detail.match(/\\[saropa_lints\\]\\s+(\\S+)\\s+\\(/);
         if (!m) return '';
         var rule = m[1];
-        return ' <span class="re-action signal-lint-link" role="button" title="Open rule docs for ' + esc(rule) + '" data-rule="' + esc(rule) + '" data-source="saropa_lints">\\uD83D\\uDCCB Rule</span>';
+        return ' <span class="re-action signal-lint-link" role="button" title="' + SIGNAL_STRINGS.openRuleTitle.split('{0}').join(esc(rule)) + '" data-rule="' + esc(rule) + '" data-source="saropa_lints">\\uD83D\\uDCCB ' + esc(SIGNAL_STRINGS.ruleLabel) + '</span>';
     }
 
     /** Build triage buttons for error-kind signals (Close/Mute/Re-open). */
     function buildTriageHtml(s) {
         if (s.kind !== 'error' && s.kind !== 'warning') return '';
         var status = (signalDataCache.statuses || {})[s.fingerprint] || 'open';
-        if (status === 'open') return ' <span class="re-action" data-hash="' + esc(s.fingerprint) + '" data-status="closed">Close</span><span class="re-action" data-hash="' + esc(s.fingerprint) + '" data-status="muted">Mute</span>';
-        return ' <span class="re-action" data-hash="' + esc(s.fingerprint) + '" data-status="open">Re-open</span>';
+        if (status === 'open') return ' <span class="re-action" data-hash="' + esc(s.fingerprint) + '" data-status="closed">' + esc(SIGNAL_STRINGS.triageClose) + '</span><span class="re-action" data-hash="' + esc(s.fingerprint) + '" data-status="muted">' + esc(SIGNAL_STRINGS.triageMute) + '</span>';
+        return ' <span class="re-action" data-hash="' + esc(s.fingerprint) + '" data-status="open">' + esc(SIGNAL_STRINGS.triageReopen) + '</span>';
     }
 
     /** Render the unified signal list across sessions — the single cross-session signal view. */
@@ -126,18 +126,18 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
             if (s.maxDurationMs) { meta += vt('viewer.signalPanel.max', fmtMs(s.maxDurationMs)); }
             if (s.category) { meta += ' [' + esc(s.category) + ']'; }
             var lintBtn = buildLintRuleLink(s.detail || '');
-            var daBtn = s.kind === 'sql' ? ' <span class="re-action signal-da-link" role="button" title="Open Drift Advisor">\\uD83D\\uDD0D DA</span>' : '';
+            var daBtn = s.kind === 'sql' ? ' <span class="re-action signal-da-link" role="button" title="' + esc(SIGNAL_STRINGS.openDriftAdvisorTitle) + '">\\uD83D\\uDD0D DA</span>' : '';
             var sevCls = s.severity === 'critical' ? ' signal-sev-critical' : s.severity === 'high' ? ' signal-sev-high' : '';
             var recurBadge = s.recurring ? ' <span class="signal-recurring-badge" title="' + esc(vt('viewer.signalPanel.recurringTitle', s.sessionCount)) + '">\u21BB</span>' : '';
             var trendBadge = '';
-            if (s.trend === 'increasing') { trendBadge = ' <span class="signal-trend-up" title="Increasing">\u2191</span>'; }
-            else if (s.trend === 'decreasing') { trendBadge = ' <span class="signal-trend-down" title="Decreasing">\u2193</span>'; }
-            else if (s.trend === 'stable') { trendBadge = ' <span class="signal-trend-stable" title="Stable">\u2014</span>'; }
+            if (s.trend === 'increasing') { trendBadge = ' <span class="signal-trend-up" title="' + esc(SIGNAL_STRINGS.trendIncreasing) + '">\u2191</span>'; }
+            else if (s.trend === 'decreasing') { trendBadge = ' <span class="signal-trend-down" title="' + esc(SIGNAL_STRINGS.trendDecreasing) + '">\u2193</span>'; }
+            else if (s.trend === 'stable') { trendBadge = ' <span class="signal-trend-stable" title="' + esc(SIGNAL_STRINGS.trendStable) + '">\u2014</span>'; }
             var triageHtml = buildTriageHtml(s);
             /* Per-row copy: emits a paste-ready detail block (metadata + example + supporting
                log lines) so the user can drop one signal into an analysis engine without
                copying the whole panel. Handler lives in part D, keyed by fingerprint/label. */
-            var copyBtn = ' <span class="re-action signal-copy-btn" role="button" title="Copy signal details for analysis" data-fingerprint="' + esc(s.fingerprint) + '" data-label="' + esc(s.label) + '">\\uD83D\\uDCCB Copy</span>';
+            var copyBtn = ' <span class="re-action signal-copy-btn" role="button" title="' + esc(SIGNAL_STRINGS.copySignalTitle) + '" data-fingerprint="' + esc(s.fingerprint) + '" data-label="' + esc(s.label) + '">\\uD83D\\uDCCB ' + esc(SIGNAL_STRINGS.copyLabel) + '</span>';
             var dimCls = (signalDataCache.statuses || {})[s.fingerprint] === 'closed' ? ' re-closed' : '';
             /* data-fingerprint + data-label + data-detail travel to the click handler so the host
                can resolve to the specific session containing this fingerprint and the webview can
@@ -194,10 +194,10 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
             var plain = (typeof stripTags === 'function' ? stripTags(li.html) : li.html).replace(/\\s+/g, ' ').trim();
             if (!plain) continue;
             var compact = plain.length > 90 ? plain.slice(0, 87) + '\\u2026' : plain;
-            snippets.push('<div class="signal-evidence-line" title="Line ' + (idx + 1) + ': ' + esc(plain) + '">' + esc(compact) + '</div>');
+            snippets.push('<div class="signal-evidence-line" title="' + SIGNAL_STRINGS.evidenceLineTitle.split('{0}').join(idx + 1).split('{1}').join(esc(plain)) + '">' + esc(compact) + '</div>');
         }
         if (snippets.length === 0) return '';
-        return '<div class="signal-evidence-preview" aria-label="Supporting log lines">' + snippets.join('') + '</div>';
+        return '<div class="signal-evidence-preview" aria-label="' + esc(SIGNAL_STRINGS.supportingLogLines) + '">' + snippets.join('') + '</div>';
     }
 
     /** Render signals detected in the current log session (all kinds). Also manages the "This log" empty state. */
@@ -257,7 +257,7 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
             var preview = buildEvidencePreviewHtml(s);
             /* fingerprint + label travel on the row so the part-D copy handler can re-find this
                exact signal object (which carries lineIndices) to build the detail block. */
-            var copyBtn = ' <span class="re-action signal-copy-btn" role="button" title="Copy signal details for analysis" data-fingerprint="' + esc(s.fingerprint || '') + '" data-label="' + esc(s.label) + '">\\uD83D\\uDCCB Copy</span>';
+            var copyBtn = ' <span class="re-action signal-copy-btn" role="button" title="' + esc(SIGNAL_STRINGS.copySignalTitle) + '" data-fingerprint="' + esc(s.fingerprint || '') + '" data-label="' + esc(s.label) + '">\\uD83D\\uDCCB ' + esc(SIGNAL_STRINGS.copyLabel) + '</span>';
             /* Inline detail body, hidden until the row is clicked. Only emitted for non-jumpable
                rows that have a detail — jumpable rows reveal context by scrolling to the line. */
             var detailBlock = (!jumpable && hasDetail)

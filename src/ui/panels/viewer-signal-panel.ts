@@ -140,6 +140,21 @@ export function getSignalPanelScript(): string {
         topOfTotal: t('signal.topOfTotal'),
         heroNoErrorsWarnings: t('signal.heroNoErrorsWarnings'),
         sectionErrorsInLog: t('signal.sectionErrorsInLog'),
+        accept: t('signal.accept'),
+        reject: t('signal.reject'),
+        triageClose: t('signal.triageClose'),
+        triageMute: t('signal.triageMute'),
+        triageReopen: t('signal.triageReopen'),
+        ruleLabel: t('signal.ruleLabel'),
+        openRuleTitle: t('signal.openRuleTitle'),
+        openDriftAdvisorTitle: t('signal.openDriftAdvisorTitle'),
+        copyLabel: t('signal.copyLabel'),
+        copySignalTitle: t('signal.copySignalTitle'),
+        trendIncreasing: t('signal.trendIncreasing'),
+        trendDecreasing: t('signal.trendDecreasing'),
+        trendStable: t('signal.trendStable'),
+        evidenceLineTitle: t('signal.evidenceLineTitle'),
+        supportingLogLines: t('signal.supportingLogLines'),
     };
     return getSignalPanelScriptContent(SIGNAL_STORAGE_KEY, strings);
 }
