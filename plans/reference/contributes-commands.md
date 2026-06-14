@@ -79,6 +79,7 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.pause` | %command.pause.title% |  |
 | `saropaLogCapture.popOutViewer` | %command.popOutViewer.title% |  |
 | `saropaLogCapture.rebuildProjectIndex` | Rebuild Project Index |  |
+| `saropaLogCapture.rebuildSearchIndex` | Rebuild Log Search Index |  |
 | `saropaLogCapture.refreshHistory` | %command.refreshHistory.title% |  |
 | `saropaLogCapture.removeFromCollection` | %command.removeFromCollection.title% |  |
 | `saropaLogCapture.renameSession` | %command.renameSession.title% |  |
@@ -97,6 +98,7 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.shareCollection` | %command.shareCollection.title% |  |
 | `saropaLogCapture.showCodeQualityForFrame` | %command.showCodeQualityForFrame.title% |  |
 | `saropaLogCapture.showFilterSuggestions` | %command.showFilterSuggestions.title% |  |
+| `saropaLogCapture.showLogReferences` | %command.showLogReferences.title% |  |
 | `saropaLogCapture.showRelatedQueries` | %command.showRelatedQueries.title% |  |
 | `saropaLogCapture.showSignals` | %command.showSignals.title% |  |
 | `saropaLogCapture.showTimeline` | %command.showTimeline.title% |  |
@@ -112,4 +114,4 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.trashSession` | %command.trashSession.title% |  |
 | `saropaLogCapture.ungroupSession` | Saropa Log Capture: Ungroup Session |  |
 
-**Total:** 105 commands.
+**Total:** 107 commands.
