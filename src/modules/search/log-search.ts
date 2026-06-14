@@ -6,6 +6,7 @@
 import * as vscode from 'vscode';
 import { getConfig, getLogDirectoryUri, readTrackedFiles } from '../config/config';
 import { boundForUserRegex } from '../misc/regex-safety';
+import { getGlobalSearchIndex } from './search-index-global';
 
 /** A single search match within a log file. */
 export interface SearchMatch {
@@ -85,13 +86,17 @@ export async function searchLogFiles(
         return { query, matches: [], totalFiles: 0, filesWithMatches: 0 };
     }
 
-    // Search each file
-    for (const uri of logFiles) {
+    // The trigram index prunes files that provably can't contain a literal query; survivors are
+    // still scanned for real, so totalFiles reports the full corpus, not the narrowed candidate set.
+    totalFiles = logFiles.length;
+    const candidates = await narrowCandidates(logFiles, query, options);
+
+    // Search each candidate file
+    for (const uri of candidates) {
         if (matches.length >= maxResults) {
             break;
         }
 
-        totalFiles++;
         const fileMatches = await searchFile(uri, pattern, maxPerFile);
 
         if (fileMatches.length > 0) {
@@ -102,6 +107,19 @@ export async function searchLogFiles(
     }
 
     return { query, matches, totalFiles, filesWithMatches };
+}
+
+/**
+ * Narrow the corpus to files the trigram index can't rule out. Regex queries and a disabled/empty
+ * index return the full list unchanged — the index only prunes provably-non-matching literal files,
+ * and every survivor is still scanned, so this can never drop a real match.
+ */
+async function narrowCandidates(
+    logFiles: vscode.Uri[], query: string, options: SearchOptions,
+): Promise<vscode.Uri[]> {
+    if (options.useRegex) { return logFiles; }
+    const narrowed = await getGlobalSearchIndex()?.narrowLiteral(logFiles, query);
+    return narrowed ?? logFiles;
 }
 
 /** Build a RegExp pattern from the query string. */
@@ -185,9 +203,12 @@ export async function searchLogFilesConcurrent(
     const pattern = buildPattern(query, options);
     if (!pattern) { return empty; }
 
+    // Prune to trigram-index candidates (literal queries only); fall back to the full list otherwise.
+    const candidates = await narrowCandidates(logFiles, query, options);
+
     const files: FileSearchResult[] = [];
-    for (let i = 0; i < logFiles.length; i += searchBatchSize) {
-        const batch = logFiles.slice(i, i + searchBatchSize);
+    for (let i = 0; i < candidates.length; i += searchBatchSize) {
+        const batch = candidates.slice(i, i + searchBatchSize);
         const batchResults = await Promise.all(batch.map(uri => countFileMatches(uri, pattern)));
         for (const r of batchResults) { if (r) { files.push(r); } }
     }

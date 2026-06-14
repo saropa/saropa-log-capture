@@ -11,6 +11,7 @@ import type { SessionMetadataStore } from './session-metadata';
 import type { AutoTagger } from '../misc/auto-tagger';
 import type { ProjectIndexer } from '../project-indexer/project-indexer';
 import { finalizeSession, buildSessionStats } from './session-lifecycle-finalize';
+import { getGlobalSearchIndex } from '../search/search-index-global';
 import type { EarlyOutputBuffer } from './session-event-bus';
 
 export interface StopSessionDeps {
@@ -76,14 +77,18 @@ export async function stopSessionImpl(
         floodSuppressedTotal: deps.floodSuppressedTotal,
     });
 
-    const onReportsIndexReady =
-        deps.projectIndexer && getConfig().projectIndex.enabled
-            ? (logUri: vscode.Uri) => {
-                deps.metadataStore.loadMetadata(logUri).then((meta) => {
-                    deps.projectIndexer!.upsertReportEntryFromMeta(logUri, meta).catch(() => {});
-                }).catch(() => {});
-            }
-            : undefined;
+    // Runs after end-of-session scans settle: refresh the doc/report index entry and append this
+    // session to the trigram search index so the next cross-session search can skip unrelated files.
+    const onReportsIndexReady = (logUri: vscode.Uri): void => {
+        if (deps.projectIndexer && getConfig().projectIndex.enabled) {
+            deps.metadataStore.loadMetadata(logUri).then((meta) => {
+                deps.projectIndexer!.upsertReportEntryFromMeta(logUri, meta).catch(() => {});
+            }).catch(() => {});
+        }
+        if (getConfig().searchIndex.enabled) {
+            getGlobalSearchIndex()?.updateForFile(logUri).catch(() => {});
+        }
+    };
 
     await finalizeSession(
         {
