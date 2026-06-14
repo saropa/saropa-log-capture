@@ -4,6 +4,7 @@
  */
 
 import { escapeHtml } from '../../modules/capture/ansi';
+import { t } from '../../l10n';
 import { getSignalReportStyles } from './signal-report-styles';
 import type { RootCauseHypothesis } from '../../modules/root-cause-hints/root-cause-hint-types';
 
@@ -26,7 +27,7 @@ function sectionSlot(id: string, title: string, loadingText: string): string {
 export function buildSignalReportShell(opts: ShellOptions): string {
   const { nonce, hypothesis } = opts;
   const conf = hypothesis.confidence ?? 'low';
-  const confLabel = conf === 'high' ? 'High confidence' : conf === 'medium' ? 'Medium confidence' : 'Low confidence';
+  const confLabel = t(conf === 'high' ? 'signals.conf.high' : conf === 'medium' ? 'signals.conf.medium' : 'signals.conf.low');
   const reasonHtml = hypothesis.confidenceReason
     ? `<div class="conf-reason">${escapeHtml(hypothesis.confidenceReason)}</div>`
     : '';
@@ -39,30 +40,30 @@ export function buildSignalReportShell(opts: ShellOptions): string {
 </head>
 <body>
 <header class="report-header">
-  <h1>Saropa Signal Report</h1>
+  <h1>${escapeHtml(t('signals.shell.title'))}</h1>
   <div class="signal-summary">
     <span>${escapeHtml(hypothesis.text)}</span>
     <span class="conf-badge conf-badge--${escapeHtml(conf)}">${escapeHtml(confLabel)}</span>
     ${reasonHtml}
   </div>
   <div class="btn-row">
-    <button class="copy-btn" id="copy-report-btn">Copy Report</button>
-    <button class="copy-btn" id="save-report-btn">Save Report</button>
+    <button class="copy-btn" id="copy-report-btn">${escapeHtml(t('signals.shell.copyReport'))}</button>
+    <button class="copy-btn" id="save-report-btn">${escapeHtml(t('signals.shell.saveReport'))}</button>
   </div>
 </header>
 
 <div class="report-grid">
   <div class="report-col report-col--primary">
-    ${sectionSlot('overview', 'Session Overview', 'Loading session data...')}
-    ${sectionSlot('evidence', 'Evidence', 'Loading evidence lines...')}
-    ${sectionSlot('details', 'Signal Details', 'Analyzing signal...')}
-    ${sectionSlot('related', 'Related Lines', 'Scanning for related lines...')}
+    ${sectionSlot('overview', t('signals.section.overview'), t('signals.loading.overview'))}
+    ${sectionSlot('evidence', t('signals.section.evidence'), t('signals.loading.evidence'))}
+    ${sectionSlot('details', t('signals.section.details'), t('signals.loading.details'))}
+    ${sectionSlot('related', t('signals.section.related'), t('signals.loading.related'))}
   </div>
   <div class="report-col report-col--secondary">
-    ${sectionSlot('other-signals', 'Other Signals', 'Checking for other signals...')}
-    ${sectionSlot('history', 'Cross-Session History', 'Checking session history\u2026')}
-    ${sectionSlot('recommendations', 'Recommendations', 'Generating recommendations...')}
-    ${sectionSlot('ecosystem', 'Companion Extensions', 'Checking installed extensions\u2026')}
+    ${sectionSlot('other-signals', t('signals.section.otherSignals'), t('signals.loading.otherSignals'))}
+    ${sectionSlot('history', t('signals.section.history'), t('signals.loading.history'))}
+    ${sectionSlot('recommendations', t('signals.section.recommendations'), t('signals.loading.recommendations'))}
+    ${sectionSlot('ecosystem', t('signals.section.ecosystem'), t('signals.loading.ecosystem'))}
   </div>
 </div>
 
@@ -209,7 +210,7 @@ export interface EvidenceGroup {
 
 /** Render evidence lines with surrounding context and optional metadata annotations. */
 export function renderEvidenceSection(groups: readonly EvidenceGroup[]): string {
-  if (groups.length === 0) { return '<div class="no-data">No evidence lines found</div>'; }
+  if (groups.length === 0) { return `<div class="no-data">${escapeHtml(t('signals.evidence.noData'))}</div>`; }
   const parts: string[] = [];
   for (const group of groups) {
     parts.push('<div class="evidence-block">');
@@ -218,7 +219,7 @@ export function renderEvidenceSection(groups: readonly EvidenceGroup[]): string 
       parts.push(`<div class="evidence-meta">${escapeHtml(group.meta.timelinePosition)}</div>`);
     }
     if (group.meta?.precedingAction) {
-      parts.push(`<div class="evidence-meta">Preceding action: ${escapeHtml(group.meta.precedingAction)}</div>`);
+      parts.push(`<div class="evidence-meta">${escapeHtml(t('signals.evidence.precedingAction', group.meta.precedingAction))}</div>`);
     }
     parts.push('<div class="evidence-lines">');
     for (const line of group.lines) {
@@ -237,9 +238,9 @@ export function renderEvidenceSection(groups: readonly EvidenceGroup[]): string 
  * (fatal, anr, oom, native, non-fatal) when available.
  */
 export function renderRecommendations(templateId: string, errorCategory?: string): string {
-  const recs = getRecommendation(templateId, errorCategory);
-  if (!recs) { return '<div class="no-data">No specific recommendations</div>'; }
-  return `<div class="recommendation">${escapeHtml(recs)}</div>`;
+  const recKey = getRecommendation(templateId, errorCategory);
+  if (!recKey) { return `<div class="no-data">${escapeHtml(t('signals.rec.noData'))}</div>`; }
+  return `<div class="recommendation">${escapeHtml(t(recKey))}</div>`;
 }
 
 /** Replace relative source paths (e.g. ./lib/foo.dart:42) with absolute paths. */
@@ -251,37 +252,23 @@ export function resolveSourcePaths(line: string, wsRoot: string): string {
   );
 }
 
+/** Returns the l10n KEY of the recommendation for a signal (rendered with t() by the caller). */
 function getRecommendation(templateId: string, errorCategory?: string): string | undefined {
   // Category-specific recommendations for error-recent signals
   if (templateId === 'error-recent' && errorCategory) {
-    const catRec = errorCategoryRecommendation(errorCategory);
-    if (catRec) { return catRec; }
+    const catKey = errorCategoryRecommendation(errorCategory);
+    if (catKey) { return catKey; }
   }
-  const map: Record<string, string> = {
-    'error-recent': 'Check the stack trace for the root cause. If the error repeats, consider adding error handling or fixing the underlying issue.',
-    'warning-recurring': 'Recurring warnings often indicate deprecated APIs or configuration issues. Address them to prevent future breakage.',
-    'network-failure': 'Check network connectivity, server availability, and timeout configuration. Consider adding retry logic with backoff.',
-    'memory-pressure': 'Profile memory usage to find leaks. Check for large allocations, unclosed streams, or growing collections.',
-    'slow-operation': 'Profile the slow path. Consider caching, pagination, or moving work off the main thread.',
-    'permission-denial': 'Ensure the app requests required permissions before use. Check the manifest/Info.plist for missing declarations.',
-    'anr-risk': 'Move long-running operations off the main thread. Check for blocking I/O, synchronous network calls, or heavy computation on UI thread.',
-    'n-plus-one': 'Use eager loading (joins) or batch queries instead of issuing one query per item in a loop.',
-    'sql-burst': 'Consider debouncing or batching these queries. Check if the same query is being called redundantly.',
-    'fingerprint-leader': 'This query runs very frequently. Consider caching results or batching multiple calls.',
-    'classified-critical': 'This is a critical error that likely causes crashes or data loss. Prioritize collection.',
-    'classified-bug': 'This pattern typically indicates a programming error. Check for null/undefined handling and type safety.',
-  };
-  return map[templateId];
+  const known = new Set([
+    'error-recent', 'warning-recurring', 'network-failure', 'memory-pressure', 'slow-operation',
+    'permission-denial', 'anr-risk', 'n-plus-one', 'sql-burst', 'fingerprint-leader',
+    'classified-critical', 'classified-bug',
+  ]);
+  return known.has(templateId) ? `signals.rec.${templateId}` : undefined;
 }
 
-/** Tailored advice based on the crash category for error-recent signals. */
+/** l10n KEY of the tailored advice for a crash category (error-recent signals), or undefined. */
 function errorCategoryRecommendation(cat: string): string | undefined {
-  const catMap: Record<string, string> = {
-    'fatal': 'This is a fatal/unhandled exception — the app likely crashed. Check the stack trace for the throw site and add a top-level error handler.',
-    'anr': 'This error is associated with an ANR (Application Not Responding). Move the blocking operation off the main thread.',
-    'oom': 'This is an out-of-memory error. Profile heap usage, check for retained references, and consider reducing allocation in hot paths.',
-    'native': 'This is a native crash (SIGSEGV/SIGABRT). Check for use-after-free, null pointer dereference, or incompatible native library versions.',
-    'non-fatal': 'This is a non-fatal error. Check for null/undefined values at the call site shown in the stack trace.',
-  };
-  return catMap[cat];
+  const known = new Set(['fatal', 'anr', 'oom', 'native', 'non-fatal']);
+  return known.has(cat) ? `signals.recCat.${cat}` : undefined;
 }
