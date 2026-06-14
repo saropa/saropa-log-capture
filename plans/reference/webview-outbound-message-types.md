@@ -17,6 +17,7 @@ Heuristic index of `type` fields on objects passed to `this.postMessage` / `targ
 | `collectionsMerged` | src/ui/provider/viewer-message-handler-collection.ts |
 | `crashAiSummary` | src/ui/analysis/analysis-panel.ts |
 | `crashDetailReady` | src/ui/analysis/analysis-panel.ts |
+| `crashlyticsApplicable` | src/ui/provider/log-viewer-provider-setup.ts |
 | `createCollectionError` | src/ui/provider/viewer-message-handler-collection.ts |
 | `createCollectionSucceeded` | src/ui/provider/viewer-message-handler-collection.ts |
 | `currentLogChanged` | src/ui/provider/log-viewer-provider.ts |
@@ -106,4 +107,4 @@ Heuristic index of `type` fields on objects passed to `this.postMessage` / `targ
 | `updateWatchCounts` | src/ui/provider/log-viewer-provider.ts |
 | `viewerKeybindingRecordMode` | src/ui/provider/viewer-message-handler-actions.ts |
 
-**Total:** 99 distinct types.
+**Total:** 100 distinct types.
