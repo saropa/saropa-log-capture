@@ -109,6 +109,59 @@ export const stringsSignals: Record<string, string> = {
     'signals.toast.buildFailed': 'Failed to build report',
     'signals.toast.saved': 'Report saved to {0}',
     'signals.toast.saveFailed': 'Failed to save report',
+
+    // Signal Details section (panel only; the markdown export uses its own English headings)
+    'signals.details.queryFingerprint': 'Query fingerprint',
+    'signals.details.repetitions': 'Repetitions',
+    'signals.details.distinctArguments': 'Distinct arguments',
+    'signals.details.windowSpan': 'Window span',
+    'signals.details.confidence': 'Confidence',
+    'signals.details.anrScore': 'ANR score',
+    'signals.details.riskLevel': 'Risk level',
+    'signals.details.issuesFound': 'Issues found',
+    'signals.details.topRule': 'Top rule',
+    'signals.details.regression': 'Regression',
+    'signals.details.firstOccurrence': 'First occurrence',
+    'signals.details.lastOccurrence': 'Last occurrence',
+    'signals.details.span': 'Span',
+    'signals.details.pattern': 'Pattern',
+    'signals.details.contributingFactors': 'Contributing factors',
+    'signals.details.nPlusOneSummary': '{0} repeats, {1} distinct args',
+    'signals.details.lineValue': 'Line {0}',
+    'signals.details.spanLines': '{0} lines',
+    'signals.details.seconds': '{0}s',
+    'signals.details.sqlQueries': '{0} queries{1}',
+    'signals.details.inSeconds': ' in {0}s',
+    'signals.details.fpOccurrences': '{0} occurrences (sample: line {1})',
+    'signals.details.patternSameLine': 'All on the same line',
+    'signals.details.patternClustered': 'Clustered ({0}% in one region)',
+    'signals.details.patternSpread': 'Spread across the log',
+
+    // Cross-Session History section
+    'signals.history.noData': 'No cross-session history for this signal type. History appears after multiple sessions detect the same signal.',
+    'signals.history.summary': 'Appeared in {0} of {1} session(s)',
+    'signals.history.openTitle': 'Open this session in the viewer',
+    'signals.history.whatChanged': 'What changed since last clean session',
+
+    // Companion Extensions (ecosystem) section — Saropa product names stay literal in the values
+    'signals.eco.notInstalled': '{0} is not installed.',
+    'signals.eco.installLink': 'Install from Marketplace',
+    'signals.eco.driftBenefit': 'Adds schema health, query stats, index suggestions, and anomaly detection to your signal reports.',
+    'signals.eco.lintsBenefit': 'Adds lint violations, OWASP summaries, and health scores to bug reports generated from signal context.',
+    'signals.eco.driftNoIssues': 'Drift Advisor connected — no issues detected this session.',
+    'signals.eco.lintsInstalled': 'Saropa Lints installed.',
+    'signals.eco.lintsNoViolations': 'Saropa Lints connected — no violations detected.',
+    'signals.eco.issuesFound': 'Issues found',
+    'signals.eco.topRule': 'Top rule',
+    'signals.eco.totalViolations': 'Total violations',
+    'signals.eco.analysisTier': 'Analysis tier',
+    'signals.eco.criticalHigh': 'Critical + High',
+
+    // Panel section fallbacks
+    'signals.panel.noDetails': 'No additional details for this signal type',
+    'signals.panel.noEvidence': 'No evidence lines to display',
+    'signals.panel.couldNotRead': 'Could not read log file. Evidence at: {0}',
+    'signals.panel.outOfRange': 'Evidence lines out of range (file may have changed). Referenced: {0}',
 };
 
 
