@@ -108,7 +108,7 @@
   "config.autoHidePatterns.description": "뷰어에서 자동으로 숨길 텍스트 패턴. 패턴을 포함하는 줄(대소문자 구분 없음)은 자동으로 숨겨집니다. 마우스 오른쪽 버튼 클릭 > 숨기기 > 선택 항목 숨기기(항상)로 관리합니다.",
   "config.autoHidePatterns.title": "Text patterns to auto-hide in the viewer.",
   "config.afterCaptureAction.description": "캡처 종료 시 동작. \"ask\"는 알림 표시. \"openLog\"는 로그를 자동으로 열기. \"nothing\"은 알림 억제.",
-  "config.afterCaptureAction.title": "캡처 종료 후 동작",
+  "config.afterCaptureAction.title": "Action after capture ends",
   "config.afterCaptureAction.enum.ask": "로그 열기 및 경로 복사 버튼이 있는 알림 표시",
   "config.afterCaptureAction.enum.openLog": "뷰어에서 로그를 자동으로 열기",
   "config.afterCaptureAction.enum.nothing": "아무것도 하지 않음 — 알림 없음, 자동 열기 없음",
@@ -460,7 +460,7 @@
   "config.viewerKeybindings.description": "Override viewer panel power shortcuts (e.g. openSearch, togglePause). Keys are action IDs; values are key descriptors (e.g. \"ctrl+f\", \"space\"). Change from Options → Keyboard shortcuts by double-clicking a power shortcut row.",
   "config.viewerKeybindings.title": "Viewer Keybindings",
   "config.viewerMaxLines.description": "뷰어에 표시할 최대 줄 수(0 = 기본 50,000). maxLines를 초과할 수 없습니다.",
-  "config.viewerMaxLines.title": "Maximum lines shown in the viewer (0 = default 50,000).",
+  "config.viewerMaxLines.title": "Maximum lines shown in the viewer (0 = use maxLines).",
   "config.viewerPreserveAsciiBoxArt.description": "When enabled, log lines that look like Unicode box banners (text between paired vertical bars \"│ … │\" on the same line) are shown as normal lines, not stack frames, so stack preview does not collapse them with \"[+N more]\". Reload the log viewer after changing.",
   "config.viewerPreserveAsciiBoxArt.title": "Preserve ASCII/Unicode box-art lines in the log viewer",
   "config.viewerSlowBurstCooldownMs.description": "Minimum log time (milliseconds) between burst markers per session. Use 0 to disable cooldown.",
@@ -497,5 +497,6 @@
   "command.clearGlobalAggregates.title": "Saropa Log Capture: Clear Cross-Workspace Noise Patterns",
   "config.learning.globalAggregates.description": "Share high-confidence framework-noise filter patterns across your workspaces so a new project starts with less noise. Off by default. Only the pattern text and its category are stored on this machine — never file paths, project names, or usernames. Use 'Clear Cross-Workspace Noise Patterns' to wipe them.",
   "config.learning.globalAggregates.title": "Share noise patterns across workspaces",
-  "command.compareThreeSessions.title": "Saropa Log Capture: Compare 3 Logs"
+  "command.compareThreeSessions.title": "Saropa Log Capture: Compare 3 Logs",
+  "config.integrations.database.redactLiterals.title": "Redact SQL literal values in the queries sidecar."
 }
