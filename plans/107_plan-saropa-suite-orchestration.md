@@ -31,6 +31,15 @@ stopped. Every per-repo plan admits the same gap in its own words — "device ve
 extensions that each implement a shared protocol and have **never shaken hands**. That seam — not more
 features — is the remaining work.
 
+**All four extensions were published to the marketplace before that verification ran** (Drift Advisor
+4.0.1, Saropa Lints 14.0.0, Log Capture 9.0.1, the Saropa Suite pack 1.0.7), so the handshake is now a
+*production* check, not a pre-ship gate. The bound on the risk is the fail-safe design: a deep-link
+renders only when the sibling command is registered (a `getCommands` probe — no dead buttons), envelope
+parsing returns `undefined` on a schema/field mismatch rather than throwing, and mirror reads are
+best-effort. A broken seam therefore surfaces as a **silently absent feature**, not a crash or data
+loss — a quality gap, not a stability incident. Phase 1 is consequently the urgent item, and a FAIL is
+a point release in the owning repo rather than a rollback.
+
 ### Built state (audited against each plan + changelog, 2026-06-14)
 
 | Repo | Requirements shipped | Test state | Honest gap |
@@ -107,6 +116,10 @@ The seams to exercise:
 
 Exit criterion: each of the four seams demonstrated once on a live three-extension run, with any
 mismatch filed as an owning-repo bug. This converts four "unverified" plans into one verified suite.
+
+The click-by-click runbook for this phase — prerequisites, the lifecycle sequencing the three
+producers need, and a PASS/FAIL check per seam — is
+[guides/suite-handshake-verification.md](guides/suite-handshake-verification.md).
 
 ### Phase 2 — Manual a11y / visual audits (gated behind Phase 1)
 
