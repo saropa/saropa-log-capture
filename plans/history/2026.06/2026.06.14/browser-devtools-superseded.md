@@ -9,7 +9,7 @@
 > `"jsonl" | "json"`; the shipped `requestIdPattern` and `timeWindowSeconds` settings are
 > absent here; and "Mode C — companion extension" is its own plan
 > ([014_integration-spec-browser-companion-extension.md](../../../014_integration-spec-browser-companion-extension.md)).
-> The accurate, as-shipped spec is **[012_integration-spec-browser-devtools.md](../../../012_integration-spec-browser-devtools.md)**;
+> The accurate, as-shipped spec is **[012_integration-spec-browser-devtools.md](../2026.06.10/012_integration-spec-browser-devtools.md)**;
 > the implementation is in `src/modules/integrations/providers/browser-devtools.ts` and
 > `src/modules/integrations/providers/browser-cdp-capture.ts`.
 

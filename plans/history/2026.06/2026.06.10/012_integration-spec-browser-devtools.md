@@ -1,8 +1,8 @@
 # Spec: Browser and DevTools Integration
 
 **Adapter id:** `browser`
-**Status:** Partial
-**Full design:** TBD — not yet created
+**Status:** Shipped — console + optional network correlation, "Browser" tab; companion-extension work split to spec 014. Deferred section: none remaining.
+**Full design:** This spec is the as-shipped design.
 
 ## Goal
 

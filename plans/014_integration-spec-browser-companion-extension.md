@@ -30,4 +30,4 @@ Mode C adds a third path: a lightweight companion browser extension that writes 
 
 ## Related
 
-- Parent spec: [012_integration-spec-browser-devtools.md](012_integration-spec-browser-devtools.md)
+- Parent spec: [012_integration-spec-browser-devtools.md](history/2026.06/2026.06.10/012_integration-spec-browser-devtools.md)
