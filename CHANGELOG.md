@@ -26,6 +26,14 @@ cspell:disable
 
 ---
 
+## [9.0.1]
+
+### Changed
+
+- **Crashlytics sidebar stays hidden on projects that ship no app:** The Crashlytics view (and its "Add google-services.json…" setup hint) no longer appears on library or package projects that have no Firebase app — so a Dart/npm package is never nagged to configure crash reporting it can't use. The icon shows as soon as there's app evidence: `saropaLogCapture.firebase.*` settings, a `google-services.json`, or an `AndroidManifest.xml` in the workspace. The adapter remains enabled in settings; only the on-screen surface is gated.
+
+---
+
 ## [9.0.0]
 
 Saropa Log Capture now spots patterns across your sessions at a glance — a workspace pulse and fix-rate show whether you're clearing errors faster than they pile up, cross-session search is faster, bug reports explain why something probably broke and who depends on the crashing file, and new integrations link traces, database queries, and the rest of the Saropa suite into your logs. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.0/CHANGELOG.md)

@@ -17,6 +17,7 @@ import { extractSourceReference } from './modules/source/source-linker';
 import { buildScopeContext, type ScopeContext } from './modules/storage/scope-context';
 import { getLearningWebviewOptions } from './modules/learning/learning-webview-options';
 import { mergeIntegrationAdaptersForWebview } from './modules/integrations/integration-adapter-constants';
+import { isCrashlyticsApplicable, clearCrashlyticsApplicabilityCache } from './modules/crashlytics/crashlytics-applicability';
 import type { CaptureToggleStatusBar } from './ui/shared/capture-toggle-status-bar';
 
 export interface ListenerDeps {
@@ -183,6 +184,11 @@ export function setupConfigListener(
         if (e.affectsConfiguration('saropaLogCapture.integrations.adapters')) {
             showSecurityAdapterNotice(context, cfg).catch(() => {});
         }
+        // firebase.* settings are one of the app-evidence signals, so a change can flip whether the
+        // Crashlytics icon should appear on this workspace — re-detect and push the new state.
+        if (e.affectsConfiguration('saropaLogCapture.firebase')) {
+            syncCrashlyticsApplicableToWebview(broadcaster);
+        }
         if (
             e.affectsConfiguration('saropaLogCapture.suppressTransientErrors')
             || e.affectsConfiguration('saropaLogCapture.breakOnCritical')
@@ -212,6 +218,14 @@ function syncIntegrationsAdaptersToWebview(broadcaster: ViewerBroadcaster): void
         vscode.workspace.getConfiguration('saropaLogCapture.ai').get<boolean>('enabled', false),
     );
     broadcaster.postToWebview({ type: 'integrationsAdapters', adapterIds: merged });
+}
+
+/** Re-detect whether this workspace is a Crashlytics-capable app and push the result to the viewer. */
+function syncCrashlyticsApplicableToWebview(broadcaster: ViewerBroadcaster): void {
+    clearCrashlyticsApplicabilityCache();
+    void isCrashlyticsApplicable().then((applicable) =>
+        broadcaster.postToWebview({ type: 'crashlyticsApplicable', applicable }),
+    );
 }
 
 /** Show a one-time info message when the security adapter is first enabled. */
