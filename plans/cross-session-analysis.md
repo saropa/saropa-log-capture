@@ -534,3 +534,43 @@ Fix Velocity: 3 errors resolved this week, 1 persisting
 | [signals/signal-report-panel.ts](src/ui/signals/signal-report-panel.ts) | 279 | Unified Signals dashboard (former insights panel; ~14 files in `src/ui/signals/`) |
 | [session/session-comparison.ts](src/ui/session/session-comparison.ts) | 208 | Side-by-side session diff |
 | [panels/timeline-panel.ts](src/ui/panels/timeline-panel.ts) | 236 | SVG error/warning timeline |
+
+---
+
+## Finish Report (2026-06-14)
+
+### What shipped
+
+Predictive error surfacing (idea #9). When a capture session ends, the extension now proactively surfaces the session's most actionable errors in a single notification instead of leaving the user to open the Signals panel and hunt. The toast names how many error patterns are *new* to this session (absent from the previous sessions — a likely regression) and how many *recur* across sessions, headlines the single most actionable item, and offers an **Open Signals** action. It stays silent when nothing is actionable.
+
+This supersedes the previous recurring-only notification (`notifyRecurringSignals` in session finalization). The net surface is unchanged — one toast per session end, only when actionable — but the message now also covers new-error regressions and ties recurring signals to the session that just ended, rather than firing on any project-wide recurring signal.
+
+### How it works
+
+On session end, after the fingerprint scans settle (so the current session's fingerprints are persisted), finalization calls `surfacePredictiveSignals(fileUri, out)`. That composes two already-persisted data sources — no new scan, no new storage:
+
+- **New error patterns:** `detectRegressions()` (regression detector F7) compares this session's error fingerprints against the previous sessions loaded via `loadFilteredMetas('all')`, sorted oldest → newest.
+- **Recurring errors:** `aggregateSignals('all')` yields cross-session signals; the surfacing keeps those flagged `recurring` whose fingerprint also appears in the current session's fingerprint hashes.
+
+The branch logic that maps the two counts to a message variant, plus label truncation, lives in a vscode-free helper (`session-signal-surfacing-format.ts`) so it is unit-testable under `node --test` without the Extension Host. The host module applies `t()` to the chosen variant key.
+
+### Files changed
+
+- `src/modules/session/session-signal-surfacing.ts` — NEW. Composes new + recurring signals on session end and shows the toast. Fire-and-forget; any failure is caught so finalization is never broken.
+- `src/modules/session/session-signal-surfacing-format.ts` — NEW. Pure variant-selection + truncation helpers (no vscode/l10n).
+- `src/modules/session/session-lifecycle-finalize.ts` — replaced the `notifyRecurringSignals()` call and removed that function; now calls `surfacePredictiveSignals()`. Dropped the now-unused `aggregateSignals` import.
+- `src/l10n/strings-b.ts` — added `action.openSignals` and four `msg.sessionSignals.*` notification keys (counts phrased as values, not pluralized words, because `vscode.l10n.t` has no plural support).
+- `src/test/modules/session/session-signal-surfacing-format.test.ts` — NEW. 7 cases covering each count combination (both / new-only / recurring-only / none → null) and label truncation boundaries.
+- `CHANGELOG.md` — Unreleased → Added entry.
+- `plans/cross-session-analysis.md` — idea #9 and the priority matrix marked Done; this report.
+
+### Verification
+
+- `npm run check-types` — clean.
+- `eslint` on the four touched source/test files — clean.
+- `npm run verify:l10n-keys` — OK (all referenced `t()` keys resolve).
+- `node --test` on the new format test — 7/7 pass.
+
+### Not done
+
+Per-error quick-actions beyond "Open Signals" (the idea text floated "quick-actions to analyze each one") are not built — the Signals panel already lists each item, so the toast links there rather than spawning N actions. No gating setting was added: the prior recurring notification had none, and this enriches that same single surface rather than adding a new one.
