@@ -1,5 +1,8 @@
 import * as assert from 'assert';
-import { suggestAdaptersFromPubspec } from '../../../modules/misc/adapter-recommendations';
+import {
+    suggestAdaptersFromPubspec,
+    suggestAdaptersFromPackageJson,
+} from '../../../modules/misc/adapter-recommendations';
 import { INTEGRATION_ADAPTERS } from '../../../modules/integrations/integrations-ui';
 
 suite('adapter-recommendations', () => {
@@ -46,11 +49,10 @@ suite('adapter-recommendations', () => {
             assert.strictEqual(recs.length, 0);
         });
 
-        test('should treat the flutter SDK marker as implying device and crash capture', () => {
+        test('should treat the flutter SDK marker as implying device log capture', () => {
             const recs = suggestAdaptersFromPubspec(new Set(['flutter']), []);
             const adapters = recs.map(r => r.adapter);
             assert.ok(adapters.includes('adbLogcat'));
-            assert.ok(adapters.includes('flutterCrashLogs'));
         });
 
         // Every adapter the mapping can emit must exist in the UI table, or the toast
@@ -63,6 +65,37 @@ suite('adapter-recommendations', () => {
                 'flutter_test', 'test', 'integration_test', 'coverage', 'flutter',
             ]);
             const recs = suggestAdaptersFromPubspec(allTriggers, []);
+            for (const rec of recs) {
+                assert.ok(knownIds.has(rec.adapter), `adapter "${rec.adapter}" missing from INTEGRATION_ADAPTERS`);
+            }
+        });
+    });
+
+    suite('suggestAdaptersFromPackageJson', () => {
+        test('should map npm packages to adapter ids', () => {
+            const deps = new Set(['jest', 'axios', 'pg', 'playwright']);
+            const adapters = suggestAdaptersFromPackageJson(deps, []).map(r => r.adapter);
+            assert.ok(adapters.includes('testResults'));
+            assert.ok(adapters.includes('http'));
+            assert.ok(adapters.includes('database'));
+            assert.ok(adapters.includes('browser'));
+        });
+
+        test('should not suggest crashlytics for a Node project', () => {
+            const adapters = suggestAdaptersFromPackageJson(new Set(['firebase']), []).map(r => r.adapter);
+            assert.ok(!adapters.includes('crashlytics'));
+        });
+
+        test('should only map to adapter ids known to the integrations UI table', () => {
+            const knownIds = new Set(INTEGRATION_ADAPTERS.map(a => a.id));
+            const allTriggers = new Set([
+                'jest', 'vitest', 'mocha', 'ava',
+                'axios', 'node-fetch', 'got', 'undici',
+                'pg', 'mysql', 'mysql2', 'better-sqlite3', 'sqlite3', 'sequelize',
+                'typeorm', 'prisma', 'knex', 'mongodb', 'mongoose',
+                'puppeteer', 'playwright', '@playwright/test', 'cypress', 'selenium-webdriver',
+            ]);
+            const recs = suggestAdaptersFromPackageJson(allTriggers, []);
             for (const rec of recs) {
                 assert.ok(knownIds.has(rec.adapter), `adapter "${rec.adapter}" missing from INTEGRATION_ADAPTERS`);
             }

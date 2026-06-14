@@ -24,6 +24,9 @@ export type StartSessionDeps = {
     broadcastSplit: (newUri: vscode.Uri, totalParts: number) => void;
     onOutputEvent: (sessionId: string, body: DapOutputBody) => void;
     clearBufferTimeoutState: () => void;
+    // Authoritative active-session line count, reported from the write queue (write-time, not
+    // enqueue-time), so the history tree's count can't lag the file by the queue depth (M1).
+    onActiveLineCount?: (n: number) => void;
 };
 
 export type StartSessionOutcome =
@@ -92,7 +95,9 @@ export async function startSessionImpl(
         session,
         context,
         outputChannel: deps.outputChannel,
-        onLineCount: (count) => deps.statusBar.updateLineCount(count),
+        // One write-time callback drives both the status bar and the history-tree active count, so
+        // neither reads the lagging enqueue-time session.lineCount (M1).
+        onLineCount: (count) => { deps.statusBar.updateLineCount(count); deps.onActiveLineCount?.(count); },
         onSplit: (newUri, partNumber) => {
             deps.broadcastSplit(newUri, partNumber + 1);
             deps.outputChannel.appendLine(`File split: Part ${partNumber + 1} at ${newUri.fsPath}`);

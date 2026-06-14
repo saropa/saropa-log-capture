@@ -55,15 +55,35 @@ suite('EarlyOutputBuffer', () => {
         assert.strictEqual(buf.drain('s2').length, 1);
     });
 
-    test('caps at maxEarlyBuffer (500) per session', () => {
+    test('caps at maxEarlyBuffer (500) and appends a drop notice for the overflow (M2)', () => {
         const buf = new EarlyOutputBuffer();
         for (let i = 0; i < 600; i++) {
             buf.add('s1', body(`line ${i}`));
         }
         const drained = buf.drain('s1');
-        assert.strictEqual(drained.length, 500);
+        // 500 kept (the earliest) + 1 synthetic notice describing the 100 dropped lines.
+        assert.strictEqual(drained.length, 501);
         assert.strictEqual(drained[0].output, 'line 0');
         assert.strictEqual(drained[499].output, 'line 499');
+        assert.match(drained[500].output, /100 early output lines dropped/);
+    });
+
+    test('under the cap there is no drop notice', () => {
+        const buf = new EarlyOutputBuffer();
+        for (let i = 0; i < 500; i++) { buf.add('s1', body(`line ${i}`)); }
+        const drained = buf.drain('s1');
+        assert.strictEqual(drained.length, 500);
+        assert.ok(!drained.some(b => /dropped before capture/.test(b.output)));
+    });
+
+    test('drainAll appends the drop notice per overflowing session (M2)', () => {
+        const buf = new EarlyOutputBuffer();
+        for (let i = 0; i < 501; i++) { buf.add('s1', body(`a${i}`)); }
+        buf.add('s2', body('b'));
+        const all = buf.drainAll();
+        assert.strictEqual(all.get('s1')!.length, 501); // 500 kept + 1 notice (1 dropped)
+        assert.match(all.get('s1')![500].output, /1 early output line dropped/);
+        assert.strictEqual(all.get('s2')!.length, 1); // no overflow → no notice
     });
 
     test('drainAll returns all sessions and clears buffer', () => {

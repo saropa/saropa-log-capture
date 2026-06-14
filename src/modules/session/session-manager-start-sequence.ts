@@ -28,6 +28,8 @@ export interface StartSequenceDeps {
     readonly earlyBuffer: EarlyOutputBuffer;
     readonly outputChannel: vscode.OutputChannel;
     readonly statusBar: { updateLineCount: (n: number) => void; show: () => void };
+    // Optional observer for the authoritative (write-time) active-session line count (M1).
+    onActiveLineCount?(n: number): void;
     readonly floodGuard: FloodGuard;
     readonly categoryCounts: Record<string, number>;
     getSingleRecentOwnerSession(windowMs: number): { sid: string; logSession: LogSession } | null;
@@ -64,6 +66,7 @@ export async function runStartSequenceImpl(
         outputChannel: deps.outputChannel,
         getSingleRecentOwnerSession: (w) => deps.getSingleRecentOwnerSession(w),
         statusBar: deps.statusBar,
+        onActiveLineCount: (n) => deps.onActiveLineCount?.(n),
         broadcastSplit: (uri, totalParts) => deps.broadcastSplit(uri, totalParts),
         onOutputEvent: (id, b) => deps.onOutputEvent(id, b),
         clearBufferTimeoutState: () => deps.clearBufferTimeoutState(),

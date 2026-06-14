@@ -14,21 +14,15 @@ export const stringsWebviewC: Record<string, string> = {
     'viewer.errorRate.spikes': '{0} spike(s)',
     'viewer.errorRate.tooltipAt': '{0} at {1}',
 
-    // Signal panel — suggestion / in-log / recurring metadata
-    'viewer.signalPanel.suggestionImpact': '~{0} lines ({1}%)',
-    'viewer.signalPanel.sessionMeta': '{0} session(s), {1} total',
-    'viewer.signalPanel.recurringTitle': 'Recurring in {0} sessions',
-    'viewer.signalPanel.heroErrors': 'Errors: {0}',
-    'viewer.signalPanel.heroWarnings': 'Warnings: {0}',
-    'viewer.signalPanel.avg': ', avg {0}',
-    'viewer.signalPanel.max': ', max {0}',
+    // NOTE: the former viewer.signalPanel.* keys (suggestion impact, session meta, recurring title,
+    // hero error/warning counts, avg/max meta) were folded into the panel-standalone SignalScriptStrings
+    // object (signal.* in strings-b.ts, consumed as SIGNAL_STRINGS.* via fillSignalString) so the signal
+    // panel uses one localization mechanism. Do not re-add them here.
 
     // Analysis panel progress (the analysis panel now has the __VT map injected)
     'viewer.analysis.progress': 'Analyzing... {0}/{1} complete',
 
-    // Signal panel — co-occurrence rows
-    'viewer.signal.cooccurTitle': '{0} and {1} co-occur in {2} sessions',
-    'viewer.signal.cooccurMeta': '{0} shared, {1}% overlap',
+    // (Signal panel co-occurrence rows folded into SignalScriptStrings — see the note above.)
 
     // Performance tabs
     'viewer.perf.framesStats': 'Worst: {0} frames · Total: {1} frames',
