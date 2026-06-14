@@ -13,19 +13,21 @@
  * App evidence is any ONE of (cheapest signal first):
  *   1. Explicit `saropaLogCapture.firebase.*` settings (projectId / appId /
  *      packageName) — the user has pointed the extension at a real app.
- *   2. A `google-services.json` anywhere in the workspace (Android / Flutter app).
- *   3. An `AndroidManifest.xml` anywhere in the workspace (native Android app).
+ *   2. A real `google-services.json` (Android / Flutter app) — excluding a
+ *      package's bundled `example/` app, see workspace-app-detection.
+ *   3. An Android application module (`android/app/…`) — likewise excluding
+ *      example apps and plugin library manifests.
  *
- * Result is cached (short TTL) because it is read on every adapter broadcast; the
- * cache is cleared when firebase settings or workspace folders change.
+ * Detection is delegated to (and cached by) workspace-app-detection so the same
+ * app-vs-package judgment is shared with the other app-only surfaces (adb logcat).
  */
 
 import * as vscode from 'vscode';
-
-const nodeModulesExclude = '**/node_modules/**';
-const cacheTtl = 5 * 60_000;
-
-let cached: { value: boolean; expires: number } | undefined;
+import {
+    hasAndroidApp,
+    hasGoogleServicesConfig,
+    clearWorkspaceAppDetectionCache,
+} from '../misc/workspace-app-detection';
 
 /** True when explicit firebase.* settings name a real app (no file scan needed). */
 function hasFirebaseSettings(): boolean {
@@ -36,29 +38,18 @@ function hasFirebaseSettings(): boolean {
     return Boolean(projectId || appId || packageName);
 }
 
-/** True when an Android app marker file exists in the workspace. */
-async function hasAndroidAppFile(): Promise<boolean> {
-    // Both searches run in parallel; maxResults 1 keeps each scan cheap on large repos.
-    const [gsj, manifest] = await Promise.all([
-        vscode.workspace.findFiles('**/google-services.json', nodeModulesExclude, 1),
-        vscode.workspace.findFiles('**/AndroidManifest.xml', nodeModulesExclude, 1),
-    ]);
-    return gsj.length > 0 || manifest.length > 0;
-}
-
 /**
  * Whether to surface Crashlytics for this workspace. Settings are checked first so
  * a configured project never pays for a file scan; only an unconfigured workspace
- * touches the filesystem.
+ * touches the filesystem (and those scans are cached).
  */
 export async function isCrashlyticsApplicable(): Promise<boolean> {
-    if (cached && Date.now() < cached.expires) { return cached.value; }
-    const value = hasFirebaseSettings() || (await hasAndroidAppFile());
-    cached = { value, expires: Date.now() + cacheTtl };
-    return value;
+    if (hasFirebaseSettings()) { return true; }
+    const [gsj, androidApp] = await Promise.all([hasGoogleServicesConfig(), hasAndroidApp()]);
+    return gsj || androidApp;
 }
 
-/** Drop the cached result so the next check re-detects (config / folder changes). */
+/** Drop the cached app-detection result so the next check re-detects. */
 export function clearCrashlyticsApplicabilityCache(): void {
-    cached = undefined;
+    clearWorkspaceAppDetectionCache();
 }

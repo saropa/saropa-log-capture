@@ -18,6 +18,7 @@ import {
     type AdapterRecommendation,
 } from '../misc/adapter-recommendations';
 import { INTEGRATION_ADAPTERS, showIntegrationsPicker } from './integrations-ui';
+import { hasAndroidApp } from '../misc/workspace-app-detection';
 
 const SECTION = 'saropaLogCapture';
 const ADAPTERS_KEY = 'integrations.adapters';
@@ -82,10 +83,16 @@ export async function maybeRecommendAdapters(
         ]);
 
         // Pubspec first so a Dart/Flutter repo's recommendation wins the per-adapter dedupe.
-        const recs = mergeRecommendations(
+        const merged = mergeRecommendations(
             suggestAdaptersFromPubspec(pubspecDeps, enabled),
             suggestAdaptersFromPackageJson(packageJsonDeps, enabled),
         );
+        // adb logcat is keyed off the `flutter` dependency, which EVERY Flutter package/plugin
+        // declares — including non-app utility libraries. Only a real Android app module gives adb
+        // something to attach to, so drop that recommendation when there is no app to debug.
+        const recs = (await hasAndroidApp())
+            ? merged
+            : merged.filter((rec) => rec.adapter !== 'adbLogcat');
         if (recs.length === 0) { return; }
 
         // Key the gate on the sorted suggested ids so an unchanged set never re-nags (R5).
