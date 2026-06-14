@@ -226,5 +226,26 @@ export function historyEditCommands(deps: CommandDeps): vscode.Disposable[] {
             await historyProvider.getMetaStore().setTags(item.uri, tags);
             historyProvider.refresh();
         }),
+        // Idea #7: attach a free-text note to a session (e.g. "Regression from PR #142").
+        // Pre-fills the existing note so the prompt edits rather than replaces; an empty value clears it.
+        vscode.commands.registerCommand('saropaLogCapture.addSessionNote',
+          async (item: { uri: vscode.Uri }) => {
+            if (!item?.uri) { return; }
+            const metaStore = historyProvider.getMetaStore();
+            const meta = await metaStore.loadMetadata(item.uri);
+            const input = await vscode.window.showInputBox({
+                prompt: t('msg.sessionNotePrompt'),
+                placeHolder: t('msg.sessionNotePlaceholder'),
+                value: meta.note ?? '',
+            });
+            if (input === undefined) { return; }
+            await metaStore.setNote(item.uri, input);
+            historyProvider.refresh();
+            // Confirm with the actual note text (or a cleared message) so the action is never silent.
+            const trimmed = input.trim();
+            void vscode.window.showInformationMessage(
+                trimmed === '' ? t('msg.sessionNoteCleared') : t('msg.sessionNoteSaved', trimmed),
+            );
+        }),
     ];
 }
