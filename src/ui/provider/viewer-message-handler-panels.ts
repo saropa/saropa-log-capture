@@ -22,6 +22,7 @@ import { fetchDriftViewerHealth } from '../../modules/integrations/drift-viewer-
 import { fetchDriftDbIssues } from '../../modules/integrations/drift-advisor-issues-fetch';
 import { getDriftLintViolations } from '../../modules/misc/drift-lint-violations';
 import { getSuiteDeepLinkAvailability, runSiblingDeepLink } from '../../modules/diagnostics/suite-deeplink';
+import { readSuiteMirrorsForPanel } from '../../modules/diagnostics/suite-mirror-read';
 import { logExtensionError } from '../../modules/misc/extension-logger';
 
 /** Clamp numeric param to safe integer range for line/part indices (0 .. 10M). */
@@ -191,6 +192,12 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
         // R5: a SQL/diagnostic row button asked to jump into Drift Advisor / Saropa Lints. The id is
         // allowlisted inside runSiblingDeepLink; args are the documented payload for that command.
         void runSiblingDeepLink(String(msg.command ?? ''), msg.args);
+        return true;
+      case "requestSuiteMirrorDiagnostics":
+        // R2 render: typed Diagnostic[] from the sibling offline mirrors, used as the fallback source
+        // for the panel's Database / Static-code sections when their live source is unavailable.
+        void readSuiteMirrorsForPanel().then((m) =>
+          ctx.post({ type: "suiteMirrorDiagnostics", advisor: m.advisor, lints: m.lints }));
         return true;
       case "checkDriftViewerHealth": {
         const baseUrl = String((msg as { baseUrl?: unknown }).baseUrl ?? "").trim();
