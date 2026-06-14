@@ -308,7 +308,7 @@ api_client.dart         ████          15 mentions  🟡 changed 8 days a
 
 **Implementation:** Combine hot-file data from [cross-session-aggregator.ts](src/modules/misc/cross-session-aggregator.ts) with `git log --format=%ai -1 -- <file>` for each hot file. Sort by combined score.
 
-### 13. Semantic Error Grouping — NOT BUILT
+### ~~13. Semantic Error Grouping~~ — DONE (classifier + label; list grouping pending)
 
 Go beyond fingerprint hashing. Group errors by meaning, not just text similarity.
 
@@ -319,6 +319,8 @@ Group: "Network connectivity issues"
 ├── HttpException: Connection reset by peer
 └── ClientException: Failed host lookup: 'api.example.com'
 ```
+
+**Status:** Shipped. [error-semantics.ts](src/modules/analysis/error-semantics.ts) is an ordered pattern library mapping error text to a meaning-based category — network, filesystem, permission, validation, concurrency, memory — with `'other'` as the no-match fallback (permission precedes filesystem so a permission-denied-on-a-file lands in the more informative bucket). The markdown bug report tags the error with its category ([bug-report-formatter.ts](src/modules/bug-report/bug-report-formatter.ts)), omitting it when nothing matches. **Pending:** using the category to visually group the "all errors" / cross-session signal lists under semantic headings (the classifier is ready; only the grouped list render remains).
 
 **Implementation:** Pattern library mapping error class names to semantic categories. `SocketException`, `TimeoutException`, `HttpException`, `ClientException` → "network". `FileNotFoundException`, `PathNotFoundException` → "filesystem". `FormatException`, `RangeError`, `TypeError` → "data validation".
 
@@ -468,7 +470,7 @@ Fix Velocity: 3 errors resolved this week, 1 persisting
 | Code freshness heatmap | Low | High | High | Backlog |
 | Error attention score | Medium | High | Very High | Backlog |
 | Caller graph | Medium | Medium | Medium | Backlog |
-| Semantic error grouping | Medium | Medium | High | Backlog |
+| ~~Semantic error grouping~~ | ~~Medium~~ | ~~Medium~~ | ~~High~~ | **Done** (classifier + label) |
 | Session annotations UI | Low | Medium | Low | Backlog |
 | Smart context boundaries | Low | Medium | Low | Backlog |
 | Environment diff (env-specific) | Medium | Medium | High | Future |
