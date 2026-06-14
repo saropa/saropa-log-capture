@@ -699,3 +699,32 @@ The markdown bug report now carries a short "Why this might have broken" section
 ### Not done
 
 An in-panel narrative banner (the prose lives in the bug report, not the live analysis panel) and weaving import changes into the story are not built.
+
+---
+
+## Finish Report (2026-06-14) — Semantic error grouping (idea #13)
+
+### What shipped
+
+Error lines are now classified into a meaning-based category — network, filesystem, permission, validation, concurrency, or memory — independent of the exact class name or fingerprint hash. The markdown bug report tags the error with its category, so failures that mean the same thing read alike even when their wording differs.
+
+### How it works
+
+`classifyErrorSemantics(text)` (pure, `src/modules/analysis/error-semantics.ts`) scans an ordered pattern library and returns the first matching category, or `'other'` when nothing matches. Ordering encodes precedence: memory and permission are checked before network/filesystem/validation so a line that could match several (a permission denial mentioning a file) lands in the most informative bucket. The bug report's Error section appends a `**Category:**` line, omitted for `'other'` to avoid a noisy non-label.
+
+### Files changed
+
+- `src/modules/analysis/error-semantics.ts` — NEW. Pure ordered pattern-library classifier (vscode-free, node:test-able).
+- `src/modules/bug-report/bug-report-formatter.ts` — `formatError` tags the error with its semantic category.
+- `src/test/modules/analysis/error-semantics.test.ts` — NEW. 6 cases (network, filesystem, validation, permission precedence, memory/concurrency, other/empty fallback).
+- `CHANGELOG.md`, `plans/cross-session-analysis.md` — idea #13 marked done; this report.
+
+### Verification
+
+- `npm run check-types` — clean (full tree).
+- `eslint` on the touched files — clean.
+- `node --test` on the new classifier test — 6/6 pass.
+
+### Pending
+
+Using the category to visually group the "all errors" / cross-session signal lists under semantic headings — the classifier is ready; only the grouped list render remains.
