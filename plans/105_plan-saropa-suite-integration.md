@@ -253,3 +253,53 @@ contract was written to each sibling repo as a hand-off spec
 hidden by the availability gate — intended behavior, not a defect.
 
 Bug archive: none — this task did not close a `bugs/*.md` file.
+
+---
+
+## Shipped-state audit (2026-06-14)
+
+An audit traced every "implemented" claim in the Progress section above against the actual `src/`
+tree and the test suite, rather than trusting the plan's own self-report. The verdict for the
+Log-Capture half of the integration: every requirement R1–R5 is **real** — backed by implementation
+code AND activation wiring — with no stubs and no stale claims. The pure logic carries 30 passing
+`node:test` cases.
+
+### Per-requirement findings
+
+| Item | Claim | Reality | Evidence |
+|---|---|---|---|
+| **R1 produce** | Writes `.saropa/diagnostics/log-capture.json` on session end, keyed on `commitSha` | Real, wired | `src/modules/diagnostics/diagnostics-producer.ts` (`writeLogCaptureDiagnostics`) aggregates signals, builds the envelope, writes the mirror; called from `src/modules/session/session-lifecycle-finalize.ts:294` (`writeSessionDiagnosticEnvelope`) with `commitSha` resolved via `getSessionCommit(meta.integrations)`, fire-and-forget with `.catch` to the output channel |
+| **R2 reader** | Parses sibling `advisor.json` / `lints.json` malformed-safe | Real, tested | `src/modules/diagnostics/envelope-parse.ts` (`parseEnvelope` / `parseDiagnostic`) returns `undefined` on bad JSON or an unreadable schema and drops individual malformed diagnostics; covered by `src/test/modules/diagnostics/envelope-parse.test.ts` |
+| **R2 render** | SQL panel renders typed mirror rows from sibling tools | Real, wired end-to-end | `src/modules/diagnostics/suite-mirror-read.ts` (`readSuiteMirrorsForPanel`) reads `advisor.json` + `lints.json`, filters to DB-relevant categories (`drift, schema, data, performance`), never throws; reaches the webview through the `requestSuiteMirrorDiagnostics` handler in `viewer-message-handler-panels.ts` |
+| **R3 producer** | Stamps crash-family signatures on crash diagnostics | Real, tested | `src/modules/diagnostics/crash-signature.ts` defines 12 stable ids (`CRASH_SIGNATURE_IDS`), `CRASH_SIGNATURE_RULE_PREFIX = 'crash:'`, and `deriveCrashSignature()` regex table; `signal-to-diagnostic.ts` stamps `ruleId: crashSig ? crashSignatureRuleId(crashSig) : undefined`; covered by `crash-signature.test.ts` + `signal-to-diagnostic.test.ts` |
+| **R4 deep-link in** | `openSignal` + `openSqlHistoryForFingerprint` commands registered | Real, registered | `src/commands-suite.ts` (`suiteIntegrationCommands`) implements both (focus-then-wait dance; fingerprint normalization); spread into the registered disposables at `src/commands.ts:62`; both contributed in `package.json` (commands + menus) |
+| **R5 deep-link out** | Gated sibling actions, no dead buttons, allowlisted | Real, wired | `src/modules/diagnostics/suite-deeplink.ts` defines `SIBLING_DEEPLINK_COMMANDS` (4 ids), probes availability via `vscode.commands.getCommands(true)` so no dead action renders, and `runSiblingDeepLink()` enforces an `ALLOWED_COMMANDS` allowlist with a failure toast |
+
+### Test coverage
+
+30 `node:test` cases pass (`crash-signature.test.ts`, `envelope-parse.test.ts`,
+`signal-to-diagnostic.test.ts`) — 0 failures. They cover the pure logic: envelope parse/build, crash
+signature derivation, and severity/category mapping. Compiled to `out/` with `tsc` (nodenext
+module/resolution, es2022) and run directly via `node --test`.
+
+### What the tests do NOT cover (verified by inspection only)
+
+- Filesystem writes (`envelope-io.ts`) — the actual `.saropa/diagnostics/*.json` write path.
+- Command registration at activation time.
+- The `runSiblingDeepLink` allowlist executor against a live command.
+- `readSuiteMirrorsForPanel` category filtering against real sibling files.
+
+### The honest caveat
+
+"Shipped + wired + passing unit tests" is not "verified end-to-end against a live sibling extension."
+Nothing here exercises a real Drift Advisor reading `log-capture.json`, or a real
+`driftViewer.openExplainForSql` landing in the Drift Viewer. That handshake needs both extensions
+installed and a manual two-tool run. So: the Log-Capture half is functionally real; the cross-tool
+handshake is unproven.
+
+### Scope of this audit
+
+This audit traced ONLY the Log-Capture side. The Drift Advisor and Saropa Lints halves were not traced
+to their `src/` — they live in sibling repositories and are still unbuilt against the hand-off specs
+filed there. The genuine failure in this effort was the cross-repo shared-package extraction (rejected
+as over-engineering, now closed Won't Do); the integration core documented by this plan did ship.
