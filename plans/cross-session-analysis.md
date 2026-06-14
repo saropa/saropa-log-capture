@@ -380,7 +380,7 @@ Not all errors deserve attention. Rank them by a composite score:
 
 **Implementation:** Extend [analysis-relevance.ts](src/modules/analysis/analysis-relevance.ts) scoring (today it scores analysis *sections* for collapse, not individual errors) to work per-error, run against each error fingerprint in the session.
 
-### 18. "Why Did This Break?" Story Mode — PARTIAL
+### ~~18. "Why Did This Break?" Story Mode~~ — DONE (in the bug report)
 
 Combine all available signals into a narrative:
 
@@ -395,7 +395,7 @@ Combine all available signals into a narrative:
 > **Suggested investigation:** Review commits `abc1234` and `def5678`. The
 > timeout increase may be insufficient, or the retry logic may have a bug.
 
-**Status:** Template-based hypotheses are shipped — [build-hypotheses.ts](src/modules/root-cause-hints/build-hypotheses.ts) (+ SQL-burst, ANR, network, text variants) emit rule-driven hints. **Remaining:** the prose narrative that weaves blame, commit messages, cross-session frequency, and import changes into a single readable story.
+**Status:** Shipped. [why-narrative.ts](src/modules/bug-report/why-narrative.ts) weaves the bug report's collected facts — git blame on the crash line (author, date, commit + message), recent commits to the surrounding code, and cross-session frequency — into a short prose "Why this might have broken" section with a suggested-investigation line keyed to the strongest signal (recently-changed + recurring → regression; stable + recurring → look outward; thin history → capture more). It renders in the markdown bug report ([bug-report-formatter.ts](src/modules/bug-report/bug-report-formatter.ts)) just after the executive summary, and is omitted when there is too little history. This complements the rule-driven [build-hypotheses.ts](src/modules/root-cause-hints/build-hypotheses.ts) (what kind of failure) with the per-line story (what happened to this line). **Not done:** an in-panel narrative banner (the prose currently lives in the bug report, not the live analysis panel) and weaving import changes into the story.
 
 ### ~~19. Session Health Score~~ — DONE (history trend arrows pending)
 
@@ -464,7 +464,7 @@ Fix Velocity: 3 errors resolved this week, 1 persisting
 | Curated/named investigations | Medium | Medium | Medium | Next |
 | ~~Ghost errors reliability tag~~ | ~~Low~~ | ~~Medium~~ | ~~High~~ | **Done** |
 | ~~Session health score (per-session model)~~ | ~~Medium~~ | ~~High~~ | ~~High~~ | **Done** |
-| "Why Did This Break?" narrative prose | High | Very High | Very High | Soon |
+| ~~"Why Did This Break?" narrative prose~~ | ~~High~~ | ~~Very High~~ | ~~Very High~~ | **Done** (bug report) |
 | Code freshness heatmap | Low | High | High | Backlog |
 | Error attention score | Medium | High | Very High | Backlog |
 | Caller graph | Medium | Medium | Medium | Backlog |
@@ -668,3 +668,32 @@ The Signal Report overview now shows a "Health: N/100" score that condenses a se
 ### Pending
 
 Session-history trend arrows (a worsening/improving indicator across the Logs list) are not built — the score is computed per session for the report but not yet persisted per session for cross-session trend rendering.
+
+---
+
+## Finish Report (2026-06-14) — "Why did this break?" narrative (idea #18)
+
+### What shipped
+
+The markdown bug report now carries a short "Why this might have broken" section just after the executive summary: a prose synthesis of who last changed the crash line (author, date, commit + message), how many sessions the error has recurred across, and whether the surrounding code changed recently — closed by a suggested-investigation line keyed to the strongest available signal. It is omitted when there is too little history to say anything non-obvious.
+
+### How it works
+
+`buildWhyNarrative(facts)` (pure, `src/modules/bug-report/why-narrative.ts`) takes a flat facts struct (blame author/date/message/short-hash, cross-session count + first-seen session, recent line-range commit count) and emits one sentence per available fact plus a suggestion. The suggestion branches on signal strength: recently-changed + recurring → regression in the last change here; recently-changed only → start with the most recent commit; stable + recurring → look outward at inputs/dependencies; thin history → capture another session. The bug report formatter maps `BugReportData` (blame, crossSessionMatch, lineRangeHistory) into the struct and inserts the section; nothing renders when the narrative is empty. English-only by design — the bug report markdown stays English for pasting into GitHub/Slack, like the rest of the export.
+
+### Files changed
+
+- `src/modules/bug-report/why-narrative.ts` — NEW. Pure narrative builder (vscode-free, node:test-able).
+- `src/modules/bug-report/bug-report-formatter.ts` — `formatWhyNarrative()` maps the report data into facts and inserts the section after the summary.
+- `src/test/modules/bug-report/why-narrative.test.ts` — NEW. 6 cases (empty, blame sentence, recurrence, regression suggestion, outward suggestion, singular phrasing).
+- `CHANGELOG.md`, `plans/cross-session-analysis.md` — idea #18 marked done; this report.
+
+### Verification
+
+- `eslint` on the touched files — clean.
+- `node --test` on the new narrative test — 6/6 pass.
+- Type-checking of the changed files is clean; a tree-wide `check-types` currently fails only inside an unrelated, in-progress OpenTelemetry integration (`otel-traces.ts` + its `integrationsOtel` config), which is outside this change set.
+
+### Not done
+
+An in-panel narrative banner (the prose lives in the bug report, not the live analysis panel) and weaving import changes into the story are not built.
