@@ -184,4 +184,22 @@ export const stringsB: Record<string, string> = {
     'learning.cleared': 'Noise-learning data cleared for this workspace.',
     'learning.clearGlobalConfirm': 'Clear all cross-workspace noise patterns shared on this machine? Other workspaces will stop receiving them as suggestions.',
     'learning.globalCleared': 'Cross-workspace noise patterns cleared.',
+
+    // Google Play Vitals sidebar panel (src/ui/panels/vitals-panel.ts). Brand/product tokens
+    // (Play Console, Play Developer Reporting API, google-services.json, gcloud) stay literal in the
+    // value; the MT pipeline shields them. "ANR" is an acronym, shielded the same way.
+    'vitals.loading': 'Loading Vitals data…',
+    'vitals.notAvailable': 'Google Play Vitals not available.',
+    'vitals.whyLabel': 'Why:',
+    'vitals.requires': 'Requires: package name (google-services.json or setting), gcloud auth with the Play reporting scope, and the Play Developer Reporting API enabled.',
+    'vitals.title': 'Vitals',
+    'vitals.refreshAria': 'Refresh Vitals data',
+    'vitals.refreshBtn': 'Refresh',
+    'vitals.crashRate': 'Crash Rate',
+    'vitals.anrRate': 'ANR Rate',
+    'vitals.openPlayConsole': 'Open Play Console',
+    'vitals.crashFreeSessions': 'Crash-free sessions',
+    'vitals.crashFreeUsers': 'Crash-free users',
+    'vitals.na': 'N/A',
+    'vitals.threshold': 'threshold: {0}%',
 };
