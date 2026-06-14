@@ -1,5 +1,13 @@
 # Integration: Application and File Logs
 
+> **Status: v1 COMPLETE (verified against code 2026-06-14).** The `externalLogs`
+> provider, `external-log-tailer.ts`, the four `integrations.externalLogs.*`
+> settings, the **Add external log path** / **Open external logs** commands, the
+> multi-source viewer, and the unified-JSONL merge all ship. The four deferred
+> items (`createIfMissing`, `followRotation`, glob paths, status-bar counter)
+> moved to [application-file-logs-advanced.md](application-file-logs-advanced.md).
+> This plan is archived; see the Finish Report at the end.
+
 ## Implementation status (v1)
 
 - **Tail during session:** `fs.watch` per configured file; new bytes appended after session start are buffered (cap `maxLinesPerFile`). Missing paths are skipped with an output-channel line.
