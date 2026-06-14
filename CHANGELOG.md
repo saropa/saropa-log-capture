@@ -34,6 +34,10 @@ Saropa Log Capture now keeps quiet about app-only extras like Crashlytics and An
 
 - **App-only integrations stay quiet on library / package projects:** The Crashlytics view, the "Integration setup" warning ("Add google-services.json…", "adb not found…"), and the offer to enable adb Logcat no longer appear on projects that ship no debuggable app — so a Dart/npm utility package is never nagged to configure crash reporting or device logging it can't use. App evidence is `saropaLogCapture.firebase.*` settings, a real `google-services.json`, or an Android application module (`android/app/…`); a package's bundled `example/` app no longer counts as making the package an app. The adb Logcat suggestion (previously fired by any `flutter` dependency, which every Flutter package declares) now requires an actual Android app. Adapters stay enabled in settings; only the unsolicited surfaces are gated.
 
+### Security
+
+- **Bump esbuild 0.28.0 → 0.28.1** (GHSA-gv7w-rqvm-qjhr — missing binary integrity check in esbuild's Deno installer). This is a dev/build-time dependency only and is not shipped in `dist/extension.js`. The flagged code path is esbuild's Deno module; this project bundles via Node.js, whose installer already SHA-256-verifies the binary, so the repo was not actually exploitable — the bump clears the advisory and keeps the build floor on the patched release.
+
 ---
 
 ## [9.0.0]
