@@ -264,6 +264,9 @@ function renderItem(item, idx, prevVis) {
     if (typeof getLintBadge === 'function') badge += getLintBadge(item);
     var corr = (typeof correlationByLineIndex !== 'undefined' && correlationByLineIndex[idx]);
     if (corr) badge += '<span class="correlation-badge" data-correlation-id="' + (corr.id || '').replace(/"/g, '&quot;') + '" title="' + (corr.description || '').replace(/"/g, '&quot;') + '">\\u27a4</span> ';
+    /* DB badge: line has correlated database queries (request-ID match). Clicking opens the related-queries popover. */
+    var dbq = (typeof databaseQueryLinesByIndex !== 'undefined' && databaseQueryLinesByIndex[idx]);
+    if (dbq) badge += '<span class="db-query-badge" data-db-idx="' + idx + '" title="' + vt('viewer.deco.relatedQueries', dbq).replace(/"/g, '&quot;') + '">\\ud83d\\uddc3</span> ';
     var titleAttr = '';
     if (typeof applyHighlightStyles === 'function') {
         var plainText = stripTags(item.html);

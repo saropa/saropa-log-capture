@@ -27,6 +27,7 @@ import {
 } from "./log-viewer-provider-load-helpers";
 import { readSessionLogParts } from "./log-viewer-provider-load-parts";
 import { classifyTailChange } from "./tail-change-classify";
+import { computeDatabaseQueryLineCounts } from "./database-line-badges";
 
 export interface LogViewerLoadTarget {
   postMessage(msg: unknown): void;
@@ -221,6 +222,14 @@ export async function executeLoadContent(
     contentLinesLength: contentLines.length,
     post,
   });
+
+  // Per-line database-query badge: flag content lines whose request ID matches a captured query.
+  const databaseQueryLines = await computeDatabaseQueryLineCounts(
+    uri, contentLines, cfg.integrationsDatabase.requestIdPattern,
+  );
+  if (checkGen() && Object.keys(databaseQueryLines).length > 0) {
+    post({ type: "setDatabaseQueryLines", databaseQueryLines });
+  }
 
   const smart = getSmartBookmarksFirstErrorAndWarning(cfg, contentLines);
 
