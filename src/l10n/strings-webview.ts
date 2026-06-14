@@ -109,6 +109,51 @@ export const stringsWebview: Record<string, string> = {
     'viewer.sessionInfo.openInBrowser': 'Open in browser',
     'viewer.sessionInfo.revealInExplorer': 'Reveal in OS file explorer',
 
+    // Crashlytics setup wizard — rendered CLIENT-SIDE via vt() (viewer-crashlytics-setup.ts), so these
+    // must live in a webview strings file to enter the __VT map. Some values embed inline <code> tags
+    // or HTML entities (&quot;, &rarr;): keep the markup inside the value so word order stays
+    // translatable rather than concatenating English fragments. Brand/product/identifier tokens
+    // (Firebase, Crashlytics, gcloud, google-services.json, VS Code, Google Cloud CLI, the setting id)
+    // stay literal; the MT pipeline shields them.
+    'viewer.crashlytics.setup.checkAgain': 'Check Again',
+    'viewer.crashlytics.setup.testConnection': 'Test connection',
+    'viewer.crashlytics.setup.connUnavailable': 'Connection check unavailable — see the Saropa Log Capture output channel.',
+    'viewer.crashlytics.setup.connected': 'Connected',
+    'viewer.crashlytics.setup.notConnected': 'Not connected yet — fix the steps marked below.',
+    'viewer.crashlytics.setup.details': 'Details',
+    'viewer.crashlytics.setup.intro': 'Connect Firebase Crashlytics to triage your crashes without leaving the editor.',
+    'viewer.crashlytics.setup.stepInstall': 'Install',
+    'viewer.crashlytics.setup.stepSignIn': 'Sign in',
+    'viewer.crashlytics.setup.stepProject': 'Project',
+    'viewer.crashlytics.setup.statusGcloud': 'Google Cloud access is not set up yet.',
+    'viewer.crashlytics.setup.statusToken': 'Not signed in to Google Cloud yet.',
+    'viewer.crashlytics.setup.statusConfig': 'Firebase project is not configured yet.',
+    'viewer.crashlytics.setup.whatWentWrong': 'What went wrong?',
+    'viewer.crashlytics.setup.billingTip': 'Google Cloud may prompt you to enable billing, but Crashlytics API access is free.',
+    'viewer.crashlytics.setup.consoleVerifyHint': 'to verify the project or copy the project / app ID.',
+    'viewer.crashlytics.setup.ifThisDoesntWork': 'If this doesn\'t work',
+    'viewer.crashlytics.setup.troubleshooting': 'Troubleshooting',
+    'viewer.crashlytics.setup.thSymptom': 'Symptom',
+    'viewer.crashlytics.setup.thCause': 'Cause',
+    'viewer.crashlytics.setup.thFix': 'Fix',
+    'viewer.crashlytics.setup.installVia': 'Install via:',
+    'viewer.crashlytics.setup.copy': 'Copy',
+    'viewer.crashlytics.setup.gcloudPathHint': 'If <code>gcloud</code> is not in PATH after installing, restart the terminal or VS Code.',
+    'viewer.crashlytics.setup.installTitle': 'Install Google Cloud CLI',
+    'viewer.crashlytics.setup.gcloudNeeded': 'The <code>gcloud</code> CLI is needed to authenticate with Firebase Crashlytics.',
+    'viewer.crashlytics.setup.downloadGcloud': 'Download Google Cloud CLI',
+    'viewer.crashlytics.setup.signInExternalHint': 'If sign-in fails in the VS Code terminal, run the command below in an external terminal (where <code>gcloud</code> is in PATH), then click Check Again.',
+    'viewer.crashlytics.setup.permissionDeniedHint': 'If you see &quot;Permission denied&quot;, your account needs the Firebase Crashlytics Viewer role on the project.',
+    'viewer.crashlytics.setup.serviceAccountHint': 'Alternatively, set <code>saropaLogCapture.firebase.serviceAccountKeyPath</code> to a service account JSON key file (e.g. when gcloud is not available).',
+    'viewer.crashlytics.setup.signInTitle': 'Sign in to Google Cloud',
+    'viewer.crashlytics.setup.signInBody': 'Authenticate with your Google account to access Crashlytics data.',
+    'viewer.crashlytics.setup.useExistingFile': 'Use existing file: {0}',
+    'viewer.crashlytics.setup.findIdsHint': 'Find project ID and app ID in Firebase Console under Project Settings &rarr; General.',
+    'viewer.crashlytics.setup.addConfigTitle': 'Add Firebase Config',
+    'viewer.crashlytics.setup.provideConfig': 'Provide your <code>google-services.json</code> file or configure the project manually.',
+    'viewer.crashlytics.setup.browseGsj': 'Browse for google-services.json',
+    'viewer.crashlytics.setup.orConfigureSettings': 'Or configure in settings',
+
     // Session (Logs) list — runtime strings built client-side (viewer-session-panel-rendering.ts).
     'viewer.session.noMatch': 'No sessions match the current filters',
     'viewer.session.pagination.showing': 'Showing {0}–{1} of {2}',

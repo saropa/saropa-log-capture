@@ -130,6 +130,7 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `searchSessions` | viewer-message-handler-actions.ts |
 | `sessionAction` | viewer-message-handler-session-ui.ts |
 | `setCaptureEnabled` | viewer-message-handler-panels.ts |
+| `setDiagnosticCapture` | viewer-message-handler-panels.ts |
 | `setIntegrationsAdapters` | viewer-message-handler-panels.ts |
 | `setLogViewerVisualSpacing` | viewer-workspace-bool-message-map.ts (boolean toggles → config update) |
 | `setMinimapCustomPx` | viewer-message-handler-session-ui.ts |
@@ -161,4 +162,4 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `viewerKeybindingRecordCancelled` | viewer-message-handler-actions.ts |
 | `viewerKeybindingRecorded` | viewer-message-handler-actions.ts |
 
-**Total:** 153 distinct types.
+**Total:** 154 distinct types.

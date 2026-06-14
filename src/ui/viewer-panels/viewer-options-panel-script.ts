@@ -156,6 +156,12 @@ function syncCaptureEnabledUi() {
     if (check) check.checked = (typeof window !== 'undefined' && window.captureEnabled !== false);
 }
 
+/** Sync diagnostic-capture checkbox from window.diagnosticCapture (set by host message). Defaults off. */
+function syncDiagnosticCaptureUi() {
+    var check = document.getElementById('opt-diagnostic-capture');
+    if (check) check.checked = (typeof window !== 'undefined' && window.diagnosticCapture === true);
+}
+
 /** Render the severity keywords display from the current keyword config. */
 function renderSeverityKeywordsDisplay() {
     var container = document.getElementById('severity-keywords-display');

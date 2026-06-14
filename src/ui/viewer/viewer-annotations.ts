@@ -19,7 +19,9 @@ function setAnnotation(idx, text) {
 
 function getAnnotationHtml(idx) {
     if (!annotations[idx]) return '';
-    var escaped = annotations[idx].replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    // Escape & first so a literal "&lt;" in the annotation text doesn't render as a "<" — and so the
+    // text is fully inert in innerHTML (annotations are user-typed).
+    var escaped = annotations[idx].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     return '<div class="annotation">' + escaped + '</div>';
 }
 
