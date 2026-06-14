@@ -5,11 +5,15 @@
 
 import * as http from 'http';
 import * as os from 'os';
+import { randomBytes } from 'crypto';
 import * as vscode from 'vscode';
 import type { Collection } from '../collection/collection-types';
 import { exportCollectionToBuffer } from '../export/slc-bundle';
 
 let activeServer: http.Server | null = null;
+
+/** Auto-stop a share after this long so a forgotten server doesn't keep the collection downloadable. */
+const SHARE_IDLE_TIMEOUT_MS = 10 * 60_000;
 
 /** Get first non-internal IPv4 address, or 127.0.0.1. */
 export function getLocalIP(): string {
@@ -41,8 +45,12 @@ export async function startShareServer(
         activeServer = null;
     }
 
+    // Serve only at an unguessable path so a random LAN peer hitting `/` or `/collection.slc` can't
+    // download the collection — the path token is the access control (the server binds the LAN IP).
+    const sharePath = `/collection-${randomBytes(9).toString('hex')}.slc`;
+
     const server = http.createServer((req, res) => {
-        if (req.url === '/' || req.url === '/collection.slc') {
+        if (req.url === sharePath) {
             res.setHeader('Content-Type', 'application/octet-stream');
             res.setHeader('Content-Disposition', 'attachment; filename="collection.slc"');
             res.end(buffer);
@@ -72,14 +80,17 @@ export async function startShareServer(
 
     activeServer = server;
     const ip = getLocalIP();
-    const url = `http://${ip}:${port}/collection.slc`;
+    const url = `http://${ip}:${port}${sharePath}`;
 
+    let idleTimer: ReturnType<typeof setTimeout> | undefined;
     const stop = (): void => {
+        if (idleTimer) { clearTimeout(idleTimer); idleTimer = undefined; }
         if (activeServer === server) {
             activeServer.close();
             activeServer = null;
         }
     };
+    idleTimer = setTimeout(stop, SHARE_IDLE_TIMEOUT_MS);
 
     return { url, stop };
 }
