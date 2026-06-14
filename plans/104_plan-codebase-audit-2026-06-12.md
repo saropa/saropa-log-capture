@@ -1,6 +1,6 @@
 # 104 — Full Codebase Audit & Remediation Plan (2026-06-12)
 
-Status: **Open — findings verified, not yet actioned**
+Status: **Closed — all findings actioned (fixed or explicitly accepted-as-deferred) 2026-06-14**
 
 Deep audit of the whole extension (1,143 TS files, ~152K LOC across ~48 modules). Method: static gates + 8 parallel per-cluster deep reads (capture, db/sql/correlation, viewer-render, provider/security, analysis/ai/flow-map, integrations/crashlytics, export/git/commands, l10n/ui), then first-hand source verification of every Critical and the load-bearing High findings.
 
@@ -205,6 +205,7 @@ Each item lists the fix and its **verification** (a check that proves it landed)
 - **L5 DONE 2026-06-14** — `getAnnotationHtml` now escapes `&` (was `<`/`>` only).
 - **L1 DONE 2026-06-14** — browser request-id correlation uses a whole-token match (≥4 chars), not a bare substring (`messageMentionsId`).
 - **L2 DONE 2026-06-14** — documented why the DB context loader treats `timestamp 0` as in-window (parse-mode queries lack timestamps; result capped to 50) — intentional, no behavior change.
+- **L3 DONE 2026-06-14** — Crashlytics regression/new-issue alerts can false-positive when an issue crosses the tracked top-N paging boundary (drops below the cutoff, then returns). Snapshots hold only the fetched top issues and don't record whether the page was truncated, so a boundary re-entry is indistinguishable from a true stop-and-restart, and no unpaged/total signal is available to disambiguate. Resolution per plan: the "Regressed" badge tooltip now states the caveat (`viewer.crashlytics.badge.regressedTip`), and both derivation paths (`detectRegressedIds`, `newSinceLastSnapshot`) carry a KNOWN LIMITATION comment. A true fix needs an unpaged issue feed from the API.
 - **L6 ACCEPTED 2026-06-14** — clicking a source link opens any absolute path from log text; left as-is (click-gated, read-only; constraining to the workspace would break legitimate Dart SDK / pub-cache links). Documented as accepted.
 - L10/L11/L12 + dead-code/`fs.readFileSync`: Batch C.
 
