@@ -6,6 +6,7 @@
  */
 
 import * as vscode from 'vscode';
+import { t } from '../../l10n';
 import type { RootCauseHypothesis, RootCauseHintBundle } from '../../modules/root-cause-hints/root-cause-hint-types';
 import { getNonce } from '../provider/viewer-content';
 import {
@@ -243,11 +244,11 @@ function copyReport(state: PanelState, panel: vscode.WebviewPanel): void {
     (md) => {
       if (!md) { return; }
       vscode.env.clipboard.writeText(md).then(
-        () => { postToast(panel, 'Report copied to clipboard', 'success'); },
-        () => { postToast(panel, 'Failed to copy report', 'error'); },
+        () => { postToast(panel, t('signals.toast.copied'), 'success'); },
+        () => { postToast(panel, t('signals.toast.copyFailed'), 'error'); },
       );
     },
-  ).catch(() => { postToast(panel, 'Failed to build report', 'error'); });
+  ).catch(() => { postToast(panel, t('signals.toast.buildFailed'), 'error'); });
 }
 
 function saveReport(state: PanelState, panel: vscode.WebviewPanel): void {
@@ -259,10 +260,10 @@ function saveReport(state: PanelState, panel: vscode.WebviewPanel): void {
     const destUri = vscode.Uri.joinPath(logDirUri, filename);
     return vscode.workspace.fs.createDirectory(logDirUri)
       .then(() => vscode.workspace.fs.writeFile(destUri, Buffer.from(md, 'utf-8')))
-      .then(() => { postToast(panel, `Report saved to ${filename}`, 'success'); });
+      .then(() => { postToast(panel, t('signals.toast.saved', filename), 'success'); });
   }).catch((err) => {
     logExtensionError('saveSignalReport', err instanceof Error ? err : new Error(String(err)));
-    postToast(panel, 'Failed to save report', 'error');
+    postToast(panel, t('signals.toast.saveFailed'), 'error');
   });
 }
 
