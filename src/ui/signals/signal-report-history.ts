@@ -7,6 +7,7 @@
  */
 
 import { escapeHtml } from '../../modules/capture/ansi';
+import { t } from '../../l10n';
 import type { HistorySession } from './signal-report-history-loader';
 import type { SessionHeader } from './signal-report-context';
 
@@ -46,18 +47,14 @@ export function buildHistoryHtml(opts: HistoryOpts): string {
     const { sessions, totalSessionCount } = opts;
     const parts: string[] = [];
     if (sessions.length === 0) {
-        parts.push(
-            '<div class="no-data">No cross-session history for this signal type. ' +
-            'History appears after multiple sessions detect the same signal.</div>',
-        );
+        parts.push(`<div class="no-data">${escapeHtml(t('signals.history.noData'))}</div>`);
     } else {
-        parts.push(
-            `<div class="history-summary">Appeared in <strong>${sessions.length}</strong> of ` +
-            `${totalSessionCount} session${totalSessionCount === 1 ? '' : 's'}</div>`,
-        );
+        // {0} is the bolded count (pre-built HTML), {1} the total; the `(s)` plural rides in the value.
+        const summary = t('signals.history.summary', `<strong>${sessions.length}</strong>`, totalSessionCount);
+        parts.push(`<div class="history-summary">${summary}</div>`);
         const rows = sessions.map(s =>
             `<div class="history-session-row" data-uri="${escapeHtml(s.uriString)}" ` +
-            `title="Open this session in the viewer">` +
+            `title="${escapeHtml(t('signals.history.openTitle'))}">` +
             `<span class="history-session-name">${escapeHtml(s.name)}</span>` +
             `<span class="history-session-date">${escapeHtml(s.dateLabel)}</span></div>`,
         ).join('');
@@ -92,7 +89,7 @@ function appendWhatChangedHtml(parts: string[], opts: HistoryOpts): void {
     if (!opts.currentHeader || !opts.cleanHeader) { return; }
     const diffs = computeHeaderDiff(opts.currentHeader, opts.cleanHeader);
     if (diffs.length === 0) { return; }
-    parts.push('<div class="history-diff-heading">What changed since last clean session</div>');
+    parts.push(`<div class="history-diff-heading">${escapeHtml(t('signals.history.whatChanged'))}</div>`);
     parts.push('<div class="history-diff-list">');
     for (const d of diffs) {
         parts.push(
