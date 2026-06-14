@@ -19,7 +19,13 @@ import {
 export interface CumulativeSqlFingerprintEntry {
   /** Sum of `count` across contributing logs. */
   readonly count: number;
-  /** Max `maxDurationMs` across contributing logs (undefined when no log reported a duration). */
+  /**
+   * Max `maxDurationMs` across contributing logs (undefined when no log reported a duration).
+   * NOTE: a maximum is not subtractable. When the active log's contribution is excluded
+   * (`indexToPayloadExcludingActive` → `subtractEntry`), this value is passed through unchanged, so
+   * it is an UPPER BOUND that may still reflect the excluded log — recomputing it would require the
+   * per-log max history, which the index does not retain.
+   */
   readonly maxDurationMs?: number;
   /** Sum of `slowQueryCount` across contributing logs (omitted when zero). */
   readonly slowQueryCount?: number;

@@ -37,14 +37,15 @@ export class ErrorRateAlert {
     private readonly entries: RateEntry[] = [];
     private lastAlertTime = 0;
     private readonly config: ErrorRateConfig;
-    private alertCallback?: (rate: number, window: number) => void;
+    /** Invoked on alert with the error COUNT in the window and the window length in ms (not a rate). */
+    private alertCallback?: (count: number, windowMs: number) => void;
 
     constructor(config: Partial<ErrorRateConfig> = {}) {
         this.config = { ...DEFAULT_CONFIG, ...config };
     }
 
-    /** Set a callback for when an alert is triggered. */
-    setAlertCallback(callback: (rate: number, windowMs: number) => void): void {
+    /** Set a callback for when an alert is triggered. Receives (count-in-window, windowMs). */
+    setAlertCallback(callback: (count: number, windowMs: number) => void): void {
         this.alertCallback = callback;
     }
 
@@ -102,15 +103,17 @@ export class ErrorRateAlert {
     /** Trigger an alert. */
     private triggerAlert(now: number): void {
         this.lastAlertTime = now;
-        const rate = this.entries.length;
+        // This is the COUNT of errors in the window (not a per-time rate). The message reads
+        // "{count} errors in {windowSec}s"; the callback gets the count plus the window in ms.
+        const count = this.entries.length;
         const windowSec = this.config.windowMs / 1000;
 
         if (this.alertCallback) {
-            this.alertCallback(rate, this.config.windowMs);
+            this.alertCallback(count, this.config.windowMs);
         } else {
             // Default: show VS Code warning
             vscode.window.showWarningMessage(
-                t('msg.highErrorRate', String(rate), String(windowSec)),
+                t('msg.highErrorRate', String(count), String(windowSec)),
                 t('action.openLog'),
             ).then((selection) => {
                 if (selection === t('action.openLog')) {

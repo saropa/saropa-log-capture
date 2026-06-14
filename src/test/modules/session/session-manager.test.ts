@@ -98,6 +98,29 @@ describe("SessionManagerImpl", () => {
     assert.ok(hidMsgs[0].includes('"noise"'), "names the matching pattern");
   });
 
+  it("should trace each output event's fate when diagnosticCapture is on (plan 102)", () => {
+    // Plan 102 Step 1: with diagnosticCapture on, every received DAP output event logs its
+    // fate, so a "missing line" is classifiable — a Debug Console line present in the trace
+    // was received (disposition says what happened); one absent was never delivered via DAP.
+    const logged: string[] = [];
+    const mgr = new SessionManagerImpl(
+      mockStatusBar as any,
+      { appendLine: (m: string) => logged.push(m) } as any,
+    );
+    mgr.refreshConfig(makeConfig({
+      captureAll: true, enabled: true, categories: [], exclusions: ["noise"],
+      diagnosticCapture: true,
+    }));
+    mgr["exclusionRules"] = [{ source: "noise", text: "noise" }];
+    mgr["sessions"].set("test", { appendLine: () => {}, lineCount: 1, fileUri: { fsPath: "test.log" } } as any);
+    mgr.onOutputEvent("test", { output: "kept line", category: "stdout" });
+    mgr.onOutputEvent("test", { output: "noise dropped", category: "stdout" });
+    const traces = logged.filter((m) => m.includes("Capture diagnostic: DAP output"));
+    assert.strictEqual(traces.length, 2, "every received output event is traced");
+    assert.ok(traces.some((m) => m.includes("-> captured") && m.includes("kept line")), "traces the captured line");
+    assert.ok(traces.some((m) => m.includes("dropped (exclusion") && m.includes("noise dropped")), "traces the dropped line + reason");
+  });
+
   it("writeLine should no-op when no active session exists", () => {
     const mgr = makeSessionManager();
     let captured = false;

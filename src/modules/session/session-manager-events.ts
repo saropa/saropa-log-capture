@@ -63,6 +63,7 @@ export function processOutputEvent(
         // channel (memoized to avoid flooding) so users can diagnose the filtering gap
         // instead of assuming capture is broken.
         reportDroppedCategory(deps, category);
+        traceOutcome(deps, category, 'dropped (category not in capture list)', text);
         return;
     }
     const excludedBy = findExclusionMatch(text, deps.exclusionRules);
@@ -73,11 +74,15 @@ export function processOutputEvent(
         // line" with captureAll ON sees nothing here, so report each matching pattern once
         // (memoized) naming the rule that hid the line.
         reportExcludedLine(deps, excludedBy.source);
+        traceOutcome(deps, category, `dropped (exclusion "${excludedBy.source}")`, text);
         return;
     }
 
     const floodResult = deps.floodGuard.check(text);
-    if (!floodResult.allow) { return; }
+    if (!floodResult.allow) {
+        traceOutcome(deps, category, 'flood-suppressed', text);
+        return;
+    }
     const now = new Date();
 
     if (floodResult.suppressedCount) {
@@ -99,6 +104,7 @@ export function processOutputEvent(
         category, timestamp: now, logFileUri: session.fileUri.fsPath,
         sourcePath: body.source?.path, sourceLine: body.line,
     });
+    traceOutcome(deps, category, 'captured', text);
 }
 
 /**
@@ -130,6 +136,28 @@ function reportExcludedLine(deps: OutputEventDeps, pattern: string): void {
     deps.outputChannel?.appendLine(
         `[capture] Hid a Debug Console line matching exclusion pattern "${pattern}" ` +
         `(saropaLogCapture.exclusions). Remove or adjust the pattern to capture these lines.`,
+    );
+}
+
+/** Max characters of line text shown in a diagnostic trace — keep the output channel readable. */
+const diagnosticSnippetMax = 80;
+
+/**
+ * Trace one DAP output event's fate to the output channel when `diagnosticCapture` is on.
+ *
+ * This is the decisive signal for "a line is in the Debug Console but missing from the log":
+ * every event the extension RECEIVES via DAP is logged here with what happened to it
+ * (captured / dropped-category / excluded / flood-suppressed). So if a Debug Console line
+ * appears in this trace, the extension got it and the disposition explains the outcome; if a
+ * Debug Console line never appears here, it was never delivered to the extension over DAP and
+ * cannot be captured — that is a VS Code boundary, not a filtering bug. Off by default; this is
+ * an opt-in debug switch, so per-line verbosity is acceptable.
+ */
+function traceOutcome(deps: OutputEventDeps, category: string, disposition: string, text: string): void {
+    if (!deps.config.diagnosticCapture) { return; }
+    const snippet = text.length > diagnosticSnippetMax ? `${text.slice(0, diagnosticSnippetMax)}…` : text;
+    deps.outputChannel?.appendLine(
+        `Capture diagnostic: DAP output category="${category}" -> ${disposition} | "${snippet}"`,
     );
 }
 

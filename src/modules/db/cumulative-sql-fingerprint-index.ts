@@ -146,6 +146,8 @@ function subtractEntry(
   if (count <= 0 || logCount <= 0) {
     return null;
   }
+  // slowQueryCount IS subtractable (a sum). When the aggregate has none, no log reported slow queries
+  // — so the active log contributed none either, and there is nothing to subtract.
   const slow = entry.slowQueryCount !== undefined
     ? entry.slowQueryCount - (active.slowQueryCount ?? 0)
     : undefined;
@@ -153,6 +155,9 @@ function subtractEntry(
     count,
     logCount,
     firstSourceUriString: entry.firstSourceUriString,
+    // maxDurationMs is passed through UNCHANGED: a max can't be subtracted without per-log history,
+    // so the surviving value is an upper bound that may still reflect the excluded active log. See the
+    // field doc on CumulativeSqlFingerprintEntry.maxDurationMs.
     ...(entry.maxDurationMs !== undefined ? { maxDurationMs: entry.maxDurationMs } : {}),
     ...(slow !== undefined && slow > 0 ? { slowQueryCount: slow } : {}),
     ...(entry.firstSourceLine !== undefined ? { firstSourceLine: entry.firstSourceLine } : {}),
