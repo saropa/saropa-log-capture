@@ -1,7 +1,11 @@
 /**
- * Tails configured external log files during a session. Buffers new lines
- * in memory; at session end the external-logs provider reads buffers and
- * writes sidecars. Start/stop from session lifecycle.
+ * Tails configured external log files during a session. Buffers new lines in
+ * memory; at session end the external-logs provider reads buffers and writes
+ * sidecars. Start/stop from session lifecycle.
+ *
+ * Each configured path gets a TailWorker that handles late appearance
+ * (createIfMissing / glob), rotation (followRotation), and incremental reads.
+ * Glob paths (`logs/*.log`) tail the most recently modified match.
  */
 
 import * as fs from 'node:fs';
@@ -9,14 +13,18 @@ import * as path from 'node:path';
 import type { IntegrationExternalLogsConfig } from '../config/config-types';
 import type { WorkspaceFolder } from 'vscode';
 import { resolveWorkspaceFileUri } from './workspace-path';
+import { isGlobPattern, resolveExternalLogPath } from './external-log-glob';
+import { TailWorker } from './external-log-tail-worker';
 
 /** Per-file buffer: lines collected during tail. */
 const buffersByLabel = new Map<string, string[]>();
-/** Watchers and read state per path; disposed on stop. */
-const watchers: Array<{ close: () => void }> = [];
+/** Active tail workers; disposed on stop. */
+const workers: TailWorker[] = [];
 /** Debounce timers used to batch fs.watch change bursts. */
 const debounceTimeouts = new Set<ReturnType<typeof setTimeout>>();
-/** Config used for max lines; set at start. */
+/** Notified with the count of files currently being tailed (for the status bar). */
+let onActiveCountChange: ((count: number) => void) | undefined;
+/** Per-file line cap; set at start from config (clamped). */
 let maxLinesPerFile = 10_000;
 
 /**
@@ -35,153 +43,102 @@ export function pathToLabel(relPath: string): string {
     return noExt || 'external';
 }
 
-/**
- * Start tailing configured paths. Resolves paths against workspace; for each
- * existing file, watches for changes and appends new lines to a per-file buffer.
- * Missing files are logged and skipped (no session failure).
- */
-export function startExternalLogTailers(
-    workspaceFolder: WorkspaceFolder,
-    paths: readonly string[],
-    config: IntegrationExternalLogsConfig,
-    outputChannel: { appendLine(line: string): void },
-): void {
-    stopExternalLogTailers();
-    buffersByLabel.clear();
-    maxLinesPerFile = Math.max(100, Math.min(1_000_000, config.maxLinesPerFile));
+/** Notify the status-bar callback with the current attached-file count. */
+function notifyActiveCount(): void {
+    onActiveCountChange?.(workers.filter((w) => w.isAttached()).length);
+}
 
-    for (const relPath of paths) {
-        const uri = resolveWorkspaceFileUri(workspaceFolder, relPath);
-        const filePath = uri.fsPath;
-        try {
-            const stat = fs.statSync(filePath);
-            if (!stat.isFile()) {
-                outputChannel.appendLine(`[externalLogs] Not a file, skipped: ${relPath}`);
-                continue;
-            }
-        } catch {
-            outputChannel.appendLine(`[externalLogs] External log not found: ${relPath}`);
-            continue;
-        }
+/** Directory to watch for a path's appearance/rotation (the literal directory part). */
+function watchDirForPath(workspaceFolder: WorkspaceFolder, relPath: string): string {
+    const segments = relPath.split(/[/\\]/g).filter(Boolean);
+    segments.pop();
+    const dirRel = segments.join('/');
+    return resolveWorkspaceFileUri(workspaceFolder, dirRel || '.').fsPath;
+}
 
-        const label = pathToLabel(relPath);
-        const buffer: string[] = [];
-        buffersByLabel.set(label, buffer);
+/** Current existing file to tail for this path, or undefined if none yet. */
+function existingTailPath(workspaceFolder: WorkspaceFolder, relPath: string): string | undefined {
+    const resolved = resolveExternalLogPath(workspaceFolder, relPath);
+    if (!resolved) { return undefined; }
+    try { return fs.statSync(resolved).isFile() ? resolved : undefined; } catch { return undefined; }
+}
 
-        const cap = (): void => {
-            while (buffer.length > maxLinesPerFile) {
-                buffer.shift();
-            }
-        };
-
-        let position = 0;
-        try {
-            const stat = fs.statSync(filePath);
-            position = stat.size;
-        } catch {
-            // use 0
-        }
-
-        const readNewBytes = (fromPos: number): number => {
-            try {
-                const stat = fs.statSync(filePath);
-                if (stat.size <= fromPos) { return fromPos; }
-                const toRead = stat.size - fromPos;
-                const fd = fs.openSync(filePath, 'r');
-                try {
-                    const buf = Buffer.alloc(toRead);
-                    fs.readSync(fd, buf, 0, toRead, fromPos);
-                    // Position advances by byte length read; line split is UTF-8 string (multi-byte chars across chunk boundaries are rare for log text).
-                    const chunk = buf.toString('utf-8').replaceAll('\r\n', '\n').replaceAll('\r', '\n');
-                    const lines = chunk.split('\n');
-                    const complete = chunk.endsWith('\n') ? lines : lines.slice(0, -1);
-                    for (const line of complete) {
-                        buffer.push(line ?? '');
-                    }
-                    cap();
-                    const consumed = complete.length === 0 ? 0 : Buffer.byteLength(complete.join('\n') + '\n', 'utf-8');
-                    return fromPos + Math.min(consumed, toRead);
-                } finally {
-                    fs.closeSync(fd);
-                }
-            } catch {
-                return fromPos;
-            }
-        };
-
-        const onChange = (): void => {
-            try {
-                const stat = fs.statSync(filePath);
-                if (stat.size > position) {
-                    position = readNewBytes(position);
-                } else if (stat.size < position) {
-                    position = stat.size;
-                    position = readNewBytes(position);
-                }
-            } catch {
-                // file deleted or unreadable
-            }
-        };
-
-        let pendingRead = false;
-        let scheduledRead = false;
-        const requestRead = (): void => {
-            pendingRead = true;
-            if (scheduledRead) { return; }
-            scheduledRead = true;
-            const t = setTimeout(() => {
-                debounceTimeouts.delete(t);
-                scheduledRead = false;
-                if (!pendingRead) { return; }
-                pendingRead = false;
-                onChange();
-            }, 50);
-            debounceTimeouts.add(t);
-        };
-
-        try {
-            const base = path.basename(filePath);
-            const w = fs.watch(filePath, { persistent: false }, (_, eventFilename) => {
-                // Windows often passes null for filename; still read new bytes for this watched path.
-                if (eventFilename === null || eventFilename === undefined || eventFilename === base) {
-                    // Debounce fs.watch bursts: schedule one synchronous read after the burst settles.
-                    // This reduces extension-host stalls under heavy log churn.
-                    requestRead();
-                }
-            });
-            watchers.push({
-                close: () => {
-                    try {
-                        w.close();
-                    } catch {
-                        // ignore
-                    }
-                },
-            });
-            onChange();
-        } catch (err) {
-            const msg = err instanceof Error ? err.message : String(err);
-            outputChannel.appendLine(`[externalLogs] Watch failed for ${relPath}: ${msg}`);
-            buffersByLabel.delete(label);
-        }
+/** createIfMissing: create an empty file (and parent dirs) so the app can append immediately. */
+function ensureFileExists(workspaceFolder: WorkspaceFolder, relPath: string, outputChannel: { appendLine(l: string): void }): void {
+    const p = resolveWorkspaceFileUri(workspaceFolder, relPath).fsPath;
+    try {
+        if (fs.existsSync(p)) { return; }
+        fs.mkdirSync(path.dirname(p), { recursive: true });
+        fs.writeFileSync(p, '');
+        outputChannel.appendLine(`[externalLogs] Created empty log to tail: ${relPath}`);
+    } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        outputChannel.appendLine(`[externalLogs] createIfMissing failed for ${relPath}: ${msg}`);
     }
 }
 
-/** Stop all watchers and clear state. Call at session end. */
-export function stopExternalLogTailers(): void {
-    for (const w of watchers) {
-        try {
-            w.close();
-        } catch {
-            // ignore
-        }
+/** Build and start a tail worker for one configured path. */
+function setupTail(
+    workspaceFolder: WorkspaceFolder,
+    relPath: string,
+    config: IntegrationExternalLogsConfig,
+    outputChannel: { appendLine(l: string): void },
+): void {
+    const buffer: string[] = [];
+    buffersByLabel.set(pathToLabel(relPath), buffer);
+    const glob = isGlobPattern(relPath);
+    // createIfMissing only makes sense for a concrete path, not a glob pattern.
+    if (!glob && config.createIfMissing) { ensureFileExists(workspaceFolder, relPath, outputChannel); }
+    const worker = new TailWorker({
+        buffer,
+        maxLines: maxLinesPerFile,
+        followRotation: config.followRotation,
+        watchForAppearance: config.createIfMissing || glob,
+        watchDir: watchDirForPath(workspaceFolder, relPath),
+        resolveLatest: () => existingTailPath(workspaceFolder, relPath),
+        outputChannel,
+        onAttachedChange: notifyActiveCount,
+        registerTimeout: (t) => debounceTimeouts.add(t),
+    });
+    workers.push(worker);
+    worker.start();
+}
+
+/**
+ * Start tailing configured paths. Resolves each path (with glob support);
+ * existing files are watched immediately, missing ones wait for appearance when
+ * createIfMissing/glob, otherwise are logged and skipped (no session failure).
+ */
+export function startExternalLogTailers(
+    workspaceFolder: WorkspaceFolder,
+    config: IntegrationExternalLogsConfig,
+    outputChannel: { appendLine(line: string): void },
+    onCountChange?: (count: number) => void,
+): void {
+    stopExternalLogTailers();
+    onActiveCountChange = onCountChange;
+    maxLinesPerFile = Math.max(100, Math.min(1_000_000, config.maxLinesPerFile));
+    for (const relPath of config.paths) {
+        setupTail(workspaceFolder, relPath, config, outputChannel);
     }
-    watchers.length = 0;
+    notifyActiveCount();
+}
+
+/** Stop all workers and clear state. Call at session end. */
+export function stopExternalLogTailers(): void {
+    for (const w of workers) {
+        try { w.close(); } catch { /* ignore */ }
+    }
+    workers.length = 0;
     buffersByLabel.clear();
     for (const t of debounceTimeouts) {
         try { clearTimeout(t); } catch { /* ignore */ }
     }
     debounceTimeouts.clear();
+    if (onActiveCountChange) {
+        onActiveCountChange(0);
+        onActiveCountChange = undefined;
+    }
 }
 
 /**

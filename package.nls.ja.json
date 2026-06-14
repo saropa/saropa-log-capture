@@ -50,6 +50,7 @@
   "command.openSession.title": "ログファイルを開く",
   "command.openLogFile.title": "Saropa Log Capture: ログファイルを開く…",
   "command.openLogFromUrl.title": "Saropa Log Capture: URL からログを開く…",
+  "command.replay.title": "Saropa Log Capture: ログを再生",
   "command.openSqlQueryHistory.title": "Saropa Log Capture: Open SQL Query History",
   "command.openSignal.title": "Saropa Log Capture: Open Signal",
   "command.openSqlHistoryForFingerprint.title": "Saropa Log Capture: Open SQL Query History for Query",
@@ -502,5 +503,7 @@
   "config.integrations.database.liveTail.title": "Stream new queries live during the session (file mode).",
   "config.integrations.database.apiUrl.title": "Query API endpoint (API mode).",
   "config.integrations.otel.traceUrlTemplate.title": "Trace backend deep-link template ({traceId}).",
-  "config.integrations.otel.traceIdPattern.title": "Trace ID regex override (OpenTelemetry)."
+  "config.integrations.otel.traceIdPattern.title": "Trace ID regex override (OpenTelemetry).",
+  "config.integrations.externalLogs.createIfMissing.title": "Integrations › External Logs › Create If Missing",
+  "config.integrations.externalLogs.followRotation.title": "Integrations › External Logs › Follow Rotation"
 }
