@@ -26,7 +26,7 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
     var signalPanelOpen = false;
     var hasLog = false;
     var heroLoading = false;
-    var signalDataCache = { statuses: {}, hotFiles: [], platforms: [], sdkVersions: [], debugAdapters: [], allSignals: [], signalsInThisLog: [], coOccurrences: [] };
+    var signalDataCache = { statuses: {}, hotFiles: [], platforms: [], sdkVersions: [], debugAdapters: [], allSignals: [], signalsInThisLog: [], coOccurrences: [], pulse: null };
     var sectionExpanded = { 'session-details': false, 'this-log': true, 'across-logs': true, environment: false };
     var currentLogLabel = '';
     var heroErrorCount = undefined, heroWarningCount = undefined, heroSnapshotSummary = '';

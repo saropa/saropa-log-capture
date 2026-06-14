@@ -10,6 +10,8 @@ import * as vscode from 'vscode';
 import { getLogDirectoryUri } from '../../../modules/config/config';
 import { aggregateSignals } from '../../../modules/misc/cross-session-aggregator';
 import { enrichHotFilesWithFreshness } from '../../../modules/misc/hot-file-freshness';
+import { computeWorkspacePulse, type WorkspacePulse } from '../../../modules/misc/workspace-pulse';
+import { computeDebuggingVelocity } from '../../../modules/compare/debugging-velocity';
 import type { RecurringSignalEntry } from '../../../modules/misc/recurring-signal-builder';
 import { buildAllRecurringSignals } from '../../../modules/misc/recurring-signal-builder';
 import { getErrorStatusBatch, setErrorStatus, type ErrorStatus } from '../../../modules/misc/error-status-store';
@@ -88,6 +90,9 @@ export async function handleSignalDataRequest(post: PostFn, currentFileUri?: vsc
 
     let signalsInThisLog: RecurringSignalEntry[] | undefined;
     let sessionCorrelationTags: readonly string[] = [];
+    // Idea #20: workspace pulse strip — composed from the regression + velocity + recurring data
+    // already gathered below. Computed inside the currentFileUri block; undefined when nothing to show.
+    let pulse: WorkspacePulse | undefined;
     if (currentFileUri) {
         try {
             const store = new SessionMetadataStore();
@@ -110,6 +115,20 @@ export async function handleSignalDataRequest(post: PostFn, currentFileUri?: vsc
             const regressionEntries = buildRegressionSignalEntries(sessionFilename, regression);
             const merged = [...regressionEntries, ...thisSessionSignals];
             if (merged.length > 0) { signalsInThisLog = merged; }
+            // Pulse (idea #20): improving = disappeared, worsening = new, stable = recurring baseline,
+            // velocity = cross-session fix rate. Reuses regression + allMetas already loaded here.
+            const recurringCount = allSignals.filter(
+                (s) => s.recurring && (s.kind === 'error' || s.kind === 'warning'),
+            ).length;
+            const orderedHashes = [...allMetas]
+                .sort((a, b) => parseSessionDate(a.filename) - parseSessionDate(b.filename))
+                .map((m) => (m.meta.fingerprints ?? []).map((f) => f.h).filter(Boolean));
+            pulse = computeWorkspacePulse({
+                newErrorCount: regression.newErrors.length,
+                resolvedErrorCount: regression.disappearingErrors.length,
+                recurringCount,
+                velocityPct: computeDebuggingVelocity(orderedHashes)?.velocityPct,
+            });
         } catch {
             // ignore — metadata may not exist yet for new sessions
         }
@@ -142,6 +161,7 @@ export async function handleSignalDataRequest(post: PostFn, currentFileUri?: vsc
         ),
         coOccurrences: aggregated?.coOccurrences ?? [],
         filterSuggestions,
+        pulse,
     });
 }
 
