@@ -114,7 +114,7 @@ Collapse any column's sections to shrink that column aside and give the open sid
 - **File retention:** Oldest logs auto-deleted when limit exceeded.
 - **Auto file split:** Split logs by line count, size, keywords, duration, or silence.
 - **Context header:** Each log starts with session metadata.
-- **Integration adapters:** Opt-in adapters add header lines per session (packages, build/CI, Git, env, test results, coverage, crash dumps, Docker, performance, terminal output, Drift Advisor, and more). Configure via `saropaLogCapture.integrations.adapters`.
+- **Integration adapters:** Opt-in adapters add header lines per session (packages, build/CI, Git, env, test results, coverage, crash dumps, Docker, performance, terminal output, Drift Advisor, and more). Configure via `saropaLogCapture.integrations.adapters`. When your `pubspec.yaml` or `package.json` declares a package an adapter can enrich, Saropa Log Capture offers once to turn the matching adapter on — never enabling anything without your tap.
 - **Full Debug Console capture:** Toggle "App Only" or set `captureAll` to include system/framework logs.
 - **AI Activity (opt-in):** Stream Claude Code AI activity into the log viewer, with colored borders and category filters. Settings under `saropaLogCapture.aiActivity.*`.
 
