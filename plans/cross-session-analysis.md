@@ -279,7 +279,7 @@ After a debug session, automatically compare it against the previous session (or
 
 **Status:** Shipped. [session-delta.ts](src/modules/compare/session-delta.ts) computes the delta vs the chronologically previous session — error/warning count deltas, error fingerprints new vs gone, and source files (`file:` correlation tags) referenced only this session — and session finalization ([session-lifecycle-finalize.ts](src/modules/session/session-lifecycle-finalize.ts)) auto-logs a "Since last session:" summary to the output channel on every session end (silent, so it never competes with the predictive-surfacing toast from idea #9). New/disappeared error detection also remains available in the Signals panel via [regression-detector.ts](src/modules/signals/regression-detector.ts). **Omitted:** raw output-volume (total-line) delta — SessionMeta does not persist a per-session line count, so it is not derivable without re-reading both log files, which this lightweight summary avoids.
 
-### 11. Ghost Errors — Intermittent Bug Tracker — PARTIAL
+### ~~11. Ghost Errors — Intermittent Bug Tracker~~ — DONE
 
 Some errors appear in 30% of sessions. Others in 100%. The extension tracks this automatically.
 
@@ -292,7 +292,7 @@ Reliability Report:
 
 Intermittent errors are often the hardest bugs. Making their pattern visible is the first step to understanding them.
 
-**Status:** Infrastructure exists — [recurring-signal-builder.ts](src/modules/misc/recurring-signal-builder.ts) builds `RecurringSignalEntry` with `sessionCount` and a `timeline`. **Remaining:** an explicit `sessionPercentage` derivation and the spark-line reliability visualization in the Signals panel.
+**Status:** Shipped. [signal-reliability.ts](src/modules/misc/signal-reliability.ts) classifies each signal's cross-session frequency into a percentage + tier (consistent ≥80%, intermittent 25–79%, rare <25%), and [recurring-signal-builder.ts](src/modules/misc/recurring-signal-builder.ts) now stamps `sessionPercentage` + `reliability` onto every `RecurringSignalEntry` (denominator = total sessions considered). The Signals panel's cross-session list renders the tier inline next to each signal's session count (e.g. "60% of sessions — intermittent"). A dedicated spark-line glyph was not added — the existing recurring badge + trend arrow already mark frequency, and the percentage/tier text carries the ghost-error signal without new CSS.
 
 ### 12. Code Freshness Heatmap — NOT BUILT
 
@@ -462,7 +462,7 @@ Fix Velocity: 3 errors resolved this week, 1 persisting
 | ~~Predictive error surfacing (session-end trigger)~~ | ~~Medium~~ | ~~Very High~~ | ~~Very High~~ | **Done** |
 | ~~"What Changed?" auto-summary on session end~~ | ~~Medium~~ | ~~Very High~~ | ~~Very High~~ | **Done** |
 | Curated/named investigations | Medium | Medium | Medium | Next |
-| Ghost errors reliability sparkline | Low | Medium | High | Soon |
+| ~~Ghost errors reliability tag~~ | ~~Low~~ | ~~Medium~~ | ~~High~~ | **Done** |
 | Session health score (per-session model) | Medium | High | High | Soon |
 | "Why Did This Break?" narrative prose | High | Very High | Very High | Soon |
 | Code freshness heatmap | Low | High | High | Backlog |
@@ -603,3 +603,37 @@ After a capture session ends, the **Saropa Log Capture** output channel now logs
 ### Omitted
 
 Raw output-volume (total-line) delta — SessionMeta persists no per-session line count, so it is not derivable without re-reading both log files, which this lightweight summary deliberately avoids. The error/warning counts and new-file signal cover the "what changed" intent without that read.
+
+---
+
+## Finish Report (2026-06-14) — Ghost errors / reliability tag (idea #11)
+
+### What shipped
+
+Each cross-session signal in the Signal panel's "All signals" list now displays a reliability tag — the share of all considered sessions the signal appears in, as a percentage plus a coarse tier (consistent ≥80%, intermittent 25–79%, rare <25%). Intermittent signals are the classic "ghost" bugs that appear in some runs but not others; surfacing the band makes them distinguishable from always-present and one-off signals at a glance.
+
+### How it works
+
+`classifyReliability(sessionCount, totalSessions)` (pure, `src/modules/misc/signal-reliability.ts`) returns a `{ percentage, tier }` or `undefined` when there are fewer than two sessions (a signal seen in the only session carries no reliability information) or a zero count; the count is clamped to the total so a stale duplicate cannot report above 100%. The unified signal builder (`recurring-signal-builder.ts`) passes the total session count (the size of the metadata set it aggregates) into ranking and stamps `sessionPercentage` + `reliability` onto every `RecurringSignalEntry`. The webview signal list renders the tier from three localized templates next to the existing session-count meta.
+
+### Files changed
+
+- `src/modules/misc/signal-reliability.ts` — NEW. Pure classifier (vscode-free, node:test-able).
+- `src/modules/misc/recurring-signal-builder.ts` — `RecurringSignalEntry` gains `sessionPercentage` + `reliability`; `rankSignals` takes the total session count and computes them.
+- `src/ui/panels/viewer-signal-panel-script-part-b.ts` — render the reliability tag on each signal row.
+- `src/ui/panels/viewer-signal-panel-script.ts` — `SignalScriptStrings` + defaults gain three reliability templates.
+- `src/ui/panels/viewer-signal-panel.ts` — wire the localized `signal.reliability*` values into the panel strings.
+- `src/l10n/strings-b.ts` — define `signal.reliabilityConsistent` / `…Intermittent` / `…Rare`.
+- `src/test/modules/misc/signal-reliability.test.ts` — NEW. 6 cases (band boundaries, clamping, not-classifiable).
+- `CHANGELOG.md`, `plans/cross-session-analysis.md` — idea #11 marked done; this report.
+
+### Verification
+
+- `npm run check-types` — clean.
+- `eslint` on the seven touched source/test files — clean.
+- `npm run verify:l10n-keys` — OK (the three new `signal.reliability*` keys resolve).
+- `node --test` on the new classifier test — 6/6 pass.
+
+### Not done
+
+A dedicated spark-line glyph for reliability was not added — the existing recurring badge and trend arrow already mark frequency, and the percentage/tier text carries the ghost-error signal without new CSS.
