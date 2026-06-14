@@ -106,6 +106,9 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
 
     const historyProvider = new SessionHistoryProvider();
     context.subscriptions.push(historyProvider);
+    // Feed the history tree's active-session count from the write queue's write-time callback, so the
+    // displayed count can't lag the file by the queue depth (M1). The per-line listener no longer sets it.
+    sessionManager.setActiveLineCountObserver((n) => historyProvider.setActiveLineCount(n));
     historyProvider.onDidChangeTreeData(async () => {
         const overrideUriStr = context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
         if (overrideUriStr) { return; }

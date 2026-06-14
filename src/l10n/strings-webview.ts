@@ -104,7 +104,7 @@ export const stringsWebview: Record<string, string> = {
     'viewer.crashlytics.badge.repetitive': 'Repetitive',
     'viewer.crashlytics.badge.repetitiveTip': 'Seen across more than one app version',
     'viewer.crashlytics.badge.regressed': 'Regressed',
-    'viewer.crashlytics.badge.regressedTip': 'Came back after disappearing in an earlier scan',
+    'viewer.crashlytics.badge.regressedTip': 'Returned after dropping out of the tracked top issues in an earlier scan. Derived from the top-issues list, so it can also reflect an issue that merely fell below the tracked cutoff and came back, not only a true regression.',
     'viewer.sessionInfo.empty': 'No session header found in this log.',
     'viewer.sessionInfo.openInBrowser': 'Open in browser',
     'viewer.sessionInfo.revealInExplorer': 'Reveal in OS file explorer',
@@ -154,37 +154,11 @@ export const stringsWebview: Record<string, string> = {
     'viewer.crashlytics.setup.browseGsj': 'Browse for google-services.json',
     'viewer.crashlytics.setup.orConfigureSettings': 'Or configure in settings',
 
-    // Signal panel cross-session report — rendered CLIENT-SIDE via vt() in
-    // viewer-signal-panel-script-part-{b,c,d}.ts. Count-bearing labels use {0}/{1} interpolation
-    // (not English concatenation) and pick a .one / .many key by the count, matching the existing
-    // crashlytics usersOne/usersMany idiom, so plural and word order stay translatable.
-    'viewer.signal.time.justNow': 'just now',
-    'viewer.signal.time.minAgo': '{0} min ago',
-    'viewer.signal.time.hoursAgo': '{0}h ago',
-    'viewer.signal.time.daysAgo': '{0} days ago',
-    'viewer.signal.time.weeksAgo': '{0}w ago',
-    'viewer.signal.suggestions.summary': 'Filter suggestions ({0})',
-    'viewer.signal.hotfiles.summaryEmpty': 'Frequently modified files',
-    'viewer.signal.hotfiles.summaryOne': '{0} file frequently modified',
-    'viewer.signal.hotfiles.summaryMany': '{0} files frequently modified',
-    'viewer.signal.hotfiles.sessionsOne': '{0} session',
-    'viewer.signal.hotfiles.sessionsMany': '{0} sessions',
-    'viewer.signal.env.platforms': 'Platforms',
-    'viewer.signal.env.sdkRuntime': 'SDK / runtime',
-    'viewer.signal.env.debugAdapters': 'Debug adapters',
-    'viewer.signal.env.summaryEmpty': 'Environment',
-    'viewer.signal.env.summary': 'Environment ({0} entries)',
-    'viewer.signal.env.empty': 'No environment data across sessions.',
-    'viewer.signal.all.summaryEmpty': 'All signals',
-    'viewer.signal.all.summary': 'All signals ({0})',
-    'viewer.signal.inLog.summaryEmpty': 'Signals in this log',
-    'viewer.signal.inLog.summary': 'Signals in this log ({0})',
-    'viewer.signal.inLog.summaryWindow': 'Signals in this log ({0} of {1})',
-    // Live on-screen performance-scope label (part-c). NOTE: the same English text in part-c's
-    // Markdown copy-export builder is intentionally left literal (copy artifact, plan 104).
-    'viewer.signal.noLogOpen': 'No log open',
-    'viewer.signal.related.summaryOne': 'Related signals ({0} pair)',
-    'viewer.signal.related.summaryMany': 'Related signals ({0} pairs)',
+    // NOTE: the Signal panel's cross-session report strings (time labels, suggestion / hot-files /
+    // environment / all-signals / in-log section summaries, related-signals counts, and the live
+    // "No log open" label) were folded into the panel-standalone SignalScriptStrings object
+    // (signal.* in strings-b.ts, consumed as SIGNAL_STRINGS.* via fillSignalString) so the whole
+    // signal panel uses one localization mechanism. Do not re-add them here.
 
     // Session (Logs) list — runtime strings built client-side (viewer-session-panel-rendering.ts).
     'viewer.session.noMatch': 'No sessions match the current filters',

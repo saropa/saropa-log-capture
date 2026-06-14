@@ -28,6 +28,14 @@ export function isRepetitive(issue: CrashlyticsIssue): boolean {
  * some earlier snapshot (it disappeared and came back). Needs ≥3 distinct states; with fewer, nothing
  * is claimed. The history is oldest→newest and its last entry is the current state (recorded at fetch
  * time before signals are derived). Pure.
+ *
+ * KNOWN LIMITATION (L3): each snapshot holds only the fetched TOP issues (the API result is ranked and
+ * paged), and the snapshot does not record whether that page was truncated. So an issue that merely
+ * slipped below the tracked cutoff in the previous scan and climbed back looks identical to one that
+ * genuinely stopped and restarted — both read as "absent then present." This over-reports regressions
+ * near the paging boundary. We cannot disambiguate from the data held (no unpaged/total signal is
+ * available), so the "Regressed" badge tooltip states the caveat rather than claiming certainty. A true
+ * fix would require an unpaged issue feed from the API.
  */
 export function detectRegressedIds(history: readonly IssueSnapshot[]): Set<string> {
     const regressed = new Set<string>();

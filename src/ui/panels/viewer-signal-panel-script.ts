@@ -47,6 +47,45 @@ export interface SignalScriptStrings {
     trendStable: string;
     evidenceLineTitle: string;
     supportingLogLines: string;
+    // Folded in from the global vt('viewer.signalPanel.*') keys so the panel uses one string
+    // mechanism. {N} placeholders are filled client-side by fillSignalString.
+    suggestionImpact: string;
+    sessionMeta: string;
+    recurringTitle: string;
+    heroErrors: string;
+    heroWarnings: string;
+    metaAvg: string;
+    metaMax: string;
+    // Cross-session report sections + co-occurrence rows + relative-time labels, folded off the global
+    // vt('viewer.signal.*') keys so the whole panel uses this one standalone object. *One/*Many pairs
+    // are selected client-side by count; {N} placeholders are filled by fillSignalString.
+    cooccurTitle: string;
+    cooccurMeta: string;
+    timeJustNow: string;
+    timeMinAgo: string;
+    timeHoursAgo: string;
+    timeDaysAgo: string;
+    timeWeeksAgo: string;
+    suggestionsSummary: string;
+    hotfilesSummaryEmpty: string;
+    hotfilesSummaryOne: string;
+    hotfilesSummaryMany: string;
+    hotfilesSessionsOne: string;
+    hotfilesSessionsMany: string;
+    envPlatforms: string;
+    envSdkRuntime: string;
+    envDebugAdapters: string;
+    envSummaryEmpty: string;
+    envSummary: string;
+    envEmpty: string;
+    allSummaryEmpty: string;
+    allSummary: string;
+    inLogSummaryEmpty: string;
+    inLogSummary: string;
+    inLogSummaryWindow: string;
+    noLogOpen: string;
+    relatedSummaryOne: string;
+    relatedSummaryMany: string;
 }
 
 const DEFAULT_SIGNAL_STRINGS: SignalScriptStrings = {
@@ -76,6 +115,40 @@ const DEFAULT_SIGNAL_STRINGS: SignalScriptStrings = {
     trendStable: 'Stable',
     evidenceLineTitle: 'Line {0}: {1}',
     supportingLogLines: 'Supporting log lines',
+    suggestionImpact: '~{0} lines ({1}%)',
+    sessionMeta: '{0} session(s), {1} total',
+    recurringTitle: 'Recurring in {0} sessions',
+    heroErrors: 'Errors: {0}',
+    heroWarnings: 'Warnings: {0}',
+    metaAvg: ', avg {0}',
+    metaMax: ', max {0}',
+    cooccurTitle: '{0} and {1} co-occur in {2} sessions',
+    cooccurMeta: '{0} shared, {1}% overlap',
+    timeJustNow: 'just now',
+    timeMinAgo: '{0} min ago',
+    timeHoursAgo: '{0}h ago',
+    timeDaysAgo: '{0} days ago',
+    timeWeeksAgo: '{0}w ago',
+    suggestionsSummary: 'Filter suggestions ({0})',
+    hotfilesSummaryEmpty: 'Frequently modified files',
+    hotfilesSummaryOne: '{0} file frequently modified',
+    hotfilesSummaryMany: '{0} files frequently modified',
+    hotfilesSessionsOne: '{0} session',
+    hotfilesSessionsMany: '{0} sessions',
+    envPlatforms: 'Platforms',
+    envSdkRuntime: 'SDK / runtime',
+    envDebugAdapters: 'Debug adapters',
+    envSummaryEmpty: 'Environment',
+    envSummary: 'Environment ({0} entries)',
+    envEmpty: 'No environment data across sessions.',
+    allSummaryEmpty: 'All signals',
+    allSummary: 'All signals ({0})',
+    inLogSummaryEmpty: 'Signals in this log',
+    inLogSummary: 'Signals in this log ({0})',
+    inLogSummaryWindow: 'Signals in this log ({0} of {1})',
+    noLogOpen: 'No log open',
+    relatedSummaryOne: 'Related signals ({0} pair)',
+    relatedSummaryMany: 'Related signals ({0} pairs)',
 };
 
 /** Generate the Signal panel script. Single scroll; State A vs B. */

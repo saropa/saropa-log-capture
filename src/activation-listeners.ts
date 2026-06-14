@@ -35,7 +35,10 @@ export function setupLineListeners(deps: ListenerDeps): void {
 
     sessionManager.addLineListener((data) => {
         broadcaster.addLine(data);
-        historyProvider.setActiveLineCount(data.lineCount);
+        // The active-session line count is NOT set here: data.lineCount is read at enqueue time
+        // (session.lineCount before the write queue drains), so it lags the file by the queue depth.
+        // The authoritative count is reported from the queue's write-time callback instead, wired via
+        // sessionManager.setActiveLineCountObserver() in extension-activation.ts (M1).
         if (data.watchHits && data.watchHits.length > 0) {
             broadcaster.updateWatchCounts(sessionManager.getWatcher().getCounts());
         }
