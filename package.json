@@ -2246,6 +2246,12 @@
           "type": "boolean",
           "title": "%config.integrations.database.redactLiterals.title%"
         },
+        "saropaLogCapture.integrations.database.liveTail": {
+          "default": false,
+          "description": "File mode only: tail the query log during the session and stream new queries live into the viewer (interleaved with app output). The end-of-session queries sidecar is written regardless.",
+          "type": "boolean",
+          "title": "%config.integrations.database.liveTail.title%"
+        },
         "saropaLogCapture.integrations.http.requestLogPath": {
           "default": "",
           "description": "Path to an HTTP request log or HAR file (relative to workspace or absolute) to correlate with debug output.",

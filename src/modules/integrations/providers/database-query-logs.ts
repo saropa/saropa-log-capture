@@ -10,9 +10,10 @@
 
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import type { IntegrationProvider, IntegrationContext, IntegrationEndContext, Contribution } from '../types';
+import type { IntegrationProvider, IntegrationContext, IntegrationEndContext, Contribution, StreamingWriter } from '../types';
 import type { IntegrationDatabaseConfig } from '../../config/config-types-integrations';
 import { resolveWorkspaceFileUri } from '../workspace-path';
+import { startDatabaseQueryTail, stopDatabaseQueryTail } from '../database-query-tailer';
 import { parseQueryBlocks, parseTextQueryLog, detectQueryLogFormat, redactQueryRecord } from './database-query-parsing';
 
 // Re-export pure parsing so tests and callers have a single entry point.
@@ -127,7 +128,28 @@ export const databaseQueryLogsProvider: IntegrationProvider = {
         return isEnabled(context);
     },
 
+    /**
+     * Live tail: when file mode + liveTail are on, stream new query-log entries
+     * into the session as they are appended, so queries appear live in the
+     * viewer. The end-of-session sidecar (onSessionEnd) still captures the full
+     * structured history independently.
+     */
+    onSessionStartStreaming(context: IntegrationContext, writer: StreamingWriter): void {
+        if (!isEnabled(context)) { return; }
+        const cfg = context.config.integrationsDatabase;
+        if (cfg.mode !== 'file' || !cfg.liveTail || !cfg.queryLogPath) { return; }
+        const filePath = resolveWorkspaceFileUri(context.workspaceFolder, cfg.queryLogPath).fsPath;
+        startDatabaseQueryTail({
+            filePath,
+            requestIdPattern: cfg.requestIdPattern,
+            outputChannel: context.outputChannel,
+            onLine: (text, timestamp) => writer.writeLine(text, 'database', timestamp),
+        });
+    },
+
     async onSessionEnd(context: IntegrationEndContext): Promise<Contribution[] | undefined> {
+        // Stop the live tail (no-op if it was never started) before the end-of-session read.
+        stopDatabaseQueryTail();
         if (!isEnabled(context)) { return undefined; }
         const cfg = context.config.integrationsDatabase;
         if (cfg.mode === 'file') { return readFileMode(context); }
