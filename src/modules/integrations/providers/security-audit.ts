@@ -9,7 +9,7 @@ import * as fs from 'fs';
 import type { IntegrationProvider, IntegrationContext, IntegrationEndContext, Contribution } from '../types';
 import { resolveWorkspaceFileUri } from '../workspace-path';
 
-interface SecurityEvent {
+export interface SecurityEvent {
     time: string;
     id: number;
     level: string;
