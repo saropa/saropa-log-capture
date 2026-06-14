@@ -23,6 +23,16 @@ const files = listNodeTestFiles();
 // inside the Extension Development Host, not under plain `node --test`.
 const vscodeStub = fileURLToPath(new URL('./vscode-stub.cjs', import.meta.url));
 
+// Under a coverage run (`run-coverage.js` sets SLC_TEST_COVERAGE=1 over an
+// already-instrumented out/), also preload the dump hook so this separate
+// node:test process contributes its coverage to .nyc_output. Plain `npm test`
+// leaves the flag unset and runs exactly as before — no coverage overhead.
+const requireFlags = ['--require', vscodeStub];
+if (process.env.SLC_TEST_COVERAGE === '1') {
+  const coverageHook = fileURLToPath(new URL('./node-coverage-hook.cjs', import.meta.url));
+  requireFlags.push('--require', coverageHook);
+}
+
 if (files.length === 0) {
   // No compiled node:test files — almost always a missing build, not "nothing to
   // run". Fail loudly so a skipped compile can't masquerade as a green suite.
@@ -32,7 +42,7 @@ if (files.length === 0) {
 
 const result = spawnSync(
   process.execPath,
-  ['--require', vscodeStub, '--test', '--test-reporter=dot', ...files],
+  [...requireFlags, '--test', '--test-reporter=dot', ...files],
   { stdio: 'inherit' },
 );
 

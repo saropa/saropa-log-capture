@@ -23,7 +23,8 @@ if (fs.existsSync(nycOutput)) {
 }
 fs.mkdirSync(nycOutput, { recursive: true });
 
-const run = (cmd) => execSync(cmd, { cwd: root, stdio: 'inherit' });
+const run = (cmd, env) =>
+	execSync(cmd, { cwd: root, stdio: 'inherit', env: { ...process.env, ...env } });
 
 let testsFailed = false;
 
@@ -36,6 +37,15 @@ try {
 
 	// Run tests with coverage collection hook
 	run('npx vscode-test --file ./out/test/coverage-hook.js');
+
+	// Capture coverage from the pure node:test suites too. They run in a
+	// separate `node --test` process the Extension Host coverage hook can't
+	// see, so without this pass every module tested only by node:test reports
+	// as untested — dragging global coverage under the gate even though the
+	// tests pass. SLC_TEST_COVERAGE makes run-node-tests.mjs preload the dump
+	// hook, which writes a second .nyc_output file that `nyc report` merges.
+	// Runs over the still-instrumented out/ (the finally block restores it).
+	run('node scripts/modules/test/run-node-tests.mjs', { SLC_TEST_COVERAGE: '1' });
 } catch {
 	testsFailed = true;
 } finally {
