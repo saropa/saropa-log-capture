@@ -185,10 +185,15 @@ Each item lists the fix and its **verification** (a check that proves it landed)
 4. **Brand rule (decided 2026-06-12):** "Saropa" and "Saropa Log Capture" are NEVER localized — they stay literal inside catalog values (and are excluded from any future MT pass). When wrapping a panel string that contains the brand, keep the brand token literal in the English source value rather than splitting it out.
 
 ### WS-6 — Cleanup (low risk)
-- Consolidate `escapeHtml` behind one helper (text + attribute variants).
-- Remove dead `deduplication.ts` and the unreachable `replay` command (or contribute it).
-- Add the explanatory comment justifying node `fs` streaming in the writer; replace `fs.readFileSync` in the two integration providers.
-- L4/L5/L6/L10/L11 minor correctness/escaping fixes.
+- Consolidate `escapeHtml` behind one helper (text + attribute variants). *(pending)*
+- Remove dead `deduplication.ts` and the unreachable `replay` command (or contribute it). *(Batch C)*
+- Add the explanatory comment justifying node `fs` streaming in the writer; replace `fs.readFileSync` in the two integration providers. *(Batch C)*
+- **L4 DONE 2026-06-14** — `cssVal` sanitizes user-config highlight-rule CSS values (`viewer-highlight.ts`); `data-tag`/color escaped in the source-tag link (`viewer-source-tags-ui.ts`).
+- **L5 DONE 2026-06-14** — `getAnnotationHtml` now escapes `&` (was `<`/`>` only).
+- **L1 DONE 2026-06-14** — browser request-id correlation uses a whole-token match (≥4 chars), not a bare substring (`messageMentionsId`).
+- **L2 DONE 2026-06-14** — documented why the DB context loader treats `timestamp 0` as in-window (parse-mode queries lack timestamps; result capped to 50) — intentional, no behavior change.
+- **L6 ACCEPTED 2026-06-14** — clicking a source link opens any absolute path from log text; left as-is (click-gated, read-only; constraining to the workspace would break legitimate Dart SDK / pub-cache links). Documented as accepted.
+- L10/L11/L12 + dead-code/`fs.readFileSync`: Batch C.
 
 ---
 

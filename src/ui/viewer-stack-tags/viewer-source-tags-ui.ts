@@ -144,8 +144,12 @@ function wrapTagLink(html, sourceTag) {
         wrapped = true;
         var orig = text.substring(idx, idx + sourceTag.length);
         var safe = orig.replace(/"/g, '&quot;');
+        // sourceTag is log-derived and goes into the data-tag attribute; color into an inline style.
+        // Escape both so a crafted tag (which may contain a quote) can't break out of the attribute.
+        var safeTag = sourceTag.replace(/"/g, '&quot;');
+        var safeColor = String(color).replace(/["<>;]/g, '');
         return text.substring(0, idx)
-            + '<span class="tag-link" data-tag="' + sourceTag + '" title="' + vt('viewer.tags.clickToFilter', safe) + '" style="--tag-clr:' + color + '">' + orig + '</span>'
+            + '<span class="tag-link" data-tag="' + safeTag + '" title="' + vt('viewer.tags.clickToFilter', safe) + '" style="--tag-clr:' + safeColor + '">' + orig + '</span>'
             + text.substring(idx + sourceTag.length);
     });
 }
