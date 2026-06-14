@@ -7,6 +7,7 @@
  */
 
 import { t } from '../../l10n';
+import { escapeHtmlScript } from '../escape-html-script';
 
 /** Generate the Find in Files panel HTML. */
 export function getFindPanelHtml(): string {
@@ -279,9 +280,7 @@ export function getFindPanelScript(): string {
         return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
     }
 
-    function escapeHtml(str) {
-        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
+    ${escapeHtmlScript('escapeHtml')}
 })();
 `;
 }

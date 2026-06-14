@@ -3,6 +3,8 @@
  * Inlined into the same IIFE as viewer-session-panel so sessionDisplayOptions,
  * cachedSessions, createCollectionInProgress and DOM refs are in scope.
  */
+import { escapeHtmlScript } from '../escape-html-script';
+
 export function getSessionCollectionsScript(): string {
   return `
     function setCreateCollectionLoading(loading) {
@@ -93,6 +95,6 @@ export function getSessionCollectionsScript(): string {
     }
 
     function escapeAttr(str) { return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
-    function escapeHtmlText(str) { return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    ${escapeHtmlScript('escapeHtmlText')}
 `;
 }

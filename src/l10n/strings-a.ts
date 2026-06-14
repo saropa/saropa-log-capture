@@ -281,6 +281,8 @@ export const stringsA: Record<string, string> = {
     'msg.databaseApiTokenStored': 'Database API token stored. It will be sent with the query lookup in API mode.',
     'msg.databaseApiTokenEmpty': 'No token entered. Use this command again to store your database API token.',
     'msg.databaseApiTokenCleared': 'Database API token cleared.',
+    'msg.databaseApiConsent.prompt': "Database API mode will send this session's time range to {0} at session end. Allow this?",
+    'msg.databaseApiConsent.allow': 'Allow',
 
     'msg.noIntegrationContext': 'No integration context available for this line.',
     'msg.noIntegrationData': 'No integration data captured for this log. Enable integrations in settings.',

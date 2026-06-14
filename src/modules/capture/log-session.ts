@@ -155,7 +155,7 @@ export class LogSession {
         this.attachStreamErrorHandler(this.writeStream);
 
         const header = generateContextHeader(this.context, this.config, extraHeaderLines);
-        this.writeStream.write(header);
+        await this.writeBackpressured(this.writeStream, header);
         this._bytesWritten = Buffer.byteLength(header, 'utf-8');
         this._partStartTime = Date.now();
     }
@@ -228,7 +228,7 @@ export class LogSession {
         // path skipped this); the block doubles as the "next text" for the byte-size split check.
         await this.splitBeforeNextLineIfNeeded(item.block);
         if (!this.writeStream) { return; }
-        this.writeStream.write(item.block);
+        await this.writeBackpressured(this.writeStream, item.block);
         this._bytesWritten += Buffer.byteLength(item.block, 'utf-8');
         if (item.countsAsLine) { this._lineCount++; }
     }
@@ -276,7 +276,7 @@ export class LogSession {
                 return;
             }
             const lineData = line + '\n';
-            this.writeStream.write(lineData);
+            await this.writeBackpressured(this.writeStream, lineData);
             this._bytesWritten += Buffer.byteLength(lineData, 'utf-8');
             this._lineCount++;
         }

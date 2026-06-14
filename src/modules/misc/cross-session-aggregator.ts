@@ -15,6 +15,10 @@ export interface HotFile {
     readonly filename: string;
     readonly sessionCount: number;
     readonly sessions: readonly { readonly filename: string; readonly uri: string }[];
+    /** Days since the file's last git commit, when resolvable (idea #12). Enriched host-side. */
+    readonly lastCommitDaysAgo?: number;
+    /** Freshness tier derived from lastCommitDaysAgo — recent / moderate / stale / unknown. */
+    readonly freshness?: import('./code-freshness').FreshnessTier;
 }
 
 /** Environment distribution entry from session headers. */
