@@ -114,4 +114,72 @@ Adapter ids are the exact strings checked in each provider's `isEnabled`.
 Default-on vs surfaced-only: should the recommendation toast appear for everyone, or only when the
 `packages` adapter is already enabled (treating recommendations as part of that adapter's remit)?
 Recommendation: **surface for everyone** — discovery shouldn't require first finding the adapter that
-discovers things. Revisit if it proves noisy.
+discovers things. Revisit if it proves noisy. Resolved: surfaces for everyone.
+
+## Finish Report (2026-06-14)
+
+### Summary
+
+Integration adapters previously required the user to discover the
+`saropaLogCapture.integrations.adapters` array by hand and know which adapter id matched which
+package. The capture now inspects a workspace's `pubspec.yaml` and `package.json` at activation,
+maps declared packages to the adapters that enrich them, and shows a single gated notification
+offering to enable any that are not already on. The notification names the triggering package and
+the adapter in plain terms and never changes a setting without an explicit tap.
+
+### Scope
+
+(B) VS Code extension (TypeScript). No Flutter/Dart app code touched.
+
+### Files added
+
+- `src/modules/misc/manifest-dependencies.ts` — pure `parsePubspecDependencies` (a small
+  indentation-aware line scanner, chosen over adding a YAML parser dependency) and
+  `parsePackageJsonDependencies` (JSON), each with a thin `vscode.workspace.fs` reader that returns
+  an empty set on any failure so activation never throws.
+- `src/modules/misc/adapter-recommendations.ts` — pure mapping engine. Two static dependency→adapter
+  tables (pubspec and npm) share one dedupe-and-exclude core; `suggestAdaptersFromPubspec` and
+  `suggestAdaptersFromPackageJson` return adapters not already enabled, each paired with the
+  dependency that triggered it.
+- `src/modules/integrations/recommend-adapters-notice.ts` — `maybeRecommendAdapters`, the gated
+  activation surface. Reads both manifests, merges recommendations (pubspec wins per-adapter ties),
+  gates on a workspace-state key derived from the sorted suggested-id set so an unchanged set never
+  re-prompts while a newly-added package surfaces a fresh one, and offers Turn On / Choose… / dismiss.
+  Reuses `INTEGRATION_ADAPTERS` for friendly labels and `showIntegrationsPicker` for the Choose path.
+- `src/test/modules/misc/manifest-dependencies.test.ts` (10 cases) and
+  `src/test/modules/misc/adapter-recommendations.test.ts` (11 cases).
+
+### Files changed
+
+- `src/extension-activation.ts` — import + one `void maybeRecommendAdapters(context, folder)` call
+  inside the existing `if (folder)` block.
+- `src/l10n/strings-a.ts` — four keys: `msg.adapterRecommend.prompt` / `.enable` / `.choose` /
+  `.enabled` (English source only; translation is left to the operator-run pipeline).
+- `CHANGELOG.md` — Unreleased → Added entry.
+- `README.md` — extended the integration-adapters bullet with the auto-suggestion behavior.
+
+### Design notes for review
+
+- The `flutter` marker maps to `adbLogcat` only. A guard test
+  (`should only map to adapter ids known to the integrations UI table`) surfaced that
+  `flutterCrashLogs` is a registered provider absent from `INTEGRATION_ADAPTERS`, so recommending it
+  would name a raw id the user could not manage from the picker. Adding it to the picker is a separate
+  product decision and was deliberately not taken.
+- Credential- or path-gated adapters that do nothing on toggle alone (build/CI, security, Windows
+  events) are excluded from both tables.
+- `database` and `http` need configured sources but are kept as discovery hints; the integrations
+  picker carries the setup guidance.
+- Recommendations surface for every workspace, not only when the `packages` adapter is enabled.
+
+### Verification
+
+- `npm run check-types` — clean.
+- `npx eslint` on all five new/changed source + test files — clean.
+- `npm run compile` (full gate: esbuild + webview catalogs + `verify:l10n-keys` confirming the four
+  new keys resolve + `verify:dist-size`) — passing.
+- `npm run test:file` on both new test files — 10 and 11 passing.
+- `npm run test:smoke` — activation completes (the new reader runs against this repo's own
+  `package.json` without error).
+- Existing-test audit: the only non-new test matching the touched symbols is
+  `src/test/ui/log-viewer-auto-load.test.ts`, which references `extension-activation` in comments
+  only; no assertion is affected.
