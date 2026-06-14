@@ -5,6 +5,7 @@
  */
 
 import { escapeHtml } from '../../modules/capture/ansi';
+import { t } from '../../l10n';
 import type {
   RootCauseHintBundle,
   RootCauseHypothesis,
@@ -28,10 +29,10 @@ export function buildOverviewHtml(opts: OverviewOptions): string {
   const { bundle, logLineCount, logFilePath, logLines } = opts;
   const parts: string[] = [];
   if (logFilePath) {
-    parts.push(overviewRow('Log file', logFilePath));
+    parts.push(overviewRow(t('signals.overview.logFile'), logFilePath));
   }
-  parts.push(overviewRow('Log lines', logLineCount.toLocaleString()));
-  parts.push(overviewRow('Session', bundle.sessionId));
+  parts.push(overviewRow(t('signals.overview.logLines'), logLineCount.toLocaleString()));
+  parts.push(overviewRow(t('signals.overview.session'), bundle.sessionId));
 
   // Session timing and outcome (items 5, 9) — extracted from log lines
   if (logLines && logLines.length > 0) {
@@ -46,7 +47,7 @@ export function buildOverviewHtml(opts: OverviewOptions): string {
       parts.push(
         `<div class="overview-stat">` +
         `<span class="stat-count">${s.count}</span>` +
-        `<span class="stat-label">${escapeHtml(s.label)}</span>` +
+        `<span class="stat-label">${escapeHtml(t(s.labelKey, ...s.labelArgs))}</span>` +
         `</div>`,
       );
     }
@@ -67,7 +68,7 @@ export function buildOtherSignalsHtml(
   const all = buildHypotheses(bundle);
   const others = all.filter(h => h.hypothesisKey !== current.hypothesisKey);
   if (others.length === 0) {
-    return '<div class="no-data">No other signals detected in this session</div>';
+    return `<div class="no-data">${escapeHtml(t('signals.overview.noOtherSignals'))}</div>`;
   }
   const parts: string[] = [];
   for (const h of others) {
@@ -127,35 +128,39 @@ export function buildOtherSignalsMarkdown(
 }
 
 interface StatItem {
+  /** English label — used by the markdown export, which stays English for GitHub/Slack. */
   readonly label: string;
+  /** l10n key + args — used to render the on-screen panel label via t(). */
+  readonly labelKey: string;
+  readonly labelArgs: readonly (string | number)[];
   readonly count: number;
 }
 
 /** Collect non-zero aggregate counts from the bundle for display. */
 function gatherStats(bundle: RootCauseHintBundle): StatItem[] {
   const items: StatItem[] = [];
-  addStat(items, 'Errors', bundle.errors?.length);
+  addStat(items, 'signals.stat.errors', 'Errors', bundle.errors?.length);
   // Sum warning counts across all groups (each group has a repeat count)
   const warnTotal = bundle.warningGroups?.reduce((sum, g) => sum + (g?.count ?? 0), 0);
-  addStat(items, 'Warnings', warnTotal);
-  addStat(items, 'Network failures', bundle.networkFailures?.length);
-  addStat(items, 'Memory events', bundle.memoryEvents?.length);
-  addStat(items, 'Slow operations', bundle.slowOperations?.length);
-  addStat(items, 'Permission denials', bundle.permissionDenials?.length);
-  addStat(items, 'Classified errors', bundle.classifiedErrors?.length);
-  addStat(items, 'SQL bursts', bundle.sqlBursts?.length);
-  addStat(items, 'N+1 queries', bundle.nPlusOneHints?.length);
+  addStat(items, 'signals.stat.warnings', 'Warnings', warnTotal);
+  addStat(items, 'signals.stat.networkFailures', 'Network failures', bundle.networkFailures?.length);
+  addStat(items, 'signals.stat.memoryEvents', 'Memory events', bundle.memoryEvents?.length);
+  addStat(items, 'signals.stat.slowOperations', 'Slow operations', bundle.slowOperations?.length);
+  addStat(items, 'signals.stat.permissionDenials', 'Permission denials', bundle.permissionDenials?.length);
+  addStat(items, 'signals.stat.classifiedErrors', 'Classified errors', bundle.classifiedErrors?.length);
+  addStat(items, 'signals.stat.sqlBursts', 'SQL bursts', bundle.sqlBursts?.length);
+  addStat(items, 'signals.stat.nPlusOne', 'N+1 queries', bundle.nPlusOneHints?.length);
   if (bundle.anrRisk && bundle.anrRisk.score > 0) {
-    items.push({ label: `ANR risk (${bundle.anrRisk.level})`, count: bundle.anrRisk.score });
+    items.push({ label: `ANR risk (${bundle.anrRisk.level})`, labelKey: 'signals.stat.anrRisk', labelArgs: [bundle.anrRisk.level], count: bundle.anrRisk.score });
   }
   if (bundle.driftAdvisorSummary && bundle.driftAdvisorSummary.issueCount > 0) {
-    items.push({ label: 'Drift Advisor issues', count: bundle.driftAdvisorSummary.issueCount });
+    items.push({ label: 'Drift Advisor issues', labelKey: 'signals.stat.driftIssues', labelArgs: [], count: bundle.driftAdvisorSummary.issueCount });
   }
   return items;
 }
 
-function addStat(items: StatItem[], label: string, count: number | undefined): void {
-  if (count && count > 0) { items.push({ label, count }); }
+function addStat(items: StatItem[], labelKey: string, label: string, count: number | undefined): void {
+  if (count && count > 0) { items.push({ label, labelKey, labelArgs: [], count }); }
 }
 
 function overviewRow(label: string, value: string): string {
@@ -197,16 +202,18 @@ function outcomeLabel(outcome: SessionOutcome): string {
 function appendTimingHtml(parts: string[], logLines: readonly string[]): void {
   const timing = parseSessionTiming(logLines);
   if (timing?.startIso) {
-    parts.push(overviewRow('Started', formatTimestamp(timing.startIso)));
+    parts.push(overviewRow(t('signals.overview.started'), formatTimestamp(timing.startIso)));
   }
   if (timing?.endIso) {
-    parts.push(overviewRow('Ended', formatTimestamp(timing.endIso)));
+    parts.push(overviewRow(t('signals.overview.ended'), formatTimestamp(timing.endIso)));
   }
   if (timing?.durationMs) {
-    parts.push(overviewRow('Duration', formatDuration(timing.durationMs)));
+    parts.push(overviewRow(t('signals.overview.duration'), formatDuration(timing.durationMs)));
   }
   const outcome = detectSessionOutcome(logLines);
-  parts.push(overviewRow('Outcome', outcomeLabel(outcome)));
+  // Localized outcome for the panel; the markdown export uses outcomeLabel() (English).
+  const outcomeText = t(outcome === 'clean-stop' ? 'signals.overview.outcomeCleanStop' : 'signals.overview.outcomeCrash');
+  parts.push(overviewRow(t('signals.overview.outcome'), outcomeText));
 }
 
 function appendTimingMarkdown(lines: string[], logLines: readonly string[]): void {
@@ -231,20 +238,20 @@ const maxErrorList = 10;
 function appendAllErrorsHtml(parts: string[], bundle: RootCauseHintBundle): void {
   const errs = bundle.errors;
   if (!errs || errs.length <= 1) { return; }
-  parts.push('<div class="overview-errors-heading">All errors in session</div>');
+  parts.push(`<div class="overview-errors-heading">${escapeHtml(t('signals.overview.allErrors'))}</div>`);
   parts.push('<div class="overview-errors-list">');
   for (const e of errs.slice(0, maxErrorList)) {
     if (!e) { continue; }
     const cat = e.category ? ` <span class="error-cat-badge">${escapeHtml(e.category)}</span>` : '';
     parts.push(
       `<div class="overview-error-item">` +
-      `<span class="related-line-num">Line ${e.lineIndex + 1}</span>${cat} ` +
+      `<span class="related-line-num">${escapeHtml(t('signals.overview.line', e.lineIndex + 1))}</span>${cat} ` +
       `<span class="overview-error-text">${escapeHtml(e.excerpt)}</span>` +
       `</div>`,
     );
   }
   if (errs.length > maxErrorList) {
-    parts.push(`<div class="related-overflow">...and ${errs.length - maxErrorList} more</div>`);
+    parts.push(`<div class="related-overflow">${escapeHtml(t('signals.overview.andMore', errs.length - maxErrorList))}</div>`);
   }
   parts.push('</div>');
 }
