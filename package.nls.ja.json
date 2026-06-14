@@ -505,5 +505,6 @@
   "config.integrations.otel.traceUrlTemplate.title": "Trace backend deep-link template ({traceId}).",
   "config.integrations.otel.traceIdPattern.title": "Trace ID regex override (OpenTelemetry).",
   "config.integrations.externalLogs.createIfMissing.title": "Integrations › External Logs › Create If Missing",
-  "config.integrations.externalLogs.followRotation.title": "Integrations › External Logs › Follow Rotation"
+  "config.integrations.externalLogs.followRotation.title": "Integrations › External Logs › Follow Rotation",
+  "command.showLogReferences.title": "Show Log References"
 }

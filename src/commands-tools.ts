@@ -11,6 +11,7 @@ import { applyTemplate } from './modules/session/session-templates';
 import { pickTemplate, promptSaveTemplate } from './modules/misc/session-templates-ui';
 import { showIntegrationsPicker } from './modules/integrations/integrations-ui';
 import { getGlobalProjectIndexer } from './modules/project-indexer/project-indexer';
+import { getGlobalSearchIndex } from './modules/search/search-index-global';
 import { logExtensionWarn } from './modules/misc/extension-logger';
 
 const extensionId = 'saropa.saropa-log-capture';
@@ -43,6 +44,19 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
                 },
             );
             vscode.window.showInformationMessage('Project index rebuilt.');
+        }),
+        vscode.commands.registerCommand('saropaLogCapture.rebuildSearchIndex', async () => {
+            const index = getGlobalSearchIndex();
+            if (!index) {
+                logExtensionWarn('rebuildSearchIndex', 'Search index not available (no workspace folder)');
+                vscode.window.showWarningMessage('Search index is not available (no workspace folder).');
+                return;
+            }
+            const count = await vscode.window.withProgress(
+                { location: vscode.ProgressLocation.Notification, title: 'Rebuilding search index', cancellable: false },
+                () => index.rebuild(),
+            );
+            vscode.window.showInformationMessage(`Search index rebuilt (${count} log files).`);
         }),
         vscode.commands.registerCommand('saropaLogCapture.debugProjectIndexRanking', async () => {
             const indexer = getGlobalProjectIndexer();
@@ -154,6 +168,15 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
         vscode.commands.registerCommand('saropaLogCapture.popOutViewer', async () => { await popOutPanel.open(); }),
         vscode.commands.registerCommand('saropaLogCapture.searchLogs', async () => {
             const match = await showSearchQuickPick();
+            if (match) { await openLogAtLine(match); }
+        }),
+        // Idea #6: right-click a source file in the Explorer → search every session for its
+        // filename, grouped by session. Reuses the cross-session search Quick Pick with the
+        // basename pre-filled, then opens the chosen match at its line.
+        vscode.commands.registerCommand('saropaLogCapture.showLogReferences', async (uri?: vscode.Uri) => {
+            const filename = uri?.fsPath.split(/[/\\]/).pop();
+            if (!filename) { return; }
+            const match = await showSearchQuickPick(filename);
             if (match) { await openLogAtLine(match); }
         }),
         vscode.commands.registerCommand('saropaLogCapture.copyDeepLink',
