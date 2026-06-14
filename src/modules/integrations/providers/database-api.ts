@@ -8,10 +8,31 @@
  */
 
 import * as vscode from 'vscode';
+import { t } from '../../../l10n';
 import { fetchWithTimeout } from './build-ci-api';
 
 /** SecretStorage key for the database API bearer token. */
 const apiTokenKey = 'saropaLogCapture.database.apiToken';
+
+/** globalState key recording the endpoint the user has consented to send session data to. */
+const apiConsentKey = 'saropaLogCapture.database.apiConsentUrl';
+
+/**
+ * Ensure the user has consented to API mode sending the session time range to
+ * `apiUrl`. Consent is per-endpoint and sticky: once a URL is allowed it never
+ * prompts again; changing the endpoint re-prompts. Returns false (no send) until
+ * the user clicks Allow. Shown at session start, when interaction is sensible.
+ */
+export async function ensureApiConsent(ctx: vscode.ExtensionContext, apiUrl: string): Promise<boolean> {
+    if (ctx.globalState.get<string>(apiConsentKey) === apiUrl) { return true; }
+    const allow = t('msg.databaseApiConsent.allow');
+    const choice = await vscode.window.showInformationMessage(t('msg.databaseApiConsent.prompt', apiUrl), allow);
+    if (choice === allow) {
+        await ctx.globalState.update(apiConsentKey, apiUrl);
+        return true;
+    }
+    return false;
+}
 
 /** Read the stored database API token, or undefined if none. */
 export async function getDatabaseApiToken(ctx: vscode.ExtensionContext): Promise<string | undefined> {

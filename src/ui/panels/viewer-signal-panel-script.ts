@@ -75,6 +75,7 @@ export interface SignalScriptStrings {
     hotfilesSummaryMany: string;
     hotfilesSessionsOne: string;
     hotfilesSessionsMany: string;
+    hotfilesChangedDaysAgo: string;
     envPlatforms: string;
     envSdkRuntime: string;
     envDebugAdapters: string;
@@ -141,6 +142,7 @@ const DEFAULT_SIGNAL_STRINGS: SignalScriptStrings = {
     hotfilesSummaryMany: '{0} files frequently modified',
     hotfilesSessionsOne: '{0} session',
     hotfilesSessionsMany: '{0} sessions',
+    hotfilesChangedDaysAgo: 'changed {0}d ago',
     envPlatforms: 'Platforms',
     envSdkRuntime: 'SDK / runtime',
     envDebugAdapters: 'Debug adapters',

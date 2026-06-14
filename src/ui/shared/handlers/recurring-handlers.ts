@@ -9,6 +9,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { getLogDirectoryUri } from '../../../modules/config/config';
 import { aggregateSignals } from '../../../modules/misc/cross-session-aggregator';
+import { enrichHotFilesWithFreshness } from '../../../modules/misc/hot-file-freshness';
 import type { RecurringSignalEntry } from '../../../modules/misc/recurring-signal-builder';
 import { buildAllRecurringSignals } from '../../../modules/misc/recurring-signal-builder';
 import { getErrorStatusBatch, setErrorStatus, type ErrorStatus } from '../../../modules/misc/error-status-store';
@@ -120,10 +121,15 @@ export async function handleSignalDataRequest(post: PostFn, currentFileUri?: vsc
        signals without suggestions than show nothing. */
     const filterSuggestions = await loadPendingFilterSuggestions().catch(() => [] as RuleSuggestion[]);
 
+    // Idea #12: overlay git recency on the top hot files so churn-meets-noise stands out.
+    // Best-effort; on any failure fall back to the un-enriched list rather than dropping hot files.
+    const hotFiles = await enrichHotFilesWithFreshness(aggregated?.hotFiles ?? [], Date.now())
+        .catch(() => aggregated?.hotFiles ?? []);
+
     post({
         type: 'signalData',
         statuses,
-        hotFiles: aggregated?.hotFiles ?? [],
+        hotFiles,
         platforms: aggregated?.platforms ?? [],
         sdkVersions: aggregated?.sdkVersions ?? [],
         debugAdapters: aggregated?.debugAdapters ?? [],

@@ -267,6 +267,9 @@ function renderItem(item, idx, prevVis) {
     /* DB badge: line has correlated database queries (request-ID match). Clicking opens the related-queries popover. */
     var dbq = (typeof databaseQueryLinesByIndex !== 'undefined' && databaseQueryLinesByIndex[idx]);
     if (dbq) badge += '<span class="db-query-badge" data-db-idx="' + idx + '" title="' + vt('viewer.deco.relatedQueries', dbq).replace(/"/g, '&quot;') + '">\\ud83d\\uddc3</span> ';
+    /* OpenTelemetry trace badge: line carries a trace id; clicking opens the trace in the configured backend. */
+    var trl = (typeof traceLinksByIndex !== 'undefined' && traceLinksByIndex[idx]);
+    if (trl) badge += '<span class="trace-link-badge" data-trace-url="' + (trl.url || '').replace(/"/g, '&quot;') + '" title="' + vt('viewer.deco.openTrace', trl.traceId).replace(/"/g, '&quot;') + '">\\ud83d\\udd17</span> ';
     var titleAttr = '';
     if (typeof applyHighlightStyles === 'function') {
         var plainText = stripTags(item.html);

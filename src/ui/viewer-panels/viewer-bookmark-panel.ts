@@ -6,6 +6,7 @@
  */
 
 import { t } from '../../l10n';
+import { escapeHtmlScript } from '../escape-html-script';
 
 /** Generate the bookmark panel HTML. */
 export function getBookmarkPanelHtml(): string {
@@ -228,7 +229,7 @@ export function getBookmarkPanelScript(): string {
     /* --- Helpers --- */
 
     function escapeAttr(str) { return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
-    function escapeHtml(str) { return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    ${escapeHtmlScript('escapeHtml')}
 })();
 `;
 }

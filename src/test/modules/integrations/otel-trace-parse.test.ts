@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { extractTraceId, extractTraceHits, traceBackendUrl } from '../../../modules/integrations/providers/otel-trace-parse';
+import { extractTraceId, extractTraceHits, traceBackendUrl, traceLineLinks } from '../../../modules/integrations/providers/otel-trace-parse';
 
 suite('otel-trace-parse', () => {
     suite('extractTraceId', () => {
@@ -52,6 +52,26 @@ suite('otel-trace-parse', () => {
         test('should return undefined without a placeholder or template', () => {
             assert.strictEqual(traceBackendUrl('https://jaeger/trace/', 'abc'), undefined);
             assert.strictEqual(traceBackendUrl('', 'abc'), undefined);
+        });
+    });
+
+    suite('traceLineLinks', () => {
+        const lines = [
+            'starting up, no trace',
+            'trace_id=abcdef0123456789 handling request',
+            'still no trace',
+        ];
+
+        test('should map trace lines to backend URLs', () => {
+            const links = traceLineLinks(lines, 'https://jaeger/trace/{traceId}', '');
+            assert.strictEqual(links[1]?.traceId, 'abcdef0123456789');
+            assert.strictEqual(links[1]?.url, 'https://jaeger/trace/abcdef0123456789');
+            assert.strictEqual(links[0], undefined);
+            assert.strictEqual(links[2], undefined);
+        });
+
+        test('should return empty when no URL template is configured', () => {
+            assert.deepStrictEqual(traceLineLinks(lines, '', ''), {});
         });
     });
 });

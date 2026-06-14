@@ -5,6 +5,7 @@
 
 import * as vscode from 'vscode';
 import { t } from '../../l10n';
+import { escapeHtml } from '../../modules/capture/ansi';
 import type { AIContext } from '../../modules/ai/ai-context-builder';
 import type { ExplainResult } from '../../modules/ai/ai-explain';
 
@@ -15,14 +16,6 @@ function getNonce(): string {
     const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     for (let i = 0; i < 32; i++) { t += possible.charAt(Math.floor(Math.random() * possible.length)); }
     return t;
-}
-
-function escapeHtml(s: string): string {
-    return s
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
 }
 
 function blockHtml(classNames: string, content: string): string {

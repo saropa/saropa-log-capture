@@ -59,7 +59,13 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
         if (emptyEl) emptyEl.style.display = toShow.length === 0 ? '' : 'none';
         if (listEl) {
             listEl.innerHTML = toShow.length === 0 ? '' : toShow.map(function(f) {
-                return '<div class="signal-hotfile-item"><span class="signal-hotfile-name">' + esc(f.filename) + '</span><span class="signal-hotfile-meta">' + fillSignalString(f.sessionCount === 1 ? SIGNAL_STRINGS.hotfilesSessionsOne : SIGNAL_STRINGS.hotfilesSessionsMany, (f.sessionCount || 0)) + '</span></div>';
+                var meta = fillSignalString(f.sessionCount === 1 ? SIGNAL_STRINGS.hotfilesSessionsOne : SIGNAL_STRINGS.hotfilesSessionsMany, (f.sessionCount || 0));
+                // Freshness overlay (idea #12): a recently-changed hot file is a prime suspect — churn meets noise.
+                if (f.freshness && f.freshness !== 'unknown' && typeof f.lastCommitDaysAgo === 'number') {
+                    var dot = f.freshness === 'recent' ? '🔴' : f.freshness === 'moderate' ? '🟡' : '🟢';
+                    meta += ' · ' + dot + ' ' + esc(fillSignalString(SIGNAL_STRINGS.hotfilesChangedDaysAgo, f.lastCommitDaysAgo));
+                }
+                return '<div class="signal-hotfile-item"><span class="signal-hotfile-name">' + esc(f.filename) + '</span><span class="signal-hotfile-meta">' + meta + '</span></div>';
             }).join('');
         }
     }

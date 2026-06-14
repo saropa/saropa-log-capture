@@ -112,6 +112,8 @@ var formatEnabled = false;
 var correlationByLineIndex = {};
 /* Per-line database-query counts (content index -> count) for the DB badge; set by setDatabaseQueryLines. */
 var databaseQueryLinesByIndex = {};
+/* Per-line OpenTelemetry trace links (content index -> {traceId,url}) for the trace badge; set by setTraceLineLinks. */
+var traceLinksByIndex = {};
 /* When true, paired "│ … │" banner rows are not stack frames (see isStackFrameText). Baked from host config. */
 var viewerPreserveAsciiBoxArt = ${viewerPreserveAsciiBoxArt ? 'true' : 'false'};
 /* When true, consecutive separator lines with the same timestamp are grouped into a visual block. */
