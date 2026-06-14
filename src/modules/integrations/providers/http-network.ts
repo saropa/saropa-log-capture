@@ -3,7 +3,7 @@
  * (JSON lines) and write to sidecar for correlation by request ID.
  */
 
-import * as fs from 'fs';
+import * as vscode from 'vscode';
 import type { IntegrationProvider, IntegrationContext, IntegrationEndContext, Contribution } from '../types';
 import { resolveWorkspaceFileUri } from '../workspace-path';
 
@@ -32,7 +32,8 @@ export const httpNetworkProvider: IntegrationProvider = {
         if (!cfg.requestLogPath) { return undefined; }
         try {
             const uri = resolveWorkspaceFileUri(context.workspaceFolder, cfg.requestLogPath);
-            const raw = fs.readFileSync(uri.fsPath, 'utf-8');
+            // Async, non-blocking read via the workspace fs (consistent with the rest of the codebase).
+            const raw = Buffer.from(await vscode.workspace.fs.readFile(uri)).toString('utf-8');
             const lines = raw.split(/\r?\n/).filter(Boolean);
             const requests: unknown[] = [];
             const cap = Math.min(cfg.maxRequestsPerSession, lines.length);

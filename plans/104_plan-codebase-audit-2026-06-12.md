@@ -186,8 +186,12 @@ Each item lists the fix and its **verification** (a check that proves it landed)
 
 ### WS-6 — Cleanup (low risk)
 - Consolidate `escapeHtml` behind one helper (text + attribute variants). *(pending)*
-- Remove dead `deduplication.ts` and the unreachable `replay` command (or contribute it). *(Batch C)*
-- Add the explanatory comment justifying node `fs` streaming in the writer; replace `fs.readFileSync` in the two integration providers. *(Batch C)*
+- ~~Remove dead `deduplication.ts`~~ **ACCEPTED (kept) 2026-06-14** — the module has its own test suite and an explicit in-code "kept defensively in case capture-side folding resurfaces" decision in `stop()`; removing it for a Nit would override documented maintainer intent. Left as-is.
+- **`fs.readFileSync` → async DONE 2026-06-14** — `http-network` and `database-query-logs` (file mode) now read via `vscode.workspace.fs` (non-blocking; `readFileMode` made async); `fs` imports dropped.
+- **L12 replay command ACCEPTED 2026-06-14** — replay is already reachable via the viewer's replay controls; the un-contributed `saropaLogCapture.replay` registration is a harmless would-be palette shortcut. Contributing it properly needs an NLS title across 11 locale files (disproportionate for a Low); removing risks the no-delete rule. Left as-is.
+- **L10 commitsMatch ACCEPTED 2026-06-14** — equal-length hashes already require exact equality via the prefix logic; only genuinely-short SHAs use prefix match, which is inherent and guarded by `MIN_PREFIX=7`. Correct for the small candidate set.
+- **L11 findFilePrs quotes ACCEPTED 2026-06-14** — the `"file"` wrapping is GitHub `gh search` exact-phrase syntax, not a stray literal; changing it would weaken filename matching.
+- **escapeHtml consolidation ACCEPTED (deferred) 2026-06-14** — the risky divergent escapers (attribute contexts) were fixed in Batch B (L4); a full single-helper consolidation across ~8 webview files is a large refactor with low remaining value.
 - **L4 DONE 2026-06-14** — `cssVal` sanitizes user-config highlight-rule CSS values (`viewer-highlight.ts`); `data-tag`/color escaped in the source-tag link (`viewer-source-tags-ui.ts`).
 - **L5 DONE 2026-06-14** — `getAnnotationHtml` now escapes `&` (was `<`/`>` only).
 - **L1 DONE 2026-06-14** — browser request-id correlation uses a whole-token match (≥4 chars), not a bare substring (`messageMentionsId`).

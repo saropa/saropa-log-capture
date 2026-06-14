@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { t } from '../../l10n';
 import { getConfig, getFileTypeGlob, getLogDirectoryUri } from '../../modules/config/config';
 import { SessionMetadataStore } from '../../modules/session/session-metadata';
 import {
@@ -98,7 +99,7 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         const renderItem = isActive ? { ...item, lineCount: this.activeLineCount } : item;
         ti.tooltip = buildTooltip(renderItem);
         const baseDescription = buildDescription(renderItem, this.displayOptions.showDayHeadings, isActive);
-        ti.description = isActive ? `ACTIVE · ${baseDescription}` : baseDescription;
+        ti.description = isActive ? `${t('sessionTree.active')} · ${baseDescription}` : baseDescription;
         if (item.trashed) {
             ti.iconPath = new vscode.ThemeIcon('trash', new vscode.ThemeColor('disabledForeground'));
         } else if (isStructuredDocFile(item.filename)) {
@@ -121,8 +122,8 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         const ti = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.Collapsed);
         ti.tooltip = buildSplitGroupTooltip(group);
         const total = totalLineCount(group);
-        const linePart = total > 0 ? ` · ${formatCount(total)} lines` : '';
-        ti.description = `${group.parts.length} parts${linePart} · ${formatSize(group.totalSize)}`;
+        const linePart = total > 0 ? ` · ${t('sessionTree.descLines', formatCount(total))}` : '';
+        ti.description = `${t('sessionTree.parts', String(group.parts.length))}${linePart} · ${formatSize(group.totalSize)}`;
         ti.iconPath = new vscode.ThemeIcon('files');
         ti.contextValue = 'split-group';
         return ti;

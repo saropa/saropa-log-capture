@@ -7,6 +7,7 @@
  */
 
 import * as vscode from 'vscode';
+import { t } from '../../l10n';
 
 /** A session file's metadata used by the history tree. */
 export interface SessionMetadata {
@@ -357,19 +358,19 @@ export function totalLineCount(group: SplitGroup): number {
 
 /** Format a tooltip for a split group showing metadata. */
 export function buildSplitGroupTooltip(group: SplitGroup): string {
-    const parts = [`${group.parts.length} split parts`];
+    const parts = [t('sessionTree.splitParts', String(group.parts.length))];
     if (group.date) {
-        parts.push(`Date: ${group.date}`);
+        parts.push(t('sessionTree.date', group.date));
     }
     if (group.project) {
-        parts.push(`Project: ${group.project}`);
+        parts.push(t('sessionTree.project', group.project));
     }
     if (group.adapter) {
-        parts.push(`Adapter: ${group.adapter}`);
+        parts.push(t('sessionTree.adapter', group.adapter));
     }
     const total = totalLineCount(group);
-    if (total > 0) { parts.push(`Total lines: ${total.toLocaleString('en-US')}`); }
-    parts.push(`Total size: ${formatSize(group.totalSize)}`);
+    if (total > 0) { parts.push(t('sessionTree.totalLines', total.toLocaleString('en-US'))); }
+    parts.push(t('sessionTree.totalSize', formatSize(group.totalSize)));
     return parts.join('\n');
 }
 
