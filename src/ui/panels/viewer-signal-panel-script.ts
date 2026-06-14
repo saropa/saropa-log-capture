@@ -29,6 +29,24 @@ export interface SignalScriptStrings {
     topOfTotal: string;
     heroNoErrorsWarnings: string;
     sectionErrorsInLog: string;
+    // Signal-row action affordances (triage / copy / cross-tool links / trend tooltips). Kept in this
+    // panel-standalone string object so the row scripts never hardcode English. openRuleTitle carries a
+    // {0} for the rule name (substituted client-side via split/join). "DA" stays an abbreviation.
+    accept: string;
+    reject: string;
+    triageClose: string;
+    triageMute: string;
+    triageReopen: string;
+    ruleLabel: string;
+    openRuleTitle: string;
+    openDriftAdvisorTitle: string;
+    copyLabel: string;
+    copySignalTitle: string;
+    trendIncreasing: string;
+    trendDecreasing: string;
+    trendStable: string;
+    evidenceLineTitle: string;
+    supportingLogLines: string;
 }
 
 const DEFAULT_SIGNAL_STRINGS: SignalScriptStrings = {
@@ -43,6 +61,21 @@ const DEFAULT_SIGNAL_STRINGS: SignalScriptStrings = {
     topOfTotal: 'Top 3 of {0}',
     heroNoErrorsWarnings: 'No errors or warnings recorded',
     sectionErrorsInLog: 'Errors in this log',
+    accept: 'Accept',
+    reject: 'Reject',
+    triageClose: 'Close',
+    triageMute: 'Mute',
+    triageReopen: 'Re-open',
+    ruleLabel: 'Rule',
+    openRuleTitle: 'Open rule docs for {0}',
+    openDriftAdvisorTitle: 'Open Drift Advisor',
+    copyLabel: 'Copy',
+    copySignalTitle: 'Copy signal details for analysis',
+    trendIncreasing: 'Increasing',
+    trendDecreasing: 'Decreasing',
+    trendStable: 'Stable',
+    evidenceLineTitle: 'Line {0}: {1}',
+    supportingLogLines: 'Supporting log lines',
 };
 
 /** Generate the Signal panel script. Single scroll; State A vs B. */
