@@ -1,6 +1,7 @@
 /** Rendering for stack trace deep-dive — clickable frame list and inline mini-analysis. */
 
 import { escapeHtml } from '../../modules/capture/ansi';
+import { t } from '../../l10n';
 import type { SourceReference } from '../../modules/source/source-linker';
 import type { WorkspaceFileInfo } from '../../modules/misc/workspace-analyzer';
 import type { BlameLine } from '../../modules/git/git-blame';
@@ -17,7 +18,7 @@ export function renderFrameSection(frames: readonly StackFrameInfo[]): string {
     const appCount = frames.filter(f => f.isApp).length;
     const fwCount = frames.length - appCount;
     let html = `<details class="group" ${frames.length <= 15 ? 'open' : ''}>`;
-    html += `<summary class="group-header">🔍 Stack Trace <span class="match-count">${frames.length} frames (${appCount} app, ${fwCount} fw)</span></summary>`;
+    html += `<summary class="group-header">🔍 ${escapeHtml(t('viewer.analysis.frame.stackTrace'))} <span class="match-count">${escapeHtml(t('viewer.analysis.frame.count', frames.length, appCount, fwCount))}</span></summary>`;
     for (const f of frames) { html += renderFrame(f); }
     return html + '</details>';
 }
@@ -37,10 +38,10 @@ export function renderSmartFrameSection(frames: readonly StackFrameInfo[]): stri
     const appCount = frames.filter(f => f.isApp).length;
     const fwCount = frames.length - appCount;
     let html = '<details class="group" open>';
-    html += `<summary class="group-header">🔍 Stack Trace <span class="match-count">${frames.length} frames (${appCount} app, ${fwCount} fw)</span></summary>`;
+    html += `<summary class="group-header">🔍 ${escapeHtml(t('viewer.analysis.frame.stackTrace'))} <span class="match-count">${escapeHtml(t('viewer.analysis.frame.count', frames.length, appCount, fwCount))}</span></summary>`;
     // App-only toggle (#1d): a stack control outside the <summary> so clicking it doesn't collapse the
     // group; the webview toggles a body class that hides framework frames/groups via CSS.
-    html += '<div class="cd-stack-controls"><button class="cd-apponly" aria-pressed="false">App frames only</button></div>';
+    html += `<div class="cd-stack-controls"><button class="cd-apponly" aria-pressed="false">${escapeHtml(t('viewer.analysis.frame.appOnly'))}</button></div>`;
     // Plan 054 5b: collapse consecutive IDENTICAL frames (recursion / stack-overflow loops) into one
     // row carrying a ↻×N badge, BEFORE the framework-run fold. A 4000-frame self-recursive overflow
     // otherwise renders 4000 identical lines; one row + a count is the readable form. The original
@@ -90,7 +91,7 @@ function renderFwRun(run: readonly FrameRun[]): string {
     let frameTotal = 0;
     for (const r of run) { inner += renderFrame(r.frame, r.index, r.count); frameTotal += r.count; }
     return `<details class="cd-fw-group"><summary class="cd-fw-summary">`
-        + `⋯ ${frameTotal} framework frames</summary>${inner}</details>`;
+        + `⋯ ${escapeHtml(t('viewer.analysis.frame.fwRun', frameTotal))}</summary>${inner}</details>`;
 }
 
 /**
@@ -102,13 +103,13 @@ function renderFwRun(run: readonly FrameRun[]): string {
  */
 function renderFrame(f: StackFrameInfo, index?: number, repeatCount?: number): string {
     const badgeCls = f.isApp ? 'frame-badge-app' : 'frame-badge-fw';
-    const badgeLabel = f.isApp ? 'APP' : 'FW';
+    const badgeLabel = escapeHtml(t(f.isApp ? 'viewer.analysis.frame.badgeApp' : 'viewer.analysis.frame.badgeFw'));
     const badge = `<span class="frame-badge ${badgeCls}">${badgeLabel}</span>`;
     const num = index !== undefined ? `<span class="frame-num">#${index}</span>` : '';
     const repeat = repeatCount && repeatCount > 1
-        ? `<span class="frame-repeat" title="${repeatCount} identical consecutive frames (e.g. recursion)">↻ ×${repeatCount}</span>`
+        ? `<span class="frame-repeat" title="${escapeHtml(t('viewer.analysis.frame.repeatTitle', repeatCount))}">↻ ×${repeatCount}</span>`
         : '';
-    const copy = index !== undefined ? `<button class="cd-frame-copy" data-copy="${escapeHtml(f.text)}" title="Copy frame">⧉</button>` : '';
+    const copy = index !== undefined ? `<button class="cd-frame-copy" data-copy="${escapeHtml(f.text)}" title="${escapeHtml(t('viewer.analysis.frame.copyTitle'))}">⧉</button>` : '';
     const fwAttr = !f.isApp && index !== undefined ? ' data-fw="1"' : '';
     if (f.isApp && f.sourceRef) {
         const file = escapeHtml(f.sourceRef.filePath);
@@ -135,15 +136,19 @@ export function renderFrameAnalysis(info: WorkspaceFileInfo, blame?: BlameLine):
         html += '</div>';
     }
     if (blame) {
-        html += `<div class="blame-line">Last changed by <strong>${escapeHtml(blame.author)}</strong>`;
-        html += ` on ${escapeHtml(blame.date)} · <code>${escapeHtml(blame.hash)}</code> ${escapeHtml(blame.message)}</div>`;
+        // The author/hash are wrapped in HTML, so build those parts then interpolate via the key.
+        html += `<div class="blame-line">${t('viewer.analysis.frame.blame',
+            `<strong>${escapeHtml(blame.author)}</strong>`,
+            escapeHtml(blame.date),
+            `<code>${escapeHtml(blame.hash)}</code>`,
+            escapeHtml(blame.message))}</div>`;
     }
     if (info.annotations.length > 0) {
         const urgent = info.annotations.filter(a => /^(BUG|FIXME)$/i.test(a.type));
         if (urgent.length > 0) {
-            html += `<div class="blame-line">⚠️ ${urgent.length} urgent annotation${urgent.length !== 1 ? 's' : ''} nearby</div>`;
+            html += `<div class="blame-line">⚠️ ${escapeHtml(t('viewer.analysis.frame.annotations', urgent.length))}</div>`;
         }
     }
-    if (!html) { html = '<div class="no-matches">Source file found but no context available</div>'; }
+    if (!html) { html = `<div class="no-matches">${escapeHtml(t('viewer.analysis.frame.noContext'))}</div>`; }
     return html;
 }
