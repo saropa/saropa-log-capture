@@ -499,5 +499,6 @@
   "config.learning.globalAggregates.title": "Share noise patterns across workspaces",
   "command.compareThreeSessions.title": "Saropa Log Capture: Compare 3 Logs",
   "config.integrations.database.redactLiterals.title": "Redact SQL literal values in the queries sidecar.",
-  "config.integrations.database.liveTail.title": "Stream new queries live during the session (file mode)."
+  "config.integrations.database.liveTail.title": "Stream new queries live during the session (file mode).",
+  "config.integrations.database.apiUrl.title": "Query API endpoint (API mode)."
 }
