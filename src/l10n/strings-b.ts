@@ -167,6 +167,23 @@ export const stringsB: Record<string, string> = {
     'signal.updatedAgo': 'Updated {0}',
     'signal.exportSummarySaved': 'Signals summary saved.',
     'signal.heroNoErrorsWarnings': 'No errors or warnings recorded',
+    // Signal-row action affordances, injected into the panel via SignalScriptStrings. "Drift Advisor"
+    // is a brand (shielded by the MT pipeline); {0} in openRuleTitle is the rule name.
+    'signal.accept': 'Accept',
+    'signal.reject': 'Reject',
+    'signal.triageClose': 'Close',
+    'signal.triageMute': 'Mute',
+    'signal.triageReopen': 'Re-open',
+    'signal.ruleLabel': 'Rule',
+    'signal.openRuleTitle': 'Open rule docs for {0}',
+    'signal.openDriftAdvisorTitle': 'Open Drift Advisor',
+    'signal.copyLabel': 'Copy',
+    'signal.copySignalTitle': 'Copy signal details for analysis',
+    'signal.trendIncreasing': 'Increasing',
+    'signal.trendDecreasing': 'Decreasing',
+    'signal.trendStable': 'Stable',
+    'signal.evidenceLineTitle': 'Line {0}: {1}',
+    'signal.supportingLogLines': 'Supporting log lines',
 
     'learning.noSuggestions': 'No filter suggestions right now. Collapse stack groups or add exclusions to build signals.',
     'learning.pickTitle': 'Filter suggestions',
