@@ -215,6 +215,11 @@ export function getConfig(): SaropaLogCaptureConfig {
     ),
     ...getIntegrationConfig(cfg),
     projectIndex: getProjectIndexConfig(cfg),
+    searchIndex: {
+      enabled: ensureBoolean(cfg.get("searchIndex.enabled"), true),
+      // 5–500 MB: a generous range; the cap is a soft budget enforced by oldest-session eviction.
+      maxSizeMB: clamp(cfg.get("searchIndex.maxSizeMB"), 5, 500, 50),
+    },
     replay: {
       defaultMode: ensureEnum(cfg.get("replay.defaultMode"), ["timed", "fast"], "timed"),
       /* 0.1–10 to match viewer speed dropdown (0.1x–10x). */
@@ -310,6 +315,11 @@ export function getSaropaCacheCrashlyticsUri(workspaceFolder: vscode.WorkspaceFo
 /** URI for project index directory (.saropa/index/). */
 export function getSaropaIndexDirUri(workspaceFolder: vscode.WorkspaceFolder | undefined | null): vscode.Uri {
   return vscode.Uri.joinPath(getSaropaDirUri(workspaceFolder), 'index');
+}
+
+/** URI for the cross-session trigram search index (.saropa/index/search/), plan 029. */
+export function getSearchIndexDirUri(workspaceFolder: vscode.WorkspaceFolder | undefined | null): vscode.Uri {
+  return vscode.Uri.joinPath(getSaropaIndexDirUri(workspaceFolder), 'search');
 }
 
 /** Per-detector flags for the log viewer DB pipeline (when master DB signals is on). */
