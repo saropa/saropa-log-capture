@@ -212,6 +212,26 @@ export interface ImportUriHandlers {
  * @param importHandlers - When provided, /import?gist=... and /import?url=... are handled
  * @returns A UriHandler object to register with VS Code
  */
+/**
+ * Require an explicit, modal confirmation before a `/import` deep link downloads and writes files into
+ * the workspace. VS Code's generic "an extension wants to open this URI" consent does not convey that
+ * the link will write files, so a link clicked from a web page or email could otherwise trigger a
+ * file-writing import on a single generic OK. The prompt names the source (gist id / url) so the user
+ * can judge whether to trust it. This is defense-in-depth on top of the import extractor's own
+ * path-containment check (audit C1) — it does not replace it.
+ *
+ * @returns true only when the user explicitly chose to proceed.
+ */
+async function confirmDeepLinkImport(detail: string): Promise<boolean> {
+    const proceed = t('msg.confirmImport.proceed');
+    const choice = await vscode.window.showWarningMessage(
+        t('msg.confirmImport.message'),
+        { modal: true, detail },
+        proceed,
+    );
+    return choice === proceed;
+}
+
 export function createUriHandler(importHandlers?: ImportUriHandlers): vscode.UriHandler {
     return {
         handleUri: async (uri: vscode.Uri) => {
@@ -219,6 +239,8 @@ export function createUriHandler(importHandlers?: ImportUriHandlers): vscode.Uri
                 const params = new URLSearchParams(uri.query ?? '');
                 const gistId = params.get('gist');
                 if (gistId) {
+                    // Gate the file-writing import behind explicit consent that names the gist.
+                    if (!(await confirmDeepLinkImport(t('msg.confirmImport.detailGist', gistId)))) { return; }
                     importHandlers.importFromGist(gistId).catch((err) => {
                         const msg = err instanceof Error ? err.message : String(err);
                         vscode.window.showErrorMessage(t('msg.importFailed', msg));
@@ -227,6 +249,8 @@ export function createUriHandler(importHandlers?: ImportUriHandlers): vscode.Uri
                 }
                 const url = params.get('url');
                 if (url) {
+                    // Same file-writing risk as the gist path — confirm and name the source URL first.
+                    if (!(await confirmDeepLinkImport(t('msg.confirmImport.detailUrl', url)))) { return; }
                     importHandlers.importFromUrl(url).catch((err) => {
                         const msg = err instanceof Error ? err.message : String(err);
                         vscode.window.showErrorMessage(t('msg.importFailed', msg));

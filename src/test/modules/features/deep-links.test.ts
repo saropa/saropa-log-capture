@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { parseDeepLinkUri, generateDeepLink } from '../../../modules/features/deep-links';
+import { parseDeepLinkUri, generateDeepLink, createUriHandler } from '../../../modules/features/deep-links';
+import { t } from '../../../l10n';
 
 suite('DeepLinks', () => {
 
@@ -128,6 +129,58 @@ suite('DeepLinks', () => {
             const params = parseDeepLinkUri(uri);
             assert.ok(params);
             assert.strictEqual(params.line, undefined);
+        });
+    });
+
+    // C1 hardening: a /import deep link writes downloaded files, so it must require explicit modal
+    // consent (named source) before the import runs — VS Code's generic URI consent is not enough.
+    suite('createUriHandler /import consent', () => {
+        const originalWarn = vscode.window.showWarningMessage;
+        teardown(() => {
+            vscode.window.showWarningMessage = originalWarn;
+        });
+
+        function recordingHandlers(): { gist: string[]; url: string[]; handlers: {
+            importFromGist: (id: string) => Promise<void>;
+            importFromUrl: (u: string) => Promise<void>;
+        }; } {
+            const gist: string[] = [];
+            const url: string[] = [];
+            return {
+                gist, url,
+                handlers: {
+                    importFromGist: async (id: string) => { gist.push(id); },
+                    importFromUrl: async (u: string) => { url.push(u); },
+                },
+            };
+        }
+
+        function stubConsent(result: string | undefined): void {
+            vscode.window.showWarningMessage = (async () => result) as typeof vscode.window.showWarningMessage;
+        }
+
+        test('declining the consent modal does not import the gist', async () => {
+            stubConsent(undefined);
+            const r = recordingHandlers();
+            await createUriHandler(r.handlers).handleUri(
+                vscode.Uri.parse('vscode://saropa.saropa-log-capture/import?gist=abc123'));
+            assert.deepStrictEqual(r.gist, [], 'import must not run when consent is declined');
+        });
+
+        test('confirming the consent modal imports the gist', async () => {
+            stubConsent(t('msg.confirmImport.proceed'));
+            const r = recordingHandlers();
+            await createUriHandler(r.handlers).handleUri(
+                vscode.Uri.parse('vscode://saropa.saropa-log-capture/import?gist=abc123'));
+            assert.deepStrictEqual(r.gist, ['abc123'], 'import runs with the gist id once consent is given');
+        });
+
+        test('declining the consent modal does not import the url', async () => {
+            stubConsent(undefined);
+            const r = recordingHandlers();
+            await createUriHandler(r.handlers).handleUri(
+                vscode.Uri.parse('vscode://saropa.saropa-log-capture/import?url=https://example.com/x.slc'));
+            assert.deepStrictEqual(r.url, [], 'url import must not run when consent is declined');
         });
     });
 });
