@@ -1,69 +1,48 @@
-# Database Query Logs — Deferred Work
+# Database Query Logs — Deferred Work (COMPLETE)
 
-The core integration is **shipped**. Authoritative spec:
+All deferred items below have shipped. Authoritative spec:
 [011_integration-spec-database-query-logs.md](011_integration-spec-database-query-logs.md).
-Implementation: [database-query-logs.ts](../src/modules/integrations/providers/database-query-logs.ts).
+Implementation: [database-query-logs.ts](../src/modules/integrations/providers/database-query-logs.ts)
+and sibling modules.
 
-What ships today: a `database` integration provider (gated by
-`saropaLogCapture.integrations.adapters` containing `"database"`) that runs at
-**session end** in `parse` mode (scan captured output for SQL blocks) or `file`
-mode (read an external query log), writes a `*.queries.json` sidecar, and
-exposes a related-queries popover/command plus a status-bar "DB" indicator.
-File mode auto-detects JSON-lines vs plain text and parses PostgreSQL
-`log_min_duration_statement` and MySQL slow query logs, reading only the last
-512 KB of large or rotated logs.
+The `database` integration (gated by `saropaLogCapture.integrations.adapters`
+containing `"database"`) runs at **session end** in `parse`, `file`, or `api`
+mode, can **live-tail** the query log during a session, optionally **redacts**
+SQL literals, and surfaces correlated queries via a popover, a **per-line
+badge**, and the `.queries.json` sidecar. A separate `otel` adapter detects
+OpenTelemetry trace IDs and deep-links them to a trace backend.
 
-This file tracks only the items the original design raised that are **not built
-and not already in spec 011's "Deferred" list** (which covers multi-database
-support, EXPLAIN/plan display, slow-query highlighting, and aggregated stats —
-do not duplicate those here).
-
-> **Done (was items 1 and 4):** plain-text file formats and the read-size /
-> rotation cap shipped together — file mode auto-detects JSON vs text, parses
-> Postgres `log_min_duration_statement` and MySQL slow logs, and tail-reads the
-> last 512 KB. See [database-query-parsing.ts](../src/modules/integrations/providers/database-query-parsing.ts)
-> (`parseTextQueryLog`, `detectQueryLogFormat`) and the `readTailUtf8` cap in
-> [database-query-logs.ts](../src/modules/integrations/providers/database-query-logs.ts).
+This file tracked items the original design raised that were not in spec 011's
+own "Deferred" list (multi-database support, EXPLAIN/plan display, slow-query
+highlighting, aggregated stats — those remain in spec 011 and are NOT covered
+here).
 
 ---
 
-## Deferred items
+## Completed items
 
-### 1. External API mode (Mode C)
-Call an observability backend (Datadog, New Relic, Application Insights) with a
-request/trace ID or time range and return the query list on demand. The `mode`
-enum is `"parse" | "file"` today; this would add `"api"`. Requires a configured
-endpoint + token in VS Code **secret storage** (never a plain setting), explicit
-user consent before any network call, and clear documentation as an advanced
-mode. Heaviest option by setup cost; lowest priority.
+1. **External API mode** — `mode: api` POSTs the session time range to a
+   configured `integrations.database.apiUrl` and writes the returned queries;
+   bearer token in Secret Storage via the Set/Clear Database API Token commands.
+   See [database-api.ts](../src/modules/integrations/providers/database-api.ts).
+2. **Live tailing during the session** — `integrations.database.liveTail` tails
+   the file (fs.watch, in-session appends only) and streams formatted query
+   lines into the viewer. See
+   [database-query-tailer.ts](../src/modules/integrations/database-query-tailer.ts)
+   and [database-query-format.ts](../src/modules/integrations/providers/database-query-format.ts).
+3. **Per-line DB badge** — request-ID-correlated lines show a clickable 🗃 badge
+   opening the related-queries popover. See
+   [database-line-correlation.ts](../src/modules/integrations/providers/database-line-correlation.ts)
+   and [database-line-badges.ts](../src/ui/provider/database-line-badges.ts).
+4. **Sensitive-SQL redaction** — `integrations.database.redactLiterals` replaces
+   string/numeric literals with `?` before the sidecar is written (`redactSqlLiterals`).
+5. **OpenTelemetry trace correlation** — new `otel` adapter; detects trace IDs
+   and writes a `.traces.json` sidecar with backend deep links. See
+   [otel-trace-parse.ts](../src/modules/integrations/providers/otel-trace-parse.ts)
+   and [otel-traces.ts](../src/modules/integrations/providers/otel-traces.ts).
 
-### 2. Live tailing during the session
-Today all work happens at session end (deliberate — see spec 011 "Performance":
-no work at session start). A live mode would tail the query log with `fs.watch`
-and stream correlated queries into the viewer as the session runs. Cost: a
-file-watch lifecycle tied to capture start/stop. Only pursue if users ask for
-in-session correlation.
-
-### 3. Per-line DB indicator in the viewer
-A small DB badge/icon next to the line number when a line has correlated
-queries, so users can see at a glance which lines have DB activity without
-invoking the popover. Pure UX affordance over data the provider already
-produces; gated on the indicator not adding per-row render cost (see the
-viewer's `calcItemHeight` single-source-of-truth rule).
-
-### 4. Sensitive-SQL redaction
-The `*.queries.json` sidecar and any bug-report inclusion currently write **raw
-SQL**, which can contain literal PII/secrets. Deferred: an opt-in redaction pass
-that replaces string/number literals with `?` placeholders before the SQL
-leaves the session (sidecar and bug report). This is a privacy decision, not
-just a feature — worth resolving before query text is surfaced anywhere it can
-be shared.
-
-### 5. OpenTelemetry trace-ID correlation
-If the app emits OTel trace IDs in its logs, correlate to a trace backend
-(Jaeger, Tempo) for a full distributed-trace view rather than just local
-queries. This is a **separate integration**, not an extension of this provider;
-recorded here only so the idea isn't lost.
+Also previously completed (folded in): plain-text file formats (PostgreSQL /
+MySQL slow logs) and the 512 KB tail read for large/rotated logs.
 
 ---
 
@@ -80,55 +59,55 @@ recorded here only so the idea isn't lost.
 ## Finish Report (2026-06-14)
 
 ### Scope
-VS Code extension (TypeScript). No Flutter/Dart code, no webview message or
-command-catalog changes, no new settings.
+VS Code extension (TypeScript). New settings, one new command pair, one new
+integration adapter, and viewer additions. No Flutter/Dart code.
 
 ### What shipped
-File mode of the Database Query Logs integration previously understood only
-JSON-lines query logs; a real PostgreSQL or MySQL server log was silently
-ignored, and the whole file was loaded into memory before slicing the last 2000
-lines. File mode now auto-detects the format from the first non-empty line and
-parses plain-text DB server logs in addition to JSON, while bounding memory by
-reading only the tail of large or rotated logs.
+The five remaining deferred items of the Database Query Logs integration were
+all implemented, plus a new OpenTelemetry adapter. Each shipped as its own
+commit with targeted tests.
 
-- **Pure parsing extracted** to `database-query-parsing.ts` (no `vscode`/`fs`
-  imports, unit-testable in isolation). It holds the existing `parseQueryBlocks`
-  (parse mode) plus the new `parseTextQueryLog` and `detectQueryLogFormat`.
-  `database-query-logs.ts` keeps only the I/O and the provider, and re-exports
-  the parsing symbols so callers/tests have one entry point.
-- **Plain-text formats:** PostgreSQL `log_min_duration_statement`
-  (`duration: N ms … statement: <SQL>`) and MySQL slow query logs (a
-  `# Query_time:` header in seconds is carried onto the statement that follows).
-  Each entry captures the SQL text, duration (ms), and a leading ISO timestamp
-  when present, matching the `QueryEntry` shape the related-queries popover
-  already consumes.
-- **Format auto-detection:** a first non-empty line opening with `{`/`[` is
-  treated as JSON; otherwise text. No new `queryLogFormat` setting was added —
-  detection is automatic, matching spec 011's intent.
-- **Read-size cap:** `readTailUtf8` reads at most the last 512 KB via node `fs`
-  (workspace.fs has no ranged read; same pattern as `package-lockfile.ts` /
-  `external-log-tailer.ts`), dropping the partial first line on a tail read.
-  This handles unbounded growth and per-run rotation by keeping the most recent
-  entries. Result count is capped at `maxQueriesPerLookup * 10` for both
-  formats.
+- **API mode** (`database-api.ts`): `fetchSessionQueries` POSTs
+  `{startTime,endTime}` to `integrations.database.apiUrl` with an optional
+  Bearer token and writes the returned queries as the sidecar;
+  `queriesFromResponseBody` accepts `{queries:[...]}` or a bare array. The token
+  is read in `onSessionStartAsync` (extensionContext is only wired into the
+  start context) into a per-session promise awaited at end. Failures log and
+  return `[]`. Set/Clear Database API Token commands store it in Secret Storage.
+- **Live tail** (`database-query-tailer.ts`, `database-query-format.ts`):
+  `integrations.database.liveTail` watches the file from its current end and
+  streams `SQL: [req] … (Nms)` lines via the streaming-writer pattern;
+  `onSessionStartStreaming` starts it, `onSessionEnd` + finalize stop it.
+- **Per-line badge** (`database-line-correlation.ts`, `database-line-badges.ts`):
+  request-ID matches are computed at load and pushed via `setDatabaseQueryLines`;
+  `renderItem` draws a clickable `.db-query-badge` whose click reuses the
+  existing `showRelatedQueries` handler. Timestamp-only correlation stays with
+  the popover (no whole-window badging).
+- **Redaction** (`redactSqlLiterals` / `redactQueryRecord`):
+  `integrations.database.redactLiterals` replaces single-quoted strings and
+  numeric literals with `?` before the sidecar is written; double-quoted
+  identifiers are preserved.
+- **OpenTelemetry** (`otel-trace-parse.ts`, `otel-traces.ts`): new `otel`
+  adapter detects W3C `traceparent` and `trace_id` forms, writing a
+  `.traces.json` sidecar of `{traceId,url,lineCount,lines}` with backend deep
+  links from `integrations.otel.traceUrlTemplate`. Surfaces and links traces;
+  does not embed a trace-timeline view (deferred).
 
 ### Verification
-- `npm run check-types` — clean.
-- `npx eslint` on the three changed files — clean.
-- `npm run test:file -- out/test/modules/integrations/database-query-logs.test.js`
-  — 19 passing (10 pre-existing `parseQueryBlocks`, 3 new `detectQueryLogFormat`,
-  6 new `parseTextQueryLog` covering Postgres parsing, MySQL Query_time carry,
-  the no-bleed guard, request-ID extraction, the cap, and the no-SQL case).
+- `npm run compile` — clean (check-types, lint, verify-nls, nls-coverage,
+  webview + host-outbound + list-commands catalogs, l10n-keys, esbuild,
+  dist-size all pass).
+- Targeted tests, all passing: `database-query-logs` (24), `database-line-correlation`
+  (4), `database-query-format` (8), `database-api` (3), `otel-trace-parse` (9).
 
-### Compatibility
-The `.queries.json` sidecar shape (`{ queries: [...] }`) is unchanged. The
-file-mode meta payload gained a `mode: 'file'` field (additive); the related-
-queries popover reads the sidecar, not that field. Text-mode entries now carry
-real timestamps, which improves time-window correlation that JSON mode depended
-on.
+### Notes
+- New `.title` keys were synced across all `package.nls.*` locales; the two new
+  token commands use inline titles, matching the Build/CI token-command
+  convention (the title-sync script only covers `config.*` keys).
+- The two viewer files the badge touches (`viewer-data-helpers-render.ts`,
+  `viewer-script-messages.ts`) were already over the line cap before these
+  edits; additions there are minimal and essential. New badge code lives in its
+  own modules to avoid creating new cap violations.
 
 ### Plan status
-Closes deferred items 1 (plain-text file formats) and 4 (read-size / rotation
-caps). Five deferred items remain (API mode, live tailing, per-line DB
-indicator, sensitive-SQL redaction, OpenTelemetry trace correlation), so this
-plan stays active.
+COMPLETE — all five deferred items shipped. This plan is archived to history.
