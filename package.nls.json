@@ -311,6 +311,7 @@
   "config.integrations.database.timeWindowSeconds.title": "Correlation time window when no request ID matches.",
   "config.integrations.database.maxQueriesPerLookup.title": "Max query results per lookup.",
   "config.integrations.database.redactLiterals.title": "Redact SQL literal values in the queries sidecar.",
+  "config.integrations.database.liveTail.title": "Stream new queries live during the session (file mode).",
   "config.integrations.browser.mode.title": "How to capture browser console events.",
   "config.integrations.browser.browserLogPath.title": "Path to browser console log file (file mode).",
   "config.integrations.browser.browserLogFormat.title": "Format of the browser log file.",
