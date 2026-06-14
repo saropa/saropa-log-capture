@@ -50,6 +50,7 @@ export function formatBugReport(data: BugReportData): string {
     if (data.gitHistory.length > 0) { sections.push(formatGitHistory(data.gitHistory, ctx)); }
     if (data.lineRangeHistory.length > 0) { sections.push(formatLineRangeHistory(data.lineRangeHistory, ctx)); }
     if (data.imports) { sections.push(formatImports(data.imports)); }
+    if (data.callers?.length) { sections.push(formatCallers(data.callers)); }
     if (data.docMatches?.matches.length) { sections.push(formatDocMatches(data.docMatches)); }
     if (data.resolvedSymbols?.symbols.length) { sections.push(formatSymbolDefs(data.resolvedSymbols)); }
     if (data.lintMatches?.matches.length) {
@@ -69,6 +70,13 @@ export function formatBugReport(data: BugReportData): string {
 
 function extractReportCtx(data: BugReportData): ReportCtx {
     return { remote: data.devEnvironment['Git Remote'], branch: data.devEnvironment['Git Branch'] };
+}
+
+/** Callers (idea #4): workspace files that import the crashing source file — its reverse deps,
+ *  the places a change here ripples to. Each row shows the importing file and the import path. */
+function formatCallers(callers: readonly { relativePath: string; module: string }[]): string {
+    const rows = callers.map((c) => `- \`${c.relativePath}\` — imports \`${c.module}\``);
+    return `## Callers (${callers.length})\n\n${rows.join('\n')}`;
 }
 
 /** Attention score (idea #17): rank how actionable this error is from the signals already
