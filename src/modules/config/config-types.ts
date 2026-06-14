@@ -23,6 +23,7 @@ import type {
   IntegrationSecurityConfig,
   IntegrationDatabaseConfig,
   IntegrationHttpConfig,
+  IntegrationOtelConfig,
   IntegrationBrowserConfig,
   IntegrationAdbLogcatConfig,
   IntegrationUnifiedLogConfig,
@@ -231,6 +232,7 @@ export interface SaropaLogCaptureConfig {
   readonly integrationsSecurity: IntegrationSecurityConfig;
   readonly integrationsDatabase: IntegrationDatabaseConfig;
   readonly integrationsHttp: IntegrationHttpConfig;
+  readonly integrationsOtel: IntegrationOtelConfig;
   readonly integrationsBrowser: IntegrationBrowserConfig;
   readonly integrationsAdbLogcat: IntegrationAdbLogcatConfig;
   /** Optional merged session artifact (Phase 4): `basename.unified.jsonl` next to main log. */
@@ -336,6 +338,7 @@ export type {
   IntegrationSecurityConfig,
   IntegrationDatabaseConfig,
   IntegrationHttpConfig,
+  IntegrationOtelConfig,
   IntegrationBrowserConfig,
   IntegrationAdbLogcatConfig,
   IntegrationUnifiedLogConfig,

@@ -2268,6 +2268,18 @@
           "type": "string",
           "title": "%config.integrations.database.apiUrl.title%"
         },
+        "saropaLogCapture.integrations.otel.traceUrlTemplate": {
+          "default": "",
+          "description": "OpenTelemetry: trace backend deep-link template with a {traceId} placeholder, e.g. 'https://jaeger.example.com/trace/{traceId}'. Detected trace IDs are linked to this URL in the .traces.json sidecar.",
+          "type": "string",
+          "title": "%config.integrations.otel.traceUrlTemplate.title%"
+        },
+        "saropaLogCapture.integrations.otel.traceIdPattern": {
+          "default": "",
+          "description": "OpenTelemetry: optional regex override (capture group 1 = trace id) for non-standard trace-id log formats. Leave empty to use built-in W3C traceparent and trace_id= detection.",
+          "type": "string",
+          "title": "%config.integrations.otel.traceIdPattern.title%"
+        },
         "saropaLogCapture.integrations.http.requestLogPath": {
           "default": "",
           "description": "Path to an HTTP request log or HAR file (relative to workspace or absolute) to correlate with debug output.",
