@@ -1,5 +1,14 @@
 # Integration: Security and Audit Logs
 
+> **SUPERSEDED (2026-06-14).** This is an early pre-implementation design draft, kept for
+> history only — do not implement from it. Several details here never shipped or shipped
+> differently: the real settings live under `saropaLogCapture.integrations.security.*`
+> (this draft says `saropaLogCapture.security.*`), there is no `enabled` master switch
+> (the adapter is gated by `integrations.adapters` containing `security`), and the two
+> proposed commands were never built (display is the viewer context popover instead).
+> The accurate, as-shipped spec is **[013_integration-spec-security-audit-logs.md](013_integration-spec-security-audit-logs.md)**;
+> the implementation is in `src/modules/integrations/providers/security-audit.ts`.
+
 ## Problem and Goal
 
 Some failures are security-related: **authentication** changes, **permission** denials, or **audit** events (who did what, when). Correlating debug output with **security and audit logs** (e.g. Windows Security log, application audit logs, or auth provider logs) helps answer "was there a login failure just before this error?" or "did permissions change?" This integration optionally attaches **time-bounded security/audit event summaries** to the session—with strong **privacy and consent**—so that security-relevant context is available for incident or support analysis without exposing raw audit data by default.
