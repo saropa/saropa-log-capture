@@ -39,13 +39,16 @@ export class LogSession {
     private splitting = false;
     /** Guard flag — prevents concurrent queue processors. */
     private processingQueue = false;
-    /** Buffered appends while split is in progress; ensures newest lines are never dropped. */
-    private readonly pendingLines: Array<{
-        readonly text: string;
-        readonly category: string;
-        readonly timestamp: Date;
-        readonly sourceLocation?: SourceLocation;
-    }> = [];
+    /**
+     * Single ordered write queue. Captured lines AND infrastructure writes (markers, DAP, header
+     * lines) all flow through this so they can never interleave mid-write or bypass split accounting.
+     * 'line' items are formatted + counted; 'raw' items are pre-formatted blocks (`countsAsLine`
+     * decides whether they advance the line count — markers do, DAP/header don't).
+     */
+    private readonly pendingLines: Array<
+        | { readonly kind: 'line'; readonly text: string; readonly category: string; readonly timestamp: Date; readonly sourceLocation?: SourceLocation }
+        | { readonly kind: 'raw'; readonly block: string; readonly countsAsLine: boolean }
+    > = [];
     private readonly deduplicator: Deduplicator;
     private readonly splitter: FileSplitter;
 
@@ -135,7 +138,7 @@ export class LogSession {
         if (this._state !== 'recording' || !this.writeStream) {
             return;
         }
-        this.pendingLines.push({ text, category, timestamp, sourceLocation });
+        this.pendingLines.push({ kind: 'line', text, category, timestamp, sourceLocation });
         this.processPendingLines().catch((e) => { console.error('Log append queue failed:', e); });
     }
 
@@ -147,42 +150,56 @@ export class LogSession {
         this.processingQueue = true;
         try {
             while (this.pendingLines.length > 0) {
-                if (this._state !== 'recording' || !this.writeStream) {
-                    return;
-                }
+                if (!this.writeStream) { return; }
                 const next = this.pendingLines[0];
-                await this.splitBeforeNextLineIfNeeded(next.text);
-
-                const elapsedMs = computeElapsedMs(this.config.includeElapsedTime, this._previousTimestamp, next.timestamp);
-                const formatted = formatLine(next.text, next.category, {
-                    timestamp: next.timestamp,
-                    includeTimestamp: this.config.includeTimestamp,
-                    sourceLocation: next.sourceLocation,
-                    includeSourceLocation: this.config.includeSourceLocation,
-                    elapsedMs,
-                    includeElapsedTime: this.config.includeElapsedTime,
-                });
-                this._previousTimestamp = next.timestamp;
-                /* Capture-side deduplication is intentionally bypassed: the
-                   2026.04 unified-line-collapsing rethink moved every collapse/hide
-                   to the viewer layer so line numbers in the captured file match
-                   the app's actual output 1:1. Each incoming line is written as
-                   its own row; identical-within-500ms runs that the old
-                   Deduplicator would have folded to `(xN)` suffix are now folded
-                   visually in the viewer via the inline .dedup-badge ("×N" pill)
-                   on the survivor row (see bugs/048_plan-severity-gutter-decoupling.md
-                   for the current viewer-side affordance) and preserve per-line
-                   timestamps in the file. */
-                await this.writeProcessedLines([formatted]);
+                // Captured lines only flow while recording; if paused, leave them (and anything
+                // queued behind) until resume. Raw items (markers/header) still flush while paused,
+                // matching the pre-queue behavior where a marker could be inserted while paused.
+                if (next.kind === 'line' && this._state !== 'recording') { return; }
+                if (next.kind === 'line') {
+                    await this.writeQueuedLine(next);
+                } else {
+                    await this.writeQueuedRaw(next);
+                }
                 this.pendingLines.shift();
-
-                this._lastLineTime = Date.now();
-                this._lastWriteTime = this._lastLineTime;
+                this._lastWriteTime = Date.now();
+                if (next.kind === 'line' || next.countsAsLine) { this._lastLineTime = this._lastWriteTime; }
                 this.onLineCountChanged(this._lineCount);
             }
         } finally {
             this.processingQueue = false;
         }
+    }
+
+    /** Format and write one queued captured line (split-accounted, counted). */
+    private async writeQueuedLine(
+        item: { text: string; category: string; timestamp: Date; sourceLocation?: SourceLocation },
+    ): Promise<void> {
+        await this.splitBeforeNextLineIfNeeded(item.text);
+        const elapsedMs = computeElapsedMs(this.config.includeElapsedTime, this._previousTimestamp, item.timestamp);
+        const formatted = formatLine(item.text, item.category, {
+            timestamp: item.timestamp,
+            includeTimestamp: this.config.includeTimestamp,
+            sourceLocation: item.sourceLocation,
+            includeSourceLocation: this.config.includeSourceLocation,
+            elapsedMs,
+            includeElapsedTime: this.config.includeElapsedTime,
+        });
+        this._previousTimestamp = item.timestamp;
+        // Capture-side dedup intentionally bypassed (2026.04 unified-line-collapsing rethink — the
+        // viewer folds visually); each line is written 1:1 so file line numbers match the app output.
+        await this.writeProcessedLines([formatted]);
+    }
+
+    /** Write one pre-formatted block (marker / DAP / header) in queue order, split-accounted by size. */
+    private async writeQueuedRaw(item: { block: string; countsAsLine: boolean }): Promise<void> {
+        // Split before writing so a marker can't push a part past its limits (the old direct-write
+        // path skipped this); the block doubles as the "next text" for the byte-size split check.
+        await this.splitBeforeNextLineIfNeeded(item.block);
+        if (!this.writeStream) { return; }
+        this.writeStream.write(item.block);
+        this._bytesWritten += Buffer.byteLength(item.block, 'utf-8');
+        if (item.countsAsLine) { this._lineCount++; }
     }
 
     /** Wait until buffered appendLine calls are flushed to disk. */
@@ -240,7 +257,7 @@ export class LogSession {
      * @returns The marker text written, or undefined if not recording.
      */
     appendMarker(customText?: string): string | undefined {
-        if (this._state === 'stopped' || !this.writeStream || this.splitting) {
+        if (this._state === 'stopped' || !this.writeStream) {
             return undefined;
         }
 
@@ -249,10 +266,11 @@ export class LogSession {
         const label = customText ? `${ts} — ${customText}` : ts;
         const markerLine = `\n--- MARKER: ${label} ---\n`;
 
-        this.writeStream.write(markerLine + '\n');
-        this._lastWriteTime = Date.now();
-        this._lineCount++;
-        this.onLineCountChanged(this._lineCount);
+        // Enqueue rather than write directly so the marker can't interleave with queued lines or skip
+        // split accounting. The text is returned synchronously for the caller's viewer broadcast; the
+        // file write and line-count bump happen when the queue reaches this entry.
+        this.pendingLines.push({ kind: 'raw', block: markerLine + '\n', countsAsLine: true });
+        this.processPendingLines().catch((e) => { console.error('Log append queue failed:', e); });
         return markerLine.trim();
     }
 
@@ -262,12 +280,12 @@ export class LogSession {
      * (DAP lines are diagnostic infrastructure, not user output).
      */
     appendDapLine(formatted: string): void {
-        if (this._state !== 'recording' || !this.writeStream || this.splitting) {
+        if (this._state !== 'recording' || !this.writeStream) {
             return;
         }
-        const lineData = formatted + '\n';
-        this.writeStream.write(lineData);
-        this._bytesWritten += Buffer.byteLength(lineData, 'utf-8');
+        // Enqueue so DAP lines stay ordered with captured output (does not advance the line count).
+        this.pendingLines.push({ kind: 'raw', block: formatted + '\n', countsAsLine: false });
+        this.processPendingLines().catch((e) => { console.error('Log append queue failed:', e); });
     }
 
     /**
@@ -275,12 +293,13 @@ export class LogSession {
      * Does not increment _lineCount; used for late-arriving integration header data.
      */
     appendHeaderLines(lines: readonly string[]): void {
-        if (this._state !== 'recording' || !this.writeStream || this.splitting || lines.length === 0) {
+        if (this._state !== 'recording' || !this.writeStream || lines.length === 0) {
             return;
         }
+        // Enqueue so late integration header lines stay ordered with captured output (not counted).
         const block = '\n' + lines.join('\n') + '\n';
-        this.writeStream.write(block);
-        this._bytesWritten += Buffer.byteLength(block, 'utf-8');
+        this.pendingLines.push({ kind: 'raw', block, countsAsLine: false });
+        this.processPendingLines().catch((e) => { console.error('Log append queue failed:', e); });
     }
 
     /** Manually trigger a file split. */
