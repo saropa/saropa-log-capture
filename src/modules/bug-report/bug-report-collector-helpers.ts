@@ -22,11 +22,23 @@ export function findHeaderEnd(lines: readonly string[]): number {
     return 0;
 }
 
+/** Header keys whose value is likely a secret — the value is dropped rather than shipped in a report. */
+const SECRET_KEY_RE = /(token|secret|password|passwd|api[_-]?key|auth|credential|cookie|bearer|private[_-]?key)/i;
+/** Home-directory prefix whose username segment is masked so a report doesn't leak it. */
+const HOME_PATH_RE = /([/\\](?:Users|home))[/\\][^/\\\s]+/gi;
+
+/** Redact a captured environment-header value before it lands in a shareable bug report. */
+function redactEnvValue(key: string, value: string): string {
+    if (SECRET_KEY_RE.test(key)) { return '<redacted>'; }
+    return value.replace(HOME_PATH_RE, '$1/<user>');
+}
+
 export function extractEnvironment(lines: readonly string[], headerEnd: number): Record<string, string> {
     const env: Record<string, string> = {};
     for (let i = 0; i < headerEnd; i++) {
         const match = lines[i].match(/^(\w[\w\s.]+?):\s+(.+)$/);
-        if (match) { env[match[1].trim()] = match[2].trim(); }
+        // Redact secret-looking values and mask home-dir usernames — the env table ships to GitHub/Slack.
+        if (match) { env[match[1].trim()] = redactEnvValue(match[1].trim(), match[2].trim()); }
     }
     return env;
 }
