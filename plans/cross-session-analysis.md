@@ -415,7 +415,7 @@ Session 2025-01-16 14:30 — Health: 72/100
 
 **Status:** Shipped. [session-health.ts](src/modules/misc/session-health.ts) computes a 0–100 per-session score from the session's detected signals (errors −10 each, ANR −25, memory −8, network −5, slow ops −3, warnings −2, each capped so one noisy category can't dominate), with a factor breakdown. The Signal Report overview shows a "Health: N/100" row, and the markdown export appends the factor breakdown. This is distinct from the pre-existing lint-impact [health-score.ts](src/modules/misc/health-score.ts) used by bug reports. **Pending:** session-history trend arrows (the score is computed per session but not yet persisted per-session for a worsening/improving trend across the Logs list).
 
-### 20. Workspace Pulse Dashboard — NOT BUILT
+### ~~20. Workspace Pulse Dashboard~~ — DONE (as a strip in the Signals panel, not a new screen)
 
 A single panel showing the health of the entire project, computed from all sessions:
 
@@ -433,7 +433,7 @@ Hot Code:
 Fix Velocity: 3 errors resolved this week, 1 persisting
 ```
 
-**Implementation:** Combine error trend analysis, hot file data with git freshness, and session health scores over time. Render as a webview dashboard. (Today [analysis-project-insights.ts](src/ui/analysis/analysis-project-insights.ts) is single-session, not workspace-level.)
+**Status:** Shipped — deliberately NOT as a new panel. The constituent pieces already aggregate in the **Signals panel** (cross-session signals, hot files with git freshness from idea #12, regression new/disappeared from F7/F8), so a separate dashboard would have duplicated an existing surface and added a new webview + command + activation. Instead, [workspace-pulse.ts](src/modules/misc/workspace-pulse.ts) composes a one-line pulse — improving (resolved) / worsening (new) / stable (recurring) error-type counts + the cross-session fix-rate (idea #14) + an overall improving/worsening/steady tone — and the Signals panel renders it as a compact, tone-accented strip at the top ([viewer-signal-panel.ts](src/ui/panels/viewer-signal-panel.ts) container, [viewer-signal-panel-script-part-b.ts](src/ui/panels/viewer-signal-panel-script-part-b.ts) `renderPulse`). It reuses the existing `signalData` round-trip ([recurring-handlers.ts](src/ui/shared/handlers/recurring-handlers.ts)) and stays hidden when there's nothing to report (passive). **Not built:** a per-error narrative list ("SocketException gone since Jan 15") — the strip gives the aggregate counts/tone, not a per-fingerprint timeline. The render needs manual Extension-Host verification; the composition + tone logic is unit-tested.
 
 ---
 
@@ -475,7 +475,7 @@ Fix Velocity: 3 errors resolved this week, 1 persisting
 | Smart context boundaries | Low | Medium | Low | Backlog |
 | ~~Environment diff (env-specific)~~ | ~~Medium~~ | ~~Medium~~ | ~~High~~ | **Done** (session delta) |
 | ~~Time-travel debugging context~~ | ~~Low~~ | ~~Medium~~ | ~~Medium~~ | **Done** (gap highlight) |
-| Workspace pulse dashboard | High | Very High | Very High | Future |
+| ~~Workspace pulse~~ (strip, not a panel) | ~~High~~ | ~~Very High~~ | ~~Very High~~ | **Done** |
 | ~~Debugging velocity score~~ | ~~Medium~~ | ~~Medium~~ | ~~High~~ | **Done** (output channel) |
 | ~~"Show Log History" for source files~~ | ~~Low~~ | ~~Medium~~ | ~~Low~~ | **Done** |
 | N-way cross-session diff | High | Medium | Medium | Future |
@@ -981,3 +981,39 @@ A free-text note can now be attached to any captured log from the Logs panel: ri
 ### Pending
 
 Manual Extension-Host verification: the **Add Note...** context-menu item appears and prompts; the saved note shows as a 📝 badge on the session row with the note as its hover title; clearing the text removes the badge. This is a session-level note — the pre-existing line-level `Annotation` storage remains unused by any UI.
+
+---
+
+## Finish Report (2026-06-14) — Workspace pulse strip (idea #20)
+
+### What shipped
+
+The Signals panel now opens with a compact one-line "workspace pulse" strip: how many error types are improving (resolved and gone from the latest session), worsening (new this session), and stable (recurring across sessions), plus the cross-session fix-rate, with a green/red left-border accent reflecting the overall trend. It is a header strip on the existing panel, not a new screen — the standalone-dashboard idea was rejected because its constituent data already aggregates in the Signals panel and a separate panel would have duplicated that surface and added a new webview + command + activation.
+
+### How it works
+
+`computeWorkspacePulse(input)` (pure, `src/modules/misc/workspace-pulse.ts`) packages already-computed counts — new errors (regression F7), resolved errors (regression F8), recurring baseline, and the debugging fix-rate (idea #14) — into `{ improving, worsening, stable, velocityPct, tone }`, flooring negatives and returning undefined when there is nothing to show (so the strip stays hidden — the Signals surface is passive). Tone is improving/worsening/steady by comparing resolved vs new. The signal-data handler (`recurring-handlers.ts`) computes the inputs from the regression result + aggregated recurring signals + `computeDebuggingVelocity` over the metadata it already loads, and posts `pulse` in the existing `signalData` message. The webview caches it and `renderPulse` (`viewer-signal-panel-script-part-b.ts`) fills a `#signal-pulse-strip` element (added in `viewer-signal-panel.ts`), tone-accented via theme-token CSS (`viewer-styles-signal-sections.ts`). Labels are localized `signal.pulse*` keys.
+
+### Files changed
+
+- `src/modules/misc/workspace-pulse.ts` — NEW. Pure composition + tone classifier (node:test-able).
+- `src/ui/shared/handlers/recurring-handlers.ts` — compute the pulse from existing data; post it in `signalData`.
+- `src/ui/panels/viewer-signal-panel.ts` — `#signal-pulse-strip` container at the top of the panel.
+- `src/ui/panels/viewer-signal-panel-script-part-a/-b/-c.ts` — cache field, `renderPulse`, render on `signalData`.
+- `src/ui/panels/viewer-signal-panel-script.ts` + `src/l10n/strings-b.ts` — 5 `pulse*` strings (interface, defaults, catalog).
+- `src/ui/viewer-styles/viewer-styles-signal-sections.ts` — themed strip CSS (tone accents via `--vscode-charts-*`).
+- `src/test/modules/misc/workspace-pulse.test.ts` — NEW. 6 cases (hidden-when-empty, velocity-only, improving/worsening/steady tone, negative floor).
+- `plans/reference/webview-outbound-message-types.md` — regenerated (new `pulse` field on `signalData`).
+- `CHANGELOG.md`, `plans/cross-session-analysis.md` — idea #20 marked done; this report.
+
+### Verification
+
+- `npm run check-types` — clean.
+- `npm run verify:l10n-keys` — OK (the 5 new keys resolve).
+- `npm run verify:host-outbound-catalog` — OK (reference matches sources).
+- `eslint` on the touched files — clean.
+- `node --test` on the pure test — 6/6 pass.
+
+### Not built / pending
+
+A per-error narrative list ("SocketException gone since Jan 15") — the strip reports aggregate counts + tone, not a per-fingerprint timeline. The strip render (and its theme accents in light/dark/high-contrast) needs manual Extension-Host verification; the composition and tone logic are unit-tested.
