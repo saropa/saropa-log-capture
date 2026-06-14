@@ -11,6 +11,7 @@ import { extractDateFromFilename } from '../analysis/stack-parser';
 import { countOwaspCategories } from './bug-report-owasp-section';
 import { buildVscodeFileUri, buildGitHubCommitUrl, buildMarkdownFileLink, type GitLinkContext } from '../source/link-helpers';
 import { fencedBlock } from '../misc/outbound-content-safety';
+import { formatContextGapNote } from './time-travel-context';
 
 export interface ReportCtx {
     readonly remote?: string;
@@ -20,7 +21,12 @@ export interface ReportCtx {
 export function formatLogContext(context: readonly string[]): string {
     if (context.length === 0) { return '## Log Context\n\n*No preceding log lines.*'; }
     const block = context.map(l => l.trimEnd()).join('\n');
-    return `## Log Context (${context.length} lines before error)\n\n${fencedBlock(block)}`;
+    const parts = [`## Log Context (${context.length} lines before error)`, fencedBlock(block)];
+    // Time-travel note (idea #15): flag the largest pause before the error — a long wait points
+    // at an operation boundary (network/lock/frame) rather than a tight error burst.
+    const gapNote = formatContextGapNote(context);
+    if (gapNote) { parts.push(gapNote); }
+    return parts.join('\n\n');
 }
 
 export function formatEnvironment(env: Record<string, string>): string {
