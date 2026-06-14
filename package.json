@@ -2240,6 +2240,34 @@
           "type": "number",
           "title": "%config.integrations.database.maxQueriesPerLookup.title%"
         },
+        "saropaLogCapture.integrations.http.requestLogPath": {
+          "default": "",
+          "description": "Path to an HTTP request log or HAR file (relative to workspace or absolute) to correlate with debug output.",
+          "type": "string",
+          "title": "%config.integrations.http.requestLogPath.title%"
+        },
+        "saropaLogCapture.integrations.http.requestIdPattern": {
+          "default": "",
+          "description": "Regex to extract a request ID from a log line (e.g. 'requestId=(\\S+)') for correlating requests with debug output.",
+          "type": "string",
+          "title": "%config.integrations.http.requestIdPattern.title%"
+        },
+        "saropaLogCapture.integrations.http.timeWindowSeconds": {
+          "default": 10,
+          "description": "Correlation time window (seconds) when no request ID matches.",
+          "minimum": 1,
+          "maximum": 120,
+          "type": "number",
+          "title": "%config.integrations.http.timeWindowSeconds.title%"
+        },
+        "saropaLogCapture.integrations.http.maxRequestsPerSession": {
+          "default": 500,
+          "description": "Max HTTP requests to correlate per session.",
+          "minimum": 10,
+          "maximum": 5000,
+          "type": "number",
+          "title": "%config.integrations.http.maxRequestsPerSession.title%"
+        },
         "saropaLogCapture.integrations.browser.mode": {
           "default": "file",
           "description": "How to capture browser console events: read an exported file or connect via Chrome DevTools Protocol.",
