@@ -18,8 +18,8 @@ const dependencySections: ReadonlySet<string> = new Set([
     'dependency_overrides',
 ]);
 
-/** Max bytes to read from pubspec.yaml. A manifest this large is pathological; cap to avoid blocking. */
-const PUBSPEC_MAX_READ = 256 * 1024;
+/** Max bytes to read from a manifest (pubspec.yaml / package.json). This large is pathological; cap to avoid blocking. */
+const MANIFEST_MAX_READ = 256 * 1024;
 
 /** Count leading space characters (YAML indentation; tabs are invalid in YAML and ignored). */
 function leadingSpaces(line: string): number {
@@ -88,9 +88,53 @@ export async function readPubspecDependencies(rootUri: vscode.Uri): Promise<Set<
     try {
         const fileUri = vscode.Uri.joinPath(rootUri, 'pubspec.yaml');
         const bytes = await vscode.workspace.fs.readFile(fileUri);
-        const capped = bytes.length > PUBSPEC_MAX_READ ? bytes.subarray(0, PUBSPEC_MAX_READ) : bytes;
+        const capped = bytes.length > MANIFEST_MAX_READ ? bytes.subarray(0, MANIFEST_MAX_READ) : bytes;
         const text = Buffer.from(capped).toString('utf-8');
         return parsePubspecDependencies(text);
+    } catch {
+        return new Set<string>();
+    }
+}
+
+/** Object whose own enumerable string keys are dependency names. */
+function isDependencyRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Extract dependency names from a package.json's `dependencies` and
+ * `devDependencies` maps. Pure (no I/O); tolerates any non-object shape by
+ * contributing nothing for that field.
+ */
+export function parsePackageJsonDependencies(text: string): Set<string> {
+    const names = new Set<string>();
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(text);
+    } catch {
+        return names;
+    }
+    if (!isDependencyRecord(parsed)) { return names; }
+    for (const field of ['dependencies', 'devDependencies']) {
+        const block = parsed[field];
+        if (isDependencyRecord(block)) {
+            for (const key of Object.keys(block)) { names.add(key); }
+        }
+    }
+    return names;
+}
+
+/**
+ * Read package.json from a workspace folder and return its declared dependency
+ * names. Returns an empty set on any failure, mirroring readPubspecDependencies.
+ */
+export async function readPackageJsonDependencies(rootUri: vscode.Uri): Promise<Set<string>> {
+    try {
+        const fileUri = vscode.Uri.joinPath(rootUri, 'package.json');
+        const bytes = await vscode.workspace.fs.readFile(fileUri);
+        const capped = bytes.length > MANIFEST_MAX_READ ? bytes.subarray(0, MANIFEST_MAX_READ) : bytes;
+        const text = Buffer.from(capped).toString('utf-8');
+        return parsePackageJsonDependencies(text);
     } catch {
         return new Set<string>();
     }

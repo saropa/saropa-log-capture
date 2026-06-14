@@ -22,8 +22,8 @@ export function getSignalScriptPartC(): string {
         // Each metric is a nowrap unit so the panel can wrap BETWEEN them but never split an emoji
         // from its count ("🟡" landing on a line above "Warnings: 3") — the old ' · '-joined string
         // wrapped mid-metric on a narrow panel.
-        if (typeof heroErrorCount === 'number') parts.push('<span class="signal-hero-metric">\\uD83D\\uDD34 Errors: <span class="signal-hero-num signal-hero-num-error">' + heroErrorCount + '</span></span>');
-        if (typeof heroWarningCount === 'number') parts.push('<span class="signal-hero-metric">\\uD83D\\uDFE1 Warnings: <span class="signal-hero-num signal-hero-num-warn">' + heroWarningCount + '</span></span>');
+        if (typeof heroErrorCount === 'number') parts.push('<span class="signal-hero-metric">\\uD83D\\uDD34 ' + fillSignalString(SIGNAL_STRINGS.heroErrors, '<span class="signal-hero-num signal-hero-num-error">' + heroErrorCount + '</span>') + '</span>');
+        if (typeof heroWarningCount === 'number') parts.push('<span class="signal-hero-metric">\\uD83D\\uDFE1 ' + fillSignalString(SIGNAL_STRINGS.heroWarnings, '<span class="signal-hero-num signal-hero-num-warn">' + heroWarningCount + '</span>') + '</span>');
         if (parts.length === 0 && hasLog && typeof heroErrorCount !== 'number' && typeof heroWarningCount !== 'number') parts.push('<span class="signal-hero-metric">' + esc(SIGNAL_STRINGS.heroNoErrorsWarnings || 'No errors or warnings recorded') + '</span>');
         if (heroSnapshotSummary) parts.push('<span class="signal-hero-metric signal-hero-snapshot">' + heroSnapshotSummary + '</span>');
         var hasSparkline = heroSparklineData && Array.isArray(heroSparklineData.freememMb) && heroSparklineData.freememMb.length >= 2;
@@ -69,8 +69,8 @@ export function getSignalScriptPartC(): string {
         lines.push('');
         if (hasLog && (typeof heroErrorCount === 'number' || typeof heroWarningCount === 'number' || heroSnapshotSummary)) {
             var heroParts = [];
-            if (typeof heroErrorCount === 'number') heroParts.push(vt('viewer.signalPanel.heroErrors', heroErrorCount));
-            if (typeof heroWarningCount === 'number') heroParts.push(vt('viewer.signalPanel.heroWarnings', heroWarningCount));
+            if (typeof heroErrorCount === 'number') heroParts.push(fillSignalString(SIGNAL_STRINGS.heroErrors, heroErrorCount));
+            if (typeof heroWarningCount === 'number') heroParts.push(fillSignalString(SIGNAL_STRINGS.heroWarnings, heroWarningCount));
             if (heroParts.length) lines.push(heroParts.join(' \\u00b7 '));
             if (heroSnapshotSummary) lines.push(heroSnapshotSummary);
             lines.push('');
@@ -217,7 +217,7 @@ export function getSignalScriptPartC(): string {
             var labelEl = document.getElementById('signal-current-log-label');
             if (scopeEl && labelEl) {
                 if (hasLog && currentLogLabel) { labelEl.textContent = currentLogLabel; scopeEl.style.display = ''; }
-                else if (hasLog) { labelEl.textContent = vt('viewer.signal.noLogOpen'); scopeEl.style.display = ''; }
+                else if (hasLog) { labelEl.textContent = SIGNAL_STRINGS.noLogOpen; scopeEl.style.display = ''; }
                 else { scopeEl.style.display = 'none'; }
             }
             renderPerformanceHero();
