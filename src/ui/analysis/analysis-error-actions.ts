@@ -6,6 +6,7 @@
  */
 
 import * as vscode from 'vscode';
+import { t } from '../../l10n';
 import { setErrorStatus, type ErrorStatus } from '../../modules/misc/error-status-store';
 
 /** Handle triage status toggle from the analysis panel. */
@@ -27,7 +28,7 @@ export async function handleCopyContext(
         `Date: ${new Date().toISOString()}`,
     ].join('\n');
     await vscode.env.clipboard.writeText(context);
-    vscode.window.showInformationMessage('Error context copied to clipboard');
+    vscode.window.showInformationMessage(t('viewer.analysis.errorContextCopied'));
 }
 
 /** Trigger bug report generation via existing command. */
@@ -36,7 +37,7 @@ export async function handleBugReport(
     extensionContext?: vscode.ExtensionContext,
 ): Promise<void> {
     if (!fileUri) {
-        vscode.window.showWarningMessage('No log file available for bug report');
+        vscode.window.showWarningMessage(t('viewer.analysis.noLogForBugReport'));
         return;
     }
     const { showBugReport } = await import('../panels/bug-report-panel.js');
@@ -57,6 +58,6 @@ export function handleExportAction(format: string): void {
 /** Trigger AI explanation via existing command. */
 export function handleAiExplain(errorText: string): void {
     vscode.commands.executeCommand('saropaLogCapture.explainError', errorText).then(undefined, () => {
-        vscode.window.showWarningMessage('AI explanation is not available');
+        vscode.window.showWarningMessage(t('viewer.analysis.aiUnavailable'));
     });
 }
