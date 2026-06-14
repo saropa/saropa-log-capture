@@ -33,7 +33,7 @@ Items below qualify as quick wins because they (a) ship on **existing data** —
 
 - [x] **F10** — Severity escalation chain (warn → warn → error within configurable window, default 5s). Highest signal-to-noise of the lot; the pattern is intrinsically meaningful. Sliding-window scan over existing severity classification, low false-positive risk.
 - [x] **F9** — Silence-then-burst (≥10s of silence followed by ≥20 lines in <1s). Catches UI freezes and watchdog events that are otherwise invisible. Two-counter check.
-- [x] **F14** — Frame-budget cluster (≥5 PERF lines or Flutter frame-budget warnings in 10s). Direct extension of the already-shipped detector from [plans/048_plan-perf-line-signal-detection.md](048_plan-perf-line-signal-detection.md); same source data, one aggregation layer.
+- [x] **F14** — Frame-budget cluster (≥5 PERF lines or Flutter frame-budget warnings in 10s). Direct extension of the already-shipped detector from [plans/048_plan-perf-line-signal-detection.md](history/2026.04/2026.04.16/048_plan-perf-line-signal-detection.md); same source data, one aggregation layer.
 - [x] **F7** — New error type signal: error fingerprint not seen in the previous M sessions appears in current. Cross-session set lookup against the project index. Big perceived value — "you just introduced a new crash."
 - [x] **F8** — Disappearing error signal (positive): fingerprint present in past M sessions absent in current. Same storage as F7, opposite query. Rewards good fixes; currently the panel surfaces problems only.
 
@@ -359,7 +359,7 @@ Adding event types unlocks a class of **structural** signals that don't reduce t
 #### F14. Frame-budget signal
 - **What:** if PERF lines or Flutter frame-budget warnings cluster (≥5 in 10s).
 - **Output:** "Frame budget exceeded × 7 in 9s. UI jank likely visible to user."
-- **Builds on:** existing slow-op signal from [plans/048_plan-perf-line-signal-detection.md](048_plan-perf-line-signal-detection.md).
+- **Builds on:** existing slow-op signal from [plans/048_plan-perf-line-signal-detection.md](history/2026.04/2026.04.16/048_plan-perf-line-signal-detection.md).
 
 #### F15. Endpoint health card
 - **What:** per-endpoint summary card: total calls, status code distribution, p50/p95 latency, last failure.

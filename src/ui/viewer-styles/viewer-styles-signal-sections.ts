@@ -261,5 +261,28 @@ export function getSignalSectionsStyles(): string {
     outline: 1px solid var(--vscode-focusBorder);
     outline-offset: -1px;
 }
+
+/* Workspace pulse strip (idea #20): a compact one-line trend summary at the top of the panel.
+   The left border accent is tinted by tone so the verdict reads before the numbers. Theme tokens
+   only, so it tracks light/dark/high-contrast. */
+.signal-pulse-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    margin: 4px 0 8px;
+    padding: 4px 8px;
+    font-size: 11px;
+    border-left: 2px solid var(--vscode-descriptionForeground);
+    background: var(--vscode-editorWidget-background);
+    border-radius: 3px;
+}
+.signal-pulse-strip.pulse-tone-improving { border-left-color: var(--vscode-charts-green); }
+.signal-pulse-strip.pulse-tone-worsening { border-left-color: var(--vscode-charts-red); }
+.signal-pulse-strip .pulse-improving { color: var(--vscode-charts-green); }
+.signal-pulse-strip .pulse-worsening { color: var(--vscode-charts-red); }
+.signal-pulse-strip .pulse-stable,
+.signal-pulse-strip .pulse-velocity { color: var(--vscode-descriptionForeground); }
+.signal-pulse-strip .pulse-sep { color: var(--vscode-descriptionForeground); opacity: 0.6; }
 `;
 }

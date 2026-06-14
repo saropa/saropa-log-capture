@@ -33,6 +33,9 @@ export function getSignalPanelHtml(): string {
         </div>
     </div>
     <div id="signal-scroll" class="signal-panel-content">
+        <!-- Workspace pulse strip (idea #20): improving/worsening/stable + fix velocity at a glance.
+             Hidden until the host posts a pulse (passive — nothing to say, nothing shown). -->
+        <div id="signal-pulse-strip" class="signal-pulse-strip" style="display:none" aria-live="polite"></div>
         <!-- Current log at a glance (no section header) -->
         <div id="signal-hero-block" class="signal-hero-block" aria-hidden="true" style="display:none">
             <div id="signal-performance-scope" class="signal-scope-label" style="display:none">${t('signal.panel.currentLog')} <span id="signal-current-log-label"></span></div>
@@ -179,6 +182,11 @@ export function getSignalPanelScript(): string {
         hotfilesSessionsOne: t('signal.hotfilesSessionsOne'),
         hotfilesSessionsMany: t('signal.hotfilesSessionsMany'),
         hotfilesChangedDaysAgo: t('signal.hotfilesChangedDaysAgo'),
+        pulseTitle: t('signal.pulseTitle'),
+        pulseImproving: t('signal.pulseImproving'),
+        pulseWorsening: t('signal.pulseWorsening'),
+        pulseStable: t('signal.pulseStable'),
+        pulseVelocity: t('signal.pulseVelocity'),
         envPlatforms: t('signal.envPlatforms'),
         envSdkRuntime: t('signal.envSdkRuntime'),
         envDebugAdapters: t('signal.envDebugAdapters'),
