@@ -34,6 +34,8 @@ import { getLastSignalBundle, getLastSignalHypotheses } from '../../ui/provider/
 import { extractSignalSummary } from '../root-cause-hints/signal-summary-extract';
 import { scanForGeneralSignals } from '../analysis/general-signal-scanner';
 import { surfacePredictiveSignals } from './session-signal-surfacing';
+import { loadFilteredMetas, parseSessionDate, type LoadedMeta } from './metadata-loader';
+import { computeSessionDelta, formatSessionDelta } from '../compare/session-delta';
 import { writeLogCaptureDiagnostics } from '../diagnostics/diagnostics-producer';
 import { getSessionCommit } from './session-commit-from-meta';
 
@@ -193,6 +195,9 @@ export async function finalizeSession(
         // Predictive surfacing (idea #1): proactively flag this session's new + recurring errors
         // in one toast. Runs after scans settle so fingerprints are persisted for the comparison.
         surfacePredictiveSignals(logSession.fileUri, outputChannel);
+        // "What changed?" auto-summary (idea #10): log the delta vs the previous session to the
+        // output channel — silent (no toast) so it never competes with the surfacing notification.
+        logWhatChanged(logSession.fileUri, metadataStore, outputChannel);
         // Suite integration (R1): write the offline diagnostic mirror only after scans
         // settle, so the envelope reflects this session's freshly-persisted signals.
         writeSessionDiagnosticEnvelope(logSession.fileUri, metadataStore, outputChannel);
@@ -225,6 +230,33 @@ export async function finalizeSession(
     } else if (config.afterCaptureAction === 'ask') {
         showSummaryNotification(withLogUri(generateSummary(filename, stats), logSession.fileUri));
     }
+}
+
+/** Auto-summary (idea #10): log how this session differs from its predecessor to the output
+ *  channel. Best-effort and silent — a missing predecessor or read failure simply logs nothing. */
+function logWhatChanged(
+    fileUri: vscode.Uri, store: SessionMetadataStore, out: vscode.OutputChannel,
+): void {
+    Promise.all([
+        store.loadMetadata(fileUri),
+        loadFilteredMetas('all').catch(() => [] as readonly LoadedMeta[]),
+    ]).then(([current, allMetas]) => {
+        const previous = pickPreviousMeta(allMetas, path.basename(fileUri.fsPath));
+        const summary = formatSessionDelta(computeSessionDelta(current, previous?.meta));
+        if (summary) { out.appendLine(summary); }
+    }).catch(() => { /* metadata may be absent for a brand-new session — nothing to compare */ });
+}
+
+/** The session chronologically just before `currentFilename`. Falls back to the most recent other
+ *  session when the current one isn't in the list yet (its metadata may still be settling). */
+function pickPreviousMeta(
+    metas: readonly LoadedMeta[], currentFilename: string,
+): LoadedMeta | undefined {
+    const sorted = [...metas].sort((a, b) => parseSessionDate(a.filename) - parseSessionDate(b.filename));
+    const idx = sorted.findIndex((m) => m.filename === currentFilename);
+    if (idx > 0) { return sorted[idx - 1]; }
+    const others = sorted.filter((m) => m.filename !== currentFilename);
+    return others.length > 0 ? others[others.length - 1] : undefined;
 }
 
 /**
