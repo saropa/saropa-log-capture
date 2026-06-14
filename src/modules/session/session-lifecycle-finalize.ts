@@ -27,6 +27,7 @@ import {
     createIntegrationEndContext,
 } from '../integrations';
 import { stopExternalLogTailers } from '../integrations/external-log-tailer';
+import { disposeExternalLogTailStatus } from '../../ui/shared/external-log-tail-status';
 import { stopLogcatCapture } from '../integrations/adb-logcat-capture';
 import { stopDatabaseQueryTail } from '../integrations/database-query-tailer';
 import { writeUnifiedSessionLogIfEnabled } from './unified-session-log-writer';
@@ -117,6 +118,7 @@ export async function finalizeSession(
     await integrationRegistry.runOnSessionEnd(endContext, metadataStore);
     // Always dispose external log watchers and adb logcat (provider stops when adapter enabled; if disabled mid-session, this still closes handles).
     stopExternalLogTailers();
+    disposeExternalLogTailStatus();
     stopLogcatCapture();
     // Belt-and-suspenders: the database provider stops its live tail in onSessionEnd; this closes the handle if onSessionEnd was skipped.
     stopDatabaseQueryTail();

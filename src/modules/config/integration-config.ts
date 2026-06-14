@@ -207,6 +207,8 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
       writeSidecars: ensureBoolean(cfg.get('integrations.externalLogs.writeSidecars'), true),
       prefixLines: ensureBoolean(cfg.get('integrations.externalLogs.prefixLines'), true),
       maxLinesPerFile: clamp(cfg.get('integrations.externalLogs.maxLinesPerFile'), 100, 1000000, 10000),
+      createIfMissing: ensureBoolean(cfg.get('integrations.externalLogs.createIfMissing'), false),
+      followRotation: ensureBoolean(cfg.get('integrations.externalLogs.followRotation'), false),
     },
     integrationsSecurity: {
       windowsSecurityLog: ensureBoolean(cfg.get('integrations.security.windowsSecurityLog'), false),

@@ -7,6 +7,8 @@ export const stringsA: Record<string, string> = {
     'statusBar.pausedTooltip': 'Saropa Log Capture: Paused. Click to open log file.',
     'statusBar.lines': '{0} lines',
     'statusBar.pausedLines': 'Paused ({0} lines)',
+    'statusBar.tailingLogs': 'Tailing {0} logs',
+    'statusBar.tailingLogsTooltip': 'Saropa Log Capture is tailing external log files for this session.',
 
     'captureToggle.enabledTooltip': 'Saropa Log Capture: Capture is on. Click to disable.',
     'captureToggle.disabledTooltip': 'Saropa Log Capture: Capture is off. Click to enable.',
