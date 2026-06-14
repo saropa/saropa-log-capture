@@ -76,6 +76,11 @@ export interface SignalScriptStrings {
     hotfilesSessionsOne: string;
     hotfilesSessionsMany: string;
     hotfilesChangedDaysAgo: string;
+    pulseTitle: string;
+    pulseImproving: string;
+    pulseWorsening: string;
+    pulseStable: string;
+    pulseVelocity: string;
     envPlatforms: string;
     envSdkRuntime: string;
     envDebugAdapters: string;
@@ -143,6 +148,11 @@ const DEFAULT_SIGNAL_STRINGS: SignalScriptStrings = {
     hotfilesSessionsOne: '{0} session',
     hotfilesSessionsMany: '{0} sessions',
     hotfilesChangedDaysAgo: 'changed {0}d ago',
+    pulseTitle: 'Workspace pulse — error types improving / worsening / stable across sessions',
+    pulseImproving: 'Improving {0}',
+    pulseWorsening: 'Worsening {0}',
+    pulseStable: 'Stable {0}',
+    pulseVelocity: 'Fixed {0}%',
     envPlatforms: 'Platforms',
     envSdkRuntime: 'SDK / runtime',
     envDebugAdapters: 'Debug adapters',

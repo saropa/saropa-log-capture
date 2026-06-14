@@ -49,6 +49,27 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
         }).join('');
     }
 
+    /* Workspace pulse strip (idea #20): one-line improving/worsening/stable + fix-rate summary at
+       the top of the panel. Hidden when the host sends no pulse, so the surface stays passive. */
+    function renderPulse() {
+        var el = document.getElementById('signal-pulse-strip');
+        if (!el) return;
+        var p = signalDataCache.pulse;
+        if (!p) { el.style.display = 'none'; return; }
+        var parts = [
+            '<span class="pulse-improving">▲ ' + fillSignalString(SIGNAL_STRINGS.pulseImproving, p.improving || 0) + '</span>',
+            '<span class="pulse-worsening">▼ ' + fillSignalString(SIGNAL_STRINGS.pulseWorsening, p.worsening || 0) + '</span>',
+            '<span class="pulse-stable">● ' + fillSignalString(SIGNAL_STRINGS.pulseStable, p.stable || 0) + '</span>'
+        ];
+        if (typeof p.velocityPct === 'number') {
+            parts.push('<span class="pulse-velocity">' + fillSignalString(SIGNAL_STRINGS.pulseVelocity, p.velocityPct) + '</span>');
+        }
+        el.className = 'signal-pulse-strip pulse-tone-' + (p.tone || 'steady');
+        el.title = SIGNAL_STRINGS.pulseTitle;
+        el.innerHTML = parts.join(' <span class="pulse-sep">·</span> ');
+        el.style.display = '';
+    }
+
     function renderHotFiles() {
         var summaryEl = document.getElementById('signal-hotfiles-summary');
         var emptyEl = document.getElementById('signal-hotfiles-empty');
