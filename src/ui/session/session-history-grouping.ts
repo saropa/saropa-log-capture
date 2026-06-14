@@ -19,6 +19,8 @@ export interface SessionMetadata {
     readonly lineCount?: number;
     readonly size: number;
     readonly displayName?: string;
+    /** Free-text user note for the session (idea #7). */
+    readonly note?: string;
     readonly tags?: string[];
     readonly autoTags?: string[];
     readonly correlationTags?: string[];

@@ -174,6 +174,7 @@ function applySidecar(
 ): SessionMetadata {
     let result = meta;
     if (sidecar.displayName) { result = { ...result, displayName: sidecar.displayName }; }
+    if (sidecar.note) { result = { ...result, note: sidecar.note }; }
     if (sidecar.tags?.length) { result = { ...result, tags: sidecar.tags }; }
     if (sidecar.autoTags?.length) { result = { ...result, autoTags: sidecar.autoTags }; }
     if (sidecar.correlationTags?.length) { result = { ...result, correlationTags: sidecar.correlationTags }; }

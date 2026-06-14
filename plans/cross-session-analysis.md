@@ -237,11 +237,11 @@ Right-click any source file in VS Code's Explorer → "Show Log References" → 
 
 **Status:** Shipped. A new `saropaLogCapture.showLogReferences` command ([commands-tools.ts](src/commands-tools.ts)) is wired to an Explorer context-menu entry (non-folder files, in [package.json](package.json) `menus.explorer/context`, hidden from the command palette). It takes the right-clicked file, derives its basename, and opens the existing cross-session search Quick Pick ([log-search-ui.ts](src/modules/search/log-search-ui.ts)) pre-filled with that name — which already groups matches by session file and shows each matching line — then opens the chosen match at its line via `openLogAtLine`. Title localized as `command.showLogReferences.title` across all 11 NLS locale files. **Note:** the command wiring delegates to the already-shipped search Quick Pick; the Explorer menu placement needs manual verification in the Extension Host.
 
-### 7. Session Annotations — PARTIAL
+### ~~7. Session Annotations~~ — DONE (session note)
 
 Let users add notes to sessions directly in the sidebar viewer: "Fixed by updating the API key" or "Regression from PR #142". Stored in the sidecar `.meta.json`.
 
-**Status:** The storage layer exists — [session-metadata.ts](src/modules/session/session-metadata.ts) defines an `Annotation` interface (lineIndex, text, timestamp) with an `addAnnotation()` method. **Remaining:** no UI to add/edit notes, and notes are not yet displayed in the session history tree or timeline panel.
+**Status:** Shipped as a free-text session note. `SessionMeta.note` + `setNote()` ([session-metadata.ts](src/modules/session/session-metadata.ts)) persist it to the sidecar; the **Add Note...** entry on the Logs panel session context-menu ([viewer-session-context-menu.ts](src/ui/viewer-context-menu/viewer-session-context-menu.ts)) routes through the `saropaLogCapture.addSessionNote` command ([commands-session.ts](src/commands-session.ts)), which prompts (pre-filled with any existing note, empty clears it) and confirms with a toast naming the saved note. The note flows through the session payload ([viewer-provider-actions.ts](src/ui/provider/viewer-provider-actions.ts)) and renders as a 📝 badge on the session row whose hover title is the note text ([viewer-session-panel-rendering.ts](src/ui/viewer-panels/viewer-session-panel-rendering.ts)). **Note:** this is a session-level note (distinct from the pre-existing line-level `Annotation` storage, still unused by any UI). The context-menu entry + row badge need manual Extension-Host verification.
 
 ### 8. Investigation Groups — PARTIAL (automatic grouping shipped)
 
@@ -471,7 +471,7 @@ Fix Velocity: 3 errors resolved this week, 1 persisting
 | ~~Error attention score~~ | ~~Medium~~ | ~~High~~ | ~~Very High~~ | **Done** (scorer + bug report) |
 | ~~Caller graph~~ | ~~Medium~~ | ~~Medium~~ | ~~Medium~~ | **Done** (bug report) |
 | ~~Semantic error grouping~~ | ~~Medium~~ | ~~Medium~~ | ~~High~~ | **Done** (classifier + label) |
-| Session annotations UI | Low | Medium | Low | Backlog |
+| ~~Session annotations UI~~ | ~~Low~~ | ~~Medium~~ | ~~Low~~ | **Done** (session note) |
 | Smart context boundaries | Low | Medium | Low | Backlog |
 | ~~Environment diff (env-specific)~~ | ~~Medium~~ | ~~Medium~~ | ~~High~~ | **Done** (session delta) |
 | ~~Time-travel debugging context~~ | ~~Low~~ | ~~Medium~~ | ~~Medium~~ | **Done** (gap highlight) |
@@ -942,3 +942,42 @@ The `saropaLogCapture.showLogReferences` command (`commands-tools.ts`) receives 
 ### Pending
 
 Manual Extension-Host verification that the **Show Log References** item appears in the Explorer right-click menu for files (not folders) and that the search Quick Pick opens pre-filled with the filename.
+
+---
+
+## Finish Report (2026-06-14) — Session note (idea #7)
+
+### What shipped
+
+A free-text note can now be attached to any captured log from the Logs panel: right-click → **Add Note...** opens an input (pre-filled with the existing note; clearing it removes the note), the note is saved to the session sidecar, a confirmation toast names the saved text, and the note appears as a 📝 badge on the session row whose hover title is the note itself.
+
+### How it works
+
+`SessionMeta.note` holds the text; `SessionMetadataStore.setNote` writes it (trimming, and clearing to undefined on empty). The `saropaLogCapture.addSessionNote` command (`commands-session.ts`) mirrors `tagSession`: it loads the session metadata, prompts via `showInputBox` pre-filled with the current note, persists, refreshes the Logs panel, and shows a toast (`msg.sessionNoteSaved` with the text, or `msg.sessionNoteCleared`). The webview session context-menu gains an **Add Note...** item (`viewer-session-context-menu.ts`) that posts `sessionAction: 'note'`; the dispatcher (`viewer-handler-sessions.ts`) routes the first selected item to the command and marks the action mutating so the list refreshes. The note threads to the webview through the grouping `SessionMetadata.note` (copied from the sidecar in `session-history-metadata.ts`) and the session payload mapper (`viewer-provider-actions.ts`), and renders as a badge on the row (`viewer-session-panel-rendering.ts`). The command title is localized across all 11 NLS locale files; the prompt/toast strings are runtime l10n keys.
+
+### Files changed
+
+- `src/modules/session/session-metadata.ts` — `SessionMeta.note` + `setNote()`.
+- `src/commands-session.ts` — `addSessionNote` command (prompt, persist, confirm).
+- `src/ui/provider/viewer-handler-sessions.ts` — `'note'` action case + mark mutating.
+- `src/ui/viewer-context-menu/viewer-session-context-menu.ts` — **Add Note...** menu item.
+- `src/ui/session/session-history-grouping.ts`, `session-history-metadata.ts` — thread `note` from sidecar through the grouping entry.
+- `src/ui/provider/viewer-provider-actions.ts` — include `note` in the session webview payload (`Meta` type + mapping).
+- `src/ui/viewer-panels/viewer-session-panel-rendering.ts` — 📝 row badge titled with the note.
+- `src/l10n/strings-a.ts` — `msg.sessionNote{Prompt,Placeholder,Saved,Cleared}`.
+- `package.json` + 11 `package.nls*.json` — `addSessionNote` command + `command.addSessionNote.title`.
+- `plans/reference/contributes-commands.md` — regenerated.
+- `CHANGELOG.md`, `plans/cross-session-analysis.md` — idea #7 marked done; this report.
+
+### Verification
+
+- `npm run check-types` — clean.
+- `npm run verify-nls` — passed (509 keys aligned, 11 files).
+- `npm run verify:l10n-keys` — OK.
+- `npm run verify:list-commands` — OK.
+- `eslint` on the touched files — clean (the row-render badge is inlined to stay within the 300-line file limit).
+- No pure unit-testable target: the note is store I/O plus command/render wiring.
+
+### Pending
+
+Manual Extension-Host verification: the **Add Note...** context-menu item appears and prompts; the saved note shows as a 📝 badge on the session row with the note as its hover title; clearing the text removes the badge. This is a session-level note — the pre-existing line-level `Annotation` storage remains unused by any UI.
