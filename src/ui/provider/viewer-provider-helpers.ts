@@ -106,7 +106,9 @@ export async function handleExportLogs(text: string, options: Record<string, unk
 		const levelStr = levels.length > 0 ? ` (${levels.join(', ')})` : '';
 
 		vscode.window.showInformationMessage(
-			t('msg.exportedLinesTo', String(lineCount), lineCount === 1 ? '' : 's', levelStr, uri.fsPath),
+			lineCount === 1
+				? t('msg.exportedLinesTo.one', String(lineCount), levelStr, uri.fsPath)
+				: t('msg.exportedLinesTo.many', String(lineCount), levelStr, uri.fsPath),
 		);
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err);

@@ -84,7 +84,9 @@ function correlationCommands(deps: CommandDeps): vscode.Disposable[] {
             await historyProvider.getMetaStore().setCorrelationTags(item.uri, tags);
             historyProvider.refresh();
             vscode.window.showInformationMessage(
-            t('msg.foundCorrelationTags', String(tags.length), tags.length !== 1 ? 's' : ''),
+            tags.length === 1
+                ? t('msg.foundCorrelationTags.one', String(tags.length))
+                : t('msg.foundCorrelationTags.many', String(tags.length)),
         );
         }),
     ];

@@ -65,7 +65,9 @@ async function confirmDeleteAllBookmarks(store: BookmarkStore): Promise<void> {
     const total = store.getTotalCount();
     if (total === 0) { return; }
     const answer = await vscode.window.showWarningMessage(
-        t('msg.deleteAllBookmarks', String(total), total === 1 ? '' : 's'),
+        total === 1
+            ? t('msg.deleteAllBookmarks.one', String(total))
+            : t('msg.deleteAllBookmarks.many', String(total)),
         { modal: true },
         t('action.deleteAll'),
     );
