@@ -216,6 +216,12 @@ export const stringsB: Record<string, string> = {
     'signal.hotfilesSessionsOne': '{0} session',
     'signal.hotfilesSessionsMany': '{0} sessions',
     'signal.hotfilesChangedDaysAgo': 'changed {0}d ago',
+    // Workspace pulse strip (idea #20): {0} is a count, or a percent for velocity.
+    'signal.pulseTitle': 'Workspace pulse — error types improving / worsening / stable across sessions',
+    'signal.pulseImproving': 'Improving {0}',
+    'signal.pulseWorsening': 'Worsening {0}',
+    'signal.pulseStable': 'Stable {0}',
+    'signal.pulseVelocity': 'Fixed {0}%',
     'signal.envPlatforms': 'Platforms',
     'signal.envSdkRuntime': 'SDK / runtime',
     'signal.envDebugAdapters': 'Debug adapters',

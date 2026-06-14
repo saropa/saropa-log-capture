@@ -193,11 +193,12 @@ export function getSignalScriptPartC(): string {
                 platforms: d.platforms || [], sdkVersions: d.sdkVersions || [],
                 debugAdapters: d.debugAdapters || [],
                 allSignals: d.allSignals || [], signalsInThisLog: d.signalsInThisLog || [],
-                coOccurrences: d.coOccurrences || []
+                coOccurrences: d.coOccurrences || [], pulse: d.pulse || null
             };
             /* Plan 053-A: noise-learning suggestions arrive in the same signalData payload so
                the panel never makes a separate round-trip. Empty list hides the section. */
             signalSuggestionsCache = d.filterSuggestions || [];
+            renderPulse();
             renderHotFiles(); renderSignalsInThisLog();
             renderEnvironment(); renderSignalTrends(); renderCoOccurrences();
             renderFilterSuggestions();
