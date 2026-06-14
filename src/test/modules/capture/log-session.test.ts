@@ -91,6 +91,27 @@ suite('LogSession queue safety', () => {
     await session.stop();
   });
 
+  test('a marker between lines is written in queue order and counts as a line', async () => {
+    /* H2: markers/DAP/header lines used to write directly to the stream, bypassing the ordered queue
+       (they could interleave with queued lines and skip split accounting). They now flow through the
+       same queue. The marker text is still returned synchronously for the viewer broadcast. */
+    const tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'saropa-log-marker-'));
+    const session = new LogSession(makeSessionContext(tmpRoot), makeSessionConfig('reports', 1000), () => {});
+    await session.start();
+    session.appendLine('before-marker', 'console', new Date('2026-03-23T10:00:00.000Z'));
+    const markerText = session.appendMarker('checkpoint');
+    session.appendLine('after-marker', 'console', new Date('2026-03-23T10:00:01.000Z'));
+    await session.stop();
+
+    assert.ok(typeof markerText === 'string' && markerText.includes('checkpoint'), 'marker text returned synchronously');
+    const body = await fs.readFile(session.fileUri.fsPath, 'utf-8');
+    const beforeIdx = body.indexOf('before-marker');
+    const markerIdx = body.indexOf('MARKER: ');
+    const afterIdx = body.indexOf('after-marker');
+    assert.ok(beforeIdx >= 0 && markerIdx >= 0 && afterIdx >= 0, 'all three present in the file');
+    assert.ok(beforeIdx < markerIdx && markerIdx < afterIdx, 'marker is ordered between the two lines');
+  });
+
   test('maxLines rotates parts and preserves newest lines', async () => {
     const tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'saropa-log-split-'));
     const session = new LogSession(makeSessionContext(tmpRoot), makeSessionConfig('reports', 3), () => {});
