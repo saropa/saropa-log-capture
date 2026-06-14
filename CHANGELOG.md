@@ -26,6 +26,14 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **CI coverage gate now counts the `node:test` suites it was missing:** The coverage run only instrumented the Mocha (Extension Host) tests; the large body of pure `node:test` suites runs in a separate `node --test` process the coverage hook never saw, so well-tested modules reported 8–15% and dragged the global thresholds under the gate — failing `main` on every push. The coverage run now also executes the `node:test` files over the instrumented build and merges their coverage, lifting measured statements/branches/functions ~46/34/40% → ~51/42/47% (all above the gate) without changing any test. Each `node --test` child writes its own `.nyc_output` file (keyed by pid, since `node --test` forks per file) for `nyc report` to merge; plain `npm test` is unaffected.
+
+---
+
 ## [9.0.1]
 
 Saropa Log Capture now keeps quiet about app-only extras like Crashlytics and Android device logs on projects that aren't apps — so your utility packages and libraries stop getting setup nudges they can't act on. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.1/CHANGELOG.md)
