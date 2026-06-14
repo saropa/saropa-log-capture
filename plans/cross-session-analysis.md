@@ -267,7 +267,7 @@ Implemented in [session-signal-surfacing.ts](src/modules/session/session-signal-
 
 This supersedes the older recurring-only notification (one toast per session end, strictly more information). Per-error quick-actions beyond "Open Signals" are not built; the panel already lists each item.
 
-### 10. "What Changed?" Regression Detector — PARTIAL
+### ~~10. "What Changed?" Regression Detector~~ — DONE (output-volume delta omitted)
 
 After a debug session, automatically compare it against the previous session (or the last "clean" session). Highlight:
 - New errors that didn't exist before
@@ -277,7 +277,7 @@ After a debug session, automatically compare it against the previous session (or
 
 **The magic:** The developer runs the app, and without asking, the extension says: "Compared to your last run: 1 new error (`TimeoutException` in `api_client.dart`), 2 errors fixed, output volume +40%."
 
-**Status:** New/disappeared error detection is shipped via [regression-detector.ts](src/modules/signals/regression-detector.ts), and baseline matching exists in [baseline-match.ts](src/modules/compare/baseline-match.ts) / [session-compare.ts](src/modules/compare/session-compare.ts). **Remaining:** it is not auto-triggered on session end (manual panel navigation required), automatic baseline selection, and the output-volume / new-file delta summary.
+**Status:** Shipped. [session-delta.ts](src/modules/compare/session-delta.ts) computes the delta vs the chronologically previous session — error/warning count deltas, error fingerprints new vs gone, and source files (`file:` correlation tags) referenced only this session — and session finalization ([session-lifecycle-finalize.ts](src/modules/session/session-lifecycle-finalize.ts)) auto-logs a "Since last session:" summary to the output channel on every session end (silent, so it never competes with the predictive-surfacing toast from idea #9). New/disappeared error detection also remains available in the Signals panel via [regression-detector.ts](src/modules/signals/regression-detector.ts). **Omitted:** raw output-volume (total-line) delta — SessionMeta does not persist a per-session line count, so it is not derivable without re-reading both log files, which this lightweight summary avoids.
 
 ### 11. Ghost Errors — Intermittent Bug Tracker — PARTIAL
 
@@ -460,7 +460,7 @@ Fix Velocity: 3 errors resolved this week, 1 persisting
 | ~~Session groups (automatic)~~ | ~~Medium~~ | ~~Medium~~ | ~~Medium~~ | **Done** |
 | ~~Regression signals (new/gone errors)~~ | ~~Medium~~ | ~~High~~ | ~~High~~ | **Done** |
 | ~~Predictive error surfacing (session-end trigger)~~ | ~~Medium~~ | ~~Very High~~ | ~~Very High~~ | **Done** |
-| "What Changed?" auto-summary on session end | Medium | Very High | Very High | Next |
+| ~~"What Changed?" auto-summary on session end~~ | ~~Medium~~ | ~~Very High~~ | ~~Very High~~ | **Done** |
 | Curated/named investigations | Medium | Medium | Medium | Next |
 | Ghost errors reliability sparkline | Low | Medium | High | Soon |
 | Session health score (per-session model) | Medium | High | High | Soon |
@@ -574,3 +574,32 @@ The branch logic that maps the two counts to a message variant, plus label trunc
 ### Not done
 
 Per-error quick-actions beyond "Open Signals" (the idea text floated "quick-actions to analyze each one") are not built — the Signals panel already lists each item, so the toast links there rather than spawning N actions. No gating setting was added: the prior recurring notification had none, and this enriches that same single surface rather than adding a new one.
+
+---
+
+## Finish Report (2026-06-14) — "What Changed?" auto-summary (idea #10)
+
+### What shipped
+
+After a capture session ends, the **Saropa Log Capture** output channel now logs a "Since last session:" summary describing how the just-ended session differs from its chronological predecessor: error/warning count deltas, error fingerprints that are new versus those no longer present, and source files referenced only this session. It is written silently to the output channel (no toast) so it never competes with the predictive-surfacing notification (idea #9), and it logs nothing when the delta is empty or there is no predecessor.
+
+### How it works
+
+`computeSessionDelta(current, previous)` (pure, in `src/modules/compare/session-delta.ts`) diffs two `SessionMeta` objects using only persisted data: `errorCount`/`warningCount` for the count deltas, the error `fingerprints` hash sets for new/resolved errors (set difference both ways, examples resolved from each side), and the `file:`-prefixed `correlationTags` for new source files. `formatSessionDelta` renders one fact per line and returns an empty string for an empty delta. Session finalization loads the current metadata plus all session metadatas, picks the chronologically previous session (`pickPreviousMeta`, falling back to the most recent other session when the current file's metadata is still settling), and appends the formatted summary to the output channel.
+
+### Files changed
+
+- `src/modules/compare/session-delta.ts` — NEW. Pure delta computation + formatting (no vscode import).
+- `src/modules/session/session-lifecycle-finalize.ts` — added `logWhatChanged()` + `pickPreviousMeta()` helpers, called from the post-scan block; new imports for `loadFilteredMetas`/`parseSessionDate`/`LoadedMeta` and the delta module.
+- `src/test/modules/compare/session-delta.test.ts` — NEW. 6 cases: no predecessor, count deltas, new/resolved fingerprints, new source files, empty-delta silence, formatting.
+- `CHANGELOG.md`, `plans/cross-session-analysis.md` — idea #10 and the priority matrix marked Done; this report.
+
+### Verification
+
+- `npm run check-types` — clean.
+- `eslint` on the touched source/test files — clean.
+- `node --test` on the new delta test — 6/6 pass.
+
+### Omitted
+
+Raw output-volume (total-line) delta — SessionMeta persists no per-session line count, so it is not derivable without re-reading both log files, which this lightweight summary deliberately avoids. The error/warning counts and new-file signal cover the "what changed" intent without that read.
