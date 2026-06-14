@@ -4,7 +4,6 @@
  * query blocks (parse mode). Writes a .queries.json sidecar.
  */
 
-import * as fs from 'fs';
 import * as vscode from 'vscode';
 import type { IntegrationProvider, IntegrationContext, IntegrationEndContext, Contribution } from '../types';
 import { resolveWorkspaceFileUri } from '../workspace-path';
@@ -108,12 +107,13 @@ export function parseQueryBlocks(
 }
 
 /** File mode: read external query log file (JSON lines). */
-function readFileMode(context: IntegrationEndContext): Contribution[] | undefined {
+async function readFileMode(context: IntegrationEndContext): Promise<Contribution[] | undefined> {
     const cfg = context.config.integrationsDatabase;
     if (!cfg.queryLogPath) { return undefined; }
     try {
         const uri = resolveWorkspaceFileUri(context.workspaceFolder, cfg.queryLogPath);
-        const raw = fs.readFileSync(uri.fsPath, 'utf-8');
+        // Async, non-blocking read via the workspace fs (consistent with parse mode below).
+        const raw = Buffer.from(await vscode.workspace.fs.readFile(uri)).toString('utf-8');
         const lines = raw.split(/\r?\n/).filter(Boolean);
         const queries: unknown[] = [];
         for (const line of lines.slice(-2000)) {

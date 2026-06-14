@@ -113,3 +113,36 @@ This work will be reviewed by another AI.
 **Outstanding:** the manual Step 1 reproduction (verbose-DAP capture on a real Flutter session, compare Debug Console vs verbose dump) is still required to classify a specific user-reported missing line as Outcome A vs B. The diagnostic now makes that classification self-service. Plan left active for that manual step.
 
 **Finish report appended:** plans/102_investigate-missing-debug-console-lines.md
+
+## Finish Report (2026-06-14)
+
+**Scope:** (B) VS Code extension (TypeScript) + (C) docs. No Flutter/Dart app code.
+
+**Why this work was needed.** The original finish report shipped a dropped-category diagnostic that only fired when `captureAll` was off. The bug it set out to diagnose reproduces with `captureAll: true` (App Only OFF), where that branch is never reached — so for the exact reported scenario, nothing was surfaced. With every category captured, the only in-extension drop that left no trace was an exclusion-pattern match (flood suppression already emits a `[FLOOD SUPPRESSED: N]` summary and only triggers on 100+ identical lines/sec, so it cannot account for a single missing line). There was also no way for an operator to see the fate of every received line without reading the raw `verboseDap` protocol dump, and no control to enable that tracing from the viewer itself.
+
+**What changed.**
+
+- **Exclusion-drop diagnostic (`captureAll: true` path).** `findExclusionMatch` was added to `exclusion-matcher.ts`, returning the matched rule rather than a boolean; `testExclusion` now delegates to it. `processOutputEvent` reports each matching exclusion pattern once (memoized per `SessionManagerImpl` via `excludedRulesLogged`) to the **Saropa Log Capture** output channel, naming the pattern and how to recover the lines.
+- **Per-line fate trace under `diagnosticCapture`.** A `traceOutcome` helper logs every received DAP output event with its disposition — `captured`, `dropped (category not in capture list)`, `dropped (exclusion "<pattern>")`, or `flood-suppressed` — text truncated to 80 chars, gated on the existing `diagnosticCapture` setting (default off). This is the decisive Outcome A vs B classifier: a Debug Console line present in the trace was received (the disposition explains why it did not reach the file); one absent was never delivered over DAP and cannot be captured.
+- **In-viewer toggle.** The viewer Options panel (Capture section) gains a "Diagnose missing lines (log capture pipeline)" checkbox wired through the same path as the existing capture-enable toggle: webview posts `setDiagnosticCapture`, the host writes `saropaLogCapture.diagnosticCapture` to Workspace scope and echoes `diagnosticCapture` back, the webview syncs the checkbox, and setup seeds the initial state. Both webview message catalogs were regenerated for the new incoming `case` and outbound `type`.
+
+**Files changed:**
+- `src/modules/features/exclusion-matcher.ts` — new `findExclusionMatch`; `testExclusion` delegates to it.
+- `src/modules/session/session-manager-events.ts` — `excludedRulesLogged` dep, `reportExcludedLine` + `traceOutcome` helpers, per-disposition trace calls.
+- `src/modules/session/session-manager.ts` — `excludedRulesLogged` field wiring.
+- `src/ui/viewer-panels/viewer-options-panel-html.ts` — diagnostic-capture checkbox row.
+- `src/ui/viewer-panels/viewer-options-events.ts` — change listener posting `setDiagnosticCapture`.
+- `src/ui/viewer-panels/viewer-options-panel-script.ts` — `syncDiagnosticCaptureUi`.
+- `src/ui/provider/viewer-message-handler-panels.ts` — `setDiagnosticCapture` host handler.
+- `src/ui/provider/log-viewer-provider-setup.ts` — initial `diagnosticCapture` push.
+- `src/ui/viewer/viewer-script-messages.ts` — `diagnosticCapture` receive case.
+- `src/l10n/strings-viewer-c.ts` — two new viewer option strings.
+- `src/test/modules/session/session-manager.test.ts` — two new tests (exclusion-drop logged once per pattern; every event traced with its fate under `diagnosticCapture`).
+- `plans/reference/webview-incoming-message-types.md`, `plans/reference/webview-outbound-message-types.md` — regenerated.
+- `README.md`, `CHANGELOG.md` — Known-Limitations and Unreleased entries.
+
+**Tests:** `npm run test:file -- out/test/modules/session/session-manager.test.js` → 10 passing (includes the two new cases); `npm run test:file -- out/test/modules/features/exclusion.test.js` → 11 passing (the `testExclusion` contract is unchanged by the refactor). `npm run check-types` clean; `npm run compile` passes all verify gates and builds the bundle. Lint: 0 errors; one pre-existing `max-lines` warning in `viewer-script-messages.ts` (already 352 lines, over the 325 soft limit, before the 4-line receive case was added).
+
+**Outstanding:** the manual Step 1 reproduction (a live Flutter/Dart debug session, watching the new `diagnosticCapture` trace) remains operator work — it cannot run in a code-only environment. The trace and the in-viewer toggle make that classification self-service. The plan stays active for that manual step.
+
+**Finish report appended:** plans/102_investigate-missing-debug-console-lines.md

@@ -7,6 +7,7 @@
 
 import * as vscode from 'vscode';
 import { open } from 'node:fs/promises';
+import { t } from '../../l10n';
 import { SessionMetadata, formatSize } from './session-history-grouping';
 import { formatMtime, formatMtimeTimeOnly, formatRelativeTime } from './session-display';
 /** Regex to extract line count from the SESSION END footer. */
@@ -193,12 +194,12 @@ export function buildDescription(item: SessionMetadata, timeOnly: boolean, isAct
     const rel = formatRelativeTime(item.mtime);
     parts.push(rel ? `${timeStr} ${rel}` : timeStr);
     if (item.lineCount !== undefined) {
-        const countStr = `${formatCount(item.lineCount)} lines`;
+        const countStr = t('sessionTree.descLines', formatCount(item.lineCount));
         parts.push(isActive ? `${countStr} ●` : countStr);
     }
     if (item.durationMs) { parts.push(formatDuration(item.durationMs)); }
     parts.push(formatSize(item.size));
-    if (item.anrCount) { parts.push(`ANR: ${item.anrCount}`); }
+    if (item.anrCount) { parts.push(t('sessionTree.anr', String(item.anrCount))); }
     if (item.tags && item.tags.length > 0) {
         parts.push(item.tags.map(t => `#${t}`).join(' '));
     }
@@ -214,16 +215,16 @@ export function buildDescription(item: SessionMetadata, timeOnly: boolean, isAct
 /** Build the tree item tooltip string. */
 export function buildTooltip(item: SessionMetadata): string {
     const parts = [item.filename];
-    if (item.date) { parts.push(`Date: ${item.date}`); }
-    parts.push(`Modified: ${formatMtime(item.mtime)}`);
-    if (item.project) { parts.push(`Project: ${item.project}`); }
-    if (item.adapter) { parts.push(`Adapter: ${item.adapter}`); }
+    if (item.date) { parts.push(t('sessionTree.date', item.date)); }
+    parts.push(t('sessionTree.modified', formatMtime(item.mtime)));
+    if (item.project) { parts.push(t('sessionTree.project', item.project)); }
+    if (item.adapter) { parts.push(t('sessionTree.adapter', item.adapter)); }
     if (item.lineCount !== undefined) {
-        parts.push(`Lines: ${formatCount(item.lineCount)}`);
+        parts.push(t('sessionTree.lines', formatCount(item.lineCount)));
     }
-    if (item.durationMs) { parts.push(`Duration: ${formatDuration(item.durationMs)}`); }
-    parts.push(`Size: ${formatSize(item.size)}`);
-    if (item.anrCount) { parts.push(`ANR patterns: ${item.anrCount}`); }
-    parts.push(`Timestamps: ${item.hasTimestamps ? 'Yes' : 'No'}`);
+    if (item.durationMs) { parts.push(t('sessionTree.duration', formatDuration(item.durationMs))); }
+    parts.push(t('sessionTree.size', formatSize(item.size)));
+    if (item.anrCount) { parts.push(t('sessionTree.anrPatterns', String(item.anrCount))); }
+    parts.push(t('sessionTree.timestamps', item.hasTimestamps ? t('sessionTree.yes') : t('sessionTree.no')));
     return parts.join('\n');
 }
