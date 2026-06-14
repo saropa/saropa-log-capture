@@ -144,3 +144,39 @@ All sources are **text files**; no binary log formats in v1. Optional: support *
 ## References
 
 - Existing: `log-session.ts`, session lifecycle, file splitter. No existing file tailer.
+
+---
+
+## Finish Report (2026-06-14)
+
+### Scope
+Documentation only. No code, test, or localization changes — a verification and
+plan-closure pass.
+
+### What was verified
+The External Logs integration (adapter id `externalLogs`) tails configured log
+files during a debug session and surfaces them alongside the Debug Console. Its
+v1 scope was confirmed shipped by inspecting the code rather than trusting the
+plan header:
+
+- Provider `external-logs.ts` (registered in `activation-integrations.ts`) and
+  the singleton tailer `external-log-tailer.ts` (fs.watch + incremental tail
+  read, `stopExternalLogTailers` at session end).
+- The four settings `integrations.externalLogs.{paths,writeSidecars,prefixLines,maxLinesPerFile}`
+  are declared in `package.json` and read in `integration-config.ts`
+  (`IntegrationExternalLogsConfig`).
+- Commands **Add external log path** and **Open external logs for this session**
+  (`commands-external-logs.ts`).
+- Multi-source viewer discovery of `basename.<label>.log` sidecars and the
+  unified-JSONL merge (`integrations.unifiedLog.writeAtSessionEnd`).
+- Adapter row in the integrations picker (`integrations-ui.ts`).
+
+### Deferred scope (preserved, not built)
+Four advanced items remain unbuilt and were confirmed absent from the config
+(`createIfMissing`, `followRotation`, glob/"latest file" paths, and a status-bar
+"Tailing N files" indicator). They are split into the active follow-up plan
+`application-file-logs-advanced.md` so closing this plan does not bury them.
+
+### Status
+v1 COMPLETE. This plan is archived to history; the deferred items live in the
+active follow-up plan.
