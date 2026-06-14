@@ -286,9 +286,9 @@ export function getSignalScriptPartD(): string {
             var pct = Math.round(p.jaccard * 100);
             var lA = p.labelA.length > 40 ? p.labelA.slice(0, 37) + '...' : p.labelA;
             var lB = p.labelB.length > 40 ? p.labelB.slice(0, 37) + '...' : p.labelB;
-            return '<div class="signal-env-row signal-cooccurrence-row" title="' + esc(p.labelA) + ' and ' + esc(p.labelB) + ' co-occur in ' + p.sharedSessions + ' sessions">'
+            return '<div class="signal-env-row signal-cooccurrence-row" title="' + esc(vt('viewer.signal.cooccurTitle', p.labelA, p.labelB, p.sharedSessions)) + '">'
                 + '<span>\\uD83D\\uDD17 ' + esc(lA) + ' \\u2194 ' + esc(lB) + '</span>'
-                + '<span class="signal-hotfile-meta">' + p.sharedSessions + ' shared, ' + pct + '% overlap</span></div>';
+                + '<span class="signal-hotfile-meta">' + esc(vt('viewer.signal.cooccurMeta', p.sharedSessions, pct)) + '</span></div>';
         }).join('');
     }
 `;
