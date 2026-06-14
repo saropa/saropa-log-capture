@@ -27,7 +27,7 @@ Implemented adapters are marked **Done** and documented in the spec (or provider
 | `performance` | *(implemented)* — spec moved to [history/](history/) | Done |
 | `http` | [010_integration-spec-http-network.md](010_integration-spec-http-network.md) | Partial |
 | `terminal` | *(implemented)* — spec moved to [history/](history/) | Done |
-| `browser` | [012_integration-spec-browser-devtools.md](012_integration-spec-browser-devtools.md) | Partial |
+| `browser` | *(implemented)* — spec moved to [history/](history/2026.06/2026.06.10/) | Done |
 | `linuxLogs` | *(implemented)* — spec moved to [history/](history/) | Done |
 | `security` | [013_integration-spec-security-audit-logs.md](013_integration-spec-security-audit-logs.md) | Partial |
 
