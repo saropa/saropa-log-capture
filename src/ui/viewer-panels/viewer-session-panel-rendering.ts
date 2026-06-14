@@ -222,7 +222,7 @@ export function getSessionRenderingScript(): string {
                noise — though isLatestOfName itself stays set on the lone entry
                so the "Latest only" filter keeps it (a singleton IS, trivially,
                the latest of its name). */
-            + '<span class="session-item-name">' + escapeHtmlText(name) + ((s.isLatestOfName && s.hasNamesakes) ? ' <span class="session-latest">' + vt('viewer.session.latest') + '</span>' : '') + groupCount + olderBadge + perfBadge + loadedBadge + '</span>'
+            + '<span class="session-item-name">' + escapeHtmlText(name) + ((s.isLatestOfName && s.hasNamesakes) ? ' <span class="session-latest">' + vt('viewer.session.latest') + '</span>' : '') + groupCount + olderBadge + perfBadge + loadedBadge + (s.note ? '<span class="session-item-note" title="' + escapeAttr(s.note) + '"><span class="codicon codicon-note"></span></span>' : '') + '</span>'
             /* Skeleton rows (mtime-only, from the stat pass) carry _preview until their
                metadata loads — render the shimmer bar so the grouped structure is visible
                immediately while bodies are still being read. updateSessionBatchItems swaps
