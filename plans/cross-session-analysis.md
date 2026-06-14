@@ -210,7 +210,7 @@ Sessions:  █ · █ ██ · · █ · ··
 
 Implemented in [git-diff.ts](src/modules/git/git-diff.ts) + [regression-hint-service.ts](src/modules/regression/regression-hint-service.ts) + [analysis-relevance.ts](src/modules/analysis/analysis-relevance.ts). Shows commit diff summary (files changed, +insertions, -deletions) below blame. Correlates blame date with the error fingerprint's cross-session first appearance. A short window after the blame date = "Error likely introduced by commit".
 
-### 4. Caller Graph — NOT BUILT
+### ~~4. Caller Graph~~ — DONE (in the bug report)
 
 When the crashing file's imports are extracted, trace in the reverse direction: which files in the workspace import the crashing file?
 
@@ -221,7 +221,7 @@ Who calls payment_handler.dart?
 └── test/payment_test.dart (L3: import 'payment_handler.dart')
 ```
 
-**Implementation:** `vscode.workspace.findFiles('**/*.{dart,ts,js,...}')` then grep each file for import/require of the crashing filename. Reuse the patterns from [import-extractor.ts](src/modules/source/import-extractor.ts) (which currently does forward imports only).
+**Status:** Shipped (in the bug report). [caller-graph.ts](src/modules/source/caller-graph.ts) is the pure reverse-import matcher (does a module path's final segment, extension-insensitively, equal the target's basename?); [find-callers.ts](src/modules/source/find-callers.ts) scans the workspace (`findFiles` over source extensions, capped at 400 candidates / 15 results), extracts each candidate's local imports via [import-extractor.ts](src/modules/source/import-extractor.ts), and matches. The bug report adds a "## Callers (N)" section listing the importing files and the import path. Bounded + best-effort; excludes the target and respects VS Code's default excludes. **Note:** rendered in the bug report (host markdown); a live "who calls this" panel section is not built. The find-callers workspace scan needs manual verification on a real project; the matcher is unit-tested.
 
 ### 5. Smart Context Boundaries — NOT BUILT
 
@@ -469,7 +469,7 @@ Fix Velocity: 3 errors resolved this week, 1 persisting
 | ~~"Why Did This Break?" narrative prose~~ | ~~High~~ | ~~Very High~~ | ~~Very High~~ | **Done** (bug report) |
 | ~~Code freshness heatmap~~ | ~~Low~~ | ~~High~~ | ~~High~~ | **Done** |
 | ~~Error attention score~~ | ~~Medium~~ | ~~High~~ | ~~Very High~~ | **Done** (scorer + bug report) |
-| Caller graph | Medium | Medium | Medium | Backlog |
+| ~~Caller graph~~ | ~~Medium~~ | ~~Medium~~ | ~~Medium~~ | **Done** (bug report) |
 | ~~Semantic error grouping~~ | ~~Medium~~ | ~~Medium~~ | ~~High~~ | **Done** (classifier + label) |
 | Session annotations UI | Low | Medium | Low | Backlog |
 | Smart context boundaries | Low | Medium | Low | Backlog |
@@ -878,3 +878,35 @@ The Signal panel's frequently-modified (hot) files list now overlays git commit 
 ### Pending
 
 Manual Extension-Host verification of the freshness dot + "changed Nd ago" render on the hot-file rows (dark mode, narrow panel), and that git resolution works for the project's `file:`-tag filename forms.
+
+---
+
+## Finish Report (2026-06-14) — Caller graph (idea #4)
+
+### What shipped
+
+A generated bug report now lists the workspace files that import the crashing source file — its reverse dependencies — each with the import path used. It shows which code depends on the file and where a change to it would ripple, complementing the existing forward-import list.
+
+### How it works
+
+`caller-graph.ts` (pure) matches an import module path back to a target by comparing the path's final segment, extension-insensitively and case-insensitively, so relative, `package:`, and extensionless imports all resolve to the same target basename. `find-callers.ts` (host) globs the workspace for source extensions (capped at 400 candidates), reads each candidate's local imports via `extractImports`, applies the matcher, and returns up to 15 callers — excluding the target and respecting VS Code's default excludes. The bug report collector resolves the crashing file with `findInWorkspace`, runs `findCallers`, and the formatter renders a "## Callers (N)" section, omitted when empty. The scan is best-effort: an unresolvable file or read failure yields no callers rather than failing the report.
+
+### Files changed
+
+- `src/modules/source/caller-graph.ts` — NEW. Pure reverse-import matcher (node:test-able).
+- `src/modules/source/find-callers.ts` — NEW. Host workspace scan (bounded, best-effort).
+- `src/modules/bug-report/bug-report-collector.ts` — `BugReportData.callers`; `collectCallers()` wired into the parallel collection.
+- `src/modules/bug-report/bug-report-formatter.ts` — `formatCallers()` renders the section.
+- `src/test/modules/source/caller-graph.test.ts` — NEW. 6 cases (relative, package, extensionless, case-insensitive, no-match, basename-only).
+- `CHANGELOG.md`, `plans/cross-session-analysis.md` — idea #4 marked done; this report.
+
+### Verification
+
+- `npm run check-types` — clean for the changed files.
+- `eslint` on the five touched files — clean.
+- `node --test` on the matcher test — 6/6 pass.
+- Not unit-tested: the `find-callers.ts` workspace scan (VS Code `findFiles` + per-file import extraction) — needs manual verification on a real project.
+
+### Note
+
+Rendered in the bug report (host markdown). A live "who calls this file" section in the analysis panel is not built. Folder-level ambiguity (two files sharing a basename) is not resolved — the matcher is basename-based by design; a same-name file in a different folder would also match.
