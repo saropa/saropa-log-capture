@@ -13,11 +13,11 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
     function formatUpdatedAgo(ms) {
         if (ms == null || !Number.isFinite(ms)) return '';
         var d = Date.now() - ms;
-        if (d < 60000) return vt('viewer.signal.time.justNow');
-        if (d < 3600000) return vt('viewer.signal.time.minAgo', Math.floor(d / 60000));
-        if (d < 86400000) return vt('viewer.signal.time.hoursAgo', Math.floor(d / 3600000));
-        if (d < 604800000) return vt('viewer.signal.time.daysAgo', Math.floor(d / 86400000));
-        return vt('viewer.signal.time.weeksAgo', Math.floor(d / 604800000));
+        if (d < 60000) return SIGNAL_STRINGS.timeJustNow;
+        if (d < 3600000) return fillSignalString(SIGNAL_STRINGS.timeMinAgo, Math.floor(d / 60000));
+        if (d < 86400000) return fillSignalString(SIGNAL_STRINGS.timeHoursAgo, Math.floor(d / 3600000));
+        if (d < 604800000) return fillSignalString(SIGNAL_STRINGS.timeDaysAgo, Math.floor(d / 86400000));
+        return fillSignalString(SIGNAL_STRINGS.timeWeeksAgo, Math.floor(d / 604800000));
     }
 
     /** Plan 053-A: render the pending filter-suggestions section inside the Insights panel.
@@ -31,7 +31,7 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
         if (!blockEl || !listEl) return;
         if (items.length === 0) { blockEl.style.display = 'none'; listEl.innerHTML = ''; return; }
         blockEl.style.display = '';
-        if (summaryEl) summaryEl.textContent = vt('viewer.signal.suggestions.summary', items.length);
+        if (summaryEl) summaryEl.textContent = fillSignalString(SIGNAL_STRINGS.suggestionsSummary, items.length);
         listEl.innerHTML = items.slice(0, 8).map(function(s) {
             var pat = s.pattern.length > 64 ? s.pattern.slice(0, 61) + '\\u2026' : s.pattern;
             var pct = (s.impact && typeof s.impact.percentageReduction === 'number') ? s.impact.percentageReduction : 0;
@@ -39,7 +39,7 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
             var sample = (s.sampleLines && s.sampleLines[0]) ? s.sampleLines[0] : '';
             var sampleCompact = sample.length > 90 ? sample.slice(0, 87) + '\\u2026' : sample;
             return '<div class="signal-suggestion-row" data-sid="' + esc(s.id) + '">'
-                + '<div class="signal-suggestion-head"><code class="signal-suggestion-pattern" title="' + esc(s.pattern) + '">' + esc(pat) + '</code><span class="signal-suggestion-impact">' + esc(vt('viewer.signalPanel.suggestionImpact', lines, pct)) + '</span></div>'
+                + '<div class="signal-suggestion-head"><code class="signal-suggestion-pattern" title="' + esc(s.pattern) + '">' + esc(pat) + '</code><span class="signal-suggestion-impact">' + esc(fillSignalString(SIGNAL_STRINGS.suggestionImpact, lines, pct)) + '</span></div>'
                 + (sampleCompact ? '<div class="signal-suggestion-sample" title="' + esc(sample) + '">' + esc(sampleCompact) + '</div>' : '')
                 + '<div class="signal-suggestion-actions">'
                 +   '<button type="button" class="signal-suggestion-accept" data-sid="' + esc(s.id) + '" data-pattern="' + escapeAttr(s.pattern) + '">' + esc(SIGNAL_STRINGS.accept) + '</button>'
@@ -54,12 +54,12 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
         var emptyEl = document.getElementById('signal-hotfiles-empty');
         var listEl = document.getElementById('signal-hotfiles-list');
         var files = signalDataCache.hotFiles || [];
-        if (summaryEl) summaryEl.textContent = files.length === 0 ? vt('viewer.signal.hotfiles.summaryEmpty') : vt(files.length === 1 ? 'viewer.signal.hotfiles.summaryOne' : 'viewer.signal.hotfiles.summaryMany', files.length);
+        if (summaryEl) summaryEl.textContent = files.length === 0 ? SIGNAL_STRINGS.hotfilesSummaryEmpty : fillSignalString(files.length === 1 ? SIGNAL_STRINGS.hotfilesSummaryOne : SIGNAL_STRINGS.hotfilesSummaryMany, files.length);
         var toShow = files.slice(0, 5);
         if (emptyEl) emptyEl.style.display = toShow.length === 0 ? '' : 'none';
         if (listEl) {
             listEl.innerHTML = toShow.length === 0 ? '' : toShow.map(function(f) {
-                return '<div class="signal-hotfile-item"><span class="signal-hotfile-name">' + esc(f.filename) + '</span><span class="signal-hotfile-meta">' + vt(f.sessionCount === 1 ? 'viewer.signal.hotfiles.sessionsOne' : 'viewer.signal.hotfiles.sessionsMany', (f.sessionCount || 0)) + '</span></div>';
+                return '<div class="signal-hotfile-item"><span class="signal-hotfile-name">' + esc(f.filename) + '</span><span class="signal-hotfile-meta">' + fillSignalString(f.sessionCount === 1 ? SIGNAL_STRINGS.hotfilesSessionsOne : SIGNAL_STRINGS.hotfilesSessionsMany, (f.sessionCount || 0)) + '</span></div>';
             }).join('');
         }
     }
@@ -73,10 +73,10 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
         var listEl = document.getElementById('signal-environment-list');
         var platforms = signalDataCache.platforms || [], sdks = signalDataCache.sdkVersions || [], adapters = signalDataCache.debugAdapters || [];
         var total = platforms.length + sdks.length + adapters.length;
-        if (summaryEl) summaryEl.textContent = total === 0 ? vt('viewer.signal.env.summaryEmpty') : vt('viewer.signal.env.summary', total);
+        if (summaryEl) summaryEl.textContent = total === 0 ? SIGNAL_STRINGS.envSummaryEmpty : fillSignalString(SIGNAL_STRINGS.envSummary, total);
         if (!listEl) return;
-        var parts = [envGroupHtml(vt('viewer.signal.env.platforms'), platforms), envGroupHtml(vt('viewer.signal.env.sdkRuntime'), sdks), envGroupHtml(vt('viewer.signal.env.debugAdapters'), adapters)].filter(Boolean);
-        listEl.innerHTML = parts.length === 0 ? '<p class="signal-hotfiles-empty">' + vt('viewer.signal.env.empty') + '</p>' : parts.join('');
+        var parts = [envGroupHtml(SIGNAL_STRINGS.envPlatforms, platforms), envGroupHtml(SIGNAL_STRINGS.envSdkRuntime, sdks), envGroupHtml(SIGNAL_STRINGS.envDebugAdapters, adapters)].filter(Boolean);
+        listEl.innerHTML = parts.length === 0 ? '<p class="signal-hotfiles-empty">' + SIGNAL_STRINGS.envEmpty + '</p>' : parts.join('');
     }
 
     /** Human-readable labels for signal kinds. */
@@ -96,7 +96,7 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
         var m = detail.match(/\\[saropa_lints\\]\\s+(\\S+)\\s+\\(/);
         if (!m) return '';
         var rule = m[1];
-        return ' <span class="re-action signal-lint-link" role="button" title="' + SIGNAL_STRINGS.openRuleTitle.split('{0}').join(esc(rule)) + '" data-rule="' + esc(rule) + '" data-source="saropa_lints">\\uD83D\\uDCCB ' + esc(SIGNAL_STRINGS.ruleLabel) + '</span>';
+        return ' <span class="re-action signal-lint-link" role="button" title="' + fillSignalString(SIGNAL_STRINGS.openRuleTitle, esc(rule)) + '" data-rule="' + esc(rule) + '" data-source="saropa_lints">\\uD83D\\uDCCB ' + esc(SIGNAL_STRINGS.ruleLabel) + '</span>';
     }
 
     /** Build triage buttons for error-kind signals (Close/Mute/Re-open). */
@@ -115,20 +115,20 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
             if (s.kind !== 'error' && s.kind !== 'warning') return true;
             return (signalDataCache.statuses || {})[s.fingerprint] !== 'muted';
         }).slice(0, 30);
-        if (summaryEl) summaryEl.textContent = allSignals.length === 0 ? vt('viewer.signal.all.summaryEmpty') : vt('viewer.signal.all.summary', allSignals.length);
+        if (summaryEl) summaryEl.textContent = allSignals.length === 0 ? SIGNAL_STRINGS.allSummaryEmpty : fillSignalString(SIGNAL_STRINGS.allSummary, allSignals.length);
         if (allSignals.length === 0) { if (listEl) listEl.innerHTML = ''; if (emptyEl) emptyEl.style.display = ''; return; }
         if (emptyEl) emptyEl.style.display = 'none';
         if (listEl) listEl.innerHTML = allSignals.map(function(s) {
             var icon = kindLabels[s.kind] || '\u2139\uFE0F';
             var text = s.label.length > 60 ? s.label.slice(0, 57) + '...' : s.label;
-            var meta = vt('viewer.signalPanel.sessionMeta', s.sessionCount, s.totalOccurrences);
-            if (s.avgDurationMs) { meta += vt('viewer.signalPanel.avg', fmtMs(s.avgDurationMs)); }
-            if (s.maxDurationMs) { meta += vt('viewer.signalPanel.max', fmtMs(s.maxDurationMs)); }
+            var meta = fillSignalString(SIGNAL_STRINGS.sessionMeta, s.sessionCount, s.totalOccurrences);
+            if (s.avgDurationMs) { meta += fillSignalString(SIGNAL_STRINGS.metaAvg, fmtMs(s.avgDurationMs)); }
+            if (s.maxDurationMs) { meta += fillSignalString(SIGNAL_STRINGS.metaMax, fmtMs(s.maxDurationMs)); }
             if (s.category) { meta += ' [' + esc(s.category) + ']'; }
             var lintBtn = buildLintRuleLink(s.detail || '');
             var daBtn = s.kind === 'sql' ? ' <span class="re-action signal-da-link" role="button" title="' + esc(SIGNAL_STRINGS.openDriftAdvisorTitle) + '">\\uD83D\\uDD0D DA</span>' : '';
             var sevCls = s.severity === 'critical' ? ' signal-sev-critical' : s.severity === 'high' ? ' signal-sev-high' : '';
-            var recurBadge = s.recurring ? ' <span class="signal-recurring-badge" title="' + esc(vt('viewer.signalPanel.recurringTitle', s.sessionCount)) + '">\u21BB</span>' : '';
+            var recurBadge = s.recurring ? ' <span class="signal-recurring-badge" title="' + esc(fillSignalString(SIGNAL_STRINGS.recurringTitle, s.sessionCount)) + '">\u21BB</span>' : '';
             var trendBadge = '';
             if (s.trend === 'increasing') { trendBadge = ' <span class="signal-trend-up" title="' + esc(SIGNAL_STRINGS.trendIncreasing) + '">\u2191</span>'; }
             else if (s.trend === 'decreasing') { trendBadge = ' <span class="signal-trend-down" title="' + esc(SIGNAL_STRINGS.trendDecreasing) + '">\u2193</span>'; }
@@ -194,7 +194,7 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
             var plain = (typeof stripTags === 'function' ? stripTags(li.html) : li.html).replace(/\\s+/g, ' ').trim();
             if (!plain) continue;
             var compact = plain.length > 90 ? plain.slice(0, 87) + '\\u2026' : plain;
-            snippets.push('<div class="signal-evidence-line" title="' + SIGNAL_STRINGS.evidenceLineTitle.split('{0}').join(idx + 1).split('{1}').join(esc(plain)) + '">' + esc(compact) + '</div>');
+            snippets.push('<div class="signal-evidence-line" title="' + fillSignalString(SIGNAL_STRINGS.evidenceLineTitle, idx + 1, esc(plain)) + '">' + esc(compact) + '</div>');
         }
         if (snippets.length === 0) return '';
         return '<div class="signal-evidence-preview" aria-label="' + esc(SIGNAL_STRINGS.supportingLogLines) + '">' + snippets.join('') + '</div>';
@@ -235,10 +235,10 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
         }
         var hasWindow = (signalsInLogWindowMs != null && signals.length !== signalsAll.length);
         if (summaryEl) summaryEl.textContent = signalsAll.length === 0
-            ? vt('viewer.signal.inLog.summaryEmpty')
+            ? SIGNAL_STRINGS.inLogSummaryEmpty
             : (hasWindow
-                ? vt('viewer.signal.inLog.summaryWindow', signals.length, signalsAll.length)
-                : vt('viewer.signal.inLog.summary', signals.length));
+                ? fillSignalString(SIGNAL_STRINGS.inLogSummaryWindow, signals.length, signalsAll.length)
+                : fillSignalString(SIGNAL_STRINGS.inLogSummary, signals.length));
         if (emptyBlock) emptyBlock.style.display = signalsAll.length === 0 ? '' : 'none';
         if (!listEl) { return; }
         if (signals.length === 0) { listEl.innerHTML = ''; return; }

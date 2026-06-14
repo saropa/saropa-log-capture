@@ -70,6 +70,8 @@ export class SessionManagerImpl implements SessionManager {
     /** Cached config snapshot — avoids 30+ cfg.get() calls per DAP message. */
     private cachedConfig: SaropaLogCaptureConfig = getConfig();
     private projectIndexer: ProjectIndexer | null = null;
+    /** Observer for the write-time active-session line count; see setActiveLineCountObserver (M1). */
+    private activeLineCountObserver?: (n: number) => void;
 
     constructor(
         private readonly statusBar: StatusBar,
@@ -86,6 +88,15 @@ export class SessionManagerImpl implements SessionManager {
     /** Set project indexer for inline reports index updates after session finalization. */
     setProjectIndexer(indexer: ProjectIndexer | null): void {
         this.projectIndexer = indexer;
+    }
+
+    /**
+     * Register an observer for the active-session line count. Fired from the write queue's
+     * write-time callback (not at enqueue), so consumers (e.g. the history tree) don't lag the
+     * file by the queue depth. The status bar is updated on the same callback (M1).
+     */
+    setActiveLineCountObserver(fn: ((n: number) => void) | undefined): void {
+        this.activeLineCountObserver = fn;
     }
 
     /**
@@ -179,6 +190,7 @@ export class SessionManagerImpl implements SessionManager {
             earlyBuffer: this.earlyBuffer,
             outputChannel: this.outputChannel,
             statusBar: this.statusBar,
+            onActiveLineCount: (n) => this.activeLineCountObserver?.(n),
             floodGuard: this.floodGuard,
             categoryCounts: this.categoryCounts,
             getSingleRecentOwnerSession: (w) => this.getSingleRecentOwnerSession(w),
