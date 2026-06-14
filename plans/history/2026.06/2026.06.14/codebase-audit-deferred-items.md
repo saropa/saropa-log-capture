@@ -13,16 +13,11 @@ Source (closed + archived): `plans/history/2026.06/2026.06.14/104_plan-codebase-
 ## Deferred — future work that may be revisited
 
 ### D3 — Crashlytics regression / new-issue false positives at the top-N paging boundary
-`src/modules/crashlytics/crashlytics-issue-signals.ts` (`detectRegressedIds`, `newSinceLastSnapshot`)
 
-"Regressed" / "new issue" alerts can false-positive when an issue crosses the tracked top-N paging
-boundary — it drops below the cutoff, then returns, which is indistinguishable from a true
-stop-and-restart because snapshots hold only the fetched top issues and don't record whether the page
-was truncated. Shipped mitigation: the "Regressed" badge tooltip states the caveat
-(`viewer.crashlytics.badge.regressedTip`) and both derivation paths carry a KNOWN LIMITATION comment.
-A true fix needs an **unpaged issue feed (or a total/truncation signal) from the API**, which the
-current Crashlytics read path does not expose — hence still deferred (it is blocked on an API
-capability, not on effort).
+Split out into its own focused deferred plan: `plans/deferred/crashlytics-paging-false-positives.md`.
+It is blocked on an API capability (an unpaged issue feed or a truncation/total signal the current
+Crashlytics read path does not expose), not on effort; a tooltip caveat and KNOWN LIMITATION comments
+ship as the mitigation.
 
 ---
 
@@ -105,3 +100,71 @@ quotes would weaken filename matching. No change.
 - **M15 `excerptKey`** — changed to leading-80-chars (the distinguishing content). Resolved.
 - **Markdown copy-export / GitHub-issue body** — kept English by design (maintainer paste artifact).
   Resolved, not deferred.
+
+---
+
+## Finish Report (2026-06-14)
+
+Four audit items originally held back for "low value / effort" reasons were reassessed against the
+actual code and built; one item that is blocked on an external API capability was split into its own
+focused deferred plan. With every audit finding now either fixed, accepted as won't-fix, or carried
+forward in a dedicated plan, this carve-out file is fully resolved and archived.
+
+### What shipped
+
+- **D5 — `saropaLogCapture.replay` contributed to the Command Palette.** The command was registered in
+  `src/commands-session.ts` but absent from `contributes.commands`, so it had no palette entry. A
+  command entry was added to `package.json` (icon `$(debug-restart)`, title `%command.replay.title%`)
+  and a translated title was added to all eleven `package.nls*.json` files. The command-list reference
+  (`plans/reference/contributes-commands.md`) was regenerated; `verify-nls` reports 507 keys aligned
+  across 11 files and `verify:nls-coverage` passes.
+
+- **D2 — ANR root-cause merge no longer skips moderate ANRs.** `mergeErrorsIntoAnr` in
+  `src/modules/root-cause-hints/build-hypotheses.ts` gated on `confidence === 'high'`, but the ANR
+  scorer only marks `high` above score 50, so a moderate ANR (score `ROOT_CAUSE_ANR_MIN_SCORE`–50)
+  bypassed the merge and its dump lines (CPU/IO/process stats) re-surfaced as duplicate `error-recent`
+  bullets. The gate now keys on the `anr::risk` hypothesis alone: an ANR is the root cause at any
+  confidence above the emit threshold, and its surrounding errors are consequences. The tradeoff (a
+  coincident unrelated error folds under a moderate ANR) is documented in-code and bounded — no
+  evidence line is dropped, and a session with no ANR leaves `error-recent` untouched.
+
+- **D1 — log-file writes honor backpressure.** `src/modules/capture/log-session.ts` pushed every line
+  to the write stream the instant it arrived; on a slow disk `write()` returns `false` and Node grows
+  its internal buffer without bound (memory pressure). A new `writeBackpressured()` helper awaits the
+  `'drain'` event when the buffer is full, pacing the serialized append queue to disk throughput. It
+  resolves on `'error'`/`'close'` as well as `'drain'` so a stream that dies mid-await cannot hang the
+  queue. Applied to the header, queued-line, and queued-raw writes; the footer was already flushed by
+  `end()`.
+
+- **D4 — webview HTML-escaping unified behind one source.** Nine webview bundles each hand-wrote an
+  `escapeHtml` / `escapeHtmlText` / `escapeHtmlBasic` function and had drifted — several escaped only
+  `& < >` and omitted the quote characters that matter in attribute contexts (the divergence behind
+  audit L4). A new `src/ui/escape-html-script.ts` exports `escapeHtmlScript(fnName)`, which emits one
+  correct `& < > " '` escaper (with null-coercion) into each isolated bundle under that bundle's
+  existing function name, so call sites are unchanged and the rules can no longer diverge. The two
+  host-side copies (`ai-explain-panel.ts`, `crashlytics-help-content.ts`) now import the single
+  exported `escapeHtml` from `ansi.ts`. `escapeAttr` helpers were left as-is (separate concern).
+
+### Verification
+
+`npm run check-types` clean; `npm run compile` passes all gates (NLS parity 507 keys, `verify:l10n-keys`
+2280 keys resolve, command-list reference, host/webview catalogs, dist-size 4.84 MiB). Targeted tests:
+`build-hypotheses.test.ts` 23/23 (includes the rewritten moderate-ANR merge test and a new no-ANR
+survival test), `log-session.test.ts` 8/8 (adds a high-volume integrity test plus deterministic
+drain- and error-resolution tests for `writeBackpressured`), and the escaper consumers
+`ansi.test.ts` (29), `viewer-session-panel-runtime.test.ts` (13, confirms `escapeHtmlText` resolves in
+the assembled bundle), `viewer-sql-query-history-panel-script.test.ts` (28), and
+`crashlytics-in-app-content.test.ts` (4) all pass.
+
+### Known pre-existing condition
+
+`src/ui/viewer/viewer-data-helpers-core.ts` trips the 300-line `max-lines` lint warning (it was already
+over the limit on HEAD; the escaper change reduced it from 341 to 336 raw lines). Clearing it requires a
+module extraction, out of scope for the escaper consolidation.
+
+### Remaining
+
+D3 (Crashlytics top-N paging-boundary false positives) is the only audit item still open. It is blocked
+on an unpaged issue feed or a truncation/total signal the current Crashlytics read path does not expose,
+not on effort, and now lives in `plans/deferred/crashlytics-paging-false-positives.md` with its shipped
+tooltip-caveat mitigation recorded.
