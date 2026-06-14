@@ -132,6 +132,11 @@
         "title": "%command.searchLogs.title%"
       },
       {
+        "command": "saropaLogCapture.showLogReferences",
+        "icon": "$(references)",
+        "title": "%command.showLogReferences.title%"
+      },
+      {
         "command": "saropaLogCapture.openTailedFile",
         "icon": "$(output)",
         "title": "%command.openTailedFile.title%"
@@ -428,6 +433,11 @@
         "command": "saropaLogCapture.rebuildProjectIndex",
         "icon": "$(refresh)",
         "title": "Rebuild Project Index"
+      },
+      {
+        "command": "saropaLogCapture.rebuildSearchIndex",
+        "icon": "$(refresh)",
+        "title": "Rebuild Log Search Index"
       },
       {
         "command": "saropaLogCapture.debugProjectIndexRanking",
@@ -1211,6 +1221,20 @@
           "minimum": 0,
           "type": "number",
           "title": "%config.projectIndex.refreshInterval.title%"
+        },
+        "saropaLogCapture.searchIndex.enabled": {
+          "default": true,
+          "description": "Maintain an incremental trigram index so cross-session log search skips files that cannot contain the query. The index only narrows the files scanned; results are identical to a full scan. When off, every search reads all log files sequentially.",
+          "type": "boolean",
+          "title": "Search Index: Enabled"
+        },
+        "saropaLogCapture.searchIndex.maxSizeMB": {
+          "default": 50,
+          "description": "Soft size cap (megabytes) for the cross-session search index. When exceeded, the oldest sessions are dropped from the index and fall back to a direct scan.",
+          "maximum": 500,
+          "minimum": 5,
+          "type": "number",
+          "title": "Search Index: Max Size (MB)"
         },
         "saropaLogCapture.enabled": {
           "default": true,
@@ -2927,6 +2951,17 @@
         {
           "command": "saropaLogCapture.openSqlHistoryForFingerprint",
           "when": "false"
+        },
+        {
+          "command": "saropaLogCapture.showLogReferences",
+          "when": "false"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "saropaLogCapture.showLogReferences",
+          "group": "4_search",
+          "when": "!explorerResourceIsFolder"
         }
       ],
       "view/title": [
