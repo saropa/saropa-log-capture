@@ -59,6 +59,7 @@ export type {
   IntegrationSecurityConfig,
   IntegrationDatabaseConfig,
   IntegrationHttpConfig,
+  IntegrationOtelConfig,
   IntegrationBrowserConfig,
   IntegrationAdbLogcatConfig,
   IntegrationUnifiedLogConfig,

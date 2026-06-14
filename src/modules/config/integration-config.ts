@@ -21,6 +21,7 @@ import type {
     IntegrationSecurityConfig,
     IntegrationDatabaseConfig,
     IntegrationHttpConfig,
+    IntegrationOtelConfig,
     IntegrationBrowserConfig,
     IntegrationAdbLogcatConfig,
     IntegrationUnifiedLogConfig,
@@ -70,6 +71,7 @@ export type IntegrationConfigBlock = {
   integrationsSecurity: IntegrationSecurityConfig;
   integrationsDatabase: IntegrationDatabaseConfig;
   integrationsHttp: IntegrationHttpConfig;
+  integrationsOtel: IntegrationOtelConfig;
   integrationsBrowser: IntegrationBrowserConfig;
   integrationsAdbLogcat: IntegrationAdbLogcatConfig;
   integrationsUnifiedLog: IntegrationUnifiedLogConfig;
@@ -229,6 +231,10 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
       requestLogPath: readTrimmedStringOrDefault(cfg, 'integrations.http.requestLogPath', ''),
       timeWindowSeconds: clamp(cfg.get('integrations.http.timeWindowSeconds'), 1, 120, 10),
       maxRequestsPerSession: clamp(cfg.get('integrations.http.maxRequestsPerSession'), 10, 5000, 500),
+    },
+    integrationsOtel: {
+      traceUrlTemplate: readTrimmedStringOrDefault(cfg, 'integrations.otel.traceUrlTemplate', ''),
+      traceIdPattern: readTrimmedStringOrDefault(cfg, 'integrations.otel.traceIdPattern', ''),
     },
     integrationsBrowser: {
       mode: ensureEnum(cfg.get('integrations.browser.mode'), ['file', 'cdp'], 'file'),
