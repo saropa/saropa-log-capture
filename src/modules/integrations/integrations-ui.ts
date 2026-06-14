@@ -164,6 +164,14 @@ export const INTEGRATION_ADAPTERS: ReadonlyArray<IntegrationAdapterMeta> = [
         whenToDisable: 'You haven\'t configured database query log sources, or don\'t need correlation.',
     },
     {
+        id: 'otel',
+        label: 'OpenTelemetry Traces',
+        description: 'Detect trace IDs and deep-link to your trace backend',
+        descriptionLong: 'Scans the captured log for OpenTelemetry trace IDs (W3C traceparent and common trace_id forms) at session end and writes a .traces.json sidecar mapping each distinct trace to a backend deep link (built from the configured trace URL template) and the lines it appeared on. Surfaces the traces and links; it does not embed a trace timeline view.',
+        performanceNote: 'Low — one pass over the captured log at session end; no network calls.',
+        whenToDisable: 'Your app does not emit OpenTelemetry trace IDs, or you have no trace backend to link to.',
+    },
+    {
         id: 'http',
         label: 'HTTP / Network',
         description: 'Correlate request log or HAR with debug output',
