@@ -97,7 +97,7 @@ async function populateSections(
 
   // 3. Signal-type-specific details (N+1, SQL burst, ANR, distribution analysis)
   const detailsHtml = buildDetailsHtml(hypothesis, bundle);
-  const detailsFallback = '<div class="no-data">No additional details for this signal type</div>';
+  const detailsFallback = `<div class="no-data">${t('signals.panel.noDetails')}</div>`;
   postSection(panel, 'details', 'Signal Details', detailsHtml || detailsFallback);
 
   // 4. Related lines — all matching items with excerpts and line numbers
@@ -146,12 +146,12 @@ function buildEvidenceHtml(
 ): string {
   const ids = hypothesis.evidenceLineIds;
   if (ids.length === 0) {
-    return '<div class="no-data">No evidence lines to display</div>';
+    return `<div class="no-data">${t('signals.panel.noEvidence')}</div>`;
   }
   if (logLines.length === 0) {
     // Log file unreadable — still show which lines were referenced
-    const idList = ids.map(i => `Line ${i + 1}`).join(', ');
-    return `<div class="no-data">Could not read log file. Evidence at: ${idList}</div>`;
+    const idList = ids.map(i => t('signals.related.line', i + 1)).join(', ');
+    return `<div class="no-data">${t('signals.panel.couldNotRead', idList)}</div>`;
   }
   const contextRadius = 10;
   const maxStackExtend = 30;
@@ -182,8 +182,8 @@ function buildEvidenceHtml(
   }
   if (groups.length === 0) {
     // All indices were out of range — the log file may have been modified since signals ran
-    const idList = ids.map(i => `Line ${i + 1}`).join(', ');
-    return `<div class="no-data">Evidence lines out of range (file may have changed). Referenced: ${idList}</div>`;
+    const idList = ids.map(i => t('signals.related.line', i + 1)).join(', ');
+    return `<div class="no-data">${t('signals.panel.outOfRange', idList)}</div>`;
   }
   return renderEvidenceSection(groups);
 }
