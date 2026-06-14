@@ -69,8 +69,8 @@ export function getSignalScriptPartC(): string {
         lines.push('');
         if (hasLog && (typeof heroErrorCount === 'number' || typeof heroWarningCount === 'number' || heroSnapshotSummary)) {
             var heroParts = [];
-            if (typeof heroErrorCount === 'number') heroParts.push('Errors: ' + heroErrorCount);
-            if (typeof heroWarningCount === 'number') heroParts.push('Warnings: ' + heroWarningCount);
+            if (typeof heroErrorCount === 'number') heroParts.push(vt('viewer.signalPanel.heroErrors', heroErrorCount));
+            if (typeof heroWarningCount === 'number') heroParts.push(vt('viewer.signalPanel.heroWarnings', heroWarningCount));
             if (heroParts.length) lines.push(heroParts.join(' \\u00b7 '));
             if (heroSnapshotSummary) lines.push(heroSnapshotSummary);
             lines.push('');
