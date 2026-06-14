@@ -180,7 +180,6 @@ export const stringsWebview: Record<string, string> = {
     'viewer.signal.inLog.summaryEmpty': 'Signals in this log',
     'viewer.signal.inLog.summary': 'Signals in this log ({0})',
     'viewer.signal.inLog.summaryWindow': 'Signals in this log ({0} of {1})',
-    'viewer.signal.noLogOpen': 'No log open',
     'viewer.signal.related.summaryOne': 'Related signals ({0} pair)',
     'viewer.signal.related.summaryMany': 'Related signals ({0} pairs)',
 
