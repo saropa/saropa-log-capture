@@ -11,6 +11,7 @@ import type {
   RootCauseHypothesis,
 } from '../../modules/root-cause-hints/root-cause-hint-types';
 import { buildHypotheses } from '../../modules/root-cause-hints/build-hypotheses';
+import { computeSessionHealth, type SessionHealthInput } from '../../modules/misc/session-health';
 import {
   parseSessionTiming,
   detectSessionOutcome,
@@ -33,6 +34,8 @@ export function buildOverviewHtml(opts: OverviewOptions): string {
   }
   parts.push(overviewRow(t('signals.overview.logLines'), logLineCount.toLocaleString()));
   parts.push(overviewRow(t('signals.overview.session'), bundle.sessionId));
+  // Health score (idea #19): a single 0–100 gauge of the session's signal load.
+  parts.push(overviewRow(t('signals.overview.health'), `${sessionHealthScore(bundle)}/100`));
 
   // Session timing and outcome (items 5, 9) — extracted from log lines
   if (logLines && logLines.length > 0) {
@@ -92,6 +95,8 @@ export function buildOverviewMarkdown(opts: OverviewOptions): string {
   }
   lines.push(`- **Log lines:** ${logLineCount.toLocaleString()}`);
   lines.push(`- **Session:** ${bundle.sessionId}`);
+  const healthBreakdown = sessionHealthBreakdown(bundle);
+  lines.push(`- **Health:** ${sessionHealthScore(bundle)}/100${healthBreakdown ? ` (${healthBreakdown})` : ''}`);
 
   // Session timing and outcome
   if (logLines && logLines.length > 0) {
@@ -161,6 +166,31 @@ function gatherStats(bundle: RootCauseHintBundle): StatItem[] {
 
 function addStat(items: StatItem[], labelKey: string, label: string, count: number | undefined): void {
   if (count && count > 0) { items.push({ label, labelKey, labelArgs: [], count }); }
+}
+
+/** Map the bundle's detected signals to the health-score inputs. */
+function sessionHealth(bundle: RootCauseHintBundle): ReturnType<typeof computeSessionHealth> {
+  const input: SessionHealthInput = {
+    errors: bundle.errors?.length,
+    warnings: bundle.warningGroups?.reduce((sum, g) => sum + (g?.count ?? 0), 0),
+    networkFailures: bundle.networkFailures?.length,
+    memoryEvents: bundle.memoryEvents?.length,
+    slowOperations: bundle.slowOperations?.length,
+    anrScore: bundle.anrRisk?.score,
+  };
+  return computeSessionHealth(input);
+}
+
+/** The 0–100 score alone, for the on-screen overview row. */
+function sessionHealthScore(bundle: RootCauseHintBundle): number {
+  return sessionHealth(bundle).score;
+}
+
+/** English factor breakdown (e.g. "3 errors -30, ANR -25") for the markdown export, or '' when clean. */
+function sessionHealthBreakdown(bundle: RootCauseHintBundle): string {
+  return sessionHealth(bundle).factors
+    .map((f) => `${f.count} ${f.key} ${f.delta}`)
+    .join(', ');
 }
 
 function overviewRow(label: string, value: string): string {
