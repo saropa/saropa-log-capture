@@ -17,6 +17,7 @@ from modules.verify.l10n_bundle_audit import (
     sync_english_bundle,
     write_audit_report,
     write_gap_export,
+    write_translation_error_audit,
 )
 from modules.verify.l10n_console import cyan, dim, green, header, red, yellow
 from modules.verify.l10n_translator import (
@@ -69,19 +70,46 @@ def _print_locale_summary(
 _PROGRESS_BAR_WIDTH = 24
 
 
-def _print_progress_bar(locale: str, done: int, total: int) -> None:
+def _format_duration(seconds: float) -> str:
+    """Format a second count as H:MM:SS (hours dropped when zero)."""
+    secs = max(int(seconds), 0)
+    hours, rem = divmod(secs, 3600)
+    minutes, sec = divmod(rem, 60)
+    if hours:
+        return f"{hours}:{minutes:02d}:{sec:02d}"
+    return f"{minutes}:{sec:02d}"
+
+
+def _print_progress_bar(
+    locale: str, done: int, total: int, *, words: int = 0, elapsed: float = 0.0,
+) -> None:
     """Render a single-line \r progress bar for one locale's translation pass.
 
     Reprints the whole line each tick (cheap, and robust to terminals that ignore
     partial \r redraws). A CPU NLLB run translates string-by-string over minutes;
     without a visible bar the gap between the per-locale header and its summary
     reads as a hang even though work is steadily progressing.
+
+    ``words``/``elapsed`` drive a throughput (words-per-minute) and ETA readout.
+    Both are suppressed until ~half a second has passed: a sub-second first tick
+    yields a meaningless rate (and risks a divide-by-zero), and the ETA needs at
+    least one measured interval to be anything but noise.
     """
     fraction = (done / total) if total else 1.0
     filled = int(fraction * _PROGRESS_BAR_WIDTH)
     bar = "#" * filled + "." * (_PROGRESS_BAR_WIDTH - filled)
+
+    stats = ""
+    if elapsed > 0.5 and done > 0:
+        wpm = words / elapsed * 60.0
+        remaining_items = max(total - done, 0)
+        eta_seconds = remaining_items * (elapsed / done)
+        stats = f"  {wpm:,.0f} wpm  ETA {_format_duration(eta_seconds)}"
+
+    # Trailing CSI EL (\033[K) erases any leftover from a previously longer line
+    # — the ETA shrinks as the run finishes, so without it stale digits linger.
     print(
-        f"\r  {cyan(locale)}: [{bar}] {fraction * 100:5.1f}%  {done}/{total}",
+        f"\r  {cyan(locale)}: [{bar}] {fraction * 100:5.1f}%  {done}/{total}{stats}\033[K",
         end="",
         flush=True,
     )
@@ -89,20 +117,39 @@ def _print_progress_bar(locale: str, done: int, total: int) -> None:
 
 def _translate_one_locale(
     locale: str, canonical: set[str], *, dry_run: bool, scope: str,
+    error_sink: list[dict[str, str]] | None = None,
 ) -> tuple[int, int, bool]:
     """Translate one locale under ``scope``. Returns (translated, errors, aborted)."""
+    # Wall-clock for the WPM/ETA readout, set lazily on the first progress tick.
+    # The first tick fires only after the first string actually translates, so
+    # starting the clock here excludes the NLLB model-load minute from the rate.
+    started_at: list[float] = []
+
     # Live bar (\r) so a multi-minute run shows motion, not a frozen prompt.
     # Default arg binds the loop's current locale into the closure.
-    def on_progress(done: int, total: int, _loc: str = locale) -> None:
-        _print_progress_bar(_loc, done, total)
+    def on_progress(done: int, total: int, words: int = 0, _loc: str = locale) -> None:
+        if not started_at:
+            started_at.append(time.time())
+        elapsed = time.time() - started_at[0]
+        _print_progress_bar(_loc, done, total, words=words, elapsed=elapsed)
 
-    print(f"\n  {cyan(locale)}:", end=" ", flush=True)
+    # Blank separator only — NO "de:" label here. translate_locale emits the
+    # one-time NLLB model-load + engine-selection lines before the first tick,
+    # and a pre-printed label stranded itself above that setup noise. The bar
+    # reprints the label every tick; the blank line just keeps this locale's
+    # output off the previous locale's summary (the bar's \r is column-0 of the
+    # current line).
+    print()
     translated, kept, brand_count, errors, aborted = translate_locale(
-        locale, canonical, dry_run=dry_run, scope=scope, on_progress=on_progress,
+        locale, canonical, dry_run=dry_run, scope=scope,
+        on_progress=on_progress, error_sink=error_sink,
     )
-    # Close the transient \r line before the per-locale summary.
-    if not dry_run and (translated or errors):
+    # A tick fired iff a bar was drawn: close its \r line. Otherwise (dry run or
+    # a no-work locale) no bar printed the label, so prefix the summary ourselves.
+    if started_at:
         print()
+    else:
+        print(f"  {cyan(locale)}: ", end="")
     _print_locale_summary(translated, kept, brand_count, errors, dry_run=dry_run)
     return translated, errors, aborted
 
@@ -129,6 +176,10 @@ def run_translate(
 
     total_translated = 0
     total_errors = 0
+    # Every per-string failure (net or brand-validation) across all locales is
+    # collected here and flushed to a timestamped audit file after the run, so
+    # the inline WARN lines are not the only record of what failed.
+    error_records: list[dict[str, str]] = []
     t0 = time.time()
     # CTRL-C is a graceful pause, not a crash: translate_locale's finally has
     # already saved the in-progress locale, so a re-run resumes where it stopped.
@@ -137,6 +188,7 @@ def run_translate(
         for locale in locales:
             translated, errors, aborted = _translate_one_locale(
                 locale, canonical, dry_run=dry_run, scope=scope,
+                error_sink=error_records,
             )
             total_translated += translated
             total_errors += errors
@@ -158,10 +210,20 @@ def run_translate(
     print(f"\n  Done in {elapsed:.1f}s. {green(f'{total_translated} translations')}")
     if total_errors > 0:
         print(f"  {red(f'{total_errors} errors')} (kept English as fallback)")
+    # Persist the full error audit (untruncated source + reason per failure).
+    # Only when there is something to record — a clean run leaves no file.
+    if error_records:
+        audit_path = write_translation_error_audit(error_records)
+        print(f"  {red('Error audit')}: {cyan(str(audit_path))}")
 
 
 def write_report_and_offer_export(audit: AuditResult) -> None:
-    """Write the audit report and, on a TTY with gaps, offer a gap export."""
+    """Write the audit report and, on a TTY with gaps, export gaps (JSON + CSV).
+
+    No prompt: when gaps exist on an interactive run, both export formats are
+    written unconditionally and their paths listed. Non-interactive runs still
+    skip the export (the publish pipeline reports gaps via its own worklist).
+    """
     report_path = write_audit_report(audit)
     print(f"\n  Audit report: {cyan(str(report_path))}")
 
@@ -172,18 +234,11 @@ def write_report_and_offer_export(audit: AuditResult) -> None:
         lc.missing_count + lc.untranslated_count for lc in audit.locale_coverage
     )
     print(f"\n  {yellow(f'{total_gaps} untranslated string(s) remain.')}")
-    print("  Export gaps for external translation?")
-    print("    1  Export as JSON")
-    print("    2  Export as CSV")
-    print("    0  No export")
-    try:
-        choice = input("\n  Choice [0]: ").strip() or "0"
-    except (EOFError, KeyboardInterrupt):
-        print()
-        return
-
-    fmt = {"1": "json", "2": "csv"}.get(choice)
-    if fmt:
+    # Always write both formats and list both paths — no prompt. The two views
+    # serve different consumers (JSON for re-import tooling, CSV for spreadsheet
+    # / external translators), so producing both is cheaper than asking which.
+    print("  Exporting gaps for external translation (JSON + CSV)…")
+    for fmt in ("json", "csv"):
         path = write_gap_export(audit, fmt=fmt)
         if path:
-            print(f"  {green('Exported')}: {path}")
+            print(f"  {green(f'Exported {fmt.upper()}')}: {path}")

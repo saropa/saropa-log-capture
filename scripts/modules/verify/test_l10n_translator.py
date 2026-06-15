@@ -56,5 +56,45 @@ class FinalizeLocaleTests(unittest.TestCase):
         self.assertFalse(target.exists())
 
 
+class SplitSentencesTests(unittest.TestCase):
+    """``_split_sentences`` underpins sentence-by-sentence translation.
+
+    The split MUST be lossless ("".join(parts) == original) so rejoining
+    translated sentences preserves the source's spacing and newlines verbatim;
+    a string with no internal boundary must stay a single segment so it routes
+    through the whole-string (paragraph) path unchanged.
+    """
+
+    def test_single_sentence_is_one_segment(self) -> None:
+        self.assertEqual(translator._split_sentences("Hello world"), ["Hello world"])
+
+    def test_multi_sentence_splits_and_keeps_separators(self) -> None:
+        self.assertEqual(
+            translator._split_sentences("Foo bar. Baz qux! Done?"),
+            ["Foo bar.", " ", "Baz qux!", " ", "Done?"],
+        )
+
+    def test_round_trip_is_lossless_including_newlines(self) -> None:
+        # Newlines and multi-space gaps are captured as separator segments, so
+        # joining the parts reproduces the original exactly.
+        for text in ("Line one.\nLine two.", "Multiple!  Spaces.  Here.", "Trailing. "):
+            with self.subTest(text=text):
+                self.assertEqual("".join(translator._split_sentences(text)), text)
+
+
+class SentenceModeToggleTests(unittest.TestCase):
+    """``set_sentence_mode`` flips the module flag the engine path reads."""
+
+    def tearDown(self) -> None:
+        # Restore the default so test order cannot leak the flag.
+        translator.set_sentence_mode(True)
+
+    def test_toggle_off_then_on(self) -> None:
+        translator.set_sentence_mode(False)
+        self.assertFalse(translator._translate_by_sentence_enabled)
+        translator.set_sentence_mode(True)
+        self.assertTrue(translator._translate_by_sentence_enabled)
+
+
 if __name__ == "__main__":
     unittest.main()
