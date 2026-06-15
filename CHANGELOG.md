@@ -26,7 +26,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.0.2]
+
+Saropa Log Capture now has an Integrations icon that badges the issues your companion tools found, suggests integrations to turn on based on the packages your project already uses, flags findings left over from an older commit, and can sort Crashlytics issues by the release date hidden in your Android version code. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.2/CHANGELOG.md)
 
 ### Added
 
@@ -46,6 +48,7 @@ cspell:disable
 
 ### Fixed
 
+- **Root-cause hints style tests no longer fail after the design-token rollout:** Four assertions in the root-cause-hints CSS tests still matched the pre-migration raw theme names (`textLink-foreground`, `errorForeground`, `gap: 4px`) after the panel moved onto the shared design tokens, so they failed even though the styling was correct. They now match the token references the source actually emits (`var(--link)`, `var(--status-bad)`, `var(--space-1)`), which resolve to the same theme values.
 - **CI coverage gate now counts the `node:test` suites it was missing:** The coverage run only instrumented the Mocha (Extension Host) tests; the large body of pure `node:test` suites runs in a separate `node --test` process the coverage hook never saw, so well-tested modules reported 8–15% and dragged the global thresholds under the gate — failing `main` on every push. The coverage run now also executes the `node:test` files over the instrumented build and merges their coverage, lifting measured statements/branches/functions ~46/34/40% → ~51/42/47% (all above the gate) without changing any test. Each `node --test` child writes its own `.nyc_output` file (keyed by pid, since `node --test` forks per file) for `nyc report` to merge; plain `npm test` is unaffected.
 
 ---
