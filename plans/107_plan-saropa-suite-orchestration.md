@@ -1,10 +1,16 @@
 # 107 Saropa Suite — Cross-Repo Orchestration
 
+> **Status: Reference guide — not an active plan (2026-06-14).** All four extensions are shipped to
+> the marketplace and per-repo tested; the suite effort is wound down. The remaining items below (the
+> live three-extension handshake, the a11y/visual audits, locale regeneration) are **manual
+> LAUNCH_TEST items, not tracked active work** — pursue them ad hoc if a problem surfaces in
+> production. This document is retained where it is (not moved, not archived) because the three sibling
+> repos reference it by absolute path; it now reads as a map of how the suite is wired, not a backlog.
+
 **Created:** 2026-06-14
-**What it does:** Coordinates the four Saropa repositories that implement the Saropa Diagnostic
-Envelope so the suite is finished as one system, not four disconnected halves. This is the layer
-*above* the per-repo plans — it does not restate their requirements; it tracks what is actually built,
-what genuinely remains, and the order to close it in.
+**What it does:** Maps how the four Saropa repositories implement the Saropa Diagnostic Envelope as one
+system. The layer *above* the per-repo plans — it does not restate their requirements; it records what
+is actually built, what was deliberately not built, and the manual checks that remain.
 
 This plan lives in `saropa-log-capture` by decision, but it governs all four repos. The per-repo plans
 it sits over:
