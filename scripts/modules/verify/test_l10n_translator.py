@@ -56,30 +56,45 @@ class FinalizeLocaleTests(unittest.TestCase):
         self.assertFalse(target.exists())
 
 
-class SplitSentencesTests(unittest.TestCase):
-    """``_split_sentences`` underpins sentence-by-sentence translation.
+class ReassembleSentencesTests(unittest.TestCase):
+    """``_reassemble_sentences`` rejoins per-sentence translations losslessly.
 
-    The split MUST be lossless ("".join(parts) == original) so rejoining
-    translated sentences preserves the source's spacing and newlines verbatim;
-    a string with no internal boundary must stay a single segment so it routes
-    through the whole-string (paragraph) path unchanged.
+    It restores the original spacing/newlines (the import never carries
+    separators), and refuses to build a half string: a sentence-count mismatch
+    or any blank translation returns None so the caller leaves the key
+    untranslated rather than storing corruption.
     """
 
-    def test_single_sentence_is_one_segment(self) -> None:
-        self.assertEqual(translator._split_sentences("Hello world"), ["Hello world"])
+    def _filled(self, en: str, fn) -> list[dict[str, object]]:
+        # Build the per-sentence list the import reads, mapping each source
+        # sentence through fn to stand in for a translator's output.
+        from modules.verify.l10n_sentences import sentence_parts
+        return [{"i": i, "en": p, "translation": fn(p)} for i, p in enumerate(sentence_parts(en))]
 
-    def test_multi_sentence_splits_and_keeps_separators(self) -> None:
+    def test_preserves_separators_on_rejoin(self) -> None:
+        en = "Shows a dialog.\nType a note. Done?"
+        out = translator._reassemble_sentences(en, self._filled(en, str.upper))
+        self.assertEqual(out, "SHOWS A DIALOG.\nTYPE A NOTE. DONE?")
+
+    def test_identity_fill_round_trips_to_source(self) -> None:
+        en = "One.  Two.\nThree?"
+        self.assertEqual(translator._reassemble_sentences(en, self._filled(en, lambda s: s)), en)
+
+    def test_single_sentence(self) -> None:
         self.assertEqual(
-            translator._split_sentences("Foo bar. Baz qux! Done?"),
-            ["Foo bar.", " ", "Baz qux!", " ", "Done?"],
+            translator._reassemble_sentences("Solo", [{"i": 0, "en": "Solo", "translation": "X"}]),
+            "X",
         )
 
-    def test_round_trip_is_lossless_including_newlines(self) -> None:
-        # Newlines and multi-space gaps are captured as separator segments, so
-        # joining the parts reproduces the original exactly.
-        for text in ("Line one.\nLine two.", "Multiple!  Spaces.  Here.", "Trailing. "):
-            with self.subTest(text=text):
-                self.assertEqual("".join(translator._split_sentences(text)), text)
+    def test_count_mismatch_returns_none(self) -> None:
+        # Two source sentences but only one translation provided -> skip.
+        self.assertIsNone(
+            translator._reassemble_sentences("A. B.", [{"i": 0, "en": "A.", "translation": "a."}]),
+        )
+
+    def test_blank_translation_returns_none(self) -> None:
+        filled = [{"i": 0, "en": "A.", "translation": "a."}, {"i": 1, "en": "B.", "translation": "  "}]
+        self.assertIsNone(translator._reassemble_sentences("A. B.", filled))
 
 
 class SentenceModeToggleTests(unittest.TestCase):
