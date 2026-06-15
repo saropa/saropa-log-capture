@@ -179,6 +179,35 @@ export function getOptionsExtraStyles(): string {
     text-decoration: underline;
 }
 
+/* Companion-tool issues block (Integrations screen): the issues the siblings found, or the
+   silent-state guidance when a tool is installed but has not shared anything yet. */
+.integrations-suite-issues { margin: 0 0 16px 0; }
+.suite-issues-heading { font-size: 12px; font-weight: 600; margin: 0 0 6px 0; }
+.suite-issue-empty,
+.suite-issue-silent { font-size: 11px; color: var(--vscode-descriptionForeground); line-height: 1.4; margin: 2px 0; }
+.suite-issue-group { margin: 0 0 8px 0; }
+.suite-issue-tool { font-size: 11px; font-weight: 600; color: var(--vscode-descriptionForeground); margin: 6px 0 3px 0; }
+.suite-issue-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 8px;
+    padding: 3px 0 3px 8px;
+    font-size: 12px;
+    /* Severity-tinted left rule; the per-severity rules below override the neutral default. */
+    border-left: 2px solid var(--vscode-descriptionForeground);
+}
+.suite-issue-error { border-left-color: var(--vscode-editorError-foreground, #f14c4c); }
+.suite-issue-warning { border-left-color: var(--vscode-editorWarning-foreground, #cca700); }
+.suite-issue-info { border-left-color: var(--vscode-editorInfo-foreground, #3794ff); }
+.suite-issue-title { flex: 1 1 auto; }
+.suite-issue-loc {
+    flex: 0 0 auto;
+    font-size: 10px;
+    color: var(--vscode-descriptionForeground);
+    font-family: var(--vscode-editor-font-family, monospace);
+}
+
 /* Keyboard shortcuts view */
 .shortcuts-h3 {
     font-size: 12px;
