@@ -84,3 +84,32 @@ never store a half-translated string.
 - Sentence-mode export is JSON only by decision; a spreadsheet (CSV) sentence form was not added.
 - Abbreviation over-split (e.g. "e.g.") remains a known splitter limitation; the import's
   count-match guard turns any resulting drift into a skipped key rather than a corrupted one.
+
+## Follow-up (2026-06-15): export the FAILURES, not the full gap inventory
+
+The fillable export was sourced from the whole untranslated inventory — thousands of strings,
+most of which simply had not been processed yet — which buried the strings that actually needed a
+human. The export source was changed to the translation FAILURES: only what the engine attempted
+and could not produce (brand-validation rejects and network errors collected during a run).
+
+- `write_gap_export_sentences` (audit-sourced, whole-inventory) was replaced by
+  `write_failures_export_sentences(records)` in `l10n_bundle_audit.py`, fed the run's error records
+  (`{locale, type, en, detail}`). It writes `*_l10n_failures_sentences.json`, carrying
+  `failure_type` / `failure_detail` per entry for context (ignored by the importer) and the same
+  nested `sentences[]` shape, so `import_gap_file` consumes it unchanged.
+- `run_translate` (`l10n_actions.py`) writes the failures export next to the error audit whenever a
+  run produced failures; a clean run writes neither.
+- The interactive audit-export path (`write_report_and_offer_export`) and the non-interactive audit
+  path (`_write_audit_report`, formerly `_write_report_with_json_gaps`) no longer auto-write any
+  gaps export. The audit report still carries per-locale gap counts for CI/diagnostics, and the
+  publish pipeline's whole-string CSV worklist (`write_gap_export`) is untouched.
+- The importer, `l10n_sentences.py`, the `--import` handler, sentence-mode translation, and the
+  `manual`-provenance / count-drift-skip guarantees from the original work are unchanged; only the
+  export's data source moved from gaps to failures.
+
+Verification: round-trip test added (`FailuresExportRoundTripTests` in `test_l10n_translator.py`)
+that exports failure records to a temp reports dir, fills every sentence, and imports the result
+with the bundle write stubbed — 2 written, 0 skipped, reassembled values correct per locale. All
+l10n test modules pass (`test_l10n_sentences` 5, `test_l10n_translator` 10, `test_l10n_nllb_engine`
+15, `test_l10n_provenance`). `--help` reflects the `*_l10n_failures_sentences.json` source. The
+removed `write_gap_export_sentences` had no test or non-doc caller.
