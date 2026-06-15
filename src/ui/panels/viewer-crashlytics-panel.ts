@@ -7,6 +7,7 @@
 
 import { getCrashlyticsSetupScript } from './viewer-crashlytics-setup';
 import { getCrashlyticsInteractionsScript } from './viewer-crashlytics-interactions-script';
+import { getCrashlyticsIssueRowScript } from './viewer-crashlytics-issue-row';
 import { t } from '../../l10n';
 
 /** Generate the crashlytics panel HTML shell. */
@@ -33,9 +34,10 @@ export function getCrashlyticsPanelHtml(): string {
             <input id="cp-search" class="cp-search" type="text" placeholder="${t('viewer.crashlytics.filter.search')}" aria-label="${t('viewer.crashlytics.filter.search')}">
             <button id="cp-regex" class="cp-regex" type="button" title="${t('viewer.crashlytics.filter.regex')}" aria-label="${t('viewer.crashlytics.filter.regex')}" aria-pressed="false">.*</button>
             <select id="cp-ver" class="cp-fselect" title="${t('viewer.crashlytics.filter.version')}" aria-label="${t('viewer.crashlytics.filter.version')}"><option value="">${t('viewer.crashlytics.filter.verAbbr')}</option></select>
+            <select id="cp-reldate" class="cp-fselect" title="${t('viewer.crashlytics.filter.releaseDate')}" aria-label="${t('viewer.crashlytics.filter.releaseDate')}"><option value="">${t('viewer.crashlytics.filter.releaseDateAbbr')}</option></select>
             <select id="cp-dev" class="cp-fselect" title="${t('viewer.crashlytics.filter.device')}" aria-label="${t('viewer.crashlytics.filter.device')}"><option value="">${t('viewer.crashlytics.filter.devAbbr')}</option></select>
             <select id="cp-os" class="cp-fselect" title="${t('viewer.crashlytics.filter.os')}" aria-label="${t('viewer.crashlytics.filter.os')}"><option value="">${t('viewer.crashlytics.filter.osAbbr')}</option></select>
-            <select id="cp-sort" class="cp-fselect" title="${t('viewer.crashlytics.sort.label')}" aria-label="${t('viewer.crashlytics.sort.label')}"><option value="events">${t('viewer.crashlytics.sort.events')}</option><option value="users">${t('viewer.crashlytics.sort.users')}</option></select>
+            <select id="cp-sort" class="cp-fselect" title="${t('viewer.crashlytics.sort.label')}" aria-label="${t('viewer.crashlytics.sort.label')}"><option value="events">${t('viewer.crashlytics.sort.events')}</option><option value="users">${t('viewer.crashlytics.sort.users')}</option><option value="reldate">${t('viewer.crashlytics.sort.releaseDate')}</option></select>
             <button id="cp-show-archived" class="cp-regex" type="button" title="${t('viewer.crashlytics.showArchived')}" aria-label="${t('viewer.crashlytics.showArchived')}" aria-pressed="false"><span class="codicon codicon-archive"></span></button>
         </div>
     </div>
@@ -54,6 +56,7 @@ export function getCrashlyticsPanelHtml(): string {
 export function getCrashlyticsPanelScript(): string {
     const setupScript = getCrashlyticsSetupScript();
     const interactionsScript = getCrashlyticsInteractionsScript();
+    const issueRowScript = getCrashlyticsIssueRowScript();
     return /* js */ `
 (function() {
     var cpPanelEl = document.getElementById('crashlytics-panel');
@@ -153,56 +156,7 @@ export function getCrashlyticsPanelScript(): string {
         if (typeof updateIconBadge === 'function') updateIconBadge('ib-crashlytics-badge', 'ib-crashlytics-count', cpCount);
     }
 
-    function renderIssue(issue) {
-        // Pill badge by kind: icon + short label, themed via tokens (UI #2/#3). ⊗ crash, ⏱ ANR, ⚠ non-fatal.
-        var kindBadge = { crash: ['\\u2297', 'Crash', 'cp-badge-crash'], anr: ['\\u23F1', 'ANR', 'cp-badge-anr'], nonfatal: ['\\u26A0', 'Non-fatal', 'cp-badge-nf'] };
-        var kb = kindBadge[issue.kind] || (issue.isFatal ? kindBadge.crash : kindBadge.nonfatal);
-        var badge = '<span class="cp-badge ' + kb[2] + '">' + kb[0] + ' ' + kb[1] + '</span>';
-        var state = issue.state !== 'UNKNOWN'
-            ? ' <span class="cp-badge cp-badge-' + issue.state.toLowerCase() + '">' + esc(issue.state) + '</span>' : '';
-        // Locally-derived "Repetitive" tag (recurs across >1 app version); the API has no such signal.
-        var rep = issue.repetitive
-            ? ' <span class="cp-badge cp-badge-repetitive" title="' + vt('viewer.crashlytics.badge.repetitiveTip') + '">' + vt('viewer.crashlytics.badge.repetitive') + '</span>' : '';
-        // Locally-derived "Regressed" tag (gone in the previous scan, back now); also not in the API.
-        var regr = issue.regressed
-            ? ' <span class="cp-badge cp-badge-regressed" title="' + vt('viewer.crashlytics.badge.regressedTip') + '">' + vt('viewer.crashlytics.badge.regressed') + '</span>' : '';
-        var users = issue.userCount > 0
-            ? ' \\u00b7 ' + vt(issue.userCount !== 1 ? 'viewer.crashlytics.usersMany' : 'viewer.crashlytics.usersOne', issue.userCount) : '';
-        var ver = formatVersionRange(issue);
-        // Close/mute removed: the Play Reporting data source is read-only, so those actions were
-        // no-ops (bug_008 / plan 054). The dashboard's "Open Firebase Console" link is the way to
-        // act on an issue.
-        // The whole row opens the detail in the viewer's main area; ↗ hints it opens a full view.
-        // data-* carry the detail-header/markdown fields AND drive the sidebar's client-side filters.
-        var sevClass = issue.isFatal ? 'cp-item-fatal' : 'cp-item-nonfatal';
-        if (issue.archived) sevClass += ' cp-item-archived';
-        var versions = [];
-        if (issue.firstVersion) versions.push(issue.firstVersion);
-        if (issue.lastVersion && issue.lastVersion !== issue.firstVersion) versions.push(issue.lastVersion);
-        var searchText = (issue.title + ' ' + issue.subtitle).toLowerCase();
-        // Archive / unarchive toggle (local view filter — the Play API is read-only). stopPropagation
-        // in the click handler stops it from also opening the issue detail.
-        var arch = issue.archived ? '1' : '0';
-        var archiveBtn = '<button class="cp-archive-btn" data-archived="' + arch + '" title="'
-            + vt(issue.archived ? 'viewer.crashlytics.unarchive' : 'viewer.crashlytics.archive') + '" aria-label="'
-            + vt(issue.archived ? 'viewer.crashlytics.unarchive' : 'viewer.crashlytics.archive') + '">'
-            + '<span class="codicon codicon-' + (issue.archived ? 'inbox' : 'archive') + '"></span></button>';
-        return '<div class="cp-item ' + sevClass + '" data-issue-id="' + esc(issue.id) + '" title="' + vt('viewer.crashlytics.openDetail') + '"'
-            + ' data-title="' + esc(issue.title) + '" data-sub="' + esc(issue.subtitle) + '"'
-            + ' data-events="' + esc(String(issue.eventCount)) + '" data-users="' + esc(String(issue.userCount)) + '"'
-            + ' data-fatal="' + (issue.isFatal ? '1' : '0') + '" data-fv="' + esc(issue.firstVersion || '') + '" data-lv="' + esc(issue.lastVersion || '') + '"'
-            + ' data-kind="' + esc(issue.kind || 'unknown') + '" data-state="' + esc(issue.state || 'UNKNOWN') + '" data-versions="' + esc(versions.join(',')) + '" data-search="' + esc(searchText) + '" data-archived="' + arch + '">'
-            + '<div class="cp-title">' + badge + state + regr + rep + ' ' + esc(issue.title) + ' <span class="cp-expand-icon">\\u2197</span>' + archiveBtn + '</div>'
-            + '<div class="cp-meta">' + esc(issue.subtitle) + ' \\u00b7 ' + vt('viewer.crashlytics.events', issue.eventCount) + users + ver + '<span class="cp-trend"></span></div></div>';
-    }
-
-    function formatVersionRange(issue) {
-        if (!issue.firstVersion && !issue.lastVersion) return '';
-        var range = issue.firstVersion && issue.lastVersion && issue.firstVersion !== issue.lastVersion
-            ? esc(issue.firstVersion) + ' \\u2192 ' + esc(issue.lastVersion)
-            : esc(issue.firstVersion || issue.lastVersion || '');
-        return ' \\u00b7 ' + range;
-    }
+    ${issueRowScript}
 
     ${setupScript}
 

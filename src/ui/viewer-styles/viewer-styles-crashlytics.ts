@@ -97,6 +97,8 @@ export function getCrashlyticsPanelStyles(): string {
 /* Typography hierarchy (UI #5): bold primary, muted metadata, room to breathe. */
 .cp-title { font-weight: 600; font-size: 12px; line-height: 1.45; margin-bottom: 3px; }
 .cp-meta { font-size: 11px; opacity: 0.65; line-height: 1.4; }
+/* Derived release date: dotted underline hints it's computed (from the version code), not raw API data. */
+.cp-reldate { border-bottom: 1px dotted currentColor; cursor: help; }
 
 /* --- Compact sidebar filter bar (#5): icons/abbreviations for the narrow panel --- */
 .cp-filterbar { border-bottom: 1px solid var(--vscode-panel-border); padding: 4px 8px; }
