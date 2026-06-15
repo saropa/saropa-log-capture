@@ -15,16 +15,35 @@ window.requestSuiteIssues = function() {
     }
 };
 
-/* Handle the host's suiteIssues reply: badge the Integrations icon and fill the issues container. */
+/* Handle the host's suiteIssues reply: badge the Integrations icon (issues + suggestions) and fill
+   both the suggestions and issues containers in the Integrations screen. */
 function handleSuiteIssuesMessage(msg) {
     if (!msg || msg.type !== 'suiteIssues') return false;
     if (typeof updateIconBadge === 'function') {
         updateIconBadge('ib-integrations-badge', 'ib-integrations-count', msg.count || 0);
     }
-    var container = document.getElementById('integrations-suite-issues');
-    if (container) { container.innerHTML = msg.html || ''; }
+    var suggestions = document.getElementById('integrations-suite-suggestions');
+    if (suggestions) { suggestions.innerHTML = msg.suggestionsHtml || ''; }
+    var issues = document.getElementById('integrations-suite-issues');
+    if (issues) { issues.innerHTML = msg.issuesHtml || ''; }
     return true;
 }
+
+/* Enable a suggested integration in place: check its existing integration checkbox and fire the
+   change event so the established setIntegrationsAdapters flow persists it, then refresh so the
+   now-enabled suggestion drops off the list. Delegated so it works on host-injected rows. */
+document.addEventListener('click', function(e) {
+    var btn = e.target && e.target.closest ? e.target.closest('.suite-suggest-enable') : null;
+    if (!btn) return;
+    var adapterId = btn.getAttribute('data-adapter-id');
+    if (!adapterId) return;
+    var checkbox = document.getElementById('int-' + adapterId);
+    if (checkbox && !checkbox.checked) {
+        checkbox.checked = true;
+        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    if (typeof window.requestSuiteIssues === 'function') window.requestSuiteIssues();
+});
 
 /* Initial fetch so the badge reflects companion issues before the user opens anything. */
 if (document.readyState === 'loading') {
