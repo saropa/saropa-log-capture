@@ -9,14 +9,13 @@ for errors/orphans, yellow for gaps — and delegates the real work to
 ``l10n_cli``.
 """
 
-import sys
 import time
 
 from modules.verify.l10n_bundle_audit import (
     AuditResult,
     sync_english_bundle,
     write_audit_report,
-    write_gap_export_sentences,
+    write_failures_export_sentences,
     write_translation_error_audit,
 )
 from modules.verify.l10n_console import cyan, dim, green, header, red, yellow
@@ -210,35 +209,39 @@ def run_translate(
     print(f"\n  Done in {elapsed:.1f}s. {green(f'{total_translated} translations')}")
     if total_errors > 0:
         print(f"  {red(f'{total_errors} errors')} (kept English as fallback)")
-    # Persist the full error audit (untruncated source + reason per failure).
-    # Only when there is something to record — a clean run leaves no file.
+    # Two artifacts per run with failures: the diagnostic error audit (full
+    # source + reason), and the FILLABLE failures export — the strings the engine
+    # could not produce, split into sentences for a human to translate and
+    # reimport. This is what a translator works from, NOT the full untranslated
+    # inventory. A clean run writes neither.
     if error_records:
         audit_path = write_translation_error_audit(error_records)
         print(f"  {red('Error audit')}: {cyan(str(audit_path))}")
+        fillable = write_failures_export_sentences(error_records)
+        if fillable:
+            print(f"  {green('Failures to translate')}: {cyan(str(fillable))}")
+            print(dim("  Fill every sentence, then: python scripts/translate_l10n.py --import <file>"))
 
 
 def write_report_and_offer_export(audit: AuditResult) -> None:
-    """Write the audit report and, on a TTY with gaps, export gaps (JSON + CSV).
+    """Write the audit report and note how many strings remain untranslated.
 
-    No prompt: when gaps exist on an interactive run, both export formats are
-    written unconditionally and their paths listed. Non-interactive runs still
-    skip the export (the publish pipeline reports gaps via its own worklist).
+    No gaps export: the fillable export a translator works from is the FAILURES
+    export written by run_translate (the strings the engine attempted and could
+    not produce), not the full untranslated inventory. Run a translate pass to
+    produce it.
     """
     report_path = write_audit_report(audit)
     print(f"\n  Audit report: {cyan(str(report_path))}")
 
-    if not audit.has_gaps or not sys.stdin.isatty():
+    if not audit.has_gaps:
         return
 
     total_gaps = sum(
         lc.missing_count + lc.untranslated_count for lc in audit.locale_coverage
     )
     print(f"\n  {yellow(f'{total_gaps} untranslated string(s) remain.')}")
-    # Sentence-level JSON export, written unconditionally (no prompt): each gap
-    # is broken into sentences so an external translator works one sentence at a
-    # time, and --import reassembles them losslessly into the whole-string keys.
-    print("  Exporting gaps for external translation (sentence-level JSON)…")
-    path = write_gap_export_sentences(audit)
-    if path:
-        print(f"  {green('Exported')}: {path}")
-        print(dim("  Fill every sentence, then: python scripts/translate_l10n.py --import <file>"))
+    print(dim(
+        "  Run a translate pass to fill them; strings the engine cannot produce "
+        "are exported (sentence-level) for human translation."
+    ))
