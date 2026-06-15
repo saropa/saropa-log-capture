@@ -18,8 +18,8 @@ test("Signals evidence buttons reset UA styling to theme link appearance", () =>
   );
   assert.match(
     css,
-    /\.rch-report-btn:hover\s*\{.*?textLink-foreground/s,
-    "hover should use theme link foreground color",
+    /\.rch-report-btn:hover\s*\{.*?var\(--link\)/s,
+    "hover should use the --link token (maps to theme textLink-foreground)",
   );
 });
 
@@ -38,8 +38,8 @@ test("should contain dismiss button styles with hover-reveal pattern", () => {
   );
   assert.match(
     css,
-    /\.rch-dismiss-btn:hover\s*\{.*?errorForeground/s,
-    "dismiss button hover must use error foreground color",
+    /\.rch-dismiss-btn:hover\s*\{.*?var\(--status-bad\)/s,
+    "dismiss button hover must use the --status-bad token (maps to theme editorError-foreground)",
   );
 });
 
@@ -54,8 +54,8 @@ test("should use flex layout on list items so signal text wraps", () => {
   );
   assert.match(
     css,
-    /\.root-cause-hypotheses-list\s+li\s*\{[^}]*gap:\s*4px/s,
-    "list items must have gap for spacing between children",
+    /\.root-cause-hypotheses-list\s+li\s*\{[^}]*gap:\s*var\(--space-1\)/s,
+    "list items must have gap for spacing between children (--space-1 = 4px)",
   );
 });
 
@@ -100,7 +100,7 @@ test("should contain restore button styles", () => {
   assert.ok(css.includes(".rch-restore-btn"), "restore button class must exist");
   assert.match(
     css,
-    /\.rch-restore-btn:hover\s*\{.*?textLink-foreground/s,
-    "restore button hover must use link foreground color",
+    /\.rch-restore-btn:hover\s*\{.*?var\(--link\)/s,
+    "restore button hover must use the --link token (maps to theme textLink-foreground)",
   );
 });
