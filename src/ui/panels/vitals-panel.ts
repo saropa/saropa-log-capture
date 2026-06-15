@@ -7,6 +7,7 @@ import { getNonce } from '../provider/viewer-content';
 import { queryVitals, clearVitalsCache, thresholds, getVitalsDiagnostic } from '../../modules/crashlytics/google-play-vitals';
 import type { VitalsSnapshot } from '../../modules/crashlytics/google-play-vitals-types';
 import { renderSparkline } from './vitals-sparkline';
+import { getTokenStyles } from '../viewer-styles/viewer-styles-tokens';
 
 let refreshTimer: ReturnType<typeof setInterval> | undefined;
 
@@ -69,7 +70,7 @@ ${reason}
 </body></html>`;
     }
     const refreshNote = `(${formatElapsedLabel(snapshot.queriedAt)})`;
-    return `<!DOCTYPE html><html><head><style nonce="${nonce}">${getStyles()}</style></head><body>
+    return `<!DOCTYPE html><html><head><style nonce="${nonce}">${getTokenStyles()}${getStyles()}</style></head><body>
 <div role="main" aria-label="${t('vitals.title')}">
 <div class="vt-toolbar"><span class="vt-title">${t('vitals.title')} ${refreshNote}</span><button class="vt-refresh" onclick="postMsg('refresh')" aria-label="${t('vitals.refreshAria')}">${t('vitals.refreshBtn')}</button></div>
 <div class="vt-pkg">${escapeHtml(snapshot.packageName)}</div>
@@ -127,31 +128,31 @@ function renderMetric(label: string, rate: number | undefined, threshold: number
 }
 
 function getStyles(): string {
-    return `body{padding:4px 8px;font-family:var(--vscode-font-family);font-size:var(--vscode-font-size);color:var(--vscode-foreground)}
-.vt-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    return `body{padding:var(--space-1) var(--space-2);font-family:var(--vscode-font-family);font-size:var(--vscode-font-size);color:var(--text)}
+.vt-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-2)}
 .vt-title{font-weight:600;font-size:1.1em}
-.vt-refresh{background:var(--vscode-button-background);color:var(--vscode-button-foreground);border:none;padding:2px 8px;cursor:pointer;border-radius:2px}
-.vt-pkg{font-size:11px;opacity:0.7;margin-bottom:10px;font-family:var(--vscode-editor-font-family,monospace)}
+.vt-refresh{background:var(--vscode-button-background);color:var(--vscode-button-foreground);border:none;padding:2px var(--space-2);cursor:pointer;border-radius:var(--radius-sm)}
+.vt-pkg{font-size:var(--text-caption);opacity:0.7;margin-bottom:10px;font-family:var(--vscode-editor-font-family,monospace)}
 .vt-refresh:hover{background:var(--vscode-button-hoverBackground,var(--vscode-button-background))}
 /* Hero crash-free figures, side by side; collapses to one column when narrow / single-metric. */
 .vt-hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px;margin-bottom:10px}
-.vt-crashfree{background:var(--vscode-editorWidget-background,var(--vscode-editor-background));border:1px solid var(--vscode-widget-border,var(--vscode-panel-border));border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.vt-crashfree{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:10px var(--space-3);display:flex;flex-direction:column;gap:2px}
 .vt-cf-label{font-size:10px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;opacity:0.72}
-.vt-cf-value{font-size:1.9em;font-weight:700;line-height:1.1;color:var(--vscode-testing-iconPassed,#388e3c)}
-.vt-cf-delta{font-size:11px;font-weight:600}
-.vt-cf-up{color:var(--vscode-testing-iconPassed,#388e3c)}
-.vt-cf-down{color:var(--vscode-errorForeground)}
+.vt-cf-value{font-size:1.9em;font-weight:700;line-height:1.1;color:var(--status-good)}
+.vt-cf-delta{font-size:var(--text-caption);font-weight:600}
+.vt-cf-up{color:var(--status-good)}
+.vt-cf-down{color:var(--status-bad)}
 /* Rate cards share the card chrome with a severity-colored left accent. */
-.vt-metric{background:var(--vscode-editorWidget-background,var(--vscode-editor-background));border:1px solid var(--vscode-widget-border,var(--vscode-panel-border));border-left:3px solid var(--vscode-panel-border);border-radius:6px;padding:8px 10px;margin-bottom:6px;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px}
-.vt-good{border-left-color:var(--vscode-testing-iconPassed,#388e3c)}
-.vt-bad{border-left-color:var(--vscode-errorForeground)}
+.vt-metric{background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--border);border-radius:var(--radius);padding:var(--space-2) 10px;margin-bottom:6px;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px}
+.vt-good{border-left-color:var(--status-good)}
+.vt-bad{border-left-color:var(--status-bad)}
 .vt-label{font-weight:600;flex:1}.vt-value{font-size:1.2em;font-weight:700}
 .vt-threshold{font-size:10px;opacity:0.6;width:100%}
-.vt-good .vt-value{color:var(--vscode-testing-iconPassed, #388e3c)}
-.vt-bad .vt-value{color:var(--vscode-errorForeground)}
+.vt-good .vt-value{color:var(--status-good)}
+.vt-bad .vt-value{color:var(--status-bad)}
 .vt-na{opacity:0.5;font-style:italic}
-.vt-spark{width:100%;height:18px;margin-top:4px;opacity:0.85}
-.vt-good .vt-spark{color:var(--vscode-testing-iconPassed,#388e3c)}
-.vt-bad .vt-spark{color:var(--vscode-errorForeground)}
-.vt-footer{margin-top:8px;text-align:center;cursor:pointer;color:var(--vscode-textLink-foreground);font-size:12px}`;
+.vt-spark{width:100%;height:18px;margin-top:var(--space-1);opacity:0.85}
+.vt-good .vt-spark{color:var(--status-good)}
+.vt-bad .vt-spark{color:var(--status-bad)}
+.vt-footer{margin-top:var(--space-2);text-align:center;cursor:pointer;color:var(--link);font-size:var(--text-body)}`;
 }

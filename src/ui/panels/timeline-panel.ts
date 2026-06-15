@@ -10,6 +10,7 @@ import { formatDuration } from '../../modules/session/session-summary';
 import { getNonce } from '../provider/viewer-content';
 import { openLogAtLine } from '../../modules/search/log-search';
 import { getUnifiedTimelineStyles } from './timeline-panel-styles';
+import { getTokenStyles } from '../viewer-styles/viewer-styles-tokens';
 import { getAdvancedScript } from './timeline-panel-script';
 import { t } from '../../l10n';
 import { loadTimelineEvents, getSourceLabel, getSourceColor, type TimelineLoadResult } from '../../modules/timeline/timeline-loader';
@@ -95,12 +96,12 @@ async function exportTimeline(format: string, result: TimelineLoadResult): Promi
 function buildLoadingHtml(message?: string): string {
     const nonce = getNonce();
     const text = message ?? t('panel.timeline.loading');
-    return `<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';"><style nonce="${nonce}">${getUnifiedTimelineStyles()}</style></head><body><div class="loading">${text}</div></body></html>`;
+    return `<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';"><style nonce="${nonce}">${getTokenStyles()}${getUnifiedTimelineStyles()}</style></head><body><div class="loading">${text}</div></body></html>`;
 }
 
 function buildErrorHtml(message: string): string {
     const nonce = getNonce();
-    return `<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}';"><style nonce="${nonce}">${getUnifiedTimelineStyles()}</style></head><body><div class="error-state">${escapeHtml(message)}</div></body></html>`;
+    return `<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}';"><style nonce="${nonce}">${getTokenStyles()}${getUnifiedTimelineStyles()}</style></head><body><div class="error-state">${escapeHtml(message)}</div></body></html>`;
 }
 
 function getCorrelationConfig(): DetectorConfig & { enabled: boolean } {
@@ -120,7 +121,7 @@ function buildTimelineHtml(result: TimelineLoadResult, filename: string, session
     const { events, stats, sourcesFound, sessionStart, sessionEnd } = result;
 
     if (events.length === 0) {
-        return `<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}';"><style nonce="${nonce}">${getUnifiedTimelineStyles()}</style></head><body>${renderHeader(filename)}<div class="empty-state">${t('panel.timeline.noEvents')}</div></body></html>`;
+        return `<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}';"><style nonce="${nonce}">${getTokenStyles()}${getUnifiedTimelineStyles()}</style></head><body>${renderHeader(filename)}<div class="empty-state">${t('panel.timeline.noEvents')}</div></body></html>`;
     }
 
     const byLoc = getCorrelationByLocation(sessionUriStr);
@@ -147,7 +148,7 @@ function buildTimelineHtml(result: TimelineLoadResult, filename: string, session
 
     return `<!DOCTYPE html><html><head>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
-<style nonce="${nonce}">${getUnifiedTimelineStyles()}</style>
+<style nonce="${nonce}">${getTokenStyles()}${getUnifiedTimelineStyles()}</style>
 </head><body>
 <div role="main" aria-label="Timeline">
 ${renderHeader(filename)}

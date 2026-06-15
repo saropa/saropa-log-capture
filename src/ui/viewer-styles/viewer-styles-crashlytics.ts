@@ -19,7 +19,7 @@ export function getCrashlyticsPanelStyles(): string {
     height: 100%;
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
     border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow);
     display: none;
     flex-direction: column;
     overflow: hidden;
@@ -70,7 +70,7 @@ export function getCrashlyticsPanelStyles(): string {
 }
 
 .crashlytics-panel-close:hover {
-    color: var(--vscode-errorForeground, #f44);
+    color: var(--status-bad);
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 
@@ -92,8 +92,8 @@ export function getCrashlyticsPanelStyles(): string {
 /* Hover lifts the row with a soft inset accent on the left edge (refined-native, no layout shift). */
 .cp-item:hover { background: var(--vscode-list-hoverBackground); box-shadow: inset 2px 0 0 var(--vscode-focusBorder); }
 /* Severity accent stripe so the list reads at a glance (color, #1). */
-.cp-item-fatal { border-left: 3px solid var(--vscode-errorForeground); padding-left: 9px; }
-.cp-item-nonfatal { border-left: 3px solid var(--vscode-editorWarning-foreground, #cca700); padding-left: 9px; }
+.cp-item-fatal { border-left: 3px solid var(--accent-critical); padding-left: 9px; }
+.cp-item-nonfatal { border-left: 3px solid var(--accent-warning); padding-left: 9px; }
 /* Typography hierarchy (UI #5): bold primary, muted metadata, room to breathe. */
 .cp-title { font-weight: 600; font-size: 12px; line-height: 1.45; margin-bottom: 3px; }
 .cp-meta { font-size: 11px; opacity: 0.65; line-height: 1.4; }
@@ -226,9 +226,9 @@ export function getCrashlyticsPanelStyles(): string {
 .cd-stat { background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background)); border: 1px solid var(--vscode-panel-border); border-radius: 6px; padding: 6px 12px; min-width: 64px; }
 .cd-stat-val { display: block; font-size: 15px; font-weight: 700; line-height: 1.2; }
 .cd-stat-label { display: block; font-size: 10px; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
-.cd-sev-crash { color: var(--vscode-errorForeground); }
-.cd-sev-anr { color: var(--vscode-editorWarning-foreground, #cca700); }
-.cd-sev-nf { color: var(--vscode-descriptionForeground); }
+.cd-sev-crash { color: var(--accent-critical); }
+.cd-sev-anr { color: var(--accent-warning); }
+.cd-sev-nf { color: var(--muted); }
 .cd-back, .cd-copy, .cd-newissue {
     background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground);
     border: none; border-radius: 3px; padding: 3px 10px; font-size: 12px; cursor: pointer; flex: none;
@@ -258,7 +258,8 @@ export function getCrashlyticsPanelStyles(): string {
 .cd-body .group-header { color: var(--vscode-textLink-foreground); font-weight: 600; cursor: pointer; }
 .cd-body .group-header .match-count { color: var(--vscode-descriptionForeground); font-weight: 400; }
 .cd-body .frame-badge { font-size: 10px; padding: 0 4px; border-radius: 3px; margin-right: 6px; font-weight: 700; }
-.cd-body .frame-badge-app { background: var(--vscode-charts-blue, #4daafc); color: var(--vscode-editor-background); }
+/* App-frame badge: blue informational accent fill; editor-background text stays as the legible on-fill color. */
+.cd-body .frame-badge-app { background: var(--accent-info); color: var(--surface-1); }
 .cd-body .frame-badge-fw { background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); opacity: 0.7; }
 .cd-body .frame-app .line-text, .cd-body .frame-app-nosrc .line-text { color: var(--vscode-foreground); }
 .cd-body .frame-fw { opacity: 0.55; }
@@ -285,7 +286,7 @@ export function getCrashlyticsPanelStyles(): string {
 
 /* Frame right-click context menu (#1c). z-index beats the detail overlay (200); position:fixed so it
    escapes the overlay's overflow:hidden. */
-.cd-ctxmenu { position: fixed; z-index: 300; min-width: 160px; padding: 4px 0; font-size: 12px; border-radius: 4px; background: var(--vscode-menu-background, var(--vscode-editorWidget-background)); border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border)); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); }
+.cd-ctxmenu { position: fixed; z-index: 300; min-width: 160px; padding: 4px 0; font-size: 12px; border-radius: 4px; background: var(--vscode-menu-background, var(--vscode-editorWidget-background)); border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border)); box-shadow: var(--shadow-lg); }
 .cd-ctxmenu.u-hidden { display: none; }
 .cd-ctxitem { padding: 4px 14px; cursor: pointer; color: var(--vscode-menu-foreground, var(--vscode-foreground)); white-space: nowrap; }
 .cd-ctxitem:hover { background: var(--vscode-menu-selectionBackground, var(--vscode-list-hoverBackground)); color: var(--vscode-menu-selectionForeground, var(--vscode-foreground)); }
@@ -305,12 +306,12 @@ export function getCrashlyticsPanelStyles(): string {
 .cd-proj { font-size: 11px; }
 /* "May already be fixed" banner — the headline signal that newer releases exist after the affected
    version. Warning-tinted so it reads as actionable, not error. */
-.cd-maybe-fixed { background: var(--vscode-inputValidation-warningBackground); color: var(--vscode-editorWarning-foreground, #cca700); border: 1px solid var(--vscode-inputValidation-warningBorder, var(--vscode-editorWarning-foreground)); border-radius: 5px; padding: 5px 9px; margin: 4px 0 8px; font-weight: 600; }
+.cd-maybe-fixed { background: var(--vscode-inputValidation-warningBackground); color: var(--accent-warning); border: 1px solid var(--vscode-inputValidation-warningBorder, var(--accent-warning)); border-radius: 5px; padding: 5px 9px; margin: 4px 0 8px; font-weight: 600; }
 .cd-proj-label { font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.6; margin: 8px 0 3px; }
 .cd-proj-row { display: flex; gap: 8px; align-items: baseline; padding: 1px 0; }
 .cd-proj-ver, .cd-proj-sha { flex: none; font-family: var(--vscode-editor-font-family, monospace); color: var(--vscode-textLink-foreground); }
 .cd-proj-date { flex: none; opacity: 0.55; min-width: 56px; }
-.cd-proj-tag { flex: none; font-weight: 700; color: var(--vscode-editorWarning-foreground, #cca700); min-width: 44px; }
+.cd-proj-tag { flex: none; font-weight: 700; color: var(--accent-warning); min-width: 44px; }
 .cd-proj-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cd-proj-link { color: var(--vscode-textLink-foreground); text-decoration: none; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
 .cd-proj-link:hover { text-decoration: underline; }
@@ -322,8 +323,9 @@ export function getCrashlyticsPanelStyles(): string {
 .crash-dist-row { display: flex; align-items: center; gap: 8px; font-size: 11px; margin: 3px 0; }
 .crash-dist-name { width: 140px; flex: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .crash-dist-bar-bg { flex: 1; height: 9px; background: var(--vscode-panel-border); border-radius: 5px; overflow: hidden; }
-/* Rounded, subtly-gradient accent bar (UI #1). */
-.crash-dist-bar-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, var(--vscode-charts-blue, #0e70c0), var(--vscode-progressBar-background, #4daafc)); }
+/* Rounded, subtly-gradient accent bar (UI #1). Both stops derive from the blue info accent: a darker
+   mix opens the gradient and the plain accent closes it, so the subtle ramp survives any host theme. */
+.crash-dist-bar-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, color-mix(in srgb, var(--accent-info) 75%, black), var(--accent-info)); }
 .crash-dist-count { width: 76px; flex: none; text-align: right; opacity: 0.8; }
 
 ` + getSetupStyles() + getDiagnosticStyles();

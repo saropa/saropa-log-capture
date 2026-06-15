@@ -64,19 +64,19 @@ export function getAiStyles(): string {
 
 /* --- Read/search operations (dimmed when visible) --- */
 .line.ai-read {
-    --ai-rail-color: var(--vscode-descriptionForeground, #717171);
+    --ai-rail-color: var(--muted);
     opacity: 0.6;
 }
 .line.ai-read .ai-prefix {
-    color: var(--vscode-descriptionForeground, #717171);
+    color: var(--muted);
 }
 
 /* --- System warnings (rate limits, hook blocks) --- */
 .line.ai-system {
-    --ai-rail-color: var(--vscode-editorWarning-foreground, #ff9800);
+    --ai-rail-color: var(--accent-warning);
 }
 .line.ai-system .ai-prefix {
-    color: var(--vscode-editorWarning-foreground, #ff9800);
+    color: var(--accent-warning);
 }
 
 /* --- AI prefix label (e.g., "[AI Edit]") --- */
