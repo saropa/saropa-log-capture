@@ -19,6 +19,7 @@ import {
   type SiblingConnection,
   type SiblingTool,
 } from './suite-connection-status';
+import { readWorkspaceHeadCommit } from './workspace-head-commit';
 
 /** Already-localized tool labels (brand names, not translated). */
 const TOOL_LABEL: Readonly<Record<SiblingTool, string>> = {
@@ -92,14 +93,17 @@ async function notifySilentOnce(context: vscode.ExtensionContext, c: SiblingConn
  */
 export async function maybeNotifySilentSiblings(context: vscode.ExtensionContext): Promise<void> {
   try {
-    let connections = await readSuiteConnections();
+    // Resolve HEAD so a mirror captured at a different commit is judged stale, not trusted as current.
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    const currentCommit = folder ? await readWorkspaceHeadCommit(folder.uri) : undefined;
+    let connections = await readSuiteConnections(currentCommit);
     const silent = connections.filter((c) => c.state === 'silent');
     if (silent.length === 0) {
       return;
     }
     // Self-wire first: a tool we can refresh may stop being silent, sparing the user a notice.
     if (await tryRefreshSilent(silent)) {
-      connections = await readSuiteConnections();
+      connections = await readSuiteConnections(currentCommit);
     }
     for (const c of connections) {
       if (c.state === 'silent') {
