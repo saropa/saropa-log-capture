@@ -35,14 +35,16 @@ export function getTokenStyles(): string {
        behind small body text (orange cannot hold AA at small sizes). */
     --brand: #f97316;
     --brand-2: #ea580c;
-    --brand-glow: rgba(249, 115, 22, 0.18);
+    --brand-glow: rgba(249, 115, 22, 0.20);
     --ring: 0 0 0 3px rgba(249, 115, 22, 0.32);
 
-    /* §3.1 Surfaces — step by depth. In VS Code the editor + widget
-       backgrounds already carry the theme's light/dark elevation, so raised
-       surfaces map to editorWidget / inactiveSelection rather than a hand-mixed
-       step. Never use shadow as the ONLY elevation signal — pair with surface. */
-    --surface-0: var(--vscode-editor-background);
+    /* §3.1 Surfaces — step by depth. --surface-0 is standalone-only and is
+       deliberately NOT defined here: in a webview the page background AND cards
+       are both --surface-1 (--vscode-editor-background), separated by --border,
+       not by a tone change. Raised surfaces map to editorWidget / inactiveSelection,
+       which render close to the editor background in some themes — so lean on the
+       border, never shadow alone, to separate stacked surfaces. Mirrors the
+       canonical chromeTokens() (saropa_lints dashboardChromeStyles.ts). */
     --surface-1: var(--vscode-editor-background);
     --surface-2: var(--vscode-editorWidget-background, var(--vscode-editor-background));
     --surface-3: var(--vscode-editor-inactiveSelectionBackground, var(--vscode-editorWidget-background));
@@ -89,22 +91,23 @@ export function getTokenStyles(): string {
 
     /* §3.9 Elevation — surface step + shadow, paired. In VS Code's flat
        language prefer the widget border + surface step; reserve --shadow-lg for
-       true overlays (popovers, modals, drill-downs). */
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.18), 0 1px 3px rgba(0, 0, 0, 0.22);
-    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.30), 0 10px 30px -8px rgba(0, 0, 0, 0.45);
+       true overlays (popovers, modals, drill-downs). Values mirror chromeTokens(). */
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.10);
+    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.18), 0 10px 30px -8px rgba(0, 0, 0, 0.28);
 
-    /* §3.10 Type scale (modular, ratio ~1.2, 14px base). DASHBOARD surfaces
-       only — the log-line console keeps its monospace --log-font-size and must
-       not consume these. Pair every size with the line-height baked in here. */
+    /* §3.10 Type scale (modular, ratio ~1.2). Anchored to the 13px VS Code host
+       density (NOT the 14px standalone base) so it matches the canonical chrome.
+       DASHBOARD surfaces only — the log-line console keeps its monospace
+       --log-font-size and must not consume these. */
     --text-eyebrow: 11px;
-    --text-caption: 12px;
-    --text-body: 14px;
-    --text-label: 14px;
-    --text-h3: 17px;
-    --text-h2: 20px;
-    --text-h1: 28px;
-    --text-kpi: 34px;
-    --text-kpi-xl: 44px;
+    --text-caption: 11px;
+    --text-body: 13px;
+    --text-label: 13px;
+    --text-h3: 15px;
+    --text-h2: 18px;
+    --text-h1: 22px;
+    --text-kpi: 28px;
+    --text-kpi-xl: 40px;
 
     /* §3.11 Motion. Wrap all non-essential motion in prefers-reduced-motion. */
     --ease: cubic-bezier(0.2, 0.6, 0.2, 1);
