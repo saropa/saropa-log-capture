@@ -179,6 +179,32 @@ export function getOptionsExtraStyles(): string {
     text-decoration: underline;
 }
 
+/* Suggested integrations block (Integrations screen): adapters the project's packages imply but
+   that are not enabled yet, each with an Enable button wired to its checkbox below. */
+.integrations-suite-suggestions { margin: 0 0 14px 0; }
+.suite-suggest-heading { font-size: 12px; font-weight: 600; margin: 0 0 6px 0; }
+.suite-suggest-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 8px;
+    padding: 4px 0;
+    font-size: 12px;
+}
+.suite-suggest-label { font-weight: 600; flex: 0 0 auto; }
+.suite-suggest-reason { flex: 1 1 auto; font-size: 11px; color: var(--vscode-descriptionForeground); }
+.suite-suggest-enable {
+    flex: 0 0 auto;
+    font-size: 11px;
+    cursor: pointer;
+    color: var(--vscode-button-foreground);
+    background: var(--vscode-button-background);
+    border: none;
+    border-radius: 2px;
+    padding: 2px 8px;
+}
+.suite-suggest-enable:hover { background: var(--vscode-button-hoverBackground, var(--vscode-button-background)); }
+
 /* Companion-tool issues block (Integrations screen): the issues the siblings found, or the
    silent-state guidance when a tool is installed but has not shared anything yet. */
 .integrations-suite-issues { margin: 0 0 16px 0; }
