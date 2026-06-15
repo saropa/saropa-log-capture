@@ -26,7 +26,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.0.4]
+
+The log viewer is now fully translated into seven more languages, bringing Spanish, French, Italian, Japanese, Korean, Brazilian Portuguese, and Russian up to 100% completion. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.4/CHANGELOG.md)
 
 ### Changed
 
