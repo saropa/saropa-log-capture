@@ -3,6 +3,7 @@ import { ansiToHtml, escapeHtml } from '../capture/ansi';
 import { SessionMetadataStore } from '../session/session-metadata';
 import { isPlainTextBlankAfterAnsi } from '../misc/blank-line-text';
 import { getSimpleHtmlExportStyles } from './html-export-styles';
+import { getStandaloneFallbackPalette } from './html-export-fallback-palette';
 
 /**
  * Export a .log file to a styled .html file alongside it.
@@ -62,9 +63,10 @@ function buildHtmlDocument(headerHtml: string, bodyHtml: string): string {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Saropa Log Capture</title>
 <style>
+${getStandaloneFallbackPalette()}
 body {
-    background: #1e1e1e;
-    color: #d4d4d4;
+    background: var(--surface-1);
+    color: var(--text);
     font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
     font-size: 13px;
     margin: 0;
@@ -75,16 +77,16 @@ pre { margin: 0; white-space: pre-wrap; word-break: break-all; }
 details { margin-bottom: 16px; }
 summary {
     cursor: pointer;
-    color: #569cd6;
+    color: var(--link);
     font-weight: bold;
     margin-bottom: 4px;
 }
 .header-block {
-    background: #252526;
-    border: 1px solid #3c3c3c;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
     padding: 8px 12px;
     border-radius: 4px;
-    color: #9cdcfe;
+    color: var(--muted);
 }
 .body-block { padding: 0; }
 ${getSimpleHtmlExportStyles()}
