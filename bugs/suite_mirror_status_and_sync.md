@@ -1,6 +1,11 @@
 # Suite mirror status + output synchronization
 
-**Status: Open (plan)**
+**Status: Reference — not an active plan (wound down 2026-06-14).** The suite effort is finished and
+shipped; this is retained for its durable takeaway, the **output-synchronization design** in Part B
+(correlate at read time on `commitSha`; no shared session id; latest-wins single mirror). The
+in-viewer status strip (Part A) is deliberately **not** built — it would be a developer-facing
+plumbing surface, against the goal of the extensions interoperating without extra screens. Kept as
+reference, not as a backlog item.
 **Created:** 2026-06-14
 **Parent:** [plans/107_plan-saropa-suite-orchestration.md](../plans/107_plan-saropa-suite-orchestration.md)
 (Phase 1 verification) and [plans/105_plan-saropa-suite-integration.md](../plans/105_plan-saropa-suite-integration.md)
