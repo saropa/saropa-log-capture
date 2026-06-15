@@ -93,9 +93,12 @@ export const stringsViewerC: Record<string, string> = {
     'viewer.crashlytics.filter.verAbbr': 'Ver',
     'viewer.crashlytics.filter.devAbbr': 'Dev',
     'viewer.crashlytics.filter.osAbbr': 'OS',
+    'viewer.crashlytics.filter.releaseDate': 'Release date (from version code)',
+    'viewer.crashlytics.filter.releaseDateAbbr': 'Date',
     'viewer.crashlytics.sort.label': 'Sort issues by',
     'viewer.crashlytics.sort.events': 'Most events',
     'viewer.crashlytics.sort.users': 'Most users',
+    'viewer.crashlytics.sort.releaseDate': 'Newest release',
     // Crash "Repetitive"/"Regressed" badge labels + tips moved to strings-webview.ts: they render
     // client-side via vt() and must be in the webview __VT map, or they show as raw keys to users.
     'viewer.crashlytics.archive': 'Archive (hide locally)',

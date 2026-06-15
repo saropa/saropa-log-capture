@@ -168,7 +168,7 @@ export function getCrashlyticsInteractionsScript(): string {
 
     /* ---- Sidebar filters (#5): compact, client-side over the #cp-issues rows ---- */
     var cpFilterbar = document.getElementById('cp-filterbar');
-    var cpKind = 'all', cpSearchText = '', cpFVer = '', cpFDev = '', cpFOs = '', cpIndexRequested = false;
+    var cpKind = 'all', cpSearchText = '', cpFVer = '', cpFRel = '', cpFDev = '', cpFOs = '', cpIndexRequested = false;
     var cpRegexOn = false, cpRegexObj = null;
     /* Sort key for the issue list. The API returns issues already ordered by event count desc, so
        'events' reproduces the server order; 'users' re-sorts client-side. Sorting reorders the DOM
@@ -202,10 +202,21 @@ export function getCrashlyticsInteractionsScript(): string {
        this just rearranges; it never rebuilds rows or touches their filter display state. */
     function applyCpSort() {
         if (!cpIssuesEl) return;
-        var attr = cpSort === 'users' ? 'data-users' : 'data-events';
         var rows = Array.prototype.slice.call(cpIssuesEl.querySelectorAll('.cp-item'));
-        rows.sort(function(a, b) { return (Number(b.getAttribute(attr)) || 0) - (Number(a.getAttribute(attr)) || 0); });
+        // Release-date sort: newest derived date first; issues with no date sort to the bottom.
+        // ISO YYYY-MM-DD strings compare correctly with localeCompare, so no Date parsing is needed.
+        if (cpSort === 'reldate') {
+            rows.sort(function(a, b) { return cpRowMaxDate(b).localeCompare(cpRowMaxDate(a)); });
+        } else {
+            var attr = cpSort === 'users' ? 'data-users' : 'data-events';
+            rows.sort(function(a, b) { return (Number(b.getAttribute(attr)) || 0) - (Number(a.getAttribute(attr)) || 0); });
+        }
         rows.forEach(function(r) { cpIssuesEl.appendChild(r); });
+    }
+    /* The latest derived release date on a row, or '' when the versionCode is not date-encoded. */
+    function cpRowMaxDate(r) {
+        var vals = (r.getAttribute('data-reldates') || '').split(',').filter(Boolean);
+        return vals.length ? vals.sort()[vals.length - 1] : '';
     }
 
     function cpHas(item, attr, want) { return !want || (item.getAttribute(attr) || '').split(',').indexOf(want) >= 0; }
@@ -218,7 +229,8 @@ export function getCrashlyticsInteractionsScript(): string {
             var ok = archivedOk
                 && (cpKind === 'all' || r.getAttribute('data-kind') === cpKind)
                 && cpSearchMatch(r)
-                && cpHas(r, 'data-versions', cpFVer) && cpHas(r, 'data-devices', cpFDev) && cpHas(r, 'data-os', cpFOs);
+                && cpHas(r, 'data-versions', cpFVer) && cpHas(r, 'data-reldates', cpFRel)
+                && cpHas(r, 'data-devices', cpFDev) && cpHas(r, 'data-os', cpFOs);
             r.style.display = ok ? '' : 'none';
         }
     }
@@ -242,6 +254,8 @@ export function getCrashlyticsInteractionsScript(): string {
         cpIndexRequested = false;
         var rows = cpIssuesEl ? cpIssuesEl.querySelectorAll('.cp-item') : [];
         cpFillSelect(document.getElementById('cp-ver'), cpUnion(rows, 'data-versions'));
+        // Release-date dropdown: newest first (reverse the ascending union) so recent releases are on top.
+        cpFillSelect(document.getElementById('cp-reldate'), cpUnion(rows, 'data-reldates').reverse());
         applyCpSort();
         applyCpFilters();
     }
@@ -284,6 +298,7 @@ export function getCrashlyticsInteractionsScript(): string {
             cpUpdateSearch(s.value);
         });
         var ver = document.getElementById('cp-ver'); if (ver) ver.addEventListener('change', function() { cpFVer = ver.value; applyCpFilters(); });
+        var rel = document.getElementById('cp-reldate'); if (rel) rel.addEventListener('change', function() { cpFRel = rel.value; applyCpFilters(); });
         var dev = document.getElementById('cp-dev'); if (dev) dev.addEventListener('change', function() { cpFDev = dev.value; applyCpFilters(); });
         var os = document.getElementById('cp-os'); if (os) os.addEventListener('change', function() { cpFOs = os.value; applyCpFilters(); });
         var sort = document.getElementById('cp-sort'); if (sort) sort.addEventListener('change', function() { cpSort = sort.value; applyCpSort(); });

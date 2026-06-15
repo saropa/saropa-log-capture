@@ -11,6 +11,7 @@ import {
     getTroubleshootingRowsForStep,
 } from '../../../modules/crashlytics/crashlytics-troubleshooting';
 import { getCrashlyticsHelpSections } from '../../../modules/crashlytics/crashlytics-help-content';
+import { parseVersionDate } from '../../../modules/crashlytics/version-date';
 
 export interface SerializeContextExtras {
     /** OS-specific install one-liner for gcloud (e.g. winget on Windows). */
@@ -74,6 +75,10 @@ export function serializeContext(ctx: FirebaseContext, extras?: SerializeContext
             isFatal: i.isFatal, state: i.state, repetitive: i.repetitive, regressed: i.regressed,
             eventCount: i.eventCount, userCount: i.userCount,
             firstVersion: i.firstVersion, lastVersion: i.lastVersion,
+            // Release date derived from the versionCode (e.g. 2026012501 → 2026-01-25), or undefined
+            // when the code is not date-encoded. Drives the panel's date display, filter, and sort.
+            firstReleaseDate: parseVersionDate(i.firstVersion)?.ymd,
+            lastReleaseDate: parseVersionDate(i.lastVersion)?.ymd,
             archived: archivedSet.has(i.id),
         })),
         consoleUrl: ctx.consoleUrl,

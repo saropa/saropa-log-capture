@@ -28,6 +28,10 @@ cspell:disable
 
 ## [Unreleased]
 
+### Added
+
+- **Crashlytics issues can now be filtered and sorted by release date derived from the version code:** Many teams encode the build date into the Android `versionCode` (e.g. `2026012501` = 2026-01-25, build 01). The Crashlytics view now reads that date — auto-detecting the common encodings (`yyyymmdd`, `ddmmyyyy`, `mmddyyyy`, `yymmdd`, with an optional trailing build-of-day counter) — and shows it next to the version, adds a **Date** filter dropdown, and adds a **Newest release** sort. Detection is conservative: a code is only treated as a date when its digits form a real calendar date in a plausible year window, so plain counters and semantic versions (e.g. `10402`) are left unchanged and excluded from the date filter (plan 108).
+
 ### Fixed
 
 - **CI coverage gate now counts the `node:test` suites it was missing:** The coverage run only instrumented the Mocha (Extension Host) tests; the large body of pure `node:test` suites runs in a separate `node --test` process the coverage hook never saw, so well-tested modules reported 8–15% and dragged the global thresholds under the gate — failing `main` on every push. The coverage run now also executes the `node:test` files over the instrumented build and merges their coverage, lifting measured statements/branches/functions ~46/34/40% → ~51/42/47% (all above the gate) without changing any test. Each `node --test` child writes its own `.nyc_output` file (keyed by pid, since `node --test` forks per file) for `nyc report` to merge; plain `npm test` is unaffected.

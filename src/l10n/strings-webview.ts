@@ -95,6 +95,8 @@ export const stringsWebview: Record<string, string> = {
     'viewer.crashlytics.usersOne': '{0} user',
     'viewer.crashlytics.usersMany': '{0} users',
     'viewer.crashlytics.events': '{0} events',
+    // Rendered client-side via vt() in renderIssue, so it must live in the webview __VT map.
+    'viewer.crashlytics.releaseDateTip': 'Release date derived from the app version code',
     'viewer.crashlytics.loadingDetail': 'Loading crash details…',
     // These four crash-badge labels and the three session-info strings below are rendered
     // CLIENT-SIDE via vt(), so they must live in a webview strings file to enter the __VT map.
