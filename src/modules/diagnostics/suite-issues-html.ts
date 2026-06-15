@@ -12,6 +12,7 @@ import * as vscode from 'vscode';
 import { escapeHtml } from '../capture/ansi';
 import { t } from '../../l10n';
 import { readSiblingEnvelope } from './envelope-io';
+import { readWorkspaceHeadCommit } from './workspace-head-commit';
 import { type Diagnostic, type DiagnosticSource } from './saropa-diagnostic-envelope';
 import { DRIFT_ADVISOR_EXTENSION_ID } from '../integrations/drift-advisor-constants';
 import { SAROPA_LINTS_EXTENSION_ID } from '../misc/saropa-lints-api';
@@ -56,12 +57,20 @@ function issueRowHtml(d: Diagnostic): string {
 }
 
 /** Render one tool's section: its issues, or the silent guidance when installed-but-empty. */
-function toolSectionHtml(tool: SuiteToolUi, diagnostics: readonly Diagnostic[] | undefined): string {
+function toolSectionHtml(
+  tool: SuiteToolUi,
+  diagnostics: readonly Diagnostic[] | undefined,
+  stale: boolean,
+): string {
   // Not installed → the existing companion install-link block already covers it; nothing here.
   if (!vscode.extensions.getExtension(tool.extensionId)) {
     return '';
   }
-  const heading = `<div class="suite-issue-tool">${escapeHtml(tool.label)}</div>`;
+  // A mirror captured at a different commit is from older code; flag it so it is not read as current.
+  const staleNote = stale
+    ? ` <span class="suite-issue-stale">${escapeHtml(t('viewer.integrations.suiteStale'))}</span>`
+    : '';
+  const heading = `<div class="suite-issue-tool">${escapeHtml(tool.label)}${staleNote}</div>`;
   // Installed but no mirror → silent: explain why nothing shows and the concrete next step.
   if (!diagnostics) {
     return `<div class="suite-issue-group suite-issue-group-silent">${heading}` +
@@ -80,13 +89,21 @@ function toolSectionHtml(tool: SuiteToolUi, diagnostics: readonly Diagnostic[] |
  * guidance or an empty state rather than erroring.
  */
 export async function buildSuiteIssues(): Promise<SuiteIssuesPayload> {
+  const folder = vscode.workspace.workspaceFolders?.[0];
+  // HEAD is the staleness anchor; when it cannot be resolved, no section is flagged stale (never guess).
+  const currentCommit = folder ? await readWorkspaceHeadCommit(folder.uri) : undefined;
   const envelopes = await Promise.all(TOOLS.map((tool) => readSiblingEnvelope(tool.source)));
   const sections: string[] = [];
   let count = 0;
   for (let i = 0; i < TOOLS.length; i++) {
     const diagnostics = envelopes[i]?.diagnostics;
+    // Commit is uniform within one mirror; the first stamped diagnostic carries it.
+    const capturedCommit = diagnostics?.find((d) => d.commitSha)?.commitSha;
+    const stale = currentCommit !== undefined
+      && capturedCommit !== undefined
+      && capturedCommit !== currentCommit;
     count += diagnostics?.length ?? 0;
-    sections.push(toolSectionHtml(TOOLS[i], diagnostics));
+    sections.push(toolSectionHtml(TOOLS[i], diagnostics, stale));
   }
   const body = sections.filter((s) => s.length > 0).join('');
   const heading = `<div class="suite-issues-heading">${escapeHtml(t('viewer.integrations.suiteIssuesHeading'))}</div>`;

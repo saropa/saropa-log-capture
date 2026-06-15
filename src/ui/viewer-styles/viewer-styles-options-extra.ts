@@ -213,6 +213,7 @@ export function getOptionsExtraStyles(): string {
 .suite-issue-silent { font-size: 11px; color: var(--vscode-descriptionForeground); line-height: 1.4; margin: 2px 0; }
 .suite-issue-group { margin: 0 0 8px 0; }
 .suite-issue-tool { font-size: 11px; font-weight: 600; color: var(--vscode-descriptionForeground); margin: 6px 0 3px 0; }
+.suite-issue-stale { font-weight: 400; font-style: italic; color: var(--vscode-disabledForeground, var(--vscode-descriptionForeground)); }
 .suite-issue-row {
     display: flex;
     flex-wrap: wrap;
