@@ -26,6 +26,17 @@ cspell:disable
 
 ---
 
+## [9.0.3]
+
+More of Saropa Log Capture now speaks your language: the German translation of the log viewer is complete, and nine more languages cover roughly four-fifths of it. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.3/CHANGELOG.md)
+
+### Changed
+
+- **Localization progress across all eleven languages:** The log viewer — the bulk of the interface — is now fully translated into **German** (all 2,021 strings), with **Spanish, French, Italian, Japanese, Korean, Brazilian Portuguese, Russian, Simplified Chinese, and Traditional Chinese** each covering about **80%**. The VS Code chrome (command titles, settings labels, menus) is hand-translated and lags behind on purpose: **German** is at **36%**, **Spanish, Japanese, Korean, and Simplified Chinese** at **35%**, and **French, Italian, Brazilian Portuguese, Russian, and Traditional Chinese** at **21%**. Where a string isn't translated yet it falls back to English, and a one-time notice tells you when your editor's chrome is still largely English.
+- **`translate_l10n.py` now shows live throughput and an ETA, and writes a full error audit file** — each locale's progress bar gained a words-per-minute readout and a remaining-time estimate (`[####....] 42.0%  654/1558  300 wpm  ETA 5:01`), so a multi-hour NLLB run shows how fast it is going and when it will finish, not just a percentage. Throughput is measured from the first translated string onward, so the one-time ~7 GB model-load minute is excluded from the rate; the readout is suppressed for the first sub-second tick to avoid a meaningless number. Every per-string failure across the whole run — network/engine errors and brand-validation rejects alike — is now collected and flushed to a timestamped audit file (`reports/YYYY.MM/YYYY.MM.DD/..._l10n_translation_errors.json`) carrying the untruncated English source and reason per failure, plus per-locale and per-type counts; a clean run writes no file. The inline `WARN` lines stay as before. Build tooling only. ([l10n_actions.py](scripts/modules/verify/l10n_actions.py), [l10n_translator.py](scripts/modules/verify/l10n_translator.py), [l10n_bundle_audit.py](scripts/modules/verify/l10n_bundle_audit.py))
+
+---
+
 ## [9.0.2]
 
 Saropa Log Capture now has an Integrations icon that badges the issues your companion tools found, suggests integrations to turn on based on the packages your project already uses, flags findings left over from an older commit, and can sort Crashlytics issues by the release date hidden in your Android version code. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.2/CHANGELOG.md)
