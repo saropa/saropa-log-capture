@@ -25,7 +25,6 @@ from modules.verify.l10n_bundle_audit import (
     AuditResult,
     run_audit,
     write_audit_report,
-    write_gap_export_sentences,
 )
 from modules.verify.l10n_console import cyan, green, header, red, yellow
 from modules.verify.l10n_translator import (
@@ -194,15 +193,16 @@ def _parse_args() -> argparse.Namespace:
         type=str,
         default="",
         help=(
-            "Reassemble a filled sentence-level gap export (the *_l10n_gaps_"
-            "sentences.json written by the audit) back into the locale bundles."
+            "Reassemble a filled sentence-level export (the *_l10n_failures_"
+            "sentences.json written by a translate run) back into the locale "
+            "bundles."
         ),
     )
     return p.parse_args()
 
 
 def _run_import(path_str: str) -> int:
-    """Reassemble a filled sentence-level gap export into the locale bundles."""
+    """Reassemble a filled sentence-level failures export into the locale bundles."""
     path = Path(path_str)
     if not path.exists():
         print(red(f"  Import file not found: {path}"))
@@ -218,14 +218,16 @@ def _run_import(path_str: str) -> int:
     return 0
 
 
-def _write_report_with_json_gaps(audit: AuditResult) -> None:
-    """Write the audit report and, when gaps exist, the sentence-level gap export."""
+def _write_audit_report(audit: AuditResult) -> None:
+    """Write the timestamped audit report.
+
+    No gaps export: the fillable export a translator works from is the FAILURES
+    export written by run_translate (the strings the engine could not produce).
+    The audit report itself still carries the per-locale gap counts/entries for
+    CI and diagnostics.
+    """
     report_path = write_audit_report(audit)
     print(f"\n  Audit report: {cyan(str(report_path))}")
-    if audit.has_gaps:
-        gap_path = write_gap_export_sentences(audit)
-        if gap_path:
-            print(f"  Gap export:   {cyan(str(gap_path))}")
 
 
 def _resolve_targets(args: argparse.Namespace) -> list[str] | None:
@@ -256,7 +258,7 @@ def run_non_interactive() -> int:
     print_audit(audit)
 
     if args.run_mode == "audit":
-        _write_report_with_json_gaps(audit)
+        _write_audit_report(audit)
         # Missing-from-bundle is a hard failure for CI; gaps alone are not.
         return 1 if audit.missing_from_bundle else 0
 
@@ -270,5 +272,5 @@ def run_non_interactive() -> int:
     final = run_audit()
     print()
     print_audit(final)
-    _write_report_with_json_gaps(final)
+    _write_audit_report(final)
     return 0
