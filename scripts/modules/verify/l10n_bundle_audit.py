@@ -444,6 +444,47 @@ def write_audit_report(audit: AuditResult) -> Path:
     return report_path
 
 
+def write_translation_error_audit(records: list[dict[str, str]]) -> Path:
+    """Write per-string translation failures as timestamped JSON under reports/.
+
+    Mirrors ``write_audit_report``'s path convention so a run's error log sits
+    beside its audit:
+      reports/YYYY.MM/YYYY.MM.DD/YYYYMMDD_HHMMSS_l10n_translation_errors.json
+
+    Each record carries the full (untruncated) English source and a reason, so
+    the file is actionable for re-translation. ``by_locale`` / ``by_type`` give a
+    scan-first summary before the detail list. Callers invoke this only when
+    ``records`` is non-empty, so it always produces a file. Returns its path.
+    """
+    now = datetime.now()
+    month_dir = REPORTS_DIR / now.strftime("%Y.%m")
+    day_dir = month_dir / now.strftime("%Y.%m.%d")
+    day_dir.mkdir(parents=True, exist_ok=True)
+
+    filename = now.strftime("%Y%m%d_%H%M%S") + "_l10n_translation_errors.json"
+    report_path = day_dir / filename
+
+    by_locale: dict[str, int] = {}
+    by_type: dict[str, int] = {}
+    for rec in records:
+        by_locale[rec["locale"]] = by_locale.get(rec["locale"], 0) + 1
+        by_type[rec["type"]] = by_type.get(rec["type"], 0) + 1
+
+    payload: dict[str, object] = {
+        "generated": now.isoformat(timespec="seconds"),
+        "total_errors": len(records),
+        "by_locale": dict(sorted(by_locale.items())),
+        "by_type": dict(sorted(by_type.items())),
+        "errors": records,
+    }
+
+    report_path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    return report_path
+
+
 # ---------------------------------------------------------------------------
 # Gap export — CSV / JSON for reimporting failed translations
 # ---------------------------------------------------------------------------

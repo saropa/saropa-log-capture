@@ -26,6 +26,7 @@ Translations that mangle brands are rejected and retried once.
 """
 
 import json
+import re
 import socket
 import sys
 import time
@@ -36,6 +37,7 @@ from modules.verify.l10n_bundle_audit import (
     L10N_DIR,
     extract_all_source_strings,
 )
+from modules.verify.l10n_console import red, yellow
 from modules.verify.l10n_brands import (
     is_acronym_only,
     is_brand_only,
@@ -96,6 +98,43 @@ _BACKOFF_BASE_SECONDS = 2.0
 # English for the rest and let the caller stop further locales.
 _CONSECUTIVE_FAILURE_LIMIT = 5
 
+# Sentence-level translation (default ON). A multi-sentence source string is
+# translated one sentence at a time and rejoined, instead of being sent to the
+# engine as a whole paragraph. Both engines — NLLB especially — produce
+# materially better output on single sentences: long paragraphs risk silent
+# truncation at the model's token limit and cross-sentence context bleed. Held
+# as module state set once per run (see set_sentence_mode) rather than threaded
+# through the whole translate call chain, which already sits at the param limit.
+_translate_by_sentence_enabled = True
+
+
+def set_sentence_mode(enabled: bool) -> None:
+    """Enable (default) or disable sentence-by-sentence translation for the run.
+
+    Disabled = paragraph mode: each source string goes to the engine as one
+    unit, the prior behavior. The CLI exposes this via --paragraph-mode.
+    """
+    global _translate_by_sentence_enabled  # noqa: PLW0603
+    _translate_by_sentence_enabled = enabled
+
+
+# Split on whitespace that directly follows a sentence terminator (. ! ?),
+# capturing the whitespace so "".join(parts) reproduces the source exactly —
+# original spacing and newlines survive verbatim. Known limitation: a string
+# like "e.g. foo" over-splits at the abbreviation; UI copy rarely hits this, and
+# paragraph mode is the escape hatch when it matters.
+_SENTENCE_SPLIT_RE = re.compile(r"((?<=[.!?])\s+)")
+
+
+def _split_sentences(text: str) -> list[str]:
+    """Split text into alternating sentence and whitespace-separator segments.
+
+    Whitespace-only segments are the captured separators (passed through
+    untranslated); the rest are sentences. Returns a single-element list when
+    the text has no internal sentence boundary.
+    """
+    return [seg for seg in _SENTENCE_SPLIT_RE.split(text) if seg != ""]
+
 
 def _load_bundle(locale: str) -> tuple[Path, dict[str, str]]:
     """Load a locale bundle, returning (path, data). Empty dict if missing."""
@@ -115,26 +154,24 @@ def _save_bundle(path: Path, data: dict[str, str]) -> None:
     tmp.replace(path)
 
 
-def _translate_one(
-    translator: object,
-    en_key: str,
-) -> str | None:
-    """Translate one string with brand shielding.
+def _translate_segment(translator: object, segment: str) -> str | None:
+    """Translate one segment (a sentence, or a whole string in paragraph mode).
 
-    Returns the translated string with brands restored, or None on failure.
-    Brand-only strings are returned as-is (identity = correct translation).
+    Applies brand shielding + validation. Returns the translated text with brands
+    restored, or None on failure. Brand-only segments are returned as-is
+    (identity = correct translation).
     """
-    if is_brand_only(en_key):
-        return en_key
+    if is_brand_only(segment):
+        return segment
 
-    shielded, replacements = shield_brands(en_key)
+    shielded, replacements = shield_brands(segment)
 
-    # If the entire string became placeholders (rare), just return as-is.
+    # If the entire segment became placeholders (rare), just return as-is.
     stripped = shielded
     for placeholder, _ in replacements:
         stripped = stripped.replace(placeholder, "").strip()
     if not stripped:
-        return en_key
+        return segment
 
     result = translator.translate(shielded)  # type: ignore[union-attr]
     if not result or not result.strip():
@@ -143,18 +180,56 @@ def _translate_one(
     restored = unshield_brands(result.strip(), replacements)
 
     # Validate: every brand in the original must survive in the translation.
-    mangled = validate_brands(en_key, restored)
+    mangled = validate_brands(segment, restored)
     if mangled:
         # One retry: Google sometimes handles it better on a second attempt.
         result2 = translator.translate(shielded)  # type: ignore[union-attr]
         if result2 and result2.strip():
             restored2 = unshield_brands(result2.strip(), replacements)
-            if not validate_brands(en_key, restored2):
+            if not validate_brands(segment, restored2):
                 return restored2
         # Retry also failed — return None so caller keeps English.
         return None
 
     return restored
+
+
+def _translate_segments(translator: object, segments: list[str]) -> str | None:
+    """Translate each sentence segment, passing separators through, then rejoin.
+
+    Returns None if any sentence fails: a paragraph that is half-English,
+    half-translated reads worse than a clean English fallback the caller can
+    retry on a later run.
+    """
+    out: list[str] = []
+    for seg in segments:
+        # Whitespace-only segments are inter-sentence separators — keep verbatim
+        # so original spacing/newlines survive; never send them to the engine.
+        if not seg.strip():
+            out.append(seg)
+            continue
+        translated = _translate_segment(translator, seg)
+        if translated is None:
+            return None
+        out.append(translated)
+    return "".join(out)
+
+
+def _translate_one(
+    translator: object,
+    en_key: str,
+) -> str | None:
+    """Translate one string with brand shielding.
+
+    In sentence mode (default), a multi-sentence string is translated one
+    sentence at a time and rejoined; paragraph mode sends it as one unit. Returns
+    the translated string with brands restored, or None on failure.
+    """
+    if _translate_by_sentence_enabled and not is_brand_only(en_key):
+        segments = _split_sentences(en_key)
+        if len(segments) > 1:
+            return _translate_segments(translator, segments)
+    return _translate_segment(translator, en_key)
 
 
 def _translate_with_retry(translator: object, en_key: str) -> str | None:
@@ -178,6 +253,31 @@ def _translate_with_retry(translator: object, en_key: str) -> str | None:
     raise last_exc
 
 
+def _record_error(
+    error_sink: list[dict[str, str]] | None,
+    locale: str,
+    en_key: str,
+    err_type: str,
+    detail: str,
+) -> None:
+    """Append one translation failure to the run's error audit sink.
+
+    The sink is a flat list the caller persists to a timestamped audit file at
+    the end of the run. Every failure is captured in full (untruncated English
+    source + reason) so the audit is actionable; the on-screen WARN line stays
+    truncated for readability. No-op when no sink was provided (e.g. the publish
+    pipeline, which collects errors via its own audit path).
+    """
+    if error_sink is None:
+        return
+    error_sink.append({
+        "locale": locale,
+        "type": err_type,
+        "en": en_key,
+        "detail": detail,
+    })
+
+
 def _apply_translation(
     translator: object,
     en_key: str,
@@ -185,6 +285,7 @@ def _apply_translation(
     locale: str,
     *,
     keep_existing_on_failure: bool = False,
+    error_sink: list[dict[str, str]] | None = None,
 ) -> str:
     """Translate one key into ``bundle``; return its outcome status.
 
@@ -202,17 +303,28 @@ def _apply_translation(
     low-quality upgrade pass: a failed NLLB upgrade of an existing Google
     translation must keep the Google text, never overwrite a real translation
     with English (which would be strictly worse than the value it replaced).
+
+    ``error_sink``, when given, collects every non-"ok" outcome for the run's
+    error audit file.
     """
     try:
         result = _translate_with_retry(translator, en_key)
     except Exception as exc:
         print(f"    WARN [{locale}]: {en_key[:50]}... -> {exc}")
+        _record_error(error_sink, locale, en_key, "net_fail", str(exc))
         if not keep_existing_on_failure:
             bundle[en_key] = en_key
         return "net_fail"
     if result:
         bundle[en_key] = result
         return "ok"
+    # Network call succeeded but the result was empty or failed brand
+    # validation (a brand name was mangled in the translation). Both reduce to
+    # a None return here, so the audit reason names both possibilities.
+    _record_error(
+        error_sink, locale, en_key, "validate_fail",
+        "empty result or brand validation rejected",
+    )
     if not keep_existing_on_failure:
         bundle[en_key] = en_key
     return "validate_fail"
@@ -238,8 +350,14 @@ def _announce_engine(engine: str) -> None:
     _engine_announced = True
     if engine == "nllb":
         print("  Engine: NLLB-200-3.3B (offline, higher quality, no rate limits)")
-    else:
-        print(f"  Engine: Google Translate — {nllb_cache_hint()}")
+        return
+    # Falling back to Google is NOT silent: NLLB is the preferred engine, so the
+    # operator is told loudly that the lower-quality online path is in use and
+    # given the exact command to enable NLLB. cache_hint() now names the real
+    # blocker (deps / missing model / cached-but-no-device), not a guess.
+    print(red("  ⚠ WARNING: NOT using offline NLLB — falling back to Google Translate"))
+    print(red("    (lower quality, network rate-limited)."))
+    print(yellow(f"    To enable NLLB: {nllb_cache_hint()}"))
 
 
 def _make_translator(locale: str) -> tuple[object, str] | None:
@@ -262,7 +380,9 @@ def _make_translator(locale: str) -> tuple[object, str] | None:
             _announce_engine("nllb")
             return translator, "nllb"
         except NllbUnavailable as exc:
-            print(f"  NLLB unavailable for '{locale}' ({exc}); using Google.")
+            # Per-device reasons (captured by the cascade) so the operator sees
+            # the real cause here; the loud warning + fix print in _announce_engine.
+            print(yellow(f"  ⚠ NLLB could not load for '{locale}': {exc}"))
 
     try:
         from deep_translator import GoogleTranslator
@@ -349,7 +469,8 @@ def translate_locale(
     *,
     dry_run: bool = False,
     scope: str = "gaps",
-    on_progress: Callable[[int, int], None] | None = None,
+    on_progress: Callable[[int, int, int], None] | None = None,
+    error_sink: list[dict[str, str]] | None = None,
 ) -> tuple[int, int, int, int, bool]:
     """Translate strings for one locale under ``scope`` (see ``_key_action``).
 
@@ -360,8 +481,15 @@ def translate_locale(
     in the locale's provenance sidecar; a failed low-quality upgrade keeps the
     existing value rather than overwriting a real translation with English.
 
-    on_progress, if given, is called as on_progress(done, total) after every
-    translation attempt so callers can render a live counter.
+    on_progress, if given, is called as on_progress(done, total, words) after
+    every translation attempt so callers can render a live counter, throughput
+    (words-per-minute), and an ETA. ``words`` is the running sum of source-word
+    counts across every attempted key — it tracks engine throughput, so it
+    includes failed attempts (they still consumed time) and excludes the NLLB
+    model-load phase, which happens before the first attempt.
+
+    error_sink, if given, collects one record per non-"ok" outcome (net_fail /
+    validate_fail) so the caller can persist a run-wide error audit file.
 
     Returns (translated, kept, brand, errors, aborted).
       translated = newly translated (or upgraded) this run.
@@ -383,6 +511,10 @@ def translate_locale(
     errors = 0
     aborted = False
     consecutive_failures = 0
+    # Running source-word total for the throughput (WPM) readout. Counts words
+    # of every key sent to the engine, success or failure, so WPM reflects real
+    # processing rate rather than only successful output.
+    words_done = 0
 
     # Denominator for on_progress — mirror the loop's per-key decision exactly,
     # so the live counter reads "done/total" and never overshoots its total.
@@ -446,6 +578,7 @@ def translate_locale(
             status = _apply_translation(
                 translator, en_key, bundle, locale,
                 keep_existing_on_failure=(scope == "low_quality"),
+                error_sink=error_sink,
             )
             if status == "ok":
                 translated += 1
@@ -461,8 +594,9 @@ def translate_locale(
 
             # Report progress before any early break so the final count shows.
             attempted += 1
+            words_done += len(en_key.split())
             if on_progress is not None:
-                on_progress(attempted, total_todo)
+                on_progress(attempted, total_todo, words_done)
 
             if status == "net_fail" and consecutive_failures >= _CONSECUTIVE_FAILURE_LIMIT:
                 aborted = True
