@@ -8,6 +8,7 @@
  * Terminal tabs). Panel-scoped elements use --vscode-panel-background to
  * blend seamlessly with the surrounding panel chrome.
  */
+import { getTokenStyles } from './viewer-styles-tokens';
 import { getContentStyles } from './viewer-styles-content';
 import { getNPlusOneSignalStyles } from './viewer-styles-n-plus-one-signal';
 import { getSqlRepeatDrilldownStyles } from './viewer-styles-sql-repeat-drilldown';
@@ -44,7 +45,9 @@ import { getFormatStyles } from './viewer-styles-format';
 import { getFlutterBannerStyles } from './viewer-styles-flutter-banner';
 
 export function getViewerStyles(): string {
-    return /* css */ `
+    // Token :root block is prepended FIRST so every downstream module can
+    // reference the design tokens (--surface-*, --space-*, --accent-*, etc.).
+    return getTokenStyles() + /* css */ `
 /* Utility: hide element without inline style (CSP-friendly) */
 .u-hidden { display: none !important; }
 
