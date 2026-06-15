@@ -29,7 +29,7 @@ export function getSetupStyles(): string {
 }
 .cp-step-done { opacity: 0.9; }
 .cp-step-done .cp-step-num {
-    background: var(--vscode-testing-iconPassed, #388e3c);
+    background: var(--status-good);
     color: var(--vscode-button-foreground);
     border-color: transparent;
 }
@@ -48,8 +48,8 @@ export function getSetupStyles(): string {
 .cp-conn-test-btn { width: 100%; text-align: center; }
 .cp-conn-report { margin-top: 8px; }
 .cp-conn-checking { font-size: 12px; opacity: 0.8; padding: 4px 0; }
-.cp-conn-ok { color: var(--vscode-testing-iconPassed, #388e3c); font-weight: 600; margin-bottom: 6px; }
-.cp-conn-bad { color: var(--vscode-errorForeground); font-weight: 600; margin-bottom: 6px; }
+.cp-conn-ok { color: var(--status-good); font-weight: 600; margin-bottom: 6px; }
+.cp-conn-bad { color: var(--status-bad); font-weight: 600; margin-bottom: 6px; }
 .cp-conn-step {
     padding: 6px 8px;
     margin: 4px 0;
@@ -57,8 +57,8 @@ export function getSetupStyles(): string {
     border-radius: 3px;
     background: var(--vscode-textBlockQuote-background);
 }
-.cp-conn-pass { border-left-color: var(--vscode-testing-iconPassed, #388e3c); }
-.cp-conn-fail { border-left-color: var(--vscode-errorForeground); }
+.cp-conn-pass { border-left-color: var(--status-good); }
+.cp-conn-fail { border-left-color: var(--status-bad); }
 .cp-conn-skipped { opacity: 0.7; }
 .cp-conn-head { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 12px; }
 .cp-conn-detail { font-size: 12px; opacity: 0.9; margin-top: 2px; }

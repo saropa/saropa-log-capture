@@ -8,80 +8,83 @@ export function getSignalReportStyles(): string {
   return /* css */ `
 body {
     font-family: var(--vscode-font-family, system-ui, sans-serif);
-    font-size: 13px;
+    font-size: var(--text-body);
     line-height: 1.5;
-    color: var(--vscode-foreground);
-    background: var(--vscode-editor-background);
-    padding: 12px 16px;
+    color: var(--text);
+    background: var(--surface-1);
+    padding: var(--space-3) var(--space-4);
     margin: 0;
 }
 h1 {
-    font-size: 16px;
+    font-size: var(--text-h3);
     font-weight: 600;
-    margin: 0 0 4px;
+    margin: 0 0 var(--space-1);
 }
 .signal-summary {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    margin: 0 0 12px;
+    gap: var(--space-2);
+    font-size: var(--text-body);
+    margin: 0 0 var(--space-3);
 }
 h2 {
-    font-size: 14px;
+    /* Section heading: no exact 14px token on the scale; --text-h3 (15px) is the
+       nearest heading-role step above body, keeping h2 visibly larger than body text. */
+    font-size: var(--text-h3);
     font-weight: 600;
-    margin: 16px 0 8px;
-    color: var(--vscode-foreground);
-    border-bottom: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
-    padding-bottom: 4px;
+    margin: var(--space-4) 0 var(--space-2);
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: var(--space-1);
 }
 .conf-badge {
     display: inline-block;
-    font-size: 12px;
+    font-size: var(--text-caption);
     padding: 1px 6px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-weight: 600;
     border: 1px solid;
 }
+/* Confidence tiers map to severity: high=critical (host error), medium=warning, low=neutral muted — tints track the host theme via color-mix. */
 .conf-badge--high {
-    background: rgba(255, 80, 80, 0.18);
-    color: #f14c4c;
-    border-color: #f14c4c;
-    box-shadow: 0 0 6px rgba(241, 76, 76, 0.25);
+    background: color-mix(in srgb, var(--accent-critical) 18%, transparent);
+    color: var(--accent-critical);
+    border-color: var(--accent-critical);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--accent-critical) 25%, transparent);
 }
 .conf-badge--medium {
-    background: rgba(255, 200, 0, 0.18);
-    color: #cca700;
-    border-color: #cca700;
-    box-shadow: 0 0 6px rgba(204, 167, 0, 0.2);
+    background: color-mix(in srgb, var(--accent-warning) 18%, transparent);
+    color: var(--accent-warning);
+    border-color: var(--accent-warning);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--accent-warning) 20%, transparent);
 }
 .conf-badge--low {
-    background: rgba(128, 128, 128, 0.18);
-    color: var(--vscode-foreground);
-    border-color: var(--vscode-widget-border, rgba(128, 128, 128, 0.5));
+    background: color-mix(in srgb, var(--muted) 18%, transparent);
+    color: var(--text);
+    border-color: var(--border);
 }
 /* .section-slot and .section-loading styles live in layout and feedback style modules */
 .evidence-block {
-    margin: 8px 0;
-    border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
-    border-radius: 4px;
+    margin: var(--space-2) 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
     overflow: hidden;
     /* Subtle warm glow on the block that contains the actual evidence */
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--shadow);
 }
 .evidence-header {
-    background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
-    padding: 4px 8px;
-    font-size: 11px;
-    color: var(--vscode-descriptionForeground);
-    border-bottom: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+    background: var(--surface-2);
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--text-caption);
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
 }
 .evidence-meta {
-    padding: 4px 8px;
-    font-size: 11px;
-    color: var(--vscode-descriptionForeground);
-    background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
-    border-bottom: 1px solid var(--vscode-widget-border, rgba(128, 128, 128, 0.15));
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--text-caption);
+    color: var(--muted);
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
 }
 .evidence-lines {
     font-family: var(--vscode-editor-font-family, 'Consolas', monospace);
@@ -91,12 +94,13 @@ h2 {
     margin: 0;
 }
 .evidence-line {
-    padding: 1px 8px;
+    padding: 1px var(--space-2);
     white-space: pre-wrap;
     word-break: break-all;
 }
 .evidence-line--target {
-    background: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 92, 0, 0.25));
+    /* Fall back to a brand-tinted highlight when the host find-match color is absent. */
+    background: var(--vscode-editor-findMatchHighlightBackground, color-mix(in srgb, var(--brand-2) 25%, transparent));
     font-weight: 600;
 }
 .evidence-line-num {
@@ -108,69 +112,69 @@ h2 {
     user-select: none;
 }
 .no-data {
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-style: italic;
-    font-size: 12px;
-    padding: 8px 0;
+    font-size: var(--text-caption);
+    padding: var(--space-2) 0;
 }
 details {
-    margin: 4px 0;
+    margin: var(--space-1) 0;
 }
 details summary {
     cursor: pointer;
     font-weight: 500;
-    padding: 4px 0;
+    padding: var(--space-1) 0;
     user-select: none;
 }
 details summary:hover {
-    color: var(--vscode-textLink-foreground);
+    color: var(--link);
 }
 .recommendation {
-    padding: 8px 12px;
-    margin: 8px 0;
-    border-left: 3px solid var(--vscode-textLink-foreground, #3794ff);
-    background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
-    border-radius: 0 4px 4px 0;
-    font-size: 12px;
+    padding: var(--space-2) var(--space-3);
+    margin: var(--space-2) 0;
+    border-left: 3px solid var(--link);
+    background: var(--surface-2);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: var(--text-caption);
 }
 .copy-btn {
-    border: 1px solid var(--vscode-button-secondaryBorder, var(--vscode-widget-border));
-    border-radius: 2px;
-    background: var(--vscode-button-secondaryBackground, rgba(90, 93, 94, 0.31));
-    color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
-    font-size: 11px;
-    padding: 4px 10px;
+    border: 1px solid var(--vscode-button-secondaryBorder, var(--border));
+    border-radius: var(--radius-sm);
+    background: var(--vscode-button-secondaryBackground, color-mix(in srgb, var(--muted) 31%, transparent));
+    color: var(--vscode-button-secondaryForeground, var(--text));
+    font-size: var(--text-caption);
+    padding: var(--space-1) 10px;
     cursor: pointer;
-    margin: 8px 0;
+    margin: var(--space-2) 0;
 }
 .copy-btn:hover {
-    background: var(--vscode-button-secondaryHoverBackground, rgba(90, 93, 94, 0.5));
+    background: var(--vscode-button-secondaryHoverBackground, color-mix(in srgb, var(--muted) 50%, transparent));
 }
 .btn-row {
     display: flex;
-    gap: 8px;
-    margin: 8px 0;
+    gap: var(--space-2);
+    margin: var(--space-2) 0;
 }
 .related-summary {
     font-weight: 500;
-    margin: 8px 0 4px;
+    margin: var(--space-2) 0 var(--space-1);
 }
 .related-list {
-    border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
-    border-radius: 4px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
     overflow: hidden;
-    margin: 4px 0 8px;
+    margin: var(--space-1) 0 var(--space-2);
     max-height: 400px;
     overflow-y: auto;
 }
 .related-item {
     display: flex;
     align-items: baseline;
-    gap: 8px;
-    padding: 3px 8px;
+    gap: var(--space-2);
+    padding: 3px var(--space-2);
     font-family: var(--vscode-editor-font-family, 'Consolas', monospace);
     font-size: var(--vscode-editor-font-size, 12px);
-    border-bottom: 1px solid var(--vscode-widget-border, rgba(128, 128, 128, 0.15));
+    border-bottom: 1px solid var(--border);
 }
 .related-item:last-child {
     border-bottom: none;
@@ -183,8 +187,8 @@ details summary:hover {
 }
 .related-badge {
     flex-shrink: 0;
-    font-size: 11px;
-    color: var(--vscode-descriptionForeground);
+    font-size: var(--text-caption);
+    color: var(--muted);
     font-weight: 500;
 }
 .related-excerpt {
@@ -194,21 +198,21 @@ details summary:hover {
     flex: 1;
 }
 .related-overflow {
-    padding: 4px 8px;
-    color: var(--vscode-descriptionForeground);
+    padding: var(--space-1) var(--space-2);
+    color: var(--muted);
     font-style: italic;
-    font-size: 12px;
+    font-size: var(--text-caption);
 }
 .overview-row {
     display: flex;
-    gap: 8px;
+    gap: var(--space-2);
     padding: 2px 0;
-    font-size: 12px;
+    font-size: var(--text-caption);
 }
 .overview-label {
     flex-shrink: 0;
     min-width: 8ch;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 .overview-value {
     word-break: break-all;
@@ -216,8 +220,8 @@ details summary:hover {
 .overview-stats {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    margin: 8px 0;
+    gap: var(--space-3);
+    margin: var(--space-2) 0;
 }
 .overview-stat {
     display: flex;
@@ -225,38 +229,39 @@ details summary:hover {
     align-items: center;
     min-width: 60px;
     padding: 6px 10px;
-    border: 1px solid var(--vscode-widget-border, rgba(128, 128, 128, 0.3));
-    border-radius: 4px;
-    background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
     transition: border-color 0.15s ease, transform 0.15s ease;
 }
 .overview-stat:hover {
-    border-color: var(--vscode-textLink-foreground, #3794ff);
+    border-color: var(--link);
     transform: translateY(-1px);
 }
 .stat-count {
-    font-size: 18px;
+    font-size: var(--text-h2);
     font-weight: 700;
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 .stat-label {
-    font-size: 10px;
-    color: var(--vscode-descriptionForeground);
+    /* No 10px token; --text-caption (11px) is the smallest type-scale step. */
+    font-size: var(--text-caption);
+    color: var(--muted);
     text-align: center;
 }
 .detail-grid {
-    margin: 8px 0;
+    margin: var(--space-2) 0;
 }
 .detail-row {
     display: flex;
-    gap: 8px;
+    gap: var(--space-2);
     padding: 2px 0;
-    font-size: 12px;
+    font-size: var(--text-caption);
 }
 .detail-label {
     flex-shrink: 0;
     min-width: 14ch;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-weight: 500;
 }
 .detail-value {
@@ -265,30 +270,30 @@ details summary:hover {
 .detail-subheading {
     font-weight: 500;
     margin: 6px 0 2px;
-    font-size: 12px;
+    font-size: var(--text-caption);
 }
 .detail-factor {
-    padding: 1px 0 1px 12px;
-    font-size: 12px;
-    color: var(--vscode-foreground);
+    padding: 1px 0 1px var(--space-3);
+    font-size: var(--text-caption);
+    color: var(--text);
 }
 .other-signal {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 4px 0;
-    font-size: 12px;
+    gap: var(--space-2);
+    padding: var(--space-1) 0;
+    font-size: var(--text-caption);
 }
 .other-signal-text {
     flex: 1;
     word-break: break-word;
 }
 /* Cross-session history section */
-.history-summary { margin-bottom: 8px; color: var(--vscode-descriptionForeground); font-size: 13px; }
+.history-summary { margin-bottom: var(--space-2); color: var(--muted); font-size: var(--text-body); }
 .history-session-list { max-height: 300px; overflow-y: auto; }
-.history-session-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; cursor: pointer; border-radius: 3px; font-size: 12px; }
+.history-session-row { display: flex; justify-content: space-between; align-items: center; padding: var(--space-1) var(--space-2); cursor: pointer; border-radius: var(--radius-sm); font-size: var(--text-caption); }
 .history-session-row:hover { background: var(--vscode-list-hoverBackground); }
 .history-session-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.history-session-date { flex-shrink: 0; color: var(--vscode-descriptionForeground); margin-left: 12px; }
+.history-session-date { flex-shrink: 0; color: var(--muted); margin-left: var(--space-3); }
 ` + getLayoutStyles() + getFeedbackStyles() + getEcosystemStyles();
 }

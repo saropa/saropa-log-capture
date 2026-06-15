@@ -6,6 +6,7 @@
 import { escapeHtml } from '../../modules/capture/ansi';
 import { t } from '../../l10n';
 import { getSignalReportStyles } from './signal-report-styles';
+import { getTokenStyles } from '../viewer-styles/viewer-styles-tokens';
 import type { RootCauseHypothesis } from '../../modules/root-cause-hints/root-cause-hint-types';
 
 interface ShellOptions {
@@ -36,7 +37,7 @@ export function buildSignalReportShell(opts: ShellOptions): string {
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
-<style nonce="${nonce}">${getSignalReportStyles()}</style>
+<style nonce="${nonce}">${getTokenStyles()}${getSignalReportStyles()}</style>
 </head>
 <body>
 <header class="report-header">
