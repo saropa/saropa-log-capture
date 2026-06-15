@@ -111,5 +111,53 @@ class SentenceModeToggleTests(unittest.TestCase):
         self.assertTrue(translator._translate_by_sentence_enabled)
 
 
+class FailuresExportRoundTripTests(unittest.TestCase):
+    """A failures export must reassemble back through ``import_gap_file``.
+
+    The export carries only the strings the engine could not produce, split into
+    sentences; the importer (which ignores the extra failure_type/detail fields)
+    must rejoin a filled copy losslessly into the right bundle keys. Proven here
+    without touching the real bundles by stubbing the bundle write and pointing
+    the export at a temp reports dir.
+    """
+
+    def test_export_then_filled_import_round_trips(self) -> None:
+        import json
+        import tempfile
+        from modules.verify import l10n_bundle_audit as audit_mod
+
+        records = [
+            {"locale": "fr", "type": "validate_fail", "en": "One. Two.", "detail": "x"},
+            {"locale": "de", "type": "net_fail", "en": "Solo sentence", "detail": "y"},
+        ]
+        captured: dict[str, dict[str, str]] = {}
+        original_reports = audit_mod.REPORTS_DIR
+        original_merge = translator._merge_into_bundle
+        translator._merge_into_bundle = (
+            lambda loc, upd: captured.setdefault(loc, {}).update(upd)
+        )
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                audit_mod.REPORTS_DIR = Path(tmp)
+                export_path = audit_mod.write_failures_export_sentences(records)
+                self.assertIsNotNone(export_path)
+                data = json.loads(Path(export_path).read_text(encoding="utf-8"))
+                self.assertEqual(data["mode"], "failures_sentences")
+                # Fill every sentence (uppercase stands in for a translation).
+                for entry in data["entries"]:
+                    for s in entry["sentences"]:
+                        s["translation"] = str(s["en"]).upper()
+                Path(export_path).write_text(json.dumps(data), encoding="utf-8")
+                written, skipped, locales = translator.import_gap_file(Path(export_path))
+        finally:
+            audit_mod.REPORTS_DIR = original_reports
+            translator._merge_into_bundle = original_merge
+
+        self.assertEqual((written, skipped), (2, 0))
+        self.assertEqual(sorted(locales), ["de", "fr"])
+        self.assertEqual(captured["fr"]["One. Two."], "ONE. TWO.")
+        self.assertEqual(captured["de"]["Solo sentence"], "SOLO SENTENCE")
+
+
 if __name__ == "__main__":
     unittest.main()
