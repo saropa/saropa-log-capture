@@ -1,5 +1,12 @@
 # 105 Saropa Suite Integration — Log Capture side
 
+> **Status: Shipped — reference guide, not an active plan (2026-06-14).** The Log-Capture side of the
+> suite (R1–R5) shipped in Saropa Log Capture and is per-repo unit-tested; the extension is published.
+> The one outstanding check — the live cross-tool handshake against running siblings — is a manual
+> LAUNCH_TEST item (see [guides/suite-handshake-verification.md](guides/suite-handshake-verification.md)),
+> not tracked active work here. This document is retained as the reference for how the Log-Capture side
+> is wired, kept at this path because the sibling repos link it by absolute path.
+
 ## Progress (incremental)
 
 - **Shipped (today, ad-hoc):** SQL Query History shows live **Drift Advisor** database issues and
@@ -238,8 +245,9 @@ live.
 
 ### Plan status (A-MOVE decision)
 
-This plan stays **active** rather than being archived to `plans/history/`. The v1 implementation
-requirements (R1–R5) are complete, but the plan retains open scope — the "Later" items (non-Drift
+This document is retained as a **reference guide** (see the status banner at the top) rather than
+archived to `plans/history/`. The v1 implementation requirements (R1–R5) are complete; the doc retains
+descriptive scope — the "Later" items (non-Drift
 performance signals, broader signal categories, the cross-commit timeline UI) and the cross-repo
 "Shared infrastructure" extraction — and it is the canonical Log-Capture-side coordination document
 referenced by absolute path from the two sibling repositories' just-filed hand-off specs. Archiving it
