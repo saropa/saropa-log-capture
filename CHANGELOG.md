@@ -26,9 +26,19 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+Simplified and Traditional Chinese now fully translate the log viewer — the last machine-translation gaps were filled in by hand. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+
+### Changed
+
+- **Simplified Chinese (zh-cn) and Traditional Chinese (zh-tw) reached 100% of the viewer's strings.** The last strings the machine translator couldn't produce — the Filters and Options panel descriptions, the device/logcat visibility cycle, the copy-path and copy-with-decorations actions, and the Firebase Console hint — were filled in by hand and marked high-quality so future translation passes won't overwrite them. Seven strings imported across the two locales.
+
+---
+
 ## [9.0.4]
 
-The log viewer is now fully translated into seven more languages, bringing Spanish, French, Italian, Japanese, Korean, Brazilian Portuguese, and Russian up to 100% completion. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.4/CHANGELOG.md)
+The log viewer is now fully translated into nine more languages, bringing Spanish, French, Italian, Japanese, Korean, Brazilian Portuguese, Russian, Simplified Chinese, and Traditional Chinese up to 100% completion. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.4/CHANGELOG.md)
 
 ### Changed
 
