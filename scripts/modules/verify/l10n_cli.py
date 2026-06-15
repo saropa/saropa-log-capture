@@ -13,6 +13,7 @@ launcher (UTF-8 setup + pick interactive vs not).
 
 import argparse
 import sys
+from pathlib import Path
 
 from modules.verify.l10n_actions import (
     run_sync,
@@ -24,11 +25,12 @@ from modules.verify.l10n_bundle_audit import (
     AuditResult,
     run_audit,
     write_audit_report,
-    write_gap_export,
+    write_gap_export_sentences,
 )
-from modules.verify.l10n_console import cyan, header, red, yellow
+from modules.verify.l10n_console import cyan, green, header, red, yellow
 from modules.verify.l10n_translator import (
     get_translation_locales,
+    import_gap_file,
     set_sentence_mode,
 )
 
@@ -186,15 +188,42 @@ def _parse_args() -> argparse.Namespace:
             "(engines handle single sentences better than long paragraphs)."
         ),
     )
+    p.add_argument(
+        "--import",
+        dest="import_file",
+        type=str,
+        default="",
+        help=(
+            "Reassemble a filled sentence-level gap export (the *_l10n_gaps_"
+            "sentences.json written by the audit) back into the locale bundles."
+        ),
+    )
     return p.parse_args()
 
 
+def _run_import(path_str: str) -> int:
+    """Reassemble a filled sentence-level gap export into the locale bundles."""
+    path = Path(path_str)
+    if not path.exists():
+        print(red(f"  Import file not found: {path}"))
+        return 1
+    written, skipped, locales = import_gap_file(path)
+    scope = ", ".join(locales) if locales else "none"
+    print(f"  {green(f'Imported {written}')} string(s) into {len(locales)} locale(s): {scope}")
+    if skipped:
+        print(yellow(
+            f"  {skipped} entry(ies) skipped — sentence count mismatch or a blank "
+            "sentence; those keys were left untranslated. Re-fill and re-import."
+        ))
+    return 0
+
+
 def _write_report_with_json_gaps(audit: AuditResult) -> None:
-    """Write the audit report and, when gaps exist, always write the JSON gap export."""
+    """Write the audit report and, when gaps exist, the sentence-level gap export."""
     report_path = write_audit_report(audit)
     print(f"\n  Audit report: {cyan(str(report_path))}")
     if audit.has_gaps:
-        gap_path = write_gap_export(audit, fmt="json")
+        gap_path = write_gap_export_sentences(audit)
         if gap_path:
             print(f"  Gap export:   {cyan(str(gap_path))}")
 
@@ -216,6 +245,10 @@ def _resolve_targets(args: argparse.Namespace) -> list[str] | None:
 def run_non_interactive() -> int:
     """Parse args and run the requested mode. No prompts. Returns the exit code."""
     args = _parse_args()
+    # Import is a standalone action — reassemble a filled gap export and stop,
+    # without running an audit or translation pass.
+    if args.import_file:
+        return _run_import(args.import_file)
     # Sentence mode is the default; --paragraph-mode opts back into whole-string
     # translation. Set before any run_translate so the engine path sees it.
     set_sentence_mode(not args.paragraph_mode)
