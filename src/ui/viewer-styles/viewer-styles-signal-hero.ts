@@ -8,7 +8,7 @@ export function getSignalHeroStyles(): string {
 
 /* Inline add-to-case button on recurring cards */
 .re-add-to-case {
-    margin-right: 4px;
+    margin-right: var(--space-1);
     font-weight: bold;
     cursor: pointer;
 }
@@ -20,23 +20,23 @@ export function getSignalHeroStyles(): string {
 /* Embedded performance panel inside Signal panel */
 .signal-hero-block {
     padding-bottom: 6px;
-    padding-left: 8px;
-    margin-left: -8px;
+    padding-left: var(--space-2);
+    margin-left: calc(-1 * var(--space-2));
     border-left: 3px solid transparent;
     border-bottom: 1px solid var(--vscode-panel-border);
-    margin-bottom: 4px;
+    margin-bottom: var(--space-1);
 }
 
 .signal-hero-block.signal-hero-has-errors {
-    border-left-color: var(--vscode-errorForeground, #f14c4c);
+    border-left-color: var(--vscode-errorForeground, var(--accent-critical));
 }
 
 .signal-hero-block.signal-hero-has-warnings {
-    border-left-color: var(--vscode-editorWarning-foreground, #cca700);
+    border-left-color: var(--vscode-editorWarning-foreground, var(--accent-warning));
 }
 
 .signal-hero-block.signal-hero-has-errors.signal-hero-has-warnings {
-    border-left-color: var(--vscode-errorForeground, #f14c4c);
+    border-left-color: var(--vscode-errorForeground, var(--accent-critical));
 }
 
 /* The error/warning COUNT is the headline of the hero. Without emphasis the whole metric line is
@@ -44,7 +44,7 @@ export function getSignalHeroStyles(): string {
    severity color (and tabular figures so multi-digit counts stay aligned) makes the count the first
    thing the eye lands on. flex-shrink:0 keeps it from collapsing when the hero row is tight. */
 .signal-hero-num {
-    font-size: 13px;
+    font-size: var(--text-body);
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     flex-shrink: 0;
@@ -62,7 +62,7 @@ export function getSignalHeroStyles(): string {
 }
 
 .signal-section-session-details .performance-panel-header {
-    padding: 4px 0 8px;
+    padding: var(--space-1) 0 var(--space-2);
 }
 
 .signal-section-session-details .pp-close {

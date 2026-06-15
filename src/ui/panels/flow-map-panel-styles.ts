@@ -4,9 +4,11 @@
  * are pills in a sticky top bar, and sections are collapsible <details>.
  */
 
+import { getTokenStyles } from '../viewer-styles/viewer-styles-tokens';
+
 /** The full `<style>` block for the panel, nonce-guarded for CSP. */
 export function flowMapStyles(nonce: string): string {
-    return `<style nonce="${nonce}">
+    return `<style nonce="${nonce}">${getTokenStyles()}
   body { font-family: var(--vscode-font-family); font-size: 13.5px; color: var(--vscode-foreground); padding: 0 1.5rem 2.5rem; line-height: 1.55; }
   h1 { font-size: 1.5em; margin: 0.4rem 0 0.25rem; }
   .report-title { margin: 0.6rem 0 0.5rem; }
@@ -15,17 +17,19 @@ export function flowMapStyles(nonce: string): string {
 
   .topbar { position: sticky; top: 0; z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 0.55rem 0; margin-bottom: 0.4rem; background: var(--vscode-editor-background); border-bottom: 1px solid var(--vscode-panel-border); }
   .pills { display: flex; flex-wrap: wrap; gap: 0.4rem; flex: 1 1 auto; }
-  .pill { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.18rem 0.65rem; border-radius: 999px; font-size: 0.85em; background: rgba(127,127,127,0.12); border: 1px solid transparent; white-space: nowrap; }
+  .pill { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.18rem 0.65rem; border-radius: var(--radius-pill); font-size: 0.85em; background: rgba(127,127,127,0.12); border: 1px solid transparent; white-space: nowrap; }
   .pill b { font-variant-numeric: tabular-nums; }
   .pill-link { cursor: pointer; }
   .pill-link:hover { filter: brightness(1.2); }
-  .pill-green { background: rgba(63,185,80,0.16); border-color: rgba(63,185,80,0.4); }
-  .pill-blue { background: rgba(88,166,255,0.16); border-color: rgba(88,166,255,0.4); }
-  .pill-amber { background: rgba(210,153,34,0.16); border-color: rgba(210,153,34,0.4); }
-  .pill-purple { background: rgba(163,113,247,0.16); border-color: rgba(163,113,247,0.4); }
-  .pill-red { background: rgba(224,82,82,0.2); border-color: rgba(224,82,82,0.45); }
+  /* Status pills: derive tint + border from the semantic token so the hue tracks the host theme
+     instead of a baked rgba. Purple has no semantic token; map the "opinionated" category to it. */
+  .pill-green { background: color-mix(in srgb, var(--status-good) 16%, transparent); border-color: color-mix(in srgb, var(--status-good) 40%, transparent); }
+  .pill-blue { background: color-mix(in srgb, var(--accent-info) 16%, transparent); border-color: color-mix(in srgb, var(--accent-info) 40%, transparent); }
+  .pill-amber { background: color-mix(in srgb, var(--accent-warning) 16%, transparent); border-color: color-mix(in srgb, var(--accent-warning) 40%, transparent); }
+  .pill-purple { background: color-mix(in srgb, var(--accent-opinionated) 16%, transparent); border-color: color-mix(in srgb, var(--accent-opinionated) 40%, transparent); }
+  .pill-red { background: color-mix(in srgb, var(--status-bad) 20%, transparent); border-color: color-mix(in srgb, var(--status-bad) 45%, transparent); }
   .topbar-actions { flex: 0 0 auto; display: flex; gap: 0.4rem; }
-  .icon-btn { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 7px; border: 1px solid var(--vscode-button-border, transparent); background: var(--vscode-button-background); color: var(--vscode-button-foreground); cursor: pointer; }
+  .icon-btn { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--radius); border: 1px solid var(--vscode-button-border, transparent); background: var(--vscode-button-background); color: var(--vscode-button-foreground); cursor: pointer; }
   .icon-btn:hover { background: var(--vscode-button-hoverBackground); }
 
   .report-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
@@ -144,13 +148,15 @@ export function flowMapStyles(nonce: string): string {
   .ac-axis { stroke: var(--vscode-panel-border); stroke-width: 1; }
   .ac-grid { stroke: var(--vscode-panel-border); stroke-width: 1; opacity: 0.4; }
   .ac-num, .ac-clock { fill: var(--vscode-descriptionForeground); font-size: 11px; font-variant-numeric: tabular-nums; font-family: var(--vscode-font-family); }
-  .ac-line { fill: none; stroke: var(--vscode-charts-blue, #58a6ff); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
-  .ac-pt { fill: var(--vscode-charts-blue, #58a6ff); }
+  .ac-line { fill: none; stroke: var(--vscode-charts-blue, var(--accent-info)); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .ac-pt { fill: var(--vscode-charts-blue, var(--accent-info)); }
   .ac-link { cursor: pointer; }
-  .ac-link:hover, .ac-link:focus { fill: var(--vscode-charts-orange, #d29922); r: 5.5; outline: none; }
+  /* Hover highlight anchors on brand orange (guide §5.10) so the active point reads as the accent. */
+  .ac-link:hover, .ac-link:focus { fill: var(--vscode-charts-orange, var(--brand)); r: 5.5; outline: none; }
 
   .dwell { min-width: 110px; }
-  .dwell-bar { display: inline-block; height: 0.62em; border-radius: 3px; background: linear-gradient(90deg, #2ea043, #58a6ff); vertical-align: middle; margin-right: 0.45rem; }
+  /* Dwell magnitude bar: green (low/good) to info-blue (high) ramp, anchored on the semantic tokens. */
+  .dwell-bar { display: inline-block; height: 0.62em; border-radius: var(--radius-sm); background: linear-gradient(90deg, var(--status-good), var(--accent-info)); vertical-align: middle; margin-right: 0.45rem; }
   .dwell-text { font-variant-numeric: tabular-nums; }
 
   .fm-node { cursor: pointer; }
@@ -159,9 +165,10 @@ export function flowMapStyles(nonce: string): string {
   .fm-crash rect { animation: fm-pulse 1.7s ease-in-out infinite; }
   .diagram svg { animation: fm-fade 0.45s ease both; }
   tr.fm-hl { background: var(--vscode-list-activeSelectionBackground) !important; box-shadow: inset 3px 0 0 var(--vscode-focusBorder); }
-  tr.sev-error td:first-child { box-shadow: inset 3px 0 0 #e05252; }
-  tr.sev-warn td:first-child { box-shadow: inset 3px 0 0 #d29922; }
-  tr.sev-perf td:first-child { box-shadow: inset 3px 0 0 #3fb950; }
+  tr.sev-error td:first-child { box-shadow: inset 3px 0 0 var(--accent-critical); }
+  tr.sev-warn td:first-child { box-shadow: inset 3px 0 0 var(--accent-warning); }
+  /* No semantic "perf/good-accent" token; reuse --status-good for the perf severity stripe (green). */
+  tr.sev-perf td:first-child { box-shadow: inset 3px 0 0 var(--status-good); }
   @keyframes fm-fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @keyframes fm-pulse { 0%,100% { stroke-opacity: 1; } 50% { stroke-opacity: 0.3; } }
   @media (prefers-reduced-motion: reduce) { .diagram-scroll svg, .fm-crash rect, .fm-node.fm-flash rect { animation: none; } }
@@ -169,7 +176,7 @@ export function flowMapStyles(nonce: string): string {
   /* Node detail popup (double-click a node): a centered modal card over a dimmed backdrop, listing
      everything known about the surface — type, dwell, times, source, log line, actions, issues. */
   .fmd-overlay { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(0,0,0,0.5); }
-  .fmd-card { position: relative; max-width: 560px; max-height: 82vh; overflow: auto; background: var(--vscode-editor-background); border: 1px solid var(--vscode-panel-border); border-radius: 10px; padding: 1.1rem 1.3rem; box-shadow: 0 10px 34px rgba(0,0,0,0.5); }
+  .fmd-card { position: relative; max-width: 560px; max-height: 82vh; overflow: auto; background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.1rem 1.3rem; box-shadow: var(--shadow-lg); }
   .fmd-close { position: absolute; top: 0.5rem; right: 0.5rem; border: none; background: transparent; color: var(--vscode-descriptionForeground); cursor: pointer; font-size: 1rem; padding: 0.15rem 0.4rem; border-radius: 5px; }
   .fmd-close:hover { background: var(--vscode-toolbar-hoverBackground, rgba(127,127,127,0.18)); color: var(--vscode-foreground); }
   .fmd-title { font-size: 1.2em; margin: 0 1.6rem 0.7rem 0; word-break: break-word; }

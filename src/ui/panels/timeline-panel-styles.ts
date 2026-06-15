@@ -4,23 +4,24 @@ export function getUnifiedTimelineStyles(): string {
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: var(--vscode-editor-background); color: var(--vscode-editor-foreground); font-family: var(--vscode-font-family, sans-serif); font-size: 13px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-.header { padding: 10px 16px; background: var(--vscode-sideBar-background); border-bottom: 1px solid var(--vscode-panel-border); flex-shrink: 0; }
-.title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
-.subtitle { font-size: 11px; color: var(--vscode-descriptionForeground); }
+.header { padding: 10px var(--space-4); background: var(--vscode-sideBar-background); border-bottom: 1px solid var(--vscode-panel-border); flex-shrink: 0; }
+.title { font-size: var(--text-label); font-weight: 600; margin-bottom: 2px; }
+.subtitle { font-size: var(--text-caption); color: var(--vscode-descriptionForeground); }
 
-.toolbar { display: flex; flex-wrap: wrap; gap: 12px; padding: 8px 16px; border-bottom: 1px solid var(--vscode-panel-border); background: var(--vscode-sideBar-background); flex-shrink: 0; align-items: center; }
+.toolbar { display: flex; flex-wrap: wrap; gap: var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--vscode-panel-border); background: var(--vscode-sideBar-background); flex-shrink: 0; align-items: center; }
 .source-filters { display: flex; gap: 10px; flex-wrap: wrap; }
-.source-filter { display: flex; align-items: center; gap: 4px; cursor: pointer; font-size: 11px; }
+.source-filter { display: flex; align-items: center; gap: var(--space-1); cursor: pointer; font-size: var(--text-caption); }
 .source-filter input { cursor: pointer; width: 14px; height: 14px; }
 .source-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .source-label { color: var(--vscode-editor-foreground); }
 .source-count { color: var(--vscode-descriptionForeground); font-size: 10px; }
-.stats-bar { display: flex; gap: 12px; font-size: 11px; color: var(--vscode-descriptionForeground); }
-.stat-item { display: flex; align-items: center; gap: 4px; }
+.stats-bar { display: flex; gap: var(--space-3); font-size: var(--text-caption); color: var(--vscode-descriptionForeground); }
+.stat-item { display: flex; align-items: center; gap: var(--space-1); }
 .stat-dot { width: 8px; height: 8px; border-radius: 50%; }
-.stat-dot.error { background: var(--vscode-editorError-foreground, #f14c4c); }
-.stat-dot.warning { background: var(--vscode-editorWarning-foreground, #cca700); }
-.stat-dot.perf { background: var(--vscode-charts-purple, #b267e6); }
+.stat-dot.error { background: var(--vscode-editorError-foreground, var(--accent-critical)); }
+.stat-dot.warning { background: var(--vscode-editorWarning-foreground, var(--accent-warning)); }
+/* Perf severity has no dedicated semantic token; map the purple chart hue to --accent-opinionated. */
+.stat-dot.perf { background: var(--vscode-charts-purple, var(--accent-opinionated)); }
 .export-buttons { display: flex; gap: 6px; margin-left: auto; }
 .export-btn { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; }
 .export-btn:hover { background: var(--vscode-button-secondaryHoverBackground); }
@@ -49,14 +50,14 @@ body { background: var(--vscode-editor-background); color: var(--vscode-editor-f
 .event-row.selected { background: var(--vscode-list-activeSelectionBackground); color: var(--vscode-list-activeSelectionForeground); }
 .event-time { width: 65px; flex-shrink: 0; font-family: var(--vscode-editor-font-family, monospace); font-size: 11px; color: var(--vscode-descriptionForeground); text-align: right; }
 .event-icon { width: 14px; flex-shrink: 0; text-align: center; font-size: 11px; }
-.level-error .event-icon { color: var(--vscode-editorError-foreground, #f14c4c); }
-.level-warning .event-icon { color: var(--vscode-editorWarning-foreground, #cca700); }
-.level-perf .event-icon { color: var(--vscode-charts-purple, #b267e6); }
+.level-error .event-icon { color: var(--vscode-editorError-foreground, var(--accent-critical)); }
+.level-warning .event-icon { color: var(--vscode-editorWarning-foreground, var(--accent-warning)); }
+.level-perf .event-icon { color: var(--vscode-charts-purple, var(--accent-opinionated)); }
 .level-debug .event-icon, .level-info .event-icon { color: var(--vscode-descriptionForeground); }
 .event-source { width: 70px; flex-shrink: 0; font-size: 10px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
 .event-summary { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--vscode-editor-font-family, monospace); font-size: 12px; }
-.level-error { background: color-mix(in srgb, var(--vscode-editorError-foreground, #f14c4c) 8%, transparent); }
-.level-warning { background: color-mix(in srgb, var(--vscode-editorWarning-foreground, #cca700) 5%, transparent); }
+.level-error { background: color-mix(in srgb, var(--vscode-editorError-foreground, var(--accent-critical)) 8%, transparent); }
+.level-warning { background: color-mix(in srgb, var(--vscode-editorWarning-foreground, var(--accent-warning)) 5%, transparent); }
 
 .correlation-badge { color: var(--vscode-textLink-foreground); cursor: pointer; margin-left: 4px; }
 .correlation-badge:hover { text-decoration: underline; }

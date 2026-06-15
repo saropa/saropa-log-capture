@@ -10,6 +10,7 @@ import type { DocScanResults } from '../../modules/misc/docs-scanner';
 import type { ImportResults } from '../../modules/source/import-extractor';
 import type { SymbolResults } from '../../modules/source/symbol-resolver';
 import type { CommitDiff } from '../../modules/git/git-diff';
+import { getTokenStyles } from '../viewer-styles/viewer-styles-tokens';
 import { getAnalysisStyles } from './analysis-panel-styles';
 import { getAnalysisErrorStyles } from './analysis-error-styles';
 import { getAnalysisScript } from './analysis-panel-script';
@@ -250,6 +251,6 @@ export function errorSlot(id: string, label: string): string {
 export function wrapHtml(nonce: string, body: string): string {
     return /* html */ `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}';">
-<style nonce="${nonce}">${getAnalysisStyles()}${getAnalysisErrorStyles()}</style></head><body>${body}
+<style nonce="${nonce}">${getTokenStyles()}${getAnalysisStyles()}${getAnalysisErrorStyles()}</style></head><body>${body}
 <script nonce="${nonce}">${getWebviewL10nScript()}${getAnalysisScript()}</script></body></html>`;
 }

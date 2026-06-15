@@ -11,21 +11,21 @@ export function getFeedbackStyles(): string {
     50% { opacity: 0.4; }
 }
 .section-loading {
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-style: italic;
-    font-size: 12px;
+    font-size: var(--text-caption);
     animation: shimmer-pulse 1.5s ease-in-out infinite;
 }
 /* Toast notification — slides in from top-right, auto-dismisses */
 .toast {
     position: fixed;
-    top: 12px;
-    right: 12px;
-    padding: 8px 14px;
-    border-radius: 4px;
-    font-size: 12px;
+    top: var(--space-3);
+    right: var(--space-3);
+    padding: var(--space-2) 14px;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-caption);
     font-weight: 500;
-    z-index: 1000;
+    z-index: var(--z-toast);
     opacity: 0;
     transform: translateY(-8px);
     transition: opacity 0.25s ease, transform 0.25s ease;
@@ -35,12 +35,14 @@ export function getFeedbackStyles(): string {
     opacity: 1;
     transform: translateY(0);
 }
+/* Host pass/fail colors with a status-token fallback. Text stays #fff: white on a
+   saturated success/error fill holds AA where a theme-bound text token might not. */
 .toast--success {
-    background: var(--vscode-testing-iconPassed, #388a34);
+    background: var(--vscode-testing-iconPassed, var(--status-good));
     color: #fff;
 }
 .toast--error {
-    background: var(--vscode-testing-iconFailed, #f14c4c);
+    background: var(--vscode-testing-iconFailed, var(--status-bad));
     color: #fff;
 }
 `;

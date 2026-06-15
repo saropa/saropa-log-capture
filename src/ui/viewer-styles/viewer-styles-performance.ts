@@ -18,7 +18,9 @@ export function getPerformancePanelStyles(): string {
     height: 100%;
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
     border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+    /* Slide-out drop shadow: use the overlay elevation token (this panel floats
+       over the log console), keeping the directional 2px,0 offset structural. */
+    box-shadow: var(--shadow-lg);
     display: none;
     flex-direction: column;
     overflow: hidden;
@@ -52,7 +54,9 @@ export function getPerformancePanelStyles(): string {
 
 .pp-action:hover {
     color: var(--vscode-foreground);
-    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+    /* Hover wash fallback: derive a neutral tint from the foreground when the
+       host theme omits a toolbar hover color. */
+    background: var(--vscode-toolbar-hoverBackground, color-mix(in srgb, var(--text) 12%, transparent));
 }
 
 .pp-close {
@@ -65,8 +69,8 @@ export function getPerformancePanelStyles(): string {
 }
 
 .pp-close:hover {
-    color: var(--vscode-errorForeground, #f44);
-    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+    color: var(--vscode-errorForeground, var(--status-bad));
+    background: var(--vscode-toolbar-hoverBackground, color-mix(in srgb, var(--text) 12%, transparent));
 }
 
 /* --- Tabs --- */
@@ -89,7 +93,7 @@ export function getPerformancePanelStyles(): string {
 
 .pp-tab.active {
     color: var(--vscode-foreground);
-    border-bottom-color: var(--vscode-debugConsole-infoForeground, #b695f8);
+    border-bottom-color: var(--vscode-debugConsole-infoForeground, var(--accent-info));
 }
 
 .pp-tab:hover { color: var(--vscode-foreground); }
@@ -119,7 +123,7 @@ export function getPerformancePanelStyles(): string {
     font-size: 10px;
     opacity: 0.7;
     margin-left: auto;
-    color: var(--vscode-debugConsole-infoForeground, #b695f8);
+    color: var(--vscode-debugConsole-infoForeground, var(--accent-info));
 }
 
 .pp-group-stats {
@@ -138,7 +142,7 @@ export function getPerformancePanelStyles(): string {
 }
 
 .pp-event-row:hover { background: var(--vscode-list-hoverBackground); }
-.pp-event-metric { color: var(--vscode-debugConsole-infoForeground, #b695f8); }
+.pp-event-metric { color: var(--vscode-debugConsole-infoForeground, var(--accent-info)); }
 .pp-event-time { opacity: 0.5; font-size: 10px; }
 
 /* --- Trends table --- */
@@ -155,8 +159,8 @@ export function getPerformancePanelStyles(): string {
 .pp-trend-table td { padding: 4px 8px; cursor: pointer; }
 .pp-trend-table tr:hover td { background: var(--vscode-list-hoverBackground); }
 .pp-trend-table tr.pp-selected td { background: var(--vscode-list-activeSelectionBackground); }
-.pp-trend-up { color: var(--vscode-debugConsole-errorForeground, #f48771); }
-.pp-trend-down { color: var(--vscode-terminal-ansiGreen, #4ec9b0); }
+.pp-trend-up { color: var(--vscode-debugConsole-errorForeground, var(--accent-critical)); }
+.pp-trend-down { color: var(--vscode-terminal-ansiGreen, var(--status-good)); }
 .pp-trend-stable { opacity: 0.5; }
 
 /* --- SVG chart --- */
@@ -167,8 +171,8 @@ export function getPerformancePanelStyles(): string {
 
 .pp-chart-title { font-size: 11px; font-weight: 600; margin-bottom: 4px; }
 .pp-chart { width: 100%; height: 120px; }
-.pp-chart-line { fill: none; stroke: var(--vscode-debugConsole-infoForeground, #b695f8); stroke-width: 2; }
-.pp-chart-dot { fill: var(--vscode-debugConsole-infoForeground, #b695f8); }
+.pp-chart-line { fill: none; stroke: var(--vscode-debugConsole-infoForeground, var(--accent-info)); stroke-width: 2; }
+.pp-chart-dot { fill: var(--vscode-debugConsole-infoForeground, var(--accent-info)); }
 .pp-chart-axis { stroke: var(--vscode-panel-border); stroke-width: 1; }
 .pp-chart-label { fill: var(--vscode-descriptionForeground); font-size: 10px; }
 
@@ -177,8 +181,8 @@ export function getPerformancePanelStyles(): string {
 .pp-session-intro {
     margin-bottom: 14px;
     padding: 10px 12px;
-    background: var(--vscode-textBlockQuote-background, rgba(128, 128, 128, 0.15));
-    border-left: 3px solid var(--vscode-focusBorder, rgba(128, 128, 128, 0.5));
+    background: var(--vscode-textBlockQuote-background, var(--surface-3));
+    border-left: 3px solid var(--vscode-focusBorder, var(--border-strong));
     font-size: 12px;
     color: var(--vscode-foreground);
     line-height: 1.45;

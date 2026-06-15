@@ -13,33 +13,33 @@ export function getSignalListStyles(): string {
     return /* css */ `
 
 /* Signal trend rows — clickable to open the most recent matching session */
-.signal-signal-trend-row { cursor: pointer; border-radius: 3px; }
+.signal-signal-trend-row { cursor: pointer; border-radius: var(--radius-sm); }
 .signal-signal-trend-row:hover { background: var(--vscode-list-hoverBackground); }
 /* Severity indicators: critical gets a red left border, high gets orange */
-.signal-sev-critical { border-left: 3px solid var(--vscode-errorForeground, #f44); }
-.signal-sev-high { border-left: 3px solid var(--vscode-editorWarning-foreground, #fa4); }
+.signal-sev-critical { border-left: 3px solid var(--vscode-errorForeground, var(--accent-critical)); }
+.signal-sev-high { border-left: 3px solid var(--vscode-editorWarning-foreground, var(--accent-high)); }
 /* Recurring badge — small ↻ marker next to the icon */
 .signal-recurring-badge { font-size: 10px; opacity: 0.7; margin: 0 1px; }
 /* Trend arrows — ↑ increasing (red), ↓ decreasing (green), — stable (muted) */
-.signal-trend-up { font-size: 10px; color: var(--vscode-editorError-foreground, #f44); margin: 0 1px; }
-.signal-trend-down { font-size: 10px; color: var(--vscode-testing-iconPassed, #4a4); margin: 0 1px; }
+.signal-trend-up { font-size: 10px; color: var(--vscode-editorError-foreground, var(--accent-critical)); margin: 0 1px; }
+.signal-trend-down { font-size: 10px; color: var(--vscode-testing-iconPassed, var(--status-good)); margin: 0 1px; }
 .signal-trend-stable { font-size: 10px; opacity: 0.5; margin: 0 1px; }
 /* Jumpable signal rows — cursor pointer and hover highlight to indicate clickability */
 .signal-jumpable { cursor: pointer; }
-.signal-jumpable:hover { background: var(--vscode-list-hoverBackground, rgba(255,255,255,0.04)); }
+.signal-jumpable:hover { background: var(--vscode-list-hoverBackground, color-mix(in srgb, var(--text) 4%, transparent)); }
 
 /* Fu7: time-window filter chips. Compact row of buttons above the signals list — the active
    chip gets the editor-foreground border so it reads as pressed without needing a fill change. */
 .signal-tw-filter {
     display: flex;
-    gap: 4px;
-    margin: 4px 0 6px;
+    gap: var(--space-1);
+    margin: var(--space-1) 0 6px;
     flex-wrap: wrap;
 }
 /* Fu5 sort toggle sits just under the time-window chips, sharing the chip style. */
 .signal-sort-toggle {
     display: flex;
-    gap: 4px;
+    gap: var(--space-1);
     margin: 0 0 6px;
 }
 .signal-tw-chip {
@@ -47,16 +47,16 @@ export function getSignalListStyles(): string {
     color: var(--vscode-foreground);
     border: 1px solid var(--vscode-panel-border);
     border-radius: 10px;
-    padding: 2px 8px;
-    font-size: 11px;
+    padding: 2px var(--space-2);
+    font-size: var(--text-caption);
     cursor: pointer;
     line-height: 1.4;
 }
 .signal-tw-chip:hover {
-    background: var(--vscode-list-hoverBackground, rgba(255,255,255,0.04));
+    background: var(--vscode-list-hoverBackground, color-mix(in srgb, var(--text) 4%, transparent));
 }
 .signal-tw-chip-active {
-    border-color: var(--vscode-focusBorder, var(--vscode-textLink-foreground, #3794ff));
+    border-color: var(--vscode-focusBorder, var(--vscode-textLink-foreground, var(--link)));
     background: var(--vscode-list-activeSelectionBackground, transparent);
     color: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
 }
@@ -73,7 +73,7 @@ export function getSignalListStyles(): string {
    to reveal that detail inline — same pointer/hover affordance as jumpable rows so the row reads as
    interactive even though there is no log line to scroll to. */
 .signal-detail-toggle { cursor: pointer; }
-.signal-detail-toggle:hover { background: var(--vscode-list-hoverBackground, rgba(255,255,255,0.04)); }
+.signal-detail-toggle:hover { background: var(--vscode-list-hoverBackground, color-mix(in srgb, var(--text) 4%, transparent)); }
 /* Inline detail body, full-width so it drops below the wrapped row rather than squeezing the meta
    column. pre-wrap keeps multi-part summaries (e.g. "1 error, 2 warnings") readable. */
 .signal-detail-body { width: 100%; margin-top: 3px; padding-left: 18px; font-size: 11px; opacity: 0.85; line-height: 1.4; white-space: pre-wrap; color: var(--vscode-descriptionForeground, var(--vscode-foreground)); }
@@ -83,7 +83,7 @@ export function getSignalListStyles(): string {
    visual debt. Cleanup is by JS class-remove on animationend (see part-d). */
 @keyframes saropaLinePulse {
     0%   { background-color: transparent; }
-    25%  { background-color: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 179, 8, 0.3)); }
+    25%  { background-color: var(--vscode-editor-findMatchHighlightBackground, color-mix(in srgb, var(--accent-warning) 30%, transparent)); }
     100% { background-color: transparent; }
 }
 .line-pulse {
@@ -96,8 +96,8 @@ export function getSignalListStyles(): string {
 .signal-suggestions-list { font-size: 12px; }
 .signal-suggestion-row {
     border: 1px solid var(--vscode-panel-border);
-    border-radius: 4px;
-    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    padding: 6px var(--space-2);
     margin-bottom: 6px;
     background: var(--vscode-editor-background, transparent);
 }
@@ -110,7 +110,7 @@ export function getSignalListStyles(): string {
 }
 .signal-suggestion-pattern {
     font-family: var(--vscode-editor-font-family, monospace);
-    font-size: 11px;
+    font-size: var(--text-caption);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -120,15 +120,15 @@ export function getSignalListStyles(): string {
 .signal-suggestion-impact {
     color: var(--vscode-descriptionForeground);
     white-space: nowrap;
-    font-size: 11px;
+    font-size: var(--text-caption);
 }
 .signal-suggestion-sample {
     color: var(--vscode-descriptionForeground);
-    font-size: 11px;
+    font-size: var(--text-caption);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    margin-bottom: 4px;
+    margin-bottom: var(--space-1);
     opacity: 0.85;
 }
 .signal-suggestion-actions {
@@ -140,17 +140,17 @@ export function getSignalListStyles(): string {
     background: transparent;
     color: var(--vscode-foreground);
     border: 1px solid var(--vscode-panel-border);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     padding: 2px 10px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     cursor: pointer;
 }
 .signal-suggestion-accept:hover {
-    background: var(--vscode-button-secondaryHoverBackground, var(--vscode-list-hoverBackground, rgba(255,255,255,0.04)));
-    border-color: var(--vscode-focusBorder, var(--vscode-textLink-foreground, #3794ff));
+    background: var(--vscode-button-secondaryHoverBackground, var(--vscode-list-hoverBackground, color-mix(in srgb, var(--text) 4%, transparent)));
+    border-color: var(--vscode-focusBorder, var(--vscode-textLink-foreground, var(--link)));
 }
 .signal-suggestion-reject:hover {
-    background: var(--vscode-list-hoverBackground, rgba(255,255,255,0.04));
+    background: var(--vscode-list-hoverBackground, color-mix(in srgb, var(--text) 4%, transparent));
 }
 `;
 }
