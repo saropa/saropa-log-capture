@@ -26,7 +26,6 @@ Translations that mangle brands are rejected and retried once.
 """
 
 import json
-import re
 import socket
 import sys
 import time
@@ -53,10 +52,12 @@ from modules.verify.l10n_nllb_engine import (
     is_available as is_nllb_available,
 )
 from modules.verify.l10n_provenance import (
+    ENGINE_MANUAL,
     is_low_quality,
     load_provenance,
     save_provenance,
 )
+from modules.verify.l10n_sentences import split_segments
 
 # VS Code l10n bundle locale codes -> deep-translator target codes.
 # deep-translator uses standard ISO codes; VS Code bundles use lowercase
@@ -116,24 +117,6 @@ def set_sentence_mode(enabled: bool) -> None:
     """
     global _translate_by_sentence_enabled  # noqa: PLW0603
     _translate_by_sentence_enabled = enabled
-
-
-# Split on whitespace that directly follows a sentence terminator (. ! ?),
-# capturing the whitespace so "".join(parts) reproduces the source exactly —
-# original spacing and newlines survive verbatim. Known limitation: a string
-# like "e.g. foo" over-splits at the abbreviation; UI copy rarely hits this, and
-# paragraph mode is the escape hatch when it matters.
-_SENTENCE_SPLIT_RE = re.compile(r"((?<=[.!?])\s+)")
-
-
-def _split_sentences(text: str) -> list[str]:
-    """Split text into alternating sentence and whitespace-separator segments.
-
-    Whitespace-only segments are the captured separators (passed through
-    untranslated); the rest are sentences. Returns a single-element list when
-    the text has no internal sentence boundary.
-    """
-    return [seg for seg in _SENTENCE_SPLIT_RE.split(text) if seg != ""]
 
 
 def _load_bundle(locale: str) -> tuple[Path, dict[str, str]]:
@@ -226,7 +209,7 @@ def _translate_one(
     the translated string with brands restored, or None on failure.
     """
     if _translate_by_sentence_enabled and not is_brand_only(en_key):
-        segments = _split_sentences(en_key)
+        segments = split_segments(en_key)
         if len(segments) > 1:
             return _translate_segments(translator, segments)
     return _translate_segment(translator, en_key)
@@ -653,6 +636,81 @@ def fix_mangled_brands(locale: str, canonical_keys: set[str]) -> int:
         _save_bundle(path, bundle)
 
     return reset_count
+
+
+def _reassemble_sentences(en_key: str, sentences: list[dict[str, object]]) -> str | None:
+    """Rejoin per-sentence translations into the whole-string value, or None.
+
+    Re-splits the English with the SAME segmenter the export used, then replaces
+    each sentence segment (in order) with its translation, leaving the captured
+    whitespace separators untouched so spacing/newlines are restored exactly.
+
+    Returns None — caller skips the key, never stores a half string — when the
+    filled sentence count does not match the source (a translator merged/split
+    sentences) or any sentence translation is blank (an incomplete fill).
+    """
+    segments = split_segments(en_key)
+    sentence_positions = [i for i, seg in enumerate(segments) if seg.strip()]
+    ordered = sorted(sentences, key=lambda s: int(s.get("i", 0)))
+    translations = [str(s.get("translation", "")) for s in ordered]
+    if len(translations) != len(sentence_positions):
+        return None
+    if any(not t.strip() for t in translations):
+        return None
+    out = list(segments)
+    for pos, translated in zip(sentence_positions, translations):
+        out[pos] = translated
+    return "".join(out)
+
+
+def _merge_into_bundle(locale: str, updates: dict[str, str]) -> None:
+    """Write reassembled translations into a locale bundle + stamp provenance.
+
+    Imported strings are human-authored, so they are stamped ``manual`` (high
+    quality) — this is what stops the NLLB low-quality upgrade pass from later
+    overwriting hand-translated work.
+    """
+    if not updates:
+        return
+    path, bundle = _load_bundle(locale)
+    bundle.update(updates)
+    _save_bundle(path, bundle)
+    save_provenance(locale, {key: ENGINE_MANUAL for key in updates})
+
+
+def import_gap_file(path: Path) -> tuple[int, int, list[str]]:
+    """Reassemble a filled sentence-level gap export into the locale bundles.
+
+    Reads the JSON produced by ``write_gap_export_sentences`` and, for each
+    entry, rejoins its per-sentence translations into the whole-string value
+    under the original English key (see ``_reassemble_sentences``). The file only
+    carries the sentence translations in order; the original spacing is restored
+    by re-splitting the English here, so the export never had to store separators.
+
+    Returns ``(written, skipped, locales_touched)``. A key is skipped — left
+    untranslated — when its sentence count drifts or any sentence is blank, so a
+    partial fill can never corrupt a string.
+    """
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    by_locale: dict[str, dict[str, str]] = {}
+    written = 0
+    skipped = 0
+    for entry in data.get("entries", []):
+        locale = entry.get("locale")
+        en_key = entry.get("en")
+        sentences = entry.get("sentences", [])
+        reassembled = (
+            _reassemble_sentences(en_key, sentences)
+            if locale and en_key and sentences else None
+        )
+        if reassembled is None:
+            skipped += 1
+            continue
+        by_locale.setdefault(locale, {})[en_key] = reassembled
+        written += 1
+    for locale, updates in by_locale.items():
+        _merge_into_bundle(locale, updates)
+    return written, skipped, sorted(by_locale)
 
 
 def get_canonical_keys() -> set[str]:
