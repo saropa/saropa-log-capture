@@ -194,3 +194,61 @@ status-strip was deliberately not built; the integration took the Integrations-s
 is retained as a reference note, not closed as a fixed bug.
 
 Finish report appended: plans/108_plan-suite-connection-front-door.md
+
+---
+
+## Finish Report — follow-up (2026-06-14): stale path live + broader detection
+
+### What shipped
+
+Two follow-ups to the Integrations front door, closing the first item in the "Honest gaps" section
+above (the `stale` branch was implemented and unit-tested but dormant — no live-HEAD resolver existed,
+so only `notInstalled` / `silent(noMirror)` / `connected` were active in practice).
+
+**Current-HEAD resolver — `stale` activated.** A companion tool's shared diagnostics carry the
+`commitSha` they were captured at; surfacing a mirror from an earlier commit as current would mislead.
+`workspace-head-commit.ts` now resolves the workspace's current HEAD by reading `.git` directly — no
+git process spawned — following a detached HEAD to its object id, or a symbolic ref to its loose ref
+file and then `packed-refs`. It returns `undefined` on any failure (missing `.git`, a worktree or
+submodule where `.git` is a file, an unreadable ref), so a consumer never guesses staleness when the
+commit is unknown. The parsing (`parseHeadRef`, `findPackedRef`, `isObjectId`) is split into the pure
+`workspace-head-commit-parse.ts` so it runs under `node --test`. `suite-silent-notice.ts` now passes
+the resolved HEAD to the classifier (a mirror at a different commit triggers the stale guidance), and
+`suite-issues-html.ts` marks a tool's section "(from an earlier commit)" — new l10n key
+`viewer.integrations.suiteStale`, CSS `.suite-issue-stale` — when its mirror commit differs from HEAD.
+
+**Broader package detection.** `adapter-recommendations.ts` gained ~30 dependency mappings to the
+existing eight adapter ids — SQL clients and ORMs (`floor`, `postgres`, `sqlite_async`,
+`mysql1`/`mysql_client`, `drift_dev`, `mariadb`, `mssql`, `tedious`, `oracledb`, `drizzle-orm`,
+`kysely`, `pg-promise`, `@prisma/client`, `redis`, `ioredis`, `cassandra-driver`), HTTP clients
+(`graphql`, `graphql_flutter`, `superagent`, `ky`, `cross-fetch`, `request`), test tooling (`mockito`,
+`mocktail`, `bloc_test`, `patrol`, `jasmine`, `tap`, `uvu`), and browser automation (`webdriverio`,
+`nightwatch`, `testcafe`). No new adapter ids were introduced. Coverage tools (`nyc`/`c8`) and Sentry
+were deliberately not mapped — their output is a different input format than the existing Coverage and
+Crashlytics adapters consume, so a mapping would point users at the wrong adapter.
+
+### Verification
+
+- `npm run check-types` — clean.
+- `npm run compile` — full gate green: webview catalogs, contributed-commands reference,
+  `verify:l10n-keys` (2309 keys resolve), dist size within ceiling.
+- ESLint on every touched source file — clean.
+- Pure unit tests under `node --test`: `workspace-head-commit.test.ts` (5 cases — symbolic ref,
+  detached HEAD, garbage, packed-ref lookup, peeled-tag skip) and `suite-connection-status.test.ts`
+  (7 cases) pass together (12/12).
+- `adapter-recommendations.test.ts` extended with `deepStrictEqual` assertions pinning the new
+  mappings (e.g. `floor`→`['database']`, `drift_dev`→`['database','driftAdvisor']`,
+  `webdriverio`→`['browser']`); it imports `INTEGRATION_ADAPTERS` (which loads `vscode`) so it runs in
+  the Extension Host, not headlessly — its new assertions were audited against the table by inspection
+  and match exactly.
+
+### Remaining (plan stays active)
+
+- End-to-end visual verification in the Extension Development Host — the badge count, the Integrations
+  screen rendering the suggestions and issues blocks, the stale "(from an earlier commit)" label, and
+  the Enable button toggling a checkbox — still requires loading the extension against a project where
+  the siblings have written mirrors at a differing commit.
+- The cross-repo ask for a Saropa Lints manual mirror-refresh command (so a silent Lints can be
+  auto-refreshed rather than only guided) is unchanged.
+
+Finish report appended: plans/108_plan-suite-connection-front-door.md
