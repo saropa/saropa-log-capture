@@ -3,42 +3,35 @@
  *
  * Generates a complete stylesheet with dark/light theme support,
  * toolbar, search bar, log content, stack traces, JSON collapsible
- * blocks, and ANSI color classes. All styles use CSS custom properties
- * for theming.
+ * blocks, and ANSI color classes. Colors resolve from the canonical §3.6
+ * fallback palette (html-export-fallback-palette.ts) so a standalone, host-less
+ * report speaks the same token vocabulary as the in-IDE viewer surfaces.
  */
+
+import { getStandaloneFallbackPalette } from './html-export-fallback-palette';
 
 /** Generate the CSS stylesheet for the interactive HTML export. */
 export function getInteractiveStyles(): string {
-    return `
+    // The §3.6 fallback palette (canonical token names, baked light/dark) carries
+    // the colors; the toggle button swaps .light-theme on the body to flip them.
+    return getStandaloneFallbackPalette() + `
 :root {
     /* Match interactive export .line vertical rhythm (see .line.line-blank quarter rule). */
     --export-line-height: 1.5;
-    --bg: #1e1e1e;
-    --fg: #d4d4d4;
-    --bg-hover: rgba(255,255,255,0.05);
-    --border: #3c3c3c;
-    --accent: #569cd6;
-    --error: #f44;
-    --warn: #fc0;
-    --muted: #858585;
-    --selection: rgba(38, 79, 120, 0.5);
-    --search-highlight: rgba(234, 92, 0, 0.33);
-    --search-current: rgba(255, 150, 50, 0.6);
-    --header-bg: #252526;
-}
-.light-theme {
-    --bg: #ffffff;
-    --fg: #333333;
-    --bg-hover: rgba(0,0,0,0.05);
-    --border: #e0e0e0;
-    --accent: #0066cc;
-    --error: #d32f2f;
-    --warn: #f57c00;
-    --muted: #666666;
-    --selection: rgba(173, 214, 255, 0.5);
-    --search-highlight: rgba(255, 235, 59, 0.5);
-    --search-current: rgba(255, 193, 7, 0.8);
-    --header-bg: #f5f5f5;
+    /* Local semantic aliases mapped onto the canonical palette so the bulk rules
+       below stay unchanged; each resolves through the theme-switching tokens, so
+       no separate .light-theme alias block is needed. --muted and --border are
+       canonical names already and are used directly. */
+    --bg: var(--surface-1);
+    --fg: var(--text);
+    --header-bg: var(--surface-2);
+    --bg-hover: color-mix(in srgb, var(--text) 5%, transparent);
+    --accent: var(--link);
+    --error: var(--accent-critical);
+    --warn: var(--accent-warning);
+    --selection: color-mix(in srgb, var(--brand) 28%, transparent);
+    --search-highlight: color-mix(in srgb, var(--brand-2) 33%, transparent);
+    --search-current: color-mix(in srgb, var(--brand) 55%, transparent);
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
@@ -220,7 +213,9 @@ export function getSimpleHtmlExportStyles(): string {
     line-height: 1;
 }
 #log-content .annotation {
-    color: #6a9955;
+    /* Notes are secondary chrome, not a status — muted token, matching the
+       interactive export's annotation styling. */
+    color: var(--muted);
     font-style: italic;
     display: block;
 }
