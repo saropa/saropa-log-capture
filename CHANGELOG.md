@@ -28,6 +28,10 @@ cspell:disable
 
 ## [Unreleased]
 
+### Changed
+
+- **Seven more languages now fully translate the log viewer:** **Spanish, French, Italian, Japanese, Korean, Brazilian Portuguese, and Russian** each reached **100%** of the viewer's 2,021 strings (up from about 80%). The last handful of strings the machine translator couldn't produce — panel descriptions, the keyboard-shortcuts reference, and a couple of status messages — were filled in by hand and marked high-quality so future translation passes won't overwrite them. Simplified and Traditional Chinese are still in progress.
+
 <details>
 <summary>Maintenance</summary>
 

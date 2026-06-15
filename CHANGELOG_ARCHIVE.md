@@ -1,6 +1,41 @@
 # Changelog Archive
 
-This archive is for versions 7.17.0 and prior. For current changes see [CHANGELOG.md](./CHANGELOG.md).
+This archive is for versions 7.17.12 and prior. For current changes see [CHANGELOG.md](./CHANGELOG.md).
+
+---
+
+## [7.17.2]
+
+Tag a log line with a bracket like `[db]` or `[perf:cold start]` and it's routed to that severity level, three more database engines are recognized automatically, and Ctrl+C now copies the selected lines as structured JSON by default. [log](https://github.com/saropa/saropa-log-capture/blob/v7.17.2/CHANGELOG.md)
+
+### Added
+
+- **Log viewer: recognized severity tags from app logs** — prefix a log line with a bracket tag (`[db] bulkPreload wrote 185 rows`, `[perf:cold start] first frame 1840ms`, `[todo:DRIFT-412] backfill`) and the line is routed to that severity level so the existing filter dots group it — including your app's own database-adjacent lines the content heuristic can't detect on its own. Format is `[TAG]` or `[TAG:metadata]`: the tag name is everything before the first colon, the metadata after it stays visible inline. An explicit tag beats keyword guesses (`[db] … failed` stays database), but a real error still wins (`[db] Error: …` stays error). The full vocabulary is published in the README under **Log Tag Vocabulary**; unlisted bracket tags still work as free-form source-tag chips. ([tag-level-dictionary.ts](src/modules/analysis/tag-level-dictionary.ts), [level-classifier.ts](src/modules/analysis/level-classifier.ts), [viewer-level-classify.ts](src/ui/viewer-search-filter/viewer-level-classify.ts))
+- **Classifier: 3 more database vendor names auto-detected** — `Sqlite3`, `Prisma`, and `DynamoDB` join the existing Drift/Isar/Sqflite/Hive/Realm/Postgres/MySQL/MongoDB set, so their bracket tags and `Vendor:` prefixes classify as database without an explicit tag. ([level-classifier.ts](src/modules/analysis/level-classifier.ts))
+
+- **Log viewer: Copy to JSON is now the default copy** — `Ctrl+C` (and the new top-most **Copy to JSON** item in the Copy & Export menu) copies the selected lines — or the visible viewport when nothing is selected — as a structured JSON array. Each line becomes one object carrying its 1-based viewer row `line`, ISO `timestamp`, `level`, `category`, parsed `tag`, stream `source`, and `text`; empty fields are omitted so a bare `print()` line stays compact. A raw sub-line text drag-selection is still copied verbatim, since a fragment can't be split into fields. Plain-text copy (`Copy selection`) remains on the right-click menu as **Copy Line** and is rebindable, but loses its default `Ctrl+C` binding to JSON. ([viewer-copy.ts](src/ui/viewer/viewer-copy.ts), [viewer-keybindings.ts](src/ui/viewer/viewer-keybindings.ts), [viewer-context-menu-html.ts](src/ui/viewer-context-menu/viewer-context-menu-html.ts))
+
+<details>
+<summary>Maintenance</summary>
+
+- **`scripts/publish.py` summary prompt now defaults to Yes** — `Proceed with publish? [Y/n]` instead of `[y/N]`. The user has already invoked the publish script and read the full irreversible-action summary; a bare Enter should proceed. Ctrl+C / explicit `n` still aborts. ([publish_confirm.py](scripts/modules/publish/publish_confirm.py))
+
+</details>
+
+---
+
+## [7.17.1]
+
+The Logs panel now folds report captures (lint reports, audits) into a collapsible Reports row under each day and shows a banner when newer logs arrive, a dead Crashlytics endpoint no longer leaves the device/OS pane silently empty, and recycled viewer rows no longer ghost faint text from the line that used to sit there. [log](https://github.com/saropa/saropa-log-capture/blob/v7.17.1/CHANGELOG.md)
+
+### Added
+
+- **Logs panel: per-day Reports bucket + newer-log alert** — completes plan [001](plans/history/2026.06/2026.06.02/001_plan-newer-alert-and-reports-grouping.md) by wiring the previously-parked classifier + dormant UI modules into the panel. Each day now renders debug-session captures inline and folds auxiliary captures (Saropa Lint Report, Json Bundle Audit/Translate, Audit Matrix) into a collapsible `Reports (N)` row that respects the new `reportsBucketDefault` setting and a per-day expansion override. A sticky banner above the day list announces logs newer than the panel's last dismiss cursor, with Open / Dismiss buttons; a small blue dot appears on each affected row (gated separately so users can keep one signal without the other). Settings: `reportsKindPatterns`, `reportsBucketDefault`, `newerLogBanner`, `newerLogDot`. Dismiss state persists per workspace and seeds to activation time on first install so pre-existing logs don't carpet-bomb the banner.
+
+### Fixed
+
+- **Crashlytics: per-issue device/OS distribution silently hit a dead endpoint** — the line-analysis panel's `getIssueStats` called `firebasecrashlytics.googleapis.com/.../issues/{id}:getStats`, which is not a public API (always returns a Google frontend HTML 404). The previous `catch { return undefined; }` wrapper turned that 404 into a silently empty pane — the exact pattern bug_008 set out to eliminate. The call is now removed from [analysis-panel.ts](src/ui/analysis/analysis-panel.ts) and the corresponding `issueStatsReady` webview handler is dropped. [crashlytics-stats.ts](src/modules/crashlytics/crashlytics-stats.ts) is now a documented stub that records a diagnostic instead of issuing the dead request. The renderer (`renderApiDistribution`) and `IssueStats` type are preserved so plan 054 can wire the right pane to Play Reporting's `errorCountMetricSet` with `deviceModel` / `apiLevel` dimensions. Closes the last open hole in bug_008.
+- **Log viewer: text from a recycled row could ghost through the next row's text** — virtualized rows are swapped in bulk on scroll; Chromium could leave un-invalidated paint inside a slot's bounding box, so the new row's text rendered on top of stale pixels from the prior occupant. Most visible when the slot transitioned between severity colors (e.g. info-blue → database-green): a `DRIFT: Drift debug server disconnected` row showed faint blue characters of the previous row's text bleeding through, fixing itself only on hover. The previous attempt (`transform: translateZ(0)` per-row compositor hint, v7.2.0) shipped in v7.17.0 but was empirically insufficient — Chromium coalesces tiny row layers back into a shared raster. Two layered fixes that don't rely on browser heuristics: (1) `.line, .stack-header` now paints an opaque `var(--vscode-editor-background)` fill rect before the text content so any stale pixels are physically covered (same color as the parent so visually invisible, but the browser DOES rasterize the fill); (2) the viewport renderer in [viewer-data-viewport.ts](src/ui/viewer/viewer-data-viewport.ts) now swaps DOM via a detached `<template>` + `replaceChildren()` + `appendChild(template.content)` instead of `viewportEl.innerHTML = …`, forcing full disposal of prior child nodes so the new rows have no paint-cache lineage with whatever previously occupied the slot. Full attempt history in [plans/history/2026.06/2026.06.02/viewer-row-paint-ghosting-attempts.md](plans/history/2026.06/2026.06.02/viewer-row-paint-ghosting-attempts.md).
 
 ---
 
