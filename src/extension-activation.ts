@@ -42,6 +42,7 @@ import { setupLineListeners, setupConfigListener, setupScopeContextListener, set
 import { DiagnosticCache } from './modules/diagnostics/diagnostic-cache';
 import { autoLoadLatest, showWalkthroughOnFirstInstall } from './extension-activation-helpers';
 import { maybeNotifyPartialNlsCoverage } from './l10n/nls-coverage-notice';
+import { maybeNotifySilentSiblings } from './modules/diagnostics/suite-silent-notice';
 import { maybeRecommendAdapters } from './modules/integrations/recommend-adapters-notice';
 import { initLearningRuntime, flushLearningBuffer } from './modules/learning/learning-runtime';
 import { scheduleLearningSuggestionCheck } from './modules/learning/learning-notifications';
@@ -276,6 +277,10 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
 
     // Tell the user once if their editor's display language has largely-English chrome.
     maybeNotifyPartialNlsCoverage(context);
+
+    // If a suite sibling is installed but hasn't shared its diagnostics mirror, try to refresh it
+    // and otherwise tell the user once — the integration is invisible until the mirror exists.
+    void maybeNotifySilentSiblings(context);
 
     scheduleMaybeAutoEnableAiFromLanguageModels();
 
