@@ -108,3 +108,89 @@ to expose a new command or change behavior is a bug report into that repo.
 
 Not relabeling, not the old per-feature silent plumbing, and not a developer diagnostics screen — this
 is the user-facing front door plus the self-wiring that the integration needed to be real.
+
+---
+
+## Finish Report (2026-06-14)
+
+### What shipped
+
+The suite integration was invisible: it surfaced only when a long chain of preconditions aligned and
+rendered nothing otherwise, leaving an installed companion tool with no explanation and no way in. The
+front door, the self-wiring, and the package-based suggestions that make it discoverable now exist.
+
+**Connection state machine.** `src/modules/diagnostics/suite-connection-classify.ts` is a pure
+classifier (no fs, no vscode) returning `notInstalled` / `silent` (cause `noMirror` or `stale`) /
+`connected` for each sibling, judging staleness only when both the mirror commit and the current
+commit are known. `suite-connection-status.ts` is the thin impure reader that resolves installation
+(`vscode.extensions.getExtension`) and the mirror metadata and defers to the classifier.
+
+**Installed-but-silent notice.** `suite-silent-notice.ts` runs on activation: it reads the
+connections, tries to make a silent tool emit (self-wiring — `vscode.commands.executeCommand` of Drift
+Advisor's `driftViewer.writeDiagnosticsMirror` when that command is registered), and only if the tool
+is still silent shows one guided `showInformationMessage` naming the concrete next step. Gated per
+(tool, cause) in `globalState`, so it never nags and re-arms when the cause changes; evidence-based, so
+a tool the user has not installed is never mentioned. Wired in `extension-activation.ts` next to the
+NLS-coverage notice.
+
+**Integrations front door.** A dedicated Integrations icon (`ib-integrations`, codicon-plug) was added
+to the activity bar with the existing badge machinery. Clicking it opens the Options slide-out and
+switches to the existing Integrations view (`openIntegrationsView`), then refreshes. The host
+(`requestSuiteIssues` → `suiteIssues`) returns a combined payload: the companion-tool issues block
+(`suite-issues-html.ts`, read from `advisor.json` / `lints.json`, silent tools rendering their guidance
+line) and the suggested-integrations block (`suite-suggestions-html.ts`, reading `pubspec.yaml` /
+`package.json` through the existing `suggestAdaptersFromPubspec` / `suggestAdaptersFromPackageJson`
+tables, dropping already-enabled adapters, filtering `adbLogcat` without an Android app). The icon
+badge counts issues + suggestions, so it surfaces whenever there is anything to act on. Each suggestion
+row carries an Enable button that checks the corresponding integration checkbox and fires its `change`
+event, reusing the established `setIntegrationsAdapters` persistence, then refreshes.
+
+All host-built HTML escapes every dynamic value (`escapeHtml`); the webview injects it via `innerHTML`,
+matching the other host-rendered panels.
+
+### Honest gaps
+
+- The classifier's `stale` branch is implemented and unit-tested, but the impure callers
+  (`readSuiteConnections`, the two HTML builders) do not yet pass a current HEAD commit — no live-HEAD
+  resolver exists in this repo (`getSessionCommit` reads session metadata, not HEAD). So only
+  `notInstalled` / `silent(noMirror)` / `connected` are active in practice; `stale` is future-wired
+  pending a HEAD resolver.
+- `suite-silent-notice.ts` and `suite-issues-html.ts` can refresh Drift Advisor on demand
+  (`writeDiagnosticsMirror`), but Saropa Lints contributes no manual mirror-refresh command, so a silent
+  Lints is guided, not auto-fixed. Tracked as the cross-repo ask in this plan's "Cross-repo asks".
+- The badge counts opt-in suggestions alongside found issues — a deliberate discoverability choice, not
+  a defect; the screen separates the two into labelled sections.
+
+### Verification
+
+- `npm run check-types` — clean.
+- `npm run compile` — full gate green: webview incoming + host-outbound catalogs regenerated and match,
+  contributed-commands reference matches, `verify:l10n-keys` resolves all 2308 keys, dist size within
+  ceiling.
+- ESLint on every touched source file — clean (the one pre-existing `max-lines` warning on
+  `viewer-script-messages.ts` is unrelated; the change to that file is net-zero lines — the script
+  concat moved to the `viewer-script.ts` assembly point to avoid growing it).
+- Unit tests: 7 new pure cases in `suite-connection-status.test.ts` (classifier across all states and
+  the never-guess-stale guards) — pass under `node --test`.
+- `viewer-icon-bar.test.ts` extended so the new icon is covered by the action-oriented-tooltip
+  assertion; not executed headlessly (Mocha/Extension-Host suite), verified by inspection — the new
+  icon's title matches the asserted `Click to open/close` prefix and `getIconBarHtml` includes it.
+
+### Verification not done
+
+The webview behavior — the badge painting the count, the Integrations screen rendering the suggestions
+and issues blocks, the Enable button toggling the checkbox and persisting — cannot be confirmed from a
+headless environment. It requires loading the extension in the Extension Development Host against a
+project where the siblings have written their mirrors. This is the one manual-verification item.
+
+### Plan status
+
+Plan retained **active**. The Log-Capture code scope is complete, but the plan's done-criteria include
+end-to-end visual verification (above) and depend on the cross-repo Lints refresh-command ask; both
+remain, and this document is the tracker for them.
+
+Bug archive: none — the related `bugs/suite_mirror_status_and_sync.md` was superseded (its Part A
+status-strip was deliberately not built; the integration took the Integrations-screen form instead) and
+is retained as a reference note, not closed as a fixed bug.
+
+Finish report appended: plans/108_plan-suite-connection-front-door.md
