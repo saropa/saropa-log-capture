@@ -26,6 +26,26 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+<details>
+<summary>Maintenance</summary>
+
+**Documentation**
+
+- **Grouped the remaining non-user-facing changelog entries under collapsible `<details>` Maintenance sections** — extends the convention introduced in 8.0.3 to releases 9.0.0, 9.0.1, 9.0.2, and 8.0.5: build-tooling, test, CI, internal-groundwork, and dev-only security entries that still sat in `Added` / `Changed` / `Fixed` / `Security` are moved into a per-release `Maintenance` block (and empty headings removed), so each release's user-facing list reads clean while the engineering detail stays available on expand. ([CHANGELOG.md](CHANGELOG.md))
+
+**Build tooling**
+
+- **`translate_l10n.py` gap export no longer prompts — it writes both JSON and CSV and lists both paths** — the audit's "Export gaps for external translation?" menu (1 JSON / 2 CSV / 0 none) is gone. When gaps remain on an interactive run, both export formats are written unconditionally and each path is printed, since the two views serve different consumers (JSON for re-import tooling, CSV for spreadsheets / external translators) and producing both is cheaper than asking. Non-interactive runs still skip the export. Build tooling only. ([l10n_actions.py](scripts/modules/verify/l10n_actions.py))
+- **`translate_l10n.py` now translates sentence-by-sentence by default (`--paragraph-mode` to opt out)** — a multi-sentence source string is split on its sentence boundaries (`. ! ?` followed by whitespace), each sentence translated independently, and the results rejoined with the original spacing/newlines preserved verbatim. Both engines — NLLB especially — produce materially better output on single sentences than on long paragraphs, which risk silent truncation at the model's token limit and cross-sentence context bleed. If any sentence in a string fails, the whole string keeps English for a clean re-run rather than shipping a half-translated paragraph. Brand shielding and validation now run per sentence. The new `--paragraph-mode` flag restores the prior whole-string behavior; single-sentence strings are unaffected either way. Build tooling only. ([l10n_translator.py](scripts/modules/verify/l10n_translator.py), [l10n_cli.py](scripts/modules/verify/l10n_cli.py))
+- **`translate_l10n.py` no longer strands the locale label above the NLLB setup output** — the per-locale `de:` label was printed before `translate_locale` ran, so the one-time model-load and engine-selection lines (`[nllb] Loading…`, device-fallback notices, `Engine: …`) landed underneath it and the run looked broken. The label is no longer pre-printed; the one-time setup now prints unlabeled, and the locale label appears attached to its own live progress bar. Dry-run and no-work locales still get a labeled summary line. Build tooling only. ([l10n_actions.py](scripts/modules/verify/l10n_actions.py))
+- **`translate_l10n.py` now warns loudly when it falls back from NLLB to Google, and reports the real reason** — the fallback used to be a quiet one-liner that wrongly claimed "NLLB model not cached (~7 GB)" even when the model **was** cached and the actual failure was a device load error (e.g. `mkl_malloc: failed to allocate memory` on every device). The device cascade now captures each device's error and surfaces it; `cache_hint()` diagnoses the true blocker — disabled by env, deps missing, model genuinely absent, or **cached-but-no-device-loaded** — instead of always guessing "not cached". The fallback prints a red `⚠ WARNING: NOT using offline NLLB` block plus the exact remedy for the detected case (free RAM and re-run / `SAROPA_NLLB_DEVICE=cpu` / `pip install nvidia-cublas-cu12` / the download command). Build tooling only. ([l10n_nllb_engine.py](scripts/modules/verify/l10n_nllb_engine.py), [l10n_translator.py](scripts/modules/verify/l10n_translator.py))
+
+</details>
+
+---
+
 ## [9.0.3]
 
 More of Saropa Log Capture now speaks your language: the German translation of the log viewer is complete, and nine more languages cover roughly four-fifths of it. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.3/CHANGELOG.md)
@@ -33,7 +53,13 @@ More of Saropa Log Capture now speaks your language: the German translation of t
 ### Changed
 
 - **Localization progress across all eleven languages:** The log viewer — the bulk of the interface — is now fully translated into **German** (all 2,021 strings), with **Spanish, French, Italian, Japanese, Korean, Brazilian Portuguese, Russian, Simplified Chinese, and Traditional Chinese** each covering about **80%**. The VS Code chrome (command titles, settings labels, menus) is hand-translated and lags behind on purpose: **German** is at **36%**, **Spanish, Japanese, Korean, and Simplified Chinese** at **35%**, and **French, Italian, Brazilian Portuguese, Russian, and Traditional Chinese** at **21%**. Where a string isn't translated yet it falls back to English, and a one-time notice tells you when your editor's chrome is still largely English.
+
+<details>
+<summary>Maintenance</summary>
+
 - **`translate_l10n.py` now shows live throughput and an ETA, and writes a full error audit file** — each locale's progress bar gained a words-per-minute readout and a remaining-time estimate (`[####....] 42.0%  654/1558  300 wpm  ETA 5:01`), so a multi-hour NLLB run shows how fast it is going and when it will finish, not just a percentage. Throughput is measured from the first translated string onward, so the one-time ~7 GB model-load minute is excluded from the rate; the readout is suppressed for the first sub-second tick to avoid a meaningless number. Every per-string failure across the whole run — network/engine errors and brand-validation rejects alike — is now collected and flushed to a timestamped audit file (`reports/YYYY.MM/YYYY.MM.DD/..._l10n_translation_errors.json`) carrying the untruncated English source and reason per failure, plus per-locale and per-type counts; a clean run writes no file. The inline `WARN` lines stay as before. Build tooling only. ([l10n_actions.py](scripts/modules/verify/l10n_actions.py), [l10n_translator.py](scripts/modules/verify/l10n_translator.py), [l10n_bundle_audit.py](scripts/modules/verify/l10n_bundle_audit.py))
+
+</details>
 
 ---
 
@@ -47,7 +73,6 @@ Saropa Log Capture now has an Integrations icon that badges the issues your comp
 - **The Integrations screen now suggests integrations based on your project's packages:** Above the companion issues, a **Suggested for your project** section reads your `pubspec.yaml` / `package.json` and lists the integrations your dependencies imply but that aren't on yet — e.g. `drift` suggests Database, `dio` suggests HTTP, `playwright` suggests Browser — each with an **Enable** button and the package that prompted it. The Integrations icon badge counts these suggestions alongside found issues, so the icon lights up whenever there's something worth a look, even before any tool has reported a problem. Only not-yet-enabled integrations appear, and enabling one removes it from the list. Package detection now recognizes a much wider set of dependencies — more SQL clients and ORMs (`floor`, `postgres`, `drizzle-orm`, `kysely`, `redis`, `mariadb`, …), HTTP clients (`graphql`, `superagent`, `ky`, …), test runners (`mockito`, `patrol`, `jasmine`, …), and browser-automation tools (`webdriverio`, `nightwatch`, …).
 - **Companion findings from an older commit are now flagged, not shown as current:** When a companion tool's shared diagnostics were captured at a different Git commit than your current `HEAD`, that tool's section in the Integrations screen is marked **(from an earlier commit)** — so a stale finding left over from before your latest changes reads as stale rather than as live truth. The current commit is read straight from `.git` (no Git process), and nothing is flagged when the commit can't be determined.
 - **Tells you when a companion tool is installed but silent:** If Saropa Drift Advisor or Saropa Lints is installed but hasn't shared its diagnostics with Saropa Log Capture yet, you now get a one-time heads-up explaining why the cross-tool integration shows nothing — and the exact next step (start a Drift debug session, or check the analyzer is running for the project). Where it can, Saropa Log Capture refreshes the companion automatically first, so it only speaks up when there's actually something for you to do. It never nags: the notice appears once per situation, and only for tools you already have installed.
-- **Shared design-token layer for the viewer webview (groundwork, no visible change):** Added a canonical `:root` token block (`viewer-styles-tokens.ts`) mapping the Saropa Dashboard Style Guide's named tokens — surfaces, text, borders, brand accent, semantic/severity colors, spacing, radius, elevation, the dashboard type scale, motion, and z-index — to the active VS Code theme, prepended ahead of all other viewer styles. Dashboard-class panels can now reference one stable vocabulary (e.g. `--surface-2`, `--space-4`, `--accent-critical`) instead of raw hex and magic pixels, while resolution stays theme-aware in light, dark, and high-contrast. Values mirror the canonical saropa_lints dashboard chrome — the type scale anchors to VS Code's 13px host density, `--surface-0` is omitted (the page and cards both use `--surface-1` plus a border). The monospace log-line console is exempt and keeps its own font sizing. The SQL Query History dashboard was the first surface migrated onto these tokens; every other dashboard-class panel has since followed (see Changed below).
 - **Crashlytics issues can now be filtered and sorted by release date derived from the version code:** Many teams encode the build date into the Android `versionCode` (e.g. `2026012501` = 2026-01-25, build 01). The Crashlytics view now reads that date — auto-detecting the common encodings (`yyyymmdd`, `ddmmyyyy`, `mmddyyyy`, `yymmdd`, with an optional trailing build-of-day counter) — and shows it next to the version, adds a **Date** filter dropdown, and adds a **Newest release** sort. Detection is conservative: a code is only treated as a date when its digits form a real calendar date in a plausible year window, so plain counters and semantic versions (e.g. `10402`) are left unchanged and excluded from the date filter (plan 108).
 
 ### Changed
@@ -57,10 +82,19 @@ Saropa Log Capture now has an Integrations icon that badges the issues your comp
 - **Every remaining dashboard-class panel is migrated onto the shared design tokens:** Following the SQL dashboard, all other analytical / report surfaces are now off raw hex and magic pixels and onto the named tokens — Crashlytics (issues, detail, setup/diagnostics), Performance (plus the DB-timeline and error-rate tabs), the Signal slide-out (hero, list, sections, layout, and the N+1 callout), Project State, Recurring, Root-cause hints, the AI panel, the code-quality badges, the Analysis panel, and the Vitals, Flow-map, and Timeline chart panels. Colors map by role to the host theme (severity → `--accent-critical/-high/-warning/-info`, pass/fail → `--status-good/-bad`, surfaces/text/borders → the shared tokens), alpha washes become `color-mix(...)` so they survive high-contrast, and spacing / radius / dashboard type sizes land on the scale. The panels that render in their own webview (Analysis, Signal Report, Vitals, Flow-map, Timeline) now inject the canonical `:root` token block into their style block so the tokens resolve there too. Theme-aware in light, dark, and high-contrast; the monospace log/code/evidence rows keep their editor font sizing, per-source chart series keep their categorical hues, and white text on saturated fills is preserved for contrast.
 - **The Signal Report panel is migrated onto the shared design tokens:** The standalone signal-report webview now prepends the canonical `:root` token block ahead of its own styles, and every raw hex / baked-alpha color and off-scale spacing value is replaced with the named tokens — confidence badges and per-section accent borders bind to the host severity colors (`--accent-critical`, `--accent-warning`, `--brand-2`, `--accent-info`, `--muted`) via `color-mix`, surfaces/borders/text use the shared tokens, and spacing, radius, type sizes, and the toast z-index land on the scale. Stays theme-aware in light, dark, and high-contrast; the monospace evidence/code lines keep their own editor font sizing, and white toast text on the saturated success/error fill is preserved for contrast.
 
-### Fixed
+<details>
+<summary>Maintenance</summary>
+
+**Internal**
+
+- **Shared design-token layer for the viewer webview (groundwork, no visible change):** Added a canonical `:root` token block (`viewer-styles-tokens.ts`) mapping the Saropa Dashboard Style Guide's named tokens — surfaces, text, borders, brand accent, semantic/severity colors, spacing, radius, elevation, the dashboard type scale, motion, and z-index — to the active VS Code theme, prepended ahead of all other viewer styles. Dashboard-class panels can now reference one stable vocabulary (e.g. `--surface-2`, `--space-4`, `--accent-critical`) instead of raw hex and magic pixels, while resolution stays theme-aware in light, dark, and high-contrast. Values mirror the canonical saropa_lints dashboard chrome — the type scale anchors to VS Code's 13px host density, `--surface-0` is omitted (the page and cards both use `--surface-1` plus a border). The monospace log-line console is exempt and keeps its own font sizing. The SQL Query History dashboard was the first surface migrated onto these tokens; every other dashboard-class panel has since followed (see Changed above).
+
+**Test tooling**
 
 - **Root-cause hints style tests no longer fail after the design-token rollout:** Four assertions in the root-cause-hints CSS tests still matched the pre-migration raw theme names (`textLink-foreground`, `errorForeground`, `gap: 4px`) after the panel moved onto the shared design tokens, so they failed even though the styling was correct. They now match the token references the source actually emits (`var(--link)`, `var(--status-bad)`, `var(--space-1)`), which resolve to the same theme values.
 - **CI coverage gate now counts the `node:test` suites it was missing:** The coverage run only instrumented the Mocha (Extension Host) tests; the large body of pure `node:test` suites runs in a separate `node --test` process the coverage hook never saw, so well-tested modules reported 8–15% and dragged the global thresholds under the gate — failing `main` on every push. The coverage run now also executes the `node:test` files over the instrumented build and merges their coverage, lifting measured statements/branches/functions ~46/34/40% → ~51/42/47% (all above the gate) without changing any test. Each `node --test` child writes its own `.nyc_output` file (keyed by pid, since `node --test` forks per file) for `nyc report` to merge; plain `npm test` is unaffected.
+
+</details>
 
 ---
 
@@ -72,9 +106,14 @@ Saropa Log Capture now keeps quiet about app-only extras like Crashlytics and An
 
 - **App-only integrations stay quiet on library / package projects:** The Crashlytics view, the "Integration setup" warning ("Add google-services.json…", "adb not found…"), and the offer to enable adb Logcat no longer appear on projects that ship no debuggable app — so a Dart/npm utility package is never nagged to configure crash reporting or device logging it can't use. App evidence is `saropaLogCapture.firebase.*` settings, a real `google-services.json`, or an Android application module (`android/app/…`); a package's bundled `example/` app no longer counts as making the package an app. The adb Logcat suggestion (previously fired by any `flutter` dependency, which every Flutter package declares) now requires an actual Android app. Adapters stay enabled in settings; only the unsolicited surfaces are gated.
 
-### Security
+<details>
+<summary>Maintenance</summary>
+
+**Security**
 
 - **Bump esbuild 0.28.0 → 0.28.1** (GHSA-gv7w-rqvm-qjhr — missing binary integrity check in esbuild's Deno installer). This is a dev/build-time dependency only and is not shipped in `dist/extension.js`. The flagged code path is esbuild's Deno module; this project bundles via Node.js, whose installer already SHA-256-verifies the binary, so the repo was not actually exploitable — the bump clears the advisory and keeps the build floor on the patched release.
+
+</details>
 
 ---
 
@@ -142,7 +181,6 @@ Saropa Log Capture now spots patterns across your sessions at a glance — a wor
 
 ### Fixed
 
-- **The pure `node:test` suite no longer crashes when a tested module is localized (internal):** the four signal-report renderer test files run under plain `node --test`, where the VS Code `vscode` module does not exist. Once the signal-report renderers were localized they began pulling in `src/l10n.ts`, which imports `vscode` for `vscode.l10n.t()`, so loading those test files threw `Cannot find module 'vscode'`. The node test runner now preloads a faithful `vscode` stub (`vscode.l10n.t` reproduces the real `{0}` / `{name}` substitution; everything else is a safe no-op), so any module reaching `vscode` transitively loads cleanly in the pure suite.
 - **Session comparison's "Sync Scroll" button no longer reverts to English when toggled:** the button's label is localized when the comparison view opens, but clicking it to flip sync on/off re-rendered the text from a hardcoded English string ("Sync Scroll: ON/OFF"), so in a translated locale the label switched back to English on the first toggle. The toggle now reuses the same localized "Sync Scroll: {0}" template and ON/OFF words, so it stays in your language.
 - **The active log's line count in the Logs list no longer lags behind the file:** while a capture was running, the count shown on the active session in the Logs list was read at the moment a line was queued, before it was actually written, so it could trail the real file by however many lines were waiting in the write queue. The status bar already showed the accurate, write-time count; the Logs list now reads from that same source, so the two always agree.
 - **Lost early output is now flagged instead of silently dropped:** when a debug session emitted a very large burst of output before logging had finished starting (more than 500 lines buffered before capture began), the overflow was discarded with no trace. The log now ends that early-output section with a `[Saropa Log Capture] N early output lines dropped …` note, so a gap at the very start of a session is visible rather than invisible. The 500-line buffer cap is unchanged (it protects memory when a session never finishes starting).
@@ -186,6 +224,15 @@ Saropa Log Capture now spots patterns across your sessions at a glance — a wor
 - **Bug reports redact secrets and usernames from the environment section:** captured environment header values are now scrubbed before the report is shared — values under secret-looking keys (token, password, api key, etc.) are dropped, home-directory paths have the username masked, and `user:pass@` credentials are stripped from every URL (not just the first).
 - **LAN collection sharing uses an unguessable link and stops itself:** the temporary "share on your network" server served the collection at a fixed `/collection.slc` path with no time limit, so anyone on the network who guessed it could download it indefinitely. It now serves at a random, unguessable path and automatically shuts down after ten minutes.
 - **Markers and diagnostic lines stay correctly ordered in the log file:** session markers and protocol/diagnostic lines were written straight to the file outside the ordered write queue, so under fast output they could land slightly out of order or push a part file just past its size limit before splitting. They now flow through the same ordered queue as captured lines (a marker inserted during a file split is now queued instead of dropped).
+
+<details>
+<summary>Maintenance</summary>
+
+**Test tooling**
+
+- **The pure `node:test` suite no longer crashes when a tested module is localized (internal):** the four signal-report renderer test files run under plain `node --test`, where the VS Code `vscode` module does not exist. Once the signal-report renderers were localized they began pulling in `src/l10n.ts`, which imports `vscode` for `vscode.l10n.t()`, so loading those test files threw `Cannot find module 'vscode'`. The node test runner now preloads a faithful `vscode` stub (`vscode.l10n.t` reproduces the real `{0}` / `{name}` substitution; everything else is a safe no-op), so any module reaching `vscode` transitively loads cleanly in the pure suite.
+
+</details>
 
 ---
 
@@ -246,9 +293,14 @@ The Session Flow Map's diagram now centers, scrolls instead of cropping when you
 - **Removed the left accent rail on error/exception blocks:** Flutter exception blocks and error stack traces no longer draw a continuous colored border down their left edge. The rail pushed those rows out of column with every other line (breaking the new gutter grid) and just duplicated the per-row severity dots that already mark the block as an error. The block now reads via a faint background tint instead, staying perfectly column-aligned.
 - **Jump-to-line highlight no longer nudges the target row:** The accent stripe on the line you jump or peek to is now painted as an inset shadow instead of a real left border, so the highlighted row's line number and text stay aligned with every other row instead of shifting 3px right (same fix already used by AI activity rows).
 
-### Fixed
+<details>
+<summary>Maintenance</summary>
+
+**Test tooling**
 
 - **Stale viewer render tests:** Two webview-render assertions still expected the pre-grid output and were failing — the stack-frame test expected the dropped `line-deco-spacer-only` alignment spacer (Plan 055 frames now nest in the message track with no decoration cell), and the continuation-badge test expected `contBadge` to be the literal first token of `msgInner` before the new Flutter-exception `bannerChevron` was prepended ahead of it. Both now assert the current shipped behavior.
+
+</details>
 
 ## [8.0.4]
 
@@ -504,39 +556,4 @@ Big log files no longer freeze VS Code or peg the CPU while the session list cou
 
 ---
 
-## [7.17.2]
-
-Tag a log line with a bracket like `[db]` or `[perf:cold start]` and it's routed to that severity level, three more database engines are recognized automatically, and Ctrl+C now copies the selected lines as structured JSON by default. [log](https://github.com/saropa/saropa-log-capture/blob/v7.17.2/CHANGELOG.md)
-
-### Added
-
-- **Log viewer: recognized severity tags from app logs** — prefix a log line with a bracket tag (`[db] bulkPreload wrote 185 rows`, `[perf:cold start] first frame 1840ms`, `[todo:DRIFT-412] backfill`) and the line is routed to that severity level so the existing filter dots group it — including your app's own database-adjacent lines the content heuristic can't detect on its own. Format is `[TAG]` or `[TAG:metadata]`: the tag name is everything before the first colon, the metadata after it stays visible inline. An explicit tag beats keyword guesses (`[db] … failed` stays database), but a real error still wins (`[db] Error: …` stays error). The full vocabulary is published in the README under **Log Tag Vocabulary**; unlisted bracket tags still work as free-form source-tag chips. ([tag-level-dictionary.ts](src/modules/analysis/tag-level-dictionary.ts), [level-classifier.ts](src/modules/analysis/level-classifier.ts), [viewer-level-classify.ts](src/ui/viewer-search-filter/viewer-level-classify.ts))
-- **Classifier: 3 more database vendor names auto-detected** — `Sqlite3`, `Prisma`, and `DynamoDB` join the existing Drift/Isar/Sqflite/Hive/Realm/Postgres/MySQL/MongoDB set, so their bracket tags and `Vendor:` prefixes classify as database without an explicit tag. ([level-classifier.ts](src/modules/analysis/level-classifier.ts))
-
-- **Log viewer: Copy to JSON is now the default copy** — `Ctrl+C` (and the new top-most **Copy to JSON** item in the Copy & Export menu) copies the selected lines — or the visible viewport when nothing is selected — as a structured JSON array. Each line becomes one object carrying its 1-based viewer row `line`, ISO `timestamp`, `level`, `category`, parsed `tag`, stream `source`, and `text`; empty fields are omitted so a bare `print()` line stays compact. A raw sub-line text drag-selection is still copied verbatim, since a fragment can't be split into fields. Plain-text copy (`Copy selection`) remains on the right-click menu as **Copy Line** and is rebindable, but loses its default `Ctrl+C` binding to JSON. ([viewer-copy.ts](src/ui/viewer/viewer-copy.ts), [viewer-keybindings.ts](src/ui/viewer/viewer-keybindings.ts), [viewer-context-menu-html.ts](src/ui/viewer-context-menu/viewer-context-menu-html.ts))
-
-<details>
-<summary>Maintenance</summary>
-
-- **`scripts/publish.py` summary prompt now defaults to Yes** — `Proceed with publish? [Y/n]` instead of `[y/N]`. The user has already invoked the publish script and read the full irreversible-action summary; a bare Enter should proceed. Ctrl+C / explicit `n` still aborts. ([publish_confirm.py](scripts/modules/publish/publish_confirm.py))
-
-</details>
-
----
-
-## [7.17.1]
-
-The Logs panel now folds report captures (lint reports, audits) into a collapsible Reports row under each day and shows a banner when newer logs arrive, a dead Crashlytics endpoint no longer leaves the device/OS pane silently empty, and recycled viewer rows no longer ghost faint text from the line that used to sit there. [log](https://github.com/saropa/saropa-log-capture/blob/v7.17.1/CHANGELOG.md)
-
-### Added
-
-- **Logs panel: per-day Reports bucket + newer-log alert** — completes plan [001](plans/history/2026.06/2026.06.02/001_plan-newer-alert-and-reports-grouping.md) by wiring the previously-parked classifier + dormant UI modules into the panel. Each day now renders debug-session captures inline and folds auxiliary captures (Saropa Lint Report, Json Bundle Audit/Translate, Audit Matrix) into a collapsible `Reports (N)` row that respects the new `reportsBucketDefault` setting and a per-day expansion override. A sticky banner above the day list announces logs newer than the panel's last dismiss cursor, with Open / Dismiss buttons; a small blue dot appears on each affected row (gated separately so users can keep one signal without the other). Settings: `reportsKindPatterns`, `reportsBucketDefault`, `newerLogBanner`, `newerLogDot`. Dismiss state persists per workspace and seeds to activation time on first install so pre-existing logs don't carpet-bomb the banner.
-
-### Fixed
-
-- **Crashlytics: per-issue device/OS distribution silently hit a dead endpoint** — the line-analysis panel's `getIssueStats` called `firebasecrashlytics.googleapis.com/.../issues/{id}:getStats`, which is not a public API (always returns a Google frontend HTML 404). The previous `catch { return undefined; }` wrapper turned that 404 into a silently empty pane — the exact pattern bug_008 set out to eliminate. The call is now removed from [analysis-panel.ts](src/ui/analysis/analysis-panel.ts) and the corresponding `issueStatsReady` webview handler is dropped. [crashlytics-stats.ts](src/modules/crashlytics/crashlytics-stats.ts) is now a documented stub that records a diagnostic instead of issuing the dead request. The renderer (`renderApiDistribution`) and `IssueStats` type are preserved so plan 054 can wire the right pane to Play Reporting's `errorCountMetricSet` with `deviceModel` / `apiLevel` dimensions. Closes the last open hole in bug_008.
-- **Log viewer: text from a recycled row could ghost through the next row's text** — virtualized rows are swapped in bulk on scroll; Chromium could leave un-invalidated paint inside a slot's bounding box, so the new row's text rendered on top of stale pixels from the prior occupant. Most visible when the slot transitioned between severity colors (e.g. info-blue → database-green): a `DRIFT: Drift debug server disconnected` row showed faint blue characters of the previous row's text bleeding through, fixing itself only on hover. The previous attempt (`transform: translateZ(0)` per-row compositor hint, v7.2.0) shipped in v7.17.0 but was empirically insufficient — Chromium coalesces tiny row layers back into a shared raster. Two layered fixes that don't rely on browser heuristics: (1) `.line, .stack-header` now paints an opaque `var(--vscode-editor-background)` fill rect before the text content so any stale pixels are physically covered (same color as the parent so visually invisible, but the browser DOES rasterize the fill); (2) the viewport renderer in [viewer-data-viewport.ts](src/ui/viewer/viewer-data-viewport.ts) now swaps DOM via a detached `<template>` + `replaceChildren()` + `appendChild(template.content)` instead of `viewportEl.innerHTML = …`, forcing full disposal of prior child nodes so the new rows have no paint-cache lineage with whatever previously occupied the slot. Full attempt history in [plans/history/2026.06/2026.06.02/viewer-row-paint-ghosting-attempts.md](plans/history/2026.06/2026.06.02/viewer-row-paint-ghosting-attempts.md).
-
----
-
-For older versions (7.17.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
+For older versions (7.17.12 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
