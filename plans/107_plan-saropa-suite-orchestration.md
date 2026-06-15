@@ -121,6 +121,12 @@ The click-by-click runbook for this phase — prerequisites, the lifecycle seque
 producers need, and a PASS/FAIL check per seam — is
 [guides/suite-handshake-verification.md](guides/suite-handshake-verification.md).
 
+Seam 1 also gets an **in-app automatic form**: a suite-mirror status strip in the viewer's Signal
+panel plus a session-report snapshot, so the user sees which mirrors are present, at which commit, and
+how fresh — without digging through `.saropa/diagnostics/` by hand. This also settles the output-sync
+question (commit-keyed read-time reconciliation; no shared session id; latest-wins single mirror).
+Planned in [../bugs/suite_mirror_status_and_sync.md](../bugs/suite_mirror_status_and_sync.md).
+
 ### Phase 2 — Manual a11y / visual audits (gated behind Phase 1)
 
 The LAUNCH_TEST items every plan defers because they need a rendered window: Drift Advisor's Drift
