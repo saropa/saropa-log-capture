@@ -24,6 +24,7 @@ import { getDriftLintViolations } from '../../modules/misc/drift-lint-violations
 import { getSuiteDeepLinkAvailability, runSiblingDeepLink } from '../../modules/diagnostics/suite-deeplink';
 import { readSuiteMirrorsForPanel } from '../../modules/diagnostics/suite-mirror-read';
 import { buildSuiteIssues } from '../../modules/diagnostics/suite-issues-html';
+import { buildSuiteSuggestions } from '../../modules/diagnostics/suite-suggestions-html';
 import { logExtensionError } from '../../modules/misc/extension-logger';
 
 /** Clamp numeric param to safe integer range for line/part indices (0 .. 10M). */
@@ -210,12 +211,19 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
         void readSuiteMirrorsForPanel().then((m) =>
           ctx.post({ type: "suiteMirrorDiagnostics", advisor: m.advisor, lints: m.lints }));
         return true;
-      case "requestSuiteIssues":
-        // Integrations screen + icon-bar badge: the count of companion-tool issues and the rendered
-        // block listing them (or the silent-state guidance when a tool is installed but empty).
-        void buildSuiteIssues().then((p) =>
-          ctx.post({ type: "suiteIssues", count: p.count, html: p.html }));
+      case "requestSuiteIssues": {
+        // Integrations screen + icon-bar badge: the companion-tool issues block AND the suggested
+        // integrations block (detected from the project's packages). The badge counts both, so the
+        // icon surfaces whenever there is anything to act on — a found issue or an unused integration.
+        void Promise.all([buildSuiteIssues(), buildSuiteSuggestions()]).then(([issues, suggestions]) =>
+          ctx.post({
+            type: "suiteIssues",
+            count: issues.count + suggestions.count,
+            issuesHtml: issues.html,
+            suggestionsHtml: suggestions.html,
+          }));
         return true;
+      }
       case "checkDriftViewerHealth": {
         const baseUrl = String((msg as { baseUrl?: unknown }).baseUrl ?? "").trim();
         if (!baseUrl || !/^https?:\/\//i.test(baseUrl)) {
