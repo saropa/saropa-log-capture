@@ -3,26 +3,26 @@
 export function getEcosystemStyles(): string {
     return /* css */ `
 /* Companion extensions (ecosystem) section */
-.ecosystem-block { margin: 8px 0; }
-.ecosystem-block-heading { font-weight: 600; font-size: 12px; margin: 0 0 4px; }
-.ecosystem-data { margin: 4px 0; }
-.ecosystem-data-row { display: flex; gap: 8px; padding: 2px 0; font-size: 12px; }
-.ecosystem-data-label { flex-shrink: 0; min-width: 14ch; color: var(--vscode-descriptionForeground); font-weight: 500; }
+.ecosystem-block { margin: var(--space-2) 0; }
+.ecosystem-block-heading { font-weight: 600; font-size: var(--text-caption); margin: 0 0 var(--space-1); }
+.ecosystem-data { margin: var(--space-1) 0; }
+.ecosystem-data-row { display: flex; gap: var(--space-2); padding: 2px 0; font-size: var(--text-caption); }
+.ecosystem-data-label { flex-shrink: 0; min-width: 14ch; color: var(--muted); font-weight: 500; }
 .ecosystem-data-value { word-break: break-all; }
-.ecosystem-status { display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 0; color: var(--vscode-descriptionForeground); }
-.ecosystem-status-icon { color: var(--vscode-testing-iconPassed, #73c991); font-weight: 700; }
+.ecosystem-status { display: flex; align-items: center; gap: 6px; font-size: var(--text-caption); padding: var(--space-1) 0; color: var(--muted); }
+.ecosystem-status-icon { color: var(--vscode-testing-iconPassed, var(--status-good)); font-weight: 700; }
 .ecosystem-prompt {
-    padding: 8px 12px;
-    margin: 4px 0;
-    border: 1px dashed var(--vscode-widget-border, rgba(128, 128, 128, 0.4));
-    border-radius: 4px;
-    background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
-    font-size: 12px;
+    padding: var(--space-2) var(--space-3);
+    margin: var(--space-1) 0;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    font-size: var(--text-caption);
 }
 .ecosystem-prompt-label { font-weight: 600; display: block; margin-bottom: 2px; }
-.ecosystem-prompt-benefit { display: block; color: var(--vscode-descriptionForeground); margin-bottom: 6px; }
+.ecosystem-prompt-benefit { display: block; color: var(--muted); margin-bottom: 6px; }
 .ecosystem-prompt-link {
-    color: var(--vscode-textLink-foreground, #3794ff);
+    color: var(--link);
     cursor: pointer;
     text-decoration: none;
     font-weight: 500;

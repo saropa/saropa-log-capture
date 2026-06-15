@@ -15,9 +15,9 @@ export function getErrorRateTabStyles(): string {
 }
 
 .pp-er-count { font-weight: 600; }
-.pp-er-count-error { color: var(--vscode-debugConsole-errorForeground, #f48771); }
-.pp-er-count-warning { color: var(--vscode-debugConsole-warningForeground, #cca700); }
-.pp-er-count-spike { color: var(--vscode-debugConsole-infoForeground, #b695f8); }
+.pp-er-count-error { color: var(--vscode-debugConsole-errorForeground, var(--accent-critical)); }
+.pp-er-count-warning { color: var(--vscode-debugConsole-warningForeground, var(--accent-warning)); }
+.pp-er-count-spike { color: var(--vscode-debugConsole-infoForeground, var(--accent-info)); }
 
 /* --- Error Rate chart --- */
 .pp-er-chart-container {
@@ -28,11 +28,11 @@ export function getErrorRateTabStyles(): string {
 
 .pp-er-bar { cursor: pointer; }
 .pp-er-bar:hover { opacity: 0.8; }
-.pp-er-bar-error { fill: var(--vscode-debugConsole-errorForeground, #f48771); }
-.pp-er-bar-warning { fill: var(--vscode-debugConsole-warningForeground, #cca700); }
+.pp-er-bar-error { fill: var(--vscode-debugConsole-errorForeground, var(--accent-critical)); }
+.pp-er-bar-warning { fill: var(--vscode-debugConsole-warningForeground, var(--accent-warning)); }
 
 .pp-er-spike-marker {
-    fill: var(--vscode-debugConsole-infoForeground, #b695f8);
+    fill: var(--vscode-debugConsole-infoForeground, var(--accent-info));
     font-size: 10px;
     pointer-events: none;
 }

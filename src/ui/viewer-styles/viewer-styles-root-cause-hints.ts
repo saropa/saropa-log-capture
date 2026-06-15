@@ -8,7 +8,7 @@ export function getRootCauseHypothesesStyles(): string {
     return /* css */ `
 .root-cause-hypotheses {
     flex-shrink: 0;
-    margin: 0 0 4px 0;
+    margin: 0 0 var(--space-1) 0;
     padding: 6px 10px 8px;
     border-radius: 4px;
     border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
@@ -37,10 +37,10 @@ export function getRootCauseHypothesesStyles(): string {
     padding-left: 1.15em;
 }
 .root-cause-hypotheses-list li {
-    margin: 4px 0;
+    margin: var(--space-1) 0;
     display: flex;
     align-items: baseline;
-    gap: 4px;
+    gap: var(--space-1);
 }
 /* Hypothesis text as clickable report button — flex: 1 lets it
    fill remaining width so long signal text wraps instead of
@@ -60,7 +60,7 @@ export function getRootCauseHypothesesStyles(): string {
     word-break: break-word;
 }
 .rch-report-btn:hover {
-    color: var(--vscode-textLink-foreground, #3794ff);
+    color: var(--link);
     text-decoration: underline;
 }
 .rch-dismiss-btn {
@@ -81,7 +81,8 @@ export function getRootCauseHypothesesStyles(): string {
     opacity: 1;
 }
 .rch-dismiss-btn:hover {
-    color: var(--vscode-errorForeground, #f48771);
+    /* Destructive dismiss = fail/red role; same token as every panel's close button. */
+    color: var(--status-bad);
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 .rch-restore-btn {
@@ -96,7 +97,7 @@ export function getRootCauseHypothesesStyles(): string {
     appearance: none;
 }
 .rch-restore-btn:hover {
-    color: var(--vscode-textLink-foreground, #3794ff);
+    color: var(--link);
     text-decoration: underline;
 }
 .root-cause-hyp-conf {
@@ -110,9 +111,11 @@ export function getRootCauseHypothesesStyles(): string {
 /* Brief toast shown after dismiss */
 .rch-toast {
     display: inline-block;
-    margin-left: 8px;
+    margin-left: var(--space-2);
     font-size: 11px;
-    color: var(--vscode-charts-green, #89d185);
+    /* Dismiss confirmation reads as a success signal — bind to the status-good
+       token so it tracks the host's pass/success color, not a baked green. */
+    color: var(--status-good);
     animation: rch-toast-fade 1.5s ease-out forwards;
 }
 /* Cross-session trend badge: small ↻N indicator between confidence emoji and signal text */
