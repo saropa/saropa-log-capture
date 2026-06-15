@@ -27,7 +27,10 @@ from modules.verify.l10n_bundle_audit import (
     write_gap_export,
 )
 from modules.verify.l10n_console import cyan, header, red, yellow
-from modules.verify.l10n_translator import get_translation_locales
+from modules.verify.l10n_translator import (
+    get_translation_locales,
+    set_sentence_mode,
+)
 
 
 # ── Interactive menu ───────────────────────────────────────────
@@ -174,6 +177,15 @@ def _parse_args() -> argparse.Namespace:
         action="store_true",
         help="Preview without writing files.",
     )
+    p.add_argument(
+        "--paragraph-mode",
+        action="store_true",
+        help=(
+            "Translate each string as one whole paragraph. Default is "
+            "sentence-by-sentence, which yields higher-quality output "
+            "(engines handle single sentences better than long paragraphs)."
+        ),
+    )
     return p.parse_args()
 
 
@@ -204,6 +216,9 @@ def _resolve_targets(args: argparse.Namespace) -> list[str] | None:
 def run_non_interactive() -> int:
     """Parse args and run the requested mode. No prompts. Returns the exit code."""
     args = _parse_args()
+    # Sentence mode is the default; --paragraph-mode opts back into whole-string
+    # translation. Set before any run_translate so the engine path sees it.
+    set_sentence_mode(not args.paragraph_mode)
     audit = run_audit()
     print_audit(audit)
 
