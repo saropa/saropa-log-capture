@@ -490,37 +490,44 @@ def write_translation_error_audit(records: list[dict[str, str]]) -> Path:
 # ---------------------------------------------------------------------------
 
 
-def write_gap_export_sentences(audit: "AuditResult") -> Path | None:
-    """Export untranslated entries split into sentences for external translation.
+def write_failures_export_sentences(records: list[dict[str, str]]) -> Path | None:
+    """Export the strings that FAILED translation, split into sentences for a human.
 
-    Each gap's English is broken into its translatable sentences (the same
-    segmenter the engine and importer use) so a human translator fills one box
-    per sentence — higher-quality output than translating a whole paragraph at
-    once. The importer (``translate_l10n.py --import``) re-splits the English and
-    slots the translations back into the whole string losslessly, so a key's
-    spacing/newlines are restored without the export carrying separators.
+    Distinct from the full untranslated inventory (most of which simply has not
+    been processed): this is ONLY what the engine attempted and could not produce
+    — brand-validation rejects and network errors collected during a translate
+    run. Each failure's English is broken into its translatable sentences (the
+    same segmenter the engine and importer use) so a translator fixes exactly the
+    strings the engine couldn't, one box per sentence. The importer
+    (``translate_l10n.py --import``) re-splits the English and slots the
+    translations back into the whole string losslessly, so spacing/newlines are
+    restored without the export carrying separators.
 
-    JSON only: the nested per-key shape (``sentences[]``) carries the ordered
-    sentence list cleanly, where a flat CSV would lose the grouping. Returns the
-    path, or None when there are no gaps.
+    ``records`` are the run's error entries (``{locale, type, en, detail}``). The
+    per-failure ``failure_type`` / ``failure_detail`` are carried through for
+    context and ignored by the importer. JSON only, same nested ``sentences[]``
+    shape the importer expects. Returns the path, or None when nothing failed.
     """
     from modules.verify.l10n_sentences import sentence_parts
 
     entries: list[dict[str, object]] = []
-    for lc in audit.locale_coverage:
-        for entry in lc.untranslated_entries:
-            # Fall back to the whole value if it has no sentence content to split
-            # (e.g. a bare symbol) so every gap still gets exactly one fill box.
-            parts = sentence_parts(entry.en_value) or [entry.en_value]
-            entries.append({
-                "locale": lc.locale,
-                "sym_key": entry.sym_key,
-                "en": entry.en_value,
-                "sentences": [
-                    {"i": i, "en": part, "translation": ""}
-                    for i, part in enumerate(parts)
-                ],
-            })
+    for rec in records:
+        en_value = rec.get("en", "")
+        if not en_value:
+            continue
+        # Fall back to the whole value if it has no sentence content to split
+        # (e.g. a bare symbol) so every failure still gets exactly one fill box.
+        parts = sentence_parts(en_value) or [en_value]
+        entries.append({
+            "locale": rec.get("locale", ""),
+            "en": en_value,
+            "failure_type": rec.get("type", ""),
+            "failure_detail": rec.get("detail", ""),
+            "sentences": [
+                {"i": i, "en": part, "translation": ""}
+                for i, part in enumerate(parts)
+            ],
+        })
 
     if not entries:
         return None
@@ -529,19 +536,19 @@ def write_gap_export_sentences(audit: "AuditResult") -> Path | None:
     month_dir = REPORTS_DIR / now.strftime("%Y.%m")
     day_dir = month_dir / now.strftime("%Y.%m.%d")
     day_dir.mkdir(parents=True, exist_ok=True)
-    export_path = day_dir / (now.strftime("%Y%m%d_%H%M%S") + "_l10n_gaps_sentences.json")
+    export_path = day_dir / (now.strftime("%Y%m%d_%H%M%S") + "_l10n_failures_sentences.json")
 
     payload = {
         "schema_version": 2,
-        "mode": "sentences",
+        "mode": "failures_sentences",
         "generated": now.isoformat(timespec="seconds"),
         "description": (
-            "Fill the 'translation' for EVERY sentence (leave none blank). "
-            "Do not split or merge sentences — keep one translation per source "
-            "sentence. Then reimport with: "
-            "python scripts/translate_l10n.py --import <file>"
+            "Strings the translation engine could not produce. Fill the "
+            "'translation' for EVERY sentence (leave none blank). Do not split or "
+            "merge sentences — keep one translation per source sentence. Then "
+            "reimport with: python scripts/translate_l10n.py --import <file>"
         ),
-        "total_gaps": len(entries),
+        "total_failures": len(entries),
         "entries": entries,
     }
     export_path.write_text(
