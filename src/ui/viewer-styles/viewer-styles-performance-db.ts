@@ -14,8 +14,8 @@ export function getPerformanceDbTabStyles(): string {
     padding: 8px 10px;
     font-size: 11px;
     line-height: 1.45;
-    background: var(--vscode-textBlockQuote-background, rgba(128, 128, 128, 0.12));
-    border-left: 3px solid var(--vscode-debugConsole-infoForeground, #b695f8);
+    background: var(--vscode-textBlockQuote-background, var(--surface-3));
+    border-left: 3px solid var(--vscode-debugConsole-infoForeground, var(--accent-info));
     color: var(--vscode-foreground);
 }
 .pp-db-drift-title { font-weight: 600; }
@@ -40,7 +40,7 @@ export function getPerformanceDbTabStyles(): string {
     margin-bottom: 10px;
     padding: 6px 8px;
     font-size: 10px;
-    background: var(--vscode-editor-inactiveSelectionBackground, rgba(128, 128, 128, 0.15));
+    background: var(--vscode-editor-inactiveSelectionBackground, var(--surface-3));
     border-radius: 4px;
 }
 .pp-db-clear-time {
@@ -86,9 +86,12 @@ export function getPerformanceDbTabStyles(): string {
     top: 0;
     height: 100%;
     width: 0;
-    background: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 92, 0, 0.25));
-    border-left: 1px solid var(--vscode-editor-findMatchBorder, rgba(234, 92, 0, 0.5));
-    border-right: 1px solid var(--vscode-editor-findMatchBorder, rgba(234, 92, 0, 0.5));
+    /* Find-match fallbacks: rgba(234,92,0,…) is the Saropa brand orange — keep
+       the viewport highlight on-brand as a translucent tint when the host
+       theme does not define a find-match background. */
+    background: var(--vscode-editor-findMatchHighlightBackground, color-mix(in srgb, var(--brand-2) 25%, transparent));
+    border-left: 1px solid var(--vscode-editor-findMatchBorder, color-mix(in srgb, var(--brand-2) 50%, transparent));
+    border-right: 1px solid var(--vscode-editor-findMatchBorder, color-mix(in srgb, var(--brand-2) 50%, transparent));
     pointer-events: none;
     z-index: 1;
     box-sizing: border-box;
@@ -100,8 +103,11 @@ export function getPerformanceDbTabStyles(): string {
     top: 0;
     height: 100%;
     width: 0;
-    background: var(--vscode-minimapSliderBackground, rgba(100, 100, 100, 0.28));
-    border: 1px solid var(--vscode-focusBorder, rgba(0, 122, 204, 0.55));
+    /* Neutral slider tint + focus edge fallbacks: derive the gray fill from the
+       foreground at low alpha, and lean on --border-strong (the focus-adjacent
+       edge token) when the host theme omits a focus border. */
+    background: var(--vscode-minimapSliderBackground, color-mix(in srgb, var(--text) 28%, transparent));
+    border: 1px solid var(--vscode-focusBorder, var(--border-strong));
     pointer-events: none;
     z-index: 2;
     box-sizing: border-box;
@@ -113,8 +119,11 @@ export function getPerformanceDbTabStyles(): string {
     top: 0;
     height: 100%;
     width: 0;
-    background: var(--vscode-mergeCurrentContentBackground, rgba(64, 200, 174, 0.2));
-    border: 1px dashed var(--vscode-debugConsole-infoForeground, #b695f8);
+    /* Brush selection fallbacks: the teal merge-current tint reads as a positive
+       "selected range" highlight, so derive it from --status-good; the dashed
+       edge tracks the same info accent as the histogram bars. */
+    background: var(--vscode-mergeCurrentContentBackground, color-mix(in srgb, var(--status-good) 20%, transparent));
+    border: 1px dashed var(--vscode-debugConsole-infoForeground, var(--accent-info));
     pointer-events: none;
     z-index: 3;
     box-sizing: border-box;
@@ -142,7 +151,7 @@ export function getPerformanceDbTabStyles(): string {
     max-width: 10px;
     margin: 0 auto;
     min-height: 2px;
-    background: var(--vscode-debugConsole-infoForeground, #b695f8);
+    background: var(--vscode-debugConsole-infoForeground, var(--accent-info));
     border-radius: 2px 2px 0 0;
     opacity: 0.85;
 }

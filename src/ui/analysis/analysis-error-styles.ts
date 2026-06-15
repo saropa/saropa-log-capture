@@ -30,9 +30,10 @@ export function getAnalysisErrorStyles(): string {
     text-transform: uppercase;
     letter-spacing: 0.4px;
 }
-.err-class-critical { background: rgba(255, 60, 60, 0.2); color: #ff5555; }
-.err-class-transient { background: rgba(255, 180, 60, 0.2); color: #ffb43c; }
-.err-class-bug { background: rgba(255, 100, 160, 0.2); color: #ff64a0; }
+.err-class-critical { background: color-mix(in srgb, var(--accent-critical) 20%, transparent); color: var(--accent-critical); }
+.err-class-transient { background: color-mix(in srgb, var(--accent-warning) 20%, transparent); color: var(--accent-warning); }
+/* No pink token exists; a bug class is an escalated (above-warning) severity, so --accent-high is the closest semantic. */
+.err-class-bug { background: color-mix(in srgb, var(--accent-high) 20%, transparent); color: var(--accent-high); }
 .err-cat {
     font-size: 9px;
     font-weight: 700;
@@ -40,10 +41,12 @@ export function getAnalysisErrorStyles(): string {
     border-radius: 2px;
     text-transform: uppercase;
 }
-.err-cat-fatal { background: rgba(255, 40, 40, 0.15); color: #ff4040; }
-.err-cat-anr { background: rgba(255, 160, 40, 0.15); color: #ffa028; }
-.err-cat-oom { background: rgba(200, 80, 255, 0.15); color: #c850ff; }
-.err-cat-native { background: rgba(255, 120, 60, 0.15); color: #ff783c; }
+.err-cat-fatal { background: color-mix(in srgb, var(--accent-critical) 15%, transparent); color: var(--accent-critical); }
+.err-cat-anr { background: color-mix(in srgb, var(--accent-warning) 15%, transparent); color: var(--accent-warning); }
+/* No purple token exists; out-of-memory is a fatal-severity crash, so --accent-critical is the closest semantic. */
+.err-cat-oom { background: color-mix(in srgb, var(--accent-critical) 15%, transparent); color: var(--accent-critical); }
+/* Native crashes are escalated above a plain warning but not strictly fatal; --accent-high sits between critical and warning. */
+.err-cat-native { background: color-mix(in srgb, var(--accent-high) 15%, transparent); color: var(--accent-high); }
 .err-hash {
     font-family: var(--vscode-editor-font-family, monospace);
     font-size: 10px;
@@ -77,9 +80,10 @@ export function getAnalysisErrorStyles(): string {
 .triage-btn:last-child { border-radius: 0 3px 3px 0; }
 .triage-btn:not(:first-child) { border-left: none; }
 .triage-btn:hover { background: var(--vscode-list-hoverBackground); }
-.triage-btn-open.triage-active { background: rgba(60, 180, 255, 0.2); color: #3cb4ff; border-color: #3cb4ff; }
-.triage-btn-closed.triage-active { background: rgba(100, 200, 100, 0.2); color: #64c864; border-color: #64c864; }
-.triage-btn-muted.triage-active { background: rgba(160, 160, 160, 0.2); color: #a0a0a0; border-color: #a0a0a0; }
+.triage-btn-open.triage-active { background: color-mix(in srgb, var(--accent-info) 20%, transparent); color: var(--accent-info); border-color: var(--accent-info); }
+.triage-btn-closed.triage-active { background: color-mix(in srgb, var(--status-good) 20%, transparent); color: var(--status-good); border-color: var(--status-good); }
+/* Muted/triaged-away state reads as de-emphasized; --muted is the gray neutral token. */
+.triage-btn-muted.triage-active { background: color-mix(in srgb, var(--muted) 20%, transparent); color: var(--muted); border-color: var(--muted); }
 
 /* Timeline sparkline */
 .err-version-info {
@@ -93,8 +97,8 @@ export function getAnalysisErrorStyles(): string {
     height: auto;
     margin: 4px 12px 8px;
 }
-.spark-bar { fill: var(--vscode-charts-blue, #3794ff); transition: fill 0.15s ease; }
-.spark-bar:hover { fill: var(--vscode-charts-yellow, #cca700); }
+.spark-bar { fill: var(--vscode-charts-blue, var(--accent-info)); transition: fill 0.15s ease; }
+.spark-bar:hover { fill: var(--vscode-charts-yellow, var(--accent-warning)); }
 .spark-axis { stroke: var(--vscode-panel-border); stroke-width: 1; }
 .spark-label { font-size: 9px; fill: var(--vscode-descriptionForeground); }
 

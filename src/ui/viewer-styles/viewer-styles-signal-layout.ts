@@ -15,7 +15,9 @@ export function getSignalLayoutStyles(): string {
     height: 100%;
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
     border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+    /* Slide-out edge lift: the panel floats over the log rows, so use the
+       overlay elevation token rather than a baked black alpha. */
+    box-shadow: var(--shadow-lg);
     display: none;
     flex-direction: column;
     overflow: hidden;
@@ -29,7 +31,7 @@ export function getSignalLayoutStyles(): string {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     font-weight: 600;
     font-size: 12px;
     border-bottom: 1px solid var(--vscode-panel-border);
@@ -39,7 +41,7 @@ export function getSignalLayoutStyles(): string {
 .signal-panel-actions {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
 }
 
 .signal-panel-copy-md {
@@ -47,8 +49,8 @@ export function getSignalLayoutStyles(): string {
     border: none;
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
-    padding: 4px;
-    border-radius: 3px;
+    padding: var(--space-1);
+    border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -57,7 +59,9 @@ export function getSignalLayoutStyles(): string {
 
 .signal-panel-copy-md:hover {
     color: var(--vscode-foreground);
-    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+    /* Toolbar hover scrim; the fallback is a faint text-tint so it tracks the
+       theme instead of a fixed neutral gray when the host var is absent. */
+    background: var(--vscode-toolbar-hoverBackground, color-mix(in srgb, var(--text) 30%, transparent));
 }
 
 .signal-panel-close {
@@ -70,26 +74,26 @@ export function getSignalLayoutStyles(): string {
     font-size: 16px;
     line-height: 1;
     padding: 2px 6px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     transition: color 0.12s ease, background 0.12s ease;
 }
 
 .signal-panel-close:hover {
-    color: var(--vscode-errorForeground, #f44);
-    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+    color: var(--vscode-errorForeground, var(--accent-critical));
+    background: var(--vscode-toolbar-hoverBackground, color-mix(in srgb, var(--text) 30%, transparent));
 }
 
 .signal-panel-content {
     flex: 1;
     min-height: 0;
     overflow: auto;
-    padding: 0 8px 8px;
+    padding: 0 var(--space-2) var(--space-2);
 }
 
 /* Accordion sections */
 .signal-section {
     border-bottom: 1px solid var(--vscode-panel-border);
-    margin-bottom: 4px;
+    margin-bottom: var(--space-1);
 }
 
 .signal-section:last-child {
@@ -107,13 +111,13 @@ export function getSignalLayoutStyles(): string {
     cursor: pointer;
     font-size: 12px;
     font-weight: 600;
-    padding: 8px 4px;
+    padding: var(--space-2) var(--space-1);
     text-align: left;
     transition: background 0.12s ease, color 0.12s ease;
 }
 
 .signal-section-header:hover {
-    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.15));
+    background: var(--vscode-toolbar-hoverBackground, color-mix(in srgb, var(--text) 15%, transparent));
     color: var(--vscode-foreground);
 }
 
@@ -149,7 +153,7 @@ export function getSignalLayoutStyles(): string {
 }
 
 .signal-section-body {
-    padding: 4px 0 12px;
+    padding: var(--space-1) 0 var(--space-3);
     overflow: hidden;
 }
 

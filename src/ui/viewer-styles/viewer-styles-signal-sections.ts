@@ -7,12 +7,12 @@ export function getSignalSectionsStyles(): string {
     return /* css */ `
 
 .signal-view-all {
-    margin: 4px 0;
+    margin: var(--space-1) 0;
     font-size: 12px;
 }
 
 .signal-view-all span {
-    color: var(--vscode-textLink-foreground, #3794ff);
+    color: var(--vscode-textLink-foreground, var(--link));
     cursor: pointer;
 }
 
@@ -26,14 +26,14 @@ export function getSignalSectionsStyles(): string {
 }
 
 .signal-recurring-footer {
-    margin-top: 8px;
-    padding-top: 8px;
+    margin-top: var(--space-2);
+    padding-top: var(--space-2);
     border-top: 1px solid var(--vscode-panel-border);
     font-size: 12px;
 }
 
 .signal-recurring-footer .recurring-footer-action {
-    color: var(--vscode-textLink-foreground, #3794ff);
+    color: var(--vscode-textLink-foreground, var(--link));
     cursor: pointer;
 }
 
@@ -50,7 +50,7 @@ export function getSignalSectionsStyles(): string {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 4px 0;
+    padding: var(--space-1) 0;
     border-bottom: 1px solid var(--vscode-panel-border);
     gap: 6px;
 }
@@ -73,7 +73,7 @@ export function getSignalSectionsStyles(): string {
 .signal-hotfile-meta {
     color: var(--vscode-descriptionForeground);
     flex-shrink: 0;
-    margin-left: 8px;
+    margin-left: var(--space-2);
 }
 
 .signal-hotfiles-empty {
@@ -84,7 +84,7 @@ export function getSignalSectionsStyles(): string {
 
 /* Scope label (Current log: filename) */
 .signal-scope-label {
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
     margin-bottom: 6px;
 }
@@ -97,10 +97,10 @@ export function getSignalSectionsStyles(): string {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 4px 14px;
-    font-size: 11px;
+    gap: var(--space-1) 14px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
-    margin-bottom: 8px;
+    margin-bottom: var(--space-2);
 }
 
 .signal-hero-sparkline-wrap {
@@ -118,7 +118,9 @@ export function getSignalSectionsStyles(): string {
 
 .signal-hero-sparkline {
     display: block;
-    stroke: var(--vscode-charts-blue, #3794ff);
+    /* Trend line uses the host chart-blue; --accent-info is the closest token
+       (the info/blue role) for the fallback when the chart color is absent. */
+    stroke: var(--vscode-charts-blue, var(--accent-info));
 }
 
 .signal-hero-metrics {
@@ -154,14 +156,14 @@ export function getSignalSectionsStyles(): string {
 
 /* Session details one-line hint */
 .signal-session-details-hint {
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
-    margin: 0 0 8px 0;
+    margin: 0 0 var(--space-2) 0;
 }
 
 /* This log: single empty state when no errors and no recurring */
 .signal-this-log-empty {
-    margin-bottom: 8px;
+    margin-bottom: var(--space-2);
 }
 
 .signal-this-log-content {
@@ -170,7 +172,7 @@ export function getSignalSectionsStyles(): string {
 
 /* Narrative blocks (grouped content within one section) */
 .signal-narrative-block {
-    margin-bottom: 12px;
+    margin-bottom: var(--space-3);
 }
 
 .signal-narrative-block:last-child {
@@ -178,10 +180,10 @@ export function getSignalSectionsStyles(): string {
 }
 
 .signal-narrative-subtitle {
-    font-size: 11px;
+    font-size: var(--text-caption);
     font-weight: 600;
     color: var(--vscode-descriptionForeground);
-    margin-bottom: 4px;
+    margin-bottom: var(--space-1);
 }
 
 /* Recurring in this log (inside This log section) */
@@ -195,12 +197,12 @@ export function getSignalSectionsStyles(): string {
 }
 
 .signal-env-group {
-    margin-bottom: 8px;
+    margin-bottom: var(--space-2);
 }
 
 .signal-env-title {
     font-weight: 600;
-    margin-bottom: 4px;
+    margin-bottom: var(--space-1);
     color: var(--vscode-foreground);
 }
 
@@ -245,9 +247,9 @@ export function getSignalSectionsStyles(): string {
 .signal-row-actions {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
     flex: 0 0 auto;
-    margin-left: 4px;
+    margin-left: var(--space-1);
     opacity: 0;
     transition: opacity 0.12s ease;
 }
@@ -270,12 +272,12 @@ export function getSignalSectionsStyles(): string {
     flex-wrap: wrap;
     gap: 6px;
     align-items: center;
-    margin: 4px 0 8px;
-    padding: 4px 8px;
-    font-size: 11px;
+    margin: var(--space-1) 0 var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--text-caption);
     border-left: 2px solid var(--vscode-descriptionForeground);
     background: var(--vscode-editorWidget-background);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
 }
 .signal-pulse-strip.pulse-tone-improving { border-left-color: var(--vscode-charts-green); }
 .signal-pulse-strip.pulse-tone-worsening { border-left-color: var(--vscode-charts-red); }
