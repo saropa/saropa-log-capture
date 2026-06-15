@@ -102,6 +102,14 @@ _load_lock = threading.Lock()
 # from re-probing the full cascade for every remaining locale.
 _load_failed = False
 
+# Per-device errors from the last exhausted cascade, joined for the operator
+# message. Without it the fallback reported a generic "no working device
+# configuration" and cache_hint() wrongly claimed the model was "not cached" —
+# hiding the real cause (e.g. "mkl_malloc: failed to allocate memory"), which is
+# exactly the diagnostic the operator needs to fix NLLB. Empty until a cascade
+# fails.
+_load_failure_detail = ""
+
 
 def _flores_code(locale: str) -> str | None:
     """Map a bundle locale code to its NLLB FLORES-200 identifier, or None."""
@@ -236,8 +244,12 @@ def _try_load_device(
     sp: object,
     device: str,
     compute: str,
-) -> object | None:
-    """Load + probe-translate on one device config. Returns translator or None.
+) -> tuple[object | None, str]:
+    """Load + probe-translate on one device config.
+
+    Returns ``(translator, "")`` on success or ``(None, error)`` on failure, so
+    the caller can aggregate the per-device reasons and surface WHY NLLB fell
+    back (memory, missing cuBLAS, etc.) instead of a generic "unavailable".
 
     cuBLAS / MKL failures surface only at inference time, not construction, so
     a one-line probe here catches a broken device before the real loop starts.
@@ -259,7 +271,7 @@ def _try_load_device(
             beam_size=1,
             max_decoding_length=10,
         )
-        return translator
+        return translator, ""
     except (RuntimeError, OSError, MemoryError) as err:
         # Not fatal: this is the device cascade trying its next fallback (e.g.
         # CUDA -> CPU when cuBLAS is absent). Phrase it as a step, not a crash —
@@ -267,7 +279,7 @@ def _try_load_device(
         sys.stderr.write(
             f"[nllb] {device}/{compute} unavailable, trying next fallback: {err}\n"
         )
-        return None
+        return None, str(err)
 
 
 def _ensure_model() -> tuple[object, object]:
@@ -301,17 +313,26 @@ def _ensure_model() -> tuple[object, object]:
             "[nllb] Loading NLLB-200-3.3B model (one-time, may take a minute)…\n"
         )
         sys.stderr.flush()
-        for device, compute in _device_attempts():
-            translator = _try_load_device(model_path, sp, device, compute)
+        attempts = _device_attempts()
+        failures: list[str] = []
+        for device, compute in attempts:
+            translator, err = _try_load_device(model_path, sp, device, compute)
             if translator is not None:
                 _translator, _tokenizer = translator, sp
                 sys.stderr.write(f"[nllb] Model loaded ({device}/{compute}).\n")
                 return _translator, _tokenizer
-        # Cascade exhausted — record it so is_available() stops offering NLLB
-        # for the rest of this run instead of re-probing every device per locale.
-        global _load_failed  # noqa: PLW0603
+            failures.append(f"{device}/{compute}: {err}")
+        # Cascade exhausted — record the per-device reasons so the operator sees
+        # the real cause (not a generic "unavailable"), and so is_available()
+        # stops offering NLLB for the rest of this run rather than re-probing
+        # every device per locale.
+        global _load_failed, _load_failure_detail  # noqa: PLW0603
         _load_failed = True
-        raise NllbUnavailable("no working device configuration")
+        _load_failure_detail = (
+            "; ".join(failures) if failures
+            else "ctranslate2 not importable — no devices to try"
+        )
+        raise NllbUnavailable(f"no device could load the model — {_load_failure_detail}")
 
 
 def _mask_format_placeholders(text: str) -> tuple[str, dict[str, str]]:
@@ -488,18 +509,35 @@ def is_available() -> bool:
 
 
 def cache_hint() -> str:
-    """Operator-facing one-liner explaining how to enable NLLB when it's off."""
+    """Operator-facing one-liner: why NLLB is off and exactly how to enable it.
+
+    Diagnoses the actual blocker rather than assuming "not cached": disabled by
+    env, deps missing, model genuinely absent, OR cached-but-no-device-loaded
+    (the case that previously masqueraded as "not cached" — see the device
+    cascade in ``_ensure_model``).
+    """
     if os.environ.get("SAROPA_SKIP_NLLB", "").strip() == "1":
-        return "NLLB disabled via SAROPA_SKIP_NLLB=1 — using Google Translate."
+        return "NLLB disabled via SAROPA_SKIP_NLLB=1. Unset it to re-enable offline translation."
     try:
         import ctranslate2  # noqa: F401
         import sentencepiece  # noqa: F401
     except ImportError:
         return (
-            "NLLB deps missing — using Google. Enable higher-quality offline "
-            "translation with: pip install ctranslate2 sentencepiece huggingface_hub"
+            "NLLB deps missing. Install them: "
+            "pip install ctranslate2 sentencepiece huggingface_hub"
         )
-    return (
-        "NLLB model not cached (~7 GB) — using Google. Download once to enable "
-        f"offline translation: huggingface-cli download {_NLLB_MODEL_ID}"
-    )
+    # Deps are present, so a generic "not cached" is wrong when the model loaded
+    # but every device failed. Check the disk cache first, then the load result.
+    if _resolve_model_path() is None:
+        return (
+            "NLLB model not cached (~7 GB). Download once: "
+            f"huggingface-cli download {_NLLB_MODEL_ID}"
+        )
+    if _load_failed:
+        return (
+            f"NLLB model IS cached but no device could load it ({_load_failure_detail}). "
+            "Most often this is low free RAM (CPU int8 needs ~4 GB, float16 ~14 GB) or, "
+            "on GPU, a missing cuBLAS runtime. Fixes: free memory and re-run; force CPU "
+            "with SAROPA_NLLB_DEVICE=cpu; for GPU run pip install nvidia-cublas-cu12."
+        )
+    return "NLLB appears available; Google was selected explicitly."

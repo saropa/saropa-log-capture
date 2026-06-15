@@ -151,5 +151,49 @@ class CudaDllRegistrationTests(unittest.TestCase):
         self.assertTrue(engine._cuda_dll_dirs_registered)
 
 
+class CacheHintTests(unittest.TestCase):
+    """``cache_hint`` must name the REAL blocker, not always guess "not cached".
+
+    The regression it guards: a cached model whose device cascade failed (e.g.
+    out-of-memory) was reported as "model not cached (~7 GB)", sending the
+    operator to re-download a model already on disk instead of freeing memory.
+    """
+
+    def tearDown(self) -> None:
+        # The cached-but-failed branch is reached via module state; reset it so
+        # the failure flag cannot leak into other tests in the run.
+        engine._load_failed = False
+        engine._load_failure_detail = ""
+
+    def test_skip_env_reports_disabled(self) -> None:
+        previous = os.environ.get("SAROPA_SKIP_NLLB")
+        os.environ["SAROPA_SKIP_NLLB"] = "1"
+        try:
+            self.assertIn("SAROPA_SKIP_NLLB", engine.cache_hint())
+        finally:
+            if previous is None:
+                os.environ.pop("SAROPA_SKIP_NLLB", None)
+            else:
+                os.environ["SAROPA_SKIP_NLLB"] = previous
+
+    def test_cached_but_device_failed_reports_real_reason(self) -> None:
+        # Force the "deps present + model cached + cascade failed" state without
+        # importing ctranslate2 or touching disk.
+        original_resolve = engine._resolve_model_path
+        engine._resolve_model_path = lambda: "C:/fake/model/snapshot"
+        engine._load_failed = True
+        engine._load_failure_detail = "cpu/int8: mkl_malloc: failed to allocate memory"
+        sys.modules.setdefault("ctranslate2", __import__("types").ModuleType("ctranslate2"))
+        sys.modules.setdefault("sentencepiece", __import__("types").ModuleType("sentencepiece"))
+        try:
+            hint = engine.cache_hint()
+        finally:
+            engine._resolve_model_path = original_resolve
+        # Must surface the captured device error AND must NOT claim "not cached".
+        self.assertIn("mkl_malloc", hint)
+        self.assertIn("IS cached", hint)
+        self.assertNotIn("not cached", hint)
+
+
 if __name__ == "__main__":
     unittest.main()
