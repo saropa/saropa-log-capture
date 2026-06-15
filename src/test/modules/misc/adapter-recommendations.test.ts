@@ -55,6 +55,16 @@ suite('adapter-recommendations', () => {
             assert.ok(adapters.includes('adbLogcat'));
         });
 
+        test('should map the expanded database / http / test packages', () => {
+            const a = (dep: string) => suggestAdaptersFromPubspec(new Set([dep]), []).map(r => r.adapter);
+            assert.deepStrictEqual(a('floor'), ['database']);
+            assert.deepStrictEqual(a('postgres'), ['database']);
+            assert.deepStrictEqual(a('drift_dev'), ['database', 'driftAdvisor']);
+            assert.deepStrictEqual(a('graphql'), ['http']);
+            assert.deepStrictEqual(a('mockito'), ['testResults']);
+            assert.deepStrictEqual(a('patrol'), ['testResults']);
+        });
+
         // Every adapter the mapping can emit must exist in the UI table, or the toast
         // would name a raw id instead of a friendly label (and the picker would not list it).
         test('should only map to adapter ids known to the integrations UI table', () => {
@@ -84,6 +94,16 @@ suite('adapter-recommendations', () => {
         test('should not suggest crashlytics for a Node project', () => {
             const adapters = suggestAdaptersFromPackageJson(new Set(['firebase']), []).map(r => r.adapter);
             assert.ok(!adapters.includes('crashlytics'));
+        });
+
+        test('should map the expanded npm packages', () => {
+            const a = (dep: string) => suggestAdaptersFromPackageJson(new Set([dep]), []).map(r => r.adapter);
+            assert.deepStrictEqual(a('redis'), ['database']);
+            assert.deepStrictEqual(a('drizzle-orm'), ['database']);
+            assert.deepStrictEqual(a('@prisma/client'), ['database']);
+            assert.deepStrictEqual(a('superagent'), ['http']);
+            assert.deepStrictEqual(a('jasmine'), ['testResults']);
+            assert.deepStrictEqual(a('webdriverio'), ['browser']);
         });
 
         test('should only map to adapter ids known to the integrations UI table', () => {
