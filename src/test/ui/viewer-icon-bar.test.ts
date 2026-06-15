@@ -55,7 +55,7 @@ suite('ViewerIconBar', () => {
             const html = getIconBarHtml();
             const ids = [
                 'ib-sessions', 'ib-find', 'ib-bookmarks',
-                'ib-sql-query-history', 'ib-trash', 'ib-options',
+                'ib-sql-query-history', 'ib-integrations', 'ib-trash', 'ib-options',
                 'ib-crashlytics', 'ib-project-state', 'ib-signal', 'ib-about',
             ];
             for (const id of ids) {

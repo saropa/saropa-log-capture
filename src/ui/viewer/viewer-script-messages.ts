@@ -21,7 +21,7 @@ function syncCrashlyticsIconVisibility() {
 window.addEventListener('message', function(event) {
     var msg = event.data;
     /* Pre-handlers return true when they've dispatched the message; skip the switch on hit. */
-    if ((typeof handleDbMessages === 'function' && handleDbMessages(msg)) || (typeof handleTypographyMessages === 'function' && handleTypographyMessages(msg))) return;
+    if ((typeof handleDbMessages === 'function' && handleDbMessages(msg)) || (typeof handleTypographyMessages === 'function' && handleTypographyMessages(msg)) || (typeof handleSuiteIssuesMessage === 'function' && handleSuiteIssuesMessage(msg))) return;
     switch (msg.type) {
         case 'addLines': {
             var isHidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';

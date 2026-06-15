@@ -23,6 +23,7 @@ import { fetchDriftDbIssues } from '../../modules/integrations/drift-advisor-iss
 import { getDriftLintViolations } from '../../modules/misc/drift-lint-violations';
 import { getSuiteDeepLinkAvailability, runSiblingDeepLink } from '../../modules/diagnostics/suite-deeplink';
 import { readSuiteMirrorsForPanel } from '../../modules/diagnostics/suite-mirror-read';
+import { buildSuiteIssues } from '../../modules/diagnostics/suite-issues-html';
 import { logExtensionError } from '../../modules/misc/extension-logger';
 
 /** Clamp numeric param to safe integer range for line/part indices (0 .. 10M). */
@@ -208,6 +209,12 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
         // for the panel's Database / Static-code sections when their live source is unavailable.
         void readSuiteMirrorsForPanel().then((m) =>
           ctx.post({ type: "suiteMirrorDiagnostics", advisor: m.advisor, lints: m.lints }));
+        return true;
+      case "requestSuiteIssues":
+        // Integrations screen + icon-bar badge: the count of companion-tool issues and the rendered
+        // block listing them (or the silent-state guidance when a tool is installed but empty).
+        void buildSuiteIssues().then((p) =>
+          ctx.post({ type: "suiteIssues", count: p.count, html: p.html }));
         return true;
       case "checkDriftViewerHealth": {
         const baseUrl = String((msg as { baseUrl?: unknown }).baseUrl ?? "").trim();
