@@ -128,6 +128,7 @@ export function getIconBarScript(): string {
         find: document.getElementById('ib-find'),
         bookmarks: document.getElementById('ib-bookmarks'),
         sqlHistory: document.getElementById('ib-sql-query-history'),
+        integrations: document.getElementById('ib-integrations'),
         trash: document.getElementById('ib-trash'),
         options: document.getElementById('ib-options'),
 
@@ -183,6 +184,12 @@ export function getIconBarScript(): string {
             openBookmarkPanel();
         } else if (name === 'sqlHistory' && typeof openSqlQueryHistoryPanel === 'function') {
             openSqlQueryHistoryPanel();
+        } else if (name === 'integrations') {
+            /* The Integrations screen is a view inside the Options slide-out; open that panel, then
+               switch to the integrations view, and refresh the companion issues so the list is current. */
+            if (typeof openOptionsPanel === 'function') openOptionsPanel();
+            if (typeof openIntegrationsView === 'function') openIntegrationsView();
+            if (typeof window.requestSuiteIssues === 'function') window.requestSuiteIssues();
         } else if (name === 'trash' && typeof openTrashPanel === 'function') {
             openTrashPanel();
         } else if (name === 'options' && typeof openOptionsPanel === 'function') {
@@ -235,6 +242,9 @@ export function getIconBarScript(): string {
     }
     if (iconButtons.sqlHistory) {
         iconButtons.sqlHistory.addEventListener('click', function() { setActivePanel('sqlHistory'); });
+    }
+    if (iconButtons.integrations) {
+        iconButtons.integrations.addEventListener('click', function() { setActivePanel('integrations'); });
     }
     if (iconButtons.trash) {
         iconButtons.trash.addEventListener('click', function() { setActivePanel('trash'); });
