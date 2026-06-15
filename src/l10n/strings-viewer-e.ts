@@ -55,6 +55,7 @@ export const stringsViewerE: Record<string, string> = {
     'viewer.integrations.suiteNoIssues': 'No issues shared by your companion tools yet.',
     'viewer.integrations.suiteSilentAdvisor': 'Drift Advisor is installed but has not shared data yet — start a Drift debug session so its findings appear here.',
     'viewer.integrations.suiteSilentLints': 'Saropa Lints is installed but has not shared findings yet — make sure its analyzer is running for this project.',
+    'viewer.integrations.suiteStale': '(from an earlier commit)',
     'viewer.integrations.suggestHeading': 'Suggested for your project',
     'viewer.integrations.suggestReason': 'Your project uses {0}',
     'viewer.integrations.suggestEnable': 'Enable',
