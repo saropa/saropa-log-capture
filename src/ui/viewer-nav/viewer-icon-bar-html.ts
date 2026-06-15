@@ -30,6 +30,9 @@ export function getIconBarHtml(): string {
     <button id="ib-sql-query-history" class="ib-icon" tabindex="0" title="${t('viewer.iconBar.sqlHistory.title')}" aria-label="${t('viewer.iconBar.sqlHistory.label')}">
         <span class="codicon codicon-database"></span><span id="ib-sql-badge" class="ib-badge"></span><span class="ib-label">${t('viewer.iconBar.sqlHistory.text')}<span id="ib-sql-count" class="ib-count"></span></span>
     </button>
+    <button id="ib-integrations" class="ib-icon" tabindex="0" title="${t('viewer.iconBar.integrations.title')}" aria-label="${t('viewer.iconBar.integrations.label')}">
+        <span class="codicon codicon-plug"></span><span id="ib-integrations-badge" class="ib-badge"></span><span class="ib-label">${t('viewer.iconBar.integrations.text')}<span id="ib-integrations-count" class="ib-count"></span></span>
+    </button>
     <div class="ib-separator"></div>
     <button id="ib-crashlytics" class="ib-icon" tabindex="0" title="${t('viewer.iconBar.crashlytics.title')}" aria-label="${t('viewer.iconBar.crashlytics.label')}">
         <span class="codicon codicon-flame"></span><span id="ib-crashlytics-badge" class="ib-badge"></span><span class="ib-label">${t('viewer.iconBar.crashlytics.text')}<span id="ib-crashlytics-count" class="ib-count"></span></span>
