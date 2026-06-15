@@ -3,28 +3,28 @@ export function getNPlusOneSignalStyles(): string {
     return /* css */ `
 /* Drift SQL N+1 heuristic signal row (see modules/db/drift-n-plus-one-detector.ts) */
 .n1-signal {
-    color: var(--vscode-editorWarning-foreground, #ffcc00);
+    color: var(--vscode-editorWarning-foreground, var(--accent-warning));
     font-style: normal;
 }
 .n1-conf {
     font-size: 10px;
     border: 1px solid currentColor;
-    border-radius: 3px;
-    padding: 0 4px;
-    margin: 0 4px;
+    border-radius: var(--radius-sm);
+    padding: 0 var(--space-1);
+    margin: 0 var(--space-1);
 }
-.n1-conf-high { color: var(--vscode-errorForeground, #f48771); }
-.n1-conf-medium { color: var(--vscode-editorWarning-foreground, #ffcc00); }
-.n1-conf-low { color: var(--vscode-descriptionForeground, #9da3a6); }
+.n1-conf-high { color: var(--vscode-errorForeground, var(--accent-critical)); }
+.n1-conf-medium { color: var(--vscode-editorWarning-foreground, var(--accent-warning)); }
+.n1-conf-low { color: var(--vscode-descriptionForeground, var(--muted)); }
 .n1-fp {
     opacity: 0.85;
     color: var(--vscode-descriptionForeground);
 }
 .n1-actions {
-    margin-left: 8px;
+    margin-left: var(--space-2);
 }
 .n1-action {
-    color: var(--vscode-textLink-foreground, #3794ff);
+    color: var(--vscode-textLink-foreground, var(--link));
     cursor: pointer;
     text-decoration: underline;
     text-decoration-style: dotted;

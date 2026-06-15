@@ -16,7 +16,7 @@ export function getRecurringPanelStyles(): string {
     height: 100%;
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
     border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow);
     display: none;
     flex-direction: column;
     overflow: hidden;
@@ -30,7 +30,7 @@ export function getRecurringPanelStyles(): string {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     font-weight: 600;
     font-size: 12px;
     border-bottom: 1px solid var(--vscode-panel-border);
@@ -39,7 +39,7 @@ export function getRecurringPanelStyles(): string {
 .recurring-panel-actions {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
 }
 
 .recurring-panel-action {
@@ -47,8 +47,8 @@ export function getRecurringPanelStyles(): string {
     border: none;
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
-    padding: 2px 4px;
-    border-radius: 3px;
+    padding: 2px var(--space-1);
+    border-radius: var(--radius-sm);
     font-size: 14px;
 }
 
@@ -67,20 +67,21 @@ export function getRecurringPanelStyles(): string {
 }
 
 .recurring-panel-close:hover {
-    color: var(--vscode-errorForeground, #f44);
+    /* Destructive close = fail/red role; one token across every panel's close button. */
+    color: var(--status-bad);
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 
 .recurring-panel-content {
     flex: 1;
     overflow-y: auto;
-    padding: 4px 0;
+    padding: var(--space-1) 0;
 }
 
 /* --- Recurring error cards --- */
 .re-card {
     border-bottom: 1px solid var(--vscode-panel-border);
-    padding: 6px 12px;
+    padding: 6px var(--space-3);
     font-size: 12px;
 }
 
@@ -103,13 +104,13 @@ export function getRecurringPanelStyles(): string {
 .re-regression .re-commit-link:hover { text-decoration: underline; }
 .re-regression code { font-size: 0.95em; }
 
-.re-actions { display: flex; gap: 4px; margin-top: 3px; }
+.re-actions { display: flex; gap: var(--space-1); margin-top: 3px; }
 
 .re-action {
     background: var(--vscode-button-secondaryBackground);
     color: var(--vscode-button-secondaryForeground);
     border: none;
-    padding: 1px 8px;
+    padding: 1px var(--space-2);
     cursor: pointer;
     border-radius: 2px;
     font-size: 11px;
@@ -118,14 +119,14 @@ export function getRecurringPanelStyles(): string {
 .re-action:hover { background: var(--vscode-button-secondaryHoverBackground); }
 
 .recurring-empty {
-    padding: 16px 12px;
+    padding: var(--space-4) var(--space-3);
     font-size: 12px;
     color: var(--vscode-descriptionForeground);
     text-align: center;
 }
 
 .recurring-loading {
-    padding: 16px 12px;
+    padding: var(--space-4) var(--space-3);
     font-size: 12px;
     color: var(--vscode-descriptionForeground);
     text-align: center;
@@ -135,7 +136,7 @@ export function getRecurringPanelStyles(): string {
 @keyframes re-pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 0.2; } }
 
 .recurring-footer {
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     text-align: center;
     cursor: pointer;
     color: var(--vscode-textLink-foreground);
@@ -143,7 +144,7 @@ export function getRecurringPanelStyles(): string {
     border-top: 1px solid var(--vscode-panel-border);
 }
 
-.recurring-footer { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.recurring-footer { display: flex; align-items: center; justify-content: center; gap: var(--space-3); flex-wrap: wrap; }
 #recurring-footer-signals:hover { text-decoration: underline; }
 .recurring-footer-action {
     cursor: pointer;
