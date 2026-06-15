@@ -16,7 +16,7 @@ from modules.verify.l10n_bundle_audit import (
     AuditResult,
     sync_english_bundle,
     write_audit_report,
-    write_gap_export,
+    write_gap_export_sentences,
     write_translation_error_audit,
 )
 from modules.verify.l10n_console import cyan, dim, green, header, red, yellow
@@ -234,11 +234,11 @@ def write_report_and_offer_export(audit: AuditResult) -> None:
         lc.missing_count + lc.untranslated_count for lc in audit.locale_coverage
     )
     print(f"\n  {yellow(f'{total_gaps} untranslated string(s) remain.')}")
-    # Always write both formats and list both paths — no prompt. The two views
-    # serve different consumers (JSON for re-import tooling, CSV for spreadsheet
-    # / external translators), so producing both is cheaper than asking which.
-    print("  Exporting gaps for external translation (JSON + CSV)…")
-    for fmt in ("json", "csv"):
-        path = write_gap_export(audit, fmt=fmt)
-        if path:
-            print(f"  {green(f'Exported {fmt.upper()}')}: {path}")
+    # Sentence-level JSON export, written unconditionally (no prompt): each gap
+    # is broken into sentences so an external translator works one sentence at a
+    # time, and --import reassembles them losslessly into the whole-string keys.
+    print("  Exporting gaps for external translation (sentence-level JSON)…")
+    path = write_gap_export_sentences(audit)
+    if path:
+        print(f"  {green('Exported')}: {path}")
+        print(dim("  Fill every sentence, then: python scripts/translate_l10n.py --import <file>"))
