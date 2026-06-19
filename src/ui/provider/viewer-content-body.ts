@@ -87,6 +87,11 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
         <button type="button" id="resume-session-btn" class="resume-session-action" title="${t('viewer.resumeBanner.btn.title')}"></button>
         <button type="button" id="resume-session-dismiss" class="resume-session-dismiss" title="${t('viewer.resumeBanner.dismiss')}">×</button>
     </div>
+    <!-- Newer-log banner, log-viewer surface. Mirrors the in-panel #session-newer-banner so the
+         "new logs available" alert is visible without opening the Logs panel (BUG_new_log_banner).
+         renderNewerLogBanner() fills both surfaces from the same session list; hidden until any
+         rendered record carries unreadSinceFocus:true. Reuses .session-newer-banner styles. -->
+    <div id="viewer-newer-banner" class="session-newer-banner viewer-newer-banner" style="display:none" role="status" aria-live="polite"></div>
     <div id="split-breadcrumb">
         <button id="split-prev" title="${t('viewer.split.prev.title')}" aria-label="${t('viewer.split.prev.label')}" disabled>&#x25C0;</button>
         <span class="nav-bar-label" aria-hidden="true">${t('viewer.split.part')} <span id="split-current">1</span> ${t('viewer.split.of')} <span id="split-total">1</span></span>

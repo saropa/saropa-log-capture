@@ -26,7 +26,7 @@ import { migrateSidecarsInDirectory } from './modules/session/session-metadata';
 import { ProjectIndexer, setGlobalProjectIndexer } from './modules/project-indexer/project-indexer';
 import { TrigramSearchIndex, setGlobalSearchIndex } from './modules/search/search-trigram-index';
 import { BookmarkStore } from './modules/storage/bookmark-store';
-import { buildSessionListPayload, buildClassifierInputs, buildRoleClassifier, LOG_LAST_VIEWED_KEY } from './ui/provider/viewer-provider-helpers';
+import { buildSessionListPayload, buildClassifierInputs, buildRoleClassifier, LOG_LAST_VIEWED_KEY, getOrSeedDismissedAt } from './ui/provider/viewer-provider-helpers';
 import { registerDebugLifecycle } from './extension-lifecycle';
 import { SessionGroupTracker } from './modules/session/session-group-tracker';
 import { setRetentionGroupContext } from './modules/config/file-retention';
@@ -130,9 +130,14 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         // peripheral on the next refresh and flicker the tree. Folder name drives the controller match.
         const cfg = getConfig();
         const refreshFolderName = folder?.name;
+        // Feed the dismiss cursor here too — this proactive refresh fires when a new log is written
+        // (the exact moment the banner should appear), and it is the path that supplies the
+        // always-visible log-viewer banner with unreadSinceFocus without the user opening the panel.
+        const dismissedAt = getOrSeedDismissedAt(context);
         const payload = await buildSessionListPayload(items, historyProvider.getActiveUri(), {
             getActiveLastWriteTime: () => sessionManager.getActiveLastWriteTime?.(),
             getLastViewedAt: (uri) => lastViewedMap[uri],
+            getDismissedAt: () => dismissedAt,
             classifyMeta: buildClassifierInputs(cfg.reportsClassifier.kindPatterns, refreshFolderName),
             classifyRole: buildRoleClassifier(cfg.reportsClassifier.controllerNames, refreshFolderName),
         });

@@ -34,6 +34,13 @@ var dragSelectLastX = 0;
 var dragSelectLastY = 0;
 var dragSelectAutoscrollTimer = 0;
 var dragSelectAutoscrollSpeed = 0;
+/* True from the mouseup that ENDS a real multi-row model drag until the next
+   mousedown. The browser fires a 'click' on the common ancestor (viewportEl)
+   after such a drag; this flag tells the dismiss-on-click handler below to skip
+   that one click so it does not immediately wipe the selection the drag just
+   built. Reset on every fresh mousedown so a dropped/absent drag-end click can
+   never strand the flag and swallow a later legitimate dismiss click. */
+var dragSelectJustEnded = false;
 
 /* Selectors to ignore on mousedown — clicking these should retain their primary action
    (open link, click button, expand peek, etc.) rather than starting a drag-select. */
@@ -140,6 +147,7 @@ function onDragSelectMouseDown(e) {
     dragSelectLastX = e.clientX;
     dragSelectLastY = e.clientY;
     dragSelectActive = false;
+    dragSelectJustEnded = false;
 }
 
 function onDragSelectMouseMove(e) {
@@ -213,12 +221,39 @@ function isUserSelecting() {
 
 function onDragSelectMouseUp() {
     if (dragSelectStartIdx < 0) return;
+    /* Remember whether THIS release ended a real model drag so the trailing
+       'click' (fired on viewportEl for a cross-row drag) is not treated as a
+       dismiss click — see dragSelectJustEnded. */
+    if (dragSelectActive) dragSelectJustEnded = true;
     dragSelectStartIdx = -1;
     dragSelectActive = false;
     stopDragSelectAutoscroll();
 }
 
+/* A plain single click dismisses an existing model selection (shift+click or a
+   prior drag) — users expect a click to clear the highlight rather than reaching
+   for Escape (user report 2026-06-16). Gated so it never wipes a selection that
+   is still being made: skip modified clicks (shift/ctrl extend or filter), skip
+   the click that ends a drag (dragSelectJustEnded), and skip when a native
+   within-line text selection is live (non-collapsed) so half-line text drags
+   survive. Native selection is already collapsed by the browser on a fresh
+   mousedown, so only the data-indexed model selection needs clearing here. */
+function onDragSelectDismissClick(e) {
+    if (e.button !== undefined && e.button !== 0) return;
+    if (e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (dragSelectJustEnded) return;
+    var s = (typeof window !== 'undefined' && window.getSelection) ? window.getSelection() : null;
+    if (s && !s.isCollapsed) return;
+    if (typeof selectionStart !== 'undefined' && selectionStart >= 0 && typeof clearSelection === 'function') {
+        clearSelection();
+    }
+}
+
 if (viewportEl) viewportEl.addEventListener('mousedown', onDragSelectMouseDown);
+/* Dismiss-on-click runs after the per-element handlers in viewer-script-click-handlers.ts
+   (registered earlier on the same element); those return for interactive targets but leave
+   the model selection intact, so this clears it on a plain click anywhere in the viewport. */
+if (viewportEl) viewportEl.addEventListener('click', onDragSelectDismissClick);
 /* mousemove/mouseup live on document so dragging out of the viewport (over the gutter,
    over the toolbar, over the iframe edge) keeps tracking until the user releases. */
 document.addEventListener('mousemove', onDragSelectMouseMove);

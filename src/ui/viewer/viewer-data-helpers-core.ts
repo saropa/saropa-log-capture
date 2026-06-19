@@ -191,9 +191,16 @@ function formatFrameMemberFirst(html) {
     if (m) return escapeHtml(m[2]) + ' <span class="frame-lib-src">' + escapeHtml(m[1]) + '</span>';
     /* App frame: <a class="source-link">…</a> + alignment padding (\\s{2,}) + member.
        Non-greedy .*? stops at the FIRST </a> — there is exactly one link per frame (the
-       path); the member that follows is plain trailing text with no link of its own. */
+       path); the member that follows is plain trailing text with no link of its own.
+       Wrap the member in .frame-member so the whole-row open affordance is discoverable:
+       the path link floats right (.frame-lib-src) and clips off-screen in a narrow
+       sidebar, so without a cue on the member itself the bright app-frame text reads as
+       plain, un-clickable text (user report 2026-06-16, "clickable text is white"). The
+       wrapper is display-only — copy/search/dedup all use rawText, and stripTags() drops
+       the span — and is added ONLY on linked app frames, so dart-SDK frames (no link,
+       not clickable) stay un-cued and avoid a dead-click affordance. */
     var am = /^(<a class="source-link"[^>]*>.*?<\\/a>)\\s{2,}(\\S.*?)\\s*$/.exec(html);
-    if (am) return am[2] + ' <span class="frame-lib-src">' + am[1] + '</span>';
+    if (am) return '<span class="frame-member">' + am[2] + '</span> <span class="frame-lib-src">' + am[1] + '</span>';
     return html;
 }
 /** Map HTML numeric/hex entities that denote Unicode whitespace to a regular space.

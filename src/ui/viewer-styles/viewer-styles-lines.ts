@@ -165,6 +165,26 @@ body.ctrl-held .source-link {
     cursor: cell;
 }
 
+/* Whole stack-FRAME rows open their source on a click anywhere on the row
+   (viewer-script-click-handlers.ts). The member name is the obvious target but
+   renders as bright plain text, so the row read as non-clickable while the only
+   cue — the floated path link — clipped off-screen in a narrow sidebar (user
+   report 2026-06-16). :has(.source-link) scopes the cursor to frames that
+   actually carry a link, so link-less dart-SDK frames keep the default cursor
+   and avoid a dead-click affordance. */
+.stack-line:has(.source-link) { cursor: pointer; }
+/* Persistent subtle dotted underline marks the member as actionable without
+   washing the whole trace in link color; the row hover promotes it to a solid
+   themed-link underline + color, matching the .source-link hover treatment. */
+.frame-member {
+    text-decoration: underline dotted var(--vscode-descriptionForeground);
+    text-underline-offset: 2px;
+}
+.stack-line:has(.source-link):hover .frame-member {
+    color: var(--vscode-textLink-foreground, #3794ff);
+    text-decoration: underline solid var(--vscode-textLink-foreground, #3794ff);
+}
+
 /* --- Clickable URL links within log lines --- */
 .url-link {
     color: var(--vscode-editorLineNumber-foreground, #858585);
