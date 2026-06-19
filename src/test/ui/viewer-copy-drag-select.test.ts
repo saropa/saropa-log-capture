@@ -141,6 +141,53 @@ suite('viewer-copy-drag-select', () => {
         );
     });
 
+    test('a plain click dismisses an existing model selection (no Escape needed)', () => {
+        /* User report 2026-06-16: a multi-row / shift selection only cleared with Escape.
+           A plain click in the viewport must now clear it via clearSelection(). */
+        assert.ok(
+            script.includes("viewportEl.addEventListener('click', onDragSelectDismissClick)"),
+            'dismiss-on-click listener must attach to viewportEl',
+        );
+        assert.ok(
+            /selectionStart >= 0 && typeof clearSelection === 'function'/.test(script),
+            'dismiss click clears the model selection only when one exists',
+        );
+    });
+
+    test('dismiss click is gated so it never wipes a selection still being made', () => {
+        /* Three gates: modifier clicks (shift/ctrl extend or filter) are skipped, the click
+           that ENDS a drag is skipped (dragSelectJustEnded), and a live native within-line
+           text selection (non-collapsed) is preserved. */
+        assert.ok(
+            script.includes('dragSelectJustEnded'),
+            'flag required so the drag-ending click is not treated as a dismiss',
+        );
+        assert.ok(
+            /if \(dragSelectActive\) dragSelectJustEnded = true/.test(script),
+            'mouseup must remember a real model drag so its trailing click is skipped',
+        );
+        assert.ok(
+            /if \(e\.shiftKey \|\| e\.ctrlKey \|\| e\.metaKey \|\| e\.altKey\) return/.test(
+                script.slice(script.indexOf('function onDragSelectDismissClick')),
+            ),
+            'modifier clicks must not dismiss',
+        );
+        assert.ok(
+            /if \(s && !s\.isCollapsed\) return/.test(
+                script.slice(script.indexOf('function onDragSelectDismissClick')),
+            ),
+            'a live native text selection must be preserved',
+        );
+        /* Reset on the next mousedown so a dropped/absent drag-end click cannot strand the
+           flag and swallow a later legitimate dismiss click. */
+        assert.ok(
+            /dragSelectJustEnded = false/.test(
+                script.slice(script.indexOf('function onDragSelectMouseDown')),
+            ),
+            'fresh mousedown must reset the just-ended flag',
+        );
+    });
+
     test('exposes isUserSelecting() for the streaming/auto-scroll path to query', () => {
         /* The addLines handler in viewer-script-messages.ts calls this to suppress
            snap-to-bottom while a selection is in progress. If this signature drifts the
