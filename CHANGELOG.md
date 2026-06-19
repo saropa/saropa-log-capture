@@ -26,9 +26,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.0.5]
 
-Stack-trace file paths are now easier to click without getting in your way: app-frame lines show they're clickable, selecting text no longer jumps you to a file, and a single click clears a selection. The "new logs" banner now appears in the log viewer (not just the Logs panel) and its Open button clears the alert. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+Stack-trace file paths are now easier to click without getting in your way: app-frame lines show they're clickable, selecting text no longer jumps you to a file, and a single click clears a selection. The "new logs" banner now appears in the log viewer (not just the Logs panel) and its Open button clears the alert. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.5/CHANGELOG.md)
 
 ### Fixed
 
