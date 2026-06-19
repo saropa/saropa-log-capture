@@ -19,7 +19,7 @@ import { showSearchQuickPick } from "../../modules/search/log-search-ui";
 import { openLogAtLine } from "../../modules/search/log-search";
 import { showAnalysis } from "../analysis/analysis-panel";
 import { loadPresets, promptSavePreset } from "../../modules/storage/filter-presets";
-import { buildSessionListPayload, buildSessionItemRecord, openSourceFile, LOG_LAST_VIEWED_KEY, LOGS_PANEL_DISMISSED_AT_KEY, buildClassifierInputs, buildRoleClassifier, type SessionListPayloadOptions } from "./viewer-provider-helpers";
+import { buildSessionListPayload, buildSessionItemRecord, openSourceFile, LOG_LAST_VIEWED_KEY, getOrSeedDismissedAt, buildClassifierInputs, buildRoleClassifier, type SessionListPayloadOptions } from "./viewer-provider-helpers";
 import { runDeferredSeverityScan } from "../session/session-severity-scan";
 import { getConfig } from "../../modules/config/config";
 import type { BookmarkStore } from "../../modules/storage/bookmark-store";
@@ -175,15 +175,9 @@ function getSessionRootPath(context: vscode.ExtensionContext): string {
 /** Build the options object used for session payload records. */
 function makePayloadOptions(deps: HandlerDeps): SessionListPayloadOptions {
   const lastViewedMap = deps.context.workspaceState.get<Record<string, number>>(LOG_LAST_VIEWED_KEY, {});
-  // Seed the dismiss cursor to "now" on first install. Without a seed, every pre-existing log on
-  // the user's disk would arrive flagged as "newer than focus" on the very first panel open —
-  // which is the carpet-bombing failure mode the banner is supposed to avoid. We persist the
-  // seed so subsequent reads observe the same baseline (idempotent on re-read).
-  let dismissedAt = deps.context.workspaceState.get<number>(LOGS_PANEL_DISMISSED_AT_KEY);
-  if (typeof dismissedAt !== 'number') {
-    dismissedAt = Date.now();
-    void deps.context.workspaceState.update(LOGS_PANEL_DISMISSED_AT_KEY, dismissedAt);
-  }
+  // Dismiss cursor (seeded to now on first read) — shared with the proactive tree-change refresh
+  // in extension-activation so both the panel banner and the log-viewer banner read one baseline.
+  const dismissedAt = getOrSeedDismissedAt(deps.context);
   const cfg = getConfig();
   const folderName = vscode.workspace.workspaceFolders?.[0]?.name;
   const classifyMeta = buildClassifierInputs(cfg.reportsClassifier.kindPatterns, folderName);

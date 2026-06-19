@@ -49,6 +49,21 @@ export const LOG_LAST_VIEWED_KEY = 'saropaLogCapture.logLastViewed';
  *  for pre-existing logs. See [plans/history/2026.06/2026.06.02/001_plan-newer-alert-and-reports-grouping.md]. */
 export const LOGS_PANEL_DISMISSED_AT_KEY = 'saropaLogCapture.logsPanelDismissedAt';
 
+/** Read the Logs-panel dismiss cursor, seeding it to now on first read.
+ *  Seeding here (not only in the panel-open path) matters because the proactive
+ *  tree-change refresh feeds the always-visible log-viewer banner too — without a
+ *  seed, every pre-existing log on disk would arrive flagged "newer than focus" on
+ *  the first run (the carpet-bombing failure the banner exists to avoid). The seed
+ *  write is idempotent: subsequent reads observe the same baseline. */
+export function getOrSeedDismissedAt(context: vscode.ExtensionContext): number {
+    let dismissedAt = context.workspaceState.get<number>(LOGS_PANEL_DISMISSED_AT_KEY);
+    if (typeof dismissedAt !== 'number') {
+        dismissedAt = Date.now();
+        void context.workspaceState.update(LOGS_PANEL_DISMISSED_AT_KEY, dismissedAt);
+    }
+    return dismissedAt;
+}
+
 /** Pre-built classifier callable handed to every per-record build. Pattern compile + folder
  *  lookup happen once per payload, not once per row — `buildClassifierInputs()` is the factory. */
 export type ClassifyMeta = (input: SessionKindInput) => SessionKind;
