@@ -28,21 +28,24 @@ cspell:disable
 
 ## [Unreleased]
 
-Simplified and Traditional Chinese now fully translate the log viewer — the last machine-translation gaps were filled in by hand. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+Stack-trace file paths are now easier to click without getting in your way: app-frame lines show they're clickable, selecting text no longer jumps you to a file, and a single click clears a selection. The "new logs" banner now appears in the log viewer (not just the Logs panel) and its Open button clears the alert. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
 
-### Changed
+### Fixed
 
-- **Simplified Chinese (zh-cn) and Traditional Chinese (zh-tw) reached 100% of the viewer's strings.** The last strings the machine translator couldn't produce — the Filters and Options panel descriptions, the device/logcat visibility cycle, the copy-path and copy-with-decorations actions, and the Firebase Console hint — were filled in by hand and marked high-quality so future translation passes won't overwrite them. Seven strings imported across the two locales.
-
----
+- **App-frame stack lines now look clickable.** The whole row opens its source, but the bright member text read as plain, un-clickable text — the only cue (the file path) floats right and clips off-screen in a narrow sidebar. The member now carries a subtle dotted underline that becomes a solid themed link on hover, and the row shows a pointer cursor. Link-less Dart SDK frames stay un-cued so they don't present a dead click.
+- **Selecting text over a file path no longer navigates away.** Finishing a text drag-select whose release landed on a source link was hijacked into opening that file. A plain click still opens the file; only a real selection is now preserved.
+- **A single click clears a selection.** Previously a multi-row or shift-click selection only cleared with Escape; a plain click anywhere in the viewer now dismisses it.
+- **"New logs" banner now also shows in the log viewer, not only in the Logs panel.** The alert previously appeared inside the Logs (session history) panel, so you had to open that panel to even know a newer log existed. The same banner now renders at the top of the log viewer too — driven by the same unread-log data — so a new capture is visible without opening the panel.
+- **Clicking "Open" on the "New logs" banner now dismisses it.** Open used to leave the banner up because opening one log doesn't advance the dismiss cursor and other unread rows kept it visible. Open now opens the newest unread log and acknowledges all unread logs in one action, hiding both banner surfaces immediately.
 
 ## [9.0.4]
 
-The log viewer is now fully translated into nine more languages, bringing Spanish, French, Italian, Japanese, Korean, Brazilian Portuguese, Russian, Simplified Chinese, and Traditional Chinese up to 100% completion. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.4/CHANGELOG.md)
+The log viewer is now fully translated into nine more languages, bringing Spanish, French, Italian, Japanese, Korean, Brazilian Portuguese, and Russian, Simplified Chinese, and Traditional Chinese up to 100% completion. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.4/CHANGELOG.md)
 
 ### Changed
 
 - **Seven more languages now fully translate the log viewer:** **Spanish, French, Italian, Japanese, Korean, Brazilian Portuguese, and Russian** each reached **100%** of the viewer's 2,021 strings (up from about 80%). The last handful of strings the machine translator couldn't produce — panel descriptions, the keyboard-shortcuts reference, and a couple of status messages — were filled in by hand and marked high-quality so future translation passes won't overwrite them. Simplified and Traditional Chinese are still in progress.
+- **Simplified Chinese (zh-cn) and Traditional Chinese (zh-tw) reached 100% of the viewer's strings.** The last strings the machine translator couldn't produce — the Filters and Options panel descriptions, the device/logcat visibility cycle, the copy-path and copy-with-decorations actions, and the Firebase Console hint — were filled in by hand and marked high-quality so future translation passes won't overwrite them. Seven strings imported across the two locales.
 
 <details>
 <summary>Maintenance</summary>
