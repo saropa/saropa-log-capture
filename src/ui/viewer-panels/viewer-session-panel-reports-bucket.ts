@@ -11,17 +11,14 @@
 
 export function getNewerLogBannerScript(): string {
     return /* javascript */ `
-    /** Apply banner state to every newer-log surface at once. Two elements share the
-     *  markup: the in-panel banner (#session-newer-banner) and the always-visible
-     *  log-viewer banner (#viewer-newer-banner) — so the user sees the alert without
-     *  opening the Logs panel. An empty html string + visible=false hides the surface. */
+    /** Apply banner state to the log-viewer surface (#viewer-newer-banner). The alert renders
+     *  only there — not inside this panel — so the user sees it without opening the Logs panel
+     *  and it never shows twice at once. An empty html string + visible=false hides it. */
     function applyNewerBanner(html, visible) {
-        ['session-newer-banner', 'viewer-newer-banner'].forEach(function(id) {
-            var el = document.getElementById(id);
-            if (!el) return;
-            el.innerHTML = html;
-            el.style.display = visible ? '' : 'none';
-        });
+        var el = document.getElementById('viewer-newer-banner');
+        if (!el) return;
+        el.innerHTML = html;
+        el.style.display = visible ? '' : 'none';
     }
 
     /** Newer-log sticky banner. Shown when ANY rendered record has unreadSinceFocus:true.
