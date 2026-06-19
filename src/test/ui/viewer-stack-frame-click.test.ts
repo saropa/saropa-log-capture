@@ -50,4 +50,16 @@ suite('Stack-frame whole-row click-to-open', () => {
         const frameIdx = script.indexOf(".closest('.stack-line')");
         assert.ok(linkIdx >= 0 && linkIdx < frameIdx, 'source-link branch precedes frame fallback');
     });
+
+    test('the direct source-link branch is guarded on a collapsed selection', () => {
+        // User report 2026-06-16: finishing a text drag-select whose mouseup landed on a
+        // source link was hijacked into open-file. The branch must read the selection and
+        // bail when it is non-collapsed, BEFORE it posts linkClicked.
+        const linkIdx = script.indexOf(".closest('.source-link')");
+        const ctrlIdx = script.indexOf('filterToPathPrefix');
+        // Window spans only the source-link branch (up to the Ctrl+click filter sub-branch).
+        const branch = script.slice(linkIdx, ctrlIdx);
+        assert.ok(branch.includes('getSelection'), 'source-link branch reads the selection');
+        assert.ok(branch.includes('isCollapsed'), 'source-link branch bails on a live selection');
+    });
 });
