@@ -97,6 +97,16 @@ if (viewportEl) viewportEl.addEventListener('click', function(e) {
     }
     var link = e.target.closest('.source-link');
     if (link) {
+        /* A click that ends a text drag-select whose mouseup happens to land on a
+           source link must NOT be hijacked into open-file — the same collapsed-
+           selection guard the frame/owner/banner branches already use. Without it,
+           selecting a path to copy it instead navigated away (user report
+           2026-06-16). A plain click leaves a collapsed selection, so navigation
+           still works. */
+        var _lsel = (typeof window !== 'undefined' && window.getSelection) ? window.getSelection() : null;
+        if (_lsel && !_lsel.isCollapsed) {
+            return;
+        }
         /* Ctrl/Cmd + click on a path segment routes to FILTER, not open.
            Each .source-link-seg carries its cumulative prefix in
            data-prefix (e.g. "./lib/database/"); we drop that into the
