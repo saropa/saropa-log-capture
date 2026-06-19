@@ -76,9 +76,13 @@ suite('formatFrameMemberFirst', () => {
             '<span class="source-link-seg" data-prefix="./lib/views/home/">home/</span>' +
             '<span class="source-link-seg" data-prefix="./lib/views/home/country_tab.dart">country_tab.dart</span> 58:7</a>';
         const out = fn(link + '   _CountryTabState.initState');
+        // The member is wrapped in .frame-member so the whole-row open affordance is
+        // discoverable (the floated path clips off-screen in a narrow sidebar). The wrapper
+        // is added ONLY on linked app frames — the dart: branch above stays unwrapped.
         assert.strictEqual(
             out,
-            '_CountryTabState.initState <span class="frame-lib-src">' + link + '</span>',
+            '<span class="frame-member">_CountryTabState.initState</span> ' +
+                '<span class="frame-lib-src">' + link + '</span>',
         );
     });
 
@@ -92,7 +96,10 @@ suite('formatFrameMemberFirst', () => {
             '<span class="source-link-seg" data-prefix="./lib/">./lib/</span>' +
             '<span class="source-link-seg" data-prefix="./lib/main.dart">main.dart</span> 543:5</a>';
         const out = fn(link + '          _runBackgroundStartupTasks');
-        assert.ok(out.startsWith('_runBackgroundStartupTasks '), 'member should lead');
+        assert.ok(
+            out.startsWith('<span class="frame-member">_runBackgroundStartupTasks</span> '),
+            'member should lead, wrapped in the .frame-member clickability cue',
+        );
         assert.ok(out.includes(link), 'the <a> element must survive intact');
         assert.ok(out.includes('class="frame-lib-src"'), 'path moves to the source tag');
     });
@@ -103,7 +110,8 @@ suite('formatFrameMemberFirst', () => {
         const out = fn(link + '  _S.build.&lt;fn&gt;');
         assert.strictEqual(
             out,
-            '_S.build.&lt;fn&gt; <span class="frame-lib-src">' + link + '</span>',
+            '<span class="frame-member">_S.build.&lt;fn&gt;</span> ' +
+                '<span class="frame-lib-src">' + link + '</span>',
         );
     });
 });
