@@ -10,34 +10,47 @@
 
 export function getNewerLogEventsScript(): string {
     return /* javascript */ `
-    /* Newer-log banner buttons (Open / Dismiss). Event delegation because the banner content
-       is rebuilt from scratch by renderNewerLogBanner on every list render.
-       Open: post openSessionFromPanel with the data-newer-uri attribute; the host loads
-         the file and updateLastViewed fires through the existing open path, so this row
-         clears updatedSinceViewed naturally — no separate ack is needed for Open.
-       Dismiss: post acknowledgeUnreadLogs; the host advances LOGS_PANEL_DISMISSED_AT_KEY
-         and re-sends the session list with unreadSinceFocus:false across the board. */
-    var newerBannerEl = document.getElementById('session-newer-banner');
-    if (newerBannerEl) {
-        newerBannerEl.addEventListener('click', function(e) {
+    /* Newer-log banner buttons (Open / Dismiss). Two banner surfaces share this wiring:
+       the in-panel banner (#session-newer-banner) and the always-visible log-viewer banner
+       (#viewer-newer-banner). Both carry identical action buttons, so one delegated handler
+       per element covers them. Event delegation because the banner content is rebuilt from
+       scratch by renderNewerLogBanner on every list render.
+       Open: open the newest unread log AND acknowledge — opening a single log does not advance
+         the dismiss cursor, so without the ack the banner would linger (the reported bug) while
+         the other unread rows still flag it. So Open is "open the newest + clear them all".
+       Dismiss: acknowledge only — advances LOGS_PANEL_DISMISSED_AT_KEY host-side and re-sends
+         the session list with unreadSinceFocus:false across the board. */
+
+    /* Hide BOTH banner surfaces at once. The host round-trip (advance dismiss cursor, re-send
+       list) re-renders them hidden anyway, but doing it inline keeps the button from feeling
+       dead, and the re-sent list (nothing unread) keeps them hidden so this never flickers back. */
+    function hideAllNewerBanners() {
+        ['session-newer-banner', 'viewer-newer-banner'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) { el.style.display = 'none'; el.innerHTML = ''; }
+        });
+    }
+
+    function wireNewerBanner(bannerEl) {
+        if (!bannerEl) return;
+        bannerEl.addEventListener('click', function(e) {
             var btn = e.target.closest('.session-newer-banner-action');
             if (!btn) return;
             var action = btn.getAttribute('data-newer-action') || '';
             if (action === 'open') {
                 var uri = btn.getAttribute('data-newer-uri') || '';
+                hideAllNewerBanners();
                 if (uri) vscodeApi.postMessage({ type: 'openSessionFromPanel', uriString: uri });
+                vscodeApi.postMessage({ type: 'acknowledgeUnreadLogs' });
             } else if (action === 'dismiss') {
-                /* Hide the banner immediately for instant feedback — the host round-trip
-                   (advance dismiss cursor, re-send list) clears unreadSinceFocus on every
-                   row, but waiting for it makes the button feel dead. The re-sent list keeps
-                   the banner hidden because nothing is unread anymore, so this never flickers
-                   back. */
-                newerBannerEl.style.display = 'none';
-                newerBannerEl.innerHTML = '';
+                hideAllNewerBanners();
                 vscodeApi.postMessage({ type: 'acknowledgeUnreadLogs' });
             }
             e.stopPropagation();
         });
     }
+
+    wireNewerBanner(document.getElementById('session-newer-banner'));
+    wireNewerBanner(document.getElementById('viewer-newer-banner'));
     `;
 }
