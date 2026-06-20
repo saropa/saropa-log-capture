@@ -12,7 +12,8 @@ import type { BookmarkStore } from './modules/storage/bookmark-store';
 import type { PopOutPanel } from './ui/viewer-panels/pop-out-panel';
 import type { ViewerBroadcaster } from './ui/provider/viewer-broadcaster';
 import { openSignalTab } from './ui/viewer-panels/signal-tab-panel';
-import { updateLastViewed } from './ui/provider/viewer-provider-helpers';
+import { updateLastViewed, getOrSeedDismissedAt } from './ui/provider/viewer-provider-helpers';
+import { computeLogContextInfo } from './ui/provider/viewer-log-context';
 import { searchLogFilesConcurrent } from './modules/search/log-search';
 import { maybeSuggestSmartBookmark, type SmartBookmarkSession } from './extension-activation-helpers';
 import { refreshCumulativeSqlFingerprintBaseline } from './modules/db/cumulative-sql-fingerprint-refresh';
@@ -74,16 +75,26 @@ async function recordExternalLoad(
 
 /**
  * Wire all viewer-specific handlers on the LogViewerProvider.
- * @returns updateSessionNav — needed by registerDebugLifecycle.
+ * @returns refreshLogContext — recomputes the open log's staleness/lifespan banner context;
+ *   needed by registerDebugLifecycle so a debug-session start/stop refreshes it.
  */
-export function wireViewerSpecificHandlers(deps: ViewerHandlerDeps): { updateSessionNav: () => Promise<void> } {
+export function wireViewerSpecificHandlers(deps: ViewerHandlerDeps): { refreshLogContext: () => Promise<void> } {
     const { viewerProvider, historyProvider, bookmarkStore, popOutPanel, broadcaster, outputChannel, context, version } = deps;
 
-    const updateSessionNav = async (): Promise<void> => {
-        const uri = viewerProvider.getCurrentFileUri();
-        if (!uri) { viewerProvider.setSessionNavInfo(false, false, 0, 0); return; }
-        const adj = await historyProvider.getAdjacentSessions(uri);
-        viewerProvider.setSessionNavInfo(!!adj.prev, !!adj.next, adj.index, adj.total);
+    /* Recompute the staleness/lifespan context for the open log and broadcast it to every viewer
+       surface (sidebar + pop-out). Replaces the old "Log N of M" navigator: instead of position,
+       the toolbar shows how far behind the latest main-project (controller) log the open one is,
+       and the banner auto-surfaces when a newer controller log exists. Fired on every file load. */
+    const refreshLogContext = async (): Promise<void> => {
+        const cfg = getConfig();
+        const info = computeLogContextInfo({
+            items: await historyProvider.getAllChildren(),
+            currentUri: viewerProvider.getCurrentFileUri()?.toString(),
+            controllerNames: cfg.reportsClassifier.controllerNames,
+            workspaceFolderName: vscode.workspace.workspaceFolders?.[0]?.name,
+            dismissedAt: getOrSeedDismissedAt(context),
+        });
+        broadcaster.setLogContextInfo(info);
     };
 
     const smartBookmarkSession: SmartBookmarkSession = {
@@ -94,7 +105,7 @@ export function wireViewerSpecificHandlers(deps: ViewerHandlerDeps): { updateSes
         scrollToLine: (line: number) => viewerProvider.scrollToLine(line),
     };
     viewerProvider.setFileLoadedHandler((uri, loadResult) => {
-        void updateSessionNav();
+        void refreshLogContext();
         const isActive = historyProvider.getActiveUri()?.toString() === uri.toString();
         if (isActive) {
             void maybeSuggestSmartBookmark(uri, loadResult, bookmarkStore, smartBookmarkSession, smartBookmarkViewer);
@@ -166,5 +177,5 @@ export function wireViewerSpecificHandlers(deps: ViewerHandlerDeps): { updateSes
 
     viewerProvider.setFindNavigateMatchHandler(() => { viewerProvider.findNextMatch(); });
 
-    return { updateSessionNav };
+    return { refreshLogContext };
 }

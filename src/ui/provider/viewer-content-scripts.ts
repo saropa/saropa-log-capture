@@ -93,6 +93,7 @@ import { getErrorClassificationScript } from '../viewer-decorations/viewer-error
 import { getErrorHoverScript } from '../viewer-decorations/viewer-error-hover-script';
 import { getGotoLineScript } from '../viewer/viewer-goto-line';
 import { getRunNavScript } from '../viewer-nav/viewer-run-nav';
+import { getLogBannerScript } from '../viewer/viewer-log-banner';
 import { getStructuredLineParserScript } from '../viewer/viewer-structured-line-parser';
 import { getMetadataFilterScript } from '../viewer-search-filter/viewer-metadata-filter';
 import { getViewerFormatMarkdownScript } from '../viewer/viewer-format-markdown';
@@ -261,6 +262,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getErrorClassificationScript()) +
         scriptTag(nonce, getErrorHoverScript()) +
         scriptTag(nonce, getGotoLineScript()) +
-        scriptTag(nonce, getRunNavScript())
+        scriptTag(nonce, getRunNavScript()) +
+        scriptTag(nonce, getLogBannerScript())
     );
 }
