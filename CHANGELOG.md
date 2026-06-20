@@ -28,6 +28,8 @@ cspell:disable
 
 ## [Unreleased]
 
+[log](https://github.com/saropa/saropa-log-capture/blob/v9.0.6/CHANGELOG.md)
+
 ### Changed
 
 - **Unified log banner replaces the "Log N of M" navigator.** The toolbar's prev/next session stepper is gone — browse logs in the Logs panel instead. In its place, a warning chip appears next to the filename only when the open log is behind a newer main-project log, showing how many newer ones exist. Clicking the filename (or the chip) now opens an inline banner with the log's lifespan ("Started 10 min ago · ran 7m 45s"), Open in editor, Copy path, and a kebab for the rest of the file actions — instead of the old modal. The banner also surfaces on its own when a newer main-project log is detected, with one-click Open. Dismiss it by tapping the banner, the × icon, or Escape.
