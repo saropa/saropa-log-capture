@@ -90,7 +90,7 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     <!-- Unified log banner (plan 109). One inline surface, two modes driven by viewer-log-banner.ts:
          AUTO (a newer main-project/controller log was detected — Open / Dismiss) and CLICK (opened
          from the filename or the toolbar staleness chip — current-log lifespan + file actions +
-         kebab). Fed by the host `logContextInfo` message, not the session list. Hidden by default;
+         kebab). Fed by the host logContextInfo message, not the session list. Hidden by default;
          role=status + aria-live announces the auto alert without stealing focus. -->
     <div id="viewer-newer-banner" class="session-newer-banner viewer-newer-banner" style="display:none" role="status" aria-live="polite"></div>
     <div id="split-breadcrumb">
