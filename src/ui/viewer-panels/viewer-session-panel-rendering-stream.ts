@@ -28,6 +28,19 @@ export function getSessionStreamingScript(): string {
         if (!rec || !rec.uriString || !Array.isArray(cachedSessions)) return;
         for (var i = 0; i < cachedSessions.length; i++) {
             if (cachedSessions[i] && cachedSessions[i].uriString === rec.uriString) {
+                /* Carry forward the group-render hints (groupId / isGroupPrimary / groupSize) from the
+                   record already in cache. Hydration and the deferred-severity scan build their batch
+                   rows with buildSessionItemRecord but pass NO SessionGroup extras, so those rows arrive
+                   with isGroupPrimary:false and groupSize:0. Overwriting wholesale strips the grouping
+                   the full payload computed; the next re-render then re-picks a different controller
+                   primary (the active row usually sorts first), which changes the collapse key
+                   'ctrl:<uriString>' and silently drops the user's collapse and the "+N" badge.
+                   Batches only ever hydrate severity/metadata, never grouping, so the cached hints win:
+                   keep the incoming value when it has one (future-proof), else fall back to the cached. */
+                var prev = cachedSessions[i];
+                rec.groupId = rec.groupId || prev.groupId;
+                rec.isGroupPrimary = rec.isGroupPrimary || prev.isGroupPrimary;
+                rec.groupSize = rec.groupSize || prev.groupSize;
                 cachedSessions[i] = rec;
                 return;
             }

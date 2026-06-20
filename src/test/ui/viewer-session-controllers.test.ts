@@ -125,6 +125,38 @@ suite('Controller-rooted session tree', () => {
         assert.ok(html.includes('file:///a.log') && html.includes('file:///b.log'), 'both rows rendered flat');
     });
 
+    test('a streaming batch without group extras keeps the controller collapse key stable', () => {
+        // Regression: the deferred severity scan and streaming hydration re-post each row via
+        // buildSessionItemRecord WITHOUT the SessionGroup extras, so those batch rows carry
+        // isGroupPrimary:false / groupSize:0. If mergeStreamingRecord overwrote the cached record
+        // wholesale, the next re-render re-picked a different controller primary (the active row
+        // sorts first), flipping the collapse key 'ctrl:<uriString>' and silently dropping the
+        // user's collapse. The active recording session fires these batches constantly, so the
+        // collapse "sometimes worked" and the row flickered. mergeStreamingRecord must preserve
+        // the cached grouping hints.
+        const { messageHandlers, elements } = buildSandbox();
+        const send = (data: unknown): void => { for (const h of messageHandlers) { h({ data }); } };
+        const gid = 'g-contacts';
+        const sessions = [
+            { uriString: 'file:///contacts.log', filename: 'contacts.log', displayName: 'Contacts', role: 'controller', groupId: gid, isGroupPrimary: true, groupSize: 2, mtime: at(10, 49), isActive: false, trashed: false, hasTimestamps: true },
+            { uriString: 'file:///dart.log', filename: 'dart.log', displayName: 'dart', role: 'controller', groupId: gid, isGroupPrimary: false, groupSize: 2, mtime: at(10, 50), isActive: true, trashed: false, hasTimestamps: true },
+        ];
+        send({ type: 'sessionDisplayOptions', options: showAll });
+        send({ type: 'sessionList', sessions });
+        const before = String(elements.get('session-list')?.innerHTML ?? '');
+        assert.ok(before.includes('ctrl:file:///contacts.log'), 'controller is keyed on the primary (Contacts)');
+
+        // Deferred severity scan / hydration re-posts the primary row stripped of group extras.
+        send({ type: 'sessionListBatch', items: [
+            { uriString: 'file:///contacts.log', filename: 'contacts.log', displayName: 'Contacts', role: 'controller', groupId: gid, isGroupPrimary: false, groupSize: 0, mtime: at(10, 49), errorCount: 9, isActive: false, trashed: false, hasTimestamps: true },
+        ] });
+        // A later re-render runs off the (possibly corrupted) cachedSessions — here a display echo.
+        send({ type: 'sessionDisplayOptions', options: showAll });
+        const after = String(elements.get('session-list')?.innerHTML ?? '');
+        assert.ok(after.includes('ctrl:file:///contacts.log'), 'controller key stays on Contacts after the batch');
+        assert.ok(!after.includes('ctrl:file:///dart.log'), 'primary did not flip to the active dart row');
+    });
+
     test('Latest-only folds older namesakes behind a "+N older" badge', () => {
         // Two logs share the canonical name "Lint"; the older must be hidden, the newer keeps a badge.
         const sessions = [
