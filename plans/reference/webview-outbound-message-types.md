@@ -33,6 +33,7 @@ Heuristic index of `type` fields on objects passed to `this.postMessage` / `targ
 | `integrationsAdapters` | src/ui/provider/log-viewer-provider-state.ts, src/ui/provider/viewer-message-handler-panels.ts |
 | `loadAnnotations` | src/ui/provider/log-viewer-provider-state.ts |
 | `loadComplete` | src/ui/provider/log-viewer-provider-load.ts |
+| `logContextInfo` | src/ui/provider/log-viewer-provider-state.ts |
 | `logViewerVisualSpacing` | src/ui/provider/log-viewer-provider-setup.ts, src/ui/provider/log-viewer-provider-state.ts |
 | `minimapProportionalLines` | src/ui/provider/log-viewer-provider-setup.ts, src/ui/provider/log-viewer-provider-state.ts |
 | `minimapShowInfo` | src/ui/provider/log-viewer-provider-state.ts |
@@ -108,4 +109,4 @@ Heuristic index of `type` fields on objects passed to `this.postMessage` / `targ
 | `updateWatchCounts` | src/ui/provider/log-viewer-provider.ts |
 | `viewerKeybindingRecordMode` | src/ui/provider/viewer-message-handler-actions.ts |
 
-**Total:** 101 distinct types.
+**Total:** 102 distinct types.

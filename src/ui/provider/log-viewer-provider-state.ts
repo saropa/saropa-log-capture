@@ -46,6 +46,12 @@ export function setSessionNavInfoImpl(
 ): void {
   target.postMessage({ type: "sessionNavInfo", ...opts });
 }
+export function setLogContextInfoImpl(
+  target: ProviderStateTarget,
+  info: import("./viewer-log-context").LogContextInfo,
+): void {
+  target.postMessage({ type: "logContextInfo", ...info });
+}
 export function updateFooterImpl(target: ProviderStateTarget, text: string): void {
   target.postMessage({ type: "updateFooter", text });
 }

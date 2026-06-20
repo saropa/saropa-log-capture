@@ -5,14 +5,13 @@
  */
 import { getSessionGroupRenderingScript } from './viewer-session-panel-rendering-groups';
 import { getControllerGroupingScript } from './viewer-session-panel-controllers';
-import { getNewerLogBannerScript } from './viewer-session-panel-reports-bucket';
 import { getSessionStreamingScript } from './viewer-session-panel-rendering-stream';
 import { getNameFilterBarScript } from './viewer-session-panel-rendering-name-filter';
 import { getPinnedRenderingScript } from './viewer-session-panel-rendering-pinned';
 
 /** Get the session panel rendering script fragment. */
 export function getSessionRenderingScript(): string {
-    return getSessionGroupRenderingScript() + getControllerGroupingScript() + getNewerLogBannerScript() + getSessionStreamingScript() + getNameFilterBarScript() + getPinnedRenderingScript() + /* javascript */ `
+    return getSessionGroupRenderingScript() + getControllerGroupingScript() + getSessionStreamingScript() + getNameFilterBarScript() + getPinnedRenderingScript() + /* javascript */ `
     /* escapeAttr and escapeHtmlText are provided by the session panel IIFE bootstrap. */
     function renderSessionList(sessions) {
         if (sessionLoadingEl) sessionLoadingEl.style.display = 'none';
@@ -97,10 +96,9 @@ export function getSessionRenderingScript(): string {
            regardless of which page or filter is active. */
         var dayHtml = sessionDisplayOptions.showDayHeadings ? renderGrouped(pageSessions, basenameCounts) : renderFlat(pageSessions, basenameCounts);
         sessionListEl.innerHTML = renderPinnedSection(pinnedRows, basenameCounts) + dayHtml;
-        /* Newer-log banner: flips visibility based on unreadSinceFocus on any rendered row.
-           Called against the SORTED list (post-filter, post-page) so the banner only fires
-           when an unread log is actually visible — hiding it would surprise the user. Plan: 001. */
-        if (typeof renderNewerLogBanner === 'function') renderNewerLogBanner(sorted);
+        /* The "newer log" alert no longer lives here — it moved to the log-viewer banner driven by
+           the host's logContextInfo message (plan 109). The per-row blue unread dot below still
+           uses unreadSinceFocus. */
         renderNameFilterBar();
         /* Pagination: show bar only when multiple pages; render "Showing X–Y of Z" and Prev/Next. */
         if (sessionListPaginationEl) {

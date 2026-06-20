@@ -51,6 +51,8 @@ export function getSessionNewerStyles(): string {
     align-items: center;
     gap: 8px;
     padding: 6px 12px;
+    /* position:relative anchors the kebab overflow menu (plan 109) to the banner row. */
+    position: relative;
     background: var(--vscode-inputValidation-infoBackground, var(--vscode-editorInfo-background, var(--vscode-list-hoverBackground)));
     color: var(--vscode-inputValidation-infoForeground, var(--vscode-foreground));
     border-bottom: 1px solid var(--vscode-inputValidation-infoBorder, var(--vscode-panel-border));
@@ -97,6 +99,72 @@ export function getSessionNewerStyles(): string {
     color: var(--vscode-button-foreground);
     border-color: var(--vscode-button-background);
 }
+
+/* --- Unified banner: kebab overflow + close (plan 109) --- */
+/* The ⋮ and × are icon-only square buttons; the codicon centers via line-height. */
+.session-newer-banner-action.log-banner-kebab-btn,
+.session-newer-banner-action.session-newer-banner-close {
+    padding: 2px 6px;
+}
+.session-newer-banner-close {
+    font-size: 14px;
+    line-height: 1;
+}
+/* Overflow menu: anchored to the banner's right edge, below the action row. Stacks the
+   less-important file actions (copy name, open beside, reveal, terminal). */
+.log-banner-kebab-menu {
+    position: absolute;
+    top: 100%;
+    right: 8px;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    min-width: 180px;
+    margin-top: 2px;
+    padding: 4px;
+    background: var(--vscode-menu-background, var(--vscode-editorWidget-background));
+    border: 1px solid var(--vscode-menu-border, var(--vscode-widget-border, var(--vscode-panel-border)));
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.36);
+}
+.log-banner-kebab-menu[hidden] { display: none; }
+.log-banner-kebab-item {
+    text-align: left;
+    padding: 5px 10px;
+    background: transparent;
+    border: none;
+    border-radius: 3px;
+    color: var(--vscode-menu-foreground, var(--vscode-foreground));
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+}
+.log-banner-kebab-item:hover {
+    background: var(--vscode-menu-selectionBackground, var(--vscode-list-hoverBackground));
+    color: var(--vscode-menu-selectionForeground, inherit);
+}
+
+/* --- Toolbar staleness chip (plan 109) ---
+ * Replaces the "Log N of M" navigator. Hidden until the open log is behind a newer controller
+ * (main-project) log; then a warning glyph + "N newer". Clicking opens the log banner. The warning
+ * color cues "you are out of date" without being alarmist (uses the editor's own warning token). */
+.log-staleness {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 6px;
+    margin-right: 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    color: var(--vscode-editorWarning-foreground, var(--vscode-charts-yellow));
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+.log-staleness:hover {
+    background: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground));
+}
+.log-staleness .codicon { font-size: 13px; }
 
 /* --- Per-row unread dot ---
  * Distinct from the existing red/orange update-dot (\`updatedInLastMinute\` /

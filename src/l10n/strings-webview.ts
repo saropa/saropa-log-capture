@@ -209,6 +209,29 @@ export const stringsWebview: Record<string, string> = {
     'viewer.session.newerBanner.open': 'Open',
     'viewer.session.newerBanner.dismiss': 'Dismiss',
 
+    // Unified log banner (plan 109). {0}=newest controller log name (auto mode) / relative start
+    // (lifespan) / duration (lifespan) / newer-count (staleness chip).
+    'viewer.logBanner.newer': 'Newer · {0}',
+    'viewer.logBanner.started': 'Started {0}',
+    'viewer.logBanner.ran': 'ran {0}',
+    'viewer.logBanner.justNow': 'just now',
+    'viewer.logBanner.minAgo': '{0} min ago',
+    'viewer.logBanner.hrAgo': '1 hr ago',
+    'viewer.logBanner.hrsAgo': '{0} hrs ago',
+    'viewer.logBanner.more': 'More actions',
+    'viewer.logBanner.unnamed': 'Log',
+    'viewer.toolbar.staleness.newer': '{0} newer',
+    // File-action labels the banner shows via vt(). Mirrors the host-side viewer.logFile.* values
+    // used by the log-file modal so the inline banner and the modal read identically.
+    'viewer.logFile.openEditor': 'Open in editor',
+    'viewer.logFile.openBeside': 'Open beside',
+    'viewer.logFile.openFolder': 'Open containing folder',
+    'viewer.logFile.revealInExplorer': 'Reveal in Explorer view',
+    'viewer.logFile.openInTerminal': 'Open folder in terminal',
+    'viewer.logFile.copyFilename': 'Copy filename',
+    'viewer.logFile.copyRelativePath': 'Copy relative path',
+    'viewer.logFile.copyFullPath': 'Copy full path',
+
     // Replay — runtime strings (viewer-replay.ts client script).
     'viewer.replay.qualityDisabled': 'Enable the codeQuality integration to generate quality reports.',
     'viewer.replay.qualityEnabled': 'Open session quality report (.quality.json sidecar)',

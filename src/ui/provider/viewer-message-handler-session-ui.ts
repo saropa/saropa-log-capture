@@ -240,7 +240,7 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
          currentFileUri is unset, and to give visible toast feedback on copy.
          An optional `path` (plan 057 files dialog) targets a specific accumulated
          file instead of the tailed one. */
-      return handleLogFileAction(type, ctx, msgStr(msg, "path") || undefined);
+      return handleLogFileAction(type, ctx, msgStr(msg, "path") || undefined, msgStr(msg, "uriString") || undefined);
     case "showKeyboardShortcuts":
       showKeyboardShortcutsPanel();
       return true;
