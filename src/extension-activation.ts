@@ -27,6 +27,7 @@ import { ProjectIndexer, setGlobalProjectIndexer } from './modules/project-index
 import { TrigramSearchIndex, setGlobalSearchIndex } from './modules/search/search-trigram-index';
 import { BookmarkStore } from './modules/storage/bookmark-store';
 import { buildSessionListPayload, buildClassifierInputs, buildRoleClassifier, LOG_LAST_VIEWED_KEY, getOrSeedDismissedAt } from './ui/provider/viewer-provider-helpers';
+import { computeLogContextInfo } from './ui/provider/viewer-log-context';
 import { registerDebugLifecycle } from './extension-lifecycle';
 import { SessionGroupTracker } from './modules/session/session-group-tracker';
 import { setRetentionGroupContext } from './modules/config/file-retention';
@@ -142,6 +143,15 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
             classifyRole: buildRoleClassifier(cfg.reportsClassifier.controllerNames, refreshFolderName),
         });
         broadcaster.sendSessionList(payload, { label: defaultLabel, path: defaultLabel, isDefault: true });
+        // Recompute the open log's staleness the instant a new log is written (this refresh is the
+        // moment a newer controller log can appear). Reuses the same items/cfg/cursor just gathered.
+        broadcaster.setLogContextInfo(computeLogContextInfo({
+            items,
+            currentUri: viewerProvider.getCurrentFileUri()?.toString(),
+            controllerNames: cfg.reportsClassifier.controllerNames,
+            workspaceFolderName: refreshFolderName,
+            dismissedAt,
+        }));
     });
 
     const bookmarkStore = new BookmarkStore(context);
@@ -224,7 +234,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     // so the badge only counts hits since the last time the panel was focused.
     viewerProvider.setWatchAcknowledgedHandler(() => sessionManager.getWatcher().resetCounts());
 
-    const { updateSessionNav } = wireViewerSpecificHandlers({
+    const { refreshLogContext } = wireViewerSpecificHandlers({
         viewerProvider, historyProvider, bookmarkStore, popOutPanel, broadcaster, outputChannel, context, version,
     });
 
@@ -253,7 +263,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     // (that would churn four interfaces for one optional hook); the module-level holder is the
     // sanctioned workaround.
     setRetentionGroupContext({ getActiveGroupId: () => sessionGroupTracker.getActiveGroupId() });
-    registerDebugLifecycle({ context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav, aiWatcher, fireSessionStart: apiHandle.fireSessionStart, fireSessionEnd: apiHandle.fireSessionEnd, sessionGroupTracker });
+    registerDebugLifecycle({ context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, refreshLogContext, aiWatcher, fireSessionStart: apiHandle.fireSessionStart, fireSessionEnd: apiHandle.fireSessionEnd, sessionGroupTracker });
     registerCommands({
         context,
         sessionManager,

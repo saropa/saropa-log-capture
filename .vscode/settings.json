@@ -160,6 +160,7 @@
   "saropaLogCapture.integrations.adapters": [
     "packages",
     "git",
-    "environment"
+    "environment",
+    "browser"
   ]
 }
