@@ -3,12 +3,11 @@
  * outside click, header path, and message listener. Inlined into the same IIFE as viewer-session-panel.
  */
 import { getSessionOptionsMenuScript } from './viewer-session-options-menu';
-import { getNewerLogEventsScript } from './viewer-session-panel-events-newer';
 import { getControllerEventsScript } from './viewer-session-panel-events-controllers';
 import { getSessionMessageListenerScript } from './viewer-session-panel-events-messages';
 
 export function getSessionPanelEventsScript(): string {
-  return getSessionOptionsMenuScript() + getNewerLogEventsScript() + getControllerEventsScript() + `
+  return getSessionOptionsMenuScript() + getControllerEventsScript() + `
     function syncToggleButtons() {
         var ids = {
             'session-toggle-strip': !sessionDisplayOptions.stripDatetime,

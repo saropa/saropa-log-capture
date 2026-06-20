@@ -59,6 +59,12 @@ suite('Webview element ID wiring', () => {
         // Old session nav elements — replaced by toolbar
         'session-nav',
         'session-nav-wrapper',
+        // "Log N of M" navigator removed (plan 109 — unified log banner). viewer-session-nav.ts
+        // still null-guards these lookups; the toolbar staleness chip + banner replaced them.
+        'session-prev',
+        'session-next',
+        'session-nav-current',
+        'session-nav-total',
         // Old icon bar buttons — removed
         'ib-performance',
         'ib-sql-filter',

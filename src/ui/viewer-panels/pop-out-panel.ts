@@ -189,6 +189,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
     const levels = helpers.getSavedLevelFilters(this.context, filename);
     if (levels) { this.post({ type: "restoreLevelFilters", levels }); }
   }
+  setLogContextInfo(info: import("../provider/viewer-log-context").LogContextInfo): void { this.post({ type: "logContextInfo", ...info }); }
   setExclusions(patterns: readonly string[]): void { this.post({ type: "setExclusions", patterns }); }
   setAnnotation(lineIndex: number, text: string): void { this.post({ type: "setAnnotation", lineIndex, text }); }
   loadAnnotations(a: readonly { lineIndex: number; text: string }[]): void { this.post({ type: "loadAnnotations", annotations: a }); }

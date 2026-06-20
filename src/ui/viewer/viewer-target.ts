@@ -45,6 +45,7 @@ export interface ViewerTarget {
   setHighlightRules(rules: readonly HighlightRule[]): void;
   setPresets(presets: readonly FilterPreset[]): void;
   setCurrentFile(uri: vscode.Uri | undefined): void;
+  setLogContextInfo(info: import("../provider/viewer-log-context").LogContextInfo): void;
   setSessionInfo(info: Record<string, string> | null): void;
   setHasPerformanceData(has: boolean): void;
   sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean }): void;

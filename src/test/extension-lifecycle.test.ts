@@ -48,7 +48,7 @@ function makeDeps(workspaceState: MockMemento): {
         historyProvider: noopProxy as unknown as DebugLifecycleDeps['historyProvider'],
         viewerProvider: noopProxy as unknown as DebugLifecycleDeps['viewerProvider'],
         inlineDecorations: noopProxy as unknown as DebugLifecycleDeps['inlineDecorations'],
-        updateSessionNav: async () => {},
+        refreshLogContext: async () => {},
         aiWatcher: noopProxy as unknown as DebugLifecycleDeps['aiWatcher'],
         fireSessionStart: (e: unknown) => { firedEvents.sessionStart.push(e); },
         fireSessionEnd: noop,
