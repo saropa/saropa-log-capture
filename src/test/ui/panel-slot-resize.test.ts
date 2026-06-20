@@ -61,4 +61,34 @@ suite('Panel-slot resize handle (shared across all panels)', () => {
             'session panel script (always loaded) must invoke the binder once',
         );
     });
+
+    /**
+     * A resize drag ends with a synthetic 'click' on the common ancestor of the press
+     * and release targets — usually outside the open panel. Every slide-out panel has a
+     * bubble-phase outside-click dismiss handler, so without a guard the drag's trailing
+     * click closes the very panel being resized (reported on the Crashlytics list). The
+     * binder must track real movement and swallow that one click in the capture phase,
+     * which runs before any bubble-phase dismiss handler.
+     */
+    test('a real resize drag swallows its trailing click in the capture phase', () => {
+        const transforms = getSessionTransformsScript();
+        // Movement flag distinguishes a real drag from a plain press (which must not be swallowed).
+        assert.ok(
+            /var moved = false/.test(transforms),
+            'binder must track whether the pointer moved during the press',
+        );
+        assert.ok(
+            /moved = true/.test(transforms),
+            'mousemove during a drag must mark the gesture as a real drag',
+        );
+        // Capture-phase listener (the trailing `true`) beats bubble-phase dismiss handlers.
+        assert.ok(
+            /addEventListener\('click',[\s\S]*?\}\s*,\s*true\)/.test(transforms),
+            'trailing-click swallow must be registered in the capture phase',
+        );
+        assert.ok(
+            transforms.includes('stopPropagation') && transforms.includes('e.preventDefault()'),
+            'the post-drag click must be both stopped and prevented so no dismiss handler sees it',
+        );
+    });
 });
