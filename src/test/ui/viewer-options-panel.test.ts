@@ -250,6 +250,19 @@ suite('ViewerOptionsPanel', () => {
             );
         });
 
+        test('outside-click closer excludes BOTH opener icons (gear and Integrations plug)', () => {
+            // Regression: the Integrations icon (ib-integrations) also opens the options panel
+            // (switched to the Integrations view). If the click-away dismiss only excludes the
+            // gear (ib-options), the same click that opens via the plug bubbles to document and
+            // immediately closes the panel — it opens blank. Both icons must be treated as openers.
+            const script = getOptionsPanelScript();
+            assert.ok(script.includes("getElementById('ib-options')"), 'gear must be an excluded opener');
+            assert.ok(
+                script.includes("getElementById('ib-integrations')"),
+                'Integrations plug must be an excluded opener so its open-click is not treated as outside',
+            );
+        });
+
         test('should define Keyboard shortcuts view switch (open/back)', () => {
             const script = getOptionsPanelScript();
             assert.ok(script.includes('openShortcutsView'));
