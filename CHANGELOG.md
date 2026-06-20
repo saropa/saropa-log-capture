@@ -26,7 +26,7 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.0.6]
 
 [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.6/CHANGELOG.md)
 
