@@ -102,6 +102,9 @@ export class ViewerBroadcaster implements ViewerTarget {
   setCurrentFile(uri: vscode.Uri | undefined): void {
     for (const t of this.targets) { t.setCurrentFile(uri); }
   }
+  setLogContextInfo(info: import("./viewer-log-context").LogContextInfo): void {
+    for (const t of this.targets) { t.setLogContextInfo(info); }
+  }
   setSessionInfo(info: Record<string, string> | null): void {
     for (const t of this.targets) { t.setSessionInfo(info); }
   }

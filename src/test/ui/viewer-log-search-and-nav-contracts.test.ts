@@ -45,19 +45,14 @@ suite('Viewer log search and nav contracts', () => {
         );
     });
 
-    test('session log prev/next are icon-only (chevrons), not “Prev/Next” label buttons', () => {
+    test('the "Log N of M" session navigator is removed; the toolbar carries the staleness chip instead (plan 109)', () => {
         const html = getToolbarHtml({ version: '0' });
-        const prevIdx = html.indexOf('session-prev');
-        const nextIdx = html.indexOf('session-next');
-        assert.ok(prevIdx >= 0 && nextIdx > prevIdx, 'expected session-prev before session-next');
-        const betweenPrevAndNext = html.slice(prevIdx, nextIdx);
+        assert.ok(!html.includes('id="session-prev"'), 'session-prev navigator button must be gone');
+        assert.ok(!html.includes('id="session-next"'), 'session-next navigator button must be gone');
+        assert.ok(!html.includes('id="session-nav-current"'), 'the "Log N of M" count span must be gone');
         assert.ok(
-            betweenPrevAndNext.includes('toolbar-icon-btn') && betweenPrevAndNext.includes('codicon-chevron-left'),
-            'session-prev should be an icon button with chevron-left',
-        );
-        assert.ok(
-            !betweenPrevAndNext.includes('Prev</button>') && !betweenPrevAndNext.includes('&#x25C0; Prev'),
-            'session-prev must not use Prev text label',
+            html.includes('id="log-staleness"') && html.includes('codicon-warning'),
+            'toolbar must carry the staleness chip (warning glyph) that replaced the navigator',
         );
     });
 

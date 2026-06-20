@@ -194,6 +194,11 @@ function initPanelSlotResize(saveWidth) {
     var slotEl = document.getElementById('panel-slot');
     if (!handle || !slotEl) return;
     var dragging = false;
+    /* True once the pointer actually moves during a drag. A press without
+       movement is a plain click and must NOT be swallowed (see the capture
+       handler below); only a real resize drag should suppress its trailing
+       click. */
+    var moved = false;
     /* Anchor the drag to where it started. The old code set the width from the
        absolute mouse X (e.clientX, or vw - e.clientX on a right icon bar), which
        is NOT the slot's current width — it's off by the icon-bar width and any
@@ -203,7 +208,7 @@ function initPanelSlotResize(saveWidth) {
     var startX = 0;
     var startWidth = 0;
     handle.addEventListener('mousedown', function(e) {
-        e.preventDefault(); dragging = true;
+        e.preventDefault(); dragging = true; moved = false;
         startX = e.clientX;
         startWidth = slotEl.getBoundingClientRect().width;
         handle.classList.add('dragging');
@@ -211,6 +216,7 @@ function initPanelSlotResize(saveWidth) {
     });
     document.addEventListener('mousemove', function(e) {
         if (!dragging) return;
+        moved = true;
         var vw = document.documentElement.clientWidth;
         var isRight = document.body.dataset.iconBar === 'right';
         /* On a right-side icon bar the panel grows as the mouse moves left, so
@@ -229,7 +235,24 @@ function initPanelSlotResize(saveWidth) {
         handle.classList.remove('dragging');
         slotEl.style.transition = '';
         saveWidth(parseInt(slotEl.style.width, 10) || 0);
+        /* Guard against a drag that ends without a trailing click (rare browser
+           cases): clear the flag on the next tick so a stale 'moved' can never
+           swallow a future genuine click. The real post-drag click fires before
+           this timeout, so the capture handler below still consumes it. */
+        setTimeout(function() { moved = false; }, 0);
     });
+    /* A drag ends with a synthetic 'click' fired on the common ancestor of the
+       press and release targets — usually OUTSIDE the open panel. Every slide-out
+       panel has an outside-click dismiss handler (e.g. the Crashlytics list), so
+       without this guard, resizing the slot would immediately close the panel you
+       were trying to make room for. Swallow that one click in the capture phase
+       (before any bubble-phase dismiss handler) when it follows a real drag. */
+    document.addEventListener('click', function(e) {
+        if (!moved) return;
+        moved = false;
+        e.stopPropagation();
+        e.preventDefault();
+    }, true);
 }
 `;
 }
