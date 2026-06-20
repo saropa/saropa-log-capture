@@ -195,12 +195,20 @@ if (optEditSeverityKeywords) optEditSeverityKeywords.addEventListener('click', f
     }
 });
 
+/* The options panel is opened by TWO icon-bar buttons: the gear (ib-options) and the
+   Integrations plug (ib-integrations), which opens the panel switched to the Integrations
+   view. Both must be excluded from this outside-click closer. Otherwise the same click that
+   opens the panel via setActivePanel('integrations') keeps bubbling to document, this handler
+   sees optionsPanelOpen=true with the click outside the panel, and immediately closes it —
+   leaving the panel-slot open at its set width but the panel itself blank (the reported bug). */
 document.addEventListener('click', function(e) {
     if (!optionsPanelOpen) return;
     var panel = document.getElementById('options-panel');
-    var ibBtn = document.getElementById('ib-options');
-    if (panel && !panel.contains(e.target)
-        && ibBtn !== e.target && !ibBtn?.contains(e.target)) {
+    var ibOptions = document.getElementById('ib-options');
+    var ibIntegrations = document.getElementById('ib-integrations');
+    var onOpener = (ibOptions && (ibOptions === e.target || ibOptions.contains(e.target)))
+        || (ibIntegrations && (ibIntegrations === e.target || ibIntegrations.contains(e.target)));
+    if (panel && !panel.contains(e.target) && !onOpener) {
         closeOptionsPanel();
     }
 });
