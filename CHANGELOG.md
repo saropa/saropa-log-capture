@@ -36,6 +36,7 @@ cspell:disable
 
 - **The "new logs" alert no longer points at the log you already have open.** The alert now tracks the latest *main-project* log specifically, and never offers to open the file already on screen.
 - **Resizing a slide-out panel no longer closes it.** Dragging the panel divider to give a panel's detail more room (e.g. widening the Crashlytics view) closed the panel on release: a drag ends with a synthetic click outside the panel, which tripped the panel's click-away dismiss. The trailing click after a real drag is now swallowed, so resizing keeps the panel open.
+- **Collapsing a session group in the Logs panel now works reliably while a session is recording.** Clicking the chevron on a grouped session (e.g. a controller with its nested logs) sometimes did nothing and the row flickered: the active recording session streams background severity/metadata updates, and each one overwrote the cached row with a copy that had lost its grouping hints (`isGroupPrimary` / group size). The next re-render then re-picked a different group leader, changing the collapse key, so the collapse silently reverted and the "+N" badge vanished. Background updates now preserve the grouping computed by the full list, so the chevron — and the leader, key, and badge — stay stable.
 
 ## [9.0.5]
 
