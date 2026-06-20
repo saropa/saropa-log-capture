@@ -29,15 +29,7 @@ export function getToolbarHtml(opts: ToolbarHtmlOptions): string {
     return /* html */ `
 <div id="viewer-toolbar" class="viewer-toolbar" role="toolbar" aria-label="${t('viewer.toolbar.label')}" data-version="${ver}">
     <div class="toolbar-left">
-        <button type="button" id="session-prev" class="toolbar-icon-btn" title="${t('viewer.toolbar.prevSession.title')}" aria-label="${t('viewer.toolbar.prevSession.label')}" disabled>
-            <span class="codicon codicon-chevron-left" aria-hidden="true"></span>
-        </button>
-        <span class="nav-bar-label" title="${t('viewer.toolbar.sessionPos.title')}">${t('viewer.toolbar.sessionLog')} <span id="session-nav-current">1</span> ${t('viewer.toolbar.sessionOf')} <span id="session-nav-total">1</span></span>
-        <button type="button" id="session-next" class="toolbar-icon-btn" title="${t('viewer.toolbar.nextSession.title')}" aria-label="${t('viewer.toolbar.nextSession.label')}" disabled>
-            <span class="codicon codicon-chevron-right" aria-hidden="true"></span>
-        </button>
         ${getRunNavHtml()}
-        <span class="toolbar-sep"></span>
         <button type="button" id="toolbar-flowmap-btn" class="toolbar-icon-btn" title="${t('viewer.toolbar.flowMap.title')}" aria-label="${t('viewer.toolbar.flowMap.label')}">
             <span class="codicon codicon-type-hierarchy" aria-hidden="true"></span>
         </button>
@@ -84,6 +76,14 @@ export function getToolbarHtml(opts: ToolbarHtmlOptions): string {
         <button type="button" id="session-info-btn" class="toolbar-icon-btn session-info-btn" style="display:none" title="${t('viewer.toolbar.sessionInfo.title')}" aria-label="${t('viewer.toolbar.sessionInfo.label')}">
             <span class="codicon codicon-info" aria-hidden="true"></span>
         </button>
+        <!-- Staleness indicator (plan 109): replaces the "Log N of M" navigator. Hidden until the
+             open log is behind a newer main-project (controller) log; then shows a warning glyph +
+             "N newer". Clicking it (or the filename) opens the log banner. role=button so it reads
+             as actionable; aria-live announces newer logs without stealing focus. -->
+        <span id="log-staleness" class="log-staleness u-hidden" role="button" tabindex="0" aria-live="polite" title="${t('viewer.toolbar.staleness.title')}">
+            <span class="codicon codicon-warning" aria-hidden="true"></span>
+            <span class="log-staleness-text"></span>
+        </span>
         <span id="footer-text" data-version="${ver}" class="toolbar-filename" title="${t('viewer.toolbar.filename.title')}"></span>
     </div>
 </div>`;

@@ -168,6 +168,7 @@ export class LogViewerProvider
   loadAnnotations(annotations: readonly { lineIndex: number; text: string }[]): void { state.loadAnnotationsImpl(this, annotations); }
   setSplitInfo(currentPart: number, totalParts: number): void { state.setSplitInfoImpl(this, currentPart, totalParts); }
   setSessionNavInfo(hasPrev: boolean, hasNext: boolean, index: number, total: number): void { state.setSessionNavInfoImpl(this, { hasPrev, hasNext, index, total }); }
+  setLogContextInfo(info: import("./viewer-log-context").LogContextInfo): void { state.setLogContextInfoImpl(this, info); }
   getCurrentFileUri(): vscode.Uri | undefined { return this.currentFileUri; }
   updateFooter(text: string): void { state.updateFooterImpl(this, text); }
   setPaused(paused: boolean): void { state.setPausedImpl(this, paused); }

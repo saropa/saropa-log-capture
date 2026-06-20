@@ -126,7 +126,12 @@ export function getLogFileModalScript(): string {
             if (!fnEl) return;
             e.preventDefault();
             e.stopPropagation();
-            openLogFileActionsModal();
+            /* Plan 109: the filename click now opens the inline log banner (current-file actions +
+               kebab), not this modal. The modal stays for the keyboard shortcut and the files-list
+               dialog (per-file actions on an accumulated file). Fall back to the modal if the banner
+               script is unavailable for any reason. */
+            if (typeof window.openLogActionsBanner === 'function') { window.openLogActionsBanner(); }
+            else { openLogFileActionsModal(); }
         });
     }
 })();

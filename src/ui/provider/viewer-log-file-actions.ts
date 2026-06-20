@@ -56,9 +56,15 @@ function relativeOrAbsolute(uri: vscode.Uri): string {
  * valid absolute path is supplied it overrides `ctx.currentFileUri`; otherwise
  * the tailed file is used, preserving the original single-file behavior.
  */
-export function handleLogFileAction(type: string, ctx: ViewerMessageContext, targetPath?: string): boolean {
+export function handleLogFileAction(type: string, ctx: ViewerMessageContext, targetPath?: string, targetUriString?: string): boolean {
     if (!(LOG_FILE_ACTION_TYPES as readonly string[]).includes(type)) { return false; }
-    const uri = targetPath ? vscode.Uri.file(targetPath) : ctx.currentFileUri;
+    /* Target resolution order: an explicit filesystem `path` (files dialog, plan 057), then a
+       `uriString` (the unified banner acting on the open or the newest controller log, plan 109),
+       then the tailed file. The banner carries uriString rather than a path because the webview
+       holds file: URIs, not platform fs paths. */
+    const uri = targetPath
+        ? vscode.Uri.file(targetPath)
+        : (targetUriString ? vscode.Uri.parse(targetUriString) : ctx.currentFileUri);
     if (!uri) { warnNoLogFile(); return true; }
     switch (type) {
         case "openLogFileInEditor":

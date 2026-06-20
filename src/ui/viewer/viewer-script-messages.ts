@@ -231,6 +231,9 @@ window.addEventListener('message', function(event) {
         case 'sessionNavInfo':
             if (typeof handleSessionNavInfo === 'function') handleSessionNavInfo(msg);
             break;
+        /* Plan 109: staleness + lifespan context for the open log. Drives the toolbar warning chip
+           and the unified banner (auto-surfaces a newer main-project log). */
+        case 'logContextInfo': if (typeof window.handleLogContextInfo === 'function') window.handleLogContextInfo(msg); break;
         case 'scrollToSignal':
             /* Host loaded the session containing the clicked signal; jump to the first matching line.
                signalScrollToLabel lives in the signal panel script (owns pulseLinesAround); if the

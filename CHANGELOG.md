@@ -26,6 +26,17 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Unified log banner replaces the "Log N of M" navigator.** The toolbar's prev/next session stepper is gone — browse logs in the Logs panel instead. In its place, a warning chip appears next to the filename only when the open log is behind a newer main-project log, showing how many newer ones exist. Clicking the filename (or the chip) now opens an inline banner with the log's lifespan ("Started 10 min ago · ran 7m 45s"), Open in editor, Copy path, and a kebab for the rest of the file actions — instead of the old modal. The banner also surfaces on its own when a newer main-project log is detected, with one-click Open. Dismiss it by tapping the banner, the × icon, or Escape.
+
+### Fixed
+
+- **The "new logs" alert no longer points at the log you already have open.** The alert now tracks the latest *main-project* log specifically, and never offers to open the file already on screen.
+- **Resizing a slide-out panel no longer closes it.** Dragging the panel divider to give a panel's detail more room (e.g. widening the Crashlytics view) closed the panel on release: a drag ends with a synthetic click outside the panel, which tripped the panel's click-away dismiss. The trailing click after a real drag is now swallowed, so resizing keeps the panel open.
+
 ## [9.0.5]
 
 Stack-trace file paths are now easier to click without getting in your way: app-frame lines show they're clickable, selecting text no longer jumps you to a file, and a single click clears a selection. The "new logs" banner now appears in the log viewer (not just the Logs panel) and its Open button clears the alert. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.5/CHANGELOG.md)

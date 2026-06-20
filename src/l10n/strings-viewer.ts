@@ -14,15 +14,9 @@
 export const stringsViewer: Record<string, string> = {
     // ── Toolbar (viewer-toolbar-html.ts) ──────────────────────────────
     'viewer.toolbar.label': 'Log viewer toolbar',
-    'viewer.toolbar.prevSession.title': 'Navigate to the previous (older) log session',
-    'viewer.toolbar.prevSession.label': 'Previous log (older)',
-    'viewer.toolbar.sessionPos.title': 'Session position — long-press (hold ~0.5s) to copy session metadata; hover for details when loaded',
-    // "Log" and "of" wrap live count spans (Log <n> of <m>); kept as separate
-    // labels because the numbers are JS-updated DOM nodes, not template args.
-    'viewer.toolbar.sessionLog': 'Log',
-    'viewer.toolbar.sessionOf': 'of',
-    'viewer.toolbar.nextSession.title': 'Navigate to the next (newer) log session',
-    'viewer.toolbar.nextSession.label': 'Next log (newer)',
+    // Staleness chip (plan 109) — replaces the old "Log N of M" navigator. Shown when the open log
+    // is behind a newer main-project log; click opens the log banner.
+    'viewer.toolbar.staleness.title': 'A newer main-project log exists — click to open the log banner',
     'viewer.toolbar.search.title': 'Open search to find text in the current log (Ctrl+F)',
     'viewer.toolbar.search.label': 'Toggle search',
     'viewer.toolbar.searchCount.title': 'Number of search matches',

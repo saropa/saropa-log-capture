@@ -23,7 +23,7 @@ export interface DebugLifecycleDeps {
     readonly historyProvider: SessionHistoryProvider;
     readonly inlineDecorations: InlineDecorationsProvider;
     readonly viewerProvider: LogViewerProvider;
-    readonly updateSessionNav: () => Promise<void>;
+    readonly refreshLogContext: () => Promise<void>;
     readonly aiWatcher: AiWatcher;
     readonly fireSessionStart: (event: SaropaSessionEvent) => void;
     readonly fireSessionEnd: (event: SaropaSessionEvent) => void;
@@ -100,7 +100,7 @@ export function applySessionStartedState(
 
 /** Register onDidStartDebugSession and onDidTerminateDebugSession handlers. */
 export function registerDebugLifecycle(deps: DebugLifecycleDeps): void {
-    const { context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider: _viewerProvider, updateSessionNav, aiWatcher, fireSessionStart: _fireSessionStart, fireSessionEnd, sessionGroupTracker } = deps;
+    const { context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider: _viewerProvider, refreshLogContext, aiWatcher, fireSessionStart: _fireSessionStart, fireSessionEnd, sessionGroupTracker } = deps;
 
     // When output is buffered and no log session exists (e.g. Dart/Cursor never fired onDidStartDebugSession),
     // try to start capture using the active debug session so dart run and similar still get logs.
@@ -154,7 +154,7 @@ export function registerDebugLifecycle(deps: DebugLifecycleDeps): void {
             historyProvider.setActiveUri(undefined);
             historyProvider.refresh();
             inlineDecorations.clearAll();
-            updateSessionNav().catch(() => {});
+            refreshLogContext().catch(() => {});
             aiWatcher.stop();
         }),
     );
