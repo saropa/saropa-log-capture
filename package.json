@@ -3109,7 +3109,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "25.x",
-    "@types/vscode": "^1.105.0",
+    "@types/vscode": "^1.125.0",
     "@types/ws": "^8.18.1",
     "@vscode/codicons": "^0.0.45",
     "@vscode/test-cli": "^0.0.12",
@@ -3121,7 +3121,7 @@
     "nyc": "^18.0.0",
     "playwright": "^1.61.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.61.0"
+    "typescript-eslint": "^8.61.1"
   },
   "displayName": "%displayName%",
   "engines": {
