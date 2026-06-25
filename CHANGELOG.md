@@ -28,10 +28,14 @@ cspell:disable
 
 ## [9.0.6]
 
+TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
 [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.6/CHANGELOG.md)
 
 ### Changed
 
+- **F5 (Run Extension) now uses a fast `dev-build` instead of the full `compile` chain.** Debug launches were blocked behind the whole validate-and-bundle pipeline (two `tsc` passes plus nine `verify:*` checks), which pinned a CPU core and kept the "Waiting for preLaunchTask 'compile'…" dialog up until everything finished. The launch configs now run only the two artifact-producing steps — regenerate the embedded DB-detector merge source, then `esbuild` the bundle — so F5 starts quickly. Full type/lint/verify coverage still runs via `npm run compile` and in CI.
 - **Unified log banner replaces the "Log N of M" navigator.** The toolbar's prev/next session stepper is gone — browse logs in the Logs panel instead. In its place, a warning chip appears next to the filename only when the open log is behind a newer main-project log, showing how many newer ones exist. Clicking the filename (or the chip) now opens an inline banner with the log's lifespan ("Started 10 min ago · ran 7m 45s"), Open in editor, Copy path, and a kebab for the rest of the file actions — instead of the old modal. The banner also surfaces on its own when a newer main-project log is detected, with one-click Open. Dismiss it by tapping the banner, the × icon, or Escape.
 
 ### Fixed
@@ -40,6 +44,15 @@ cspell:disable
 - **The "new logs" alert no longer points at the log you already have open.** The alert now tracks the latest *main-project* log specifically, and never offers to open the file already on screen.
 - **Resizing a slide-out panel no longer closes it.** Dragging the panel divider to give a panel's detail more room (e.g. widening the Crashlytics view) closed the panel on release: a drag ends with a synthetic click outside the panel, which tripped the panel's click-away dismiss. The trailing click after a real drag is now swallowed, so resizing keeps the panel open.
 - **Collapsing a session group in the Logs panel now works reliably while a session is recording.** Clicking the chevron on a grouped session (e.g. a controller with its nested logs) sometimes did nothing and the row flickered: the active recording session streams background severity/metadata updates, and each one overwrote the cached row with a copy that had lost its grouping hints (`isGroupPrimary` / group size). The next re-render then re-picked a different group leader, changing the collapse key, so the collapse silently reverted and the "+N" badge vanished. Background updates now preserve the grouping computed by the full list, so the chevron — and the leader, key, and badge — stay stable.
+
+<details>
+<summary>Maintenance</summary>
+
+**Build tooling**
+
+- **`.vscode-test/` no longer accumulates a full ~200 MB VS Code build per release.** `@vscode/test-electron` downloads a complete editor per version under `.vscode-test/` and never prunes the old ones; left unbounded this reached 16.3 GB / 179,824 files across 26 installs and froze the window on open ([Bug 002](bugs/bug_002_vscode-test-cache-hangs-window-on-open.md) / [Bug 003](bugs/bug_003_workspace-large-dir-blowout-detection-and-prevention.md)). A new `posttest` step ([prune-vscode-test-cache.mjs](scripts/modules/test/prune-vscode-test-cache.mjs)) keeps only the newest install after every `npm test`, bounding the cache to one build. Run it manually with `npm run prune:vscode-test` (`--dry-run` to preview). Build/test tooling only.
+
+</details>
 
 ## [9.0.5]
 
