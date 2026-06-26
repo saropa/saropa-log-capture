@@ -86,16 +86,34 @@ function updateStatsDisplay() {
 }
 
 /**
- * Increment counters based on incoming lines.
- * Uses classifyLevel() from the level-filter script.
+ * Recompute every level counter from the rendered line items (allLines).
+ *
+ * The badge MUST equal what soloing that level shows. The earlier approach counted
+ * raw incoming text with classifyLevel() — a SECOND, independent classification that
+ * diverged from the per-row item.level the filter actually uses:
+ *   - addToData() demotes device-other (Android-native logcat: gralloc4, Badge,
+ *     MediaCodec…) error/warning to 'info' for display (plan 050). Raw counting still
+ *     saw "E/" and tallied them as errors, so the Error badge read 32 while soloing
+ *     Error showed zero — those 32 rows carry item.level 'info'.
+ *   - Repeat-collapse, banner override, and ascii-art demotion likewise change the
+ *     effective level. Any of them desynced count from filter.
+ * Counting the actual item.level over allLines makes badge == focus by construction:
+ * the same field the filter reads (item.level) is the field tallied here. Collapsed
+ * SQL contributes one item (the repeat-notification row) — i.e. "what WILL be shown".
+ * Markers carry no level and are skipped, exactly as applyLevelFilter() skips them.
  */
-function updateStatsFromLines(lines) {
-    for (var i = 0; i < lines.length; i++) {
-        var line = lines[i];
-        var plainText = stripTags(line.html || line.text || '');
-        var category = line.category || '';
-        var level = classifyLevel(plainText, category);
-        statsCounters[level]++;
+function recomputeStatsCounters() {
+    var keys = Object.keys(statsCounters);
+    for (var k = 0; k < keys.length; k++) { statsCounters[keys[k]] = 0; }
+    if (typeof allLines !== 'undefined' && allLines) {
+        for (var i = 0; i < allLines.length; i++) {
+            var it = allLines[i];
+            if (!it || it.type === 'marker') continue;
+            var lvl = it.level;
+            if (lvl && Object.prototype.hasOwnProperty.call(statsCounters, lvl)) {
+                statsCounters[lvl]++;
+            }
+        }
     }
     updateStatsDisplay();
 }
@@ -111,12 +129,13 @@ function resetStats() {
     updateStatsDisplay();
 }
 
-// Hook into addLines message to update stats
+// Reset on clear/reset. addLines counts are recomputed by recomputeStatsCounters(),
+// called from the addLines handler AFTER addToData() + trimData() have settled allLines
+// and collapse — driving it from there (not a second message listener here) guarantees
+// the recompute reads the post-batch array rather than racing the addToData loop.
 window.addEventListener('message', function(event) {
     var msg = event.data;
-    if (msg.type === 'addLines' && msg.lines) {
-        updateStatsFromLines(msg.lines);
-    } else if (msg.type === 'reset' || msg.type === 'clear') {
+    if (msg.type === 'reset' || msg.type === 'clear') {
         resetStats();
     }
 });
