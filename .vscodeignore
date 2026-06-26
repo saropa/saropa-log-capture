@@ -19,3 +19,27 @@ nul
 **/*.ts
 **/.vscode-test.*
 !package.nls*.json
+
+# Packaging hygiene — these dirs ballooned the 9.0.6 vsix to ~18 MB / 2851 files.
+# They are repo/CI/test artifacts with no runtime consumer; only dist/, l10n/,
+# images/, media/walkthrough/, and audio/ are actually loaded by the extension.
+coverage/**
+.nyc_output/**
+reports/**
+plans/**
+bugs/**
+examples/**
+test/**
+.github/**
+.devcontainer/**
+.dev/**
+.saropa/**
+.mocharc*
+.nycrc.json
+.nvmrc
+.node-version
+*.vsix
+
+# Translation provenance is build/audit metadata; the l10n runtime loads only
+# l10n/bundle.l10n.<locale>.json, never these.
+l10n/provenance/**
