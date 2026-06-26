@@ -11,6 +11,7 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.addSessionNote` | %command.addSessionNote.title% |  |
 | `saropaLogCapture.addSignalItemToCollection` | %command.addSignalItemToCollection.title% |  |
 | `saropaLogCapture.addToCollection` | %command.addToCollection.title% |  |
+| `saropaLogCapture.addToInvestigation` | Saropa Log Capture: Add to Investigation |  |
 | `saropaLogCapture.applyPreset` | %command.applyPreset.title% |  |
 | `saropaLogCapture.applyTemplate` | %command.applyTemplate.title% |  |
 | `saropaLogCapture.checkFilterSuggestions` | %command.checkFilterSuggestions.title% |  |
@@ -39,7 +40,9 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.debugProjectIndexRanking` | Debug Project Index Ranking |  |
 | `saropaLogCapture.delete` | %command.delete.title% |  |
 | `saropaLogCapture.deleteCollection` | %command.deleteCollection.title% |  |
+| `saropaLogCapture.deleteInvestigation` | Saropa Log Capture: Delete Investigation |  |
 | `saropaLogCapture.deleteSession` | %command.deleteSession.title% |  |
+| `saropaLogCapture.editInvestigationNotes` | Saropa Log Capture: Edit Investigation Notes |  |
 | `saropaLogCapture.emptyTrash` | %command.emptyTrash.title% |  |
 | `saropaLogCapture.expandAllSections` | %command.expandAllSections.title% |  |
 | `saropaLogCapture.explainRootCauseHypotheses` | %command.explainRootCauseHypotheses.title% |  |
@@ -62,10 +65,12 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.markForComparison` | %command.markForComparison.title% |  |
 | `saropaLogCapture.maximizePanel` | %command.maximizePanel.title% |  |
 | `saropaLogCapture.newCollectionFromSessions` | %command.newCollectionFromSessions.title% |  |
+| `saropaLogCapture.newInvestigation` | Saropa Log Capture: New Investigation |  |
 | `saropaLogCapture.open` | %command.open.title% |  |
 | `saropaLogCapture.openCollection` | %command.openCollection.title% |  |
 | `saropaLogCapture.openExternalLogsForSession` | %command.openExternalLogsForSession.title% |  |
 | `saropaLogCapture.openFolder` | %command.openFolder.title% |  |
+| `saropaLogCapture.openInvestigation` | Saropa Log Capture: Open Investigation |  |
 | `saropaLogCapture.openLogFile` | %command.openLogFile.title% |  |
 | `saropaLogCapture.openLogFromUrl` | %command.openLogFromUrl.title% |  |
 | `saropaLogCapture.openQualityReport` | %command.openQualityReport.title% |  |
@@ -83,6 +88,8 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.rebuildSearchIndex` | Rebuild Log Search Index |  |
 | `saropaLogCapture.refreshHistory` | %command.refreshHistory.title% |  |
 | `saropaLogCapture.removeFromCollection` | %command.removeFromCollection.title% |  |
+| `saropaLogCapture.removeFromInvestigation` | Saropa Log Capture: Remove from Investigation |  |
+| `saropaLogCapture.renameInvestigation` | Saropa Log Capture: Rename Investigation |  |
 | `saropaLogCapture.renameSession` | %command.renameSession.title% |  |
 | `saropaLogCapture.replay` | %command.replay.title% |  |
 | `saropaLogCapture.rescanTags` | %command.rescanTags.title% |  |
@@ -115,4 +122,4 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.trashSession` | %command.trashSession.title% |  |
 | `saropaLogCapture.ungroupSession` | Saropa Log Capture: Ungroup Session |  |
 
-**Total:** 108 commands.
+**Total:** 115 commands.

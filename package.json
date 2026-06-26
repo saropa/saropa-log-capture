@@ -495,6 +495,41 @@
         "title": "Saropa Log Capture: Add Group to Collection"
       },
       {
+        "command": "saropaLogCapture.newInvestigation",
+        "icon": "$(add)",
+        "title": "Saropa Log Capture: New Investigation"
+      },
+      {
+        "command": "saropaLogCapture.addToInvestigation",
+        "icon": "$(folder-library)",
+        "title": "Saropa Log Capture: Add to Investigation"
+      },
+      {
+        "command": "saropaLogCapture.removeFromInvestigation",
+        "icon": "$(remove)",
+        "title": "Saropa Log Capture: Remove from Investigation"
+      },
+      {
+        "command": "saropaLogCapture.renameInvestigation",
+        "icon": "$(edit)",
+        "title": "Saropa Log Capture: Rename Investigation"
+      },
+      {
+        "command": "saropaLogCapture.editInvestigationNotes",
+        "icon": "$(note)",
+        "title": "Saropa Log Capture: Edit Investigation Notes"
+      },
+      {
+        "command": "saropaLogCapture.deleteInvestigation",
+        "icon": "$(trash)",
+        "title": "Saropa Log Capture: Delete Investigation"
+      },
+      {
+        "command": "saropaLogCapture.openInvestigation",
+        "icon": "$(folder-opened)",
+        "title": "Saropa Log Capture: Open Investigation"
+      },
+      {
         "command": "saropaLogCapture.addSignalItemToCollection",
         "icon": "$(add)",
         "title": "%command.addSignalItemToCollection.title%"
