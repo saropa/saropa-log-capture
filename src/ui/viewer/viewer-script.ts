@@ -165,6 +165,15 @@ function isStackFrameText(html) {
     if (/^\\s+\\S*\\/\\S+\\.\\S+\\s+\\d+:\\d+\\s+\\S/.test(plain)) return true;
     // Mid-line Dart source paths: "Method package:foo/bar.dart:1:2" or "(./lib/foo.dart:1:2)"
     if (/\\bpackage:\\S+\\.dart:\\d+/.test(plain)) return true;
+    // SDA inline source-ref annotation guard. A Drift "[database] Drift SLOW … SELECT …"
+    // log line ends with " » Member (./path.dart:line:col)"; that trailing ref otherwise
+    // trips the fallback below and the SQL line is eaten into a stack group (hidden +
+    // mis-leveled), which is why the Database filter showed ~1 row of 200+. A standalone
+    // SDA frame is "⠀ » Member (path)" (only braille-blank U+2800 + whitespace before »).
+    // So if real text precedes the first » , this is a content line, not a frame.
+    // Keep in sync with stack-parser.ts isStackFrameLine().
+    var guillemetIdx = plain.indexOf('»');
+    if (guillemetIdx >= 0 && plain.slice(0, guillemetIdx).replace(/[⠀\\s]/g, '').length > 0) return false;
     return /\\(\\.\\\/\\S+\\.dart:\\d+:\\d+\\)/.test(plain);
 }
 
