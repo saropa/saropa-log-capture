@@ -16,7 +16,7 @@
 			"outFiles": [
 				"${workspaceFolder}/dist/**/*.js"
 			],
-			"preLaunchTask": "compile"
+			"preLaunchTask": "dev-build"
 		},
 		{
 			"name": "Run Extension in VS Code",
@@ -31,7 +31,7 @@
 			"outFiles": [
 				"${workspaceFolder}/dist/**/*.js"
 			],
-			"preLaunchTask": "compile"
+			"preLaunchTask": "dev-build"
 		}
 	]
 }
