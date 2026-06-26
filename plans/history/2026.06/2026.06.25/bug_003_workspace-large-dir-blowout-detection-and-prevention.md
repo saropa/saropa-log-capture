@@ -1,6 +1,6 @@
 # Bug 003 — Workspace-wide: VS Code hangs on open when it crawls oversized directories; detection + prevention across `D:\src`
 
-## Status: Documented (prevention actions listed; per-project guards not yet applied)
+## Status: Closed for `saropa-log-capture` (this repo's guard shipped); cross-project items dispatched to their own repos' `bugs/` as separate reports
 
 <!-- Status values: Open → Investigating → Fix Ready → Fixed (pending review) → Closed -->
 
@@ -8,7 +8,7 @@
 
 This is an **environment / workspace-hygiene** bug, not a runtime defect in any
 one extension. It is filed here because the triggering incident was this
-project's 16 GB `.vscode-test` cache (see [Bug 002](../plans/history/2026.06/2026.06.25/bug_002_vscode-test-cache-hangs-window-on-open.md)).
+project's 16 GB `.vscode-test` cache (see [Bug 002](bug_002_vscode-test-cache-hangs-window-on-open.md)).
 It catalogs every project under `D:\src` that can hit the same class of failure,
 and how to stop it at the source.
 
@@ -186,7 +186,7 @@ commands in the Prevention sections above — they are not edited from here.
 **What landed (this project):**
 
 - New `posttest` lifecycle step,
-  [prune-vscode-test-cache.mjs](../scripts/modules/test/prune-vscode-test-cache.mjs),
+  [prune-vscode-test-cache.mjs](../../../../scripts/modules/test/prune-vscode-test-cache.mjs),
   runs after every `npm test` and removes all but the newest
   `vscode-…-archive-<version>` install under `.vscode-test/`. This bounds the
   cache to a single ~200 MB build instead of accumulating one per VS Code
@@ -205,7 +205,7 @@ commands in the Prevention sections above — they are not edited from here.
 nothing to prune; dry-run with two injected older-version dirs correctly keeps
 `1.126.0` and marks `1.105.0` + `1.99.0` for removal. The pure selection logic
 (`parseVersion`, `selectStaleInstalls`) is unit-tested in
-[prune-vscode-test-cache.test.ts](../src/test/modules/scripts/prune-vscode-test-cache.test.ts)
+[prune-vscode-test-cache.test.ts](../../../../src/test/modules/scripts/prune-vscode-test-cache.test.ts)
 — 7 node:test cases covering version parsing, component-wise (non-lexical)
 ordering, the version-beats-mtime rule, the mtime fallback, and the empty /
 single-install no-op paths. The script's file system mutation is gated behind an
