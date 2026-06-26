@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "pins": [
+    {
+      "id": "mqtppmvg-jfrwylkq",
+      "path": ".vscode/saropa-workspace.json",
+      "scope": "project",
+      "order": 0
+    },
+    {
+      "id": "mqtqgj46-amgfcy8i",
+      "path": "scripts/translate_l10n.py",
+      "scope": "project",
+      "order": 1
+    },
+    {
+      "id": "mqttaaay-suldmd3f",
+      "path": "CHANGELOG.md",
+      "scope": "project",
+      "order": 2
+    },
+    {
+      "id": "mqttae70-pfo6ikb2",
+      "path": "scripts/publish.py",
+      "scope": "project",
+      "order": 3,
+      "exec": {
+        "command": "",
+        "includeFilePath": true
+      }
+    }
+  ],
+  "groups": [],
+  "removedAutoPins": [
+    "auto:saropa-log-capture:.vscode/saropa-workspace.json"
+  ],
+  "removedRecipes": [
+    "install"
+  ],
+  "autoGroups": {}
+}
