@@ -9,7 +9,21 @@ This file tracks only the still-open scope so the active `plans/` tree reflects 
 
 ---
 
-## 1. Smart Context Boundaries — NOT BUILT
+## 1. Smart Context Boundaries — DONE (2026-06-25)
+
+Built as a refinement of the idea-#15 pause note, in
+[time-travel-context.ts](../src/modules/bug-report/time-travel-context.ts): `findContextBoundary()`
+walks backward from the error and returns the start of the operation it belongs to using blank
+lines and timestamp gaps (strong, nearest wins) with a severity escalation as a weak fallback;
+`formatContextInsights()` renders the boundary note plus the largest-pause note, deduped so one gap
+is never reported twice. Wired into the Log Context section of the bug report
+([bug-report-sections.ts](../src/modules/bug-report/bug-report-sections.ts)); the fixed window is
+still shown in full (annotation only, no shrink). Pure + unit-tested
+([time-travel-context.test.ts](../src/test/modules/bug-report/time-travel-context.test.ts), 13 cases).
+
+<details>
+<summary>Original spec</summary>
+
 
 Instead of always showing a fixed N lines before an error, use blank lines, timestamp gaps, and
 log-level changes to find the logical boundary of the operation the error belongs to.
@@ -28,6 +42,8 @@ not a parallel mechanism.
 
 **Effort/impact:** Low effort, Medium impact. Pure core is unit-testable; the bug-report render is
 verifiable by reading a generated report.
+
+</details>
 
 ---
 
