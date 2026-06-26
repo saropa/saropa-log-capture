@@ -1,5 +1,7 @@
 # Level badge count ≠ rows shown on focus — attempt history
 
+**Status:** Fixed (commit 27c46391)
+
 Symptom (user, 2026-06-26): badge says `E 32`, double-click the Error dot → **zero** rows.
 Same family as `DB 202 → 1 row` and `D 81 → none` reported earlier the same day.
 
