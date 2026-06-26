@@ -20,6 +20,15 @@ Tail one or more external log files (app.log, nginx, etc.) during the session an
 - **Viewer:** Discovers `basename.<label>.log` (excluding `.terminal.log`); `external:<label>` source id; same **Sources** checkboxes as terminal.
 - **Commands:** Add external log path; Open external logs for this session (progress when multiple).
 
+## Implemented (v2 — 2026-06-25 status correction)
+
+The items below were listed as deferred but are in fact shipped (verified against code):
+
+- **`createIfMissing`** — [external-log-tailer.ts](../src/modules/integrations/external-log-tailer.ts) `ensureFileExists()`; setting `saropaLogCapture.integrations.externalLogs.createIfMissing`.
+- **`followRotation`** — passed to `TailWorker` ([external-log-tail-worker.ts](../src/modules/integrations/external-log-tail-worker.ts)); setting `…externalLogs.followRotation`.
+- **Glob paths** — [external-log-glob.ts](../src/modules/integrations/external-log-glob.ts) (`isGlobPattern`, `pickLatestMatch`, `resolveExternalLogPath`); a `*`/`?` wildcard in the final path segment tails the latest-modified match.
+- **Status bar “Tailing N logs”** — [external-log-tail-status.ts](../src/ui/shared/external-log-tail-status.ts), driven by the tailer’s active-count callback; wired in session lifecycle init/finalize.
+
 ## Deferred
 
-- `createIfMissing`, `followRotation`, glob paths, status bar “Tailing N files”, optional JSONL unified stream (see complete-debug plan Phase 4).
+- Optional JSONL unified stream (see complete-debug plan Phase 4).
