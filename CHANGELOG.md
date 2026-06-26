@@ -28,10 +28,7 @@ cspell:disable
 
 ## [9.0.6]
 
-TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-[log](https://github.com/saropa/saropa-log-capture/blob/v9.0.6/CHANGELOG.md)
+Group related logs into named Investigations with notes, so a multi-session bug reads as one case — and bug reports now point at where the failing operation actually began instead of just dumping a fixed window. The toolbar's "Log N of M" stepper is replaced by a tidier banner showing a log's lifespan and newer-log alerts, plus fixes so the Integrations panel opens reliably, resizing a panel no longer closes it, and grouped sessions collapse without flickering. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.6/CHANGELOG.md)
 
 ### Added
 
