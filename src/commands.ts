@@ -24,6 +24,8 @@ import { registerCollectionCommands } from './commands-collection';
 import { externalLogsCommands } from './commands-external-logs';
 import { learningCommands } from './commands-learning';
 import { sessionGroupCommands } from './commands-session-groups';
+import { investigationCommands } from './commands-investigations';
+import { InvestigationStore } from './modules/session/investigation-store';
 import { suiteIntegrationCommands } from './commands-suite';
 import type { CaptureToggleStatusBar } from './ui/shared/capture-toggle-status-bar';
 
@@ -32,6 +34,9 @@ export type { CommandDeps } from './commands-deps';
 /** Register all extension commands. Called from extension-activation after handler wiring. */
 export function registerCommands(deps: CommandDeps, captureToggle: CaptureToggleStatusBar): void {
     const { context, collectionStore } = deps;
+    // Investigation Groups persist in workspaceState; the store is disposable (owns a change event).
+    const investigationStore = new InvestigationStore(context.workspaceState);
+    context.subscriptions.push(investigationStore);
     context.subscriptions.push(
         ...sessionLifecycleCommands(deps, captureToggle),
         ...sessionActionCommands(deps),
@@ -59,6 +64,7 @@ export function registerCommands(deps: CommandDeps, captureToggle: CaptureToggle
         ...externalLogsCommands(deps),
         ...learningCommands(deps),
         ...sessionGroupCommands(deps.historyProvider, deps.viewerProvider, deps.collectionStore),
+        ...investigationCommands(investigationStore, deps.historyProvider),
         ...suiteIntegrationCommands(deps),
         walkthroughCommand(),
     );

@@ -35,6 +35,7 @@ TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ### Added
 
+- **Investigations — bundle related logs into one named, annotated case.** A curated layer over automatic session grouping: give a multi-session debugging effort a title ("Bug #42: Payment timeout") and notes (the root cause), spanning whichever logs you choose. Right-click a log in the Logs panel → **Add to Investigation** (or **Remove from Investigation**), or use the Command Palette: New / Rename / Edit Notes / Delete / **Open Investigation**. Open shows the member sessions or a one-page **overview** that gathers the title, notes, and each session with its error/warning counts and notes. Investigations are non-destructive (a log can be in an auto group and any number of investigations) and persist per-workspace.
 - **Bug reports now point at where the failing operation began.** The Log Context section already flagged the largest pause before an error; it now also walks back from the error to find the logical start of the operation it belongs to — a blank-line break, a timestamp gap, or a rise in severity — and annotates "the failing operation begins N lines back". The full context window is still shown unchanged; this just marks the boundary so a developer reads the relevant operation instead of guessing how far back to look.
 
 ### Changed
