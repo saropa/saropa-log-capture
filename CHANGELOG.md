@@ -37,7 +37,6 @@ Group related logs into named Investigations with notes, so a multi-session bug 
 
 ### Changed
 
-- **F5 (Run Extension) now uses a fast `dev-build` instead of the full `compile` chain.** Debug launches were blocked behind the whole validate-and-bundle pipeline (two `tsc` passes plus nine `verify:*` checks), which pinned a CPU core and kept the "Waiting for preLaunchTask 'compile'…" dialog up until everything finished. The launch configs now run only the two artifact-producing steps — regenerate the embedded DB-detector merge source, then `esbuild` the bundle — so F5 starts quickly. Full type/lint/verify coverage still runs via `npm run compile` and in CI.
 - **Unified log banner replaces the "Log N of M" navigator.** The toolbar's prev/next session stepper is gone — browse logs in the Logs panel instead. In its place, a warning chip appears next to the filename only when the open log is behind a newer main-project log, showing how many newer ones exist. Clicking the filename (or the chip) now opens an inline banner with the log's lifespan ("Started 10 min ago · ran 7m 45s"), Open in editor, Copy path, and a kebab for the rest of the file actions — instead of the old modal. The banner also surfaces on its own when a newer main-project log is detected, with one-click Open. Dismiss it by tapping the banner, the × icon, or Escape.
 
 ### Fixed
@@ -52,6 +51,7 @@ Group related logs into named Investigations with notes, so a multi-session bug 
 
 **Build tooling**
 
+- **F5 (Run Extension) now uses a fast `dev-build` instead of the full `compile` chain.** Debug launches were blocked behind the whole validate-and-bundle pipeline (two `tsc` passes plus nine `verify:*` checks), which pinned a CPU core and kept the "Waiting for preLaunchTask 'compile'…" dialog up until everything finished. The launch configs now run only the two artifact-producing steps — regenerate the embedded DB-detector merge source, then `esbuild` the bundle — so F5 starts quickly. Full type/lint/verify coverage still runs via `npm run compile` and in CI.
 - **`.vscode-test/` no longer accumulates a full ~200 MB VS Code build per release.** `@vscode/test-electron` downloads a complete editor per version under `.vscode-test/` and never prunes the old ones; left unbounded this reached 16.3 GB / 179,824 files across 26 installs and froze the window on open ([Bug 002](plans/history/2026.06/2026.06.25/bug_002_vscode-test-cache-hangs-window-on-open.md) / [Bug 003](plans/history/2026.06/2026.06.25/bug_003_workspace-large-dir-blowout-detection-and-prevention.md)). A new `posttest` step ([prune-vscode-test-cache.mjs](scripts/modules/test/prune-vscode-test-cache.mjs)) keeps only the newest install after every `npm test`, bounding the cache to one build. Run it manually with `npm run prune:vscode-test` (`--dry-run` to preview). Build/test tooling only.
 
 </details>
