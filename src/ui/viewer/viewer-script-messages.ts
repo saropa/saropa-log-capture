@@ -31,6 +31,11 @@ window.addEventListener('message', function(event) {
                 if (typeof applyLintDataToLastLine === 'function') applyLintDataToLastLine(ln);
             }
             trimData();
+            /* Badge counts must equal what the level filter shows. Recompute here — after the
+               addToData loop and trimData have settled allLines, repeat-collapse, and trimming —
+               so the tally reads the same per-row item.level the filter reads (effective, post-
+               demotion, post-collapse), not a separate raw classification that diverges. */
+            if (typeof recomputeStatsCounters === 'function') recomputeStatsCounters();
             if (msg.lineCount !== undefined) {
                 lineCount = msg.lineCount;
                 // Decoration width only changes when line-count digit width crosses a threshold.
