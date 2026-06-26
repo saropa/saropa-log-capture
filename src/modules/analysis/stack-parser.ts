@@ -279,6 +279,20 @@ export function isStackFrameLine(line: string): boolean {
     if (/^\s+\S*\/\S+\.\S+\s+\d+:\d+\s+\S/.test(line)) { return true; }
     // Mid-line Dart source paths: "Method package:foo/bar.dart:1:2" or "(./lib/foo.dart:1:2)"
     if (/\bpackage:\S+\.dart:\d+/.test(line)) { return true; }
+    // SDA inline source-ref annotation guard. A normal content log line — typically a
+    // Drift "[database] Drift SLOW … SELECT …" line — ends with the interceptor's
+    // " » Member (./path.dart:line:col)" call-site annotation. That trailing parenthesized
+    // ref otherwise trips the mid-line fallback below, so the whole SQL line was consumed
+    // into a stack group: hidden as a collapsed frame AND mis-leveled (a stack frame
+    // inherits its group header's level, not 'database'). That is why the Database filter
+    // showed ~1 row instead of 200+. A genuine standalone SDA frame is "⠀ » Member (path)"
+    // where only the braille-blank (U+2800) + whitespace precede the » (and the package:
+    // form already returned true above). So if real message text precedes the first » ,
+    // this is an annotated content line, not a frame. Keep in sync with viewer-script.ts.
+    const guillemetIdx = line.indexOf('»');
+    if (guillemetIdx >= 0 && line.slice(0, guillemetIdx).replace(/[⠀\s]/g, '').length > 0) {
+        return false;
+    }
     return /\(\.\/\S+\.dart:\d+:\d+\)/.test(line);
 }
 
