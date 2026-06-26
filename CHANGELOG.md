@@ -50,7 +50,7 @@ TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 **Build tooling**
 
-- **`.vscode-test/` no longer accumulates a full ~200 MB VS Code build per release.** `@vscode/test-electron` downloads a complete editor per version under `.vscode-test/` and never prunes the old ones; left unbounded this reached 16.3 GB / 179,824 files across 26 installs and froze the window on open ([Bug 002](bugs/bug_002_vscode-test-cache-hangs-window-on-open.md) / [Bug 003](bugs/bug_003_workspace-large-dir-blowout-detection-and-prevention.md)). A new `posttest` step ([prune-vscode-test-cache.mjs](scripts/modules/test/prune-vscode-test-cache.mjs)) keeps only the newest install after every `npm test`, bounding the cache to one build. Run it manually with `npm run prune:vscode-test` (`--dry-run` to preview). Build/test tooling only.
+- **`.vscode-test/` no longer accumulates a full ~200 MB VS Code build per release.** `@vscode/test-electron` downloads a complete editor per version under `.vscode-test/` and never prunes the old ones; left unbounded this reached 16.3 GB / 179,824 files across 26 installs and froze the window on open ([Bug 002](plans/history/2026.06/2026.06.25/bug_002_vscode-test-cache-hangs-window-on-open.md) / [Bug 003](bugs/bug_003_workspace-large-dir-blowout-detection-and-prevention.md)). A new `posttest` step ([prune-vscode-test-cache.mjs](scripts/modules/test/prune-vscode-test-cache.mjs)) keeps only the newest install after every `npm test`, bounding the cache to one build. Run it manually with `npm run prune:vscode-test` (`--dry-run` to preview). Build/test tooling only.
 
 </details>
 
