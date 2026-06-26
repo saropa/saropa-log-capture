@@ -15,15 +15,22 @@
  * install behind. The `extensions/` and `user-data/` siblings are small and
  * persistent and are never touched. Safe when `.vscode-test` is absent.
  *
+ * The pure selection helpers are exported for unit tests; the file system
+ * mutation only runs when the script is invoked directly (the `isMain` guard),
+ * so importing it for a test never deletes a real cache.
+ *
  * Usage: node scripts/modules/test/prune-vscode-test-cache.mjs [--dry-run]
  */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const testDir = path.resolve(__dirname, "..", "..", "..", ".vscode-test");
-const dryRun = process.argv.slice(2).includes("--dry-run");
+/**
+ * @typedef {object} Install
+ * @property {string} name Install dir name, e.g. `vscode-win32-x64-archive-1.126.0`.
+ * @property {readonly number[] | null} version Parsed `[major, minor, patch]`, or null.
+ * @property {number} mtimeMs Directory mtime, the tie-breaker when version is null.
+ */
 
 /**
  * Parses the trailing `X.Y.Z` from a `vscode-<platform>-archive-<version>`
@@ -32,7 +39,7 @@ const dryRun = process.argv.slice(2).includes("--dry-run");
  * @param {string} name
  * @returns {readonly number[] | null}
  */
-function parseVersion(name) {
+export function parseVersion(name) {
 	const match = /(\d+)\.(\d+)\.(\d+)$/.exec(name);
 	if (!match) {
 		return null;
@@ -43,11 +50,11 @@ function parseVersion(name) {
 /**
  * Orders two installs newest-first by semantic version, falling back to
  * directory mtime when either name lacks a parseable version.
- * @param {{ name: string; version: readonly number[] | null; mtimeMs: number }} a
- * @param {{ name: string; version: readonly number[] | null; mtimeMs: number }} b
+ * @param {Install} a
+ * @param {Install} b
  * @returns {number}
  */
-function newestFirst(a, b) {
+export function compareNewestFirst(a, b) {
 	if (a.version && b.version) {
 		for (let i = 0; i < 3; i++) {
 			if (a.version[i] !== b.version[i]) {
@@ -58,6 +65,18 @@ function newestFirst(a, b) {
 	}
 	// One side has no version — order by mtime so a malformed dir can't win.
 	return b.mtimeMs - a.mtimeMs;
+}
+
+/**
+ * Pure selection: given the install descriptors, returns the single newest to
+ * keep and the rest to remove. `keep` is null only when the list is empty.
+ * @param {readonly Install[]} installs
+ * @returns {{ keep: Install | null; stale: Install[] }}
+ */
+export function selectStaleInstalls(installs) {
+	const sorted = [...installs].sort(compareNewestFirst);
+	const [keep = null, ...stale] = sorted;
+	return { keep, stale };
 }
 
 /**
@@ -80,11 +99,12 @@ function dirSize(dir) {
 }
 
 /**
- * Lists the per-version VS Code install dirs (the `vscode-…-archive-…` entries),
- * annotated with parsed version and mtime for ordering.
- * @returns {Array<{ name: string; version: readonly number[] | null; mtimeMs: number }>}
+ * Lists the per-version VS Code install dirs (the `vscode-…-archive-…` entries)
+ * under `testDir`, annotated with parsed version and mtime for ordering.
+ * @param {string} testDir
+ * @returns {Install[]}
  */
-function listInstalls() {
+function listInstalls(testDir) {
 	return fs
 		.readdirSync(testDir, { withFileTypes: true })
 		.filter((e) => e.isDirectory() && e.name.startsWith("vscode-"))
@@ -95,31 +115,50 @@ function listInstalls() {
 		}));
 }
 
-if (!fs.existsSync(testDir)) {
-	process.exit(0);
-}
-
-const installs = listInstalls().sort(newestFirst);
-if (installs.length <= 1) {
-	console.log(
-		`prune-vscode-test-cache: ${installs.length} install present, nothing to prune.`,
-	);
-	process.exit(0);
-}
-
-// Keep the newest install; everything older is redundant download churn.
-const [keep, ...stale] = installs;
-let freed = 0;
-for (const install of stale) {
-	const full = path.join(testDir, install.name);
-	freed += dirSize(full);
-	if (!dryRun) {
-		fs.rmSync(full, { recursive: true, force: true });
+/**
+ * Removes every install but the newest under `testDir`, printing what it kept
+ * and freed. No-op when the dir is absent or holds at most one install.
+ * @param {string} testDir
+ * @param {boolean} dryRun
+ * @returns {void}
+ */
+function prune(testDir, dryRun) {
+	if (!fs.existsSync(testDir)) {
+		return;
 	}
-	console.log(`${dryRun ? "would remove" : "removed"} ${install.name}`);
+	const { keep, stale } = selectStaleInstalls(listInstalls(testDir));
+	if (!keep || stale.length === 0) {
+		console.log(
+			`prune-vscode-test-cache: ${keep ? 1 : 0} install present, nothing to prune.`,
+		);
+		return;
+	}
+	let freed = 0;
+	for (const install of stale) {
+		const full = path.join(testDir, install.name);
+		freed += dirSize(full);
+		if (!dryRun) {
+			fs.rmSync(full, { recursive: true, force: true });
+		}
+		console.log(`${dryRun ? "would remove" : "removed"} ${install.name}`);
+	}
+	const freedGb = (freed / 1024 ** 3).toFixed(2);
+	console.log(
+		`prune-vscode-test-cache: kept ${keep.name}, ${dryRun ? "would free" : "freed"} ${freedGb} GB across ${stale.length} stale install(s).`,
+	);
 }
 
-const freedGb = (freed / 1024 ** 3).toFixed(2);
-console.log(
-	`prune-vscode-test-cache: kept ${keep.name}, ${dryRun ? "would free" : "freed"} ${freedGb} GB across ${stale.length} stale install(s).`,
-);
+// Only mutate the file system when run as a script, never on import (tests
+// import the pure helpers above and must not touch the real cache).
+const isMain =
+	process.argv[1] &&
+	path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+	const root = path.resolve(
+		path.dirname(fileURLToPath(import.meta.url)),
+		"..",
+		"..",
+		"..",
+	);
+	prune(path.join(root, ".vscode-test"), process.argv.slice(2).includes("--dry-run"));
+}
