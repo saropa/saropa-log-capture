@@ -33,6 +33,10 @@ TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.6/CHANGELOG.md)
 
+### Added
+
+- **Bug reports now point at where the failing operation began.** The Log Context section already flagged the largest pause before an error; it now also walks back from the error to find the logical start of the operation it belongs to — a blank-line break, a timestamp gap, or a rise in severity — and annotates "the failing operation begins N lines back". The full context window is still shown unchanged; this just marks the boundary so a developer reads the relevant operation instead of guessing how far back to look.
+
 ### Changed
 
 - **F5 (Run Extension) now uses a fast `dev-build` instead of the full `compile` chain.** Debug launches were blocked behind the whole validate-and-bundle pipeline (two `tsc` passes plus nine `verify:*` checks), which pinned a CPU core and kept the "Waiting for preLaunchTask 'compile'…" dialog up until everything finished. The launch configs now run only the two artifact-producing steps — regenerate the embedded DB-detector merge source, then `esbuild` the bundle — so F5 starts quickly. Full type/lint/verify coverage still runs via `npm run compile` and in CI.
