@@ -8,7 +8,7 @@
 
 This is an **environment / workspace-hygiene** bug, not a runtime defect in any
 one extension. It is filed here because the triggering incident was this
-project's 16 GB `.vscode-test` cache (see [Bug 002](bug_002_vscode-test-cache-hangs-window-on-open.md)).
+project's 16 GB `.vscode-test` cache (see [Bug 002](../plans/history/2026.06/2026.06.25/bug_002_vscode-test-cache-hangs-window-on-open.md)).
 It catalogs every project under `D:\src` that can hit the same class of failure,
 and how to stop it at the source.
 
