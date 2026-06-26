@@ -38,6 +38,18 @@ suite('ViewerSessionContextMenu', () => {
             assert.ok(hideItem > 0, 'hideByName should have session-normal-only');
             assert.ok(showItem > 0, 'showOnlyByName should have session-normal-only');
         });
+        test('should include Add/Remove Investigation actions, marked normal-only', () => {
+            /* Investigation membership is surfaced on the session row context menu; both rows are
+               session-normal-only so they hide in the trashed view, like Group/Collection actions. */
+            const html = getSessionContextMenuHtml();
+            assert.ok(html.includes('data-session-action="addToInvestigation"'));
+            assert.ok(html.includes('Add to Investigation'));
+            assert.ok(html.includes('data-session-action="removeFromInvestigation"'));
+            assert.ok(html.includes('Remove from Investigation'));
+            const addIdx = html.indexOf('addToInvestigation');
+            assert.ok(html.lastIndexOf('session-normal-only', addIdx) > 0,
+                'addToInvestigation should be session-normal-only');
+        });
         test('should include Reveal in File Explorer action with folder-opened icon', () => {
             /* The reveal action lets the user jump from a log row to its OS folder.
                It must be exposed both on the hover button (tested in panel runtime)
