@@ -26,9 +26,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.0.8]
 
-Database (and other) lines no longer vanish when you isolate a severity: Drift query logs stay visible under the Database filter, and double-clicking a level dot to focus it now opens the Log Sources tiers so you actually see those lines. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+Database (and other) lines no longer vanish when you isolate a severity: Drift query logs stay visible under the Database filter, and double-clicking a level dot to focus it now opens the Log Sources tiers so you actually see those lines. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.8/CHANGELOG.md)
 
 ### Fixed
 
