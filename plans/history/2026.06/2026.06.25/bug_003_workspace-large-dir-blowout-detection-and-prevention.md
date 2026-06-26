@@ -214,3 +214,27 @@ single-install no-op paths. The script's file system mutation is gated behind an
 **Already in place (Bug 002):** `"files.watcherExclude": { "**/.vscode-test/**":
 true }` in `.vscode/settings.json` — the watcher exclusion that stops the crawl;
 this pass adds the growth bound the watcher exclusion does not provide.
+
+## Cross-project dispatch (2026-06-25)
+
+The remaining prevention items target other repos under `D:\src` and cannot be
+applied from `saropa-log-capture` (cross-project edit boundary). Each was filed
+as a standalone, self-contained report in the target repo's `bugs/` folder
+(folder created where absent), `Status: Open`, carrying that repo's specific
+large dir(s), the exact `files.watcherExclude` JSON, and a back-reference to this
+archived report. They are not applied — each repo's maintainer applies the
+watcher exclusion.
+
+| Target repo | Report file | Item |
+|---|---|---|
+| `vscode-versionlens-master` | `bugs/vscode_test_cache_hang_prevention.md` | `@vscode/test-electron`, no watcher exclusion (the acute hang risk); watcher-exclude + cache bound |
+| `contacts` | `bugs/vscode_watcher_exclude_large_dirs.md` | `blobs` / `reports` / `build` |
+| `saropa_radiance_vector` | `bugs/vscode_watcher_exclude_large_dirs.md` | `game` (exclude generated subtree only) |
+| `saropa_kykto` | `bugs/vscode_watcher_exclude_large_dirs.md` | `build` |
+| `web.app.dotnet` | `bugs/vscode_watcher_exclude_large_dirs.md` | .NET `bin`/`obj` (not the `Saropa` source dir) |
+| `saropa_bangers` | `bugs/vscode_watcher_exclude_large_dirs.md` | `build` |
+| `saropa_drift_advisor` | `bugs/vscode_watcher_exclude_large_dirs.md` | `example` (exclude `example/build` only) |
+| `saropa_lints` | `bugs/vscode_watcher_exclude_large_dirs.md` | `build` |
+
+With this dispatch the catalog is closed for `saropa-log-capture`; the cross-
+project tracking now lives in each respective repo where it is actionable.
