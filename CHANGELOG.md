@@ -26,9 +26,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.0.9]
 
-Level badges now match what you see: the count on a severity dot equals the rows that appear when you focus it. Earlier, device noise (Android `E/` logcat) inflated the Error count, so the badge could say 32 while focusing Error showed none. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+Level badges now match what you see: the count on a severity dot equals the rows that appear when you focus it. Earlier, device noise (Android `E/` logcat) inflated the Error count, so the badge could say 32 while focusing Error showed none. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.9/CHANGELOG.md)
 
 ### Fixed
 
