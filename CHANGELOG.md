@@ -26,14 +26,29 @@ cspell:disable
 
 ---
 
-## [9.0.6]
+## [9.0.7]
 
-Group related logs into named Investigations with notes, so a multi-session bug reads as one case — and bug reports now point at where the failing operation actually began instead of just dumping a fixed window. The toolbar's "Log N of M" stepper is replaced by a tidier banner showing a log's lifespan and newer-log alerts, plus fixes so the Integrations panel opens reliably, resizing a panel no longer closes it, and grouped sessions collapse without flickering. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.6/CHANGELOG.md)
+Group related logs into named Investigations with notes, so a multi-session bug reads as one case — and bug reports now point at where the failing operation actually began instead of just dumping a fixed window. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.7/CHANGELOG.md)
 
 ### Added
 
 - **Investigations — bundle related logs into one named, annotated case.** A curated layer over automatic session grouping: give a multi-session debugging effort a title ("Bug #42: Payment timeout") and notes (the root cause), spanning whichever logs you choose. Right-click a log in the Logs panel → **Add to Investigation** (or **Remove from Investigation**), or use the Command Palette: New / Rename / Edit Notes / Delete / **Open Investigation**. Open shows the member sessions or a one-page **overview** that gathers the title, notes, and each session with its error/warning counts and notes. Investigations are non-destructive (a log can be in an auto group and any number of investigations) and persist per-workspace.
 - **Bug reports now point at where the failing operation began.** The Log Context section already flagged the largest pause before an error; it now also walks back from the error to find the logical start of the operation it belongs to — a blank-line break, a timestamp gap, or a rise in severity — and annotates "the failing operation begins N lines back". The full context window is still shown unchanged; this just marks the boundary so a developer reads the relevant operation instead of guessing how far back to look.
+
+<details>
+<summary>Maintenance</summary>
+
+**Build tooling**
+
+- **F5 (Run Extension) now uses a fast `dev-build` instead of the full `compile` chain.** Debug launches were blocked behind the whole validate-and-bundle pipeline (two `tsc` passes plus nine `verify:*` checks), which pinned a CPU core and kept the "Waiting for preLaunchTask 'compile'…" dialog up until everything finished. The launch configs now run only the two artifact-producing steps — regenerate the embedded DB-detector merge source, then `esbuild` the bundle — so F5 starts quickly. Full type/lint/verify coverage still runs via `npm run compile` and in CI.
+- **`.vscode-test/` no longer accumulates a full ~200 MB VS Code build per release.** `@vscode/test-electron` downloads a complete editor per version under `.vscode-test/` and never prunes the old ones; left unbounded this reached 16.3 GB / 179,824 files across 26 installs and froze the window on open ([Bug 002](plans/history/2026.06/2026.06.25/bug_002_vscode-test-cache-hangs-window-on-open.md) / [Bug 003](plans/history/2026.06/2026.06.25/bug_003_workspace-large-dir-blowout-detection-and-prevention.md)). A new `posttest` step ([prune-vscode-test-cache.mjs](scripts/modules/test/prune-vscode-test-cache.mjs)) keeps only the newest install after every `npm test`, bounding the cache to one build. Run it manually with `npm run prune:vscode-test` (`--dry-run` to preview). Build/test tooling only.
+- **The packaged `.vsix` no longer ships repo and CI artifacts.** `.vscodeignore` did not exclude `coverage/`, `.nyc_output/`, `reports/`, `plans/`, `bugs/`, `examples/`, `test/`, `.github/`, and `l10n/provenance/`, so a package pulled in 2,851 files (~18 MB) of test-coverage HTML, captured logs, and planning docs that have no runtime consumer. Those folders are now ignored; only `dist/`, `l10n/` bundles, `images/`, `media/walkthrough/`, `audio/`, and the manifest NLS files ship — 47 files. Packaging only.
+
+</details>
+
+## [9.0.6]
+
+The toolbar's "Log N of M" stepper is replaced by a tidier banner showing a log's lifespan and newer-log alerts, plus fixes so the Integrations panel opens reliably, resizing a panel no longer closes it, and grouped sessions collapse without flickering. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.6/CHANGELOG.md)
 
 ### Changed
 
@@ -45,16 +60,6 @@ Group related logs into named Investigations with notes, so a multi-session bug 
 - **The "new logs" alert no longer points at the log you already have open.** The alert now tracks the latest *main-project* log specifically, and never offers to open the file already on screen.
 - **Resizing a slide-out panel no longer closes it.** Dragging the panel divider to give a panel's detail more room (e.g. widening the Crashlytics view) closed the panel on release: a drag ends with a synthetic click outside the panel, which tripped the panel's click-away dismiss. The trailing click after a real drag is now swallowed, so resizing keeps the panel open.
 - **Collapsing a session group in the Logs panel now works reliably while a session is recording.** Clicking the chevron on a grouped session (e.g. a controller with its nested logs) sometimes did nothing and the row flickered: the active recording session streams background severity/metadata updates, and each one overwrote the cached row with a copy that had lost its grouping hints (`isGroupPrimary` / group size). The next re-render then re-picked a different group leader, changing the collapse key, so the collapse silently reverted and the "+N" badge vanished. Background updates now preserve the grouping computed by the full list, so the chevron — and the leader, key, and badge — stay stable.
-
-<details>
-<summary>Maintenance</summary>
-
-**Build tooling**
-
-- **F5 (Run Extension) now uses a fast `dev-build` instead of the full `compile` chain.** Debug launches were blocked behind the whole validate-and-bundle pipeline (two `tsc` passes plus nine `verify:*` checks), which pinned a CPU core and kept the "Waiting for preLaunchTask 'compile'…" dialog up until everything finished. The launch configs now run only the two artifact-producing steps — regenerate the embedded DB-detector merge source, then `esbuild` the bundle — so F5 starts quickly. Full type/lint/verify coverage still runs via `npm run compile` and in CI.
-- **`.vscode-test/` no longer accumulates a full ~200 MB VS Code build per release.** `@vscode/test-electron` downloads a complete editor per version under `.vscode-test/` and never prunes the old ones; left unbounded this reached 16.3 GB / 179,824 files across 26 installs and froze the window on open ([Bug 002](plans/history/2026.06/2026.06.25/bug_002_vscode-test-cache-hangs-window-on-open.md) / [Bug 003](plans/history/2026.06/2026.06.25/bug_003_workspace-large-dir-blowout-detection-and-prevention.md)). A new `posttest` step ([prune-vscode-test-cache.mjs](scripts/modules/test/prune-vscode-test-cache.mjs)) keeps only the newest install after every `npm test`, bounding the cache to one build. Run it manually with `npm run prune:vscode-test` (`--dry-run` to preview). Build/test tooling only.
-
-</details>
 
 ## [9.0.5]
 
