@@ -47,7 +47,33 @@ verifiable by reading a generated report.
 
 ---
 
-## 2. Investigation Groups — curated/named layer (automatic grouping already shipped)
+## 2. Investigation Groups — DONE via commands (2026-06-25); webview tree-parent rendering deferred
+
+**Built (2026-06-25):** the curated named layer over auto-grouping, command-driven and fully usable.
+- **Persistence:** workspaceState (the simpler, private option — the open question below is resolved
+  in favor of workspace state; the shareable `reports/.investigations.json` file stays a follow-up).
+  Pure model [investigation-model.ts](../src/modules/session/investigation-model.ts) +
+  [investigation-store.ts](../src/modules/session/investigation-store.ts).
+- **Commands** (palette + Logs-panel right-click for add/remove):
+  [commands-investigations.ts](../src/commands-investigations.ts) /
+  [-open.ts](../src/commands-investigations-open.ts) /
+  [-helpers.ts](../src/commands-investigations-helpers.ts) — New, Add to, Remove from, Rename, Edit
+  Notes, Delete, and Open (overview or a member session).
+- **Overview document** [investigation-overview.ts](../src/modules/session/investigation-overview.ts)
+  — one markdown page (title, notes, member sessions with error/warning counts + per-session notes
+  and clickable links) so a multi-session effort "reads as one thing".
+- **Tests:** pure model + overview, 11 cases
+  ([investigation-model.test.ts](../src/test/modules/session/investigation-model.test.ts),
+  [investigation-overview.test.ts](../src/test/modules/session/investigation-overview.test.ts)).
+
+**Deferred (display polish, not built):** rendering investigations as **parent nodes inside the
+Logs panel tree**. The Logs panel is a webview (there is no native sessions TreeView), so a
+persistent tree-parent row is a webview-rendering change with its own design pass; the
+command-driven surface + overview document deliver the value without it. Membership is surfaced
+today via the right-click "Add to / Remove from Investigation" actions and the Open command.
+
+<details>
+<summary>Original spec</summary>
 
 Bundle related sessions into named investigations with a custom title and notes, so a multi-session
 debugging effort reads as one thing:
@@ -79,3 +105,5 @@ it warrants its own design pass before implementation.
 
 **Open question (carried from the roadmap):** should investigation groups persist in workspace
 state or in a `reports/.investigations.json` file shareable via git?
+
+</details>
