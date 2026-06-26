@@ -203,7 +203,13 @@ commands in the Prevention sections above — they are not edited from here.
 
 **Verified:** dry-run against the live cache (one install present) reports
 nothing to prune; dry-run with two injected older-version dirs correctly keeps
-`1.126.0` and marks `1.105.0` + `1.99.0` for removal.
+`1.126.0` and marks `1.105.0` + `1.99.0` for removal. The pure selection logic
+(`parseVersion`, `selectStaleInstalls`) is unit-tested in
+[prune-vscode-test-cache.test.ts](../src/test/modules/scripts/prune-vscode-test-cache.test.ts)
+— 7 node:test cases covering version parsing, component-wise (non-lexical)
+ordering, the version-beats-mtime rule, the mtime fallback, and the empty /
+single-install no-op paths. The script's file system mutation is gated behind an
+`isMain` guard so importing it for the test never touches a real cache.
 
 **Already in place (Bug 002):** `"files.watcherExclude": { "**/.vscode-test/**":
 true }` in `.vscode/settings.json` — the watcher exclusion that stops the crawl;
