@@ -32,6 +32,14 @@
 			"presentation": { "reveal": "always", "panel": "shared" }
 		},
 		{
+			"label": "dev-build",
+			"type": "npm",
+			"script": "dev-build",
+			"group": "build",
+			"problemMatcher": [],
+			"presentation": { "reveal": "silent", "panel": "shared" }
+		},
+		{
             "label": "watch",
             "dependsOn": [
                 "npm: watch:tsc",

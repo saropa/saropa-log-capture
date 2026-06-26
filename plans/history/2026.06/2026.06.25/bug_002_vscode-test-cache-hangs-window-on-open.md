@@ -1,6 +1,6 @@
 # Bug 002 — Opening the project in VS Code hangs the window (CPU 100%) — 16 GB `.vscode-test` crawled by the file watcher
 
-## Status: Fixed (pending review)
+## Status: Fixed
 
 <!-- Status values: Open → Investigating → Fix Ready → Fixed (pending review) → Closed -->
 
