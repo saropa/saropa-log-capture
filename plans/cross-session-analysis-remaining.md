@@ -67,10 +67,12 @@ verifiable by reading a generated report.
   [investigation-overview.test.ts](../src/test/modules/session/investigation-overview.test.ts)).
 
 **Deferred (display polish, not built):** rendering investigations as **parent nodes inside the
-Logs panel tree**. The Logs panel is a webview (there is no native sessions TreeView), so a
-persistent tree-parent row is a webview-rendering change with its own design pass; the
-command-driven surface + overview document deliver the value without it. Membership is surfaced
-today via the right-click "Add to / Remove from Investigation" actions and the Open command.
+Logs panel tree** — tracked in
+[deferred/investigation-groups-webview-tree-parent.md](deferred/investigation-groups-webview-tree-parent.md).
+The Logs panel is a webview (there is no native sessions TreeView), so a persistent tree-parent row
+is a webview-rendering change with its own design pass; the command-driven surface + overview
+document deliver the value without it. Membership is surfaced today via the right-click "Add to /
+Remove from Investigation" actions and the Open command.
 
 <details>
 <summary>Original spec</summary>
@@ -107,3 +109,52 @@ it warrants its own design pass before implementation.
 state or in a `reports/.investigations.json` file shareable via git?
 
 </details>
+
+---
+
+## Finish Report (2026-06-25)
+
+Both remaining cross-session-analysis items are implemented. The file is retained in `plans/` (not
+moved to history) because it remains the index for the one carved-out follow-up — the webview
+tree-parent rendering tracked in
+[deferred/investigation-groups-webview-tree-parent.md](deferred/investigation-groups-webview-tree-parent.md)
+— and moving it would break its numerous in-file relative links (`../src/…`, `history/…`, sibling
+plans).
+
+**Scope:** (B) VS Code extension (TypeScript) + (C) plans/docs. No Flutter/Dart app code.
+
+### Item 1 — Smart Context Boundaries (commit `c172db16`)
+
+The bug report's Log Context section previously surfaced only the largest pause before an error
+(idea #15). It now also locates where the failing operation logically begins.
+`findContextBoundary()` ([time-travel-context.ts](../src/modules/bug-report/time-travel-context.ts))
+walks backward from the newest context line and returns the start of the most recent operation,
+using blank lines and timestamp gaps as strong separators (nearest wins) and a severity escalation
+(info/debug → warn/error) as a weak fallback; `coarseLevel()` reads a structural head token
+(logcat / `[level]` / `LEVEL:`) and stays config-free so the helper is pure and node:test-able.
+`formatContextInsights()` renders the boundary note plus the pause note, deduped so one gap is never
+reported twice. The fixed window is still shown in full — this annotates, it does not shrink.
+Verified by 13 unit cases ([time-travel-context.test.ts](../src/test/modules/bug-report/time-travel-context.test.ts)).
+
+### Item 2 — Investigation Groups (commit `961b3794`)
+
+A curated, human-named layer over automatic session grouping: a titled, annotated bundle of related
+sessions, non-destructive (a log can belong to an auto group and any number of investigations).
+- **Persistence** resolves the open question in favor of `workspaceState` (private, simpler); the
+  shareable `reports/.investigations.json` variant remains a separate follow-up. Pure model
+  ([investigation-model.ts](../src/modules/session/investigation-model.ts)) + Memento store
+  ([investigation-store.ts](../src/modules/session/investigation-store.ts)).
+- **Commands** (Command Palette + Logs-panel right-click for Add/Remove): New, Add to, Remove from,
+  Rename, Edit Notes, Delete, and Open (member session or a generated markdown **overview** gathering
+  title, notes, and each session's error/warning counts, notes, and links).
+- Wired into the webview session context menu → `sessionAction` dispatch → commands; runtime l10n
+  source keys in [strings-investigations.ts](../src/l10n/strings-investigations.ts).
+- Verified by 11 unit cases (model + overview).
+
+**Deferred:** Logs-panel tree-parent rendering — there is no native sessions `TreeView` (the panel is
+a webview), so a persistent parent row is a webview-rendering change with its own design questions;
+carved out to `plans/deferred/`.
+
+**Gates:** `npm run compile` passes all checks (check-types, lint, NLS key parity 509×11,
+nls-coverage, webview + command catalogs, l10n-keys, esbuild, dist-size 4.94 MiB). Pure tests: 24
+passing across the three touched modules.
