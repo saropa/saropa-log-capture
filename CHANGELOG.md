@@ -26,6 +26,19 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+Database (and other) lines no longer vanish when you isolate a severity: Drift query logs stay visible under the Database filter, and double-clicking a level dot to focus it now opens the Log Sources tiers so you actually see those lines. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+
+### Fixed
+
+- **Drift / database log lines no longer disappear under the Database filter.** Each Drift interceptor line ends with an inline `» Member (./path.dart:line:col)` call-site annotation; that trailing source reference was being misread as a stack frame, so the whole SQL line got folded into a collapsed stack group and lost its `database` level. Isolating Database then showed ~1 row even when the count badge said 200+. Content lines carrying that inline `»` annotation are now kept as normal log lines (a genuine standalone stack frame — `⠀ » Member (path)` with nothing before the `»` — is still detected). Guarded in both the extension-side and webview detectors with a parity-corpus regression case.
+- **Double-clicking a level dot to focus a severity now opens the Log Sources tiers.** Device and External tiers default to **Warn+**, which independently hides every non-error/warning line regardless of the level filter — so soloing Debug or Database showed nothing despite the count badge. Soloing a level now resets all three tiers to **All** and moves the drawer radios to match, so the isolated level's lines are actually shown.
+
+### Maintenance
+
+- Aligned `@types/vscode` down to `^1.105.0` to match `engines.vscode`. The dev type range had drifted ahead to `^1.125.0`, which vsce rejects at the Package step — the prerequisite manifest-compat gate now self-heals or stops before any version/CHANGELOG mutation, preserving the committed VS Code compatibility floor.
+
 ## [9.0.7]
 
 Group related logs into named Investigations with notes, so a multi-session bug reads as one case — and bug reports now point at where the failing operation actually began instead of just dumping a fixed window. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.7/CHANGELOG.md)

@@ -196,6 +196,11 @@ function soloLevel(level) {
     var btn = document.getElementById('level-' + level + '-toggle');
     if (btn) btn.classList.add('active');
     syncLevelDots();
+    /* Soloing a level is an explicit "show me ALL of these" — relax the Log Sources tier
+       filters (Device/External default to 'warnplus') so the isolated level is not silently
+       suppressed by the orthogonal tier axis. Set before applyLevelFilter() so its single
+       recalcAndRender covers both filter changes. See resetTiersToAll() for the full why. */
+    if (typeof resetTiersToAll === 'function') resetTiersToAll();
     applyLevelFilter();
     saveLevelState();
     if (typeof markPresetDirty === 'function') markPresetDirty();

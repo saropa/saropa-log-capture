@@ -100,6 +100,11 @@ const CORPUS: readonly Case[] = [
     { line: 'ServerContext.log package:saropa/src/server.dart:202:35', frame: true, note: 'midline: member package:...dart:202:35' },
     { line: '      ⠀ » _Executor.run package:drift/interceptor.dart:163:25', frame: true, note: 'midline: braille » prefix + package:' },
     { line: '      ⠀ » Interceptor._log (./lib/database/drift_debug.dart:92:5)', frame: true, note: 'midline: parenthesized ./lib path' },
+    // Drift interceptor logs a single content line ending with the " » Member (./path)"
+    // call-site annotation. Real message text precedes the » , so it is NOT a frame — it
+    // must stay a normal 'database' line (regression: it was eaten into a stack group and
+    // vanished under the Database filter).
+    { line: '[log] [database] Drift SLOW 119ms SELECT: SELECT * FROM "country_states" ORDER BY "id" LIMIT 1000  » DriftDebugInterceptor._lightLog (./lib/database/drift/drift_debug_interceptor.dart:282:5)', frame: false, note: 'drift inline source-ref annotation — content before »' },
 
     // --- Pure negatives ---
     { line: '', frame: false, note: 'empty string' },
