@@ -32,7 +32,7 @@ Level badges now match what you see: the count on a severity dot equals the rows
 
 ### Fixed
 
-- **Level dot counts now equal the rows shown when you focus that level.** The badge total was computed from a separate raw text classification, while the rows are filtered by each line's effective level. These diverged: Android-native device logcat (`gralloc4`, `Badge`, `MediaCodec`, …) is deliberately shown as informational rather than error, but the badge still counted it as error — so the Error dot read 32 while double-clicking it revealed zero. Counts are now tallied from the same per-row level the filter uses (effective, after device demotion and repeat-collapse), so every badge equals exactly what isolating that level displays. App and Dart errors are unaffected — only Android OS/hardware-layer logcat is treated as informational, and it always was for display.
+- **Level dot counts now equal the rows shown when you focus that level.** The badge total was computed from a separate raw text classification, while the rows are filtered by each line's effective level. These diverged: Android-native device logcat (`gralloc4`, `Badge`, `MediaCodec`, …) is deliberately shown as informational rather than error, but the badge still counted it as error — so the Error dot read 32 while double-clicking it revealed zero. Counts are now tallied from the same per-row level the filter uses (effective, after device demotion and repeat-collapse), so every badge equals exactly what isolating that level displays. App and Dart errors are unaffected — only Android OS/hardware-layer logcat is treated as informational, and it always was for display. (Background: `plans/history/2026.06/2026.06.26/level-badge-count-vs-visible-attempts.md`.)
 
 ## [9.0.8]
 
