@@ -169,6 +169,19 @@ export async function handleSessionAction(
                 await vscode.commands.executeCommand('saropaLogCapture.addGroupToCollection', items[0], items);
             }
             break;
+        // Investigations: add/remove the selected log(s) to a curated, named investigation. Pass the
+        // full selection (primary + array) so the command's target resolver sees the multi-select;
+        // it only mutates workspaceState, so no session-list refresh is needed below.
+        case 'addToInvestigation':
+            if (items.length > 0) {
+                await vscode.commands.executeCommand('saropaLogCapture.addToInvestigation', items[0], items);
+            }
+            break;
+        case 'removeFromInvestigation':
+            if (items.length > 0) {
+                await vscode.commands.executeCommand('saropaLogCapture.removeFromInvestigation', items[0], items);
+            }
+            break;
         // Controller/Peripheral role override. Writes the role to each selected log's sidecar so it
         // survives reloads, then the refresh below re-runs the day grouping with the new roots.
         case 'markAsController':
