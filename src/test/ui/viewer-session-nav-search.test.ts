@@ -111,11 +111,16 @@ suite('Viewer toolbar search', () => {
         );
     });
 
-    test('search match count uses "Showing N of M" format and badge styling', () => {
+    test('search match count reports position plus a hidden-by-filter suffix', () => {
         const searchSrc = readSrc('ui/viewer-search-filter/viewer-search.ts');
         assert.ok(
-            searchSrc.includes("'Showing ' + (currentMatchIdx + 1) + ' of ' + matchIndices.length"),
-            'updateMatchDisplay should emit "Showing N of M" text',
+            searchSrc.includes("vt('viewer.search.matchPosition', currentMatchIdx + 1, matchIndices.length)"),
+            'updateMatchDisplay should emit localized "Match N of M" position text',
+        );
+        assert.ok(
+            searchSrc.includes('countHiddenSearchMatches')
+            && searchSrc.includes("vt('viewer.search.hiddenSuffix'"),
+            'updateMatchDisplay should append a "N hidden by filters" suffix',
         );
         const cssSrc = readSrc('ui/viewer-styles/viewer-styles-search.ts');
         assert.ok(

@@ -254,5 +254,55 @@ mark {
 .search-match {
     background: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 92, 0, 0.1));
 }
+
+/* --- "Hidden by filter" notice (search-reveal) ---
+   A full-width strip under the search row, shown when the current match was
+   force-revealed past an active filter. Uses notification tokens so it reads as
+   an inline advisory, not an error. Hidden until the script unsets [hidden]. */
+.search-hidden-notice {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--vscode-notificationsInfoIcon-foreground, var(--vscode-foreground));
+    background: var(--vscode-editorWidget-background, var(--vscode-input-background));
+    border-top: 1px solid var(--vscode-editorWidget-border, var(--vscode-widget-border, var(--vscode-panel-border)));
+}
+.search-hidden-notice[hidden] { display: none !important; }
+.search-hidden-icon {
+    flex-shrink: 0;
+    font-size: 13px;
+    opacity: 0.85;
+}
+.search-hidden-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+/* Link-style action so it reads as a clickable affordance, not a heavy button. */
+.search-hidden-disable {
+    flex-shrink: 0;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 2px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-family: var(--vscode-font-family);
+    color: var(--vscode-textLink-foreground);
+    cursor: pointer;
+    white-space: nowrap;
+}
+.search-hidden-disable:hover {
+    background: var(--vscode-toolbar-hoverBackground);
+    color: var(--vscode-textLink-activeForeground, var(--vscode-textLink-foreground));
+}
+.search-hidden-disable:focus-visible {
+    outline: 1px solid var(--vscode-focusBorder);
+    outline-offset: 1px;
+}
 ` + getSearchHistoryStyles();
 }
