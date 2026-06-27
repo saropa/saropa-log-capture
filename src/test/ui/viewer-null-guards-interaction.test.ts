@@ -155,9 +155,12 @@ suite('Webview script null guards – interaction', () => {
         });
 
         test('should guard matchCountEl in clearSearchState', () => {
+            // 400-char window: the search-reveal feature added two leading
+            // typeof-guards (clearSearchReveals / hideSearchHiddenNotice) that
+            // pushed the matchCountEl guard past the original 200-char slice.
             const block = script.slice(
                 script.indexOf('function clearSearchState'),
-                script.indexOf('function clearSearchState') + 200,
+                script.indexOf('function clearSearchState') + 400,
             );
             assert.ok(
                 block.includes("if (matchCountEl) matchCountEl.textContent"),
