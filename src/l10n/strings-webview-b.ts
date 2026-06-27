@@ -127,6 +127,27 @@ export const stringsWebviewB: Record<string, string> = {
     'viewer.sqlPatterns.accordionTypes.one': '{0} type',
     'viewer.sqlPatterns.accordionTypes.many': '{0} types',
 
+    // In-log search — match count + "hidden by filter" reveal notice
+    // (viewer-search.ts / viewer-search-reveal.ts).
+    'viewer.search.noMatches': 'No matches',
+    'viewer.search.matchPosition': 'Match {0} of {1}',
+    'viewer.search.hiddenSuffix': ' · {0} hidden by filters',
+    'viewer.search.hiddenNotice': 'This match was hidden by the {0} filter.',
+    'viewer.search.hiddenNotice.disable': 'Disable {0} filter',
+    'viewer.search.filterName.level': 'Level',
+    'viewer.search.filterName.tier': 'Log Sources',
+    'viewer.search.filterName.exclusions': 'Exclusions',
+    'viewer.search.filterName.sourceTag': 'Log Tags',
+    'viewer.search.filterName.classTag': 'Source Classes',
+    'viewer.search.filterName.sqlPattern': 'SQL Commands',
+    'viewer.search.filterName.scope': 'File Scope',
+    'viewer.search.filterName.metadata': 'Metadata',
+    'viewer.search.filterName.timeRange': 'Time Range',
+    'viewer.search.filterName.category': 'Categories',
+    'viewer.search.filterName.errorSuppression': 'Suppressed Errors',
+    'viewer.search.filterName.hidden': 'Hidden Lines',
+    'viewer.search.filterName.autoHide': 'Auto-Hide',
+
     // Exclusions chip (viewer-exclusions.ts).
     'viewer.exclusions.hiddenCount': '({0} hidden)',
     'viewer.exclusions.labelWithCount': 'Exclusions ({0})',
