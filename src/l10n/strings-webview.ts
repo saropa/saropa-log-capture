@@ -223,14 +223,14 @@ export const stringsWebview: Record<string, string> = {
     'viewer.toolbar.staleness.newer': '{0} newer',
     // File-action labels the banner shows via vt(). Mirrors the host-side viewer.logFile.* values
     // used by the log-file modal so the inline banner and the modal read identically.
-    'viewer.logFile.openEditor': 'Open in editor',
+    'viewer.logFile.openEditor': 'Open in Editor',
     'viewer.logFile.openBeside': 'Open beside',
     'viewer.logFile.openFolder': 'Open containing folder',
     'viewer.logFile.revealInExplorer': 'Reveal in Explorer view',
     'viewer.logFile.openInTerminal': 'Open folder in terminal',
     'viewer.logFile.copyFilename': 'Copy filename',
     'viewer.logFile.copyRelativePath': 'Copy relative path',
-    'viewer.logFile.copyFullPath': 'Copy full path',
+    'viewer.logFile.copyFullPath': 'Copy Full Path',
 
     // Replay — runtime strings (viewer-replay.ts client script).
     'viewer.replay.qualityDisabled': 'Enable the codeQuality integration to generate quality reports.',
