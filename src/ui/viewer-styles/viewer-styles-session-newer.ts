@@ -100,6 +100,18 @@ export function getSessionNewerStyles(): string {
     border-color: var(--vscode-button-background);
 }
 
+/* The viewer's CLICK-mode banner overlays its kebab menu DOWN over the log content. None of
+   #log-content-wrapper / .log-content-clip / #log-content set a z-index, so they create no
+   stacking context and the content's own positioned bits (severity bars z-index 1-3, the floating
+   copy icon z-index 10) bubble up to compete in #log-area-with-footer. The banner sat at z-index
+   auto, so its kebab (a child at z-index 5) painted UNDER those bars. Promote the whole banner so
+   it — and its absolutely-positioned overflow menu — paint above the content. Stays below the
+   toolbar (50) and its dropdowns (100) and all modal overlays (200+). Scoped to .viewer-newer-banner
+   so the session panel's sticky newer banner is untouched. */
+.viewer-newer-banner {
+    z-index: 20;
+}
+
 /* --- Unified banner: kebab overflow + close (plan 109) --- */
 /* The ⋮ and × are icon-only square buttons; the codicon centers via line-height. */
 .session-newer-banner-action.log-banner-kebab-btn,
