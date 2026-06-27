@@ -26,6 +26,19 @@ cspell:disable
 
 ---
 
+## [9.0.10]
+
+Search now always shows what it finds. If a match is tucked inside a collapsed group or hidden by a filter, the viewer reveals it instead of scrolling to an empty spot — and tells you which filter was hiding it, with a one-click way to turn that filter off. The match counter also reports how many results are hidden. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.10/CHANGELOG.md)
+
+### Fixed
+
+- **Search no longer scrolls to an invisible match.** Searching for text that lived inside a collapsed continuation/stack/banner/ASCII-art group, or on a line hidden by a filter (level, Log Sources tier, exclusions, source/class/SQL tags, file scope, metadata, time range, manual hide), showed "Showing 1 of 1" but nothing on screen. Navigating to a match now expands any collapsed group automatically and force-shows the matched line past the filter so it is always visible.
+
+### Added
+
+- **"Hidden by filter" search notice.** When the current match was only visible because search revealed it past an active filter, an inline notice names the responsible filter (e.g. "This match was hidden by the Level filter.") with a one-click **Disable** action to turn that filter off for full context.
+- **Richer search match counter.** The badge now reads "Match N of M" and appends "· K hidden by filters" when some results sit outside the visible set, so you know matches exist beyond what is shown.
+
 ## [9.0.9]
 
 Level badges now match what you see: the count on a severity dot equals the rows that appear when you focus it. Earlier, device noise (Android `E/` logcat) inflated the Error count, so the badge could say 32 while focusing Error showed none. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.9/CHANGELOG.md)
