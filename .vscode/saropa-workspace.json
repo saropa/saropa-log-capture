@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "pins": [
     {
       "id": "mqtppmvg-jfrwylkq",
@@ -23,14 +23,17 @@
       "id": "mqttae70-pfo6ikb2",
       "path": "scripts/publish.py",
       "scope": "project",
-      "order": 3,
+      "order": 0,
       "exec": {
         "command": "",
         "includeFilePath": true
-      }
+      },
+      "groupId": "default:deploy"
     }
   ],
   "groups": [],
+  "activeSet": "Default",
+  "sets": [],
   "removedAutoPins": [
     "auto:saropa-log-capture:.vscode/saropa-workspace.json"
   ],
