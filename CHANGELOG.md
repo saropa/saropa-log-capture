@@ -32,12 +32,18 @@ Search now always shows what it finds. If a match is tucked inside a collapsed g
 
 ### Fixed
 
+- **Log banner "Open in Editor" now works.** Clicking **Open in Editor** (or any file action) in the click-opened log banner did nothing when the log was viewed in a popped-out panel: the banner posted a bare message that the host resolved against the panel's own current-file URI, which is only set for the live tail session — not for an opened report. The banner now sends the URI it is actually displaying, so every action targets the open file regardless of where it is shown.
+- **Log banner kebab menu no longer hides behind the log.** The overflow (⋮) menu painted under the colored severity bars and log text because the banner had no stacking promotion above the content. The banner is now raised above the log content (still below the toolbar and dialogs) so the menu is fully visible.
 - **Search no longer scrolls to an invisible match.** Searching for text that lived inside a collapsed continuation/stack/banner/ASCII-art group, or on a line hidden by a filter (level, Log Sources tier, exclusions, source/class/SQL tags, file scope, metadata, time range, manual hide), showed "Showing 1 of 1" but nothing on screen. Navigating to a match now expands any collapsed group automatically and force-shows the matched line past the filter so it is always visible.
 
 ### Added
 
 - **"Hidden by filter" search notice.** When the current match was only visible because search revealed it past an active filter, an inline notice names the responsible filter (e.g. "This match was hidden by the Level filter.") with a one-click **Disable** action to turn that filter off for full context.
 - **Richer search match counter.** The badge now reads "Match N of M" and appends "· K hidden by filters" when some results sit outside the visible set, so you know matches exist beyond what is shown.
+
+### Changed
+
+- **Log banner buttons use title case** — "Open in Editor" and "Copy Full Path".
 
 ## [9.0.9]
 
