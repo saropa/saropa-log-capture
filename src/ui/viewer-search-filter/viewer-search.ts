@@ -1,4 +1,5 @@
 import { getSearchPopoversScript } from './viewer-search-popovers';
+import { getSearchRevealScript } from './viewer-search-reveal';
 /**
  * In-log search — webview script (injected string) for the Saropa Log Capture viewer.
  *
@@ -22,7 +23,7 @@ import { getSearchPopoversScript } from './viewer-search-popovers';
 
 /** Returns the JavaScript for search (highlight, filter, F3 navigation). */
 export function getSearchScript(): string {
-    return getSearchPopoversScript() + /* javascript */ `
+    return getSearchPopoversScript() + getSearchRevealScript() + /* javascript */ `
 var sessionNavSearchOuter = document.getElementById('search-flyout');
 var searchInputEl = document.getElementById('search-input');
 var matchCountEl = document.getElementById('match-count');
@@ -72,6 +73,8 @@ function closeSearch() {
     if (typeof renderSearchHistory === 'function') renderSearchHistory();
     if (typeof clearActivePanel === 'function') clearActivePanel('search');
     searchRegex = null;
+    if (typeof clearSearchReveals === 'function') clearSearchReveals();
+    if (typeof hideSearchHiddenNotice === 'function') hideSearchHiddenNotice();
     clearSearchFilteredFlags();
     renderViewport(true); // clears match highlighting (and covers non-filter case)
     syncSearchMatchOptionsVisibility();
@@ -82,6 +85,8 @@ function toggleSearchPanel() {
 }
 
 function clearSearchState() {
+    if (typeof clearSearchReveals === 'function') clearSearchReveals();
+    if (typeof hideSearchHiddenNotice === 'function') hideSearchHiddenNotice();
     searchRegex = null;
     matchIndices = [];
     currentMatchIdx = -1;
@@ -106,6 +111,10 @@ function updateSearch() {
             renderViewport(true);
             return;
         }
+        /* Drop reveals from the previous query before recomputing matches so a
+           stale force-shown row neither lingers nor skews the hidden-match count. */
+        if (typeof clearSearchReveals === 'function') clearSearchReveals();
+        if (typeof hideSearchHiddenNotice === 'function') hideSearchHiddenNotice();
         try {
             var pattern = searchRegexMode ? query : escapeForRegex(query);
             if (searchWholeWord && !searchRegexMode) {
@@ -189,11 +198,15 @@ function clearSearchFilteredFlags() {
 
 function updateMatchDisplay() {
     if (matchIndices.length === 0) {
-        if (matchCountEl) matchCountEl.textContent = (searchInputEl && searchInputEl.value) ? 'No matches' : '';
+        if (matchCountEl) matchCountEl.textContent = (searchInputEl && searchInputEl.value) ? vt('viewer.search.noMatches') : '';
     } else {
-        /* "Showing X of N" reads as a result count badge (matches sibling panel filters
-           and the screenshot pattern); previous "X/Y" looked like a fraction in body text. */
-        if (matchCountEl) matchCountEl.textContent = 'Showing ' + (currentMatchIdx + 1) + ' of ' + matchIndices.length;
+        /* Position + total ("Match 3 of 12"), plus a "N hidden by filters" suffix
+           so the user knows when matches exist outside the visible set (previously
+           "Showing X of N" gave no hint that some results were filtered away). */
+        var hiddenN = (typeof countHiddenSearchMatches === 'function') ? countHiddenSearchMatches() : 0;
+        var txt = vt('viewer.search.matchPosition', currentMatchIdx + 1, matchIndices.length);
+        if (hiddenN > 0) txt += vt('viewer.search.hiddenSuffix', hiddenN);
+        if (matchCountEl) matchCountEl.textContent = txt;
     }
     var sp = document.getElementById('search-prev');
     var sn = document.getElementById('search-next');
@@ -224,7 +237,9 @@ function searchPrev() {
 function scrollToMatch() {
     if (currentMatchIdx < 0 || window.isContextMenuOpen) return;
     var idx = matchIndices[currentMatchIdx];
-    if (typeof expandContinuationForSearch === 'function') expandContinuationForSearch(idx);
+    /* Reveal before measuring: expand collapsed groups + force-show a
+       filter-hidden match, else we scroll to a zero-height row. */
+    if (typeof revealMatchForSearch === 'function') revealMatchForSearch(idx);
     var cumH = (typeof prefixSums !== 'undefined' && prefixSums && idx < prefixSums.length)
         ? prefixSums[idx] : 0;
     if (!cumH) { for (var i = 0; i < idx; i++) cumH += allLines[i].height; }

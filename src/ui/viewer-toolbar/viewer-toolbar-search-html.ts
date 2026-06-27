@@ -8,7 +8,8 @@
  * Preserved IDs: `#search-input`, `#search-clear-btn`, `#search-case-toggle`,
  * `#search-word-toggle`, `#search-regex-toggle`, `#match-count`, `#search-prev`,
  * `#search-next`, `#search-funnel-btn`, `#search-mode-toggle`,
- * `#search-options-popover`, `#search-history`.
+ * `#search-options-popover`, `#search-history`, `#search-hidden-notice`
+ * (with `#search-hidden-label` / `#search-hidden-disable`).
  *
  * User-facing strings resolve through t() (host-built HTML) — see strings-viewer.ts.
  */
@@ -43,6 +44,11 @@ export function getSearchFlyoutHtml(): string {
                 </button>
             </div>
         </div>
+    </div>
+    <div id="search-hidden-notice" class="search-hidden-notice" role="status" aria-live="polite" hidden>
+        <span class="codicon codicon-eye-closed search-hidden-icon"></span>
+        <span id="search-hidden-label" class="search-hidden-label"></span>
+        <button type="button" id="search-hidden-disable" class="search-hidden-disable"></button>
     </div>
     <div id="search-options-popover" class="search-flyout-options" role="dialog" aria-label="${t('viewer.search.modePopover.label')}" hidden>
         <div class="search-options-popover-inner">
