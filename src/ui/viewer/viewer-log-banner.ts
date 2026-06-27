@@ -182,7 +182,18 @@ export function getLogBannerScript(): string {
         if (show) { menu.removeAttribute('hidden'); } else { menu.setAttribute('hidden', ''); }
     }
 
-    function postCurrentFileAction(type) { vscodeApi.postMessage({ type: type }); }
+    /* Act on the URI the banner is DISPLAYING (ctx.currentUri, from logContextInfo), not the
+       receiving target's host-side currentFileUri. They diverge: opening a report sets the
+       provider's currentFileUri directly (log-viewer-provider.loadFromFile) but never broadcasts
+       it, and broadcaster.setCurrentFile only fires for the live tail session — so in the pop-out
+       target currentFileUri is unset/stale and a bare message silently no-op'd ("Open in editor
+       did nothing"). The host handler prefers uriString over currentFileUri (plan 109), so passing
+       the displayed URI makes every file action target the file the user is looking at. */
+    function postCurrentFileAction(type) {
+        var msg = { type: type };
+        if (ctx.currentUri) { msg.uriString = ctx.currentUri; }
+        vscodeApi.postMessage(msg);
+    }
 
     function handleAction(action, el) {
         if (action === 'dismiss') { dismiss(); return; }

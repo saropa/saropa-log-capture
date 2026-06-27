@@ -45,14 +45,14 @@ export const stringsViewerD: Record<string, string> = {
 
     // Log-file modal (viewer-log-file-modal.ts).
     'viewer.logFile.title': 'Log file',
-    'viewer.logFile.openEditor': 'Open in editor',
+    'viewer.logFile.openEditor': 'Open in Editor',
     'viewer.logFile.openBeside': 'Open beside',
     'viewer.logFile.openFolder': 'Open containing folder',
     'viewer.logFile.revealInExplorer': 'Reveal in Explorer view',
     'viewer.logFile.openInTerminal': 'Open folder in terminal',
     'viewer.logFile.copyFilename': 'Copy filename',
     'viewer.logFile.copyRelativePath': 'Copy relative path',
-    'viewer.logFile.copyFullPath': 'Copy full path',
+    'viewer.logFile.copyFullPath': 'Copy Full Path',
 
     // Files dialog (viewer-files-list-modal.ts) — cumulative cross-session feed (plan 057).
     'viewer.files.title': 'Files in this view',
