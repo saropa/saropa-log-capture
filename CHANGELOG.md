@@ -26,6 +26,17 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+The live viewer no longer crashes the debugger during very high-volume sessions. Under a sustained firehose (full logcat plus per-query database logs), the viewer's pending-line queue could grow without limit until the editor's extension host ran out of memory and aborted — dropping the debug session every few minutes. The queue is now capped and drains faster under load. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.11/CHANGELOG.md)
+
+### Fixed
+
+- **High-volume sessions no longer crash the extension host (bug 001).** When a debug target streamed lines faster than the viewer could post them to the webview, the `pendingLines` staging queue grew unbounded toward the ~4GB V8 heap limit; the extension host aborted with an out-of-memory illegal-instruction crash (`0xC000001D`) roughly every seven minutes, terminating the active Dart/Flutter debug session each time. The queue is now hard-capped at 20,000 lines: on overflow the oldest un-posted lines are dropped (the full stream is still in the session log file) and a single notice marker records the count, mirroring the existing early-output buffer cap.
+- **Batch flush now back-pressures correctly.** When the queue was backlogged, the flush interval previously *lengthened* (200ms → 500ms), halving drain throughput exactly when the queue was growing — accelerating the runaway. The interval now *shortens* under backlog (200ms → 50ms) so the consumer speeds up; per-flush payload size stays bounded.
+
+---
+
 ## [9.0.10]
 
 Search now always shows what it finds. If a match is tucked inside a collapsed group or hidden by a filter, the viewer reveals it instead of scrolling to an empty spot — and tells you which filter was hiding it, with a one-click way to turn that filter off. The match counter also reports how many results are hidden. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.10/CHANGELOG.md)
