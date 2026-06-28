@@ -26,7 +26,7 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.0.11]
 
 The live viewer no longer crashes the debugger during very high-volume sessions. Under a sustained firehose (full logcat plus per-query database logs), the viewer's pending-line queue could grow without limit until the editor's extension host ran out of memory and aborted — dropping the debug session every few minutes. The queue is now capped and drains faster under load. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.11/CHANGELOG.md)
 
