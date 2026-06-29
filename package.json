@@ -3143,7 +3143,7 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
-    "@types/node": "25.x",
+    "@types/node": "26.x",
     "@types/vscode": "^1.105.0",
     "@types/ws": "^8.18.1",
     "@vscode/codicons": "^0.0.45",
