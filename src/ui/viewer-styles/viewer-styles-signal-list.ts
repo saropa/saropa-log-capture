@@ -15,9 +15,12 @@ export function getSignalListStyles(): string {
 /* Signal trend rows — clickable to open the most recent matching session */
 .signal-signal-trend-row { cursor: pointer; border-radius: var(--radius-sm); }
 .signal-signal-trend-row:hover { background: var(--vscode-list-hoverBackground); }
-/* Severity indicators: critical gets a red left border, high gets orange */
-.signal-sev-critical { border-left: 3px solid var(--vscode-errorForeground, var(--accent-critical)); }
-.signal-sev-high { border-left: 3px solid var(--vscode-editorWarning-foreground, var(--accent-high)); }
+/* Severity indicators: critical gets a red accent, high gets orange. Painted as an INSET shadow
+   inside the row's left padding (not a border) so the accent takes zero layout width — a critical
+   row and a plain row keep their label text at the exact same x. A real border-left widened only the
+   severity rows and jogged their text right, which read as the "inconsistent indenting" the panel had. */
+.signal-sev-critical { box-shadow: inset 3px 0 0 0 var(--vscode-errorForeground, var(--accent-critical)); }
+.signal-sev-high { box-shadow: inset 3px 0 0 0 var(--vscode-editorWarning-foreground, var(--accent-high)); }
 /* Recurring badge — small ↻ marker next to the icon */
 .signal-recurring-badge { font-size: 10px; opacity: 0.7; margin: 0 1px; }
 /* Trend arrows — ↑ increasing (red), ↓ decreasing (green), — stable (muted) */
@@ -151,6 +154,98 @@ export function getSignalListStyles(): string {
 }
 .signal-suggestion-reject:hover {
     background: var(--vscode-list-hoverBackground, color-mix(in srgb, var(--text) 4%, transparent));
+}
+
+/* ============================================================================
+   Row formatting: one shared indent rail, real-width ellipsis, click affordance.
+   ============================================================================ */
+
+/* Single left rail. Every signal row, narrative subtitle, and empty state starts its emoji/icon at
+   the same x (var(--space-2)); the severity accent is drawn INSIDE this padding as an inset shadow
+   (see .signal-sev-*) so nothing shifts. .signal-margin-emoji is a fixed-width cell so the label text
+   after the emoji also aligns column-to-column instead of drifting with each emoji's glyph width. */
+.signal-trend-row,
+.signal-in-log-row {
+    padding-left: var(--space-2);
+    padding-right: var(--space-1);
+    border-radius: var(--radius-sm);
+}
+.signal-narrative-subtitle,
+.signal-hotfiles-empty {
+    padding-left: var(--space-2);
+}
+.signal-margin-emoji {
+    display: inline-block;
+    width: 1.3em;
+    margin-right: 4px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* Real-width truncation: the label cell truncates with an ellipsis at the actual column edge rather
+   than at a fixed character count. The row scripts used to slice labels at 50–60 chars, which cut
+   text off well before the panel's real width (and left "..." mid-column on a wide panel). min-width:0
+   (set in viewer-styles-signal-sections.ts) lets the flex item shrink so the ellipsis can trigger. */
+.signal-trend-row > span:first-child,
+.signal-in-log-row > span:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Click affordance: a trailing chevron marks a row as openable. Trend rows always open a session;
+   in-log rows open only when jumpable (a log line to scroll to) or a detail-toggle (inline detail).
+   Rows with neither get NO chevron and keep the default cursor, so "which rows do something" reads
+   at a glance instead of by trial-and-error clicking. The chevron rests dim and brightens on hover. */
+.signal-trend-row::after,
+.signal-in-log-row.signal-jumpable::after,
+.signal-in-log-row.signal-detail-toggle::after {
+    content: "\\203A";
+    flex: 0 0 auto;
+    align-self: center;
+    margin-left: var(--space-1);
+    font-size: 13px;
+    line-height: 1;
+    opacity: 0.3;
+    color: var(--vscode-descriptionForeground);
+    transition: opacity 0.12s ease, transform 0.12s ease;
+}
+.signal-trend-row:hover::after,
+.signal-in-log-row.signal-jumpable:hover::after,
+.signal-in-log-row.signal-detail-toggle:hover::after { opacity: 0.85; }
+/* Detail-toggle rows rotate the chevron down while their inline detail is open. */
+.signal-in-log-row.signal-detail-toggle.signal-detail-open::after { transform: rotate(90deg); opacity: 0.85; }
+
+/* Slow-open feedback. Opening a cross-session signal loads that session's log file on the host, which
+   can take a moment; without a cue the click looks dead. The clicked row shimmers and a slim
+   indeterminate bar shows under the panel header until the host posts scrollToSignal (or a safety
+   timeout clears it). No new async surface — just an acknowledgement that the click registered. */
+@keyframes signalRowShimmer {
+    0%   { background-position: -180px 0; }
+    100% { background-position: calc(180px + 100%) 0; }
+}
+.signal-row-loading {
+    background-image: linear-gradient(90deg, transparent 0%, var(--vscode-list-hoverBackground, color-mix(in srgb, var(--text) 8%, transparent)) 50%, transparent 100%);
+    background-size: 180px 100%;
+    background-repeat: no-repeat;
+    animation: signalRowShimmer 1.1s linear infinite;
+}
+.signal-loading-bar {
+    height: 2px;
+    flex-shrink: 0;
+    overflow: hidden;
+    background: transparent;
+}
+.signal-loading-bar > span {
+    display: block;
+    height: 100%;
+    width: 40%;
+    background: var(--vscode-progressBar-background, var(--vscode-textLink-foreground, var(--link)));
+    animation: signalLoadingSlide 1.1s ease-in-out infinite;
+}
+@keyframes signalLoadingSlide {
+    0%   { margin-left: -40%; }
+    100% { margin-left: 100%; }
 }
 `;
 }
