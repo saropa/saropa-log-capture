@@ -431,6 +431,8 @@
   "config.staticSqlFromFingerprint.enabled.title": "Suggest static Dart/Drift sources from SQL fingerprints",
   "config.stderrTreatAsError.markdownDescription": "When enabled, every line with DAP output category **stderr** is treated as an error (red styling). When disabled (default), stderr lines use the same text-based rules as stdout (logcat prefix, Drift SQL traces, keywords). Many Flutter/Dart tools send informational output on stderr; leave this off unless you rely on stream-as-error semantics.",
   "config.stderrTreatAsError.title": "Treat stderr DAP category as error",
+  "config.showErrorSnackbars.markdownDescription": "When enabled, each newly detected error in the captured log shows a notification with **Open Log** (jump to the error line) and **Error Report** actions. Errors are grouped by signature and rate-limited so bursts do not flood notifications. Off by default.",
+  "config.showErrorSnackbars.title": "Show a notification when an error is detected",
   "config.suppressTransientErrors.description": "예상되는 일시적 오류(TimeoutException, SocketException, ECONNREFUSED 등)를 숨깁니다. 필요한 경우 필터링된 줄을 확장할 수 있습니다.",
   "config.suppressTransientErrors.title": "Hide expected transient errors (TimeoutException, SocketException, EC…",
   "config.tailPatterns.description": "테일 모드용 글로브 패턴. 일치하는 파일은 '테일 파일 열기'로 열 수 있으며, 파일이 커지면 뷰어에 새 줄이 추가됩니다(예: **/*.log).",

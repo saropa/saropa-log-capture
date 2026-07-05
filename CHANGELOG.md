@@ -26,6 +26,16 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+The viewer can now follow the newest run for you. Turn on **Always Switch to Latest Log** and the viewer jumps to each new log the moment it arrives — no more clicking Open on the newer-log banner. It stays off by default so a fresh log never yanks the view away while you are reading an older one.
+
+### Added
+
+- **"Always Switch to Latest Log" setting (`saropaLogCapture.autoSwitchToLatest`).** When enabled, the viewer automatically loads the newest controller log as soon as it appears, instead of only surfacing the sticky newer-log banner and waiting for a click. Off by default; joins the existing newer-log banner/dot settings. Switching happens without stealing editor focus, and only when the newest log differs from the one already open (so it never reloads in a loop).
+
+---
+
 ## [9.0.11]
 
 The live viewer no longer crashes the debugger during very high-volume sessions. Under a sustained firehose (full logcat plus per-query database logs), the viewer's pending-line queue could grow without limit until the editor's extension host ran out of memory and aborted — dropping the debug session every few minutes. The queue is now capped and drains faster under load. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.11/CHANGELOG.md)
