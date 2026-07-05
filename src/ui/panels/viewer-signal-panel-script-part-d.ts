@@ -112,6 +112,9 @@ export function getSignalScriptPartD(): string {
             var row = e.target.closest('.signal-trend-row');
             if (!row || !row.dataset.signalType) { return; }
             e.stopPropagation();
+            /* Acknowledge the click immediately — resolving + loading the session on the host is the
+               slow step, and the host echoes scrollToSignal when done (which clears this). */
+            if (typeof signalSetOpening === 'function') { signalSetOpening(row); }
             vscodeApi.postMessage({
                 type: 'openSessionForSignalType',
                 signalType: row.dataset.signalType,
