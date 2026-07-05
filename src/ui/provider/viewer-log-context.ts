@@ -138,3 +138,19 @@ export function computeLogContextInfo(params: LogContextParams): LogContextInfo 
         latestMtime: latest?.mtime ?? 0,
     };
 }
+
+/**
+ * Decide whether the viewer should auto-switch to the newest controller log, given the just-computed
+ * log context and the user's `autoSwitchToLatest` setting. Pure so the decision is unit-testable
+ * without the Extension Host (mirrors the extracted `shouldAutoLoad` predicate).
+ *
+ * Returns true only when the setting is on, a newer controller log exists (`stale`), that log has a
+ * URI, and it differs from the open one. `stale` is the load-bearing anti-loop guard: it is
+ * mtime-based, so once the viewer loads `latestUri` that log becomes the newest controller,
+ * `newerCount` drops to 0, `stale` clears, and this returns false on the next tree refresh — no
+ * reload loop. When nothing is open (`currentUri` empty) `newerCount` is 0 → `stale` false, so this
+ * never fires against an empty viewer and never fights the first-visit autoLoadLatest path.
+ */
+export function shouldAutoSwitchToLatest(info: LogContextInfo, autoSwitchEnabled: boolean): boolean {
+    return autoSwitchEnabled && info.stale && info.latestUri !== "" && info.latestUri !== info.currentUri;
+}
