@@ -42,21 +42,30 @@ function classifyTone(improving: number, worsening: number): PulseTone {
 }
 
 /**
- * Build the pulse, or undefined when there is nothing to report — no improving/worsening/stable
- * signals and no velocity. Returning undefined keeps the strip absent rather than showing an empty
- * "0 / 0 / 0" row (the Signals surface stays passive until it has something to say).
+ * Build the pulse, or undefined when there is nothing to report. Two "nothing to say" cases both
+ * return undefined so the strip stays absent (the Signals surface is passive until it has content):
+ *   1. No improving/worsening/stable signals AND no fix-rate at all.
+ *   2. No improving/worsening/stable signals AND a fix-rate of 0% — a "Fixed 0%" with zero tracked
+ *      issues is vacuous (there is nothing that COULD have been fixed), and rendered as an all-zero
+ *      "▲ 0 · ▼ 0 · ● 0 · Fixed 0%" strip it just reads as noise. A positive fix-rate still shows
+ *      (velocity alone is meaningful), and a 0% fix-rate still shows when there ARE stable issues to
+ *      fix (that "Fixed 0% of N" is a real, actionable signal).
  */
 export function computeWorkspacePulse(input: WorkspacePulseInput): WorkspacePulse | undefined {
     const improving = Math.max(0, input.resolvedErrorCount);
     const worsening = Math.max(0, input.newErrorCount);
     const stable = Math.max(0, input.recurringCount);
-    const hasVelocity = typeof input.velocityPct === 'number';
-    if (improving === 0 && worsening === 0 && stable === 0 && !hasVelocity) { return undefined; }
+    const hasCounts = improving > 0 || worsening > 0 || stable > 0;
+    const hasVelocityNumber = typeof input.velocityPct === 'number';
+    // A fix-rate is worth showing only when it is positive, or when there are tracked issues it
+    // measures against — a bare 0% with no baseline carries no information.
+    const velocityIsMeaningful = hasVelocityNumber && (hasCounts || (input.velocityPct as number) > 0);
+    if (!hasCounts && !velocityIsMeaningful) { return undefined; }
     return {
         improving,
         worsening,
         stable,
-        velocityPct: hasVelocity ? input.velocityPct : undefined,
+        velocityPct: velocityIsMeaningful ? input.velocityPct : undefined,
         tone: classifyTone(improving, worsening),
     };
 }

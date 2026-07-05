@@ -302,8 +302,8 @@ export interface ReportsClassifierConfig {
  * `bannerEnabled` toggles the sticky top banner; `dotEnabled` toggles the per-row blue dot.
  * Both default true; users can disable either independently if they find the cue intrusive.
  * `autoSwitch` upgrades the passive alert to an active behavior: when true the viewer loads the
- * newest controller log automatically instead of surfacing the banner. Defaults false so a new log
- * never steals the view from someone reading an older one unless they opt in.
+ * newest controller log automatically instead of surfacing the banner. Defaults true so the viewer
+ * follows the most recent run out of the box; users who prefer the passive banner turn it off.
  */
 export interface NewerLogAlertConfig {
   readonly bannerEnabled: boolean;

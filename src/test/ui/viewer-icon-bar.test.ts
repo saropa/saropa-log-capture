@@ -98,4 +98,46 @@ suite('ViewerIconBar', () => {
             );
         });
     });
+
+    // Unread-delta badges: each badge counts items arrived since the panel was last
+    // opened (not the absolute total) and clears on open. Logic lives in the
+    // viewer-icon-bar-badges module, concatenated into getIconBarScript().
+    suite('unread-delta badges', () => {
+        test('should render unread = total minus persisted baseline, not the raw total', () => {
+            const script = getIconBarScript();
+            assert.ok(script.includes('updateIconBadge'), 'defines the badge setter');
+            assert.ok(
+                script.includes('Math.max(0, count - seen[badgeId])'),
+                'badge value is the delta above the read baseline, clamped at zero',
+            );
+        });
+
+        test('should persist the baseline in webview state so unread survives a reload', () => {
+            const script = getIconBarScript();
+            assert.ok(script.includes('iconBadgeBaseline'), 'baseline is stored under a stable state key');
+            assert.ok(script.includes('getState'));
+            assert.ok(script.includes('setState'));
+        });
+
+        test('should acknowledge (reset) a badge when its panel opens', () => {
+            const script = getIconBarScript();
+            assert.ok(script.includes('acknowledgeIconBadge'), 'defines the acknowledge entry point');
+            assert.ok(
+                script.includes('window.acknowledgeIconBadge(name)'),
+                'setActivePanel acknowledges the opened panel',
+            );
+        });
+
+        test('should not clobber a persisted baseline before the panel re-reports post-reload', () => {
+            const script = getIconBarScript();
+            // Guards the acknowledge-writes-0 regression: skip rebaseline until the
+            // panel has reported a total this session.
+            assert.ok(script.includes('badgeTotals[badgeId] === undefined'));
+        });
+
+        test('should suppress the badge while its own panel is the active one', () => {
+            const script = getIconBarScript();
+            assert.ok(script.includes('window.__activeIconPanel'), 'reads the active panel to suppress in-view lighting');
+        });
+    });
 });

@@ -32,6 +32,9 @@ export function getSignalPanelHtml(): string {
             <button id="signal-panel-close" class="signal-panel-close" title="${t('signal.panel.close')}" aria-label="${t('signal.panel.close')}">&times;</button>
         </div>
     </div>
+    <!-- Indeterminate loading bar: shown while a clicked signal's session loads on the host so the
+         click reads as acknowledged (opening a cross-session signal can be slow). Hidden otherwise. -->
+    <div id="signal-loading-bar" class="signal-loading-bar" style="display:none" aria-hidden="true"><span></span></div>
     <div id="signal-scroll" class="signal-panel-content">
         <!-- Workspace pulse strip (idea #20): improving/worsening/stable + fix velocity at a glance.
              Hidden until the host posts a pulse (passive — nothing to say, nothing shown). -->

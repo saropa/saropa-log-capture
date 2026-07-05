@@ -8,11 +8,13 @@
  * continue importing both from this module.
  */
 
+import { getIconBarBadgeScript } from './viewer-icon-bar-badges';
+
 export { getIconBarHtml } from './viewer-icon-bar-html';
 
-/** Generate the icon bar toggle script. */
+/** Generate the icon bar toggle script (unread-delta badge IIFE first, then interactions). */
 export function getIconBarScript(): string {
-    return /* js */ `
+    return getIconBarBadgeScript() + /* js */ `
 (function() {
     var activePanel = null;
     var panelSlot = document.getElementById('panel-slot');
@@ -22,24 +24,10 @@ export function getIconBarScript(): string {
        this value when a panel opens, silently undoing a user's narrower drag. */
     var MIN_PANEL_WIDTH = 420;
 
-    /**
-     * Update both the overlay badge (icons-only mode) and inline count label
-     * (labels-visible mode) for an icon bar button.
-     * Badge ID convention: ib-{name}-badge, count ID: ib-{name}-count.
-     * Caps display at 99; shows "99+" for counts above 99.
-     */
-    window.updateIconBadge = function(badgeId, countId, count) {
-        var text = count > 99 ? '99+' : String(count);
-        var badge = document.getElementById(badgeId);
-        if (badge) {
-            badge.textContent = text;
-            badge.style.display = count > 0 ? 'inline-block' : 'none';
-        }
-        var countEl = document.getElementById(countId);
-        if (countEl) {
-            countEl.textContent = count > 0 ? ' (' + text + ')' : '';
-        }
-    };
+    /* Unread-delta badge machinery (window.updateIconBadge / window.acknowledgeIconBadge)
+       lives in viewer-icon-bar-badges.ts, concatenated ahead of this script. It reads
+       window.__activeIconPanel (kept current below) to suppress a badge while its panel
+       is open. Kept out of this file only to respect the 300-line limit. */
 
     /** Restore and persist icon bar label visibility (uses same webview state as other viewer UI). */
     var api = typeof vscodeApi !== 'undefined' ? vscodeApi : (window._vscodeApi || null);
@@ -168,14 +156,18 @@ export function getIconBarScript(): string {
         if (name === activePanel) {
             closeAllPanels();
             activePanel = null;
+            window.__activeIconPanel = null;
             updateIconStates();
             updatePanelSlotWidth(null);
             return;
         }
         closeAllPanels();
         activePanel = name;
+        window.__activeIconPanel = name;
         updateIconStates();
         updatePanelSlotWidth(name);
+        /* Opening a panel clears its unread-delta badge (no-op for badge-less panels). */
+        if (typeof window.acknowledgeIconBadge === 'function') { window.acknowledgeIconBadge(name); }
         if (name === 'sessions' && typeof openSessionPanel === 'function') {
             openSessionPanel();
         } else if (name === 'find' && typeof openFindPanel === 'function') {
@@ -226,6 +218,7 @@ export function getIconBarScript(): string {
     window.clearActivePanel = function(name) {
         if (activePanel === name) {
             activePanel = null;
+            window.__activeIconPanel = null;
             updateIconStates();
             updatePanelSlotWidth(null);
         }
