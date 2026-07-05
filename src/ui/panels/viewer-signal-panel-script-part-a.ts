@@ -42,6 +42,33 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
        { id, pattern, description, confidence, impact: { linesAffected, percentageReduction },
          sampleLines: string[] }. */
     var signalSuggestionsCache = [];
+    /* Slow-open feedback timer. Opening a cross-session signal loads that session's log on the host;
+       until the host echoes scrollToSignal we shimmer the clicked row + show the loading bar. The
+       timer is the safety net so an unresolved open (host finds no matching session, posts nothing)
+       cannot leave the shimmer spinning forever. */
+    var signalOpeningTimer = null;
+
+    /* Clear all open-in-progress affordances: hide the loading bar, strip the shimmer class off any
+       row still carrying it, and cancel the safety timer. Called on scrollToSignal / panel refresh. */
+    function signalClearOpening() {
+        var bar = document.getElementById('signal-loading-bar');
+        if (bar) { bar.style.display = 'none'; }
+        if (signalPanel) {
+            var loadingRows = signalPanel.querySelectorAll('.signal-row-loading');
+            for (var i = 0; i < loadingRows.length; i++) { loadingRows[i].classList.remove('signal-row-loading'); }
+        }
+        if (signalOpeningTimer) { clearTimeout(signalOpeningTimer); signalOpeningTimer = null; }
+    }
+
+    /* Mark a signal row as opening: shimmer the row, show the loading bar, and arm the safety clear. */
+    function signalSetOpening(row) {
+        signalClearOpening();
+        var bar = document.getElementById('signal-loading-bar');
+        if (bar) { bar.style.display = ''; }
+        if (row) { row.classList.add('signal-row-loading'); }
+        signalOpeningTimer = setTimeout(signalClearOpening, 6000);
+    }
+    window.signalClearOpening = signalClearOpening;
 
     function getStoredSectionState() {
         try {

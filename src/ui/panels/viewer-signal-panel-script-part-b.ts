@@ -147,7 +147,10 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
         if (emptyEl) emptyEl.style.display = 'none';
         if (listEl) listEl.innerHTML = allSignals.map(function(s) {
             var icon = kindLabels[s.kind] || '\u2139\uFE0F';
-            var text = s.label.length > 60 ? s.label.slice(0, 57) + '...' : s.label;
+            /* Full label \u2014 the row's first span truncates with a CSS ellipsis at the real column
+               width (see viewer-styles-signal-list.ts). No JS char-cap, which cut text short of the
+               panel width and stranded "..." mid-column on a wide panel. */
+            var text = s.label;
             var meta = fillSignalString(SIGNAL_STRINGS.sessionMeta, s.sessionCount, s.totalOccurrences);
             if (s.avgDurationMs) { meta += fillSignalString(SIGNAL_STRINGS.metaAvg, fmtMs(s.avgDurationMs)); }
             if (s.maxDurationMs) { meta += fillSignalString(SIGNAL_STRINGS.metaMax, fmtMs(s.maxDurationMs)); }
@@ -278,7 +281,8 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
         if (!listEl) { return; }
         if (signals.length === 0) { listEl.innerHTML = ''; return; }
         listEl.innerHTML = signals.slice(0, 20).map(function(s) {
-            var icon = kindLabels[s.kind] || '\u2139\uFE0F', text = s.label.length > 50 ? s.label.slice(0, 47) + '...' : s.label;
+            /* Full label; the row's first span ellipsis-truncates at the real column width (CSS). */
+            var icon = kindLabels[s.kind] || '\u2139\uFE0F', text = s.label;
             var meta = s.totalOccurrences + 'x' + (s.avgDurationMs ? ', avg ' + fmtMs(s.avgDurationMs) : '');
             var lineAttr = s.lineIndices && s.lineIndices.length > 0 ? ' data-line="' + s.lineIndices[0] + '"' : '';
             /* A row is jumpable when it points at a log line. Otherwise, if it carries a detail

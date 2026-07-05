@@ -214,6 +214,8 @@ export const stringsA: Record<string, string> = {
 
     'msg.highErrorRate': 'High error rate detected: {0} errors in {1}s',
 
+    'msg.errorSnackbar': 'Error detected: {0}',
+
     'msg.noSessionFiles': 'No log files found.',
     'msg.deletedSessionFiles': 'Deleted {0} log file(s).',
     'prompt.selectSessionsToDelete': 'Select log file(s) to delete',

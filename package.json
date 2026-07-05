@@ -2900,8 +2900,8 @@
           "title": "Logs Panel: Newer-Log Dot"
         },
         "saropaLogCapture.autoSwitchToLatest": {
-          "default": false,
-          "description": "When on, the viewer automatically switches to the newest log the moment it arrives, instead of showing the newer-log banner and waiting for you to click Open. Useful when you always want to follow the most recent run. Off by default so a new log never steals the view while you are reading an older one.",
+          "default": true,
+          "description": "When on (the default), the viewer automatically switches to the newest log the moment it arrives, so you always follow the most recent run. Turn it off to keep the newer-log banner instead — the viewer then stays on the log you are reading until you click Open.",
           "type": "boolean",
           "title": "Logs Panel: Always Switch to Latest Log"
         },

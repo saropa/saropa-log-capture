@@ -42,6 +42,8 @@ import { setupWebviewProviders, registerNoRestoreSerializers } from './activatio
 import { setupLineListeners, setupConfigListener, setupScopeContextListener, setupDiagnosticListener } from './activation-listeners';
 import { DiagnosticCache } from './modules/diagnostics/diagnostic-cache';
 import { autoLoadLatest, showWalkthroughOnFirstInstall } from './extension-activation-helpers';
+import { ErrorSnackbarNotifier } from './modules/features/error-snackbar';
+import { showBugReport } from './ui/panels/bug-report-panel';
 import { maybeNotifyPartialNlsCoverage } from './l10n/nls-coverage-notice';
 import { maybeNotifySilentSiblings } from './modules/diagnostics/suite-silent-notice';
 import { maybeRecommendAdapters } from './modules/integrations/recommend-adapters-notice';
@@ -231,6 +233,21 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         await viewerProvider.loadFromFile(vscode.Uri.parse(fileUri));
         viewerProvider.scrollToLine(lineIndex + 1);
     };
+
+    /* Live error snackbars (opt-in via saropaLogCapture.showErrorSnackbars). The notifier reads
+       the setting fresh per line, so no config-change wiring is needed. Buttons reuse the same
+       load-then-scroll path as bookmarks (Open Log) and the existing bug-report webview (Error
+       Report). Registered as a second line listener so activation-listeners.ts stays untouched. */
+    const errorSnackbar = new ErrorSnackbarNotifier({
+        isEnabled: () => getConfig().showErrorSnackbars,
+        openLogAtLine: async (logFileUri, line) => {
+            await viewerProvider.loadFromFile(vscode.Uri.parse(logFileUri));
+            viewerProvider.scrollToLine(line); // already 1-based
+        },
+        openReport: (text, lineIndex, logFileUri) =>
+            showBugReport(text, lineIndex, vscode.Uri.parse(logFileUri), context),
+    });
+    sessionManager.addLineListener((data) => errorSnackbar.onLine(data));
     const openSessionForReplay = async (uri: vscode.Uri): Promise<void> => {
         await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
         await viewerProvider.loadFromFile(uri, { replay: true });

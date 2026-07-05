@@ -9,14 +9,14 @@
 /** Manifest translation coverage (0-100) keyed by VS Code display-language tag. */
 export const nlsManifestCoverage: Readonly<Record<string, number>> = {
     en: 100,
-    "de": 36,
-    "es": 35,
+    "de": 35,
+    "es": 34,
     "fr": 21,
     "it": 21,
     "ja": 35,
-    "ko": 35,
+    "ko": 34,
     "pt-br": 21,
     "ru": 21,
-    "zh-cn": 35,
+    "zh-cn": 34,
     "zh-tw": 21,
 };

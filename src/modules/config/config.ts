@@ -249,7 +249,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     newerLogAlert: {
       bannerEnabled: ensureBoolean(cfg.get("newerLogBanner"), true),
       dotEnabled: ensureBoolean(cfg.get("newerLogDot"), true),
-      autoSwitch: ensureBoolean(cfg.get("autoSwitchToLatest"), false),
+      autoSwitch: ensureBoolean(cfg.get("autoSwitchToLatest"), true),
     },
   };
 }
