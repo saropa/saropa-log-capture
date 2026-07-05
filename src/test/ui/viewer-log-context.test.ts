@@ -1,6 +1,6 @@
 import * as assert from 'node:assert';
 import * as vscode from 'vscode';
-import { computeLogContextInfo } from '../../ui/provider/viewer-log-context';
+import { computeLogContextInfo, shouldAutoSwitchToLatest } from '../../ui/provider/viewer-log-context';
 import type { SessionMetadata, TreeItem } from '../../ui/session/session-history-grouping';
 
 /**
@@ -80,5 +80,57 @@ suite('computeLogContextInfo', () => {
         const b = compute([noDur], noDur.uri.toString());
         assert.strictEqual(b.startedMs, 0);
         assert.strictEqual(b.durationMs, 0);
+    });
+});
+
+/**
+ * Unit tests for the "always switch to latest" decision predicate. Pure, so no Extension Host state
+ * is needed — this pins the anti-loop and first-visit invariants the feature relies on.
+ */
+suite('shouldAutoSwitchToLatest', () => {
+    const FOLDER = 'MyApp';
+
+    function leaf(name: string, mtime: number, controller: boolean): SessionMetadata {
+        return {
+            uri: vscode.Uri.parse('file:///logs/' + name + '.log'),
+            filename: name + '.log',
+            displayName: controller ? FOLDER : name,
+            size: 1,
+            mtime,
+        } as SessionMetadata;
+    }
+
+    function context(items: TreeItem[], currentUri: string | undefined) {
+        return computeLogContextInfo({ items, currentUri, controllerNames: [], workspaceFolderName: FOLDER, dismissedAt: 0 });
+    }
+
+    test('should switch when enabled and a newer controller log differs from the open one', () => {
+        const open = leaf('run1', 100, true);
+        const newer = leaf('run2', 200, true);
+        assert.strictEqual(shouldAutoSwitchToLatest(context([open, newer], open.uri.toString()), true), true);
+    });
+
+    test('should NOT switch when the setting is off, even though a newer log exists', () => {
+        const open = leaf('run1', 100, true);
+        const newer = leaf('run2', 200, true);
+        assert.strictEqual(shouldAutoSwitchToLatest(context([open, newer], open.uri.toString()), false), false);
+    });
+
+    test('should NOT switch when the open log is already the latest controller (anti-loop)', () => {
+        const older = leaf('run1', 100, true);
+        const newest = leaf('run2', 200, true);
+        assert.strictEqual(shouldAutoSwitchToLatest(context([older, newest], newest.uri.toString()), true), false);
+    });
+
+    test('should NOT switch when nothing is open yet (first-visit path owns the initial load)', () => {
+        const a = leaf('run1', 100, true);
+        const b = leaf('run2', 200, true);
+        assert.strictEqual(shouldAutoSwitchToLatest(context([a, b], undefined), true), false);
+    });
+
+    test('should NOT switch when only a newer PERIPHERAL log exists', () => {
+        const open = leaf('run1', 100, true);
+        const newerPeripheral = leaf('drift', 300, false);
+        assert.strictEqual(shouldAutoSwitchToLatest(context([open, newerPeripheral], open.uri.toString()), true), false);
     });
 });
