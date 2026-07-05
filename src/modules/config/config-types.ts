@@ -177,6 +177,13 @@ export interface SaropaLogCaptureConfig {
    * When false (default), stderr is classified from message text (logcat, Drift SQL, keywords) like other channels.
    */
   readonly stderrTreatAsError: boolean;
+  /**
+   * When true, each newly detected error line during live capture pops a non-modal
+   * notification (snackbar) with "Open Log" / "Error Report" actions. Coalesced by error
+   * fingerprint + cooldown so bursts do not flood the notification corner. Default off —
+   * opt-in, to avoid interrupting users who only want the passive Log Viewer coloring.
+   */
+  readonly showErrorSnackbars: boolean;
   readonly severityKeywords: SeverityKeywords;
   readonly smartBookmarks: SmartBookmarksConfig;
   readonly verboseDap: boolean;
@@ -294,10 +301,14 @@ export interface ReportsClassifierConfig {
  * Newer-log alert — see [plans/history/2026.06/2026.06.02/001_plan-newer-alert-and-reports-grouping.md].
  * `bannerEnabled` toggles the sticky top banner; `dotEnabled` toggles the per-row blue dot.
  * Both default true; users can disable either independently if they find the cue intrusive.
+ * `autoSwitch` upgrades the passive alert to an active behavior: when true the viewer loads the
+ * newest controller log automatically instead of surfacing the banner. Defaults false so a new log
+ * never steals the view from someone reading an older one unless they opt in.
  */
 export interface NewerLogAlertConfig {
   readonly bannerEnabled: boolean;
   readonly dotEnabled: boolean;
+  readonly autoSwitch: boolean;
 }
 
 /**

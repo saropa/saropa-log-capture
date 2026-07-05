@@ -145,13 +145,27 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         broadcaster.sendSessionList(payload, { label: defaultLabel, path: defaultLabel, isDefault: true });
         // Recompute the open log's staleness the instant a new log is written (this refresh is the
         // moment a newer controller log can appear). Reuses the same items/cfg/cursor just gathered.
-        broadcaster.setLogContextInfo(computeLogContextInfo({
+        const logContext = computeLogContextInfo({
             items,
             currentUri: viewerProvider.getCurrentFileUri()?.toString(),
             controllerNames: cfg.reportsClassifier.controllerNames,
             workspaceFolderName: refreshFolderName,
             dismissedAt,
-        }));
+        });
+        broadcaster.setLogContextInfo(logContext);
+        // Opt-in "always switch to latest": upgrade the passive banner to an active switch. This
+        // refresh is the exact moment a newer controller log appears, so load it here instead of
+        // waiting for the user to click the banner's Open. Guard on latestUri !== currentUri so
+        // re-firing on unrelated tree changes (line-count ticks, dot updates) cannot reload the
+        // same log in a loop — after the load, currentUri catches up and stale clears.
+        if (
+            cfg.newerLogAlert.autoSwitch
+            && logContext.stale
+            && logContext.latestUri
+            && logContext.latestUri !== logContext.currentUri
+        ) {
+            void viewerProvider.loadFromFile(vscode.Uri.parse(logContext.latestUri));
+        }
     });
 
     const bookmarkStore = new BookmarkStore(context);
