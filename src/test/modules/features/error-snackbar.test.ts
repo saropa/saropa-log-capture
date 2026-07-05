@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { ErrorSnackbarNotifier, type ErrorSnackbarDeps } from '../../../modules/features/error-snackbar';
+import { ErrorSnackbarNotifier, cleanForDisplay, type ErrorSnackbarDeps } from '../../../modules/features/error-snackbar';
 import type { LineData } from '../../../modules/session/session-event-bus';
 
 /** Build a LineData with sensible defaults; override per test. */
@@ -128,5 +128,52 @@ suite('ErrorSnackbarNotifier', () => {
         await flush();
         assert.strictEqual(opened.length, 0);
         assert.strictEqual(reported.length, 0);
+    });
+
+    test('strips ANSI and collapses newlines in the displayed error text', () => {
+        makeNotifier().onLine(makeLine({ text: '\x1b[31mFatalError:\x1b[0m boom\n   at frame\n   at frame2' }));
+        assert.strictEqual(shown.length, 1);
+        assert.ok(!shown[0].message.includes('\x1b'), 'ANSI escape should be stripped');
+        assert.ok(!shown[0].message.includes('\n'), 'newlines should be collapsed');
+        assert.ok(shown[0].message.includes('FatalError: boom at frame at frame2'));
+    });
+
+    test('evicts the oldest fingerprint past the cap so it can surface again', () => {
+        // Purely-alphabetic tokens: normalizeLine masks 2+ digit numbers, so numeric suffixes would
+        // collapse to one fingerprint. Map each index to letters to keep 500 signatures distinct.
+        const tok = (i: number): string => String(i).replace(/[0-9]/g, (d) => 'abcdefghij'[Number(d)]);
+        const n = makeNotifier();
+        n.onLine(makeLine({ text: 'FatalError: origin-marker' }));
+        assert.strictEqual(shown.length, 1);
+        // Fill the fingerprint set beyond MAX_SEEN (500) with distinct errors, each past the cooldown.
+        for (let i = 0; i < 500; i++) {
+            clock += 5000;
+            n.onLine(makeLine({ text: `FatalError: case-${tok(i)}` }));
+        }
+        // The first error's hash was evicted (set is capped), so re-emitting it shows a second time.
+        clock += 5000;
+        n.onLine(makeLine({ text: 'FatalError: origin-marker' }));
+        const originShows = shown.filter((s) => s.message.includes('origin-marker'));
+        assert.strictEqual(originShows.length, 2);
+    });
+});
+
+suite('cleanForDisplay', () => {
+    test('leaves a short clean line untouched', () => {
+        assert.strictEqual(cleanForDisplay('TypeError: bad arg', 120), 'TypeError: bad arg');
+    });
+
+    test('truncates with an ellipsis at the max length', () => {
+        const out = cleanForDisplay('x'.repeat(200), 120);
+        assert.strictEqual(out.length, 120);
+        assert.ok(out.endsWith('…'));
+    });
+
+    test('strips ANSI color codes', () => {
+        assert.strictEqual(cleanForDisplay('\x1b[31mred\x1b[0m error', 120), 'red error');
+    });
+
+    test('collapses internal newlines and runs of whitespace', () => {
+        assert.strictEqual(cleanForDisplay('a:\n   b\t c', 120), 'a: b c');
     });
 });
