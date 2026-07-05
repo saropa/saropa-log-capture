@@ -26,9 +26,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.1.0]
 
-The viewer now follows the newest run automatically. When a new log arrives, the viewer jumps to it the moment it appears — no more clicking Open on the newer-log banner. Prefer the old behavior? Turn off **Always Switch to Latest Log** and the viewer stays on the log you are reading, surfacing the banner instead.
+The viewer now follows the newest run automatically. When a new log arrives, the viewer jumps to it the moment it appears — no more clicking Open on the newer-log banner. Prefer the old behavior? Turn off **Always Switch to Latest Log** and the viewer stays on the log you are reading, surfacing the banner instead. [log](https://github.com/saropa/saropa-log-capture/blob/v9.1.0/CHANGELOG.md)
 
 ### Added
 

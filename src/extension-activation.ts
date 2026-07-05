@@ -238,13 +238,19 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
        load-then-scroll path as bookmarks (Open Log) and the existing bug-report webview (Error
        Report). Registered as a second line listener so activation-listeners.ts stays untouched. */
     const errorSnackbar = new ErrorSnackbarNotifier({
-        isEnabled: () => getConfig().showErrorSnackbars,
+        /* Read only this one key, not the full getConfig() object. This runs per captured line
+           (even when the feature is off), and getConfig() rebuilds all ~256 settings through their
+           normalizers every call — far too heavy for the live firehose. A single get() is fresh
+           (honors runtime toggles) without the rebuild. */
+        isEnabled: () => vscode.workspace.getConfiguration('saropaLogCapture').get<boolean>('showErrorSnackbars', false),
+        // logFileUri is session.fileUri.fsPath (a filesystem path), NOT a URI string — so it must go
+        // through Uri.file, not Uri.parse (Uri.parse would read the Windows drive letter as a scheme).
         openLogAtLine: async (logFileUri, line) => {
-            await viewerProvider.loadFromFile(vscode.Uri.parse(logFileUri));
+            await viewerProvider.loadFromFile(vscode.Uri.file(logFileUri));
             viewerProvider.scrollToLine(line); // already 1-based
         },
         openReport: (text, lineIndex, logFileUri) =>
-            showBugReport(text, lineIndex, vscode.Uri.parse(logFileUri), context),
+            showBugReport(text, lineIndex, vscode.Uri.file(logFileUri), context),
     });
     sessionManager.addLineListener((data) => errorSnackbar.onLine(data));
     const openSessionForReplay = async (uri: vscode.Uri): Promise<void> => {
