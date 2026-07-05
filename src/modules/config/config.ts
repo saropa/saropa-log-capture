@@ -187,6 +187,7 @@ export function getConfig(): SaropaLogCaptureConfig {
 
     levelDetection: ensureEnum(cfg.get("levelDetection"), ["strict", "loose"], "strict"),
     stderrTreatAsError: ensureBoolean(cfg.get("stderrTreatAsError"), false),
+    showErrorSnackbars: ensureBoolean(cfg.get("showErrorSnackbars"), false),
     severityKeywords: normalizeSeverityKeywords(cfg.get("severityKeywords")),
     smartBookmarks: {
       suggestFirstError: ensureBoolean(cfg.get("smartBookmarks.suggestFirstError"), true),
@@ -248,6 +249,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     newerLogAlert: {
       bannerEnabled: ensureBoolean(cfg.get("newerLogBanner"), true),
       dotEnabled: ensureBoolean(cfg.get("newerLogDot"), true),
+      autoSwitch: ensureBoolean(cfg.get("autoSwitchToLatest"), false),
     },
   };
 }
