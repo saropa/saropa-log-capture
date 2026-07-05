@@ -1629,6 +1629,12 @@
           "type": "boolean",
           "title": "%config.stderrTreatAsError.title%"
         },
+        "saropaLogCapture.showErrorSnackbars": {
+          "default": false,
+          "markdownDescription": "%config.showErrorSnackbars.markdownDescription%",
+          "type": "boolean",
+          "title": "%config.showErrorSnackbars.title%"
+        },
         "saropaLogCapture.severityKeywords": {
           "type": "object",
           "default": {
@@ -2892,6 +2898,12 @@
           "description": "When on, each Logs panel row carries a small blue dot on its icon while the log is newer than the panel's last focus. The dot persists after the banner is dismissed so the user always has a visible cue per row.",
           "type": "boolean",
           "title": "Logs Panel: Newer-Log Dot"
+        },
+        "saropaLogCapture.autoSwitchToLatest": {
+          "default": false,
+          "description": "When on, the viewer automatically switches to the newest log the moment it arrives, instead of showing the newer-log banner and waiting for you to click Open. Useful when you always want to follow the most recent run. Off by default so a new log never steals the view while you are reading an older one.",
+          "type": "boolean",
+          "title": "Logs Panel: Always Switch to Latest Log"
         },
         "saropaLogCapture.verboseDap": {
           "default": false,

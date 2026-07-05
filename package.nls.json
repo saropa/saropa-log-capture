@@ -329,6 +329,8 @@
   "config.levelDetection.title": "How aggressively to classify lines as errors.",
   "config.stderrTreatAsError.markdownDescription": "When enabled, every line with DAP output category **stderr** is treated as an error (red styling). When disabled (default), stderr lines use the same text-based rules as stdout (logcat prefix, Drift SQL traces, keywords). Many Flutter/Dart tools send informational output on stderr; leave this off unless you rely on stream-as-error semantics.",
   "config.stderrTreatAsError.title": "Treat stderr DAP category as error",
+  "config.showErrorSnackbars.markdownDescription": "When enabled, each newly detected error in the captured log shows a notification with **Open Log** (jump to the error line) and **Error Report** actions. Errors are grouped by signature and rate-limited so bursts do not flood notifications. Off by default.",
+  "config.showErrorSnackbars.title": "Show a notification when an error is detected",
   "config.severityKeywords.markdownDescription": "Keywords that trigger each severity level. Each keyword is matched as a case-insensitive whole word (`\\bword\\b`). Structural patterns (logcat prefixes, `Error:`, `[error]`, Dart `_TypeError`) are built-in and cannot be changed here. Edit the arrays below to add, remove, or move keywords between severity levels.",
   "config.severityKeywords.title": "Severity keywords",
   "config.severityKeywords.error.description": "Keywords classified as error (red). Built-in structural patterns like 'Error:' and '[error]' always apply regardless of this list.",
