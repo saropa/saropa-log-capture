@@ -13,6 +13,19 @@ test("velocity alone is enough to show the strip", () => {
   assert.equal(p!.tone, "steady");
 });
 
+test("a bare 0% fix-rate with no tracked issues stays hidden (vacuous)", () => {
+  // Regression: the panel used to show "▲ 0 · ▼ 0 · ● 0 · Fixed 0%" — an all-zero strip that
+  // reads as noise. Nothing tracked and 0% fixed means there is nothing to report.
+  assert.equal(computeWorkspacePulse({ newErrorCount: 0, resolvedErrorCount: 0, recurringCount: 0, velocityPct: 0 }), undefined);
+});
+
+test("0% fix-rate still shows when there are stable issues to fix (actionable)", () => {
+  const p = computeWorkspacePulse({ newErrorCount: 0, resolvedErrorCount: 0, recurringCount: 4, velocityPct: 0 });
+  assert.ok(p);
+  assert.equal(p!.stable, 4);
+  assert.equal(p!.velocityPct, 0);
+});
+
 test("more resolved than new reads as improving", () => {
   const p = computeWorkspacePulse({ newErrorCount: 1, resolvedErrorCount: 3, recurringCount: 2 });
   assert.equal(p!.improving, 3);

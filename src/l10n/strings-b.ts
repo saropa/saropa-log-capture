@@ -43,6 +43,7 @@ export const stringsB: Record<string, string> = {
     'action.deleteAll': 'Delete All',
     'action.alwaysOpen': 'Always Open',
     'action.openLog': 'Open Log',
+    'action.errorReport': 'Error Report',
     'action.openSignals': 'Open Signals',
     'action.copyLogPath': 'Copy Log Path',
     'action.add': 'Add',
