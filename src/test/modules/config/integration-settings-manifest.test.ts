@@ -65,6 +65,18 @@ suite('integration settings manifest', () => {
         });
     });
 
+    suite('error notifications', () => {
+        // Pins the opt-in default: this feature pops a notification on every detected error, so a
+        // silent flip to true (or a dropped declaration) would spam every user — the exact manifest/
+        // reader drift this file guards against.
+        test('showErrorSnackbars is a boolean defaulting to false', () => {
+            const p = props[`${prefix}showErrorSnackbars`];
+            assert.ok(p, 'showErrorSnackbars must be declared');
+            assert.strictEqual(p.type, 'boolean');
+            assert.strictEqual(p.default, false);
+        });
+    });
+
     suite('http adapter', () => {
         test('requestLogPath and requestIdPattern default to empty strings', () => {
             assert.strictEqual(props[`${prefix}integrations.http.requestLogPath`]?.default, '');

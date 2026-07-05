@@ -15,6 +15,8 @@ import * as vscode from 'vscode';
 import { t } from '../../l10n';
 import { isErrorLine } from './error-rate-alert';
 import { normalizeLine, hashFingerprint } from '../analysis/error-fingerprint-pure';
+import { stripAnsi } from '../capture/ansi';
+import { logExtensionWarn } from '../misc/extension-logger';
 import type { LineData } from '../session/session-event-bus';
 
 /** Minimum gap between snackbars, so even distinct errors cannot stack faster than this. */
@@ -60,12 +62,17 @@ export class ErrorSnackbarNotifier {
         if (data.isMarker) { return; }
         // Read the setting fresh so toggling it takes effect without a reload.
         if (!this.deps.isEnabled()) { return; }
-        if (!isErrorLine(data.text, data.category)) { return; }
         // Need a file to point the buttons at; lines without an origin file can't be focused.
         if (!data.logFileUri) { return; }
 
+        // Classify and fingerprint on ANSI-free text. Captured lines keep their color escapes, and an
+        // SGR code's trailing letter fuses with the following word (e.g. "…[31mError"), which breaks
+        // isErrorLine's `\b` word-boundary match and would silently miss colored error lines.
+        const text = stripAnsi(data.text);
+        if (!isErrorLine(text, data.category)) { return; }
+
         // Coalesce: one snackbar per unique error signature for the window lifetime.
-        const hash = hashFingerprint(normalizeLine(data.text));
+        const hash = hashFingerprint(normalizeLine(text));
         if (this.seenHashes.has(hash)) { return; }
 
         // Cooldown: drop (do not queue) errors arriving too soon after the last snackbar.
@@ -74,8 +81,12 @@ export class ErrorSnackbarNotifier {
 
         this.rememberHash(hash);
         this.lastShownAt = now;
-        // Capture the values now — the active session may change before the user clicks.
-        void this.showSnackbar(data.text, data.lineCount, data.logFileUri);
+        // Capture the values now — the active session may change before the user clicks. A button
+        // action (loadFromFile / showBugReport) can reject; catch here so a failed click never
+        // surfaces as an unhandled rejection from this fire-and-forget call (line listeners must not throw).
+        this.showSnackbar(text, data.lineCount, data.logFileUri).catch((err) => {
+            logExtensionWarn('errorSnackbar', err instanceof Error ? err.message : String(err));
+        });
     }
 
     /** Record a fingerprint, evicting the oldest once the cap is reached. */
@@ -92,7 +103,7 @@ export class ErrorSnackbarNotifier {
         const openLog = t('action.openLog');
         const report = t('action.errorReport');
         const pick = await vscode.window.showWarningMessage(
-            t('msg.errorSnackbar', truncate(text, MAX_TEXT_LEN)),
+            t('msg.errorSnackbar', cleanForDisplay(text, MAX_TEXT_LEN)),
             openLog,
             report,
         );
@@ -106,8 +117,14 @@ export class ErrorSnackbarNotifier {
     }
 }
 
-/** Truncate with an ellipsis so the inline message stays a single readable line. */
-function truncate(text: string, max: number): string {
-    const trimmed = text.trim();
-    return trimmed.length <= max ? trimmed : `${trimmed.slice(0, max - 1)}…`;
+/**
+ * Prepare an error line for a one-line notification: strip ANSI color codes (a notification renders
+ * them as literal garbage) and collapse internal newlines/whitespace (captured text keeps internal
+ * `\n`; only the trailing newline is stripped upstream), then truncate with an ellipsis. We do NOT
+ * use `normalizeLine` here — that also masks numbers/paths/ids for fingerprinting, which would hide
+ * the actual error detail the user needs to read.
+ */
+export function cleanForDisplay(text: string, max: number): string {
+    const flattened = stripAnsi(text).replace(/\s+/g, ' ').trim();
+    return flattened.length <= max ? flattened : `${flattened.slice(0, max - 1)}…`;
 }
