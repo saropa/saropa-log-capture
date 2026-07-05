@@ -28,11 +28,22 @@ cspell:disable
 
 ## [Unreleased]
 
-The viewer can now follow the newest run for you. Turn on **Always Switch to Latest Log** and the viewer jumps to each new log the moment it arrives — no more clicking Open on the newer-log banner. It stays off by default so a fresh log never yanks the view away while you are reading an older one.
+The viewer now follows the newest run automatically. When a new log arrives, the viewer jumps to it the moment it appears — no more clicking Open on the newer-log banner. Prefer the old behavior? Turn off **Always Switch to Latest Log** and the viewer stays on the log you are reading, surfacing the banner instead.
 
 ### Added
 
-- **"Always Switch to Latest Log" setting (`saropaLogCapture.autoSwitchToLatest`).** When enabled, the viewer automatically loads the newest controller log as soon as it appears, instead of only surfacing the sticky newer-log banner and waiting for a click. Off by default; joins the existing newer-log banner/dot settings. Switching happens without stealing editor focus, and only when the newest log differs from the one already open (so it never reloads in a loop).
+- **"Always Switch to Latest Log" setting (`saropaLogCapture.autoSwitchToLatest`).** On by default: the viewer automatically loads the newest controller log as soon as it appears, instead of only surfacing the sticky newer-log banner and waiting for a click. Turn it off to keep the passive banner. Joins the existing newer-log banner/dot settings. Switching happens without stealing editor focus, and only when the newest log differs from the one already open (so it never reloads in a loop).
+- **Error notification setting (`saropaLogCapture.showErrorSnackbars`).** When enabled, each newly detected error during live capture pops a notification showing the error text, with **Open Log** (opens the Log Viewer scrolled to that error line) and **Error Report** (opens the bug-report webview for that error) buttons. Off by default. Notifications are coalesced so bursts don't flood the corner: repeats of the same error signature (variations like differing ports/ids/timestamps normalize to one) are suppressed, and a short cooldown limits how fast distinct errors can stack.
+
+### Changed
+
+- **Icon-bar badges (Signal, SQL, Integrations, Crashlytics, Collections, Bookmarks, Trash) now count unread items, not the panel total.** Each badge shows only how many items arrived since you last opened that panel; opening the panel clears it to zero. Baselines persist across viewer reloads, and a panel that is already open never lights its own badge while you are looking at it.
+
+### Fixed
+
+- **Signals panel formatting overhaul.** The Signals sidebar now reads as one clean, aligned list. Every signal row, section subtitle, and empty state starts its icon on a single left rail; the critical/high severity accent is painted inside the row instead of as a border, so severity rows no longer jog their text right. Signal labels now fill the real column width and truncate with an ellipsis at the panel edge (they were cut off at a fixed 50–60 characters, stranding "..." well short of the available space). Rows that open something (a session, a log line, or inline detail) now carry a trailing chevron; rows that do nothing show none, so it is obvious at a glance which rows are clickable.
+- **Signals "Workspace pulse" strip no longer shows an all-zero row.** A pulse of `▲ 0 · ▼ 0 · ● 0 · Fixed 0%` — nothing improving, worsening, stable, and a fix-rate measured against nothing — is vacuous, so the strip now stays hidden in that case. A positive fix-rate, or a 0% fix-rate when there are recurring issues it actually measures, still shows.
+- **Opening a cross-session signal now gives immediate feedback.** Clicking a signal that has to load a different session's log could sit silently for a moment, looking like a dead click. The clicked row now shimmers and a slim loading bar appears under the panel header until the target line is reached.
 
 ---
 

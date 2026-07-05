@@ -161,6 +161,10 @@ export function getSignalScriptPartC(): string {
 
     window.addEventListener('message', function(e) {
         if (!e.data) return;
+        /* Host resolved a clicked signal and is scrolling to it — the slow open is done, so clear the
+           row shimmer + loading bar. The main viewer bus also handles this message (to scroll); both
+           listeners receive it in the shared webview scope. */
+        if (e.data.type === 'scrollToSignal') { if (typeof signalClearOpening === 'function') signalClearOpening(); return; }
         if (e.data.type === 'openSignalPanel') {
             openSignalPanel();
             if (e.data.tab) setSignalTab(e.data.tab);

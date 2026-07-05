@@ -170,6 +170,7 @@ Collapse any column's sections to shrink that column aside and give the open sid
 ### Error Intelligence
 - **Smart classification:** Errors auto-classified as CRITICAL, TRANSIENT, or BUG with inline badges. Configurable detection mode (strict/loose). User-editable severity keywords.
 - **Alerts:** Flash border, sound, counter badge, optional modal popup on errors.
+- **Error notifications (opt-in):** Turn on `saropaLogCapture.showErrorSnackbars` and each newly detected error during capture pops a notification with **Open Log** (jump to the error line) and **Error Report** (open the bug-report webview) buttons. Coalesced by error signature with a cooldown so bursts don't flood the corner. Off by default.
 - **Multi-level classification:** Eight severity levels (Error, Warning, Info, Performance, TODO, Debug/Trace, Notice, Database) with dedicated colors and filters.
 
 ### Signals
