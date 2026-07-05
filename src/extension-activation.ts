@@ -27,7 +27,7 @@ import { ProjectIndexer, setGlobalProjectIndexer } from './modules/project-index
 import { TrigramSearchIndex, setGlobalSearchIndex } from './modules/search/search-trigram-index';
 import { BookmarkStore } from './modules/storage/bookmark-store';
 import { buildSessionListPayload, buildClassifierInputs, buildRoleClassifier, LOG_LAST_VIEWED_KEY, getOrSeedDismissedAt } from './ui/provider/viewer-provider-helpers';
-import { computeLogContextInfo } from './ui/provider/viewer-log-context';
+import { computeLogContextInfo, shouldAutoSwitchToLatest } from './ui/provider/viewer-log-context';
 import { registerDebugLifecycle } from './extension-lifecycle';
 import { SessionGroupTracker } from './modules/session/session-group-tracker';
 import { setRetentionGroupContext } from './modules/config/file-retention';
@@ -155,17 +155,16 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
             dismissedAt,
         });
         broadcaster.setLogContextInfo(logContext);
-        // Opt-in "always switch to latest": upgrade the passive banner to an active switch. This
+        // "Always switch to latest" (default on): upgrade the passive banner to an active switch. This
         // refresh is the exact moment a newer controller log appears, so load it here instead of
-        // waiting for the user to click the banner's Open. Guard on latestUri !== currentUri so
-        // re-firing on unrelated tree changes (line-count ticks, dot updates) cannot reload the
-        // same log in a loop — after the load, currentUri catches up and stale clears.
-        if (
-            cfg.newerLogAlert.autoSwitch
-            && logContext.stale
-            && logContext.latestUri
-            && logContext.latestUri !== logContext.currentUri
-        ) {
+        // waiting for the user to click the banner's Open. The decision predicate is pure/extracted so
+        // it is unit-testable without the Extension Host (see shouldAutoSwitchToLatest).
+        if (shouldAutoSwitchToLatest(logContext, cfg.newerLogAlert.autoSwitch)) {
+            // Deliberately a NON-tail load. A live-streaming session is always its own currentUri
+            // (broadcaster.setCurrentFile in applySessionStartedState marks it) and therefore the
+            // newest controller, so this branch only ever targets a finished / other-window log — never
+            // the active tail. Adding { tail: true } here would start a second tail on a static file
+            // and risk fighting the live session's tail; the plain load is correct.
             void viewerProvider.loadFromFile(vscode.Uri.parse(logContext.latestUri));
         }
     });

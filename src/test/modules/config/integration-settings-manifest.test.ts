@@ -53,6 +53,18 @@ suite('integration settings manifest', () => {
         });
     });
 
+    suite('newer-log alert', () => {
+        // Pins the default so a future edit cannot silently revert the shipped ON behavior: with this
+        // false the viewer would stop following the newest run and users would see no error — exactly
+        // the manifest/reader drift this whole test file exists to catch.
+        test('autoSwitchToLatest is a boolean defaulting to true', () => {
+            const p = props[`${prefix}autoSwitchToLatest`];
+            assert.ok(p, 'autoSwitchToLatest must be declared');
+            assert.strictEqual(p.type, 'boolean');
+            assert.strictEqual(p.default, true);
+        });
+    });
+
     suite('http adapter', () => {
         test('requestLogPath and requestIdPattern default to empty strings', () => {
             assert.strictEqual(props[`${prefix}integrations.http.requestLogPath`]?.default, '');
