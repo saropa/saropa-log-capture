@@ -88,7 +88,7 @@ export function getToolbarHtml(opts: ToolbarHtmlOptions): string {
              (saropaLogCapture.troubleMode.toggle). Named + clickable so the user always
              knows why most lines vanished and can click to exit the mode. -->
         <span id="trouble-mode-indicator" class="trouble-mode-indicator u-hidden" role="button" tabindex="0" title="${t('viewer.troubleMode.indicatorTitle')}">
-            <span class="codicon codicon-pulse" aria-hidden="true"></span>
+            <span class="codicon codicon-warning" aria-hidden="true"></span>
             <span>${t('viewer.troubleMode.indicator')}</span>
         </span>
         <span id="footer-text" data-version="${ver}" class="toolbar-filename" title="${t('viewer.toolbar.filename.title')}"></span>

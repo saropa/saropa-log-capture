@@ -1736,7 +1736,6 @@
   "FW": "FW FW - Фундаментальный",
   "Failed to build report": "Не удалось создать отчет.",
   "Failed to copy report": "Не удалось скопировать отчет.",
-  "Failed to save report": "Не удалось сохранить отчет.",
   "Filter shortcuts by key, name, or description": "Фильтруйте ярлыки по ключу, имени или описанию.",
   "Filter shortcuts…": "Переключения фильтров...",
   "Filter suggestions ({0})": "Предложения по фильтру ({0})",
@@ -1887,7 +1886,6 @@
   "Saropa Lints is installed but has not shared findings yet — make sure its analyzer is running for this project.": "Установлен Saropa Lints, но пока не поделился результатами  ⁇  убедитесь, что его анализатор работает для этого проекта.",
   "Saropa Log Capture is tailing external log files for this session.": "Saropa Log Capture отслеживает внешние файлы журнала для этой сессии.",
   "Saropa Signal Report": "Saropa Сигнальный отчет, сигнал",
-  "Save Report": "Сохранить отчет",
   "Saves the center line to the Bookmarks panel (open it with B). The bookmark stores the line number, text, and timestamp. In the Bookmarks panel, bookmarks are listed in order and each one is clickable — clicking jumps back to that exact line. Bookmarks persist across viewer reloads.": "Сохраняет центральную линию в панели закладок (открывает ее с помощью буквы B). В закладке хранятся номер строки, текст и временная метка. В панели закладок закладки перечислены в порядке, и каждый из них подлежит нажатию  ⁇  щелчок возвращает назад к той же строке. Закладки сохраняются при перезагрузке просмотров.",
   "Scanning for related lines...": "Сканирование на наличие связанных линий...",
   "Scrolls the viewport down by about 80% of its visible height.": "Скроллирует смотровую площадку вниз примерно на 80% от видимой высоты.",
@@ -2061,5 +2059,10 @@
   "No matches": "Никаких совпадений.",
   "Suppressed Errors": "Сдержанные ошибки.",
   "This match was hidden by the {0} filter.": "Эта совпадение была скрыта фильтром {0}.",
-  "Time Range": "Временной диапазон Time Range."
+  "Time Range": "Временной диапазон Time Range.",
+  "Error Report": "Отчет о ошибке, сообщение об ошибках.",
+  "Error detected: {0}": "Определена ошибка: {0}",
+  "Report file": "Доклад, файл отчетности.",
+  "Showing only errors, warnings, and performance issues. Click to exit Trouble Mode.": "Показывает только ошибки, предупреждения и проблемы с производительностью. Нажмите, чтобы выйти из режима проблем.",
+  "Trouble Mode": "Режим неисправности (Trouble Mode) - режим, в котором воз"
 }

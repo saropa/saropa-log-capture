@@ -58,8 +58,11 @@ function saveTroubleModeState() {
 }
 
 /* Body class + footer chip so the user always knows why most lines vanished —
-   silent filtering that hides 90% of the log reads as "the viewer broke". */
+   silent filtering that hides 90% of the log reads as "the viewer broke".
+   Guarded for DOM-less contexts (the VM test harness) so the classifier logic
+   stays unit-testable without a document. */
 function applyTroubleModeIndicator() {
+    if (typeof document === 'undefined') return;
     document.body.classList.toggle('slc-trouble-active', troubleModeActive);
     var chip = document.getElementById('trouble-mode-indicator');
     if (chip) chip.classList.toggle('u-hidden', !troubleModeActive);
@@ -86,6 +89,7 @@ function restoreTroubleModeState() {
 }
 
 (function() {
+    if (typeof document === 'undefined') return;
     var chip = document.getElementById('trouble-mode-indicator');
     if (chip) chip.addEventListener('click', function() { toggleTroubleMode(); });
     restoreTroubleModeState();

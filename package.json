@@ -202,6 +202,11 @@
         "title": "%command.toggleSearchOverlay.title%"
       },
       {
+        "command": "saropaLogCapture.troubleMode.toggle",
+        "icon": "$(warning)",
+        "title": "%command.troubleModeToggle.title%"
+      },
+      {
         "command": "saropaLogCapture.gotoLineInViewer",
         "icon": "$(go-to-file)",
         "title": "%command.gotoLineInViewer.title%"
@@ -3023,6 +3028,11 @@
           "when": "view == saropaLogCapture.logViewer"
         },
         {
+          "command": "saropaLogCapture.troubleMode.toggle",
+          "group": "navigation@1",
+          "when": "view == saropaLogCapture.logViewer"
+        },
+        {
           "command": "saropaLogCapture.collapseAllSections",
           "group": "navigation@2",
           "when": "view == saropaLogCapture.logViewer && !saropaLogCapture.allCollapsed"
@@ -3248,5 +3258,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "9.1.0"
+  "version": "9.1.1"
 }

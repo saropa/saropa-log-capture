@@ -120,6 +120,7 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.toggleSearchOverlay` | %command.toggleSearchOverlay.title% |  |
 | `saropaLogCapture.toggleTrash` | %command.toggleTrash.title% |  |
 | `saropaLogCapture.trashSession` | %command.trashSession.title% |  |
+| `saropaLogCapture.troubleMode.toggle` | %command.troubleModeToggle.title% |  |
 | `saropaLogCapture.ungroupSession` | Saropa Log Capture: Ungroup Session |  |
 
-**Total:** 115 commands.
+**Total:** 116 commands.

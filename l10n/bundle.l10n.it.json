@@ -1736,7 +1736,6 @@
   "FW": "FW FW, la sua prima volta.",
   "Failed to build report": "Non è riuscito a costruire il report.",
   "Failed to copy report": "Non è riuscito a copiare il rapporto di reporting.",
-  "Failed to save report": "Non è riuscito a salvare il rapporto.",
   "Filter shortcuts by key, name, or description": "Filtra le scorciatoie per chiave, nome o descrizione.",
   "Filter shortcuts…": "Scartamenti dei filtri... scorciatoie.",
   "Filter suggestions ({0})": "Suggerimenti di filtro ({0})",
@@ -1887,7 +1886,6 @@
   "Saropa Lints is installed but has not shared findings yet — make sure its analyzer is running for this project.": "Saropa Lints è installato ma non ha ancora condiviso i risultati  ⁇  assicurati che l'analizzatore sia in esecuzione per questo progetto.",
   "Saropa Log Capture is tailing external log files for this session.": "Saropa Log Capture sta tracciando i file di log esterni per questa sessione.",
   "Saropa Signal Report": "Saropa Segnale Rapporto segnalazione",
-  "Save Report": "Salva il rapporto",
   "Saves the center line to the Bookmarks panel (open it with B). The bookmark stores the line number, text, and timestamp. In the Bookmarks panel, bookmarks are listed in order and each one is clickable — clicking jumps back to that exact line. Bookmarks persist across viewer reloads.": "Salva la linea centrale nel pannello Bookmarks (aprilo con B). Il segnalibro memorizza il numero di riga, il testo e timestamp. Nel pannello dei segnalibri, i segnalabri sono elencati in ordine e ciascuno di essi è cliccabile  ⁇  facendo clic salta indietro a quella riga esatta. I segnalibri persistono attraverso i ricarichi del visualizzatore.",
   "Scanning for related lines...": "Scansione per linee correlate...",
   "Scrolls the viewport down by about 80% of its visible height.": "Scorre il mirino verso il basso di circa l'80% della sua altezza visibile.",
@@ -2061,5 +2059,10 @@
   "No matches": "Nessuna corrispondenza.",
   "Suppressed Errors": "Errori soppressi.",
   "This match was hidden by the {0} filter.": "Questa corrispondenza è stata nascosta dal filtro {0}.",
-  "Time Range": "Tempo di percorrenza Time Range Range."
+  "Time Range": "Tempo di percorrenza Time Range Range.",
+  "Error Report": "Segnalazione di errore, segnalazione dell'errore.",
+  "Error detected: {0}": "Errore rilevato: {0}",
+  "Report file": "File di rapporto file di relazione.",
+  "Showing only errors, warnings, and performance issues. Click to exit Trouble Mode.": "Mostra solo errori, avvertimenti e problemi di prestazioni. Clicca per uscire dalla modalità di emergenza.",
+  "Trouble Mode": "La modalità di risoluzione dei problemi (Trouble Mode)"
 }

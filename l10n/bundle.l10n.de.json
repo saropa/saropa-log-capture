@@ -1736,7 +1736,6 @@
   "FW": "FW FW ist ein",
   "Failed to build report": "Es gelang nicht, einen Bericht zu erstellen.",
   "Failed to copy report": "Es gelang nicht, den Bericht zu kopieren.",
-  "Failed to save report": "Es gelang nicht, den Bericht zu speichern.",
   "Filter shortcuts by key, name, or description": "Filtern Sie die Verknüpfungen nach Schlüssel, Namen oder Beschreibung.",
   "Filter shortcuts…": "Filter-Abkürzungen ...",
   "Filter suggestions ({0})": "Filtervorschläge ({0})",
@@ -1887,7 +1886,6 @@
   "Saropa Lints is installed but has not shared findings yet — make sure its analyzer is running for this project.": "Saropa Lints installiert ist, aber noch keine Ergebnisse geteilt hat  ⁇  stellen Sie sicher, dass sein Analyzer für dieses Projekt läuft.",
   "Saropa Log Capture is tailing external log files for this session.": "Saropa Log Capture verfolgt externe Protokolldateien für diese Sitzung.",
   "Saropa Signal Report": "Saropa Signal Report Bericht über die Signale",
-  "Save Report": "Bericht speichern Report Speichern",
   "Saves the center line to the Bookmarks panel (open it with B). The bookmark stores the line number, text, and timestamp. In the Bookmarks panel, bookmarks are listed in order and each one is clickable — clicking jumps back to that exact line. Bookmarks persist across viewer reloads.": "Speichert die mittlere Zeile im Bookmarks-Panel (öffnet sie mit B). Das Lesezeichen speichert Zeilenummer, Text und Zeitstempel. Im Bookmarks Panel sind die Lesezeigen in der Reihenfolge aufgeführt und jeder einzelne ist anklickbar  ⁇  Klicken springt zurück zu dieser exakten Linie. Lesezeichnungen bestehen über Viewer reloads hinweg.",
   "Scanning for related lines...": "Scannen nach verwandten Linien...",
   "Scrolls the viewport down by about 80% of its visible height.": "Scrollt den Aussichtsbereich um etwa 80% seiner sichtbaren Höhe nach unten.",
@@ -2061,5 +2059,10 @@
   "No matches": "Keine Übereinstimmungen.",
   "Suppressed Errors": "Unterdrückte Fehler.",
   "This match was hidden by the {0} filter.": "Diese Übereinstimmung wurde durch den {0} Filter versteckt.",
-  "Time Range": "Zeitbereich Time Range"
+  "Time Range": "Zeitbereich Time Range",
+  "Error Report": "Fehlermeldung, Fehlerbericht",
+  "Error detected: {0}": "Fehler erkannt: {0}",
+  "Report file": "Bericht Datei, Berichtsdatei",
+  "Showing only errors, warnings, and performance issues. Click to exit Trouble Mode.": "Zeigt nur Fehler, Warnungen und Leistungsprobleme. Klicken Sie, um den Trouble Mode zu verlassen.",
+  "Trouble Mode": "Der Trouble Mode ist ein Problemmodus."
 }

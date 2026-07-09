@@ -62,6 +62,7 @@
   "command.expandAllSections.title": "展开所有区域",
   "command.maximizePanel.title": "最大化面板",
   "command.toggleSearchOverlay.title": "切换搜索",
+  "command.troubleModeToggle.title": "Toggle Trouble Mode",
   "command.gotoLineInViewer.title": "转到行",
   "command.refreshHistory.title": "刷新日志历史",
   "command.removeFromCollection.title": "从调查中移除",

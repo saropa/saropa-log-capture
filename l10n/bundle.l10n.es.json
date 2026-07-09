@@ -1736,7 +1736,6 @@
   "FW": "FW FW es el nombre de la película.",
   "Failed to build report": "No se pudo construir un informe.",
   "Failed to copy report": "No se pudo copiar el informe del reporte.",
-  "Failed to save report": "No se pudo guardar el informe.",
   "Filter shortcuts by key, name, or description": "Filtrar atajos por clave, nombre o descripción.",
   "Filter shortcuts…": "Los atajos de filtro... los accesos directos.",
   "Filter suggestions ({0})": "Sugerencias de filtro ({0})",
@@ -1887,7 +1886,6 @@
   "Saropa Lints is installed but has not shared findings yet — make sure its analyzer is running for this project.": "Saropa Lints está instalado pero aún no ha compartido los resultados  ⁇  asegúrese de que su analizador esté en ejecución para este proyecto.",
   "Saropa Log Capture is tailing external log files for this session.": "Saropa Log Capture está rastreando archivos de registro externos para esta sesión.",
   "Saropa Signal Report": "Saropa Informe de señales",
-  "Save Report": "Guardar el informe guardar el informe.",
   "Saves the center line to the Bookmarks panel (open it with B). The bookmark stores the line number, text, and timestamp. In the Bookmarks panel, bookmarks are listed in order and each one is clickable — clicking jumps back to that exact line. Bookmarks persist across viewer reloads.": "Guarda la línea central en el panel de marcadores (abrirlo con B). El marcador almacena el número de línea, texto y timestamp. En el panel de marcadores, los marcadores se enumeran por orden y cada uno es clickable  ⁇  haciendo clic salta hacia atrás a esa línea exacta. Las marcadores persisten a través de las recargas del espectador.",
   "Scanning for related lines...": "Escaneo de líneas relacionadas...",
   "Scrolls the viewport down by about 80% of its visible height.": "Desliza la ventana de visión hacia abajo en aproximadamente el 80% de su altura visible.",
@@ -2061,5 +2059,10 @@
   "No matches": "No hay coincidencias.",
   "Suppressed Errors": "Errores reprimidos de los errores.",
   "This match was hidden by the {0} filter.": "Esta coincidencia estaba oculta por el filtro {0}.",
-  "Time Range": "Rango de tiempo Rango del rango."
+  "Time Range": "Rango de tiempo Rango del rango.",
+  "Error Report": "Informe de error del informe de error.",
+  "Error detected: {0}": "Se ha detectado un error: {0}",
+  "Report file": "Archivo de informe archivo del reporte.",
+  "Showing only errors, warnings, and performance issues. Click to exit Trouble Mode.": "Mostrando sólo errores, advertencias y problemas de rendimiento. Haga clic para salir del modo de emergencia.",
+  "Trouble Mode": "El modo de emergencia (trouble mode) es el modo en que se producen"
 }

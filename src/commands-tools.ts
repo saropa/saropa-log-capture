@@ -158,6 +158,13 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
         vscode.commands.registerCommand('saropaLogCapture.toggleSearchOverlay', () => {
             broadcaster.postToWebview({ type: 'triggerToggleSearch' });
         }),
+        /* Trouble Mode: a zero-context triage filter that hides every nominal line
+           and shows only errors, warnings, and performance issues. Fire-and-forget —
+           the webview owns and persists the active state (setState), so a bare toggle
+           message is all the host sends. */
+        vscode.commands.registerCommand('saropaLogCapture.troubleMode.toggle', () => {
+            broadcaster.postToWebview({ type: 'triggerToggleTroubleMode' });
+        }),
         /* Ctrl+G in the log viewer: VS Code's built-in workbench.action.gotoLine has no
            `when` clause, so without this it preempts the webview keydown handler and opens
            Quick Open instead. The package.json keybinding scopes Ctrl+G to the log viewer
