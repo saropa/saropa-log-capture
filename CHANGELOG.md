@@ -26,7 +26,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.1.1]
+
+Cut through the noise with the new Trouble Mode. This zero-context triage filter instantly strips away nominal lines so you only see errors, warnings, and performance issues. We've also made saving signal reports completely automatic—they now write straight to your reports folder the moment you open them. [log](https://github.com/saropa/saropa-log-capture/blob/v9.1.1/CHANGELOG.md)
 
 ### Changed
 
@@ -34,6 +36,7 @@ cspell:disable
 
 ### Added
 
+- **Trouble Mode — a zero-context triage filter for the log viewer.** Toggle it from the view title bar (the warning icon) or the command palette (**Toggle Trouble Mode**), and the viewer strips every nominal line to show only errors, warnings, and performance issues. It is a separate filter layered on top of your existing level selection — turning it off restores exactly what you had. A footer chip shows when the mode is active; click it to exit. Markers (run separators, database signals) always stay visible. This is the first stage of the Trouble Mode dashboard; the live chart, detail pane, Crashlytics rows, and Copy Report handoff follow.
 - **`[frame-stall]` bracket tag** for explicit performance-level annotation (aliases: `[perf]`, `[jank]`, `[slow]`, `[latency]`, `[timing]`, `[profile]`, `[frame]`, `[fps]`, `[gc]`, `[memory]`, `[bench]`, `[benchmark]`). Any of these tags at the start of a log line routes it to the Performance level in the viewer.
 - **Quantified performance metric detection.** Logs containing `took <n>ms` or `duration: <n>ms` patterns (e.g., `Database query took 2400ms`, `Elapsed duration: 1.5s`) now automatically classify as **Performance**. Supports fractional durations and optional spaces (`took 500 ms`).
 

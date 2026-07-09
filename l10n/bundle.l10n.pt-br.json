@@ -1736,7 +1736,6 @@
   "FW": "FWFW - O que é?",
   "Failed to build report": "Não conseguiu construir o relatório.",
   "Failed to copy report": "Não conseguiu copiar o relatório do relatório.",
-  "Failed to save report": "Não conseguiu salvar o relatório.",
   "Filter shortcuts by key, name, or description": "Filtre atalhos por chave, nome ou descrição.",
   "Filter shortcuts…": "atalhos de filtro...",
   "Filter suggestions ({0})": "Sugestões de filtro ({0})",
@@ -1887,7 +1886,6 @@
   "Saropa Lints is installed but has not shared findings yet — make sure its analyzer is running for this project.": "Saropa Lints está instalado, mas ainda não compartilhou os resultados  ⁇  certifique-se de que seu analisador esteja em execução para este projeto.",
   "Saropa Log Capture is tailing external log files for this session.": "Saropa Log Capture está rastreando arquivos de log externos para esta sessão.",
   "Saropa Signal Report": "Saropa Relatório de sinalização",
-  "Save Report": "Salvar Relatório Salvar relatório",
   "Saves the center line to the Bookmarks panel (open it with B). The bookmark stores the line number, text, and timestamp. In the Bookmarks panel, bookmarks are listed in order and each one is clickable — clicking jumps back to that exact line. Bookmarks persist across viewer reloads.": "Salva a linha central no painel de Marcas (abre-o com B). O marcador armazena o número de linha, texto e timestamp. No painel de marcadores, os marcadores são listados em ordem e cada um deles é clicável  ⁇  clique salta para trás para essa linha exata. Os marcadores persistem em todos os recarregamentos do visualizador.",
   "Scanning for related lines...": "Análise de linhas relacionadas...",
   "Scrolls the viewport down by about 80% of its visible height.": "Desloca a abertura de visão para baixo em cerca de 80% da sua altura visível.",
@@ -2061,5 +2059,10 @@
   "No matches": "Não há correspondências.",
   "Suppressed Errors": "Erros reprimidos erros.",
   "This match was hidden by the {0} filter.": "Esta correspondência foi escondida pelo filtro {0}.",
-  "Time Range": "Tempo de duração Time Range."
+  "Time Range": "Tempo de duração Time Range.",
+  "Error Report": "Relatório de Erro do relatório de erro.",
+  "Error detected: {0}": "Erro detectado: {0}",
+  "Report file": "Ficheiro de relatório, arquivo de relatórios.",
+  "Showing only errors, warnings, and performance issues. Click to exit Trouble Mode.": "Mostrando apenas erros, avisos e problemas de desempenho. Clique para sair do Modo de Problemas.",
+  "Trouble Mode": "Modo de solução de problemas (Trouble Mode)"
 }

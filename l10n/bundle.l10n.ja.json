@@ -1736,7 +1736,6 @@
   "FW": "FWFW フォローしている",
   "Failed to build report": "報告書の構築に失敗しました.",
   "Failed to copy report": "報告書のコピーに失敗しました.",
-  "Failed to save report": "レポートを保存する際に失敗しました.",
   "Filter shortcuts by key, name, or description": "キー,名前,または記述によってショートカットフィルターをフィルターします.",
   "Filter shortcuts…": "フィルターショートカット...",
   "Filter suggestions ({0})": "フィルターに関する提案 ({0})",
@@ -1887,7 +1886,6 @@
   "Saropa Lints is installed but has not shared findings yet — make sure its analyzer is running for this project.": "Saropa Lintsがインストールされているが,まだ結果を共有していない. このプロジェクトのためにその分析器が動作していることを確認してください.",
   "Saropa Log Capture is tailing external log files for this session.": "Saropa Log Capture は,このセッションの外部ログファイルを尾行しています.",
   "Saropa Signal Report": "Saropa シグナル レポート",
-  "Save Report": "報告書を保存する",
   "Saves the center line to the Bookmarks panel (open it with B). The bookmark stores the line number, text, and timestamp. In the Bookmarks panel, bookmarks are listed in order and each one is clickable — clicking jumps back to that exact line. Bookmarks persist across viewer reloads.": "中央線をブックマークパネルに保存する (Bで開きます). ブックマークは行番号,テキスト,タイムスタンプを保存します. ブックマークパネルでは,ブークマークが順番にリストされ,それぞれクリックできます. クリックするとその正確な行に戻ります. ブックマークは,ビューアーの再ロードにわたって持続します.",
   "Scanning for related lines...": "関連線をスキャンする...",
   "Scrolls the viewport down by about 80% of its visible height.": "ビューポートを可視高さの約80%まで下にスクロールします.",
@@ -2061,5 +2059,10 @@
   "No matches": "匹配がない",
   "Suppressed Errors": "抑圧されたエラー",
   "This match was hidden by the {0} filter.": "このマッチは {0} フィルターによって隠されていました.",
-  "Time Range": "タイムレンジ・ランゲージ"
+  "Time Range": "タイムレンジ・ランゲージ",
+  "Error Report": "エラーレポート エラー報告",
+  "Error detected: {0}": "エラーが検出されました: {0}",
+  "Report file": "報告書ファイル,レポートファイル",
+  "Showing only errors, warnings, and performance issues. Click to exit Trouble Mode.": "エラー,警告,パフォーマンス問題のみを表示しています. トラブルモードを終了するにはクリックします.",
+  "Trouble Mode": "トラブルモードは,トラブルモードです."
 }

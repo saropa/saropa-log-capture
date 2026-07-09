@@ -1736,7 +1736,6 @@
   "FW": "沒有任何樓盤符合您的搜尋 - FWF",
   "Failed to build report": "沒有建立報告的失敗.",
   "Failed to copy report": "沒有成功複製報告.",
-  "Failed to save report": "沒有保存報告的錯誤.",
   "Filter shortcuts by key, name, or description": "按鍵,名稱或描述過濾快捷方式.",
   "Filter shortcuts…": "⁇ 波器的快捷方式 ...",
   "Filter suggestions ({0})": "⁇ 波器建議 ({0}) 的使用",
@@ -1887,7 +1886,6 @@
   "Saropa Lints is installed but has not shared findings yet — make sure its analyzer is running for this project.": "已安裝了Saropa Lints,但尚未共享結果.  ⁇ 請確認其分析器正在運行這個項目.",
   "Saropa Log Capture is tailing external log files for this session.": "Saropa Log Capture 在追蹤本會議的外部日志檔案.",
   "Saropa Signal Report": "Saropa 信号报告 表示",
-  "Save Report": "保存報告 儲存報導",
   "Saves the center line to the Bookmarks panel (open it with B). The bookmark stores the line number, text, and timestamp. In the Bookmarks panel, bookmarks are listed in order and each one is clickable — clicking jumps back to that exact line. Bookmarks persist across viewer reloads.": "儲存中線到書籤面板 (用 B 開啟). 標籤儲存行號,文字和時間 ⁇ . 在書籤面板中,標誌按順序列出,每一張都可以點擊.  ⁇  點選跳回正確的行. 預覽標籤會在觀看者重載中持續存在.",
   "Scanning for related lines...": "掃描相關線條... 在網路上搜尋",
   "Scrolls the viewport down by about 80% of its visible height.": "移動視窗向下,使其可見高度約為 80%.",
@@ -2061,5 +2059,10 @@
   "No matches": "沒有任何匹配的結果.",
   "Suppressed Errors": "壓制錯誤的方法 - 抑制錯誤",
   "This match was hidden by the {0} filter.": "這個匹配被 {0} 濾鏡隱藏.",
-  "Time Range": "時間 範圍 時間範圍"
+  "Time Range": "時間 範圍 時間範圍",
+  "Error Report": "錯誤報告 錯误報告",
+  "Error detected: {0}": "檢測到錯誤: {0} 這裡有錯誤",
+  "Report file": "報告檔案 報告文件",
+  "Showing only errors, warnings, and performance issues. Click to exit Trouble Mode.": "顯示只有錯誤,警告和性能問題. 點擊退出故障模式. 這樣您就可以進入安全狀態.",
+  "Trouble Mode": "解決問題的方法 問題模式"
 }
