@@ -160,7 +160,7 @@ const flutterExceptionBannerPattern = /\bException caught by\b/i;
 const structuralWarnPattern = /\b(?:could\s*not|couldn't|cannot|unable\s+to|failed\s+to)\s+(?!(?:see|tell|say|imagine|think|know|believe|recall|remember|hear|feel|guess|understand|wait|help)\b)\w/i;
 
 /** Performance patterns that use regex features (quantifiers, alternation) and can't be simple keywords. */
-const structuralPerfPattern = /\b(skipped\s+\d+\s+frames?|gc\s+(?:pause|freed|concurrent))\b/i;
+const structuralPerfPattern = /\b(skipped\s+\d+\s+frames?|gc\s+(?:pause|freed|concurrent)|took\s+\d+(?:\.\d+)?\s*(?:ms|s)\b|duration\s*:\s*\d+(?:\.\d+)?\s*(?:ms|s)\b)\b/i;
 const anrPattern = /\b(anr|application\s+not\s+responding|input\s+dispatching\s+timed\s+out)\b/i;
 
 // Flutter/Dart memory: applied only when line has Flutter/Dart context.
