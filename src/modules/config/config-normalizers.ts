@@ -111,7 +111,7 @@ export const DEFAULT_SEVERITY_KEYWORDS: SeverityKeywords = {
   error: ["fatal", "panic"],
   warning: ["warn", "warning", "caution", "fail", "failed", "failure"],
   performance: [
-    "perf", "performance", "dropped frame", "fps", "framerate",
+    "perf", "dropped frame", "fps", "framerate",
     "jank", "stutter", "choreographer", "doing too much work",
     "anr", "application not responding", "slow operation",
   ],
