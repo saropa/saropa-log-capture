@@ -89,7 +89,7 @@ function matchesTagLevel(plainText) {
     if (!m || !m[1]) return null;
     return lookupTagLevel(tagNameBeforeColon(m[1]));
 }
-var structuralPerfPattern = /\\b(skipped\\s+\\d+\\s+frames?|gc\\s+(?:pause|freed|concurrent))\\b/i;
+var structuralPerfPattern = /\\b(skipped\\s+\\d+\\s+frames?|gc\\s+(?:pause|freed|concurrent)|took\\s+\\d+(?:\\.\\d+)?\\s*(?:ms|s)\\b|duration\\s*:\\s*\\d+(?:\\.\\d+)?\\s*(?:ms|s)\\b)\\b/i;
 // Structural warning: "could not / unable to / failed to / cannot <verb>" failure phrasing
 // with no warn/fail keyword (e.g. "databaseDecode: could not decode …"). Mirrors level-classifier.ts.
 // Negative lookahead excludes perception/cognition verbs ("cannot see/tell/think") so
