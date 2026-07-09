@@ -41,7 +41,6 @@ export const stringsSignals: Record<string, string> = {
     // Report shell (panel chrome)
     'signals.shell.title': 'Saropa Signal Report',
     'signals.shell.copyReport': 'Copy Report',
-    'signals.shell.saveReport': 'Save Report',
     'signals.conf.high': 'High confidence',
     'signals.conf.medium': 'Medium confidence',
     'signals.conf.low': 'Low confidence',
@@ -109,8 +108,6 @@ export const stringsSignals: Record<string, string> = {
     'signals.toast.copied': 'Report copied to clipboard',
     'signals.toast.copyFailed': 'Failed to copy report',
     'signals.toast.buildFailed': 'Failed to build report',
-    'signals.toast.saved': 'Report saved to {0}',
-    'signals.toast.saveFailed': 'Failed to save report',
 
     // Signal Details section (panel only; the markdown export uses its own English headings)
     'signals.details.queryFingerprint': 'Query fingerprint',
