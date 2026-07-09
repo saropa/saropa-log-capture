@@ -1,6 +1,6 @@
 # Plan — Trouble Mode Dashboard
 
-## Status: Open
+## Status: In progress — Stage 1+2 shipped (zero-context feed filter); chart/detail/Crashlytics/Copy Report remain
 
 <!-- Status values: Open → In progress → Shipped / Deferred / Superseded. -->
 
@@ -206,3 +206,73 @@ selection, stack collapse, markers, and scrolling for free.
    pop-out/wide-viewport only.
 5. **Plan numbering.** This is an owner note; when picked up, assign the next free
    `NNN_plan-` number (check `plans/` and `plans/history/`) per repo convention.
+
+## Finish Report (2026-07-09) — Stage 1+2: zero-context feed filter
+
+**Scope:** the mode toggle (command + view-title button + footer chip) and the
+zero-context issue feed (the `troubleFiltered` filter flag through the full
+filter/height pipeline). Deliberately NOT in this stage: the live severity chart
+(Stage 3), the detail/report pane (Stage 4), Crashlytics feed rows (Stage 5),
+and Copy Report (Stage 6) — each is independently shippable and follows.
+
+### What shipped
+
+Trouble Mode is now an orthogonal viewer filter: an own `troubleFiltered` flag
+that hides every line whose `item.level` is not error/warning/performance, layered
+on top of (never replacing) the user's existing level selection, giving true
+zero-context (no ±N context window). Markers are never filtered. Toggled by
+`saropaLogCapture.troubleMode.toggle` (view title bar warning icon + command
+palette) or by clicking the footer chip; the active state persists per-webview via
+`setState`. A warning-colored footer chip + `slc-trouble-active` body class make
+the mode visible so hiding most of the log never reads as a broken viewer.
+
+`calcTroubleFiltered(level)` is the single classifier, called both in the apply
+pass (`applyTroubleFilter` over `allLines`) and at line birth
+(`computeLineBirthHeight`), so a line arriving while the mode is active is born at
+height 0 instead of flashing full-height until the next recalc — the same
+birth-height contract every other filter honors.
+
+### Files changed
+
+- `src/ui/viewer-search-filter/viewer-trouble-mode.ts` — NEW. State, classifier,
+  apply pass, toggle, persistence, indicator; guarded for DOM-less test contexts.
+- `src/ui/viewer/viewer-data-helpers-core.ts` — `troubleFiltered` added to the
+  `calcItemHeight` filter gate.
+- `src/ui/viewer/viewer-data-add-line-birth.ts` — `calcTroubleFiltered(lvl)` folded
+  into `computeLineBirthHeight`.
+- `src/ui/viewer/viewer-data-add.ts` — `troubleFiltered` stamped on each new lineItem.
+- `src/ui/provider/viewer-content-scripts.ts` — script registered after the level filter.
+- `src/ui/viewer/viewer-script-messages.ts` — `triggerToggleTroubleMode` case.
+- `src/commands-tools.ts` — command registration (posts the trigger message).
+- `src/ui/viewer-toolbar/viewer-toolbar-html.ts` — footer chip markup.
+- `src/ui/viewer-styles/viewer-styles-session-newer.ts` — chip CSS (next to `.log-staleness`).
+- `package.json` — command def (`$(warning)` icon) + view/title menu entry.
+- `package.nls*.json` (×11) — `command.troubleModeToggle.title` (English value across locales; MT is operator-run).
+- `src/l10n/strings-webview-c.ts` — chip label + tooltip runtime keys.
+- `plans/reference/{webview-outbound-message-types,contributes-commands}.md`,
+  `src/l10n/nls-coverage-data.ts` — regenerated catalogs.
+- `CHANGELOG.md` — Unreleased › Added entry.
+- Tests: `src/test/ui/viewer-trouble-mode.test.ts` (NEW) — classifier, apply-pass
+  marker exemption, and birth-height integration through real `addToData`/`calcItemHeight`.
+
+### Testing
+
+- `npm run check-types` — clean.
+- `npm run compile-tests` — clean.
+- `npm run test:file -- out/test/ui/viewer-trouble-mode.test.js` — 3 passing.
+- `viewer-blank-row-affordance.test.js` (same `addToData`/`calcItemHeight` path) — 2 passing, no regression.
+- Lint on all touched files — clean. (Two pre-existing max-lines warnings in
+  `viewer-data-helpers-core.ts` and `viewer-script-messages.ts` are unchanged by
+  this work — line counts vs HEAD are identical; not introduced here.)
+- `verify-nls`, `verify:nls-coverage`, `verify:l10n-keys`,
+  `verify:host-outbound-catalog`, `verify:list-commands` — all OK.
+- **Not executed here:** F5 Extension Development Host manual pass (toggle in both
+  the sidebar view and the pop-out; confirm the chip, the body class, persistence
+  across reload, and that toggling off restores the prior level selection).
+
+### Open / follow-up
+
+- Stages 3–6 (chart, detail pane, Crashlytics rows, Copy Report) remain, each
+  building on this feed. Open questions 1–5 above (icon, chart color, default
+  trouble set, sidebar three-pane layout, plan numbering) still stand for those stages.
+- Manual F5 verification of the toggle/persistence/indicator is the only unrun check.

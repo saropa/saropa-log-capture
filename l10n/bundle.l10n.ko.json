@@ -1736,7 +1736,6 @@
   "FW": "FW FW는 FW의 일종이다.",
   "Failed to build report": "보고서를 작성하는 데 실패했습니다.",
   "Failed to copy report": "보고서 복사 실패",
-  "Failed to save report": "보고서를 저장하는 데 실패했습니다.",
   "Filter shortcuts by key, name, or description": "키, 이름 또는 설명에 따라 단축키를 필터링하십시오.",
   "Filter shortcuts…": "필터 지름길...",
   "Filter suggestions ({0})": "필터 제안 ({0})",
@@ -1887,7 +1886,6 @@
   "Saropa Lints is installed but has not shared findings yet — make sure its analyzer is running for this project.": "Saropa Lints가 설치되어 있지만 아직 결과를 공유하지 않았습니다.  ⁇ 이 프로젝트에서 분석기가 실행되고 있는지 확인하십시오.",
   "Saropa Log Capture is tailing external log files for this session.": "Saropa Log Capture는 이 세션에 대한 외부 로그 파일을 추적하고 있습니다.",
   "Saropa Signal Report": "Saropa 신호 보고",
-  "Save Report": "보고서를 저장하라 Save Report",
   "Saves the center line to the Bookmarks panel (open it with B). The bookmark stores the line number, text, and timestamp. In the Bookmarks panel, bookmarks are listed in order and each one is clickable — clicking jumps back to that exact line. Bookmarks persist across viewer reloads.": "중앙선을 북마크 패널에 저장합니다 (B로 열립니다). 북마크는 라인 번호, 텍스트 및 타임 스탬프를 저장합니다. 북마크 패널에서, 북마크는 순서대로 나열되어 있으며 각각은 클릭할 수 있습니다.  ⁇  클릭하면 정확히 그 라인에 다시 점프합니다. 북마크는 시청자 재부하에서 지속됩니다.",
   "Scanning for related lines...": "관련 라인을 스캔하는 것...",
   "Scrolls the viewport down by about 80% of its visible height.": "뷰포트를 가시 높이의 약 80% 아래로 스크롤합니다.",
@@ -2061,5 +2059,10 @@
   "No matches": "일치하는 경기가 없습니다.",
   "Suppressed Errors": "억제된 오류를 제거합니다.",
   "This match was hidden by the {0} filter.": "이 일치는 {0} 필터에 의해 숨겨져 있었다.",
-  "Time Range": "시간 범위 Time Range"
+  "Time Range": "시간 범위 Time Range",
+  "Error Report": "오류 보고서 에러 보고서",
+  "Error detected: {0}": "오류가 감지되었습니다: {0}",
+  "Report file": "보고서 파일, 보고서 파일이 있습니다.",
+  "Showing only errors, warnings, and performance issues. Click to exit Trouble Mode.": "오류, 경고 및 성능 문제만 표시합니다. 트러블 모드를 종료하기 위해 클릭하십시오.",
+  "Trouble Mode": "문제 모드 (Trouble Mode) 에 문제가 발생하면 해결합니다."
 }
