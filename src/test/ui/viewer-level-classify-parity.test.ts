@@ -49,6 +49,8 @@ const CORPUS: readonly Case[] = [
     { line: '[log] [database] Drift SLOW 533ms SELECT: SELECT * FROM "activities"', level: 'performance', note: 'Drift SLOW perf beats [database] tag' },
     { line: '[log] [database] Drift REPEAT x8 in ≤500ms INSERT: INSERT INTO "activities"', level: 'performance', note: 'Drift REPEAT perf beats [database] tag' },
     { line: '[log] [database] Drift SELECT: SELECT * FROM "contacts"', level: 'database', note: 'plain Drift statement still database' },
+    { line: 'Database query took 2400ms', level: 'performance', note: 'took Xms quantified metric' },
+    { line: 'Elapsed duration: 1850ms for sync', level: 'performance', note: 'duration: Xms quantified metric' },
 ];
 
 suite('level classification — extension/webview parity', () => {

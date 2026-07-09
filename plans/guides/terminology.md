@@ -23,7 +23,7 @@ When adding a new user-facing string, check this file first.
 
 | User-facing term | Code term | Definition |
 |------------------|-----------|------------|
-| **Collection** | `collection` | A named group of related logs and files for investigating a specific bug, feature, or incident. Never say "investigation" or "case" in UI text. |
+| **Collection** | `collection` | A named group of related logs and files for investigating a specific bug, feature, or incident. Never say "case" in UI text. ("Investigation" is permitted — it is the shipped name of the Investigation commands; ban removed 2026-07-09 by owner decision.) |
 | **Bundle** | `.slc`, `slc-bundle` | A `.slc` ZIP file containing a collection's logs plus metadata. Used for sharing with teammates. |
 | **Tag** | `tag`, `correlationTag` | A label on a log. Three kinds: manual (user-applied), auto-tag (rule-based pattern match), and correlation (auto-extracted from file paths or error types). |
 | **Bookmark** | `bookmark` | A saved reference to a specific log line. Persists across viewer reloads. Created with Ctrl+B. |
@@ -86,6 +86,5 @@ These terms **must not** appear in user-facing text:
 | Project Logs | **Logs** | Unnecessary qualifier. The panel is just "Logs". |
 | Code Origins | **Source Classes** | Misleading — the panel shows class/method names, not generic "code". |
 | filter preset | **Quick Filter** | Internal term. Users see "Quick Filter" in commands and menus. |
-| investigation | **collection** | Legacy term from an earlier design. |
 | case / active case | **collection** | Legacy term. |
 | webview | **viewer** or **log viewer** | VS Code implementation detail. |

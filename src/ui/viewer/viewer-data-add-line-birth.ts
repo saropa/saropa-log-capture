@@ -11,15 +11,18 @@
  *
  * The streaming-lines filter gap (lines arriving after a level toggle bypassed
  * the filter until `applyLevelFilter()` next ran) is folded into `_lineHidden`
- * via `calcLevelFiltered(lvl)`. The blank check is gated on `!_lineHidden` so
- * already-filtered rows still collapse fully to 0.
+ * via `calcLevelFiltered(lvl)`. Trouble Mode folds in the same way via
+ * `calcTroubleFiltered(lvl)` so a line arriving while the mode is active is born
+ * hidden rather than flashing visible until the next recalc. The blank check is
+ * gated on `!_lineHidden` so already-filtered rows still collapse fully to 0.
  */
 
 /** Get the embedded JavaScript for the lineItem birth-height computation. */
 export function getLineBirthScript(): string {
     return /* javascript */ `
 function computeLineBirthHeight(html, errorSuppressed, lineTierHidden, classHidden, catFiltered, lvl, scopeFilt, isAutoHidden) {
-    var _lineHidden = errorSuppressed || lineTierHidden || classHidden || catFiltered || calcLevelFiltered(lvl) || scopeFilt || isAutoHidden;
+    var _troubleHidden = typeof calcTroubleFiltered === 'function' && calcTroubleFiltered(lvl);
+    var _lineHidden = errorSuppressed || lineTierHidden || classHidden || catFiltered || calcLevelFiltered(lvl) || _troubleHidden || scopeFilt || isAutoHidden;
     /* Blank-at-birth: gate on !_lineHidden so filtered rows do not get a quarter
        height (which would re-expose them). isLineContentBlank consults html
        only — same input calcItemHeight uses on the next recalc pass. */
