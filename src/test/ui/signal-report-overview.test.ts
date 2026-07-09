@@ -42,6 +42,40 @@ test('buildOverviewHtml: should show log file path when provided', () => {
   assert.ok(html.includes('/home/user/reports/session.log'));
 });
 
+test('buildOverviewHtml: should render the log file as an openable link when a URI is given', () => {
+  const html = buildOverviewHtml({
+    bundle: makeBundle(),
+    logLineCount: 100,
+    logFilePath: '/home/user/reports/session.log',
+    logFileUri: 'file:///home/user/reports/session.log',
+  });
+  assert.ok(html.includes('overview-file-link'), 'should use the link row');
+  assert.ok(html.includes('data-kind="log"'), 'log link should carry the log kind');
+  assert.ok(html.includes('data-uri="file:///home/user/reports/session.log"'));
+});
+
+test('buildOverviewHtml: should add a report-file link only when both path and URI are present', () => {
+  const html = buildOverviewHtml({
+    bundle: makeBundle(),
+    logLineCount: 100,
+    logFilePath: undefined,
+    reportFilePath: '/home/user/reports/20260709_signal_error-recent.md',
+    reportFileUri: 'file:///home/user/reports/20260709_signal_error-recent.md',
+  });
+  assert.ok(html.includes('Report file'), 'should label the report row');
+  assert.ok(html.includes('data-kind="file"'), 'report link should carry the file kind');
+});
+
+test('buildOverviewHtml: should omit the report link when the report URI is missing', () => {
+  const html = buildOverviewHtml({
+    bundle: makeBundle(),
+    logLineCount: 100,
+    logFilePath: undefined,
+    reportFilePath: '/home/user/reports/report.md',
+  });
+  assert.ok(!html.includes('data-kind="file"'), 'no link without a URI');
+});
+
 test('buildOverviewHtml: should show stat cards for non-zero counts', () => {
   const bundle = makeBundle({
     errors: [

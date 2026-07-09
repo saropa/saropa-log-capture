@@ -268,12 +268,21 @@ Prefix a log line with a recognized **bracket tag** to route it to a severity le
 
 Unlisted bracket tags still work — they become free-form **Message-Tag chips** in the filter drawer (they just don't change the severity level).
 
+**Performance logging:** To emit a performance signal (slow operations, frame drops, latency, memory, etc.), prefix your log with **`[perf]`** or another performance tag from the list below. The classifier also detects quantified metrics like `took 500ms` or `duration: 1.2s` anywhere in the line. Bare keywords in natural language (e.g., "Performance settings") are ignored to avoid false positives.
+
+```text
+[perf] Database query took 2400ms
+[latency] API request: 1850ms
+[jank] Skipped 12 frames during scroll
+[memory] Retained memory spike: 180MB
+```
+
 **Tags that set a severity level** (case-insensitive):
 
 - **database** — `db` `database` `sql` `query` `drift` `isar` `sqlite` `sqlite3` `sqflite` `hive` `realm` `postgres` `mysql` `mongo` `mongodb` `dynamodb` `redis` `orm` `dao` `prisma` `sequelize` `migration` `rowcount`
 - **error** — `err` `error` `fatal` `panic` `crash` `exception` `abort`
 - **warning** — `warn` `warning` `caution` `deprecated` `retry` `fallback` `degraded`
-- **performance** — `perf` `performance` `slow` `latency` `timing` `profile` `jank` `frame` `fps` `gc` `memory` `bench` `benchmark`
+- **performance** — `perf` `performance` `slow` `latency` `timing` `profile` `jank` `frame` `fps` `gc` `memory` `bench` `benchmark` `frame-stall`
 - **todo** — `todo` `fixme` `hack` `xxx` `kludge` `workaround` `tech-debt`
 - **notice** — `notice` `note` `important` `banner` `milestone` `lifecycle`
 - **debug** — `debug` `trace` `verbose` `breadcrumb` `dump` `spew` `devlog`

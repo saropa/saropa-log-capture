@@ -64,7 +64,7 @@ export const TAG_LEVEL_MAP: Readonly<Record<string, SeverityLevel>> = {
     perf: 'performance', performance: 'performance', slow: 'performance', latency: 'performance',
     timing: 'performance', profile: 'performance', jank: 'performance', frame: 'performance',
     fps: 'performance', gc: 'performance', memory: 'performance', bench: 'performance',
-    benchmark: 'performance',
+    benchmark: 'performance', 'frame-stall': 'performance',
     // todo
     todo: 'todo', fixme: 'todo', hack: 'todo', xxx: 'todo', kludge: 'todo', workaround: 'todo',
     'tech-debt': 'todo',
