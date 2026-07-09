@@ -104,7 +104,7 @@ var threadtimeLevelPattern = /^\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\s
 // ── Keyword patterns (rebuilt from config) ──────────────────────────
 var kwError = /\\b(fatal|panic)\\b/i;
 var kwWarn = /\\b(warn|warning|caution|fail|failed|failure)\\b/i;
-var kwPerf = /\\b(perf|performance|dropped\\s+frame|fps|framerate|jank|stutter|choreographer|doing\\s+too\\s+much\\s+work|anr|application\\s+not\\s+responding)\\b/i;
+var kwPerf = /\\b(perf|dropped\\s+frame|fps|framerate|jank|stutter|choreographer|doing\\s+too\\s+much\\s+work|anr|application\\s+not\\s+responding)\\b/i;
 var kwTodo = /\\b(TODO|FIXME|HACK|XXX|BUG|KLUDGE|WORKAROUND)\\b/i;
 var kwDebug = /\\b(breadcrumb|trace|debug)\\b/i;
 var kwNotice = /\\b(notice|note|important)\\b/i;

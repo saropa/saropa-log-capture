@@ -1,0 +1,13 @@
+[
+  {
+    "line": 2845,
+    "timestamp": "2026-07-08T23:07:48.331Z",
+    "level": "performance",
+    "category": "console",
+    "tag": "log",
+    "source": "debug",
+    "text": "[log] No videos returned from YouTube API for emergency education resource. URL: `https://www.youtube.com/@VibrantForAll` - This could be due to: 1) API rate limiting, 2) Channel privacy settings, or 3) Performance settings filtering (maxResults=50) "
+  }
+]
+
+It is misleading. why is this Performance flagged?
