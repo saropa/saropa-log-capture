@@ -13,8 +13,10 @@
  * the default keyword patterns) attaches to the sandbox, then `classifyLevel` is pulled out. The
  * webview copy reads the module globals `strictLevelDetection` (default true) and
  * `stderrTreatAsError` (default false); the extension copy is called with the matching
- * `strict=true, stderrTreatAsError=false`. The corpus is deliberately tag/structural-pattern
- * focused so keyword-list defaults are not a confounder.
+ * `strict=true, stderrTreatAsError=false`. The corpus is mostly tag/structural-pattern
+ * focused, plus a few keyword-DEFAULT cases at the end: the default keyword lists are
+ * themselves hand-mirrored (config-normalizers.ts vs the webview `var kw*` lines) and
+ * have drifted before ("slow operation" missing from the webview perf default).
  */
 import * as assert from 'node:assert';
 import * as vm from 'node:vm';
@@ -51,6 +53,13 @@ const CORPUS: readonly Case[] = [
     { line: '[log] [database] Drift SELECT: SELECT * FROM "contacts"', level: 'database', note: 'plain Drift statement still database' },
     { line: 'Database query took 2400ms', level: 'performance', note: 'took Xms quantified metric' },
     { line: 'Elapsed duration: 1850ms for sync', level: 'performance', note: 'duration: Xms quantified metric' },
+    // Keyword-default parity guards. The default keyword lists exist in three places
+    // (config-normalizers.ts, the webview var kwPerf line, package.json) and drifted
+    // silently: "slow operation" was missing from the webview default, and bare
+    // "performance" lingered in package.json causing noun phrases like "Performance
+    // settings" to classify as performance (bugs/BUG_saropa signal report.md).
+    { line: 'W/ActivityManager: Slow operation: 51ms so far, now at startProcess', level: 'performance', note: 'slow operation keyword promotes W/ to performance' },
+    { line: '3) Performance settings filtering (maxResults=50)', level: 'info', note: 'bare "Performance" noun phrase stays info' },
 ];
 
 suite('level classification — extension/webview parity', () => {

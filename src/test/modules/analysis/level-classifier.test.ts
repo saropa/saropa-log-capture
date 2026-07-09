@@ -128,6 +128,17 @@ suite('LevelClassifier', () => {
             assert.strictEqual(classifyLevel('Slow operation: took 5000ms', 'stdout', true), 'performance');
         });
 
+        test('should not classify bare "Performance" noun phrases as performance', () => {
+            // Regression for bugs/BUG_saropa signal report.md: "performance" was a default
+            // keyword, so prose like "Performance settings filtering" in an info line
+            // classified as the performance level. Bare "performance" is intentionally
+            // absent from DEFAULT_SEVERITY_KEYWORDS AND the package.json setting default
+            // (VS Code resolves the package.json default, so it is the live list).
+            const line = '[log] No videos returned from YouTube API. This could be due to: '
+                + '1) API rate limiting, 2) Channel privacy settings, or 3) Performance settings filtering (maxResults=50)';
+            assert.strictEqual(classifyLevel(line, 'stdout', true), 'info');
+        });
+
         test('should classify Flutter/Dart memory lines as performance only with Flutter/Dart context', () => {
             assert.strictEqual(classifyLevel('memory pressure warning', 'stdout', true), 'info');
             assert.strictEqual(classifyLevel('I/flutter (123): memory pressure warning', 'stdout', true), 'performance');

@@ -246,7 +246,7 @@ All settings are prefixed with `saropaLogCapture.` — see [plans/guides/configu
 
 | Setting         | Default     | Description                                          |
 | --------------- | ----------- | ---------------------------------------------------- |
-| `enabled`       | `true`      | Enable/disable automatic log capture                 |
+| `enabled`       | `true`      | Master capture switch. Disabling stops active capture immediately (sessions, external tailers, watchers), not only new sessions |
 | `logDirectory`  | `"reports"` | Where to save log files (relative to workspace root) |
 | `captureAll`    | `false`     | Capture all Debug Console output, bypassing filters  |
 

@@ -26,6 +26,19 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Disabling capture now stops in-flight capture immediately.** Turning the master capture switch off (status bar toggle, Options panel, `saropaLogCapture.toggleCapture`, or the setting) finalizes any active session — flushing and closing the log file — and stops session-scoped work: external log tailers, the adb logcat process, terminal capture, and database live tail. Per-event DAP processing is skipped before buffering, and the background Crashlytics poller stops. Previously these kept running until the debug session happened to end. The captured log stays on disk; turning capture back on starts fresh on the next debug session. When disabling stopped live sessions, the toast names how many.
+
+### Fixed
+
+- **Bare "performance" no longer misclassifies prose as a performance signal.** The `severityKeywords` setting default in `package.json` still shipped the bare keyword "performance", so informational lines containing noun phrases like "Performance settings filtering" classified as the performance level even after the in-code defaults dropped it (VS Code resolves the `package.json` default, making it the live list). Removed there too; specific keywords (`perf`, `jank`, `fps`, `choreographer`, `slow operation`, …) and the structural patterns (`Skipped N frames`, `GC pause`, `took Nms`) still catch real performance logs.
+- **Webview default perf keywords were missing "slow operation".** The webview's built-in perf keyword regex (active only until the settings broadcast arrives) lacked `slow operation`, which the extension-side default includes. Restored parity and extended the extension/webview parity test corpus with keyword-default cases so this drift is caught in CI.
+
+---
+
 ## [9.1.1]
 
 Cut through the noise with the new Trouble Mode. This zero-context triage filter instantly strips away nominal lines so you only see errors, warnings, and performance issues. We've also made saving signal reports completely automatic—they now write straight to your reports folder the moment you open them. [log](https://github.com/saropa/saropa-log-capture/blob/v9.1.1/CHANGELOG.md)

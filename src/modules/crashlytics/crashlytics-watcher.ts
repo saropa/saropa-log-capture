@@ -37,13 +37,23 @@ export class CrashlyticsWatcher implements vscode.Disposable {
         this.reschedule();
         this.context.subscriptions.push(
             vscode.workspace.onDidChangeConfiguration(e => {
-                if (e.affectsConfiguration('saropaLogCapture.firebase')) { this.reschedule(); }
+                // Re-schedule on firebase.* changes AND on the master kill switch: flipping capture
+                // off must stop this background poller, and flipping it back on must resume it
+                // without a reload.
+                if (
+                    e.affectsConfiguration('saropaLogCapture.firebase')
+                    || e.affectsConfiguration('saropaLogCapture.enabled')
+                ) { this.reschedule(); }
             }),
         );
     }
 
     /** Poll interval in ms, or 0 when the feature is off (which stops the timer). */
     private intervalMs(): number {
+        // Master kill switch: when capture is disabled the background poller must also stop —
+        // otherwise network polling continues while the user believes all capture activity is off.
+        // Treated the same as the feature's own interval-0 disable (which stops the timer).
+        if (!vscode.workspace.getConfiguration('saropaLogCapture').get<boolean>('enabled', true)) { return 0; }
         const cfg = vscode.workspace.getConfiguration('saropaLogCapture.firebase');
         if (!cfg.get<boolean>('notifyNewIssues', false)) { return 0; }
         // Floor at 60s: the manifest allows refreshInterval down to 0 (disable), so a small positive

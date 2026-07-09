@@ -47,10 +47,14 @@ export function processOutputEvent(
     sessionId: string,
     body: DapOutputBody,
 ): void {
+    // Kill switch: when capture is disabled, do NO per-event work — not even buffering an
+    // unknown-session event. This gate must sit ABOVE the earlyBuffer.add branch so a flipped-off
+    // switch truly means zero string processing per DAP event (the switch's zero-overhead contract),
+    // rather than "receive, trim, and buffer up to 500 events, then drop them".
+    if (!deps.config.enabled) { return; }
     const session = deps.sessions.get(sessionId);
     // Buffer events arriving before async session init completes (DAP can fire before startSession returns).
     if (!session) { deps.earlyBuffer.add(sessionId, body); return; }
-    if (!deps.config.enabled) { return; }
 
     const category = body.category ?? 'console';
     const text = body.output.replace(/[\r\n]+$/, '');

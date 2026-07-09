@@ -1657,7 +1657,6 @@
             ],
             "performance": [
               "perf",
-              "performance",
               "dropped frame",
               "fps",
               "framerate",

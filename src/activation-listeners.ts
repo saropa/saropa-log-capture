@@ -83,6 +83,21 @@ export function setupConfigListener(
             /* Keep the status bar toggle in sync when the setting changes
              * externally (e.g. via the Settings UI or settings.json edit). */
             captureToggle.setEnabled(cfg.enabled);
+            /* Kill switch: flipping capture off must stop all in-flight work, not just gate new
+             * sessions. Without this, the log stream stays open and session-scoped integrations
+             * (external tailers' fs.watch handles, the adb logcat process, terminal capture,
+             * database live tail) keep running until the debug session happens to end — so the
+             * user sees "capture off" while watchers and processes are still active. stopAll()
+             * flushes each write queue and runs the session-end providers that stop those tailers
+             * and processes, the same cascade deactivate() uses. Fire-and-forget: a config listener
+             * must never throw, so any failure is logged to the output channel instead. */
+            if (!cfg.enabled) {
+                sessionManager.stopAll().catch(err =>
+                    sessionManager.logToOutputChannel(
+                        `[capture] Failed to stop sessions on disable: ${err instanceof Error ? err.message : String(err)}`,
+                    ),
+                );
+            }
         }
         if (e.affectsConfiguration('saropaLogCapture.iconBarPosition')) {
             broadcaster.setIconBarPosition(cfg.iconBarPosition);

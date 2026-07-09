@@ -116,3 +116,15 @@ The fix is **safe** if:
 - Audit a sample of real perf logs from the user's app to confirm they use covered patterns
 - If any real perf signal is being missed, the pattern causing the miss must be identified and added to `structuralPerfPattern` or `DEFAULT_SEVERITY_KEYWORDS.performance`
 
+## Review Findings (2026-07-09)
+
+The review found the fix described above was **incomplete** — two defects remained:
+
+1. **The false positive was still live.** There are THREE copies of the default keyword lists, and the third — the `saropaLogCapture.severityKeywords` setting default in `package.json` — still contained bare `"performance"`. Because VS Code resolves `cfg.get("severityKeywords")` to the `package.json` default whenever the user has not overridden the setting, and `normalizeSeverityKeywords()` keeps any non-empty array as-is, the **effective runtime keyword list still included bare "performance"** for every real user. The in-code `DEFAULT_SEVERITY_KEYWORDS` (where the word was removed) only applies when the config value is missing or malformed. Fixed: removed `"performance"` from the `package.json` default.
+
+2. **Parity was NOT maintained.** The webview's built-in default perf regex (`kwPerf` in `viewer-level-classify.ts:111`) was missing `slow\s+operation`, which the extension-side default includes. This default is live from webview load until the first settings broadcast overwrites it. The existing parity test could not catch this because its corpus deliberately avoided keyword defaults. Fixed: added `slow\s+operation` to the webview default and added keyword-default cases to the parity corpus (the bug's example noun-phrase line → `info`, and a `W/ActivityManager: Slow operation` line → `performance`).
+
+3. **Regression test added.** `level-classifier.test.ts` now asserts the bug's example line (`…3) Performance settings filtering (maxResults=50)`) classifies as `info`.
+
+The false-negative analysis in this report stands: `[perf]` tags, the `perf`/`jank`/`fps`/`choreographer`/`slow operation` keywords, and the structural patterns (`Skipped N frames`, `GC pause/freed/concurrent`, `took Nms`, `duration: Nms`) cover the known real-world perf log shapes. Note also that the head-tag dictionary (`tag-level-dictionary.ts`) still maps a bracket tag `[performance]` to the performance level — that is unaffected and correct, since a bracket tag is an explicit structured signal, not prose.
+
