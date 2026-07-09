@@ -34,7 +34,17 @@ function applyLevelFilter() {
         if (item.type === 'marker') { item.levelFiltered = false; continue; }
         item.levelFiltered = allEnabled ? false : !enabledLevels.has(item.level);
     }
-    if (!allEnabled && contextLinesBefore > 0) {
+    /* Context window only in FOCUS mode. The ±N context reveal exists to keep the
+       surroundings of the few levels you are focusing on (e.g. "show only errors" still
+       shows the info lines that led up to each error, dimmed). But it also fired when the
+       user merely EXCLUDED one level while keeping the rest — turning off Performance with
+       7/8 levels on left almost every perf line within N rows of a still-shown line, so it
+       came back as dimmed context instead of hiding. Users read that as "the toggle only
+       dimmed them" (bugs/BUG_Log_viewer_issues.md). Gate the reveal on a focused selection
+       — shown levels are a minority — so excluding a level or two hides cleanly, while
+       soloing / narrowing to a few levels still gets its context. */
+    var focused = enabledLevels.size <= Math.floor(allLevelNames.length / 2);
+    if (!allEnabled && focused && contextLinesBefore > 0) {
         for (var i = 0; i < allLines.length; i++) {
             if (allLines[i].levelFiltered || allLines[i].type === 'marker') continue;
             for (var j = 1; j <= contextLinesBefore && (i - j) >= 0; j++) {

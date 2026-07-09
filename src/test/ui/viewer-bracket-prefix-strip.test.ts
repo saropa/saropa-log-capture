@@ -94,9 +94,10 @@ suite('renderItem multi-bracket source-tag strip', () => {
     });
 
     test('structured prefix strip still takes priority over source-tag strip', () => {
-        /* When structuredPrefixLen > 0, stripHtmlPrefix handles everything (including
-           brackets). The source-tag strip is only a fallback for lines that did not
-           match any structured format. */
+        /* stripHtmlPrefix removes the structured HEADER (timestamp/PID/level/logcat tag), but
+           NOT any app-emitted head tags that follow it — those are stripped by a second pass
+           inside the structured branch (see the head-tag test below). The standalone source-tag
+           strip is still the fallback for lines that did not match any structured format. */
         const lines = renderScript.split('\n');
         const structuredBranch = lines.findIndex(
             (l: string) => l.includes('structuredLineParsing') && l.includes('structuredPrefixLen > 0'),
@@ -109,6 +110,25 @@ suite('renderItem multi-bracket source-tag strip', () => {
         assert.ok(
             structuredBranch < sourceTagBranch,
             'structured prefix strip must be checked BEFORE source-tag fallback',
+        );
+    });
+
+    test('structured branch also strips leading app head tags left after the header', () => {
+        /* BUG_Log_viewer_issues.md: "I/flutter (…): [perf] [frame-stall] …" kept "[perf] [frame-stall]"
+           visible because the structured strip only removed the logcat header. Those tags duplicate
+           the level chip/row color, so the structured branch now runs the same all-leading-brackets
+           strip the non-structured branch uses, guarded on item.sourceTag. */
+        const structuredIdx = renderScript.indexOf('stripHtmlPrefix(rawHtml, item.structuredPrefixLen)');
+        const elseIdx = renderScript.indexOf('} else if (typeof stripSourceTagPrefix', structuredIdx);
+        assert.ok(structuredIdx >= 0 && elseIdx > structuredIdx, 'structured branch must exist before the else-if');
+        const structuredBody = renderScript.substring(structuredIdx, elseIdx);
+        assert.ok(
+            structuredBody.includes('stripSourceTagPrefix') && structuredBody.includes('item.sourceTag'),
+            'structured branch must run the head-tag strip guarded on item.sourceTag',
+        );
+        assert.ok(
+            structuredBody.includes('(?:\\[[^\\]]+\\]\\s?)+'),
+            'structured branch must strip all leading [bracket] head tags',
         );
     });
 });

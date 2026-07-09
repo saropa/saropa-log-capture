@@ -8,9 +8,11 @@
  * existing level selection, and it enforces true zero-context (no +/-N context
  * lines, unlike the level filter's context window).
  *
- * Toggled by the `saropaLogCapture.troubleMode.toggle` command (host posts
- * `triggerToggleTroubleMode`) or by clicking the footer chip, and persisted
- * per-webview via `setState` so the mode survives a webview reload.
+ * Toggled by the toolbar button (`#toolbar-trouble-btn`, next to the filter icon)
+ * or the `saropaLogCapture.troubleMode.toggle` command (host posts
+ * `triggerToggleTroubleMode`), and persisted per-webview via `setState` so the
+ * mode survives a webview reload. The button's active style + the dimmed level
+ * dots (body class `slc-trouble-active`) show the state.
  *
  * `calcTroubleFiltered(level)` is the single classification helper. It is called
  * both here (applyTroubleFilter over allLines) AND at line birth
@@ -57,15 +59,19 @@ function saveTroubleModeState() {
     vscodeApi.setState(st);
 }
 
-/* Body class + footer chip so the user always knows why most lines vanished —
-   silent filtering that hides 90% of the log reads as "the viewer broke".
+/* Reflect the mode everywhere the user reads state: the toolbar button's active
+   style + aria-pressed (on/off), and a body class the level dots key off to dim
+   the levels being hidden — so silent filtering never reads as "the viewer broke".
    Guarded for DOM-less contexts (the VM test harness) so the classifier logic
    stays unit-testable without a document. */
 function applyTroubleModeIndicator() {
     if (typeof document === 'undefined') return;
     document.body.classList.toggle('slc-trouble-active', troubleModeActive);
-    var chip = document.getElementById('trouble-mode-indicator');
-    if (chip) chip.classList.toggle('u-hidden', !troubleModeActive);
+    var btn = document.getElementById('toolbar-trouble-btn');
+    if (btn) {
+        btn.classList.toggle('toolbar-icon-btn-active', troubleModeActive);
+        btn.setAttribute('aria-pressed', troubleModeActive ? 'true' : 'false');
+    }
 }
 
 function toggleTroubleMode() {
@@ -90,8 +96,8 @@ function restoreTroubleModeState() {
 
 (function() {
     if (typeof document === 'undefined') return;
-    var chip = document.getElementById('trouble-mode-indicator');
-    if (chip) chip.addEventListener('click', function() { toggleTroubleMode(); });
+    var btn = document.getElementById('toolbar-trouble-btn');
+    if (btn) btn.addEventListener('click', function(e) { e.stopPropagation(); toggleTroubleMode(); });
     restoreTroubleModeState();
 })();
 `;

@@ -51,6 +51,18 @@ function renderItem(item, idx, prevVis) {
        call removes brackets + structured prefix together. */
     if (typeof structuredLineParsing !== 'undefined' && structuredLineParsing && item.structuredPrefixLen > 0) {
         rawHtml = (typeof stripHtmlPrefix === 'function') ? stripHtmlPrefix(rawHtml, item.structuredPrefixLen) : rawHtml;
+        /* The structured prefix strip removes the timestamp/PID/level/logcat HEADER but leaves any
+           app-emitted head tags that followed it — e.g. "I/flutter (…): [perf] [frame-stall] …"
+           keeps "[perf] [frame-stall]". Those tags only duplicate the level chip + row color (the
+           tag is what classified the line's severity in the first place), so strip the leading
+           [bracket] tags too when tag-stripping is on. Without this, structured lines showed the
+           redundant severity tag inline while non-structured lines (below) did not — the
+           inconsistency reported in bugs/BUG_Log_viewer_issues.md. Guarded on item.sourceTag so a
+           structured line whose body legitimately opens with a non-tag "[literal]" (no recognized
+           source tag parsed) is left untouched. */
+        if (typeof stripSourceTagPrefix !== 'undefined' && stripSourceTagPrefix && item.sourceTag) {
+            rawHtml = rawHtml.replace(/^(?:\\[[^\\]]+\\]\\s?)+/, '');
+        }
     } else if (typeof stripSourceTagPrefix !== 'undefined' && stripSourceTagPrefix && item.sourceTag) {
         /* Strip ALL leading [bracket] pairs — DAP adapters may prepend multiple
            (e.g. [11:49:55.128] [stdout]) and we only want the message body. */

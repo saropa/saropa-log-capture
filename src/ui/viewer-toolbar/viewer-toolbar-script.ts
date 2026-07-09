@@ -9,6 +9,7 @@
  * appended below the main IIFE so tab click handlers wire up during page load.
  */
 import { getFilterTabsScript } from './viewer-toolbar-filter-tabs-script';
+import { t } from '../../l10n';
 
 /** Returns the toolbar interaction JavaScript. */
 export function getToolbarScript(): string {
@@ -272,6 +273,41 @@ export function getToolbarScript(): string {
     }
 
     if (formatBtn) formatBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleFormat(); });
+
+    /* ---- Collapse / expand all sections (moved from the editor view-title bar) ----
+       One button that swaps icon + title to reflect state. allSectionsCollapsed is an
+       approximate global (the user can still toggle individual groups), matching how the
+       old view-title context key 'saropaLogCapture.allCollapsed' worked. */
+    var collapseBtn = document.getElementById('toolbar-collapse-btn');
+    var allSectionsCollapsed = false;
+    var COLLAPSE_TITLE = ${JSON.stringify(t('viewer.toolbar.collapseAll.title'))};
+    var COLLAPSE_LABEL = ${JSON.stringify(t('viewer.toolbar.collapseAll.label'))};
+    var EXPAND_TITLE = ${JSON.stringify(t('viewer.toolbar.expandAll.title'))};
+    var EXPAND_LABEL = ${JSON.stringify(t('viewer.toolbar.expandAll.label'))};
+    function updateCollapseBtn() {
+        if (!collapseBtn) return;
+        var icon = collapseBtn.querySelector('.codicon');
+        if (icon) {
+            icon.classList.toggle('codicon-expand-all', allSectionsCollapsed);
+            icon.classList.toggle('codicon-collapse-all', !allSectionsCollapsed);
+        }
+        collapseBtn.title = allSectionsCollapsed ? EXPAND_TITLE : COLLAPSE_TITLE;
+        collapseBtn.setAttribute('aria-label', allSectionsCollapsed ? EXPAND_LABEL : COLLAPSE_LABEL);
+    }
+    if (collapseBtn) collapseBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (allSectionsCollapsed) {
+            if (typeof expandAllSections === 'function') expandAllSections();
+            allSectionsCollapsed = false;
+        } else {
+            if (typeof collapseAllSections === 'function') collapseAllSections();
+            allSectionsCollapsed = true;
+        }
+        updateCollapseBtn();
+    });
+    /* Keep the icon correct when the collapse/expand palette commands (or their
+       keybindings) fire instead of this button — the message handler calls this. */
+    window.__setAllSectionsCollapsed = function(v) { allSectionsCollapsed = !!v; updateCollapseBtn(); };
 
     initAnimEnd(searchFlyout);
     if (actionsPopover) {
