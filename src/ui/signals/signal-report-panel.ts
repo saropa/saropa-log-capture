@@ -54,7 +54,10 @@ export async function showSignalReport(
     nonce: getNonce(),
     hypothesis,
   });
-  await populateSections(panel, state);
+  // Persist the full report to disk automatically on open (replaces the manual
+  // "Save Report" action). The overview section links to the saved file.
+  const reportUri = await autoSaveReport(state);
+  await populateSections(panel, state, reportUri);
 }
 
 /** Build a short panel title from the hypothesis template ID. */
@@ -78,15 +81,21 @@ function createPanel(hypothesis: RootCauseHypothesis): vscode.WebviewPanel {
 async function populateSections(
   panel: vscode.WebviewPanel,
   state: PanelState,
+  reportUri: vscode.Uri | undefined,
 ): Promise<void> {
   const { hypothesis, bundle, fileUri } = state;
   const logLines = fileUri ? await readLogLines(fileUri) : [];
 
-  // 1. Session overview — aggregate stats, timing, outcome, all errors
+  // 1. Session overview — aggregate stats, timing, outcome, all errors.
+  // Paths are passed as both display text and URI strings so the webview can
+  // open them (log file → viewer, saved report → editor).
   const overviewHtml = buildOverviewHtml({
     bundle,
     logLineCount: logLines.length,
     logFilePath: fileUri?.fsPath,
+    logFileUri: fileUri?.toString(),
+    reportFilePath: reportUri?.fsPath,
+    reportFileUri: reportUri?.toString(),
     logLines,
   });
   postSection(panel, 'overview', 'Session Overview', overviewHtml);
@@ -225,11 +234,13 @@ function handleMessage(
   panel: vscode.WebviewPanel,
 ): void {
   if (msg.type === 'copyReport') { copyReport(state, panel); }
-  if (msg.type === 'saveReport') { saveReport(state, panel); }
   if (msg.type === 'openSessionFromHistory') {
     const uri = msg.uriString as string;
-    if (uri) { vscode.commands.executeCommand('saropaLogCapture.openLog', vscode.Uri.parse(uri)); }
+    // openSession loads a log URI into the viewer; the old 'openLog' command
+    // this called was never registered, so history rows silently did nothing.
+    if (uri) { vscode.commands.executeCommand('saropaLogCapture.openSession', { uri: vscode.Uri.parse(uri) }); }
   }
+  if (msg.type === 'openFile') { openFileFromReport(msg); }
   if (msg.type === 'openUrl') {
     const url = msg.url as string;
     // Only allow marketplace URLs from ecosystem install links
@@ -251,20 +262,41 @@ function copyReport(state: PanelState, panel: vscode.WebviewPanel): void {
   ).catch(() => { postToast(panel, t('signals.toast.buildFailed'), 'error'); });
 }
 
-function saveReport(state: PanelState, panel: vscode.WebviewPanel): void {
-  buildMarkdownReport(state).then((md) => {
-    if (!md) { return; }
+/**
+ * Write the full report to disk when the panel opens and return its URI.
+ * Failure is non-critical (the panel still renders): log it and return undefined
+ * so the overview simply omits the report link.
+ */
+async function autoSaveReport(state: PanelState): Promise<vscode.Uri | undefined> {
+  try {
+    const md = await buildMarkdownReport(state);
+    if (!md) { return undefined; }
     const wsFolder = vscode.workspace.workspaceFolders?.[0];
     const logDirUri = getLogDirectoryUri(wsFolder);
     const filename = buildSaveFilename(state, new Date());
     const destUri = vscode.Uri.joinPath(logDirUri, filename);
-    return vscode.workspace.fs.createDirectory(logDirUri)
-      .then(() => vscode.workspace.fs.writeFile(destUri, Buffer.from(md, 'utf-8')))
-      .then(() => { postToast(panel, t('signals.toast.saved', filename), 'success'); });
-  }).catch((err) => {
-    logExtensionError('saveSignalReport', err instanceof Error ? err : new Error(String(err)));
-    postToast(panel, t('signals.toast.saveFailed'), 'error');
-  });
+    await vscode.workspace.fs.createDirectory(logDirUri);
+    await vscode.workspace.fs.writeFile(destUri, Buffer.from(md, 'utf-8'));
+    return destUri;
+  } catch (err) {
+    logExtensionError('autoSaveSignalReport', err instanceof Error ? err : new Error(String(err)));
+    return undefined;
+  }
+}
+
+/**
+ * Open a file linked from the overview. Log files load into the Saropa viewer;
+ * the saved markdown report opens in a normal editor.
+ */
+function openFileFromReport(msg: Record<string, unknown>): void {
+  const uriString = msg.uriString as string;
+  if (!uriString) { return; }
+  const uri = vscode.Uri.parse(uriString);
+  if (msg.kind === 'log') {
+    vscode.commands.executeCommand('saropaLogCapture.openSession', { uri });
+  } else {
+    vscode.commands.executeCommand('vscode.open', uri);
+  }
 }
 
 function buildSaveFilename(state: PanelState, now: Date): string {
