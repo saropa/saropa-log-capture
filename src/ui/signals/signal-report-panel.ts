@@ -26,7 +26,7 @@ import { loadSignalHistory, loadLastCleanSessionUri } from './signal-report-hist
 import { buildHistoryHtml } from './signal-report-history';
 import { buildEcosystemHtml } from './signal-report-ecosystem';
 
-/** Per-panel state for save/copy actions. Includes bundle for full markdown export. */
+/** Per-panel state for the copy + auto-save report actions. Includes bundle for full markdown export. */
 interface PanelState {
   readonly hypothesis: RootCauseHypothesis;
   readonly bundle: RootCauseHintBundle;
@@ -54,10 +54,23 @@ export async function showSignalReport(
     nonce: getNonce(),
     hypothesis,
   });
-  // Persist the full report to disk automatically on open (replaces the manual
-  // "Save Report" action). The overview section links to the saved file.
-  const reportUri = await autoSaveReport(state);
-  await populateSections(panel, state, reportUri);
+  // Render all sections progressively FIRST so the initial paint is not blocked
+  // behind the report build + disk write. Reuse the log lines read here for the
+  // auto-save (avoids a second full read), then refresh the overview so it links
+  // to the saved file. Auto-save replaces the old manual "Save Report" action.
+  const { logLines, cleanHeader } = await populateSections(panel, state);
+  const reportUri = await autoSaveReport(state, logLines, cleanHeader);
+  if (reportUri) {
+    postSection(panel, 'overview', 'Session Overview', buildOverviewHtml({
+      bundle,
+      logLineCount: logLines.length,
+      logFilePath: fileUri?.fsPath,
+      logFileUri: fileUri?.toString(),
+      reportFilePath: reportUri.fsPath,
+      reportFileUri: reportUri.toString(),
+      logLines,
+    }));
+  }
 }
 
 /** Build a short panel title from the hypothesis template ID. */
@@ -77,25 +90,26 @@ function createPanel(hypothesis: RootCauseHypothesis): vscode.WebviewPanel {
   return panel;
 }
 
-/** Populate all report sections — reads the log file once and shares across all builders. */
+/**
+ * Populate all report sections — reads the log file once and shares across all
+ * builders. Returns the read log lines and the clean-session header so the caller
+ * can build the auto-saved report without re-reading from disk.
+ */
 async function populateSections(
   panel: vscode.WebviewPanel,
   state: PanelState,
-  reportUri: vscode.Uri | undefined,
-): Promise<void> {
+): Promise<{ logLines: string[]; cleanHeader: ReturnType<typeof parseSessionHeader> | undefined }> {
   const { hypothesis, bundle, fileUri } = state;
   const logLines = fileUri ? await readLogLines(fileUri) : [];
 
   // 1. Session overview — aggregate stats, timing, outcome, all errors.
-  // Paths are passed as both display text and URI strings so the webview can
-  // open them (log file → viewer, saved report → editor).
+  // The log-file link opens the log in the viewer; the saved-report link is added
+  // by a follow-up overview refresh once the auto-save completes (see showSignalReport).
   const overviewHtml = buildOverviewHtml({
     bundle,
     logLineCount: logLines.length,
     logFilePath: fileUri?.fsPath,
     logFileUri: fileUri?.toString(),
-    reportFilePath: reportUri?.fsPath,
-    reportFileUri: reportUri?.toString(),
     logLines,
   });
   postSection(panel, 'overview', 'Session Overview', overviewHtml);
@@ -143,6 +157,10 @@ async function populateSections(
     cleanHeader,
   });
   postSection(panel, 'history', 'Cross-Session History', historyHtml);
+
+  // Hand the already-read log lines + clean header back so the auto-save reuses
+  // them instead of reading the log file a second time.
+  return { logLines, cleanHeader };
 }
 
 /**
@@ -264,12 +282,25 @@ function copyReport(state: PanelState, panel: vscode.WebviewPanel): void {
 
 /**
  * Write the full report to disk when the panel opens and return its URI.
- * Failure is non-critical (the panel still renders): log it and return undefined
- * so the overview simply omits the report link.
+ * Reuses the log lines + clean header already read by populateSections so the
+ * log file is not read a second time. Failure is non-critical (the panel still
+ * renders): log it and return undefined so the overview omits the report link.
  */
-async function autoSaveReport(state: PanelState): Promise<vscode.Uri | undefined> {
+async function autoSaveReport(
+  state: PanelState,
+  logLines: readonly string[],
+  cleanHeader: ReturnType<typeof parseSessionHeader> | undefined,
+): Promise<vscode.Uri | undefined> {
   try {
-    const md = await buildMarkdownReport(state);
+    const wsRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    const md = await buildFullMarkdownReport({
+      hypothesis: state.hypothesis,
+      bundle: state.bundle,
+      logLines,
+      filePath: state.fileUri?.fsPath,
+      wsRoot,
+      cleanHeader,
+    });
     if (!md) { return undefined; }
     const wsFolder = vscode.workspace.workspaceFolders?.[0];
     const logDirUri = getLogDirectoryUri(wsFolder);

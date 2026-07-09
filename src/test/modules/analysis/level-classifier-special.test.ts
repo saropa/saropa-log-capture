@@ -97,6 +97,52 @@ suite('LevelClassifier (special formats)', () => {
                 'database',
             );
         });
+
+        // Drift SLOW / REPEAT annotations carry the app's [database] head tag but are
+        // performance signals (slow query / N+1 storm). They must classify as 'performance'
+        // so they survive with the Database level off and appear under Performance
+        // (BUG_Log_viewer_issues.md item 2) — not as 'database', which the DB toggle hides.
+        test('should classify "Drift SLOW <n>ms" as performance despite the [database] tag', () => {
+            assert.strictEqual(
+                classifyLevel(
+                    '[log] [database] Drift SLOW 533ms SELECT: SELECT * FROM "activities" ORDER BY "activity_date_time" DESC;',
+                    'console',
+                    true,
+                ),
+                'performance',
+            );
+        });
+
+        test('should classify "Drift REPEAT x<n>" batches as performance despite the [database] tag', () => {
+            assert.strictEqual(
+                classifyLevel(
+                    '[log] [database] Drift REPEAT x8 in ≤500ms INSERT: INSERT INTO "activities" ("metadata") VALUES (?)',
+                    'console',
+                    true,
+                ),
+                'performance',
+            );
+        });
+
+        test('should classify "Drift SLOW" as performance even when SQL args contain an "…Error" enum value', () => {
+            // The perf check runs ahead of matchesError so a logged column/enum like
+            // "ApplicationLogError" in the statement cannot force the line to 'error'.
+            assert.strictEqual(
+                classifyLevel(
+                    '[log] [database] Drift SLOW 900ms SELECT: SELECT * FROM "logs" WHERE "kind" = \'ApplicationLogError\';',
+                    'console',
+                    true,
+                ),
+                'performance',
+            );
+        });
+
+        test('should still classify a plain "Drift SELECT:" statement as database (perf pattern is specific)', () => {
+            assert.strictEqual(
+                classifyLevel('[log] [database] Drift SELECT: SELECT * FROM "contacts";', 'console', true),
+                'database',
+            );
+        });
     });
 
     suite('classifyLevel — DB vendor bracket tags and "Vendor:" prefixes', () => {
