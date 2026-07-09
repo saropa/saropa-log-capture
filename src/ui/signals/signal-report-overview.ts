@@ -22,15 +22,27 @@ export interface OverviewOptions {
   readonly bundle: RootCauseHintBundle;
   readonly logLineCount: number;
   readonly logFilePath: string | undefined;
+  /** URI string for the log file, so the panel can open it in the viewer. */
+  readonly logFileUri?: string;
+  /** Path of the auto-saved report, shown as an openable link (HTML panel only). */
+  readonly reportFilePath?: string;
+  /** URI string for the auto-saved report, so the panel can open it in an editor. */
+  readonly reportFileUri?: string;
   readonly logLines?: readonly string[];
 }
 
 /** Build session overview HTML showing aggregate stats from the bundle. */
 export function buildOverviewHtml(opts: OverviewOptions): string {
-  const { bundle, logLineCount, logFilePath, logLines } = opts;
+  const { bundle, logLineCount, logFilePath, logFileUri, reportFilePath, reportFileUri, logLines } = opts;
   const parts: string[] = [];
   if (logFilePath) {
-    parts.push(overviewRow(t('signals.overview.logFile'), logFilePath));
+    // Link opens the log in the viewer when a URI is available; plain text otherwise.
+    parts.push(logFileUri
+      ? overviewLinkRow(t('signals.overview.logFile'), logFilePath, logFileUri, 'log')
+      : overviewRow(t('signals.overview.logFile'), logFilePath));
+  }
+  if (reportFilePath && reportFileUri) {
+    parts.push(overviewLinkRow(t('signals.overview.reportFile'), reportFilePath, reportFileUri, 'file'));
   }
   parts.push(overviewRow(t('signals.overview.logLines'), logLineCount.toLocaleString()));
   parts.push(overviewRow(t('signals.overview.session'), bundle.sessionId));
@@ -198,6 +210,20 @@ function overviewRow(label: string, value: string): string {
     `<div class="overview-row">` +
     `<span class="overview-label">${escapeHtml(label)}</span>` +
     `<span class="overview-value">${escapeHtml(value)}</span>` +
+    `</div>`
+  );
+}
+
+/**
+ * An overview row whose value is a clickable link. The webview's delegated click
+ * handler reads data-uri/data-kind and posts an 'openFile' message to the host.
+ */
+function overviewLinkRow(label: string, value: string, uriString: string, kind: 'log' | 'file'): string {
+  return (
+    `<div class="overview-row">` +
+    `<span class="overview-label">${escapeHtml(label)}</span>` +
+    `<a class="overview-value overview-file-link" href="#" ` +
+    `data-uri="${escapeHtml(uriString)}" data-kind="${kind}">${escapeHtml(value)}</a>` +
     `</div>`
   );
 }

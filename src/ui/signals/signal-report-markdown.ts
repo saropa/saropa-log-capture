@@ -9,7 +9,7 @@ import type {
   RootCauseHintError,
   RootCauseHypothesis,
 } from '../../modules/root-cause-hints/root-cause-hint-types';
-import { resolveSourcePaths } from './signal-report-render';
+import { resolveSourcePaths, buildRecommendationsMarkdown } from './signal-report-render';
 import { buildOverviewMarkdown, buildOtherSignalsMarkdown } from './signal-report-overview';
 import { buildDetailsMarkdown } from './signal-report-details';
 import { resolveText } from './signal-report-related';
@@ -78,6 +78,11 @@ export async function buildFullMarkdownReport(opts: MarkdownReportOptions): Prom
   // Other signals in this session
   const othersMd = buildOtherSignalsMarkdown(hypothesis, bundle);
   if (othersMd) { out.push(othersMd); }
+
+  // Recommendations — category-tailored for error-recent, same as the on-screen panel
+  const firstErrorCat = bundle.errors?.find(e => e?.category)?.category;
+  const recsMd = buildRecommendationsMarkdown(hypothesis.templateId, firstErrorCat);
+  if (recsMd) { out.push(recsMd); }
 
   // Companion extensions (Drift Advisor + Saropa Lints)
   const ecosystemMd = buildEcosystemMarkdown(bundle);

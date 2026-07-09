@@ -141,7 +141,7 @@ test("buildSignalReportShell: should render signal text in summary div", () => {
   assert.ok(html.includes("Medium confidence"));
 });
 
-test("buildSignalReportShell: should include save report button", () => {
+test("buildSignalReportShell: should NOT include a save report button (auto-saved on open)", () => {
   const html = buildSignalReportShell({
     nonce: "n",
     hypothesis: {
@@ -151,11 +151,12 @@ test("buildSignalReportShell: should include save report button", () => {
       hypothesisKey: "test::5",
     },
   });
-  assert.ok(html.includes('id="save-report-btn"'));
-  assert.ok(html.includes("Save Report"));
+  // Save Report was removed — the report is written to disk automatically on open.
+  assert.ok(!html.includes('id="save-report-btn"'));
+  assert.ok(!html.includes("Save Report"));
 });
 
-test("buildSignalReportShell: should include both copy and save buttons in btn-row", () => {
+test("buildSignalReportShell: should include the copy button in btn-row", () => {
   const html = buildSignalReportShell({
     nonce: "n",
     hypothesis: {
@@ -167,7 +168,6 @@ test("buildSignalReportShell: should include both copy and save buttons in btn-r
   });
   assert.ok(html.includes('class="btn-row"'));
   assert.ok(html.includes('id="copy-report-btn"'));
-  assert.ok(html.includes('id="save-report-btn"'));
 });
 
 test("buildSignalReportShell: should include ecosystem section slot for companion extensions", () => {
