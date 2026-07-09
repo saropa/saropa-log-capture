@@ -14,12 +14,6 @@
       "order": 1
     },
     {
-      "id": "mqttaaay-suldmd3f",
-      "path": "CHANGELOG.md",
-      "scope": "project",
-      "order": 2
-    },
-    {
       "id": "mqttae70-pfo6ikb2",
       "path": "scripts/publish.py",
       "scope": "project",
@@ -29,6 +23,13 @@
         "includeFilePath": true
       },
       "groupId": "default:deploy"
+    },
+    {
+      "id": "mrcolxn1-ufp2zdq9",
+      "path": "reports/organize_reports.py",
+      "scope": "project",
+      "order": 3,
+      "groupId": "default:code"
     }
   ],
   "groups": [],
