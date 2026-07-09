@@ -3,7 +3,7 @@
  */
 import test from "node:test";
 import assert from "node:assert/strict";
-import { renderEvidenceSection, renderRecommendations, buildSignalReportShell, resolveSourcePaths } from "../../ui/signals/signal-report-render";
+import { renderEvidenceSection, renderRecommendations, buildRecommendationsMarkdown, buildSignalReportShell, resolveSourcePaths } from "../../ui/signals/signal-report-render";
 
 // --- renderEvidenceSection ---
 
@@ -61,6 +61,24 @@ test("renderRecommendations: should return recommendation for n-plus-one", () =>
 test("renderRecommendations: should return no-data for unknown template", () => {
   const html = renderRecommendations("unknown-template-xyz");
   assert.ok(html.includes("No specific recommendations"));
+});
+
+// --- buildRecommendationsMarkdown (feeds the Copy Report / auto-saved report) ---
+
+test("buildRecommendationsMarkdown: should emit a Recommendations heading for a known template", () => {
+  const md = buildRecommendationsMarkdown("error-recent");
+  assert.ok(md.includes("## Recommendations"));
+  assert.ok(md.includes("stack trace"));
+});
+
+test("buildRecommendationsMarkdown: should use the category-tailored advice when provided", () => {
+  const md = buildRecommendationsMarkdown("error-recent", "oom");
+  assert.ok(md.includes("out-of-memory"));
+});
+
+test("buildRecommendationsMarkdown: should return empty string for an unknown template", () => {
+  // Empty (not a bare heading) so the report builder omits the section entirely.
+  assert.strictEqual(buildRecommendationsMarkdown("unknown-template-xyz"), "");
 });
 
 // --- buildSignalReportShell ---

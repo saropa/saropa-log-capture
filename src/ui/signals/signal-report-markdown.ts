@@ -1,6 +1,6 @@
 /**
  * Full markdown export for the signal report.
- * Used by Copy Report and Save Report actions to produce a comprehensive document
+ * Used by Copy Report and the auto-saved report to produce a comprehensive document
  * with all sections (overview, evidence with context, details, related items, other signals).
  */
 

@@ -23,6 +23,15 @@ const threadtimeLevelPattern = /^\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\.\d{3}\s+\d+\s+
 // Drift SQL statement logs can contain enum values like "ApplicationLogError" in args.
 // Matches both LogInterceptor (`Drift: Sent SELECT`) and DriftDebugInterceptor (`Drift SELECT: SELECT`).
 const driftStatementPattern = /\bDrift(?::\s+Sent|\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\s*:)\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\b/i;
+// Drift's own performance annotations — the DriftDebugInterceptor emits `Drift SLOW <n>ms <VERB>: …`
+// for over-threshold queries and `Drift REPEAT x<n> in ≤<n>ms …` for N+1 batches. These carry the
+// app's `[database]` head tag, so without this they classified as `database` (via matchesTagLevel)
+// and vanished whenever the user turned the Database level off — but they are performance signals
+// (slow query / query storm), not routine SQL traffic. Classifying them as `performance` splits
+// them out of the DB grouping so they survive with the Database filter off and appear under the
+// Performance filter (BUG_Log_viewer_issues.md item 2). `\d+\s*ms` tolerates "620ms" and "620 ms".
+// Linear-time: `\bDrift\s+` then a fixed two-branch alternation, no re-partitioning inner quantifier.
+const driftPerfPattern = /\bDrift\s+(?:SLOW\s+\d+\s*ms|REPEAT\s+x\d+)\b/i;
 
 /**
  * Vendor tokens that strongly imply database content when they appear as a
@@ -217,6 +226,10 @@ export function classifyLevel(
     stderrTreatAsError = true,
 ): SeverityLevel {
     if (stderrTreatAsError && category === 'stderr') { return 'error'; }
+    // Drift's SLOW/REPEAT perf annotations must win over both the `[database]` head tag and the
+    // Drift SQL grouping below — they are performance signals, not DB traffic. Placed ahead of
+    // matchesError too so an "…Error" enum value inside the logged SQL args can't force `error`.
+    if (driftPerfPattern.test(plainText)) { return 'performance'; }
     if (driftStatementPattern.test(plainText)) { return 'database'; }
     const lcm = logcatLevelPattern.exec(plainText) ?? threadtimeLevelPattern.exec(plainText);
     if (lcm) { return classifyLogcat(lcm[1], plainText, strict); }

@@ -63,6 +63,15 @@ function computeRowAffordances() {
         if (allLines[i]._hiddenAfter) allLines[i]._hiddenAfter = null;
         if (allLines[i]._triggeredPeekKey != null) allLines[i]._triggeredPeekKey = null;
         if (allLines[i].height === 0) continue;
+        /* Blank content rows (empty console output / paragraph-break slivers) render at a
+           quarter-height (>0), so without this they were eligible to become prevVis and then
+           received the filter-hidden-gap reveal chevron — a blank row with an expander arrow
+           on it (BUG_Log_viewer_issues.md item 1). They carry no line content to anchor an
+           affordance to, so skip them as the "previous visible" anchor: the reveal chevron
+           (and the peek-trigger detection) then attaches to the nearest NON-blank visible row.
+           The blank still renders; countHiddenNonBlank already excludes it from the gap count,
+           so no false chevron appears when only a blank separates two visible rows. */
+        if (allLines[i].type === 'line' && typeof isLineContentBlank === 'function' && isLineContentBlank(allLines[i])) continue;
         if (prevVis >= 0) {
             if (i - prevVis > 1 && typeof countHiddenNonBlank === 'function') {
                 var info = countHiddenNonBlank(prevVis + 1, i);

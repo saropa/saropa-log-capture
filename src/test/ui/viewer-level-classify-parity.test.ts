@@ -46,6 +46,9 @@ const CORPUS: readonly Case[] = [
     { line: '[DB] preload done', level: 'database', note: 'case-insensitive [DB]' },
     { line: 'Sqlite3: opened database', level: 'database', note: 'new Sqlite3 vendor prefix' },
     { line: 'bulkPreload wrote 185 rows', level: 'info', note: 'no tag → no promotion' },
+    { line: '[log] [database] Drift SLOW 533ms SELECT: SELECT * FROM "activities"', level: 'performance', note: 'Drift SLOW perf beats [database] tag' },
+    { line: '[log] [database] Drift REPEAT x8 in ≤500ms INSERT: INSERT INTO "activities"', level: 'performance', note: 'Drift REPEAT perf beats [database] tag' },
+    { line: '[log] [database] Drift SELECT: SELECT * FROM "contacts"', level: 'database', note: 'plain Drift statement still database' },
 ];
 
 suite('level classification — extension/webview parity', () => {

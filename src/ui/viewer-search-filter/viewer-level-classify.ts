@@ -38,6 +38,10 @@ var criticalSeverityPattern = /\\[critical\\]|\\bcritical\\s*:|\\bcritical\\s+(?
 // because the phrase has no colon/bracket. Mirror extension-side level-classifier.ts.
 var flutterExceptionBannerPattern = /\\bException caught by\\b/i;
 var driftStatementPattern = /\\bDrift(?:\\:\\s+Sent|\\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\s*\\:)\\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\b/i;
+// Drift's own perf annotations (SLOW <n>ms, REPEAT xN batches) carry the app's [database] head
+// tag but are performance signals, not routine SQL — classify as performance so the Database
+// filter can be off while they still surface under Performance. Mirrors level-classifier.ts.
+var driftPerfPattern = /\\bDrift\\s+(?:SLOW\\s+\\d+\\s*ms|REPEAT\\s+x\\d+)\\b/i;
 // Curated DB-vendor tokens. Mirrors level-classifier.ts. Bare "DB" / "SQL"
 // are excluded to avoid false positives on common English text.
 var databaseVendorTokensSrc = '(?:Drift|Isar|Sqlite3|Sqlite|Sqflite|Hive|Realm|Postgres|MySQL|MongoDB?|Prisma|DynamoDB)';
@@ -154,6 +158,9 @@ function matchesPerf(plainText) {
 
 function classifyLevel(plainText, category) {
     if (stderrTreatAsError && category === 'stderr') return 'error';
+    // Drift SLOW/REPEAT perf annotations win over the [database] tag and Drift SQL grouping —
+    // performance signals, not DB traffic. Mirrors level-classifier.ts. Keep in sync.
+    if (driftPerfPattern.test(plainText)) return 'performance';
     if (driftStatementPattern.test(plainText)) return 'database';
     var lcm = logcatLevelPattern.exec(plainText) || threadtimeLevelPattern.exec(plainText);
     if (lcm) {

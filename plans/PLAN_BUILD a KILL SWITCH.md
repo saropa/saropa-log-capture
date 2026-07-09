@@ -1,99 +1,169 @@
-# Feature Specification: Global Tracking & Capture Kill Switch (`saropa-log-capture`)
+# Plan: Global Capture Kill Switch
 
-## Overview & Objective
+## Status: Draft (rewritten 2026-07-09 against actual code; supersedes the external-AI draft)
 
-This specification details the implementation of a comprehensive **Kill Switch** for the `saropa-log-capture` extension workspace. This feature provides a single unified toggle to suspend or resume all active log processing, live stream captures, OpenTelemetry trace aggregations, background external file tailing, and data-flow queue allocations[cite: 4]. 
+## Objective
 
-When triggered, it eliminates background performance overhead entirely, ensuring zero log footprint during sensitive data tasks or high-throughput local operations[cite: 4].
+Make disabling capture actually kill all capture work — including work already in flight.
+A user flipping capture off (for a sensitive task, or to eliminate background overhead) must
+get a true zero-activity state: no open log stream, no file watchers, no spawned processes,
+no per-event string processing.
 
-Following the conventions laid out in the `BUG_REPORT_GUIDE.md`, this specification serves as the blueprint for the feature plan `057_plan-global-kill-switch.md`[cite: 3].
+## What already exists — do NOT rebuild
 
----
+Most of the original draft proposed surfaces that shipped long ago. Verified inventory:
 
-## 1. User Experience & UI Integration
+| Surface | Where | Behavior today |
+|---|---|---|
+| Master setting `saropaLogCapture.enabled` | `package.json`; read via `getConfig().enabled` | Gates session start (`src/modules/session/session-manager-start.ts:46`), session init (`src/modules/session/session-lifecycle-init.ts:55`), and every live DAP output event (`src/modules/session/session-manager-events.ts:53,190`) |
+| Toggle command `saropaLogCapture.toggleCapture` | `src/commands-session.ts:52-67` | Flips the setting (Workspace scope when a workspace is open, else Global) and shows a toast |
+| Status bar toggle | `src/ui/shared/capture-toggle-status-bar.ts` | Always-visible item, priority 52: `$(circle-filled)` on, `$(circle-outline)` + warning color off; click runs `toggleCapture` |
+| Options panel checkbox | `src/ui/viewer-panels/viewer-options-panel-html.ts:38-40`, synced by `viewer-options-panel-script.ts` from the host `captureEnabled` message (`src/ui/provider/log-viewer-provider-setup.ts:86`) | Master capture checkbox already at the top of the Options panel |
+| External-change sync | `src/activation-listeners.ts:82-86` | Settings-UI / settings.json edits update the status bar item |
+| Per-session pause | `saropaLogCapture.pause` → `sessionManager.togglePause()` (`src/modules/session/session-manager.ts:261-265`) | Pauses/resumes writes for the active session only — a different feature; leave untouched |
 
-The kill switch will be exposed via three primary surfaces within the VS Code Extension to ensure ease of access.
+All capture integrations are **session-scoped** — they start on session start and stop at
+session end: external log tailers (`src/modules/integrations/external-log-tailer.ts` — "Start/stop
+from session lifecycle"), terminal capture (`src/modules/integrations/providers/terminal-output.ts`),
+adb logcat streaming (`providers/adb-logcat.ts`, spawned in `onSessionStartStreaming`), database
+live tail (`providers/database-query-logs.ts:186-194`, gated on `integrations.database.liveTail`),
+and OTel trace parsing. Because session start is already gated on `enabled`, none of these ever
+start while capture is off. **No upstream "Is Switch Enabled?" gate needs to be built into the
+pipeline — it exists.**
 
-### 1a. View Title & Status Bar Controls
-* **Status Bar Indicator:** While active, a new status item will appear alongside the tracking stats indicating `$(shield) Capture Active` or `$(circle-slash) Capture Killed`. Clicking this indicator prompts a quick-pick selection to flip states.
-* **Viewer Options Drawer:** A master checkbox labeled "Enable Log Collection & Monitoring" will be placed at the absolute top of the **Options Panel** (under the Capture category group)[cite: 4].
+## The actual gaps
 
-### 1b. Command Palette
-Two new explicitly localized commands will be added to `package.json`[cite: 4]:
-* `Saropa Log Capture: Suspend All Logging and Monitoring` (`saropaLogCapture.monitoring.suspend`)
-* `Saropa Log Capture: Resume All Logging and Monitoring` (`saropaLogCapture.monitoring.resume`)
+Flipping `enabled` to `false` while a session is running does NOT kill in-flight work:
 
----
+1. **Running sessions stay alive.** The config listener (`src/activation-listeners.ts:82-86`)
+   only repaints the status bar. The log file stream stays open, external tailers keep their
+   `fs.watch` handles, the logcat process keeps streaming, terminal capture keeps buffering,
+   database live tail keeps watching — all until the debug session happens to end. Live DAP
+   lines are dropped per-event, so the user sees "capture off" while watchers and processes
+   keep running.
+2. **Early-output buffering happens before the enabled check.** In
+   `src/modules/session/session-manager-events.ts:50-53` the unknown-session branch buffers
+   the event (`earlyBuffer.add`) BEFORE the `enabled` gate. With capture off, every DAP output
+   event is still received, string-trimmed, and buffered (up to 500 events per session in
+   `EarlyOutputBuffer`). Bounded, so not a leak — but not zero work either, and it contradicts
+   the switch's promise.
+3. **The Crashlytics watcher ignores `enabled` entirely.** It polls on its own interval
+   setting (`src/modules/crashlytics/crashlytics-watcher.ts` — timer stops only when its own
+   interval is 0). Network polling continues while capture is "off".
 
-## 2. Configuration & Settings
+## Design decision
 
-A new global workspace configuration key will govern all stream parsing loops[cite: 4]:
+**Reuse `saropaLogCapture.enabled` as the kill switch. Add nothing new.**
 
-```json
-"saropaLogCapture.enableCaptureAndMonitoring": {
-  "type": "boolean",
-  "default": true,
-  "description": "When set to false, instantly closes external tailed logs, flushes pending queues, drops input streams, and suspends sidecar telemetry generation."
-}
-```
+- No new setting. A second master boolean (`enableCaptureAndMonitoring`) alongside `enabled`
+  splits one concept across two sources of truth; every consumer would have to check both.
+- No new commands. `toggleCapture` + status bar + Options checkbox + Settings UI are four
+  existing entry points. (If explicit palette verbs are ever wanted, the repo convention is
+  flat IDs — `saropaLogCapture.suspendCapture` — never nested `saropaLogCapture.monitoring.suspend`;
+  see `.claude/rules/typescript.md` naming.)
+- No new status bar item. The existing toggle already shows on/off state; a second
+  `Capture Active` text item duplicates it and adds status-bar clutter.
+- Off means **stop**, not pause: flipping off finalizes active sessions (flush + close file,
+  stop tailers/processes/watchers via the existing session-end path). Rationale: the switch's
+  contract is zero overhead, and `stop` reuses the proven `sessionManager.stopAll()` cascade
+  already exercised by `deactivate()` (`src/extension.ts`). The already-captured log stays on
+  disk. Turning capture back on does not resurrect anything — the next debug session starts
+  fresh (matching today's start-gate behavior).
 
----
+## Implementation steps
 
-## 3. Technical Architecture & Stream Isolation
+Each step names its success check. Run checks per step; do not proceed on assumption.
 
-To guarantee that a disabled state enforces zero CPU overhead and prevents Out of Memory crashes in high-volume environments, critical pipeline drops must be handled upstream[cite: 4].
+### 1. Kill in-flight work on flip-off
 
-```
-       DAP / Debug Console Output Stream
-                       |
-                       v
-         +-------------+-------------+
-         |     Is Switch Enabled?    |
-         +-------------+-------------+
-                       |
-            +----------+----------+
-            |                     |
-         [ Yes ]               [ No ]
-            |                     |
-            v                     v
-   Ingest to Queue          Flush Queues
-   Run Classifiers         Kill FS Watches
-   Emit to Webview         Zero Allocations
-```
+In `setupConfigListener` (`src/activation-listeners.ts:82-86`), when
+`e.affectsConfiguration('saropaLogCapture.enabled')` and the new value is `false`, call
+`sessionManager.stopAll()` (fire-and-forget with `.catch()` logged to the output channel —
+the listener must not throw). Session stop already flushes the write queue
+(`drainPendingLines`, `src/modules/capture/log-session.ts:394-395`), runs `onSessionEnd`
+providers (which stop tailers — `providers/external-logs.ts:75`), and tears down
+session-scoped streams.
 
-### 3a. Staging Queue Purging & Back-Pressure Control
-When `enableCaptureAndMonitoring` switches to `false`:
-* The `pendingLines` staging queue must be cleared immediately, freeing up occupied space beneath the standard 20,000 line threshold to prevent V8 heap leakage[cite: 4].
-* The batch flush timer must be decoupled and cleared rather than shortening or lengthening intervals[cite: 4].
+- Comment the WHY at the call site: the switch promises zero background activity, and
+  without this the tailers/processes outlive the "off" state until the debug session ends.
+- **Check:** F5, start a Flutter debug session with a tailed external log configured, flip
+  the setting off mid-run → log file is finalized (footer written), the "Tailing N logs"
+  status item disappears, no further lines arrive, the toggle shows `$(circle-outline)`.
 
-### 3b. External Log Tailing Disruption
-The Application / File Logs integration loop must aggressively wind down system interactions[cite: 4]:
-* All active file system watchers spawned by `integrations.externalLogs.paths` or globs must be unlinked and shut down[cite: 4].
-* The **Tailing N logs** status-bar item must be removed from view[cite: 4].
+### 2. Hoist the enabled gate above early buffering
 
-### 3c. Sidecar Telemetry & API Abortion
-* **OpenTelemetry Adaption:** Trace extraction engines will abort immediately before evaluating W3C `traceparent` regex closures, preventing the generation of `.traces.json` sidecars[cite: 4].
-* **Database Interception:** Live query streaming via `integrations.database.liveTail` turns off, and time-range payloads will skip passing execution blocks to any configured `apiUrl` backend[cite: 4].
+In `processOutputEvent` (`src/modules/session/session-manager-events.ts:50-53`), check
+`deps.config.enabled` BEFORE the unknown-session `earlyBuffer.add` branch. When disabled,
+return without buffering. Mirror the same ordering in the second gate at `:190` if it has
+the same shape.
 
----
+- **Check:** existing test file `src/test/modules/session/session-manager-start.test.ts`
+  pattern — add a case: disabled + unknown session id → `earlyBuffer` stays empty.
 
-## 4. Quality Gates & Fix Requirements
+### 3. Gate the Crashlytics watcher
 
-Implementation code must satisfy the rigid constraints dictated by the `BUG_REPORT_GUIDE.md` prior to merging into `main`[cite: 3, 4]:
+In `crashlytics-watcher.ts`, treat `getConfig().enabled === false` the same as interval 0
+(stop the timer), and re-evaluate on config change so flipping capture back on resumes
+polling without a reload.
 
-### Code Structure Controls
-* **Function Limits:** No individual routine introduced may exceed 30 lines of code or carry more than 4 parameters[cite: 3].
-* **File Footprint:** The absolute length of any new manager structure must stay $\le$ 300 lines[cite: 3].
-* **Null-Safety Guardrails:** Avoid unsafe type evaluations. The implementation must use robust truthiness syntax patterns instead of relying on broken type assumptions (e.g., avoid `typeof x !== 'undefined'` pitfalls on potential null properties)[cite: 3].
+- **Check:** unit test — watcher with a nonzero interval and `enabled: false` does not
+  schedule; flipping to `true` schedules again.
 
-### Pre-Flight Verification
+### 4. Name what was killed in the toast
+
+The `toggleCapture` toast (`src/commands-session.ts:64-66`) currently says only
+enabled/disabled. When disabling stops live work, say what stopped — e.g.
+"Capture disabled — stopped 1 active session" (count from `sessionManager`). Add the new
+English strings to the runtime l10n catalog (`src/l10n/strings-*.ts`) and reference by key;
+never hardcode. Adding English keys is routine; the machine-translation pipeline stays
+operator-run — do not trigger it.
+
+- **Check:** flip off during a session → toast names the stopped session count; flip off
+  while idle → plain "Capture disabled" toast unchanged.
+
+### 5. Docs
+
+- CHANGELOG.md under `## [Unreleased]`: one `### Changed` line — disabling capture now
+  stops in-flight capture work (sessions, tailers, watchers) immediately.
+- README: update the capture-toggle description to state that disabling stops active
+  capture rather than only blocking new sessions.
+
+## Explicitly out of scope
+
+- **Clearing the viewer batch queues.** The per-target `pendingLines` staging queue is
+  already bounded with drop-oldest + faster-under-load drain
+  (`src/ui/provider/log-viewer-provider-batch.ts:33-42` — `MAX_PENDING_LINES = 20_000`,
+  bug 001 doctrine). On kill the queues must **drain, not be cleared**: every line in them
+  is already on disk, and clearing would make the viewer silently omit captured history.
+- **Clearing the LogSession write queue.** Same reason, stronger: clearing it would LOSE
+  captured data. `stop()` flushes it; that is the correct path.
+- **Touching the batch flush timer.** It drains and goes idle on its own; there is nothing
+  to "decouple".
+- **A quick-pick on status bar click.** The existing one-click toggle follows the style
+  guide's "one item, one action"; a picker adds a step to a two-state flip.
+- **`saropaLogCapture.pause`** stays as-is (per-session pause is a different tool).
+
+## Quality gates
+
+Standard repo gates — limits come from `.claude/rules/global.md` (functions ≤ 30 lines,
+≤ 4 params, files ≤ 300 LOC) and CONTRIBUTING.md. (`bugs/BUG_REPORT_GUIDE.md` is the
+bug-report formatting guide, not the source of code limits — the original draft miscited it.)
+
 ```bash
-# Must pass cleanly without warnings before staging changes
 npm run check-types
 npm run lint
-npm run compile
-npm test
+npm run compile   # also runs the catalog/NLS verify gates
+npm run test:file -- out/test/modules/session/session-manager-start.test.js  # scoped, not the full suite
 ```
 
-### Documentation Update Required
-Upon successful verification, updates must be added to the `CHANGELOG.md` file under the `[Unreleased]` section header using a dedicated `### Changed` or `### Added` entry[cite: 4].
+Manual test in the Extension Development Host (F5) per the checks in each step.
+
+## Corrections carried over from the original draft (do not reintroduce)
+
+- `enableCaptureAndMonitoring` as a new setting — duplicates `saropaLogCapture.enabled`.
+- New status bar item / new suspend+resume commands / new Options checkbox — all exist.
+- Nested command IDs (`saropaLogCapture.monitoring.suspend`) — repo convention is flat.
+- "Purge pendingLines to prevent V8 heap leakage" — the queue is bounded by design; purging
+  loses viewer history and the write path must flush, never drop.
+- "Abort before evaluating W3C traceparent regex" — OTel parsing is session-scoped provider
+  work; stopping the session covers it. No special-case abort needed.
