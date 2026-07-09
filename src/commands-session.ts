@@ -53,6 +53,10 @@ export function sessionLifecycleCommands(
             const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
             const current = cfg.get<boolean>('enabled', true);
             const newValue = !current;
+            /* Capture the active-session count BEFORE writing the setting: the config-change
+             * listener stops all sessions asynchronously on flip-off, so reading the count after
+             * the write could race that teardown to zero and under-report what was stopped. */
+            const stoppedCount = newValue ? 0 : sessionManager.activeSessionCount;
             /* Write to Workspace scope when a workspace is open, otherwise Global.
              * This fixes the common pitfall where the user enables at User level
              * but a workspace override silently keeps it disabled. */
@@ -61,9 +65,14 @@ export function sessionLifecycleCommands(
                 : vscode.ConfigurationTarget.Global;
             await cfg.update('enabled', newValue, target);
             captureToggle.setEnabled(newValue);
-            vscode.window.showInformationMessage(
-                newValue ? t('captureToggle.enabled') : t('captureToggle.disabled'),
-            );
+            /* Name what the switch actually did: when disabling stopped live sessions, report the
+             * count so the user knows in-flight capture was torn down (not just new sessions gated). */
+            const message = newValue
+                ? t('captureToggle.enabled')
+                : stoppedCount > 0
+                    ? t('captureToggle.disabledStoppedSessions', stoppedCount)
+                    : t('captureToggle.disabled');
+            vscode.window.showInformationMessage(message);
         }),
         vscode.commands.registerCommand('saropaLogCapture.start', () => {
             const active = vscode.debug.activeDebugSession;
