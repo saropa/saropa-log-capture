@@ -175,6 +175,7 @@ window.addEventListener('message', function(event) {
         case 'triggerCollapseAllSections': if (typeof collapseAllSections === 'function') collapseAllSections(); break;
         case 'triggerExpandAllSections': if (typeof expandAllSections === 'function') expandAllSections(); break;
         case 'triggerToggleSearch': if (typeof toggleSearchPanel === 'function') toggleSearchPanel(); break;
+        case 'triggerToggleTroubleMode': if (typeof toggleTroubleMode === 'function') toggleTroubleMode(); break;
         case 'triggerGotoLine': if (typeof openGotoLine === 'function') openGotoLine(); break;
         case 'triggerExplainRootCauseHypotheses':
             if (typeof runTriggerExplainRootCauseHypothesesFromHost === 'function') runTriggerExplainRootCauseHypothesesFromHost();
