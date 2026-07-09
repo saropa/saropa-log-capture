@@ -178,6 +178,30 @@ export function getSessionNewerStyles(): string {
 }
 .log-staleness .codicon { font-size: 13px; }
 
+/* Trouble Mode footer chip — the same warning-colored footer chip shape as
+   .log-staleness, shown while the zero-context triage filter is active so the
+   user always knows why most lines vanished. Warning token (not brand orange)
+   keeps it reading as a status and clearing AA on the footer. Kept as its own
+   block rather than folded into .log-staleness so the two features stay
+   independent (one is "you are behind a newer log", the other is a filter). */
+.trouble-mode-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 6px;
+    margin-right: 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    color: var(--vscode-editorWarning-foreground, var(--vscode-charts-yellow));
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+.trouble-mode-indicator:hover {
+    background: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground));
+}
+.trouble-mode-indicator .codicon { font-size: 13px; }
+
 /* --- Per-row unread dot ---
  * Distinct from the existing red/orange update-dot (\`updatedInLastMinute\` /
  * \`updatedSinceViewed\`) — fires for never-viewed logs too, cleared by panel

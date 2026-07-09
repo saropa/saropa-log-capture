@@ -1736,7 +1736,6 @@
   "FW": "Le FWF est une association de femmes.",
   "Failed to build report": "Échec de la construction du rapport.",
   "Failed to copy report": "Échec de la copie du rapport d'enquête.",
-  "Failed to save report": "Échec de l'enregistrement du rapport.",
   "Filter shortcuts by key, name, or description": "Filtrer les raccourcis par clé, nom ou description.",
   "Filter shortcuts…": "Les raccourcis de filtres...",
   "Filter suggestions ({0})": "Suggestions de filtres ({0}) Pour les personnes qui ont besoin d'un filtre",
@@ -1887,7 +1886,6 @@
   "Saropa Lints is installed but has not shared findings yet — make sure its analyzer is running for this project.": "Saropa Lints est installé mais n'a pas encore partagé les résultats  ⁇  assurez-vous que son analyseur fonctionne pour ce projet.",
   "Saropa Log Capture is tailing external log files for this session.": "Saropa Log Capture suit les fichiers journaux externes de cette session.",
   "Saropa Signal Report": "Saropa Signal Rapport sur le signalement de la détection.",
-  "Save Report": "Enregistrer le rapport d'enregistrement.",
   "Saves the center line to the Bookmarks panel (open it with B). The bookmark stores the line number, text, and timestamp. In the Bookmarks panel, bookmarks are listed in order and each one is clickable — clicking jumps back to that exact line. Bookmarks persist across viewer reloads.": "Enregistre la ligne centrale dans le panneau Bookmarks (ouvrez-le avec B). Le bookmark stocke le numéro de ligne, le texte et l'horodatage. Dans le panneau Bookmarks, les signets sont listés dans l'ordre et chacun d'eux est cliquable  ⁇  en faisant un clic saute à cette ligne exacte. Les signets persistent à travers les recharges de lecteur.",
   "Scanning for related lines...": "Le scan pour les lignes connexes...",
   "Scrolls the viewport down by about 80% of its visible height.": "Fait défiler la fenêtre vers le bas d'environ 80% de sa hauteur visible.",
@@ -2061,5 +2059,10 @@
   "No matches": "Il n'y a pas de correspondance.",
   "Suppressed Errors": "Erreurs supprimées.",
   "This match was hidden by the {0} filter.": "Cette correspondance a été cachée par le filtre {0}.",
-  "Time Range": "Le temps de la période est le nombre d'heures."
+  "Time Range": "Le temps de la période est le nombre d'heures.",
+  "Error Report": "Rapport d'erreur du rapport de erreur",
+  "Error detected: {0}": "Erreur détectée: {0}",
+  "Report file": "Fichier de rapport Le fichier du rapport.",
+  "Showing only errors, warnings, and performance issues. Click to exit Trouble Mode.": "Ne montrant que les erreurs, avertissements et problèmes de performance. Cliquez pour quitter le mode dépannage.",
+  "Trouble Mode": "Le mode de dépannage Trouble Mode."
 }

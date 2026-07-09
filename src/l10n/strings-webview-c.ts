@@ -22,6 +22,10 @@ export const stringsWebviewC: Record<string, string> = {
     // Analysis panel progress (the analysis panel now has the __VT map injected)
     'viewer.analysis.progress': 'Analyzing... {0}/{1} complete',
 
+    // Trouble Mode zero-context triage filter (footer chip label + tooltip)
+    'viewer.troubleMode.indicator': 'Trouble Mode',
+    'viewer.troubleMode.indicatorTitle': 'Showing only errors, warnings, and performance issues. Click to exit Trouble Mode.',
+
     // (Signal panel co-occurrence rows folded into SignalScriptStrings — see the note above.)
 
     // Performance tabs

@@ -1736,7 +1736,6 @@
   "FW": "美国FW FW",
   "Failed to build report": "无法构建报告,没有成功.",
   "Failed to copy report": "无法复制报告报告的情况.",
-  "Failed to save report": "无法保存报告,没有成功.",
   "Filter shortcuts by key, name, or description": "根据密钥,名称或描述过 ⁇ 快捷方式.",
   "Filter shortcuts…": "过 ⁇ 器的快捷方式...",
   "Filter suggestions ({0})": "过 ⁇ 器建议 ({0}) 的一个例子.",
@@ -1887,7 +1886,6 @@
   "Saropa Lints is installed but has not shared findings yet — make sure its analyzer is running for this project.": "已安装了Saropa Lints,但尚未共享结果. 请确保其分析器正在运行这个项目.",
   "Saropa Log Capture is tailing external log files for this session.": "Saropa Log Capture正在跟踪本会话的外部日志文件.",
   "Saropa Signal Report": "Saropa 信号报告",
-  "Save Report": "保存报告 保存报道",
   "Saves the center line to the Bookmarks panel (open it with B). The bookmark stores the line number, text, and timestamp. In the Bookmarks panel, bookmarks are listed in order and each one is clickable — clicking jumps back to that exact line. Bookmarks persist across viewer reloads.": "将中线保存到书签面板 (用B打开). 书签存储行号,文本和时间 ⁇ . 在书签面板中,书签按顺序列出,每个人都可以点击 ⁇ 单击跳回到那个确切的行. 书签在浏览器重载中持续存在.",
   "Scanning for related lines...": "扫描相关线条... 在此处,我们将检查相应的线条",
   "Scrolls the viewport down by about 80% of its visible height.": "滚动视窗向下,其可见高度的约80%.",
@@ -2061,5 +2059,10 @@
   "No matches": "没有匹配的结果.",
   "Suppressed Errors": "压抑的错误被抑制了",
   "This match was hidden by the {0} filter.": "这个匹配被隐藏在 {0} 过 ⁇ 器中.",
-  "Time Range": "时间范围 Time Range"
+  "Time Range": "时间范围 Time Range",
+  "Error Report": "错误报告 错誤报告",
+  "Error detected: {0}": "检测到错误: {0}",
+  "Report file": "报告文件,报告档案.",
+  "Showing only errors, warnings, and performance issues. Click to exit Trouble Mode.": "显示只有错误,警告和性能问题. 点击退出故障模式.",
+  "Trouble Mode": "问题模式故障状态"
 }
