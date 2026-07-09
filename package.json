@@ -3027,21 +3027,6 @@
           "when": "view == saropaLogCapture.logViewer"
         },
         {
-          "command": "saropaLogCapture.troubleMode.toggle",
-          "group": "navigation@1",
-          "when": "view == saropaLogCapture.logViewer"
-        },
-        {
-          "command": "saropaLogCapture.collapseAllSections",
-          "group": "navigation@2",
-          "when": "view == saropaLogCapture.logViewer && !saropaLogCapture.allCollapsed"
-        },
-        {
-          "command": "saropaLogCapture.expandAllSections",
-          "group": "navigation@2",
-          "when": "view == saropaLogCapture.logViewer && saropaLogCapture.allCollapsed"
-        },
-        {
           "command": "saropaLogCapture.copyAllFilteredLines",
           "group": "navigation@3",
           "when": "view == saropaLogCapture.logViewer"

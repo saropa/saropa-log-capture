@@ -37,12 +37,24 @@ export function getToolbarHtml(opts: ToolbarHtmlOptions): string {
             <span class="codicon codicon-filter" aria-hidden="true"></span>
             <span id="toolbar-filter-count" class="toolbar-badge" title="${t('viewer.toolbar.filterCount.title')}"></span>
         </button>
+        <!-- Trouble Mode: zero-context triage filter (only errors/warnings/performance).
+             Lives next to the filter icon because it IS a filter; toolbar-icon-btn-active
+             signals the on/off state, and the level dots dim to show what is hidden. -->
+        <button type="button" id="toolbar-trouble-btn" class="toolbar-icon-btn" title="${t('viewer.toolbar.trouble.title')}" aria-label="${t('viewer.toolbar.trouble.label')}" aria-pressed="false">
+            <span class="codicon codicon-warning" aria-hidden="true"></span>
+        </button>
         <button type="button" id="toolbar-signals-btn" class="toolbar-icon-btn" title="${t('viewer.toolbar.signals.title')}" aria-label="${t('viewer.toolbar.signals.label')}" aria-expanded="false">
             <span class="codicon codicon-pulse" aria-hidden="true"></span>
             <span id="toolbar-signals-count" class="toolbar-badge" title="${t('viewer.toolbar.signalsCount.title')}"></span>
         </button>
         <button type="button" id="toolbar-deco-btn" class="toolbar-icon-btn" title="${t('viewer.toolbar.deco.title')}" aria-label="${t('viewer.toolbar.deco.label')}">
             <span class="codicon codicon-symbol-color" aria-hidden="true"></span>
+        </button>
+        <!-- Collapse/expand all sections. One button that swaps icon + title to reflect
+             state: collapse-all glyph when sections are expanded, expand-all when collapsed.
+             Moved here from the editor view-title bar so all section controls live together. -->
+        <button type="button" id="toolbar-collapse-btn" class="toolbar-icon-btn" title="${t('viewer.toolbar.collapseAll.title')}" aria-label="${t('viewer.toolbar.collapseAll.label')}">
+            <span class="codicon codicon-collapse-all" aria-hidden="true"></span>
         </button>
         <button type="button" id="toolbar-format-btn" class="toolbar-icon-btn" style="display:none" title="${t('viewer.toolbar.format.title')}" aria-label="${t('viewer.toolbar.format.label')}">
             <span class="codicon codicon-open-preview" aria-hidden="true"></span>
@@ -83,13 +95,6 @@ export function getToolbarHtml(opts: ToolbarHtmlOptions): string {
         <span id="log-staleness" class="log-staleness u-hidden" role="button" tabindex="0" aria-live="polite" title="${t('viewer.toolbar.staleness.title')}">
             <span class="codicon codicon-warning" aria-hidden="true"></span>
             <span class="log-staleness-text"></span>
-        </span>
-        <!-- Trouble Mode chip: hidden until the zero-context triage filter is active
-             (saropaLogCapture.troubleMode.toggle). Named + clickable so the user always
-             knows why most lines vanished and can click to exit the mode. -->
-        <span id="trouble-mode-indicator" class="trouble-mode-indicator u-hidden" role="button" tabindex="0" title="${t('viewer.troubleMode.indicatorTitle')}">
-            <span class="codicon codicon-warning" aria-hidden="true"></span>
-            <span>${t('viewer.troubleMode.indicator')}</span>
         </span>
         <span id="footer-text" data-version="${ver}" class="toolbar-filename" title="${t('viewer.toolbar.filename.title')}"></span>
     </div>

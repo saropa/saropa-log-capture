@@ -176,6 +176,12 @@ function applyCompressDedupModes() {
         var useStructured = (typeof structuredLineParsing !== 'undefined' && structuredLineParsing);
         if (useStructured && row.structuredPrefixLen > 0 && typeof stripHtmlPrefix === 'function') {
             html = stripHtmlPrefix(html, row.structuredPrefixLen);
+            /* Mirror renderItem: also strip leading app head tags left after the structured
+               prefix so the dedup key matches what the user sees (two lines identical except for
+               a redundant [perf]/[frame-stall] tag still fold together). */
+            if (typeof stripSourceTagPrefix !== 'undefined' && stripSourceTagPrefix && row.sourceTag) {
+                html = html.replace(/^(?:\\[[^\\]]+\\]\\s?)+/, '');
+            }
         } else if (typeof stripSourceTagPrefix !== 'undefined' && stripSourceTagPrefix && row.sourceTag) {
             html = html.replace(/^(?:\\[[^\\]]+\\]\\s?)+/, '');
         }

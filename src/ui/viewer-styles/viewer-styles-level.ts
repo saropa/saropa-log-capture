@@ -38,6 +38,20 @@ export function getLevelStyles(): string {
     transition: opacity 0.2s ease;
 }
 .level-dot:not(.active) { opacity: 0.3; }
+/* Trouble Mode dims the dots for the levels it actively hides (everything but
+   error / warning / performance) so the toolbar reflects what is suppressed,
+   without touching the real level-filter state (enabledLevels). Mirrors the
+   inactive-dot / inactive-letter opacities above. */
+body.slc-trouble-active .level-dot-group[data-level="info"] .level-dot,
+body.slc-trouble-active .level-dot-group[data-level="notice"] .level-dot,
+body.slc-trouble-active .level-dot-group[data-level="debug"] .level-dot,
+body.slc-trouble-active .level-dot-group[data-level="database"] .level-dot,
+body.slc-trouble-active .level-dot-group[data-level="todo"] .level-dot { opacity: 0.3; }
+body.slc-trouble-active .level-dot-group[data-level="info"] .level-letter,
+body.slc-trouble-active .level-dot-group[data-level="notice"] .level-letter,
+body.slc-trouble-active .level-dot-group[data-level="debug"] .level-letter,
+body.slc-trouble-active .level-dot-group[data-level="database"] .level-letter,
+body.slc-trouble-active .level-dot-group[data-level="todo"] .level-letter { opacity: 0.45; }
 /* Dot palette matches .line.level-* text colors in viewer-styles-lines.ts and
    .level-bar-* in viewer-styles-decoration-bars.ts. Info=blue, Notice=cyan,
    Database=green — keep the three in lockstep when any one changes. */
