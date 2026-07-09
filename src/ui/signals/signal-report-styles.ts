@@ -217,6 +217,14 @@ details summary:hover {
 .overview-value {
     word-break: break-all;
 }
+.overview-file-link {
+    color: var(--link);
+    text-decoration: none;
+    cursor: pointer;
+}
+.overview-file-link:hover {
+    text-decoration: underline;
+}
 .overview-stats {
     display: flex;
     flex-wrap: wrap;

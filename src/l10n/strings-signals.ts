@@ -10,6 +10,7 @@
 export const stringsSignals: Record<string, string> = {
     // Overview section
     'signals.overview.logFile': 'Log file',
+    'signals.overview.reportFile': 'Report file',
     'signals.overview.logLines': 'Log lines',
     'signals.overview.session': 'Session',
     'signals.overview.health': 'Health',

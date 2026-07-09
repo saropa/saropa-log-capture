@@ -26,6 +26,21 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Signal reports now save automatically when opened.** The manual **Save Report** button is gone — opening a signal report writes the full markdown report to your reports folder immediately, and the report's Session Overview links straight to the saved file. The log-file path in the overview is now a link too (opens the log in the viewer).
+
+### Fixed
+
+- **Slow-query and repeat-query warnings now stay visible when the Database filter is off.** Drift's own performance annotations — `Drift SLOW <n>ms …` (over-threshold queries) and `Drift REPEAT x<n> …` (N+1 query storms) — carry the app's `[database]` tag, so they used to classify as **Database** and disappear the moment you turned that level off. They now classify as **Performance** and appear under the Performance filter (and no longer force an error when the logged SQL happens to contain an "…Error" enum value).
+- **Blank rows no longer render an expander arrow.** An empty log line sitting just above filter-hidden rows was picking up the "reveal hidden rows" chevron, showing a blank sliver with an expander on it. The chevron now attaches to the nearest non-blank row instead.
+- **Copy Report / the saved report now include the Recommendations section.** The exported markdown previously omitted the recommendations shown on the panel; the copied and saved reports now carry the same advice alongside evidence, cross-session history, and other signals.
+- **Cross-Session History rows now open the selected session.** Clicking a history row called an unregistered command and silently did nothing; it now loads that session's log into the viewer.
+
+---
+
 ## [9.1.0]
 
 The viewer now follows the newest run automatically. When a new log arrives, the viewer jumps to it the moment it appears — no more clicking Open on the newer-log banner. Prefer the old behavior? Turn off **Always Switch to Latest Log** and the viewer stays on the log you are reading, surfacing the banner instead. [log](https://github.com/saropa/saropa-log-capture/blob/v9.1.0/CHANGELOG.md)

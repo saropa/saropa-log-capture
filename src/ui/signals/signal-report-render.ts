@@ -49,7 +49,6 @@ export function buildSignalReportShell(opts: ShellOptions): string {
   </div>
   <div class="btn-row">
     <button class="copy-btn" id="copy-report-btn">${escapeHtml(t('signals.shell.copyReport'))}</button>
-    <button class="copy-btn" id="save-report-btn">${escapeHtml(t('signals.shell.saveReport'))}</button>
   </div>
 </header>
 
@@ -171,18 +170,22 @@ export function buildSignalReportShell(opts: ShellOptions): string {
       ev.preventDefault();
       var url = link.getAttribute('data-url');
       if (url) { vscodeApi.postMessage({ type: 'openUrl', url: url }); }
+      return;
+    }
+    /* Overview file links — open the log file or the saved report on the host */
+    var fileLink = ev.target && ev.target.closest ? ev.target.closest('.overview-file-link') : null;
+    if (fileLink) {
+      ev.preventDefault();
+      var fileUri = fileLink.getAttribute('data-uri');
+      if (fileUri) {
+        vscodeApi.postMessage({ type: 'openFile', uriString: fileUri, kind: fileLink.getAttribute('data-kind') });
+      }
     }
   });
   var copyBtn = document.getElementById('copy-report-btn');
   if (copyBtn) {
     copyBtn.addEventListener('click', function() {
       vscodeApi.postMessage({ type: 'copyReport' });
-    });
-  }
-  var saveBtn = document.getElementById('save-report-btn');
-  if (saveBtn) {
-    saveBtn.addEventListener('click', function() {
-      vscodeApi.postMessage({ type: 'saveReport' });
     });
   }
 })();
@@ -242,6 +245,17 @@ export function renderRecommendations(templateId: string, errorCategory?: string
   const recKey = getRecommendation(templateId, errorCategory);
   if (!recKey) { return `<div class="no-data">${escapeHtml(t('signals.rec.noData'))}</div>`; }
   return `<div class="recommendation">${escapeHtml(t(recKey))}</div>`;
+}
+
+/**
+ * Recommendations section as markdown for the export report.
+ * Mirrors renderRecommendations() so the copied/saved report carries the same
+ * advice the on-screen panel shows — previously omitted from the export entirely.
+ */
+export function buildRecommendationsMarkdown(templateId: string, errorCategory?: string): string {
+  const recKey = getRecommendation(templateId, errorCategory);
+  if (!recKey) { return ''; }
+  return ['## Recommendations', '', t(recKey), ''].join('\n');
 }
 
 /** Replace relative source paths (e.g. ./lib/foo.dart:42) with absolute paths. */
