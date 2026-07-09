@@ -276,3 +276,47 @@ birth-height contract every other filter honors.
   building on this feed. Open questions 1–5 above (icon, chart color, default
   trouble set, sidebar three-pane layout, plan numbering) still stand for those stages.
 - Manual F5 verification of the toggle/persistence/indicator is the only unrun check.
+
+## Finish Report (2026-07-09) — UX relocation: toolbar button + level-dot state
+
+**Scope:** moved the Stage 1 controls off the editor view-title bar into the log
+viewer's own toolbar, per owner feedback. No change to the filter engine.
+
+### What shipped
+
+- **Trouble Mode toggle is now a toolbar button** (`#toolbar-trouble-btn`, warning
+  triangle) placed next to the filter icon — it is a filter, so it lives with the
+  filters. `toolbar-icon-btn-active` + `aria-pressed` show on/off. The separate
+  footer chip was removed; the button and the dimmed dots carry the state.
+- **Level dots reflect what is hidden:** while Trouble Mode is active, the dots for
+  the suppressed levels (info, notice, debug, database, todo) dim via a
+  `body.slc-trouble-active` CSS rule keyed on `data-level`, without mutating the real
+  `enabledLevels` filter state.
+- **Collapse all / expand all moved into the toolbar** (`#toolbar-collapse-btn`) as a
+  single button that swaps its icon (`codicon-collapse-all` ↔ `codicon-expand-all`)
+  and title to reflect state. The palette commands still work and keep the icon in
+  sync via `window.__setAllSectionsCollapsed`.
+- The `view/title` menu entries for Trouble Mode and collapse/expand were removed; the
+  commands themselves remain registered (command palette).
+
+### Files changed (this iteration)
+
+- `src/ui/viewer-toolbar/viewer-toolbar-html.ts` — trouble + collapse/expand buttons; removed footer chip.
+- `src/ui/viewer-toolbar/viewer-toolbar-script.ts` — collapse/expand wiring, state, icon/title swap.
+- `src/ui/viewer-search-filter/viewer-trouble-mode.ts` — indicator repointed to the toolbar button.
+- `src/ui/viewer/viewer-script-messages.ts` — palette collapse/expand cases sync the toolbar icon.
+- `src/ui/viewer-styles/viewer-styles-level.ts` — dim non-trouble dots under `slc-trouble-active`.
+- `src/ui/viewer-styles/viewer-styles-session-newer.ts` — reverted the (now-unused) footer-chip CSS.
+- `src/l10n/strings-viewer.ts` — toolbar button titles/labels; `strings-webview-c.ts` — removed chip keys.
+- `package.json` — removed the two view/title menu entries (trouble + collapse/expand).
+- `CHANGELOG.md` — Unreleased › Changed entries.
+
+### Testing
+
+- `check-types` clean; `compile-tests` clean; `verify:l10n-keys`, `verify:list-commands` OK.
+- `viewer-trouble-mode.test.js` — 3 passing (indicator now guards the DOM, logic unchanged).
+- Emitted `getToolbarScript()` / `getTroubleModeScript()` parse-checked via `new Function`.
+- Lint clean on touched files (the one remaining `viewer-script-messages.ts` max-lines
+  warning is pre-existing; my edits there were in-place, no net line added).
+- **Not executed here:** F5 manual pass — button placement/active style, dot dimming,
+  collapse/expand icon swap and palette sync, in both sidebar and pop-out.

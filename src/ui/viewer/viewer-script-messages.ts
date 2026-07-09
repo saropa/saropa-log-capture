@@ -172,8 +172,8 @@ window.addEventListener('message', function(event) {
             if (typeof scheduleRootCauseHypothesesRefresh === 'function') scheduleRootCauseHypothesesRefresh();
             break;
         case 'triggerCopyAllFiltered': if (typeof copyAllFilteredWithCount === 'function') copyAllFilteredWithCount(); break;
-        case 'triggerCollapseAllSections': if (typeof collapseAllSections === 'function') collapseAllSections(); break;
-        case 'triggerExpandAllSections': if (typeof expandAllSections === 'function') expandAllSections(); break;
+        case 'triggerCollapseAllSections': if (typeof collapseAllSections === 'function') collapseAllSections(); if (typeof window.__setAllSectionsCollapsed === 'function') window.__setAllSectionsCollapsed(true); break;
+        case 'triggerExpandAllSections': if (typeof expandAllSections === 'function') expandAllSections(); if (typeof window.__setAllSectionsCollapsed === 'function') window.__setAllSectionsCollapsed(false); break;
         case 'triggerToggleSearch': if (typeof toggleSearchPanel === 'function') toggleSearchPanel(); break;
         case 'triggerToggleTroubleMode': if (typeof toggleTroubleMode === 'function') toggleTroubleMode(); break;
         case 'triggerGotoLine': if (typeof openGotoLine === 'function') openGotoLine(); break;
