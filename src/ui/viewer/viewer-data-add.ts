@@ -153,8 +153,11 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
        normal log lines reach here (markers/stack/structured returned above). */
     var flowTag = (typeof classifyFlowTag === 'function') ? classifyFlowTag(plain) : null;
 
-    /* Parse all bracket head tags for rendering as chips in the tag column. */
+    /* Parse all bracket head tags for rendering as chips in the head-tag column. */
     var headTags = (typeof parseHeadTags === 'function') ? parseHeadTags(plain) : [];
+    /* Reserve the head-tag column only when the log actually carries recognized
+       app tags — a plain/markdown/logcat-only file trips none, so no empty gap. */
+    if (typeof decoSeen !== 'undefined' && headTags && headTags.length > 0) decoSeen.htags = true;
 
     // One parse per line: repeat tracker, dbSignal, and DB detectors share this object.
     var sqlMeta = (typeof parseSqlFingerprint === 'function') ? parseSqlFingerprint(plain) : null;
