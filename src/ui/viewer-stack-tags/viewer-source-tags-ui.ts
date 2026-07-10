@@ -36,7 +36,7 @@ function rebuildTagChips() {
     ];
     for (var i = 0; i < shownKeys.length; i++) {
         var key = shownKeys[i];
-        var label = escapeTagHtml(key);
+        var label = escapeTagHtml(formatTagLabel(sourceTagDisplayNames[key] || key));
         var active = !hiddenSourceTags[key];
         var cls = 'source-tag-chip' + (active ? ' active' : '');
         parts.push(
@@ -94,6 +94,7 @@ function rebuildTagChips() {
 /** Reset all source tag state. Called on clear. */
 function resetSourceTags() {
     sourceTagCounts = {};
+    sourceTagDisplayNames = {};
     hiddenSourceTags = {};
     savedHiddenSourceTags = null;
     soloedSourceTag = null;

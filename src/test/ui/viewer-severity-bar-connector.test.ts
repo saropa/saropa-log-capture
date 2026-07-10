@@ -14,18 +14,20 @@ import { getDecorationStyles } from '../../ui/viewer-styles/viewer-styles-decora
 import { getViewerStyles } from '../../ui/viewer-styles/viewer-styles';
 import { getViewerDataAddScript } from '../../ui/viewer/viewer-data-add';
 
-suite('Severity bar connector (CSS full-height stripe architecture)', () => {
-    // The connector that joins consecutive same-color dots is pure CSS in
-    // viewer-styles-decoration-bars.ts: every leveled row paints a FULL-HEIGHT
-    // ::after stripe of its own --bar-color, so any run of same-color rows abuts
-    // into one continuous band. This replaced (2026-07-10) the earlier
-    // :has(+ .level-bar-X)::after per-pair chain, which only connected direct
-    // neighbors of the EXACT same class — a blank line, a .slow-gap divider, or
-    // a stack frame between two same-level rows severed the band, and info vs
-    // framework (both charts-blue) never joined despite looking identical. The
-    // still-earlier JS architecture (findNextDotSibling + bar-up / bar-down /
-    // bar-bridge stamping) was removed before that. These tests pin the current
-    // architecture.
+suite('Severity bar connector (CSS per-color-group half-stripe architecture)', () => {
+    // The connector joining consecutive dots is pure CSS in
+    // viewer-styles-decoration-bars.ts and joins ONLY same-color dots. Each
+    // leveled row has a collapsed ::after (centered on --gutter-cx); generated
+    // per-color-group rules extend its bottom half toward the next dot
+    // (g:has(+ g)) and its top half toward the previous dot (g + g) only when the
+    // neighbor shares the color group, so a color change shows a clean break.
+    // This replaced (2026-07-10) the full-height class-agnostic stripe, which
+    // joined ADJACENT DIFFERENT colors at the shared row boundary (user: "you
+    // regressed by joining NON-matching colors"); that stripe had itself replaced
+    // an exact-class :has() chain that missed info/framework (same blue, different
+    // class) and severed at any intervening row, which replaced the still-earlier
+    // JS findNextDotSibling + bar-up/bar-down/bar-bridge stamping. Full history:
+    // bugs/severity_dot_join_attempts.md. These tests pin the current architecture.
     const viewportScript = getViewportRenderScript();
     const decoStyles = getDecorationStyles();
 
@@ -52,43 +54,52 @@ suite('Severity bar connector (CSS full-height stripe architecture)', () => {
         );
     });
 
-    test('CSS defines a single class-agnostic full-height stripe, not per-level :has() pairs', () => {
-        // The stripe is one rule keyed on the attribute selector
-        // [class*="level-bar-"]::after — it reads --bar-color from whatever
-        // level-bar-* class the row carries, so it covers every level without a
-        // per-level selector. The old per-pair :has(+ .level-bar-X) chain must
-        // be gone: it was exactly what left same-color runs disconnected.
+    test('connector joins by COLOR GROUP so only same-color dots connect', () => {
+        // The join is gated on the neighbor's color group: a segment is drawn
+        // toward the next/previous dot only when it shares the color. This is the
+        // whole point — a full-height class-agnostic stripe (no :has/+ gate)
+        // joined adjacent DIFFERENT colors at the row boundary.
         assert.ok(
-            /\[class\*="level-bar-"\][^{]*::after\s*\{/.test(decoStyles),
-            'connector must be a single [class*="level-bar-"]::after full-height stripe rule',
+            /:has\(\+ \.level-bar-warning\)::after\s*\{\s*bottom:\s*0/.test(decoStyles),
+            'a row must connect DOWN only when the next sibling is the same color group',
         );
         assert.ok(
-            !decoStyles.includes(':has(+ .level-bar-'),
-            'the per-pair :has(+ .level-bar-X) chain must be removed — it severed same-color runs at any intervening row',
+            /\.level-bar-warning \+ \.level-bar-warning::after\s*\{\s*top:\s*0/.test(decoStyles),
+            'a row must connect UP only when the previous sibling is the same color group',
+        );
+        // info + framework are the SAME blue: they must be one color group, so a
+        // mixed info/framework run still joins (the exact-class chain missed this).
+        assert.ok(
+            /:is\(\.level-bar-info,\s*\.level-bar-framework\):has\(\+ :is\(\.level-bar-info,\s*\.level-bar-framework\)\)::after/.test(decoStyles),
+            'info and framework (same charts-blue) must share one color group in the connector',
         );
     });
 
-    test('connector ::after is a full-height in-row stripe under the dot column', () => {
-        // Full-height (top: 0 / bottom: 0) keeps the stripe INSIDE the row, so
-        // consecutive same-color rows merge edge-to-edge and the row can clip its
-        // own overflow (the old top: 50% / bottom: -50% overshoot forced
-        // overflow: visible and let long wrapped text bleed over the next row).
-        assert.ok(
-            /left:\s*0\.89em/.test(decoStyles),
-            'connector left position must remain at 0.89em (under the dot)',
-        );
-        assert.ok(
-            /width:\s*0\.14em/.test(decoStyles),
-            'connector width must remain at 0.14em',
-        );
-        assert.ok(
-            /top:\s*0/.test(decoStyles) && /bottom:\s*0/.test(decoStyles),
-            'connector must span the full row height (top: 0; bottom: 0), not overshoot into the next row',
-        );
-        assert.ok(
-            !/bottom:\s*-50%/.test(decoStyles),
-            'the -50% overshoot must be gone so .line can clip overflow instead of bleeding wrapped text',
-        );
+    test('base connector ::after is collapsed and center-anchored on --gutter-cx', () => {
+        // The base ::after paints NOTHING on its own (top:50%/bottom:50% => zero
+        // height); only the per-group rules extend a half toward a same-color
+        // neighbor. It is anchored on the shared --gutter-cx with translateX(-50%)
+        // so the stripe and the dot compute their left edge from ONE reference and
+        // cannot drift sub-pixel (the off-center-line report). The old absolute
+        // left:0.89em / width:0.14em positioning is gone.
+        const base = /\[class\*="level-bar-"\][^{]*::after\s*\{[^}]*\}/s.exec(decoStyles);
+        assert.ok(base, 'expected the base [class*="level-bar-"]::after rule');
+        assert.ok(/left:\s*var\(--gutter-cx\)/.test(base![0]), 'base stripe must anchor on --gutter-cx');
+        assert.ok(/transform:\s*translateX\(-50%\)/.test(base![0]), 'base stripe must self-center with translateX(-50%)');
+        assert.ok(/top:\s*50%/.test(base![0]) && /bottom:\s*50%/.test(base![0]),
+            'base stripe must be collapsed (top:50%; bottom:50%) so it joins nothing until a same-color neighbor extends it');
+        assert.ok(!/left:\s*0\.89em/.test(decoStyles), 'the absolute left:0.89em positioning must be gone (center-anchored now)');
+        assert.ok(/#viewport\s*\{[^}]*--gutter-cx:/.test(decoStyles), '--gutter-cx must be defined on the positioning context');
+    });
+
+    test('the severity dot shares the connector center anchor (exact centering)', () => {
+        // The dot ::before and the connector ::after both anchor on --gutter-cx
+        // with translateX(-50%). Sharing one center is what guarantees the line
+        // sits exactly under the dots regardless of their different widths.
+        const dot = /\[class\*="level-bar-"\]::before\s*\{[^}]*\}/s.exec(decoStyles);
+        assert.ok(dot, 'expected the dot ::before rule');
+        assert.ok(/left:\s*var\(--gutter-cx\)/.test(dot![0]), 'dot must anchor on the same --gutter-cx');
+        assert.ok(/transform:\s*translateX\(-50%\)/.test(dot![0]), 'dot must self-center with translateX(-50%)');
     });
 
     test('connector excludes ASCII-art rows so shimmer animation is preserved', () => {
