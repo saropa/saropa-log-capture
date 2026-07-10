@@ -82,9 +82,11 @@ function parseFlowMapAction(line: string, tsMs: number, clock: string, logLine: 
     if (!m) {
         return undefined;
     }
+    // The category is both the display label and the counter key — single trim, used twice.
+    const category = m[1].trim();
     return {
         tsMs, clock, logLine, kind: 'action',
-        label: m[1].trim(), actionCategory: m[1].trim(), source: tagSource(m[2], m[3]),
+        label: category, actionCategory: category, source: tagSource(m[2], m[3]),
     };
 }
 

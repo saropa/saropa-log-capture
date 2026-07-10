@@ -88,6 +88,7 @@ Heuristic index of `type` fields on objects passed to `this.postMessage` / `targ
 | `setShowElapsed` | src/ui/provider/log-viewer-provider-state.ts |
 | `setSources` | src/ui/provider/log-viewer-provider-load-group.ts |
 | `setStaticSqlFromFingerprintEnabled` | src/ui/provider/log-viewer-provider-setup.ts, src/ui/provider/log-viewer-provider-state.ts |
+| `setTroubleChartInterval` | src/ui/provider/log-viewer-provider-setup.ts, src/ui/provider/log-viewer-provider-state.ts |
 | `setupFindSearch` | src/ui/provider/log-viewer-provider-state.ts |
 | `setViewerDbDetectorToggles` | src/ui/provider/log-viewer-provider-setup.ts, src/ui/provider/log-viewer-provider-state.ts |
 | `setViewerDbSignalsEnabled` | src/ui/provider/log-viewer-provider-setup.ts, src/ui/provider/log-viewer-provider-state.ts |
@@ -109,4 +110,4 @@ Heuristic index of `type` fields on objects passed to `this.postMessage` / `targ
 | `updateWatchCounts` | src/ui/provider/log-viewer-provider.ts |
 | `viewerKeybindingRecordMode` | src/ui/provider/viewer-message-handler-actions.ts |
 
-**Total:** 102 distinct types.
+**Total:** 103 distinct types.
