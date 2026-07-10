@@ -119,8 +119,10 @@ suite('Empty-message structured rows render as blanks, not tag-only rows', () =>
       ctx.buildDecoParts(normal, 0, null).some((c) => c.key === 'tag'),
       'a row WITH text still shows its parsed-tag chip',
     );
+    // renderHeadTagChip runs the tag name through formatTagLabel, which splits camelCase
+    // boundaries for readability ("ActivityManager" -> "Activity Manager").
     assert.ok(
-      ctx.getDecorationCells(normal, 0, null).includes('ActivityManager'),
+      ctx.getDecorationCells(normal, 0, null).includes('Activity Manager'),
       'the tag chip carries the parsed tag name',
     );
   });
