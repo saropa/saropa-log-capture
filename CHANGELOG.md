@@ -46,6 +46,7 @@ Trouble Mode's reports now open **beside** the log instead of covering it, the l
 - **The severity chart matches the toolbar.** Its bars, legend dots, and label text now use the toolbar's red, orange, and purple, at the toolbar's text size. Performance previously drew blue in the chart while the toolbar labeled those same lines with a purple **P**.
 - **The severity chart's collapse chevron is visible.** Drawn at the head row's 10px label size it read as a stray pixel rather than a control. It is now large enough to see and click.
 - **The severity chart has a frame.** A dim rule down each side and along the baseline bounds the bars, so a quiet window reads as a short bar over a baseline rather than as blank space.
+- **The severity chart's legend is a level filter.** The **ERROR**, **WARN**, and **PERF** chips (each with its running count) now work like the toolbar's level dots: single-click a chip to hide or show that level, double-click to focus only it. The chip and its toolbar dot stay in sync both ways, and a hidden level dims in both. The labels are abbreviated to keep the chips compact in the chart's head row.
 - **The crash-issues band is compact and dates itself.** It shows the top five issues with an **All N issues** link into the full Crashlytics panel, rather than a scrolling list that squeezed the feed. Because the band reads a cache and never fetches, its header now states when that cache was last updated.
 
 ### Fixed
