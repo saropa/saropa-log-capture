@@ -236,7 +236,24 @@ function isLineContentBlank(item) {
        where the logcat-threadtime regex yields msg = '' and prefixLen = the whole line
        — renders with nothing after the tag. Testing item.html would call it non-blank,
        so it was born at full ROW_HEIGHT and, worse, stayed a legal anchor for the
-       hidden-gap reveal chevron: a blank row wearing an expander arrow. */
+       hidden-gap reveal chevron: a blank row wearing an expander arrow.
+
+       SCOPE: this applies to EVERY structured format, not just logcat. An empty-message
+       sda-log / log4j / syslog line also collapses, which discards its tag or logger
+       chip — buildDecoParts returns no cells for a blank row. That is deliberate: a row
+       showing a tag and no text is not worth a row. The tag survives in copy output
+       (viewer-copy.ts reads rawText) and reappears in full if structured parsing is off.
+
+       INVARIANT: prefixLen is measured on stripTags(html) while stripHtmlPrefix counts
+       each &entity; as one visible char, so the two agree only because escapeHtml emits
+       exactly the five entities stripTags decodes (&amp; &lt; &gt; &quot; &#39;). A raw
+       &nbsp; or numeric entity inside the PREFIX region would desync them and over-strip
+       a real message into a false blank. Decorations use literal \\u00a0, never &nbsp;.
+
+       Not a perfect mirror of renderItem: it also strips leading head-tag brackets. A
+       structured line whose post-prefix body is only [head tags] would measure non-blank
+       yet render as chips alone. Unreachable today — head tags parse from line start,
+       before any timestamp — so the gap is recorded rather than coded around. */
     if (typeof structuredLineParsing !== 'undefined' && structuredLineParsing
         && item.structuredPrefixLen > 0 && typeof stripHtmlPrefix === 'function') {
         _shown = stripHtmlPrefix(_shown, item.structuredPrefixLen);

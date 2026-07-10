@@ -6,6 +6,7 @@ import type { LoadResultFirstError } from './ui/provider/log-viewer-provider-loa
 import type { FirstErrorResult } from './modules/bookmarks/first-error';
 import { isSplitGroup, getTreeItemUri, type TreeItem } from './ui/session/session-history-grouping';
 import { LOG_LAST_VIEWED_KEY } from './ui/provider/viewer-provider-helpers';
+import { flattenLeafSessions } from './ui/provider/viewer-log-context';
 
 const walkthroughShownKey = 'slc.walkthroughShown';
 
@@ -145,15 +146,6 @@ function findLastViewedUri(lastViewedMap: Record<string, number>): string | unde
     return best;
 }
 
-/** Locate a tree item by leaf URI. Split groups match on any of their parts, since the last-viewed
- *  map records the part the user actually opened, never the synthetic group. */
-function findItemByUri(items: readonly TreeItem[], uriStr: string): TreeItem | undefined {
-    return items.find(i => {
-        if (isSplitGroup(i)) { return i.parts.some(p => p.uri.toString() === uriStr); }
-        return i.uri.toString() === uriStr;
-    });
-}
-
 /**
  * The log to reopen on startup: whichever log the user last deliberately opened, provided it still
  * exists and has not been trashed. Returns undefined to mean "no restorable choice — use the newest".
@@ -162,10 +154,16 @@ function findItemByUri(items: readonly TreeItem[], uriStr: string): TreeItem | u
  * auto-loads deliberately do not. So this is the user's real last choice, not an echo of a previous
  * auto-load.
  *
- * The existence check is a `stat`, not a lookup in `items`: `openLogFile` can load a file from
- * ANYWHERE, and such a file never appears in the reports-directory scan. Requiring tree membership
- * (as the old resume banner did) silently dropped exactly those files. When the URI IS in the tree
- * we additionally honor `trashed` — a log the user sent to trash must not come back on restart.
+ * Two lookups, and they answer different questions:
+ *  - `trashed` is a SIDECAR FLAG, not a file move (`trashSession` calls `metaStore.setTrashed`; the
+ *    log stays where it is). A trashed log therefore still passes `stat()`, so the flag is the ONLY
+ *    thing keeping it from reopening. The leaf must be found through `flattenLeafSessions`, which
+ *    descends both `SplitGroup.parts` AND `SessionGroup.members` — the last-viewed map records the
+ *    part or member the user actually opened, never the synthetic parent. A shallower lookup finds
+ *    no leaf for a nested member, reads no flag, and reopens a trashed log.
+ *  - Existence is a `stat`, not tree membership: `openLogFile` can load a file from ANYWHERE, and
+ *    such a file never appears in the reports-directory scan. Requiring tree membership (as the old
+ *    resume banner did) silently dropped exactly those files. Absent from the tree is normal here.
  */
 async function resolveRestoreUri(
     context: vscode.ExtensionContext,
@@ -174,8 +172,8 @@ async function resolveRestoreUri(
     const lastViewedMap = context.workspaceState.get<Record<string, number>>(LOG_LAST_VIEWED_KEY, {});
     const lastViewedUriStr = findLastViewedUri(lastViewedMap);
     if (!lastViewedUriStr) { return undefined; }
-    const item = findItemByUri(items, lastViewedUriStr);
-    if (item && !isSplitGroup(item) && item.trashed) { return undefined; }
+    const leaf = flattenLeafSessions(items).find(l => l.uri.toString() === lastViewedUriStr);
+    if (leaf?.trashed) { return undefined; }
     const uri = vscode.Uri.parse(lastViewedUriStr);
     // A remembered file can be deleted, renamed, or live on a drive that is no longer mounted.
     // stat() failing is the normal case for a stale entry, not an error worth surfacing.
@@ -209,6 +207,11 @@ export async function autoLoadInitialLog(
     target: AutoLoadTarget,
 ): Promise<void> {
     const restoreUri = await resolveRestoreUri(context, items);
+    // The caller checked "nothing open yet" BEFORE this function's stat() await. A live session
+    // starting, or the webview's pending-load path (log-viewer-provider-setup.ts), can land during
+    // that await — and this is a first-visit convenience, so it must never overwrite a log that a
+    // more deliberate path has already opened. Re-check once the await has resolved.
+    if (target.getCurrentFileUri()) { return; }
     if (restoreUri) {
         void target.loadFromFile(restoreUri);
         return;
