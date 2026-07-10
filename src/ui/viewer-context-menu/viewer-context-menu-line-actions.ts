@@ -173,8 +173,14 @@ function handleLineAction(action, lineIdx) {
                 /* openSearch() only flips internal search state; the visible #search-flyout bar is a
                    separate DOM concern owned by viewer-toolbar-script.ts and normally shown via that
                    file's openSearch monkey-patch. Call openSearchFlyout() directly too so this action
-                   still opens the bar even if that wrapper's load order or presence ever changes. */
-                if (typeof openSearchFlyout === 'function') openSearchFlyout();
+                   still opens the bar even if that wrapper's load order or presence ever changes.
+                   Guarded on the u-hidden class (not called unconditionally): openSearchFlyout()
+                   always (re)adds the anim-flyout-open class, so calling it while the bar is
+                   already visible restarts the slide-in animation as a visible flash. */
+                var searchFlyoutEl = document.getElementById('search-flyout');
+                if (searchFlyoutEl && searchFlyoutEl.classList.contains('u-hidden') && typeof openSearchFlyout === 'function') {
+                    openSearchFlyout();
+                }
                 searchInputEl.value = plainText;
                 if (typeof updateSearch === 'function') updateSearch();
             }
