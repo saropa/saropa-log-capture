@@ -55,6 +55,19 @@ suite('Trouble Mode severity chart styles', () => {
     assert.doesNotMatch(plot, /\bborder:\s/, 'the border shorthand would close the frame at the top');
   });
 
+  test('each severity color is written exactly once, and both the swatch and the bar read it', () => {
+    const css = getTroubleChartStyles();
+
+    // A second literal is how a chip and the bar it counts drift apart: the swatch stays
+    // orange while the bar it labels goes amber, and nothing fails until someone looks.
+    for (const hex of ['#f44336', '#ff9800', '#9c27b0']) {
+      const written = css.split(hex).length - 1;
+      assert.strictEqual(written, 1, `${hex} must be declared once, found ${written}`);
+    }
+    assert.match(ruleBody(css, '.trouble-chart .tc-chip-error i'), /background:\s*var\(--tc-error\)/);
+    assert.match(ruleBody(css, '.trouble-chart .tc-bar-error'), /fill:\s*var\(--tc-error\)/);
+  });
+
   test('the frame is drawn on the plot, so the baseline sits under the bars and above the clock labels', () => {
     const css = getTroubleChartStyles();
 
