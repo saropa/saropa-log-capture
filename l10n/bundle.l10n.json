@@ -1458,6 +1458,8 @@
   "Copy this line's number to the clipboard": "Copy this line's number to the clipboard",
   "Copy Timestamp": "Copy Timestamp",
   "Copy this line's wall-clock timestamp": "Copy this line's wall-clock timestamp",
+  "Copy Tags": "Copy Tags",
+  "Copy this line's tags as a comma-separated list": "Copy this line's tags as a comma-separated list",
   "Copy All": "Copy All",
   "Copy every line in the log as plain text": "Copy every line in the log as plain text",
   "Copy All Decorated": "Copy All Decorated",

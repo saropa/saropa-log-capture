@@ -2109,5 +2109,7 @@
   "Collapse severity chart": "崩 ⁇ 严重程度图表的情况",
   "Error {0}": "错误 {0} 的一个问题.",
   "Perf {0}": "⁇ 的 _PH0__ 的意思",
-  "Warn {0}": "警告:PH0__ 的一个字."
+  "Warn {0}": "警告:PH0__ 的一个字.",
+  "Copy Tags": "复制标签 (Copy Tags) 是一个标记.",
+  "Copy this line's tags as a comma-separated list": "将这行标签复制成以逗号分隔的列表."
 }
