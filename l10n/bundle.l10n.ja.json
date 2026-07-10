@@ -2095,5 +2095,17 @@
   "Trouble Mode — show only errors, warnings, and performance issues (hides everything nominal)": "トラブルモード  ⁇  エラー,警告,パフォーマンス問題のみを表示する (すべての名目隠す)",
   "Trouble report copied to the clipboard": "トラブルレポートはクリップボードにコピーされました.",
   "{0} events · {1} users": "{0}イベント · {1}ユーザー",
-  "{0} · errors {1} · warnings {2} · performance {3}": "{0} · エラー _PH1__ · 警告 _PH2__ · パフォーマンス _PH3__"
+  "{0} · errors {1} · warnings {2} · performance {3}": "{0} · エラー _PH1__ · 警告 _PH2__ · パフォーマンス _PH3__",
+  "All {0} issues": "すべての {0} 問題を解く",
+  "Cached": "キャッシュされたキャッシング",
+  "Could not load this issue.": "この問題を読み込むことができません.",
+  "Errors {0}": "エラー _PH0__ 間違い",
+  "Issue": "発行件数について",
+  "No stack trace available for this issue.": "この問題について,スタック・トラックは利用できません.",
+  "Peak {0}": "ピーク {0} でした.",
+  "Performance {0}": "パフォーマンス {0}",
+  "Reveal in log": "Reveal はログに公開されています.",
+  "Scroll the log to the line this report describes": "ログをスクロールして,このレポートで説明されている行まで移動します.",
+  "Try again": "また試してください.",
+  "Warnings {0}": "警告 {0} を表示する"
 }

@@ -100,6 +100,10 @@ export function getCrashlyticsInteractionsScript(): string {
         cpDetailMeta = meta || {};
         el.innerHTML = cdSkeletonHtml(cpDetailMeta);
         if (cdRailActive) {
+            /* The rail may currently hold a feed-row report whose window the severity chart
+               is marking. A crash issue is a cross-session aggregate with no window, so the
+               mark must clear on the switch or it points at a report no longer on screen. */
+            if (typeof setTroubleChartSelection === 'function') setTroubleChartSelection(0);
             if (typeof openTroubleRail === 'function') openTroubleRail('crashlytics');
         } else {
             el.classList.remove('u-hidden');

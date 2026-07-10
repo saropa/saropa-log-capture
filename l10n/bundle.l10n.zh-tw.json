@@ -2095,5 +2095,17 @@
   "Trouble Mode — show only errors, warnings, and performance issues (hides everything nominal)": "故障模式:只顯示錯誤,警告和性能問題 (隱藏所有名稱)",
   "Trouble report copied to the clipboard": "複製到剪貼板上的問題報告.",
   "{0} events · {1} users": "{0}事件 · {1}使用者",
-  "{0} · errors {1} · warnings {2} · performance {3}": "{0} · 錯誤 {1} ·警告 {2} ·性能 {3} 在線"
+  "{0} · errors {1} · warnings {2} · performance {3}": "{0} · 錯誤 {1} ·警告 {2} ·性能 {3} 在線",
+  "All {0} issues": "所有的 {0} 問題",
+  "Cached": "預覽 [網路] 有沒有人喜歡的",
+  "Could not load this issue.": "沒有辦法加載這個問題.",
+  "Errors {0}": "錯誤 {0} 這樣的問題",
+  "Issue": "關於問題的發表會 -",
+  "No stack trace available for this issue.": "沒有可用的堆 ⁇ 痕跡. 這一問題.",
+  "Peak {0}": "峰值 {0} 在",
+  "Performance {0}": "性能 {0} 的時間",
+  "Reveal in log": "在日志中揭示 登录",
+  "Scroll the log to the line this report describes": "掃描日志到本報告所描述的行.",
+  "Try again": "再試一次 請繼續閱讀",
+  "Warnings {0}": "警告 {0} 的注意事項"
 }

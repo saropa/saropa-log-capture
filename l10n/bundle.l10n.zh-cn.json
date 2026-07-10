@@ -2095,5 +2095,17 @@
   "Trouble Mode — show only errors, warnings, and performance issues (hides everything nominal)": "故障模式:只显示错误,警告和性能问题 (隐藏所有名义)",
   "Trouble report copied to the clipboard": "问题报告复制到剪贴板上的报道.",
   "{0} events · {1} users": "{0}事件 · {1}用户",
-  "{0} · errors {1} · warnings {2} · performance {3}": "{0} · 错误 {1} ·警告 {2} ·性能 {3}"
+  "{0} · errors {1} · warnings {2} · performance {3}": "{0} · 错误 {1} ·警告 {2} ·性能 {3}",
+  "All {0} issues": "所有的 {0} 问题.",
+  "Cached": "缓存的缓存,可以保存.",
+  "Could not load this issue.": "无法加载这个问题.",
+  "Errors {0}": "错误 {0} 的一个",
+  "Issue": "问题问题问题.",
+  "No stack trace available for this issue.": "没有可用的堆 ⁇ 痕迹,为这个问题.",
+  "Peak {0}": "峰值{0} 在一个",
+  "Performance {0}": "性能 {0} 的表现",
+  "Reveal in log": "在日志中揭示.",
+  "Scroll the log to the line this report describes": "滚动日志到本报告描述的行.",
+  "Try again": "再试一次,可以吗?",
+  "Warnings {0}": "警告 {0} 的注意事项"
 }

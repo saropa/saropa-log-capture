@@ -2095,5 +2095,17 @@
   "Trouble Mode — show only errors, warnings, and performance issues (hides everything nominal)": "Режим проблем  ⁇  показывает только ошибки, предупреждения и проблемы с производительностью (скрывает все номинальные)",
   "Trouble report copied to the clipboard": "Отчет о проблеме скопирован в буфер.",
   "{0} events · {1} users": "{0} события · {1} пользователи.",
-  "{0} · errors {1} · warnings {2} · performance {3}": "{0} · ошибки {1} · предупреждения {2} · производительность {3}."
+  "{0} · errors {1} · warnings {2} · performance {3}": "{0} · ошибки {1} · предупреждения {2} · производительность {3}.",
+  "All {0} issues": "Все вопросы _PH0__.",
+  "Cached": "Кэшированный кэш.",
+  "Could not load this issue.": "Не удалось загрузить эту проблему.",
+  "Errors {0}": "Ошибки {0}",
+  "Issue": "Выпуск выпуска Issue.",
+  "No stack trace available for this issue.": "Нет следов стека доступны для этого вопроса.",
+  "Peak {0}": "Пик {0} _Пик __ФО_.",
+  "Performance {0}": "Производительность {0}.",
+  "Reveal in log": "Reveal в журнале регистрации.",
+  "Scroll the log to the line this report describes": "Прокрутите журнал до линии, описанной в этом отчете.",
+  "Try again": "Попробуйте еще раз.",
+  "Warnings {0}": "Предупреждения {0}"
 }

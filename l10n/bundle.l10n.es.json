@@ -2095,5 +2095,17 @@
   "Trouble Mode — show only errors, warnings, and performance issues (hides everything nominal)": "Modo de problemas  ⁇  muestra solo errores, advertencias y problemas de rendimiento (oculta todo lo nominal)",
   "Trouble report copied to the clipboard": "Informe de problemas copiado al portapapeles.",
   "{0} events · {1} users": "{0} eventos · usuarios de {1}",
-  "{0} · errors {1} · warnings {2} · performance {3}": "{0} · errores {1} · advertencias {2} · rendimiento {3}"
+  "{0} · errors {1} · warnings {2} · performance {3}": "{0} · errores {1} · advertencias {2} · rendimiento {3}",
+  "All {0} issues": "Todos los problemas de {0}.",
+  "Cached": "Cachado en caché.",
+  "Could not load this issue.": "No se pudo cargar este problema.",
+  "Errors {0}": "Errores {0} El error es el siguiente:",
+  "Issue": "El número de la cuestión.",
+  "No stack trace available for this issue.": "No hay rastro de pila disponible para este número.",
+  "Peak {0}": "Pico {0} El pico es el PH0__.",
+  "Performance {0}": "El rendimiento {0}.",
+  "Reveal in log": "Reveal en el registro de registros.",
+  "Scroll the log to the line this report describes": "Desplácese por el registro hasta la línea que describe este informe.",
+  "Try again": "Intenta de nuevo.",
+  "Warnings {0}": "Advertencias {0} Las advertencias son las siguientes:"
 }

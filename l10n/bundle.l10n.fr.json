@@ -2095,5 +2095,17 @@
   "Trouble Mode — show only errors, warnings, and performance issues (hides everything nominal)": "Mode Problème  ⁇  ne montre que les erreurs, avertissements et problèmes de performance (cache tout ce qui est nominal)",
   "Trouble report copied to the clipboard": "Rapport de problème copié dans le presse-papiers.",
   "{0} events · {1} users": "{0} événements · utilisateurs de {1}",
-  "{0} · errors {1} · warnings {2} · performance {3}": "{0} · erreurs {1} · avertissements {2} · performance {3} est le plus souvent utilisé."
+  "{0} · errors {1} · warnings {2} · performance {3}": "{0} · erreurs {1} · avertissements {2} · performance {3} est le plus souvent utilisé.",
+  "All {0} issues": "Tous les problèmes de {0}.",
+  "Cached": "Caché dans la mémoire cache.",
+  "Could not load this issue.": "Impossible de charger ce problème.",
+  "Errors {0}": "Erreurs {0} Les erreurs sont des erreurs.",
+  "Issue": "Le problème de la question.",
+  "No stack trace available for this issue.": "Aucune trace de pile disponible pour ce numéro.",
+  "Peak {0}": "Le pic est de {0}.",
+  "Performance {0}": "La performance est de {0}.",
+  "Reveal in log": "Révéler dans le journal d'accueil.",
+  "Scroll the log to the line this report describes": "Faites défiler le journal jusqu'à la ligne décrite dans ce rapport.",
+  "Try again": "Essayez à nouveau.",
+  "Warnings {0}": "Avertissements {0} Les avertissements sont les suivants:"
 }

@@ -86,8 +86,11 @@ export function getCrashlyticsPanelScript(): string {
         if (!cpPanelEl) return;
         cpPanelEl.classList.remove('visible');
         cpPanelOpen = false;
-        // Closing the sidebar also restores the log (the in-viewer detail belongs to this panel).
-        if (typeof closeIssueDetail === 'function') closeIssueDetail();
+        /* Closing the sidebar restores the log, because the full-area detail belongs to this
+           panel. A detail living in the Trouble Mode side rail does NOT: it was opened from
+           the crash-issues band, which is not part of this panel, so tearing it down here
+           would close a surface the user never associated with the sidebar. */
+        if (!cdRailActive && typeof closeIssueDetail === 'function') closeIssueDetail();
         vscodeApi.postMessage({ type: 'crashlyticsPanelClosed' });
         if (typeof clearActivePanel === 'function') clearActivePanel('crashlytics');
         var ibBtn = document.getElementById('ib-crashlytics');
@@ -263,6 +266,12 @@ export function getCrashlyticsPanelScript(): string {
         if (!e.data) return;
         if (e.data.type === 'crashlyticsData') { renderData(e.data.context); }
         else if (e.data.type === 'crashlyticsDetailReady') {
+            /* Drop a reply for an issue the user has already navigated away from. The three
+               async enrichers below have always gated on cpDetailIssueId; this write did not,
+               so a slow fetch for issue A could overwrite issue B's detail with A's stack
+               while every other panel on screen still said B. Switching issues is a normal
+               gesture now that the crash-issues band opens details in the side rail. */
+            if (e.data.issueId && e.data.issueId !== cpDetailIssueId) return;
             if (cpDetailEl) cpDetailEl.innerHTML = e.data.html;
             cpDetailMarkdown = e.data.markdown || '';
             cpDetailTitle = e.data.title || 'Issue';
