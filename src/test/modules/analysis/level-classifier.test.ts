@@ -129,7 +129,8 @@ suite('LevelClassifier', () => {
         });
 
         test('should not classify bare "Performance" noun phrases as performance', () => {
-            // Regression for bugs/BUG_saropa signal report.md: "performance" was a default
+            // Regression for plans/history/2026.07/2026.07.09/BUG_saropa signal report.md:
+            // "performance" was a default
             // keyword, so prose like "Performance settings filtering" in an info line
             // classified as the performance level. Bare "performance" is intentionally
             // absent from DEFAULT_SEVERITY_KEYWORDS AND the package.json setting default
