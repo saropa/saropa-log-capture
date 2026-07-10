@@ -20,9 +20,12 @@
 /** Get the embedded JavaScript for the lineItem birth-height computation. */
 export function getLineBirthScript(): string {
     return /* javascript */ `
-function computeLineBirthHeight(html, errorSuppressed, lineTierHidden, classHidden, catFiltered, lvl, scopeFilt, isAutoHidden) {
+function computeLineBirthHeight(html, errorSuppressed, lineTierHidden, classHidden, catFiltered, lvl, scopeFilt, isAutoHidden, flowTag) {
     var _troubleHidden = typeof calcTroubleFiltered === 'function' && calcTroubleFiltered(lvl);
-    var _lineHidden = errorSuppressed || lineTierHidden || classHidden || catFiltered || calcLevelFiltered(lvl) || _troubleHidden || scopeFilt || isAutoHidden;
+    /* Flow-tags 'hidden' mode (plan 109): a [flowmap] line arriving while the mode
+       is hidden must be born at height 0, not flash visible until the next recalc. */
+    var _flowHidden = typeof calcFlowFiltered === 'function' && calcFlowFiltered(flowTag);
+    var _lineHidden = errorSuppressed || lineTierHidden || classHidden || catFiltered || calcLevelFiltered(lvl) || _troubleHidden || _flowHidden || scopeFilt || isAutoHidden;
     /* Blank-at-birth: gate on !_lineHidden so filtered rows do not get a quarter
        height (which would re-expose them). isLineContentBlank consults html
        only — same input calcItemHeight uses on the next recalc pass. */

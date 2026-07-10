@@ -356,6 +356,9 @@ function renderItem(item, idx, prevVis) {
        wrapper in deco). No trailing chip after html anymore — see the
        counter-row affordance in buildDecoParts. */
     var baseCls = 'line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + bannerCls + dbTsBurstCls;
+    /* Flow-tag chip (plan 109): 'chips' mode swaps a [flowmap] line's raw text for a chip
+       (logic in viewer-flow-tags.ts; 'raw' returns html unchanged, 'hidden' never reaches here). */
+    if (typeof flowChipSwap === 'function') html = flowChipSwap(item, html);
     var msgInner = bannerChevron + contBadge + elapsed + badge + catBadge + html;
     /* Collapse affordance — start row only. Absolutely positioned (CSS) over the
        block's top-right corner so it never shifts the white-space:pre box art.
