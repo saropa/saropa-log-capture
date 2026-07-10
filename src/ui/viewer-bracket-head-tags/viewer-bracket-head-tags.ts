@@ -68,24 +68,12 @@ function renderHeadTagChips(tags) {
     return tags.map(function(t) { return renderHeadTagChip(t); }).join('');
 }
 
-/* Build the fixed-width head-tag CELL for the decoration grid: the first tag as
-   a chip, then a +N badge when more tags follow. The column is a shared fixed
-   width (viewer-styles-columns.ts) so it cannot stretch per row — collapsing the
-   overflow to +N is what keeps the message aligned. Returns { html, title }; the
-   title lists every tag in full so +N (and any ellipsis-clipped name) is always
-   recoverable on hover, applied to the whole cell by getDecorationCells. */
-function renderHeadTagCell(tags) {
-    if (!tags || tags.length === 0) return { html: '', title: '' };
-    var html = renderHeadTagChip(tags[0]);
-    var extra = tags.length - 1;
-    if (extra > 0) {
-        /* Neutral +N badge (tag-chip-more) — it counts, it is not itself a level. */
-        html += '<span class="tag-chip tag-chip-more">+' + extra + '</span>';
-    }
-    /* Full list for the cell tooltip, in emission order. escapeHeadTag guards
-       the attacker-controlled tag text before it lands in a title attribute. */
-    var names = tags.map(function(t) { return escapeHeadTag(t.name); }).join(' ');
-    return { html: html, title: names };
+/* Space-separated list of every head-tag name, escaped, for the tag cell's title
+   tooltip so a chip clipped by the fixed column width is recoverable on hover.
+   escapeHeadTag guards the attacker-controlled tag text before the title attr. */
+function headTagsTitle(tags) {
+    if (!tags || tags.length === 0) return '';
+    return tags.map(function(t) { return escapeHeadTag(t.name); }).join(' ');
 }
 `;
 }
