@@ -4,10 +4,15 @@
  * groups share a file because both are about preventing a future cleanup
  * from removing rules whose purpose is non-obvious from the diff alone.
  *
- * Decorations (counter, timestamp, elapsed, separator) and clickable links
- * (source-link, url-link) must render in grey (editorLineNumber token) so
- * they visually recede behind severity-coloured log content. Links reveal
- * their blue colour only on hover.
+ * Decorations (counter, timestamp, elapsed, separator) and bare url-links must
+ * render in grey (editorLineNumber token) so they visually recede behind
+ * severity-coloured log content.
+ *
+ * EXCEPTION: source-link (a clickable file.ext:line:col) is NOT grey. The grey
+ * receded so far into the dark viewer background that file links were unreadable
+ * and read as non-clickable (user report 2026-07-10), so source-link uses the
+ * theme link colour with a resting dotted underline; hover promotes it to a solid
+ * underline. url-link keeps the grey-until-hover treatment.
  */
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -51,21 +56,34 @@ test("no standalone deco-counter color rule (parent handles it)", () => {
 
 // --- Source file links ---
 
-test("source-link defaults to grey, not blue", () => {
+test("source-link defaults to the visible link color, not grey", () => {
   const css = getLineStyles();
+  const rule = css.match(/\.source-link\s*\{[^}]*\}/s)?.[0] ?? "";
+  // Was editorLineNumber grey — that receded to invisible on dark backgrounds,
+  // so file links now use the theme link color and look like links at rest.
   assert.match(
-    css,
-    /\.source-link\s*\{[^}]*editorLineNumber-foreground/s,
-    ".source-link must default to editorLineNumber grey",
+    rule,
+    /textLink-foreground/,
+    ".source-link must default to textLink blue (grey was unreadable on dark)",
+  );
+  assert.ok(
+    !rule.includes("editorLineNumber-foreground"),
+    ".source-link must NOT use the receding editorLineNumber grey anymore",
   );
 });
 
-test("source-link reveals blue on hover", () => {
+test("source-link carries a resting dotted underline, solid on hover", () => {
   const css = getLineStyles();
+  const rest = css.match(/\.source-link\s*\{[^}]*\}/s)?.[0] ?? "";
+  assert.match(
+    rest,
+    /text-decoration:\s*underline dotted/,
+    ".source-link must show a dotted underline at rest to read as a link",
+  );
   assert.match(
     css,
     /\.source-link:hover\s*\{[^}]*textLink-foreground/s,
-    ".source-link:hover must switch to textLink blue",
+    ".source-link:hover must keep the textLink color and promote the underline",
   );
 });
 

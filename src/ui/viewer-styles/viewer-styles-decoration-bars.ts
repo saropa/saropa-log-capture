@@ -98,6 +98,14 @@ export function getDecorationBarStyles(): string {
 .level-bar-framework { --bar-color: var(--vscode-charts-blue, #2196f3); }
 .level-bar-database { --bar-color: var(--vscode-charts-green, #4caf50); }
 .level-bar-info { --bar-color: var(--vscode-charts-blue, #2196f3); }
+/* AI activity rows: one dedicated gutter color (magenta) so a run of Claude Code
+   activity reads as its own joined band, exactly like every severity run — this
+   replaced the old .ai-line box-shadow left rail, which sat in its own column and
+   read as a SECOND severity bar (user report 2026-07-10). The gutter dot answers
+   "is this AI activity"; the per-action color (edit/bash/ask/read/system) lives in
+   the .ai-tag-chip, so the single dot color loses no information. Magenta is unused
+   by any severity level above, so AI never collides with a real severity color. */
+.level-bar-ai { --bar-color: var(--vscode-terminal-ansiMagenta, #bc3fbc); }
 [class*="level-bar-"]::before { background: var(--bar-color); }
 /* Blank lines: no dot, the connector ::after below still paints across them. */
 .line-blank[class*="level-bar-"]::before { display: none; }
@@ -117,23 +125,21 @@ export function getDecorationBarStyles(): string {
    (::before) sitting on top; at a color change the stripe simply switches color
    at the row boundary. The dot stays the focal marker, the stripe joins them.
 
-   WHY this replaced the old `:has(+ .level-bar-X)` per-pair chain (2026-07-10,
+   WHY this replaced the old per-pair sibling-chain connector (2026-07-10,
    user: "sequential dots are NOT joined, NOTHING is joined"):
-     - `:has(+ sibling)` only connected rows whose IMMEDIATE next sibling shared
-       the EXACT class. A blank line, a `.slow-gap` divider, or a stack-frame row
-       between two same-level rows severed the chain; and `info` vs `framework`
+     - The old rule only connected rows whose IMMEDIATE next sibling shared the
+       EXACT class. A blank line, a .slow-gap divider, or a stack-frame row
+       between two same-level rows severed the chain; and info vs framework
        (both --vscode-charts-blue — same color, different class) never joined
        even though they look identical. A per-row full-height stripe has no
        adjacency or class-equality dependency, so same-color rows always merge.
-     - The old stripe overshot the row (bottom: -50%) to reach the next dot,
-       which FORCED `.line { overflow: visible }` and let long wrapped text paint
-       behind the next row. A within-row stripe removes that requirement so rows
-       can clip again.
-   :not(:is(.art-block-*)) still excludes ASCII-art rows — they reuse ::after for
-   the shimmer animation, so the stripe must not claim ::after there. Blank lines
-   are excluded (they carry no dot); a same-level run that straddles a blank shows
-   a one-row gap in the band, which is acceptable and far better than the old
-   near-total disconnection. */
+     - The old stripe overshot below the row to reach the next dot, which FORCED
+       overflow: visible on .line and let long wrapped text paint behind the next
+       row. A within-row stripe removes that requirement so rows can clip again.
+   The art-block exclusion below still frees ::after for ASCII-art shimmer, so the
+   stripe must not claim ::after there. Blank lines are excluded (they carry no
+   dot); a same-level run that straddles a blank shows a one-row gap in the band,
+   which is acceptable and far better than the old near-total disconnection. */
 [class*="level-bar-"]:not(:is(.art-block-start, .art-block-middle, .art-block-end, .line-blank))::after {
     content: ''; position: absolute;
     left: 0.89em; width: 0.14em;

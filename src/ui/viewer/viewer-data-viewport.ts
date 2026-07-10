@@ -1,7 +1,7 @@
 /** Viewport rendering helpers: hidden-line dividers and virtual scroll renderer.
- *  The severity-gutter connector (line joining consecutive same-level dots) is
- *  pure CSS in viewer-styles-decoration-bars.ts (a :has(+ .level-bar-X) sibling
- *  selector on each row). No JS chain bookkeeping lives here. */
+ *  The severity-gutter connector (band joining consecutive same-color dots) is
+ *  pure CSS in viewer-styles-decoration-bars.ts (each leveled row paints a
+ *  full-height ::after stripe of its own color). No JS chain bookkeeping here. */
 export function getViewportRenderScript(): string {
     return /* javascript */ `
 /** Count hidden non-blank lines between two allLines indices (exclusive). */
@@ -154,11 +154,12 @@ function renderViewport(force) {
     _vTmpl.innerHTML = parts.join('');
     viewportEl.replaceChildren();
     viewportEl.appendChild(_vTmpl.content);
-    /* Severity-gutter connector: the line between consecutive same-level dots
-       is purely CSS, painted by viewer-styles-decoration-bars.ts via a
-       :has(+ .level-bar-X) selector on each row. No JS chain walking, no
-       bridge stamping. The row's own level-bar-* class drives both the dot
-       and the connecting stripe via --bar-color, so they cannot disagree. */
+    /* Severity-gutter connector: the band joining consecutive same-color dots
+       is purely CSS, painted by viewer-styles-decoration-bars.ts — each leveled
+       row draws a full-height ::after stripe of its own --bar-color, so a run of
+       same-color rows abuts into one continuous band. No JS chain walking, no
+       bridge stamping. The row's own level-bar-* class drives both the dot and
+       the stripe via --bar-color, so they cannot disagree. */
     spacerTop.style.height = startOffset + 'px';
     spacerBottom.style.height = bottomH + 'px';
     // Re-apply row selection highlight after DOM replace so shift-click selection is preserved (e.g. on right-click context menu).

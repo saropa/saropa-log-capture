@@ -13,7 +13,18 @@ export function getLineStyles(): string {
        leading that users read as a gap between every row in dense logs. */
     line-height: var(--log-line-height, 1.1);
     height: calc(1em * var(--log-line-height, 1.1));
-    overflow: visible;
+    /* Clip to the row's own box. The virtual scroller fixes every normal row at
+       exactly one line (calcItemHeight returns ROW_HEIGHT), but white-space:
+       pre-wrap lets a long line wrap to a SECOND visual line that the fixed
+       height has no room for — with overflow: visible that overflow painted
+       DOWN over the next row, so a wrapped stack frame appeared as unreadable
+       dim text bleeding through the row below (user report 2026-07-10). Clipping
+       contains it to one line; the full text is reachable via no-wrap mode
+       (horizontal scroll) below. The old overflow: visible was needed only so
+       the severity connector stripe could overshoot into the next row — that
+       stripe is now full-height WITHIN the row (viewer-styles-decoration-bars.ts),
+       so nothing needs to escape the box anymore. */
+    overflow: hidden;
     transition: background 0.1s ease;
 }
 /* Rows that embed a block-level child (currently: expanded SQL repeat drilldown
@@ -65,10 +76,8 @@ export function getLineStyles(): string {
 
    1. position: relative + isolation: isolate — gives each row its own
       stacking context so the severity dot's ::before (z-index 2) and the
-      chain-stripe ::after (z-index 1) from a *previous* row that overflows
-      into this row's space (via overflow: visible) resolve INSIDE the row.
-      Without it, an overshooting ::after composed against the global
-      stacking context could paint over this row's dot at the overlap.
+      full-height stripe ::after (z-index 1) resolve INSIDE the row against
+      each other, keeping the dot on top of its own stripe at the center.
 
    2. transform: translateZ(0) — attempt #1 (commit 49297d75). A
       compositor-layer hint promoting each row to its own GPU layer so paint
@@ -94,9 +103,7 @@ export function getLineStyles(): string {
 
    Bounded cost: virtualization keeps ~50 rows live, so the GPU/compositor
    footprint stays small regardless of how many of these the browser
-   actually materializes. The opaque background also does NOT clip the
-   severity-gutter ::after stripe overshoot (bottom: -50%) — only
-   contain: paint would, which is why we deliberately avoid it. */
+   actually materializes. */
 .line, .stack-header {
     position: relative;
     isolation: isolate;
@@ -139,11 +146,11 @@ export function getLineStyles(): string {
 
 /* --- Clickable source file links within log lines --- */
 .source-link {
-    /* Was editorLineNumber-foreground (#858585) — that gray is designed to recede
-       against the editor gutter, so on the dark viewer background the links were
-       effectively invisible and read as non-clickable (user report 2026-07-10).
-       Use the theme's link color so a file path looks like the link it is; the
-       resting dotted underline marks it actionable without the loud solid link
+    /* The prior line-number gray is designed to recede against the editor
+       gutter, so on the dark viewer background the links were effectively
+       invisible and read as non-clickable (user report 2026-07-10). Use the
+       theme's link color so a file path looks like the link it is; the resting
+       dotted underline marks it actionable without the loud solid link
        underline, which hover then promotes. */
     color: var(--vscode-textLink-foreground, #3794ff);
     text-decoration: underline dotted;
@@ -282,6 +289,12 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
 #log-content.nowrap .stack-frames .line {
     white-space: pre;
     word-break: normal;
+    /* Restore visible overflow in no-wrap mode: here a long line stays on one
+       line and extends past the row's right edge, and that visible overflow is
+       what expands #log-content's scrollWidth so its overflow-x: auto can scroll
+       to reveal it. The wrap-mode clip (overflow: hidden on base .line) would
+       instead cut the line at the pane edge with no way to scroll to the rest. */
+    overflow: visible;
 }
 `;
 }
