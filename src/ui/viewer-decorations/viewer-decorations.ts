@@ -46,9 +46,9 @@ var lastAppliedDecoSig = '';
     has no timestamps, PIDs, or tags — so applyDecorationLayoutWidth() reserves
     a column's width only when both the toggle is on AND the data was seen.
     Set incrementally in addToData(); reset on 'clear'. */
-var decoSeen = { ts: false, pidTid: false, tag: false, rawLevel: false };
+var decoSeen = { ts: false, pidTid: false, tag: false, rawLevel: false, htags: false };
 /** Clear all decoration data-seen flags — called on 'clear', before a new file loads. */
-function resetDecoSeen() { decoSeen.ts = false; decoSeen.pidTid = false; decoSeen.tag = false; decoSeen.rawLevel = false; }
+function resetDecoSeen() { decoSeen.ts = false; decoSeen.pidTid = false; decoSeen.tag = false; decoSeen.rawLevel = false; decoSeen.htags = false; }
 
 /**
  * Map log level to a colored dot emoji.
@@ -162,10 +162,17 @@ function applyDecorationLayoutWidth() {
     var hasTag = (typeof decoShowParsedTag === 'undefined' || decoShowParsedTag)
         && (typeof structuredLineParsing !== 'undefined' && structuredLineParsing)
         && decoSeen.tag;
+    /* App head-tag column: reserved whenever the loaded log carries any recognized
+       [db]/[perf]/[frame-stall] bracket tag. No separate toggle — head-tag chips
+       ride the decoration master switch like every other part (buildDecoParts
+       early-returns when decorations are off). Independent of structuredLineParsing
+       and decoShowParsedTag: those govern the DEVICE tag (item.parsedTag), a
+       different datum from app-emitted head tags. */
+    var hasHtags = decoSeen.htags;
     /* Signature gates the CSS write: width depends on digit count, the enabled
        flags, AND which data has been seen (data arrives as lines stream in). */
     var sig = digits + '|' + (hasCounter ? 1 : 0) + (hasTime ? 1 : 0) + (showMilliseconds ? 1 : 0)
-        + (hasSessionElapsed ? 1 : 0) + (hasPid ? 1 : 0) + (hasLvl ? 1 : 0) + (hasTag ? 1 : 0);
+        + (hasSessionElapsed ? 1 : 0) + (hasPid ? 1 : 0) + (hasLvl ? 1 : 0) + (hasTag ? 1 : 0) + (hasHtags ? 1 : 0);
     if (sig === lastAppliedDecoSig) return;
     /* Per-part em widths at the .line parent font size. The deco prefix renders
        at font-size:0.85em; these are deliberately a touch generous because
@@ -190,6 +197,11 @@ function applyDecorationLayoutWidth() {
     if (hasPid) em += 7;
     if (hasLvl) em += 1.6;
     if (hasTag) em += 7;
+    /* Fixed head-tag track: sized to fit one chip (~"frame-stall") plus a +N
+       badge. Extra chips collapse to +N and the full list rides the cell title,
+       so the width never needs to grow with tag count — that is what keeps the
+       message aligned row-to-row (a content-sized track would not). */
+    if (hasHtags) em += 9;
     if (em > 0) em += 1; // trailing &nbsp;&nbsp; gap getDecorationPrefix appends
     var contentIndentEm = em;
     var totalPaddingEm = 1.25 + contentIndentEm; // 1.25em keeps severity bar clear.
@@ -207,6 +219,7 @@ function applyDecorationLayoutWidth() {
         hasPid ? '7em' : '0',
         hasLvl ? '1.6em' : '0',
         hasTag ? '7em' : '0',
+        hasHtags ? '9em' : '0',
         '1fr',
     ];
     root.style.setProperty('--grid-cols', gridCols.join(' '));

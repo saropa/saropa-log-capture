@@ -131,8 +131,14 @@ export function getTagStyles(): string {
     background: rgba(255, 255, 255, 0.08);
 }
 
-/* --- Head-tag chips (bracket tags rendered inline in lines) --- */
+/* --- Head-tag chips (bracket tags rendered in the head-tag column) ---
+   One rule reads --tag-c (the level color); each level class only sets the
+   variable, and color-mix derives the fill + border from it — the same DRY
+   pattern as .flow-chip. Colors are VS Code theme-adaptive --vscode-charts-*
+   tokens (readable on dark AND light), replacing the old hardcoded material
+   hexes whose dark purple/brown read as dark-on-dark on the editor background. */
 .tag-chip {
+    --tag-c: var(--vscode-charts-blue, #4aa5ff);
     display: inline-flex;
     align-items: center;
     font-size: 10px;
@@ -140,50 +146,26 @@ export function getTagStyles(): string {
     border-radius: 3px;
     margin-right: 4px;
     white-space: nowrap;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: var(--vscode-foreground);
+    color: var(--tag-c);
+    background: color-mix(in srgb, var(--tag-c) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--tag-c) 40%, transparent);
 }
 /* Level-specific tag coloring — matches level dots in viewer-styles-level.ts */
-.tag-chip.tag-level-error {
-    border-color: #f44336;
-    color: #f44336;
-    background: rgba(244, 67, 54, 0.1);
-}
-.tag-chip.tag-level-warning {
-    border-color: #ff9800;
-    color: #ff9800;
-    background: rgba(255, 152, 0, 0.1);
-}
-.tag-chip.tag-level-performance {
-    border-color: #9c27b0;
-    color: #9c27b0;
-    background: rgba(156, 39, 176, 0.1);
-}
-.tag-chip.tag-level-database {
-    border-color: #4caf50;
-    color: #4caf50;
-    background: rgba(76, 175, 80, 0.1);
-}
-.tag-chip.tag-level-todo {
-    border-color: #bdbdbd;
-    color: #bdbdbd;
-    background: rgba(189, 189, 189, 0.1);
-}
-.tag-chip.tag-level-notice {
-    border-color: #00bcd4;
-    color: #00bcd4;
-    background: rgba(0, 188, 212, 0.1);
-}
-.tag-chip.tag-level-debug {
-    border-color: #a1887f;
-    color: #a1887f;
-    background: rgba(161, 136, 127, 0.1);
-}
-.tag-chip.tag-level-info {
-    border-color: #2196f3;
-    color: #2196f3;
-    background: rgba(33, 150, 243, 0.1);
+.tag-chip.tag-level-error       { --tag-c: var(--vscode-charts-red, #f14c4c); }
+.tag-chip.tag-level-warning     { --tag-c: var(--vscode-charts-yellow, #e2c08d); }
+.tag-chip.tag-level-performance { --tag-c: var(--vscode-charts-purple, #b180d7); }
+.tag-chip.tag-level-database    { --tag-c: var(--vscode-charts-green, #89d185); }
+.tag-chip.tag-level-todo        { --tag-c: var(--vscode-charts-foreground, #cccccc); }
+.tag-chip.tag-level-notice      { --tag-c: var(--vscode-charts-blue, #4aa5ff); }
+.tag-chip.tag-level-debug       { --tag-c: var(--vscode-descriptionForeground, #9d9d9d); }
+.tag-chip.tag-level-info        { --tag-c: var(--vscode-charts-blue, #4aa5ff); }
+/* Overflow badge: shows +N when a line carries more head tags than the fixed
+   column shows. Neutral (it is a count, not a severity); the full list is on
+   the cell title. No margin-right — it is the last chip in the cell. */
+.tag-chip.tag-chip-more {
+    --tag-c: var(--vscode-descriptionForeground, #9d9d9d);
+    margin-right: 0;
+    font-weight: 600;
 }
 `;
 }

@@ -104,7 +104,15 @@ function buildDecoParts(item, idx, hiddenAfter) {
     if (!isBlank && item.parsedTag
         && typeof structuredLineParsing !== 'undefined' && structuredLineParsing
         && (typeof decoShowParsedTag === 'undefined' || decoShowParsedTag)) {
-        parts.push({ key: 'tag', html: '<span class="meta-filter-toggle deco-parsed-tag" data-meta-key="tag" data-meta-value="' + item.parsedTag.replace(/"/g, '&quot;') + '" title="' + vt('viewer.deco.filterByTag', item.parsedTag.replace(/"/g, '&quot;')) + '">' + item.parsedTag + '</span>' });
+        parts.push({ key: 'tag', html: '<span class="meta-filter-toggle deco-parsed-tag deco-parsed-tag-chip" data-meta-key="tag" data-meta-value="' + item.parsedTag.replace(/"/g, '&quot;') + '" title="' + vt('viewer.deco.filterByTag', item.parsedTag.replace(/"/g, '&quot;')) + '">' + item.parsedTag + '</span>' });
+    }
+    /* App head-tag chips ([db]/[perf]/[frame-stall]) in their own fixed column,
+       left of the message. First tag as a chip, the rest collapsed to +N, full
+       list on the cell title. Independent of the device-tag branch above: a line
+       can carry both a device tag (keystore2) and app head tags. */
+    if (!isBlank && item.headTags && item.headTags.length > 0 && typeof renderHeadTagCell === 'function') {
+        var htc = renderHeadTagCell(item.headTags);
+        if (htc.html) parts.push({ key: 'htags', html: htc.html, title: htc.title });
     }
     return parts;
 }
@@ -132,7 +140,11 @@ function getDecorationCells(item, idx, hiddenAfter) {
     for (var i = 0; i < parts.length; i++) {
         var p = parts[i];
         var ell = (p.key === 'tag') ? ' ellipsis' : '';
-        cells += '<span class="deco-cell deco-cell-' + p.key + ell + '">' + p.html + '</span>';
+        /* Optional whole-cell tooltip (head-tag column uses it for the full tag
+           list behind +N / an ellipsis-clipped name). Title text is pre-escaped
+           by the part builder. */
+        var titleAttr = p.title ? ' title="' + p.title + '"' : '';
+        cells += '<span class="deco-cell deco-cell-' + p.key + ell + '"' + titleAttr + '>' + p.html + '</span>';
     }
     return '<span class="line-decoration">' + cells + '</span>';
 }
