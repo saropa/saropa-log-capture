@@ -21,11 +21,12 @@ export function getTroubleCrashlyticsStyles(): string {
 body:not(.slc-trouble-active) .trouble-crashlytics { display: none !important; }
 .trouble-crashlytics.u-hidden { display: none !important; }
 
-/* Title left, cache age right (plan 110, Stage 5). The rows are read from disk and never
-   refetched here, so an unlabeled list would imply a liveness the band does not have. */
+/* Collapse caret + title left, cache age right (plan 110, Stage 5). The rows are read from
+   disk and never refetched here, so an unlabeled list would imply a liveness the band does
+   not have. align-items:center (not baseline) so the caret button sits on the title's line. */
 .trouble-crashlytics-head {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     gap: var(--space-2);
     font-size: var(--text-eyebrow);
@@ -34,7 +35,40 @@ body:not(.slc-trouble-active) .trouble-crashlytics { display: none !important; }
     color: var(--muted);
     margin-bottom: var(--space-1);
 }
+/* Caret + title travel together on the left; space-between keeps the age on the right. */
+.trouble-crashlytics-head .tcx-head-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+}
 .trouble-crashlytics .tcx-fresh { font-variant-numeric: tabular-nums; text-transform: none; }
+
+/* Collapse control — mirror of the severity chart's .tc-toggle: one caret glyph rotated by
+   CSS (no script-swapped text a translator would own), sized off the type scale so it reads
+   as a control rather than a stray pixel. Letter-spacing cancelled so the glyph centers. */
+.trouble-crashlytics .tcx-toggle {
+    background: none;
+    border: none;
+    padding: 0 2px;
+    margin: 0;
+    color: var(--muted);
+    cursor: pointer;
+    line-height: 1;
+    font-size: var(--text-h2);
+    letter-spacing: normal;
+    transition: transform 0.15s ease;
+}
+.trouble-crashlytics .tcx-toggle:hover { color: var(--fg); }
+.trouble-crashlytics.tcx-collapsed .tcx-toggle { transform: rotate(-90deg); }
+/* The title doubles as a larger collapse target; it takes the caret's pointer + hover. */
+.trouble-crashlytics .tcx-head-title { cursor: pointer; user-select: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trouble-crashlytics .tcx-head-title:hover { color: var(--fg); }
+/* Collapsed keeps the head (the title + cache age are the point of a collapsed band, and a
+   band that vanished would leave nothing to click to bring it back) and drops only the rows. */
+.trouble-crashlytics.tcx-collapsed .trouble-crashlytics-rows,
+.trouble-crashlytics.tcx-collapsed .trouble-crashlytics-more { display: none; }
+.trouble-crashlytics.tcx-collapsed .trouble-crashlytics-head { margin-bottom: 0; }
 
 /* Five rows, no scroller: the band is a triage cue, and the height it used to reclaim
    from the feed bought a list the user could not scan anyway. Overflow goes to the

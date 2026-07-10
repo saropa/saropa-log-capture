@@ -10,7 +10,7 @@ import { getTroubleChartStyles } from '../../ui/viewer-styles/viewer-styles-trou
  *  1. The collapse caret must NOT inherit the head row's 10px label size. At 10px the
  *     glyph reads as a stray pixel rather than a control, and it is the only affordance
  *     announcing that the chart can be put away. It is sized from the type scale
- *     (--text-h3), not a literal, so the scale stays the single source of truth.
+ *     (--text-h2), not a literal, so the scale stays the single source of truth.
  *  2. The plot frame is THREE-sided. A top border would close it into a box and imply a
  *     ceiling the bars are measured against; the scale is the running peak, which moves.
  *
@@ -33,7 +33,7 @@ suite('Trouble Mode severity chart styles', () => {
     const toggle = ruleBody(getTroubleChartStyles(), '.trouble-chart .tc-toggle');
 
     assert.ok(toggle.length > 0, 'the .tc-toggle rule must exist');
-    assert.match(toggle, /font-size:\s*var\(--text-h3\)/, 'caret size must come from the type scale');
+    assert.match(toggle, /font-size:\s*var\(--text-h2\)/, 'caret size must come from the type scale');
     assert.doesNotMatch(toggle, /font-size:\s*\d/, 'a literal px size would drift from the scale');
   });
 
