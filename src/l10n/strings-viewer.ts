@@ -32,6 +32,8 @@ export const stringsViewer: Record<string, string> = {
     // Trouble Mode severity chart (Stage 3) — host-built pane chrome.
     'viewer.troubleChart.region': 'Severity over time chart',
     'viewer.troubleChart.title': 'Severity over time',
+    'viewer.troubleChart.toggle.title': 'Collapse or expand the severity chart',
+    'viewer.troubleChart.toggle.label': 'Collapse severity chart',
     // Trouble Mode detail pane (Stage 4) — host-built pane chrome + content.
     'viewer.troubleDetail.region': 'Selected issue detail',
     'viewer.troubleDetail.close.title': 'Close detail',

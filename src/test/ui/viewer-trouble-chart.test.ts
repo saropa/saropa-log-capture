@@ -139,3 +139,98 @@ suite('Trouble Mode severity chart', () => {
     assert.strictEqual(ctx.troubleChartIntervalSec, 3, 'NaN ignored');
   });
 });
+
+/** The subset of an element the chart's head/plot rendering touches. */
+interface ChartStubEl {
+  innerHTML: string;
+  textContent: string;
+  attrs: Record<string, string>;
+  classes: Set<string>;
+  classList: { toggle(c: string, on: boolean): void; contains(c: string): boolean };
+  setAttribute(k: string, v: string): void;
+  addEventListener(): void;
+}
+
+function chartStubEl(): ChartStubEl {
+  const classes = new Set<string>();
+  const attrs: Record<string, string> = {};
+  return {
+    innerHTML: '', textContent: '', attrs, classes,
+    classList: {
+      toggle: (c, on) => { if (on) { classes.add(c); } else { classes.delete(c); } },
+      contains: (c) => classes.has(c),
+    },
+    setAttribute: (k, v) => { attrs[k] = v; },
+    addEventListener: () => { /* the chevron/bar listeners are exercised by calling the fns directly */ },
+  };
+}
+
+/** Chart context with a stub document, so the render path (not just the math) runs. */
+function buildChartDomCtx(): { ctx: Record<string, unknown>; els: Record<string, ChartStubEl> } {
+  const ids = ['trouble-chart', 'trouble-chart-toggle', 'trouble-chart-body', 'trouble-chart-legend', 'trouble-chart-peak'];
+  const els: Record<string, ChartStubEl> = {};
+  for (const id of ids) { els[id] = chartStubEl(); }
+  const ctx = vm.createContext({
+    allLines: [], Number, console, Math,
+    // Templates are irrelevant here; the assertions read placement, not wording.
+    vt: (key: string, ...args: unknown[]) => key + ':' + args.join(','),
+    document: { getElementById: (id: string) => els[id] ?? null },
+  }) as Record<string, unknown>;
+  vm.runInContext(getTroubleModeScript() + getTroubleChartScript(), ctx, { filename: 'trouble-chart-dom.js' });
+  ctx.troubleModeActive = true;
+  ctx.allLines = [
+    { type: 'line', level: 'warning', timestamp: 10_000, viewerLineIndex: 0 },
+    { type: 'line', level: 'warning', timestamp: 10_500, viewerLineIndex: 1 },
+    { type: 'line', level: 'error', timestamp: 20_000, viewerLineIndex: 2 },
+  ];
+  return { ctx, els };
+}
+
+suite('Trouble Mode severity chart — head placement and collapse', () => {
+  test('the peak count renders in the head, never inside the plot', () => {
+    const { ctx, els } = buildChartDomCtx();
+    (ctx.renderTroubleChart as () => void)();
+
+    // The device-startup warning rush is always the tallest bar and always lands in the
+    // leading window, so a peak label drawn inside the plot is drawn underneath it.
+    assert.strictEqual(els['trouble-chart-peak'].textContent, 'viewer.troubleChart.peak:2', 'peak labels the busiest window');
+    assert.ok(!els['trouble-chart-body'].innerHTML.includes('tc-ymax'), 'no peak label overlays the plot');
+    assert.ok(els['trouble-chart-body'].innerHTML.includes('tc-svg'), 'the plot did render');
+  });
+
+  test('an empty chart clears the head rather than stranding a stale peak', () => {
+    const { ctx, els } = buildChartDomCtx();
+    (ctx.renderTroubleChart as () => void)();
+    ctx.allLines = [];
+    (ctx.renderTroubleChart as () => void)();
+
+    assert.strictEqual(els['trouble-chart-peak'].textContent, '', 'peak cleared');
+    assert.strictEqual(els['trouble-chart-legend'].innerHTML, '', 'legend cleared');
+    assert.ok(els['trouble-chart-body'].innerHTML.includes('tc-empty'), 'empty state shown');
+  });
+
+  test('collapsing keeps the head totals live and skips the plot; expanding rebuilds it', () => {
+    const { ctx, els } = buildChartDomCtx();
+    const toggle = ctx.toggleTroubleChartCollapsed as () => void;
+    const render = ctx.renderTroubleChart as () => void;
+    render();
+
+    toggle();
+    assert.ok(els['trouble-chart'].classList.contains('tc-collapsed'), 'pane marked collapsed');
+    assert.strictEqual(els['trouble-chart-toggle'].attrs['aria-expanded'], 'false', 'chevron reports collapsed');
+
+    // While collapsed, a new line still updates the legend and peak — that is the reason
+    // to collapse rather than hide — but must not pay to rebuild the hidden plot.
+    (ctx.allLines as unknown[]).push({ type: 'line', level: 'error', timestamp: 20_500, viewerLineIndex: 3 });
+    els['trouble-chart-body'].innerHTML = 'STALE';
+    render();
+    assert.strictEqual(els['trouble-chart-body'].innerHTML, 'STALE', 'hidden plot not rebuilt');
+    assert.ok(els['trouble-chart-legend'].innerHTML.includes('legend.error:2'), 'legend still counts the new error');
+
+    // Expanding must rebuild: every render while collapsed left the plot stale.
+    toggle();
+    assert.ok(!els['trouble-chart'].classList.contains('tc-collapsed'), 'pane expanded');
+    assert.strictEqual(els['trouble-chart-toggle'].attrs['aria-expanded'], 'true', 'chevron reports expanded');
+    assert.ok(els['trouble-chart-body'].innerHTML.includes('tc-svg'), 'plot rebuilt on expand');
+  });
+});

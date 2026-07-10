@@ -6,10 +6,18 @@
  * that viewer-trouble-mode.ts already toggles, so the chart script never manages
  * display, only content.
  *
- * Bar fills come from the design tokens (viewer-styles-tokens.ts) so they resolve
- * against the host theme: errors --accent-critical, warnings --accent-warning,
- * performance --accent-info. The pane chrome uses --surface-2 / --border so it
- * reads as a distinct dashboard band separated from the feed by the hairline.
+ * Bar fills are the SAME literal palette as the toolbar's level dots and letters
+ * (viewer-styles-level.ts): error #f44336, warning #ff9800, performance #9c27b0.
+ * They deliberately do NOT use the theme tokens (--accent-critical etc.), which
+ * resolve to the host's editor squiggle colors and rendered performance as blue —
+ * disagreeing with the purple "P" the toolbar shows two rows above for the same
+ * lines. One severity, one color, across the whole viewer: when any of the three
+ * changes, change it in BOTH files. The pane chrome still uses --surface-2 /
+ * --border so it reads as a dashboard band separated from the feed by a hairline.
+ *
+ * Head-row text is pinned to 10px to match .level-letter / .dot-count in the
+ * toolbar, not the 11px --text-eyebrow the other pane heads use: this strip sits
+ * directly under the toolbar and any size step between them reads as a misalignment.
  */
 export function getTroubleChartStyles(): string {
     return /* css */ `
@@ -26,48 +34,61 @@ export function getTroubleChartStyles(): string {
 }
 body.slc-trouble-active .trouble-chart { display: block; }
 
-/* Title left, legend chips right (plan 110, Stage 4). Putting the legend in the head
-   rather than under the strip is what keeps the readability additions from costing the
-   feed vertical space — the mode exists to give the log MORE room, not less. */
+/* Chevron + title + peak on the left, legend chips pushed right. Putting the legend and
+   the peak count in the head rather than under/over the strip is what keeps the
+   readability additions from costing the feed vertical space — the mode exists to give
+   the log MORE room, not less. */
 .trouble-chart-head {
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
+    align-items: center;
     gap: var(--space-2);
-    font-size: var(--text-eyebrow);
+    font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: var(--muted);
     margin-bottom: var(--space-1);
 }
-.trouble-chart .tc-legend { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.trouble-chart .tc-legend { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-left: auto; }
 .trouble-chart .tc-chip { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
 .trouble-chart .tc-chip i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
-.trouble-chart .tc-chip-error i { background: var(--accent-critical); }
-.trouble-chart .tc-chip-warning i { background: var(--accent-warning); }
-.trouble-chart .tc-chip-performance i { background: var(--accent-info); }
+.trouble-chart .tc-chip-error i { background: #f44336; }
+.trouble-chart .tc-chip-warning i { background: #ff9800; }
+.trouble-chart .tc-chip-performance i { background: #9c27b0; }
+/* Peak sits beside the title, never over the plot: the leading device-startup warning
+   spike is the tallest bar in most logs and drew straight through the old overlay label. */
+.trouble-chart .tc-peak { font-variant-numeric: tabular-nums; }
+.trouble-chart .tc-peak:empty { display: none; }
+
+/* Collapse control. The glyph is a single caret rotated by CSS rather than swapped in
+   script, so the button carries no text a translator would have to own. */
+.trouble-chart .tc-toggle {
+    background: none;
+    border: none;
+    padding: 0 2px;
+    margin: 0;
+    color: var(--muted);
+    cursor: pointer;
+    line-height: 1;
+    font-size: 10px;
+    transition: transform 0.15s ease;
+}
+.trouble-chart .tc-toggle:hover { color: var(--fg); }
+.trouble-chart.tc-collapsed .tc-toggle { transform: rotate(-90deg); }
+/* Collapsed keeps the head — the legend totals are the whole point of a collapsed chart,
+   and a chart that vanishes entirely gives the user nothing to click to bring it back. */
+.trouble-chart.tc-collapsed .trouble-chart-body { display: none; }
+.trouble-chart.tc-collapsed .trouble-chart-head { margin-bottom: 0; }
 
 .trouble-chart-body { position: relative; }
 
 .trouble-chart .tc-plot { position: relative; }
-/* Peak count pinned inside the plot's top-left corner: it labels the y axis without
-   reserving a gutter that would shrink the strip on a narrow sidebar. */
-.trouble-chart .tc-ymax {
-    position: absolute;
-    top: 0;
-    left: 0;
-    font-size: var(--text-eyebrow);
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
-    pointer-events: none;
-}
 /* The strip is a rate over time, so the span it covers must be stated. Only the two
    ends are labeled — interior ticks cannot be placed honestly under
    preserveAspectRatio="none", which stretches the SVG horizontally. */
 .trouble-chart .tc-axis {
     display: flex;
     justify-content: space-between;
-    font-size: var(--text-eyebrow);
+    font-size: 10px;
     color: var(--muted);
     font-variant-numeric: tabular-nums;
     margin-top: 2px;
@@ -84,9 +105,9 @@ body.slc-trouble-active .trouble-chart { display: block; }
    feed to that window's first row). */
 .trouble-chart .tc-bar { cursor: pointer; }
 .trouble-chart .tc-bar:hover rect { opacity: 0.75; }
-.trouble-chart .tc-bar-error { fill: var(--accent-critical); }
-.trouble-chart .tc-bar-warning { fill: var(--accent-warning); }
-.trouble-chart .tc-bar-performance { fill: var(--accent-info); }
+.trouble-chart .tc-bar-error { fill: #f44336; }
+.trouble-chart .tc-bar-warning { fill: #ff9800; }
+.trouble-chart .tc-bar-performance { fill: #9c27b0; }
 /* The window holding the row currently open in the side rail. A full-height band BEHIND
    the bar, not a stroke on it: preserveAspectRatio="none" stretches the SVG horizontally,
    so any stroke width would render as a thick smear on the vertical edges. */

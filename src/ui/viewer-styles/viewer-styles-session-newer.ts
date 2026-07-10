@@ -81,23 +81,36 @@ export function getSessionNewerStyles(): string {
     gap: 4px;
     flex-shrink: 0;
 }
+/* Labeled non-primary buttons take the SECONDARY button treatment, not a bare transparent box.
+   Transparent-on-blue next to the filled primary read as a disabled control ("why is Copy Full Path
+   greyed out?") when it was always live. Icon-only chrome (⋮, ×) opts back out below. */
 .session-newer-banner-action {
-    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--vscode-button-secondaryBackground);
     border: 1px solid var(--vscode-button-border, transparent);
-    color: inherit;
+    color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
     padding: 2px 8px;
     border-radius: 3px;
     cursor: pointer;
     font-size: 11px;
     font-family: inherit;
 }
+.session-newer-banner-action .codicon {
+    font-size: 12px;
+    line-height: 1;
+}
 .session-newer-banner-action:hover {
-    background: var(--vscode-button-hoverBackground);
+    background: var(--vscode-button-secondaryHoverBackground, var(--vscode-button-hoverBackground));
 }
 .session-newer-banner-action.primary {
     background: var(--vscode-button-background);
     color: var(--vscode-button-foreground);
     border-color: var(--vscode-button-background);
+}
+.session-newer-banner-action.primary:hover {
+    background: var(--vscode-button-hoverBackground);
 }
 
 /* The viewer's CLICK-mode banner overlays its kebab menu DOWN over the log content. None of
@@ -112,11 +125,24 @@ export function getSessionNewerStyles(): string {
     z-index: 20;
 }
 
+/* The status bar is permanent, so its filename must yield width to the session metadata rather
+   than stretch across the bar; the details line takes the slack and ellipsizes. */
+.viewer-newer-banner .session-newer-banner-text { flex: 0 1 auto; }
+.viewer-newer-banner .session-details-inline { font-size: 11px; opacity: 0.85; }
+
 /* --- Unified banner: kebab overflow + close (plan 109) --- */
-/* The ⋮ and × are icon-only square buttons; the codicon centers via line-height. */
+/* The ⋮ and × are icon-only chrome, not actions — no button fill, or the bar reads as three
+   competing buttons plus two more. */
 .session-newer-banner-action.log-banner-kebab-btn,
 .session-newer-banner-action.session-newer-banner-close {
     padding: 2px 6px;
+    background: transparent;
+    border-color: transparent;
+    color: inherit;
+}
+.session-newer-banner-action.log-banner-kebab-btn:hover,
+.session-newer-banner-action.session-newer-banner-close:hover {
+    background: var(--vscode-toolbar-hoverBackground);
 }
 .session-newer-banner-close {
     font-size: 14px;
