@@ -9,10 +9,14 @@ navigation from app-shaped breadcrumbs (`Screen Navigation: …`, `… Screen Re
 those only catch surfaces that already log something and can never resolve a source `file:line`.
 The `[flowmap]` tag wins over all of them because it declares the surface kind **and** its source.
 
+The tag has five verbs: **`enter`** (reach a surface), **`exit`** (leave one), **`handoff`**
+(go off-app), **`action`** (do something on a surface), and **`error`** (a failure on a surface).
+`enter` is documented first; the rest follow below.
+
 ## Format
 
 ```
-[flowmap] enter <kind> "<Name>" [<lib/path/to/file.dart:line>]
+[flowmap] enter <kind> "<Name>" [back] [<lib/path/to/file.dart:line>]
 ```
 
 - **`[flowmap]`** — the literal tag. It only needs to appear somewhere in the line; the usual
@@ -22,6 +26,9 @@ The `[flowmap]` tag wins over all of them because it declares the surface kind *
 - **`<kind>`** — one of: `screen`, `tab`, `dialog`, `sheet`, `inline`
   (`sheet` is mapped to a dialog node; `inline` marks an in-screen sub-view leaf).
 - **`"<Name>"`** — the human label, in **double quotes** (required).
+- **`back`** — optional keyword (after the name, before the anchor). Marks this entry as a *back*
+  navigation, so the transition draws a return arrow instead of a forward edge — see
+  [The `back` flag](#the-back-flag-return-navigation) below.
 - **`<file.dart:line>`** — optional but strongly recommended. It is what makes each Flow Map /
   Issue Report / Screen Visit Log row link straight to the source. A leading `./` is stripped.
   Without it the surface is still captured, just with no clickable source.
@@ -115,6 +122,66 @@ Matching is **case-insensitive**, like the other verbs.
 An `action` emitted before any surface has been entered has no screen to attribute to and is
 dropped silently.
 
+## The `exit` verb — surface dismissed
+
+`enter` opens a surface and it stays the *current* surface — accruing dwell time — until the next
+`enter`. That is wrong for a dialog or sheet you dismiss and then keep sitting on the screen behind:
+without an `exit`, the dialog is charged all the idle time until you navigate somewhere new. Emit
+`exit` at the surface's dismissal point (e.g. a dialog helper's return) and its dwell stops there;
+the surface it revealed resumes accruing.
+
+```
+[flowmap] exit <kind> "<Name>"
+```
+
+- **`exit`** — the literal verb.
+- **`<kind>`** — same kind vocabulary as `enter` (informational; the match is by name).
+- **`"<Name>"`** — the surface being closed, in **double quotes** (required). It must be the surface
+  currently open — an `exit` naming anything else is ignored, so a stray tag can never rewind the
+  timeline onto the wrong screen. No source anchor (the `enter` already carried it).
+
+```
+[12:05:33.014] [console] [log] [flowmap] enter dialog "Culture Picker" lib/.../culture_religion_picker_dialog.dart:101
+[12:05:41.660] [console] [log] [flowmap] exit dialog "Culture Picker"
+```
+
+## The `error` verb — a failure on the surface
+
+`error` puts a failure badge on the surface that was active when it fired — so the Flow Map shows
+*where* the app broke, not just that it did. It becomes a row in the Issue Report table (time-ordered)
+and a 💥 badge on the node. Emit it from the app's own exception chokepoint. Unlike the heuristic
+warning patterns, an explicit `error` also badges a dialog / sheet surface.
+
+```
+[flowmap] error "<Category>" [<lib/path/to/file.dart:line>]
+```
+
+- **`error`** — the literal verb.
+- **`"<Category>"`** — the failure label, in **double quotes** (required): `"Payment declined"`,
+  `"Sync failed"`. Each occurrence is recorded (explicit errors are not deduped, unlike heuristic
+  warnings), so emit deliberately.
+- **`<file.dart:line>`** — optional, handled exactly like `enter` (leading `./` stripped).
+
+```
+[12:07:01.900] [console] [log] [flowmap] error "Payment declined" lib/api/payments_client.dart:212
+```
+
+## The `back` flag — return navigation
+
+The Flow Map infers back-navigation from the open-surface stack: returning to a screen still open
+below the current one draws a return arrow, not a forward edge. But a re-entry the stack can't see as
+a return (the target was already closed) reads as forward. When the app's own back handler knows a
+step is a *back*, add the `back` keyword to the `enter` tag and the transition is forced to a return
+edge regardless of the stack.
+
+```
+[flowmap] enter screen "Home" back
+[flowmap] enter screen "Home" back lib/views/home.dart:22
+```
+
+The keyword goes **after the name and before any `file.dart:line`**. Use it only for genuine back
+steps — a forward navigation must not carry it, or the diagram's direction becomes wrong.
+
 ## Guidance for the calling project
 
 - **Emit the tag at the moment the surface becomes visible** (e.g. in the route's `initState` /
@@ -129,10 +196,14 @@ dropped silently.
 
 ## Where this is parsed (for maintainers)
 
-The tags are recognized in
+The `enter` / `exit` / `handoff` / `action` verbs are recognized in
 [flow-map-breadcrumbs.ts](../../src/modules/flow-map/flow-map-breadcrumbs.ts) — see the
-`FLOWMAP_TAG` / `FLOWMAP_HANDOFF` / `FLOWMAP_ACTION` regexes and `parseFlowMapTag()` /
-`parseFlowMapHandoff()` / `parseFlowMapAction()`. The
-explicit tags are checked first in `classifyBreadcrumb()` and take precedence over the heuristic
-matchers below them. The handoff's leaf semantics live in `applyHandoff()` in
-[flow-map-builder.ts](../../src/modules/flow-map/flow-map-builder.ts).
+`FLOWMAP_TAG` / `FLOWMAP_EXIT` / `FLOWMAP_HANDOFF` / `FLOWMAP_ACTION` regexes and their
+`parseFlowMap…()` functions. These explicit tags are checked first in `classifyBreadcrumb()` and take
+precedence over the heuristic matchers below them. The `error` verb is on the issue side —
+`FLOWMAP_ERROR` / `parseFlowMapError()` in
+[flow-map-issues.ts](../../src/modules/flow-map/flow-map-issues.ts), pushed to the issue overlay from
+`scanLine()` in [flow-map-log-parser.ts](../../src/modules/flow-map/flow-map-log-parser.ts). The
+builder-side semantics live in [flow-map-builder.ts](../../src/modules/flow-map/flow-map-builder.ts):
+`applyHandoff()` (leaf), `applyExit()` (dwell close + stack pop), the `forceBack` path in
+`recordTransition()`, and the `explicit` relaxation in `attachIssues()`.
