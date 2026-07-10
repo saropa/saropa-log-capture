@@ -19,7 +19,8 @@
  * Input is one options object `o`, not a positional list: the birth inputs had grown
  * to ten arguments, past the project's 4-param limit, and a positional call is easy to
  * mis-order. Fields: `html`, `errorSuppressed`, `lineTierHidden`, `classHidden`,
- * `catFiltered`, `lvl`, `scopeFilt`, `isAutoHidden`, `flowTag`, and `spLen` — the
+ * `catFiltered`, `lvl`, `scopeFilt`, `isAutoHidden`, `flowTag`, `ts` (the line's timestamp,
+ * for the opt-in warm-up filter), and `spLen` — the
  * structured-prefix length (`parseStructuredPrefix().prefixLen`), required for parity
  * with `calcItemHeight()`, which measures the same *displayed* body via
  * `isLineContentBlank` in viewer-line-text-helpers.ts.
@@ -33,7 +34,12 @@ function computeLineBirthHeight(o) {
     /* Flow-tags 'hidden' mode (plan 109): a [flowmap] line arriving while the mode
        is hidden must be born at height 0, not flash visible until the next recalc. */
     var _flowHidden = typeof calcFlowFiltered === 'function' && calcFlowFiltered(o.flowTag);
-    var _lineHidden = o.errorSuppressed || o.lineTierHidden || o.classHidden || o.catFiltered || calcLevelFiltered(o.lvl) || _troubleHidden || _flowHidden || o.scopeFilt || o.isAutoHidden;
+    /* Warm-up filter (opt-in): a line captured at or before the app-ready boundary is device
+       backlog. Born hidden only when the filter is on AND the boundary is already known; while
+       the boundary is still unresolved these lines are born visible and maybeReapplyWarmupOn-
+       BoundaryChange hides them once it resolves. */
+    var _warmupHidden = typeof calcWarmupFiltered === 'function' && calcWarmupFiltered(o.ts);
+    var _lineHidden = o.errorSuppressed || o.lineTierHidden || o.classHidden || o.catFiltered || calcLevelFiltered(o.lvl) || _troubleHidden || _flowHidden || o.scopeFilt || o.isAutoHidden || _warmupHidden;
     /* Blank-at-birth: gate on !_lineHidden so filtered rows do not get a quarter
        height (which would re-expose them). The probe must carry structuredPrefixLen,
        not html alone: isLineContentBlank measures the post-prefix-strip body, so an

@@ -145,6 +145,7 @@ function getFilterTabPanels(): string {
         <label class="options-row" title="${t('viewer.drawer.scope.directory.title')}"><input type="radio" name="scope" value="directory" disabled /> ${t('viewer.drawer.scope.directory')}<span id="scope-suffix-directory" class="scope-suffix"></span></label>
         <label class="options-row" title="${t('viewer.drawer.scope.file.title')}"><input type="radio" name="scope" value="file" disabled /> ${t('viewer.drawer.scope.file')}<span id="scope-suffix-file" class="scope-suffix"></span></label>
         <label class="options-row scope-unattrib-row" title="${t('viewer.drawer.scope.unattrib.title')}"><input type="checkbox" id="scope-hide-unattrib" /><span>${t('viewer.drawer.scope.unattrib')}</span></label>
+        <label class="options-row warmup-exclude-row" title="${t('viewer.drawer.scope.warmup.title')}"><input type="checkbox" id="warmup-exclude" /><span>${t('viewer.drawer.scope.warmup')}</span></label>
         <div id="scope-filter-hint" class="options-hint scope-filter-hint" style="display:none" aria-live="polite"></div>
     </div>
     <div class="filter-tab-panel" id="log-tags-section" role="tabpanel" style="display:none">
