@@ -123,7 +123,6 @@ export function getToolbarStyles(): string {
 
 /* Nav label in toolbar */
 .viewer-toolbar .nav-bar-label { font-size: 11px; white-space: nowrap; }
-.viewer-toolbar .session-details-inline { font-size: 11px; opacity: 0.7; }
 
 /* ===================================================================
    Search Flyout — floating overlay anchored top-right of log area

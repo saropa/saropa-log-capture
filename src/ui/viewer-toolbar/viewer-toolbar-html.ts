@@ -90,7 +90,9 @@ export function getToolbarHtml(opts: ToolbarHtmlOptions): string {
         <button type="button" id="session-perf-chip" class="session-perf-chip u-hidden" title="${t('viewer.toolbar.perfChip.title')}" aria-label="${t('viewer.toolbar.perfChip.label')}">${t('viewer.toolbar.perfChip.text')}</button>
     </div>
     <div class="toolbar-right">
-        <span id="session-details-inline" class="session-details-inline" aria-label="${t('viewer.toolbar.sessionDetails.label')}" title="${t('viewer.toolbar.sessionDetails.title')}"></span>
+        <!-- The session context/metadata line (#session-details-inline) used to live here. It moved
+             into the persistent log status bar (viewer-log-banner.ts), which owns the open log's
+             identity; the (i) button stays here as the session-details modal trigger. -->
         <button type="button" id="session-info-btn" class="toolbar-icon-btn session-info-btn" style="display:none" title="${t('viewer.toolbar.sessionInfo.title')}" aria-label="${t('viewer.toolbar.sessionInfo.label')}">
             <span class="codicon codicon-info" aria-hidden="true"></span>
         </button>
