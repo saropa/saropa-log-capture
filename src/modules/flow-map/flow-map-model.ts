@@ -75,9 +75,15 @@ export interface FlowGraph {
 export interface TimelineEvent {
     readonly tsMs: number;
     readonly clock: string;
-    readonly kind: 'nav' | 'action' | 'reached' | 'viewed' | 'handoff' | 'lifecycle';
+    readonly kind: 'nav' | 'action' | 'reached' | 'viewed' | 'handoff' | 'lifecycle' | 'exit';
     /** Display label hint for the target node, already cleaned of the breadcrumb prefix. */
     readonly label: string;
+    /**
+     * From an explicit `[flowmap] enter … back` tag: the app declared this entry is a back
+     * navigation. Forces the return-edge path even when the open-surface stack didn't detect a
+     * return, so a re-entry the app knows is a step back never renders as a forward edge (bug 011).
+     */
+    readonly back?: boolean;
     /** For actions: the category (Favorite, Emergency, …) used for per-node counts. For handoffs: the
      * handoff type (`api` for an outbound request, `app` for a launched external application). */
     readonly actionCategory?: string;
@@ -99,6 +105,12 @@ export interface IssueEvent {
     source?: SourceAnchor;
     /** 1-based line number in the source log. */
     logLine?: number;
+    /**
+     * From an explicit `[flowmap] error` tag (bug 011), as opposed to a heuristic/window-matched
+     * issue. Lets the overlay attach the badge to the exact surface active at that moment — including
+     * dialog surfaces, which heuristic issues skip to keep window-matched noise off the crash node.
+     */
+    readonly explicit?: boolean;
 }
 
 /** Parsed session header fields from the SESSION START banner. */

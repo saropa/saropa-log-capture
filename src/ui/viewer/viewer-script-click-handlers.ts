@@ -271,6 +271,21 @@ if (viewportEl) viewportEl.addEventListener('click', function(e) {
         toggleContinuationGroup(parseInt(contBadge.dataset.contGid));
         return;
     }
+    /* Trouble Mode (Stage 4): a plain click on a feed row opens the detail pane.
+       Runs LAST so every interactive sub-element above (links, badges, toggles)
+       keeps its own behavior; guarded on a collapsed selection so drag-to-select
+       is never hijacked, and only while the mode is active. */
+    if (typeof troubleModeActive !== 'undefined' && troubleModeActive && typeof openTroubleDetailForItem === 'function') {
+        var tRow = e.target.closest('.line[data-idx]');
+        if (tRow) {
+            var _tSel = (typeof window !== 'undefined' && window.getSelection) ? window.getSelection() : null;
+            if (!_tSel || _tSel.isCollapsed) {
+                var _tIdx = parseInt(tRow.dataset.idx, 10);
+                var _tItem = (!isNaN(_tIdx) && allLines[_tIdx]) ? allLines[_tIdx] : null;
+                if (_tItem && _tItem.type === 'line') { openTroubleDetailForItem(_tItem); }
+            }
+        }
+    }
 });
 
 if (viewportEl) viewportEl.addEventListener('keydown', function(e) {

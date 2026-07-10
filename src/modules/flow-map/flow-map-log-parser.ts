@@ -8,7 +8,9 @@ import {
     type CrashInfo, type IssueEvent, type ParsedLog, type SessionHeader, type TimelineEvent,
 } from './flow-map-model';
 import { classifyBreadcrumb } from './flow-map-breadcrumbs';
-import { classifyWarning, isRepeatBatch, parseSlowQuery, type SlowQuery } from './flow-map-issues';
+import {
+    classifyWarning, isRepeatBatch, parseFlowMapError, parseSlowQuery, type SlowQuery,
+} from './flow-map-issues';
 import { parseErrorCausingWidget } from './error-causing-widget-parser';
 import { stripAnsi } from './flow-map-format';
 
@@ -156,6 +158,12 @@ function scanLine(ctx: LineContext, state: ScanState): void {
     if (warn && !state.seenWarnings.has(warn.category)) {
         state.seenWarnings.add(warn.category);
         state.issues.push(warn);
+    }
+    // Explicit app-reported errors are deliberate and low-volume, so (unlike heuristic warnings) they
+    // are NOT deduped by category — each occurrence is a real failure on its own surface (bug 011).
+    const err = parseFlowMapError(text, ctx.tsMs, ctx.clock, ctx.logLine);
+    if (err) {
+        state.issues.push(err);
     }
 }
 

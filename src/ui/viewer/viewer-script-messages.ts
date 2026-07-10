@@ -68,6 +68,9 @@ window.addEventListener('message', function(event) {
         case 'setTroubleChartInterval':
             if (typeof setTroubleChartInterval === 'function') setTroubleChartInterval(msg.seconds);
             break;
+        case 'troubleDetailReady':
+            if (typeof renderTroubleDetail === 'function') renderTroubleDetail(msg);
+            break;
         case 'setCorrelationByLineIndex':
             correlationByLineIndex = msg.correlationByLineIndex || {};
             if (typeof renderViewport === 'function') renderViewport(true);
