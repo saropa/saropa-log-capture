@@ -40,8 +40,20 @@ export const stringsWebview: Record<string, string> = {
     'viewer.troubleChart.empty': 'No errors, warnings, or performance issues in this log yet',
     // {0}=window start time, {1}=error count, {2}=warning count, {3}=performance count.
     'viewer.troubleChart.barTip': '{0} · errors {1} · warnings {2} · performance {3}',
+    // Chart readability (plan 110, Stage 4): legend chips, peak-count label, axis end labels.
+    // {0}=count in each legend chip, so a language can put the number before the word.
+    'viewer.troubleChart.legend.error': 'Errors {0}',
+    'viewer.troubleChart.legend.warning': 'Warnings {0}',
+    'viewer.troubleChart.legend.performance': 'Performance {0}',
+    // {0}=the busiest window's total event count. Labels the top of the y axis.
+    'viewer.troubleChart.peak': 'Peak {0}',
     // Trouble Mode Crashlytics band (Stage 5). {0}=event count, {1}=user count.
     'viewer.troubleCrashlytics.counts': '{0} events · {1} users',
+    // Band compaction (plan 110, Stage 5). {0}=total non-archived issue count.
+    'viewer.troubleCrashlytics.allIssues': 'All {0} issues',
+    // {0}=local clock time the on-disk issue cache was last written by the background watcher.
+    'viewer.troubleCrashlytics.updated': 'Updated {0}',
+    'viewer.troubleCrashlytics.updatedUnknown': 'Cached',
 
     // Find in Files — runtime result strings built client-side.
     'viewer.find.minChars': 'Type at least 2 characters',

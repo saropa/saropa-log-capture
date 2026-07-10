@@ -103,15 +103,26 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     <!-- Trouble Mode severity chart (Stage 3). Shown only while Trouble Mode is active
          (CSS keyed on body.slc-trouble-active); the chart script fills the body only. -->
     <div id="trouble-chart" class="trouble-chart" role="img" aria-label="${t('viewer.troubleChart.region')}">
-        <div class="trouble-chart-head">${t('viewer.troubleChart.title')}</div>
+        <!-- Legend chips live in the head row (not under the strip) so the readability
+             additions of plan 110 Stage 4 cost the feed almost no vertical space. -->
+        <div class="trouble-chart-head">
+            <span class="trouble-chart-title">${t('viewer.troubleChart.title')}</span>
+            <span id="trouble-chart-legend" class="tc-legend"></span>
+        </div>
         <div id="trouble-chart-body" class="trouble-chart-body"></div>
     </div>
     <!-- Trouble Mode Crashlytics band (Stage 5). Top cached crash issues from the
          background watcher's cache; hidden until Trouble Mode is active AND the band
          has rows. A row click opens the existing in-viewer Crashlytics detail overlay. -->
     <div id="trouble-crashlytics" class="trouble-crashlytics u-hidden" role="region" aria-label="${t('viewer.troubleCrashlytics.region')}">
-        <div class="trouble-crashlytics-head">${t('viewer.troubleCrashlytics.title')}</div>
+        <div class="trouble-crashlytics-head">
+            <span>${t('viewer.troubleCrashlytics.title')}</span>
+            <!-- Cache freshness (plan 110, Stage 5): the band is fed from the background
+                 watcher's on-disk cache, never a live fetch, so its age must be visible. -->
+            <span id="trouble-crashlytics-fresh" class="tcx-fresh"></span>
+        </div>
         <div id="trouble-crashlytics-rows" class="trouble-crashlytics-rows"></div>
+        <div id="trouble-crashlytics-more" class="trouble-crashlytics-more u-hidden"></div>
     </div>
     <div id="log-content-wrapper">
     <div class="log-content-clip">
@@ -128,16 +139,28 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     ${getGotoLineHtml()}
     ${getReplayBarHtml()}
     ${getErrorBreakpointHtml()}
-    <!-- Trouble Mode detail pane (Stage 4). Overlays only the feed (inside the
-         position:relative wrapper) so the severity chart + toolbar stay visible.
-         Content is host-built and posted in; shown on feed-row selection. -->
+    <!-- Trouble Mode side rail (plan 110, Stage 1). A flex COLUMN to the right of the
+         feed once the wrapper is wide enough (body.slc-trouble-rail-wide); below that
+         width it falls back to the original full-feed overlay. Triage means reading the
+         report against the log, so the feed must stay on screen.
+
+         Two content slots, one rail: #trouble-detail-body holds the host-built feed-row
+         report; #trouble-detail-crashlytics holds the Crashlytics issue detail when a
+         band row is clicked (rail carries .td-mode-cd, which hides the head + body).
+         aria-live announces late-arriving content without stealing focus. -->
     <div id="trouble-detail" class="trouble-detail u-hidden" role="region" tabindex="-1" aria-label="${t('viewer.troubleDetail.region')}">
         <div class="trouble-detail-head">
-            <span id="trouble-detail-title" class="trouble-detail-title"></span>
-            <button type="button" id="trouble-detail-copy" class="trouble-detail-btn" title="${t('viewer.troubleDetail.copy.title')}" aria-label="${t('viewer.troubleDetail.copy.label')}">${t('viewer.troubleDetail.copy.label')}</button>
-            <button type="button" id="trouble-detail-close" class="trouble-detail-close" title="${t('viewer.troubleDetail.close.title')}" aria-label="${t('viewer.troubleDetail.close.title')}">×</button>
+            <div class="trouble-detail-head-top">
+                <span id="trouble-detail-title" class="trouble-detail-title"></span>
+                <button type="button" id="trouble-detail-close" class="trouble-detail-close" title="${t('viewer.troubleDetail.close.title')}" aria-label="${t('viewer.troubleDetail.close.title')}">×</button>
+            </div>
+            <div class="trouble-detail-actions">
+                <button type="button" id="trouble-detail-reveal" class="trouble-detail-btn" title="${t('viewer.troubleDetail.reveal.title')}" aria-label="${t('viewer.troubleDetail.reveal.label')}">${t('viewer.troubleDetail.reveal.label')}</button>
+                <button type="button" id="trouble-detail-copy" class="trouble-detail-btn" title="${t('viewer.troubleDetail.copy.title')}" aria-label="${t('viewer.troubleDetail.copy.label')}">${t('viewer.troubleDetail.copy.label')}</button>
+            </div>
         </div>
-        <div id="trouble-detail-body" class="trouble-detail-body"></div>
+        <div id="trouble-detail-body" class="trouble-detail-body" aria-live="polite"></div>
+        <div id="trouble-detail-crashlytics" class="trouble-detail-cd" aria-live="polite"></div>
     </div>
     </div>
     <div id="crashlytics-detail" class="crashlytics-detail u-hidden" role="region" aria-label="${t('viewer.crashlytics.detail.region')}"></div>

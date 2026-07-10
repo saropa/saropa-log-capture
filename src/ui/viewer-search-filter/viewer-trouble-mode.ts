@@ -84,9 +84,11 @@ function toggleTroubleMode() {
     /* Pull the cached Crashlytics issues into the band when entering the mode (Stage 5);
        the host reads the cache only, so this never blocks or fetches. */
     if (troubleModeActive && typeof requestTroubleCrashlytics === 'function') { requestTroubleCrashlytics(); }
-    /* Leaving Trouble Mode dismisses the detail overlay (Stage 4) so it never
-       lingers over a normal feed. */
-    if (!troubleModeActive && typeof closeTroubleDetail === 'function') { closeTroubleDetail(); }
+    /* Leaving Trouble Mode dismisses the side rail so it never lingers beside a normal
+       feed. Routed through closeTroubleRailAnyMode, not closeTroubleDetail, because the
+       rail may be holding a Crashlytics detail whose panel-side bookkeeping (active
+       container, cpDetailIssueId) must be reset with it. */
+    if (!troubleModeActive && typeof closeTroubleRailAnyMode === 'function') { closeTroubleRailAnyMode(); }
     saveTroubleModeState();
 }
 

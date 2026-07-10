@@ -21,20 +21,41 @@ export function getTroubleCrashlyticsStyles(): string {
 body:not(.slc-trouble-active) .trouble-crashlytics { display: none !important; }
 .trouble-crashlytics.u-hidden { display: none !important; }
 
+/* Title left, cache age right (plan 110, Stage 5). The rows are read from disk and never
+   refetched here, so an unlabeled list would imply a liveness the band does not have. */
 .trouble-crashlytics-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
     font-size: var(--text-eyebrow);
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: var(--muted);
     margin-bottom: var(--space-1);
 }
+.trouble-crashlytics .tcx-fresh { font-variant-numeric: tabular-nums; text-transform: none; }
+
+/* Five rows, no scroller: the band is a triage cue, and the height it used to reclaim
+   from the feed bought a list the user could not scan anyway. Overflow goes to the
+   "All N issues" link, which opens the real Crashlytics panel. */
 .trouble-crashlytics-rows {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    max-height: 132px;
-    overflow-y: auto;
 }
+.trouble-crashlytics-more { margin-top: var(--space-1); }
+.trouble-crashlytics-more.u-hidden { display: none; }
+.tcx-more-btn {
+    background: none;
+    border: none;
+    color: var(--vscode-textLink-foreground);
+    cursor: pointer;
+    font-family: var(--vscode-font-family);
+    font-size: var(--text-caption);
+    padding: var(--space-1) var(--space-2);
+}
+.tcx-more-btn:hover { text-decoration: underline; }
 
 .tcx-row {
     display: flex;
@@ -52,6 +73,11 @@ body:not(.slc-trouble-active) .trouble-crashlytics { display: none !important; }
     cursor: pointer;
 }
 .tcx-row:hover { background: var(--vscode-list-hoverBackground, var(--surface-3)); }
+/* Wayfinding: the issue whose detail is open in the side rail. Cleared on rail close. */
+.tcx-row.tcx-selected {
+    background: var(--vscode-list-activeSelectionBackground, var(--surface-3));
+    color: var(--vscode-list-activeSelectionForeground, var(--text));
+}
 
 .tcx-sev {
     flex-shrink: 0;

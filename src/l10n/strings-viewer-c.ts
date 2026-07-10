@@ -65,6 +65,12 @@ export const stringsViewerC: Record<string, string> = {
     'viewer.crashlytics.detail.newIssue': 'Create issue',
     'viewer.crashlytics.detail.noRemote': 'No GitHub remote found for this workspace.',
     'viewer.crashlytics.detail.viewOnline': 'View on Firebase Console',
+    // Detail body states (plan 110, Stage 3). Previously hardcoded English in
+    // crashlytics-detail-handler.ts, so they shipped untranslated in every locale.
+    'viewer.crashlytics.detail.noStack': 'No stack trace available for this issue.',
+    'viewer.crashlytics.detail.loadFailed': 'Could not load this issue.',
+    'viewer.crashlytics.detail.retry': 'Try again',
+    'viewer.crashlytics.detail.issueFallbackTitle': 'Issue',
     'viewer.crashlytics.stat.severity': 'Severity',
     'viewer.crashlytics.stat.events': 'Events',
     'viewer.crashlytics.stat.users': 'Users',

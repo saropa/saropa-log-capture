@@ -92,10 +92,26 @@ function header(meta: IssueMeta, consoleUrl: string): string {
     const consoleLink = consoleUrl
         ? ` <a class="cd-console-link" data-url="${escapeHtml(consoleUrl)}" title="${t('viewer.crashlytics.detail.viewOnline')}">↗</a>`
         : '';
-    return `<div class="cd-header"><span class="cd-title">${escapeHtml(meta.title ?? 'Issue')}${consoleLink}</span>`
+    return `<div class="cd-header"><span class="cd-title">${escapeHtml(meta.title ?? issueFallbackTitle())}${consoleLink}</span>`
         + `<button class="cd-newissue">${t('viewer.crashlytics.detail.newIssue')}</button>`
         + `<button class="cd-copy">${t('viewer.crashlytics.detail.copyMd')}</button>`
         + `<button class="cd-back">${t('viewer.crashlytics.detail.back')}</button></div>`;
+}
+
+/** Header text when the clicked row carried no title (a cache row written by an older build). */
+function issueFallbackTitle(): string {
+    return t('viewer.crashlytics.detail.issueFallbackTitle');
+}
+
+/**
+ * The failure body, with a retry affordance. A transient Play Reporting error or a dropped
+ * connection is the common case here, so the dead end the user used to hit ("Could not load
+ * this issue.", full stop) cost a panel close + reopen to re-attempt. `.cd-retry` re-issues
+ * the same fetch from the webview's stored meta.
+ */
+function errorBody(): string {
+    return `<div class="cd-body"><div class="no-matches">${escapeHtml(t('viewer.crashlytics.detail.loadFailed'))}</div>`
+        + `<div class="cd-error-actions"><button class="cd-retry">${escapeHtml(t('viewer.crashlytics.detail.retry'))}</button></div></div>`;
 }
 
 /** Whole issue as Markdown for the Copy button: facts, device, and the crash stack. */
@@ -186,8 +202,8 @@ export async function handleCrashlyticsDetail(issueId: string, rawMeta: Record<s
         const event = multi && multi.events.length > 0 ? multi.events[multi.currentIndex] : undefined;
         const body = event
             ? renderCrashDetail(event) + (multi ? renderDeviceDistribution(multi) : '')
-            : '<div class="no-matches">No stack trace available for this issue.</div>';
-        post({ type: 'crashlyticsDetailReady', issueId, title: meta.title ?? 'Issue', html: `${header(meta, deepLink)}<div class="cd-body">${renderStatsStrip(meta)}${body}</div>`, markdown: buildMarkdown(meta, event) });
+            : `<div class="no-matches">${escapeHtml(t('viewer.crashlytics.detail.noStack'))}</div>`;
+        post({ type: 'crashlyticsDetailReady', issueId, title: meta.title ?? issueFallbackTitle(), html: `${header(meta, deepLink)}<div class="cd-body">${renderStatsStrip(meta)}${body}</div>`, markdown: buildMarkdown(meta, event) });
         if (event) {
             const contexts = await getFrameContexts(event);
             if (contexts.length > 0) { post({ type: 'crashlyticsFrameContext', issueId, contexts }); }
@@ -196,7 +212,7 @@ export async function handleCrashlyticsDetail(issueId: string, rawMeta: Record<s
         await streamDeviceStates(issueId, post);
         await streamLogCorrelation(issueId, meta, post);
     } catch {
-        post({ type: 'crashlyticsDetailReady', issueId, title: meta.title ?? 'Issue', html: `${header(meta, deepLink)}<div class="cd-body"><div class="no-matches">Could not load this issue.</div></div>`, markdown: '' });
+        post({ type: 'crashlyticsDetailReady', issueId, title: meta.title ?? issueFallbackTitle(), html: `${header(meta, deepLink)}${errorBody()}`, markdown: '' });
     }
 }
 

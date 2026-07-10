@@ -13,6 +13,8 @@ import { getTroubleChartScript } from '../../ui/viewer-search-filter/viewer-trou
  *  2. The window is CONTIGUOUS (empty gaps kept as zero bars so bars read as a rate)
  *     but bounded to the most-recent TROUBLE_CHART_MAX_BUCKETS windows, so an
  *     hours-long session cannot grow the array (bug 001 OOM fence — no unbounded buffer).
+ *  3. The legend totals (plan 110, Stage 4) sum the RENDERED bins, not allLines — a
+ *     legend counting events the capped window never draws would contradict the bars.
  */
 
 /** Load the trouble-mode + chart scripts in a DOM-less VM (both guard on `document`). */
@@ -23,7 +25,8 @@ function buildChartCtx(): Record<string, unknown> {
 }
 
 interface Bucket { key: number; error: number; warning: number; performance: number; firstLine: number | null }
-interface BucketResult { bins: Bucket[]; maxTotal: number; intervalMs: number }
+interface LevelTotals { error: number; warning: number; performance: number }
+interface BucketResult { bins: Bucket[]; maxTotal: number; intervalMs: number; totals: LevelTotals }
 
 function buckets(ctx: Record<string, unknown>): BucketResult {
   return (ctx.buildTroubleChartBuckets as () => BucketResult)();
@@ -79,6 +82,48 @@ suite('Trouble Mode severity chart', () => {
     const r = buckets(ctx);
     assert.strictEqual(r.bins.length, 0, 'no trouble events → no bars');
     assert.strictEqual(r.maxTotal, 0, 'no total');
+    // Field-by-field, not deepStrictEqual: the object is built inside the VM, so its
+    // prototype is the VM realm's Object.prototype and a deep-strict compare fails.
+    assert.strictEqual(r.totals.error, 0, 'legend reads zero errors, not undefined');
+    assert.strictEqual(r.totals.warning, 0, 'legend reads zero warnings');
+    assert.strictEqual(r.totals.performance, 0, 'legend reads zero performance');
+  });
+
+  test('legend totals tally the charted levels', () => {
+    const ctx = buildChartCtx();
+    ctx.allLines = [
+      { type: 'line', level: 'error', timestamp: 10_000, viewerLineIndex: 0 },
+      { type: 'line', level: 'error', timestamp: 11_000, viewerLineIndex: 1 },
+      { type: 'line', level: 'warning', timestamp: 12_000, viewerLineIndex: 2 },
+      { type: 'line', level: 'info', timestamp: 12_500, viewerLineIndex: 3 },   // not a charted level
+      { type: 'line', level: 'performance', timestamp: 20_000, viewerLineIndex: 4 },
+    ];
+    const r = buckets(ctx);
+    assert.strictEqual(r.totals.error, 2, 'both errors counted');
+    assert.strictEqual(r.totals.warning, 1, 'the warning counted');
+    assert.strictEqual(r.totals.performance, 1, 'the performance line counted');
+  });
+
+  test('legend totals exclude events that fell outside the capped window', () => {
+    const ctx = buildChartCtx();
+    // key 1 is far below the rendered start (key 1000 - 179), so its error must not be counted.
+    ctx.allLines = [
+      { type: 'line', level: 'error', timestamp: 5_000, viewerLineIndex: 0 },
+      { type: 'line', level: 'error', timestamp: 5_000_000, viewerLineIndex: 1 },
+    ];
+    const r = buckets(ctx);
+    assert.strictEqual(r.totals.error, 1, 'only the in-window error is counted');
+  });
+
+  test('setTroubleChartSelection stores a positive timestamp and clears on 0', () => {
+    const ctx = buildChartCtx();
+    const set = ctx.setTroubleChartSelection as (n: number) => void;
+    set(12_345);
+    assert.strictEqual(ctx.troubleChartSelectedTs, 12_345, 'selection recorded');
+    set(0);
+    assert.strictEqual(ctx.troubleChartSelectedTs, 0, 'cleared on rail close');
+    set(-1);
+    assert.strictEqual(ctx.troubleChartSelectedTs, 0, 'a nonsense timestamp never marks a window');
   });
 
   test('setTroubleChartInterval clamps to 1..60 seconds', () => {

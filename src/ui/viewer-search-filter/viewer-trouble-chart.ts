@@ -39,7 +39,21 @@ var TROUBLE_CHART_MAX_BUCKETS = 180;
 var TROUBLE_CHART_VW = 1000;
 var TROUBLE_CHART_VH = 60;
 var TROUBLE_CHART_TOP_PAD = 6;
+/* A single event used to render as a 1px dash — visible only if you knew to look. Three
+   viewBox units is ~3px at the pinned 60px strip height: unmistakably a bar. */
+var TROUBLE_CHART_MIN_BAR = 3;
 var troubleChartTimer = null;
+/* Timestamp of the row currently open in the side rail, or 0. The chart marks the window
+   containing it, so the strip answers "where in the session is the report I am reading".
+   Stored as a timestamp, not a bucket key: the bucket size changes with the interval
+   setting, so a key computed at selection time would point at the wrong window later. */
+var troubleChartSelectedTs = 0;
+
+/* Called by the side rail on open (with the row's timestamp) and on close (with 0). */
+function setTroubleChartSelection(timestamp) {
+    troubleChartSelectedTs = (typeof timestamp === 'number' && timestamp > 0) ? timestamp : 0;
+    renderTroubleChart();
+}
 
 /* Two-digit clock for a window's start time (webview runs in the browser, so
    Date is available here). Labels the bar tooltip. */
@@ -74,27 +88,33 @@ function buildTroubleChartBuckets() {
         if (maxKey == null || key > maxKey) { maxKey = key; }
         if (minKey == null || key < minKey) { minKey = key; }
     }
-    if (maxKey == null) { return { bins: [], maxTotal: 0, intervalMs: intervalMs }; }
+    var totals = { error: 0, warning: 0, performance: 0 };
+    if (maxKey == null) { return { bins: [], maxTotal: 0, intervalMs: intervalMs, totals: totals }; }
     /* Materialize a CONTIGUOUS window (empty windows included as zero-height gaps)
-       so the bars read as a rate over time, not a collapsed list. Start at the
-       earliest event, but never earlier than TROUBLE_CHART_MAX_BUCKETS windows back
-       from the latest — so a short session shows just its own span, and an
-       hours-long one is bounded to a recent slice (bug 001 OOM fence: no unbounded array). */
+       so the bars read as a rate over time, not a collapsed list. minKey is the FIRST
+       window that actually holds an event, so leading empty span is already trimmed;
+       the cap only bounds how far back a long session reaches (bug 001 OOM fence:
+       no unbounded array). A short session therefore shows exactly its own span. */
     var start = Math.max(minKey, maxKey - TROUBLE_CHART_MAX_BUCKETS + 1);
     var bins = [];
     var maxTotal = 0;
+    /* Legend totals are summed over the RENDERED bins, not over allLines. Counting every
+       matching line would let the legend claim errors the capped window never draws — a
+       chart and a legend that disagree is worse than no legend. */
     for (var k = start; k <= maxKey; k++) {
         var hit = byKey[k];
         var total = hit ? (hit.error + hit.warning + hit.performance) : 0;
         if (total > maxTotal) { maxTotal = total; }
+        if (hit) { totals.error += hit.error; totals.warning += hit.warning; totals.performance += hit.performance; }
         bins.push(hit || { key: k, error: 0, warning: 0, performance: 0, firstLine: null });
     }
-    return { bins: bins, maxTotal: maxTotal, intervalMs: intervalMs };
+    return { bins: bins, maxTotal: maxTotal, intervalMs: intervalMs, totals: totals };
 }
 
-/* Draw one stacked bar. Error sits on the baseline, warning above it, performance
-   on top. A non-zero count clamps to at least 1px so a single event is visible. */
-function troubleChartBar(bin, x, barW, scale, intervalMs) {
+/* Draw one stacked bar. Error sits on the baseline, warning above it, performance on
+   top. A non-zero count clamps to TROUBLE_CHART_MIN_BAR so a single event is legible.
+   The selected flag paints a full-height band behind the bar (the row open in the rail). */
+function troubleChartBar(bin, geom, scale, intervalMs, selected) {
     var segs = [
         { cls: 'tc-bar-error', n: bin.error },
         { cls: 'tc-bar-warning', n: bin.warning },
@@ -104,15 +124,44 @@ function troubleChartBar(bin, x, barW, scale, intervalMs) {
     var rects = '';
     for (var s = 0; s < segs.length; s++) {
         if (segs[s].n <= 0) { continue; }
-        var h = Math.max(1, segs[s].n * scale);
+        var h = Math.max(TROUBLE_CHART_MIN_BAR, segs[s].n * scale);
         y -= h;
-        rects += '<rect class="' + segs[s].cls + '" x="' + x.toFixed(1) + '" y="' + y.toFixed(1)
-            + '" width="' + barW.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="1"></rect>';
+        rects += '<rect class="' + segs[s].cls + '" x="' + geom.barX.toFixed(1) + '" y="' + y.toFixed(1)
+            + '" width="' + geom.barW.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="1"></rect>';
     }
-    if (!rects) { return ''; }
+    if (!rects && !selected) { return ''; }
+    var band = selected
+        ? '<rect class="tc-selected-band" x="' + geom.cellX.toFixed(1) + '" y="0" width="' + geom.cellW.toFixed(1) + '" height="' + TROUBLE_CHART_VH + '"></rect>'
+        : '';
     var tip = vt('viewer.troubleChart.barTip', troubleChartClock(bin.key * intervalMs), bin.error, bin.warning, bin.performance);
     var lineAttr = (bin.firstLine != null) ? ' data-line="' + (bin.firstLine + 1) + '"' : '';
-    return '<g class="tc-bar"' + lineAttr + '><title>' + tip + '</title>' + rects + '</g>';
+    return '<g class="tc-bar"' + lineAttr + '><title>' + tip + '</title>' + band + rects + '</g>';
+}
+
+/* Per-level totals for the whole charted span, as colored chips in the pane head.
+   Without them a stacked bar's colors are unlabeled and the chart is decoration. */
+function renderTroubleChartLegend(totals) {
+    var el = document.getElementById('trouble-chart-legend');
+    if (!el) { return; }
+    var levels = ['error', 'warning', 'performance'];
+    var html = '';
+    for (var i = 0; i < levels.length; i++) {
+        html += '<span class="tc-chip tc-chip-' + levels[i] + '"><i></i>'
+            + vt('viewer.troubleChart.legend.' + levels[i], totals[levels[i]]) + '</span>';
+    }
+    el.innerHTML = html;
+}
+
+/* The strip's SVG plus the labels that make it readable: the peak count (y axis) and
+   the first/last window clock times (x axis). Labels are HTML, never SVG <text>: the
+   viewBox is drawn with preserveAspectRatio="none", which would stretch glyphs. */
+function troubleChartPlotHtml(bars, data) {
+    var first = troubleChartClock(data.bins[0].key * data.intervalMs);
+    var last = troubleChartClock(data.bins[data.bins.length - 1].key * data.intervalMs);
+    return '<div class="tc-plot"><span class="tc-ymax">' + vt('viewer.troubleChart.peak', data.maxTotal) + '</span>'
+        + '<svg class="tc-svg" viewBox="0 0 ' + TROUBLE_CHART_VW + ' ' + TROUBLE_CHART_VH
+        + '" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">' + bars + '</svg></div>'
+        + '<div class="tc-axis"><span>' + first + '</span><span>' + last + '</span></div>';
 }
 
 /* Fill #trouble-chart-body: empty state when there is nothing wrong yet, else the
@@ -124,7 +173,9 @@ function renderTroubleChart() {
     if (!body) { return; }
     if (typeof troubleModeActive === 'undefined' || !troubleModeActive) { return; }
     var data = buildTroubleChartBuckets();
+    var legend = document.getElementById('trouble-chart-legend');
     if (data.bins.length === 0 || data.maxTotal === 0) {
+        if (legend) { legend.innerHTML = ''; }
         body.innerHTML = '<div class="tc-empty">' + vt('viewer.troubleChart.empty') + '</div>';
         return;
     }
@@ -132,12 +183,15 @@ function renderTroubleChart() {
     var cellW = TROUBLE_CHART_VW / n;
     var barW = Math.min(cellW * 0.7, 14);
     var scale = (TROUBLE_CHART_VH - TROUBLE_CHART_TOP_PAD) / data.maxTotal;
+    var selectedKey = troubleChartSelectedTs > 0 ? Math.floor(troubleChartSelectedTs / data.intervalMs) : null;
     var bars = '';
     for (var i = 0; i < n; i++) {
-        bars += troubleChartBar(data.bins[i], i * cellW + (cellW - barW) / 2, barW, scale, data.intervalMs);
+        var cellX = i * cellW;
+        var geom = { cellX: cellX, cellW: cellW, barX: cellX + (cellW - barW) / 2, barW: barW };
+        bars += troubleChartBar(data.bins[i], geom, scale, data.intervalMs, data.bins[i].key === selectedKey);
     }
-    body.innerHTML = '<svg class="tc-svg" viewBox="0 0 ' + TROUBLE_CHART_VW + ' ' + TROUBLE_CHART_VH
-        + '" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">' + bars + '</svg>';
+    body.innerHTML = troubleChartPlotHtml(bars, data);
+    renderTroubleChartLegend(data.totals);
 }
 
 /* Coalesce bursts (a streaming batch fires this once per batch, not per line).
