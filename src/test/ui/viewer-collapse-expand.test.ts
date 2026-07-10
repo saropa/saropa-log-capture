@@ -114,5 +114,20 @@ suite('Collapse / expand all sections', () => {
                 'triggerExpandAllSections must call expandAllSections()',
             );
         });
+
+        test('palette collapse/expand must sync the toolbar button icon', () => {
+            /* The collapse/expand controls moved into the viewer toolbar. When the
+               palette commands fire instead of the button, they MUST update the
+               toolbar button state so its icon does not go stale — via
+               window.__setAllSectionsCollapsed(true/false). */
+            assert.ok(
+                handler.includes('__setAllSectionsCollapsed(true)'),
+                'triggerCollapseAllSections must sync the toolbar button to collapsed',
+            );
+            assert.ok(
+                handler.includes('__setAllSectionsCollapsed(false)'),
+                'triggerExpandAllSections must sync the toolbar button to expanded',
+            );
+        });
     });
 });

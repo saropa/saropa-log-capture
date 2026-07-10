@@ -130,3 +130,29 @@ The review found the fix described above was **incomplete** — two defects rema
 
 The false-negative analysis in this report stands: `[perf]` tags, the `perf`/`jank`/`fps`/`choreographer`/`slow operation` keywords, and the structural patterns (`Skipped N frames`, `GC pause/freed/concurrent`, `took Nms`, `duration: Nms`) cover the known real-world perf log shapes. Note also that the head-tag dictionary (`tag-level-dictionary.ts`) still maps a bracket tag `[performance]` to the performance level — that is unaffected and correct, since a bracket tag is an explicit structured signal, not prose.
 
+## Finish Report (2026-07-09)
+
+### Defect
+
+The default severity-keyword lists exist in three hand-mirrored copies: `DEFAULT_SEVERITY_KEYWORDS` in `src/modules/config/config-normalizers.ts` (code fallback), the built-in `var kw*` regexes in `src/ui/viewer-search-filter/viewer-level-classify.ts` (webview, live from load until the first settings broadcast), and the `saropaLogCapture.severityKeywords` setting default in `package.json` (the manifest). VS Code resolves `cfg.get()` to the manifest default whenever the user has not overridden the setting, and `normalizeSeverityKeywords()` keeps any non-empty per-level array as-is — so the manifest copy is the live keyword list for effectively all users. Bare `"performance"` had been removed from the first two copies but remained in the manifest, so informational prose containing noun phrases such as "Performance settings filtering" continued to classify as the `performance` severity level. Independently, the webview copy had drifted: its perf regex lacked `slow operation`, present in the other two copies.
+
+### Changes (commits f4e2e10a and the follow-up)
+
+- `package.json` — removed bare `"performance"` from the `severityKeywords` performance default (11 keywords remain).
+- `src/ui/viewer-search-filter/viewer-level-classify.ts` — added `slow\s+operation` to the built-in `kwPerf` regex, restoring parity with the extension-side default.
+- `src/test/modules/analysis/level-classifier.test.ts` — regression test: the reported YouTube-API line (containing "Performance settings filtering (maxResults=50)") classifies as `info`.
+- `src/test/ui/viewer-level-classify-parity.test.ts` — two keyword-default corpus cases (bare "Performance" noun phrase → `info`; `W/ActivityManager: Slow operation` → `performance`), plus a structural pin: each webview `kw*` default regex must equal `buildKeywordPattern(DEFAULT_SEVERITY_KEYWORDS[level])` (source and flags) for all six levels. The regexes are constructed inside the vm sandbox realm, so the check uses `util.types.isRegExp` (cross-realm) rather than `instanceof`.
+- `src/test/modules/config/integration-settings-manifest.test.ts` — pins the `package.json` `severityKeywords` default `deepStrictEqual` to `DEFAULT_SEVERITY_KEYWORDS`, following that file's existing manifest-pinning pattern, so manifest/code drift fails a test instead of silently forking behavior.
+- `CHANGELOG.md` — Unreleased entries for both fixes.
+
+### Verification
+
+- `npm run compile-tests` (full tsc over the project) — clean.
+- `npm run test:file` on the three touched test files — level-classifier 45 passing, parity suite passing (corpus + drift guard + 6 pin tests), settings-manifest passing.
+- Independent review confirmed three-way default parity for all six levels, correct doubled-backslash transcription of the webview regex, and that no remaining live occurrence of bare "performance" exists as a severity keyword (`tag-level-dictionary.ts`'s `[performance]` bracket tag and the `integrations.adapters` "performance" adapter name are intentional and unrelated).
+
+### Not covered
+
+- `normalizeSeverityKeywords()` has no direct unit test (its keep-non-empty-arrays behavior is what made the manifest copy live). Flagged during review; not added here.
+- Real-world perf-log audit from the reporting app (the "Needs validation" item above) remains an operator task.
+
