@@ -1,5 +1,6 @@
 import * as assert from 'node:assert';
 import { getIntegrationsPanelHtml } from '../../ui/viewer-panels/viewer-integrations-panel-html';
+import { getSuiteSuggestionsScript } from '../../ui/viewer/viewer-suite-suggestions-script';
 import { getKeyboardShortcutsViewHtml } from '../../ui/viewer-panels/viewer-keyboard-shortcuts-html';
 import { getOptionsPanelHtml, getOptionsPanelScript } from '../../ui/viewer-panels/viewer-options-panel';
 import { getOptionsStyles } from '../../ui/viewer-styles/viewer-styles-options';
@@ -164,6 +165,17 @@ suite('ViewerOptionsPanel', () => {
                 'Warning emoji should be on the label, not duplicated in perf note');
         });
 
+        test('should keep the suggestions container but no companion-issues container', () => {
+            // Owner ruling 2026-07-09: the Options screen is a configuration surface (toggles only).
+            // The "Issues found by your companion tools" diagnostics list was removed and must not
+            // return to any Options view; suggestions (which resolve to a toggle) stay.
+            const html = getIntegrationsPanelHtml();
+            assert.ok(html.includes('id="integrations-suite-suggestions"'),
+                'suggested-integrations container must remain');
+            assert.ok(!html.includes('integrations-suite-issues'),
+                'companion-tool diagnostics container must not be re-added to the Options view');
+        });
+
         test('should use Title Case for all integration labels', () => {
             const html = getIntegrationsPanelHtml();
             // Verify key labels are Title Cased
@@ -176,6 +188,25 @@ suite('ViewerOptionsPanel', () => {
             assert.ok(!html.includes('>Code coverage<'));
             assert.ok(!html.includes('>Test results<'));
             assert.ok(!html.includes('>Terminal output<'));
+        });
+    });
+
+    suite('getSuiteSuggestionsScript (Integrations badge + suggestions block)', () => {
+        test('should use the suiteSuggestions message pair and carry no issues payload', () => {
+            // Pins the rename from the removed issues feature: the request/reply pair is
+            // requestSuiteSuggestions -> suiteSuggestions and the payload has no issuesHtml,
+            // so a stale host or webview half of the old protocol fails fast here.
+            const script = getSuiteSuggestionsScript();
+            assert.ok(script.includes("postMessage({ type: 'requestSuiteSuggestions' })"),
+                'webview must request with type requestSuiteSuggestions');
+            assert.ok(script.includes("msg.type !== 'suiteSuggestions'"),
+                'reply handler must gate on type suiteSuggestions');
+            assert.ok(script.includes('msg.suggestionsHtml'),
+                'handler must read the suggestions block payload');
+            assert.ok(!script.includes('issuesHtml'),
+                'the removed companion-issues payload must not be referenced');
+            assert.ok(!script.includes('requestSuiteIssues'),
+                'the old message name must be fully gone from the webview script');
         });
     });
 
