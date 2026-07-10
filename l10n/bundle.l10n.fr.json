@@ -1027,9 +1027,7 @@
   "Severity": "Gravité",
   "Severity dot (copy only)": "Point de gravité (copie uniquement)",
   "Show PID/TID": "Afficher PID/TID",
-  "Show all ({0})": "Afficher tout ({0})",
   "Show details": "Afficher les détails",
-  "Show less": "Afficher moins",
   "Show level prefix": "Afficher le préfixe de niveau",
   "Show line number on blank lines": "Afficher le numéro de ligne sur les lignes vides",
   "Show line number on blank lines so Go to Line matches file": "Afficher le numéro de ligne sur les lignes vides, donc accéder au fichier de correspondances de lignes",
@@ -2111,5 +2109,8 @@
   "Perf {0}": "Le Perf est un ph0__.",
   "Warn {0}": "Attention à la mise en garde {0}.",
   "Copy Tags": "Copiez les étiquettes.",
-  "Copy this line's tags as a comma-separated list": "Copiez les balises de cette ligne en tant que liste séparée par des virgules."
+  "Copy this line's tags as a comma-separated list": "Copiez les balises de cette ligne en tant que liste séparée par des virgules.",
+  "Copy every tag as JSON, grouped by display name with its raw tag variants": "Copiez chaque balise sous forme de JSON, regroupée par nom d'affichage avec ses variantes de balises brutes.",
+  "Filter tags…": "Les étiquettes de filtres...",
+  "No tags match your search": "Aucune balise ne correspond à votre recherche."
 }

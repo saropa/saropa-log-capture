@@ -1027,9 +1027,7 @@
   "Severity": "嚴重性",
   "Severity dot (copy only)": "嚴重性點（僅限副本）",
   "Show PID/TID": "顯示PID/TID",
-  "Show all ({0})": "顯示全部 ({0})",
   "Show details": "顯示詳情",
-  "Show less": "顯示較少",
   "Show level prefix": "顯示級別前綴",
   "Show line number on blank lines": "在空白行上顯示行號",
   "Show line number on blank lines so Go to Line matches file": "在空白行上顯示行號，以便轉到行匹配文件",
@@ -2111,5 +2109,8 @@
   "Perf {0}": "⁇ 的 _PH0__ 的時間",
   "Warn {0}": "警告 {0} 的時間",
   "Copy Tags": "複製標籤 (Copy Tags) 這個標誌",
-  "Copy this line's tags as a comma-separated list": "將這個行的標籤複製成以逗號分隔列表."
+  "Copy this line's tags as a comma-separated list": "將這個行的標籤複製成以逗號分隔列表.",
+  "Copy every tag as JSON, grouped by display name with its raw tag variants": "將每個標籤複製成 JSON,並按顯示名稱分組,以及其原始標籤變體.",
+  "Filter tags…": "⁇ 波器標籤 ... 這些是",
+  "No tags match your search": "沒有任何標籤與您的搜尋結果相符."
 }

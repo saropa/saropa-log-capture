@@ -81,6 +81,11 @@ suite('Webview localization bridge', () => {
             const text = fs.readFileSync(file, 'utf8');
             let m: RegExpExecArray | null;
             while ((m = keyRe.exec(text)) !== null) {
+                // Skip dynamic-prefix concatenation like vt('viewer.troubleChart.legend.' + level,
+                // count) — the regex only sees the quoted literal up to the '+', so a trailing '.'
+                // marks a runtime-built key (the concrete '...legend.error' etc. keys are checked
+                // directly wherever they're authored in strings-webview*.ts).
+                if (m[1].endsWith('.')) { continue; }
                 if (!(m[1] in map)) { missing.add(m[1]); }
             }
         }
