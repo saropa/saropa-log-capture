@@ -14,7 +14,8 @@ import {
 } from '../../../modules/crashlytics/firebase-crashlytics';
 import { renderSparkline } from '../../panels/vitals-sparkline';
 import { serializeContext } from './crashlytics-serializers';
-import { readArchivedIds, setIssueArchived } from '../../../modules/crashlytics/crashlytics-io';
+import { readArchivedIds, setIssueArchived, readCachedIssues } from '../../../modules/crashlytics/crashlytics-io';
+import { troubleCrashlyticsRowsFromIssues } from '../../../modules/crashlytics/trouble-crashlytics-rows';
 import { getOutputChannel, playReportingScopeFix } from '../../../modules/crashlytics/crashlytics-diagnostics';
 import { runConnectionCheck, formatConnectionReport } from '../../../modules/crashlytics/crashlytics-connection-check';
 
@@ -49,6 +50,24 @@ export async function handleCrashlyticsRequest(post: PostFn, forceRefresh = fals
     } catch {
         const fallbackChecklist = { gcloud: 'missing' as const, token: 'pending' as const, config: 'pending' as const };
         post({ type: 'crashlyticsData', context: serializeContext({ available: false, setupHint: 'Unexpected error', setupChecklist: fallbackChecklist, issues: [] }) });
+    }
+}
+
+/**
+ * Trouble Mode Crashlytics band (Stage 5): send the CACHED issue list as compact rows.
+ *
+ * Reads only the on-disk cache (readCachedIssues) — Trouble Mode never issues its own
+ * network fetch and never blocks rendering on it (plan fence). A cold cache posts an
+ * empty list, so the band simply does not appear; the background watcher's next poll
+ * refreshes issues.json and a later request picks the rows up. Never throws.
+ */
+export async function handleTroubleCrashlyticsRequest(post: PostFn): Promise<void> {
+    try {
+        const issues = await readCachedIssues();
+        const archived = await readArchivedIds();
+        post({ type: 'troubleCrashlyticsRows', rows: troubleCrashlyticsRowsFromIssues(issues ?? [], archived) });
+    } catch {
+        post({ type: 'troubleCrashlyticsRows', rows: [] });
     }
 }
 

@@ -22,6 +22,8 @@ import { escapeHtml } from '../../../modules/capture/ansi';
 import { describeTimelinePosition, findPrecedingAction } from '../../signals/signal-report-context';
 import { renderEvidenceSection, resolveSourcePaths, type EvidenceGroup } from '../../signals/signal-report-render';
 import { scanAnrRisk } from '../../../modules/analysis/anr-risk-scorer';
+import { buildTroubleReportMarkdown } from '../../signals/signal-report-markdown';
+import { SessionMetadataStore } from '../../../modules/session/session-metadata';
 import { logExtensionError } from '../../../modules/misc/extension-logger';
 
 type PostFn = (msg: unknown) => void;
@@ -127,6 +129,48 @@ function buildDetailHtml(logLines: readonly string[], targetIdx: number, plainTe
 function buildTitle(level: string, logLines: readonly string[], targetIdx: number, plainText: string): string {
     const raw = ((targetIdx >= 0 ? logLines[targetIdx] : plainText) || '').trim();
     return `${t('viewer.level.' + level)}: ${raw.slice(0, 80)}`;
+}
+
+/** The fault line plus its immediately-following stack frames (zero surrounding context). */
+function collectFaultLines(logLines: readonly string[], targetIdx: number, plainText: string): string[] {
+    if (targetIdx < 0 || logLines.length === 0) { return [plainText]; }
+    const out = [logLines[targetIdx]];
+    for (let i = targetIdx + 1; i < logLines.length && i <= targetIdx + 40; i++) {
+        if (!isStackTraceLine(logLines[i])) { break; }
+        out.push(logLines[i]);
+    }
+    return out;
+}
+
+/**
+ * Copy Report (Stage 6): build a focused Markdown report for the selected issue and
+ * put it on the clipboard. Reuses the same line-location as the detail pane, collects
+ * only the fault + its stack (zero surrounding context), and adds the environment
+ * fields that exist on session metadata. A visible info message confirms the copy.
+ */
+export async function handleCopyTroubleReport(
+    fileUri: vscode.Uri | undefined,
+    sourceLineNo: number,
+    plainText: string,
+    level: string,
+): Promise<void> {
+    try {
+        const logLines = await readLogLines(fileUri);
+        const targetIdx = locateLine(logLines, sourceLineNo, plainText);
+        const meta = fileUri ? await new SessionMetadataStore().loadMetadata(fileUri) : undefined;
+        const md = buildTroubleReportMarkdown({
+            severityLabel: t('viewer.level.' + level),
+            faultLines: collectFaultLines(logLines, targetIdx, plainText),
+            appVersion: meta?.appVersion,
+            debugAdapterType: meta?.debugAdapterType,
+            debugTarget: meta?.debugTarget,
+        });
+        await vscode.env.clipboard.writeText(md);
+        void vscode.window.showInformationMessage(t('viewer.troubleDetail.copied'));
+    } catch (err) {
+        logExtensionError('copyTroubleReport', err instanceof Error ? err : new Error(String(err)));
+        void vscode.window.showWarningMessage(t('viewer.troubleDetail.copyFailed'));
+    }
 }
 
 /** Build the detail for the selected feed row and post it back to the in-viewer pane. */

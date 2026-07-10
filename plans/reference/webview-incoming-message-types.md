@@ -25,6 +25,7 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `copyErrorWarningJson` | viewer-message-handler-actions.ts |
 | `copySourcePath` | viewer-message-handler-actions.ts |
 | `copyToClipboard` | viewer-message-handler-actions.ts |
+| `copyTroubleReport` | viewer-message-handler-panels.ts |
 | `copyWithSource` | viewer-message-handler-actions.ts |
 | `crashlyticsArchiveIssue` | viewer-message-handler-panels.ts |
 | `crashlyticsBrowseGoogleServices` | viewer-message-handler-panels.ts |
@@ -118,6 +119,7 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `requestSuiteDeepLinkAvailability` | viewer-message-handler-panels.ts |
 | `requestSuiteMirrorDiagnostics` | viewer-message-handler-panels.ts |
 | `requestSuiteSuggestions` | viewer-message-handler-panels.ts |
+| `requestTroubleCrashlytics` | viewer-message-handler-panels.ts |
 | `resetAllSettings` | viewer-message-handler-panels.ts |
 | `revealLogFile` | viewer-message-handler-session-ui.ts |
 | `revealLogFileInExplorer` | viewer-message-handler-session-ui.ts |
@@ -164,4 +166,4 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `viewerKeybindingRecordCancelled` | viewer-message-handler-actions.ts |
 | `viewerKeybindingRecorded` | viewer-message-handler-actions.ts |
 
-**Total:** 156 distinct types.
+**Total:** 158 distinct types.

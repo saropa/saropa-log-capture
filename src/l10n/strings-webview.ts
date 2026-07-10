@@ -40,6 +40,8 @@ export const stringsWebview: Record<string, string> = {
     'viewer.troubleChart.empty': 'No errors, warnings, or performance issues in this log yet',
     // {0}=window start time, {1}=error count, {2}=warning count, {3}=performance count.
     'viewer.troubleChart.barTip': '{0} · errors {1} · warnings {2} · performance {3}',
+    // Trouble Mode Crashlytics band (Stage 5). {0}=event count, {1}=user count.
+    'viewer.troubleCrashlytics.counts': '{0} events · {1} users',
 
     // Find in Files — runtime result strings built client-side.
     'viewer.find.minChars': 'Type at least 2 characters',

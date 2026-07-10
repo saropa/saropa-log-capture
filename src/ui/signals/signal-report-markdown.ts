@@ -162,6 +162,45 @@ function isStackTraceLine(line: string): boolean {
   return false;
 }
 
+/** Longest run of consecutive backticks in text (to size a fence that can't be broken out of). */
+function longestBacktickRun(text: string): number {
+  const runs = text.match(/`+/g);
+  return runs ? Math.max(...runs.map(r => r.length)) : 0;
+}
+
+/** A single Trouble Mode issue (a plain fault or a Crashlytics row), not a signal hypothesis. */
+export interface TroubleReportInput {
+  /** Localized severity label (e.g. "Error"). */
+  readonly severityLabel: string;
+  /** The exact fault lines: the message plus any collapsed stack frames. */
+  readonly faultLines: readonly string[];
+  readonly appVersion?: string;
+  readonly debugAdapterType?: string;
+  readonly debugTarget?: string;
+}
+
+/**
+ * Build a focused Markdown report for ONE Trouble Mode issue (Stage 6). This is the
+ * non-signal counterpart to buildFullMarkdownReport: a single fault rather than a
+ * hypothesis, so there is no evidence/history/recommendation machinery. Contents, in
+ * order: severity, the environment fields that ACTUALLY exist (never invented), and
+ * the exact fault lines — with NO surrounding nominal lines, because the zero-context
+ * boundary IS the payload. The fence is sized to outrun any backtick run in the
+ * content so a fault line containing ``` cannot break out of the block (export
+ * hygiene, commit 585d966b).
+ */
+export function buildTroubleReportMarkdown(input: TroubleReportInput): string {
+  const out = ['# Saropa Trouble Report', '', `**Severity:** ${input.severityLabel}`];
+  if (input.appVersion) { out.push(`**App version:** ${input.appVersion}`); }
+  if (input.debugAdapterType) { out.push(`**Debug adapter:** ${input.debugAdapterType}`); }
+  if (input.debugTarget) { out.push(`**Debug target:** ${input.debugTarget}`); }
+  out.push('', '## Fault', '');
+  const body = input.faultLines.join('\n');
+  const fence = '`'.repeat(Math.max(3, longestBacktickRun(body) + 1));
+  out.push(fence, body, fence, '');
+  return out.join('\n');
+}
+
 /**
  * Append related items as markdown. Errors are grouped by fingerprint with
  * category, origin, and normalized-key metadata. Other types use flat lists.

@@ -49,6 +49,18 @@ function handleGlobalAction(action, savedLineIdx) {
         vscodeApi.postMessage({ type: 'copyToClipboard', text: '' });
         return true;
     }
+    /* Copy Report (Trouble Mode dashboard, Stage 6): a focused Markdown report for the
+       right-clicked line — severity + environment + the fault and its stack, no
+       surrounding nominal lines. The host builds it and writes the clipboard. */
+    if (action === 'copy-trouble-report') {
+        if (typeof savedLineIdx === 'number' && savedLineIdx >= 0 && savedLineIdx < allLines.length) {
+            var itTr = allLines[savedLineIdx];
+            if (itTr && itTr.type === 'line') {
+                vscodeApi.postMessage({ type: 'copyTroubleReport', sourceLineNo: itTr.sourceLineNo || 0, plainText: stripTags(itTr.html || ''), level: itTr.level || 'info' });
+            }
+        }
+        return true;
+    }
     if (action === 'copy-with-source') {
         var selWs = window.getSelection();
         var tws = selWs ? selWs.toString() : '';

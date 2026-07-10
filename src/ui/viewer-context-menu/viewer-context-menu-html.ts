@@ -88,6 +88,9 @@ export function getContextMenuHtml(): string {
             <div class="context-menu-item" data-action="copy-with-source" title="${t('viewer.ctx.copyWithSource.title')}">
                 <span class="codicon codicon-file-code"></span> ${t('viewer.ctx.copyWithSource.label')}
             </div>
+            <div class="context-menu-item" data-action="copy-trouble-report" title="${t('viewer.ctx.copyTroubleReport.title')}">
+                <span class="codicon codicon-bug"></span> ${t('viewer.ctx.copyTroubleReport.label')}
+            </div>
             <div class="context-menu-item" data-action="select-all" title="${t('viewer.ctx.selectAll.title')}">
                 <span class="codicon codicon-list-flat"></span> ${t('viewer.ctx.selectAll.label')}
                 <span class="context-menu-shortcut">Ctrl+A</span>

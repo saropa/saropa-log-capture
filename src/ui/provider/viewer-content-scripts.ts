@@ -51,6 +51,7 @@ import { getLevelFilterScript } from '../viewer-search-filter/viewer-level-filte
 import { getTroubleModeScript } from '../viewer-search-filter/viewer-trouble-mode';
 import { getTroubleChartScript } from '../viewer-search-filter/viewer-trouble-chart';
 import { getTroubleDetailScript } from '../viewer-search-filter/viewer-trouble-detail';
+import { getTroubleCrashlyticsScript } from '../viewer-search-filter/viewer-trouble-crashlytics';
 import { getSourceTagsScript } from '../viewer-stack-tags/viewer-source-tags';
 import { getClassTagsScript } from '../viewer-stack-tags/viewer-class-tags';
 import { getSqlPatternTagsScript } from '../viewer-stack-tags/viewer-sql-pattern-tags';
@@ -216,6 +217,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         // the viewer-data block so allLines/renderViewport/scrollToLineNumber exist.
         scriptTag(nonce, getTroubleChartScript()) +
         scriptTag(nonce, getTroubleDetailScript()) +
+        scriptTag(nonce, getTroubleCrashlyticsScript()) +
         scriptTag(nonce, getTagSelectionGuardScript()) +
         scriptTag(nonce, getSourceTagsScript()) +
         scriptTag(nonce, getClassTagsScript()) +
