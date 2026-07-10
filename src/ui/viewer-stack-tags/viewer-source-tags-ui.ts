@@ -14,20 +14,26 @@ function escapeTagHtml(text) {
     return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function rebuildTagChips() {
-    var container = document.getElementById('source-tag-chips');
-    if (!container) { return; }
+/** Every chip-eligible tag key, alpha-sorted, narrowed by the search box if the
+    user has typed anything. Always the full list — no top-N collapse (2026-07-10:
+    the "Show all (N)" expander hid tags by default with no indication why a tag
+    you knew existed was missing from the panel). */
+function getVisibleTagChipKeys() {
     var chipKeys = (typeof getSourceTagChipKeys === 'function')
         ? getSourceTagChipKeys()
         : Object.keys(sourceTagCounts);
-    var totalKeys = chipKeys.length;
-    /* Collapsed view keeps the highest-signal tags: rank by count FIRST, take the
-       top-N, THEN alpha-sort only what will be shown. Sorting alpha before slicing
-       would drop high-count tags (perf 51) below the fold just because their name
-       sorts late. User asked for alpha order in the panel (2026-07-10). */
-    chipKeys.sort(function(a, b) { return sourceTagCounts[b] - sourceTagCounts[a]; });
-    var limit = sourceTagShowAll ? totalKeys : Math.min(totalKeys, sourceTagMaxChips);
-    var shownKeys = chipKeys.slice(0, limit).sort(function(a, b) { return a.localeCompare(b); });
+    if (sourceTagSearchQuery) {
+        chipKeys = chipKeys.filter(function(key) {
+            return formatTagLabel(sourceTagDisplayNames[key] || key).toLowerCase().indexOf(sourceTagSearchQuery) >= 0;
+        });
+    }
+    return chipKeys.sort(function(a, b) { return a.localeCompare(b); });
+}
+
+function rebuildTagChips() {
+    var container = document.getElementById('source-tag-chips');
+    if (!container) { return; }
+    var shownKeys = getVisibleTagChipKeys();
     var parts = [
         '<span class="source-tag-actions">'
         + '<button class="tag-action-btn" data-action="all">' + vt('viewer.tags.all') + '</button>'
@@ -45,14 +51,57 @@ function rebuildTagChips() {
             + '<span class="tag-count">' + sourceTagCounts[key] + '</span></button>'
         );
     }
-    /* Show-all toggle keyed off the TOTAL count, not the sliced view. */
-    if (totalKeys > sourceTagMaxChips) {
-        var showLabel = sourceTagShowAll ? vt('viewer.tags.showLess') : vt('viewer.tags.showAll', totalKeys);
-        parts.push('<button class="tag-show-all-btn" data-action="toggle-all">' + showLabel + '</button>');
+    if (shownKeys.length === 0 && sourceTagSearchQuery) {
+        parts.push('<span class="source-tag-no-match">' + vt('viewer.tags.noMatch') + '</span>');
     }
     container.innerHTML = parts.join('');
     updateTagSummary();
 }
+
+/* Search box: filters the chip list live as the user types. Does not touch
+   hiddenSourceTags/counts — it is a view filter only, so the "N tags (M hidden)"
+   summary keeps describing the FULL set regardless of what the search narrows to. */
+(function() {
+    var searchEl = document.getElementById('source-tag-search');
+    if (!searchEl) { return; }
+    searchEl.addEventListener('input', function() {
+        sourceTagSearchQuery = searchEl.value.trim().toLowerCase();
+        rebuildTagChips();
+    });
+})();
+
+/** Build { [displayLabel]: [rawTag, ...] } for every tracked tag (not just chip-eligible
+    ones — this is a full export, unlike the panel's >=2-count chip floor). Raw tags are
+    the pre-cleanup strings (before bracket-suffix-strip / dot-collapse) that collapsed
+    into this display label, alpha-sorted for a stable diff between exports. */
+function buildTagsJsonPayload() {
+    var keys = Object.keys(sourceTagCounts).filter(function(k) { return k !== otherKey; });
+    keys.sort(function(a, b) { return a.localeCompare(b); });
+    var out = {};
+    for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        var label = formatTagLabel(sourceTagDisplayNames[key] || key);
+        var rawSet = sourceTagRawValues[key];
+        var rawList = rawSet ? Object.keys(rawSet).sort() : [sourceTagDisplayNames[key] || key];
+        out[label] = rawList;
+    }
+    return out;
+}
+
+/** Copy every tracked tag as JSON via the extension host's clipboard handler
+    (webviews have no direct clipboard-write permission). */
+function copyTagsAsJson() {
+    var json = JSON.stringify(buildTagsJsonPayload(), null, 2);
+    if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
+        vscodeApi.postMessage({ type: 'copyToClipboard', text: json });
+    }
+}
+
+(function() {
+    var copyBtn = document.getElementById('source-tag-copy-json');
+    if (!copyBtn) { return; }
+    copyBtn.addEventListener('click', copyTagsAsJson);
+})();
 
 /* Event delegation for chip clicks — avoids inline onclick escaping issues.
  * Chip clicks are delayed 250ms so a double-click can cancel the pending
@@ -78,7 +127,6 @@ function rebuildTagChips() {
         if (!btn) return;
         if (btn.dataset.action === 'all') { selectAllTags(); }
         else if (btn.dataset.action === 'none') { deselectAllTags(); }
-        else if (btn.dataset.action === 'toggle-all') { sourceTagShowAll = !sourceTagShowAll; rebuildTagChips(); }
     });
     chipsEl.addEventListener('dblclick', function(e) {
         var chip = e.target.closest('.source-tag-chip');
@@ -95,7 +143,9 @@ function rebuildTagChips() {
 function resetSourceTags() {
     sourceTagCounts = {};
     sourceTagDisplayNames = {};
+    sourceTagRawValues = {};
     hiddenSourceTags = {};
+    sourceTagSearchQuery = '';
     savedHiddenSourceTags = null;
     soloedSourceTag = null;
     /* Hide the tab button when tags are cleared */
@@ -103,6 +153,8 @@ function resetSourceTags() {
     if (tab) { tab.style.display = 'none'; }
     var container = document.getElementById('source-tag-chips');
     if (container) { container.innerHTML = ''; }
+    var searchEl = document.getElementById('source-tag-search');
+    if (searchEl) { searchEl.value = ''; }
     updateTagSummary();
     if (typeof updateSqlToolbarButton === 'function') updateSqlToolbarButton();
 }
@@ -188,6 +240,14 @@ function openMessageTagsPanel(tagKey) {
     var tab = document.getElementById('filter-tab-log-tags');
     if (tab) { tab.click(); }
     if (!tagKey) { return; }
+    /* Clear any active search filter first — otherwise the chip we are about to
+       scroll to and flash might be filtered out of the DOM entirely. */
+    if (sourceTagSearchQuery) {
+        sourceTagSearchQuery = '';
+        var searchEl = document.getElementById('source-tag-search');
+        if (searchEl) { searchEl.value = ''; }
+        rebuildTagChips();
+    }
     /* Bring the matching sidebar chip into view + flash it so the user sees what
        to toggle. A tag seen too few times to earn a sidebar chip simply has none. */
     var sel = (typeof CSS !== 'undefined' && CSS.escape) ? CSS.escape(tagKey) : tagKey;
