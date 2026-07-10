@@ -57,9 +57,22 @@ function troubleCrashlyticsRowHtml(r) {
         + '</button>';
 }
 
+/* Time-only for a cache written today; date + time once it is older. A bare "9:17 AM" beside
+   an 18:00 log was read as the log's own time (field report), but the value is the Firebase
+   Crashlytics CLOUD cache's write instant, unrelated to the log. Showing the date once it is
+   not today's removes that ambiguity; the freshTitle tooltip names the source in full. */
+function troubleCrashlyticsFreshStamp(cachedAt) {
+    var when = new Date(cachedAt);
+    var now = new Date();
+    var sameDay = when.getFullYear() === now.getFullYear()
+        && when.getMonth() === now.getMonth()
+        && when.getDate() === now.getDate();
+    return sameDay ? when.toLocaleTimeString() : when.toLocaleString();
+}
+
 /* Cache age. The host stamps cachedAt when the background watcher writes issues.json;
-   an absolute clock time beats a relative one here because the band is not re-rendered
-   as it ages, so "5m ago" would quietly become a lie. */
+   an absolute stamp beats a relative one here because the band is not re-rendered as it
+   ages, so "5m ago" would quietly become a lie. */
 function renderTroubleCrashlyticsFreshness(cachedAt) {
     var el = document.getElementById('trouble-crashlytics-fresh');
     if (!el) { return; }
@@ -67,7 +80,20 @@ function renderTroubleCrashlyticsFreshness(cachedAt) {
         el.textContent = vt('viewer.troubleCrashlytics.updatedUnknown');
         return;
     }
-    el.textContent = vt('viewer.troubleCrashlytics.updated', new Date(cachedAt).toLocaleTimeString());
+    el.textContent = vt('viewer.troubleCrashlytics.updated', troubleCrashlyticsFreshStamp(cachedAt));
+}
+
+/* Collapse the band to its head — the title and cache age stay (a collapsed band still
+   answers "how fresh are these issues"), only the rows and the "All N" link drop, hidden by
+   CSS. Mirrors the severity chart's toggle; no re-render either way since the rows are kept. */
+var troubleCrashlyticsCollapsed = false;
+function toggleTroubleCrashlyticsCollapsed() {
+    var band = document.getElementById('trouble-crashlytics');
+    var btn = document.getElementById('trouble-crashlytics-toggle');
+    if (!band) { return; }
+    troubleCrashlyticsCollapsed = !troubleCrashlyticsCollapsed;
+    band.classList.toggle('tcx-collapsed', troubleCrashlyticsCollapsed);
+    if (btn) { btn.setAttribute('aria-expanded', troubleCrashlyticsCollapsed ? 'false' : 'true'); }
 }
 
 /* "All N issues" opens the full Crashlytics panel via its icon-bar button — the panel
@@ -126,6 +152,12 @@ function openTroubleCrashlyticsDetail(meta) {
 
 (function() {
     if (typeof document === 'undefined') { return; }
+    /* The caret AND the title toggle the collapse — the title is the larger, more obvious
+       hit target. The cache-age span is deliberately NOT wired: it carries its own tooltip. */
+    var cxToggle = document.getElementById('trouble-crashlytics-toggle');
+    if (cxToggle) { cxToggle.addEventListener('click', toggleTroubleCrashlyticsCollapsed); }
+    var cxTitle = document.getElementById('trouble-crashlytics-title');
+    if (cxTitle) { cxTitle.addEventListener('click', toggleTroubleCrashlyticsCollapsed); }
     var rowsEl = document.getElementById('trouble-crashlytics-rows');
     if (rowsEl) {
         rowsEl.addEventListener('click', function(e) {

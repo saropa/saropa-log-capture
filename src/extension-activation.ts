@@ -204,6 +204,13 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         broadcaster.postToWebview({ type: 'minimapWidthPx', px: customMmPx });
     }
 
+    /* Restore custom Trouble Mode rail drag-to-resize width from workspace state (overrides
+       the default clamp(320px, 40%, 560px)); same 320/560 bounds as the drag itself. */
+    const customTrPx = context.workspaceState.get<number>('saropaLogCapture.troubleRailCustomPx');
+    if (typeof customTrPx === 'number' && customTrPx >= 320 && customTrPx <= 560) {
+        broadcaster.postToWebview({ type: 'troubleRailWidthPx', px: customTrPx });
+    }
+
     setupConfigListener(context, sessionManager, broadcaster, captureToggle);
     setupLineListeners({ context, sessionManager, broadcaster, historyProvider, inlineDecorations });
     setupScopeContextListener(context, broadcaster);

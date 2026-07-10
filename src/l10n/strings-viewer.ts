@@ -55,6 +55,11 @@ export const stringsViewer: Record<string, string> = {
     // Trouble Mode Crashlytics band (Stage 5) — host-built pane chrome.
     'viewer.troubleCrashlytics.region': 'Crash issues from Crashlytics',
     'viewer.troubleCrashlytics.title': 'Crash issues',
+    'viewer.troubleCrashlytics.toggle.title': 'Collapse or expand the crash issues',
+    'viewer.troubleCrashlytics.toggle.label': 'Collapse crash issues',
+    // Clarifies that the age is the cloud cache's, not the log's — the reported confusion was
+    // an "Updated 9:17 AM" next to an 18:00 log, because these issues come from Firebase, not here.
+    'viewer.troubleCrashlytics.freshTitle': 'Top issues from Firebase Crashlytics (cloud), cached at this time — not from this log',
     'viewer.toolbar.collapseAll.title': 'Collapse all sections',
     'viewer.toolbar.collapseAll.label': 'Collapse all sections',
     'viewer.toolbar.expandAll.title': 'Expand all sections',

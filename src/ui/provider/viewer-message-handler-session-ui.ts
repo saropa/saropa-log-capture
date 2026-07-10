@@ -88,6 +88,13 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
       .then(undefined, () => {});
     return true;
   }
+  /* Trouble Mode rail drag-to-resize: persist custom pixel width to workspace state */
+  if (type === "setTroubleRailCustomPx") {
+    const px = typeof msg.value === "number" ? msg.value : 0;
+    ctx.context.workspaceState.update("saropaLogCapture.troubleRailCustomPx", px > 0 ? px : undefined)
+      .then(undefined, () => {});
+    return true;
+  }
   switch (type) {
     case "addToWatch": ctx.onAddToWatch?.(msgStr(msg, "text")); return true;
     case "promptAnnotation":

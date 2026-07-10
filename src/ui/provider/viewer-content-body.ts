@@ -108,7 +108,7 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
             <button id="trouble-chart-toggle" class="tc-toggle" type="button" aria-expanded="true"
                 aria-controls="trouble-chart-body" title="${t('viewer.troubleChart.toggle.title')}"
                 aria-label="${t('viewer.troubleChart.toggle.label')}">&#x25BE;</button>
-            <span class="trouble-chart-title">${t('viewer.troubleChart.title')}</span>
+            <span id="trouble-chart-title" class="trouble-chart-title">${t('viewer.troubleChart.title')}</span>
             <span id="trouble-chart-peak" class="tc-peak"></span>
             <span id="trouble-chart-legend" class="tc-legend"></span>
         </div>
@@ -122,10 +122,16 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
          has rows. A row click opens the existing in-viewer Crashlytics detail overlay. -->
     <div id="trouble-crashlytics" class="trouble-crashlytics u-hidden" role="region" aria-label="${t('viewer.troubleCrashlytics.region')}">
         <div class="trouble-crashlytics-head">
-            <span>${t('viewer.troubleCrashlytics.title')}</span>
+            <span class="tcx-head-left">
+                <button id="trouble-crashlytics-toggle" class="tcx-toggle" type="button" aria-expanded="true"
+                    aria-controls="trouble-crashlytics-rows" title="${t('viewer.troubleCrashlytics.toggle.title')}"
+                    aria-label="${t('viewer.troubleCrashlytics.toggle.label')}">&#x25BE;</button>
+                <span id="trouble-crashlytics-title" class="tcx-head-title">${t('viewer.troubleCrashlytics.title')}</span>
+            </span>
             <!-- Cache freshness (plan 110, Stage 5): the band is fed from the background
-                 watcher's on-disk cache, never a live fetch, so its age must be visible. -->
-            <span id="trouble-crashlytics-fresh" class="tcx-fresh"></span>
+                 watcher's on-disk cache of Firebase Crashlytics (cloud), never a live fetch
+                 and unrelated to the log's own timeframe, so its age must be visible. -->
+            <span id="trouble-crashlytics-fresh" class="tcx-fresh" title="${t('viewer.troubleCrashlytics.freshTitle')}"></span>
         </div>
         <div id="trouble-crashlytics-rows" class="trouble-crashlytics-rows"></div>
         <div id="trouble-crashlytics-more" class="trouble-crashlytics-more u-hidden"></div>
@@ -153,7 +159,13 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
          Two content slots, one rail: #trouble-detail-body holds the host-built feed-row
          report; #trouble-detail-crashlytics holds the Crashlytics issue detail when a
          band row is clicked (rail carries .td-mode-cd, which hides the head + body).
-         aria-live announces late-arriving content without stealing focus. -->
+         aria-live announces late-arriving content without stealing focus.
+
+         Resize handle is a SIBLING before the rail (mirrors #panel-slot-resize), not a
+         child of it, so it stays a normal flex item next to #trouble-detail in the
+         #log-content-wrapper row — CSS only reveals it while the rail is open AND in the
+         wide static-column layout (viewer-trouble-detail.ts owns the drag). -->
+    <div id="trouble-rail-resize" class="trouble-rail-resize" aria-hidden="true"></div>
     <div id="trouble-detail" class="trouble-detail u-hidden" role="region" tabindex="-1" aria-label="${t('viewer.troubleDetail.region')}">
         <div class="trouble-detail-head">
             <div class="trouble-detail-head-top">

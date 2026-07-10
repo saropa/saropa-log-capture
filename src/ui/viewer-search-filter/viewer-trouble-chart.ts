@@ -352,6 +352,10 @@ function wireTroubleChartChips() {
     if (typeof document === 'undefined') { return; }
     var toggle = document.getElementById('trouble-chart-toggle');
     if (toggle) { toggle.addEventListener('click', toggleTroubleChartCollapsed); }
+    /* The title toggles too — a larger target than the caret. Only the title span, not the
+       whole head: the legend chips beside it own their level-filter click handlers. */
+    var chartTitle = document.getElementById('trouble-chart-title');
+    if (chartTitle) { chartTitle.addEventListener('click', toggleTroubleChartCollapsed); }
     wireTroubleChartChips();
     var body = document.getElementById('trouble-chart-body');
     if (!body) { return; }
