@@ -47,6 +47,9 @@ export const stringsViewer: Record<string, string> = {
     'viewer.troubleDetail.copy.title': 'Copy a Markdown report for this issue (severity, environment, fault + stack)',
     'viewer.troubleDetail.copied': 'Trouble report copied to the clipboard',
     'viewer.troubleDetail.copyFailed': 'Could not copy the trouble report',
+    // Side rail (plan 110, Stage 1): jump the feed back to the line this report describes.
+    'viewer.troubleDetail.reveal.label': 'Reveal in log',
+    'viewer.troubleDetail.reveal.title': 'Scroll the log to the line this report describes',
     // Trouble Mode Crashlytics band (Stage 5) — host-built pane chrome.
     'viewer.troubleCrashlytics.region': 'Crash issues from Crashlytics',
     'viewer.troubleCrashlytics.title': 'Crash issues',
