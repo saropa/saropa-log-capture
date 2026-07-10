@@ -53,9 +53,6 @@ export const stringsWebview: Record<string, string> = {
     'viewer.troubleChart.chip.title': 'Click to toggle this level, double-click to focus it',
     // {0}=the busiest window's total event count. Labels the top of the y axis.
     'viewer.troubleChart.peak': 'Peak {0}',
-    // Tooltip prefix on a bar drawn entirely before the app's launch line — the device's own
-    // logcat backlog, kept out of the peak scale so it cannot flatten the app's real spikes.
-    'viewer.troubleChart.preLaunch': 'Before app launch',
     // Trouble Mode Crashlytics band (Stage 5). {0}=event count, {1}=user count.
     'viewer.troubleCrashlytics.counts': '{0} events · {1} users',
     // Band compaction (plan 110, Stage 5). {0}=total non-archived issue count.

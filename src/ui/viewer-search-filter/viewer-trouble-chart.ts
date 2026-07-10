@@ -108,47 +108,57 @@ function buildTroubleChartBuckets() {
     }
     var totals = { error: 0, warning: 0, performance: 0 };
     if (maxKey == null) { return { bins: [], maxTotal: 0, intervalMs: intervalMs, totals: totals }; }
-    /* Materialize a CONTIGUOUS window (empty windows included as zero-height gaps)
-       so the bars read as a rate over time, not a collapsed list. minKey is the FIRST
-       window that actually holds an event, so leading empty span is already trimmed;
-       the cap only bounds how far back a long session reaches (bug 001 OOM fence:
-       no unbounded array). A short session therefore shows exactly its own span. */
-    var start = Math.max(minKey, maxKey - TROUBLE_CHART_MAX_BUCKETS + 1);
+    /* The chart starts at the first REAL (post-app-ready) event window. Everything before the
+       app-ready boundary (troubleChartLaunchTs: the build-complete line, or the launch-start
+       line when there is no build) is the device's own logcat backlog plus build-tool output —
+       a burst routinely an order of magnitude larger than the app's own trouble. It is DROPPED,
+       not drawn muted: it belongs behind an opt-in feed filter, not on a triage chart it would
+       dominate. Trimming to the first real event also removes the long empty gap between that
+       burst and app start that a minKey start would otherwise show. */
     var launchTs = troubleChartLaunchTs();
+    var realMinKey = firstRealWindowKey(byKey, launchTs, intervalMs);
+    /* Every event so far is pre-app (boundary not yet passed, or nothing charted after it):
+       show the empty state rather than the burst — "no app-era trouble yet". */
+    if (realMinKey == null) { return { bins: [], maxTotal: 0, intervalMs: intervalMs, totals: totals }; }
+    /* Materialize a CONTIGUOUS window from the first real event (empty windows kept as
+       zero-height gaps so bars read as a rate, not a collapsed list); the cap only bounds how
+       far back a long session reaches (bug 001 OOM fence: no unbounded array). */
+    var start = Math.max(realMinKey, maxKey - TROUBLE_CHART_MAX_BUCKETS + 1);
     var bins = [];
     var maxTotal = 0;
-    var anyTotal = 0;
     /* Legend totals are summed over the RENDERED bins, not over allLines. Counting every
        matching line would let the legend claim errors the capped window never draws — a
-       chart and a legend that disagree is worse than no legend. */
+       chart and a legend that disagree is worse than no legend. Pre-app windows are trimmed
+       above, so the totals no longer count the device burst either. */
     for (var k = start; k <= maxKey; k++) {
         var hit = byKey[k];
         var total = hit ? (hit.error + hit.warning + hit.performance) : 0;
-        /* A window that ENDS at or before the app-ready boundary (troubleChartLaunchTs:
-           the build-complete line, or the launch-start line when there is no build) holds
-           only the device's pre-app logcat backlog plus build-tool output. It still draws
-           — nothing is hidden — but it is kept out of the peak, because that startup burst
-           is routinely an order of magnitude larger than anything the app itself does and
-           flattens every real spike after it into an unreadable sliver. The window that
-           CONTAINS the boundary is mixed, so it counts. */
-        var pre = launchTs > 0 && ((k + 1) * intervalMs) <= launchTs;
-        if (total > anyTotal) { anyTotal = total; }
-        if (!pre && total > maxTotal) { maxTotal = total; }
+        if (total > maxTotal) { maxTotal = total; }
         if (hit) { totals.error += hit.error; totals.warning += hit.warning; totals.performance += hit.performance; }
-        var bin = hit || { key: k, error: 0, warning: 0, performance: 0, firstLine: null };
-        bin.preLaunch = pre;
-        bins.push(bin);
+        bins.push(hit || { key: k, error: 0, warning: 0, performance: 0, firstLine: null });
     }
-    /* Nothing after launch yet: scale to the burst rather than divide by zero. */
-    if (maxTotal === 0) { maxTotal = anyTotal; }
     return { bins: bins, maxTotal: maxTotal, intervalMs: intervalMs, totals: totals };
+}
+
+/* Smallest window key holding an event whose window ENDS after the app-ready boundary — the
+   first window the app itself could have produced. null when every event is pre-app. With no
+   boundary (launchTs 0: attach, pure logcat, or a boundary not yet streamed) nothing is pre,
+   so this is simply the earliest event window and the chart shows the whole span. */
+function firstRealWindowKey(byKey, launchTs, intervalMs) {
+    var best = null;
+    for (var kk in byKey) {
+        if (!Object.prototype.hasOwnProperty.call(byKey, kk)) { continue; }
+        var kn = +kk;
+        var isPre = launchTs > 0 && ((kn + 1) * intervalMs) <= launchTs;
+        if (!isPre && (best === null || kn < best)) { best = kn; }
+    }
+    return best;
 }
 
 /* Draw one stacked bar. Error sits on the baseline, warning above it, performance on
    top. A non-zero count clamps to TROUBLE_CHART_MIN_BAR so a single event is legible.
-   A pre-launch bar is scaled off the chart (its window is excluded from the peak), so
-   every segment is clamped to the plot: it saturates at full height instead of drawing
-   above the viewBox, where the SVG would simply cut it off. */
+   Every segment is also clamped to the plot height so a spike scaled past the viewBox
+   saturates at the top instead of drawing above it, where the SVG would cut it off. */
 function troubleChartStackRects(bin, geom, scale) {
     var segs = [
         { cls: 'tc-bar-error', n: bin.error },
@@ -175,11 +185,8 @@ function troubleChartBar(bin, geom, scale, intervalMs, selected) {
         ? '<rect class="tc-selected-band" x="' + geom.cellX.toFixed(1) + '" y="0" width="' + geom.cellW.toFixed(1) + '" height="' + TROUBLE_CHART_VH + '"></rect>'
         : '';
     var tip = vt('viewer.troubleChart.barTip', troubleChartClock(bin.key * intervalMs), bin.error, bin.warning, bin.performance);
-    /* Say why the bar is muted and off-scale, or the user reads it as a rendering bug. */
-    if (bin.preLaunch) { tip = vt('viewer.troubleChart.preLaunch') + ' — ' + tip; }
     var lineAttr = (bin.firstLine != null) ? ' data-line="' + (bin.firstLine + 1) + '"' : '';
-    var cls = bin.preLaunch ? 'tc-bar tc-bar-pre' : 'tc-bar';
-    return '<g class="' + cls + '"' + lineAttr + '><title>' + tip + '</title>' + band + rects + '</g>';
+    return '<g class="tc-bar"' + lineAttr + '><title>' + tip + '</title>' + band + rects + '</g>';
 }
 
 /* One legend chip. The chips are not just labels: each is an interactive level filter that
