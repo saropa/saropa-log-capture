@@ -1,6 +1,7 @@
 # Plan 111 — Restore the last-viewed log on startup
 
-**Status:** In progress (2026-07-10)
+**Status:** Shipped (2026-07-10). All three changes landed; tests below pass. The manual F5
+check is the one item not machine-verified.
 
 ## Problem
 
