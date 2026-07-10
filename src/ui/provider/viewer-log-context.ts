@@ -145,12 +145,27 @@ export function computeLogContextInfo(params: LogContextParams): LogContextInfo 
  * without the Extension Host (mirrors the extracted `shouldAutoLoad` predicate).
  *
  * Returns true only when the setting is on, a newer controller log exists (`stale`), that log has a
- * URI, and it differs from the open one. `stale` is the load-bearing anti-loop guard: it is
- * mtime-based, so once the viewer loads `latestUri` that log becomes the newest controller,
- * `newerCount` drops to 0, `stale` clears, and this returns false on the next tree refresh — no
- * reload loop. When nothing is open (`currentUri` empty) `newerCount` is 0 → `stale` false, so this
- * never fires against an empty viewer and never fights the first-visit autoLoadLatest path.
+ * URI, it differs from the open one, and it ARRIVED after `arrivedSinceMs`. `stale` is the
+ * load-bearing anti-loop guard: it is mtime-based, so once the viewer loads `latestUri` that log
+ * becomes the newest controller, `newerCount` drops to 0, `stale` clears, and this returns false on
+ * the next tree refresh — no reload loop. When nothing is open (`currentUri` empty) `newerCount` is
+ * 0 → `stale` false, so this never fires against an empty viewer and never fights the first-visit
+ * autoLoadInitialLog path.
+ *
+ * `arrivedSinceMs` (the window's activation time) is what makes "always switch to latest" mean what
+ * its setting description says: "switches to the newest log the moment it ARRIVES". Without it, any
+ * `reports/` watcher event (session-history-provider.ts wires onDidCreate/onDidChange/onDidDelete →
+ * refresh → this predicate) would switch the viewer off a log the user deliberately opened, merely
+ * because a PRE-EXISTING log on disk happens to be newer. That silently defeated the startup
+ * last-viewed restore (plan 111): the correct log loaded, then the first unrelated file event
+ * yanked the viewer to the newest one.
  */
-export function shouldAutoSwitchToLatest(info: LogContextInfo, autoSwitchEnabled: boolean): boolean {
-    return autoSwitchEnabled && info.stale && info.latestUri !== "" && info.latestUri !== info.currentUri;
+export function shouldAutoSwitchToLatest(
+    info: LogContextInfo,
+    autoSwitchEnabled: boolean,
+    arrivedSinceMs: number,
+): boolean {
+    if (!autoSwitchEnabled || !info.stale) { return false; }
+    if (info.latestUri === "" || info.latestUri === info.currentUri) { return false; }
+    return info.latestMtime > arrivedSinceMs;
 }

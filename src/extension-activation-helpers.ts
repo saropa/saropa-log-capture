@@ -135,12 +135,6 @@ export function showWalkthroughOnFirstInstall(context: vscode.ExtensionContext):
     );
 }
 
-/** Get the display name for a tree item. */
-function getItemName(item: TreeItem): string {
-    if (isSplitGroup(item)) { return item.displayName ?? item.baseFilename; }
-    return item.displayName ?? item.filename;
-}
-
 /** Find the most recently viewed URI from the last-viewed workspace state map. */
 function findLastViewedUri(lastViewedMap: Record<string, number>): string | undefined {
     let best: string | undefined;
@@ -151,6 +145,48 @@ function findLastViewedUri(lastViewedMap: Record<string, number>): string | unde
     return best;
 }
 
+/** Locate a tree item by leaf URI. Split groups match on any of their parts, since the last-viewed
+ *  map records the part the user actually opened, never the synthetic group. */
+function findItemByUri(items: readonly TreeItem[], uriStr: string): TreeItem | undefined {
+    return items.find(i => {
+        if (isSplitGroup(i)) { return i.parts.some(p => p.uri.toString() === uriStr); }
+        return i.uri.toString() === uriStr;
+    });
+}
+
+/**
+ * The log to reopen on startup: whichever log the user last deliberately opened, provided it still
+ * exists and has not been trashed. Returns undefined to mean "no restorable choice — use the newest".
+ *
+ * Only explicit opens write `logLastViewed` (the Logs-panel click, `openSession`, `openLogFile`);
+ * auto-loads deliberately do not. So this is the user's real last choice, not an echo of a previous
+ * auto-load.
+ *
+ * The existence check is a `stat`, not a lookup in `items`: `openLogFile` can load a file from
+ * ANYWHERE, and such a file never appears in the reports-directory scan. Requiring tree membership
+ * (as the old resume banner did) silently dropped exactly those files. When the URI IS in the tree
+ * we additionally honor `trashed` — a log the user sent to trash must not come back on restart.
+ */
+async function resolveRestoreUri(
+    context: vscode.ExtensionContext,
+    items: readonly TreeItem[],
+): Promise<vscode.Uri | undefined> {
+    const lastViewedMap = context.workspaceState.get<Record<string, number>>(LOG_LAST_VIEWED_KEY, {});
+    const lastViewedUriStr = findLastViewedUri(lastViewedMap);
+    if (!lastViewedUriStr) { return undefined; }
+    const item = findItemByUri(items, lastViewedUriStr);
+    if (item && !isSplitGroup(item) && item.trashed) { return undefined; }
+    const uri = vscode.Uri.parse(lastViewedUriStr);
+    // A remembered file can be deleted, renamed, or live on a drive that is no longer mounted.
+    // stat() failing is the normal case for a stale entry, not an error worth surfacing.
+    try {
+        await vscode.workspace.fs.stat(uri);
+    } catch {
+        return undefined;
+    }
+    return uri;
+}
+
 /** Auto-load deps: viewer provider and a function to post messages to it. */
 export interface AutoLoadTarget {
     getCurrentFileUri(): vscode.Uri | undefined;
@@ -159,32 +195,25 @@ export interface AutoLoadTarget {
 }
 
 /**
- * Auto-load the latest log into the viewer on first visit.
- * Called after the session list streaming fetch completes — items are already loaded, no extra I/O.
- * If a different session was last viewed, sends a `showResumeSession` message
- * so the webview can offer a quick-switch button.
+ * Open a log in the viewer on first visit: the last-viewed one when it can be restored, else the
+ * newest non-trashed session. Called after the session list streaming fetch completes — items are
+ * already loaded, so the only extra I/O is one stat() of the remembered URI.
+ *
+ * Restoring rather than always jumping to newest is the point (plan 111): a window reload used to
+ * discard whichever log the user was reading. When a newer log does exist, the unified log status
+ * bar surfaces it (refreshLogContext runs on every load), so nothing is hidden by staying put.
  */
-export async function autoLoadLatest(
+export async function autoLoadInitialLog(
     context: vscode.ExtensionContext,
     items: readonly TreeItem[],
     target: AutoLoadTarget,
 ): Promise<void> {
+    const restoreUri = await resolveRestoreUri(context, items);
+    if (restoreUri) {
+        void target.loadFromFile(restoreUri);
+        return;
+    }
     const latest = items.find(i => isSplitGroup(i) || !i.trashed);
     if (!latest) { return; }
-    const latestUri = getTreeItemUri(latest);
-    void target.loadFromFile(latestUri);
-    // Offer resume if a different session was last viewed.
-    const lastViewedMap = context.workspaceState.get<Record<string, number>>(LOG_LAST_VIEWED_KEY, {});
-    const lastViewedUriStr = findLastViewedUri(lastViewedMap);
-    if (!lastViewedUriStr || lastViewedUriStr === latestUri.toString()) { return; }
-    const lastItem = items.find(i => {
-        if (isSplitGroup(i)) { return i.parts.some(p => p.uri.toString() === lastViewedUriStr); }
-        return i.uri.toString() === lastViewedUriStr;
-    });
-    if (!lastItem) { return; }
-    target.postMessage({
-        type: 'showResumeSession',
-        uriString: lastViewedUriStr,
-        name: getItemName(lastItem),
-    });
+    void target.loadFromFile(getTreeItemUri(latest));
 }

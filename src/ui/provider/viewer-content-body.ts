@@ -82,11 +82,6 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
         <button type="button" id="compress-suggest-enable" class="compress-suggest-btn">${t('viewer.compressBanner.enable')}</button>
         <button type="button" id="compress-suggest-dismiss" class="compress-suggest-dismiss" title="${t('viewer.compressBanner.dismiss')}">×</button>
     </div>
-    <div id="resume-session-banner" class="resume-session-banner u-hidden" role="status" aria-live="polite">
-        <span class="resume-session-msg">${t('viewer.resumeBanner.msg')}</span>
-        <button type="button" id="resume-session-btn" class="resume-session-action" title="${t('viewer.resumeBanner.btn.title')}"></button>
-        <button type="button" id="resume-session-dismiss" class="resume-session-dismiss" title="${t('viewer.resumeBanner.dismiss')}">×</button>
-    </div>
     <!-- Unified log status bar (plan 109). One inline surface, two modes driven by
          viewer-log-banner.ts: STATUS (persistent while a log is open — filename + lifespan +
          session metadata + file actions; only its × collapses it) and AUTO (a newer
