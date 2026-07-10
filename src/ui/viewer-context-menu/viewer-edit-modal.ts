@@ -123,6 +123,14 @@ function saveEditedLine(lineIdx, newText) {
 
     // Update the local line display immediately for responsiveness
     allLines[lineIdx].html = escapeHtml(newText);
+    /* isLineContentBlank memoizes on _contentBlank keyed only by global toggles, not by
+       item.html — see viewer-line-text-helpers.ts. Editing html in place leaves that key
+       unchanged, so a stale cached blank-state (line-blank class + severity bar) would survive
+       an edit that turns a filled line into whitespace (or a prefix that strips to nothing):
+       the row would keep its full-height, barred rendering while displaying blank. Drop the
+       memo so the immediate re-render recomputes. (An edit to truly empty text is already
+       correct — isLineContentBlank's empty-html guard returns before the cache.) */
+    delete allLines[lineIdx]._contentBlank;
     renderViewport(true);
 
     closeEditModal();
