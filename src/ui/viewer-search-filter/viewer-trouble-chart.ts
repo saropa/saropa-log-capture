@@ -15,9 +15,9 @@
  * hours-long session cannot grow it unbounded — only the most recent windows show.
  *
  * WHY colors come from CSS classes (viewer-styles-trouble-chart.ts) rather than
- * inline fills: the design tokens (--accent-critical / --accent-warning /
- * --accent-info) resolve against the host theme, so the bars stay theme-aware in
- * light, dark, and high-contrast. TROUBLE_LEVELS is reused from
+ * inline fills: severity has exactly one palette across the viewer, and it is the
+ * toolbar's (red / orange / purple). Keeping the fills in CSS lets that one
+ * declaration site stay paired with the toolbar's. TROUBLE_LEVELS is reused from
  * viewer-trouble-mode.ts (which loads first) so the charted set is defined once.
  *
  * Rendering is debounced and only runs while `troubleModeActive` — the pane is
@@ -48,6 +48,10 @@ var troubleChartTimer = null;
    Stored as a timestamp, not a bucket key: the bucket size changes with the interval
    setting, so a key computed at selection time would point at the wrong window later. */
 var troubleChartSelectedTs = 0;
+/* Collapsed hides the plot but KEEPS the head — the legend totals are the reason to
+   collapse (keep the counts, give the feed back the 60px strip), and a head-less chart
+   would leave nothing to click to bring it back. */
+var troubleChartCollapsed = false;
 
 /* Called by the side rail on open (with the row's timestamp) and on close (with 0). */
 function setTroubleChartSelection(timestamp) {
@@ -152,16 +156,43 @@ function renderTroubleChartLegend(totals) {
     el.innerHTML = html;
 }
 
-/* The strip's SVG plus the labels that make it readable: the peak count (y axis) and
-   the first/last window clock times (x axis). Labels are HTML, never SVG <text>: the
-   viewBox is drawn with preserveAspectRatio="none", which would stretch glyphs. */
+/* Peak count, in the head row beside the title. It lived pinned inside the plot's
+   top-left corner until the tallest bar — the device-startup warning rush, which
+   always lands in the leading window — drew straight over it. An overlapped number is
+   worse than none, and the head costs the feed no extra height. */
+function renderTroubleChartPeak(maxTotal) {
+    var el = document.getElementById('trouble-chart-peak');
+    if (!el) { return; }
+    el.textContent = maxTotal > 0 ? vt('viewer.troubleChart.peak', maxTotal) : '';
+}
+
+/* The strip's SVG plus the x-axis labels: the first and last window clock times. Labels
+   are HTML, never SVG <text>: the viewBox is drawn with preserveAspectRatio="none",
+   which would stretch glyphs. */
 function troubleChartPlotHtml(bars, data) {
     var first = troubleChartClock(data.bins[0].key * data.intervalMs);
     var last = troubleChartClock(data.bins[data.bins.length - 1].key * data.intervalMs);
-    return '<div class="tc-plot"><span class="tc-ymax">' + vt('viewer.troubleChart.peak', data.maxTotal) + '</span>'
+    return '<div class="tc-plot">'
         + '<svg class="tc-svg" viewBox="0 0 ' + TROUBLE_CHART_VW + ' ' + TROUBLE_CHART_VH
         + '" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">' + bars + '</svg></div>'
         + '<div class="tc-axis"><span>' + first + '</span><span>' + last + '</span></div>';
+}
+
+/* Lay the bins across the fixed viewBox width and stack each one. Split out of
+   renderTroubleChart purely to keep both under the 30-line function limit. */
+function troubleChartBarsHtml(data) {
+    var n = data.bins.length;
+    var cellW = TROUBLE_CHART_VW / n;
+    var barW = Math.min(cellW * 0.7, 14);
+    var scale = (TROUBLE_CHART_VH - TROUBLE_CHART_TOP_PAD) / data.maxTotal;
+    var selectedKey = troubleChartSelectedTs > 0 ? Math.floor(troubleChartSelectedTs / data.intervalMs) : null;
+    var bars = '';
+    for (var i = 0; i < n; i++) {
+        var cellX = i * cellW;
+        var geom = { cellX: cellX, cellW: cellW, barX: cellX + (cellW - barW) / 2, barW: barW };
+        bars += troubleChartBar(data.bins[i], geom, scale, data.intervalMs, data.bins[i].key === selectedKey);
+    }
+    return bars;
 }
 
 /* Fill #trouble-chart-body: empty state when there is nothing wrong yet, else the
@@ -176,22 +207,16 @@ function renderTroubleChart() {
     var legend = document.getElementById('trouble-chart-legend');
     if (data.bins.length === 0 || data.maxTotal === 0) {
         if (legend) { legend.innerHTML = ''; }
+        renderTroubleChartPeak(0);
         body.innerHTML = '<div class="tc-empty">' + vt('viewer.troubleChart.empty') + '</div>';
         return;
     }
-    var n = data.bins.length;
-    var cellW = TROUBLE_CHART_VW / n;
-    var barW = Math.min(cellW * 0.7, 14);
-    var scale = (TROUBLE_CHART_VH - TROUBLE_CHART_TOP_PAD) / data.maxTotal;
-    var selectedKey = troubleChartSelectedTs > 0 ? Math.floor(troubleChartSelectedTs / data.intervalMs) : null;
-    var bars = '';
-    for (var i = 0; i < n; i++) {
-        var cellX = i * cellW;
-        var geom = { cellX: cellX, cellW: cellW, barX: cellX + (cellW - barW) / 2, barW: barW };
-        bars += troubleChartBar(data.bins[i], geom, scale, data.intervalMs, data.bins[i].key === selectedKey);
-    }
-    body.innerHTML = troubleChartPlotHtml(bars, data);
+    /* Head first: the totals and the peak stay live while collapsed, which is the whole
+       reason collapsing beats hiding. Only the plot's string building is skipped. */
     renderTroubleChartLegend(data.totals);
+    renderTroubleChartPeak(data.maxTotal);
+    if (troubleChartCollapsed) { return; }
+    body.innerHTML = troubleChartPlotHtml(troubleChartBarsHtml(data), data);
 }
 
 /* Coalesce bursts (a streaming batch fires this once per batch, not per line).
@@ -213,8 +238,22 @@ function setTroubleChartInterval(seconds) {
     renderTroubleChart();
 }
 
+/* Chevron. Collapsing re-renders nothing (CSS hides the plot); expanding must rebuild,
+   because every render while collapsed skipped the plot and left it stale. */
+function toggleTroubleChartCollapsed() {
+    var pane = document.getElementById('trouble-chart');
+    var btn = document.getElementById('trouble-chart-toggle');
+    if (!pane) { return; }
+    troubleChartCollapsed = !troubleChartCollapsed;
+    pane.classList.toggle('tc-collapsed', troubleChartCollapsed);
+    if (btn) { btn.setAttribute('aria-expanded', troubleChartCollapsed ? 'false' : 'true'); }
+    if (!troubleChartCollapsed) { renderTroubleChart(); }
+}
+
 (function() {
     if (typeof document === 'undefined') { return; }
+    var toggle = document.getElementById('trouble-chart-toggle');
+    if (toggle) { toggle.addEventListener('click', toggleTroubleChartCollapsed); }
     var body = document.getElementById('trouble-chart-body');
     if (!body) { return; }
     /* Delegated click: a bar carries the 1-based line number of its window's first
