@@ -73,6 +73,9 @@ export function getContextMenuHtml(): string {
             <div class="context-menu-item" data-action="copy-timestamp" data-line-action data-timestamp-action title="${t('viewer.ctx.copyTimestamp.title')}">
                 <span class="codicon codicon-clock"></span> ${t('viewer.ctx.copyTimestamp.label')}
             </div>
+            <div class="context-menu-item" data-action="copy-tags" data-line-action data-tags-action title="${t('viewer.ctx.copyTags.title')}">
+                <span class="codicon codicon-tag"></span> ${t('viewer.ctx.copyTags.label')}
+            </div>
             <div class="context-menu-separator" data-line-action></div>
             <div class="context-menu-item" data-action="copy-all" title="${t('viewer.ctx.copyAll.title')}">
                 <span class="codicon codicon-clippy"></span> ${t('viewer.ctx.copyAll.label')}

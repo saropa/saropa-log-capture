@@ -2109,5 +2109,7 @@
   "Collapse severity chart": "El gráfico de la gravedad del colapso muestra el desplome.",
   "Error {0}": "El error es {0}.",
   "Perf {0}": "Perf {0} fue el primero.",
-  "Warn {0}": "Advertencia para el {0}."
+  "Warn {0}": "Advertencia para el {0}.",
+  "Copy Tags": "Copia las etiquetas de los textos.",
+  "Copy this line's tags as a comma-separated list": "Copie las etiquetas de esta línea como una lista separada por comas."
 }
