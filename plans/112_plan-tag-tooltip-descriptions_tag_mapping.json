@@ -1,0 +1,266 @@
+[
+  {
+    "ui_filter_tag": "Activity Manager",
+    "raw_log_tags": ["ActivityManager"],
+    "system_category": "Android System",
+    "description": "Manages the lifecycle of applications, activity stacks, process creation, and core system navigation."
+  },
+  {
+    "ui_filter_tag": "A Hardware Buffer",
+    "raw_log_tags": ["AHardwareBuffer"],
+    "system_category": "Graphics / Memory",
+    "description": "A native Android API that allows allocation and direct sharing of hardware memory buffers across different processes (e.g., camera to GPU)."
+  },
+  {
+    "ui_filter_tag": "Android",
+    "raw_log_tags": ["Android"],
+    "system_category": "Core OS",
+    "description": "General baseline Android operating system framework logs."
+  },
+  {
+    "ui_filter_tag": "Android Runtime",
+    "raw_log_tags": ["AndroidRuntime"],
+    "system_category": "Core Execution",
+    "description": "The virtual machine environment (ART) executing the application’s compiled Java/Kotlin bytecode."
+  },
+  {
+    "ui_filter_tag": "Aropamobile App",
+    "raw_log_tags": ["aropamobile.app"],
+    "system_category": "Application Layer",
+    "description": "Your specific mobile application package. Logs here originate directly from your unique business logic."
+  },
+  {
+    "ui_filter_tag": "Awesome Notifications",
+    "raw_log_tags": ["awesome notifications"],
+    "system_category": "Flutter Plugin",
+    "description": "A popular Flutter package used to create, manage, and display localized push and system notifications."
+  },
+  {
+    "ui_filter_tag": "BLAST Buffer Queue",
+    "raw_log_tags": ["BLASTBufferQueue"],
+    "system_category": "Graphics Pipeline",
+    "description": "Android’s Buffer Layer Architecture System Tracking queue, optimizing how graphic frames are passed to the compositor."
+  },
+  {
+    "ui_filter_tag": "Buffer Queue Consumer",
+    "raw_log_tags": ["BufferQueueConsumer"],
+    "system_category": "Graphics Pipeline",
+    "description": "The engine side (like SurfaceFlinger) that consumes graphical frames produced by the app for display rendering."
+  },
+  {
+    "ui_filter_tag": "Choreographer",
+    "raw_log_tags": ["Choreographer"],
+    "system_category": "UI / Rendering",
+    "description": "Coordinates the timing of animations, input, and drawing. It synchronizes rendering with the display refresh rate to prevent tearing."
+  },
+  {
+    "ui_filter_tag": "Database",
+    "raw_log_tags": ["database"],
+    "system_category": "Storage",
+    "description": "Logs related to database interactions (SQLite, Room, Hive, or local app caching engines)."
+  },
+  {
+    "ui_filter_tag": "FBI",
+    "raw_log_tags": ["FBI"],
+    "system_category": "Unknown / Custom Identifier",
+    "description": "Likely a highly specific local debug tag, process alias, or proprietary third-party framework identifier."
+  },
+  {
+    "ui_filter_tag": "Firebase Sessions",
+    "raw_log_tags": ["FirebaseSessions"],
+    "system_category": "Analytics / SDK",
+    "description": "Google Firebase telemetry component tracking application user sessions, app launches, and engagement metrics."
+  },
+  {
+    "ui_filter_tag": "FLT Fire Context Holder",
+    "raw_log_tags": ["FLTFireContextHolder"],
+    "system_category": "Flutter Plugin / Firebase",
+    "description": "Internal Flutter Firebase context provider tracking framework lifecycle states."
+  },
+  {
+    "ui_filter_tag": "Flutter",
+    "raw_log_tags": ["flutter"],
+    "system_category": "UI Framework",
+    "description": "Standard infrastructure logs coming directly from the main Flutter framework engine."
+  },
+  {
+    "ui_filter_tag": "Flutter Activity And Fragment Delegate",
+    "raw_log_tags": ["FlutterActivityAndFragmentDelegate"],
+    "system_category": "Framework Bridge",
+    "description": "Handles binding Android Activity/Fragment lifecycles to the Flutter engine view."
+  },
+  {
+    "ui_filter_tag": "Flutter Geolocator",
+    "raw_log_tags": ["FlutterGeolocator"],
+    "system_category": "Flutter Plugin",
+    "description": "Plugin framework responsible for communicating with Android's GPS and network location services."
+  },
+  {
+    "ui_filter_tag": "Flutter JNI",
+    "raw_log_tags": ["FlutterJNI"],
+    "system_category": "Framework Bridge",
+    "description": "Java Native Interface logic connecting the C++ based Flutter engine to Android's native Java/Kotlin APIs."
+  },
+  {
+    "ui_filter_tag": "Flutter Renderer",
+    "raw_log_tags": ["FlutterRenderer"],
+    "system_category": "Graphics / UI",
+    "description": "The engine sub-component responsible for taking Flutter widget layers and drawing them onto the screen canvas."
+  },
+  {
+    "ui_filter_tag": "Frame Stall",
+    "raw_log_tags": ["frame-stall"],
+    "system_category": "Performance",
+    "description": "A performance warning flag. Logs here mean a frame took too long to render, causing visible stutter (jank) for the user."
+  },
+  {
+    "ui_filter_tag": "Gralloc4",
+    "raw_log_tags": ["Gralloc4", "gralloc4"],
+    "system_category": "Graphics / Hardware",
+    "description": "The Graphics Memory Allocator Hardware Abstraction Layer. It allocates raw memory on behalf of device display drivers."
+  },
+  {
+    "ui_filter_tag": "Gralloc Extra",
+    "raw_log_tags": ["GrallocExtra"],
+    "system_category": "Graphics / Hardware",
+    "description": "Extended functionality hooks and allocations tied to the primary Gralloc hardware framework."
+  },
+  {
+    "ui_filter_tag": "Graphic Buffer Allocator",
+    "raw_log_tags": ["GraphicBufferAllocator"],
+    "system_category": "Graphics Pipeline",
+    "description": "A high-level system service allocating system memory arrays for graphic and rendering layers."
+  },
+  {
+    "ui_filter_tag": "HWUI",
+    "raw_log_tags": ["HWUI"],
+    "system_category": "Graphics Pipeline",
+    "description": "Android’s hardware-accelerated 2D rendering engine. It handles drawing Android-native views using the device GPU."
+  },
+  {
+    "ui_filter_tag": "IMPORTANT",
+    "raw_log_tags": ["IMPORTANT"],
+    "system_category": "Diagnostic / Priority",
+    "description": "High-importance or severe framework-level warnings flagged explicitly as crucial."
+  },
+  {
+    "ui_filter_tag": "Important:flutter/shell/platform/android/android Context Vk Impeller Cc(62)",
+    "raw_log_tags": ["IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(62)"],
+    "system_category": "Graphics (Impeller)",
+    "description": "Deep engine logs concerning Flutter’s modern rendering backend (Impeller) processing via the Vulkan (Vk) graphics API on Android."
+  },
+  {
+    "ui_filter_tag": "Input Dispatcher",
+    "raw_log_tags": ["InputDispatcher"],
+    "system_category": "System Events",
+    "description": "The Android system component responsible for intercepting and routing physical touch, gestures, and hardware key presses to your active screen."
+  },
+  {
+    "ui_filter_tag": "Job Service",
+    "raw_log_tags": ["JobService"],
+    "system_category": "Android System",
+    "description": "Manages scheduled background tasks and deferred system processes via JobScheduler."
+  },
+  {
+    "ui_filter_tag": "Keystore2",
+    "raw_log_tags": ["keystore2"],
+    "system_category": "Security",
+    "description": "Android’s system-wide cryptographic storage daemon used to secure app keys, biometrics, and credentials safely."
+  },
+  {
+    "ui_filter_tag": "Libc",
+    "raw_log_tags": ["libc"],
+    "system_category": "Core OS / Low Level",
+    "description": "Standard C library implementation used for basic system calls, memory management, and low-level execution."
+  },
+  {
+    "ui_filter_tag": "Lib MEOW",
+    "raw_log_tags": ["libMEOW"],
+    "system_category": "Hardware Vendor",
+    "description": "A proprietary graphics optimization/vendor library frequently bundled within specific vendor chipsets (e.g., MediaTek display drivers)."
+  },
+  {
+    "ui_filter_tag": "Log",
+    "raw_log_tags": ["log"],
+    "system_category": "Diagnostic",
+    "description": "Standard diagnostic logs generated by explicit print statements or simple debugging flags in code."
+  },
+  {
+    "ui_filter_tag": "Lowmemorykiller",
+    "raw_log_tags": ["lowmemorykiller"],
+    "system_category": "Memory Management",
+    "description": "Android’s lmdkd daemon. If logs peak here, the OS is aggressively killing background services because the system is critically out of RAM."
+  },
+  {
+    "ui_filter_tag": "Media Player",
+    "raw_log_tags": ["MediaPlayer"],
+    "system_category": "Multimedia",
+    "description": "The native Android multimedia framework handling audio, video playback, and codec operations."
+  },
+  {
+    "ui_filter_tag": "Media Session Compat",
+    "raw_log_tags": ["MediaSessionCompat"],
+    "system_category": "Multimedia",
+    "description": "Ensures backward compatibility for media playback controls, transport buttons, and lock-screen status tracking."
+  },
+  {
+    "ui_filter_tag": "Nativeloader",
+    "raw_log_tags": ["nativeloader"],
+    "system_category": "Core OS / Execution",
+    "description": "The internal system utility responsible for finding and loading shared native (.so) binary libraries."
+  },
+  {
+    "ui_filter_tag": "Perf",
+    "raw_log_tags": ["Perf", "perf"],
+    "system_category": "Performance",
+    "description": "Telemetry and hooks related to CPU performance monitoring, system tracing, or optimization tracking."
+  },
+  {
+    "ui_filter_tag": "Process",
+    "raw_log_tags": ["Process"],
+    "system_category": "Android System",
+    "description": "Manages application processes, lifecycle priorities, and standard process communication tools."
+  },
+  {
+    "ui_filter_tag": "Profile Installer",
+    "raw_log_tags": ["ProfileInstaller"],
+    "system_category": "Core Execution",
+    "description": "Optimizes initial application performance by installing profile-guided optimization files (PGO/Baseline Profiles)."
+  },
+  {
+    "ui_filter_tag": "T Runtime Cct Transport Backend",
+    "raw_log_tags": ["TRuntime.CctTransportBackend"],
+    "system_category": "Cloud / Analytics",
+    "description": "A background data transport layer (often linked to Google Play Services) used to queue and upload crash reports and metrics."
+  },
+  {
+    "ui_filter_tag": "Url Launcher",
+    "raw_log_tags": ["UrlLauncher"],
+    "system_category": "Flutter Plugin",
+    "description": "A Flutter plugin utilized to kick intents out to the OS, such as launching an external web browser, dialing a phone number, or opening an email app."
+  },
+  {
+    "ui_filter_tag": "Window Extensions Impl",
+    "raw_log_tags": ["WindowExtensionsImpl"],
+    "system_category": "UI Architecture",
+    "description": "Handles vendor-specific screen extensions, multi-window configurations, and foldable device screen form factors."
+  },
+  {
+    "ui_filter_tag": "Window Manager",
+    "raw_log_tags": ["WindowManager"],
+    "system_category": "UI Architecture",
+    "description": "System service that governs screen layout, window layering, visibility states, and how different applications stack visually."
+  },
+  {
+    "ui_filter_tag": "WM Reschedule Receiver",
+    "raw_log_tags": ["WM-RescheduleReceiver"],
+    "system_category": "UI Architecture / System",
+    "description": "Internal window manager scheduler handling display, frame, or structural updates."
+  },
+  {
+    "ui_filter_tag": "Zygote",
+    "raw_log_tags": ["Zygote"],
+    "system_category": "Core OS Process",
+    "description": "The base preloaded process from which all Android applications fork when launched, designed to drastically decrease application startup times."
+  }
+]
