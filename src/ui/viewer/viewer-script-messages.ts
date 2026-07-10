@@ -63,6 +63,9 @@ window.addEventListener('message', function(event) {
             if (typeof scheduleRootCauseHypothesesRefresh === 'function') scheduleRootCauseHypothesesRefresh();
             /* Refresh the Trouble Mode severity chart once per batch (no-op while the mode is off). */
             if (typeof scheduleTroubleChartUpdate === 'function') scheduleTroubleChartUpdate();
+            /* Warm-up filter re-applies when the app-ready boundary first resolves mid-load
+               (no-op while the filter is off or the boundary is unchanged). */
+            if (typeof maybeReapplyWarmupOnBoundaryChange === 'function') maybeReapplyWarmupOnBoundaryChange();
             break;
         }
         case 'setTroubleChartInterval':
@@ -109,7 +112,7 @@ window.addEventListener('message', function(event) {
             isPaused = false; isViewingFile = false; if (footerEl) footerEl.classList.remove('paused');
             if (typeof window.setReplayEnabled === 'function') window.setReplayEnabled(false, isSessionActive);
             if (typeof closeContextModal === 'function') closeContextModal();
-            if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof resetClassTags === 'function') resetClassTags(); if (typeof resetSqlPatternTags === 'function') resetSqlPatternTags(); if (typeof resetScopeFilter === 'function') resetScopeFilter(); if (typeof dbTimeFilterActive !== 'undefined') { dbTimeFilterActive = false; dbTimeFilterMin = 0; dbTimeFilterMax = 0; } if (typeof window !== 'undefined') { window.driftAdvisorDbPanelMeta = null; window.ppDbTimelineMeta = null; } if (typeof resetDriftDebugServerFromLogSession === 'function') resetDriftDebugServerFromLogSession(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
+            if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof resetClassTags === 'function') resetClassTags(); if (typeof resetSqlPatternTags === 'function') resetSqlPatternTags(); if (typeof resetScopeFilter === 'function') resetScopeFilter(); if (typeof resetWarmupFilter === 'function') resetWarmupFilter(); if (typeof dbTimeFilterActive !== 'undefined') { dbTimeFilterActive = false; dbTimeFilterMin = 0; dbTimeFilterMax = 0; } if (typeof window !== 'undefined') { window.driftAdvisorDbPanelMeta = null; window.ppDbTimelineMeta = null; } if (typeof resetDriftDebugServerFromLogSession === 'function') resetDriftDebugServerFromLogSession(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
             if (typeof clearRunNav === 'function') clearRunNav();
             if (typeof artBlockTracker !== 'undefined') { artBlockTracker.startIdx = -1; artBlockTracker.count = 0; artBlockTracker.timestamp = 0; }
             if (typeof resetAsciiArtDetector === 'function') resetAsciiArtDetector();
