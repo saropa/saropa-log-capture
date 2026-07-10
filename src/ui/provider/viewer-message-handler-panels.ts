@@ -55,6 +55,7 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
         });
         return true;
       case "requestCrashlyticsData": panelHandlers.handleCrashlyticsRequest(ctx.post).catch(() => {}); return true;
+      case "requestTroubleCrashlytics": panelHandlers.handleTroubleCrashlyticsRequest(ctx.post).catch(() => {}); return true;
       case "crashlyticsCheckAgain": panelHandlers.handleCrashlyticsRequest(ctx.post, true).catch(() => {}); return true;
       case "crashlyticsValidate": panelHandlers.handleCrashlyticsValidate(ctx.post).catch(() => {}); return true;
       case "fetchCrashlyticsDetail": panelHandlers.handleCrashlyticsDetail(String(msg.issueId ?? ''), (msg.meta as Record<string, unknown>) ?? {}, ctx.post, String(msg.consoleUrl ?? '')).catch(() => {}); return true;
@@ -79,6 +80,14 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
           typeof msg.plainText === 'string' ? msg.plainText : '',
           typeof msg.level === 'string' ? msg.level : 'info',
           ctx.post,
+        ).catch(() => {});
+        return true;
+      case "copyTroubleReport":
+        panelHandlers.handleCopyTroubleReport(
+          ctx.currentFileUri,
+          safeLineIndex(msg.sourceLineNo, 0),
+          typeof msg.plainText === 'string' ? msg.plainText : '',
+          typeof msg.level === 'string' ? msg.level : 'info',
         ).catch(() => {});
         return true;
       case "requestPerformanceData": panelHandlers.handlePerformanceRequest(ctx.post, ctx.currentFileUri).catch(() => {}); return true;

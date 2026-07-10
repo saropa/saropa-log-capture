@@ -56,6 +56,8 @@ export const stringsViewerG: Record<string, string> = {
     'viewer.ctx.copyAsSnippet.title': 'Copy as a fenced code block for GitHub or GitLab',
     'viewer.ctx.copyWithSource.label': 'Copy with source (filename + source code)',
     'viewer.ctx.copyWithSource.title': 'Copy the selection together with the matching source filename and code',
+    'viewer.ctx.copyTroubleReport.label': 'Copy issue report',
+    'viewer.ctx.copyTroubleReport.title': 'Copy a Markdown report for this line (severity, environment, fault + stack)',
     'viewer.ctx.selectAll.label': 'Select All',
     'viewer.ctx.selectAll.title': 'Select all lines in the viewport',
     'viewer.ctx.exportCurrentView.label': 'Export current view…',

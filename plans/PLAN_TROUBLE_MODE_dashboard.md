@@ -1,6 +1,6 @@
 # Plan — Trouble Mode Dashboard (remaining stages)
 
-## Status: Open — Stages 3–6 (chart, detail pane, Crashlytics rows, Copy Report)
+## Status: Shipped — Stages 3–6 (chart, detail pane, Crashlytics band, Copy Report). See Finish Report below.
 
 <!-- Status values: Open → In progress → Shipped / Deferred / Superseded. -->
 
@@ -139,3 +139,54 @@ Each stage is independently shippable.
    pop-out/wide-viewport only.
 5. **Plan numbering.** When picked up, assign the next free `NNN_plan-` number (check
    `plans/` and `plans/history/`) per repo convention.
+
+## Finish Report (2026-07-09)
+
+Stages 3–6 built and verified through all 12 compile gates (`npm run compile`) plus new
+unit tests. The only unverified surface is the F5 Extension-Host visual render.
+
+### What shipped
+
+- **Stage 3 — severity chart** (`viewer-trouble-chart.ts`, `viewer-styles-trouble-chart.ts`).
+  Zero-dependency SVG stacked bars above the feed while Trouble Mode is active; buckets
+  `item.level`+`item.timestamp` into tumbling windows sized by the new setting
+  `saropaLogCapture.troubleMode.chartInterval` (1–60s, default 5). Bars colored from tokens
+  (`--accent-critical`/`--accent-warning`/`--accent-info`). Click-a-bar → `scrollToLineNumber`.
+  Aggregates in the webview; window bounded to the most-recent 180 buckets (OOM fence). Setting
+  threaded through the full 8-step pipeline + NLS keys in all 11 locale files. Test:
+  `viewer-trouble-chart.test.ts`.
+- **Stage 4 — detail pane** (`viewer-trouble-detail.ts`, `trouble-detail-handler.ts`,
+  `viewer-styles-trouble-detail.ts`). Feed-row click posts `openTroubleDetail`; host builds the
+  detail reusing the signal-report builders (`renderEvidenceSection`,
+  `describeTimelinePosition`, `findPrecedingAction`, `resolveSourcePaths`) and posts
+  `troubleDetailReady` into an overlay over the feed (chart/toolbar stay visible). Shows fault
+  line, severity, elevated ANR risk (`scanAnrRisk`), and surrounding context. Line located
+  defensively (`locateLine`: `sourceLineNo` hint + text verification). Test:
+  `viewer-trouble-detail-locate.test.ts`.
+- **Stage 5 — Crashlytics band** (`viewer-trouble-crashlytics.ts`, `trouble-crashlytics-rows.ts`,
+  `viewer-styles-trouble-crashlytics.ts`). Band of the top cached crash issues above the feed,
+  read from `readCachedIssues()` — **no network fetch**; cold cache → no band. Row click reuses
+  the existing in-viewer Crashlytics detail overlay (`fetchCrashlyticsDetail`). Test:
+  `trouble-crashlytics-rows.test.ts`.
+- **Stage 6 — Copy Report** (`buildTroubleReportMarkdown` in `signal-report-markdown.ts`,
+  `handleCopyTroubleReport`). "Copy report" button in the detail-pane header + "Copy issue
+  report" context-menu item on every line. Payload: severity + existing environment fields
+  (`appVersion`/`debugAdapterType`/`debugTarget`) + fault line and its stack, zero surrounding
+  lines; fence sized to outrun any backtick run in the content (export hygiene). Test:
+  `trouble-report-markdown.test.ts`.
+
+### Deviations from this plan (deliberate, with reasons)
+
+- **Stage 4 signal-report cross-link deferred.** The plan wanted the full signal report inline
+  when a row is a detected signal. Cached hypotheses key evidence by the *webview* line-index
+  space; the detail pane works in *file* line-index space. A correct match needs an index
+  mapping that was not built — deferred rather than shipped subtly wrong. Full report remains
+  reachable from the Signals panel.
+- **Stage 5 is a pinned band, not interleaved feed rows.** The plan said "Crashlytics issues as
+  feed rows." Interleaving fights the append-only prefix sums (known weak point — top-of-feed
+  insertion forces O(n) rebuilds) and issues are session/cross-session aggregates with no
+  per-line timestamp, so there is no correct interleave position. A band above the feed is the
+  correct model. Owner-approved during build.
+- **Health-score `factors` (Open question, Stage 4 design) not used.** `health-score.ts` returns
+  `{ score, weightedViolations }` from lint violations, not a session-severity `factors` array,
+  so the pane uses ANR risk + context instead. The plan's premise here was stale.
