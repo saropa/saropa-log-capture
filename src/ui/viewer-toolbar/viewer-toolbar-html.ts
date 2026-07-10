@@ -43,6 +43,12 @@ export function getToolbarHtml(opts: ToolbarHtmlOptions): string {
         <button type="button" id="toolbar-trouble-btn" class="toolbar-icon-btn" title="${t('viewer.toolbar.trouble.title')}" aria-label="${t('viewer.toolbar.trouble.label')}" aria-pressed="false">
             <span class="codicon codicon-warning" aria-hidden="true"></span>
         </button>
+        <!-- Flow tags: render [flowmap] navigation lines as compact chips, raw text, or
+             hidden. A 3-state cycle button (chips -> raw -> hidden); data-flow-mode +
+             the active style show the state, and the feature module wires the click. -->
+        <button type="button" id="toolbar-flowtags-btn" class="toolbar-icon-btn" data-flow-mode="chips" title="${t('viewer.toolbar.flowTags.title')}" aria-label="${t('viewer.toolbar.flowTags.label')}">
+            <span class="codicon codicon-tag" aria-hidden="true"></span>
+        </button>
         <button type="button" id="toolbar-signals-btn" class="toolbar-icon-btn" title="${t('viewer.toolbar.signals.title')}" aria-label="${t('viewer.toolbar.signals.label')}" aria-expanded="false">
             <span class="codicon codicon-pulse" aria-hidden="true"></span>
             <span id="toolbar-signals-count" class="toolbar-badge" title="${t('viewer.toolbar.signalsCount.title')}"></span>

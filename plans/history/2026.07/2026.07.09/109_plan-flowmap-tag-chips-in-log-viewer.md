@@ -1,6 +1,6 @@
 # Plan — render `[flowmap]` tag lines as chips in the Log Viewer
 
-Status: **proposed**
+Status: **Implemented** (see the Finish Report below).
 
 Depends on the `[flowmap]` tag grammar defined in
 [flowmap-tag-navigation.md](guides/flowmap-tag-navigation.md) (verbs `enter`, `back`, `exit`,
@@ -107,3 +107,56 @@ Touchpoints to confirm during implementation (files located, exact lines TBD):
 3. **Multiple flow lines with identical rendering in a burst** (e.g. rapid `action` repeats) — leave
    as separate chips, or collapse like the existing repeat-collapse? Recommendation: **separate** for
    v1; repeat-collapse already exists and can fold them later if it proves noisy.
+
+## Finish Report (2026-07-09)
+
+Shipped as designed. All three open questions were resolved with the recommended answers (chips
+default, name-only chip with kind in the tooltip, separate chips per line in a burst).
+
+### What was built
+
+- **New webview module** `src/ui/viewer-flow-tags/viewer-flow-tags.ts` (`getFlowTagsScript`) holds
+  the whole feature client-side, mirroring the Trouble Mode pattern: `classifyFlowTag(plain)`
+  (all six verbs, `enter … back` reported as `back`), `renderFlowChip(flow)`, `flowChipSwap(item, html)`,
+  the `flowTagMode` state (`chips` | `raw` | `hidden`) with `setFlowTagMode` / `cycleFlowTagMode`,
+  `calcFlowFiltered`, `applyFlowFilter`, the toolbar indicator, and `setState` persistence. Registered
+  in `viewer-content-scripts.ts` after `getStackFilterScript`.
+- **Birth-time classification** in `viewer-data-add.ts`: each normal line is parsed once
+  (`classifyFlowTag(plain)`) and the result stamped as `item.flowTag`, with `item.flowFiltered`
+  computed at birth. Markers/stack/structured lines return before the parse, so only real log lines
+  carry the field.
+- **Chip render** in `viewer-data-helpers-render.ts`: a single guarded line
+  (`html = flowChipSwap(item, html)`) swaps the raw text for a chip in `chips` mode; the decision
+  logic lives in the feature module to keep this already-large file's growth minimal.
+- **Hidden filter** honors the project filter contract: `item.flowFiltered` is added to the
+  `calcItemHeight` gate and folded into `computeLineBirthHeight` (new `flowTag` param) so a line
+  streaming in while `hidden` is active is born at height 0 rather than flashing visible. Markers are
+  never filtered (`applyFlowFilter` skips them).
+- **Toolbar** button `#toolbar-flowtags-btn` (tag codicon) next to Trouble Mode; a 3-state cycle
+  (chips → raw → hidden) whose title/aria-label and active style reflect the mode.
+- **Styles**: one `.flow-chip` rule in `viewer-styles-decoration-bars.ts` reading a `--flow-c` custom
+  property per verb (`.flow-chip-enter/back/exit/action/handoff/error`), tinted via `color-mix` from
+  VS Code chart/severity theme variables — no raw hex, no magic px.
+- **l10n**: `viewer.toolbar.flowTags.*` (host `t()`) and `viewer.flow.chip.*` / `viewer.flow.mode.*`
+  (webview `vt()`) source keys added; `verify:l10n-keys` passes (all referenced keys resolve). The
+  chip text/tooltip escape HTML — log content is attacker-controlled.
+
+### Deliberate limits (v1)
+
+- Chips replace the rendered body, so in `chips` mode a text search match inside a `[flowmap]` line is
+  not visibly highlighted (the line still counts as a match); flip to `raw` to see it. Acceptable
+  tradeoff — the mode exists to hide that text.
+- The source anchor shows in the chip tooltip as text, not as a click-to-open link (the raw-line
+  source link remains available in `raw` mode). Full clickable source-nav on the chip is a later
+  enhancement, not a gap in the readability goal.
+
+### Verification
+
+`viewer-flow-tags.test.js` 8 passing (classifier per verb, `enter … back` → `back`, non-flow → null,
+chip class/meaning/source/escaping, `calcFlowFiltered` gating, born-hidden height, markers untouched).
+`viewer-blank-row-affordance.test.js` 2 passing (the shared `addToData` → `calcItemHeight` →
+birth-height pipeline I modified — no regression). `npm run check-types` clean; `npm run compile`
+green through every verify gate (l10n keys, webview catalogs, command list, dist size). Scoped eslint
+clean on all new/changed files; the two `max-lines` warnings on `viewer-data-helpers-core.ts` and
+`viewer-data-helpers-render.ts` are pre-existing (both files were already over 300 before this change;
+`core.ts` gained no lines, `render.ts` gained one guarded call).

@@ -30,6 +30,20 @@ export const stringsWebviewB: Record<string, string> = {
     'viewer.deco.anr': 'ANR Pattern Detected',
     'viewer.deco.recentErrorContext': 'Recent-error context: not the primary faulting line; tinted because a real error or stack line occurred within 2 seconds above.',
 
+    // Flow-tag chips (plan 109) — [flowmap] navigation lines rendered as compact
+    // chips in the log viewer. One meaning line per verb; shown in the chip tooltip
+    // above the original raw tag text.
+    'viewer.flow.chip.enter': 'Entered this surface',
+    'viewer.flow.chip.back': 'Returned to a surface already visited',
+    'viewer.flow.chip.exit': 'Left this surface',
+    'viewer.flow.chip.action': 'Action taken on this surface',
+    'viewer.flow.chip.handoff': 'Handed off to an external app or API',
+    'viewer.flow.chip.error': 'Failure reported on this surface',
+    // Flow-tag toolbar button — the three display modes, cycled by clicking.
+    'viewer.flow.mode.chips': 'Flow tags: chips (click for raw text)',
+    'viewer.flow.mode.raw': 'Flow tags: raw text (click to hide)',
+    'viewer.flow.mode.hidden': 'Flow tags: hidden (click for chips)',
+
     // Files dialog + footer counter — cumulative cross-session feed (plan 057).
     'viewer.files.counterTooltip': '{0} files in this view — click to list',
     'viewer.files.lineCount': '{0} lines',

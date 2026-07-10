@@ -27,6 +27,8 @@ export const stringsViewer: Record<string, string> = {
     'viewer.toolbar.filterCount.title': 'Number of active filters',
     'viewer.toolbar.trouble.title': 'Trouble Mode — show only errors, warnings, and performance issues (hides everything nominal)',
     'viewer.toolbar.trouble.label': 'Toggle Trouble Mode',
+    'viewer.toolbar.flowTags.title': 'Flow tags — show [flowmap] navigation lines as compact chips, as raw text, or hidden',
+    'viewer.toolbar.flowTags.label': 'Cycle flow-tag display',
     // Trouble Mode severity chart (Stage 3) — host-built pane chrome.
     'viewer.troubleChart.region': 'Severity over time chart',
     'viewer.troubleChart.title': 'Severity over time',

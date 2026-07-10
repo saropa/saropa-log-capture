@@ -186,6 +186,31 @@ export function getDecorationBarStyles(): string {
     color: var(--vscode-badge-foreground, #fff);
 }
 
+/* Flow-tag chip (plan 109) — replaces a [flowmap] line's raw text with a compact
+   verb-colored pill. --flow-c carries the verb color so this single rule stays
+   DRY; each verb class only sets the variable. color-mix tints the fill/border
+   from that one color, matching the .cont-badge approach above. */
+.flow-chip {
+    --flow-c: var(--vscode-descriptionForeground, #888);
+    display: inline-block;
+    padding: 0.05em 0.55em;
+    border-radius: 0.9em;
+    font-size: 0.8em;
+    font-weight: 600;
+    line-height: 1.4;
+    user-select: none;
+    vertical-align: baseline;
+    color: var(--flow-c);
+    background: color-mix(in srgb, var(--flow-c) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--flow-c) 35%, transparent);
+}
+.flow-chip-enter   { --flow-c: var(--vscode-charts-blue, #2196f3); }
+.flow-chip-back    { --flow-c: var(--vscode-charts-purple, #a855f7); }
+.flow-chip-exit    { --flow-c: var(--vscode-descriptionForeground, #888); }
+.flow-chip-action  { --flow-c: var(--vscode-charts-green, #4caf50); }
+.flow-chip-handoff { --flow-c: var(--vscode-charts-orange, #f97316); }
+.flow-chip-error   { --flow-c: var(--vscode-errorForeground, #f48771); }
+
 /* Error classification markers — all four (critical / bug / transient / ANR)
    render as a single emoji absolutely positioned in the gutter, in their OWN
    column, so they never push the log text. WHY absolute: the prior inline

@@ -49,6 +49,7 @@ import { getSearchTogglesScript } from '../viewer-search-filter/viewer-search-to
 import { getSearchHistoryScript } from '../viewer-search-filter/viewer-search-history';
 import { getLevelFilterScript } from '../viewer-search-filter/viewer-level-filter';
 import { getTroubleModeScript } from '../viewer-search-filter/viewer-trouble-mode';
+import { getFlowTagsScript } from '../viewer-flow-tags/viewer-flow-tags';
 import { getTroubleChartScript } from '../viewer-search-filter/viewer-trouble-chart';
 import { getTroubleDetailScript } from '../viewer-search-filter/viewer-trouble-detail';
 import { getTroubleCrashlyticsScript } from '../viewer-search-filter/viewer-trouble-crashlytics';
@@ -204,6 +205,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getLintBadgeScript()) +
         scriptTag(nonce, getStackDedupScript()) +
         scriptTag(nonce, getStackFilterScript()) +
+        scriptTag(nonce, getFlowTagsScript()) +
         scriptTag(nonce, getSplitNavScript()) +
         scriptTag(nonce, getSessionNavScript()) +
         scriptTag(nonce, getJsonScript()) +
