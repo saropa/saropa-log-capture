@@ -90,6 +90,7 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
      Ctrl+0 / Ctrl+Shift+0 return to the *user's* configured value, not the hard-coded fallback. */
   queueMicrotask(() => target.postMessage({ type: 'setLogFontSize', size: getConfig().logFontSize }));
   queueMicrotask(() => target.postMessage({ type: 'setLogLineHeight', height: getConfig().logLineHeight }));
+  queueMicrotask(() => target.postMessage({ type: 'setTroubleChartInterval', seconds: getConfig().troubleModeChartInterval }));
   queueMicrotask(() => target.postMessage({ type: 'logViewerVisualSpacing', value: getConfig().logViewerVisualSpacing }));
   queueMicrotask(() => target.postMessage({
     type: 'showCollapseDividerLabels',

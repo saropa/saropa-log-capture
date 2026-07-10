@@ -100,6 +100,12 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     </div>
     <div id="pinned-section"></div>
     <div id="root-cause-hypotheses" class="root-cause-hypotheses u-hidden" role="region" aria-label="${t('viewer.rootCause.region')}"></div>
+    <!-- Trouble Mode severity chart (Stage 3). Shown only while Trouble Mode is active
+         (CSS keyed on body.slc-trouble-active); the chart script fills the body only. -->
+    <div id="trouble-chart" class="trouble-chart" role="img" aria-label="${t('viewer.troubleChart.region')}">
+        <div class="trouble-chart-head">${t('viewer.troubleChart.title')}</div>
+        <div id="trouble-chart-body" class="trouble-chart-body"></div>
+    </div>
     <div id="log-content-wrapper">
     <div class="log-content-clip">
     <div id="log-content" class="nowrap" role="log" aria-label="${t('viewer.logContent.region')}" title="${escapeHtml(t('viewer.logContent.title'))}">

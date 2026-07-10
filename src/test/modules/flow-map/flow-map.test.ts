@@ -226,6 +226,48 @@ suite('FlowMap', () => {
         });
     });
 
+    suite('action tag (bug 010 — explicit in-screen actions)', () => {
+        // A session that enters a screen, then fires two tagged actions (one repeated) on it.
+        const ACTION: readonly string[] = [
+            '=== SAROPA LOG CAPTURE — SESSION START ===',
+            'Project:        demo',
+            '[08:00:01.000] [console] [log] [flowmap] enter screen "Contact View" lib/views/contact_view.dart:58',
+            '[08:00:05.000] [console] [log] [FLOWMAP] action "Favorite" lib/components/activity/activity_flag_button.dart:88',
+            '[08:00:07.000] [console] [log] [flowmap] action "Favorite" lib/components/activity/activity_flag_button.dart:88',
+            '[08:00:09.000] [console] [log] [flowmap] action "Share"',
+        ];
+
+        test('parses tagged actions with label = category (case-insensitive, source optional)', () => {
+            const events = parseLog(ACTION).events.filter(e => e.kind === 'action');
+            assert.strictEqual(events.length, 3);
+            const fav = events[0];
+            assert.strictEqual(fav.label, 'Favorite');
+            assert.strictEqual(fav.actionCategory, 'Favorite');
+            assert.strictEqual(fav.source?.file, 'lib/components/activity/activity_flag_button.dart');
+            assert.strictEqual(fav.source?.line, 88);
+            const share = events[2];
+            assert.strictEqual(share.actionCategory, 'Share');
+            assert.strictEqual(share.source, undefined);
+        });
+
+        test('folds tagged action counts onto the current node without creating nodes or edges', () => {
+            const graph = buildGraph(parseLog(ACTION));
+            const node = nodeByKey(graph, 'contact view');
+            assert.strictEqual(node?.actionCounts['Favorite'], 2);
+            assert.strictEqual(node?.actionCounts['Share'], 1);
+            // Actions are counters on the screen, never nodes of their own.
+            assert.strictEqual(nodeByKey(graph, 'favorite'), undefined);
+            assert.ok(!graph.edges.some(e => e.to === 'favorite'), 'no edge to an action');
+        });
+
+        test('an action before any screen is entered is dropped, not crashed on', () => {
+            const orphan = ['=== SAROPA LOG CAPTURE — SESSION START ===', 'Project: demo',
+                '[08:00:01.000] [console] [log] [flowmap] action "Favorite"'];
+            const graph = buildGraph(parseLog(orphan));
+            assert.strictEqual(graph.nodes.length, 0);
+        });
+    });
+
     suite('static-scan join (R5/R6)', () => {
         test('joins a node to the scan index for label + source', () => {
             const scan: ScanIndex = new Map([

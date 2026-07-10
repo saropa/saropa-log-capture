@@ -78,6 +78,9 @@ function toggleTroubleMode() {
     troubleModeActive = !troubleModeActive;
     applyTroubleModeIndicator();
     applyTroubleFilter();
+    /* Build / refresh the severity chart when the mode turns on (Stage 3). Guarded:
+       the chart script owns this and may be absent in the VM test harness. */
+    if (typeof scheduleTroubleChartUpdate === 'function') { scheduleTroubleChartUpdate(); }
     saveTroubleModeState();
 }
 
@@ -91,6 +94,7 @@ function restoreTroubleModeState() {
     if (st && st.troubleModeActive === true) {
         troubleModeActive = true;
         applyTroubleModeIndicator();
+        if (typeof scheduleTroubleChartUpdate === 'function') { scheduleTroubleChartUpdate(); }
     }
 }
 
