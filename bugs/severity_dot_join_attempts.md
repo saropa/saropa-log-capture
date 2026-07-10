@@ -71,3 +71,58 @@ from 2 and 3:
 The color-group connector rules are generated from a single array in
 `viewer-styles-decoration-bars.ts` so the 10 groups stay DRY (one source, not 20
 hand-written selectors).
+
+## Finish Report (2026-07-10)
+
+### Defect
+
+The severity gutter draws one colored dot per leveled log row and is meant to
+join a run of same-severity dots into a single vertical band. The connector had
+regressed to a full-height, class-agnostic `::after` stripe: every leveled row
+painted its own `--bar-color` from `top:0` to `bottom:0`, so the stripe of one
+color and the stripe of the adjacent row of a DIFFERENT color abutted at the
+shared row boundary and produced a continuous line through a color change —
+different-severity dots looked joined. Independently, the stripe (`left:0.89em`,
+`width:0.14em`) and the dot (`left:0.74em`, `width:0.44em`) were centered on the
+same arithmetic point (0.96em) but their differing left edges rounded to
+different sub-pixels, so the line appeared off-center under the dots.
+
+### Change
+
+`viewer-styles-decoration-bars.ts`:
+- The base `[class*="level-bar-"]…::after` is collapsed (`top:50%; bottom:50%`,
+  zero height) and paints nothing on its own.
+- Per-color-group rules, generated from one `barColorGroups` array, extend the
+  bottom half toward the next dot (`g:has(+ g) { bottom:0 }`) and the top half
+  toward the previous dot (`g + g { top:0 }`) only when the neighbor shares the
+  color group. A mid-run row matches both (full segment); a boundary row matches
+  neither on the boundary side (clean break). Halves fill to the row edges, so
+  the band stays exact across variable row heights. Groups are 1:1 with a
+  `level-bar` class except blue, where `info` and `framework` (same
+  `--vscode-charts-blue`, different class) share one `:is()` group. The two error
+  shades (`error` vs `error-recent-context`) are distinct colors and stay in
+  separate groups, so they never bridge.
+- The dot `::before` and the connector `::after` both anchor on a single shared
+  `--gutter-cx` (0.96em on `#viewport`) and self-center with
+  `transform: translateX(-50%)`, computing their left edge from one reference so
+  they cannot drift sub-pixel. The stripe was widened 0.14em → 0.16em for a solid
+  seam.
+
+### Verification
+
+`check-types` clean; targeted `viewer-severity-bar-connector` suite passes (32
+tests) after being rewritten for the color-group half-stripe model, with added
+guards pinning error/`error-recent-context` separation and a completeness check
+that every `--bar-color` class appears in a generated connector group; `eslint`
+clean on the touched files. A delegated read-only review hand-verified the
+cascade (specificity ties resolved by source order), group completeness (all 11
+`level-bar` classes covered, only blue merged), and that no other test asserted
+the retired geometry. One review finding was applied: a `${connectorJoins}` token
+left inside a CSS `/* */` comment (which lives in a template literal) had been
+interpolating the whole 20-rule string into every emitted stylesheet; the `$` was
+removed so the comment names the variable rather than embeds its value.
+
+The repo-wide `verify:l10n-keys` gate currently fails on two undefined keys
+(`viewer.tags.showAll`, `viewer.tags.showLess`) originating from a separate,
+in-progress tag-panel change in the working tree; it is unrelated to the severity
+connector and is not addressed here.
