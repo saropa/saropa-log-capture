@@ -57,4 +57,31 @@ suite('LevelClassifier — app head tags', () => {
     test('should classify a Sqlite3 vendor prefix as database', () => {
         assert.strictEqual(classifyLevel('Sqlite3: opened database', 'stdout', true), 'database');
     });
+
+    // The saved-log "[HH:MM:SS.mmm] [source]" wrapper (written by formatLine() when a
+    // captured line is saved to a .log file) used to make the head-tag scan give up on
+    // the timestamp bracket before ever reaching the app's own tag, so re-opening a
+    // saved log left [important:...]/[db]/etc. unrecognized (2026-07-10, reported against
+    // a real device log line: "[10:48:41.586] [logcat] 07-10 ... I flutter : [IMPORTANT:
+    // flutter/shell/platform/android/android_context_vk_impeller.cc(62)] Using the
+    // Impeller rendering backend (Vulkan).").
+    test('should classify [important:...] behind a saved-log [time] [source] wrapper as notice', () => {
+        assert.strictEqual(
+            classifyLevel(
+                '[10:48:41.586] [logcat] 07-10 10:48:42.122 26735 26943 I flutter : '
+                + '[IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(62)] '
+                + 'Using the Impeller rendering backend (Vulkan).',
+                'stdout',
+                true,
+            ),
+            'notice',
+        );
+    });
+
+    test('should classify [db] behind a saved-log [time] [source] wrapper as database', () => {
+        assert.strictEqual(
+            classifyLevel('[16:13:49.489] [console] [db] bulkPreload wrote 185 rows', 'stdout', true),
+            'database',
+        );
+    });
 });

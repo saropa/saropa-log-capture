@@ -14,9 +14,17 @@ export function getHeadTagsParserScript(): string {
 function parseHeadTags(plain) {
     if (!plain || typeof TAG_LEVEL_MAP === 'undefined') return [];
 
-    /* Strip optional logcat/threadtime/[log] shells to find app-emitted tags.
-       Match zero or one occurrence of: V/tag:, logcat threadtime, or [log] wrapper. */
+    /* Strip optional saved-log/logcat/threadtime/[log] shells to find app-emitted tags.
+       Match zero or one occurrence of each: the saved-log "[HH:MM:SS.mmm] [source]"
+       wrapper (log-session-helpers.ts's formatLine() always writes both brackets
+       together when a captured line is saved to a .log file — source is an
+       unrestricted string, so this is recognized by its fixed timestamp shape, then
+       unconditionally consumes the very next bracket as the source label; without
+       this, re-opening a saved log left every app-emitted tag unrecognized because
+       the FIRST bracket seen was the timestamp, not the tag, 2026-07-10), then
+       V/tag:, logcat threadtime, or [log] wrapper. */
     var stripped = plain
+        .replace(/^\\[\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\]\\s*\\[[^\\]]+\\]\\s*/, '')
         .replace(/^[VDIWEFA]\\/[^:]*:\\s*/, '')
         .replace(/^\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\s+\\d+\\s+\\d+\\s+[VDIWEFA]\\s+[^:]*:\\s*/, '')
         .replace(/^\\[log\\]\\s*/, '');
@@ -30,12 +38,18 @@ function parseHeadTags(plain) {
         if (!m) break;
 
         var rawTag = m[1];
-        var tagName = rawTag.indexOf(':') === -1 ? rawTag : rawTag.slice(0, rawTag.indexOf(':'));
-        tagName = tagName.trim().toLowerCase();
+        var colonIdx = rawTag.indexOf(':');
+        var tagName = (colonIdx === -1 ? rawTag : rawTag.slice(0, colonIdx)).trim().toLowerCase();
 
         var level = TAG_LEVEL_MAP[tagName] || null;
         if (level) {
-            tags.push({ name: rawTag, level: level });
+            /* Display name excludes any :metadata suffix (case preserved for
+               formatTagLabel's Title Case pass) — the metadata stays visible inline in
+               the message text below the chip, so repeating it in the chip's own label
+               produced a garbled "Perf:cold Start" once tags started running through
+               formatTagLabel (2026-07-10). */
+            var displayName = colonIdx === -1 ? rawTag : rawTag.slice(0, colonIdx).trim();
+            tags.push({ name: displayName, level: level });
         } else {
             /* Unrecognized tag — stop here so we don't consume random [brackets] in the message. */
             break;
@@ -117,15 +131,23 @@ function renderHeadTagChip(tag) {
     return '<span class="tag-chip ' + levelCls + '" data-tag-chip="' + escapeHeadTag(key) + '">' + body + '</span>';
 }
 
-/* Render all of a line's tags as a sequence of chips (spacing via CSS margin-right). */
+/* Render only the line's PRIMARY tag — the first entry in tags[], already the
+   highest-priority signal (buildUnifiedLineTags pushes bracket head tags before the
+   structured/logcat/source tag, so an app-emitted [db]/[perf] wins over a generic
+   device tag on the same line). Rendering every tag as its own chip cluttered the
+   fixed-width tag column and, on lines carrying 2-3 tags, visibly squeezed the
+   message text down to a sliver (user report 2026-07-10). Every tag is still fully
+   filterable from the Message Tags sidebar (item.tags is unchanged) and still listed
+   in full on the cell's hover tooltip (headTagsTitle below). */
 function renderHeadTagChips(tags) {
     if (!tags || tags.length === 0) return '';
-    return tags.map(function(t) { return renderHeadTagChip(t); }).join('');
+    return renderHeadTagChip(tags[0]);
 }
 
-/* Space-separated list of every tag name, escaped, for the tag cell's title
-   tooltip so a chip clipped by the fixed column width is recoverable on hover.
-   escapeHeadTag guards the attacker-controlled tag text before the title attr. */
+/* Space-separated list of every tag name (not just the one rendered chip), escaped,
+   for the tag cell's title tooltip — the only place a line's SECOND/THIRD tag is
+   visible now that only the primary tag renders as a chip. escapeHeadTag guards the
+   attacker-controlled tag text before the title attr. */
 function headTagsTitle(tags) {
     if (!tags || tags.length === 0) return '';
     return tags.map(function(t) { return escapeHeadTag(formatTagLabel(t.name)); }).join(' ');

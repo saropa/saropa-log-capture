@@ -9,7 +9,7 @@
 
 import type { SeverityKeywords } from "../config/config-types";
 import { DEFAULT_SEVERITY_KEYWORDS } from "../config/config-normalizers";
-import { matchesTagLevel, type SeverityLevel } from "./tag-level-dictionary";
+import { matchesTagLevel, savedLogWrapperPatternSrc, type SeverityLevel } from "./tag-level-dictionary";
 
 // SeverityLevel now lives in tag-level-dictionary.ts (shared with the dictionary).
 // Re-exported here so existing importers of this module keep working unchanged.
@@ -53,7 +53,8 @@ const databaseVendorTokens = '(?:Drift|Isar|Sqlite3|Sqlite|Sqflite|Hive|Realm|Po
  * a mid-message mention like "see [Drift] for details" doesn't promote.
  */
 const databaseBracketTagPattern = new RegExp(
-    '^(?:[VDIWEFA]\\/[^:]*:\\s*)?'           // optional logcat prefix
+    '^' + savedLogWrapperPatternSrc          // optional saved-log [time] [source] wrapper
+    + '(?:[VDIWEFA]\\/[^:]*:\\s*)?'           // optional logcat prefix
     + '(?:\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\s+\\d+\\s+\\d+\\s+[VDIWEFA]\\s+[^:]*:\\s*)?' // optional threadtime
     + '(?:\\[log\\]\\s*)?'                    // optional Flutter [log] shell
     + '\\[[^\\]]*' + databaseVendorTokens + '[^\\]]*\\]',
@@ -69,7 +70,8 @@ const databaseBracketTagPattern = new RegExp(
  * Anchored to line start so "the Drift: project is..." mid-message doesn't promote.
  */
 const databaseColonPrefixPattern = new RegExp(
-    '^(?:[VDIWEFA]\\/[^:]*:\\s*)?'           // optional logcat prefix
+    '^' + savedLogWrapperPatternSrc          // optional saved-log [time] [source] wrapper
+    + '(?:[VDIWEFA]\\/[^:]*:\\s*)?'           // optional logcat prefix
     + '(?:\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\s+\\d+\\s+\\d+\\s+[VDIWEFA]\\s+[^:]*:\\s*)?' // optional threadtime
     + '(?:\\[log\\]\\s*)?'                    // optional Flutter [log] shell
     + databaseVendorTokens + '\\s*:',
