@@ -31,6 +31,23 @@ suite('StructuredLineParser', () => {
             assert.strictEqual(result.level, 'warning');
         });
 
+        test('should not fracture the tag/message split on an embedded colon inside a bracket suffix', () => {
+            // Some GmsCore/Clearcut components append a "[epoch:seq][tid]" counter
+            // directly onto their tag with no colon-space delimiter at all. The old
+            // non-greedy (.+?): split matched the FIRST colon anywhere in the line —
+            // including the one inside "[000:619]" — truncating the tag and eating
+            // the start of the message (2026-07-10, contacts device log).
+            const result = parseStructuredLine(
+                '07-10 10:45:49.281 25822 25918 I TY_com.google.android.libraries.communications.conference.service.impl.telecom.TelecomRegistra[000:619][25918] Telecom registration synclet',
+            );
+            assert.ok(result);
+            assert.strictEqual(
+                result.tag,
+                'TY_com.google.android.libraries.communications.conference.service.impl.telecom.TelecomRegistra[000:619][25918]',
+            );
+            assert.strictEqual(result.message, 'Telecom registration synclet');
+        });
+
         test('should not stamp a year-less logcat date in the far future (year rollback)', () => {
             // Logcat omits the year. Assuming the current year for a December line read the next January
             // threw the timestamp ~12 months ahead; the parser now rolls the year back when the

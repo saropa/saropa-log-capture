@@ -151,7 +151,9 @@ function getFilterTabPanels(): string {
         <div class="options-hint">${t('viewer.drawer.logTags.hint')}</div>
         <div class="options-row">
             <span id="source-tag-summary" class="source-tag-summary"></span>
+            <button type="button" id="source-tag-copy-json" class="options-action-btn" title="${t('viewer.tags.copyJson.title')}">${t('viewer.tags.copyJson')}</button>
         </div>
+        <input id="source-tag-search" type="text" class="source-tag-search" placeholder="${t('viewer.tags.searchPlaceholder')}" title="${t('viewer.tags.searchPlaceholder')}" autocomplete="off" />
         <div id="source-tag-chips" class="source-tag-chips options-tags"></div>
     </div>
     <div class="filter-tab-panel" id="class-tags-section" role="tabpanel" style="display:none">
