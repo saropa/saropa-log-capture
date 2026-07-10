@@ -101,19 +101,23 @@ function buildDecoParts(item, idx, hiddenAfter) {
     if (!isBlank && typeof showParsedLevelPrefix !== 'undefined' && showParsedLevelPrefix && item.parsedRawLevel) {
         parts.push({ key: 'level', html: '<span class="deco-level-prefix">' + item.parsedRawLevel + '</span>' });
     }
+    /* The one tag cell holds every per-line tag chip: the structured device tag
+       (keystore2) first — gated by its column toggle + structured parsing — then
+       ALL app head tags ([db]/[perf]/[frame-stall]), which need neither toggle nor
+       structured parsing. The cell title lists every head tag so a name clipped by
+       the fixed column width is recoverable on hover. */
+    var tagHtml = '';
+    var tagTitle = '';
     if (!isBlank && item.parsedTag
         && typeof structuredLineParsing !== 'undefined' && structuredLineParsing
         && (typeof decoShowParsedTag === 'undefined' || decoShowParsedTag)) {
-        parts.push({ key: 'tag', html: '<span class="meta-filter-toggle deco-parsed-tag deco-parsed-tag-chip" data-meta-key="tag" data-meta-value="' + item.parsedTag.replace(/"/g, '&quot;') + '" title="' + vt('viewer.deco.filterByTag', item.parsedTag.replace(/"/g, '&quot;')) + '">' + item.parsedTag + '</span>' });
+        tagHtml += '<span class="meta-filter-toggle deco-parsed-tag deco-parsed-tag-chip" data-meta-key="tag" data-meta-value="' + item.parsedTag.replace(/"/g, '&quot;') + '" title="' + vt('viewer.deco.filterByTag', item.parsedTag.replace(/"/g, '&quot;')) + '">' + item.parsedTag + '</span>';
     }
-    /* App head-tag chips ([db]/[perf]/[frame-stall]) in their own fixed column,
-       left of the message. First tag as a chip, the rest collapsed to +N, full
-       list on the cell title. Independent of the device-tag branch above: a line
-       can carry both a device tag (keystore2) and app head tags. */
-    if (!isBlank && item.headTags && item.headTags.length > 0 && typeof renderHeadTagCell === 'function') {
-        var htc = renderHeadTagCell(item.headTags);
-        if (htc.html) parts.push({ key: 'htags', html: htc.html, title: htc.title });
+    if (!isBlank && item.headTags && item.headTags.length > 0 && typeof renderHeadTagChips === 'function') {
+        tagHtml += renderHeadTagChips(item.headTags);
+        if (typeof headTagsTitle === 'function') tagTitle = headTagsTitle(item.headTags);
     }
+    if (tagHtml) parts.push({ key: 'tag', html: tagHtml, title: tagTitle });
     return parts;
 }
 

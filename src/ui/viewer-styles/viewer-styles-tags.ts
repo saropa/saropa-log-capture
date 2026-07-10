@@ -159,13 +159,5 @@ export function getTagStyles(): string {
 .tag-chip.tag-level-notice      { --tag-c: var(--vscode-charts-blue, #4aa5ff); }
 .tag-chip.tag-level-debug       { --tag-c: var(--vscode-descriptionForeground, #9d9d9d); }
 .tag-chip.tag-level-info        { --tag-c: var(--vscode-charts-blue, #4aa5ff); }
-/* Overflow badge: shows +N when a line carries more head tags than the fixed
-   column shows. Neutral (it is a count, not a severity); the full list is on
-   the cell title. No margin-right — it is the last chip in the cell. */
-.tag-chip.tag-chip-more {
-    --tag-c: var(--vscode-descriptionForeground, #9d9d9d);
-    margin-right: 0;
-    font-weight: 600;
-}
 `;
 }

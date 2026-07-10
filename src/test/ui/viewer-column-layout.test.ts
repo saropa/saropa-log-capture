@@ -45,7 +45,7 @@ suite('viewer column layout (plan 055 — grid column model)', () => {
         // min-width:0 lets the 1fr message track shrink/wrap inside its column so
         // it never pushes — or is pushed over — the decoration cells.
         assert.ok(/min-width:\s*0/.test(msg[0]), '.line-msg must have min-width:0');
-        assert.ok(/grid-column:\s*8/.test(msg[0]), '.line-msg must be pinned to the last (message) column');
+        assert.ok(/grid-column:\s*7/.test(msg[0]), '.line-msg must be pinned to the last (message) column');
     });
 
     test('cells are placed by FIXED grid-column index (alignment despite missing parts)', () => {
@@ -53,7 +53,7 @@ suite('viewer column layout (plan 055 — grid column model)', () => {
         // A row may omit a globally-present part; without fixed placement, grid
         // auto-flow would shift the remaining cells into the wrong tracks.
         for (const [cls, col] of [
-            ['num', 1], ['time', 2], ['sessElapsed', 3], ['pidtid', 4], ['level', 5], ['tag', 6], ['htags', 7],
+            ['num', 1], ['time', 2], ['sessElapsed', 3], ['pidtid', 4], ['level', 5], ['tag', 6],
         ] as const) {
             const re = new RegExp(`\\.deco-cell-${cls}\\s*\\{[^}]*grid-column:\\s*${col}`, 's');
             assert.ok(re.test(css), `.deco-cell-${cls} must be pinned to grid-column ${col}`);
@@ -62,7 +62,7 @@ suite('viewer column layout (plan 055 — grid column model)', () => {
             '.log-cols must drive its template from --grid-cols');
     });
 
-    test('applyDecorationLayoutWidth emits an 8-track --grid-cols (7 deco + 1fr)', () => {
+    test('applyDecorationLayoutWidth emits a 7-track --grid-cols (6 deco + 1fr)', () => {
         const script = getDecorationsScript();
         const fn = /function applyDecorationLayoutWidth\(\)\s*\{[\s\S]*?\n\}/.exec(script);
         assert.ok(fn, 'expected the applyDecorationLayoutWidth function');
@@ -73,8 +73,9 @@ suite('viewer column layout (plan 055 — grid column model)', () => {
         assert.ok(/'1fr'/.test(body), 'the message track must be 1fr');
         assert.ok(/decoShowTimestamp\s*&&\s*decoSeen\.ts/.test(body), 'timestamp track still requires decoSeen.ts');
         assert.ok(/decoSeen\.tag/.test(body), 'tag track still requires decoSeen.tag');
-        // The app head-tag column is the 7th deco track, reserved when the log carries head tags.
-        assert.ok(/hasHtags\s*=\s*decoSeen\.htags/.test(body), 'head-tag track must be gated on decoSeen.htags');
+        // The one tag column also reserves when the log carries app head tags,
+        // since head tags render as chips in that same cell (buildDecoParts).
+        assert.ok(/decoSeen\.htags/.test(body), 'tag track must also reserve for app head tags');
     });
 
     test('getDecorationCells renders one .deco-cell per part, keyed for placement', () => {
