@@ -23,7 +23,6 @@ import { fetchDriftDbIssues } from '../../modules/integrations/drift-advisor-iss
 import { getDriftLintViolations } from '../../modules/misc/drift-lint-violations';
 import { getSuiteDeepLinkAvailability, runSiblingDeepLink } from '../../modules/diagnostics/suite-deeplink';
 import { readSuiteMirrorsForPanel } from '../../modules/diagnostics/suite-mirror-read';
-import { buildSuiteIssues } from '../../modules/diagnostics/suite-issues-html';
 import { buildSuiteSuggestions } from '../../modules/diagnostics/suite-suggestions-html';
 import { logExtensionError } from '../../modules/misc/extension-logger';
 
@@ -211,15 +210,15 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
         void readSuiteMirrorsForPanel().then((m) =>
           ctx.post({ type: "suiteMirrorDiagnostics", advisor: m.advisor, lints: m.lints }));
         return true;
-      case "requestSuiteIssues": {
-        // Integrations screen + icon-bar badge: the companion-tool issues block AND the suggested
-        // integrations block (detected from the project's packages). The badge counts both, so the
-        // icon surfaces whenever there is anything to act on — a found issue or an unused integration.
-        void Promise.all([buildSuiteIssues(), buildSuiteSuggestions()]).then(([issues, suggestions]) =>
+      case "requestSuiteSuggestions": {
+        // Integrations screen + icon-bar badge: the suggested-integrations block (detected from the
+        // project's packages). The Options screen is a configuration surface, so companion-tool
+        // diagnostics are deliberately NOT rendered here (owner ruling 2026-07-09) — those belong to
+        // the tools' own UIs and the signal report's ecosystem section.
+        void buildSuiteSuggestions().then((suggestions) =>
           ctx.post({
-            type: "suiteIssues",
-            count: issues.count + suggestions.count,
-            issuesHtml: issues.html,
+            type: "suiteSuggestions",
+            count: suggestions.count,
             suggestionsHtml: suggestions.html,
           }));
         return true;
