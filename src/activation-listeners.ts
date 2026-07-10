@@ -132,6 +132,9 @@ export function setupConfigListener(
         if (e.affectsConfiguration('saropaLogCapture.logLineHeight')) {
             broadcaster.setLogLineHeight(cfg.logLineHeight);
         }
+        if (e.affectsConfiguration('saropaLogCapture.troubleMode.chartInterval')) {
+            broadcaster.setTroubleChartInterval(cfg.troubleModeChartInterval);
+        }
         if (e.affectsConfiguration('saropaLogCapture.logViewerVisualSpacing')) {
             broadcaster.setLogViewerVisualSpacing(cfg.logViewerVisualSpacing);
         }
