@@ -118,15 +118,33 @@ export async function recordIssueSnapshot(issues: readonly CrashlyticsIssue[]): 
     }
 }
 
-/** Read the last persisted issue list (so issues stay visible offline). Undefined if none/invalid. */
-export async function readCachedIssues(): Promise<CrashlyticsIssue[] | undefined> {
+/** The persisted issue list plus the epoch-ms stamp writeCachedIssues wrote it at. */
+export interface CachedIssues {
+    readonly issues: CrashlyticsIssue[];
+    /** Absent for caches written before the stamp existed, or when it is not a number. */
+    readonly cachedAt?: number;
+}
+
+/**
+ * Read the last persisted issue list AND its write time. The Trouble Mode band renders the
+ * cache without ever fetching, so surfacing the age is the only way a stale list is
+ * distinguishable from a live one. Undefined if the file is missing or invalid.
+ */
+export async function readCachedIssuesWithMeta(): Promise<CachedIssues | undefined> {
     const uri = getIssuesCacheUri();
     if (!uri) { return undefined; }
     try {
         const raw = await vscode.workspace.fs.readFile(uri);
-        const parsed = JSON.parse(Buffer.from(raw).toString('utf-8')) as { issues?: unknown };
-        return Array.isArray(parsed.issues) ? parsed.issues as CrashlyticsIssue[] : undefined;
+        const parsed = JSON.parse(Buffer.from(raw).toString('utf-8')) as { issues?: unknown; cachedAt?: unknown };
+        if (!Array.isArray(parsed.issues)) { return undefined; }
+        const cachedAt = typeof parsed.cachedAt === 'number' ? parsed.cachedAt : undefined;
+        return { issues: parsed.issues as CrashlyticsIssue[], cachedAt };
     } catch { return undefined; }
+}
+
+/** Read the last persisted issue list (so issues stay visible offline). Undefined if none/invalid. */
+export async function readCachedIssues(): Promise<CrashlyticsIssue[] | undefined> {
+    return (await readCachedIssuesWithMeta())?.issues;
 }
 
 /** Persist the latest issue list for offline use. Never throws (cache write is non-fatal). */

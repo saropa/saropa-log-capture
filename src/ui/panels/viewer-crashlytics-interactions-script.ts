@@ -1,16 +1,34 @@
 /**
- * Crashlytics panel interaction script: in-viewer issue detail + compact sidebar filters.
- * Extracted from viewer-crashlytics-panel.ts to keep that file under the line limit.
+ * Crashlytics panel interaction script: the in-viewer issue detail. Extracted from
+ * viewer-crashlytics-panel.ts to keep that file under the line limit; the stack-frame context
+ * menu and the sidebar list controls are further splits of this file, inlined below.
  * Returned as a template-literal fragment inlined into the panel's IIFE, so it shares scope
  * (cpIssuesEl, esc, vt, vscodeApi) and its function declarations are visible to the main script.
+ *
+ * TWO render containers (plan 110, Stage 2). The issue detail used to render only into the
+ * full-area #crashlytics-detail, which covers the log. In Trouble Mode a band row now renders
+ * it into the side rail instead, beside the feed. cdActiveContainer() is the single place that
+ * decides which one is live; cpDetailEl always points at it, so the click handlers, the
+ * crashlyticsDetailReady route, and the three async enrichers all follow automatically.
+ * That also retires the old KNOWN LIMITATION: a band-opened detail sets cpDetailIssueId through
+ * the same path as a list-opened one, so it receives the "In your project" / "Seen in your logs"
+ * / device-states panels that gate on it.
  */
 
-/** JS fragment: detail open/close + frame-context annotations + the sidebar filter logic. */
+import { getCrashlyticsFrameMenuScript } from './viewer-crashlytics-frame-menu-script';
+import { getCrashlyticsFiltersScript } from './viewer-crashlytics-filters-script';
+
+/** JS fragment: detail open/close + skeleton + frame annotations + the inlined sub-fragments. */
 export function getCrashlyticsInteractionsScript(): string {
     return /* js */ `
-    /* ---- In-viewer issue detail (fills the log area beside the sidebar) ---- */
-    var cpDetailEl = document.getElementById('crashlytics-detail');
+    /* ---- In-viewer issue detail (full-area panel flow, or the Trouble Mode rail) ---- */
+    var cdFullEl = document.getElementById('crashlytics-detail');
+    var cdRailEl = document.getElementById('trouble-detail-crashlytics');
     var cpLogWrap = document.getElementById('log-content-wrapper');
+    /* The container the detail is currently rendered into. Never assigned directly —
+       cdActiveContainer() is the one writer, so no code path can leave it stale. */
+    var cpDetailEl = cdFullEl;
+    var cdRailActive = false;
     var cpDetailMarkdown = '';
     var cpDetailTitle = '';
     /* Project Firebase console URL (#3) — set in renderData from ctx.consoleUrl, forwarded with the
@@ -20,6 +38,15 @@ export function getCrashlyticsInteractionsScript(): string {
     /* The issue whose detail is currently shown, so a late-arriving project-insights panel for a
        different (since-switched) issue is dropped instead of appended to the wrong detail. */
     var cpDetailIssueId = '';
+    /* The clicked row's meta, kept so the error state's Try again button can re-issue the same
+       fetch without the user hunting for the row again. */
+    var cpDetailMeta = {};
+
+    function cdActiveContainer(useRail) {
+        cdRailActive = !!(useRail && cdRailEl);
+        cpDetailEl = cdRailActive ? cdRailEl : cdFullEl;
+        return cpDetailEl;
+    }
 
     /* Append the host-rendered "In your project" panel to the detail body once (#2 / 5c). */
     function applyProjectInsights(id, html) {
@@ -45,8 +72,44 @@ export function getCrashlyticsInteractionsScript(): string {
         body.insertAdjacentHTML('beforeend', html);
     }
 
+    /* Informative skeleton (plan 110, Stage 3). The clicked row already carries title,
+       subtitle, counts, kind/state and the version range, so the header renders in the
+       same frame as the click; only the stack — the one thing that needs the network —
+       shimmers. The previous single "Loading issue…" line threw all of that away. */
+    function cdSkeletonHtml(m) {
+        var sevCls = m.fatal ? 'cd-sev-crash' : (m.kind === 'anr' ? 'cd-sev-anr' : 'cd-sev-nf');
+        var ver = (m.fv && m.lv && m.fv !== m.lv) ? (m.fv + ' → ' + m.lv) : (m.lv || m.fv || '');
+        var chips = '<span class="cd-skel-chip">' + esc(vt('viewer.troubleCrashlytics.counts', m.events || '0', m.users || '0')) + '</span>';
+        if (m.state && m.state !== 'UNKNOWN') chips += '<span class="cd-skel-chip">' + esc(m.state) + '</span>';
+        if (ver) chips += '<span class="cd-skel-chip">' + esc(ver) + '</span>';
+        return '<div class="cd-header"><span class="cd-title">' + esc(m.title || '') + '</span></div>'
+            + '<div class="cd-body"><div class="cd-skel-head"><span class="cd-skel-sev ' + sevCls + '"></span>'
+            + '<div class="cd-skel-titles"><div class="cd-skel-sub">' + esc(m.subtitle || '') + '</div>'
+            + '<div class="cd-skel-chips">' + chips + '</div></div></div>'
+            + '<div class="cd-loading">' + vt('viewer.crashlytics.detail.loading') + '</div>'
+            + '<div class="cd-shimmer" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>';
+    }
+
+    /* One fetch path for both entry points. useRail=true renders beside the feed (Trouble
+       Mode band); useRail=false keeps the original behavior of hiding the log under the
+       full-area detail (the Crashlytics sidebar panel flow). */
+    function cdOpenDetail(id, meta, useRail) {
+        var el = cdActiveContainer(useRail);
+        if (!el) return;
+        cpDetailIssueId = id;
+        cpDetailMeta = meta || {};
+        el.innerHTML = cdSkeletonHtml(cpDetailMeta);
+        if (cdRailActive) {
+            if (typeof openTroubleRail === 'function') openTroubleRail('crashlytics');
+        } else {
+            el.classList.remove('u-hidden');
+            if (cpLogWrap) cpLogWrap.classList.add('u-hidden');
+        }
+        vscodeApi.postMessage({ type: 'fetchCrashlyticsDetail', issueId: id, meta: cpDetailMeta, consoleUrl: cdRailActive ? '' : cpConsoleUrl });
+    }
+
+    /* Sidebar list click: highlight the row, harvest its meta, open in the full area. */
     function openIssueDetail(id) {
-        if (!cpDetailEl) return;
         var row = null;
         if (cpIssuesEl) {
             var items = cpIssuesEl.querySelectorAll('.cp-item');
@@ -57,21 +120,35 @@ export function getCrashlyticsInteractionsScript(): string {
             }
         }
         var meta = row ? { title: row.dataset.title, subtitle: row.dataset.sub, events: row.dataset.events, users: row.dataset.users, fatal: row.dataset.fatal === '1', fv: row.dataset.fv, lv: row.dataset.lv, kind: row.dataset.kind, state: row.dataset.state } : {};
-        cpDetailIssueId = id;
-        cpDetailEl.innerHTML = '<div class="cd-loading">' + vt('viewer.crashlytics.detail.loading') + '</div>';
-        cpDetailEl.classList.remove('u-hidden');
-        if (cpLogWrap) cpLogWrap.classList.add('u-hidden');
-        vscodeApi.postMessage({ type: 'fetchCrashlyticsDetail', issueId: id, meta: meta, consoleUrl: cpConsoleUrl });
+        cdOpenDetail(id, meta, false);
     }
 
     function closeIssueDetail() {
-        if (cpDetailEl) cpDetailEl.classList.add('u-hidden');
+        if (cdRailActive) {
+            cdActiveContainer(false);
+            cpDetailIssueId = '';
+            if (typeof closeTroubleDetail === 'function') closeTroubleDetail();
+            return;
+        }
+        cpDetailIssueId = '';
+        if (cdFullEl) cdFullEl.classList.add('u-hidden');
         if (cpLogWrap) cpLogWrap.classList.remove('u-hidden');
     }
 
-    if (cpDetailEl) {
-        cpDetailEl.addEventListener('click', function(e) {
+    /* Bridges for scripts outside this IIFE (the Trouble Mode band + rail). Exposing two
+       named functions is what lets a band-opened detail run the SAME cdOpenDetail path —
+       and therefore set cpDetailIssueId — instead of posting the fetch itself. */
+    window.slcOpenCrashlyticsDetailInRail = function(meta) { cdOpenDetail(meta.id, meta, true); };
+    window.slcCloseCrashlyticsDetail = function() { closeIssueDetail(); };
+
+    /* Delegated clicks for one detail container; wired to both so the rail behaves
+       identically to the full-area panel detail. */
+    function cdWireContainer(el) {
+        if (!el) return;
+        el.addEventListener('click', function(e) {
             if (e.target.closest('.cd-back')) { closeIssueDetail(); return; }
+            // Try again after a failed load (plan 110, Stage 3): re-run the same fetch.
+            if (e.target.closest('.cd-retry')) { cdOpenDetail(cpDetailIssueId, cpDetailMeta, cdRailActive); return; }
             if (e.target.closest('.cd-copy')) { vscodeApi.postMessage({ type: 'copyToClipboard', text: cpDetailMarkdown }); return; }
             // Create issue: open a prefilled GitHub new-issue page with the crash Markdown as the body.
             if (e.target.closest('.cd-newissue')) { vscodeApi.postMessage({ type: 'crashlyticsCreateIssue', title: cpDetailTitle, body: cpDetailMarkdown }); return; }
@@ -91,7 +168,7 @@ export function getCrashlyticsInteractionsScript(): string {
             // App-only toggle (#1d): hide framework frames/groups via a body class (pure client-side).
             var appOnly = e.target.closest('.cd-apponly');
             if (appOnly) {
-                var bodyEl = cpDetailEl.querySelector('.cd-body');
+                var bodyEl = el.querySelector('.cd-body');
                 if (bodyEl) { var on = bodyEl.classList.toggle('cd-appcode-only'); appOnly.setAttribute('aria-pressed', on ? 'true' : 'false'); appOnly.classList.toggle('cd-apponly-on', on); }
                 return;
             }
@@ -101,53 +178,9 @@ export function getCrashlyticsInteractionsScript(): string {
         });
     }
 
-    /* ---- Frame context menu (#1c): lightweight right-click popover over a stack frame ---- */
-    var cdMenu = null, cdMenuFrame = null;
-    function cdEnsureMenu() {
-        if (cdMenu && cdMenu.isConnected) return cdMenu;
-        cdMenu = document.createElement('div');
-        cdMenu.className = 'cd-ctxmenu u-hidden';
-        cdMenu.innerHTML =
-            '<div class="cd-ctxitem" data-act="copy">' + vt('viewer.crashlytics.frameMenu.copy') + '</div>'
-            + '<div class="cd-ctxitem" data-act="copypath">' + vt('viewer.crashlytics.frameMenu.copyPath') + '</div>'
-            + '<div class="cd-ctxitem" data-act="open">' + vt('viewer.crashlytics.frameMenu.open') + '</div>'
-            + '<div class="cd-ctxitem" data-act="issue">' + vt('viewer.crashlytics.frameMenu.issue') + '</div>';
-        document.body.appendChild(cdMenu);
-        // stopPropagation so selecting an item does not bubble to the panel's outside-click handler.
-        cdMenu.addEventListener('click', function(ev) {
-            ev.stopPropagation();
-            var it = ev.target.closest('.cd-ctxitem');
-            if (it && cdMenuFrame) cdRunFrameAction(it.getAttribute('data-act'), cdMenuFrame);
-            cdHideMenu();
-        });
-        return cdMenu;
-    }
-    function cdHideMenu() { if (cdMenu) cdMenu.classList.add('u-hidden'); cdMenuFrame = null; }
-    function cdFrameText(frame) {
-        var btn = frame.querySelector('.cd-frame-copy');
-        return btn ? btn.getAttribute('data-copy') : (frame.textContent || '').trim();
-    }
-    function cdRunFrameAction(act, frame) {
-        var file = frame.getAttribute('data-frame-file'), line = frame.getAttribute('data-frame-line'), text = cdFrameText(frame);
-        if (act === 'copy') vscodeApi.postMessage({ type: 'copyToClipboard', text: text });
-        else if (act === 'copypath' && file) vscodeApi.postMessage({ type: 'copyToClipboard', text: file });
-        else if (act === 'open' && file) vscodeApi.postMessage({ type: 'crashlyticsOpenFrame', file: file, line: line });
-        else if (act === 'issue') vscodeApi.postMessage({ type: 'crashlyticsCreateIssue', title: cpDetailTitle, body: 'Crash frame: ' + text + '\\n\\n' + cpDetailMarkdown });
-    }
-    if (cpDetailEl) cpDetailEl.addEventListener('contextmenu', function(e) {
-        var frame = e.target.closest('.stack-frame');
-        if (!frame) return;
-        e.preventDefault();
-        var menu = cdEnsureMenu();
-        cdMenuFrame = frame;
-        var hasFile = !!frame.getAttribute('data-frame-file');
-        menu.querySelector('[data-act="copypath"]').style.display = hasFile ? '' : 'none';
-        menu.querySelector('[data-act="open"]').style.display = hasFile ? '' : 'none';
-        menu.style.left = e.clientX + 'px';
-        menu.style.top = e.clientY + 'px';
-        menu.classList.remove('u-hidden');
-    });
-    document.addEventListener('mousedown', function(e) { if (cdMenu && !cdMenu.contains(e.target)) cdHideMenu(); });
+${getCrashlyticsFrameMenuScript()}
+
+    [cdFullEl, cdRailEl].forEach(function(el) { cdWireContainer(el); cdWireFrameMenu(el); });
 
     /* Append source line + git blame under matching app frames (streamed after detail). */
     function applyFrameContexts(contexts) {
@@ -166,151 +199,7 @@ export function getCrashlyticsInteractionsScript(): string {
         });
     }
 
-    /* ---- Sidebar filters (#5): compact, client-side over the #cp-issues rows ---- */
-    var cpFilterbar = document.getElementById('cp-filterbar');
-    var cpKind = 'all', cpSearchText = '', cpFVer = '', cpFRel = '', cpFDev = '', cpFOs = '', cpIndexRequested = false;
-    var cpRegexOn = false, cpRegexObj = null;
-    /* Sort key for the issue list. The API returns issues already ordered by event count desc, so
-       'events' reproduces the server order; 'users' re-sorts client-side. Sorting reorders the DOM
-       rows (appendChild moves nodes); it is independent of the per-row display filter above. */
-    var cpSort = 'events';
-    /* When false (default), locally-archived issues are hidden; the "Show archived" toggle reveals them. */
-    var cpShowArchived = false;
-
-    /* Recompile the search term when the text or the regex toggle changes. In regex mode an invalid
-       pattern is non-fatal: cpRegexObj stays null, the input shows the invalid outline, and the
-       search clause matches everything so the list does not blank out mid-typing. */
-    function cpUpdateSearch(raw) {
-        var input = document.getElementById('cp-search');
-        if (cpRegexOn && raw) {
-            try { cpRegexObj = new RegExp(raw, 'i'); if (input) input.classList.remove('cp-search-invalid'); }
-            catch (e) { cpRegexObj = null; if (input) input.classList.add('cp-search-invalid'); }
-            cpSearchText = '';
-        } else {
-            cpRegexObj = null; cpSearchText = raw.toLowerCase();
-            if (input) input.classList.remove('cp-search-invalid');
-        }
-        applyCpFilters();
-    }
-    function cpSearchMatch(r) {
-        var hay = r.getAttribute('data-search') || '';
-        if (cpRegexOn) { return !cpRegexObj || cpRegexObj.test(hay); }
-        return !cpSearchText || hay.indexOf(cpSearchText) >= 0;
-    }
-
-    /* Reorder the issue rows by the chosen metric (descending). appendChild moves existing nodes, so
-       this just rearranges; it never rebuilds rows or touches their filter display state. */
-    function applyCpSort() {
-        if (!cpIssuesEl) return;
-        var rows = Array.prototype.slice.call(cpIssuesEl.querySelectorAll('.cp-item'));
-        // Release-date sort: newest derived date first; issues with no date sort to the bottom.
-        // ISO YYYY-MM-DD strings compare correctly with localeCompare, so no Date parsing is needed.
-        if (cpSort === 'reldate') {
-            rows.sort(function(a, b) { return cpRowMaxDate(b).localeCompare(cpRowMaxDate(a)); });
-        } else {
-            var attr = cpSort === 'users' ? 'data-users' : 'data-events';
-            rows.sort(function(a, b) { return (Number(b.getAttribute(attr)) || 0) - (Number(a.getAttribute(attr)) || 0); });
-        }
-        rows.forEach(function(r) { cpIssuesEl.appendChild(r); });
-    }
-    /* The latest derived release date on a row, or '' when the versionCode is not date-encoded. */
-    function cpRowMaxDate(r) {
-        var vals = (r.getAttribute('data-reldates') || '').split(',').filter(Boolean);
-        return vals.length ? vals.sort()[vals.length - 1] : '';
-    }
-
-    function cpHas(item, attr, want) { return !want || (item.getAttribute(attr) || '').split(',').indexOf(want) >= 0; }
-    function applyCpFilters() {
-        if (!cpIssuesEl) return;
-        var rows = cpIssuesEl.querySelectorAll('.cp-item');
-        for (var i = 0; i < rows.length; i++) {
-            var r = rows[i];
-            var archivedOk = cpShowArchived || r.getAttribute('data-archived') !== '1';
-            var ok = archivedOk
-                && (cpKind === 'all' || r.getAttribute('data-kind') === cpKind)
-                && cpSearchMatch(r)
-                && cpHas(r, 'data-versions', cpFVer) && cpHas(r, 'data-reldates', cpFRel)
-                && cpHas(r, 'data-devices', cpFDev) && cpHas(r, 'data-os', cpFOs);
-            r.style.display = ok ? '' : 'none';
-        }
-    }
-    function cpUnion(rows, attr) {
-        var set = {};
-        for (var i = 0; i < rows.length; i++) { var v = rows[i].getAttribute(attr); if (v) { v.split(',').forEach(function(x) { if (x) set[x] = true; }); } }
-        return Object.keys(set).sort();
-    }
-    /* Keep the host-rendered first <option> (the "Ver"/"Dev"/"OS" abbreviation) and append values. */
-    function cpFillSelect(el, values) {
-        if (!el) return;
-        var cur = el.value;
-        var first = el.options[0] ? el.options[0].outerHTML : '<option value=""></option>';
-        el.innerHTML = first + values.map(function(v) { return '<option value="' + esc(v) + '">' + esc(v) + '</option>'; }).join('');
-        el.value = cur;
-    }
-    function showCpFilters() {
-        if (!cpFilterbar) return;
-        cpFilterbar.style.display = '';
-        // Rows were rebuilt, so device/OS annotations are gone — allow a re-fetch on next dropdown use.
-        cpIndexRequested = false;
-        var rows = cpIssuesEl ? cpIssuesEl.querySelectorAll('.cp-item') : [];
-        cpFillSelect(document.getElementById('cp-ver'), cpUnion(rows, 'data-versions'));
-        // Release-date dropdown: newest first (reverse the ascending union) so recent releases are on top.
-        cpFillSelect(document.getElementById('cp-reldate'), cpUnion(rows, 'data-reldates').reverse());
-        applyCpSort();
-        applyCpFilters();
-    }
-    /* Inject the host-rendered trend sparkline SVG into each row by short issue id (5c / T3.1). */
-    function applyCpTrends(map) {
-        if (!cpIssuesEl || !map) return;
-        var rows = cpIssuesEl.querySelectorAll('.cp-item');
-        for (var i = 0; i < rows.length; i++) {
-            var sid = (rows[i].getAttribute('data-issue-id') || '').split('/').pop();
-            var svg = map[sid];
-            if (!svg) continue;
-            var slot = rows[i].querySelector('.cp-trend');
-            if (slot) slot.innerHTML = svg;
-        }
-    }
-    function applyCpFilterIndex(index) {
-        if (!cpIssuesEl || !index) return;
-        var rows = cpIssuesEl.querySelectorAll('.cp-item');
-        for (var i = 0; i < rows.length; i++) {
-            var sid = (rows[i].getAttribute('data-issue-id') || '').split('/').pop();
-            rows[i].setAttribute('data-devices', ((index.devicesByIssue || {})[sid] || []).join(','));
-            rows[i].setAttribute('data-os', ((index.osByIssue || {})[sid] || []).join(','));
-        }
-        cpFillSelect(document.getElementById('cp-dev'), cpUnion(rows, 'data-devices'));
-        cpFillSelect(document.getElementById('cp-os'), cpUnion(rows, 'data-os'));
-    }
-    (function wireCpFilters() {
-        var tabs = cpFilterbar ? cpFilterbar.querySelector('.cp-tabs') : null;
-        if (tabs) tabs.addEventListener('click', function(e) {
-            var b = e.target.closest('.cp-tab'); if (!b) return;
-            tabs.querySelectorAll('.cp-tab-sel').forEach(function(t) { t.classList.remove('cp-tab-sel'); });
-            b.classList.add('cp-tab-sel'); cpKind = b.getAttribute('data-kind'); applyCpFilters();
-        });
-        var s = document.getElementById('cp-search'); if (s) s.addEventListener('input', function() { cpUpdateSearch(s.value); });
-        var rx = document.getElementById('cp-regex');
-        if (rx && s) rx.addEventListener('click', function() {
-            cpRegexOn = !cpRegexOn;
-            rx.classList.toggle('cp-regex-on', cpRegexOn);
-            rx.setAttribute('aria-pressed', cpRegexOn ? 'true' : 'false');
-            cpUpdateSearch(s.value);
-        });
-        var ver = document.getElementById('cp-ver'); if (ver) ver.addEventListener('change', function() { cpFVer = ver.value; applyCpFilters(); });
-        var rel = document.getElementById('cp-reldate'); if (rel) rel.addEventListener('change', function() { cpFRel = rel.value; applyCpFilters(); });
-        var dev = document.getElementById('cp-dev'); if (dev) dev.addEventListener('change', function() { cpFDev = dev.value; applyCpFilters(); });
-        var os = document.getElementById('cp-os'); if (os) os.addEventListener('change', function() { cpFOs = os.value; applyCpFilters(); });
-        var sort = document.getElementById('cp-sort'); if (sort) sort.addEventListener('change', function() { cpSort = sort.value; applyCpSort(); });
-        var showArch = document.getElementById('cp-show-archived');
-        if (showArch) showArch.addEventListener('click', function() {
-            cpShowArchived = !cpShowArchived;
-            showArch.classList.toggle('cp-regex-on', cpShowArchived);
-            showArch.setAttribute('aria-pressed', cpShowArchived ? 'true' : 'false');
-            applyCpFilters();
-        });
-        function ensureIndex() { if (cpIndexRequested) return; cpIndexRequested = true; vscodeApi.postMessage({ type: 'fetchCrashlyticsFilterIndex' }); }
-        [dev, os].forEach(function(el) { if (el) { el.addEventListener('mousedown', ensureIndex); el.addEventListener('focus', ensureIndex); } });
-    })();
+    /* ---- Sidebar list controls (#5): search, tabs, dropdowns, sort, archived ---- */
+${getCrashlyticsFiltersScript()}
 `;
 }

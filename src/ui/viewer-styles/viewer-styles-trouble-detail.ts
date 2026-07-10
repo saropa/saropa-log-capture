@@ -1,19 +1,32 @@
 /**
- * Styles for the Trouble Mode detail pane (plan Trouble Mode dashboard, Stage 4).
+ * Styles for the Trouble Mode side rail (plan 110, Stage 1; originally the Stage 4
+ * detail overlay of the Trouble Mode dashboard plan).
  *
- * The pane is an absolute overlay inside #log-content-wrapper, so it covers only
- * the feed while the severity chart and toolbar stay visible. Content is built
- * host-side (trouble-detail-builder.ts) and reuses the signal-report evidence
- * renderer, so the `.evidence-*` classes it emits are styled here for the viewer
- * (the signal report's own stylesheet lives in its separate webview, not here).
+ * The rail lives inside #log-content-wrapper, which is already a flex ROW whose
+ * .log-content-clip child is `flex: 1 1 0%; min-width: 0`. So the wide layout needs
+ * no new container: the rail simply becomes a static flex item and the feed shrinks
+ * beside it. That is the whole fix for the v1 defect — the rail shipped as
+ * `position: absolute; inset: 0`, which covered the feed at EVERY width, and triage
+ * means reading the report against the log.
  *
- * All colors come from the design tokens (viewer-styles-tokens.ts) so the pane
- * stays theme-aware; severity accents match the feed and the chart.
+ * The overlay remains as the NARROW fallback: below the rail breakpoint the sidebar
+ * cannot afford two columns, so `body.slc-trouble-rail-wide` is absent and the
+ * default absolute rules apply. The class is set from JS (viewer-trouble-detail.ts)
+ * rather than a container query because #log-content-wrapper hosts absolutely
+ * positioned children (minimap, jump buttons, goto-line) whose containing block a
+ * `container-type: inline-size` would silently change.
+ *
+ * Content is built host-side (trouble-detail-handler.ts) and reuses the signal-report
+ * evidence renderer, so the `.evidence-*` classes it emits are styled here for the
+ * viewer (the signal report's own stylesheet lives in its separate webview, not here).
+ *
+ * All colors come from the design tokens (viewer-styles-tokens.ts) so the rail stays
+ * theme-aware; severity accents match the feed and the chart.
  */
 export function getTroubleDetailStyles(): string {
     return /* css */ `
 /* ===================================================================
-   Trouble Mode — detail pane (feed overlay)
+   Trouble Mode — side rail (narrow fallback: full-feed overlay)
    =================================================================== */
 .trouble-detail {
     position: absolute;
@@ -26,24 +39,59 @@ export function getTroubleDetailStyles(): string {
 }
 .trouble-detail.u-hidden { display: none; }
 
+/* Wide layout: a static right column. The clamped width keeps the rail from ever being
+   too narrow to read a stack frame (320px) or wide enough to starve the feed (560px),
+   and tracks the wrapper in between. The feed reflows through the existing
+   ResizeObserver on #log-content, so word-wrap row heights recalc on open/close. */
+body.slc-trouble-rail-wide .trouble-detail {
+    position: relative;
+    inset: auto;
+    z-index: auto;
+    flex: 0 0 auto;
+    width: clamp(320px, 40%, 560px);
+    height: 100%;
+    border-left: 1px solid var(--border);
+}
+
+/* Severity identity: a colored cap on the rail head so a report never reads as
+   "the log jumped". The level class is set by renderTroubleDetail from the same
+   item.level the feed filters on — it can never disagree with the row's badge. */
 .trouble-detail-head {
     flex-shrink: 0;
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: var(--space-2);
     padding: var(--space-2) var(--space-3);
     background: var(--surface-2);
+    border-top: 3px solid var(--accent-critical);
     border-bottom: 1px solid var(--border);
 }
+.trouble-detail.td-sev-warning .trouble-detail-head { border-top-color: var(--accent-warning); }
+.trouble-detail.td-sev-performance .trouble-detail-head { border-top-color: var(--accent-info); }
+
+.trouble-detail-head-top {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+}
+/* Two-line clamp rather than a single ellipsized line: an exception message is the
+   most useful text in the report, and at rail width one line truncates all of it. */
 .trouble-detail-title {
     flex: 1;
     min-width: 0;
     font-size: var(--text-label);
     font-weight: 600;
     color: var(--text);
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
+}
+.trouble-detail-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
 }
 .trouble-detail-btn {
     flex-shrink: 0;
@@ -57,6 +105,7 @@ export function getTroubleDetailStyles(): string {
     border-radius: var(--radius-sm);
 }
 .trouble-detail-btn:hover { border-color: var(--border-strong); }
+.trouble-detail-btn:disabled { opacity: 0.5; cursor: default; }
 .trouble-detail-close {
     flex-shrink: 0;
     background: none;
@@ -79,6 +128,22 @@ export function getTroubleDetailStyles(): string {
     font-size: var(--text-body);
     color: var(--text);
 }
+
+/* Crashlytics slot (plan 110, Stage 2). Hidden unless the rail is in .td-mode-cd,
+   where it replaces BOTH the trouble head and the trouble body — the Crashlytics
+   detail brings its own .cd-header with Back / Copy / Create issue. Deliberately
+   NOT reusing .crashlytics-detail: that class is position:absolute + inset:0 for
+   the full-area panel flow and would re-cover the feed. */
+.trouble-detail-cd {
+    display: none;
+    flex: 1;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+}
+.trouble-detail.td-mode-cd .trouble-detail-head,
+.trouble-detail.td-mode-cd .trouble-detail-body { display: none; }
+.trouble-detail.td-mode-cd .trouble-detail-cd { display: flex; }
 
 /* Host-built detail sections. */
 .trouble-detail-body .td-section { margin-bottom: var(--space-4); }
