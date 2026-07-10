@@ -137,8 +137,9 @@ export function getSessionInfoModalStyles(): string {
     font-size: 11px;
     opacity: 0.85;
 }
-/* Toolbar (i) button sits between session-details-inline and the filename so
-   it reads as a sibling of the filename, not part of the nav cluster. */
+/* Toolbar (i) button sits to the left of the filename so it reads as a sibling of the filename,
+   not part of the nav cluster. Its old left neighbor, the session-details line, moved into the
+   persistent log status bar. */
 .session-info-btn { margin-right: 4px; }
 `;
 }
