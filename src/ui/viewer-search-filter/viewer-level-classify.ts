@@ -48,8 +48,16 @@ var databaseVendorTokensSrc = '(?:Drift|Isar|Sqlite3|Sqlite|Sqflite|Hive|Realm|P
 // Bracket tag at line head containing a DB vendor token (e.g. "[IsarDriftRowCountAudit] ...").
 // Anchored to line start (after optional logcat/threadtime/[log] shells) so a
 // mid-message "[Drift]" mention does not promote the whole line to database.
+// Optional saved-log wrapper "[HH:MM:SS.mmm] [source]" — log-session-helpers.ts's
+// formatLine() always writes both together when a captured line is saved to a .log
+// file (source is an unrestricted string), so this only recognizes the wrapper by its
+// fixed timestamp shape, then unconditionally consumes the very next bracket as the
+// source label. Without this, re-opening a saved log left every app-emitted tag
+// unrecognized because the FIRST bracket seen was the timestamp, not the tag (2026-07-10).
+var savedLogWrapperSrc = '(?:\\\\[\\\\d{2}:\\\\d{2}:\\\\d{2}\\\\.\\\\d{3}\\\\]\\\\s*\\\\[[^\\\\]]+\\\\]\\\\s*)?';
 var databaseBracketTagPattern = new RegExp(
-    '^(?:[VDIWEFA]\\\\/[^:]*:\\\\s*)?'
+    '^' + savedLogWrapperSrc
+    + '(?:[VDIWEFA]\\\\/[^:]*:\\\\s*)?'
     + '(?:\\\\d{2}-\\\\d{2}\\\\s+\\\\d{2}:\\\\d{2}:\\\\d{2}\\\\.\\\\d{3}\\\\s+\\\\d+\\\\s+\\\\d+\\\\s+[VDIWEFA]\\\\s+[^:]*:\\\\s*)?'
     + '(?:\\\\[log\\\\]\\\\s*)?'
     + '\\\\[[^\\\\]]*' + databaseVendorTokensSrc + '[^\\\\]]*\\\\]',
@@ -57,7 +65,8 @@ var databaseBracketTagPattern = new RegExp(
 );
 // "Vendor:" prefix at line head (e.g. "DRIFT: VM Service WebSocket connect failed").
 var databaseColonPrefixPattern = new RegExp(
-    '^(?:[VDIWEFA]\\\\/[^:]*:\\\\s*)?'
+    '^' + savedLogWrapperSrc
+    + '(?:[VDIWEFA]\\\\/[^:]*:\\\\s*)?'
     + '(?:\\\\d{2}-\\\\d{2}\\\\s+\\\\d{2}:\\\\d{2}:\\\\d{2}\\\\.\\\\d{3}\\\\s+\\\\d+\\\\s+\\\\d+\\\\s+[VDIWEFA]\\\\s+[^:]*:\\\\s*)?'
     + '(?:\\\\[log\\\\]\\\\s*)?'
     + databaseVendorTokensSrc + '\\\\s*:',
@@ -71,7 +80,8 @@ function matchesDatabaseAnnotation(plainText) {
 // tag-level-dictionary.ts; same optional logcat/threadtime/[log] shells, captures the first
 // [tag] inner text (group 1) and splits on the first colon so [db:phase 2] resolves to 'db'.
 var headBracketTagPattern = new RegExp(
-    '^(?:[VDIWEFA]\\\\/[^:]*:\\\\s*)?'
+    '^' + savedLogWrapperSrc
+    + '(?:[VDIWEFA]\\\\/[^:]*:\\\\s*)?'
     + '(?:\\\\d{2}-\\\\d{2}\\\\s+\\\\d{2}:\\\\d{2}:\\\\d{2}\\\\.\\\\d{3}\\\\s+\\\\d+\\\\s+\\\\d+\\\\s+[VDIWEFA]\\\\s+[^:]*:\\\\s*)?'
     + '(?:\\\\[log\\\\]\\\\s*)?'
     + '\\\\[([^\\\\]]+)\\\\]',

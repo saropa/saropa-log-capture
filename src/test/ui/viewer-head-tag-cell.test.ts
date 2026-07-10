@@ -1,15 +1,18 @@
 /**
  * Tests for the head-tag chips that render in the tag decoration column.
  *
- * App head tags ([db]/[perf]/[frame-stall]) render as chips in the same tag cell
- * as the structured device tag (buildDecoParts). Every tag is shown — no +N
- * collapse — and the full list rides the cell title (headTagsTitle) so a chip
- * clipped by the fixed column width is recoverable on hover. This suite pins the
- * all-chips rendering, the title list, and HTML-escaping of hostile tag text.
+ * Only the line's PRIMARY tag (tags[0], the highest-priority signal) renders as a
+ * chip in the tag cell (buildDecoParts) — rendering every tag cluttered the
+ * fixed-width column and squeezed the message text on lines carrying 2-3 tags
+ * (user report 2026-07-10). The full tag list still rides the cell title
+ * (headTagsTitle) and is still fully filterable from the Message Tags sidebar.
+ * This suite pins the single-chip rendering, the full-list title, and
+ * HTML-escaping of hostile tag text.
  */
 import * as assert from 'node:assert';
 import * as vm from 'node:vm';
 import { getHeadTagsParserScript } from '../../ui/viewer-bracket-head-tags/viewer-bracket-head-tags';
+import { TAG_LEVEL_MAP } from '../../modules/analysis/tag-level-dictionary';
 
 /** Run the head-tags webview script in a VM and return the named function's string result. */
 function run(call: string): string {
@@ -18,18 +21,64 @@ function run(call: string): string {
     return vm.runInContext(call, ctx) as string;
 }
 
+/** Run parseHeadTags in a VM with a real TAG_LEVEL_MAP injected (mirrors how
+    viewer-level-classify.ts bakes the map into the webview global scope). */
+function runParseHeadTags(plain: string): Array<{ name: string; level: string }> {
+    const ctx = vm.createContext({ TAG_LEVEL_MAP });
+    vm.runInContext(getHeadTagsParserScript(), ctx);
+    return vm.runInContext(`parseHeadTags(${JSON.stringify(plain)})`, ctx) as Array<{ name: string; level: string }>;
+}
+
+suite('parseHeadTags — saved-log [time] [source] wrapper tolerance', () => {
+    test('recognizes an app tag behind a saved-log [time] [source] wrapper', () => {
+        // Real device log line (2026-07-10 report): the wrapper's timestamp bracket used
+        // to make the scan give up before ever reaching [IMPORTANT:...].
+        const tags = runParseHeadTags(
+            '[10:48:41.586] [logcat] 07-10 10:48:42.122 26735 26943 I flutter : '
+            + '[IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(62)] '
+            + 'Using the Impeller rendering backend (Vulkan).',
+        );
+        assert.strictEqual(tags.length, 1);
+        assert.strictEqual(tags[0].level, 'notice');
+    });
+
+    test('strips the :metadata suffix from the chip display name but keeps the level lookup', () => {
+        const tags = runParseHeadTags('[16:13:49.489] [console] [perf:cold start] first frame 1840ms');
+        assert.strictEqual(tags.length, 1);
+        assert.strictEqual(tags[0].name, 'perf', 'metadata after the colon is not part of the display name');
+        assert.strictEqual(tags[0].level, 'performance');
+    });
+
+    test('still returns nothing for an unrecognized tag behind the wrapper', () => {
+        const tags = runParseHeadTags('[16:13:49.489] [console] [randomtag] hello');
+        assert.strictEqual(tags.length, 0);
+    });
+
+    test('a line with no wrapper is unaffected', () => {
+        const tags = runParseHeadTags('[db] bulkPreload wrote 185 rows');
+        assert.strictEqual(tags.length, 1);
+        assert.strictEqual(tags[0].level, 'database');
+    });
+});
+
 suite('head-tag chips in the tag column', () => {
-    test('renderHeadTagChips shows every tag as a level-colored, Title Case chip (no +N)', () => {
+    test('renderHeadTagChips shows only the PRIMARY (first) tag, as a level-colored Title Case chip', () => {
         // Chip bodies run through formatTagLabel — always "Title Case With Spaces",
         // never the raw lowercase/kebab-case tag name (user-reported inconsistency,
         // 2026-07-10: sidebar showed lowercase, tag column showed raw/no-space case).
         const html = run(
             'renderHeadTagChips([{name:"perf",level:"performance"},{name:"frame-stall",level:"performance"}])',
         );
-        assert.ok(html.includes('>Perf<'), 'first tag chip is Title Case');
-        assert.ok(html.includes('>Frame Stall<'), 'second tag chip splits the hyphen into a space — nothing collapsed');
-        assert.ok(html.includes('tag-level-performance'), 'chips carry their level class');
+        assert.ok(html.includes('>Perf<'), 'first (primary) tag chip renders, Title Case');
+        assert.ok(!html.includes('Frame Stall'), 'second tag does NOT render as its own chip (2026-07-10: capped to 1 chip/row)');
+        assert.ok(html.includes('tag-level-performance'), 'chip carries its level class');
         assert.ok(!html.includes('+1') && !html.includes('tag-chip-more'), 'no +N overflow badge');
+    });
+
+    test('renderHeadTagChips on a single-tag list still renders that one chip', () => {
+        const html = run('renderHeadTagChips([{name:"db",level:"database"}])');
+        assert.ok(html.includes('>Db<'));
+        assert.ok(html.includes('tag-level-database'));
     });
 
     test('renderHeadTagChips on an empty list renders nothing', () => {
