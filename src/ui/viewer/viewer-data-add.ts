@@ -147,6 +147,10 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     var lTag = (typeof parseLogcatTag === 'function') ? parseLogcatTag(plain) : null;
     if (lTag && lTag === sTag) lTag = null;
     var cTags = (typeof parseClassTags === 'function') ? parseClassTags(plain) : [];
+    /* Flow-tag chips (plan 109): classify an explicit [flowmap] navigation line so
+       the renderer can show it as a chip and the 'hidden' mode can filter it. Only
+       normal log lines reach here (markers/stack/structured returned above). */
+    var flowTag = (typeof classifyFlowTag === 'function') ? classifyFlowTag(plain) : null;
 
     // One parse per line: repeat tracker, dbSignal, and DB detectors share this object.
     var sqlMeta = (typeof parseSqlFingerprint === 'function') ? parseSqlFingerprint(plain) : null;
@@ -233,10 +237,10 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         var scopeFilt = (typeof calcScopeFiltered === 'function') ? calcScopeFiltered(sp) : false;
         /* Birth-height computation delegated to viewer-data-add-line-birth.ts —
            mirrors buildDocItem's quarter-height-at-birth + filter-gap fix. */
-        var finalH = computeLineBirthHeight(html, errorSuppressed, lineTierHidden, classHidden, catFiltered, lvl, scopeFilt, isAutoHidden);
+        var finalH = computeLineBirthHeight(html, errorSuppressed, lineTierHidden, classHidden, catFiltered, lvl, scopeFilt, isAutoHidden, flowTag);
         if (isAutoHidden && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
         var isAnr = (lvl === 'performance' && anrPattern.test(plain));
-        var lineItem = { html: html, rawText: rawText || null, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sqlVerb: sqlMeta ? sqlMeta.verb : null, tier: lineTier, filteredOut: catFiltered, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource, timeRangeFiltered: false, recentErrorContext: recentErrorContext, levelFiltered: calcLevelFiltered(lvl), troubleFiltered: (typeof calcTroubleFiltered === 'function' ? calcTroubleFiltered(lvl) : false), parsedPid: slp ? slp.pid : undefined, parsedTid: slp ? slp.tid : undefined, parsedTag: slp ? slp.tag : undefined, parsedRawLevel: slp ? slp.rawLvl : undefined, structuredPrefixLen: slp ? slp.prefixLen : 0, levelTooltip: (typeof getLevelTooltip === 'function' && slp) ? getLevelTooltip(slp.rawLvl, lvl) : ((typeof getLevelTooltip === 'function') ? getLevelTooltip(null, lvl) : null) };
+        var lineItem = { html: html, rawText: rawText || null, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sqlVerb: sqlMeta ? sqlMeta.verb : null, tier: lineTier, filteredOut: catFiltered, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource, timeRangeFiltered: false, recentErrorContext: recentErrorContext, levelFiltered: calcLevelFiltered(lvl), troubleFiltered: (typeof calcTroubleFiltered === 'function' ? calcTroubleFiltered(lvl) : false), parsedPid: slp ? slp.pid : undefined, parsedTid: slp ? slp.tid : undefined, parsedTag: slp ? slp.tag : undefined, parsedRawLevel: slp ? slp.rawLvl : undefined, structuredPrefixLen: slp ? slp.prefixLen : 0, levelTooltip: (typeof getLevelTooltip === 'function' && slp) ? getLevelTooltip(slp.rawLvl, lvl) : ((typeof getLevelTooltip === 'function') ? getLevelTooltip(null, lvl) : null), flowTag: flowTag, flowFiltered: (typeof calcFlowFiltered === 'function' ? calcFlowFiltered(flowTag) : false) };
         if (elapsedMs !== undefined && elapsedMs >= 0) lineItem.elapsedMs = elapsedMs;
         /* Only set originalLevel when demotion changed the display level — saves memory on
            the vast majority of lines where no demotion occurs (plan 050). */
