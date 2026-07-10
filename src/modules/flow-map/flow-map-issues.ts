@@ -38,6 +38,27 @@ export function isRepeatBatch(line: string): boolean {
     return /Drift REPEAT\s+x\d+/.test(line);
 }
 
+/**
+ * Explicit app-reported failure tag (bug 011) — a failure badge on the surface where it happened,
+ * emitted from the app's own exception chokepoint. Parallel to the `[flowmap]` enter/exit/action
+ * verbs but on the issue side: it becomes an `error` IssueEvent with `explicit: true` so the overlay
+ * badges it onto the exact active surface, dialogs included.
+ *
+ *   [flowmap] error "<Category>" [<lib/path/file.dart:line>]
+ */
+const FLOWMAP_ERROR = /\[flowmap\]\s+error\s+"([^"]+)"(?:\s+(\S+\.dart):(\d+))?/i;
+
+/** Parse a `[flowmap] error …` tag into an explicit error IssueEvent, or undefined. */
+export function parseFlowMapError(line: string, tsMs: number, clock: string, logLine: number): IssueEvent | undefined {
+    const m = FLOWMAP_ERROR.exec(line);
+    if (!m) {
+        return undefined;
+    }
+    const category = m[1].trim();
+    const source = m[2] ? { file: m[2].replace(/^\.\//, ''), line: parseInt(m[3], 10) } : undefined;
+    return { tsMs, clock, severity: 'error', category, detail: category, source, logLine, explicit: true };
+}
+
 /** Warning matchers: category + severity + human detail. First hit wins; deduped by category. */
 const WARNINGS: { re: RegExp; category: string; severity: IssueSeverity; detail: string }[] = [
     {

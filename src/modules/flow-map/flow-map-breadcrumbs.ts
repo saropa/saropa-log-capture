@@ -12,11 +12,23 @@ import type { NodeKind, SourceAnchor, TimelineEvent } from './flow-map-model';
  * screen/tab/dialog/sheet entered so the map captures EVERY surface (not just ones with ad-hoc
  * breadcrumbs) and gets the source file for free — including dialogs the screen scan can't resolve.
  *
- *   [flowmap] enter <screen|tab|dialog|sheet> "<Name>" [<lib/path/file.dart:line>]
+ *   [flowmap] enter <screen|tab|dialog|sheet> "<Name>" [back] [<lib/path/file.dart:line>]
  *
  * e.g.  [flowmap] enter dialog "Culture Picker" lib/components/.../culture_religion_picker_dialog.dart:101
+ *
+ * The optional `back` token (after the name, before the anchor) declares a back navigation — see
+ * `TimelineEvent.back`. `back` sits before the source group so the `\S+\.dart` anchor never eats it.
  */
-const FLOWMAP_TAG = /\[flowmap\]\s+enter\s+(screen|tab|dialog|sheet|inline)\s+"([^"]+)"(?:\s+(\S+\.dart):(\d+))?/i;
+const FLOWMAP_TAG = /\[flowmap\]\s+enter\s+(screen|tab|dialog|sheet|inline)\s+"([^"]+)"(?:\s+(back))?(?:\s+(\S+\.dart):(\d+))?/i;
+
+/**
+ * Surface-close tag (bug 011) — the moment a surface is dismissed, so its dwell stops here instead
+ * of running until the next `enter`. Without it, dismissing a dialog and sitting on the screen
+ * behind it charges that idle time to the dialog. The kind is informational; the builder pops by name.
+ *
+ *   [flowmap] exit <screen|tab|dialog|sheet> "<Name>"
+ */
+const FLOWMAP_EXIT = /\[flowmap\]\s+exit\s+(screen|tab|dialog|sheet|inline)\s+"([^"]+)"/i;
 
 const TAG_KIND: Record<string, NodeKind> = {
     screen: 'screen', tab: 'tab', dialog: 'dialog', sheet: 'dialog', inline: 'inline',
@@ -49,13 +61,27 @@ function tagSource(file?: string, line?: string): SourceAnchor | undefined {
     return file ? { file: file.replace(/^\.\//, ''), line: parseInt(line ?? '', 10) } : undefined;
 }
 
-/** Parse a `[flowmap] enter …` project tag, or undefined. Carries the declared kind + source. */
+/** Parse a `[flowmap] enter …` project tag, or undefined. Carries the declared kind, back flag + source. */
 function parseFlowMapTag(line: string, tsMs: number, clock: string, logLine: number): TimelineEvent | undefined {
     const m = FLOWMAP_TAG.exec(line);
     if (!m) {
         return undefined;
     }
-    return { tsMs, clock, logLine, kind: 'nav', label: m[2].trim(), nodeKind: TAG_KIND[m[1].toLowerCase()], source: tagSource(m[3], m[4]) };
+    // Groups: 1 kind, 2 name, 3 optional `back`, 4 anchor file, 5 anchor line.
+    return {
+        tsMs, clock, logLine, kind: 'nav',
+        label: m[2].trim(), nodeKind: TAG_KIND[m[1].toLowerCase()],
+        source: tagSource(m[4], m[5]), back: m[3] ? true : undefined,
+    };
+}
+
+/** Parse a `[flowmap] exit …` tag, or undefined. Only the name is load-bearing (the builder pops by it). */
+function parseFlowMapExit(line: string, tsMs: number, clock: string, logLine: number): TimelineEvent | undefined {
+    const m = FLOWMAP_EXIT.exec(line);
+    if (!m) {
+        return undefined;
+    }
+    return { tsMs, clock, logLine, kind: 'exit', label: m[2].trim(), nodeKind: TAG_KIND[m[1].toLowerCase()] };
 }
 
 /**
@@ -152,6 +178,10 @@ export function classifyBreadcrumb(line: string, tsMs: number, clock: string, lo
     const tagged = parseFlowMapTag(line, tsMs, clock, logLine);
     if (tagged) {
         return tagged;
+    }
+    const exited = parseFlowMapExit(line, tsMs, clock, logLine);
+    if (exited) {
+        return exited;
     }
     const handoff = parseFlowMapHandoff(line, tsMs, clock, logLine);
     if (handoff) {

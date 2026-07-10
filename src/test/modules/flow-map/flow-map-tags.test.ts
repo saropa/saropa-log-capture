@@ -132,4 +132,90 @@ suite('FlowMap tag verbs', () => {
             assert.strictEqual(action?.source, undefined);
         });
     });
+
+    suite('exit tag (bug 011 — dialog-dwell fix)', () => {
+        // Home, then a dialog opened at :10 and dismissed at :12, then Settings at :30. The 18s spent
+        // on Home AFTER the dialog closed must go to Home, not the dialog.
+        const EXIT: readonly string[] = [
+            '=== SAROPA LOG CAPTURE — SESSION START ===',
+            'Project:        demo',
+            '[08:00:00.000] [console] [log] [flowmap] enter screen "Home" lib/views/home.dart:1',
+            '[08:00:10.000] [console] [log] [flowmap] enter dialog "Picker" lib/views/picker.dart:1',
+            '[08:00:12.000] [console] [log] [flowmap] exit dialog "Picker"',
+            '[08:00:30.000] [console] [log] [flowmap] enter screen "Settings" lib/views/settings.dart:1',
+        ];
+
+        test('exit closes the dialog dwell at the exit moment; the caller keeps the idle time', () => {
+            const graph = buildGraph(parseLog(EXIT));
+            // Dialog was open 10s→12s only. Without the exit tag it would run 10s→30s (20s).
+            assert.strictEqual(nodeByKey(graph, 'picker')?.dwellMs, 2000);
+            // Home: 0→10s before the dialog + 12s→30s after it closed = 28s.
+            assert.strictEqual(nodeByKey(graph, 'home')?.dwellMs, 28000);
+        });
+
+        test('an exit that does not name the current surface is ignored', () => {
+            const stray = ['=== SAROPA LOG CAPTURE — SESSION START ===', 'Project: demo',
+                '[08:00:00.000] [console] [log] [flowmap] enter screen "Home"',
+                '[08:00:05.000] [console] [log] [flowmap] exit dialog "Nonexistent"',
+                '[08:00:10.000] [console] [log] [flowmap] enter screen "Settings"'];
+            const graph = buildGraph(parseLog(stray));
+            // Home stayed current across the stray exit: 0→10s.
+            assert.strictEqual(nodeByKey(graph, 'home')?.dwellMs, 10000);
+        });
+    });
+
+    suite('error tag (bug 011 — failure badge on the surface)', () => {
+        test('an error tag becomes an explicit error issue on the active screen and in the table', () => {
+            const src = ['=== SAROPA LOG CAPTURE — SESSION START ===', 'Project: demo',
+                '[08:00:01.000] [console] [log] [flowmap] enter screen "Checkout" lib/views/checkout.dart:1',
+                '[08:00:02.000] [console] [log] [flowmap] error "Payment declined" lib/api/pay.dart:9',
+                '[08:00:03.000] [console] [log] [flowmap] enter screen "Confirmation"'];
+            const parsed = parseLog(src);
+            const issue = parsed.issues.find(i => i.category === 'Payment declined');
+            assert.strictEqual(issue?.severity, 'error');
+            assert.strictEqual(issue?.explicit, true);
+            assert.strictEqual(issue?.source?.file, 'lib/api/pay.dart');
+            const graph = buildGraph(parsed);
+            const checkout = nodeByKey(graph, 'checkout');
+            assert.ok(checkout?.issues.some(i => i.category === 'Payment declined'), 'badge on Checkout');
+        });
+
+        test('an explicit error badges a dialog surface (heuristic issues would skip it)', () => {
+            const src = ['=== SAROPA LOG CAPTURE — SESSION START ===', 'Project: demo',
+                '[08:00:01.000] [console] [log] [flowmap] enter screen "Checkout"',
+                '[08:00:02.000] [console] [log] [flowmap] enter dialog "Card Sheet"',
+                '[08:00:03.000] [console] [log] [flowmap] error "Card declined"',
+                '[08:00:04.000] [console] [log] [flowmap] exit dialog "Card Sheet"',
+                '[08:00:05.000] [console] [log] [flowmap] enter screen "Confirmation"'];
+            const graph = buildGraph(parseLog(src));
+            const dialog = nodeByKey(graph, 'card sheet');
+            assert.strictEqual(dialog?.kind, 'dialog');
+            assert.ok(dialog?.issues.some(i => i.category === 'Card declined'), 'badge on the dialog');
+        });
+    });
+
+    suite('back flag on enter (bug 011 — return direction)', () => {
+        test('an explicit back forces a return edge even when the target is off the open stack', () => {
+            // A→B, return to A (pops B), A→C, then back to B — B is no longer on the stack, so the
+            // navStack heuristic alone would draw a forward C→B edge. The flag forces a back edge.
+            const src = ['=== SAROPA LOG CAPTURE — SESSION START ===', 'Project: demo',
+                '[08:00:01.000] [console] [log] [flowmap] enter screen "A"',
+                '[08:00:02.000] [console] [log] [flowmap] enter screen "B"',
+                '[08:00:03.000] [console] [log] [flowmap] enter screen "A"',
+                '[08:00:04.000] [console] [log] [flowmap] enter screen "C"',
+                '[08:00:05.000] [console] [log] [flowmap] enter screen "B" back'];
+            const graph = buildGraph(parseLog(src));
+            assert.ok(graph.edges.some(e => e.from === 'c' && e.to === 'b' && e.back), 'C→B is a back edge');
+            assert.ok(!graph.edges.some(e => e.from === 'c' && e.to === 'b' && !e.back), 'no forward C→B');
+        });
+
+        test('the back token is parsed off the enter tag without disturbing the source anchor', () => {
+            const src = ['=== SAROPA LOG CAPTURE — SESSION START ===', 'Project: demo',
+                '[08:00:01.000] [console] [log] [flowmap] enter screen "Home" back lib/views/home.dart:7'];
+            const nav = parseLog(src).events.find(e => e.kind === 'nav');
+            assert.strictEqual(nav?.back, true);
+            assert.strictEqual(nav?.source?.file, 'lib/views/home.dart');
+            assert.strictEqual(nav?.source?.line, 7);
+        });
+    });
 });

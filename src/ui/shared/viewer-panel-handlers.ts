@@ -43,6 +43,8 @@ export {
 
 export { handleCrashlyticsDetail, openCrashFrame, handleCrashlyticsCreateIssue } from './handlers/crashlytics-detail-handler';
 
+export { handleTroubleDetail } from './handlers/trouble-detail-handler';
+
 export { openLogLine } from '../../modules/crashlytics/crash-log-correlation';
 
 export { serializeContext, buildDiagnosticHtml } from './handlers/crashlytics-serializers';

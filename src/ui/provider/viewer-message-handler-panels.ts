@@ -72,6 +72,15 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
       case "crashlyticsPanelOpened": panelHandlers.startCrashlyticsAutoRefresh(ctx.post); return true;
       case "crashlyticsPanelClosed": panelHandlers.stopCrashlyticsAutoRefresh(); return true;
       case "requestSignalData": panelHandlers.handleSignalDataRequest(ctx.post, ctx.currentFileUri).catch(() => {}); return true;
+      case "openTroubleDetail":
+        panelHandlers.handleTroubleDetail(
+          ctx.currentFileUri,
+          safeLineIndex(msg.sourceLineNo, 0),
+          typeof msg.plainText === 'string' ? msg.plainText : '',
+          typeof msg.level === 'string' ? msg.level : 'info',
+          ctx.post,
+        ).catch(() => {});
+        return true;
       case "requestPerformanceData": panelHandlers.handlePerformanceRequest(ctx.post, ctx.currentFileUri).catch(() => {}); return true;
       case "setRecurringErrorStatus": panelHandlers.handleSetErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open'), ctx.post, ctx.currentFileUri).catch(() => {}); return true;
       /* Fu4 (plan 052): Mute-with-reason. Distinct from setRecurringErrorStatus because it prompts

@@ -50,6 +50,7 @@ import { getSearchHistoryScript } from '../viewer-search-filter/viewer-search-hi
 import { getLevelFilterScript } from '../viewer-search-filter/viewer-level-filter';
 import { getTroubleModeScript } from '../viewer-search-filter/viewer-trouble-mode';
 import { getTroubleChartScript } from '../viewer-search-filter/viewer-trouble-chart';
+import { getTroubleDetailScript } from '../viewer-search-filter/viewer-trouble-detail';
 import { getSourceTagsScript } from '../viewer-stack-tags/viewer-source-tags';
 import { getClassTagsScript } from '../viewer-stack-tags/viewer-class-tags';
 import { getSqlPatternTagsScript } from '../viewer-stack-tags/viewer-sql-pattern-tags';
@@ -214,6 +215,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         // After Trouble Mode so it can reuse TROUBLE_LEVELS/troubleModeActive, and after
         // the viewer-data block so allLines/renderViewport/scrollToLineNumber exist.
         scriptTag(nonce, getTroubleChartScript()) +
+        scriptTag(nonce, getTroubleDetailScript()) +
         scriptTag(nonce, getTagSelectionGuardScript()) +
         scriptTag(nonce, getSourceTagsScript()) +
         scriptTag(nonce, getClassTagsScript()) +

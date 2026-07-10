@@ -30,6 +30,17 @@ export const stringsViewer: Record<string, string> = {
     // Trouble Mode severity chart (Stage 3) — host-built pane chrome.
     'viewer.troubleChart.region': 'Severity over time chart',
     'viewer.troubleChart.title': 'Severity over time',
+    // Trouble Mode detail pane (Stage 4) — host-built pane chrome + content.
+    'viewer.troubleDetail.region': 'Selected issue detail',
+    'viewer.troubleDetail.close.title': 'Close detail',
+    'viewer.troubleDetail.faultTitle': 'Fault line',
+    'viewer.troubleDetail.contextTitle': 'Surrounding context',
+    'viewer.troubleDetail.severity': 'Severity',
+    'viewer.troubleDetail.anr': 'ANR risk',
+    'viewer.troubleDetail.anr.medium': 'Medium',
+    'viewer.troubleDetail.anr.high': 'High',
+    'viewer.troubleDetail.noContext': 'Log content is unavailable, so no surrounding context can be shown',
+    'viewer.troubleDetail.unavailable': 'Could not build the detail for this line',
     'viewer.toolbar.collapseAll.title': 'Collapse all sections',
     'viewer.toolbar.collapseAll.label': 'Collapse all sections',
     'viewer.toolbar.expandAll.title': 'Expand all sections',

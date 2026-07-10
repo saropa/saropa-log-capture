@@ -95,6 +95,7 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `openSignalReport` | viewer-message-handler-root-cause.ts |
 | `openSignals` | viewer-message-handler-panels.ts |
 | `openSignalTab` | viewer-message-handler-session-ui.ts |
+| `openTroubleDetail` | viewer-message-handler-panels.ts |
 | `openUrl` | viewer-message-handler-session-ui.ts |
 | `popOutViewer` | viewer-message-handler-session-ui.ts |
 | `presetApplied` | viewer-message-handler-actions.ts |
@@ -163,4 +164,4 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `viewerKeybindingRecordCancelled` | viewer-message-handler-actions.ts |
 | `viewerKeybindingRecorded` | viewer-message-handler-actions.ts |
 
-**Total:** 155 distinct types.
+**Total:** 156 distinct types.
