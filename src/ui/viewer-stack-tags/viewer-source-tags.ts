@@ -24,6 +24,11 @@ export function getSourceTagsHtml(): string {
 export function getSourceTagsScript(): string {
     return /* javascript */ `
 var sourceTagCounts = {};
+/* First-seen display name (original case, e.g. "ActivityManager") per lowercase filter
+   key. The sidebar chip label reads from here (via formatTagLabel) instead of the key
+   itself, so it matches the case-preserving row-column chips instead of showing the
+   all-lowercase grouping key ("activitymanager"). */
+var sourceTagDisplayNames = {};
 var hiddenSourceTags = {};
 var otherKey = '__other__';
 /** Log-tag key for Drift/database SQL lines (see parseSourceTag). */
@@ -182,6 +187,14 @@ function registerSourceTag(item) {
     for (var i = 0; i < ks.length; i++) {
         sourceTagCounts[ks[i]] = (sourceTagCounts[ks[i]] || 0) + 1;
         if (ks[i] === DATABASE_TAG_KEY) { sawDb = true; }
+    }
+    /* Capture the first-seen original-case name per key (item.tags carries {name, key}
+       from the unified tag set — lineTagKeys only returns keys, so this needs its own pass). */
+    if (item && item.tags && item.tags.length) {
+        for (var ti = 0; ti < item.tags.length; ti++) {
+            var t = item.tags[ti];
+            if (t && t.key && !sourceTagDisplayNames[t.key]) { sourceTagDisplayNames[t.key] = t.name; }
+        }
     }
     item.sourceFiltered = computeSourceFiltered(item);
     updateTagSummary();
