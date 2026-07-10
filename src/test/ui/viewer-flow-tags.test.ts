@@ -114,12 +114,12 @@ suite('FlowMap tag chips (plan 109)', () => {
         test('a flow line is born at height 0 under hidden mode, full height otherwise', () => {
             const ctx = build();
             const tag = ctx.classifyFlowTag(TAG + '[flowmap] enter tab "Home"');
-            // computeLineBirthHeight(html, errorSuppressed, tierHidden, classHidden, catFiltered, lvl, scopeFilt, autoHidden, flowTag)
-            const args = ['<span>x</span>', false, false, false, false, 'info', false, false] as const;
-            assert.strictEqual(ctx.computeLineBirthHeight(...args, tag), 20, 'chips mode: full height');
+            // computeLineBirthHeight takes one options object (see viewer-data-add-line-birth.ts).
+            const base = { html: '<span>x</span>', errorSuppressed: false, lineTierHidden: false, classHidden: false, catFiltered: false, lvl: 'info', scopeFilt: false, isAutoHidden: false, spLen: 0 };
+            assert.strictEqual(ctx.computeLineBirthHeight({ ...base, flowTag: tag }), 20, 'chips mode: full height');
             ctx.setFlowTagMode('hidden');
-            assert.strictEqual(ctx.computeLineBirthHeight(...args, tag), 0, 'hidden mode: born hidden');
-            assert.strictEqual(ctx.computeLineBirthHeight(...args, null), 20, 'non-flow line unaffected');
+            assert.strictEqual(ctx.computeLineBirthHeight({ ...base, flowTag: tag }), 0, 'hidden mode: born hidden');
+            assert.strictEqual(ctx.computeLineBirthHeight({ ...base, flowTag: null }), 20, 'non-flow line unaffected');
         });
 
         test('applyFlowFilter marks flow lines but never markers', () => {
