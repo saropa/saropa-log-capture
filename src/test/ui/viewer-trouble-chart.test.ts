@@ -323,6 +323,20 @@ suite('Trouble Mode severity chart — head placement and collapse', () => {
     assert.ok(els['trouble-chart-body'].innerHTML.includes('tc-empty'), 'empty state shown');
   });
 
+  test('a level disabled in enabledLevels renders its chip dimmed, unpressed, and clickable', () => {
+    const { ctx, els } = buildChartDomCtx();
+    // enabledLevels is owned by the level-filter script (absent from this VM); inject it to
+    // prove the chip render reads it. Error off, warning/performance on.
+    ctx.enabledLevels = new Set(['warning', 'performance']);
+    (ctx.renderTroubleChart as () => void)();
+
+    const html = els['trouble-chart-legend'].innerHTML;
+    // data-level is what the delegated toggleLevel/soloLevel handler reads off the chip.
+    assert.match(html, /class="tc-chip tc-chip-error tc-chip-off"[^>]*data-level="error"[^>]*aria-pressed="false"/, 'disabled level: dimmed + unpressed');
+    assert.match(html, /class="tc-chip tc-chip-warning"[^>]*data-level="warning"[^>]*aria-pressed="true"/, 'enabled level: active + pressed');
+    assert.ok(html.includes('role="button"') && html.includes('tabindex="0"'), 'chips are keyboard-reachable buttons');
+  });
+
   test('collapsing keeps the head totals live and skips the plot; expanding rebuilds it', () => {
     const { ctx, els } = buildChartDomCtx();
     const toggle = ctx.toggleTroubleChartCollapsed as () => void;
@@ -346,5 +360,42 @@ suite('Trouble Mode severity chart — head placement and collapse', () => {
     assert.ok(!els['trouble-chart'].classList.contains('tc-collapsed'), 'pane expanded');
     assert.strictEqual(els['trouble-chart-toggle'].attrs['aria-expanded'], 'true', 'chevron reports expanded');
     assert.ok(els['trouble-chart-body'].innerHTML.includes('tc-svg'), 'plot rebuilt on expand');
+  });
+});
+
+/** A stub legend chip: only the three surfaces syncTroubleChartChips touches. */
+function chipStub(level: string): { attrs: Record<string, string>; classes: Set<string>;
+  getAttribute(k: string): string | null; setAttribute(k: string, v: string): void;
+  classList: { toggle(c: string, on: boolean): void } } {
+  const attrs: Record<string, string> = { 'data-level': level };
+  const classes = new Set<string>(['tc-chip', 'tc-chip-' + level]);
+  return {
+    attrs, classes,
+    getAttribute: (k) => (k in attrs ? attrs[k] : null),
+    setAttribute: (k, v) => { attrs[k] = v; },
+    classList: { toggle: (c, on) => { if (on) { classes.add(c); } else { classes.delete(c); } } },
+  };
+}
+
+suite('Trouble Mode severity chart — chips as level filters', () => {
+  test('syncTroubleChartChips dims the chips disabled in enabledLevels, in place', () => {
+    const chips = ['error', 'warning', 'performance'].map(chipStub);
+    // The legend container: querySelectorAll feeds the chips, addEventListener absorbs the
+    // wireTroubleChartChips() delegation the chart IIFE runs at load.
+    const legend = { querySelectorAll: () => chips, addEventListener: () => { /* no-op */ } };
+    const ctx = vm.createContext({
+      console, enabledLevels: new Set(['warning', 'performance']),
+      document: { getElementById: (id: string) => (id === 'trouble-chart-legend' ? legend : null) },
+    }) as Record<string, unknown>;
+    vm.runInContext(getTroubleModeScript() + getTroubleChartScript(), ctx, { filename: 'chips.js' });
+
+    (ctx.syncTroubleChartChips as () => void)();
+
+    // Error is not in enabledLevels → dimmed and unpressed; the other two stay active.
+    assert.ok(chips[0].classes.has('tc-chip-off'), 'error chip dimmed');
+    assert.strictEqual(chips[0].attrs['aria-pressed'], 'false', 'error chip unpressed');
+    assert.ok(!chips[1].classes.has('tc-chip-off'), 'warning chip stays lit');
+    assert.strictEqual(chips[1].attrs['aria-pressed'], 'true', 'warning chip pressed');
+    assert.ok(!chips[2].classes.has('tc-chip-off'), 'performance chip stays lit');
   });
 });
