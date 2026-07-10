@@ -2095,5 +2095,17 @@
   "Trouble Mode — show only errors, warnings, and performance issues (hides everything nominal)": "Trouble Mode  ⁇  zeigt nur Fehler, Warnungen und Leistungsprobleme (verbirgt alles Nominelle)",
   "Trouble report copied to the clipboard": "Fehlermeldung kopiert in die Zwischenablage.",
   "{0} events · {1} users": "{0} Ereignisse · {1} Benutzer",
-  "{0} · errors {1} · warnings {2} · performance {3}": "{0} · Fehlern {1} · Warnungen {2} · Leistung {3}"
+  "{0} · errors {1} · warnings {2} · performance {3}": "{0} · Fehlern {1} · Warnungen {2} · Leistung {3}",
+  "All {0} issues": "Alle {0}-Probleme sind aufgelöst.",
+  "Cached": "Cached im Cache gespeichert",
+  "Could not load this issue.": "Dieses Problem konnte nicht geladen werden.",
+  "Errors {0}": "Fehler {0} Die Fehler sind",
+  "Issue": "Ausgabe der Ausgabe.",
+  "No stack trace available for this issue.": "Keine Stack-Trace für diese Ausgabe verfügbar.",
+  "Peak {0}": "Spitzenwert {0}",
+  "Performance {0}": "Leistung {0}",
+  "Reveal in log": "Reveal im Protokoll.",
+  "Scroll the log to the line this report describes": "Scrollen Sie durch das Protokoll bis zur Zeile, die in diesem Bericht beschrieben wird.",
+  "Try again": "Versuchen Sie es noch einmal.",
+  "Warnings {0}": "Warnungen {0}"
 }
