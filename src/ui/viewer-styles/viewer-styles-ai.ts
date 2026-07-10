@@ -15,24 +15,20 @@ export function getAiStyles(): string {
    left border and slightly reduced opacity vs primary debug output.
    =================================================================== */
 
-/* Rail is drawn with inset box-shadow (NOT border-left) so it is OUT OF FLOW.
-   With border-left:3px the AI rows' content shifted 3px right of non-AI rows
-   — the line-number digits on every AI line landed 3px right of the digits
-   on regular log lines, breaking column alignment across the viewport.
-   box-shadow:inset paints the same 3px stripe inside the row's left edge
-   without adding to its box width, so columns stay straight. Per-category
-   color overrides set --ai-rail-color; the .ai-line rule reads it via fallback. */
+/* The left rail (box-shadow: inset 3px) was REMOVED 2026-07-10: it sat in its own
+   column beside the severity gutter and read as a second severity bar. AI rows now
+   use the shared severity gutter with a dedicated magenta dot (.level-bar-ai in
+   viewer-styles-decoration-bars.ts), and the AI action is named by the .ai-tag-chip.
+   --ai-rail-color is kept ONLY as the per-category color source the chip reads. */
 .line.ai-line {
     --ai-rail-color: var(--vscode-terminal-ansiMagenta, #bc3fbc);
-    box-shadow: inset 3px 0 0 var(--ai-rail-color);
     opacity: 0.85;
 }
-/* Decoration-off rows have no .line-decoration prefix, so they don't inherit
-   the regular hanging-indent padding from viewer-styles-decoration.ts. Without
-   this fallback the message would butt directly against the 3px accent rail.
-   Scoped :not(.cols) — grid AI rows (plan 055 Phase 2) already get the shared
-   1.25em clearance from .line.cols, so this legacy fallback must not stack a
-   second indent on top of it. */
+/* Decoration-off rows have no .line-decoration prefix, so they don't inherit the
+   regular hanging-indent padding from viewer-styles-decoration.ts; this keeps the
+   message off the left edge. Scoped :not(.cols) — grid AI rows (plan 055 Phase 2)
+   already get the shared 1.25em clearance from .line.cols, so this legacy fallback
+   must not stack a second indent on top of it. */
 .line.ai-line:not(.cols):not(:has(.line-decoration)) {
     padding-left: 13px;
 }

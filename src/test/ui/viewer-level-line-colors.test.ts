@@ -84,13 +84,14 @@ suite('ViewerLevelLineColors', () => {
 
     test('severity gutter connector uses color-mix not opacity (dot stacks above stripe)', () => {
         const deco = getDecorationStyles();
-        // Connector is now per-level :has(+ .level-bar-X)::after rules (one
-        // per level) instead of the prior .bar-down/.bar-up class system.
-        // Each rule must use color-mix(45%) for the fill, not opacity, so the
-        // pseudo-element doesn't stack above the dot in Chromium/WebKit.
+        // Connector is now a single class-agnostic [class*="level-bar-"]::after
+        // full-height stripe reading --bar-color (replaced the per-level
+        // :has(+ .level-bar-X) chain, 2026-07-10). It must use color-mix(45%) for
+        // the fill, not opacity, so the pseudo-element doesn't stack above the
+        // dot in Chromium/WebKit.
         assert.ok(
-            /:has\(\+\s*\.level-bar-info\)::after/.test(deco),
-            'connector CSS must use :has(+ .level-bar-*) sibling selectors',
+            /\[class\*="level-bar-"\][^{]*::after\s*\{/.test(deco),
+            'connector CSS must use a single [class*="level-bar-"]::after stripe rule',
         );
         assert.ok(
             /background:\s*color-mix\(in srgb,\s*var\(--bar-color\)\s*45%,\s*transparent\)/.test(deco),
@@ -99,8 +100,8 @@ suite('ViewerLevelLineColors', () => {
         // The rule body must not use opacity (regression guard from the
         // pre-CSS-sibling era — opacity on ::after interacted with stacking
         // contexts and let the gutter stripe paint on top of the dot).
-        const ruleBody = /:has\(\+[^)]*\)::after\s*\{([^}]*)\}/.exec(deco);
-        assert.ok(ruleBody, 'connector :has-based rule must exist');
+        const ruleBody = /\[class\*="level-bar-"\][^{]*::after\s*\{([^}]*)\}/.exec(deco);
+        assert.ok(ruleBody, 'connector stripe rule must exist');
         assert.ok(
             !/opacity:\s*0\./.test(ruleBody![1]),
             'regression: connector must not use opacity (Chromium stacks it over the dot)',

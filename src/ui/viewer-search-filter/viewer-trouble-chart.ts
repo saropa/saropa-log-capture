@@ -7,6 +7,11 @@
  * tumbling time windows and draws one stacked bar per window — error / warning /
  * performance. Clicking a bar scrolls the feed to that window's first row.
  *
+ * The head-row legend chips (error / warning / performance, each with its running total)
+ * double as level filters: they route to the SAME toggleLevel / soloLevel the toolbar level
+ * dots call, so single-click toggles the level, double-click focuses only it, and the chip
+ * dim and the dot dim stay in lockstep through the one enabledLevels set (syncTroubleChartChips).
+ *
  * WHY aggregate in the webview: the page already holds every line with its
  * `item.level` and `item.timestamp`, so bucketing here needs no new host→webview
  * channel and adds NO buffer between capture and the webview. The extension-host
@@ -170,18 +175,50 @@ function troubleChartBar(bin, geom, scale, intervalMs, selected) {
     return '<g class="' + cls + '"' + lineAttr + '><title>' + tip + '</title>' + band + rects + '</g>';
 }
 
-/* Per-level totals for the whole charted span, as colored chips in the pane head.
-   Without them a stacked bar's colors are unlabeled and the chart is decoration. */
+/* One legend chip. The chips are not just labels: each is an interactive level filter that
+   routes to the SAME toggleLevel/soloLevel the toolbar dots use, so data-level is required
+   for the delegated handler. 'on' (the level is in enabledLevels) drives the inactive dim,
+   mirroring .level-dot:not(.active). role=button + tabindex + aria-pressed make the control
+   keyboard-reachable, which the plain <span> was not. enabledLevels may be undefined in the
+   VM test harness (the level-filter script is not loaded there) — default to on. */
+function troubleChartChipHtml(level, count) {
+    var on = (typeof enabledLevels === 'undefined') || enabledLevels.has(level);
+    return '<span class="tc-chip tc-chip-' + level + (on ? '' : ' tc-chip-off')
+        + '" data-level="' + level + '" role="button" tabindex="0" aria-pressed="' + (on ? 'true' : 'false')
+        + '" title="' + vt('viewer.troubleChart.chip.title') + '"><i></i>'
+        + vt('viewer.troubleChart.legend.' + level, count) + '</span>';
+}
+
+/* Per-level totals for the whole charted span, as clickable colored chips in the pane head.
+   Without them a stacked bar's colors are unlabeled and the chart is decoration; making them
+   clickable turns the same colors into a level filter paired with the toolbar dots. */
 function renderTroubleChartLegend(totals) {
     var el = document.getElementById('trouble-chart-legend');
     if (!el) { return; }
     var levels = ['error', 'warning', 'performance'];
     var html = '';
     for (var i = 0; i < levels.length; i++) {
-        html += '<span class="tc-chip tc-chip-' + levels[i] + '"><i></i>'
-            + vt('viewer.troubleChart.legend.' + levels[i], totals[levels[i]]) + '</span>';
+        html += troubleChartChipHtml(levels[i], totals[levels[i]]);
     }
     el.innerHTML = html;
+}
+
+/* Live-sync each chip's on/off dim from enabledLevels WITHOUT rebuilding the legend, so a
+   level toggled from a toolbar dot dims its chip immediately (syncLevelDots calls this), and
+   the chip's own click — which routes through toggleLevel → syncLevelDots — comes straight
+   back here. The chart and the toolbar are two views of one enabledLevels set, never two. */
+function syncTroubleChartChips() {
+    if (typeof document === 'undefined') { return; }
+    var el = document.getElementById('trouble-chart-legend');
+    if (!el) { return; }
+    var chips = el.querySelectorAll('.tc-chip');
+    for (var i = 0; i < chips.length; i++) {
+        var lvl = chips[i].getAttribute('data-level');
+        if (!lvl) { continue; }
+        var on = (typeof enabledLevels === 'undefined') || enabledLevels.has(lvl);
+        chips[i].classList.toggle('tc-chip-off', !on);
+        chips[i].setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
 }
 
 /* Peak count, in the head row beside the title. It lived pinned inside the plot's
@@ -278,10 +315,37 @@ function toggleTroubleChartCollapsed() {
     if (!troubleChartCollapsed) { renderTroubleChart(); }
 }
 
+/* Resolve the chip a legend event landed on and run the level action. Split so click,
+   dblclick, and keydown share one lookup. 'solo' focuses the level (double-click); every
+   other path toggles it. Guarded — toggleLevel/soloLevel live in the level-filter script. */
+function troubleChartChipAction(e, mode) {
+    var chip = e.target && e.target.closest ? e.target.closest('.tc-chip') : null;
+    if (!chip) { return; }
+    var lvl = chip.getAttribute('data-level');
+    if (!lvl) { return; }
+    if (mode === 'solo' && typeof soloLevel === 'function') { soloLevel(lvl); }
+    else if (typeof toggleLevel === 'function') { toggleLevel(lvl); }
+}
+
+/* Chips are rebuilt on every legend update, so the listeners are delegated on the stable
+   #trouble-chart-legend container. Single-click (or Enter/Space) toggles the level;
+   double-click focuses only it — the exact gestures the toolbar dots use, because they call
+   the same functions. State stays in sync both ways through enabledLevels/syncLevelDots. */
+function wireTroubleChartChips() {
+    var legend = document.getElementById('trouble-chart-legend');
+    if (!legend) { return; }
+    legend.addEventListener('click', function(e) { troubleChartChipAction(e, 'toggle'); });
+    legend.addEventListener('dblclick', function(e) { troubleChartChipAction(e, 'solo'); });
+    legend.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); troubleChartChipAction(e, 'toggle'); }
+    });
+}
+
 (function() {
     if (typeof document === 'undefined') { return; }
     var toggle = document.getElementById('trouble-chart-toggle');
     if (toggle) { toggle.addEventListener('click', toggleTroubleChartCollapsed); }
+    wireTroubleChartChips();
     var body = document.getElementById('trouble-chart-body');
     if (!body) { return; }
     /* Delegated click: a bar carries the 1-based line number of its window's first
