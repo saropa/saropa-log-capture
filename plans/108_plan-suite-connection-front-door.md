@@ -252,3 +252,27 @@ Crashlytics adapters consume, so a mapping would point users at the wrong adapte
   auto-refreshed rather than only guided) is unchanged.
 
 Finish report appended: plans/108_plan-suite-connection-front-door.md
+
+## Owner ruling (2026-07-09): issues block removed from the Integrations screen
+
+The "Issues found by your companion tools" block and its share of the icon badge were REMOVED.
+Ruling: **the Options screen is for toggles only** — it is a configuration surface, not a
+diagnostics feed. The block rendered every raw diagnostic from the sibling mirrors (Drift Advisor
+statistical outliers, Saropa Lints HACK markers) with no severity gate and no cap, which read as
+noise, not signal. Companion findings belong in the tools' own UIs and the signal report's
+ecosystem section (`signal-report-ecosystem.ts`), which summarizes instead of dumping rows.
+
+What was removed / kept:
+
+- REMOVED: `suite-issues-html.ts` (host builder), the `integrations-suite-issues` container,
+  the `.suite-issue-*` CSS, and the five `viewer.integrations.suite*` l10n keys.
+- RENAMED: the message pair `requestSuiteIssues` → `suiteIssues` became
+  `requestSuiteSuggestions` → `suiteSuggestions`; the webview script is now
+  `viewer-suite-suggestions-script.ts` (`getSuiteSuggestionsScript`). Catalogs regenerated.
+- KEPT: the Integrations icon (shortcut to the Integrations screen), the badge (now counting only
+  pending integration suggestions), the suggested-integrations block with its Enable buttons, the
+  companion install rows, and the silent-tool notification flow (`suite-silent-notice.ts` —
+  a notification, not an Options-screen surface, so unaffected).
+
+**Do not re-add a diagnostics list to any Options view.** If cross-tool findings need a surface
+later, propose it as its own panel or extend the signal report — never the Options panel.
