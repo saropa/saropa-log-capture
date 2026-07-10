@@ -169,3 +169,52 @@ suite('Empty-message structured rows render as blanks, not tag-only rows', () =>
     assert.strictEqual(ctx.calcItemHeight(item), 20);
   });
 });
+
+suite('isLineContentBlank memoization', () => {
+  /* The result is cached on item._contentBlank keyed by the global toggles. Toggling
+     structuredLineParsing must invalidate that cache for the SAME item, or an empty-message
+     logcat line would keep reporting blank after the user turns parsing off (when the raw
+     line, shown in full, is not blank). */
+  test('recomputes for the same item when structuredLineParsing toggles', () => {
+    const ctx = build();
+    const item = itemFor(ctx, EMPTY_LOGCAT);
+    assert.strictEqual(ctx.isLineContentBlank(item), true, 'parsing on: prefix stripped, blank');
+    ctx.structuredLineParsing = false;
+    assert.strictEqual(ctx.isLineContentBlank(item), false, 'parsing off: raw line has text');
+    ctx.structuredLineParsing = true;
+    assert.strictEqual(ctx.isLineContentBlank(item), true, 'parsing on again: blank once more');
+  });
+
+  /* Regression for the memo defect the review caught: saveEditedLine (viewer-edit-modal.ts)
+     rewrites item.html in place, which the cache key does NOT cover. Without clearing the memo
+     the stale blank-state survives the edit; the edit site clears item._contentBlank, and this
+     pins that contract. Uses a WHITESPACE edit, not '' — an empty string trips the early
+     `if (!item.html) return true` guard and bypasses the memo, so only a truthy-but-blank
+     value (whitespace, or a prefix that strips to nothing) actually exercises the stale path. */
+  test('an in-place html edit is only reflected after item._contentBlank is cleared', () => {
+    const ctx = build();
+    const item: Record<string, unknown> = { html: 'real text', type: 'line', level: 'info' };
+    assert.strictEqual(ctx.isLineContentBlank(item), false, 'starts non-blank, memo populated');
+
+    // Mimic saveEditedLine mutating html to whitespace WITHOUT invalidating: memo returns stale.
+    item.html = '   ';
+    assert.strictEqual(ctx.isLineContentBlank(item), false, 'stale cache still reports non-blank');
+
+    // The edit site's `delete item._contentBlank` is what makes the re-render correct.
+    delete item._contentBlank;
+    assert.strictEqual(ctx.isLineContentBlank(item), true, 'after invalidation the whitespace line is blank');
+  });
+
+  /* The throwaway probe objects computeLineBirthHeight builds get _contentBlank written on
+     them, but they are discarded — they must never leak state onto a real allLines item. */
+  test('birth-height probe objects do not poison a real line item', () => {
+    const ctx = build();
+    const real = itemFor(ctx, NORMAL_LOGCAT);
+    ctx.computeLineBirthHeight({
+      html: EMPTY_LOGCAT, errorSuppressed: false, lineTierHidden: false, classHidden: false,
+      catFiltered: false, lvl: 'warning', scopeFilt: false, isAutoHidden: false, flowTag: null,
+      spLen: ctx.parseStructuredPrefix(EMPTY_LOGCAT, null)!.prefixLen,
+    });
+    assert.strictEqual(ctx.isLineContentBlank(real), false, 'the real item is unaffected by probe calls');
+  });
+});

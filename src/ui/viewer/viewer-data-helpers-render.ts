@@ -182,7 +182,13 @@ function renderItem(item, idx, prevVis) {
         var _aiBracketMatch = /^((?:<[^>]*>)*)\\[([^\\]]+)\\]\\s*/.exec(html);
         var aiPrefix = '', aiBody = html;
         if (_aiBracketMatch) {
-            aiPrefix = _aiBracketMatch[1] + '<span class="ai-prefix">[' + escapeHtml(_aiBracketMatch[2]) + ']</span>';
+            /* Render the [AI Edit] / [AI Bash] label as a labeled chip (brackets stripped)
+               instead of plain bracketed text. Other tagged lines already chip their
+               [db]/[perf] tags; AI lines were the only tagged rows left reading their
+               category from an undocumented color rail alone (user report 2026-07-10).
+               The chip reads --ai-rail-color (set per category on .ai-line) so its color
+               matches the rail without duplicating the category-to-color map. */
+            aiPrefix = _aiBracketMatch[1] + '<span class="ai-tag-chip">' + escapeHtml(_aiBracketMatch[2]) + '</span>';
             aiBody = html.substring(_aiBracketMatch[0].length);
         }
         var aiCompress = '';

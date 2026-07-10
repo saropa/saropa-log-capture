@@ -112,12 +112,16 @@ function normalizeForBlankCheck(text) {
     renderer calls it again per visible row, so the memo removes a repeated stripHtmlPrefix +
     stripTags + normalize pass on hot paths.
 
-    The cache key (item._contentBlankKey) folds in every global input that can flip the answer
-    for a FIXED item without the item being rebuilt: the structuredLineParsing toggle (changes
-    the parsed-prefix strip in log AND file mode) and the formatEnabled toggle (toggleFormat
-    flips it in place and only calls recalcHeights — it does NOT rebuild items — so a file-mode
-    row's formatted-output blankness can change under a stale key). fileMode is fixed per loaded
-    file (a mode change reloads and rebuilds items) but is included for safety. */
+    The cache key (item._contentBlankKey) folds in the GLOBAL toggles that can flip the answer
+    for a fixed item: structuredLineParsing (changes the parsed-prefix strip in log AND file
+    mode) and formatEnabled (toggleFormat flips it in place and only calls recalcHeights — it
+    does NOT rebuild items — so a file-mode row's formatted-output blankness can change under a
+    stale key). fileMode is fixed per loaded file (a mode change reloads and rebuilds items) but
+    is included for safety.
+
+    The key does NOT cover item.html, which the manual line-edit feature mutates in place
+    (saveEditedLine in viewer-edit-modal.ts). Any code that rewrites a line item's html without
+    a rebuild MUST clear item._contentBlank so the next call recomputes — the edit site does. */
 function isLineContentBlank(item) {
     if (!item || !item.html) return true;
     var _slp = (typeof structuredLineParsing !== 'undefined' && structuredLineParsing) ? 1 : 0;

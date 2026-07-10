@@ -139,8 +139,15 @@ export function getLineStyles(): string {
 
 /* --- Clickable source file links within log lines --- */
 .source-link {
-    color: var(--vscode-editorLineNumber-foreground, #858585);
-    text-decoration: none;
+    /* Was editorLineNumber-foreground (#858585) — that gray is designed to recede
+       against the editor gutter, so on the dark viewer background the links were
+       effectively invisible and read as non-clickable (user report 2026-07-10).
+       Use the theme's link color so a file path looks like the link it is; the
+       resting dotted underline marks it actionable without the loud solid link
+       underline, which hover then promotes. */
+    color: var(--vscode-textLink-foreground, #3794ff);
+    text-decoration: underline dotted;
+    text-underline-offset: 2px;
     cursor: pointer;
     transition: color 0.15s ease;
 }
