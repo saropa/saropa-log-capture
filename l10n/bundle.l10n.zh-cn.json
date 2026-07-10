@@ -1027,9 +1027,7 @@
   "Severity": "严重性",
   "Severity dot (copy only)": "严重性点（仅限副本）",
   "Show PID/TID": "显示PID/TID",
-  "Show all ({0})": "显示全部 ({0})",
   "Show details": "显示详情",
-  "Show less": "显示较少",
   "Show level prefix": "显示级别前缀",
   "Show line number on blank lines": "在空白行上显示行号",
   "Show line number on blank lines so Go to Line matches file": "在空白行上显示行号，以便转到行匹配文件",
@@ -2111,5 +2109,8 @@
   "Perf {0}": "⁇ 的 _PH0__ 的意思",
   "Warn {0}": "警告:PH0__ 的一个字.",
   "Copy Tags": "复制标签 (Copy Tags) 是一个标记.",
-  "Copy this line's tags as a comma-separated list": "将这行标签复制成以逗号分隔的列表."
+  "Copy this line's tags as a comma-separated list": "将这行标签复制成以逗号分隔的列表.",
+  "Copy every tag as JSON, grouped by display name with its raw tag variants": "将每个标签复制为JSON,按显示名称分组,并以其原始标记变体进行分类.",
+  "Filter tags…": "过 ⁇ 标签... 这是一个很好的方法.",
+  "No tags match your search": "没有标签与您的搜索匹配."
 }

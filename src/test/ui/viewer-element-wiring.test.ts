@@ -81,6 +81,10 @@ suite('Webview element ID wiring', () => {
         // flyout's aria-expanded and badge updates no-op harmlessly.
         'toolbar-search-btn',
         'toolbar-search-count',
+        // Flow-tags toolbar button removed 2026-07-10 (user: redundant). viewer-flow-tags.ts
+        // still null-guards both getElementById lookups (applyFlowModeIndicator + the IIFE
+        // click listener), so this is a harmless no-op, not a regression.
+        'toolbar-flowtags-btn',
         // Old footer toggle buttons — not in current HTML
         'audio-toggle',
         'deco-toggle',

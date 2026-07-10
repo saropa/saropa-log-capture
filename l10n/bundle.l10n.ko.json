@@ -1027,9 +1027,7 @@
   "Severity": "심각성",
   "Severity dot (copy only)": "심각도 점(복사만 가능)",
   "Show PID/TID": "PID/TID 표시",
-  "Show all ({0})": "모두 표시({0})",
   "Show details": "세부정보 표시",
-  "Show less": "간략히 보기",
   "Show level prefix": "레벨 접두사 표시",
   "Show line number on blank lines": "빈 줄에 줄 번호 표시",
   "Show line number on blank lines so Go to Line matches file": "Go to Line이 파일과 일치하도록 빈 줄에 줄 번호를 표시합니다.",
@@ -2111,5 +2109,8 @@
   "Perf {0}": "퍼프 {0}",
   "Warn {0}": "경고 {0}를 켜십시오.",
   "Copy Tags": "복사 태그 (Copy Tags)",
-  "Copy this line's tags as a comma-separated list": "이 라인의 태그를 쉼표로 구분된 목록으로 복사하십시오."
+  "Copy this line's tags as a comma-separated list": "이 라인의 태그를 쉼표로 구분된 목록으로 복사하십시오.",
+  "Copy every tag as JSON, grouped by display name with its raw tag variants": "모든 태그를 JSON으로 복사하여, Raw 태그 변종과 함께 표시 이름에 따라 그룹화합니다.",
+  "Filter tags…": "필터 태그...필터 태그가 있습니다.",
+  "No tags match your search": "검색과 일치하는 태그가 없습니다."
 }

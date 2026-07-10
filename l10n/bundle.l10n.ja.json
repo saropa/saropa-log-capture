@@ -1027,9 +1027,7 @@
   "Severity": "重大度",
   "Severity dot (copy only)": "重大度ドット (コピーのみ)",
   "Show PID/TID": "PID/TID を表示",
-  "Show all ({0})": "すべて表示 ({0})",
   "Show details": "詳細を表示",
-  "Show less": "表示を少なくする",
   "Show level prefix": "レベルプレフィックスを表示",
   "Show line number on blank lines": "空行に行番号を表示",
   "Show line number on blank lines so Go to Line matches file": "空白行に行番号を表示して、「行に移動」がファイルと一致するようにします",
@@ -2111,5 +2109,8 @@
   "Perf {0}": "パルフ _PH0__ でした.",
   "Warn {0}": "警告する {0}",
   "Copy Tags": "コピータグ (Copy Tags) は,コピー・タグを表示する.",
-  "Copy this line's tags as a comma-separated list": "この行のタグをコンマで区切られたリストとしてコピーします."
+  "Copy this line's tags as a comma-separated list": "この行のタグをコンマで区切られたリストとしてコピーします.",
+  "Copy every tag as JSON, grouped by display name with its raw tag variants": "すべてのタグをJSONとしてコピーし,その原始のタグ変数を持つ表示名によってグループ化します.",
+  "Filter tags…": "フィルタータグ...",
+  "No tags match your search": "検索に一致するタグはありません."
 }
