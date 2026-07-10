@@ -211,5 +211,14 @@ export function getTagStyles(): string {
 .tag-chip.tag-level-notice      { --tag-c: var(--vscode-charts-blue, #4aa5ff); }
 .tag-chip.tag-level-debug       { --tag-c: var(--vscode-descriptionForeground, #9d9d9d); }
 .tag-chip.tag-level-info        { --tag-c: var(--vscode-charts-blue, #4aa5ff); }
+/* "+N" badge for the tags a row carries beyond the one rendered primary chip
+   (2026-07-10: capping the column to 1 chip fixed message-text squeeze, but hid
+   that more tags existed with no visible cue). Neutral gray — it counts, it is
+   not itself a severity level. Full list still rides the cell's hover tooltip. */
+.tag-chip.tag-chip-more {
+    --tag-c: var(--vscode-descriptionForeground, #9d9d9d);
+    margin-right: 0;
+    font-weight: 600;
+}
 `;
 }

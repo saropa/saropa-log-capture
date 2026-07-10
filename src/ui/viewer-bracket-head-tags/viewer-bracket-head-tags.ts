@@ -131,17 +131,26 @@ function renderHeadTagChip(tag) {
     return '<span class="tag-chip ' + levelCls + '" data-tag-chip="' + escapeHeadTag(key) + '">' + body + '</span>';
 }
 
-/* Render only the line's PRIMARY tag — the first entry in tags[], already the
+/* Render the line's PRIMARY tag — the first entry in tags[], already the
    highest-priority signal (buildUnifiedLineTags pushes bracket head tags before the
    structured/logcat/source tag, so an app-emitted [db]/[perf] wins over a generic
-   device tag on the same line). Rendering every tag as its own chip cluttered the
-   fixed-width tag column and, on lines carrying 2-3 tags, visibly squeezed the
-   message text down to a sliver (user report 2026-07-10). Every tag is still fully
-   filterable from the Message Tags sidebar (item.tags is unchanged) and still listed
-   in full on the cell's hover tooltip (headTagsTitle below). */
+   device tag on the same line) — plus a neutral "+N" badge when the line carries
+   more. Rendering every tag as its own chip cluttered the fixed-width tag column
+   and, on lines carrying 2-3 tags, visibly squeezed the message text down to a
+   sliver (user report 2026-07-10); showing +N with no count then hid that the
+   extra tags existed at all. Every tag is still fully filterable from the Message
+   Tags sidebar (item.tags is unchanged) and still listed in full on the cell's
+   hover tooltip (headTagsTitle below). Revives the +N pattern from commit 7ff07c3b
+   (renderHeadTagCell), simplified back into this function since the caller already
+   applies headTagsTitle as the cell's own tooltip separately. */
 function renderHeadTagChips(tags) {
     if (!tags || tags.length === 0) return '';
-    return renderHeadTagChip(tags[0]);
+    var html = renderHeadTagChip(tags[0]);
+    var extra = tags.length - 1;
+    if (extra > 0) {
+        html += '<span class="tag-chip tag-chip-more">+' + extra + '</span>';
+    }
+    return html;
 }
 
 /* Space-separated list of every tag name (not just the one rendered chip), escaped,
