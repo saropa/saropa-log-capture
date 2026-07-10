@@ -96,8 +96,6 @@ export const stringsViewer: Record<string, string> = {
     'viewer.toolbar.perfChip.title': 'Performance data available — click to open the Signals panel',
     'viewer.toolbar.perfChip.label': 'Performance data available',
     'viewer.toolbar.perfChip.text': 'Performance',
-    'viewer.toolbar.sessionDetails.label': 'Log context',
-    'viewer.toolbar.sessionDetails.title': 'Log session context and metadata',
     'viewer.toolbar.filename.title': 'Log file — click the name for actions (open in editor, folder, copy path). Press F1 in the viewer (default) for the shortcut list.',
 
     // ── Filter drawer (viewer-toolbar-filter-drawer-html.ts) ──────────

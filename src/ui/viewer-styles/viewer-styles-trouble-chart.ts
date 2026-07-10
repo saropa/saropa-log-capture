@@ -105,6 +105,10 @@ body.slc-trouble-active .trouble-chart { display: block; }
    feed to that window's first row). */
 .trouble-chart .tc-bar { cursor: pointer; }
 .trouble-chart .tc-bar:hover rect { opacity: 0.75; }
+/* A window that ended before the app launched: the device's own logcat backlog. It is drawn
+   (hiding data is never the answer) but muted and saturated at full height, because it is
+   excluded from the peak scale. Muted is the signal that the bar's height is not to scale. */
+.trouble-chart .tc-bar-pre rect { opacity: 0.35; }
 .trouble-chart .tc-bar-error { fill: #f44336; }
 .trouble-chart .tc-bar-warning { fill: #ff9800; }
 .trouble-chart .tc-bar-performance { fill: #9c27b0; }

@@ -24,7 +24,7 @@ function buildChartCtx(): Record<string, unknown> {
   return ctx;
 }
 
-interface Bucket { key: number; error: number; warning: number; performance: number; firstLine: number | null }
+interface Bucket { key: number; error: number; warning: number; performance: number; firstLine: number | null; preLaunch: boolean }
 interface LevelTotals { error: number; warning: number; performance: number }
 interface BucketResult { bins: Bucket[]; maxTotal: number; intervalMs: number; totals: LevelTotals }
 
@@ -137,6 +137,120 @@ suite('Trouble Mode severity chart', () => {
     assert.strictEqual(ctx.troubleChartIntervalSec, 3, 'valid value kept');
     set(Number.NaN);
     assert.strictEqual(ctx.troubleChartIntervalSec, 3, 'NaN ignored');
+  });
+});
+
+suite('Trouble Mode severity chart — the pre-launch device burst', () => {
+  // A phone drains its logcat backlog while an app starts: dozens of framework warnings
+  // that belong to the device, not the app. Left in the peak, that one window scales the
+  // whole strip and every real spike after it collapses to a sliver.
+  const LAUNCH = 'Launching lib\\main.dart on motorola edge 2022 in debug mode...';
+
+  test('a window ending before the launch line is excluded from the peak', () => {
+    const ctx = buildChartCtx();
+    // 5s windows. Window 2 (10_000..14_999) holds a 3-warning burst; launch lands in
+    // window 3, so window 2 ends before it and only the single later error sets the peak.
+    ctx.allLines = [
+      { type: 'line', level: 'warning', timestamp: 10_000, viewerLineIndex: 0 },
+      { type: 'line', level: 'warning', timestamp: 11_000, viewerLineIndex: 1 },
+      { type: 'line', level: 'warning', timestamp: 12_000, viewerLineIndex: 2 },
+      { type: 'line', level: 'info', rawText: LAUNCH, timestamp: 15_000, viewerLineIndex: 3 },
+      { type: 'line', level: 'error', timestamp: 20_000, viewerLineIndex: 4 },
+    ];
+
+    const r = buckets(ctx);
+    assert.strictEqual(r.maxTotal, 1, 'the burst does not set the scale');
+    assert.strictEqual(r.bins[0].preLaunch, true, 'burst window flagged pre-launch');
+    assert.strictEqual(r.bins[0].warning, 3, 'and its bar still carries all three warnings');
+    assert.strictEqual(r.bins[2].preLaunch, false, 'the app-era window is not flagged');
+    assert.strictEqual(r.totals.warning, 3, 'the legend still counts them — nothing is hidden');
+  });
+
+  test('the window containing the launch line counts toward the peak', () => {
+    const ctx = buildChartCtx();
+    // The launch line sits inside window 2, which therefore holds app-era events too.
+    ctx.allLines = [
+      { type: 'line', level: 'warning', timestamp: 10_000, viewerLineIndex: 0 },
+      { type: 'line', level: 'warning', timestamp: 11_000, viewerLineIndex: 1 },
+      { type: 'line', level: 'info', rawText: LAUNCH, timestamp: 12_000, viewerLineIndex: 2 },
+    ];
+    const r = buckets(ctx);
+    assert.strictEqual(r.bins[0].preLaunch, false, 'a mixed window is never treated as device noise');
+    assert.strictEqual(r.maxTotal, 2, 'so it sets the scale');
+  });
+
+  test('a log with no launch line scales to everything', () => {
+    const ctx = buildChartCtx();
+    // A pure logcat capture, or a session attached after the app was already running.
+    ctx.allLines = [
+      { type: 'line', level: 'warning', timestamp: 10_000, viewerLineIndex: 0 },
+      { type: 'line', level: 'warning', timestamp: 11_000, viewerLineIndex: 1 },
+      { type: 'line', level: 'error', timestamp: 20_000, viewerLineIndex: 2 },
+    ];
+    const r = buckets(ctx);
+    assert.strictEqual(r.maxTotal, 2, 'no launch line means no exclusion');
+    assert.strictEqual(r.bins[0].preLaunch, false, 'nothing is flagged');
+  });
+
+  test('when nothing has happened since launch, the burst scales the chart', () => {
+    const ctx = buildChartCtx();
+    // Otherwise every bar would divide by a zero peak and vanish.
+    ctx.allLines = [
+      { type: 'line', level: 'warning', timestamp: 10_000, viewerLineIndex: 0 },
+      { type: 'line', level: 'warning', timestamp: 11_000, viewerLineIndex: 1 },
+      { type: 'line', level: 'info', rawText: LAUNCH, timestamp: 30_000, viewerLineIndex: 2 },
+    ];
+    const r = buckets(ctx);
+    assert.strictEqual(r.bins[0].preLaunch, true, 'the burst is still flagged');
+    assert.strictEqual(r.maxTotal, 2, 'but the peak falls back to it rather than 0');
+  });
+
+  test('an untimestamped launch line takes its instant from the next timestamped line', () => {
+    const ctx = buildChartCtx();
+    // This is the real shape: Flutter prints the launch line to stdout with no clock
+    // prefix, so it reaches the page with timestamp 0. Requiring a timestamp on the line
+    // itself would disable the rule for every log it exists to fix.
+    ctx.allLines = [
+      { type: 'line', level: 'warning', timestamp: 10_000, viewerLineIndex: 0 },
+      { type: 'line', level: 'info', rawText: LAUNCH, timestamp: 0, viewerLineIndex: 1 },
+      { type: 'line', level: 'error', timestamp: 16_000, viewerLineIndex: 2 },
+    ];
+    assert.strictEqual((ctx.troubleChartLaunchTs as () => number)(), 16_000, 'launch instant resolved forward');
+
+    const r = buckets(ctx);
+    assert.strictEqual(r.bins[0].preLaunch, true, 'the warning window ends before it');
+    assert.strictEqual(r.maxTotal, 1, 'and only the app-era error sets the peak');
+  });
+
+  test('a launch line still streaming has no instant yet, and excludes nothing', () => {
+    const ctx = buildChartCtx();
+    // Live capture: the launch line has arrived but nothing timestamped has followed it.
+    ctx.allLines = [
+      { type: 'line', level: 'warning', timestamp: 10_000, viewerLineIndex: 0 },
+      { type: 'line', level: 'info', rawText: LAUNCH, timestamp: 0, viewerLineIndex: 1 },
+    ];
+    assert.strictEqual((ctx.troubleChartLaunchTs as () => number)(), 0, 'unresolved, not guessed');
+    assert.strictEqual(buckets(ctx).bins[0].preLaunch, false, 'so nothing is muted');
+  });
+
+  test('loading a new log restarts the resumable scan', () => {
+    const ctx = buildChartCtx();
+    ctx.allLines = [
+      { type: 'line', level: 'warning', timestamp: 10_000, viewerLineIndex: 0 },
+      { type: 'line', level: 'info', rawText: LAUNCH, timestamp: 15_000, viewerLineIndex: 1 },
+    ];
+    const launchTs = ctx.troubleChartLaunchTs as () => number;
+    assert.strictEqual(launchTs(), 15_000, 'launch timestamp found');
+
+    // A longer log with no launch line: without the explicit reset the scan would resume
+    // past index 1 and keep reporting the previous log's launch.
+    ctx.allLines = [
+      { type: 'line', level: 'error', timestamp: 90_000, viewerLineIndex: 0 },
+      { type: 'line', level: 'error', timestamp: 91_000, viewerLineIndex: 1 },
+      { type: 'line', level: 'error', timestamp: 92_000, viewerLineIndex: 2 },
+    ];
+    (ctx.resetTroubleChartLaunchScan as () => void)();
+    assert.strictEqual(launchTs(), 0, 'no stale launch from the previous log');
   });
 });
 

@@ -96,7 +96,8 @@ export function getLogBannerScript(): string {
     var detailsEl = document.createElement('span');
     detailsEl.id = 'session-details-inline';
     detailsEl.className = 'session-details-inline';
-    detailsEl.setAttribute('aria-label', tr('viewer.toolbar.sessionDetails.label'));
+    detailsEl.setAttribute('aria-label', tr('viewer.logBanner.details.label'));
+    detailsEl.title = tr('viewer.logBanner.details.title');
     var actionsEl = document.createElement('span');
     actionsEl.className = 'session-newer-banner-actions';
     banner.appendChild(iconEl);
@@ -159,21 +160,33 @@ export function getLogBannerScript(): string {
         banner.style.display = '';
     }
 
+    /* Idempotent by design. The host re-posts logContextInfo on every session-tree change, which
+       during a live capture is continuous — so a status render that unconditionally reset
+       textContent and rebuilt the button row would (a) re-announce the whole bar to a screen
+       reader on each tick, since the bar is an aria-live region, and (b) destroy a button under
+       the cursor mid-click. Rebuild only on a mode change; touch the text only when it differs. */
     function renderStatus() {
+        var wasStatus = bannerMode === 'status';
         bannerMode = 'status';
         collapsed = false;
-        setIcon('file');
-        textEl.textContent = currentFilenameForBanner() + lifespanSuffix();
-        detailsEl.classList.remove('u-hidden');
-        statusActions();
+        if (!wasStatus) {
+            setIcon('file');
+            detailsEl.classList.remove('u-hidden');
+            statusActions();
+        }
+        var text = currentFilenameForBanner() + lifespanSuffix();
+        if (textEl.textContent !== text) { textEl.textContent = text; }
         banner.style.display = '';
     }
 
     /* Open-log name: prefer the live footer filename (always current), else the host's latest ctx. */
     function currentFilenameForBanner() {
+        return footerFilename() || ctx.latestName || tr('viewer.logBanner.unnamed');
+    }
+
+    function footerFilename() {
         var fnEl = document.querySelector('#footer-text .footer-filename');
-        var name = fnEl && fnEl.textContent ? fnEl.textContent.trim() : '';
-        return name || ctx.latestName || tr('viewer.logBanner.unnamed');
+        return (fnEl && fnEl.textContent) ? fnEl.textContent.trim() : '';
     }
 
     /* Only the × collapses the bar. Actions (open, copy, kebab items) leave it standing so the user
@@ -245,6 +258,12 @@ export function getLogBannerScript(): string {
         toggleKebab(false);
     });
 
+    /* An open kebab menu used to disappear with the whole pop-up banner. The bar no longer goes
+       anywhere, so the menu needs its own outside-click close or it hangs over the log. */
+    document.addEventListener('click', function(e) {
+        if (!banner.contains(e.target)) { toggleKebab(false); }
+    });
+
     document.addEventListener('keydown', function(e) {
         if (e.key !== 'Escape' || !bannerMode) { return; }
         e.preventDefault();
@@ -279,8 +298,11 @@ export function getLogBannerScript(): string {
     window.handleLogContextInfo = function(info) {
         ctx = info || ctx;
         updateStaleness();
-        /* No open log (empty viewer) — nothing to status-report. */
-        if (!ctx.currentUri && !bannerMode) { return; }
+        /* No open log (empty viewer) — nothing to status-report. currentUri comes from the SIDEBAR
+           provider and is broadcast unchanged to every target, so a pop-out showing a file the
+           sidebar never tracked receives ''. The footer filename is per-target, so it is what tells
+           that pop-out a log is in fact open. */
+        if (!ctx.currentUri && !footerFilename() && !bannerMode) { return; }
         if (ctx.autoShow) { renderAuto(); return; }
         /* A newer-log alert that stopped applying falls back to status; an explicitly collapsed bar
            stays collapsed, but its text is refreshed so re-opening it shows the current file. */
