@@ -49,6 +49,7 @@ Trouble Mode's reports now open **beside** the log instead of covering it, the l
 
 ### Fixed
 
+- **Log lines with an empty message no longer take a full row.** Android emits warnings that carry a tag and nothing else — `W keystore2:` with no message after the colon. Because the viewer lifts the parsed timestamp, process, and level out of the text and into their own columns, these lines rendered as a full-height row holding only a tag chip, and could even sprout an expander arrow for the hidden lines beneath them. They now collapse to the same slim sliver every other empty line gets, with no tag and no arrow.
 - **Crash issues opened from Trouble Mode get the full detail.** Opening an issue from the crash-issues band silently dropped the "In your project", "Seen in your logs", and device-state panels — they only appeared for issues opened from the Crashlytics sidebar. Both paths now run through the same code, so both get everything.
 - **A failed crash-issue load offers to retry.** "Could not load this issue." was a dead end; it now comes with a **Try again** button, and both it and "No stack trace available for this issue." were hardcoded English that never reached translation.
 - **Switching crash issues quickly no longer shows the wrong stack.** A slow fetch for one issue could land after you had already opened another, overwriting the second issue's detail with the first issue's stack while every surrounding panel still described the second. Late replies for an issue you have navigated away from are now discarded.

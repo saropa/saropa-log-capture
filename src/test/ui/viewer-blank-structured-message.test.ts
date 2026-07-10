@@ -26,7 +26,8 @@ interface Ctx extends Record<string, unknown> {
   parseStructuredPrefix(plain: string, formatId: string | null): { prefixLen: number; tag: string; msg: string } | null;
   isLineContentBlank(item: Record<string, unknown>): boolean;
   calcItemHeight(item: Record<string, unknown>): number;
-  getDecorationCells(item: Record<string, unknown>, idx: number, hiddenAfter: unknown): unknown[];
+  buildDecoParts(item: Record<string, unknown>, idx: number, hiddenAfter: unknown): { key: string }[];
+  getDecorationCells(item: Record<string, unknown>, idx: number, hiddenAfter: unknown): string;
   computeLineBirthHeight(...a: unknown[]): number;
 }
 
@@ -77,13 +78,23 @@ suite('Empty-message logcat rows render as blanks, not tag-only rows', () => {
 
   test('the empty-message row emits no decoration cells — no tag-only row', () => {
     const ctx = build();
-    const cells = ctx.getDecorationCells(itemFor(ctx, EMPTY_LOGCAT), 0, null);
-    assert.deepStrictEqual(cells, [], 'a row with no text must not render its parsed-tag chip');
+    const empty = itemFor(ctx, EMPTY_LOGCAT);
+    // Arrays cross the VM realm boundary with a foreign prototype, so compare length,
+    // not deepStrictEqual (which compares prototypes and would fail on an equal array).
+    assert.strictEqual(ctx.buildDecoParts(empty, 0, null).length, 0, 'no decoration parts');
+    assert.strictEqual(
+      ctx.getDecorationCells(empty, 0, null), '',
+      'a row with no text must not render its parsed-tag chip',
+    );
 
-    const normal = ctx.getDecorationCells(itemFor(ctx, NORMAL_LOGCAT), 0, null);
+    const normal = itemFor(ctx, NORMAL_LOGCAT);
     assert.ok(
-      normal.some((c) => (c as { key: string }).key === 'tag'),
+      ctx.buildDecoParts(normal, 0, null).some((c) => c.key === 'tag'),
       'a row WITH text still shows its parsed-tag chip',
+    );
+    assert.ok(
+      ctx.getDecorationCells(normal, 0, null).includes('ActivityManager'),
+      'the tag chip carries the parsed tag name',
     );
   });
 
