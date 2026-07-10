@@ -103,12 +103,18 @@ body.slc-trouble-active .trouble-chart { display: block; }
     color: var(--muted);
     cursor: pointer;
     line-height: 1;
-    font-size: var(--text-h3);
+    font-size: var(--text-h2);
     letter-spacing: normal;
     transition: transform 0.15s ease;
 }
 .trouble-chart .tc-toggle:hover { color: var(--fg); }
 .trouble-chart.tc-collapsed .tc-toggle { transform: rotate(-90deg); }
+/* The title doubles as a collapse target (larger hit area than the caret alone), so it takes
+   the caret's pointer + hover. Its own click handler toggles the chart; the legend chips beside
+   it keep their separate level-filter handlers, so only the title text — not the whole head —
+   is wired. */
+.trouble-chart .trouble-chart-title { cursor: pointer; user-select: none; }
+.trouble-chart .trouble-chart-title:hover { color: var(--fg); }
 /* Collapsed keeps the head — the legend totals are the whole point of a collapsed chart,
    and a chart that vanishes entirely gives the user nothing to click to bring it back. */
 .trouble-chart.tc-collapsed .trouble-chart-body { display: none; }

@@ -70,6 +70,63 @@ function revealTroubleDetailLine() {
     if (typeof scrollToLineNumber === 'function') { scrollToLineNumber(troubleDetailLast.viewerLine); }
 }
 
+/* Drag-to-resize bounds — same 320/560 rationale as the shipped clamp() this overrides:
+   narrower than 320 cannot show a readable stack frame, wider than 560 starves the feed. */
+var TROUBLE_RAIL_MIN_PX = 320;
+var TROUBLE_RAIL_MAX_PX = 560;
+
+/* Left-edge grip drag (precedent: viewer-scrollbar-minimap-resize.ts initMinimapResize).
+   Reads the CURRENT rendered width as the drag start point rather than a stored var, so
+   the first drag after load picks up wherever the clamp() (or a restored custom px)
+   already put the rail — there is no separate "clamp vs custom" state to keep in sync. */
+function initTroubleRailResize() {
+    var handle = document.getElementById('trouble-rail-resize');
+    var rail = document.getElementById('trouble-detail');
+    if (!handle || !rail) { return; }
+    handle.addEventListener('pointerdown', function(e) {
+        e.preventDefault();
+        handle.setPointerCapture(e.pointerId);
+        var startX = e.clientX;
+        var startW = rail.getBoundingClientRect().width;
+        var pid = e.pointerId;
+        var lastW = startW;
+        document.body.classList.add('tr-resizing');
+        function onMove(ev) {
+            if (ev.pointerId !== pid) { return; }
+            ev.preventDefault();
+            /* Handle sits on the rail's LEFT edge: dragging left grows the rail (same
+               sign convention as the minimap's left-edge handle). */
+            var delta = startX - ev.clientX;
+            lastW = Math.round(Math.max(TROUBLE_RAIL_MIN_PX, Math.min(TROUBLE_RAIL_MAX_PX, startW + delta)));
+            rail.style.width = lastW + 'px';
+        }
+        function onDone(ev) {
+            if (ev && ev.pointerId !== undefined && ev.pointerId !== pid) { return; }
+            document.body.classList.remove('tr-resizing');
+            handle.removeEventListener('pointermove', onMove);
+            handle.removeEventListener('pointerup', onDone);
+            handle.removeEventListener('pointercancel', onDone);
+            handle.removeEventListener('lostpointercapture', onDone);
+            if (typeof vscodeApi !== 'undefined') {
+                vscodeApi.postMessage({ type: 'setTroubleRailCustomPx', value: lastW });
+            }
+        }
+        handle.addEventListener('pointermove', onMove);
+        handle.addEventListener('pointerup', onDone);
+        handle.addEventListener('pointercancel', onDone);
+        handle.addEventListener('lostpointercapture', onDone);
+    });
+}
+
+/* Restore a previously dragged width from workspace state (host sends this once at
+   startup). Clamped defensively — a malformed or stale value must not paint the rail
+   off-screen. */
+function handleTroubleRailWidthPx(msg) {
+    if (typeof msg.px !== 'number' || msg.px < TROUBLE_RAIL_MIN_PX || msg.px > TROUBLE_RAIL_MAX_PX) { return; }
+    var rail = document.getElementById('trouble-detail');
+    if (rail) { rail.style.width = msg.px + 'px'; }
+}
+
 /* Wide enough for two columns? Toggles the class the rail's static-column rules key
    on. Cheap and idempotent; safe to call on every resize frame. */
 function syncTroubleRailWidth() {
@@ -137,6 +194,7 @@ function closeTroubleDetail() {
     if (copyBtn) { copyBtn.addEventListener('click', function() { copyTroubleReport(); }); }
     var revealBtn = document.getElementById('trouble-detail-reveal');
     if (revealBtn) { revealBtn.addEventListener('click', function() { revealTroubleDetailLine(); }); }
+    initTroubleRailResize();
     var el = document.getElementById('trouble-detail');
     if (el) {
         el.addEventListener('keydown', function(e) {
