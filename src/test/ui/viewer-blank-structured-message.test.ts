@@ -121,10 +121,12 @@ suite('Empty-message structured rows render as blanks, not tag-only rows', () =>
   test('birth height matches calcItemHeight for the empty-message row', () => {
     const ctx = build();
     const slp = ctx.parseStructuredPrefix(EMPTY_LOGCAT, null);
-    // computeLineBirthHeight(html, errSup, tierHidden, classHidden, catFilt, lvl, scopeFilt, autoHidden, flowTag, spLen)
-    const born = ctx.computeLineBirthHeight(
-      EMPTY_LOGCAT, false, false, false, false, 'warning', false, false, null, slp!.prefixLen,
-    );
+    // computeLineBirthHeight takes one options object (see viewer-data-add-line-birth.ts).
+    const born = ctx.computeLineBirthHeight({
+      html: EMPTY_LOGCAT, errorSuppressed: false, lineTierHidden: false, classHidden: false,
+      catFiltered: false, lvl: 'warning', scopeFilt: false, isAutoHidden: false, flowTag: null,
+      spLen: slp!.prefixLen,
+    });
     assert.strictEqual(born, QUARTER, 'born at quarter height, so it never flashes full-height before recalc');
   });
 
