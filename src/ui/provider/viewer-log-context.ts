@@ -54,8 +54,11 @@ export interface LogContextParams {
     readonly dismissedAt: number;
 }
 
-/** Flatten the tree into plain leaf sessions (split parts + group members + singletons). */
-function flattenLeafSessions(items: readonly TreeItem[]): SessionMetadata[] {
+/** Flatten the tree into plain leaf sessions (split parts + group members + singletons).
+ *  Exported because any code that must resolve a URI to the leaf that OWNS it — and therefore to
+ *  that leaf's `trashed` flag — needs this exact traversal. A partial flatten that skips
+ *  `SessionGroup.members` silently reports "not in the tree" for a nested member (plan 111). */
+export function flattenLeafSessions(items: readonly TreeItem[]): SessionMetadata[] {
     const leaves: SessionMetadata[] = [];
     for (const item of items) {
         if (isSessionGroup(item)) {
