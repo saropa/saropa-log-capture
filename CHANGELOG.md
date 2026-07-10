@@ -29,6 +29,10 @@ cspell:disable
 
 Trouble Mode's reports now open **beside** the log instead of covering it, the loading view shows the issue instead of the word "Loading", and the severity chart finally has a legend and a time axis. [log](https://github.com/saropa/saropa-log-capture/blob/v9.2.0/CHANGELOG.md)
 
+### Added
+
+- **Copy Tags.** A new right-click item copies a line's tags (bracket tags, structured tag, logcat tag, source tag) as one comma-separated list. It sits next to Copy Timestamp in the Copy & Export submenu and hides itself on lines that carry no tags.
+
 ### Changed
 
 - **Large logs recompute less while scrolling.** The viewer now remembers whether each row is blank instead of re-deriving it on every height pass and again for every painted row, recomputing only when you toggle structured parsing or file formatting. On logs with tens of thousands of lines this trims repeated work on the scroll path.
@@ -65,6 +69,7 @@ Trouble Mode's reports now open **beside** the log instead of covering it, the l
 - **Closing the Crashlytics sidebar no longer closes an unrelated report.** A crash issue opened from Trouble Mode's crash-issues band lives in the side rail, which does not belong to the sidebar panel; closing the panel now leaves it alone.
 - **The device's startup noise no longer flattens the severity chart.** A phone drains its logcat backlog while an app starts, so the opening seconds of a log carry dozens of framework warnings that belong to the device, not to your app. That single burst set the chart's scale and squashed every real spike after it into a sliver. Time windows that end before the app's launch line are now excluded from the peak. They still draw — nothing is hidden — but muted, and their tooltip reads **Before app launch**.
 - **The chart's peak label is no longer drawn over.** The tallest bar is almost always the burst of device warnings a phone emits while an app starts, it always lands in the leading time window, and it painted straight through the "Peak N" label pinned to the plot's top-left corner. The label now sits in the chart's header beside the title.
+- **Copy to Search now opens the search bar.** Right-clicking a line and choosing **Copy to Search** filled in the search field but left the search bar hidden if it was not already open, so the pasted text was invisible until you separately opened search. The action now opens the bar itself.
 
 ---
 

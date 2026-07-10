@@ -170,6 +170,18 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(decIdx > 0 && numIdx > decIdx && tsIdx > numIdx && allIdx > tsIdx);
         });
 
+        test('should include Copy Tags line-scoped item after Copy Timestamp', () => {
+            const html = getContextMenuHtml();
+            assert.ok(html.includes('Copy Tags'));
+            /* data-tags-action lets showContextMenu hide the row when the line carries no
+               unified tag set (item.tags), mirroring the data-timestamp-action pattern. */
+            assert.ok(html.includes('data-action="copy-tags" data-line-action data-tags-action'));
+            const tsIdx = html.indexOf('data-action="copy-timestamp"');
+            const tagsIdx = html.indexOf('data-action="copy-tags"');
+            const allIdx = html.indexOf('data-action="copy-all"');
+            assert.ok(tsIdx > 0 && tagsIdx > tsIdx && allIdx > tagsIdx);
+        });
+
         test('should group "All" items between separators in Copy & Export submenu', () => {
             const html = getContextMenuHtml();
             const copyAllIdx = html.indexOf('data-action="copy-all"');

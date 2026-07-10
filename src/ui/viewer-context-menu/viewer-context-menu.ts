@@ -211,6 +211,13 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
         el.style.display = (hasLine && hasTimestamp) ? '' : 'none';
     });
 
+    /* Copy Tags hides when the line carries no unified tag set (item.tags, built once in
+       addToData — see viewer-source-tags.ts). Most plain/markdown lines have none. */
+    var hasTags = !!(lineData && lineData.tags && lineData.tags.length > 0);
+    contextMenuEl.querySelectorAll('[data-tags-action]').forEach(function(el) {
+        el.style.display = (hasLine && hasTags) ? '' : 'none';
+    });
+
     // Code-quality actions depend on the codeQuality session adapter.
     var integrationAdapters = (typeof window !== 'undefined' && Array.isArray(window.integrationAdapters))
         ? window.integrationAdapters

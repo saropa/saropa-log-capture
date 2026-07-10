@@ -2109,5 +2109,7 @@
   "Collapse severity chart": "붕괴 심각도 차트",
   "Error {0}": "오류 {0}",
   "Perf {0}": "퍼프 {0}",
-  "Warn {0}": "경고 {0}를 켜십시오."
+  "Warn {0}": "경고 {0}를 켜십시오.",
+  "Copy Tags": "복사 태그 (Copy Tags)",
+  "Copy this line's tags as a comma-separated list": "이 라인의 태그를 쉼표로 구분된 목록으로 복사하십시오."
 }

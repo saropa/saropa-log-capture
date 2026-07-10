@@ -2109,5 +2109,7 @@
   "Collapse severity chart": "Grafico della gravità del collasso.",
   "Error {0}": "Errore {0}",
   "Perf {0}": "Perf {0} è stato scelto.",
-  "Warn {0}": "Avvertimento {0}"
+  "Warn {0}": "Avvertimento {0}",
+  "Copy Tags": "Copia Tag Etichette.",
+  "Copy this line's tags as a comma-separated list": "Copia i tag di questa riga come un elenco separato da virgole."
 }

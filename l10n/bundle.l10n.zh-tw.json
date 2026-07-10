@@ -2109,5 +2109,7 @@
   "Collapse severity chart": "崩潰嚴重度圖表 在此處,我們將會",
   "Error {0}": "錯誤 {0} 這是一種錯誤",
   "Perf {0}": "⁇ 的 _PH0__ 的時間",
-  "Warn {0}": "警告 {0} 的時間"
+  "Warn {0}": "警告 {0} 的時間",
+  "Copy Tags": "複製標籤 (Copy Tags) 這個標誌",
+  "Copy this line's tags as a comma-separated list": "將這個行的標籤複製成以逗號分隔列表."
 }

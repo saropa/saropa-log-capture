@@ -53,6 +53,7 @@ function formatCopyToastMessage(kind, lo, hi, charCount) {
     if (kind === 'line-decorated') return 'Copied line ' + lo + ' decorated' + charPart;
     if (kind === 'line-number') return 'Copied line number ' + lo;
     if (kind === 'timestamp') return 'Copied timestamp';
+    if (kind === 'tags') return 'Copied ' + lo + ' tag' + (lo === 1 ? '' : 's') + charPart;
     if (kind === 'selection') return 'Copied selection' + charPart;
     return 'Copied' + charPart;
 }
@@ -151,9 +152,29 @@ function handleLineAction(action, lineIdx) {
             if (typeof showCopyToast === 'function') showCopyToast(formatCopyToastMessage('timestamp', 0, 0, 0));
             return true;
         }
+        case 'copy-tags': {
+            /* lineData.tags is the unified per-line tag set built once in addToData (bracket
+               head tags, structured tag, logcat tag, source tag — see viewer-source-tags.ts).
+               .name preserves original casing/metadata; .key is the lowercased grouping key. */
+            var tagList = lineData.tags || [];
+            var tagNames = [];
+            for (var tgi = 0; tgi < tagList.length; tgi++) tagNames.push(tagList[tgi].name);
+            var tagsText = tagNames.join(', ');
+            if (tagsText.length === 0) return true;
+            vscodeApi.postMessage({ type: 'copyToClipboard', text: tagsText });
+            if (typeof showCopyToast === 'function') {
+                showCopyToast(formatCopyToastMessage('tags', tagNames.length, tagNames.length, tagsText.length));
+            }
+            return true;
+        }
         case 'copy-to-search':
             if (typeof openSearch === 'function' && typeof searchInputEl !== 'undefined') {
                 openSearch();
+                /* openSearch() only flips internal search state; the visible #search-flyout bar is a
+                   separate DOM concern owned by viewer-toolbar-script.ts and normally shown via that
+                   file's openSearch monkey-patch. Call openSearchFlyout() directly too so this action
+                   still opens the bar even if that wrapper's load order or presence ever changes. */
+                if (typeof openSearchFlyout === 'function') openSearchFlyout();
                 searchInputEl.value = plainText;
                 if (typeof updateSearch === 'function') updateSearch();
             }

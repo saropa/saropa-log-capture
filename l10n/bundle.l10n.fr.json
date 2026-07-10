@@ -2109,5 +2109,7 @@
   "Collapse severity chart": "Graphique de la gravité de l'effondrement.",
   "Error {0}": "Erreur {0} L'erreur est le nombre de phrases.",
   "Perf {0}": "Le Perf est un ph0__.",
-  "Warn {0}": "Attention à la mise en garde {0}."
+  "Warn {0}": "Attention à la mise en garde {0}.",
+  "Copy Tags": "Copiez les étiquettes.",
+  "Copy this line's tags as a comma-separated list": "Copiez les balises de cette ligne en tant que liste séparée par des virgules."
 }

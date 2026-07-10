@@ -179,6 +179,39 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes('lineData.timestamp || lineData.ts'));
         });
 
+        test('showContextMenu hides copy-tags when the line has no tags', () => {
+            const script = getContextMenuScript();
+            assert.ok(script.includes("querySelectorAll('[data-tags-action]')"));
+            assert.ok(script.includes('lineData.tags && lineData.tags.length > 0'));
+        });
+
+        test('copy-tags joins item.tags names as a comma-separated list and guards the empty case', () => {
+            const script = getContextMenuScript();
+            const idx = script.indexOf("case 'copy-tags':");
+            assert.ok(idx >= 0, 'copy-tags case must exist');
+            const snippet = script.slice(idx, idx + 800);
+            /* .name (not .key) so casing/metadata from the original tag survives the copy. */
+            assert.ok(snippet.includes('tagList[tgi].name'));
+            assert.ok(snippet.includes("tagNames.join(', ')"));
+            /* No silent empty-string copy when the line carries no tags. */
+            assert.ok(snippet.includes('if (tagsText.length === 0) return true;'));
+            assert.ok(snippet.includes("type: 'copyToClipboard'"));
+            assert.ok(snippet.includes("formatCopyToastMessage('tags'"));
+        });
+
+        test('copy-to-search opens the search flyout bar directly, not only via the toolbar monkey-patch', () => {
+            const script = getContextMenuScript();
+            const idx = script.indexOf("case 'copy-to-search':");
+            assert.ok(idx >= 0);
+            const snippet = script.slice(idx, idx + 700);
+            assert.ok(snippet.includes('openSearch()'));
+            /* Must call openSearchFlyout() explicitly so the bar is guaranteed visible even if
+               viewer-toolbar-script.ts's openSearch wrapper is ever removed or reordered. */
+            assert.ok(snippet.includes("typeof openSearchFlyout === 'function'"));
+            assert.ok(snippet.includes('openSearchFlyout();'));
+            assert.ok(snippet.includes('searchInputEl.value = plainText;'));
+        });
+
         test('copy-decorated should use linesToDecoratedText for decorated copy', () => {
             const script = getContextMenuScript();
             const start = script.indexOf("case 'copy-decorated':");

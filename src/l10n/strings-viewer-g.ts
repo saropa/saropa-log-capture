@@ -48,6 +48,8 @@ export const stringsViewerG: Record<string, string> = {
     'viewer.ctx.copyLineNumber.title': "Copy this line's number to the clipboard",
     'viewer.ctx.copyTimestamp.label': 'Copy Timestamp',
     'viewer.ctx.copyTimestamp.title': "Copy this line's wall-clock timestamp",
+    'viewer.ctx.copyTags.label': 'Copy Tags',
+    'viewer.ctx.copyTags.title': "Copy this line's tags as a comma-separated list",
     'viewer.ctx.copyAll.label': 'Copy All',
     'viewer.ctx.copyAll.title': 'Copy every line in the log as plain text',
     'viewer.ctx.copyAllDecorated.label': 'Copy All Decorated',
