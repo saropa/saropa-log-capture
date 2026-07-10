@@ -1,7 +1,6 @@
 # Plan — three new `[flowmap]` verbs: `exit`, `back`, `error`
 
-Status: **proposed** (emitters already shipping from Saropa Contacts; the parser does not yet
-recognize these lines and silently ignores them).
+Status: **Implemented** (all three verbs recognized and tested; see the Finish Report below).
 
 Extends [flowmap-tag-navigation.md](guides/flowmap-tag-navigation.md), which today defines
 `enter`, `handoff`, and `action`. Parser: `src/modules/flow-map/flow-map-breadcrumbs.ts`
@@ -120,3 +119,48 @@ Should `exit` also close every surface entered ABOVE the named one (a stack unwi
 the current surface and drop otherwise? Recommendation: **drop otherwise**. A silent unwind hides
 missing `exit` emitters in the calling app, and the strict form makes an instrumentation gap visible
 as wrong dwell rather than as plausible-looking data.
+
+**Resolved:** implemented as *drop otherwise* (strict). `applyExit` returns early unless the named
+surface is the current one, so a stray or out-of-order `exit` can never rewind onto the wrong screen.
+
+## Finish Report (2026-07-09)
+
+All three verbs from this plan are implemented, tested, and shipping. Two of the three (`exit`,
+`error`) landed with bug 011; the third (`back`) was completed as a standalone verb afterward when it
+was found to diverge from what the calling app emits.
+
+### What was built
+
+- **`exit <kind> "<Name>"`** — closes the named surface's dwell at the exit timestamp and restores the
+  surface beneath it, fixing dialog/sheet dwell inflation. Parser `FLOWMAP_EXIT` +
+  `parseFlowMapExit()` in `flow-map-breadcrumbs.ts`; builder `applyExit()` in `flow-map-builder.ts`
+  (guards on current-surface match, pops the nav stack by name, resumes the caller's dwell). An
+  `exit` that does not name the currently open surface is dropped.
+- **`error "<Category>" [file.dart:line]`** — records a failure and badges the surface active when it
+  fired. Parser `FLOWMAP_ERROR` + `parseFlowMapError()` in `flow-map-issues.ts`, pushed to the issue
+  overlay from `scanLine()` in `flow-map-log-parser.ts`. Divergence from the plan's letter: rather
+  than an `action`-style per-category counter, `error` routes through the issue overlay — it becomes a
+  time-ordered Issue Report row plus a node issue badge (dialogs included). This meets the plan's goal
+  ("*where* the app broke, and how many") with richer output than a bare counter. Explicit errors are
+  not deduped by category (deliberate, low-volume). Attribution picks the INNERMOST open surface via
+  `targetNodeForIssue()`, so an error fired inside a dialog badges the dialog, not the screen behind
+  it whose dwell window re-extended over the same span after the dialog closed.
+- **`back <kind> "<Name>" [file.dart:line]`** — a standalone verb that draws a RETURN edge. Parser
+  `FLOWMAP_BACK` + `parseFlowMapBack()` in `flow-map-breadcrumbs.ts`, producing the same `nav` event
+  as `enter` with `back: true`; the builder's `forceBack` path in `recordTransition()` renders the
+  return edge even when the open-surface stack cannot detect the return.
+
+### Correction: `back` was first built as a flag, then as the verb
+
+The initial bug 011 implementation modeled `back` as a trailing keyword on `enter`
+(`[flowmap] enter screen "Home" back`). The plan and the shipping Saropa Contacts emitter instead log
+`back` as its own verb (`[flowmap] back tab "Home" …`) from the `PopScope` handler. The keyword-only
+parser silently dropped every standalone `back` line, so back-navigation never appeared in the Flow
+Map. Fixed by adding the `FLOWMAP_BACK` verb (checked before the heuristics in `classifyBreadcrumb()`)
+while keeping the `enter … back` keyword as an alternate spelling.
+
+### Verification
+
+`flow-map-tags.test.js` 15 passing, `flow-map.test.js` 27 passing (Extension Host); `compile-tests`
+clean; scoped eslint zero warnings on the changed parser and test files. Guide updated
+(`plans/guides/flowmap-tag-navigation.md`) to document all six verbs; CHANGELOG entries added.
