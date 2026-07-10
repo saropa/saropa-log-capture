@@ -18,14 +18,25 @@ export function getTroubleDetailScript(): string {
 /* Ask the host to build the detail for a selected feed row. Sends the file line
    number (sourceLineNo — a hint the host verifies), the plain text, and the level
    so the host can locate the line and reuse the signal-report builders. */
+/* The issue currently shown in the pane, so Copy Report (Stage 6) can rebuild the
+   host payload for the same line without a re-selection. */
+var troubleDetailLast = null;
+
 function openTroubleDetailForItem(item) {
     if (!item || typeof vscodeApi === 'undefined') { return; }
     var plain = (typeof stripTags === 'function') ? stripTags(item.html || '') : (item.rawText || '');
+    troubleDetailLast = { sourceLineNo: item.sourceLineNo || 0, plainText: plain, level: item.level || 'info' };
+    vscodeApi.postMessage({ type: 'openTroubleDetail', sourceLineNo: troubleDetailLast.sourceLineNo, plainText: plain, level: troubleDetailLast.level });
+}
+
+/* Copy a Markdown report for the shown issue (host builds + writes the clipboard). */
+function copyTroubleReport() {
+    if (!troubleDetailLast || typeof vscodeApi === 'undefined') { return; }
     vscodeApi.postMessage({
-        type: 'openTroubleDetail',
-        sourceLineNo: item.sourceLineNo || 0,
-        plainText: plain,
-        level: item.level || 'info',
+        type: 'copyTroubleReport',
+        sourceLineNo: troubleDetailLast.sourceLineNo,
+        plainText: troubleDetailLast.plainText,
+        level: troubleDetailLast.level,
     });
 }
 
@@ -52,6 +63,8 @@ function closeTroubleDetail() {
     if (typeof document === 'undefined') { return; }
     var closeBtn = document.getElementById('trouble-detail-close');
     if (closeBtn) { closeBtn.addEventListener('click', function() { closeTroubleDetail(); }); }
+    var copyBtn = document.getElementById('trouble-detail-copy');
+    if (copyBtn) { copyBtn.addEventListener('click', function() { copyTroubleReport(); }); }
     /* Escape closes the pane when it is open and focus is inside it. */
     var el = document.getElementById('trouble-detail');
     if (el) {

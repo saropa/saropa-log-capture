@@ -45,6 +45,18 @@ export function getTroubleDetailStyles(): string {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+.trouble-detail-btn {
+    flex-shrink: 0;
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: var(--text-caption);
+    line-height: 1;
+    cursor: pointer;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+}
+.trouble-detail-btn:hover { border-color: var(--border-strong); }
 .trouble-detail-close {
     flex-shrink: 0;
     background: none;

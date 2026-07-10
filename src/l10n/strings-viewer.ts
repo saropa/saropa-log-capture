@@ -41,6 +41,13 @@ export const stringsViewer: Record<string, string> = {
     'viewer.troubleDetail.anr.high': 'High',
     'viewer.troubleDetail.noContext': 'Log content is unavailable, so no surrounding context can be shown',
     'viewer.troubleDetail.unavailable': 'Could not build the detail for this line',
+    'viewer.troubleDetail.copy.label': 'Copy report',
+    'viewer.troubleDetail.copy.title': 'Copy a Markdown report for this issue (severity, environment, fault + stack)',
+    'viewer.troubleDetail.copied': 'Trouble report copied to the clipboard',
+    'viewer.troubleDetail.copyFailed': 'Could not copy the trouble report',
+    // Trouble Mode Crashlytics band (Stage 5) — host-built pane chrome.
+    'viewer.troubleCrashlytics.region': 'Crash issues from Crashlytics',
+    'viewer.troubleCrashlytics.title': 'Crash issues',
     'viewer.toolbar.collapseAll.title': 'Collapse all sections',
     'viewer.toolbar.collapseAll.label': 'Collapse all sections',
     'viewer.toolbar.expandAll.title': 'Expand all sections',

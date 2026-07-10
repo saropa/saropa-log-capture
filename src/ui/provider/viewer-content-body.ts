@@ -106,6 +106,13 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
         <div class="trouble-chart-head">${t('viewer.troubleChart.title')}</div>
         <div id="trouble-chart-body" class="trouble-chart-body"></div>
     </div>
+    <!-- Trouble Mode Crashlytics band (Stage 5). Top cached crash issues from the
+         background watcher's cache; hidden until Trouble Mode is active AND the band
+         has rows. A row click opens the existing in-viewer Crashlytics detail overlay. -->
+    <div id="trouble-crashlytics" class="trouble-crashlytics u-hidden" role="region" aria-label="${t('viewer.troubleCrashlytics.region')}">
+        <div class="trouble-crashlytics-head">${t('viewer.troubleCrashlytics.title')}</div>
+        <div id="trouble-crashlytics-rows" class="trouble-crashlytics-rows"></div>
+    </div>
     <div id="log-content-wrapper">
     <div class="log-content-clip">
     <div id="log-content" class="nowrap" role="log" aria-label="${t('viewer.logContent.region')}" title="${escapeHtml(t('viewer.logContent.title'))}">
@@ -127,6 +134,7 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     <div id="trouble-detail" class="trouble-detail u-hidden" role="region" aria-label="${t('viewer.troubleDetail.region')}">
         <div class="trouble-detail-head">
             <span id="trouble-detail-title" class="trouble-detail-title"></span>
+            <button type="button" id="trouble-detail-copy" class="trouble-detail-btn" title="${t('viewer.troubleDetail.copy.title')}" aria-label="${t('viewer.troubleDetail.copy.label')}">${t('viewer.troubleDetail.copy.label')}</button>
             <button type="button" id="trouble-detail-close" class="trouble-detail-close" title="${t('viewer.troubleDetail.close.title')}" aria-label="${t('viewer.troubleDetail.close.title')}">×</button>
         </div>
         <div id="trouble-detail-body" class="trouble-detail-body"></div>
