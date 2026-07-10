@@ -159,20 +159,19 @@ function applyDecorationLayoutWidth() {
     /* Tag column: gated by its own toggle (Columns → Tag) AND by structuredLineParsing
        — without structured parsing the tag is never extracted into item.parsedTag, so a
        reserved column would always be empty. */
-    var hasTag = (typeof decoShowParsedTag === 'undefined' || decoShowParsedTag)
+    /* The tag column holds the structured DEVICE tag (keystore2), gated by its own
+       toggle + structured parsing. It ALSO holds app head tags ([db]/[perf]/
+       [frame-stall]) — a different datum that needs no toggle and no structured
+       parsing — so reserve the column when EITHER is present (decoSeen.htags).
+       buildDecoParts composes both into the one 'tag' cell. */
+    var hasTag = ((typeof decoShowParsedTag === 'undefined' || decoShowParsedTag)
         && (typeof structuredLineParsing !== 'undefined' && structuredLineParsing)
-        && decoSeen.tag;
-    /* App head-tag column: reserved whenever the loaded log carries any recognized
-       [db]/[perf]/[frame-stall] bracket tag. No separate toggle — head-tag chips
-       ride the decoration master switch like every other part (buildDecoParts
-       early-returns when decorations are off). Independent of structuredLineParsing
-       and decoShowParsedTag: those govern the DEVICE tag (item.parsedTag), a
-       different datum from app-emitted head tags. */
-    var hasHtags = decoSeen.htags;
+        && decoSeen.tag)
+        || decoSeen.htags;
     /* Signature gates the CSS write: width depends on digit count, the enabled
        flags, AND which data has been seen (data arrives as lines stream in). */
     var sig = digits + '|' + (hasCounter ? 1 : 0) + (hasTime ? 1 : 0) + (showMilliseconds ? 1 : 0)
-        + (hasSessionElapsed ? 1 : 0) + (hasPid ? 1 : 0) + (hasLvl ? 1 : 0) + (hasTag ? 1 : 0) + (hasHtags ? 1 : 0);
+        + (hasSessionElapsed ? 1 : 0) + (hasPid ? 1 : 0) + (hasLvl ? 1 : 0) + (hasTag ? 1 : 0);
     if (sig === lastAppliedDecoSig) return;
     /* Per-part em widths at the .line parent font size. The deco prefix renders
        at font-size:0.85em; these are deliberately a touch generous because
@@ -196,12 +195,12 @@ function applyDecorationLayoutWidth() {
     if (hasSessionElapsed) em += 6.5;
     if (hasPid) em += 7;
     if (hasLvl) em += 1.6;
-    if (hasTag) em += 7;
-    /* Fixed head-tag track: sized to fit one chip (~"frame-stall") plus a +N
-       badge. Extra chips collapse to +N and the full list rides the cell title,
-       so the width never needs to grow with tag count — that is what keeps the
-       message aligned row-to-row (a content-sized track would not). */
-    if (hasHtags) em += 9;
+    /* Tag column widened from the old 7em (bare device-tag text) to 9em because it
+       now carries chips (device tag + app head tags), which are wider than plain
+       text; 9em fits the common one/two-chip line. It is a shared fixed width so
+       the message stays aligned row-to-row; a rare line with more chips clips, with
+       the full list on the cell tooltip. */
+    if (hasTag) em += 9;
     if (em > 0) em += 1; // trailing &nbsp;&nbsp; gap getDecorationPrefix appends
     var contentIndentEm = em;
     var totalPaddingEm = 1.25 + contentIndentEm; // 1.25em keeps severity bar clear.
@@ -218,8 +217,7 @@ function applyDecorationLayoutWidth() {
         hasSessionElapsed ? '6.5em' : '0',
         hasPid ? '7em' : '0',
         hasLvl ? '1.6em' : '0',
-        hasTag ? '7em' : '0',
-        hasHtags ? '9em' : '0',
+        hasTag ? '9em' : '0',
         '1fr',
     ];
     root.style.setProperty('--grid-cols', gridCols.join(' '));
