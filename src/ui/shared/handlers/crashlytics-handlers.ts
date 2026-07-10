@@ -14,7 +14,7 @@ import {
 } from '../../../modules/crashlytics/firebase-crashlytics';
 import { renderSparkline } from '../../panels/vitals-sparkline';
 import { serializeContext } from './crashlytics-serializers';
-import { readArchivedIds, setIssueArchived, readCachedIssues } from '../../../modules/crashlytics/crashlytics-io';
+import { readArchivedIds, setIssueArchived, readCachedIssuesWithMeta } from '../../../modules/crashlytics/crashlytics-io';
 import { troubleCrashlyticsRowsFromIssues } from '../../../modules/crashlytics/trouble-crashlytics-rows';
 import { getOutputChannel, playReportingScopeFix } from '../../../modules/crashlytics/crashlytics-diagnostics';
 import { runConnectionCheck, formatConnectionReport } from '../../../modules/crashlytics/crashlytics-connection-check';
@@ -54,20 +54,31 @@ export async function handleCrashlyticsRequest(post: PostFn, forceRefresh = fals
 }
 
 /**
- * Trouble Mode Crashlytics band (Stage 5): send the CACHED issue list as compact rows.
+ * Trouble Mode Crashlytics band: send the CACHED issue list as compact rows.
  *
- * Reads only the on-disk cache (readCachedIssues) — Trouble Mode never issues its own
- * network fetch and never blocks rendering on it (plan fence). A cold cache posts an
- * empty list, so the band simply does not appear; the background watcher's next poll
- * refreshes issues.json and a later request picks the rows up. Never throws.
+ * Reads only the on-disk cache — Trouble Mode never issues its own network fetch and
+ * never blocks rendering on it (plan fence). A cold cache posts an empty list, so the
+ * band simply does not appear; the background watcher's next poll refreshes issues.json
+ * and a later request picks the rows up. Never throws.
+ *
+ * `total` is the non-archived issue count BEFORE the band's row cap, so the band's
+ * "All N issues" link states the real backlog size rather than the number it happens to
+ * show. `cachedAt` lets the band label its own staleness (plan 110, Stage 5).
  */
 export async function handleTroubleCrashlyticsRequest(post: PostFn): Promise<void> {
     try {
-        const issues = await readCachedIssues();
+        const cached = await readCachedIssuesWithMeta();
+        const issues = cached?.issues ?? [];
         const archived = await readArchivedIds();
-        post({ type: 'troubleCrashlyticsRows', rows: troubleCrashlyticsRowsFromIssues(issues ?? [], archived) });
+        const archivedSet = new Set(archived);
+        post({
+            type: 'troubleCrashlyticsRows',
+            rows: troubleCrashlyticsRowsFromIssues(issues, archived),
+            total: issues.filter(i => i && !archivedSet.has(i.id)).length,
+            cachedAt: cached?.cachedAt,
+        });
     } catch {
-        post({ type: 'troubleCrashlyticsRows', rows: [] });
+        post({ type: 'troubleCrashlyticsRows', rows: [], total: 0 });
     }
 }
 

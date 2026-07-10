@@ -1,6 +1,6 @@
 # 110 — Trouble Mode dashboard v2: side rail layout
 
-## Status: Open — not started
+## Status: Shipped — Stages 1–5. See Finish Report below.
 
 ## Problem (UX review, 2026-07-10)
 
@@ -145,13 +145,97 @@ through it.
 - Running the machine-translation pipeline for new strings (operator-run only).
 - Severity classifier changes.
 
-## Open questions
+## Open questions — resolved
 
-1. **Resizable rail divider.** A drag handle with persisted width (the minimap resize
-   handle is the precedent, `viewer-scrollbar-minimap-resize.ts`). Recommendation: defer;
-   ship the fixed `clamp(320px, 40%, 560px)` width first and add the divider only if the
-   fixed width proves wrong in use.
-2. **Narrow/wide breakpoint.** ~700px wrapper width is the starting value; confirm
-   against real sidebar widths during the F5 pass.
-3. **Cache timestamp availability** for the freshness label (Stage 3/5) — verify the
-   watcher cache schema before building; record the answer here.
+1. **Resizable rail divider.** DEFERRED as recommended. The fixed
+   `clamp(320px, 40%, 560px)` width shipped; a drag handle (precedent:
+   `viewer-scrollbar-minimap-resize.ts`) is only worth adding if that width proves wrong
+   in use.
+2. **Narrow/wide breakpoint.** Shipped at 700px of `#log-content-wrapper` width
+   (`TROUBLE_RAIL_MIN_WIDTH`, `viewer-trouble-detail.ts`). Still to confirm against real
+   sidebar widths in an F5 pass.
+3. **Cache timestamp availability.** ANSWERED: yes, no schema change needed.
+   `writeCachedIssues` has always stamped `cachedAt: Date.now()` into `issues.json`
+   (`crashlytics-io.ts`); `readCachedIssues` simply discarded it. A new
+   `readCachedIssuesWithMeta()` returns both, and `readCachedIssues` now delegates to it.
+
+## Finish Report (2026-07-10)
+
+All five stages built and verified through the 12-gate `npm run compile` chain plus the
+touched unit tests. The unverified surface is the F5 Extension-Host visual render.
+
+### What shipped
+
+- **Stage 1 — side rail.** `#log-content-wrapper` was already a flex row whose
+  `.log-content-clip` child is `flex: 1 1 0%; min-width: 0`, so the wide layout needed no
+  new container: `.trouble-detail` becomes a static flex item at
+  `width: clamp(320px, 40%, 560px)` under `body.slc-trouble-rail-wide`, and the feed
+  shrinks beside it. The original `position: absolute; inset: 0` rules remain as the
+  narrow fallback below 700px of wrapper width. Rail chrome rebuilt: severity-colored
+  header cap driven by the same `item.level` the feed filters on, two-line clamped title,
+  an actions row, and a **Reveal in log** button (`scrollToLineNumber` on the row's
+  `viewerLineIndex`, which is a different coordinate space from the host's
+  `sourceLineNo`). `aria-live="polite"` on both rail slots.
+- **Stage 2 — Crashlytics detail into the rail.** `cdActiveContainer(useRail)` is the one
+  writer of `cpDetailEl`, so the click handlers, the `crashlyticsDetailReady` route, and
+  the three async enrichers follow the active container automatically. Band rows reach it
+  through two exposed bridges, `window.slcOpenCrashlyticsDetailInRail` and
+  `window.slcCloseCrashlyticsDetail`, which run the SAME `cdOpenDetail` path as a
+  sidebar-list click — that is what sets `cpDetailIssueId` and retires the KNOWN
+  LIMITATION (band-opened details had been silently dropping the "In your project",
+  "Seen in your logs", and device-state panels). Selected band row highlighted; one
+  Escape / one × closes the rail in either mode (`closeTroubleRailAnyMode`).
+- **Stage 3 — informative skeleton, error, freshness.** `cdSkeletonHtml` paints the issue
+  header synchronously from the `data-*` meta the row already carries (severity dot,
+  subtitle, events/users, state, version range); only the stack shimmers. Failure now
+  renders a **Try again** button (`.cd-retry`) that re-issues the fetch from the stored
+  meta. The three hardcoded English strings in `crashlytics-detail-handler.ts` moved to
+  `t()` keys. The freshness label ships in the band head (single surface, Stage 5) rather
+  than duplicated in a rail header that is hidden in Crashlytics mode.
+- **Stage 4 — chart readability.** Legend chips with per-level totals in the pane head
+  (costing the feed no vertical space), start/end clock labels, a peak-count label, a 3px
+  minimum bar, and a translucent full-height band marking the window that holds the row
+  open in the rail. Labels are HTML, never SVG `<text>`: the strip is drawn with
+  `preserveAspectRatio="none"`, which would stretch glyphs. Selection is stored as a
+  timestamp, not a bucket key, because bucket size changes with the interval setting.
+- **Stage 5 — band compaction.** Top five rows inline, `All N issues` link into the
+  Crashlytics panel, and a cache-age label. `handleTroubleCrashlyticsRequest` now posts
+  `total` (non-archived count before the row cap) and `cachedAt` alongside `rows`.
+
+### Deviations from this plan (deliberate, with reasons)
+
+- **Container query rejected for the wide/narrow switch.** The plan preferred a container
+  query on `#log-content-wrapper` over a JS width check. `container-type: inline-size`
+  makes the element a containment context and silently re-parents the containing block of
+  its absolutely positioned children (minimap, jump buttons, goto-line, replay bar). A
+  class toggle behind one ResizeObserver costs nothing and changes nothing else. The
+  wrapper's own width does not change when the rail opens (only `.log-content-clip`
+  shrinks), so the measurement cannot oscillate across the breakpoint.
+- **Leading empty windows were already trimmed.** Review finding 4 claimed the chart
+  spreads bursts across mostly-empty space. `buildTroubleChartBuckets` already started the
+  rendered span at `minKey`, the first window holding an event; the 180-bucket cap only
+  bounds how far back a long session reaches. No change was made, and the comment now
+  states this so the claim is not re-filed.
+- **Legend totals sum the RENDERED bins, not `allLines`.** Counting every matching line
+  would let the legend claim errors the capped window never draws. Regression-tested.
+- **Cache-freshness line placed in the band head only.** The plan mentioned it for both
+  the rail header (Stage 3) and the band (Stage 5). The rail header is hidden while a
+  Crashlytics detail is showing, so a freshness line there would be invisible exactly when
+  it matters.
+- **Two files extracted to stay under the 300-line limit.** Giving the detail a second
+  render container pushed `viewer-crashlytics-interactions-script.ts` to 312 lines. The
+  stack-frame context menu (`viewer-crashlytics-frame-menu-script.ts`) and the sidebar
+  list controls (`viewer-crashlytics-filters-script.ts`) moved out unchanged, inlined back
+  into the same panel IIFE so shared scope is preserved.
+
+### Verification
+
+- `npm run compile` — all 12 gates pass (typecheck, lint, NLS parity + coverage, three
+  catalog checks, `verify:l10n-keys` against 2408 keys, bundle, dist-size 5.06 MiB).
+- `npx mocha --ui tdd --spec out/test/ui/viewer-trouble-chart.test.js --spec
+  out/test/modules/crashlytics/trouble-crashlytics-rows.test.js` — 10 passing. Four new
+  chart tests pin the legend totals (including the capped-window exclusion) and
+  `setTroubleChartSelection`.
+- Lint on the touched files is clean. The two warnings that remain in this area
+  (`handleTroubleDetail` has 5 parameters; several files over the line limit) are
+  pre-existing and in files this work did not modify.
