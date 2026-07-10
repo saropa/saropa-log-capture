@@ -2109,5 +2109,7 @@
   "Collapse severity chart": "Die Schweregrad-Chart des Zusammenbruchs.",
   "Error {0}": "Fehler {0} Der Fehler ist",
   "Perf {0}": "Perf {0} ist ein perfekter",
-  "Warn {0}": "Warnung {0} warnen"
+  "Warn {0}": "Warnung {0} warnen",
+  "Copy Tags": "Copy Tags Tags Kopieren Sie die Tags.",
+  "Copy this line's tags as a comma-separated list": "Kopieren Sie die Tags dieser Zeile als eine durch Kommas getrennte Liste."
 }
