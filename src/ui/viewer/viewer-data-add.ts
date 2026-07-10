@@ -103,6 +103,10 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     if (typeof ingestDriftDebugServerFromPlain === 'function') ingestDriftDebugServerFromPlain(plain);
     /* Structured line parsing: extract metadata (PID, TID, level, tag) from known log formats. */
     var slp = (typeof parseStructuredPrefix === 'function') ? parseStructuredPrefix(plain, sniffedFormatId) : null;
+    // Collapse fully-qualified package/class tags (logcat, log4j) to their last segment
+    // in place, right at the parse boundary, so every downstream reader of slp.tag
+    // (item.parsedTag, the divider label, the tag-column chip) sees the same short name.
+    if (slp && slp.tag && typeof collapseQualifiedTag === 'function') { slp.tag = collapseQualifiedTag(slp.tag); }
     /* Record which decoration data this log actually carries so the prefix
        column reserves width only for parts that will render — see decoSeen /
        applyDecorationLayoutWidth. A markdown/plain file trips none of these. */
@@ -142,10 +146,12 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     // frames still group via stack-parser, which is the correct continuation signal.
     var recentErrorContext = false;
     var sTag = (typeof parseSourceTag === 'function') ? parseSourceTag(plain) : null;
+    if (sTag && typeof collapseQualifiedTag === 'function') { sTag = collapseQualifiedTag(sTag); }
     // Source-tag driven: any line tagged 'database' that isn't already error/warning gets the level.
     // Separator lines stay 'info' — source tags should not override decorative lines.
     if (!isSep && sTag === 'database' && lvl !== 'error' && lvl !== 'warning' && lvl !== 'database') { lvl = 'database'; }
     var lTag = (typeof parseLogcatTag === 'function') ? parseLogcatTag(plain) : null;
+    if (lTag && typeof collapseQualifiedTag === 'function') { lTag = collapseQualifiedTag(lTag); }
     if (lTag && lTag === sTag) lTag = null;
     var cTags = (typeof parseClassTags === 'function') ? parseClassTags(plain) : [];
     /* Flow-tag chips (plan 109): classify an explicit [flowmap] navigation line so

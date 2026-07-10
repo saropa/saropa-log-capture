@@ -19,12 +19,15 @@ function run(call: string): string {
 }
 
 suite('head-tag chips in the tag column', () => {
-    test('renderHeadTagChips shows every tag as a level-colored chip (no +N)', () => {
+    test('renderHeadTagChips shows every tag as a level-colored, Title Case chip (no +N)', () => {
+        // Chip bodies run through formatTagLabel — always "Title Case With Spaces",
+        // never the raw lowercase/kebab-case tag name (user-reported inconsistency,
+        // 2026-07-10: sidebar showed lowercase, tag column showed raw/no-space case).
         const html = run(
             'renderHeadTagChips([{name:"perf",level:"performance"},{name:"frame-stall",level:"performance"}])',
         );
-        assert.ok(html.includes('>perf<'), 'first tag chip is present');
-        assert.ok(html.includes('>frame-stall<'), 'second tag chip is ALSO present — nothing collapsed');
+        assert.ok(html.includes('>Perf<'), 'first tag chip is Title Case');
+        assert.ok(html.includes('>Frame Stall<'), 'second tag chip splits the hyphen into a space — nothing collapsed');
         assert.ok(html.includes('tag-level-performance'), 'chips carry their level class');
         assert.ok(!html.includes('+1') && !html.includes('tag-chip-more'), 'no +N overflow badge');
     });
@@ -33,19 +36,42 @@ suite('head-tag chips in the tag column', () => {
         assert.strictEqual(run('renderHeadTagChips([])'), '');
     });
 
-    test('headTagsTitle lists every tag name in emission order', () => {
+    test('headTagsTitle lists every tag name, Title Cased, in emission order', () => {
         const title = run(
             'headTagsTitle([{name:"perf",level:"performance"},{name:"frame-stall",level:"performance"},{name:"db",level:"database"}])',
         );
-        assert.strictEqual(title, 'perf frame-stall db');
+        assert.strictEqual(title, 'Perf Frame Stall Db');
+    });
+
+    test('collapseQualifiedTag collapses fully-qualified package/class names to their last segment', () => {
+        // 2+ dots reliably means a Java/Android reverse-domain class name, not a short
+        // hand-picked tag — collapsing this stopped ~13 near-duplicate chips sharing a
+        // 60-char common package prefix from cluttering the Message Tags sidebar.
+        assert.strictEqual(
+            run('collapseQualifiedTag("com.google.android.libraries.communications.conference.service.impl.ChatService")'),
+            'ChatService',
+        );
+        assert.strictEqual(run('collapseQualifiedTag("system.err")'), 'system.err', 'single-dot tags stay whole');
+        assert.strictEqual(run('collapseQualifiedTag("FlutterJNI")'), 'FlutterJNI', 'no-dot tags stay whole');
+        assert.strictEqual(run('collapseQualifiedTag("")'), '');
+    });
+
+    test('formatTagLabel produces Title Case With Spaces from any raw tag shape', () => {
+        assert.strictEqual(run('formatTagLabel("ActivityManager")'), 'Activity Manager', 'camelCase splits');
+        assert.strictEqual(run('formatTagLabel("FlutterJNI")'), 'Flutter JNI', 'trailing acronym is preserved, not "Jni"');
+        assert.strictEqual(run('formatTagLabel("flutter")'), 'Flutter', 'plain lowercase word is capitalized');
+        assert.strictEqual(run('formatTagLabel("frame-stall")'), 'Frame Stall', 'hyphen becomes a space');
+        assert.strictEqual(run('formatTagLabel("system.err")'), 'System Err', 'dot becomes a space');
+        assert.strictEqual(run('formatTagLabel("")'), '');
     });
 
     test('tag names are HTML-escaped in both the chip body and the title', () => {
         // Head tag text is attacker-controlled log content; a raw & or < must never
-        // reach the DOM (chip) or a title attribute unescaped.
+        // reach the DOM (chip) or a title attribute unescaped. formatTagLabel title-cases
+        // the single "word" ("a&b" -> "A&b") before escaping, so assert against that form.
         const html = run('renderHeadTagChips([{name:"a&b",level:"info"}])');
-        assert.ok(html.includes('a&amp;b') && !html.includes('a&b'), 'chip body escapes &');
+        assert.ok(html.includes('A&amp;b') && !html.includes('A&b'), 'chip body escapes &');
         const title = run('headTagsTitle([{name:"a&b",level:"info"},{name:"<x>",level:"info"}])');
-        assert.ok(title.includes('a&amp;b') && title.includes('&lt;x&gt;'), 'title escapes both tags');
+        assert.ok(title.includes('A&amp;b') && title.includes('&lt;x&gt;'), 'title escapes both tags');
     });
 });

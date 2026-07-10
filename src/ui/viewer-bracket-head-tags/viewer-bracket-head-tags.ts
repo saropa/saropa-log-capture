@@ -54,6 +54,46 @@ function escapeHeadTag(s) {
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+/* Collapse a deeply-dotted, package-qualified tag (Java/Android reverse-domain class
+   names like "com.google.android.libraries.foo.bar.ChatService", or log4j logger names)
+   to its last segment. Two or more dots reliably means a fully-qualified class name,
+   not a short hand-picked tag — the only known 1-dot tag in this codebase is
+   "system.err" (parseSourceTag's genericTags), so a 2-dot threshold never touches it.
+   Without this, every distinct class in one Java package produced its own
+   near-unreadable chip sharing a 60+ char common prefix. Case is preserved so the
+   result still flows through formatTagLabel's camelCase splitter correctly.
+   Shared by viewer-data-add.ts (applied to slp.tag/sTag/lTag at parse time so the
+   Message Tags sidebar, the row chips, and item.sourceTag/logcatTag all agree). */
+function collapseQualifiedTag(name) {
+    var s = String(name == null ? '' : name);
+    var dotCount = (s.match(/\\./g) || []).length;
+    if (dotCount < 2) return s;
+    var segs = s.split('.');
+    return segs[segs.length - 1] || s;
+}
+
+/* Convert a raw tag identifier (camelCase class name like "ActivityManager", a
+   dotted/underscored/hyphenated token, or a plain lowercase word) into a
+   "Title Case With Spaces" display label. Acronym runs (JNI, HWUI, SQL) are kept
+   upper-case rather than title-cased — blindly capitalizing-first/lowercasing-rest
+   would turn "HWUI" into "Hwui". Used for BOTH the row tag-column chips and the
+   Message Tags sidebar chips so a tag reads identically in both places. */
+function formatTagLabel(name) {
+    if (!name) return '';
+    var s = String(name);
+    // camelCase boundaries: lower/digit -> Upper, and Acronym -> Capitalized (HTTPRequest -> HTTP Request).
+    s = s.replace(/([a-z0-9])([A-Z])/g, '$1 $2');
+    s = s.replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2');
+    // Normalize dot/underscore/hyphen separators to spaces.
+    s = s.replace(/[._-]+/g, ' ').replace(/\\s+/g, ' ').trim();
+    if (!s) return '';
+    return s.split(' ').map(function(word) {
+        if (!word) return word;
+        if (word.length > 1 && word === word.toUpperCase() && /[A-Z]/.test(word)) return word;
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    }).join(' ');
+}
+
 /* Render one line tag as a chip. Tags are {name, key, level} — the unified set
    built in addToData (bracket head tags + device/logcat/source tags). data-tag-chip
    carries the filter key so a click opens the Message Tags sidebar for that tag
@@ -62,7 +102,7 @@ function renderHeadTagChip(tag) {
     if (!tag || !tag.name) return '';
     var levelCls = 'tag-level-' + (tag.level || 'info');
     var key = (tag.key || String(tag.name).split(':')[0].trim().toLowerCase());
-    var body = escapeHeadTag(tag.name);
+    var body = escapeHeadTag(formatTagLabel(tag.name));
     return '<span class="tag-chip ' + levelCls + '" data-tag-chip="' + escapeHeadTag(key) + '">' + body + '</span>';
 }
 
@@ -77,7 +117,7 @@ function renderHeadTagChips(tags) {
    escapeHeadTag guards the attacker-controlled tag text before the title attr. */
 function headTagsTitle(tags) {
     if (!tags || tags.length === 0) return '';
-    return tags.map(function(t) { return escapeHeadTag(t.name); }).join(' ');
+    return tags.map(function(t) { return escapeHeadTag(formatTagLabel(t.name)); }).join(' ');
 }
 `;
 }
