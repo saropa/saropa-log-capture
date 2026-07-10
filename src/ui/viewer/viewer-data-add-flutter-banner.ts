@@ -63,6 +63,14 @@ var flutterBannerCloseRe = /^[\\s\\u2550]*\\u2550{20,}[\\s\\u2550]*$/;
 var activeFlutterBanner = null;
 /* Monotonic id so multiple banners in one session stay distinct; groupId=-1 means no banner. */
 var nextBannerGroupId = 1;
+/* A truncated dump (e.g. the DAP maxLogLineLength setting cutting a long RenderFlex
+   widget-tree dump mid-sentence) never emits its closing rule, so without a cap the
+   banner would stay "open" for the rest of the session and force every later line —
+   permission logs, perf stalls, Crashlytics telemetry — to level=error via addToData's
+   bannerInfo.groupId !== -1 check (bug_012). Real Flutter exception dumps run well
+   under 100 lines even for deep widget-tree overflows, so 300 is generous headroom
+   with no real dump anywhere near it. */
+var maxFlutterBannerSpanLines = 300;
 /* Header line item per groupId. calcItemHeight reads header.bannerCollapsed to
    hide body/footer rows; the click handler + toggleFlutterBanner flip it. Mirrors
    the contHeaderMap / groupHeaderMap pattern so banners collapse like stack and
@@ -79,7 +87,7 @@ function isFlutterBannerCloseLine(plainText) {
 }
 /** Start a new banner group, return its id for tagging the header line. */
 function beginFlutterBanner() {
-    activeFlutterBanner = { groupId: nextBannerGroupId++ };
+    activeFlutterBanner = { groupId: nextBannerGroupId++, lineCount: 0 };
     return activeFlutterBanner.groupId;
 }
 /** End the active banner. Returns the groupId to tag the footer line with (or -1). */
@@ -116,6 +124,14 @@ function classifyFlutterBannerLine(plainText) {
     if (isFlutterBannerCloseLine(plainText)) {
         var endGid = endFlutterBanner();
         return { groupId: endGid, role: 'footer' };
+    }
+    /* Cap tripped: auto-close with no synthetic footer (same treatment as the
+       "open detected while already active" path above) and treat this line as
+       ungrouped rather than keep dragging unrelated content into the banner. */
+    activeFlutterBanner.lineCount++;
+    if (activeFlutterBanner.lineCount > maxFlutterBannerSpanLines) {
+        endFlutterBanner();
+        return { groupId: -1, role: null };
     }
     return { groupId: cur, role: 'body' };
 }
