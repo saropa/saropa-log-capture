@@ -218,4 +218,21 @@ suite('FlowMap tag verbs', () => {
             assert.strictEqual(nav?.source?.line, 7);
         });
     });
+
+    suite('back verb (plan 057 — the form Contacts actually emits)', () => {
+        test('a standalone `back` verb draws a return edge, same as the enter flag', () => {
+            // The app's PopScope handler logs `back tab "Home" …` as its own verb, not `enter … back`.
+            // Before this parser existed the line fell through to heuristics and back-nav was dropped.
+            const src = ['=== SAROPA LOG CAPTURE — SESSION START ===', 'Project: demo',
+                '[08:00:01.000] [console] [log] [flowmap] enter tab "Home"',
+                '[08:00:02.000] [console] [log] [flowmap] enter tab "Search"',
+                '[08:00:03.000] [console] [log] [FLOWMAP] back tab "Home" lib/views/main_material_app.dart:875'];
+            const nav = parseLog(src).events.find(e => e.back === true);
+            assert.strictEqual(nav?.label, 'Home');
+            assert.strictEqual(nav?.nodeKind, 'tab');
+            assert.strictEqual(nav?.source?.file, 'lib/views/main_material_app.dart');
+            const graph = buildGraph(parseLog(src));
+            assert.ok(graph.edges.some(e => e.from === 'search' && e.to === 'home' && e.back), 'Search→Home is a back edge');
+        });
+    });
 });
