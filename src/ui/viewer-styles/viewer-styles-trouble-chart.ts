@@ -88,13 +88,14 @@ body.slc-trouble-active .trouble-chart { display: block; }
 
 .trouble-chart-body { position: relative; }
 
-/* Three sides only, and open at the top: the frame is read as a pair of axes plus a
-   baseline, so closing the top would turn it into a box and imply a ceiling the bars are
-   measured against — they are not, the scale is the peak. border-box keeps the two side
-   rules inside the strip's width so the bars still span it edge to edge. */
+/* Three sides only, and open at the top: the frame reads as a pair of axes plus a baseline,
+   whereas closing the top would make it a box and imply a ceiling the bars are measured
+   against — they are not, the scale is the running peak and it moves. The baseline belongs
+   HERE and not on .trouble-chart-body: .tc-plot wraps the <svg> alone, so the rule lands
+   directly under the bars, while the clock labels (.tc-axis, a sibling) stay outside the
+   frame where an axis label belongs. */
 .trouble-chart .tc-plot {
     position: relative;
-    box-sizing: border-box;
     border-left: 1px solid var(--border);
     border-right: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
