@@ -79,3 +79,34 @@ header documents why the palette is literal hex rather than theme tokens (the to
 the editor's squiggle colors and rendered performance blue, contradicting the toolbar's purple
 `P`) and requires lockstep with `viewer-styles-level.ts`, but it does not address the in-file
 duplication. Collapsing the pair is a separate change.
+
+## Follow-up (2026-07-10) — the palette pair was collapsed
+
+The duplication flagged above is resolved. Each severity color is now declared once, as a
+custom property on `.trouble-chart` (`--tc-error`, `--tc-warning`, `--tc-performance`), and read
+by both the legend swatch (`background`) and the bar (`fill`). A chip and the bar it counts can
+no longer drift to different colors — the failure mode of the two-copy arrangement, which
+nothing in the suite would have caught until the chart shipped visibly wrong.
+
+The properties are scoped to `.trouble-chart`, not promoted to the global token sheet. They
+must agree with the toolbar's copies in `viewer-styles-level.ts`, and a global severity-color
+token would invite call sites that have no business choosing one. Custom-property inheritance
+carries the values to every reader because all six consuming selectors use the descendant
+combinator `.trouble-chart <x>` and so are unconditionally inside the declaring subtree; a
+reader outside it would resolve to the invalid initial value. The cross-file lockstep with
+`viewer-styles-level.ts` is unchanged and remains the one place two files still hold the same
+three values.
+
+Two stale comments were corrected in the same change, both in this file. The `.tc-bar` rules
+carried "fill from theme tokens so severity reads identically to the feed dots / editor
+squiggles", left behind when the fills moved off `--accent-*` — the editor's `--accent-info`
+squiggle is exactly what drew performance blue against the toolbar's purple `P`, so those tokens
+are what the rules must not use. The header made the same claim about the palette being written
+into the bar fills. Both now describe the single declaration.
+
+`src/test/ui/viewer-trouble-chart-styles.test.ts` gained a case asserting each hex appears
+exactly once in the emitted CSS and that both the swatch and the bar resolve it through the
+property (`css.split(hex).length - 1 === 1`, which fails the instant a second literal returns).
+The styles suite is 5 passing; the render suite `viewer-trouble-chart.test.ts` is 17 passing and
+untouched. `npm run compile` passes all 12 gates. Rendered output is byte-identical — the same
+three colors reach the same elements.
