@@ -14,14 +14,18 @@ import { getDecorationStyles } from '../../ui/viewer-styles/viewer-styles-decora
 import { getViewerStyles } from '../../ui/viewer-styles/viewer-styles';
 import { getViewerDataAddScript } from '../../ui/viewer/viewer-data-add';
 
-suite('Severity bar connector (CSS sibling architecture)', () => {
-    // The connector that joins consecutive same-level dots is now pure CSS in
-    // viewer-styles-decoration-bars.ts, using :has(+ .level-bar-X)::after on
-    // each row. The previous JS architecture (findNextDotSibling + bar-up /
-    // bar-down / bar-bridge stamping in the render loop) is fully removed —
-    // it had multiple drift bugs (the chain extending across colour changes,
-    // the stripe's --bar-color disagreeing with the dot's). These tests pin
-    // the new architecture.
+suite('Severity bar connector (CSS full-height stripe architecture)', () => {
+    // The connector that joins consecutive same-color dots is pure CSS in
+    // viewer-styles-decoration-bars.ts: every leveled row paints a FULL-HEIGHT
+    // ::after stripe of its own --bar-color, so any run of same-color rows abuts
+    // into one continuous band. This replaced (2026-07-10) the earlier
+    // :has(+ .level-bar-X)::after per-pair chain, which only connected direct
+    // neighbors of the EXACT same class — a blank line, a .slow-gap divider, or
+    // a stack frame between two same-level rows severed the band, and info vs
+    // framework (both charts-blue) never joined despite looking identical. The
+    // still-earlier JS architecture (findNextDotSibling + bar-up / bar-down /
+    // bar-bridge stamping) was removed before that. These tests pin the current
+    // architecture.
     const viewportScript = getViewportRenderScript();
     const decoStyles = getDecorationStyles();
 
@@ -48,40 +52,27 @@ suite('Severity bar connector (CSS sibling architecture)', () => {
         );
     });
 
-    test('CSS defines a :has(+ same-level)::after connector for every level', () => {
-        // One rule per level — CSS has no "same class as me" combinator, so
-        // each level gets its own selector. All ten levels must be present
-        // or those rows visually break out of the chain.
-        const levels = [
-            'error',
-            'error-recent-context',
-            'warning',
-            'performance',
-            'todo',
-            'debug',
-            'notice',
-            'framework',
-            'database',
-            'info',
-        ];
-        for (const lvl of levels) {
-            // The selector for level X must include `:has(+ .level-bar-X)` —
-            // that's the sibling-aware check the browser uses to decide
-            // whether to paint the chain stripe from this dot to the next.
-            assert.ok(
-                decoStyles.includes(`:has(+ .level-bar-${lvl})`),
-                `connector CSS must include a :has(+ .level-bar-${lvl}) sibling rule`,
-            );
-        }
+    test('CSS defines a single class-agnostic full-height stripe, not per-level :has() pairs', () => {
+        // The stripe is one rule keyed on the attribute selector
+        // [class*="level-bar-"]::after — it reads --bar-color from whatever
+        // level-bar-* class the row carries, so it covers every level without a
+        // per-level selector. The old per-pair :has(+ .level-bar-X) chain must
+        // be gone: it was exactly what left same-color runs disconnected.
+        assert.ok(
+            /\[class\*="level-bar-"\][^{]*::after\s*\{/.test(decoStyles),
+            'connector must be a single [class*="level-bar-"]::after full-height stripe rule',
+        );
+        assert.ok(
+            !decoStyles.includes(':has(+ .level-bar-'),
+            'the per-pair :has(+ .level-bar-X) chain must be removed — it severed same-color runs at any intervening row',
+        );
     });
 
-    test('connector ::after geometry matches the dot column', () => {
-        // The stripe is anchored at this row's middle (top: 50%) and extends
-        // 50% PAST the row's bottom edge (bottom: -50%). Net: it spans from
-        // this dot to where the next row's dot sits (50% into the next row).
-        // Using percentages rather than a calc on --log-line-height so the
-        // stripe automatically scales with whatever row height the parent
-        // produces, including blank rows and lines with custom line-height.
+    test('connector ::after is a full-height in-row stripe under the dot column', () => {
+        // Full-height (top: 0 / bottom: 0) keeps the stripe INSIDE the row, so
+        // consecutive same-color rows merge edge-to-edge and the row can clip its
+        // own overflow (the old top: 50% / bottom: -50% overshoot forced
+        // overflow: visible and let long wrapped text bleed over the next row).
         assert.ok(
             /left:\s*0\.89em/.test(decoStyles),
             'connector left position must remain at 0.89em (under the dot)',
@@ -91,12 +82,12 @@ suite('Severity bar connector (CSS sibling architecture)', () => {
             'connector width must remain at 0.14em',
         );
         assert.ok(
-            /top:\s*50%/.test(decoStyles),
-            'connector must be anchored at the row middle (top: 50%)',
+            /top:\s*0/.test(decoStyles) && /bottom:\s*0/.test(decoStyles),
+            'connector must span the full row height (top: 0; bottom: 0), not overshoot into the next row',
         );
         assert.ok(
-            /bottom:\s*-50%/.test(decoStyles),
-            'connector reaches exactly to next row\'s middle (bottom: -50%); requires uniform row heights, which stack-header now provides by matching .line\'s line-height var(--log-line-height)',
+            !/bottom:\s*-50%/.test(decoStyles),
+            'the -50% overshoot must be gone so .line can clip overflow instead of bleeding wrapped text',
         );
     });
 
@@ -108,18 +99,19 @@ suite('Severity bar connector (CSS sibling architecture)', () => {
         // .art-block-end)) qualifier on the chain rule keeps art-block ::after
         // free for shimmer use. (Art blocks no longer paint a gutter rail at all —
         // the left border was removed because it broke the box layout.)
+        // The exclusion list also carries .line-blank now (blank rows carry no
+        // dot), so match up to .art-block-end without pinning the closing paren.
         assert.ok(
-            /:not\(:is\(\.art-block-start,\s*\.art-block-middle,\s*\.art-block-end\)\)/.test(decoStyles),
+            /:not\(:is\(\.art-block-start,\s*\.art-block-middle,\s*\.art-block-end/.test(decoStyles),
             'connector must exclude art-block rows so shimmer ::after is preserved',
         );
     });
 
-    test('between-row divider rows are retired — chain spans naturally row-to-row', () => {
-        // The .viewer-divider concept was retired alongside the move to
-        // the counter-row chevron affordance. With no DOM rows between
-        // visible log rows, the :has(+ .level-bar-X) selector on each
-        // row finds its immediate neighbor directly — no divider stamping,
-        // no chain bridging, no special-case CSS.
+    test('between-row divider rows are retired — band spans naturally row-to-row', () => {
+        // The .viewer-divider concept was retired alongside the move to the
+        // counter-row chevron affordance. With no DOM rows between visible log
+        // rows, each row's full-height stripe abuts the next directly — no
+        // divider stamping, no chain bridging, no special-case CSS.
         const fullStyles = getViewerStyles();
         assert.ok(
             !fullStyles.includes('.viewer-divider'),
