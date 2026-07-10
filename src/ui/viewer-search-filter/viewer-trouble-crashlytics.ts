@@ -63,7 +63,13 @@ function renderTroubleCrashlyticsRows(msg) {
 /* Reuse the shipped in-viewer Crashlytics detail overlay: same reveal + fetch the
    crashlytics panel does (openIssueDetail), so the host reply renders identically and
    the overlay's own back button closes it. consoleUrl is empty here (the cache path
-   has no project URL); the detail degrades to no deep-link, never a broken one. */
+   has no project URL); the detail degrades to no deep-link, never a broken one.
+   KNOWN LIMITATION: the panel's private cpDetailIssueId (viewer-crashlytics-
+   interactions-script.ts) is NOT set from here, so the async enrichment panels
+   ("In your project" / "Seen in your logs" / device states) that gate on it are
+   dropped for a band-opened detail. The base detail (stack + stats + copy) still
+   renders. Setting that var would require the crashlytics IIFE to expose a setter;
+   not done to avoid widening this feature into that script. */
 function openTroubleCrashlyticsDetail(meta) {
     if (typeof document === 'undefined' || typeof vscodeApi === 'undefined') { return; }
     var detailEl = document.getElementById('crashlytics-detail');

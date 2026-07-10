@@ -131,7 +131,7 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     <!-- Trouble Mode detail pane (Stage 4). Overlays only the feed (inside the
          position:relative wrapper) so the severity chart + toolbar stay visible.
          Content is host-built and posted in; shown on feed-row selection. -->
-    <div id="trouble-detail" class="trouble-detail u-hidden" role="region" aria-label="${t('viewer.troubleDetail.region')}">
+    <div id="trouble-detail" class="trouble-detail u-hidden" role="region" tabindex="-1" aria-label="${t('viewer.troubleDetail.region')}">
         <div class="trouble-detail-head">
             <span id="trouble-detail-title" class="trouble-detail-title"></span>
             <button type="button" id="trouble-detail-copy" class="trouble-detail-btn" title="${t('viewer.troubleDetail.copy.title')}" aria-label="${t('viewer.troubleDetail.copy.label')}">${t('viewer.troubleDetail.copy.label')}</button>

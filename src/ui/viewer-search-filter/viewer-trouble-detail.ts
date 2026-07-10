@@ -51,6 +51,9 @@ function renderTroubleDetail(msg) {
     if (titleEl) { titleEl.textContent = (msg && msg.title) || ''; }
     if (bodyEl) { bodyEl.innerHTML = (msg && msg.html) || ''; }
     el.classList.remove('u-hidden');
+    /* Move focus into the pane (it carries tabindex="-1") so a fresh open + Escape
+       closes it — the keydown listener below only fires when focus is inside. */
+    if (typeof el.focus === 'function') { el.focus(); }
 }
 
 function closeTroubleDetail() {
@@ -65,7 +68,8 @@ function closeTroubleDetail() {
     if (closeBtn) { closeBtn.addEventListener('click', function() { closeTroubleDetail(); }); }
     var copyBtn = document.getElementById('trouble-detail-copy');
     if (copyBtn) { copyBtn.addEventListener('click', function() { copyTroubleReport(); }); }
-    /* Escape closes the pane when it is open and focus is inside it. */
+    /* Escape closes the pane. renderTroubleDetail focuses the pane on open (it has
+       tabindex="-1"), so this fires from a fresh open, not only after a manual tab-in. */
     var el = document.getElementById('trouble-detail');
     if (el) {
         el.addEventListener('keydown', function(e) {
