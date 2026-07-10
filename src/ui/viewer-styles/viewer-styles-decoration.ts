@@ -52,6 +52,18 @@ export function getDecorationStyles(): string {
     white-space: nowrap;
     vertical-align: bottom;
 }
+/* Device tag (keystore2, FlutterJNI…) rendered as a chip, matching the app
+   head-tag chips so every tag in the gutter reads as a pill, not bare text.
+   Keeps the link color (it is a click-to-filter toggle) but gains the chip
+   border/fill via color-mix off that one color. max-width trimmed so the
+   border sits inside the 7em tag track. */
+.deco-parsed-tag-chip {
+    padding: 1px 6px;
+    max-width: 6em;
+    border-radius: 3px;
+    border: 1px solid color-mix(in srgb, var(--vscode-textLink-foreground, #3794ff) 40%, transparent);
+    background: color-mix(in srgb, var(--vscode-textLink-foreground, #3794ff) 12%, transparent);
+}
 .deco-pid-tid {
     opacity: 0.7;
 }

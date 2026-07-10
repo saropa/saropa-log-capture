@@ -12,8 +12,7 @@ All notable changes to Saropa Log Capture will be documented in this file.
 
     The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-    **Overview** — Each release (and [Unreleased]) opens with one plain-language line for humans—user-facing only, casual wording—then end it with: [log](https://github.com/saropa/saropa-log-capture/blob/vX.Y.Z/CHANGELOG.md)
-    substituting X.Y.Z.
+    **Overview** — Each release (and [Unreleased]) opens with one plain-language line for humans—user-facing only, casual wording—then end it with: [log](https://github.com/saropa/saropa-log-capture/blob/vX.Y.Z/CHANGELOG.md) substituting X.Y.Z.
 
     **Tagged changelog** — Published versions use git tag **`vx.y.z`**; compare to [current `main`](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md).
 
@@ -26,9 +25,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.2.0]
 
-Trouble Mode's reports now open **beside** the log instead of covering it, the loading view shows the issue instead of the word "Loading", and the severity chart finally has a legend and a time axis.
+Trouble Mode's reports now open **beside** the log instead of covering it, the loading view shows the issue instead of the word "Loading", and the severity chart finally has a legend and a time axis. [log](https://github.com/saropa/saropa-log-capture/blob/v9.2.0/CHANGELOG.md)
 
 ### Changed
 
@@ -36,6 +35,7 @@ Trouble Mode's reports now open **beside** the log instead of covering it, the l
 - **The viewer reopens the log you were reading.** Reloading the window, or pressing F5, always jumped to the newest log in the reports folder and threw away whatever you had open — then offered a "Resume" button only if that log happened to live in the reports folder. The viewer now reopens the log you last opened yourself, wherever it lives, including a file you loaded through **Open Log File** from anywhere on disk. If it has been deleted or sent to the trash, the newest log opens instead. The **Resume** button is gone, because there is nothing left to resume; when a newer log exists, the log status bar says so and offers to open it.
 - **"Always switch to latest" now waits for a log to actually arrive.** The setting says it switches to the newest log "the moment it arrives", but it switched to any log newer than the one you were reading — so a log already sitting on disk could pull the viewer off a log you had deliberately opened, as soon as anything in the reports folder changed. It now only follows logs written after the window opened.
 - **All bracket tags now render as visual chips.** Lines with `[frame-stall]`, `[db]`, `[perf]`, `[retry]`, and other bracket tags from the tag vocabulary render those tags as colored semantic chips before the message, instead of displaying them as plain text. The tags are stripped from the message body so they appear exactly once, with level-based coloring that matches the tag's severity (error tags red, performance tags purple, database tags blue, etc.).
+- **Tag chips moved into their own column, and are easier to read.** The `[db]`/`[perf]`/`[frame-stall]` chips no longer sit inline in the message text — they render in a dedicated column just left of the message, so the message body reads cleanly. The column is a fixed width so the message stays aligned line to line; a line carrying more tags than fit shows the first chip plus a `+N` badge, and hovering the column lists every tag in full. Chip colors switched to theme-aware colors so they stay legible on dark **and** light backgrounds — the old performance-purple and debug-brown read as dark-on-dark. The parsed device tag (e.g. `keystore2`) now renders as a chip too, matching the others while staying click-to-filter.
 - **The log status bar stays up.** The blue bar under the toolbar was a pop-up: it appeared when you clicked the filename and vanished the moment you clicked anything in it — including its own **Open in Editor** and **Copy Full Path** buttons. It is now a permanent bar for as long as a log is open, and only its **×** closes it. Clicking the filename or the "N newer" chip brings it back.
 - **The session context line moved into the status bar.** The adapter, project, launch configuration, and device — "dart · contacts · contacts (debug mode) (motorola edge 2022)" — used to be squeezed into the toolbar's right edge between the icons and the file path. It now sits in the status bar beside the log's name and lifespan, where the rest of the open log's identity already lives.
 - **The status bar's buttons look like buttons.** **Copy Full Path** was transparent text on the blue bar next to a filled **Open in Editor**, so it read as disabled when it was always live. Both are now proper buttons carrying icons, while the **⋮** and **×** stay as plain chrome.
@@ -67,7 +67,7 @@ Trouble Mode's reports now open **beside** the log instead of covering it, the l
 
 ## [9.1.2]
 
- [log](https://github.com/saropa/saropa-log-capture/blob/v9.1.2/CHANGELOG.md)
+Trouble Mode grew up — a live severity chart, a band of your top Crashlytics issues, and a detail pane for any row you click — plus a one-click Markdown report for any issue and richer `[flowmap]` tagging for actions, exits, and errors. [log](https://github.com/saropa/saropa-log-capture/blob/v9.1.2/CHANGELOG.md)
 
 ### Added
 

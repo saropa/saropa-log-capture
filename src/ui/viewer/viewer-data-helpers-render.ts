@@ -364,12 +364,11 @@ function renderItem(item, idx, prevVis) {
     /* Flow-tag chip (plan 109): 'chips' mode swaps a [flowmap] line's raw text for a chip
        (logic in viewer-flow-tags.ts; 'raw' returns html unchanged, 'hidden' never reaches here). */
     if (typeof flowChipSwap === 'function') html = flowChipSwap(item, html);
-    /* Head tags (bracket tags): render all parsed tags as chips before the message body. */
-    var headTagsChips = '';
-    if (item.headTags && item.headTags.length > 0 && typeof renderHeadTagChips === 'function') {
-        headTagsChips = renderHeadTagChips(item.headTags);
-    }
-    var msgInner = bannerChevron + contBadge + elapsed + badge + catBadge + headTagsChips + html;
+    /* Head-tag chips ([db]/[perf]/[frame-stall]) render in their own fixed
+       decoration column (deco-cell-htags via buildDecoParts), NOT inline here —
+       inline chips shifted the message text and cluttered the body. The leading
+       [bracket] text was already stripped above so the column is the sole home. */
+    var msgInner = bannerChevron + contBadge + elapsed + badge + catBadge + html;
     /* Collapse affordance — start row only. Absolutely positioned (CSS) over the
        block's top-right corner so it never shifts the white-space:pre box art.
        Collapsed shows ▸ + the row count ("N"); expanded shows ▾. The whole block

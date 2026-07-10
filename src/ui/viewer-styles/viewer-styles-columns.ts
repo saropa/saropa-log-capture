@@ -14,7 +14,8 @@
  * shown for the file). Auto-placement would then shift that row's remaining cells
  * into the wrong tracks. Fixed indices keep every column aligned top-to-bottom
  * regardless of which parts a given row carries. `--grid-cols` therefore always
- * emits all six decoration tracks (absent ones at width 0) plus the `1fr` message.
+ * emits all seven decoration tracks (absent ones at width 0) plus the `1fr`
+ * message — six metadata parts plus the app head-tag chip column (`htags`).
  */
 export function getColumnStyles(): string {
     return /* css */ `
@@ -27,14 +28,14 @@ export function getColumnStyles(): string {
    direct grid items of the row (keeps the JS hook without a nesting level). */
 .cols .line-decoration { display: contents; }
 
-/* Log-gutter consumer: 6 decoration tracks + message, sized by --grid-cols.
+/* Log-gutter consumer: 7 decoration tracks + message, sized by --grid-cols.
    padding-left reserves the severity-bar clearance (matches the old 1.25em).
    Multi-frame stack-header rows are NOT .line (they carry .stack-header for the
    collapse click handler), so the gutter selectors name both — same template var,
    same overlap-proof contract, so a stack header's message aligns under the same
    column as the regular log rows around it (plan 055 Phase 2). */
 .line.cols, .stack-header.cols { padding-left: 1.25em; }
-.line.log-cols, .stack-header.log-cols { grid-template-columns: var(--grid-cols, 0 0 0 0 0 0 1fr); }
+.line.log-cols, .stack-header.log-cols { grid-template-columns: var(--grid-cols, 0 0 0 0 0 0 0 1fr); }
 
 /* Each decoration datum is its own clipping cell — no merged content, no spill. */
 .deco-cell {
@@ -54,6 +55,10 @@ export function getColumnStyles(): string {
 .deco-cell-pidtid { grid-column: 4; }
 .deco-cell-level { grid-column: 5; }
 .deco-cell-tag { grid-column: 6; }
+/* App head-tag chips ([db]/[perf]/[frame-stall]) live in their own fixed track,
+   left of the message. A shared fixed width keeps the message aligned row-to-row;
+   overflow past one chip collapses to a +N badge (buildDecoParts). */
+.deco-cell-htags { grid-column: 7; }
 
 /* Message track: pinned last, min-width:0 so it wraps inside its column and can
    never push or be pushed over the decoration cells. Keeps the row's own
@@ -61,7 +66,7 @@ export function getColumnStyles(): string {
    stack-frame rows share the column so their message/frame text aligns under the
    same track as the regular rows above them. */
 .line.cols .line-msg, .stack-header.cols .line-msg {
-    grid-column: 7;
+    grid-column: 8;
     min-width: 0;
 }
 `;
