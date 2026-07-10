@@ -62,7 +62,7 @@ suite('parseHeadTags — saved-log [time] [source] wrapper tolerance', () => {
 });
 
 suite('head-tag chips in the tag column', () => {
-    test('renderHeadTagChips shows only the PRIMARY (first) tag, as a level-colored Title Case chip', () => {
+    test('renderHeadTagChips shows the PRIMARY (first) tag plus a "+N" badge for the rest', () => {
         // Chip bodies run through formatTagLabel — always "Title Case With Spaces",
         // never the raw lowercase/kebab-case tag name (user-reported inconsistency,
         // 2026-07-10: sidebar showed lowercase, tag column showed raw/no-space case).
@@ -71,12 +71,20 @@ suite('head-tag chips in the tag column', () => {
         );
         assert.ok(html.includes('>Perf<'), 'first (primary) tag chip renders, Title Case');
         assert.ok(!html.includes('Frame Stall'), 'second tag does NOT render as its own chip (2026-07-10: capped to 1 chip/row)');
-        assert.ok(html.includes('tag-level-performance'), 'chip carries its level class');
-        assert.ok(!html.includes('+1') && !html.includes('tag-chip-more'), 'no +N overflow badge');
+        assert.ok(html.includes('tag-level-performance'), 'primary chip carries its level class');
+        assert.ok(html.includes('tag-chip-more') && html.includes('>+1<'), 'a "+1" badge signals the hidden second tag');
     });
 
-    test('renderHeadTagChips on a single-tag list still renders that one chip', () => {
+    test('renderHeadTagChips shows "+N" for the actual count of extra tags, not just +1', () => {
+        const html = run(
+            'renderHeadTagChips([{name:"db",level:"database"},{name:"perf",level:"performance"},{name:"log",level:"info"}])',
+        );
+        assert.ok(html.includes('>+2<'), 'two tags beyond the primary one');
+    });
+
+    test('renderHeadTagChips on a single-tag list renders that one chip with no "+N" badge', () => {
         const html = run('renderHeadTagChips([{name:"db",level:"database"}])');
+        assert.ok(!html.includes('tag-chip-more'), 'no extra tags — no badge');
         assert.ok(html.includes('>Db<'));
         assert.ok(html.includes('tag-level-database'));
     });
