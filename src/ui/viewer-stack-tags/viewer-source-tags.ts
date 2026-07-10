@@ -153,32 +153,49 @@ function getSourceTagChipKeys() {
     return chipKeys;
 }
 
-/** Increment the count for a line item's source tag (and logcat parent tag if different). */
-function registerSourceTag(item) {
-    var key = item.sourceTag || otherKey;
-    sourceTagCounts[key] = (sourceTagCounts[key] || 0) + 1;
-    var lk = item.logcatTag;
-    if (lk && lk !== key) { sourceTagCounts[lk] = (sourceTagCounts[lk] || 0) + 1; }
-    var primaryHidden = !!hiddenSourceTags[key];
-    var parentHidden = lk ? !!hiddenSourceTags[lk] : true;
-    if (primaryHidden && (!lk || parentHidden)) { item.sourceFiltered = true; }
-    updateTagSummary();
-    if (key === DATABASE_TAG_KEY || lk === DATABASE_TAG_KEY) {
-        if (typeof updateSqlToolbarButton === 'function') updateSqlToolbarButton();
+/* The line's filter keys = its unified tag set (item.tags, built once in
+   addToData), or the catch-all otherKey when it has none. ONE source shared by
+   count, filter, and trim so the sidebar chips, the log chips, and the
+   hidden-line math can never disagree — the mismatch that made toggling a chip
+   appear to do nothing (the chip you saw had no sidebar entry). */
+function lineTagKeys(item) {
+    if (item && item.tags && item.tags.length) {
+        var ks = [];
+        for (var i = 0; i < item.tags.length; i++) { ks.push(item.tags[i].key); }
+        return ks;
     }
+    return [otherKey];
 }
 
-/** Decrement the count for a line item's source tag and logcat parent (used by trimData). */
-function unregisterSourceTag(item) {
-    var key = item.sourceTag || otherKey;
-    if (sourceTagCounts[key]) {
-        sourceTagCounts[key]--;
-        if (sourceTagCounts[key] <= 0) { delete sourceTagCounts[key]; }
+/* A line is hidden only when EVERY one of its tags is hidden; toggling any one
+   of its tags back on reveals it. */
+function computeSourceFiltered(item) {
+    var ks = lineTagKeys(item);
+    for (var i = 0; i < ks.length; i++) { if (!hiddenSourceTags[ks[i]]) { return false; } }
+    return true;
+}
+
+/** Increment the count for every tag on a line item. */
+function registerSourceTag(item) {
+    var ks = lineTagKeys(item);
+    var sawDb = false;
+    for (var i = 0; i < ks.length; i++) {
+        sourceTagCounts[ks[i]] = (sourceTagCounts[ks[i]] || 0) + 1;
+        if (ks[i] === DATABASE_TAG_KEY) { sawDb = true; }
     }
-    var lk = item.logcatTag;
-    if (lk && lk !== key && sourceTagCounts[lk]) {
-        sourceTagCounts[lk]--;
-        if (sourceTagCounts[lk] <= 0) { delete sourceTagCounts[lk]; }
+    item.sourceFiltered = computeSourceFiltered(item);
+    updateTagSummary();
+    if (sawDb && typeof updateSqlToolbarButton === 'function') { updateSqlToolbarButton(); }
+}
+
+/** Decrement the count for every tag on a line item (used by trimData). */
+function unregisterSourceTag(item) {
+    var ks = lineTagKeys(item);
+    for (var i = 0; i < ks.length; i++) {
+        if (sourceTagCounts[ks[i]]) {
+            sourceTagCounts[ks[i]]--;
+            if (sourceTagCounts[ks[i]] <= 0) { delete sourceTagCounts[ks[i]]; }
+        }
     }
 }
 
@@ -190,11 +207,7 @@ function applySourceTagFilter() {
     for (var i = 0; i < allLines.length; i++) {
         var item = allLines[i];
         if (item.type === 'marker') { continue; }
-        var key = item.sourceTag || otherKey;
-        var lk = item.logcatTag;
-        var primaryHidden = !!hiddenSourceTags[key];
-        var parentHidden = lk ? !!hiddenSourceTags[lk] : true;
-        item.sourceFiltered = primaryHidden && (!lk || parentHidden);
+        item.sourceFiltered = computeSourceFiltered(item);
     }
     if (typeof recalcAndRender === 'function') { recalcAndRender(); }
     else { recalcHeights(); renderViewport(true); }

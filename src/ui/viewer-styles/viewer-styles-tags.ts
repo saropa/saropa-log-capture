@@ -150,6 +150,15 @@ export function getTagStyles(): string {
     background: color-mix(in srgb, var(--tag-c) 14%, transparent);
     border: 1px solid color-mix(in srgb, var(--tag-c) 40%, transparent);
 }
+/* Log-line tag chips are clickable — they open the Message Tags sidebar. */
+.tag-chip[data-tag-chip] { cursor: pointer; }
+.tag-chip[data-tag-chip]:hover { background: color-mix(in srgb, var(--tag-c) 28%, transparent); }
+/* Brief flash on the sidebar chip a log chip click scrolled to. */
+@keyframes tag-chip-flash-kf {
+    0% { box-shadow: 0 0 0 2px var(--vscode-focusBorder, #4aa5ff); }
+    100% { box-shadow: 0 0 0 2px transparent; }
+}
+.source-tag-chip.tag-chip-flash { animation: tag-chip-flash-kf 1.2s ease-out; }
 /* Level-specific tag coloring — matches level dots in viewer-styles-level.ts */
 .tag-chip.tag-level-error       { --tag-c: var(--vscode-charts-red, #f14c4c); }
 .tag-chip.tag-level-warning     { --tag-c: var(--vscode-charts-yellow, #e2c08d); }

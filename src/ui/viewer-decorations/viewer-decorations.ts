@@ -159,15 +159,11 @@ function applyDecorationLayoutWidth() {
     /* Tag column: gated by its own toggle (Columns → Tag) AND by structuredLineParsing
        — without structured parsing the tag is never extracted into item.parsedTag, so a
        reserved column would always be empty. */
-    /* The tag column holds the structured DEVICE tag (keystore2), gated by its own
-       toggle + structured parsing. It ALSO holds app head tags ([db]/[perf]/
-       [frame-stall]) — a different datum that needs no toggle and no structured
-       parsing — so reserve the column when EITHER is present (decoSeen.htags).
-       buildDecoParts composes both into the one 'tag' cell. */
-    var hasTag = ((typeof decoShowParsedTag === 'undefined' || decoShowParsedTag)
-        && (typeof structuredLineParsing !== 'undefined' && structuredLineParsing)
-        && decoSeen.tag)
-        || decoSeen.htags;
+    /* One tag column, one tag set (item.tags): every per-line tag — device/logcat/
+       source + bracket head tags — renders as a chip here (buildDecoParts).
+       decoSeen.htags is true once any line carries a tag; the Columns "Tag" toggle
+       (decoShowParsedTag) still hides the whole column. */
+    var hasTag = (typeof decoShowParsedTag === 'undefined' || decoShowParsedTag) && decoSeen.htags;
     /* Signature gates the CSS write: width depends on digit count, the enabled
        flags, AND which data has been seen (data arrives as lines stream in). */
     var sig = digits + '|' + (hasCounter ? 1 : 0) + (hasTime ? 1 : 0) + (showMilliseconds ? 1 : 0)
@@ -195,12 +191,11 @@ function applyDecorationLayoutWidth() {
     if (hasSessionElapsed) em += 6.5;
     if (hasPid) em += 7;
     if (hasLvl) em += 1.6;
-    /* Tag column widened from the old 7em (bare device-tag text) to 9em because it
-       now carries chips (device tag + app head tags), which are wider than plain
-       text; 9em fits the common one/two-chip line. It is a shared fixed width so
-       the message stays aligned row-to-row; a rare line with more chips clips, with
-       the full list on the cell tooltip. */
-    if (hasTag) em += 9;
+    /* Tag column holds the line's chips (device/logcat/source + head tags). 12em
+       fits the common one/two-chip line without cutting names to "Activi…"; it is
+       a shared fixed width so the message stays aligned row-to-row, and a rare
+       busier line clips with the full list on the cell tooltip. */
+    if (hasTag) em += 12;
     if (em > 0) em += 1; // trailing &nbsp;&nbsp; gap getDecorationPrefix appends
     var contentIndentEm = em;
     var totalPaddingEm = 1.25 + contentIndentEm; // 1.25em keeps severity bar clear.
@@ -217,7 +212,7 @@ function applyDecorationLayoutWidth() {
         hasSessionElapsed ? '6.5em' : '0',
         hasPid ? '7em' : '0',
         hasLvl ? '1.6em' : '0',
-        hasTag ? '9em' : '0',
+        hasTag ? '12em' : '0',
         '1fr',
     ];
     root.style.setProperty('--grid-cols', gridCols.join(' '));

@@ -72,10 +72,9 @@ suite('viewer column layout (plan 055 — grid column model)', () => {
         // indices stay valid row-to-row; the message track is 1fr.
         assert.ok(/'1fr'/.test(body), 'the message track must be 1fr');
         assert.ok(/decoShowTimestamp\s*&&\s*decoSeen\.ts/.test(body), 'timestamp track still requires decoSeen.ts');
-        assert.ok(/decoSeen\.tag/.test(body), 'tag track still requires decoSeen.tag');
-        // The one tag column also reserves when the log carries app head tags,
-        // since head tags render as chips in that same cell (buildDecoParts).
-        assert.ok(/decoSeen\.htags/.test(body), 'tag track must also reserve for app head tags');
+        // The one tag column reserves when the log carries any tag (the unified
+        // item.tags set — device/logcat/source + head tags — flagged via decoSeen.htags).
+        assert.ok(/decoSeen\.htags/.test(body), 'tag track reserves for any line tag (decoSeen.htags)');
     });
 
     test('getDecorationCells renders one .deco-cell per part, keyed for placement', () => {

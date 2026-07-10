@@ -54,21 +54,25 @@ function escapeHeadTag(s) {
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-/* Render one head tag as a chip. Reuses tag column styling from sourceTag chips. */
+/* Render one line tag as a chip. Tags are {name, key, level} — the unified set
+   built in addToData (bracket head tags + device/logcat/source tags). data-tag-chip
+   carries the filter key so a click opens the Message Tags sidebar for that tag
+   (viewer-source-tags-ui); the chip is not itself an inline filter toggle. */
 function renderHeadTagChip(tag) {
     if (!tag || !tag.name) return '';
     var levelCls = 'tag-level-' + (tag.level || 'info');
+    var key = (tag.key || String(tag.name).split(':')[0].trim().toLowerCase());
     var body = escapeHeadTag(tag.name);
-    return '<span class="tag-chip ' + levelCls + '">' + body + '</span>';
+    return '<span class="tag-chip ' + levelCls + '" data-tag-chip="' + escapeHeadTag(key) + '">' + body + '</span>';
 }
 
-/* Render all head tags as a sequence of chips (spacing via CSS margin-right). */
+/* Render all of a line's tags as a sequence of chips (spacing via CSS margin-right). */
 function renderHeadTagChips(tags) {
     if (!tags || tags.length === 0) return '';
     return tags.map(function(t) { return renderHeadTagChip(t); }).join('');
 }
 
-/* Space-separated list of every head-tag name, escaped, for the tag cell's title
+/* Space-separated list of every tag name, escaped, for the tag cell's title
    tooltip so a chip clipped by the fixed column width is recoverable on hover.
    escapeHeadTag guards the attacker-controlled tag text before the title attr. */
 function headTagsTitle(tags) {

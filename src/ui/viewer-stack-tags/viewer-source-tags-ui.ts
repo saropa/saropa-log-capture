@@ -20,16 +20,22 @@ function rebuildTagChips() {
     var chipKeys = (typeof getSourceTagChipKeys === 'function')
         ? getSourceTagChipKeys()
         : Object.keys(sourceTagCounts);
+    var totalKeys = chipKeys.length;
+    /* Collapsed view keeps the highest-signal tags: rank by count FIRST, take the
+       top-N, THEN alpha-sort only what will be shown. Sorting alpha before slicing
+       would drop high-count tags (perf 51) below the fold just because their name
+       sorts late. User asked for alpha order in the panel (2026-07-10). */
     chipKeys.sort(function(a, b) { return sourceTagCounts[b] - sourceTagCounts[a]; });
-    var limit = sourceTagShowAll ? chipKeys.length : Math.min(chipKeys.length, sourceTagMaxChips);
+    var limit = sourceTagShowAll ? totalKeys : Math.min(totalKeys, sourceTagMaxChips);
+    var shownKeys = chipKeys.slice(0, limit).sort(function(a, b) { return a.localeCompare(b); });
     var parts = [
         '<span class="source-tag-actions">'
         + '<button class="tag-action-btn" data-action="all">' + vt('viewer.tags.all') + '</button>'
         + '<button class="tag-action-btn" data-action="none">' + vt('viewer.tags.none') + '</button>'
         + '</span>'
     ];
-    for (var i = 0; i < limit; i++) {
-        var key = chipKeys[i];
+    for (var i = 0; i < shownKeys.length; i++) {
+        var key = shownKeys[i];
         var label = escapeTagHtml(key);
         var active = !hiddenSourceTags[key];
         var cls = 'source-tag-chip' + (active ? ' active' : '');
@@ -39,8 +45,9 @@ function rebuildTagChips() {
             + '<span class="tag-count">' + sourceTagCounts[key] + '</span></button>'
         );
     }
-    if (chipKeys.length > sourceTagMaxChips) {
-        var showLabel = sourceTagShowAll ? vt('viewer.tags.showLess') : vt('viewer.tags.showAll', chipKeys.length);
+    /* Show-all toggle keyed off the TOTAL count, not the sliced view. */
+    if (totalKeys > sourceTagMaxChips) {
+        var showLabel = sourceTagShowAll ? vt('viewer.tags.showLess') : vt('viewer.tags.showAll', totalKeys);
         parts.push('<button class="tag-show-all-btn" data-action="toggle-all">' + showLabel + '</button>');
     }
     container.innerHTML = parts.join('');
@@ -164,6 +171,43 @@ function wrapTagLink(html, sourceTag) {
             e.preventDefault();
             e.stopPropagation();
             soloSourceTag(tagEl.dataset.tag);
+        }
+    });
+})();
+
+/* Open the Message Tags sidebar (Filters panel → Log Tags tab), scrolled to the
+   clicked tag. The log-line tag chips are LABELS, not inline filters: a click
+   brings the user to the one place every tag is toggleable, instead of a
+   per-chip filter toggle the user found confusing (2026-07-10). */
+function openMessageTagsPanel(tagKey) {
+    if (typeof setActivePanel === 'function') { setActivePanel('filters'); }
+    else if (typeof openFiltersSlideout === 'function') { openFiltersSlideout(); }
+    /* The tab button carries the click wiring (initFilterTabs); clicking it both
+       selects the tab and shows the log-tags section. */
+    var tab = document.getElementById('filter-tab-log-tags');
+    if (tab) { tab.click(); }
+    if (!tagKey) { return; }
+    /* Bring the matching sidebar chip into view + flash it so the user sees what
+       to toggle. A tag seen too few times to earn a sidebar chip simply has none. */
+    var sel = (typeof CSS !== 'undefined' && CSS.escape) ? CSS.escape(tagKey) : tagKey;
+    var chip = document.querySelector('#source-tag-chips .source-tag-chip[data-tag="' + sel + '"]');
+    if (chip && chip.scrollIntoView) {
+        chip.scrollIntoView({ block: 'nearest' });
+        chip.classList.add('tag-chip-flash');
+        setTimeout(function() { chip.classList.remove('tag-chip-flash'); }, 1200);
+    }
+}
+
+/* Click delegate for the log-line tag chips (data-tag-chip → filter key). */
+(function() {
+    var vp = document.getElementById('viewport');
+    if (!vp) return;
+    vp.addEventListener('click', function(e) {
+        var chip = e.target.closest('.tag-chip[data-tag-chip]');
+        if (chip) {
+            e.preventDefault();
+            e.stopPropagation();
+            openMessageTagsPanel(chip.getAttribute('data-tag-chip'));
         }
     });
 })();

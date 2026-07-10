@@ -4,6 +4,7 @@ import { getViewerDataHelpersCore } from '../../ui/viewer/viewer-data-helpers-co
 import { getStructuredLineParserScript } from '../../ui/viewer/viewer-structured-line-parser';
 import { getDecoContentScript } from '../../ui/viewer-decorations/viewer-deco-content';
 import { getLineBirthScript } from '../../ui/viewer/viewer-data-add-line-birth';
+import { getHeadTagsParserScript } from '../../ui/viewer-bracket-head-tags/viewer-bracket-head-tags';
 
 /**
  * Regression: a structured log line whose message body is empty must be treated as a blank row.
@@ -55,7 +56,7 @@ function calcLevelFiltered(){return false;}
 function getCounterDigitsForLayout(){return 5;}
 `;
   const code = prelude + getStructuredLineParserScript() + getViewerDataHelpersCore()
-    + getDecoContentScript() + getLineBirthScript();
+    + getHeadTagsParserScript() + getDecoContentScript() + getLineBirthScript();
   const ctx = vm.createContext({ console, vt: (k: string) => k }) as Ctx;
   vm.runInContext(code, ctx, { filename: 'blank-structured.js', timeout: 10_000 });
   return ctx;
@@ -73,9 +74,15 @@ function itemFor(ctx: Ctx, rawText: string): Record<string, unknown> {
   const plain = (ctx.stripTags as (h: string) => string)(html);
   const slp = ctx.parseStructuredPrefix(plain, null);
   assert.ok(slp, 'structured parser must match this line: ' + rawText);
+  // Mirror addToData's unified item.tags (viewer-data-add): the parsed device tag
+  // becomes one entry, deduped by lowercase key. buildDecoParts renders item.tags.
+  const tags: Array<{ name: string; key: string; level: string }> = [];
+  if (slp!.tag) {
+    tags.push({ name: slp!.tag, key: String(slp!.tag).split(':')[0].trim().toLowerCase(), level: 'info' });
+  }
   return {
     html, type: 'line', level: 'warning',
-    structuredPrefixLen: slp!.prefixLen, parsedTag: slp!.tag,
+    structuredPrefixLen: slp!.prefixLen, parsedTag: slp!.tag, tags,
   };
 }
 

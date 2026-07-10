@@ -101,23 +101,17 @@ function buildDecoParts(item, idx, hiddenAfter) {
     if (!isBlank && typeof showParsedLevelPrefix !== 'undefined' && showParsedLevelPrefix && item.parsedRawLevel) {
         parts.push({ key: 'level', html: '<span class="deco-level-prefix">' + item.parsedRawLevel + '</span>' });
     }
-    /* The one tag cell holds every per-line tag chip: the structured device tag
-       (keystore2) first — gated by its column toggle + structured parsing — then
-       ALL app head tags ([db]/[perf]/[frame-stall]), which need neither toggle nor
-       structured parsing. The cell title lists every head tag so a name clipped by
-       the fixed column width is recoverable on hover. */
-    var tagHtml = '';
-    var tagTitle = '';
-    if (!isBlank && item.parsedTag
-        && typeof structuredLineParsing !== 'undefined' && structuredLineParsing
-        && (typeof decoShowParsedTag === 'undefined' || decoShowParsedTag)) {
-        tagHtml += '<span class="meta-filter-toggle deco-parsed-tag deco-parsed-tag-chip" data-meta-key="tag" data-meta-value="' + item.parsedTag.replace(/"/g, '&quot;') + '" title="' + vt('viewer.deco.filterByTag', item.parsedTag.replace(/"/g, '&quot;')) + '">' + item.parsedTag + '</span>';
+    /* One tag cell, one tag set (item.tags — the unified union built in addToData).
+       Every tag renders as a level-colored chip; clicking any chip opens the
+       Message Tags sidebar (viewer-source-tags-ui) rather than toggling an inline
+       filter. The cell title lists every tag so a name clipped by the fixed column
+       width is recoverable on hover. Same list the sidebar counts and filters. */
+    if (!isBlank && (typeof decoShowParsedTag === 'undefined' || decoShowParsedTag)
+        && item.tags && item.tags.length > 0 && typeof renderHeadTagChips === 'function') {
+        var tagHtml = renderHeadTagChips(item.tags);
+        var tagTitle = (typeof headTagsTitle === 'function') ? headTagsTitle(item.tags) : '';
+        if (tagHtml) parts.push({ key: 'tag', html: tagHtml, title: tagTitle });
     }
-    if (!isBlank && item.headTags && item.headTags.length > 0 && typeof renderHeadTagChips === 'function') {
-        tagHtml += renderHeadTagChips(item.headTags);
-        if (typeof headTagsTitle === 'function') tagTitle = headTagsTitle(item.headTags);
-    }
-    if (tagHtml) parts.push({ key: 'tag', html: tagHtml, title: tagTitle });
     return parts;
 }
 
