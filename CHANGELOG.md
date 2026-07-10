@@ -29,6 +29,7 @@ cspell:disable
 
 ### Fixed
 
+- **The severity chart no longer lets the device's startup burst flatten every real spike.** The chart excludes the pre-app logcat backlog from its peak, but on a reloaded log the detection could miss the launch line and scale the whole strip to that one leading crash burst. It now anchors on the **build-complete** line (`√ Built …apk`, `Xcode build done`) — a later, stronger boundary than "Launching…" that also drops device noise during the build — and falls back to the launch line when there is no build. The scan also self-heals if a log is swapped in without a clear, so the boundary can't get stuck on the previous log.
 - **A truncated Flutter exception dump no longer paints the rest of the session red.** When a `RenderFlex overflowed` / `Exception caught by …` banner's closing rule never arrived (e.g. cut off by the debug adapter's `maxLogLineLength` truncating a long widget-tree dump mid-sentence), the banner group stayed "open" forever, forcing every later line — permission logs, perf stalls, Crashlytics telemetry — to Error severity. The banner now auto-closes after a generous line cap instead of leaking (bug_012).
 
 ---
