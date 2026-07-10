@@ -1,18 +1,22 @@
 /**
- * Unified log banner (plan 109 — bugs/109_plan-unified-log-banner.md).
+ * Unified log status bar (plan 109 — bugs/109_plan-unified-log-banner.md).
  *
  * One inline, non-modal surface (#viewer-newer-banner, in viewer-content-body.ts) with two modes:
  *
- *  - AUTO: surfaces on its own when the host reports the open log is behind a newer main-project
- *    (controller) log. Shows "Newer · <name> · <ago>" with Open (loads that newer log) / Dismiss.
- *    Auto-surfacing must never steal focus or block input — hence inline, not a modal/popover.
- *  - CLICK: opened by clicking the filename or the toolbar staleness chip. Shows the OPEN log's
- *    name + lifespan ("Started <ago> · ran <dur>") with Open in editor · Copy path · a kebab for
- *    the remaining file actions. Targets the open file.
+ *  - STATUS (the resting state): a persistent bar shown for as long as a log is open. Carries the
+ *    open log's name + lifespan ("Started <ago> · ran <dur>"), the session context/metadata line
+ *    (#session-details-inline, filled by viewer-session-header.ts — it lived in the toolbar until
+ *    the bar became permanent), and the file actions Open in Editor · Copy Full Path · a kebab for
+ *    the rest. Only the × collapses it; every other click leaves it up. Re-opened by clicking the
+ *    toolbar filename or the staleness chip.
+ *  - AUTO: temporarily replaces the status content when the host reports the open log is behind a
+ *    newer main-project (controller) log. Shows "Newer · <name> · <ago>" with Open (loads that
+ *    newer log) / Dismiss. Auto-surfacing must never steal focus or block input — hence inline,
+ *    not a modal/popover. Dismissing an AUTO alert returns to STATUS, it does not blank the bar.
  *
- * The two modes never co-exist: a user-opened CLICK banner takes precedence over AUTO until
- * dismissed. Dismiss = tap the banner body (not a button), the × icon, or Escape; AUTO dismiss also
- * advances the host dismiss cursor (acknowledgeUnreadLogs) so the same newer log will not re-nag.
+ * Bar chrome (icon, text, details, action slot, kebab menu) is built ONCE and then mutated in
+ * place. Rebuilding it via innerHTML would destroy #session-details-inline, whose content arrives
+ * on a separate host message (sessionInfo) that never replays.
  *
  * Runs at top-level webview scope (NOT the session-panel IIFE) so the logContextInfo message
  * handler and the filename/staleness click handlers can all reach it. Uses window._vscodeApi and
@@ -36,7 +40,8 @@ export function getLogBannerScript(): string {
     var vscodeApi = window._vscodeApi;
     if (!banner || !vscodeApi) { return; }
     var KEBAB = ${JSON.stringify(KEBAB_ACTIONS)};
-    var bannerMode = '';            // '' (hidden) | 'auto' | 'click'
+    var bannerMode = '';            // '' (never shown) | 'status' | 'auto'
+    var collapsed = false;          // true once the user hits × — host refreshes must not re-open it
     var ctx = { currentUri: '', startedMs: 0, durationMs: 0, stale: false, newerCount: 0, autoShow: false, latestUri: '', latestName: '', latestMtime: 0 };
 
     function tr(key, a, b) { return (typeof vt === 'function') ? vt(key, a, b) : key; }
@@ -54,26 +59,16 @@ export function getLogBannerScript(): string {
         return hrs === 1 ? tr('viewer.logBanner.hrAgo') : tr('viewer.logBanner.hrsAgo', hrs);
     }
 
-    function makeButton(action, label, primary) {
+    /* Every action button carries a leading codicon: the bar is dense and mixed-purpose, so a glyph
+       is what makes "open" vs "copy" separable at a glance. Icon-only buttons pass an empty label. */
+    function makeButton(action, label, icon, primary) {
         var b = document.createElement('button');
         b.type = 'button';
         b.className = 'session-newer-banner-action' + (primary ? ' primary' : '');
         b.setAttribute('data-banner-action', action);
-        b.textContent = label;
+        if (icon) { b.innerHTML = '<span class="codicon codicon-' + icon + '" aria-hidden="true"></span>'; }
+        if (label) { b.appendChild(document.createTextNode(label)); }
         return b;
-    }
-
-    function makeIcon(name) {
-        var s = document.createElement('span');
-        s.className = 'session-newer-banner-icon codicon codicon-' + name;
-        return s;
-    }
-
-    function makeText(text) {
-        var s = document.createElement('span');
-        s.className = 'session-newer-banner-text';
-        s.textContent = text;
-        return s;
     }
 
     /* Kebab overflow: a hidden menu of the less-important file actions, toggled by the ⋮ button.
@@ -93,34 +88,52 @@ export function getLogBannerScript(): string {
         return menu;
     }
 
-    function clickActions() {
-        var wrap = document.createElement('span');
-        wrap.className = 'session-newer-banner-actions';
-        wrap.appendChild(makeButton('open-editor', tr('viewer.logFile.openEditor'), true));
-        wrap.appendChild(makeButton('copy-path', tr('viewer.logFile.copyFullPath'), false));
-        var kebab = makeButton('kebab', '', false);
-        kebab.classList.add('log-banner-kebab-btn');
-        kebab.setAttribute('aria-haspopup', 'true');
-        kebab.setAttribute('aria-label', tr('viewer.logBanner.more'));
-        kebab.innerHTML = '<span class="codicon codicon-kebab-vertical" aria-hidden="true"></span>';
-        wrap.appendChild(kebab);
-        var close = makeButton('dismiss', '', false);
+    /* Persistent chrome. #session-details-inline is created here (not in the toolbar HTML) but keeps
+       its id so viewer-session-header.ts:applySessionInfo keeps finding it by getElementById. */
+    var iconEl = document.createElement('span');
+    var textEl = document.createElement('span');
+    textEl.className = 'session-newer-banner-text';
+    var detailsEl = document.createElement('span');
+    detailsEl.id = 'session-details-inline';
+    detailsEl.className = 'session-details-inline';
+    detailsEl.setAttribute('aria-label', tr('viewer.toolbar.sessionDetails.label'));
+    var actionsEl = document.createElement('span');
+    actionsEl.className = 'session-newer-banner-actions';
+    banner.appendChild(iconEl);
+    banner.appendChild(textEl);
+    banner.appendChild(detailsEl);
+    banner.appendChild(actionsEl);
+    banner.appendChild(buildKebabMenu());
+
+    function setIcon(name) { iconEl.className = 'session-newer-banner-icon codicon codicon-' + name; }
+
+    function addCloseButton() {
+        var close = makeButton('hide', '', '', false);
         close.classList.add('session-newer-banner-close');
         close.setAttribute('aria-label', tr('viewer.popover.close'));
         close.textContent = '\\u00d7';
-        wrap.appendChild(close);
-        return wrap;
+        actionsEl.appendChild(close);
+    }
+
+    function statusActions() {
+        actionsEl.innerHTML = '';
+        actionsEl.appendChild(makeButton('open-editor', tr('viewer.logFile.openEditor'), 'go-to-file', true));
+        actionsEl.appendChild(makeButton('copy-path', tr('viewer.logFile.copyFullPath'), 'copy', false));
+        var kebab = makeButton('kebab', '', 'kebab-vertical', false);
+        kebab.classList.add('log-banner-kebab-btn');
+        kebab.setAttribute('aria-haspopup', 'true');
+        kebab.setAttribute('aria-label', tr('viewer.logBanner.more'));
+        actionsEl.appendChild(kebab);
+        addCloseButton();
     }
 
     function autoActions() {
-        var wrap = document.createElement('span');
-        wrap.className = 'session-newer-banner-actions';
-        wrap.appendChild(makeButton('open-newer', tr('viewer.session.newerBanner.open'), true));
-        wrap.appendChild(makeButton('dismiss', tr('viewer.session.newerBanner.dismiss'), false));
-        return wrap;
+        actionsEl.innerHTML = '';
+        actionsEl.appendChild(makeButton('open-newer', tr('viewer.session.newerBanner.open'), 'arrow-right', true));
+        actionsEl.appendChild(makeButton('dismiss', tr('viewer.session.newerBanner.dismiss'), '', false));
     }
 
-    /* Lifespan suffix for CLICK mode: " · Started 10 min ago · ran 7m 45s". Each clause is dropped
+    /* Lifespan suffix for STATUS mode: " · Started 10 min ago · ran 7m 45s". Each clause is dropped
        when its data is unknown so a freshly-opened or duration-less log reads cleanly. */
     function lifespanSuffix() {
         var parts = [];
@@ -134,23 +147,25 @@ export function getLogBannerScript(): string {
 
     function renderAuto() {
         bannerMode = 'auto';
-        banner.innerHTML = '';
-        banner.appendChild(makeIcon('bell'));
+        toggleKebab(false);
+        setIcon('bell');
         var name = ctx.latestName || tr('viewer.logBanner.unnamed');
         var ago = formatAgo(ctx.latestMtime);
-        banner.appendChild(makeText(tr('viewer.logBanner.newer', name) + (ago ? (' \\u00b7 ' + ago) : '')));
-        banner.appendChild(autoActions());
+        textEl.textContent = tr('viewer.logBanner.newer', name) + (ago ? (' \\u00b7 ' + ago) : '');
+        /* The session metadata belongs to the OPEN log, so it would misread beside a newer-log
+           alert. Hidden for the duration of the alert, restored when it is dismissed. */
+        detailsEl.classList.add('u-hidden');
+        autoActions();
         banner.style.display = '';
     }
 
-    function renderClick() {
-        bannerMode = 'click';
-        banner.innerHTML = '';
-        banner.appendChild(makeIcon('file'));
-        var name = currentFilenameForBanner();
-        banner.appendChild(makeText(name + lifespanSuffix()));
-        banner.appendChild(clickActions());
-        banner.appendChild(buildKebabMenu());
+    function renderStatus() {
+        bannerMode = 'status';
+        collapsed = false;
+        setIcon('file');
+        textEl.textContent = currentFilenameForBanner() + lifespanSuffix();
+        detailsEl.classList.remove('u-hidden');
+        statusActions();
         banner.style.display = '';
     }
 
@@ -161,18 +176,20 @@ export function getLogBannerScript(): string {
         return name || ctx.latestName || tr('viewer.logBanner.unnamed');
     }
 
+    /* Only the × collapses the bar. Actions (open, copy, kebab items) leave it standing so the user
+       can copy a path and then open the file without re-summoning it. */
     function hideBanner() {
         bannerMode = '';
+        collapsed = true;
+        toggleKebab(false);
         banner.style.display = 'none';
-        banner.innerHTML = '';
     }
 
-    function dismiss() {
-        var wasAuto = bannerMode === 'auto';
-        hideBanner();
-        /* AUTO dismiss advances the host dismiss cursor so this newer log stops nagging until an
-           even newer controller log arrives. CLICK dismiss is a pure local hide. */
-        if (wasAuto) { vscodeApi.postMessage({ type: 'acknowledgeUnreadLogs' }); }
+    /* AUTO dismiss advances the host dismiss cursor so this newer log stops nagging until an even
+       newer controller log arrives, then falls back to the resting status bar. */
+    function dismissAuto() {
+        vscodeApi.postMessage({ type: 'acknowledgeUnreadLogs' });
+        renderStatus();
     }
 
     function toggleKebab(open) {
@@ -195,17 +212,18 @@ export function getLogBannerScript(): string {
         vscodeApi.postMessage(msg);
     }
 
-    function handleAction(action, el) {
-        if (action === 'dismiss') { dismiss(); return; }
+    function handleAction(action) {
+        if (action === 'hide') { hideBanner(); return; }
+        if (action === 'dismiss') { dismissAuto(); return; }
         if (action === 'kebab') { toggleKebab(); return; }
         if (action === 'open-newer') {
             if (ctx.latestUri) { vscodeApi.postMessage({ type: 'openSessionFromPanel', uriString: ctx.latestUri }); }
             vscodeApi.postMessage({ type: 'acknowledgeUnreadLogs' });
-            hideBanner();
+            renderStatus();
             return;
         }
-        if (action === 'open-editor') { postCurrentFileAction('openLogFileInEditor'); hideBanner(); return; }
-        if (action === 'copy-path') { postCurrentFileAction('copyCurrentFilePath'); hideBanner(); return; }
+        if (action === 'open-editor') { postCurrentFileAction('openLogFileInEditor'); return; }
+        if (action === 'copy-path') { postCurrentFileAction('copyCurrentFilePath'); return; }
     }
 
     banner.addEventListener('click', function(e) {
@@ -213,27 +231,29 @@ export function getLogBannerScript(): string {
         if (menuItem) {
             e.stopPropagation();
             postCurrentFileAction(menuItem.getAttribute('data-banner-msg') || '');
-            hideBanner();
+            toggleKebab(false);
             return;
         }
         var actionEl = e.target.closest ? e.target.closest('[data-banner-action]') : null;
         if (actionEl) {
             e.stopPropagation();
-            handleAction(actionEl.getAttribute('data-banner-action') || '', actionEl);
+            handleAction(actionEl.getAttribute('data-banner-action') || '');
             return;
         }
-        /* Tapping the banner body (not a button or menu) dismisses — the whole surface is a tap
-           target. Clicking the log content outside the banner is left alone (normal interaction). */
+        /* Body taps used to dismiss. They no longer do: the bar is persistent status, and losing it
+           on a stray click (or on a text selection inside it) was the reported annoyance. */
         toggleKebab(false);
-        dismiss();
     });
 
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && bannerMode) { e.preventDefault(); toggleKebab(false); dismiss(); }
+        if (e.key !== 'Escape' || !bannerMode) { return; }
+        e.preventDefault();
+        if (bannerMode === 'auto') { dismissAuto(); return; }
+        toggleKebab(false);
     });
 
-    /* Toolbar staleness chip + footer filename both open the CLICK banner. */
-    function openClickBanner() { renderClick(); }
+    /* Toolbar staleness chip + footer filename re-open a collapsed bar. */
+    function openClickBanner() { renderStatus(); }
     window.openLogActionsBanner = openClickBanner;
 
     var staleEl = document.getElementById('log-staleness');
@@ -259,9 +279,13 @@ export function getLogBannerScript(): string {
     window.handleLogContextInfo = function(info) {
         ctx = info || ctx;
         updateStaleness();
-        /* A user-opened CLICK banner is not clobbered by host refreshes. */
-        if (bannerMode === 'click') { return; }
-        if (ctx.autoShow) { renderAuto(); } else if (bannerMode === 'auto') { hideBanner(); }
+        /* No open log (empty viewer) — nothing to status-report. */
+        if (!ctx.currentUri && !bannerMode) { return; }
+        if (ctx.autoShow) { renderAuto(); return; }
+        /* A newer-log alert that stopped applying falls back to status; an explicitly collapsed bar
+           stays collapsed, but its text is refreshed so re-opening it shows the current file. */
+        if (collapsed) { return; }
+        renderStatus();
     };
 })();
 `;

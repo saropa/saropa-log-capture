@@ -87,11 +87,13 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
         <button type="button" id="resume-session-btn" class="resume-session-action" title="${t('viewer.resumeBanner.btn.title')}"></button>
         <button type="button" id="resume-session-dismiss" class="resume-session-dismiss" title="${t('viewer.resumeBanner.dismiss')}">×</button>
     </div>
-    <!-- Unified log banner (plan 109). One inline surface, two modes driven by viewer-log-banner.ts:
-         AUTO (a newer main-project/controller log was detected — Open / Dismiss) and CLICK (opened
-         from the filename or the toolbar staleness chip — current-log lifespan + file actions +
-         kebab). Fed by the host logContextInfo message, not the session list. Hidden by default;
-         role=status + aria-live announces the auto alert without stealing focus. -->
+    <!-- Unified log status bar (plan 109). One inline surface, two modes driven by
+         viewer-log-banner.ts: STATUS (persistent while a log is open — filename + lifespan +
+         session metadata + file actions; only its × collapses it) and AUTO (a newer
+         main-project/controller log was detected — Open / Dismiss, then back to STATUS). Fed by the
+         host logContextInfo message, not the session list. Starts hidden because no log is open
+         yet; role=status + aria-live announces the auto alert without stealing focus. Its chrome is
+         built by the script — do not add children here. -->
     <div id="viewer-newer-banner" class="session-newer-banner viewer-newer-banner" style="display:none" role="status" aria-live="polite"></div>
     <div id="split-breadcrumb">
         <button id="split-prev" title="${t('viewer.split.prev.title')}" aria-label="${t('viewer.split.prev.label')}" disabled>&#x25C0;</button>
@@ -102,14 +104,23 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     <div id="root-cause-hypotheses" class="root-cause-hypotheses u-hidden" role="region" aria-label="${t('viewer.rootCause.region')}"></div>
     <!-- Trouble Mode severity chart (Stage 3). Shown only while Trouble Mode is active
          (CSS keyed on body.slc-trouble-active); the chart script fills the body only. -->
-    <div id="trouble-chart" class="trouble-chart" role="img" aria-label="${t('viewer.troubleChart.region')}">
-        <!-- Legend chips live in the head row (not under the strip) so the readability
-             additions of plan 110 Stage 4 cost the feed almost no vertical space. -->
+    <div id="trouble-chart" class="trouble-chart" role="region" aria-label="${t('viewer.troubleChart.region')}">
+        <!-- Legend chips and the peak count live in the head row (not under the strip) so the
+             readability additions cost the feed almost no vertical space. The peak label was
+             moved out of the plot because a tall leading bar (the device-startup warning rush)
+             drew straight through it — an overlapped label is worse than no label. -->
         <div class="trouble-chart-head">
+            <button id="trouble-chart-toggle" class="tc-toggle" type="button" aria-expanded="true"
+                aria-controls="trouble-chart-body" title="${t('viewer.troubleChart.toggle.title')}"
+                aria-label="${t('viewer.troubleChart.toggle.label')}">&#x25BE;</button>
             <span class="trouble-chart-title">${t('viewer.troubleChart.title')}</span>
+            <span id="trouble-chart-peak" class="tc-peak"></span>
             <span id="trouble-chart-legend" class="tc-legend"></span>
         </div>
-        <div id="trouble-chart-body" class="trouble-chart-body"></div>
+        <!-- role="img" belongs on the plot, not the region: the region now holds a real button,
+             and an interactive control inside role="img" is unreachable to a screen reader. -->
+        <div id="trouble-chart-body" class="trouble-chart-body" role="img"
+            aria-label="${t('viewer.troubleChart.region')}"></div>
     </div>
     <!-- Trouble Mode Crashlytics band (Stage 5). Top cached crash issues from the
          background watcher's cache; hidden until Trouble Mode is active AND the band
