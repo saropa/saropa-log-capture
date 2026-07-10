@@ -100,6 +100,21 @@ suite('Flutter exception banner grouping', () => {
             const r = api.classify('no exception caught by the error handler here');
             assert.strictEqual(r.role, null, 'no leading box-rule → not a banner header');
         });
+
+        test('a banner with no closing rule auto-closes after the span cap instead of leaking forever (bug_012)', () => {
+            const api = loadClassifier();
+            api.reset();
+            api.classify('══╡ EXCEPTION CAUGHT BY RENDERING LIBRARY ╞══════');
+            // Simulate a truncated dump: 301 body lines, never reaching a closing rule.
+            let lastRole: string | null = 'body';
+            for (let i = 0; i < 301; i++) {
+                lastRole = api.classify('body line ' + i).role;
+            }
+            assert.strictEqual(lastRole, null, 'line past the cap must fall out of the banner group');
+            const after = api.classify('[log] [flowmap] action "Permission" some/file.dart:1');
+            assert.strictEqual(after.role, null, 'unrelated lines after the cap must not be grouped');
+            assert.strictEqual(after.groupId, -1, 'unrelated lines after the cap must not carry the stale groupId');
+        });
     });
 
     suite('state machine', () => {
