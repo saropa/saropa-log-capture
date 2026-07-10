@@ -97,7 +97,9 @@ function initTroubleRailResize() {
             /* Handle sits on the rail's LEFT edge: dragging left grows the rail (same
                sign convention as the minimap's left-edge handle). */
             var delta = startX - ev.clientX;
-            lastW = Math.round(Math.max(TROUBLE_RAIL_MIN_PX, Math.min(TROUBLE_RAIL_MAX_PX, startW + delta)));
+            var nextW = Math.round(Math.max(TROUBLE_RAIL_MIN_PX, Math.min(TROUBLE_RAIL_MAX_PX, startW + delta)));
+            if (nextW === lastW) { return; }
+            lastW = nextW;
             rail.style.width = lastW + 'px';
         }
         function onDone(ev) {
