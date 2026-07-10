@@ -203,12 +203,15 @@ suite('ViewerContextMenu', () => {
             const script = getContextMenuScript();
             const idx = script.indexOf("case 'copy-to-search':");
             assert.ok(idx >= 0);
-            const snippet = script.slice(idx, idx + 700);
+            const snippet = script.slice(idx, idx + 1300);
             assert.ok(snippet.includes('openSearch()'));
             /* Must call openSearchFlyout() explicitly so the bar is guaranteed visible even if
                viewer-toolbar-script.ts's openSearch wrapper is ever removed or reordered. */
             assert.ok(snippet.includes("typeof openSearchFlyout === 'function'"));
             assert.ok(snippet.includes('openSearchFlyout();'));
+            /* Guarded on u-hidden — calling openSearchFlyout() unconditionally would restart the
+               slide-in animation (a visible flash) every time this action runs while already open. */
+            assert.ok(snippet.includes("classList.contains('u-hidden')"));
             assert.ok(snippet.includes('searchInputEl.value = plainText;'));
         });
 
