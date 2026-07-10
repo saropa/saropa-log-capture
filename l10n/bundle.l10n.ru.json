@@ -1027,9 +1027,7 @@
   "Severity": "Серьезность",
   "Severity dot (copy only)": "Точка серьезности (только копирование)",
   "Show PID/TID": "Показать ПИД/ТИД",
-  "Show all ({0})": "Показать все ({0})",
   "Show details": "Показать детали",
-  "Show less": "Показать меньше",
   "Show level prefix": "Показать префикс уровня",
   "Show line number on blank lines": "Показывать номер строки в пустых строках",
   "Show line number on blank lines so Go to Line matches file": "Показывать номер строки в пустых строках, чтобы перейти к строке, соответствующей файлу.",
@@ -2111,5 +2109,8 @@
   "Perf {0}": "Перф {0} - это перфоманс.",
   "Warn {0}": "Предупреждение {0}",
   "Copy Tags": "Копировать Tags Tags.",
-  "Copy this line's tags as a comma-separated list": "Копируйте теги этой строки в виде списка, разделенного запятой."
+  "Copy this line's tags as a comma-separated list": "Копируйте теги этой строки в виде списка, разделенного запятой.",
+  "Copy every tag as JSON, grouped by display name with its raw tag variants": "Копируйте каждый тег в JSON, сгруппированный по имени дисплея и его вариантам чистых тегов.",
+  "Filter tags…": "Фильтрационные метки...",
+  "No tags match your search": "Никакие теги не совпадают с вашим поиском."
 }

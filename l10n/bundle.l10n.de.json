@@ -1027,9 +1027,7 @@
   "Severity": "Schwere",
   "Severity dot (copy only)": "Schweregradpunkt (nur Kopie)",
   "Show PID/TID": "PID/TID anzeigen",
-  "Show all ({0})": "Alle anzeigen ({0})",
   "Show details": "Details anzeigen",
-  "Show less": "Weniger anzeigen",
   "Show level prefix": "Ebenenpräfix anzeigen",
   "Show line number on blank lines": "Zeilennummer in Leerzeilen anzeigen",
   "Show line number on blank lines so Go to Line matches file": "Zeigt die Zeilennummer in leeren Zeilen an, sodass „Gehe zu Zeile“ mit der Datei übereinstimmt",
@@ -2111,5 +2109,8 @@
   "Perf {0}": "Perf {0} ist ein perfekter",
   "Warn {0}": "Warnung {0} warnen",
   "Copy Tags": "Copy Tags Tags Kopieren Sie die Tags.",
-  "Copy this line's tags as a comma-separated list": "Kopieren Sie die Tags dieser Zeile als eine durch Kommas getrennte Liste."
+  "Copy this line's tags as a comma-separated list": "Kopieren Sie die Tags dieser Zeile als eine durch Kommas getrennte Liste.",
+  "Copy every tag as JSON, grouped by display name with its raw tag variants": "Kopieren Sie jeden Tag als JSON, gruppiert nach Anzeigennamen mit seinen Raw-Tag-Varianten.",
+  "Filter tags…": "Filter-Tags... das ist alles.",
+  "No tags match your search": "Keine Tags passen zu Ihrer Suche."
 }

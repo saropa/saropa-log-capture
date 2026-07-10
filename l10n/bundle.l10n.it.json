@@ -1027,9 +1027,7 @@
   "Severity": "Gravità",
   "Severity dot (copy only)": "Punto di gravità (solo copia)",
   "Show PID/TID": "Mostra PID/TID",
-  "Show all ({0})": "Mostra tutto ({0})",
   "Show details": "Mostra dettagli",
-  "Show less": "Mostra meno",
   "Show level prefix": "Mostra il prefisso del livello",
   "Show line number on blank lines": "Mostra il numero di riga sulle righe vuote",
   "Show line number on blank lines so Go to Line matches file": "Mostra il numero di riga sulle righe vuote in modo che Vai alla riga corrisponda al file",
@@ -2111,5 +2109,8 @@
   "Perf {0}": "Perf {0} è stato scelto.",
   "Warn {0}": "Avvertimento {0}",
   "Copy Tags": "Copia Tag Etichette.",
-  "Copy this line's tags as a comma-separated list": "Copia i tag di questa riga come un elenco separato da virgole."
+  "Copy this line's tags as a comma-separated list": "Copia i tag di questa riga come un elenco separato da virgole.",
+  "Copy every tag as JSON, grouped by display name with its raw tag variants": "Copia ogni tag come JSON, raggruppato per nome visualizzato con le sue varianti di tag raw.",
+  "Filter tags…": "Tag di filtro... tag di filtri.",
+  "No tags match your search": "Nessuna tag corrisponde alla tua ricerca."
 }
