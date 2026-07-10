@@ -1,6 +1,6 @@
 # Plan: Global Capture Kill Switch
 
-## Status: Draft (rewritten 2026-07-09 against actual code; supersedes the external-AI draft)
+## Status: Complete (2026-07-09) — see Finish Report at the end
 
 ## Objective
 
@@ -167,3 +167,73 @@ Manual test in the Extension Development Host (F5) per the checks in each step.
   loses viewer history and the write path must flush, never drop.
 - "Abort before evaluating W3C traceparent regex" — OTel parsing is session-scoped provider
   work; stopping the session covers it. No special-case abort needed.
+
+## Finish Report (2026-07-09)
+
+### Status: Complete
+
+Disabling `saropaLogCapture.enabled` while a debug session is running now kills all in-flight
+capture work immediately instead of leaving it running until the debug session ends. All five
+implementation steps landed; the change reuses the master `enabled` setting as the kill switch
+with no new settings, commands, or status-bar items.
+
+### What changed
+
+1. **In-flight teardown on flip-off** — `setupConfigListener` (`src/activation-listeners.ts`) now
+   calls `sessionManager.stopAll()` when `saropaLogCapture.enabled` transitions to `false`. The
+   call is fire-and-forget with a `.catch()` that logs to the output channel, so the config
+   listener cannot throw. `stopAll()` reuses the existing `deactivate()` cascade: it flushes each
+   session's write queue and runs the session-end providers that stop external tailers, the adb
+   logcat process, terminal capture, and database live tail. The already-captured log stays on
+   disk; re-enabling starts fresh on the next debug session.
+
+2. **Enabled gate hoisted (two layers)** — `processOutputEvent`
+   (`src/modules/session/session-manager-events.ts`) checks `config.enabled` BEFORE the
+   unknown-session `earlyBuffer.add` branch, so a disabled switch performs no per-event buffering
+   or string trimming. A caller-level guard was also added at the top of
+   `SessionManagerImpl.onOutputEvent` (`src/modules/session/session-manager.ts`): it returns before
+   `resolveEffectiveSessionId` runs, which otherwise routed every DAP event (and could trigger a
+   late `startSession` attempt that `startSession` then rejected on `enabled=false`) even while
+   capture was off. The two guards are defense-in-depth — `processOutputEvent` remains the
+   unit-tested contract surface, and the caller guard makes the "zero per-event work" promise
+   literal for the live DAP path.
+
+3. **Crashlytics watcher gated** — `CrashlyticsWatcher.intervalMs()`
+   (`src/modules/crashlytics/crashlytics-watcher.ts`) returns `0` (which stops the timer via
+   `reschedule()`) when the master `enabled` setting is `false`, and the watcher's config listener
+   now reschedules on `saropaLogCapture.enabled` changes so flipping capture back on resumes
+   polling without a reload.
+
+4. **Toast names the stopped count** — the `toggleCapture` command
+   (`src/commands-session.ts`) reads `sessionManager.activeSessionCount` BEFORE writing the setting
+   (the config listener's async `stopAll()` would otherwise race the count to zero) and shows a new
+   string `captureToggle.disabledStoppedSessions` ("Log capture disabled — stopped {0} active
+   session(s).", added to `src/l10n/strings-a.ts`) when at least one session was stopped; the plain
+   `captureToggle.disabled` toast is used when idle.
+
+5. **Docs** — CHANGELOG gained a `### Changed` entry under `[Unreleased]`; the README `enabled`
+   settings row now states that disabling stops active capture, not only new sessions.
+
+### Verification
+
+- `npm run check-types` — clean.
+- `npm run lint` — 0 errors (14 pre-existing warnings in untouched files).
+- `npm run compile-tests` — clean.
+- New unit test `src/test/modules/session/session-manager-events.test.ts` — 3 passing: disabled +
+  unknown session does not buffer; disabled + known session does not broadcast; enabled + unknown
+  session buffers once.
+- `src/test/modules/session/api-write-line.test.ts` "no-op when capture is disabled" — unaffected
+  (the `processApiWriteLine` gate was not moved).
+
+### Not automated (manual verification required)
+
+- The `toggleCapture` toast count logic and the `activeSessionCount`-before-write race fix have no
+  automated test (the command is registered against the VS Code host; asserting the toast requires
+  driving `showInformationMessage`). Covered by inspection.
+- The Crashlytics watcher's enabled gating has no automated test (timer scheduling against a live
+  `vscode.workspace.getConfiguration` is not observable as a pure unit). Covered by inspection.
+
+### Known residual (accepted, not a regression)
+
+`intervalMs()` performs uncached `getConfiguration` reads on each `reschedule`/`scan`/`recordFailure`
+call — a pre-existing pattern, not introduced by this change.

@@ -1,5 +1,7 @@
 # Signal Classification Analysis: False Positives vs. False Negatives
 
+Status: Fixed
+
 ## Problem Summary
 
 The severity keyword classifier has conflicting requirements:
@@ -118,7 +120,7 @@ The fix is **safe** if:
 
 ## Review Findings (2026-07-09)
 
-The review found the fix described above was **incomplete** — two defects remained:
+The review found the fix described above was **incomplete** — two defects remained (items 1 and 2; item 3 is the regression coverage added alongside):
 
 1. **The false positive was still live.** There are THREE copies of the default keyword lists, and the third — the `saropaLogCapture.severityKeywords` setting default in `package.json` — still contained bare `"performance"`. Because VS Code resolves `cfg.get("severityKeywords")` to the `package.json` default whenever the user has not overridden the setting, and `normalizeSeverityKeywords()` keeps any non-empty array as-is, the **effective runtime keyword list still included bare "performance"** for every real user. The in-code `DEFAULT_SEVERITY_KEYWORDS` (where the word was removed) only applies when the config value is missing or malformed. Fixed: removed `"performance"` from the `package.json` default.
 

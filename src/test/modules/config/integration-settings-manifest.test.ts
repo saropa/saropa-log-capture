@@ -10,6 +10,7 @@
 import * as assert from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';
+import { DEFAULT_SEVERITY_KEYWORDS } from '../../../modules/config/config-normalizers';
 
 interface ConfigProp {
     readonly default?: unknown;
@@ -74,6 +75,22 @@ suite('integration settings manifest', () => {
             assert.ok(p, 'showErrorSnackbars must be declared');
             assert.strictEqual(p.type, 'boolean');
             assert.strictEqual(p.default, false);
+        });
+    });
+
+    suite('severity keywords', () => {
+        // The keyword defaults exist in three copies: DEFAULT_SEVERITY_KEYWORDS (code),
+        // the webview `var kw*` regexes, and this package.json default. VS Code resolves
+        // cfg.get() to the package.json default, and normalizeSeverityKeywords keeps any
+        // non-empty per-level array — so the MANIFEST copy is the live list for every
+        // user who hasn't overridden the setting. Bare "performance" lingered here after
+        // being removed from the code default, keeping a prose false positive alive
+        // (noun phrases like "Performance settings" classified as performance). This
+        // pin makes manifest/code drift a test failure instead of a silent behavior fork.
+        test('severityKeywords default matches DEFAULT_SEVERITY_KEYWORDS exactly', () => {
+            const p = props[`${prefix}severityKeywords`];
+            assert.ok(p, 'severityKeywords must be declared');
+            assert.deepStrictEqual(p.default, DEFAULT_SEVERITY_KEYWORDS);
         });
     });
 

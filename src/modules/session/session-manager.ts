@@ -126,6 +126,13 @@ export class SessionManagerImpl implements SessionManager {
 
     /** Called by the DAP tracker for every output event. */
     onOutputEvent(sessionId: string, body: DapOutputBody): void {
+        // Kill switch (first touch): when capture is disabled, do zero per-event work — bail before
+        // session-id routing runs. resolveEffectiveSessionId can trigger a late startSession attempt
+        // (onOutputBufferedWithNoSession) that startSession then rejects on `enabled=false` anyway, so
+        // routing every DAP event while off is wasted work. processOutputEvent has its own gate (the
+        // unit-tested contract surface); this caller-level guard makes the switch's zero-activity
+        // promise literal for the live DAP path.
+        if (!this.cachedConfig.enabled) { return; }
         const effectiveSessionId = resolveEffectiveSessionId(sessionId, {
             sessions: this.sessions,
             ownerSessionIds: this.ownerSessionIds,

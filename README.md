@@ -159,6 +159,7 @@ Collapse any column's sections to shrink that column aside and give the open sid
 - **In-log search:** Floating overlay with case, whole word, regex, and recent terms.
 - **Category filter:** Filter by DAP category (stdout, stderr, console).
 - **Level filter:** Toggle buttons for all 8 severity levels. Per-file state persisted.
+- **Trouble Mode:** One-click zero-context triage — a toolbar toggle (next to the filter icon) that hides every nominal line and shows only errors, warnings, and performance issues. Layers on top of the level filter; the level dots dim to show what is hidden.
 - **Log Sources:** Three tier radios — Flutter DAP, Device, External — each with All / Warn+ / None.
 - **Tags & Origins panel:** Browse auto-discovered source tags and code origins with visibility toggles.
 - **Source tag filter:** Auto-discovers logcat tags and bracket prefixes. Click chips to toggle.

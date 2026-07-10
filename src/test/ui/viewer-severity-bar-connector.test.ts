@@ -148,7 +148,7 @@ suite('Hidden-lines chevron insertion', () => {
     test('should cover all calcItemHeight filter flags in reason tracking', () => {
         // These flags are checked in calcItemHeight; countHiddenNonBlank must track each.
         const requiredFlags = [
-            'levelFiltered', 'excluded', 'filteredOut', 'sourceFiltered',
+            'levelFiltered', 'troubleFiltered', 'excluded', 'filteredOut', 'sourceFiltered',
             'searchFiltered', 'errorSuppressed', 'repeatHidden',
             'compressDupHidden', 'stackDedupHidden', 'scopeFiltered', 'timeRangeFiltered',
             'classFiltered', 'sqlPatternFiltered',
