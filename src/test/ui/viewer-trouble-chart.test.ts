@@ -252,6 +252,48 @@ suite('Trouble Mode severity chart — the pre-launch device burst', () => {
     (ctx.resetTroubleChartLaunchScan as () => void)();
     assert.strictEqual(launchTs(), 0, 'no stale launch from the previous log');
   });
+
+  test('prefers the build-complete line over the earlier launch line', () => {
+    const ctx = buildChartCtx();
+    // "Launching…" prints at 15s, the apk finishes building at 25s. Nothing the app emits can
+    // precede its own built artifact, so the whole build phase — including any device noise
+    // between the two — is device backlog. The boundary must be the build line, not launch.
+    const BUILT = '√ Built build\\app\\outputs\\flutter-apk\\app-debug.apk';
+    ctx.allLines = [
+      { type: 'line', level: 'warning', timestamp: 10_000, viewerLineIndex: 0 },
+      { type: 'line', level: 'info', rawText: LAUNCH, timestamp: 15_000, viewerLineIndex: 1 },
+      { type: 'line', level: 'warning', timestamp: 20_000, viewerLineIndex: 2 },
+      { type: 'line', level: 'info', rawText: BUILT, timestamp: 25_000, viewerLineIndex: 3 },
+      { type: 'line', level: 'error', timestamp: 30_000, viewerLineIndex: 4 },
+    ];
+    assert.strictEqual((ctx.troubleChartLaunchTs as () => number)(), 25_000, 'boundary is the build line');
+
+    const r = buckets(ctx);
+    assert.strictEqual(r.bins[0].preLaunch, true, 'the pre-launch warning window is excluded');
+    const during = r.bins.find((b) => b.key === 4);
+    assert.ok(during && during.preLaunch, 'and so is the warning window during the build');
+    assert.strictEqual(r.maxTotal, 1, 'only the post-build error sets the peak');
+  });
+
+  test('self-heals when a new log replaces the array without a reset', () => {
+    const ctx = buildChartCtx();
+    ctx.allLines = [
+      { type: 'line', level: 'warning', timestamp: 10_000, viewerLineIndex: 0 },
+      { type: 'line', level: 'info', rawText: LAUNCH, timestamp: 15_000, viewerLineIndex: 1 },
+    ];
+    const launchTs = ctx.troubleChartLaunchTs as () => number;
+    assert.strictEqual(launchTs(), 15_000, 'first log resolves its launch');
+
+    // A different log swapped in WITHOUT calling resetTroubleChartLaunchScan — the load path
+    // that produced the 9.2.0 field report where the device burst kept scaling the peak. The
+    // cached marker index (1) now points at unrelated content, so the scan restarts itself.
+    ctx.allLines = [
+      { type: 'line', level: 'error', timestamp: 90_000, viewerLineIndex: 0 },
+      { type: 'line', level: 'error', timestamp: 91_000, viewerLineIndex: 1 },
+      { type: 'line', level: 'error', timestamp: 92_000, viewerLineIndex: 2 },
+    ];
+    assert.strictEqual(launchTs(), 0, 'no stale launch carried over from the previous log');
+  });
 });
 
 /** The subset of an element the chart's head/plot rendering touches. */

@@ -150,6 +150,12 @@ function syncLevelDots() {
        lockstep with the footer dots here, so a level toggled from either control updates
        both. Guarded — the chart script may be absent (VM test harness). */
     if (typeof syncTroubleChartChips === 'function') syncTroubleChartChips();
+    /* The chart bars/totals also read enabledLevels (buildTroubleChartBuckets), so a level
+       toggled off here must rebuild the plot too — otherwise the chip dims but the bar it
+       labels keeps counting the now-hidden level, contradicting the dim. syncLevelDots is
+       the one choke point every level-changing path (toggle/select-all/select-none/solo/
+       restore) already calls, so wiring the rebuild here covers all of them. */
+    if (typeof scheduleTroubleChartUpdate === 'function') scheduleTroubleChartUpdate();
 }`;
 }
 

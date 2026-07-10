@@ -88,6 +88,12 @@ function buildTroubleChartBuckets() {
         var item = allLines[i];
         if (!item || item.type !== 'line') { continue; }
         if (!TROUBLE_LEVELS[item.level]) { continue; }
+        /* Honor the SAME enabledLevels set the legend chips (and the toolbar level dots)
+           gate — otherwise a chip reads dimmed while its bar keeps counting the level the
+           user just turned off, contradicting the "chart can never disagree with the feed"
+           fence this file's header describes. Guarded: enabledLevels is owned by the
+           level-filter script, absent in the VM test harness. */
+        if (typeof enabledLevels !== 'undefined' && !enabledLevels.has(item.level)) { continue; }
         var ts = item.timestamp;
         if (typeof ts !== 'number' || !(ts > 0)) { continue; }
         var key = Math.floor(ts / intervalMs);
@@ -118,12 +124,13 @@ function buildTroubleChartBuckets() {
     for (var k = start; k <= maxKey; k++) {
         var hit = byKey[k];
         var total = hit ? (hit.error + hit.warning + hit.performance) : 0;
-        /* A window that ENDS at or before the launch line holds only the device's
-           pre-launch logcat backlog. It still draws — nothing is hidden — but it is kept
-           out of the peak, because that one startup burst is routinely an order of
-           magnitude larger than anything the app itself does and flattens every real
-           spike after it into an unreadable sliver. The window that CONTAINS the launch
-           line is mixed, so it counts. */
+        /* A window that ENDS at or before the app-ready boundary (troubleChartLaunchTs:
+           the build-complete line, or the launch-start line when there is no build) holds
+           only the device's pre-app logcat backlog plus build-tool output. It still draws
+           — nothing is hidden — but it is kept out of the peak, because that startup burst
+           is routinely an order of magnitude larger than anything the app itself does and
+           flattens every real spike after it into an unreadable sliver. The window that
+           CONTAINS the boundary is mixed, so it counts. */
         var pre = launchTs > 0 && ((k + 1) * intervalMs) <= launchTs;
         if (total > anyTotal) { anyTotal = total; }
         if (!pre && total > maxTotal) { maxTotal = total; }
