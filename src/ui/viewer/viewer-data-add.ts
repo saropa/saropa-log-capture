@@ -25,9 +25,10 @@ import { getStackHeaderRepeatScript } from './viewer-data-add-stack-header-repea
 import { getStackIngestScript } from './viewer-data-add-stack-ingest';
 import { getTreeIngestScript } from './viewer-data-add-tree-ingest';
 import { getHeadTagsParserScript } from '../viewer-bracket-head-tags/viewer-bracket-head-tags';
+import { getViewerDataAddTagsScript } from './viewer-data-add-tags';
 
 export function getViewerDataAddScript(staticSqlFromFingerprintEnabled = true): string {
-    return getDriftDebugServerFromLogScript() + getViewerDataAddDbDetectorsScript(staticSqlFromFingerprintEnabled) + getContinuationScript() + getRepeatCollapseBranchScript() + getAsciiArtDetectScript() + getFlutterBannerScript() + getDataAddContextHelpersScript() + getDocItemBuilderScript() + getLineBirthScript() + getStackHeaderRepeatScript() + getStackIngestScript() + getTreeIngestScript() + getHeadTagsParserScript() + /* javascript */ `
+    return getDriftDebugServerFromLogScript() + getViewerDataAddDbDetectorsScript(staticSqlFromFingerprintEnabled) + getContinuationScript() + getRepeatCollapseBranchScript() + getAsciiArtDetectScript() + getFlutterBannerScript() + getDataAddContextHelpersScript() + getDocItemBuilderScript() + getLineBirthScript() + getStackHeaderRepeatScript() + getStackIngestScript() + getTreeIngestScript() + getHeadTagsParserScript() + getViewerDataAddTagsScript() + /* javascript */ `
 function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPercent, source, rawText, tier) {
     /* elapsedMs: per-line delay (from [+Nms]) for replay. qualityPercent: per-file line coverage (0-100) for badges. source: stream id for multi-source filter ('debug'|'terminal'|...). tier: 'flutter'|'device-critical'|'device-other'|'external' */
     var lineSource = source || 'debug';
@@ -103,10 +104,11 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     if (typeof ingestDriftDebugServerFromPlain === 'function') ingestDriftDebugServerFromPlain(plain);
     /* Structured line parsing: extract metadata (PID, TID, level, tag) from known log formats. */
     var slp = (typeof parseStructuredPrefix === 'function') ? parseStructuredPrefix(plain, sniffedFormatId) : null;
-    // Collapse fully-qualified package/class tags (logcat, log4j) to their last segment
-    // in place, right at the parse boundary, so every downstream reader of slp.tag
-    // (item.parsedTag, the divider label, the tag-column chip) sees the same short name.
-    if (slp && slp.tag && typeof collapseQualifiedTag === 'function') { slp.tag = collapseQualifiedTag(slp.tag); }
+    // Keep the pre-cleanup tag text — the "Copy tags as JSON" export groups by the
+    // cleaned display tag but lists every distinct RAW tag string that collapsed
+    // into it, so a user auditing the log can see what "ChatService" actually stood for.
+    var _slpRawTag = slp ? slp.tag : null;
+    if (slp && slp.tag) { slp.tag = cleanParsedTag(slp.tag); }
     /* Record which decoration data this log actually carries so the prefix
        column reserves width only for parts that will render — see decoSeen /
        applyDecorationLayoutWidth. A markdown/plain file trips none of these. */
@@ -146,12 +148,14 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     // frames still group via stack-parser, which is the correct continuation signal.
     var recentErrorContext = false;
     var sTag = (typeof parseSourceTag === 'function') ? parseSourceTag(plain) : null;
-    if (sTag && typeof collapseQualifiedTag === 'function') { sTag = collapseQualifiedTag(sTag); }
+    var _sTagRaw = sTag;
+    sTag = cleanParsedTag(sTag);
     // Source-tag driven: any line tagged 'database' that isn't already error/warning gets the level.
     // Separator lines stay 'info' — source tags should not override decorative lines.
     if (!isSep && sTag === 'database' && lvl !== 'error' && lvl !== 'warning' && lvl !== 'database') { lvl = 'database'; }
     var lTag = (typeof parseLogcatTag === 'function') ? parseLogcatTag(plain) : null;
-    if (lTag && typeof collapseQualifiedTag === 'function') { lTag = collapseQualifiedTag(lTag); }
+    var _lTagRaw = lTag;
+    lTag = cleanParsedTag(lTag);
     if (lTag && lTag === sTag) lTag = null;
     var cTags = (typeof parseClassTags === 'function') ? parseClassTags(plain) : [];
     /* Flow-tag chips (plan 109): classify an explicit [flowmap] navigation line so
@@ -162,27 +166,10 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     /* Parse all bracket head tags ([db]/[perf]/[frame-stall]). */
     var headTags = (typeof parseHeadTags === 'function') ? parseHeadTags(plain) : [];
 
-    /* ONE tag set per line. Previously three parsers each owned a slice — bracket
-       head tags (chips), the structured device tag (its own column), and the
-       source/logcat tag (the Message Tags sidebar) — so the chips and the sidebar
-       showed DIFFERENT tags and a chip had no matching filter. item.tags is the
-       single union that now drives BOTH the chips (viewer-deco-content) AND the
-       sidebar registry/filter (viewer-source-tags). Deduped by lowercase key
-       (name before any :metadata); head tags come first so their real level wins
-       over the neutral info level of a device/logcat/source tag with the same key. */
-    var _tagSeen = {};
-    var tags = [];
-    function _addLineTag(name, level) {
-        if (!name) { return; }
-        var key = String(name).split(':')[0].trim().toLowerCase();
-        if (!key || _tagSeen[key]) { return; }
-        _tagSeen[key] = true;
-        tags.push({ name: name, key: key, level: level || 'info' });
-    }
-    for (var _hi = 0; _hi < headTags.length; _hi++) { _addLineTag(headTags[_hi].name, headTags[_hi].level); }
-    if (slp && slp.tag) { _addLineTag(slp.tag, 'info'); }
-    if (lTag) { _addLineTag(lTag, 'info'); }
-    if (sTag) { _addLineTag(sTag, sTag === 'database' ? 'database' : 'info'); }
+    /* item.tags: the single unified tag set driving both the tag-column chips
+       (viewer-deco-content) and the Message Tags sidebar registry/filter
+       (viewer-source-tags) — see buildUnifiedLineTags (viewer-data-add-tags.ts). */
+    var tags = buildUnifiedLineTags(headTags, slp ? slp.tag : null, _slpRawTag, lTag, _lTagRaw, sTag, _sTagRaw);
 
     /* Reserve the tag column whenever the line carries any tag — a plain/markdown
        file with none trips nothing, so no empty gap. */

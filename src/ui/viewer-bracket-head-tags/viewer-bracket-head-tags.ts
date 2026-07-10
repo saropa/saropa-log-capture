@@ -54,6 +54,17 @@ function escapeHeadTag(s) {
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+/* Strip one or more trailing "[...]" groups appended directly after a tag name, e.g.
+   "TelecomRegistra[000:619][25918]" -> "TelecomRegistra". Some GmsCore/Clearcut
+   components append a per-line sequence/thread-id tuple straight onto their own tag
+   with no delimiter — that suffix increments on every line, so leaving it in would
+   make the "collapse qualified tag" dedup below useless (every line would look like a
+   distinct tag) and reads as noise, never a real name. Only trailing bracket groups are
+   stripped — a bracket elsewhere in the name (there is none in practice) is left alone. */
+function stripTagBracketSuffix(name) {
+    return String(name == null ? '' : name).replace(/(?:\\[[^\\]]*\\])+$/, '');
+}
+
 /* Collapse a deeply-dotted, package-qualified tag (Java/Android reverse-domain class
    names like "com.google.android.libraries.foo.bar.ChatService", or log4j logger names)
    to its last segment. Two or more dots reliably means a fully-qualified class name,

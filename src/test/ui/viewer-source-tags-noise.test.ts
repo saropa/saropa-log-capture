@@ -69,7 +69,7 @@ suite('Viewer Source Tags Noise Guard', () => {
     test('source tag UI uses shared chip-eligibility helper', () => {
         const uiScript = getSourceTagUiScript();
         assert.ok(uiScript.includes('getSourceTagChipKeys'));
-        assert.ok(uiScript.includes('viewer.tags.showAll'));
+        assert.ok(uiScript.includes('sourceTagSearchQuery'), 'search filter reads the shared query var');
     });
 });
 

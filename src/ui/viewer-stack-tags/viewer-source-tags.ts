@@ -29,13 +29,17 @@ var sourceTagCounts = {};
    itself, so it matches the case-preserving row-column chips instead of showing the
    all-lowercase grouping key ("activitymanager"). */
 var sourceTagDisplayNames = {};
+/* Every distinct RAW (pre-cleanup) tag string per key, as an object-as-set. Read by
+   "Copy tags as JSON" so a user auditing the log can see what a collapsed display tag
+   like "ChatService" actually stood for across different packages/lines. */
+var sourceTagRawValues = {};
 var hiddenSourceTags = {};
 var otherKey = '__other__';
 /** Log-tag key for Drift/database SQL lines (see parseSourceTag). */
 var DATABASE_TAG_KEY = 'database';
-var sourceTagShowAll = false;
-var sourceTagMaxChips = 20;
 var sourceTagMinChip = 2;
+/** Live substring filter typed into the Message Tags search box (lowercase, or ''). */
+var sourceTagSearchQuery = '';
 
 /** Saved hidden state before a solo action, so double-tap-again restores it. */
 var savedHiddenSourceTags = null;
@@ -188,12 +192,19 @@ function registerSourceTag(item) {
         sourceTagCounts[ks[i]] = (sourceTagCounts[ks[i]] || 0) + 1;
         if (ks[i] === DATABASE_TAG_KEY) { sawDb = true; }
     }
-    /* Capture the first-seen original-case name per key (item.tags carries {name, key}
-       from the unified tag set — lineTagKeys only returns keys, so this needs its own pass). */
+    /* Capture the first-seen original-case name per key, AND every distinct raw
+       (pre-cleanup) tag string that key stands for — item.tags carries {name, key, raw}
+       from the unified tag set; lineTagKeys only returns keys, so this needs its own pass.
+       sourceTagRawValues[key] is an object-as-set (dedup) of raw strings, read by the
+       "Copy tags as JSON" export. */
     if (item && item.tags && item.tags.length) {
         for (var ti = 0; ti < item.tags.length; ti++) {
             var t = item.tags[ti];
-            if (t && t.key && !sourceTagDisplayNames[t.key]) { sourceTagDisplayNames[t.key] = t.name; }
+            if (t && t.key) {
+                if (!sourceTagDisplayNames[t.key]) { sourceTagDisplayNames[t.key] = t.name; }
+                if (!sourceTagRawValues[t.key]) { sourceTagRawValues[t.key] = {}; }
+                sourceTagRawValues[t.key][t.raw != null ? t.raw : t.name] = true;
+            }
         }
     }
     item.sourceFiltered = computeSourceFiltered(item);

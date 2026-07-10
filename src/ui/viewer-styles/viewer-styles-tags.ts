@@ -39,6 +39,36 @@ export function getTagStyles(): string {
     opacity: 0.7;
     margin-left: auto;
 }
+/* The summary row has no control inside it — the generic .options-row cursor:pointer
+   (meant for rows that wrap a checkbox/radio label) otherwise reads as a false
+   clickable affordance on plain informational text (2026-07-10). */
+.options-row:has(.source-tag-summary) {
+    cursor: default;
+}
+
+/* --- Tag search box: filters the chip list live as the user types --- */
+.source-tag-search {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 2px 0 6px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-family: inherit;
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border, transparent);
+    border-radius: 2px;
+    outline: none;
+}
+.source-tag-search:focus {
+    border-color: var(--vscode-focusBorder);
+}
+.source-tag-no-match {
+    font-size: 11px;
+    opacity: 0.7;
+    padding: 4px 2px;
+}
 
 /* --- Chip container: flex-wrap, shown when tags exist --- */
 .source-tag-chips {
@@ -105,7 +135,9 @@ export function getTagStyles(): string {
     text-decoration: underline;
 }
 
-/* --- Show all / Show less toggle in tag sections --- */
+/* --- Show all / Show less toggle — used by Class Tags (viewer-class-tags.ts) and
+   Session Tags (viewer-session-tags.ts). The Message Tags (source-tag) panel no
+   longer uses this: it always shows every tag and offers search instead (2026-07-10). --- */
 .tag-show-all-btn {
     background: none;
     border: none;
@@ -142,7 +174,18 @@ export function getTagStyles(): string {
     display: inline-flex;
     align-items: center;
     font-size: 10px;
-    padding: 2px 6px;
+    /* line-height: 1 (not inherited) — .line sets line-height to a unitless 1.1, which
+       is a RATIO, not a fixed px value, so it recomputes against THIS element's own
+       10px font (11px) rather than the row's 13px font. Chip box height was then
+       11(text) + 4(padding) + 2(border) = 17px against a ~14.3px fixed row height
+       (calc(1em * 1.1) at the default 13px log font) — the row's overflow:hidden
+       clipped the excess, shearing off exactly the bottom border first (the
+       outermost pixel), which read as "missing bottom border" plus row-to-row
+       height looking inconsistent (only rows with a chip clipped). Matches the
+       line-height:1 pattern already used by .level-letter/.dot-count for the same
+       reason. */
+    line-height: 1;
+    padding: 1px 6px;
     border-radius: 3px;
     margin-right: 4px;
     white-space: nowrap;

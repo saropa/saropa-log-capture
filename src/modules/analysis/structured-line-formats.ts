@@ -96,7 +96,12 @@ export const LINE_FORMATS: readonly LineFormat[] = [
     // 04-12 20:47:05.621  485  485 D Zygote  : begin preload
     {
         id: 'logcat-threadtime',
-        pattern: /^(\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\.\d{3})\s+(\d+)\s+(\d+)\s+([VDIWEFA])\s+(.+?):\s?(.*)/,
+        // Tag capture allows trailing [bracket] groups (which may themselves contain a
+        // colon, e.g. some GmsCore/Clearcut components emit "Tag[epoch:seq][tid] msg"
+        // with no colon-space delimiter at all). The old non-greedy `(.+?):` split at
+        // the FIRST colon anywhere in the line — including one buried inside a bracket
+        // group — fracturing the tag and swallowing the start of the message.
+        pattern: /^(\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\.\d{3})\s+(\d+)\s+(\d+)\s+([VDIWEFA])\s+([^\s:[]+(?:\[[^\]]*\])*)\s*:?\s*(.*)/,
         extract: (m) => ({
             timestamp: parseLogcatTimestamp(m[1]),
             rawTimestamp: m[1],

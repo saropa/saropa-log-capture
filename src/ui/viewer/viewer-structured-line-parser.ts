@@ -23,7 +23,13 @@ var showParsedLevelPrefix = false;
 var structuredFormats = [
     {
         id: 'logcat-threadtime',
-        re: /^(\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\s+(\\d+)\\s+(\\d+)\\s+([VDIWEFA])\\s+(.+?):\\s?(.*)/,
+        // Tag capture allows trailing [bracket] groups (which may themselves contain a
+        // colon, e.g. some GmsCore/Clearcut components emit "Tag[epoch:seq][tid] msg"
+        // with no colon-space delimiter at all). The old non-greedy (.+?): split at the
+        // FIRST colon anywhere in the line — including one buried inside a bracket group —
+        // fracturing the tag and swallowing the start of the message. Mirrors
+        // structured-line-formats.ts (host).
+        re: /^(\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\s+(\\d+)\\s+(\\d+)\\s+([VDIWEFA])\\s+([^\\s:[]+(?:\\[[^\\]]*\\])*)\\s*:?\\s*(.*)/,
         extract: function(m) {
             return { rawTs: m[1], pid: parseInt(m[2],10), tid: m[3], rawLvl: m[4], tag: m[5].trim(), msg: m[6], fmt: 'logcat-threadtime' };
         }
