@@ -113,46 +113,49 @@ suite('renderItem multi-bracket source-tag strip', () => {
         );
     });
 
-    test('structured branch strips redundant severity head tags but keeps descriptive ones', () => {
-        /* BUG_Log_viewer_issues.md: "I/flutter (…): [perf] [frame-stall] …" kept "[perf] [frame-stall]"
-           visible because the structured strip only removed the logcat header. A leading tag that just
-           restates the severity ([perf], [warn], [error], …) duplicates the level chip/color and is
-           stripped; a DESCRIPTIVE tag like [frame-stall] is kept as the line's tag. */
+    test('structured branch now strips ALL head tags (rendered as chips instead)', () => {
+        /* Changed behavior: all bracket tags are now parsed at line birth and rendered as
+           chips in the tag column via item.headTags. The renderItem function strips all
+           leading brackets from the text to prevent duplication. Guarded on headTags
+           existing OR sourceTag existing for backwards compatibility. */
         const structuredIdx = renderScript.indexOf('stripHtmlPrefix(rawHtml, item.structuredPrefixLen)');
         const elseIdx = renderScript.indexOf('} else if (typeof stripSourceTagPrefix', structuredIdx);
         assert.ok(structuredIdx >= 0 && elseIdx > structuredIdx, 'structured branch must exist before the else-if');
         const structuredBody = renderScript.substring(structuredIdx, elseIdx);
         assert.ok(
-            structuredBody.includes('stripSourceTagPrefix') && structuredBody.includes('item.sourceTag'),
-            'structured branch must run the head-tag strip guarded on item.sourceTag',
+            structuredBody.includes('stripSourceTagPrefix') && (structuredBody.includes('item.sourceTag') || structuredBody.includes('item.headTags')),
+            'structured branch must run the head-tag strip',
         );
         assert.ok(
-            structuredBody.includes('perf|performance|warn|warning|error|err|notice|todo|debug|info'),
-            'structured branch must strip only the pure-severity label tags',
-        );
-        assert.ok(
-            !structuredBody.includes('[^\\]]+'),
-            'structured branch must NOT strip arbitrary tags (that would remove [frame-stall])',
+            structuredBody.includes('[^\\]]+') || structuredBody.includes('\\\\[\\\\[^\\\\\\\\\\]\\\\]+\\\\]'),
+            'structured branch must strip all bracket pairs (not just severity-only tags)',
         );
     });
 
-    test('the severity-only strip regex removes [perf] but keeps [frame-stall] (behavioral)', () => {
-        /* Exercise the exact regex the render emits against the reported line body. */
-        const re = /^(?:\[(?:perf|performance|warn|warning|error|err|notice|todo|debug|info)\]\s?)+/i;
+    test('the all-bracket strip regex removes all head tags (behavioral)', () => {
+        /* Updated behavior: the render now strips ALL leading bracket tags because they
+           are rendered as chips via item.headTags. Both severity tags and descriptive
+           tags like [frame-stall] are stripped from the text. */
+        const re = /^(?:\[[^\]]+\]\s?)+/;
         assert.strictEqual(
             '[perf] [frame-stall] total=566ms build=155ms'.replace(re, ''),
-            '[frame-stall] total=566ms build=155ms',
-            '[perf] is stripped, [frame-stall] survives as the tag',
+            'total=566ms build=155ms',
+            'all bracket tags stripped, only message body remains',
         );
         assert.strictEqual(
             '[warn] [retry] giving up'.replace(re, ''),
-            '[retry] giving up',
-            'severity [warn] stripped, descriptive [retry] kept',
+            'giving up',
+            'all bracket tags stripped regardless of type',
         );
         assert.strictEqual(
             '[frame-stall] total=100ms'.replace(re, ''),
-            '[frame-stall] total=100ms',
-            'a descriptive-only head tag is untouched',
+            'total=100ms',
+            'descriptive tags also stripped now',
+        );
+        assert.strictEqual(
+            '[db:phase-2] SELECT * FROM items'.replace(re, ''),
+            'SELECT * FROM items',
+            'tags with metadata are stripped completely',
         );
     });
 });

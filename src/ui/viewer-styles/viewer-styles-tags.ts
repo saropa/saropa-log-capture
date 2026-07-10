@@ -130,5 +130,60 @@ export function getTagStyles(): string {
     text-decoration: underline;
     background: rgba(255, 255, 255, 0.08);
 }
+
+/* --- Head-tag chips (bracket tags rendered inline in lines) --- */
+.tag-chip {
+    display: inline-flex;
+    align-items: center;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-right: 4px;
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--vscode-foreground);
+}
+/* Level-specific tag coloring — matches level dots in viewer-styles-level.ts */
+.tag-chip.tag-level-error {
+    border-color: #f44336;
+    color: #f44336;
+    background: rgba(244, 67, 54, 0.1);
+}
+.tag-chip.tag-level-warning {
+    border-color: #ff9800;
+    color: #ff9800;
+    background: rgba(255, 152, 0, 0.1);
+}
+.tag-chip.tag-level-performance {
+    border-color: #9c27b0;
+    color: #9c27b0;
+    background: rgba(156, 39, 176, 0.1);
+}
+.tag-chip.tag-level-database {
+    border-color: #4caf50;
+    color: #4caf50;
+    background: rgba(76, 175, 80, 0.1);
+}
+.tag-chip.tag-level-todo {
+    border-color: #bdbdbd;
+    color: #bdbdbd;
+    background: rgba(189, 189, 189, 0.1);
+}
+.tag-chip.tag-level-notice {
+    border-color: #00bcd4;
+    color: #00bcd4;
+    background: rgba(0, 188, 212, 0.1);
+}
+.tag-chip.tag-level-debug {
+    border-color: #a1887f;
+    color: #a1887f;
+    background: rgba(161, 136, 127, 0.1);
+}
+.tag-chip.tag-level-info {
+    border-color: #2196f3;
+    color: #2196f3;
+    background: rgba(33, 150, 243, 0.1);
+}
 `;
 }

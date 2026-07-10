@@ -51,21 +51,16 @@ function renderItem(item, idx, prevVis) {
        call removes brackets + structured prefix together. */
     if (typeof structuredLineParsing !== 'undefined' && structuredLineParsing && item.structuredPrefixLen > 0) {
         rawHtml = (typeof stripHtmlPrefix === 'function') ? stripHtmlPrefix(rawHtml, item.structuredPrefixLen) : rawHtml;
-        /* The structured prefix strip removes the timestamp/PID/level/logcat HEADER but leaves any
-           app-emitted head tags that followed it — e.g. "I/flutter (…): [perf] [frame-stall] …"
-           keeps "[perf] [frame-stall]". A leading tag that only RESTATES the severity ([perf],
-           [warn], [error], …) duplicates the level chip + row color, so strip those; but a
-           DESCRIPTIVE head tag like [frame-stall] names WHICH performance event and is kept as the
-           line's tag (bugs/BUG_Log_viewer_issues.md — "frame-stall can be the tag"). Only the pure
-           severity-label synonyms are removed; [frame-stall], [db], [jank], etc. survive. Runs
-           front-to-back so "[perf] [frame-stall]" drops [perf] and stops at [frame-stall].
-           Guarded on item.sourceTag for the same reason as the non-structured branch below. */
-        if (typeof stripSourceTagPrefix !== 'undefined' && stripSourceTagPrefix && item.sourceTag) {
-            rawHtml = rawHtml.replace(/^(?:\\[(?:perf|performance|warn|warning|error|err|notice|todo|debug|info)\\]\\s?)+/i, '');
+        /* Strip ALL app-emitted head tags from the structured branch — they will be rendered
+           as chips in the tag column (via headTags). Both severity-only tags ([perf], [warn])
+           and descriptive tags ([frame-stall], [db]) are removed from the text. */
+        if (typeof stripSourceTagPrefix !== 'undefined' && stripSourceTagPrefix && (item.sourceTag || (item.headTags && item.headTags.length > 0))) {
+            rawHtml = rawHtml.replace(/^(?:\\[[^\\]]+\\]\\s?)+/, '');
         }
-    } else if (typeof stripSourceTagPrefix !== 'undefined' && stripSourceTagPrefix && item.sourceTag) {
+    } else if (typeof stripSourceTagPrefix !== 'undefined' && stripSourceTagPrefix && (item.sourceTag || (item.headTags && item.headTags.length > 0))) {
         /* Strip ALL leading [bracket] pairs — DAP adapters may prepend multiple
-           (e.g. [11:49:55.128] [stdout]) and we only want the message body. */
+           (e.g. [11:49:55.128] [stdout]), and app-emitted head tags are rendered
+           as chips in the tag column instead of inline text. */
         rawHtml = rawHtml.replace(/^(?:\\[[^\\]]+\\]\\s?)+/, '');
     }
     var html = (typeof highlightSearchInHtml === 'function') ? highlightSearchInHtml(rawHtml) : rawHtml;
@@ -359,7 +354,12 @@ function renderItem(item, idx, prevVis) {
     /* Flow-tag chip (plan 109): 'chips' mode swaps a [flowmap] line's raw text for a chip
        (logic in viewer-flow-tags.ts; 'raw' returns html unchanged, 'hidden' never reaches here). */
     if (typeof flowChipSwap === 'function') html = flowChipSwap(item, html);
-    var msgInner = bannerChevron + contBadge + elapsed + badge + catBadge + html;
+    /* Head tags (bracket tags): render all parsed tags as chips before the message body. */
+    var headTagsChips = '';
+    if (item.headTags && item.headTags.length > 0 && typeof renderHeadTagChips === 'function') {
+        headTagsChips = renderHeadTagChips(item.headTags);
+    }
+    var msgInner = bannerChevron + contBadge + elapsed + badge + catBadge + headTagsChips + html;
     /* Collapse affordance — start row only. Absolutely positioned (CSS) over the
        block's top-right corner so it never shifts the white-space:pre box art.
        Collapsed shows ▸ + the row count ("N"); expanded shows ▾. The whole block

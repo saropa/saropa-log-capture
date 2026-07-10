@@ -1,0 +1,12 @@
+I/flutter ( 1234): [db] bulkPreload DRIFT WRITE DONE — wrote 185 rows
+I/flutter ( 1234): [perf] [frame-stall] total=566ms build=155ms
+I/flutter ( 1234): [retry] connection failed, attempting reconnect
+W/ActivityManager: [warn] low memory condition detected
+I/flutter ( 1234): [db:phase-2] SELECT * FROM contacts WHERE id = ?
+I/flutter ( 1234): [frame-stall] [perf] frame drop detected
+E/Flutter: [error] unhandled exception in main
+I/flutter ( 1234): [todo] TODO: implement error boundary
+I/flutter ( 1234): [notice] app started successfully
+I/flutter ( 1234): [debug] cache invalidated
+D/sqlite: [database] opened sqlite database
+I/flutter ( 1234): Regular log line without tags
