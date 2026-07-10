@@ -30,6 +30,7 @@ cspell:disable
 
 ### Added
 
+- **Trouble Mode now shows a live severity chart above the feed.** While Trouble Mode is active, a compact bar chart sits above the log, bucketing errors, warnings, and performance issues into tumbling time windows so you can see bursts and rates at a glance. Each bar stacks the three severities using the theme's error/warning/info colors; clicking a bar scrolls the feed to that window's first row. The window width is configurable with `saropaLogCapture.troubleMode.chartInterval` (1–60 seconds, default 5). The chart reads the same per-line severity the feed filters on, so it can never disagree with what the feed shows, and it aggregates entirely in the viewer (no extra capture buffer) with a bounded recent-activity window.
 - **`[flowmap] action` tag — explicit in-screen action breadcrumbs for the Session Flow Map.** Apps can now emit `[flowmap] action "<Category>" [file.dart:line]` (parallel to `enter` and `handoff`) to count user actions — Favorite, Share, Delete — on the screen where they happened. Action counts previously came only from app-specific heuristic text patterns, so most projects' Flow Maps showed no action data. Counts appear as per-screen action badges in the Flow Map report; the tag never creates nodes or edges. Format spec: `plans/guides/flowmap-tag-navigation.md`.
 
 ### Removed
