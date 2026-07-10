@@ -239,3 +239,53 @@ touched unit tests. The unverified surface is the F5 Extension-Host visual rende
 - Lint on the touched files is clean. The two warnings that remain in this area
   (`handleTroubleDetail` has 5 parameters; several files over the line limit) are
   pre-existing and in files this work did not modify.
+
+## Review pass (2026-07-10)
+
+A structured read-only review of the shipped diff found no blocking bug, no shared-scope
+collision among the new page-global names, no `item.height` write, and no broken test
+assertion. Three behavioral defects were reported; all three were fixed.
+
+### Fixed
+
+- **Stale detail render on rapid issue switching.** `crashlyticsDetailReady`
+  (`viewer-crashlytics-panel.ts`) wrote `cpDetailEl.innerHTML` with no issue-id guard,
+  while the three async enrichers had always gated on `cpDetailIssueId`. A slow fetch for
+  issue A landing after the user opened issue B overwrote B's detail with A's stack, with
+  every other panel on screen still describing B. The defect predates this plan — the
+  single-container code had the same gap — but the side rail plus the crash-issues band
+  make switching issues a routine gesture, so the exposure changed from theoretical to
+  everyday. A one-line `if (e.data.issueId && e.data.issueId !== cpDetailIssueId) return;`
+  closes it. Regression risk is nil: the host echoes `issueId` on every reply, and the
+  guard is skipped when it is absent.
+- **Sidebar close tore down an unrelated rail detail.** `closeCrashlyticsPanel` called
+  `closeIssueDetail()` unconditionally, on the assumption that the in-viewer detail always
+  belongs to that panel. A detail opened from the crash-issues band lives in the side rail
+  and does not. Guarded on `!cdRailActive`, which is true only for band-opened details
+  because panel-list clicks always render into the full-area container.
+- **Chart window marker survived a rail mode switch.** Opening a crash issue while a
+  feed-row report was open left the severity chart marking the previous report's window. A
+  crash issue is a cross-session aggregate with no window, so `cdOpenDetail` now clears the
+  mark before switching the rail into Crashlytics mode.
+
+### Accepted, not changed
+
+`buildMarkdown`'s `'Crashlytics issue'` heading and the panel's
+`cpDetailTitle = e.data.title || 'Issue'` remain literal English. Both are fallbacks in
+copy-report Markdown and a GitHub issue title — export payloads, not rendered UI — and the
+host always supplies a real title on the path that reaches them.
+
+### Test coverage added by the review
+
+The review named the band's Stage 5 composition as untested.
+`viewer-trouble-crashlytics-band.test.ts` now pins the five-row inline cap, that the
+"All N issues" link reports the host's `total` rather than the number of rows posted (they
+differ whenever the host's own 15-row cap bites), the absolute-time freshness label and its
+unstamped-cache fallback, and that a cold cache hides the band rather than rendering an
+empty shell. Its `vt` stub resolves against the real `strings-webview.ts` catalog and
+asserts each key exists, so a key deleted from the catalog fails the test instead of
+shipping as raw-key text in the UI.
+
+Still uncovered by automated tests: the rail open/close routing, the loading skeleton, and
+the retry path. All three are DOM-and-message-plumbing surfaces whose verification is the
+F5 Extension-Host pass.

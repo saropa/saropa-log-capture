@@ -2095,5 +2095,17 @@
   "Trouble Mode — show only errors, warnings, and performance issues (hides everything nominal)": "문제 모드  ⁇  오류, 경고 및 성능 문제만 표시합니다 (모든 명목을 숨깁니다)",
   "Trouble report copied to the clipboard": "문제 보고서는 클립보드에 복사되었습니다.",
   "{0} events · {1} users": "{0} 이벤트 · {1} 사용자",
-  "{0} · errors {1} · warnings {2} · performance {3}": "{0} · 오류들 {1} · 경고들 __ PH2__ · 성능 {3}"
+  "{0} · errors {1} · warnings {2} · performance {3}": "{0} · 오류들 {1} · 경고들 __ PH2__ · 성능 {3}",
+  "All {0} issues": "모든 {0} 이슈",
+  "Cached": "캐시된 카쉬를 사용한다.",
+  "Could not load this issue.": "이 문제를 로드할 수 없습니다.",
+  "Errors {0}": "오류 {0}",
+  "Issue": "이슈의 문제점",
+  "No stack trace available for this issue.": "이 문제에 대해 스택 트레이스가 없습니다.",
+  "Peak {0}": "피크 {0}",
+  "Performance {0}": "성능 {0}",
+  "Reveal in log": "로그에 공개합니다.",
+  "Scroll the log to the line this report describes": "로그를 스크롤하여 이 보고서에서 설명하는 라인에 도달하십시오.",
+  "Try again": "다시 시도해 보세요.",
+  "Warnings {0}": "경고 {0}"
 }

@@ -41,6 +41,8 @@ Trouble Mode's reports now open **beside** the log instead of covering it, the l
 
 - **Crash issues opened from Trouble Mode get the full detail.** Opening an issue from the crash-issues band silently dropped the "In your project", "Seen in your logs", and device-state panels — they only appeared for issues opened from the Crashlytics sidebar. Both paths now run through the same code, so both get everything.
 - **A failed crash-issue load offers to retry.** "Could not load this issue." was a dead end; it now comes with a **Try again** button, and both it and "No stack trace available for this issue." were hardcoded English that never reached translation.
+- **Switching crash issues quickly no longer shows the wrong stack.** A slow fetch for one issue could land after you had already opened another, overwriting the second issue's detail with the first issue's stack while every surrounding panel still described the second. Late replies for an issue you have navigated away from are now discarded.
+- **Closing the Crashlytics sidebar no longer closes an unrelated report.** A crash issue opened from Trouble Mode's crash-issues band lives in the side rail, which does not belong to the sidebar panel; closing the panel left it alone now.
 
 ---
 
