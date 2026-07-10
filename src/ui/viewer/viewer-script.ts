@@ -11,7 +11,7 @@ import { getKeyboardScriptWithDefaults } from './viewer-script-keyboard';
 import { getViewerScriptFooterChunk } from './viewer-script-footer';
 import { getViewerScriptMessageHandler } from './viewer-script-messages';
 import { getViewerClickHandlerScript } from './viewer-script-click-handlers';
-import { getSuiteIssuesScript } from './viewer-suite-issues-script';
+import { getSuiteSuggestionsScript } from './viewer-suite-suggestions-script';
 
 export function getViewerScript(maxLines: number, viewerPreserveAsciiBoxArt = true, viewerGroupAsciiArt = true, viewerDetectAsciiArt = false): string {
     return /* javascript */ `
@@ -302,7 +302,7 @@ function jumpToBottom() {
 ${getViewerScriptFooterChunk()}
 
 ${getViewerScriptMessageHandler()}
-${getSuiteIssuesScript()}
+${getSuiteSuggestionsScript()}
 ${getKeyboardScriptWithDefaults()}
 
 var _resizeRaf = false;

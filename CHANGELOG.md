@@ -28,6 +28,10 @@ cspell:disable
 
 ## [Unreleased]
 
+### Removed
+
+- **The Integrations screen no longer lists companion-tool issues.** The "Issues found by your companion tools" block (Drift Advisor / Saropa Lints diagnostics read from the workspace mirrors) rendered an unbounded raw diagnostics feed inside an options surface. The Options panel is for configuration only; companion findings stay in the tools' own UIs and the signal report's ecosystem section. The Integrations icon badge now counts only pending integration suggestions.
+
 ### Changed
 
 - **Trouble Mode now lives in the log viewer toolbar, next to the filter icon.** The toggle moved off the editor view title bar into the viewer's own toolbar (a warning-triangle button) where the other filters live. The button highlights while active, and the level dots dim for the levels Trouble Mode is hiding (info, notice, debug, database, todo) so you can see exactly what is suppressed. The separate footer chip is gone — the button and dots carry the state.
@@ -37,7 +41,7 @@ cspell:disable
 ### Fixed
 
 - **Turning off a level now hides its lines instead of dimming them.** The level filter's ±context window (default 3 lines) was re-revealing a disabled level's lines as dimmed *context* around still-shown neighbors, so turning off Performance with most levels still on left the perf lines visible-but-dimmed. The context reveal is now gated to a focused selection (when the shown levels are a minority) — excluding one or two levels hides them cleanly, while soloing or narrowing to a few levels still shows their surrounding context.
-- **Performance lines no longer show a redundant `[perf]` tag.** Structured logcat lines like `I/flutter (…): [perf] [frame-stall] …` kept the leading `[perf] [frame-stall]` tags in the message body even though the severity is already shown by the row color and level chip. The structured render path now strips those leading app head tags, matching how non-structured lines already behaved.
+- **Performance lines no longer show a redundant `[perf]` tag.** Structured logcat lines like `I/flutter (…): [perf] [frame-stall] …` kept a leading `[perf]` in the message body even though the severity is already shown by the row color and level chip. The structured render path now strips a leading tag that only restates the severity (`[perf]`, `[warn]`, `[error]`, …); a descriptive tag such as `[frame-stall]` is kept as the line's tag.
 - **Bare "performance" no longer misclassifies prose as a performance signal.** The `severityKeywords` setting default in `package.json` still shipped the bare keyword "performance", so informational lines containing noun phrases like "Performance settings filtering" classified as the performance level even after the in-code defaults dropped it (VS Code resolves the `package.json` default, making it the live list). Removed there too; specific keywords (`perf`, `jank`, `fps`, `choreographer`, `slow operation`, …) and the structural patterns (`Skipped N frames`, `GC pause`, `took Nms`) still catch real performance logs.
 - **Webview default perf keywords were missing "slow operation".** The webview's built-in perf keyword regex (active only until the settings broadcast arrives) lacked `slow operation`, which the extension-side default includes. Restored parity and extended the extension/webview parity test corpus with keyword-default cases so this drift is caught in CI.
 
