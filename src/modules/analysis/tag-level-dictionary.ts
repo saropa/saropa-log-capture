@@ -77,15 +77,30 @@ export const TAG_LEVEL_MAP: Readonly<Record<string, SeverityLevel>> = {
 };
 
 /**
+ * Optional saved-log wrapper `[HH:MM:SS.mmm] [source]` at line start. log-session-
+ * helpers.ts's `formatLine()` always writes both brackets together when a captured
+ * line is saved to a `.log` file — `source` (the category) is an unrestricted string
+ * end to end, so this only recognizes the wrapper by its fixed timestamp shape, then
+ * unconditionally consumes the very next bracket as the source label. Without this,
+ * re-opening a saved log left every app-emitted tag (`[db]`, `[perf]`,
+ * `[important:...]`) unrecognized because the FIRST bracket seen was the timestamp,
+ * not the tag (2026-07-10). Shared with level-classifier.ts's database patterns and
+ * their webview mirror (viewer-level-classify.ts) so all three stay in sync.
+ */
+export const savedLogWrapperPatternSrc = '(?:\\[\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\]\\s*\\[[^\\]]+\\]\\s*)?';
+
+/**
  * Head bracket tag at line start, tolerating the same optional shells as
- * `databaseBracketTagPattern` in level-classifier.ts (logcat prefix, threadtime
- * prefix, Flutter `[log]` wrapper). Captures the first `[...]` tag's inner text
- * (group 1), which may include a `:metadata` suffix — callers split on the first colon.
+ * `databaseBracketTagPattern` in level-classifier.ts (saved-log `[time] [source]`
+ * wrapper, logcat prefix, threadtime prefix, Flutter `[log]` wrapper). Captures the
+ * first `[...]` tag's inner text (group 1), which may include a `:metadata` suffix —
+ * callers split on the first colon.
  *
  * Anchored to line start so a mid-message `see [db] for details` does not promote.
  */
 export const headBracketTagPattern = new RegExp(
-    '^(?:[VDIWEFA]\\/[^:]*:\\s*)?'                                                      // optional logcat prefix
+    '^' + savedLogWrapperPatternSrc
+    + '(?:[VDIWEFA]\\/[^:]*:\\s*)?'                                                      // optional logcat prefix
     + '(?:\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\s+\\d+\\s+\\d+\\s+[VDIWEFA]\\s+[^:]*:\\s*)?' // optional threadtime
     + '(?:\\[log\\]\\s*)?'                                                              // optional Flutter [log] shell
     + '\\[([^\\]]+)\\]',                                                                // first bracket tag (inner = group 1)
