@@ -178,10 +178,10 @@ export function getIconBarScript(): string {
             openSqlQueryHistoryPanel();
         } else if (name === 'integrations') {
             /* The Integrations screen is a view inside the Options slide-out; open that panel, then
-               switch to the integrations view, and refresh the companion issues so the list is current. */
+               switch to the integrations view, and refresh the suggestions so the list is current. */
             if (typeof openOptionsPanel === 'function') openOptionsPanel();
             if (typeof openIntegrationsView === 'function') openIntegrationsView();
-            if (typeof window.requestSuiteIssues === 'function') window.requestSuiteIssues();
+            if (typeof window.requestSuiteSuggestions === 'function') window.requestSuiteSuggestions();
         } else if (name === 'trash' && typeof openTrashPanel === 'function') {
             openTrashPanel();
         } else if (name === 'options' && typeof openOptionsPanel === 'function') {

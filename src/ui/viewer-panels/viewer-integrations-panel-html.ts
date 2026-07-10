@@ -140,7 +140,6 @@ export function getIntegrationsPanelHtml(): string {
         <div class="integrations-content">
             <p class="integrations-intro">${t('viewer.integrations.intro')}</p>
             <div id="integrations-suite-suggestions" class="integrations-suite-suggestions" aria-live="polite"></div>
-            <div id="integrations-suite-issues" class="integrations-suite-issues" aria-live="polite"></div>
             ${renderCompanionExtensionsHtml()}
             <div class="integrations-search-wrapper">
                 <input id="integrations-search" type="text" placeholder="${t('viewer.integrations.searchPlaceholder')}" aria-label="${t('viewer.integrations.searchLabel')}" />
