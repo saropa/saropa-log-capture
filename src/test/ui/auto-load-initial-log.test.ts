@@ -15,7 +15,7 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { autoLoadInitialLog } from '../../extension-activation-helpers';
 import { LOG_LAST_VIEWED_KEY } from '../../ui/provider/viewer-provider-actions';
-import type { SessionMetadata, TreeItem } from '../../ui/session/session-history-grouping';
+import type { SessionGroup, SessionMetadata, SplitGroup, TreeItem } from '../../ui/session/session-history-grouping';
 
 /** Map-backed workspaceState carrying only the last-viewed map. */
 function fakeContext(lastViewed: Record<string, number>): vscode.ExtensionContext {
@@ -28,11 +28,12 @@ function fakeContext(lastViewed: Record<string, number>): vscode.ExtensionContex
     } as unknown as vscode.ExtensionContext;
 }
 
-/** Records what the viewer was asked to load. */
-function fakeTarget(): { target: Parameters<typeof autoLoadInitialLog>[2]; loaded: string[] } {
+/** Records what the viewer was asked to load. `currentFileUri` models a log that some other path
+ *  (a live session, the webview's pending load) opened while autoLoadInitialLog was awaiting stat(). */
+function fakeTarget(currentFileUri?: vscode.Uri): { target: Parameters<typeof autoLoadInitialLog>[2]; loaded: string[] } {
     const loaded: string[] = [];
     const target = {
-        getCurrentFileUri: (): vscode.Uri | undefined => undefined,
+        getCurrentFileUri: (): vscode.Uri | undefined => currentFileUri,
         loadFromFile: (uri: vscode.Uri): Promise<void> => { loaded.push(uri.toString()); return Promise.resolve(); },
         postMessage: (): void => {},
     };
@@ -126,5 +127,66 @@ suite('autoLoadInitialLog', () => {
         const { target, loaded } = fakeTarget();
         await autoLoadInitialLog(fakeContext({}), [], target);
         assert.deepStrictEqual(loaded, []);
+    });
+
+    /* Trash is a sidecar flag, not a file move: `trashSession` calls metaStore.setTrashed and the log
+       stays on disk, so stat() still succeeds. Only the leaf's `trashed` flag stops the restore — and
+       the leaf lives one level down, inside SplitGroup.parts or SessionGroup.members. A lookup that
+       inspects only top-level items finds nothing, reads no flag, and reopens the trashed log. */
+    test('falls back to the newest log when the last-viewed leaf is a TRASHED SPLIT PART', async () => {
+        const part = await realFile('split-part-2.log');
+        const newest = await realFile('newest-after-split.log');
+        const split = {
+            type: 'split-group', baseFilename: 'split', mtime: 100,
+            parts: [item(part, 100, true) as SessionMetadata],
+        } as unknown as SplitGroup;
+        const ctx = fakeContext({ [part.toString()]: 5_000 });
+        const { target, loaded } = fakeTarget();
+        await autoLoadInitialLog(ctx, [item(newest, 200), split as TreeItem], target);
+        assert.deepStrictEqual(loaded, [newest.toString()], 'a trashed split part must not be restored');
+    });
+
+    test('falls back to the newest log when the last-viewed leaf is a TRASHED SESSION-GROUP MEMBER', async () => {
+        const member = await realFile('group-member-2.log');
+        const primary = await realFile('group-primary.log');
+        const newest = await realFile('newest-after-group.log');
+        const primaryLeaf = item(primary, 100) as SessionMetadata;
+        const group = {
+            type: 'session-group', groupId: 'g1', mtime: 100, latestMtime: 120,
+            members: [primaryLeaf, item(member, 120, true) as SessionMetadata],
+            primary: primaryLeaf, uri: primary, filename: 'group-primary.log', size: 2,
+        } as unknown as SessionGroup;
+        const ctx = fakeContext({ [member.toString()]: 5_000 });
+        const { target, loaded } = fakeTarget();
+        await autoLoadInitialLog(ctx, [item(newest, 200), group as TreeItem], target);
+        assert.deepStrictEqual(loaded, [newest.toString()], 'a trashed group member must not be restored');
+    });
+
+    test('restores a NON-trashed session-group member (the nested lookup must not over-reject)', async () => {
+        const member = await realFile('live-group-member.log');
+        const primary = await realFile('live-group-primary.log');
+        const newest = await realFile('newest-beside-group.log');
+        const primaryLeaf = item(primary, 100) as SessionMetadata;
+        const group = {
+            type: 'session-group', groupId: 'g2', mtime: 100, latestMtime: 120,
+            members: [primaryLeaf, item(member, 120) as SessionMetadata],
+            primary: primaryLeaf, uri: primary, filename: 'live-group-primary.log', size: 2,
+        } as unknown as SessionGroup;
+        const ctx = fakeContext({ [member.toString()]: 5_000 });
+        const { target, loaded } = fakeTarget();
+        await autoLoadInitialLog(ctx, [item(newest, 200), group as TreeItem], target);
+        assert.deepStrictEqual(loaded, [member.toString()]);
+    });
+
+    /* The caller's "nothing open yet" guard runs BEFORE the stat() await. A live session or the
+       webview's pending load can open a log during that await; this first-visit convenience must
+       not overwrite it. */
+    test('loads nothing when another path opened a log during the stat() await', async () => {
+        const remembered = await realFile('remembered.log');
+        const openedMeanwhile = await realFile('opened-by-live-session.log');
+        const ctx = fakeContext({ [remembered.toString()]: 5_000 });
+        const { target, loaded } = fakeTarget(openedMeanwhile);
+        await autoLoadInitialLog(ctx, [item(remembered, 100)], target);
+        assert.deepStrictEqual(loaded, [], 'a log opened by a more deliberate path must not be overwritten');
     });
 });
