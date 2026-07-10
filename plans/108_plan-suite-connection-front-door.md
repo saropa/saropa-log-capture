@@ -276,3 +276,38 @@ What was removed / kept:
 
 **Do not re-add a diagnostics list to any Options view.** If cross-tool findings need a surface
 later, propose it as its own panel or extend the signal report — never the Options panel.
+
+## Finish Report (2026-07-09)
+
+**Change:** the companion-tool issues list was removed from the Integrations screen per the
+owner ruling recorded above (Options views are toggles-only configuration surfaces).
+
+**Defect being corrected:** the Integrations view rendered every raw diagnostic from the
+sibling mirrors — Drift Advisor statistical outliers and Saropa Lints HACK markers — with no
+severity gate and no row cap, turning an options surface into an unbounded diagnostics feed
+and inflating the icon badge with informational noise.
+
+**Implementation:** `suite-issues-html.ts` deleted; the `requestSuiteIssues`→`suiteIssues`
+message pair renamed to `requestSuiteSuggestions`→`suiteSuggestions` with the `issuesHtml`
+payload dropped; the webview script renamed to `viewer-suite-suggestions-script.ts`; the
+`integrations-suite-issues` container, `.suite-issue-*` CSS, and five
+`viewer.integrations.suite*` l10n keys removed. The badge now counts only pending integration
+suggestions. Both webview message catalogs regenerated. Landed across commits dc22a539,
+ac7cffa9, and d16801f8 (interleaved with unrelated workstreams; the removal narrative is in
+d16801f8's message).
+
+**Verification:** full `npm run compile` gate chain green (typecheck, lint, NLS/l10n gates,
+catalogs, bundle, dist size). A repo-wide grep for the removed symbols (`suiteIssues`,
+`suite-issue`, `buildSuiteIssues`, `requestSuiteIssues`, `handleSuiteIssuesMessage`,
+`integrations-suite-issues`) returns zero hits in `src/`. A delegated review confirmed no
+dead code remains (`readSiblingEnvelope`, `readWorkspaceHeadCommit`, and the `Diagnostic`
+types all retain live consumers) and the badge renderer hides at count ≤ 0 with a rebaseline
+branch preventing ghost unread deltas. Regression tests added to
+`src/test/ui/viewer-options-panel.test.ts` pin the absence of the issues container and the
+renamed message pair.
+
+**Known residue:** ten locale bundles retain orphaned translations of the removed strings;
+they are inert (runtime lookup is by English source text) and fall to the next operator-run
+translation pass. Two mid-sequence commits (dc22a539, ac7cffa9) carry parts of this change
+undescribed in their messages and dc22a539 does not build standalone — a bisect hazard noted
+for archaeology, not action.
