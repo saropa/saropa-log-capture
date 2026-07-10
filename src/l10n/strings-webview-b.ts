@@ -131,8 +131,10 @@ export const stringsWebviewB: Record<string, string> = {
     // Source-tag + SQL-pattern chips (viewer-source-tags-ui.ts, viewer-sql-pattern-tags.ts).
     'viewer.tags.all': 'All',
     'viewer.tags.none': 'None',
-    'viewer.tags.showLess': 'Show less',
-    'viewer.tags.showAll': 'Show all ({0})',
+    'viewer.tags.searchPlaceholder': 'Filter tags…',
+    'viewer.tags.noMatch': 'No tags match your search',
+    'viewer.tags.copyJson': 'Copy as JSON',
+    'viewer.tags.copyJson.title': 'Copy every tag as JSON, grouped by display name with its raw tag variants',
     'viewer.tags.clickToFilter': 'Click to filter: {0}',
     'viewer.sqlPatterns.commandTypes.one': '{0} command type',
     'viewer.sqlPatterns.commandTypes.many': '{0} command types',

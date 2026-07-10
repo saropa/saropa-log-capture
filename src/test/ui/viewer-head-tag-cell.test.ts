@@ -43,6 +43,23 @@ suite('head-tag chips in the tag column', () => {
         assert.strictEqual(title, 'Perf Frame Stall Db');
     });
 
+    test('stripTagBracketSuffix drops a trailing per-line sequence/thread-id counter', () => {
+        // "TelecomRegistra[000:619][25918]" -> "TelecomRegistra": some GmsCore/Clearcut
+        // components append this directly onto their own tag with no delimiter; the
+        // counter increments every line, so leaving it in defeats tag grouping entirely.
+        assert.strictEqual(run('stripTagBracketSuffix("TelecomRegistra[000:619][25918]")'), 'TelecomRegistra');
+        assert.strictEqual(run('stripTagBracketSuffix("CommonClearcutLogger[001:494][25914]")'), 'CommonClearcutLogger');
+        assert.strictEqual(run('stripTagBracketSuffix("FlutterJNI")'), 'FlutterJNI', 'no bracket suffix, unchanged');
+    });
+
+    test('bracket-suffix strip + qualified-tag collapse together clean a real device tag', () => {
+        // The full, real tag from the reported device log: strip the per-line counter
+        // first, THEN collapse the dotted package path to its class name.
+        const full = 'TY_com.google.android.libraries.communications.conference.service.impl.telecom.TelecomRegistra[000:619][25918]';
+        const cleaned = run('collapseQualifiedTag(stripTagBracketSuffix("' + full + '"))');
+        assert.strictEqual(cleaned, 'TelecomRegistra');
+    });
+
     test('collapseQualifiedTag collapses fully-qualified package/class names to their last segment', () => {
         // 2+ dots reliably means a Java/Android reverse-domain class name, not a short
         // hand-picked tag — collapsing this stopped ~13 near-duplicate chips sharing a
