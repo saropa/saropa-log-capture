@@ -63,7 +63,8 @@ const CORPUS: readonly Case[] = [
     // (config-normalizers.ts, the webview var kwPerf line, package.json) and drifted
     // silently: "slow operation" was missing from the webview default, and bare
     // "performance" lingered in package.json causing noun phrases like "Performance
-    // settings" to classify as performance (bugs/BUG_saropa signal report.md).
+    // settings" to classify as performance
+    // (plans/history/2026.07/2026.07.09/BUG_saropa signal report.md).
     { line: 'W/ActivityManager: Slow operation: 51ms so far, now at startProcess', level: 'performance', note: 'slow operation keyword promotes W/ to performance' },
     { line: '3) Performance settings filtering (maxResults=50)', level: 'info', note: 'bare "Performance" noun phrase stays info' },
 ];

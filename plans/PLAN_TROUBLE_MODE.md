@@ -320,3 +320,35 @@ viewer's own toolbar, per owner feedback. No change to the filter engine.
   warning is pre-existing; my edits there were in-place, no net line added).
 - **Not executed here:** F5 manual pass — button placement/active style, dot dimming,
   collapse/expand icon swap and palette sync, in both sidebar and pop-out.
+
+## Finish Report (2026-07-09) — review hardening
+
+A deep review of the Trouble Mode feed filter and the toolbar relocation surfaced
+one real, in-scope defect and one moot concern; both resolved.
+
+### Fixed
+
+- **Reveal-gap tooltip now attributes Trouble Mode.** The `calcItemHeight` filter
+  inventory gained `troubleFiltered`, but the parallel hidden-line reason inventory
+  (`countHiddenNonBlank` / `buildHiddenTip` in `viewer-data-viewport.ts`) was not
+  extended, so a Trouble-Mode-hidden gap under-summed its breakdown or showed none.
+  Added the `trouble` reason count + "Trouble-Mode-filtered" label so every hidden
+  line is attributed, matching the other 13 filters.
+
+### Verified moot (no action)
+
+- **Toolbar collapse button not posting to the host context key
+  `saropaLogCapture.allCollapsed`.** That key is now written only by the palette
+  command bodies and read by nothing — the view-title `when` clauses that consumed
+  it were removed when the buttons moved into the toolbar — so there is no title-bar
+  icon left to desync. Left as-is.
+
+### Tests
+
+- `viewer-severity-bar-connector.test.ts` — added `troubleFiltered` to the
+  required-flags coverage list (pins the tooltip fix): 29 passing.
+- `viewer-collapse-expand.test.ts` — added assertions that the palette
+  collapse/expand cases call `window.__setAllSectionsCollapsed(true/false)` to keep
+  the toolbar icon in sync: 10 passing.
+- `viewer-trouble-mode.test.ts` (3) and `viewer-blank-row-affordance.test.ts` (2)
+  re-run green. `check-types` clean; lint clean on touched files.
