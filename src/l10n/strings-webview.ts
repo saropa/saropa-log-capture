@@ -47,6 +47,9 @@ export const stringsWebview: Record<string, string> = {
     'viewer.troubleChart.legend.performance': 'Performance {0}',
     // {0}=the busiest window's total event count. Labels the top of the y axis.
     'viewer.troubleChart.peak': 'Peak {0}',
+    // Tooltip prefix on a bar drawn entirely before the app's launch line — the device's own
+    // logcat backlog, kept out of the peak scale so it cannot flatten the app's real spikes.
+    'viewer.troubleChart.preLaunch': 'Before app launch',
     // Trouble Mode Crashlytics band (Stage 5). {0}=event count, {1}=user count.
     'viewer.troubleCrashlytics.counts': '{0} events · {1} users',
     // Band compaction (plan 110, Stage 5). {0}=total non-archived issue count.
@@ -239,6 +242,10 @@ export const stringsWebview: Record<string, string> = {
     'viewer.logBanner.hrsAgo': '{0} hrs ago',
     'viewer.logBanner.more': 'More actions',
     'viewer.logBanner.unnamed': 'Log',
+    // The session context line the status bar builds. It was toolbar HTML rendered host-side under
+    // viewer.toolbar.sessionDetails.*; the bar builds it client-side, so it needs __VT keys.
+    'viewer.logBanner.details.label': 'Log context',
+    'viewer.logBanner.details.title': 'Log session context and metadata',
     'viewer.toolbar.staleness.newer': '{0} newer',
     // File-action labels the banner shows via vt(). Mirrors the host-side viewer.logFile.* values
     // used by the log-file modal so the inline banner and the modal read identically.
