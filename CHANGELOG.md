@@ -27,8 +27,17 @@ cspell:disable
 
 ## [Unreleased]
 
+### Added
+
+- **The Trouble Mode error-report rail can now be dragged wider.** A new resize handle sits between the scrollbar minimap and the rail (right edge of the minimap); dragging it resizes the report panel instead of the minimap, between the rail's existing 320–560px bounds. The chosen width persists per workspace.
+
+### Changed
+
+- **Trouble Mode's Crash Issues band now collapses, and both bands fold away more easily.** The Crash Issues band gets the same collapse caret the severity chart has, and on both bands you can click the **title text** — not just the small arrow — to fold or unfold them. The severity chart's caret is larger so it reads as a control. The Crash Issues "Updated" time now shows the date when the cache is not from today and carries a tooltip noting it is the Firebase Crashlytics cloud-cache time, not the log's — so an "Updated 9:17 AM" beside an 18:00 log no longer looks wrong.
+
 ### Fixed
 
+- **Turning off a severity toggle (error/warning/performance) now updates the Trouble Mode chart, not just the feed.** The chart's bars and legend totals previously counted every charted line regardless of which levels were enabled, so a dimmed chip could sit beside a bar still counting the level the user just hid. The chart now reads the same `enabledLevels` set the toolbar dots and legend chips gate, and toggling a level (from either control) now rebuilds the chart.
 - **The severity chart no longer lets the device's startup burst flatten every real spike.** The chart excludes the pre-app logcat backlog from its peak, but on a reloaded log the detection could miss the launch line and scale the whole strip to that one leading crash burst. It now anchors on the **build-complete** line (`√ Built …apk`, `Xcode build done`) — a later, stronger boundary than "Launching…" that also drops device noise during the build — and falls back to the launch line when there is no build. The scan also self-heals if a log is swapped in without a clear, so the boundary can't get stuck on the previous log.
 - **A truncated Flutter exception dump no longer paints the rest of the session red.** When a `RenderFlex overflowed` / `Exception caught by …` banner's closing rule never arrived (e.g. cut off by the debug adapter's `maxLogLineLength` truncating a long widget-tree dump mid-sentence), the banner group stayed "open" forever, forcing every later line — permission logs, perf stalls, Crashlytics telemetry — to Error severity. The banner now auto-closes after a generous line cap instead of leaking (bug_012).
 

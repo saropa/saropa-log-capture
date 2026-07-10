@@ -330,6 +330,7 @@ window.addEventListener('message', function(event) {
             break;
         case 'minimapWidth': if (typeof handleMinimapWidth === 'function') handleMinimapWidth(msg); break;
         case 'minimapWidthPx': if (typeof handleMinimapWidthPx === 'function') handleMinimapWidthPx(msg); break;
+        case 'troubleRailWidthPx': if (typeof handleTroubleRailWidthPx === 'function') handleTroubleRailWidthPx(msg); break;
         case 'scrollbarVisible': /* Apply showScrollbar setting + force Chromium scrollbar re-render */ applyScrollbarVisible(msg.show === true); break;
         case 'searchMatchOptionsAlwaysVisible': document.body.classList.toggle('search-match-options-always', msg.always === true); break;
         case 'iconBarPosition':

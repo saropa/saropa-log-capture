@@ -186,5 +186,28 @@ body.slc-trouble-rail-wide .trouble-detail {
 .trouble-detail-body .evidence-line { display: flex; gap: var(--space-2); padding: 1px var(--space-2); white-space: pre; }
 .trouble-detail-body .evidence-line-num { color: var(--muted); text-align: right; min-width: 44px; user-select: none; }
 .trouble-detail-body .evidence-line--target { background: var(--brand-glow); }
+
+/* Drag-to-resize grip, left edge of the rail (precedent: .minimap-resize-handle). Hidden
+   until the rail is BOTH open and in the wide static-column layout — narrow mode is the
+   absolute-overlay fallback with no adjacent flex geometry to drag, and a hidden rail has
+   nothing to resize. */
+.trouble-rail-resize {
+    display: none;
+    flex: 0 0 4px;
+    width: 4px;
+    cursor: col-resize;
+    align-self: stretch;
+    background: transparent;
+    transition: background 0.15s;
+}
+body.slc-trouble-rail-open.slc-trouble-rail-wide .trouble-rail-resize {
+    display: block;
+}
+.trouble-rail-resize:hover {
+    background: var(--vscode-sash-hoverBorder, rgba(0, 122, 204, 0.6));
+}
+/* Lock cursor to col-resize during drag so it does not flicker between the handle,
+   the feed, and the rail as the pointer crosses each while moving fast. */
+body.tr-resizing, body.tr-resizing * { cursor: col-resize !important; }
 `;
 }
