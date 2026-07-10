@@ -15,9 +15,11 @@
  * changes, change it in BOTH files. The pane chrome still uses --surface-2 /
  * --border so it reads as a dashboard band separated from the feed by a hairline.
  *
- * Head-row text is pinned to 10px to match .level-letter / .dot-count in the
+ * Head-row TEXT is pinned to 10px to match .level-letter / .dot-count in the
  * toolbar, not the 11px --text-eyebrow the other pane heads use: this strip sits
  * directly under the toolbar and any size step between them reads as a misalignment.
+ * The collapse caret is the sole exception — it is a control, not a label, and is
+ * sized from the type scale; the reason lives on its own rule below.
  */
 export function getTroubleChartStyles(): string {
     return /* css */ `
@@ -73,7 +75,7 @@ body.slc-trouble-active .trouble-chart { display: block; }
     color: var(--muted);
     cursor: pointer;
     line-height: 1;
-    font-size: 15px;
+    font-size: var(--text-h3);
     letter-spacing: normal;
     transition: transform 0.15s ease;
 }
