@@ -34,6 +34,11 @@ suite('Webview element ID wiring', () => {
         'cp-check-again',
         // Created via innerHTML in viewer-crashlytics-setup.ts buildConnectionTest()
         'cp-conn-report',
+        // Created by document.createElement in viewer-log-banner.ts, which builds the persistent
+        // log status bar's chrome. It was static toolbar HTML until the bar became permanent and
+        // took ownership of the session context line; viewer-session-header.ts still reaches it by
+        // this id, so the id must survive the move.
+        'session-details-inline',
     ]);
 
     /**
