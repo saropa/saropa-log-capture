@@ -100,7 +100,9 @@ report. Without the tag, action counts only come from app-shaped heuristics (the
 - **`action`** — the literal verb (parallel to `enter` / `handoff`).
 - **`"<Category>"`** — the counter key, in **double quotes** (required): `"Favorite"`, `"Share"`,
   `"Delete"`. Repeats of the same category on the same screen increment its count. Keep it a short
-  noun — it is both the badge label and the aggregation key.
+  noun — it is both the badge label and the aggregation key. The key is **case-sensitive**
+  (only the tag/verb matching is case-insensitive): `"favorite"` and `"Favorite"` count as two
+  separate badges, so keep the category's casing consistent across call sites.
 - **`<file.dart:line>`** — optional, handled exactly like `enter` (leading `./` stripped).
 
 Matching is **case-insensitive**, like the other verbs.

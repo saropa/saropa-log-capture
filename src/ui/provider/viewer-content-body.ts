@@ -121,6 +121,16 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     ${getGotoLineHtml()}
     ${getReplayBarHtml()}
     ${getErrorBreakpointHtml()}
+    <!-- Trouble Mode detail pane (Stage 4). Overlays only the feed (inside the
+         position:relative wrapper) so the severity chart + toolbar stay visible.
+         Content is host-built and posted in; shown on feed-row selection. -->
+    <div id="trouble-detail" class="trouble-detail u-hidden" role="region" aria-label="${t('viewer.troubleDetail.region')}">
+        <div class="trouble-detail-head">
+            <span id="trouble-detail-title" class="trouble-detail-title"></span>
+            <button type="button" id="trouble-detail-close" class="trouble-detail-close" title="${t('viewer.troubleDetail.close.title')}" aria-label="${t('viewer.troubleDetail.close.title')}">×</button>
+        </div>
+        <div id="trouble-detail-body" class="trouble-detail-body"></div>
+    </div>
     </div>
     <div id="crashlytics-detail" class="crashlytics-detail u-hidden" role="region" aria-label="${t('viewer.crashlytics.detail.region')}"></div>
     </div>
