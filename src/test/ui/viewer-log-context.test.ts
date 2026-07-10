@@ -90,6 +90,10 @@ suite('computeLogContextInfo', () => {
 suite('shouldAutoSwitchToLatest', () => {
     const FOLDER = 'MyApp';
 
+    /** Activation baseline older than every fixture mtime — i.e. "every log arrived after we
+     *  started", which is the condition the pre-plan-111 predicate implicitly assumed always held. */
+    const ACTIVATED_BEFORE_ALL = 0;
+
     function leaf(name: string, mtime: number, controller: boolean): SessionMetadata {
         return {
             uri: vscode.Uri.parse('file:///logs/' + name + '.log'),
@@ -107,30 +111,54 @@ suite('shouldAutoSwitchToLatest', () => {
     test('should switch when enabled and a newer controller log differs from the open one', () => {
         const open = leaf('run1', 100, true);
         const newer = leaf('run2', 200, true);
-        assert.strictEqual(shouldAutoSwitchToLatest(context([open, newer], open.uri.toString()), true), true);
+        assert.strictEqual(shouldAutoSwitchToLatest(context([open, newer], open.uri.toString()), true, ACTIVATED_BEFORE_ALL), true);
     });
 
     test('should NOT switch when the setting is off, even though a newer log exists', () => {
         const open = leaf('run1', 100, true);
         const newer = leaf('run2', 200, true);
-        assert.strictEqual(shouldAutoSwitchToLatest(context([open, newer], open.uri.toString()), false), false);
+        assert.strictEqual(shouldAutoSwitchToLatest(context([open, newer], open.uri.toString()), false, ACTIVATED_BEFORE_ALL), false);
     });
 
     test('should NOT switch when the open log is already the latest controller (anti-loop)', () => {
         const older = leaf('run1', 100, true);
         const newest = leaf('run2', 200, true);
-        assert.strictEqual(shouldAutoSwitchToLatest(context([older, newest], newest.uri.toString()), true), false);
+        assert.strictEqual(shouldAutoSwitchToLatest(context([older, newest], newest.uri.toString()), true, ACTIVATED_BEFORE_ALL), false);
     });
 
     test('should NOT switch when nothing is open yet (first-visit path owns the initial load)', () => {
         const a = leaf('run1', 100, true);
         const b = leaf('run2', 200, true);
-        assert.strictEqual(shouldAutoSwitchToLatest(context([a, b], undefined), true), false);
+        assert.strictEqual(shouldAutoSwitchToLatest(context([a, b], undefined), true, ACTIVATED_BEFORE_ALL), false);
     });
 
     test('should NOT switch when only a newer PERIPHERAL log exists', () => {
         const open = leaf('run1', 100, true);
         const newerPeripheral = leaf('drift', 300, false);
-        assert.strictEqual(shouldAutoSwitchToLatest(context([open, newerPeripheral], open.uri.toString()), true), false);
+        assert.strictEqual(shouldAutoSwitchToLatest(context([open, newerPeripheral], open.uri.toString()), true, ACTIVATED_BEFORE_ALL), false);
+    });
+
+    /* Plan 111. The newer controller log already existed when the window opened, so it did not
+       "arrive" — switching to it would override the last-viewed log the startup restore just loaded.
+       Any reports/ watcher event triggers this predicate, so without the baseline the restore was
+       undone by the first unrelated file change. */
+    test('should NOT switch to a newer controller log that pre-dates activation', () => {
+        const open = leaf('run1', 100, true);
+        const newerButPreExisting = leaf('run2', 200, true);
+        const activatedAfterBoth = 300;
+        assert.strictEqual(
+            shouldAutoSwitchToLatest(context([open, newerButPreExisting], open.uri.toString()), true, activatedAfterBoth),
+            false,
+        );
+    });
+
+    test('should switch to a controller log that arrived after activation', () => {
+        const open = leaf('run1', 100, true);
+        const arrivedAfter = leaf('run2', 400, true);
+        const activatedBetween = 300;
+        assert.strictEqual(
+            shouldAutoSwitchToLatest(context([open, arrivedAfter], open.uri.toString()), true, activatedBetween),
+            true,
+        );
     });
 });

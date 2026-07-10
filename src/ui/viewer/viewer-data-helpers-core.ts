@@ -229,7 +229,19 @@ function normalizeForBlankCheck(text) {
 /** True if line has no visible content: raw stripTags blank, or (Format on) formatted output is blank. */
 function isLineContentBlank(item) {
     if (!item || !item.html) return true;
-    var base = normalizeForBlankCheck(stripTags(item.html));
+    var _shown = item.html;
+    /* Blankness must be measured on what the row DISPLAYS, not on item.html. With
+       structured parsing on, renderItem strips the parsed prefix, so a device line
+       that logged an empty message — e.g. "07-10 08:23:05.388 924 17991 W keystore2:",
+       where the logcat-threadtime regex yields msg = '' and prefixLen = the whole line
+       — renders with nothing after the tag. Testing item.html would call it non-blank,
+       so it was born at full ROW_HEIGHT and, worse, stayed a legal anchor for the
+       hidden-gap reveal chevron: a blank row wearing an expander arrow. */
+    if (typeof structuredLineParsing !== 'undefined' && structuredLineParsing
+        && item.structuredPrefixLen > 0 && typeof stripHtmlPrefix === 'function') {
+        _shown = stripHtmlPrefix(_shown, item.structuredPrefixLen);
+    }
+    var base = normalizeForBlankCheck(stripTags(_shown));
     if (/^\\s*$/.test(base)) return true;
     if (typeof fileMode !== 'undefined' && fileMode !== 'log' && typeof formatEnabled !== 'undefined' && formatEnabled && item.type === 'line') {
         var wi = (typeof item.viewerLineIndex === 'number') ? item.viewerLineIndex : -1;

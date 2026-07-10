@@ -60,7 +60,11 @@ body.slc-trouble-active .trouble-chart { display: block; }
 .trouble-chart .tc-peak:empty { display: none; }
 
 /* Collapse control. The glyph is a single caret rotated by CSS rather than swapped in
-   script, so the button carries no text a translator would have to own. */
+   script, so the button carries no text a translator would have to own.
+   It is the ONE thing in this head row that does not take the row's 10px: a caret drawn at
+   label size reads as a stray pixel rather than a control, and it is the only affordance
+   telling the user the chart can be put away. The row's uppercase letter-spacing is also
+   cancelled here — it would push the glyph off the center of its own hit area. */
 .trouble-chart .tc-toggle {
     background: none;
     border: none;
@@ -69,7 +73,8 @@ body.slc-trouble-active .trouble-chart { display: block; }
     color: var(--muted);
     cursor: pointer;
     line-height: 1;
-    font-size: 10px;
+    font-size: 15px;
+    letter-spacing: normal;
     transition: transform 0.15s ease;
 }
 .trouble-chart .tc-toggle:hover { color: var(--fg); }
@@ -81,7 +86,17 @@ body.slc-trouble-active .trouble-chart { display: block; }
 
 .trouble-chart-body { position: relative; }
 
-.trouble-chart .tc-plot { position: relative; }
+/* Three sides only, and open at the top: the frame is read as a pair of axes plus a
+   baseline, so closing the top would turn it into a box and imply a ceiling the bars are
+   measured against — they are not, the scale is the peak. border-box keeps the two side
+   rules inside the strip's width so the bars still span it edge to edge. */
+.trouble-chart .tc-plot {
+    position: relative;
+    box-sizing: border-box;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
 /* The strip is a rate over time, so the span it covers must be stated. Only the two
    ends are labeled — interior ticks cannot be placed honestly under
    preserveAspectRatio="none", which stretches the SVG horizontally. */
