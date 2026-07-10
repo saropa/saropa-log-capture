@@ -87,7 +87,8 @@ function flowEsc(s) {
 function renderFlowChip(flow) {
     if (!flow) return '';
     var meta = FLOW_CHIP_META[flow.verb] || FLOW_CHIP_META.enter;
-    var meaning = (typeof vt === 'function') ? vt('viewer.flow.chip.' + flow.verb) : flow.verb;
+    var meaningKey = 'viewer.flow.chip.' + flow.verb;
+    var meaning = (typeof vt === 'function') ? vt(meaningKey) : flow.verb;
     var kindTip = (flow.kind && flow.kind !== 'action' && flow.kind !== 'error') ? (' (' + flow.kind + ')') : '';
     var srcTip = (flow.source && flow.source.file) ? (' \\u00b7 ' + flow.source.file + ':' + flow.source.line) : '';
     var tip = flowEsc(meaning + kindTip + srcTip);
@@ -132,7 +133,8 @@ function applyFlowModeIndicator() {
     var btn = document.getElementById('toolbar-flowtags-btn');
     if (!btn) return;
     btn.setAttribute('data-flow-mode', flowTagMode);
-    var tip = (typeof vt === 'function') ? vt('viewer.flow.mode.' + flowTagMode) : flowTagMode;
+    var modeTipKey = 'viewer.flow.mode.' + flowTagMode;
+    var tip = (typeof vt === 'function') ? vt(modeTipKey) : flowTagMode;
     btn.setAttribute('title', tip);
     btn.setAttribute('aria-label', tip);
     btn.classList.toggle('toolbar-icon-btn-active', flowTagMode === 'hidden');
