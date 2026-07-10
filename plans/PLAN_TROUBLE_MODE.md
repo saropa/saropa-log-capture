@@ -7,8 +7,8 @@
 Owner note carried over from the draft: include Crashlytics — its data must background-load
 so opening Trouble Mode is never blocked on a network fetch.
 
-Sibling owner note: [PLAN_BUILD a KILL SWITCH.md](PLAN_BUILD%20a%20KILL%20SWITCH.md)
-(same drafting batch; no functional dependency).
+Sibling owner note: [PLAN_BUILD a KILL SWITCH.md](history/2026.07/2026.07.09/PLAN_BUILD%20a%20KILL%20SWITCH.md)
+(completed and archived; same drafting batch; no functional dependency).
 
 ## Goal
 

@@ -37,6 +37,21 @@ describe('processOutputEvent kill switch', () => {
         assert.strictEqual(added, 0, 'earlyBuffer.add must not be called when capture is disabled');
     });
 
+    it('should NOT broadcast a known-session event when capture is disabled', () => {
+        // The top gate must short-circuit the known-session branch too, not only the unknown-session
+        // one — a session already in the map must produce no append/broadcast while the switch is off.
+        let broadcasts = 0;
+        const earlyBuffer = { add: () => {} };
+        const deps = makeDeps(false, earlyBuffer);
+        (deps.sessions as Map<string, LogSession>).set('known-session', {
+            appendLine: () => {}, lineCount: 0, fileUri: { fsPath: '/x' },
+        } as unknown as LogSession);
+        const target = makeTarget();
+        target.broadcastLine = () => { broadcasts += 1; };
+        processOutputEvent(deps, target, 'known-session', body);
+        assert.strictEqual(broadcasts, 0, 'no broadcast may occur for a known session when disabled');
+    });
+
     it('should buffer an unknown-session event when capture is enabled', () => {
         // Sanity check the ordering did not break the normal early-buffer path: with capture on,
         // an event for a session that has not finished init is still buffered.
