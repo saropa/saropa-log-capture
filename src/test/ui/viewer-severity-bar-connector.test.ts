@@ -75,6 +75,43 @@ suite('Severity bar connector (CSS per-color-group half-stripe architecture)', (
         );
     });
 
+    test('error and error-recent-context are separate color groups (never bridged)', () => {
+        // The two error shades are DIFFERENT colors (full red vs a muted red mixed
+        // toward the panel border). They must not join into one band — this is the
+        // same "don't bridge different colors" contract as yellow-vs-blue, and the
+        // one case where the two class names share a prefix, so it is pinned
+        // explicitly against a substring-style regression.
+        assert.ok(
+            /\.level-bar-error:has\(\+ \.level-bar-error\)::after\s*\{\s*bottom:\s*0/.test(decoStyles),
+            'plain error has its own join group',
+        );
+        assert.ok(
+            /\.level-bar-error-recent-context:has\(\+ \.level-bar-error-recent-context\)::after\s*\{\s*bottom:\s*0/.test(decoStyles),
+            'recent-error context has its own join group (its own muted color)',
+        );
+        assert.ok(
+            !/\.level-bar-error:has\(\+ \.level-bar-error-recent-context\)/.test(decoStyles)
+                && !/\.level-bar-error-recent-context:has\(\+ \.level-bar-error\)::after/.test(decoStyles),
+            'the two error shades are different colors and must never bridge into one band',
+        );
+    });
+
+    test('every colored gutter class is joined in a connector group (completeness)', () => {
+        // Guard against adding a new .level-bar-X (with its own --bar-color) while
+        // forgetting to add it to barColorGroups — its dots would then silently
+        // never join. Every class that declares --bar-color must appear in a
+        // generated connector rule (a line carrying :has(+ ...)).
+        const colorClasses = [...decoStyles.matchAll(/\.(level-bar-[\w-]+)\s*\{\s*--bar-color:/g)].map((m) => m[1]);
+        assert.ok(colorClasses.length >= 10, `expected the full set of gutter color classes, found ${colorClasses.length}`);
+        const joinRules = decoStyles.split('\n').filter((l) => l.includes(':has(+')).join('\n');
+        for (const cls of colorClasses) {
+            // (?![\w-]) boundary so .level-bar-error does not match inside
+            // .level-bar-error-recent-context (the shared-prefix trap).
+            const re = new RegExp('\\.' + cls + '(?![\\w-])');
+            assert.ok(re.test(joinRules), `gutter class .${cls} is not joined in any connector group — add it to barColorGroups`);
+        }
+    });
+
     test('base connector ::after is collapsed and center-anchored on --gutter-cx', () => {
         // The base ::after paints NOTHING on its own (top:50%/bottom:50% => zero
         // height); only the per-group rules extend a half toward a same-color
