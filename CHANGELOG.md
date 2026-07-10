@@ -25,6 +25,14 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **A truncated Flutter exception dump no longer paints the rest of the session red.** When a `RenderFlex overflowed` / `Exception caught by …` banner's closing rule never arrived (e.g. cut off by the debug adapter's `maxLogLineLength` truncating a long widget-tree dump mid-sentence), the banner group stayed "open" forever, forcing every later line — permission logs, perf stalls, Crashlytics telemetry — to Error severity. The banner now auto-closes after a generous line cap instead of leaking (bug_012).
+
+---
+
 ## [9.2.0]
 
 Trouble Mode's reports now open **beside** the log instead of covering it, the loading view shows the issue instead of the word "Loading", and the severity chart finally has a legend and a time axis. [log](https://github.com/saropa/saropa-log-capture/blob/v9.2.0/CHANGELOG.md)
