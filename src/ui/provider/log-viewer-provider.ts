@@ -229,6 +229,7 @@ export class LogViewerProvider
   setScrollbarVisible(show: boolean): void { state.setScrollbarVisibleImpl(this, show); }
   setLogFontSize(size: number): void { state.setLogFontSizeImpl(this, size); }
   setLogLineHeight(height: number): void { state.setLogLineHeightImpl(this, height); }
+  setTroubleChartInterval(seconds: number): void { state.setTroubleChartIntervalImpl(this, seconds); }
   setLogViewerVisualSpacing(enabled: boolean): void { state.setLogViewerVisualSpacingImpl(this, enabled); }
   setShowCollapseDividerLabels(show: boolean): void { state.setShowCollapseDividerLabelsImpl(this, show); }
   setSearchMatchOptionsAlwaysVisible(always: boolean): void { state.setSearchMatchOptionsAlwaysVisibleImpl(this, always); }

@@ -43,6 +43,7 @@ import { getColumnStyles } from './viewer-styles-columns';
 import { getAsciiArtStyles } from './viewer-styles-ascii-art';
 import { getFormatStyles } from './viewer-styles-format';
 import { getFlutterBannerStyles } from './viewer-styles-flutter-banner';
+import { getTroubleChartStyles } from './viewer-styles-trouble-chart';
 
 export function getViewerStyles(): string {
     // Token :root block is prepended FIRST so every downstream module can
@@ -243,5 +244,5 @@ body.scrollbar-visible #log-content {
     background: var(--vscode-scrollbarSlider-hoverBackground);
 }
 #log-content::-webkit-scrollbar-track { background: transparent; }
-` + getLineStyles() + getColumnStyles() + getAsciiArtStyles() + getContentStyles() + getNPlusOneSignalStyles() + getSqlRepeatDrilldownStyles() + getReplayStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getSqlQueryHistoryPanelStyles() + getSqlQueryHistoryDashboardStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCollectionsPanelStyles() + getCrashlyticsPanelStyles() + getProjectStatePanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getSignalPanelStyles() + getAiStyles() + getRunSeparatorStyles() + getContextPopoverStyles() + getRootCauseHypothesesStyles() + getToolbarStyles() + getFilterDrawerStyles() + getFormatStyles() + getFlutterBannerStyles();
+` + getLineStyles() + getColumnStyles() + getAsciiArtStyles() + getContentStyles() + getNPlusOneSignalStyles() + getSqlRepeatDrilldownStyles() + getReplayStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getSqlQueryHistoryPanelStyles() + getSqlQueryHistoryDashboardStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCollectionsPanelStyles() + getCrashlyticsPanelStyles() + getProjectStatePanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getSignalPanelStyles() + getAiStyles() + getRunSeparatorStyles() + getContextPopoverStyles() + getRootCauseHypothesesStyles() + getToolbarStyles() + getFilterDrawerStyles() + getFormatStyles() + getFlutterBannerStyles() + getTroubleChartStyles();
 }
