@@ -29,6 +29,7 @@ cspell:disable
 
 ### Added
 
+- **New "Exclude warm-up logs" filter hides the device's pre-app noise from the feed.** A checkbox in the **File Scope** filter tab (under "Exclude lines with no source file", off by default) hides everything captured before the app started — the device's logcat backlog and the build tool's output, up to the same app-ready point the severity chart begins at. The data isn't lost: untick it to see the warm-up lines again.
 - **The Trouble Mode error-report rail can now be dragged wider.** A new resize handle sits between the scrollbar minimap and the rail (right edge of the minimap); dragging it resizes the report panel instead of the minimap, between the rail's existing 320–560px bounds. The chosen width persists per workspace.
 
 ### Changed

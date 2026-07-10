@@ -178,6 +178,8 @@ export const stringsViewer: Record<string, string> = {
     'viewer.drawer.scope.file': 'Only file',
     'viewer.drawer.scope.unattrib.title': 'When a scope is active, also exclude lines that have no source file from the debugger',
     'viewer.drawer.scope.unattrib': 'Exclude lines with no source file',
+    'viewer.drawer.scope.warmup.title': 'Hide the device backlog and build output captured before the app started — the same point the severity chart begins',
+    'viewer.drawer.scope.warmup': 'Exclude warm-up logs (before app start)',
     'viewer.drawer.logTags.hint': 'Tags from your logging framework',
     'viewer.drawer.classTags.hint': 'Class & method where log originated',
     'viewer.drawer.sql.markers.title': 'Show DB signal markers inline in the log (timestamp-burst, slow-query-burst). Turn off to suppress all such markers regardless of the DB level filter.',
