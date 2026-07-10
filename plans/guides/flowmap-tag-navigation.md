@@ -9,9 +9,9 @@ navigation from app-shaped breadcrumbs (`Screen Navigation: …`, `… Screen Re
 those only catch surfaces that already log something and can never resolve a source `file:line`.
 The `[flowmap]` tag wins over all of them because it declares the surface kind **and** its source.
 
-The tag has five verbs: **`enter`** (reach a surface), **`exit`** (leave one), **`handoff`**
-(go off-app), **`action`** (do something on a surface), and **`error`** (a failure on a surface).
-`enter` is documented first; the rest follow below.
+The tag has six verbs: **`enter`** (reach a surface), **`back`** (return to one), **`exit`** (leave
+one), **`handoff`** (go off-app), **`action`** (do something on a surface), and **`error`** (a failure
+on a surface). `enter` is documented first; the rest follow below.
 
 ## Format
 
@@ -166,21 +166,38 @@ warning patterns, an explicit `error` also badges a dialog / sheet surface.
 [12:07:01.900] [console] [log] [flowmap] error "Payment declined" lib/api/payments_client.dart:212
 ```
 
-## The `back` flag — return navigation
+## The `back` verb — return navigation
 
 The Flow Map infers back-navigation from the open-surface stack: returning to a screen still open
 below the current one draws a return arrow, not a forward edge. But a re-entry the stack can't see as
 a return (the target was already closed) reads as forward. When the app's own back handler knows a
-step is a *back*, add the `back` keyword to the `enter` tag and the transition is forced to a return
-edge regardless of the stack.
+step is a *back*, declare it and the transition is forced to a return edge regardless of the stack.
+
+There are two spellings; both force a return edge:
+
+**Preferred — the `back` verb** (what Saropa Contacts emits from its `PopScope` handler):
+
+```
+[flowmap] back <screen|tab|dialog|sheet|inline> "<Name>" [<lib/path/to/file.dart:line>]
+```
+
+```
+[flowmap] back tab "Home" lib/views/main_material_app.dart:875
+```
+
+It is identical to `enter` in every respect — the named surface becomes current, its visit count
+increments, a node is created if new — except the drawn edge is a *return* edge. Emit `back`
+**instead of** `enter`, never both, so visit counts stay honest.
+
+**Alternate — a `back` keyword on `enter`:**
 
 ```
 [flowmap] enter screen "Home" back
 [flowmap] enter screen "Home" back lib/views/home.dart:22
 ```
 
-The keyword goes **after the name and before any `file.dart:line`**. Use it only for genuine back
-steps — a forward navigation must not carry it, or the diagram's direction becomes wrong.
+The keyword goes **after the name and before any `file.dart:line`**. Use `back` (either form) only for
+genuine back steps — a forward navigation must not carry it, or the diagram's direction becomes wrong.
 
 ## Guidance for the calling project
 
@@ -196,10 +213,11 @@ steps — a forward navigation must not carry it, or the diagram's direction bec
 
 ## Where this is parsed (for maintainers)
 
-The `enter` / `exit` / `handoff` / `action` verbs are recognized in
+The `enter` / `back` / `exit` / `handoff` / `action` verbs are recognized in
 [flow-map-breadcrumbs.ts](../../src/modules/flow-map/flow-map-breadcrumbs.ts) — see the
-`FLOWMAP_TAG` / `FLOWMAP_EXIT` / `FLOWMAP_HANDOFF` / `FLOWMAP_ACTION` regexes and their
-`parseFlowMap…()` functions. These explicit tags are checked first in `classifyBreadcrumb()` and take
+`FLOWMAP_TAG` / `FLOWMAP_BACK` / `FLOWMAP_EXIT` / `FLOWMAP_HANDOFF` / `FLOWMAP_ACTION` regexes and their
+`parseFlowMap…()` functions. `FLOWMAP_BACK` produces the same `nav` event as `enter` with `back: true`;
+the `enter … back` keyword is an alternate spelling handled by `FLOWMAP_TAG` group 3. These explicit tags are checked first in `classifyBreadcrumb()` and take
 precedence over the heuristic matchers below them. The `error` verb is on the issue side —
 `FLOWMAP_ERROR` / `parseFlowMapError()` in
 [flow-map-issues.ts](../../src/modules/flow-map/flow-map-issues.ts), pushed to the issue overlay from

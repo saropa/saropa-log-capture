@@ -30,6 +30,17 @@ const FLOWMAP_TAG = /\[flowmap\]\s+enter\s+(screen|tab|dialog|sheet|inline)\s+"(
  */
 const FLOWMAP_EXIT = /\[flowmap\]\s+exit\s+(screen|tab|dialog|sheet|inline)\s+"([^"]+)"/i;
 
+/**
+ * Return-navigation tag (plan 057) — a standalone verb, the form Saropa Contacts actually emits from
+ * its `PopScope` back handler (`[flowmap] back tab "Home" …`). Identical to `enter` except the drawn
+ * edge is a RETURN edge, so it produces the same `nav` event carrying `back: true`. Emitters send
+ * `back` INSTEAD of `enter` (never both), keeping visit counts honest. Kept separate from the
+ * `enter … back` flag form: the flag is an alternate spelling, this verb is what the app logs.
+ *
+ *   [flowmap] back <screen|tab|dialog|sheet|inline> "<Name>" [<lib/path/file.dart:line>]
+ */
+const FLOWMAP_BACK = /\[flowmap\]\s+back\s+(screen|tab|dialog|sheet|inline)\s+"([^"]+)"(?:\s+(\S+\.dart):(\d+))?/i;
+
 const TAG_KIND: Record<string, NodeKind> = {
     screen: 'screen', tab: 'tab', dialog: 'dialog', sheet: 'dialog', inline: 'inline',
 };
@@ -82,6 +93,20 @@ function parseFlowMapExit(line: string, tsMs: number, clock: string, logLine: nu
         return undefined;
     }
     return { tsMs, clock, logLine, kind: 'exit', label: m[2].trim(), nodeKind: TAG_KIND[m[1].toLowerCase()] };
+}
+
+/** Parse a `[flowmap] back …` verb, or undefined. Same `nav` event as `enter`, forced to a return edge. */
+function parseFlowMapBack(line: string, tsMs: number, clock: string, logLine: number): TimelineEvent | undefined {
+    const m = FLOWMAP_BACK.exec(line);
+    if (!m) {
+        return undefined;
+    }
+    // Groups: 1 kind, 2 name, 3 anchor file, 4 anchor line. `back: true` is the only difference from enter.
+    return {
+        tsMs, clock, logLine, kind: 'nav',
+        label: m[2].trim(), nodeKind: TAG_KIND[m[1].toLowerCase()],
+        source: tagSource(m[3], m[4]), back: true,
+    };
 }
 
 /**
@@ -182,6 +207,10 @@ export function classifyBreadcrumb(line: string, tsMs: number, clock: string, lo
     const exited = parseFlowMapExit(line, tsMs, clock, logLine);
     if (exited) {
         return exited;
+    }
+    const back = parseFlowMapBack(line, tsMs, clock, logLine);
+    if (back) {
+        return back;
     }
     const handoff = parseFlowMapHandoff(line, tsMs, clock, logLine);
     if (handoff) {
