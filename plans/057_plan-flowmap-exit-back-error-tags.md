@@ -75,19 +75,27 @@ Wired at chokepoints; no per-call-site tagging.
 | Verb | Emitter | Call site |
 |---|---|---|
 | `exit dialog` | `breadcrumbExit` | `showDialogCommon`, after `showGeneralDialog`'s future completes — paired with the existing `enter dialog`, same name, same source anchor. |
+| `exit screen` | `breadcrumbExit` | A debug-only `FlowMapNavigatorObserver` on `MaterialApp.navigatorObservers`, on `didPop`. |
+| `back screen` | `breadcrumbBack` | The same observer, on `didPop`, for the revealed route — a popped route's revealed screen never rebuilds, so only the Navigator knows the user went back. |
 | `back tab` | `breadcrumbBack` | The app shell's `PopScope` handler, on the branch where a back press switches tabs. |
 | `error` | `breadcrumbError` | `debugException` — the single funnel every reported exception passes through. Anchored to the exception's OWN stack (where it was thrown), not the caller's, because a rethrown error surfaces far from its origin. |
 
-All three are `kDebugMode`-only and skipped in demo mode, like `enter` / `handoff` / `action`.
+All are `kDebugMode`-only and skipped in demo mode, like `enter` / `handoff` / `action`.
 
-Not yet emitted, and worth noting so the parser does not assume it:
+The observer names routes by correlation, which matters to the parser only in that the names are
+guaranteed identical on both ends: routes carry no human title (`screenPush` builds a bare
+`MaterialPageRoute`), so `didPush` records the route and the screen's `initState` — the next thing to
+run for that route, before any other push can interleave — binds the same string it passed to
+`enter`. A screen that never announces itself leaves its route unnamed and emits neither `exit` nor
+`back`, rather than corrupting a neighbour's name. Dialog and popup routes are `PopupRoute`s and are
+skipped by the observer entirely; they carry their own `enter` / `exit dialog` pair.
 
-- `exit screen` — the app's `ScreenInfoMixin` sits on the StatefulWidget, not its State, so it has no
-  `dispose` hook. Emitting screen exits needs a `NavigatorObserver`; that is a shared-infrastructure
-  change awaiting sign-off in the contacts repo.
-- `back screen` — same blocker (a popped route's revealed screen has no name without an observer).
+Still not emitted, so the parser must not assume it:
+
 - `exit sheet` — `showBottomSheetCommon` takes only a builder, so sheets have no name to enter OR
   exit with. Unchanged from the `enter` situation.
+- `exit` on `pushAndRemoveUntil` (the stack clear after sign-in) — the removed routes are dropped
+  silently rather than emitting `back` navigations the user never performed.
 
 ## Implementation notes for this repo
 
