@@ -3,8 +3,8 @@
  *
  * Session metadata is shown as a tooltip on the session count label
  * and can be copied to clipboard via long-press. A compact one-line
- * summary (adapter, project, date) is shown in the session nav bar
- * and hides on scroll down, reveals on scroll up (smart sticky header).
+ * summary (adapter, project, date) is written into #session-details-inline,
+ * which the persistent log status bar (viewer-log-banner.ts) builds and owns.
  */
 
 /** Returns the JavaScript for session info handling. */

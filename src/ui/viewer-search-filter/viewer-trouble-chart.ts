@@ -24,10 +24,13 @@
  * shown/hidden purely by CSS keyed on `body.slc-trouble-active`, so this script
  * only ever fills content, never toggles visibility.
  */
+import { getTroubleChartLaunchScript } from './viewer-trouble-chart-launch';
 
 /** Embedded webview JavaScript for the Trouble Mode severity chart. */
 export function getTroubleChartScript(): string {
-    return /* javascript */ `
+    // The launch-line scan is prepended, not imported at runtime: every viewer script is
+    // concatenated into one page scope, so troubleChartLaunchTs() is simply in scope below.
+    return getTroubleChartLaunchScript() + /* javascript */ `
 /* Seconds per tumbling window; overwritten by the host 'setTroubleChartInterval'
    message (saropaLogCapture.troubleMode.chartInterval). Clamped 1..60. */
 var troubleChartIntervalSec = 5;
@@ -100,25 +103,41 @@ function buildTroubleChartBuckets() {
        the cap only bounds how far back a long session reaches (bug 001 OOM fence:
        no unbounded array). A short session therefore shows exactly its own span. */
     var start = Math.max(minKey, maxKey - TROUBLE_CHART_MAX_BUCKETS + 1);
+    var launchTs = troubleChartLaunchTs();
     var bins = [];
     var maxTotal = 0;
+    var anyTotal = 0;
     /* Legend totals are summed over the RENDERED bins, not over allLines. Counting every
        matching line would let the legend claim errors the capped window never draws — a
        chart and a legend that disagree is worse than no legend. */
     for (var k = start; k <= maxKey; k++) {
         var hit = byKey[k];
         var total = hit ? (hit.error + hit.warning + hit.performance) : 0;
-        if (total > maxTotal) { maxTotal = total; }
+        /* A window that ENDS at or before the launch line holds only the device's
+           pre-launch logcat backlog. It still draws — nothing is hidden — but it is kept
+           out of the peak, because that one startup burst is routinely an order of
+           magnitude larger than anything the app itself does and flattens every real
+           spike after it into an unreadable sliver. The window that CONTAINS the launch
+           line is mixed, so it counts. */
+        var pre = launchTs > 0 && ((k + 1) * intervalMs) <= launchTs;
+        if (total > anyTotal) { anyTotal = total; }
+        if (!pre && total > maxTotal) { maxTotal = total; }
         if (hit) { totals.error += hit.error; totals.warning += hit.warning; totals.performance += hit.performance; }
-        bins.push(hit || { key: k, error: 0, warning: 0, performance: 0, firstLine: null });
+        var bin = hit || { key: k, error: 0, warning: 0, performance: 0, firstLine: null };
+        bin.preLaunch = pre;
+        bins.push(bin);
     }
+    /* Nothing after launch yet: scale to the burst rather than divide by zero. */
+    if (maxTotal === 0) { maxTotal = anyTotal; }
     return { bins: bins, maxTotal: maxTotal, intervalMs: intervalMs, totals: totals };
 }
 
 /* Draw one stacked bar. Error sits on the baseline, warning above it, performance on
    top. A non-zero count clamps to TROUBLE_CHART_MIN_BAR so a single event is legible.
-   The selected flag paints a full-height band behind the bar (the row open in the rail). */
-function troubleChartBar(bin, geom, scale, intervalMs, selected) {
+   A pre-launch bar is scaled off the chart (its window is excluded from the peak), so
+   every segment is clamped to the plot: it saturates at full height instead of drawing
+   above the viewBox, where the SVG would simply cut it off. */
+function troubleChartStackRects(bin, geom, scale) {
     var segs = [
         { cls: 'tc-bar-error', n: bin.error },
         { cls: 'tc-bar-warning', n: bin.warning },
@@ -127,19 +146,28 @@ function troubleChartBar(bin, geom, scale, intervalMs, selected) {
     var y = TROUBLE_CHART_VH;
     var rects = '';
     for (var s = 0; s < segs.length; s++) {
-        if (segs[s].n <= 0) { continue; }
-        var h = Math.max(TROUBLE_CHART_MIN_BAR, segs[s].n * scale);
+        if (segs[s].n <= 0 || y <= 0) { continue; }
+        var h = Math.min(y, Math.max(TROUBLE_CHART_MIN_BAR, segs[s].n * scale));
         y -= h;
         rects += '<rect class="' + segs[s].cls + '" x="' + geom.barX.toFixed(1) + '" y="' + y.toFixed(1)
             + '" width="' + geom.barW.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="1"></rect>';
     }
+    return rects;
+}
+
+/* The selected flag paints a full-height band behind the bar (the row open in the rail). */
+function troubleChartBar(bin, geom, scale, intervalMs, selected) {
+    var rects = troubleChartStackRects(bin, geom, scale);
     if (!rects && !selected) { return ''; }
     var band = selected
         ? '<rect class="tc-selected-band" x="' + geom.cellX.toFixed(1) + '" y="0" width="' + geom.cellW.toFixed(1) + '" height="' + TROUBLE_CHART_VH + '"></rect>'
         : '';
     var tip = vt('viewer.troubleChart.barTip', troubleChartClock(bin.key * intervalMs), bin.error, bin.warning, bin.performance);
+    /* Say why the bar is muted and off-scale, or the user reads it as a rendering bug. */
+    if (bin.preLaunch) { tip = vt('viewer.troubleChart.preLaunch') + ' — ' + tip; }
     var lineAttr = (bin.firstLine != null) ? ' data-line="' + (bin.firstLine + 1) + '"' : '';
-    return '<g class="tc-bar"' + lineAttr + '><title>' + tip + '</title>' + band + rects + '</g>';
+    var cls = bin.preLaunch ? 'tc-bar tc-bar-pre' : 'tc-bar';
+    return '<g class="' + cls + '"' + lineAttr + '><title>' + tip + '</title>' + band + rects + '</g>';
 }
 
 /* Per-level totals for the whole charted span, as colored chips in the pane head.
