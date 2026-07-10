@@ -36,6 +36,11 @@ export const stringsWebview: Record<string, string> = {
     'viewer.treeHeader.expanded': 'Render tree expanded · click to collapse',
     'viewer.treeHeader.preview': 'Render tree · preview mode · click to expand all',
 
+    // Trouble Mode severity chart (Stage 3) — client-side chart strings.
+    'viewer.troubleChart.empty': 'No errors, warnings, or performance issues in this log yet',
+    // {0}=window start time, {1}=error count, {2}=warning count, {3}=performance count.
+    'viewer.troubleChart.barTip': '{0} · errors {1} · warnings {2} · performance {3}',
+
     // Find in Files — runtime result strings built client-side.
     'viewer.find.minChars': 'Type at least 2 characters',
     'viewer.find.noMatches': 'No matches found',

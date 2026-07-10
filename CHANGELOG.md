@@ -28,6 +28,10 @@ cspell:disable
 
 ## [Unreleased]
 
+### Added
+
+- **`[flowmap] action` tag — explicit in-screen action breadcrumbs for the Session Flow Map.** Apps can now emit `[flowmap] action "<Category>" [file.dart:line]` (parallel to `enter` and `handoff`) to count user actions — Favorite, Share, Delete — on the screen where they happened. Action counts previously came only from app-specific heuristic text patterns, so most projects' Flow Maps showed no action data. Counts appear as per-screen action badges in the Flow Map report; the tag never creates nodes or edges. Format spec: `plans/guides/flowmap-tag-navigation.md`.
+
 ### Removed
 
 - **The Integrations screen no longer lists companion-tool issues.** The "Issues found by your companion tools" block (Drift Advisor / Saropa Lints diagnostics read from the workspace mirrors) rendered an unbounded raw diagnostics feed inside an options surface. The Options panel is for configuration only; companion findings stay in the tools' own UIs and the signal report's ecosystem section. The Integrations icon badge now counts only pending integration suggestions.

@@ -510,5 +510,7 @@
   "walkthrough.useKeyboardShortcuts.description": "Use **Space** to pause, **Ctrl+F** to search, **P** to pin lines, **N** to annotate, and **M** to insert markers.",
   "walkthrough.useKeyboardShortcuts.title": "Master Keyboard Shortcuts",
   "command.showLogReferences.title": "Show Log References",
-  "command.addSessionNote.title": "Add Note to Log"
+  "command.addSessionNote.title": "Add Note to Log",
+  "config.troubleModeChartInterval.title": "Trouble Mode severity-chart window (seconds)",
+  "config.troubleModeChartInterval.description": "Width of each tumbling time window (in seconds, 1–60) in the Trouble Mode severity chart. Lower values give finer-grained bars over a shorter recent span."
 }

@@ -154,6 +154,9 @@ export function getConfig(): SaropaLogCaptureConfig {
        avoids the ~0.5em intra-line leading that the old 1.5 default produced — a request
        from users seeing visible gaps between every row in dense logs. */
     logLineHeight: clamp(cfg.get("logLineHeight"), 0.5, 4.0, 1.1),
+    /* Trouble Mode chart window; 1–60s matches the setting min/max and the webview
+       setTroubleChartInterval() guard. Default 5s. */
+    troubleModeChartInterval: clamp(cfg.get("troubleMode.chartInterval"), 1, 60, 5),
     logViewerVisualSpacing: ensureBoolean(cfg.get("logViewerVisualSpacing"), false),
     /* Default ON: when this rendered as off, preview-collapsed stack frames left a
        silent ~8px gap between visible rows (the .viewer-divider stayed in the DOM

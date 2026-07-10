@@ -510,5 +510,7 @@
   "config.integrations.externalLogs.createIfMissing.title": "Integrations › External Logs › Create If Missing",
   "config.integrations.externalLogs.followRotation.title": "Integrations › External Logs › Follow Rotation",
   "command.showLogReferences.title": "Show Log References",
-  "command.addSessionNote.title": "Add Note to Log"
+  "command.addSessionNote.title": "Add Note to Log",
+  "config.troubleModeChartInterval.title": "Trouble Mode severity-chart window (seconds)",
+  "config.troubleModeChartInterval.description": "Width of each tumbling time window (in seconds, 1–60) in the Trouble Mode severity chart. Lower values give finer-grained bars over a shorter recent span."
 }

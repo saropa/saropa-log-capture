@@ -61,8 +61,13 @@ window.addEventListener('message', function(event) {
                 updateFooterText();
             }
             if (typeof scheduleRootCauseHypothesesRefresh === 'function') scheduleRootCauseHypothesesRefresh();
+            /* Refresh the Trouble Mode severity chart once per batch (no-op while the mode is off). */
+            if (typeof scheduleTroubleChartUpdate === 'function') scheduleTroubleChartUpdate();
             break;
         }
+        case 'setTroubleChartInterval':
+            if (typeof setTroubleChartInterval === 'function') setTroubleChartInterval(msg.seconds);
+            break;
         case 'setCorrelationByLineIndex':
             correlationByLineIndex = msg.correlationByLineIndex || {};
             if (typeof renderViewport === 'function') renderViewport(true);
@@ -117,6 +122,7 @@ window.addEventListener('message', function(event) {
             var _rb = document.getElementById('resume-session-banner'); if (_rb) _rb.classList.add('u-hidden');
             if (typeof hiddenLineIndices !== 'undefined') { hiddenLineIndices.clear(); isPeeking = false; autoHiddenCount = 0; sessionAutoHidePatterns = []; updateHiddenDisplay(); }
             if (footerTextEl) footerTextEl.textContent = 'Cleared'; updateLineCount(); renderViewport(true); if (typeof scheduleMinimap === 'function') scheduleMinimap();
+            if (typeof scheduleTroubleChartUpdate === 'function') scheduleTroubleChartUpdate();
             break;
         case 'updateFooter':
             if (footerTextEl) footerTextEl.textContent = msg.text;

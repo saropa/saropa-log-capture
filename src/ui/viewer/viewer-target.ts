@@ -70,6 +70,7 @@ export interface ViewerTarget {
   setScrollbarVisible(show: boolean): void;
   setLogFontSize(size: number): void;
   setLogLineHeight(height: number): void;
+  setTroubleChartInterval(seconds: number): void;
   setLogViewerVisualSpacing(enabled: boolean): void;
   setShowCollapseDividerLabels(show: boolean): void;
   setSearchMatchOptionsAlwaysVisible(always: boolean): void;

@@ -187,6 +187,9 @@ export function setLogFontSizeImpl(target: ProviderStateTarget, size: number): v
 export function setLogLineHeightImpl(target: ProviderStateTarget, height: number): void {
   target.postMessage({ type: "setLogLineHeight", height });
 }
+export function setTroubleChartIntervalImpl(target: ProviderStateTarget, seconds: number): void {
+  target.postMessage({ type: "setTroubleChartInterval", seconds });
+}
 export function setSearchMatchOptionsAlwaysVisibleImpl(target: ProviderStateTarget, always: boolean): void {
   target.postMessage({ type: "searchMatchOptionsAlwaysVisible", always });
 }

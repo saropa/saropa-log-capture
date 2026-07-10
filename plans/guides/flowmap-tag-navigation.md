@@ -85,6 +85,34 @@ Matching is **case-insensitive**, like `enter`.
 External nodes render with a distinct dashed purple style and an ↗️ glyph so an off-app exit never
 looks like an in-app screen or a recovered (dotted) edge.
 
+## The `action` verb — in-screen actions
+
+`enter` records reaching a surface; `action` records something the user *did* on the surface they
+are already on (toggling a flag, sharing, deleting). Actions never create nodes or edges — they
+increment a per-category counter on whichever screen is current, shown as action badges in the
+report. Without the tag, action counts only come from app-shaped heuristics (the
+`Activity flag made …` matchers), which other projects' logs never match.
+
+```
+[flowmap] action "<Category>" [<lib/path/to/file.dart:line>]
+```
+
+- **`action`** — the literal verb (parallel to `enter` / `handoff`).
+- **`"<Category>"`** — the counter key, in **double quotes** (required): `"Favorite"`, `"Share"`,
+  `"Delete"`. Repeats of the same category on the same screen increment its count. Keep it a short
+  noun — it is both the badge label and the aggregation key.
+- **`<file.dart:line>`** — optional, handled exactly like `enter` (leading `./` stripped).
+
+Matching is **case-insensitive**, like the other verbs.
+
+```
+[12:06:02.410] [console] [log] [flowmap] action "Favorite" lib/components/activity/activity_flag_button.dart:88
+[12:06:40.120] [console] [log] [flowmap] action "Share"
+```
+
+An `action` emitted before any surface has been entered has no screen to attribute to and is
+dropped silently.
+
 ## Guidance for the calling project
 
 - **Emit the tag at the moment the surface becomes visible** (e.g. in the route's `initState` /
@@ -101,7 +129,8 @@ looks like an in-app screen or a recovered (dotted) edge.
 
 The tags are recognized in
 [flow-map-breadcrumbs.ts](../../src/modules/flow-map/flow-map-breadcrumbs.ts) — see the
-`FLOWMAP_TAG` / `FLOWMAP_HANDOFF` regexes and `parseFlowMapTag()` / `parseFlowMapHandoff()`. The
+`FLOWMAP_TAG` / `FLOWMAP_HANDOFF` / `FLOWMAP_ACTION` regexes and `parseFlowMapTag()` /
+`parseFlowMapHandoff()` / `parseFlowMapAction()`. The
 explicit tags are checked first in `classifyBreadcrumb()` and take precedence over the heuristic
 matchers below them. The handoff's leaf semantics live in `applyHandoff()` in
 [flow-map-builder.ts](../../src/modules/flow-map/flow-map-builder.ts).

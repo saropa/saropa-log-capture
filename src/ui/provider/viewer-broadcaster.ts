@@ -175,6 +175,9 @@ export class ViewerBroadcaster implements ViewerTarget {
   setLogLineHeight(height: number): void {
     for (const t of this.targets) { t.setLogLineHeight(height); }
   }
+  setTroubleChartInterval(seconds: number): void {
+    for (const t of this.targets) { t.setTroubleChartInterval(seconds); }
+  }
   setLogViewerVisualSpacing(enabled: boolean): void {
     for (const t of this.targets) { t.setLogViewerVisualSpacing(enabled); }
   }

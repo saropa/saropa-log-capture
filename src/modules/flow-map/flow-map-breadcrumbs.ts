@@ -32,6 +32,18 @@ const TAG_KIND: Record<string, NodeKind> = {
  */
 const FLOWMAP_HANDOFF = /\[flowmap\]\s+handoff\s+(api|app)\s+"([^"]+)"(?:\s+(\S+\.dart):(\d+))?/i;
 
+/**
+ * Explicit in-screen action tag (bug 010) — the third verb, parallel to `enter` and `handoff`.
+ * Without it, per-node action counts only come from the contacts-shaped heuristic matchers below,
+ * so any other project gets zero action data. The quoted string is both the display label and the
+ * `actionCategory` counter key (matching how the heuristics set label = category).
+ *
+ *   [flowmap] action "<Category>" [<lib/path/file.dart:line>]
+ *
+ * e.g.  [flowmap] action "Favorite" lib/components/activity/activity_flag_button.dart:88
+ */
+const FLOWMAP_ACTION = /\[flowmap\]\s+action\s+"([^"]+)"(?:\s+(\S+\.dart):(\d+))?/i;
+
 /** Parse a leading `./`-stripped `file.dart:line` anchor from a `[flowmap]` tag match, or undefined. */
 function tagSource(file?: string, line?: string): SourceAnchor | undefined {
     return file ? { file: file.replace(/^\.\//, ''), line: parseInt(line ?? '', 10) } : undefined;
@@ -58,6 +70,21 @@ function parseFlowMapHandoff(line: string, tsMs: number, clock: string, logLine:
     return {
         tsMs, clock, logLine, kind: 'handoff', nodeKind: 'external',
         actionCategory: m[1].toLowerCase(), label: m[2].trim(), source: tagSource(m[3], m[4]),
+    };
+}
+
+/**
+ * Parse a `[flowmap] action …` tag, or undefined. The category rides on both `label` and
+ * `actionCategory` so `applyAction` folds it into the current node's per-category counts.
+ */
+function parseFlowMapAction(line: string, tsMs: number, clock: string, logLine: number): TimelineEvent | undefined {
+    const m = FLOWMAP_ACTION.exec(line);
+    if (!m) {
+        return undefined;
+    }
+    return {
+        tsMs, clock, logLine, kind: 'action',
+        label: m[1].trim(), actionCategory: m[1].trim(), source: tagSource(m[2], m[3]),
     };
 }
 
@@ -127,6 +154,10 @@ export function classifyBreadcrumb(line: string, tsMs: number, clock: string, lo
     const handoff = parseFlowMapHandoff(line, tsMs, clock, logLine);
     if (handoff) {
         return handoff;
+    }
+    const action = parseFlowMapAction(line, tsMs, clock, logLine);
+    if (action) {
+        return action;
     }
     const payload = logPayload(line);
     if (payload === undefined) {
