@@ -146,6 +146,10 @@ function syncLevelDots() {
     var selNone = document.getElementById('level-select-none');
     if (selAll) selAll.classList.toggle('active', count === allLevelNames.length);
     if (selNone) selNone.classList.toggle('active', count === 0);
+    /* The Trouble Mode chart chips are a second view of enabledLevels: keep their dim in
+       lockstep with the footer dots here, so a level toggled from either control updates
+       both. Guarded — the chart script may be absent (VM test harness). */
+    if (typeof syncTroubleChartChips === 'function') syncTroubleChartChips();
 }`;
 }
 

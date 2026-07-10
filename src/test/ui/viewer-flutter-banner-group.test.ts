@@ -315,10 +315,11 @@ suite('Flutter exception banner grouping', () => {
     suite('severity connector is pure CSS — JS chain machinery retired', () => {
         // The dot-to-dot connector that used to live as a JS loop in
         // renderViewport (findNextDotSibling + bar-up/bar-down/bar-bridge
-        // class stamping + a bridgeable pre-check) is gone. The chain is now
-        // ten per-level CSS rules using :has(+ .level-bar-X)::after on each
-        // row. Sibling-aware, declarative, no JS, no DOM bookkeeping. These
-        // tests pin that retirement so the JS chain doesn't come back.
+        // class stamping + a bridgeable pre-check) is gone. The join is now
+        // a single class-agnostic [class*="level-bar-"]::after full-height
+        // stripe (2026-07-10, replacing the interim per-level :has(+) chain).
+        // Declarative, no JS, no DOM bookkeeping. These tests pin that
+        // retirement so the JS chain doesn't come back.
         const viewport = getViewportRenderScript();
 
         test('renderViewport no longer carries the chain helpers or class stamping', () => {

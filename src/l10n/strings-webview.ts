@@ -41,10 +41,16 @@ export const stringsWebview: Record<string, string> = {
     // {0}=window start time, {1}=error count, {2}=warning count, {3}=performance count.
     'viewer.troubleChart.barTip': '{0} · errors {1} · warnings {2} · performance {3}',
     // Chart readability (plan 110, Stage 4): legend chips, peak-count label, axis end labels.
-    // {0}=count in each legend chip, so a language can put the number before the word.
-    'viewer.troubleChart.legend.error': 'Errors {0}',
-    'viewer.troubleChart.legend.warning': 'Warnings {0}',
-    'viewer.troubleChart.legend.performance': 'Performance {0}',
+    // {0}=count in each legend chip, so a language can put the number before the word. The
+    // words are deliberately abbreviated (Error / Warn / Perf) — the chips sit in a dense
+    // head row the CSS renders uppercase, and the full words crowd it; the color swatch and
+    // the tooltip carry the full meaning. WARN/PERF mirror the toolbar's single-letter dots.
+    'viewer.troubleChart.legend.error': 'Error {0}',
+    'viewer.troubleChart.legend.warning': 'Warn {0}',
+    'viewer.troubleChart.legend.performance': 'Perf {0}',
+    // Tooltip on each legend chip: the chips are clickable level filters, mirroring the
+    // toolbar dots (single-click toggles the level, double-click focuses only it).
+    'viewer.troubleChart.chip.title': 'Click to toggle this level, double-click to focus it',
     // {0}=the busiest window's total event count. Labels the top of the y axis.
     'viewer.troubleChart.peak': 'Peak {0}',
     // Tooltip prefix on a bar drawn entirely before the app's launch line — the device's own

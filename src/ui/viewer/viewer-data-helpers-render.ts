@@ -193,10 +193,14 @@ function renderItem(item, idx, prevVis) {
         }
         var aiCompress = '';
         if (item.compressDupCount > 1) { aiCompress = '<span class="compress-dup-badge" title="' + vt('viewer.deco.identicalLines', item.compressDupCount) + '">(×' + item.compressDupCount + ')</span> '; }
-        // Plan 055 Phase 2: AI rows join the gutter grid (.cols.log-cols) — getDecorationCells (clipping cells, same source as regular rows) + a min-width:0 .line-msg; rail is box-shadow:inset (out of flow).
+        // Plan 055 Phase 2: AI rows join the gutter grid (.cols.log-cols) — getDecorationCells (clipping cells, same source as regular rows) + a min-width:0 .line-msg. The AI gutter mark is now the shared severity dot (level-bar-ai, below); the old box-shadow left rail was removed 2026-07-10.
         var _aiGap = (typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '', _aiDeco = (typeof getDecorationCells === 'function') ? getDecorationCells(item, idx, item._hiddenAfter) : '', _aiElapsed = (typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '';
-        // Severity classes parity with regular branch — AI rows now show gutter dot + tint when classifyLevel tagged them (prior AI branch silently suppressed both).
-        var _aiBar = (typeof decoShowBar !== 'undefined' && decoShowBar && !item.isContext && item.level) ? ' level-bar-' + item.level : '';
+        // AI rows carry ONE dedicated gutter color (level-bar-ai, magenta) rather
+        // than their severity level: AI activity lines rarely have a real severity,
+        // and a single AI dot color makes a run of Claude Code activity read as its
+        // own joined band. Which AI action it was lives in the .ai-tag-chip. This
+        // replaced the old box-shadow left rail that read as a second severity bar.
+        var _aiBar = (typeof decoShowBar !== 'undefined' && decoShowBar && !item.isContext) ? ' level-bar-ai' : '';
         var _aiLvlCls = ((typeof lineColorsEnabled !== 'undefined' && lineColorsEnabled) && item.level && !item.isContext) ? ' level-' + item.level : '';
         return _aiGap + '<div class="line ai-line cols log-cols ' + aiCat + matchCls + spacingCls + _aiBar + _aiLvlCls + '"' + idxAttr + '>' + _aiDeco + '<span class="line-msg">' + _aiElapsed + aiPrefix + aiCompress + aiBody + '</span></div>';
     }

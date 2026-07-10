@@ -61,7 +61,25 @@ body.slc-trouble-active .trouble-chart { display: block; }
     margin-bottom: var(--space-1);
 }
 .trouble-chart .tc-legend { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-left: auto; }
-.trouble-chart .tc-chip { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
+/* The chips are interactive level filters, not just labels: each toggles its level the way
+   the toolbar dots do (single-click toggle, double-click focus), so it takes the dots'
+   cursor, hover wash, and inactive dim, and the two controls read as one affordance. */
+.trouble-chart .tc-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    padding: 1px 4px;
+    border-radius: 4px;
+    user-select: none;
+    transition: opacity 0.2s ease, background 0.15s ease;
+}
+.trouble-chart .tc-chip:hover { background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31)); }
+.trouble-chart .tc-chip:focus-visible { outline: 1px solid var(--vscode-focusBorder); outline-offset: 1px; }
+/* A level removed from enabledLevels — via this chip or its toolbar dot — dims exactly like
+   an inactive .level-dot, so both views agree at a glance that the level is hidden. */
+.trouble-chart .tc-chip-off { opacity: 0.3; }
 .trouble-chart .tc-chip i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
 .trouble-chart .tc-chip-error i { background: var(--tc-error); }
 .trouble-chart .tc-chip-warning i { background: var(--tc-warning); }
