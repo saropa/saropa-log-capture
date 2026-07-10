@@ -17,6 +17,7 @@ function countHiddenNonBlank(fromIdx, toIdx) {
         }
         count++;
         if (item.levelFiltered) reasons.level = (reasons.level || 0) + 1;
+        if (item.troubleFiltered) reasons.trouble = (reasons.trouble || 0) + 1;
         if (item.excluded) reasons.excluded = (reasons.excluded || 0) + 1;
         if (item.filteredOut) reasons.category = (reasons.category || 0) + 1;
         if (item.sourceFiltered) reasons.source = (reasons.source || 0) + 1;
@@ -40,6 +41,7 @@ function buildHiddenTip(info) {
     var parts = [];
     var r = info.reasons;
     if (r.level) parts.push(r.level + ' level-filtered');
+    if (r.trouble) parts.push(r.trouble + ' Trouble-Mode-filtered');
     if (r.excluded) parts.push(r.excluded + ' excluded');
     if (r.category) parts.push(r.category + ' category-filtered');
     if (r.source) parts.push(r.source + ' source-filtered');

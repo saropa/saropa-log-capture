@@ -19,17 +19,23 @@
  * have drifted before ("slow operation" missing from the webview perf default).
  */
 import * as assert from 'node:assert';
+import { types } from 'node:util';
 import * as vm from 'node:vm';
-import { classifyLevel } from '../../modules/analysis/level-classifier';
+import { buildKeywordPattern, classifyLevel } from '../../modules/analysis/level-classifier';
+import { DEFAULT_SEVERITY_KEYWORDS } from '../../modules/config/config-normalizers';
 import { getLevelClassifyScript } from '../../ui/viewer-search-filter/viewer-level-classify';
 
-/** Run the emitted webview classifier script in a sandbox and return its classifyLevel. */
-function loadWebviewClassifier(): (text: string, category: string) => string {
+/**
+ * Run the emitted webview classifier script in a sandbox and return the sandbox itself:
+ * top-level `var`/`function` declarations (classifyLevel, the default kw* regexes) attach
+ * to it, so tests can reach both the classifier and the raw default patterns.
+ */
+function loadWebviewSandbox(): Record<string, unknown> {
     const script = getLevelClassifyScript();
     const sandbox: Record<string, unknown> = {};
     vm.createContext(sandbox);
     vm.runInContext(script + '\nthis.__fn = classifyLevel;', sandbox);
-    return sandbox.__fn as (text: string, category: string) => string;
+    return sandbox;
 }
 
 interface Case { line: string; level: string; note: string; }
@@ -63,7 +69,8 @@ const CORPUS: readonly Case[] = [
 ];
 
 suite('level classification — extension/webview parity', () => {
-    const webview = loadWebviewClassifier();
+    const sandbox = loadWebviewSandbox();
+    const webview = sandbox.__fn as (text: string, category: string) => string;
 
     for (const c of CORPUS) {
         test(c.level + ' — ' + c.note, () => {
@@ -86,5 +93,35 @@ suite('level classification — extension/webview parity', () => {
             mismatches.map((c) => c.note), [],
             'extension/webview classifiers drifted — these lines classify differently',
         );
+    });
+
+    // The webview's built-in `var kw*` regexes are a hand-transcribed copy of
+    // buildKeywordPattern(DEFAULT_SEVERITY_KEYWORDS[level]) and are LIVE from webview
+    // load until the first settings broadcast overwrites them. They drifted once
+    // ("slow operation" missing from kwPerf), and the corpus above only samples the
+    // performance level — this structural pin covers all six levels so any future
+    // drift in any level fails here, not in a user's briefly-misclassified lines.
+    suite('webview default kw* regexes pinned to DEFAULT_SEVERITY_KEYWORDS', () => {
+        const KW_VARS: ReadonlyArray<readonly [string, readonly string[]]> = [
+            ['kwError', DEFAULT_SEVERITY_KEYWORDS.error],
+            ['kwWarn', DEFAULT_SEVERITY_KEYWORDS.warning],
+            ['kwPerf', DEFAULT_SEVERITY_KEYWORDS.performance],
+            ['kwTodo', DEFAULT_SEVERITY_KEYWORDS.todo],
+            ['kwDebug', DEFAULT_SEVERITY_KEYWORDS.debug],
+            ['kwNotice', DEFAULT_SEVERITY_KEYWORDS.notice],
+        ];
+
+        for (const [varName, keywords] of KW_VARS) {
+            test(varName + ' matches buildKeywordPattern of the code default', () => {
+                const expected = buildKeywordPattern(keywords);
+                const actual = sandbox[varName] as RegExp | undefined;
+                // instanceof RegExp is realm-bound and the kw* regexes were constructed
+                // inside the vm sandbox realm — util.types.isRegExp is cross-realm safe.
+                assert.ok(actual && types.isRegExp(actual), varName + ' must be a RegExp in the webview script');
+                assert.ok(expected, 'code default keyword list for ' + varName + ' must be non-empty');
+                assert.strictEqual(actual.source, expected.source, varName + ' webview default drifted from DEFAULT_SEVERITY_KEYWORDS');
+                assert.strictEqual(actual.flags, expected.flags, varName + ' webview default flags drifted');
+            });
+        }
     });
 });
