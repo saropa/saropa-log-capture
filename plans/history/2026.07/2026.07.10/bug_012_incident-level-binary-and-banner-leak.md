@@ -1,6 +1,6 @@
 # Bug 012 — Unclosed Flutter banner leaks `error` severity onto unrelated lines
 
-## Status: Fixed (pending review)
+## Status: Fixed
 
 ## Problem
 
@@ -78,4 +78,47 @@ session.
 
 ## Commits
 
-<!-- Add commit hashes as fixes land. -->
+- `77777bc9` fix(viewer): cap Flutter banner group span so unclosed dumps don't leak error severity
+
+## Finish Report (2026-07-10)
+
+### Defect
+
+A Flutter exception banner (`══╡ EXCEPTION CAUGHT BY ... ╞══`) whose closing rule never arrives —
+e.g. a RenderFlex/widget-tree dump truncated mid-line by the DAP `maxLogLineLength` setting — left
+the webview's banner state machine (`classifyFlutterBannerLine` in
+`viewer-data-add-flutter-banner.ts`) open for the remainder of the session. Every subsequent line
+carrying the stale `bannerGroupId` was forced to `level = 'error'` by `viewer-data-add.ts`'s
+`if (bannerInfo.groupId !== -1) lvl = 'error'` check, regardless of its own content — surfacing
+unrelated app telemetry (a `[flowmap]` navigation log, `[perf] [frame-stall]` lines, Crashlytics and
+MediaPlayer noise) as Error severity in Trouble Mode and in Copy Error/Warning JSON exports.
+
+### Change
+
+Added `maxFlutterBannerSpanLines = 300` and a `lineCount` field on `activeFlutterBanner`
+(`viewer-data-add-flutter-banner.ts:66-73, 88-92, 128-135`). Once a banner's body-line count exceeds
+the cap without a closing rule, it auto-closes with no synthetic footer — the same treatment already
+used for the "open detected while a banner is already active" case — and the line that trips the cap
+falls out as ungrouped. A genuine closing rule arriving exactly at or after the trip point is dropped
+rather than recognized as a footer; this is an accepted tradeoff (matches the existing two-block
+split behavior for the open-while-active path) rather than a regression, since real Flutter exception
+dumps run well under 100 lines.
+
+### Investigated and ruled out
+
+Whether the "Copy Error/Warning JSON" export should be able to report `level: "performance"` for a
+block containing only a perf line. Ruled out: that action is gated by `rangeHasCopyableIncident`
+(`viewer-context-menu-incident-range.ts`), which requires an actual error/warning line in the merged
+range before the menu item (labeled only "Copy Error" / "Copy Warning") appears at all — a
+performance-only block can never reach it. Widening it to a third severity label would be a feature
+change, not a fix, and was left out of scope.
+
+### Verification
+
+- `npm run compile-tests` — clean.
+- `npm run test:file -- out/test/ui/viewer-flutter-banner-group.test.js` — 27 passing (26 existing +
+  1 new regression test covering the cap).
+- Independent subagent review of the diff: line-counting confirmed correct (header/footer lines
+  don't count toward the cap, no off-by-one, no state leak across `resetFlutterBannerDetector()`),
+  no other test file constructs a 300+ line synthetic banner or asserts an exact banner span, no
+  out-of-scope code smells flagged.
