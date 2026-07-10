@@ -41,7 +41,7 @@ import { disposeCollectionPanel } from './ui/collection/collection-panel';
 import { setupWebviewProviders, registerNoRestoreSerializers } from './activation-providers';
 import { setupLineListeners, setupConfigListener, setupScopeContextListener, setupDiagnosticListener } from './activation-listeners';
 import { DiagnosticCache } from './modules/diagnostics/diagnostic-cache';
-import { autoLoadLatest, showWalkthroughOnFirstInstall } from './extension-activation-helpers';
+import { autoLoadInitialLog, showWalkthroughOnFirstInstall } from './extension-activation-helpers';
 import { ErrorSnackbarNotifier } from './modules/features/error-snackbar';
 import { showBugReport } from './ui/panels/bug-report-panel';
 import { maybeNotifyPartialNlsCoverage } from './l10n/nls-coverage-notice';
@@ -98,6 +98,10 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     }
 
     const version = String(context.extension.packageJSON.version ?? '');
+    // Baseline for "a newer log ARRIVED" (plan 111). Only controller logs written after this window
+    // activated may auto-switch the viewer; logs already on disk at startup must not, or they would
+    // override the last-viewed log restored by autoLoadInitialLog on the first reports/ watcher event.
+    const activatedAtMs = Date.now();
     const { viewerProvider, inlineDecorations } = setupWebviewProviders(context, version);
 
     const broadcaster = new ViewerBroadcaster();
@@ -159,7 +163,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         // refresh is the exact moment a newer controller log appears, so load it here instead of
         // waiting for the user to click the banner's Open. The decision predicate is pure/extracted so
         // it is unit-testable without the Extension Host (see shouldAutoSwitchToLatest).
-        if (shouldAutoSwitchToLatest(logContext, cfg.newerLogAlert.autoSwitch)) {
+        if (shouldAutoSwitchToLatest(logContext, cfg.newerLogAlert.autoSwitch, activatedAtMs)) {
             // Deliberately a NON-tail load. A live-streaming session is always its own currentUri
             // (broadcaster.setCurrentFile in applySessionStartedState marks it) and therefore the
             // newest controller, so this branch only ever targets a finished / other-window log — never
@@ -260,7 +264,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     const onFirstSessionListReady = (items: readonly import('./ui/session/session-history-grouping').TreeItem[]): void => {
         if (viewerProvider.getCurrentFileUri()) { return; }
         if (historyProvider.getActiveUri()) { return; }
-        void autoLoadLatest(context, items, viewerProvider);
+        void autoLoadInitialLog(context, items, viewerProvider);
     };
     const handlerDeps = { sessionManager, broadcaster, historyProvider, bookmarkStore, context, onOpenBookmark, openSessionForReplay, onFirstSessionListReady };
     wireSharedHandlers(viewerProvider, handlerDeps);
