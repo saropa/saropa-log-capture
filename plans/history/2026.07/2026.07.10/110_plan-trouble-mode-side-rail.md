@@ -289,3 +289,64 @@ shipping as raw-key text in the UI.
 Still uncovered by automated tests: the rail open/close routing, the loading skeleton, and
 the retry path. All three are DOM-and-message-plumbing surfaces whose verification is the
 F5 Extension-Host pass.
+
+## Finish Report (2026-07-10) — resizable rail divider
+
+Closes the deferred open question 1, "Resizable rail divider," above: a user report that
+the only visible drag handle near the rail (the scrollbar minimap's) resized the minimap,
+not the rail, confirmed the fixed `clamp(320px, 40%, 560px)` width was worth making
+adjustable.
+
+### What shipped
+
+A new sibling flex item, `#trouble-rail-resize`, sits between the minimap and
+`#trouble-detail` in `viewer-content-body.ts` (precedent: `#panel-slot-resize`, a sibling
+before its panel rather than a child — the same reasoning applies: the handle must exist
+independently of whatever is currently rendered next to it). CSS
+(`viewer-styles-trouble-detail.ts`) hides it by default and reveals it only under
+`body.slc-trouble-rail-open.slc-trouble-rail-wide`, the same two classes that already gate
+the rail's static-column layout, so the handle can never appear with nothing adjacent to
+drag (narrow mode is still the absolute-overlay fallback).
+
+`initTroubleRailResize()` (`viewer-trouble-detail.ts`) mirrors
+`viewer-scrollbar-minimap-resize.ts`'s `initMinimapResize` almost line for line: pointer
+capture, a `startX`/`startW` delta read on `pointerdown`, a clamp to
+`[TROUBLE_RAIL_MIN_PX, TROUBLE_RAIL_MAX_PX]` = `[320, 560]` (the same bounds the original
+`clamp()` shipped with, so dragging can never make the rail unreadably narrow or starve the
+feed), and a `setTroubleRailCustomPx` post on drag end. One deliberate difference from the
+precedent: the drag start width is read live from `rail.getBoundingClientRect().width`
+rather than a stored variable, so the first drag after load picks up wherever the CSS
+`clamp()` (or a restored custom width) already put the rail — there is no separate
+"clamp vs. custom" state to keep in sync.
+
+Persistence mirrors the minimap's exactly: `viewer-message-handler-session-ui.ts` writes
+`saropaLogCapture.troubleRailCustomPx` to workspace state on drag end;
+`extension-activation.ts` reads it back at activation and posts `troubleRailWidthPx` to the
+webview if it is a number in `[320, 560]`; `handleTroubleRailWidthPx`
+(`viewer-trouble-detail.ts`), dispatched from a new `case 'troubleRailWidthPx'` in
+`viewer-script-messages.ts`, re-validates the same bounds before applying `style.width` —
+a malformed or stale workspace-state value cannot paint the rail off-screen.
+
+### Verification
+
+- `npm run compile` — all 12 gates pass, including the regenerated
+  `plans/reference/webview-incoming-message-types.md` /
+  `webview-outbound-message-types.md` catalogs for the two new message types.
+- New `src/test/ui/viewer-trouble-rail-resize.test.ts` — 9 passing. Covers handle DOM
+  position (after the minimap, before the rail), that the minimap's own markup does not
+  absorb the new handle, the CSS default-hidden / open-and-wide-only visibility rule,
+  pointer-capture usage, the `setTroubleRailCustomPx` persistence post, that
+  `initTroubleRailResize()` is actually invoked (not just defined), the restore handler's
+  bound validation, and the `viewer-script-messages.ts` dispatch case.
+- `src/test/ui/viewer-scrollbar-toggle-and-resize.test.ts` (the minimap's own resize
+  suite) — unchanged, still 12 passing; confirms the new handle did not disturb the
+  minimap's.
+
+### Known gap
+
+`plans/reference/webview-outbound-message-types.md` does not list `troubleRailWidthPx` (nor
+its precedent `minimapWidthPx`) because the generator
+(`scripts/modules/generate/webview-host-outbound-catalog.mjs`) globs only `src/ui/**/*.ts`,
+and both messages are posted from `extension-activation.ts`, outside that tree. Pre-existing
+generator gap, not introduced by this change — left as-is rather than widening the
+generator's glob under an unrelated task.

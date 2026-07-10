@@ -24,7 +24,7 @@ function buildChartCtx(): Record<string, unknown> {
   return ctx;
 }
 
-interface Bucket { key: number; error: number; warning: number; performance: number; firstLine: number | null; preLaunch: boolean }
+interface Bucket { key: number; error: number; warning: number; performance: number; firstLine: number | null }
 interface LevelTotals { error: number; warning: number; performance: number }
 interface BucketResult { bins: Bucket[]; maxTotal: number; intervalMs: number; totals: LevelTotals }
 
@@ -140,16 +140,18 @@ suite('Trouble Mode severity chart', () => {
   });
 });
 
-suite('Trouble Mode severity chart — the pre-launch device burst', () => {
-  // A phone drains its logcat backlog while an app starts: dozens of framework warnings
-  // that belong to the device, not the app. Left in the peak, that one window scales the
-  // whole strip and every real spike after it collapses to a sliver.
+suite('Trouble Mode severity chart — the pre-app device burst', () => {
+  // A phone drains its logcat backlog while an app starts: dozens of framework warnings that
+  // belong to the device, not the app. Rather than draw that burst muted, the chart DROPS every
+  // window before the app-ready boundary and starts at the first real event — no dominating
+  // spike, and no long empty gap between the burst and app start. Excluding those lines from the
+  // FEED is the opt-in warm-up filter's job, not this chart's.
   const LAUNCH = 'Launching lib\\main.dart on motorola edge 2022 in debug mode...';
 
-  test('a window ending before the launch line is excluded from the peak', () => {
+  test('windows before the launch line are dropped; the chart starts at the first real event', () => {
     const ctx = buildChartCtx();
-    // 5s windows. Window 2 (10_000..14_999) holds a 3-warning burst; launch lands in
-    // window 3, so window 2 ends before it and only the single later error sets the peak.
+    // 5s windows. Window 2 (10_000..14_999) holds a 3-warning burst; launch lands in window 3,
+    // so window 2 is pre-app and dropped entirely — the chart begins at the window-4 error.
     ctx.allLines = [
       { type: 'line', level: 'warning', timestamp: 10_000, viewerLineIndex: 0 },
       { type: 'line', level: 'warning', timestamp: 11_000, viewerLineIndex: 1 },
@@ -159,29 +161,30 @@ suite('Trouble Mode severity chart — the pre-launch device burst', () => {
     ];
 
     const r = buckets(ctx);
+    assert.strictEqual(r.bins.length, 1, 'only the app-era window is charted, no leading gap');
+    assert.strictEqual(r.bins[0].key, 4, 'and it is the window holding the error');
     assert.strictEqual(r.maxTotal, 1, 'the burst does not set the scale');
-    assert.strictEqual(r.bins[0].preLaunch, true, 'burst window flagged pre-launch');
-    assert.strictEqual(r.bins[0].warning, 3, 'and its bar still carries all three warnings');
-    assert.strictEqual(r.bins[2].preLaunch, false, 'the app-era window is not flagged');
-    assert.strictEqual(r.totals.warning, 3, 'the legend still counts them — nothing is hidden');
+    assert.strictEqual(r.totals.warning, 0, 'the dropped burst is not counted in the totals');
+    assert.strictEqual(r.totals.error, 1, 'the app-era error is');
   });
 
-  test('the window containing the launch line counts toward the peak', () => {
+  test('the window containing the launch line is kept (it holds app-era events too)', () => {
     const ctx = buildChartCtx();
-    // The launch line sits inside window 2, which therefore holds app-era events too.
+    // The launch line sits inside window 2, whose end is after the boundary, so it is real.
     ctx.allLines = [
       { type: 'line', level: 'warning', timestamp: 10_000, viewerLineIndex: 0 },
       { type: 'line', level: 'warning', timestamp: 11_000, viewerLineIndex: 1 },
       { type: 'line', level: 'info', rawText: LAUNCH, timestamp: 12_000, viewerLineIndex: 2 },
     ];
     const r = buckets(ctx);
-    assert.strictEqual(r.bins[0].preLaunch, false, 'a mixed window is never treated as device noise');
+    assert.strictEqual(r.bins.length, 1, 'the mixed window is not dropped');
     assert.strictEqual(r.maxTotal, 2, 'so it sets the scale');
   });
 
-  test('a log with no launch line scales to everything', () => {
+  test('a log with no launch line charts everything', () => {
     const ctx = buildChartCtx();
-    // A pure logcat capture, or a session attached after the app was already running.
+    // A pure logcat capture, or a session attached after the app was already running: with no
+    // boundary nothing is pre-app, so the whole span shows.
     ctx.allLines = [
       { type: 'line', level: 'warning', timestamp: 10_000, viewerLineIndex: 0 },
       { type: 'line', level: 'warning', timestamp: 11_000, viewerLineIndex: 1 },
@@ -189,27 +192,27 @@ suite('Trouble Mode severity chart — the pre-launch device burst', () => {
     ];
     const r = buckets(ctx);
     assert.strictEqual(r.maxTotal, 2, 'no launch line means no exclusion');
-    assert.strictEqual(r.bins[0].preLaunch, false, 'nothing is flagged');
+    assert.strictEqual(r.bins[0].key, 2, 'and the chart starts at the first event');
   });
 
-  test('when nothing has happened since launch, the burst scales the chart', () => {
+  test('when only pre-app events exist, the chart is empty rather than showing the burst', () => {
     const ctx = buildChartCtx();
-    // Otherwise every bar would divide by a zero peak and vanish.
+    // Boundary is later than every event so far — the app has not produced trouble yet. The
+    // chart shows its empty state instead of scaling to the device burst.
     ctx.allLines = [
       { type: 'line', level: 'warning', timestamp: 10_000, viewerLineIndex: 0 },
       { type: 'line', level: 'warning', timestamp: 11_000, viewerLineIndex: 1 },
       { type: 'line', level: 'info', rawText: LAUNCH, timestamp: 30_000, viewerLineIndex: 2 },
     ];
     const r = buckets(ctx);
-    assert.strictEqual(r.bins[0].preLaunch, true, 'the burst is still flagged');
-    assert.strictEqual(r.maxTotal, 2, 'but the peak falls back to it rather than 0');
+    assert.strictEqual(r.bins.length, 0, 'nothing app-era yet, so no bars');
+    assert.strictEqual(r.maxTotal, 0, 'and no peak');
   });
 
   test('an untimestamped launch line takes its instant from the next timestamped line', () => {
     const ctx = buildChartCtx();
-    // This is the real shape: Flutter prints the launch line to stdout with no clock
-    // prefix, so it reaches the page with timestamp 0. Requiring a timestamp on the line
-    // itself would disable the rule for every log it exists to fix.
+    // Flutter prints the launch line to stdout with no clock prefix, so it reaches the page
+    // with timestamp 0. The instant comes from the first timestamped line at or after it.
     ctx.allLines = [
       { type: 'line', level: 'warning', timestamp: 10_000, viewerLineIndex: 0 },
       { type: 'line', level: 'info', rawText: LAUNCH, timestamp: 0, viewerLineIndex: 1 },
@@ -218,19 +221,23 @@ suite('Trouble Mode severity chart — the pre-launch device burst', () => {
     assert.strictEqual((ctx.troubleChartLaunchTs as () => number)(), 16_000, 'launch instant resolved forward');
 
     const r = buckets(ctx);
-    assert.strictEqual(r.bins[0].preLaunch, true, 'the warning window ends before it');
-    assert.strictEqual(r.maxTotal, 1, 'and only the app-era error sets the peak');
+    assert.strictEqual(r.bins.length, 1, 'the pre-app warning window is dropped');
+    assert.strictEqual(r.bins[0].error, 1, 'the chart starts at the app-era error');
+    assert.strictEqual(r.maxTotal, 1, 'which sets the peak');
   });
 
-  test('a launch line still streaming has no instant yet, and excludes nothing', () => {
+  test('a launch line still streaming has no instant yet, and charts everything', () => {
     const ctx = buildChartCtx();
-    // Live capture: the launch line has arrived but nothing timestamped has followed it.
+    // Live capture: the launch line has arrived but nothing timestamped has followed it, so the
+    // boundary is unresolved and nothing is treated as pre-app.
     ctx.allLines = [
       { type: 'line', level: 'warning', timestamp: 10_000, viewerLineIndex: 0 },
       { type: 'line', level: 'info', rawText: LAUNCH, timestamp: 0, viewerLineIndex: 1 },
     ];
     assert.strictEqual((ctx.troubleChartLaunchTs as () => number)(), 0, 'unresolved, not guessed');
-    assert.strictEqual(buckets(ctx).bins[0].preLaunch, false, 'so nothing is muted');
+    const r = buckets(ctx);
+    assert.strictEqual(r.bins.length, 1, 'the warning window still shows');
+    assert.strictEqual(r.maxTotal, 1, 'nothing excluded');
   });
 
   test('loading a new log restarts the resumable scan', () => {
@@ -269,9 +276,11 @@ suite('Trouble Mode severity chart — the pre-launch device burst', () => {
     assert.strictEqual((ctx.troubleChartLaunchTs as () => number)(), 25_000, 'boundary is the build line');
 
     const r = buckets(ctx);
-    assert.strictEqual(r.bins[0].preLaunch, true, 'the pre-launch warning window is excluded');
-    const during = r.bins.find((b) => b.key === 4);
-    assert.ok(during && during.preLaunch, 'and so is the warning window during the build');
+    // Both the pre-launch warning (window 2) and the during-build warning (window 4) are before
+    // the 25s boundary, so both are dropped; the chart begins at the post-build error (window 6).
+    assert.strictEqual(r.bins.length, 1, 'only the post-build window is charted');
+    assert.strictEqual(r.bins[0].key, 6, 'the chart starts at the post-build error');
+    assert.strictEqual(r.totals.warning, 0, 'neither warning window is counted');
     assert.strictEqual(r.maxTotal, 1, 'only the post-build error sets the peak');
   });
 

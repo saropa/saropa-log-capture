@@ -160,10 +160,10 @@ body.slc-trouble-active .trouble-chart { display: block; }
    fills moved off --accent-* — the tokens are exactly what these rules must not use. */
 .trouble-chart .tc-bar { cursor: pointer; }
 .trouble-chart .tc-bar:hover rect { opacity: 0.75; }
-/* A window that ended before the app launched: the device's own logcat backlog. It is drawn
-   (hiding data is never the answer) but muted and saturated at full height, because it is
-   excluded from the peak scale. Muted is the signal that the bar's height is not to scale. */
-.trouble-chart .tc-bar-pre rect { opacity: 0.35; }
+/* Pre-app windows (the device's logcat backlog + build output) are no longer drawn at all —
+   the chart starts at the first real event (buildTroubleChartBuckets) so the burst never
+   reaches the plot. Excluding those lines from the FEED is the opt-in "warm-up" filter's job,
+   not a muted bar here. */
 .trouble-chart .tc-bar-error { fill: var(--tc-error); }
 .trouble-chart .tc-bar-warning { fill: var(--tc-warning); }
 .trouble-chart .tc-bar-performance { fill: var(--tc-performance); }
