@@ -113,11 +113,11 @@ suite('renderItem multi-bracket source-tag strip', () => {
         );
     });
 
-    test('structured branch also strips leading app head tags left after the header', () => {
+    test('structured branch strips redundant severity head tags but keeps descriptive ones', () => {
         /* BUG_Log_viewer_issues.md: "I/flutter (…): [perf] [frame-stall] …" kept "[perf] [frame-stall]"
-           visible because the structured strip only removed the logcat header. Those tags duplicate
-           the level chip/row color, so the structured branch now runs the same all-leading-brackets
-           strip the non-structured branch uses, guarded on item.sourceTag. */
+           visible because the structured strip only removed the logcat header. A leading tag that just
+           restates the severity ([perf], [warn], [error], …) duplicates the level chip/color and is
+           stripped; a DESCRIPTIVE tag like [frame-stall] is kept as the line's tag. */
         const structuredIdx = renderScript.indexOf('stripHtmlPrefix(rawHtml, item.structuredPrefixLen)');
         const elseIdx = renderScript.indexOf('} else if (typeof stripSourceTagPrefix', structuredIdx);
         assert.ok(structuredIdx >= 0 && elseIdx > structuredIdx, 'structured branch must exist before the else-if');
@@ -127,8 +127,32 @@ suite('renderItem multi-bracket source-tag strip', () => {
             'structured branch must run the head-tag strip guarded on item.sourceTag',
         );
         assert.ok(
-            structuredBody.includes('(?:\\[[^\\]]+\\]\\s?)+'),
-            'structured branch must strip all leading [bracket] head tags',
+            structuredBody.includes('perf|performance|warn|warning|error|err|notice|todo|debug|info'),
+            'structured branch must strip only the pure-severity label tags',
+        );
+        assert.ok(
+            !structuredBody.includes('[^\\]]+'),
+            'structured branch must NOT strip arbitrary tags (that would remove [frame-stall])',
+        );
+    });
+
+    test('the severity-only strip regex removes [perf] but keeps [frame-stall] (behavioral)', () => {
+        /* Exercise the exact regex the render emits against the reported line body. */
+        const re = /^(?:\[(?:perf|performance|warn|warning|error|err|notice|todo|debug|info)\]\s?)+/i;
+        assert.strictEqual(
+            '[perf] [frame-stall] total=566ms build=155ms'.replace(re, ''),
+            '[frame-stall] total=566ms build=155ms',
+            '[perf] is stripped, [frame-stall] survives as the tag',
+        );
+        assert.strictEqual(
+            '[warn] [retry] giving up'.replace(re, ''),
+            '[retry] giving up',
+            'severity [warn] stripped, descriptive [retry] kept',
+        );
+        assert.strictEqual(
+            '[frame-stall] total=100ms'.replace(re, ''),
+            '[frame-stall] total=100ms',
+            'a descriptive-only head tag is untouched',
         );
     });
 });
