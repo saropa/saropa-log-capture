@@ -252,7 +252,7 @@ function calcItemHeight(item) {
        hidden lines without disturbing the global filter state. Does NOT override
        continuation/stack-group collapse — those are explicit user actions, not filters. */
     if (!item.peekOverride) {
-        if (item.filteredOut || item.excluded || item.levelFiltered || item.troubleFiltered || item.sourceFiltered || item.classFiltered || item.sqlPatternFiltered || item.searchFiltered || item.errorSuppressed || item.scopeFiltered || item.repeatHidden || item.compressDupHidden || item.stackDedupHidden || item.metadataFiltered) return 0;
+        if (item.filteredOut || item.excluded || item.levelFiltered || item.troubleFiltered || item.flowFiltered || item.sourceFiltered || item.classFiltered || item.sqlPatternFiltered || item.searchFiltered || item.errorSuppressed || item.scopeFiltered || item.repeatHidden || item.compressDupHidden || item.stackDedupHidden || item.metadataFiltered) return 0;
         if (item.type === 'line' && item.timeRangeFiltered) return 0;
         var _peeking = (typeof isPeeking !== 'undefined' && isPeeking);
         if (!_peeking && (item.userHidden || item.autoHidden)) return 0;
