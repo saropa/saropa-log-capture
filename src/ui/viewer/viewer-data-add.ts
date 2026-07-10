@@ -153,11 +153,34 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
        normal log lines reach here (markers/stack/structured returned above). */
     var flowTag = (typeof classifyFlowTag === 'function') ? classifyFlowTag(plain) : null;
 
-    /* Parse all bracket head tags for rendering as chips in the head-tag column. */
+    /* Parse all bracket head tags ([db]/[perf]/[frame-stall]). */
     var headTags = (typeof parseHeadTags === 'function') ? parseHeadTags(plain) : [];
-    /* Reserve the head-tag column only when the log actually carries recognized
-       app tags — a plain/markdown/logcat-only file trips none, so no empty gap. */
-    if (typeof decoSeen !== 'undefined' && headTags && headTags.length > 0) decoSeen.htags = true;
+
+    /* ONE tag set per line. Previously three parsers each owned a slice — bracket
+       head tags (chips), the structured device tag (its own column), and the
+       source/logcat tag (the Message Tags sidebar) — so the chips and the sidebar
+       showed DIFFERENT tags and a chip had no matching filter. item.tags is the
+       single union that now drives BOTH the chips (viewer-deco-content) AND the
+       sidebar registry/filter (viewer-source-tags). Deduped by lowercase key
+       (name before any :metadata); head tags come first so their real level wins
+       over the neutral info level of a device/logcat/source tag with the same key. */
+    var _tagSeen = {};
+    var tags = [];
+    function _addLineTag(name, level) {
+        if (!name) { return; }
+        var key = String(name).split(':')[0].trim().toLowerCase();
+        if (!key || _tagSeen[key]) { return; }
+        _tagSeen[key] = true;
+        tags.push({ name: name, key: key, level: level || 'info' });
+    }
+    for (var _hi = 0; _hi < headTags.length; _hi++) { _addLineTag(headTags[_hi].name, headTags[_hi].level); }
+    if (slp && slp.tag) { _addLineTag(slp.tag, 'info'); }
+    if (lTag) { _addLineTag(lTag, 'info'); }
+    if (sTag) { _addLineTag(sTag, sTag === 'database' ? 'database' : 'info'); }
+
+    /* Reserve the tag column whenever the line carries any tag — a plain/markdown
+       file with none trips nothing, so no empty gap. */
+    if (typeof decoSeen !== 'undefined' && tags.length > 0) decoSeen.htags = true;
 
     // One parse per line: repeat tracker, dbSignal, and DB detectors share this object.
     var sqlMeta = (typeof parseSqlFingerprint === 'function') ? parseSqlFingerprint(plain) : null;
@@ -247,7 +270,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         var finalH = computeLineBirthHeight({ html: html, errorSuppressed: errorSuppressed, lineTierHidden: lineTierHidden, classHidden: classHidden, catFiltered: catFiltered, lvl: lvl, scopeFilt: scopeFilt, isAutoHidden: isAutoHidden, flowTag: flowTag, spLen: slp ? slp.prefixLen : 0 });
         if (isAutoHidden && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
         var isAnr = (lvl === 'performance' && anrPattern.test(plain));
-        var lineItem = { html: html, rawText: rawText || null, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, headTags: headTags, sqlVerb: sqlMeta ? sqlMeta.verb : null, tier: lineTier, filteredOut: catFiltered, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource, timeRangeFiltered: false, recentErrorContext: recentErrorContext, levelFiltered: calcLevelFiltered(lvl), troubleFiltered: (typeof calcTroubleFiltered === 'function' ? calcTroubleFiltered(lvl) : false), parsedPid: slp ? slp.pid : undefined, parsedTid: slp ? slp.tid : undefined, parsedTag: slp ? slp.tag : undefined, parsedRawLevel: slp ? slp.rawLvl : undefined, structuredPrefixLen: slp ? slp.prefixLen : 0, levelTooltip: (typeof getLevelTooltip === 'function' && slp) ? getLevelTooltip(slp.rawLvl, lvl) : ((typeof getLevelTooltip === 'function') ? getLevelTooltip(null, lvl) : null), flowTag: flowTag, flowFiltered: (typeof calcFlowFiltered === 'function' ? calcFlowFiltered(flowTag) : false) };
+        var lineItem = { html: html, rawText: rawText || null, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, headTags: headTags, tags: tags, sqlVerb: sqlMeta ? sqlMeta.verb : null, tier: lineTier, filteredOut: catFiltered, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource, timeRangeFiltered: false, recentErrorContext: recentErrorContext, levelFiltered: calcLevelFiltered(lvl), troubleFiltered: (typeof calcTroubleFiltered === 'function' ? calcTroubleFiltered(lvl) : false), parsedPid: slp ? slp.pid : undefined, parsedTid: slp ? slp.tid : undefined, parsedTag: slp ? slp.tag : undefined, parsedRawLevel: slp ? slp.rawLvl : undefined, structuredPrefixLen: slp ? slp.prefixLen : 0, levelTooltip: (typeof getLevelTooltip === 'function' && slp) ? getLevelTooltip(slp.rawLvl, lvl) : ((typeof getLevelTooltip === 'function') ? getLevelTooltip(null, lvl) : null), flowTag: flowTag, flowFiltered: (typeof calcFlowFiltered === 'function' ? calcFlowFiltered(flowTag) : false) };
         if (elapsedMs !== undefined && elapsedMs >= 0) lineItem.elapsedMs = elapsedMs;
         /* Only set originalLevel when demotion changed the display level — saves memory on
            the vast majority of lines where no demotion occurs (plan 050). */
