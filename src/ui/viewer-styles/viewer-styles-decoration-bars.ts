@@ -163,7 +163,7 @@ export function getDecorationBarStyles(): string {
    The base rule establishes a COLLAPSED ::after box for every leveled, non-art,
    non-blank row — centered on --gutter-cx (see #viewport) so it sits exactly
    under the dot — but with top:50%/bottom:50% it has zero height and paints
-   nothing on its own. The generated ${connectorJoins} rules below extend the
+   nothing on its own. The generated connectorJoins rules below extend the
    bottom half toward the next dot (g:has(+ g)) and the top half toward the
    previous dot (g + g) ONLY when the neighbor shares the color group. So a
    segment is drawn strictly BETWEEN two same-color dots; at a color change no
