@@ -84,5 +84,27 @@ export function getAiStyles(): string {
     font-weight: 600;
     margin-right: 6px;
 }
+
+/* AI category chip — replaces the plain bracketed [AI Edit] prefix so the
+   category is a readable label, not just a color rail. Mirrors the .flow-chip
+   shape (viewer-styles-decoration-bars.ts) and reads --ai-rail-color, which
+   .ai-line already sets per category (magenta bash, yellow edit, cyan prompt,
+   muted read, warning system) — so one rule covers every category and the chip
+   color always matches its row's rail. */
+.ai-tag-chip {
+    display: inline-block;
+    padding: 0.02em 0.5em;
+    margin-right: 6px;
+    border-radius: 0.9em;
+    font-size: 0.8em;
+    font-weight: 600;
+    line-height: 1.4;
+    user-select: none;
+    vertical-align: baseline;
+    white-space: nowrap;
+    color: var(--ai-rail-color, var(--vscode-terminal-ansiMagenta, #bc3fbc));
+    background: color-mix(in srgb, var(--ai-rail-color, #bc3fbc) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--ai-rail-color, #bc3fbc) 35%, transparent);
+}
 `;
 }

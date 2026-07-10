@@ -110,59 +110,42 @@ export function getDecorationBarStyles(): string {
 .stack-header[class*="level-bar-"]::before,
 .line.stack-line[class*="level-bar-"]::before { display: none; }
 
-/* Connector line between consecutive same-level dots.
-   Declarative — no JS chain walking. Each row paints its OWN stripe ONLY
-   when its immediate next sibling shares the same level-bar-* class. The
-   stripe is anchored at this row's middle (top: 50%) and extends downward
-   by one row height (height: calc(1em * --log-line-height)), reaching the
-   next row's middle exactly. Result:
-     - run of N same-level rows → N-1 stripes, each dot connected to the next
-     - lone row (no same-level next) → no stripe, just the dot
-     - end of a chain (next is different level) → :has() fails on the LAST
-       row, no overshoot past its dot — clean termination.
-   Single source of truth: the row's own level-bar-* class drives both the
-   dot color (::before) and the line color (::after) via --bar-color. They
-   cannot disagree because they're both pseudo-elements of the same element
-   reading the same custom property.
-   One selector per level — listed individually because CSS has no "same
-   class as me" combinator. Order doesn't matter; specificity is identical.
-   :not(:is(.art-block-start, .art-block-middle, .art-block-end)) excludes
-   ASCII-art rows — they reuse ::after for the shimmer animation (and carry no
-   gutter rail of their own; the old border-left was removed because it broke
-   the box layout), so the chain connector must NOT also claim ::after there or
-   it would replace the shimmer with a static stripe. */
-.level-bar-error:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-error)::after,
-.level-bar-error-recent-context:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-error-recent-context)::after,
-.level-bar-warning:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-warning)::after,
-.level-bar-performance:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-performance)::after,
-.level-bar-todo:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-todo)::after,
-.level-bar-debug:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-debug)::after,
-.level-bar-notice:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-notice)::after,
-.level-bar-framework:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-framework)::after,
-.level-bar-database:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-database)::after,
-.level-bar-info:not(:is(.art-block-start, .art-block-middle, .art-block-end)):has(+ .level-bar-info)::after {
+/* Connector stripe joining consecutive same-color dots.
+   Each leveled row paints a FULL-HEIGHT stripe of its own --bar-color (top: 0
+   to bottom: 0). Consecutive rows of the same color abut edge-to-edge, so a run
+   of same-level rows reads as ONE continuous vertical band with the dots
+   (::before) sitting on top; at a color change the stripe simply switches color
+   at the row boundary. The dot stays the focal marker, the stripe joins them.
+
+   WHY this replaced the old `:has(+ .level-bar-X)` per-pair chain (2026-07-10,
+   user: "sequential dots are NOT joined, NOTHING is joined"):
+     - `:has(+ sibling)` only connected rows whose IMMEDIATE next sibling shared
+       the EXACT class. A blank line, a `.slow-gap` divider, or a stack-frame row
+       between two same-level rows severed the chain; and `info` vs `framework`
+       (both --vscode-charts-blue — same color, different class) never joined
+       even though they look identical. A per-row full-height stripe has no
+       adjacency or class-equality dependency, so same-color rows always merge.
+     - The old stripe overshot the row (bottom: -50%) to reach the next dot,
+       which FORCED `.line { overflow: visible }` and let long wrapped text paint
+       behind the next row. A within-row stripe removes that requirement so rows
+       can clip again.
+   :not(:is(.art-block-*)) still excludes ASCII-art rows — they reuse ::after for
+   the shimmer animation, so the stripe must not claim ::after there. Blank lines
+   are excluded (they carry no dot); a same-level run that straddles a blank shows
+   a one-row gap in the band, which is acceptable and far better than the old
+   near-total disconnection. */
+[class*="level-bar-"]:not(:is(.art-block-start, .art-block-middle, .art-block-end, .line-blank))::after {
     content: ''; position: absolute;
     left: 0.89em; width: 0.14em;
-    /* Anchor at THIS row's middle (top: 50%) and extend to 50% PAST this
-       row's bottom (bottom: -50%) — net height equals one parent-row
-       height, reaching exactly the next row's middle where the next dot
-       sits. Requires uniform row heights, which we now have: .line and
-       .stack-header both use var(--log-line-height, 1.1) (see
-       viewer-styles-content.ts comment on stack-header line-height).
-       At a level transition the row's :has() check fails so it doesn't
-       paint — no overshoot to leak the previous chain's color into the
-       next chain's space. .line and .stack-header parents have
-       overflow: visible so the stripe paints past the row's bottom edge
-       into the next row's top half without clipping. */
-    top: 50%;
-    bottom: -50%;
-    /* color-mix at 45% replaces opacity — opacity on ::after interacted with
-       Chromium/WebKit stacking contexts so the gutter stripe could paint on
-       top of the severity dot (::before). */
+    top: 0;
+    bottom: 0;
+    /* color-mix at 45% (not opacity) — opacity on ::after interacted with
+       Chromium/WebKit stacking contexts so the stripe could paint on top of
+       the severity dot (::before). */
     background: color-mix(in srgb, var(--bar-color) 45%, transparent);
     pointer-events: none;
-    /* Below severity dot (::before z-index: 2) so the dot covers the stripe
-       at the connection point and remains the focal element. */
+    /* Below the severity dot (::before z-index: 2) so the dot stays on top at
+       its center point and remains the focal element. */
     z-index: 1;
 }
 
