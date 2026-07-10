@@ -81,6 +81,9 @@ function toggleTroubleMode() {
     /* Build / refresh the severity chart when the mode turns on (Stage 3). Guarded:
        the chart script owns this and may be absent in the VM test harness. */
     if (typeof scheduleTroubleChartUpdate === 'function') { scheduleTroubleChartUpdate(); }
+    /* Pull the cached Crashlytics issues into the band when entering the mode (Stage 5);
+       the host reads the cache only, so this never blocks or fetches. */
+    if (troubleModeActive && typeof requestTroubleCrashlytics === 'function') { requestTroubleCrashlytics(); }
     /* Leaving Trouble Mode dismisses the detail overlay (Stage 4) so it never
        lingers over a normal feed. */
     if (!troubleModeActive && typeof closeTroubleDetail === 'function') { closeTroubleDetail(); }
@@ -98,6 +101,7 @@ function restoreTroubleModeState() {
         troubleModeActive = true;
         applyTroubleModeIndicator();
         if (typeof scheduleTroubleChartUpdate === 'function') { scheduleTroubleChartUpdate(); }
+        if (typeof requestTroubleCrashlytics === 'function') { requestTroubleCrashlytics(); }
     }
 }
 
