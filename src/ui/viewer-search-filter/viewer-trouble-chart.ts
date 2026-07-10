@@ -56,6 +56,7 @@ function troubleChartClock(ms) {
 function buildTroubleChartBuckets() {
     var intervalMs = troubleChartIntervalSec * 1000;
     var byKey = {};
+    var minKey = null;
     var maxKey = null;
     for (var i = 0; i < allLines.length; i++) {
         var item = allLines[i];
@@ -71,12 +72,15 @@ function buildTroubleChartBuckets() {
             b.firstLine = item.viewerLineIndex;
         }
         if (maxKey == null || key > maxKey) { maxKey = key; }
+        if (minKey == null || key < minKey) { minKey = key; }
     }
     if (maxKey == null) { return { bins: [], maxTotal: 0, intervalMs: intervalMs }; }
     /* Materialize a CONTIGUOUS window (empty windows included as zero-height gaps)
-       so the bars read as a rate over time, not a collapsed list — but only the
-       last TROUBLE_CHART_MAX_BUCKETS windows, so the array is bounded. */
-    var start = maxKey - TROUBLE_CHART_MAX_BUCKETS + 1;
+       so the bars read as a rate over time, not a collapsed list. Start at the
+       earliest event, but never earlier than TROUBLE_CHART_MAX_BUCKETS windows back
+       from the latest — so a short session shows just its own span, and an
+       hours-long one is bounded to a recent slice (bug 001 OOM fence: no unbounded array). */
+    var start = Math.max(minKey, maxKey - TROUBLE_CHART_MAX_BUCKETS + 1);
     var bins = [];
     var maxTotal = 0;
     for (var k = start; k <= maxKey; k++) {
