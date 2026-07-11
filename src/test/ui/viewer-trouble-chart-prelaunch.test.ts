@@ -227,6 +227,57 @@ suite('Trouble Mode severity chart — the pre-app device burst', () => {
     assert.match(rects, /class="tc-bar-warning"[^>]*height="3\.0"/, 'warning keeps the 3px floor');
   });
 
+  test('the host run-boundary overrides the scan so the chart aligns with the feed divider', () => {
+    const ctx = buildChartCtx();
+    // Field bug (9.2.x): the resumable webview scan drifted to 0 on a fully loaded log, so the
+    // chart drew the whole pre-app device backlog while the feed's green App-started divider was
+    // correct. handleRunBoundaries now hands the chart the SAME host launch line the divider uses
+    // via setTroubleChartHostLaunchTs; that boundary wins over the scan so the two cannot disagree.
+    const BUILT = '√ Built build\\app\\outputs\\flutter-apk\\app-debug.apk';
+    ctx.allLines = [
+      { type: 'line', level: 'warning', category: 'logcat', timestamp: 10_000, viewerLineIndex: 0 },
+      { type: 'line', level: 'info', rawText: LAUNCH, category: 'console', timestamp: 15_000, viewerLineIndex: 1 },
+      { type: 'line', level: 'warning', category: 'logcat', timestamp: 20_000, viewerLineIndex: 2 },
+      { type: 'line', level: 'info', rawText: BUILT, category: 'console', timestamp: 25_000, viewerLineIndex: 3 },
+      { type: 'line', level: 'error', category: 'logcat', timestamp: 30_000, viewerLineIndex: 4 },
+    ];
+    const launchTs = ctx.troubleChartLaunchTs as () => number;
+    // Scan alone prefers the build line (25s); the host says the app started at the launch line.
+    assert.strictEqual(launchTs(), 25_000, 'scan fallback still prefers the build line');
+    (ctx.setTroubleChartHostLaunchTs as (i: number) => void)(1); // host launch-line index
+    assert.strictEqual(launchTs(), 15_000, 'the host launch boundary overrides the scan');
+
+    const r = buckets(ctx) as BucketResult & { atAppStart?: boolean };
+    assert.strictEqual(r.atAppStart, true, 'the app-start divider is flagged at the host boundary');
+    // The during-build warning (20s) is now KEPT — the app started at launch, so it is app-era,
+    // matching where the divider sits; only the pre-launch backlog (10s) is dropped.
+    assert.strictEqual(r.totals.warning, 1, 'the post-launch warning charts; the pre-launch one is dropped');
+    assert.strictEqual(r.totals.error, 1, 'the app-era error charts');
+
+    // -1 (a log with no launch line) clears the override; the scan fallback returns.
+    (ctx.setTroubleChartHostLaunchTs as (i: number) => void)(-1);
+    assert.strictEqual(launchTs(), 25_000, 'clearing the host boundary falls back to the scan');
+  });
+
+  test('a new log clears the host launch boundary too', () => {
+    const ctx = buildChartCtx();
+    ctx.allLines = [
+      { type: 'line', level: 'info', rawText: LAUNCH, category: 'console', timestamp: 15_000, viewerLineIndex: 0 },
+      { type: 'line', level: 'error', category: 'logcat', timestamp: 20_000, viewerLineIndex: 1 },
+    ];
+    (ctx.setTroubleChartHostLaunchTs as (i: number) => void)(0);
+    const launchTs = ctx.troubleChartLaunchTs as () => number;
+    assert.strictEqual(launchTs(), 15_000, 'host boundary set from the launch line');
+
+    // A new log with no launch line, cleared via resetTroubleChartLaunchScan (the 'clear' path).
+    // Without clearing the host ts, the stale 15_000 would keep trimming the new log.
+    ctx.allLines = [
+      { type: 'line', level: 'error', category: 'logcat', timestamp: 90_000, viewerLineIndex: 0 },
+    ];
+    (ctx.resetTroubleChartLaunchScan as () => void)();
+    assert.strictEqual(launchTs(), 0, 'no stale host boundary from the previous log');
+  });
+
   test('self-heals when a new log replaces the array without a reset', () => {
     const ctx = buildChartCtx();
     ctx.allLines = [

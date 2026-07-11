@@ -42,13 +42,30 @@ var TROUBLE_CHART_PREFIX_RE = /^\\[[\\d:.]+\\]\\s*\\[\\w+\\]\\s?/;
    scanIdx is the next line to test; startIdx / builtIdx are the FIRST launch-start and FIRST
    build-complete markers found (-1 until seen). */
 var troubleChartLaunch = { scanIdx: 0, startIdx: -1, builtIdx: -1 };
+/* Boundary handed down from the HOST run-boundary detector (run-boundaries.ts) — the SAME
+   signal the feed's green App-started divider anchors to, via setTroubleChartHostLaunchTs
+   (see handleRunBoundaries). 0 until the host message arrives (live capture) or on an
+   attach / pure-logcat log with no launch line. When set it OVERRIDES the resumable content
+   scan below so the chart's left edge and the feed divider sit on the ONE app-start line and
+   can never disagree — the parallel webview scan had drifted to 0 in the field (a fully
+   loaded log charting its whole pre-app device backlog) while the host divider was correct. */
+var troubleChartHostLaunchTs = 0;
 
 /* Called when a new log replaces allLines (viewer-script-messages.ts clears it). Without this
    the resumed scan would start part-way into the new log and miss its markers. The self-heal
    in troubleChartLaunchTs is a backstop for load paths that skip the clear; this is the
-   primary reset. */
+   primary reset. Also drops the host boundary so a stale one cannot bleed into the next log. */
 function resetTroubleChartLaunchScan() {
     troubleChartLaunch = { scanIdx: 0, startIdx: -1, builtIdx: -1 };
+    troubleChartHostLaunchTs = 0;
+}
+
+/* Host run-boundary detector reports the launch line's index (or -1). Resolve its timestamp
+   forward — the live launch line ("Launching…") prints to stdout with no clock prefix, so its
+   own timestamp is often 0 and the boundary is the first timestamped line after it. Called
+   from handleRunBoundaries; cleared on a new log through resetTroubleChartLaunchScan. */
+function setTroubleChartHostLaunchTs(lineIdx) {
+    troubleChartHostLaunchTs = (lineIdx != null && lineIdx >= 0) ? troubleChartResolveFwd(lineIdx) : 0;
 }
 
 /* Line text at idx with the saved-log [time][category] prefix stripped, or '' when the item
@@ -90,6 +107,10 @@ function troubleChartIndexStale(idx) {
    session attached after the app was already running). Windows ending at or before it are the
    device's own pre-app backlog. */
 function troubleChartLaunchTs() {
+    /* Host boundary wins when known: it reads the raw file (never this file's scan state) and is
+       the exact line the feed's green divider uses, so chart and divider stay on one app-start
+       line. The content scan below is only the live-capture fallback for before that message. */
+    if (troubleChartHostLaunchTs > 0) { return troubleChartHostLaunchTs; }
     /* Self-heal the resumable scan. It caches indices into allLines, which is REPLACED (not
        appended) when a different log loads — normally fired through resetTroubleChartLaunchScan
        by the 'clear' message, but if any load path skips that, a stale scanIdx sits past the
