@@ -23,10 +23,13 @@ function firstLaunchLineIndex(boundaries) {
 
 /* Insert one green "App started" divider at the launch line — the feed's counterpart to the
    Trouble Mode chart's green app-start bar, marking where the app began after the device
-   backlog. Reuses the marker row type so it is never filtered, breaks groups, and takes
-   MARKER_HEIGHT for free. Idempotent (skips if the divider is already there). Runs BEFORE
-   insertRunSeparators so the +1 index shift is already reflected in the runStartIndices the
-   separators read. */
+   backlog. Reuses the marker row type so it is never filtered and takes MARKER_HEIGHT for free.
+   The launch line is a fresh console line (groupId -1), so splicing before it never lands inside
+   a stack-frame group. The guard makes the MARKER insertion idempotent (a second call finds the
+   divider already at atIdx and returns) — it does NOT make the surrounding run-separator flow
+   idempotent, which assumes a fresh allLines per runBoundaries message (the normal load path
+   clears the feed first). Runs BEFORE insertRunSeparators so the +1 index shift is already
+   reflected in the runStartIndices the separators read. */
 function insertAppStartMarker(atIdx) {
     if (atIdx == null || atIdx < 0 || !allLines || atIdx >= allLines.length) return;
     if (allLines[atIdx] && allLines[atIdx].appStart) return;

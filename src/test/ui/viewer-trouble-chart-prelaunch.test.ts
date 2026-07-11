@@ -199,6 +199,34 @@ suite('Trouble Mode severity chart — the pre-app device burst', () => {
     assert.strictEqual(r.atAppStart, true, 'the app-start divider is flagged');
   });
 
+  test('does NOT flag the app-start divider when the cap trims the start past the app era', () => {
+    const ctx = buildChartCtx();
+    // Launch resolves the boundary, but the app-era span is longer than TROUBLE_CHART_MAX_BUCKETS
+    // (180 windows), so the cap pushes start well past the real first window. bins[0] is then a
+    // mid-session window, NOT app start — the green divider must not claim it is.
+    ctx.allLines = [
+      { type: 'line', level: 'info', rawText: LAUNCH, category: 'console', timestamp: 10_000, viewerLineIndex: 0 },
+      { type: 'line', level: 'error', category: 'logcat', timestamp: 20_000, viewerLineIndex: 1 },
+      { type: 'line', level: 'error', category: 'logcat', timestamp: 20_000 + 200 * 5_000, viewerLineIndex: 2 },
+    ];
+    const r = buckets(ctx) as BucketResult & { atAppStart?: boolean };
+    assert.strictEqual(r.bins.length, 180, 'the strip is capped to the most-recent 180 windows');
+    assert.strictEqual(r.atAppStart, false, 'a capped mid-session left edge is not marked as app start');
+  });
+
+  test('a single error renders a taller floor than warning/performance so it stays visible', () => {
+    const ctx = buildChartCtx();
+    // troubleChartStackRects clamps error to TROUBLE_CHART_MIN_ERROR (5) and warning/perf to
+    // TROUBLE_CHART_MIN_BAR (3); with a tiny scale both clamp, so error draws taller.
+    const rects = (ctx.troubleChartStackRects as (b: unknown, g: unknown, s: number) => string)(
+      { error: 1, warning: 1, performance: 0 },
+      { barX: 0, barW: 10, cellX: 0, cellW: 14 },
+      0.1,
+    );
+    assert.match(rects, /class="tc-bar-error"[^>]*height="5\.0"/, 'a lone error clamps to the 5px floor');
+    assert.match(rects, /class="tc-bar-warning"[^>]*height="3\.0"/, 'warning keeps the 3px floor');
+  });
+
   test('self-heals when a new log replaces the array without a reset', () => {
     const ctx = buildChartCtx();
     ctx.allLines = [
