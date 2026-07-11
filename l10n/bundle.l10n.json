@@ -1726,6 +1726,7 @@
   "Likely Bug": "Likely Bug",
   "Output channel: {0}": "Output channel: {0}",
   "{0} adjacent identical markers collapsed into this one": "{0} adjacent identical markers collapsed into this one",
+  "App started": "App started",
   "{0} identical lines": "{0} identical lines",
   "Click to expand {0} continuation lines": "Click to expand {0} continuation lines",
   "Click to collapse {0} continuation lines": "Click to collapse {0} continuation lines",

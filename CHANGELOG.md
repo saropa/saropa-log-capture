@@ -25,13 +25,13 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.2.2]
 
  [log](https://github.com/saropa/saropa-log-capture/blob/v9.2.2/CHANGELOG.md)
 
 ### Added
 
-- **A green "App started" divider now marks where the app launched in the log itself.** At the launch line — after the device's startup backlog — a bold green divider separates the pre-app noise from the app's own output, the feed counterpart to the Trouble Mode chart's green app-start marker. It appears once per launch and never for attached or logcat-only captures with no launch line.
+- **A green "App started" divider now marks where the app launched in the log itself.** At the launch line — after the device's startup backlog — a bold green divider separates the pre-app noise from the app's own output, the feed counterpart to the Trouble Mode chart's green app-start marker. It appears once per launch and never for attached or logcat-only captures with no launch line. [log](https://github.com/saropa/saropa-log-capture/blob/v9.2.2/CHANGELOG.md)
 
 ### Changed
 

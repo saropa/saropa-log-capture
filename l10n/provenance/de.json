@@ -61,6 +61,7 @@
   "Annotate line": "nllb",
   "Any size": "nllb",
   "App frames only": "nllb",
+  "App started": "nllb",
   "App state": "nllb",
   "Appeared in {0} of {1} session(s)": "nllb",
   "Apply a saved Quick Filter": "nllb",
