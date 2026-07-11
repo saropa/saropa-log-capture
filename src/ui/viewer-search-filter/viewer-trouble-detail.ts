@@ -181,7 +181,6 @@ function closeTroubleDetail() {
     var el = document.getElementById('trouble-detail');
     if (el) { el.classList.add('u-hidden'); el.classList.remove('td-mode-cd'); }
     document.body.classList.remove('slc-trouble-rail-open');
-    if (typeof clearTroubleCrashlyticsSelection === 'function') { clearTroubleCrashlyticsSelection(); }
     if (typeof setTroubleChartSelection === 'function') { setTroubleChartSelection(0); }
 }
 

@@ -117,25 +117,6 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
         <div id="trouble-chart-body" class="trouble-chart-body" role="img"
             aria-label="${t('viewer.troubleChart.region')}"></div>
     </div>
-    <!-- Trouble Mode Crashlytics band (Stage 5). Top cached crash issues from the
-         background watcher's cache; hidden until Trouble Mode is active AND the band
-         has rows. A row click opens the existing in-viewer Crashlytics detail overlay. -->
-    <div id="trouble-crashlytics" class="trouble-crashlytics u-hidden" role="region" aria-label="${t('viewer.troubleCrashlytics.region')}">
-        <div class="trouble-crashlytics-head">
-            <span class="tcx-head-left">
-                <button id="trouble-crashlytics-toggle" class="tcx-toggle" type="button" aria-expanded="true"
-                    aria-controls="trouble-crashlytics-rows" title="${t('viewer.troubleCrashlytics.toggle.title')}"
-                    aria-label="${t('viewer.troubleCrashlytics.toggle.label')}">&#x25BE;</button>
-                <span id="trouble-crashlytics-title" class="tcx-head-title">${t('viewer.troubleCrashlytics.title')}</span>
-            </span>
-            <!-- Cache freshness (plan 110, Stage 5): the band is fed from the background
-                 watcher's on-disk cache of Firebase Crashlytics (cloud), never a live fetch
-                 and unrelated to the log's own timeframe, so its age must be visible. -->
-            <span id="trouble-crashlytics-fresh" class="tcx-fresh" title="${t('viewer.troubleCrashlytics.freshTitle')}"></span>
-        </div>
-        <div id="trouble-crashlytics-rows" class="trouble-crashlytics-rows"></div>
-        <div id="trouble-crashlytics-more" class="trouble-crashlytics-more u-hidden"></div>
-    </div>
     <div id="log-content-wrapper">
     <div class="log-content-clip">
     <div id="log-content" class="nowrap" role="log" aria-label="${t('viewer.logContent.region')}" title="${escapeHtml(t('viewer.logContent.title'))}">

@@ -32,9 +32,13 @@ cspell:disable
 - **New "Exclude warm-up logs" filter hides the device's pre-app noise from the feed.** A checkbox in the **File Scope** filter tab (under "Exclude lines with no source file", off by default) hides everything captured before the app started — the device's logcat backlog and the build tool's output, up to the same app-ready point the severity chart begins at. The data isn't lost: untick it to see the warm-up lines again.
 - **The Trouble Mode error-report rail can now be dragged wider.** A new resize handle sits between the scrollbar minimap and the rail (right edge of the minimap); dragging it resizes the report panel instead of the minimap, between the rail's existing 320–560px bounds. The chosen width persists per workspace.
 
+### Removed
+
+- **The Crash Issues band is gone from Trouble Mode.** Those rows came from Firebase Crashlytics (your app's top crashes across all users, cloud-cached) and had nothing to do with the log on screen, which was confusing beside a specific capture. Crashlytics is still fully available from its own toolbar button; Trouble Mode now focuses on the log you're viewing. A Signals view sourced from the current log is coming in its place.
+
 ### Changed
 
-- **Trouble Mode's Crash Issues band now collapses, and both bands fold away more easily.** The Crash Issues band gets the same collapse caret the severity chart has, and on both bands you can click the **title text** — not just the small arrow — to fold or unfold them. The severity chart's caret is larger so it reads as a control. The Crash Issues "Updated" time now shows the date when the cache is not from today and carries a tooltip noting it is the Firebase Crashlytics cloud-cache time, not the log's — so an "Updated 9:17 AM" beside an 18:00 log no longer looks wrong.
+- **The severity chart's collapse control is easier to hit.** Its caret is larger so it reads as a control, and you can click the chart's **title text** — not just the small arrow — to fold or unfold it.
 
 ### Fixed
 
