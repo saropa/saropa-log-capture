@@ -106,7 +106,7 @@ function renderItem(item, idx, prevVis) {
 ` +
         VIEWER_RENDER_EMBED_MARKER_BURST_EDGE +
         /* javascript */ `
-        return '<div class="marker' + _burstEdgeCls + spacingCls + '"' + idxAttr + _mkTitle + '>' + html + '</div>';
+        return '<div class="marker' + (item.appStart ? ' app-start-marker' : '') + _burstEdgeCls + spacingCls + '"' + idxAttr + _mkTitle + '>' + html + '</div>';
     }
 ` +
         VIEWER_RENDER_EMBED_RUN_SEPARATOR +
