@@ -9,12 +9,23 @@
  * because hiding data is never the answer.
  *
  * This module owns the one thing that rule needs: the timestamp of the app-ready boundary.
- * Everything BEFORE it is device backlog plus build-tool output. Two markers define it:
+ *
+ * PRIMARY source (the shipped path): the HOST run-boundary detector's launch line, handed in
+ * via setTroubleChartHostLaunchTs — the SAME line the feed's green "App started" divider sits
+ * on. When that is present troubleChartLaunchTs returns it, so the chart's left edge and the
+ * feed divider anchor to one launch line and cannot disagree. This means the chart's boundary
+ * is the LAUNCH instant, so the compile phase (launch → build-complete) is charted as app-era —
+ * a deliberate trade: matching the divider beats excluding a little compile-phase device noise.
+ *
+ * FALLBACK source (live capture before the host message arrives): the resumable content scan
+ * below. Everything BEFORE its boundary is device backlog plus build-tool output. Two markers
+ * define it:
  *   - the launch-start line ("Launching … in debug mode") — mirror of run-boundaries.ts, and
- *   - the build-complete line ("√ Built …apk", "Xcode build done") — the STRONGER boundary,
- *     because nothing the app emits can precede its own built artifact, so it excludes the
- *     whole compile phase's device noise, not just the pre-launch burst.
- * run-boundaries.ts deliberately treats only "Launching…" as a run START; the chart wants a
+ *   - the build-complete line ("√ Built …apk", "Xcode build done") — the STRONGER boundary FOR
+ *     THE FALLBACK, because nothing the app emits can precede its own built artifact, so it
+ *     excludes the whole compile phase's device noise, not just the pre-launch burst. (The host
+ *     boundary above overrides this build preference once the runBoundaries message lands.)
+ * run-boundaries.ts deliberately treats only "Launching…" as a run START; the fallback wants a
  * LATER cut than a run start, so "Built" is a chart-specific addition, NOT mirrored there.
  *
  * Split out of viewer-trouble-chart.ts purely to hold the 300-line file limit; its script text
@@ -48,7 +59,12 @@ var troubleChartLaunch = { scanIdx: 0, startIdx: -1, builtIdx: -1 };
    attach / pure-logcat log with no launch line. When set it OVERRIDES the resumable content
    scan below so the chart's left edge and the feed divider sit on the ONE app-start line and
    can never disagree — the parallel webview scan had drifted to 0 in the field (a fully
-   loaded log charting its whole pre-app device backlog) while the host divider was correct. */
+   loaded log charting its whole pre-app device backlog) while the host divider was correct.
+   Cleared on every new log through the 'clear' message (resetTroubleChartLaunchScan), which is
+   the normal reset. Residual gap (accepted, not everyday): a log swapped into allLines by an
+   abnormal path that SKIPS 'clear' AND has no launch line would not re-fire handleRunBoundaries,
+   so a previous log's boundary could linger. The scan self-heal below cannot backstop that here
+   because the host early-return means the scan never ran to cache the indices it checks. */
 var troubleChartHostLaunchTs = 0;
 
 /* Called when a new log replaces allLines (viewer-script-messages.ts clears it). Without this
