@@ -2064,8 +2064,6 @@
   "Copy report": "复制报告的副本",
   "Could not build the detail for this line": "无法构建这个行的细节.",
   "Could not copy the trouble report": "无法复制故障报告的错误",
-  "Crash issues": "崩 ⁇ 问题的问题",
-  "Crash issues from Crashlytics": "崩 ⁇ 问题从Crashlytics开始.",
   "Cycle flow-tag display": "循环流量标签显示器",
   "Entered this surface": "进入了这个表面.",
   "Expand all sections": "扩展所有部分.",
@@ -2092,8 +2090,6 @@
   "Trouble report copied to the clipboard": "问题报告复制到剪贴板上的报道.",
   "{0} events · {1} users": "{0}事件 · {1}用户",
   "{0} · errors {1} · warnings {2} · performance {3}": "{0} · 错误 {1} ·警告 {2} ·性能 {3}",
-  "All {0} issues": "所有的 {0} 问题.",
-  "Cached": "缓存的缓存,可以保存.",
   "Could not load this issue.": "无法加载这个问题.",
   "Issue": "问题问题问题.",
   "No stack trace available for this issue.": "没有可用的堆 ⁇ 痕迹,为这个问题.",
@@ -2101,7 +2097,6 @@
   "Reveal in log": "在日志中揭示.",
   "Scroll the log to the line this report describes": "滚动日志到本报告描述的行.",
   "Try again": "再试一次,可以吗?",
-  "Before app launch": "在 app 启动之前,先发行应用程序.",
   "Click to toggle this level, double-click to focus it": "点击来切换这个级别,双击以聚焦它.",
   "Collapse or expand the severity chart": "崩 ⁇ 或扩大严重程度图表的情况.",
   "Collapse severity chart": "崩 ⁇ 严重程度图表的情况",
@@ -2112,5 +2107,11 @@
   "Copy this line's tags as a comma-separated list": "将这行标签复制成以逗号分隔的列表.",
   "Copy every tag as JSON, grouped by display name with its raw tag variants": "将每个标签复制为JSON,按显示名称分组,并以其原始标记变体进行分类.",
   "Filter tags…": "过 ⁇ 标签... 这是一个很好的方法.",
-  "No tags match your search": "没有标签与您的搜索匹配."
+  "No tags match your search": "没有标签与您的搜索匹配.",
+  "All {0}": "所有的PH0__",
+  "Collapse or expand the signals": "信号的崩 ⁇ 或扩张.",
+  "Exclude warm-up logs (before app start)": "排除热身日志 (在应用程序启动之前)",
+  "Hide the device backlog and build output captured before the app started — the same point the severity chart begins": "隐藏设备积压和构建输出在应用程序启动之前捕获的 ⁇ 相同点开始严重性图表.",
+  "{0} signals": "{0} 信号表示",
+  "{0}x": "{0}x 在一个小时内"
 }

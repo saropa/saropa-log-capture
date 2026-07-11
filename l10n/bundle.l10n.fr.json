@@ -2064,8 +2064,6 @@
   "Copy report": "Copie du rapport de l'enquête.",
   "Could not build the detail for this line": "Impossible de construire le détail pour cette ligne.",
   "Could not copy the trouble report": "Impossible de copier le rapport d'erreur.",
-  "Crash issues": "Les problèmes de crash sont des problèmes.",
-  "Crash issues from Crashlytics": "Problèmes de panne à partir du Crashlytics.",
   "Cycle flow-tag display": "Affichage de l'étiquette d'écoulement du cycle.",
   "Entered this surface": "Entré dans cette surface de la surface.",
   "Expand all sections": "Étendre toutes les sections.",
@@ -2092,8 +2090,6 @@
   "Trouble report copied to the clipboard": "Rapport de problème copié dans le presse-papiers.",
   "{0} events · {1} users": "{0} événements · utilisateurs de {1}",
   "{0} · errors {1} · warnings {2} · performance {3}": "{0} · erreurs {1} · avertissements {2} · performance {3} est le plus souvent utilisé.",
-  "All {0} issues": "Tous les problèmes de {0}.",
-  "Cached": "Caché dans la mémoire cache.",
   "Could not load this issue.": "Impossible de charger ce problème.",
   "Issue": "Le problème de la question.",
   "No stack trace available for this issue.": "Aucune trace de pile disponible pour ce numéro.",
@@ -2101,7 +2097,6 @@
   "Reveal in log": "Révéler dans le journal d'accueil.",
   "Scroll the log to the line this report describes": "Faites défiler le journal jusqu'à la ligne décrite dans ce rapport.",
   "Try again": "Essayez à nouveau.",
-  "Before app launch": "Avant le lancement de l'application,",
   "Click to toggle this level, double-click to focus it": "Cliquez pour basculer ce niveau, double-cliquez pour le focaliser.",
   "Collapse or expand the severity chart": "Collapse ou agrandissement du graphique de sévérité.",
   "Collapse severity chart": "Graphique de la gravité de l'effondrement.",
@@ -2112,5 +2107,11 @@
   "Copy this line's tags as a comma-separated list": "Copiez les balises de cette ligne en tant que liste séparée par des virgules.",
   "Copy every tag as JSON, grouped by display name with its raw tag variants": "Copiez chaque balise sous forme de JSON, regroupée par nom d'affichage avec ses variantes de balises brutes.",
   "Filter tags…": "Les étiquettes de filtres...",
-  "No tags match your search": "Aucune balise ne correspond à votre recherche."
+  "No tags match your search": "Aucune balise ne correspond à votre recherche.",
+  "All {0}": "Tout le monde est PH0__.",
+  "Collapse or expand the signals": "Collapse ou d'étendre les signaux.",
+  "Exclude warm-up logs (before app start)": "Excluez les journaux d'échauffement (avant le démarrage de l'application)",
+  "Hide the device backlog and build output captured before the app started — the same point the severity chart begins": "Cacher le backlog de l'appareil et construire la sortie capturée avant que l'application ne démarre  ⁇  au même point où commence le graphique de gravité.",
+  "{0} signals": "{0} est un signal de ph.",
+  "{0}x": "Le X est le nombre de ___."
 }
