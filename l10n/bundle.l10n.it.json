@@ -2064,8 +2064,6 @@
   "Copy report": "Copia del rapporto copia della relazione.",
   "Could not build the detail for this line": "Non è stato possibile creare il dettaglio per questa linea.",
   "Could not copy the trouble report": "Non è stato possibile copiare il rapporto di guasto.",
-  "Crash issues": "Crash problemi di crash.",
-  "Crash issues from Crashlytics": "Problemi di crash da Crashlytics",
   "Cycle flow-tag display": "Visualizzazione del ciclo di flusso dei cicli con etichetta.",
   "Entered this surface": "Entrato in questa superficie di superficie.",
   "Expand all sections": "Espandere tutte le sezioni.",
@@ -2092,8 +2090,6 @@
   "Trouble report copied to the clipboard": "Il rapporto di errore è stato copiato nella clipboard.",
   "{0} events · {1} users": "{0} eventi · {1} utenti",
   "{0} · errors {1} · warnings {2} · performance {3}": "{0} · errori {1} · avvertimenti {2} · prestazioni {3}",
-  "All {0} issues": "Tutti i problemi di {0}",
-  "Cached": "Cached in cache.",
   "Could not load this issue.": "Non è stato possibile caricare questo problema.",
   "Issue": "Il problema è il numero.",
   "No stack trace available for this issue.": "Nessuna traccia di stack disponibile per questo numero.",
@@ -2101,7 +2097,6 @@
   "Reveal in log": "Rivelare nel log.",
   "Scroll the log to the line this report describes": "Scorri il registro fino alla linea che descrive questo rapporto.",
   "Try again": "Riprova a riprovare.",
-  "Before app launch": "Prima del lancio dell'app, prima di avviare l'applicazione.",
   "Click to toggle this level, double-click to focus it": "Clicca per togliere questo livello, doppio clic per focalizzarlo.",
   "Collapse or expand the severity chart": "Collassare o espandere il grafico di gravità.",
   "Collapse severity chart": "Grafico della gravità del collasso.",
@@ -2112,5 +2107,11 @@
   "Copy this line's tags as a comma-separated list": "Copia i tag di questa riga come un elenco separato da virgole.",
   "Copy every tag as JSON, grouped by display name with its raw tag variants": "Copia ogni tag come JSON, raggruppato per nome visualizzato con le sue varianti di tag raw.",
   "Filter tags…": "Tag di filtro... tag di filtri.",
-  "No tags match your search": "Nessuna tag corrisponde alla tua ricerca."
+  "No tags match your search": "Nessuna tag corrisponde alla tua ricerca.",
+  "All {0}": "Tutti i _PH0__",
+  "Collapse or expand the signals": "Collassare o espandere i segnali.",
+  "Exclude warm-up logs (before app start)": "Escludere i registri di riscaldamento (prima dell'avvio dell'app)",
+  "Hide the device backlog and build output captured before the app started — the same point the severity chart begins": "Nascondi il backlog del dispositivo e costruisci l'output catturato prima che l'app si avvii  ⁇  lo stesso punto in cui inizia la tabella di gravità.",
+  "{0} signals": "{0} segnala i segnali di PH0.",
+  "{0}x": "{0}xx Il tuo cuore è un po' troppo grande."
 }
