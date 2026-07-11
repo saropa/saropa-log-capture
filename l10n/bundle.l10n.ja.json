@@ -2113,5 +2113,6 @@
   "Exclude warm-up logs (before app start)": "ウォームアップログを除外する (アプリ起動前)",
   "Hide the device backlog and build output captured before the app started — the same point the severity chart begins": "デバイスのバックログを隠し,アプリが起動する前にキャプチャされた出力を構築します. 重症度グラフが始まる同じポイントです.",
   "{0} signals": "{0}信号は,その",
-  "{0}x": "{0}x でした."
+  "{0}x": "{0}x でした.",
+  "App started": "アプリが起動しました."
 }

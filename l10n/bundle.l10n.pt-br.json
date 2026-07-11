@@ -2113,5 +2113,6 @@
   "Exclude warm-up logs (before app start)": "Excluir registros de aquecimento (antes do início da aplicação)",
   "Hide the device backlog and build output captured before the app started — the same point the severity chart begins": "Esconda o backlog do dispositivo e crie a saída capturada antes de o aplicativo ser iniciado  ⁇  no mesmo ponto em que começa o gráfico de gravidade.",
   "{0} signals": "{0} sinais de sinal.",
-  "{0}x": "{0}xx O que é isso?"
+  "{0}x": "{0}xx O que é isso?",
+  "App started": "A aplicação começou a funcionar."
 }
