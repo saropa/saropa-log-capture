@@ -30,12 +30,14 @@
  * only ever fills content, never toggles visibility.
  */
 import { getTroubleChartLaunchScript } from './viewer-trouble-chart-launch';
+import { getTroubleChartRenderScript } from './viewer-trouble-chart-render';
 
 /** Embedded webview JavaScript for the Trouble Mode severity chart. */
 export function getTroubleChartScript(): string {
-    // The launch-line scan is prepended, not imported at runtime: every viewer script is
-    // concatenated into one page scope, so troubleChartLaunchTs() is simply in scope below.
-    return getTroubleChartLaunchScript() + /* javascript */ `
+    // The launch-line scan and the bar/legend/axis builders are prepended, not imported at
+    // runtime: every viewer script is concatenated into one page scope, so troubleChartLaunchTs()
+    // and troubleChartPlotHtml() are simply in scope below (all render calls happen post-load).
+    return getTroubleChartLaunchScript() + getTroubleChartRenderScript() + /* javascript */ `
 /* Seconds per tumbling window; overwritten by the host 'setTroubleChartInterval'
    message (saropaLogCapture.troubleMode.chartInterval). Clamped 1..60. */
 var troubleChartIntervalSec = 5;
@@ -50,6 +52,12 @@ var TROUBLE_CHART_TOP_PAD = 6;
 /* A single event used to render as a 1px dash — visible only if you knew to look. Three
    viewBox units is ~3px at the pinned 60px strip height: unmistakably a bar. */
 var TROUBLE_CHART_MIN_BAR = 3;
+/* Error's larger floor (see troubleChartStackRects): a lone error must stay visible under a
+   tall performance stack rather than collapse to the 3px others get. */
+var TROUBLE_CHART_MIN_ERROR = 5;
+/* Evenly spaced time labels under the strip. The windows are contiguous keys, so bin index
+   maps linearly to x and a label at fraction f can name the window at that fraction honestly. */
+var TROUBLE_CHART_AXIS_TICKS = 5;
 var troubleChartTimer = null;
 /* Timestamp of the row currently open in the side rail, or 0. The chart marks the window
    containing it, so the strip answers "where in the session is the report I am reading".
@@ -68,34 +76,46 @@ function setTroubleChartSelection(timestamp) {
 }
 
 /* Two-digit clock for a window's start time (webview runs in the browser, so
-   Date is available here). Labels the bar tooltip. */
+   Date is available here). Labels the bar tooltip, where per-second precision matters. */
 function troubleChartClock(ms) {
     var d = new Date(ms);
     function p(n) { return (n < 10 ? '0' : '') + n; }
     return p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
 }
 
-/* One O(n) pass over allLines → a map of windowKey → per-level counts plus the
-   first row index in that window (for click-to-scroll). Only 'line' items with a
-   charted level and a real timestamp count; markers carry no level and are skipped
-   (same fence as the feed filter). Returns the contiguous most-recent window slice. */
-function buildTroubleChartBuckets() {
-    var intervalMs = troubleChartIntervalSec * 1000;
+/* Hours:minutes only, for the x-axis tick labels. The strip spans minutes, so the seconds a
+   window happens to start on are noise on the axis and just crowd the labels. */
+function troubleChartClockHM(ms) {
+    var d = new Date(ms);
+    function p(n) { return (n < 10 ? '0' : '') + n; }
+    return p(d.getHours()) + ':' + p(d.getMinutes());
+}
+
+/* One O(n) pass over allLines → windowKey → per-level counts + the first row index in that
+   window (for click-to-scroll). Only 'line' items with a charted level and a real timestamp
+   count; markers carry no level and are skipped (same fence as the feed filter). Also reports
+   sawAppContent: whether any charted event is NON-logcat (app stdout/stderr/console) — the
+   signal that the app has produced output, used to release the pre-launch hold. */
+function troubleChartScanLines(intervalMs) {
     var byKey = {};
-    var minKey = null;
     var maxKey = null;
+    var sawAppContent = false;
     for (var i = 0; i < allLines.length; i++) {
         var item = allLines[i];
         if (!item || item.type !== 'line') { continue; }
         if (!TROUBLE_LEVELS[item.level]) { continue; }
-        /* Honor the SAME enabledLevels set the legend chips (and the toolbar level dots)
-           gate — otherwise a chip reads dimmed while its bar keeps counting the level the
-           user just turned off, contradicting the "chart can never disagree with the feed"
-           fence this file's header describes. Guarded: enabledLevels is owned by the
-           level-filter script, absent in the VM test harness. */
+        /* Honor the SAME enabledLevels set the legend chips (and the toolbar level dots) gate —
+           otherwise a chip reads dimmed while its bar keeps counting the level the user just
+           turned off, contradicting this file's "chart can never disagree with the feed" fence.
+           Guarded: enabledLevels is owned by the level-filter script, absent in the VM tests. */
         if (typeof enabledLevels !== 'undefined' && !enabledLevels.has(item.level)) { continue; }
         var ts = item.timestamp;
         if (typeof ts !== 'number' || !(ts > 0)) { continue; }
+        /* A charted event whose category is NOT explicitly logcat is app output — its presence
+           means we are no longer looking at pure device backlog, so the pre-launch hold must
+           release. Only an explicit 'logcat' category is backlog; anything else (console,
+           stdout, stderr, or an untagged line) is treated as app content. */
+        if (item.category !== 'logcat') { sawAppContent = true; }
         var key = Math.floor(ts / intervalMs);
         var b = byKey[key];
         if (!b) { b = byKey[key] = { key: key, error: 0, warning: 0, performance: 0, firstLine: item.viewerLineIndex }; }
@@ -104,8 +124,17 @@ function buildTroubleChartBuckets() {
             b.firstLine = item.viewerLineIndex;
         }
         if (maxKey == null || key > maxKey) { maxKey = key; }
-        if (minKey == null || key < minKey) { minKey = key; }
     }
+    return { byKey: byKey, maxKey: maxKey, sawAppContent: sawAppContent };
+}
+
+/* Bucket allLines into the contiguous most-recent window slice, starting at the first real
+   (post-app-ready) event. See troubleChartScanLines for the per-line scan. */
+function buildTroubleChartBuckets() {
+    var intervalMs = troubleChartIntervalSec * 1000;
+    var scan = troubleChartScanLines(intervalMs);
+    var byKey = scan.byKey;
+    var maxKey = scan.maxKey;
     var totals = { error: 0, warning: 0, performance: 0 };
     if (maxKey == null) { return { bins: [], maxTotal: 0, intervalMs: intervalMs, totals: totals }; }
     /* The chart starts at the first REAL (post-app-ready) event window. Everything before the
@@ -116,6 +145,17 @@ function buildTroubleChartBuckets() {
        dominate. Trimming to the first real event also removes the long empty gap between that
        burst and app start that a minKey start would otherwise show. */
     var launchTs = troubleChartLaunchTs();
+    /* Pre-launch HOLD: before the launch/build marker has streamed in, the boundary is still 0,
+       so nothing looks pre-app and the device's logcat backlog burst would chart (the field
+       report: the strip starts minutes before the app, then the burst "drops off" when the
+       marker finally arrives). While every charted event so far is device logcat backlog and
+       no boundary has resolved, show "waiting for app to start" instead of that burst. The first
+       non-logcat charted event (app stdout/stderr/console) OR a resolved boundary releases the
+       hold — so an attach / pure-app session with no launch line still charts from its first
+       event, and a launch session simply waits the extra moment for its marker. */
+    if (launchTs === 0 && !scan.sawAppContent) {
+        return { bins: [], maxTotal: 0, intervalMs: intervalMs, totals: totals, waiting: true };
+    }
     var realMinKey = firstRealWindowKey(byKey, launchTs, intervalMs);
     /* Every event so far is pre-app (boundary not yet passed, or nothing charted after it):
        show the empty state rather than the burst — "no app-era trouble yet". */
@@ -155,125 +195,6 @@ function firstRealWindowKey(byKey, launchTs, intervalMs) {
     return best;
 }
 
-/* Draw one stacked bar. Error sits on the baseline, warning above it, performance on
-   top. A non-zero count clamps to TROUBLE_CHART_MIN_BAR so a single event is legible.
-   Every segment is also clamped to the plot height so a spike scaled past the viewBox
-   saturates at the top instead of drawing above it, where the SVG would cut it off. */
-function troubleChartStackRects(bin, geom, scale) {
-    var segs = [
-        { cls: 'tc-bar-error', n: bin.error },
-        { cls: 'tc-bar-warning', n: bin.warning },
-        { cls: 'tc-bar-performance', n: bin.performance },
-    ];
-    var y = TROUBLE_CHART_VH;
-    var rects = '';
-    for (var s = 0; s < segs.length; s++) {
-        if (segs[s].n <= 0 || y <= 0) { continue; }
-        var h = Math.min(y, Math.max(TROUBLE_CHART_MIN_BAR, segs[s].n * scale));
-        y -= h;
-        rects += '<rect class="' + segs[s].cls + '" x="' + geom.barX.toFixed(1) + '" y="' + y.toFixed(1)
-            + '" width="' + geom.barW.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="1"></rect>';
-    }
-    return rects;
-}
-
-/* The selected flag paints a full-height band behind the bar (the row open in the rail). */
-function troubleChartBar(bin, geom, scale, intervalMs, selected) {
-    var rects = troubleChartStackRects(bin, geom, scale);
-    if (!rects && !selected) { return ''; }
-    var band = selected
-        ? '<rect class="tc-selected-band" x="' + geom.cellX.toFixed(1) + '" y="0" width="' + geom.cellW.toFixed(1) + '" height="' + TROUBLE_CHART_VH + '"></rect>'
-        : '';
-    var tip = vt('viewer.troubleChart.barTip', troubleChartClock(bin.key * intervalMs), bin.error, bin.warning, bin.performance);
-    var lineAttr = (bin.firstLine != null) ? ' data-line="' + (bin.firstLine + 1) + '"' : '';
-    return '<g class="tc-bar"' + lineAttr + '><title>' + tip + '</title>' + band + rects + '</g>';
-}
-
-/* One legend chip. The chips are not just labels: each is an interactive level filter that
-   routes to the SAME toggleLevel/soloLevel the toolbar dots use, so data-level is required
-   for the delegated handler. 'on' (the level is in enabledLevels) drives the inactive dim,
-   mirroring .level-dot:not(.active). role=button + tabindex + aria-pressed make the control
-   keyboard-reachable, which the plain <span> was not. enabledLevels may be undefined in the
-   VM test harness (the level-filter script is not loaded there) — default to on. */
-function troubleChartChipHtml(level, count) {
-    var on = (typeof enabledLevels === 'undefined') || enabledLevels.has(level);
-    return '<span class="tc-chip tc-chip-' + level + (on ? '' : ' tc-chip-off')
-        + '" data-level="' + level + '" role="button" tabindex="0" aria-pressed="' + (on ? 'true' : 'false')
-        + '" title="' + vt('viewer.troubleChart.chip.title') + '"><i></i>'
-        + vt('viewer.troubleChart.legend.' + level, count) + '</span>';
-}
-
-/* Per-level totals for the whole charted span, as clickable colored chips in the pane head.
-   Without them a stacked bar's colors are unlabeled and the chart is decoration; making them
-   clickable turns the same colors into a level filter paired with the toolbar dots. */
-function renderTroubleChartLegend(totals) {
-    var el = document.getElementById('trouble-chart-legend');
-    if (!el) { return; }
-    var levels = ['error', 'warning', 'performance'];
-    var html = '';
-    for (var i = 0; i < levels.length; i++) {
-        html += troubleChartChipHtml(levels[i], totals[levels[i]]);
-    }
-    el.innerHTML = html;
-}
-
-/* Live-sync each chip's on/off dim from enabledLevels WITHOUT rebuilding the legend, so a
-   level toggled from a toolbar dot dims its chip immediately (syncLevelDots calls this), and
-   the chip's own click — which routes through toggleLevel → syncLevelDots — comes straight
-   back here. The chart and the toolbar are two views of one enabledLevels set, never two. */
-function syncTroubleChartChips() {
-    if (typeof document === 'undefined') { return; }
-    var el = document.getElementById('trouble-chart-legend');
-    if (!el) { return; }
-    var chips = el.querySelectorAll('.tc-chip');
-    for (var i = 0; i < chips.length; i++) {
-        var lvl = chips[i].getAttribute('data-level');
-        if (!lvl) { continue; }
-        var on = (typeof enabledLevels === 'undefined') || enabledLevels.has(lvl);
-        chips[i].classList.toggle('tc-chip-off', !on);
-        chips[i].setAttribute('aria-pressed', on ? 'true' : 'false');
-    }
-}
-
-/* Peak count, in the head row beside the title. It lived pinned inside the plot's
-   top-left corner until the tallest bar — the device-startup warning rush, which
-   always lands in the leading window — drew straight over it. An overlapped number is
-   worse than none, and the head costs the feed no extra height. */
-function renderTroubleChartPeak(maxTotal) {
-    var el = document.getElementById('trouble-chart-peak');
-    if (!el) { return; }
-    el.textContent = maxTotal > 0 ? vt('viewer.troubleChart.peak', maxTotal) : '';
-}
-
-/* The strip's SVG plus the x-axis labels: the first and last window clock times. Labels
-   are HTML, never SVG <text>: the viewBox is drawn with preserveAspectRatio="none",
-   which would stretch glyphs. */
-function troubleChartPlotHtml(bars, data) {
-    var first = troubleChartClock(data.bins[0].key * data.intervalMs);
-    var last = troubleChartClock(data.bins[data.bins.length - 1].key * data.intervalMs);
-    return '<div class="tc-plot">'
-        + '<svg class="tc-svg" viewBox="0 0 ' + TROUBLE_CHART_VW + ' ' + TROUBLE_CHART_VH
-        + '" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">' + bars + '</svg></div>'
-        + '<div class="tc-axis"><span>' + first + '</span><span>' + last + '</span></div>';
-}
-
-/* Lay the bins across the fixed viewBox width and stack each one. Split out of
-   renderTroubleChart purely to keep both under the 30-line function limit. */
-function troubleChartBarsHtml(data) {
-    var n = data.bins.length;
-    var cellW = TROUBLE_CHART_VW / n;
-    var barW = Math.min(cellW * 0.7, 14);
-    var scale = (TROUBLE_CHART_VH - TROUBLE_CHART_TOP_PAD) / data.maxTotal;
-    var selectedKey = troubleChartSelectedTs > 0 ? Math.floor(troubleChartSelectedTs / data.intervalMs) : null;
-    var bars = '';
-    for (var i = 0; i < n; i++) {
-        var cellX = i * cellW;
-        var geom = { cellX: cellX, cellW: cellW, barX: cellX + (cellW - barW) / 2, barW: barW };
-        bars += troubleChartBar(data.bins[i], geom, scale, data.intervalMs, data.bins[i].key === selectedKey);
-    }
-    return bars;
-}
-
 /* Fill #trouble-chart-body: empty state when there is nothing wrong yet, else the
    SVG. No-op while Trouble Mode is off so the work never runs when the pane is
    hidden. */
@@ -287,7 +208,11 @@ function renderTroubleChart() {
     if (data.bins.length === 0 || data.maxTotal === 0) {
         if (legend) { legend.innerHTML = ''; }
         renderTroubleChartPeak(0);
-        body.innerHTML = '<div class="tc-empty">' + vt('viewer.troubleChart.empty') + '</div>';
+        /* "Waiting for app to start" while the log is still only device backlog (data.waiting),
+           versus "no trouble yet" once the app is running — two different states, two messages,
+           so the strip never reads "all clear" when it simply has not seen the app launch. */
+        var emptyKey = data.waiting ? 'viewer.troubleChart.waiting' : 'viewer.troubleChart.empty';
+        body.innerHTML = '<div class="tc-empty">' + vt(emptyKey) + '</div>';
         return;
     }
     /* Head first: the totals and the peak stay live while collapsed, which is the whole
