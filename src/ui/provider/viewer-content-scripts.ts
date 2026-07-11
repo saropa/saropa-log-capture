@@ -59,6 +59,7 @@ import { getSqlQueryHistoryCoreScript } from '../viewer-stack-tags/viewer-sql-qu
 import { getSqlQueryHistoryPanelScript } from '../viewer-panels/viewer-sql-query-history-panel';
 import { getHighlightScript } from '../viewer-decorations/viewer-highlight';
 import { getScopeFilterScript } from '../viewer-search-filter/viewer-scope-filter';
+import { getTroubleSignalsScript } from '../viewer-search-filter/viewer-trouble-signals';
 import { getWarmupFilterScript } from '../viewer-search-filter/viewer-warmup-filter';
 import { getScopeFilterHintScript } from '../viewer-search-filter/viewer-scope-filter-hint';
 import { getSessionTimeBucketsScript } from '../../modules/viewer/session-time-buckets';
@@ -219,6 +220,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         // the viewer-data block so allLines/renderViewport/scrollToLineNumber exist.
         scriptTag(nonce, getTroubleChartScript()) +
         scriptTag(nonce, getTroubleDetailScript()) +
+        scriptTag(nonce, getTroubleSignalsScript()) +
         scriptTag(nonce, getTagSelectionGuardScript()) +
         scriptTag(nonce, getSourceTagsScript()) +
         scriptTag(nonce, getClassTagsScript()) +

@@ -171,6 +171,11 @@ export const stringsViewer: Record<string, string> = {
     'viewer.drawer.scope.unattrib.title': 'When a scope is active, also exclude lines that have no source file from the debugger',
     'viewer.drawer.scope.unattrib': 'Exclude lines with no source file',
     'viewer.drawer.scope.warmup.title': 'Hide the device backlog and build output captured before the app started — the same point the severity chart begins',
+    // Trouble Mode Signals band — the current log's top recurring signals (host-built chrome).
+    'viewer.troubleSignals.region': 'Signals in this log',
+    'viewer.troubleSignals.title': 'Signals in this log',
+    'viewer.troubleSignals.toggle.title': 'Collapse or expand the signals',
+    'viewer.troubleSignals.toggle.label': 'Collapse signals',
     'viewer.drawer.scope.warmup': 'Exclude warm-up logs (before app start)',
     'viewer.drawer.logTags.hint': 'Tags from your logging framework',
     'viewer.drawer.classTags.hint': 'Class & method where log originated',

@@ -29,12 +29,13 @@ cspell:disable
 
 ### Added
 
+- **Trouble Mode now shows a Signals band for the log you're viewing.** In place of the removed Crash Issues band, a compact band lists the current log's top recurring signals (errors, warnings, performance patterns) with their occurrence counts — the same "Signals in this log" the Signal panel computes, sourced from this capture rather than the cloud. Click a signal to jump the feed to its first occurrence; the band collapses like the severity chart, and "All N" opens the full Signal panel.
 - **New "Exclude warm-up logs" filter hides the device's pre-app noise from the feed.** A checkbox in the **File Scope** filter tab (under "Exclude lines with no source file", off by default) hides everything captured before the app started — the device's logcat backlog and the build tool's output, up to the same app-ready point the severity chart begins at. The data isn't lost: untick it to see the warm-up lines again.
 - **The Trouble Mode error-report rail can now be dragged wider.** A new resize handle sits between the scrollbar minimap and the rail (right edge of the minimap); dragging it resizes the report panel instead of the minimap, between the rail's existing 320–560px bounds. The chosen width persists per workspace.
 
 ### Removed
 
-- **The Crash Issues band is gone from Trouble Mode.** Those rows came from Firebase Crashlytics (your app's top crashes across all users, cloud-cached) and had nothing to do with the log on screen, which was confusing beside a specific capture. Crashlytics is still fully available from its own toolbar button; Trouble Mode now focuses on the log you're viewing. A Signals view sourced from the current log is coming in its place.
+- **The Crash Issues band is gone from Trouble Mode.** Those rows came from Firebase Crashlytics (your app's top crashes across all users, cloud-cached) and had nothing to do with the log on screen, which was confusing beside a specific capture. Crashlytics is still fully available from its own toolbar button; Trouble Mode now focuses on the log you're viewing. A Signals band sourced from the current log takes its place (see Added).
 
 ### Changed
 

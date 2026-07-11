@@ -55,6 +55,10 @@ export const stringsWebview: Record<string, string> = {
     'viewer.troubleChart.peak': 'Peak {0}',
     // Crashlytics issue detail (rail + panel skeleton). {0}=event count, {1}=user count.
     'viewer.troubleCrashlytics.counts': '{0} events · {1} users',
+    // Trouble Mode Signals band. count = per-row occurrence count; total = signals in the head; all = "See all" link.
+    'viewer.troubleSignals.count': '{0}x',
+    'viewer.troubleSignals.total': '{0} signals',
+    'viewer.troubleSignals.all': 'All {0}',
 
     // Find in Files — runtime result strings built client-side.
     'viewer.find.minChars': 'Type at least 2 characters',
