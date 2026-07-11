@@ -2064,8 +2064,6 @@
   "Copy report": "Копировать отчет.",
   "Could not build the detail for this line": "Не удалось создать детали для этой линии.",
   "Could not copy the trouble report": "Не удалось скопировать отчет о проблемах.",
-  "Crash issues": "Проблемы сбоев в работе.",
-  "Crash issues from Crashlytics": "Проблемы сбоев от Crashlytics",
   "Cycle flow-tag display": "Дисплей с тегом цикла - это дисплей, на котором отобража",
   "Entered this surface": "Входил в эту поверхность.",
   "Expand all sections": "Расширить все разделы.",
@@ -2092,8 +2090,6 @@
   "Trouble report copied to the clipboard": "Отчет о проблеме скопирован в буфер.",
   "{0} events · {1} users": "{0} события · {1} пользователи.",
   "{0} · errors {1} · warnings {2} · performance {3}": "{0} · ошибки {1} · предупреждения {2} · производительность {3}.",
-  "All {0} issues": "Все вопросы _PH0__.",
-  "Cached": "Кэшированный кэш.",
   "Could not load this issue.": "Не удалось загрузить эту проблему.",
   "Issue": "Выпуск выпуска Issue.",
   "No stack trace available for this issue.": "Нет следов стека доступны для этого вопроса.",
@@ -2101,7 +2097,6 @@
   "Reveal in log": "Reveal в журнале регистрации.",
   "Scroll the log to the line this report describes": "Прокрутите журнал до линии, описанной в этом отчете.",
   "Try again": "Попробуйте еще раз.",
-  "Before app launch": "Перед запуском приложения.",
   "Click to toggle this level, double-click to focus it": "Нажмите, чтобы переключить этот уровень, дважды щелкните, чтобы сфокусировать его.",
   "Collapse or expand the severity chart": "Снимайте или расширяйте диаграмму тяжести.",
   "Collapse severity chart": "График степени тяжести коллапса.",
@@ -2112,5 +2107,11 @@
   "Copy this line's tags as a comma-separated list": "Копируйте теги этой строки в виде списка, разделенного запятой.",
   "Copy every tag as JSON, grouped by display name with its raw tag variants": "Копируйте каждый тег в JSON, сгруппированный по имени дисплея и его вариантам чистых тегов.",
   "Filter tags…": "Фильтрационные метки...",
-  "No tags match your search": "Никакие теги не совпадают с вашим поиском."
+  "No tags match your search": "Никакие теги не совпадают с вашим поиском.",
+  "All {0}": "Все _PH0__ все",
+  "Collapse or expand the signals": "Сжигать или расширять сигналы.",
+  "Exclude warm-up logs (before app start)": "Исключить журналы разминки (до запуска приложения)",
+  "Hide the device backlog and build output captured before the app started — the same point the severity chart begins": "Спрячьте отставание устройства и создайте выход, захваченный до запуска приложения  ⁇  в той же точке начинается диаграмма тяжести.",
+  "{0} signals": "{0} сигналы передает сигнал _PH0.",
+  "{0}x": "{0}xx Это было очень важно."
 }

@@ -2064,8 +2064,6 @@
   "Copy report": "Kopieren Sie den Bericht.",
   "Could not build the detail for this line": "Es konnte nicht das Detail für diese Zeile erstellt werden.",
   "Could not copy the trouble report": "Der Fehlerbericht konnte nicht kopiert werden.",
-  "Crash issues": "Crash-Probleme sind Probleme, die sich ausbreiten.",
-  "Crash issues from Crashlytics": "Absturzprobleme von Crashlytics",
   "Cycle flow-tag display": "Die Anzeige des Zyklus-Flow-Tags zeigt den Ablauf der Str",
   "Entered this surface": "Gelangt in diese Oberfläche eingegeben.",
   "Expand all sections": "Alle Abschnitte erweitern.",
@@ -2092,8 +2090,6 @@
   "Trouble report copied to the clipboard": "Fehlermeldung kopiert in die Zwischenablage.",
   "{0} events · {1} users": "{0} Ereignisse · {1} Benutzer",
   "{0} · errors {1} · warnings {2} · performance {3}": "{0} · Fehlern {1} · Warnungen {2} · Leistung {3}",
-  "All {0} issues": "Alle {0}-Probleme sind aufgelöst.",
-  "Cached": "Cached im Cache gespeichert",
   "Could not load this issue.": "Dieses Problem konnte nicht geladen werden.",
   "Issue": "Ausgabe der Ausgabe.",
   "No stack trace available for this issue.": "Keine Stack-Trace für diese Ausgabe verfügbar.",
@@ -2101,7 +2097,6 @@
   "Reveal in log": "Reveal im Protokoll.",
   "Scroll the log to the line this report describes": "Scrollen Sie durch das Protokoll bis zur Zeile, die in diesem Bericht beschrieben wird.",
   "Try again": "Versuchen Sie es noch einmal.",
-  "Before app launch": "Bevor die App gestartet wird.",
   "Click to toggle this level, double-click to focus it": "Klicken Sie, um dieses Level zu wechseln, doppelklicken Sie zum Fokussieren.",
   "Collapse or expand the severity chart": "Zusammenbruch oder Erweiterung der Schweregrad-Chart.",
   "Collapse severity chart": "Die Schweregrad-Chart des Zusammenbruchs.",
@@ -2112,5 +2107,11 @@
   "Copy this line's tags as a comma-separated list": "Kopieren Sie die Tags dieser Zeile als eine durch Kommas getrennte Liste.",
   "Copy every tag as JSON, grouped by display name with its raw tag variants": "Kopieren Sie jeden Tag als JSON, gruppiert nach Anzeigennamen mit seinen Raw-Tag-Varianten.",
   "Filter tags…": "Filter-Tags... das ist alles.",
-  "No tags match your search": "Keine Tags passen zu Ihrer Suche."
+  "No tags match your search": "Keine Tags passen zu Ihrer Suche.",
+  "All {0}": "Alle sind ph0__.",
+  "Collapse or expand the signals": "Zusammenbruch oder Ausdehnung der Signale.",
+  "Exclude warm-up logs (before app start)": "Ausschließen Sie Warm-up-Logs (vor App Start)",
+  "Hide the device backlog and build output captured before the app started — the same point the severity chart begins": "Verstecken Sie den Gerätesacklog und erstellen Sie die Ausgabe, die vor dem Start der App erfasst wurde  ⁇  denselben Punkt beginnt das Schweregraddiagramm.",
+  "{0} signals": "{0} Signale sind ein",
+  "{0}x": "{0}x ist ein Phänomen, das sich in der"
 }

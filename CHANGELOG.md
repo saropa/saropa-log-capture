@@ -25,7 +25,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.2.1]
+
+Trouble Mode gets a local Signals band and a resizable panel, a new filter lets you hide noisy pre-app startup lines, and the severity chart finally updates correctly when you toggle levels. [log](https://github.com/saropa/saropa-log-capture/blob/v9.2.1/CHANGELOG.md)
 
 ### Added
 

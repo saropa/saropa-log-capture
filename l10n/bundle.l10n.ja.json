@@ -2064,8 +2064,6 @@
   "Copy report": "報告書のコピー",
   "Could not build the detail for this line": "このラインの詳細を構築できませんでした.",
   "Could not copy the trouble report": "トラブルレポートをコピーできませんでした.",
-  "Crash issues": "クラッシュの問題点 クラッシュ問題",
-  "Crash issues from Crashlytics": "Crashlyticsからのクラッシュ問題",
   "Cycle flow-tag display": "サイクルフロータグ表示",
   "Entered this surface": "この表面に入力した.",
   "Expand all sections": "すべてのセクションを拡張します.",
@@ -2092,8 +2090,6 @@
   "Trouble report copied to the clipboard": "トラブルレポートはクリップボードにコピーされました.",
   "{0} events · {1} users": "{0}イベント · {1}ユーザー",
   "{0} · errors {1} · warnings {2} · performance {3}": "{0} · エラー _PH1__ · 警告 _PH2__ · パフォーマンス _PH3__",
-  "All {0} issues": "すべての {0} 問題を解く",
-  "Cached": "キャッシュされたキャッシング",
   "Could not load this issue.": "この問題を読み込むことができません.",
   "Issue": "発行件数について",
   "No stack trace available for this issue.": "この問題について,スタック・トラックは利用できません.",
@@ -2101,7 +2097,6 @@
   "Reveal in log": "Reveal はログに公開されています.",
   "Scroll the log to the line this report describes": "ログをスクロールして,このレポートで説明されている行まで移動します.",
   "Try again": "また試してください.",
-  "Before app launch": "アプリの起動前に",
   "Click to toggle this level, double-click to focus it": "このレベルを切り替えるとクリックし,フォーカスするにはダブルクリックします.",
   "Collapse or expand the severity chart": "深刻度チャートを崩したり,拡張したりします.",
   "Collapse severity chart": "崩壊の重度チャート",
@@ -2112,5 +2107,11 @@
   "Copy this line's tags as a comma-separated list": "この行のタグをコンマで区切られたリストとしてコピーします.",
   "Copy every tag as JSON, grouped by display name with its raw tag variants": "すべてのタグをJSONとしてコピーし,その原始のタグ変数を持つ表示名によってグループ化します.",
   "Filter tags…": "フィルタータグ...",
-  "No tags match your search": "検索に一致するタグはありません."
+  "No tags match your search": "検索に一致するタグはありません.",
+  "All {0}": "全員PH0で",
+  "Collapse or expand the signals": "信号が崩壊したり,拡大したりします.",
+  "Exclude warm-up logs (before app start)": "ウォームアップログを除外する (アプリ起動前)",
+  "Hide the device backlog and build output captured before the app started — the same point the severity chart begins": "デバイスのバックログを隠し,アプリが起動する前にキャプチャされた出力を構築します. 重症度グラフが始まる同じポイントです.",
+  "{0} signals": "{0}信号は,その",
+  "{0}x": "{0}x でした."
 }

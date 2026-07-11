@@ -2064,8 +2064,6 @@
   "Copy report": "Copiar o relatório do relatório.",
   "Could not build the detail for this line": "Não foi possível construir o detalhe para esta linha.",
   "Could not copy the trouble report": "Não foi possível copiar o relatório de problemas.",
-  "Crash issues": "Questões de crash questões.",
-  "Crash issues from Crashlytics": "Problemas de falha a partir do Crashlytics",
   "Cycle flow-tag display": "A exibição de etiquetas do fluxo do ciclo é marcada pelo display.",
   "Entered this surface": "Entrou nesta superfície de superfície.",
   "Expand all sections": "Expandir todas as seções.",
@@ -2092,8 +2090,6 @@
   "Trouble report copied to the clipboard": "Relatório de problema copiado para a área de transferência.",
   "{0} events · {1} users": "{0} eventos · {1} usuários",
   "{0} · errors {1} · warnings {2} · performance {3}": "{0} · erros {1} · avisos {2} · desempenho {3}",
-  "All {0} issues": "Todas as questões {0}.",
-  "Cached": "Cached em cache.",
   "Could not load this issue.": "Não foi possível carregar este problema.",
   "Issue": "Questão de questão.",
   "No stack trace available for this issue.": "Não há nenhum rastro de pilha disponível para esta edição.",
@@ -2101,7 +2097,6 @@
   "Reveal in log": "Reveal no log.",
   "Scroll the log to the line this report describes": "Role o log para a linha que este relatório descreve.",
   "Try again": "Tente novamente.",
-  "Before app launch": "Antes do lançamento da app, inicie o aplicativo.",
   "Click to toggle this level, double-click to focus it": "Clique para alternar este nível, clique duas vezes para focalizar.",
   "Collapse or expand the severity chart": "Colapse ou expanda o gráfico de gravidade.",
   "Collapse severity chart": "Gráfico de gravidade do colapso.",
@@ -2112,5 +2107,11 @@
   "Copy this line's tags as a comma-separated list": "Copie as tags desta linha como uma lista separada por vírgulas.",
   "Copy every tag as JSON, grouped by display name with its raw tag variants": "Copie cada tag como JSON, agrupado por nome de exibição com suas variantes de tags em bruto.",
   "Filter tags…": "Etiquetas de filtro... etiquetas do filtro.",
-  "No tags match your search": "Nenhuma tag corresponde à sua pesquisa."
+  "No tags match your search": "Nenhuma tag corresponde à sua pesquisa.",
+  "All {0}": "Todos os {0}.",
+  "Collapse or expand the signals": "Colapso ou expansão dos sinais.",
+  "Exclude warm-up logs (before app start)": "Excluir registros de aquecimento (antes do início da aplicação)",
+  "Hide the device backlog and build output captured before the app started — the same point the severity chart begins": "Esconda o backlog do dispositivo e crie a saída capturada antes de o aplicativo ser iniciado  ⁇  no mesmo ponto em que começa o gráfico de gravidade.",
+  "{0} signals": "{0} sinais de sinal.",
+  "{0}x": "{0}xx O que é isso?"
 }
