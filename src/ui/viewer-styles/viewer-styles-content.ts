@@ -12,6 +12,19 @@ export function getContentStyles(): string {
     font-style: italic;
     line-height: 1.5;
 }
+/* App-start divider: the feed's counterpart to the Trouble Mode chart's green app-start bar.
+   Regular markers are a faint green tint; this one is SOLID green with white bold text so the
+   moment the app launched (after the device backlog) stands out from ordinary session markers. */
+.marker.app-start-marker {
+    background: var(--vscode-charts-green, #4caf50);
+    color: #fff;
+    border-top-color: var(--vscode-charts-green, #4caf50);
+    border-bottom-color: var(--vscode-charts-green, #4caf50);
+    font-style: normal;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
 /* DB_16 timestamp burst — green rail matches database level / gutter (same token as level-bar-database).
    Was cyan when Database itself was cyan; rotated to green alongside the Info=blue / Notice=cyan / DB=green palette swap. */
 .marker.marker-db-ts-burst-edge {
