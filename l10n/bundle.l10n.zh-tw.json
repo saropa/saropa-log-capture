@@ -2064,8 +2064,6 @@
   "Copy report": "複製報告的副本. 這樣就能",
   "Could not build the detail for this line": "无法构建此行的细节. 此行中的",
   "Could not copy the trouble report": "无法复制故障报告的文件.",
-  "Crash issues": "崩潰問題 問題 崩壞問題",
-  "Crash issues from Crashlytics": "崩潰問題從 Crashlytics 的時候開始.",
   "Cycle flow-tag display": "循環流量標籤顯示器 - 週期",
   "Entered this surface": "進入這個表面. 這裏的地形是",
   "Expand all sections": "擴展所有部分的範圍.",
@@ -2092,8 +2090,6 @@
   "Trouble report copied to the clipboard": "複製到剪貼板上的問題報告.",
   "{0} events · {1} users": "{0}事件 · {1}使用者",
   "{0} · errors {1} · warnings {2} · performance {3}": "{0} · 錯誤 {1} ·警告 {2} ·性能 {3} 在線",
-  "All {0} issues": "所有的 {0} 問題",
-  "Cached": "預覽 [網路] 有沒有人喜歡的",
   "Could not load this issue.": "沒有辦法加載這個問題.",
   "Issue": "關於問題的發表會 -",
   "No stack trace available for this issue.": "沒有可用的堆 ⁇ 痕跡. 這一問題.",
@@ -2101,7 +2097,6 @@
   "Reveal in log": "在日志中揭示 登录",
   "Scroll the log to the line this report describes": "掃描日志到本報告所描述的行.",
   "Try again": "再試一次 請繼續閱讀",
-  "Before app launch": "在 app 啟動之前,先執行它.",
   "Click to toggle this level, double-click to focus it": "點擊來切換這個層次,雙擊以聚焦它.",
   "Collapse or expand the severity chart": "崩潰或擴大嚴重性圖表的情況.",
   "Collapse severity chart": "崩潰嚴重度圖表 在此處,我們將會",
@@ -2112,5 +2107,11 @@
   "Copy this line's tags as a comma-separated list": "將這個行的標籤複製成以逗號分隔列表.",
   "Copy every tag as JSON, grouped by display name with its raw tag variants": "將每個標籤複製成 JSON,並按顯示名稱分組,以及其原始標籤變體.",
   "Filter tags…": "⁇ 波器標籤 ... 這些是",
-  "No tags match your search": "沒有任何標籤與您的搜尋結果相符."
+  "No tags match your search": "沒有任何標籤與您的搜尋結果相符.",
+  "All {0}": "所有的 PH0__  ⁇",
+  "Collapse or expand the signals": "崩潰或擴展訊號的時間",
+  "Exclude warm-up logs (before app start)": "排除預熱日志 (在應用程式啟動之前)",
+  "Hide the device backlog and build output captured before the app started — the same point the severity chart begins": "隱藏裝置備份和建立在 app 開啟前捕捉的輸出. 在嚴重性圖表開始時,相同點",
+  "{0} signals": "{0} 訊號表示",
+  "{0}x": "{0}x 在這個網站上"
 }
