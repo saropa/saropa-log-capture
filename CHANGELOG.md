@@ -25,6 +25,14 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+The Trouble Mode chart now starts exactly where the app started — the same green line the feed shows — instead of a few minutes early on the device's pre-launch noise.
+
+### Fixed
+
+- **Trouble Mode chart started too early on some captures.** The severity chart derived its own app-start point from a resumable webview scan that could drift, leaving the chart drawing the device's pre-launch logcat backlog while the feed's green "App started" divider was correctly placed. The chart now anchors to the same host-detected launch line the divider uses (`setTroubleChartHostLaunchTs` from `handleRunBoundaries`), so the chart's left edge and the feed divider always agree; the webview scan remains only as the live-capture fallback before the host boundary message arrives.
+
 ## [9.2.2]
 
  [log](https://github.com/saropa/saropa-log-capture/blob/v9.2.2/CHANGELOG.md)
