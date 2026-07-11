@@ -2113,5 +2113,6 @@
   "Exclude warm-up logs (before app start)": "Исключить журналы разминки (до запуска приложения)",
   "Hide the device backlog and build output captured before the app started — the same point the severity chart begins": "Спрячьте отставание устройства и создайте выход, захваченный до запуска приложения  ⁇  в той же точке начинается диаграмма тяжести.",
   "{0} signals": "{0} сигналы передает сигнал _PH0.",
-  "{0}x": "{0}xx Это было очень важно."
+  "{0}x": "{0}xx Это было очень важно.",
+  "App started": "Приложение началось Приложение началось"
 }
