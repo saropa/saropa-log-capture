@@ -2113,5 +2113,6 @@
   "Exclude warm-up logs (before app start)": "排除热身日志 (在应用程序启动之前)",
   "Hide the device backlog and build output captured before the app started — the same point the severity chart begins": "隐藏设备积压和构建输出在应用程序启动之前捕获的 ⁇ 相同点开始严重性图表.",
   "{0} signals": "{0} 信号表示",
-  "{0}x": "{0}x 在一个小时内"
+  "{0}x": "{0}x 在一个小时内",
+  "App started": "应用程序开始 App started"
 }

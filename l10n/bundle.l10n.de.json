@@ -2113,5 +2113,6 @@
   "Exclude warm-up logs (before app start)": "Ausschließen Sie Warm-up-Logs (vor App Start)",
   "Hide the device backlog and build output captured before the app started — the same point the severity chart begins": "Verstecken Sie den Gerätesacklog und erstellen Sie die Ausgabe, die vor dem Start der App erfasst wurde  ⁇  denselben Punkt beginnt das Schweregraddiagramm.",
   "{0} signals": "{0} Signale sind ein",
-  "{0}x": "{0}x ist ein Phänomen, das sich in der"
+  "{0}x": "{0}x ist ein Phänomen, das sich in der",
+  "App started": "App startete wurde gestartet"
 }
