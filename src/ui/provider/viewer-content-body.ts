@@ -117,6 +117,22 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
         <div id="trouble-chart-body" class="trouble-chart-body" role="img"
             aria-label="${t('viewer.troubleChart.region')}"></div>
     </div>
+    <!-- Trouble Mode Signals band: the CURRENT log's top recurring signals (errors, warnings,
+         performance) from signalsInThisLog. Replaces the removed Crashlytics band — this data is
+         about the log on screen. Hidden until Trouble Mode is active AND the log has signals. -->
+    <div id="trouble-signals" class="trouble-signals u-hidden" role="region" aria-label="${t('viewer.troubleSignals.region')}">
+        <div class="trouble-signals-head">
+            <span class="tsg-head-left">
+                <button id="trouble-signals-toggle" class="tsg-toggle" type="button" aria-expanded="true"
+                    aria-controls="trouble-signals-rows" title="${t('viewer.troubleSignals.toggle.title')}"
+                    aria-label="${t('viewer.troubleSignals.toggle.label')}">&#x25BE;</button>
+                <span id="trouble-signals-title" class="tsg-head-title">${t('viewer.troubleSignals.title')}</span>
+            </span>
+            <span id="trouble-signals-count" class="tsg-count"></span>
+        </div>
+        <div id="trouble-signals-rows" class="trouble-signals-rows"></div>
+        <div id="trouble-signals-more" class="trouble-signals-more u-hidden"></div>
+    </div>
     <div id="log-content-wrapper">
     <div class="log-content-clip">
     <div id="log-content" class="nowrap" role="log" aria-label="${t('viewer.logContent.region')}" title="${escapeHtml(t('viewer.logContent.title'))}">
