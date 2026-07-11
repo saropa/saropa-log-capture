@@ -142,14 +142,19 @@ function troubleChartPlotHtml(bars, data) {
 }
 
 /* Lay the bins across the fixed viewBox width and stack each one. Split out of
-   renderTroubleChart purely to keep both under the 30-line function limit. */
+   renderTroubleChart purely to keep both under the 30-line function limit. When the strip has
+   been trimmed to the app era (data.atAppStart), a green divider is drawn at the left edge FIRST,
+   under the bars, marking where the app session started and the start point was reset — the
+   burst before it fell away here on purpose, not by accident. */
 function troubleChartBarsHtml(data) {
     var n = data.bins.length;
     var cellW = TROUBLE_CHART_VW / n;
     var barW = Math.min(cellW * 0.7, 14);
     var scale = (TROUBLE_CHART_VH - TROUBLE_CHART_TOP_PAD) / data.maxTotal;
     var selectedKey = troubleChartSelectedTs > 0 ? Math.floor(troubleChartSelectedTs / data.intervalMs) : null;
-    var bars = '';
+    var bars = data.atAppStart
+        ? '<rect class="tc-app-start" x="0" y="0" width="5" height="' + TROUBLE_CHART_VH + '"></rect>'
+        : '';
     for (var i = 0; i < n; i++) {
         var cellX = i * cellW;
         var geom = { cellX: cellX, cellW: cellW, barX: cellX + (cellW - barW) / 2, barW: barW };

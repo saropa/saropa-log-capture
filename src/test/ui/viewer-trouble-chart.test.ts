@@ -216,6 +216,25 @@ suite('Trouble Mode severity chart — head placement and collapse', () => {
     assert.ok(els['trouble-chart-body'].innerHTML.includes('tc-svg'), 'the plot did render');
   });
 
+  test('a resolved app-start draws the green divider; no boundary draws none', () => {
+    // Default items (buildChartDomCtx) have no launch line -> no boundary -> no divider.
+    const noBoundary = buildChartDomCtx();
+    (noBoundary.ctx.renderTroubleChart as () => void)();
+    assert.ok(!noBoundary.els['trouble-chart-body'].innerHTML.includes('tc-app-start'), 'no divider without an app-start');
+
+    // A fresh context whose log carries a launch line: the boundary resolves, the strip trims to
+    // the app era, and the green app-start divider is drawn at the left edge. A separate context
+    // (not a second render on the first) so the resumable scan starts clean over this log.
+    const withLaunch = buildChartDomCtx();
+    withLaunch.ctx.allLines = [
+      { type: 'line', level: 'warning', timestamp: 10_000, viewerLineIndex: 0 },
+      { type: 'line', level: 'info', rawText: 'Launching lib\\main.dart on x in debug mode...', timestamp: 15_000, viewerLineIndex: 1 },
+      { type: 'line', level: 'error', timestamp: 20_000, viewerLineIndex: 2 },
+    ];
+    (withLaunch.ctx.renderTroubleChart as () => void)();
+    assert.ok(withLaunch.els['trouble-chart-body'].innerHTML.includes('class="tc-app-start"'), 'green app-start divider drawn at the left edge');
+  });
+
   test('every bar carries a full-cell tc-hit target so the whole column is clickable', () => {
     const { ctx, els } = buildChartDomCtx();
     (ctx.renderTroubleChart as () => void)();
