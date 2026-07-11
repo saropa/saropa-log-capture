@@ -38,8 +38,6 @@ export const stringsWebview: Record<string, string> = {
 
     // Trouble Mode severity chart (Stage 3) — client-side chart strings.
     'viewer.troubleChart.empty': 'No errors, warnings, or performance issues in this log yet',
-    // Shown before the app launches: the log so far is only device backlog, not app trouble.
-    'viewer.troubleChart.waiting': 'Waiting for the app to start…',
     // {0}=window start time, {1}=error count, {2}=warning count, {3}=performance count.
     'viewer.troubleChart.barTip': '{0} · errors {1} · warnings {2} · performance {3}',
     // Chart readability (plan 110, Stage 4): legend chips, peak-count label, axis end labels.

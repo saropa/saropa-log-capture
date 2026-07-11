@@ -194,6 +194,11 @@ body.slc-trouble-active .trouble-chart { display: block; }
    the bar, not a stroke on it: preserveAspectRatio="none" stretches the SVG horizontally,
    so any stroke width would render as a thick smear on the vertical edges. */
 .trouble-chart .tc-selected-band { fill: var(--brand-glow); }
+/* App-start divider: a bold green bar at the strip's left edge, drawn once a launch/build
+   boundary has trimmed the chart to the app era. Green is the session-start color across the
+   viewer; it marks where the start point was reset and the pre-app burst was dropped. Not
+   clickable (pointer-events:none) so it never intercepts a click meant for the first bar. */
+.trouble-chart .tc-app-start { fill: var(--vscode-charts-green, #4caf50); pointer-events: none; }
 
 .trouble-chart .tc-empty {
     font-size: var(--text-caption);

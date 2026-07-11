@@ -93,13 +93,10 @@ function troubleChartClockHM(ms) {
 
 /* One O(n) pass over allLines → windowKey → per-level counts + the first row index in that
    window (for click-to-scroll). Only 'line' items with a charted level and a real timestamp
-   count; markers carry no level and are skipped (same fence as the feed filter). Also reports
-   sawAppContent: whether any charted event is NON-logcat (app stdout/stderr/console) — the
-   signal that the app has produced output, used to release the pre-launch hold. */
+   count; markers carry no level and are skipped (same fence as the feed filter). */
 function troubleChartScanLines(intervalMs) {
     var byKey = {};
     var maxKey = null;
-    var sawAppContent = false;
     for (var i = 0; i < allLines.length; i++) {
         var item = allLines[i];
         if (!item || item.type !== 'line') { continue; }
@@ -111,11 +108,6 @@ function troubleChartScanLines(intervalMs) {
         if (typeof enabledLevels !== 'undefined' && !enabledLevels.has(item.level)) { continue; }
         var ts = item.timestamp;
         if (typeof ts !== 'number' || !(ts > 0)) { continue; }
-        /* A charted event whose category is NOT explicitly logcat is app output — its presence
-           means we are no longer looking at pure device backlog, so the pre-launch hold must
-           release. Only an explicit 'logcat' category is backlog; anything else (console,
-           stdout, stderr, or an untagged line) is treated as app content. */
-        if (item.category !== 'logcat') { sawAppContent = true; }
         var key = Math.floor(ts / intervalMs);
         var b = byKey[key];
         if (!b) { b = byKey[key] = { key: key, error: 0, warning: 0, performance: 0, firstLine: item.viewerLineIndex }; }
@@ -125,7 +117,7 @@ function troubleChartScanLines(intervalMs) {
         }
         if (maxKey == null || key > maxKey) { maxKey = key; }
     }
-    return { byKey: byKey, maxKey: maxKey, sawAppContent: sawAppContent };
+    return { byKey: byKey, maxKey: maxKey };
 }
 
 /* Bucket allLines into the contiguous most-recent window slice, starting at the first real
@@ -144,18 +136,13 @@ function buildTroubleChartBuckets() {
        not drawn muted: it belongs behind an opt-in feed filter, not on a triage chart it would
        dominate. Trimming to the first real event also removes the long empty gap between that
        burst and app start that a minKey start would otherwise show. */
+    /* The chart shows EVERYTHING until the app-start boundary is known — the device's pre-app
+       logcat backlog charts normally rather than being held behind a "waiting" state (a blank
+       chart hid real pre-startup issues). The moment the launch/build marker resolves the
+       boundary, the start point resets to the app era (firstRealWindowKey drops the pre-app
+       windows) and a green app-start divider is drawn at the left edge (atAppStart) to mark
+       where the reset happened, so the burst falling away is explained rather than unexplained. */
     var launchTs = troubleChartLaunchTs();
-    /* Pre-launch HOLD: before the launch/build marker has streamed in, the boundary is still 0,
-       so nothing looks pre-app and the device's logcat backlog burst would chart (the field
-       report: the strip starts minutes before the app, then the burst "drops off" when the
-       marker finally arrives). While every charted event so far is device logcat backlog and
-       no boundary has resolved, show "waiting for app to start" instead of that burst. The first
-       non-logcat charted event (app stdout/stderr/console) OR a resolved boundary releases the
-       hold — so an attach / pure-app session with no launch line still charts from its first
-       event, and a launch session simply waits the extra moment for its marker. */
-    if (launchTs === 0 && !scan.sawAppContent) {
-        return { bins: [], maxTotal: 0, intervalMs: intervalMs, totals: totals, waiting: true };
-    }
     var realMinKey = firstRealWindowKey(byKey, launchTs, intervalMs);
     /* Every event so far is pre-app (boundary not yet passed, or nothing charted after it):
        show the empty state rather than the burst — "no app-era trouble yet". */
@@ -177,7 +164,10 @@ function buildTroubleChartBuckets() {
         if (hit) { totals.error += hit.error; totals.warning += hit.warning; totals.performance += hit.performance; }
         bins.push(hit || { key: k, error: 0, warning: 0, performance: 0, firstLine: null });
     }
-    return { bins: bins, maxTotal: maxTotal, intervalMs: intervalMs, totals: totals };
+    /* atAppStart: a boundary resolved, so the strip is trimmed to the app era and the left edge
+       IS the app-start — the render draws the green divider there. 0 = no boundary (attach, pure
+       logcat, or not yet streamed): the whole span shows and there is no app-start to mark. */
+    return { bins: bins, maxTotal: maxTotal, intervalMs: intervalMs, totals: totals, atAppStart: launchTs > 0 };
 }
 
 /* Smallest window key holding an event whose window ENDS after the app-ready boundary — the
@@ -208,11 +198,7 @@ function renderTroubleChart() {
     if (data.bins.length === 0 || data.maxTotal === 0) {
         if (legend) { legend.innerHTML = ''; }
         renderTroubleChartPeak(0);
-        /* "Waiting for app to start" while the log is still only device backlog (data.waiting),
-           versus "no trouble yet" once the app is running — two different states, two messages,
-           so the strip never reads "all clear" when it simply has not seen the app launch. */
-        var emptyKey = data.waiting ? 'viewer.troubleChart.waiting' : 'viewer.troubleChart.empty';
-        body.innerHTML = '<div class="tc-empty">' + vt(emptyKey) + '</div>';
+        body.innerHTML = '<div class="tc-empty">' + vt('viewer.troubleChart.empty') + '</div>';
         return;
     }
     /* Head first: the totals and the peak stay live while collapsed, which is the whole
