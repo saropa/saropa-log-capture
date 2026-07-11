@@ -128,25 +128,21 @@ function buildTroubleChartBuckets() {
     var byKey = scan.byKey;
     var maxKey = scan.maxKey;
     var totals = { error: 0, warning: 0, performance: 0 };
-    if (maxKey == null) { return { bins: [], maxTotal: 0, intervalMs: intervalMs, totals: totals }; }
-    /* The chart starts at the first REAL (post-app-ready) event window. Everything before the
-       app-ready boundary (troubleChartLaunchTs: the build-complete line, or the launch-start
-       line when there is no build) is the device's own logcat backlog plus build-tool output —
-       a burst routinely an order of magnitude larger than the app's own trouble. It is DROPPED,
-       not drawn muted: it belongs behind an opt-in feed filter, not on a triage chart it would
-       dominate. Trimming to the first real event also removes the long empty gap between that
-       burst and app start that a minKey start would otherwise show. */
+    if (maxKey == null) { return { bins: [], maxTotal: 0, intervalMs: intervalMs, totals: totals, atAppStart: false }; }
     /* The chart shows EVERYTHING until the app-start boundary is known — the device's pre-app
        logcat backlog charts normally rather than being held behind a "waiting" state (a blank
        chart hid real pre-startup issues). The moment the launch/build marker resolves the
-       boundary, the start point resets to the app era (firstRealWindowKey drops the pre-app
-       windows) and a green app-start divider is drawn at the left edge (atAppStart) to mark
-       where the reset happened, so the burst falling away is explained rather than unexplained. */
+       boundary (troubleChartLaunchTs: the build-complete line, or the launch-start line when
+       there is no build), the start point resets to the app era: firstRealWindowKey DROPS every
+       pre-app window (device backlog + build output — a burst an order of magnitude larger than
+       the app's own trouble), which also removes the long empty gap before app start, and the
+       green app-start divider is drawn at the left edge (atAppStart) so the burst falling away is
+       explained rather than an unexplained change. */
     var launchTs = troubleChartLaunchTs();
     var realMinKey = firstRealWindowKey(byKey, launchTs, intervalMs);
     /* Every event so far is pre-app (boundary not yet passed, or nothing charted after it):
        show the empty state rather than the burst — "no app-era trouble yet". */
-    if (realMinKey == null) { return { bins: [], maxTotal: 0, intervalMs: intervalMs, totals: totals }; }
+    if (realMinKey == null) { return { bins: [], maxTotal: 0, intervalMs: intervalMs, totals: totals, atAppStart: false }; }
     /* Materialize a CONTIGUOUS window from the first real event (empty windows kept as
        zero-height gaps so bars read as a rate, not a collapsed list); the cap only bounds how
        far back a long session reaches (bug 001 OOM fence: no unbounded array). */
@@ -164,10 +160,13 @@ function buildTroubleChartBuckets() {
         if (hit) { totals.error += hit.error; totals.warning += hit.warning; totals.performance += hit.performance; }
         bins.push(hit || { key: k, error: 0, warning: 0, performance: 0, firstLine: null });
     }
-    /* atAppStart: a boundary resolved, so the strip is trimmed to the app era and the left edge
-       IS the app-start — the render draws the green divider there. 0 = no boundary (attach, pure
-       logcat, or not yet streamed): the whole span shows and there is no app-start to mark. */
-    return { bins: bins, maxTotal: maxTotal, intervalMs: intervalMs, totals: totals, atAppStart: launchTs > 0 };
+    /* atAppStart: draw the green divider only when the left edge genuinely IS the app-start
+       window. That needs BOTH a resolved boundary (launchTs > 0) AND the cap not having pushed
+       the start past it: on a long app-era session (> TROUBLE_CHART_MAX_BUCKETS windows) the cap
+       makes start > realMinKey, so bins[0] is a mid-session window — marking it "app started"
+       would be a lie. No boundary (0: attach, pure logcat, not yet streamed) also means no
+       app-start to mark. */
+    return { bins: bins, maxTotal: maxTotal, intervalMs: intervalMs, totals: totals, atAppStart: launchTs > 0 && start === realMinKey };
 }
 
 /* Smallest window key holding an event whose window ENDS after the app-ready boundary — the
