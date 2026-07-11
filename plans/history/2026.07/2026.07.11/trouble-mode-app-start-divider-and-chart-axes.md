@@ -28,3 +28,26 @@ The Trouble Mode severity chart began before the app launched (charting the devi
 
 ### Verification notes
 - `check-types` clean; scoped `eslint` clean on the changed files; `verify:l10n-keys` OK (2417 keys). The chart/feed test files pass (38 assertions). The run-nav test chains to `vscode` via l10n, so it runs under the Extension Host (or a stubbed `vscode` locally), not bare `node`. Full `npm run compile` (esbuild/catalogs) not run end to end.
+
+## Finish Report (2026-07-11) — chart anchored to the host app-start line
+
+A follow-up defect on the same feature: on some captures the severity chart still began minutes before the app launched (drawing the phone's pre-launch logcat backlog) while the feed's green "App started" divider was correctly placed — the chart and the divider disagreed on where the app started. Reproduced on `reports/20260711/20260711_133030_contacts.log`: the app launches at 13:32:13 (build completes 13:35:27) but the chart began at 13:30:30.
+
+### Root cause
+- The chart derived its app-start boundary from its own resumable webview scan (`troubleChartLaunchTs`, in `viewer-trouble-chart-launch.ts`), independent of the feed divider. Empirical replay of the real log through the compiled scripts showed the scan returns the correct boundary when handed the fully loaded `allLines`, so the field failure is a render-time state issue in the live webview (the scan evaluating to 0), not a logic error in the bucketing. The parallel scanner was a second, drift-prone source of truth for the same fact the host already computes reliably for the divider.
+- The feed divider anchors to the host run-boundary detector (`run-boundaries.ts`), which reads the raw file and is deterministic — it was correct in the field.
+
+### Fix
+- `handleRunBoundaries` (`viewer-run-nav.ts`) now hands the chart the same host launch line the divider uses, via `setTroubleChartHostLaunchTs(firstLaunchLineIndex(msg.boundaries))`, called BEFORE `insertAppStartMarker` shifts `allLines` indices, then triggers `scheduleTroubleChartUpdate()`.
+- `troubleChartLaunchTs()` returns `troubleChartHostLaunchTs` when set (> 0), so the chart's left edge and the feed divider sit on one launch line and cannot disagree. Because `firstRealWindowKey` starts at the first charted event after the boundary, the chart's first bar lands exactly where the divider renders (verified: host launch at 13:32:13 → first bar 13:34:20, `atAppStart` true, the 13:30:30 backlog dropped).
+- The webview content scan remains the live-capture fallback for before the host `runBoundaries` message arrives. `resetTroubleChartLaunchScan` (the `'clear'` path) now also zeroes the host boundary so a stale one cannot bleed into the next log.
+- Trade recorded in the module header: the host boundary is the LAUNCH instant, so the compile phase (launch → build-complete) is now charted as app-era rather than excluded — matching the divider is preferred over excluding a little compile-phase device noise. The fallback scan keeps its build-complete preference for the pre-host-message window.
+
+### Review outcome
+- A delegated read-only review confirmed index handling, splice ordering, guards, and the two new tests are correct, with no existing assertion broken. Two low-severity findings were addressed by documentation: the module header was updated to describe the host-boundary override (it previously claimed the build-complete line was always the boundary), and the `troubleChartHostLaunchTs` comment now records a residual, accepted gap — a log swapped in by an abnormal path that skips `'clear'` AND has no launch line could carry a previous log's boundary; the scan self-heal cannot backstop that because the host early-return means the scan never ran to cache the indices it checks. A robust code guard was judged disproportionate and risky (the marker splice shifts the stored index, so an index-staleness check would false-clear right after the divider is inserted); the normal load path is fully covered by the `'clear'` reset. A guard-symmetry nit was left as-is (harmless: `troubleChartResolveFwd` returns 0 on empty `allLines`).
+
+### Tests
+- `viewer-trouble-chart-prelaunch.test.ts`: the host boundary overrides the scan and aligns the chart with the divider (keeps the post-launch warning, drops the pre-launch backlog, flags `atAppStart`); a new log clears the host boundary. The existing build-preference and self-heal tests still pass (they never set the host ts, exercising the fallback). 31 chart assertions + 4 run-nav assertions pass.
+
+### Verification notes
+- `check-types` clean; scoped `eslint` clean on the changed files. Fix additionally verified by replaying the real reference log through the compiled `run-boundaries` + chart scripts (host launch@498 → first bar 13:34:20, `atAppStart` true). Full `npm run compile` (esbuild/catalogs) not run end to end.
