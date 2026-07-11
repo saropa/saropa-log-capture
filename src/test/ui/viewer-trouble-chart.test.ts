@@ -204,15 +204,40 @@ function buildChartDomCtx(): { ctx: Record<string, unknown>; els: Record<string,
 }
 
 suite('Trouble Mode severity chart — head placement and collapse', () => {
-  test('the peak count renders in the head, never inside the plot', () => {
+  test('the peak count renders in the head AND as the y-axis top scale mark', () => {
     const { ctx, els } = buildChartDomCtx();
     (ctx.renderTroubleChart as () => void)();
 
-    // The device-startup warning rush is always the tallest bar and always lands in the
-    // leading window, so a peak label drawn inside the plot is drawn underneath it.
-    assert.strictEqual(els['trouble-chart-peak'].textContent, 'viewer.troubleChart.peak:2', 'peak labels the busiest window');
-    assert.ok(!els['trouble-chart-body'].innerHTML.includes('tc-ymax'), 'no peak label overlays the plot');
+    // Head peak (survives collapse) and the plot's y-axis max both name the busiest window's
+    // count. The y-axis label is an HTML chip with a background, not SVG text, so a tall bar
+    // rising under it stays legible — the reason the label can live over the plot now.
+    assert.strictEqual(els['trouble-chart-peak'].textContent, 'viewer.troubleChart.peak:2', 'head peak labels the busiest window');
+    assert.ok(els['trouble-chart-body'].innerHTML.includes('class="tc-ymax">2<'), 'y-axis max renders the peak in the plot');
     assert.ok(els['trouble-chart-body'].innerHTML.includes('tc-svg'), 'the plot did render');
+  });
+
+  test('every bar carries a full-cell tc-hit target so the whole column is clickable', () => {
+    const { ctx, els } = buildChartDomCtx();
+    (ctx.renderTroubleChart as () => void)();
+
+    // The colored bar is only ~14px wide; the transparent tc-hit rect spans the full cell so a
+    // click anywhere in the column jumps the feed (field report: "bars are unclickable").
+    const html = els['trouble-chart-body'].innerHTML;
+    assert.ok(html.includes('class="tc-hit"'), 'a full-cell hit rect is drawn');
+    assert.ok(html.includes('data-line='), 'and the bar carries the 1-based feed line to jump to');
+  });
+
+  test('the x-axis shows several HH:MM ticks, never per-second labels', () => {
+    const { ctx, els } = buildChartDomCtx();
+    (ctx.renderTroubleChart as () => void)();
+
+    // The axis <span>s are bare (the y-max span carries a class), so counting them counts ticks.
+    const html = els['trouble-chart-body'].innerHTML;
+    const ticks = (html.match(/<span>/g) || []).length;
+    assert.ok(ticks >= 3, 'more than the old two end labels');
+    // HH:MM only — a seconds field (a third colon-group) on an axis label is the regression.
+    assert.ok(!/<span>\d{2}:\d{2}:\d{2}<\/span>/.test(html), 'axis labels drop the seconds');
+    assert.ok(/<span>\d{2}:\d{2}<\/span>/.test(html), 'axis labels are HH:MM');
   });
 
   test('an empty chart clears the head rather than stranding a stale peak', () => {

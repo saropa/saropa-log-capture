@@ -168,6 +168,50 @@ suite('Trouble Mode severity chart — the pre-app device burst', () => {
     assert.strictEqual(r.maxTotal, 1, 'only the post-build error sets the peak');
   });
 
+  test('holds "waiting for app to start" while only device logcat backlog has streamed', () => {
+    const ctx = buildChartCtx();
+    // The phone dumps its logcat backlog at session start, BEFORE the launch line arrives, so
+    // the boundary is still 0. Rather than chart that device burst (which then "drops off" when
+    // the marker finally lands), the chart holds: every charted event so far is logcat.
+    ctx.allLines = [
+      { type: 'line', level: 'warning', category: 'logcat', timestamp: 10_000, viewerLineIndex: 0 },
+      { type: 'line', level: 'error', category: 'logcat', timestamp: 11_000, viewerLineIndex: 1 },
+    ];
+    const r = buckets(ctx) as BucketResult & { waiting?: boolean };
+    assert.strictEqual(r.bins.length, 0, 'no bars while only backlog is present');
+    assert.strictEqual(r.maxTotal, 0, 'and no peak');
+    assert.strictEqual(r.waiting, true, 'the state is "waiting for app", not "no trouble"');
+  });
+
+  test('the hold releases the moment app output (non-logcat) is charted, even with no launch line', () => {
+    const ctx = buildChartCtx();
+    // An attach session, or app output arriving before any launch line: a charted stdout/console
+    // event means the app is running, so the chart starts rather than waiting forever.
+    ctx.allLines = [
+      { type: 'line', level: 'warning', category: 'logcat', timestamp: 10_000, viewerLineIndex: 0 },
+      { type: 'line', level: 'error', category: 'stdout', timestamp: 11_000, viewerLineIndex: 1 },
+    ];
+    const r = buckets(ctx) as BucketResult & { waiting?: boolean };
+    assert.notStrictEqual(r.waiting, true, 'app output released the hold');
+    assert.strictEqual(r.totals.error, 1, 'the app-output error charts');
+  });
+
+  test('the launch line releases the hold AND trims the backlog before it', () => {
+    const ctx = buildChartCtx();
+    // The real shape: logcat backlog, then the launch line, then an app-era error. The hold
+    // releases (boundary resolved) and the pre-launch backlog window is dropped in one step.
+    ctx.allLines = [
+      { type: 'line', level: 'warning', category: 'logcat', timestamp: 10_000, viewerLineIndex: 0 },
+      { type: 'line', level: 'warning', category: 'logcat', timestamp: 11_000, viewerLineIndex: 1 },
+      { type: 'line', level: 'info', rawText: LAUNCH, category: 'console', timestamp: 15_000, viewerLineIndex: 2 },
+      { type: 'line', level: 'error', category: 'logcat', timestamp: 20_000, viewerLineIndex: 3 },
+    ];
+    const r = buckets(ctx) as BucketResult & { waiting?: boolean };
+    assert.notStrictEqual(r.waiting, true, 'the launch marker released the hold');
+    assert.strictEqual(r.totals.warning, 0, 'the pre-launch backlog window is dropped');
+    assert.strictEqual(r.totals.error, 1, 'only the app-era error charts');
+  });
+
   test('self-heals when a new log replaces the array without a reset', () => {
     const ctx = buildChartCtx();
     ctx.allLines = [

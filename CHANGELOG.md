@@ -25,6 +25,16 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **The Trouble Mode severity chart now waits for the app to start, instead of charting the device's startup noise.** While a capture is still only the phone's logcat backlog (the burst before the app launches), the chart shows "Waiting for the app to start…" and begins at the real app-ready point — so it no longer starts minutes early, shows a large leading gap, or lets the initial spike silently "drop off" once the launch line finally arrives. Attach sessions and captures that never launch an app still chart from their first event.
+- **Trouble Mode chart bars are now clickable across their whole column.** The colored bar is thin, so clicks used to land in the empty space beside it and do nothing; a full-cell hit target now jumps the feed to that window from anywhere in the column.
+- **The Trouble Mode chart axes are clearer.** The peak count is shown as the top mark of the vertical axis (in addition to the head), the time axis carries several evenly spaced ticks instead of just the two ends, and axis times drop the seconds (HH:MM) since the strip spans minutes. A single error also renders a touch taller so it stays visible under a tall performance stack.
+
+---
+
 ## [9.2.1]
 
 Trouble Mode gets a local Signals band and a resizable panel, a new filter lets you hide noisy pre-app startup lines, and the severity chart finally updates correctly when you toggle levels. [log](https://github.com/saropa/saropa-log-capture/blob/v9.2.1/CHANGELOG.md)

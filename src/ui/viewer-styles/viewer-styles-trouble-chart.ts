@@ -134,9 +134,11 @@ body.slc-trouble-active .trouble-chart { display: block; }
     border-right: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
 }
-/* The strip is a rate over time, so the span it covers must be stated. Only the two
-   ends are labeled — interior ticks cannot be placed honestly under
-   preserveAspectRatio="none", which stretches the SVG horizontally. */
+/* The strip is a rate over time, so the span it covers must be stated. The windows are
+   contiguous keys, so bin index maps linearly to x even under preserveAspectRatio="none"
+   (the stretch is uniform); interior HH:MM ticks are therefore honest and are spread here by
+   space-between (first left, last right, the rest between). Seconds are dropped — the strip
+   spans minutes and the start-second of a window is noise on the axis. */
 .trouble-chart .tc-axis {
     display: flex;
     justify-content: space-between;
@@ -145,6 +147,27 @@ body.slc-trouble-active .trouble-chart { display: block; }
     font-variant-numeric: tabular-nums;
     margin-top: 2px;
 }
+/* The peak count as the y-axis top scale mark. An HTML chip layered over the plot's top-left,
+   not an SVG <text>: preserveAspectRatio="none" would stretch a glyph, and a tall bar can rise
+   under this corner — the faint chip background keeps the number legible where it overlaps a
+   bar. pointer-events:none so it never eats a bar click. */
+.trouble-chart .tc-ymax {
+    position: absolute;
+    top: 1px;
+    left: 2px;
+    font-size: 10px;
+    line-height: 1;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    background: color-mix(in srgb, var(--surface-2) 78%, transparent);
+    padding: 0 2px;
+    border-radius: 2px;
+    pointer-events: none;
+}
+/* Transparent full-cell click target (troubleChartBar): makes the whole column jump the feed,
+   not just the ~14px colored bar. fill:transparent (not none) + pointer-events:all so the
+   invisible rect still captures the click. */
+.trouble-chart .tc-hit { fill: transparent; pointer-events: all; }
 
 .trouble-chart .tc-svg {
     display: block;
