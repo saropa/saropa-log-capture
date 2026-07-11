@@ -100,8 +100,18 @@ export function getSessionStreamingScript(): string {
         var metaEl = el.querySelector('.session-item-meta');
         if (metaEl) {
             metaEl.classList.remove('session-shimmer-meta');
-            var dots = renderSeverityDots(s);
-            metaEl.innerHTML = buildSessionMeta(s, dots, null);
+            metaEl.innerHTML = buildSessionMeta(s, null);
+            /* Dots are a sibling of .session-item-meta, not part of its text (see renderItem's
+               comment) — patch them as their own element so a mid-chip ellipsis clip can't
+               swallow a count number during streaming hydration either. */
+            var dotsHtml = renderSeverityDots(s);
+            var dotsEl = metaEl.parentNode ? metaEl.parentNode.querySelector('.sev-dots') : null;
+            if (dotsHtml) {
+                if (dotsEl) { dotsEl.outerHTML = dotsHtml; }
+                else { metaEl.insertAdjacentHTML('afterend', dotsHtml); }
+            } else if (dotsEl) {
+                dotsEl.remove();
+            }
         }
     }
     `;

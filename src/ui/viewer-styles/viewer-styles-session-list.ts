@@ -240,8 +240,12 @@ export function getSessionListStyles(): string {
    Mirrors the .context-menu.flip-submenu rule used by the line context menu. */
 .session-context-menu.flip-submenu .context-menu-submenu-content { left: auto; right: 100%; }
 
-/* --- Severity dots --- */
-.sev-dots { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; color: var(--vscode-descriptionForeground); vertical-align: middle; }
+/* --- Severity dots ---
+ * Renders as a sibling of .session-item-meta (never inside its text), and wraps its own chips
+ * rather than clipping: a bare overflow:hidden here would still cut a .sev-pair mid-box on a
+ * narrow row (a flex chip isn't a text glyph, so text-overflow ellipsis can't clip it cleanly),
+ * silently hiding a category's count. Wrapping to a second line costs row height, not data. */
+.sev-dots { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; row-gap: 2px; font-size: 10px; color: var(--vscode-descriptionForeground); vertical-align: middle; }
 .sev-pair { display: inline-flex; align-items: center; gap: 2px; }
 .sev-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .sev-error { background: var(--vscode-charts-red, #f44336); }

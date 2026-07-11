@@ -174,7 +174,7 @@ export function getSessionRenderingScript(): string {
         var fileTime = sessionDisplayOptions.normalizeNames ? extractFilenameTime(bn) : null;
         var name = applySessionDisplayOptions(displayInput);
         var dots = renderSeverityDots(s);
-        var meta = buildSessionMeta(s, dots, fileTime);
+        var meta = buildSessionMeta(s, fileTime);
         var perfBadge = s.hasPerformanceData ? '<span class="session-item-perf" title="' + vt('viewer.session.perfAvailable') + '"><span class="codicon codicon-graph-line"></span></span>' : '';
         /* Loaded-via-picker rows sit under their LOAD day, not the file's mtime — this badge
            tells the user why an external file shows up here (otherwise it looks misplaced). */
@@ -227,7 +227,10 @@ export function getSessionRenderingScript(): string {
                in the real meta in place once each file resolves. */
             + (s._preview
                 ? '<span class="session-item-meta session-shimmer-meta">' + (s.size ? escapeHtmlText(formatSessionSize(s.size)) : '') + '</span>'
-                : (meta ? '<span class="session-item-meta">' + meta + '</span>' : ''))
+                /* Dots are a SIBLING of the meta span, not inside its text: meta's
+                   ellipsis truncation hard-clips a nested chip mid-box instead of ellipsizing
+                   it, so the dot survives but its count and everything after it vanish. */
+                : (meta ? '<span class="session-item-meta">' + meta + '</span>' : '') + dots)
             + '</div>'
             + renderSessionRowActions()
             + '</div>';
@@ -267,8 +270,8 @@ export function getSessionRenderingScript(): string {
     /* Day heading/formatting helpers and formatSessionSize are loaded
        from viewer-session-transforms.ts as a separate script. */
 
-    /* Build meta line: adapter, time (relative or clock; never blank), dots, duration, size, tags. */
-    function buildSessionMeta(s, dotsHtml, fileTime) {
+    /* Meta line: adapter, time, duration, size, tags — no dots (rendered as a sibling, see renderItem). */
+    function buildSessionMeta(s, fileTime) {
         var parts = [];
         if (s.adapter) parts.push(escapeHtmlText(s.adapter));
         var timePart = '';
@@ -289,7 +292,6 @@ export function getSessionRenderingScript(): string {
             timePart = timeLabel ? (s.relativeTime ? timeLabel + ' ' + s.relativeTime : timeLabel) : (s.relativeTime || clockTime);
         }
         if (timePart) parts.push(escapeHtmlText(timePart));
-        if (dotsHtml) parts.push(dotsHtml);
         if (s.durationMs > 0) parts.push(escapeHtmlText(formatSessionDuration(s.durationMs)));
         if (s.size) parts.push(escapeHtmlText(formatSessionSize(s.size)));
         var allTags = (s.tags || []).map(function(t) { return '#' + t; })
