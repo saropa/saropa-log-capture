@@ -120,11 +120,19 @@ function insertRunSeparators(runSummaries) {
 function handleRunBoundaries(msg) {
     runStartIndices = msg.runStartIndices || [];
     var runSummaries = msg.runSummaries;
+    var launchIdx = firstLaunchLineIndex(msg.boundaries);
+    /* Hand the launch line to the Trouble chart BEFORE the marker splice shifts indices, so the
+       chart's app-start boundary is the very line the green divider anchors to — one source of
+       truth for "where the app started", which the chart's parallel webview scan could not
+       guarantee (it drifted to 0 in the field, charting the whole pre-app device backlog). */
+    if (typeof setTroubleChartHostLaunchTs === 'function') setTroubleChartHostLaunchTs(launchIdx);
     /* App-start divider first (shifts runStartIndices), then the between-run separators. */
-    if (allLines && allLines.length > 0) insertAppStartMarker(firstLaunchLineIndex(msg.boundaries));
+    if (allLines && allLines.length > 0) insertAppStartMarker(launchIdx);
     if (runSummaries && runSummaries.length > 1 && allLines && allLines.length > 0) insertRunSeparators(runSummaries);
     updateRunNav();
     if (typeof renderViewport === 'function') renderViewport(true);
+    /* Re-render the chart so it adopts the host boundary just set (no-op while the mode is off). */
+    if (typeof scheduleTroubleChartUpdate === 'function') scheduleTroubleChartUpdate();
 }
 
 function clearRunNav() {
