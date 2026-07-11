@@ -74,7 +74,6 @@ window.addEventListener('message', function(event) {
         case 'troubleDetailReady':
             if (typeof renderTroubleDetail === 'function') renderTroubleDetail(msg);
             break;
-            break;
         case 'setCorrelationByLineIndex':
             correlationByLineIndex = msg.correlationByLineIndex || {};
             if (typeof renderViewport === 'function') renderViewport(true);
