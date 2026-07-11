@@ -78,6 +78,32 @@ suite('Warm-up filter — boundary-change re-apply', () => {
         assert.strictEqual(lines[0].warmupFiltered, true, 're-applied once the boundary resolved');
     });
 
+    test('re-applies again on a second boundary move, and is a no-op when unchanged', () => {
+        const lines: Line[] = [{ type: 'line', timestamp: 500 }, { type: 'line', timestamp: 1500 }];
+        let boundary = 1000;
+        let recalcs = 0;
+        const ctx = vm.createContext({
+            allLines: lines,
+            troubleChartLaunchTs: () => boundary,
+            recalcAndRender: () => { recalcs++; },
+        }) as Record<string, unknown>;
+        vm.runInContext(getWarmupFilterScript(), ctx, { filename: 'warmup.js' });
+        ctx.excludeWarmupLogs = true;
+        (ctx.applyWarmupFilter as () => void)();
+        assert.strictEqual(lines[1].warmupFiltered, false, 'the 1500 line is app-era at boundary 1000');
+        const afterFirst = recalcs;
+
+        // Unchanged boundary: maybeReapply must not recalc again.
+        (ctx.maybeReapplyWarmupOnBoundaryChange as () => void)();
+        assert.strictEqual(recalcs, afterFirst, 'no redundant recalc when the boundary is unchanged');
+
+        // Boundary self-heals to a later value: the 1500 line is now warm-up.
+        boundary = 2000;
+        (ctx.maybeReapplyWarmupOnBoundaryChange as () => void)();
+        assert.strictEqual(lines[1].warmupFiltered, true, 're-applied on the second boundary move');
+        assert.strictEqual(recalcs, afterFirst + 1, 'exactly one more recalc for the real change');
+    });
+
     test('reset clears the toggle and the applied boundary', () => {
         const ctx = load(1000, []);
         ctx.excludeWarmupLogs = true;
