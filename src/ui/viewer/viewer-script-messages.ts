@@ -74,8 +74,6 @@ window.addEventListener('message', function(event) {
         case 'troubleDetailReady':
             if (typeof renderTroubleDetail === 'function') renderTroubleDetail(msg);
             break;
-        case 'troubleCrashlyticsRows':
-            if (typeof renderTroubleCrashlyticsRows === 'function') renderTroubleCrashlyticsRows(msg);
             break;
         case 'setCorrelationByLineIndex':
             correlationByLineIndex = msg.correlationByLineIndex || {};

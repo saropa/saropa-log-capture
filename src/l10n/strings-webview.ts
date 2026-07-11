@@ -53,13 +53,8 @@ export const stringsWebview: Record<string, string> = {
     'viewer.troubleChart.chip.title': 'Click to toggle this level, double-click to focus it',
     // {0}=the busiest window's total event count. Labels the top of the y axis.
     'viewer.troubleChart.peak': 'Peak {0}',
-    // Trouble Mode Crashlytics band (Stage 5). {0}=event count, {1}=user count.
+    // Crashlytics issue detail (rail + panel skeleton). {0}=event count, {1}=user count.
     'viewer.troubleCrashlytics.counts': '{0} events · {1} users',
-    // Band compaction (plan 110, Stage 5). {0}=total non-archived issue count.
-    'viewer.troubleCrashlytics.allIssues': 'All {0} issues',
-    // {0}=local clock time the on-disk issue cache was last written by the background watcher.
-    'viewer.troubleCrashlytics.updated': 'Updated {0}',
-    'viewer.troubleCrashlytics.updatedUnknown': 'Cached',
 
     // Find in Files — runtime result strings built client-side.
     'viewer.find.minChars': 'Type at least 2 characters',
