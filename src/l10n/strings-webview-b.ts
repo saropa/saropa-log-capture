@@ -22,6 +22,8 @@ export const stringsWebviewB: Record<string, string> = {
     // Inline render tooltips / labels (viewer-data-helpers-render.ts).
     'viewer.deco.outputChannel': 'Output channel: {0}',
     'viewer.marker.collapsed': '{0} adjacent identical markers collapsed into this one',
+    // Green divider inserted at the launch line, marking where the app started in the feed.
+    'viewer.marker.appStart': 'App started',
     'viewer.deco.identicalLines': '{0} identical lines',
     'viewer.deco.contExpand': 'Click to expand {0} continuation lines',
     'viewer.deco.contCollapse': 'Click to collapse {0} continuation lines',

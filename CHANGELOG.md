@@ -29,6 +29,10 @@ cspell:disable
 
  [log](https://github.com/saropa/saropa-log-capture/blob/v9.2.2/CHANGELOG.md)
 
+### Added
+
+- **A green "App started" divider now marks where the app launched in the log itself.** At the launch line — after the device's startup backlog — a bold green divider separates the pre-app noise from the app's own output, the feed counterpart to the Trouble Mode chart's green app-start marker. It appears once per launch and never for attached or logcat-only captures with no launch line.
+
 ### Changed
 
 - **The Trouble Mode severity chart now marks where the app started and resets to it, instead of starting before the app.** The chart shows everything (the device's pre-app logcat backlog included, so nothing is hidden); the moment the launch/build point is detected, the chart resets its start to the app era and draws a bold green app-start divider at the left edge — so the pre-app burst falling away is explained by the divider, not an unexplained change, and the bars scale to the app's own trouble. Attach sessions and captures that never launch an app chart their whole span with no divider.
