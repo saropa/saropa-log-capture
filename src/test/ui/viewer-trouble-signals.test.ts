@@ -7,13 +7,14 @@ import { getTroubleSignalsScript } from '../../ui/viewer-search-filter/viewer-tr
  * when there are none. Pinned in a VM with a stub DOM; the band's IIFE self-guards on `document`.
  */
 
-interface StubEl { innerHTML: string; textContent: string; classes: Set<string>; classList: { add(c: string): void; remove(c: string): void; toggle(c: string, on?: boolean): void; contains(c: string): boolean }; setAttribute(k: string, v: string): void; attrs: Record<string, string>; addEventListener(): void }
+interface StubEl { innerHTML: string; textContent: string; classes: Set<string>; classList: { add(c: string): void; remove(c: string): void; toggle(c: string, on?: boolean): void; contains(c: string): boolean }; setAttribute(k: string, v: string): void; attrs: Record<string, string>; listeners: Record<string, (e: unknown) => void>; addEventListener(t: string, fn: (e: unknown) => void): void }
 
 function el(): StubEl {
     const classes = new Set<string>();
     const attrs: Record<string, string> = {};
+    const listeners: Record<string, (e: unknown) => void> = {};
     return {
-        innerHTML: '', textContent: '', classes, attrs,
+        innerHTML: '', textContent: '', classes, attrs, listeners,
         classList: {
             add: (c) => { classes.add(c); },
             remove: (c) => { classes.delete(c); },
@@ -21,23 +22,26 @@ function el(): StubEl {
             contains: (c) => classes.has(c),
         },
         setAttribute: (k, v) => { attrs[k] = v; },
-        addEventListener: () => { /* the delegated handlers are exercised by calling fns directly */ },
+        addEventListener: (t, fn) => { listeners[t] = fn; },
     };
 }
 
-function load(signalsInThisLog: unknown[] | undefined): { ctx: Record<string, unknown>; els: Record<string, StubEl> } {
+function load(signalsInThisLog: unknown[] | undefined): { ctx: Record<string, unknown>; els: Record<string, StubEl>; jumps: number[] } {
     const els: Record<string, StubEl> = {
         'trouble-signals': el(), 'trouble-signals-rows': el(),
         'trouble-signals-count': el(), 'trouble-signals-more': el(), 'trouble-signals-toggle': el(),
+        'trouble-signals-title': el(),
     };
+    const jumps: number[] = [];
     const ctx = vm.createContext({
         document: { getElementById: (id: string) => els[id] ?? null },
         signalDataCache: signalsInThisLog === undefined ? undefined : { signalsInThisLog },
         vt: (key: string, ...a: unknown[]) => key + (a.length ? ':' + a.join(',') : ''),
+        scrollToLineNumber: (n: number) => { jumps.push(n); },
         parseInt, isNaN,
     }) as Record<string, unknown>;
     vm.runInContext(getTroubleSignalsScript(), ctx, { filename: 'trouble-signals.js' });
-    return { ctx, els };
+    return { ctx, els, jumps };
 }
 
 suite('Trouble Mode Signals band', () => {
@@ -65,6 +69,25 @@ suite('Trouble Mode Signals band', () => {
         const { ctx, els } = load(undefined);
         (ctx.renderTroubleSignalsBand as () => void)();
         assert.ok(els['trouble-signals'].classes.has('u-hidden'), 'band hidden when the cache is absent');
+    });
+
+    test('caps the band at five rows and shows the "All N" link', () => {
+        const many = Array.from({ length: 7 }, (_v, i) => ({ label: 'sig' + i, totalOccurrences: i + 1, lineIndices: [i] }));
+        const { ctx, els } = load(many);
+        (ctx.renderTroubleSignalsBand as () => void)();
+        const rowCount = (els['trouble-signals-rows'].innerHTML.match(/class="tsg-row/g) || []).length;
+        assert.strictEqual(rowCount, 5, 'only TROUBLE_SIGNALS_BAND_ROWS rows render');
+        assert.ok(!els['trouble-signals-more'].classes.has('u-hidden'), 'the "All N" link shows when there are more');
+        assert.match(els['trouble-signals-count'].textContent, /7/, 'the head count is the full total, not the shown count');
+    });
+
+    test('clicking a jumpable row scrolls the feed to its 1-based line', () => {
+        const { els, jumps } = load([{ label: 'RenderFlex', totalOccurrences: 2, lineIndices: [40] }]);
+        const clickHandler = els['trouble-signals-rows'].listeners.click;
+        assert.ok(clickHandler, 'the rows container has a delegated click handler');
+        // The handler reads data-line (0-based) off the closest .tsg-jumpable and adds 1.
+        clickHandler({ target: { closest: (sel: string) => sel === '.tsg-jumpable' ? { getAttribute: (k: string) => (k === 'data-line' ? '40' : null) } : null } });
+        assert.deepStrictEqual(jumps, [41], 'scrollToLineNumber called with the 1-based line');
     });
 
     test('collapse toggles the band class and the button aria', () => {
