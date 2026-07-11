@@ -204,6 +204,9 @@ export function getSignalScriptPartC(): string {
             signalSuggestionsCache = d.filterSuggestions || [];
             renderPulse();
             renderHotFiles(); renderSignalsInThisLog();
+            /* Trouble Mode Signals band reads the same signalsInThisLog cache — refresh it here
+               so the band populates without its own round-trip. Guarded: absent in some harnesses. */
+            if (typeof renderTroubleSignalsBand === 'function') renderTroubleSignalsBand();
             renderEnvironment(); renderSignalTrends(); renderCoOccurrences();
             renderFilterSuggestions();
             /* Update icon bar badge with total signal count (this log + all signals). */
