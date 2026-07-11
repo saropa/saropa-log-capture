@@ -1,6 +1,7 @@
 import * as assert from 'node:assert';
 import * as vm from 'node:vm';
 import { getRunNavScript } from '../../ui/viewer-nav/viewer-run-nav';
+import { getViewerDataHelpersRender } from '../../ui/viewer/viewer-data-helpers-render';
 
 /**
  * The green "App started" divider the run-nav script inserts into the feed at the launch line
@@ -77,5 +78,13 @@ suite('Run nav — the green app-start divider', () => {
     fresh.allLines = [{ type: 'line', level: 'info', timestamp: 10 }];
     (fresh.insertAppStartMarker as (n: number) => void)(-1);
     assert.strictEqual((fresh.allLines as unknown[]).length, 1, 'no divider without a launch line');
+  });
+
+  test('the marker render branch tags an app-start marker with the green app-start-marker class', () => {
+    // renderItem is a string-building embed; assert the marker branch adds the class when
+    // item.appStart, so the inserted divider renders solid green rather than a faint marker.
+    const chunk = getViewerDataHelpersRender();
+    assert.ok(chunk.includes('item.appStart'), 'the marker branch reads item.appStart');
+    assert.ok(chunk.includes('app-start-marker'), 'and emits the app-start-marker class');
   });
 });
