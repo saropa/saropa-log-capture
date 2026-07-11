@@ -25,9 +25,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.2.3]
 
-The Trouble Mode chart now starts exactly where the app started — the same green line the feed shows — instead of a few minutes early on the device's pre-launch noise.
+The Trouble Mode chart now starts exactly where the app started — the same green line the feed shows — instead of a few minutes early on the device's pre-launch noise. [log](https://github.com/saropa/saropa-log-capture/blob/v9.2.3/CHANGELOG.md)
 
 ### Fixed
 
@@ -35,7 +35,7 @@ The Trouble Mode chart now starts exactly where the app started — the same gre
 
 ## [9.2.2]
 
- [log](https://github.com/saropa/saropa-log-capture/blob/v9.2.2/CHANGELOG.md)
+A new green "App started" divider cleanly separates pre-app noise in your log feed, while the Trouble Mode chart aligns to match it, gains fully clickable bars, and cleans up its axes. [log](https://github.com/saropa/saropa-log-capture/blob/v9.2.2/CHANGELOG.md)
 
 ### Added
 
