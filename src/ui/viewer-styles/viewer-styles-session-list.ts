@@ -249,41 +249,24 @@ export function getSessionListStyles(): string {
    Mirrors the .context-menu.flip-submenu rule used by the line context menu. */
 .session-context-menu.flip-submenu .context-menu-submenu-content { left: auto; right: 100%; }
 
-/* --- Severity dots ---
+/* --- Severity count chips ---
  * Renders as a sibling of .session-item-meta (never inside its text), and wraps its own chips
  * rather than clipping: a bare overflow:hidden here would still cut a .sev-pair mid-box on a
  * narrow row (a flex chip isn't a text glyph, so text-overflow ellipsis can't clip it cleanly),
- * silently hiding a category's count. Wrapping to a second line costs row height, not data. */
+ * silently hiding a category's count. Wrapping to a second line costs row height, not data.
+ * The old per-category color dot was removed once the count became a filled colored pill —
+ * the pill carries the category color, so the dot was pure duplication. */
 .sev-dots { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; row-gap: 2px; font-size: 10px; color: var(--vscode-descriptionForeground); vertical-align: middle; }
-.sev-pair { display: inline-flex; align-items: center; gap: 2px; }
-.sev-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.sev-error { background: var(--vscode-charts-red, #f44336); }
-.sev-warning { background: var(--vscode-charts-yellow, #ffc107); }
-.sev-perf { background: var(--vscode-charts-purple, #a855f7); }
-/* Framework reads as "neutral background activity" — pick a hue that does not
-   collide with Info (also blue). Charts-foreground is theme-neutral and keeps
-   the dot legible without competing with the Info/Notice/Database trio. */
-.sev-fw { background: var(--vscode-charts-foreground, #cccccc); }
-/* Info dot follows the level palette: Info=blue (rotated from green when the
-   level palette became Info=blue / Notice=cyan / Database=green). */
-.sev-info { background: var(--vscode-charts-blue, #2196f3); }
-/* Debug / Database / Todo / Notice colors mirror the viewer's top-bar palette
-   so the same file reads consistently across the list badge and the open log. */
-.sev-debug { background: var(--vscode-charts-foreground, #aaaaaa); opacity: 0.7; }
-.sev-database { background: var(--vscode-charts-green, #4caf50); }
-.sev-todo { background: var(--vscode-charts-orange, #ff9800); }
-.sev-notice { background: var(--vscode-charts-cyan, #00bcd4); }
-.sev-other { background: var(--vscode-descriptionForeground, #888); opacity: 0.5; }
+.sev-pair { display: inline-flex; align-items: center; }
 
 /* --- Severity count pills ---
  * Each count was faint descriptionForeground gray (inherited from .sev-dots); now a
  * filled high-contrast pill in its category color, mirroring the viewer top-bar level
- * pills so a log reads the same in the list and open. Backgrounds are fixed hex (not the
- * charts-* theme vars the dots use) for the same reason the top-bar pills are: a
- * theme-variable fill inverts light/dark and would make a fixed foreground fail contrast;
- * fixed hex + a per-category foreground guarantees the number stays VERY legible. The hex
- * matches each dot's fallback, so pill and dot agree in the default palette. Foreground is
- * near-black on every fill except the two dark ones (purple, gray-debug never goes here). */
+ * pills so a log reads the same in the list and open. Backgrounds are fixed hex for the
+ * same reason the top-bar pills are: a theme-variable fill inverts light/dark and would
+ * make a fixed foreground fail contrast; fixed hex + a per-category foreground guarantees
+ * the number stays VERY legible. Foreground is near-black on every fill except the dark
+ * purple (perf). Palette matches the viewer top-bar level colors. */
 .sev-count {
     font-weight: 700;
     line-height: 15px;
