@@ -80,8 +80,7 @@ export function getToolbarStyles(): string {
     justify-content: center;
     width: 24px;
     height: 22px;
-    background: none;
-    border: none;
+    background: none; border: none;
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
     border-radius: 3px;
@@ -308,6 +307,7 @@ export function getToolbarStyles(): string {
    Reduced Motion
    =================================================================== */
 @media (prefers-reduced-motion: reduce) {
+    .toolbar-icon-btn,
     .search-flyout,
     .filter-drawer,
     .toolbar-actions-popover,
