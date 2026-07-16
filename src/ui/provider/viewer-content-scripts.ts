@@ -79,6 +79,7 @@ import { getTrashPanelScript } from '../viewer-panels/viewer-trash-panel';
 import { getFindPanelScript } from '../viewer-panels/viewer-find-panel';
 import { getBookmarkPanelScript } from '../viewer-panels/viewer-bookmark-panel';
 import { getFiltersPanelScript } from '../viewer-search-filter/viewer-filters-panel';
+import { getCaptureSourcesScript } from '../viewer-search-filter/viewer-filter-capture-sources';
 import { getToolbarScript } from '../viewer-toolbar/viewer-toolbar-script';
 import { getOptionsPanelScript } from '../viewer-panels/viewer-options-panel';
 import { getCrashlyticsPanelScript } from '../panels/viewer-crashlytics-panel';
@@ -252,6 +253,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getFindPanelScript()) +
         scriptTag(nonce, getBookmarkPanelScript()) +
         scriptTag(nonce, getFiltersPanelScript()) +
+        scriptTag(nonce, getCaptureSourcesScript()) +
         scriptTag(nonce, getOptionsPanelScript()) +
         scriptTag(nonce, getCrashlyticsPanelScript()) +
         scriptTag(nonce, getCollectionsPanelScript()) +

@@ -159,6 +159,12 @@ export function getOptionsExtraStyles(): string {
 .integrations-companion-item input[type="checkbox"]:disabled {
     cursor: default;
 }
+/* Installed companion: the Marketplace link is redundant (manage from the Extensions view).
+   Both states are in the DOM so the host's setCompanionInstalled message can toggle this class
+   live without re-rendering the row. */
+.integrations-companion-item.is-installed .integrations-companion-link {
+    display: none;
+}
 .integrations-companion-link {
     flex: 0 0 auto;
     font-size: 11px;

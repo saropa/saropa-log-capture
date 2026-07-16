@@ -1,6 +1,7 @@
 # ENH: surface active capture sources in the viewer Filters panel
 
-Status: proposed / not started.
+Status: shipped (2026-07-16). Both parts implemented with the recommended options.
+See the Finish Report at the end.
 
 Bundles two related items the owner raised (2026-07-16) while reviewing the adb-logcat /
 ANR work:
@@ -127,3 +128,38 @@ of "sources active for the current session" to the webview today. Needed:
 3. Webview: extract `viewer-filter-capture-sources.ts`, render the read-only block, wire the
    click-to-Options action; regenerate both catalogs.
 4. l10n keys + English sync (no machine translation).
+
+## Finish Report (2026-07-16)
+
+Both parts shipped with the recommended options (owner approved "go with your picks").
+
+**Part B — checkbox is now authoritative (option 1).**
+- New `saropaLogCapture.integrations.adbLogcat.enabled` boolean (default true) is the master
+  allow the Options → Integrations checkbox binds to. `checkEnabled` gates on it, so an explicit
+  uncheck truly disables the feed; zero-config Flutter behavior is unchanged (auto-detect still
+  runs when enabled). Files: config type + reader, package.json + NLS ×11, providers/adb-logcat.ts.
+- adbLogcat became a UI-only merged id like `explainWithAi`: `mergeIntegrationAdaptersForWebview`
+  gained an `adbLogcatEnabled` arg (reflects the checkbox from the boolean), and the
+  `setIntegrationsAdapters` handler routes the checkbox to `integrations.adbLogcat.enabled` instead
+  of the adapters array. `stripUiOnlyIntegrationAdapterIds` intentionally does NOT strip adbLogcat
+  (the config READ path still honors an explicit array entry as a non-Dart power-user force).
+  Unit tests updated to the 3-arg signature + new adbLogcat cases.
+
+**Part A — "Capture sources" status block (session/config-derived; the 5 streaming sources).**
+- Host helper `src/modules/integrations/capture-source-states.ts` builds the log-relevant source
+  list (adb Logcat, Terminal, Browser, App/File Logs, Database) with on/off from config.
+- New outbound `captureSources` message pushed at viewer load (`log-viewer-provider-setup.ts`) and
+  on any `integrations.*` change (`activation-listeners.ts`); catalog regenerated.
+- Webview: `viewer-filter-capture-sources.ts` renders the read-only rows (built via textContent);
+  a row click opens Options → Integrations (in-page `openOptionsPanel` + `openIntegrationsView`,
+  so no new incoming message). HTML container in the Log Sources tab, CSS in
+  `viewer-styles-filter-drawer.ts`, message case in `viewer-script-messages.ts`, l10n keys for the
+  heading (host `t()`) and On/Off (webview `vt()`).
+
+Refresh cadence is config-derived (open question 2): the block shows the CONFIGURED on/off, not a
+per-session runtime probe. Deferred follow-ups: runtime "streaming now / device attached" state,
+live device reconnect refresh, and a possible tri-state (auto/on/off) for adbLogcat if forcing on
+a non-Dart session from the UI is ever requested.
+
+Verification: full `npm run compile` green (check-types, lint, all catalog verifies, NLS parity +
+coverage, l10n-keys, dist-size), production bundle builds, adapter-constants unit suite passes.

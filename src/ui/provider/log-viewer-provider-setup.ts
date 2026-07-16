@@ -6,11 +6,13 @@ import * as vscode from "vscode";
 import { getNonce, buildViewerHtml, getEffectiveViewerLines } from "./viewer-content";
 import { getConfig, viewerDbDetectorTogglesFromConfig, errorRateConfigFromConfig } from "../../modules/config/config";
 import { DRIFT_ADVISOR_EXTENSION_ID } from "./drift-advisor-integration";
+import { wireCompanionInstallState } from "./companion-install-state";
 import * as helpers from "./viewer-provider-helpers";
 import { getViewerKeybindingsFromConfig } from "../viewer/viewer-keybindings";
 import { getLearningWebviewOptions } from "../../modules/learning/learning-webview-options";
 import { getRootCauseHintViewerStrings } from "../../modules/root-cause-hints/root-cause-hint-l10n-host";
 import { mergeIntegrationAdaptersForWebview } from "../../modules/integrations/integration-adapter-constants";
+import { getCaptureSourceStates } from "../../modules/integrations/capture-source-states";
 import { isCrashlyticsApplicable } from "../../modules/crashlytics/crashlytics-applicability";
 
 export interface LogViewerSetupTarget {
@@ -74,6 +76,8 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
     const c = getConfig();
     const aiOn = vscode.workspace.getConfiguration("saropaLogCapture.ai").get<boolean>("enabled", false);
     target.sendIntegrationsAdapters(mergeIntegrationAdaptersForWebview(c.integrationsAdapters, aiOn, c.integrationsAdbLogcat.enabled));
+    // Read-only "Capture sources" status for the Filters panel Log Sources tab.
+    target.postMessage({ type: 'captureSources', sources: getCaptureSourceStates(c) });
   });
   // Crashlytics is enabled by default, so the webview also needs to know whether THIS workspace is a
   // deployable app. On a library / package project the icon stays hidden so the setup hint never nags.
@@ -83,6 +87,10 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
     );
   });
   queueMicrotask(() => target.postMessage({ type: 'setDriftAdvisorAvailable', available: !!vscode.extensions.getExtension(DRIFT_ADVISOR_EXTENSION_ID) }));
+  // Keep the Integrations companion checkboxes live: seed now and re-post on extension changes.
+  const companionInstallWatcher = wireCompanionInstallState((states) =>
+    target.postMessage({ type: 'setCompanionInstalled', states }));
+  webviewView.onDidDispose(() => companionInstallWatcher.dispose());
   queueMicrotask(() => target.postMessage({ type: 'captureEnabled', enabled: getConfig().enabled }));
   queueMicrotask(() => target.postMessage({ type: 'diagnosticCapture', enabled: getConfig().diagnosticCapture }));
   /* Seed typography from user settings so webview boots with configured font size / line height
