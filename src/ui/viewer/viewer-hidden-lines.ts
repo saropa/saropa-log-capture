@@ -221,11 +221,11 @@ function updateHiddenDisplay() {
     } else {
         hiddenCounterEl.classList.remove('u-hidden');
         var countTextEl = hiddenCounterEl.querySelector('.hidden-count-text');
-        if (countTextEl) countTextEl.textContent = String(count);
+        if (countTextEl) countTextEl.textContent = formatNumber(count);
         hiddenCounterEl.classList.toggle('peeking', isPeeking);
         hiddenCounterEl.title = isPeeking
             ? 'Peeking at hidden lines \\u2014 click to re-hide'
-            : count + ' hidden \\u2014 click to peek, double-click to manage';
+            : formatNumber(count) + ' hidden \\u2014 click to peek, double-click to manage';
     }
 }
 

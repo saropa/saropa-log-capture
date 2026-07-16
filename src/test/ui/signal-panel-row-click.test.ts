@@ -116,8 +116,8 @@ suite('Signal panel per-signal copy', () => {
             'trend handler copies from the cross-session cache',
         );
         assert.ok(
-            script.includes('copySignalFromButton(copyBtn, signalDataCache.signalsInThisLog)'),
-            'in-log handler copies from the this-log cache',
+            script.includes('? signalDataCache.signalsInThisLog : liveSignalsInThisLog'),
+            'in-log handler copies from the this-log cache, falling back to on-screen live signals',
         );
         assert.ok(
             script.includes("type: 'copyToClipboard'"),
@@ -189,7 +189,7 @@ suite('Signal panel summary-signal detail toggle', () => {
     test('in-log click handler toggles the detail body and intercepts copy first', () => {
         const script = getSignalScriptPartD();
         /* Copy must be checked before the jump/toggle branches so the button never also toggles. */
-        const copyIdx = script.indexOf("copySignalFromButton(copyBtn, signalDataCache.signalsInThisLog)");
+        const copyIdx = script.indexOf("? signalDataCache.signalsInThisLog : liveSignalsInThisLog");
         const toggleIdx = script.indexOf("e.target.closest('.signal-detail-toggle')");
         assert.ok(copyIdx !== -1, 'in-log handler must handle the copy button');
         assert.ok(toggleIdx !== -1, 'in-log handler must handle detail-toggle rows');
