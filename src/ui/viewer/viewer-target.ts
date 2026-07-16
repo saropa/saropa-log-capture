@@ -52,7 +52,7 @@ export interface ViewerTarget {
   sendSessionListLoading(folderPath: string): void;
   sendDisplayOptions(options: SessionDisplayOptions): void;
   setSessionActive(active: boolean): void;
-  updateWatchCounts(counts: ReadonlyMap<string, number>): void;
+  updateWatchCounts(counts: ReadonlyMap<string, number>, badgeCount?: number): void;
   sendBookmarkList(files: Record<string, unknown>): void;
   setScopeContext(context: ScopeContext): void;
   setMinimapShowInfo(show: boolean): void;

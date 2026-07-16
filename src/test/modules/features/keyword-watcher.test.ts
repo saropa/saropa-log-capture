@@ -76,6 +76,40 @@ suite('KeywordWatcher', () => {
         assert.strictEqual(hits.length, 1);
     });
 
+    test('getBadgeCount sums only patterns whose alert is badge', () => {
+        const watcher = makeWatcher([
+            { keyword: 'error', alert: 'flash' },
+            { keyword: 'warning', alert: 'badge' },
+            { keyword: 'info', alert: 'none' },
+        ]);
+        watcher.testLine('error and warning and info');
+        watcher.testLine('another warning here');
+        // Only the badge-alert 'warning' pattern (2 hits) counts; flash/none are excluded.
+        assert.strictEqual(watcher.getBadgeCount(), 2);
+    });
+
+    test('getBadgeCount reads a repeated badge keyword slot once, not per entry', () => {
+        // Two entries with the same keyword share one 'counts' slot. testLine increments that
+        // slot once per matching entry (so a single line here stores 2). getBadgeCount must
+        // read the slot once (2), not add it per duplicate entry (which would report 4).
+        const watcher = makeWatcher([
+            { keyword: 'warning', alert: 'badge' },
+            { keyword: 'warning', alert: 'badge' },
+        ]);
+        watcher.testLine('warning here');
+        assert.strictEqual(watcher.getCounts().get('warning'), 2);
+        assert.strictEqual(watcher.getBadgeCount(), 2);
+    });
+
+    test('getBadgeCount is zero when no pattern uses the badge alert', () => {
+        const watcher = makeWatcher([
+            { keyword: 'error', alert: 'flash' },
+            { keyword: 'info', alert: 'none' },
+        ]);
+        watcher.testLine('error and info');
+        assert.strictEqual(watcher.getBadgeCount(), 0);
+    });
+
     test('should report correct alert type per hit', () => {
         const watcher = makeWatcher([
             { keyword: 'error', alert: 'flash' },

@@ -41,7 +41,8 @@ export function setupLineListeners(deps: ListenerDeps): void {
         // The authoritative count is reported from the queue's write-time callback instead, wired via
         // sessionManager.setActiveLineCountObserver() in extension-activation.ts (M1).
         if (data.watchHits && data.watchHits.length > 0) {
-            broadcaster.updateWatchCounts(sessionManager.getWatcher().getCounts());
+            const watcher = sessionManager.getWatcher();
+            broadcaster.updateWatchCounts(watcher.getCounts(), watcher.getBadgeCount());
         }
         if (!data.isMarker) {
             const sourceRef = extractSourceReference(data.text);
