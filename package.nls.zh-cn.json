@@ -219,6 +219,7 @@
   "config.integrations.adbLogcat.captureDeviceOther.title": "Capture non-critical device logcat lines (default: false).",
   "config.integrations.adbLogcat.captureAnr.title": "Always capture ANR and native-crash evidence regardless of level/PID filtering.",
   "config.integrations.adbLogcat.device.title": "Device serial for adb (blank = default device).",
+  "config.integrations.adbLogcat.enabled.title": "Allow the adb logcat feed (Android system log). On by default.",
   "config.integrations.adbLogcat.filterByPid.title": "Filter logcat by debug target PID once known.",
   "config.integrations.adbLogcat.maxBufferLines.title": "Max logcat lines to buffer for sidecar file.",
   "config.integrations.adbLogcat.minLevel.title": "Minimum logcat level to capture.",

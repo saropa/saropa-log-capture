@@ -177,6 +177,14 @@ export interface IntegrationBrowserConfig {
 }
 
 export interface IntegrationAdbLogcatConfig {
+  /**
+   * Master allow for the adb logcat feed (default true). When false, logcat never spawns even
+   * for a Flutter session. When true, the provider still only runs where it applies (auto-detect
+   * on Dart/Flutter sessions, or an explicit `adbLogcat` entry in integrations.adapters). This is
+   * the on/off the Options → Integrations checkbox binds to, so an explicit uncheck truly disables
+   * capture instead of being silently overridden by auto-detect.
+   */
+  readonly enabled: boolean;
   /** Device serial (blank = default device). Maps to `adb -s <serial>`. */
   readonly device: string;
   /** Logcat tag filter expressions (e.g. ["flutter:V", "*:S"]). Passed to adb logcat. */
