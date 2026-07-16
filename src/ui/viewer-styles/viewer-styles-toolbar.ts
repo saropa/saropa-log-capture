@@ -87,6 +87,9 @@ export function getToolbarStyles(): string {
     border-radius: 3px;
     position: relative;
     flex-shrink: 0;
+    /* Smooth the grey↔blue swap when toggling on/off or expanding/collapsing a panel,
+       matching the 0.15s ease the filename hover already uses. */
+    transition: color 0.15s ease, background 0.15s ease;
 }
 .toolbar-icon-btn:disabled {
     opacity: 0.35;
