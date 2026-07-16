@@ -26,7 +26,7 @@ function updateFooterText() {
         }
     }
     if (loadTruncatedInfo) {
-        footerTextEl.appendChild(document.createTextNode(' \\u00b7 Showing first ' + formatNumber(loadTruncatedInfo.shown) + ' of ' + formatNumber(loadTruncatedInfo.total) + ' lines'));
+        footerTextEl.appendChild(document.createTextNode(' Showing first ' + formatNumber(loadTruncatedInfo.shown) + ' of ' + formatNumber(loadTruncatedInfo.total) + ' lines'));
     }
     updateLineCount();
 }
@@ -44,7 +44,7 @@ function updateFooterSelection() {
     var text = sel.toString();
     var lineCount = (text.match(/\\n/g) || []).length + 1;
     var charCount = text.length;
-    el.textContent = lineCount + ' line' + (lineCount !== 1 ? 's' : '') + ', ' + charCount + ' char' + (charCount !== 1 ? 's' : '') + ' selected';
+    el.textContent = formatNumber(lineCount) + ' line' + (lineCount !== 1 ? 's' : '') + ', ' + formatNumber(charCount) + ' char' + (charCount !== 1 ? 's' : '') + ' selected';
 }
 var selectionUpdateRaf = null;
 function scheduleFooterSelectionUpdate() {
