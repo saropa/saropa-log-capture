@@ -4,7 +4,7 @@
  * state, start/stop functions, and a buffer snapshot for sidecar writing.
  */
 
-import { spawn, execFileSync } from 'child_process';
+import { spawn, execFile, execFileSync } from 'child_process';
 import type { ChildProcess } from 'child_process';
 import { parseLogcatLine, meetsMinLevel, type LogcatLine } from './adb-logcat-parser';
 import { getDeviceTier } from '../analysis/device-tag-tiers';
@@ -44,6 +44,37 @@ export function isAdbAvailable(): boolean {
     } catch {
         return false;
     }
+}
+
+/**
+ * Parse the serials of attached, ready devices from `adb devices` output. Exported for testing.
+ *
+ * `adb devices` prints a header line then `<serial>\t<state>` rows. Only rows in the `device`
+ * state are ready for logcat; `offline`, `unauthorized`, and `no permissions` rows are excluded so
+ * the viewer never reports "streaming" for a device that cannot actually deliver logs.
+ */
+export function parseAdbDevices(stdout: string): string[] {
+    return stdout
+        .split(/\r?\n/)
+        .slice(1) // drop the "List of devices attached" header
+        .map((line) => line.trim())
+        .filter((line) => /\tdevice$/.test(line))
+        .map((line) => line.split(/\s+/)[0])
+        .filter((serial) => serial.length > 0);
+}
+
+/**
+ * List attached, ready device serials via `adb devices`. Async (execFile, 5s timeout) so a session
+ * start never blocks the event loop on the subprocess; resolves to [] when adb is missing, errors,
+ * or no device is ready. Used only to distinguish "streaming" from "idle" in the Filters panel.
+ */
+export function listAdbDevices(): Promise<string[]> {
+    return new Promise((resolve) => {
+        execFile('adb', ['devices'], { timeout: 5000 }, (err, stdout) => {
+            if (err || typeof stdout !== 'string') { resolve([]); return; }
+            resolve(parseAdbDevices(stdout));
+        });
+    });
 }
 
 /** Start adb logcat child process. Idempotent (stops previous if running). */

@@ -17,7 +17,7 @@ import { extractSourceReference } from './modules/source/source-linker';
 import { buildScopeContext, type ScopeContext } from './modules/storage/scope-context';
 import { getLearningWebviewOptions } from './modules/learning/learning-webview-options';
 import { mergeIntegrationAdaptersForWebview } from './modules/integrations/integration-adapter-constants';
-import { getCaptureSourceStates } from './modules/integrations/capture-source-states';
+import { resolveAndPostCaptureSources } from './modules/integrations/capture-source-states';
 import { isCrashlyticsApplicable, clearCrashlyticsApplicabilityCache } from './modules/crashlytics/crashlytics-applicability';
 import type { CaptureToggleStatusBar } from './ui/shared/capture-toggle-status-bar';
 
@@ -205,7 +205,7 @@ export function setupConfigListener(
         }
         // The Filters-panel "Capture sources" status reflects any log-streaming integration's on/off.
         if (e.affectsConfiguration('saropaLogCapture.integrations')) {
-            broadcaster.postToWebview({ type: 'captureSources', sources: getCaptureSourceStates(cfg) });
+            void resolveAndPostCaptureSources((m) => broadcaster.postToWebview(m));
         }
         if (e.affectsConfiguration('saropaLogCapture.integrations.adapters')) {
             showSecurityAdapterNotice(context, cfg).catch(() => {});

@@ -162,6 +162,9 @@ window.addEventListener('message', function(event) {
         case 'setDriftAdvisorAvailable':
             if (typeof window !== 'undefined') window.driftAdvisorAvailable = !!msg.available; break;
         case 'setCompanionInstalled':
+            // Cache unconditionally so openIntegrationsView can re-apply even if this arrived before
+            // the integrations helper (applyCompanionInstalled) finished loading.
+            if (typeof window !== 'undefined') window.__companionInstalledStates = msg.states;
             if (typeof applyCompanionInstalled === 'function') applyCompanionInstalled(msg.states); break;
         case 'setDriftAdvisorDbPanelMeta':
             if (typeof window !== 'undefined') window.driftAdvisorDbPanelMeta = (msg.payload != null) ? msg.payload : null; break;
