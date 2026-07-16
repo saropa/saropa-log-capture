@@ -193,7 +193,9 @@ export function getSignalScriptPartD(): string {
         signalsInLogEl.addEventListener('click', function(e) {
             /* Copy detail — checked before the jump/toggle handlers so the button doesn't also act on the row */
             var copyBtn = e.target.closest('.signal-copy-btn');
-            if (copyBtn) { e.stopPropagation(); copySignalFromButton(copyBtn, signalDataCache.signalsInThisLog); return; }
+            /* Resolve against liveSignalsInThisLog when the host sent no metadata signals — the clicked
+               row may be a synthesized on-screen-line fallback entry not present in the cache. */
+            if (copyBtn) { e.stopPropagation(); copySignalFromButton(copyBtn, (signalDataCache.signalsInThisLog && signalDataCache.signalsInThisLog.length) ? signalDataCache.signalsInThisLog : liveSignalsInThisLog); return; }
             var jumpRow = e.target.closest('.signal-jumpable');
             if (jumpRow && jumpRow.dataset.line) {
                 e.stopPropagation();
