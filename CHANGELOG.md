@@ -31,6 +31,8 @@ Tag column polish: the `lowmemorykiller` device tag now reads as "Low Memory Kil
 
 ### Fixed
 
+- **Project Signals panel showed nothing for logs without performance sampling.** The "This log" section was hidden unless a session carried performance-integration data, and its signal list was built only from fingerprints written at session-finalize — so a plainly-open report full of errors displayed an empty panel. The section now shows whenever a log is open, and when no fingerprint metadata exists it falls back to the errors and warnings the viewer already classifies on screen, grouping identical lines with an occurrence count and a click-to-jump to the source line.
+
 - **Panel tab number badge would not clear.** The unread-hit count on the "Saropa Log Capture" panel tab only cleared on a hide/show transition or when a focusable element inside the viewer took focus, and the count that accrued before the view first resolved was never acknowledged when the panel restored already-visible (e.g. reopening a window with the panel showing a log file) — so it could stay pinned on-screen with no way to dismiss it. It now clears when the panel resolves already-visible and the instant you engage the viewer — pointer, keyboard, or scroll — so it surfaces new activity while the panel is away and disappears the moment you look. The badge also now counts only watch patterns whose `alert` is `"badge"`, so a pattern set to `"flash"`/`"none"` no longer contributes.
 
 ### Added
@@ -41,7 +43,12 @@ Tag column polish: the `lowmemorykiller` device tag now reads as "Low Memory Kil
 
 ### Changed
 
+- **Signals panel renamed to "Project Signals."** The sidebar/panel title and its accessibility region label now read "Project Signals" to make clear the panel spans the whole project, not just the open log.
+- **Root-cause hint rows are numbered and no longer sprawl.** Each hint in the in-viewer root-cause strip now carries a leading number and truncates to a single line with an ellipsis so long hints keep the strip compact. Click the hint text to expand it and wrap the full text; opening the detailed Signal Report moved to a small report icon that appears on row hover.
+- Logs panel counts now use comma grouping. The per-log severity pills, the day-heading file count, and the pinned-section count format large values as e.g. "12,480" instead of "12480", so a big log's counts stay readable.
 - Enabled toolbar toggle icons (trouble mode, signals, decorations, format, expanded panels) now render in VS Code link-blue instead of the same dim grey as inactive icons, so you can tell at a glance which toggles are on. Disabled icons stay dim.
+- Large numbers in the toolbar now use comma separators — line counts, hidden-line counts, and selection counters all format with grouping (e.g. "12,345 lines") instead of raw digits.
+- Removed the leading middle-dot separator before the truncated-file line count; the pill background already provides visual separation from the filename.
 - Viewer toolbar counters are now high-contrast pills. Each level count (E/W/I/P/T/N/D/DB) renders as a filled chip in that level's own color with a legibility-tuned foreground, and the line-count ("N lines") uses the theme badge colors — replacing the faint gray text that was hard to read against the toolbar.
 - Log-list (session history) severity counts now use the same high-contrast pill style: each per-log count (errors, warnings, info, etc.) is a filled chip in its category color instead of faint gray text, so a log's severity mix reads consistently in the list and when opened. The small leading color dot was dropped — the colored pill already carries the category color.
 - Logs panel day-heading file count is now a high-contrast pill instead of faint parenthesized text. The per-day count (and the Pinned section count) renders as a filled badge using the theme's badge colors, so it stays legible in every theme; the surrounding parentheses are dropped.
