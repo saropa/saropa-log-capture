@@ -177,12 +177,23 @@ suite('ViewerOptionsPanel', () => {
             // Companion rows are <label> + checkbox like adapters (so no consumer special-cases a
             // checkbox-less variant), but the checkbox is a disabled status indicator carrying NO
             // data-adapter-id — it mirrors install state and never enters the adapter payload.
-            assert.match(html, /<label class="integrations-row integrations-companion-item"/,
+            assert.match(html, /<label class="integrations-row integrations-companion-item[^"]*"/,
                 'companion rows must be <label> like adapter rows');
             assert.match(html, /id="int-companion-[^"]+"[^>]*disabled/,
                 'companion checkbox must be disabled');
             assert.ok(!html.includes('int-companion-') || !/int-companion-[^"]*"[^>]*data-adapter-id/.test(html),
                 'companion checkbox must not carry data-adapter-id');
+        });
+
+        test('should carry data attributes for live install-state toggling', () => {
+            const html = getIntegrationsPanelHtml();
+            // The host setCompanionInstalled message finds rows by data-companion-id and flips the
+            // is-installed class + checkbox using the label strings carried as data-* (no l10n
+            // round-trip). The Marketplace link is always in the DOM (hidden via CSS when installed).
+            assert.ok(html.includes('data-companion-id="'),
+                'companion rows must expose data-companion-id for live lookup');
+            assert.ok(html.includes('data-installed-title="') && html.includes('data-not-installed-title="'),
+                'state-label strings must ride along as data-* for the webview');
         });
 
         test('should place companion rows alphabetically after their adapter neighbors', () => {
@@ -307,6 +318,15 @@ suite('ViewerOptionsPanel', () => {
             assert.ok(script.includes('function filterIntegrations(query)'));
             assert.ok(script.includes('function initIntegrationsOptionsHandlers()'));
             assert.ok(script.includes('initIntegrationsOptionsHandlers()'));
+        });
+
+        test('should define applyCompanionInstalled for live install-state toggling', () => {
+            const script = getOptionsPanelScript();
+            // The host setCompanionInstalled message drives this: it flips is-installed + checkbox
+            // per data-companion-id so installing/removing a companion updates the row without reload.
+            assert.ok(script.includes('function applyCompanionInstalled(states)'));
+            assert.ok(script.includes('data-companion-id'));
+            assert.ok(script.includes("classList.toggle('is-installed'"));
         });
 
         test('should toggle Integrations description with more/less labels in embedded helper', () => {

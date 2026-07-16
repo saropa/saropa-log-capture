@@ -127,6 +127,12 @@ function getFilterTabPanels(): string {
                 ${tierRadio('external', 'none', 'viewer.drawer.external.none.title',false)}
             </fieldset>
         </div>
+        <!-- Read-only status of the log-streaming integrations feeding this log; populated by the
+             host 'captureSources' message. Clicking a row opens Options -> Integrations. -->
+        <div class="capture-sources-block" id="capture-sources-block" style="display:none">
+            <div class="capture-sources-title" title="${t('viewer.drawer.captureSources.hint')}">${t('viewer.drawer.captureSources.title')}</div>
+            <div class="capture-sources-list" id="capture-sources-list"></div>
+        </div>
     </div>
     <div class="filter-tab-panel" id="exclusions-section" role="tabpanel" style="display:none">
         <div class="exclusion-input-wrapper">

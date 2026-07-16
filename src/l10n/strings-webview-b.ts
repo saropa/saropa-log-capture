@@ -154,6 +154,8 @@ export const stringsWebviewB: Record<string, string> = {
     'viewer.search.hiddenNotice.disable': 'Disable {0} filter',
     'viewer.search.filterName.level': 'Level',
     'viewer.search.filterName.tier': 'Log Sources',
+    'viewer.drawer.captureSources.on': 'On',
+    'viewer.drawer.captureSources.off': 'Off',
     'viewer.search.filterName.exclusions': 'Exclusions',
     'viewer.search.filterName.sourceTag': 'Log Tags',
     'viewer.search.filterName.classTag': 'Source Classes',

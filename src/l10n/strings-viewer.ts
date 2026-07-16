@@ -149,6 +149,8 @@ export const stringsViewer: Record<string, string> = {
     'viewer.drawer.device.none.title': 'Hide device/system logs (critical errors remain visible)',
     'viewer.drawer.external.legendText': 'External',
     'viewer.drawer.external.legendHint': '— Saved logs, terminal, browser, drift-perf',
+    'viewer.drawer.captureSources.title': 'Capture sources',
+    'viewer.drawer.captureSources.hint': 'Integrations feeding this log — click to configure',
     'viewer.drawer.external.all.title': 'Show all external source output',
     'viewer.drawer.external.warnplus.title': 'Show only warnings and errors from external sources',
     'viewer.drawer.external.none.title': 'Hide all external source output',

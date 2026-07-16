@@ -161,6 +161,8 @@ window.addEventListener('message', function(event) {
             break;
         case 'setDriftAdvisorAvailable':
             if (typeof window !== 'undefined') window.driftAdvisorAvailable = !!msg.available; break;
+        case 'setCompanionInstalled':
+            if (typeof applyCompanionInstalled === 'function') applyCompanionInstalled(msg.states); break;
         case 'setDriftAdvisorDbPanelMeta':
             if (typeof window !== 'undefined') window.driftAdvisorDbPanelMeta = (msg.payload != null) ? msg.payload : null; break;
         case 'driftViewerHealth':
@@ -357,6 +359,9 @@ window.addEventListener('message', function(event) {
             var ibPerf = document.getElementById('ib-performance');
             if (ibPerf) ibPerf.classList.toggle('ib-integration-enabled', window.integrationAdapters.indexOf('performance') >= 0);
             if (typeof window.applyFooterQualityReportState === 'function') window.applyFooterQualityReportState();
+            break;
+        case 'captureSources':
+            if (typeof renderCaptureSources === 'function') renderCaptureSources(msg.sources);
             break;
         case 'crashlyticsApplicable':
             // Library / package projects (no app evidence) keep the icon hidden even when the
