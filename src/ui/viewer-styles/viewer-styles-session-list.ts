@@ -161,10 +161,19 @@ export function getSessionListStyles(): string {
     flex-shrink: 0;
     transition: transform 0.15s ease;
 }
-/* File count shown dimmed in parentheses beside the date label. */
+/* File count shown as a pill beside the date label. Uses VS Code's badge tokens
+   (--vscode-badge-foreground/-background) — the same pair the workbench uses for its
+   own count badges, so contrast stays AA-legible in every theme. No opacity dimming:
+   the badge background is what separates it from the heading, not faded text. */
 .session-day-count {
-    font-weight: 400;
-    opacity: 0.5;
+    display: inline-block;
+    font-weight: 600;
+    font-size: 10px;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 8px;
+    color: var(--vscode-badge-foreground, #ffffff);
+    background: var(--vscode-badge-background, #4d4d4d);
 }
 
 /* Collapsed day group: hide session items. */
@@ -265,5 +274,35 @@ export function getSessionListStyles(): string {
 .sev-todo { background: var(--vscode-charts-orange, #ff9800); }
 .sev-notice { background: var(--vscode-charts-cyan, #00bcd4); }
 .sev-other { background: var(--vscode-descriptionForeground, #888); opacity: 0.5; }
+
+/* --- Severity count pills ---
+ * Each count was faint descriptionForeground gray (inherited from .sev-dots); now a
+ * filled high-contrast pill in its category color, mirroring the viewer top-bar level
+ * pills so a log reads the same in the list and open. Backgrounds are fixed hex (not the
+ * charts-* theme vars the dots use) for the same reason the top-bar pills are: a
+ * theme-variable fill inverts light/dark and would make a fixed foreground fail contrast;
+ * fixed hex + a per-category foreground guarantees the number stays VERY legible. The hex
+ * matches each dot's fallback, so pill and dot agree in the default palette. Foreground is
+ * near-black on every fill except the two dark ones (purple, gray-debug never goes here). */
+.sev-count {
+    font-weight: 700;
+    line-height: 15px;
+    padding: 0 6px;
+    border-radius: 8px;
+    letter-spacing: 0.2px;
+    color: #fff;
+    background: var(--vscode-badge-background);
+}
+.sev-count-error    { background: #f44336; color: #2a0400; }
+.sev-count-warning  { background: #ffc107; color: #1c1200; }
+.sev-count-info     { background: #2196f3; color: #051f33; }
+.sev-count-debug    { background: #aaaaaa; color: #141414; }
+.sev-count-database { background: #4caf50; color: #0a2410; }
+.sev-count-perf     { background: #a855f7; color: #1a0033; }
+.sev-count-todo     { background: #ff9800; color: #1c1200; }
+.sev-count-notice   { background: #00bcd4; color: #062a2e; }
+.sev-count-fw       { background: #cccccc; color: #141414; }
+/* Residual "other" bucket has no semantic color — keep it the neutral theme badge pair. */
+.sev-count-other    { background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); }
 `;
 }
