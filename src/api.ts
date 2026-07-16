@@ -19,6 +19,7 @@ import type {
     WriteLineOptions,
 } from './api-types';
 import { getDefaultIntegrationRegistry } from './modules/integrations';
+import { getDailySummary } from './api-daily-summary';
 
 /** Result of createApi — the public API object plus lifecycle helpers. */
 export interface ApiHandle {
@@ -59,6 +60,7 @@ export function createApi(sessionManager: SessionManagerImpl): ApiHandle {
     sessionManager.addSplitListener(splitListener);
 
     const api: SaropaLogCaptureApi = {
+        apiVersion: 1,
         onDidWriteLine: lineEmitter.event,
         onDidSplitFile: splitEmitter.event,
         onDidStartSession: startEmitter.event,
@@ -88,6 +90,10 @@ export function createApi(sessionManager: SessionManagerImpl): ApiHandle {
             return new vscode.Disposable(() => {
                 registry.unregister(provider.id);
             });
+        },
+
+        getDailySummary(date: string) {
+            return getDailySummary(date);
         },
     };
 

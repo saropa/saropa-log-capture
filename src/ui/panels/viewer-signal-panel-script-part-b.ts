@@ -242,7 +242,7 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
     function renderSignalsInThisLog() {
         var listEl = document.getElementById('signals-in-log-list'), summaryEl = document.getElementById('signals-in-log-summary');
         var emptyBlock = document.getElementById('signal-this-log-empty');
-        var signalsAll = signalDataCache.signalsInThisLog || [];
+        var signalsAll = resolveSignalsInThisLog();
         /* Fu7: time-window filter. Signals lacking a timestamp are hidden under any active window
            (you can't time-locate them, so they aren't in "the last X"). No-op when window is null. */
         var signals;
