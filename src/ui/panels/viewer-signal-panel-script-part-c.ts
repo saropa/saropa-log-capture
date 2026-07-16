@@ -135,8 +135,10 @@ export function getSignalScriptPartC(): string {
                 lines.push('');
             }
         }
-        var signalsInLog = signalDataCache.signalsInThisLog || [];
-        if (hasLog && signalsInLog.length > 0) {
+        /* Resolve host-or-fallback so the copy reflects what the panel shows (fallback live signals
+           included), gated on logOpen not hasLog — a no-perf log still has this-log signals. */
+        var signalsInLog = resolveSignalsInThisLog();
+        if (logOpen && signalsInLog.length > 0) {
             lines.push('## Signals in this log');
             lines.push('');
             for (var i = 0; i < signalsInLog.length; i++) {
@@ -249,8 +251,10 @@ export function getSignalScriptPartC(): string {
             if (typeof renderTroubleSignalsBand === 'function') renderTroubleSignalsBand();
             renderEnvironment(); renderSignalTrends(); renderCoOccurrences();
             renderFilterSuggestions();
-            /* Update icon bar badge with total signal count (this log + all signals). */
-            var sigTotal = (signalDataCache.signalsInThisLog || []).length + (signalDataCache.allSignals || []).length;
+            /* Update icon bar badge with total signal count (this log + all signals). Use
+               liveSignalsInThisLog (set by renderSignalsInThisLog above) so fallback live signals are
+               counted — signalDataCache.signalsInThisLog is empty in the no-fingerprint fallback case. */
+            var sigTotal = (liveSignalsInThisLog || []).length + (signalDataCache.allSignals || []).length;
             if (typeof updateIconBadge === 'function') updateIconBadge('ib-signal-badge', 'ib-signal-count', sigTotal);
         }
         if (e.data.type === 'performanceData') {
