@@ -30,9 +30,10 @@ test("should contain dismiss button styles with hover-reveal pattern", () => {
     /\.rch-dismiss-btn\s*\{.*?opacity:\s*0/s,
     "dismiss button must be hidden by default",
   );
+  // Selector list (hover + focus-within + :focus) may precede the brace, so allow any non-brace chars.
   assert.match(
     css,
-    /li:hover\s+\.rch-dismiss-btn\s*\{.*?opacity:\s*1/s,
+    /li:hover\s+\.rch-dismiss-btn[^{]*\{.*?opacity:\s*1/s,
     "dismiss button must appear on li hover",
   );
   assert.match(

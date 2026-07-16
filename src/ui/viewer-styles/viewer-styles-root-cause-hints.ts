@@ -100,7 +100,11 @@ export function getRootCauseHypothesesStyles(): string {
     opacity: 0;
     transition: opacity 0.15s;
 }
-.root-cause-hypotheses-list li:hover .rch-report-btn {
+/* Reveal on row hover OR keyboard focus — opacity:0 alone leaves the button focusable but invisible,
+   so a keyboard/touch user could tab to an unseen control. focus-within covers the button itself. */
+.root-cause-hypotheses-list li:hover .rch-report-btn,
+.root-cause-hypotheses-list li:focus-within .rch-report-btn,
+.rch-report-btn:focus {
     opacity: 1;
 }
 .rch-report-btn:hover {
@@ -121,7 +125,10 @@ export function getRootCauseHypothesesStyles(): string {
     opacity: 0;
     transition: opacity 0.15s;
 }
-.root-cause-hypotheses-list li:hover .rch-dismiss-btn {
+/* Same hover-or-focus reveal as the report icon so the dismiss control is reachable without a mouse. */
+.root-cause-hypotheses-list li:hover .rch-dismiss-btn,
+.root-cause-hypotheses-list li:focus-within .rch-dismiss-btn,
+.rch-dismiss-btn:focus {
     opacity: 1;
 }
 .rch-dismiss-btn:hover {
