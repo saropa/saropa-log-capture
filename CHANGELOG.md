@@ -39,7 +39,7 @@ Tag column polish: the `lowmemorykiller` device tag now reads as "Low Memory Kil
 
 ### Changed
 
-- Viewer toolbar: the line-count ("N lines") now renders as a high-contrast pill using the theme badge colors, replacing the faint gray text that was hard to read against the toolbar.
+- Viewer toolbar counters are now high-contrast pills. Each level count (E/W/I/P/T/N/D/DB) renders as a filled chip in that level's own color with a legibility-tuned foreground, and the line-count ("N lines") uses the theme badge colors — replacing the faint gray text that was hard to read against the toolbar.
 - Tag chips: added display-label overrides so all-lowercase Android system tags render as words — `lowmemorykiller` → "Low Memory Killer", `dalvikvm` → "Dalvik VM", `surfaceflinger` → "Surface Flinger", `bufferqueue`, `audioflinger`, `audiotrack`, `mediacodec`, `mediaplayer`, `cameraservice`, `inputmethodmanager`, plus casing fixes for `wpa_supplicant` → "WPA Supplicant" and `libc`.
 - Tag-cell hover tooltip now joins tag names with ", " instead of a space, keeping multi-word tags legible (e.g. "Perf, Frame Stall, Flutter").
 - **Flutter DevTools inspector "ghost errors" no longer show as errors.** Lines from the Layout Explorer's async widget-tree probe (`ext.flutter.inspector.getLayoutExplorerNode` / a `getLayoutExplorerNode` stack frame) throw a "Null check operator used on a null value" that is developer-tooling noise, not an app fault. Such lines now classify as `debug` — kept off the Errors filter and the timeline — even when they arrive on stderr. This catches the signature-bearing frame only; whole-stack suppression of the bare header line is tracked in `plans/history/2026.07/2026.07.16/BUG_Better_Support_ANR.md`.

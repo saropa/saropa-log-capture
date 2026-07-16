@@ -20,7 +20,7 @@ export interface ToolbarHtmlOptions {
 
 /** One severity dot-group cell. Glyph (E/W/…) stays symbolic; title + aria-label localize. */
 function levelDot(level: string, glyph: string): string {
-    return `<span class="level-dot-group" data-level="${level}" title="${t('viewer.toolbar.levelDot.' + level + '.title')}" role="img" aria-label="${t('viewer.level.' + level)}"><span class="level-dot active level-dot-${level}"></span><span class="level-letter level-letter-${level}">${glyph}</span><span class="dot-count"></span></span>`;
+    return `<span class="level-dot-group" data-level="${level}" title="${t('viewer.toolbar.levelDot.' + level + '.title')}" role="img" aria-label="${t('viewer.level.' + level)}"><span class="level-dot active level-dot-${level}"></span><span class="level-letter level-letter-${level}">${glyph}</span><span class="dot-count dot-count-${level}"></span></span>`;
 }
 
 /** Toolbar HTML: nav arrows, icons, level dots, line count, filename. */
