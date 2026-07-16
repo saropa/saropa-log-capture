@@ -3,7 +3,7 @@ REF log:d:\src\contacts\reports\20260714\20260714_094848_contacts.log
 # Better Support for ANR / DevTools-Inspector Noise in Captured Logs
 
 Status: Fixed (in-scope acceptance §4). Deferred items §5 tracked in
-`bugs/ENH_adb_logcat_capture_source.md` and `D:\src\contacts\bugs\BUG_anr_telemetry_debug_suppression.md`.
+`plans/history/2026.07/2026.07.16/ENH_adb_logcat_capture_source.md` (shipped) and `D:\src\contacts\bugs\BUG_anr_telemetry_debug_suppression.md`.
 
 ## 1. Scope of this file (read first)
 
