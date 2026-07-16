@@ -97,7 +97,7 @@ suite('head-tag chips in the tag column', () => {
         const title = run(
             'headTagsTitle([{name:"perf",level:"performance"},{name:"frame-stall",level:"performance"},{name:"db",level:"database"}])',
         );
-        assert.strictEqual(title, 'Perf Frame Stall Db');
+        assert.strictEqual(title, 'Perf, Frame Stall, Db');
     });
 
     test('stripTagBracketSuffix drops a trailing per-line sequence/thread-id counter', () => {
@@ -136,6 +136,23 @@ suite('head-tag chips in the tag column', () => {
         assert.strictEqual(run('formatTagLabel("flutter")'), 'Flutter', 'plain lowercase word is capitalized');
         assert.strictEqual(run('formatTagLabel("frame-stall")'), 'Frame Stall', 'hyphen becomes a space');
         assert.strictEqual(run('formatTagLabel("system.err")'), 'System Err', 'dot becomes a space');
+        // Unbreakable all-lowercase token: heuristic splitter would yield "Lowmemorykiller";
+        // the explicit override gives the readable multi-word label.
+        assert.strictEqual(run('formatTagLabel("lowmemorykiller")'), 'Low Memory Killer', 'override wins');
+        assert.strictEqual(run('formatTagLabel("LOWMEMORYKILLER")'), 'Low Memory Killer', 'override is case-insensitive');
+        assert.strictEqual(run('formatTagLabel("dalvikvm")'), 'Dalvik VM', 'lowercase compound + acronym');
+        assert.strictEqual(run('formatTagLabel("mediacodec")'), 'Media Codec', 'lowercase compound splits');
+        // Acronym / proper-name casing the Title-Case pass would otherwise mangle.
+        assert.strictEqual(run('formatTagLabel("wpa_supplicant")'), 'WPA Supplicant', 'acronym casing preserved');
+        assert.strictEqual(run('formatTagLabel("libc")'), 'libc', 'proper-name lowercase preserved');
+        // Override normalizes the all-lowercase logcat form; the camelCase form already
+        // splits to the same label, so both spellings render identically.
+        assert.strictEqual(run('formatTagLabel("surfaceflinger")'), 'Surface Flinger', 'lowercase form via override');
+        assert.strictEqual(run('formatTagLabel("SurfaceFlinger")'), 'Surface Flinger', 'camelCase form via splitter');
+        // A tag colliding with an Object.prototype member must NOT resolve to an inherited
+        // property — the hasOwnProperty guard keeps these on the normal splitter path.
+        assert.strictEqual(run('formatTagLabel("constructor")'), 'Constructor', 'prototype key is not an override');
+        assert.strictEqual(run('formatTagLabel("__proto__")'), 'Proto', 'proto key falls through to the splitter');
         assert.strictEqual(run('formatTagLabel("")'), '');
     });
 

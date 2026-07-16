@@ -97,6 +97,33 @@ function collapseQualifiedTag(name) {
     return segs[segs.length - 1] || s;
 }
 
+/* Explicit display labels for tags the heuristic splitter below gets wrong. Two
+   cases qualify: (1) all-lowercase compounds with no boundary to split on, so
+   formatTagLabel would emit one run-together word ("lowmemorykiller" ->
+   "Lowmemorykiller"); (2) acronyms/proper-names whose canonical casing the
+   Title-Case pass would clobber ("wpa_supplicant" -> "Wpa Supplicant", "libc" ->
+   "Libc"). Keyed by the LOWERCASED raw tag, so an entry normalizes the label
+   regardless of the casing the log source happens to use (a saved log, adb, or a
+   camelCase emitter all resolve to the same chip). Keep this list to genuinely
+   ambiguous tags — a tag the splitter already handles (camelCase like
+   "ActivityManager") needs no entry. */
+var TAG_LABEL_OVERRIDES = {
+    // all-lowercase compounds the splitter cannot break into words
+    'lowmemorykiller': 'Low Memory Killer',
+    'dalvikvm': 'Dalvik VM',
+    'surfaceflinger': 'Surface Flinger',
+    'bufferqueue': 'Buffer Queue',
+    'audioflinger': 'Audio Flinger',
+    'audiotrack': 'Audio Track',
+    'mediacodec': 'Media Codec',
+    'mediaplayer': 'Media Player',
+    'cameraservice': 'Camera Service',
+    'inputmethodmanager': 'Input Method Manager',
+    // acronym / proper-name casing the Title-Case pass would otherwise mangle
+    'wpa_supplicant': 'WPA Supplicant',
+    'libc': 'libc'
+};
+
 /* Convert a raw tag identifier (camelCase class name like "ActivityManager", a
    dotted/underscored/hyphenated token, or a plain lowercase word) into a
    "Title Case With Spaces" display label. Acronym runs (JNI, HWUI, SQL) are kept
@@ -106,6 +133,15 @@ function collapseQualifiedTag(name) {
 function formatTagLabel(name) {
     if (!name) return '';
     var s = String(name);
+    /* Explicit override wins over the heuristic splitter for unbreakable lowercase
+       tags. hasOwnProperty guard is required, not defensive polish: formatTagLabel
+       runs on arbitrary source-tag names, and a tag literally named "constructor" or
+       "__proto__" would otherwise hit an inherited Object.prototype member and render
+       the function source / "[object Object]" as the chip label. */
+    var key = s.toLowerCase();
+    if (Object.prototype.hasOwnProperty.call(TAG_LABEL_OVERRIDES, key)) {
+        return TAG_LABEL_OVERRIDES[key];
+    }
     // camelCase boundaries: lower/digit -> Upper, and Acronym -> Capitalized (HTTPRequest -> HTTP Request).
     s = s.replace(/([a-z0-9])([A-Z])/g, '$1 $2');
     s = s.replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2');
@@ -153,13 +189,15 @@ function renderHeadTagChips(tags) {
     return html;
 }
 
-/* Space-separated list of every tag name (not just the one rendered chip), escaped,
+/* Comma-separated list of every tag name (not just the one rendered chip), escaped,
    for the tag cell's title tooltip — the only place a line's SECOND/THIRD tag is
-   visible now that only the primary tag renders as a chip. escapeHeadTag guards the
-   attacker-controlled tag text before the title attr. */
+   visible now that only the primary tag renders as a chip. Comma delimiters (not
+   spaces) keep multi-word tags legible: space-joined, "Perf Frame Stall Flutter"
+   reads as one four-word tag; ", " makes the three distinct tags unambiguous.
+   escapeHeadTag guards the attacker-controlled tag text before the title attr. */
 function headTagsTitle(tags) {
     if (!tags || tags.length === 0) return '';
-    return tags.map(function(t) { return escapeHeadTag(formatTagLabel(t.name)); }).join(' ');
+    return tags.map(function(t) { return escapeHeadTag(formatTagLabel(t.name)); }).join(', ');
 }
 `;
 }
