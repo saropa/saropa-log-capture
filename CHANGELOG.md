@@ -35,6 +35,8 @@ Tag column polish: the `lowmemorykiller` device tag now reads as "Low Memory Kil
 
 - **Panel tab number badge would not clear.** The unread-hit count on the "Saropa Log Capture" panel tab only cleared on a hide/show transition or when a focusable element inside the viewer took focus, and the count that accrued before the view first resolved was never acknowledged when the panel restored already-visible (e.g. reopening a window with the panel showing a log file) — so it could stay pinned on-screen with no way to dismiss it. It now clears when the panel resolves already-visible and the instant you engage the viewer — pointer, keyboard, or scroll — so it surfaces new activity while the panel is away and disappears the moment you look. The badge also now counts only watch patterns whose `alert` is `"badge"`, so a pattern set to `"flash"`/`"none"` no longer contributes.
 
+- **The "adb Logcat" checkbox in Options → Integrations was misleading for Flutter apps.** It rendered unchecked, but the logcat feed auto-ran for any Dart/Flutter session regardless — so the box read "off" while the feed was live, and unchecking it did nothing. The checkbox now reflects the real on/off state (on by default via the new `saropaLogCapture.integrations.adbLogcat.enabled` setting) and an explicit uncheck truly disables capture. Zero-config Flutter behavior is unchanged (still on by default); you can now turn it off.
+
 ### Added
 
 - **Preflight open-PR check.** `npm run preflight` now queries GitHub for open dependabot PRs with passing CI and warns before you publish with unmerged dependency bumps waiting. Requires `gh` CLI; skips silently when offline or unauthenticated.

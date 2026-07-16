@@ -5,6 +5,7 @@
 
 import * as vscode from "vscode";
 import {
+  ADB_LOGCAT_ADAPTER_ID,
   EXPLAIN_WITH_AI_ADAPTER_ID,
   mergeIntegrationAdaptersForWebview,
   stripUiOnlyIntegrationAdapterIds,
@@ -141,14 +142,18 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
           ? (raw as unknown[]).filter((x): x is string => typeof x === 'string')
           : [];
         const aiEnabled = adapterIds.includes(EXPLAIN_WITH_AI_ADAPTER_ID);
-        const sessionOnly = stripUiOnlyIntegrationAdapterIds(adapterIds);
+        // adbLogcat's checkbox binds to its own boolean, not the adapters array — route it there and
+        // keep it out of the persisted session-adapter list (see integration-adapter-constants).
+        const adbLogcatEnabled = adapterIds.includes(ADB_LOGCAT_ADAPTER_ID);
+        const sessionOnly = stripUiOnlyIntegrationAdapterIds(adapterIds).filter((id) => id !== ADB_LOGCAT_ADAPTER_ID);
         const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
         const aiCfg = vscode.workspace.getConfiguration('saropaLogCapture.ai');
         void Promise.all([
           cfg.update('integrations.adapters', sessionOnly, vscode.ConfigurationTarget.Workspace),
+          cfg.update('integrations.adbLogcat.enabled', adbLogcatEnabled, vscode.ConfigurationTarget.Workspace),
           aiCfg.update('enabled', aiEnabled, vscode.ConfigurationTarget.Workspace),
         ]).then(() => {
-          const merged = mergeIntegrationAdaptersForWebview(sessionOnly, aiEnabled);
+          const merged = mergeIntegrationAdaptersForWebview(sessionOnly, aiEnabled, adbLogcatEnabled);
           ctx.post({ type: 'integrationsAdapters', adapterIds: merged });
           ctx.post({ type: 'setDriftAdvisorAvailable', available: !!vscode.extensions.getExtension(DRIFT_ADVISOR_EXTENSION_ID) });
           void import('../../modules/integrations/integration-prep.js').then((m) => m.runIntegrationPrepCheck(sessionOnly));

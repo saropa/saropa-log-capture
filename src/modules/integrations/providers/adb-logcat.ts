@@ -16,12 +16,15 @@ import {
 } from '../adb-logcat-capture';
 
 /**
- * Enabled when explicitly listed in integrations.adapters OR when the
- * debug adapter is Dart/Flutter (auto-detect). The isAdbAvailable() check
- * is deferred to onSessionStartStreaming to avoid spawning a process on
- * every isEnabled call.
+ * Enabled when the master `adbLogcat.enabled` allow is on (default) AND the source applies to
+ * this session — explicitly listed in integrations.adapters OR the debug adapter is Dart/Flutter
+ * (auto-detect). The `enabled` gate is what makes an Options → Integrations uncheck authoritative:
+ * previously auto-detect ran logcat for every Flutter session regardless of the checkbox, so the
+ * box read "off" while the feed was live. The isAdbAvailable() check is deferred to
+ * onSessionStartStreaming to avoid spawning a process on every isEnabled call.
  */
 function checkEnabled(context: IntegrationContext): boolean {
+    if (!context.config.integrationsAdbLogcat.enabled) { return false; }
     const explicit = (context.config.integrationsAdapters ?? []).includes('adbLogcat');
     const autoDetect = context.sessionContext.debugAdapterType === 'dart';
     return explicit || autoDetect;

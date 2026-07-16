@@ -248,6 +248,7 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
       requestIdPattern: readTrimmedStringOrDefault(cfg, 'integrations.browser.requestIdPattern', ''),
     },
     integrationsAdbLogcat: {
+      enabled: ensureBoolean(cfg.get('integrations.adbLogcat.enabled'), true),
       device: readTrimmedStringOrDefault(cfg, 'integrations.adbLogcat.device', ''),
       tagFilters: ensureStringArray(cfg.get('integrations.adbLogcat.tagFilters'), []),
       minLevel: ensureEnum(cfg.get('integrations.adbLogcat.minLevel'), ['V', 'D', 'I', 'W', 'E', 'F', 'A'], 'V'),

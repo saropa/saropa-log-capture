@@ -2570,6 +2570,12 @@
           "type": "number",
           "title": "%config.integrations.terminal.maxLines.title%"
         },
+        "saropaLogCapture.integrations.adbLogcat.enabled": {
+          "default": true,
+          "description": "Allow the adb logcat feed (Android system log) to run. On by default. When on, logcat still only spawns where it applies — a Flutter/Dart debug session, or an explicit `adbLogcat` entry in integrations.adapters. Turn off to stop it entirely. This is the switch the Options → Integrations checkbox binds to.",
+          "type": "boolean",
+          "title": "%config.integrations.adbLogcat.enabled.title%"
+        },
         "saropaLogCapture.integrations.adbLogcat.device": {
           "default": "",
           "description": "Device serial for adb (blank = default device). Maps to `adb -s <serial>`.",

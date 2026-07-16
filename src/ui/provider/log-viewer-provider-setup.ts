@@ -73,7 +73,7 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
   queueMicrotask(() => {
     const c = getConfig();
     const aiOn = vscode.workspace.getConfiguration("saropaLogCapture.ai").get<boolean>("enabled", false);
-    target.sendIntegrationsAdapters(mergeIntegrationAdaptersForWebview(c.integrationsAdapters, aiOn));
+    target.sendIntegrationsAdapters(mergeIntegrationAdaptersForWebview(c.integrationsAdapters, aiOn, c.integrationsAdbLogcat.enabled));
   });
   // Crashlytics is enabled by default, so the webview also needs to know whether THIS workspace is a
   // deployable app. On a library / package project the icon stays hidden so the setup hint never nags.
