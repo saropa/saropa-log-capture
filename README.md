@@ -175,7 +175,7 @@ Collapse any column's sections to shrink that column aside and give the open sid
 - **Multi-level classification:** Eight severity levels (Error, Warning, Info, Performance, TODO, Debug/Trace, Notice, Database) with dedicated colors and filters.
 
 ### Signals
-- **Signals panel:** Single icon-bar panel (lightbulb). Accordion sections: Collections (named groups of logs/files), All Signals (unified cross-session list sorted by severity), Frequently Modified Files, and Performance (current, trends, database, errors).
+- **Project Signals panel:** Single icon-bar panel (lightbulb), titled "Project Signals". Accordion sections: This log (the open report's own errors/warnings — from session fingerprints, or the viewer's on-screen classification when none exist), Collections (named groups of logs/files), All Signals (unified cross-session list sorted by severity), Frequently Modified Files, and Performance (current, trends, database, errors).
 - **Signal reports:** Evidence-backed reports for each detected signal with confidence labels, line links, and action buttons.
 - **Copy a signal:** Each signal row has a 📋 Copy action that puts a paste-ready markdown block on the clipboard — the signal's metadata, raw example, and full supporting log lines — ready to drop into an analysis engine.
 - **Database signals:** N+1 detection, slow query burst markers, baseline volume hints, and session SQL comparison — each independently togglable.
