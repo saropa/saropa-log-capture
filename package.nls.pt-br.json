@@ -217,6 +217,7 @@
   "config.includeTimestamp.title": "Prefix each captured line with a timestamp.",
   "config.integrations.adapters.title": "Integrations › Adapters",
   "config.integrations.adbLogcat.captureDeviceOther.title": "Capture non-critical device logcat lines (default: false).",
+  "config.integrations.adbLogcat.captureAnr.title": "Always capture ANR and native-crash evidence regardless of level/PID filtering.",
   "config.integrations.adbLogcat.device.title": "Device serial for adb (blank = default device).",
   "config.integrations.adbLogcat.filterByPid.title": "Filter logcat by debug target PID once known.",
   "config.integrations.adbLogcat.maxBufferLines.title": "Max logcat lines to buffer for sidecar file.",
