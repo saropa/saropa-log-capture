@@ -34,7 +34,11 @@ export function getRootCauseHypothesesStyles(): string {
 }
 .root-cause-hypotheses-list {
     margin: 0;
-    padding-left: 1.15em;
+    /* Numbered via a CSS counter rather than <ol> bullets: each row is a flex container with optional
+       emoji/badge children, so a counter ::before sits as the first flex item and stays column-aligned. */
+    counter-reset: rch-item;
+    list-style: none;
+    padding-left: 0;
 }
 .root-cause-hypotheses-list li {
     margin: var(--space-1) 0;
@@ -42,10 +46,21 @@ export function getRootCauseHypothesesStyles(): string {
     align-items: baseline;
     gap: var(--space-1);
 }
-/* Hypothesis text as clickable report button — flex: 1 lets it
-   fill remaining width so long signal text wraps instead of
-   overflowing the panel. */
-.rch-report-btn {
+/* Leading number. Fixed min-width + right-align keeps 1..9..10 in a tidy column. */
+.root-cause-hypotheses-list li::before {
+    counter-increment: rch-item;
+    content: counter(rch-item) ".";
+    flex-shrink: 0;
+    min-width: 1.4em;
+    text-align: right;
+    opacity: 0.7;
+    color: var(--vscode-descriptionForeground);
+    font-variant-numeric: tabular-nums;
+}
+/* Hypothesis text. Truncates to one line with an ellipsis by default so long hints keep the strip
+   compact; clicking toggles .rch-expanded on the row to wrap the full text (handler in the embed
+   script). flex:1 + min-width:0 lets the ellipsis trigger at the real column edge. */
+.rch-hyp-text {
     border: none;
     background: transparent;
     font: inherit;
@@ -56,12 +71,41 @@ export function getRootCauseHypothesesStyles(): string {
     appearance: none;
     flex: 1;
     min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.rch-hyp-text:hover {
+    color: var(--link);
+    text-decoration: underline;
+}
+.root-cause-hypotheses-list li.rch-expanded .rch-hyp-text {
     white-space: normal;
     word-break: break-word;
+    overflow: visible;
+    text-overflow: clip;
+}
+/* Open-report affordance, split off the text so clicking the text expands instead of navigating.
+   Hover-reveal like dismiss so the strip stays clean; icon-only with a title/aria-label. */
+.rch-report-btn {
+    border: none;
+    background: transparent;
+    color: var(--vscode-descriptionForeground);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 1px 4px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    align-self: flex-start;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+.root-cause-hypotheses-list li:hover .rch-report-btn {
+    opacity: 1;
 }
 .rch-report-btn:hover {
     color: var(--link);
-    text-decoration: underline;
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 .rch-dismiss-btn {
     border: none;
@@ -133,7 +177,7 @@ export function getRootCauseHypothesesStyles(): string {
 }
 @media (prefers-reduced-motion: reduce) {
     .root-cause-hypotheses { transition: none !important; }
-    .rch-dismiss-btn { transition: none !important; }
+    .rch-dismiss-btn, .rch-report-btn { transition: none !important; }
     .rch-toast { animation: none !important; }
 }
 `;
