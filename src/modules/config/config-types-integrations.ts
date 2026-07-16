@@ -191,6 +191,13 @@ export interface IntegrationAdbLogcatConfig {
   readonly writeSidecar: boolean;
   /** When true, capture device-other (non-critical, non-Flutter) logcat lines. Default false. */
   readonly captureDeviceOther: boolean;
+  /**
+   * When true (default), ANR / native-crash evidence is always captured even when level or PID
+   * filtering would otherwise drop it. ActivityManager / AndroidRuntime dump the "ANR in <pkg>"
+   * header and frozen main-thread stack from system_server — a different PID than the app — so
+   * PID scoping (filterByPid) hides exactly the richest ANR detail unless this bypass is on.
+   */
+  readonly captureAnr: boolean;
 }
 
 export interface IntegrationFlutterCrashLogsConfig {

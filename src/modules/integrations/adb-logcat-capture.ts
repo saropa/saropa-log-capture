@@ -6,7 +6,7 @@
 
 import { spawn, execFileSync } from 'child_process';
 import type { ChildProcess } from 'child_process';
-import { parseLogcatLine, meetsMinLevel } from './adb-logcat-parser';
+import { parseLogcatLine, meetsMinLevel, type LogcatLine } from './adb-logcat-parser';
 import { getDeviceTier } from '../analysis/device-tag-tiers';
 
 /** Options for starting logcat capture. */
@@ -18,6 +18,8 @@ export interface LogcatCaptureOptions {
     readonly maxBufferLines: number;
     /** When false (default), drop device-other lines before they reach the viewer. */
     readonly captureDeviceOther: boolean;
+    /** When true (default), device-critical (ANR/crash) lines bypass the level and PID gates. */
+    readonly captureAnr: boolean;
     readonly outputChannel: { appendLine(msg: string): void };
     /** Called for each accepted logcat line (used to push into the active log session). */
     readonly onLine: (raw: string) => void;
@@ -28,6 +30,7 @@ let buffer: string[] = [];
 let pidFilter: number | undefined;
 let filterByPid = true;
 let captureDeviceOther = false;
+let captureAnr = true;
 let minLevel = 'V';
 let maxBuffer = 50_000;
 let remainder = '';
@@ -49,6 +52,7 @@ export function startLogcatCapture(options: LogcatCaptureOptions): void {
 
     filterByPid = options.filterByPid;
     captureDeviceOther = options.captureDeviceOther;
+    captureAnr = options.captureAnr;
     minLevel = options.minLevel;
     maxBuffer = Math.max(1000, Math.min(500_000, options.maxBufferLines));
     lineCb = options.onLine;
@@ -141,8 +145,34 @@ function onStdoutData(chunk: string): void {
 function acceptLine(raw: string): boolean {
     const parsed = parseLogcatLine(raw);
     if (!parsed) { return true; }
-    if (!meetsMinLevel(parsed.level, minLevel)) { return false; }
-    if (filterByPid && pidFilter !== undefined && parsed.pid !== pidFilter) { return false; }
-    if (!captureDeviceOther && getDeviceTier(parsed.tag) === 'device-other') { return false; }
+    return shouldAcceptLogcatLine(parsed, { minLevel, filterByPid, pidFilter, captureDeviceOther, captureAnr });
+}
+
+/** Filter inputs for {@link shouldAcceptLogcatLine} — a snapshot of the module's capture state. */
+export interface LogcatLineFilter {
+    readonly minLevel: string;
+    readonly filterByPid: boolean;
+    readonly pidFilter: number | undefined;
+    readonly captureDeviceOther: boolean;
+    readonly captureAnr: boolean;
+}
+
+/**
+ * Decide whether a parsed logcat line is accepted. Pure (no module state) so the ANR-bypass
+ * rule is unit-testable without spawning adb.
+ *
+ * ANR / native-crash evidence bypasses BOTH the level and PID gates: ActivityManager,
+ * AndroidRuntime, and lowmemorykiller dump the "ANR in <pkg>" header and the frozen main-thread
+ * stack from system_server — a DIFFERENT pid than the app — so PID scoping (on by default) would
+ * hide exactly the richest ANR detail. When captureAnr is on (default), device-critical lines are
+ * always kept regardless of level or pid. This is the concrete fix for the gap the adb-logcat
+ * plan (§3.2) warned about: forced PID scoping drops cross-process ANR-killer lines.
+ */
+export function shouldAcceptLogcatLine(parsed: LogcatLine, f: LogcatLineFilter): boolean {
+    const tier = getDeviceTier(parsed.tag);
+    if (f.captureAnr && tier === 'device-critical') { return true; }
+    if (!meetsMinLevel(parsed.level, f.minLevel)) { return false; }
+    if (f.filterByPid && f.pidFilter !== undefined && parsed.pid !== f.pidFilter) { return false; }
+    if (!f.captureDeviceOther && tier === 'device-other') { return false; }
     return true;
 }
