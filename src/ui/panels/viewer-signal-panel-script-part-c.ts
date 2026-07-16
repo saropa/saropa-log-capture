@@ -9,16 +9,24 @@ export function getSignalScriptPartC(): string {
     /* Live fallback for "Signals in this log". Error/warning fingerprints are written only on session
        finalize (session-lifecycle-finalize.ts), so a loaded or not-yet-finalized report has none and
        the host sends an empty signalsInThisLog. Rather than show nothing while the viewer plainly
-       displays errors, synthesize signals from the already-classified error/warning lines in allLines.
-       Identical line text is grouped into one entry carrying an occurrence count and the line indices
-       needed to jump and to build the evidence preview. Non-line items (markers, stack frames, context)
-       are skipped so the fallback mirrors what the viewer counts as a severity line. */
+       displays errors, synthesize signals from the already-classified error/warning lines in allLines,
+       grouping identical text into one entry with an occurrence count and the line indices needed to
+       jump and to build the evidence preview.
+
+       Line selection mirrors the viewer's own severity badge (viewer-stats.ts recomputeStatsCounters:
+       every non-marker item carrying a level) so an error rendered as a stack HEADER — not a plain
+       'line' — is not silently dropped, which the earlier type==='line'-only filter did. Two kinds are
+       still excluded so distinct issues aren't inflated: stack-FRAME continuations (one error's 20
+       frames would otherwise become 20 signals) and recentErrorContext lines (proximity-inherited
+       coloring, not real errors — the root-cause collector skips them for the same reason). */
+    var LIVE_SIGNAL_GROUP_CAP = 500;
     function buildLiveSignalsFromLines() {
         if (typeof allLines === 'undefined' || !allLines || !allLines.length) { return []; }
         var groups = Object.create(null), order = [];
         for (var i = 0; i < allLines.length; i++) {
             var li = allLines[i];
-            if (!li || li.type !== 'line') { continue; }
+            if (!li || li.type === 'marker' || li.type === 'stack-frame') { continue; }
+            if (li.recentErrorContext) { continue; }
             if (li.level !== 'error' && li.level !== 'warning') { continue; }
             var raw = li.rawText != null ? li.rawText : (typeof stripTags === 'function' ? stripTags(li.html || '') : (li.html || ''));
             var text = (raw || '').replace(/\\s+/g, ' ').trim();
@@ -26,7 +34,13 @@ export function getSignalScriptPartC(): string {
             /* NUL-join kind + text so an error and a warning with identical text stay distinct groups. */
             var key = li.level + '\\u0000' + text;
             var g = groups[key];
-            if (!g) { g = groups[key] = { kind: li.level, label: text, detail: text, fingerprint: 'live:' + key, totalOccurrences: 0, lineIndices: [] }; order.push(key); }
+            /* Runaway guard: a pathological log of all-distinct errors must not grow an unbounded array.
+               Existing groups keep accumulating occurrences; only NEW distinct groups stop past the cap. */
+            if (!g) {
+                if (order.length >= LIVE_SIGNAL_GROUP_CAP) { continue; }
+                g = groups[key] = { kind: li.level, label: text, detail: text, fingerprint: 'live:' + key, totalOccurrences: 0, lineIndices: [] };
+                order.push(key);
+            }
             g.totalOccurrences++;
             g.lineIndices.push(i);
         }
@@ -251,10 +265,11 @@ export function getSignalScriptPartC(): string {
             if (typeof renderTroubleSignalsBand === 'function') renderTroubleSignalsBand();
             renderEnvironment(); renderSignalTrends(); renderCoOccurrences();
             renderFilterSuggestions();
-            /* Update icon bar badge with total signal count (this log + all signals). Use
-               liveSignalsInThisLog (set by renderSignalsInThisLog above) so fallback live signals are
-               counted — signalDataCache.signalsInThisLog is empty in the no-fingerprint fallback case. */
-            var sigTotal = (liveSignalsInThisLog || []).length + (signalDataCache.allSignals || []).length;
+            /* Update icon bar badge with total signal count (this log + all signals). Resolve the
+               this-log list directly (idempotent, cached) rather than reading liveSignalsInThisLog —
+               that removes the dependency on renderSignalsInThisLog having run first, and still counts
+               fallback live signals (signalDataCache.signalsInThisLog is empty in the fallback case). */
+            var sigTotal = (resolveSignalsInThisLog() || []).length + (signalDataCache.allSignals || []).length;
             if (typeof updateIconBadge === 'function') updateIconBadge('ib-signal-badge', 'ib-signal-count', sigTotal);
         }
         if (e.data.type === 'performanceData') {
@@ -262,8 +277,10 @@ export function getSignalScriptPartC(): string {
             hasLog = !!(e.data.sessionData);
             currentLogLabel = e.data.currentLogLabel || '';
             /* A log is open iff the host sent a label for it (basename of the viewed file). Drives the
-               "This log" section visibility independently of perf-sampling data (see logOpen decl). */
-            logOpen = !!currentLogLabel;
+               "This log" section visibility independently of perf-sampling data (see logOpen decl).
+               OR hasLog defensively: perf data can only exist for an open log, so treat that as open
+               even in the unlikely event a label is missing. */
+            logOpen = !!currentLogLabel || hasLog;
             heroErrorCount = e.data.heroErrorCount;
             heroWarningCount = e.data.heroWarningCount;
             heroSnapshotSummary = (e.data.heroSnapshotSummary != null && e.data.heroSnapshotSummary !== '') ? String(e.data.heroSnapshotSummary) : '';
