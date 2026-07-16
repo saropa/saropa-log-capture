@@ -180,7 +180,7 @@ export const anrPattern = /\b(anr|application\s+not\s+responding|input\s+dispatc
  * Per-line only: this catches the signature-bearing frame, NOT the bare "Null check operator …"
  * header line that precedes it (that header carries no inspector token, and the classifier has no
  * cross-line stack context). Whole-block suppression is deferred to the stack-grouping layer —
- * see bugs/BUG_Better_Support_ANR.md §5.
+ * see plans/history/2026.07/2026.07.16/BUG_Better_Support_ANR.md §5.
  */
 const inspectorArtifactPattern = /\bgetLayoutExplorerNode\b|ext\.flutter\.inspector\./i;
 

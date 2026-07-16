@@ -2,6 +2,9 @@ REF log:d:\src\contacts\reports\20260714\20260714_094848_contacts.log
 
 # Better Support for ANR / DevTools-Inspector Noise in Captured Logs
 
+Status: Fixed (in-scope acceptance §4). Deferred items §5 tracked in
+`bugs/ENH_adb_logcat_capture_source.md` and `D:\src\contacts\bugs\BUG_anr_telemetry_debug_suppression.md`.
+
 ## 1. Scope of this file (read first)
 
 This plan covers only what **Saropa Log Capture** (the VS Code extension) can do. The
@@ -91,3 +94,43 @@ namespace. So the false-positive risk against genuine app errors is negligible.
 - **ApplicationExitInfo ingestion**: only viable if the app writes ANR traces into its own log
   output (which the extension then captures as ordinary text). Pure device-side APIs remain
   out of reach for a VS Code extension.
+
+## Finish Report (2026-07-16)
+
+### Defect
+Captured logs surfaced Flutter DevTools inspector "ghost errors" as genuine errors. The Layout
+Explorer's asynchronous widget-tree probe (`ext.flutter.inspector.getLayoutExplorerNode`) throws
+`Null check operator used on a null value` from `WidgetInspectorService` when a widget unmounts
+between frames — developer-tooling noise, not an application fault. The severity classifier's
+strict/loose `Null check operator` alternative promoted the carrying stack frame to `error`,
+reddening it under the Errors filter and placing it on the actionable timeline. Separately, the
+ANR keyword regex was duplicated verbatim in the per-line classifier and the pre-production risk
+scorer — a silent-drift hazard.
+
+### Change
+- Added `inspectorArtifactPattern` (`getLayoutExplorerNode` | `ext.flutter.inspector.`) to
+  `level-classifier.ts` and its webview mirror `viewer-level-classify.ts`. A matching line
+  classifies as `debug`, which excludes it from the Errors filter and the actionable timeline
+  (`isActionableLevel` omits `debug`). The check runs BEFORE the `stderr → error` force because
+  Flutter emits framework exceptions on stderr; without that ordering the artifact would be
+  forced to `error`. Token choice is deliberately narrow — no application names a method
+  `getLayoutExplorerNode`, and `ext.flutter.inspector.` is the inspector RPC namespace — so
+  false positives against real application errors are negligible.
+- Exported the single `anrPattern` from `level-classifier.ts`; `anr-risk-scorer.ts` imports it
+  instead of re-declaring the literal, removing the drift hazard. The regex is non-global, so the
+  scorer's per-line `.test()` in `countMatches()` stays stateless.
+
+### Boundary / limitation (intentional)
+Classification is per-line with no cross-line stack context. The fix de-emphasizes the
+signature-bearing frame only, NOT the bare `Null check operator used on a null value` header that
+precedes it (that header carries no inspector token). Whole-stack suppression — tagging an entire
+inspector-originated stack group and de-emphasizing its header — belongs in the stack-grouping
+layer (`viewer-thread-grouping.ts`) and is deferred (§5).
+
+### Verification
+- Extension/webview parity test: two inspector corpus cases (a `getLayoutExplorerNode` frame and
+  an `ext.flutter.inspector.` RPC line carrying the Null-check message) both classify `debug` in
+  both classifiers; a dedicated case pins that an inspector artifact on category `stderr` with
+  `stderrTreatAsError=true` still classifies `debug`. 30 passing.
+- ANR risk scorer test: 12 passing after the shared-regex refactor.
+- `npm run check-types` clean.
