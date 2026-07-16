@@ -1,6 +1,8 @@
 // Place your settings in this file to overwrite default and user settings.
 {
-  "files.watcherExclude": { "**/.vscode-test/**": true },
+  "files.watcherExclude": {
+    "**/.vscode-test/**": true
+  },
   "files.exclude": {
     "out": false, // set this to true to hide the "out" folder with the compiled JS files
     "dist": false, // set this to true to hide the "dist" folder with the compiled JS files
@@ -161,9 +163,10 @@
     }
   ],
   "saropaLogCapture.integrations.adapters": [
-    "packages",
-    "git",
+    "browser",
     "environment",
-    "browser"
-  ]
+    "git",
+    "packages"
+  ],
+  "saropaLogCapture.ai.enabled": true
 }
