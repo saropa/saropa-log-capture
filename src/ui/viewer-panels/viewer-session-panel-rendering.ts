@@ -107,7 +107,7 @@ export function getSessionRenderingScript(): string {
             } else {
                 sessionListPaginationEl.style.display = '';
                 var from = start + 1, to = Math.min(start + pageSize, total);
-                var label = vt('viewer.session.pagination.showing', from, to, total);
+                var label = vt('viewer.session.pagination.showing', groupThousands(from), groupThousands(to), groupThousands(total));
                 sessionListPaginationEl.innerHTML = '<span class="session-list-pagination-label">' + escapeHtmlText(label) + '</span>'
                     + '<button type="button" id="session-pagination-prev" class="session-list-pagination-btn" title="' + vt('viewer.session.pagination.prev') + '" ' + (sessionListPage <= 0 ? ' disabled' : '') + '><span class="codicon codicon-chevron-left"></span></button>'
                     + '<button type="button" id="session-pagination-next" class="session-list-pagination-btn" title="' + vt('viewer.session.pagination.next') + '" ' + (sessionListPage >= totalPages - 1 ? ' disabled' : '') + '><span class="codicon codicon-chevron-right"></span></button>';
@@ -197,7 +197,7 @@ export function getSessionRenderingScript(): string {
             var chevTitle = s._groupCollapsed ? vt('viewer.session.group.expand') : vt('viewer.session.group.collapse');
             groupChevron = '<span class="session-group-chevron" role="button" tabindex="0" title="' + chevTitle + '" aria-label="' + chevTitle + '"><span class="codicon ' + chev + '"></span></span>';
             var secCount = Math.max(0, (s.groupSize || 1) - 1);
-            if (secCount > 0) groupCount = ' <span class="session-group-count">+' + secCount + '</span>';
+            if (secCount > 0) groupCount = ' <span class="session-group-count">+' + groupThousands(secCount) + '</span>';
         } else if (groupRole === 'controller') {
             /* Controller row: distinct chevron class (.session-controller-chevron) + collapse map so
                its closest() target never collides with a peripheral that is itself a real
@@ -207,7 +207,7 @@ export function getSessionRenderingScript(): string {
             var cTitle = s._ctrlCollapsed ? vt('viewer.session.group.expand') : vt('viewer.session.group.collapse');
             groupChevron = '<span class="session-controller-chevron" role="button" tabindex="0" title="' + cTitle + '" aria-label="' + cTitle + '"><span class="codicon ' + cChev + '"></span></span>';
             var childCount = Math.max(0, s._ctrlChildCount || 0);
-            if (childCount > 0) groupCount = ' <span class="session-group-count">+' + childCount + '</span>';
+            if (childCount > 0) groupCount = ' <span class="session-group-count">+' + groupThousands(childCount) + '</span>';
         }
         /* "+N older" badge (Latest-only mode): keeps hidden older namesakes discoverable. */
         var olderBadge = (typeof renderOlderBadge === 'function') ? renderOlderBadge(s) : '';
