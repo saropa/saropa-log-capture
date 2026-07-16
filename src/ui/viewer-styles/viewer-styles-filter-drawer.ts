@@ -247,6 +247,12 @@ export function getFilterDrawerStyles(): string {
     background: var(--vscode-testing-iconPassed, var(--vscode-charts-green, #3fb950));
     opacity: 1;
 }
+/* Idle = enabled but not producing (e.g. adb on, no device attached). Amber, with a fallback chain
+   in case a theme defines neither testing nor charts token. */
+.capture-source-idle .capture-source-dot {
+    background: var(--vscode-testing-iconQueued, var(--vscode-charts-yellow, #d9a400));
+    opacity: 1;
+}
 .capture-source-label {
     flex: 1 1 auto;
 }

@@ -145,8 +145,16 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
         // adbLogcat's checkbox binds to its own boolean, not the adapters array — route it there and
         // keep it out of the persisted session-adapter list (see integration-adapter-constants).
         const adbLogcatEnabled = adapterIds.includes(ADB_LOGCAT_ADAPTER_ID);
-        const sessionOnly = stripUiOnlyIntegrationAdapterIds(adapterIds).filter((id) => id !== ADB_LOGCAT_ADAPTER_ID);
         const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+        // The checkbox controls integrations.adbLogcat.enabled, not array membership. But a power user
+        // can hand-add 'adbLogcat' to integrations.adapters to force logcat on a NON-Dart session; that
+        // explicit entry must survive a UI toggle of any OTHER checkbox. Preserve it while the box stays
+        // on; a genuine uncheck (adbLogcatEnabled false) drops it AND sets enabled false, which is the
+        // authoritative off.
+        const currentAdapters = cfg.get<string[]>('integrations.adapters', []);
+        const adbWasExplicit = Array.isArray(currentAdapters) && currentAdapters.includes(ADB_LOGCAT_ADAPTER_ID);
+        let sessionOnly = stripUiOnlyIntegrationAdapterIds(adapterIds).filter((id) => id !== ADB_LOGCAT_ADAPTER_ID);
+        if (adbLogcatEnabled && adbWasExplicit) { sessionOnly = [...sessionOnly, ADB_LOGCAT_ADAPTER_ID]; }
         const aiCfg = vscode.workspace.getConfiguration('saropaLogCapture.ai');
         void Promise.all([
           cfg.update('integrations.adapters', sessionOnly, vscode.ConfigurationTarget.Workspace),

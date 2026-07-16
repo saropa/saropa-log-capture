@@ -3,12 +3,16 @@ export function getOptionsIntegrationsHelperScript(): string {
     return /* javascript */ `
 /**
  * Apply live companion install-state from the host's setCompanionInstalled message.
- * Flips each companion row's checkbox + is-installed class (which hides the Marketplace link)
- * and refreshes the checkbox title/aria from the row's data-* labels — no re-render, no l10n
- * round-trip. Unknown / missing ids are left untouched so a partial payload is safe.
+ * For each companion row: toggles is-installed (which hides the Marketplace link), sets the
+ * checkbox checked, and — because the checkbox is an install control — disables it once installed
+ * and re-enables it when absent (so it stays actionable). Title/aria come from the row's data-*
+ * labels — no re-render, no l10n round-trip. Unknown / missing ids are left untouched so a partial
+ * payload is safe. The last payload is cached on window so openIntegrationsView can re-apply it
+ * (covers a message that arrived before the rows/handlers were ready, or a future re-render).
  */
 function applyCompanionInstalled(states) {
     if (!states || typeof states !== 'object') return;
+    if (typeof window !== 'undefined') window.__companionInstalledStates = states;
     var rows = document.querySelectorAll('.integrations-companion-item[data-companion-id]');
     for (var i = 0; i < rows.length; i++) {
         var row = rows[i];
@@ -19,10 +23,12 @@ function applyCompanionInstalled(states) {
         var cb = row.querySelector('input[type="checkbox"]');
         if (!cb) continue;
         cb.checked = installed;
+        cb.disabled = installed;
         var title = installed ? row.getAttribute('data-installed-title') : row.getAttribute('data-not-installed-title');
         if (title) {
             cb.title = title;
-            cb.setAttribute('aria-label', (row.getAttribute('data-label') || '') + ': ' + title);
+            var label = row.getAttribute('data-label') || '';
+            cb.setAttribute('aria-label', installed ? (label + ': ' + title) : title);
         }
     }
 }
@@ -75,6 +81,19 @@ function initIntegrationsOptionsHandlers() {
             toggleBtn.textContent = nextExpanded ? 'less' : 'more';
         });
         integrationsSection.addEventListener('change', function(e) {
+            /* Companion install checkbox: checking an absent companion requests an install and
+               reverts the box — the host installs, then the live feed re-checks it on success. */
+            if (e.target && e.target.matches && e.target.matches('.integrations-companion-check')) {
+                var row = e.target.closest('.integrations-companion-item');
+                var extId = e.target.getAttribute('data-extension-id');
+                if (extId && e.target.checked && row && !row.classList.contains('is-installed')) {
+                    e.target.checked = false;
+                    if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
+                        vscodeApi.postMessage({ type: 'installCompanion', extensionId: extId });
+                    }
+                }
+                return;
+            }
             if (!e.target || !e.target.matches || !e.target.matches('input[data-adapter-id]')) return;
             var inputs = integrationsSection.querySelectorAll('input[data-adapter-id]:checked');
             var adapterIds = [];
