@@ -24,15 +24,17 @@ suite('Viewer toolbar', () => {
 
     test('toolbar level summary has letter chip between dot and count (bug 006)', () => {
         const html = getToolbarHtml({ version: '1.0.0' });
+        // Count span now carries a per-level class (dot-count dot-count-<level>) so each
+        // counter renders as a filled pill in its own color — assert the paired class.
         const snippets = [
-            'class="level-letter level-letter-error">E</span><span class="dot-count"',
-            'class="level-letter level-letter-warning">W</span><span class="dot-count"',
-            'class="level-letter level-letter-info">I</span><span class="dot-count"',
-            'class="level-letter level-letter-performance">P</span><span class="dot-count"',
-            'class="level-letter level-letter-todo">T</span><span class="dot-count"',
-            'class="level-letter level-letter-notice">N</span><span class="dot-count"',
-            'class="level-letter level-letter-debug">D</span><span class="dot-count"',
-            'class="level-letter level-letter-database">DB</span><span class="dot-count"',
+            'class="level-letter level-letter-error">E</span><span class="dot-count dot-count-error"',
+            'class="level-letter level-letter-warning">W</span><span class="dot-count dot-count-warning"',
+            'class="level-letter level-letter-info">I</span><span class="dot-count dot-count-info"',
+            'class="level-letter level-letter-performance">P</span><span class="dot-count dot-count-performance"',
+            'class="level-letter level-letter-todo">T</span><span class="dot-count dot-count-todo"',
+            'class="level-letter level-letter-notice">N</span><span class="dot-count dot-count-notice"',
+            'class="level-letter level-letter-debug">D</span><span class="dot-count dot-count-debug"',
+            'class="level-letter level-letter-database">DB</span><span class="dot-count dot-count-database"',
         ];
         for (const s of snippets) {
             assert.ok(html.includes(s), `toolbar HTML should contain: ${s}`);
@@ -41,6 +43,42 @@ suite('Viewer toolbar', () => {
         assert.ok(
             css.includes('.level-dot-group:has(.level-dot:not(.active)) .level-letter'),
             'level CSS should dim letter when dot is inactive (pairs with syncLevelDots)',
+        );
+    });
+
+    test('each level count pill has a filled rule whose bg matches its dot color', () => {
+        const css = getLevelStyles();
+        // Palette lockstep is a hand-maintained invariant: the pill background must equal
+        // the dot background for the same level, or the counter and its dot diverge.
+        const levels: readonly [string, string][] = [
+            ['error', '#f44336'],
+            ['warning', '#ff9800'],
+            ['info', '#2196f3'],
+            ['performance', '#9c27b0'],
+            ['todo', '#bdbdbd'],
+            ['notice', '#00bcd4'],
+            ['debug', '#795548'],
+            ['database', '#4caf50'],
+        ];
+        for (const [level, hex] of levels) {
+            // Whitespace-insensitive: the CSS aligns declarations with variable spacing.
+            const dotRule = new RegExp(`\\.level-dot-${level}\\s*\\{\\s*background:\\s*${hex};`);
+            const pillRule = new RegExp(`\\.dot-count-${level}\\s*\\{\\s*background:\\s*${hex};`);
+            assert.ok(dotRule.test(css), `dot color for ${level} should be ${hex}`);
+            assert.ok(
+                pillRule.test(css),
+                `count pill for ${level} should be filled with ${hex} (lockstep with the dot)`,
+            );
+        }
+    });
+
+    test('trouble mode dims count pills for the levels it suppresses', () => {
+        const css = getLevelStyles();
+        // Trouble Mode leaves .active in place, so the inactive-dimming rule cannot fire;
+        // the count pills need their own trouble dim or a hidden level shows a vivid pill.
+        assert.ok(
+            css.includes('body.slc-trouble-active .level-dot-group[data-level="info"] .dot-count'),
+            'trouble mode should dim suppressed-level count pills',
         );
     });
 
