@@ -174,6 +174,9 @@ export function getSessionListStyles(): string {
     border-radius: 8px;
     color: var(--vscode-badge-foreground, #ffffff);
     background: var(--vscode-badge-background, #4d4d4d);
+    /* Never wrap a comma-grouped count ("1,234") mid-number when the sidebar is narrow. */
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 /* Collapsed day group: hide session items. */
