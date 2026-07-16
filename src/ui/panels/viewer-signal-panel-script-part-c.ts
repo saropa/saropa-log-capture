@@ -6,6 +6,46 @@
 /** Returns the third fragment of the Signal panel IIFE (hero, delegates, messages). */
 export function getSignalScriptPartC(): string {
     return /* js */ `
+    /* Live fallback for "Signals in this log". Error/warning fingerprints are written only on session
+       finalize (session-lifecycle-finalize.ts), so a loaded or not-yet-finalized report has none and
+       the host sends an empty signalsInThisLog. Rather than show nothing while the viewer plainly
+       displays errors, synthesize signals from the already-classified error/warning lines in allLines.
+       Identical line text is grouped into one entry carrying an occurrence count and the line indices
+       needed to jump and to build the evidence preview. Non-line items (markers, stack frames, context)
+       are skipped so the fallback mirrors what the viewer counts as a severity line. */
+    function buildLiveSignalsFromLines() {
+        if (typeof allLines === 'undefined' || !allLines || !allLines.length) { return []; }
+        var groups = Object.create(null), order = [];
+        for (var i = 0; i < allLines.length; i++) {
+            var li = allLines[i];
+            if (!li || li.type !== 'line') { continue; }
+            if (li.level !== 'error' && li.level !== 'warning') { continue; }
+            var raw = li.rawText != null ? li.rawText : (typeof stripTags === 'function' ? stripTags(li.html || '') : (li.html || ''));
+            var text = (raw || '').replace(/\\s+/g, ' ').trim();
+            if (!text) { continue; }
+            /* NUL-join kind + text so an error and a warning with identical text stay distinct groups. */
+            var key = li.level + '\\u0000' + text;
+            var g = groups[key];
+            if (!g) { g = groups[key] = { kind: li.level, label: text, detail: text, fingerprint: 'live:' + key, totalOccurrences: 0, lineIndices: [] }; order.push(key); }
+            g.totalOccurrences++;
+            g.lineIndices.push(i);
+        }
+        /* Errors before warnings so the most severe surface first, matching the producer's severity order. */
+        var out = order.map(function(k) { return groups[k]; });
+        out.sort(function(a, b) { return a.kind === b.kind ? 0 : (a.kind === 'error' ? -1 : 1); });
+        return out;
+    }
+
+    /* Prefer host metadata signals; fall back to on-screen lines only when the host sent none. Caches
+       the resolved list in liveSignalsInThisLog so the per-row copy handler (part D) can re-find a
+       clicked fallback entry by fingerprint. */
+    function resolveSignalsInThisLog() {
+        var fromHost = signalDataCache.signalsInThisLog || [];
+        var resolved = fromHost.length > 0 ? fromHost : buildLiveSignalsFromLines();
+        liveSignalsInThisLog = resolved;
+        return resolved;
+    }
+
     function renderPerformanceHero() {
         var heroEl = document.getElementById('signal-performance-hero');
         if (!heroEl) return;
@@ -217,6 +257,9 @@ export function getSignalScriptPartC(): string {
             heroLoading = false;
             hasLog = !!(e.data.sessionData);
             currentLogLabel = e.data.currentLogLabel || '';
+            /* A log is open iff the host sent a label for it (basename of the viewed file). Drives the
+               "This log" section visibility independently of perf-sampling data (see logOpen decl). */
+            logOpen = !!currentLogLabel;
             heroErrorCount = e.data.heroErrorCount;
             heroWarningCount = e.data.heroWarningCount;
             heroSnapshotSummary = (e.data.heroSnapshotSummary != null && e.data.heroSnapshotSummary !== '') ? String(e.data.heroSnapshotSummary) : '';

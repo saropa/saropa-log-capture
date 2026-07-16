@@ -25,6 +25,12 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
     var sectionThisLog = document.getElementById('signal-section-this-log');
     var signalPanelOpen = false;
     var hasLog = false;
+    /* logOpen = "a log file is being viewed", set from performanceData.currentLogLabel. Distinct from
+       hasLog, which means "performance-sampling data exists" (meta.integrations.performance). The
+       "This log" section must show whenever a log is open — a plain capture with errors but no perf
+       integration still has signals to display. Gating that section on hasLog hid it for every log
+       without perf sampling, so on-screen errors never reached the panel. */
+    var logOpen = false;
     var heroLoading = false;
     var signalDataCache = { statuses: {}, hotFiles: [], platforms: [], sdkVersions: [], debugAdapters: [], allSignals: [], signalsInThisLog: [], coOccurrences: [], pulse: null };
     var sectionExpanded = { 'session-details': false, 'this-log': true, 'across-logs': true, environment: false };
@@ -37,6 +43,11 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
     /* Fu5 sort toggle state for "Signals in this log": 'severity' (default, the producer's order)
        or 'time' (chronological by representative timestamp). Lives in part-a so it survives renders. */
     var signalsInLogSortMode = 'severity';
+    /* Last-resolved "Signals in this log" list (host metadata signals, or the on-screen-line fallback
+       when the host sent none). Cached here so the per-row copy handler in part D can re-find a
+       clicked fallback entry by fingerprint — those entries are synthesized at render time and are
+       not present in signalDataCache.signalsInThisLog. */
+    var liveSignalsInThisLog = [];
     /* Plan 053-A: pending noise-learning suggestions cached from the extension host.
        Refreshed when the panel opens (sent in the signalData payload). Each entry has
        { id, pattern, description, confidence, impact: { linesAffected, percentageReduction },
@@ -97,9 +108,11 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
             sectionSessionDetails.style.display = hasLog ? '' : 'none';
             sectionSessionDetails.setAttribute('aria-hidden', hasLog ? 'false' : 'true');
         }
+        /* This-log section gates on logOpen, NOT hasLog: it holds the current report's own signals,
+           which exist whenever a log is open regardless of performance sampling. */
         if (sectionThisLog) {
-            sectionThisLog.style.display = hasLog ? '' : 'none';
-            sectionThisLog.setAttribute('aria-hidden', hasLog ? 'false' : 'true');
+            sectionThisLog.style.display = logOpen ? '' : 'none';
+            sectionThisLog.setAttribute('aria-hidden', logOpen ? 'false' : 'true');
         }
         renderSectionAccordion('session-details');
         renderSectionAccordion('this-log');
