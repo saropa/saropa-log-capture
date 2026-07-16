@@ -170,17 +170,14 @@ suite('ViewerOptionsPanel', () => {
                 'the old companion prose block must be gone');
             assert.ok(!html.includes('Companion extensions'),
                 'the companion heading/intro copy must not push down the real toggles');
-        });
-
-        test('should give companion rows a disabled status checkbox + live-toggle data attributes', () => {
-            const html = getIntegrationsPanelHtml();
-            // Companion rows are <label> + checkbox like adapters (no checkbox-less variant to
-            // special-case); the checkbox is a disabled status indicator with NO data-adapter-id,
-            // so it never enters the adapter payload. The host setCompanionInstalled message finds
-            // rows by data-companion-id and flips is-installed + checkbox from the data-* labels.
+            // Rows are <label> + checkbox like adapters (no checkbox-less variant to special-case).
+            // The checkbox carries NO data-adapter-id (never in the adapter payload) and, when absent,
+            // is enabled with data-extension-id so checking it requests an install. The host
+            // setCompanionInstalled message flips is-installed + checkbox from the data-* labels.
             assert.match(html, /<label class="integrations-row integrations-companion-item[^"]*"/,
                 'companion rows must be <label> like adapter rows');
-            assert.match(html, /id="int-companion-[^"]+"[^>]*disabled/, 'companion checkbox must be disabled');
+            assert.match(html, /class="integrations-companion-check"[^>]*data-extension-id="/,
+                'companion checkbox must carry its extension id for the install request');
             assert.ok(!/int-companion-[^"]*"[^>]*data-adapter-id/.test(html),
                 'companion checkbox must not carry data-adapter-id');
             assert.ok(html.includes('data-companion-id="') && html.includes('data-installed-title="'), 'rows expose data-companion-id + data-* labels for live toggling');
@@ -310,13 +307,17 @@ suite('ViewerOptionsPanel', () => {
             assert.ok(script.includes('initIntegrationsOptionsHandlers()'));
         });
 
-        test('should define applyCompanionInstalled for live install-state toggling', () => {
+        test('should wire companion live-toggle + one-click install in the embedded helper', () => {
             const script = getOptionsPanelScript();
-            // The host setCompanionInstalled message drives this: it flips is-installed + checkbox
-            // per data-companion-id so installing/removing a companion updates the row without reload.
+            // applyCompanionInstalled flips is-installed + checkbox per data-companion-id (disabling
+            // the box once installed, caching states for re-apply on view open); checking an absent
+            // companion posts installCompanion and reverts, letting the live feed confirm on success.
             assert.ok(script.includes('function applyCompanionInstalled(states)'));
-            assert.ok(script.includes('data-companion-id'));
             assert.ok(script.includes("classList.toggle('is-installed'"));
+            assert.ok(script.includes('cb.disabled = installed'), 'installed companion checkbox becomes disabled');
+            assert.ok(script.includes('window.__companionInstalledStates = states'), 'states cached for re-apply');
+            assert.ok(script.includes("matches('.integrations-companion-check')"), 'handler recognizes the install checkbox');
+            assert.ok(script.includes("type: 'installCompanion'"), 'checking posts an installCompanion request');
         });
 
         test('should toggle Integrations description with more/less labels in embedded helper', () => {
