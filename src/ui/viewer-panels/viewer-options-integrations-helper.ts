@@ -21,6 +21,16 @@ function initIntegrationsOptionsHandlers() {
     var integrationsSearch = document.getElementById('integrations-search');
     if (integrationsSection) {
         integrationsSection.addEventListener('click', function(e) {
+            /* Companion rows carry a Marketplace link instead of a toggle checkbox. */
+            var companionLink = e.target && e.target.closest && e.target.closest('.integrations-companion-link');
+            if (companionLink) {
+                e.preventDefault();
+                var companionUrl = companionLink.getAttribute('data-url');
+                if (companionUrl && typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
+                    vscodeApi.postMessage({ type: 'openUrl', url: companionUrl });
+                }
+                return;
+            }
             var toggleBtn = e.target && e.target.closest && e.target.closest('.integrations-desc-toggle');
             if (!toggleBtn) return;
             e.preventDefault();
@@ -57,15 +67,15 @@ function initIntegrationsOptionsHandlers() {
         });
     }
 
-    /* Companion extension "View in Marketplace" links — open URL via host. */
-    var companionSection = document.querySelector('.integrations-companion-section');
-    if (companionSection) {
-        companionSection.addEventListener('click', function(e) {
+    /* "Install all with the Saropa Suite" footer link (below the list, outside the section). */
+    var suiteFooter = document.querySelector('.integrations-suite-footer');
+    if (suiteFooter) {
+        suiteFooter.addEventListener('click', function(e) {
             var link = e.target && e.target.closest && e.target.closest('.integrations-companion-link');
             if (!link) return;
             e.preventDefault();
             var url = link.getAttribute('data-url');
-            if (url && typeof vscodeApi !== 'undefined') {
+            if (url && typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
                 vscodeApi.postMessage({ type: 'openUrl', url: url });
             }
         });

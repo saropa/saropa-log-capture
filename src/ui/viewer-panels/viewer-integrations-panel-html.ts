@@ -16,10 +16,11 @@ import { SAROPA_LINTS_EXTENSION_ID } from '../../modules/misc/saropa-lints-api';
 import { DRIFT_ADVISOR_EXTENSION_ID } from '../../modules/integrations/drift-advisor-constants';
 
 /**
- * When the description has no extra notes, still offer expand/collapse if the text is long
- * enough that a multi-line clamp (see CSS) likely truncates. Mirrors ~3–4 wrapped lines.
+ * Descriptions collapse to a single line (see CSS `-webkit-line-clamp`/nowrap on the preview),
+ * so anything wider than roughly one wrapped line gets a "more" toggle. Kept well below a full
+ * line's character budget so short one-liners stay inline while real prose earns an expander.
  */
-const INTEGRATIONS_DESCRIPTION_COLLAPSE_THRESHOLD_CHARS = 130;
+const INTEGRATIONS_DESCRIPTION_COLLAPSE_THRESHOLD_CHARS = 55;
 const PERFORMANCE_WARNING_EMOJI = '⚠️';
 
 function splitPerformanceWarning(performanceNote?: string): { warningEmoji: string; text: string } {
@@ -57,29 +58,58 @@ const COMPANION_EXTENSIONS: readonly CompanionExtension[] = [
     },
 ];
 
-/** Render the companion extensions block shown above the adapter list. */
-function renderCompanionExtensionsHtml(): string {
-    const suiteUrl = escapeHtml(buildItemUrl('saropa.saropa-suite'));
-    const rows = COMPANION_EXTENSIONS.map((c) => {
-        const url = escapeHtml(buildItemUrl(c.extensionId));
-        return `<div class="integrations-companion-row">
-            <span class="integrations-companion-label">${escapeHtml(c.label)}</span>
-            <span class="integrations-companion-benefit">${escapeHtml(t(c.benefitKey))}</span>
+/**
+ * Shared collapsible description block.
+ *
+ * Collapsed state is a single line: the preview truncates with an ellipsis and the "more"
+ * toggle sits inline at the end of that line (CSS flex; expanded block is display:none so it
+ * does not occupy the row). Expanded state hides the preview, shows the full text plus any
+ * extra notes at full width, which pushes the same toggle (now "less") onto its own line below.
+ */
+function renderDescBlock(text: string, expandedExtraHtml: string, expandable: boolean): string {
+    const escaped = escapeHtml(text);
+    if (!expandable) {
+        return `<div class="integrations-desc">
+                <span class="integrations-desc-only">${escaped}</span>
+            </div>`;
+    }
+    return `<div class="integrations-desc integrations-desc-collapsible">
+                <span class="integrations-desc-preview">${escaped}</span>
+                <div class="integrations-expanded-block options-filtered-hidden">
+                    <span class="integrations-desc-full">${escaped}</span>
+                    ${expandedExtraHtml}
+                </div>
+                <button type="button" class="integrations-desc-toggle" data-expanded="false" aria-expanded="false">${t('viewer.integrations.more')}</button>
+            </div>`;
+}
+
+/** A list entry with its sort label so companion links and adapters interleave alphabetically. */
+interface IntegrationListEntry {
+    readonly label: string;
+    readonly html: string;
+}
+
+/**
+ * Companion Saropa extension as a list row (no checkbox — an uninstalled extension can't be
+ * "enabled" here; the action is a Marketplace link). Rendered inline with the adapters so the
+ * list is one alphabetical surface instead of a separate wall of prose above the real toggles.
+ */
+function renderCompanionRow(c: CompanionExtension): IntegrationListEntry {
+    const url = escapeHtml(buildItemUrl(c.extensionId));
+    const benefit = t(c.benefitKey);
+    const searchText = [c.label, benefit].join(' ').toLowerCase();
+    const expandable = benefit.length > INTEGRATIONS_DESCRIPTION_COLLAPSE_THRESHOLD_CHARS;
+    const html = `
+        <div class="integrations-row integrations-companion-item" title="${escapeHtml(benefit)}" data-search-text="${escapeHtml(searchText)}">
+            <span class="integrations-label">${escapeHtml(c.label)}</span>
             <a class="integrations-companion-link" data-url="${url}" href="#">${t('viewer.integrations.viewInMarketplace')}</a>
+            ${renderDescBlock(benefit, '', expandable)}
         </div>`;
-    }).join('\n');
-    return `<div class="integrations-companion-section">
-        <div class="integrations-companion-heading">${t('viewer.integrations.companionHeading')}</div>
-        <p class="integrations-intro">${t('viewer.integrations.companionIntro')}</p>
-        ${rows}
-        <div class="integrations-companion-row integrations-companion-suite">
-            <a class="integrations-companion-link" data-url="${suiteUrl}" href="#">${t('viewer.integrations.installSuite')}</a>
-        </div>
-    </div>`;
+    return { label: c.label, html };
 }
 
 /** Build one integration row: checkbox, label, long description, and optional perf/when-to-disable lines. */
-function renderIntegrationRow(a: IntegrationAdapterMeta): string {
+function renderIntegrationRow(a: IntegrationAdapterMeta): IntegrationListEntry {
     const longDesc = a.descriptionLong ?? a.description;
     const perfNote = splitPerformanceWarning(a.performanceNote);
     const labelWarning = perfNote.warningEmoji
@@ -96,40 +126,39 @@ function renderIntegrationRow(a: IntegrationAdapterMeta): string {
         ? `<div class="integrations-note integrations-when">${t('viewer.integrations.whenToDisable')} ${escapeHtml(a.whenToDisable)}</div>`
         : '';
     const searchText = [a.label, longDesc, a.performanceNote ?? '', a.whenToDisable ?? ''].join(' ').toLowerCase();
-    const escapedLongDesc = escapeHtml(longDesc);
     const hasExpandable =
         longDesc.length > INTEGRATIONS_DESCRIPTION_COLLAPSE_THRESHOLD_CHARS ||
         !!a.performanceNote ||
         !!a.whenToDisable;
 
-    // Collapsed: line-clamped preview (CSS). Expanded: full text, notes, then "less" toggle at end.
-    const descBlock = hasExpandable
-        ? `<div class="integrations-desc integrations-desc-collapsible">
-                <span class="integrations-desc-preview">${escapedLongDesc}</span>
-                <div class="integrations-expanded-block options-filtered-hidden">
-                    <span class="integrations-desc-full">${escapedLongDesc}</span>
-                    ${perf}
-                    ${when}
-                </div>
-                <button type="button" class="integrations-desc-toggle" data-expanded="false" aria-expanded="false">${t('viewer.integrations.more')}</button>
-            </div>`
-        : `<div class="integrations-desc">
-                <span class="integrations-desc-only">${escapedLongDesc}</span>
-            </div>`;
-
-    return `
+    const html = `
         <label class="integrations-row" title="${escapeHtml(longDesc)}" data-search-text="${escapeHtml(searchText)}">
             <input type="checkbox" id="int-${escapeHtml(a.id)}" data-adapter-id="${escapeHtml(a.id)}" />
             <span class="integrations-label">${escapeHtml(a.label)}${labelWarning}</span>
-            ${descBlock}
+            ${renderDescBlock(longDesc, `${perf}\n${when}`, hasExpandable)}
         </label>`;
+    return { label: a.label, html };
+}
+
+/** Compact footer link to install the whole Saropa suite; sits below the list, out of the way. */
+function renderSuiteInstallFooter(): string {
+    const suiteUrl = escapeHtml(buildItemUrl('saropa.saropa-suite'));
+    return `<div class="integrations-suite-footer">
+        <a class="integrations-companion-link" data-url="${suiteUrl}" href="#">${t('viewer.integrations.installSuite')}</a>
+    </div>`;
 }
 
 /** Returns the HTML for the Integrations view (header + back + list). Shown inside the options panel when user clicks Integrations. */
 export function getIntegrationsPanelHtml(): string {
-    const rows = [...INTEGRATION_ADAPTERS]
+    // Adapters (checkbox toggles) and companion Saropa extensions (Marketplace links) share one
+    // alphabetical list so the real integration points are not buried under a separate prose block.
+    const entries: IntegrationListEntry[] = [
+        ...INTEGRATION_ADAPTERS.map(renderIntegrationRow),
+        ...COMPANION_EXTENSIONS.map(renderCompanionRow),
+    ];
+    const rows = entries
         .sort((a, b) => a.label.localeCompare(b.label))
-        .map(renderIntegrationRow)
+        .map((e) => e.html)
         .join('\n');
     return `
     <div id="integrations-view" class="integrations-view integrations-view-hidden" role="region" aria-label="${t('viewer.integrations.region')}" aria-hidden="true">
@@ -140,13 +169,13 @@ export function getIntegrationsPanelHtml(): string {
         <div class="integrations-content">
             <p class="integrations-intro">${t('viewer.integrations.intro')}</p>
             <div id="integrations-suite-suggestions" class="integrations-suite-suggestions" aria-live="polite"></div>
-            ${renderCompanionExtensionsHtml()}
             <div class="integrations-search-wrapper">
                 <input id="integrations-search" type="text" placeholder="${t('viewer.integrations.searchPlaceholder')}" aria-label="${t('viewer.integrations.searchLabel')}" />
             </div>
             <div class="options-section" id="integrations-section">
                 ${rows}
             </div>
+            ${renderSuiteInstallFooter()}
         </div>
     </div>`;
 }

@@ -156,6 +156,32 @@ suite('ViewerOptionsPanel', () => {
             assert.ok(!html.includes('Show less'));
         });
 
+        test('should render Saropa companion extensions as list rows (no separate prose block)', () => {
+            const html = getIntegrationsPanelHtml();
+            // Companion extensions now live inside the integration list as rows with a
+            // Marketplace link, interleaved alphabetically — not a heading/prose block on top.
+            assert.ok(html.includes('integrations-companion-item'),
+                'companion extensions must render as integration list rows');
+            assert.ok(html.includes('Saropa Lints'));
+            assert.ok(html.includes('Saropa Drift Advisor'));
+            assert.ok(html.includes('View in Marketplace'));
+            assert.ok(!html.includes('integrations-companion-section'),
+                'the old companion prose block must be gone');
+            assert.ok(!html.includes('Companion extensions'),
+                'the companion heading/intro copy must not push down the real toggles');
+        });
+
+        test('should place companion rows alphabetically after their adapter neighbors', () => {
+            const html = getIntegrationsPanelHtml();
+            // Both companion rows are checkbox-less; the suite install link is a footer below the list.
+            assert.ok(html.indexOf('integrations-companion-item') > html.indexOf('id="integrations-section"'),
+                'companion rows sit inside the list section');
+            assert.ok(html.includes('integrations-suite-footer'),
+                'install-all link is a footer below the list');
+            assert.ok(html.indexOf('integrations-suite-footer') > html.indexOf('integrations-companion-item'),
+                'suite footer follows the list rows');
+        });
+
         test('should show warning emoji in label for integrations with performance warnings', () => {
             const html = getIntegrationsPanelHtml();
             assert.ok(html.includes('integrations-perf-warning'));
