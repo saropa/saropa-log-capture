@@ -59,6 +59,9 @@ const COMPANION_EXTENSIONS: readonly CompanionExtension[] = [
     },
 ];
 
+/** Extension IDs of the companion rows — the host watches these for live install-state updates. */
+export const COMPANION_EXTENSION_IDS: readonly string[] = COMPANION_EXTENSIONS.map((c) => c.extensionId);
+
 /**
  * Shared collapsible description block.
  *
@@ -99,8 +102,14 @@ function isCompanionInstalled(extensionId: string): boolean {
  * Companion Saropa extension as a proper list row: a `<label>` with an inline checkbox that
  * mirrors install state (checked+disabled when installed), matching the adapter rows so no
  * consumer has to special-case a checkbox-less variant. The checkbox is always disabled — this
- * panel does not install/uninstall; when the extension is absent a Marketplace link offers it.
- * The checkbox carries NO `data-adapter-id`, so it never enters the adapter-selection payload.
+ * panel does not install/uninstall; the checkbox carries NO `data-adapter-id`, so it never
+ * enters the adapter-selection payload.
+ *
+ * Both states are rendered: the Marketplace link is always present and hidden via CSS while the
+ * extension is installed (`is-installed`). Install/uninstall while the viewer is open flips the
+ * class + checkbox from the host `setCompanionInstalled` message — see `applyCompanionInstalled`.
+ * The state-label strings ride along as `data-*` attributes so that live update needs no l10n
+ * round-trip into the webview.
  */
 function renderCompanionRow(c: CompanionExtension): IntegrationListEntry {
     const installed = isCompanionInstalled(c.extensionId);
@@ -108,16 +117,19 @@ function renderCompanionRow(c: CompanionExtension): IntegrationListEntry {
     const benefit = t(c.benefitKey);
     const searchText = [c.label, benefit].join(' ').toLowerCase();
     const expandable = benefit.length > INTEGRATIONS_DESCRIPTION_COLLAPSE_THRESHOLD_CHARS;
-    const stateLabel = installed
-        ? t('viewer.integrations.companionInstalled')
-        : t('viewer.integrations.companionNotInstalled');
+    const installedTitle = t('viewer.integrations.companionInstalled');
+    const notInstalledTitle = t('viewer.integrations.companionNotInstalled');
+    const stateLabel = installed ? installedTitle : notInstalledTitle;
+    const rowClass = `integrations-row integrations-companion-item${installed ? ' is-installed' : ''}`;
+    const dataAttrs =
+        `data-companion-id="${escapeHtml(c.extensionId)}"` +
+        ` data-installed-title="${escapeHtml(installedTitle)}"` +
+        ` data-not-installed-title="${escapeHtml(notInstalledTitle)}"` +
+        ` data-label="${escapeHtml(c.label)}"`;
     const checkbox = `<input type="checkbox" id="int-companion-${escapeHtml(c.extensionId)}" ${installed ? 'checked ' : ''}disabled title="${escapeHtml(stateLabel)}" aria-label="${escapeHtml(`${c.label}: ${stateLabel}`)}" />`;
-    // Marketplace link only when absent; an installed companion is managed from the Extensions view.
-    const link = installed
-        ? ''
-        : `<a class="integrations-companion-link" data-url="${url}" href="#">${t('viewer.integrations.viewInMarketplace')}</a>`;
+    const link = `<a class="integrations-companion-link" data-url="${url}" href="#">${t('viewer.integrations.viewInMarketplace')}</a>`;
     const html = `
-        <label class="integrations-row integrations-companion-item" title="${escapeHtml(benefit)}" data-search-text="${escapeHtml(searchText)}">
+        <label class="${rowClass}" title="${escapeHtml(benefit)}" data-search-text="${escapeHtml(searchText)}" ${dataAttrs}>
             ${checkbox}
             <span class="integrations-label">${escapeHtml(c.label)}</span>
             ${link}
