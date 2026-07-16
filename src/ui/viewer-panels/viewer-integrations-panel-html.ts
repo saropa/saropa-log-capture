@@ -62,6 +62,11 @@ const COMPANION_EXTENSIONS: readonly CompanionExtension[] = [
 /** Extension IDs of the companion rows — the host watches these for live install-state updates. */
 export const COMPANION_EXTENSION_IDS: readonly string[] = COMPANION_EXTENSIONS.map((c) => c.extensionId);
 
+/** Brand label per companion id — the host `installCompanion` allowlist + toast text draw from this. */
+export const COMPANION_LABEL_BY_ID: Readonly<Record<string, string>> = Object.fromEntries(
+    COMPANION_EXTENSIONS.map((c) => [c.extensionId, c.label]),
+);
+
 /**
  * Shared collapsible description block.
  *
@@ -99,17 +104,17 @@ function isCompanionInstalled(extensionId: string): boolean {
 }
 
 /**
- * Companion Saropa extension as a proper list row: a `<label>` with an inline checkbox that
- * mirrors install state (checked+disabled when installed), matching the adapter rows so no
- * consumer has to special-case a checkbox-less variant. The checkbox is always disabled — this
- * panel does not install/uninstall; the checkbox carries NO `data-adapter-id`, so it never
- * enters the adapter-selection payload.
+ * Companion Saropa extension as a proper list row: a `<label>` with an inline checkbox, matching
+ * the adapter rows so no consumer has to special-case a checkbox-less variant. The checkbox
+ * carries NO `data-adapter-id`, so it never enters the adapter-selection payload.
  *
- * Both states are rendered: the Marketplace link is always present and hidden via CSS while the
- * extension is installed (`is-installed`). Install/uninstall while the viewer is open flips the
- * class + checkbox from the host `setCompanionInstalled` message — see `applyCompanionInstalled`.
- * The state-label strings ride along as `data-*` attributes so that live update needs no l10n
- * round-trip into the webview.
+ * The checkbox is actionable in ONE direction: when the extension is absent it is enabled and
+ * checking it posts `installCompanion` (the host installs it; the live feed then flips the row to
+ * installed). When already installed it is checked + disabled — this panel never uninstalls, so
+ * removal stays in the Extensions view. Both states are rendered; the Marketplace link is always
+ * present and hidden via CSS while installed (`is-installed`). Install state (checkbox + class)
+ * and the actionable/disabled flip are driven live by `applyCompanionInstalled`. The state-label
+ * strings ride along as `data-*` attributes so live update needs no l10n round-trip.
  */
 function renderCompanionRow(c: CompanionExtension): IntegrationListEntry {
     const installed = isCompanionInstalled(c.extensionId);
@@ -118,15 +123,17 @@ function renderCompanionRow(c: CompanionExtension): IntegrationListEntry {
     const searchText = [c.label, benefit].join(' ').toLowerCase();
     const expandable = benefit.length > INTEGRATIONS_DESCRIPTION_COLLAPSE_THRESHOLD_CHARS;
     const installedTitle = t('viewer.integrations.companionInstalled');
-    const notInstalledTitle = t('viewer.integrations.companionNotInstalled');
-    const stateLabel = installed ? installedTitle : notInstalledTitle;
+    const installTitle = t('viewer.integrations.companionInstallAction', c.label);
+    const stateLabel = installed ? installedTitle : installTitle;
     const rowClass = `integrations-row integrations-companion-item${installed ? ' is-installed' : ''}`;
     const dataAttrs =
         `data-companion-id="${escapeHtml(c.extensionId)}"` +
         ` data-installed-title="${escapeHtml(installedTitle)}"` +
-        ` data-not-installed-title="${escapeHtml(notInstalledTitle)}"` +
+        ` data-not-installed-title="${escapeHtml(installTitle)}"` +
         ` data-label="${escapeHtml(c.label)}"`;
-    const checkbox = `<input type="checkbox" id="int-companion-${escapeHtml(c.extensionId)}" ${installed ? 'checked ' : ''}disabled title="${escapeHtml(stateLabel)}" aria-label="${escapeHtml(`${c.label}: ${stateLabel}`)}" />`;
+    // Enabled (installable) when absent; checked+disabled when present. data-extension-id tells the
+    // change handler what to install; the id is re-validated host-side against the companion allowlist.
+    const checkbox = `<input type="checkbox" class="integrations-companion-check" id="int-companion-${escapeHtml(c.extensionId)}" data-extension-id="${escapeHtml(c.extensionId)}" ${installed ? 'checked disabled ' : ''}title="${escapeHtml(stateLabel)}" aria-label="${escapeHtml(installed ? `${c.label}: ${installedTitle}` : installTitle)}" />`;
     const link = `<a class="integrations-companion-link" data-url="${url}" href="#">${t('viewer.integrations.viewInMarketplace')}</a>`;
     const html = `
         <label class="${rowClass}" title="${escapeHtml(benefit)}" data-search-text="${escapeHtml(searchText)}" ${dataAttrs}>

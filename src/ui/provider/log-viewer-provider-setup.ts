@@ -12,7 +12,7 @@ import { getViewerKeybindingsFromConfig } from "../viewer/viewer-keybindings";
 import { getLearningWebviewOptions } from "../../modules/learning/learning-webview-options";
 import { getRootCauseHintViewerStrings } from "../../modules/root-cause-hints/root-cause-hint-l10n-host";
 import { mergeIntegrationAdaptersForWebview } from "../../modules/integrations/integration-adapter-constants";
-import { getCaptureSourceStates } from "../../modules/integrations/capture-source-states";
+import { resolveAndPostCaptureSources } from "../../modules/integrations/capture-source-states";
 import { isCrashlyticsApplicable } from "../../modules/crashlytics/crashlytics-applicability";
 
 export interface LogViewerSetupTarget {
@@ -76,8 +76,9 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
     const c = getConfig();
     const aiOn = vscode.workspace.getConfiguration("saropaLogCapture.ai").get<boolean>("enabled", false);
     target.sendIntegrationsAdapters(mergeIntegrationAdaptersForWebview(c.integrationsAdapters, aiOn, c.integrationsAdbLogcat.enabled));
-    // Read-only "Capture sources" status for the Filters panel Log Sources tab.
-    target.postMessage({ type: 'captureSources', sources: getCaptureSourceStates(c) });
+    // Read-only "Capture sources" status for the Filters panel Log Sources tab. Resolves runtime
+    // state (adb device probe) when a debug session is already active as the viewer loads.
+    void resolveAndPostCaptureSources((m) => target.postMessage(m));
   });
   // Crashlytics is enabled by default, so the webview also needs to know whether THIS workspace is a
   // deployable app. On a library / package project the icon stays hidden so the setup hint never nags.

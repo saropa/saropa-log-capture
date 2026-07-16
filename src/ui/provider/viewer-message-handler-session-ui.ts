@@ -18,6 +18,7 @@ import { handleOpenSessionForSignalType } from '../shared/handlers/recurring-han
 import { SAROPA_BOOL_SETTING_BY_MSG_TYPE, SAROPA_GLOBAL_BOOL_SETTING_BY_MSG_TYPE } from "./viewer-workspace-bool-message-map";
 import { handleLogFileAction } from "./viewer-log-file-actions";
 import { handleOpenDroppedLog } from "./viewer-dropped-log";
+import { COMPANION_EXTENSION_IDS, COMPANION_LABEL_BY_ID } from "../viewer-panels/viewer-integrations-panel-html";
 
 /** Coerce message field to string; never stringify objects (avoids '[object Object]'). */
 function msgStr(m: Record<string, unknown>, key: string, fallback = ""): string {
@@ -46,6 +47,26 @@ function isAllowedExternalUrl(url: string): boolean {
    cwd) in the OS file explorer. Validates the path before invoking the
    built-in 'revealFileInOS' command so a hostile webview payload cannot
    coerce a path traversal. */
+/**
+ * Install a Saropa companion extension requested from the Integrations list checkbox. The id is
+ * re-validated against the companion allowlist here — never trust the webview to name an arbitrary
+ * extension to install. On success the live `setCompanionInstalled` feed flips the row; this only
+ * surfaces start/done/failure feedback so the tap is never silent.
+ */
+function runInstallCompanion(msg: Record<string, unknown>): void {
+  const id = msgStr(msg, "extensionId").trim();
+  if (!COMPANION_EXTENSION_IDS.includes(id)) {
+    logExtensionWarn('viewerMessage', 'installCompanion rejected: not a companion extension id');
+    return;
+  }
+  const label = COMPANION_LABEL_BY_ID[id] ?? id;
+  vscode.window.setStatusBarMessage(t('viewer.integrations.companionInstalling', label), 4000);
+  void vscode.commands.executeCommand('workbench.extensions.installExtension', id).then(
+    () => vscode.window.showInformationMessage(t('viewer.integrations.companionInstallDone', label)),
+    () => vscode.window.showErrorMessage(t('viewer.integrations.companionInstallFailed', label)),
+  );
+}
+
 function runRevealPath(msg: Record<string, unknown>): void {
   const path = msgStr(msg, "path").trim();
   if (path.length === 0 || path.length > 2048) {
@@ -112,6 +133,7 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
       ctx.onLinkClick?.(msgStr(msg, "path"), Number(msg.line ?? 1), Number(msg.col ?? 1), Boolean(msg.splitEditor));
       return true;
     case "openUrl": runOpenUrl(msg); return true;
+    case "installCompanion": runInstallCompanion(msg); return true;
     case "revealPath": runRevealPath(msg); return true;
     case "navigatePart": ctx.onPartNavigate?.(Math.max(1, safeLineIndex(msg.part, 1))); return true;
     case "navigateSession": { const d = Number(msg.direction); ctx.onSessionNavigate?.(d < 0 ? -1 : 1); return true; }

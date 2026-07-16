@@ -156,6 +156,8 @@ export const stringsWebviewB: Record<string, string> = {
     'viewer.search.filterName.tier': 'Log Sources',
     'viewer.drawer.captureSources.on': 'On',
     'viewer.drawer.captureSources.off': 'Off',
+    'viewer.drawer.captureSources.streaming': 'Streaming',
+    'viewer.drawer.captureSources.idle': 'Idle',
     'viewer.search.filterName.exclusions': 'Exclusions',
     'viewer.search.filterName.sourceTag': 'Log Tags',
     'viewer.search.filterName.classTag': 'Source Classes',
