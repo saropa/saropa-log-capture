@@ -191,6 +191,26 @@ suite('Collapsible day groups', () => {
         assert.ok(html.includes('class="session-day-count">1<'), 'Yesterday group should show count 1');
     });
 
+    test('severity pill count is comma-grouped for large logs', () => {
+        const { sandbox } = buildSandbox();
+        bootPanel(sandbox);
+        /* renderSeverityDots is a top-level fn in the transforms chunk, so it is a global
+           on the VM context. Exercise the real pill path: a five-figure error count must
+           render as "12,480" inside the sev-count-error pill, not raw "12480". */
+        const render = sandbox.renderSeverityDots as (s: Record<string, number>) => string;
+        const html = render({ errorCount: 12480, lineCount: 12480 });
+        assert.ok(html.includes('sev-count-error'), 'renders an error pill');
+        assert.ok(html.includes('>12,480<'), 'large error count is comma-grouped');
+    });
+
+    test('groupThousands leaves small counts unchanged', () => {
+        const { sandbox } = buildSandbox();
+        bootPanel(sandbox);
+        const gt = sandbox.groupThousands as (n: number) => string;
+        assert.strictEqual(gt(42), '42', 'no separator below 1,000');
+        assert.strictEqual(gt(1000), '1,000', 'separator at the thousand boundary');
+    });
+
     test('should not show file count when day headings are off', () => {
         const { sandbox: _sb, elements, messageHandlers } = buildSandbox();
         bootPanel(_sb);
