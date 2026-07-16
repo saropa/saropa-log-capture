@@ -2626,6 +2626,12 @@
           "type": "boolean",
           "title": "%config.integrations.adbLogcat.captureDeviceOther.title%"
         },
+        "saropaLogCapture.integrations.adbLogcat.captureAnr": {
+          "default": true,
+          "description": "Always capture ANR and native-crash evidence, even when level or PID filtering would drop it. ActivityManager/AndroidRuntime dump the \"ANR in <package>\" header and the frozen main-thread stack from the system process (a different PID than your app), so PID scoping hides the richest ANR detail unless this is on. Turn off to keep strict PID/level filtering.",
+          "type": "boolean",
+          "title": "%config.integrations.adbLogcat.captureAnr.title%"
+        },
         "saropaLogCapture.integrations.unifiedLog.writeAtSessionEnd": {
           "default": false,
           "description": "After session end, write basename.unified.jsonl next to the main log: one JSON line per row { \"source\", \"text\" } merging main log, .terminal.log, and external sidecars (for sharing or opening one file in the viewer with Sources filter).",

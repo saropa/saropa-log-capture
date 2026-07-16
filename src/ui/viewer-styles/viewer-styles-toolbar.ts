@@ -239,7 +239,23 @@ export function getToolbarStyles(): string {
 /* ===================================================================
    Footer compat styles (for elements that kept footer class names)
    =================================================================== */
-#line-count { white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* Line-count pill. Uses the badge token pair (not descriptionForeground) because the
+   plain gray count was near-illegible against the toolbar; badge bg/fg is VS Code's
+   guaranteed-contrast pair across light/dark/high-contrast themes. :empty hides it so
+   an empty count leaves no stray pill. */
+#line-count {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 9px;
+    background: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    font-weight: 600;
+    font-size: 10px;
+    line-height: 15px;
+}
+#line-count:empty { display: none; }
 .footer-selection { white-space: nowrap; font-variant-numeric: tabular-nums; margin-left: 6px; }
 .footer-selection:empty { display: none; }
 @keyframes badge-pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
