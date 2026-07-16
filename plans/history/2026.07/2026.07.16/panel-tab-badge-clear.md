@@ -37,6 +37,10 @@ A screenshot showed the badge reading 56 while the panel was the active, visible
 
 Fix: on resolve, if `webviewView.visible`, call `setVisibleView` + `acknowledgeWatchHits` regardless of the pending-load branch, and still fire `onBecameVisible()` only when not loading a pending file (preserving prior semantics).
 
+### Test coverage
+
+The resolve-when-visible decision (acknowledge iff visible; run auto-load iff visible and no pending file) is pinned in `src/test/ui/log-viewer-auto-load.test.ts` as a pure-logic mirror, matching that file's existing `shouldAutoLoad` convention — `setupLogViewerWebview` itself imports vscode/getConfig at module scope and is not directly importable in a pure test.
+
 ### Not covered
 
-Host-side `LogViewerProvider.updateWatchCounts` badge logic and the `viewerFocused` → `acknowledgeWatchHits` path have no unit tests (pre-existing gap in webview/provider coverage); the 400ms throttle lives in a webview template literal with no unit harness. Verified by inspection and manual reasoning.
+Host-side `LogViewerProvider.updateWatchCounts` badge logic and the `viewerFocused` → `acknowledgeWatchHits` path have no unit tests (pre-existing gap in webview/provider coverage); the 400ms throttle lives in a webview template literal with no unit harness. The resolve-branch test is a logic mirror, not a drive of the real `setupLogViewerWebview`. Verified otherwise by inspection and the delegated review.
