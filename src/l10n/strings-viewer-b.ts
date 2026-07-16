@@ -184,8 +184,8 @@ export const stringsViewerB: Record<string, string> = {
     'viewer.session.loading': 'Loading…',
 
     // ── Signals panel — leftover host literals (panels/viewer-signal-panel.ts) ─
-    'signal.panel.region': 'Signals',
-    'signal.panel.title': 'Signals',
+    'signal.panel.region': 'Project Signals',
+    'signal.panel.title': 'Project Signals',
     'signal.panel.openTab.title': 'Open in new tab',
     'signal.panel.openTab.label': 'Open Signals in new tab',
     'signal.panel.copyMd.title': 'Copy to Markdown',

@@ -185,10 +185,10 @@ suite('Collapsible day groups', () => {
     test('should show file count in day heading for today group', () => {
         const { elements } = bootWithSessions(twoDaySessions);
         const html = String(elements.get('session-list')?.innerHTML ?? '');
-        /* Today has 2 sessions, yesterday has 1. Both should show counts in parentheses. */
+        /* Today has 2 sessions, yesterday has 1. Both show the count in a pill (no parens). */
         assert.ok(html.includes('session-day-count'), 'Day headings should include count badge');
-        assert.ok(html.includes('(2)'), 'Today group should show count (2)');
-        assert.ok(html.includes('(1)'), 'Yesterday group should show count (1)');
+        assert.ok(html.includes('class="session-day-count">2<'), 'Today group should show count 2');
+        assert.ok(html.includes('class="session-day-count">1<'), 'Yesterday group should show count 1');
     });
 
     test('should not show file count when day headings are off', () => {

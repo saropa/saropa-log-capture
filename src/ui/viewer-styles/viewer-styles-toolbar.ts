@@ -96,9 +96,11 @@ export function getToolbarStyles(): string {
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
     color: var(--vscode-foreground);
 }
+/* Expanded panel buttons (filter drawer, flow map, actions) get the same
+   link-blue as toggle-active icons — consistent "this is on" signal. */
 .toolbar-icon-btn[aria-expanded="true"] {
     background: var(--vscode-toolbar-activeBackground, rgba(99, 102, 106, 0.31));
-    color: var(--vscode-foreground);
+    color: var(--vscode-textLink-foreground, #3794ff);
 }
 .toolbar-badge {
     position: absolute;
