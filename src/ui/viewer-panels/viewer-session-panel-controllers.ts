@@ -171,7 +171,9 @@ export function getControllerGroupingScript(): string {
         if (n <= 0) return '';
         var name = s._canonName || '';
         var expanded = !!(name && expandedOlderNames[name]);
-        var label = (typeof vt === 'function') ? vt('viewer.session.olderCount', n) : ('+' + n + ' older');
+        /* Comma-group the count so a large fold reads "+1,234 older", not "+1234 older". */
+        var nLabel = groupThousands(n);
+        var label = (typeof vt === 'function') ? vt('viewer.session.olderCount', nLabel) : ('+' + nLabel + ' older');
         var title = (typeof vt === 'function')
             ? vt(expanded ? 'viewer.session.older.collapse' : 'viewer.session.older.expand')
             : label;

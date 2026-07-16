@@ -53,3 +53,29 @@ implementations (`toLocaleString` vs a regex). They are not shared because the
 session panel and the open-log viewer are distinct script scopes. If a third
 count surface is added, reuse whichever helper is already in that scope rather
 than adding a third.
+
+## Finish Report (2026-07-16) — remaining count surfaces
+
+The first pass grouped the severity pills, day heading, and pinned heading. Four
+count surfaces in the same panel still emitted bare digits; they now route through
+the same `groupThousands` helper:
+
+- `viewer-session-panel-rendering.ts` — the `+N` group badge (`secCount`) and the
+  `+N` controller-child badge (`childCount`), plus the "Showing X–Y of Z"
+  pagination line (all three of `from`, `to`, `total`).
+- `viewer-session-panel-controllers.ts` — the "+N older" latest-only fold badge.
+  The count is comma-formatted into a local `nLabel` before being passed as the
+  `{0}` token to `vt('viewer.session.olderCount', …)`; `vt` substitutes tokens by
+  split/join, so a formatted string argument is safe.
+
+All four sites live in the `getSessionRenderingScript` composition, which loads
+after the transforms chunk that defines `groupThousands` (verified via
+`viewer-content-scripts.ts` script order), so the helper is in scope at render
+time — the same unguarded cross-script pattern the existing `renderSeverityDots`
+call already relies on.
+
+No assertions broken: the older-badge test checks badge presence, not text, and
+its fixture count is single-digit; no pagination test pins the numeric format.
+Suites re-run green — controllers 6, day-collapse 13, session-panel-runtime 13.
+The comma mechanism itself was already pinned by the first-pass day-collapse test,
+so no new heavy fixture (1,000+ namesakes / >1 page of sessions) was added.
