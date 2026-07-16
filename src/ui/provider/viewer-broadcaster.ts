@@ -123,8 +123,8 @@ export class ViewerBroadcaster implements ViewerTarget {
   setSessionActive(active: boolean): void {
     for (const t of this.targets) { t.setSessionActive(active); }
   }
-  updateWatchCounts(counts: ReadonlyMap<string, number>): void {
-    for (const t of this.targets) { t.updateWatchCounts(counts); }
+  updateWatchCounts(counts: ReadonlyMap<string, number>, badgeCount?: number): void {
+    for (const t of this.targets) { t.updateWatchCounts(counts, badgeCount); }
   }
   sendBookmarkList(files: Record<string, unknown>): void {
     for (const t of this.targets) { t.sendBookmarkList(files); }

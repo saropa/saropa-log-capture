@@ -67,6 +67,12 @@ const CORPUS: readonly Case[] = [
     // (plans/history/2026.07/2026.07.09/BUG_saropa signal report.md).
     { line: 'W/ActivityManager: Slow operation: 51ms so far, now at startProcess', level: 'performance', note: 'slow operation keyword promotes W/ to performance' },
     { line: '3) Performance settings filtering (maxResults=50)', level: 'info', note: 'bare "Performance" noun phrase stays info' },
+    // DevTools inspector ghost errors (getLayoutExplorerNode / ext.flutter.inspector.) are
+    // developer-tooling noise, de-emphasized to 'debug' so they never redden the Errors filter —
+    // even the "Null check operator" carrier frame and even on stderr. Per-line only: the bare
+    // "Null check operator …" header (no inspector token) is NOT caught here by design.
+    { line: '#0 WidgetInspectorService.getLayoutExplorerNode (package:flutter/src/widgets/widget_inspector.dart:1)', level: 'debug', note: 'inspector getLayoutExplorerNode frame de-emphasized to debug' },
+    { line: 'ext.flutter.inspector.getLayoutExplorerNode: Null check operator used on a null value', level: 'debug', note: 'inspector RPC + Null check stays debug, not error' },
 ];
 
 suite('level classification — extension/webview parity', () => {
@@ -85,6 +91,15 @@ suite('level classification — extension/webview parity', () => {
             );
         });
     }
+
+    // The corpus runs category 'stdout'; this pins the ordering the corpus can't reach — an
+    // inspector artifact arriving on stderr with stderrTreatAsError=true must still be 'debug',
+    // because the inspector check runs BEFORE the stderr→error force. Flutter prints framework
+    // exceptions to stderr, so without that ordering these ghost errors would be forced to error.
+    test('inspector artifact on stderr stays debug despite stderrTreatAsError', () => {
+        const line = 'ext.flutter.inspector.getLayoutExplorerNode: Null check operator used on a null value';
+        assert.strictEqual(classifyLevel(line, 'stderr', true, true), 'debug');
+    });
 
     test('every corpus line classifies identically in both copies (drift guard)', () => {
         const mismatches = CORPUS.filter(
