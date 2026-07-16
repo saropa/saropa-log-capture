@@ -163,7 +163,26 @@ const structuralWarnPattern = /\b(?:could\s*not|couldn't|cannot|unable\s+to|fail
 
 /** Performance patterns that use regex features (quantifiers, alternation) and can't be simple keywords. */
 const structuralPerfPattern = /\b(skipped\s+\d+\s+frames?|gc\s+(?:pause|freed|concurrent)|took\s+\d+(?:\.\d+)?\s*(?:ms|s)\b|duration\s*:\s*\d+(?:\.\d+)?\s*(?:ms|s)\b)\b/i;
-const anrPattern = /\b(anr|application\s+not\s+responding|input\s+dispatching\s+timed\s+out)\b/i;
+// Exported so the pre-production risk scorer (anr-risk-scorer.ts) shares this exact definition
+// instead of re-declaring the same literal — a second copy drifted silently before.
+export const anrPattern = /\b(anr|application\s+not\s+responding|input\s+dispatching\s+timed\s+out)\b/i;
+
+/**
+ * Flutter DevTools inspector tooling artifact. The Layout Explorer interrogates the widget
+ * tree asynchronously via the `ext.flutter.inspector.getLayoutExplorerNode` service extension;
+ * a widget unmounted between frames makes the framework throw "Null check operator used on a
+ * null value" from `WidgetInspectorService` — a developer-tooling ghost, never an app fault.
+ * Left alone the frame carrying this signature reddens under the Errors filter (the strict/loose
+ * "Null check operator" alt) and can trip a logging breakpoint. The tokens are unambiguous
+ * DevTools internals: no app names a method `getLayoutExplorerNode`, and `ext.flutter.inspector.`
+ * is the inspector RPC namespace, so false positives against real app errors are negligible.
+ *
+ * Per-line only: this catches the signature-bearing frame, NOT the bare "Null check operator …"
+ * header line that precedes it (that header carries no inspector token, and the classifier has no
+ * cross-line stack context). Whole-block suppression is deferred to the stack-grouping layer —
+ * see bugs/BUG_Better_Support_ANR.md §5.
+ */
+const inspectorArtifactPattern = /\bgetLayoutExplorerNode\b|ext\.flutter\.inspector\./i;
 
 // Flutter/Dart memory: applied only when line has Flutter/Dart context.
 const flutterDartContextRe = /(?:^[VDIW]\/(?:flutter|dart)[\s:]|package[\/:](?:flutter|dart)\b)/i;
@@ -227,6 +246,10 @@ export function classifyLevel(
     strict: boolean,
     stderrTreatAsError = true,
 ): SeverityLevel {
+    // DevTools inspector ghost errors are de-emphasized to 'debug' BEFORE the stderr→error force:
+    // Flutter prints framework exceptions to stderr, so an inspector artifact on stderr would
+    // otherwise be forced to 'error'. 'debug' keeps it off the Errors filter and the timeline.
+    if (inspectorArtifactPattern.test(plainText)) { return 'debug'; }
     if (stderrTreatAsError && category === 'stderr') { return 'error'; }
     // Drift's SLOW/REPEAT perf annotations must win over both the `[database]` head tag and the
     // Drift SQL grouping below — they are performance signals, not DB traffic. Placed ahead of

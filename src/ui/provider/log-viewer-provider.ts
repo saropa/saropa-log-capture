@@ -297,9 +297,12 @@ export class LogViewerProvider
     return this.visibleView ?? this.views.values().next().value;
   }
   getSeenCategories(): Set<string> { return this.seenCategories; }
-  updateWatchCounts(counts: ReadonlyMap<string, number>): void {
+  updateWatchCounts(counts: ReadonlyMap<string, number>, badgeCount?: number): void {
     const obj = Object.fromEntries(counts);
-    const total = [...counts.values()].reduce((s, n) => s + n, 0);
+    // The badge counts ONLY patterns whose alert is 'badge'; flash/none patterns still
+    // show per-pattern counts in the webview but must never light the tab badge. Fall back
+    // to the all-pattern sum only when the caller omits an explicit badge total.
+    const total = badgeCount ?? [...counts.values()].reduce((s, n) => s + n, 0);
     this.postMessage({ type: "updateWatchCounts", counts: obj });
     // Suppress badge while the panel is visible — onDidChangeVisibility only fires
     // on transitions, so hits landing while already open would silently re-light it.
