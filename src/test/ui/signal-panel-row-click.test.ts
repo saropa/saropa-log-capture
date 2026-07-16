@@ -9,6 +9,7 @@
 
 import * as assert from 'node:assert';
 import { getSignalScriptPartB } from '../../ui/panels/viewer-signal-panel-script-part-b';
+import { getSignalScriptPartC } from '../../ui/panels/viewer-signal-panel-script-part-c';
 import { getSignalScriptPartD } from '../../ui/panels/viewer-signal-panel-script-part-d';
 import { getViewerScriptMessageHandler } from '../../ui/viewer/viewer-script-messages';
 
@@ -197,6 +198,59 @@ suite('Signal panel summary-signal detail toggle', () => {
         assert.ok(
             script.includes('body.hidden = !body.hidden') && script.includes("classList.toggle('signal-detail-open'"),
             'clicking a detail-toggle row flips the body hidden state and the open class',
+        );
+    });
+});
+
+/**
+ * Pins the live-line fallback that populates "Signals in this log" when the host sent no
+ * fingerprint-metadata signals (loaded/unfinalized reports have none). The line-selection predicate
+ * must match the viewer's own severity badge (viewer-stats.ts: every non-marker item with a level),
+ * NOT the earlier type==='line'-only filter which dropped errors rendered as stack headers.
+ */
+suite('Signal panel live-line fallback', () => {
+
+    test('resolver prefers host signals and only falls back when the host sent none', () => {
+        const script = getSignalScriptPartC();
+        assert.ok(script.includes('function resolveSignalsInThisLog()'), 'resolver must exist');
+        assert.ok(
+            script.includes('fromHost.length > 0 ? fromHost : buildLiveSignalsFromLines()'),
+            'resolver must prefer host signals and never merge (no double-count)',
+        );
+        assert.ok(
+            script.includes('liveSignalsInThisLog = resolved'),
+            'resolver must cache the resolved list for the part-D copy handler',
+        );
+    });
+
+    test('fallback line filter mirrors the severity badge and excludes frames + context', () => {
+        const script = getSignalScriptPartC();
+        /* Skips markers and stack-frame continuations (a stack of frames must not become N signals). */
+        assert.ok(
+            script.includes("li.type === 'marker' || li.type === 'stack-frame'"),
+            'fallback must skip markers and stack-frame continuations',
+        );
+        /* recentErrorContext lines are proximity-inherited coloring, not real errors. */
+        assert.ok(
+            script.includes('li.recentErrorContext'),
+            'fallback must skip proximity-inherited error-context lines',
+        );
+        /* Includes stack HEADERS and other leveled non-marker lines by NOT restricting to type==="line". */
+        assert.ok(
+            !script.includes("li.type !== 'line'"),
+            'fallback must NOT re-narrow to type===line — that drops stack-header errors',
+        );
+        assert.ok(
+            script.includes("li.level !== 'error' && li.level !== 'warning'"),
+            'fallback keeps only error/warning severity lines',
+        );
+    });
+
+    test('fallback bounds distinct groups to avoid unbounded growth on pathological logs', () => {
+        const script = getSignalScriptPartC();
+        assert.ok(
+            script.includes('order.length >= LIVE_SIGNAL_GROUP_CAP'),
+            'a runaway guard must cap the number of distinct fallback groups',
         );
     });
 });
