@@ -7,6 +7,7 @@
  * optional performance note, and when-to-disable. Checkboxes use data-adapter-id
  * and are synced from window.integrationAdapters; changes post setIntegrationsAdapters to host.
  */
+import * as vscode from 'vscode';
 import { escapeHtml } from '../../modules/capture/ansi';
 import { t } from '../../l10n';
 import type { IntegrationAdapterMeta } from '../../modules/integrations/integrations-ui';
@@ -89,22 +90,39 @@ interface IntegrationListEntry {
     readonly html: string;
 }
 
+/** Whether a companion extension is currently installed in this VS Code instance. */
+function isCompanionInstalled(extensionId: string): boolean {
+    return !!vscode.extensions.getExtension(extensionId);
+}
+
 /**
- * Companion Saropa extension as a list row (no checkbox — an uninstalled extension can't be
- * "enabled" here; the action is a Marketplace link). Rendered inline with the adapters so the
- * list is one alphabetical surface instead of a separate wall of prose above the real toggles.
+ * Companion Saropa extension as a proper list row: a `<label>` with an inline checkbox that
+ * mirrors install state (checked+disabled when installed), matching the adapter rows so no
+ * consumer has to special-case a checkbox-less variant. The checkbox is always disabled — this
+ * panel does not install/uninstall; when the extension is absent a Marketplace link offers it.
+ * The checkbox carries NO `data-adapter-id`, so it never enters the adapter-selection payload.
  */
 function renderCompanionRow(c: CompanionExtension): IntegrationListEntry {
+    const installed = isCompanionInstalled(c.extensionId);
     const url = escapeHtml(buildItemUrl(c.extensionId));
     const benefit = t(c.benefitKey);
     const searchText = [c.label, benefit].join(' ').toLowerCase();
     const expandable = benefit.length > INTEGRATIONS_DESCRIPTION_COLLAPSE_THRESHOLD_CHARS;
+    const stateLabel = installed
+        ? t('viewer.integrations.companionInstalled')
+        : t('viewer.integrations.companionNotInstalled');
+    const checkbox = `<input type="checkbox" id="int-companion-${escapeHtml(c.extensionId)}" ${installed ? 'checked ' : ''}disabled title="${escapeHtml(stateLabel)}" aria-label="${escapeHtml(`${c.label}: ${stateLabel}`)}" />`;
+    // Marketplace link only when absent; an installed companion is managed from the Extensions view.
+    const link = installed
+        ? ''
+        : `<a class="integrations-companion-link" data-url="${url}" href="#">${t('viewer.integrations.viewInMarketplace')}</a>`;
     const html = `
-        <div class="integrations-row integrations-companion-item" title="${escapeHtml(benefit)}" data-search-text="${escapeHtml(searchText)}">
+        <label class="integrations-row integrations-companion-item" title="${escapeHtml(benefit)}" data-search-text="${escapeHtml(searchText)}">
+            ${checkbox}
             <span class="integrations-label">${escapeHtml(c.label)}</span>
-            <a class="integrations-companion-link" data-url="${url}" href="#">${t('viewer.integrations.viewInMarketplace')}</a>
+            ${link}
             ${renderDescBlock(benefit, '', expandable)}
-        </div>`;
+        </label>`;
     return { label: c.label, html };
 }
 
