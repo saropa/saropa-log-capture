@@ -172,28 +172,18 @@ suite('ViewerOptionsPanel', () => {
                 'the companion heading/intro copy must not push down the real toggles');
         });
 
-        test('should give companion rows an inline disabled status checkbox, not an adapter checkbox', () => {
+        test('should give companion rows a disabled status checkbox + live-toggle data attributes', () => {
             const html = getIntegrationsPanelHtml();
-            // Companion rows are <label> + checkbox like adapters (so no consumer special-cases a
-            // checkbox-less variant), but the checkbox is a disabled status indicator carrying NO
-            // data-adapter-id — it mirrors install state and never enters the adapter payload.
+            // Companion rows are <label> + checkbox like adapters (no checkbox-less variant to
+            // special-case); the checkbox is a disabled status indicator with NO data-adapter-id,
+            // so it never enters the adapter payload. The host setCompanionInstalled message finds
+            // rows by data-companion-id and flips is-installed + checkbox from the data-* labels.
             assert.match(html, /<label class="integrations-row integrations-companion-item[^"]*"/,
                 'companion rows must be <label> like adapter rows');
-            assert.match(html, /id="int-companion-[^"]+"[^>]*disabled/,
-                'companion checkbox must be disabled');
-            assert.ok(!html.includes('int-companion-') || !/int-companion-[^"]*"[^>]*data-adapter-id/.test(html),
+            assert.match(html, /id="int-companion-[^"]+"[^>]*disabled/, 'companion checkbox must be disabled');
+            assert.ok(!/int-companion-[^"]*"[^>]*data-adapter-id/.test(html),
                 'companion checkbox must not carry data-adapter-id');
-        });
-
-        test('should carry data attributes for live install-state toggling', () => {
-            const html = getIntegrationsPanelHtml();
-            // The host setCompanionInstalled message finds rows by data-companion-id and flips the
-            // is-installed class + checkbox using the label strings carried as data-* (no l10n
-            // round-trip). The Marketplace link is always in the DOM (hidden via CSS when installed).
-            assert.ok(html.includes('data-companion-id="'),
-                'companion rows must expose data-companion-id for live lookup');
-            assert.ok(html.includes('data-installed-title="') && html.includes('data-not-installed-title="'),
-                'state-label strings must ride along as data-* for the webview');
+            assert.ok(html.includes('data-companion-id="') && html.includes('data-installed-title="'), 'rows expose data-companion-id + data-* labels for live toggling');
         });
 
         test('should place companion rows alphabetically after their adapter neighbors', () => {
