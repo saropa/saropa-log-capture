@@ -107,11 +107,11 @@ function formatSessionDuration(ms) {
  * the classifier skipped — separators, stack frames — still appear as a count.
  * fwCount is V1-only (legacy "framework" bucket pre-classifyLevel migration) and
  * renders only when a stale V1 sidecar value is still around. */
-/** One severity chip: colored dot + a filled high-contrast count pill (sev-count-<cls>).
+/** One severity chip: a filled high-contrast count pill (sev-count-<cls>). The pill now
+ *  carries the category color, so the old leading dot was redundant and was dropped.
  *  Mirrors the viewer top-bar level pills so a log reads the same in the list and open. */
 function sevPair(cls, title, n) {
     return '<span class="sev-pair" title="' + title + '">'
-        + '<span class="sev-dot sev-' + cls + '"></span>'
         + '<span class="sev-count sev-count-' + cls + '">' + n + '</span></span>';
 }
 function renderSeverityDots(s) {
