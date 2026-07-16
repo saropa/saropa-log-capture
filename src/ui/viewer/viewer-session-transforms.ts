@@ -110,9 +110,13 @@ function formatSessionDuration(ms) {
 /** Group a non-negative integer with thousands separators (1234 -> "1,234"). Forced to
  *  en-US so the separator is always a comma, matching the host's toLocaleString('en-US')
  *  use — a five-figure line count in a pill is unreadable without it. Shared by every
- *  count surface in the Logs panel (severity pills, day heading, pinned heading). */
+ *  count surface in the Logs panel (severity pills, day heading, pinned heading).
+ *  Input is coerced to a finite integer first: counts are logically non-negative ints, but
+ *  a malformed count field (undefined, a string, NaN from an arithmetic residual, Infinity)
+ *  must never surface as "NaN" or "∞" inside a pill — it degrades to "0" instead. */
 function groupThousands(n) {
-    return (typeof n === 'number' ? n : 0).toLocaleString('en-US');
+    var v = (typeof n === 'number' && isFinite(n)) ? Math.trunc(n) : 0;
+    return v.toLocaleString('en-US');
 }
 /** One severity chip: a filled high-contrast count pill (sev-count-<cls>). The pill now
  *  carries the category color, so the old leading dot was redundant and was dropped.

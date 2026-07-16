@@ -79,3 +79,37 @@ its fixture count is single-digit; no pagination test pins the numeric format.
 Suites re-run green — controllers 6, day-collapse 13, session-panel-runtime 13.
 The comma mechanism itself was already pinned by the first-pass day-collapse test,
 so no new heavy fixture (1,000+ namesakes / >1 page of sessions) was added.
+
+## Finish Report (2026-07-16) — hardening pass
+
+Addressed the handoff-reflection risks:
+
+- **Input coercion.** `groupThousands` now coerces to a finite integer before
+  formatting (`isFinite` + `Math.trunc`), so a malformed count (undefined, a
+  string, a NaN arithmetic residual, Infinity, a fraction) degrades to `"0"`
+  instead of surfacing `"NaN"`/`"∞"`/a decimal in a pill. Counts are logically
+  non-negative ints; in practice every call site already clamps with
+  `Math.max(0, …)` or `|| 0`, so this is defense-in-depth, not a live bug fix.
+- **l10n token safety (verified).** `viewer.session.olderCount` is `'+{0} older'`
+  and `viewer.session.pagination.showing` is `'Showing {0}–{1} of {2}'` — pure
+  `{0}`-token templates with no plural branch or numeric logic. `vt()` substitutes
+  by split/join, so passing the pre-formatted string (`"1,234"`) is safe; there is
+  no downstream re-parse of the token as a number.
+- **Load-order dependency.** `groupThousands` (transforms chunk) is called
+  cross-chunk by the panel scripts, unguarded, matching the existing
+  `renderSeverityDots` coupling. Rather than sprinkle inconsistent `typeof` guards
+  (which would give false safety — the panel already all-or-nothing depends on the
+  transforms chunk), a composition-order test now asserts the transforms chunk is
+  emitted before the panel chunk in `getViewerScriptTags`, converting a silent
+  runtime blank-panel regression into a test failure.
+- **Pill wrap.** `.session-day-count` gained `white-space: nowrap` + `flex-shrink: 0`
+  so a comma-grouped count never wraps mid-number in a narrow sidebar.
+
+New test file `src/test/ui/viewer-session-count-format.test.ts` (4 cases): comma
+insertion at the thousand boundary, malformed-input degradation, fractional
+truncation, and the transforms-before-panel composition order. All pass.
+
+Note on the compile-tests run: `viewer-integrations-panel-html.ts` reports an
+undefined `renderCompanionExtensionsHtml` — an unrelated in-flight change in
+another workstream, not touched here. `tsc` still emits, so the scoped test files
+compiled and ran; `check-types` over this task's source is clean.
