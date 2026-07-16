@@ -1,6 +1,32 @@
 /** Returns integration-specific options handlers to keep generic options events small. */
 export function getOptionsIntegrationsHelperScript(): string {
     return /* javascript */ `
+/**
+ * Apply live companion install-state from the host's setCompanionInstalled message.
+ * Flips each companion row's checkbox + is-installed class (which hides the Marketplace link)
+ * and refreshes the checkbox title/aria from the row's data-* labels — no re-render, no l10n
+ * round-trip. Unknown / missing ids are left untouched so a partial payload is safe.
+ */
+function applyCompanionInstalled(states) {
+    if (!states || typeof states !== 'object') return;
+    var rows = document.querySelectorAll('.integrations-companion-item[data-companion-id]');
+    for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        var id = row.getAttribute('data-companion-id');
+        if (!id || !Object.prototype.hasOwnProperty.call(states, id)) continue;
+        var installed = !!states[id];
+        row.classList.toggle('is-installed', installed);
+        var cb = row.querySelector('input[type="checkbox"]');
+        if (!cb) continue;
+        cb.checked = installed;
+        var title = installed ? row.getAttribute('data-installed-title') : row.getAttribute('data-not-installed-title');
+        if (title) {
+            cb.title = title;
+            cb.setAttribute('aria-label', (row.getAttribute('data-label') || '') + ': ' + title);
+        }
+    }
+}
+
 /** Filter integrations rows by query text from integration metadata. */
 function filterIntegrations(query) {
     var integrationsSection = document.getElementById('integrations-section');
