@@ -9,8 +9,11 @@ export function getFormatStyles(): string {
 
 /* ---- Format toggle button active state ---- */
 
+/* Enabled toggle icons use the link-blue so they read as "on" at a glance;
+   disabled/inactive icons stay at descriptionForeground (dim grey). */
 .toolbar-icon-btn-active {
     background: var(--vscode-toolbar-activeBackground, rgba(255, 255, 255, 0.12));
+    color: var(--vscode-textLink-foreground, #3794ff);
     border-radius: 4px;
 }
 

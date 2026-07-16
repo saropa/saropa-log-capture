@@ -56,8 +56,9 @@ export function getSessionGroupStyles(): string {
     opacity: 1;
 }
 
-/* The "+N" badge on the primary row. Mirrors .session-day-count so it reads
-   as part of the Logs panel's existing count vocabulary. */
+/* The "+N" badge on the primary row. Intentionally dim inline text (not the day-count
+   pill) — it annotates a name inline, so it must stay lighter than the row's own label
+   rather than compete with it as a standalone chip. */
 .session-group-count {
     margin-left: 4px;
     color: var(--vscode-descriptionForeground);
