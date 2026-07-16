@@ -31,6 +31,12 @@ A second, latent defect: the badge total summed every `watchPatterns` hit regard
 
 `src/test/modules/features/keyword-watcher.test.ts` — three added cases: badge sum excludes flash/none patterns; repeated badge keyword read once (2, not 4); zero when no badge-alert pattern exists. Full suite: 14 passing (`mocha --ui tdd out/test/modules/features/keyword-watcher.test.js`). `npm run check-types` clean.
 
+### Follow-up: badge stuck while panel visible (resolve path)
+
+A screenshot showed the badge reading 56 while the panel was the active, visible tab and displaying a loaded log file — a state the visible-suppression in `updateWatchCounts` (`some(v => v.visible) ? 0`) should make impossible. Root cause: `log-viewer-provider-setup.ts` acknowledged the badge only on a `onDidChangeVisibility` hide→show transition. When the view resolves already-visible — window restored with the panel showing, or opened straight to it — no transition fires, and the pending-file-load branch skipped the acknowledge entirely (the `else if (webviewView.visible)` only called `onBecameVisible()`). A count accrued before the view resolved therefore stayed pinned with no clearing path.
+
+Fix: on resolve, if `webviewView.visible`, call `setVisibleView` + `acknowledgeWatchHits` regardless of the pending-load branch, and still fire `onBecameVisible()` only when not loading a pending file (preserving prior semantics).
+
 ### Not covered
 
 Host-side `LogViewerProvider.updateWatchCounts` badge logic and the `viewerFocused` → `acknowledgeWatchHits` path have no unit tests (pre-existing gap in webview/provider coverage); the 400ms throttle lives in a webview template literal with no unit harness. Verified by inspection and manual reasoning.

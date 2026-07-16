@@ -141,7 +141,16 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
   });
   const pending = target.getPendingLoadUri();
   if (pending) { queueMicrotask(() => { void target.loadFromFile(pending); }); }
-  else if (webviewView.visible) { queueMicrotask(() => target.onBecameVisible()); }
+  // The view can resolve ALREADY visible — window restored with the panel showing, or the
+  // user opened straight to it — with no hidden->visible transition to follow, so
+  // onDidChangeVisibility never fires. Any watch count accrued before the view resolved (or
+  // while it was a background tab) would then stay pinned to the panel tab with no way to
+  // dismiss it. Acknowledge here so the badge is cleared for a view that is visible on resolve.
+  if (webviewView.visible) {
+    target.setVisibleView(webviewView);
+    target.acknowledgeWatchHits();
+    if (!pending) { queueMicrotask(() => target.onBecameVisible()); }
+  }
   webviewView.onDidChangeVisibility(() => {
     if (webviewView.visible) {
       target.setVisibleView(webviewView);
