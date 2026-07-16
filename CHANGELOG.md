@@ -25,6 +25,23 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+Tag column polish: the `lowmemorykiller` device tag now reads as "Low Memory Killer", and the tag-cell tooltip separates multiple tags with commas so a line's extra tags don't run together as one phrase. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+
+### Fixed
+
+- **Panel tab number badge would not clear.** The unread-hit count on the "Saropa Log Capture" panel tab only cleared on a hide/show transition or when a focusable element inside the viewer took focus, so scrolling the feed or clicking rows in the session-history panel left it stuck on-screen. It now clears the instant you engage the viewer — pointer, keyboard, or scroll — so it surfaces new activity while the panel is away and disappears the moment you look. The badge also now counts only watch patterns whose `alert` is `"badge"`, so a pattern set to `"flash"`/`"none"` no longer contributes.
+
+### Changed
+
+- Tag chips: added display-label overrides so all-lowercase Android system tags render as words — `lowmemorykiller` → "Low Memory Killer", `dalvikvm` → "Dalvik VM", `surfaceflinger` → "Surface Flinger", `bufferqueue`, `audioflinger`, `audiotrack`, `mediacodec`, `mediaplayer`, `cameraservice`, `inputmethodmanager`, plus casing fixes for `wpa_supplicant` → "WPA Supplicant" and `libc`.
+- Tag-cell hover tooltip now joins tag names with ", " instead of a space, keeping multi-word tags legible (e.g. "Perf, Frame Stall, Flutter").
+- **Flutter DevTools inspector "ghost errors" no longer show as errors.** Lines from the Layout Explorer's async widget-tree probe (`ext.flutter.inspector.getLayoutExplorerNode` / a `getLayoutExplorerNode` stack frame) throw a "Null check operator used on a null value" that is developer-tooling noise, not an app fault. Such lines now classify as `debug` — kept off the Errors filter and the timeline — even when they arrive on stderr. This catches the signature-bearing frame only; whole-stack suppression of the bare header line is tracked in `bugs/BUG_Better_Support_ANR.md`.
+- Internal: the ANR keyword regex used by per-line classification and the pre-production ANR risk scorer is now a single shared definition, so the two cannot drift.
+
+---
+
 ## [9.2.3]
 
 The Trouble Mode chart now starts exactly where the app started — the same green line the feed shows — instead of a few minutes early on the device's pre-launch noise. [log](https://github.com/saropa/saropa-log-capture/blob/v9.2.3/CHANGELOG.md)
