@@ -235,6 +235,7 @@ function syncIntegrationsAdaptersToWebview(broadcaster: ViewerBroadcaster): void
     const merged = mergeIntegrationAdaptersForWebview(
         cfg.integrationsAdapters,
         vscode.workspace.getConfiguration('saropaLogCapture.ai').get<boolean>('enabled', false),
+        cfg.integrationsAdbLogcat.enabled,
     );
     broadcaster.postToWebview({ type: 'integrationsAdapters', adapterIds: merged });
 }
