@@ -5,6 +5,7 @@ import {
     clearLogcatBuffer,
     stopLogcatCapture,
     shouldAcceptLogcatLine,
+    parseAdbDevices,
     type LogcatLineFilter,
 } from '../../../modules/integrations/adb-logcat-capture';
 import { parseLogcatLine } from '../../../modules/integrations/adb-logcat-parser';
@@ -69,5 +70,33 @@ suite('shouldAcceptLogcatLine (ANR bypass)', () => {
     test('captureAnr does not resurrect device-other noise', () => {
         assert.ok(deviceOther);
         assert.strictEqual(shouldAcceptLogcatLine(deviceOther, { ...strict, captureAnr: true }), false);
+    });
+});
+
+suite('parseAdbDevices', () => {
+    test('extracts serials of ready devices only', () => {
+        const out = [
+            'List of devices attached',
+            'emulator-5554\tdevice',
+            'RF8M12345\tdevice',
+            '',
+        ].join('\n');
+        assert.deepStrictEqual(parseAdbDevices(out), ['emulator-5554', 'RF8M12345']);
+    });
+
+    test('excludes offline / unauthorized / no-permission rows', () => {
+        const out = [
+            'List of devices attached',
+            'emulator-5554\tdevice',
+            'ZY223\toffline',
+            'ABC99\tunauthorized',
+            '0123456789ABCDEF\tno permissions',
+        ].join('\n');
+        // Only the ready "device" row is streaming-capable.
+        assert.deepStrictEqual(parseAdbDevices(out), ['emulator-5554']);
+    });
+
+    test('returns empty for the no-devices case', () => {
+        assert.deepStrictEqual(parseAdbDevices('List of devices attached\n\n'), []);
     });
 });

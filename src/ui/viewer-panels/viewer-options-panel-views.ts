@@ -34,6 +34,12 @@ function openIntegrationsView() {
         integrationsSearch.value = '';
         if (typeof filterIntegrations === 'function') filterIntegrations('');
     }
+    // Re-apply the last companion install-state in case its host message landed before this view
+    // (its rows/handlers) was ready — otherwise a fast install/uninstall could be missed on open.
+    if (typeof window !== 'undefined' && window.__companionInstalledStates
+        && typeof applyCompanionInstalled === 'function') {
+        applyCompanionInstalled(window.__companionInstalledStates);
+    }
     syncIntegrationsUi();
 }
 

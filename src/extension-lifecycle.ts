@@ -12,6 +12,7 @@ import type { InlineDecorationsProvider } from './ui/viewer-decorations/inline-d
 import type { LogViewerProvider } from './ui/provider/log-viewer-provider';
 import type { AiWatcher } from './modules/ai/ai-watcher';
 import { hasClaudeProject } from './modules/ai/ai-session-resolver';
+import { resolveAndPostCaptureSources } from './modules/integrations/capture-source-states';
 import type { SaropaSessionEvent } from './api-types';
 import { SESSION_PANEL_ROOT_KEY } from './ui/provider/viewer-handler-wiring';
 import type { SessionGroupTracker } from './modules/session/session-group-tracker';
@@ -124,6 +125,9 @@ export function registerDebugLifecycle(deps: DebugLifecycleDeps): void {
                 broadcaster.setPaused(false);
                 await sessionManager.startSession(session, context);
                 applySessionStartedState(deps, session);
+                // Refresh the Filters-panel capture-source status now that a session is live —
+                // this is what flips adb Logcat from "on" to "streaming (device)" or "idle".
+                void resolveAndPostCaptureSources((m) => broadcaster.postToWebview(m));
             } catch (err) {
                 // Log failures — without this, async rejections are silently swallowed by VS Code's
                 // event infrastructure and the session is invisibly dropped.
@@ -151,6 +155,8 @@ export function registerDebugLifecycle(deps: DebugLifecycleDeps): void {
             // Session end: stop session, clear broadcaster/history/decorations, update nav.
             await sessionManager.stopSession(session);
             broadcaster.setSessionActive(false);
+            // Session ended: revert the capture-source status to its configured ('on'/'off') state.
+            void resolveAndPostCaptureSources((m) => broadcaster.postToWebview(m));
             historyProvider.setActiveUri(undefined);
             historyProvider.refresh();
             inlineDecorations.clearAll();

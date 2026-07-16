@@ -11,7 +11,6 @@ Heuristic index of `type` fields on objects passed to `this.postMessage` / `targ
 | `applyPreset` | src/ui/provider/log-viewer-provider-state.ts |
 | `bookmarkList` | src/ui/provider/log-viewer-provider-state.ts |
 | `captureEnabled` | src/ui/provider/log-viewer-provider-setup.ts, src/ui/provider/viewer-message-handler-panels.ts |
-| `captureSources` | src/ui/provider/log-viewer-provider-setup.ts |
 | `clear` | src/ui/provider/log-viewer-provider.ts |
 | `collectionDeleted` | src/ui/provider/viewer-message-handler-collection.ts |
 | `collectionRenamed` | src/ui/provider/viewer-message-handler-collection.ts |
@@ -112,4 +111,4 @@ Heuristic index of `type` fields on objects passed to `this.postMessage` / `targ
 | `updateWatchCounts` | src/ui/provider/log-viewer-provider.ts |
 | `viewerKeybindingRecordMode` | src/ui/provider/viewer-message-handler-actions.ts |
 
-**Total:** 105 distinct types.
+**Total:** 104 distinct types.
