@@ -61,6 +61,26 @@ export class KeywordWatcher {
         return this.counts;
     }
 
+    /**
+     * Sum of hit counts for patterns whose alert is 'badge'. Only these light the
+     * panel tab badge — patterns set to 'flash' or 'none' must not contribute, or a
+     * user who sets alert:'none' still sees a badge they cannot clear.
+     */
+    getBadgeCount(): number {
+        let total = 0;
+        // Duplicate-keyword entries share one `counts` slot (the map is keyed by label), so
+        // count each label at most once — otherwise two badge entries for the same keyword
+        // would add the shared count twice and inflate the badge past the real hit total.
+        const counted = new Set<string>();
+        for (const p of this.patterns) {
+            if (p.alert === 'badge' && !counted.has(p.label)) {
+                counted.add(p.label);
+                total += this.counts.get(p.label) ?? 0;
+            }
+        }
+        return total;
+    }
+
     /** Reset all hit counts to zero. */
     resetCounts(): void {
         for (const key of this.counts.keys()) {

@@ -37,6 +37,11 @@ var criticalSeverityPattern = /\\[critical\\]|\\bcritical\\s*:|\\bcritical\\s+(?
 // Flutter framework exception banner: strict/loose patterns miss 'Exception caught by <lib>'
 // because the phrase has no colon/bracket. Mirror extension-side level-classifier.ts.
 var flutterExceptionBannerPattern = /\\bException caught by\\b/i;
+// Flutter DevTools inspector ghost error: the Layout Explorer's async widget-tree probe
+// (ext.flutter.inspector.getLayoutExplorerNode) throws "Null check operator …" from
+// WidgetInspectorService when a widget unmounts between frames — tooling noise, not an app
+// fault. Tokens are unambiguous DevTools internals. Mirrors level-classifier.ts. Keep in sync.
+var inspectorArtifactPattern = /\\bgetLayoutExplorerNode\\b|ext\\.flutter\\.inspector\\./i;
 var driftStatementPattern = /\\bDrift(?:\\:\\s+Sent|\\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\s*\\:)\\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\b/i;
 // Drift's own perf annotations (SLOW <n>ms, REPEAT xN batches) carry the app's [database] head
 // tag but are performance signals, not routine SQL — classify as performance so the Database
@@ -167,6 +172,10 @@ function matchesPerf(plainText) {
 }
 
 function classifyLevel(plainText, category) {
+    // DevTools inspector ghost error → 'debug', BEFORE the stderr→error force (Flutter prints
+    // framework exceptions to stderr). Keeps it off the Errors filter and the timeline. Per-line
+    // only: the bare "Null check operator" header isn't caught. Mirrors level-classifier.ts.
+    if (inspectorArtifactPattern.test(plainText)) return 'debug';
     if (stderrTreatAsError && category === 'stderr') return 'error';
     // Drift SLOW/REPEAT perf annotations win over the [database] tag and Drift SQL grouping —
     // performance signals, not DB traffic. Mirrors level-classifier.ts. Keep in sync.

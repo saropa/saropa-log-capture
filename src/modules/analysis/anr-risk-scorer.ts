@@ -6,6 +6,8 @@
  * and produces a 0-100 risk score with human-readable signal descriptions.
  */
 
+import { anrPattern } from './level-classifier';
+
 /** Risk level thresholds. */
 export type AnrRiskLevel = 'low' | 'medium' | 'high';
 
@@ -24,7 +26,10 @@ interface SignalDef {
 }
 
 const signalDefs: readonly SignalDef[] = [
-    { pattern: /\b(?:anr|application\s+not\s+responding|input\s+dispatching\s+timed\s+out)\b/i, label: 'ANR keyword', weight: 25, cap: 50 },
+    // Single source of truth: the ANR keyword regex is shared with the per-line classifier
+    // (level-classifier.ts) so the two definitions cannot drift. Non-global, so per-line
+    // .test() in countMatches() stays stateless.
+    { pattern: anrPattern, label: 'ANR keyword', weight: 25, cap: 50 },
     { pattern: /\bchoreographer\b/i, label: 'Choreographer warning', weight: 5, cap: 30 },
     { pattern: /\bgc\s+pause\b/i, label: 'GC pause', weight: 8, cap: 30 },
     { pattern: /\b(?:dropped\s+frame|skipped\s+\d+\s+frames?)\b/i, label: 'Dropped frame', weight: 3, cap: 20 },
