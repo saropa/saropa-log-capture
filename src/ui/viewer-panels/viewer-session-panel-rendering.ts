@@ -253,7 +253,7 @@ export function getSessionRenderingScript(): string {
         var chevron = collapsed ? 'codicon-chevron-right' : 'codicon-chevron-down';
         /* Show file count as a high-contrast pill after the date label (styled by .session-day-count). */
         var countText = typeof count === 'number' && count > 0
-            ? ' <span class="session-day-count">' + count + '</span>' : '';
+            ? ' <span class="session-day-count">' + groupThousands(count) + '</span>' : '';
         return '<div class="session-day-heading" role="button" tabindex="0" aria-expanded="' + (!collapsed) + '">'
             + '<span class="session-day-chevron codicon ' + chevron + '"></span>'
             + escapeHtmlText(formatDayHeading(dateKeyToEpoch(dateKey)))

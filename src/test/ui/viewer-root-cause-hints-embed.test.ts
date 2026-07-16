@@ -23,10 +23,12 @@ test("should contain restore button with rch-restore-btn class", () => {
   assert.ok(chunk.includes("viewer.rch.restoreAll"), "restore button text must mention dismissed count");
 });
 
-test("should open report panel when signal text clicked", () => {
+test("hint text toggles expand; report opens via the dedicated report icon", () => {
   const chunk = getViewerRootCauseHintsScript();
-  assert.ok(chunk.includes("rch-report-btn"), "signal text must be a clickable report button");
-  assert.ok(chunk.includes("openSignalReport"), "clicking signal must post openSignalReport to host");
+  assert.ok(chunk.includes("rch-hyp-text"), "hint text must be its own button (expand toggle)");
+  assert.ok(chunk.includes("rch-expanded"), "clicking the hint text must toggle the expanded/wrapped state");
+  assert.ok(chunk.includes("rch-report-btn"), "report-open must live on its own icon button");
+  assert.ok(chunk.includes("openSignalReport"), "clicking the report icon must post openSignalReport to host");
 });
 
 test("strength uses emoji + l10n tooltips (no confPrefix label)", () => {

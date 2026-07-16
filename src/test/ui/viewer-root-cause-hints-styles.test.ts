@@ -7,18 +7,17 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { getRootCauseHypothesesStyles } from "../../ui/viewer-styles/viewer-styles-root-cause-hints";
 
-test("Signals evidence buttons reset UA styling to theme link appearance", () => {
+test("Signals hint text button resets UA styling to theme link appearance", () => {
   const css = getRootCauseHypothesesStyles();
-  // Fix: test was referencing .root-cause-hyp-evidence which never existed;
-  // the actual class is .rch-report-btn (hypothesis text as clickable report button)
+  // The clickable hint text is .rch-hyp-text (report-open moved to the .rch-report-btn icon).
   assert.match(
     css,
-    /\.rch-report-btn\s*\{.*?border:\s*none.*?background:\s*transparent.*?appearance:\s*none/s,
-    "report button rule must reset UA button chrome + appearance:none",
+    /\.rch-hyp-text\s*\{.*?border:\s*none.*?background:\s*transparent.*?appearance:\s*none/s,
+    "hint text rule must reset UA button chrome + appearance:none",
   );
   assert.match(
     css,
-    /\.rch-report-btn:hover\s*\{.*?var\(--link\)/s,
+    /\.rch-hyp-text:hover\s*\{.*?var\(--link\)/s,
     "hover should use the --link token (maps to theme textLink-foreground)",
   );
 });
@@ -59,24 +58,43 @@ test("should use flex layout on list items so signal text wraps", () => {
   );
 });
 
-test("should allow report button text to wrap within available width", () => {
+test("hint text truncates by default and wraps only when the row is expanded", () => {
   const css = getRootCauseHypothesesStyles();
-  // Before fix: button text never wrapped (default button behavior).
-  // After fix: flex:1 + min-width:0 + word-break let long text wrap.
+  // Default: flex:1 + min-width:0 + ellipsis truncate the hint to one line so the strip stays compact.
   assert.match(
     css,
-    /\.rch-report-btn\s*\{[^}]*flex:\s*1/s,
-    "report button must flex-grow to fill available width",
+    /\.rch-hyp-text\s*\{[^}]*flex:\s*1/s,
+    "hint text must flex-grow to fill available width",
   );
   assert.match(
     css,
-    /\.rch-report-btn\s*\{[^}]*min-width:\s*0/s,
-    "report button must allow shrinking below intrinsic width",
+    /\.rch-hyp-text\s*\{[^}]*min-width:\s*0/s,
+    "hint text must allow shrinking so the ellipsis triggers at the column edge",
   );
   assert.match(
     css,
-    /\.rch-report-btn\s*\{[^}]*word-break:\s*break-word/s,
-    "report button text must break long words to prevent overflow",
+    /\.rch-hyp-text\s*\{[^}]*text-overflow:\s*ellipsis/s,
+    "hint text must truncate with an ellipsis by default",
+  );
+  // Expanded: clicking the text toggles .rch-expanded on the row, which wraps the full text.
+  assert.match(
+    css,
+    /li\.rch-expanded\s+\.rch-hyp-text\s*\{[^}]*white-space:\s*normal/s,
+    "expanded row must wrap the full hint text",
+  );
+});
+
+test("hint list is numbered via a CSS counter", () => {
+  const css = getRootCauseHypothesesStyles();
+  assert.match(
+    css,
+    /\.root-cause-hypotheses-list\s*\{[^}]*counter-reset:\s*rch-item/s,
+    "list must reset the numbering counter",
+  );
+  assert.match(
+    css,
+    /li::before\s*\{[^}]*counter-increment:\s*rch-item[^}]*content:\s*counter\(rch-item\)/s,
+    "each row must render its number via the counter",
   );
 });
 

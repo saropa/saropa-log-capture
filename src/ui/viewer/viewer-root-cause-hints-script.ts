@@ -147,7 +147,12 @@ function renderRootCauseHypothesesFromCache() {
             if (typeof trendCount === 'number' && trendCount >= 2) {
                 li += '<span class="rch-trend-badge" title="' + vt(trendCount === 1 ? 'viewer.rch.trendBadge.title.one' : 'viewer.rch.trendBadge.title.many', trendCount) + '">\\u21BB' + trendCount + '</span>';
             }
-            li += '<button type="button" class="rch-hyp-text rch-report-btn" data-rch-key="' + escapeHtml(item.hypothesisKey) + '" title="' + vt('viewer.rch.openReport') + '">' + escapeHtml(item.text) + '</button>';
+            /* Text truncates to one line (CSS); clicking it toggles .rch-expanded to wrap the full text.
+               title carries the full text so a hover also reveals it without expanding. */
+            li += '<button type="button" class="rch-hyp-text" data-rch-key="' + escapeHtml(item.hypothesisKey) + '" aria-expanded="false" title="' + escapeHtml(item.text) + '">' + escapeHtml(item.text) + '</button>';
+            /* Open-report moved to its own hover-revealed icon so the text click can expand. Keeps the
+               .rch-report-btn class the click handler keys on, so openSignalReport is unchanged. */
+            li += '<button type="button" class="rch-report-btn" data-rch-key="' + escapeHtml(item.hypothesisKey) + '" aria-label="' + vt('viewer.rch.openReport') + '" title="' + vt('viewer.rch.openReport') + '"><span class="codicon codicon-link-external"></span></button>';
             li += '<button type="button" class="rch-dismiss-btn" data-rch-dismiss="' + escapeHtml(item.hypothesisKey) + '" aria-label="' + vt('viewer.rch.dismiss') + '" title="' + vt('viewer.rch.dismiss') + '"><span class="codicon codicon-close"></span></button>';
             li += '</li>';
             parts.push(li);
@@ -193,6 +198,18 @@ function initRootCauseHypothesesUi() {
             ev.preventDefault();
             if (typeof vscodeApi !== 'undefined' && vscodeApi) {
                 vscodeApi.postMessage({ type: 'openSignalReport', hypothesisKey: reportBtn.dataset.rchKey });
+            }
+            return;
+        }
+        /* Hint text toggles expand/collapse (wrap the full text vs. one-line ellipsis). Separate from
+           the report icon above so a text click reads the hint rather than navigating away. */
+        var textBtn = t && t.closest ? t.closest('.rch-hyp-text') : null;
+        if (textBtn) {
+            ev.preventDefault();
+            var liEl = textBtn.closest('li');
+            if (liEl) {
+                var expanded = liEl.classList.toggle('rch-expanded');
+                textBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
             }
             return;
         }

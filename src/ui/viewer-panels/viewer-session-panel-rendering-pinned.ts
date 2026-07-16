@@ -27,7 +27,7 @@ export function getPinnedRenderingScript(): string {
             + '<div class="session-pinned-heading">'
             + '<span class="codicon codicon-pin"></span> '
             + escapeHtmlText(vt('viewer.session.pinned.heading'))
-            + ' <span class="session-day-count">' + pinnedList.length + '</span>'
+            + ' <span class="session-day-count">' + groupThousands(pinnedList.length) + '</span>'
             + '</div>'
             + rows
             + '</div>';

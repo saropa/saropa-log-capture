@@ -107,12 +107,19 @@ function formatSessionDuration(ms) {
  * the classifier skipped — separators, stack frames — still appear as a count.
  * fwCount is V1-only (legacy "framework" bucket pre-classifyLevel migration) and
  * renders only when a stale V1 sidecar value is still around. */
+/** Group a non-negative integer with thousands separators (1234 -> "1,234"). Forced to
+ *  en-US so the separator is always a comma, matching the host's toLocaleString('en-US')
+ *  use — a five-figure line count in a pill is unreadable without it. Shared by every
+ *  count surface in the Logs panel (severity pills, day heading, pinned heading). */
+function groupThousands(n) {
+    return (typeof n === 'number' ? n : 0).toLocaleString('en-US');
+}
 /** One severity chip: a filled high-contrast count pill (sev-count-<cls>). The pill now
  *  carries the category color, so the old leading dot was redundant and was dropped.
  *  Mirrors the viewer top-bar level pills so a log reads the same in the list and open. */
 function sevPair(cls, title, n) {
     return '<span class="sev-pair" title="' + title + '">'
-        + '<span class="sev-count sev-count-' + cls + '">' + n + '</span></span>';
+        + '<span class="sev-count sev-count-' + cls + '">' + groupThousands(n) + '</span></span>';
 }
 function renderSeverityDots(s) {
     var parts = [];
