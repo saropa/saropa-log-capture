@@ -164,11 +164,25 @@ suite('ViewerOptionsPanel', () => {
                 'companion extensions must render as integration list rows');
             assert.ok(html.includes('Saropa Lints'));
             assert.ok(html.includes('Saropa Drift Advisor'));
-            assert.ok(html.includes('View in Marketplace'));
+            assert.ok(html.includes('View in Marketplace'),
+                'an absent companion shows a Marketplace link (test env has none installed)');
             assert.ok(!html.includes('integrations-companion-section'),
                 'the old companion prose block must be gone');
             assert.ok(!html.includes('Companion extensions'),
                 'the companion heading/intro copy must not push down the real toggles');
+        });
+
+        test('should give companion rows an inline disabled status checkbox, not an adapter checkbox', () => {
+            const html = getIntegrationsPanelHtml();
+            // Companion rows are <label> + checkbox like adapters (so no consumer special-cases a
+            // checkbox-less variant), but the checkbox is a disabled status indicator carrying NO
+            // data-adapter-id — it mirrors install state and never enters the adapter payload.
+            assert.match(html, /<label class="integrations-row integrations-companion-item"/,
+                'companion rows must be <label> like adapter rows');
+            assert.match(html, /id="int-companion-[^"]+"[^>]*disabled/,
+                'companion checkbox must be disabled');
+            assert.ok(!html.includes('int-companion-') || !/int-companion-[^"]*"[^>]*data-adapter-id/.test(html),
+                'companion checkbox must not carry data-adapter-id');
         });
 
         test('should place companion rows alphabetically after their adapter neighbors', () => {

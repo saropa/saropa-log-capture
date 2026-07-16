@@ -126,6 +126,8 @@ export function getOptionsExtraStyles(): string {
 }
 .integrations-desc-toggle {
     flex: 0 0 auto;
+    /* Never wrap the toggle word — at a narrow panel it must stay one token at the line end. */
+    white-space: nowrap;
     border: none;
     background: none;
     color: var(--vscode-textLink-foreground, var(--vscode-focusBorder));
@@ -148,10 +150,14 @@ export function getOptionsExtraStyles(): string {
 }
 .integrations-when { }
 
-/* Companion Saropa extensions render as list rows (no checkbox); the Marketplace link sits
-   inline after the label where the enable action would otherwise be. */
+/* Companion Saropa extensions render as list rows with a disabled checkbox mirroring install
+   state; the Marketplace link sits inline after the label when the extension is absent. */
 .integrations-companion-item .integrations-label {
     color: var(--vscode-foreground);
+}
+/* The companion checkbox is a status indicator, not a control — no pointer affordance. */
+.integrations-companion-item input[type="checkbox"]:disabled {
+    cursor: default;
 }
 .integrations-companion-link {
     flex: 0 0 auto;
