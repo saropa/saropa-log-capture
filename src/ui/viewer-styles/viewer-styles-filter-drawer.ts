@@ -200,5 +200,61 @@ export function getFilterDrawerStyles(): string {
     white-space: nowrap;
 }
 
+/* Read-only "Capture sources" status list under the tier radios in the Log Sources tab. */
+.capture-sources-block {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--vscode-panel-border);
+}
+.capture-sources-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--vscode-descriptionForeground);
+    margin-bottom: 4px;
+}
+.capture-sources-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.capture-source-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 3px 4px;
+    border: none;
+    border-radius: 3px;
+    background: transparent;
+    color: var(--vscode-foreground);
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+}
+.capture-source-row:hover {
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
+.capture-source-dot {
+    flex: 0 0 auto;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--vscode-descriptionForeground);
+    opacity: 0.5;
+}
+.capture-source-on .capture-source-dot {
+    background: var(--vscode-testing-iconPassed, var(--vscode-charts-green, #3fb950));
+    opacity: 1;
+}
+.capture-source-label {
+    flex: 1 1 auto;
+}
+.capture-source-state {
+    flex: 0 0 auto;
+    font-size: 10px;
+    color: var(--vscode-descriptionForeground);
+}
+
 `;
 }
