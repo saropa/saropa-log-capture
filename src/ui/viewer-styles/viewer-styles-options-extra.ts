@@ -102,20 +102,30 @@ export function getOptionsExtraStyles(): string {
     line-height: 1.35;
     margin: 4px 0 0 24px;
 }
-/* Multi-line ellipsis follows panel width; avoids a fixed character cut-off. */
+/* Collapsed = a single line: preview truncates and "more" sits inline at its end. The expanded
+   block is display:none while collapsed, so it does not steal the row from preview + toggle. */
+.integrations-desc-collapsible {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 6px;
+}
 .integrations-desc-collapsible .integrations-desc-preview {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 4;
-    line-clamp: 4;
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
     overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* Expanded text takes the full row width, forcing the shared toggle ("less") below it. */
+.integrations-expanded-block {
+    flex: 1 1 100%;
 }
 .integrations-expanded-block .integrations-desc-full {
     display: block;
 }
 .integrations-desc-toggle {
-    display: block;
-    margin: 4px 0 0 0;
+    flex: 0 0 auto;
     border: none;
     background: none;
     color: var(--vscode-textLink-foreground, var(--vscode-focusBorder));
@@ -138,45 +148,27 @@ export function getOptionsExtraStyles(): string {
 }
 .integrations-when { }
 
-/* Companion extensions section — links to related Saropa extensions above the adapter list. */
-.integrations-companion-section {
-    margin: 0 0 16px 0;
-    padding: 0 0 12px 0;
-    border-bottom: 1px solid var(--vscode-sideBar-border, rgba(255, 255, 255, 0.1));
-}
-.integrations-companion-heading {
-    font-size: 12px;
-    font-weight: 600;
-    margin: 0 0 6px 0;
-}
-.integrations-companion-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 2px 8px;
-    padding: 6px 0;
-    font-size: 12px;
-}
-.integrations-companion-label {
-    font-weight: 600;
-    flex: 0 0 auto;
-}
-.integrations-companion-benefit {
-    flex: 1 1 100%;
-    font-size: 11px;
-    color: var(--vscode-descriptionForeground);
-    line-height: 1.35;
-    margin: 2px 0 0 0;
+/* Companion Saropa extensions render as list rows (no checkbox); the Marketplace link sits
+   inline after the label where the enable action would otherwise be. */
+.integrations-companion-item .integrations-label {
+    color: var(--vscode-foreground);
 }
 .integrations-companion-link {
+    flex: 0 0 auto;
     font-size: 11px;
     color: var(--vscode-textLink-foreground, var(--vscode-focusBorder));
     cursor: pointer;
     text-decoration: none;
-    margin: 2px 0 0 0;
 }
 .integrations-companion-link:hover {
     text-decoration: underline;
+}
+/* Install-all link below the list — a quiet footer, not a header block that pushes rows down. */
+.integrations-suite-footer {
+    margin: 12px 0 0 0;
+    padding: 10px 0 0 0;
+    border-top: 1px solid var(--vscode-sideBar-border, rgba(255, 255, 255, 0.1));
+    font-size: 11px;
 }
 
 /* Suggested integrations block (Integrations screen): adapters the project's packages imply but
