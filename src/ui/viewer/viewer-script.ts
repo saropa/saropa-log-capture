@@ -89,8 +89,23 @@ window._vscodeApi = vscodeApi;
 if (window._scriptErrors && window._scriptErrors.length) {
     vscodeApi.postMessage({ type: 'scriptError', errors: window._scriptErrors });
 }
-/* Clear panel badge when user focuses webview (onDidChangeVisibility only fires on hide/show toggle). */
-document.addEventListener('focus', function() { vscodeApi.postMessage({ type: 'viewerFocused' }); }, true);
+/* Clear the panel tab badge the moment the user engages the viewer. Two gaps this closes:
+   onDidChangeVisibility only fires on hide/show transitions, and DOM 'focus' only fires for
+   focusable elements — so scrolling the feed or clicking a row in the session-history panel
+   (neither of which moves focus) would otherwise leave the badge lit with no way to clear it.
+   pointer/key/wheel cover "navigated to or interacted with". Throttled so a scroll or keyboard
+   burst does not flood the host; the host-side acknowledge is idempotent and no-ops when clear. */
+var lastViewerEngagedPostT = 0;
+function ackViewerEngaged() {
+    var now = Date.now();
+    if (now - lastViewerEngagedPostT < 400) { return; }
+    lastViewerEngagedPostT = now;
+    vscodeApi.postMessage({ type: 'viewerFocused' });
+}
+document.addEventListener('focus', ackViewerEngaged, true);
+document.addEventListener('pointerdown', ackViewerEngaged, true);
+document.addEventListener('keydown', ackViewerEngaged, true);
+document.addEventListener('wheel', ackViewerEngaged, { capture: true, passive: true });
 var MAX_LINES = ${maxLines};
 var MAX_LINES_DEFAULT = MAX_LINES;
 /* Noise learning (set by host via setLearningOptions). */
