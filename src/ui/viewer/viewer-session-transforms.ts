@@ -107,22 +107,29 @@ function formatSessionDuration(ms) {
  * the classifier skipped — separators, stack frames — still appear as a count.
  * fwCount is V1-only (legacy "framework" bucket pre-classifyLevel migration) and
  * renders only when a stale V1 sidecar value is still around. */
+/** One severity chip: colored dot + a filled high-contrast count pill (sev-count-<cls>).
+ *  Mirrors the viewer top-bar level pills so a log reads the same in the list and open. */
+function sevPair(cls, title, n) {
+    return '<span class="sev-pair" title="' + title + '">'
+        + '<span class="sev-dot sev-' + cls + '"></span>'
+        + '<span class="sev-count sev-count-' + cls + '">' + n + '</span></span>';
+}
 function renderSeverityDots(s) {
     var parts = [];
-    if (s.errorCount > 0) parts.push('<span class="sev-pair" title="Errors"><span class="sev-dot sev-error"></span>' + s.errorCount + '</span>');
-    if (s.warningCount > 0) parts.push('<span class="sev-pair" title="Warnings"><span class="sev-dot sev-warning"></span>' + s.warningCount + '</span>');
-    if (s.infoCount > 0) parts.push('<span class="sev-pair" title="Info"><span class="sev-dot sev-info"></span>' + s.infoCount + '</span>');
-    if (s.debugCount > 0) parts.push('<span class="sev-pair" title="Debug"><span class="sev-dot sev-debug"></span>' + s.debugCount + '</span>');
-    if (s.databaseCount > 0) parts.push('<span class="sev-pair" title="Database"><span class="sev-dot sev-database"></span>' + s.databaseCount + '</span>');
-    if (s.perfCount > 0) parts.push('<span class="sev-pair" title="Performance"><span class="sev-dot sev-perf"></span>' + s.perfCount + '</span>');
-    if (s.todoCount > 0) parts.push('<span class="sev-pair" title="Todo"><span class="sev-dot sev-todo"></span>' + s.todoCount + '</span>');
-    if (s.noticeCount > 0) parts.push('<span class="sev-pair" title="Notice"><span class="sev-dot sev-notice"></span>' + s.noticeCount + '</span>');
-    if (s.fwCount > 0) parts.push('<span class="sev-pair" title="Framework"><span class="sev-dot sev-fw"></span>' + s.fwCount + '</span>');
+    if (s.errorCount > 0) parts.push(sevPair('error', 'Errors', s.errorCount));
+    if (s.warningCount > 0) parts.push(sevPair('warning', 'Warnings', s.warningCount));
+    if (s.infoCount > 0) parts.push(sevPair('info', 'Info', s.infoCount));
+    if (s.debugCount > 0) parts.push(sevPair('debug', 'Debug', s.debugCount));
+    if (s.databaseCount > 0) parts.push(sevPair('database', 'Database', s.databaseCount));
+    if (s.perfCount > 0) parts.push(sevPair('perf', 'Performance', s.perfCount));
+    if (s.todoCount > 0) parts.push(sevPair('todo', 'Todo', s.todoCount));
+    if (s.noticeCount > 0) parts.push(sevPair('notice', 'Notice', s.noticeCount));
+    if (s.fwCount > 0) parts.push(sevPair('fw', 'Framework', s.fwCount));
     var categorized = (s.errorCount || 0) + (s.warningCount || 0) + (s.perfCount || 0)
         + (s.fwCount || 0) + (s.infoCount || 0) + (s.debugCount || 0)
         + (s.databaseCount || 0) + (s.todoCount || 0) + (s.noticeCount || 0);
     var other = (s.lineCount || 0) - categorized;
-    if (other > 0) parts.push('<span class="sev-pair" title="Other lines"><span class="sev-dot sev-other"></span>' + other + '</span>');
+    if (other > 0) parts.push(sevPair('other', 'Other lines', other));
     if (parts.length === 0) return '';
     return '<span class="sev-dots">' + parts.join('') + '</span>';
 }
