@@ -1,6 +1,9 @@
 # ENH: adb-logcat capture source (device/emulator system log)
 
-Status: proposed / not started.
+Status: shipped. The capture source, device selection, dedup reuse, and settings all
+landed previously (the "not started" header was stale). The final gap — cross-process ANR
+evidence being dropped by PID scoping — is closed by the `captureAnr` option (default on).
+See the Finish Report at the end of this file.
 
 ## 1. Why
 
@@ -103,3 +106,30 @@ catalog regen). No machine translation.
 - Reading `ApplicationExitInfo` (app-only API — belongs in
   `D:\src\contacts\bugs\BUG_anr_telemetry_debug_suppression.md`).
 - Any device write / `adb shell` mutation. This source is read-only logcat.
+
+## Finish Report (2026-07-16)
+
+The bulk of this plan was already implemented when reviewed (the `## Status` header was stale):
+
+- **§3.1 source module** — `src/modules/integrations/adb-logcat-capture.ts` spawns
+  `adb -s <serial> logcat -v threadtime`, streams line-by-line, and feeds the existing
+  ingestion path via the integration `StreamingWriter` (`writer.writeLine(raw, 'logcat', …)`
+  → `SessionManager.writeLine` → `processApiWriteLine`), so classification, exclusion, and
+  flood-guard are reused unchanged. Lifecycle is managed by the integration registry
+  (`providers/adb-logcat.ts`): started on `onSessionStartStreaming`, stopped on `onSessionEnd`,
+  PID forwarded via `onProcessId`.
+- **§3.2 device selection** — the `device` setting maps to `adb -s`; a single device
+  auto-selects. (Multi-device quick-pick remains deferred per §5 — not requested.)
+- **§3.3 dedup** — reused; lines flow through the same exclusion/flood pipeline.
+- **§3.4 settings** — `device`, `tagFilters`, `minLevel`, `filterByPid`, `maxBufferLines`,
+  `writeSidecar`, `captureDeviceOther` all exist.
+
+**This change** adds the missing piece the plan flagged in §3.2 and §4.1: with `filterByPid`
+on by default, the ANR header + frozen-thread stack (dumped by `system_server` under the
+`ActivityManager` / `AndroidRuntime` tags, a *different* PID than the app) was being dropped.
+New setting `saropaLogCapture.integrations.adbLogcat.captureAnr` (default **on**) makes
+device-critical lines bypass the level and PID gates. Implemented as a pure, unit-tested
+predicate `shouldAcceptLogcatLine` in the capture module.
+
+Not done (deferred per §5, not requested here): multi-device quick-pick, `adbPath` override,
+`/data/anr/` direct read on rooted emulators.
