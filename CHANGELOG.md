@@ -25,9 +25,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.3.0]
 
-Tag column polish: the `lowmemorykiller` device tag now reads as "Low Memory Killer", and the tag-cell tooltip separates multiple tags with commas so a line's extra tags don't run together as one phrase. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+Tag column polish: the `lowmemorykiller` device tag now reads as "Low Memory Killer", and the tag-cell tooltip separates multiple tags with commas so a line's extra tags don't run together as one phrase. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.0/CHANGELOG.md)
 
 ### Fixed
 
@@ -572,42 +572,4 @@ Saropa Log Capture now spots patterns across your sessions at a glance — a wor
 
 ---
 
-## [8.1.1]
-
-The Crashlytics issue-list labels and alerts that shipped in 8.1.0 are now translated in every supported language instead of falling back to English. [log](https://github.com/saropa/saropa-log-capture/blob/v8.1.1/CHANGELOG.md)
-
-### Changed
-
-- **Crashlytics strings localized across all 10 locales:** The 15 new Crashlytics issue-list strings from 8.1.0 (archive/unarchive actions and toasts, the "Regressed" / "Repetitive" badges and their tooltips, the sort-by labels, "Show archived", and the new-issue alerts) are now hand-translated for German, Spanish, French, Italian, Japanese, Korean, Portuguese (Brazil), Russian, Simplified Chinese, and Traditional Chinese. Brings every locale bundle back to 100% coverage.
-
----
-
-## [8.1.0]
-
-The Crashlytics and Vitals panels get a big upgrade: crash-free users and sessions headline figures, trend sparklines on the cards and on every issue row, foreground/background device states, and a polished theme-aware look. You can archive issues you've triaged, get background alerts when a new or returned crash shows up, sort the list by events or affected users, and spot crashes tagged "Regressed" or "Repetitive" — plus the "Open in Firebase" arrow now deep-links straight to the exact issue. [log](https://github.com/saropa/saropa-log-capture/blob/v8.1.0/CHANGELOG.md)
-
-### Added
-
-- **Crash-free users on the Vitals panel:** Alongside crash-free sessions, the panel now shows crash-free **users** (the share of people who didn't hit a crash) — the headline number the Firebase console leads with, using the distinct-user rate from Google Play.
-- **Device states (foreground vs background) on the issue detail:** The crash detail now shows a "Device states" panel with the true foreground/background split for the issue (from Google Play's aggregate data, not a sample) — so you can tell a crash that happens while users are actively in the app from one that fires in the background.
-- **Per-issue trend mini-charts in the list:** Each crash issue now shows a small sparkline of its daily event count over the selected period, so you can spot a spiking issue versus a flat one without opening it. Fetched once when the list loads.
-- **Archive crash issues locally:** Each issue row now has an archive button to hide issues you've already triaged. A **Show archived** toggle in the filter bar reveals them again, each with an unarchive button. Archiving is local to your workspace (the Play Reporting data is read-only, so this doesn't close the issue in Firebase) and archived issues are skipped by the background new-issue alerts.
-- **Background alerts for new and returned crashes:** Turn on **Notify on new Crashlytics issues** (off by default) and the extension checks for new or returned crash issues in the background — no need to open the panel — and shows a notification plus a status-bar badge when one appears, with a **View** action that opens the sidebar. Each issue alerts once; an issue that disappears and comes back alerts again.
-- **"Regressed" tag on crashes that came back:** Issues that disappeared in an earlier refresh and have since reappeared now carry a "Regressed" badge. This is tracked locally across refreshes (a short history of past scans is now kept under `.saropa/cache/crashlytics/`), since the Play Reporting API doesn't expose issue state.
-- **"Repetitive" tag on recurring crashes:** Issues seen across more than one app version now carry a "Repetitive" badge in the list, so a crash that has survived a release stands out from a one-off. Derived locally from the version range (the Play Reporting API has no such signal).
-- **Sort the Crashlytics issue list by events or users:** A new sort dropdown in the issue-list filter bar lets you order issues by most events (the default, matching the server order) or most affected users — useful for telling "noisy for one user" apart from "hitting many people." Sorting is instant and client-side.
-- **Crash-free sessions headline on the Vitals panel:** A prominent "Crash-free sessions" figure (100 − crash rate) now sits at the top of the Vitals panel — the single daily-health number the Firebase console leads with — alongside a period change arrow (↑ green when improving). The existing Crash Rate and ANR Rate cards stay below it. (Labeled "sessions": crash-free *users* uses a different denominator and is a separate addition.)
-- **Trend sparkline on the Vitals panel:** The Crash Rate and ANR Rate cards now show a small line chart of the last several days beneath the number, so you can see at a glance whether a rate is climbing, falling, or steady — not just today's value. The data was already being fetched and thrown away; nothing new is requested from Google Play.
-
-### Changed
-
-- **Polished Crashlytics & Vitals visuals:** The Vitals panel now leads with side-by-side "Crash-free users" and "Crash-free sessions" hero figures, and the crash/ANR cards share a cohesive card style with a color-coded left edge and an inline trend line. In the issue list, rows lift on hover with a soft accent, the status pills are crisper, and each issue's trend sparkline sits in a tidy chip. All theme-aware (adapts to your VS Code color theme).
-- **The "Open in Firebase" arrow now deep-links to the exact issue:** Clicking ↗ beside a crash's name previously could only open the whole issues list. It now opens that specific issue in the Firebase Crashlytics console (the issue ids match between the two), so you land on the crash you were looking at instead of hunting for it.
-
-### Fixed
-
-- **"Open in Firebase" arrow now reaches the Crashlytics console:** The ↗ link beside a crash issue's name (and the panel's "Open Firebase Console" link) built its URL from the Firebase *app id* (`1:NNN:android:HEX`), which the console rejects with "This app does not exist or you do not have permission to view it." The link now uses the platform-prefixed package name (`android:com.example.app`) the console actually expects, so it opens the right project.
-
----
-
-For older versions (8.0.5 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
+For older versions (8.1.1 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
