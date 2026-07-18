@@ -10,9 +10,9 @@ export function getScrollbarMinimapPaintScript(): string {
 function initMmColors() {
     var cs = getComputedStyle(document.documentElement);
     function v(n, fb) { return cs.getPropertyValue(n).trim() || fb; }
-    /* Severity swatches mirror the canonical .level-dot-* hex palette in
-       viewer-styles-level.ts (footer chip dots), so the minimap tick and the
-       footer chip read as the same color — single source of truth for "what
+    /* Severity swatches mirror the canonical .dot-count-* hex palette in
+       viewer-styles-level.ts (the toolbar level count pills), so the minimap tick
+       and the toolbar pill read as the same color — single source of truth for "what
        does this color mean?". Alpha values are calibrated for the per-pixel-
        row reduction paint model (one deterministic fill per y-pixel, no
        overdraw). Previously these alphas were higher (0.6 severity / 0.85

@@ -22,34 +22,40 @@ suite('Viewer toolbar', () => {
         return fs.readFileSync(p, 'utf8');
     }
 
-    test('toolbar level summary has letter chip between dot and count (bug 006)', () => {
+    test('toolbar level summary nests letter + count inside one pill (bug 006)', () => {
         const html = getToolbarHtml({ version: '1.0.0' });
-        // Count span now carries a per-level class (dot-count dot-count-<level>) so each
-        // counter renders as a filled pill in its own color — assert the paired class.
+        // The prefix letter now lives INSIDE the count pill (.dot-count-letter), with the
+        // number in a sibling .dot-count-num span the count-writer targets. Assert the pill
+        // opens with its per-level class and immediately contains the letter chip.
         const snippets = [
-            'class="level-letter level-letter-error">E</span><span class="dot-count dot-count-error"',
-            'class="level-letter level-letter-warning">W</span><span class="dot-count dot-count-warning"',
-            'class="level-letter level-letter-info">I</span><span class="dot-count dot-count-info"',
-            'class="level-letter level-letter-performance">P</span><span class="dot-count dot-count-performance"',
-            'class="level-letter level-letter-todo">T</span><span class="dot-count dot-count-todo"',
-            'class="level-letter level-letter-notice">N</span><span class="dot-count dot-count-notice"',
-            'class="level-letter level-letter-debug">D</span><span class="dot-count dot-count-debug"',
-            'class="level-letter level-letter-database">DB</span><span class="dot-count dot-count-database"',
+            'class="dot-count dot-count-error"><span class="dot-count-letter">E</span><span class="dot-count-num"',
+            'class="dot-count dot-count-warning"><span class="dot-count-letter">W</span><span class="dot-count-num"',
+            'class="dot-count dot-count-info"><span class="dot-count-letter">I</span><span class="dot-count-num"',
+            'class="dot-count dot-count-performance"><span class="dot-count-letter">P</span><span class="dot-count-num"',
+            'class="dot-count dot-count-todo"><span class="dot-count-letter">T</span><span class="dot-count-num"',
+            'class="dot-count dot-count-notice"><span class="dot-count-letter">N</span><span class="dot-count-num"',
+            'class="dot-count dot-count-debug"><span class="dot-count-letter">D</span><span class="dot-count-num"',
+            'class="dot-count dot-count-database"><span class="dot-count-letter">DB</span><span class="dot-count-num"',
         ];
         for (const s of snippets) {
             assert.ok(html.includes(s), `toolbar HTML should contain: ${s}`);
         }
         const css = getLevelStyles();
+        // The in-pill letter must NOT set its own color — it inherits the pill's per-level
+        // contrasting foreground so letter and number match. A stray .level-letter-* color
+        // rule would break that, so assert the old level-colored letter class is gone.
+        assert.ok(css.includes('.dot-count-letter'), 'level CSS should style the in-pill letter');
         assert.ok(
-            css.includes('.level-dot-group:has(.level-dot:not(.active)) .level-letter'),
-            'level CSS should dim letter when dot is inactive (pairs with syncLevelDots)',
+            !css.includes('.level-letter-error'),
+            'the old level-colored letter chip rules should be removed (letter now inherits the pill color)',
         );
     });
 
-    test('each level count pill has a filled rule whose bg matches its dot color', () => {
+    test('each level count pill is filled with its canonical severity color', () => {
         const css = getLevelStyles();
-        // Palette lockstep is a hand-maintained invariant: the pill background must equal
-        // the dot background for the same level, or the counter and its dot diverge.
+        // The leading dot was removed; the pill is now the only colored element in the level
+        // summary and the canonical palette. Its fill must match the shared severity hex (kept
+        // in lockstep with .line.level-* and .level-bar-* in the line/bar style files).
         const levels: readonly [string, string][] = [
             ['error', '#f44336'],
             ['warning', '#ff9800'],
@@ -62,14 +68,14 @@ suite('Viewer toolbar', () => {
         ];
         for (const [level, hex] of levels) {
             // Whitespace-insensitive: the CSS aligns declarations with variable spacing.
-            const dotRule = new RegExp(`\\.level-dot-${level}\\s*\\{\\s*background:\\s*${hex};`);
             const pillRule = new RegExp(`\\.dot-count-${level}\\s*\\{\\s*background:\\s*${hex};`);
-            assert.ok(dotRule.test(css), `dot color for ${level} should be ${hex}`);
             assert.ok(
                 pillRule.test(css),
-                `count pill for ${level} should be filled with ${hex} (lockstep with the dot)`,
+                `count pill for ${level} should be filled with ${hex}`,
             );
         }
+        // The removed dot must not leave a stray colored rule behind.
+        assert.ok(!css.includes('.level-dot-error'), 'the removed leading dot color rules should be gone');
     });
 
     test('trouble mode dims count pills for the levels it suppresses', () => {

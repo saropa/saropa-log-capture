@@ -27,74 +27,27 @@ export function getLevelStyles(): string {
 .level-dot-group:hover {
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
-.level-dot {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    min-width: 12px;
-    min-height: 12px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    transition: opacity 0.2s ease;
-}
-.level-dot:not(.active) { opacity: 0.3; }
-/* Trouble Mode dims the dots for the levels it actively hides (everything but
-   error / warning / performance) so the toolbar reflects what is suppressed,
-   without touching the real level-filter state (enabledLevels). Mirrors the
-   inactive-dot / inactive-letter opacities above. */
-body.slc-trouble-active .level-dot-group[data-level="info"] .level-dot,
-body.slc-trouble-active .level-dot-group[data-level="notice"] .level-dot,
-body.slc-trouble-active .level-dot-group[data-level="debug"] .level-dot,
-body.slc-trouble-active .level-dot-group[data-level="database"] .level-dot,
-body.slc-trouble-active .level-dot-group[data-level="todo"] .level-dot { opacity: 0.3; }
-body.slc-trouble-active .level-dot-group[data-level="info"] .level-letter,
-body.slc-trouble-active .level-dot-group[data-level="notice"] .level-letter,
-body.slc-trouble-active .level-dot-group[data-level="debug"] .level-letter,
-body.slc-trouble-active .level-dot-group[data-level="database"] .level-letter,
-body.slc-trouble-active .level-dot-group[data-level="todo"] .level-letter { opacity: 0.45; }
-/* Dot palette matches .line.level-* text colors in viewer-styles-lines.ts and
-   .level-bar-* in viewer-styles-decoration-bars.ts. Info=blue, Notice=cyan,
-   Database=green — keep the three in lockstep when any one changes. */
-.level-dot-info { background: #2196f3; }
-.level-dot-warning { background: #ff9800; }
-.level-dot-error { background: #f44336; }
-.level-dot-performance { background: #9c27b0; }
-.level-dot-todo { background: #bdbdbd; }
-.level-dot-debug { background: #795548; }
-.level-dot-notice { background: #00bcd4; }
-.level-dot-database { background: #4caf50; }
-/* Level letter chip — sits between the colored dot and the count.
-   Why: 8 colors at 12px are unscannable on dense toolbar (color-blind users
-   especially), and the toolbar footer was the only level-filter UI without
-   any text label, diverging from the filter drawer's emoji+label+count
-   chips. Per-level colors match the dot; inactive groups also lower letter
-   opacity via :has(.level-dot:not(.active)) so state stays paired with the dot. */
-.level-letter {
-    font-size: 10px;
-    font-weight: 600;
-    line-height: 1;
-    letter-spacing: 0;
+/* Prefix letter, now INSIDE the count pill (was a separate .level-letter chip in the level
+   color sitting between the dot and the pill). It deliberately has NO color of its own so it
+   inherits the pill's per-level contrasting foreground — letter and number are the same color
+   on the level-colored fill, one self-identifying chip. Dimming (inactive + Trouble Mode) is
+   handled by the .dot-count rules below; the letter dims with its parent pill for free.
+   Why keep a letter at all: 8 fill colors are unscannable on a dense toolbar (color-blind
+   users especially), so each pill carries its severity initial. */
+.dot-count-letter {
+    margin-right: 3px;
     user-select: none;
-    transition: opacity 0.2s ease;
-    color: var(--vscode-descriptionForeground);
 }
-.level-dot-group:has(.level-dot:not(.active)) .level-letter { opacity: 0.45; }
-.level-letter-error { color: #f44336; }
-.level-letter-warning { color: #ff9800; }
-.level-letter-info { color: #2196f3; }
-.level-letter-performance { color: #9c27b0; }
-.level-letter-todo { color: var(--vscode-descriptionForeground); }
-.level-letter-debug { color: #a1887f; }
-.level-letter-notice { color: #00bcd4; }
-.level-letter-database { color: #4caf50; }
-/* Count pill. Was faint descriptionForeground gray and near-illegible on the dense
-   toolbar; now a filled chip in the level's own color so each counter is high-contrast
-   and self-identifying. Foreground is chosen per level to clear WCAG AA (4.5:1) for the
-   10px bold number: near-black on the bright/mid fills (warning/info/error/todo/notice/
-   database) and white only on the two genuinely dark fills (performance purple, debug
-   brown). White-on-red/-blue was rejected — it sits at ~3.9:1 / ~3.1:1 and the count
-   must be VERY legible. Backgrounds must stay in lockstep with .level-dot-* above and the
-   line/bar colors those comment. */
+/* Count pill — the only colored element in the level summary now (the leading dot was
+   removed; the pill carries the level color). Was faint descriptionForeground gray and
+   near-illegible on the dense toolbar; now a filled chip in the level's own color so each
+   counter is high-contrast and self-identifying. Foreground is chosen per level to clear
+   WCAG AA (4.5:1) for the 10px bold number: near-black on the bright/mid fills (warning/info/
+   error/todo/notice/database) and white only on the two genuinely dark fills (performance
+   purple, debug brown). White-on-red/-blue was rejected — it sits at ~3.9:1 / ~3.1:1 and the
+   count must be VERY legible. The fill palette matches .line.level-* text in
+   viewer-styles-lines.ts and .level-bar-* in viewer-styles-decoration-bars.ts — keep them in
+   lockstep when any one changes. */
 .dot-count {
     font-size: 10px;
     font-weight: 700;
@@ -105,7 +58,8 @@ body.slc-trouble-active .level-dot-group[data-level="todo"] .level-letter { opac
     color: #fff;
     background: var(--vscode-badge-background);
 }
-.dot-count:empty { display: none; }
+/* Zero-count levels are hidden by viewer-stats.ts (group display:none), so the pill is never
+   empty in steady state — the letter child means an :empty rule could no longer match anyway. */
 .dot-count-error    { background: #f44336; color: #2a0400; }
 .dot-count-warning  { background: #ff9800; color: #1c1200; }
 .dot-count-info     { background: #2196f3; color: #051f33; }
@@ -114,14 +68,13 @@ body.slc-trouble-active .level-dot-group[data-level="todo"] .level-letter { opac
 .dot-count-notice   { background: #00bcd4; color: #062a2e; }
 .dot-count-debug    { background: #795548; color: #fff; }
 .dot-count-database { background: #4caf50; color: #0a2410; }
-/* Inactive level: dim the whole pill to match the dot/letter dimming, so a filtered-out
-   level's count reads as off without losing its identity color. */
-.level-dot-group:has(.level-dot:not(.active)) .dot-count { opacity: 0.4; }
+/* Inactive level: dim the whole pill (state now lives on the group, toggled by syncLevelDots),
+   so a filtered-out level's count reads as off without losing its identity color. */
+.level-dot-group:not(.active) .dot-count { opacity: 0.4; }
 /* Trouble Mode suppresses info/notice/debug/database/todo without clearing .active (it
    leaves the real level-filter state alone), so the inactive-dimming rule above cannot
-   fire for those. Dim their count pills explicitly to match the dimmed dot/letter above —
-   otherwise a bright pill would contradict the "this level is hidden" signal. Keep this
-   list in step with the trouble-mode .level-dot / .level-letter rules earlier in this file. */
+   fire for those. Dim their count pills explicitly — otherwise a bright pill would
+   contradict the "this level is hidden" signal. */
 body.slc-trouble-active .level-dot-group[data-level="info"] .dot-count,
 body.slc-trouble-active .level-dot-group[data-level="notice"] .dot-count,
 body.slc-trouble-active .level-dot-group[data-level="debug"] .dot-count,

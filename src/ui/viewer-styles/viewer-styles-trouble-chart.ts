@@ -17,7 +17,7 @@
  * The pane chrome still uses --surface-2 / --border so it reads as a dashboard band
  * separated from the feed by a hairline.
  *
- * Head-row TEXT is pinned to 10px to match .level-letter / .dot-count in the
+ * Head-row TEXT is pinned to 10px to match the .dot-count count pills in the
  * toolbar, not the 11px --text-eyebrow the other pane heads use: this strip sits
  * directly under the toolbar and any size step between them reads as a misalignment.
  * The collapse caret is the sole exception — it is a control, not a label, and is
@@ -77,8 +77,8 @@ body.slc-trouble-active .trouble-chart { display: block; }
 }
 .trouble-chart .tc-chip:hover { background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31)); }
 .trouble-chart .tc-chip:focus-visible { outline: 1px solid var(--vscode-focusBorder); outline-offset: 1px; }
-/* A level removed from enabledLevels — via this chip or its toolbar dot — dims exactly like
-   an inactive .level-dot, so both views agree at a glance that the level is hidden. */
+/* A level removed from enabledLevels — via this chip or its toolbar pill — dims exactly like
+   an inactive .level-dot-group pill, so both views agree at a glance that the level is hidden. */
 .trouble-chart .tc-chip-off { opacity: 0.3; }
 .trouble-chart .tc-chip i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
 .trouble-chart .tc-chip-error i { background: var(--tc-error); }

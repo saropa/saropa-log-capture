@@ -50,6 +50,22 @@ def _run_npm_install() -> bool:
     return True
 
 
+def cleanup_stray_output() -> None:
+    """Remove stale coverage/test output left by prior local runs.
+
+    Best-effort housekeeping, not a gated step: `.nyc_output/` and
+    `coverage/` are gitignored junk that only appears after a manual
+    `npm run test:coverage`, but a compile that runs mid-pipeline shouldn't
+    have to reason about a leftover instrumented `out/` from a prior
+    interrupted coverage run (see clean.mjs). Failure here never blocks
+    the pipeline — it's cleanup, not a correctness check.
+    """
+    from modules.publish.display import info
+    result = run(["node", "scripts/modules/build/clean.mjs"], cwd=PROJECT_ROOT, check=False)
+    if result.returncode == 0:
+        info("Cleaned stray out/, .nyc_output/, coverage/ from prior runs.")
+
+
 def step_compile() -> bool:
     """Run the full compile: type-check + lint + production esbuild bundle.
 

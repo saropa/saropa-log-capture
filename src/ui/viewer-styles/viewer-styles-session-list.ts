@@ -271,6 +271,9 @@ export function getSessionListStyles(): string {
  * the number stays VERY legible. Foreground is near-black on every fill except the dark
  * purple (perf). Palette matches the viewer top-bar level colors. */
 .sev-count {
+    /* 9px, one step below the top-bar pill: the sidebar pill now carries a prefix LETTER plus
+       the count, and the extra glyph needs the smaller size to fit without widening the row. */
+    font-size: 9px;
     font-weight: 700;
     line-height: 15px;
     padding: 0 6px;
@@ -278,6 +281,12 @@ export function getSessionListStyles(): string {
     letter-spacing: 0.2px;
     color: #fff;
     background: var(--vscode-badge-background);
+}
+/* Prefix letter inside the pill — no color of its own, so it inherits the pill's per-category
+   contrasting foreground (letter and number are the same color on the category fill). */
+.sev-count-letter {
+    margin-right: 3px;
+    user-select: none;
 }
 .sev-count-error    { background: #f44336; color: #2a0400; }
 .sev-count-warning  { background: #ffc107; color: #1c1200; }
