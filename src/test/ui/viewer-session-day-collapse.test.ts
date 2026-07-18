@@ -201,6 +201,12 @@ suite('Collapsible day groups', () => {
         const html = render({ errorCount: 12480, lineCount: 12480 });
         assert.ok(html.includes('sev-count-error'), 'renders an error pill');
         assert.ok(html.includes('>12,480<'), 'large error count is comma-grouped');
+        // The pill now carries its category prefix letter inside the pill (E for error), before
+        // the count. Pin the letter + argument order so a wrong `letter` arg to sevPair is caught.
+        assert.ok(
+            html.includes('<span class="sev-count-letter">E</span>12,480'),
+            'error pill shows the "E" prefix letter immediately before the count',
+        );
     });
 
     test('groupThousands leaves small counts unchanged', () => {
