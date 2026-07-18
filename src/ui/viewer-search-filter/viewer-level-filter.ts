@@ -132,8 +132,9 @@ function syncLevelDots() {
     var groups = document.querySelectorAll('.level-dot-group');
     for (var i = 0; i < groups.length; i++) {
         var lvl = groups[i].getAttribute('data-level');
-        var dot = groups[i].querySelector('.level-dot');
-        if (dot) dot.classList.toggle('active', enabledLevels.has(lvl));
+        // The color dot was removed; the group itself now holds the on/off state. CSS dims
+        // the count pill via .level-dot-group:not(.active), so a disabled level reads as off.
+        groups[i].classList.toggle('active', enabledLevels.has(lvl));
     }
     var count = enabledLevels.size;
     var label = document.getElementById('level-trigger-label');
