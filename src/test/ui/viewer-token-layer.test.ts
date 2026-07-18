@@ -49,4 +49,34 @@ suite('ViewerTokenLayer', () => {
 		assert.ok(full.includes('--brand: #f97316'));
 		assert.ok(full.trimStart().startsWith(':root') || full.indexOf(':root') < full.indexOf('.u-hidden'));
 	});
+
+	test('severity pill palette is defined once and consumed by BOTH pill surfaces', () => {
+		// The fixed count-pill fills live in exactly one place (the --sev-* tokens). Both the
+		// toolbar level pills (.dot-count-*) and the sidebar Logs pills (.sev-count-*) reference
+		// those tokens, so the two surfaces cannot drift apart (they had, on 4 levels, before
+		// this unification). Pin the values AND the cross-surface consumption.
+		const tokens = getTokenStyles();
+		const pairs: readonly [string, string][] = [
+			['error', '#f44336'], ['warning', '#ff9800'], ['info', '#2196f3'],
+			['performance', '#9c27b0'], ['todo', '#bdbdbd'], ['notice', '#00bcd4'],
+			['debug', '#795548'], ['database', '#4caf50'],
+		];
+		const full = getViewerStyles();
+		for (const [lvl, hex] of pairs) {
+			assert.ok(
+				new RegExp(`--sev-${lvl}:\\s*${hex};`).test(tokens),
+				`--sev-${lvl} token should be defined as ${hex}`,
+			);
+			assert.ok(
+				new RegExp(`\\.dot-count-${lvl}\\s*\\{\\s*background:\\s*var\\(--sev-${lvl}\\)`).test(full),
+				`toolbar pill ${lvl} should consume var(--sev-${lvl})`,
+			);
+			// Sidebar names performance 'perf'; every other class matches the level name.
+			const listClass = lvl === 'performance' ? 'perf' : lvl;
+			assert.ok(
+				new RegExp(`\\.sev-count-${listClass}\\s*\\{\\s*background:\\s*var\\(--sev-${lvl}\\)`).test(full),
+				`sidebar pill ${lvl} should consume var(--sev-${lvl})`,
+			);
+		}
+	});
 });
