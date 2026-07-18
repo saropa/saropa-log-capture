@@ -355,6 +355,11 @@ def main() -> int:
 
     _print_banner(args, version)
 
+    # Best-effort sweep of stale coverage/test junk (.nyc_output/, coverage/)
+    # left by prior manual runs, before compile touches out/.
+    from modules.publish.checks_build import cleanup_stray_output
+    cleanup_stray_output()
+
     # ── ANALYSIS PHASE ──
     # Steps 1-10: prerequisites, clean tree, compile, test, version.
     # run_analysis may update `version` if the user bumps it during Step 10.

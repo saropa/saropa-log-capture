@@ -18,9 +18,14 @@ export interface ToolbarHtmlOptions {
     readonly version: string;
 }
 
-/** One severity dot-group cell. Glyph (E/W/…) stays symbolic; title + aria-label localize. */
+/** One severity cell: a single count pill carrying its level letter + number. Glyph (E/W/…)
+ *  stays symbolic; title + aria-label localize. The old leading color dot was removed — the
+ *  pill itself now carries the level color, so the dot was pure duplication (matching the
+ *  sidebar Logs pills, which dropped their dot for the same reason). The whole group is the
+ *  click target and holds the `active` state (toggled by syncLevelDots); the number lives in
+ *  `.dot-count-num` so the count-writer (viewer-stats.ts) sets it without wiping the letter. */
 function levelDot(level: string, glyph: string): string {
-    return `<span class="level-dot-group" data-level="${level}" title="${t('viewer.toolbar.levelDot.' + level + '.title')}" role="img" aria-label="${t('viewer.level.' + level)}"><span class="level-dot active level-dot-${level}"></span><span class="level-letter level-letter-${level}">${glyph}</span><span class="dot-count dot-count-${level}"></span></span>`;
+    return `<span class="level-dot-group active" data-level="${level}" title="${t('viewer.toolbar.levelDot.' + level + '.title')}" role="img" aria-label="${t('viewer.level.' + level)}"><span class="dot-count dot-count-${level}"><span class="dot-count-letter">${glyph}</span><span class="dot-count-num"></span></span></span>`;
 }
 
 /** Toolbar HTML: nav arrows, icons, level dots, line count, filename. */

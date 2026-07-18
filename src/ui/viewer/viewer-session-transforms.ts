@@ -118,29 +118,34 @@ function groupThousands(n) {
     var v = (typeof n === 'number' && isFinite(n)) ? Math.trunc(n) : 0;
     return v.toLocaleString('en-US');
 }
-/** One severity chip: a filled high-contrast count pill (sev-count-<cls>). The pill now
- *  carries the category color, so the old leading dot was redundant and was dropped.
- *  Mirrors the viewer top-bar level pills so a log reads the same in the list and open. */
-function sevPair(cls, title, n) {
+/** One severity chip: a filled high-contrast count pill (sev-count-<cls>) carrying the
+ *  category's prefix letter AND count in one pill. The letter has no color of its own so it
+ *  inherits the pill's per-category contrasting foreground — letter and number are the same
+ *  color on the category-colored fill. Mirrors the viewer top-bar level pills so a log reads
+ *  the same in the list and open. */
+function sevPair(cls, letter, title, n) {
     return '<span class="sev-pair" title="' + title + '">'
-        + '<span class="sev-count sev-count-' + cls + '">' + groupThousands(n) + '</span></span>';
+        + '<span class="sev-count sev-count-' + cls + '">'
+        + '<span class="sev-count-letter">' + letter + '</span>' + groupThousands(n) + '</span></span>';
 }
 function renderSeverityDots(s) {
     var parts = [];
-    if (s.errorCount > 0) parts.push(sevPair('error', 'Errors', s.errorCount));
-    if (s.warningCount > 0) parts.push(sevPair('warning', 'Warnings', s.warningCount));
-    if (s.infoCount > 0) parts.push(sevPair('info', 'Info', s.infoCount));
-    if (s.debugCount > 0) parts.push(sevPair('debug', 'Debug', s.debugCount));
-    if (s.databaseCount > 0) parts.push(sevPair('database', 'Database', s.databaseCount));
-    if (s.perfCount > 0) parts.push(sevPair('perf', 'Performance', s.perfCount));
-    if (s.todoCount > 0) parts.push(sevPair('todo', 'Todo', s.todoCount));
-    if (s.noticeCount > 0) parts.push(sevPair('notice', 'Notice', s.noticeCount));
-    if (s.fwCount > 0) parts.push(sevPair('fw', 'Framework', s.fwCount));
+    // Prefix letters mirror the toolbar level glyphs (E/W/I/P/T/N/D/DB); framework and the
+    // residual "other" bucket have no toolbar equivalent, so they use FW / O.
+    if (s.errorCount > 0) parts.push(sevPair('error', 'E', 'Errors', s.errorCount));
+    if (s.warningCount > 0) parts.push(sevPair('warning', 'W', 'Warnings', s.warningCount));
+    if (s.infoCount > 0) parts.push(sevPair('info', 'I', 'Info', s.infoCount));
+    if (s.debugCount > 0) parts.push(sevPair('debug', 'D', 'Debug', s.debugCount));
+    if (s.databaseCount > 0) parts.push(sevPair('database', 'DB', 'Database', s.databaseCount));
+    if (s.perfCount > 0) parts.push(sevPair('perf', 'P', 'Performance', s.perfCount));
+    if (s.todoCount > 0) parts.push(sevPair('todo', 'T', 'Todo', s.todoCount));
+    if (s.noticeCount > 0) parts.push(sevPair('notice', 'N', 'Notice', s.noticeCount));
+    if (s.fwCount > 0) parts.push(sevPair('fw', 'FW', 'Framework', s.fwCount));
     var categorized = (s.errorCount || 0) + (s.warningCount || 0) + (s.perfCount || 0)
         + (s.fwCount || 0) + (s.infoCount || 0) + (s.debugCount || 0)
         + (s.databaseCount || 0) + (s.todoCount || 0) + (s.noticeCount || 0);
     var other = (s.lineCount || 0) - categorized;
-    if (other > 0) parts.push(sevPair('other', 'Other lines', other));
+    if (other > 0) parts.push(sevPair('other', 'O', 'Other lines', other));
     if (parts.length === 0) return '';
     return '<span class="sev-dots">' + parts.join('') + '</span>';
 }

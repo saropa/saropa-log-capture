@@ -181,9 +181,9 @@ export function getTagStyles(): string {
        (calc(1em * 1.1) at the default 13px log font) — the row's overflow:hidden
        clipped the excess, shearing off exactly the bottom border first (the
        outermost pixel), which read as "missing bottom border" plus row-to-row
-       height looking inconsistent (only rows with a chip clipped). Matches the
-       line-height:1 pattern already used by .level-letter/.dot-count for the same
-       reason. */
+       height looking inconsistent (only rows with a chip clipped). line-height:1
+       keeps the chip box height driven by padding + border alone, not a font-scaled
+       line box, so it can't exceed the fixed row height and get clipped. */
     line-height: 1;
     padding: 1px 6px;
     border-radius: 3px;

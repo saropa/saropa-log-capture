@@ -25,6 +25,18 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+Severity count pills now read the same everywhere: each pill shows its level letter and count together (E, W, I, …), and the sidebar Logs list gains those letters too, so a glance tells you the level without decoding colors. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+
+### Changed
+
+- Log-viewer toolbar level pills now carry the prefix letter INSIDE the count pill instead of as a separate level-colored chip beside it; the letter inherits the pill's contrasting foreground so letter and number are the same color.
+- Removed the small leading color dot beside each toolbar level pill — the pill itself carries the level color and letter, so the dot was pure duplication (matching the sidebar Logs pills). The whole pill remains the click target and dims when its level is filtered out.
+- Sidebar Logs session-history count pills now include the category prefix letter (E/W/I/P/T/N/D/DB/FW/O) and use a slightly smaller font so the letter plus count fit without widening the row.
+
+---
+
 ## [9.3.0]
 
 Tag column polish: the `lowmemorykiller` device tag now reads as "Low Memory Killer", and the tag-cell tooltip separates multiple tags with commas so a line's extra tags don't run together as one phrase. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.0/CHANGELOG.md)

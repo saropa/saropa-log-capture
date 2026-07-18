@@ -66,7 +66,9 @@ function updateDotCounts() {
     var groups = document.querySelectorAll('.level-dot-group');
     for (var i = 0; i < groups.length; i++) {
         var lvl = groups[i].getAttribute('data-level');
-        var countEl = groups[i].querySelector('.dot-count');
+        // Write the number to .dot-count-num, NOT the pill itself: the pill also holds the
+        // .dot-count-letter glyph, so setting textContent on .dot-count would erase the letter.
+        var countEl = groups[i].querySelector('.dot-count-num');
         if (!countEl || !lvl) continue;
         var c = statsCounters[lvl] || 0;
         countEl.textContent = c > 0 ? formatNumber(c) : '';

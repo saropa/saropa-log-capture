@@ -56,9 +56,9 @@ function troubleChartBar(bin, geom, scale, intervalMs, selected) {
 }
 
 /* One legend chip. The chips are not just labels: each is an interactive level filter that
-   routes to the SAME toggleLevel/soloLevel the toolbar dots use, so data-level is required
-   for the delegated handler. 'on' (the level is in enabledLevels) drives the inactive dim,
-   mirroring .level-dot:not(.active). role=button + tabindex + aria-pressed make the control
+   routes to the SAME toggleLevel/soloLevel the toolbar level pills use, so data-level is
+   required for the delegated handler. 'on' (the level is in enabledLevels) drives the inactive
+   dim, mirroring .level-dot-group:not(.active). role=button + tabindex + aria-pressed make the control
    keyboard-reachable, which the plain <span> was not. enabledLevels may be undefined in the
    VM test harness (the level-filter script is not loaded there) — default to on. */
 function troubleChartChipHtml(level, count) {
