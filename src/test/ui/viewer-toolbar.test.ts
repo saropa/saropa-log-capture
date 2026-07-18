@@ -51,28 +51,16 @@ suite('Viewer toolbar', () => {
         );
     });
 
-    test('each level count pill is filled with its canonical severity color', () => {
+    test('each level count pill draws its fill from the shared --sev token', () => {
         const css = getLevelStyles();
-        // The leading dot was removed; the pill is now the only colored element in the level
-        // summary and the canonical palette. Its fill must match the shared severity hex (kept
-        // in lockstep with .line.level-* and .level-bar-* in the line/bar style files).
-        const levels: readonly [string, string][] = [
-            ['error', '#f44336'],
-            ['warning', '#ff9800'],
-            ['info', '#2196f3'],
-            ['performance', '#9c27b0'],
-            ['todo', '#bdbdbd'],
-            ['notice', '#00bcd4'],
-            ['debug', '#795548'],
-            ['database', '#4caf50'],
-        ];
-        for (const [level, hex] of levels) {
-            // Whitespace-insensitive: the CSS aligns declarations with variable spacing.
-            const pillRule = new RegExp(`\\.dot-count-${level}\\s*\\{\\s*background:\\s*${hex};`);
-            assert.ok(
-                pillRule.test(css),
-                `count pill for ${level} should be filled with ${hex}`,
-            );
+        // The pill no longer hardcodes a hex: it reads the shared --sev-<level> palette token
+        // (viewer-styles-tokens.ts), the single source the sidebar pills also consume. The
+        // token VALUES are pinned in viewer-token-layer.test.ts; here we pin that the toolbar
+        // pill consumes the token rather than reintroducing a local hex (which would drift).
+        const levels = ['error', 'warning', 'info', 'performance', 'todo', 'notice', 'debug', 'database'];
+        for (const level of levels) {
+            const pillRule = new RegExp(`\\.dot-count-${level}\\s*\\{\\s*background:\\s*var\\(--sev-${level}\\);`);
+            assert.ok(pillRule.test(css), `count pill for ${level} should use var(--sev-${level})`);
         }
         // The removed dot must not leave a stray colored rule behind.
         assert.ok(!css.includes('.level-dot-error'), 'the removed leading dot color rules should be gone');
