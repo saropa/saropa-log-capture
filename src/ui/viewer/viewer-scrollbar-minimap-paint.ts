@@ -10,10 +10,23 @@ export function getScrollbarMinimapPaintScript(): string {
 function initMmColors() {
     var cs = getComputedStyle(document.documentElement);
     function v(n, fb) { return cs.getPropertyValue(n).trim() || fb; }
-    /* Severity swatches mirror the canonical .dot-count-* hex palette in
-       viewer-styles-level.ts (the toolbar level count pills), so the minimap tick
-       and the toolbar pill read as the same color — single source of truth for "what
-       does this color mean?". Alpha values are calibrated for the per-pixel-
+    /* Expand a #rrggbb (or #rgb) token into an rgba() string at a given alpha. The --sev-*
+       tokens are opaque hex; the canvas fill needs a per-severity alpha (calibration below),
+       so we parse the hue here rather than duplicate the RGB. Falls back to mid-gray on a
+       malformed value so a bad token can never throw mid-paint. */
+    function hexToRgba(hex, a) {
+        var h = String(hex || '').replace('#', '');
+        if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+        var n = parseInt(h, 16);
+        if (h.length !== 6 || isNaN(n)) { return 'rgba(128,128,128,' + a + ')'; }
+        return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+    }
+    /* Severity swatch RGB is READ from the canonical --sev-* pill tokens
+       (viewer-styles-tokens.ts) via getComputedStyle below, so the minimap tick and
+       the toolbar / sidebar count pills are guaranteed the same hue — one source of
+       truth for "what does this color mean?", and the info/notice/database rotation
+       drift documented below can't recur. Only the per-severity ALPHA is set here
+       (the tokens are opaque); the alpha is paint-model calibration, not palette. Alpha values are calibrated for the per-pixel-
        row reduction paint model (one deterministic fill per y-pixel, no
        overdraw). Previously these alphas were higher (0.6 severity / 0.85
        purple / 1.0 SQL density) because the old paint model stamped every
@@ -26,23 +39,21 @@ function initMmColors() {
        (cyan is a perceptually bright hue), SQL density at 0.5 (annotation
        weight, matches severity), slow SQL at 0.6 (slightly hotter to flag
        actionability without screaming). */
-    /* Palette must mirror the per-row gutter (viewer-styles-decoration-bars.ts
-       .level-bar-* rules). The "rotate Info=blue / Notice=cyan / DB=green"
-       change in commit 492d346f updated the per-row palette but never updated
-       the minimap below, so for months the minimap painted info=green,
-       notice=blue, database=cyan while the row gutter painted info=blue,
-       notice=cyan, database=green — same line shows different colors in the
-       two places. Synced here: info uses #2196f3 (charts-blue), notice uses
-       #00bcd4 (terminal-ansiCyan), database uses #4caf50 (charts-green). */
+    /* The "rotate Info=blue / Notice=cyan / DB=green" change in commit 492d346f once
+       updated the per-row palette but not the minimap, so for months the minimap painted
+       info=green / notice=blue / database=cyan while the row gutter painted the opposite —
+       the same line showed different colors in the two places. Reading the shared --sev-*
+       tokens (the fallback hexes here are only for a token-less context) removes that whole
+       class of drift: change a token once and pill, sidebar, and minimap all follow. */
     mmColors = {
-        error: 'rgba(244,67,54,0.55)',
-        warning: 'rgba(255,152,0,0.55)',
-        performance: 'rgba(156,39,176,0.6)',
-        todo: 'rgba(189,189,189,0.45)',
-        debug: 'rgba(121,85,72,0.5)',
-        notice: 'rgba(0,188,212,0.5)',
-        info: 'rgba(33,150,243,0.5)',
-        database: 'rgba(76,175,80,0.5)',
+        error: hexToRgba(v('--sev-error', '#f44336'), 0.55),
+        warning: hexToRgba(v('--sev-warning', '#ff9800'), 0.55),
+        performance: hexToRgba(v('--sev-performance', '#9c27b0'), 0.6),
+        todo: hexToRgba(v('--sev-todo', '#bdbdbd'), 0.45),
+        debug: hexToRgba(v('--sev-debug', '#795548'), 0.5),
+        notice: hexToRgba(v('--sev-notice', '#00bcd4'), 0.5),
+        info: hexToRgba(v('--sev-info', '#2196f3'), 0.5),
+        database: hexToRgba(v('--sev-database', '#4caf50'), 0.5),
         sqlDensity: 'rgba(200, 120, 180, 0.5)',
         sqlSlowDensity: 'rgba(255, 189, 89, 0.6)',
         searchMatch: v('--vscode-editorOverviewRuler-findMatchForeground', 'rgba(234,92,0,0.85)'),

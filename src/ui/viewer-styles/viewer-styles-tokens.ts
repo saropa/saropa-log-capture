@@ -74,6 +74,31 @@ export function getTokenStyles(): string {
     --accent-info: var(--vscode-editorInfo-foreground);
     --accent-opinionated: var(--vscode-descriptionForeground);
 
+    /* Severity count-pill palette — the SINGLE source of truth for the filled level
+       count pills (.dot-count-* in the toolbar level summary AND .sev-count-* in the
+       sidebar Logs list). Unlike the theme-bound --accent-* semantics above, these are
+       FIXED hex on purpose: a count pill is a filled chip with a fixed per-fill foreground
+       tuned to clear WCAG AA (4.5:1) for a 9–10px bold number, and a theme-variable fill
+       would invert light/dark and break that fixed contrast. Each level has a fill
+       (--sev-<level>) and its paired legible foreground (--sev-<level>-fg): near-black on
+       the bright/mid fills, white only on the two genuinely dark fills (performance purple,
+       debug brown) — white-on-red / white-on-blue was rejected (~3.9:1 / ~3.1:1, below AA).
+       The fills echo the semantic hues of the theme-bound .line.level-* / .level-bar-* text
+       colors (red/orange/blue/purple/gray/cyan/brown/green) but are their own fixed set;
+       do NOT re-point these at --vscode-* tokens. Both pill surfaces consume ONLY these
+       variables, so the two can never drift apart again. */
+    --sev-error: #f44336;       --sev-error-fg: #2a0400;
+    --sev-warning: #ff9800;     --sev-warning-fg: #1c1200;
+    --sev-info: #2196f3;        --sev-info-fg: #051f33;
+    --sev-performance: #9c27b0; --sev-performance-fg: #ffffff;
+    --sev-todo: #bdbdbd;        --sev-todo-fg: #1a1a1a;
+    --sev-notice: #00bcd4;      --sev-notice-fg: #062a2e;
+    --sev-debug: #795548;       --sev-debug-fg: #ffffff;
+    --sev-database: #4caf50;    --sev-database-fg: #0a2410;
+    /* Framework bucket exists only in the sidebar list (the toolbar has no fw pill); it is
+       a neutral gray, kept here so the whole pill palette lives in one place. */
+    --sev-fw: #cccccc;          --sev-fw-fg: #141414;
+
     /* §3.7 Spacing scale (4px base). All margins/padding/gaps land on these. */
     --space-1: 4px;
     --space-2: 8px;

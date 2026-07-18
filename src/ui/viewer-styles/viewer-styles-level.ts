@@ -39,15 +39,10 @@ export function getLevelStyles(): string {
     user-select: none;
 }
 /* Count pill — the only colored element in the level summary now (the leading dot was
-   removed; the pill carries the level color). Was faint descriptionForeground gray and
-   near-illegible on the dense toolbar; now a filled chip in the level's own color so each
-   counter is high-contrast and self-identifying. Foreground is chosen per level to clear
-   WCAG AA (4.5:1) for the 10px bold number: near-black on the bright/mid fills (warning/info/
-   error/todo/notice/database) and white only on the two genuinely dark fills (performance
-   purple, debug brown). White-on-red/-blue was rejected — it sits at ~3.9:1 / ~3.1:1 and the
-   count must be VERY legible. The fill palette matches .line.level-* text in
-   viewer-styles-lines.ts and .level-bar-* in viewer-styles-decoration-bars.ts — keep them in
-   lockstep when any one changes. */
+   removed; the pill carries the level color). Fill + foreground come from the shared
+   --sev-<level> / --sev-<level>-fg tokens (viewer-styles-tokens.ts), the single source of
+   truth the sidebar Logs pills (.sev-count-*) also consume — so the two pill surfaces can
+   never drift. See that token block for the fixed-fill / WCAG-foreground rationale. */
 .dot-count {
     font-size: 10px;
     font-weight: 700;
@@ -58,16 +53,20 @@ export function getLevelStyles(): string {
     color: #fff;
     background: var(--vscode-badge-background);
 }
-/* Zero-count levels are hidden by viewer-stats.ts (group display:none), so the pill is never
-   empty in steady state — the letter child means an :empty rule could no longer match anyway. */
-.dot-count-error    { background: #f44336; color: #2a0400; }
-.dot-count-warning  { background: #ff9800; color: #1c1200; }
-.dot-count-info     { background: #2196f3; color: #051f33; }
-.dot-count-performance { background: #9c27b0; color: #fff; }
-.dot-count-todo     { background: #bdbdbd; color: #1a1a1a; }
-.dot-count-notice   { background: #00bcd4; color: #062a2e; }
-.dot-count-debug    { background: #795548; color: #fff; }
-.dot-count-database { background: #4caf50; color: #0a2410; }
+.dot-count-error       { background: var(--sev-error);       color: var(--sev-error-fg); }
+.dot-count-warning     { background: var(--sev-warning);     color: var(--sev-warning-fg); }
+.dot-count-info        { background: var(--sev-info);        color: var(--sev-info-fg); }
+.dot-count-performance { background: var(--sev-performance); color: var(--sev-performance-fg); }
+.dot-count-todo        { background: var(--sev-todo);        color: var(--sev-todo-fg); }
+.dot-count-notice      { background: var(--sev-notice);      color: var(--sev-notice-fg); }
+.dot-count-debug       { background: var(--sev-debug);       color: var(--sev-debug-fg); }
+.dot-count-database    { background: var(--sev-database);    color: var(--sev-database-fg); }
+/* Pre-hydration guard: the toolbar HTML renders all 8 level groups up front, each with an
+   empty .dot-count-num until viewer-stats.ts writes the first counts. Hide any group whose
+   number is still empty so the sheet never flashes a row of letter-only pills before the
+   first stats pass. Once a count is written the :empty match drops and the pill shows; a
+   zero-count level is separately hidden by viewer-stats.ts setting the group display:none. */
+.level-dot-group:has(.dot-count-num:empty) { display: none; }
 /* Inactive level: dim the whole pill (state now lives on the group, toggled by syncLevelDots),
    so a filtered-out level's count reads as off without losing its identity color. */
 .level-dot-group:not(.active) .dot-count { opacity: 0.4; }

@@ -264,12 +264,13 @@ export function getSessionListStyles(): string {
 
 /* --- Severity count pills ---
  * Each count was faint descriptionForeground gray (inherited from .sev-dots); now a
- * filled high-contrast pill in its category color, mirroring the viewer top-bar level
- * pills so a log reads the same in the list and open. Backgrounds are fixed hex for the
- * same reason the top-bar pills are: a theme-variable fill inverts light/dark and would
- * make a fixed foreground fail contrast; fixed hex + a per-category foreground guarantees
- * the number stays VERY legible. Foreground is near-black on every fill except the dark
- * purple (perf). Palette matches the viewer top-bar level colors. */
+ * filled high-contrast pill in its category color. Fill + foreground come from the shared
+ * --sev-<level> / --sev-<level>-fg tokens (viewer-styles-tokens.ts) — the SAME source the
+ * toolbar level pills (.dot-count-*) consume, so a log reads identically in the list and
+ * open and the two can never drift. (Before this, the list kept its own hand-copied hexes
+ * that had already diverged from the toolbar on warning/debug/todo/perf.) The 'perf'
+ * category maps to the --sev-performance token; 'other' has no semantic color and stays the
+ * neutral theme badge pair. See the token block for the fixed-fill / WCAG rationale. */
 .sev-count {
     /* 9px, one step below the top-bar pill: the sidebar pill now carries a prefix LETTER plus
        the count, and the extra glyph needs the smaller size to fit without widening the row. */
@@ -288,15 +289,15 @@ export function getSessionListStyles(): string {
     margin-right: 3px;
     user-select: none;
 }
-.sev-count-error    { background: #f44336; color: #2a0400; }
-.sev-count-warning  { background: #ffc107; color: #1c1200; }
-.sev-count-info     { background: #2196f3; color: #051f33; }
-.sev-count-debug    { background: #aaaaaa; color: #141414; }
-.sev-count-database { background: #4caf50; color: #0a2410; }
-.sev-count-perf     { background: #a855f7; color: #1a0033; }
-.sev-count-todo     { background: #ff9800; color: #1c1200; }
-.sev-count-notice   { background: #00bcd4; color: #062a2e; }
-.sev-count-fw       { background: #cccccc; color: #141414; }
+.sev-count-error    { background: var(--sev-error);       color: var(--sev-error-fg); }
+.sev-count-warning  { background: var(--sev-warning);     color: var(--sev-warning-fg); }
+.sev-count-info     { background: var(--sev-info);        color: var(--sev-info-fg); }
+.sev-count-debug    { background: var(--sev-debug);       color: var(--sev-debug-fg); }
+.sev-count-database { background: var(--sev-database);    color: var(--sev-database-fg); }
+.sev-count-perf     { background: var(--sev-performance); color: var(--sev-performance-fg); }
+.sev-count-todo     { background: var(--sev-todo);        color: var(--sev-todo-fg); }
+.sev-count-notice   { background: var(--sev-notice);      color: var(--sev-notice-fg); }
+.sev-count-fw       { background: var(--sev-fw);          color: var(--sev-fw-fg); }
 /* Residual "other" bucket has no semantic color — keep it the neutral theme badge pair. */
 .sev-count-other    { background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); }
 `;
