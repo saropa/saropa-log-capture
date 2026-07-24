@@ -5,6 +5,7 @@ import { LogSession } from '../capture/log-session';
 import { StatusBar } from '../../ui/shared/status-bar';
 import { KeywordWatcher } from '../features/keyword-watcher';
 import { FloodGuard } from '../capture/flood-guard';
+import { SpamSuppressor } from '../capture/spam-suppressor';
 import { ExclusionRule } from '../features/exclusion-matcher';
 import { AutoTagger } from '../misc/auto-tagger';
 import { DapDirection } from '../capture/dap-formatter';
@@ -54,6 +55,7 @@ export class SessionManagerImpl implements SessionManager {
     private readonly splitListeners: SplitListener[] = [];
     private watcher: KeywordWatcher;
     private readonly floodGuard = new FloodGuard();
+    private readonly spamSuppressor = new SpamSuppressor();
     private exclusionRules: ExclusionRule[] = [];
     private categoryCounts: Record<string, number> = {};
     /** Categories already reported as dropped by the captureAll whitelist (log each once). */
@@ -151,6 +153,7 @@ export class SessionManagerImpl implements SessionManager {
             {
                 sessions: this.sessions, earlyBuffer: this.earlyBuffer, config: this.cachedConfig,
                 exclusionRules: this.exclusionRules, floodGuard: this.floodGuard,
+                spamSuppressor: this.spamSuppressor,
                 outputChannel: this.outputChannel, droppedCategoriesLogged: this.droppedCategoriesLogged,
                 excludedRulesLogged: this.excludedRulesLogged,
             },
@@ -199,6 +202,7 @@ export class SessionManagerImpl implements SessionManager {
             statusBar: this.statusBar,
             onActiveLineCount: (n) => this.activeLineCountObserver?.(n),
             floodGuard: this.floodGuard,
+            spamSuppressor: this.spamSuppressor,
             categoryCounts: this.categoryCounts,
             getSingleRecentOwnerSession: (w) => this.getSingleRecentOwnerSession(w),
             broadcastSplit: (uri, totalParts) => this.broadcastSplit(uri, totalParts),
@@ -244,7 +248,7 @@ export class SessionManagerImpl implements SessionManager {
         if (!session) { return; }
         const counters = { categoryCounts: this.categoryCounts, floodSuppressedTotal: this.floodSuppressedTotal };
         processApiWriteLine(
-            { config: this.cachedConfig, exclusionRules: this.exclusionRules, floodGuard: this.floodGuard },
+            { config: this.cachedConfig, exclusionRules: this.exclusionRules, floodGuard: this.floodGuard, spamSuppressor: this.spamSuppressor },
             { counters, broadcastLine: (data) => this.broadcastLine(data) },
             { session, text, category, timestamp },
         );

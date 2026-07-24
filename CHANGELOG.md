@@ -25,6 +25,14 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- Suppress BLASTBufferQueue `acquireNextBufferLocked` spam at capture time — consecutive lines matching known high-frequency Android platform patterns are replaced by a single summary line with count and time range, instead of writing hundreds of thousands of junk lines to log files
+
+---
+
 ## [9.3.1]
 
 Severity count pills now read the same everywhere: each pill shows its level letter and count together (E, W, I, …), and the sidebar Logs list gains those letters too, so a glance tells you the level without decoding colors. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.1/CHANGELOG.md)

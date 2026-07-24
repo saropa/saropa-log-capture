@@ -1,6 +1,6 @@
 # Bug 001 — BLASTBufferQueue spam: 213k lines (91% of all cataloged events) persisted to log files
 
-## Status: Open
+## Status: Fix Ready
 
 ## Problem
 
@@ -68,11 +68,20 @@ Option 1 is the smaller, targeted change and keeps the suppression auditable in 
 
 ## Changes Made
 
-<!-- Fill in when a fix is written. -->
+Implemented Option 1 (targeted write-time suppression).
+
+- **`src/modules/capture/spam-suppressor.ts`** (new) — `SpamSuppressor` class. Maintains a list of known per-frame platform spam patterns (substring match). Accumulates consecutive matching lines and emits one `[SPAM SUPPRESSED: N <pattern> lines (HH:MM:SS.mmm–HH:MM:SS.mmm)]` summary when the burst ends.
+- **`src/modules/session/session-manager-events.ts`** — spam check wired after FloodGuard in both `processOutputEvent` and `writeOneLine`. Summary written via shared `writeSpamSummary` helper.
+- **`src/modules/session/session-manager.ts`** — `SpamSuppressor` instantiated alongside `FloodGuard`, passed to deps.
+- **`src/modules/session/session-manager-internals.ts`** — `spamSuppressor.reset()` on session start.
+- **`src/modules/session/session-manager-stop.ts`** — `spamSuppressor.flush()` before session finalize (so the final burst summary is not lost).
+- **`src/modules/session/session-manager-start-sequence.ts`** — threading `spamSuppressor` through start deps.
 
 ## Tests Added
 
-<!-- Fill in when a fix is written. -->
+- **`src/test/modules/capture/spam-suppressor.test.ts`** (new) — 11 tests covering: non-spam passthrough, first-line suppression, varying-field suppression, flush-on-burst-end with time range, single-line burst timestamp, partial pattern rejection (both substrings required), flush when no burst, flush drains once, reset discards without emitting, post-reset state, and spam→non-spam→spam transitions.
+- **`src/test/modules/session/api-write-line.test.ts`** — updated deps to include `SpamSuppressor`.
+- **`src/test/modules/session/session-manager-events.test.ts`** — updated mock deps to include `spamSuppressor`.
 
 ### Acceptance criteria
 
@@ -83,3 +92,4 @@ Option 1 is the smaller, targeted change and keeps the suppression auditable in 
 ## Commits
 
 <!-- Add commit hashes as fixes land. -->
+<!-- Previous commits: 972e612b, c9e5e060 (report accuracy fixes) -->

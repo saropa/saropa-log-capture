@@ -10,6 +10,7 @@ import type { KeywordWatcher } from '../features/keyword-watcher';
 import type { SessionMetadataStore } from './session-metadata';
 import type { AutoTagger } from '../misc/auto-tagger';
 import type { ProjectIndexer } from '../project-indexer/project-indexer';
+import type { SpamSuppressor } from '../capture/spam-suppressor';
 import { finalizeSession, buildSessionStats } from './session-lifecycle-finalize';
 import { getGlobalSearchIndex } from '../search/search-index-global';
 import type { EarlyOutputBuffer } from './session-event-bus';
@@ -29,6 +30,7 @@ export interface StopSessionDeps {
     categoryCounts: Record<string, number>;
     watcher: KeywordWatcher;
     floodSuppressedTotal: number;
+    spamSuppressor: SpamSuppressor;
     outputChannel: vscode.OutputChannel;
     statusBar: { hide: () => void };
     metadataStore: SessionMetadataStore;
@@ -68,6 +70,12 @@ export async function stopSessionImpl(
 
     if (!deps.ownerSessionIds.has(session.id)) { return; }
     deps.ownerSessionIds.delete(session.id);
+
+    // Flush any in-progress spam burst so the summary lands in the log before stop().
+    const spamFlush = deps.spamSuppressor.flush();
+    if (spamFlush) {
+        logSession.appendLine(spamFlush.summary, 'system', spamFlush.timestamp);
+    }
 
     const stats = buildSessionStats({
         logSession,

@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import { processApiWriteLine, OutputEventTarget, WriteLineDeps } from '../../../modules/session/session-manager-events';
 import { FloodGuard } from '../../../modules/capture/flood-guard';
+import { SpamSuppressor } from '../../../modules/capture/spam-suppressor';
 import { parseExclusionPattern } from '../../../modules/features/exclusion-matcher';
 import type { LineData } from '../../../modules/session/session-event-bus';
 
@@ -23,6 +24,7 @@ function makeDeps(overrides?: Partial<WriteLineDeps>): WriteLineDeps {
         config: { enabled: true },
         exclusionRules: [],
         floodGuard: new FloodGuard(),
+        spamSuppressor: new SpamSuppressor(),
         ...overrides,
     };
 }
