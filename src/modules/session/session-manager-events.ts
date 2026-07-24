@@ -9,6 +9,7 @@ import { SourceLocation } from '../capture/log-session-helpers';
 import { SaropaLogCaptureConfig } from '../config/config';
 import { DapOutputBody } from '../capture/tracker';
 import { FloodGuard } from '../capture/flood-guard';
+import { SpamSuppressor, SpamFlush } from '../capture/spam-suppressor';
 import { ExclusionRule, testExclusion, findExclusionMatch } from '../features/exclusion-matcher';
 import { DapMessage, DapDirection, formatDapMessage } from '../capture/dap-formatter';
 import { LineData, EarlyOutputBuffer } from './session-event-bus';
@@ -20,6 +21,7 @@ export interface OutputEventDeps {
     readonly config: SaropaLogCaptureConfig;
     readonly exclusionRules: readonly ExclusionRule[];
     readonly floodGuard: FloodGuard;
+    readonly spamSuppressor: SpamSuppressor;
     /** Output channel for diagnostics (e.g. categories dropped by the captureAll whitelist). */
     readonly outputChannel?: { appendLine(message: string): void };
     /** Per-session memo of categories already reported as dropped, to log each at most once. */
@@ -99,6 +101,15 @@ export function processOutputEvent(
         });
     }
 
+    const spamResult = deps.spamSuppressor.check(text, now);
+    if (spamResult.flush) {
+        writeSpamSummary(session, target, spamResult.flush);
+    }
+    if (!spamResult.allow) {
+        traceOutcome(deps, category, 'spam-suppressed', text);
+        return;
+    }
+
     const sourceLocation: SourceLocation | undefined =
         body.source?.path ? { path: body.source.path, line: body.line, column: body.column } : undefined;
     session.appendLine(text, category, now, sourceLocation);
@@ -143,6 +154,19 @@ function reportExcludedLine(deps: OutputEventDeps, pattern: string): void {
     );
 }
 
+/** Write a spam-burst summary line to the log and broadcast it to the viewer. */
+function writeSpamSummary(
+    session: LogSession,
+    target: OutputEventTarget,
+    flush: SpamFlush,
+): void {
+    session.appendLine(flush.summary, 'system', flush.timestamp);
+    target.broadcastLine({
+        text: flush.summary, isMarker: false, lineCount: session.lineCount,
+        category: 'system', timestamp: flush.timestamp, logFileUri: session.fileUri.fsPath,
+    });
+}
+
 /** Max characters of line text shown in a diagnostic trace — keep the output channel readable. */
 const diagnosticSnippetMax = 80;
 
@@ -170,6 +194,7 @@ export interface WriteLineDeps {
     readonly config: Pick<SaropaLogCaptureConfig, 'enabled'>;
     readonly exclusionRules: readonly ExclusionRule[];
     readonly floodGuard: FloodGuard;
+    readonly spamSuppressor: SpamSuppressor;
 }
 
 /** Input data for a single API-written line. */
@@ -219,6 +244,11 @@ function writeOneLine(
                 category: 'system', timestamp, logFileUri: session.fileUri.fsPath,
             });
         }
+        const spamResult = deps.spamSuppressor.check(text, timestamp);
+        if (spamResult.flush) {
+            writeSpamSummary(session, target, spamResult.flush);
+        }
+        if (!spamResult.allow) { return; }
     }
     session.appendLine(text, category, timestamp);
     target.counters.categoryCounts[category] = (target.counters.categoryCounts[category] ?? 0) + 1;
