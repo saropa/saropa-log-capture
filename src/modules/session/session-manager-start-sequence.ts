@@ -12,6 +12,7 @@ import type { EarlyOutputBuffer } from './session-event-bus';
 import type { ExclusionRule } from '../features/exclusion-matcher';
 import type { AutoTagger } from '../misc/auto-tagger';
 import type { FloodGuard } from '../capture/flood-guard';
+import type { SpamSuppressor } from '../capture/spam-suppressor';
 import { startSessionImpl, type StartSessionDeps } from './session-manager-start';
 import { applyStartResult } from './session-manager-internals';
 
@@ -31,6 +32,7 @@ export interface StartSequenceDeps {
     // Optional observer for the authoritative (write-time) active-session line count (M1).
     onActiveLineCount?(n: number): void;
     readonly floodGuard: FloodGuard;
+    readonly spamSuppressor: SpamSuppressor;
     readonly categoryCounts: Record<string, number>;
     getSingleRecentOwnerSession(windowMs: number): { sid: string; logSession: LogSession } | null;
     broadcastSplit(newUri: vscode.Uri, totalParts: number): void;
@@ -89,6 +91,7 @@ export async function runStartSequenceImpl(
         setExclusionRules: (r) => deps.setExclusionRules(r),
         setAutoTagger: (a) => deps.setAutoTagger(a),
         floodGuard: deps.floodGuard,
+        spamSuppressor: deps.spamSuppressor,
         categoryCounts: deps.categoryCounts,
         setSessionStartTime: (v) => deps.setSessionStartTime(v),
         setFloodSuppressedTotal: (v) => deps.setFloodSuppressedTotal(v),

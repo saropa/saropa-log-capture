@@ -1,6 +1,6 @@
-# Bug 001 report accuracy fix
+# Bug 001 — BLASTBufferQueue write-spam fix
 
-The bug report `bugs/bug_001_blastbufferqueue-write-spam.md` contained inaccurate descriptions of the existing write-path suppression mechanisms. The report named a non-existent "Repeated log #N" dedupe mechanism, overstated the absence of write-path guards, and described Option 2 in terms of a mechanism that is currently bypassed without noting the bypass.
+BLASTBufferQueue `acquireNextBufferLocked` lines accounted for 213k events (91% of all cataloged events) across 48 session files. The lines varied per frame (PID, buffer id, frame counters), bypassing all existing write-path guards. A new `SpamSuppressor` now suppresses these at capture time, replacing consecutive matching lines with one summary.
 
 ## Finish Report (2026-07-23)
 
@@ -38,3 +38,47 @@ All mechanism descriptions were hardened against source on 2026-07-23:
 ### Considered but rejected
 
 - **Automated write-path filter inventory doc** — would prevent stale mechanism descriptions in future bug reports, but without a verify script enforced at compile time it would become stale itself. Not worth adding as a manual doc.
+
+## Finish Report (2026-07-23) — Implementation
+
+### Fix implemented (Option 1 — targeted write-time suppression)
+
+New file `src/modules/capture/spam-suppressor.ts` — `SpamSuppressor` class. Maintains a list of known per-frame platform spam patterns (substring match, not regex). Accumulates consecutive matching lines and emits one summary when the burst ends:
+
+```
+[SPAM SUPPRESSED: 213326 BLASTBufferQueue lines (16:32:44.931–16:45:12.003)]
+```
+
+First (and currently only) pattern: lines containing both `BLASTBufferQueue` and `acquireNextBufferLocked`.
+
+### Write-path integration
+
+The suppressor sits after FloodGuard and before `session.appendLine()` in both write paths:
+- `processOutputEvent` (DAP output events)
+- `writeOneLine` (public API writes)
+
+Lifecycle:
+- Instantiated on `SessionManagerImpl` alongside `FloodGuard`
+- `reset()` on session start (via `applyStartResult`)
+- `flush()` on session stop (via `stopSessionImpl`, before `finalizeSession`) so the final burst summary is written to the log
+
+### Files changed
+
+| File | Change |
+|---|---|
+| `src/modules/capture/spam-suppressor.ts` | New — `SpamSuppressor` class |
+| `src/modules/session/session-manager-events.ts` | Spam check after FloodGuard in both paths; `writeSpamSummary` helper |
+| `src/modules/session/session-manager.ts` | Instantiation and dep threading |
+| `src/modules/session/session-manager-internals.ts` | `reset()` on session start |
+| `src/modules/session/session-manager-stop.ts` | `flush()` before finalize |
+| `src/modules/session/session-manager-start-sequence.ts` | Dep threading |
+| `src/test/modules/capture/spam-suppressor.test.ts` | New — 13 tests |
+| `src/test/modules/session/api-write-line.test.ts` | Updated deps |
+| `src/test/modules/session/session-manager-events.test.ts` | Updated mock deps |
+
+### Gate results
+
+- `npm run check-types` — 0 errors
+- `npm run lint` — 0 new warnings (15 pre-existing)
+- `npm run compile` — all 12 gates pass
+- Tests: 13/13 spam-suppressor, 10/10 api-write-line, session-manager-events all pass
