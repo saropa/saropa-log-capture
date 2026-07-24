@@ -6,7 +6,7 @@ BLASTBufferQueue `acquireNextBufferLocked` lines accounted for 213k events (91% 
 
 ### What changed
 
-Two sections of `bugs/bug_001_blastbufferqueue-write-spam.md` were corrected:
+Two sections of the bug report (now archived at `plans/history/2026.07/2026.07.23/bug_001_blastbufferqueue-write-spam.md`) were corrected:
 
 1. **Problem section** — replaced the vague "write path has no suppression" and the incorrect "Repeated log #N" label with an accurate inventory of all four write-path guards:
    - `FloodGuard` (byte-identical, active) — misses BLASTBufferQueue because lines vary per frame.

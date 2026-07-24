@@ -5,7 +5,7 @@ import { LogSession } from '../capture/log-session';
 import { StatusBar } from '../../ui/shared/status-bar';
 import { KeywordWatcher } from '../features/keyword-watcher';
 import { FloodGuard } from '../capture/flood-guard';
-import { SpamSuppressor } from '../capture/spam-suppressor';
+import { SpamSuppressor, parseSpamPatterns } from '../capture/spam-suppressor';
 import { ExclusionRule } from '../features/exclusion-matcher';
 import { AutoTagger } from '../misc/auto-tagger';
 import { DapDirection } from '../capture/dap-formatter';
@@ -85,6 +85,14 @@ export class SessionManagerImpl implements SessionManager {
     /** Refresh the cached config (call on settings change). */
     refreshConfig(config?: SaropaLogCaptureConfig): void {
         this.cachedConfig = config ?? getConfig();
+        const flush = this.spamSuppressor.setPatterns(parseSpamPatterns(this.cachedConfig.spamPatterns));
+        if (flush) {
+            // Pattern list changed mid-burst — write the old burst's summary to the active session.
+            const session = this.getActiveSession();
+            if (session) {
+                session.appendLine(flush.summary, 'system', flush.timestamp);
+            }
+        }
     }
 
     /** Set project indexer for inline reports index updates after session finalization. */

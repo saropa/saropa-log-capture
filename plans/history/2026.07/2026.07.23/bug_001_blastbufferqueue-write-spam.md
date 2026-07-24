@@ -1,6 +1,6 @@
 # Bug 001 — BLASTBufferQueue spam: 213k lines (91% of all cataloged events) persisted to log files
 
-## Status: Fix Ready
+## Status: Fixed
 
 ## Problem
 
