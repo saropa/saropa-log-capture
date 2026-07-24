@@ -91,6 +91,8 @@ export interface SaropaLogCaptureConfig {
   readonly gitignoreCheck: boolean;
   readonly redactEnvVars: readonly string[];
   readonly exclusions: readonly string[];
+  /** User-defined spam patterns (comma-separated substring lists). Merged with built-ins at capture time. */
+  readonly spamPatterns: readonly string[];
   /** Text patterns to auto-hide in the viewer. Lines containing any pattern (case-insensitive) are hidden. */
   readonly autoHidePatterns: readonly string[];
   readonly showElapsedTime: boolean;

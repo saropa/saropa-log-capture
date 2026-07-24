@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { SpamSuppressor } from '../../../modules/capture/spam-suppressor';
+import { SpamSuppressor, parseSpamPatterns } from '../../../modules/capture/spam-suppressor';
 
 const blastLine = (f: number, a: number): string =>
     `E/BLASTBufferQueue(14935): [SurfaceView[com.app/...MainActivity]#1](f:${f},a:${a}) ` +
@@ -56,7 +56,6 @@ suite('SpamSuppressor', () => {
             assert.ok(r.flush);
             assert.ok(r.flush.summary.includes('1 BLASTBufferQueue'));
             assert.ok(r.flush.summary.includes('14:00:00.000'));
-            // No range separator when first === last
             assert.ok(!r.flush.summary.includes('–'));
         });
 
@@ -117,6 +116,81 @@ suite('SpamSuppressor', () => {
             const r = s.check('normal', new Date());
             assert.strictEqual(r.allow, true);
             assert.strictEqual(r.flush, undefined);
+        });
+    });
+
+    suite('setPatterns', () => {
+
+        test('should match user-defined patterns', () => {
+            const s = new SpamSuppressor();
+            s.setPatterns([{ name: 'CustomSpam', substrs: ['CUSTOM', 'NOISE'] }]);
+            const r = s.check('CUSTOM log NOISE here', new Date());
+            assert.strictEqual(r.allow, false);
+        });
+
+        test('should still match built-in patterns after setPatterns', () => {
+            const s = new SpamSuppressor();
+            s.setPatterns([{ name: 'Other', substrs: ['Other'] }]);
+            const r = s.check(blastLine(1, 1), new Date());
+            assert.strictEqual(r.allow, false);
+        });
+
+        test('should flush active burst when patterns change', () => {
+            const s = new SpamSuppressor();
+            s.check(blastLine(1, 1), new Date());
+            s.check(blastLine(2, 2), new Date());
+            const flush = s.setPatterns([]);
+            assert.ok(flush);
+            assert.ok(flush.summary.includes('2 BLASTBufferQueue'));
+        });
+
+        test('should continue burst across setPatterns when name matches', () => {
+            const s = new SpamSuppressor();
+            const t1 = new Date(2026, 0, 1, 9, 0, 0, 0);
+            s.check(blastLine(1, 1), t1);
+
+            // setPatterns flushes the burst even if the same built-in exists
+            const flush = s.setPatterns([]);
+            assert.ok(flush, 'old burst should flush on setPatterns');
+
+            // New burst starts fresh
+            s.check(blastLine(3, 3), new Date());
+            const r = s.check('normal', new Date());
+            assert.ok(r.flush);
+            assert.ok(r.flush.summary.includes('1 BLASTBufferQueue'));
+        });
+    });
+
+    suite('parseSpamPatterns', () => {
+
+        test('should parse comma-separated substrings', () => {
+            const result = parseSpamPatterns(['foo,bar,baz']);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].name, 'foo');
+            assert.deepStrictEqual(result[0].substrs, ['foo', 'bar', 'baz']);
+        });
+
+        test('should trim whitespace around segments', () => {
+            const result = parseSpamPatterns([' alpha , beta ']);
+            assert.deepStrictEqual(result[0].substrs, ['alpha', 'beta']);
+        });
+
+        test('should skip empty entries', () => {
+            const result = parseSpamPatterns(['', '  ', ',,,']);
+            assert.strictEqual(result.length, 0);
+        });
+
+        test('should handle single-substring patterns', () => {
+            const result = parseSpamPatterns(['SomeTag']);
+            assert.strictEqual(result[0].name, 'SomeTag');
+            assert.deepStrictEqual(result[0].substrs, ['SomeTag']);
+        });
+
+        test('should parse multiple entries', () => {
+            const result = parseSpamPatterns(['A,B', 'X,Y,Z']);
+            assert.strictEqual(result.length, 2);
+            assert.strictEqual(result[0].name, 'A');
+            assert.strictEqual(result[1].name, 'X');
         });
     });
 
