@@ -71,7 +71,9 @@ export async function stopSessionImpl(
     if (!deps.ownerSessionIds.has(session.id)) { return; }
     deps.ownerSessionIds.delete(session.id);
 
-    // Flush any in-progress spam burst so the summary lands in the log before stop().
+    // Flush any in-progress spam burst so the summary lands in the log file before stop().
+    // File-only (no broadcastLine) — the session is ending; a viewer line visible for <1s
+    // before shutdown adds broadcast complexity for no value. The durable record matters.
     const spamFlush = deps.spamSuppressor.flush();
     if (spamFlush) {
         logSession.appendLine(spamFlush.summary, 'system', spamFlush.timestamp);
