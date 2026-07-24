@@ -9,6 +9,7 @@ import { KeywordWatcher } from '../features/keyword-watcher';
 import { StatusBar } from '../../ui/shared/status-bar';
 import { AutoTagger } from '../misc/auto-tagger';
 import type { FloodGuard } from '../capture/flood-guard';
+import type { SpamSuppressor } from '../capture/spam-suppressor';
 import type { SaropaLogCaptureConfig } from '../config/config';
 import type { ExclusionRule } from '../features/exclusion-matcher';
 import type { DapOutputBody } from '../capture/tracker';
@@ -116,6 +117,7 @@ export interface ApplyStartResultState {
     setExclusionRules: (r: ExclusionRule[]) => void;
     setAutoTagger: (a: AutoTagger | null) => void;
     floodGuard: FloodGuard;
+    spamSuppressor: SpamSuppressor;
     categoryCounts: Record<string, number>;
     setSessionStartTime: (v: number) => void;
     setFloodSuppressedTotal: (v: number) => void;
@@ -137,6 +139,7 @@ export function applyStartResult(
     state.setExclusionRules(result.exclusionRules);
     state.setAutoTagger(result.autoTagger);
     state.floodGuard.reset();
+    state.spamSuppressor.reset();
     Object.keys(state.categoryCounts).forEach((k) => delete state.categoryCounts[k]);
     state.setSessionStartTime(Date.now());
     state.setFloodSuppressedTotal(0);
