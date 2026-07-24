@@ -4,10 +4,14 @@
  * Unlike FloodGuard (byte-identical messages), this catches lines that share a
  * recognizable pattern but vary per frame (PID, buffer id, frame counters).
  * Consecutive matching lines are replaced by one summary in the log file.
+ *
+ * Each DAP output event is one line (trailing newlines stripped by the caller).
+ * BLASTBufferQueue lines are single-line logs from Android's libgui — no
+ * embedded newlines — so the per-line check is safe for the known patterns.
  */
 
-/** A known platform spam pattern: all substrings must appear in the line. */
-interface SpamPattern {
+/** A spam pattern: all substrings must appear in the line for a match. */
+export interface SpamPattern {
     readonly name: string;
     readonly substrs: readonly string[];
 }
@@ -18,7 +22,7 @@ interface SpamPattern {
  * of these (91% of all cataloged events). The varying parts (PID, surface
  * name, frame counters) prevent FloodGuard from collapsing them.
  */
-const knownSpamPatterns: readonly SpamPattern[] = [
+const builtInPatterns: readonly SpamPattern[] = [
     {
         name: 'BLASTBufferQueue',
         substrs: ['BLASTBufferQueue', 'acquireNextBufferLocked'],
@@ -41,16 +45,33 @@ export interface SpamCheckResult {
  * {@link flush} is called at session stop).
  */
 export class SpamSuppressor {
-    private activePattern: SpamPattern | null = null;
+    private patterns: readonly SpamPattern[] = builtInPatterns;
+    private activePatternName: string | null = null;
     private count = 0;
     private firstTimestamp: Date | null = null;
     private lastTimestamp: Date | null = null;
 
+    /**
+     * Replace the active pattern list. Built-in patterns are always included;
+     * user patterns are appended. Flushes any in-progress burst first so the
+     * summary reflects the old pattern set.
+     */
+    setPatterns(userPatterns: readonly SpamPattern[]): SpamFlush | null {
+        const flush = this.drain();
+        this.patterns = userPatterns.length > 0
+            ? [...builtInPatterns, ...userPatterns]
+            : builtInPatterns;
+        return flush;
+    }
+
     /** Check a line. Returns allow=false to suppress; flush carries the prior burst's summary. */
     check(text: string, now: Date): SpamCheckResult {
-        const matched = findMatch(text);
+        const matched = this.findMatch(text);
 
-        if (matched && matched === this.activePattern) {
+        // Continuation of the same burst — uses name equality, not reference,
+        // so a setPatterns() call that rebuilds the array with the same names
+        // does not falsely break the burst.
+        if (matched && matched.name === this.activePatternName) {
             this.count++;
             this.lastTimestamp = now;
             return { allow: false };
@@ -59,7 +80,7 @@ export class SpamSuppressor {
         const flush = this.drain();
 
         if (matched) {
-            this.activePattern = matched;
+            this.activePatternName = matched.name;
             this.count = 1;
             this.firstTimestamp = now;
             this.lastTimestamp = now;
@@ -76,22 +97,31 @@ export class SpamSuppressor {
 
     /** Reset all state (e.g. on session start). */
     reset(): void {
-        this.activePattern = null;
+        this.activePatternName = null;
         this.count = 0;
         this.firstTimestamp = null;
         this.lastTimestamp = null;
     }
 
+    private findMatch(text: string): SpamPattern | null {
+        for (const pattern of this.patterns) {
+            if (pattern.substrs.every(s => text.includes(s))) {
+                return pattern;
+            }
+        }
+        return null;
+    }
+
     private drain(): SpamFlush | null {
-        if (!this.activePattern || this.count === 0 || !this.firstTimestamp || !this.lastTimestamp) {
+        if (!this.activePatternName || this.count === 0 || !this.firstTimestamp || !this.lastTimestamp) {
             return null;
         }
         const first = formatTime(this.firstTimestamp);
         const last = formatTime(this.lastTimestamp);
         const timeRange = first === last ? first : `${first}–${last}`;
-        const summary = `[SPAM SUPPRESSED: ${this.count} ${this.activePattern.name} lines (${timeRange})]`;
+        const summary = `[SPAM SUPPRESSED: ${this.count} ${this.activePatternName} lines (${timeRange})]`;
         const timestamp = this.lastTimestamp;
-        this.activePattern = null;
+        this.activePatternName = null;
         this.count = 0;
         this.firstTimestamp = null;
         this.lastTimestamp = null;
@@ -99,13 +129,20 @@ export class SpamSuppressor {
     }
 }
 
-function findMatch(text: string): SpamPattern | null {
-    for (const pattern of knownSpamPatterns) {
-        if (pattern.substrs.every(s => text.includes(s))) {
-            return pattern;
-        }
+/**
+ * Parse user-configured spam pattern strings into SpamPattern objects.
+ * Each string is a comma-separated list of substrings that must ALL appear
+ * in a line for it to match. The first segment is used as the display name.
+ * Empty entries and entries with no non-empty segments are skipped.
+ */
+export function parseSpamPatterns(raw: readonly string[]): SpamPattern[] {
+    const result: SpamPattern[] = [];
+    for (const entry of raw) {
+        const substrs = entry.split(',').map(s => s.trim()).filter(s => s.length > 0);
+        if (substrs.length === 0) { continue; }
+        result.push({ name: substrs[0], substrs });
     }
-    return null;
+    return result;
 }
 
 function formatTime(d: Date): string {

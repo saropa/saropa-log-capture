@@ -119,6 +119,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     gitignoreCheck: ensureBoolean(cfg.get("gitignoreCheck"), true),
     redactEnvVars: ensureStringArray(cfg.get("redactEnvVars"), []),
     exclusions: ensureStringArray(cfg.get("exclusions"), []),
+    spamPatterns: ensureStringArray(cfg.get("spamPatterns"), []),
     autoHidePatterns: ensureStringArray(cfg.get("autoHidePatterns"), []),
     showElapsedTime: ensureBoolean(cfg.get("showElapsedTime"), false),
     signalSlowOpThresholdMs: clamp(cfg.get("signalSlowOpThresholdMs"), 100, 60000, 500),
