@@ -25,7 +25,7 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.3.2]
 
 Android platform spam that used to flood log files (200k+ junk lines per session) is now suppressed at capture time, and you can add your own spam patterns in settings. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.2/CHANGELOG.md)
 
