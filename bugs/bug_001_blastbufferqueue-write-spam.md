@@ -8,12 +8,12 @@ The file writer persists every `BLASTBufferQueue` `acquireNextBufferLocked` line
 
 The viewer already classifies unknown device tags as `device-other` and hides them by default (`src/modules/analysis/device-tag-tiers.ts`), but the **write path has no content-aware suppression** — the noise hits disk regardless.
 
-The write path does have two guards, but neither catches these lines:
+The write path does have four guards, but none catches these lines:
 
-- **FloodGuard** (`src/modules/capture/flood-guard.ts`) — suppresses >100 **byte-identical** messages per second. BLASTBufferQueue lines vary per frame (frame number, buffer id), so they bypass it.
+- **FloodGuard** (`src/modules/capture/flood-guard.ts`) — suppresses after >100 **byte-identical** messages within a 1-second window (`repeatThreshold = 100`, `windowMs = 1000`). BLASTBufferQueue lines vary per frame (frame number, buffer id), so each is a "different message" and resets the counter (line 42).
 - **Exclusion rules** (`session-manager-events.ts`) — user-configured pattern exclusions. No built-in pattern targets this spam.
-- **`captureDeviceOther` setting** (`adb-logcat-capture.ts`) — drops `device-other` lines on the logcat path. Irrelevant here because these lines arrive through stdout, not logcat.
-- **Capture-side `Deduplicator`** (`src/modules/capture/deduplication.ts`) — groups byte-identical consecutive lines within 500 ms. Intentionally **bypassed** since 2026.04 (`log-session.ts` line ~220); even if active, would not collapse lines that vary per frame.
+- **`captureDeviceOther` setting** (`adb-logcat-capture.ts:207`) — drops `device-other` tier lines on the logcat capture path. Irrelevant here because these lines arrive through stdout (DAP `output` event), not the ADB logcat side-channel.
+- **Capture-side `Deduplicator`** (`src/modules/capture/deduplication.ts`) — groups byte-identical consecutive lines within a 500 ms window. Intentionally **bypassed** since 2026.04 (`log-session.ts:220`); even if active, would not collapse lines that vary per frame.
 
 ```
 [16:32:44.931] [stdout] E/BLASTBufferQueue(14935): [SurfaceView[com.saropamobile.app/...MainActivity]#1](f:1,a:6) acquireNextBufferLocked: Can't acquire next buffer. Already acquired max frames
