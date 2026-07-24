@@ -13,6 +13,7 @@ function makeDeps(enabled: boolean, earlyBuffer: unknown): OutputEventDeps {
         config: { ...getConfig(), enabled } as ReturnType<typeof getConfig>,
         exclusionRules: [],
         floodGuard: { check: () => ({ allow: true }) } as never,
+        spamSuppressor: { check: () => ({ allow: true }), flush: () => null, reset: () => {} } as never,
     };
 }
 
