@@ -64,6 +64,7 @@ export const stringsWebviewB: Record<string, string> = {
     // Per-line screenshot badge + thumbnail popover (plan 114, viewer-screenshots.ts).
     'viewer.deco.screenshot': 'Screenshot captured at this line — click to preview',
     'viewer.screenshot.popoverCaption': 'Captured at {0} — click to open full size',
+    'viewer.screenshot.unavailable': 'Screenshot image unavailable — it may have been deleted.',
 
     // Footer camera options menu (plan 114, viewer-screenshots.ts).
     'viewer.screenshot.menu.master': 'Screenshots',

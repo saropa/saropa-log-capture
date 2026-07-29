@@ -17,8 +17,23 @@ export function getViewerScreenshotsScript(): string {
     return /* javascript */ `
 /* allLines index → sidecar entry {file, trigger, timestamp, logLine}. Rebuilt per screenshotList. */
 var screenshotByIdx = {};
-/* file → data URI cache (bounded: per-log cap is small, images are cooldown-limited). */
+/* file → data URI cache. Explicitly bounded (project queue doctrine): maxPerLog is
+   configurable up to 500 × up to 10MB per image, so "the cap is small" is not a bound.
+   FIFO-evict beyond SCREENSHOT_CACHE_MAX; an evicted image is simply refetched on demand. */
+var SCREENSHOT_CACHE_MAX = 12;
 var screenshotDataUris = {};
+var screenshotCacheOrder = [];
+
+function screenshotCachePut(file, dataUri) {
+    if (!(file in screenshotDataUris)) {
+        screenshotCacheOrder.push(file);
+        if (screenshotCacheOrder.length > SCREENSHOT_CACHE_MAX) {
+            var evict = screenshotCacheOrder.shift();
+            delete screenshotDataUris[evict];
+        }
+    }
+    screenshotDataUris[file] = dataUri;
+}
 var screenshotSessionCount = 0;
 /* file whose image the open popover is waiting for/showing (null = popover closed). */
 var screenshotPopoverFile = null;
@@ -61,10 +76,23 @@ function screenshotHandleCaptured(msg) {
     screenshotSyncFooter();
 }
 
-/* Image reply: cache and, if the popover still waits on this file, show it. */
+/* Image reply: cache and, if the popover still waits on this file, show it. An error
+   reply (missing/oversized/corrupt PNG) swaps the loading dots for a visible message —
+   never leave the popover stuck on its placeholder. */
 function screenshotHandleImage(msg) {
-    if (!msg || typeof msg.file !== 'string' || typeof msg.dataUri !== 'string') return;
-    screenshotDataUris[msg.file] = msg.dataUri;
+    if (!msg || typeof msg.file !== 'string') return;
+    if (typeof msg.dataUri !== 'string') {
+        if (screenshotPopoverFile === msg.file) {
+            var el = screenshotPopoverEl();
+            el.textContent = '';
+            var failCap = document.createElement('div');
+            failCap.className = 'screenshot-popover-caption';
+            failCap.textContent = (typeof vt === 'function') ? vt('viewer.screenshot.unavailable') : 'Image unavailable';
+            el.appendChild(failCap);
+        }
+        return;
+    }
+    screenshotCachePut(msg.file, msg.dataUri);
     if (screenshotPopoverFile === msg.file) screenshotPopoverShow(msg.file);
 }
 
