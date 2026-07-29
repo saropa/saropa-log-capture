@@ -4,13 +4,8 @@
  */
 
 import * as vscode from "vscode";
-import {
-  ADB_LOGCAT_ADAPTER_ID,
-  EXPLAIN_WITH_AI_ADAPTER_ID,
-  mergeIntegrationAdaptersForWebview,
-  stripUiOnlyIntegrationAdapterIds,
-} from "../../modules/integrations/integration-adapter-constants";
-import { DRIFT_ADVISOR_EXTENSION_ID, DRIFT_ADVISOR_OPEN_COMMAND } from "./drift-advisor-integration";
+import { applyIntegrationsAdaptersWrite } from "./viewer-message-handler-integrations-write";
+import { DRIFT_ADVISOR_OPEN_COMMAND } from "./drift-advisor-integration";
 import * as panelHandlers from '../shared/viewer-panel-handlers';
 import { loadAndPostAboutContent } from "../viewer-panels/about-content-loader";
 import { handleErrorHoverRequest } from '../shared/handlers/error-hover-handler';
@@ -136,38 +131,10 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
         });
         return true;
       }
-      case "setIntegrationsAdapters": {
-        const raw = msg.adapterIds;
-        const adapterIds = Array.isArray(raw)
-          ? (raw as unknown[]).filter((x): x is string => typeof x === 'string')
-          : [];
-        const aiEnabled = adapterIds.includes(EXPLAIN_WITH_AI_ADAPTER_ID);
-        // adbLogcat's checkbox binds to its own boolean, not the adapters array — route it there and
-        // keep it out of the persisted session-adapter list (see integration-adapter-constants).
-        const adbLogcatEnabled = adapterIds.includes(ADB_LOGCAT_ADAPTER_ID);
-        const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
-        // The checkbox controls integrations.adbLogcat.enabled, not array membership. But a power user
-        // can hand-add 'adbLogcat' to integrations.adapters to force logcat on a NON-Dart session; that
-        // explicit entry must survive a UI toggle of any OTHER checkbox. Preserve it while the box stays
-        // on; a genuine uncheck (adbLogcatEnabled false) drops it AND sets enabled false, which is the
-        // authoritative off.
-        const currentAdapters = cfg.get<string[]>('integrations.adapters', []);
-        const adbWasExplicit = Array.isArray(currentAdapters) && currentAdapters.includes(ADB_LOGCAT_ADAPTER_ID);
-        let sessionOnly = stripUiOnlyIntegrationAdapterIds(adapterIds).filter((id) => id !== ADB_LOGCAT_ADAPTER_ID);
-        if (adbLogcatEnabled && adbWasExplicit) { sessionOnly = [...sessionOnly, ADB_LOGCAT_ADAPTER_ID]; }
-        const aiCfg = vscode.workspace.getConfiguration('saropaLogCapture.ai');
-        void Promise.all([
-          cfg.update('integrations.adapters', sessionOnly, vscode.ConfigurationTarget.Workspace),
-          cfg.update('integrations.adbLogcat.enabled', adbLogcatEnabled, vscode.ConfigurationTarget.Workspace),
-          aiCfg.update('enabled', aiEnabled, vscode.ConfigurationTarget.Workspace),
-        ]).then(() => {
-          const merged = mergeIntegrationAdaptersForWebview(sessionOnly, aiEnabled, adbLogcatEnabled);
-          ctx.post({ type: 'integrationsAdapters', adapterIds: merged });
-          ctx.post({ type: 'setDriftAdvisorAvailable', available: !!vscode.extensions.getExtension(DRIFT_ADVISOR_EXTENSION_ID) });
-          void import('../../modules/integrations/integration-prep.js').then((m) => m.runIntegrationPrepCheck(sessionOnly));
-        });
+      case "setIntegrationsAdapters":
+        // Checkbox-to-boolean routing (AI / adbLogcat / screenshots) lives in the extracted module.
+        applyIntegrationsAdaptersWrite(msg.adapterIds, ctx.post);
         return true;
-      }
       case "showIntegrationContext":
         panelHandlers.handleIntegrationContextRequest(
           ctx.currentFileUri,

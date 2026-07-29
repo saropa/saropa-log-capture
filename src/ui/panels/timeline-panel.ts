@@ -62,17 +62,31 @@ function handleMessage(msg: Record<string, unknown>): void {
     if (msg.type === 'openLine' && currentUri) {
         openLogAtLine({ uri: currentUri, filename: '', lineNumber: Number(msg.lineNumber), lineText: '', matchStart: 0, matchEnd: 0 }).catch(() => {});
     } else if (msg.type === 'openSidecar' && msg.file) {
-        vscode.window.showTextDocument(vscode.Uri.parse(String(msg.file)), { preview: true }).then(() => {}, () => {});
+        openSidecarOrImage(String(msg.file));
     } else if (msg.type === 'openAtLocation' && msg.file && typeof msg.line === 'number') {
         const line = Number(msg.line);
         if (Number.isFinite(line)) {
             openLogAtLine({ uri: vscode.Uri.parse(String(msg.file)), filename: '', lineNumber: line, lineText: '', matchStart: 0, matchEnd: 0 }).catch(() => {});
         }
     } else if (msg.type === 'openFile' && msg.file) {
-        vscode.window.showTextDocument(vscode.Uri.parse(String(msg.file)), { preview: true }).then(() => {}, () => {});
+        openSidecarOrImage(String(msg.file));
     } else if (msg.type === 'export' && currentResult) {
         exportTimeline(String(msg.format), currentResult);
     }
+}
+
+/**
+ * Open a timeline location target. Screenshot events point at PNGs (plan 114) —
+ * showTextDocument rejects binary files, so images route through vscode.open
+ * (VS Code's image preview) instead.
+ */
+function openSidecarOrImage(fileUriStr: string): void {
+    const uri = vscode.Uri.parse(fileUriStr);
+    if (/\.png$/i.test(uri.path)) {
+        void vscode.commands.executeCommand('vscode.open', uri, { preview: true });
+        return;
+    }
+    vscode.window.showTextDocument(uri, { preview: true }).then(() => {}, () => {});
 }
 
 async function exportTimeline(format: string, result: TimelineLoadResult): Promise<void> {

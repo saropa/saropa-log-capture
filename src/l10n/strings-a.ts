@@ -219,6 +219,13 @@ export const stringsA: Record<string, string> = {
 
     'msg.errorSnackbar': 'Error detected: {0}',
 
+    'msg.screenshotSaved': 'Screenshot saved beside the log.',
+    'msg.screenshotDisabled': 'Screenshots are turned off — enable them in Options → Integrations.',
+    'msg.screenshotNoVmService': 'No Flutter debug session with a VM Service is running.',
+    'msg.screenshotCapFull': 'Screenshot limit for this log reached — older captures are kept.',
+    'msg.screenshotFailed': 'Screenshot capture failed — see the Saropa Log Capture output channel.',
+    'msg.screenshotNoLog': 'No active capture log to attach the screenshot to.',
+
     'msg.noSessionFiles': 'No log files found.',
     'msg.deletedSessionFiles': 'Deleted {0} log file(s).',
     'prompt.selectSessionsToDelete': 'Select log file(s) to delete',
@@ -243,6 +250,15 @@ export const stringsA: Record<string, string> = {
     'msg.noQualityReportFound': 'No quality report found for this log. Run a session with the codeQuality integration enabled.',
 
     'panel.timeline.title': 'Unified Timeline',
+
+    'panel.screenshotGallery.title': 'Screenshots',
+    'panel.screenshotGallery.empty': 'No screenshots captured for this log.',
+    'panel.screenshotGallery.openFull': 'Open full size',
+    'panel.screenshotGallery.jump': 'Jump to line {0} in the log',
+    'panel.screenshotGallery.trigger.error': 'Error',
+    'panel.screenshotGallery.trigger.warning': 'Warning',
+    'panel.screenshotGallery.trigger.nav': 'Navigation',
+    'panel.screenshotGallery.trigger.manual': 'Manual',
     'panel.timeline.loading': 'Loading timeline data...',
     'panel.timeline.detectingCorrelations': 'Detecting correlations…',
     'panel.timeline.noEvents': 'No events found in this log.',

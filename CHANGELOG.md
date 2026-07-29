@@ -25,6 +25,29 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- Debug screenshot capture (plan 114): during a Flutter debug session, the app's screen is captured automatically when an error is detected (warnings and screen navigation are optional triggers) plus a manual "Capture Screenshot" command — no app-side code needed (uses the Flutter VM Service)
+- Screenshots are stored beside the log (`<log>.screenshots/` + `<log>.screenshots.json` metadata) with per-log cap, cooldown, and error-fingerprint dedup
+- Log viewer shows a camera badge on the line that triggered each capture; clicking it opens a thumbnail preview, click-through opens the full-size image
+- Viewer footer camera icon doubles as a quick screenshots on/off toggle; a live counter next to it opens a gallery of all captures with datetime, trigger, and the log lines explaining why each was taken (click to jump into the log)
+- Signal reports gain a Screenshots section showing the captures nearest the signal's anchor line
+- Unified timeline shows screenshot events (camera marker with trigger + line); clicking opens the image
+- New Integrations row "Debug Screenshots" (on by default) bound to `integrations.screenshots.enabled`, plus per-trigger settings (`onError`, `onWarning`, `onNavigation`, `cooldownMs`, `maxPerLog`)
+
+### Changed
+
+- Signal report stat cards now show severity-colored top borders (red for errors, amber for warnings, blue for info signals)
+- Signal report health score replaced with a visual arc gauge — color graduates by tier (green ≥80, amber 50–79, red <50)
+- Signal report header upgraded to a hero block with type badge, larger title, and confidence badge on one line
+- Signal report evidence blocks highlight the target line with a red left-border accent; surrounding lines fade to draw the eye
+- Signal report overview rows now have subtle separators, bolder labels, and consistent vertical rhythm
+- Signal panel entries (both "This log" and "Across your logs") now show colored type badges (ERR, WARN, PERF, SQL, NET, MEM, etc.) for at-a-glance category scanning
+
+---
+
 ## [9.3.2]
 
 Android platform spam that used to flood log files (200k+ junk lines per session) is now suppressed at capture time, and you can add your own spam patterns in settings. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.2/CHANGELOG.md)

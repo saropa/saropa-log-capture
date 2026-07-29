@@ -61,6 +61,10 @@ export const stringsWebviewB: Record<string, string> = {
     // Per-line OpenTelemetry trace badge (viewer-data-helpers-render.ts).
     'viewer.deco.openTrace': 'Open trace {0} in your trace backend',
 
+    // Per-line screenshot badge + thumbnail popover (plan 114, viewer-screenshots.ts).
+    'viewer.deco.screenshot': 'Screenshot captured at this line — click to preview',
+    'viewer.screenshot.popoverCaption': 'Captured at {0} — click to open full size',
+
     // Run separator snip labels (viewer-data-helpers-render-run-separator-snip.ts).
     'viewer.runSeparator.errors': 'Errors',
     'viewer.runSeparator.warnings': 'Warnings',

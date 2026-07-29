@@ -3,6 +3,7 @@
 import { getEcosystemStyles } from './signal-report-ecosystem-styles';
 import { getFeedbackStyles } from './signal-report-feedback-styles';
 import { getLayoutStyles } from './signal-report-layout-styles';
+import { getOverviewStyles } from './signal-report-overview-styles';
 
 export function getSignalReportStyles(): string {
   return /* css */ `
@@ -19,13 +20,6 @@ h1 {
     font-size: var(--text-h3);
     font-weight: 600;
     margin: 0 0 var(--space-1);
-}
-.signal-summary {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-size: var(--text-body);
-    margin: 0 0 var(--space-3);
 }
 h2 {
     /* Section heading: no exact 14px token on the scale; --text-h3 (15px) is the
@@ -102,7 +96,17 @@ h2 {
     /* Fall back to a brand-tinted highlight when the host find-match color is absent. */
     background: var(--vscode-editor-findMatchHighlightBackground, color-mix(in srgb, var(--brand-2) 25%, transparent));
     font-weight: 600;
+    /* Left accent makes the target scannable without reading background colors. */
+    border-left: 3px solid var(--accent-critical);
+    padding-left: calc(var(--space-2) - 3px);
 }
+/* Context fade: lines far from the target get progressively lower opacity,
+   drawing the eye to the center evidence line. */
+.evidence-line { opacity: 0.55; transition: opacity 0.15s ease; }
+.evidence-line--target { opacity: 1; }
+/* Lines adjacent to the target stay mostly visible. */
+.evidence-line--target + .evidence-line { opacity: 0.8; }
+.evidence-line:has(+ .evidence-line--target) { opacity: 0.8; }
 .evidence-line-num {
     display: inline-block;
     min-width: 4ch;
@@ -203,60 +207,6 @@ details summary:hover {
     font-style: italic;
     font-size: var(--text-caption);
 }
-.overview-row {
-    display: flex;
-    gap: var(--space-2);
-    padding: 2px 0;
-    font-size: var(--text-caption);
-}
-.overview-label {
-    flex-shrink: 0;
-    min-width: 8ch;
-    color: var(--muted);
-}
-.overview-value {
-    word-break: break-all;
-}
-.overview-file-link {
-    color: var(--link);
-    text-decoration: none;
-    cursor: pointer;
-}
-.overview-file-link:hover {
-    text-decoration: underline;
-}
-.overview-stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-3);
-    margin: var(--space-2) 0;
-}
-.overview-stat {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 60px;
-    padding: 6px 10px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--surface-2);
-    transition: border-color 0.15s ease, transform 0.15s ease;
-}
-.overview-stat:hover {
-    border-color: var(--link);
-    transform: translateY(-1px);
-}
-.stat-count {
-    font-size: var(--text-h2);
-    font-weight: 700;
-    color: var(--text);
-}
-.stat-label {
-    /* No 10px token; --text-caption (11px) is the smallest type-scale step. */
-    font-size: var(--text-caption);
-    color: var(--muted);
-    text-align: center;
-}
 .detail-grid {
     margin: var(--space-2) 0;
 }
@@ -303,5 +253,10 @@ details summary:hover {
 .history-session-row:hover { background: var(--vscode-list-hoverBackground); }
 .history-session-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .history-session-date { flex-shrink: 0; color: var(--muted); margin-left: var(--space-3); }
-` + getLayoutStyles() + getFeedbackStyles() + getEcosystemStyles();
+/* Screenshot evidence strip (plan 114) */
+.screenshot-strip { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.screenshot-card { display: block; max-width: 300px; text-decoration: none; }
+.screenshot-thumb { display: block; max-width: 100%; max-height: 200px; border-radius: var(--radius-sm); border: 1px solid var(--vscode-editorWidget-border); }
+.screenshot-caption { display: block; margin-top: var(--space-1); color: var(--muted); font-size: var(--text-caption); }
+` + getOverviewStyles() + getLayoutStyles() + getFeedbackStyles() + getEcosystemStyles();
 }

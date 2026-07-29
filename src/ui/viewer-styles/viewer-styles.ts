@@ -47,6 +47,7 @@ import { getTroubleChartStyles } from './viewer-styles-trouble-chart';
 import { getTroubleSignalsStyles } from './viewer-styles-trouble-signals';
 import { getTroubleDetailStyles } from './viewer-styles-trouble-detail';
 import { getCrashlyticsSkeletonStyles } from './viewer-styles-crashlytics-skeleton';
+import { getScreenshotStyles } from './viewer-styles-screenshots';
 
 export function getViewerStyles(): string {
     // Token :root block is prepended FIRST so every downstream module can
@@ -247,5 +248,5 @@ body.scrollbar-visible #log-content {
     background: var(--vscode-scrollbarSlider-hoverBackground);
 }
 #log-content::-webkit-scrollbar-track { background: transparent; }
-` + getLineStyles() + getColumnStyles() + getAsciiArtStyles() + getContentStyles() + getNPlusOneSignalStyles() + getSqlRepeatDrilldownStyles() + getReplayStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getSqlQueryHistoryPanelStyles() + getSqlQueryHistoryDashboardStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCollectionsPanelStyles() + getCrashlyticsPanelStyles() + getProjectStatePanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getSignalPanelStyles() + getAiStyles() + getRunSeparatorStyles() + getContextPopoverStyles() + getRootCauseHypothesesStyles() + getToolbarStyles() + getFilterDrawerStyles() + getFormatStyles() + getFlutterBannerStyles() + getTroubleChartStyles() + getTroubleDetailStyles() + getTroubleSignalsStyles() + getCrashlyticsSkeletonStyles();
+` + getLineStyles() + getColumnStyles() + getAsciiArtStyles() + getContentStyles() + getNPlusOneSignalStyles() + getSqlRepeatDrilldownStyles() + getReplayStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getSqlQueryHistoryPanelStyles() + getSqlQueryHistoryDashboardStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCollectionsPanelStyles() + getCrashlyticsPanelStyles() + getProjectStatePanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getSignalPanelStyles() + getAiStyles() + getRunSeparatorStyles() + getContextPopoverStyles() + getRootCauseHypothesesStyles() + getToolbarStyles() + getFilterDrawerStyles() + getFormatStyles() + getFlutterBannerStyles() + getTroubleChartStyles() + getTroubleDetailStyles() + getTroubleSignalsStyles() + getCrashlyticsSkeletonStyles() + getScreenshotStyles();
 }

@@ -25,6 +25,7 @@ import { logExtensionError } from '../../modules/misc/extension-logger';
 import { loadSignalHistory, loadLastCleanSessionUri } from './signal-report-history-loader';
 import { buildHistoryHtml } from './signal-report-history';
 import { buildEcosystemHtml } from './signal-report-ecosystem';
+import { buildScreenshotSectionHtml } from './signal-report-screenshots';
 
 /** Per-panel state for the copy + auto-save report actions. Includes bundle for full markdown export. */
 interface PanelState {
@@ -117,6 +118,10 @@ async function populateSections(
   // 2. Evidence — target lines with 10 lines of context and stack trace extension
   const evidenceHtml = buildEvidenceHtml(hypothesis, logLines);
   postSection(panel, 'evidence', 'Evidence', evidenceHtml);
+
+  // 2b. Screenshots nearest the signal's anchor line (plan 114) — visual evidence strip.
+  const screenshotsHtml = await buildScreenshotSectionHtml(fileUri, hypothesis.evidenceLineIds);
+  postSection(panel, 'screenshots', 'Screenshots', screenshotsHtml);
 
   // 3. Signal-type-specific details (N+1, SQL burst, ANR, distribution analysis)
   const detailsHtml = buildDetailsHtml(hypothesis, bundle);
