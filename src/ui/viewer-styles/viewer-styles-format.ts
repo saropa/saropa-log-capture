@@ -153,7 +153,7 @@ export function getFormatStyles(): string {
 
 .md-code {
     background: var(--vscode-textCodeBlock-background, rgba(255, 255, 255, 0.06));
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     padding: 1px 4px;
     font-family: var(--vscode-editor-font-family);
 }

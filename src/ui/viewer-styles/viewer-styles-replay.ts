@@ -40,7 +40,7 @@ export function getReplayStyles(): string {
     color: var(--vscode-descriptionForeground);
     padding: 2px 5px;
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-size: 12px;
 }
 .replay-btn:hover {
@@ -55,7 +55,7 @@ export function getReplayStyles(): string {
     background: var(--vscode-input-background);
     color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     text-align: center;
 }
 

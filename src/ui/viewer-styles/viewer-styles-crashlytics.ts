@@ -51,7 +51,7 @@ export function getCrashlyticsPanelStyles(): string {
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
     padding: 2px 4px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-size: 14px;
 }
 
@@ -96,27 +96,27 @@ export function getCrashlyticsPanelStyles(): string {
 .cp-item-nonfatal { border-left: 3px solid var(--accent-warning); padding-left: 9px; }
 /* Typography hierarchy (UI #5): bold primary, muted metadata, room to breathe. */
 .cp-title { font-weight: 600; font-size: 12px; line-height: 1.45; margin-bottom: 3px; }
-.cp-meta { font-size: 11px; opacity: 0.65; line-height: 1.4; }
+.cp-meta { font-size: var(--text-caption); opacity: 0.65; line-height: 1.4; }
 /* Derived release date: dotted underline hints it's computed (from the version code), not raw API data. */
 .cp-reldate { border-bottom: 1px dotted currentColor; cursor: help; }
 
 /* --- Compact sidebar filter bar (#5): icons/abbreviations for the narrow panel --- */
 .cp-filterbar { border-bottom: 1px solid var(--vscode-panel-border); padding: 4px 8px; }
 .cp-tabs { display: flex; gap: 2px; margin-bottom: 4px; }
-.cp-tab { flex: 1; background: transparent; color: var(--vscode-foreground); border: 1px solid var(--vscode-panel-border); border-radius: 3px; padding: 2px 0; font-size: 11px; cursor: pointer; opacity: 0.75; }
+.cp-tab { flex: 1; background: transparent; color: var(--vscode-foreground); border: 1px solid var(--vscode-panel-border); border-radius: var(--radius-sm); padding: 2px 0; font-size: var(--text-caption); cursor: pointer; opacity: 0.75; }
 .cp-tab:hover { opacity: 1; }
 .cp-tab.cp-tab-sel { opacity: 1; font-weight: 700; background: var(--vscode-button-secondaryBackground); border-color: var(--vscode-focusBorder); }
 .cp-fcontrols { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 /* Search shares a row with the regex toggle (flex-basis < 100% so the button does not wrap alone);
    the version/device/OS selects wrap to the next row as before. */
-.cp-search { flex: 1 1 70%; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, var(--vscode-panel-border)); border-radius: 3px; padding: 2px 6px; font-size: 11px; min-width: 80px; }
+.cp-search { flex: 1 1 70%; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, var(--vscode-panel-border)); border-radius: var(--radius-sm); padding: 2px 6px; font-size: var(--text-caption); min-width: 80px; }
 /* Regex toggle (#2 advanced search): monospace .* glyph; pressed state borrows the focus accent. */
-.cp-regex { flex: 0 0 auto; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: 1px solid var(--vscode-panel-border); border-radius: 3px; font-family: var(--vscode-editor-font-family, monospace); font-size: 11px; padding: 2px 6px; cursor: pointer; opacity: 0.7; }
+.cp-regex { flex: 0 0 auto; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: 1px solid var(--vscode-panel-border); border-radius: var(--radius-sm); font-family: var(--vscode-editor-font-family, monospace); font-size: var(--text-caption); padding: 2px 6px; cursor: pointer; opacity: 0.7; }
 .cp-regex:hover { opacity: 1; }
 .cp-regex.cp-regex-on { opacity: 1; background: var(--vscode-button-background); color: var(--vscode-button-foreground); border-color: var(--vscode-focusBorder); }
 /* Invalid regex pattern: red outline so the user knows the filter is not applied. */
 .cp-search.cp-search-invalid { border-color: var(--vscode-errorForeground); }
-.cp-fselect { flex: 1 1 auto; min-width: 56px; max-width: 33%; background: var(--vscode-dropdown-background); color: var(--vscode-dropdown-foreground); border: 1px solid var(--vscode-dropdown-border, var(--vscode-panel-border)); border-radius: 3px; font-size: 11px; padding: 1px; }
+.cp-fselect { flex: 1 1 auto; min-width: 56px; max-width: 33%; background: var(--vscode-dropdown-background); color: var(--vscode-dropdown-foreground); border: 1px solid var(--vscode-dropdown-border, var(--vscode-panel-border)); border-radius: var(--radius-sm); font-size: var(--text-caption); padding: 1px; }
 
 /* Pill badges (UI #2/#3): soft tints + crisp borders via theme tokens, so they adapt to any theme. */
 .cp-badge {
@@ -156,7 +156,7 @@ export function getCrashlyticsPanelStyles(): string {
     padding: 2px 8px;
     cursor: pointer;
     border-radius: 2px;
-    font-size: 11px;
+    font-size: var(--text-caption);
 }
 
 .cp-action-btn:hover { background: var(--vscode-button-secondaryHoverBackground); }
@@ -174,7 +174,7 @@ export function getCrashlyticsPanelStyles(): string {
 /* Empty state: centered muted regular text (not italic) to match VS Code's own "No results" surfaces;
    roomier top padding so it reads as an intentional empty state, not stranded text under the filters. */
 .cp-empty { padding: 28px 16px; color: var(--vscode-descriptionForeground); text-align: center; font-size: 12px; line-height: 1.5; }
-.cp-error { color: var(--vscode-errorForeground); font-size: 11px; padding: 6px 12px; }
+.cp-error { color: var(--vscode-errorForeground); font-size: var(--text-caption); padding: 6px 12px; }
 
 /* --- Crash detail (loaded into issue card) --- */
 .cp-detail { overflow: hidden; max-height: 0; transition: max-height 0.3s ease; }
@@ -231,7 +231,7 @@ export function getCrashlyticsPanelStyles(): string {
 .cd-sev-nf { color: var(--muted); }
 .cd-back, .cd-copy, .cd-newissue {
     background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground);
-    border: none; border-radius: 3px; padding: 3px 10px; font-size: 12px; cursor: pointer; flex: none;
+    border: none; border-radius: var(--radius-sm); padding: 3px 10px; font-size: 12px; cursor: pointer; flex: none;
 }
 .cd-back:hover, .cd-copy:hover, .cd-newissue:hover { background: var(--vscode-button-secondaryHoverBackground); }
 /* Dashboard grid (#5 full layout): small data panels tile into columns as cards; the stack, stats
@@ -240,24 +240,24 @@ export function getCrashlyticsPanelStyles(): string {
 .cd-body { flex: 1; overflow-y: auto; padding: 8px 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; align-content: start; }
 .cd-body > * { grid-column: 1 / -1; min-width: 0; }
 .cd-body > .cd-tile { grid-column: span 1; }
-.cd-body > .group { background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background)); border: 1px solid var(--vscode-panel-border); border-radius: 8px; padding: 6px 10px; }
+.cd-body > .group { background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background)); border: 1px solid var(--vscode-panel-border); border-radius: var(--radius); padding: 6px 10px; }
 .cd-loading { padding: 16px; opacity: 0.7; animation: cp-pulse 1.5s ease-in-out infinite; }
 .cp-item.cp-selected { background: var(--vscode-list-activeSelectionBackground); color: var(--vscode-list-activeSelectionForeground); }
 
 /* Codebase context streamed under an app frame (source line + git blame) — #8 made visible in-viewer. */
 .cd-frame-ctx { margin: 1px 0 6px 22px; padding: 3px 6px; border-left: 2px solid var(--vscode-panel-border); }
-.cd-frame-code { display: block; font-family: var(--vscode-editor-font-family, monospace); font-size: 11px; white-space: pre-wrap; word-break: break-all; }
+.cd-frame-code { display: block; font-family: var(--vscode-editor-font-family, monospace); font-size: var(--text-caption); white-space: pre-wrap; word-break: break-all; }
 .cd-frame-blame { display: block; font-size: 10px; opacity: 0.7; margin-top: 2px; color: var(--vscode-gitDecoration-modifiedResourceForeground, var(--vscode-descriptionForeground)); }
 
 /* Device / OS distribution bars (renderDeviceDistribution output) — were dashboard-only; restored
    here so the in-viewer detail shows colored bars instead of plain text. */
 /* Colorize the whole detail (#1), not just the stack: device meta, section headers, keys, and the
    app-vs-framework distinction all get color so the eye lands on what matters. */
-.cd-body .crash-device-meta { font-size: 11px; margin: 0 0 8px; color: var(--vscode-charts-blue, var(--vscode-foreground)); }
+.cd-body .crash-device-meta { font-size: var(--text-caption); margin: 0 0 8px; color: var(--vscode-charts-blue, var(--vscode-foreground)); }
 .cd-body .crash-thread-header { font-weight: 600; font-size: 12px; margin: 10px 0 4px; padding-left: 6px; border-left: 3px solid var(--vscode-errorForeground); }
 .cd-body .group-header { color: var(--vscode-textLink-foreground); font-weight: 600; cursor: pointer; }
 .cd-body .group-header .match-count { color: var(--vscode-descriptionForeground); font-weight: 400; }
-.cd-body .frame-badge { font-size: 10px; padding: 0 4px; border-radius: 3px; margin-right: 6px; font-weight: 700; }
+.cd-body .frame-badge { font-size: 10px; padding: 0 4px; border-radius: var(--radius-sm); margin-right: 6px; font-weight: 700; }
 /* App-frame badge: blue informational accent fill; editor-background text stays as the legible on-fill color. */
 .cd-body .frame-badge-app { background: var(--accent-info); color: var(--surface-1); }
 .cd-body .frame-badge-fw { background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); opacity: 0.7; }
@@ -268,17 +268,17 @@ export function getCrashlyticsPanelStyles(): string {
 /* Per-frame line numbers (#1a), hover copy (#1b), app-only filter (#1d) in the crash stack. */
 .cd-body .stack-frame { position: relative; }
 .cd-body .frame-num { color: var(--vscode-descriptionForeground); opacity: 0.5; font-family: var(--vscode-editor-font-family, monospace); font-size: 10px; margin-right: 6px; }
-.cd-body .cd-frame-copy { position: absolute; right: 4px; top: 1px; opacity: 0; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; border-radius: 3px; font-size: 11px; padding: 0 5px; cursor: pointer; }
+.cd-body .cd-frame-copy { position: absolute; right: 4px; top: 1px; opacity: 0; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; border-radius: var(--radius-sm); font-size: var(--text-caption); padding: 0 5px; cursor: pointer; }
 .cd-body .stack-frame:hover .cd-frame-copy { opacity: 0.8; }
 .cd-body .cd-frame-copy:hover { opacity: 1; }
 /* Plan 054 5b: ↻×N badge on a frame that stands in for a run of identical (recursive) frames. */
-.cd-body .frame-repeat { margin-left: 8px; padding: 0 5px; border-radius: 3px; font-size: 10px; font-weight: 700; color: var(--vscode-badge-foreground); background: var(--vscode-badge-background); }
+.cd-body .frame-repeat { margin-left: 8px; padding: 0 5px; border-radius: var(--radius-sm); font-size: 10px; font-weight: 700; color: var(--vscode-badge-foreground); background: var(--vscode-badge-background); }
 /* Plan 054 5b: Other-Threads grouping — ×N badge for collapsed identical threads, sibling names, overflow. */
-.cd-body .cd-thread-count { padding: 0 5px; border-radius: 3px; font-size: 10px; font-weight: 700; color: var(--vscode-badge-foreground); background: var(--vscode-badge-background); }
+.cd-body .cd-thread-count { padding: 0 5px; border-radius: var(--radius-sm); font-size: 10px; font-weight: 700; color: var(--vscode-badge-foreground); background: var(--vscode-badge-background); }
 .cd-body .crash-thread-names { font-size: 10px; color: var(--vscode-descriptionForeground); margin: 0 0 4px 6px; }
-.cd-body .crash-thread-more { font-size: 11px; color: var(--vscode-descriptionForeground); margin: 6px 0 0 6px; font-style: italic; }
+.cd-body .crash-thread-more { font-size: var(--text-caption); color: var(--vscode-descriptionForeground); margin: 6px 0 0 6px; font-style: italic; }
 .cd-stack-controls { margin: 2px 0 4px; }
-.cd-apponly { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: 1px solid var(--vscode-panel-border); border-radius: 3px; font-size: 11px; padding: 1px 8px; cursor: pointer; opacity: 0.8; }
+.cd-apponly { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: 1px solid var(--vscode-panel-border); border-radius: var(--radius-sm); font-size: var(--text-caption); padding: 1px 8px; cursor: pointer; opacity: 0.8; }
 .cd-apponly:hover { opacity: 1; }
 .cd-apponly.cd-apponly-on { opacity: 1; background: var(--vscode-button-background); color: var(--vscode-button-foreground); border-color: var(--vscode-focusBorder); }
 /* App-only mode hides framework rows and their folded groups. */
@@ -295,7 +295,7 @@ export function getCrashlyticsPanelStyles(): string {
    noise stays one click away without competing with the app frames it sits between. */
 .cd-body .cd-fw-group { margin: 2px 0; }
 .cd-body .cd-fw-summary {
-    cursor: pointer; font-size: 11px; opacity: 0.6; padding: 1px 0 1px 22px;
+    cursor: pointer; font-size: var(--text-caption); opacity: 0.6; padding: 1px 0 1px 22px;
     color: var(--vscode-descriptionForeground); list-style: none;
 }
 .cd-body .cd-fw-summary:hover { opacity: 0.95; }
@@ -303,7 +303,7 @@ export function getCrashlyticsPanelStyles(): string {
 .cd-body .crash-key-name { color: var(--vscode-symbolIcon-propertyForeground, var(--vscode-foreground)); }
 
 /* "In your project" panel (#2 / 5c): recent commits + changelog-since + annotations. */
-.cd-proj { font-size: 11px; }
+.cd-proj { font-size: var(--text-caption); }
 /* "May already be fixed" banner — the headline signal that newer releases exist after the affected
    version. Warning-tinted so it reads as actionable, not error. */
 .cd-maybe-fixed { background: var(--vscode-inputValidation-warningBackground); color: var(--accent-warning); border: 1px solid var(--vscode-inputValidation-warningBorder, var(--accent-warning)); border-radius: 5px; padding: 5px 9px; margin: 4px 0 8px; font-weight: 600; }
@@ -319,8 +319,8 @@ export function getCrashlyticsPanelStyles(): string {
 .cd-log-link { display: flex; gap: 8px; align-items: baseline; text-decoration: none; cursor: pointer; padding: 1px 0; }
 .cd-log-link:hover { background: var(--vscode-list-hoverBackground); }
 .cd-log-link .cd-proj-text { color: var(--vscode-descriptionForeground); }
-.crash-dist-label { font-weight: 600; font-size: 11px; margin: 8px 0 4px; opacity: 0.85; }
-.crash-dist-row { display: flex; align-items: center; gap: 8px; font-size: 11px; margin: 3px 0; }
+.crash-dist-label { font-weight: 600; font-size: var(--text-caption); margin: 8px 0 4px; opacity: 0.85; }
+.crash-dist-row { display: flex; align-items: center; gap: 8px; font-size: var(--text-caption); margin: 3px 0; }
 .crash-dist-name { width: 140px; flex: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .crash-dist-bar-bg { flex: 1; height: 9px; background: var(--vscode-panel-border); border-radius: 5px; overflow: hidden; }
 /* Rounded, subtly-gradient accent bar (UI #1). Both stops derive from the blue info accent: a darker

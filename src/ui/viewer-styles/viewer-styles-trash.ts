@@ -48,7 +48,7 @@ export function getTrashPanelStyles(): string {
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
     padding: 2px 4px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-size: 14px;
 }
 
@@ -63,7 +63,7 @@ export function getTrashPanelStyles(): string {
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
     padding: 2px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-size: 14px;
 }
 

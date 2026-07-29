@@ -117,7 +117,7 @@ td {
     font-size: 1.2em;
     cursor: pointer;
     padding: 4px 6px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     line-height: 1;
 }
 
@@ -136,7 +136,7 @@ kbd {
     font-family: var(--vscode-editor-font-family, 'Consolas', monospace);
     font-size: 0.9em;
     padding: 2px 6px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     background: var(--vscode-keybindingLabel-background, rgba(128,128,128,0.15));
     color: var(--vscode-keybindingLabel-foreground, var(--vscode-foreground));
     border: 1px solid var(--vscode-keybindingLabel-border, rgba(128,128,128,0.25));

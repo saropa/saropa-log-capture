@@ -21,7 +21,7 @@ export function getTagStyles(): string {
     align-items: center;
     gap: 6px;
     padding: 3px 8px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
     user-select: none;
@@ -53,7 +53,7 @@ export function getTagStyles(): string {
     box-sizing: border-box;
     margin: 2px 0 6px;
     padding: 4px 8px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     font-family: inherit;
     background: var(--vscode-input-background);
     color: var(--vscode-input-foreground);
@@ -65,7 +65,7 @@ export function getTagStyles(): string {
     border-color: var(--vscode-focusBorder);
 }
 .source-tag-no-match {
-    font-size: 11px;
+    font-size: var(--text-caption);
     opacity: 0.7;
     padding: 4px 2px;
 }
@@ -88,7 +88,7 @@ export function getTagStyles(): string {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     padding: 2px 8px;
     border-radius: 10px;
     border: 1px solid var(--vscode-descriptionForeground);
@@ -110,7 +110,7 @@ export function getTagStyles(): string {
     opacity: 1;
 }
 .source-tag-chip.tag-overflow { display: none; }
-.source-tag-chip .codicon { font-size: 11px; line-height: 1; }
+.source-tag-chip .codicon { font-size: var(--text-caption); line-height: 1; }
 .tag-count {
     font-size: 9px;
     opacity: 0.7;
@@ -186,7 +186,7 @@ export function getTagStyles(): string {
        line box, so it can't exceed the fixed row height and get clipped. */
     line-height: 1;
     padding: 1px 6px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     margin-right: 4px;
     white-space: nowrap;
     color: var(--tag-c);

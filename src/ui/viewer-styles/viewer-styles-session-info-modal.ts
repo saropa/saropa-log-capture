@@ -26,12 +26,12 @@ export function getSessionInfoModalStyles(): string {
 }
 .session-info-section {
     border: 1px solid var(--vscode-panel-border);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     background: var(--vscode-sideBar-background, var(--vscode-panel-background));
 }
 .session-info-section-title {
     padding: 6px 10px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -119,7 +119,7 @@ export function getSessionInfoModalStyles(): string {
     background: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.1));
     border-left: 2px solid var(--vscode-textBlockQuote-border, #007acc);
     border-radius: 2px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
     word-break: break-all;
     user-select: text;
@@ -134,7 +134,7 @@ export function getSessionInfoModalStyles(): string {
     padding-top: 8px;
     border-top: 1px solid var(--vscode-panel-border);
     color: var(--vscode-descriptionForeground);
-    font-size: 11px;
+    font-size: var(--text-caption);
     opacity: 0.85;
 }
 /* Toolbar (i) button sits to the left of the filename so it reads as a sibling of the filename,

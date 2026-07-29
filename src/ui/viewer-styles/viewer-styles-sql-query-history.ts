@@ -47,7 +47,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
     padding: 2px 4px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-size: 14px;
 }
 
@@ -63,7 +63,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
 
 .sql-query-history-drift-status {
     padding: 6px 12px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     line-height: 1.35;
     color: var(--vscode-descriptionForeground);
     border-bottom: 1px solid var(--vscode-panel-border);
@@ -103,7 +103,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
 
 .sql-query-history-hint {
     padding: 6px 12px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
     border-bottom: 1px solid var(--vscode-panel-border);
     background: var(--vscode-editor-inactiveSelectionBackground, rgba(128, 128, 128, 0.12));
@@ -114,7 +114,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
     overflow-x: hidden;
     overflow-y: auto;
     font-family: var(--vscode-editor-font-family, monospace);
-    font-size: 11px;
+    font-size: var(--text-caption);
 }
 
 .sql-query-history-table {
@@ -133,7 +133,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
 .sql-qh-header {
     text-align: left;
     padding: 4px 8px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     font-weight: 600;
     color: var(--vscode-descriptionForeground);
     border-bottom: 1px solid var(--vscode-panel-border);
@@ -265,7 +265,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
     border: none;
     color: var(--vscode-textLink-foreground, var(--vscode-focusBorder));
     cursor: pointer;
-    font-size: 11px;
+    font-size: var(--text-caption);
     padding: 0;
 }
 
@@ -277,7 +277,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
     padding: 2px 4px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-size: 12px;
 }
 
@@ -300,7 +300,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
     user-select: none;
@@ -332,7 +332,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
     cursor: pointer;
     font-size: 12px;
     padding: 2px 10px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
 }
 
 .sql-qh-show-more:hover {

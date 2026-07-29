@@ -49,6 +49,8 @@ cspell:disable
 - Signal report overview rows now have subtle separators, bolder labels, and consistent vertical rhythm
 - Signal panel entries (both "This log" and "Across your logs") now show colored type badges (ERR, WARN, PERF, SQL, NET, MEM, etc.) for at-a-glance category scanning
 - Health gauge handles non-finite scores gracefully (renders 0 instead of NaN)
+- Migrated hardcoded `border-radius` values to design token variables (`--radius-sm`, `--radius`, `--radius-pill`) across 45+ style files for consistent corner rounding
+- Migrated hardcoded `font-size` values to design token type scale (`--text-caption`, `--text-body`, `--text-h2`) across 48+ style files for consistent typography
 
 ---
 

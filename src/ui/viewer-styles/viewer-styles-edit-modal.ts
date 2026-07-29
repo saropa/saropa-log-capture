@@ -44,7 +44,7 @@ export function getEditModalStyles(): string {
     padding: 12px 16px;
     border-bottom: 1px solid var(--vscode-panel-border);
     font-weight: 500;
-    font-size: 13px;
+    font-size: var(--text-body);
 }
 
 .edit-modal-close {
@@ -70,7 +70,7 @@ export function getEditModalStyles(): string {
     background: var(--vscode-inputValidation-warningBackground, rgba(252, 192, 0, 0.15));
     color: var(--vscode-inputValidation-warningForeground, #fc0);
     padding: 8px 16px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     border-bottom: 1px solid var(--vscode-inputValidation-warningBorder, rgba(252, 192, 0, 0.3));
 }
 

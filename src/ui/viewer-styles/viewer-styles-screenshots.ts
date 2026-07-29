@@ -75,7 +75,7 @@ export function getScreenshotStyles(): string {
     padding: 4px 8px;
     font-size: var(--vscode-font-size);
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     background: none;
     border: none;
     color: inherit;
