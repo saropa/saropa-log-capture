@@ -106,13 +106,12 @@ export function getToolbarHtml(opts: ToolbarHtmlOptions): string {
             <span class="codicon codicon-warning" aria-hidden="true"></span>
             <span class="log-staleness-text"></span>
         </span>
-        <!-- Screenshot controls (plan 114): the camera is a quick on/off toggle for
-             integrations.screenshots.enabled (always visible, dimmed when off); the count
-             appears once captures exist and opens the gallery. State titles ride as data-*
-             so the toggle flips tooltips without an l10n round-trip. -->
-        <span id="screenshot-toggle" class="screenshot-toggle" role="button" tabindex="0"
-              data-on-title="${t('viewer.toolbar.screenshotToggleOn')}" data-off-title="${t('viewer.toolbar.screenshotToggleOff')}"
-              title="${t('viewer.toolbar.screenshotToggleOn')}" aria-label="${t('viewer.toolbar.screenshotToggleOn')}">
+        <!-- Screenshot controls (plan 114): the camera opens the capture options menu
+             (master + per-trigger toggles, capture now, gallery). Always visible; dimmed
+             while the master toggle is off. The count appears once captures exist and
+             opens the gallery directly. -->
+        <span id="screenshot-toggle" class="screenshot-toggle" role="button" tabindex="0" aria-haspopup="menu"
+              title="${t('viewer.toolbar.screenshotMenu')}" aria-label="${t('viewer.toolbar.screenshotMenu')}">
             <span class="codicon codicon-device-camera" aria-hidden="true"></span>
         </span>
         <span id="screenshot-count" class="screenshot-count u-hidden" role="button" tabindex="0" title="${t('viewer.toolbar.screenshotCount')}" aria-label="${t('viewer.toolbar.screenshotCount')}"></span>

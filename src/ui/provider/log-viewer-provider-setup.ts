@@ -12,6 +12,7 @@ import { getViewerKeybindingsFromConfig } from "../viewer/viewer-keybindings";
 import { getLearningWebviewOptions } from "../../modules/learning/learning-webview-options";
 import { getRootCauseHintViewerStrings } from "../../modules/root-cause-hints/root-cause-hint-l10n-host";
 import { mergeIntegrationAdaptersForWebview } from "../../modules/integrations/integration-adapter-constants";
+import { buildScreenshotSettingsPayload } from "./viewer-message-handler-screenshots";
 import { resolveAndPostCaptureSources } from "../../modules/integrations/capture-source-states";
 import { isCrashlyticsApplicable } from "../../modules/crashlytics/crashlytics-applicability";
 
@@ -76,6 +77,8 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
     const c = getConfig();
     const aiOn = vscode.workspace.getConfiguration("saropaLogCapture.ai").get<boolean>("enabled", false);
     target.sendIntegrationsAdapters(mergeIntegrationAdaptersForWebview(c.integrationsAdapters, aiOn, c.integrationsAdbLogcat.enabled, c.integrationsScreenshots.enabled));
+    // Footer camera menu state (plan 114) — checkboxes render from this, not from defaults.
+    target.postMessage({ type: 'screenshotSettings', ...buildScreenshotSettingsPayload() });
     // Read-only "Capture sources" status for the Filters panel Log Sources tab. Resolves runtime
     // state (adb device probe) when a debug session is already active as the viewer loads.
     void resolveAndPostCaptureSources((m) => target.postMessage(m));

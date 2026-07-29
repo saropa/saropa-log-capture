@@ -51,6 +51,48 @@ export function getScreenshotStyles(): string {
 }
 .screenshot-toggle.screenshot-toggle-off:hover { opacity: 0.6; }
 
+/* Camera options menu — fixed popover anchored to the footer icon. */
+.screenshot-menu {
+    position: fixed;
+    z-index: 1000;
+    min-width: 200px;
+    padding: var(--space-1, 4px);
+    background: var(--vscode-menu-background, var(--vscode-editorWidget-background));
+    color: var(--vscode-menu-foreground, var(--vscode-foreground));
+    border: 1px solid var(--vscode-menu-border, var(--vscode-editorWidget-border));
+    border-radius: 4px;
+    box-shadow: 0 4px 12px var(--vscode-widget-shadow);
+    display: flex;
+    flex-direction: column;
+}
+.screenshot-menu-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    font-size: var(--vscode-font-size);
+    cursor: pointer;
+    border-radius: 3px;
+    background: none;
+    border: none;
+    color: inherit;
+    text-align: left;
+}
+.screenshot-menu-row:hover { background: var(--vscode-list-hoverBackground); }
+/* Master row reads as the header of the checkbox group. */
+.screenshot-menu-master { font-weight: 600; }
+.screenshot-menu input[type="checkbox"]:disabled + span { opacity: 0.5; }
+.screenshot-menu-sep {
+    height: 1px;
+    margin: 4px 2px;
+    background: var(--vscode-menu-separatorBackground, var(--vscode-editorWidget-border));
+}
+.screenshot-menu-limits {
+    padding: 3px 8px 4px;
+    font-size: 0.85em;
+    color: var(--vscode-descriptionForeground);
+}
+
 /* Footer capture counter — click opens the gallery. */
 .screenshot-count {
     cursor: pointer;
