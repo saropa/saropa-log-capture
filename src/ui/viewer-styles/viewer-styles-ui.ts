@@ -34,13 +34,13 @@ export function getUiStyles(): string {
 }
 @keyframes slide-in-left { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
 .pinned-item {
-    padding: 0 8px;
+    padding: 0 var(--space-2);
     line-height: 1.5;
     white-space: pre-wrap;
     word-break: break-all;
     display: flex;
     align-items: baseline;
-    gap: 4px;
+    gap: var(--space-1);
     cursor: pointer;  /* click to scroll to original line */
     animation: slide-in-left 0.15s ease-out;
 }
@@ -85,7 +85,7 @@ export function getUiStyles(): string {
     display: inline-flex;
     align-items: center;
     gap: 2px;
-    padding: 0 4px;
+    padding: 0 var(--space-1);
     font-size: 10px;
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
@@ -115,14 +115,14 @@ export function getUiStyles(): string {
     border-top: 2px solid var(--vscode-focusBorder, #007acc);
     border-bottom: 2px solid var(--vscode-focusBorder, #007acc);
     background: var(--vscode-editorHoverWidget-background, var(--vscode-editor-background));
-    margin: 4px 0;
+    margin: var(--space-1) 0;
     animation: peek-reveal 0.2s ease-out;
 }
 .peek-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
     font-size: 10px;
     color: var(--vscode-descriptionForeground);
     border-bottom: 1px solid var(--vscode-panel-border);
@@ -133,7 +133,7 @@ export function getUiStyles(): string {
     color: var(--vscode-descriptionForeground);
     font-size: 14px;
     cursor: pointer;
-    padding: 0 4px;
+    padding: 0 var(--space-1);
 }
 .peek-close:hover {
     color: var(--vscode-errorForeground, #f44);
@@ -245,17 +245,17 @@ body.mm-resizing, body.mm-resizing * { cursor: col-resize !important; }
 }
 .auto-hide-modal-header {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 8px 12px; font-size: var(--text-body); font-weight: 600;
+    padding: var(--space-2) var(--space-3); font-size: var(--text-body); font-weight: 600;
     border-bottom: 1px solid var(--vscode-panel-border);
 }
-.auto-hide-modal-close { background: none; border: none; color: var(--vscode-descriptionForeground); font-size: var(--text-h2); cursor: pointer; padding: 0 4px; }
+.auto-hide-modal-close { background: none; border: none; color: var(--vscode-descriptionForeground); font-size: var(--text-h2); cursor: pointer; padding: 0 var(--space-1); }
 .auto-hide-modal-close:hover {
     color: var(--vscode-errorForeground, #f44);
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
-.auto-hide-modal-list { overflow-y: auto; max-height: 50vh; padding: 4px 0; }
+.auto-hide-modal-list { overflow-y: auto; max-height: 50vh; padding: var(--space-1) 0; }
 .auto-hide-item {
-    display: flex; align-items: center; gap: 6px; padding: 4px 12px; font-size: 12px;
+    display: flex; align-items: center; gap: 6px; padding: var(--space-1) var(--space-3); font-size: 12px;
 }
 .auto-hide-item:hover { background: var(--vscode-list-hoverBackground); }
 .auto-hide-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -266,7 +266,7 @@ body.mm-resizing, body.mm-resizing * { cursor: col-resize !important; }
 .auto-hide-badge.session { opacity: 0.6; }
 .auto-hide-remove { background: none; border: none; color: var(--vscode-descriptionForeground); font-size: 14px; cursor: pointer; padding: 0 2px; }
 .auto-hide-remove:hover { color: var(--vscode-errorForeground, #f44); }
-.auto-hide-modal-empty { padding: 16px; text-align: center; font-size: 12px; color: var(--vscode-descriptionForeground); }
+.auto-hide-modal-empty { padding: var(--space-4); text-align: center; font-size: 12px; color: var(--vscode-descriptionForeground); }
 
 `;
 }

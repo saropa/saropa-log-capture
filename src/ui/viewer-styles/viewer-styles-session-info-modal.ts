@@ -22,7 +22,7 @@ export function getSessionInfoModalStyles(): string {
 .session-info-content {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--space-2);
 }
 .session-info-section {
     border: 1px solid var(--vscode-panel-border);
@@ -45,7 +45,7 @@ export function getSessionInfoModalStyles(): string {
     content: "▶";
     display: inline-block;
     width: 12px;
-    margin-right: 4px;
+    margin-right: var(--space-1);
     font-size: 9px;
     transition: transform 0.15s ease;
 }
@@ -114,7 +114,7 @@ export function getSessionInfoModalStyles(): string {
 }
 .session-info-details[open] > summary::after { content: ""; }
 .session-info-details-body {
-    margin-top: 4px;
+    margin-top: var(--space-1);
     padding: 6px 8px;
     background: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.1));
     border-left: 2px solid var(--vscode-textBlockQuote-border, #007acc);
@@ -127,11 +127,11 @@ export function getSessionInfoModalStyles(): string {
 .session-info-empty {
     color: var(--vscode-descriptionForeground);
     font-style: italic;
-    padding: 8px 4px;
+    padding: var(--space-2) var(--space-1);
 }
 .session-info-hint {
-    margin-top: 12px;
-    padding-top: 8px;
+    margin-top: var(--space-3);
+    padding-top: var(--space-2);
     border-top: 1px solid var(--vscode-panel-border);
     color: var(--vscode-descriptionForeground);
     font-size: var(--text-caption);
@@ -140,6 +140,6 @@ export function getSessionInfoModalStyles(): string {
 /* Toolbar (i) button sits to the left of the filename so it reads as a sibling of the filename,
    not part of the nav cluster. Its old left neighbor, the session-details line, moved into the
    persistent log status bar. */
-.session-info-btn { margin-right: 4px; }
+.session-info-btn { margin-right: var(--space-1); }
 `;
 }

@@ -148,7 +148,7 @@ export function getDecorationStyles(): string {
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     min-width: 180px;
-    padding: 4px 0;
+    padding: var(--space-1) 0;
     font-size: 12px;
 }
 .deco-settings-panel.visible { display: block; }
@@ -156,7 +156,7 @@ export function getDecorationStyles(): string {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
     font-size: 11px;
     font-weight: bold;
     color: var(--vscode-foreground);
@@ -168,7 +168,7 @@ export function getDecorationStyles(): string {
     color: var(--vscode-descriptionForeground);
     font-size: 14px;
     cursor: pointer;
-    padding: 0 4px;
+    padding: 0 var(--space-1);
 }
 .deco-settings-close:hover {
     color: var(--vscode-errorForeground, #f44);
@@ -178,7 +178,7 @@ export function getDecorationStyles(): string {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
     color: var(--vscode-menu-foreground, var(--vscode-editor-foreground));
     cursor: default;
 }
@@ -186,7 +186,7 @@ export function getDecorationStyles(): string {
     background: var(--vscode-menu-selectionBackground, var(--vscode-list-hoverBackground));
 }
 .deco-settings-row.deco-indent {
-    padding-left: 24px;
+    padding-left: var(--space-5);
     font-size: 11px;
 }
 .deco-settings-row input[type="checkbox"] {
@@ -203,7 +203,7 @@ export function getDecorationStyles(): string {
 .deco-settings-separator {
     height: 1px;
     background: var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
-    margin: 4px 8px;
+    margin: var(--space-1) var(--space-2);
 }
 ` + getDecorationBarStyles() + getCollapseControlStyles();
 }

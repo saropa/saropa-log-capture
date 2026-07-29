@@ -60,7 +60,7 @@ export function getSessionGroupStyles(): string {
    pill) — it annotates a name inline, so it must stay lighter than the row's own label
    rather than compete with it as a standalone chip. */
 .session-group-count {
-    margin-left: 4px;
+    margin-left: var(--space-1);
     color: var(--vscode-descriptionForeground);
     font-size: 0.85em;
     font-weight: normal;
@@ -144,9 +144,9 @@ export function getSessionGroupStyles(): string {
    on the container's left edge rather than per-row (rows here may be plain items OR nested
    .session-group blocks, so a per-row ::before like the secondary rows use won't line up). */
 .session-controller-children {
-    padding-left: 16px;
+    padding-left: var(--space-4);
     border-left: 1px solid var(--vscode-tree-indentGuidesStroke, rgba(128, 128, 128, 0.35));
-    margin-left: 8px;
+    margin-left: var(--space-2);
 }
 .session-controller-group[data-collapsed="true"] .session-controller-children {
     display: none;
@@ -154,8 +154,8 @@ export function getSessionGroupStyles(): string {
 
 /* "+N older" badge: a quiet, clickable chip that keeps Latest-only's hidden namesakes reachable. */
 .session-older-toggle {
-    margin-left: 4px;
-    padding: 0 4px;
+    margin-left: var(--space-1);
+    padding: 0 var(--space-1);
     border-radius: var(--radius-sm);
     color: var(--vscode-descriptionForeground);
     font-size: 0.85em;

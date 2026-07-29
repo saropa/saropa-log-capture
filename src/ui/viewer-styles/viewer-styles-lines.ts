@@ -134,7 +134,7 @@ export function getLineStyles(): string {
     background: var(--vscode-editorWidget-background);
     color: var(--vscode-editorWidget-foreground);
     border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
-    padding: 4px 12px;
+    padding: var(--space-1) var(--space-3);
     border-radius: 4px;
     font-size: 12px;
     opacity: 0;
