@@ -39,14 +39,19 @@ var screenshotSessionCount = 0;
 var screenshotPopoverFile = null;
 
 /* Map a 1-based source line number to its allLines index. Walks backwards because live
-   captures anchor near the tail; falls back to a full scan for loaded-file lists. */
+   captures anchor near the tail. Several rendered rows can share a sourceLineNo
+   (stack frames, continuation rows); prefer a plain 'line' row so the badge lands on
+   the message the trigger actually matched, falling back to the first non-marker hit. */
 function screenshotFindIdx(logLine) {
     if (typeof allLines === 'undefined' || !logLine) return -1;
+    var fallback = -1;
     for (var i = allLines.length - 1; i >= 0; i--) {
         var it = allLines[i];
-        if (it && it.type !== 'marker' && it.sourceLineNo === logLine) return i;
+        if (!it || it.type === 'marker' || it.sourceLineNo !== logLine) continue;
+        if (it.type === 'line') return i;
+        if (fallback < 0) fallback = i;
     }
-    return -1;
+    return fallback;
 }
 
 /* Rebuild the badge map from a full sidecar list (sent on load / request). */
@@ -184,7 +189,8 @@ function screenshotMenuSync() {
         if (key !== 'enabled') boxes[i].disabled = !screenshotTriggerSettings.enabled;
     }
     var limits = document.getElementById('screenshot-menu-limits');
-    if (limits) limits.textContent = vt('viewer.screenshot.menu.limits', (screenshotTriggerSettings.cooldownMs / 1000), screenshotTriggerSettings.maxPerLog);
+    /* Pass args pre-stringified — vt()'s split/join substitution is only proven for strings. */
+    if (limits) limits.textContent = vt('viewer.screenshot.menu.limits', String(screenshotTriggerSettings.cooldownMs / 1000), String(screenshotTriggerSettings.maxPerLog));
 }
 
 function screenshotMenuClose() {

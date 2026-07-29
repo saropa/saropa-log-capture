@@ -1,7 +1,7 @@
 import * as assert from 'node:assert';
 import { ScreenshotCapturer, type ScreenshotCapturerDeps } from '../../../modules/screenshot/screenshot-capturer';
 import { ScreenshotStore, type ScreenshotSaveResult } from '../../../modules/screenshot/screenshot-store';
-import { toVmServiceWsUri } from '../../../modules/screenshot/vm-service-uri';
+import { toVmServiceWsUri, recordVmServiceUriFromLogLine, getLatestVmServiceWsUri, clearVmServiceUris } from '../../../modules/screenshot/vm-service-uri';
 import { parseScreenshotReply } from '../../../modules/screenshot/vm-service-screenshot';
 import type { LineData } from '../../../modules/session/session-event-bus';
 
@@ -170,6 +170,25 @@ suite('toVmServiceWsUri', () => {
     });
 });
 
+suite('recordVmServiceUriFromLogLine', () => {
+    teardown(() => clearVmServiceUris());
+
+    test('should register the ws URI from the Flutter console banner', () => {
+        const hit = recordVmServiceUriFromLogLine(
+            'A Dart VM Service on sdk gphone64 x86 64 is available at: http://127.0.0.1:33417/abcDEF123=/',
+            'd:/reports/test.log',
+        );
+        assert.strictEqual(hit, true);
+        assert.strictEqual(getLatestVmServiceWsUri(), 'ws://127.0.0.1:33417/abcDEF123=/ws');
+    });
+
+    test('should ignore ordinary log lines and URLs without the banner lead-in', () => {
+        assert.strictEqual(recordVmServiceUriFromLogLine('GET http://127.0.0.1:8080/api ok', 'd:/reports/test.log'), false);
+        assert.strictEqual(recordVmServiceUriFromLogLine('plain output line', 'd:/reports/test.log'), false);
+        assert.strictEqual(getLatestVmServiceWsUri(), undefined);
+    });
+});
+
 suite('parseScreenshotReply', () => {
     test('should decode a valid reply for our id', () => {
         const png = Buffer.from([137, 80, 78, 71]).toString('base64');
@@ -177,6 +196,19 @@ suite('parseScreenshotReply', () => {
         assert.strictEqual(err, undefined);
         assert.strictEqual(ours, true);
         assert.deepStrictEqual([...(bytes ?? [])], [137, 80, 78, 71]);
+    });
+
+    test('should tolerate one level of result nesting (private-API drift guard)', () => {
+        const png = Buffer.from([1, 2, 3]).toString('base64');
+        const [err, bytes, ours] = parseScreenshotReply(JSON.stringify({ id: '1', result: { result: { screenshot: png } } }));
+        assert.strictEqual(err, undefined);
+        assert.strictEqual(ours, true);
+        assert.deepStrictEqual([...(bytes ?? [])], [1, 2, 3]);
+    });
+
+    test('should name the removed-API failure mode on method-not-found', () => {
+        const [err] = parseScreenshotReply(JSON.stringify({ id: '1', error: { message: 'Method not found' } }));
+        assert.ok(err && err.message.includes('unavailable'));
     });
 
     test('should ignore stream events and other ids', () => {

@@ -14,7 +14,7 @@ import { clamp } from '../config/config-validation';
 import { ScreenshotCapturer, type ManualCaptureOutcome } from './screenshot-capturer';
 import { ScreenshotStore, type ScreenshotSaveResult } from './screenshot-store';
 import { captureVmServiceScreenshot } from './vm-service-screenshot';
-import { getLatestVmServiceWsUri, registerVmServiceUriTracking } from './vm-service-uri';
+import { getLatestVmServiceWsUri, recordVmServiceUriFromLogLine, registerVmServiceUriTracking } from './vm-service-uri';
 import type { SessionManagerImpl } from '../session/session-manager';
 
 /** What the rest of the extension needs back from the wiring. */
@@ -56,7 +56,14 @@ export function registerScreenshotCapture(deps: ScreenshotWiringDeps): Screensho
     });
 
     registerVmServiceUriTracking(deps.context);
-    deps.sessionManager.addLineListener((data) => capturer.onLine(data));
+    deps.sessionManager.addLineListener((data) => {
+        // Fallback URI discovery from the console banner — regex runs ONLY while no URI is
+        // known (one boolean check per line otherwise), so the firehose cost stays near zero.
+        if (!data.isMarker && data.logFileUri && !getLatestVmServiceWsUri()) {
+            recordVmServiceUriFromLogLine(data.text, data.logFileUri);
+        }
+        capturer.onLine(data);
+    });
     deps.context.subscriptions.push(
         vscode.commands.registerCommand('saropaLogCapture.captureScreenshot', () =>
             runManualCapture(capturer, deps.sessionManager),

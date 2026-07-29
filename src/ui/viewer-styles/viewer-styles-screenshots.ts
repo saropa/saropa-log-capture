@@ -37,11 +37,14 @@ export function getScreenshotStyles(): string {
     color: var(--vscode-descriptionForeground);
 }
 
-/* Footer camera toggle: always visible; dimmed = capture disabled. */
+/* Footer camera toggle: always visible; dimmed = capture disabled. flex-shrink 0 so a
+   narrow sidebar ellipsizes the filename (which is the designed shrink target) instead
+   of crushing the icon. */
 .screenshot-toggle {
     cursor: pointer;
     display: inline-flex;
     align-items: center;
+    flex-shrink: 0;
     color: var(--vscode-foreground);
     opacity: 0.85;
 }
@@ -96,6 +99,8 @@ export function getScreenshotStyles(): string {
 /* Footer capture counter — click opens the gallery. */
 .screenshot-count {
     cursor: pointer;
+    flex-shrink: 0;
+    white-space: nowrap;
     font-size: 0.9em;
     color: var(--vscode-descriptionForeground);
     padding: 0 2px;
