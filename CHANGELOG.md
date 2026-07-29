@@ -36,7 +36,7 @@ cspell:disable
 - Signal reports gain a Screenshots section showing the captures nearest the signal's anchor line
 - Signal reports show a before/after screenshot comparison when a capture exists from before the error (screen-navigation shots are the intended source): the earlier frame, the at-error frame, and a third panel highlighting changed pixels in magenta
 - Screenshot capture is more resilient: the VM Service address is also read from the Debug Console banner when the debug adapter's announcement event is missing, stale addresses are dropped when a debug session ends, and an unavailable `_flutter.screenshot` API is named plainly in the output channel
-- Device and framework error lines (logcat feed, `E/Gralloc4`-style startup noise, benign `E/` tags) never trigger a screenshot — only Flutter app errors do, so launch bursts cost nothing and captures always show a screen worth looking at
+- Framework noise (logcat feed, `E/Gralloc4`-style startup noise, benign device `E/` tags) never triggers a screenshot; Flutter app errors and critical device crashes (`AndroidRuntime` fatal exceptions, out-of-memory kills) still do — launch bursts cost nothing and captures always show a screen worth looking at
 - Unified timeline shows screenshot events (camera marker with trigger + line); clicking opens the image
 - New Integrations row "Debug Screenshots" (on by default) bound to `integrations.screenshots.enabled`, plus per-trigger settings (`onError`, `onWarning`, `onNavigation`, `cooldownMs`, `maxPerLog`)
 
