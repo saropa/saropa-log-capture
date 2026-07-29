@@ -98,11 +98,17 @@ async function postScreenshotImage(ctx: ViewerMessageContext, file: unknown): Pr
     if (!uri) { return; }
     try {
         const bytes = await vscode.workspace.fs.readFile(uri);
-        if (bytes.byteLength > MAX_IMAGE_BYTES) { return; }
+        if (bytes.byteLength > MAX_IMAGE_BYTES) {
+            // Oversized reads reply as errors too — the popover must never sit on its
+            // loading placeholder forever (no silent async).
+            ctx.post({ type: 'screenshotImage', file, error: true });
+            return;
+        }
         const dataUri = `data:image/png;base64,${Buffer.from(bytes).toString('base64')}`;
         ctx.post({ type: 'screenshotImage', file, dataUri });
     } catch {
-        // Missing/unreadable image: the popover keeps its loading state; nothing to crash over.
+        // Missing/unreadable image: tell the webview so it shows a visible failure state.
+        ctx.post({ type: 'screenshotImage', file, error: true });
     }
 }
 
