@@ -89,6 +89,8 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `openLogFileInEditor` | viewer-message-handler-session-ui.ts |
 | `openLogFromUrl` | viewer-message-handler-session-ui.ts |
 | `openQualityReport` | viewer-message-handler-panels.ts |
+| `openScreenshotFile` | viewer-message-handler-screenshots.ts |
+| `openScreenshotGallery` | viewer-message-handler-screenshots.ts |
 | `openSessionForSignalType` | viewer-message-handler-session-ui.ts |
 | `openSessionFromPanel` | viewer-message-handler-session-ui.ts |
 | `openSettings` | viewer-message-handler-actions.ts |
@@ -115,6 +117,8 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `requestFindInFiles` | viewer-message-handler-session-ui.ts |
 | `requestPerformanceData` | viewer-message-handler-panels.ts |
 | `requestProjectStateData` | viewer-message-handler-panels.ts |
+| `requestScreenshotImage` | viewer-message-handler-screenshots.ts |
+| `requestScreenshots` | viewer-message-handler-screenshots.ts |
 | `requestSessionList` | viewer-message-handler-session-ui.ts |
 | `requestSignalData` | viewer-message-handler-panels.ts |
 | `requestSuiteDeepLinkAvailability` | viewer-message-handler-panels.ts |
@@ -163,8 +167,9 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `sqlHistoryCrossLogJump` | viewer-message-handler-session-ui.ts |
 | `startRecordViewerKey` | viewer-message-handler-actions.ts |
 | `togglePause` | viewer-message-handler-actions.ts |
+| `toggleScreenshots` | viewer-message-handler-screenshots.ts |
 | `trackInteraction` | viewer-message-handler.ts |
 | `viewerKeybindingRecordCancelled` | viewer-message-handler-actions.ts |
 | `viewerKeybindingRecorded` | viewer-message-handler-actions.ts |
 
-**Total:** 159 distinct types.
+**Total:** 164 distinct types.

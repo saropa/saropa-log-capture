@@ -23,6 +23,14 @@ export const EXPLAIN_WITH_AI_ADAPTER_ID = 'explainWithAi';
 export const ADB_LOGCAT_ADAPTER_ID = 'adbLogcat';
 
 /**
+ * The debug-screenshots adapter id (plan 114). Same UI-only checkbox-to-boolean shape as
+ * {@link ADB_LOGCAT_ADAPTER_ID}: the Options checkbox binds to `integrations.screenshots.enabled`,
+ * never to membership in `integrations.adapters`, so on-by-default reaches users who already
+ * customized the adapters array and an uncheck is authoritative.
+ */
+export const SCREENSHOTS_ADAPTER_ID = 'screenshots';
+
+/**
  * Remove the Explain-with-AI UI-only id so it is never persisted as a session adapter.
  *
  * NOTE: adbLogcat is intentionally NOT stripped here. This function also runs on the READ path
@@ -35,19 +43,22 @@ export function stripUiOnlyIntegrationAdapterIds(ids: readonly string[]): string
 }
 
 /**
- * Build the adapter id list sent to the webview: session adapters plus the two checkbox-only
- * toggles (Explain with AI, adb logcat) reflected from their own settings. adbLogcat's displayed
- * checkbox state follows `adbLogcatEnabled`, independent of whether the array happens to contain it.
+ * Build the adapter id list sent to the webview: session adapters plus the checkbox-only
+ * toggles (Explain with AI, adb logcat, screenshots) reflected from their own settings.
+ * Each boolean-backed checkbox state follows its flag, independent of whether the array
+ * happens to contain the id.
  */
 export function mergeIntegrationAdaptersForWebview(
     sessionAdapterIds: readonly string[],
     aiExplainEnabled: boolean,
     adbLogcatEnabled: boolean,
+    screenshotsEnabled: boolean,
 ): string[] {
-    // Drop any array copy of adbLogcat so the checkbox reflects the boolean, then re-add iff enabled.
+    // Drop any array copy of the boolean-backed ids so checkboxes reflect the booleans, then re-add iff enabled.
     let base = stripUiOnlyIntegrationAdapterIds([...sessionAdapterIds])
-        .filter((id) => id !== ADB_LOGCAT_ADAPTER_ID);
+        .filter((id) => id !== ADB_LOGCAT_ADAPTER_ID && id !== SCREENSHOTS_ADAPTER_ID);
     if (adbLogcatEnabled) { base = [...base, ADB_LOGCAT_ADAPTER_ID]; }
+    if (screenshotsEnabled) { base = [...base, SCREENSHOTS_ADAPTER_ID]; }
     if (aiExplainEnabled) { base = [...base, EXPLAIN_WITH_AI_ADAPTER_ID]; }
     return base;
 }

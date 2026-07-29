@@ -10,7 +10,7 @@ export * from './event-types';
 import type { PerfSample, HttpRequest, DockerEvent, BrowserEvent, DatabaseQuery, GenericEvent } from './event-types';
 
 /** Source types for timeline events. */
-export type TimelineSource = 'debug' | 'terminal' | 'http' | 'perf' | 'docker' | 'events' | 'database' | 'browser';
+export type TimelineSource = 'debug' | 'terminal' | 'http' | 'perf' | 'docker' | 'events' | 'database' | 'browser' | 'screenshot';
 
 /** Timeline event severity for visual styling. */
 export type TimelineLevel = 'error' | 'warning' | 'info' | 'debug' | 'perf';

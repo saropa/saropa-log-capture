@@ -51,6 +51,7 @@ import { initLearningRuntime, flushLearningBuffer } from './modules/learning/lea
 import { scheduleLearningSuggestionCheck } from './modules/learning/learning-notifications';
 import { scheduleMaybeAutoEnableAiFromLanguageModels } from './modules/ai/ai-auto-enable';
 import { startFlutterCrashWatcher } from './modules/integrations/flutter-crash-watcher';
+import { registerScreenshotCapture } from './modules/screenshot/screenshot-wiring';
 
 export interface ActivationRefs {
     readonly api: SaropaLogCaptureApi;
@@ -264,6 +265,26 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
             showBugReport(text, lineIndex, vscode.Uri.file(logFileUri), context),
     });
     sessionManager.addLineListener((data) => errorSnackbar.onLine(data));
+
+    /* Debug screenshot capture (plan 114): VM-Service screenshots on error/warning/nav triggers
+       plus a manual command. Saves land beside the log; the webview message keeps the footer
+       camera counter and viewer icons live. */
+    registerScreenshotCapture({
+        context,
+        sessionManager,
+        log: (msg) => outputChannel.appendLine(msg),
+        onSaved: (logFsPath, result) => {
+            broadcaster.postToWebview({
+                type: 'screenshotCaptured',
+                logFsPath,
+                file: result.entry.file,
+                trigger: result.entry.trigger,
+                timestamp: result.entry.timestamp,
+                logLine: result.entry.logLine,
+                totalForLog: result.totalForLog,
+            });
+        },
+    });
     const openSessionForReplay = async (uri: vscode.Uri): Promise<void> => {
         await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
         await viewerProvider.loadFromFile(uri, { replay: true });

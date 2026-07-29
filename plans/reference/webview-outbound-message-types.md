@@ -30,7 +30,8 @@ Heuristic index of `type` fields on objects passed to `this.postMessage` / `targ
 | `findResults` | src/ui/provider/log-viewer-provider-state.ts |
 | `frameReady` | src/ui/analysis/analysis-panel.ts |
 | `iconBarPosition` | src/ui/provider/log-viewer-provider-state.ts |
-| `integrationsAdapters` | src/ui/provider/log-viewer-provider-state.ts, src/ui/provider/viewer-message-handler-panels.ts |
+| `image` | src/ui/panels/screenshot-gallery-panel.ts |
+| `integrationsAdapters` | src/ui/provider/log-viewer-provider-state.ts |
 | `loadAnnotations` | src/ui/provider/log-viewer-provider-state.ts |
 | `loadComplete` | src/ui/provider/log-viewer-provider-load.ts |
 | `logContextInfo` | src/ui/provider/log-viewer-provider-state.ts |
@@ -44,6 +45,8 @@ Heuristic index of `type` fields on objects passed to `this.postMessage` / `targ
 | `openSignalPanel` | src/ui/provider/viewer-message-handler-panels.ts, src/ui/viewer-panels/signal-tab-panel.ts |
 | `restoreLevelFilters` | src/ui/provider/log-viewer-provider-state.ts |
 | `rootCauseHypothesesResult` | src/ui/provider/viewer-message-handler-root-cause.ts |
+| `screenshotImage` | src/ui/provider/viewer-message-handler-screenshots.ts |
+| `screenshotList` | src/ui/provider/viewer-message-handler-screenshots.ts |
 | `scrollbarVisible` | src/ui/provider/log-viewer-provider-state.ts |
 | `scrollToLine` | src/ui/provider/log-viewer-provider-state.ts, src/ui/provider/viewer-message-handler-session-ui.ts |
 | `scrollToSignal` | src/ui/provider/viewer-message-handler-session-ui.ts |
@@ -68,7 +71,7 @@ Heuristic index of `type` fields on objects passed to `this.postMessage` / `targ
 | `setCopyContextLines` | src/ui/provider/log-viewer-provider-state.ts |
 | `setCumulativeSqlFingerprintSummary` | src/ui/provider/log-viewer-provider-state.ts |
 | `setDbBaselineFingerprintSummary` | src/ui/provider/log-viewer-provider-state.ts |
-| `setDriftAdvisorAvailable` | src/ui/provider/log-viewer-provider-setup.ts, src/ui/provider/viewer-message-handler-panels.ts |
+| `setDriftAdvisorAvailable` | src/ui/provider/log-viewer-provider-setup.ts |
 | `setDriftAdvisorDbPanelMeta` | src/ui/provider/log-viewer-provider-load.ts |
 | `setErrorRateConfig` | src/ui/provider/log-viewer-provider-setup.ts, src/ui/provider/log-viewer-provider-state.ts |
 | `setExclusions` | src/ui/provider/log-viewer-provider-state.ts |
@@ -111,4 +114,4 @@ Heuristic index of `type` fields on objects passed to `this.postMessage` / `targ
 | `updateWatchCounts` | src/ui/provider/log-viewer-provider.ts |
 | `viewerKeybindingRecordMode` | src/ui/provider/viewer-message-handler-actions.ts |
 
-**Total:** 104 distinct types.
+**Total:** 107 distinct types.

@@ -24,6 +24,7 @@ import type {
     IntegrationOtelConfig,
     IntegrationBrowserConfig,
     IntegrationAdbLogcatConfig,
+    IntegrationScreenshotsConfig,
     IntegrationUnifiedLogConfig,
     IntegrationFlutterCrashLogsConfig,
     ProjectIndexConfig,
@@ -74,6 +75,7 @@ export type IntegrationConfigBlock = {
   integrationsOtel: IntegrationOtelConfig;
   integrationsBrowser: IntegrationBrowserConfig;
   integrationsAdbLogcat: IntegrationAdbLogcatConfig;
+  integrationsScreenshots: IntegrationScreenshotsConfig;
   integrationsUnifiedLog: IntegrationUnifiedLogConfig;
   integrationsFlutterCrashLogs: IntegrationFlutterCrashLogsConfig;
 };
@@ -257,6 +259,14 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
       writeSidecar: ensureBoolean(cfg.get('integrations.adbLogcat.writeSidecar'), true),
       captureDeviceOther: ensureBoolean(cfg.get('integrations.adbLogcat.captureDeviceOther'), false),
       captureAnr: ensureBoolean(cfg.get('integrations.adbLogcat.captureAnr'), true),
+    },
+    integrationsScreenshots: {
+      enabled: ensureBoolean(cfg.get('integrations.screenshots.enabled'), true),
+      onError: ensureBoolean(cfg.get('integrations.screenshots.onError'), true),
+      onWarning: ensureBoolean(cfg.get('integrations.screenshots.onWarning'), false),
+      onNavigation: ensureBoolean(cfg.get('integrations.screenshots.onNavigation'), false),
+      cooldownMs: clamp(cfg.get('integrations.screenshots.cooldownMs'), 250, 60000, 2000),
+      maxPerLog: clamp(cfg.get('integrations.screenshots.maxPerLog'), 1, 500, 50),
     },
     integrationsUnifiedLog: {
       writeAtSessionEnd: ensureBoolean(cfg.get('integrations.unifiedLog.writeAtSessionEnd'), false),
