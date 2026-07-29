@@ -118,7 +118,7 @@ export function getLineStyles(): string {
     cursor: pointer;
     color: var(--vscode-descriptionForeground);
     background: var(--vscode-editor-background);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     user-select: none;
     z-index: 10;
 }

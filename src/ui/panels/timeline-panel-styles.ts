@@ -2,7 +2,7 @@
 export function getUnifiedTimelineStyles(): string {
     return /* css */ `
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: var(--vscode-editor-background); color: var(--vscode-editor-foreground); font-family: var(--vscode-font-family, sans-serif); font-size: 13px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+body { background: var(--vscode-editor-background); color: var(--vscode-editor-foreground); font-family: var(--vscode-font-family, sans-serif); font-size: var(--text-body); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
 .header { padding: 10px var(--space-4); background: var(--vscode-sideBar-background); border-bottom: 1px solid var(--vscode-panel-border); flex-shrink: 0; }
 .title { font-size: var(--text-label); font-weight: 600; margin-bottom: 2px; }
@@ -23,18 +23,18 @@ body { background: var(--vscode-editor-background); color: var(--vscode-editor-f
 /* Perf severity has no dedicated semantic token; map the purple chart hue to --accent-opinionated. */
 .stat-dot.perf { background: var(--vscode-charts-purple, var(--accent-opinionated)); }
 .export-buttons { display: flex; gap: 6px; margin-left: auto; }
-.export-btn { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; }
+.export-btn { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; padding: 4px 10px; border-radius: var(--radius-sm); cursor: pointer; font-size: var(--text-caption); }
 .export-btn:hover { background: var(--vscode-button-secondaryHoverBackground); }
 
 .time-scrubber { display: flex; align-items: center; gap: 10px; padding: 8px 16px; border-bottom: 1px solid var(--vscode-panel-border); flex-shrink: 0; }
-.time-label { font-family: var(--vscode-editor-font-family, monospace); font-size: 11px; color: var(--vscode-descriptionForeground); min-width: 60px; }
+.time-label { font-family: var(--vscode-editor-font-family, monospace); font-size: var(--text-caption); color: var(--vscode-descriptionForeground); min-width: 60px; }
 .time-label.end { text-align: right; }
 .scrubber-track { flex: 1; height: 20px; background: var(--vscode-input-background); border-radius: 4px; position: relative; cursor: pointer; }
 .scrubber-range { position: absolute; top: 4px; bottom: 4px; background: var(--vscode-button-background); border-radius: 2px; opacity: 0.5; }
-.scrubber-handle { position: absolute; top: 2px; width: 10px; height: 16px; background: var(--vscode-button-background); border-radius: 3px; cursor: ew-resize; transform: translateX(-50%); }
+.scrubber-handle { position: absolute; top: 2px; width: 10px; height: 16px; background: var(--vscode-button-background); border-radius: var(--radius-sm); cursor: ew-resize; transform: translateX(-50%); }
 .scrubber-handle:hover { background: var(--vscode-button-hoverBackground); }
 .zoom-controls { display: flex; gap: 4px; }
-.zoom-btn { width: 24px; height: 24px; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; border-radius: 3px; cursor: pointer; font-size: 14px; line-height: 1; }
+.zoom-btn { width: 24px; height: 24px; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; border-radius: var(--radius-sm); cursor: pointer; font-size: 14px; line-height: 1; }
 .zoom-btn:hover { background: var(--vscode-button-secondaryHoverBackground); }
 
 .minimap { display: flex; align-items: flex-end; gap: 1px; height: 36px; padding: 3px 16px; background: var(--vscode-sideBar-background); border-bottom: 1px solid var(--vscode-panel-border); flex-shrink: 0; position: relative; cursor: pointer; }
@@ -48,8 +48,8 @@ body { background: var(--vscode-editor-background); color: var(--vscode-editor-f
 .event-row { display: flex; align-items: flex-start; padding: 4px 16px; gap: 8px; height: 28px; cursor: pointer; transition: background 0.1s; border-bottom: 1px solid transparent; }
 .event-row:hover { background: var(--vscode-list-hoverBackground); }
 .event-row.selected { background: var(--vscode-list-activeSelectionBackground); color: var(--vscode-list-activeSelectionForeground); }
-.event-time { width: 65px; flex-shrink: 0; font-family: var(--vscode-editor-font-family, monospace); font-size: 11px; color: var(--vscode-descriptionForeground); text-align: right; }
-.event-icon { width: 14px; flex-shrink: 0; text-align: center; font-size: 11px; }
+.event-time { width: 65px; flex-shrink: 0; font-family: var(--vscode-editor-font-family, monospace); font-size: var(--text-caption); color: var(--vscode-descriptionForeground); text-align: right; }
+.event-icon { width: 14px; flex-shrink: 0; text-align: center; font-size: var(--text-caption); }
 .level-error .event-icon { color: var(--vscode-editorError-foreground, var(--accent-critical)); }
 .level-warning .event-icon { color: var(--vscode-editorWarning-foreground, var(--accent-warning)); }
 .level-perf .event-icon { color: var(--vscode-charts-purple, var(--accent-opinionated)); }
@@ -67,8 +67,8 @@ body { background: var(--vscode-editor-background); color: var(--vscode-editor-f
 .timeline-correlations .cp-header { font-weight: 600; margin-bottom: 6px; font-size: 12px; }
 .timeline-correlations .cp-list { display: flex; flex-direction: column; gap: 8px; }
 .timeline-correlations .cp-item { border: 1px solid var(--vscode-panel-border); border-radius: 4px; padding: 6px 10px; }
-.timeline-correlations .cp-desc { font-size: 11px; margin-bottom: 4px; font-weight: 500; }
-.timeline-correlations .cp-events { margin: 0; padding-left: 18px; font-size: 11px; }
+.timeline-correlations .cp-desc { font-size: var(--text-caption); margin-bottom: 4px; font-weight: 500; }
+.timeline-correlations .cp-events { margin: 0; padding-left: 18px; font-size: var(--text-caption); }
 .timeline-correlations .cp-events li { margin: 2px 0; list-style: disc; }
 .timeline-correlations .cp-jump { background: none; border: none; color: var(--vscode-textLink-foreground); cursor: pointer; padding: 0; margin-right: 4px; text-decoration: underline; font-size: inherit; transition: color 0.12s ease; }
 .timeline-correlations .cp-jump:hover { color: var(--vscode-textLink-activeForeground); }

@@ -10,7 +10,7 @@ export function getLintBadgeStyles(): string {
     display: inline-block;
     padding: 0 4px;
     margin-right: 3px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-size: 10px;
     font-weight: 600;
     vertical-align: middle;

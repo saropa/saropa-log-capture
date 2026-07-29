@@ -72,7 +72,7 @@ export function getUiStyles(): string {
    Footer elements for the pattern-based line exclusion feature.
    =================================================================== */
 #exclusion-count {
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
     white-space: nowrap;
 }
@@ -245,10 +245,10 @@ body.mm-resizing, body.mm-resizing * { cursor: col-resize !important; }
 }
 .auto-hide-modal-header {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 8px 12px; font-size: 13px; font-weight: 600;
+    padding: 8px 12px; font-size: var(--text-body); font-weight: 600;
     border-bottom: 1px solid var(--vscode-panel-border);
 }
-.auto-hide-modal-close { background: none; border: none; color: var(--vscode-descriptionForeground); font-size: 18px; cursor: pointer; padding: 0 4px; }
+.auto-hide-modal-close { background: none; border: none; color: var(--vscode-descriptionForeground); font-size: var(--text-h2); cursor: pointer; padding: 0 4px; }
 .auto-hide-modal-close:hover {
     color: var(--vscode-errorForeground, #f44);
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
@@ -260,7 +260,7 @@ body.mm-resizing, body.mm-resizing * { cursor: col-resize !important; }
 .auto-hide-item:hover { background: var(--vscode-list-hoverBackground); }
 .auto-hide-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .auto-hide-badge {
-    font-size: 9px; padding: 1px 4px; border-radius: 3px;
+    font-size: 9px; padding: 1px 4px; border-radius: var(--radius-sm);
     background: var(--vscode-badge-background); color: var(--vscode-badge-foreground);
 }
 .auto-hide-badge.session { opacity: 0.6; }

@@ -143,7 +143,7 @@ export function getRootCauseHypothesesStyles(): string {
     border: none;
     background: transparent;
     color: var(--vscode-descriptionForeground);
-    font-size: 11px;
+    font-size: var(--text-caption);
     cursor: pointer;
     appearance: none;
 }
@@ -163,7 +163,7 @@ export function getRootCauseHypothesesStyles(): string {
 .rch-toast {
     display: inline-block;
     margin-left: var(--space-2);
-    font-size: 11px;
+    font-size: var(--text-caption);
     /* Dismiss confirmation reads as a success signal — bind to the status-good
        token so it tracks the host's pass/success color, not a baked green. */
     color: var(--status-good);

@@ -45,10 +45,10 @@ export function getSqlRepeatDrilldownStyles(): string {
     white-space: pre-wrap;
     word-break: break-word;
     font-family: var(--vscode-editor-font-family, monospace);
-    font-size: 11px;
+    font-size: var(--text-caption);
     line-height: 1.35;
     background: var(--vscode-textCodeBlock-background, rgba(0, 0, 0, 0.2));
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     max-height: 9.5em;
     overflow: auto;
 }
@@ -78,7 +78,7 @@ export function getSqlRepeatDrilldownStyles(): string {
     margin-top: 8px;
 }
 .sql-repeat-static-sources {
-    font-size: 11px;
+    font-size: var(--text-caption);
     padding: 2px 8px;
     cursor: pointer;
     border: 1px solid var(--vscode-button-border, transparent);

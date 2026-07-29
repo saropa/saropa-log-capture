@@ -156,7 +156,7 @@ h1 { font-size: 1.1em; margin-bottom: 12px; }
 .thumb-wrap { min-height: 60px; }
 .thumb { max-width: 100%; max-height: 240px; border-radius: 4px; cursor: pointer; display: block; }
 .card-meta { display: flex; gap: 10px; align-items: center; margin: 8px 0 6px; }
-.badge { font-size: 0.8em; padding: 1px 8px; border-radius: 8px; border: 1px solid var(--vscode-editorWidget-border); }
+.badge { font-size: 0.8em; padding: 1px 8px; border-radius: var(--radius); border: 1px solid var(--vscode-editorWidget-border); }
 .badge-error { color: var(--vscode-errorForeground); border-color: var(--vscode-errorForeground); }
 .badge-warning { color: var(--vscode-editorWarning-foreground); border-color: var(--vscode-editorWarning-foreground); }
 .when { color: var(--vscode-descriptionForeground); font-size: 0.9em; }

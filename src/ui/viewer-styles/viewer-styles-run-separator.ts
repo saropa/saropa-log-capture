@@ -33,7 +33,7 @@ export function getRunSeparatorStyles(): string {
 }
 .run-sep-duration {
     opacity: 0.9;
-    font-size: 11px;
+    font-size: var(--text-caption);
 }
 .run-sep-counts {
     display: inline-flex;

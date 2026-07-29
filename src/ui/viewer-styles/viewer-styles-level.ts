@@ -14,7 +14,7 @@ export function getLevelStyles(): string {
     gap: 2px;
     align-items: center;
     padding: 2px 4px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
 }
 .level-dot-group {
     display: inline-flex;
@@ -49,7 +49,7 @@ export function getLevelStyles(): string {
     line-height: 15px;
     letter-spacing: 0.2px;
     padding: 0 6px;
-    border-radius: 8px;
+    border-radius: var(--radius);
     color: #fff;
     background: var(--vscode-badge-background);
 }
@@ -85,7 +85,7 @@ body.slc-trouble-active .level-dot-group[data-level="todo"] .dot-count { opacity
     margin-left: 2px;
     cursor: pointer;
     padding: 2px 4px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
 }
 .level-trigger-label:hover {
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
@@ -101,13 +101,13 @@ body.slc-trouble-active .level-dot-group[data-level="todo"] .dot-count { opacity
     background: none;
     border: 1px solid transparent;
     color: inherit;
-    font-size: 11px;
+    font-size: var(--text-caption);
     padding: 2px 6px;
     cursor: pointer;
     opacity: 1;
     transition: opacity 0.2s ease, background 0.15s ease;
     line-height: 1.2;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     white-space: nowrap;
     display: flex;
     align-items: center;

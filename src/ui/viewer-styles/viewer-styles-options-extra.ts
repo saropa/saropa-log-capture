@@ -28,7 +28,7 @@ export function getOptionsExtraStyles(): string {
     background: var(--vscode-sideBarTitle-background, var(--vscode-panel-background));
     border-bottom: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
     font-weight: bold;
-    font-size: 13px;
+    font-size: var(--text-body);
 }
 .integrations-back {
     background: none;
@@ -36,7 +36,7 @@ export function getOptionsExtraStyles(): string {
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
     padding: 4px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-size: 14px;
     transition: color 0.15s ease, background 0.15s ease;
 }
@@ -51,7 +51,7 @@ export function getOptionsExtraStyles(): string {
     padding: 12px;
 }
 .integrations-intro {
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
     line-height: 1.4;
     margin: 0 0 12px 0;
@@ -97,7 +97,7 @@ export function getOptionsExtraStyles(): string {
 }
 .integrations-desc {
     flex: 1 1 100%;
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
     line-height: 1.35;
     margin: 4px 0 0 24px;
@@ -167,7 +167,7 @@ export function getOptionsExtraStyles(): string {
 }
 .integrations-companion-link {
     flex: 0 0 auto;
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-textLink-foreground, var(--vscode-focusBorder));
     cursor: pointer;
     text-decoration: none;
@@ -180,7 +180,7 @@ export function getOptionsExtraStyles(): string {
     margin: 12px 0 0 0;
     padding: 10px 0 0 0;
     border-top: 1px solid var(--vscode-sideBar-border, rgba(255, 255, 255, 0.1));
-    font-size: 11px;
+    font-size: var(--text-caption);
 }
 
 /* Suggested integrations block (Integrations screen): adapters the project's packages imply but
@@ -196,10 +196,10 @@ export function getOptionsExtraStyles(): string {
     font-size: 12px;
 }
 .suite-suggest-label { font-weight: 600; flex: 0 0 auto; }
-.suite-suggest-reason { flex: 1 1 auto; font-size: 11px; color: var(--vscode-descriptionForeground); }
+.suite-suggest-reason { flex: 1 1 auto; font-size: var(--text-caption); color: var(--vscode-descriptionForeground); }
 .suite-suggest-enable {
     flex: 0 0 auto;
-    font-size: 11px;
+    font-size: var(--text-caption);
     cursor: pointer;
     color: var(--vscode-button-foreground);
     background: var(--vscode-button-background);
@@ -236,9 +236,9 @@ export function getOptionsExtraStyles(): string {
 }
 .shortcuts-table kbd {
     font-family: var(--vscode-editor-font-family, var(--monaco-monospace-font));
-    font-size: 11px;
+    font-size: var(--text-caption);
     padding: 1px 4px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     background: var(--vscode-keybindingLabel-background, rgba(128, 128, 128, 0.2));
     border: 1px solid var(--vscode-keybindingLabel-border, rgba(128, 128, 128, 0.35));
 }

@@ -54,7 +54,7 @@ export function getSessionOptionsMenuStyles(): string {
 .session-date-range-select {
     font-size: 12px;
     padding: 2px 6px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     border: 1px solid var(--vscode-input-border, transparent);
     background: var(--vscode-input-background, transparent);
     color: var(--vscode-input-foreground, var(--vscode-foreground));
@@ -70,7 +70,7 @@ export function getSessionOptionsMenuStyles(): string {
     padding: 6px;
     background: none;
     border: 1px solid transparent;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     color: var(--vscode-foreground);
     font-size: 12px;
     cursor: pointer;
@@ -89,7 +89,7 @@ export function getSessionOptionsMenuStyles(): string {
     width: 26px;
     height: 14px;
     padding: 1px;
-    border-radius: 8px;
+    border-radius: var(--radius);
     background: var(--vscode-input-background, rgba(120, 120, 120, 0.4));
     border: 1px solid var(--vscode-input-border, transparent);
     transition: background 0.12s ease-out;
@@ -123,7 +123,7 @@ export function getSessionOptionsMenuStyles(): string {
    fit a short panel. These overrides align the trigger row with the menu's other rows (matching
    padding/radius) and let the label fill the row so the arrow sits far-right. The flyout itself is
    placed by positionSessionOptionsSubmenu() in viewport coordinates so it is never cropped. */
-.session-options-submenu { padding: 6px; border-radius: 3px; }
+.session-options-submenu { padding: 6px; border-radius: var(--radius-sm); }
 .session-options-submenu-label { flex: 1; font-size: 12px; }
 /* Active-filter dot on the Filter group row: sits just left of the ▸ arrow, shown only when the
    trigger carries .has-active-filters (toggled in renderNameFilterBar for an active date/size
@@ -146,7 +146,7 @@ export function getSessionOptionsMenuStyles(): string {
     padding: 6px;
     background: none;
     border: 1px solid transparent;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     color: var(--vscode-foreground);
     font-size: 12px;
     cursor: pointer;
@@ -170,7 +170,7 @@ export function getSessionOptionsMenuStyles(): string {
 }
 .session-loaded-files-empty {
     padding: 4px 6px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     font-style: italic;
     color: var(--vscode-descriptionForeground);
     opacity: 0.75;
@@ -183,7 +183,7 @@ export function getSessionOptionsMenuStyles(): string {
     padding: 5px 6px;
     background: none;
     border: 1px solid transparent;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     color: var(--vscode-foreground);
     font-size: 12px;
     cursor: pointer;
