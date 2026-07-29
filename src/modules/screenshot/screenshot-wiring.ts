@@ -10,6 +10,7 @@
 
 import * as vscode from 'vscode';
 import { t } from '../../l10n';
+import { clamp } from '../config/config-validation';
 import { ScreenshotCapturer, type ManualCaptureOutcome } from './screenshot-capturer';
 import { ScreenshotStore, type ScreenshotSaveResult } from './screenshot-store';
 import { captureVmServiceScreenshot } from './vm-service-screenshot';
@@ -41,8 +42,11 @@ export function registerScreenshotCapture(deps: ScreenshotWiringDeps): Screensho
             onError: cfg().get<boolean>('integrations.screenshots.onError', true),
             onWarning: cfg().get<boolean>('integrations.screenshots.onWarning', false),
             onNavigation: cfg().get<boolean>('integrations.screenshots.onNavigation', false),
-            cooldownMs: cfg().get<number>('integrations.screenshots.cooldownMs', 2000),
-            maxPerLog: cfg().get<number>('integrations.screenshots.maxPerLog', 50),
+            // Clamp to the package.json ranges: raw .get() skips getConfig()'s validation, and
+            // a hand-edited settings.json value (e.g. maxPerLog 0) would otherwise silently
+            // disable capture while the menu UI shows the clamped number.
+            cooldownMs: clamp(cfg().get('integrations.screenshots.cooldownMs'), 250, 60000, 2000),
+            maxPerLog: clamp(cfg().get('integrations.screenshots.maxPerLog'), 1, 500, 50),
         }),
         getVmServiceWsUri: getLatestVmServiceWsUri,
         capturePng: captureVmServiceScreenshot,
@@ -79,6 +83,7 @@ function showManualOutcome(outcome: ManualCaptureOutcome): Thenable<string | und
         case 'disabled': return vscode.window.showInformationMessage(t('msg.screenshotDisabled'));
         case 'noVmService': return vscode.window.showInformationMessage(t('msg.screenshotNoVmService'));
         case 'capFull': return vscode.window.showWarningMessage(t('msg.screenshotCapFull'));
+        case 'busy': return vscode.window.showInformationMessage(t('msg.screenshotBusy'));
         case 'failed': return vscode.window.showWarningMessage(t('msg.screenshotFailed'));
     }
 }

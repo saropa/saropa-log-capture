@@ -142,6 +142,19 @@ suite('ScreenshotCapturer', () => {
         assert.strictEqual(await noVm.capturer.captureManual('d:/reports/test.log', 1), 'noVmService');
     });
 
+    test('manual capture should report busy while another capture is in flight', async () => {
+        // Hold the auto-trigger capture open with a never-resolving PNG fetch, then try manual.
+        let release: ((png: Uint8Array) => void) | undefined;
+        const h = makeHarness({ capturePng: () => new Promise((r) => { release = r; }) });
+        h.capturer.onLine(makeLine('Unhandled Exception: something broke'));
+        await new Promise((r) => setImmediate(r)); // let the auto capture enter captureAndSave
+        assert.strictEqual(await h.capturer.captureManual('d:/reports/test.log', 5), 'busy');
+        release?.(new Uint8Array([1]));
+        await h.flush();
+        // Exactly ONE save landed (the auto capture); the manual attempt never raced the store.
+        assert.strictEqual(h.store.saves.length, 1);
+    });
+
     test('manual capture should report failed when the VM call rejects', async () => {
         const h = makeHarness({ capturePng: () => Promise.reject(new Error('boom')) });
         assert.strictEqual(await h.capturer.captureManual('d:/reports/test.log', 1), 'failed');

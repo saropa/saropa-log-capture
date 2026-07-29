@@ -8,7 +8,10 @@
  *
  * The per-log cap bounds disk use on pathological sessions; once hit, saves are refused
  * and the caller logs one warning. Metadata is kept in memory per log base and rewritten
- * whole on each save — screenshot cadence is cooldown-limited, so the extra write is noise.
+ * whole on each save. save() is a read-modify-write (seq number from entries.length across
+ * two awaits) and is NOT safe under concurrency — the capturer's in-flight guard on every
+ * capture path (auto AND manual) is what serializes calls; do not add a caller that
+ * bypasses it.
  */
 
 import * as vscode from 'vscode';
