@@ -37,7 +37,7 @@ suite('ViewerContextMenuStyles', () => {
         );
         assert.match(
             css,
-            /\.context-menu-shortcut\s*\{[^}]*margin-left:\s*24px/s,
+            /\.context-menu-shortcut\s*\{[^}]*margin-left:\s*var\(--space-\d+\)/s,
             'shortcut hint should have left margin to separate from label',
         );
     });

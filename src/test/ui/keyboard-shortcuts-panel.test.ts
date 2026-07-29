@@ -10,10 +10,10 @@ suite('KeyboardShortcutsPanel', () => {
             assert.ok(css.length > 0, 'CSS must not be empty');
         });
 
-        test('should use VS Code theme variables', () => {
+        test('should use design tokens and VS Code theme variables', () => {
             const css = getKeyboardShortcutsPanelStyles();
-            assert.ok(css.includes('--vscode-foreground'), 'should reference foreground color');
-            assert.ok(css.includes('--vscode-editor-background'), 'should reference editor background');
+            assert.ok(css.includes('--text'), 'should reference text token');
+            assert.ok(css.includes('--surface-1'), 'should reference surface token');
             assert.ok(css.includes('--vscode-keybindingLabel-background'), 'should reference kbd background');
         });
 

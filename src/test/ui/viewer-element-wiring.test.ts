@@ -39,6 +39,11 @@ suite('Webview element ID wiring', () => {
         // took ownership of the session context line; viewer-session-header.ts still reaches it by
         // this id, so the id must survive the move.
         'session-details-inline',
+        // Created by viewer-screenshots.ts screenshotMenuEl() via createElement + innerHTML
+        'screenshot-menu',
+        'screenshot-menu-limits',
+        // Created by viewer-screenshots.ts screenshotPopoverEl() via createElement
+        'screenshot-popover',
     ]);
 
     /**
