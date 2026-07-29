@@ -12,8 +12,8 @@ export function getKeyboardShortcutsPanelStyles(): string {
 body {
     font-family: var(--vscode-font-family, system-ui, sans-serif);
     font-size: var(--vscode-font-size, 13px);
-    color: var(--vscode-foreground);
-    background: var(--vscode-editor-background);
+    color: var(--text);
+    background: var(--surface-1);
     padding: 24px 32px;
     line-height: 1.6;
     max-width: 960px;
@@ -24,20 +24,20 @@ h1 {
     font-size: 1.6em;
     font-weight: 600;
     margin: 0 0 8px;
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 
 h2 {
     font-size: 1.15em;
     font-weight: 600;
     margin: 28px 0 8px;
-    color: var(--vscode-foreground);
+    color: var(--text);
     border-bottom: 1px solid var(--vscode-widget-border, var(--vscode-panel-border, rgba(128,128,128,0.2)));
     padding-bottom: var(--space-1);
 }
 
 .intro {
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     margin: 0 0 20px;
     line-height: 1.5;
 }
@@ -54,7 +54,7 @@ thead th {
     font-size: 0.85em;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     padding: 6px 12px 6px 0;
     border-bottom: 1px solid var(--vscode-widget-border, var(--vscode-panel-border, rgba(128,128,128,0.2)));
 }
@@ -75,7 +75,7 @@ td {
 /* Column widths */
 .key-col { width: 140px; white-space: nowrap; }
 .name-col { width: 180px; white-space: nowrap; font-weight: 500; }
-.desc-col { color: var(--vscode-descriptionForeground); }
+.desc-col { color: var(--muted); }
 
 /* Search bar */
 .search-bar {
@@ -85,7 +85,7 @@ td {
     margin-bottom: 20px;
     position: sticky;
     top: 0;
-    background: var(--vscode-editor-background);
+    background: var(--surface-1);
     padding: var(--space-2) 0;
     z-index: 1;
 }
@@ -95,7 +95,7 @@ td {
     padding: 6px 10px;
     font-size: var(--vscode-font-size, 13px);
     font-family: var(--vscode-font-family, system-ui, sans-serif);
-    color: var(--vscode-input-foreground, var(--vscode-foreground));
+    color: var(--vscode-input-foreground, var(--text));
     background: var(--vscode-input-background, rgba(128,128,128,0.1));
     border: 1px solid var(--vscode-input-border, rgba(128,128,128,0.3));
     border-radius: 4px;
@@ -113,7 +113,7 @@ td {
 .search-bar button {
     background: none;
     border: none;
-    color: var(--vscode-foreground);
+    color: var(--text);
     font-size: 1.2em;
     cursor: pointer;
     padding: 4px 6px;
@@ -127,7 +127,7 @@ td {
 
 .match-count {
     font-size: 0.85em;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     white-space: nowrap;
 }
 
@@ -138,7 +138,7 @@ kbd {
     padding: 2px 6px;
     border-radius: var(--radius-sm);
     background: var(--vscode-keybindingLabel-background, rgba(128,128,128,0.15));
-    color: var(--vscode-keybindingLabel-foreground, var(--vscode-foreground));
+    color: var(--vscode-keybindingLabel-foreground, var(--text));
     border: 1px solid var(--vscode-keybindingLabel-border, rgba(128,128,128,0.25));
     box-shadow: 0 1px 0 var(--vscode-keybindingLabel-bottomBorder, rgba(0,0,0,0.15));
 }

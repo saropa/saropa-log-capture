@@ -12,7 +12,7 @@ export function getSignalSectionsStyles(): string {
 }
 
 .signal-view-all span {
-    color: var(--vscode-textLink-foreground, var(--link));
+    color: var(--link);
     cursor: pointer;
 }
 
@@ -28,12 +28,12 @@ export function getSignalSectionsStyles(): string {
 .signal-recurring-footer {
     margin-top: var(--space-2);
     padding-top: var(--space-2);
-    border-top: 1px solid var(--vscode-panel-border);
+    border-top: 1px solid var(--border);
     font-size: 12px;
 }
 
 .signal-recurring-footer .recurring-footer-action {
-    color: var(--vscode-textLink-foreground, var(--link));
+    color: var(--link);
     cursor: pointer;
 }
 
@@ -51,7 +51,7 @@ export function getSignalSectionsStyles(): string {
     justify-content: space-between;
     align-items: center;
     padding: var(--space-1) 0;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     gap: 6px;
 }
 
@@ -71,13 +71,13 @@ export function getSignalSectionsStyles(): string {
 }
 
 .signal-hotfile-meta {
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     flex-shrink: 0;
     margin-left: var(--space-2);
 }
 
 .signal-hotfiles-empty {
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-size: 12px;
     margin: 0;
 }
@@ -85,7 +85,7 @@ export function getSignalSectionsStyles(): string {
 /* Scope label (Current log: filename) */
 .signal-scope-label {
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     margin-bottom: 6px;
 }
 
@@ -99,7 +99,7 @@ export function getSignalSectionsStyles(): string {
     align-items: center;
     gap: var(--space-1) 14px;
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     margin-bottom: var(--space-2);
 }
 
@@ -112,7 +112,7 @@ export function getSignalSectionsStyles(): string {
 
 .signal-hero-sparkline-label {
     font-size: 10px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     white-space: nowrap;
 }
 
@@ -144,7 +144,7 @@ export function getSignalSectionsStyles(): string {
     display: inline-flex;
     align-items: center;
     font-size: 10px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     opacity: 0.9;
 }
 
@@ -157,7 +157,7 @@ export function getSignalSectionsStyles(): string {
 /* Session details one-line hint */
 .signal-session-details-hint {
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     margin: 0 0 var(--space-2) 0;
 }
 
@@ -182,7 +182,7 @@ export function getSignalSectionsStyles(): string {
 .signal-narrative-subtitle {
     font-size: var(--text-caption);
     font-weight: 600;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     margin-bottom: var(--space-1);
 }
 
@@ -203,7 +203,7 @@ export function getSignalSectionsStyles(): string {
 .signal-env-title {
     font-weight: 600;
     margin-bottom: var(--space-1);
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 
 .signal-env-row {
@@ -275,8 +275,8 @@ export function getSignalSectionsStyles(): string {
     margin: var(--space-1) 0 var(--space-2);
     padding: var(--space-1) var(--space-2);
     font-size: var(--text-caption);
-    border-left: 2px solid var(--vscode-descriptionForeground);
-    background: var(--vscode-editorWidget-background);
+    border-left: 2px solid var(--muted);
+    background: var(--surface-2);
     border-radius: var(--radius-sm);
 }
 .signal-pulse-strip.pulse-tone-improving { border-left-color: var(--vscode-charts-green); }
@@ -284,7 +284,7 @@ export function getSignalSectionsStyles(): string {
 .signal-pulse-strip .pulse-improving { color: var(--vscode-charts-green); }
 .signal-pulse-strip .pulse-worsening { color: var(--vscode-charts-red); }
 .signal-pulse-strip .pulse-stable,
-.signal-pulse-strip .pulse-velocity { color: var(--vscode-descriptionForeground); }
-.signal-pulse-strip .pulse-sep { color: var(--vscode-descriptionForeground); opacity: 0.6; }
+.signal-pulse-strip .pulse-velocity { color: var(--muted); }
+.signal-pulse-strip .pulse-sep { color: var(--muted); opacity: 0.6; }
 `;
 }

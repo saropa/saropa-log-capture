@@ -19,8 +19,8 @@ export function getOptionsStyles(): string {
     width: 100%;
     min-width: 280px;
     height: 100%;
-    background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-    border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    background: var(--vscode-sideBar-background, var(--surface-1));
+    border-right: 1px solid var(--vscode-sideBar-border, var(--border));
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
     display: none;
     flex-direction: column;
@@ -37,7 +37,7 @@ export function getOptionsStyles(): string {
     align-items: center;
     padding: var(--space-2) var(--space-3);
     background: var(--vscode-sideBarTitle-background, var(--vscode-panel-background));
-    border-bottom: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    border-bottom: 1px solid var(--vscode-sideBar-border, var(--border));
     font-weight: bold;
     font-size: var(--text-body);
 }
@@ -45,7 +45,7 @@ export function getOptionsStyles(): string {
 .options-close {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     padding: 2px;
     border-radius: var(--radius-sm);
@@ -60,8 +60,8 @@ export function getOptionsStyles(): string {
 .options-search-wrapper {
     display: flex;
     align-items: center;
-    background: var(--vscode-input-background);
-    border-bottom: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    background: var(--inset);
+    border-bottom: 1px solid var(--vscode-sideBar-border, var(--border));
     padding: var(--space-1) var(--space-2);
 }
 #filters-search,
@@ -79,7 +79,7 @@ export function getOptionsStyles(): string {
 .options-search-clear {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-size: 14px;
     cursor: pointer;
     padding: 0 var(--space-1);
@@ -106,7 +106,7 @@ export function getOptionsStyles(): string {
     font-size: var(--text-caption);
     font-weight: bold;
     text-transform: uppercase;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     margin: 0 0 8px 0;
     padding: 0;
 }
@@ -128,7 +128,7 @@ export function getOptionsStyles(): string {
 .scope-suffix { opacity: 0.5; margin-left: var(--space-1); font-style: italic; }
 
 .options-row select {
-    background: var(--vscode-input-background);
+    background: var(--inset);
     color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border, transparent);
     font-size: var(--text-caption);
@@ -166,7 +166,7 @@ export function getOptionsStyles(): string {
     padding: 0 0 4px;
     font-weight: 600;
     font-size: 12px;
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 /* Inline hint after the tier legend — explains what the tier includes */
 .tier-hint {
@@ -178,7 +178,7 @@ export function getOptionsStyles(): string {
 .tier-radio-group-spaced {
     margin-top: 10px;
     padding-top: 10px;
-    border-top: 1px solid var(--vscode-panel-border);
+    border-top: 1px solid var(--border);
 }
 .tier-radio-group label {
     display: flex;
@@ -210,7 +210,7 @@ export function getOptionsStyles(): string {
 /* Action buttons (Reset to default, Reset all, SQL Query History…) */
 .options-action-btn {
     background: var(--vscode-button-secondaryBackground, rgba(90, 93, 94, 0.5));
-    color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+    color: var(--vscode-button-secondaryForeground, var(--text));
     border: 1px solid var(--vscode-button-border, transparent);
     font-size: var(--text-caption);
     padding: var(--space-1) var(--space-3);
@@ -224,7 +224,7 @@ export function getOptionsStyles(): string {
 /* Hint/status text under a control */
 .options-hint {
     font-size: 10px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     opacity: 0.8;
     padding: 0 0 4px 24px;
 }
@@ -241,7 +241,7 @@ export function getOptionsStyles(): string {
 .scope-filter-hint {
     margin-top: 6px;
     padding-left: var(--space-2);
-    border-left: 2px solid var(--vscode-editorWarning-foreground);
+    border-left: 2px solid var(--accent-warning);
 }
 .scope-hint-reset-btn {
     margin-left: var(--space-2);

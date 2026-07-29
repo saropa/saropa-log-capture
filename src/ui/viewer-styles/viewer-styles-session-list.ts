@@ -14,7 +14,7 @@ export function getSessionListStyles(): string {
     display: flex;
     align-items: flex-start;
     gap: var(--space-2);
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
 }
 
 .session-item:hover {
@@ -84,14 +84,14 @@ export function getSessionListStyles(): string {
     display: inline-flex;
     margin-left: var(--space-1);
     vertical-align: middle;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-size: 12px;
 }
 .session-item-loaded .codicon { font-size: 12px; }
 
 .session-item-meta {
     font-size: 10px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -120,7 +120,7 @@ export function getSessionListStyles(): string {
     border: none;
     padding: 2px 4px;
     cursor: pointer;
-    color: var(--vscode-icon-foreground, var(--vscode-foreground));
+    color: var(--vscode-icon-foreground, var(--text));
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -142,8 +142,8 @@ export function getSessionListStyles(): string {
     font-size: var(--text-caption);
     font-weight: 600;
     color: var(--vscode-textLink-foreground, #3794ff);
-    border-bottom: 1px solid var(--vscode-panel-border);
-    background: var(--vscode-sideBar-background, var(--vscode-editor-background));
+    border-bottom: 1px solid var(--border);
+    background: var(--vscode-sideBar-background, var(--surface-1));
     position: sticky;
     top: 0;
     z-index: 1;
@@ -194,14 +194,14 @@ export function getSessionListStyles(): string {
     align-items: center;
     gap: var(--space-2);
     padding: 6px 12px;
-    border-top: 1px solid var(--vscode-panel-border);
-    background: var(--vscode-sideBar-background, var(--vscode-editor-background));
+    border-top: 1px solid var(--border);
+    background: var(--vscode-sideBar-background, var(--surface-1));
     flex-shrink: 0;
     transition: opacity 0.15s ease;
 }
 .session-list-pagination-label {
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     margin-right: auto;
 }
 .session-list-pagination-btn {
@@ -228,7 +228,7 @@ export function getSessionListStyles(): string {
 .session-empty-filtered {
     padding: var(--space-4) var(--space-3);
     font-size: 12px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     text-align: center;
 }
 
@@ -242,8 +242,8 @@ export function getSessionListStyles(): string {
    scrolling is unnecessary; the show() logic clamps the menu's top/left to the viewport instead. */
 .session-context-menu {
     display: none; position: fixed; z-index: 300;
-    background: var(--vscode-menu-background, var(--vscode-editor-background));
-    border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border));
+    background: var(--vscode-menu-background, var(--surface-1));
+    border: 1px solid var(--vscode-menu-border, var(--border));
     border-radius: 4px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     padding: var(--space-1) 0; min-width: 180px; overflow: visible;
 }
@@ -259,7 +259,7 @@ export function getSessionListStyles(): string {
  * silently hiding a category's count. Wrapping to a second line costs row height, not data.
  * The old per-category color dot was removed once the count became a filled colored pill —
  * the pill carries the category color, so the dot was pure duplication. */
-.sev-dots { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; row-gap: 2px; font-size: 10px; color: var(--vscode-descriptionForeground); vertical-align: middle; }
+.sev-dots { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; row-gap: 2px; font-size: 10px; color: var(--muted); vertical-align: middle; }
 .sev-pair { display: inline-flex; align-items: center; }
 
 /* --- Severity count pills ---

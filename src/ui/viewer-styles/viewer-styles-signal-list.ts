@@ -47,7 +47,7 @@ export function getSignalListStyles(): string {
 /* Recurring badge — small ↻ marker next to the icon */
 .signal-recurring-badge { font-size: 10px; opacity: 0.7; margin: 0 1px; }
 /* Trend arrows — ↑ increasing (red), ↓ decreasing (green), — stable (muted) */
-.signal-trend-up { font-size: 10px; color: var(--vscode-editorError-foreground, var(--accent-critical)); margin: 0 1px; }
+.signal-trend-up { font-size: 10px; color: var(--accent-critical); margin: 0 1px; }
 .signal-trend-down { font-size: 10px; color: var(--vscode-testing-iconPassed, var(--status-good)); margin: 0 1px; }
 .signal-trend-stable { font-size: 10px; opacity: 0.5; margin: 0 1px; }
 /* Jumpable signal rows — cursor pointer and hover highlight to indicate clickability */
@@ -70,8 +70,8 @@ export function getSignalListStyles(): string {
 }
 .signal-tw-chip {
     background: transparent;
-    color: var(--vscode-foreground);
-    border: 1px solid var(--vscode-panel-border);
+    color: var(--text);
+    border: 1px solid var(--border);
     border-radius: 10px;
     padding: 2px var(--space-2);
     font-size: var(--text-caption);
@@ -82,16 +82,16 @@ export function getSignalListStyles(): string {
     background: var(--vscode-list-hoverBackground, color-mix(in srgb, var(--text) 4%, transparent));
 }
 .signal-tw-chip-active {
-    border-color: var(--vscode-focusBorder, var(--vscode-textLink-foreground, var(--link)));
+    border-color: var(--vscode-focusBorder, var(--link));
     background: var(--vscode-list-activeSelectionBackground, transparent);
-    color: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
+    color: var(--vscode-list-activeSelectionForeground, var(--text));
 }
 
 /* Fu3: inline evidence preview under a signal title. Three compact lines of raw log text so the
    user can verify what the signal is pointing at without clicking through. Width is constrained
    so long lines truncate rather than push the meta column out of the row. */
 .signal-evidence-preview { width: 100%; margin-top: 3px; padding-left: 18px; font-size: var(--text-caption); opacity: 0.75; line-height: 1.35; }
-.signal-evidence-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--vscode-descriptionForeground, var(--vscode-foreground)); }
+.signal-evidence-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--vscode-descriptionForeground, var(--text)); }
 /* Force the row to wrap so the preview drops below the icon/meta cells instead of breaking flex. */
 .signal-in-log-row { flex-wrap: wrap; }
 
@@ -102,7 +102,7 @@ export function getSignalListStyles(): string {
 .signal-detail-toggle:hover { background: var(--vscode-list-hoverBackground, color-mix(in srgb, var(--text) 4%, transparent)); }
 /* Inline detail body, full-width so it drops below the wrapped row rather than squeezing the meta
    column. pre-wrap keeps multi-part summaries (e.g. "1 error, 2 warnings") readable. */
-.signal-detail-body { width: 100%; margin-top: 3px; padding-left: 18px; font-size: var(--text-caption); opacity: 0.85; line-height: 1.4; white-space: pre-wrap; color: var(--vscode-descriptionForeground, var(--vscode-foreground)); }
+.signal-detail-body { width: 100%; margin-top: 3px; padding-left: 18px; font-size: var(--text-caption); opacity: 0.85; line-height: 1.4; white-space: pre-wrap; color: var(--vscode-descriptionForeground, var(--text)); }
 
 /* Fu2: scroll-lock pulse. Brief highlight on lines around the jump target so the eye lands on
    the right place. Keyframes fade in then out so the cue is clearly transient — no leftover
@@ -121,7 +121,7 @@ export function getSignalListStyles(): string {
    density so the section doesn't dominate the panel even when several suggestions are pending. */
 .signal-suggestions-list { font-size: 12px; }
 .signal-suggestion-row {
-    border: 1px solid var(--vscode-panel-border);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 6px var(--space-2);
     margin-bottom: 6px;
@@ -144,12 +144,12 @@ export function getSignalListStyles(): string {
     flex: 1;
 }
 .signal-suggestion-impact {
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     white-space: nowrap;
     font-size: var(--text-caption);
 }
 .signal-suggestion-sample {
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-size: var(--text-caption);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -164,8 +164,8 @@ export function getSignalListStyles(): string {
 .signal-suggestion-accept,
 .signal-suggestion-reject {
     background: transparent;
-    color: var(--vscode-foreground);
-    border: 1px solid var(--vscode-panel-border);
+    color: var(--text);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 2px 10px;
     font-size: var(--text-caption);
@@ -173,7 +173,7 @@ export function getSignalListStyles(): string {
 }
 .signal-suggestion-accept:hover {
     background: var(--vscode-button-secondaryHoverBackground, var(--vscode-list-hoverBackground, color-mix(in srgb, var(--text) 4%, transparent)));
-    border-color: var(--vscode-focusBorder, var(--vscode-textLink-foreground, var(--link)));
+    border-color: var(--vscode-focusBorder, var(--link));
 }
 .signal-suggestion-reject:hover {
     background: var(--vscode-list-hoverBackground, color-mix(in srgb, var(--text) 4%, transparent));
@@ -230,7 +230,7 @@ export function getSignalListStyles(): string {
     font-size: var(--text-body);
     line-height: 1;
     opacity: 0.3;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     transition: opacity 0.12s ease, transform 0.12s ease;
 }
 .signal-trend-row:hover::after,
@@ -263,7 +263,7 @@ export function getSignalListStyles(): string {
     display: block;
     height: 100%;
     width: 40%;
-    background: var(--vscode-progressBar-background, var(--vscode-textLink-foreground, var(--link)));
+    background: var(--vscode-progressBar-background, var(--link));
     animation: signalLoadingSlide 1.1s ease-in-out infinite;
 }
 @keyframes signalLoadingSlide {

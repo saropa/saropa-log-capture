@@ -26,8 +26,8 @@ export function getModalStyles(): string {
 .modal.visible { display: flex; }
 
 .modal-content {
-    background: var(--vscode-editorWidget-background);
-    border: 1px solid var(--vscode-panel-border);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
     border-radius: 4px;
     padding: 0;
     /* Cap the min-width floor to the viewport so modals don't run off the edge (clipping their
@@ -46,7 +46,7 @@ export function getModalStyles(): string {
     justify-content: space-between;
     align-items: center;
     padding: var(--space-3) var(--space-4);
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     font-weight: 500;
     font-size: var(--text-body);
 }
@@ -54,7 +54,7 @@ export function getModalStyles(): string {
 .modal-close {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-size: var(--text-h2);
     cursor: pointer;
     padding: 0;
@@ -75,7 +75,7 @@ export function getModalStyles(): string {
 
 /* Export accordion — collapsible sections with selection counts */
 .export-accordion {
-    border: 1px solid var(--vscode-panel-border);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     margin-bottom: var(--space-2);
 }
@@ -87,7 +87,7 @@ export function getModalStyles(): string {
     padding: 6px 8px;
     background: var(--vscode-sideBar-background, var(--vscode-panel-background));
     border: none;
-    color: var(--vscode-foreground);
+    color: var(--text);
     font-size: var(--text-caption);
     cursor: pointer;
     text-align: left;
@@ -111,7 +111,7 @@ export function getModalStyles(): string {
     flex: 1;
     text-align: right;
     font-size: 10px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     text-transform: none;
     letter-spacing: normal;
 }
@@ -140,7 +140,7 @@ export function getModalStyles(): string {
 .export-section h4 {
     font-size: var(--text-caption);
     font-weight: 600;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     margin-bottom: var(--space-2);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -148,7 +148,7 @@ export function getModalStyles(): string {
 
 .export-section select {
     width: 100%;
-    background: var(--vscode-input-background);
+    background: var(--inset);
     color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border, transparent);
     padding: 6px 8px;
@@ -169,7 +169,7 @@ export function getModalStyles(): string {
     accent-color: var(--vscode-button-background);
 }
 .export-checkbox:hover {
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 
 #export-preview {
@@ -178,12 +178,12 @@ export function getModalStyles(): string {
     padding: var(--space-2) var(--space-3);
     border-radius: 2px;
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 
 #export-line-count {
     font-weight: 600;
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 
 .modal-footer {
@@ -191,7 +191,7 @@ export function getModalStyles(): string {
     align-items: center;
     gap: var(--space-2);
     padding: var(--space-3) var(--space-4);
-    border-top: 1px solid var(--vscode-panel-border);
+    border-top: 1px solid var(--border);
 }
 .modal-footer-spacer { flex: 1; }
 
@@ -238,7 +238,7 @@ export function getModalStyles(): string {
 .log-file-modal-filename {
     font-family: var(--vscode-editor-font-family, monospace);
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     background: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.1));
     padding: 6px 10px;
     border-radius: 2px;
@@ -250,7 +250,7 @@ export function getModalStyles(): string {
    opacity so it sits quieter than .modal-header's full-strength border. */
 .log-file-modal-divider {
     border: none;
-    border-top: 1px solid var(--vscode-panel-border);
+    border-top: 1px solid var(--border);
     opacity: 0.5;
     margin: var(--space-1) 0;
 }
@@ -282,7 +282,7 @@ export function getModalStyles(): string {
     font-family: var(--vscode-editor-font-family, monospace);
     font-weight: 600;
     min-width: 2.2em;
-    color: var(--vscode-textLink-foreground);
+    color: var(--link);
 }
 .files-list-name {
     flex: 1 1 auto;
@@ -291,12 +291,12 @@ export function getModalStyles(): string {
 .files-list-meta {
     flex: 0 0 auto;
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 /* Footer (n) counter: a quiet, clickable affordance next to the filename. */
 .footer-file-count {
     cursor: pointer;
-    color: var(--vscode-textLink-foreground);
+    color: var(--link);
 }
 .footer-file-count:hover {
     text-decoration: underline;

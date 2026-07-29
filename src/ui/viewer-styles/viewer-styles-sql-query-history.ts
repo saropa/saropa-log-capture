@@ -12,8 +12,8 @@ export function getSqlQueryHistoryPanelStyles(): string {
     width: 100%;
     min-width: 280px;
     height: 100%;
-    background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-    border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    background: var(--vscode-sideBar-background, var(--surface-1));
+    border-right: 1px solid var(--vscode-sideBar-border, var(--border));
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
     display: none;
     flex-direction: column;
@@ -31,7 +31,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
     padding: var(--space-2) var(--space-3);
     font-weight: 600;
     font-size: 12px;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
 }
 
 .sql-query-history-actions {
@@ -44,7 +44,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
 .sql-query-history-close {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     padding: 2px 4px;
     border-radius: var(--radius-sm);
@@ -53,7 +53,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
 
 .sql-query-history-action:hover,
 .sql-query-history-close:hover {
-    color: var(--vscode-foreground);
+    color: var(--text);
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 
@@ -65,8 +65,8 @@ export function getSqlQueryHistoryPanelStyles(): string {
     padding: 6px 12px;
     font-size: var(--text-caption);
     line-height: 1.35;
-    color: var(--vscode-descriptionForeground);
-    border-bottom: 1px solid var(--vscode-panel-border);
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
     background: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.08));
     /* anywhere (not break-all): lets the long server URL wrap when it must, WITHOUT chopping
        ordinary words mid-character — break-all split "reachable" into "reac"/"hable" at narrow widths. */
@@ -79,7 +79,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
     align-items: center;
     gap: var(--space-2);
     padding: var(--space-2) var(--space-3);
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
 }
 .sql-query-history-toolbar > * {
     margin: 0;
@@ -88,9 +88,9 @@ export function getSqlQueryHistoryPanelStyles(): string {
 #sql-query-history-search {
     flex: 1;
     min-width: 120px;
-    background: var(--vscode-input-background);
+    background: var(--inset);
     color: var(--vscode-input-foreground);
-    border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
+    border: 1px solid var(--vscode-input-border, var(--border));
     border-radius: 4px;
     font-size: 12px;
     padding: var(--space-1) var(--space-2);
@@ -104,8 +104,8 @@ export function getSqlQueryHistoryPanelStyles(): string {
 .sql-query-history-hint {
     padding: 6px 12px;
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
-    border-bottom: 1px solid var(--vscode-panel-border);
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
     background: var(--vscode-editor-inactiveSelectionBackground, rgba(128, 128, 128, 0.12));
 }
 
@@ -127,7 +127,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
     position: sticky;
     top: 0;
     z-index: 1;
-    background: var(--vscode-editor-background);
+    background: var(--surface-1);
 }
 
 .sql-qh-header {
@@ -135,8 +135,8 @@ export function getSqlQueryHistoryPanelStyles(): string {
     padding: var(--space-1) var(--space-2);
     font-size: var(--text-caption);
     font-weight: 600;
-    color: var(--vscode-descriptionForeground);
-    border-bottom: 1px solid var(--vscode-panel-border);
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
     cursor: pointer;
     user-select: none;
     overflow: hidden;
@@ -198,7 +198,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
 }
 
 #sql-query-history-tbody tr {
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
 }
 
 #sql-query-history-tbody tr:hover {
@@ -224,18 +224,18 @@ export function getSqlQueryHistoryPanelStyles(): string {
 
 .sql-query-history-count {
     font-weight: 600;
-    color: var(--vscode-foreground);
+    color: var(--text);
     font-variant-numeric: tabular-nums;
 }
 
 .sql-query-history-dur {
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-variant-numeric: tabular-nums;
     flex-shrink: 0;
 }
 
 .sql-query-history-preview {
-    color: var(--vscode-foreground);
+    color: var(--text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -248,7 +248,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
     padding: 0;
     white-space: pre-wrap;
     word-break: break-word;
-    color: var(--vscode-foreground);
+    color: var(--text);
     user-select: text;
     cursor: text;
 }
@@ -274,7 +274,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
 .sql-qh-action-btn {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     padding: 2px 4px;
     border-radius: var(--radius-sm);
@@ -282,14 +282,14 @@ export function getSqlQueryHistoryPanelStyles(): string {
 }
 
 .sql-qh-action-btn:hover {
-    color: var(--vscode-foreground);
+    color: var(--text);
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 
 .sql-query-history-empty {
     padding: var(--space-4) var(--space-3);
     font-size: 12px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     text-align: center;
     white-space: pre-line;
 }
@@ -301,7 +301,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
     align-items: center;
     gap: var(--space-1);
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     user-select: none;
 }
@@ -312,7 +312,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
 }
 
 .sql-qh-cumulative:hover {
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 
 /* DB_18b 1c: pager row shown only when the scale-gated window hides rows (>2000 filtered). */
@@ -320,7 +320,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
     padding: 10px 12px;
     text-align: center;
     font-size: 12px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 
 .sql-qh-pager-note { margin-right: var(--space-2); }
@@ -336,7 +336,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
 }
 
 .sql-qh-show-more:hover {
-    color: var(--vscode-foreground);
+    color: var(--text);
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 `;
