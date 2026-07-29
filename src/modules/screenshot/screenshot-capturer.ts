@@ -15,6 +15,7 @@
 
 import { isErrorLine, isWarningLine } from '../features/error-rate-alert';
 import { normalizeLine, hashFingerprint } from '../analysis/error-fingerprint-pure';
+import { classifyLogLine } from '../analysis/stack-parser';
 import { classifyBreadcrumb } from '../flow-map/flow-map-breadcrumbs';
 import { stripAnsi } from '../capture/ansi';
 import type { LineData } from '../session/session-event-bus';
@@ -79,9 +80,12 @@ export class ScreenshotCapturer {
     /** LineListener entry point — must never throw (line listeners run on the capture path). */
     onLine(data: LineData): void {
         if (data.isMarker || !data.logFileUri) { return; }
-        if (!this.deps.isEnabled()) { return; }
+        // wsUri before isEnabled: outside a live Flutter session (including the huge logcat
+        // replay burst at session start, before the VM Service is announced) every line
+        // bails on a cached-map read instead of paying a workspace-config read.
         const wsUri = this.deps.getVmServiceWsUri();
         if (!wsUri) { return; }
+        if (!this.deps.isEnabled()) { return; }
 
         const settings = this.deps.triggerSettings();
         const text = stripAnsi(data.text);
@@ -178,6 +182,15 @@ function classifyTrigger(
     data: LineData,
     settings: ScreenshotTriggerSettings,
 ): ScreenshotTrigger | undefined {
+    // Device/framework lines never trigger a capture. isErrorLine matches ANY logcat E/ line
+    // and any "failed" text, but framework errors are routinely benign (E/Gralloc4 allocation
+    // probes, E/Badge init — see the 2026-07-28 contacts startup log): each would burn a VM
+    // round-trip + PNG + disk to photograph a screen showing nothing wrong. The logcat feed
+    // (category 'logcat') is device output wholesale; for console/stdout relays, the tier
+    // classifier's ruling stands — only the `flutter` tag (or untagged app output) is app code.
+    if (data.category === 'logcat') { return undefined; }
+    const tier = classifyLogLine(text);
+    if (tier !== undefined && tier !== 'flutter') { return undefined; }
     if (settings.onError && isErrorLine(text, data.category)) { return 'error'; }
     if (settings.onWarning && isWarningLine(text)) { return 'warning'; }
     // classifyBreadcrumb runs several regexes — only pay for it when the nav trigger is on.

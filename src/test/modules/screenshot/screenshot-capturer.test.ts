@@ -86,6 +86,29 @@ suite('ScreenshotCapturer', () => {
         assert.strictEqual(h.store.saves.length, 0);
     });
 
+    test('should never capture on device/framework error lines (startup-noise guard)', async () => {
+        const h = makeHarness();
+        // Real lines from a contacts startup log (2026-07-28): benign framework errors that
+        // match isErrorLine but must not burn a capture.
+        h.capturer.onLine(makeLine('E/Gralloc4(14538): isSupported(1, 1, 56, 1, ...) failed with 5', { category: 'console' }));
+        await h.flush();
+        h.clock.now += 5000;
+        h.capturer.onLine(makeLine('E/Badge   (14538): Failed to initialize badge', { category: 'stdout' }));
+        await h.flush();
+        h.clock.now += 5000;
+        // The logcat feed is device output wholesale — even an app-tagged line there is skipped.
+        h.capturer.onLine(makeLine('07-28 21:50:35.847  1919  2024 W ActivityManager: Rescheduling restart of crashed service', { category: 'logcat' }));
+        await h.flush();
+        assert.strictEqual(h.store.saves.length, 0);
+    });
+
+    test('should still capture on flutter-tagged and untagged app error lines', async () => {
+        const h = makeHarness();
+        h.capturer.onLine(makeLine('I/flutter (14538): === debugException break — fix this error ===', { category: 'stdout' }));
+        await h.flush();
+        assert.strictEqual(h.store.saves.length, 1);
+    });
+
     test('should skip markers and non-error lines', async () => {
         const h = makeHarness();
         h.capturer.onLine(makeLine('Unhandled Exception: broke', { isMarker: true }));

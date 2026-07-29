@@ -73,6 +73,10 @@ const vmServiceBanner = /(?:VM Service|Observatory)[^\n]*?(?:available at|listen
  * banner still carries the endpoint. Keyed by log path so a later real event can overwrite.
  */
 export function recordVmServiceUriFromLogLine(text: string, logFsPath: string): boolean {
+    // indexOf fast-path: this runs per line during the pre-URI window, which includes the
+    // session-start logcat replay burst (hundreds of lines in one flush) — skip the regex
+    // unless the literal lead-in is present.
+    if (!text.includes('VM Service') && !text.includes('Observatory')) { return false; }
     const match = vmServiceBanner.exec(text);
     if (!match) { return false; }
     uriBySessionId.set(`log:${logFsPath}`, toVmServiceWsUri(match[1]));
