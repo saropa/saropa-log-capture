@@ -18,7 +18,7 @@ export function getSignalListStyles(): string {
     display: inline-block;
     font-size: 9px;
     font-weight: 700;
-    padding: 0 4px;
+    padding: 0 var(--space-1);
     border-radius: var(--radius-sm);
     line-height: 16px;
     vertical-align: middle;
@@ -200,7 +200,7 @@ export function getSignalListStyles(): string {
 .signal-margin-emoji {
     display: inline-block;
     width: 1.3em;
-    margin-right: 4px;
+    margin-right: var(--space-1);
     text-align: center;
     flex-shrink: 0;
 }

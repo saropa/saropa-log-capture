@@ -54,7 +54,7 @@ export function getOverlayStyles(): string {
     cursor: pointer;
     font-size: 16px;
     line-height: 1;
-    padding: 0 4px;
+    padding: 0 var(--space-1);
     border-radius: 2px;
 }
 .compress-suggest-dismiss:hover {
@@ -62,8 +62,8 @@ export function getOverlayStyles(): string {
     background: var(--vscode-toolbar-hoverBackground);
 }
 .session-details-inline {
-    margin-left: 8px;
-    padding-left: 8px;
+    margin-left: var(--space-2);
+    padding-left: var(--space-2);
     border-left: 1px solid var(--vscode-panel-border);
     min-width: 0;
     flex: 1;
@@ -74,7 +74,7 @@ export function getOverlayStyles(): string {
     font-size: var(--text-caption);
 }
 .session-perf-chip {
-    margin-left: 8px;
+    margin-left: var(--space-2);
     padding: 2px 6px;
     font-size: 10px;
     color: var(--vscode-textLink-foreground, #3794ff);
@@ -90,8 +90,8 @@ export function getOverlayStyles(): string {
     display: none;
     align-items: center;
     flex-wrap: wrap;
-    row-gap: 4px;
-    column-gap: 4px;
+    row-gap: var(--space-1);
+    column-gap: var(--space-1);
     padding: 2px 8px;
     background: var(--vscode-panel-background);
     border-bottom: 1px solid var(--vscode-panel-border);
@@ -102,7 +102,7 @@ export function getOverlayStyles(): string {
 #run-nav {
     display: none;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
 }
 #run-nav.visible { display: flex; }
 .nav-bar-sep {
@@ -144,7 +144,7 @@ export function getOverlayStyles(): string {
     color: var(--vscode-textLink-foreground, #3794ff);
     font-family: sans-serif;
     font-size: 10px;
-    padding: 0 4px;
+    padding: 0 var(--space-1);
     user-select: none;
 }
 .json-toggle:hover { color: var(--vscode-textLink-activeForeground, #3794ff); }
@@ -157,7 +157,7 @@ export function getOverlayStyles(): string {
 .json-expanded {
     display: block;
     margin: 4px 0 4px 16px;
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
     background: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.1));
     border-left: 2px solid var(--vscode-textBlockQuote-border, #007acc);
     font-size: 0.95em;

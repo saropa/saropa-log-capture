@@ -111,7 +111,7 @@ h2 {
     display: inline-block;
     min-width: 4ch;
     text-align: right;
-    margin-right: 8px;
+    margin-right: var(--space-2);
     color: var(--vscode-editorLineNumber-foreground);
     user-select: none;
 }

@@ -55,6 +55,7 @@ cspell:disable
 - Migrated hardcoded `border-radius` values to design token variables (`--radius-sm`, `--radius`, `--radius-pill`) across 45+ style files for consistent corner rounding
 - Migrated hardcoded `font-size` values to design token type scale (`--text-caption`, `--text-body`, `--text-h2`) across 48+ style files for consistent typography
 - Session comparison, collection, bug report, and keyboard shortcuts panels now load the design token layer — they can consume spacing, radius, type, and color tokens like the signal report already does
+- Migrated hardcoded `padding`, `margin`, and `gap` values to spacing tokens (`--space-1` through `--space-7`) across 59 style files — single-value, two-value, and three-value declarations that map to the 4 px scale
 
 ---
 

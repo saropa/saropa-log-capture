@@ -52,7 +52,7 @@ export function getTagStyles(): string {
     width: 100%;
     box-sizing: border-box;
     margin: 2px 0 6px;
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
     font-size: var(--text-caption);
     font-family: inherit;
     background: var(--vscode-input-background);
@@ -74,7 +74,7 @@ export function getTagStyles(): string {
 .source-tag-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: var(--space-1);
     padding: 4px 8px 6px;
     align-items: center;
 }
@@ -87,7 +87,7 @@ export function getTagStyles(): string {
 .source-tag-chip {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
     font-size: var(--text-caption);
     padding: 2px 8px;
     border-radius: 10px;
@@ -121,7 +121,7 @@ export function getTagStyles(): string {
 .source-tag-actions {
     display: flex;
     gap: 2px;
-    margin-right: 4px;
+    margin-right: var(--space-1);
 }
 .tag-action-btn {
     background: none;
@@ -129,7 +129,7 @@ export function getTagStyles(): string {
     color: var(--vscode-textLink-foreground, #3794ff);
     font-size: 10px;
     cursor: pointer;
-    padding: 0 4px;
+    padding: 0 var(--space-1);
 }
 .tag-action-btn:hover {
     text-decoration: underline;
@@ -187,7 +187,7 @@ export function getTagStyles(): string {
     line-height: 1;
     padding: 1px 6px;
     border-radius: var(--radius-sm);
-    margin-right: 4px;
+    margin-right: var(--space-1);
     white-space: nowrap;
     color: var(--tag-c);
     background: color-mix(in srgb, var(--tag-c) 14%, transparent);

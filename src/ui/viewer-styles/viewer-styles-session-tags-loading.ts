@@ -17,7 +17,7 @@ export function getSessionTagsLoadingStyles(): string {
 .session-tags-section .session-tag-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: var(--space-1);
     align-items: center;
     max-height: 4.8em;
     overflow-y: auto;
@@ -45,7 +45,7 @@ export function getSessionTagsLoadingStyles(): string {
 
 /* --- Empty / loading states --- */
 .session-empty {
-    padding: 16px 12px;
+    padding: var(--space-4) var(--space-3);
     font-size: 12px;
     color: var(--vscode-descriptionForeground);
     text-align: center;
@@ -81,8 +81,8 @@ export function getSessionTagsLoadingStyles(): string {
 .session-loading-shimmer {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-top: 4px;
+    gap: var(--space-2);
+    margin-top: var(--space-1);
 }
 
 .session-shimmer-line {
@@ -118,7 +118,7 @@ export function getSessionTagsLoadingStyles(): string {
     display: block;
     height: 10px;
     width: 60%;
-    margin-top: 4px;
+    margin-top: var(--space-1);
     border-radius: var(--radius-sm);
     background: var(--vscode-sideBar-background, #252526);
     position: relative;

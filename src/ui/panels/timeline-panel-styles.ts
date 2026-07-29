@@ -26,14 +26,14 @@ body { background: var(--vscode-editor-background); color: var(--vscode-editor-f
 .export-btn { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; padding: 4px 10px; border-radius: var(--radius-sm); cursor: pointer; font-size: var(--text-caption); }
 .export-btn:hover { background: var(--vscode-button-secondaryHoverBackground); }
 
-.time-scrubber { display: flex; align-items: center; gap: 10px; padding: 8px 16px; border-bottom: 1px solid var(--vscode-panel-border); flex-shrink: 0; }
+.time-scrubber { display: flex; align-items: center; gap: 10px; padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--vscode-panel-border); flex-shrink: 0; }
 .time-label { font-family: var(--vscode-editor-font-family, monospace); font-size: var(--text-caption); color: var(--vscode-descriptionForeground); min-width: 60px; }
 .time-label.end { text-align: right; }
 .scrubber-track { flex: 1; height: 20px; background: var(--vscode-input-background); border-radius: 4px; position: relative; cursor: pointer; }
 .scrubber-range { position: absolute; top: 4px; bottom: 4px; background: var(--vscode-button-background); border-radius: 2px; opacity: 0.5; }
 .scrubber-handle { position: absolute; top: 2px; width: 10px; height: 16px; background: var(--vscode-button-background); border-radius: var(--radius-sm); cursor: ew-resize; transform: translateX(-50%); }
 .scrubber-handle:hover { background: var(--vscode-button-hoverBackground); }
-.zoom-controls { display: flex; gap: 4px; }
+.zoom-controls { display: flex; gap: var(--space-1); }
 .zoom-btn { width: 24px; height: 24px; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; border-radius: var(--radius-sm); cursor: pointer; font-size: 14px; line-height: 1; }
 .zoom-btn:hover { background: var(--vscode-button-secondaryHoverBackground); }
 
@@ -45,7 +45,7 @@ body { background: var(--vscode-editor-background); color: var(--vscode-editor-f
 .timeline-container { flex: 1; overflow-y: auto; overflow-x: hidden; }
 .virtual-spacer { width: 100%; }
 
-.event-row { display: flex; align-items: flex-start; padding: 4px 16px; gap: 8px; height: 28px; cursor: pointer; transition: background 0.1s; border-bottom: 1px solid transparent; }
+.event-row { display: flex; align-items: flex-start; padding: var(--space-1) var(--space-4); gap: var(--space-2); height: 28px; cursor: pointer; transition: background 0.1s; border-bottom: 1px solid transparent; }
 .event-row:hover { background: var(--vscode-list-hoverBackground); }
 .event-row.selected { background: var(--vscode-list-activeSelectionBackground); color: var(--vscode-list-activeSelectionForeground); }
 .event-time { width: 65px; flex-shrink: 0; font-family: var(--vscode-editor-font-family, monospace); font-size: var(--text-caption); color: var(--vscode-descriptionForeground); text-align: right; }
@@ -59,25 +59,25 @@ body { background: var(--vscode-editor-background); color: var(--vscode-editor-f
 .level-error { background: color-mix(in srgb, var(--vscode-editorError-foreground, var(--accent-critical)) 8%, transparent); }
 .level-warning { background: color-mix(in srgb, var(--vscode-editorWarning-foreground, var(--accent-warning)) 5%, transparent); }
 
-.correlation-badge { color: var(--vscode-textLink-foreground); cursor: pointer; margin-left: 4px; }
+.correlation-badge { color: var(--vscode-textLink-foreground); cursor: pointer; margin-left: var(--space-1); }
 .correlation-badge:hover { text-decoration: underline; }
 .event-row.correlation-highlight { background: var(--vscode-list-hoverBackground); outline: 1px solid var(--vscode-focusBorder); }
 
-.timeline-correlations { padding: 8px 16px; border-bottom: 1px solid var(--vscode-panel-border); background: var(--vscode-sideBar-background); flex-shrink: 0; }
+.timeline-correlations { padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--vscode-panel-border); background: var(--vscode-sideBar-background); flex-shrink: 0; }
 .timeline-correlations .cp-header { font-weight: 600; margin-bottom: 6px; font-size: 12px; }
-.timeline-correlations .cp-list { display: flex; flex-direction: column; gap: 8px; }
+.timeline-correlations .cp-list { display: flex; flex-direction: column; gap: var(--space-2); }
 .timeline-correlations .cp-item { border: 1px solid var(--vscode-panel-border); border-radius: 4px; padding: 6px 10px; }
-.timeline-correlations .cp-desc { font-size: var(--text-caption); margin-bottom: 4px; font-weight: 500; }
+.timeline-correlations .cp-desc { font-size: var(--text-caption); margin-bottom: var(--space-1); font-weight: 500; }
 .timeline-correlations .cp-events { margin: 0; padding-left: 18px; font-size: var(--text-caption); }
 .timeline-correlations .cp-events li { margin: 2px 0; list-style: disc; }
-.timeline-correlations .cp-jump { background: none; border: none; color: var(--vscode-textLink-foreground); cursor: pointer; padding: 0; margin-right: 4px; text-decoration: underline; font-size: inherit; transition: color 0.12s ease; }
+.timeline-correlations .cp-jump { background: none; border: none; color: var(--vscode-textLink-foreground); cursor: pointer; padding: 0; margin-right: var(--space-1); text-decoration: underline; font-size: inherit; transition: color 0.12s ease; }
 .timeline-correlations .cp-jump:hover { color: var(--vscode-textLink-activeForeground); }
 .timeline-correlations .cp-high { border-left: 3px solid var(--vscode-testing-iconPassed); }
 .timeline-correlations .cp-medium { border-left: 3px solid var(--vscode-editorWarning-foreground); }
 .timeline-correlations .cp-low { border-left: 3px solid var(--vscode-descriptionForeground); }
 
 .empty-state, .loading, .error-state { padding: 32px 16px; text-align: center; color: var(--vscode-disabledForeground); font-style: italic; }
-.loading::before { content: ''; display: inline-block; width: 16px; height: 16px; border: 2px solid var(--vscode-progressBar-background); border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
+.loading::before { content: ''; display: inline-block; width: 16px; height: 16px; border: 2px solid var(--vscode-progressBar-background); border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: var(--space-2); vertical-align: middle; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .error-state { color: var(--vscode-editorError-foreground); }
 

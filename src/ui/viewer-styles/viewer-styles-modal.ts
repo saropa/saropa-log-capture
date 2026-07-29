@@ -45,7 +45,7 @@ export function getModalStyles(): string {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
+    padding: var(--space-3) var(--space-4);
     border-bottom: 1px solid var(--vscode-panel-border);
     font-weight: 500;
     font-size: var(--text-body);
@@ -68,7 +68,7 @@ export function getModalStyles(): string {
 }
 
 .modal-body {
-    padding: 16px;
+    padding: var(--space-4);
     overflow-y: auto;
     max-height: 60vh;
 }
@@ -77,7 +77,7 @@ export function getModalStyles(): string {
 .export-accordion {
     border: 1px solid var(--vscode-panel-border);
     border-radius: var(--radius-sm);
-    margin-bottom: 8px;
+    margin-bottom: var(--space-2);
 }
 .export-accordion-header {
     display: flex;
@@ -119,14 +119,14 @@ export function getModalStyles(): string {
     max-height: 0;
     opacity: 0;
     overflow: hidden;
-    padding: 0 8px;
+    padding: 0 var(--space-2);
     transition: max-height 0.2s ease, opacity 0.2s ease,
                 padding-top 0.15s ease, padding-bottom 0.15s ease;
 }
 .export-accordion.expanded .export-accordion-body {
     max-height: 300px;
     opacity: 1;
-    padding: 4px 8px 8px;
+    padding: var(--space-1) var(--space-2) var(--space-2);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -135,13 +135,13 @@ export function getModalStyles(): string {
 }
 
 .export-section {
-    margin-bottom: 16px;
+    margin-bottom: var(--space-4);
 }
 .export-section h4 {
     font-size: var(--text-caption);
     font-weight: 600;
     color: var(--vscode-descriptionForeground);
-    margin-bottom: 8px;
+    margin-bottom: var(--space-2);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -160,8 +160,8 @@ export function getModalStyles(): string {
 .export-checkbox {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 4px 0;
+    gap: var(--space-2);
+    padding: var(--space-1) 0;
     cursor: pointer;
     font-size: 12px;
 }
@@ -175,7 +175,7 @@ export function getModalStyles(): string {
 #export-preview {
     background: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.1));
     border-left: 2px solid var(--vscode-textBlockQuote-border, #007acc);
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     border-radius: 2px;
     font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
@@ -189,8 +189,8 @@ export function getModalStyles(): string {
 .modal-footer {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px 16px;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
     border-top: 1px solid var(--vscode-panel-border);
 }
 .modal-footer-spacer { flex: 1; }
@@ -225,9 +225,9 @@ export function getModalStyles(): string {
 .log-file-modal-body {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding-top: 4px;
-    padding-bottom: 16px;
+    gap: var(--space-2);
+    padding-top: var(--space-1);
+    padding-bottom: var(--space-4);
 }
 .log-file-modal-btn {
     width: 100%;
@@ -242,7 +242,7 @@ export function getModalStyles(): string {
     background: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.1));
     padding: 6px 10px;
     border-radius: 2px;
-    margin-bottom: 4px;
+    margin-bottom: var(--space-1);
     word-break: break-all;
     user-select: text;
 }
@@ -252,7 +252,7 @@ export function getModalStyles(): string {
     border: none;
     border-top: 1px solid var(--vscode-panel-border);
     opacity: 0.5;
-    margin: 4px 0;
+    margin: var(--space-1) 0;
 }
 
 /* Files dialog (cumulative cross-session feed, plan 057). Reuses .modal + .modal-btn;
@@ -265,8 +265,8 @@ export function getModalStyles(): string {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    padding-top: 4px;
-    padding-bottom: 12px;
+    padding-top: var(--space-1);
+    padding-bottom: var(--space-3);
     max-height: 50vh;
     overflow-y: auto;
 }

@@ -105,7 +105,7 @@ body.search-match-options-always .session-search-toggles-inline {
     overflow: hidden;
     text-overflow: ellipsis;
     padding: 3px 8px;
-    margin: 0 4px;
+    margin: 0 var(--space-1);
     border-radius: 10px;
     user-select: none;
     font-weight: 600;
@@ -263,7 +263,7 @@ mark {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
     font-size: var(--text-caption);
     line-height: 1.4;
     color: var(--vscode-notificationsInfoIcon-foreground, var(--vscode-foreground));

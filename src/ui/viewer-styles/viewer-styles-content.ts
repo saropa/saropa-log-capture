@@ -180,7 +180,7 @@ export function getContentStyles(): string {
     font-size: 0.95em;
 }
 /* ANR pattern warning badge on blocking threads */
-.anr-badge { color: var(--vscode-editorWarning-foreground, #fc0); margin-right: 4px; }
+.anr-badge { color: var(--vscode-editorWarning-foreground, #fc0); margin-right: var(--space-1); }
 .anr-warning { color: var(--vscode-editorWarning-foreground, #fc0); }
 
 /* Correlation badge: line is part of a detected correlation */
@@ -264,7 +264,7 @@ export function getContentStyles(): string {
 .stack-dedup-badge {
     font-size: 10px;
     opacity: 0.7;
-    margin-left: 4px;
+    margin-left: var(--space-1);
 }
 /* Consecutive duplicate lines collapsed in compress mode (same styling family as stack dedup). */
 .compress-dup-badge {
@@ -314,10 +314,10 @@ export function getContentStyles(): string {
    Adds configurable margin before/after log sections for readability.
    =================================================================== */
 .spacing-before {
-    margin-top: 12px;
+    margin-top: var(--space-3);
 }
 .spacing-after {
-    margin-bottom: 12px;
+    margin-bottom: var(--space-3);
 }
 
 `;

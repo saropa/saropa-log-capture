@@ -13,7 +13,7 @@ export function getSessionListStyles(): string {
     cursor: pointer;
     display: flex;
     align-items: flex-start;
-    gap: 8px;
+    gap: var(--space-2);
     border-bottom: 1px solid var(--vscode-panel-border);
 }
 
@@ -38,7 +38,7 @@ export function getSessionListStyles(): string {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    margin-left: 4px;
+    margin-left: var(--space-1);
     flex-shrink: 0;
     vertical-align: middle;
     transition: opacity 0.15s ease;
@@ -73,7 +73,7 @@ export function getSessionListStyles(): string {
 
 .session-item-perf {
     display: inline-flex;
-    margin-left: 4px;
+    margin-left: var(--space-1);
     vertical-align: middle;
     color: var(--vscode-charts-purple, #b267e6);
     font-size: 12px;
@@ -82,7 +82,7 @@ export function getSessionListStyles(): string {
 
 .session-item-loaded {
     display: inline-flex;
-    margin-left: 4px;
+    margin-left: var(--space-1);
     vertical-align: middle;
     color: var(--vscode-descriptionForeground);
     font-size: 12px;
@@ -151,7 +151,7 @@ export function getSessionListStyles(): string {
     user-select: none;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
 }
 .session-day-heading:hover {
     background: var(--vscode-list-hoverBackground);
@@ -192,7 +192,7 @@ export function getSessionListStyles(): string {
 .session-list-pagination {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
     padding: 6px 12px;
     border-top: 1px solid var(--vscode-panel-border);
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
@@ -208,7 +208,7 @@ export function getSessionListStyles(): string {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
     font-size: 12px;
     border: 1px solid var(--vscode-button-border, transparent);
     background: var(--vscode-button-secondaryBackground);
@@ -226,7 +226,7 @@ export function getSessionListStyles(): string {
 
 /* --- Filtered-empty hint (shown when filters produce zero results) --- */
 .session-empty-filtered {
-    padding: 16px 12px;
+    padding: var(--space-4) var(--space-3);
     font-size: 12px;
     color: var(--vscode-descriptionForeground);
     text-align: center;
@@ -245,7 +245,7 @@ export function getSessionListStyles(): string {
     background: var(--vscode-menu-background, var(--vscode-editor-background));
     border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border));
     border-radius: 4px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-    padding: 4px 0; min-width: 180px; overflow: visible;
+    padding: var(--space-1) 0; min-width: 180px; overflow: visible;
 }
 .session-context-menu.visible { display: block; }
 /* Flip submenu to open leftward when the parent menu is near the right edge of the viewport.

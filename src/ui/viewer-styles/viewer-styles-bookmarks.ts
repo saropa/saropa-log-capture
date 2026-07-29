@@ -30,7 +30,7 @@ export function getBookmarkPanelStyles(): string {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     font-weight: 600;
     font-size: 12px;
     border-bottom: 1px solid var(--vscode-panel-border);
@@ -39,7 +39,7 @@ export function getBookmarkPanelStyles(): string {
 .bookmark-panel-actions {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
 }
 
 .bookmark-panel-action {
@@ -76,7 +76,7 @@ export function getBookmarkPanelStyles(): string {
 .bookmark-input-wrapper {
     display: flex;
     align-items: center;
-    margin: 8px 12px;
+    margin: var(--space-2) var(--space-3);
     border: 1px solid var(--vscode-input-border, transparent);
     border-radius: 4px;
     background: var(--vscode-input-background, #1e1e1e);
@@ -93,7 +93,7 @@ export function getBookmarkPanelStyles(): string {
     border: none;
     color: var(--vscode-input-foreground, inherit);
     font-size: 12px;
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
     outline: none;
     min-width: 0;
 }
@@ -218,7 +218,7 @@ export function getBookmarkPanelStyles(): string {
 
 /* --- Empty state --- */
 .bookmark-empty {
-    padding: 16px 12px;
+    padding: var(--space-4) var(--space-3);
     font-size: 12px;
     color: var(--vscode-descriptionForeground);
     text-align: center;

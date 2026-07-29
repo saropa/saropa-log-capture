@@ -9,7 +9,7 @@ export function getErrorRateTabStyles(): string {
 
 /* --- Error Rate summary --- */
 .pp-er-summary {
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     font-size: var(--text-caption);
     border-bottom: 1px solid var(--vscode-panel-border);
 }
@@ -21,7 +21,7 @@ export function getErrorRateTabStyles(): string {
 
 /* --- Error Rate chart --- */
 .pp-er-chart-container {
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
 }
 
 .pp-er-chart { width: 100%; height: 120px; }
