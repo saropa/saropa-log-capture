@@ -52,7 +52,7 @@ export interface ScreenshotCapturerDeps {
 }
 
 /** Outcome of a manual capture, mapped to user-facing toasts by the command layer. */
-export type ManualCaptureOutcome = 'saved' | 'disabled' | 'noVmService' | 'capFull' | 'failed';
+export type ManualCaptureOutcome = 'saved' | 'disabled' | 'noVmService' | 'capFull' | 'busy' | 'failed';
 
 /** One admitted capture, bundled so captureAndSave stays within the parameter limit. */
 interface CaptureRequest {
@@ -95,12 +95,16 @@ export class ScreenshotCapturer {
 
     /**
      * Manual capture command path: no dedup, no cooldown — an explicit user action always
-     * tries. Still refused when the feature toggle is off or no VM Service is live.
+     * tries. Still refused when the feature toggle is off, no VM Service is live, or a
+     * capture is already in flight (the in-flight guard must hold on EVERY path: two
+     * concurrent captureAndSave calls would race ScreenshotStore's read-modify-write
+     * sequence numbering and could collide filenames).
      */
     async captureManual(logFsPath: string, logLine: number): Promise<ManualCaptureOutcome> {
         if (!this.deps.isEnabled()) { return 'disabled'; }
         const wsUri = this.deps.getVmServiceWsUri();
         if (!wsUri) { return 'noVmService'; }
+        if (this.inFlight) { return 'busy'; }
         const { maxPerLog } = this.deps.triggerSettings();
         try {
             const saved = await this.captureAndSave({ wsUri, logFsPath, trigger: 'manual', text: '', logLine, maxPerLog });

@@ -223,6 +223,7 @@ export const stringsA: Record<string, string> = {
     'msg.screenshotDisabled': 'Screenshots are turned off — enable them in Options → Integrations.',
     'msg.screenshotNoVmService': 'No Flutter debug session with a VM Service is running.',
     'msg.screenshotCapFull': 'Screenshot limit for this log reached — older captures are kept.',
+    'msg.screenshotBusy': 'A screenshot capture is already in progress.',
     'msg.screenshotFailed': 'Screenshot capture failed — see the Saropa Log Capture output channel.',
     'msg.screenshotNoLog': 'No active capture log to attach the screenshot to.',
 
