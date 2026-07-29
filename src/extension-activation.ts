@@ -281,6 +281,9 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
                 trigger: result.entry.trigger,
                 timestamp: result.entry.timestamp,
                 logLine: result.entry.logLine,
+                // The matched line text rides along so the webview can text-verify the badge row
+                // (logLine is a counted-lines hint, not a file coordinate).
+                text: result.entry.text,
                 totalForLog: result.totalForLog,
             });
         },

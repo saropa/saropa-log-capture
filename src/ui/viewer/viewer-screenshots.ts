@@ -38,20 +38,40 @@ var screenshotSessionCount = 0;
 /* file whose image the open popover is waiting for/showing (null = popover closed). */
 var screenshotPopoverFile = null;
 
-/* Map a 1-based source line number to its allLines index. Walks backwards because live
-   captures anchor near the tail. Several rendered rows can share a sourceLineNo
-   (stack frames, continuation rows); prefer a plain 'line' row so the badge lands on
-   the message the trigger actually matched, falling back to the first non-marker hit. */
-function screenshotFindIdx(logLine) {
-    if (typeof allLines === 'undefined' || !logLine) return -1;
-    var fallback = -1;
+/* True when a row's rendered html plausibly contains the capture's trigger text. The
+   token is the text's first 30 chars minus HTML-special chars (the html is escaped +
+   linkified, so <>&" would never match literally). Empty text (manual captures) matches. */
+function screenshotRowTextMatches(item, text) {
+    if (!text) return true;
+    var token = String(text).replace(/[<>&"']/g, ' ').trim().slice(0, 30).trim();
+    return token.length < 4 || (item.html || '').indexOf(token) >= 0;
+}
+
+/* Map a capture to its allLines index. logLine counts CAPTURED lines (session-cumulative
+   across splits, header uncounted) so it is a HINT: prefer a 'line'-typed row at that
+   sourceLineNo whose html contains the trigger text; degrade through weaker matches, and
+   when the number misses entirely, fall back to a text search from the tail (mirrors the
+   host-side locateLine pattern). Walks backwards because live captures anchor near the tail. */
+function screenshotFindIdx(logLine, text) {
+    if (typeof allLines === 'undefined') return -1;
+    /* A token under 4 chars matches everything — too weak to drive the text-search fallback. */
+    var token = text ? String(text).replace(/[<>&"']/g, ' ').trim().slice(0, 30).trim() : '';
+    var strongToken = token.length >= 4;
+    var lineHit = -1, anyHit = -1, textHit = -1;
     for (var i = allLines.length - 1; i >= 0; i--) {
         var it = allLines[i];
-        if (!it || it.type === 'marker' || it.sourceLineNo !== logLine) continue;
-        if (it.type === 'line') return i;
-        if (fallback < 0) fallback = i;
+        if (!it || it.type === 'marker') continue;
+        if (logLine && it.sourceLineNo === logLine) {
+            if (it.type === 'line' && screenshotRowTextMatches(it, text)) return i;
+            if (it.type === 'line' && lineHit < 0) lineHit = i;
+            if (anyHit < 0) anyHit = i;
+        } else if (strongToken && textHit < 0 && it.type === 'line' && (it.html || '').indexOf(token) >= 0) {
+            textHit = i;
+        }
     }
-    return fallback;
+    if (lineHit >= 0) return lineHit;
+    if (anyHit >= 0) return anyHit;
+    return textHit;
 }
 
 /* Rebuild the badge map from a full sidecar list (sent on load / request). */
@@ -61,8 +81,8 @@ function screenshotApplyList(msg) {
     screenshotSessionCount = list.length;
     for (var i = 0; i < list.length; i++) {
         var e = list[i];
-        if (!e || !e.logLine) continue;
-        var idx = screenshotFindIdx(e.logLine);
+        if (!e) continue;
+        var idx = screenshotFindIdx(e.logLine, e.text);
         if (idx >= 0) screenshotByIdx[idx] = e;
     }
     screenshotSyncFooter();
@@ -73,9 +93,9 @@ function screenshotApplyList(msg) {
 function screenshotHandleCaptured(msg) {
     if (!msg) return;
     if (typeof msg.totalForLog === 'number') screenshotSessionCount = msg.totalForLog;
-    var idx = screenshotFindIdx(msg.logLine);
+    var idx = screenshotFindIdx(msg.logLine, msg.text);
     if (idx >= 0) {
-        screenshotByIdx[idx] = { file: msg.file, trigger: msg.trigger, timestamp: msg.timestamp, logLine: msg.logLine };
+        screenshotByIdx[idx] = { file: msg.file, trigger: msg.trigger, timestamp: msg.timestamp, logLine: msg.logLine, text: msg.text };
         if (typeof renderViewport === 'function') renderViewport(true);
     }
     screenshotSyncFooter();
