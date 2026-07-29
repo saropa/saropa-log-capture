@@ -20,7 +20,7 @@ export function getSearchHistoryStyles(): string {
 }
 .search-history-item {
     padding: 3px 8px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     cursor: pointer;
     color: var(--vscode-descriptionForeground);
     white-space: nowrap;

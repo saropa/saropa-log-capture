@@ -19,7 +19,7 @@ export function getSessionNewerStyles(): string {
     align-items: center;
     gap: 4px;
     padding: 4px 12px 4px 22px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     font-weight: 500;
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
@@ -92,9 +92,9 @@ export function getSessionNewerStyles(): string {
     border: 1px solid var(--vscode-button-border, transparent);
     color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
     padding: 2px 8px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    font-size: 11px;
+    font-size: var(--text-caption);
     font-family: inherit;
 }
 .session-newer-banner-action .codicon {
@@ -128,7 +128,7 @@ export function getSessionNewerStyles(): string {
 /* The status bar is permanent, so its filename must yield width to the session metadata rather
    than stretch across the bar; the details line takes the slack and ellipsizes. */
 .viewer-newer-banner .session-newer-banner-text { flex: 0 1 auto; }
-.viewer-newer-banner .session-details-inline { font-size: 11px; opacity: 0.85; }
+.viewer-newer-banner .session-details-inline { font-size: var(--text-caption); opacity: 0.85; }
 
 /* --- Unified banner: kebab overflow + close (plan 109) --- */
 /* The ⋮ and × are icon-only chrome, not actions — no button fill, or the bar reads as three
@@ -171,7 +171,7 @@ export function getSessionNewerStyles(): string {
     padding: 5px 10px;
     background: transparent;
     border: none;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     color: var(--vscode-menu-foreground, var(--vscode-foreground));
     font-size: 12px;
     font-family: inherit;
@@ -192,8 +192,8 @@ export function getSessionNewerStyles(): string {
     gap: 4px;
     padding: 1px 6px;
     margin-right: 6px;
-    border-radius: 3px;
-    font-size: 11px;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-caption);
     color: var(--vscode-editorWarning-foreground, var(--vscode-charts-yellow));
     cursor: pointer;
     user-select: none;
@@ -202,7 +202,7 @@ export function getSessionNewerStyles(): string {
 .log-staleness:hover {
     background: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground));
 }
-.log-staleness .codicon { font-size: 13px; }
+.log-staleness .codicon { font-size: var(--text-body); }
 
 /* --- Per-row unread dot ---
  * Distinct from the existing red/orange update-dot (\`updatedInLastMinute\` /
@@ -234,7 +234,7 @@ export function getSessionNewerStyles(): string {
     align-items: center;
     gap: 5px;
     padding: 6px 12px 4px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     font-weight: 600;
     color: var(--vscode-textLink-foreground, #3794ff);
     border-left: 2px solid var(--vscode-textLink-foreground, #3794ff);

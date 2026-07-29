@@ -142,7 +142,7 @@ body {
 .db-fp-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 11px;
+    font-size: var(--text-caption);
 }
 .db-fp-table th, .db-fp-table td {
     text-align: left;
@@ -159,7 +159,7 @@ body {
 .db-kind {
     display: inline-block;
     padding: 1px 6px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
@@ -180,6 +180,6 @@ body {
     flex-shrink: 0;
 }
 .db-jump-cell { white-space: nowrap; }
-.db-jump { padding: 2px 8px; font-size: 11px; }
+.db-jump { padding: 2px 8px; font-size: var(--text-caption); }
 `;
 }

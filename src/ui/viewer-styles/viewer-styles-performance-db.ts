@@ -3,7 +3,7 @@ export function getPerformanceDbTabStyles(): string {
     return /* css */ `
 
 /* --- Database tab (Drift rollup + timeline) --- */
-.pp-db-view { padding: 8px 12px; font-size: 11px; }
+.pp-db-view { padding: 8px 12px; font-size: var(--text-caption); }
 .pp-db-empty, .pp-db-note {
     color: var(--vscode-descriptionForeground);
     margin: 8px 0;
@@ -12,7 +12,7 @@ export function getPerformanceDbTabStyles(): string {
 .pp-db-drift-row {
     margin-bottom: 10px;
     padding: 8px 10px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     line-height: 1.45;
     background: var(--vscode-textBlockQuote-background, var(--surface-3));
     border-left: 3px solid var(--vscode-debugConsole-infoForeground, var(--accent-info));
@@ -27,7 +27,7 @@ export function getPerformanceDbTabStyles(): string {
     border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
     background: var(--vscode-button-secondaryBackground, transparent);
     color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
 }
 .pp-db-drift-open:hover {
     background: var(--vscode-button-secondaryHoverBackground, var(--vscode-toolbar-hoverBackground));
@@ -50,7 +50,7 @@ export function getPerformanceDbTabStyles(): string {
     border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
     background: var(--vscode-button-secondaryBackground, transparent);
     color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
 }
 .pp-db-histo {
     font-size: 10px;

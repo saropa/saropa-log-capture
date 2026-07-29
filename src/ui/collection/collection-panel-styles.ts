@@ -22,13 +22,13 @@ body {
 .header-left { display: flex; flex-direction: column; gap: 2px; }
 .title { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
 .title-icon { opacity: 0.8; }
-.subtitle { font-size: 11px; color: var(--vscode-descriptionForeground); }
+.subtitle { font-size: var(--text-caption); color: var(--vscode-descriptionForeground); }
 .header-right { display: flex; align-items: center; gap: 6px; }
 .btn {
     background: var(--vscode-button-background);
     color: var(--vscode-button-foreground);
-    border: none; border-radius: 3px;
-    padding: 4px 10px; cursor: pointer; font-size: 11px;
+    border: none; border-radius: var(--radius-sm);
+    padding: 4px 10px; cursor: pointer; font-size: var(--text-caption);
     display: inline-flex; align-items: center; gap: 4px;
 }
 .btn:hover { background: var(--vscode-button-hoverBackground); }
@@ -40,7 +40,7 @@ body {
 .close-btn {
     background: none; border: none; cursor: pointer;
     color: var(--vscode-icon-foreground); font-size: 16px;
-    padding: 4px; border-radius: 3px;
+    padding: 4px; border-radius: var(--radius-sm);
 }
 .close-btn:hover { background: var(--vscode-toolbar-hoverBackground); }
 
@@ -63,7 +63,7 @@ body {
 .sources-list { display: flex; flex-direction: column; gap: 4px; }
 .source-item {
     display: flex; align-items: center; gap: 8px;
-    padding: 6px 8px; border-radius: 3px; cursor: pointer;
+    padding: 6px 8px; border-radius: var(--radius-sm); cursor: pointer;
     border: 1px solid transparent;
 }
 .source-item:hover {
@@ -84,7 +84,7 @@ body {
 .unpin-btn {
     background: none; border: none; cursor: pointer;
     color: var(--vscode-icon-foreground); font-size: 14px;
-    padding: 2px 4px; border-radius: 3px; opacity: 0;
+    padding: 2px 4px; border-radius: var(--radius-sm); opacity: 0;
 }
 .source-item:hover .unpin-btn { opacity: 1; }
 .unpin-btn:hover { background: var(--vscode-toolbar-hoverBackground); color: var(--vscode-errorForeground); }
@@ -108,13 +108,13 @@ body {
     flex: 1; background: none; border: none; outline: none;
     color: var(--vscode-input-foreground);
     font-family: var(--vscode-editor-font-family, monospace);
-    font-size: 13px;
+    font-size: var(--text-body);
 }
 .search-input::placeholder { color: var(--vscode-input-placeholderForeground); }
 .search-history-btn, .search-options-btn, .search-clear {
     background: none; border: none; cursor: pointer;
     color: var(--vscode-icon-foreground); font-size: 14px;
-    padding: 2px 4px; border-radius: 3px;
+    padding: 2px 4px; border-radius: var(--radius-sm);
 }
 .search-history-btn:hover, .search-options-btn:hover, .search-clear:hover {
     background: var(--vscode-toolbar-hoverBackground);
@@ -137,7 +137,7 @@ body {
     padding: 6px 12px; cursor: pointer;
     border-top: 1px solid var(--vscode-dropdown-border);
     color: var(--vscode-descriptionForeground);
-    font-size: 11px;
+    font-size: var(--text-caption);
 }
 .history-clear:hover { background: var(--vscode-list-hoverBackground); }
 .history-empty {
@@ -150,7 +150,7 @@ body {
 }
 .search-option {
     display: flex; align-items: center; gap: 6px;
-    font-size: 11px; color: var(--vscode-descriptionForeground);
+    font-size: var(--text-caption); color: var(--vscode-descriptionForeground);
     cursor: pointer;
 }
 .search-option input[type="checkbox"] { cursor: pointer; }
@@ -159,7 +159,7 @@ body {
     background: var(--vscode-input-background);
     color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
 }
 .search-progress {
     display: flex; align-items: center; gap: 8px; padding: 8px 0;
@@ -172,7 +172,7 @@ body {
     height: 100%; background: var(--vscode-progressBar-background);
     width: 0%; transition: width 0.15s ease-out;
 }
-.progress-text { font-size: 11px; color: var(--vscode-descriptionForeground); }
+.progress-text { font-size: var(--text-caption); color: var(--vscode-descriptionForeground); }
 .hidden { display: none !important; }
 
 .results-section {
@@ -180,7 +180,7 @@ body {
     overflow-y: auto;
 }
 .results-header {
-    font-size: 11px; color: var(--vscode-descriptionForeground);
+    font-size: var(--text-caption); color: var(--vscode-descriptionForeground);
     margin-bottom: 8px; padding-top: 8px;
 }
 .search-time { opacity: 0.7; }
@@ -191,7 +191,7 @@ body {
 }
 .result-group { margin-bottom: 12px; }
 .result-group-header {
-    font-size: 11px; font-weight: 600;
+    font-size: var(--text-caption); font-weight: 600;
     padding: 4px 0; display: flex; align-items: center; gap: 6px;
 }
 .result-group-name { flex-shrink: 0; }
@@ -200,12 +200,12 @@ body {
     font-size: 9px; padding: 1px 4px;
     background: var(--vscode-badge-background);
     color: var(--vscode-badge-foreground);
-    border-radius: 3px; text-transform: uppercase;
+    border-radius: var(--radius-sm); text-transform: uppercase;
 }
 .result-group-warning { margin-left: 4px; cursor: help; }
 .result-context {
     padding: 2px 8px 2px 20px;
-    cursor: pointer; border-radius: 3px;
+    cursor: pointer; border-radius: var(--radius-sm);
     font-family: var(--vscode-editor-font-family, monospace);
     font-size: 12px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -215,7 +215,7 @@ body {
 .result-context .context-line { font-style: italic; }
 .result-item {
     padding: 4px 8px 4px 20px;
-    cursor: pointer; border-radius: 3px;
+    cursor: pointer; border-radius: var(--radius-sm);
     font-family: var(--vscode-editor-font-family, monospace);
     font-size: 12px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -228,7 +228,7 @@ body {
 .result-match { background: var(--vscode-editor-findMatchHighlightBackground); }
 .result-truncated {
     padding: 4px 20px;
-    font-size: 11px; font-style: italic;
+    font-size: var(--text-caption); font-style: italic;
     color: var(--vscode-descriptionForeground);
 }
 .source-warning { margin-right: 4px; }
@@ -270,6 +270,6 @@ body {
 }
 .no-collection-icon { font-size: 48px; opacity: 0.3; margin-bottom: 16px; }
 .no-collection-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: var(--vscode-foreground); }
-.no-collection-text { font-size: 13px; margin-bottom: 16px; max-width: 280px; }
+.no-collection-text { font-size: var(--text-body); margin-bottom: 16px; max-width: 280px; }
 `;
 }

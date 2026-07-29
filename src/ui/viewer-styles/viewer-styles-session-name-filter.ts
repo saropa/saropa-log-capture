@@ -17,7 +17,7 @@ export function getSessionNameFilterStyles(): string {
     padding: 4px 12px;
     background: var(--vscode-editorInfo-background, rgba(55, 148, 255, 0.1));
     border-bottom: 1px solid var(--vscode-panel-border);
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-foreground);
 }
 .session-name-filter-label {
@@ -78,8 +78,8 @@ export function getSessionNameFilterStyles(): string {
     color: var(--vscode-textLink-foreground);
     cursor: pointer;
     padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 11px;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-caption);
     flex-shrink: 0;
 }
 .session-name-filter-clear:hover {
