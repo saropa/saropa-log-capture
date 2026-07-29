@@ -60,6 +60,26 @@ export function clearVmServiceUris(): void {
 }
 
 /**
+ * Flutter's Debug Console banner: "A Dart VM Service on <device> is available at:
+ * http://127.0.0.1:PORT/TOKEN=/". Kept loose on the lead-in ("Observatory" on very old
+ * SDKs) but strict on the URL shape so ordinary log text can never register a bogus URI.
+ */
+const vmServiceBanner = /(?:VM Service|Observatory)[^\n]*?(?:available at|listening on):?\s*(https?:\/\/[\w.:[\]-]+\/[\w=+/-]*\/?)/;
+
+/**
+ * Fallback URI discovery from captured output (called per line ONLY while no URI is known —
+ * see the wiring). The `dart.debuggerUris` custom event is the primary source, but its name
+ * is Dart-Code convention, not spec; if an adapter version renames or drops it, the console
+ * banner still carries the endpoint. Keyed by log path so a later real event can overwrite.
+ */
+export function recordVmServiceUriFromLogLine(text: string, logFsPath: string): boolean {
+    const match = vmServiceBanner.exec(text);
+    if (!match) { return false; }
+    uriBySessionId.set(`log:${logFsPath}`, toVmServiceWsUri(match[1]));
+    return true;
+}
+
+/**
  * Wire the VM Service URI registry to the debug lifecycle. Registered once at activation;
  * both listeners land in `context.subscriptions` for disposal.
  */
@@ -72,6 +92,14 @@ export function registerVmServiceUriTracking(context: vscode.ExtensionContext): 
                 recordVmServiceUri(e.session.id, body.vmServiceUri);
             }
         }),
-        vscode.debug.onDidTerminateDebugSession((session) => { forgetVmServiceUri(session.id); }),
+        vscode.debug.onDidTerminateDebugSession((session) => {
+            forgetVmServiceUri(session.id);
+            // Log-derived (banner) entries have no session id to correlate on terminate. Drop
+            // them ALL when any session ends: a stale URI (dead socket per capture) is worse
+            // than a missing one — the banner re-registers on the next run's first lines.
+            for (const key of [...uriBySessionId.keys()]) {
+                if (key.startsWith('log:')) { uriBySessionId.delete(key); }
+            }
+        }),
     );
 }

@@ -6,6 +6,7 @@
 import { escapeHtml } from '../../modules/capture/ansi';
 import { t } from '../../l10n';
 import { getSignalReportStyles } from './signal-report-styles';
+import { getSignalReportDiffScript } from './signal-report-diff-script';
 import { getTokenStyles } from '../viewer-styles/viewer-styles-tokens';
 import type { RootCauseHypothesis } from '../../modules/root-cause-hints/root-cause-hint-types';
 
@@ -100,6 +101,7 @@ export function buildSignalReportShell(opts: ShellOptions): string {
 <script nonce="${nonce}">
 (function() {
   var vscodeApi = acquireVsCodeApi();
+${getSignalReportDiffScript()}
 
   /**
    * Apply a section's HTML to the DOM.
@@ -127,6 +129,11 @@ export function buildSignalReportShell(opts: ShellOptions): string {
       var s = saved.sections[keys[i]];
       applySection(keys[i], s.title, s.html);
     }
+    // Restored HTML loses canvas pixel content (setState stores markup only) and still
+    // carries the stale data-diff-done marker — clear it so the recompute actually runs.
+    var staleDiffs = document.querySelectorAll('.screenshot-diff[data-diff-done]');
+    for (var d = 0; d < staleDiffs.length; d++) { staleDiffs[d].removeAttribute('data-diff-done'); }
+    computeScreenshotDiffs();
   }
   // Restore collapse state for each section
   if (saved && saved.collapsed) {
@@ -159,6 +166,7 @@ export function buildSignalReportShell(opts: ShellOptions): string {
     var msg = event.data;
     if (msg.type === 'sectionReady') {
       applySection(msg.id, msg.title, msg.html);
+      if (msg.id === 'screenshots') { computeScreenshotDiffs(); }
       // Persist each section so tab-move recreation can restore it
       var state = vscodeApi.getState() || {};
       var sections = state.sections || {};

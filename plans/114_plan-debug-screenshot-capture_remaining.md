@@ -12,7 +12,8 @@ Unit tests cover triggers/coalescing/parsing, but `_flutter.screenshot` has neve
 called against a real Flutter debug session from this extension. Run the original plan's
 investigation checklist in the Extension Development Host:
 
-- [ ] Confirm the `dart.debuggerUris` custom event fires and `vmServiceUri` converts to a connectable ws URI (`toVmServiceWsUri`).
+- [ ] Confirm the `dart.debuggerUris` custom event fires and `vmServiceUri` converts to a connectable ws URI (`toVmServiceWsUri`). A console-banner fallback ("A Dart VM Service … is available at:") now also registers the URI when the event is absent — verify whichever path fires.
+- [ ] Verify the before/after diff block renders in a signal report when `onNavigation` is enabled and an error follows a screen entry (canvas heat overlay, magenta = changed pixels).
 - [ ] Confirm `_flutter.screenshot` returns `result.screenshot` (base64 PNG) with empty params on a `flutter run --debug` session; note whether it captures the Flutter surface only or full device frame.
 - [ ] Measure capture latency; if >~200ms consider whether the single-in-flight drop policy loses too many triggers.
 - [ ] Verify the full chain: error line → PNG in `<base>.screenshots/` → viewer badge → popover → footer counter → gallery → signal report strip → timeline event.
