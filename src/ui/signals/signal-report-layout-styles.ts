@@ -5,12 +5,47 @@
 
 export function getLayoutStyles(): string {
     return /* css */ `
-/* --- Report header --- */
-.report-header {
+/* --- Report hero header --- */
+.report-hero {
     margin-bottom: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
 }
-.report-header .btn-row {
+.hero-title-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}
+.hero-title-row h1 {
+    margin: 0;
+    font-size: var(--text-h2);
+    flex: 1 1 auto;
+    min-width: 0;
+}
+/* Type badge in the hero — colored pill matching the signal category. */
+.hero-badge {
+    display: inline-block;
+    font-size: var(--text-caption);
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+}
+.hero-badge--error { background: color-mix(in srgb, var(--accent-critical) 20%, transparent); color: var(--accent-critical); }
+.hero-badge--warning { background: color-mix(in srgb, var(--accent-warning) 20%, transparent); color: var(--accent-warning); }
+.hero-badge--info { background: color-mix(in srgb, var(--link) 15%, transparent); color: var(--link); }
+.hero-badge--sql { background: color-mix(in srgb, var(--accent-sql) 20%, transparent); color: var(--accent-sql); }
+.conf-reason {
+    font-size: var(--text-caption);
+    color: var(--muted);
     margin: var(--space-1) 0 0;
+}
+.report-hero .btn-row {
+    margin: var(--space-2) 0 0;
 }
 
 /* --- Two-column responsive grid ---

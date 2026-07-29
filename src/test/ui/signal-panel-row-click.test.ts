@@ -9,6 +9,7 @@
 
 import * as assert from 'node:assert';
 import { getSignalScriptPartB } from '../../ui/panels/viewer-signal-panel-script-part-b';
+import { getSignalScriptPartB2 } from '../../ui/panels/viewer-signal-panel-script-part-b2';
 import { getSignalScriptPartC } from '../../ui/panels/viewer-signal-panel-script-part-c';
 import { getSignalScriptPartD } from '../../ui/panels/viewer-signal-panel-script-part-d';
 import { getViewerScriptMessageHandler } from '../../ui/viewer/viewer-script-messages';
@@ -80,18 +81,20 @@ suite('Signal panel row → session jump wiring', () => {
 suite('Signal panel per-signal copy', () => {
 
     test('both signal renderers emit a copy button keyed by fingerprint + label', () => {
-        const script = getSignalScriptPartB(90);
-        const copyButtons = script.match(/class="re-action signal-copy-btn"/g) || [];
+        const scriptB = getSignalScriptPartB(90);
+        const scriptB2 = getSignalScriptPartB2();
+        const combined = scriptB + scriptB2;
+        const copyButtons = combined.match(/class="re-action signal-copy-btn"/g) || [];
         assert.strictEqual(
             copyButtons.length, 2,
-            'copy button must appear in both renderSignalTrends and renderSignalsInThisLog',
+            'copy button must appear in both renderSignalTrends (part-b) and renderSignalsInThisLog (part-b2)',
         );
         assert.ok(
-            script.includes("data-fingerprint=\"' + esc(s.fingerprint || '')"),
+            combined.includes("data-fingerprint=\"' + esc(s.fingerprint || '')"),
             'in-log row + its copy button must expose a fingerprint (empty-safe) for re-lookup',
         );
         assert.ok(
-            script.includes("data-label=\"' + esc(s.label)"),
+            combined.includes("data-label=\"' + esc(s.label)"),
             'copy button must expose the label as a fallback key when fingerprint is absent',
         );
     });
@@ -130,8 +133,9 @@ suite('Signal panel per-signal copy', () => {
        template literal — a stray backslash or unescaped backtick produces malformed JS that
        compiles fine (it is just a string) but throws at runtime in the webview. Parse the
        generated fragment as a function body to prove it is syntactically valid JS. */
-    test('generated part B + part D fragments are syntactically valid JS', () => {
+    test('generated part B + B2 + part D fragments are syntactically valid JS', () => {
         assert.doesNotThrow(() => new Function(getSignalScriptPartB(90)), 'part B must parse as JS');
+        assert.doesNotThrow(() => new Function(getSignalScriptPartB2()), 'part B2 must parse as JS');
         assert.doesNotThrow(() => new Function(getSignalScriptPartD()), 'part D must parse as JS');
     });
 });
@@ -143,7 +147,7 @@ suite('Signal panel per-signal copy', () => {
  */
 suite('Signal panel Fu5 sort toggle', () => {
     test('renderSignalsInThisLog sorts by time only in time mode, leaving severity untouched', () => {
-        const script = getSignalScriptPartB(90);
+        const script = getSignalScriptPartB2();
         assert.ok(script.includes("signalsInLogSortMode === 'time'"), 'time sort is gated on the mode');
         assert.ok(script.includes('signals.slice().sort('), 'time mode sorts a COPY, not the cached array');
         assert.ok(script.includes('signalRepTs(a)') && script.includes('signalRepTs(b)'),
@@ -170,7 +174,7 @@ suite('Signal panel Fu5 sort toggle', () => {
 suite('Signal panel summary-signal detail toggle', () => {
 
     test('non-jumpable in-log rows with a detail become detail-toggle rows', () => {
-        const script = getSignalScriptPartB(90);
+        const script = getSignalScriptPartB2();
         /* A row is jumpable only when it has lineIndices; otherwise a detail makes it a toggle row.
            This branch is the gate that fixed the dead-click on "Drift Advisor issues". */
         assert.ok(

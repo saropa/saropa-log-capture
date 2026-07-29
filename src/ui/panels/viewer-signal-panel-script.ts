@@ -1,6 +1,6 @@
 /**
  * Signal panel script content (single-scroll, context-aware).
- * Assembled from part-a, part-b, part-c to stay under max-lines.
+ * Assembled from part-a, part-b, part-b2, part-c, part-d to stay under max-lines.
  *
  * UX enhancements: empty states (Recurring, Hot files); loading states;
  * "This log" single empty message when no errors/recurring; keyboard nav (arrows, Enter/Space)
@@ -12,6 +12,7 @@
 
 import { getSignalScriptPartA } from './viewer-signal-panel-script-part-a';
 import { getSignalScriptPartB } from './viewer-signal-panel-script-part-b';
+import { getSignalScriptPartB2 } from './viewer-signal-panel-script-part-b2';
 import { getSignalScriptPartC } from './viewer-signal-panel-script-part-c';
 import { getSignalScriptPartD } from './viewer-signal-panel-script-part-d';
 
@@ -177,6 +178,7 @@ export function getSignalPanelScriptContent(storageKey: string, strings?: Signal
         /* js */ `(function() {\n` +
         getSignalScriptPartA(storageKey, scriptStringsJson) +
         getSignalScriptPartB(MAX_RECURRING_TEXT_LEN) +
+        getSignalScriptPartB2() +
         getSignalScriptPartC() +
         getSignalScriptPartD() +
         `})();\n`
