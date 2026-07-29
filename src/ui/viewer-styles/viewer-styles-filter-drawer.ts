@@ -31,7 +31,7 @@ export function getFilterDrawerStyles(): string {
     background: var(--vscode-sideBarTitle-background, var(--vscode-panel-background));
     border-bottom: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
     font-weight: bold;
-    font-size: 13px;
+    font-size: var(--text-body);
     flex-shrink: 0;
 }
 .filters-panel-close {
@@ -40,7 +40,7 @@ export function getFilterDrawerStyles(): string {
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
     padding: 2px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-size: 14px;
 }
 .filters-panel-close:hover {
@@ -84,7 +84,7 @@ export function getFilterDrawerStyles(): string {
     font-size: 10px;
     padding: 2px 8px;
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
 }
 .level-flyup-header button:hover {
     background: var(--vscode-button-secondaryHoverBackground);
@@ -140,7 +140,7 @@ export function getFilterDrawerStyles(): string {
     border: none;
     border-left: 2px solid transparent;
     color: var(--vscode-descriptionForeground);
-    font-size: 11px;
+    font-size: var(--text-caption);
     cursor: pointer;
     white-space: nowrap;
     text-align: left;
@@ -225,7 +225,7 @@ export function getFilterDrawerStyles(): string {
     width: 100%;
     padding: 3px 4px;
     border: none;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     background: transparent;
     color: var(--vscode-foreground);
     font-size: 12px;

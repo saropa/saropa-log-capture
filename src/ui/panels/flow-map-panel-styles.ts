@@ -36,7 +36,7 @@ export function flowMapStyles(nonce: string): string {
   /* TOC entries are navigation — styled like the (info) stat chips but never underlined, so the two
      reads as distinct surfaces (nav chips vs info pills). */
   .toc { display: flex; flex-wrap: wrap; gap: 0.4rem 0.5rem; margin: 0.4rem 0 1rem; font-size: 0.88em; }
-  .toc a { color: var(--vscode-foreground); text-decoration: none; padding: 0.18rem 0.75rem; border-radius: 999px; background: rgba(127,127,127,0.12); border: 1px solid transparent; }
+  .toc a { color: var(--vscode-foreground); text-decoration: none; padding: 0.18rem 0.75rem; border-radius: var(--radius-pill); background: rgba(127,127,127,0.12); border: 1px solid transparent; }
   .toc a:hover, .toc a:focus-visible { background: rgba(127,127,127,0.22); border-color: var(--vscode-focusBorder); outline: none; }
 
   .logpath { color: var(--vscode-textLink-foreground); font-family: var(--vscode-editor-font-family); font-size: 0.85em; cursor: pointer; margin: 0 0 0.7rem; word-break: break-all; }
@@ -147,7 +147,7 @@ export function flowMapStyles(nonce: string): string {
   .ac-empty { color: var(--vscode-descriptionForeground); font-size: 0.92em; }
   .ac-axis { stroke: var(--vscode-panel-border); stroke-width: 1; }
   .ac-grid { stroke: var(--vscode-panel-border); stroke-width: 1; opacity: 0.4; }
-  .ac-num, .ac-clock { fill: var(--vscode-descriptionForeground); font-size: 11px; font-variant-numeric: tabular-nums; font-family: var(--vscode-font-family); }
+  .ac-num, .ac-clock { fill: var(--vscode-descriptionForeground); font-size: var(--text-caption); font-variant-numeric: tabular-nums; font-family: var(--vscode-font-family); }
   .ac-line { fill: none; stroke: var(--vscode-charts-blue, var(--accent-info)); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
   .ac-pt { fill: var(--vscode-charts-blue, var(--accent-info)); }
   .ac-link { cursor: pointer; }

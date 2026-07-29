@@ -41,7 +41,7 @@ export function getErrorHoverStyles(): string {
     font-size: 10px;
     font-weight: 700;
     padding: 1px 6px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     text-transform: uppercase;
     letter-spacing: 0.3px;
 }
@@ -51,7 +51,7 @@ export function getErrorHoverStyles(): string {
 .eh-level {
     font-size: 10px;
     padding: 1px 5px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     background: var(--vscode-badge-background);
     color: var(--vscode-badge-foreground);
 }
@@ -62,7 +62,7 @@ export function getErrorHoverStyles(): string {
 .eh-text {
     padding: 6px 8px;
     font-family: var(--vscode-editor-font-family, monospace);
-    font-size: 11px;
+    font-size: var(--text-caption);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -76,7 +76,7 @@ export function getErrorHoverStyles(): string {
     gap: 3px;
 }
 .eh-stat {
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
     display: flex;
     align-items: center;
@@ -103,7 +103,7 @@ export function getErrorHoverStyles(): string {
     font-size: 10px;
     font-weight: 600;
     padding: 1px 5px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
 }
 .eh-triage-open { background: rgba(60, 180, 255, 0.2); color: #3cb4ff; }
 .eh-triage-closed { background: rgba(100, 200, 100, 0.2); color: #64c864; }
@@ -118,9 +118,9 @@ export function getErrorHoverStyles(): string {
     background: var(--vscode-button-background);
     color: var(--vscode-button-foreground);
     border: none;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     padding: 3px 12px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     cursor: pointer;
     font-weight: 500;
 }

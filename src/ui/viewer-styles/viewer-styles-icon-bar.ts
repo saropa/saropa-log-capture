@@ -47,7 +47,7 @@ export function getIconBarStyles(): string {
 .ib-label {
     display: none;
     margin-left: 6px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -104,7 +104,7 @@ export function getIconBarStyles(): string {
 }
 
 .ib-icon .codicon {
-    font-size: 18px;
+    font-size: var(--text-h2);
 }
 
 .ib-badge {

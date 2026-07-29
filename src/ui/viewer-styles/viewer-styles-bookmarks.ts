@@ -48,7 +48,7 @@ export function getBookmarkPanelStyles(): string {
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
     padding: 2px 4px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-size: 14px;
 }
 
@@ -63,7 +63,7 @@ export function getBookmarkPanelStyles(): string {
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
     padding: 2px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-size: 14px;
 }
 
@@ -128,7 +128,7 @@ export function getBookmarkPanelStyles(): string {
     font-size: 10px;
     font-weight: normal;
     padding: 1px 6px;
-    border-radius: 8px;
+    border-radius: var(--radius);
     background: var(--vscode-badge-background, #4d4d4d);
     color: var(--vscode-badge-foreground, #fff);
 }
@@ -177,7 +177,7 @@ export function getBookmarkPanelStyles(): string {
 .bookmark-item-note {
     margin-top: 2px;
     padding-left: 20px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -203,7 +203,7 @@ export function getBookmarkPanelStyles(): string {
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
     padding: 2px 4px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-size: 12px;
 }
 

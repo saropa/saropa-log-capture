@@ -80,7 +80,7 @@ export function getContextPopoverStyles(): string {
 }
 
 .popover-section-header {
-    font-size: 11px;
+    font-size: var(--text-caption);
     font-weight: 600;
     color: var(--vscode-foreground);
     margin-bottom: 4px;
@@ -90,11 +90,11 @@ export function getContextPopoverStyles(): string {
 }
 
 .popover-icon {
-    font-size: 13px;
+    font-size: var(--text-body);
 }
 
 .popover-section-content {
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
     padding-left: 20px;
 }
@@ -175,7 +175,7 @@ export function getContextPopoverStyles(): string {
 
 .popover-btn {
     padding: 4px 10px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     border: 1px solid var(--vscode-button-border, transparent);
     border-radius: 4px;
     cursor: pointer;
@@ -220,7 +220,7 @@ export function getContextPopoverStyles(): string {
     color: var(--vscode-editor-foreground);
 }
 .popover-db-static-note {
-    font-size: 11px;
+    font-size: var(--text-caption);
     opacity: 0.88;
     margin-top: 6px;
     color: var(--vscode-descriptionForeground);
@@ -247,7 +247,7 @@ export function getContextPopoverStyles(): string {
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 11px;
+    font-size: var(--text-caption);
     padding: 0 2px;
     opacity: 0.6;
     flex-shrink: 0;

@@ -14,7 +14,7 @@ h2 { font-size: 1.1em; margin-top: 16px; margin-bottom: 6px; border-bottom: 1px 
 pre {
     background: var(--vscode-textCodeBlock-background);
     border: 1px solid var(--vscode-panel-border);
-    border-radius: 3px; padding: 8px; overflow-x: auto;
+    border-radius: var(--radius-sm); padding: 8px; overflow-x: auto;
     font-family: var(--vscode-editor-font-family, monospace);
     font-size: 0.9em; white-space: pre-wrap; word-break: break-all;
 }
@@ -32,7 +32,7 @@ th { background: var(--vscode-sideBar-background); font-weight: 600; }
 .toolbar button {
     background: var(--vscode-button-background);
     color: var(--vscode-button-foreground);
-    border: none; border-radius: 3px; padding: 4px 10px;
+    border: none; border-radius: var(--radius-sm); padding: 4px 10px;
     cursor: pointer; font-size: 0.85em;
 }
 .toolbar button:hover { background: var(--vscode-button-hoverBackground); }

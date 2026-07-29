@@ -111,7 +111,7 @@ body.slc-trouble-rail-wide .trouble-detail {
     background: none;
     border: none;
     color: var(--muted);
-    font-size: 18px;
+    font-size: var(--text-h2);
     line-height: 1;
     cursor: pointer;
     padding: 0 var(--space-1);
