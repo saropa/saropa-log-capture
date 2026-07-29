@@ -48,7 +48,7 @@ export function getPerformancePanelStyles(): string {
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
     padding: 2px 4px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-size: 14px;
 }
 
@@ -83,7 +83,7 @@ export function getPerformancePanelStyles(): string {
     flex: 1;
     padding: 6px 8px;
     text-align: center;
-    font-size: 11px;
+    font-size: var(--text-caption);
     cursor: pointer;
     color: var(--vscode-descriptionForeground);
     background: none;
@@ -128,7 +128,7 @@ export function getPerformancePanelStyles(): string {
 
 .pp-group-stats {
     padding: 2px 12px 4px 30px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     opacity: 0.7;
 }
 
@@ -136,7 +136,7 @@ export function getPerformancePanelStyles(): string {
     display: flex;
     justify-content: space-between;
     padding: 3px 12px 3px 30px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     cursor: pointer;
     font-family: var(--vscode-editor-font-family, monospace);
 }
@@ -146,7 +146,7 @@ export function getPerformancePanelStyles(): string {
 .pp-event-time { opacity: 0.5; font-size: 10px; }
 
 /* --- Trends table --- */
-.pp-trend-table { width: 100%; font-size: 11px; border-collapse: collapse; }
+.pp-trend-table { width: 100%; font-size: var(--text-caption); border-collapse: collapse; }
 .pp-trend-table th {
     text-align: left;
     padding: 4px 8px;
@@ -169,7 +169,7 @@ export function getPerformancePanelStyles(): string {
     border-bottom: 1px solid var(--vscode-panel-border);
 }
 
-.pp-chart-title { font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+.pp-chart-title { font-size: var(--text-caption); font-weight: 600; margin-bottom: 4px; }
 .pp-chart { width: 100%; height: 120px; }
 .pp-chart-line { fill: none; stroke: var(--vscode-debugConsole-infoForeground, var(--accent-info)); stroke-width: 2; }
 .pp-chart-dot { fill: var(--vscode-debugConsole-infoForeground, var(--accent-info)); }
@@ -189,7 +189,7 @@ export function getPerformancePanelStyles(): string {
 }
 .pp-session-intro-line { margin: 0 0 6px 0; }
 .pp-session-intro-line:last-child { margin-bottom: 0; }
-.pp-session-intro-note { font-size: 11px; opacity: 0.85; }
+.pp-session-intro-note { font-size: var(--text-caption); opacity: 0.85; }
 .pp-session-block {
     margin-bottom: 14px;
     padding-bottom: 10px;
@@ -197,13 +197,13 @@ export function getPerformancePanelStyles(): string {
 }
 .pp-session-block:last-child { border-bottom: none; margin-bottom: 0; }
 .pp-session-title {
-    font-size: 11px;
+    font-size: var(--text-caption);
     font-weight: 600;
     margin-bottom: 4px;
     color: var(--vscode-foreground);
 }
 .pp-session-value {
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
     line-height: 1.4;
     white-space: pre-line;

@@ -25,7 +25,7 @@ export function getOverlayStyles(): string {
     flex-wrap: wrap;
     gap: 6px 10px;
     padding: 4px 8px 6px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     line-height: 1.35;
     color: var(--vscode-foreground);
     background: var(--vscode-inputValidation-infoBackground, rgba(55, 148, 255, 0.12));
@@ -41,7 +41,7 @@ export function getOverlayStyles(): string {
     border: 1px solid var(--vscode-button-border, transparent);
     border-radius: 2px;
     padding: 2px 10px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     cursor: pointer;
 }
 .compress-suggest-btn:hover {
@@ -71,7 +71,7 @@ export function getOverlayStyles(): string {
     overflow: hidden;
     text-overflow: ellipsis;
     color: var(--vscode-descriptionForeground);
-    font-size: 11px;
+    font-size: var(--text-caption);
 }
 .session-perf-chip {
     margin-left: 8px;
@@ -80,7 +80,7 @@ export function getOverlayStyles(): string {
     color: var(--vscode-textLink-foreground, #3794ff);
     background: var(--vscode-textLinkActiveBackground, rgba(55, 148, 255, 0.2));
     border: 1px solid var(--vscode-textLink-foreground, #3794ff);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
 }
 .session-perf-chip:hover {
@@ -95,7 +95,7 @@ export function getOverlayStyles(): string {
     padding: 2px 8px;
     background: var(--vscode-panel-background);
     border-bottom: 1px solid var(--vscode-panel-border);
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
 }
 #split-breadcrumb.visible { display: flex; }
@@ -121,7 +121,7 @@ export function getOverlayStyles(): string {
     font-size: 10px;
     padding: 1px 6px;
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
 }
 #split-breadcrumb button:hover,
 #run-nav button:hover {

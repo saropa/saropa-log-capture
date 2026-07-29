@@ -39,7 +39,7 @@ export function getOptionsStyles(): string {
     background: var(--vscode-sideBarTitle-background, var(--vscode-panel-background));
     border-bottom: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
     font-weight: bold;
-    font-size: 13px;
+    font-size: var(--text-body);
 }
 
 .options-close {
@@ -48,7 +48,7 @@ export function getOptionsStyles(): string {
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
     padding: 2px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-size: 14px;
 }
 
@@ -72,7 +72,7 @@ export function getOptionsStyles(): string {
     color: var(--vscode-input-foreground);
     border: none;
     padding: 3px 4px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     font-family: inherit;
     outline: none;
 }
@@ -103,7 +103,7 @@ export function getOptionsStyles(): string {
 }
 
 .options-section-title {
-    font-size: 11px;
+    font-size: var(--text-caption);
     font-weight: bold;
     text-transform: uppercase;
     color: var(--vscode-descriptionForeground);
@@ -131,7 +131,7 @@ export function getOptionsStyles(): string {
     background: var(--vscode-input-background);
     color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border, transparent);
-    font-size: 11px;
+    font-size: var(--text-caption);
     padding: 2px 4px;
     border-radius: 2px;
     flex: 1;
@@ -171,7 +171,7 @@ export function getOptionsStyles(): string {
 /* Inline hint after the tier legend — explains what the tier includes */
 .tier-hint {
     font-weight: normal;
-    font-size: 11px;
+    font-size: var(--text-caption);
     opacity: 0.6;
 }
 /* Vertical spacing before Device and External tiers */
@@ -212,10 +212,10 @@ export function getOptionsStyles(): string {
     background: var(--vscode-button-secondaryBackground, rgba(90, 93, 94, 0.5));
     color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
     border: 1px solid var(--vscode-button-border, transparent);
-    font-size: 11px;
+    font-size: var(--text-caption);
     padding: 4px 12px;
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
 }
 .options-action-btn:hover {
     background: var(--vscode-button-secondaryHoverBackground, rgba(90, 93, 94, 0.7));
@@ -247,7 +247,7 @@ export function getOptionsStyles(): string {
     margin-left: 8px;
     padding: 1px 6px;
     border: 1px solid var(--vscode-button-border, transparent);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     background: var(--vscode-button-secondaryBackground);
     color: var(--vscode-button-secondaryForeground);
     font-size: 10px;
@@ -268,7 +268,7 @@ export function getOptionsStyles(): string {
     font-size: 12px;
     padding: 6px 12px;
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     text-align: left;
 }
 .options-integrations-btn:hover {

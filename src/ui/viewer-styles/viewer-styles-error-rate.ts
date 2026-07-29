@@ -10,7 +10,7 @@ export function getErrorRateTabStyles(): string {
 /* --- Error Rate summary --- */
 .pp-er-summary {
     padding: 8px 12px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     border-bottom: 1px solid var(--vscode-panel-border);
 }
 

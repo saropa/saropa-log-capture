@@ -124,7 +124,7 @@ export function getSessionListStyles(): string {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
 }
 .session-item-action:hover {
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
@@ -134,12 +134,12 @@ export function getSessionListStyles(): string {
 }
 
 /* --- Latest suffix --- */
-.session-latest { opacity: 0.5; font-style: italic; font-size: 11px; margin-left: 3px; }
+.session-latest { opacity: 0.5; font-style: italic; font-size: var(--text-caption); margin-left: 3px; }
 
 /* --- Day headings (collapsible) --- */
 .session-day-heading {
     padding: 6px 12px 4px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     font-weight: 600;
     color: var(--vscode-textLink-foreground, #3794ff);
     border-bottom: 1px solid var(--vscode-panel-border);
@@ -171,7 +171,7 @@ export function getSessionListStyles(): string {
     font-size: 10px;
     line-height: 1;
     padding: 2px 6px;
-    border-radius: 8px;
+    border-radius: var(--radius);
     color: var(--vscode-badge-foreground, #ffffff);
     background: var(--vscode-badge-background, #4d4d4d);
     /* Never wrap a comma-grouped count ("1,234") mid-number when the sidebar is narrow. */
@@ -200,7 +200,7 @@ export function getSessionListStyles(): string {
     transition: opacity 0.15s ease;
 }
 .session-list-pagination-label {
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
     margin-right: auto;
 }
@@ -278,7 +278,7 @@ export function getSessionListStyles(): string {
     font-weight: 700;
     line-height: 15px;
     padding: 0 6px;
-    border-radius: 8px;
+    border-radius: var(--radius);
     letter-spacing: 0.2px;
     color: #fff;
     background: var(--vscode-badge-background);

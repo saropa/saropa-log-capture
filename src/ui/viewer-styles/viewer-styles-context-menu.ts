@@ -118,7 +118,7 @@ export function getContextMenuStyles(): string {
 .context-menu-shortcut {
     margin-left: 24px;
     opacity: 0.5;
-    font-size: 11px;
+    font-size: var(--text-caption);
     white-space: nowrap;
 }
 

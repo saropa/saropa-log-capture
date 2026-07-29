@@ -17,7 +17,7 @@ export function getSeverityKeywordsStyles(): string {
     align-items: flex-start;
     gap: 6px;
     padding: 3px 0;
-    font-size: 11px;
+    font-size: var(--text-caption);
 }
 .sk-dot {
     width: 8px;
@@ -40,7 +40,7 @@ export function getSeverityKeywordsStyles(): string {
     background: var(--vscode-badge-background, rgba(90, 93, 94, 0.4));
     color: var(--vscode-badge-foreground, var(--vscode-foreground));
     padding: 1px 6px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-size: 10px;
     white-space: nowrap;
 }

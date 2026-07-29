@@ -74,7 +74,7 @@ export function getSessionTagsLoadingStyles(): string {
 }
 
 .session-loading-label {
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
 }
 
@@ -119,7 +119,7 @@ export function getSessionTagsLoadingStyles(): string {
     height: 10px;
     width: 60%;
     margin-top: 4px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     background: var(--vscode-sideBar-background, #252526);
     position: relative;
     overflow: hidden;

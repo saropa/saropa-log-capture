@@ -90,7 +90,7 @@ export function getRecurringPanelStyles(): string {
 
 .re-text {
     font-family: var(--vscode-editor-font-family, monospace);
-    font-size: 11px;
+    font-size: var(--text-caption);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -113,7 +113,7 @@ export function getRecurringPanelStyles(): string {
     padding: 1px var(--space-2);
     cursor: pointer;
     border-radius: 2px;
-    font-size: 11px;
+    font-size: var(--text-caption);
 }
 
 .re-action:hover { background: var(--vscode-button-secondaryHoverBackground); }

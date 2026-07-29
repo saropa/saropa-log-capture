@@ -58,7 +58,7 @@ export function getSearchStyles(): string {
     color: var(--vscode-input-foreground);
     border: none;
     padding: 3px 4px 3px 6px;
-    font-size: 13px;
+    font-size: var(--text-body);
     font-family: var(--vscode-font-family);
     line-height: 18px;
     outline: none;
@@ -95,7 +95,7 @@ body.search-match-options-always .session-search-toggles-inline {
    a result indicator (badge_background) instead of dimmed body text. Empty span collapses so the
    gutter has no width when there is nothing to show. */
 .session-search-match-count {
-    font-size: 11px;
+    font-size: var(--text-caption);
     line-height: 1;
     font-family: var(--vscode-font-family);
     background: var(--vscode-badge-background, #4d4d4d);
@@ -159,7 +159,7 @@ body.search-match-options-always .session-search-toggles-inline {
     background: var(--vscode-editorWidget-background);
     color: var(--vscode-editorWidget-foreground, var(--vscode-foreground));
     border: 1px solid var(--vscode-editorWidget-border, var(--vscode-widget-border, var(--vscode-panel-border)));
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     box-shadow: 0 2px 8px var(--vscode-widget-shadow, rgba(0, 0, 0, 0.36));
 }
 .search-options-popover[hidden] {
@@ -236,7 +236,7 @@ body.search-match-options-always .session-search-toggles-inline {
     background: var(--vscode-editorWidget-background);
     color: var(--vscode-editorWidget-foreground, var(--vscode-foreground));
     border: 1px solid var(--vscode-editorWidget-border, var(--vscode-widget-border, var(--vscode-panel-border)));
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     box-shadow: 0 2px 8px var(--vscode-widget-shadow, rgba(0, 0, 0, 0.36));
 }
 
@@ -264,7 +264,7 @@ mark {
     align-items: center;
     gap: 6px;
     padding: 4px 8px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     line-height: 1.4;
     color: var(--vscode-notificationsInfoIcon-foreground, var(--vscode-foreground));
     background: var(--vscode-editorWidget-background, var(--vscode-input-background));
@@ -273,7 +273,7 @@ mark {
 .search-hidden-notice[hidden] { display: none !important; }
 .search-hidden-icon {
     flex-shrink: 0;
-    font-size: 13px;
+    font-size: var(--text-body);
     opacity: 0.85;
 }
 .search-hidden-label {
@@ -290,7 +290,7 @@ mark {
     border: 1px solid transparent;
     border-radius: 2px;
     padding: 2px 6px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     font-family: var(--vscode-font-family);
     color: var(--vscode-textLink-foreground);
     cursor: pointer;

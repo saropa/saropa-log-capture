@@ -117,7 +117,7 @@ export function getDecorationStyles(): string {
     font-size: 14px;
     padding: 1px 4px;
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     transition: opacity 0.15s;
 }
 .emoji-toggle.toggle-inactive {
@@ -136,7 +136,7 @@ export function getDecorationStyles(): string {
     font-size: 10px;
     padding: 1px 4px;
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
 }
 /* Decoration settings popover panel */
 .deco-settings-panel {

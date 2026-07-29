@@ -90,7 +90,7 @@ export function getSignalListStyles(): string {
 /* Fu3: inline evidence preview under a signal title. Three compact lines of raw log text so the
    user can verify what the signal is pointing at without clicking through. Width is constrained
    so long lines truncate rather than push the meta column out of the row. */
-.signal-evidence-preview { width: 100%; margin-top: 3px; padding-left: 18px; font-size: 11px; opacity: 0.75; line-height: 1.35; }
+.signal-evidence-preview { width: 100%; margin-top: 3px; padding-left: 18px; font-size: var(--text-caption); opacity: 0.75; line-height: 1.35; }
 .signal-evidence-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--vscode-descriptionForeground, var(--vscode-foreground)); }
 /* Force the row to wrap so the preview drops below the icon/meta cells instead of breaking flex. */
 .signal-in-log-row { flex-wrap: wrap; }
@@ -102,7 +102,7 @@ export function getSignalListStyles(): string {
 .signal-detail-toggle:hover { background: var(--vscode-list-hoverBackground, color-mix(in srgb, var(--text) 4%, transparent)); }
 /* Inline detail body, full-width so it drops below the wrapped row rather than squeezing the meta
    column. pre-wrap keeps multi-part summaries (e.g. "1 error, 2 warnings") readable. */
-.signal-detail-body { width: 100%; margin-top: 3px; padding-left: 18px; font-size: 11px; opacity: 0.85; line-height: 1.4; white-space: pre-wrap; color: var(--vscode-descriptionForeground, var(--vscode-foreground)); }
+.signal-detail-body { width: 100%; margin-top: 3px; padding-left: 18px; font-size: var(--text-caption); opacity: 0.85; line-height: 1.4; white-space: pre-wrap; color: var(--vscode-descriptionForeground, var(--vscode-foreground)); }
 
 /* Fu2: scroll-lock pulse. Brief highlight on lines around the jump target so the eye lands on
    the right place. Keyframes fade in then out so the cue is clearly transient — no leftover
@@ -227,7 +227,7 @@ export function getSignalListStyles(): string {
     flex: 0 0 auto;
     align-self: center;
     margin-left: var(--space-1);
-    font-size: 13px;
+    font-size: var(--text-body);
     line-height: 1;
     opacity: 0.3;
     color: var(--vscode-descriptionForeground);

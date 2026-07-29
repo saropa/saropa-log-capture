@@ -42,7 +42,7 @@ export function getAboutPanelStyles(): string {
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
     padding: 2px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-size: 14px;
 }
 
@@ -68,7 +68,7 @@ export function getAboutPanelStyles(): string {
 .ab-version-row.ab-title-pressing { opacity: 0.55; }
 .ab-version-label { font-size: 1.1em; font-weight: 700; }
 .ab-version-badge { font-size: 0.9em; font-weight: 500; color: var(--vscode-descriptionForeground); }
-.ab-changelog-link { display: inline-block; color: var(--vscode-textLink-foreground); font-size: 11px; margin: 2px 0 4px 0; cursor: pointer; }
+.ab-changelog-link { display: inline-block; color: var(--vscode-textLink-foreground); font-size: var(--text-caption); margin: 2px 0 4px 0; cursor: pointer; }
 .ab-changelog-link:hover { text-decoration: underline; }
 .ab-tagline { font-weight: 600; font-style: italic; opacity: 0.9; margin: 0 0 6px 0; font-size: 0.95em; }
 .ab-blurb { opacity: 0.8; margin: 0 0 16px 0; font-size: 0.9em; }
@@ -85,7 +85,7 @@ export function getAboutPanelStyles(): string {
 .ab-debug-row { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border-radius: 4px; cursor: pointer; margin-bottom: 4px; border: 1px solid transparent; }
 .ab-debug-row:hover { background: var(--vscode-list-hoverBackground); border-color: var(--vscode-panel-border); }
 .ab-debug-label { font-weight: 600; display: flex; align-items: center; gap: 5px; }
-.ab-debug-state { font-weight: 500; font-size: 0.8em; padding: 0 5px; border-radius: 8px; }
+.ab-debug-state { font-weight: 500; font-size: 0.8em; padding: 0 5px; border-radius: var(--radius); }
 .ab-debug-present { color: var(--vscode-testing-iconPassed, #3fb950); background: rgba(63, 185, 80, 0.12); }
 .ab-debug-missing { color: var(--vscode-list-warningForeground, #d29922); background: rgba(210, 153, 34, 0.14); }
 .ab-debug-usage { font-size: 0.85em; opacity: 0.8; line-height: 1.35; }

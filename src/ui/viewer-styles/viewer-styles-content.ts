@@ -79,7 +79,7 @@ export function getContentStyles(): string {
 .marker-collapse-count {
     margin-left: 6px;
     padding: 0 6px;
-    border-radius: 8px;
+    border-radius: var(--radius);
     background: var(--vscode-badge-background, rgba(255, 255, 255, 0.12));
     color: var(--vscode-badge-foreground, inherit);
     font-style: normal;
