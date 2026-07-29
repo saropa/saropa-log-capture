@@ -26,6 +26,19 @@ suite('selectDiffPair', () => {
         assert.strictEqual(pair?.before.file, 'far.png');
     });
 
+    test('should exclude same-timestamp entries from before-candidates (strict earlier only)', () => {
+        // Two errors sharing the exact timestamp: neither is "earlier" than the other, so no
+        // pair forms — the strict `<` comparison is the pinned behavior.
+        const a = entry({ file: 'a.png', trigger: 'error', timestamp: 500, logLine: 40 });
+        const b = entry({ file: 'b.png', trigger: 'error', timestamp: 500, logLine: 60 });
+        assert.strictEqual(selectDiffPair([a, b], 50), undefined);
+        // A genuinely earlier frame still pairs against the tied errors.
+        const nav = entry({ file: 'n.png', trigger: 'nav', timestamp: 100, logLine: 10 });
+        const pair = selectDiffPair([nav, a, b], 50);
+        assert.strictEqual(pair?.before.file, 'n.png');
+        assert.strictEqual(pair?.after.timestamp, 500);
+    });
+
     test('should return undefined without an error capture or without an earlier frame', () => {
         const navOnly = [entry({ trigger: 'nav', timestamp: 100, logLine: 10 })];
         assert.strictEqual(selectDiffPair(navOnly, 10), undefined);

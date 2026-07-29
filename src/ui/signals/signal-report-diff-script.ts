@@ -43,6 +43,10 @@ function diffOneBlock(block) {
 
 /** Draw the after frame with a magenta heat overlay where it differs from before. */
 function drawDiff(beforeImg, afterImg, canvas) {
+    // A failed decode can be complete with naturalWidth 0 before our load listener attaches;
+    // the scale math would go NaN and getImageData would throw. Bail explicitly (the caller's
+    // try/catch is the backstop, not the plan).
+    if (!beforeImg.naturalWidth || !afterImg.naturalWidth) { return; }
     var w = Math.min(afterImg.naturalWidth, DIFF_MAX_W);
     var scale = w / afterImg.naturalWidth;
     var h = Math.max(1, Math.round(afterImg.naturalHeight * scale));

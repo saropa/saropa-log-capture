@@ -96,8 +96,9 @@ suite('ScreenshotCapturer', () => {
         h.capturer.onLine(makeLine('E/Badge   (14538): Failed to initialize badge', { category: 'stdout' }));
         await h.flush();
         h.clock.now += 5000;
-        // The logcat feed is device output wholesale — even an app-tagged line there is skipped.
-        h.capturer.onLine(makeLine('07-28 21:50:35.847  1919  2024 W ActivityManager: Rescheduling restart of crashed service', { category: 'logcat' }));
+        // The direct logcat feed is device output wholesale — even a device-critical tag
+        // (ActivityManager) arriving on category 'logcat' is skipped.
+        h.capturer.onLine(makeLine('07-28 21:50:35.847  1919  2024 E ActivityManager: restart failed', { category: 'logcat' }));
         await h.flush();
         assert.strictEqual(h.store.saves.length, 0);
     });
@@ -107,6 +108,25 @@ suite('ScreenshotCapturer', () => {
         h.capturer.onLine(makeLine('I/flutter (14538): === debugException break — fix this error ===', { category: 'stdout' }));
         await h.flush();
         assert.strictEqual(h.store.saves.length, 1);
+    });
+
+    test('should capture on device-CRITICAL relays (AndroidRuntime crash) via console/stdout', async () => {
+        // device-critical = "real app problems, always visible" (device-tag-tiers.ts); a native
+        // crash relay is the frame most worth photographing. Only device-other is suppressed.
+        const h = makeHarness();
+        h.capturer.onLine(makeLine('E/AndroidRuntime(14538): FATAL EXCEPTION: main', { category: 'stdout' }));
+        await h.flush();
+        assert.strictEqual(h.store.saves.length, 1);
+        assert.strictEqual(h.store.saves[0].trigger, 'error');
+    });
+
+    test('should skip the tier classifier entirely when no trigger is enabled', async () => {
+        const h = makeHarness({
+            triggerSettings: () => ({ onError: false, onWarning: false, onNavigation: false, cooldownMs: 2000, maxPerLog: 50 }),
+        });
+        h.capturer.onLine(makeLine('Unhandled Exception: something broke'));
+        await h.flush();
+        assert.strictEqual(h.store.saves.length, 0);
     });
 
     test('should skip markers and non-error lines', async () => {
