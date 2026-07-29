@@ -2,6 +2,20 @@
 
 ## Status: Implemented 2026-07-28 (pending F5 verification of live capture)
 
+## Finish Report (2026-07-28)
+
+Shipped in commits 1eef6602 (capture pipeline + all display surfaces), f9619986 (footer camera options menu), and a follow-up review-fix commit. Debug sessions of Flutter apps now produce screenshots on error lines (and optionally warnings / screen navigation, plus a manual command) with zero app-side code: the Dart adapter's `dart.debuggerUris` custom DAP event supplies the VM Service URI and each capture is a single short-lived `ws` JSON-RPC call to `_flutter.screenshot`.
+
+**Architecture.** `src/modules/screenshot/` holds the pipeline: `vm-service-uri` (session-id → ws URI registry, cleared on deactivate), `vm-service-screenshot` (one-shot socket, 5s timeout, id-filtered JSON-RPC reply parsing), `screenshot-store` (PNGs in `<base>.screenshots/` + versioned `<base>.screenshots.json` sidecar; save() is a read-modify-write serialized by the capturer's in-flight guard), `screenshot-capturer` (LineListener with deps-injection per the ErrorSnackbarNotifier pattern; fingerprint dedup, cooldown, in-flight guard on both auto and manual paths), and `screenshot-wiring` (activation glue; per-key config reads clamped to the package.json ranges). The Integrations toggle follows the adbLogcat checkbox-to-boolean pattern (`integrations.screenshots.enabled`, on by default); the adapters write path moved to `viewer-message-handler-integrations-write.ts` for the line limit.
+
+**Surfaces.** Viewer: per-line camera badge → fixed-position thumbnail popover (no `calcItemHeight` interaction), data-URI images (viewer CSP gained `img-src data:`), bounded FIFO image cache, visible failure state for unreadable PNGs. Footer: camera icon opens a capture-options menu (master + per-trigger checkboxes, Capture now, Open gallery, live cooldown/cap limits) synced via a `screenshotSettings` broadcast; counter opens the gallery panel (cards with datetime, trigger, log excerpt, click-to-jump, lazy images). Signal reports: nearest-3 thumbnail strip in a new Screenshots section. Timeline: `'screenshot'` source parsed from the sidecar; PNG locations open through `vscode.open` (image preview) since `showTextDocument` rejects binaries.
+
+**Review findings fixed post-implementation:** manual capture previously bypassed the in-flight guard (could race the store's sequence numbering — now returns a `busy` outcome with its own toast); `cooldownMs`/`maxPerLog` reached the capture path unclamped via raw `.get()`; the VM-URI registry lacked a deactivation clear; the webview image cache was unbounded; failed image reads left the popover on its loading placeholder forever.
+
+**Tests.** 14-case capturer suite (triggers, dedup, cooldown, cap, manual outcomes incl. the busy guard), VM URI conversion, JSON-RPC reply parsing, timeline sidecar parsing (malformed/missing-field/URI derivation), and merge-function coverage for the screenshots boolean.
+
+**Known limitations** (carried to the remaining-work plan): live `_flutter.screenshot` capture unverified against a real Flutter session (F5 pass outstanding); with two concurrent Flutter sessions the latest-announced VM URI wins, so a capture can screenshot the wrong app; retention hard-delete does not remove `.screenshots/` directories; no image downscaling (would need a new dependency).
+
 ## Implementation notes (deviations from the plan below)
 
 - **A4 resize to ≤1280px: NOT implemented.** The extension host has no image library and no canvas; downscaling would require a new dependency (blast-radius gate). Full-resolution PNGs are saved; all inline data-URI reads are capped at 10 MB. Deferred pending an explicit go/no-go on an image dependency.

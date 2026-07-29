@@ -17,6 +17,7 @@ import { disposeTimelinePanel } from './ui/panels/timeline-panel';
 import { disposeFlowMapPanel } from './ui/panels/flow-map-panel';
 import { disposeKeyboardShortcutsPanel } from './ui/panels/keyboard-shortcuts-panel';
 import { disposeScreenshotGalleryPanel } from './ui/panels/screenshot-gallery-panel';
+import { clearVmServiceUris } from './modules/screenshot/vm-service-uri';
 import { disposeSignalReportPanel } from './ui/signals/signal-report-panel';
 import type { SaropaLogCaptureApi } from './api-types';
 
@@ -53,4 +54,5 @@ export function deactivate(): void {
     disposeSignalReportPanel();
     disposeKeyboardShortcutsPanel();
     disposeScreenshotGalleryPanel();
+    clearVmServiceUris();
 }

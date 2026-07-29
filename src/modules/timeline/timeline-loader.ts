@@ -200,7 +200,7 @@ async function loadSidecar(source: TimelineSource, uri: vscode.Uri, sessionStart
  * itself, so the timeline's generic open-location click shows the image; the log line
  * lives in the summary text.
  */
-function loadScreenshotSidecarEvents(text: string, sidecarUri: vscode.Uri): TimelineEvent[] {
+export function loadScreenshotSidecarEvents(text: string, sidecarUri: vscode.Uri): TimelineEvent[] {
     let parsed: { screenshots?: unknown };
     try { parsed = JSON.parse(text) as { screenshots?: unknown }; } catch { return []; }
     if (!Array.isArray(parsed.screenshots)) { return []; }
