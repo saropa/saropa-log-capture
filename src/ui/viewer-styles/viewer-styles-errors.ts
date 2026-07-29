@@ -28,7 +28,7 @@ export function getErrorStyles(): string {
     cursor: pointer;
     color: var(--vscode-errorForeground, #f44);
     font-weight: bold;
-    margin-right: 4px;
+    margin-right: var(--space-1);
     padding: 2px 6px;
     border-radius: var(--radius-sm);
     background: var(--vscode-errorBackground, rgba(244, 68, 68, 0.1));
@@ -65,7 +65,7 @@ export function getErrorStyles(): string {
     background: var(--vscode-editorWidget-background);
     border: 1px solid var(--vscode-errorForeground, #f44);
     border-radius: 4px;
-    padding: 16px;
+    padding: var(--space-4);
     max-width: 400px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
@@ -85,7 +85,7 @@ export function getErrorStyles(): string {
     background: var(--vscode-button-background);
     color: var(--vscode-button-foreground);
     border: none;
-    padding: 4px 12px;
+    padding: var(--space-1) var(--space-3);
     border-radius: 2px;
     cursor: pointer;
     font-size: 12px;

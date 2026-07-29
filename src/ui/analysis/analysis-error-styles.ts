@@ -10,10 +10,10 @@ export function getAnalysisErrorStyles(): string {
     return /* css */ `
 /* Error header */
 .err-header {
-    padding: 12px 16px;
+    padding: var(--space-3) var(--space-4);
     background: var(--vscode-sideBar-background);
     border-bottom: 1px solid var(--vscode-panel-border);
-    margin-bottom: 8px;
+    margin-bottom: var(--space-2);
 }
 .err-badges {
     display: flex;
@@ -60,11 +60,11 @@ export function getAnalysisErrorStyles(): string {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-bottom: 8px;
+    margin-bottom: var(--space-2);
 }
 
 /* Triage controls */
-.err-triage { display: flex; align-items: center; gap: 4px; }
+.err-triage { display: flex; align-items: center; gap: var(--space-1); }
 .triage-group { display: flex; gap: 2px; }
 .triage-btn {
     font-size: var(--text-caption);
@@ -87,7 +87,7 @@ export function getAnalysisErrorStyles(): string {
 
 /* Timeline sparkline */
 .err-version-info {
-    padding: 4px 12px;
+    padding: var(--space-1) var(--space-3);
     font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
 }
@@ -95,7 +95,7 @@ export function getAnalysisErrorStyles(): string {
     width: 100%;
     max-width: 500px;
     height: auto;
-    margin: 4px 12px 8px;
+    margin: var(--space-1) var(--space-3) var(--space-2);
 }
 .spark-bar { fill: var(--vscode-charts-blue, var(--accent-info)); transition: fill 0.15s ease; }
 .spark-bar:hover { fill: var(--vscode-charts-yellow, var(--accent-warning)); }
@@ -114,7 +114,7 @@ export function getAnalysisErrorStyles(): string {
     margin: 2px 8px;
 }
 .err-more {
-    padding: 4px 12px;
+    padding: var(--space-1) var(--space-3);
     font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
     font-style: italic;
@@ -125,7 +125,7 @@ export function getAnalysisErrorStyles(): string {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    padding: 12px 16px;
+    padding: var(--space-3) var(--space-4);
     border-top: 1px solid var(--vscode-panel-border);
     background: var(--vscode-sideBar-background);
     position: sticky;

@@ -22,17 +22,17 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     background: var(--vscode-sideBar-background);
     border-bottom: 1px solid var(--vscode-panel-border);
     flex-shrink: 0;
 }
 .stats {
     display: flex;
-    gap: 16px;
+    gap: var(--space-4);
     font-size: 12px;
 }
-.stat { display: flex; align-items: center; gap: 4px; }
+.stat { display: flex; align-items: center; gap: var(--space-1); }
 .unique-a-dot, .unique-b-dot {
     width: 10px;
     height: 10px;
@@ -44,7 +44,7 @@ body {
     background: var(--vscode-button-secondaryBackground);
     color: var(--vscode-button-secondaryForeground);
     border: none;
-    padding: 4px 12px;
+    padding: var(--space-1) var(--space-3);
     cursor: pointer;
     border-radius: 4px;
     font-size: 12px;
@@ -81,10 +81,10 @@ body {
 .pane-content {
     flex: 1;
     overflow: auto;
-    padding: 4px 0;
+    padding: var(--space-1) 0;
 }
 .line {
-    padding: 0 12px;
+    padding: 0 var(--space-3);
     line-height: 1.5;
     white-space: pre-wrap;
     word-break: break-all;
@@ -126,10 +126,10 @@ body {
 }
 .db-fp-section summary {
     cursor: pointer;
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     font-weight: 600;
     list-style-position: outside;
-    margin-left: 8px;
+    margin-left: var(--space-2);
 }
 .db-fp-section .db-fp-hint {
     padding: 4px 12px 8px 28px;
@@ -173,8 +173,8 @@ body {
 .db-toolbar {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
     border-bottom: 1px solid var(--vscode-panel-border);
     background: var(--vscode-editor-background);
     flex-shrink: 0;

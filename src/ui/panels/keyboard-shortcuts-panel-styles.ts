@@ -33,7 +33,7 @@ h2 {
     margin: 28px 0 8px;
     color: var(--vscode-foreground);
     border-bottom: 1px solid var(--vscode-widget-border, var(--vscode-panel-border, rgba(128,128,128,0.2)));
-    padding-bottom: 4px;
+    padding-bottom: var(--space-1);
 }
 
 .intro {
@@ -45,7 +45,7 @@ h2 {
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 8px;
+    margin-bottom: var(--space-2);
 }
 
 thead th {
@@ -81,12 +81,12 @@ td {
 .search-bar {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
     margin-bottom: 20px;
     position: sticky;
     top: 0;
     background: var(--vscode-editor-background);
-    padding: 8px 0;
+    padding: var(--space-2) 0;
     z-index: 1;
 }
 

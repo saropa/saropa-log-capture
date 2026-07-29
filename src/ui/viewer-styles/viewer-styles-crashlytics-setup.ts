@@ -38,21 +38,21 @@ export function getSetupStyles(): string {
 
 /* Collapsed diagnostic/troubleshooting so a failed setup reads as guidance, not an error wall. */
 .cp-problem { margin: 10px 12px; font-size: var(--text-caption); }
-.cp-problem > summary { cursor: pointer; opacity: 0.8; padding: 4px 0; }
-.cp-problem-body { margin-top: 4px; }
+.cp-problem > summary { cursor: pointer; opacity: 0.8; padding: var(--space-1) 0; }
+.cp-problem-body { margin-top: var(--space-1); }
 
 .cp-setup-title { font-weight: 600; font-size: 12px; margin: 0 12px 4px; }
 
 /* --- Connection test report --- */
-.cp-conn-test { margin: 8px 12px; }
+.cp-conn-test { margin: var(--space-2) var(--space-3); }
 .cp-conn-test-btn { width: 100%; text-align: center; }
-.cp-conn-report { margin-top: 8px; }
-.cp-conn-checking { font-size: 12px; opacity: 0.8; padding: 4px 0; }
+.cp-conn-report { margin-top: var(--space-2); }
+.cp-conn-checking { font-size: 12px; opacity: 0.8; padding: var(--space-1) 0; }
 .cp-conn-ok { color: var(--status-good); font-weight: 600; margin-bottom: 6px; }
 .cp-conn-bad { color: var(--status-bad); font-weight: 600; margin-bottom: 6px; }
 .cp-conn-step {
     padding: 6px 8px;
-    margin: 4px 0;
+    margin: var(--space-1) 0;
     border-left: 3px solid var(--vscode-panel-border);
     border-radius: var(--radius-sm);
     background: var(--vscode-textBlockQuote-background);
@@ -62,17 +62,17 @@ export function getSetupStyles(): string {
 .cp-conn-skipped { opacity: 0.7; }
 .cp-conn-head { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 12px; }
 .cp-conn-detail { font-size: 12px; opacity: 0.9; margin-top: 2px; }
-.cp-conn-fix { font-size: var(--text-caption); margin-top: 4px; }
-.cp-conn-tech { margin-top: 4px; font-size: var(--text-caption); }
+.cp-conn-fix { font-size: var(--text-caption); margin-top: var(--space-1); }
+.cp-conn-tech { margin-top: var(--space-1); font-size: var(--text-caption); }
 .cp-conn-tech summary { cursor: pointer; opacity: 0.8; }
 .cp-conn-tech pre {
     white-space: pre-wrap;
     word-break: break-all;
     background: var(--vscode-textCodeBlock-background);
-    padding: 4px;
-    margin: 4px 0;
+    padding: var(--space-1);
+    margin: var(--space-1) 0;
 }
-.cp-setup-step { margin: 8px 12px; }
+.cp-setup-step { margin: var(--space-2) var(--space-3); }
 .cp-setup-step p { margin: 4px 0 8px; opacity: 0.85; line-height: 1.4; font-size: 12px; }
 .cp-setup-step code {
     background: var(--vscode-textCodeBlock-background);
@@ -97,7 +97,7 @@ export function getSetupStyles(): string {
 .cp-copy-btn:hover { background: var(--vscode-button-secondaryHoverBackground); }
 
 .cp-setup-why {
-    margin-top: 8px;
+    margin-top: var(--space-2);
     font-size: var(--text-caption);
     opacity: 0.75;
     font-style: italic;
@@ -113,7 +113,7 @@ export function getSetupStyles(): string {
     border-radius: var(--radius-sm);
     font-size: 12px;
     display: block;
-    margin: 8px 0;
+    margin: var(--space-2) 0;
 }
 
 .cp-setup-btn:hover { background: var(--vscode-button-hoverBackground); }
@@ -123,7 +123,7 @@ export function getSetupStyles(): string {
     cursor: pointer;
     text-decoration: underline;
     display: inline-block;
-    margin: 4px 0;
+    margin: var(--space-1) 0;
 }
 
 .cp-setup-settings {
@@ -146,11 +146,11 @@ export function getSetupStyles(): string {
     background: var(--vscode-button-secondaryBackground);
     color: var(--vscode-button-secondaryForeground);
     border: none;
-    padding: 4px 12px;
+    padding: var(--space-1) var(--space-3);
     cursor: pointer;
     border-radius: 2px;
     font-size: 12px;
-    margin: 8px 12px;
+    margin: var(--space-2) var(--space-3);
 }
 
 .cp-check-btn:hover { background: var(--vscode-button-secondaryHoverBackground); }
@@ -163,20 +163,20 @@ export function getDiagnosticStyles(): string {
 /* --- Diagnostic box --- */
 .cp-diag-box {
     margin: 10px 12px;
-    padding: 8px;
+    padding: var(--space-2);
     background: var(--vscode-inputValidation-warningBackground);
     border-left: 3px solid var(--vscode-inputValidation-warningBorder);
     border-radius: var(--radius-sm);
     font-size: var(--text-caption);
 }
 
-.cp-diag-msg { margin-bottom: 4px; }
+.cp-diag-msg { margin-bottom: var(--space-1); }
 .cp-diag-status { font-size: 10px; opacity: 0.8; margin-top: 2px; }
 .cp-diag-tech { margin-top: 6px; font-size: 10px; }
 .cp-diag-tech summary { cursor: pointer; opacity: 0.8; }
 .cp-diag-tech pre {
-    margin: 4px 0;
-    padding: 4px;
+    margin: var(--space-1) 0;
+    padding: var(--space-1);
     background: var(--vscode-textCodeBlock-background);
     overflow-x: auto;
     font-family: var(--vscode-editor-font-family);
@@ -191,7 +191,7 @@ export function getDiagnosticStyles(): string {
     margin: 10px 12px 4px;
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--space-2);
     align-items: center;
 }
 .cp-btn-secondary {
@@ -199,8 +199,8 @@ export function getDiagnosticStyles(): string {
     color: var(--vscode-button-secondaryForeground);
 }
 .cp-btn-secondary:hover { background: var(--vscode-button-secondaryHoverBackground); }
-.cp-open-console { margin: 8px 12px; font-size: 12px; }
-.cp-show-output { margin-left: 4px; }
+.cp-open-console { margin: var(--space-2) var(--space-3); font-size: 12px; }
+.cp-show-output { margin-left: var(--space-1); }
 
 /* --- In-panel troubleshooting --- */
 .cp-trouble-step {
@@ -218,7 +218,7 @@ export function getDiagnosticStyles(): string {
     font-size: 10px;
 }
 .cp-trouble-table th, .cp-trouble-table td {
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
     text-align: left;
     vertical-align: top;
     border-bottom: 1px solid var(--vscode-widget-border);
@@ -232,7 +232,7 @@ export function getDiagnosticStyles(): string {
 .cp-trouble-details summary {
     cursor: pointer;
     font-weight: 600;
-    padding: 4px 0;
+    padding: var(--space-1) 0;
 }
 .cp-trouble-details .cp-trouble-table { margin-top: 6px; }
 
@@ -241,15 +241,15 @@ export function getDiagnosticStyles(): string {
     margin: 10px 12px 12px;
     font-size: var(--text-caption);
     border-top: 1px solid var(--vscode-widget-border);
-    padding-top: 8px;
+    padding-top: var(--space-2);
 }
 .cp-help-details summary {
     cursor: pointer;
     font-weight: 600;
-    padding: 4px 0;
+    padding: var(--space-1) 0;
 }
 .cp-help-section { margin: 10px 0; }
-.cp-help-section-title { font-weight: 600; margin-bottom: 4px; }
+.cp-help-section-title { font-weight: 600; margin-bottom: var(--space-1); }
 .cp-help-section-body {
     font-size: var(--text-caption);
     line-height: 1.4;

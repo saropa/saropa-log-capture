@@ -34,13 +34,13 @@ export function getPerformancePanelStyles(): string {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     font-weight: 600;
     font-size: 12px;
     border-bottom: 1px solid var(--vscode-panel-border);
 }
 
-.performance-panel-actions { display: flex; align-items: center; gap: 4px; }
+.performance-panel-actions { display: flex; align-items: center; gap: var(--space-1); }
 
 .pp-action {
     background: none;
@@ -65,7 +65,7 @@ export function getPerformancePanelStyles(): string {
     color: var(--vscode-descriptionForeground);
     font-size: 16px;
     cursor: pointer;
-    padding: 0 4px;
+    padding: 0 var(--space-1);
 }
 
 .pp-close:hover {
@@ -98,7 +98,7 @@ export function getPerformancePanelStyles(): string {
 
 .pp-tab:hover { color: var(--vscode-foreground); }
 
-.performance-panel-content { flex: 1; overflow-y: auto; padding: 4px 0; }
+.performance-panel-content { flex: 1; overflow-y: auto; padding: var(--space-1) 0; }
 
 /* --- Current session groups --- */
 .pp-group { border-bottom: 1px solid var(--vscode-panel-border); }
@@ -149,14 +149,14 @@ export function getPerformancePanelStyles(): string {
 .pp-trend-table { width: 100%; font-size: var(--text-caption); border-collapse: collapse; }
 .pp-trend-table th {
     text-align: left;
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
     font-weight: 600;
     border-bottom: 1px solid var(--vscode-panel-border);
     font-size: 10px;
     opacity: 0.7;
 }
 
-.pp-trend-table td { padding: 4px 8px; cursor: pointer; }
+.pp-trend-table td { padding: var(--space-1) var(--space-2); cursor: pointer; }
 .pp-trend-table tr:hover td { background: var(--vscode-list-hoverBackground); }
 .pp-trend-table tr.pp-selected td { background: var(--vscode-list-activeSelectionBackground); }
 .pp-trend-up { color: var(--vscode-debugConsole-errorForeground, var(--accent-critical)); }
@@ -165,11 +165,11 @@ export function getPerformancePanelStyles(): string {
 
 /* --- SVG chart --- */
 .pp-chart-container {
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     border-bottom: 1px solid var(--vscode-panel-border);
 }
 
-.pp-chart-title { font-size: var(--text-caption); font-weight: 600; margin-bottom: 4px; }
+.pp-chart-title { font-size: var(--text-caption); font-weight: 600; margin-bottom: var(--space-1); }
 .pp-chart { width: 100%; height: 120px; }
 .pp-chart-line { fill: none; stroke: var(--vscode-debugConsole-infoForeground, var(--accent-info)); stroke-width: 2; }
 .pp-chart-dot { fill: var(--vscode-debugConsole-infoForeground, var(--accent-info)); }
@@ -177,7 +177,7 @@ export function getPerformancePanelStyles(): string {
 .pp-chart-label { fill: var(--vscode-descriptionForeground); font-size: 10px; }
 
 /* --- Session tab (snapshot, samples, profiler) --- */
-.pp-session-view { padding: 8px 12px; }
+.pp-session-view { padding: var(--space-2) var(--space-3); }
 .pp-session-intro {
     margin-bottom: 14px;
     padding: 10px 12px;
@@ -199,7 +199,7 @@ export function getPerformancePanelStyles(): string {
 .pp-session-title {
     font-size: var(--text-caption);
     font-weight: 600;
-    margin-bottom: 4px;
+    margin-bottom: var(--space-1);
     color: var(--vscode-foreground);
 }
 .pp-session-value {
@@ -211,14 +211,14 @@ export function getPerformancePanelStyles(): string {
 
 /* --- Empty / loading --- */
 .pp-empty {
-    padding: 16px 12px;
+    padding: var(--space-4) var(--space-3);
     font-size: 12px;
     color: var(--vscode-descriptionForeground);
     text-align: center;
 }
 
 .pp-loading {
-    padding: 16px 12px;
+    padding: var(--space-4) var(--space-3);
     font-size: 12px;
     color: var(--vscode-descriptionForeground);
     text-align: center;
