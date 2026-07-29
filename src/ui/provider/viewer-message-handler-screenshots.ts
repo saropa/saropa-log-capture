@@ -9,6 +9,7 @@
  */
 
 import * as vscode from 'vscode';
+import { getConfig } from '../../modules/config/config';
 import { readScreenshotSidecar, screenshotDirUri } from '../../modules/screenshot/screenshot-store';
 import { showScreenshotGallery } from '../panels/screenshot-gallery-panel';
 import type { ViewerMessageContext } from './viewer-message-types';
@@ -18,6 +19,9 @@ const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
 /** PNG filenames the store generates (`NNN_trigger_epochms.png`) — anything else is rejected. */
 const SAFE_FILE = /^[\w-]+\.png$/;
+
+/** Booleans the footer camera menu may write (suffixes of integrations.screenshots.*). */
+const SCREENSHOT_TRIGGER_KEYS = ['enabled', 'onError', 'onWarning', 'onNavigation'];
 
 /** Route screenshot messages; returns true when handled. */
 export function dispatchScreenshotMessage(msg: Record<string, unknown>, ctx: ViewerMessageContext): boolean {
@@ -31,20 +35,47 @@ export function dispatchScreenshotMessage(msg: Record<string, unknown>, ctx: Vie
         case "openScreenshotFile":
             void openScreenshotFullSize(ctx, msg.file);
             return true;
-        case "toggleScreenshots": {
-            // Footer camera icon quick toggle — same boolean the Integrations checkbox binds to.
-            // The config-change listener re-broadcasts merged adapter state, which flips the icon.
-            const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
-            const current = cfg.get<boolean>('integrations.screenshots.enabled', true);
-            void cfg.update('integrations.screenshots.enabled', !current, vscode.ConfigurationTarget.Workspace);
+        case "setScreenshotTrigger": {
+            // Footer camera menu checkbox → the matching integrations.screenshots.* boolean.
+            // Key is allowlisted so the webview cannot write arbitrary settings. The config-change
+            // listener re-broadcasts screenshotSettings, which re-syncs every open menu/checkbox.
+            const key = msg.key;
+            if (typeof key === 'string' && SCREENSHOT_TRIGGER_KEYS.includes(key)) {
+                const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+                void cfg.update(`integrations.screenshots.${key}`, msg.value === true, vscode.ConfigurationTarget.Workspace);
+            }
             return true;
         }
+        case "captureScreenshotNow":
+            // Menu "Capture now" — routes through the command so toasts/outcomes stay identical.
+            void vscode.commands.executeCommand('saropaLogCapture.captureScreenshot');
+            return true;
         case "openScreenshotGallery":
             if (ctx.currentFileUri) { void showScreenshotGallery(ctx.currentFileUri); }
             return true;
         default:
             return false;
     }
+}
+
+/**
+ * The screenshotSettings payload driving the footer camera menu. Sent at webview setup
+ * and re-broadcast on every integrations.screenshots.* change so menu checkboxes, the
+ * Integrations panel, and Settings JSON never disagree.
+ *
+ * The `type` literal stays at each post site (not in here) so the outbound-catalog
+ * generator's post-call scan window can see it.
+ */
+export function buildScreenshotSettingsPayload(): Record<string, unknown> {
+    const s = getConfig().integrationsScreenshots;
+    return {
+        enabled: s.enabled,
+        onError: s.onError,
+        onWarning: s.onWarning,
+        onNavigation: s.onNavigation,
+        cooldownMs: s.cooldownMs,
+        maxPerLog: s.maxPerLog,
+    };
 }
 
 /** Send the sidecar's entry list for the currently loaded log (empty when none). */

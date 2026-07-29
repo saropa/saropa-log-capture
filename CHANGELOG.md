@@ -32,7 +32,7 @@ cspell:disable
 - Debug screenshot capture (plan 114): during a Flutter debug session, the app's screen is captured automatically when an error is detected (warnings and screen navigation are optional triggers) plus a manual "Capture Screenshot" command — no app-side code needed (uses the Flutter VM Service)
 - Screenshots are stored beside the log (`<log>.screenshots/` + `<log>.screenshots.json` metadata) with per-log cap, cooldown, and error-fingerprint dedup
 - Log viewer shows a camera badge on the line that triggered each capture; clicking it opens a thumbnail preview, click-through opens the full-size image
-- Viewer footer camera icon doubles as a quick screenshots on/off toggle; a live counter next to it opens a gallery of all captures with datetime, trigger, and the log lines explaining why each was taken (click to jump into the log)
+- Viewer footer camera icon opens a capture options menu — screenshots master toggle, per-trigger checkboxes (errors/warnings/navigation), Capture now, Open gallery, and the active cooldown/per-log limits; a live counter next to it opens a gallery of all captures with datetime, trigger, and the log lines explaining why each was taken (click to jump into the log)
 - Signal reports gain a Screenshots section showing the captures nearest the signal's anchor line
 - Unified timeline shows screenshot events (camera marker with trigger + line); clicking opens the image
 - New Integrations row "Debug Screenshots" (on by default) bound to `integrations.screenshots.enabled`, plus per-trigger settings (`onError`, `onWarning`, `onNavigation`, `cooldownMs`, `maxPerLog`)
