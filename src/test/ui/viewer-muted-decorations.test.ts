@@ -145,8 +145,8 @@ test(".line, .stack-header carry opaque background to obscure recycled-slot ghos
   const css = getLineStyles();
   const rule = css.match(/\.line,\s*\.stack-header\s*\{[^}]*\}/s)?.[0] ?? "";
   assert.ok(
-    /background:\s*var\(--vscode-editor-background\)/.test(rule),
-    ".line, .stack-header must declare background: var(--vscode-editor-background) to physically obscure ghost pixels left by Chromium's paint cache on virtualized row recycle",
+    /background:\s*var\(--surface-1\)/.test(rule),
+    ".line, .stack-header must declare background: var(--surface-1) to physically obscure ghost pixels left by Chromium's paint cache on virtualized row recycle",
   );
 });
 
