@@ -17,6 +17,7 @@ import {
   detectSessionOutcome,
   type SessionOutcome,
 } from './signal-report-context';
+import { buildHealthGaugeSvg } from './signal-report-gauge';
 
 export interface OverviewOptions {
   readonly bundle: RootCauseHintBundle;
@@ -46,8 +47,9 @@ export function buildOverviewHtml(opts: OverviewOptions): string {
   }
   parts.push(overviewRow(t('signals.overview.logLines'), logLineCount.toLocaleString()));
   parts.push(overviewRow(t('signals.overview.session'), bundle.sessionId));
-  // Health score (idea #19): a single 0–100 gauge of the session's signal load.
-  parts.push(overviewRow(t('signals.overview.health'), `${sessionHealthScore(bundle)}/100`));
+  // Health score (idea #19): a visual arc gauge of the session's signal load.
+  const healthScore = sessionHealthScore(bundle);
+  parts.push(healthGaugeRow(t('signals.overview.health'), healthScore));
 
   // Session timing and outcome (items 5, 9) — extracted from log lines
   if (logLines && logLines.length > 0) {
@@ -60,7 +62,7 @@ export function buildOverviewHtml(opts: OverviewOptions): string {
     parts.push('<div class="overview-stats">');
     for (const s of stats) {
       parts.push(
-        `<div class="overview-stat">` +
+        `<div class="overview-stat" data-severity="${s.severity}">` +
         `<span class="stat-count">${s.count}</span>` +
         `<span class="stat-label">${escapeHtml(t(s.labelKey, ...s.labelArgs))}</span>` +
         `</div>`,
@@ -144,6 +146,8 @@ export function buildOtherSignalsMarkdown(
   return lines.join('\n');
 }
 
+type StatSeverity = 'error' | 'warning' | 'info';
+
 interface StatItem {
   /** English label — used by the markdown export, which stays English for GitHub/Slack. */
   readonly label: string;
@@ -151,33 +155,35 @@ interface StatItem {
   readonly labelKey: string;
   readonly labelArgs: readonly (string | number)[];
   readonly count: number;
+  /** Semantic severity — drives the colored top border on the stat card. */
+  readonly severity: StatSeverity;
 }
 
 /** Collect non-zero aggregate counts from the bundle for display. */
 function gatherStats(bundle: RootCauseHintBundle): StatItem[] {
   const items: StatItem[] = [];
-  addStat(items, 'signals.stat.errors', 'Errors', bundle.errors?.length);
-  // Sum warning counts across all groups (each group has a repeat count)
+  addStat(items, 'signals.stat.errors', 'Errors', [bundle.errors?.length, 'error']);
   const warnTotal = bundle.warningGroups?.reduce((sum, g) => sum + (g?.count ?? 0), 0);
-  addStat(items, 'signals.stat.warnings', 'Warnings', warnTotal);
-  addStat(items, 'signals.stat.networkFailures', 'Network failures', bundle.networkFailures?.length);
-  addStat(items, 'signals.stat.memoryEvents', 'Memory events', bundle.memoryEvents?.length);
-  addStat(items, 'signals.stat.slowOperations', 'Slow operations', bundle.slowOperations?.length);
-  addStat(items, 'signals.stat.permissionDenials', 'Permission denials', bundle.permissionDenials?.length);
-  addStat(items, 'signals.stat.classifiedErrors', 'Classified errors', bundle.classifiedErrors?.length);
-  addStat(items, 'signals.stat.sqlBursts', 'SQL bursts', bundle.sqlBursts?.length);
-  addStat(items, 'signals.stat.nPlusOne', 'N+1 queries', bundle.nPlusOneHints?.length);
+  addStat(items, 'signals.stat.warnings', 'Warnings', [warnTotal, 'warning']);
+  addStat(items, 'signals.stat.networkFailures', 'Network failures', [bundle.networkFailures?.length, 'error']);
+  addStat(items, 'signals.stat.memoryEvents', 'Memory events', [bundle.memoryEvents?.length, 'warning']);
+  addStat(items, 'signals.stat.slowOperations', 'Slow operations', [bundle.slowOperations?.length, 'warning']);
+  addStat(items, 'signals.stat.permissionDenials', 'Permission denials', [bundle.permissionDenials?.length, 'warning']);
+  addStat(items, 'signals.stat.classifiedErrors', 'Classified errors', [bundle.classifiedErrors?.length, 'error']);
+  addStat(items, 'signals.stat.sqlBursts', 'SQL bursts', [bundle.sqlBursts?.length, 'info']);
+  addStat(items, 'signals.stat.nPlusOne', 'N+1 queries', [bundle.nPlusOneHints?.length, 'info']);
   if (bundle.anrRisk && bundle.anrRisk.score > 0) {
-    items.push({ label: `ANR risk (${bundle.anrRisk.level})`, labelKey: 'signals.stat.anrRisk', labelArgs: [bundle.anrRisk.level], count: bundle.anrRisk.score });
+    items.push({ label: `ANR risk (${bundle.anrRisk.level})`, labelKey: 'signals.stat.anrRisk', labelArgs: [bundle.anrRisk.level], count: bundle.anrRisk.score, severity: 'error' });
   }
   if (bundle.driftAdvisorSummary && bundle.driftAdvisorSummary.issueCount > 0) {
-    items.push({ label: 'Drift Advisor issues', labelKey: 'signals.stat.driftIssues', labelArgs: [], count: bundle.driftAdvisorSummary.issueCount });
+    items.push({ label: 'Drift Advisor issues', labelKey: 'signals.stat.driftIssues', labelArgs: [], count: bundle.driftAdvisorSummary.issueCount, severity: 'warning' });
   }
   return items;
 }
 
-function addStat(items: StatItem[], labelKey: string, label: string, count: number | undefined): void {
-  if (count && count > 0) { items.push({ label, labelKey, labelArgs: [], count }); }
+function addStat(items: StatItem[], labelKey: string, label: string, countAndSev: readonly [number | undefined, StatSeverity]): void {
+  const [count, severity] = countAndSev;
+  if (count && count > 0) { items.push({ label, labelKey, labelArgs: [], count, severity }); }
 }
 
 /** Map the bundle's detected signals to the health-score inputs. */
@@ -203,6 +209,15 @@ function sessionHealthBreakdown(bundle: RootCauseHintBundle): string {
   return sessionHealth(bundle).factors
     .map((f) => `${f.count} ${f.key} ${f.delta}`)
     .join(', ');
+}
+
+function healthGaugeRow(label: string, score: number): string {
+  return (
+    `<div class="overview-row overview-row--gauge">` +
+    `<span class="overview-label">${escapeHtml(label)}</span>` +
+    `<span class="overview-value">${buildHealthGaugeSvg(score)}</span>` +
+    `</div>`
+  );
 }
 
 function overviewRow(label: string, value: string): string {
