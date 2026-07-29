@@ -319,6 +319,9 @@ window.addEventListener('message', function(event) {
         case 'screenshotImage':
             if (typeof screenshotHandleImage === 'function') screenshotHandleImage(msg);
             break;
+        case 'screenshotSettings':
+            if (typeof screenshotHandleSettings === 'function') screenshotHandleSettings(msg);
+            break;
         case 'setScopeContext':
             if (typeof handleScopeContextMessage === 'function') handleScopeContextMessage(msg);
             break;
@@ -372,8 +375,6 @@ window.addEventListener('message', function(event) {
             var ibPerf = document.getElementById('ib-performance');
             if (ibPerf) ibPerf.classList.toggle('ib-integration-enabled', window.integrationAdapters.indexOf('performance') >= 0);
             if (typeof window.applyFooterQualityReportState === 'function') window.applyFooterQualityReportState();
-            /* Footer camera icon mirrors the merged 'screenshots' id (plan 114). */
-            if (typeof screenshotSyncFooter === 'function') screenshotSyncFooter();
             break;
         case 'captureSources':
             if (typeof renderCaptureSources === 'function') renderCaptureSources(msg.sources);
