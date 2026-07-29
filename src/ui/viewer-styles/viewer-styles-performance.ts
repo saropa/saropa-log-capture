@@ -16,8 +16,8 @@ export function getPerformancePanelStyles(): string {
     width: 100%;
     min-width: 280px;
     height: 100%;
-    background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-    border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    background: var(--vscode-sideBar-background, var(--surface-1));
+    border-right: 1px solid var(--vscode-sideBar-border, var(--border));
     /* Slide-out drop shadow: use the overlay elevation token (this panel floats
        over the log console), keeping the directional 2px,0 offset structural. */
     box-shadow: var(--shadow-lg);
@@ -37,7 +37,7 @@ export function getPerformancePanelStyles(): string {
     padding: var(--space-2) var(--space-3);
     font-weight: 600;
     font-size: 12px;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
 }
 
 .performance-panel-actions { display: flex; align-items: center; gap: var(--space-1); }
@@ -45,7 +45,7 @@ export function getPerformancePanelStyles(): string {
 .pp-action {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     padding: 2px 4px;
     border-radius: var(--radius-sm);
@@ -53,7 +53,7 @@ export function getPerformancePanelStyles(): string {
 }
 
 .pp-action:hover {
-    color: var(--vscode-foreground);
+    color: var(--text);
     /* Hover wash fallback: derive a neutral tint from the foreground when the
        host theme omits a toolbar hover color. */
     background: var(--vscode-toolbar-hoverBackground, color-mix(in srgb, var(--text) 12%, transparent));
@@ -62,7 +62,7 @@ export function getPerformancePanelStyles(): string {
 .pp-close {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-size: 16px;
     cursor: pointer;
     padding: 0 var(--space-1);
@@ -76,7 +76,7 @@ export function getPerformancePanelStyles(): string {
 /* --- Tabs --- */
 .pp-tabs {
     display: flex;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
 }
 
 .pp-tab {
@@ -85,23 +85,23 @@ export function getPerformancePanelStyles(): string {
     text-align: center;
     font-size: var(--text-caption);
     cursor: pointer;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     background: none;
     border: none;
     border-bottom: 2px solid transparent;
 }
 
 .pp-tab.active {
-    color: var(--vscode-foreground);
+    color: var(--text);
     border-bottom-color: var(--vscode-debugConsole-infoForeground, var(--accent-info));
 }
 
-.pp-tab:hover { color: var(--vscode-foreground); }
+.pp-tab:hover { color: var(--text); }
 
 .performance-panel-content { flex: 1; overflow-y: auto; padding: var(--space-1) 0; }
 
 /* --- Current session groups --- */
-.pp-group { border-bottom: 1px solid var(--vscode-panel-border); }
+.pp-group { border-bottom: 1px solid var(--border); }
 
 .pp-group-header {
     display: flex;
@@ -151,7 +151,7 @@ export function getPerformancePanelStyles(): string {
     text-align: left;
     padding: var(--space-1) var(--space-2);
     font-weight: 600;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     font-size: 10px;
     opacity: 0.7;
 }
@@ -166,15 +166,15 @@ export function getPerformancePanelStyles(): string {
 /* --- SVG chart --- */
 .pp-chart-container {
     padding: var(--space-2) var(--space-3);
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
 }
 
 .pp-chart-title { font-size: var(--text-caption); font-weight: 600; margin-bottom: var(--space-1); }
 .pp-chart { width: 100%; height: 120px; }
 .pp-chart-line { fill: none; stroke: var(--vscode-debugConsole-infoForeground, var(--accent-info)); stroke-width: 2; }
 .pp-chart-dot { fill: var(--vscode-debugConsole-infoForeground, var(--accent-info)); }
-.pp-chart-axis { stroke: var(--vscode-panel-border); stroke-width: 1; }
-.pp-chart-label { fill: var(--vscode-descriptionForeground); font-size: 10px; }
+.pp-chart-axis { stroke: var(--border); stroke-width: 1; }
+.pp-chart-label { fill: var(--muted); font-size: 10px; }
 
 /* --- Session tab (snapshot, samples, profiler) --- */
 .pp-session-view { padding: var(--space-2) var(--space-3); }
@@ -184,7 +184,7 @@ export function getPerformancePanelStyles(): string {
     background: var(--vscode-textBlockQuote-background, var(--surface-3));
     border-left: 3px solid var(--vscode-focusBorder, var(--border-strong));
     font-size: 12px;
-    color: var(--vscode-foreground);
+    color: var(--text);
     line-height: 1.45;
 }
 .pp-session-intro-line { margin: 0 0 6px 0; }
@@ -193,18 +193,18 @@ export function getPerformancePanelStyles(): string {
 .pp-session-block {
     margin-bottom: 14px;
     padding-bottom: 10px;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
 }
 .pp-session-block:last-child { border-bottom: none; margin-bottom: 0; }
 .pp-session-title {
     font-size: var(--text-caption);
     font-weight: 600;
     margin-bottom: var(--space-1);
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 .pp-session-value {
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     line-height: 1.4;
     white-space: pre-line;
 }
@@ -213,14 +213,14 @@ export function getPerformancePanelStyles(): string {
 .pp-empty {
     padding: var(--space-4) var(--space-3);
     font-size: 12px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     text-align: center;
 }
 
 .pp-loading {
     padding: var(--space-4) var(--space-3);
     font-size: 12px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     text-align: center;
     animation: pp-pulse 1.5s ease-in-out infinite;
 }

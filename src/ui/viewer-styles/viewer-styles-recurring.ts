@@ -14,8 +14,8 @@ export function getRecurringPanelStyles(): string {
     width: 100%;
     min-width: 280px;
     height: 100%;
-    background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-    border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    background: var(--vscode-sideBar-background, var(--surface-1));
+    border-right: 1px solid var(--vscode-sideBar-border, var(--border));
     box-shadow: var(--shadow);
     display: none;
     flex-direction: column;
@@ -33,7 +33,7 @@ export function getRecurringPanelStyles(): string {
     padding: var(--space-2) var(--space-3);
     font-weight: 600;
     font-size: 12px;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
 }
 
 .recurring-panel-actions {
@@ -45,7 +45,7 @@ export function getRecurringPanelStyles(): string {
 .recurring-panel-action {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     padding: 2px var(--space-1);
     border-radius: var(--radius-sm);
@@ -53,14 +53,14 @@ export function getRecurringPanelStyles(): string {
 }
 
 .recurring-panel-action:hover {
-    color: var(--vscode-foreground);
+    color: var(--text);
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 
 .recurring-panel-close {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-size: 16px;
     cursor: pointer;
     padding: 0 var(--space-1);
@@ -80,7 +80,7 @@ export function getRecurringPanelStyles(): string {
 
 /* --- Recurring error cards --- */
 .re-card {
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     padding: 6px var(--space-3);
     font-size: 12px;
 }
@@ -100,7 +100,7 @@ export function getRecurringPanelStyles(): string {
 .re-meta { font-size: 0.9em; opacity: 0.8; margin-top: 2px; }
 
 .re-regression { font-size: 0.85em; opacity: 0.85; margin-top: 2px; }
-.re-regression .re-commit-link { color: var(--vscode-textLink-foreground); }
+.re-regression .re-commit-link { color: var(--link); }
 .re-regression .re-commit-link:hover { text-decoration: underline; }
 .re-regression code { font-size: 0.95em; }
 
@@ -121,14 +121,14 @@ export function getRecurringPanelStyles(): string {
 .recurring-empty {
     padding: var(--space-4) var(--space-3);
     font-size: 12px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     text-align: center;
 }
 
 .recurring-loading {
     padding: var(--space-4) var(--space-3);
     font-size: 12px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     text-align: center;
     animation: re-pulse 1.5s ease-in-out infinite;
 }
@@ -139,16 +139,16 @@ export function getRecurringPanelStyles(): string {
     padding: var(--space-2) var(--space-3);
     text-align: center;
     cursor: pointer;
-    color: var(--vscode-textLink-foreground);
+    color: var(--link);
     font-size: 12px;
-    border-top: 1px solid var(--vscode-panel-border);
+    border-top: 1px solid var(--border);
 }
 
 .recurring-footer { display: flex; align-items: center; justify-content: center; gap: var(--space-3); flex-wrap: wrap; }
 #recurring-footer-signals:hover { text-decoration: underline; }
 .recurring-footer-action {
     cursor: pointer;
-    color: var(--vscode-textLink-foreground);
+    color: var(--link);
 }
 .recurring-footer-action:hover { text-decoration: underline; }
 
@@ -175,7 +175,7 @@ export function getRecurringPanelStyles(): string {
 /* Fatal → error tint (mirrors .cp-badge-crash). */
 .re-cat-fatal { background: var(--vscode-inputValidation-errorBackground); color: var(--vscode-errorForeground); border-color: var(--vscode-inputValidation-errorBorder, var(--vscode-errorForeground)); }
 /* ANR → warning tint (mirrors .cp-badge-anr). */
-.re-cat-anr { background: var(--vscode-inputValidation-warningBackground); color: var(--vscode-editorWarning-foreground); border-color: var(--vscode-inputValidation-warningBorder, var(--vscode-editorWarning-foreground)); }
+.re-cat-anr { background: var(--vscode-inputValidation-warningBackground); color: var(--accent-warning); border-color: var(--vscode-inputValidation-warningBorder, var(--accent-warning)); }
 /* OOM → neutral badge fill with a purple foreground so it stays distinct from fatal/anr
    without a dedicated inputValidation token (none exists for purple). */
 .re-cat-oom { background: var(--vscode-badge-background); color: var(--vscode-charts-purple, var(--vscode-debugConsole-infoForeground)); border-color: var(--vscode-charts-purple, var(--vscode-contrastBorder, transparent)); }

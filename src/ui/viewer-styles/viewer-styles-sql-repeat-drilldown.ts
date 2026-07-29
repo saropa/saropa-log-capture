@@ -16,7 +16,7 @@ export function getSqlRepeatDrilldownStyles(): string {
     text-underline-offset: 2px;
 }
 .sql-repeat-drilldown-toggle:hover {
-    color: var(--vscode-textLink-foreground);
+    color: var(--link);
 }
 .sql-repeat-drilldown-detail {
     display: block;
@@ -29,7 +29,7 @@ export function getSqlRepeatDrilldownStyles(): string {
 .sql-repeat-drilldown-meta {
     font-size: 0.92em;
     margin-bottom: var(--space-1);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 .sql-repeat-drilldown-meta-label {
     font-weight: 600;
@@ -56,7 +56,7 @@ export function getSqlRepeatDrilldownStyles(): string {
     font-size: 0.88em;
     font-weight: 600;
     margin: 4px 0 2px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 .sql-repeat-drilldown-variant {
     font-size: 0.88em;
@@ -72,7 +72,7 @@ export function getSqlRepeatDrilldownStyles(): string {
     font-size: 0.88em;
     font-style: italic;
     margin-top: var(--space-1);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 .sql-repeat-drilldown-actions {
     margin-top: var(--space-2);

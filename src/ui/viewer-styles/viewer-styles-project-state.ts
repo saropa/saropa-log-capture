@@ -15,8 +15,8 @@ export function getProjectStatePanelStyles(): string {
     width: 100%;
     min-width: 280px;
     height: 100%;
-    background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-    border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    background: var(--vscode-sideBar-background, var(--surface-1));
+    border-right: 1px solid var(--vscode-sideBar-border, var(--border));
     box-shadow: var(--shadow);
     display: none;
     flex-direction: column;
@@ -34,13 +34,13 @@ export function getProjectStatePanelStyles(): string {
     padding: var(--space-2) var(--space-3);
     font-weight: 600;
     font-size: 12px;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
 }
 
 .project-state-panel-close {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     padding: 2px;
     border-radius: var(--radius-sm);
@@ -75,7 +75,7 @@ export function getProjectStatePanelStyles(): string {
 .ps-label {
     flex: none;
     min-width: 110px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 
 .ps-value {
@@ -86,7 +86,7 @@ export function getProjectStatePanelStyles(): string {
 
 .ps-commit-subject {
     padding: 0 0 2px 118px;
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 
 .ps-clean { color: var(--status-good); }
@@ -94,7 +94,7 @@ export function getProjectStatePanelStyles(): string {
 
 .ps-note,
 .ps-empty {
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-style: italic;
 }
 `;

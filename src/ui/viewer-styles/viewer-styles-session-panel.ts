@@ -16,8 +16,8 @@ export function getSessionPanelLayoutStyles(): string {
        can reclaim horizontal space via the resize handle. */
     min-width: 420px;
     height: 100%;
-    background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-    border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    background: var(--vscode-sideBar-background, var(--surface-1));
+    border-right: 1px solid var(--vscode-sideBar-border, var(--border));
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
     display: none;
     flex-direction: column;
@@ -35,7 +35,7 @@ export function getSessionPanelLayoutStyles(): string {
     padding: var(--space-2) var(--space-3);
     font-weight: 600;
     font-size: 12px;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
 }
 
 .session-header-clickable {
@@ -48,11 +48,11 @@ export function getSessionPanelLayoutStyles(): string {
 }
 
 .session-header-clickable:hover {
-    color: var(--vscode-textLink-foreground);
+    color: var(--link);
 }
 
 .session-header-clickable:hover .session-header-path {
-    color: var(--vscode-textLink-foreground);
+    color: var(--link);
     text-decoration: underline;
 }
 
@@ -66,7 +66,7 @@ export function getSessionPanelLayoutStyles(): string {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-weight: 500;
 }
 
@@ -84,7 +84,7 @@ export function getSessionPanelLayoutStyles(): string {
 .session-panel-action {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     padding: 2px;
     border-radius: var(--radius-sm);
@@ -92,14 +92,14 @@ export function getSessionPanelLayoutStyles(): string {
 }
 
 .session-panel-action:hover {
-    color: var(--vscode-foreground);
+    color: var(--text);
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 
 .session-panel-close {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     padding: 2px;
     border-radius: var(--radius-sm);
@@ -127,19 +127,19 @@ export function getSessionPanelLayoutStyles(): string {
 /* --- Collections section --- */
 .session-collections {
     padding: var(--space-2) var(--space-3);
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     background: var(--vscode-sideBarSectionHeader-background, transparent);
 }
 .session-collections-header {
     font-size: var(--text-caption);
     font-weight: 600;
     text-transform: uppercase;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     margin-bottom: 2px;
 }
 .session-collections-hint {
     font-size: 10px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     margin: 0 0 6px 0;
     line-height: 1.3;
 }
@@ -160,7 +160,7 @@ export function getSessionPanelLayoutStyles(): string {
     padding: var(--space-1) var(--space-2);
     border: 1px solid var(--vscode-input-border, transparent);
     border-radius: var(--radius-sm);
-    background: var(--vscode-input-background);
+    background: var(--inset);
     color: var(--vscode-input-foreground);
     width: 100%;
     box-sizing: border-box;
@@ -232,7 +232,7 @@ export function getSessionPanelLayoutStyles(): string {
     background: none;
     border: 1px solid var(--vscode-button-border, transparent);
     border-radius: var(--radius-sm);
-    color: var(--vscode-textLink-foreground);
+    color: var(--link);
     cursor: pointer;
 }
 .session-collections-create:hover {

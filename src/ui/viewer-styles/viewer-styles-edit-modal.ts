@@ -25,8 +25,8 @@ export function getEditModalStyles(): string {
 }
 
 .edit-modal-content {
-    background: var(--vscode-editorWidget-background);
-    border: 1px solid var(--vscode-panel-border);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
     border-radius: 4px;
     padding: 0;
     /* Cap the floor to the viewport so the edit dialog doesn't clip on a narrow viewer panel. */
@@ -42,7 +42,7 @@ export function getEditModalStyles(): string {
     justify-content: space-between;
     align-items: center;
     padding: var(--space-3) var(--space-4);
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     font-weight: 500;
     font-size: var(--text-body);
 }
@@ -50,7 +50,7 @@ export function getEditModalStyles(): string {
 .edit-modal-close {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-size: 16px;
     cursor: pointer;
     padding: 0;
@@ -78,7 +78,7 @@ export function getEditModalStyles(): string {
     width: 100%;
     min-height: 100px;
     padding: var(--space-3) var(--space-4);
-    background: var(--vscode-input-background);
+    background: var(--inset);
     color: var(--vscode-input-foreground);
     border: none;
     font-family: var(--vscode-editor-font-family, monospace);
@@ -88,7 +88,7 @@ export function getEditModalStyles(): string {
 }
 
 #edit-modal-textarea:focus {
-    background: var(--vscode-input-background);
+    background: var(--inset);
     outline: 1px solid var(--vscode-focusBorder);
 }
 
@@ -97,7 +97,7 @@ export function getEditModalStyles(): string {
     justify-content: flex-end;
     gap: var(--space-2);
     padding: var(--space-3) var(--space-4);
-    border-top: 1px solid var(--vscode-panel-border);
+    border-top: 1px solid var(--border);
 }
 
 .edit-modal-btn {

@@ -3,31 +3,31 @@ export function getBugReportStyles(): string {
     return /* css */ `
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-    background: var(--vscode-editor-background);
+    background: var(--surface-1);
     color: var(--vscode-editor-foreground);
     font-family: var(--vscode-font-family, sans-serif);
     font-size: var(--vscode-font-size, 13px);
     padding: var(--space-4); line-height: 1.5;
 }
 h1 { font-size: 1.4em; margin-bottom: var(--space-1); }
-h2 { font-size: 1.1em; margin-top: var(--space-4); margin-bottom: 6px; border-bottom: 1px solid var(--vscode-panel-border); padding-bottom: var(--space-1); }
+h2 { font-size: 1.1em; margin-top: var(--space-4); margin-bottom: 6px; border-bottom: 1px solid var(--border); padding-bottom: var(--space-1); }
 pre {
     background: var(--vscode-textCodeBlock-background);
-    border: 1px solid var(--vscode-panel-border);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm); padding: var(--space-2); overflow-x: auto;
     font-family: var(--vscode-editor-font-family, monospace);
     font-size: 0.9em; white-space: pre-wrap; word-break: break-all;
 }
 table { border-collapse: collapse; width: 100%; margin: var(--space-1) 0; }
 th, td {
-    border: 1px solid var(--vscode-panel-border);
+    border: 1px solid var(--border);
     padding: var(--space-1) var(--space-2); text-align: left; font-size: 0.9em;
 }
 th { background: var(--vscode-sideBar-background); font-weight: 600; }
-.meta { font-size: 0.85em; color: var(--vscode-descriptionForeground); }
+.meta { font-size: 0.85em; color: var(--muted); }
 .toolbar {
     display: flex; gap: var(--space-2); margin: 12px 0; position: sticky; top: 0;
-    background: var(--vscode-editor-background); padding: var(--space-1) 0; z-index: 10;
+    background: var(--surface-1); padding: var(--space-1) 0; z-index: 10;
 }
 .toolbar button {
     background: var(--vscode-button-background);
@@ -38,9 +38,9 @@ th { background: var(--vscode-sideBar-background); font-weight: 600; }
 .toolbar button:hover { background: var(--vscode-button-hoverBackground); }
 .loading {
     display: flex; align-items: center; justify-content: center;
-    height: 200px; color: var(--vscode-descriptionForeground);
+    height: 200px; color: var(--muted);
 }
-hr { border: none; border-top: 1px solid var(--vscode-panel-border); margin: 16px 0; }
+hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
 p { margin: var(--space-1) 0; }
 strong { font-weight: 600; }
 code { font-family: var(--vscode-editor-font-family, monospace); font-size: 0.9em; background: var(--vscode-textCodeBlock-background); padding: 1px 4px; border-radius: 2px; }

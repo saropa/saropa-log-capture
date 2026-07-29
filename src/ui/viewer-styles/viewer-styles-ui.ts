@@ -20,7 +20,7 @@ export function getUiStyles(): string {
     z-index: 5;
     /* Panel background blends with the VS Code bottom panel chrome */
     background: var(--vscode-panel-background);
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     max-height: 30vh;  /* cap height so pins don't eat all space */
     overflow-y: auto;
     flex-shrink: 0;
@@ -28,9 +28,9 @@ export function getUiStyles(): string {
 .pinned-header {
     font-size: 10px;
     padding: 2px 8px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-weight: bold;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
 }
 @keyframes slide-in-left { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
 .pinned-item {
@@ -50,7 +50,7 @@ export function getUiStyles(): string {
 /* Small "x" button to remove a pinned line */
 .unpin-btn {
     cursor: pointer;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-size: 10px;
     flex-shrink: 0;
 }
@@ -73,7 +73,7 @@ export function getUiStyles(): string {
    =================================================================== */
 #exclusion-count {
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     white-space: nowrap;
 }
 
@@ -87,13 +87,13 @@ export function getUiStyles(): string {
     gap: 2px;
     padding: 0 var(--space-1);
     font-size: 10px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     white-space: nowrap;
     user-select: none;
 }
 .hidden-lines-counter:hover {
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 .hidden-lines-counter.peeking {
     color: var(--vscode-inputValidation-infoForeground, #75beff);
@@ -114,7 +114,7 @@ export function getUiStyles(): string {
 .inline-peek {
     border-top: 2px solid var(--vscode-focusBorder, #007acc);
     border-bottom: 2px solid var(--vscode-focusBorder, #007acc);
-    background: var(--vscode-editorHoverWidget-background, var(--vscode-editor-background));
+    background: var(--vscode-editorHoverWidget-background, var(--surface-1));
     margin: var(--space-1) 0;
     animation: peek-reveal 0.2s ease-out;
 }
@@ -124,13 +124,13 @@ export function getUiStyles(): string {
     justify-content: space-between;
     padding: var(--space-1) var(--space-2);
     font-size: 10px;
-    color: var(--vscode-descriptionForeground);
-    border-bottom: 1px solid var(--vscode-panel-border);
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
 }
 .peek-close {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-size: 14px;
     cursor: pointer;
     padding: 0 var(--space-1);
@@ -239,16 +239,16 @@ body.mm-resizing, body.mm-resizing * { cursor: col-resize !important; }
 .auto-hide-modal-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.4); }
 .auto-hide-modal-content {
     position: relative; z-index: 1; width: 400px; max-height: 60vh;
-    background: var(--vscode-editorWidget-background, var(--vscode-editor-background));
-    border: 1px solid var(--vscode-editorWidget-border, var(--vscode-panel-border));
+    background: var(--vscode-editorWidget-background, var(--surface-1));
+    border: 1px solid var(--vscode-editorWidget-border, var(--border));
     border-radius: 6px; display: flex; flex-direction: column; overflow: hidden;
 }
 .auto-hide-modal-header {
     display: flex; align-items: center; justify-content: space-between;
     padding: var(--space-2) var(--space-3); font-size: var(--text-body); font-weight: 600;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
 }
-.auto-hide-modal-close { background: none; border: none; color: var(--vscode-descriptionForeground); font-size: var(--text-h2); cursor: pointer; padding: 0 var(--space-1); }
+.auto-hide-modal-close { background: none; border: none; color: var(--muted); font-size: var(--text-h2); cursor: pointer; padding: 0 var(--space-1); }
 .auto-hide-modal-close:hover {
     color: var(--vscode-errorForeground, #f44);
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
@@ -264,9 +264,9 @@ body.mm-resizing, body.mm-resizing * { cursor: col-resize !important; }
     background: var(--vscode-badge-background); color: var(--vscode-badge-foreground);
 }
 .auto-hide-badge.session { opacity: 0.6; }
-.auto-hide-remove { background: none; border: none; color: var(--vscode-descriptionForeground); font-size: 14px; cursor: pointer; padding: 0 2px; }
+.auto-hide-remove { background: none; border: none; color: var(--muted); font-size: 14px; cursor: pointer; padding: 0 2px; }
 .auto-hide-remove:hover { color: var(--vscode-errorForeground, #f44); }
-.auto-hide-modal-empty { padding: var(--space-4); text-align: center; font-size: 12px; color: var(--vscode-descriptionForeground); }
+.auto-hide-modal-empty { padding: var(--space-4); text-align: center; font-size: 12px; color: var(--muted); }
 
 `;
 }

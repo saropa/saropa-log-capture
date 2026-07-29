@@ -14,8 +14,8 @@ export function getBookmarkPanelStyles(): string {
     width: 100%;
     min-width: 280px;
     height: 100%;
-    background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-    border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    background: var(--vscode-sideBar-background, var(--surface-1));
+    border-right: 1px solid var(--vscode-sideBar-border, var(--border));
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
     display: none;
     flex-direction: column;
@@ -33,7 +33,7 @@ export function getBookmarkPanelStyles(): string {
     padding: var(--space-2) var(--space-3);
     font-weight: 600;
     font-size: 12px;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
 }
 
 .bookmark-panel-actions {
@@ -45,7 +45,7 @@ export function getBookmarkPanelStyles(): string {
 .bookmark-panel-action {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     padding: 2px 4px;
     border-radius: var(--radius-sm);
@@ -53,14 +53,14 @@ export function getBookmarkPanelStyles(): string {
 }
 
 .bookmark-panel-action:hover {
-    color: var(--vscode-foreground);
+    color: var(--text);
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 
 .bookmark-panel-close {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     padding: 2px;
     border-radius: var(--radius-sm);
@@ -112,7 +112,7 @@ export function getBookmarkPanelStyles(): string {
     font-size: 12px;
     font-weight: 600;
     background: var(--vscode-sideBarSectionHeader-background, rgba(128, 128, 128, 0.1));
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
 }
 
 .bookmark-file-name {
@@ -136,7 +136,7 @@ export function getBookmarkPanelStyles(): string {
 .bookmark-file-delete {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     padding: 0 2px;
     font-size: 12px;
@@ -151,7 +151,7 @@ export function getBookmarkPanelStyles(): string {
 .bookmark-item {
     padding: 6px 12px 6px 24px;
     cursor: pointer;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     font-size: 12px;
     position: relative;
 }
@@ -178,7 +178,7 @@ export function getBookmarkPanelStyles(): string {
     margin-top: 2px;
     padding-left: 20px;
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -200,7 +200,7 @@ export function getBookmarkPanelStyles(): string {
 .bookmark-action-btn {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     padding: 2px 4px;
     border-radius: var(--radius-sm);
@@ -208,7 +208,7 @@ export function getBookmarkPanelStyles(): string {
 }
 
 .bookmark-action-btn:hover {
-    color: var(--vscode-foreground);
+    color: var(--text);
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 
@@ -220,7 +220,7 @@ export function getBookmarkPanelStyles(): string {
 .bookmark-empty {
     padding: var(--space-4) var(--space-3);
     font-size: 12px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     text-align: center;
     white-space: pre-line;
 }

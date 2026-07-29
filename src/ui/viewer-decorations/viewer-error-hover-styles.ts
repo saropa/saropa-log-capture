@@ -11,9 +11,9 @@ export function getErrorHoverStyles(): string {
     z-index: 1001;
     min-width: 280px;
     max-width: 420px;
-    background: var(--vscode-editorHoverWidget-background, var(--vscode-editorWidget-background));
+    background: var(--vscode-editorHoverWidget-background, var(--surface-2));
     color: var(--vscode-editorHoverWidget-foreground, var(--vscode-editor-foreground));
-    border: 1px solid var(--vscode-editorHoverWidget-border, var(--vscode-widget-border));
+    border: 1px solid var(--vscode-editorHoverWidget-border, var(--border));
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.24);
     font-size: 12px;
@@ -24,13 +24,13 @@ export function getErrorHoverStyles(): string {
     align-items: center;
     gap: 6px;
     padding: 6px 8px;
-    border-bottom: 1px solid var(--vscode-editorHoverWidget-border, var(--vscode-widget-border));
+    border-bottom: 1px solid var(--vscode-editorHoverWidget-border, var(--border));
 }
 .eh-close {
     margin-left: auto;
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     font-size: 14px;
     padding: 0 2px;
@@ -58,7 +58,7 @@ export function getErrorHoverStyles(): string {
 .eh-level-error { background: rgba(255, 60, 60, 0.15); color: #ff5555; }
 .eh-level-warning { background: rgba(255, 200, 0, 0.15); color: #ffc800; }
 .eh-level-performance { background: rgba(180, 140, 255, 0.15); color: #b48cff; }
-.eh-fw { font-size: 10px; color: var(--vscode-descriptionForeground); }
+.eh-fw { font-size: 10px; color: var(--muted); }
 .eh-text {
     padding: 6px 8px;
     font-family: var(--vscode-editor-font-family, monospace);
@@ -66,8 +66,8 @@ export function getErrorHoverStyles(): string {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    color: var(--vscode-descriptionForeground);
-    border-bottom: 1px solid var(--vscode-editorHoverWidget-border, var(--vscode-widget-border));
+    color: var(--muted);
+    border-bottom: 1px solid var(--vscode-editorHoverWidget-border, var(--border));
 }
 .eh-stats {
     padding: 6px 8px;
@@ -77,16 +77,16 @@ export function getErrorHoverStyles(): string {
 }
 .eh-stat {
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     display: flex;
     align-items: center;
     gap: 6px;
 }
 .eh-stat-loading { font-style: italic; }
-.eh-stat-new { color: var(--vscode-textLink-foreground); font-weight: 500; }
+.eh-stat-new { color: var(--link); font-weight: 500; }
 .eh-hash { font-family: var(--vscode-editor-font-family, monospace); font-size: 10px; opacity: 0.7; }
 .eh-regression { flex-wrap: wrap; }
-.eh-regression-link { color: var(--vscode-textLink-foreground); }
+.eh-regression-link { color: var(--link); }
 .eh-regression-link:hover { text-decoration: underline; }
 .eh-crash-cat {
     font-size: 9px;
@@ -110,7 +110,7 @@ export function getErrorHoverStyles(): string {
 .eh-triage-muted { background: rgba(160, 160, 160, 0.2); color: #a0a0a0; }
 .eh-actions {
     padding: 6px 8px;
-    border-top: 1px solid var(--vscode-editorHoverWidget-border, var(--vscode-widget-border));
+    border-top: 1px solid var(--vscode-editorHoverWidget-border, var(--border));
     display: flex;
     justify-content: flex-end;
 }
@@ -129,7 +129,7 @@ export function getErrorHoverStyles(): string {
     display: inline-block;
     width: 10px;
     height: 10px;
-    border: 2px solid var(--vscode-descriptionForeground);
+    border: 2px solid var(--muted);
     border-top-color: transparent;
     border-radius: 50%;
     animation: eh-spin 0.8s linear infinite;

@@ -27,7 +27,7 @@ export function getOverlayStyles(): string {
     padding: 4px 8px 6px;
     font-size: var(--text-caption);
     line-height: 1.35;
-    color: var(--vscode-foreground);
+    color: var(--text);
     background: var(--vscode-inputValidation-infoBackground, rgba(55, 148, 255, 0.12));
     border-top: 1px solid var(--vscode-inputValidation-infoBorder, var(--vscode-focusBorder));
 }
@@ -37,7 +37,7 @@ export function getOverlayStyles(): string {
 }
 .compress-suggest-btn {
     background: var(--vscode-button-secondaryBackground);
-    color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+    color: var(--vscode-button-secondaryForeground, var(--text));
     border: 1px solid var(--vscode-button-border, transparent);
     border-radius: 2px;
     padding: 2px 10px;
@@ -50,7 +50,7 @@ export function getOverlayStyles(): string {
 .compress-suggest-dismiss {
     background: transparent;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     font-size: 16px;
     line-height: 1;
@@ -58,19 +58,19 @@ export function getOverlayStyles(): string {
     border-radius: 2px;
 }
 .compress-suggest-dismiss:hover {
-    color: var(--vscode-foreground);
+    color: var(--text);
     background: var(--vscode-toolbar-hoverBackground);
 }
 .session-details-inline {
     margin-left: var(--space-2);
     padding-left: var(--space-2);
-    border-left: 1px solid var(--vscode-panel-border);
+    border-left: 1px solid var(--border);
     min-width: 0;
     flex: 1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-size: var(--text-caption);
 }
 .session-perf-chip {
@@ -94,9 +94,9 @@ export function getOverlayStyles(): string {
     column-gap: var(--space-1);
     padding: 2px 8px;
     background: var(--vscode-panel-background);
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 #split-breadcrumb.visible { display: flex; }
 #run-nav {
@@ -106,7 +106,7 @@ export function getOverlayStyles(): string {
 }
 #run-nav.visible { display: flex; }
 .nav-bar-sep {
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     opacity: 0.7;
     margin: 0 2px;
     user-select: none;
@@ -150,7 +150,7 @@ export function getOverlayStyles(): string {
 .json-toggle:hover { color: var(--vscode-textLink-activeForeground, #3794ff); }
 /* Collapsed: shows truncated preview text */
 .json-preview {
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-size: 0.95em;
 }
 /* Expanded: full formatted JSON in a quote block */

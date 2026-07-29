@@ -62,7 +62,7 @@ export function getErrorStyles(): string {
 }
 
 .error-modal-content {
-    background: var(--vscode-editorWidget-background);
+    background: var(--surface-2);
     border: 1px solid var(--vscode-errorForeground, #f44);
     border-radius: 4px;
     padding: var(--space-4);
@@ -98,8 +98,8 @@ export function getErrorStyles(): string {
 /* Error breakpoint toggle button */
 #error-breakpoint-toggle {
     background: none;
-    border: 1px solid var(--vscode-descriptionForeground);
-    color: var(--vscode-descriptionForeground);
+    border: 1px solid var(--muted);
+    color: var(--muted);
     font-size: 10px;
     padding: 1px 6px;
     cursor: pointer;

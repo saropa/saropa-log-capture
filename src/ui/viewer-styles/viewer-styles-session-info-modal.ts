@@ -25,7 +25,7 @@ export function getSessionInfoModalStyles(): string {
     gap: var(--space-2);
 }
 .session-info-section {
-    border: 1px solid var(--vscode-panel-border);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     background: var(--vscode-sideBar-background, var(--vscode-panel-background));
 }
@@ -35,7 +35,7 @@ export function getSessionInfoModalStyles(): string {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     user-select: none;
     list-style: none;
@@ -74,13 +74,13 @@ export function getSessionInfoModalStyles(): string {
 .session-info-key {
     flex: 0 0 auto;
     min-width: 140px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-weight: 500;
     user-select: text;
 }
 .session-info-value {
     flex: 1 1 auto;
-    color: var(--vscode-foreground);
+    color: var(--text);
     font-family: var(--vscode-editor-font-family, monospace);
     word-break: break-all;
     user-select: text;
@@ -92,14 +92,14 @@ export function getSessionInfoModalStyles(): string {
     padding-left: 14px;
 }
 .session-info-link {
-    color: var(--vscode-textLink-foreground);
+    color: var(--link);
     text-decoration: none;
 }
 .session-info-link:hover { text-decoration: underline; }
 .session-info-details {
     flex: 1 1 auto;
     font-family: var(--vscode-editor-font-family, monospace);
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 .session-info-details > summary {
     cursor: pointer;
@@ -110,7 +110,7 @@ export function getSessionInfoModalStyles(): string {
 .session-info-details > summary::-webkit-details-marker { display: none; }
 .session-info-details > summary::after {
     content: "  …";
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 .session-info-details[open] > summary::after { content: ""; }
 .session-info-details-body {
@@ -120,20 +120,20 @@ export function getSessionInfoModalStyles(): string {
     border-left: 2px solid var(--vscode-textBlockQuote-border, #007acc);
     border-radius: 2px;
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     word-break: break-all;
     user-select: text;
 }
 .session-info-empty {
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-style: italic;
     padding: var(--space-2) var(--space-1);
 }
 .session-info-hint {
     margin-top: var(--space-3);
     padding-top: var(--space-2);
-    border-top: 1px solid var(--vscode-panel-border);
-    color: var(--vscode-descriptionForeground);
+    border-top: 1px solid var(--border);
+    color: var(--muted);
     font-size: var(--text-caption);
     opacity: 0.85;
 }

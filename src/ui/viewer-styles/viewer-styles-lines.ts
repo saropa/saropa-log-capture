@@ -87,7 +87,7 @@ export function getLineStyles(): string {
       can still help on Chromium versions where the heuristic honors it; it
       composes with (3) and (4) below.
 
-   3. background: var(--vscode-editor-background) — attempt #2 (this
+   3. background: var(--surface-1) — attempt #2 (this
       commit). Each row paints an opaque fill rect before its text content,
       so any stale pixels left behind by Chromium's paint cache are
       physically overwritten by the row's own background. Same color as
@@ -108,7 +108,7 @@ export function getLineStyles(): string {
     position: relative;
     isolation: isolate;
     transform: translateZ(0);
-    background: var(--vscode-editor-background);
+    background: var(--surface-1);
 }
 #copy-float {
     display: none;
@@ -116,8 +116,8 @@ export function getLineStyles(): string {
     font-size: 14px;
     padding: 2px;
     cursor: pointer;
-    color: var(--vscode-descriptionForeground);
-    background: var(--vscode-editor-background);
+    color: var(--muted);
+    background: var(--surface-1);
     border-radius: var(--radius-sm);
     user-select: none;
     z-index: 10;
@@ -131,9 +131,9 @@ export function getLineStyles(): string {
     bottom: 48px;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--vscode-editorWidget-background);
+    background: var(--surface-2);
     color: var(--vscode-editorWidget-foreground);
-    border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+    border: 1px solid var(--border);
     padding: var(--space-1) var(--space-3);
     border-radius: 4px;
     font-size: 12px;
@@ -191,7 +191,7 @@ body.ctrl-held .source-link {
    washing the whole trace in link color; the row hover promotes it to a solid
    themed-link underline + color, matching the .source-link hover treatment. */
 .frame-member {
-    text-decoration: underline dotted var(--vscode-descriptionForeground);
+    text-decoration: underline dotted var(--muted);
     text-underline-offset: 2px;
 }
 .stack-line:has(.source-link):hover .frame-member {
