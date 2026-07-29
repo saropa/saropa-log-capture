@@ -1,102 +1,64 @@
 # Plan 116 — Full-App Design Token Migration
 
-**Status:** In Progress
+**Status:** Complete
 **Goal:** Migrate every UI surface to consume the design token system (`viewer-styles-tokens.ts`) so the app renders as one cohesive design, not 8+ independent visual dialects.
 
 ## Problem
 
-The design token layer exists and is well-defined (surfaces, type scale, spacing, radius, elevation, motion, z-index). But only 1 of 8 editor-tab panels uses it. The rest predate it and hardcode raw pixel values and `--vscode-*` variables directly.
+The design token layer exists and is well-defined (surfaces, type scale, spacing, radius, elevation, motion, z-index). But only 1 of 8 editor-tab panels used it. The rest predated it and hardcoded raw pixel values and `--vscode-*` variables directly.
 
-### Audit results (2026-07-29)
+## Execution summary
 
-| Dimension | Count |
-|-----------|-------|
-| Hardcoded hex/rgba colors | 53 violations |
-| Hardcoded spacing/sizing/radius | ~750+ across ~60 files |
-| `border-radius: 3px` → `--radius-sm` | ~120 instances |
-| `font-size: 11px` → `--text-caption` | ~130 instances |
-| `padding: 8px 12px` → `--space-2 --space-3` | ~30 instances |
-| Editor-tab panels not loading tokens | 4 of 8 |
-| Editor-tab panels partially compliant | 2 of 8 |
-| Editor-tab panels fully compliant | 1 of 8 (Signal Report) |
+### Phase 1: Mechanical find-and-replace — DONE
 
-### Hotspot files (most violations)
+Commit `aada0f7c` — 62 files, 427 ins, 323 del.
 
-1. `viewer-styles-crashlytics.ts` (~78)
-2. `analysis-panel-styles.ts` (~77)
-3. `viewer-styles-crashlytics-setup.ts` (~54)
-4. `collection-panel-styles.ts` (~50)
-5. `viewer-styles-options.ts` (~30)
-6. `viewer-styles-options-extra.ts` (~30)
-7. `viewer-styles-performance.ts` (~27)
+- `border-radius: 3px` → `var(--radius-sm)` (~120 instances)
+- `border-radius: 8px` → `var(--radius)` (~8 instances)
+- `border-radius: 999px` → `var(--radius-pill)`
+- `font-size: 11px` → `var(--text-caption)` (~130 instances)
+- `font-size: 13px` → `var(--text-body)` (~20 instances)
+- `font-size: 18px` → `var(--text-h2)` (~3 instances)
 
-## Scope
+### Phase 2: Panel token layer wiring — DONE
 
-### In scope
+Commit `89f9da81` — 5 files, 11 ins, 6 del.
 
-- Replace hardcoded px values with spacing tokens (`--space-1` through `--space-8`)
-- Replace hardcoded font sizes with type scale tokens (`--text-caption`, `--text-body`, etc.)
-- Replace hardcoded border-radius with radius tokens (`--radius-sm`, `--radius`, etc.)
-- Replace hardcoded hex/rgba colors with semantic tokens or `--vscode-*` variables
-- Add `getTokenStyles()` import to panels that don't load the token layer
-- Replace raw `--vscode-*` references with semantic aliases where tokens exist
+Added `getTokenStyles()` import and prepend to:
+- Session Comparison panel
+- Collection panel
+- Bug Report panel
+- Keyboard Shortcuts panel
 
-### Out of scope (exempt per token file docs)
+### Phase 3: Spacing token migration — DONE
 
-- Log-line console (monospace rows, minimap, decoration bars) — exempt from the sans type scale
-- Severity pill fixed hex colors (`--sev-*`) — intentionally fixed
-- `rgba(0,0,0,...)` in shadow definitions
-- Fallback values inside `var()` expressions
+Commit `12f61526` — 60 files, 433 ins, 477 del.
 
-### Not features
+- Single-value padding/margin/gap (4/8/12/16/24/32/48px → `--space-1` through `--space-7`)
+- Two-value compound patterns (e.g. `padding: 8px 12px` → `var(--space-2) var(--space-3)`)
+- Three-value compound patterns
+- Remaining px values involve off-scale sizes (2px, 3px, 6px, 10px) that need design decisions
 
-This is a refactor. No new UI, no behavior changes, no new tokens needed. Every replacement maps a hardcoded value to an existing token that resolves to the same computed value.
+### Phase 4+5: Semantic token migration — DONE
 
-## Execution plan
+Commit `816ce2a1` — 69 files, 751 ins, 750 del.
 
-Batched by area to keep commits within the ≤10 files / ≤400 lines threshold. Each batch is one commit.
+Replaced ~750 raw `--vscode-*` CSS variable references with semantic tokens:
+- Surfaces: `--vscode-editor-background` → `--surface-1`, `editorWidget-background` → `--surface-2`
+- Text: `--vscode-foreground` → `--text`, `descriptionForeground` → `--muted`
+- Links: `--vscode-textLink-foreground` → `--link`
+- Borders: `--vscode-panel-border`/`widget-border` → `--border`
+- Input: `--vscode-input-background` → `--inset`
+- Status: `editorError/Warning/Info-foreground` → `--accent-critical/warning/info`
+- Collapsed redundant fallback chains where both raw var and token coexisted
 
-### Phase 1: Mechanical find-and-replace (highest volume, lowest risk)
+## Remaining (by design)
 
-These are 1:1 replacements where the token resolves to the exact same value:
+These are NOT violations — they are intentional or structural:
 
-| Pattern | Token | Count |
-|---------|-------|-------|
-| `border-radius: 3px` | `var(--radius-sm)` | ~120 |
-| `border-radius: 8px` | `var(--radius)` | ~8 |
-| `border-radius: 12px` | `var(--radius-lg)` | few |
-| `font-size: 11px` | `var(--text-caption)` | ~130 |
-| `font-size: 13px` | `var(--text-body)` | ~20 |
-| `font-size: 18px` | `var(--text-h2)` | ~3 |
-| `font-size: 22px` | `var(--text-h1)` | few |
-| `gap: 4px` | `var(--space-1)` | many |
-| `gap: 8px` | `var(--space-2)` | many |
-
-### Phase 2: Panel token layer wiring
-
-Add `getTokenStyles()` to panels that don't load it:
-- Session Comparison
-- Collection Panel
-- Bug Report Panel
-- Keyboard Shortcuts Panel
-
-### Phase 3: Spacing token migration
-
-Replace hardcoded padding/margin/gap with spacing tokens, file by file, prioritized by violation count.
-
-### Phase 4: Color token migration
-
-Replace hardcoded hex/rgba with semantic tokens. Requires case-by-case judgment:
-- Error hover styles (14 violations) — needs `--accent-critical`/`--accent-warning` derived colors
-- Run separator (9 violations) — needs `--sev-*` token references
-- Lint badge (4 violations) — straightforward `color-mix()` replacements
-- Decoration bars (4 violations) — `color-mix()` with theme variables
-
-### Phase 5: Raw `--vscode-*` → semantic alias migration
-
-Replace direct `--vscode-*` usage with semantic tokens where the mapping exists:
-- `--vscode-editor-background` → `var(--surface-1)`
-- `--vscode-foreground` → `var(--text)`
-- `--vscode-descriptionForeground` → `var(--muted)`
-- `--vscode-panel-border` → `var(--border)`
-- `--vscode-textLink-foreground` → `var(--link)`
+- **Off-scale spacing** (2px, 3px, 6px, 10px): need design decisions about bumping to nearest scale value or adding tokens
+- **Severity pill hex** (`--sev-*`): fixed by design for WCAG AA contrast on filled chips
+- **Syntax highlighting hex**: level-bar colors, ANSI colors — theme-specific, not tokenizable
+- **CSS fallback hex** inside `var(--vscode-*, #hex)`: correct — only used if theme var undefined
+- **Log-line console**: exempt from sans type scale per token docs
+- **`--vscode-*` without semantic mapping**: `list-hoverBackground`, `button-*`, `badge-*`, `sideBar-*`, `focusBorder`, `font-family` — no token alias exists yet
