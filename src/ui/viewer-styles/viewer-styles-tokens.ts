@@ -99,6 +99,17 @@ export function getTokenStyles(): string {
        a neutral gray, kept here so the whole pill palette lives in one place. */
     --sev-fw: #cccccc;          --sev-fw-fg: #141414;
 
+    /* §3.6 Stat card + signal badge tokens — derived from semantic/severity tokens above.
+       Used by signal report stat cards (severity-keyed top borders) and signal panel
+       type badges. All resolve through existing theme-bound tokens. */
+    --stat-border-error: var(--accent-critical);
+    --stat-border-warning: var(--accent-warning);
+    --stat-border-info: var(--link);
+    --stat-border-health-good: var(--status-good);
+    --stat-border-health-mid: var(--accent-warning);
+    --stat-border-health-bad: var(--accent-critical);
+    --accent-sql: color-mix(in srgb, var(--sev-performance) 80%, var(--surface-1));
+
     /* §3.7 Spacing scale (4px base). All margins/padding/gaps land on these. */
     --space-1: 4px;
     --space-2: 8px;
