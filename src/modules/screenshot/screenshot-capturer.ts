@@ -182,15 +182,19 @@ function classifyTrigger(
     data: LineData,
     settings: ScreenshotTriggerSettings,
 ): ScreenshotTrigger | undefined {
-    // Device/framework lines never trigger a capture. isErrorLine matches ANY logcat E/ line
-    // and any "failed" text, but framework errors are routinely benign (E/Gralloc4 allocation
-    // probes, E/Badge init — see the 2026-07-28 contacts startup log): each would burn a VM
-    // round-trip + PNG + disk to photograph a screen showing nothing wrong. The logcat feed
-    // (category 'logcat') is device output wholesale; for console/stdout relays, the tier
-    // classifier's ruling stands — only the `flutter` tag (or untagged app output) is app code.
+    // Nothing enabled → skip the classifier regexes entirely (they are the priciest step here).
+    if (!settings.onError && !settings.onWarning && !settings.onNavigation) { return undefined; }
+    // Framework noise never triggers a capture. isErrorLine matches ANY logcat E/ line and any
+    // "failed" text, but device-other errors are routinely benign (E/Gralloc4 allocation probes,
+    // E/Badge init — see the 2026-07-28 contacts startup log): each would burn a VM round-trip +
+    // PNG + disk to photograph a screen showing nothing wrong. The logcat feed (category
+    // 'logcat') is device output wholesale. For console/stdout relays the tier classifier
+    // rules: 'device-other' is suppressed, while 'device-critical' (AndroidRuntime crashes,
+    // lowmemorykiller — "real app problems, always visible" per device-tag-tiers.ts) stays
+    // capturable — a FATAL EXCEPTION relay is exactly the frame worth photographing.
     if (data.category === 'logcat') { return undefined; }
     const tier = classifyLogLine(text);
-    if (tier !== undefined && tier !== 'flutter') { return undefined; }
+    if (tier === 'device-other') { return undefined; }
     if (settings.onError && isErrorLine(text, data.category)) { return 'error'; }
     if (settings.onWarning && isWarningLine(text)) { return 'warning'; }
     // classifyBreadcrumb runs several regexes — only pay for it when the nav trigger is on.
