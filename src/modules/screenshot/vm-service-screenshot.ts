@@ -19,7 +19,7 @@ const CAPTURE_TIMEOUT_MS = 5000;
 
 interface VmServiceScreenshotResponse {
     readonly id?: unknown;
-    readonly result?: { readonly screenshot?: unknown };
+    readonly result?: { readonly screenshot?: unknown; readonly result?: { readonly screenshot?: unknown } };
     readonly error?: { readonly message?: unknown };
 }
 
@@ -76,9 +76,18 @@ export function parseScreenshotReply(raw: string): [Error | undefined, Uint8Arra
     if (msg.id !== '1') { return [undefined, undefined, false]; }
     if (msg.error) {
         const detail = typeof msg.error.message === 'string' ? msg.error.message : 'unknown error';
-        return [new Error(`_flutter.screenshot failed: ${detail}`), undefined, true];
+        // "Method not found" is the signature of the private extension being removed/renamed
+        // in a Flutter upgrade — the single most likely long-term failure mode. Name it so the
+        // output channel diagnosis is one read, not a debugging session.
+        const hint = /method not found/i.test(detail)
+            ? ' (the _flutter.screenshot VM extension is unavailable — this Flutter version may have removed it)'
+            : '';
+        return [new Error(`_flutter.screenshot failed: ${detail}${hint}`), undefined, true];
     }
-    const b64 = msg.result?.screenshot;
+    // Tolerate one level of result nesting: the canonical shape is result.screenshot, but the
+    // extension is private API — accept result.result.screenshot too rather than break on a
+    // wrapper change.
+    const b64 = msg.result?.screenshot ?? msg.result?.result?.screenshot;
     if (typeof b64 !== 'string' || b64.length === 0) {
         return [new Error('_flutter.screenshot reply had no screenshot payload'), undefined, true];
     }

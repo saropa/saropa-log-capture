@@ -71,6 +71,10 @@ export const stringsSignals: Record<string, string> = {
     'signals.screenshots.noData': 'No screenshots captured for this log',
     'signals.screenshots.caption': 'Line {0} · {1}',
     'signals.screenshots.openFull': 'Open full size',
+    // Before/after pixel-diff block (plan 114 follow-up)
+    'signals.screenshots.diff.before': 'Before · {0}',
+    'signals.screenshots.diff.atError': 'At error · {0}',
+    'signals.screenshots.diff.changes': 'Changes (magenta = differs from before)',
     'signals.evidence.precedingAction': 'Preceding action: {0}',
     'signals.rec.noData': 'No specific recommendations',
     'signals.rec.error-recent': 'Check the stack trace for the root cause. If the error repeats, consider adding error handling or fixing the underlying issue.',
