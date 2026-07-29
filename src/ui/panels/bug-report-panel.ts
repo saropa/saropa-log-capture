@@ -11,6 +11,7 @@ import { escapeHtml } from '../../modules/capture/ansi';
 import { collectBugReportData } from '../../modules/bug-report/bug-report-collector';
 import { formatBugReport } from '../../modules/bug-report/bug-report-formatter';
 import { getBugReportStyles } from './bug-report-panel-styles';
+import { getTokenStyles } from '../viewer-styles/viewer-styles-tokens';
 
 let panel: vscode.WebviewPanel | undefined;
 let lastMarkdown = '';
@@ -114,7 +115,7 @@ function buildLoadingHtml(): string {
     const nonce = getNonce();
     return `<!DOCTYPE html><html><head>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
-<style nonce="${nonce}">${getBugReportStyles()}</style>
+<style nonce="${nonce}">${getTokenStyles()}${getBugReportStyles()}</style>
 </head><body><div class="loading">Generating bug report...</div></body></html>`;
 }
 
@@ -123,7 +124,7 @@ function buildPreviewHtml(markdown: string): string {
     const html = markdownToHtml(markdown);
     return `<!DOCTYPE html><html><head>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
-<style nonce="${nonce}">${getBugReportStyles()}</style>
+<style nonce="${nonce}">${getTokenStyles()}${getBugReportStyles()}</style>
 </head><body>
 <div role="main" aria-label="Bug Report">
 <div class="toolbar" role="toolbar" aria-label="Bug report actions">
