@@ -60,7 +60,7 @@ cspell:disable
 
 ### Fixed
 
-- Fixed 5 test failures caused by the design token migration: updated CSS assertions to match semantic tokens instead of raw `--vscode-*` variables, fixed signal kind badge exhaustiveness check for hyphenated keys (`slow-op`), and registered dynamically created screenshot element IDs in the wiring test
+- Fixed 6 test failures caused by the design token migration: updated CSS assertions to match semantic tokens instead of raw `--vscode-*` variables (including the ghost-pixel opaque background guard), fixed signal kind badge exhaustiveness check for hyphenated keys (`slow-op`), and registered dynamically created screenshot element IDs in the wiring test
 
 ---
 
