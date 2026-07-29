@@ -279,8 +279,10 @@ suite('Signal kind badge exhaustiveness', () => {
     test('kindLabels covers every SignalKind', () => {
         const script = getSignalScriptPartB(90);
         for (const kind of allKinds) {
+            // Hyphenated keys are quoted in JS object literals ('slow-op':)
+            const pattern = kind.includes('-') ? `'${kind}':` : `${kind}:`;
             assert.ok(
-                script.includes(`${kind}:`),
+                script.includes(pattern),
                 `kindLabels missing entry for '${kind}'`,
             );
         }
@@ -289,8 +291,9 @@ suite('Signal kind badge exhaustiveness', () => {
     test('kindBadgeText covers every SignalKind', () => {
         const script = getSignalScriptPartB(90);
         for (const kind of allKinds) {
+            const pattern = kind.includes('-') ? `'${kind}':` : `${kind}:`;
             assert.ok(
-                script.includes(`${kind}:`),
+                script.includes(pattern),
                 `kindBadgeText missing entry for '${kind}'`,
             );
         }
