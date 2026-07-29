@@ -255,6 +255,11 @@ details summary:hover {
 .history-session-date { flex-shrink: 0; color: var(--muted); margin-left: var(--space-3); }
 /* Screenshot evidence strip (plan 114) */
 .screenshot-strip { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+/* Before/after pixel-diff block: three equal cells, wraps on narrow columns. */
+.screenshot-diff { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-2); }
+.diff-cell { flex: 1 1 140px; min-width: 120px; margin: 0; }
+.diff-img, .diff-canvas { display: block; width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--vscode-editorWidget-border); }
+.diff-cell figcaption { margin-top: var(--space-1); color: var(--muted); font-size: var(--text-caption); }
 .screenshot-card { display: block; max-width: 300px; text-decoration: none; }
 .screenshot-thumb { display: block; max-width: 100%; max-height: 200px; border-radius: var(--radius-sm); border: 1px solid var(--vscode-editorWidget-border); }
 .screenshot-caption { display: block; margin-top: var(--space-1); color: var(--muted); font-size: var(--text-caption); }
