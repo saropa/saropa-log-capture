@@ -14,8 +14,8 @@ export function getFindPanelStyles(): string {
     width: 100%;
     min-width: 280px;
     height: 100%;
-    background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-    border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    background: var(--vscode-sideBar-background, var(--surface-1));
+    border-right: 1px solid var(--vscode-sideBar-border, var(--border));
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
     display: none;
     flex-direction: column;
@@ -33,7 +33,7 @@ export function getFindPanelStyles(): string {
     padding: var(--space-2) var(--space-3);
     font-weight: 600;
     font-size: 12px;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
 }
 
 .find-panel-header-actions {
@@ -45,18 +45,18 @@ export function getFindPanelStyles(): string {
 .find-header-btn {
     background: none;
     border: 1px solid transparent;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     padding: 2px;
     border-radius: var(--radius-sm);
     font-size: 14px;
 }
 .find-header-btn:hover {
-    color: var(--vscode-foreground);
+    color: var(--text);
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 .find-header-btn.active {
-    color: var(--vscode-foreground);
+    color: var(--text);
     background: var(--vscode-button-secondaryBackground, rgba(90, 93, 94, 0.31));
     border-color: var(--vscode-focusBorder);
 }
@@ -64,7 +64,7 @@ export function getFindPanelStyles(): string {
 .find-panel-close {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     padding: 2px;
     border-radius: var(--radius-sm);
@@ -111,7 +111,7 @@ export function getFindPanelStyles(): string {
 .find-input-actions .search-input-btn {
     background: none;
     border: 1px solid transparent;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     padding: 2px 4px;
     border-radius: var(--radius-sm);
@@ -119,12 +119,12 @@ export function getFindPanelStyles(): string {
 }
 
 .find-input-actions .search-input-btn:hover {
-    color: var(--vscode-foreground);
+    color: var(--text);
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 
 .find-input-actions .search-input-btn.active {
-    color: var(--vscode-foreground);
+    color: var(--text);
     background: var(--vscode-button-secondaryBackground, rgba(90, 93, 94, 0.31));
     border-color: var(--vscode-focusBorder);
 }
@@ -133,7 +133,7 @@ export function getFindPanelStyles(): string {
 .find-summary {
     padding: var(--space-1) var(--space-3);
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 
 .find-results {
@@ -147,7 +147,7 @@ export function getFindPanelStyles(): string {
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     font-size: 12px;
 }
 
@@ -187,7 +187,7 @@ export function getFindPanelStyles(): string {
 .find-loading {
     padding: var(--space-4) var(--space-3);
     font-size: 12px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     text-align: center;
 }
 `;

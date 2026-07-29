@@ -61,7 +61,7 @@ export function getSessionGroupStyles(): string {
    rather than compete with it as a standalone chip. */
 .session-group-count {
     margin-left: var(--space-1);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-size: 0.85em;
     font-weight: normal;
     white-space: nowrap;
@@ -89,7 +89,7 @@ export function getSessionGroupStyles(): string {
 /* Secondary-row labels read as subordinate: use the description foreground
    colour for the source adapter chip so the primary's name pops. */
 .session-group .session-item-secondary .session-item-meta {
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 
 /* --- Collapsed state ---
@@ -157,17 +157,17 @@ export function getSessionGroupStyles(): string {
     margin-left: var(--space-1);
     padding: 0 var(--space-1);
     border-radius: var(--radius-sm);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-size: 0.85em;
     white-space: nowrap;
     cursor: pointer;
 }
 .session-older-toggle:hover {
-    color: var(--vscode-foreground);
+    color: var(--text);
     background: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.2));
 }
 .session-older-toggle.expanded {
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 `;
 }

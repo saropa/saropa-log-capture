@@ -19,7 +19,7 @@ export function getScreenshotStyles(): string {
     z-index: 1000;
     max-width: 320px;
     padding: var(--space-1, 4px);
-    background: var(--vscode-editorWidget-background);
+    background: var(--surface-2);
     border: 1px solid var(--vscode-editorWidget-border);
     border-radius: 4px;
     box-shadow: 0 4px 12px var(--vscode-widget-shadow);
@@ -34,7 +34,7 @@ export function getScreenshotStyles(): string {
 .screenshot-popover-caption {
     padding: 2px 4px;
     font-size: 0.85em;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 
 /* Footer camera toggle: always visible; dimmed = capture disabled. flex-shrink 0 so a
@@ -45,7 +45,7 @@ export function getScreenshotStyles(): string {
     display: inline-flex;
     align-items: center;
     flex-shrink: 0;
-    color: var(--vscode-foreground);
+    color: var(--text);
     opacity: 0.85;
 }
 .screenshot-toggle:hover { opacity: 1; }
@@ -60,8 +60,8 @@ export function getScreenshotStyles(): string {
     z-index: 1000;
     min-width: 200px;
     padding: var(--space-1, 4px);
-    background: var(--vscode-menu-background, var(--vscode-editorWidget-background));
-    color: var(--vscode-menu-foreground, var(--vscode-foreground));
+    background: var(--vscode-menu-background, var(--surface-2));
+    color: var(--vscode-menu-foreground, var(--text));
     border: 1px solid var(--vscode-menu-border, var(--vscode-editorWidget-border));
     border-radius: 4px;
     box-shadow: 0 4px 12px var(--vscode-widget-shadow);
@@ -93,7 +93,7 @@ export function getScreenshotStyles(): string {
 .screenshot-menu-limits {
     padding: 3px 8px 4px;
     font-size: 0.85em;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 
 /* Footer capture counter — click opens the gallery. */
@@ -102,9 +102,9 @@ export function getScreenshotStyles(): string {
     flex-shrink: 0;
     white-space: nowrap;
     font-size: 0.9em;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     padding: 0 2px;
 }
-.screenshot-count:hover { color: var(--vscode-foreground); }
+.screenshot-count:hover { color: var(--text); }
 `;
 }

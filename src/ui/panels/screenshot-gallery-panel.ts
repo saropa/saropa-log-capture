@@ -159,17 +159,17 @@ ${body}
 
 function galleryCss(): string {
     return /* css */ `
-body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); background: var(--vscode-editor-background); padding: var(--space-3); }
+body { font-family: var(--vscode-font-family); color: var(--text); background: var(--surface-1); padding: var(--space-3); }
 h1 { font-size: 1.1em; margin-bottom: var(--space-3); }
-.empty { color: var(--vscode-descriptionForeground); padding: 24px 0; }
+.empty { color: var(--muted); padding: 24px 0; }
 .card { border: 1px solid var(--vscode-editorWidget-border); border-radius: 6px; padding: 10px; margin-bottom: 14px; max-width: 720px; }
 .thumb-wrap { min-height: 60px; }
 .thumb { max-width: 100%; max-height: 240px; border-radius: 4px; cursor: pointer; display: block; }
 .card-meta { display: flex; gap: 10px; align-items: center; margin: 8px 0 6px; }
 .badge { font-size: 0.8em; padding: 1px 8px; border-radius: var(--radius); border: 1px solid var(--vscode-editorWidget-border); }
 .badge-error { color: var(--vscode-errorForeground); border-color: var(--vscode-errorForeground); }
-.badge-warning { color: var(--vscode-editorWarning-foreground); border-color: var(--vscode-editorWarning-foreground); }
-.when { color: var(--vscode-descriptionForeground); font-size: 0.9em; }
+.badge-warning { color: var(--accent-warning); border-color: var(--accent-warning); }
+.when { color: var(--muted); font-size: 0.9em; }
 .excerpt { font-family: var(--vscode-editor-font-family); font-size: 0.85em; background: var(--vscode-textCodeBlock-background); border-radius: 4px; padding: 6px 8px; overflow-x: auto; cursor: pointer; }
 .excerpt .hit { color: var(--vscode-errorForeground); font-weight: bold; }
 `;

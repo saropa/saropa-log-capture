@@ -40,8 +40,8 @@ export function getDropToOpenScript(): string {
             s.position = 'fixed'; s.inset = '0'; s.display = 'none'; s.zIndex = '99999';
             s.alignItems = 'center'; s.justifyContent = 'center';
             s.font = '600 14px var(--vscode-font-family, sans-serif)';
-            s.color = 'var(--vscode-foreground)';
-            s.background = 'color-mix(in srgb, var(--vscode-editor-background) 75%, transparent)';
+            s.color = 'var(--text)';
+            s.background = 'color-mix(in srgb, var(--surface-1) 75%, transparent)';
             s.border = '2px dashed var(--vscode-focusBorder)';
             s.pointerEvents = 'none';
             overlay.textContent = ${JSON.stringify('Drop a log file to open it')};

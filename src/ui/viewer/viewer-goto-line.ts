@@ -26,8 +26,8 @@ export function getGotoLineStyles(): string {
     left: 50%;
     transform: translateX(-50%);
     z-index: 300;
-    background: var(--vscode-editorWidget-background, var(--vscode-editor-background));
-    border: 1px solid var(--vscode-editorWidget-border, var(--vscode-widget-border, var(--vscode-panel-border)));
+    background: var(--vscode-editorWidget-background, var(--surface-1));
+    border: 1px solid var(--vscode-editorWidget-border, var(--border));
     border-top: none;
     border-radius: 0 0 6px 6px;
     padding: 6px 12px;
@@ -41,13 +41,13 @@ export function getGotoLineStyles(): string {
 }
 .goto-line-label {
     font-size: 12px;
-    color: var(--vscode-foreground);
+    color: var(--text);
     white-space: nowrap;
 }
 #goto-line-input {
-    background: var(--vscode-input-background);
+    background: var(--inset);
     color: var(--vscode-input-foreground);
-    border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
+    border: 1px solid var(--vscode-input-border, var(--border));
     padding: 3px 6px;
     font-size: 12px;
     width: 120px;

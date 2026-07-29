@@ -39,7 +39,7 @@ export function getSearchStyles(): string {
     align-items: stretch;
     min-height: 24px;
     box-sizing: border-box;
-    background: var(--vscode-input-background);
+    background: var(--inset);
     color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border, transparent);
     border-radius: 2px;
@@ -124,12 +124,12 @@ body.search-match-options-always .session-search-toggles-inline {
     border-radius: 2px;
     box-sizing: border-box;
     background: transparent;
-    color: var(--vscode-icon-foreground, var(--vscode-foreground));
+    color: var(--vscode-icon-foreground, var(--text));
     cursor: pointer;
 }
 .session-search-icon-btn:hover {
     background: var(--vscode-toolbar-hoverBackground);
-    color: var(--vscode-icon-foreground, var(--vscode-foreground));
+    color: var(--vscode-icon-foreground, var(--text));
 }
 .session-search-icon-btn:disabled {
     opacity: 0.35;
@@ -149,16 +149,16 @@ body.search-match-options-always .session-search-toggles-inline {
 }
 .session-search-funnel-btn[aria-expanded="true"] {
     background: var(--vscode-toolbar-activeBackground, var(--vscode-button-secondaryBackground));
-    color: var(--vscode-toolbar-activeForeground, var(--vscode-foreground));
+    color: var(--vscode-toolbar-activeForeground, var(--text));
 }
 
 /* Options popover (fixed position; coordinates from script) */
 .search-options-popover {
     margin: 0;
     padding: 0;
-    background: var(--vscode-editorWidget-background);
-    color: var(--vscode-editorWidget-foreground, var(--vscode-foreground));
-    border: 1px solid var(--vscode-editorWidget-border, var(--vscode-widget-border, var(--vscode-panel-border)));
+    background: var(--surface-2);
+    color: var(--vscode-editorWidget-foreground, var(--text));
+    border: 1px solid var(--vscode-editorWidget-border, var(--border));
     border-radius: var(--radius-sm);
     box-shadow: 0 2px 8px var(--vscode-widget-shadow, rgba(0, 0, 0, 0.36));
 }
@@ -180,7 +180,7 @@ body.search-match-options-always .session-search-toggles-inline {
 .search-options-toggles .search-input-btn {
     background: none;
     border: 1px solid transparent;
-    color: var(--vscode-icon-foreground, var(--vscode-foreground));
+    color: var(--vscode-icon-foreground, var(--text));
     cursor: pointer;
     padding: 2px;
     border-radius: 2px;
@@ -194,12 +194,12 @@ body.search-match-options-always .session-search-toggles-inline {
 .session-search-toggles-inline .search-input-btn:hover,
 .search-options-toggles .search-input-btn:hover {
     background: var(--vscode-toolbar-hoverBackground);
-    color: var(--vscode-icon-foreground, var(--vscode-foreground));
+    color: var(--vscode-icon-foreground, var(--text));
 }
 /* Match find-input-actions in find panel (not high-contrast inputOption pills unless theme sets them). */
 .session-search-toggles-inline .search-input-btn.active,
 .search-options-toggles .search-input-btn.active {
-    color: var(--vscode-foreground);
+    color: var(--text);
     background: var(--vscode-button-secondaryBackground);
     border-color: var(--vscode-focusBorder);
 }
@@ -214,7 +214,7 @@ body.search-match-options-always .session-search-toggles-inline {
     text-align: left;
     background: transparent;
     border: 1px solid transparent;
-    color: var(--vscode-foreground);
+    color: var(--text);
     cursor: pointer;
     font-size: 12px;
     font-family: var(--vscode-font-family);
@@ -227,15 +227,15 @@ body.search-match-options-always .session-search-toggles-inline {
 }
 .search-mode-toggle.active {
     background: var(--vscode-toolbar-activeBackground, var(--vscode-button-secondaryBackground));
-    color: var(--vscode-toolbar-activeForeground, var(--vscode-foreground));
+    color: var(--vscode-toolbar-activeForeground, var(--text));
 }
 
 /* Floating search history under the field */
 .session-search-history:not(:empty) {
     overflow-y: auto;
-    background: var(--vscode-editorWidget-background);
-    color: var(--vscode-editorWidget-foreground, var(--vscode-foreground));
-    border: 1px solid var(--vscode-editorWidget-border, var(--vscode-widget-border, var(--vscode-panel-border)));
+    background: var(--surface-2);
+    color: var(--vscode-editorWidget-foreground, var(--text));
+    border: 1px solid var(--vscode-editorWidget-border, var(--border));
     border-radius: var(--radius-sm);
     box-shadow: 0 2px 8px var(--vscode-widget-shadow, rgba(0, 0, 0, 0.36));
 }
@@ -266,9 +266,9 @@ mark {
     padding: var(--space-1) var(--space-2);
     font-size: var(--text-caption);
     line-height: 1.4;
-    color: var(--vscode-notificationsInfoIcon-foreground, var(--vscode-foreground));
-    background: var(--vscode-editorWidget-background, var(--vscode-input-background));
-    border-top: 1px solid var(--vscode-editorWidget-border, var(--vscode-widget-border, var(--vscode-panel-border)));
+    color: var(--vscode-notificationsInfoIcon-foreground, var(--text));
+    background: var(--vscode-editorWidget-background, var(--inset));
+    border-top: 1px solid var(--vscode-editorWidget-border, var(--border));
 }
 .search-hidden-notice[hidden] { display: none !important; }
 .search-hidden-icon {
@@ -292,13 +292,13 @@ mark {
     padding: 2px 6px;
     font-size: var(--text-caption);
     font-family: var(--vscode-font-family);
-    color: var(--vscode-textLink-foreground);
+    color: var(--link);
     cursor: pointer;
     white-space: nowrap;
 }
 .search-hidden-disable:hover {
     background: var(--vscode-toolbar-hoverBackground);
-    color: var(--vscode-textLink-activeForeground, var(--vscode-textLink-foreground));
+    color: var(--vscode-textLink-activeForeground, var(--link));
 }
 .search-hidden-disable:focus-visible {
     outline: 1px solid var(--vscode-focusBorder);

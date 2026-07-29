@@ -71,7 +71,7 @@ export function getContentStyles(): string {
     text-underline-offset: 2px;
 }
 .slow-query-burst-marker:hover {
-    color: var(--vscode-textLink-activeForeground, var(--vscode-textLink-foreground));
+    color: var(--vscode-textLink-activeForeground, var(--link));
 }
 /* Count badge for collapsed runs of adjacent identical db-signal markers
    (applyConsecutiveDbMarkerCollapse). Sits after the marker label; muted against the
@@ -142,7 +142,7 @@ export function getContentStyles(): string {
 /* Individual stack frames are indented and dimmed */
 .stack-frames .line {
     padding-left: 28px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     white-space: pre;
     word-break: normal;
     overflow-wrap: normal;
@@ -166,10 +166,10 @@ export function getContentStyles(): string {
 .async-gap-glyph:focus { outline: 1px dotted var(--vscode-focusBorder); }
 .async-gap-glyph .async-gap-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; user-select: text; color: transparent; }
 .async-gap-glyph.expanded::before { content: ''; margin: 0; }
-.async-gap-glyph.expanded .async-gap-text { position: static; width: auto; height: auto; overflow: visible; clip: auto; color: var(--vscode-descriptionForeground); opacity: 0.75; }
+.async-gap-glyph.expanded .async-gap-text { position: static; width: auto; height: auto; overflow: visible; clip: auto; color: var(--muted); opacity: 0.75; }
 /* Thread header lines from Android/Java thread dumps */
 .thread-header {
-    color: var(--vscode-textLink-foreground);
+    color: var(--link);
     font-weight: 600;
     font-style: italic;
 }
@@ -184,7 +184,7 @@ export function getContentStyles(): string {
 .anr-warning { color: var(--vscode-editorWarning-foreground, #fc0); }
 
 /* Correlation badge: line is part of a detected correlation */
-.correlation-badge { color: var(--vscode-textLink-foreground); cursor: pointer; margin-left: 2px; }
+.correlation-badge { color: var(--link); cursor: pointer; margin-left: 2px; }
 .correlation-badge:hover { text-decoration: underline; }
 
 /* ===================================================================
@@ -201,9 +201,9 @@ export function getContentStyles(): string {
     position: fixed;
     left: auto;
     right: 8px;
-    background: var(--vscode-editorWidget-background);
+    background: var(--surface-2);
     color: var(--vscode-editorWidget-foreground);
-    border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+    border: 1px solid var(--border);
     padding: 4px 10px;
     cursor: pointer;
     border-radius: 4px;
@@ -231,7 +231,7 @@ export function getContentStyles(): string {
     padding: 1px 8px 1px 32px;
     font-size: 11px;
     font-style: italic;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     background: var(--vscode-editor-inactiveSelectionBackground, rgba(255,255,255,0.04));
 }
 /* Dashed warning line shown when a time gap exceeds the threshold */
@@ -245,7 +245,7 @@ export function getContentStyles(): string {
 }
 /* Per-line elapsed time label (e.g. "+1.2s"). text-align:right + min-width line up varying values ("17s", "3m 31s") on the "s". */
 .elapsed-time {
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-size: 10px;
     min-width: 50px;
     display: inline-block;
@@ -271,7 +271,7 @@ export function getContentStyles(): string {
     font-size: 10px;
     opacity: 0.75;
     margin-right: 6px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-style: normal;
     vertical-align: baseline;
 }
@@ -284,7 +284,7 @@ export function getContentStyles(): string {
 .repeat-notification {
     opacity: 0.75;
     font-style: italic;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 .repeat-preview {
     font-size: 0.95em;

@@ -11,8 +11,8 @@ export function getContextMenuStyles(): string {
     display: none;
     position: fixed;
     z-index: 200;
-    background: var(--vscode-menu-background, var(--vscode-editor-background));
-    border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border));
+    background: var(--vscode-menu-background, var(--surface-1));
+    border: 1px solid var(--vscode-menu-border, var(--border));
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     min-width: 160px;
@@ -53,7 +53,7 @@ export function getContextMenuStyles(): string {
 }
 .context-menu-separator {
     height: 1px;
-    background: var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
+    background: var(--vscode-menu-separatorBackground, var(--border));
     margin: var(--space-1) var(--space-2);
 }
 
@@ -86,8 +86,8 @@ export function getContextMenuStyles(): string {
     left: 100%;
     top: 0;
     z-index: 201;
-    background: var(--vscode-menu-background, var(--vscode-editor-background));
-    border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border));
+    background: var(--vscode-menu-background, var(--surface-1));
+    border: 1px solid var(--vscode-menu-border, var(--border));
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     min-width: 160px;

@@ -14,8 +14,8 @@ export function getCollectionsPanelStyles(): string {
     width: 100%;
     min-width: 280px;
     height: 100%;
-    background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-    border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    background: var(--vscode-sideBar-background, var(--surface-1));
+    border-right: 1px solid var(--vscode-sideBar-border, var(--border));
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
     display: none;
     flex-direction: column;
@@ -30,7 +30,7 @@ export function getCollectionsPanelStyles(): string {
     padding: var(--space-2) var(--space-3);
     font-weight: 600;
     font-size: 12px;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
 }
 .collections-panel-close {
     background: none;
@@ -74,7 +74,7 @@ export function getCollectionsPanelStyles(): string {
 .collections-explainer-close {
     background: none;
     border: none;
-    color: var(--vscode-foreground);
+    color: var(--text);
     opacity: 0.6;
     cursor: pointer;
     font-size: 12px;
@@ -106,7 +106,7 @@ export function getCollectionsPanelStyles(): string {
     gap: 6px;
 }
 .collections-rename-input {
-    background: var(--vscode-input-background);
+    background: var(--inset);
     color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border, transparent);
     border-radius: var(--radius-sm);
@@ -156,7 +156,7 @@ export function getCollectionsPanelStyles(): string {
 /* ---- Merge ---- */
 .collections-merge-section { margin-bottom: var(--space-3); }
 .collections-merge-select {
-    background: var(--vscode-input-background);
+    background: var(--inset);
     color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border, transparent);
     border-radius: var(--radius-sm);
@@ -200,7 +200,7 @@ export function getCollectionsPanelStyles(): string {
     background: var(--vscode-list-activeSelectionBackground, rgba(127,127,127,0.15));
 }
 .collections-item-active {
-    border-color: var(--vscode-focusBorder, var(--vscode-textLink-foreground));
+    border-color: var(--vscode-focusBorder, var(--link));
 }
 
 .collections-item-header {

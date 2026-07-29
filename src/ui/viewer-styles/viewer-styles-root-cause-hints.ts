@@ -11,9 +11,9 @@ export function getRootCauseHypothesesStyles(): string {
     margin: 0 0 var(--space-1) 0;
     padding: 6px 10px 8px;
     border-radius: 4px;
-    border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+    border: 1px solid var(--border);
     background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
-    color: var(--vscode-editorWidget-foreground, var(--vscode-foreground));
+    color: var(--vscode-editorWidget-foreground, var(--text));
     font-size: 12px;
     line-height: 1.35;
     max-height: 42vh;
@@ -54,7 +54,7 @@ export function getRootCauseHypothesesStyles(): string {
     min-width: 1.4em;
     text-align: right;
     opacity: 0.7;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-variant-numeric: tabular-nums;
 }
 /* Hypothesis text. Truncates to one line with an ellipsis by default so long hints keep the strip
@@ -90,7 +90,7 @@ export function getRootCauseHypothesesStyles(): string {
 .rch-report-btn {
     border: none;
     background: transparent;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     font-size: 12px;
     padding: 1px 4px;
@@ -114,7 +114,7 @@ export function getRootCauseHypothesesStyles(): string {
 .rch-dismiss-btn {
     border: none;
     background: transparent;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     font-size: 12px;
     padding: 1px 4px;
@@ -142,7 +142,7 @@ export function getRootCauseHypothesesStyles(): string {
     padding: 0;
     border: none;
     background: transparent;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-size: var(--text-caption);
     cursor: pointer;
     appearance: none;
@@ -172,7 +172,7 @@ export function getRootCauseHypothesesStyles(): string {
 /* Cross-session trend badge: small ↻N indicator between confidence emoji and signal text */
 .rch-trend-badge {
     font-size: 10px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     opacity: 0.75;
     white-space: nowrap;
     flex-shrink: 0;
