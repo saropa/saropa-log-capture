@@ -101,6 +101,7 @@ import { getErrorHoverScript } from '../viewer-decorations/viewer-error-hover-sc
 import { getGotoLineScript } from '../viewer/viewer-goto-line';
 import { getRunNavScript } from '../viewer-nav/viewer-run-nav';
 import { getLogBannerScript } from '../viewer/viewer-log-banner';
+import { getViewerScreenshotsScript } from '../viewer/viewer-screenshots';
 import { getStructuredLineParserScript } from '../viewer/viewer-structured-line-parser';
 import { getMetadataFilterScript } from '../viewer-search-filter/viewer-metadata-filter';
 import { getViewerFormatMarkdownScript } from '../viewer/viewer-format-markdown';
@@ -279,6 +280,8 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getErrorHoverScript()) +
         scriptTag(nonce, getGotoLineScript()) +
         scriptTag(nonce, getRunNavScript()) +
-        scriptTag(nonce, getLogBannerScript())
+        scriptTag(nonce, getLogBannerScript()) +
+        // After viewer-data (allLines/renderViewport) and the toolbar; adds only badge/popover/footer handlers.
+        scriptTag(nonce, getViewerScreenshotsScript())
     );
 }

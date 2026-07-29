@@ -17,6 +17,10 @@ export const stringsViewer: Record<string, string> = {
     // Staleness chip (plan 109) — replaces the old "Log N of M" navigator. Shown when the open log
     // is behind a newer main-project log; click opens the log banner.
     'viewer.toolbar.staleness.title': 'A newer main-project log exists — click to open the log banner',
+    // Screenshot footer controls (plan 114) — camera is the quick on/off toggle, count opens the gallery.
+    'viewer.toolbar.screenshotToggleOn': 'Screenshots on — click to turn off',
+    'viewer.toolbar.screenshotToggleOff': 'Screenshots off — click to turn on',
+    'viewer.toolbar.screenshotCount': 'Screenshots captured for this log — click to open the gallery',
     'viewer.toolbar.search.title': 'Open search to find text in the current log (Ctrl+F)',
     'viewer.toolbar.search.label': 'Toggle search',
     'viewer.toolbar.searchCount.title': 'Number of search matches',

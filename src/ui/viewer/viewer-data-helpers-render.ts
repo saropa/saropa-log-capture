@@ -287,6 +287,9 @@ function renderItem(item, idx, prevVis) {
     /* OpenTelemetry trace badge: line carries a trace id; clicking opens the trace in the configured backend. */
     var trl = (typeof traceLinksByIndex !== 'undefined' && traceLinksByIndex[idx]);
     if (trl) badge += '<span class="trace-link-badge" data-trace-url="' + (trl.url || '').replace(/"/g, '&quot;') + '" title="' + vt('viewer.deco.openTrace', trl.traceId).replace(/"/g, '&quot;') + '">\\ud83d\\udd17</span> ';
+    /* Screenshot badge (plan 114): a capture is anchored to this line; clicking opens the thumbnail popover. */
+    var shot = (typeof screenshotByIdx !== 'undefined' && screenshotByIdx[idx]);
+    if (shot) badge += '<span class="screenshot-badge" data-shot-file="' + (shot.file || '').replace(/"/g, '&quot;') + '" title="' + vt('viewer.deco.screenshot').replace(/"/g, '&quot;') + '">\\ud83d\\udcf7</span> ';
     var titleAttr = '';
     if (typeof applyHighlightStyles === 'function') {
         var plainText = stripTags(item.html);

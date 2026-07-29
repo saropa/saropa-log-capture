@@ -200,6 +200,8 @@ export function setupConfigListener(
             || e.affectsConfiguration('saropaLogCapture.ai.enabled')
             // adbLogcat.enabled drives the "adb Logcat" checkbox state (merged in), so a JSON edit must refresh it.
             || e.affectsConfiguration('saropaLogCapture.integrations.adbLogcat.enabled')
+            // screenshots.enabled drives the Screenshots checkbox + footer camera toggle the same way.
+            || e.affectsConfiguration('saropaLogCapture.integrations.screenshots.enabled')
         ) {
             syncIntegrationsAdaptersToWebview(broadcaster);
         }
@@ -243,6 +245,7 @@ function syncIntegrationsAdaptersToWebview(broadcaster: ViewerBroadcaster): void
         cfg.integrationsAdapters,
         vscode.workspace.getConfiguration('saropaLogCapture.ai').get<boolean>('enabled', false),
         cfg.integrationsAdbLogcat.enabled,
+        cfg.integrationsScreenshots.enabled,
     );
     broadcaster.postToWebview({ type: 'integrationsAdapters', adapterIds: merged });
 }

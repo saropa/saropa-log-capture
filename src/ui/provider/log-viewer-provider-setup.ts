@@ -75,7 +75,7 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
   queueMicrotask(() => {
     const c = getConfig();
     const aiOn = vscode.workspace.getConfiguration("saropaLogCapture.ai").get<boolean>("enabled", false);
-    target.sendIntegrationsAdapters(mergeIntegrationAdaptersForWebview(c.integrationsAdapters, aiOn, c.integrationsAdbLogcat.enabled));
+    target.sendIntegrationsAdapters(mergeIntegrationAdaptersForWebview(c.integrationsAdapters, aiOn, c.integrationsAdbLogcat.enabled, c.integrationsScreenshots.enabled));
     // Read-only "Capture sources" status for the Filters panel Log Sources tab. Resolves runtime
     // state (adb device probe) when a debug session is already active as the viewer loads.
     void resolveAndPostCaptureSources((m) => target.postMessage(m));

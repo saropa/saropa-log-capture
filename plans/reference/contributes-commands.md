@@ -14,6 +14,7 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.addToInvestigation` | Saropa Log Capture: Add to Investigation |  |
 | `saropaLogCapture.applyPreset` | %command.applyPreset.title% |  |
 | `saropaLogCapture.applyTemplate` | %command.applyTemplate.title% |  |
+| `saropaLogCapture.captureScreenshot` | %command.captureScreenshot.title% |  |
 | `saropaLogCapture.checkFilterSuggestions` | %command.checkFilterSuggestions.title% |  |
 | `saropaLogCapture.clear` | %command.clear.title% |  |
 | `saropaLogCapture.clearBuildCiAzurePat` | Saropa: Clear Build/CI Azure PAT |  |
@@ -123,4 +124,4 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.troubleMode.toggle` | %command.troubleModeToggle.title% |  |
 | `saropaLogCapture.ungroupSession` | Saropa Log Capture: Ungroup Session |  |
 
-**Total:** 116 commands.
+**Total:** 117 commands.

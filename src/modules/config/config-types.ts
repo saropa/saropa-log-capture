@@ -26,6 +26,7 @@ import type {
   IntegrationOtelConfig,
   IntegrationBrowserConfig,
   IntegrationAdbLogcatConfig,
+  IntegrationScreenshotsConfig,
   IntegrationUnifiedLogConfig,
   IntegrationFlutterCrashLogsConfig,
 } from "./config-types-integrations";
@@ -246,6 +247,8 @@ export interface SaropaLogCaptureConfig {
   readonly integrationsOtel: IntegrationOtelConfig;
   readonly integrationsBrowser: IntegrationBrowserConfig;
   readonly integrationsAdbLogcat: IntegrationAdbLogcatConfig;
+  /** Debug screenshot capture via the Flutter VM Service (plan 114). */
+  readonly integrationsScreenshots: IntegrationScreenshotsConfig;
   /** Optional merged session artifact (Phase 4): `basename.unified.jsonl` next to main log. */
   readonly integrationsUnifiedLog: IntegrationUnifiedLogConfig;
   readonly integrationsFlutterCrashLogs: IntegrationFlutterCrashLogsConfig;
@@ -358,6 +361,7 @@ export type {
   IntegrationOtelConfig,
   IntegrationBrowserConfig,
   IntegrationAdbLogcatConfig,
+  IntegrationScreenshotsConfig,
   IntegrationUnifiedLogConfig,
   IntegrationFlutterCrashLogsConfig,
 } from "./config-types-integrations";

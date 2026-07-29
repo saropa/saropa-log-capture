@@ -208,6 +208,25 @@ export interface IntegrationAdbLogcatConfig {
   readonly captureAnr: boolean;
 }
 
+export interface IntegrationScreenshotsConfig {
+  /**
+   * Master allow for debug screenshot capture (default true). The Options → Integrations
+   * checkbox and the viewer footer camera icon both bind to this boolean — NOT to membership
+   * in `integrations.adapters` — so an explicit off truly disables capture (adbLogcat pattern).
+   */
+  readonly enabled: boolean;
+  /** Capture a screenshot when an error line is detected. */
+  readonly onError: boolean;
+  /** Capture on warning lines (default off — warnings are frequent). */
+  readonly onWarning: boolean;
+  /** Capture on flow-map screen-navigation entries (default off). */
+  readonly onNavigation: boolean;
+  /** Minimum gap between any two captures, ms. */
+  readonly cooldownMs: number;
+  /** Maximum screenshots per log file; further captures are skipped with one warning. */
+  readonly maxPerLog: number;
+}
+
 export interface IntegrationFlutterCrashLogsConfig {
   /** Delete flutter_*.log originals from workspace root after importing to reports. */
   readonly deleteOriginals: boolean;
