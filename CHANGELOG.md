@@ -45,6 +45,7 @@ cspell:disable
 - Signal report evidence blocks highlight the target line with a red left-border accent; surrounding lines fade to draw the eye
 - Signal report overview rows now have subtle separators, bolder labels, and consistent vertical rhythm
 - Signal panel entries (both "This log" and "Across your logs") now show colored type badges (ERR, WARN, PERF, SQL, NET, MEM, etc.) for at-a-glance category scanning
+- Health gauge handles non-finite scores gracefully (renders 0 instead of NaN)
 
 ---
 
