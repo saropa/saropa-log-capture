@@ -18,6 +18,7 @@
  */
 
 import * as vscode from 'vscode';
+import { logExtensionInfo } from '../misc/extension-logger';
 
 /** Session id → VM Service WebSocket URI, insertion-ordered (newest last). */
 const uriBySessionId = new Map<string, string>();
@@ -80,6 +81,7 @@ export function recordVmServiceUriFromLogLine(text: string, logFsPath: string): 
     const match = vmServiceBanner.exec(text);
     if (!match) { return false; }
     uriBySessionId.set(`log:${logFsPath}`, toVmServiceWsUri(match[1]));
+    logExtensionInfo('screenshot', `VM Service URI from console banner (dart.debuggerUris event absent): ${toVmServiceWsUri(match[1])}`);
     return true;
 }
 
@@ -94,6 +96,9 @@ export function registerVmServiceUriTracking(context: vscode.ExtensionContext): 
             const body = e.body as { vmServiceUri?: unknown } | undefined;
             if (typeof body?.vmServiceUri === 'string' && body.vmServiceUri.length > 0) {
                 recordVmServiceUri(e.session.id, body.vmServiceUri);
+                // Which discovery path fired is the first question when captures don't work —
+                // answer it in the output channel instead of making F5 diagnosis guesswork.
+                logExtensionInfo('screenshot', `VM Service URI from dart.debuggerUris event: ${toVmServiceWsUri(body.vmServiceUri)}`);
             }
         }),
         vscode.debug.onDidTerminateDebugSession((session) => {
