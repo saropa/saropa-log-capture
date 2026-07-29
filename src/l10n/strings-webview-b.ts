@@ -65,6 +65,15 @@ export const stringsWebviewB: Record<string, string> = {
     'viewer.deco.screenshot': 'Screenshot captured at this line — click to preview',
     'viewer.screenshot.popoverCaption': 'Captured at {0} — click to open full size',
 
+    // Footer camera options menu (plan 114, viewer-screenshots.ts).
+    'viewer.screenshot.menu.master': 'Screenshots',
+    'viewer.screenshot.menu.onError': 'Capture on errors',
+    'viewer.screenshot.menu.onWarning': 'Capture on warnings',
+    'viewer.screenshot.menu.onNavigation': 'Capture on navigation',
+    'viewer.screenshot.menu.captureNow': 'Capture now',
+    'viewer.screenshot.menu.openGallery': 'Open gallery',
+    'viewer.screenshot.menu.limits': '{0}s cooldown · {1} per log',
+
     // Run separator snip labels (viewer-data-helpers-render-run-separator-snip.ts).
     'viewer.runSeparator.errors': 'Errors',
     'viewer.runSeparator.warnings': 'Warnings',

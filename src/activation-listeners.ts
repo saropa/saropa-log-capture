@@ -17,6 +17,7 @@ import { extractSourceReference } from './modules/source/source-linker';
 import { buildScopeContext, type ScopeContext } from './modules/storage/scope-context';
 import { getLearningWebviewOptions } from './modules/learning/learning-webview-options';
 import { mergeIntegrationAdaptersForWebview } from './modules/integrations/integration-adapter-constants';
+import { buildScreenshotSettingsPayload } from './ui/provider/viewer-message-handler-screenshots';
 import { resolveAndPostCaptureSources } from './modules/integrations/capture-source-states';
 import { isCrashlyticsApplicable, clearCrashlyticsApplicabilityCache } from './modules/crashlytics/crashlytics-applicability';
 import type { CaptureToggleStatusBar } from './ui/shared/capture-toggle-status-bar';
@@ -204,6 +205,10 @@ export function setupConfigListener(
             || e.affectsConfiguration('saropaLogCapture.integrations.screenshots.enabled')
         ) {
             syncIntegrationsAdaptersToWebview(broadcaster);
+        }
+        // Footer camera menu (plan 114): any screenshots.* change re-syncs the menu checkboxes.
+        if (e.affectsConfiguration('saropaLogCapture.integrations.screenshots')) {
+            broadcaster.postToWebview({ type: 'screenshotSettings', ...buildScreenshotSettingsPayload() });
         }
         // The Filters-panel "Capture sources" status reflects any log-streaming integration's on/off.
         if (e.affectsConfiguration('saropaLogCapture.integrations')) {

@@ -1,6 +1,8 @@
 /**
  * Webview-side screenshot surfaces (plan 114): the per-line camera badge, the
- * floating thumbnail popover, and the footer camera toggle + gallery counter.
+ * floating thumbnail popover, and the footer camera icon whose menu holds the
+ * capture options (master + per-trigger toggles, capture now, gallery) beside
+ * the live gallery counter.
  *
  * The popover is a fixed-position overlay, NOT an inline row expansion — an inline
  * thumbnail would add a variable height term to calcItemHeight and interact with the
@@ -66,21 +68,113 @@ function screenshotHandleImage(msg) {
     if (screenshotPopoverFile === msg.file) screenshotPopoverShow(msg.file);
 }
 
-/* Footer: icon reflects the enabled boolean (mirrored via integrationAdapters merge);
-   counter shows/hides on count. Both elements are static toolbar HTML. */
+/* Live settings driving the footer menu; replaced wholesale by each screenshotSettings
+   message (defaults mirror the published setting defaults for the pre-message window). */
+var screenshotTriggerSettings = { enabled: true, onError: true, onWarning: false, onNavigation: false, cooldownMs: 2000, maxPerLog: 50 };
+
+function screenshotHandleSettings(msg) {
+    if (!msg) return;
+    screenshotTriggerSettings = {
+        enabled: msg.enabled !== false,
+        onError: msg.onError !== false,
+        onWarning: msg.onWarning === true,
+        onNavigation: msg.onNavigation === true,
+        cooldownMs: typeof msg.cooldownMs === 'number' ? msg.cooldownMs : 2000,
+        maxPerLog: typeof msg.maxPerLog === 'number' ? msg.maxPerLog : 50,
+    };
+    screenshotSyncFooter();
+    screenshotMenuSync();
+}
+
+/* Footer: icon dims when the master toggle is off; counter shows/hides on count. */
 function screenshotSyncFooter() {
     var toggle = document.getElementById('screenshot-toggle');
     var count = document.getElementById('screenshot-count');
-    if (toggle) {
-        var on = !window.integrationAdapters || window.integrationAdapters.indexOf('screenshots') >= 0;
-        toggle.classList.toggle('screenshot-toggle-off', !on);
-        var tip = on ? toggle.getAttribute('data-on-title') : toggle.getAttribute('data-off-title');
-        if (tip) { toggle.title = tip; toggle.setAttribute('aria-label', tip); }
-    }
+    if (toggle) toggle.classList.toggle('screenshot-toggle-off', !screenshotTriggerSettings.enabled);
     if (count) {
         count.textContent = screenshotSessionCount > 0 ? String(screenshotSessionCount) : '';
         count.classList.toggle('u-hidden', screenshotSessionCount <= 0);
     }
+}
+
+/* ── Camera options menu (anchored to the footer icon) ─────────────────── */
+
+/* Checkbox rows: setting key ↔ vt label. Rendered in this order. */
+var screenshotMenuToggles = [
+    { key: 'enabled', label: 'viewer.screenshot.menu.master' },
+    { key: 'onError', label: 'viewer.screenshot.menu.onError' },
+    { key: 'onWarning', label: 'viewer.screenshot.menu.onWarning' },
+    { key: 'onNavigation', label: 'viewer.screenshot.menu.onNavigation' },
+];
+
+function screenshotMenuEl() {
+    var el = document.getElementById('screenshot-menu');
+    if (el) return el;
+    el = document.createElement('div');
+    el.id = 'screenshot-menu';
+    el.className = 'screenshot-menu u-hidden';
+    var html = '';
+    for (var i = 0; i < screenshotMenuToggles.length; i++) {
+        var tgl = screenshotMenuToggles[i];
+        html += '<label class="screenshot-menu-row' + (tgl.key === 'enabled' ? ' screenshot-menu-master' : '') + '">'
+            + '<input type="checkbox" data-shot-setting="' + tgl.key + '">'
+            + '<span>' + vt(tgl.label) + '</span></label>';
+    }
+    html += '<div class="screenshot-menu-sep"></div>'
+        + '<button type="button" class="screenshot-menu-row screenshot-menu-action" data-shot-action="captureNow">' + vt('viewer.screenshot.menu.captureNow') + '</button>'
+        + '<button type="button" class="screenshot-menu-row screenshot-menu-action" data-shot-action="openGallery">' + vt('viewer.screenshot.menu.openGallery') + '</button>'
+        + '<div class="screenshot-menu-limits" id="screenshot-menu-limits"></div>';
+    el.innerHTML = html;
+    document.body.appendChild(el);
+    el.addEventListener('change', function(e) {
+        var key = e.target && e.target.getAttribute && e.target.getAttribute('data-shot-setting');
+        if (!key || typeof vscodeApi === 'undefined') return;
+        /* Optimistic local flip; the host echoes screenshotSettings after persisting. */
+        screenshotTriggerSettings[key] = !!e.target.checked;
+        screenshotSyncFooter();
+        vscodeApi.postMessage({ type: 'setScreenshotTrigger', key: key, value: !!e.target.checked });
+    });
+    el.addEventListener('click', function(e) {
+        var action = e.target && e.target.getAttribute && e.target.getAttribute('data-shot-action');
+        if (!action || typeof vscodeApi === 'undefined') return;
+        if (action === 'captureNow') vscodeApi.postMessage({ type: 'captureScreenshotNow' });
+        else if (action === 'openGallery') vscodeApi.postMessage({ type: 'openScreenshotGallery' });
+        screenshotMenuClose();
+    });
+    return el;
+}
+
+/* Reflect current settings into the menu's checkboxes + limits line (no-op while unbuilt). */
+function screenshotMenuSync() {
+    var el = document.getElementById('screenshot-menu');
+    if (!el) return;
+    var boxes = el.querySelectorAll('input[data-shot-setting]');
+    for (var i = 0; i < boxes.length; i++) {
+        var key = boxes[i].getAttribute('data-shot-setting');
+        boxes[i].checked = !!screenshotTriggerSettings[key];
+        /* Sub-triggers are moot while the master is off — disable so the hierarchy reads. */
+        if (key !== 'enabled') boxes[i].disabled = !screenshotTriggerSettings.enabled;
+    }
+    var limits = document.getElementById('screenshot-menu-limits');
+    if (limits) limits.textContent = vt('viewer.screenshot.menu.limits', (screenshotTriggerSettings.cooldownMs / 1000), screenshotTriggerSettings.maxPerLog);
+}
+
+function screenshotMenuClose() {
+    var el = document.getElementById('screenshot-menu');
+    if (el) el.classList.add('u-hidden');
+}
+
+/* Toggle the menu anchored to the icon; opens above the icon when it sits in the lower
+   half of the window (the footer bar usually does). */
+function screenshotMenuOpen(iconEl) {
+    var el = screenshotMenuEl();
+    if (!el.classList.contains('u-hidden')) { screenshotMenuClose(); return; }
+    screenshotMenuSync();
+    var r = iconEl.getBoundingClientRect();
+    el.style.left = Math.min(r.left, Math.max(8, window.innerWidth - 240)) + 'px';
+    if (r.top > window.innerHeight / 2) { el.style.top = ''; el.style.bottom = (window.innerHeight - r.top + 4) + 'px'; }
+    else { el.style.bottom = ''; el.style.top = (r.bottom + 4) + 'px'; }
+    el.classList.remove('u-hidden');
 }
 
 function screenshotPopoverEl() {
@@ -151,17 +245,15 @@ document.addEventListener('click', function(e) {
     var badge = t.closest('.screenshot-badge');
     if (badge) { e.stopPropagation(); screenshotBadgeClick(badge); return; }
     var toggle = t.closest('#screenshot-toggle');
-    if (toggle) {
-        if (typeof vscodeApi !== 'undefined') vscodeApi.postMessage({ type: 'toggleScreenshots' });
-        return;
-    }
+    if (toggle) { screenshotMenuOpen(toggle); return; }
     var counter = t.closest('#screenshot-count');
     if (counter) {
         if (typeof vscodeApi !== 'undefined') vscodeApi.postMessage({ type: 'openScreenshotGallery' });
         return;
     }
     if (!t.closest('#screenshot-popover')) screenshotPopoverClose();
+    if (!t.closest('#screenshot-menu')) screenshotMenuClose();
 });
-document.addEventListener('keydown', function(e) { if (e.key === 'Escape') screenshotPopoverClose(); });
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { screenshotPopoverClose(); screenshotMenuClose(); } });
 `;
 }

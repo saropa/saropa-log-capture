@@ -16,6 +16,7 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `addToWatch` | viewer-message-handler-session-ui.ts |
 | `analyzeLine` | viewer-message-handler-actions.ts |
 | `browseSessionRoot` | viewer-message-handler-session-ui.ts |
+| `captureScreenshotNow` | viewer-message-handler-screenshots.ts |
 | `checkDriftViewerHealth` | viewer-message-handler-panels.ts |
 | `clearSessionRoot` | viewer-message-handler-session-ui.ts |
 | `copyAllFiltered` | viewer-message-handler-actions.ts |
@@ -149,6 +150,7 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `setMinimapViewportRedOutline` | viewer-workspace-bool-message-map.ts (boolean toggles → config update) |
 | `setMinimapWidth` | viewer-message-handler-session-ui.ts |
 | `setRecurringErrorStatus` | viewer-message-handler-panels.ts |
+| `setScreenshotTrigger` | viewer-message-handler-screenshots.ts |
 | `setSessionDisplayOptions` | viewer-message-handler-session-ui.ts |
 | `setShowElapsed` | viewer-workspace-bool-message-map.ts (boolean toggles → config update) |
 | `setShowScrollbar` | viewer-workspace-bool-message-map.ts (boolean toggles → config update) |
@@ -167,9 +169,8 @@ Handlers live under `src/ui/provider/viewer-message-handler*.ts` and `dispatchVi
 | `sqlHistoryCrossLogJump` | viewer-message-handler-session-ui.ts |
 | `startRecordViewerKey` | viewer-message-handler-actions.ts |
 | `togglePause` | viewer-message-handler-actions.ts |
-| `toggleScreenshots` | viewer-message-handler-screenshots.ts |
 | `trackInteraction` | viewer-message-handler.ts |
 | `viewerKeybindingRecordCancelled` | viewer-message-handler-actions.ts |
 | `viewerKeybindingRecorded` | viewer-message-handler-actions.ts |
 
-**Total:** 164 distinct types.
+**Total:** 165 distinct types.
