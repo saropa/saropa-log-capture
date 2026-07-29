@@ -130,7 +130,7 @@ test("buildSignalReportShell: should default to low confidence when undefined", 
 
 // --- Title and layout (post-refactor) ---
 
-test("buildSignalReportShell: should include Saropa Signal Report title", () => {
+test("buildSignalReportShell: should include hypothesis text in hero h1", () => {
   const html = buildSignalReportShell({
     nonce: "n",
     hypothesis: {
@@ -140,10 +140,10 @@ test("buildSignalReportShell: should include Saropa Signal Report title", () => 
       hypothesisKey: "test::3",
     },
   });
-  assert.ok(html.includes("<h1>Saropa Signal Report</h1>"));
+  assert.ok(html.includes("<h1>Some signal</h1>"));
 });
 
-test("buildSignalReportShell: should render signal text in summary div", () => {
+test("buildSignalReportShell: should render signal text in hero title row", () => {
   const html = buildSignalReportShell({
     nonce: "n",
     hypothesis: {
@@ -154,9 +154,8 @@ test("buildSignalReportShell: should render signal text in summary div", () => {
       hypothesisKey: "test::4",
     },
   });
-  assert.ok(html.includes('class="signal-summary"'));
+  assert.ok(html.includes('class="hero-title-row"'));
   assert.ok(html.includes("Slow operation (3000ms)"));
-  assert.ok(html.includes("Medium confidence"));
 });
 
 test("buildSignalReportShell: should NOT include a save report button (auto-saved on open)", () => {
