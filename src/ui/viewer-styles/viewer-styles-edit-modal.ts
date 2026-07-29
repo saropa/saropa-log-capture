@@ -41,7 +41,7 @@ export function getEditModalStyles(): string {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
+    padding: var(--space-3) var(--space-4);
     border-bottom: 1px solid var(--vscode-panel-border);
     font-weight: 500;
     font-size: var(--text-body);
@@ -69,7 +69,7 @@ export function getEditModalStyles(): string {
 .edit-warning {
     background: var(--vscode-inputValidation-warningBackground, rgba(252, 192, 0, 0.15));
     color: var(--vscode-inputValidation-warningForeground, #fc0);
-    padding: 8px 16px;
+    padding: var(--space-2) var(--space-4);
     font-size: var(--text-caption);
     border-bottom: 1px solid var(--vscode-inputValidation-warningBorder, rgba(252, 192, 0, 0.3));
 }
@@ -77,7 +77,7 @@ export function getEditModalStyles(): string {
 #edit-modal-textarea {
     width: 100%;
     min-height: 100px;
-    padding: 12px 16px;
+    padding: var(--space-3) var(--space-4);
     background: var(--vscode-input-background);
     color: var(--vscode-input-foreground);
     border: none;
@@ -95,8 +95,8 @@ export function getEditModalStyles(): string {
 .edit-modal-footer {
     display: flex;
     justify-content: flex-end;
-    gap: 8px;
-    padding: 12px 16px;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
     border-top: 1px solid var(--vscode-panel-border);
 }
 

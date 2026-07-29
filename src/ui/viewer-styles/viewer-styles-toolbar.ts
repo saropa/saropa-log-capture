@@ -17,7 +17,7 @@ export function getToolbarStyles(): string {
     z-index: 50;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
     padding: 2px 8px;
     min-height: 28px;
     background: var(--vscode-panel-background);
@@ -34,7 +34,7 @@ export function getToolbarStyles(): string {
 .toolbar-left {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
     flex-shrink: 0;
 }
 .toolbar-right {
@@ -147,12 +147,12 @@ export function getToolbarStyles(): string {
     border: 1px solid var(--vscode-editorWidget-border, var(--vscode-panel-border));
     border-top: none;
     border-radius: 0 0 4px 4px;
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
     box-shadow: 0 2px 8px var(--vscode-widget-shadow, rgba(0, 0, 0, 0.36));
 }
 .search-flyout.u-hidden { display: none; }
 .search-flyout-row { display: flex; align-items: center; }
-.search-flyout-options { padding: 4px 0; }
+.search-flyout-options { padding: var(--space-1) 0; }
 .search-flyout-history { max-height: 150px; overflow-y: auto; }
 
 /* ===================================================================
@@ -172,7 +172,7 @@ export function getToolbarStyles(): string {
     min-width: 200px;
     max-width: min(90vw, 420px);
     width: max-content;
-    padding: 4px;
+    padding: var(--space-1);
     border-radius: 4px;
     border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
     background: var(--vscode-editorWidget-background, var(--vscode-panel-background));
@@ -195,7 +195,7 @@ export function getToolbarStyles(): string {
     top: -4px;
     min-width: 180px;
     width: max-content;
-    padding: 4px;
+    padding: var(--space-1);
     border-radius: 4px;
     border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
     background: var(--vscode-editorWidget-background, var(--vscode-panel-background));

@@ -28,12 +28,12 @@ export function getSqlRepeatDrilldownStyles(): string {
 }
 .sql-repeat-drilldown-meta {
     font-size: 0.92em;
-    margin-bottom: 4px;
+    margin-bottom: var(--space-1);
     color: var(--vscode-descriptionForeground);
 }
 .sql-repeat-drilldown-meta-label {
     font-weight: 600;
-    margin-right: 4px;
+    margin-right: var(--space-1);
 }
 .sql-repeat-drilldown-fp {
     font-size: 0.88em;
@@ -61,7 +61,7 @@ export function getSqlRepeatDrilldownStyles(): string {
 .sql-repeat-drilldown-variant {
     font-size: 0.88em;
     margin: 2px 0;
-    padding-left: 4px;
+    padding-left: var(--space-1);
 }
 .sql-repeat-drilldown-variant-count {
     opacity: 0.85;
@@ -71,11 +71,11 @@ export function getSqlRepeatDrilldownStyles(): string {
 .sql-repeat-drilldown-more {
     font-size: 0.88em;
     font-style: italic;
-    margin-top: 4px;
+    margin-top: var(--space-1);
     color: var(--vscode-descriptionForeground);
 }
 .sql-repeat-drilldown-actions {
-    margin-top: 8px;
+    margin-top: var(--space-2);
 }
 .sql-repeat-static-sources {
     font-size: var(--text-caption);

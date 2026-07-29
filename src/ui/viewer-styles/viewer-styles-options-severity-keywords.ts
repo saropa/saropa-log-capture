@@ -10,7 +10,7 @@ export function getSeverityKeywordsStyles(): string {
 
 /* Severity keywords display */
 .severity-keywords-display {
-    margin-bottom: 8px;
+    margin-bottom: var(--space-2);
 }
 .sk-level-row {
     display: flex;

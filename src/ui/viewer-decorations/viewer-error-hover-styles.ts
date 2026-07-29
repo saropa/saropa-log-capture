@@ -91,7 +91,7 @@ export function getErrorHoverStyles(): string {
 .eh-crash-cat {
     font-size: 9px;
     font-weight: 700;
-    padding: 0 4px;
+    padding: 0 var(--space-1);
     border-radius: 2px;
     text-transform: uppercase;
 }

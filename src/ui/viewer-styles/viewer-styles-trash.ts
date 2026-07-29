@@ -30,7 +30,7 @@ export function getTrashPanelStyles(): string {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     font-weight: 600;
     font-size: 12px;
     border-bottom: 1px solid var(--vscode-panel-border);
@@ -39,7 +39,7 @@ export function getTrashPanelStyles(): string {
 .trash-panel-actions {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
 }
 
 .trash-panel-action {
@@ -81,7 +81,7 @@ export function getTrashPanelStyles(): string {
 .trash-item {
     display: flex;
     align-items: flex-start;
-    gap: 8px;
+    gap: var(--space-2);
     padding: 6px 12px;
     cursor: pointer;
     border-bottom: 1px solid var(--vscode-panel-border);
@@ -121,7 +121,7 @@ export function getTrashPanelStyles(): string {
 
 /* --- Empty state --- */
 .trash-empty {
-    padding: 16px 12px;
+    padding: var(--space-4) var(--space-3);
     font-size: 12px;
     color: var(--vscode-descriptionForeground);
     text-align: center;

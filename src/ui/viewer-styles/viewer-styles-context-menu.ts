@@ -17,7 +17,7 @@ export function getContextMenuStyles(): string {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     min-width: 160px;
     width: max-content;
-    padding: 4px 0;
+    padding: var(--space-1) 0;
     white-space: nowrap;
     /* positionContextMenu() caps max-height to the viewport; this lets a long menu on a
        short panel scroll instead of running off the bottom edge with no way to reach the rest. */
@@ -32,7 +32,7 @@ export function getContextMenuStyles(): string {
     font-size: 12px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
     color: var(--vscode-menu-foreground, var(--vscode-editor-foreground));
 }
 .context-menu-item:hover {
@@ -54,7 +54,7 @@ export function getContextMenuStyles(): string {
 .context-menu-separator {
     height: 1px;
     background: var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
-    margin: 4px 8px;
+    margin: var(--space-1) var(--space-2);
 }
 
 /* --- Submenu trigger row --- */
@@ -65,7 +65,7 @@ export function getContextMenuStyles(): string {
     font-size: 12px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
     color: var(--vscode-menu-foreground, var(--vscode-editor-foreground));
 }
 .context-menu-submenu:hover {
@@ -92,7 +92,7 @@ export function getContextMenuStyles(): string {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     min-width: 160px;
     width: max-content;
-    padding: 4px 0;
+    padding: var(--space-1) 0;
     white-space: nowrap;
     overflow-y: auto;
     overscroll-behavior: contain; /* a scroll inside the flyout must not bubble to the log list */
@@ -116,7 +116,7 @@ export function getContextMenuStyles(): string {
 /* Right-aligned dimmed shortcut hint (VS Code convention: Ctrl+C sits right of the label).
    margin-left:auto pushes it to the far right; the label's flex:1 already fills the middle. */
 .context-menu-shortcut {
-    margin-left: 24px;
+    margin-left: var(--space-5);
     opacity: 0.5;
     font-size: var(--text-caption);
     white-space: nowrap;
