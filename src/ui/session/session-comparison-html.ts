@@ -25,6 +25,7 @@ import {
 import { escapeHtml } from '../../modules/capture/ansi';
 import { t } from '../../l10n';
 import { getComparisonStyles } from './session-comparison-styles';
+import { getTokenStyles } from '../viewer-styles/viewer-styles-tokens';
 import { getSessionComparisonWebviewScript } from './session-comparison-webview-script';
 
 // l10n keys (not literal labels) so the visible text resolves through t() at render
@@ -93,7 +94,7 @@ export function buildSessionComparisonHtml(args: SessionComparisonHtmlArgs): str
     <meta http-equiv="Content-Security-Policy"
           content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}';">
     <style nonce="${nonce}">
-        ${getComparisonStyles()}
+        ${getTokenStyles()}${getComparisonStyles()}
     </style>
 </head>
 <body>
