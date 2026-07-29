@@ -29,7 +29,7 @@ export function getContextPopoverStyles(): string {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    background: var(--vscode-editorHoverWidget-background, var(--vscode-editor-background));
+    background: var(--vscode-editorHoverWidget-background, var(--surface-1));
     border: 1px solid var(--vscode-editorHoverWidget-border, var(--vscode-focusBorder));
     border-radius: 6px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
@@ -42,20 +42,20 @@ export function getContextPopoverStyles(): string {
     justify-content: space-between;
     padding: var(--space-2) var(--space-3);
     background: var(--vscode-editorHoverWidget-statusBarBackground, rgba(0, 0, 0, 0.1));
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     flex-shrink: 0;
 }
 
 .popover-title {
     font-size: 12px;
     font-weight: 600;
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 
 .popover-close {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     padding: 2px 4px;
     font-size: 14px;
@@ -82,7 +82,7 @@ export function getContextPopoverStyles(): string {
 .popover-section-header {
     font-size: var(--text-caption);
     font-weight: 600;
-    color: var(--vscode-foreground);
+    color: var(--text);
     margin-bottom: var(--space-1);
     display: flex;
     align-items: center;
@@ -95,7 +95,7 @@ export function getContextPopoverStyles(): string {
 
 .popover-section-content {
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     padding-left: 20px;
 }
 
@@ -106,7 +106,7 @@ export function getContextPopoverStyles(): string {
 
 .popover-more {
     font-style: italic;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     opacity: 0.8;
     padding-top: 2px;
 }
@@ -114,7 +114,7 @@ export function getContextPopoverStyles(): string {
 .popover-empty {
     padding: var(--space-4);
     text-align: center;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-style: italic;
 }
 
@@ -127,7 +127,7 @@ export function getContextPopoverStyles(): string {
     color: var(--vscode-symbolIcon-methodForeground, #b180d7);
 }
 .http-url {
-    color: var(--vscode-textLink-foreground);
+    color: var(--link);
 }
 .http-status.status-ok {
     color: var(--vscode-testing-iconPassed, #73c991);
@@ -139,7 +139,7 @@ export function getContextPopoverStyles(): string {
     color: var(--vscode-editorWarning-foreground, #cca700);
 }
 .http-duration {
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     opacity: 0.8;
 }
 
@@ -169,7 +169,7 @@ export function getContextPopoverStyles(): string {
     display: flex;
     gap: var(--space-2);
     padding: var(--space-2) var(--space-3);
-    border-top: 1px solid var(--vscode-panel-border);
+    border-top: 1px solid var(--border);
     flex-shrink: 0;
 }
 
@@ -196,7 +196,7 @@ export function getContextPopoverStyles(): string {
 /* Line-local database signal (Drift SQL fingerprint + snippet) */
 .popover-meta-label {
     font-weight: 600;
-    color: var(--vscode-foreground);
+    color: var(--text);
     margin-right: var(--space-1);
 }
 .popover-fingerprint {
@@ -223,7 +223,7 @@ export function getContextPopoverStyles(): string {
     font-size: var(--text-caption);
     opacity: 0.88;
     margin-top: 6px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 .popover-static-sql-open {
     margin-top: var(--space-1);

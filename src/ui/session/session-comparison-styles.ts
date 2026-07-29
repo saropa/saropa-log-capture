@@ -9,7 +9,7 @@ export function getComparisonStyles(): string {
     return /* css */ `
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-    background: var(--vscode-editor-background);
+    background: var(--surface-1);
     color: var(--vscode-editor-foreground);
     font-family: var(--vscode-editor-font-family, monospace);
     font-size: var(--vscode-editor-font-size, 13px);
@@ -24,7 +24,7 @@ body {
     align-items: center;
     padding: var(--space-2) var(--space-3);
     background: var(--vscode-sideBar-background);
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     flex-shrink: 0;
 }
 .stats {
@@ -67,11 +67,11 @@ body {
     flex-direction: column;
     overflow: hidden;
 }
-.pane-a { border-right: 1px solid var(--vscode-panel-border); }
+.pane-a { border-right: 1px solid var(--border); }
 .pane-header {
     padding: 6px 12px;
     background: var(--vscode-editorGroupHeader-tabsBackground);
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     font-weight: bold;
     font-size: 12px;
     white-space: nowrap;
@@ -113,14 +113,14 @@ body {
 .db-compare-marker-item {
     margin: 0.15rem 0;
     font-size: 0.92em;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 
 .db-fp-section {
     flex-shrink: 0;
     max-height: 240px;
     overflow: auto;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     background: var(--vscode-sideBar-background);
     font-size: 12px;
 }
@@ -133,7 +133,7 @@ body {
 }
 .db-fp-section .db-fp-hint {
     padding: 4px 12px 8px 28px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 .db-fp-table-wrap {
     padding: 0 8px 10px 12px;
@@ -150,7 +150,7 @@ body {
     vertical-align: top;
     border-bottom: 1px solid var(--vscode-widget-border, rgba(128,128,128,0.25));
 }
-.db-fp-table th { color: var(--vscode-descriptionForeground); font-weight: 600; }
+.db-fp-table th { color: var(--muted); font-weight: 600; }
 .db-fp-fp {
     font-family: var(--vscode-editor-font-family, monospace);
     word-break: break-all;
@@ -175,8 +175,8 @@ body {
     flex-wrap: wrap;
     gap: var(--space-2);
     padding: var(--space-2) var(--space-3);
-    border-bottom: 1px solid var(--vscode-panel-border);
-    background: var(--vscode-editor-background);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-1);
     flex-shrink: 0;
 }
 .db-jump-cell { white-space: nowrap; }

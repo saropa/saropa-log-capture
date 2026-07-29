@@ -81,7 +81,7 @@ body.slc-trouble-active .level-dot-group[data-level="database"] .dot-count,
 body.slc-trouble-active .level-dot-group[data-level="todo"] .dot-count { opacity: 0.4; }
 .level-trigger-label {
     font-size: 10px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     margin-left: 2px;
     cursor: pointer;
     padding: 2px 4px;
@@ -120,13 +120,13 @@ body.slc-trouble-active .level-dot-group[data-level="todo"] .dot-count { opacity
 .level-label { flex: 1; text-align: left; }
 .level-count {
     font-size: 10px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     min-width: 20px;
     text-align: right;
 }
 .level-circle:hover {
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
-    border-color: var(--vscode-descriptionForeground);
+    border-color: var(--muted);
 }
 /* Inactive (disabled) circles are dimmed and desaturated */
 .level-circle:not(.active) {
@@ -134,8 +134,8 @@ body.slc-trouble-active .level-dot-group[data-level="todo"] .dot-count { opacity
     filter: grayscale(0.8);
 }
 /* Context lines slider inside the level fly-up */
-.level-flyup-context { border-top: 1px solid var(--vscode-panel-border); margin-top: var(--space-1); padding: 4px 4px 2px; }
-.level-flyup-context-label { font-size: 10px; color: var(--vscode-descriptionForeground); }
+.level-flyup-context { border-top: 1px solid var(--border); margin-top: var(--space-1); padding: 4px 4px 2px; }
+.level-flyup-context-label { font-size: 10px; color: var(--muted); }
 .level-flyup-context input[type="range"] { width: 100%; margin-top: 2px; }
 .line.context-line { opacity: 0.4; }
 .line.context-first { position: relative; }

@@ -16,9 +16,9 @@ export function getSessionNameFilterStyles(): string {
     gap: var(--space-2);
     padding: var(--space-1) var(--space-3);
     background: var(--vscode-editorInfo-background, rgba(55, 148, 255, 0.1));
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     font-size: var(--text-caption);
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 .session-name-filter-label {
     flex-shrink: 0;
@@ -43,7 +43,7 @@ export function getSessionNameFilterStyles(): string {
     padding: 1px 2px 1px 6px;
     border-radius: 9px;
     background: var(--vscode-badge-background, rgba(120, 120, 120, 0.3));
-    color: var(--vscode-badge-foreground, var(--vscode-foreground));
+    color: var(--vscode-badge-foreground, var(--text));
 }
 .session-name-filter-pill-label {
     overflow: hidden;
@@ -75,7 +75,7 @@ export function getSessionNameFilterStyles(): string {
     gap: 3px;
     background: none;
     border: 1px solid var(--vscode-button-border, transparent);
-    color: var(--vscode-textLink-foreground);
+    color: var(--link);
     cursor: pointer;
     padding: 2px 6px;
     border-radius: var(--radius-sm);
@@ -103,7 +103,7 @@ export function getSessionNameFilterStyles(): string {
     padding: 1px 2px 1px 6px;
     border-radius: 9px;
     background: var(--vscode-badge-background, rgba(120, 120, 120, 0.3));
-    color: var(--vscode-badge-foreground, var(--vscode-foreground));
+    color: var(--vscode-badge-foreground, var(--text));
 }
 .session-filter-chip .codicon {
     font-size: 12px;
@@ -144,7 +144,7 @@ export function getSessionNameFilterStyles(): string {
     height: 6px;
     border-radius: 50%;
     background: var(--vscode-textLink-foreground, #3794ff);
-    border: 1px solid var(--vscode-sideBar-background, var(--vscode-editor-background));
+    border: 1px solid var(--vscode-sideBar-background, var(--surface-1));
 }
 `;
 }

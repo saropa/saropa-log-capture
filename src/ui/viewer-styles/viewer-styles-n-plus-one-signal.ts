@@ -3,7 +3,7 @@ export function getNPlusOneSignalStyles(): string {
     return /* css */ `
 /* Drift SQL N+1 heuristic signal row (see modules/db/drift-n-plus-one-detector.ts) */
 .n1-signal {
-    color: var(--vscode-editorWarning-foreground, var(--accent-warning));
+    color: var(--accent-warning);
     font-style: normal;
 }
 .n1-conf {
@@ -14,17 +14,17 @@ export function getNPlusOneSignalStyles(): string {
     margin: 0 var(--space-1);
 }
 .n1-conf-high { color: var(--vscode-errorForeground, var(--accent-critical)); }
-.n1-conf-medium { color: var(--vscode-editorWarning-foreground, var(--accent-warning)); }
+.n1-conf-medium { color: var(--accent-warning); }
 .n1-conf-low { color: var(--vscode-descriptionForeground, var(--muted)); }
 .n1-fp {
     opacity: 0.85;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 .n1-actions {
     margin-left: var(--space-2);
 }
 .n1-action {
-    color: var(--vscode-textLink-foreground, var(--link));
+    color: var(--link);
     cursor: pointer;
     text-decoration: underline;
     text-decoration-style: dotted;

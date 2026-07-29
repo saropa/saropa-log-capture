@@ -10,7 +10,7 @@ export function getSessionTagsLoadingStyles(): string {
 /* --- Session tag chips (correlation filters: file/error tags across sessions) --- */
 .session-tags-section {
     padding: 6px 12px;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     flex-shrink: 0;
     min-height: 0;
 }
@@ -26,11 +26,11 @@ export function getSessionTagsLoadingStyles(): string {
 .session-tags-section .source-tag-chip {
     border: none;
     background: var(--vscode-badge-background, rgba(128, 128, 128, 0.25));
-    color: var(--vscode-badge-foreground, var(--vscode-foreground));
+    color: var(--vscode-badge-foreground, var(--text));
 }
 .session-tags-section .source-tag-chip.active {
     background: var(--vscode-button-secondaryBackground, rgba(90, 93, 94, 0.31));
-    color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+    color: var(--vscode-button-secondaryForeground, var(--text));
 }
 .session-tags-section .source-tag-chip .tag-label {
     display: inline-block;
@@ -47,7 +47,7 @@ export function getSessionTagsLoadingStyles(): string {
 .session-empty {
     padding: var(--space-4) var(--space-3);
     font-size: 12px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     text-align: center;
 }
 
@@ -75,7 +75,7 @@ export function getSessionTagsLoadingStyles(): string {
 
 .session-loading-label {
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 
 .session-loading-shimmer {
