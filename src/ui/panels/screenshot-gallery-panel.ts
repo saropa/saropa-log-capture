@@ -15,6 +15,7 @@ import { escapeHtml } from '../../modules/capture/ansi';
 import { getNonce } from '../provider/viewer-content';
 import { getTokenStyles } from '../viewer-styles/viewer-styles-tokens';
 import { openLogAtLine } from '../../modules/search/log-search';
+import { locateLine } from '../shared/handlers/trouble-detail-handler';
 import {
     readScreenshotSidecar,
     screenshotDirUri,
@@ -103,19 +104,28 @@ function triggerLabel(trigger: string): string {
     }
 }
 
-/** The "why" block: the triggering line ± context, triggering line marked. */
+/**
+ * The "why" block: the triggering line ± context, triggering line marked.
+ *
+ * `entry.logLine` counts CAPTURED lines (the session header block is uncounted, and the
+ * count is session-cumulative across file splits), so it is treated as a hint only —
+ * locateLine (the trouble-detail pattern) trusts it just when the line actually contains
+ * the stored trigger text, and otherwise searches the file for the text.
+ */
 function buildExcerptHtml(entry: ScreenshotMetaEntry, logLines: string[] | undefined): string {
-    if (!logLines || !entry.logLine || entry.logLine < 1 || entry.logLine > logLines.length) {
+    const anchor0 = logLines ? locateLine(logLines, entry.logLine, entry.text) : -1;
+    if (!logLines || anchor0 < 0) {
         return entry.text ? `<pre class="excerpt"><span class="hit">${escapeHtml(entry.text)}</span></pre>` : '';
     }
-    const from = Math.max(1, entry.logLine - CONTEXT_RADIUS);
-    const to = Math.min(logLines.length, entry.logLine + CONTEXT_RADIUS);
+    const anchor = anchor0 + 1;
+    const from = Math.max(1, anchor - CONTEXT_RADIUS);
+    const to = Math.min(logLines.length, anchor + CONTEXT_RADIUS);
     const rows: string[] = [];
     for (let n = from; n <= to; n++) {
-        const cls = n === entry.logLine ? ' class="hit"' : '';
+        const cls = n === anchor ? ' class="hit"' : '';
         rows.push(`<span${cls}>${String(n).padStart(6)}  ${escapeHtml(logLines[n - 1] ?? '')}</span>`);
     }
-    return `<pre class="excerpt" data-line="${entry.logLine}" title="${escapeHtml(t('panel.screenshotGallery.jump', String(entry.logLine)))}">${rows.join('\n')}</pre>`;
+    return `<pre class="excerpt" data-line="${anchor}" title="${escapeHtml(t('panel.screenshotGallery.jump', String(anchor)))}">${rows.join('\n')}</pre>`;
 }
 
 function buildCardHtml(entry: ScreenshotMetaEntry, logLines: string[] | undefined): string {
@@ -149,8 +159,8 @@ ${body}
 
 function galleryCss(): string {
     return /* css */ `
-body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); background: var(--vscode-editor-background); padding: 12px; }
-h1 { font-size: 1.1em; margin-bottom: 12px; }
+body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); background: var(--vscode-editor-background); padding: var(--space-3); }
+h1 { font-size: 1.1em; margin-bottom: var(--space-3); }
 .empty { color: var(--vscode-descriptionForeground); padding: 24px 0; }
 .card { border: 1px solid var(--vscode-editorWidget-border); border-radius: 6px; padding: 10px; margin-bottom: 14px; max-width: 720px; }
 .thumb-wrap { min-height: 60px; }

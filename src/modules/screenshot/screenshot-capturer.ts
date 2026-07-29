@@ -24,6 +24,15 @@ import type { ScreenshotStore, ScreenshotSaveResult, ScreenshotTrigger } from '.
 /** Cap on remembered fingerprints — bounds memory on a long noisy session. */
 const MAX_SEEN = 500;
 
+/**
+ * Consecutive capture failures before auto-triggers stop for the current VM Service.
+ * Without this, a broken endpoint (e.g. `_flutter.screenshot` removed in a Flutter
+ * upgrade) costs a 5s socket timeout per distinct error for the whole session. The
+ * breaker resets when a DIFFERENT VM Service URI appears (new run) and never blocks
+ * the manual command — an explicit user action is the right probe for recovery.
+ */
+const MAX_CONSECUTIVE_FAILURES = 3;
+
 /** Longest matched-line text persisted in metadata (the gallery shows an excerpt, not the log). */
 const MAX_TEXT_LEN = 300;
 
@@ -71,6 +80,9 @@ export class ScreenshotCapturer {
     private lastCaptureAt = 0;
     private inFlight = false;
     private warnedCapFull = false;
+    private consecutiveFailures = 0;
+    /** URI the failure streak was counted against — a different URI resets the breaker. */
+    private breakerUri = '';
     private readonly now: () => number;
 
     constructor(private readonly deps: ScreenshotCapturerDeps) {
@@ -85,6 +97,7 @@ export class ScreenshotCapturer {
         // bails on a cached-map read instead of paying a workspace-config read.
         const wsUri = this.deps.getVmServiceWsUri();
         if (!wsUri) { return; }
+        if (this.breakerTripped(wsUri)) { return; }
         if (!this.deps.isEnabled()) { return; }
 
         const settings = this.deps.triggerSettings();
@@ -94,7 +107,7 @@ export class ScreenshotCapturer {
 
         if (!this.passesCoalescing(text, trigger, settings.cooldownMs)) { return; }
         this.captureAndSave({ wsUri, logFsPath: data.logFileUri, trigger, text, logLine: data.lineCount, maxPerLog: settings.maxPerLog })
-            .catch((err) => this.deps.log(`screenshot: ${err instanceof Error ? err.message : String(err)}`));
+            .catch((err) => this.recordFailure(wsUri, err));
     }
 
     /**
@@ -156,6 +169,26 @@ export class ScreenshotCapturer {
             return true;
         } finally {
             this.inFlight = false;
+        }
+    }
+
+    /** True when auto-triggers are suspended for this URI after repeated failures. */
+    private breakerTripped(wsUri: string): boolean {
+        if (this.breakerUri !== wsUri) {
+            // New VM Service (new run / hot restart with a new port) — clean slate.
+            this.breakerUri = wsUri;
+            this.consecutiveFailures = 0;
+        }
+        return this.consecutiveFailures >= MAX_CONSECUTIVE_FAILURES;
+    }
+
+    /** Count a failed capture toward the breaker; log the trip exactly once per URI. */
+    private recordFailure(wsUri: string, err: unknown): void {
+        this.deps.log(`screenshot: ${err instanceof Error ? err.message : String(err)}`);
+        if (this.breakerUri !== wsUri) { return; }
+        this.consecutiveFailures++;
+        if (this.consecutiveFailures === MAX_CONSECUTIVE_FAILURES) {
+            this.deps.log(`screenshot: ${MAX_CONSECUTIVE_FAILURES} consecutive capture failures — automatic captures paused for this session (the manual command still tries)`);
         }
     }
 

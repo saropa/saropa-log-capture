@@ -96,6 +96,12 @@ suite('ScreenshotCapturer', () => {
         h.capturer.onLine(makeLine('E/Badge   (14538): Failed to initialize badge', { category: 'stdout' }));
         await h.flush();
         h.clock.now += 5000;
+        h.capturer.onLine(makeLine('E/FBI     (14538): Can\'t load library: dlopen failed: library "libmagtsync.so" not found', { category: 'console' }));
+        await h.flush();
+        h.clock.now += 5000;
+        h.capturer.onLine(makeLine('E/GraphicBufferAllocator(14538): Failed to allocate (4 x 4) layerCount 1 format 56 usage b00: 5', { category: 'console' }));
+        await h.flush();
+        h.clock.now += 5000;
         // The direct logcat feed is device output wholesale — even a device-critical tag
         // (ActivityManager) arriving on category 'logcat' is skipped.
         h.capturer.onLine(makeLine('07-28 21:50:35.847  1919  2024 E ActivityManager: restart failed', { category: 'logcat' }));
@@ -183,6 +189,31 @@ suite('ScreenshotCapturer', () => {
         assert.strictEqual(await off.capturer.captureManual('d:/reports/test.log', 1), 'disabled');
         const noVm = makeHarness({ getVmServiceWsUri: () => undefined });
         assert.strictEqual(await noVm.capturer.captureManual('d:/reports/test.log', 1), 'noVmService');
+    });
+
+    test('should pause auto captures after 3 consecutive failures and resume on a new VM URI', async () => {
+        let uri = 'ws://127.0.0.1:1111/a=/ws';
+        const h = makeHarness({
+            getVmServiceWsUri: () => uri,
+            capturePng: () => Promise.reject(new Error('socket timeout')),
+        });
+        // Three distinct errors → three failed attempts → breaker trips.
+        for (const text of ['Unhandled Exception: alpha one', 'Unhandled Exception: beta two', 'Unhandled Exception: gamma three']) {
+            h.capturer.onLine(makeLine(text));
+            await h.flush();
+            h.clock.now += 5000;
+        }
+        assert.strictEqual(h.logs.filter((l) => l.includes('paused')).length, 1);
+        // Fourth error: no attempt at all (no new failure log beyond the 3 + the trip notice).
+        h.capturer.onLine(makeLine('Unhandled Exception: delta four'));
+        await h.flush();
+        assert.strictEqual(h.logs.filter((l) => l.includes('socket timeout')).length, 3);
+        // New VM URI (new run) → breaker resets → attempts resume.
+        uri = 'ws://127.0.0.1:2222/b=/ws';
+        h.clock.now += 5000;
+        h.capturer.onLine(makeLine('Unhandled Exception: epsilon five'));
+        await h.flush();
+        assert.strictEqual(h.logs.filter((l) => l.includes('socket timeout')).length, 4);
     });
 
     test('manual capture should report busy while another capture is in flight', async () => {
