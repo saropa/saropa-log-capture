@@ -8,7 +8,7 @@ export function getLintBadgeStyles(): string {
     return /* css */ `
 .lint-badge {
     display: inline-block;
-    padding: 0 4px;
+    padding: 0 var(--space-1);
     margin-right: 3px;
     border-radius: var(--radius-sm);
     font-size: 10px;

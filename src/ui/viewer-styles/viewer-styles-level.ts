@@ -134,7 +134,7 @@ body.slc-trouble-active .level-dot-group[data-level="todo"] .dot-count { opacity
     filter: grayscale(0.8);
 }
 /* Context lines slider inside the level fly-up */
-.level-flyup-context { border-top: 1px solid var(--vscode-panel-border); margin-top: 4px; padding: 4px 4px 2px; }
+.level-flyup-context { border-top: 1px solid var(--vscode-panel-border); margin-top: var(--space-1); padding: 4px 4px 2px; }
 .level-flyup-context-label { font-size: 10px; color: var(--vscode-descriptionForeground); }
 .level-flyup-context input[type="range"] { width: 100%; margin-top: 2px; }
 .line.context-line { opacity: 0.4; }

@@ -32,7 +32,7 @@ export function getSessionPanelLayoutStyles(): string {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     font-weight: 600;
     font-size: 12px;
     border-bottom: 1px solid var(--vscode-panel-border);
@@ -41,7 +41,7 @@ export function getSessionPanelLayoutStyles(): string {
 .session-header-clickable {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
     flex: 1;
     min-width: 0;
     cursor: pointer;
@@ -77,7 +77,7 @@ export function getSessionPanelLayoutStyles(): string {
 
 .session-panel-actions {
     display: flex;
-    gap: 4px;
+    gap: var(--space-1);
     align-items: center;
 }
 
@@ -126,7 +126,7 @@ export function getSessionPanelLayoutStyles(): string {
 
 /* --- Collections section --- */
 .session-collections {
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     border-bottom: 1px solid var(--vscode-panel-border);
     background: var(--vscode-sideBarSectionHeader-background, transparent);
 }
@@ -157,7 +157,7 @@ export function getSessionPanelLayoutStyles(): string {
 }
 .session-collections-name-input {
     font-size: 12px;
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
     border: 1px solid var(--vscode-input-border, transparent);
     border-radius: var(--radius-sm);
     background: var(--vscode-input-background);
@@ -210,7 +210,7 @@ export function getSessionPanelLayoutStyles(): string {
     color: var(--vscode-errorForeground);
 }
 .session-collection-item {
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
     cursor: pointer;
     font-size: 12px;
     border-radius: var(--radius-sm);
@@ -223,12 +223,12 @@ export function getSessionPanelLayoutStyles(): string {
     color: var(--vscode-list-activeSelectionForeground);
 }
 .session-collection-check {
-    margin-left: 4px;
+    margin-left: var(--space-1);
     font-weight: bold;
 }
 .session-collections-create {
     font-size: 12px;
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
     background: none;
     border: 1px solid var(--vscode-button-border, transparent);
     border-radius: var(--radius-sm);

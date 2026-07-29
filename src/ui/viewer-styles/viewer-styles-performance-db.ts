@@ -3,10 +3,10 @@ export function getPerformanceDbTabStyles(): string {
     return /* css */ `
 
 /* --- Database tab (Drift rollup + timeline) --- */
-.pp-db-view { padding: 8px 12px; font-size: var(--text-caption); }
+.pp-db-view { padding: var(--space-2) var(--space-3); font-size: var(--text-caption); }
 .pp-db-empty, .pp-db-note {
     color: var(--vscode-descriptionForeground);
-    margin: 8px 0;
+    margin: var(--space-2) 0;
     line-height: 1.45;
 }
 .pp-db-drift-row {
@@ -36,7 +36,7 @@ export function getPerformanceDbTabStyles(): string {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    gap: var(--space-2);
     margin-bottom: 10px;
     padding: 6px 8px;
     font-size: 10px;
@@ -59,7 +59,7 @@ export function getPerformanceDbTabStyles(): string {
     line-height: 1.4;
 }
 .pp-db-summary {
-    margin-bottom: 12px;
+    margin-bottom: var(--space-3);
     line-height: 1.45;
     color: var(--vscode-foreground);
 }
@@ -133,7 +133,7 @@ export function getPerformanceDbTabStyles(): string {
     align-items: flex-end;
     gap: 2px;
     height: 56px;
-    padding: 4px 0;
+    padding: var(--space-1) 0;
     border-bottom: 1px solid var(--vscode-panel-border);
     position: relative;
     z-index: 0;

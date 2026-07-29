@@ -40,7 +40,7 @@ export function getContextPopoverStyles(): string {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     background: var(--vscode-editorHoverWidget-statusBarBackground, rgba(0, 0, 0, 0.1));
     border-bottom: 1px solid var(--vscode-panel-border);
     flex-shrink: 0;
@@ -68,12 +68,12 @@ export function getContextPopoverStyles(): string {
 .popover-body {
     flex: 1;
     overflow-y: auto;
-    padding: 8px 0;
+    padding: var(--space-2) 0;
 }
 
 .popover-section {
-    padding: 0 12px;
-    margin-bottom: 8px;
+    padding: 0 var(--space-3);
+    margin-bottom: var(--space-2);
 }
 .popover-section:last-child {
     margin-bottom: 0;
@@ -83,7 +83,7 @@ export function getContextPopoverStyles(): string {
     font-size: var(--text-caption);
     font-weight: 600;
     color: var(--vscode-foreground);
-    margin-bottom: 4px;
+    margin-bottom: var(--space-1);
     display: flex;
     align-items: center;
     gap: 6px;
@@ -112,7 +112,7 @@ export function getContextPopoverStyles(): string {
 }
 
 .popover-empty {
-    padding: 16px;
+    padding: var(--space-4);
     text-align: center;
     color: var(--vscode-descriptionForeground);
     font-style: italic;
@@ -167,8 +167,8 @@ export function getContextPopoverStyles(): string {
 
 .popover-footer {
     display: flex;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
     border-top: 1px solid var(--vscode-panel-border);
     flex-shrink: 0;
 }
@@ -197,7 +197,7 @@ export function getContextPopoverStyles(): string {
 .popover-meta-label {
     font-weight: 600;
     color: var(--vscode-foreground);
-    margin-right: 4px;
+    margin-right: var(--space-1);
 }
 .popover-fingerprint {
     font-family: var(--vscode-editor-font-family, monospace);
@@ -206,7 +206,7 @@ export function getContextPopoverStyles(): string {
 }
 .popover-sql-wrap {
     display: block;
-    margin-top: 4px;
+    margin-top: var(--space-1);
 }
 .popover-sql-snippet {
     display: inline-block;
@@ -226,7 +226,7 @@ export function getContextPopoverStyles(): string {
     color: var(--vscode-descriptionForeground);
 }
 .popover-static-sql-open {
-    margin-top: 4px;
+    margin-top: var(--space-1);
 }
 
 /* Database queries (from .queries.json sidecar) */
@@ -234,7 +234,7 @@ export function getContextPopoverStyles(): string {
     font-family: var(--vscode-editor-font-family, monospace);
     display: flex;
     align-items: baseline;
-    gap: 4px;
+    gap: var(--space-1);
 }
 .db-query-text {
     white-space: nowrap;

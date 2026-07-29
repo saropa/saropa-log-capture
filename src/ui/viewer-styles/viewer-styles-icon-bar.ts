@@ -28,7 +28,7 @@ export function getIconBarStyles(): string {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top: 4px;
+    padding-top: var(--space-1);
     gap: 3px;
     background: var(--vscode-activityBar-background, var(--vscode-sideBar-background, var(--vscode-panel-background)));
     border-right: 1px solid var(--vscode-activityBar-border, var(--vscode-panel-border));
@@ -78,8 +78,8 @@ export function getIconBarStyles(): string {
     width: auto;
     min-width: 32px;
     justify-content: flex-start;
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: var(--space-2);
+    padding-right: var(--space-2);
 }
 
 .ib-icon:hover {

@@ -17,7 +17,7 @@ export function getSessionNewerStyles(): string {
 .session-reports-bucket-heading {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
     padding: 4px 12px 4px 22px;
     font-size: var(--text-caption);
     font-weight: 500;
@@ -49,7 +49,7 @@ export function getSessionNewerStyles(): string {
 .session-newer-banner {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
     padding: 6px 12px;
     /* position:relative anchors the kebab overflow menu (plan 109) to the banner row. */
     position: relative;
@@ -78,7 +78,7 @@ export function getSessionNewerStyles(): string {
 }
 .session-newer-banner-actions {
     display: flex;
-    gap: 4px;
+    gap: var(--space-1);
     flex-shrink: 0;
 }
 /* Labeled non-primary buttons take the SECONDARY button treatment, not a bare transparent box.
@@ -87,7 +87,7 @@ export function getSessionNewerStyles(): string {
 .session-newer-banner-action {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
     background: var(--vscode-button-secondaryBackground);
     border: 1px solid var(--vscode-button-border, transparent);
     color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
@@ -159,7 +159,7 @@ export function getSessionNewerStyles(): string {
     flex-direction: column;
     min-width: 180px;
     margin-top: 2px;
-    padding: 4px;
+    padding: var(--space-1);
     background: var(--vscode-menu-background, var(--vscode-editorWidget-background));
     border: 1px solid var(--vscode-menu-border, var(--vscode-widget-border, var(--vscode-panel-border)));
     border-radius: 4px;
@@ -189,7 +189,7 @@ export function getSessionNewerStyles(): string {
 .log-staleness {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
     padding: 1px 6px;
     margin-right: 6px;
     border-radius: var(--radius-sm);

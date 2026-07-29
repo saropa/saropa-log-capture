@@ -35,7 +35,7 @@ export function getOptionsStyles(): string {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     background: var(--vscode-sideBarTitle-background, var(--vscode-panel-background));
     border-bottom: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
     font-weight: bold;
@@ -62,7 +62,7 @@ export function getOptionsStyles(): string {
     align-items: center;
     background: var(--vscode-input-background);
     border-bottom: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
 }
 #filters-search,
 #options-search {
@@ -82,7 +82,7 @@ export function getOptionsStyles(): string {
     color: var(--vscode-descriptionForeground);
     font-size: 14px;
     cursor: pointer;
-    padding: 0 4px;
+    padding: 0 var(--space-1);
     line-height: 1;
     visibility: hidden;
 }
@@ -94,12 +94,12 @@ export function getOptionsStyles(): string {
 .options-content {
     flex: 1;
     overflow-y: auto;
-    padding: 8px 0;
+    padding: var(--space-2) 0;
 }
 
 .options-section {
-    margin-bottom: 16px;
-    padding: 0 12px;
+    margin-bottom: var(--space-4);
+    padding: 0 var(--space-3);
 }
 
 .options-section-title {
@@ -114,8 +114,8 @@ export function getOptionsStyles(): string {
 .options-row {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 4px 0;
+    gap: var(--space-2);
+    padding: var(--space-1) 0;
     font-size: 12px;
     cursor: pointer;
 }
@@ -125,7 +125,7 @@ export function getOptionsStyles(): string {
     cursor: pointer;
 }
 .scope-disabled { opacity: 0.4; pointer-events: none; }
-.scope-suffix { opacity: 0.5; margin-left: 4px; font-style: italic; }
+.scope-suffix { opacity: 0.5; margin-left: var(--space-1); font-style: italic; }
 
 .options-row select {
     background: var(--vscode-input-background);
@@ -153,11 +153,11 @@ export function getOptionsStyles(): string {
 .tier-radio-group {
     border: none;
     margin: 0;
-    padding: 8px 0;
+    padding: var(--space-2) 0;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 4px 10px;
+    gap: var(--space-1) 10px;
     font-size: 12px;
 }
 .tier-radio-group legend {
@@ -183,11 +183,11 @@ export function getOptionsStyles(): string {
 .tier-radio-group label {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
     cursor: pointer;
     font-size: 12px;
     /* Indent radios under the legend */
-    margin-left: 12px;
+    margin-left: var(--space-3);
 }
 .tier-radio-group input[type="radio"] {
     accent-color: var(--vscode-button-background);
@@ -197,7 +197,7 @@ export function getOptionsStyles(): string {
 
 .options-indent {
     margin-left: 20px;
-    padding-left: 12px;
+    padding-left: var(--space-3);
     border-left: 2px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.1));
     transition: opacity 0.15s ease;
 }
@@ -213,7 +213,7 @@ export function getOptionsStyles(): string {
     color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
     border: 1px solid var(--vscode-button-border, transparent);
     font-size: var(--text-caption);
-    padding: 4px 12px;
+    padding: var(--space-1) var(--space-3);
     cursor: pointer;
     border-radius: var(--radius-sm);
 }
@@ -231,8 +231,8 @@ export function getOptionsStyles(): string {
 
 /* Log Sources: subheading before external source checkboxes */
 .source-external-group-title {
-    margin-top: 8px;
-    padding-top: 4px;
+    margin-top: var(--space-2);
+    padding-top: var(--space-1);
     font-weight: 600;
     opacity: 0.95;
 }
@@ -240,11 +240,11 @@ export function getOptionsStyles(): string {
 /* Code Location Scope: contextual warning when narrowing hides most lines */
 .scope-filter-hint {
     margin-top: 6px;
-    padding-left: 8px;
+    padding-left: var(--space-2);
     border-left: 2px solid var(--vscode-editorWarning-foreground);
 }
 .scope-hint-reset-btn {
-    margin-left: 8px;
+    margin-left: var(--space-2);
     padding: 1px 6px;
     border: 1px solid var(--vscode-button-border, transparent);
     border-radius: var(--radius-sm);

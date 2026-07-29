@@ -63,7 +63,7 @@ export function getRecurringPanelStyles(): string {
     color: var(--vscode-descriptionForeground);
     font-size: 16px;
     cursor: pointer;
-    padding: 0 4px;
+    padding: 0 var(--space-1);
 }
 
 .recurring-panel-close:hover {
@@ -169,7 +169,7 @@ export function getRecurringPanelStyles(): string {
     letter-spacing: 0.02em;
     border: 1px solid transparent;
     vertical-align: middle;
-    margin-right: 4px;
+    margin-right: var(--space-1);
 }
 
 /* Fatal → error tint (mirrors .cp-badge-crash). */

@@ -19,14 +19,14 @@ export function getRunSeparatorStyles(): string {
 .run-separator-inner {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--space-3);
     flex-wrap: wrap;
     border-left: 4px solid #ad1457;
-    padding-left: 8px;
+    padding-left: var(--space-2);
 }
 .run-sep-title {
     font-weight: bold;
-    margin-right: 4px;
+    margin-right: var(--space-1);
 }
 .run-sep-times {
     opacity: 0.95;
@@ -50,7 +50,7 @@ export function getRunSeparatorStyles(): string {
     border-radius: 9px;
     font-size: 10px;
     font-weight: bold;
-    padding: 0 4px;
+    padding: 0 var(--space-1);
 }
 .run-sep-dot-error { background: #f44336; color: #fff; }
 .run-sep-dot-warning { background: #ff9800; color: #000; }

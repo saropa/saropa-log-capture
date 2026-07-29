@@ -28,7 +28,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     font-weight: 600;
     font-size: 12px;
     border-bottom: 1px solid var(--vscode-panel-border);
@@ -37,7 +37,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
 .sql-query-history-actions {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
 }
 
 .sql-query-history-action,
@@ -77,8 +77,8 @@ export function getSqlQueryHistoryPanelStyles(): string {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
     border-bottom: 1px solid var(--vscode-panel-border);
 }
 .sql-query-history-toolbar > * {
@@ -93,7 +93,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
     border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
     border-radius: 4px;
     font-size: 12px;
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
     outline: none;
 }
 
@@ -132,7 +132,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
 
 .sql-qh-header {
     text-align: left;
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
     font-size: var(--text-caption);
     font-weight: 600;
     color: var(--vscode-descriptionForeground);
@@ -162,7 +162,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
 .sql-qh-cell-count {
     width: 3.5rem;
     padding-left: 6px;
-    padding-right: 4px;
+    padding-right: var(--space-1);
     white-space: nowrap;
     text-align: right;
     vertical-align: top;
@@ -171,7 +171,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
 .sql-qh-header-dur,
 .sql-qh-cell-dur {
     width: 5rem;
-    padding-left: 4px;
+    padding-left: var(--space-1);
     padding-right: 6px;
     white-space: nowrap;
     text-align: right;
@@ -185,7 +185,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
 
 .sql-qh-header::after {
     content: '';
-    margin-left: 4px;
+    margin-left: var(--space-1);
     opacity: 0.6;
 }
 
@@ -287,7 +287,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
 }
 
 .sql-query-history-empty {
-    padding: 16px 12px;
+    padding: var(--space-4) var(--space-3);
     font-size: 12px;
     color: var(--vscode-descriptionForeground);
     text-align: center;
@@ -299,7 +299,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
 .sql-qh-cumulative {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
     font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
@@ -323,7 +323,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
     color: var(--vscode-descriptionForeground);
 }
 
-.sql-qh-pager-note { margin-right: 8px; }
+.sql-qh-pager-note { margin-right: var(--space-2); }
 
 .sql-qh-show-more {
     background: none;
