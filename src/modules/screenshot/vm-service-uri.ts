@@ -5,6 +5,16 @@
  * `dart.debuggerUris` (body.vmServiceUri). We record it per session id and drop it on
  * terminate, so the screenshot capturer can reach the VM Service of whichever Flutter
  * session is currently running without polling or spawning `flutter` CLI processes.
+ *
+ * KNOWN LIMITATION: getLatestVmServiceWsUri returns the most recently announced URI with
+ * no correlation to the log file that produced a trigger. With TWO Flutter sessions live
+ * at once, a capture triggered by session A's log line screenshots session B's app.
+ * Correlating would need a debug-session-id → LogSession mapping threaded through
+ * LineData; deferred until multi-session capture is a real use case (plan 114).
+ *
+ * Module-level state: `uriBySessionId` is process-local and cleared on deactivation via
+ * clearVmServiceUris() (wired in extension.ts deactivate), matching the sanctioned
+ * module-level-holder pattern.
  */
 
 import * as vscode from 'vscode';
@@ -42,6 +52,11 @@ export function recordVmServiceUri(sessionId: string, rawUri: string): void {
 /** Forget a session's URI (called on debug session terminate). */
 export function forgetVmServiceUri(sessionId: string): void {
     uriBySessionId.delete(sessionId);
+}
+
+/** Drop all recorded URIs — called from deactivate() so no state outlives the extension. */
+export function clearVmServiceUris(): void {
+    uriBySessionId.clear();
 }
 
 /**

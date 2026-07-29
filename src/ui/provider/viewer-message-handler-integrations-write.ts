@@ -35,6 +35,9 @@ export function applyIntegrationsAdaptersWrite(rawAdapterIds: unknown, post: (ms
     // explicit entry must survive a UI toggle of any OTHER checkbox. Preserve it while the box stays
     // on; a genuine uncheck (adbLogcatEnabled false) drops it AND sets enabled false, which is the
     // authoritative off.
+    // screenshots deliberately gets NO such carve-out: unlike adbLogcat there is no
+    // "force on a non-Dart session" semantic for an explicit array entry, so the boolean
+    // is the sole authority and any stray array copy is dropped.
     const currentAdapters = cfg.get<string[]>('integrations.adapters', []);
     const adbWasExplicit = Array.isArray(currentAdapters) && currentAdapters.includes(ADB_LOGCAT_ADAPTER_ID);
     let sessionOnly = stripUiOnlyIntegrationAdapterIds(adapterIds)
