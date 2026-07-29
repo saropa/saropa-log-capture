@@ -16,6 +16,7 @@ import { randomBytes } from 'crypto';
 import { t } from '../../l10n';
 import { getViewerActionToKeyFromConfig, type ViewerKeybindingActionId } from '../viewer/viewer-keybindings';
 import { getKeyboardShortcutsPanelStyles } from './keyboard-shortcuts-panel-styles';
+import { getTokenStyles } from '../viewer-styles/viewer-styles-tokens';
 import { getKeyboardShortcutsPanelScript } from './keyboard-shortcuts-panel-script';
 
 let panel: vscode.WebviewPanel | undefined;
@@ -52,7 +53,7 @@ function buildHtml(): string {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
-<style nonce="${nonce}">${getKeyboardShortcutsPanelStyles()}</style>
+<style nonce="${nonce}">${getTokenStyles()}${getKeyboardShortcutsPanelStyles()}</style>
 </head>
 <body>
 <div role="main" aria-label="${esc(t('kbd.chrome.mainAria'))}">
