@@ -21,9 +21,9 @@ export function getToolbarStyles(): string {
     padding: 2px 8px;
     min-height: 28px;
     background: var(--vscode-panel-background);
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     flex-shrink: 0;
     user-select: none;
 }
@@ -67,7 +67,7 @@ export function getToolbarStyles(): string {
 .toolbar-sep {
     width: 1px;
     height: 16px;
-    background: var(--vscode-panel-border);
+    background: var(--border);
     flex-shrink: 0;
 }
 
@@ -81,7 +81,7 @@ export function getToolbarStyles(): string {
     width: 24px;
     height: 22px;
     background: none; border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     border-radius: var(--radius-sm);
     position: relative;
@@ -96,7 +96,7 @@ export function getToolbarStyles(): string {
 }
 .toolbar-icon-btn:hover:not(:disabled) {
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 /* Expanded panel buttons (filter drawer, flow map, actions) get the same
    link-blue as toggle-active icons — consistent "this is on" signal. */
@@ -143,8 +143,8 @@ export function getToolbarStyles(): string {
     width: 480px;
     max-width: calc(100% - 24px);
     background: var(--vscode-editorWidget-background, var(--vscode-panel-background));
-    color: var(--vscode-editorWidget-foreground, var(--vscode-foreground));
-    border: 1px solid var(--vscode-editorWidget-border, var(--vscode-panel-border));
+    color: var(--vscode-editorWidget-foreground, var(--text));
+    border: 1px solid var(--vscode-editorWidget-border, var(--border));
     border-top: none;
     border-radius: 0 0 4px 4px;
     padding: var(--space-1) var(--space-2);
@@ -174,7 +174,7 @@ export function getToolbarStyles(): string {
     width: max-content;
     padding: var(--space-1);
     border-radius: 4px;
-    border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+    border: 1px solid var(--border);
     background: var(--vscode-editorWidget-background, var(--vscode-panel-background));
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
@@ -197,7 +197,7 @@ export function getToolbarStyles(): string {
     width: max-content;
     padding: var(--space-1);
     border-radius: 4px;
-    border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+    border: 1px solid var(--border);
     background: var(--vscode-editorWidget-background, var(--vscode-panel-background));
     box-shadow: -4px 4px 16px rgba(0, 0, 0, 0.25);
     margin-right: 2px;
@@ -209,7 +209,7 @@ export function getToolbarStyles(): string {
 /* Highlight the currently active preset */
 .preset-active {
     background: var(--vscode-list-activeSelectionBackground, rgba(0, 122, 204, 0.3));
-    color: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
+    color: var(--vscode-list-activeSelectionForeground, var(--text));
 }
 /* toolbar-actions-open: toolbar script; footer-actions-open: replay script compat */
 .toolbar-actions-popover.toolbar-actions-open,
@@ -224,7 +224,7 @@ export function getToolbarStyles(): string {
     border: 0;
     border-radius: var(--radius-sm);
     background: transparent;
-    color: var(--vscode-foreground);
+    color: var(--text);
     font-size: var(--text-caption);
     text-align: left;
     padding: 4px 6px;
@@ -236,7 +236,7 @@ export function getToolbarStyles(): string {
 }
 .toolbar-actions-dropdown .footer-actions-separator {
     border: none;
-    border-top: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+    border-top: 1px solid var(--border);
     margin: 3px 4px;
 }
 
@@ -295,7 +295,7 @@ export function getToolbarStyles(): string {
     gap: 2px;
     cursor: pointer;
     font-size: 10px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     padding: 1px 4px;
     border-radius: var(--radius-sm);
 }

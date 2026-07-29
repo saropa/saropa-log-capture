@@ -13,8 +13,8 @@ export function getFilterDrawerStyles(): string {
 .filters-panel {
     width: 100%;
     height: 100%;
-    background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-    border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    background: var(--vscode-sideBar-background, var(--surface-1));
+    border-right: 1px solid var(--vscode-sideBar-border, var(--border));
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
     display: none;
     flex-direction: column;
@@ -29,7 +29,7 @@ export function getFilterDrawerStyles(): string {
     align-items: center;
     padding: var(--space-2) var(--space-3);
     background: var(--vscode-sideBarTitle-background, var(--vscode-panel-background));
-    border-bottom: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    border-bottom: 1px solid var(--vscode-sideBar-border, var(--border));
     font-weight: bold;
     font-size: var(--text-body);
     flex-shrink: 0;
@@ -37,7 +37,7 @@ export function getFilterDrawerStyles(): string {
 .filters-panel-close {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     padding: 2px;
     border-radius: var(--radius-sm);
@@ -55,7 +55,7 @@ export function getFilterDrawerStyles(): string {
     gap: var(--space-2);
     flex-wrap: wrap;
     padding: 6px 8px;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     flex-shrink: 0;
 }
 .filter-drawer-level-row {
@@ -101,14 +101,14 @@ export function getFilterDrawerStyles(): string {
     align-items: center;
     gap: var(--space-1);
     font-size: 10px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     margin-left: var(--space-1);
 }
 .filter-drawer-context input[type="range"] { width: 60px; }
 
 /* Log Sources divider between tiers */
 .log-inputs-divider {
-    border-top: 1px dashed var(--vscode-panel-border);
+    border-top: 1px dashed var(--border);
     margin: var(--space-1) 0;
 }
 
@@ -127,7 +127,7 @@ export function getFilterDrawerStyles(): string {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
-    border-right: 1px solid var(--vscode-panel-border);
+    border-right: 1px solid var(--border);
     padding: var(--space-1) 0;
     gap: 1px;
 }
@@ -139,7 +139,7 @@ export function getFilterDrawerStyles(): string {
     background: none;
     border: none;
     border-left: 2px solid transparent;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-size: var(--text-caption);
     cursor: pointer;
     white-space: nowrap;
@@ -147,11 +147,11 @@ export function getFilterDrawerStyles(): string {
     transition: color 0.1s, border-color 0.1s;
 }
 .filter-tab:hover {
-    color: var(--vscode-foreground);
+    color: var(--text);
     background: var(--vscode-list-hoverBackground);
 }
 .filter-tab[aria-selected="true"] {
-    color: var(--vscode-foreground);
+    color: var(--text);
     border-left-color: var(--vscode-focusBorder, #007fd4);
     font-weight: 600;
 }
@@ -196,7 +196,7 @@ export function getFilterDrawerStyles(): string {
 /* Filter drawer summary — hidden, kept for backward compat */
 .filter-drawer-summary {
     font-size: 10px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     white-space: nowrap;
 }
 
@@ -204,13 +204,13 @@ export function getFilterDrawerStyles(): string {
 .capture-sources-block {
     margin-top: 10px;
     padding-top: var(--space-2);
-    border-top: 1px dashed var(--vscode-panel-border);
+    border-top: 1px dashed var(--border);
 }
 .capture-sources-title {
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     margin-bottom: var(--space-1);
 }
 .capture-sources-list {
@@ -227,7 +227,7 @@ export function getFilterDrawerStyles(): string {
     border: none;
     border-radius: var(--radius-sm);
     background: transparent;
-    color: var(--vscode-foreground);
+    color: var(--text);
     font-size: 12px;
     text-align: left;
     cursor: pointer;
@@ -240,7 +240,7 @@ export function getFilterDrawerStyles(): string {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--vscode-descriptionForeground);
+    background: var(--muted);
     opacity: 0.5;
 }
 .capture-source-on .capture-source-dot {
@@ -259,7 +259,7 @@ export function getFilterDrawerStyles(): string {
 .capture-source-state {
     flex: 0 0 auto;
     font-size: 10px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 
 `;

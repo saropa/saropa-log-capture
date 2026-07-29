@@ -23,7 +23,7 @@ export function getSignalHeroStyles(): string {
     padding-left: var(--space-2);
     margin-left: calc(-1 * var(--space-2));
     border-left: 3px solid transparent;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     margin-bottom: var(--space-1);
 }
 
@@ -32,7 +32,7 @@ export function getSignalHeroStyles(): string {
 }
 
 .signal-hero-block.signal-hero-has-warnings {
-    border-left-color: var(--vscode-editorWarning-foreground, var(--accent-warning));
+    border-left-color: var(--accent-warning);
 }
 
 .signal-hero-block.signal-hero-has-errors.signal-hero-has-warnings {
@@ -51,7 +51,7 @@ export function getSignalHeroStyles(): string {
 }
 
 .signal-hero-num-error { color: var(--vscode-errorForeground); }
-.signal-hero-num-warn { color: var(--vscode-editorWarning-foreground); }
+.signal-hero-num-warn { color: var(--accent-warning); }
 
 .signal-section-session-details .performance-panel {
     display: flex !important;

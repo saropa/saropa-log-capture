@@ -26,14 +26,14 @@ export function getOptionsExtraStyles(): string {
     gap: var(--space-2);
     padding: var(--space-2) var(--space-3);
     background: var(--vscode-sideBarTitle-background, var(--vscode-panel-background));
-    border-bottom: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    border-bottom: 1px solid var(--vscode-sideBar-border, var(--border));
     font-weight: bold;
     font-size: var(--text-body);
 }
 .integrations-back {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     padding: var(--space-1);
     border-radius: var(--radius-sm);
@@ -41,7 +41,7 @@ export function getOptionsExtraStyles(): string {
     transition: color 0.15s ease, background 0.15s ease;
 }
 .integrations-back:hover {
-    color: var(--vscode-foreground);
+    color: var(--text);
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 .integrations-title { flex: 1; }
@@ -52,7 +52,7 @@ export function getOptionsExtraStyles(): string {
 }
 .integrations-intro {
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     line-height: 1.4;
     margin: 0 0 12px 0;
 }
@@ -63,7 +63,7 @@ export function getOptionsExtraStyles(): string {
     width: 100%;
     box-sizing: border-box;
     border: 1px solid var(--vscode-input-border, transparent);
-    background: var(--vscode-input-background);
+    background: var(--inset);
     color: var(--vscode-input-foreground);
     border-radius: 4px;
     padding: 6px 8px;
@@ -98,7 +98,7 @@ export function getOptionsExtraStyles(): string {
 .integrations-desc {
     flex: 1 1 100%;
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     line-height: 1.35;
     margin: 4px 0 0 24px;
 }
@@ -153,7 +153,7 @@ export function getOptionsExtraStyles(): string {
 /* Companion Saropa extensions render as list rows with a disabled checkbox mirroring install
    state; the Marketplace link sits inline after the label when the extension is absent. */
 .integrations-companion-item .integrations-label {
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 /* The companion checkbox is a status indicator, not a control — no pointer affordance. */
 .integrations-companion-item input[type="checkbox"]:disabled {
@@ -196,7 +196,7 @@ export function getOptionsExtraStyles(): string {
     font-size: 12px;
 }
 .suite-suggest-label { font-weight: 600; flex: 0 0 auto; }
-.suite-suggest-reason { flex: 1 1 auto; font-size: var(--text-caption); color: var(--vscode-descriptionForeground); }
+.suite-suggest-reason { flex: 1 1 auto; font-size: var(--text-caption); color: var(--muted); }
 .suite-suggest-enable {
     flex: 0 0 auto;
     font-size: var(--text-caption);
@@ -214,7 +214,7 @@ export function getOptionsExtraStyles(): string {
     font-size: 12px;
     font-weight: 600;
     margin: 16px 0 8px 0;
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 .shortcuts-h3:first-of-type { margin-top: 0; }
 .shortcuts-table {
@@ -232,7 +232,7 @@ export function getOptionsExtraStyles(): string {
 }
 .shortcuts-table th {
     font-weight: 600;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 .shortcuts-table kbd {
     font-family: var(--vscode-editor-font-family, var(--monaco-monospace-font));

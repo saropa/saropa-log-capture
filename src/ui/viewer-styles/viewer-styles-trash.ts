@@ -14,8 +14,8 @@ export function getTrashPanelStyles(): string {
     width: 100%;
     min-width: 280px;
     height: 100%;
-    background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-    border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    background: var(--vscode-sideBar-background, var(--surface-1));
+    border-right: 1px solid var(--vscode-sideBar-border, var(--border));
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
     display: none;
     flex-direction: column;
@@ -33,7 +33,7 @@ export function getTrashPanelStyles(): string {
     padding: var(--space-2) var(--space-3);
     font-weight: 600;
     font-size: 12px;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
 }
 
 .trash-panel-actions {
@@ -45,7 +45,7 @@ export function getTrashPanelStyles(): string {
 .trash-panel-action {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     padding: 2px 4px;
     border-radius: var(--radius-sm);
@@ -60,7 +60,7 @@ export function getTrashPanelStyles(): string {
 .trash-panel-close {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     padding: 2px;
     border-radius: var(--radius-sm);
@@ -84,7 +84,7 @@ export function getTrashPanelStyles(): string {
     gap: var(--space-2);
     padding: 6px 12px;
     cursor: pointer;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     font-size: 12px;
     opacity: 0.85;
 }
@@ -95,7 +95,7 @@ export function getTrashPanelStyles(): string {
 }
 
 .trash-item-icon { flex-shrink: 0; padding-top: 1px; }
-.trash-item-icon .codicon { font-size: 14px; color: var(--vscode-descriptionForeground); }
+.trash-item-icon .codicon { font-size: 14px; color: var(--muted); }
 
 .trash-item-info {
     flex: 1;
@@ -113,7 +113,7 @@ export function getTrashPanelStyles(): string {
 
 .trash-item-meta {
     font-size: 10px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -123,7 +123,7 @@ export function getTrashPanelStyles(): string {
 .trash-empty {
     padding: var(--space-4) var(--space-3);
     font-size: 12px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     text-align: center;
 }
 `;

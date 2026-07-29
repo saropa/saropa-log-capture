@@ -17,8 +17,8 @@ export function getReplayStyles(): string {
     align-items: center;
     gap: 6px;
     padding: 6px 10px;
-    background: var(--vscode-editorWidget-background);
-    border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+    background: var(--surface-2);
+    border: 1px solid var(--border);
     border-radius: 6px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
     pointer-events: auto;
@@ -36,8 +36,8 @@ export function getReplayStyles(): string {
 }
 .replay-btn {
     background: none;
-    border: 1px solid var(--vscode-descriptionForeground);
-    color: var(--vscode-descriptionForeground);
+    border: 1px solid var(--muted);
+    color: var(--muted);
     padding: 2px 5px;
     cursor: pointer;
     border-radius: var(--radius-sm);
@@ -52,7 +52,7 @@ export function getReplayStyles(): string {
 .replay-mode, .replay-speed {
     font-size: 10px;
     padding: 1px 2px;
-    background: var(--vscode-input-background);
+    background: var(--inset);
     color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border);
     border-radius: var(--radius-sm);
@@ -71,7 +71,7 @@ export function getReplayStyles(): string {
     font-size: 9px;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 
 `;

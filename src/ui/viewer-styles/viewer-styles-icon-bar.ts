@@ -31,7 +31,7 @@ export function getIconBarStyles(): string {
     padding-top: var(--space-1);
     gap: 3px;
     background: var(--vscode-activityBar-background, var(--vscode-sideBar-background, var(--vscode-panel-background)));
-    border-right: 1px solid var(--vscode-activityBar-border, var(--vscode-panel-border));
+    border-right: 1px solid var(--vscode-activityBar-border, var(--border));
     transition: width 0.15s ease;
     cursor: pointer;
     overflow-y: auto;
@@ -67,7 +67,7 @@ export function getIconBarStyles(): string {
     justify-content: center;
     background: none;
     border: none;
-    color: var(--vscode-activityBar-inactiveForeground, var(--vscode-descriptionForeground));
+    color: var(--vscode-activityBar-inactiveForeground, var(--muted));
     cursor: pointer;
     border-radius: 4px;
     position: relative;
@@ -83,12 +83,12 @@ export function getIconBarStyles(): string {
 }
 
 .ib-icon:hover {
-    color: var(--vscode-activityBar-foreground, var(--vscode-foreground));
+    color: var(--vscode-activityBar-foreground, var(--text));
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 
 .ib-icon.ib-active {
-    color: var(--vscode-activityBar-foreground, var(--vscode-foreground));
+    color: var(--vscode-activityBar-foreground, var(--text));
 }
 
 /* Active indicator bar on inner edge (right when bar is on left). */
@@ -145,7 +145,7 @@ export function getIconBarStyles(): string {
    =================================================================== */
 body[data-icon-bar="right"] #icon-bar {
     border-right: none;
-    border-left: 1px solid var(--vscode-activityBar-border, var(--vscode-panel-border));
+    border-left: 1px solid var(--vscode-activityBar-border, var(--border));
 }
 body[data-icon-bar="right"] .ib-icon.ib-active::before {
     right: auto; left: 0;
@@ -196,7 +196,7 @@ body[data-icon-bar="right"] .ib-badge {
 
 body[data-icon-bar="right"] #panel-slot > * {
     border-right: none;
-    border-left: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    border-left: 1px solid var(--vscode-sideBar-border, var(--border));
     box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
 }
 body[data-icon-bar="right"] .panel-slot-resize {

@@ -5,7 +5,7 @@ export function getPerformanceDbTabStyles(): string {
 /* --- Database tab (Drift rollup + timeline) --- */
 .pp-db-view { padding: var(--space-2) var(--space-3); font-size: var(--text-caption); }
 .pp-db-empty, .pp-db-note {
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     margin: var(--space-2) 0;
     line-height: 1.45;
 }
@@ -16,7 +16,7 @@ export function getPerformanceDbTabStyles(): string {
     line-height: 1.45;
     background: var(--vscode-textBlockQuote-background, var(--surface-3));
     border-left: 3px solid var(--vscode-debugConsole-infoForeground, var(--accent-info));
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 .pp-db-drift-title { font-weight: 600; }
 .pp-db-drift-open {
@@ -24,9 +24,9 @@ export function getPerformanceDbTabStyles(): string {
     padding: 2px 8px;
     font-size: 10px;
     cursor: pointer;
-    border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
+    border: 1px solid var(--vscode-button-border, var(--border));
     background: var(--vscode-button-secondaryBackground, transparent);
-    color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+    color: var(--vscode-button-secondaryForeground, var(--text));
     border-radius: var(--radius-sm);
 }
 .pp-db-drift-open:hover {
@@ -47,21 +47,21 @@ export function getPerformanceDbTabStyles(): string {
     padding: 2px 8px;
     font-size: 10px;
     cursor: pointer;
-    border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
+    border: 1px solid var(--vscode-button-border, var(--border));
     background: var(--vscode-button-secondaryBackground, transparent);
-    color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+    color: var(--vscode-button-secondaryForeground, var(--text));
     border-radius: var(--radius-sm);
 }
 .pp-db-histo {
     font-size: 10px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     margin: 0 0 12px 0;
     line-height: 1.4;
 }
 .pp-db-summary {
     margin-bottom: var(--space-3);
     line-height: 1.45;
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 .pp-db-timeline { margin-bottom: 14px; }
 .pp-db-timeline-label {
@@ -134,7 +134,7 @@ export function getPerformanceDbTabStyles(): string {
     gap: 2px;
     height: 56px;
     padding: var(--space-1) 0;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     position: relative;
     z-index: 0;
 }
@@ -170,7 +170,7 @@ export function getPerformanceDbTabStyles(): string {
 .pp-db-table th {
     text-align: left;
     padding: 4px 6px;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     font-weight: 600;
     opacity: 0.75;
 }
@@ -180,7 +180,7 @@ export function getPerformanceDbTabStyles(): string {
     vertical-align: top;
     word-break: break-all;
 }
-.pp-db-fp { color: var(--vscode-descriptionForeground); }
+.pp-db-fp { color: var(--muted); }
 
 `;
 }

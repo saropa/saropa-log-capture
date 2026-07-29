@@ -18,7 +18,7 @@ export function getSetupStyles(): string {
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    border: 1px solid var(--vscode-panel-border);
+    border: 1px solid var(--border);
     font-size: var(--text-caption);
 }
 .cp-step-active { opacity: 1; font-weight: 600; }
@@ -53,7 +53,7 @@ export function getSetupStyles(): string {
 .cp-conn-step {
     padding: 6px 8px;
     margin: var(--space-1) 0;
-    border-left: 3px solid var(--vscode-panel-border);
+    border-left: 3px solid var(--border);
     border-radius: var(--radius-sm);
     background: var(--vscode-textBlockQuote-background);
 }
@@ -119,7 +119,7 @@ export function getSetupStyles(): string {
 .cp-setup-btn:hover { background: var(--vscode-button-hoverBackground); }
 
 .cp-setup-link {
-    color: var(--vscode-textLink-foreground);
+    color: var(--link);
     cursor: pointer;
     text-decoration: underline;
     display: inline-block;
@@ -130,7 +130,7 @@ export function getSetupStyles(): string {
     display: block;
     margin-top: 6px;
     font-size: 12px;
-    color: var(--vscode-textLink-foreground);
+    color: var(--link);
     cursor: pointer;
     opacity: 0.8;
 }
@@ -221,7 +221,7 @@ export function getDiagnosticStyles(): string {
     padding: var(--space-1) var(--space-2);
     text-align: left;
     vertical-align: top;
-    border-bottom: 1px solid var(--vscode-widget-border);
+    border-bottom: 1px solid var(--border);
 }
 .cp-trouble-table th { font-weight: 600; }
 .cp-trouble-symptom { font-family: var(--vscode-editor-font-family); }
@@ -240,7 +240,7 @@ export function getDiagnosticStyles(): string {
 .cp-help-details {
     margin: 10px 12px 12px;
     font-size: var(--text-caption);
-    border-top: 1px solid var(--vscode-widget-border);
+    border-top: 1px solid var(--border);
     padding-top: var(--space-2);
 }
 .cp-help-details summary {
@@ -257,7 +257,7 @@ export function getDiagnosticStyles(): string {
 .cp-help-section-body p { margin: 6px 0; }
 .cp-help-section-body ol, .cp-help-section-body ul { margin: 6px 0; padding-left: 20px; }
 .cp-help-section-body code { font-family: var(--vscode-editor-font-family); font-size: var(--text-caption); }
-.cp-help-link { color: var(--vscode-textLink-foreground); text-decoration: underline; }
+.cp-help-link { color: var(--link); text-decoration: underline; }
 .cp-help-link:hover { color: var(--vscode-textLink-activeForeground); }
 `;
 }

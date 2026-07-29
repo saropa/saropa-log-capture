@@ -14,8 +14,8 @@ export function getAboutPanelStyles(): string {
     width: 100%;
     min-width: 280px;
     height: 100%;
-    background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-    border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    background: var(--vscode-sideBar-background, var(--surface-1));
+    border-right: 1px solid var(--vscode-sideBar-border, var(--border));
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
     display: none;
     flex-direction: column;
@@ -33,13 +33,13 @@ export function getAboutPanelStyles(): string {
     padding: var(--space-2) var(--space-3);
     font-weight: 600;
     font-size: 12px;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
 }
 
 .about-panel-close {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     padding: 2px;
     border-radius: var(--radius-sm);
@@ -67,23 +67,23 @@ export function getAboutPanelStyles(): string {
 .ab-version-row { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2); flex-wrap: wrap; cursor: pointer; user-select: none; -webkit-user-select: none; transition: opacity 0.1s ease; }
 .ab-version-row.ab-title-pressing { opacity: 0.55; }
 .ab-version-label { font-size: 1.1em; font-weight: 700; }
-.ab-version-badge { font-size: 0.9em; font-weight: 500; color: var(--vscode-descriptionForeground); }
-.ab-changelog-link { display: inline-block; color: var(--vscode-textLink-foreground); font-size: var(--text-caption); margin: 2px 0 4px 0; cursor: pointer; }
+.ab-version-badge { font-size: 0.9em; font-weight: 500; color: var(--muted); }
+.ab-changelog-link { display: inline-block; color: var(--link); font-size: var(--text-caption); margin: 2px 0 4px 0; cursor: pointer; }
 .ab-changelog-link:hover { text-decoration: underline; }
 .ab-tagline { font-weight: 600; font-style: italic; opacity: 0.9; margin: 0 0 6px 0; font-size: 0.95em; }
 .ab-blurb { opacity: 0.8; margin: 0 0 16px 0; font-size: 0.9em; }
 /* Section header is now a collapse/expand toggle. cursor:pointer + user-select:none so the
    click doesn't start a text selection. The chevron flips via codicon class swap in script. */
-.ab-section { font-weight: 600; font-size: 1.05em; margin-bottom: var(--space-2); margin-top: var(--space-3); border-bottom: 1px solid var(--vscode-panel-border); padding-bottom: var(--space-1); }
+.ab-section { font-weight: 600; font-size: 1.05em; margin-bottom: var(--space-2); margin-top: var(--space-3); border-bottom: 1px solid var(--border); padding-bottom: var(--space-1); }
 .ab-section-toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; -webkit-user-select: none; }
-.ab-section-toggle:hover { color: var(--vscode-textLink-foreground); }
+.ab-section-toggle:hover { color: var(--link); }
 .ab-section-chevron { font-size: 0.9em; opacity: 0.8; flex-shrink: 0; }
 /* Collapsed body is fully removed from flow (not just hidden) so the sections stack tightly. */
 .ab-section-body-hidden { display: none; }
 /* --- Debug section: meta files/folders the extension uses --- */
 .ab-debug-loading { opacity: 0.6; font-size: 0.9em; }
 .ab-debug-row { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border-radius: 4px; cursor: pointer; margin-bottom: var(--space-1); border: 1px solid transparent; }
-.ab-debug-row:hover { background: var(--vscode-list-hoverBackground); border-color: var(--vscode-panel-border); }
+.ab-debug-row:hover { background: var(--vscode-list-hoverBackground); border-color: var(--border); }
 .ab-debug-label { font-weight: 600; display: flex; align-items: center; gap: 5px; }
 .ab-debug-state { font-weight: 500; font-size: 0.8em; padding: 0 5px; border-radius: var(--radius); }
 .ab-debug-present { color: var(--vscode-testing-iconPassed, #3fb950); background: rgba(63, 185, 80, 0.12); }
@@ -93,7 +93,7 @@ export function getAboutPanelStyles(): string {
 .ab-link { display: flex; align-items: flex-start; gap: var(--space-2); padding: 6px 8px; border-radius: 4px; cursor: pointer; margin-bottom: var(--space-1); }
 .ab-link:hover { background: var(--vscode-list-hoverBackground); }
 .ab-link-icon { font-size: 1.2em; flex-shrink: 0; margin-top: 1px; }
-.ab-link-title { display: block; color: var(--vscode-textLink-foreground); font-weight: 500; }
+.ab-link-title { display: block; color: var(--link); font-weight: 500; }
 .ab-link-badge { display: block; font-size: 0.8em; opacity: 0.6; margin-top: 1px; }
 .ab-link-desc { display: block; font-size: 0.85em; opacity: 0.8; margin-top: 2px; line-height: 1.35; }
 `;

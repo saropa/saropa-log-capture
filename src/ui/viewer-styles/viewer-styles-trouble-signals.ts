@@ -64,7 +64,7 @@ body:not(.slc-trouble-active) .trouble-signals { display: none !important; }
 .tsg-more-btn {
     background: none;
     border: none;
-    color: var(--vscode-textLink-foreground);
+    color: var(--link);
     cursor: pointer;
     font-family: var(--vscode-font-family);
     font-size: var(--text-caption);

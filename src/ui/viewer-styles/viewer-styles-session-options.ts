@@ -31,8 +31,8 @@ export function getSessionOptionsMenuStyles(): string {
     flex-direction: column;
     gap: 2px;
     padding: 6px;
-    background: var(--vscode-menu-background, var(--vscode-editor-background));
-    border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border));
+    background: var(--vscode-menu-background, var(--surface-1));
+    border: 1px solid var(--vscode-menu-border, var(--border));
     border-radius: 4px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
@@ -47,7 +47,7 @@ export function getSessionOptionsMenuStyles(): string {
 .session-options-row-label {
     flex: 1;
     font-size: 12px;
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 
 /* Date range filter dropdown (All time / Last 7 days / Last 30 days). */
@@ -57,7 +57,7 @@ export function getSessionOptionsMenuStyles(): string {
     border-radius: var(--radius-sm);
     border: 1px solid var(--vscode-input-border, transparent);
     background: var(--vscode-input-background, transparent);
-    color: var(--vscode-input-foreground, var(--vscode-foreground));
+    color: var(--vscode-input-foreground, var(--text));
 }
 
 /* Toggle row: icon + label on the left, switch on the right. The switch is a
@@ -71,7 +71,7 @@ export function getSessionOptionsMenuStyles(): string {
     background: none;
     border: 1px solid transparent;
     border-radius: var(--radius-sm);
-    color: var(--vscode-foreground);
+    color: var(--text);
     font-size: 12px;
     cursor: pointer;
     text-align: left;
@@ -98,7 +98,7 @@ export function getSessionOptionsMenuStyles(): string {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: var(--vscode-descriptionForeground);
+    background: var(--muted);
     transform: translateX(0);
     transition: transform 0.12s ease-out, background 0.12s ease-out;
 }
@@ -112,7 +112,7 @@ export function getSessionOptionsMenuStyles(): string {
 
 .session-options-sep {
     border: none;
-    border-top: 1px solid var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
+    border-top: 1px solid var(--vscode-menu-separatorBackground, var(--border));
     margin: var(--space-1) var(--space-1);
 }
 
@@ -147,7 +147,7 @@ export function getSessionOptionsMenuStyles(): string {
     background: none;
     border: 1px solid transparent;
     border-radius: var(--radius-sm);
-    color: var(--vscode-foreground);
+    color: var(--text);
     font-size: 12px;
     cursor: pointer;
     text-align: left;
@@ -172,7 +172,7 @@ export function getSessionOptionsMenuStyles(): string {
     padding: 4px 6px;
     font-size: var(--text-caption);
     font-style: italic;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     opacity: 0.75;
 }
 .session-loaded-file-item {
@@ -184,7 +184,7 @@ export function getSessionOptionsMenuStyles(): string {
     background: none;
     border: 1px solid transparent;
     border-radius: var(--radius-sm);
-    color: var(--vscode-foreground);
+    color: var(--text);
     font-size: 12px;
     cursor: pointer;
     text-align: left;
@@ -205,7 +205,7 @@ export function getSessionOptionsMenuStyles(): string {
 /* Highlight the kebab button while the menu is open so the popover origin
    is obvious. Mirrors .session-toggle-btn.active appearance. */
 .session-panel-action.active {
-    color: var(--vscode-foreground);
+    color: var(--text);
     background: var(--vscode-button-secondaryBackground, rgba(90, 93, 94, 0.31));
 }
 `;

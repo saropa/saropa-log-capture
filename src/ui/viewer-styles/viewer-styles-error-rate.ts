@@ -11,7 +11,7 @@ export function getErrorRateTabStyles(): string {
 .pp-er-summary {
     padding: var(--space-2) var(--space-3);
     font-size: var(--text-caption);
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
 }
 
 .pp-er-count { font-weight: 600; }

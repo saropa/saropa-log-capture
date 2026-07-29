@@ -15,9 +15,9 @@ export function getExclusionChipStyles(): string {
     font-size: var(--text-caption);
     padding: 2px 6px;
     border-radius: 10px;
-    border: 1px solid var(--vscode-descriptionForeground);
+    border: 1px solid var(--muted);
     background: var(--vscode-button-secondaryBackground, rgba(90, 93, 94, 0.31));
-    color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+    color: var(--vscode-button-secondaryForeground, var(--text));
     white-space: nowrap;
     max-width: 100%;
     transition: opacity 0.15s;
@@ -30,7 +30,7 @@ export function getExclusionChipStyles(): string {
 .exclusion-chip-remove {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-size: 12px;
     cursor: pointer;
     padding: 0 2px;
@@ -47,7 +47,7 @@ export function getExclusionChipStyles(): string {
 .exclusion-input-wrapper {
     display: flex;
     align-items: center;
-    background: var(--vscode-input-background);
+    background: var(--inset);
     border: 1px solid var(--vscode-input-border, transparent);
     border-radius: 2px;
     margin: var(--space-1) 0;

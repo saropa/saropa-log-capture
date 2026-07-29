@@ -15,21 +15,21 @@ export function getSearchHistoryStyles(): string {
 .search-history-header {
     padding: 4px 8px 2px;
     font-size: 10px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     opacity: 0.7;
 }
 .search-history-item {
     padding: 3px 8px;
     font-size: var(--text-caption);
     cursor: pointer;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 .search-history-item:hover {
     background: var(--vscode-list-hoverBackground);
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 `;
 }

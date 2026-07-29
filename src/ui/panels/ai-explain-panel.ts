@@ -71,11 +71,11 @@ function buildExplanationHtml(context: AIContext, result: ExplainResult, nonce: 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
     <style nonce="${nonce}">
-        body { font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); padding: 1rem; color: var(--vscode-foreground); line-height: 1.5; }
+        body { font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); padding: 1rem; color: var(--text); line-height: 1.5; }
         .toolbar { margin-bottom: 0.75rem; }
         .copy-btn { padding: 0.25rem 0.75rem; cursor: pointer; font-size: 0.9em; }
-        .meta { font-size: 0.9em; color: var(--vscode-descriptionForeground); margin-bottom: 1rem; }
-        .section-title { font-size: 0.95em; margin: 1rem 0 0.5rem; color: var(--vscode-foreground); }
+        .meta { font-size: 0.9em; color: var(--muted); margin-bottom: 1rem; }
+        .section-title { font-size: 0.95em; margin: 1rem 0 0.5rem; color: var(--text); }
         .error-line { background: var(--vscode-inputValidation-errorBackground); padding: 0.5rem 0.75rem; margin: 0.25rem 0; border-radius: 4px; font-family: var(--vscode-editor-font-family); }
         .stack-trace { background: var(--vscode-textBlockQuote-background); padding: 0.5rem 0.75rem; margin: 0.25rem 0; border-radius: 4px; font-family: var(--vscode-editor-font-family); font-size: 0.9em; white-space: pre-wrap; word-break: break-all; }
         .integration-data { background: var(--vscode-textBlockQuote-background); padding: 0.5rem 0.75rem; margin: 0.25rem 0; border-radius: 4px; font-size: 0.9em; }
