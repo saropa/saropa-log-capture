@@ -109,7 +109,7 @@ export function getFormatStyles(): string {
 /* Subtle, right-aligned collapse affordance. */
 .md-chevron {
     flex: 0 0 auto;
-    margin-left: 8px;
+    margin-left: var(--space-2);
     opacity: 0.35;
     font-size: 0.7em;
     color: var(--vscode-descriptionForeground, #888);
@@ -120,7 +120,7 @@ export function getFormatStyles(): string {
     font-size: 0.8em;
     color: var(--vscode-descriptionForeground, #888);
     font-weight: normal;
-    margin-left: 8px;
+    margin-left: var(--space-2);
 }
 
 .md-hr {
@@ -250,7 +250,7 @@ export function getFormatStyles(): string {
 .json-collapse-badge {
     font-size: 0.85em;
     color: var(--vscode-descriptionForeground, #888);
-    margin-left: 4px;
+    margin-left: var(--space-1);
 }
 
 /* ---- CSV ---- */
@@ -271,12 +271,12 @@ export function getFormatStyles(): string {
 
 .csv-cell {
     display: inline-block;
-    padding: 0 4px;
+    padding: 0 var(--space-1);
 }
 
 .csv-header-cell {
     display: inline-block;
-    padding: 0 4px;
+    padding: 0 var(--space-1);
     font-weight: bold;
 }
 

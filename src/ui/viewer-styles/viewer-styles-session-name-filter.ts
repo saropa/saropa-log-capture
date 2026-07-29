@@ -13,8 +13,8 @@ export function getSessionNameFilterStyles(): string {
 .session-name-filter-bar {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 4px 12px;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-3);
     background: var(--vscode-editorInfo-background, rgba(55, 148, 255, 0.1));
     border-bottom: 1px solid var(--vscode-panel-border);
     font-size: var(--text-caption);
@@ -24,7 +24,7 @@ export function getSessionNameFilterStyles(): string {
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
 }
 /* Pills wrap onto multiple rows as names accumulate, and take the flexible width
    so the verb label and "Show All" button keep their natural size at the ends. */
@@ -33,7 +33,7 @@ export function getSessionNameFilterStyles(): string {
     min-width: 0;
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: var(--space-1);
 }
 .session-name-filter-pill {
     display: inline-flex;

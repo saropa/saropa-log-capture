@@ -67,7 +67,7 @@ body.slc-trouble-active .trouble-chart { display: block; }
 .trouble-chart .tc-chip {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
     font-variant-numeric: tabular-nums;
     cursor: pointer;
     padding: 1px 4px;

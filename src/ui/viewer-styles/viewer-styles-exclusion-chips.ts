@@ -5,7 +5,7 @@ export function getExclusionChipStyles(): string {
 .exclusion-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: var(--space-1);
     padding: 4px 0 2px;
 }
 .exclusion-chip {
@@ -50,7 +50,7 @@ export function getExclusionChipStyles(): string {
     background: var(--vscode-input-background);
     border: 1px solid var(--vscode-input-border, transparent);
     border-radius: 2px;
-    margin: 4px 0;
+    margin: var(--space-1) 0;
 }
 
 /* Checkbox toggle inline with the exclusion text input */
@@ -76,7 +76,7 @@ export function getExclusionChipStyles(): string {
     background: transparent;
     color: var(--vscode-input-foreground);
     border: none;
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
     font-size: var(--text-caption);
     font-family: inherit;
     outline: none;
@@ -104,7 +104,7 @@ export function getExclusionChipStyles(): string {
     padding: 2px 8px;
     cursor: pointer;
     border-radius: 2px;
-    margin-left: 4px;
+    margin-left: var(--space-1);
 }
 
 .preview-sound-btn:hover {

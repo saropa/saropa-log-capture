@@ -23,8 +23,8 @@ export function getOptionsExtraStyles(): string {
 .integrations-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
     background: var(--vscode-sideBarTitle-background, var(--vscode-panel-background));
     border-bottom: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
     font-weight: bold;
@@ -35,7 +35,7 @@ export function getOptionsExtraStyles(): string {
     border: none;
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
-    padding: 4px;
+    padding: var(--space-1);
     border-radius: var(--radius-sm);
     font-size: 14px;
     transition: color 0.15s ease, background 0.15s ease;
@@ -48,7 +48,7 @@ export function getOptionsExtraStyles(): string {
 .integrations-content {
     flex: 1;
     overflow-y: auto;
-    padding: 12px;
+    padding: var(--space-3);
 }
 .integrations-intro {
     font-size: var(--text-caption);
@@ -73,7 +73,7 @@ export function getOptionsExtraStyles(): string {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
-    gap: 4px 8px;
+    gap: var(--space-1) 8px;
     padding: 10px 0;
     border-bottom: 1px solid var(--vscode-sideBar-border, rgba(255, 255, 255, 0.1));
     cursor: pointer;
@@ -192,7 +192,7 @@ export function getOptionsExtraStyles(): string {
     flex-wrap: wrap;
     align-items: baseline;
     gap: 2px 8px;
-    padding: 4px 0;
+    padding: var(--space-1) 0;
     font-size: 12px;
 }
 .suite-suggest-label { font-weight: 600; flex: 0 0 auto; }
@@ -221,7 +221,7 @@ export function getOptionsExtraStyles(): string {
     width: 100%;
     border-collapse: collapse;
     font-size: 12px;
-    margin-bottom: 12px;
+    margin-bottom: var(--space-3);
 }
 .shortcuts-table th,
 .shortcuts-table td {

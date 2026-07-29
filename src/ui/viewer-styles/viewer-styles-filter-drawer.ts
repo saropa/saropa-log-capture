@@ -27,7 +27,7 @@ export function getFilterDrawerStyles(): string {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     background: var(--vscode-sideBarTitle-background, var(--vscode-panel-background));
     border-bottom: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
     font-weight: bold;
@@ -52,7 +52,7 @@ export function getFilterDrawerStyles(): string {
 .filters-panel .filter-drawer-levels {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
     flex-wrap: wrap;
     padding: 6px 8px;
     border-bottom: 1px solid var(--vscode-panel-border);
@@ -61,7 +61,7 @@ export function getFilterDrawerStyles(): string {
 .filter-drawer-level-row {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
     flex-wrap: wrap;
     flex: 1;
 }
@@ -99,17 +99,17 @@ export function getFilterDrawerStyles(): string {
 .filter-drawer-context {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
     font-size: 10px;
     color: var(--vscode-descriptionForeground);
-    margin-left: 4px;
+    margin-left: var(--space-1);
 }
 .filter-drawer-context input[type="range"] { width: 60px; }
 
 /* Log Sources divider between tiers */
 .log-inputs-divider {
     border-top: 1px dashed var(--vscode-panel-border);
-    margin: 4px 0;
+    margin: var(--space-1) 0;
 }
 
 /* ===================================================================
@@ -128,7 +128,7 @@ export function getFilterDrawerStyles(): string {
     flex-direction: column;
     flex-shrink: 0;
     border-right: 1px solid var(--vscode-panel-border);
-    padding: 4px 0;
+    padding: var(--space-1) 0;
     gap: 1px;
 }
 .filter-tab {
@@ -203,7 +203,7 @@ export function getFilterDrawerStyles(): string {
 /* Read-only "Capture sources" status list under the tier radios in the Log Sources tab. */
 .capture-sources-block {
     margin-top: 10px;
-    padding-top: 8px;
+    padding-top: var(--space-2);
     border-top: 1px dashed var(--vscode-panel-border);
 }
 .capture-sources-title {
@@ -211,7 +211,7 @@ export function getFilterDrawerStyles(): string {
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: var(--vscode-descriptionForeground);
-    margin-bottom: 4px;
+    margin-bottom: var(--space-1);
 }
 .capture-sources-list {
     display: flex;

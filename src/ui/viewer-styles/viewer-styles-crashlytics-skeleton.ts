@@ -29,7 +29,7 @@ export function getCrashlyticsSkeletonStyles(): string {
     flex-shrink: 0;
     width: 10px;
     height: 10px;
-    margin-top: 4px;
+    margin-top: var(--space-1);
     border-radius: 50%;
     background: currentColor;
 }

@@ -27,7 +27,7 @@ export function getCollectionsPanelStyles(): string {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     font-weight: 600;
     font-size: 12px;
     border-bottom: 1px solid var(--vscode-panel-border);
@@ -48,7 +48,7 @@ export function getCollectionsPanelStyles(): string {
 .collections-panel-content {
     flex: 1;
     overflow-y: auto;
-    padding: 12px;
+    padding: var(--space-3);
 }
 
 /* ---- Explainer ---- */
@@ -57,7 +57,7 @@ export function getCollectionsPanelStyles(): string {
     border-left: 3px solid var(--vscode-textLink-foreground, #007acc);
     border-radius: 4px;
     padding: 10px 12px;
-    margin-bottom: 12px;
+    margin-bottom: var(--space-3);
     font-size: 11.5px;
     line-height: 1.55;
 }
@@ -69,7 +69,7 @@ export function getCollectionsPanelStyles(): string {
 .collections-explainer-title {
     font-weight: 600;
     font-size: 12px;
-    margin-bottom: 4px;
+    margin-bottom: var(--space-1);
 }
 .collections-explainer-close {
     background: none;
@@ -110,7 +110,7 @@ export function getCollectionsPanelStyles(): string {
     color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border, transparent);
     border-radius: var(--radius-sm);
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
     font-size: 12px;
     outline: none;
     width: 100%;
@@ -129,7 +129,7 @@ export function getCollectionsPanelStyles(): string {
     color: var(--vscode-button-foreground);
     border: none;
     border-radius: var(--radius-sm);
-    padding: 4px 12px;
+    padding: var(--space-1) var(--space-3);
     font-size: 11.5px;
     cursor: pointer;
 }
@@ -141,7 +141,7 @@ export function getCollectionsPanelStyles(): string {
     color: var(--vscode-button-secondaryForeground, inherit);
     border: none;
     border-radius: var(--radius-sm);
-    padding: 4px 12px;
+    padding: var(--space-1) var(--space-3);
     font-size: 11.5px;
     cursor: pointer;
 }
@@ -154,7 +154,7 @@ export function getCollectionsPanelStyles(): string {
 }
 
 /* ---- Merge ---- */
-.collections-merge-section { margin-bottom: 12px; }
+.collections-merge-section { margin-bottom: var(--space-3); }
 .collections-merge-select {
     background: var(--vscode-input-background);
     color: var(--vscode-input-foreground);
@@ -168,7 +168,7 @@ export function getCollectionsPanelStyles(): string {
 .collections-merge-form label {
     font-size: var(--text-caption);
     opacity: 0.8;
-    margin-top: 4px;
+    margin-top: var(--space-1);
 }
 
 /* ---- Loading / empty ---- */
@@ -180,7 +180,7 @@ export function getCollectionsPanelStyles(): string {
 }
 .collections-empty {
     text-align: center;
-    padding: 12px;
+    padding: var(--space-3);
     opacity: 0.6;
     font-size: 11.5px;
 }
@@ -229,8 +229,8 @@ export function getCollectionsPanelStyles(): string {
 }
 .collections-item-actions {
     display: flex;
-    gap: 4px;
-    margin-top: 4px;
+    gap: var(--space-1);
+    margin-top: var(--space-1);
 }
 .collections-action-btn {
     background: none;

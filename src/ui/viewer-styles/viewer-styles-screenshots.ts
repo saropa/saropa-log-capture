@@ -72,7 +72,7 @@ export function getScreenshotStyles(): string {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
     font-size: var(--vscode-font-size);
     cursor: pointer;
     border-radius: var(--radius-sm);

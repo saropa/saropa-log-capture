@@ -41,7 +41,7 @@ export function getSessionOptionsMenuStyles(): string {
 .session-options-row {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
     padding: 4px 6px;
 }
 .session-options-row-label {
@@ -65,7 +65,7 @@ export function getSessionOptionsMenuStyles(): string {
 .session-options-toggle {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
     width: 100%;
     padding: 6px;
     background: none;
@@ -113,7 +113,7 @@ export function getSessionOptionsMenuStyles(): string {
 .session-options-sep {
     border: none;
     border-top: 1px solid var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
-    margin: 4px 4px;
+    margin: var(--space-1) var(--space-1);
 }
 
 /* --- Grouped submenu triggers (Filter / Display / Actions) ---
@@ -132,7 +132,7 @@ export function getSessionOptionsMenuStyles(): string {
     display: none;
     width: 6px;
     height: 6px;
-    margin-right: 4px;
+    margin-right: var(--space-1);
     border-radius: 50%;
     background: var(--vscode-textLink-foreground, #3794ff);
 }
@@ -141,7 +141,7 @@ export function getSessionOptionsMenuStyles(): string {
 .session-options-action {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
     width: 100%;
     padding: 6px;
     background: none;
@@ -178,7 +178,7 @@ export function getSessionOptionsMenuStyles(): string {
 .session-loaded-file-item {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
     width: 100%;
     padding: 5px 6px;
     background: none;
