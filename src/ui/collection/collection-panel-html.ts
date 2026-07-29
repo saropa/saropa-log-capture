@@ -8,6 +8,7 @@ import { t } from '../../l10n';
 import { escapeHtml } from '../../modules/capture/ansi';
 import { getNonce } from '../provider/viewer-content';
 import { getCollectionPanelStyles } from './collection-panel-styles';
+import { getTokenStyles } from '../viewer-styles/viewer-styles-tokens';
 import { getCollectionPanelScript } from './collection-panel-script';
 import type { Collection, CollectionSource } from '../../modules/collection/collection-types';
 import { renderEmptyResults } from './collection-panel-handlers';
@@ -41,7 +42,7 @@ export function buildCollectionHtml(inv: Collection, missingSources: string[] = 
 
     return `<!DOCTYPE html><html><head>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
-<style nonce="${nonce}">${getCollectionPanelStyles()}</style>
+<style nonce="${nonce}">${getTokenStyles()}${getCollectionPanelStyles()}</style>
 </head><body>
 <div role="main" aria-label="Collection">
 <div class="header">
@@ -109,7 +110,7 @@ export function buildNoCollectionHtml(): string {
     const nonce = getNonce();
     return `<!DOCTYPE html><html><head>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
-<style nonce="${nonce}">${getCollectionPanelStyles()}</style>
+<style nonce="${nonce}">${getTokenStyles()}${getCollectionPanelStyles()}</style>
 </head><body>
 <div class="no-collection">
     <div class="no-collection-icon">🔍</div>
