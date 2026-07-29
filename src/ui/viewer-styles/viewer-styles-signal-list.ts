@@ -12,6 +12,29 @@
 export function getSignalListStyles(): string {
     return /* css */ `
 
+/* Signal kind type badges — compact colored pills before the signal text so the kind
+   reads at a glance without needing to parse the emoji. */
+.signal-kind-badge {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 0 4px;
+    border-radius: var(--radius-sm);
+    line-height: 16px;
+    vertical-align: middle;
+    margin-right: 3px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+.signal-kind-badge--error { background: color-mix(in srgb, var(--accent-critical) 20%, transparent); color: var(--accent-critical); }
+.signal-kind-badge--warning { background: color-mix(in srgb, var(--accent-warning) 20%, transparent); color: var(--accent-warning); }
+.signal-kind-badge--perf, .signal-kind-badge--slow-op { background: color-mix(in srgb, var(--link) 15%, transparent); color: var(--link); }
+.signal-kind-badge--sql { background: color-mix(in srgb, var(--accent-sql) 20%, transparent); color: var(--accent-sql); }
+.signal-kind-badge--network { background: color-mix(in srgb, var(--accent-warning) 15%, transparent); color: var(--accent-warning); }
+.signal-kind-badge--memory, .signal-kind-badge--anr { background: color-mix(in srgb, var(--accent-critical) 15%, transparent); color: var(--accent-critical); }
+.signal-kind-badge--permission { background: color-mix(in srgb, var(--muted) 20%, transparent); color: var(--muted); }
+.signal-kind-badge--classified { background: color-mix(in srgb, var(--accent-critical) 15%, transparent); color: var(--accent-critical); }
+
 /* Signal trend rows — clickable to open the most recent matching session */
 .signal-signal-trend-row { cursor: pointer; border-radius: var(--radius-sm); }
 .signal-signal-trend-row:hover { background: var(--vscode-list-hoverBackground); }
