@@ -307,6 +307,17 @@ window.addEventListener('message', function(event) {
                 setTimeout(function() { if (typeof window.setReplayEnabled === 'function') window.setReplayEnabled(isViewingFile, isSessionActive); }, 0);
             }
             if (typeof scheduleRootCauseHypothesesRefresh === 'function') scheduleRootCauseHypothesesRefresh();
+            /* Screenshot badges need allLines populated to map sidecar logLine → row idx. */
+            if (typeof vscodeApi !== 'undefined') vscodeApi.postMessage({ type: 'requestScreenshots' });
+            break;
+        case 'screenshotList':
+            if (typeof screenshotApplyList === 'function') screenshotApplyList(msg);
+            break;
+        case 'screenshotCaptured':
+            if (typeof screenshotHandleCaptured === 'function') screenshotHandleCaptured(msg);
+            break;
+        case 'screenshotImage':
+            if (typeof screenshotHandleImage === 'function') screenshotHandleImage(msg);
             break;
         case 'setScopeContext':
             if (typeof handleScopeContextMessage === 'function') handleScopeContextMessage(msg);
@@ -361,6 +372,8 @@ window.addEventListener('message', function(event) {
             var ibPerf = document.getElementById('ib-performance');
             if (ibPerf) ibPerf.classList.toggle('ib-integration-enabled', window.integrationAdapters.indexOf('performance') >= 0);
             if (typeof window.applyFooterQualityReportState === 'function') window.applyFooterQualityReportState();
+            /* Footer camera icon mirrors the merged 'screenshots' id (plan 114). */
+            if (typeof screenshotSyncFooter === 'function') screenshotSyncFooter();
             break;
         case 'captureSources':
             if (typeof renderCaptureSources === 'function') renderCaptureSources(msg.sources);

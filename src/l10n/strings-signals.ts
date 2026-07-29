@@ -50,6 +50,7 @@ export const stringsSignals: Record<string, string> = {
     'signals.section.evidence': 'Evidence',
     'signals.section.details': 'Signal Details',
     'signals.section.related': 'Related Lines',
+    'signals.section.screenshots': 'Screenshots',
     'signals.section.otherSignals': 'Other Signals',
     'signals.section.history': 'Cross-Session History',
     'signals.section.recommendations': 'Recommendations',
@@ -58,6 +59,7 @@ export const stringsSignals: Record<string, string> = {
     'signals.loading.evidence': 'Loading evidence lines...',
     'signals.loading.details': 'Analyzing signal...',
     'signals.loading.related': 'Scanning for related lines...',
+    'signals.loading.screenshots': 'Looking for captured screenshots…',
     'signals.loading.otherSignals': 'Checking for other signals...',
     'signals.loading.history': 'Checking session history…',
     'signals.loading.recommendations': 'Generating recommendations...',
@@ -65,6 +67,10 @@ export const stringsSignals: Record<string, string> = {
 
     // Evidence + recommendations
     'signals.evidence.noData': 'No evidence lines found',
+    // Screenshot evidence strip (plan 114)
+    'signals.screenshots.noData': 'No screenshots captured for this log',
+    'signals.screenshots.caption': 'Line {0} · {1}',
+    'signals.screenshots.openFull': 'Open full size',
     'signals.evidence.precedingAction': 'Preceding action: {0}',
     'signals.rec.noData': 'No specific recommendations',
     'signals.rec.error-recent': 'Check the stack trace for the root cause. If the error repeats, consider adding error handling or fixing the underlying issue.',

@@ -24,6 +24,32 @@ function sectionSlot(id: string, title: string, loadingText: string): string {
   );
 }
 
+/** Map template IDs to a short badge label for the report hero. */
+function heroTypeBadge(templateId: string): { label: string; cls: string } {
+  if (templateId.startsWith('error') || templateId.startsWith('classified')) {
+    return { label: 'ERROR', cls: 'hero-badge--error' };
+  }
+  if (templateId.startsWith('warning')) {
+    return { label: 'WARN', cls: 'hero-badge--warning' };
+  }
+  if (templateId === 'network-failure') {
+    return { label: 'NET', cls: 'hero-badge--warning' };
+  }
+  if (templateId === 'memory-pressure') {
+    return { label: 'MEM', cls: 'hero-badge--error' };
+  }
+  if (templateId === 'slow-operation') {
+    return { label: 'PERF', cls: 'hero-badge--info' };
+  }
+  if (templateId === 'anr-risk') {
+    return { label: 'ANR', cls: 'hero-badge--error' };
+  }
+  if (templateId.startsWith('sql') || templateId === 'n-plus-one') {
+    return { label: 'SQL', cls: 'hero-badge--sql' };
+  }
+  return { label: 'SIGNAL', cls: 'hero-badge--info' };
+}
+
 /** Build the initial HTML document with loading slots for each section. */
 export function buildSignalReportShell(opts: ShellOptions): string {
   const { nonce, hypothesis } = opts;
@@ -32,21 +58,22 @@ export function buildSignalReportShell(opts: ShellOptions): string {
   const reasonHtml = hypothesis.confidenceReason
     ? `<div class="conf-reason">${escapeHtml(hypothesis.confidenceReason)}</div>`
     : '';
+  const badge = heroTypeBadge(hypothesis.templateId);
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}'; img-src data:;">
 <style nonce="${nonce}">${getTokenStyles()}${getSignalReportStyles()}</style>
 </head>
 <body>
-<header class="report-header">
-  <h1>${escapeHtml(t('signals.shell.title'))}</h1>
-  <div class="signal-summary">
-    <span>${escapeHtml(hypothesis.text)}</span>
+<header class="report-header report-hero">
+  <div class="hero-title-row">
+    <span class="hero-badge ${badge.cls}">${badge.label}</span>
+    <h1>${escapeHtml(hypothesis.text)}</h1>
     <span class="conf-badge conf-badge--${escapeHtml(conf)}">${escapeHtml(confLabel)}</span>
-    ${reasonHtml}
   </div>
+  ${reasonHtml}
   <div class="btn-row">
     <button class="copy-btn" id="copy-report-btn">${escapeHtml(t('signals.shell.copyReport'))}</button>
   </div>
@@ -60,6 +87,7 @@ export function buildSignalReportShell(opts: ShellOptions): string {
     ${sectionSlot('related', t('signals.section.related'), t('signals.loading.related'))}
   </div>
   <div class="report-col report-col--secondary">
+    ${sectionSlot('screenshots', t('signals.section.screenshots'), t('signals.loading.screenshots'))}
     ${sectionSlot('other-signals', t('signals.section.otherSignals'), t('signals.loading.otherSignals'))}
     ${sectionSlot('history', t('signals.section.history'), t('signals.loading.history'))}
     ${sectionSlot('recommendations', t('signals.section.recommendations'), t('signals.loading.recommendations'))}

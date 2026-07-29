@@ -106,6 +106,16 @@ export function getToolbarHtml(opts: ToolbarHtmlOptions): string {
             <span class="codicon codicon-warning" aria-hidden="true"></span>
             <span class="log-staleness-text"></span>
         </span>
+        <!-- Screenshot controls (plan 114): the camera is a quick on/off toggle for
+             integrations.screenshots.enabled (always visible, dimmed when off); the count
+             appears once captures exist and opens the gallery. State titles ride as data-*
+             so the toggle flips tooltips without an l10n round-trip. -->
+        <span id="screenshot-toggle" class="screenshot-toggle" role="button" tabindex="0"
+              data-on-title="${t('viewer.toolbar.screenshotToggleOn')}" data-off-title="${t('viewer.toolbar.screenshotToggleOff')}"
+              title="${t('viewer.toolbar.screenshotToggleOn')}" aria-label="${t('viewer.toolbar.screenshotToggleOn')}">
+            <span class="codicon codicon-device-camera" aria-hidden="true"></span>
+        </span>
+        <span id="screenshot-count" class="screenshot-count u-hidden" role="button" tabindex="0" title="${t('viewer.toolbar.screenshotCount')}" aria-label="${t('viewer.toolbar.screenshotCount')}"></span>
         <span id="footer-text" data-version="${ver}" class="toolbar-filename" title="${t('viewer.toolbar.filename.title')}"></span>
     </div>
 </div>`;

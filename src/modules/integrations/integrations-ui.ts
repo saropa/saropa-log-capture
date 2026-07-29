@@ -197,6 +197,15 @@ export const INTEGRATION_ADAPTERS: ReadonlyArray<IntegrationAdapterMeta> = [
         whenToDisable: 'You don\'t want the Android system log captured, or adb is not installed.',
     },
     {
+        id: 'screenshots',
+        label: 'Debug Screenshots',
+        description: 'Capture app screenshots on errors during Flutter debug (on by default)',
+        descriptionLong:
+            'On by default: during a Flutter debug session, captures a screenshot of the running app when an error is detected (warnings and screen navigation are optional triggers, off by default) plus a manual capture command. Images are saved beside the log in a .screenshots folder with a metadata sidecar recording the triggering log line, and appear in the viewer, gallery, and timeline. Uses the Flutter VM Service — no app-side code needed. Unchecking this box turns all screenshot capture off.',
+        performanceNote: 'Low — captures only fire on trigger events (cooldown-limited); each capture is one VM Service call.',
+        whenToDisable: 'You don\'t want screen images stored with logs (e.g. sensitive app content), or you\'re not debugging Flutter.',
+    },
+    {
         id: 'driftAdvisor',
         label: 'Drift Advisor',
         description: 'Drift query stats, schema, and health in session metadata and sidecar',
