@@ -25,7 +25,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.3.3]
+
+Automatic screenshots now capture your Flutter app the exact moment an error strikes, and signal reports received a massive visual upgrade with new arc gauges, badges, and cleaner layouts. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.3/CHANGELOG.md)
 
 ### Added
 
@@ -45,6 +47,7 @@ cspell:disable
 
 ### Changed
 
+- l10n audit now prints per-locale untranslated string detail (key, reason, English value) below the gap count, so the operator sees exactly which strings need work without opening the JSON report
 - Signal report stat cards now show severity-colored top borders (red for errors, amber for warnings, blue for info signals)
 - Signal report health score replaced with a visual arc gauge — color graduates by tier (green ≥80, amber 50–79, red <50)
 - Signal report header upgraded to a hero block with type badge, larger title, and confidence badge on one line
