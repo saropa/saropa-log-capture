@@ -131,8 +131,8 @@ export function getDecorationStyles(): string {
 }
 #deco-settings-btn {
     background: none;
-    border: 1px solid var(--vscode-descriptionForeground);
-    color: var(--vscode-descriptionForeground);
+    border: 1px solid var(--muted);
+    color: var(--muted);
     font-size: 10px;
     padding: 1px 4px;
     cursor: pointer;
@@ -143,8 +143,8 @@ export function getDecorationStyles(): string {
     display: none;
     position: fixed;
     z-index: 180;
-    background: var(--vscode-menu-background, var(--vscode-editor-background));
-    border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border));
+    background: var(--vscode-menu-background, var(--surface-1));
+    border: 1px solid var(--vscode-menu-border, var(--border));
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     min-width: 180px;
@@ -159,13 +159,13 @@ export function getDecorationStyles(): string {
     padding: var(--space-1) var(--space-2);
     font-size: 11px;
     font-weight: bold;
-    color: var(--vscode-foreground);
-    border-bottom: 1px solid var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
+    color: var(--text);
+    border-bottom: 1px solid var(--vscode-menu-separatorBackground, var(--border));
 }
 .deco-settings-close {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-size: 14px;
     cursor: pointer;
     padding: 0 var(--space-1);
@@ -193,7 +193,7 @@ export function getDecorationStyles(): string {
     accent-color: var(--vscode-button-background);
 }
 .deco-settings-row select {
-    background: var(--vscode-input-background);
+    background: var(--inset);
     color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border, transparent);
     font-size: 11px;
@@ -202,7 +202,7 @@ export function getDecorationStyles(): string {
 }
 .deco-settings-separator {
     height: 1px;
-    background: var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
+    background: var(--vscode-menu-separatorBackground, var(--border));
     margin: var(--space-1) var(--space-2);
 }
 ` + getDecorationBarStyles() + getCollapseControlStyles();

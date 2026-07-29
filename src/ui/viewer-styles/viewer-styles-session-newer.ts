@@ -21,10 +21,10 @@ export function getSessionNewerStyles(): string {
     padding: 4px 12px 4px 22px;
     font-size: var(--text-caption);
     font-weight: 500;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     user-select: none;
-    border-bottom: 1px dotted var(--vscode-panel-border);
+    border-bottom: 1px dotted var(--border);
 }
 .session-reports-bucket-heading:hover {
     background: var(--vscode-list-hoverBackground);
@@ -54,8 +54,8 @@ export function getSessionNewerStyles(): string {
     /* position:relative anchors the kebab overflow menu (plan 109) to the banner row. */
     position: relative;
     background: var(--vscode-inputValidation-infoBackground, var(--vscode-editorInfo-background, var(--vscode-list-hoverBackground)));
-    color: var(--vscode-inputValidation-infoForeground, var(--vscode-foreground));
-    border-bottom: 1px solid var(--vscode-inputValidation-infoBorder, var(--vscode-panel-border));
+    color: var(--vscode-inputValidation-infoForeground, var(--text));
+    border-bottom: 1px solid var(--vscode-inputValidation-infoBorder, var(--border));
     font-size: 12px;
     cursor: pointer;
     user-select: none;
@@ -66,7 +66,7 @@ export function getSessionNewerStyles(): string {
 }
 .session-newer-banner-icon {
     flex-shrink: 0;
-    color: var(--vscode-charts-blue, var(--vscode-textLink-foreground));
+    color: var(--vscode-charts-blue, var(--link));
     font-size: 14px;
 }
 .session-newer-banner-text {
@@ -90,7 +90,7 @@ export function getSessionNewerStyles(): string {
     gap: var(--space-1);
     background: var(--vscode-button-secondaryBackground);
     border: 1px solid var(--vscode-button-border, transparent);
-    color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+    color: var(--vscode-button-secondaryForeground, var(--text));
     padding: 2px 8px;
     border-radius: var(--radius-sm);
     cursor: pointer;
@@ -160,8 +160,8 @@ export function getSessionNewerStyles(): string {
     min-width: 180px;
     margin-top: 2px;
     padding: var(--space-1);
-    background: var(--vscode-menu-background, var(--vscode-editorWidget-background));
-    border: 1px solid var(--vscode-menu-border, var(--vscode-widget-border, var(--vscode-panel-border)));
+    background: var(--vscode-menu-background, var(--surface-2));
+    border: 1px solid var(--vscode-menu-border, var(--border));
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.36);
 }
@@ -172,7 +172,7 @@ export function getSessionNewerStyles(): string {
     background: transparent;
     border: none;
     border-radius: var(--radius-sm);
-    color: var(--vscode-menu-foreground, var(--vscode-foreground));
+    color: var(--vscode-menu-foreground, var(--text));
     font-size: 12px;
     font-family: inherit;
     cursor: pointer;
@@ -217,7 +217,7 @@ export function getSessionNewerStyles(): string {
     height: 7px;
     border-radius: 50%;
     background: var(--vscode-charts-blue, var(--vscode-textLink-foreground, #3794ff));
-    border: 1px solid var(--vscode-sideBar-background, var(--vscode-editor-background));
+    border: 1px solid var(--vscode-sideBar-background, var(--surface-1));
     pointer-events: none;
 }
 
@@ -226,7 +226,7 @@ export function getSessionNewerStyles(): string {
  * left border so the pinned block reads as a distinct, always-present group. A faint background
  * tint on the section ties its rows together visually without re-styling each row. */
 .session-pinned-section {
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     background: var(--vscode-list-inactiveSelectionBackground, transparent);
 }
 .session-pinned-heading {

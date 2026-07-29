@@ -78,7 +78,7 @@ export function getViewerStyles(): string {
    =================================================================== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-    background: var(--vscode-editor-background);
+    background: var(--surface-1);
     color: var(--vscode-editor-foreground);
     font-family: 'JetBrains Mono', var(--vscode-editor-font-family, monospace);
     font-size: var(--log-font-size, var(--vscode-editor-font-size, 13px));

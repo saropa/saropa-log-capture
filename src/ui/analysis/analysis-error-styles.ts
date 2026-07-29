@@ -12,7 +12,7 @@ export function getAnalysisErrorStyles(): string {
 .err-header {
     padding: var(--space-3) var(--space-4);
     background: var(--vscode-sideBar-background);
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     margin-bottom: var(--space-2);
 }
 .err-badges {
@@ -50,13 +50,13 @@ export function getAnalysisErrorStyles(): string {
 .err-hash {
     font-family: var(--vscode-editor-font-family, monospace);
     font-size: 10px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     opacity: 0.7;
 }
 .err-text {
     font-family: var(--vscode-editor-font-family, monospace);
     font-size: 12px;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -69,9 +69,9 @@ export function getAnalysisErrorStyles(): string {
 .triage-btn {
     font-size: var(--text-caption);
     padding: 3px 10px;
-    border: 1px solid var(--vscode-panel-border);
+    border: 1px solid var(--border);
     background: transparent;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     border-radius: var(--radius-sm);
     transition: all 0.15s ease;
@@ -89,7 +89,7 @@ export function getAnalysisErrorStyles(): string {
 .err-version-info {
     padding: var(--space-1) var(--space-3);
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
 }
 .err-sparkline {
     width: 100%;
@@ -99,8 +99,8 @@ export function getAnalysisErrorStyles(): string {
 }
 .spark-bar { fill: var(--vscode-charts-blue, var(--accent-info)); transition: fill 0.15s ease; }
 .spark-bar:hover { fill: var(--vscode-charts-yellow, var(--accent-warning)); }
-.spark-axis { stroke: var(--vscode-panel-border); stroke-width: 1; }
-.spark-label { font-size: 9px; fill: var(--vscode-descriptionForeground); }
+.spark-axis { stroke: var(--border); stroke-width: 1; }
+.spark-label { font-size: 9px; fill: var(--muted); }
 
 /* Occurrences */
 .err-occurrence {
@@ -110,13 +110,13 @@ export function getAnalysisErrorStyles(): string {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    border-left: 2px solid var(--vscode-panel-border);
+    border-left: 2px solid var(--border);
     margin: 2px 8px;
 }
 .err-more {
     padding: var(--space-1) var(--space-3);
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     font-style: italic;
 }
 
@@ -126,7 +126,7 @@ export function getAnalysisErrorStyles(): string {
     flex-wrap: wrap;
     gap: 6px;
     padding: var(--space-3) var(--space-4);
-    border-top: 1px solid var(--vscode-panel-border);
+    border-top: 1px solid var(--border);
     background: var(--vscode-sideBar-background);
     position: sticky;
     bottom: 0;
@@ -134,7 +134,7 @@ export function getAnalysisErrorStyles(): string {
 .err-action {
     font-size: var(--text-caption);
     padding: 4px 10px;
-    border: 1px solid var(--vscode-panel-border);
+    border: 1px solid var(--border);
     background: transparent;
     color: var(--vscode-editor-foreground);
     cursor: pointer;

@@ -269,7 +269,7 @@ function renderMinimap(buckets: MinimapBucket[]): string {
     const bars = buckets.map(b => {
         const total = b.errors + b.warnings + b.info;
         const h = Math.max(2, (total / maxCount) * maxHeight);
-        const color = b.errors > 0 ? 'var(--vscode-editorError-foreground)' : b.warnings > 0 ? 'var(--vscode-editorWarning-foreground)' : 'var(--vscode-descriptionForeground)';
+        const color = b.errors > 0 ? 'var(--accent-critical)' : b.warnings > 0 ? 'var(--accent-warning)' : 'var(--muted)';
         return `<div class="minimap-bar" style="height:${h}px;background:${color}" data-bucket="${b.x}"></div>`;
     }).join('');
     return `<div class="minimap" id="minimap"><div class="minimap-viewport" id="minimap-viewport"></div>${bars}</div>`;

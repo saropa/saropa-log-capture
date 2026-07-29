@@ -13,8 +13,8 @@ export function getSignalLayoutStyles(): string {
     width: 100%;
     min-width: 280px;
     height: 100%;
-    background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-    border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    background: var(--vscode-sideBar-background, var(--surface-1));
+    border-right: 1px solid var(--vscode-sideBar-border, var(--border));
     /* Slide-out edge lift: the panel floats over the log rows, so use the
        overlay elevation token rather than a baked black alpha. */
     box-shadow: var(--shadow-lg);
@@ -34,7 +34,7 @@ export function getSignalLayoutStyles(): string {
     padding: var(--space-2) var(--space-3);
     font-weight: 600;
     font-size: 12px;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     flex-shrink: 0;
 }
 
@@ -47,7 +47,7 @@ export function getSignalLayoutStyles(): string {
 .signal-panel-copy-md {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     padding: var(--space-1);
     border-radius: var(--radius-sm);
@@ -58,7 +58,7 @@ export function getSignalLayoutStyles(): string {
 }
 
 .signal-panel-copy-md:hover {
-    color: var(--vscode-foreground);
+    color: var(--text);
     /* Toolbar hover scrim; the fallback is a faint text-tint so it tracks the
        theme instead of a fixed neutral gray when the host var is absent. */
     background: var(--vscode-toolbar-hoverBackground, color-mix(in srgb, var(--text) 30%, transparent));
@@ -67,7 +67,7 @@ export function getSignalLayoutStyles(): string {
 .signal-panel-close {
     background: none;
     border: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     /* 16px matches the close glyph in the Performance and Crashlytics panels; 18px here made
        the Signal panel's close button visibly larger than its siblings (inconsistent affordance). */
@@ -92,7 +92,7 @@ export function getSignalLayoutStyles(): string {
 
 /* Accordion sections */
 .signal-section {
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     margin-bottom: var(--space-1);
 }
 
@@ -107,7 +107,7 @@ export function getSignalLayoutStyles(): string {
     justify-content: space-between;
     background: none;
     border: none;
-    color: var(--vscode-foreground);
+    color: var(--text);
     cursor: pointer;
     font-size: 12px;
     font-weight: 600;
@@ -118,7 +118,7 @@ export function getSignalLayoutStyles(): string {
 
 .signal-section-header:hover {
     background: var(--vscode-toolbar-hoverBackground, color-mix(in srgb, var(--text) 15%, transparent));
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 
 .signal-section-emoji {

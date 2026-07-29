@@ -29,7 +29,7 @@ export function getSeverityKeywordsStyles(): string {
 .sk-label {
     font-weight: 600;
     min-width: 80px;
-    color: var(--vscode-foreground);
+    color: var(--text);
 }
 .sk-pills {
     display: flex;
@@ -38,7 +38,7 @@ export function getSeverityKeywordsStyles(): string {
 }
 .sk-pill {
     background: var(--vscode-badge-background, rgba(90, 93, 94, 0.4));
-    color: var(--vscode-badge-foreground, var(--vscode-foreground));
+    color: var(--vscode-badge-foreground, var(--text));
     padding: 1px 6px;
     border-radius: var(--radius-sm);
     font-size: 10px;

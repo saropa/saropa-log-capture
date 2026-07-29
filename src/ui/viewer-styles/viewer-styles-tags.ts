@@ -13,7 +13,7 @@ export function getTagStyles(): string {
    =================================================================== */
 .source-tag-strip {
     background: var(--vscode-panel-background);
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid var(--border);
     flex-shrink: 0;
 }
 .source-tag-header {
@@ -22,7 +22,7 @@ export function getTagStyles(): string {
     gap: 6px;
     padding: 3px 8px;
     font-size: var(--text-caption);
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     user-select: none;
 }
@@ -55,7 +55,7 @@ export function getTagStyles(): string {
     padding: var(--space-1) var(--space-2);
     font-size: var(--text-caption);
     font-family: inherit;
-    background: var(--vscode-input-background);
+    background: var(--inset);
     color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border, transparent);
     border-radius: 2px;
@@ -91,9 +91,9 @@ export function getTagStyles(): string {
     font-size: var(--text-caption);
     padding: 2px 8px;
     border-radius: 10px;
-    border: 1px solid var(--vscode-descriptionForeground);
+    border: 1px solid var(--muted);
     background: none;
-    color: var(--vscode-descriptionForeground);
+    color: var(--muted);
     cursor: pointer;
     white-space: nowrap;
     opacity: 0.5;
@@ -101,8 +101,8 @@ export function getTagStyles(): string {
 }
 .source-tag-chip.active {
     background: var(--vscode-button-secondaryBackground, rgba(90, 93, 94, 0.31));
-    color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
-    border-color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+    color: var(--vscode-button-secondaryForeground, var(--text));
+    border-color: var(--vscode-button-secondaryForeground, var(--text));
     opacity: 1;
 }
 .source-tag-chip:hover {
