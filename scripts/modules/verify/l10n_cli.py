@@ -20,7 +20,7 @@ from modules.verify.l10n_actions import (
     run_translate,
     write_report_and_offer_export,
 )
-from modules.verify.l10n_audit_display import print_audit
+from modules.verify.l10n_audit_display import print_audit, print_untranslated_detail
 from modules.verify.l10n_bundle_audit import (
     AuditResult,
     run_audit,
@@ -188,6 +188,15 @@ def _parse_args() -> argparse.Namespace:
         ),
     )
     p.add_argument(
+        "--verbose",
+        action="store_true",
+        help=(
+            "Print per-string untranslated detail after the coverage table. "
+            "Interactive mode always shows this; non-interactive suppresses "
+            "it by default to keep CI output compact."
+        ),
+    )
+    p.add_argument(
         "--import",
         dest="import_file",
         type=str,
@@ -259,6 +268,8 @@ def run_non_interactive() -> int:
 
     if args.run_mode == "audit":
         _write_audit_report(audit)
+        if args.verbose and audit.has_gaps:
+            print_untranslated_detail(audit, max_entries=None)
         # Missing-from-bundle is a hard failure for CI; gaps alone are not.
         return 1 if audit.missing_from_bundle else 0
 
@@ -273,4 +284,6 @@ def run_non_interactive() -> int:
     print()
     print_audit(final)
     _write_audit_report(final)
+    if args.verbose and final.has_gaps:
+        print_untranslated_detail(final, max_entries=None)
     return 0

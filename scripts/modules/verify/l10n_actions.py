@@ -244,6 +244,6 @@ def write_report_and_offer_export(audit: AuditResult) -> None:
     print(f"\n  {yellow(f'{total_gaps} untranslated string(s) remain.')}")
     print_untranslated_detail(audit)
     print(dim(
-        "\n  Run a translate pass to fill them; strings the engine cannot produce "
+        "  Run a translate pass to fill them; strings the engine cannot produce "
         "are exported (sentence-level) for human translation."
     ))

@@ -112,23 +112,24 @@ def _print_provenance_table(audit: AuditResult) -> None:
         print(f"  {lc.locale:<10} {hi_cell} {low_cell}  {_engine_breakdown(lc.engine_counts)}")
 
 
-def print_untranslated_detail(audit: AuditResult) -> None:
+def print_untranslated_detail(
+    audit: AuditResult, *, max_entries: int | None = 10,
+) -> None:
     """Print per-locale untranslated entries so the user can see what's left.
 
-    NOT part of the default ``print_audit`` output — that stays a compact
-    count-table view. The same per-string detail is always written to the JSON
-    audit report (``write_audit_report``); this console dump is opt-in for
-    callers that explicitly want it on screen.
+    ``max_entries`` caps per-locale output (default 10). Pass ``None`` to show
+    every entry (useful with ``--verbose``).
     """
     for lc in audit.locale_coverage:
         if not lc.untranslated_entries:
             continue
         print(f"\n  {bold(lc.locale)} — {yellow(f'{len(lc.untranslated_entries)} gap(s)')}:")
-        for entry in lc.untranslated_entries[:10]:
+        visible = lc.untranslated_entries if max_entries is None else lc.untranslated_entries[:max_entries]
+        for entry in visible:
             # Missing (absent) is more severe than en-copy (present, untranslated).
             tag = red("MISSING") if entry.reason == "missing" else yellow("EN-COPY")
             print(f'    [{tag}] {entry.sym_key}: "{_truncate(entry.en_value, 55, 58)}"')
-        remaining = len(lc.untranslated_entries) - 10
+        remaining = len(lc.untranslated_entries) - len(visible)
         if remaining > 0:
             print(dim(f"    ... and {remaining} more"))
 
