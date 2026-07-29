@@ -13,6 +13,11 @@
         "title": "%command.openWalkthrough.title%"
       },
       {
+        "command": "saropaLogCapture.captureScreenshot",
+        "icon": "$(device-camera)",
+        "title": "%command.captureScreenshot.title%"
+      },
+      {
         "command": "saropaLogCapture.start",
         "icon": "$(play)",
         "title": "%command.start.title%"
@@ -2646,6 +2651,46 @@
           "description": "Always capture ANR and native-crash evidence, even when level or PID filtering would drop it. ActivityManager/AndroidRuntime dump the \"ANR in <package>\" header and the frozen main-thread stack from the system process (a different PID than your app), so PID scoping hides the richest ANR detail unless this is on. Turn off to keep strict PID/level filtering.",
           "type": "boolean",
           "title": "%config.integrations.adbLogcat.captureAnr.title%"
+        },
+        "saropaLogCapture.integrations.screenshots.enabled": {
+          "default": true,
+          "description": "Allow debug screenshot capture (Flutter VM Service) to run. On by default. Captures fire on trigger events only (errors by default; warnings/navigation opt-in) plus the manual command. This is the switch the Options → Integrations checkbox and the viewer footer camera icon bind to; turn off to stop all screenshot capture.",
+          "type": "boolean",
+          "title": "%config.integrations.screenshots.enabled.title%"
+        },
+        "saropaLogCapture.integrations.screenshots.onError": {
+          "default": true,
+          "description": "Capture a screenshot when an error line is detected during a Flutter debug session (deduplicated by error fingerprint, cooldown-limited).",
+          "type": "boolean",
+          "title": "%config.integrations.screenshots.onError.title%"
+        },
+        "saropaLogCapture.integrations.screenshots.onWarning": {
+          "default": false,
+          "description": "Capture a screenshot when a warning line is detected. Off by default — warnings are frequent and each capture stores an image.",
+          "type": "boolean",
+          "title": "%config.integrations.screenshots.onWarning.title%"
+        },
+        "saropaLogCapture.integrations.screenshots.onNavigation": {
+          "default": false,
+          "description": "Capture a screenshot on each screen navigation (flow-map entry). Off by default. Gives a discrete snapshot of every screen visited.",
+          "type": "boolean",
+          "title": "%config.integrations.screenshots.onNavigation.title%"
+        },
+        "saropaLogCapture.integrations.screenshots.cooldownMs": {
+          "default": 2000,
+          "description": "Minimum gap between any two screenshot captures, in milliseconds. Bounds capture rate during error cascades.",
+          "minimum": 250,
+          "maximum": 60000,
+          "type": "number",
+          "title": "%config.integrations.screenshots.cooldownMs.title%"
+        },
+        "saropaLogCapture.integrations.screenshots.maxPerLog": {
+          "default": 50,
+          "description": "Maximum screenshots stored per log file. Once reached, further captures are skipped and one warning is written to the output channel.",
+          "minimum": 1,
+          "maximum": 500,
+          "type": "number",
+          "title": "%config.integrations.screenshots.maxPerLog.title%"
         },
         "saropaLogCapture.integrations.unifiedLog.writeAtSessionEnd": {
           "default": false,

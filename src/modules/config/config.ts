@@ -62,6 +62,7 @@ export type {
   IntegrationOtelConfig,
   IntegrationBrowserConfig,
   IntegrationAdbLogcatConfig,
+  IntegrationScreenshotsConfig,
   IntegrationUnifiedLogConfig,
   IntegrationFlutterCrashLogsConfig,
   ProjectIndexSourceConfig,

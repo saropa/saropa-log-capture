@@ -7,6 +7,7 @@
 import { logExtensionWarn } from '../../modules/misc/extension-logger';
 import { assertDefined } from '../../modules/misc/assert';
 import { dispatchPanelMessage } from './viewer-message-handler-panels';
+import { dispatchScreenshotMessage } from './viewer-message-handler-screenshots';
 import { dispatchCollectionMessage } from './viewer-message-handler-collection';
 import { dispatchViewerActionMessage } from './viewer-message-handler-actions';
 import type { ViewerMessageContext } from './viewer-message-types';
@@ -31,5 +32,6 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
     return;
   }
   if (dispatchViewerActionMessage(msg, ctx)) { return; }
+  if (dispatchScreenshotMessage(msg, ctx)) { return; }
   dispatchPanelMessage(msg, ctx);
 }

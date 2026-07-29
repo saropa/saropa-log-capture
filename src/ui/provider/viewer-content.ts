@@ -109,7 +109,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy"
-          content="default-src 'none'; script-src 'nonce-${nonce}'; ${styleSrc} ${fontSrc} media-src ${cspSource || extensionUri || "'none'"};">
+          content="default-src 'none'; script-src 'nonce-${nonce}'; ${styleSrc} ${fontSrc} img-src data:; media-src ${cspSource || extensionUri || "'none'"};">
     ${codiconLink}
     <style nonce="${nonce}">
         ${getViewerStyles()}

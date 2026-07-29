@@ -20,6 +20,7 @@ import {
 
 /** Known sidecar extensions and their source types. */
 const SIDECAR_MAP: { ext: string; source: TimelineSource }[] = [
+    { ext: '.screenshots.json', source: 'screenshot' },
     { ext: '.perf.json', source: 'perf' },
     { ext: '.requests.json', source: 'http' },
     { ext: '.terminal.log', source: 'terminal' },
@@ -94,7 +95,7 @@ async function findSidecarUris(mainLogUri: vscode.Uri): Promise<Map<TimelineSour
 /** Load and merge timeline events from a session and its sidecars. */
 export async function loadTimelineEvents(options: TimelineLoadOptions): Promise<TimelineLoadResult> {
     const { sessionUri, sources, timeRange, maxEvents = 10000, includeAll = true } = options;
-    const allSources: TimelineSource[] = ['debug', 'terminal', 'http', 'perf', 'docker', 'events', 'database', 'browser'];
+    const allSources: TimelineSource[] = ['debug', 'terminal', 'http', 'perf', 'docker', 'events', 'database', 'browser', 'screenshot'];
     const enabledSources = new Set<TimelineSource>(sources ?? allSources);
     const events: TimelineEvent[] = [];
     const sourcesFound: TimelineSource[] = [];
@@ -188,12 +189,43 @@ async function loadSidecar(source: TimelineSource, uri: vscode.Uri, sessionStart
         case 'browser': return loadBrowserSidecar(text, uriStr, sessionStart);
         case 'database': return loadDatabaseSidecar(text, uriStr, sessionStart);
         case 'events': return loadEventsSidecar(text, uriStr, sessionStart);
+        case 'screenshot': return loadScreenshotSidecarEvents(text, uri);
         default: return [];
     }
 }
 
+/**
+ * Screenshot sidecar → timeline events (plan 114). Timestamps in `.screenshots.json`
+ * are already epoch ms (no session-midnight math). `location.file` points at the PNG
+ * itself, so the timeline's generic open-location click shows the image; the log line
+ * lives in the summary text.
+ */
+function loadScreenshotSidecarEvents(text: string, sidecarUri: vscode.Uri): TimelineEvent[] {
+    let parsed: { screenshots?: unknown };
+    try { parsed = JSON.parse(text) as { screenshots?: unknown }; } catch { return []; }
+    if (!Array.isArray(parsed.screenshots)) { return []; }
+    // `foo.screenshots.json` sits beside the `foo.screenshots/` PNG directory.
+    const dirUri = vscode.Uri.parse(sidecarUri.toString().replace(/\.screenshots\.json$/i, '.screenshots'));
+    const events: TimelineEvent[] = [];
+    for (const s of parsed.screenshots as Array<Record<string, unknown>>) {
+        if (!s || typeof s.timestamp !== 'number' || typeof s.file !== 'string') { continue; }
+        const trigger = typeof s.trigger === 'string' ? s.trigger : 'manual';
+        const excerpt = typeof s.text === 'string' && s.text.length > 0 ? ` — ${s.text}` : '';
+        const line = typeof s.logLine === 'number' && s.logLine > 0 ? ` (line ${s.logLine})` : '';
+        events.push({
+            timestamp: s.timestamp,
+            source: 'screenshot',
+            level: trigger === 'error' ? 'error' : trigger === 'warning' ? 'warning' : 'info',
+            summary: `\u{1F4F7} ${trigger}${line}${excerpt}`.slice(0, 120),
+            detail: typeof s.text === 'string' ? s.text : undefined,
+            location: { file: vscode.Uri.joinPath(dirUri, s.file).toString() },
+        });
+    }
+    return events;
+}
+
 function computeStats(events: TimelineEvent[], sessionStart: number, sessionEnd: number): TimelineStats {
-    const bySource: Record<TimelineSource, number> = { debug: 0, terminal: 0, http: 0, perf: 0, docker: 0, events: 0, database: 0, browser: 0 };
+    const bySource: Record<TimelineSource, number> = { debug: 0, terminal: 0, http: 0, perf: 0, docker: 0, events: 0, database: 0, browser: 0, screenshot: 0 };
     const byLevel: Record<string, number> = { error: 0, warning: 0, info: 0, debug: 0, perf: 0 };
     for (const event of events) {
         bySource[event.source]++;
@@ -203,7 +235,7 @@ function computeStats(events: TimelineEvent[], sessionStart: number, sessionEnd:
 }
 
 export function getSourceLabel(source: TimelineSource): string {
-    const labels: Record<TimelineSource, string> = { debug: 'Debug', terminal: 'Terminal', http: 'HTTP', perf: 'Perf', docker: 'Docker', events: 'Events', database: 'DB', browser: 'Browser' };
+    const labels: Record<TimelineSource, string> = { debug: 'Debug', terminal: 'Terminal', http: 'HTTP', perf: 'Perf', docker: 'Docker', events: 'Events', database: 'DB', browser: 'Browser', screenshot: 'Screenshot' };
     return labels[source] ?? source;
 }
 
@@ -217,6 +249,7 @@ export function getSourceColor(source: TimelineSource): string {
         events: 'var(--vscode-charts-orange, #d18616)',
         database: 'var(--vscode-charts-yellow, #dcdcaa)',
         browser: 'var(--vscode-charts-red, #f14c4c)',
+        screenshot: 'var(--vscode-charts-foreground, #cccccc)',
     };
     return colors[source] ?? 'var(--vscode-editor-foreground)';
 }
