@@ -2,6 +2,8 @@
  * Signal panel script part B2: "This log" signal list renderer and its helpers.
  * Extracted from part-b to keep files under the 300-line limit.
  * Concatenated by viewer-signal-panel-script.ts inside the same IIFE scope.
+ * Depends on part-b being concatenated BEFORE this: kindBadge(), kindLabels,
+ * esc(), fmtMs(), fillSignalString(), SIGNAL_STRINGS are defined there.
  */
 
 /** Returns the "This log" renderer fragment (timestamps, evidence preview, renderSignalsInThisLog). */
@@ -115,7 +117,7 @@ export function getSignalScriptPartB2(): string {
                 ? '<div class="signal-detail-body" hidden>' + esc(String(s.detail).trim()) + '</div>'
                 : '';
             return '<div class="signal-env-row signal-in-log-row' + clickCls + '"' + lineAttr + ' data-fingerprint="' + esc(s.fingerprint || '') + '" data-label="' + esc(s.label) + '" title="' + esc(s.label) + titleSuffix + '">'
-                + '<span>' + icon + ' ' + kindBadge(s.kind) + esc(text) + '</span>'
+                + '<span>' + icon + ' ' + (typeof kindBadge === 'function' ? kindBadge(s.kind) : '') + esc(text) + '</span>'
                 + '<span class="signal-hotfile-meta">' + meta + '</span>'
                 + '<span class="signal-row-actions">' + copyBtn + '</span>'
                 + preview

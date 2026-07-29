@@ -24,7 +24,9 @@ function sectionSlot(id: string, title: string, loadingText: string): string {
   );
 }
 
-/** Map template IDs to a short badge label for the report hero. */
+/** Map template IDs (not SignalKind) to a short badge label for the report hero.
+ *  Returns one of 4 CSS classes: hero-badge--error/warning/info/sql.
+ *  New templateId prefixes fall through to the generic SIGNAL/info default. */
 function heroTypeBadge(templateId: string): { label: string; cls: string } {
   if (templateId.startsWith('error') || templateId.startsWith('classified')) {
     return { label: 'ERROR', cls: 'hero-badge--error' };

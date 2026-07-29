@@ -13,6 +13,8 @@ import { getSignalScriptPartB2 } from '../../ui/panels/viewer-signal-panel-scrip
 import { getSignalScriptPartC } from '../../ui/panels/viewer-signal-panel-script-part-c';
 import { getSignalScriptPartD } from '../../ui/panels/viewer-signal-panel-script-part-d';
 import { getViewerScriptMessageHandler } from '../../ui/viewer/viewer-script-messages';
+import { getSignalListStyles } from '../../ui/viewer-styles/viewer-styles-signal-list';
+import type { SignalKind } from '../../modules/misc/recurring-signal-builder';
 
 suite('Signal panel row → session jump wiring', () => {
 
@@ -256,5 +258,51 @@ suite('Signal panel live-line fallback', () => {
             script.includes('order.length >= LIVE_SIGNAL_GROUP_CAP'),
             'a runaway guard must cap the number of distinct fallback groups',
         );
+    });
+});
+
+/**
+ * Exhaustiveness guard: every SignalKind member must have an entry in all three
+ * badge/label maps (kindLabels, kindBadgeText, CSS .signal-kind-badge--*).
+ * Without this, adding a new SignalKind silently renders a generic/empty badge
+ * in whichever map was missed — no compile-time or runtime error.
+ */
+suite('Signal kind badge exhaustiveness', () => {
+
+    // Mirrors the SignalKind union — a new member added there without updating
+    // this array fails the type assertion below (SignalKind extends the element type).
+    const allKinds: readonly SignalKind[] = [
+        'error', 'warning', 'perf', 'sql', 'network',
+        'memory', 'slow-op', 'anr', 'permission', 'classified',
+    ] as const;
+
+    test('kindLabels covers every SignalKind', () => {
+        const script = getSignalScriptPartB(90);
+        for (const kind of allKinds) {
+            assert.ok(
+                script.includes(`${kind}:`),
+                `kindLabels missing entry for '${kind}'`,
+            );
+        }
+    });
+
+    test('kindBadgeText covers every SignalKind', () => {
+        const script = getSignalScriptPartB(90);
+        for (const kind of allKinds) {
+            assert.ok(
+                script.includes(`${kind}:`),
+                `kindBadgeText missing entry for '${kind}'`,
+            );
+        }
+    });
+
+    test('CSS has a .signal-kind-badge-- rule for every SignalKind', () => {
+        const css = getSignalListStyles();
+        for (const kind of allKinds) {
+            assert.ok(
+                css.includes(`.signal-kind-badge--${kind}`),
+                `CSS missing .signal-kind-badge--${kind} rule`,
+            );
+        }
     });
 });
