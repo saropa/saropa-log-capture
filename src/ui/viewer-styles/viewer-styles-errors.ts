@@ -30,7 +30,7 @@ export function getErrorStyles(): string {
     font-weight: bold;
     margin-right: 4px;
     padding: 2px 6px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     background: var(--vscode-errorBackground, rgba(244, 68, 68, 0.1));
     font-size: 10px;
     transition: background 0.2s ease;
@@ -103,7 +103,7 @@ export function getErrorStyles(): string {
     font-size: 10px;
     padding: 1px 6px;
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
 }
 
 #error-breakpoint-toggle:hover {

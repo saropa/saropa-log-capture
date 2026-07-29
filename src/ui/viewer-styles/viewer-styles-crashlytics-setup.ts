@@ -10,7 +10,7 @@ export function getSetupStyles(): string {
 
 /* 3-step progress row. Each step is a numbered/checked pill: done (green), active (accent), todo (muted). */
 .cp-steps { display: flex; gap: 6px; margin: 10px 12px; }
-.cp-step { display: flex; align-items: center; gap: 5px; flex: 1; font-size: 11px; opacity: 0.6; }
+.cp-step { display: flex; align-items: center; gap: 5px; flex: 1; font-size: var(--text-caption); opacity: 0.6; }
 .cp-step-num {
     display: inline-flex;
     align-items: center;
@@ -19,7 +19,7 @@ export function getSetupStyles(): string {
     height: 18px;
     border-radius: 50%;
     border: 1px solid var(--vscode-panel-border);
-    font-size: 11px;
+    font-size: var(--text-caption);
 }
 .cp-step-active { opacity: 1; font-weight: 600; }
 .cp-step-active .cp-step-num {
@@ -37,7 +37,7 @@ export function getSetupStyles(): string {
 .cp-setup-status { margin: 6px 12px 2px; font-size: 12px; font-weight: 600; }
 
 /* Collapsed diagnostic/troubleshooting so a failed setup reads as guidance, not an error wall. */
-.cp-problem { margin: 10px 12px; font-size: 11px; }
+.cp-problem { margin: 10px 12px; font-size: var(--text-caption); }
 .cp-problem > summary { cursor: pointer; opacity: 0.8; padding: 4px 0; }
 .cp-problem-body { margin-top: 4px; }
 
@@ -54,7 +54,7 @@ export function getSetupStyles(): string {
     padding: 6px 8px;
     margin: 4px 0;
     border-left: 3px solid var(--vscode-panel-border);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     background: var(--vscode-textBlockQuote-background);
 }
 .cp-conn-pass { border-left-color: var(--status-good); }
@@ -62,8 +62,8 @@ export function getSetupStyles(): string {
 .cp-conn-skipped { opacity: 0.7; }
 .cp-conn-head { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 12px; }
 .cp-conn-detail { font-size: 12px; opacity: 0.9; margin-top: 2px; }
-.cp-conn-fix { font-size: 11px; margin-top: 4px; }
-.cp-conn-tech { margin-top: 4px; font-size: 11px; }
+.cp-conn-fix { font-size: var(--text-caption); margin-top: 4px; }
+.cp-conn-tech { margin-top: 4px; font-size: var(--text-caption); }
 .cp-conn-tech summary { cursor: pointer; opacity: 0.8; }
 .cp-conn-tech pre {
     white-space: pre-wrap;
@@ -86,7 +86,7 @@ export function getSetupStyles(): string {
 .cp-copy-btn {
     margin-left: 6px;
     padding: 2px 8px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     background: var(--vscode-button-secondaryBackground);
     color: var(--vscode-button-secondaryForeground);
     border: none;
@@ -98,7 +98,7 @@ export function getSetupStyles(): string {
 
 .cp-setup-why {
     margin-top: 8px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     opacity: 0.75;
     font-style: italic;
 }
@@ -110,7 +110,7 @@ export function getSetupStyles(): string {
     border: none;
     padding: 6px 14px;
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-size: 12px;
     display: block;
     margin: 8px 0;
@@ -137,7 +137,7 @@ export function getSetupStyles(): string {
 
 .cp-setup-tip {
     margin: 16px 12px 8px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     opacity: 0.6;
     font-style: italic;
 }
@@ -166,8 +166,8 @@ export function getDiagnosticStyles(): string {
     padding: 8px;
     background: var(--vscode-inputValidation-warningBackground);
     border-left: 3px solid var(--vscode-inputValidation-warningBorder);
-    border-radius: 3px;
-    font-size: 11px;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-caption);
 }
 
 .cp-diag-msg { margin-bottom: 4px; }
@@ -180,7 +180,7 @@ export function getDiagnosticStyles(): string {
     background: var(--vscode-textCodeBlock-background);
     overflow-x: auto;
     font-family: var(--vscode-editor-font-family);
-    font-size: 11px;
+    font-size: var(--text-caption);
     white-space: pre-wrap;
     word-break: break-all;
 }
@@ -208,8 +208,8 @@ export function getDiagnosticStyles(): string {
     padding: 8px 10px;
     background: var(--vscode-textBlockQuote-background);
     border-left: 3px solid var(--vscode-focusBorder);
-    border-radius: 3px;
-    font-size: 11px;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-caption);
 }
 .cp-trouble-step-title { font-weight: 600; margin-bottom: 6px; }
 .cp-trouble-table {
@@ -227,7 +227,7 @@ export function getDiagnosticStyles(): string {
 .cp-trouble-symptom { font-family: var(--vscode-editor-font-family); }
 .cp-trouble-details {
     margin: 10px 12px;
-    font-size: 11px;
+    font-size: var(--text-caption);
 }
 .cp-trouble-details summary {
     cursor: pointer;
@@ -239,7 +239,7 @@ export function getDiagnosticStyles(): string {
 /* --- In-panel Help (full doc content) --- */
 .cp-help-details {
     margin: 10px 12px 12px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     border-top: 1px solid var(--vscode-widget-border);
     padding-top: 8px;
 }
@@ -251,12 +251,12 @@ export function getDiagnosticStyles(): string {
 .cp-help-section { margin: 10px 0; }
 .cp-help-section-title { font-weight: 600; margin-bottom: 4px; }
 .cp-help-section-body {
-    font-size: 11px;
+    font-size: var(--text-caption);
     line-height: 1.4;
 }
 .cp-help-section-body p { margin: 6px 0; }
 .cp-help-section-body ol, .cp-help-section-body ul { margin: 6px 0; padding-left: 20px; }
-.cp-help-section-body code { font-family: var(--vscode-editor-font-family); font-size: 11px; }
+.cp-help-section-body code { font-family: var(--vscode-editor-font-family); font-size: var(--text-caption); }
 .cp-help-link { color: var(--vscode-textLink-foreground); text-decoration: underline; }
 .cp-help-link:hover { color: var(--vscode-textLink-activeForeground); }
 `;

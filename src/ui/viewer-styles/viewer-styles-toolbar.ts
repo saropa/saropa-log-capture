@@ -22,7 +22,7 @@ export function getToolbarStyles(): string {
     min-height: 28px;
     background: var(--vscode-panel-background);
     border-bottom: 1px solid var(--vscode-panel-border);
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
     flex-shrink: 0;
     user-select: none;
@@ -83,7 +83,7 @@ export function getToolbarStyles(): string {
     background: none; border: none;
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     position: relative;
     flex-shrink: 0;
     /* Smooth the grey↔blue swap when toggling on/off or expanding/collapsing a panel,
@@ -126,7 +126,7 @@ export function getToolbarStyles(): string {
 }
 
 /* Nav label in toolbar */
-.viewer-toolbar .nav-bar-label { font-size: 11px; white-space: nowrap; }
+.viewer-toolbar .nav-bar-label { font-size: var(--text-caption); white-space: nowrap; }
 
 /* ===================================================================
    Search Flyout — floating overlay anchored top-right of log area
@@ -222,10 +222,10 @@ export function getToolbarStyles(): string {
     align-items: center;
     gap: 6px;
     border: 0;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     background: transparent;
     color: var(--vscode-foreground);
-    font-size: 11px;
+    font-size: var(--text-caption);
     text-align: left;
     padding: 4px 6px;
     cursor: pointer;
@@ -297,7 +297,7 @@ export function getToolbarStyles(): string {
     font-size: 10px;
     color: var(--vscode-descriptionForeground);
     padding: 1px 4px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
 }
 .hidden-lines-counter:hover {
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));

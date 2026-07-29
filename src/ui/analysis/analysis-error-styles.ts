@@ -26,7 +26,7 @@ export function getAnalysisErrorStyles(): string {
     font-size: 10px;
     font-weight: 700;
     padding: 2px 8px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     text-transform: uppercase;
     letter-spacing: 0.4px;
 }
@@ -67,16 +67,16 @@ export function getAnalysisErrorStyles(): string {
 .err-triage { display: flex; align-items: center; gap: 4px; }
 .triage-group { display: flex; gap: 2px; }
 .triage-btn {
-    font-size: 11px;
+    font-size: var(--text-caption);
     padding: 3px 10px;
     border: 1px solid var(--vscode-panel-border);
     background: transparent;
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     transition: all 0.15s ease;
 }
-.triage-btn:first-child { border-radius: 3px 0 0 3px; }
+.triage-btn:first-child { border-radius: var(--radius-sm) 0 0 3px; }
 .triage-btn:last-child { border-radius: 0 3px 3px 0; }
 .triage-btn:not(:first-child) { border-left: none; }
 .triage-btn:hover { background: var(--vscode-list-hoverBackground); }
@@ -88,7 +88,7 @@ export function getAnalysisErrorStyles(): string {
 /* Timeline sparkline */
 .err-version-info {
     padding: 4px 12px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
 }
 .err-sparkline {
@@ -106,7 +106,7 @@ export function getAnalysisErrorStyles(): string {
 .err-occurrence {
     padding: 3px 12px;
     font-family: var(--vscode-editor-font-family, monospace);
-    font-size: 11px;
+    font-size: var(--text-caption);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -115,7 +115,7 @@ export function getAnalysisErrorStyles(): string {
 }
 .err-more {
     padding: 4px 12px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
     font-style: italic;
 }
@@ -132,13 +132,13 @@ export function getAnalysisErrorStyles(): string {
     bottom: 0;
 }
 .err-action {
-    font-size: 11px;
+    font-size: var(--text-caption);
     padding: 4px 10px;
     border: 1px solid var(--vscode-panel-border);
     background: transparent;
     color: var(--vscode-editor-foreground);
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     transition: background 0.15s ease;
 }
 .err-action:hover { background: var(--vscode-list-hoverBackground); }

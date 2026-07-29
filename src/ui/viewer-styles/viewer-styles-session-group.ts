@@ -156,7 +156,7 @@ export function getSessionGroupStyles(): string {
 .session-older-toggle {
     margin-left: 4px;
     padding: 0 4px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     color: var(--vscode-descriptionForeground);
     font-size: 0.85em;
     white-space: nowrap;

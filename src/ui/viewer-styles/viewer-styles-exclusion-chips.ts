@@ -12,7 +12,7 @@ export function getExclusionChipStyles(): string {
     display: inline-flex;
     align-items: center;
     gap: 2px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     padding: 2px 6px;
     border-radius: 10px;
     border: 1px solid var(--vscode-descriptionForeground);
@@ -77,7 +77,7 @@ export function getExclusionChipStyles(): string {
     color: var(--vscode-input-foreground);
     border: none;
     padding: 4px 8px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     font-family: inherit;
     outline: none;
 }
@@ -86,7 +86,7 @@ export function getExclusionChipStyles(): string {
     color: var(--vscode-button-secondaryForeground);
     border: none;
     border-left: 1px solid var(--vscode-input-border, transparent);
-    font-size: 11px;
+    font-size: var(--text-caption);
     padding: 4px 10px;
     cursor: pointer;
     flex-shrink: 0;

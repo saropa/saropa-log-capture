@@ -48,14 +48,14 @@ export function getModalStyles(): string {
     padding: 12px 16px;
     border-bottom: 1px solid var(--vscode-panel-border);
     font-weight: 500;
-    font-size: 13px;
+    font-size: var(--text-body);
 }
 
 .modal-close {
     background: none;
     border: none;
     color: var(--vscode-descriptionForeground);
-    font-size: 18px;
+    font-size: var(--text-h2);
     cursor: pointer;
     padding: 0;
     width: 20px;
@@ -76,7 +76,7 @@ export function getModalStyles(): string {
 /* Export accordion — collapsible sections with selection counts */
 .export-accordion {
     border: 1px solid var(--vscode-panel-border);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     margin-bottom: 8px;
 }
 .export-accordion-header {
@@ -88,10 +88,10 @@ export function getModalStyles(): string {
     background: var(--vscode-sideBar-background, var(--vscode-panel-background));
     border: none;
     color: var(--vscode-foreground);
-    font-size: 11px;
+    font-size: var(--text-caption);
     cursor: pointer;
     text-align: left;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -138,7 +138,7 @@ export function getModalStyles(): string {
     margin-bottom: 16px;
 }
 .export-section h4 {
-    font-size: 11px;
+    font-size: var(--text-caption);
     font-weight: 600;
     color: var(--vscode-descriptionForeground);
     margin-bottom: 8px;
@@ -177,7 +177,7 @@ export function getModalStyles(): string {
     border-left: 2px solid var(--vscode-textBlockQuote-border, #007acc);
     padding: 8px 12px;
     border-radius: 2px;
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
 }
 
@@ -237,7 +237,7 @@ export function getModalStyles(): string {
    word-break keeps very long names from forcing horizontal scroll. */
 .log-file-modal-filename {
     font-family: var(--vscode-editor-font-family, monospace);
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
     background: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.1));
     padding: 6px 10px;
@@ -290,7 +290,7 @@ export function getModalStyles(): string {
 }
 .files-list-meta {
     flex: 0 0 auto;
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-descriptionForeground);
 }
 /* Footer (n) counter: a quiet, clickable affordance next to the filename. */

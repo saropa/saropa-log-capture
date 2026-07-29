@@ -87,7 +87,7 @@ export function getSessionPanelLayoutStyles(): string {
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
     padding: 2px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-size: 14px;
 }
 
@@ -102,7 +102,7 @@ export function getSessionPanelLayoutStyles(): string {
     color: var(--vscode-descriptionForeground);
     cursor: pointer;
     padding: 2px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-size: 14px;
 }
 
@@ -131,7 +131,7 @@ export function getSessionPanelLayoutStyles(): string {
     background: var(--vscode-sideBarSectionHeader-background, transparent);
 }
 .session-collections-header {
-    font-size: 11px;
+    font-size: var(--text-caption);
     font-weight: 600;
     text-transform: uppercase;
     color: var(--vscode-descriptionForeground);
@@ -159,7 +159,7 @@ export function getSessionPanelLayoutStyles(): string {
     font-size: 12px;
     padding: 4px 8px;
     border: 1px solid var(--vscode-input-border, transparent);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     background: var(--vscode-input-background);
     color: var(--vscode-input-foreground);
     width: 100%;
@@ -179,7 +179,7 @@ export function getSessionPanelLayoutStyles(): string {
     background: var(--vscode-button-background);
     color: var(--vscode-button-foreground);
     border: 1px solid var(--vscode-button-border, transparent);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
 }
 .session-collections-create-confirm:hover {
@@ -199,21 +199,21 @@ export function getSessionPanelLayoutStyles(): string {
     background: var(--vscode-button-secondaryBackground);
     color: var(--vscode-button-secondaryForeground);
     border: 1px solid var(--vscode-button-border, transparent);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
 }
 .session-collections-create-cancel:hover {
     background: var(--vscode-button-secondaryHoverBackground);
 }
 .session-collections-create-error {
-    font-size: 11px;
+    font-size: var(--text-caption);
     color: var(--vscode-errorForeground);
 }
 .session-collection-item {
     padding: 4px 8px;
     cursor: pointer;
     font-size: 12px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
 }
 .session-collection-item:hover {
     background: var(--vscode-list-hoverBackground);
@@ -231,7 +231,7 @@ export function getSessionPanelLayoutStyles(): string {
     padding: 4px 8px;
     background: none;
     border: 1px solid var(--vscode-button-border, transparent);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     color: var(--vscode-textLink-foreground);
     cursor: pointer;
 }
