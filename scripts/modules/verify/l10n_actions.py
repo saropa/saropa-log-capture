@@ -11,6 +11,7 @@ for errors/orphans, yellow for gaps — and delegates the real work to
 
 import time
 
+from modules.verify.l10n_audit_display import print_untranslated_detail
 from modules.verify.l10n_bundle_audit import (
     AuditResult,
     sync_english_bundle,
@@ -241,7 +242,8 @@ def write_report_and_offer_export(audit: AuditResult) -> None:
         lc.missing_count + lc.untranslated_count for lc in audit.locale_coverage
     )
     print(f"\n  {yellow(f'{total_gaps} untranslated string(s) remain.')}")
+    print_untranslated_detail(audit)
     print(dim(
-        "  Run a translate pass to fill them; strings the engine cannot produce "
+        "\n  Run a translate pass to fill them; strings the engine cannot produce "
         "are exported (sentence-level) for human translation."
     ))
