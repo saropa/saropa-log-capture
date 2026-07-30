@@ -18,18 +18,24 @@ const MARGIN = 26;
 const EDGE_LABEL_GAP = 8;
 /** How far a back (return) edge bows to the right of the boxes so it clears the forward arrow. */
 const BACK_BULGE = 22;
+/** Extra bulge per additional back edge so overlapping return curves fan out instead of stacking. */
+const BACK_STAGGER = 14;
 
-interface Palette { readonly fill: string; readonly stroke: string; readonly text: string; readonly dashed: boolean; }
+interface Palette { readonly cls: string; readonly dashed: boolean; }
 
-/** Color a node by class — matches the Mermaid classDefs so both diagrams look the same. */
+/**
+ * Palette CLASS for a node — actual colors live in the panel stylesheet as semantic-token rules
+ * (`.fm-p-walked rect { … }`), so the diagram tracks the host light/dark theme instead of the old
+ * baked dark-only hex fills. The Mermaid export keeps its own static colors (it leaves VS Code).
+ */
 function paletteOf(node: FlowNode): Palette {
-    if (nodeHasError(node)) { return { fill: '#3a1a1a', stroke: '#e05252', text: '#ffd7d7', dashed: false }; }
-    if (node.kind === 'launch') { return { fill: '#2d333b', stroke: '#8b949e', text: '#e6edf3', dashed: false }; }
-    // External handoffs are walked but get a distinct purple dashed leaf style (bug 009) — checked
-    // before the walked branch so they don't fall through to the solid green screen style.
-    if (node.kind === 'external') { return { fill: '#2b2440', stroke: '#a371f7', text: '#e6e0ff', dashed: true }; }
-    if (node.walked) { return { fill: '#16321f', stroke: '#3fb950', text: '#e6edf3', dashed: false }; }
-    return { fill: '#22272e', stroke: '#555', text: '#9aa4ad', dashed: true };
+    if (nodeHasError(node)) { return { cls: 'fm-p-crash', dashed: false }; }
+    if (node.kind === 'launch') { return { cls: 'fm-p-launch', dashed: false }; }
+    // External handoffs are walked but get a distinct dashed leaf style (bug 009) — checked before
+    // the walked branch so they don't fall through to the solid walked-screen style.
+    if (node.kind === 'external') { return { cls: 'fm-p-external', dashed: true }; }
+    if (node.walked) { return { cls: 'fm-p-walked', dashed: false }; }
+    return { cls: 'fm-p-static', dashed: true };
 }
 
 /** Escape text for XML/SVG. */
@@ -37,9 +43,14 @@ function esc(s: string): string {
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-/** Truncate a node line so it fits the box width. */
-function clip(line: string): string {
-    return line.length > 30 ? line.slice(0, 29) + '…' : line;
+/**
+ * Truncate a node line so it fits the box width. Per-role budget: the bold 13.5px title fits ~29
+ * chars in the 236px box; the 11.5px detail lines fit ~34 — a flat 30 both overflowed titles and
+ * needlessly cut detail lines.
+ */
+function clip(line: string, isTitle: boolean): string {
+    const max = isTitle ? 29 : 34;
+    return line.length > max ? line.slice(0, max - 1) + '…' : line;
 }
 
 /** Longest-path depth per node (DAG; R1 keeps edges forward so no cycles). */
@@ -78,7 +89,7 @@ function layout(graph: FlowGraph): { placed: Map<string, Placed>; width: number;
     const built = rows.map(row => row.map(node => {
         const raw = nodeDisplayLines(node, false);
         raw[0] = `${kindIcon(node)} ${raw[0]}`;
-        const lines = raw.map(clip);
+        const lines = raw.map((line, i) => clip(line, i === 0));
         return { node, lines, x: 0, y: 0, w: BOX_W, h: PAD_Y * 2 + lines.length * LINE_H };
     }));
     const maxWidth = Math.max(...built.map(r => r.length * BOX_W + (r.length - 1) * COL_GAP), BOX_W);
@@ -138,28 +149,28 @@ function renderNode(p: Placed): string {
         const isTitle = i === 0;
         const weight = isTitle ? ' font-weight="700"' : '';
         const size = isTitle ? 13.5 : 11.5;
-        const fill = isTitle ? pal.text : '#aeb6bf';
         const dy = isTitle ? PAD_Y + 13 : LINE_H;
-        return `<tspan x="${cx}" dy="${dy}" font-size="${size}" fill="${fill}"${weight}>${esc(line)}</tspan>`;
+        const lineCls = isTitle ? 'fm-t-title' : 'fm-t-sub';
+        return `<tspan x="${cx}" dy="${dy}" font-size="${size}" class="${lineCls}"${weight}>${esc(line)}</tspan>`;
     }).join('');
-    const cls = nodeHasError(p.node) ? 'fm-node fm-crash' : 'fm-node';
+    const cls = nodeHasError(p.node) ? `fm-node fm-crash ${pal.cls}` : `fm-node ${pal.cls}`;
     const logAttr = p.node.logLine ? ` data-logline="${p.node.logLine}"` : '';
     return `<g class="${cls}" data-rowkey="${esc(rowKeyOf(p.node))}"${logAttr}${detailAttr(p.node)} tabindex="0" role="button">`
         + `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="7" `
-        + `fill="${pal.fill}" stroke="${pal.stroke}" stroke-width="1.5"${dash}/>`
-        + `<text x="${cx}" y="${p.y}" text-anchor="middle" fill="${pal.text}" `
-        + `font-family="var(--vscode-font-family)">${tspans}</text>${visitBadge(p, pal)}</g>`;
+        + `stroke-width="1.5"${dash}/>`
+        + `<text x="${cx}" y="${p.y}" text-anchor="middle" `
+        + `font-family="var(--vscode-font-family)">${tspans}</text>${visitBadge(p)}</g>`;
 }
 
-/** A circular visit-count badge straddling the node's top-right corner (e.g. ②). Walked, non-launch. */
-function visitBadge(p: Placed, pal: Palette): string {
-    if (p.node.kind === 'launch' || !p.node.walked || p.node.visits < 1) {
+/** A circular repeat-visit badge straddling the node's top-right corner (e.g. ②). Only for revisits — a "1" on nearly every node was noise. */
+function visitBadge(p: Placed): string {
+    if (p.node.kind === 'launch' || !p.node.walked || p.node.visits < 2) {
         return '';
     }
     const cx = p.x + p.w;
     const cy = p.y;
-    return `<circle cx="${cx}" cy="${cy}" r="11" fill="${pal.stroke}" stroke="#0d1117" stroke-width="2"/>`
-        + `<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" fill="#0d1117" `
+    return `<circle class="fm-badge" cx="${cx}" cy="${cy}" r="11" stroke-width="2"/>`
+        + `<text class="fm-badge-text" x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" `
         + `font-size="11" font-weight="700" font-family="var(--vscode-font-family)">${p.node.visits}</text>`;
 }
 
@@ -182,31 +193,32 @@ function edgeLabel(edge: FlowEdge, from: Placed): string {
  * Bowed to the RIGHT of the boxes (so it never overlaps the forward arrow running down the middle)
  * and drawn dashed-blue with its own marker so it reads as "back", not another forward step.
  */
-function renderBackEdge(from: Placed, to: Placed, edge: FlowEdge): string {
+function renderBackEdge(from: Placed, to: Placed, edge: FlowEdge, backIndex: number): string {
     const x1 = from.x + from.w;
     const y1 = from.y + from.h / 2;
     const x2 = to.x + to.w;
     const y2 = to.y + to.h / 2;
-    const bx = Math.max(x1, x2) + BACK_BULGE;
-    const path = `<path d="M${x1},${y1} C${bx},${y1} ${bx},${y2} ${x2},${y2}" fill="none" `
-        + `stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="2 4" marker-end="url(#fm-back)"/>`;
+    // Stagger each back edge's bulge so two returns on the right side never draw on top of each other.
+    const bx = Math.max(x1, x2) + BACK_BULGE + backIndex * BACK_STAGGER;
+    const path = `<path class="fm-e-back" d="M${x1},${y1} C${bx},${y1} ${bx},${y2} ${x2},${y2}" fill="none" `
+        + `stroke-width="1.5" stroke-dasharray="2 4" marker-end="url(#fm-back)"/>`;
     if (edge.count <= 1) { return path; }
-    return path + `<text x="${bx + 4}" y="${(y1 + y2) / 2}" text-anchor="start" dominant-baseline="middle" `
-        + `fill="#58a6ff" font-size="10" font-family="var(--vscode-font-family)">×${edge.count}</text>`;
+    return path + `<text class="fm-e-back-label" x="${bx + 4}" y="${(y1 + y2) / 2}" text-anchor="start" dominant-baseline="middle" `
+        + `font-size="10" font-family="var(--vscode-font-family)">×${edge.count}</text>`;
 }
 
 /** Render one edge: a line from the source's bottom to the target's top, with the dwell/count label. */
-function renderEdge(edge: FlowEdge, placed: Map<string, Placed>): string {
+function renderEdge(edge: FlowEdge, placed: Map<string, Placed>, backIndex: number): string {
     const from = placed.get(edge.from);
     const to = placed.get(edge.to);
     if (!from || !to) { return ''; }
-    if (edge.back) { return renderBackEdge(from, to, edge); }
+    if (edge.back) { return renderBackEdge(from, to, edge, backIndex); }
     const x1 = from.x + from.w / 2;
     const y1 = from.y + from.h;
     const x2 = to.x + to.w / 2;
     const y2 = to.y;
     const dash = edge.walked ? '' : ' stroke-dasharray="5 4"';
-    const line = `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#8b949e" `
+    const line = `<line class="fm-e-fwd" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" `
         + `stroke-width="1.5"${dash} marker-end="url(#fm-arrow)"/>`;
     const label = edgeLabel(edge, from);
     if (!label) { return line; }
@@ -214,23 +226,26 @@ function renderEdge(edge: FlowEdge, placed: Map<string, Placed>): string {
     const my = (y1 + y2) / 2;
     // Park the dwell label to the RIGHT of the shaft (anchor start + gap), vertically centered on the
     // midpoint, so the time is never painted on top of the arrow where it was unreadable.
-    return line + `<text x="${mx + EDGE_LABEL_GAP}" y="${my}" text-anchor="start" dominant-baseline="middle" `
-        + `fill="#c9d1d9" font-size="11" font-family="var(--vscode-font-family)" paint-order="stroke" `
-        + `stroke="#1c2128" stroke-width="3">${esc(label)}</text>`;
+    return line + `<text class="fm-e-label" x="${mx + EDGE_LABEL_GAP}" y="${my}" text-anchor="start" dominant-baseline="middle" `
+        + `font-size="11" font-family="var(--vscode-font-family)" paint-order="stroke" `
+        + `stroke-width="3">${esc(label)}</text>`;
 }
 
 /** Render the whole graph as an `<svg>` element string. */
 export function renderSvg(graph: FlowGraph): string {
     const { placed, width, height } = layout(graph);
-    // Reserve room on the right for any back-edge bulge so the curve is never clipped by the canvas.
-    const canvasW = graph.edges.some(e => e.back) ? width + BACK_BULGE + 10 : width;
+    // Reserve room on the right for the WIDEST back-edge bulge so no staggered curve gets clipped.
+    const backCount = graph.edges.filter(e => e.back).length;
+    const canvasW = backCount > 0 ? width + BACK_BULGE + (backCount - 1) * BACK_STAGGER + 10 : width;
+    // Marker heads take their fill from CSS classes (theme tokens), like every other diagram color.
     const defs = '<defs>'
         + '<marker id="fm-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" '
-        + 'markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8b949e"/></marker>'
+        + 'markerHeight="7" orient="auto-start-reverse"><path class="fm-arrow-head" d="M0,0 L10,5 L0,10 z"/></marker>'
         + '<marker id="fm-back" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" '
-        + 'markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#58a6ff"/></marker>'
+        + 'markerHeight="7" orient="auto-start-reverse"><path class="fm-back-head" d="M0,0 L10,5 L0,10 z"/></marker>'
         + '</defs>';
-    const edges = graph.edges.map(e => renderEdge(e, placed)).join('');
+    let backIdx = 0;
+    const edges = graph.edges.map(e => renderEdge(e, placed, e.back ? backIdx++ : 0)).join('');
     const nodes = [...placed.values()].map(renderNode).join('');
     return `<svg viewBox="0 0 ${canvasW} ${height}" width="${canvasW}" height="${height}" `
         + `xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Session flow diagram">`
