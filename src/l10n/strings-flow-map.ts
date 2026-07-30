@@ -19,6 +19,7 @@ export const stringsFlowMap: Record<string, string> = {
     'flowMap.zoomOutBtn': 'Zoom out',
     'flowMap.resetViewBtn': 'Reset view (fit diagram)',
     'flowMap.jumpToCrashBtn': 'Center the fault node',
+    'flowMap.replayBtn': 'Replay the session walk',
     'flowMap.popOutBtn': 'Open the flow chart in its own panel',
     'flowMap.detailDialogTitle': 'Flow node detail',
     'flowMap.detailType': 'Type',
