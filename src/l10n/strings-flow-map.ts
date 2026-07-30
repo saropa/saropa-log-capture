@@ -44,6 +44,10 @@ export const stringsFlowMap: Record<string, string> = {
     'flowMap.section.activity': 'Activity Timeline',
     'flowMap.section.dwell': 'Screen Visit Log',
     'flowMap.section.issues': 'Issue Report',
+    // Screenshots gallery (Phase E, plan 117): trigger words render as-is (not localized) — they are
+    // short technical labels (error/warning/nav/manual) matching the setting's own enum values.
+    'flowMap.section.screenshots': 'Screenshots',
+    'flowMap.shots.more': '+{0} more in the gallery',
     'flowMap.th.screenPhase': 'Screen / phase',
     'flowMap.th.type': 'Type',
     'flowMap.th.entered': 'Entered',
