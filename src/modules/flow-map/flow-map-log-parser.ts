@@ -11,6 +11,7 @@ import { classifyBreadcrumb } from './flow-map-breadcrumbs';
 import {
     classifyWarning, isRepeatBatch, parseFlowMapError, parseSlowQuery, type SlowQuery,
 } from './flow-map-issues';
+import { matchCustomBreadcrumb, matchCustomIssue, type CustomPatterns } from './flow-map-custom-patterns';
 import { parseErrorCausingWidget } from './error-causing-widget-parser';
 import { stripAnsi } from './flow-map-format';
 
@@ -143,6 +144,8 @@ interface ScanState {
     slowCount: number;
     repeatCount: number;
     lastClock?: string;
+    /** Compiled `saropaLogCapture.flowMap.custom*` settings (plan 117, Phase D); undefined = none configured. */
+    readonly custom?: CustomPatterns;
 }
 
 /** One timestamped line's parsed coordinates. */
@@ -153,12 +156,50 @@ interface LineContext {
     readonly logLine: number;
 }
 
+/** Fold a matched warning into the dedup-by-category map, counting repeats (#5). Shared by the
+ * built-in heuristic warnings and any custom warn-severity issue, so both namespaces dedup together. */
+function addWarningRow(state: ScanState, issue: IssueEvent): void {
+    const seen = state.warnings.get(issue.category);
+    if (seen) { seen.count++; }
+    else { state.warnings.set(issue.category, { issue, count: 1 }); }
+}
+
+/** Try the project's custom breadcrumb patterns (plan 117, Phase D) once the built-ins have missed. */
+function matchCustomBreadcrumbEvent(text: string, ctx: LineContext, state: ScanState): TimelineEvent | undefined {
+    if (!state.custom) {
+        return undefined;
+    }
+    const match = matchCustomBreadcrumb(state.custom, text);
+    return match ? { ...match, tsMs: ctx.tsMs, clock: ctx.clock, logLine: ctx.logLine } : undefined;
+}
+
+/**
+ * Try the project's custom issue patterns (plan 117, Phase D). Warn-severity hits join the same
+ * category dedup as the built-in heuristic warnings; perf/error severities are low-volume signals
+ * pushed straight to the issue list, mirroring how explicit `[flowmap] error` tags are handled.
+ */
+function scanCustomIssue(text: string, ctx: LineContext, state: ScanState): void {
+    if (!state.custom) {
+        return;
+    }
+    const match = matchCustomIssue(state.custom, text);
+    if (!match) {
+        return;
+    }
+    const issue: IssueEvent = { ...match, tsMs: ctx.tsMs, clock: ctx.clock, logLine: ctx.logLine };
+    if (issue.severity === 'warn') {
+        addWarningRow(state, issue);
+    } else {
+        state.issues.push(issue);
+    }
+}
+
 /** Fold one timestamped line's breadcrumb / slow-query / warning content into the scan state. */
 function scanLine(ctx: LineContext, state: ScanState): void {
     state.lastClock = ctx.clock;
     // Strip ANSI color codes first so they never leak into node labels or break anchored matchers.
     const text = stripAnsi(ctx.text);
-    const event = classifyBreadcrumb(text, ctx.tsMs, ctx.clock, ctx.logLine);
+    const event = classifyBreadcrumb(text, ctx.tsMs, ctx.clock, ctx.logLine) ?? matchCustomBreadcrumbEvent(text, ctx, state);
     if (event) {
         state.events.push(event);
     }
@@ -176,10 +217,8 @@ function scanLine(ctx: LineContext, state: ScanState): void {
     }
     const warn = classifyWarning(text, ctx.tsMs, ctx.clock, ctx.logLine);
     if (warn) {
-        const seen = state.warnings.get(warn.category);
         // One row per category, but repeats are counted — "×47" is a different signal from one hit.
-        if (seen) { seen.count++; }
-        else { state.warnings.set(warn.category, { issue: warn, count: 1 }); }
+        addWarningRow(state, warn);
     }
     // Explicit app-reported errors are deliberate and low-volume, so (unlike heuristic warnings) they
     // are NOT deduped by category — each occurrence is a real failure on its own surface (bug 011).
@@ -187,6 +226,7 @@ function scanLine(ctx: LineContext, state: ScanState): void {
     if (err) {
         state.issues.push(err);
     }
+    scanCustomIssue(text, ctx, state);
 }
 
 /**
@@ -197,12 +237,18 @@ function normalizeRoot(root: string | undefined): string | undefined {
     return root?.replace(/\\{2,}/g, '\\');
 }
 
-/** Parse a full session log (already split into lines) into the ParsedLog model. */
-export function parseLog(lines: readonly string[], projectRootOverride?: string): ParsedLog {
+/**
+ * Parse a full session log (already split into lines) into the ParsedLog model.
+ *
+ * @param custom Compiled `saropaLogCapture.flowMap.customBreadcrumbs`/`customIssues` settings
+ * (plan 117, Phase D). Passed in already-compiled so this module — and its tests — stay free of
+ * `vscode.workspace.getConfiguration`; the command layer compiles fresh per report.
+ */
+export function parseLog(lines: readonly string[], projectRootOverride?: string, custom?: CustomPatterns): ParsedLog {
     const header = parseHeader(lines);
     const projectRoot = normalizeRoot(projectRootOverride ?? header.projectRoot);
     const state: ScanState = {
-        events: [], issues: [], warnings: new Map(), slowCount: 0, repeatCount: 0,
+        events: [], issues: [], warnings: new Map(), slowCount: 0, repeatCount: 0, custom,
     };
 
     // Resolve clocks once so events crossing midnight stay in monotonic order (no negative dwell).
