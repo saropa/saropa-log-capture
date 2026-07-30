@@ -53,6 +53,12 @@ export interface FlowEdge {
     readonly from: string;
     readonly to: string;
     count: number;
+    /**
+     * Dwell accumulated on the SOURCE node immediately before each traversal of this edge, summed
+     * across traversals. This is what the diagram labels — the node's own dwellMs is its total across
+     * ALL visits (including ones that left via other edges), which misreads as per-transition time.
+     */
+    dwellMs?: number;
     source?: SourceAnchor;
     walked: boolean;
     /** True when the transition was recovered indirectly (e.g. crash widget), not from a breadcrumb. */
@@ -140,7 +146,10 @@ export interface ParsedLog {
     readonly header: SessionHeader;
     readonly events: TimelineEvent[];
     readonly issues: IssueEvent[];
+    /** First crash — kept as a convenience alias of `crashes[0]` for single-crash consumers. */
     readonly crash?: CrashInfo;
+    /** EVERY unhandled-exception block in the log, in time order (a session can fault repeatedly). */
+    readonly crashes: readonly CrashInfo[];
     /** Aggregate counts for the narrative/summary (cheap, computed during parse). */
     readonly slowQueryCount: number;
     readonly repeatBatchCount: number;
