@@ -75,6 +75,21 @@ suite('FlowMap custom capture patterns (plan 117, Phase D)', () => {
             assert.strictEqual(match?.detail, 'Net');
             assert.strictEqual(match?.severity, 'warn', 'defaults to warn');
         });
+
+        test('should skip over-length lines entirely (backtracking guard, no truncation false-match)', () => {
+            // A $-anchored pattern must not match at a truncation boundary; long payload lines
+            // (SQL/JSON dumps) are skipped outright rather than scanned or clipped.
+            const compiled = compileCustomPatterns(
+                [{ pattern: 'END$', kind: 'nav', label: 'Endish' }],
+                [{ pattern: 'Timeout', category: 'Net' }],
+            );
+            const longLine = 'Timeout ' + 'x'.repeat(600) + ' END';
+            assert.strictEqual(matchCustomBreadcrumb(compiled, longLine), undefined, 'no breadcrumb on 600+ char line');
+            assert.strictEqual(matchCustomIssue(compiled, longLine), undefined, 'no issue on 600+ char line');
+            const shortLine = 'short Timeout END';
+            assert.ok(matchCustomBreadcrumb(compiled, shortLine), 'short line still matches');
+            assert.ok(matchCustomIssue(compiled, shortLine), 'short line still matches issues');
+        });
     });
 
     suite('threaded through parseLog/buildGraph', () => {
