@@ -55,6 +55,13 @@ All settings are prefixed with `saropaLogCapture.`
 | `splitRules.maxDurationMinutes` | `0`          | Split after N minutes (0 = disabled)       |
 | `splitRules.silenceMinutes`     | `0`          | Split after N minutes of silence (0 = disabled) |
 
+## Flow Map Settings
+
+| Setting                    | Default | Description                                                                                                                                              |
+| -------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `flowMap.customBreadcrumbs` | `[]`   | Project-specific regex patterns that map log lines to flow-map screens/actions: `{ pattern, kind: nav\|action\|viewed\|handoff, nodeKind?, label? }`. `label` supports `$1`–`$9` capture templates (default `$1`). Invalid patterns are skipped. |
+| `flowMap.customIssues`      | `[]`   | Project-specific regex patterns that surface issue rows: `{ pattern, category, severity: warn\|perf\|error, detail? }`. `warn` rows dedup by category with a repeat count; `perf`/`error` rows are kept per occurrence. |
+
 ## Advanced Settings
 
 | Setting              | Default          | Description                                                                                                                                      |
