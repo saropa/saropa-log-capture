@@ -62,7 +62,7 @@ suite('FlowMap tag verbs', () => {
             const m = renderMermaid(graph);
             assert.ok(m.includes(':::external'), 'mermaid external class applied');
             const svg = renderSvg(graph);
-            assert.ok(svg.includes('#a371f7'), 'svg external stroke color present');
+            assert.ok(svg.includes('fm-p-external'), 'svg external palette class present');
             const md = buildReport(parseLog(HANDOFF), graph);
             assert.ok(md.includes('| external |'), 'report Type column shows external');
         });

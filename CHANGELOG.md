@@ -27,6 +27,10 @@ cspell:disable
 
 ## [Unreleased]
 
+### Added
+
+- Flow map: new settings `saropaLogCapture.flowMap.customBreadcrumbs` and `saropaLogCapture.flowMap.customIssues` let any project map its own log lines to screens, actions, and issues without code changes
+
 ### Changed
 
 - Status bar capture toggle: replaced the bare dot icon with "SLC" text label for discoverability; shows active session count as a badge (e.g. "SLC (2)"); hovering now shows a menu tooltip with command links — toggle capture, open viewer, pause/resume, stop (when a session is active), open settings, and view changelog
