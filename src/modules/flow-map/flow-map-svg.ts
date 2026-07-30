@@ -163,12 +163,14 @@ function visitBadge(p: Placed, pal: Palette): string {
         + `font-size="11" font-weight="700" font-family="var(--vscode-font-family)">${p.node.visits}</text>`;
 }
 
-/** The edge label: dwell on the source node (time before this transition), plus count / "opens". */
+/** The edge label: dwell on the source before taking THIS edge, plus count / "opens". */
 function edgeLabel(edge: FlowEdge, from: Placed): string {
     const parts: string[] = [];
+    // Per-edge dwell (accumulated at transition time), NOT the node's total across all visits —
+    // a thrice-visited screen would otherwise stamp its whole lifetime on every outgoing arrow.
     // Dwell is meaningful leaving a real screen, not the synthetic launch node.
-    if (from.node.kind !== 'launch' && from.node.dwellMs >= 1000) {
-        parts.push(formatDwellMs(from.node.dwellMs));
+    if (from.node.kind !== 'launch' && (edge.dwellMs ?? 0) >= 1000) {
+        parts.push(formatDwellMs(edge.dwellMs ?? 0));
     }
     if (edge.count > 1) { parts.push(`×${edge.count}`); }
     if (edge.inferred) { parts.push('opens'); }

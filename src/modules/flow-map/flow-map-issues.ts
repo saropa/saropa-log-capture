@@ -13,6 +13,9 @@ export interface SlowQuery {
     readonly kind: string;
     readonly source?: SourceAnchor;
     logLine?: number;
+    /** Stamped by the scanner so the promoted issue row keeps its real time (sorts + node-attaches). */
+    tsMs?: number;
+    clock?: string;
 }
 
 /** Pull the `(./lib/…/foo.dart:NN:CC)` anchor Drift appends, as a project-relative SourceAnchor. */
