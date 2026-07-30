@@ -1,6 +1,7 @@
 # Plan 117 — Flow Map review fixes (13 items)
 
-**Status:** In progress (2026-07-29)
+**Status:** Implemented (2026-07-30) — pending F5 manual pass
+**Commits:** A `c0630bbf` · B `ef829145` · C `6a253bc8` · D `b7b95ce6` · E `a937fb8f`
 **Origin:** Code review of the flow-map module (parser → breadcrumbs → issues → builder → SVG → HTML).
 **Scope:** `src/modules/flow-map/*`, `src/ui/panels/flow-map-panel*`, l10n strings, two new settings.
 
