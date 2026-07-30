@@ -15,6 +15,7 @@ import { stringsKbd } from './l10n/strings-kbd';
 import { stringsSignals } from './l10n/strings-signals';
 import { stringsAnalysis } from './l10n/strings-analysis';
 import { stringsInvestigations } from './l10n/strings-investigations';
+import { stringsFlowMap } from './l10n/strings-flow-map';
 
 /**
  * English strings keyed by symbolic ID.
@@ -37,6 +38,7 @@ const strings: Record<string, string> = {
     ...stringsSignals,
     ...stringsAnalysis,
     ...stringsInvestigations,
+    ...stringsFlowMap,
     ...stringsWebview,
     ...stringsWebviewB,
     ...stringsWebviewC,
