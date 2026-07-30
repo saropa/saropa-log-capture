@@ -1501,6 +1501,88 @@
           "type": "string",
           "title": "%config.firebase.versionFilter.title%"
         },
+        "saropaLogCapture.flowMap.customBreadcrumbs": {
+          "default": [],
+          "description": "%config.flowMap.customBreadcrumbs.description%",
+          "items": {
+            "properties": {
+              "pattern": {
+                "description": "%config.flowMap.customBreadcrumbs.pattern.description%",
+                "type": "string"
+              },
+              "kind": {
+                "default": "nav",
+                "description": "%config.flowMap.customBreadcrumbs.kind.description%",
+                "enum": [
+                  "nav",
+                  "action",
+                  "viewed",
+                  "handoff"
+                ],
+                "type": "string"
+              },
+              "nodeKind": {
+                "description": "%config.flowMap.customBreadcrumbs.nodeKind.description%",
+                "enum": [
+                  "screen",
+                  "tab",
+                  "dialog",
+                  "inline",
+                  "external"
+                ],
+                "type": "string"
+              },
+              "label": {
+                "default": "$1",
+                "description": "%config.flowMap.customBreadcrumbs.label.description%",
+                "type": "string"
+              }
+            },
+            "required": [
+              "pattern"
+            ],
+            "type": "object"
+          },
+          "type": "array",
+          "title": "%config.flowMap.customBreadcrumbs.title%"
+        },
+        "saropaLogCapture.flowMap.customIssues": {
+          "default": [],
+          "description": "%config.flowMap.customIssues.description%",
+          "items": {
+            "properties": {
+              "pattern": {
+                "description": "%config.flowMap.customIssues.pattern.description%",
+                "type": "string"
+              },
+              "category": {
+                "description": "%config.flowMap.customIssues.category.description%",
+                "type": "string"
+              },
+              "severity": {
+                "default": "warn",
+                "description": "%config.flowMap.customIssues.severity.description%",
+                "enum": [
+                  "warn",
+                  "perf",
+                  "error"
+                ],
+                "type": "string"
+              },
+              "detail": {
+                "description": "%config.flowMap.customIssues.detail.description%",
+                "type": "string"
+              }
+            },
+            "required": [
+              "pattern",
+              "category"
+            ],
+            "type": "object"
+          },
+          "type": "array",
+          "title": "%config.flowMap.customIssues.title%"
+        },
         "saropaLogCapture.playConsole.enabled": {
           "default": false,
           "description": "%config.playConsole.enabled.description%",
