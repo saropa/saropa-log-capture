@@ -35,6 +35,7 @@ cspell:disable
 - Flow map: repeated warnings keep one issue row per category but now show how often they fired (e.g. "×47")
 - Flow map: the diagram now follows the editor color theme (light themes included) — node, edge, and badge colors come from the design tokens instead of fixed dark-only colors
 - Flow map: the visit-count badge only appears on screens visited more than once; multiple return arrows fan out instead of drawing on top of each other; long titles and detail lines truncate to their own font's fit
+- Flow map: report section titles, table headers, session-info labels, and tooltips are now translatable
 - Flow map: report section titles, table headers, and tooltips are now translatable
 
 ### Fixed

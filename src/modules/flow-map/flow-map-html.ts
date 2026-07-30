@@ -29,9 +29,14 @@ const SEV_ICON: Record<IssueEvent['severity'], string> = {
     info: 'ℹ️', warn: '⚠️', perf: '🐢', error: '💥',
 };
 
-const KIND_LABEL: Record<FlowNode['kind'], string> = {
-    launch: '—', screen: 'screen', tab: 'tab', dialog: 'dialog', inline: 'inline', external: 'external', unknown: '—',
-};
+/** Localized labels for `FlowNode.kind`, built lazily so `t()` sees a workspace locale, not import time. */
+function kindLabel(): Record<FlowNode['kind'], string> {
+    return {
+        launch: '—', screen: t('flowMap.kind.screen'), tab: t('flowMap.kind.tab'),
+        dialog: t('flowMap.kind.dialog'), inline: t('flowMap.kind.inline'), external: t('flowMap.kind.external'),
+        unknown: '—',
+    };
+}
 
 /** A clickable source `file:line` cell (opens in editor), or an em-dash. */
 function sourceCell(source?: SourceAnchor): string {
@@ -40,7 +45,7 @@ function sourceCell(source?: SourceAnchor): string {
         return '<td class="src-empty">—</td>';
     }
     return `<td><span class="src" role="link" tabindex="0" data-file="${esc(source?.file ?? '')}" `
-        + `data-line="${source?.line ?? 1}" title="Open in editor">${esc(text)}</span></td>`;
+        + `data-line="${source?.line ?? 1}" title="${esc(t('flowMap.title.openInEditor'))}">${esc(text)}</span></td>`;
 }
 
 /** A log-line cell: reveal the raw log line in the viewer, or copy it. Em-dash when unknown. */
@@ -49,8 +54,9 @@ function logCell(logLine?: number): string {
         return '<td class="src-empty">—</td>';
     }
     return `<td class="logcell"><span class="loglink" role="link" tabindex="0" data-line="${logLine}" `
-        + `title="Reveal in log">L${logLine}</span>`
-        + `<span class="logcopy" role="button" tabindex="0" data-line="${logLine}" title="Copy log line">⧉</span></td>`;
+        + `title="${esc(t('flowMap.title.revealInLog'))}">L${logLine}</span>`
+        + `<span class="logcopy" role="button" tabindex="0" data-line="${logLine}" `
+        + `title="${esc(t('flowMap.title.copyLogLine'))}">⧉</span></td>`;
 }
 
 /** Parse an HH:MM:SS clock to seconds, or undefined. */
@@ -77,19 +83,20 @@ function sessionInfoHtml(parsed: ParsedLog, graph: FlowGraph, logPath?: string):
     // Launch visits beyond the first are hot restarts recovered from `App Startup` lifecycle lines.
     const restarts = Math.max(0, (graph.nodes.find(n => n.kind === 'launch')?.visits ?? 1) - 1);
     const pathRow = logPath
-        ? `<div class="si-k">Log</div><div class="si-v"><span class="logpath" role="link" tabindex="0" `
-            + `title="Open this log in the viewer">${esc(logPath)}</span></div>`
+        ? `<div class="si-k">${t('flowMap.si.log')}</div><div class="si-v"><span class="logpath" role="link" `
+            + `tabindex="0" title="${esc(t('flowMap.title.openInViewer'))}">${esc(logPath)}</span></div>`
         : '';
     return '<div class="session-info">'
         + pathRow
-        + row('Project', h.project) + row('Branch', h.branch) + row('Commit', h.commit)
-        + row('Device', h.device) + row('Version', h.version)
-        + row('Captured', `${h.captureStartClock ?? '?'} → ${parsed.lastClock ?? '?'}`)
-        + row('Screens', String(screens)) + row('Duration', durationText(parsed))
-        + row('Slow queries', String(parsed.slowQueryCount))
-        + row('Repeat batches', String(parsed.repeatBatchCount))
-        + row('Crashes', String(parsed.crashes.length))
-        + (restarts > 0 ? row('Restarts', String(restarts)) : '')
+        + row(t('flowMap.si.project'), h.project) + row(t('flowMap.si.branch'), h.branch)
+        + row(t('flowMap.si.commit'), h.commit)
+        + row(t('flowMap.si.device'), h.device) + row(t('flowMap.si.version'), h.version)
+        + row(t('flowMap.si.captured'), `${h.captureStartClock ?? '?'} → ${parsed.lastClock ?? '?'}`)
+        + row(t('flowMap.si.screens'), String(screens)) + row(t('flowMap.si.duration'), durationText(parsed))
+        + row(t('flowMap.si.slowQueries'), String(parsed.slowQueryCount))
+        + row(t('flowMap.si.repeatBatches'), String(parsed.repeatBatchCount))
+        + row(t('flowMap.si.crashes'), String(parsed.crashes.length))
+        + (restarts > 0 ? row(t('flowMap.si.restarts'), String(restarts)) : '')
         + '</div>';
 }
 
@@ -104,6 +111,7 @@ function dwellCell(node: FlowNode, maxDwell: number): string {
 function dwellTableHtml(graph: FlowGraph): string {
     const walked = graph.nodes.filter(n => n.walked && n.kind !== 'launch');
     const maxDwell = Math.max(1, ...walked.map(n => n.dwellMs));
+    const labels = kindLabel();
     const rows = walked
         .sort((a, b) => (a.firstTsMs ?? 0) - (b.firstTsMs ?? 0))
         .map(n => {
@@ -111,13 +119,14 @@ function dwellTableHtml(graph: FlowGraph): string {
             const cleanLabel = esc(stripAnsi(n.label));
             const label = actions ? `${cleanLabel} · ${esc(actions)}` : cleanLabel;
             const entered = n.firstTsMs !== undefined ? clockOf(n.firstTsMs) : '';
-            return `<tr data-key="${esc(n.key)}"><td>${label}</td><td class="ctr">${KIND_LABEL[n.kind]}</td>`
+            return `<tr data-key="${esc(n.key)}"><td>${label}</td><td class="ctr">${labels[n.kind]}</td>`
                 + `<td class="num">${entered}</td>${dwellCell(n, maxDwell)}<td class="num">${n.visits}</td>`
                 + `${sourceCell(n.source)}${logCell(n.logLine)}</tr>`;
         }).join('');
-    return '<table><thead><tr><th>Screen / phase</th><th class="ctr">Type</th><th class="num">Entered</th>'
-        + '<th>Duration</th><th class="num">Visits</th><th>Source</th><th>Log</th>'
-        + `</tr></thead><tbody>${rows}</tbody></table>`;
+    return `<table><thead><tr><th>${t('flowMap.th.screenPhase')}</th><th class="ctr">${t('flowMap.th.type')}</th>`
+        + `<th class="num">${t('flowMap.th.entered')}</th><th>${t('flowMap.th.duration')}</th>`
+        + `<th class="num">${t('flowMap.th.visits')}</th><th>${t('flowMap.th.source')}</th>`
+        + `<th>${t('flowMap.th.log')}</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 /** Issue table over all parsed issues, in time order. Crash row carries data-key for cross-highlight. */
@@ -131,8 +140,9 @@ function issueTableHtml(parsed: ParsedLog): string {
     }).join('');
     // `sortable` opts the table into client-side column sorting (script wires the headers). The Time
     // header carries `num` so the sorter compares parsed HH:MM:SS, not raw text.
-    return '<table class="sortable"><thead><tr><th class="num">Time</th><th>Sev</th><th>What</th><th>Detail</th>'
-        + `<th>Source</th><th>Log</th></tr></thead><tbody>${rows}</tbody></table>`;
+    return `<table class="sortable"><thead><tr><th class="num">${t('flowMap.th.time')}</th>`
+        + `<th>${t('flowMap.th.sev')}</th><th>${t('flowMap.th.what')}</th><th>${t('flowMap.th.detail')}</th>`
+        + `<th>${t('flowMap.th.source')}</th><th>${t('flowMap.th.log')}</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 /**
@@ -141,8 +151,9 @@ function issueTableHtml(parsed: ParsedLog): string {
  * asks the host to copy it, so the clipboard gets clean prose without the HTML escaping.
  */
 function narrativeSectionHtml(parsed: ParsedLog, graph: FlowGraph): string {
+    const copySummary = esc(t('flowMap.title.copySummary'));
     return '<div class="narrative-block">'
-        + '<button type="button" class="copy-narrative" title="Copy summary" aria-label="Copy summary">⧉</button>'
+        + `<button type="button" class="copy-narrative" title="${copySummary}" aria-label="${copySummary}">⧉</button>`
         + '<p id="narrative-text">' + esc(buildNarrative(parsed, graph)) + '</p></div>';
 }
 
@@ -151,11 +162,26 @@ function section(id: string, title: string, body: string): string {
     return `<details class="sec" id="${id}" open><summary>${title}</summary><div class="sec-body">${body}</div></details>`;
 }
 
+/**
+ * Localized section titles keyed by section id, emoji baked into the template (not translated).
+ * Single source of truth shared by `tocHtml()` and the `section()` calls in `buildFlowMapBody()`.
+ */
+function sectionTitles(): Record<string, string> {
+    return {
+        flow: `🗺️ ${t('flowMap.section.flow')}`,
+        narrative: `📝 ${t('flowMap.section.narrative')}`,
+        session: `🧾 ${t('flowMap.section.session')}`,
+        activity: `📈 ${t('flowMap.section.activity')}`,
+        dwell: `⏱️ ${t('flowMap.section.dwell')}`,
+        issues: `📊 ${t('flowMap.section.issues')}`,
+    };
+}
+
 /** Section table of contents (jumps to and expands a section). */
-function tocHtml(): string {
+function tocHtml(titles: Record<string, string>): string {
     const items: [string, string][] = [
-        ['sec-flow', '🗺️ Flow'], ['sec-narrative', '📝 Executive Summary'], ['sec-session', '🧾 Session info'],
-        ['sec-activity', '📈 Activity Timeline'], ['sec-dwell', '⏱️ Screen Visit Log'], ['sec-perf', '📊 Issue Report'],
+        ['sec-flow', titles.flow], ['sec-narrative', titles.narrative], ['sec-session', titles.session],
+        ['sec-activity', titles.activity], ['sec-dwell', titles.dwell], ['sec-perf', titles.issues],
     ];
     return '<nav class="toc">'
         + items.map(([id, label]) => `<a href="#${id}" data-target="${id}">${label}</a>`).join('')
@@ -164,9 +190,8 @@ function tocHtml(): string {
 
 /** An info-circle button whose tooltip shows the diagram legend on hover/focus. */
 function flowLegend(): string {
-    return '<span class="fm-legend-tip" tabindex="0" role="button" aria-label="Legend"'
-        + ' data-tip="Solid = walked · dashed = recovered indirectly · ↗️ = off-app handoff · 💥 = fault.'
-        + ' Click a node to find its row and jump the log; double-click for full detail; click a source to open it."'
+    return `<span class="fm-legend-tip" tabindex="0" role="button" aria-label="${esc(t('flowMap.legendAria'))}"`
+        + ` data-tip="${esc(t('flowMap.legendTip'))}"`
         + '>ℹ</span>';
 }
 
@@ -200,23 +225,24 @@ export function buildFlowMapBody(parsed: ParsedLog, graph: FlowGraph, logPath?: 
     // Two-column report: the (potentially very tall) diagram on the left; the narrative and both
     // tables stacked in a right column so they stay visible alongside the diagram, not buried under
     // it. The row wraps to a single column when the panel is narrow.
+    const titles = sectionTitles();
     const diagramCol = '<div class="diagram-col">'
-        + section('sec-flow', '🗺️ Flow', flowLegend() + flowDiagramHtml(graph, true))
+        + section('sec-flow', titles.flow, flowLegend() + flowDiagramHtml(graph, true))
         + '</div>';
     const detailCol = '<div class="detail-col">'
-        + section('sec-narrative', '📝 Executive Summary', narrativeSectionHtml(parsed, graph))
-        + section('sec-session', '🧾 Session info', sessionInfoHtml(parsed, graph, logPath))
-        + section('sec-activity', '📈 Activity Timeline', activityChartHtml(parsed, clockOf))
-        + section('sec-dwell', '⏱️ Screen Visit Log', dwellTableHtml(graph))
-        + section('sec-perf', '📊 Issue Report', issueTableHtml(parsed))
+        + section('sec-narrative', titles.narrative, narrativeSectionHtml(parsed, graph))
+        + section('sec-session', titles.session, sessionInfoHtml(parsed, graph, logPath))
+        + section('sec-activity', titles.activity, activityChartHtml(parsed, clockOf))
+        + section('sec-dwell', titles.dwell, dwellTableHtml(graph))
+        + section('sec-perf', titles.issues, issueTableHtml(parsed))
         + '</div>';
     // A draggable divider between the two columns lets the reader trade diagram width for detail
     // width; the script persists the chosen split. It hides when the row wraps to a single column.
     const resizer = '<div class="col-resize" role="separator" aria-orientation="vertical" '
-        + 'tabindex="-1" title="Drag to resize"></div>';
+        + `tabindex="-1" title="${esc(t('flowMap.title.dragToResize'))}"></div>`;
     // Title + clickable log path are rendered by the panel above the bar; the body starts at the TOC.
     return [
-        tocHtml(),
+        tocHtml(titles),
         '<div class="report-row">' + diagramCol + resizer + detailCol + '</div>',
     ].join('\n');
 }
