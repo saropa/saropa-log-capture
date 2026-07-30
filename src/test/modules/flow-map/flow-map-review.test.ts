@@ -67,11 +67,48 @@ suite('FlowMap review fixes (plan 117)', () => {
             assert.strictEqual(parsed.issues.filter(i => i.category === 'Crash').length, 2);
         });
 
+        test('should not let a widget-less crash steal the NEXT crash\'s widget anchor', () => {
+            // Crash #1 has no "error-causing widget" block; crash #2 does. The widget scan must stop
+            // at the next banner, or crash #1 walks forward and claims x_dialog.dart as its own.
+            const twoCrashes = ['=== SAROPA LOG CAPTURE — SESSION START ===', 'Project: demo',
+                '  projectRootPath: "D:\\\\src\\\\demo"',
+                nav('08:00:01', 'Home'),
+                '[08:00:10.000] [stderr] ════════ Exception caught by rendering library ═══',
+                '[08:00:10.001] [stdout] Widgetless failure.',
+                nav('08:01:00', 'Settings'),
+                '[08:02:00.000] [stderr] ════════ Exception caught by widgets library ═══',
+                '[08:02:00.001] [stdout] Widgeted failure.',
+                '[08:02:00.002] [stdout] The relevant error-causing widget was:',
+                '[08:02:00.003] [stdout]     ListView ListView:file:///D:/src/demo/lib/views/x_dialog.dart:42:14',
+            ];
+            const parsed = parseLog(twoCrashes);
+            assert.strictEqual(parsed.crashes.length, 2);
+            assert.strictEqual(parsed.crashes[0].widget, undefined, 'crash #1 has no widget of its own');
+            assert.strictEqual(parsed.crashes[0].source, undefined, 'crash #1 must not claim crash #2\'s anchor');
+            assert.strictEqual(parsed.crashes[1].widget, 'ListView');
+            assert.strictEqual(parsed.crashes[1].source?.file, 'lib/views/x_dialog.dart');
+        });
+
         test('should anchor each crash edge to the screen active at ITS moment', () => {
             const graph = buildGraph(parseLog(lines));
             const crashEdges = graph.edges.filter(e => e.inferred);
             assert.ok(crashEdges.some(e => e.from === 'home'), 'first crash hangs off Home');
             assert.ok(crashEdges.some(e => e.from === 'settings'), 'second crash hangs off Settings');
+        });
+
+        test('should anchor a crash in a revisit gap to the screen ACTUALLY current, not the revisited one', () => {
+            // Home 8:00 → Alpha 8:05 (crash 8:06 while ON Alpha) → Home 8:10. Home's dwell WINDOW
+            // spans 8:00–end and would swallow the 8:06 crash; the occupancy segments must not.
+            const gapLines = [...HEAD,
+                nav('08:00:01', 'Home'),
+                nav('08:05:00', 'Alpha'),
+                '[08:06:00.000] [stderr] ════════ Exception caught by rendering library ═══',
+                '[08:06:00.001] [stdout] Gap failure.',
+                nav('08:10:00', 'Home'),
+            ];
+            const graph = buildGraph(parseLog(gapLines));
+            const crashEdge = graph.edges.find(e => e.inferred);
+            assert.strictEqual(crashEdge?.from, 'alpha', 'crash hangs off Alpha, not the revisited Home');
         });
     });
 
