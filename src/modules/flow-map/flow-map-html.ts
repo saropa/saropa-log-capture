@@ -74,6 +74,8 @@ function sessionInfoHtml(parsed: ParsedLog, graph: FlowGraph, logPath?: string):
     const row = (k: string, v?: string) =>
         v ? `<div class="si-k">${k}</div><div class="si-v">${esc(v)}</div>` : '';
     const screens = graph.nodes.filter(n => n.walked && n.kind !== 'launch').length;
+    // Launch visits beyond the first are hot restarts recovered from `App Startup` lifecycle lines.
+    const restarts = Math.max(0, (graph.nodes.find(n => n.kind === 'launch')?.visits ?? 1) - 1);
     const pathRow = logPath
         ? `<div class="si-k">Log</div><div class="si-v"><span class="logpath" role="link" tabindex="0" `
             + `title="Open this log in the viewer">${esc(logPath)}</span></div>`
@@ -86,7 +88,8 @@ function sessionInfoHtml(parsed: ParsedLog, graph: FlowGraph, logPath?: string):
         + row('Screens', String(screens)) + row('Duration', durationText(parsed))
         + row('Slow queries', String(parsed.slowQueryCount))
         + row('Repeat batches', String(parsed.repeatBatchCount))
-        + row('Crashes', parsed.crash ? '1' : '0')
+        + row('Crashes', String(parsed.crashes.length))
+        + (restarts > 0 ? row('Restarts', String(restarts)) : '')
         + '</div>';
 }
 
@@ -159,10 +162,12 @@ function tocHtml(): string {
         + '</nav>';
 }
 
-/** The shared legend line under the Flow heading. */
+/** An info-circle button whose tooltip shows the diagram legend on hover/focus. */
 function flowLegend(): string {
-    return '<p class="legend">Solid = walked · dashed = recovered indirectly · ↗️ = off-app handoff · 💥 = fault.'
-        + ' Click a node to find its row and jump the log; double-click for full detail; click a source to open it.</p>';
+    return '<span class="fm-legend-tip" tabindex="0" role="button" aria-label="Legend"'
+        + ' data-tip="Solid = walked · dashed = recovered indirectly · ↗️ = off-app handoff · 💥 = fault.'
+        + ' Click a node to find its row and jump the log; double-click for full detail; click a source to open it."'
+        + '>ℹ</span>';
 }
 
 /**
