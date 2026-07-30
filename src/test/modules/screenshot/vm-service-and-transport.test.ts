@@ -39,6 +39,15 @@ suite('recordVmServiceUriFromLogLine', () => {
         assert.strictEqual(recordVmServiceUriFromLogLine('plain output line', 'd:/reports/test.log'), false);
         assert.strictEqual(getLatestVmServiceWsUri(), undefined);
     });
+
+    test('should reject non-loopback hosts (SSRF guard on echoed text)', () => {
+        // An app echoing attacker-influenced text must not be able to route captures off-machine.
+        assert.strictEqual(recordVmServiceUriFromLogLine(
+            'Connecting to VM Service at ws://evil.example.com:9999/x=/ws', 'd:/reports/test.log'), false);
+        assert.strictEqual(recordVmServiceUriFromLogLine(
+            'A Dart VM Service is available at: http://10.0.0.5:8181/tok=/', 'd:/reports/test.log'), false);
+        assert.strictEqual(getLatestVmServiceWsUri(), undefined);
+    });
 });
 
 suite('makeCaptureTransport', () => {
@@ -83,23 +92,44 @@ suite('makeCaptureTransport', () => {
         assert.deepStrictEqual([...(await h.capture('ws://a'))], [2]);
         assert.deepStrictEqual(h.calls, { vm: 2, adb: 2 });
     });
+
+    test('memo holds ONE dead URI: interleaving two dead sessions re-probes (documented limitation)', async () => {
+        // Single-string memo, matching the single-active-session design of getLatestVmServiceWsUri.
+        // Pinned so a future multi-session effort knows this behavior was intentional, not a bug.
+        const h = harness('notFound');
+        await h.capture('ws://a'); // a dead, memoized
+        await h.capture('ws://b'); // b dead, overwrites the memo
+        await h.capture('ws://a'); // a re-probed (memo lost) — 3 VM calls total
+        assert.strictEqual(h.calls.vm, 3);
+        assert.strictEqual(h.calls.adb, 3);
+    });
 });
 
 suite('parseScreenshotReply', () => {
+    /** Full 8-byte PNG signature — the parser now magic-checks replies before accepting. */
+    const PNG_MAGIC = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+
     test('should decode a valid reply for our id', () => {
-        const png = Buffer.from([137, 80, 78, 71]).toString('base64');
+        const png = Buffer.from(PNG_MAGIC).toString('base64');
         const [err, bytes, ours] = parseScreenshotReply(JSON.stringify({ jsonrpc: '2.0', id: '1', result: { type: 'Screenshot', screenshot: png } }));
         assert.strictEqual(err, undefined);
         assert.strictEqual(ours, true);
-        assert.deepStrictEqual([...(bytes ?? [])], [137, 80, 78, 71]);
+        assert.deepStrictEqual([...(bytes ?? [])], PNG_MAGIC);
     });
 
     test('should tolerate one level of result nesting (private-API drift guard)', () => {
-        const png = Buffer.from([1, 2, 3]).toString('base64');
+        const png = Buffer.from(PNG_MAGIC).toString('base64');
         const [err, bytes, ours] = parseScreenshotReply(JSON.stringify({ id: '1', result: { result: { screenshot: png } } }));
         assert.strictEqual(err, undefined);
         assert.strictEqual(ours, true);
-        assert.deepStrictEqual([...(bytes ?? [])], [1, 2, 3]);
+        assert.deepStrictEqual([...(bytes ?? [])], PNG_MAGIC);
+    });
+
+    test('should reject non-PNG payloads (endpoint handing back arbitrary bytes)', () => {
+        const notPng = Buffer.from('this is not an image, honest').toString('base64');
+        const [err, , ours] = parseScreenshotReply(JSON.stringify({ id: '1', result: { screenshot: notPng } }));
+        assert.ok(err && err.message.includes('not a PNG'));
+        assert.strictEqual(ours, true);
     });
 
     test('should name the removed-API failure mode on method-not-found', () => {

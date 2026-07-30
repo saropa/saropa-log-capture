@@ -38,12 +38,24 @@ var screenshotSessionCount = 0;
 /* file whose image the open popover is waiting for/showing (null = popover closed). */
 var screenshotPopoverFile = null;
 
-/* True when a row's rendered html plausibly contains the capture's trigger text. The
-   token is the text's first 30 chars minus HTML-special chars (the html is escaped +
-   linkified, so <>&" would never match literally). Empty text (manual captures) matches. */
+/* Discriminating token from trigger text: the LONGEST run between HTML-special chars
+   (the html is escaped, so a token spanning "&" would face "&amp;" and never match).
+   Taking a clean segment — not a specials-stripped mash — keeps indexOf exact. */
+function screenshotTextToken(text) {
+    if (!text) return '';
+    var parts = String(text).split(/[<>&"']/);
+    var best = '';
+    for (var i = 0; i < parts.length; i++) {
+        var p = parts[i].trim();
+        if (p.length > best.length) best = p;
+    }
+    return best.slice(0, 30).trim();
+}
+
+/* True when a row's rendered html plausibly contains the capture's trigger text.
+   Empty/degenerate tokens (manual captures, all-special text) match everything. */
 function screenshotRowTextMatches(item, text) {
-    if (!text) return true;
-    var token = String(text).replace(/[<>&"']/g, ' ').trim().slice(0, 30).trim();
+    var token = screenshotTextToken(text);
     return token.length < 4 || (item.html || '').indexOf(token) >= 0;
 }
 
@@ -55,7 +67,7 @@ function screenshotRowTextMatches(item, text) {
 function screenshotFindIdx(logLine, text) {
     if (typeof allLines === 'undefined') return -1;
     /* A token under 4 chars matches everything — too weak to drive the text-search fallback. */
-    var token = text ? String(text).replace(/[<>&"']/g, ' ').trim().slice(0, 30).trim() : '';
+    var token = screenshotTextToken(text);
     var strongToken = token.length >= 4;
     var lineHit = -1, anyHit = -1, textHit = -1;
     for (var i = allLines.length - 1; i >= 0; i--) {
