@@ -33,6 +33,8 @@ cspell:disable
 - Flow map: the legend line under the Flow heading is now an info icon whose tooltip shows the legend on hover or focus
 - Flow map: diagram arrows now label the time spent on a screen before that specific transition, instead of the screen's total time across all visits
 - Flow map: repeated warnings keep one issue row per category but now show how often they fired (e.g. "×47")
+- Flow map: the diagram now follows the editor color theme (light themes included) — node, edge, and badge colors come from the design tokens instead of fixed dark-only colors
+- Flow map: the visit-count badge only appears on screens visited more than once; multiple return arrows fan out instead of drawing on top of each other; long titles and detail lines truncate to their own font's fit
 
 ### Fixed
 

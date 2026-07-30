@@ -121,15 +121,38 @@ suite('FlowMap review fixes (plan 117)', () => {
         });
     });
 
-    suite('visit badge and svg (items 8/9 groundwork)', () => {
-        test('should render the svg without errors for a multi-crash graph', () => {
+    suite('svg polish (items 7-10)', () => {
+        test('should color nodes/edges via theme palette classes, not baked hex fills', () => {
             const lines = [...HEAD,
                 nav('08:00:01', 'Home'),
                 '[08:00:10.000] [stderr] ════════ Exception caught by rendering library ═══',
                 '[08:00:10.001] [stdout] Boom.',
             ];
             const svg = renderSvg(buildGraph(parseLog(lines)));
-            assert.ok(svg.startsWith('<svg'), 'svg renders');
+            assert.ok(svg.includes('fm-p-walked'), 'walked palette class');
+            assert.ok(svg.includes('fm-p-crash'), 'crash palette class');
+            assert.ok(svg.includes('fm-arrow-head'), 'marker head classed');
+            assert.ok(!/(fill|stroke)="#/.test(svg), 'no hard-coded hex fills or strokes remain');
+        });
+
+        test('should hide the visit badge on single visits and show it on revisits', () => {
+            const once = renderSvg(buildGraph(parseLog([...HEAD, nav('08:00:01', 'Home'), nav('08:00:05', 'Alpha')])));
+            assert.ok(!once.includes('fm-badge'), 'no badge noise on single visits');
+            const twice = renderSvg(buildGraph(parseLog([...HEAD,
+                nav('08:00:01', 'Home'), nav('08:00:05', 'Alpha'), nav('08:00:09', 'Home')])));
+            assert.ok(twice.includes('fm-badge'), 'revisited node gets the badge');
+        });
+
+        test('should stagger multiple back edges so their bulges differ', () => {
+            // Two distinct returns: Alpha→Home and Beta→Alpha.
+            const lines = [...HEAD,
+                nav('08:00:01', 'Home'), nav('08:00:05', 'Alpha'), nav('08:00:09', 'Home'),
+                nav('08:00:12', 'Alpha'), nav('08:00:15', 'Beta'), nav('08:00:20', 'Alpha'),
+            ];
+            const svg = renderSvg(buildGraph(parseLog(lines)));
+            const bulges = [...svg.matchAll(/class="fm-e-back" d="M[\d.]+,[\d.]+ C([\d.]+),/g)].map(m => m[1]);
+            assert.strictEqual(bulges.length, 2, 'two back edges drawn');
+            assert.notStrictEqual(bulges[0], bulges[1], 'bulge x-offsets differ');
         });
     });
 });

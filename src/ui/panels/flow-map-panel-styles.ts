@@ -163,6 +163,32 @@ export function flowMapStyles(nonce: string): string {
   .dwell-bar { display: inline-block; height: 0.62em; border-radius: var(--radius-sm); background: linear-gradient(90deg, var(--status-good), var(--accent-info)); vertical-align: middle; margin-right: 0.45rem; }
   .dwell-text { font-variant-numeric: tabular-nums; }
 
+  /* Diagram palette — semantic tokens so the SVG tracks the host light/dark theme (was baked dark
+     hex). Fills are token tints over the panel surface; text inherits the theme foreground. */
+  .fm-p-walked rect { fill: color-mix(in srgb, var(--status-good) 14%, var(--surface-1)); stroke: var(--status-good); }
+  .fm-p-crash rect { fill: color-mix(in srgb, var(--status-bad) 16%, var(--surface-1)); stroke: var(--status-bad); }
+  .fm-p-external rect { fill: color-mix(in srgb, var(--accent-opinionated) 14%, var(--surface-1)); stroke: var(--accent-opinionated); }
+  .fm-p-launch rect { fill: color-mix(in srgb, var(--muted) 12%, var(--surface-1)); stroke: var(--muted); }
+  .fm-p-static rect { fill: var(--surface-1); stroke: var(--border); }
+  .fm-node .fm-t-title { fill: var(--text); }
+  .fm-node .fm-t-sub { fill: var(--muted); }
+  .fm-p-static .fm-t-title { fill: var(--muted); }
+  /* Repeat-visit badge inherits its node's accent so it reads as part of the box, not a sticker. */
+  .fm-badge { stroke: var(--surface-1); }
+  .fm-badge-text { fill: var(--surface-1); }
+  .fm-p-walked .fm-badge { fill: var(--status-good); }
+  .fm-p-crash .fm-badge { fill: var(--status-bad); }
+  .fm-p-external .fm-badge { fill: var(--accent-opinionated); }
+  .fm-p-static .fm-badge, .fm-p-launch .fm-badge { fill: var(--muted); }
+  /* Edges: forward = muted, back/return = info accent; labels halo with the surface color so they
+     stay readable where they cross an arrow shaft. */
+  .fm-e-fwd, .fm-arrow-head { stroke: var(--muted); }
+  .fm-arrow-head { fill: var(--muted); stroke: none; }
+  .fm-e-back, .fm-back-head { stroke: var(--accent-info); }
+  .fm-back-head { fill: var(--accent-info); stroke: none; }
+  .fm-e-back-label { fill: var(--accent-info); }
+  .fm-e-label { fill: var(--text); stroke: var(--surface-1); }
+
   .fm-node { cursor: pointer; }
   .fm-node rect { transition: stroke-width 0.12s ease, filter 0.12s ease; }
   .fm-node:hover rect, .fm-node:focus rect { stroke-width: 3; filter: brightness(1.18); outline: none; }
