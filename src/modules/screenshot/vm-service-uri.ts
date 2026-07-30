@@ -66,10 +66,12 @@ export function clearVmServiceUris(): void {
  *   "A Dart VM Service on <device> is available at: http://127.0.0.1:PORT/TOKEN=/"
  *   "Connecting to VM Service at ws://127.0.0.1:PORT/TOKEN=/ws"   (Dart-Code console)
  * Lead-ins are enumerated ("Observatory" covers very old SDKs) and the URL shape is
- * strict — and must accept ws:// as well as http://, since the Dart-Code form is
- * already the WebSocket URI — so ordinary log text can never register a bogus address.
+ * strict — ws:// accepted as well as http:// (the Dart-Code form is already the
+ * WebSocket URI), and the HOST is pinned to loopback: the VM Service is always local,
+ * and without the pin an app that echoes attacker-influenced text to the console could
+ * register an arbitrary endpoint and route capture calls (SSRF-shaped) off-machine.
  */
-const vmServiceBanner = /(?:(?:VM Service|Observatory)[^\n]*?(?:available at|listening on)|Connecting to VM Service at):?\s*((?:https?|wss?):\/\/[\w.:[\]-]+\/[\w=+/-]*\/?)/;
+const vmServiceBanner = /(?:(?:VM Service|Observatory)[^\n]*?(?:available at|listening on)|Connecting to VM Service at):?\s*((?:https?|wss?):\/\/(?:127\.0\.0\.1|localhost|\[::1\]):\d+\/[\w=+/-]*\/?)/;
 
 /**
  * Fallback URI discovery from captured output (called per line ONLY while no URI is known —

@@ -38,6 +38,37 @@ pre-connect logcat replay bursts bail on a map read. Capturer suite: 22 cases pi
 guard with the literal Gralloc/Badge lines from the contacts log plus the AndroidRuntime
 relay that must still capture.
 
+## Finish Report (2026-07-29, second pass) — root cause found: `_flutter.screenshot` no longer exists; adb transport shipped
+
+Field report: a deployed build produced zero screenshots while the debugged app raised many
+exceptions. Investigation (commits 220dae6b, 27b9a133 and a review-fix commit):
+
+**Two independent faults.** (1) Real capture sessions never emit the "A Dart VM Service …
+is available at:" banner the URI fallback expected — Dart-Code's console prints only
+"Connecting to VM Service at ws://…", which the old regex rejected on both lead-in and
+scheme (`https?` only, but this form is already `ws://`). (2) Decisively: the local
+Flutter SDK's flutter_tools carries only `_flutter.screenshotSkp` — the
+`_flutter.screenshot` rasterizer API the capture path called was removed from modern
+Flutter with the Skia screenshot machinery. Every capture attempt returned "Method not
+found"; after three, the failure breaker paused captures for the session, silently from
+the user's perspective. The trigger chain itself was verified innocent by running the
+compiled tier classifier against the literal exception lines from the field log.
+
+**Fix: transport chain.** `screenshot-transport.ts` probes the VM once per URI (chrome-free
+where the API survives; covers non-Android targets), switches permanently to
+`adb exec-out screencap -p` (`adb-screenshot.ts`: binary-safe on Windows, 7s timeout,
+32MB output ceiling, PNG-magic validation, device serial from the adbLogcat setting) on
+method-not-found, and falls back per-capture on transient VM errors. Verified LIVE: the
+new path captured a 2,027,510-byte PNG from the connected Android device.
+
+**Review-pass hardening.** Banner-derived URIs are pinned to loopback hosts (an app echoing
+attacker-influenced text could otherwise register an arbitrary ws endpoint —
+SSRF-shaped); the VM reply path gained the same PNG-magic check as the adb path; the
+webview badge token is now the longest clean segment between HTML-special characters so
+entity escaping cannot weaken anchor precision; the transport's single-URI dead-memo is
+pinned by test as a documented single-session limitation. Suites: capturer 15 +
+vm-service-and-transport 15.
+
 ## 1. F5 verification of live capture (blocking for release confidence)
 
 Unit tests cover triggers/coalescing/parsing, but `_flutter.screenshot` has never been

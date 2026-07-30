@@ -91,5 +91,11 @@ export function parseScreenshotReply(raw: string): [Error | undefined, Uint8Arra
     if (typeof b64 !== 'string' || b64.length === 0) {
         return [new Error('_flutter.screenshot reply had no screenshot payload'), undefined, true];
     }
-    return [undefined, new Uint8Array(Buffer.from(b64, 'base64')), true];
+    const bytes = new Uint8Array(Buffer.from(b64, 'base64'));
+    // PNG magic check (parity with the adb path's looksLikePng): never persist non-image
+    // bytes a wrong/compromised endpoint hands back as a "screenshot".
+    if (bytes.length < 8 || bytes[0] !== 0x89 || bytes[1] !== 0x50 || bytes[2] !== 0x4e || bytes[3] !== 0x47) {
+        return [new Error('_flutter.screenshot reply was not a PNG'), undefined, true];
+    }
+    return [undefined, bytes, true];
 }
