@@ -211,7 +211,7 @@ suite('FlowMap', () => {
             assert.ok(svg.startsWith('<svg'));
             assert.strictEqual((svg.match(/<rect /g) ?? []).length, graph.nodes.length);
             assert.ok(svg.includes('fm-arrow'), 'arrow marker defined');
-            assert.ok(svg.includes('#3a1a1a'), 'crash node colored');
+            assert.ok(svg.includes('fm-p-crash'), 'crash node carries its theme palette class');
         });
 
         test('webview body has the diagram and clickable source cells', () => {
