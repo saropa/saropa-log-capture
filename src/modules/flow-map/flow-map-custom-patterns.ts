@@ -56,6 +56,15 @@ const BREADCRUMB_KINDS = new Set(['nav', 'action', 'viewed', 'handoff']);
 const NODE_KINDS = new Set(['screen', 'tab', 'dialog', 'inline', 'external']);
 const ISSUE_SEVERITIES = new Set(['warn', 'perf', 'error']);
 
+/**
+ * User-supplied regexes run against EVERY log line; a catastrophic-backtracking pattern (`(a+)+$`)
+ * on an unbounded line could freeze the host (this project has a prior regex-freeze incident).
+ * Over-length lines are SKIPPED, not truncated — truncating would let `$`-anchored patterns match
+ * at the cut point and fabricate a hit that isn't in the real line. Real breadcrumb/issue markers
+ * are short; a 500+ char line is payload (SQL, JSON dumps), not a navigation marker.
+ */
+const MAX_CUSTOM_SCAN_CHARS = 500;
+
 /** Empty compiled set — returned whenever the raw settings values are absent or malformed. */
 const EMPTY_PATTERNS: CustomPatterns = { breadcrumbs: [], issues: [] };
 
@@ -155,6 +164,9 @@ function applyLabelTemplate(template: string, m: RegExpExecArray): string {
 export function matchCustomBreadcrumb(
     patterns: CustomPatterns, text: string,
 ): Omit<TimelineEvent, 'tsMs' | 'clock' | 'logLine'> | undefined {
+    if (text.length > MAX_CUSTOM_SCAN_CHARS) {
+        return undefined;
+    }
     for (const def of patterns.breadcrumbs) {
         const m = def.re.exec(text);
         if (!m) {
@@ -173,10 +185,17 @@ export function matchCustomBreadcrumb(
     return undefined;
 }
 
-/** Try every compiled custom issue against a log line. Returns the timing-free half of an IssueEvent. */
+/**
+ * Try every compiled custom issue against a log line. Returns the timing-free half of an IssueEvent.
+ * Note: the category name `Crash` is reserved — the builder's issue overlay deliberately skips it
+ * (crashes badge their own synthetic node), so a custom rule reusing it would never badge a screen.
+ */
 export function matchCustomIssue(
     patterns: CustomPatterns, text: string,
 ): Omit<IssueEvent, 'tsMs' | 'clock' | 'logLine'> | undefined {
+    if (text.length > MAX_CUSTOM_SCAN_CHARS) {
+        return undefined;
+    }
     for (const def of patterns.issues) {
         if (def.re.test(text)) {
             return { severity: def.severity, category: def.category, detail: def.detail };
