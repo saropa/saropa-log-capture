@@ -13,7 +13,11 @@ export function flowMapStyles(nonce: string): string {
   h1 { font-size: 1.5em; margin: 0.4rem 0 0.25rem; }
   .report-title { margin: 0.6rem 0 0.5rem; }
   h3 { font-size: 1.02em; margin: 0 0 0.4rem; }
-  .legend { color: var(--muted); font-size: 0.9em; margin: 0.2rem 0 0.5rem; }
+  /* Info-circle legend tooltip: the data-tip content appears on hover/focus as a positioned tooltip. */
+  .fm-legend-tip { display: inline-flex; align-items: center; justify-content: center; width: 1.5rem; height: 1.5rem; border-radius: 50%; font-size: 0.85rem; color: var(--muted); border: 1px solid var(--border); cursor: help; position: relative; vertical-align: middle; margin: 0.2rem 0 0.5rem; }
+  .fm-legend-tip:hover, .fm-legend-tip:focus-visible { color: var(--text); border-color: var(--vscode-focusBorder); outline: none; }
+  .fm-legend-tip::after { content: attr(data-tip); position: absolute; left: calc(100% + 0.5rem); top: 50%; transform: translateY(-50%); width: max-content; max-width: 340px; padding: 0.5rem 0.7rem; border-radius: var(--radius); background: var(--surface-1); border: 1px solid var(--border); box-shadow: var(--shadow-lg); color: var(--text); font-size: 0.85em; line-height: 1.45; white-space: normal; pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 10; }
+  .fm-legend-tip:hover::after, .fm-legend-tip:focus-visible::after { opacity: 1; }
 
   .topbar { position: sticky; top: 0; z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 0.55rem 0; margin-bottom: 0.4rem; background: var(--surface-1); border-bottom: 1px solid var(--border); }
   .pills { display: flex; flex-wrap: wrap; gap: 0.4rem; flex: 1 1 auto; }
