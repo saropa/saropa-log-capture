@@ -234,6 +234,7 @@ export function flowDiagramHtml(graph: FlowGraph, withPopout: boolean): string {
         + btn('in', '+', t('flowMap.zoomInBtn'))
         + btn('out', '−', t('flowMap.zoomOutBtn'))
         + btn('reset', '⧉', t('flowMap.resetViewBtn'))
+        + btn('replay', '▶', t('flowMap.replayBtn'))
         + (hasCrash ? btn('crash', '💥', t('flowMap.jumpToCrashBtn'), ' fm-zoom-crash') : '')
         + (withPopout ? btn('popout', '⤢', t('flowMap.popOutBtn')) : '')
         + '</div>';

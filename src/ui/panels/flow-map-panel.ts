@@ -13,6 +13,7 @@ import { buildFlowDiagramBody, buildFlowMapBody } from '../../modules/flow-map/f
 import { flowMapStyles } from './flow-map-panel-styles';
 import { flowMapScript } from './flow-map-panel-script';
 import { flowMapZoomScript } from './flow-map-panel-zoom-script';
+import { flowMapReplayScript } from './flow-map-panel-replay-script';
 
 const VIEW_TYPE = 'saropaFlowMap';
 const POPOUT_VIEW_TYPE = 'saropaFlowMapDiagram';
@@ -94,7 +95,8 @@ ${flowMapStyles(nonce)}</head><body>
 <div class="report-head">${titleHtml(params)}${actions}</div>
 ${body}
 ${flowMapScript(nonce)}
-${flowMapZoomScript(nonce)}</body></html>`;
+${flowMapZoomScript(nonce)}
+${flowMapReplayScript(nonce)}</body></html>`;
 }
 
 /** The pop-out panel's HTML: diagram only, full bleed, same lens/popup scripts (no nested pop-out). */
@@ -106,7 +108,8 @@ ${flowMapStyles(nonce)}</head><body>
 <div class="report-head">${titleHtml(params)}</div>
 ${buildFlowDiagramBody(params.graph)}
 ${flowMapScript(nonce)}
-${flowMapZoomScript(nonce)}</body></html>`;
+${flowMapZoomScript(nonce)}
+${flowMapReplayScript(nonce)}</body></html>`;
 }
 
 /** Open (or reveal) the diagram-only pop-out panel beside the report. */
