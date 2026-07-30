@@ -37,7 +37,12 @@ export interface FlowShot {
 /** Kinds of `TimelineEvent` that create/enter a flow-map node (mirrors `flow-map-builder.ts`). */
 const NODE_CREATING_KINDS: ReadonlySet<TimelineEvent['kind']> = new Set(['nav', 'reached']);
 
-/** Format epoch-ms to a local HH:MM:SS clock string for the gallery caption. */
+/**
+ * Format epoch-ms to a local HH:MM:SS clock string for the gallery caption.
+ * Caveat: this is HOST-local time. Log line clocks are DEVICE-local ms-of-day, so when the device
+ * sits in another timezone the caption clock will not match adjacent log clocks — the join itself
+ * is unaffected (it anchors on log line numbers, never on clocks).
+ */
 export function formatClock(epochMs: number): string {
     const d = new Date(epochMs);
     const p = (n: number) => String(n).padStart(2, '0');
