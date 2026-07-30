@@ -85,16 +85,13 @@ function stripPrefix(line: string): string {
     return line.replace(CLOCK_RE, '').replace(/^\s*\[[^\]]+\]\s*/, '').trim();
 }
 
-/** Locate the rendering-exception block and recover its message + crashing-widget anchor. */
-function detectCrash(
+/** Recover one exception block's message + crashing-widget anchor, starting at its banner line. */
+function crashAt(
     lines: readonly string[],
     lineTimes: readonly (number | undefined)[],
+    bannerIdx: number,
     projectRoot?: string,
 ): CrashInfo | undefined {
-    const bannerIdx = lines.findIndex(l => /Exception caught by [\w ]+library/i.test(l));
-    if (bannerIdx === -1) {
-        return undefined;
-    }
     // Message = first prose line after the banner that is not the "assertion was thrown" preamble.
     for (let i = bannerIdx + 1; i < Math.min(bannerIdx + 8, lines.length); i++) {
         const content = stripAnsi(stripPrefix(lines[i]));
@@ -102,7 +99,8 @@ function detectCrash(
             continue;
         }
         const clk = parseClock(lines[i]);
-        const widget = parseErrorCausingWidget(lines, projectRoot);
+        // Slice from THIS banner so each crash recovers ITS error-causing widget, not the first one's.
+        const widget = parseErrorCausingWidget(lines.slice(bannerIdx), projectRoot);
         return {
             // Use the rollover-resolved time so an after-midnight crash sorts after earlier events.
             tsMs: lineTimes[i] ?? clk?.tsMs ?? 0,
@@ -116,11 +114,31 @@ function detectCrash(
     return undefined;
 }
 
+/** Locate EVERY rendering-exception block — a session can fault repeatedly and keep running. */
+function detectCrashes(
+    lines: readonly string[],
+    lineTimes: readonly (number | undefined)[],
+    projectRoot?: string,
+): CrashInfo[] {
+    const out: CrashInfo[] = [];
+    for (let i = 0; i < lines.length; i++) {
+        if (!/Exception caught by [\w ]+library/i.test(lines[i])) {
+            continue;
+        }
+        const crash = crashAt(lines, lineTimes, i, projectRoot);
+        if (crash) {
+            out.push(crash);
+        }
+    }
+    return out;
+}
+
 /** Mutable accumulators threaded through the line scan. */
 interface ScanState {
     readonly events: TimelineEvent[];
     readonly issues: IssueEvent[];
-    readonly seenWarnings: Set<string>;
+    /** Category → first occurrence + repeat count. Deduped to one row, but frequency is kept. */
+    readonly warnings: Map<string, { issue: IssueEvent; count: number }>;
     worstSlow?: SlowQuery;
     slowCount: number;
     repeatCount: number;
@@ -148,16 +166,20 @@ function scanLine(ctx: LineContext, state: ScanState): void {
     if (slow) {
         state.slowCount++;
         if (!state.worstSlow || slow.ms > state.worstSlow.ms) {
-            state.worstSlow = { ...slow, logLine: ctx.logLine };
+            // Keep the line's real time so the promoted issue row sorts chronologically AND window-
+            // attaches to the screen active then — tsMs 0 is skipped by the builder's issue overlay.
+            state.worstSlow = { ...slow, logLine: ctx.logLine, tsMs: ctx.tsMs, clock: ctx.clock };
         }
     }
     if (isRepeatBatch(text)) {
         state.repeatCount++;
     }
     const warn = classifyWarning(text, ctx.tsMs, ctx.clock, ctx.logLine);
-    if (warn && !state.seenWarnings.has(warn.category)) {
-        state.seenWarnings.add(warn.category);
-        state.issues.push(warn);
+    if (warn) {
+        const seen = state.warnings.get(warn.category);
+        // One row per category, but repeats are counted — "×47" is a different signal from one hit.
+        if (seen) { seen.count++; }
+        else { state.warnings.set(warn.category, { issue: warn, count: 1 }); }
     }
     // Explicit app-reported errors are deliberate and low-volume, so (unlike heuristic warnings) they
     // are NOT deduped by category — each occurrence is a real failure on its own surface (bug 011).
@@ -180,7 +202,7 @@ export function parseLog(lines: readonly string[], projectRootOverride?: string)
     const header = parseHeader(lines);
     const projectRoot = normalizeRoot(projectRootOverride ?? header.projectRoot);
     const state: ScanState = {
-        events: [], issues: [], seenWarnings: new Set(), slowCount: 0, repeatCount: 0,
+        events: [], issues: [], warnings: new Map(), slowCount: 0, repeatCount: 0,
     };
 
     // Resolve clocks once so events crossing midnight stay in monotonic order (no negative dwell).
@@ -192,9 +214,10 @@ export function parseLog(lines: readonly string[], projectRootOverride?: string)
         }
     }
 
-    const crash = detectCrash(lines, lineTimes, projectRoot);
+    const crashes = detectCrashes(lines, lineTimes, projectRoot);
+    flushWarnings(state);
     appendWorstSlow(state);
-    if (crash) {
+    for (const crash of crashes) {
         state.issues.push(crashIssue(crash));
     }
     state.issues.sort((a, b) => a.tsMs - b.tsMs);
@@ -203,12 +226,19 @@ export function parseLog(lines: readonly string[], projectRootOverride?: string)
         header: { ...header, projectRoot, captureStartClock: firstClock(lines) },
         events: state.events,
         issues: state.issues,
-        crash,
-        crashes: crash ? [crash] : [],
+        crash: crashes[0],
+        crashes,
         slowQueryCount: state.slowCount,
         repeatBatchCount: state.repeatCount,
         lastClock: state.lastClock,
     };
+}
+
+/** Flush the deduped warnings into issue rows, appending the repeat count when a category recurred. */
+function flushWarnings(state: ScanState): void {
+    for (const { issue, count } of state.warnings.values()) {
+        state.issues.push(count > 1 ? { ...issue, detail: `${issue.detail} ×${count}` } : issue);
+    }
 }
 
 /** Promote the single worst slow query into an issue row (the rest are summarized by count). */
@@ -218,8 +248,9 @@ function appendWorstSlow(state: ScanState): void {
     }
     const w = state.worstSlow;
     state.issues.push({
-        tsMs: 0,
-        clock: '',
+        // Real time (when known) so the row sorts chronologically and window-attaches to its screen.
+        tsMs: w.tsMs ?? 0,
+        clock: w.clock ?? '',
         severity: 'perf',
         category: 'Slow query',
         detail: `Drift SLOW ${w.ms}ms ${w.kind} — worst of session`,

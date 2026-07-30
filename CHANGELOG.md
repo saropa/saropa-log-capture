@@ -30,6 +30,16 @@ cspell:disable
 ### Changed
 
 - Status bar capture toggle: replaced the bare dot icon with "SLC" text label for discoverability; shows active session count as a badge (e.g. "SLC (2)"); hovering now shows a menu tooltip with command links — toggle capture, open viewer, pause/resume, stop (when a session is active), open settings, and view changelog
+- Flow map: the legend line under the Flow heading is now an info icon whose tooltip shows the legend on hover or focus
+- Flow map: diagram arrows now label the time spent on a screen before that specific transition, instead of the screen's total time across all visits
+- Flow map: repeated warnings keep one issue row per category but now show how often they fired (e.g. "×47")
+
+### Fixed
+
+- Flow map: the worst slow query now keeps its real time — it sorts chronologically in the Issue Report and badges the screen that was active, instead of floating to the top with no clock
+- Flow map: every unhandled exception in a log is now detected and drawn (previously only the first); each crash edge anchors to the screen active at its own moment
+- Flow map: returning to a screen that appears twice in the open-navigation stack no longer closes every surface between the two visits
+- Flow map: a mid-log hot restart ("App Startup") now resets the walk to the launch node and is counted in Session info, so repeated Home entries after restarts no longer read as user taps
 
 ---
 
