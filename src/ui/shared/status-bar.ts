@@ -1,11 +1,16 @@
 import * as vscode from 'vscode';
 import { t } from '../../l10n';
 
+/** Callback fired when session visibility or pause state changes. */
+export type SessionStateObserver = (active: boolean, paused: boolean) => void;
+
 export class StatusBar implements vscode.Disposable {
     private readonly item: vscode.StatusBarItem;
     private lineCount = 0;
     private paused = false;
+    private visible = false;
     private watchCounts = new Map<string, number>();
+    private sessionStateObserver?: SessionStateObserver;
 
     constructor() {
         this.item = vscode.window.createStatusBarItem(
@@ -18,15 +23,25 @@ export class StatusBar implements vscode.Disposable {
         this.hide();
     }
 
+    /** Subscribe to session visibility/pause changes. Single observer only —
+     *  upgrade to an array or EventEmitter if a second consumer is needed. */
+    setSessionStateObserver(fn: SessionStateObserver): void {
+        this.sessionStateObserver = fn;
+    }
+
     show(): void {
         this.lineCount = 0;
         this.paused = false;
+        this.visible = true;
         this.updateText();
         this.item.show();
+        this.sessionStateObserver?.(true, false);
     }
 
     hide(): void {
+        this.visible = false;
         this.item.hide();
+        this.sessionStateObserver?.(false, false);
     }
 
     updateLineCount(count: number): void {
@@ -37,6 +52,9 @@ export class StatusBar implements vscode.Disposable {
     setPaused(value: boolean): void {
         this.paused = value;
         this.updateText();
+        /* `paused=true` only meaningful when `visible=true`; observer consumers
+         * guard on the active flag so a stale setPaused after hide() is harmless. */
+        this.sessionStateObserver?.(this.visible, value);
     }
 
     /** Update keyword watch hit counts shown in the status bar. */

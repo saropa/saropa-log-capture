@@ -67,6 +67,12 @@ export interface ActivationRefs {
 export function runActivation(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel): ActivationRefs {
     const statusBar = new StatusBar();
     const captureToggle = new CaptureToggleStatusBar(getConfig().enabled);
+    /* sessionManager is declared below but assigned before the observer fires
+     * (no debug sessions start during synchronous activation). */
+    statusBar.setSessionStateObserver((active, paused) => {
+        captureToggle.setSessionState(active, paused);
+        captureToggle.setSessionCount(sessionManager.activeSessionCount);
+    });
     context.subscriptions.push(statusBar, captureToggle, outputChannel);
 
     const sessionManager = new SessionManagerImpl(statusBar, outputChannel);
