@@ -7,6 +7,7 @@
  */
 
 import type { FlowGraph, FlowNode, IssueEvent, ParsedLog, SourceAnchor } from './flow-map-model';
+import type { FlowShot } from './flow-map-screenshots';
 import { anchorText, formatActions, formatDwellMs, nodeHasError, stripAnsi } from './flow-map-format';
 import { renderSvg } from './flow-map-svg';
 import { t } from '../../l10n';
@@ -162,6 +163,28 @@ function section(id: string, title: string, body: string): string {
     return `<details class="sec" id="${id}" open><summary>${title}</summary><div class="sec-body">${body}</div></details>`;
 }
 
+/** Truncate alt/caption text to a readable length without cutting mid-word where avoidable. */
+function truncate(s: string, max: number): string {
+    return s.length > max ? `${s.slice(0, max).trimEnd()}…` : s;
+}
+
+/** One screenshot figure: clickable thumbnail (reuses the log-reveal path) + a clock/trigger/screen caption. */
+function shotFigureHtml(shot: FlowShot): string {
+    const dataLine = shot.logLine > 0 ? ` data-line="${shot.logLine}"` : '';
+    const alt = esc(truncate(stripAnsi(shot.text), 80));
+    const screen = shot.screenLabel ? esc(stripAnsi(shot.screenLabel)) : '—';
+    const caption = `${esc(shot.clock)} · ${esc(shot.trigger)} · ${screen}`;
+    return `<figure class="shot-fig"><img class="shot-img loglink" role="link" tabindex="0"${dataLine} `
+        + `src="${shot.dataUri}" alt="${alt}" title="${alt}"><figcaption class="shot-cap">${caption}</figcaption></figure>`;
+}
+
+/** Screenshot gallery body: a grid of figures plus an omitted-count note when the report capped the set. */
+function screenshotsSectionHtml(shots: readonly FlowShot[], omitted: number): string {
+    const grid = `<div class="shot-grid">${shots.map(shotFigureHtml).join('')}</div>`;
+    const more = omitted > 0 ? `<p class="shot-more">${esc(t('flowMap.shots.more', String(omitted)))}</p>` : '';
+    return grid + more;
+}
+
 /**
  * Localized section titles keyed by section id, emoji baked into the template (not translated).
  * Single source of truth shared by `tocHtml()` and the `section()` calls in `buildFlowMapBody()`.
@@ -171,16 +194,18 @@ function sectionTitles(): Record<string, string> {
         flow: `🗺️ ${t('flowMap.section.flow')}`,
         narrative: `📝 ${t('flowMap.section.narrative')}`,
         session: `🧾 ${t('flowMap.section.session')}`,
+        screenshots: `📸 ${t('flowMap.section.screenshots')}`,
         activity: `📈 ${t('flowMap.section.activity')}`,
         dwell: `⏱️ ${t('flowMap.section.dwell')}`,
         issues: `📊 ${t('flowMap.section.issues')}`,
     };
 }
 
-/** Section table of contents (jumps to and expands a section). */
-function tocHtml(titles: Record<string, string>): string {
+/** Section table of contents (jumps to and expands a section). Omits Screenshots when there are none. */
+function tocHtml(titles: Record<string, string>, hasShots: boolean): string {
     const items: [string, string][] = [
         ['sec-flow', titles.flow], ['sec-narrative', titles.narrative], ['sec-session', titles.session],
+        ...(hasShots ? [['sec-shots', titles.screenshots] as [string, string]] : []),
         ['sec-activity', titles.activity], ['sec-dwell', titles.dwell], ['sec-perf', titles.issues],
     ];
     return '<nav class="toc">'
@@ -220,18 +245,36 @@ export function buildFlowDiagramBody(graph: FlowGraph): string {
     return '<div class="diagram-only">' + flowLegend() + flowDiagramHtml(graph, false) + '</div>';
 }
 
-/** Build the inner webview body (the panel adds doctype/CSP/styles/topbar). */
-export function buildFlowMapBody(parsed: ParsedLog, graph: FlowGraph, logPath?: string): string {
+/** Screenshot gallery inputs, bundled to keep `buildFlowMapBody` within the 4-parameter limit. */
+export interface FlowShotsInput {
+    readonly screenshots: readonly FlowShot[];
+    readonly screenshotsOmitted: number;
+}
+
+/**
+ * Build the inner webview body (the panel adds doctype/CSP/styles/topbar). `shots` is omitted (or its
+ * `screenshots` array is empty) when the log has no sidecar captures — the Screenshots section and its
+ * TOC entry are then left out entirely rather than rendered blank (Phase E, plan 117).
+ */
+export function buildFlowMapBody(
+    parsed: ParsedLog, graph: FlowGraph, logPath?: string, shots?: FlowShotsInput,
+): string {
     // Two-column report: the (potentially very tall) diagram on the left; the narrative and both
     // tables stacked in a right column so they stay visible alongside the diagram, not buried under
     // it. The row wraps to a single column when the panel is narrow.
     const titles = sectionTitles();
+    const screenshots = shots?.screenshots ?? [];
+    const hasShots = screenshots.length > 0;
     const diagramCol = '<div class="diagram-col">'
         + section('sec-flow', titles.flow, flowLegend() + flowDiagramHtml(graph, true))
         + '</div>';
+    const shotsSection = hasShots
+        ? section('sec-shots', titles.screenshots, screenshotsSectionHtml(screenshots, shots?.screenshotsOmitted ?? 0))
+        : '';
     const detailCol = '<div class="detail-col">'
         + section('sec-narrative', titles.narrative, narrativeSectionHtml(parsed, graph))
         + section('sec-session', titles.session, sessionInfoHtml(parsed, graph, logPath))
+        + shotsSection
         + section('sec-activity', titles.activity, activityChartHtml(parsed, clockOf))
         + section('sec-dwell', titles.dwell, dwellTableHtml(graph))
         + section('sec-perf', titles.issues, issueTableHtml(parsed))
@@ -242,7 +285,7 @@ export function buildFlowMapBody(parsed: ParsedLog, graph: FlowGraph, logPath?: 
         + `tabindex="-1" title="${esc(t('flowMap.title.dragToResize'))}"></div>`;
     // Title + clickable log path are rendered by the panel above the bar; the body starts at the TOC.
     return [
-        tocHtml(titles),
+        tocHtml(titles, hasShots),
         '<div class="report-row">' + diagramCol + resizer + detailCol + '</div>',
     ].join('\n');
 }
