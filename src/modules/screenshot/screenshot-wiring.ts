@@ -14,6 +14,8 @@ import { clamp } from '../config/config-validation';
 import { ScreenshotCapturer, type ManualCaptureOutcome } from './screenshot-capturer';
 import { ScreenshotStore, type ScreenshotSaveResult } from './screenshot-store';
 import { captureVmServiceScreenshot } from './vm-service-screenshot';
+import { captureAdbScreenshot } from './adb-screenshot';
+import { makeCaptureTransport } from './screenshot-transport';
 import { getLatestVmServiceWsUri, recordVmServiceUriFromLogLine, registerVmServiceUriTracking } from './vm-service-uri';
 import type { SessionManagerImpl } from '../session/session-manager';
 
@@ -49,7 +51,14 @@ export function registerScreenshotCapture(deps: ScreenshotWiringDeps): Screensho
             maxPerLog: clamp(cfg().get('integrations.screenshots.maxPerLog'), 1, 500, 50),
         }),
         getVmServiceWsUri: getLatestVmServiceWsUri,
-        capturePng: captureVmServiceScreenshot,
+        // VM first (chrome-free where it still exists), adb screencap fallback — the path
+        // that works on modern Flutter, where _flutter.screenshot is gone. Device serial
+        // follows the adb-logcat setting (blank = default device), read fresh per capture.
+        capturePng: makeCaptureTransport({
+            vm: captureVmServiceScreenshot,
+            adb: () => captureAdbScreenshot(cfg().get<string>('integrations.adbLogcat.device', '').trim()),
+            log: deps.log,
+        }),
         store,
         onSaved: deps.onSaved,
         log: deps.log,
