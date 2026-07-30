@@ -31,6 +31,7 @@ cspell:disable
 
 - Flow map: new settings `saropaLogCapture.flowMap.customBreadcrumbs` and `saropaLogCapture.flowMap.customIssues` let any project map its own log lines to screens, actions, and issues without code changes
 - Flow map: a Screenshots section shows the captures taken during the session, each joined to the screen that was active and clickable to jump to its log line
+- Flow map: a Replay button steps through the session walk, highlighting each screen in visit order
 
 ### Changed
 
@@ -41,10 +42,12 @@ cspell:disable
 - Flow map: the diagram now follows the editor color theme (light themes included) — node, edge, and badge colors come from the design tokens instead of fixed dark-only colors
 - Flow map: the visit-count badge only appears on screens visited more than once; multiple return arrows fan out instead of drawing on top of each other; long titles and detail lines truncate to their own font's fit
 - Flow map: report section titles, table headers, session-info labels, and tooltips are now translatable
-- Flow map: report section titles, table headers, and tooltips are now translatable
 
 ### Fixed
 
+- Flow map: a crash without its own widget report no longer claims the next crash's widget and source anchor
+- Flow map: a crash that fires between two visits to the same screen now anchors to the screen actually open at that moment
+- Flow map: custom patterns skip lines over 500 characters, bounding worst-case regex backtracking from user-supplied patterns
 - Flow map: the worst slow query now keeps its real time — it sorts chronologically in the Issue Report and badges the screen that was active, instead of floating to the top with no clock
 - Flow map: every unhandled exception in a log is now detected and drawn (previously only the first); each crash edge anchors to the screen active at its own moment
 - Flow map: returning to a screen that appears twice in the open-navigation stack no longer closes every surface between the two visits

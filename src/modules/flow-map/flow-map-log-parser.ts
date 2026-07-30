@@ -86,6 +86,9 @@ function stripPrefix(line: string): string {
     return line.replace(CLOCK_RE, '').replace(/^\s*\[[^\]]+\]\s*/, '').trim();
 }
 
+/** The Flutter exception-block banner. Shared by the crash finder and the per-crash scan bound. */
+const CRASH_BANNER_RE = /Exception caught by [\w ]+library/i;
+
 /** Recover one exception block's message + crashing-widget anchor, starting at its banner line. */
 function crashAt(
     lines: readonly string[],
@@ -100,8 +103,13 @@ function crashAt(
             continue;
         }
         const clk = parseClock(lines[i]);
-        // Slice from THIS banner so each crash recovers ITS error-causing widget, not the first one's.
-        const widget = parseErrorCausingWidget(lines.slice(bannerIdx), projectRoot);
+        // Bound the widget scan to THIS crash's block (banner → next banner). An open-ended slice
+        // would let a widget-less crash walk forward and steal the NEXT crash's widget/source anchor.
+        let end = lines.length;
+        for (let j = bannerIdx + 1; j < lines.length; j++) {
+            if (CRASH_BANNER_RE.test(lines[j])) { end = j; break; }
+        }
+        const widget = parseErrorCausingWidget(lines.slice(bannerIdx, end), projectRoot);
         return {
             // Use the rollover-resolved time so an after-midnight crash sorts after earlier events.
             tsMs: lineTimes[i] ?? clk?.tsMs ?? 0,
@@ -123,7 +131,7 @@ function detectCrashes(
 ): CrashInfo[] {
     const out: CrashInfo[] = [];
     for (let i = 0; i < lines.length; i++) {
-        if (!/Exception caught by [\w ]+library/i.test(lines[i])) {
+        if (!CRASH_BANNER_RE.test(lines[i])) {
             continue;
         }
         const crash = crashAt(lines, lineTimes, i, projectRoot);

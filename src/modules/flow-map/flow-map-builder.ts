@@ -39,6 +39,12 @@ interface BuildState {
      */
     readonly navStack: string[];
     readonly scan?: ScanIndex;
+    /**
+     * Closed occupancy segments: one {key, start, end} per completed stay on a currentable node.
+     * Node dwell windows (firstTsMs/lastTsMs) span ALL visits including the gaps between them, so a
+     * crash in a gap would window-match the wrong screen; segments record who was ACTUALLY current.
+     */
+    readonly segments: { key: string; start: number; end: number }[];
     currentKey?: string;
     enteredAtMs?: number;
 }
@@ -76,6 +82,8 @@ function leaveCurrent(state: BuildState, atMs: number): void {
         node.dwellMs += Math.max(0, atMs - state.enteredAtMs);
         node.lastTsMs = atMs;
     }
+    // Close this stay's occupancy segment — the precise record crashFromKey anchors against.
+    state.segments.push({ key: state.currentKey, start: state.enteredAtMs, end: atMs });
 }
 
 /** Record (or increment) a plain forward transition edge. Back/return edges are handled by recordTransition. */
@@ -256,19 +264,18 @@ function seedLaunch(state: BuildState, atMs: number): void {
 }
 
 /**
- * The screen a crash's inferred edge should hang off: the INNERMOST currentable node (screen/tab/
- * launch — leaf kinds never become current) whose dwell window contains the crash time. The final
- * `currentKey` is only right for the LAST crash; an earlier crash happened on an earlier screen.
+ * The screen a crash's inferred edge should hang off: whoever was ACTUALLY current at the crash
+ * time, read from the closed occupancy segments. Node dwell windows can't answer this — a node
+ * revisited twice has one window spanning the gap where the user was elsewhere, so a crash in that
+ * gap would window-match the wrong screen. The LAST containing segment wins (nested stays: the
+ * caller's segment re-opens after an exit, so the latest entry is the innermost active surface).
  */
 function crashFromKey(state: BuildState, tsMs: number): string | undefined {
-    let best: FlowNode | undefined;
-    for (const node of state.nodes.values()) {
-        if (node.kind !== 'screen' && node.kind !== 'tab' && node.kind !== 'launch') { continue; }
-        if (issueWithin(node, tsMs) && (!best || (node.firstTsMs ?? 0) > (best.firstTsMs ?? 0))) {
-            best = node;
-        }
+    let found: string | undefined;
+    for (const seg of state.segments) {
+        if (tsMs >= seg.start && tsMs <= seg.end) { found = seg.key; }
     }
-    return best?.key ?? state.currentKey;
+    return found ?? state.currentKey;
 }
 
 /** Create one crash's node + inferred edge and attach its crash issue (R4/R5). */
@@ -349,7 +356,7 @@ function attachIssues(state: BuildState, issues: readonly IssueEvent[]): void {
 
 /** Build the flow graph from a parsed log and optional static-scan index. */
 export function buildGraph(parsed: ParsedLog, scan?: ScanIndex): FlowGraph {
-    const state: BuildState = { nodes: new Map(), edges: new Map(), navStack: [], scan };
+    const state: BuildState = { nodes: new Map(), edges: new Map(), navStack: [], segments: [], scan };
     const transitionEvents = new Set(['nav', 'reached']);
 
     for (const event of parsed.events) {
