@@ -158,6 +158,15 @@ export function flowMapStyles(nonce: string): string {
   /* Hover highlight anchors on brand orange (guide §5.10) so the active point reads as the accent. */
   .ac-link:hover, .ac-link:focus { fill: var(--vscode-charts-orange, var(--brand)); r: 5.5; outline: none; }
 
+  /* Screenshot gallery (Phase E, plan 117): a wrapping grid of small clickable thumbnails, each
+     captioned with capture time/trigger/screen. Reuses .loglink's click wiring on the <img>. */
+  .shot-grid { display: flex; flex-wrap: wrap; gap: 0.7rem; }
+  .shot-fig { width: 150px; margin: 0; }
+  .shot-img { max-width: 100%; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; display: block; }
+  .shot-img:hover { filter: brightness(1.15); }
+  .shot-cap { font-size: 0.8em; color: var(--muted); word-break: break-word; margin-top: 0.25rem; }
+  .shot-more { color: var(--muted); font-size: 0.85em; }
+
   .dwell { min-width: 110px; }
   /* Dwell magnitude bar: green (low/good) to info-blue (high) ramp, anchored on the semantic tokens. */
   .dwell-bar { display: inline-block; height: 0.62em; border-radius: var(--radius-sm); background: linear-gradient(90deg, var(--status-good), var(--accent-info)); vertical-align: middle; margin-right: 0.45rem; }
