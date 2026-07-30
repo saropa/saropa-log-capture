@@ -256,6 +256,17 @@ suite('recordVmServiceUriFromLogLine', () => {
         assert.strictEqual(getLatestVmServiceWsUri(), 'ws://127.0.0.1:33417/abcDEF123=/ws');
     });
 
+    test('should register the ws URI from the Dart-Code "Connecting to" console line', () => {
+        // The ONLY VM Service line real contacts sessions emit (2026-07-28/29 logs) — the
+        // "is available at" banner never appears, and the URL is already ws://.
+        const hit = recordVmServiceUriFromLogLine(
+            'Connecting to VM Service at ws://127.0.0.1:56443/e3arVY258sw=/ws',
+            'd:/reports/contacts.log',
+        );
+        assert.strictEqual(hit, true);
+        assert.strictEqual(getLatestVmServiceWsUri(), 'ws://127.0.0.1:56443/e3arVY258sw=/ws');
+    });
+
     test('should ignore ordinary log lines and URLs without the banner lead-in', () => {
         assert.strictEqual(recordVmServiceUriFromLogLine('GET http://127.0.0.1:8080/api ok', 'd:/reports/test.log'), false);
         assert.strictEqual(recordVmServiceUriFromLogLine('plain output line', 'd:/reports/test.log'), false);
