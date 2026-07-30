@@ -8,6 +8,7 @@
 import * as vscode from 'vscode';
 import { t } from '../../l10n';
 import type { FlowGraph, ParsedLog } from '../../modules/flow-map/flow-map-model';
+import type { FlowShot } from '../../modules/flow-map/flow-map-screenshots';
 import { buildFlowDiagramBody, buildFlowMapBody } from '../../modules/flow-map/flow-map-html';
 import { flowMapStyles } from './flow-map-panel-styles';
 import { flowMapScript } from './flow-map-panel-script';
@@ -28,6 +29,10 @@ export interface FlowMapPanelParams {
     readonly revealLine: (line: number) => void;
     /** Regenerate the report from the current log and re-render the panel. */
     readonly refresh: () => void;
+    /** Captured screenshots (plan 114) joined to the screen active when each was taken (Phase E). */
+    readonly screenshots: readonly FlowShot[];
+    /** Count of sidecar entries beyond the render cap, for the "+N more" gallery note. */
+    readonly screenshotsOmitted: number;
 }
 
 let current: vscode.WebviewPanel | undefined;
@@ -72,8 +77,12 @@ function titleHtml(params: FlowMapPanelParams): string {
 /** Full HTML document: CSP, styles, header (title + action buttons), report body, script. */
 function buildHtml(params: FlowMapPanelParams, nonce: string): string {
     // Stats and the log path now live as rows in the Session-info section (info ≠ navigation).
-    const body = buildFlowMapBody(params.parsed, params.graph, params.logUri.fsPath);
-    const csp = `default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';`;
+    const body = buildFlowMapBody(params.parsed, params.graph, params.logUri.fsPath, {
+        screenshots: params.screenshots, screenshotsOmitted: params.screenshotsOmitted,
+    });
+    // img-src data: only on the main report — thumbnails render here; the diagram-only pop-out below
+    // never includes the gallery, so its CSP stays unchanged.
+    const csp = `default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}'; img-src data:;`;
     const actions = '<div class="topbar-actions">'
         + iconButton('showlog-fm', t('flowMap.showLogBtn'), LOG_SVG)
         + iconButton('refresh-fm', t('flowMap.refreshBtn'), REFRESH_SVG)

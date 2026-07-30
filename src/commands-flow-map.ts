@@ -8,6 +8,11 @@ import { buildGraph } from './modules/flow-map/flow-map-builder';
 import { buildReport } from './modules/flow-map/flow-map-report';
 import { scanProjectScreens } from './modules/flow-map/flow-map-source-scan';
 import { showFlowMapPanel, type FlowMapPanelParams } from './ui/panels/flow-map-panel';
+import { readScreenshotSidecar, screenshotDirUri } from './modules/screenshot/screenshot-store';
+import { joinShotsToScreens, type ShotWithDataUri } from './modules/flow-map/flow-map-screenshots';
+
+/** Bound how many screenshots the webview embeds as data URIs — keeps panel HTML weight sane. */
+const MAX_REPORT_SHOTS = 12;
 
 /** The viewer surface the flow map drives to reveal log lines. */
 export interface FlowMapViewer {
@@ -33,6 +38,33 @@ function defaultReportUri(logUri: vscode.Uri): vscode.Uri {
 /** The report params minus `refresh` (the command supplies the refresh closure). */
 type ReportData = Omit<FlowMapPanelParams, 'refresh'>;
 
+/** Read one screenshot PNG and encode it as a data URI; undefined when the file is unreadable. */
+async function readShotDataUri(logFsPath: string, file: string): Promise<string | undefined> {
+    try {
+        const uri = vscode.Uri.joinPath(screenshotDirUri(logFsPath), file);
+        const bytes = await vscode.workspace.fs.readFile(uri);
+        return `data:image/png;base64,${Buffer.from(bytes).toString('base64')}`;
+    } catch {
+        // Non-fatal — a moved/deleted PNG just drops out of the gallery instead of failing the report.
+        return undefined;
+    }
+}
+
+/**
+ * Load the first `MAX_REPORT_SHOTS` sidecar screenshots as data URIs and join them to the screen
+ * active at capture time. Returns the shots plus how many entries were left out of the cap.
+ */
+async function loadFlowShots(logFsPath: string): Promise<{ shots: ShotWithDataUri[]; omitted: number }> {
+    const entries = await readScreenshotSidecar(logFsPath);
+    const capped = entries.slice(0, MAX_REPORT_SHOTS);
+    const withUris: ShotWithDataUri[] = [];
+    for (const entry of capped) {
+        const dataUri = await readShotDataUri(logFsPath, entry.file);
+        if (dataUri) { withUris.push({ ...entry, dataUri }); }
+    }
+    return { shots: withUris, omitted: Math.max(0, entries.length - MAX_REPORT_SHOTS) };
+}
+
 /** Read the log and build the report model + markdown. Separated for isolated testing/observation. */
 async function generateReport(logUri: vscode.Uri, revealLine: (line: number) => void): Promise<ReportData> {
     const bytes = await vscode.workspace.fs.readFile(logUri);
@@ -48,12 +80,15 @@ async function generateReport(logUri: vscode.Uri, revealLine: (line: number) => 
     // Source 3 — non-fatal; empty index yields a runtime-only map.
     const scan = await scanProjectScreens(parsed.header.projectRoot);
     const graph = buildGraph(parsed, scan);
+    const { shots, omitted } = await loadFlowShots(logUri.fsPath);
     return {
         parsed, graph,
         markdown: buildReport(parsed, graph),
         defaultUri: defaultReportUri(logUri),
         logUri,
         revealLine,
+        screenshots: joinShotsToScreens(shots, parsed.events),
+        screenshotsOmitted: omitted,
     };
 }
 
