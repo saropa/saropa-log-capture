@@ -45,6 +45,26 @@ suite('CaptureToggleStatusBar', () => {
         });
     });
 
+    test('should accept setSessionState without throwing', () => {
+        toggle = new CaptureToggleStatusBar(true);
+        assert.doesNotThrow(() => { toggle.setSessionState(true, false); });
+        assert.doesNotThrow(() => { toggle.setSessionState(true, true); });
+        assert.doesNotThrow(() => { toggle.setSessionState(false, false); });
+    });
+
+    test('should handle setSessionState when disabled', () => {
+        toggle = new CaptureToggleStatusBar(false);
+        assert.doesNotThrow(() => { toggle.setSessionState(true, false); });
+        assert.doesNotThrow(() => { toggle.setSessionState(false, false); });
+    });
+
+    test('should accept setSessionCount without throwing', () => {
+        toggle = new CaptureToggleStatusBar(true);
+        assert.doesNotThrow(() => { toggle.setSessionCount(0); });
+        assert.doesNotThrow(() => { toggle.setSessionCount(1); });
+        assert.doesNotThrow(() => { toggle.setSessionCount(5); });
+    });
+
     test('should dispose without throwing', () => {
         toggle = new CaptureToggleStatusBar(true);
         assert.doesNotThrow(() => { toggle.dispose(); });

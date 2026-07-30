@@ -204,6 +204,7 @@ export function parseLog(lines: readonly string[], projectRootOverride?: string)
         events: state.events,
         issues: state.issues,
         crash,
+        crashes: crash ? [crash] : [],
         slowQueryCount: state.slowCount,
         repeatBatchCount: state.repeatCount,
         lastClock: state.lastClock,
