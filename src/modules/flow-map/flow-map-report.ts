@@ -33,7 +33,9 @@ function facts(parsed: ParsedLog): string {
         `**Session:** ${h.project ?? 'unknown'} · \`${h.branch ?? '?'}\` @ \`${h.commit ?? '?'}\``,
         `**Device:** ${h.device ?? 'unknown'} · Flutter`,
         `**Captured:** ${span} · Saropa Log Capture ${h.version ?? ''}`.trim(),
-        `**Outcome:** ${parsed.crash ? '💥 1 unhandled exception' : '✓ no crash'} · `
+        `**Outcome:** ${parsed.crashes.length > 0
+            ? `💥 ${parsed.crashes.length} unhandled exception${parsed.crashes.length === 1 ? '' : 's'}`
+            : '✓ no crash'} · `
             + `${parsed.slowQueryCount} slow queries`,
     ].join('  \n');
 }
@@ -92,7 +94,10 @@ export function buildNarrative(parsed: ParsedLog, graph: FlowGraph): string {
     if (parsed.crash) {
         const at = anchorText(parsed.crash.source);
         const message = parsed.crash.message.replace(/[.\s]+$/, '');
-        parts.push(`The session's one fault: ${message}${at ? ` — \`${at}\`` : ''}.`);
+        const label = parsed.crashes.length === 1
+            ? "The session's one fault"
+            : `The session faulted ${parsed.crashes.length} times — first`;
+        parts.push(`${label}: ${message}${at ? ` — \`${at}\`` : ''}.`);
     }
     parts.push(`${parsed.slowQueryCount} slow queries and ${parsed.repeatBatchCount} repeat batches `
         + `were logged (mostly repeated preference reads).`);
