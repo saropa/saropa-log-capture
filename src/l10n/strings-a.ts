@@ -18,6 +18,16 @@ export const stringsA: Record<string, string> = {
     // (only used when at least one session was active; the plain "disabled" string is used when idle).
     'captureToggle.disabledStoppedSessions': 'Log capture disabled — stopped {0} active session(s).',
 
+    // Status bar menu tooltip items (MarkdownString command links)
+    'captureToggle.menu.captureOn': 'Capture enabled',
+    'captureToggle.menu.captureOff': 'Capture disabled',
+    'captureToggle.menu.openViewer': 'Open viewer',
+    'captureToggle.menu.pause': 'Pause',
+    'captureToggle.menu.resume': 'Resume',
+    'captureToggle.menu.stop': 'Stop',
+    'captureToggle.menu.settings': 'Settings',
+    'captureToggle.menu.changelog': 'Changelog',
+
     'msg.noActiveSession': 'No active log. Open a log file in the viewer first.',
     'msg.noActiveSessionToSplit': 'No active debug session to split.',
     'msg.logFileSplit': 'Log file split. Now on part {0}.',

@@ -219,6 +219,12 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
         vscode.commands.registerCommand('saropaLogCapture.saveTemplate', async () => { await promptSaveTemplate(); }),
         vscode.commands.registerCommand('saropaLogCapture.resetAllSettings', resetAllSettings),
         vscode.commands.registerCommand('saropaLogCapture.configureIntegrations', () => showIntegrationsPicker()),
+        vscode.commands.registerCommand('saropaLogCapture.openSettings', () => {
+            void vscode.commands.executeCommand('workbench.action.openSettings', `@ext:${extensionId}`);
+        }),
+        vscode.commands.registerCommand('saropaLogCapture.openChangelog', () => {
+            void vscode.commands.executeCommand('extension.open', extensionId);
+        }),
     ];
 }
 
