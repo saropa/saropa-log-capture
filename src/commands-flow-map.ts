@@ -3,6 +3,7 @@
 import * as vscode from 'vscode';
 import { t } from './l10n';
 import { parseLog } from './modules/flow-map/flow-map-log-parser';
+import { compileCustomPatterns } from './modules/flow-map/flow-map-custom-patterns';
 import { buildGraph } from './modules/flow-map/flow-map-builder';
 import { buildReport } from './modules/flow-map/flow-map-report';
 import { scanProjectScreens } from './modules/flow-map/flow-map-source-scan';
@@ -36,7 +37,14 @@ type ReportData = Omit<FlowMapPanelParams, 'refresh'>;
 async function generateReport(logUri: vscode.Uri, revealLine: (line: number) => void): Promise<ReportData> {
     const bytes = await vscode.workspace.fs.readFile(logUri);
     const lines = Buffer.from(bytes).toString('utf-8').split(/\r?\n/);
-    const parsed = parseLog(lines);
+    // Read fresh per call (not cached) so a settings change is picked up by the Refresh button
+    // without reloading the panel — same fresh-read rule the rest of the config surface follows.
+    const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+    const custom = compileCustomPatterns(
+        cfg.get('flowMap.customBreadcrumbs'),
+        cfg.get('flowMap.customIssues'),
+    );
+    const parsed = parseLog(lines, undefined, custom);
     // Source 3 — non-fatal; empty index yields a runtime-only map.
     const scan = await scanProjectScreens(parsed.header.projectRoot);
     const graph = buildGraph(parsed, scan);
