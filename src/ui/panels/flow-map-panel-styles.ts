@@ -94,6 +94,11 @@ export function flowMapStyles(nonce: string): string {
   /* Brief flash when "center the fault" lands so the eye catches the crash node after the pan. */
   .fm-node.fm-flash rect { animation: fm-flash 0.9s ease 2; }
   @keyframes fm-flash { 0%, 100% { stroke-width: 1.5; } 50% { stroke-width: 4.5; } }
+  /* Persistent step marker while Replay is running (distinct from the one-shot fm-flash above). */
+  .fm-node.fm-replay-hl rect { stroke-width: 4; filter: brightness(1.25); animation: fm-replay-pulse 1.4s ease-in-out infinite; }
+  @keyframes fm-replay-pulse { 0%, 100% { stroke-opacity: 1; } 50% { stroke-opacity: 0.5; } }
+  /* The Replay button itself stays lit while a walk is in progress, mirroring the panning-cursor cue. */
+  .fm-zoom-btn.fm-zoom-active { background: var(--vscode-button-background); color: var(--vscode-button-foreground); }
 
   /* Draggable column divider. A wide invisible hit area around a thin visible rule keeps the grab
      forgiving without a fat gutter. Highlights on hover/drag so the affordance is discoverable. */
@@ -210,7 +215,7 @@ export function flowMapStyles(nonce: string): string {
   tr.sev-perf td:first-child { box-shadow: inset 3px 0 0 var(--status-good); }
   @keyframes fm-fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @keyframes fm-pulse { 0%,100% { stroke-opacity: 1; } 50% { stroke-opacity: 0.3; } }
-  @media (prefers-reduced-motion: reduce) { .diagram-scroll svg, .fm-crash rect, .fm-node.fm-flash rect { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .diagram-scroll svg, .fm-crash rect, .fm-node.fm-flash rect, .fm-node.fm-replay-hl rect { animation: none; } }
 
   /* Node detail popup (double-click a node): a centered modal card over a dimmed backdrop, listing
      everything known about the surface — type, dwell, times, source, log line, actions, issues. */
