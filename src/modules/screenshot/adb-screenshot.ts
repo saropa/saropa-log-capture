@@ -18,6 +18,13 @@ import { spawn } from 'node:child_process';
 /** Bound a hung adb (device asleep, USB drop) — same order as the VM capture timeout. */
 const CAPTURE_TIMEOUT_MS = 7000;
 
+/**
+ * Hard ceiling on buffered process output. A screencap PNG is a few MB; a misbehaving
+ * adb streaming for the whole timeout window must not grow an unbounded buffer
+ * (project queue doctrine: every buffer is bounded).
+ */
+const MAX_OUT_BYTES = 32 * 1024 * 1024;
+
 /** PNG magic prefix — screencap failures sometimes exit 0 with error text on stdout. */
 function looksLikePng(buf: Buffer): boolean {
     return buf.length > 8 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47;
@@ -45,8 +52,18 @@ export function captureAdbScreenshot(deviceSerial: string): Promise<Uint8Array> 
             finish(new Error(`adb screencap timed out after ${CAPTURE_TIMEOUT_MS}ms`));
         }, CAPTURE_TIMEOUT_MS);
 
-        child.stdout.on('data', (c: Buffer) => out.push(c));
-        child.stderr.on('data', (c: Buffer) => err.push(c));
+        let outBytes = 0;
+        child.stdout.on('data', (c: Buffer) => {
+            outBytes += c.length;
+            if (outBytes > MAX_OUT_BYTES) {
+                try { child.kill(); } catch { /* already gone */ }
+                finish(new Error(`adb screencap exceeded ${MAX_OUT_BYTES} bytes — aborted`));
+                return;
+            }
+            out.push(c);
+        });
+        // stderr is diagnostics only and truncated at read; cap defensively all the same.
+        child.stderr.on('data', (c: Buffer) => { if (err.length < 64) { err.push(c); } });
         child.on('error', (e: Error) => finish(new Error(`adb not available: ${e.message}`)));
         child.on('close', (code: number | null) => {
             const buf = Buffer.concat(out);
