@@ -25,7 +25,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.3.4]
+
+The Flow map gets a major upgrade with session replays, custom breadcrumb mapping, integrated screenshot previews, and theme support, plus a fresh status bar look with quick-action menus.  [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.4/CHANGELOG.md)
 
 ### Added
 
