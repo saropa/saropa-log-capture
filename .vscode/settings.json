@@ -168,5 +168,8 @@
     "git",
     "packages"
   ],
-  "saropaLogCapture.ai.enabled": true
+  "saropaLogCapture.ai.enabled": true,
+  "saropaLogCapture.enabled": true,
+  "saropaLogCapture.integrations.screenshots.onWarning": true,
+  "saropaLogCapture.integrations.screenshots.onNavigation": true
 }
