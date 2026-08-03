@@ -38,6 +38,15 @@ export interface FlowShot {
 const NODE_CREATING_KINDS: ReadonlySet<TimelineEvent['kind']> = new Set(['nav', 'reached']);
 
 /**
+ * Normalized screen identity for a display label — MUST mirror the builder's `normalizeKey` (R3),
+ * because the replay preview pairs gallery figures (`data-screen-key`) with diagram nodes
+ * (`data-rowkey`) by exact string equality of this key.
+ */
+export function screenKeyOf(label: string): string {
+    return label.toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+/**
  * Format epoch-ms to a local HH:MM:SS clock string for the gallery caption.
  * Caveat: this is HOST-local time. Log line clocks are DEVICE-local ms-of-day, so when the device
  * sits in another timezone the caption clock will not match adjacent log clocks — the join itself
