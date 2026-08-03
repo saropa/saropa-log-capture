@@ -21,8 +21,33 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from modules.verify import l10n_qwen_engine as engine  # noqa: E402
 
 
+class NormalizeModelNameTests(unittest.TestCase):
+    """_normalize_model_name strips digest and :latest suffixes."""
+
+    def test_no_suffix(self) -> None:
+        self.assertEqual(engine._normalize_model_name("qwen3:8b"), "qwen3:8b")
+
+    def test_strips_digest(self) -> None:
+        self.assertEqual(
+            engine._normalize_model_name("qwen3:8b@sha256:abc123"),
+            "qwen3:8b",
+        )
+
+    def test_strips_latest(self) -> None:
+        self.assertEqual(
+            engine._normalize_model_name("qwen3:latest"),
+            "qwen3",
+        )
+
+    def test_strips_both(self) -> None:
+        self.assertEqual(
+            engine._normalize_model_name("qwen3:latest@sha256:abc"),
+            "qwen3",
+        )
+
+
 class HasModelTests(unittest.TestCase):
-    """_has_model strips digest suffixes before comparing."""
+    """_has_model normalizes names before comparing."""
 
     def _fake_tags(self, names: list[str]) -> str:
         models = [{"name": n} for n in names]
@@ -50,6 +75,18 @@ class HasModelTests(unittest.TestCase):
         resp.status = 200
         with patch("urllib.request.urlopen", return_value=resp):
             with patch.object(engine, "QWEN_MODEL_TAG", "qwen3:8b"):
+                self.assertTrue(engine._has_model())
+
+    def test_latest_suffix_still_matches(self) -> None:
+        """If tags list has 'qwen3:latest', it matches SAROPA_QWEN_MODEL='qwen3'."""
+        from unittest.mock import MagicMock
+        resp = MagicMock()
+        resp.__enter__ = lambda s: s
+        resp.__exit__ = MagicMock(return_value=False)
+        resp.read.return_value = self._fake_tags(["qwen3:latest"])
+        resp.status = 200
+        with patch("urllib.request.urlopen", return_value=resp):
+            with patch.object(engine, "QWEN_MODEL_TAG", "qwen3"):
                 self.assertTrue(engine._has_model())
 
 
