@@ -110,6 +110,32 @@ suite('FlowMap review fixes (plan 117)', () => {
             const crashEdge = graph.edges.find(e => e.inferred);
             assert.strictEqual(crashEdge?.from, 'alpha', 'crash hangs off Alpha, not the revisited Home');
         });
+
+        test('should anchor a crash at the exact transition instant to the NEWLY entered screen', () => {
+            // Segment boundaries touch: Home's stay ends at the same ms Alpha's begins. The later
+            // segment wins the tie — the crash renders off the surface the user just landed on.
+            const tieLines = [...HEAD,
+                nav('08:00:01', 'Home'),
+                nav('08:05:00', 'Alpha'),
+                '[08:05:00.000] [stderr] ════════ Exception caught by rendering library ═══',
+                '[08:05:00.001] [stdout] Boundary failure.',
+                nav('08:10:00', 'Beta'),
+            ];
+            const graph = buildGraph(parseLog(tieLines));
+            const crashEdge = graph.edges.find(e => e.inferred);
+            assert.strictEqual(crashEdge?.from, 'alpha', 'tie resolves to the newly entered screen');
+        });
+
+        test('should detect a gesture exception banner (no "library" suffix)', () => {
+            const gestureLines = [...HEAD,
+                nav('08:00:01', 'Home'),
+                '[08:00:10.000] [stderr] ════════ Exception caught by gesture ═══',
+                '[08:00:10.001] [stdout] Tap handler threw.',
+            ];
+            const parsed = parseLog(gestureLines);
+            assert.strictEqual(parsed.crashes.length, 1, 'gesture banner detected');
+            assert.strictEqual(parsed.crashes[0].message, 'Tap handler threw.');
+        });
     });
 
     suite('nearest-occurrence back-pop (item 4)', () => {

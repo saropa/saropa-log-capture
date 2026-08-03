@@ -86,8 +86,13 @@ function stripPrefix(line: string): string {
     return line.replace(CLOCK_RE, '').replace(/^\s*\[[^\]]+\]\s*/, '').trim();
 }
 
-/** The Flutter exception-block banner. Shared by the crash finder and the per-crash scan bound. */
-const CRASH_BANNER_RE = /Exception caught by [\w ]+library/i;
+/**
+ * The Flutter exception-block banner. Shared by the crash finder and the per-crash scan bound.
+ * Deliberately loose: Flutter prints "Exception caught by rendering library" / "widgets library" but
+ * also "Exception caught by gesture" (no "library" suffix) — requiring the suffix silently dropped
+ * gesture crashes, and a future framework wording tweak would zero out detection the same way.
+ */
+const CRASH_BANNER_RE = /Exception caught by\s+\w/i;
 
 /** Recover one exception block's message + crashing-widget anchor, starting at its banner line. */
 function crashAt(

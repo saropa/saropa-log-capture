@@ -62,6 +62,8 @@ All settings are prefixed with `saropaLogCapture.`
 | `flowMap.customBreadcrumbs` | `[]`   | Project-specific regex patterns that map log lines to flow-map screens/actions: `{ pattern, kind: nav\|action\|viewed\|handoff, nodeKind?, label? }`. `label` supports `$1`–`$9` capture templates (default `$1`). Invalid patterns are skipped. |
 | `flowMap.customIssues`      | `[]`   | Project-specific regex patterns that surface issue rows: `{ pattern, category, severity: warn\|perf\|error, detail? }`. `warn` rows dedup by category with a repeat count; `perf`/`error` rows are kept per occurrence. |
 
+Custom patterns only scan lines up to 500 characters — longer lines (SQL/JSON payload dumps) are skipped outright to bound regex backtracking, so keep breadcrumb markers short. The category name `Crash` is reserved for detected exceptions.
+
 ## Advanced Settings
 
 | Setting              | Default          | Description                                                                                                                                      |
