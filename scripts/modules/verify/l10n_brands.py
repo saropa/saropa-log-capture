@@ -55,7 +55,7 @@ ACRONYM_ONLY_STRINGS: frozenset[str] = frozenset({
 # Japanese. A global force-English set would mistranslate the locales that DO
 # differ, so each entry names the exact locale it was checked against. Audit-only
 # — the translator's publish path already leaves en-copy keys in place, so these
-# are never re-sent to Google.
+# are never re-sent to the translation engine.
 #
 # Add an entry ONLY after confirming the word is genuinely identical in that
 # locale (a true cognate, loanword, proper noun, or abbreviation), not merely
@@ -183,7 +183,7 @@ def is_no_translatable_content(en_value: str) -> bool:
     Like brands/acronyms, identity IS the correct rendering: there is nothing to
     translate, so the value equals English in every locale. Without this skip a
     value==English check counts these as untranslated forever, and the translator
-    round-trips them to Google for identical output on every publish.
+    round-trips them to the engine for identical output on every publish.
 
     Translatable content = any ASCII letter (a real word or single-letter label
     that could differ per locale, e.g. a column header "A"), OR a run of two or
@@ -219,7 +219,7 @@ def validate_brands(en_value: str, translated: str) -> list[str]:
 # sending to the MT engine, then restore them after. This prevents the engine
 # from transliterating or "translating" brand names.
 #
-# Sentinel format: XBQ<L1><L2>VKZ (7 chars, no digits, no adjacent repeats).
+# Sentinel format: XBQ<L1><L2>VKZ (8 chars, no digits, no adjacent repeats).
 # Matches the saropa.com website pipeline. The frame letters (XBQ/VKZ) form
 # consonant clusters that never appear in natural text, so the model copies
 # them through as opaque tokens rather than trying to translate them.

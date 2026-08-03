@@ -8,8 +8,8 @@ The bundles themselves stay plain ``{english: translation}`` maps; provenance
 lives beside them so the audit can report quality and an upgrade pass can target
 only the weak translations.
 
-Quality model: Qwen / manual / verified-identity are high quality; NLLB, Google,
-and the other free MT engines are low; and — critically — a translated key with
+Quality model: Qwen / manual / verified-identity are high quality; NLLB and
+other legacy MT engines are low; and — critically — a translated key with
 NO provenance record is treated as **untracked = low quality**. Every translation
 in these bundles predates provenance tracking, so they all classify as low until
 re-translated, which is exactly what lets the "upgrade low-quality" pass sweep
