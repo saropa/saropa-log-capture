@@ -25,6 +25,15 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- l10n translation engine switched from NLLB/Google to Qwen 3 via Ollama (offline, no rate limits, no Google fallback)
+- NLLB and Google translations are now classified as low quality in provenance; Qwen is high quality
+
+---
+
 ## [9.3.5]
 
 Flow map replays now show a floating screenshot of each screen as they step through, and crash detection no longer misses gesture exceptions. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.5/CHANGELOG.md)
