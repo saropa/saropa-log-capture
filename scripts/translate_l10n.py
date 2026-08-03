@@ -21,7 +21,8 @@
 #
 #   Interactive mode (no args, TTY): shows the audit then a menu —
 #     1 Audit only · 2 Sync English · 3 Sync + translate all ·
-#     4 Sync + translate specific · 0 Exit
+#     4 Sync + translate specific · 5/6 Low-quality upgrade ·
+#     7 Round-trip quality audit · 0 Exit
 #
 #   Non-interactive / CI (--run-mode):
 #     --run-mode audit       read-only status report

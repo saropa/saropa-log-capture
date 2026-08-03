@@ -477,8 +477,9 @@ def translate_locale(
                 continue
 
             if prompt_preview:
-                # Print the prompt to stderr without calling Ollama
-                translator.translate(en_key)  # type: ignore[union-attr]
+                # Shield brands so the preview shows exactly what Ollama sees
+                shielded, _ = shield_brands(en_key)
+                translator.translate(shielded)  # type: ignore[union-attr]
                 translated += 1
                 continue
 
