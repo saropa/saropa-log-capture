@@ -3,17 +3,17 @@
 
 Models the Saropa Contacts pipeline's provenance system, scaled down for this
 project's flat bundles. Each locale gets a sidecar ``l10n/provenance/<locale>.json``
-mapping ``english_key -> engine`` (``"nllb"``, ``"google"``, …). The bundles
-themselves stay plain ``{english: translation}`` maps; provenance lives beside
-them so the audit can report quality and an upgrade pass can target only the
-weak translations.
+mapping ``english_key -> engine`` (``"qwen"``, ``"nllb"``, ``"google"``, …).
+The bundles themselves stay plain ``{english: translation}`` maps; provenance
+lives beside them so the audit can report quality and an upgrade pass can target
+only the weak translations.
 
-Quality model (matches contacts): NLLB / manual / verified-identity are high
-quality; Google and the other free MT engines are low; and — critically — a
-translated key with NO provenance record is treated as **untracked = low
-quality**. Every translation in these bundles predates provenance tracking, so
-they all classify as low until re-translated, which is exactly what lets the
-"upgrade low-quality" pass sweep the old Google output into NLLB.
+Quality model: Qwen / manual / verified-identity are high quality; NLLB, Google,
+and the other free MT engines are low; and — critically — a translated key with
+NO provenance record is treated as **untracked = low quality**. Every translation
+in these bundles predates provenance tracking, so they all classify as low until
+re-translated, which is exactly what lets the "upgrade low-quality" pass sweep
+the old output into Qwen.
 """
 
 import json
@@ -32,6 +32,7 @@ PROJECT_ROOT = _MODULE_DIR.parent.parent.parent
 PROVENANCE_DIR = PROJECT_ROOT / "l10n" / "provenance"
 
 # Engine identifiers stamped into provenance.
+ENGINE_QWEN = "qwen"
 ENGINE_NLLB = "nllb"
 ENGINE_GOOGLE = "google"
 ENGINE_MANUAL = "manual"
@@ -45,19 +46,19 @@ ENGINE_IDENTITY = "identity"
 
 # High quality — never an upgrade candidate.
 HIGH_QUALITY_ENGINES = frozenset({
-    ENGINE_NLLB, ENGINE_MANUAL, ENGINE_IDENTITY, "translation_memory", "gemini",
+    ENGINE_QWEN, ENGINE_MANUAL, ENGINE_IDENTITY, "translation_memory", "gemini",
 })
 # Low quality — produced by a weaker MT engine. Upgrade candidates.
 LOW_QUALITY_ENGINES = frozenset({
-    ENGINE_GOOGLE, "mymemory", "libretranslate", "lingva", "argos",
+    ENGINE_NLLB, ENGINE_GOOGLE, "mymemory", "libretranslate", "lingva", "argos",
     "legacy_pre_provenance",
 })
 
 # Left-to-right order for the audit table: best quality first.
 ENGINE_DISPLAY_ORDER = [
-    ENGINE_NLLB, "gemini", ENGINE_MANUAL, "translation_memory", ENGINE_IDENTITY,
-    ENGINE_GOOGLE, "mymemory", "libretranslate", "lingva", "argos",
-    "legacy_pre_provenance", ENGINE_UNTRACKED,
+    ENGINE_QWEN, ENGINE_NLLB, "gemini", ENGINE_MANUAL, "translation_memory",
+    ENGINE_IDENTITY, ENGINE_GOOGLE, "mymemory", "libretranslate", "lingva",
+    "argos", "legacy_pre_provenance", ENGINE_UNTRACKED,
 ]
 
 
