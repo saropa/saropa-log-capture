@@ -71,9 +71,9 @@ VERIFIED_IDENTICAL: dict[str, frozenset[str]] = {
         "{0} total",
     }),
     "fr": frozenset({
-        "{0} commit", "FATAL", "Ver", "Versions", "Flutter DAP", "Exclusions",
-        "Exclusions ({0})", "Collections", "Audio", "Performance", "Sources",
-        "Terminal", "Pause", "Dates", "Git", "Session", "{0} types",
+        "{0} commit", "FATAL", "Ver", "Version", "Versions", "Flutter DAP",
+        "Exclusions", "Exclusions ({0})", "Collections", "Audio", "Performance",
+        "Sources", "Terminal", "Pause", "Dates", "Git", "Session", "{0} types",
     }),
     "it": frozenset({
         "Dev", "— stdout, stderr, console", "Perf", "file", "Debug",
