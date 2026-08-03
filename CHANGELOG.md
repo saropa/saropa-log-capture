@@ -25,7 +25,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.3.5]
+
+Flow map replays now show a floating screenshot of each screen as they step through, and crash detection no longer misses gesture exceptions. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.5/CHANGELOG.md)
 
 ### Added
 
