@@ -15,6 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from modules.verify.l10n_brands import (  # noqa: E402
+    _SENT_CAPACITY,
     _sentinel,
     shield_brands,
     unshield_brands,
@@ -39,6 +40,10 @@ class SentinelFormatTests(unittest.TestCase):
     def test_no_digits(self) -> None:
         for i in range(20):
             self.assertFalse(any(c.isdigit() for c in _sentinel(i)))
+
+    def test_overflow_raises(self) -> None:
+        with self.assertRaises(ValueError):
+            _sentinel(_SENT_CAPACITY)
 
 
 class ShieldUnshieldRoundTripTests(unittest.TestCase):
