@@ -20,6 +20,10 @@ from modules.verify.l10n_actions import (
     run_translate,
     write_report_and_offer_export,
 )
+from modules.verify.l10n_quality_audit import (
+    print_quality_report,
+    run_quality_audit,
+)
 from modules.verify.l10n_audit_display import print_audit, print_untranslated_detail
 from modules.verify.l10n_bundle_audit import (
     AuditResult,
@@ -81,6 +85,7 @@ def _print_menu() -> None:
     print("  4  Sync + translate GAPS — specific locales")
     print("  5  Sync + upgrade LOW-QUALITY → Qwen — all locales")
     print("  6  Sync + upgrade LOW-QUALITY → Qwen — specific locales")
+    print("  7  Round-trip quality audit (samples translations, needs Qwen)")
     print("  0  Exit")
 
 
@@ -139,8 +144,24 @@ def interactive_menu() -> int:
             print(yellow("  Cancelled."))
             return 2
         return _sync_translate_reaudit(codes, "low_quality")
+    if choice == "7":
+        return _run_quality_audit()
     print(red(f"  Unknown choice: {choice}"))
     return 1
+
+
+def _run_quality_audit() -> int:
+    """Run the round-trip quality audit from the interactive menu."""
+    locales = get_translation_locales()
+    try:
+        raw = input(f"\n  Sample size per locale [20]: ").strip()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return 2
+    sample_size = int(raw) if raw.isdigit() and int(raw) > 0 else 20
+    flagged = run_quality_audit(locales, sample_size=sample_size)
+    print_quality_report(flagged)
+    return 0
 
 
 # ── Non-interactive (CI / --run-mode) ─────────────────────────

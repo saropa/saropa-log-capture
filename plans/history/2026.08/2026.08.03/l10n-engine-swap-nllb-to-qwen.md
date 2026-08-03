@@ -39,10 +39,11 @@ The l10n translation pipeline used the offline NLLB-200-3.3B model (CTranslate2)
 - Fixed `translate()` docstring: accurately states "Raises on network/timeout errors" (was "Returns None on failure")
 - Fixed prompt text: "8-character" sentinel tokens (was "7-character")
 - Removed unused `sentinels` parameter from `_build_prompt()`
-- `_has_model()` now strips `@sha256:…` digest suffixes before comparing — prevents false-negative re-pulls
+- `_has_model()` now uses `_normalize_model_name()` to strip `@sha256:…` digests AND `:latest` suffixes — prevents false-negative re-pulls
 - `_call_ollama()` checks HTTP status before parsing JSON — raises `OSError` on non-200 instead of a confusing parse error
 - `Popen` for `ollama serve` uses `creationflags=CREATE_NEW_PROCESS_GROUP` on Windows, `start_new_session=True` on Unix
 - GPU detection docstring documents AMD/Intel limitation (falls through to 8B default)
+- Prompt preview now brand-shields strings before building prompts, so the preview matches exactly what Ollama would see
 
 **Sentinel bounds check in `l10n_brands.py`:**
 - `_sentinel()` raises `ValueError` when index exceeds capacity (324 = 18²)
@@ -54,7 +55,11 @@ The l10n translation pipeline used the offline NLLB-200-3.3B model (CTranslate2)
 - No disk writes: `_finalize_locale` receives `dry_run=True` in preview mode
 - Does not require Ollama to be installed or running
 
+**New file: `scripts/modules/verify/l10n_quality_audit.py`** — round-trip translation quality audit. Samples translated strings, reverse-translates them to English via Qwen, flags divergences using Jaccard word-bag similarity. Accessible as menu option 7 in the interactive CLI. Configurable sample size per locale.
+
 **New test file: `test_l10n_brands.py`** — 10 tests covering sentinel format (including overflow), shield/unshield round-trip, case-insensitive restore, and character-doubling tolerance.
+
+**New test file: `test_l10n_quality_audit.py`** — 14 tests covering word tokenization, Jaccard similarity, key sampling filters, and reverse prompt construction.
 
 ### Failure mode change
 
@@ -62,12 +67,13 @@ When Qwen fails to translate a string (timeout, Ollama down, echo), the English 
 
 ### Test results
 
-59 tests pass across 5 suites:
+78 tests pass across 6 suites:
 - 9 provenance tests (quality tiers, identity, quality split)
 - 10 translator tests (finalize locale, reassemble sentences, failures export, sentence mode toggle)
 - 6 sentence tests (split/join round-trip)
-- 24 Qwen engine tests (prompt building, `<think>` stripping, model selection, echo detection, locale coverage, digest matching, prompt preview)
+- 29 Qwen engine tests (prompt building, `<think>` stripping, model selection, echo detection, locale coverage, name normalization, digest/latest matching, prompt preview)
 - 10 brand tests (sentinel format + overflow, shield/unshield round-trip, case/doubling tolerance)
+- 14 quality audit tests (word tokenization, Jaccard similarity, key sampling, reverse prompts)
 
 ### Known limitations
 

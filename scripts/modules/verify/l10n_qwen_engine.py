@@ -133,6 +133,18 @@ def _endpoint_up(timeout_s: float = 2.0) -> bool:
         return False
 
 
+def _normalize_model_name(name: str) -> str:
+    """Strip digest (`@sha256:…`) and `:latest` suffix for comparison.
+
+    Ollama returns pulled models with varying suffixes depending on version
+    and pull method. Normalizing lets `_has_model` match reliably.
+    """
+    name = name.split("@")[0]
+    if name.endswith(":latest"):
+        name = name[: -len(":latest")]
+    return name
+
+
 def _has_model(timeout_s: float = 5.0) -> bool:
     """True when the selected model tag is pulled locally."""
     try:
@@ -145,10 +157,11 @@ def _has_model(timeout_s: float = 5.0) -> bool:
     models = data.get("models", [])
     if not isinstance(models, list):
         return False
-    # Ollama may append a digest hash (e.g. "qwen3:8b" → "qwen3:8b@sha256:…")
-    base_tag = QWEN_MODEL_TAG.split("@")[0]
+    # Ollama may append `:latest` or `@sha256:…` to model names; strip both
+    # before comparing so a pulled "qwen3:8b" matches tag "qwen3:8b".
+    base_tag = _normalize_model_name(QWEN_MODEL_TAG)
     for m in models:
-        name = str(m.get("name", "")).split("@")[0]
+        name = _normalize_model_name(str(m.get("name", "")))
         if name == base_tag:
             return True
     return False
