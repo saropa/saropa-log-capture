@@ -23,8 +23,11 @@ class QualityModelTests(unittest.TestCase):
     """is_low_quality encodes the upgrade-candidate rule."""
 
     def test_strong_engines_are_high_quality(self) -> None:
-        for engine in (prov.ENGINE_NLLB, prov.ENGINE_MANUAL, prov.ENGINE_IDENTITY):
+        for engine in (prov.ENGINE_QWEN, prov.ENGINE_MANUAL, prov.ENGINE_IDENTITY):
             self.assertFalse(prov.is_low_quality(engine), engine)
+
+    def test_nllb_is_low_quality(self) -> None:
+        self.assertTrue(prov.is_low_quality(prov.ENGINE_NLLB))
 
     def test_google_is_low_quality(self) -> None:
         self.assertTrue(prov.is_low_quality(prov.ENGINE_GOOGLE))
@@ -44,13 +47,13 @@ class QualitySplitTests(unittest.TestCase):
 
     def test_split_counts(self) -> None:
         counts = {
-            prov.ENGINE_NLLB: 70,
+            prov.ENGINE_QWEN: 70,
             prov.ENGINE_IDENTITY: 25,
             prov.ENGINE_GOOGLE: 100,
             prov.ENGINE_UNTRACKED: 1173,
         }
         high, low = prov.quality_split(counts)
-        self.assertEqual(high, 95)        # nllb + identity
+        self.assertEqual(high, 95)        # qwen + identity
         self.assertEqual(low, 1273)       # google + untracked
 
     def test_empty_is_zero_zero(self) -> None:

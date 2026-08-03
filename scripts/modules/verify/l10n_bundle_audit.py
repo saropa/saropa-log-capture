@@ -197,7 +197,7 @@ class LocaleCoverage:
 
     @property
     def high_quality_count(self) -> int:
-        """Translated keys from NLLB / manual / identity / other strong engines."""
+        """Translated keys from Qwen / manual / identity / other strong engines."""
         return quality_split(self.engine_counts)[0]
 
     @property

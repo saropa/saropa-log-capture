@@ -284,7 +284,7 @@ def check_l10n_bundles() -> bool:
     """Audit locale bundles for translation gaps — NEVER runs translation.
 
     Publish must not trigger any machine-translation pass: an unattended
-    NLLB/GPU job once locked the machine mid-release. This step only (A)
+    MT job once locked the machine mid-release. This step only (A)
     re-syncs the English source bundle — mechanical key alignment, not
     translation — so the gap count reflects genuine non-English work, then
     (B) reports the missing / still-English strings and exports a worklist.

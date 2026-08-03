@@ -16,7 +16,7 @@
 #     l10n_actions.py        run_sync / run_translate / report + gap export
 #     l10n_cli.py            interactive menu + --run-mode arg handling
 #     l10n_bundle_audit.py   audit, sync, report/export (data layer)
-#     l10n_translator.py     translation engine (NLLB first, Google fallback)
+#     l10n_translator.py     translation engine (Qwen 3 via Ollama)
 #     l10n_brands.py         brand shielding
 #
 #   Interactive mode (no args, TTY): shows the audit then a menu —
@@ -35,15 +35,11 @@
 #     directly via the modules — this entry point is never imported.
 #
 # .NOTES
-#   Version:   1.4.0
+#   Version:   2.0.0
 #   Requires:  Python 3.10+
-#   Translate: Offline NLLB-200-3.3B is used automatically when its model is
-#              cached (higher quality, no rate limits); otherwise the pipeline
-#              falls back to Google Translate.
-#                NLLB:   pip install ctranslate2 sentencepiece huggingface_hub
-#                        huggingface-cli download JustFrederik/nllb-200-3.3B-ct2-float16
-#                Google: pip install deep-translator
-#              Set SAROPA_SKIP_NLLB=1 to force the Google path.
+#   Translate: Qwen 3 via Ollama (offline, no rate limits). Install Ollama
+#              from https://ollama.com/download — the model pull is automatic.
+#              No Google Translate fallback; failed strings keep English.
 #
 # Exit Codes:
 #   0  Success

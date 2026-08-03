@@ -79,8 +79,8 @@ def _print_menu() -> None:
     print("  2  Sync English bundle (add missing, remove orphans)")
     print("  3  Sync + translate GAPS — all locales")
     print("  4  Sync + translate GAPS — specific locales")
-    print("  5  Sync + upgrade LOW-QUALITY → NLLB — all locales")
-    print("  6  Sync + upgrade LOW-QUALITY → NLLB — specific locales")
+    print("  5  Sync + upgrade LOW-QUALITY → Qwen — all locales")
+    print("  6  Sync + upgrade LOW-QUALITY → Qwen — specific locales")
     print("  0  Exit")
 
 
@@ -170,7 +170,7 @@ def _parse_args() -> argparse.Namespace:
         help=(
             "translate mode: 'gaps' (default) fills untranslated strings; "
             "'low_quality' re-translates existing low-quality / untracked "
-            "strings with NLLB (Google → NLLB upgrade)."
+            "strings with Qwen (Google → Qwen upgrade)."
         ),
     )
     p.add_argument(

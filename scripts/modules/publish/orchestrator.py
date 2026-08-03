@@ -94,7 +94,7 @@ def _resolve_test_failure_action(args: argparse.Namespace) -> str:
 def _prompt_on_l10n_gap() -> str:
     """Ask the user how to proceed when the l10n audit finds translation gaps.
 
-    Publish never translates (an unattended NLLB/GPU job once locked the
+    Publish never translates (an unattended MT job once locked the
     machine), so the only paths forward are: re-run the audit after filling
     gaps by hand with scripts/translate_l10n.py, ignore the gaps and continue
     the release, or abort. Default (Enter) is retry.
@@ -221,7 +221,7 @@ def run_build_and_validate(
     if not run_step("File line limits", check_file_line_limits, results):
         return "", False
     # l10n is AUDIT-ONLY here: publish never runs a translation pass (an
-    # unattended NLLB/GPU job once locked the machine mid-release).
+    # unattended MT job once locked the machine mid-release).
     # check_l10n_bundles re-syncs the English source and reports gaps; when any
     # locale is still incomplete it returns False and we prompt the user.
     # Fill gaps by hand with `python scripts/translate_l10n.py`.
