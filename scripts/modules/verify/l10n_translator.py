@@ -1,17 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Translate missing l10n bundle entries — offline NLLB first, Google fallback.
+"""Translate missing l10n bundle entries via Qwen 3 (Ollama, offline).
 
-Engine selection is per run: when the offline NLLB-200-3.3B model is cached and
-its deps are installed, ``NllbTranslator`` is used for materially higher quality
-with no rate limits; otherwise the pipeline falls back to Google Translate via
-``deep-translator`` (``pip install deep-translator``), which wraps the public
-Google endpoint (no API key, generous rate limits for ~300 strings x 10
-locales). See ``l10n_nllb_engine`` for the NLLB engine and how to enable it.
+Uses the local Qwen model through Ollama for all translation. When Qwen fails
+on a string, the English source is kept (PROV_ENGLISH) — no Google fallback.
 
-Both engines expose the same ``.translate(text)`` shape, so the brand-shielding,
-validation, and bundle-merge logic below is engine-agnostic. Only the
-network-specific safeguards (socket timeout, throttle, rate-limit circuit
-breaker) are gated to the Google path — NLLB is local and never throttles.
+The ``QwenTranslator`` exposes ``.translate(text)`` so the brand-shielding,
+validation, and bundle-merge logic below is engine-agnostic.
 
 Each locale's bundle is updated in place: missing keys are added (this is also
 how "out of date" strings flow through — changing an English source string
@@ -26,8 +20,6 @@ Translations that mangle brands are rejected and retried once.
 """
 
 import json
-import socket
-import sys
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -45,11 +37,12 @@ from modules.verify.l10n_brands import (
     unshield_brands,
     validate_brands,
 )
-from modules.verify.l10n_nllb_engine import (
-    NllbTranslator,
-    NllbUnavailable,
-    cache_hint as nllb_cache_hint,
-    is_available as is_nllb_available,
+from modules.verify.l10n_qwen_engine import (
+    QwenTranslator,
+    QWEN_MODEL_TAG,
+    QWEN_STAMP,
+    qwen_available,
+    _ensure_ready,
 )
 from modules.verify.l10n_provenance import (
     ENGINE_MANUAL,
@@ -59,51 +52,17 @@ from modules.verify.l10n_provenance import (
 )
 from modules.verify.l10n_sentences import split_segments
 
-# VS Code l10n bundle locale codes -> deep-translator target codes.
-# deep-translator uses standard ISO codes; VS Code bundles use lowercase
-# with hyphens. Most map 1:1 except regional variants.
-_LOCALE_MAP: dict[str, str] = {
-    "de": "de",
-    "es": "es",
-    "fr": "fr",
-    "it": "it",
-    "ja": "ja",
-    "ko": "ko",
-    "pt-br": "pt",
-    "ru": "ru",
-    "zh-cn": "zh-CN",
-    "zh-tw": "zh-TW",
-}
-
-# Delay between individual translate calls to avoid rate limits.
-# Google's free endpoint tolerates ~5 req/s comfortably; 0.2s is safe.
-_THROTTLE_SECONDS = 0.2
-
-# Bound every network call. deep-translator's GoogleTranslator calls
-# requests.get() with NO timeout (see deep_translator/google.py), so a
-# throttled or stalled Google response hangs the publish pipeline forever —
-# this was the "lock-up at step 9" symptom. requests falls back to the
-# process-wide socket default when given no explicit timeout, so we set that
-# around the translate loop and restore it afterward. 8s is generous for one
-# short UI string yet short enough that a stalled endpoint fails fast.
-_NETWORK_TIMEOUT_SECONDS = 8.0
-
-# A single throttle blip (429 / consent page) shouldn't permanently lose a
-# string to English. Retry transient failures once with a short backoff.
+# Retry transient Ollama failures once with a short backoff.
 _MAX_RETRIES = 1
 _BACKOFF_BASE_SECONDS = 2.0
 
-# Circuit breaker: once this many strings fail their network call back-to-back,
-# Google is rate-limiting us wholesale. Abort the run instead of grinding
-# through hundreds more doomed (and timeout-bounded, so slow) calls — keep
-# English for the rest and let the caller stop further locales.
+# Consecutive Ollama failures before aborting the locale.
 _CONSECUTIVE_FAILURE_LIMIT = 5
 
 # Sentence-level translation (default ON). A multi-sentence source string is
 # translated one sentence at a time and rejoined, instead of being sent to the
-# engine as a whole paragraph. Both engines — NLLB especially — produce
-# materially better output on single sentences: long paragraphs risk silent
-# truncation at the model's token limit and cross-sentence context bleed. Held
+# engine as a whole paragraph. Qwen produces materially better output on single
+# sentences: long paragraphs risk cross-sentence context bleed. Held
 # as module state set once per run (see set_sentence_mode) rather than threaded
 # through the whole translate call chain, which already sits at the param limit.
 _translate_by_sentence_enabled = True
@@ -283,8 +242,8 @@ def _apply_translation(
     ``keep_existing_on_failure`` controls the failure path. Default False writes
     English as a fallback — correct when filling a gap (the slot was empty or
     English anyway). True LEAVES the current value untouched — required by the
-    low-quality upgrade pass: a failed NLLB upgrade of an existing Google
-    translation must keep the Google text, never overwrite a real translation
+    low-quality upgrade pass: a failed Qwen upgrade of an existing legacy
+    translation must keep the existing text, never overwrite a real translation
     with English (which would be strictly worse than the value it replaced).
 
     ``error_sink``, when given, collects every non-"ok" outcome for the run's
@@ -319,70 +278,33 @@ def _apply_translation(
 _engine_announced = False
 
 
-def _announce_engine(engine: str) -> None:
-    """Print the chosen translation engine once per process.
-
-    Why: NLLB is selected silently when available and the pipeline falls back to
-    Google just as silently. A run that quietly used Google would defeat the
-    whole point of enabling NLLB without the operator ever noticing — so the
-    engine, and the reason for any fallback, is surfaced exactly once.
-    """
+def _announce_engine() -> None:
+    """Print the chosen translation engine once per process."""
     global _engine_announced  # noqa: PLW0603
     if _engine_announced:
         return
     _engine_announced = True
-    if engine == "nllb":
-        print("  Engine: NLLB-200-3.3B (offline, higher quality, no rate limits)")
-        return
-    # Falling back to Google is NOT silent: NLLB is the preferred engine, so the
-    # operator is told loudly that the lower-quality online path is in use and
-    # given the exact command to enable NLLB. cache_hint() now names the real
-    # blocker (deps / missing model / cached-but-no-device), not a guess.
-    print(red("  ⚠ WARNING: NOT using offline NLLB — falling back to Google Translate"))
-    print(red("    (lower quality, network rate-limited)."))
-    print(yellow(f"    To enable NLLB: {nllb_cache_hint()}"))
+    print(f"  Engine: Qwen 3 via Ollama ({QWEN_MODEL_TAG}, offline)")
 
 
-def _make_translator(locale: str) -> tuple[object, str] | None:
-    """Build the best available translator for a locale.
+def _make_translator(locale: str) -> tuple[QwenTranslator, str] | None:
+    """Build a Qwen translator for a locale.
 
-    Prefers the offline NLLB-200-3.3B engine (higher quality, no rate limits)
-    when its model is cached and deps are installed; otherwise falls back to
-    Google Translate. Returns ``(translator, engine_name)`` where engine_name is
-    "nllb" or "google", or None when neither engine can serve the locale.
-
-    Engine choice drives the network safeguards in ``translate_locale``: the
-    socket timeout, the inter-call throttle, and the rate-limit circuit breaker
-    apply only to the Google path. NLLB runs locally and never throttles.
+    Auto-provisions Ollama + model on first use. Returns
+    ``(translator, engine_stamp)`` or None when Qwen cannot start.
     """
-    # NLLB only when its model is already cached on disk — a machine without it
-    # transparently uses Google rather than triggering a 7 GB download.
-    if is_nllb_available():
-        try:
-            translator = NllbTranslator(locale)
-            _announce_engine("nllb")
-            return translator, "nllb"
-        except NllbUnavailable as exc:
-            # Per-device reasons (captured by the cascade) so the operator sees
-            # the real cause here; the loud warning + fix print in _announce_engine.
-            print(yellow(f"  ⚠ NLLB could not load for '{locale}': {exc}"))
+    if not qwen_available():
+        ready, detail = _ensure_ready()
+        if not ready:
+            print(red(f"  ⚠ Qwen NOT ready: {detail}"))
+            print(yellow(
+                "    Install Ollama from https://ollama.com/download "
+                "and re-run."
+            ))
+            return None
 
-    try:
-        from deep_translator import GoogleTranslator
-    except ImportError:
-        print(
-            "  deep-translator not installed. "
-            "Run: pip install deep-translator",
-            file=sys.stderr,
-        )
-        return None
-
-    target_code = _LOCALE_MAP.get(locale)
-    if not target_code:
-        print(f"  No translator mapping for locale '{locale}', skipping.")
-        return None
-    _announce_engine("google")
-    return GoogleTranslator(source="en", target=target_code), "google"
+    _announce_engine()
+    return QwenTranslator(locale), QWEN_STAMP
 
 
 _TRANSLATE_SCOPES = ("missing", "gaps", "low_quality")
@@ -436,7 +358,7 @@ def _finalize_locale(
     Called from ``translate_locale``'s ``finally`` so a graceful CTRL-C still
     writes everything translated so far. A multi-hour run must be resumable, not
     lost: a re-run keeps already-translated keys (``gaps`` skips value != English;
-    ``low_quality`` skips ``nllb`` provenance), so cancellation becomes a pause.
+    ``low_quality`` skips ``qwen`` provenance), so cancellation becomes a pause.
     """
     orphans = [k for k in bundle if k not in canonical_keys]
     for k in orphans:
@@ -460,7 +382,7 @@ def translate_locale(
     ``scope`` is one of "missing" (absent keys only — the publish pipeline),
     "gaps" (absent + en-copy — the deliberate translate_l10n.py run), or
     "low_quality" (re-translate existing low-quality / untracked output — the
-    Google → NLLB upgrade pass). Every successful translation records its engine
+    legacy → Qwen upgrade pass). Every successful translation records its engine
     in the locale's provenance sidecar; a failed low-quality upgrade keeps the
     existing value rather than overwriting a real translation with English.
 
@@ -468,8 +390,7 @@ def translate_locale(
     every translation attempt so callers can render a live counter, throughput
     (words-per-minute), and an ETA. ``words`` is the running sum of source-word
     counts across every attempted key — it tracks engine throughput, so it
-    includes failed attempts (they still consumed time) and excludes the NLLB
-    model-load phase, which happens before the first attempt.
+    includes failed attempts (they still consumed time).
 
     error_sink, if given, collects one record per non-"ok" outcome (net_fail /
     validate_fail) so the caller can persist a run-wide error audit file.
@@ -507,9 +428,8 @@ def translate_locale(
     )
     attempted = 0
 
-    # Build the engine only when there is real work AND we will write. Building
-    # NllbTranslator loads the ~7 GB model and runs a probe translation, so a
-    # dry run or a no-op locale (e.g. an upgrade pass with no weak keys) must
+    # Build the engine only when there is real work AND we will write. A dry
+    # run or a no-op locale (e.g. an upgrade pass with no weak keys) must
     # never construct it — translator stays None on those paths and is unused.
     translator: object | None = None
     engine = "dry-run" if dry_run else "none"
@@ -519,16 +439,6 @@ def translate_locale(
             return 0, 0, 0, 0, False
         translator, engine = made
 
-    # requests has no default timeout, so without this a stalled Google
-    # response hangs forever (the original lock-up). Set the process-wide
-    # socket default for the network loop and restore it in finally so the
-    # rest of the pipeline keeps its own timeout policy. Skip for dry_run
-    # (no network) and for NLLB, which runs locally — clamping the socket
-    # timeout there would needlessly cap unrelated I/O while NLLB has its own
-    # per-string wall-clock deadline inside the engine.
-    prev_timeout = socket.getdefaulttimeout()
-    if not dry_run and engine == "google":
-        socket.setdefaulttimeout(_NETWORK_TIMEOUT_SECONDS)
     try:
         for en_key in sorted(canonical_keys):
             existing = bundle.get(en_key)
@@ -556,8 +466,8 @@ def translate_locale(
                 translated += 1
                 continue
 
-            # keep_existing_on_failure for the upgrade pass: a failed NLLB
-            # upgrade must not overwrite a real Google translation with English.
+            # keep_existing_on_failure for the upgrade pass: a failed Qwen
+            # upgrade must not overwrite a real translation with English.
             status = _apply_translation(
                 translator, en_key, bundle, locale,
                 keep_existing_on_failure=(scope == "low_quality"),
@@ -584,20 +494,12 @@ def translate_locale(
             if status == "net_fail" and consecutive_failures >= _CONSECUTIVE_FAILURE_LIMIT:
                 aborted = True
                 break
-
-            # Throttle to stay under Google's per-IP rate limit. NLLB is local
-            # and never rate-limits, so the delay would only slow the run.
-            if engine == "google":
-                time.sleep(_THROTTLE_SECONDS)
     finally:
         # Runs on normal completion, circuit-breaker abort, AND KeyboardInterrupt
         # (which is BaseException, so the retry/_apply_translation `except
         # Exception` blocks never swallow it — it propagates straight here). That
         # makes a CTRL-C save in-progress work and re-raise cleanly: the operator
         # can pause a 20-hour run and resume it later without losing the locale.
-        socket.setdefaulttimeout(prev_timeout)
-        # Record which engine produced each new/upgraded translation so the audit
-        # can report quality and a later pass can target the weak ones.
         _finalize_locale(
             path, bundle, canonical_keys, locale, provenance_updates,
             dry_run=dry_run,
@@ -667,7 +569,7 @@ def _merge_into_bundle(locale: str, updates: dict[str, str]) -> None:
     """Write reassembled translations into a locale bundle + stamp provenance.
 
     Imported strings are human-authored, so they are stamped ``manual`` (high
-    quality) — this is what stops the NLLB low-quality upgrade pass from later
+    quality) — this is what stops the Qwen low-quality upgrade pass from later
     overwriting hand-translated work.
     """
     if not updates:

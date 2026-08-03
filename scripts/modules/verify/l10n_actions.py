@@ -86,7 +86,7 @@ def _print_progress_bar(
     """Render a single-line \r progress bar for one locale's translation pass.
 
     Reprints the whole line each tick (cheap, and robust to terminals that ignore
-    partial \r redraws). A CPU NLLB run translates string-by-string over minutes;
+    partial \r redraws). A CPU Qwen run translates string-by-string over minutes;
     without a visible bar the gap between the per-locale header and its summary
     reads as a hang even though work is steadily progressing.
 
@@ -122,7 +122,7 @@ def _translate_one_locale(
     """Translate one locale under ``scope``. Returns (translated, errors, aborted)."""
     # Wall-clock for the WPM/ETA readout, set lazily on the first progress tick.
     # The first tick fires only after the first string actually translates, so
-    # starting the clock here excludes the NLLB model-load minute from the rate.
+    # starting the clock here excludes the Qwen model-load minute from the rate.
     started_at: list[float] = []
 
     # Live bar (\r) so a multi-minute run shows motion, not a frozen prompt.
@@ -134,7 +134,7 @@ def _translate_one_locale(
         _print_progress_bar(_loc, done, total, words=words, elapsed=elapsed)
 
     # Blank separator only — NO "de:" label here. translate_locale emits the
-    # one-time NLLB model-load + engine-selection lines before the first tick,
+    # one-time Qwen model-load + engine-selection lines before the first tick,
     # and a pre-printed label stranded itself above that setup noise. The bar
     # reprints the label every tick; the blank line just keeps this locale's
     # output off the previous locale's summary (the bar's \r is column-0 of the
@@ -160,7 +160,7 @@ def run_translate(
     """Translate the given locales under ``scope`` (gaps / low_quality), live.
 
     ``scope="gaps"`` fills untranslated strings; ``scope="low_quality"`` re-does
-    existing low-quality / untracked translations with NLLB (the upgrade pass).
+    existing low-quality / untracked translations with Qwen (the upgrade pass).
     """
     canonical = get_canonical_keys()
     # Brand-reset is a gap-fill concern (resets mangled brands to English so they
@@ -169,7 +169,7 @@ def run_translate(
     if not dry_run and scope != "low_quality":
         _reset_mangled_brands(locales, canonical)
 
-    verb = "Upgrading low-quality → NLLB" if scope == "low_quality" else "Translating gaps"
+    verb = "Upgrading low-quality → Qwen" if scope == "low_quality" else "Translating gaps"
     if dry_run:
         verb += " (dry run)"
     header(f"{verb}: {len(locales)} locale(s), {len(canonical)} strings")
