@@ -2,7 +2,7 @@
 """Translate missing l10n bundle entries via Qwen 3 (Ollama, offline).
 
 Uses the local Qwen model through Ollama for all translation. When Qwen fails
-on a string, the English source is kept (PROV_ENGLISH) — no Google fallback.
+on a string, the English source is kept (PROV_ENGLISH) — no external fallback.
 
 The ``QwenTranslator`` exposes ``.translate(text)`` so the brand-shielding,
 validation, and bundle-merge logic below is engine-agnostic.
@@ -124,7 +124,7 @@ def _translate_segment(translator: object, segment: str) -> str | None:
     # Validate: every brand in the original must survive in the translation.
     mangled = validate_brands(segment, restored)
     if mangled:
-        # One retry: Google sometimes handles it better on a second attempt.
+        # One retry: the engine sometimes produces a clean result on a second attempt.
         result2 = translator.translate(shielded)  # type: ignore[union-attr]
         if result2 and result2.strip():
             restored2 = unshield_brands(result2.strip(), replacements)

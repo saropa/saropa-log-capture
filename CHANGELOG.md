@@ -32,11 +32,18 @@ cspell:disable
 - l10n translation engine switched from NLLB/Google to Qwen 3 via Ollama (offline, no rate limits, no Google fallback)
 - NLLB and Google translations are now classified as low quality in provenance; Qwen is high quality
 - Brand shielding uses XBQ…VKZ sentinel tokens (8-char opaque codes) instead of angle-bracket placeholders
+- Quality audit similarity scoring uses character bigrams for CJK locales (ja, ko, zh) instead of word bags
 
 ### Added
 
 - `--prompt-preview` flag for the l10n pipeline prints Qwen prompts to stderr without calling Ollama
 - Round-trip quality audit (menu option 7): samples translations, reverse-translates via Qwen, flags low-similarity divergences
+
+### Fixed
+
+- Stale Google references in l10n pipeline comments and help text replaced with engine-agnostic wording
+- Sentinel format comment corrected from "7 chars" to "8 chars"
+- Dead imports removed from quality audit module
 
 ---
 

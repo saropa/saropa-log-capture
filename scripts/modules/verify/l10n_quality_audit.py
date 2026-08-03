@@ -19,8 +19,6 @@ from modules.verify.l10n_brands import is_brand_only, is_acronym_only
 from modules.verify.l10n_bundle_audit import L10N_DIR
 from modules.verify.l10n_console import cyan, dim, green, header, red, yellow
 from modules.verify.l10n_qwen_engine import (
-    QwenTranslator,
-    _build_prompt,
     _call_ollama,
     _LOCALE_INFO,
     QWEN_MODEL_TAG,
@@ -47,10 +45,43 @@ def _word_set(text: str) -> set[str]:
     return {w.lower().strip(".,!?;:()[]{}\"'") for w in text.split() if w.strip()}
 
 
+def _has_cjk(text: str) -> bool:
+    """True when the text contains CJK ideographs or syllables.
+
+    CJK text isn't space-delimited, so word-bag Jaccard produces empty or
+    single-element sets and the similarity score is meaningless.
+    """
+    for ch in text:
+        cp = ord(ch)
+        # CJK Unified Ideographs, Hiragana, Katakana, Hangul Syllables
+        if (0x4E00 <= cp <= 0x9FFF
+                or 0x3040 <= cp <= 0x309F
+                or 0x30A0 <= cp <= 0x30FF
+                or 0xAC00 <= cp <= 0xD7AF):
+            return True
+    return False
+
+
+def _char_ngrams(text: str, n: int = 2) -> set[str]:
+    """Character n-gram set for scripts without word boundaries."""
+    normalized = text.lower().strip()
+    if len(normalized) < n:
+        return {normalized} if normalized else set()
+    return {normalized[i:i + n] for i in range(len(normalized) - n + 1)}
+
+
 def _similarity(source: str, round_tripped: str) -> float:
-    """Jaccard similarity of word bags. 1.0 = identical, 0.0 = no overlap."""
-    a = _word_set(source)
-    b = _word_set(round_tripped)
+    """Jaccard similarity: word bags for Latin text, char bigrams for CJK.
+
+    Auto-detects CJK in either input and switches to character bigrams,
+    which handle scripts without word boundaries (Japanese, Korean, Chinese).
+    """
+    if _has_cjk(source) or _has_cjk(round_tripped):
+        a = _char_ngrams(source)
+        b = _char_ngrams(round_tripped)
+    else:
+        a = _word_set(source)
+        b = _word_set(round_tripped)
     if not a and not b:
         return 1.0
     if not a or not b:
