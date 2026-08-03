@@ -38,17 +38,14 @@ export function flowMapReplayScript(nonce: string): string {
     return walked.map(function(w){ return w.el; });
   }
 
-  // Convert the node's viewBox-space bbox into current on-screen scroll coordinates. Computed from
-  // the SVG's live rendered width (not a shared "scale" var) since this script's IIFE never sees the
-  // zoom script's internal state.
+  // Center in SCREEN space: shift the scroll box by the delta between the node's on-screen center
+  // and the scroll box's center. Rect math already includes whatever zoom the zoom script applied,
+  // so this stays correct at any scale — no viewBox/scale reconstruction to drift out of sync.
   function centerOn(el){
-    var vb = (svg.getAttribute('viewBox') || '').split(' ').map(Number);
-    var baseW = vb[2] || svg.clientWidth || 1;
-    var rect = svg.getBoundingClientRect();
-    var s = rect.width / baseW;
-    var b = el.getBBox();
-    scroll.scrollLeft = (b.x + b.width / 2) * s - scroll.clientWidth / 2;
-    scroll.scrollTop = (b.y + b.height / 2) * s - scroll.clientHeight / 2;
+    var nb = el.getBoundingClientRect();
+    var sb = scroll.getBoundingClientRect();
+    scroll.scrollLeft += (nb.left + nb.width / 2) - (sb.left + sb.width / 2);
+    scroll.scrollTop += (nb.top + nb.height / 2) - (sb.top + sb.height / 2);
   }
 
   function clearHighlight(){
@@ -56,9 +53,55 @@ export function flowMapReplayScript(nonce: string): string {
     if (lit) { lit.classList.remove('fm-replay-hl'); }
   }
 
+  function hidePreview(){
+    var el = document.getElementById('fm-replay-preview');
+    if (el) { el.style.display = 'none'; }
+  }
+
+  // Floating screenshot beside the highlighted node: the gallery figure whose data-screen-key equals
+  // the node's data-rowkey supplies the (already-loaded) data-URI img, so no new image fetch happens.
+  // Absent in the pop-out (no gallery in its DOM) — the lookup just misses and nothing shows.
+  function showPreview(nodeEl){
+    var key = nodeEl.getAttribute('data-rowkey');
+    var fig = null;
+    if (key && window.CSS && CSS.escape) {
+      fig = document.querySelector('.shot-fig[data-screen-key="' + CSS.escape(key) + '"]');
+    }
+    var img = fig ? fig.querySelector('img') : null;
+    if (!img) { hidePreview(); return; }
+    var el = document.getElementById('fm-replay-preview');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'fm-replay-preview';
+      el.className = 'fm-replay-preview';
+      document.body.appendChild(el);
+    }
+    var cap = fig.querySelector('.shot-cap');
+    el.innerHTML = '';
+    var clone = document.createElement('img');
+    clone.src = img.src;
+    clone.alt = '';
+    el.appendChild(clone);
+    if (cap) {
+      var c = document.createElement('div');
+      c.className = 'fm-replay-preview-cap';
+      c.textContent = cap.textContent || '';
+      el.appendChild(c);
+    }
+    el.style.display = 'block';
+    // Position AFTER centering: the node's rect is fresh post-scroll. Right of the node when there
+    // is room, else to its left; clamped into the viewport.
+    var nb = nodeEl.getBoundingClientRect();
+    var w = 230;
+    var left = (nb.right + 12 + w <= window.innerWidth) ? nb.right + 12 : Math.max(8, nb.left - 12 - w);
+    el.style.left = left + 'px';
+    el.style.top = Math.max(8, Math.min(nb.top, window.innerHeight - 240)) + 'px';
+  }
+
   function stop(){
     if (timer) { clearInterval(timer); timer = null; }
     clearHighlight();
+    hidePreview();
     btn.classList.remove('fm-zoom-active');
   }
 
@@ -68,6 +111,7 @@ export function flowMapReplayScript(nonce: string): string {
     var el = steps[idx++];
     el.classList.add('fm-replay-hl');
     centerOn(el);
+    showPreview(el);
   }
 
   function start(){
@@ -80,6 +124,10 @@ export function flowMapReplayScript(nonce: string): string {
   }
 
   btn.addEventListener('click', function(){ if (timer) { stop(); } else { start(); } });
-  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && timer) { stop(); } });
+  document.addEventListener('keydown', function(e){
+    // When the node-detail popup is open, Escape belongs to it — closing the popup while the replay
+    // keeps stepping matches how users layer dismissals; only a bare Escape stops the replay.
+    if (e.key === 'Escape' && timer && !document.querySelector('.fmd-overlay')) { stop(); }
+  });
 })();</script>`;
 }
