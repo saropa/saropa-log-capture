@@ -27,11 +27,9 @@ cspell:disable
 
 ## [9.3.6]
 
- [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.6/CHANGELOG.md)
+Non-english language translations have been upgraded to a higher-quality offline engine. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.6/CHANGELOG.md)
 
-### Changed
-
-- Translations upgraded to a higher-quality offline engine; existing low-quality translations will be re-translated on the next pipeline run
+- 
 
 <details>
 <summary>Maintenance</summary>
