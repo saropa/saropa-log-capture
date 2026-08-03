@@ -36,6 +36,7 @@ cspell:disable
 ### Added
 
 - `--prompt-preview` flag for the l10n pipeline prints Qwen prompts to stderr without calling Ollama
+- Round-trip quality audit (menu option 7): samples translations, reverse-translates via Qwen, flags low-similarity divergences
 
 ---
 
