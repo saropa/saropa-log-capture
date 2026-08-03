@@ -99,6 +99,11 @@ export function flowMapStyles(nonce: string): string {
   @keyframes fm-replay-pulse { 0%, 100% { stroke-opacity: 1; } 50% { stroke-opacity: 0.5; } }
   /* The Replay button itself stays lit while a walk is in progress, mirroring the panning-cursor cue. */
   .fm-zoom-btn.fm-zoom-active { background: var(--vscode-button-background); color: var(--vscode-button-foreground); }
+  /* Replay screenshot preview: a floating card beside the highlighted node showing what the user
+     actually saw on that screen. pointer-events none so it never intercepts the replay controls. */
+  .fm-replay-preview { position: fixed; z-index: 40; display: none; width: 230px; padding: 0.35rem; background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-lg); pointer-events: none; }
+  .fm-replay-preview img { max-width: 100%; display: block; border-radius: var(--radius-sm); }
+  .fm-replay-preview-cap { font-size: 0.78em; color: var(--muted); padding-top: 0.25rem; word-break: break-word; }
 
   /* Draggable column divider. A wide invisible hit area around a thin visible rule keeps the grab
      forgiving without a fat gutter. Highlights on hover/drag so the affordance is discoverable. */
