@@ -116,7 +116,8 @@ def _print_progress_bar(
 
 
 def _translate_one_locale(
-    locale: str, canonical: set[str], *, dry_run: bool, scope: str,
+    locale: str, canonical: set[str], *, dry_run: bool,
+    prompt_preview: bool = False, scope: str,
     error_sink: list[dict[str, str]] | None = None,
 ) -> tuple[int, int, bool]:
     """Translate one locale under ``scope``. Returns (translated, errors, aborted)."""
@@ -141,8 +142,8 @@ def _translate_one_locale(
     # current line).
     print()
     translated, kept, brand_count, errors, aborted = translate_locale(
-        locale, canonical, dry_run=dry_run, scope=scope,
-        on_progress=on_progress, error_sink=error_sink,
+        locale, canonical, dry_run=dry_run, prompt_preview=prompt_preview,
+        scope=scope, on_progress=on_progress, error_sink=error_sink,
     )
     # A tick fired iff a bar was drawn: close its \r line. Otherwise (dry run or
     # a no-work locale) no bar printed the label, so prefix the summary ourselves.
@@ -155,7 +156,8 @@ def _translate_one_locale(
 
 
 def run_translate(
-    locales: list[str], *, dry_run: bool = False, scope: str = "gaps",
+    locales: list[str], *, dry_run: bool = False,
+    prompt_preview: bool = False, scope: str = "gaps",
 ) -> None:
     """Translate the given locales under ``scope`` (gaps / low_quality), live.
 
@@ -166,11 +168,13 @@ def run_translate(
     # Brand-reset is a gap-fill concern (resets mangled brands to English so they
     # refill). The upgrade pass re-translates mangled brands directly — they
     # classify as low quality — so skip the reset there.
-    if not dry_run and scope != "low_quality":
+    if not dry_run and not prompt_preview and scope != "low_quality":
         _reset_mangled_brands(locales, canonical)
 
     verb = "Upgrading low-quality → Qwen" if scope == "low_quality" else "Translating gaps"
-    if dry_run:
+    if prompt_preview:
+        verb += " (prompt preview)"
+    elif dry_run:
         verb += " (dry run)"
     header(f"{verb}: {len(locales)} locale(s), {len(canonical)} strings")
 
@@ -187,7 +191,8 @@ def run_translate(
     try:
         for locale in locales:
             translated, errors, aborted = _translate_one_locale(
-                locale, canonical, dry_run=dry_run, scope=scope,
+                locale, canonical, dry_run=dry_run,
+                prompt_preview=prompt_preview, scope=scope,
                 error_sink=error_records,
             )
             total_translated += translated

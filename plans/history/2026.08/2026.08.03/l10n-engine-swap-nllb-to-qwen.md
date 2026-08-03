@@ -39,8 +39,22 @@ The l10n translation pipeline used the offline NLLB-200-3.3B model (CTranslate2)
 - Fixed `translate()` docstring: accurately states "Raises on network/timeout errors" (was "Returns None on failure")
 - Fixed prompt text: "8-character" sentinel tokens (was "7-character")
 - Removed unused `sentinels` parameter from `_build_prompt()`
+- `_has_model()` now strips `@sha256:…` digest suffixes before comparing — prevents false-negative re-pulls
+- `_call_ollama()` checks HTTP status before parsing JSON — raises `OSError` on non-200 instead of a confusing parse error
+- `Popen` for `ollama serve` uses `creationflags=CREATE_NEW_PROCESS_GROUP` on Windows, `start_new_session=True` on Unix
+- GPU detection docstring documents AMD/Intel limitation (falls through to 8B default)
 
-**New test file: `test_l10n_brands.py`** — 9 tests covering sentinel format, shield/unshield round-trip, case-insensitive restore, and character-doubling tolerance.
+**Sentinel bounds check in `l10n_brands.py`:**
+- `_sentinel()` raises `ValueError` when index exceeds capacity (324 = 18²)
+- `_SENT_CAPACITY` constant exported for tests
+
+**Prompt preview mode (`--prompt-preview`):**
+- `QwenTranslator` accepts `prompt_preview=True` — prints each prompt to stderr, returns None, never contacts Ollama
+- Threaded through `_make_translator`, `translate_locale`, `_translate_one_locale`, `run_translate`, CLI
+- No disk writes: `_finalize_locale` receives `dry_run=True` in preview mode
+- Does not require Ollama to be installed or running
+
+**New test file: `test_l10n_brands.py`** — 10 tests covering sentinel format (including overflow), shield/unshield round-trip, case-insensitive restore, and character-doubling tolerance.
 
 ### Failure mode change
 
@@ -48,12 +62,12 @@ When Qwen fails to translate a string (timeout, Ollama down, echo), the English 
 
 ### Test results
 
-54 tests pass across 5 suites:
+59 tests pass across 5 suites:
 - 9 provenance tests (quality tiers, identity, quality split)
 - 10 translator tests (finalize locale, reassemble sentences, failures export, sentence mode toggle)
 - 6 sentence tests (split/join round-trip)
-- 21 Qwen engine tests (prompt building, `<think>` stripping, model selection, echo detection, locale coverage)
-- 9 brand tests (sentinel format, shield/unshield round-trip, case/doubling tolerance)
+- 24 Qwen engine tests (prompt building, `<think>` stripping, model selection, echo detection, locale coverage, digest matching, prompt preview)
+- 10 brand tests (sentinel format + overflow, shield/unshield round-trip, case/doubling tolerance)
 
 ### Known limitations
 

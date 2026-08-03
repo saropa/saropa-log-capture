@@ -31,6 +31,11 @@ cspell:disable
 
 - l10n translation engine switched from NLLB/Google to Qwen 3 via Ollama (offline, no rate limits, no Google fallback)
 - NLLB and Google translations are now classified as low quality in provenance; Qwen is high quality
+- Brand shielding uses XBQ…VKZ sentinel tokens (8-char opaque codes) instead of angle-bracket placeholders
+
+### Added
+
+- `--prompt-preview` flag for the l10n pipeline prints Qwen prompts to stderr without calling Ollama
 
 ---
 

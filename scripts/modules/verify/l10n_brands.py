@@ -228,8 +228,16 @@ def validate_brands(en_value: str, translated: str) -> list[str]:
 _SENT_ALPHABET = "ACDEFGHJLMNPRSTUWY"
 
 
+_SENT_CAPACITY = len(_SENT_ALPHABET) ** 2  # 324 distinct sentinels
+
+
 def _sentinel(n: int) -> str:
     """Return the nth sentinel token ``XBQ<L1><L2>VKZ``."""
+    if n >= _SENT_CAPACITY:
+        raise ValueError(
+            f"Sentinel index {n} exceeds capacity {_SENT_CAPACITY} "
+            f"— add letters to _SENT_ALPHABET"
+        )
     hi, lo = divmod(n, len(_SENT_ALPHABET))
     return "XBQ" + _SENT_ALPHABET[hi] + _SENT_ALPHABET[lo] + "VKZ"
 
