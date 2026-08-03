@@ -179,6 +179,15 @@ def _parse_args() -> argparse.Namespace:
         help="Preview without writing files.",
     )
     p.add_argument(
+        "--prompt-preview",
+        action="store_true",
+        help=(
+            "Print Qwen prompts to stderr for each string that would be "
+            "translated, without calling Ollama. Useful for auditing prompt "
+            "quality across locales before a full run."
+        ),
+    )
+    p.add_argument(
         "--paragraph-mode",
         action="store_true",
         help=(
@@ -278,7 +287,10 @@ def run_non_interactive() -> int:
         targets = _resolve_targets(args)
         if targets is None:
             return 1
-        run_translate(targets, dry_run=args.dry_run, scope=args.scope)
+        run_translate(
+            targets, dry_run=args.dry_run,
+            prompt_preview=args.prompt_preview, scope=args.scope,
+        )
 
     final = run_audit()
     print()

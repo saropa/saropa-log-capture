@@ -8,6 +8,7 @@ Run from scripts/:
     python -m unittest modules.verify.test_l10n_qwen_engine
 """
 
+import json
 import os
 import re
 import sys
@@ -18,6 +19,38 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from modules.verify import l10n_qwen_engine as engine  # noqa: E402
+
+
+class HasModelTests(unittest.TestCase):
+    """_has_model strips digest suffixes before comparing."""
+
+    def _fake_tags(self, names: list[str]) -> str:
+        models = [{"name": n} for n in names]
+        return json.dumps({"models": models}).encode("utf-8")
+
+    def test_exact_match(self) -> None:
+        from unittest.mock import MagicMock
+        resp = MagicMock()
+        resp.__enter__ = lambda s: s
+        resp.__exit__ = MagicMock(return_value=False)
+        resp.read.return_value = self._fake_tags(["qwen3:8b"])
+        resp.status = 200
+        with patch("urllib.request.urlopen", return_value=resp):
+            with patch.object(engine, "QWEN_MODEL_TAG", "qwen3:8b"):
+                self.assertTrue(engine._has_model())
+
+    def test_digest_suffix_still_matches(self) -> None:
+        from unittest.mock import MagicMock
+        resp = MagicMock()
+        resp.__enter__ = lambda s: s
+        resp.__exit__ = MagicMock(return_value=False)
+        resp.read.return_value = self._fake_tags(
+            ["qwen3:8b@sha256:abc123"]
+        )
+        resp.status = 200
+        with patch("urllib.request.urlopen", return_value=resp):
+            with patch.object(engine, "QWEN_MODEL_TAG", "qwen3:8b"):
+                self.assertTrue(engine._has_model())
 
 
 class PromptBuildingTests(unittest.TestCase):
@@ -134,6 +167,25 @@ class EchoDetectionTests(unittest.TestCase):
         t = engine.QwenTranslator("de")
         self.assertIsNone(t.translate(""))
         self.assertIsNone(t.translate("   "))
+
+
+class PromptPreviewTests(unittest.TestCase):
+    """prompt_preview mode prints prompts and returns None."""
+
+    def test_preview_returns_none(self) -> None:
+        t = engine.QwenTranslator("de", prompt_preview=True)
+        result = t.translate("Hello")
+        self.assertIsNone(result)
+
+    def test_preview_writes_to_stderr(self) -> None:
+        import io
+        t = engine.QwenTranslator("de", prompt_preview=True)
+        captured = io.StringIO()
+        with patch("sys.stderr", captured):
+            t.translate("Hello")
+        output = captured.getvalue()
+        self.assertIn("German", output)
+        self.assertIn("Hello", output)
 
 
 class LocaleInfoTests(unittest.TestCase):
