@@ -66,7 +66,12 @@ _LOCALE_INFO: dict[str, tuple[str, str | None]] = {
 # ---------------------------------------------------------------------------
 
 def _detect_gpu_vram_gb() -> float | None:
-    """Total VRAM of the primary NVIDIA GPU in GB, or None."""
+    """Total VRAM of the primary NVIDIA GPU in GB, or None.
+
+    AMD/Intel GPUs are not probed — no cross-platform CLI equivalent to
+    nvidia-smi. Non-NVIDIA machines fall through to the 8B default, which
+    is safe for CPU-only inference (slower, but correct).
+    """
     try:
         out = subprocess.run(
             ["nvidia-smi", "--query-gpu=memory.total",
@@ -140,7 +145,13 @@ def _has_model(timeout_s: float = 5.0) -> bool:
     models = data.get("models", [])
     if not isinstance(models, list):
         return False
-    return any(str(m.get("name", "")) == QWEN_MODEL_TAG for m in models)
+    # Ollama may append a digest hash (e.g. "qwen3:8b" → "qwen3:8b@sha256:…")
+    base_tag = QWEN_MODEL_TAG.split("@")[0]
+    for m in models:
+        name = str(m.get("name", "")).split("@")[0]
+        if name == base_tag:
+            return True
+    return False
 
 
 def ollama_installed() -> bool:
@@ -169,11 +180,17 @@ def _ensure_ready() -> tuple[bool, str]:
     if not _endpoint_up():
         sys.stderr.write("[Ollama/Qwen] daemon not running — starting...\n")
         env = {**os.environ, "OLLAMA_NUM_PARALLEL": "1"}
+        # Detach so the daemon outlives this script
+        popen_kw: dict = {"env": env}
+        if sys.platform == "win32":
+            popen_kw["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+        else:
+            popen_kw["start_new_session"] = True
         try:
             subprocess.Popen(  # noqa: S603
                 [ollama, "serve"],
                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                env=env, start_new_session=True,
+                **popen_kw,
             )
         except Exception as exc:  # noqa: BLE001
             return False, f"`ollama serve` failed: {exc}"
@@ -275,6 +292,11 @@ def _call_ollama(prompt: str, timeout_s: float) -> str | None:
     )
 
     with urllib.request.urlopen(req, timeout=timeout_s) as response:
+        if response.status != 200:
+            raise OSError(
+                f"Ollama returned HTTP {response.status} "
+                f"(expected 200) from {_OLLAMA_BASE}/api/chat"
+            )
         res_data = json.loads(response.read().decode("utf-8"))
         translated = (
             (res_data.get("message") or {}).get("content", "").strip()
@@ -303,8 +325,9 @@ class QwenTranslator:
     validation, and bundle-merge logic in l10n_translator is engine-agnostic.
     """
 
-    def __init__(self, locale: str) -> None:
+    def __init__(self, locale: str, *, prompt_preview: bool = False) -> None:
         self.locale = locale
+        self.prompt_preview = prompt_preview
         self._timeout_s = float(
             os.environ.get("SAROPA_QWEN_TIMEOUT", "90").strip() or "90"
         )
@@ -322,6 +345,13 @@ class QwenTranslator:
             return None
 
         prompt = _build_prompt(plain, self.locale)
+
+        if self.prompt_preview:
+            sys.stderr.write(f"\n{'─' * 60}\n")
+            sys.stderr.write(f"[{self.locale}] {plain[:80]}\n{'─' * 60}\n")
+            sys.stderr.write(prompt + "\n")
+            return None
+
         translated = _call_ollama(prompt, self._timeout_s)
 
         if not translated or translated.lower() == plain.lower():

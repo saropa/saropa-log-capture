@@ -287,24 +287,31 @@ def _announce_engine() -> None:
     print(f"  Engine: Qwen 3 via Ollama ({QWEN_MODEL_TAG}, offline)")
 
 
-def _make_translator(locale: str) -> tuple[QwenTranslator, str] | None:
+def _make_translator(
+    locale: str,
+    *,
+    prompt_preview: bool = False,
+) -> tuple[QwenTranslator, str] | None:
     """Build a Qwen translator for a locale.
 
     Auto-provisions Ollama + model on first use. Returns
     ``(translator, engine_stamp)`` or None when Qwen cannot start.
+    When ``prompt_preview`` is True, the translator prints prompts to stderr
+    and returns None for every string — Ollama is never called.
     """
-    if not qwen_available():
-        ready, detail = _ensure_ready()
-        if not ready:
-            print(red(f"  ⚠ Qwen NOT ready: {detail}"))
-            print(yellow(
-                "    Install Ollama from https://ollama.com/download "
-                "and re-run."
-            ))
-            return None
+    if not prompt_preview:
+        if not qwen_available():
+            ready, detail = _ensure_ready()
+            if not ready:
+                print(red(f"  ⚠ Qwen NOT ready: {detail}"))
+                print(yellow(
+                    "    Install Ollama from https://ollama.com/download "
+                    "and re-run."
+                ))
+                return None
 
     _announce_engine()
-    return QwenTranslator(locale), QWEN_STAMP
+    return QwenTranslator(locale, prompt_preview=prompt_preview), QWEN_STAMP
 
 
 _TRANSLATE_SCOPES = ("missing", "gaps", "low_quality")
@@ -373,6 +380,7 @@ def translate_locale(
     canonical_keys: set[str],
     *,
     dry_run: bool = False,
+    prompt_preview: bool = False,
     scope: str = "gaps",
     on_progress: Callable[[int, int, int], None] | None = None,
     error_sink: list[dict[str, str]] | None = None,
@@ -434,10 +442,12 @@ def translate_locale(
     translator: object | None = None
     engine = "dry-run" if dry_run else "none"
     if not dry_run and total_todo > 0:
-        made = _make_translator(locale)
+        made = _make_translator(locale, prompt_preview=prompt_preview)
         if made is None:
             return 0, 0, 0, 0, False
         translator, engine = made
+        if prompt_preview:
+            engine = "prompt-preview"
 
     try:
         for en_key in sorted(canonical_keys):
@@ -463,6 +473,12 @@ def translate_locale(
                 continue
 
             if dry_run:
+                translated += 1
+                continue
+
+            if prompt_preview:
+                # Print the prompt to stderr without calling Ollama
+                translator.translate(en_key)  # type: ignore[union-attr]
                 translated += 1
                 continue
 
@@ -502,7 +518,7 @@ def translate_locale(
         # can pause a 20-hour run and resume it later without losing the locale.
         _finalize_locale(
             path, bundle, canonical_keys, locale, provenance_updates,
-            dry_run=dry_run,
+            dry_run=dry_run or prompt_preview,
         )
 
     return translated, kept, brand, errors, aborted
