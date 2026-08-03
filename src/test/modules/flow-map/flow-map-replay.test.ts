@@ -25,4 +25,29 @@ suite('FlowMap Replay button', () => {
         const body = buildFlowDiagramBody(graph);
         assert.ok(body.includes('data-zoom="replay"'), 'replay control present in the pop-out');
     });
+
+    test('gallery figures carry the normalized screen key matching the node data-rowkey', () => {
+        // The replay preview pairs figure ↔ node by exact key equality, so the figure's attribute
+        // must use the SAME normalization the builder applies to node keys (lowercase, collapsed).
+        const shot = {
+            dataUri: 'data:image/png;base64,AA==', clock: '08:00:02', trigger: 'nav',
+            logLine: 3, screenLabel: 'Home', text: 'capture',
+        };
+        const body = buildFlowMapBody(parseLog(FIXTURE), graph, undefined, {
+            screenshots: [shot], screenshotsOmitted: 0,
+        });
+        assert.ok(body.includes('data-screen-key="home"'), 'figure keyed by normalized label');
+        assert.ok(body.includes('data-rowkey="home"'), 'node carries the same key');
+    });
+
+    test('a shot with no screen label renders a figure without a screen key', () => {
+        const shot = {
+            dataUri: 'data:image/png;base64,AA==', clock: '08:00:02', trigger: 'manual',
+            logLine: 0, screenLabel: undefined, text: 'manual capture',
+        };
+        const body = buildFlowMapBody(parseLog(FIXTURE), graph, undefined, {
+            screenshots: [shot], screenshotsOmitted: 0,
+        });
+        assert.ok(!body.includes('data-screen-key'), 'no key attribute for unanchored captures');
+    });
 });

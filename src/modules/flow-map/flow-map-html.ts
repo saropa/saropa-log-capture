@@ -7,7 +7,7 @@
  */
 
 import type { FlowGraph, FlowNode, IssueEvent, ParsedLog, SourceAnchor } from './flow-map-model';
-import type { FlowShot } from './flow-map-screenshots';
+import { screenKeyOf, type FlowShot } from './flow-map-screenshots';
 import { anchorText, formatActions, formatDwellMs, nodeHasError, stripAnsi } from './flow-map-format';
 import { renderSvg } from './flow-map-svg';
 import { t } from '../../l10n';
@@ -171,10 +171,13 @@ function truncate(s: string, max: number): string {
 /** One screenshot figure: clickable thumbnail (reuses the log-reveal path) + a clock/trigger/screen caption. */
 function shotFigureHtml(shot: FlowShot): string {
     const dataLine = shot.logLine > 0 ? ` data-line="${shot.logLine}"` : '';
+    // The replay preview pairs figures to diagram nodes by this key (matches the node's data-rowkey).
+    const keyAttr = shot.screenLabel
+        ? ` data-screen-key="${esc(screenKeyOf(stripAnsi(shot.screenLabel)))}"` : '';
     const alt = esc(truncate(stripAnsi(shot.text), 80));
     const screen = shot.screenLabel ? esc(stripAnsi(shot.screenLabel)) : '—';
     const caption = `${esc(shot.clock)} · ${esc(shot.trigger)} · ${screen}`;
-    return `<figure class="shot-fig"><img class="shot-img loglink" role="link" tabindex="0"${dataLine} `
+    return `<figure class="shot-fig"${keyAttr}><img class="shot-img loglink" role="link" tabindex="0"${dataLine} `
         + `src="${shot.dataUri}" alt="${alt}" title="${alt}"><figcaption class="shot-cap">${caption}</figcaption></figure>`;
 }
 
