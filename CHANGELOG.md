@@ -25,25 +25,30 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.3.6]
+
+ [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.6/CHANGELOG.md)
 
 ### Changed
 
-- l10n translation engine switched from NLLB/Google to Qwen 3 via Ollama (offline, no rate limits, no Google fallback)
-- NLLB and Google translations are now classified as low quality in provenance; Qwen is high quality
+- Translations upgraded to a higher-quality offline engine; existing low-quality translations will be re-translated on the next pipeline run
+
+<details>
+<summary>Maintenance</summary>
+
+**l10n pipeline**
+
+- Translation engine switched from NLLB/Google to Qwen 3 via Ollama (offline, GPU-aware model ladder, no external API fallback)
 - Brand shielding uses XBQ…VKZ sentinel tokens (8-char opaque codes) instead of angle-bracket placeholders
-- Quality audit similarity scoring uses character bigrams for CJK locales (ja, ko, zh) instead of word bags
-
-### Added
-
-- `--prompt-preview` flag for the l10n pipeline prints Qwen prompts to stderr without calling Ollama
+- NLLB and Google translations reclassified as low quality in provenance; Qwen and manual are high quality
+- Quality audit similarity scoring uses character bigrams for CJK locales (ja, ko, zh) instead of word bags, which produced meaningless scores for scripts without word boundaries
+- `--prompt-preview` flag prints Qwen prompts to stderr without calling Ollama
 - Round-trip quality audit (menu option 7): samples translations, reverse-translates via Qwen, flags low-similarity divergences
-
-### Fixed
-
-- Stale Google references in l10n pipeline comments and help text replaced with engine-agnostic wording
+- Stale Google/NLLB references replaced with engine-agnostic wording across pipeline modules
 - Sentinel format comment corrected from "7 chars" to "8 chars"
 - Dead imports removed from quality audit module
+
+</details>
 
 ---
 
