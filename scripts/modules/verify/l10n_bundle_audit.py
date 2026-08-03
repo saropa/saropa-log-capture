@@ -317,7 +317,7 @@ def run_audit() -> AuditResult:
         )
         # Classify the really-translated keys by the engine that produced them
         # (no provenance record -> "untracked", counted as low quality). This is
-        # what surfaces "1,198 untracked Google strings to upgrade" in the audit.
+        # what surfaces "1,198 untracked legacy strings to upgrade" in the audit.
         translated_keys = (
             expected_values
             - set(missing_keys)
