@@ -2,8 +2,8 @@
 """Brand name protection for l10n translation.
 
 Brand names must never be translated, transliterated, or phonetically
-adapted. They appear verbatim in every locale. Google Translate routinely
-mangles them (e.g. "Saropa Lints" → "Saropa-Fusseln" in German,
+adapted. They appear verbatim in every locale. MT engines routinely
+mangle them (e.g. "Saropa Lints" → "Saropa-Fusseln" in German,
 "サロパリント" in Japanese, "Pelusas Saropa" in Spanish).
 
 Two categories:
@@ -14,7 +14,7 @@ Two categories:
     strings are never sent to the translator and never counted as untranslated.
   - BRAND_TOKENS: substrings that must appear verbatim inside longer
     translated strings. Used to validate translations and to shield
-    brands from Google Translate via placeholder substitution.
+    brands from the MT engine via placeholder substitution.
 """
 
 import re
@@ -215,16 +215,29 @@ def validate_brands(en_value: str, translated: str) -> list[str]:
 
 
 # ---------------------------------------------------------------------------
-# Placeholder shielding: swap brand tokens for numbered placeholders before
-# sending to Google Translate, then restore them after. This prevents Google
+# Sentinel shielding: swap brand tokens for opaque sentinel tokens before
+# sending to the MT engine, then restore them after. This prevents the engine
 # from transliterating or "translating" brand names.
+#
+# Sentinel format: XBQ<L1><L2>VKZ (7 chars, no digits, no adjacent repeats).
+# Matches the saropa.com website pipeline. The frame letters (XBQ/VKZ) form
+# consonant clusters that never appear in natural text, so the model copies
+# them through as opaque tokens rather than trying to translate them.
 # ---------------------------------------------------------------------------
+
+_SENT_ALPHABET = "ACDEFGHJLMNPRSTUWY"
+
+
+def _sentinel(n: int) -> str:
+    """Return the nth sentinel token ``XBQ<L1><L2>VKZ``."""
+    hi, lo = divmod(n, len(_SENT_ALPHABET))
+    return "XBQ" + _SENT_ALPHABET[hi] + _SENT_ALPHABET[lo] + "VKZ"
 
 
 def shield_brands(text: str) -> tuple[str, list[tuple[str, str]]]:
-    """Replace brand tokens with placeholders like <B0>, <B1>, etc.
+    """Replace brand tokens with sentinel placeholders like XBQACVKZ.
 
-    Returns (shielded_text, [(placeholder, original), ...]).
+    Returns (shielded_text, [(sentinel, original), ...]).
     Longest brands are replaced first so "Saropa Log Capture" is one
     token, not "Saropa" + "Log Capture".
     """
@@ -232,7 +245,7 @@ def shield_brands(text: str) -> tuple[str, list[tuple[str, str]]]:
     idx = 0
     for brand in BRAND_TOKENS:
         if brand in text:
-            placeholder = f"<B{idx}>"
+            placeholder = _sentinel(idx)
             text = text.replace(brand, placeholder)
             replacements.append((placeholder, brand))
             idx += 1
@@ -243,20 +256,19 @@ def unshield_brands(
     text: str,
     replacements: list[tuple[str, str]],
 ) -> str:
-    """Restore brand tokens from placeholders.
+    """Restore brand tokens from sentinel placeholders.
 
-    Handles cases where Google Translate may have added spaces around
-    placeholders or changed their casing.
+    Case-insensitive matching handles models that reCASE the sentinel.
+    Per-character duplication tolerance handles models that double letter
+    runs (e.g. XBBQQ → XBQ).
     """
     for placeholder, brand in replacements:
-        # Exact match first.
         if placeholder in text:
             text = text.replace(placeholder, brand)
             continue
-        # Google sometimes lowercases or adds spaces: "< b0 >" or "<b0>".
-        pattern = re.compile(
-            re.escape(placeholder).replace(r"\<", r"<\s*").replace(r"\>", r"\s*>"),
-            re.IGNORECASE,
-        )
+        # Case-insensitive fallback with optional character doubling.
+        chars = list(placeholder)
+        pattern_str = "".join(f"{re.escape(c)}{{1,2}}" for c in chars)
+        pattern = re.compile(pattern_str, re.IGNORECASE)
         text = pattern.sub(brand, text)
     return text
