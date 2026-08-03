@@ -93,7 +93,7 @@ def _print_provenance_table(audit: AuditResult) -> None:
     """Print the per-locale engine provenance + high/low quality split.
 
     Untracked (no provenance record) counts as low quality, so a locale full of
-    old un-attributed Google strings reads as a large red Low-Q figure — the
+    old un-attributed legacy strings reads as a large red Low-Q figure — the
     signal that an "upgrade low-quality" pass has work to do.
     """
     if not audit.locale_coverage:

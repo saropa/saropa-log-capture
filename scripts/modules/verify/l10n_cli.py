@@ -191,7 +191,7 @@ def _parse_args() -> argparse.Namespace:
         help=(
             "translate mode: 'gaps' (default) fills untranslated strings; "
             "'low_quality' re-translates existing low-quality / untracked "
-            "strings with Qwen (Google → Qwen upgrade)."
+            "strings with Qwen."
         ),
     )
     p.add_argument(

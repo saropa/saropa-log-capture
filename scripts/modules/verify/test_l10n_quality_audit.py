@@ -15,6 +15,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from modules.verify.l10n_quality_audit import (  # noqa: E402
+    _char_ngrams,
+    _has_cjk,
     _reverse_prompt,
     _sample_keys,
     _similarity,
@@ -34,8 +36,57 @@ class WordSetTests(unittest.TestCase):
         self.assertEqual(result, {"hello", "world"})
 
 
+class HasCjkTests(unittest.TestCase):
+    """_has_cjk detects CJK characters in text."""
+
+    def test_pure_latin(self) -> None:
+        self.assertFalse(_has_cjk("Hello World"))
+
+    def test_japanese_kanji(self) -> None:
+        self.assertTrue(_has_cjk("設定を開く"))
+
+    def test_japanese_hiragana(self) -> None:
+        self.assertTrue(_has_cjk("こんにちは"))
+
+    def test_katakana(self) -> None:
+        self.assertTrue(_has_cjk("デバッグ"))
+
+    def test_korean_hangul(self) -> None:
+        self.assertTrue(_has_cjk("디버그 콘솔"))
+
+    def test_chinese_simplified(self) -> None:
+        self.assertTrue(_has_cjk("打开设置"))
+
+    def test_mixed_latin_cjk(self) -> None:
+        self.assertTrue(_has_cjk("Open 設定"))
+
+    def test_cyrillic_is_not_cjk(self) -> None:
+        self.assertFalse(_has_cjk("Привет мир"))
+
+
+class CharNgramTests(unittest.TestCase):
+    """_char_ngrams builds character n-gram sets."""
+
+    def test_bigrams(self) -> None:
+        result = _char_ngrams("abcd", n=2)
+        self.assertEqual(result, {"ab", "bc", "cd"})
+
+    def test_short_text_returns_whole(self) -> None:
+        result = _char_ngrams("a", n=2)
+        self.assertEqual(result, {"a"})
+
+    def test_empty_returns_empty(self) -> None:
+        result = _char_ngrams("", n=2)
+        self.assertEqual(result, set())
+
+    def test_cjk_text(self) -> None:
+        result = _char_ngrams("設定を開く", n=2)
+        self.assertEqual(len(result), 4)
+        self.assertIn("設定", result)
+
+
 class SimilarityTests(unittest.TestCase):
-    """Jaccard similarity scoring."""
+    """Jaccard similarity scoring — word bags for Latin, char bigrams for CJK."""
 
     def test_identical_strings(self) -> None:
         self.assertEqual(_similarity("hello world", "hello world"), 1.0)
@@ -53,6 +104,18 @@ class SimilarityTests(unittest.TestCase):
 
     def test_one_empty(self) -> None:
         self.assertEqual(_similarity("hello", ""), 0.0)
+
+    def test_cjk_uses_char_ngrams(self) -> None:
+        """CJK text should produce a meaningful (non-1.0) similarity score."""
+        sim = _similarity("設定を開く", "設定を閉じる")
+        self.assertGreater(sim, 0.0)
+        self.assertLess(sim, 1.0)
+
+    def test_mixed_cjk_english_triggers_ngrams(self) -> None:
+        """When round-trip contains CJK, similarity still works."""
+        sim = _similarity("Open settings", "Open 設定")
+        self.assertGreater(sim, 0.0)
+        self.assertLess(sim, 1.0)
 
 
 class SampleKeysTests(unittest.TestCase):
