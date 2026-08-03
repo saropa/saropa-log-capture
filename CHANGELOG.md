@@ -25,6 +25,19 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- Flow map: during a replay, screens with a captured screenshot show a floating preview of what the user saw at that step
+
+### Fixed
+
+- Flow map: gesture exceptions ("Exception caught by gesture", no "library" suffix) are now detected as crashes
+- Flow map: replay centering is now zoom-proof, and Escape closes the node-detail popup before stopping a running replay
+
+---
+
 ## [9.3.4]
 
 The Flow map gets a major upgrade with session replays, custom breadcrumb mapping, integrated screenshot previews, and theme support, plus a fresh status bar look with quick-action menus.  [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.4/CHANGELOG.md)
@@ -33,7 +46,7 @@ The Flow map gets a major upgrade with session replays, custom breadcrumb mappin
 
 - Flow map: new settings `saropaLogCapture.flowMap.customBreadcrumbs` and `saropaLogCapture.flowMap.customIssues` let any project map its own log lines to screens, actions, and issues without code changes
 - Flow map: a Screenshots section shows the captures taken during the session, each joined to the screen that was active and clickable to jump to its log line
-- Flow map: a Replay button steps through the session walk, highlighting each screen in visit order; when a screen has a captured screenshot, a floating preview shows what the user saw at that step
+- Flow map: a Replay button steps through the session walk, highlighting each screen in visit order
 
 ### Changed
 
@@ -50,8 +63,6 @@ The Flow map gets a major upgrade with session replays, custom breadcrumb mappin
 - Flow map: a crash without its own widget report no longer claims the next crash's widget and source anchor
 - Flow map: a crash that fires between two visits to the same screen now anchors to the screen actually open at that moment
 - Flow map: custom patterns skip lines over 500 characters, bounding worst-case regex backtracking from user-supplied patterns
-- Flow map: gesture exceptions ("Exception caught by gesture", no "library" suffix) are now detected as crashes
-- Flow map: replay centering is now zoom-proof, and Escape closes the node-detail popup before stopping a running replay
 - Flow map: the worst slow query now keeps its real time — it sorts chronologically in the Issue Report and badges the screen that was active, instead of floating to the top with no clock
 - Flow map: every unhandled exception in a log is now detected and drawn (previously only the first); each crash edge anchors to the screen active at its own moment
 - Flow map: returning to a screen that appears twice in the open-navigation stack no longer closes every surface between the two visits
