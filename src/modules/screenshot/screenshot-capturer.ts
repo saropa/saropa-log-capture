@@ -16,7 +16,7 @@
 import { isErrorLine, isWarningLine } from '../features/error-rate-alert';
 import { normalizeLine, hashFingerprint } from '../analysis/error-fingerprint-pure';
 import { classifyLogLine } from '../analysis/stack-parser';
-import { getDeviceTier } from '../analysis/device-tag-tiers';
+import { LogcatCrashGate } from './logcat-crash-gate';
 import { classifyBreadcrumb } from '../flow-map/flow-map-breadcrumbs';
 import { stripAnsi } from '../capture/ansi';
 import type { LineData } from '../session/session-event-bus';
@@ -78,6 +78,8 @@ interface CaptureRequest {
 /** Watches captured lines and saves VM Service screenshots on matching triggers. */
 export class ScreenshotCapturer {
     private readonly seenFingerprints = new Set<string>();
+    /** Live-vs-replay decision for the logcat feed; stateful per session (see its module doc). */
+    private readonly logcatGate = new LogcatCrashGate();
     private lastCaptureAt = 0;
     private inFlight = false;
     private warnedCapFull = false;
@@ -101,11 +103,18 @@ export class ScreenshotCapturer {
         const wsUri = this.deps.getVmServiceWsUri();
         if (!wsUri) {
             // The no-URI state was invisible: error lines streamed past and nothing said why
-            // captures stayed idle. Warn ONCE when the first error-shaped line passes with no
-            // VM Service address known (flag checked first — zero cost after the warn).
-            if (!this.warnedNoUri && isErrorLine(stripAnsi(data.text), data.category)) {
-                this.warnedNoUri = true;
-                this.deps.log('screenshot: error line seen but no VM Service address is known — captures stay idle until the debug adapter announces one or the console banner appears');
+            // captures stayed idle. Warn ONCE — but only for a line that would REALLY have been
+            // a trigger. An unfiltered isErrorLine check fires on the startup logcat replay
+            // burst (device noise, days-old crashes) during every healthy session, which turns
+            // the diagnostic into routine false alarm. Mirror classifyTrigger's console-path
+            // gating: skip the logcat feed (its own gate owns that decision) and device-other
+            // noise. The flag is tested first, so the classifier cost is paid at most once.
+            if (!this.warnedNoUri && data.category !== 'logcat') {
+                const plain = stripAnsi(data.text);
+                if (isErrorLine(plain, data.category) && classifyLogLine(plain) !== 'device-other') {
+                    this.warnedNoUri = true;
+                    this.deps.log('screenshot: app error seen but no VM Service address is known — captures stay idle until the debug adapter announces one or the console banner appears');
+                }
             }
             return;
         }
@@ -114,7 +123,7 @@ export class ScreenshotCapturer {
 
         const settings = this.deps.triggerSettings();
         const text = stripAnsi(data.text);
-        const trigger = classifyTrigger(text, data, settings);
+        const trigger = classifyTrigger(text, data, settings, this.logcatGate);
         if (!trigger) { return; }
 
         if (!this.passesCoalescing(text, trigger, settings.cooldownMs)) { return; }
@@ -221,41 +230,12 @@ export class ScreenshotCapturer {
     }
 }
 
-/** Threadtime prefix: "MM-DD HH:MM:SS.mmm  PID  TID  L Tag: message". */
-const logcatThreadtime = /^(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})\.\d+\s+\d+\s+\d+\s+([VDIWEFA])\s+([^:]+?)\s*:/;
-
-/** Device-clock skew + capture latency allowance for the freshness gate. */
-const LOGCAT_FRESH_WINDOW_MS = 10 * 60 * 1000;
-
-/**
- * True for a logcat line worth a screenshot: error-or-worse level, device-critical tag
- * (AndroidRuntime/ART/lowmemorykiller — not binder noise, which arrives at W), and FRESH.
- * Freshness matters because logcat replays its whole buffer at session start: a real
- * `E/AndroidRuntime: FATAL EXCEPTION` from days ago streams past on every launch (observed
- * in the 2026-08-04 contacts log: device stamp 07-29, captured 08-04) and must not fire.
- * The device timestamp has no year; compare against adjacent years and keep the smallest
- * delta so New Year's Eve sessions don't misjudge.
- */
-export function isFreshCriticalLogcatCrash(text: string, arrivalMs: number): boolean {
-    const m = logcatThreadtime.exec(text);
-    if (!m) { return false; }
-    const level = m[6];
-    if (level !== 'E' && level !== 'F' && level !== 'A') { return false; }
-    if (getDeviceTier(m[7]) !== 'device-critical') { return false; }
-    const year = new Date(arrivalMs).getFullYear();
-    let best = Number.POSITIVE_INFINITY;
-    for (const y of [year - 1, year, year + 1]) {
-        const stamp = new Date(y, Number(m[1]) - 1, Number(m[2]), Number(m[3]), Number(m[4]), Number(m[5])).getTime();
-        best = Math.min(best, Math.abs(arrivalMs - stamp));
-    }
-    return best <= LOGCAT_FRESH_WINDOW_MS;
-}
-
 /** Decide which enabled trigger (if any) a line fires. Error wins over warning over nav. */
 function classifyTrigger(
     text: string,
     data: LineData,
     settings: ScreenshotTriggerSettings,
+    logcatGate: LogcatCrashGate,
 ): ScreenshotTrigger | undefined {
     // Nothing enabled → skip the classifier regexes entirely (they are the priciest step here).
     if (!settings.onError && !settings.onWarning && !settings.onNavigation) { return undefined; }
@@ -271,10 +251,12 @@ function classifyTrigger(
     // The logcat feed needs its own narrow gate rather than a wholesale exclusion: PROFILE-mode
     // runs (the 2026-08 contacts sessions) emit almost no console output — the framework's
     // exception banners are debug-mode only — so the logcat crash line IS the only error signal
-    // a profile session produces. Capture on fresh, E/F/A-level, device-critical logcat lines;
-    // everything else in the feed stays excluded.
+    // a profile session produces. The gate (logcat-crash-gate.ts) admits only live, E/F/A-level,
+    // device-critical crashes and must observe EVERY logcat line to keep its device-clock
+    // watermark accurate, so it runs before the onError check rather than behind it.
     if (data.category === 'logcat') {
-        return settings.onError && isFreshCriticalLogcatCrash(text, data.timestamp.getTime()) ? 'error' : undefined;
+        const isCrash = logcatGate.observe(text, data.timestamp.getTime(), data.timestamp.getFullYear());
+        return isCrash && settings.onError ? 'error' : undefined;
     }
     const tier = classifyLogLine(text);
     if (tier === 'device-other') { return undefined; }
