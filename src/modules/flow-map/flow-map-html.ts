@@ -13,6 +13,7 @@ import { renderSvg } from './flow-map-svg';
 import { t } from '../../l10n';
 import { buildNarrative } from './flow-map-report';
 import { activityChartHtml } from './flow-map-activity-chart';
+import type { BreadcrumbSuggestion } from './flow-map-empty-diagnostic';
 
 /** Escape text for HTML. */
 function esc(s: string): string {
@@ -223,18 +224,44 @@ function flowLegend(): string {
         + '>ℹ</span>';
 }
 
+/** One suggested custom breadcrumb rule: the log's own sample line, its count, and an "Add rule" button. */
+function suggestRowHtml(s: BreadcrumbSuggestion): string {
+    return '<div class="fm-suggest-row">'
+        + `<span class="fm-suggest-sample" title="${esc(s.sample)}">${esc(s.sample)}</span>`
+        + `<span class="fm-suggest-count">${esc(String(s.count))}×</span>`
+        + `<button type="button" class="fm-suggest-btn" data-pattern="${esc(s.pattern)}" `
+        + `data-label="${esc(s.label)}">${esc(t('flowMap.suggestAdd'))}</button></div>`;
+}
+
+/**
+ * The empty-state onboarding block (breadcrumb diagnostic): repeated `Prefix: value` shapes found in
+ * the log's own lines, offered as one-click custom-rule suggestions. Empty when the heuristic found
+ * nothing worth suggesting — never renders a block with no rows.
+ */
+function suggestBlockHtml(suggestions: readonly BreadcrumbSuggestion[]): string {
+    if (suggestions.length === 0) {
+        return '';
+    }
+    return '<div class="fm-suggest">'
+        + `<p class="fm-suggest-heading">${esc(t('flowMap.suggestHeading'))}</p>`
+        + suggestions.map(suggestRowHtml).join('')
+        + '</div>';
+}
+
 /**
  * The diagram block: an overlay zoom/pan/fit toolbar (plus center-on-fault when a node faulted, and
  * an optional pop-out) over the SVG, which sits in a scroll container so zoom grows scrollbars and
  * the chart centers via margin:auto when it is smaller than the viewport. Glyphs are symbols (exempt
  * from l10n); titles are localized. `withPopout` is false inside the already-popped-out panel.
  */
-export function flowDiagramHtml(graph: FlowGraph, withPopout: boolean, emptyDetail = ''): string {
+export function flowDiagramHtml(
+    graph: FlowGraph, withPopout: boolean, emptyDetail = '', suggestions: readonly BreadcrumbSuggestion[] = [],
+): string {
     // No nodes = nothing to draw or zoom. Say so instead of shipping an empty diagram — a log with
     // no navigation breadcrumbs (logcat-only captures, tooling runs) otherwise reads as broken.
     if (graph.nodes.length === 0) {
         const detail = emptyDetail ? `<p class="fm-empty fm-empty-detail">${esc(emptyDetail)}</p>` : '';
-        return `<p class="fm-empty">${esc(t('flowMap.emptyDiagram'))}</p>${detail}`;
+        return `<p class="fm-empty">${esc(t('flowMap.emptyDiagram'))}</p>${detail}${suggestBlockHtml(suggestions)}`;
     }
     const hasCrash = graph.nodes.some(nodeHasError);
     const btn = (zoom: string, glyph: string, label: string, extra = '') =>
@@ -255,9 +282,11 @@ export function flowDiagramHtml(graph: FlowGraph, withPopout: boolean, emptyDeta
  * empty graph — a key explaining walked/dashed/fault glyphs reads as broken beside a "no breadcrumbs"
  * note, since there are no glyphs to decode.
  */
-function legendAndDiagram(graph: FlowGraph, withPopout: boolean, emptyDetail = ''): string {
+function legendAndDiagram(
+    graph: FlowGraph, withPopout: boolean, emptyDetail = '', suggestions: readonly BreadcrumbSuggestion[] = [],
+): string {
     const legend = graph.nodes.length > 0 ? flowLegend() : '';
-    return legend + flowDiagramHtml(graph, withPopout, emptyDetail);
+    return legend + flowDiagramHtml(graph, withPopout, emptyDetail, suggestions);
 }
 
 /**
@@ -277,10 +306,15 @@ export function buildFlowDiagramBody(graph: FlowGraph): string {
     return '<div class="diagram-only">' + legendAndDiagram(graph, false) + '</div>';
 }
 
-/** Screenshot gallery inputs, bundled to keep `buildFlowMapBody` within the 4-parameter limit. */
+/**
+ * Screenshot gallery + empty-state diagnostic inputs, bundled to keep `buildFlowMapBody` within the
+ * 4-parameter limit. `suggestions` rides along here (rather than as its own parameter) for the same
+ * reason — see `suggestBreadcrumbPatterns` in `flow-map-empty-diagnostic.ts`.
+ */
 export interface FlowShotsInput {
     readonly screenshots: readonly FlowShot[];
     readonly screenshotsOmitted: number;
+    readonly suggestions?: readonly BreadcrumbSuggestion[];
 }
 
 /**
@@ -298,7 +332,7 @@ export function buildFlowMapBody(
     const screenshots = shots?.screenshots ?? [];
     const hasShots = screenshots.length > 0;
     const diagramCol = '<div class="diagram-col">'
-        + section('sec-flow', titles.flow, legendAndDiagram(graph, true, emptyDetailFor(parsed)))
+        + section('sec-flow', titles.flow, legendAndDiagram(graph, true, emptyDetailFor(parsed), shots?.suggestions ?? []))
         + '</div>';
     const shotsSection = hasShots
         ? section('sec-shots', titles.screenshots, screenshotsSectionHtml(screenshots, shots?.screenshotsOmitted ?? 0))
