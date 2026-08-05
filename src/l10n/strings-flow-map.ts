@@ -24,6 +24,13 @@ export const stringsFlowMap: Record<string, string> = {
     'flowMap.emptyScanned': 'Scanned timestamped lines through {0} and matched no navigation breadcrumbs.',
     'flowMap.emptyNoClock': 'No timestamped lines were recognized in this log, so nothing could be classified. If the log does contain timestamps, the capture format may have changed.',
     'flowMap.popOutBtn': 'Open the flow chart in its own panel',
+    // Empty-state breadcrumb diagnostic: suggested custom-rule onboarding when the log has no
+    // recognized navigation breadcrumbs (see flow-map-empty-diagnostic.ts).
+    'flowMap.suggestHeading': 'These lines look like navigation — add one as a custom rule:',
+    'flowMap.suggestAdd': 'Add rule',
+    'flowMap.ruleAdded': 'Added a custom flow-map breadcrumb rule.',
+    'flowMap.ruleExists': 'That breadcrumb rule is already configured.',
+    'flowMap.ruleAddFailed': 'Could not save the custom breadcrumb rule: {0}',
     'flowMap.detailDialogTitle': 'Flow node detail',
     'flowMap.detailType': 'Type',
     'flowMap.detailState': 'State',

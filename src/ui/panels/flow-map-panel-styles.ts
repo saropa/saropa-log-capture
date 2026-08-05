@@ -213,6 +213,17 @@ export function flowMapStyles(nonce: string): string {
   .fm-empty { color: var(--muted); font-size: 0.92em; max-width: 46ch; min-width: 0; overflow-wrap: anywhere; padding: 0.4rem 0 0.2rem; }
   .fm-empty-detail { font-size: 0.86em; opacity: 0.85; padding: 0 0 1rem; }
 
+  /* Empty-state breadcrumb diagnostic: onboarding block offering custom-rule suggestions built from
+     the log's own repeated line shapes (flow-map-empty-diagnostic.ts). Bordered so it reads as a
+     distinct, actionable card rather than more dead-end prose. */
+  .fm-suggest { max-width: 46ch; margin-top: 0.6rem; padding: 0.6rem 0.75rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-1); }
+  .fm-suggest-heading { margin: 0 0 0.5rem; font-size: 0.86em; color: var(--muted); }
+  .fm-suggest-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin: 0.35rem 0; font-size: 0.85em; }
+  .fm-suggest-sample { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--vscode-editor-font-family); color: var(--text); }
+  .fm-suggest-count { flex: 0 0 auto; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .fm-suggest-btn { flex: 0 0 auto; padding: 0.18rem 0.6rem; font-size: 0.85em; border-radius: var(--radius-sm); border: 1px solid var(--vscode-button-border, transparent); background: var(--vscode-button-background); color: var(--vscode-button-foreground); cursor: pointer; }
+  .fm-suggest-btn:hover { background: var(--vscode-button-hoverBackground); }
+
   .fm-node { cursor: pointer; }
   .fm-node rect { transition: stroke-width 0.12s ease, filter 0.12s ease; }
   .fm-node:hover rect, .fm-node:focus rect { stroke-width: 3; filter: brightness(1.18); outline: none; }
