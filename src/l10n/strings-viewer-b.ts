@@ -146,6 +146,7 @@ export const stringsViewerB: Record<string, string> = {
     'viewer.session.size.5m': 'Larger than 5 MB',
     'viewer.session.size.10m': 'Larger than 10 MB',
     'viewer.session.size.50m': 'Larger than 50 MB',
+    // @l10n-family .title .label .text
     'viewer.session.toggleStrip.title': 'Show date/time in filenames',
     'viewer.session.toggleStrip.label': 'Show date and time in filenames',
     'viewer.session.toggleStrip.text': 'Dates',
@@ -164,6 +165,7 @@ export const stringsViewerB: Record<string, string> = {
     'viewer.session.filterTags.title': 'Filter by correlation tag',
     'viewer.session.filterTags.label': 'Filter by correlation tag',
     'viewer.session.filterTags.text': 'Tags',
+
     'viewer.session.options.title': 'Display options',
     'viewer.session.options.label': 'Display options',
     'viewer.session.group.filter': 'Filter',
