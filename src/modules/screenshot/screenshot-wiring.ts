@@ -65,8 +65,10 @@ export function registerScreenshotCapture(deps: ScreenshotWiringDeps): Screensho
     });
 
     // Build-identity line: the first question in any "no screenshots" report is whether the
-    // running extension actually contains this pipeline. One line at activation settles it.
-    deps.log('screenshot: capture pipeline armed (2026-07-30 build — VM probe + adb screencap fallback)');
+    // running extension actually contains this pipeline. Version comes from the manifest —
+    // a hardcoded date would silently go stale on the next change to this file.
+    const version = vscode.extensions.getExtension('saropa.saropa-log-capture')?.packageJSON?.version ?? 'unknown';
+    deps.log(`screenshot: capture pipeline armed (v${version} — VM probe + adb screencap fallback)`);
     registerVmServiceUriTracking(deps.context);
     deps.sessionManager.addLineListener((data) => {
         // Fallback URI discovery from the console banner — regex runs ONLY while no URI is
