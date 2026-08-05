@@ -2160,7 +2160,7 @@
   "Capture enabled": "Cattura abilitata",
   "Captured": "Capturato",
   "Changelog": "Registro delle modifiche",
-  "Commit": "Conferma",
+  "Commit": "Commit",
   "Copy log line": "Copia riga log",
   "Copy summary": "Copia sommario",
   "Detail": "Dettaglio",
@@ -2191,5 +2191,15 @@
   "external": "esterno",
   "inline": "in linea",
   "screen": "schermo",
-  "tab": "scheda"
+  "tab": "scheda",
+  "Add rule": "Aggiungi regola",
+  "Added a custom flow-map breadcrumb rule.": "Aggiunta una regola personalizzata per il breadcrumb del flow-map.",
+  "Could not save the custom breadcrumb rule: {0}": "Non è stato possibile salvare la regola breadcrumb personalizzata: {0}",
+  "No navigation breadcrumbs in this log — the flow diagram needs \"Screen Navigation\" lines or [flowmap] tags from the app. Other report sections still reflect the log.": "Nessuna breadcrumb di navigazione in questo log — il diagramma di flusso necessita di linee \"Screen Navigation\" o tag [flowmap] dall'app. Altre sezioni del report riflettono ancora il log.",
+  "No timestamped lines were recognized in this log, so nothing could be classified. If the log does contain timestamps, the capture format may have changed.": "Nessuna riga con timestamp è stata riconosciuta in questo log, quindi nulla è stato classificato. Se il log contiene timestamp, il formato di cattura potrebbe essere cambiato.",
+  "Reverse": "Retroattivo",
+  "Scanned timestamped lines through {0} and matched no navigation breadcrumbs.": "Linee timestampate scansionate attraverso {0} e nessuna breadcrumb di navigazione corrispondente.",
+  "Take a screenshot of the running app now": "Cattura uno screenshot dell'app in esecuzione adesso",
+  "That breadcrumb rule is already configured.": "Quella regola del breadcrumb è già configurata.",
+  "These lines look like navigation — add one as a custom rule:": "Queste righe sembrano essere delle navigazioni — aggiungi una come regola personalizzata:"
 }

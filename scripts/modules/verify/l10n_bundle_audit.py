@@ -34,7 +34,9 @@ from modules.verify.l10n_brands import (
     validate_brands,
 )
 from modules.verify.l10n_provenance import (
+    ENGINE_MANUAL,
     classify_translated_keys,
+    load_provenance,
     quality_split,
 )
 
@@ -283,13 +285,16 @@ def run_audit() -> AuditResult:
         orphan_count = sum(
             1 for k in bundle_keys if k not in expected_values
         )
+        provenance = load_provenance(locale)
         # Untranslated = value identical to English AND none of: a brand-only
-        # string, a technical acronym, a symbol-only string with no word, or a
-        # per-locale human-verified cognate. Brand-only ("Saropa Lints"),
-        # acronyms ("SQL", "ANR"), and symbol-only ("1 - {0}", "{0} #", "Δ #")
-        # are correctly identical in EVERY locale; is_verified_identical covers
-        # the per-locale cases (Spanish "Error", German "Pause") a reviewer
-        # confirmed. Identity IS the translation, so none count as gaps.
+        # string, a technical acronym, a symbol-only string with no word, a
+        # per-locale human-verified cognate, or a human-reviewed cognate
+        # (provenance == "manual" with value unchanged). Brand-only ("Saropa
+        # Lints"), acronyms ("SQL", "ANR"), and symbol-only ("1 - {0}") are
+        # correctly identical in EVERY locale; is_verified_identical covers
+        # the per-locale allow-list (Spanish "Error", German "Pause"); and
+        # human provenance with value == key means a reviewer confirmed
+        # English is correct for this locale — no code change needed.
         untranslated_keys = [
             k
             for k in bundle_keys
@@ -299,6 +304,7 @@ def run_audit() -> AuditResult:
             and not is_acronym_only(k)
             and not is_no_translatable_content(k)
             and not is_verified_identical(k, locale)
+            and provenance.get(k) != ENGINE_MANUAL
         ]
         # Brand-mangled = translated but a brand token got transliterated
         # or removed (e.g. "Saropa Log Capture" → "Saropa-Protokollerfassung").
