@@ -216,7 +216,8 @@ export function flowMapStyles(nonce: string): string {
   /* Empty-state breadcrumb diagnostic: onboarding block offering custom-rule suggestions built from
      the log's own repeated line shapes (flow-map-empty-diagnostic.ts). Bordered so it reads as a
      distinct, actionable card rather than more dead-end prose. */
-  .fm-suggest { max-width: 46ch; margin-top: 0.6rem; padding: 0.6rem 0.75rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-1); }
+  /* min-width:0 lets the block shrink with a drag-narrowed diagram column instead of forcing width. */
+  .fm-suggest { max-width: 46ch; min-width: 0; margin-top: 0.6rem; padding: 0.6rem 0.75rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-1); }
   .fm-suggest-heading { margin: 0 0 0.5rem; font-size: 0.86em; color: var(--muted); }
   .fm-suggest-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin: 0.35rem 0; font-size: 0.85em; }
   .fm-suggest-sample { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--vscode-editor-font-family); color: var(--text); }
