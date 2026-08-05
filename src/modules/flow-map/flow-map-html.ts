@@ -230,6 +230,11 @@ function flowLegend(): string {
  * from l10n); titles are localized. `withPopout` is false inside the already-popped-out panel.
  */
 export function flowDiagramHtml(graph: FlowGraph, withPopout: boolean): string {
+    // No nodes = nothing to draw or zoom. Say so instead of shipping an empty diagram — a log with
+    // no navigation breadcrumbs (logcat-only captures, tooling runs) otherwise reads as broken.
+    if (graph.nodes.length === 0) {
+        return `<p class="fm-empty">${esc(t('flowMap.emptyDiagram'))}</p>`;
+    }
     const hasCrash = graph.nodes.some(nodeHasError);
     const btn = (zoom: string, glyph: string, label: string, extra = '') =>
         `<button class="fm-zoom-btn${extra}" data-zoom="${zoom}" title="${label}" aria-label="${label}">${glyph}</button>`;

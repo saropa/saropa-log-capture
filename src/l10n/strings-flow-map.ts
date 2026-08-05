@@ -20,6 +20,7 @@ export const stringsFlowMap: Record<string, string> = {
     'flowMap.resetViewBtn': 'Reset view (fit diagram)',
     'flowMap.jumpToCrashBtn': 'Center the fault node',
     'flowMap.replayBtn': 'Replay the session walk',
+    'flowMap.emptyDiagram': 'No navigation breadcrumbs in this log — the flow diagram needs "Screen Navigation" lines or [flowmap] tags from the app. Other report sections still reflect the log.',
     'flowMap.popOutBtn': 'Open the flow chart in its own panel',
     'flowMap.detailDialogTitle': 'Flow node detail',
     'flowMap.detailType': 'Type',
