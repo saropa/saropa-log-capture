@@ -107,6 +107,30 @@ suite('ScreenshotCapturer', () => {
         assert.strictEqual(h.store.saves.length, 0);
     });
 
+    test('should capture on FRESH device-critical logcat crashes (profile-mode signal)', async () => {
+        // Profile-mode sessions emit no console exception banners — the logcat crash line is
+        // the only error signal. Device stamp matches arrival time → fresh → capture.
+        const h = makeHarness();
+        const arrival = new Date(2026, 7, 4, 18, 30, 0); // Aug 4, 18:30
+        h.capturer.onLine(makeLine('08-04 18:30:00.100 24445 24458 E AndroidRuntime: FATAL EXCEPTION: main', { category: 'logcat', timestamp: arrival }));
+        await h.flush();
+        assert.strictEqual(h.store.saves.length, 1);
+        assert.strictEqual(h.store.saves[0].trigger, 'error');
+    });
+
+    test('should NOT capture on stale logcat replay crashes or W-level binder noise', async () => {
+        const h = makeHarness();
+        const arrival = new Date(2026, 7, 4, 19, 9, 15); // Aug 4, 19:09 — session start replay
+        // Literal line from the 2026-08-04 contacts log: device stamp six days old.
+        h.capturer.onLine(makeLine('07-29 08:39:15.769 24445 24458 E AndroidRuntime: FATAL EXCEPTION: video', { category: 'logcat', timestamp: arrival }));
+        await h.flush();
+        h.clock.now += 5000;
+        // Fresh but W-level ActivityManager binder chatter (matches isErrorLine via "error").
+        h.capturer.onLine(makeLine('08-04 19:09:15.000 24732 26378 W ActivityManager: pid 31795 sent binder code 10 and got error -32', { category: 'logcat', timestamp: arrival }));
+        await h.flush();
+        assert.strictEqual(h.store.saves.length, 0);
+    });
+
     test('should still capture on flutter-tagged and untagged app error lines', async () => {
         const h = makeHarness();
         h.capturer.onLine(makeLine('I/flutter (14538): === debugException break — fix this error ===', { category: 'stdout' }));
