@@ -72,6 +72,16 @@ export function registerScreenshotCapture(deps: ScreenshotWiringDeps): Screensho
     deps.log(`screenshot: capture pipeline armed (v${version} — VM probe + adb screencap fallback)`);
     registerVmServiceUriTracking(deps.context);
     registerSelfTest(deps, cfg);
+    // Threshold observability: the replay gate's constants are reasoned from one observed
+    // device. If they are wrong for another, crashes are silently suppressed and the feature
+    // looks inert — the exact failure this plan already burned two rounds on. Report the
+    // count at session end so a mistuned threshold surfaces as a number.
+    deps.context.subscriptions.push(vscode.debug.onDidTerminateDebugSession(() => {
+        const suppressed = capturer.suppressedLogcatCrashes;
+        if (suppressed > 0) {
+            deps.log(`screenshot: ${suppressed} device crash line(s) were treated as replayed history and did not capture — if the app genuinely crashed live, report this count`);
+        }
+    }));
     deps.sessionManager.addLineListener((data) => {
         // Fallback URI discovery from the console banner — regex runs ONLY while no URI is
         // known (one boolean check per line otherwise), so the firehose cost stays near zero.
@@ -88,18 +98,29 @@ export function registerScreenshotCapture(deps: ScreenshotWiringDeps): Screensho
     return { capturer, store };
 }
 
+/** One probe at a time across all sessions (see the coalescing note in the listener). */
+let selfTestInFlight = false;
+
 /**
  * Probe capture preconditions once per debug session and record the verdict in BOTH the
- * output channel and the log's own header. Writing it into the log is the point: a
- * "no screenshots" report then arrives already carrying its own diagnosis (toggle state,
+ * output channel and the log itself. Writing it into the log is the point: a "no
+ * screenshots" report then arrives already carrying its own diagnosis (toggle state,
  * trigger set, adb availability, attached devices) instead of needing a live investigation.
+ * The line is appended through the session's ordered write queue, so it lands with the
+ * early session output rather than literally inside the header block.
  */
 function registerSelfTest(deps: ScreenshotWiringDeps, cfg: () => vscode.WorkspaceConfiguration): void {
     deps.context.subscriptions.push(vscode.debug.onDidStartDebugSession((session) => {
         // Dart/Flutter sessions only. onDidStartDebugSession fires for every debug type, and
         // reporting "adb NOT FOUND / NO DEVICE attached" against a Node or Python session
-        // would be actively misleading — screenshots do not apply there at all.
-        if (!/^(dart|flutter)$/i.test(session.type)) { return; }
+        // would be actively misleading — screenshots do not apply there at all. Substring
+        // rather than exact match: 'dart' is what Dart-Code reports today, but attach/variant
+        // types ('dart-attach', 'flutter-web') must not silently lose their self-test.
+        if (!/dart|flutter/i.test(session.type)) { return; }
+        // Coalesce: a crash-loop or rapid restart fires this repeatedly, and each probe spawns
+        // two adb processes. One in-flight probe at a time is plenty for a diagnostic.
+        if (selfTestInFlight) { return; }
+        selfTestInFlight = true;
         const enabled = cfg().get<boolean>('integrations.screenshots.enabled', true);
         const triggers = [
             cfg().get<boolean>('integrations.screenshots.onError', true) ? 'errors' : '',
@@ -109,10 +130,14 @@ function registerSelfTest(deps: ScreenshotWiringDeps, cfg: () => vscode.Workspac
         // Fire-and-forget: the probe must never delay session start, and a failed probe is
         // itself reportable information rather than an error worth surfacing to the user.
         void runScreenshotSelfTest(enabled, triggers).then((result) => {
+            selfTestInFlight = false;
             const line = formatSelfTest(result);
             deps.log(`screenshot: ${line}`);
             deps.sessionManager.getActiveSession()?.appendHeaderLines([line]);
-        }, () => { /* probe failed entirely — the armed line already proves the pipeline loaded */ });
+        }, () => {
+            // Probe failed entirely — the armed line already proves the pipeline loaded.
+            selfTestInFlight = false;
+        });
     }));
 }
 
