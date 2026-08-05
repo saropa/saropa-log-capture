@@ -252,9 +252,11 @@ suite('FlowMap', () => {
 
         test('S2: no jump-to-crash control when the session has no fault', () => {
             // A clean two-screen session (no error markers) must not render a dead crash button.
+            // Timestamped so the lines actually classify — untimestamped breadcrumbs are skipped,
+            // and an empty graph now renders the empty-state note instead of a toolbar (plan 117).
             const clean = ['=== SAROPA LOG CAPTURE — SESSION START ===', 'Project: demo',
-                '[flowmap] enter screen "Home" lib/views/home.dart:1',
-                '[flowmap] enter screen "Settings" lib/views/settings.dart:1'];
+                '[08:00:01.000] [console] [log] [flowmap] enter screen "Home" lib/views/home.dart:1',
+                '[08:00:05.000] [console] [log] [flowmap] enter screen "Settings" lib/views/settings.dart:1'];
             const cleanGraph = buildGraph(parseLog(clean));
             const body = buildFlowMapBody(parseLog(clean), cleanGraph);
             assert.ok(body.includes('class="fm-zoom-toolbar"'), 'zoom toolbar still present');
