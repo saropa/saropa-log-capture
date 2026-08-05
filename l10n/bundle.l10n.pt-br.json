@@ -2160,7 +2160,7 @@
   "Capture enabled": "Captura ativada",
   "Captured": "Capturado",
   "Changelog": "Registro de Alterações",
-  "Commit": "Confirmação",
+  "Commit": "Commit",
   "Copy log line": "Copiar linha de log",
   "Copy summary": "Copiar resumo",
   "Detail": "Detalhe",
@@ -2191,5 +2191,15 @@
   "external": "externo",
   "inline": "em linha",
   "screen": "tela",
-  "tab": "aba"
+  "tab": "aba",
+  "Add rule": "Adicionar regra",
+  "Added a custom flow-map breadcrumb rule.": "Adicionado uma regra personalizada de breadcrumb do flow-map.",
+  "Could not save the custom breadcrumb rule: {0}": "Não foi possível salvar a regra de breadcrumb personalizada: {0}",
+  "No navigation breadcrumbs in this log — the flow diagram needs \"Screen Navigation\" lines or [flowmap] tags from the app. Other report sections still reflect the log.": "Nenhum pão de navegação neste log — o diagrama de fluxo precisa de linhas \"Navegação de Tela\" ou tags [flowmap] do aplicativo. Outras seções do relatório ainda refletem o log.",
+  "No timestamped lines were recognized in this log, so nothing could be classified. If the log does contain timestamps, the capture format may have changed.": "Nenhuma linha com marcação de tempo foi reconhecida nesse log, então nada pôde ser classificado. Se o log contiver timestamps, o formato de captura pode ter mudado.",
+  "Reverse": "Inverso",
+  "Scanned timestamped lines through {0} and matched no navigation breadcrumbs.": "Linhas timestampadas varredas através de {0} e nenhuma pão de pão de navegação encontrada.",
+  "Take a screenshot of the running app now": "Faça um screenshot da aplicação em execução agora",
+  "That breadcrumb rule is already configured.": "Essa regra de pão de mel já está configurada.",
+  "These lines look like navigation — add one as a custom rule:": "Essas linhas parecem ser de navegação — adicione uma como regra personalizada:"
 }

@@ -63,8 +63,9 @@ ACRONYM_ONLY_STRINGS: frozenset[str] = frozenset({
 # silenced a real gap is far cheaper than shipping it.
 VERIFIED_IDENTICAL: dict[str, frozenset[str]] = {
     "de": frozenset({
-        "Export", "in {0}", "Filter…", "Ver", "Perf", "Info", "Audio",
-        "Layout", "Trends", "Terminal", "Pause", "Git", "System",
+        "Commit", "Detail", "Export", "in {0}", "Filter…", "Ver", "Version",
+        "Perf", "Info", "Audio", "Layout", "Trends", "Terminal", "Pause",
+        "Git", "System",
     }),
     "es": frozenset({
         "local", "FATAL", "Ver", "Error", "{0} error", "Audio", "Terminal",

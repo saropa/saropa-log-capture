@@ -2191,5 +2191,15 @@
   "external": "внешний",
   "inline": "встроенная",
   "screen": "экран",
-  "tab": "вкладка"
+  "tab": "вкладка",
+  "Add rule": "Добавить правило",
+  "Added a custom flow-map breadcrumb rule.": "Добавлено правило пользовательского flow-map breadcrumb.",
+  "Could not save the custom breadcrumb rule: {0}": "Не удалось сохранить пользовательскую правило хлебных крошек: {0}",
+  "No navigation breadcrumbs in this log — the flow diagram needs \"Screen Navigation\" lines or [flowmap] tags from the app. Other report sections still reflect the log.": "В этом логе отсутствуют навигационные хлебные крошки — для схемы потока требуется \"Screen Navigation\" или [flowmap] метки из приложения. Другие разделы отчета всё ещё отражают журнал.",
+  "No timestamped lines were recognized in this log, so nothing could be classified. If the log does contain timestamps, the capture format may have changed.": "В этом логе не было распознанных строк с временной меткой, поэтому ничего не удалось классифицировать. Если журнал содержит временные метки, формат захвата может быть изменен.",
+  "Reverse": "Обратный",
+  "Scanned timestamped lines through {0} and matched no navigation breadcrumbs.": "Просканированные временные метки через {0} и не совпали с навигационными хлебными крошками.",
+  "Take a screenshot of the running app now": "Сделайте снимок экрана запущенного приложения сейчас",
+  "That breadcrumb rule is already configured.": "ТаBreadcrumb rule уже настроена.",
+  "These lines look like navigation — add one as a custom rule:": "Эти строки выглядят как навигация — добавьте одну как пользовательскую правило:"
 }
