@@ -16,12 +16,12 @@ suite('LogcatCrashGate', () => {
         // absolute "within N minutes of now" window would tolerate. The gate compares device
         // stamps only to other device stamps, so the offset cancels and this must still pass.
         const gate = new LogcatCrashGate();
-        assert.strictEqual(gate.observe(info('08-05 10:00:00.000'), T0, YEAR), false, 'first line is grace');
-        assert.strictEqual(gate.observe(info('08-05 10:00:06.000'), T0 + 6000, YEAR), false, 'still grace');
+        assert.strictEqual(gate.observe(info('08-05 10:00:00.000'), T0, YEAR), false, 'dump not yet drained');
+        assert.strictEqual(gate.observe(info('08-05 10:00:06.000'), T0 + 6000, YEAR), false, 'first line after the pause seeds the watermark');
         assert.strictEqual(gate.observe(crash('08-05 10:00:10.000'), T0 + 10_000, YEAR), true);
     });
 
-    test('should reject the startup replay burst (whole buffer inside the grace window)', () => {
+    test('should reject the startup replay burst (continuous flood, no pause)', () => {
         const gate = new LogcatCrashGate();
         // Real shape: hundreds of lines, days of device time, all arriving in the same instant.
         assert.strictEqual(gate.observe(crash('07-29 08:39:15.769'), T0, YEAR), false);
@@ -29,9 +29,49 @@ suite('LogcatCrashGate', () => {
         assert.strictEqual(gate.observe(crash('08-04 23:00:00.000'), T0 + 2, YEAR), false);
     });
 
+    test('should hold through a SLOW drain that outruns any fixed window', () => {
+        // The named scaling risk: a slow device or oversized buffer taking far longer than a
+        // fixed grace period to drain. Detection keys on the PAUSE, so a 25-second continuous
+        // dump stays suppressed the whole way — including its chronologically-climbing stamps,
+        // which would each look "current" against the running watermark.
+        const gate = new LogcatCrashGate();
+        for (let i = 0; i < 200; i++) {
+            const stamp = new Date(Date.UTC(2026, 6, 29, 8, 39, 15) + i * 60_000);
+            const mmdd = `${String(stamp.getUTCMonth() + 1).padStart(2, '0')}-${String(stamp.getUTCDate()).padStart(2, '0')}`;
+            const hms = stamp.toISOString().slice(11, 19);
+            // Lines arrive 120ms apart — well inside the burst gap — for 24 seconds straight.
+            const fired = gate.observe(crash(`${mmdd} ${hms}.000`), T0 + i * 120, YEAR);
+            assert.strictEqual(fired, false, `replayed line ${i} must not capture`);
+        }
+    });
+
+    test('should survive a FALSE pause mid-dump (host stall) without releasing replay', () => {
+        // The one scenario pause-detection alone cannot settle: the extension host stalls (GC,
+        // another burst) for >750ms while the buffer is still replaying. The pause looks real,
+        // so the burst latch opens — and every following replayed line sits within the stale
+        // window of the watermark it just advanced. Only rate detection separates them: replay
+        // fast-forwards device time far quicker than arrival time elapses.
+        const gate = new LogcatCrashGate();
+        for (let i = 0; i < 10; i++) {
+            gate.observe(info(`07-29 08:${String(39 + i).padStart(2, '0')}:00.000`), T0 + i * 20, YEAR);
+        }
+        // Host stalls 1.2s — a "pause" the device never actually took.
+        // Replay resumes: one more minute of history delivered 20ms later.
+        const fired = gate.observe(crash('07-29 08:50:00.000'), T0 + 200 + 1200, YEAR);
+        assert.strictEqual(fired, false, 'replayed crash after a false pause must not capture');
+    });
+
+    test('should arm after the feed first pauses, not after a fixed interval', () => {
+        const gate = new LogcatCrashGate();
+        gate.observe(info('08-05 10:00:00.000'), T0, YEAR);
+        gate.observe(info('08-05 10:00:01.000'), T0 + 50, YEAR);      // still flooding
+        // A pause marks the dump drained — captures arm immediately after, no fixed wait.
+        assert.strictEqual(gate.observe(crash('08-05 10:00:02.000'), T0 + 1200, YEAR), true);
+    });
+
     test('should reject a mid-session re-dump of old history after the watermark is live', () => {
         const gate = new LogcatCrashGate();
-        gate.observe(info('08-05 10:00:00.000'), T0, YEAR);              // grace anchor
+        gate.observe(info('08-05 10:00:00.000'), T0, YEAR);              // seeds firstArrival/watermark
         gate.observe(info('08-05 10:00:20.000'), T0 + 20_000, YEAR);     // watermark → live
         // logcat respawns and re-dumps the buffer: same old crash, now well past grace.
         assert.strictEqual(gate.observe(crash('07-29 08:39:15.769'), T0 + 21_000, YEAR), false);

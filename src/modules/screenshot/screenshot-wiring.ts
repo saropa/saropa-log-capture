@@ -17,6 +17,7 @@ import { captureVmServiceScreenshot } from './vm-service-screenshot';
 import { captureAdbScreenshot } from './adb-screenshot';
 import { makeCaptureTransport } from './screenshot-transport';
 import { getLatestVmServiceWsUri, recordVmServiceUriFromLogLine, registerVmServiceUriTracking } from './vm-service-uri';
+import { runScreenshotSelfTest, formatSelfTest } from './screenshot-self-test';
 import type { SessionManagerImpl } from '../session/session-manager';
 
 /** What the rest of the extension needs back from the wiring. */
@@ -70,6 +71,7 @@ export function registerScreenshotCapture(deps: ScreenshotWiringDeps): Screensho
     const version = vscode.extensions.getExtension('saropa.saropa-log-capture')?.packageJSON?.version ?? 'unknown';
     deps.log(`screenshot: capture pipeline armed (v${version} — VM probe + adb screencap fallback)`);
     registerVmServiceUriTracking(deps.context);
+    registerSelfTest(deps, cfg);
     deps.sessionManager.addLineListener((data) => {
         // Fallback URI discovery from the console banner — regex runs ONLY while no URI is
         // known (one boolean check per line otherwise), so the firehose cost stays near zero.
@@ -84,6 +86,34 @@ export function registerScreenshotCapture(deps: ScreenshotWiringDeps): Screensho
         ),
     );
     return { capturer, store };
+}
+
+/**
+ * Probe capture preconditions once per debug session and record the verdict in BOTH the
+ * output channel and the log's own header. Writing it into the log is the point: a
+ * "no screenshots" report then arrives already carrying its own diagnosis (toggle state,
+ * trigger set, adb availability, attached devices) instead of needing a live investigation.
+ */
+function registerSelfTest(deps: ScreenshotWiringDeps, cfg: () => vscode.WorkspaceConfiguration): void {
+    deps.context.subscriptions.push(vscode.debug.onDidStartDebugSession((session) => {
+        // Dart/Flutter sessions only. onDidStartDebugSession fires for every debug type, and
+        // reporting "adb NOT FOUND / NO DEVICE attached" against a Node or Python session
+        // would be actively misleading — screenshots do not apply there at all.
+        if (!/^(dart|flutter)$/i.test(session.type)) { return; }
+        const enabled = cfg().get<boolean>('integrations.screenshots.enabled', true);
+        const triggers = [
+            cfg().get<boolean>('integrations.screenshots.onError', true) ? 'errors' : '',
+            cfg().get<boolean>('integrations.screenshots.onWarning', false) ? 'warnings' : '',
+            cfg().get<boolean>('integrations.screenshots.onNavigation', false) ? 'navigation' : '',
+        ].filter(Boolean).join('+') || 'none';
+        // Fire-and-forget: the probe must never delay session start, and a failed probe is
+        // itself reportable information rather than an error worth surfacing to the user.
+        void runScreenshotSelfTest(enabled, triggers).then((result) => {
+            const line = formatSelfTest(result);
+            deps.log(`screenshot: ${line}`);
+            deps.sessionManager.getActiveSession()?.appendHeaderLines([line]);
+        }, () => { /* probe failed entirely — the armed line already proves the pipeline loaded */ });
+    }));
 }
 
 /** Manual command: capture against the active log, then toast the outcome (no silent async). */
