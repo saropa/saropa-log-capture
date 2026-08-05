@@ -141,11 +141,14 @@ window.addEventListener('message', function(event) {
             isViewingFile = !!msg.viewing;
             if (isViewingFile) { autoScroll = false; }
             if (typeof window.setReplayEnabled === 'function') window.setReplayEnabled(isViewingFile, isSessionActive);
+            /* Capture-on-demand only applies to a live session, never a saved log (plan 114). */
+            if (typeof screenshotSyncFooter === 'function') screenshotSyncFooter();
             updateFooterText();
             break;
         case 'sessionState':
             isSessionActive = !!msg.active;
             if (typeof window.setReplayEnabled === 'function') window.setReplayEnabled(isViewingFile, isSessionActive);
+            if (typeof screenshotSyncFooter === 'function') screenshotSyncFooter();
             break;
         case 'setSessionInfo':
             if (typeof applySessionInfo === 'function') applySessionInfo(msg.info);

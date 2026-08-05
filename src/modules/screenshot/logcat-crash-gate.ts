@@ -107,6 +107,15 @@ export class LogcatCrashGate {
     private lastArrivalMs = 0;
     private drained = false;
     private watermarkMs = 0;
+    private suppressedCrashes = 0;
+
+    /**
+     * How many capture-worthy crash lines were rejected as replay. The thresholds here are
+     * reasoned from one observed device; this counter is how a WRONG threshold becomes
+     * visible instead of looking like "the feature does nothing" — the caller reports it
+     * when a session ends having captured nothing.
+     */
+    get suppressedCrashCount(): number { return this.suppressedCrashes; }
 
     /**
      * Observe one logcat line and report whether it is a capture-worthy crash:
@@ -148,8 +157,14 @@ export class LogcatCrashGate {
         const isCurrent = this.watermarkMs > 0 && stampMs >= this.watermarkMs - STALE_WINDOW_MS;
         if (stampMs > this.watermarkMs) { this.watermarkMs = stampMs; }
 
-        if (!this.drained || !isCurrent || catchingUp) { return false; }
+        // Level/tag first so the suppression counter only tallies lines that WOULD have
+        // captured — a count of rejected noise would say nothing about threshold accuracy.
         if (facts.level !== 'E' && facts.level !== 'F' && facts.level !== 'A') { return false; }
-        return getDeviceTier(facts.tag) === 'device-critical';
+        if (getDeviceTier(facts.tag) !== 'device-critical') { return false; }
+        if (!this.drained || !isCurrent || catchingUp) {
+            this.suppressedCrashes++;
+            return false;
+        }
+        return true;
     }
 }
