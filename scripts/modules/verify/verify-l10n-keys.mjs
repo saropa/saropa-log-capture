@@ -62,17 +62,28 @@ function referencedKeys() {
 
 // ── Layer 2: @l10n-expand ──────────────────────────────────────────────
 
-const warnings = [];
+const expandWarnings = [];
+const expandErrors = [];
 
+/** Collect multi-line @l10n-expand tag content (handles `*`-prefixed JSDoc continuations). */
 function collectExpandTags(files) {
     const tags = new Map();
     for (const file of files) {
         const text = fs.readFileSync(file, 'utf-8');
-        // Match @l10n-expand in JSDoc, block comments, or line comments
-        for (const m of text.matchAll(/@l10n-expand\s+([^\n*]+)/g)) {
-            const patterns = m[1].trim().replace(/\*\/\s*$/, '').trim().split(/\s+/);
-            const after = text.slice(m.index + m[0].length);
-            // Match function/export function/export default function
+        const lines = text.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+            const tagMatch = lines[i].match(/@l10n-expand\s+(.+)/);
+            if (!tagMatch) { continue; }
+            // Collect patterns: first line + continuation lines (start with optional `*` then a dot-path)
+            let raw = tagMatch[1].replace(/\*\/\s*$/, '').trim();
+            while (i + 1 < lines.length) {
+                const cont = lines[i + 1].match(/^\s*\*?\s+([a-zA-Z0-9._{}]+(?:\s+[a-zA-Z0-9._{}]+)*)\s*\*?\s*$/);
+                if (!cont || /@/.test(lines[i + 1])) { break; }
+                raw += ' ' + cont[1]; i++;
+            }
+            const patterns = raw.split(/\s+/).filter((p) => p.includes('.'));
+            // Find the function name: scan forward past comment for the declaration
+            const after = lines.slice(i + 1).join('\n');
             const funcMatch = after.match(/(?:export\s+(?:default\s+)?)?function\s+(\w+)\s*\(/);
             if (funcMatch) { tags.set(funcMatch[1], { patterns, file }); }
         }
@@ -80,13 +91,19 @@ function collectExpandTags(files) {
     return tags;
 }
 
-/** Extract the balanced argument substring starting at `(` in text at pos. */
+/** Extract balanced paren content. Handles quotes, escapes, and template-literal ${} nesting. */
 function extractBalancedArgs(text, startPos) {
-    let depth = 0, inQ = '', escaped = false;
+    let depth = 0, inQ = '', escaped = false, tplDepth = 0;
     for (let i = startPos; i < text.length; i++) {
         const ch = text[i];
         if (escaped) { escaped = false; continue; }
         if (ch === '\\') { escaped = true; continue; }
+        if (inQ === '`') {
+            if (ch === '$' && text[i + 1] === '{') { tplDepth++; i++; continue; }
+            if (ch === '}' && tplDepth > 0) { tplDepth--; continue; }
+            if (ch === '`' && tplDepth === 0) { inQ = ''; }
+            continue;
+        }
         if (inQ) { if (ch === inQ) { inQ = ''; } continue; }
         if (ch === '\'' || ch === '"' || ch === '`') { inQ = ch; continue; }
         if (ch === '(') { depth++; }
@@ -95,30 +112,43 @@ function extractBalancedArgs(text, startPos) {
     return '';
 }
 
+/** Check whether text before a match position is a function definition. */
+function isDefinitionSite(text, matchIndex) {
+    const before = text.slice(Math.max(0, matchIndex - 40), matchIndex);
+    return /\bfunction\s+$/.test(before);
+}
+
 function expandTaggedCalls(defined, files) {
     const tags = collectExpandTags(files);
     if (tags.size === 0) { return []; }
     const missing = [];
     const funcNames = [...tags.keys()].join('|');
-    // Negative lookbehind excludes function definitions (function/export function)
-    const callRe = new RegExp(`(?<!function\\s)\\b(${funcNames})\\(`, 'g');
+    const callRe = new RegExp(`\\b(${funcNames})\\(`, 'g');
     for (const file of files) {
         const text = fs.readFileSync(file, 'utf-8');
         for (const cm of text.matchAll(callRe)) {
+            if (isDefinitionSite(text, cm.index)) { continue; }
             const tag = tags.get(cm[1]);
             if (!tag) { continue; }
             const argsStr = extractBalancedArgs(text, cm.index + cm[1].length);
             if (!argsStr) { continue; }
             const args = parseArgs(argsStr);
             for (const pattern of tag.patterns) {
-                let unresolved = false;
+                let bad = null;
                 const key = pattern.replace(/\{(\d+)\}/g, (_, idx) => {
-                    const val = extractStringLiteral(args[Number(idx)]);
-                    if (val === null) { unresolved = true; return `{${idx}}`; }
+                    const i = Number(idx);
+                    if (i >= args.length) { bad = 'missing'; return `{${idx}}`; }
+                    const val = extractStringLiteral(args[i]);
+                    if (val === null) { bad = 'computed'; return `{${idx}}`; }
                     return val;
                 });
-                if (unresolved) {
-                    warnings.push(`  ${cm[1]}() call has non-literal arg for ${pattern}`
+                if (bad === 'missing') {
+                    expandErrors.push(`  ${cm[1]}() arg index out of bounds for ${pattern} (stale @l10n-expand?)`
+                        + `\n      in: ${path.relative(SRC, file)}`);
+                    continue;
+                }
+                if (bad === 'computed') {
+                    expandWarnings.push(`  ${cm[1]}() non-literal arg for ${pattern}`
                         + `\n      in: ${path.relative(SRC, file)}`);
                     continue;
                 }
@@ -131,11 +161,12 @@ function expandTaggedCalls(defined, files) {
     return missing;
 }
 
-/** Extract the string value from a quoted literal, or null if not a literal. */
+/** Extract the string value from a single-line quoted literal, or null. */
 function extractStringLiteral(arg) {
     if (!arg) { return null; }
     const trimmed = arg.trim();
-    const m = trimmed.match(/^(['"])(.*)(\1)$/s);
+    if (trimmed.includes('\n')) { return null; }
+    const m = trimmed.match(/^(['"])(.*)\1$/);
     if (!m) { return null; }
     return m[2].replace(/\\(['"\\/bfnrt])/g, (_, c) => {
         const esc = { '\'': '\'', '"': '"', '\\': '\\', '/': '/', b: '\b', f: '\f', n: '\n', r: '\r', t: '\t' };
@@ -143,13 +174,21 @@ function extractStringLiteral(arg) {
     });
 }
 
-/** Split call arguments on commas, respecting quotes, escapes, and nested parens/brackets. */
+/** Split call arguments on commas, respecting quotes, escapes, template ${}, and nesting. */
 function parseArgs(argsStr) {
     const args = [];
-    let depth = 0, current = '', inQ = '', escaped = false;
-    for (const ch of argsStr) {
+    let depth = 0, current = '', inQ = '', escaped = false, tplDepth = 0;
+    for (let ci = 0; ci < argsStr.length; ci++) {
+        const ch = argsStr[ci];
         if (escaped) { current += ch; escaped = false; continue; }
         if (ch === '\\' && inQ) { current += ch; escaped = true; continue; }
+        if (inQ === '`') {
+            current += ch;
+            if (ch === '$' && argsStr[ci + 1] === '{') { tplDepth++; current += '{'; ci++; continue; }
+            if (ch === '}' && tplDepth > 0) { tplDepth--; continue; }
+            if (ch === '`' && tplDepth === 0) { inQ = ''; }
+            continue;
+        }
         if (inQ) { current += ch; if (ch === inQ) { inQ = ''; } continue; }
         if (ch === '\'' || ch === '"' || ch === '`') { inQ = ch; current += ch; continue; }
         if (ch === '(' || ch === '[') { depth++; current += ch; continue; }
@@ -256,13 +295,19 @@ for (const d of [...expandMissing, ...annotationMissing, ...dynamicMissing]) {
     if (!familyMap.has(d.key)) { familyMap.set(d.key, d.file); }
 }
 
-if (warnings.length > 0) {
-    console.warn(`verify:l10n-keys — WARN: ${warnings.length} @l10n-expand call(s) have non-literal args (keys unchecked)`);
-    for (const w of warnings) { console.warn(w); }
+if (expandErrors.length > 0) {
+    console.error(`verify:l10n-keys — ERROR: ${expandErrors.length} @l10n-expand arg(s) out of bounds (stale tag?)`);
+    for (const e of expandErrors) { console.error(e); }
+    console.error('');
+}
+if (expandWarnings.length > 0) {
+    console.warn(`verify:l10n-keys — WARN: ${expandWarnings.length} @l10n-expand call(s) have non-literal args (keys unchecked)`);
+    for (const w of expandWarnings) { console.warn(w); }
     console.warn('');
 }
 
-if (literalMissing.length === 0 && familyMap.size === 0) {
+const hasErrors = literalMissing.length > 0 || familyMap.size > 0 || expandErrors.length > 0;
+if (!hasErrors) {
     console.log(`verify:l10n-keys — OK (${defined.size} keys defined; all referenced t()/vt() keys resolve)`);
     process.exit(0);
 }
