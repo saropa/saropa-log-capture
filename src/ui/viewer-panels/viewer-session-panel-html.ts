@@ -12,7 +12,8 @@ import { t } from '../../l10n';
 
 /* One toggle row inside the kebab options menu. Button ids stay identical to
    the prior toolbar so existing syncToggleButtons/bindToggle wiring keeps
-   working without code changes. */
+   working without code changes.
+   @l10n-expand viewer.session.{2}.title viewer.session.{2}.label viewer.session.{2}.text */
 function renderOptionToggle(buttonId: string, codicon: string, key: string): string {
     const title = t(`viewer.session.${key}.title`);
     const label = t(`viewer.session.${key}.label`);

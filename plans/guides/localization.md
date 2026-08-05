@@ -297,6 +297,29 @@ upgrade keeps the existing value rather than regressing it to English.
 > Adding the source-language key is normal write-time work — never a blocker, never a
 > reason to drop UI. Translating it is a separate, scheduled, operator-run step.
 
+### 5.1b Key families (`@l10n-expand` / `@l10n-family`)
+
+When a function builds `t()` keys dynamically (template literals with a variable base and fixed suffixes), the literal-key scanner cannot catch missing keys. Two mechanisms close this gap — both checked by `verify:l10n-keys` on every compile.
+
+**`@l10n-expand`** (on consumer functions — cross-file):
+Add a JSDoc tag declaring the key templates with arg-position placeholders (`{N}`, 0-based). The lint finds every call site across all files, resolves placeholders to string-literal arguments, and checks each expanded key exists.
+
+```ts
+/** @l10n-expand viewer.session.{2}.title viewer.session.{2}.label viewer.session.{2}.text */
+function renderToggle(id: string, icon: string, key: string) { … }
+```
+
+**`@l10n-family`** (in catalog files — scope-bounded):
+A comment `// @l10n-family .title .label .text` above a contiguous block of keys declares that every base in that block must have all listed suffixes. Scope ends at the first blank line or non-key line.
+
+```ts
+// @l10n-family .title .label .text
+'ns.toggleA.title': '…',
+'ns.toggleA.label': '…',
+'ns.toggleA.text': '…',
+'ns.toggleB.title': '…',  // missing .label and .text → compile fails
+```
+
 ### 5.2 Add a **manifest** string (command title, setting, menu)
 
 1. Add `%key%` in `package.json` and the English value to `package.nls.json`.

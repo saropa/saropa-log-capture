@@ -39,7 +39,8 @@ function shortcutsTableHead(): string {
     return `<thead><tr><th>${t('viewer.shortcuts.col.key')}</th><th>${t('viewer.shortcuts.col.action')}</th><th>${t('viewer.shortcuts.col.description')}</th></tr></thead>`;
 }
 
-/** One rebindable/static shortcut row: key cell (literal), then localized action + description. */
+/** One rebindable/static shortcut row: key cell (literal), then localized action + description.
+ * @l10n-expand viewer.shortcuts.{1}.action viewer.shortcuts.{1}.desc */
 function shortcutRow(keyCell: string, id: string, attrs = ''): string {
     return `<tr${attrs}><td>${keyCell}</td><td>${t(`viewer.shortcuts.${id}.action`)}</td><td>${t(`viewer.shortcuts.${id}.desc`)}</td></tr>`;
 }
@@ -151,7 +152,8 @@ function getPowerShortcutsHtml(): string {
             </table>`;
 }
 
-/** One Command-Palette row: command NAME stays English (also the search term), localized description. */
+/** One Command-Palette row: command NAME stays English (also the search term), localized description.
+ * @l10n-expand viewer.shortcuts.cmd.{1}.desc */
 function commandRow(command: string, descId: string): string {
     return `<tr data-keybinding-search="Saropa Log Capture: ${command}"><td>${command}</td><td>${t(`viewer.shortcuts.cmd.${descId}.desc`)}</td></tr>`;
 }
