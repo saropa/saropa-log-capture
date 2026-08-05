@@ -208,7 +208,10 @@ export function flowMapStyles(nonce: string): string {
   .fm-e-back-label { fill: var(--accent-info); }
   .fm-e-label { fill: var(--text); stroke: var(--surface-1); }
 
-  .fm-empty { color: var(--muted); font-size: 0.92em; max-width: 46ch; padding: 0.4rem 0 1rem; }
+  /* min-width:0 + overflow-wrap let the note shrink with a dragged-narrow diagram column instead of
+     forcing width or clipping mid-word (the column is overflow:hidden and drag-resizable to 20px). */
+  .fm-empty { color: var(--muted); font-size: 0.92em; max-width: 46ch; min-width: 0; overflow-wrap: anywhere; padding: 0.4rem 0 0.2rem; }
+  .fm-empty-detail { font-size: 0.86em; opacity: 0.85; padding: 0 0 1rem; }
 
   .fm-node { cursor: pointer; }
   .fm-node rect { transition: stroke-width 0.12s ease, filter 0.12s ease; }

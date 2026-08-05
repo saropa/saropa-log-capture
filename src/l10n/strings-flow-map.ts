@@ -21,6 +21,8 @@ export const stringsFlowMap: Record<string, string> = {
     'flowMap.jumpToCrashBtn': 'Center the fault node',
     'flowMap.replayBtn': 'Replay the session walk',
     'flowMap.emptyDiagram': 'No navigation breadcrumbs in this log — the flow diagram needs "Screen Navigation" lines or [flowmap] tags from the app. Other report sections still reflect the log.',
+    'flowMap.emptyScanned': 'Scanned timestamped lines through {0} and matched no navigation breadcrumbs.',
+    'flowMap.emptyNoClock': 'No timestamped lines were recognized in this log, so nothing could be classified. If the log does contain timestamps, the capture format may have changed.',
     'flowMap.popOutBtn': 'Open the flow chart in its own panel',
     'flowMap.detailDialogTitle': 'Flow node detail',
     'flowMap.detailType': 'Type',
