@@ -29,6 +29,34 @@ suite('FlowMap empty-state breadcrumb diagnostic', () => {
             assert.strictEqual(suggestions[0].sample, 'HomePage');
         });
 
+        test('should see through the real stacked-bracket capture format', () => {
+            // Real capture lines carry BOTH the DAP channel and Flutter's [log] marker. Stripping a
+            // single bracket group left a '['-leading string that matched no prefix shape, so the
+            // whole feature silently returned nothing for the exact format it targets.
+            const real = [
+                '[08:00:01.000] [console] [log] Route pushed: HomePage',
+                '[08:00:02.000] [console] [log] Route pushed: SettingsPage',
+            ];
+            const suggestions = suggestBreadcrumbPatterns(real);
+            assert.strictEqual(suggestions.length, 1);
+            assert.strictEqual(suggestions[0].pattern, '^Route pushed: (.+)$');
+            assert.strictEqual(suggestions[0].sample, 'HomePage');
+        });
+
+        test('should never suggest logcat tags or any prefix carrying a process id', () => {
+            // These dominate a logcat-heavy capture by volume but are platform plumbing, and the
+            // embedded pid changes each run — a generated rule would make junk nodes, then go stale.
+            const noisy = [
+                line('08:00:01', 'W/ViewRootImpl(15450): gpuCompletedTime unavailable'),
+                line('08:00:02', 'W/ViewRootImpl(15450): gpuCompletedTime unavailable'),
+                line('08:00:03', 'D/FirebaseSessions(15450): App foregrounded'),
+                line('08:00:04', 'D/FirebaseSessions(15450): App foregrounded'),
+                line('08:00:05', 'Worker(9911): started'),
+                line('08:00:06', 'Worker(9911): started'),
+            ];
+            assert.strictEqual(suggestBreadcrumbPatterns(noisy).length, 0);
+        });
+
         test('should ignore prefixes seen only once', () => {
             const lines = [
                 line('08:00:01', 'Route pushed: HomePage'),
