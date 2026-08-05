@@ -30,15 +30,34 @@ const PREFIX_LINE_RE = /^([A-Za-z][^:\n]*?):\s+(.+)$/;
 /** Prefixes the built-in matchers (`flow-map-breadcrumbs.ts`) already handle — never suggest these. */
 const BUILTIN_SKIP_RE = [/^Screen Navigation$/, /Screen Reached/, /^Viewed /, /^App (Startup|Shutdown)$/];
 
+/**
+ * Android logcat tag prefixes (`W/ViewRootImpl(15450)`, `D/FirebaseSessions`). These dominate a
+ * logcat-heavy capture by sheer volume, but they are platform plumbing, not app navigation — and the
+ * embedded PID changes every run, so a generated rule would both create junk nodes AND stop matching
+ * on the next session. Excluded outright rather than ranked down.
+ */
+const LOGCAT_TAG_RE = /^[VDIWEFA]\/\S+$/;
+
 const MAX_PREFIX_LEN = 40;
 const MAX_SAMPLE_LEN = 70;
 /** Bound the scan on huge logs — a repeated shape that matters shows up well within the first 5000
  * timestamped lines; scanning further just burns time on a report the user is waiting on. */
 const MAX_TIMESTAMPED_LINES = 5000;
 
-/** Strip the `[clock]` and any `[channel]` prefix, mirroring the parser's `stripPrefix` shape. */
+/**
+ * Strip the `[clock]` and EVERY leading `[bracket]` group. Real capture lines stack them —
+ * `[08:00:01.000] [console] [log] Route pushed: Home` carries both the DAP channel and the Flutter
+ * `[log]` marker — so stripping a single group (as the parser's own stripPrefix does, because it
+ * peels `[log]` separately) would leave a `[`-leading string that no prefix shape can match.
+ */
 function stripPrefix(line: string): string {
-    return line.replace(CLOCK_RE, '').replace(/^\s*\[[^\]]+\]\s*/, '').trim();
+    let out = line.replace(CLOCK_RE, '').trim();
+    let prev = '';
+    while (out !== prev) {
+        prev = out;
+        out = out.replace(/^\[[^\]]*\]\s*/, '').trim();
+    }
+    return out;
 }
 
 /**
@@ -55,6 +74,11 @@ function isNoisePrefix(prefix: string): boolean {
     }
     const letterCount = (prefix.match(/[A-Za-z]/g) ?? []).length;
     if (letterCount / prefix.length < 0.5) {
+        return true;
+    }
+    // A prefix carrying a bare process id would bake that id into the generated rule, which then
+    // matches nothing after the next app restart. Catches logcat tags and `Worker(1234)` shapes alike.
+    if (LOGCAT_TAG_RE.test(prefix) || /\(\d{3,}\)/.test(prefix)) {
         return true;
     }
     return BUILTIN_SKIP_RE.some((re) => re.test(prefix));
