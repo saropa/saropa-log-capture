@@ -98,11 +98,21 @@ export function getLogBannerScript(): string {
     detailsEl.className = 'session-details-inline';
     detailsEl.setAttribute('aria-label', tr('viewer.logBanner.details.label'));
     detailsEl.title = tr('viewer.logBanner.details.title');
+    /* Screenshot count pill (plan 114): the banner owns the open log's identity, so the
+       capture count belongs with it — the toolbar copy is for the live feed, this one tells
+       you what a log you are READING contains. Populated by viewer-screenshots.ts; hidden
+       until captures exist so a log without any shows no chrome. */
+    var shotPillEl = document.createElement('span');
+    shotPillEl.id = 'log-banner-screenshot-pill';
+    shotPillEl.className = 'screenshot-pill u-hidden';
+    shotPillEl.setAttribute('role', 'button');
+    shotPillEl.title = tr('viewer.toolbar.screenshotCount');
     var actionsEl = document.createElement('span');
     actionsEl.className = 'session-newer-banner-actions';
     banner.appendChild(iconEl);
     banner.appendChild(textEl);
     banner.appendChild(detailsEl);
+    banner.appendChild(shotPillEl);
     banner.appendChild(actionsEl);
     banner.appendChild(buildKebabMenu());
 

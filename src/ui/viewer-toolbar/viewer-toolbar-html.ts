@@ -106,15 +106,23 @@ export function getToolbarHtml(opts: ToolbarHtmlOptions): string {
             <span class="codicon codicon-warning" aria-hidden="true"></span>
             <span class="log-staleness-text"></span>
         </span>
-        <!-- Screenshot controls (plan 114): the camera opens the capture options menu
-             (master + per-trigger toggles, capture now, gallery). Always visible; dimmed
-             while the master toggle is off. The count appears once captures exist and
-             opens the gallery directly. -->
+        <!-- Screenshot controls (plan 114). Three elements, each with its own visibility rule:
+             · shoot  — take one NOW. Only rendered while a live capture target exists (active
+                        session + known device/VM). Shooting a saved log is meaningless: there
+                        is no running app to photograph, so the button is absent, not disabled.
+             · camera — capture options menu (master + per-trigger toggles, gallery). Always
+                        visible; dimmed while the master toggle is off.
+             · count  — pill showing captures for the open log; appears once any exist and
+                        opens the gallery. -->
+        <span id="screenshot-shoot" class="screenshot-shoot u-hidden" role="button" tabindex="0"
+              title="${t('viewer.toolbar.screenshotShoot')}" aria-label="${t('viewer.toolbar.screenshotShoot')}">
+            <span class="codicon codicon-record" aria-hidden="true"></span>
+        </span>
         <span id="screenshot-toggle" class="screenshot-toggle" role="button" tabindex="0" aria-haspopup="menu"
               title="${t('viewer.toolbar.screenshotMenu')}" aria-label="${t('viewer.toolbar.screenshotMenu')}">
             <span class="codicon codicon-device-camera" aria-hidden="true"></span>
         </span>
-        <span id="screenshot-count" class="screenshot-count u-hidden" role="button" tabindex="0" title="${t('viewer.toolbar.screenshotCount')}" aria-label="${t('viewer.toolbar.screenshotCount')}"></span>
+        <span id="screenshot-count" class="screenshot-count screenshot-pill u-hidden" role="button" tabindex="0" title="${t('viewer.toolbar.screenshotCount')}" aria-label="${t('viewer.toolbar.screenshotCount')}"></span>
         <span id="footer-text" data-version="${ver}" class="toolbar-filename" title="${t('viewer.toolbar.filename.title')}"></span>
     </div>
 </div>`;
