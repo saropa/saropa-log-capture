@@ -84,6 +84,21 @@ suite('ScreenshotCapturer', () => {
         assert.strictEqual(h.store.saves.length, 0);
     });
 
+    test('should warn once about a missing VM Service — but not on startup device noise', async () => {
+        const h = makeHarness({ getVmServiceWsUri: () => undefined });
+        // The startup logcat replay burst streams device noise and old crashes on EVERY healthy
+        // session; warning on those turns the diagnostic into a routine false alarm.
+        h.capturer.onLine(makeLine('07-29 08:39:15.769 24445 24458 E AndroidRuntime: FATAL EXCEPTION: video', { category: 'logcat' }));
+        h.capturer.onLine(makeLine('E/Gralloc4(14538): isSupported(1, 1, 56, 1, ...) failed with 5', { category: 'console' }));
+        await h.flush();
+        assert.strictEqual(h.logs.filter((l) => l.includes('no VM Service address')).length, 0);
+        // A real app error with no URI known is the genuine signal — warned exactly once.
+        h.capturer.onLine(makeLine('Unhandled Exception: something broke'));
+        h.capturer.onLine(makeLine('Unhandled Exception: something else broke'));
+        await h.flush();
+        assert.strictEqual(h.logs.filter((l) => l.includes('no VM Service address')).length, 1);
+    });
+
     test('should never capture on device/framework error lines (startup-noise guard)', async () => {
         const h = makeHarness();
         // Real lines from a contacts startup log (2026-07-28): benign framework errors that
@@ -107,26 +122,55 @@ suite('ScreenshotCapturer', () => {
         assert.strictEqual(h.store.saves.length, 0);
     });
 
-    test('should capture on FRESH device-critical logcat crashes (profile-mode signal)', async () => {
-        // Profile-mode sessions emit no console exception banners — the logcat crash line is
-        // the only error signal. Device stamp matches arrival time → fresh → capture.
+    /**
+     * Logcat feed cases. Device stamps deliberately sit 4 HOURS ahead of host arrival
+     * (device on UTC, workstation on EDT — routine): the gate must be timezone-immune, and
+     * an absolute "device stamp within N minutes of now" test would reject all of these.
+     */
+    const hostT0 = new Date(2026, 7, 4, 19, 0, 0).getTime();
+    const at = (offsetMs: number): Date => new Date(hostT0 + offsetMs);
+    const logcat = (text: string, offsetMs: number): LineData =>
+        makeLine(text, { category: 'logcat', timestamp: at(offsetMs) });
+
+    test('should capture a live device-critical logcat crash despite device/host timezone offset', async () => {
         const h = makeHarness();
-        const arrival = new Date(2026, 7, 4, 18, 30, 0); // Aug 4, 18:30
-        h.capturer.onLine(makeLine('08-04 18:30:00.100 24445 24458 E AndroidRuntime: FATAL EXCEPTION: main', { category: 'logcat', timestamp: arrival }));
+        // Feed drains its startup burst, then live output establishes the device watermark.
+        h.capturer.onLine(logcat('08-04 23:00:00.000 24732 24752 I ActivityManager: start proc', 0));
+        h.capturer.onLine(logcat('08-04 23:00:06.000 24732 24752 I ActivityManager: displayed', 6000));
+        await h.flush();
+        h.clock.now += 5000;
+        // Past the grace window and current against the watermark → the profile-mode signal fires.
+        h.capturer.onLine(logcat('08-04 23:00:10.000 24445 24458 E AndroidRuntime: FATAL EXCEPTION: main', 10000));
         await h.flush();
         assert.strictEqual(h.store.saves.length, 1);
         assert.strictEqual(h.store.saves[0].trigger, 'error');
     });
 
-    test('should NOT capture on stale logcat replay crashes or W-level binder noise', async () => {
+    test('should NOT capture replayed buffer crashes (startup burst or mid-session re-dump)', async () => {
         const h = makeHarness();
-        const arrival = new Date(2026, 7, 4, 19, 9, 15); // Aug 4, 19:09 — session start replay
-        // Literal line from the 2026-08-04 contacts log: device stamp six days old.
-        h.capturer.onLine(makeLine('07-29 08:39:15.769 24445 24458 E AndroidRuntime: FATAL EXCEPTION: video', { category: 'logcat', timestamp: arrival }));
+        // Literal line from the 2026-08-04 contacts log: a real FATAL EXCEPTION six days old,
+        // arriving in the startup burst (whole buffer delivered inside milliseconds).
+        const staleCrash = '07-29 08:39:15.769 24445 24458 E AndroidRuntime: FATAL EXCEPTION: video';
+        h.capturer.onLine(logcat(staleCrash, 0));
+        h.capturer.onLine(logcat('07-29 08:39:16.000 24732 24752 I ActivityManager: ...', 1));
+        await h.flush();
+        assert.strictEqual(h.store.saves.length, 0, 'startup replay must not capture');
+        // Live output advances the watermark to current device time.
+        h.clock.now += 5000;
+        h.capturer.onLine(logcat('08-04 23:00:00.000 24732 24752 I ActivityManager: displayed', 8000));
+        // The SAME old crash re-delivered mid-session (logcat respawn) is far below the watermark.
+        h.capturer.onLine(logcat(staleCrash, 9000));
+        await h.flush();
+        assert.strictEqual(h.store.saves.length, 0, 'mid-session re-dump must not capture');
+    });
+
+    test('should NOT capture W-level binder noise even when live', async () => {
+        const h = makeHarness();
+        h.capturer.onLine(logcat('08-04 23:00:00.000 24732 24752 I ActivityManager: start proc', 0));
         await h.flush();
         h.clock.now += 5000;
-        // Fresh but W-level ActivityManager binder chatter (matches isErrorLine via "error").
-        h.capturer.onLine(makeLine('08-04 19:09:15.000 24732 26378 W ActivityManager: pid 31795 sent binder code 10 and got error -32', { category: 'logcat', timestamp: arrival }));
+        // Fresh, device-critical tag, but W level — matches isErrorLine via the word "error".
+        h.capturer.onLine(logcat('08-04 23:00:10.000 24732 26378 W ActivityManager: sent binder code 10 and got error -32', 10000));
         await h.flush();
         assert.strictEqual(h.store.saves.length, 0);
     });

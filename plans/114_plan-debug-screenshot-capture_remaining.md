@@ -69,6 +69,49 @@ entity escaping cannot weaken anchor precision; the transport's single-URI dead-
 pinned by test as a documented single-session limitation. Suites: capturer 15 +
 vm-service-and-transport 15.
 
+## Finish Report (2026-08-05) — profile-mode trigger gap; timezone-immune replay gate
+
+Field report: with v9.3.6 installed and the app raising exceptions, no screenshots were ever
+captured. Two defects, both found by reading the operator's real logs rather than reasoning
+from the code.
+
+**Defect 1 — no trigger existed in profile mode.** Every session since 2026-07-30 is a
+PROFILE-mode launch (`flutterMode: "profile"`). The Flutter framework's exception banners are
+debug-mode-only console output, so a 1,705-line profile session contained just 4 non-logcat
+lines across five hours. The only error signal such a run produces is the device's own logcat
+crash line — which the startup-noise guard (added 2026-07-29 to stop `E/Gralloc4` launch noise
+burning captures) excluded wholesale via `if (data.category === 'logcat') return undefined`.
+The trigger chain was therefore inert by construction for the operator's entire workflow.
+
+**Defect 2 (self-inflicted, caught before release) — the first fix was timezone-fragile.**
+The initial gate compared the device's logcat timestamp against the host clock with a 10-minute
+freshness window. Logcat stamps are device-local with no timezone and no year, while arrival
+is an absolute host instant: a device on UTC with a workstation on EDT yields a 240-minute
+apparent delta, so every genuinely fresh crash was rejected — silently reproducing the very
+symptom being fixed, now gated on device timezone instead of build mode. The unit tests could
+not catch it because both sides were constructed host-locally, cancelling the offset.
+
+**Design now in place** (`modules/screenshot/logcat-crash-gate.ts`): the gate never compares
+device time to host time. (1) A replay-drain grace window suppresses the startup buffer dump,
+which arrives as one tight burst — 728 lines inside 2ms in a real capture. (2) After that, a
+line must sit within a stale window of the newest device stamp seen (device-clock watermark);
+both sides come from the same parser, so any timezone offset cancels exactly. This also covers
+a mid-session logcat respawn, where the watermark already sits at live time and re-dumped
+history falls far below it. Line parsing delegates to the canonical `parseLogcatLine` rather
+than duplicating its regex. Year rollover is handled by pulling a stamp far ahead of the
+watermark back one year.
+
+**Diagnostics** (the idle state was silent, which is what let this persist): an activation line
+naming the running version, and a one-time warning when a genuine app error passes with no VM
+Service address — gated by tier so the startup device-noise burst cannot trip it on healthy
+sessions.
+
+**Verification.** A new Extension Host end-to-end suite composes the real production pieces —
+banner-line URI discovery, trigger classification, VM-probe-then-adb transport, store — and
+asserts real artifacts on disk. Both the console path and the profile-mode logcat path were
+verified live against a connected device (~1.14 MB PNGs plus sidecars). Suites: gate 5,
+capturer 19, transport/URI 15, end-to-end 2.
+
 ## 1. F5 verification of live capture (blocking for release confidence)
 
 Unit tests cover triggers/coalescing/parsing, but `_flutter.screenshot` has never been
