@@ -2,6 +2,7 @@ import * as assert from 'assert';
 import { parseLog } from '../../../modules/flow-map/flow-map-log-parser';
 import { buildGraph } from '../../../modules/flow-map/flow-map-builder';
 import { renderSvg } from '../../../modules/flow-map/flow-map-svg';
+import { buildFlowMapBody } from '../../../modules/flow-map/flow-map-html';
 
 /** Session header + helper to build breadcrumb lines tersely. */
 const HEAD = ['=== SAROPA LOG CAPTURE — SESSION START ===', 'Project:        demo'];
@@ -124,6 +125,19 @@ suite('FlowMap review fixes (plan 117)', () => {
             const graph = buildGraph(parseLog(tieLines));
             const crashEdge = graph.edges.find(e => e.inferred);
             assert.strictEqual(crashEdge?.from, 'alpha', 'tie resolves to the newly entered screen');
+        });
+
+        test('should render a valid (non-negative) svg and an empty note for a breadcrumb-less log', () => {
+            // A logcat-only capture yields zero nodes; the layout previously computed height="-2",
+            // an invalid SVG browsers render as NOTHING — the report showed a silent blank space.
+            const noCrumbs = parseLog([...HEAD, '[08:00:01.000] [logcat] D Foo: system noise']);
+            const graph = buildGraph(noCrumbs);
+            assert.strictEqual(graph.nodes.length, 0, 'nothing classified');
+            const svg = renderSvg(graph);
+            assert.ok(!/height="-/.test(svg) && !/viewBox="[^"]*-/.test(svg), 'no negative dimensions');
+            const body = buildFlowMapBody(noCrumbs, graph);
+            assert.ok(body.includes('fm-empty'), 'empty-state note shown');
+            assert.ok(!body.includes('fm-zoom-toolbar'), 'no dead zoom toolbar over an empty diagram');
         });
 
         test('should detect a gesture exception banner (no "library" suffix)', () => {
