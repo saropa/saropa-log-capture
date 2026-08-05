@@ -176,7 +176,24 @@ async function copyLogLine(logUri: vscode.Uri, line: number): Promise<void> {
 
 /** True when `entries` already contains a custom-breadcrumb rule with this exact `pattern`. */
 function hasPattern(entries: readonly unknown[], pattern: string): boolean {
-    return entries.some((e) => typeof e === 'object' && e !== null && (e as { pattern?: unknown }).pattern === pattern);
+    // Compare trimmed: a rule the user hand-edited with stray whitespace is the SAME rule to the
+    // regex engine, so an exact-string check would silently append a duplicate that never fires twice.
+    const want = pattern.trim();
+    return entries.some((e) => {
+        const raw = typeof e === 'object' && e !== null ? (e as { pattern?: unknown }).pattern : undefined;
+        return typeof raw === 'string' && raw.trim() === want;
+    });
+}
+
+/**
+ * Where a generated rule is written. Workspace scope keeps a project's log dialect with the project,
+ * but `update()` REJECTS workspace scope when no folder is open (a single-file window), which would
+ * surface as a bare error on an otherwise valid click — fall back to user scope there.
+ */
+function ruleTarget(): vscode.ConfigurationTarget {
+    return (vscode.workspace.workspaceFolders?.length ?? 0) > 0
+        ? vscode.ConfigurationTarget.Workspace
+        : vscode.ConfigurationTarget.Global;
 }
 
 /**
@@ -196,7 +213,7 @@ async function addCustomBreadcrumbRule(p: FlowMapPanelParams, pattern: string, l
     }
     try {
         const next = [...entries, { pattern, kind: 'nav', label }];
-        await cfg.update('flowMap.customBreadcrumbs', next, vscode.ConfigurationTarget.Workspace);
+        await cfg.update('flowMap.customBreadcrumbs', next, ruleTarget());
         void vscode.window.showInformationMessage(t('flowMap.ruleAdded'));
         p.refresh();
     } catch (err) {
