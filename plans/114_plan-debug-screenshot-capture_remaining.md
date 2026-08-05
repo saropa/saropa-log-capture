@@ -112,6 +112,33 @@ asserts real artifacts on disk. Both the console path and the profile-mode logca
 verified live against a connected device (~1.14 MB PNGs plus sidecars). Suites: gate 5,
 capturer 19, transport/URI 15, end-to-end 2.
 
+### Addendum (same day) — replay detection hardened; capture self-test added
+
+Two follow-ups after the review of the timezone-immune gate.
+
+**Replay detection no longer rests on a fixed window.** The 5-second grace period was the
+named scaling risk: a slow device or oversized buffer drains for longer than any fixed
+interval, and the dump's chronologically-climbing stamps each look current against the
+running watermark, so replayed crashes would fire. Detection now keys on the feed's first
+PAUSE (the dump is a continuous flood; live output has human-scale gaps), with a 30-second
+backstop. Review then raised a scenario pause-detection alone cannot settle: a host stall
+mid-dump fakes the pause. A test was written to measure that exposure rather than argue it
+— **it failed**, confirming replayed crashes were released. The fix is a third, independent
+layer: catch-up rate detection, rejecting any line whose device-time jump outruns the
+elapsed arrival time, which holds regardless of pauses. All three layers compare device
+time only to device time, so the timezone immunity is preserved.
+
+**Capture self-test.** Each Dart/Flutter session start probes the preconditions (toggle
+state, armed triggers, adb version, attached devices) and writes one verdict line to both
+the output channel and the log itself. The motivation is procedural rather than technical:
+the defects in this plan each cost a round of live investigation because the artifacts
+recorded the session but nothing about whether capture was even possible. Probes are soft
+(3s cap, failures report as absent) and scoped to Dart/Flutter session types so other
+debug adapters never receive a misleading "NO DEVICE attached".
+
+Suites: gate 8, self-test 8, capturer 19, transport/URI 15, end-to-end 2 (both paths
+re-verified live against a device).
+
 ## 1. F5 verification of live capture (blocking for release confidence)
 
 Unit tests cover triggers/coalescing/parsing, but `_flutter.screenshot` has never been

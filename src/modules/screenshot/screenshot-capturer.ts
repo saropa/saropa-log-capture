@@ -97,9 +97,14 @@ export class ScreenshotCapturer {
     /** LineListener entry point — must never throw (line listeners run on the capture path). */
     onLine(data: LineData): void {
         if (data.isMarker || !data.logFileUri) { return; }
-        // wsUri before isEnabled: outside a live Flutter session (including the huge logcat
-        // replay burst at session start, before the VM Service is announced) every line
-        // bails on a cached-map read instead of paying a workspace-config read.
+        // The logcat gate observes EVERY logcat line, ahead of the URI/enabled/breaker gates:
+        // its replay-drain detection and device-clock watermark describe the FEED, and the
+        // startup dump arrives before the VM Service is announced. Observing only post-URI
+        // lines would anchor the burst detection mid-feed and mis-read a re-dump. Cost is one
+        // regex per logcat line (guarded by the cheap category compare) — paid so the gate is
+        // never reasoning from a partial view of its own input.
+        const logcatCrash = data.category === 'logcat'
+            && this.logcatGate.observe(data.text, data.timestamp.getTime(), data.timestamp.getFullYear());
         const wsUri = this.deps.getVmServiceWsUri();
         if (!wsUri) {
             // The no-URI state was invisible: error lines streamed past and nothing said why
@@ -123,7 +128,7 @@ export class ScreenshotCapturer {
 
         const settings = this.deps.triggerSettings();
         const text = stripAnsi(data.text);
-        const trigger = classifyTrigger(text, data, settings, this.logcatGate);
+        const trigger = classifyTrigger(text, data, settings, logcatCrash);
         if (!trigger) { return; }
 
         if (!this.passesCoalescing(text, trigger, settings.cooldownMs)) { return; }
@@ -235,7 +240,7 @@ function classifyTrigger(
     text: string,
     data: LineData,
     settings: ScreenshotTriggerSettings,
-    logcatGate: LogcatCrashGate,
+    logcatCrash: boolean,
 ): ScreenshotTrigger | undefined {
     // Nothing enabled → skip the classifier regexes entirely (they are the priciest step here).
     if (!settings.onError && !settings.onWarning && !settings.onNavigation) { return undefined; }
@@ -251,12 +256,11 @@ function classifyTrigger(
     // The logcat feed needs its own narrow gate rather than a wholesale exclusion: PROFILE-mode
     // runs (the 2026-08 contacts sessions) emit almost no console output — the framework's
     // exception banners are debug-mode only — so the logcat crash line IS the only error signal
-    // a profile session produces. The gate (logcat-crash-gate.ts) admits only live, E/F/A-level,
-    // device-critical crashes and must observe EVERY logcat line to keep its device-clock
-    // watermark accurate, so it runs before the onError check rather than behind it.
+    // a profile session produces. The verdict is computed by the gate in onLine (which sees
+    // every logcat line, including the pre-URI startup dump); this branch only applies the
+    // user's onError preference to it.
     if (data.category === 'logcat') {
-        const isCrash = logcatGate.observe(text, data.timestamp.getTime(), data.timestamp.getFullYear());
-        return isCrash && settings.onError ? 'error' : undefined;
+        return logcatCrash && settings.onError ? 'error' : undefined;
     }
     const tier = classifyLogLine(text);
     if (tier === 'device-other') { return undefined; }
