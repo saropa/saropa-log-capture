@@ -31,10 +31,11 @@ cspell:disable
 
 ### Added
 
-- Flow map: when a log has no recognized navigation breadcrumbs, the diagram area now suggests custom rules built from the log's own repeated line shapes, addable in one click
+- Flow map: when a log has no recognized navigation breadcrumbs, the diagram area now suggests custom rules built from the log's own repeated line shapes, addable in one click — arrow-separated lines (`Navigated -> Home`) are recognized alongside colon-separated ones, and a short capture holding a single navigation-worded line is offered too
 
 ### Fixed
 
+- Flow map: a suggested breadcrumb rule now reproduces its source line verbatim, so the rule matches the lines it was derived from (an arrow-separated suggestion previously generated a rule that matched nothing), and adding one falls back to user settings when no workspace folder is open instead of failing
 - Session Display menu: the Reverse toggle showed its raw l10n key (`viewer.session.toggleReverse.text`) instead of a label — added the missing `.text` string
 - l10n key verification now catches dynamic key families (two layers: template-pattern scanning for `t(\`prefix.${var}.suffix\`)` and `// @l10n-family` annotations in catalog files) — a missing suffix in any family fails the compile gate
 - Flow map: a log with no navigation breadcrumbs (for example a logcat-only capture) no longer renders a silent blank diagram — the zero-node layout produced an invalid negative-height SVG; the diagram area now explains what the flow map needs, and the zoom toolbar and glyph legend are hidden when there is no diagram to control
