@@ -2182,7 +2182,7 @@
   "Screens": "スクリーンス",
   "Session info": "セッション情報",
   "Settings": "設定",
-  "Sev": "セブ",
+  "Sev": "重度",
   "Slow queries": "遅いクエリ",
   "Solid = walked · dashed = recovered indirectly · ↗️ = off-app handoff · 💥 = fault. ": "固体 = 行った · 破線 = 間接的に回復 · ↗️ = アプリ外への手渡し · 💥 = 故障 ",
   "Version": "バージョン",
@@ -2191,5 +2191,15 @@
   "external": "外部",
   "inline": "インライン",
   "screen": "スクリーン",
-  "tab": "タブ"
+  "tab": "タブ",
+  "Add rule": "ルールを追加",
+  "Added a custom flow-map breadcrumb rule.": "カスタムフローマップのブレッドクrumbルールを追加しました。",
+  "Could not save the custom breadcrumb rule: {0}": "カスタムブレッドクラumbルールを保存できませんでした: {0}",
+  "No navigation breadcrumbs in this log — the flow diagram needs \"Screen Navigation\" lines or [flowmap] tags from the app. Other report sections still reflect the log.": "このログにはナビゲーションのパンくずがありません — フロー図には「Screen Navigation（画面ナビゲーション）」の線またはアプリからの[flowmap]タグが必要です。 他のレポートセクションもログを反映しています",
+  "No timestamped lines were recognized in this log, so nothing could be classified. If the log does contain timestamps, the capture format may have changed.": "このログにはタイムスタンプ付きの行が認識されなかったため、何もないため分類できませんでした。 ログにタイムスタンプが含まれている場合、キャプチャ形式が変更されている可能性があります。",
+  "Reverse": "逆転",
+  "Scanned timestamped lines through {0} and matched no navigation breadcrumbs.": "{0} を通じてタイムスタンプ付きの行をスキャンし、ナビゲーションのパンくずと一致しませんでした。",
+  "Take a screenshot of the running app now": "現在のアプリのスクリーンショットを撮影してください",
+  "That breadcrumb rule is already configured.": "そのブレッドクラumbsルールはすでに設定されています。",
+  "These lines look like navigation — add one as a custom rule:": "これらの行はナビゲーションのように見えます — カスタムルールとして1つ追加してください: /no_think"
 }

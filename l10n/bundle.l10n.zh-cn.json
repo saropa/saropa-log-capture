@@ -2191,5 +2191,15 @@
   "external": "外部",
   "inline": "内联",
   "screen": "屏幕",
-  "tab": "标签"
+  "tab": "标签",
+  "Add rule": "添加规则",
+  "Added a custom flow-map breadcrumb rule.": "添加了一个自定义 flow-map 面包屑规则。",
+  "Could not save the custom breadcrumb rule: {0}": "无法保存自定义面包屑规则：{0}",
+  "No navigation breadcrumbs in this log — the flow diagram needs \"Screen Navigation\" lines or [flowmap] tags from the app. Other report sections still reflect the log.": "此日志中没有导航面包屑——流程图需要来自应用的“屏幕导航”线或[flowmap]标签。 其他报告部分仍显示日志。",
+  "No timestamped lines were recognized in this log, so nothing could be classified. If the log does contain timestamps, the capture format may have changed.": "此日志中未识别到任何带时间戳的行，因此无法进行分类。 如果日志中包含时间戳，日志捕获格式可能已更改。",
+  "Reverse": "反向",
+  "Scanned timestamped lines through {0} and matched no navigation breadcrumbs.": "通过{0}扫描时间戳行并匹配到任何导航面包屑。",
+  "Take a screenshot of the running app now": "现在对正在运行的应用程序截图",
+  "That breadcrumb rule is already configured.": "该面包屑规则已经配置。",
+  "These lines look like navigation — add one as a custom rule:": "这些行看起来像导航 —— 添加一个作为自定义规则："
 }
