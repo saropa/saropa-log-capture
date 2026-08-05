@@ -25,11 +25,32 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+[log](https://github.com/saropa/saropa-log-capture/blob/v9.3.6/CHANGELOG.md)
+
+### Fixed
+
+- Screenshots now capture in profile-mode Flutter runs: profile builds emit no console exception banners (the previous only trigger source), so fresh, error-level critical device crashes from the live logcat feed (`E/AndroidRuntime: FATAL EXCEPTION`) now trigger a capture — stale crashes replayed from the logcat buffer at session start and W-level binder noise never do
+- The output channel now announces "capture pipeline armed" at startup (confirms the running build has the feature) and warns once when error lines stream past with no VM Service address known, so an idle capture pipeline is never silent
+- 29 manual translations filled across 9 locales (EN-COPY audit gaps from engine swap)
+- Japanese and Korean "Sev" column header fixed from sound transliterations to meaning (重度, 심각)
+
+<details>
+<summary>Maintenance</summary>
+
+**l10n pipeline**
+
+- German loanwords (Commit, Detail, Version) kept as-is and added to verified-identical allow-list
+- Audit auto-suppresses EN-COPY entries with manual provenance (no code change needed for true cognates)
+
+</details>
+
+---
+
 ## [9.3.6]
 
 Non-english language translations have been upgraded to a higher-quality offline engine. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.6/CHANGELOG.md)
-
-- 
 
 <details>
 <summary>Maintenance</summary>
