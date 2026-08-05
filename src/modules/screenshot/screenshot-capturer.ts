@@ -198,6 +198,13 @@ export class ScreenshotCapturer {
         }
     }
 
+    /**
+     * Crash lines the logcat gate rejected as replay. Reported at session end when nothing
+     * was captured: the replay thresholds are reasoned from one observed device, and this is
+     * how a wrong threshold shows up as a number rather than as silence.
+     */
+    get suppressedLogcatCrashes(): number { return this.logcatGate.suppressedCrashCount; }
+
     /** True when auto-triggers are suspended for this URI after repeated failures. */
     private breakerTripped(wsUri: string): boolean {
         if (this.breakerUri !== wsUri) {

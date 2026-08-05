@@ -97,14 +97,33 @@ export function getScreenshotStyles(): string {
 }
 
 /* Footer capture counter — click opens the gallery. */
-.screenshot-count {
+/* Capture-now button — present only while a live session can actually be photographed. */
+.screenshot-shoot {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    color: var(--text);
+    opacity: 0.85;
+}
+.screenshot-shoot:hover { opacity: 1; color: var(--accent-critical); }
+
+/* Capture counter as a pill: reads as a count badge beside the file identity rather than
+   as loose text, and stays legible on both the toolbar and the log banner. */
+.screenshot-count,
+.screenshot-pill {
     cursor: pointer;
     flex-shrink: 0;
     white-space: nowrap;
-    font-size: 0.9em;
-    color: var(--muted);
-    padding: 0 2px;
+    font-size: 0.85em;
+    line-height: 1.4;
+    color: var(--vscode-badge-foreground);
+    background: var(--vscode-badge-background);
+    border-radius: 9px;
+    padding: 0 6px;
+    margin: 0 2px;
 }
-.screenshot-count:hover { color: var(--text); }
+.screenshot-count:hover,
+.screenshot-pill:hover { filter: brightness(1.15); }
 `;
 }

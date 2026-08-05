@@ -280,6 +280,14 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         sessionManager,
         log: (msg) => outputChannel.appendLine(msg),
         onSaved: (logFsPath, result) => {
+            /* Record the capture in the log itself. A screenshot that exists only as a file
+               beside the log is invisible when reading the log — as a line it sits in the
+               stream next to the error that caused it, survives export/sharing, and gives
+               the viewer a real row to anchor to. Written as a marker so line filters and
+               the severity gutter leave it alone. */
+            sessionManager.insertMarker(
+                `\u{1F4F7} Screenshot ${result.entry.file} (${result.entry.trigger}) — ${result.totalForLog} this log`,
+            );
             broadcaster.postToWebview({
                 type: 'screenshotCaptured',
                 logFsPath,
