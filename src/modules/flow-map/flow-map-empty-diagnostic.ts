@@ -25,7 +25,17 @@ const CLOCK_RE = /^\[(\d{2}):(\d{2}):(\d{2})\.(\d{3})\]/;
  * digit or parenthesis, e.g. "Nav (v2): HomePage") — `isNoisePrefix` does the "mostly letters" and
  * word-count filtering afterward, so the pattern only bounds where the prefix ends.
  */
-const PREFIX_LINE_RE = /^([A-Za-z][^:\n]*?):\s+(.+)$/;
+const PREFIX_LINE_RE = /^([A-Za-z][^\n]*?(?::|->|→))\s+(.+)$/;
+
+/** Trailing separator, stripped from a captured head to get the bare prefix for noise checks. */
+const TRAILING_SEP_RE = /\s*(?::|->|→)$/;
+
+/**
+ * Prefix words that make a once-seen line worth suggesting anyway. The default "seen at least twice"
+ * bar assumes a session long enough to repeat itself; a short capture can hold exactly one genuine
+ * navigation line, and offering nothing there is the same dead end this feature exists to remove.
+ */
+const NAV_WORD_RE = /\b(route|nav|navigat|screen|page|view|open|enter|push|present)/i;
 
 /** Prefixes the built-in matchers (`flow-map-breadcrumbs.ts`) already handle — never suggest these. */
 const BUILTIN_SKIP_RE = [/^Screen Navigation$/, /Screen Reached/, /^Viewed /, /^App (Startup|Shutdown)$/];
@@ -92,16 +102,23 @@ function escapeRegex(s: string): string {
 interface PrefixGroup {
     count: number;
     firstValue: string;
+    /**
+     * The head EXACTLY as it appeared, separator and internal spacing included (`Route pushed:`,
+     * `Navigated ->`). Reproducing it verbatim is what makes the generated rule match the very lines
+     * it was derived from; rebuilding it from a trimmed prefix plus a separator drops the spacing and
+     * yields a rule that matches nothing.
+     */
+    head: string;
 }
 
-/** Fold one candidate line into the running per-prefix tally, seeding the sample on first sight. */
-function recordPrefix(groups: Map<string, PrefixGroup>, prefix: string, value: string): void {
-    const existing = groups.get(prefix);
+/** Fold one candidate line into the running tally, keyed by the verbatim head. */
+function recordPrefix(groups: Map<string, PrefixGroup>, head: string, value: string): void {
+    const existing = groups.get(head);
     if (existing) {
         existing.count += 1;
         return;
     }
-    groups.set(prefix, { count: 1, firstValue: value });
+    groups.set(head, { count: 1, firstValue: value, head });
 }
 
 /** Truncate to a readable sample length without leaving a dangling ellipsis on already-short text. */
@@ -109,18 +126,32 @@ function truncateSample(s: string): string {
     return s.length > MAX_SAMPLE_LEN ? `${s.slice(0, MAX_SAMPLE_LEN).trimEnd()}…` : s;
 }
 
-/** Rank groups by count desc, drop singletons, and cap the result at `max`. */
-function rankGroups(groups: Map<string, PrefixGroup>, max: number): BreadcrumbSuggestion[] {
-    const ranked = [...groups.entries()]
-        .filter(([, g]) => g.count >= 2)
-        .sort((a, b) => b[1].count - a[1].count)
-        .slice(0, max);
-    return ranked.map(([prefix, g]) => ({
-        pattern: `^${escapeRegex(prefix)}: (.+)$`,
+/**
+ * Build one suggestion from a tallied group. `\s+` (not a literal space) after the head so the rule
+ * survives the alignment padding some loggers emit between the separator and the value.
+ */
+function toSuggestion(g: PrefixGroup): BreadcrumbSuggestion {
+    return {
+        pattern: `^${escapeRegex(g.head)}\\s+(.+)$`,
         label: '$1',
         sample: truncateSample(g.firstValue.trim()),
         count: g.count,
-    }));
+    };
+}
+
+/**
+ * Rank by count desc and cap at `max`. Repeated shapes (seen twice or more) are the confident
+ * signal. Only when NOTHING repeats does the bar drop to a single sighting, and then only for
+ * prefixes whose wording reads as navigation — a short capture holding one real route line should
+ * still get an offer, without letting one-off noise through on a long log that simply lacks nav.
+ */
+function rankGroups(groups: Map<string, PrefixGroup>, max: number): BreadcrumbSuggestion[] {
+    const all = [...groups.values()].sort((a, b) => b.count - a.count);
+    const repeated = all.filter((g) => g.count >= 2);
+    const chosen = repeated.length > 0
+        ? repeated
+        : all.filter((g) => NAV_WORD_RE.test(g.head));
+    return chosen.slice(0, max).map(toSuggestion);
 }
 
 /**
@@ -144,7 +175,8 @@ export function suggestBreadcrumbPatterns(lines: readonly string[], max = 3): Br
         }
         const content = stripPrefix(line);
         const m = PREFIX_LINE_RE.exec(content);
-        if (!m || isNoisePrefix(m[1])) {
+        // Noise checks read the bare prefix; the tally keeps the head verbatim for rule generation.
+        if (!m || isNoisePrefix(m[1].replace(TRAILING_SEP_RE, ''))) {
             continue;
         }
         recordPrefix(groups, m[1], m[2]);

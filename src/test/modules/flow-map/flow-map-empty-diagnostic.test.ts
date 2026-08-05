@@ -23,7 +23,7 @@ suite('FlowMap empty-state breadcrumb diagnostic', () => {
             ];
             const suggestions = suggestBreadcrumbPatterns(lines);
             assert.strictEqual(suggestions.length, 1);
-            assert.strictEqual(suggestions[0].pattern, '^Route pushed: (.+)$');
+            assert.strictEqual(suggestions[0].pattern, '^Route pushed:\\s+(.+)$');
             assert.strictEqual(suggestions[0].label, '$1');
             assert.strictEqual(suggestions[0].count, 3);
             assert.strictEqual(suggestions[0].sample, 'HomePage');
@@ -39,7 +39,7 @@ suite('FlowMap empty-state breadcrumb diagnostic', () => {
             ];
             const suggestions = suggestBreadcrumbPatterns(real);
             assert.strictEqual(suggestions.length, 1);
-            assert.strictEqual(suggestions[0].pattern, '^Route pushed: (.+)$');
+            assert.strictEqual(suggestions[0].pattern, '^Route pushed:\\s+(.+)$');
             assert.strictEqual(suggestions[0].sample, 'HomePage');
         });
 
@@ -57,9 +57,44 @@ suite('FlowMap empty-state breadcrumb diagnostic', () => {
             assert.strictEqual(suggestBreadcrumbPatterns(noisy).length, 0);
         });
 
-        test('should ignore prefixes seen only once', () => {
-            const lines = [
+        test('should support arrow separators and keep each shape\'s own rule', () => {
+            const arrows = [
+                line('08:00:01', 'Navigated -> HomePage'),
+                line('08:00:02', 'Navigated -> Settings'),
+            ];
+            const suggestions = suggestBreadcrumbPatterns(arrows);
+            assert.strictEqual(suggestions.length, 1);
+            assert.strictEqual(suggestions[0].pattern, '^Navigated ->\\s+(.+)$');
+            assert.ok(new RegExp(suggestions[0].pattern).test('Navigated -> HomePage'),
+                'the generated rule matches the very line it was derived from');
+        });
+
+        test('should offer a lone navigation-worded line only when nothing repeats', () => {
+            // A short capture can hold exactly one real route line; returning nothing there is the
+            // dead end this feature exists to remove.
+            const short = [line('08:00:01', 'Route pushed: HomePage'), line('08:00:02', 'Cache warm: done')];
+            const suggestions = suggestBreadcrumbPatterns(short);
+            assert.strictEqual(suggestions.length, 1);
+            assert.strictEqual(suggestions[0].pattern, '^Route pushed:\\s+(.+)$');
+            assert.strictEqual(suggestions[0].count, 1);
+        });
+
+        test('should prefer repeated shapes over lone navigation-worded ones', () => {
+            const mixed = [
                 line('08:00:01', 'Route pushed: HomePage'),
+                line('08:00:02', 'Widget built: Card'),
+                line('08:00:03', 'Widget built: List'),
+            ];
+            const suggestions = suggestBreadcrumbPatterns(mixed);
+            assert.strictEqual(suggestions.length, 1, 'the repeated shape wins outright');
+            assert.strictEqual(suggestions[0].pattern, '^Widget built:\\s+(.+)$');
+        });
+
+        test('should ignore prefixes seen only once when none reads as navigation', () => {
+            // Singletons are dropped; the nav-worded fallback deliberately exempts route/screen/page
+            // wording, so this fixture uses prefixes that carry no navigation sense at all.
+            const lines = [
+                line('08:00:01', 'Cache warm: done'),
                 line('08:00:02', 'Something else: value'),
             ];
             assert.strictEqual(suggestBreadcrumbPatterns(lines).length, 0);
@@ -81,7 +116,7 @@ suite('FlowMap empty-state breadcrumb diagnostic', () => {
             ];
             const suggestions = suggestBreadcrumbPatterns(lines);
             assert.strictEqual(suggestions.length, 1);
-            assert.strictEqual(suggestions[0].pattern, '^Nav \\(v2\\): (.+)$');
+            assert.strictEqual(suggestions[0].pattern, '^Nav \\(v2\\):\\s+(.+)$');
             // The generated pattern must actually compile and match the source line.
             assert.ok(new RegExp(suggestions[0].pattern).test('Nav (v2): HomePage'));
         });
