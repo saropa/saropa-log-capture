@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import { parseLog } from '../../../modules/flow-map/flow-map-log-parser';
 import { buildGraph } from '../../../modules/flow-map/flow-map-builder';
 import { renderSvg } from '../../../modules/flow-map/flow-map-svg';
-import { buildFlowMapBody } from '../../../modules/flow-map/flow-map-html';
+import { buildFlowDiagramBody, buildFlowMapBody } from '../../../modules/flow-map/flow-map-html';
 
 /** Session header + helper to build breadcrumb lines tersely. */
 const HEAD = ['=== SAROPA LOG CAPTURE — SESSION START ===', 'Project:        demo'];
@@ -138,6 +138,30 @@ suite('FlowMap review fixes (plan 117)', () => {
             const body = buildFlowMapBody(noCrumbs, graph);
             assert.ok(body.includes('fm-empty'), 'empty-state note shown');
             assert.ok(!body.includes('fm-zoom-toolbar'), 'no dead zoom toolbar over an empty diagram');
+            // A glyph key beside "no breadcrumbs" has nothing to decode — suppressed in both bodies.
+            assert.ok(!body.includes('fm-legend-tip'), 'no legend over an empty diagram');
+            assert.ok(!buildFlowDiagramBody(graph).includes('fm-legend-tip'), 'same in the pop-out');
+        });
+
+        test('should distinguish a scanned-but-breadcrumbless log from one with no timestamps', () => {
+            // Both yield zero nodes; only the second suggests the capture format itself is off. A
+            // parser regression would otherwise wear the "instrument your app" note and mislead.
+            const scanned = parseLog([...HEAD, '[08:00:01.000] [logcat] D Foo: noise']);
+            const scannedBody = buildFlowMapBody(scanned, buildGraph(scanned));
+            assert.ok(scannedBody.includes('08:00:01'), 'names the last scanned clock');
+
+            const untimed = parseLog([...HEAD, 'plain untimestamped output']);
+            const untimedBody = buildFlowMapBody(untimed, buildGraph(untimed));
+            assert.ok(!untimedBody.includes('08:00:01'), 'no clock to report');
+            assert.ok(untimedBody.includes('fm-empty-detail'), 'still explains the empty state');
+        });
+
+        test('should keep the legend and toolbar once the graph has real nodes', () => {
+            const walked = parseLog([...HEAD, nav('08:00:01', 'Home'), nav('08:00:05', 'Alpha')]);
+            const body = buildFlowMapBody(walked, buildGraph(walked));
+            assert.ok(body.includes('fm-legend-tip'), 'legend present for a real diagram');
+            assert.ok(body.includes('fm-zoom-toolbar'), 'toolbar present for a real diagram');
+            assert.ok(!body.includes('fm-empty'), 'no empty note when nodes exist');
         });
 
         test('should detect a gesture exception banner (no "library" suffix)', () => {
