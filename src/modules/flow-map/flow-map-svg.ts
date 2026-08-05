@@ -107,7 +107,9 @@ function layout(graph: FlowGraph): { placed: Map<string, Placed>; width: number;
         }
         y += rowHeight + ROW_GAP;
     }
-    return { placed, width: maxWidth + MARGIN * 2, height: y - ROW_GAP + MARGIN };
+    // Floor at the margins: a zero-node graph otherwise computes a NEGATIVE height, and a negative
+    // viewBox/height is an invalid SVG that browsers silently render as nothing (blank panel).
+    return { placed, width: maxWidth + MARGIN * 2, height: Math.max(y - ROW_GAP + MARGIN, MARGIN * 2) };
 }
 
 /** The table row key a node cross-links to: crash nodes target the crash issue row. */
