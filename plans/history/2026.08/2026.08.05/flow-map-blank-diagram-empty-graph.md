@@ -51,6 +51,28 @@ intended two-node case.
 dimensions plus the empty-state note and no toolbar or legend (in the report and the pop-out), and a
 walked log still renders legend and toolbar with no empty note.
 
+### Follow-up: empty-state onboarding (same day)
+
+The note alone was a dead end — it named the `flowMap.customBreadcrumbs` escape hatch without saying
+what to put in it. `flow-map-empty-diagnostic.ts` now mines the log for repeated `Prefix: value`
+shapes the built-in matchers miss and offers each as a one-click rule, written to the workspace
+setting with an immediate report refresh.
+
+Two defects in that heuristic surfaced only by running it against the real logs, not by its own unit
+tests:
+
+- `stripPrefix` peeled a single leading bracket group, but capture lines stack them
+  (`[clock] [console] [log] payload`). Every real line stayed `[`-leading and matched no prefix
+  shape, so the feature returned nothing for the exact format it targets. The test helper emitted a
+  single-bracket line, which is why the suite passed while production input did not.
+- Logcat tag prefixes (`W/ViewRootImpl(15450)`) ranked top by volume in logcat-heavy captures. They
+  are platform plumbing, and the embedded process id changes per run, so an accepted rule would
+  create junk nodes and then go stale. Logcat-shaped prefixes and any prefix carrying a bare process
+  id are now excluded.
+
+Lesson for future heuristics here: fixture helpers must emit the REAL decorated line shape, or a
+green suite will certify a matcher that never fires in production.
+
 ### Verification
 
 `npm run check-types` clean; targeted eslint clean; six flow-map suites total 87 tests passing; full
