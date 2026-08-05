@@ -70,6 +70,14 @@ export function flowMapScript(nonce: string): string {
     });
   });
 
+  // Empty-state breadcrumb diagnostic: one click hands the suggested pattern/label straight to the
+  // host, which appends it to the customBreadcrumbs setting and refreshes the report.
+  document.querySelectorAll('.fm-suggest-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      send('addFlowMapPattern', { pattern: btn.getAttribute('data-pattern') || '', label: btn.getAttribute('data-label') || '$1' });
+    });
+  });
+
   // Executive-summary copy button: send the rendered paragraph's plain text to the host clipboard.
   var copyBtn = document.querySelector('.copy-narrative');
   if (copyBtn) copyBtn.addEventListener('click', function(){

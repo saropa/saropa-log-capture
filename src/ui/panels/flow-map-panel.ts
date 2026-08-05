@@ -9,6 +9,7 @@ import * as vscode from 'vscode';
 import { t } from '../../l10n';
 import type { FlowGraph, ParsedLog } from '../../modules/flow-map/flow-map-model';
 import type { FlowShot } from '../../modules/flow-map/flow-map-screenshots';
+import type { BreadcrumbSuggestion } from '../../modules/flow-map/flow-map-empty-diagnostic';
 import { buildFlowDiagramBody, buildFlowMapBody } from '../../modules/flow-map/flow-map-html';
 import { flowMapStyles } from './flow-map-panel-styles';
 import { flowMapScript } from './flow-map-panel-script';
@@ -34,6 +35,9 @@ export interface FlowMapPanelParams {
     readonly screenshots: readonly FlowShot[];
     /** Count of sidecar entries beyond the render cap, for the "+N more" gallery note. */
     readonly screenshotsOmitted: number;
+    /** Empty-state breadcrumb diagnostic (plan follow-up): custom-rule suggestions when the diagram
+     * has no nodes. Empty when the graph is populated or the heuristic found nothing worth suggesting. */
+    readonly suggestions: readonly BreadcrumbSuggestion[];
 }
 
 let current: vscode.WebviewPanel | undefined;
@@ -80,6 +84,7 @@ function buildHtml(params: FlowMapPanelParams, nonce: string): string {
     // Stats and the log path now live as rows in the Session-info section (info ≠ navigation).
     const body = buildFlowMapBody(params.parsed, params.graph, params.logUri.fsPath, {
         screenshots: params.screenshots, screenshotsOmitted: params.screenshotsOmitted,
+        suggestions: params.suggestions,
     });
     // img-src data: only on the main report — thumbnails render here; the diagram-only pop-out below
     // never includes the gallery, so its CSP stays unchanged.
@@ -169,8 +174,41 @@ async function copyLogLine(logUri: vscode.Uri, line: number): Promise<void> {
     }
 }
 
+/** True when `entries` already contains a custom-breadcrumb rule with this exact `pattern`. */
+function hasPattern(entries: readonly unknown[], pattern: string): boolean {
+    return entries.some((e) => typeof e === 'object' && e !== null && (e as { pattern?: unknown }).pattern === pattern);
+}
+
+/**
+ * Append one `{ pattern, kind: 'nav', label }` rule to `saropaLogCapture.flowMap.customBreadcrumbs`
+ * (the empty-state suggestion button's target) and refresh the report so it applies immediately.
+ * Non-fatal on a config-write failure — the report itself is not at stake, just the shortcut.
+ */
+async function addCustomBreadcrumbRule(p: FlowMapPanelParams, pattern: string, label: string): Promise<void> {
+    const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+    const existing = cfg.get('flowMap.customBreadcrumbs');
+    const entries = Array.isArray(existing) ? existing : [];
+    if (hasPattern(entries, pattern)) {
+        // Never a silent no-op: the button stays clickable after a refresh, so a repeat click must
+        // still report an outcome rather than looking like the click was dropped.
+        void vscode.window.showInformationMessage(t('flowMap.ruleExists'));
+        return;
+    }
+    try {
+        const next = [...entries, { pattern, kind: 'nav', label }];
+        await cfg.update('flowMap.customBreadcrumbs', next, vscode.ConfigurationTarget.Workspace);
+        void vscode.window.showInformationMessage(t('flowMap.ruleAdded'));
+        p.refresh();
+    } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        void vscode.window.showWarningMessage(t('flowMap.ruleAddFailed', msg));
+    }
+}
+
 /** Dispatch one webview message against the latest shown report. */
-function handleMessage(msg: { type?: string; file?: string; line?: number; text?: string }): void {
+function handleMessage(
+    msg: { type?: string; file?: string; line?: number; text?: string; pattern?: string; label?: string },
+): void {
     const p = currentParams;
     if (!p) { return; }
     if (msg.type === 'saveMarkdown') {
@@ -188,6 +226,8 @@ function handleMessage(msg: { type?: string; file?: string; line?: number; text?
         p.revealLine(msg.line);
     } else if (msg.type === 'copyLogLine' && msg.line) {
         void copyLogLine(p.logUri, msg.line);
+    } else if (msg.type === 'addFlowMapPattern' && msg.pattern) {
+        void addCustomBreadcrumbRule(p, msg.pattern, msg.label || '$1');
     } else if (msg.type === 'copyText' && msg.text) {
         // The Executive-Summary copy button sends the rendered prose; write it straight to clipboard.
         void vscode.env.clipboard.writeText(msg.text);

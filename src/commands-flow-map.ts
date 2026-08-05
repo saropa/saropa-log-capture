@@ -10,6 +10,7 @@ import { scanProjectScreens } from './modules/flow-map/flow-map-source-scan';
 import { showFlowMapPanel, type FlowMapPanelParams } from './ui/panels/flow-map-panel';
 import { readScreenshotSidecar, screenshotDirUri } from './modules/screenshot/screenshot-store';
 import { joinShotsToScreens, type ShotWithDataUri } from './modules/flow-map/flow-map-screenshots';
+import { suggestBreadcrumbPatterns } from './modules/flow-map/flow-map-empty-diagnostic';
 
 /** Bound how many screenshots the webview embeds as data URIs — keeps panel HTML weight sane. */
 const MAX_REPORT_SHOTS = 12;
@@ -81,6 +82,9 @@ async function generateReport(logUri: vscode.Uri, revealLine: (line: number) => 
     const scan = await scanProjectScreens(parsed.header.projectRoot);
     const graph = buildGraph(parsed, scan);
     const { shots, omitted } = await loadFlowShots(logUri.fsPath);
+    // Only worth computing when the diagram is empty — a populated graph already has its own story,
+    // and running the heuristic against a huge log is otherwise wasted work.
+    const suggestions = graph.nodes.length === 0 ? suggestBreadcrumbPatterns(lines) : [];
     return {
         parsed, graph,
         markdown: buildReport(parsed, graph),
@@ -89,6 +93,7 @@ async function generateReport(logUri: vscode.Uri, revealLine: (line: number) => 
         revealLine,
         screenshots: joinShotsToScreens(shots, parsed.events),
         screenshotsOmitted: omitted,
+        suggestions,
     };
 }
 
