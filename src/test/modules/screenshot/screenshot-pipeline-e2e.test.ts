@@ -29,6 +29,72 @@ import type { LineData } from '../../../modules/session/session-event-bus';
 suite('screenshot pipeline end-to-end', () => {
     teardown(() => clearVmServiceUris());
 
+    /** Build a capturer wired exactly as screenshot-wiring.ts does, against a temp log. */
+    async function makeRig(): Promise<{ capturer: ScreenshotCapturer; store: ScreenshotStore; logs: string[]; logFsPath: string }> {
+        const logDir = path.join(os.tmpdir(), `slc-e2e-${Date.now()}-${Math.floor(process.hrtime()[1] / 1000)}`);
+        const logFsPath = path.join(logDir, 'e2e.log');
+        await vscode.workspace.fs.createDirectory(vscode.Uri.file(logDir));
+        const logs: string[] = [];
+        const store = new ScreenshotStore();
+        const capturer = new ScreenshotCapturer({
+            isEnabled: () => true,
+            triggerSettings: () => ({ onError: true, onWarning: false, onNavigation: false, cooldownMs: 250, maxPerLog: 50 }),
+            getVmServiceWsUri: getLatestVmServiceWsUri,
+            capturePng: makeCaptureTransport({
+                vm: captureVmServiceScreenshot,
+                adb: () => captureAdbScreenshot(''),
+                log: (m) => logs.push(m),
+            }),
+            store,
+            log: (m) => logs.push(m),
+        });
+        return { capturer, store, logs, logFsPath };
+    }
+
+    /** Wait until a save lands or the transport reports why it could not. */
+    async function settle(store: ScreenshotStore, logs: string[], logFsPath: string): Promise<void> {
+        const deadline = Date.now() + 15000;
+        while (Date.now() < deadline && store.countForLog(logFsPath) === 0
+            && !logs.some((l) => /adb (screencap failed|not available)/.test(l))) {
+            await new Promise((r) => setTimeout(r, 250));
+        }
+    }
+
+    test('PROFILE-MODE path: a live logcat crash should produce a PNG on disk', async function () {
+        this.timeout(20000);
+        // The defect this proves: profile-mode Flutter runs emit no console exception banners,
+        // so the device's own crash line is the only error signal. Device stamps deliberately
+        // sit hours away from host arrival time (device on another timezone) — the gate must
+        // still admit the crash.
+        const rig = await makeRig();
+        assert.strictEqual(recordVmServiceUriFromLogLine('Connecting to VM Service at ws://127.0.0.1:1/deadbeef=/ws', rig.logFsPath), true);
+
+        const base = Date.now();
+        const lc = (text: string, offsetMs: number, lineCount = 7): LineData => ({
+            text, category: 'logcat', lineCount, isMarker: false,
+            timestamp: new Date(base + offsetMs), logFileUri: rig.logFsPath,
+        });
+        // Startup burst drains, live output establishes the device-clock watermark…
+        rig.capturer.onLine(lc('08-05 10:00:00.000 24732 24752 I ActivityManager: start proc', 0));
+        rig.capturer.onLine(lc('08-05 10:00:06.000 24732 24752 I ActivityManager: displayed', 6000));
+        // …then the real crash, past the replay grace window.
+        rig.capturer.onLine(lc('08-05 10:00:10.000 24445 24458 E AndroidRuntime: FATAL EXCEPTION: main', 10000, 99));
+        await settle(rig.store, rig.logs, rig.logFsPath);
+
+        if (rig.store.countForLog(rig.logFsPath) === 0) {
+            const adbFailure = rig.logs.find((l) => /adb (screencap failed|not available)/.test(l));
+            assert.ok(adbFailure, `pipeline went silent — no save and no transport log. Logs: ${rig.logs.join(' | ')}`);
+            console.log(`[e2e] no device attached — logcat-path tail skipped (${adbFailure})`);
+            return;
+        }
+        const entries = await readScreenshotSidecar(rig.logFsPath);
+        assert.strictEqual(entries.length, 1, 'exactly the crash line should capture — not the info lines');
+        assert.strictEqual(entries[0].logLine, 99);
+        const png = await vscode.workspace.fs.readFile(vscode.Uri.joinPath(screenshotDirUri(rig.logFsPath), entries[0].file));
+        assert.ok(png[0] === 0x89 && png[1] === 0x50 && png.byteLength > 1000);
+        console.log(`[e2e] profile-mode logcat path verified: ${entries[0].file}, ${png.byteLength} bytes`);
+    });
+
     test('banner line + exception line should produce a PNG and sidecar on disk', async function () {
         this.timeout(20000);
         const logDir = path.join(os.tmpdir(), `slc-e2e-${Date.now()}`);
