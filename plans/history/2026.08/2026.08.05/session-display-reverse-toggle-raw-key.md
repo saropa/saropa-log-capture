@@ -28,6 +28,12 @@ toggles.
    string-literal argument, and checks each expanded key exists. Cross-file by
    design — the function definition and its callers can be in different modules.
    Added to `renderOptionToggle`, `shortcutRow`, and `commandRow`.
+   Hardened: paren-balanced arg extraction (handles nested calls like
+   `f(getId('x'), getIcon(), 'key')`), backslash-escape-aware string parsing,
+   bracket depth tracking, `export function` matching, and a negative
+   lookbehind that excludes function definitions from call-site scanning.
+   Non-literal arguments emit a WARN line naming the function and file so
+   unchecked expansions are never silent.
 
 3. *`@l10n-family` annotations* — a comment `// @l10n-family .title .label .text`
    in a catalog file declares that every key in the contiguous block below must
