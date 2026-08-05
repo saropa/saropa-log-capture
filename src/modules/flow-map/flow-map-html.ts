@@ -229,11 +229,12 @@ function flowLegend(): string {
  * the chart centers via margin:auto when it is smaller than the viewport. Glyphs are symbols (exempt
  * from l10n); titles are localized. `withPopout` is false inside the already-popped-out panel.
  */
-export function flowDiagramHtml(graph: FlowGraph, withPopout: boolean): string {
+export function flowDiagramHtml(graph: FlowGraph, withPopout: boolean, emptyDetail = ''): string {
     // No nodes = nothing to draw or zoom. Say so instead of shipping an empty diagram — a log with
     // no navigation breadcrumbs (logcat-only captures, tooling runs) otherwise reads as broken.
     if (graph.nodes.length === 0) {
-        return `<p class="fm-empty">${esc(t('flowMap.emptyDiagram'))}</p>`;
+        const detail = emptyDetail ? `<p class="fm-empty fm-empty-detail">${esc(emptyDetail)}</p>` : '';
+        return `<p class="fm-empty">${esc(t('flowMap.emptyDiagram'))}</p>${detail}`;
     }
     const hasCrash = graph.nodes.some(nodeHasError);
     const btn = (zoom: string, glyph: string, label: string, extra = '') =>
@@ -249,9 +250,31 @@ export function flowDiagramHtml(graph: FlowGraph, withPopout: boolean): string {
     return '<div class="diagram">' + zoomToolbar + '<div class="diagram-scroll">' + renderSvg(graph) + '</div></div>';
 }
 
+/**
+ * The Flow section's contents: the legend tooltip above the diagram. The legend is suppressed for an
+ * empty graph — a key explaining walked/dashed/fault glyphs reads as broken beside a "no breadcrumbs"
+ * note, since there are no glyphs to decode.
+ */
+function legendAndDiagram(graph: FlowGraph, withPopout: boolean, emptyDetail = ''): string {
+    const legend = graph.nodes.length > 0 ? flowLegend() : '';
+    return legend + flowDiagramHtml(graph, withPopout, emptyDetail);
+}
+
+/**
+ * Second line of the empty state, naming WHICH empty this is. A parser regression and a genuinely
+ * breadcrumb-less log both yield zero nodes, and "instrument your app" is actively misleading advice
+ * for the former — `lastClock` is set only when timestamped lines were scanned, so it separates
+ * "scanned the log, matched nothing" from "recognized nothing at all".
+ */
+function emptyDetailFor(parsed: ParsedLog): string {
+    return parsed.lastClock
+        ? t('flowMap.emptyScanned', parsed.lastClock)
+        : t('flowMap.emptyNoClock');
+}
+
 /** Diagram-only body for the pop-out panel: the legend plus the full-area diagram, no tables/TOC. */
 export function buildFlowDiagramBody(graph: FlowGraph): string {
-    return '<div class="diagram-only">' + flowLegend() + flowDiagramHtml(graph, false) + '</div>';
+    return '<div class="diagram-only">' + legendAndDiagram(graph, false) + '</div>';
 }
 
 /** Screenshot gallery inputs, bundled to keep `buildFlowMapBody` within the 4-parameter limit. */
@@ -275,7 +298,7 @@ export function buildFlowMapBody(
     const screenshots = shots?.screenshots ?? [];
     const hasShots = screenshots.length > 0;
     const diagramCol = '<div class="diagram-col">'
-        + section('sec-flow', titles.flow, flowLegend() + flowDiagramHtml(graph, true))
+        + section('sec-flow', titles.flow, legendAndDiagram(graph, true, emptyDetailFor(parsed)))
         + '</div>';
     const shotsSection = hasShots
         ? section('sec-shots', titles.screenshots, screenshotsSectionHtml(screenshots, shots?.screenshotsOmitted ?? 0))

@@ -107,9 +107,19 @@ function layout(graph: FlowGraph): { placed: Map<string, Placed>; width: number;
         }
         y += rowHeight + ROW_GAP;
     }
-    // Floor at the margins: a zero-node graph otherwise computes a NEGATIVE height, and a negative
-    // viewBox/height is an invalid SVG that browsers silently render as nothing (blank panel).
-    return { placed, width: maxWidth + MARGIN * 2, height: Math.max(y - ROW_GAP + MARGIN, MARGIN * 2) };
+    // Floor BOTH axes at the margins and reject non-finite values: a zero-node graph computes a
+    // NEGATIVE height, and any negative/NaN viewBox dimension is an invalid SVG that browsers
+    // silently render as nothing — a blank panel with no console error to trace it by.
+    return {
+        placed,
+        width: safeDimension(maxWidth + MARGIN * 2, BOX_W),
+        height: safeDimension(y - ROW_GAP + MARGIN, MARGIN * 2),
+    };
+}
+
+/** Clamp a computed canvas dimension to a valid positive number, falling back when non-finite. */
+function safeDimension(value: number, floor: number): number {
+    return Number.isFinite(value) ? Math.max(value, floor) : floor;
 }
 
 /** The table row key a node cross-links to: crash nodes target the crash issue row. */
