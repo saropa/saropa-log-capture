@@ -157,6 +157,7 @@ export const stringsViewerB: Record<string, string> = {
     'viewer.session.toggleHeadings.text': 'Days',
     'viewer.session.toggleReverse.title': 'Reverse sort order',
     'viewer.session.toggleReverse.label': 'Reverse sort order',
+    'viewer.session.toggleReverse.text': 'Reverse',
     'viewer.session.toggleLatest.title': 'Show only latest of each name',
     'viewer.session.toggleLatest.label': 'Show only latest of each name',
     'viewer.session.toggleLatest.text': 'Latest',
