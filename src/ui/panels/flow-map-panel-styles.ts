@@ -208,6 +208,8 @@ export function flowMapStyles(nonce: string): string {
   .fm-e-back-label { fill: var(--accent-info); }
   .fm-e-label { fill: var(--text); stroke: var(--surface-1); }
 
+  .fm-empty { color: var(--muted); font-size: 0.92em; max-width: 46ch; padding: 0.4rem 0 1rem; }
+
   .fm-node { cursor: pointer; }
   .fm-node rect { transition: stroke-width 0.12s ease, filter 0.12s ease; }
   .fm-node:hover rect, .fm-node:focus rect { stroke-width: 3; filter: brightness(1.18); outline: none; }
