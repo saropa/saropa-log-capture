@@ -25,6 +25,7 @@ export interface LoadContentResultLike {
   contentLength: number;
   firstError?: FirstErrorResult;
   firstWarning?: FirstErrorResult;
+  skippedPreLaunchErrors?: number;
 }
 
 export async function loadUnifiedSessionJsonlContent(
@@ -282,12 +283,19 @@ export function postCorrelationByLineIndex(opts: {
 export function getSmartBookmarksFirstErrorAndWarning(
   cfg: ReturnType<typeof getConfig>,
   contentLines: readonly string[],
-): { firstError?: FirstErrorResult; firstWarning?: FirstErrorResult } {
+): { firstError?: FirstErrorResult; firstWarning?: FirstErrorResult; skippedPreLaunchErrors?: number } {
   if (!cfg.smartBookmarks.suggestFirstError && !cfg.smartBookmarks.suggestFirstWarning) { return {}; }
+  // Skip pre-launch device backlog: errors before the first app launch are logcat noise.
+  const startIndices = getRunStartIndices(detectRunBoundaries(contentLines));
   const found = findFirstErrorLines(contentLines, {
     strict: cfg.levelDetection === "strict",
     includeWarning: cfg.smartBookmarks.suggestFirstWarning,
     stderrTreatAsError: cfg.stderrTreatAsError,
+    skipBeforeLine: startIndices[0],
   });
-  return { firstError: found.firstError, firstWarning: found.firstWarning };
+  return {
+    firstError: found.firstError,
+    firstWarning: found.firstWarning,
+    skippedPreLaunchErrors: found.skippedPreLaunchErrors || undefined,
+  };
 }
