@@ -34,7 +34,7 @@ cspell:disable
 
 ### Fixed
 
-- Smart bookmark modal no longer fires on pre-launch device backlog errors (bug_002)
+- Smart bookmark modal no longer fires on pre-launch device backlog errors; skipped pre-launch error count is logged to the output channel (bug_002)
 
 ## [9.3.7]
 

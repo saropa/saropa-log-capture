@@ -66,6 +66,8 @@ export interface TailExternalHooks {
 export interface LoadResultFirstError {
   firstError?: FirstErrorResult;
   firstWarning?: FirstErrorResult;
+  /** Errors in pre-launch device backlog that were skipped by the smart bookmark scanner. */
+  skippedPreLaunchErrors?: number;
 }
 
 type LoadContentResult = LoadContentResultLike & LoadResultFirstError;
@@ -248,6 +250,7 @@ export async function executeLoadContent(
     contentLength: contentLines.length,
     ...(smart.firstError && { firstError: smart.firstError }),
     ...(smart.firstWarning && { firstWarning: smart.firstWarning }),
+    ...(smart.skippedPreLaunchErrors && { skippedPreLaunchErrors: smart.skippedPreLaunchErrors }),
   };
 }
 
