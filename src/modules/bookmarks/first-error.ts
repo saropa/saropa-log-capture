@@ -56,21 +56,41 @@ export interface FirstErrorOptions {
   readonly includeWarning: boolean;
   /** When true, DAP `stderr` category maps to error before text (legacy). Same as `saropaLogCapture.stderrTreatAsError`. */
   readonly stderrTreatAsError: boolean;
+  /** Skip lines before this 0-based index (e.g. first app launch line). */
+  readonly skipBeforeLine?: number;
 }
 
 /**
  * Scan content lines and return the first error (and optionally first warning).
  * Line indices are 0-based content line indices (after header).
  */
+export interface FindFirstErrorResult {
+  readonly firstError?: FirstErrorResult;
+  readonly firstWarning?: FirstErrorResult;
+  /** Number of error-level lines skipped before skipBeforeLine. */
+  readonly skippedPreLaunchErrors: number;
+}
+
 export function findFirstErrorLines(
   contentLines: readonly string[],
   options: FirstErrorOptions,
-): { firstError?: FirstErrorResult; firstWarning?: FirstErrorResult } {
+): FindFirstErrorResult {
   let firstError: FirstErrorResult | undefined;
   let firstWarning: FirstErrorResult | undefined;
+  let skippedPreLaunchErrors = 0;
   const strict = options.strict;
 
-  for (let i = 0; i < contentLines.length; i++) {
+  const start = options.skipBeforeLine && options.skipBeforeLine > 0 ? options.skipBeforeLine : 0;
+
+  // Count errors in the skipped pre-launch region.
+  for (let i = 0; i < start; i++) {
+    const { category, plainText } = extractCategoryAndPlain(contentLines[i]);
+    if (classifyLevel(plainText, category, strict, options.stderrTreatAsError) === 'error') {
+      skippedPreLaunchErrors++;
+    }
+  }
+
+  for (let i = start; i < contentLines.length; i++) {
     const raw = contentLines[i];
     const { category, plainText } = extractCategoryAndPlain(raw);
     const level: SeverityLevel = classifyLevel(plainText, category, strict, options.stderrTreatAsError);
@@ -80,7 +100,7 @@ export function findFirstErrorLines(
     if (level === 'error' && !firstError) {
       firstError = { lineIndex: i, snippet: displaySnippet, lineText: trimmed, level: 'error' };
       if (!options.includeWarning) {
-        return { firstError, firstWarning };
+        return { firstError, firstWarning, skippedPreLaunchErrors };
       }
     }
     if (level === 'warning' && !firstWarning) {
@@ -91,5 +111,5 @@ export function findFirstErrorLines(
     }
   }
 
-  return { firstError, firstWarning };
+  return { firstError, firstWarning, skippedPreLaunchErrors };
 }
