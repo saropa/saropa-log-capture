@@ -51,11 +51,13 @@ export function getSessionMessageListenerScript(): string {
         if (e.data.type === 'sessionDisplayOptions') {
             var opts = e.data.options || sessionDisplayOptions;
             sessionDisplayOptions = opts.dateRange !== undefined ? opts : Object.assign({}, opts, { dateRange: 'all' });
-            /* Restore persisted collapsed-day state from options. */
+            /* Restore persisted collapsed-day state. Both true (collapsed) and false
+               (explicitly expanded) are meaningful — renderDayGroup defaults non-today
+               days to collapsed, so a false entry overrides that default. */
             if (opts.collapsedDays) {
                 collapsedDays = Object.create(null);
                 for (var dk in opts.collapsedDays) {
-                    if (opts.collapsedDays[dk]) collapsedDays[dk] = true;
+                    collapsedDays[dk] = !!opts.collapsedDays[dk];
                 }
             }
             /* Restore persisted collapsed-group state from options. */

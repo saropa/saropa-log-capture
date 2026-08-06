@@ -25,6 +25,17 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- Logs panel: older day groups now collapse by default — only today's group starts expanded; clicking a heading still toggles, and explicit expand/collapse persists across reloads (plan 001 part A)
+- Logs panel: non-latest, non-active rows now show a single neutral line-count pill instead of the full severity breakdown — click the pill to expand inline; a "Collapse counts" toggle in Display options controls the behavior (plan 001 part B)
+
+### Fixed
+
+- Smart bookmark modal no longer fires on pre-launch device backlog errors (bug_002)
+
 ## [9.3.7]
 
 Flutter profile mode now captures screenshots on crash, alongside inline log image references, on-demand capture tools, diagnostic self-tests, and smart flow map breadcrumb suggestions. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.7/CHANGELOG.md)
