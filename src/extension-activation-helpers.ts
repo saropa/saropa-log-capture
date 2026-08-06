@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { t } from './l10n';
 import { getConfig } from './modules/config/config';
+import { logExtensionInfo } from './modules/misc/extension-logger';
 import { BookmarkStore } from './modules/storage/bookmark-store';
 import type { LoadResultFirstError } from './ui/provider/log-viewer-provider-load';
 import type { FirstErrorResult } from './modules/bookmarks/first-error';
@@ -50,6 +51,9 @@ export async function maybeSuggestSmartBookmark(
     viewer: SmartBookmarkViewer,
 ): Promise<void> {
     if (!loadResult) { return; }
+    if (loadResult.skippedPreLaunchErrors) {
+        logExtensionInfo('smartBookmark', `${loadResult.skippedPreLaunchErrors} pre-launch error(s) skipped`);
+    }
     const candidate = pickCandidate(loadResult);
     if (!candidate) { return; }
     const uriStr = uri.toString();
