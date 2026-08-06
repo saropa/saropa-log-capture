@@ -173,7 +173,7 @@ export function getSessionRenderingScript(): string {
         var displayInput = (bnCounts && bnCounts[bn] > 1) ? rawName : bn;
         var fileTime = sessionDisplayOptions.normalizeNames ? extractFilenameTime(bn) : null;
         var name = applySessionDisplayOptions(displayInput);
-        var dots = renderSeverityDots(s);
+        var dots = shouldCollapseCounts(s) ? renderCollapsedCount(s) : renderSeverityDots(s);
         var meta = buildSessionMeta(s, fileTime);
         var perfBadge = s.hasPerformanceData ? '<span class="session-item-perf" title="' + vt('viewer.session.perfAvailable') + '"><span class="codicon codicon-graph-line"></span></span>' : '';
         /* Loaded-via-picker rows sit under their LOAD day, not the file's mtime — this badge
