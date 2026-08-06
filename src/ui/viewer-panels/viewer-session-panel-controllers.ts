@@ -151,7 +151,10 @@ export function getControllerGroupingScript(): string {
     /** Replaces the old reports-bucket renderDayGroup: wraps one day's controller list in the
      *  collapsible day-heading chrome. */
     function renderDayGroup(dateKey, dayRecords, bnCounts) {
-        var collapsed = !!collapsedDays[dateKey];
+        /* Default: non-today days collapsed, today expanded. An explicit entry in
+           collapsedDays (true = collapsed, false = expanded) overrides the default. */
+        var today = toDateKey(Date.now());
+        var collapsed = dateKey in collapsedDays ? collapsedDays[dateKey] : dateKey !== today;
         var cls = 'session-day-group' + (collapsed ? ' collapsed' : '');
         return '<div class="' + cls + '" data-day-key="' + escapeAttr(dateKey) + '">'
             + renderDayHeading(dateKey, collapsed, dayRecords.length)

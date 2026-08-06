@@ -116,7 +116,8 @@ export function getSessionPanelHtml(): string {
             ${renderOptionToggle('session-toggle-normalize', 'edit', 'toggleNormalize')}
             ${renderOptionToggle('session-toggle-headings', 'list-tree', 'toggleHeadings')}
             ${renderOptionToggle('session-toggle-reverse', 'sort-precedence', 'toggleReverse')}
-            ${renderOptionToggle('session-toggle-latest', 'pinned', 'toggleLatest')}`)}
+            ${renderOptionToggle('session-toggle-latest', 'pinned', 'toggleLatest')}
+            ${renderOptionToggle('session-toggle-collapse-counts', 'list-flat', 'toggleCollapseCounts')}`)}
         <hr class="session-options-sep" />
         ${renderOptionsSubmenu('list-unordered', 'viewer.session.group.actions', `
             <button id="session-export-list" type="button" class="session-options-action" role="menuitem" title="${t('viewer.session.exportList.title')}" aria-label="${t('viewer.session.exportList.label')}">

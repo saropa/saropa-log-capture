@@ -37,7 +37,7 @@ export function getSessionPanelScript(): string {
            toggle. Must match defaultDisplayOptions on the host so the first paint — before the
            setSessionDisplayOptions round-trip — already matches the persisted state. */
         reverseSort: false, showLatestOnly: false, panelWidth: 0, dateRange: 'all',
-        newerLogBannerEnabled: true, newerLogDotEnabled: true,
+        newerLogBannerEnabled: true, newerLogDotEnabled: true, collapseSeverityCounts: true,
     };
     /* Match the CSS .session-panel min-width (viewer-styles-session-panel.ts).
        Earlier the CSS dropped to 420 but this JS gate stayed at 560, so the
