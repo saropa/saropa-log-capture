@@ -77,5 +77,51 @@ suite('FirstError', () => {
       assert.ok(result.firstError);
       assert.strictEqual(result.firstError!.lineIndex, 1);
     });
+
+    test('skips errors before skipBeforeLine and counts them', () => {
+      const lines = [
+        '[12:00:00] [stderr] E/AndroidRuntime: FATAL EXCEPTION',
+        '[12:00:01] [stderr] E/AndroidRuntime: PID: 24445',
+        '[12:00:02] [stdout] Launching lib/main.dart in debug mode',
+        '[12:00:03] [stdout] Error: real app error',
+      ];
+      const result = findFirstErrorLines(lines, {
+        strict: false, includeWarning: false, stderrTreatAsError: true, skipBeforeLine: 2,
+      });
+      assert.ok(result.firstError);
+      assert.strictEqual(result.firstError!.lineIndex, 3);
+      assert.strictEqual(result.skippedPreLaunchErrors, 2);
+    });
+
+    test('returns errors from line 0 when skipBeforeLine is 0 or undefined', () => {
+      const lines = [
+        '[12:00:00] [stdout] Error: early error',
+        '[12:00:01] [stdout] Normal line',
+      ];
+      const noSkip = findFirstErrorLines(lines, {
+        strict: false, includeWarning: false, stderrTreatAsError: false,
+      });
+      assert.ok(noSkip.firstError);
+      assert.strictEqual(noSkip.firstError!.lineIndex, 0);
+      assert.strictEqual(noSkip.skippedPreLaunchErrors, 0);
+      const skipZero = findFirstErrorLines(lines, {
+        strict: false, includeWarning: false, stderrTreatAsError: false, skipBeforeLine: 0,
+      });
+      assert.ok(skipZero.firstError);
+      assert.strictEqual(skipZero.firstError!.lineIndex, 0);
+      assert.strictEqual(skipZero.skippedPreLaunchErrors, 0);
+    });
+
+    test('returns empty when all errors are before skipBeforeLine', () => {
+      const lines = [
+        '[12:00:00] [stderr] E/AndroidRuntime: FATAL EXCEPTION',
+        '[12:00:01] [stdout] Normal after launch',
+      ];
+      const result = findFirstErrorLines(lines, {
+        strict: false, includeWarning: false, stderrTreatAsError: true, skipBeforeLine: 1,
+      });
+      assert.ok(!result.firstError);
+      assert.strictEqual(result.skippedPreLaunchErrors, 1);
+    });
   });
 });
