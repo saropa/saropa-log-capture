@@ -58,6 +58,9 @@ export interface SessionDisplayOptions {
     /** Per-row blue unread dot. Seeded from `saropaLogCapture.newerLogDot`.
      *  Default true. */
     readonly newerLogDotEnabled?: boolean;
+    /** Collapse severity count pills on non-latest, non-active rows to a single
+     *  neutral total-line-count pill. Default true. */
+    readonly collapseSeverityCounts?: boolean;
 }
 
 /** Default display options. */
@@ -76,6 +79,7 @@ export const defaultDisplayOptions: SessionDisplayOptions = {
     reportsBucketState: 'collapsed',
     newerLogBannerEnabled: true,
     newerLogDotEnabled: true,
+    collapseSeverityCounts: true,
 };
 
 const shortMonths = [

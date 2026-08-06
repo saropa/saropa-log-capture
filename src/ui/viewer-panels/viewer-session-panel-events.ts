@@ -15,6 +15,7 @@ export function getSessionPanelEventsScript(): string {
             'session-toggle-headings': sessionDisplayOptions.showDayHeadings,
             'session-toggle-reverse': sessionDisplayOptions.reverseSort,
             'session-toggle-latest': sessionDisplayOptions.showLatestOnly,
+            'session-toggle-collapse-counts': sessionDisplayOptions.collapseSeverityCounts,
         };
         for (var id in ids) {
             var el = document.getElementById(id);
@@ -61,6 +62,7 @@ export function getSessionPanelEventsScript(): string {
     bindToggle('session-toggle-headings', 'showDayHeadings');
     bindToggle('session-toggle-reverse', 'reverseSort');
     bindToggle('session-toggle-latest', 'showLatestOnly');
+    bindToggle('session-toggle-collapse-counts', 'collapseSeverityCounts');
 
     /* Filter dropdowns (date range, minimum size) share one binding: clone the options, write the
        selected value under the given key, reset to page 0, persist, and re-render. Cloning keeps the
@@ -90,6 +92,16 @@ export function getSessionPanelEventsScript(): string {
     });
 
     if (sessionListEl) {
+        /* Collapsed severity pills: click toggles between the single total pill and the
+           full breakdown. Webview-local state — re-rendering the list resets all to collapsed. */
+        sessionListEl.addEventListener('click', function(e) {
+            var pill = e.target.closest('.sev-dots-collapsed');
+            if (!pill) return;
+            e.preventDefault();
+            e.stopPropagation();
+            pill.classList.add('sev-dots-expanded');
+            pill.classList.remove('sev-dots-collapsed');
+        }, true);
         /* Session-group chevron collapse/expand: check before the day-heading handler because
            group chevrons live inside session rows which themselves live inside day-group blocks.
            Without this guard the event would fall through to the row-open path. */
@@ -125,9 +137,11 @@ export function getSessionPanelEventsScript(): string {
                 if (!group) return;
                 var key = group.getAttribute('data-day-key');
                 if (!key) return;
-                collapsedDays[key] = !collapsedDays[key];
-                /* Remove falsy entries to keep the persisted object small. */
-                if (!collapsedDays[key]) delete collapsedDays[key];
+                /* Read the current visual state from the DOM and flip it. Both true
+                   (collapsed) and false (expanded) persist so renderDayGroup's
+                   default-collapsed-unless-today logic can distinguish "never touched"
+                   from "user explicitly expanded". */
+                collapsedDays[key] = !group.classList.contains('collapsed');
                 group.classList.toggle('collapsed', !!collapsedDays[key]);
                 var chevron = heading.querySelector('.session-day-chevron');
                 if (chevron) {
