@@ -1,6 +1,6 @@
 # Plan 001 — Session List Readability and Discoverability
 
-## Status: Open
+## Status: Fixed (pending review)
 
 ## Problem
 
