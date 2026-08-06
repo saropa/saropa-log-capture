@@ -128,6 +128,23 @@ function sevPair(cls, letter, title, n) {
         + '<span class="sev-count sev-count-' + cls + '">'
         + '<span class="sev-count-letter">' + letter + '</span>' + groupThousands(n) + '</span></span>';
 }
+/** True when the row should show a single collapsed total pill instead of the full breakdown. */
+function shouldCollapseCounts(s) {
+    return sessionDisplayOptions.collapseSeverityCounts && !s.isLatestOfName && !s.isActive;
+}
+/** Single neutral pill showing the total line count. Clicking expands to the full breakdown
+ *  (handled by the .sev-dots-collapsed click listener in the events script). Both the collapsed
+ *  and expanded markup are present; CSS hides one based on the .sev-dots-collapsed class. */
+function renderCollapsedCount(s) {
+    var total = s.lineCount || 0;
+    var full = renderSeverityDots(s);
+    return '<span class="sev-dots sev-dots-collapsed">'
+        + '<span class="sev-collapsed-total">'
+        + '<span class="sev-count sev-count-other">' + groupThousands(total) + '</span>'
+        + '</span>'
+        + '<span class="sev-expanded-full">' + full + '</span>'
+        + '</span>';
+}
 function renderSeverityDots(s) {
     var parts = [];
     // Prefix letters mirror the toolbar level glyphs (E/W/I/P/T/N/D/DB); framework and the

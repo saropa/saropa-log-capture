@@ -300,5 +300,14 @@ export function getSessionListStyles(): string {
 .sev-count-fw       { background: var(--sev-fw);          color: var(--sev-fw-fg); }
 /* Residual "other" bucket has no semantic color — keep it the neutral theme badge pair. */
 .sev-count-other    { background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); }
+
+/* --- Collapsed severity pills (plan 001) ---
+ * Non-latest, non-active rows show a single neutral total pill. Clicking swaps
+ * the class from .sev-dots-collapsed to .sev-dots-expanded, revealing the full
+ * breakdown inline. Both the collapsed total and the full breakdown are in the
+ * DOM; visibility is toggled via CSS so the row height stays stable. */
+.sev-dots-collapsed .sev-expanded-full { display: none; }
+.sev-dots-collapsed .sev-collapsed-total { cursor: pointer; }
+.sev-dots-expanded .sev-collapsed-total { display: none; }
 `;
 }
