@@ -97,6 +97,12 @@ Added an optional `skipBeforeLine` field to `FirstErrorOptions`. When set, `find
 
 A "First error" button in the trouble chart header provides a non-modal alternative to the smart bookmark. The button appears only when trouble mode is active and a post-app-start error exists. Clicking it scrolls the feed to that error via `scrollToLineNumber`. The button reuses the existing `troubleChartLaunchTs()` boundary so the chart's app-start and the button's app-start can never disagree.
 
+### `troubleMode.openOnLoad` setting
+
+A new `saropaLogCapture.troubleMode.openOnLoad` boolean setting (default false) auto-activates Trouble Mode when any log opens in the viewer. When enabled, the smart bookmark modal is suppressed — Trouble Mode already surfaces all errors and warnings in the feed, making the modal redundant for users whose default workflow is Trouble Mode.
+
+The webview receives an `activateTroubleMode` message (idempotent — only turns ON, never toggles off) after each file load. The host does not need to know the webview's current trouble mode state.
+
 ### Files changed
 
 | File | Change |
@@ -105,16 +111,24 @@ A "First error" button in the trouble chart header provides a non-modal alternat
 | `src/ui/provider/log-viewer-provider-load-helpers.ts` | `getSmartBookmarksFirstErrorAndWarning` detects first launch boundary; returns skipped count |
 | `src/ui/provider/log-viewer-provider-load.ts` | `LoadResultFirstError` carries `skippedPreLaunchErrors` |
 | `src/extension-activation-helpers.ts` | Logs skipped pre-launch error count to output channel |
+| `src/extension-activation-handlers.ts` | Sends `activateTroubleMode` on load when setting is on; suppresses smart bookmark modal |
 | `src/test/modules/bookmarks/first-error.test.ts` | 3 regression tests with `skippedPreLaunchErrors` assertions |
-| `src/ui/viewer-search-filter/viewer-trouble-chart.ts` | `findFirstErrorLineAfterLaunch`, `syncJumpFirstErrorButton`, button click handler |
+| `src/ui/viewer-search-filter/viewer-trouble-chart.ts` | `findFirstErrorLineAfterLaunch`, `syncJumpFirstErrorButton`, button click handler, O(1) cache |
+| `src/ui/viewer-search-filter/viewer-trouble-mode.ts` | Added `activateTroubleMode()` (idempotent ON-only function) |
+| `src/ui/viewer/viewer-script-messages.ts` | `activateTroubleMode` message handler |
 | `src/ui/viewer-styles/viewer-styles-trouble-chart.ts` | `.tc-jump-btn` styles |
 | `src/ui/provider/viewer-content-body.ts` | Button HTML in trouble chart header |
-| `src/l10n/strings-webview.ts` | 3 l10n keys for button label, title, and empty state |
+| `src/l10n/strings-webview.ts` | 2 l10n keys for button label and title |
+| `src/modules/config/config-types.ts` | Added `troubleModeOpenOnLoad` to `SaropaLogCaptureConfig` |
+| `src/modules/config/config.ts` | Reads `troubleMode.openOnLoad` setting |
+| `package.json` | Setting definition for `troubleMode.openOnLoad` |
+| `package.nls*.json` (11 files) | NLS keys for setting title and description |
+| `plans/reference/webview-outbound-message-types.md` | Regenerated (new `activateTroubleMode` message) |
 | `CHANGELOG.md` | `[Unreleased]` entries |
 
 ### Verification
 
 - `npm run compile`: all 12 gates pass
 - `npm run test:file -- out/test/modules/bookmarks/first-error.test.js`: 9/9 pass
-- `npm run test:file -- out/test/ui/viewer-trouble-chart.test.js`: 16/16 pass
 - Needs F5 manual verification with a log containing pre-launch logcat errors
+- Needs F5 manual verification of `troubleMode.openOnLoad` setting (set to true, open a log, verify Trouble Mode activates and no smart bookmark modal appears)

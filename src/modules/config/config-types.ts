@@ -145,6 +145,8 @@ export interface SaropaLogCaptureConfig {
   readonly logLineHeight: number;
   /** Tumbling-window width in seconds for the Trouble Mode severity chart (1–60, default 5). */
   readonly troubleModeChartInterval: number;
+  /** When true, Trouble Mode activates automatically on load and the smart bookmark modal is suppressed. */
+  readonly troubleModeOpenOnLoad: boolean;
   /**
    * When true, the log viewer adds extra vertical gaps between some line kinds (markers, level changes).
    * Syncs with the V shortcut and Options panel; default off for IDE-like density.
