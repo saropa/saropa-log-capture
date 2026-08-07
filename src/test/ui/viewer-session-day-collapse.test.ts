@@ -217,6 +217,109 @@ suite('Collapsible day groups', () => {
         assert.strictEqual(gt(1000), '1,000', 'separator at the thousand boundary');
     });
 
+    test('should default non-today day groups to collapsed', () => {
+        const { elements } = bootWithSessions(twoDaySessions);
+        const html = String(elements.get('session-list')?.innerHTML ?? '');
+        /* Two day groups: today (expanded) and yesterday (collapsed by default). */
+        const groups = html.match(/<div class="session-day-group[^"]*"[^>]*data-day-key="([^"]+)"/g) || [];
+        assert.strictEqual(groups.length, 2, 'Should have two day groups');
+        /* Today's group should NOT have the collapsed class. */
+        const todayKey = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+        const todayGroup = html.match(new RegExp('class="session-day-group([^"]*)"[^>]*data-day-key="' + todayKey + '"'));
+        assert.ok(todayGroup, 'Today group should exist');
+        assert.ok(!todayGroup![1].includes('collapsed'), 'Today group should be expanded');
+        /* Yesterday's group should have the collapsed class. */
+        const yKey = yesterday.getFullYear() + '-' + String(yesterday.getMonth() + 1).padStart(2, '0') + '-' + String(yesterday.getDate()).padStart(2, '0');
+        const yGroup = html.match(new RegExp('class="session-day-group([^"]*)"[^>]*data-day-key="' + yKey + '"'));
+        assert.ok(yGroup, 'Yesterday group should exist');
+        assert.ok(yGroup![1].includes('collapsed'), 'Yesterday group should be collapsed by default');
+    });
+
+    test('should respect explicit false in collapsedDays (user expanded)', () => {
+        const yKey = yesterday.getFullYear() + '-' + String(yesterday.getMonth() + 1).padStart(2, '0') + '-' + String(yesterday.getDate()).padStart(2, '0');
+        const { sandbox: _sb, elements, messageHandlers } = buildSandbox();
+        bootPanel(_sb);
+        for (const handler of messageHandlers) {
+            handler({
+                data: {
+                    type: 'sessionDisplayOptions',
+                    options: {
+                        stripDatetime: true, normalizeNames: true,
+                        showDayHeadings: true, reverseSort: false,
+                        showLatestOnly: false, dateRange: 'all',
+                        collapsedDays: { [yKey]: false },
+                    },
+                },
+            });
+        }
+        for (const handler of messageHandlers) {
+            handler({ data: { type: 'sessionList', sessions: twoDaySessions } });
+        }
+        const html = String(elements.get('session-list')?.innerHTML ?? '');
+        const yGroup = html.match(new RegExp('class="session-day-group([^"]*)"[^>]*data-day-key="' + yKey + '"'));
+        assert.ok(yGroup, 'Yesterday group should exist');
+        assert.ok(!yGroup![1].includes('collapsed'), 'Yesterday should be expanded when collapsedDays has false');
+    });
+
+    test('collapsed severity pills: non-latest rows show collapsed count', () => {
+        const sessions = [
+            { uriString: 'file:///a1.log', filename: 'app.log', displayName: 'app.log', mtime: today.getTime(), trashed: false, lineCount: 500, errorCount: 10, warningCount: 20 },
+            { uriString: 'file:///a2.log', filename: 'app.log', displayName: 'app.log', mtime: today.getTime() - 60000, trashed: false, lineCount: 300, errorCount: 5, warningCount: 8 },
+        ];
+        const { elements } = bootWithSessions(sessions);
+        const html = String(elements.get('session-list')?.innerHTML ?? '');
+        assert.ok(html.includes('sev-dots-collapsed'), 'Non-latest row should have collapsed pill');
+        assert.ok(html.includes('sev-collapsed-total'), 'Collapsed pill should show total count element');
+    });
+
+    test('collapsed severity pills: latest row shows full breakdown', () => {
+        const sessions = [
+            { uriString: 'file:///a1.log', filename: 'app.log', displayName: 'app.log', mtime: today.getTime(), trashed: false, lineCount: 500, errorCount: 10, warningCount: 20, isLatestOfName: true },
+        ];
+        const { elements } = bootWithSessions(sessions);
+        const html = String(elements.get('session-list')?.innerHTML ?? '');
+        assert.ok(html.includes('sev-count-error'), 'Latest row should show full error pill');
+        assert.ok(html.includes('sev-count-warning'), 'Latest row should show full warning pill');
+        assert.ok(!html.includes('sev-dots-collapsed'), 'Latest row should not be collapsed');
+    });
+
+    test('collapsed severity pills: active row shows full breakdown', () => {
+        const sessions = [
+            { uriString: 'file:///a1.log', filename: 'active.log', displayName: 'active.log', mtime: today.getTime(), trashed: false, lineCount: 100, errorCount: 3, isActive: true },
+        ];
+        const { elements } = bootWithSessions(sessions);
+        const html = String(elements.get('session-list')?.innerHTML ?? '');
+        assert.ok(html.includes('sev-count-error'), 'Active row should show full error pill');
+        assert.ok(!html.includes('sev-dots-collapsed'), 'Active row should not be collapsed');
+    });
+
+    test('collapsed severity pills: toggle off shows full breakdown for all', () => {
+        const sessions = [
+            { uriString: 'file:///a1.log', filename: 'app.log', displayName: 'app.log', mtime: today.getTime(), trashed: false, lineCount: 500, errorCount: 10 },
+            { uriString: 'file:///a2.log', filename: 'app.log', displayName: 'app.log', mtime: today.getTime() - 60000, trashed: false, lineCount: 300, errorCount: 5 },
+        ];
+        const { sandbox: _sb, elements, messageHandlers } = buildSandbox();
+        bootPanel(_sb);
+        for (const handler of messageHandlers) {
+            handler({
+                data: {
+                    type: 'sessionDisplayOptions',
+                    options: {
+                        stripDatetime: true, normalizeNames: true,
+                        showDayHeadings: true, reverseSort: false,
+                        showLatestOnly: false, dateRange: 'all',
+                        collapseSeverityCounts: false,
+                    },
+                },
+            });
+        }
+        for (const handler of messageHandlers) {
+            handler({ data: { type: 'sessionList', sessions } });
+        }
+        const html = String(elements.get('session-list')?.innerHTML ?? '');
+        assert.ok(!html.includes('sev-dots-collapsed'), 'No collapsed pills when toggle is off');
+    });
+
     test('should not show file count when day headings are off', () => {
         const { sandbox: _sb, elements, messageHandlers } = buildSandbox();
         bootPanel(_sb);
