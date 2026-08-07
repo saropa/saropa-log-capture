@@ -159,6 +159,15 @@ export function getConfig(): SaropaLogCaptureConfig {
     /* Trouble Mode chart window; 1–60s matches the setting min/max and the webview
        setTroubleChartInterval() guard. Default 5s. */
     troubleModeChartInterval: clamp(cfg.get("troubleMode.chartInterval"), 1, 60, 5),
+    troubleModeLevels: (() => {
+      const v = cfg.get("troubleMode.levels");
+      const valid = ["error", "warning", "performance", "database", "todo", "debug", "notice"];
+      if (Array.isArray(v) && v.length > 0) {
+        const filtered = v.filter((s): s is string => typeof s === "string" && valid.includes(s));
+        if (filtered.length > 0) { return filtered; }
+      }
+      return ["error", "warning", "performance"];
+    })(),
     troubleModeOpenOnLoad: ensureBoolean(cfg.get("troubleMode.openOnLoad"), false),
     logViewerVisualSpacing: ensureBoolean(cfg.get("logViewerVisualSpacing"), false),
     /* Default ON: when this rendered as off, preview-collapsed stack frames left a

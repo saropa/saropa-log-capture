@@ -108,6 +108,14 @@ export function wireViewerSpecificHandlers(deps: ViewerHandlerDeps): { refreshLo
         void refreshLogContext();
         const cfg = getConfig();
         const isActive = historyProvider.getActiveUri()?.toString() === uri.toString();
+        const defaultLevels = ["error", "warning", "performance"];
+        const levelsChanged = cfg.troubleModeLevels.length !== defaultLevels.length
+            || cfg.troubleModeLevels.some((l, i) => l !== defaultLevels[i]);
+        if (levelsChanged) {
+            broadcaster.postToWebview({ type: 'setTroubleLevels', levels: cfg.troubleModeLevels });
+        }
+        /* Safe to send here: the webview scripts initialize before the first content
+           message, so activateTroubleMode is always defined by the time this fires. */
         if (cfg.troubleModeOpenOnLoad) {
             broadcaster.postToWebview({ type: 'activateTroubleMode' });
         }

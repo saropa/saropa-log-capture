@@ -145,6 +145,8 @@ export interface SaropaLogCaptureConfig {
   readonly logLineHeight: number;
   /** Tumbling-window width in seconds for the Trouble Mode severity chart (1–60, default 5). */
   readonly troubleModeChartInterval: number;
+  /** Severity levels that survive the Trouble Mode filter (default: error, warning, performance). */
+  readonly troubleModeLevels: readonly string[];
   /** When true, Trouble Mode activates automatically on load and the smart bookmark modal is suppressed. */
   readonly troubleModeOpenOnLoad: boolean;
   /**

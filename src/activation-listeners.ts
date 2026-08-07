@@ -138,6 +138,9 @@ export function setupConfigListener(
         if (e.affectsConfiguration('saropaLogCapture.troubleMode.chartInterval')) {
             broadcaster.setTroubleChartInterval(cfg.troubleModeChartInterval);
         }
+        if (e.affectsConfiguration('saropaLogCapture.troubleMode.levels')) {
+            broadcaster.postToWebview({ type: 'setTroubleLevels', levels: cfg.troubleModeLevels });
+        }
         if (e.affectsConfiguration('saropaLogCapture.logViewerVisualSpacing')) {
             broadcaster.setLogViewerVisualSpacing(cfg.logViewerVisualSpacing);
         }
