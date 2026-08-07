@@ -6,9 +6,16 @@
  */
 
 import type { FlowEdge, FlowGraph, FlowNode } from './flow-map-model';
+import type { FlowShot } from './flow-map-screenshots';
 import { formatDwellMs, kindIcon, nodeDisplayLines, nodeHasError } from './flow-map-format';
+import { groupShotsByScreen, THUMB_BLOCK_H, thumbMarkup, type ShotsByScreen } from './flow-map-svg-shots';
 
-const BOX_W = 236;
+/**
+ * Portrait card width. Nodes are storyboard cards (tall, phone-shaped) rather than the original 236px
+ * landscape boxes so a captured screenshot can sit ON the node at a recognizable size; the narrower
+ * card also lets more sibling screens share a row before the diagram runs wide.
+ */
+const BOX_W = 168;
 const LINE_H = 17;
 const PAD_Y = 13;
 const ROW_GAP = 54;
@@ -44,12 +51,12 @@ function esc(s: string): string {
 }
 
 /**
- * Truncate a node line so it fits the box width. Per-role budget: the bold 13.5px title fits ~29
- * chars in the 236px box; the 11.5px detail lines fit ~34 — a flat 30 both overflowed titles and
- * needlessly cut detail lines.
+ * Truncate a node line so it fits the box width. Per-role budget: the bold 13.5px title fits ~20
+ * chars in the 168px portrait card; the 11.5px detail lines fit ~24 — a flat budget both overflowed
+ * titles and needlessly cut detail lines. Both shrank with the card (was 29/34 at 236px wide).
  */
 function clip(line: string, isTitle: boolean): string {
-    const max = isTitle ? 29 : 34;
+    const max = isTitle ? 20 : 24;
     return line.length > max ? line.slice(0, max - 1) + '…' : line;
 }
 
@@ -71,7 +78,30 @@ function computeDepths(graph: FlowGraph): Map<string, number> {
     return depth;
 }
 
-interface Placed { readonly node: FlowNode; readonly lines: string[]; x: number; y: number; readonly w: number; readonly h: number; }
+interface Placed {
+    readonly node: FlowNode;
+    readonly lines: string[];
+    x: number;
+    y: number;
+    readonly w: number;
+    readonly h: number;
+    /** Captures taken on this screen, first one drawn as the card's thumbnail. Empty when none. */
+    readonly shots: readonly FlowShot[];
+}
+
+/** Measure and pre-format one row's nodes: display lines, thumbnail reservation, box height. */
+function buildRow(row: readonly FlowNode[], shots: ShotsByScreen): Placed[] {
+    return row.map(node => {
+        const raw = nodeDisplayLines(node, false);
+        raw[0] = `${kindIcon(node)} ${raw[0]}`;
+        const lines = raw.map((line, i) => clip(line, i === 0));
+        const own = shots.get(node.key) ?? [];
+        // A card with no capture keeps its old short height rather than reserving an empty frame —
+        // a column of tall blanks would cost vertical space to say nothing.
+        const thumb = own.length > 0 ? THUMB_BLOCK_H : 0;
+        return { node, lines, x: 0, y: 0, w: BOX_W, h: thumb + PAD_Y * 2 + lines.length * LINE_H, shots: own };
+    });
+}
 
 /** Group nodes into rows by depth, preserving insertion order within a row. */
 function rowsByDepth(graph: FlowGraph, depth: Map<string, number>): FlowNode[][] {
@@ -84,14 +114,9 @@ function rowsByDepth(graph: FlowGraph, depth: Map<string, number>): FlowNode[][]
 }
 
 /** Position every node; returns placements + the overall canvas size. */
-function layout(graph: FlowGraph): { placed: Map<string, Placed>; width: number; height: number } {
+function layout(graph: FlowGraph, shots: ShotsByScreen): { placed: Map<string, Placed>; width: number; height: number } {
     const rows = rowsByDepth(graph, computeDepths(graph));
-    const built = rows.map(row => row.map(node => {
-        const raw = nodeDisplayLines(node, false);
-        raw[0] = `${kindIcon(node)} ${raw[0]}`;
-        const lines = raw.map((line, i) => clip(line, i === 0));
-        return { node, lines, x: 0, y: 0, w: BOX_W, h: PAD_Y * 2 + lines.length * LINE_H };
-    }));
+    const built = rows.map(row => buildRow(row, shots));
     const maxWidth = Math.max(...built.map(r => r.length * BOX_W + (r.length - 1) * COL_GAP), BOX_W);
     const placed = new Map<string, Placed>();
     let y = MARGIN;
@@ -157,6 +182,9 @@ function renderNode(p: Placed): string {
     const pal = paletteOf(p.node);
     const dash = pal.dashed ? ' stroke-dasharray="4 3"' : '';
     const cx = p.x + p.w / 2;
+    // Text starts below the thumbnail when the screen was captured; `<text y>` is the anchor the
+    // per-line dy offsets accumulate from, so shifting it moves the whole stack in one place.
+    const textTop = p.y + (p.shots.length > 0 ? THUMB_BLOCK_H : 0);
     const tspans = p.lines.map((line, i) => {
         const isTitle = i === 0;
         const weight = isTitle ? ' font-weight="700"' : '';
@@ -170,7 +198,8 @@ function renderNode(p: Placed): string {
     return `<g class="${cls}" data-rowkey="${esc(rowKeyOf(p.node))}"${logAttr}${detailAttr(p.node)} tabindex="0" role="button">`
         + `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="7" `
         + `stroke-width="1.5"${dash}/>`
-        + `<text x="${cx}" y="${p.y}" text-anchor="middle" `
+        + thumbMarkup(p.x, p.y, p.shots)
+        + `<text x="${cx}" y="${textTop}" text-anchor="middle" `
         + `font-family="var(--vscode-font-family)">${tspans}</text>${visitBadge(p)}</g>`;
 }
 
@@ -243,9 +272,12 @@ function renderEdge(edge: FlowEdge, placed: Map<string, Placed>, backIndex: numb
         + `stroke-width="3">${esc(label)}</text>`;
 }
 
-/** Render the whole graph as an `<svg>` element string. */
-export function renderSvg(graph: FlowGraph): string {
-    const { placed, width, height } = layout(graph);
+/**
+ * Render the whole graph as an `<svg>` element string. `shots` (optional) are the session's captures:
+ * each screen's first one is drawn as its card's thumbnail, with a count pill when it has several.
+ */
+export function renderSvg(graph: FlowGraph, shots: readonly FlowShot[] = []): string {
+    const { placed, width, height } = layout(graph, groupShotsByScreen(shots));
     // Reserve room on the right for the WIDEST back-edge bulge so no staggered curve gets clipped.
     const backCount = graph.edges.filter(e => e.back).length;
     const canvasW = backCount > 0 ? width + BACK_BULGE + (backCount - 1) * BACK_STAGGER + 10 : width;

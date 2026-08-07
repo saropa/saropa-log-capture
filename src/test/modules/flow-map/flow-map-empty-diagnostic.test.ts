@@ -144,16 +144,16 @@ suite('FlowMap empty-state breadcrumb diagnostic', () => {
         const emptyGraph = buildGraph(parseLog(['=== SAROPA LOG CAPTURE — SESSION START ===']));
 
         test('renders the suggestion block + button when suggestions exist', () => {
-            const html = flowDiagramHtml(emptyGraph, false, '', [
-                { pattern: '^Route pushed: (.+)$', label: '$1', sample: 'HomePage', count: 3 },
-            ]);
+            const html = flowDiagramHtml(emptyGraph, {
+                suggestions: [{ pattern: '^Route pushed: (.+)$', label: '$1', sample: 'HomePage', count: 3 }],
+            });
             assert.ok(html.includes('fm-suggest'), 'suggestion block present');
             assert.ok(html.includes('fm-suggest-btn'), 'add-rule button present');
             assert.ok(html.includes('data-pattern="^Route pushed: (.+)$"'), 'pattern carried on the button');
         });
 
         test('renders NO fm-suggest block when there are no suggestions', () => {
-            const html = flowDiagramHtml(emptyGraph, false, '', []);
+            const html = flowDiagramHtml(emptyGraph, { suggestions: [] });
             assert.ok(!html.includes('fm-suggest'), 'no suggestion block for an empty suggestion list');
         });
     });

@@ -15,6 +15,7 @@ import { flowMapStyles } from './flow-map-panel-styles';
 import { flowMapScript } from './flow-map-panel-script';
 import { flowMapZoomScript } from './flow-map-panel-zoom-script';
 import { flowMapReplayScript } from './flow-map-panel-replay-script';
+import { flowMapLightboxScript, type LightboxLabels } from './flow-map-panel-lightbox-script';
 
 const VIEW_TYPE = 'saropaFlowMap';
 const POPOUT_VIEW_TYPE = 'saropaFlowMapDiagram';
@@ -72,6 +73,24 @@ function iconButton(id: string, label: string, svg: string): string {
     return `<button type="button" id="${id}" class="icon-btn" title="${t9}" aria-label="${t9}">${svg}</button>`;
 }
 
+/**
+ * Lightbox labels resolved host-side. Built per render (not at import time) so `t()` reads the
+ * workspace locale rather than whatever was active when the module first loaded.
+ */
+function lightboxLabels(): LightboxLabels {
+    return {
+        title: t('flowMap.shot.title'),
+        captured: t('flowMap.shot.captured'),
+        trigger: t('flowMap.shot.trigger'),
+        screen: t('flowMap.shot.screen'),
+        logLine: t('flowMap.shot.logLine'),
+        close: t('flowMap.shot.close'),
+        // No args: `t()` returns the translated template with {0}/{1} intact for the script to fill.
+        counter: t('flowMap.shot.counter'),
+        counterScreen: t('flowMap.shot.counterScreen'),
+    };
+}
+
 /** The report title, shown first (before the pill/action bar). */
 function titleHtml(params: FlowMapPanelParams): string {
     const project = params.parsed.header.project;
@@ -101,20 +120,24 @@ ${flowMapStyles(nonce)}</head><body>
 ${body}
 ${flowMapScript(nonce)}
 ${flowMapZoomScript(nonce)}
-${flowMapReplayScript(nonce)}</body></html>`;
+${flowMapReplayScript(nonce)}
+${flowMapLightboxScript(nonce, lightboxLabels())}</body></html>`;
 }
 
 /** The pop-out panel's HTML: diagram only, full bleed, same lens/popup scripts (no nested pop-out). */
 function buildDiagramHtml(params: FlowMapPanelParams, nonce: string): string {
-    const csp = `default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';`;
+    // img-src data: — the pop-out's cards now carry the same screenshot thumbnails as the report's
+    // (it renders no gallery, but the diagram itself embeds capture data URIs).
+    const csp = `default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}'; img-src data:;`;
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="${csp}">
 ${flowMapStyles(nonce)}</head><body>
 <div class="report-head">${titleHtml(params)}</div>
-${buildFlowDiagramBody(params.graph)}
+${buildFlowDiagramBody(params.graph, params.screenshots)}
 ${flowMapScript(nonce)}
 ${flowMapZoomScript(nonce)}
-${flowMapReplayScript(nonce)}</body></html>`;
+${flowMapReplayScript(nonce)}
+${flowMapLightboxScript(nonce, lightboxLabels())}</body></html>`;
 }
 
 /** Open (or reveal) the diagram-only pop-out panel beside the report. */
