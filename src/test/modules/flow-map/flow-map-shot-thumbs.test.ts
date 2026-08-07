@@ -6,6 +6,7 @@ import { buildFlowDiagramBody, buildFlowMapBody } from '../../../modules/flow-ma
 import { parseLog } from '../../../modules/flow-map/flow-map-log-parser';
 import { buildGraph } from '../../../modules/flow-map/flow-map-builder';
 import { flowMapLightboxScript } from '../../../ui/panels/flow-map-panel-lightbox-script';
+import { flowMapStyles } from '../../../ui/panels/flow-map-panel-styles';
 
 const HEAD = ['=== SAROPA LOG CAPTURE — SESSION START ===', 'Project:        demo'];
 const nav = (clock: string, name: string) => `[${clock}.000] [console] [log] Screen Navigation: ${name}`;
@@ -135,8 +136,8 @@ suite('FlowMap diagram screenshot thumbnails', () => {
             ]);
             const svg = renderSvg(graph, shots);
             assert.ok(svg.includes('src="file:///shots/err.png"'), 'the fault capture is the thumbnail');
-            // ONE thumbnail per screen — the nav capture now appears in data-shot-siblings (compare
-            // needs the whole set), so the assertion is on the drawn images, not on the string.
+            // ONE thumbnail per screen. The nav capture is reachable through the screen's set island,
+            // so the assertion is on the images actually DRAWN, not on the whole document string.
             assert.strictEqual(svg.split('class="fm-shot"').length - 1, 1, 'only the fault capture is drawn');
             assert.ok(!/src="file:\/\/\/shots\/nav\.png"/.test(svg), 'the nav capture is not drawn');
             assert.ok(svg.includes('fm-shot-pill-alert'), 'the pill carries the fault tint');
@@ -168,13 +169,32 @@ suite('FlowMap diagram screenshot thumbnails', () => {
             assert.ok(renderSvg(graph).includes('width="168"'), 'node boxes use the portrait card width');
         });
 
-        test('should carry the screen\'s capture set for compare, and only when there is a set', () => {
+        test('should POINT a thumbnail at its screen set rather than inlining the set', () => {
+            // Inlining every screen's set on every element of that screen grows the markup with the
+            // square of the capture count — fine at the 12-capture cap, quietly not fine above it.
             const one = fixture([shot(3)]);
-            assert.ok(!renderSvg(one.graph, one.shots).includes('data-shot-siblings'), 'no set for a lone capture');
+            assert.ok(!renderSvg(one.graph, one.shots).includes('data-shot-screen-key'), 'no pointer for a lone capture');
             const many = fixture([shot(3, { src: 'file:///a.png' }), shot(3, { src: 'file:///b.png' })]);
             const svg = renderSvg(many.graph, many.shots);
-            assert.ok(svg.includes('data-shot-siblings'), 'the screen set rides on the thumbnail');
-            assert.ok(svg.includes('file:///b.png'), 'including the capture NOT shown on the card');
+            assert.ok(svg.includes('data-shot-screen-key="home"'), 'the thumbnail names its screen');
+            assert.ok(svg.includes('data-shot-sib="0"'), 'and its own index within that screen');
+            assert.ok(!svg.includes('file:///b.png'), 'the other capture is not copied onto the card');
+        });
+
+        test('should class the node box so palette rules cannot repaint the thumbnail frame', () => {
+            // ROOT CAUSE of the blank thumbnails. The palette rules were written as descendant
+            // selectors (`.fm-p-walked rect`), which also match the thumbnail frame and the count
+            // pill — siblings in the same <g> — and a CSS `fill` beats their `fill="none"`
+            // presentation attribute. The frame is drawn AFTER the capture, so the node's own color
+            // was painted straight over the screenshot on every card.
+            const { graph, shots } = fixture([shot(3)]);
+            const svg = renderSvg(graph, shots);
+            assert.ok(svg.includes('class="fm-box"'), 'the node box is addressable by class');
+            assert.ok(/<rect class="fm-shot-frame"/.test(svg), 'the frame is a separate, unclassed-as-box rect');
+            const css = flowMapStyles('n');
+            assert.ok(css.includes('.fm-p-walked rect.fm-box'), 'palette targets the box only');
+            assert.ok(!/\.fm-p-\w+ rect \{/.test(css), 'no bare rect descendant selector survives');
+            assert.ok(!/\.fm-node:hover rect,/.test(css), 'nor on the hover rule');
         });
 
         test('should title the thumbnail with WHY this capture is the one on show', () => {
@@ -200,6 +220,24 @@ suite('FlowMap diagram screenshot thumbnails', () => {
             const { graph, shots } = fixture([shot(3)]);
             assert.ok(buildFlowDiagramBody(graph, shots).includes('fm-shot'), 'pop-out cards carry thumbnails');
             assert.ok(!buildFlowDiagramBody(graph).includes('fm-shot'), 'and none when no captures are passed');
+        });
+
+        test('should emit the capture-set island ONCE, in the report and in the pop-out alike', () => {
+            // The pop-out renders no gallery but its cards still open the lightbox, so compare would
+            // be dead there alone if only the report carried the island.
+            const { parsed, graph, shots } = fixture([
+                shot(3, { src: 'file:///a.png' }), shot(3, { src: 'file:///b.png' }),
+            ]);
+            const report = buildFlowMapBody(parsed, graph, undefined, { screenshots: shots, screenshotsOmitted: 0 });
+            assert.strictEqual(report.split('id="fm-shot-sets"').length - 1, 1, 'exactly one island in the report');
+            assert.ok(report.includes('file:///b.png'), 'the set names every capture of the screen');
+            assert.ok(buildFlowDiagramBody(graph, shots).includes('id="fm-shot-sets"'), 'pop-out carries it too');
+        });
+
+        test('should emit no island when no screen has a second capture', () => {
+            const { parsed, graph, shots } = fixture([shot(3)]);
+            const html = buildFlowMapBody(parsed, graph, undefined, { screenshots: shots, screenshotsOmitted: 0 });
+            assert.ok(!html.includes('fm-shot-sets'), 'nothing to compare, so no island');
         });
 
         test('should escape the image URL identically on both surfaces', () => {
@@ -228,6 +266,8 @@ suite('FlowMap diagram screenshot thumbnails', () => {
             file: 'File', copyPath: 'Copy full path', zoom: 'Zoom', zoomHint: 'Scroll to zoom',
             unavailable: 'Screenshot unavailable',
             compare: 'Compare', comparePrev: 'Previous', compareNext: 'Next',
+            compareSession: 'Other session', compareThisSession: 'This session',
+            compareLoading: 'Reading…', compareNoMatch: 'No capture of this screen',
         });
 
         test('should keep Tab inside the dialog and restore focus to the opener on close', () => {
@@ -269,8 +309,9 @@ suite('FlowMap diagram screenshot thumbnails', () => {
         });
 
         test('should offer compare only when the screen has more than one capture', () => {
-            assert.ok(script.includes('data-shot-siblings'), 'compare reads the screen set off the element');
-            assert.ok(/set\.length > 1/.test(script), 'a lone capture has nothing to compare against');
+            assert.ok(script.includes('data-shot-screen-key'), 'compare resolves the set from a screen key');
+            assert.ok(script.includes('fm-shot-sets'), 'reading the once-per-document island');
+            assert.ok(/set\.length > 1/.test(script), 'a lone capture has nothing to compare against in-session');
         });
 
         test('should walk compare siblings with a BOUNDED scan, never skip-until-different', () => {
@@ -278,6 +319,7 @@ suite('FlowMap diagram screenshot thumbnails', () => {
             // src; an unbounded "skip until different" loop would spin forever and hang the panel.
             assert.ok(!/do\s*\{/.test(script), 'no unbounded do/while in the sibling walk');
             assert.ok(/for \(var i = 0; i < n; i\+\+\)/.test(script), 'one lap maximum');
+            assert.ok(script.includes('next !== cmpSelf'), 'skips by INDEX, never by src equality');
         });
 
         test('should state a load failure in a compare pane too, not just on a thumbnail', () => {
