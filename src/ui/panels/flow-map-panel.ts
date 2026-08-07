@@ -36,6 +36,12 @@ export interface FlowMapPanelParams {
     readonly screenshots: readonly FlowShot[];
     /** Count of sidecar entries beyond the render cap, for the "+N more" gallery note. */
     readonly screenshotsOmitted: number;
+    /**
+     * The `.screenshots/` directory beside the source log — the ONE path both panels open to
+     * `localResourceRoots`. Captures are referenced, not embedded, so without this every thumbnail
+     * loads as nothing.
+     */
+    readonly shotRoot: vscode.Uri;
     /** Empty-state breadcrumb diagnostic (plan follow-up): custom-rule suggestions when the diagram
      * has no nodes. Empty when the graph is populated or the heuristic found nothing worth suggesting. */
     readonly suggestions: readonly BreadcrumbSuggestion[];
@@ -91,6 +97,23 @@ function lightboxLabels(): LightboxLabels {
     };
 }
 
+/**
+ * Rewrite each capture's `file:` URI into a URL this webview's sandbox will load. Per render, not
+ * once at load: the report panel and the pop-out are separate webviews, and only the live one can
+ * mint a URL its own CSP `cspSource` matches.
+ */
+function withWebviewSrc(webview: vscode.Webview, shots: readonly FlowShot[]): readonly FlowShot[] {
+    return shots.map(s => ({ ...s, src: webview.asWebviewUri(vscode.Uri.parse(s.src)).toString() }));
+}
+
+/**
+ * Webview options for both panels. `localResourceRoots` opens exactly one directory — the captures
+ * beside the source log — and is reapplied on every render because the panel outlives any one log.
+ */
+function webviewOptions(shotRoot: vscode.Uri): vscode.WebviewOptions {
+    return { enableScripts: true, localResourceRoots: [shotRoot] };
+}
+
 /** The report title, shown first (before the pill/action bar). */
 function titleHtml(params: FlowMapPanelParams): string {
     const project = params.parsed.header.project;
@@ -99,16 +122,18 @@ function titleHtml(params: FlowMapPanelParams): string {
 }
 
 /** Full HTML document: CSP, styles, header (title + action buttons), report body, script. */
-function buildHtml(params: FlowMapPanelParams, nonce: string): string {
+function buildHtml(params: FlowMapPanelParams, nonce: string, webview: vscode.Webview): string {
     // Stats and the log path now live as rows in the Session-info section (info ≠ navigation).
     const body = buildFlowMapBody(params.parsed, params.graph, params.logUri.fsPath, {
-        screenshots: params.screenshots, screenshotsOmitted: params.screenshotsOmitted,
+        screenshots: withWebviewSrc(webview, params.screenshots),
+        screenshotsOmitted: params.screenshotsOmitted,
         suggestions: params.suggestions,
     });
-    // img-src data: — captures are embedded as data URIs, in the gallery AND on the diagram cards.
-    // The pop-out below needs the same allowance: it renders no gallery, but its diagram does carry
-    // thumbnails.
-    const csp = `default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}'; img-src data:;`;
+    // img-src ${webview.cspSource} — captures load from disk (gallery AND diagram cards), never as
+    // embedded data URIs; `data:` is deliberately NOT allowed, so a stray embed fails loudly here
+    // rather than quietly reintroducing megabytes of base64 into the document.
+    const csp = `default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}'; `
+        + `img-src ${webview.cspSource};`;
     const actions = '<div class="topbar-actions">'
         + iconButton('showlog-fm', t('flowMap.showLogBtn'), LOG_SVG)
         + iconButton('refresh-fm', t('flowMap.refreshBtn'), REFRESH_SVG)
@@ -126,15 +151,16 @@ ${flowMapLightboxScript(nonce, lightboxLabels())}</body></html>`;
 }
 
 /** The pop-out panel's HTML: diagram only, full bleed, same lens/popup scripts (no nested pop-out). */
-function buildDiagramHtml(params: FlowMapPanelParams, nonce: string): string {
-    // img-src data: — the pop-out's cards now carry the same screenshot thumbnails as the report's
-    // (it renders no gallery, but the diagram itself embeds capture data URIs).
-    const csp = `default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}'; img-src data:;`;
+function buildDiagramHtml(params: FlowMapPanelParams, nonce: string, webview: vscode.Webview): string {
+    // The pop-out renders no gallery, but its cards carry the same thumbnails, so it needs the same
+    // image source as the report. `cspSource` is per-webview — never reuse the report panel's.
+    const csp = `default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}'; `
+        + `img-src ${webview.cspSource};`;
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="${csp}">
 ${flowMapStyles(nonce)}</head><body>
 <div class="report-head">${titleHtml(params)}</div>
-${buildFlowDiagramBody(params.graph, params.screenshots)}
+${buildFlowDiagramBody(params.graph, withWebviewSrc(webview, params.screenshots))}
 ${flowMapScript(nonce)}
 ${flowMapZoomScript(nonce)}
 ${flowMapReplayScript(nonce)}
@@ -146,13 +172,14 @@ function showFlowDiagramPanel(params: FlowMapPanelParams): void {
     if (!popout) {
         popout = vscode.window.createWebviewPanel(
             POPOUT_VIEW_TYPE, panelTitle(params), vscode.ViewColumn.Beside,
-            { enableScripts: true, localResourceRoots: [], retainContextWhenHidden: true },
+            { ...webviewOptions(params.shotRoot), retainContextWhenHidden: true },
         );
         popout.onDidDispose(() => { popout = undefined; });
         popout.webview.onDidReceiveMessage(handleMessage);
     }
     popout.title = panelTitle(params);
-    popout.webview.html = buildDiagramHtml(params, getNonce());
+    popout.webview.options = webviewOptions(params.shotRoot);
+    popout.webview.html = buildDiagramHtml(params, getNonce(), popout.webview);
     popout.reveal(vscode.ViewColumn.Beside);
 }
 
@@ -289,18 +316,21 @@ export function showFlowMapPanel(params: FlowMapPanelParams): void {
     if (!current) {
         current = vscode.window.createWebviewPanel(
             VIEW_TYPE, title, vscode.ViewColumn.Active,
-            { enableScripts: true, localResourceRoots: [], retainContextWhenHidden: true },
+            { ...webviewOptions(params.shotRoot), retainContextWhenHidden: true },
         );
         current.onDidDispose(() => { current = undefined; currentParams = undefined; });
         current.webview.onDidReceiveMessage(handleMessage);
     }
     current.title = title;
-    current.webview.html = buildHtml(params, getNonce());
+    // Reapplied every render: an existing panel showing a different log has the old root.
+    current.webview.options = webviewOptions(params.shotRoot);
+    current.webview.html = buildHtml(params, getNonce(), current.webview);
     current.reveal(vscode.ViewColumn.Active);
     // Keep an open pop-out diagram in sync after a refresh (it shares the same report).
     if (popout) {
         popout.title = title;
-        popout.webview.html = buildDiagramHtml(params, getNonce());
+        popout.webview.options = webviewOptions(params.shotRoot);
+        popout.webview.html = buildDiagramHtml(params, getNonce(), popout.webview);
     }
 }
 
