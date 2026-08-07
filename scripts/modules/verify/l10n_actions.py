@@ -9,22 +9,29 @@ for errors/orphans, yellow for gaps — and delegates the real work to
 ``l10n_cli``.
 """
 
+import json
 import time
 
 from modules.verify.l10n_audit_display import print_untranslated_detail
 from modules.verify.l10n_bundle_audit import (
     AuditResult,
+    L10N_DIR,
     sync_english_bundle,
     write_audit_report,
     write_failures_export_sentences,
     write_translation_error_audit,
 )
-from modules.verify.l10n_brands import is_acronym_only
 from modules.verify.l10n_console import cyan, dim, green, header, red, yellow
-from modules.verify.l10n_provenance import ENGINE_MANUAL, save_provenance
+from modules.verify.l10n_provenance import (
+    ENGINE_MANUAL,
+    is_forced_identity,
+    load_provenance,
+    save_provenance,
+)
 from modules.verify.l10n_translator import (
     fix_mangled_brands,
     get_canonical_keys,
+    get_translation_locales,
     translate_locale,
 )
 
@@ -256,37 +263,47 @@ def write_report_and_offer_export(audit: AuditResult) -> None:
     ))
 
 
-def run_fill_identity(audit: AuditResult, *, dry_run: bool = False) -> int:
-    """Mark EN-COPY gaps as manual provenance when the value is identity-correct.
+def run_fill_identity(*, dry_run: bool = False) -> int:
+    """Stamp provenance on EN-COPY bundle entries that are identity-correct.
 
-    Targets gaps where the English string is an acronym with placeholders
-    (e.g. "DB {0}", "TODO {0}") — the correct rendering IS the English text, so
-    adding manual provenance clears the gap without changing the bundle value.
+    Scans each locale bundle directly (not the audit's filtered gap list) for
+    keys where value == key and no provenance is recorded, then checks
+    ``is_forced_identity`` (acronyms, brands, symbols, verified cognates). This
+    catches entries the audit already exempts from the gap count but that lack a
+    provenance record — a belt-and-suspenders cleanup.
 
-    Returns the number of entries marked.
+    Returns the number of entries stamped.
     """
     header("Fill identity gaps")
+    locales = get_translation_locales()
     total = 0
-    for lc in audit.locale_coverage:
+    for locale in locales:
+        bundle_path = L10N_DIR / f"bundle.l10n.{locale}.json"
+        if not bundle_path.exists():
+            continue
+        bundle = json.loads(bundle_path.read_text(encoding="utf-8"))
+        prov = load_provenance(locale)
         updates: dict[str, str] = {}
-        for entry in lc.untranslated_entries:
-            if entry.reason != "untranslated":
+        for key, value in bundle.items():
+            if value != key:
                 continue
-            if not is_acronym_only(entry.en_value):
+            if key in prov:
                 continue
-            updates[entry.en_value] = ENGINE_MANUAL
+            if not is_forced_identity(key, locale):
+                continue
+            updates[key] = ENGINE_MANUAL
         if not updates:
             continue
         keys_str = ", ".join(sorted(updates))
         if dry_run:
-            print(f"  {cyan(lc.locale)}: would mark {len(updates)} — {keys_str}")
+            print(f"  {cyan(locale)}: would mark {len(updates)} — {keys_str}")
         else:
-            save_provenance(lc.locale, updates)
-            print(f"  {cyan(lc.locale)}: marked {green(str(len(updates)))} — {keys_str}")
+            save_provenance(locale, updates)
+            print(f"  {cyan(locale)}: marked {green(str(len(updates)))} — {keys_str}")
         total += len(updates)
     if total == 0:
-        print(f"  {dim('No identity gaps found.')}")
+        print(f"  {dim('No unstamped identity entries found.')}")
     else:
         verb = "would mark" if dry_run else "marked"
-        print(f"\n  {verb} {green(str(total))} identity gap(s) as manual provenance.")
+        print(f"\n  {verb} {green(str(total))} identity entry/entries as manual.")
     return total

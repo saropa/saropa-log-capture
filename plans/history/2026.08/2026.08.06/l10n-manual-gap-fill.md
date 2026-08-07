@@ -36,15 +36,29 @@ The root cause was `is_acronym_only()` doing exact-match only — "DB" matched b
 
 New pipeline action (CLI `--run-mode fill-identity`, interactive menu option 8) that scans the audit's untranslated entries, identifies those where `is_acronym_only` returns true, and marks them as `"manual"` provenance in one step. Supports `--dry-run` for preview. This replaces the manual per-file provenance editing done for this batch.
 
+### Hardening (follow-up)
+
+**Dead-code fix:** `run_fill_identity` originally iterated the audit's `untranslated_entries` and checked `is_acronym_only` — but the audit already filters out acronym matches, so the check always returned False. Refactored to scan locale bundles directly for EN-COPY entries (value == key) without provenance that match `is_forced_identity()` (acronyms, brands, symbols, verified cognates).
+
+**Confirmation prompt:** Interactive menu option 8 now previews with `--dry-run`, then asks "Apply? [y/N]" before writing provenance.
+
+**ACRONYM_ONLY_STRINGS expanded:** Added "APP" (application badge) and "FW" (framework badge) — both had garbled MT output in all 10 locales (NLLB hallucinated sentences from 2–3 character inputs). A future translate pass will overwrite the garbled values with identity.
+
+### Prevention: compile gate `verify:acronym-coverage`
+
+New compile gate (`npm run verify:acronym-coverage`, wired into the compile chain) that scans every `strings-*.ts` file for source strings whose entire translatable content (after stripping `{n}` placeholders) is a single uppercase word. If that word is not in `ACRONYM_ONLY_STRINGS` and not in the known-uppercase-words exclusion list, the build fails with a message naming the file, key, and unregistered acronym. Catches new acronym-based legend keys at compile time instead of at translation audit time.
+
 ### Verification
 
-Post-change audit: all 10 locales report 100.0% COMPLETE, 0 gaps.
+Post-change audit: all 10 locales report 100.0% COMPLETE, 0 gaps. `verify:acronym-coverage` passes (8 registered acronyms, 17 source files scanned).
 
 ### Files changed
 
 - `l10n/bundle.l10n.<locale>.json` (8 files with value changes; 2 identity-only)
 - `l10n/provenance/<locale>.json` (all 10 files — manual provenance added)
-- `scripts/modules/verify/l10n_brands.py` — `is_acronym_only` enhanced for placeholder patterns
-- `scripts/modules/verify/l10n_actions.py` — `run_fill_identity()` action added
-- `scripts/modules/verify/l10n_cli.py` — `fill-identity` run-mode and menu option 8
+- `scripts/modules/verify/l10n_brands.py` — `is_acronym_only` enhanced; "APP"/"FW" added to `ACRONYM_ONLY_STRINGS`
+- `scripts/modules/verify/l10n_actions.py` — `run_fill_identity()` refactored to scan bundles directly
+- `scripts/modules/verify/l10n_cli.py` — `fill-identity` with dry-run preview + confirmation; locale-prompt deduplication
+- `scripts/modules/verify/verify-acronym-coverage.mjs` — new compile gate
+- `package.json` — `verify:acronym-coverage` script + wired into compile chain
 - `CHANGELOG.md`
