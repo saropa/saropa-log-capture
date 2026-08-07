@@ -30,6 +30,7 @@ cspell:disable
 ### Added
 
 - Flow map: any screen captured more than once can be compared in the screenshot lightbox — two captures side by side with their clocks, stepping through the rest of that screen's set
+- Flow map: a screen can also be compared against another session — the lightbox lists recent sessions that captured the same screen, so "what did this look like yesterday" is one click
 
 ### Fixed
 
@@ -37,7 +38,7 @@ cspell:disable
 - Flow map: the two report columns size their scroll area from the actual header height, so a wrapped toolbar no longer pushes the bottom of each column out of reach
 - Flow map: screenshot thumbnails on the diagram cards rendered as empty frames — captures are now referenced from disk instead of being embedded in the panel, which drops a screenshot-heavy report from megabytes of markup to a few kilobytes and lets each capture load on its own
 - Flow map: a short session no longer fans out across the screen — terminal crash cards stack in a column beside the walk rather than sitting side by side in it, and any genuinely wide row of sibling screens wraps instead of widening the canvas (a real four-step session measured 1272px wide before, 456px after)
-- Flow map: diagram card thumbnails render again — the captures now draw with the same kind of image element the gallery uses, which was the one painting correctly
+- Flow map: diagram card thumbnails render again — the diagram's own node coloring was being painted over the top of every screenshot
 - Flow map: the diagram and the detail column each scroll on their own, so a long issue table no longer drags the diagram off the screen
 - Log viewer: the screenshot preview popover shows the full path of the capture it is previewing, not just the filename
 - Flow map: the screenshot lightbox shows the capture's filename with a one-click copy of its full path, and the image can be zoomed by scrolling over it or with a zoom slider (which overrides fit-to-window; the fit button returns)

@@ -11,6 +11,7 @@ import { showFlowMapPanel, type FlowMapPanelParams } from './ui/panels/flow-map-
 import { readScreenshotSidecar, screenshotDirUri } from './modules/screenshot/screenshot-store';
 import { joinShotsToScreens, type ShotWithSource } from './modules/flow-map/flow-map-screenshots';
 import { suggestBreadcrumbPatterns } from './modules/flow-map/flow-map-empty-diagnostic';
+import { findCompareSessions } from './modules/flow-map/flow-map-cross-session';
 
 /**
  * Bound how many screenshots the report renders. Captures are referenced by URL rather than embedded,
@@ -107,6 +108,9 @@ async function generateReport(logUri: vscode.Uri, revealLine: (line: number) => 
     const scan = await scanProjectScreens(parsed.header.projectRoot);
     const graph = buildGraph(parsed, scan);
     const { shots, omitted } = await loadFlowShots(logUri.fsPath);
+    // Cheap: a directory read plus one stat per candidate. Resolving a session's captures is the
+    // expensive half and only happens if the reader actually picks one.
+    const sessions = shots.length > 0 ? await findCompareSessions(logUri) : [];
     // Only worth computing when the diagram is empty — a populated graph already has its own story,
     // and running the heuristic against a huge log is otherwise wasted work.
     const suggestions = graph.nodes.length === 0 ? suggestBreadcrumbPatterns(lines) : [];
@@ -119,8 +123,11 @@ async function generateReport(logUri: vscode.Uri, revealLine: (line: number) => 
         screenshots: joinShotsToScreens(shots, parsed.events),
         screenshotsOmitted: omitted,
         // Always passed, even with no captures: the panel is reused across refreshes, so its resource
-        // root must follow the log currently shown rather than whichever log first had screenshots.
-        shotRoot: screenshotDirUri(logUri.fsPath),
+        // roots must follow the log currently shown rather than whichever log first had screenshots.
+        // Comparable sessions' directories are opened up front because a webview cannot be granted a
+        // new root mid-render — the picker only offers sessions whose captures are already loadable.
+        shotRoots: [screenshotDirUri(logUri.fsPath), ...sessions.map(s => screenshotDirUri(s.logFsPath))],
+        compareSessions: sessions,
         suggestions,
     };
 }
