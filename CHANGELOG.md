@@ -34,6 +34,7 @@ cspell:disable
 - Logs panel: "Expand all" / "Collapse all" buttons in the Display submenu to open or close all day groups at once; buttons auto-hide when day headings are off (plan 001)
 - Trouble chart: "First error" button in the header jumps to the first error after app start
 - Setting `troubleMode.openOnLoad`: auto-activate Trouble Mode when a log opens; suppresses the smart bookmark modal since Trouble Mode already surfaces errors
+- Setting `troubleMode.levels`: choose which severity levels survive the Trouble Mode filter (default: error, warning, performance); changes apply live without reopening the log
 
 ### Fixed
 
