@@ -34,6 +34,12 @@ const BACK_BULGE = 22;
 const BACK_STAGGER = 14;
 /** Vertical gap between stacked cards in the terminal-fault side column (see `flow-map-svg-layout`). */
 const FAULT_GAP = 14;
+/**
+ * How tall the fault column may grow before wrapping into another column. Roughly a comfortable
+ * panel height — deeper than this and the reader is scrolling a sidebar of crash cards, which is the
+ * same unbounded-growth problem the fault column was introduced to solve, turned on its side.
+ */
+const FAULT_COL_H = 720;
 
 interface Palette { readonly cls: string; readonly dashed: boolean; }
 
@@ -97,29 +103,44 @@ function rowWidth(count: number): number {
     return count * BOX_W + (count - 1) * COL_GAP;
 }
 
+/** Where the fault column starts, and the y it may not grow past before wrapping to a new column. */
+interface FaultColumnFit { readonly x: number; readonly maxY: number; }
+
+/** How far down the fault column(s) reached, and how many columns it took. */
+interface FaultColumnPlacement { readonly bottom: number; readonly columns: number; }
+
 /**
- * Stack terminal fault cards in ONE column to the right of the walk, each at or below its parent's
+ * Stack terminal fault cards in a column to the right of the walk, each at or below its parent's
  * bottom edge so the parent→fault arrow still reads downward. Parents are visited top-down and share
- * a single cursor, so two parents on adjacent rows can never have their stacks overlap. Returns the
- * y the column ends at (`MARGIN` when there are no fault leaves).
+ * a single cursor, so two parents on adjacent rows can never have their stacks overlap.
+ *
+ * A stack that would pass `fit.maxY` starts ANOTHER column instead of growing: twenty faults under
+ * one screen would otherwise produce a 2000px column beside a 400px walk, which is unreadable and
+ * unbounded — the very failure the fault column exists to fix, rotated ninety degrees.
  */
 function placeFaultLeaves(
     leaves: ReadonlyMap<string, readonly FlowNode[]>,
-    placed: Map<string, Placed>, shots: ShotsByScreen, columnX: number,
-): number {
+    placed: Map<string, Placed>, shots: ShotsByScreen, fit: FaultColumnFit,
+): FaultColumnPlacement {
     let cursor = MARGIN;
+    let bottom = MARGIN;
+    let x = fit.x;
+    let columns = leaves.size > 0 ? 1 : 0;
     const groups = [...leaves].sort((a, b) => (placed.get(a[0])?.y ?? 0) - (placed.get(b[0])?.y ?? 0));
     for (const [parentKey, nodes] of groups) {
         const parent = placed.get(parentKey);
         if (parent) { cursor = Math.max(cursor, parent.y + parent.h + FAULT_GAP); }
         for (const p of buildRow(nodes, shots)) {
-            p.x = columnX;
+            // `cursor > MARGIN` keeps a single over-tall card from wrapping to an empty column.
+            if (cursor + p.h > fit.maxY && cursor > MARGIN) { columns++; x += BOX_W + COL_GAP; cursor = MARGIN; }
+            p.x = x;
             p.y = cursor;
             placed.set(p.node.key, p);
             cursor += p.h + FAULT_GAP;
+            bottom = Math.max(bottom, cursor);
         }
     }
-    return cursor;
+    return { bottom, columns };
 }
 
 /** Position every node; returns placements + the overall canvas size. */
@@ -141,16 +162,21 @@ function layout(graph: FlowGraph, shots: ShotsByScreen): { placed: Map<string, P
         y += rowHeight + ROW_GAP;
     }
     const columnX = MARGIN + maxWidth + COL_GAP;
-    const faultBottom = placeFaultLeaves(plan.faultLeaves, placed, shots, columnX);
+    // Let the fault column run as deep as the walk, but never shorter than FAULT_COL_H — a one-row
+    // walk with six faults should stack them, not fan into six columns to match its own height.
+    const maxY = Math.max(y - ROW_GAP, MARGIN + FAULT_COL_H);
+    const faults = placeFaultLeaves(plan.faultLeaves, placed, shots, { x: columnX, maxY });
     // The column only costs width when something is actually in it.
-    const contentW = plan.faultLeaves.size > 0 ? columnX - MARGIN + BOX_W : maxWidth;
+    const contentW = faults.columns > 0
+        ? columnX - MARGIN + faults.columns * BOX_W + (faults.columns - 1) * COL_GAP
+        : maxWidth;
     // Floor BOTH axes at the margins and reject non-finite values: a zero-node graph computes a
     // NEGATIVE height, and any negative/NaN viewBox dimension is an invalid SVG that browsers
     // silently render as nothing — a blank panel with no console error to trace it by.
     return {
         placed,
         width: safeDimension(contentW + MARGIN * 2, BOX_W),
-        height: safeDimension(Math.max(y - ROW_GAP, faultBottom - FAULT_GAP) + MARGIN, MARGIN * 2),
+        height: safeDimension(Math.max(y - ROW_GAP, faults.bottom - FAULT_GAP) + MARGIN, MARGIN * 2),
     };
 }
 

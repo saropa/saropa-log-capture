@@ -38,13 +38,23 @@ var screenshotSessionCount = 0;
 /* Directory holding this log's PNGs (from screenshotList). The popover joins it with a capture's
    bare filename to show the full path — the sidecar itself only ever stores the filename. */
 var screenshotDir = '';
+/* Path separator for this host, sent alongside the directory. NOT inferred from the directory
+   string: the webview has no platform of its own, and a Windows path the host had normalized to
+   forward slashes would fool any inference rule into printing a path that does not exist. */
+var screenshotSep = '/';
 
-/* Join the capture directory to a bare filename. The separator is inferred from the directory the
-   host sent rather than assumed: the webview has no platform of its own, and a hard-coded '\\' would
-   print a Windows path on Linux and macOS. */
+/* Join the capture directory to a bare filename, using the host's own separator. */
 function screenshotJoinPath(dir, file) {
     if (!dir) return file;
-    return dir + (dir.indexOf('\\\\') >= 0 ? '\\\\' : '/') + file;
+    return dir + screenshotSep + file;
+}
+
+/* Record the capture directory from any message that carries it — the sidecar listing AND a live
+   capture, so a popover opened on a just-captured line still knows the full path. */
+function screenshotNoteDir(msg) {
+    if (!msg) return;
+    if (typeof msg.dir === 'string') screenshotDir = msg.dir;
+    if (typeof msg.sep === 'string' && msg.sep) screenshotSep = msg.sep;
 }
 /* file whose image the open popover is waiting for/showing (null = popover closed). */
 var screenshotPopoverFile = null;
@@ -100,7 +110,7 @@ function screenshotFindIdx(logLine, text) {
 /* Rebuild the badge map from a full sidecar list (sent on load / request). */
 function screenshotApplyList(msg) {
     screenshotByIdx = {};
-    if (msg && typeof msg.dir === 'string') screenshotDir = msg.dir;
+    screenshotNoteDir(msg);
     var list = (msg && Array.isArray(msg.screenshots)) ? msg.screenshots : [];
     screenshotSessionCount = list.length;
     for (var i = 0; i < list.length; i++) {
@@ -116,6 +126,7 @@ function screenshotApplyList(msg) {
 /* One live capture landed: badge its line and bump the footer counter. */
 function screenshotHandleCaptured(msg) {
     if (!msg) return;
+    screenshotNoteDir(msg);
     if (typeof msg.totalForLog === 'number') screenshotSessionCount = msg.totalForLog;
     var idx = screenshotFindIdx(msg.logLine, msg.text);
     if (idx >= 0) {

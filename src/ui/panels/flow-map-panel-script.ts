@@ -92,6 +92,24 @@ export function flowMapScript(nonce: string): string {
   var resizer = document.querySelector('.col-resize');
   var st0 = (v.getState && v.getState()) || {};
   if (diagram && st0.diagramW) diagram.style.setProperty('--diagram-w', st0.diagramW + 'px');
+
+  // --- Column scroll height: MEASURED, never assumed. ---
+  // Each column scrolls inside --report-vh (see the stylesheet). A hard-coded "viewport minus a
+  // guess at the header" is wrong the moment the topbar wraps to two lines — a long project name
+  // plus a full pill row does exactly that — and it fails silently: the last rows of each column
+  // land below the fold with no way to scroll to them. Measuring the row's own top edge is exact
+  // whatever the header does, and re-measuring on resize keeps it exact after a panel drag.
+  function sizeColumns(){
+    if (!row) return;
+    // Wrapped single-column layout (see the 720px media query): the page scrolls as one, so a
+    // per-column cap here would make the reader scroll two boxes to reach the bottom of one page.
+    if (window.innerWidth <= 720) { row.style.removeProperty('--report-vh'); return; }
+    var top = row.getBoundingClientRect().top;
+    // 12px keeps the columns clear of the panel's bottom edge instead of butting against it.
+    row.style.setProperty('--report-vh', Math.max(160, window.innerHeight - top - 12) + 'px');
+  }
+  sizeColumns();
+  window.addEventListener('resize', sizeColumns);
   if (resizer && row && diagram) {
     var dragging = false;
     resizer.addEventListener('pointerdown', function(e){

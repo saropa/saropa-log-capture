@@ -44,6 +44,15 @@ function defaultReportUri(logUri: vscode.Uri): vscode.Uri {
 type ReportData = Omit<FlowMapPanelParams, 'refresh'>;
 
 /**
+ * PNG filenames the store generates (`NNN_trigger_epochms.png`) — anything else is refused. The
+ * sidecar is a file on disk that a user can edit, and `Uri.joinPath` would happily walk `../../` out
+ * of the capture directory, handing the panel a path outside the one root its CSP opens.
+ * Deliberately duplicates the viewer's own `SAFE_FILE`: two independent read paths, each of which
+ * must refuse traversal on its own rather than trusting the other to have done it.
+ */
+const SAFE_SHOT_FILE = /^[\w-]+\.png$/;
+
+/**
  * Locate one capture on disk, or undefined when the PNG is gone. `stat` rather than `readFile`: the
  * panel only needs a URL, and a missing capture must drop out quietly instead of rendering a
  * broken-image box the reader cannot act on. Both forms travel on: `src` is what the sandbox fetches
@@ -52,6 +61,7 @@ type ReportData = Omit<FlowMapPanelParams, 'refresh'>;
 async function resolveShotFile(
     logFsPath: string, file: string,
 ): Promise<{ src: string; path: string } | undefined> {
+    if (!SAFE_SHOT_FILE.test(file)) { return undefined; }
     const uri = vscode.Uri.joinPath(screenshotDirUri(logFsPath), file);
     try {
         await vscode.workspace.fs.stat(uri);
