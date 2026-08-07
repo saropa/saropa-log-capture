@@ -13,7 +13,26 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..", "..", "..");
 
 const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-const setting = pkg.contributes?.configuration?.properties?.["saropaLogCapture.troubleMode.levels"];
+
+// Walk contributes.configuration to find the setting, handling both
+// flat `properties` and an `allOf`/`oneOf` wrapping array.
+function findSetting(config) {
+	if (!config) { return undefined; }
+	if (config.properties?.["saropaLogCapture.troubleMode.levels"]) {
+		return config.properties["saropaLogCapture.troubleMode.levels"];
+	}
+	for (const key of ["allOf", "oneOf"]) {
+		if (Array.isArray(config[key])) {
+			for (const entry of config[key]) {
+				const found = findSetting(entry);
+				if (found) { return found; }
+			}
+		}
+	}
+	return undefined;
+}
+
+const setting = findSetting(pkg.contributes?.configuration);
 if (!setting) {
 	console.error("ERROR: saropaLogCapture.troubleMode.levels not found in package.json");
 	process.exit(1);
@@ -27,17 +46,32 @@ const tsFile = fs.readFileSync(
 	"utf8",
 );
 
-/** @param {string} src @param {string} name */
+/**
+ * Extract a string array from an `export const NAME = [...]` declaration.
+ * Handles multiline arrays and inline/trailing comments.
+ * @param {string} src
+ * @param {string} name
+ */
 function extractArray(src, name) {
-	const re = new RegExp(`export\\s+const\\s+${name}\\s*=\\s*\\[([^\\]]+)\\]`);
+	// Match from `export const NAME = [` through the closing `]`, across lines.
+	const re = new RegExp(
+		`export\\s+const\\s+${name}\\s*=\\s*\\[([\\s\\S]*?)\\]`,
+	);
 	const m = src.match(re);
 	if (!m) {
 		console.error(`ERROR: could not parse ${name} from trouble-level-constants.ts`);
 		process.exit(1);
 	}
-	return m[1]
+	// Strip comments, then split on commas, then extract quoted strings.
+	const body = m[1]
+		.replace(/\/\/.*$/gm, "")
+		.replace(/\/\*[\s\S]*?\*\//g, "");
+	return body
 		.split(",")
-		.map((s) => s.trim().replace(/^["']|["']$/g, ""))
+		.map((s) => {
+			const q = s.trim().match(/^["'](.+)["']/);
+			return q ? q[1] : "";
+		})
 		.filter(Boolean);
 }
 
