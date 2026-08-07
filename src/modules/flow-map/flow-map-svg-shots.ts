@@ -102,18 +102,35 @@ function countPill(x: number, y: number, count: number, cls: string): string {
  * never drift into describing the same capture differently.
  */
 /**
- * The whole set a capture belongs to, as JSON, so the lightbox can compare two captures of the same
- * screen without another round trip. Only the three fields compare needs travel — a URL, a clock,
- * and a trigger — because the alternative (every capture's facts on every element) multiplies the
- * markup by the set size to answer a question most readers never ask.
+ * Where a capture sits in its screen's set, for the lightbox's compare view: the screen's key and
+ * this capture's index within that screen's captures.
+ *
+ * Deliberately a POINTER, not the set itself. Inlining every screen's set on every element of that
+ * screen makes the markup grow with the square of a screen's capture count — fine at the current
+ * 12-capture report cap, and quietly not fine the moment that cap is raised. The set is emitted once
+ * per document by `shotSetsIsland`.
  *
  * Omitted for a lone capture: there is nothing to compare it against, and the compare control keys
  * off this attribute's absence.
  */
-export function shotSiblingsAttr(shots: readonly FlowShot[]): string {
-    if (shots.length < 2) { return ''; }
-    const set = shots.map(s => ({ src: s.src, clock: s.clock, trigger: s.trigger }));
-    return ` data-shot-siblings="${esc(JSON.stringify(set))}"`;
+export function shotSetAttrs(screenKey: string, index: number, total: number): string {
+    if (total < 2 || !screenKey) { return ''; }
+    return ` data-shot-screen-key="${esc(screenKey)}" data-shot-sib="${index}"`;
+}
+
+/**
+ * Every multi-capture screen's set, emitted ONCE per document as an inert data island the compare
+ * view reads. A `<div hidden data-…>` rather than a `<script type="application/json">` because the
+ * panel's CSP admits scripts only by nonce, and an inert element sidesteps that question entirely.
+ */
+export function shotSetsIsland(byScreen: ShotsByScreen): string {
+    const sets: Record<string, { src: string; clock: string; trigger: string }[]> = {};
+    for (const [key, list] of byScreen) {
+        if (list.length < 2) { continue; }
+        sets[key] = list.map(s => ({ src: s.src, clock: s.clock, trigger: s.trigger }));
+    }
+    if (Object.keys(sets).length === 0) { return ''; }
+    return `<div id="fm-shot-sets" hidden data-sets="${esc(JSON.stringify(sets))}"></div>`;
 }
 
 export function shotDataAttrs(shot: FlowShot, index: number, total: number): string {
@@ -132,11 +149,18 @@ const XHTML_NS = 'http://www.w3.org/1999/xhtml';
  * The thumbnail block for one node: framed capture + optional count pill. `x`/`y` are the node box's
  * top-left. Returns '' when the screen has no captures, so callers can concatenate unconditionally.
  *
- * The capture is an HTML `<img>` inside a `<foreignObject>`, NOT an SVG `<image>`. Field evidence
- * (2026-08-07): with both surfaces rendering the same webview URLs in the same document under the
- * same CSP, the gallery's `<img>` figures painted and the diagram's `<image>` thumbnails did not —
- * so the element, not the resource loading, was the failure. The gallery element is the one with
- * proof behind it, so the diagram uses it too.
+ * WHY THE THUMBNAILS WERE BLANK — corrected. An earlier note here blamed the element (SVG `<image>`
+ * vs this `<img>`); that was wrong, and a Playwright render of this exact markup shows an SVG
+ * `<image>` painting perfectly well. The real cause was CSS: the palette rules were written as
+ * DESCENDANT selectors (`.fm-p-walked rect { fill: … }`), so they also matched `.fm-shot-frame` —
+ * a sibling rect in the same node group, drawn AFTER the capture — and a CSS `fill` overrides that
+ * rect's `fill="none"` presentation attribute. Every card was painting its own node color straight
+ * over its screenshot. The fix is `class="fm-box"` on the node's own rect plus `rect.fm-box` in
+ * every palette/hover/animation selector. Keep it that way: one new bare `rect` descendant rule in
+ * this panel's stylesheet reintroduces the bug for every card at once.
+ *
+ * The `<img>` stays because it makes the diagram and the gallery one element type served by one
+ * lightbox binder — a simplification, not the fix.
  *
  * `object-fit: cover` + `object-position: top` (in the stylesheet) reproduces what
  * `preserveAspectRatio="xMidYMin slice"` did: fill the frame and crop from the BOTTOM, because a
@@ -144,7 +168,7 @@ const XHTML_NS = 'http://www.w3.org/1999/xhtml';
  * would be a sliver with dead space either side at 148px. The portrait frame assumes phone captures;
  * a landscape or tablet capture crops harder, which is a legibility trade, not a defect.
  */
-export function thumbMarkup(x: number, y: number, shots: readonly FlowShot[]): string {
+export function thumbMarkup(x: number, y: number, shots: readonly FlowShot[], screenKey = ''): string {
     const picked = pickThumbShot(shots);
     if (!picked) { return ''; }
     const { shot, index } = picked;
@@ -164,7 +188,7 @@ export function thumbMarkup(x: number, y: number, shots: readonly FlowShot[]): s
         // lightbox picks its wording from the scope so "1 of 3" never silently means two things. The
         // index is the SHOWN capture's position, which is not always the first one (see pickThumbShot).
         + `aria-label="${label}"${shotDataAttrs(shot, index + 1, shots.length)}`
-        + `${shotSiblingsAttr(shots)} data-shot-scope="screen"/>`
+        + `${shotSetAttrs(screenKey, index, shots.length)} data-shot-scope="screen"/>`
         + `</foreignObject>`
         // Drawn AFTER the foreignObject so the hairline frame sits on top of the capture, and kept as
         // SVG so it scales with the diagram's zoom exactly like every other stroke.
