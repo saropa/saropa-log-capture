@@ -31,13 +31,19 @@
  */
 import { getTroubleChartLaunchScript } from './viewer-trouble-chart-launch';
 import { getTroubleChartRenderScript } from './viewer-trouble-chart-render';
+import { troubleValidLevels } from '../../modules/config/trouble-level-constants';
 
 /** Embedded webview JavaScript for the Trouble Mode severity chart. */
 export function getTroubleChartScript(): string {
+    // Canonical stacking order injected at build time so chart and constants agree.
+    const orderJson = JSON.stringify([...troubleValidLevels]);
     // The launch-line scan and the bar/legend/axis builders are prepended, not imported at
     // runtime: every viewer script is concatenated into one page scope, so troubleChartLaunchTs()
     // and troubleChartPlotHtml() are simply in scope below (all render calls happen post-load).
     return getTroubleChartLaunchScript() + getTroubleChartRenderScript() + /* javascript */ `
+/* Canonical stacking order for chart bars and legend chips (source of truth:
+   trouble-level-constants.ts). Only levels present in TROUBLE_LEVELS are drawn. */
+var TROUBLE_CHART_LEVEL_ORDER = ${orderJson};
 /* Seconds per tumbling window; overwritten by the host 'setTroubleChartInterval'
    message (saropaLogCapture.troubleMode.chartInterval). Clamped 1..60. */
 var troubleChartIntervalSec = 5;
@@ -110,8 +116,11 @@ function troubleChartScanLines(intervalMs) {
         if (typeof ts !== 'number' || !(ts > 0)) { continue; }
         var key = Math.floor(ts / intervalMs);
         var b = byKey[key];
-        if (!b) { b = byKey[key] = { key: key, error: 0, warning: 0, performance: 0, firstLine: item.viewerLineIndex }; }
-        b[item.level]++;
+        if (!b) {
+            b = byKey[key] = { key: key, firstLine: item.viewerLineIndex };
+            for (var li = 0; li < TROUBLE_CHART_LEVEL_ORDER.length; li++) { b[TROUBLE_CHART_LEVEL_ORDER[li]] = 0; }
+        }
+        b[item.level] = (b[item.level] || 0) + 1;
         if (typeof item.viewerLineIndex === 'number' && (b.firstLine == null || item.viewerLineIndex < b.firstLine)) {
             b.firstLine = item.viewerLineIndex;
         }
@@ -122,12 +131,25 @@ function troubleChartScanLines(intervalMs) {
 
 /* Bucket allLines into the contiguous most-recent window slice, starting at the first real
    (post-app-ready) event. See troubleChartScanLines for the per-line scan. */
+/* Active TROUBLE_LEVELS keys, in canonical chart stack order. Rebuilt by
+   rebuildActiveChartLevels whenever setTroubleLevels replaces the set. */
+var activeChartLevels = troubleChartActiveLevels();
+function troubleChartActiveLevels() {
+    var out = [];
+    for (var i = 0; i < TROUBLE_CHART_LEVEL_ORDER.length; i++) {
+        if (TROUBLE_LEVELS[TROUBLE_CHART_LEVEL_ORDER[i]]) { out.push(TROUBLE_CHART_LEVEL_ORDER[i]); }
+    }
+    return out;
+}
+function rebuildActiveChartLevels() { activeChartLevels = troubleChartActiveLevels(); }
+
 function buildTroubleChartBuckets() {
     var intervalMs = troubleChartIntervalSec * 1000;
     var scan = troubleChartScanLines(intervalMs);
     var byKey = scan.byKey;
     var maxKey = scan.maxKey;
-    var totals = { error: 0, warning: 0, performance: 0 };
+    var totals = {};
+    for (var ti = 0; ti < activeChartLevels.length; ti++) { totals[activeChartLevels[ti]] = 0; }
     if (maxKey == null) { return { bins: [], maxTotal: 0, intervalMs: intervalMs, totals: totals, atAppStart: false }; }
     /* The chart shows EVERYTHING until the app-start boundary is known — the device's pre-app
        logcat backlog charts normally rather than being held behind a "waiting" state (a blank
@@ -155,10 +177,20 @@ function buildTroubleChartBuckets() {
        above, so the totals no longer count the device burst either. */
     for (var k = start; k <= maxKey; k++) {
         var hit = byKey[k];
-        var total = hit ? (hit.error + hit.warning + hit.performance) : 0;
+        var total = 0;
+        if (hit) {
+            for (var si = 0; si < activeChartLevels.length; si++) {
+                var lv = activeChartLevels[si];
+                total += hit[lv] || 0;
+                totals[lv] = (totals[lv] || 0) + (hit[lv] || 0);
+            }
+        }
         if (total > maxTotal) { maxTotal = total; }
-        if (hit) { totals.error += hit.error; totals.warning += hit.warning; totals.performance += hit.performance; }
-        bins.push(hit || { key: k, error: 0, warning: 0, performance: 0, firstLine: null });
+        if (!hit) {
+            hit = { key: k, firstLine: null };
+            for (var zi = 0; zi < activeChartLevels.length; zi++) { hit[activeChartLevels[zi]] = 0; }
+        }
+        bins.push(hit);
     }
     /* atAppStart: draw the green divider only when the left edge genuinely IS the app-start
        window. That needs BOTH a resolved boundary (launchTs > 0) AND the cap not having pushed
