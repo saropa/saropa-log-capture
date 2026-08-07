@@ -105,8 +105,9 @@ function buildHtml(params: FlowMapPanelParams, nonce: string): string {
         screenshots: params.screenshots, screenshotsOmitted: params.screenshotsOmitted,
         suggestions: params.suggestions,
     });
-    // img-src data: only on the main report — thumbnails render here; the diagram-only pop-out below
-    // never includes the gallery, so its CSP stays unchanged.
+    // img-src data: — captures are embedded as data URIs, in the gallery AND on the diagram cards.
+    // The pop-out below needs the same allowance: it renders no gallery, but its diagram does carry
+    // thumbnails.
     const csp = `default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}'; img-src data:;`;
     const actions = '<div class="topbar-actions">'
         + iconButton('showlog-fm', t('flowMap.showLogBtn'), LOG_SVG)
