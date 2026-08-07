@@ -31,7 +31,7 @@ suite('FlowMap Replay button', () => {
         // The replay preview pairs figure ↔ node by exact key equality, so the figure's attribute
         // must use the SAME normalization the builder applies to node keys (lowercase, collapsed).
         const shot: FlowShot = {
-            dataUri: 'data:image/png;base64,AA==', clock: '08:00:02', trigger: 'nav',
+            src: 'file:///shots/a.png', clock: '08:00:02', trigger: 'nav',
             logLine: 3, screenLabel: 'Home', text: 'capture',
         };
         const body = buildFlowMapBody(parseLog(FIXTURE), graph, undefined, {
@@ -43,7 +43,7 @@ suite('FlowMap Replay button', () => {
 
     test('a shot with no screen label renders a figure without a screen key', () => {
         const shot: FlowShot = {
-            dataUri: 'data:image/png;base64,AA==', clock: '08:00:02', trigger: 'manual',
+            src: 'file:///shots/a.png', clock: '08:00:02', trigger: 'manual',
             logLine: 0, screenLabel: undefined, text: 'manual capture',
         };
         const body = buildFlowMapBody(parseLog(FIXTURE), graph, undefined, {

@@ -29,6 +29,8 @@ cspell:disable
 
 ### Fixed
 
+- Flow map: screenshot thumbnails on the diagram cards rendered as empty frames — captures are now referenced from disk instead of being embedded in the panel, which drops a screenshot-heavy report from megabytes of markup to a few kilobytes and lets each capture load on its own
+- Flow map: a short session no longer fans out across the screen — terminal crash cards stack in a column beside the walk rather than sitting side by side in it, and any genuinely wide row of sibling screens wraps instead of widening the canvas (a real four-step session measured 1272px wide before, 456px after)
 - l10n: 25 untranslated trouble-chart legend and flow-map strings filled across 10 locales (DB, Debug, TODO, Screenshot, Trigger); all locales now at 100% coverage
 
 <details>
