@@ -25,7 +25,10 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.3.8]
+
+Introduces quality-of-life improvements to the Logs panel by collapsing older logs and simplifying severity counts to reduce visual clutter. Trouble Mode also gains an auto-activation setting, customizable severity filters, and a new quick-jump button to locate initial errors faster. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.8/CHANGELOG.md)
+
 
 ### Added
 
@@ -35,6 +38,11 @@ cspell:disable
 - Trouble chart: "First error" button in the header jumps to the first error after app start
 - Setting `troubleMode.openOnLoad`: auto-activate Trouble Mode when a log opens; suppresses the smart bookmark modal since Trouble Mode already surfaces errors
 - Setting `troubleMode.levels`: choose which severity levels survive the Trouble Mode filter (default: error, warning, performance); changes apply live without reopening the log
+- Command palette: "Trouble Mode — Errors Only" and "Trouble Mode — Reset Levels" for quick preset switching
+
+### Changed
+
+- Trouble Mode level constants (valid set + defaults) consolidated into a single source of truth (`trouble-level-constants.ts`) shared by config reader, load handler, and webview initialisation
 
 ### Fixed
 
