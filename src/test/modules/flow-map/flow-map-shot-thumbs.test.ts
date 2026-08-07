@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import { groupShotsByScreen, pickThumbShot, THUMB_BLOCK_H } from '../../../modules/flow-map/flow-map-svg-shots';
-import { joinShotsToScreens, type ShotWithDataUri } from '../../../modules/flow-map/flow-map-screenshots';
+import { joinShotsToScreens, type ShotWithSource } from '../../../modules/flow-map/flow-map-screenshots';
 import { renderSvg } from '../../../modules/flow-map/flow-map-svg';
 import { buildFlowDiagramBody, buildFlowMapBody } from '../../../modules/flow-map/flow-map-html';
 import { parseLog } from '../../../modules/flow-map/flow-map-log-parser';
@@ -11,13 +11,13 @@ const HEAD = ['=== SAROPA LOG CAPTURE — SESSION START ===', 'Project:        d
 const nav = (clock: string, name: string) => `[${clock}.000] [console] [log] Screen Navigation: ${name}`;
 const LINES = [...HEAD, nav('08:00:01', 'Home'), nav('08:00:05', 'Contact View')];
 
-/** A minimal sidecar+dataUri entry, defaults chosen so tests only set what they're asserting on. */
-function shot(logLine: number, overrides: Partial<ShotWithDataUri> = {}): ShotWithDataUri {
-    return { trigger: 'error', timestamp: 0, logLine, text: 'boom', dataUri: 'data:image/png;base64,AA==', ...overrides };
+/** A minimal sidecar+source entry, defaults chosen so tests only set what they're asserting on. */
+function shot(logLine: number, overrides: Partial<ShotWithSource> = {}): ShotWithSource {
+    return { trigger: 'error', timestamp: 0, logLine, text: 'boom', src: 'file:///shots/a.png', ...overrides };
 }
 
 /** Parse the fixture and join `entries` to the screens they were captured on. */
-function fixture(entries: readonly ShotWithDataUri[]) {
+function fixture(entries: readonly ShotWithSource[]) {
     const parsed = parseLog(LINES);
     const graph = buildGraph(parsed);
     return { parsed, graph, shots: joinShotsToScreens(entries, parsed.events) };
@@ -102,7 +102,7 @@ suite('FlowMap diagram screenshot thumbnails', () => {
             const { graph, shots } = fixture([shot(3)]);
             const svg = renderSvg(graph, shots);
             assert.ok(svg.includes('class="fm-shot"'), 'thumbnail image present');
-            assert.ok(svg.includes('href="data:image/png;base64,AA=="'), 'embeds the capture data URI');
+            assert.ok(svg.includes('href="file:///shots/a.png"'), 'references the capture by URL');
         });
 
         test('should draw no thumbnail when the session has no captures', () => {
@@ -127,12 +127,12 @@ suite('FlowMap diagram screenshot thumbnails', () => {
 
         test('should draw the error capture and flag the pill when a screen faulted', () => {
             const { graph, shots } = fixture([
-                shot(3, { trigger: 'nav', dataUri: 'data:image/png;base64,NAV=' }),
-                shot(3, { trigger: 'error', dataUri: 'data:image/png;base64,ERR=' }),
+                shot(3, { trigger: 'nav', src: 'file:///shots/nav.png' }),
+                shot(3, { trigger: 'error', src: 'file:///shots/err.png' }),
             ]);
             const svg = renderSvg(graph, shots);
-            assert.ok(svg.includes('href="data:image/png;base64,ERR="'), 'the fault capture is the thumbnail');
-            assert.ok(!svg.includes('base64,NAV='), 'the nav capture is not also embedded');
+            assert.ok(svg.includes('href="file:///shots/err.png"'), 'the fault capture is the thumbnail');
+            assert.ok(!svg.includes('nav.png'), 'the nav capture is not also referenced');
             assert.ok(svg.includes('fm-shot-pill-alert'), 'the pill carries the fault tint');
             assert.ok(svg.includes('data-shot-index="2"'), 'the lightbox counter reports its real position');
         });
@@ -151,7 +151,7 @@ suite('FlowMap diagram screenshot thumbnails', () => {
             assert.ok(!/fm-shot-pill-(alert|warn)/.test(svg), 'but not tinted');
         });
 
-        test('should embed only ONE capture per screen, not every one', () => {
+        test('should reference only ONE capture per screen, not every one', () => {
             const { graph, shots } = fixture([shot(3), shot(3), shot(3)]);
             const svg = renderSvg(graph, shots);
             assert.strictEqual(svg.split('class="fm-shot"').length - 1, 1, 'one thumbnail per screen');
@@ -178,13 +178,13 @@ suite('FlowMap diagram screenshot thumbnails', () => {
             assert.ok(!buildFlowDiagramBody(graph).includes('fm-shot'), 'and none when no captures are passed');
         });
 
-        test('should escape the data URI identically on both surfaces', () => {
+        test('should escape the image URL identically on both surfaces', () => {
             // The diagram thumbnail and the gallery figure render the SAME value; divergent escaping
             // is how one surface ends up with a broken attribute the other does not.
-            const { parsed, graph, shots } = fixture([shot(3, { dataUri: 'data:image/png;base64,A"B' })]);
+            const { parsed, graph, shots } = fixture([shot(3, { src: 'file:///shots/a"b.png' })]);
             const html = buildFlowMapBody(parsed, graph, undefined, { screenshots: shots, screenshotsOmitted: 0 });
-            assert.ok(!/src="data:image\/png;base64,A"B"/.test(html), 'gallery escapes the quote');
-            assert.ok(html.includes('base64,A&quot;B'), 'both surfaces emit the escaped form');
+            assert.ok(!/src="file:\/\/\/shots\/a"b\.png"/.test(html), 'gallery escapes the quote');
+            assert.ok(html.includes('shots/a&quot;b.png'), 'both surfaces emit the escaped form');
         });
 
         test('should open the lightbox from a gallery figure instead of jumping the log', () => {

@@ -9,22 +9,15 @@ import { buildReport } from './modules/flow-map/flow-map-report';
 import { scanProjectScreens } from './modules/flow-map/flow-map-source-scan';
 import { showFlowMapPanel, type FlowMapPanelParams } from './ui/panels/flow-map-panel';
 import { readScreenshotSidecar, screenshotDirUri } from './modules/screenshot/screenshot-store';
-import { joinShotsToScreens, shotBudgetVerdict, type ShotWithDataUri } from './modules/flow-map/flow-map-screenshots';
+import { joinShotsToScreens, type ShotWithSource } from './modules/flow-map/flow-map-screenshots';
 import { suggestBreadcrumbPatterns } from './modules/flow-map/flow-map-empty-diagnostic';
 
-/** Bound how many screenshots the webview embeds as data URIs — keeps panel HTML weight sane. */
-const MAX_REPORT_SHOTS = 12;
-
 /**
- * Second, independent bound: total base64 bytes the report may embed. The count cap alone assumes a
- * capture's size, and a device screenshotting at 3x can be an order of magnitude larger than the one
- * that cap was chosen against. Panel HTML is parsed synchronously by the webview, so weight here buys
- * a frozen panel, not a slow one — and nothing else measures it (`verify:dist-size` watches the
- * BUNDLE, not generated HTML). A captured screen's shown shot is embedded twice in the report (card
- * thumbnail + gallery figure), so the effective document weight is up to ~2x this number — a bound
- * that holds because no single capture may exceed the budget either (see `shotBudgetVerdict`).
+ * Bound how many screenshots the report renders. Captures are referenced by URL rather than embedded,
+ * so this is a readability cap on the gallery, not a weight cap on the document — a hundred figures
+ * is noise no reader scrolls through. The byte budget the data-URI era needed is gone with it.
  */
-const MAX_REPORT_SHOT_BYTES = 6 * 1024 * 1024;
+const MAX_REPORT_SHOTS = 12;
 
 /** The viewer surface the flow map drives to reveal log lines. */
 export interface FlowMapViewer {
@@ -50,12 +43,16 @@ function defaultReportUri(logUri: vscode.Uri): vscode.Uri {
 /** The report params minus `refresh` (the command supplies the refresh closure). */
 type ReportData = Omit<FlowMapPanelParams, 'refresh'>;
 
-/** Read one screenshot PNG and encode it as a data URI; undefined when the file is unreadable. */
-async function readShotDataUri(logFsPath: string, file: string): Promise<string | undefined> {
+/**
+ * The `file:` URI of one capture, or undefined when the PNG is gone. `stat` rather than `readFile`:
+ * the panel only needs a URL, and a missing capture must drop out quietly instead of rendering a
+ * broken-image box the reader cannot act on.
+ */
+async function resolveShotUri(logFsPath: string, file: string): Promise<string | undefined> {
+    const uri = vscode.Uri.joinPath(screenshotDirUri(logFsPath), file);
     try {
-        const uri = vscode.Uri.joinPath(screenshotDirUri(logFsPath), file);
-        const bytes = await vscode.workspace.fs.readFile(uri);
-        return `data:image/png;base64,${Buffer.from(bytes).toString('base64')}`;
+        await vscode.workspace.fs.stat(uri);
+        return uri.toString();
     } catch {
         // Non-fatal — a moved/deleted PNG just drops out of the gallery instead of failing the report.
         return undefined;
@@ -63,26 +60,20 @@ async function readShotDataUri(logFsPath: string, file: string): Promise<string 
 }
 
 /**
- * Load sidecar screenshots as data URIs and join them to the screen active at capture time. Stops at
- * whichever bound hits first — `MAX_REPORT_SHOTS` captures or `MAX_REPORT_SHOT_BYTES` of base64 — and
- * reports every entry it did not embed as `omitted`, so the gallery's "+N more" note stays truthful
- * however the budget was spent. Unreadable PNGs are skipped without consuming budget.
+ * Resolve sidecar screenshots to `file:` URIs and join them to the screen active at capture time.
+ * Every entry beyond `MAX_REPORT_SHOTS`, plus any whose PNG has vanished, is counted as `omitted` so
+ * the gallery's "+N more" note stays truthful.
+ *
+ * The panel rewrites each `src` to a webview URI before render — see `FlowShot.src`.
  */
-async function loadFlowShots(logFsPath: string): Promise<{ shots: ShotWithDataUri[]; omitted: number }> {
+async function loadFlowShots(logFsPath: string): Promise<{ shots: ShotWithSource[]; omitted: number }> {
     const entries = await readScreenshotSidecar(logFsPath);
     const capped = entries.slice(0, MAX_REPORT_SHOTS);
-    const withUris: ShotWithDataUri[] = [];
-    let bytes = 0;
+    const withUris: ShotWithSource[] = [];
     for (const entry of capped) {
-        const dataUri = await readShotDataUri(logFsPath, entry.file);
-        if (!dataUri) { continue; }
-        // Checked BEFORE pushing, so the budget is a ceiling on what ships rather than one the last
-        // capture is allowed to blow through. See `shotBudgetVerdict` for why skip and stop differ.
-        const verdict = shotBudgetVerdict(dataUri.length, bytes, MAX_REPORT_SHOT_BYTES);
-        if (verdict === 'stop') { break; }
-        if (verdict === 'skip') { continue; }
-        bytes += dataUri.length;
-        withUris.push({ ...entry, dataUri });
+        const src = await resolveShotUri(logFsPath, entry.file);
+        if (!src) { continue; }
+        withUris.push({ ...entry, src });
     }
     return { shots: withUris, omitted: Math.max(0, entries.length - withUris.length) };
 }
@@ -114,6 +105,9 @@ async function generateReport(logUri: vscode.Uri, revealLine: (line: number) => 
         revealLine,
         screenshots: joinShotsToScreens(shots, parsed.events),
         screenshotsOmitted: omitted,
+        // Always passed, even with no captures: the panel is reused across refreshes, so its resource
+        // root must follow the log currently shown rather than whichever log first had screenshots.
+        shotRoot: screenshotDirUri(logUri.fsPath),
         suggestions,
     };
 }
