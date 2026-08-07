@@ -63,19 +63,27 @@ export function flowMapStyles(nonce: string): string {
      alongside a tall diagram instead of being pushed below it. Wraps to one column when narrow.
      The gap is 0 here because the .col-resize divider supplies the visual gutter (and the drag
      target); a flex gap would otherwise double the space and split the hit area. */
-  .report-row { display: flex; flex-wrap: wrap; gap: 0; align-items: flex-start; }
+  /* stretch, not flex-start: each column owns its own scrollbar (below), and a column sized to its
+     content would scroll a box the height of that content instead of the height of the panel. */
+  .report-row { display: flex; flex-wrap: wrap; gap: 0; align-items: stretch; }
+  /* Height budget for a scrolling column: the viewport less the sticky topbar, title, and TOC. One
+     value both columns and the diagram's inner scroller derive from, so they can never disagree. */
+  .report-row { --report-vh: calc(100vh - 9.5rem); }
   /* Width is driven by --diagram-w (set by the resize drag); auto until the user drags.
      min-width is 20px (not the content width) so the user can drag the splitter to any ratio —
      each column crops what doesn't fit (overflow:hidden) instead of pinning the divider to the
      widest cell. 20px keeps a sliver of column under the gripper so it stays grabbable. */
-  .diagram-col { flex: 0 0 auto; width: var(--diagram-w, auto); min-width: 20px; max-width: 100%; overflow: hidden; }
-  .detail-col { flex: 1 1 420px; min-width: 20px; overflow: hidden; }
+  .diagram-col { flex: 0 0 auto; width: var(--diagram-w, auto); min-width: 20px; max-width: 100%; overflow: hidden; max-height: var(--report-vh); }
+  /* The detail column scrolls itself so a long issue table never drags the diagram off-screen; the
+     diagram column delegates to .diagram-scroll, which must keep the scrollbars zoom-panning needs. */
+  .detail-col { flex: 1 1 420px; min-width: 20px; overflow-y: auto; overflow-x: hidden; max-height: var(--report-vh); }
   .detail-col p { max-width: 60ch; }
   .diagram { position: relative; max-width: 100%; padding: 0.4rem 0 1rem; }
   /* The SVG lives in its own scroll box so zoom (which scales the SVG element's width/height) grows
      REAL scrollbars instead of clipping the chart, and margin:auto centers it when it is smaller
      than the box. The toolbar sits in .diagram (not the scroll box) so it stays pinned while panning. */
-  .diagram-scroll { overflow: auto; max-height: 78vh; }
+  /* Sits inside .diagram-col's height budget, less the section header and legend above it. */
+  .diagram-scroll { overflow: auto; max-height: calc(var(--report-vh, 78vh) - 4.5rem); }
   .diagram-scroll svg { display: block; margin: 0 auto; cursor: grab; touch-action: none; }
   .diagram-scroll.fm-panning svg { cursor: grabbing; }
   /* Pop-out panel: the diagram claims the full panel height. */
@@ -119,8 +127,14 @@ export function flowMapStyles(nonce: string): string {
   /* A fully-collapsed column has no content to resize against — hide the divider so it can't strand. */
   .report-row.no-resize .col-resize { pointer-events: none; }
   .report-row.no-resize .col-resize::before { opacity: 0.4; }
-  /* Single-column (wrapped) layout: the divider is meaningless, so it folds away. */
-  @media (max-width: 720px) { .col-resize { display: none; } .diagram-col { width: auto; } }
+  /* Single-column (wrapped) layout: the divider is meaningless, so it folds away — and the per-column
+     scrollers go with it, because stacked columns each capped at a viewport height would make the
+     reader scroll two boxes to reach the bottom of one page. The page scrolls instead. */
+  @media (max-width: 720px) {
+    .col-resize { display: none; }
+    .diagram-col { width: auto; }
+    .diagram-col, .detail-col { max-height: none; overflow: visible; }
+  }
 
   /* Sortable headers (Issue Report): a chevron fades in on hover; the active sort key shows its
      direction persistently. Cursor + user-select make the click target read as interactive. */

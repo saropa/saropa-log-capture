@@ -7,7 +7,7 @@
  * second capture of the same screen adds no information, so the extra ones stay in the gallery and
  * the lightbox.
  *
- * The `href` is a `webview.asWebviewUri(...)` URL, not a base64 data URI: the PNGs sit on disk beside
+ * The image source is a `webview.asWebviewUri(...)` URL, not a base64 data URI: the PNGs sit on disk beside
  * the log, so referencing them keeps the panel document a few KB instead of megabytes and lets
  * Chromium load and cache each capture independently. It also means the diagram and the gallery
  * figure of the same capture share ONE fetch rather than shipping the bytes twice.
@@ -104,18 +104,30 @@ function countPill(x: number, y: number, count: number, cls: string): string {
 export function shotDataAttrs(shot: FlowShot, index: number, total: number): string {
     return ` data-shot-clock="${esc(shot.clock)}" data-shot-trigger="${esc(shot.trigger)}"`
         + ` data-shot-screen="${esc(stripAnsi(shot.screenLabel ?? ''))}"`
+        // The on-disk path, not the fetch URL: the lightbox shows the filename and copies this whole
+        // string, which is what a reader pastes into a terminal or a bug report.
+        + ` data-shot-path="${esc(shot.path)}"`
         + ` data-shot-line="${shot.logLine}" data-shot-index="${index}" data-shot-total="${total}"`;
 }
+
+/** The XHTML namespace a `<foreignObject>` child must declare to survive XML parsing. */
+const XHTML_NS = 'http://www.w3.org/1999/xhtml';
 
 /**
  * The thumbnail block for one node: framed capture + optional count pill. `x`/`y` are the node box's
  * top-left. Returns '' when the screen has no captures, so callers can concatenate unconditionally.
  *
- * `xMidYMin slice` fills the frame and crops from the BOTTOM: a phone capture's identifying chrome
- * (app bar, screen title) lives at the top, so keeping the top edge makes the screen recognizable at
- * 148px where a letterboxed "meet" fit would be a sliver with dead space either side. The frame's
- * portrait aspect assumes phone captures; a landscape or tablet capture crops harder, which is a
- * legibility trade, not a defect.
+ * The capture is an HTML `<img>` inside a `<foreignObject>`, NOT an SVG `<image>`. Field evidence
+ * (2026-08-07): with both surfaces rendering the same webview URLs in the same document under the
+ * same CSP, the gallery's `<img>` figures painted and the diagram's `<image>` thumbnails did not —
+ * so the element, not the resource loading, was the failure. The gallery element is the one with
+ * proof behind it, so the diagram uses it too.
+ *
+ * `object-fit: cover` + `object-position: top` (in the stylesheet) reproduces what
+ * `preserveAspectRatio="xMidYMin slice"` did: fill the frame and crop from the BOTTOM, because a
+ * phone capture's identifying chrome (app bar, screen title) lives at the top and a letterboxed fit
+ * would be a sliver with dead space either side at 148px. The portrait frame assumes phone captures;
+ * a landscape or tablet capture crops harder, which is a legibility trade, not a defect.
  */
 export function thumbMarkup(x: number, y: number, shots: readonly FlowShot[]): string {
     const picked = pickThumbShot(shots);
@@ -128,15 +140,18 @@ export function thumbMarkup(x: number, y: number, shots: readonly FlowShot[]): s
     // without the clock and trigger the reader has no way to tell which one they are looking at.
     // Same `clock · trigger · screen` wording (and same untranslated trigger word) as the gallery
     // caption, so the two surfaces describe one capture identically.
-    const title = `<title>${esc(shot.clock)} · ${esc(shot.trigger)} · ${label}</title>`;
-    return `<image class="fm-shot" x="${tx}" y="${ty}" width="${THUMB_W}" height="${THUMB_H}" `
-        + `preserveAspectRatio="xMidYMin slice" href="${esc(shot.src)}" role="button" tabindex="0" `
+    const title = esc(`${shot.clock} · ${shot.trigger} · ${stripAnsi(shot.screenLabel ?? shot.trigger)}`);
+    return `<foreignObject x="${tx}" y="${ty}" width="${THUMB_W}" height="${THUMB_H}">`
+        + `<img xmlns="${XHTML_NS}" class="fm-shot" src="${esc(shot.src)}" role="button" tabindex="0" `
+        + `title="${title}" alt="${label}" `
         // data-shot-scope="screen": this thumbnail's index/total count THIS SCREEN's captures, while a
         // gallery figure's count the whole session's. Same attributes, different denominator — the
         // lightbox picks its wording from the scope so "1 of 3" never silently means two things. The
         // index is the SHOWN capture's position, which is not always the first one (see pickThumbShot).
-        + `aria-label="${label}"${shotDataAttrs(shot, index + 1, shots.length)} data-shot-scope="screen">`
-        + `${title}</image>`
+        + `aria-label="${label}"${shotDataAttrs(shot, index + 1, shots.length)} data-shot-scope="screen"/>`
+        + `</foreignObject>`
+        // Drawn AFTER the foreignObject so the hairline frame sits on top of the capture, and kept as
+        // SVG so it scales with the diagram's zoom exactly like every other stroke.
         + `<rect class="fm-shot-frame" x="${tx}" y="${ty}" width="${THUMB_W}" height="${THUMB_H}" rx="4" `
         + `fill="none" stroke-width="1"/>`
         + countPill(tx, ty, shots.length, pillClass(shot.trigger));

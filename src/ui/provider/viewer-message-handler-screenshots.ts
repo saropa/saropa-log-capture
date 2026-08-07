@@ -83,7 +83,11 @@ async function postScreenshotList(ctx: ViewerMessageContext): Promise<void> {
     if (!ctx.currentFileUri) { return; }
     const logFsPath = ctx.currentFileUri.fsPath;
     const screenshots = await readScreenshotSidecar(logFsPath);
-    ctx.post({ type: 'screenshotList', logFsPath, screenshots });
+    // The capture directory rides along so the popover can show a reader the FULL path of the PNG
+    // it is previewing. The sidecar stores bare filenames, and a filename alone is not something the
+    // reader can act on — they need the path to open, copy, or attach the file.
+    const dir = screenshotDirUri(logFsPath).fsPath;
+    ctx.post({ type: 'screenshotList', logFsPath, dir, screenshots });
 }
 
 /** Resolve a sidecar-relative PNG name against the current log, rejecting traversal. */

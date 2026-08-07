@@ -44,15 +44,18 @@ function defaultReportUri(logUri: vscode.Uri): vscode.Uri {
 type ReportData = Omit<FlowMapPanelParams, 'refresh'>;
 
 /**
- * The `file:` URI of one capture, or undefined when the PNG is gone. `stat` rather than `readFile`:
- * the panel only needs a URL, and a missing capture must drop out quietly instead of rendering a
- * broken-image box the reader cannot act on.
+ * Locate one capture on disk, or undefined when the PNG is gone. `stat` rather than `readFile`: the
+ * panel only needs a URL, and a missing capture must drop out quietly instead of rendering a
+ * broken-image box the reader cannot act on. Both forms travel on: `src` is what the sandbox fetches
+ * (after the panel rewrites it), `path` is what the reader copies.
  */
-async function resolveShotUri(logFsPath: string, file: string): Promise<string | undefined> {
+async function resolveShotFile(
+    logFsPath: string, file: string,
+): Promise<{ src: string; path: string } | undefined> {
     const uri = vscode.Uri.joinPath(screenshotDirUri(logFsPath), file);
     try {
         await vscode.workspace.fs.stat(uri);
-        return uri.toString();
+        return { src: uri.toString(), path: uri.fsPath };
     } catch {
         // Non-fatal — a moved/deleted PNG just drops out of the gallery instead of failing the report.
         return undefined;
@@ -71,9 +74,9 @@ async function loadFlowShots(logFsPath: string): Promise<{ shots: ShotWithSource
     const capped = entries.slice(0, MAX_REPORT_SHOTS);
     const withUris: ShotWithSource[] = [];
     for (const entry of capped) {
-        const src = await resolveShotUri(logFsPath, entry.file);
-        if (!src) { continue; }
-        withUris.push({ ...entry, src });
+        const found = await resolveShotFile(logFsPath, entry.file);
+        if (!found) { continue; }
+        withUris.push({ ...entry, ...found });
     }
     return { shots: withUris, omitted: Math.max(0, entries.length - withUris.length) };
 }

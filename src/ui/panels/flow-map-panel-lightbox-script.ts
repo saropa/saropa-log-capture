@@ -10,6 +10,8 @@
  * the log viewer out from under the reader.
  */
 
+import { flowMapLightboxZoomJs } from './flow-map-panel-lightbox-zoom';
+
 /** Labels the overlay renders, resolved host-side so the webview needs no l10n runtime. */
 export interface LightboxLabels {
     readonly title: string;
@@ -22,6 +24,12 @@ export interface LightboxLabels {
     readonly counter: string;
     /** Position within one screen's captures — used by diagram thumbnails (data-shot-scope="screen"). */
     readonly counterScreen: string;
+    /** Row label for the capture's filename. */
+    readonly file: string;
+    /** Copy-button tooltip — copies the FULL path, not the filename shown beside it. */
+    readonly copyPath: string;
+    readonly zoom: string;
+    readonly zoomHint: string;
 }
 
 /** The full `<script>` block wiring the screenshot lightbox, nonce-guarded for CSP. */
@@ -30,6 +38,7 @@ export function flowMapLightboxScript(nonce: string, labels: LightboxLabels): st
   var L = ${JSON.stringify(labels)};
   var overlay = null;
   var opener = null;
+${flowMapLightboxZoomJs()}
 
   function close(){
     if (overlay) { overlay.remove(); overlay = null; }
@@ -70,6 +79,35 @@ export function flowMapLightboxScript(nonce: string, labels: LightboxLabels): st
     grid.appendChild(vd);
   }
 
+  /* Filename plus a copy button for the FULL path. The filename alone is what identifies a capture
+     at a glance (001_error_….png); the path is what gets pasted somewhere, and is too long to read
+     inline in a facts grid, so it travels on the button instead of on screen. */
+  function addPathRow(grid, path){
+    if (!path) { return; }
+    var kd = document.createElement('div');
+    kd.className = 'fms-k';
+    kd.textContent = L.file;
+    var vd = document.createElement('div');
+    vd.className = 'fms-v fms-path';
+    var name = document.createElement('span');
+    name.className = 'fms-file';
+    name.title = path;
+    name.textContent = path.split(/[\\\\/]/).pop() || path;
+    var copy = document.createElement('button');
+    copy.type = 'button';
+    copy.className = 'fms-copy';
+    copy.title = L.copyPath;
+    copy.setAttribute('aria-label', L.copyPath);
+    copy.textContent = '⧉';
+    copy.addEventListener('click', function(){
+      if (window.__fmSend) { window.__fmSend('copyShotPath', { text: path }); }
+    });
+    vd.appendChild(name);
+    vd.appendChild(copy);
+    grid.appendChild(kd);
+    grid.appendChild(vd);
+  }
+
   function addLogRow(grid, line){
     if (!line || line <= 0) { return; }
     var kd = document.createElement('div');
@@ -101,6 +139,39 @@ export function flowMapLightboxScript(nonce: string, labels: LightboxLabels): st
     return tpl.replace('{0}', i).replace('{1}', n);
   }
 
+  /* The zoom strip under the capture: a reset-to-fit button, the slider, and the live percentage.
+     Built here (not in the zoom module) so the module stays behavior-only and this file keeps every
+     piece of the dialog's DOM in one place. */
+  function zoomBar(stage, img){
+    var bar = document.createElement('div');
+    bar.className = 'fms-zoombar';
+    var fit = document.createElement('button');
+    fit.type = 'button';
+    fit.className = 'fms-zoom-fit';
+    fit.title = L.zoom;
+    fit.textContent = '⧉';
+    fit.addEventListener('click', zoomReset);
+    var label = document.createElement('span');
+    label.className = 'fms-k';
+    label.textContent = L.zoom;
+    var slider = document.createElement('input');
+    slider.type = 'range';
+    slider.className = 'fms-zoom-range';
+    slider.min = '25';
+    slider.max = '800';
+    slider.value = '100';
+    slider.title = L.zoomHint;
+    slider.setAttribute('aria-label', L.zoom);
+    var pct = document.createElement('span');
+    pct.className = 'fms-zoom-pct';
+    bar.appendChild(fit);
+    bar.appendChild(label);
+    bar.appendChild(slider);
+    bar.appendChild(pct);
+    zoomAttach(stage, img, slider, pct);
+    return bar;
+  }
+
   function open(el, src){
     close();
     // Captured BEFORE the overlay steals focus, so close() can hand it back to the exact thumbnail.
@@ -118,18 +189,25 @@ export function flowMapLightboxScript(nonce: string, labels: LightboxLabels): st
     closeBtn.setAttribute('aria-label', L.close);
     closeBtn.textContent = '✕';
     closeBtn.addEventListener('click', close);
+    // The image lives in its own scroll box: once zoomed past the card it must scroll, not overflow
+    // the dialog (which would put the facts grid out of reach behind the capture).
+    var stage = document.createElement('div');
+    stage.className = 'fms-stage';
     var img = document.createElement('img');
     img.className = 'fms-img';
     img.src = src;
     img.alt = el.getAttribute('data-shot-screen') || L.title;
+    stage.appendChild(img);
     var grid = document.createElement('div');
     grid.className = 'fms-grid';
     addRow(grid, L.screen, el.getAttribute('data-shot-screen'));
     addRow(grid, L.captured, el.getAttribute('data-shot-clock'));
     addRow(grid, L.trigger, el.getAttribute('data-shot-trigger'));
+    addPathRow(grid, el.getAttribute('data-shot-path'));
     addLogRow(grid, parseInt(el.getAttribute('data-shot-line') || '0', 10));
     card.appendChild(closeBtn);
-    card.appendChild(img);
+    card.appendChild(stage);
+    card.appendChild(zoomBar(stage, img));
     var count = counterText(el);
     if (count) {
       var cd = document.createElement('div');
@@ -159,12 +237,10 @@ export function flowMapLightboxScript(nonce: string, labels: LightboxLabels): st
     el.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') { activate(e); } });
   }
 
-  document.querySelectorAll('img.shot-img').forEach(function(img){
+  // Both surfaces are plain <img> now — the diagram's lives inside a <foreignObject> (see
+  // thumbMarkup), so one selector and one src accessor cover the gallery and the cards alike.
+  document.querySelectorAll('img.shot-img, img.fm-shot').forEach(function(img){
     bind(img, function(){ return img.src; });
-  });
-  // SVG <image> exposes its URL through the href/xlink:href attribute, not .src.
-  document.querySelectorAll('image.fm-shot').forEach(function(im){
-    bind(im, function(){ return im.getAttribute('href') || im.getAttribute('xlink:href') || ''; });
   });
 
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && overlay) { close(); } });

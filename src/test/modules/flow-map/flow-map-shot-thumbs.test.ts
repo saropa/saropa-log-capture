@@ -13,7 +13,10 @@ const LINES = [...HEAD, nav('08:00:01', 'Home'), nav('08:00:05', 'Contact View')
 
 /** A minimal sidecar+source entry, defaults chosen so tests only set what they're asserting on. */
 function shot(logLine: number, overrides: Partial<ShotWithSource> = {}): ShotWithSource {
-    return { trigger: 'error', timestamp: 0, logLine, text: 'boom', src: 'file:///shots/a.png', ...overrides };
+    return {
+        trigger: 'error', timestamp: 0, logLine, text: 'boom',
+        src: 'file:///shots/a.png', path: 'D:\shots\a.png', ...overrides,
+    };
 }
 
 /** Parse the fixture and join `entries` to the screens they were captured on. */
@@ -102,7 +105,7 @@ suite('FlowMap diagram screenshot thumbnails', () => {
             const { graph, shots } = fixture([shot(3)]);
             const svg = renderSvg(graph, shots);
             assert.ok(svg.includes('class="fm-shot"'), 'thumbnail image present');
-            assert.ok(svg.includes('href="file:///shots/a.png"'), 'references the capture by URL');
+            assert.ok(svg.includes('src="file:///shots/a.png"'), 'references the capture by URL');
         });
 
         test('should draw no thumbnail when the session has no captures', () => {
@@ -128,10 +131,10 @@ suite('FlowMap diagram screenshot thumbnails', () => {
         test('should draw the error capture and flag the pill when a screen faulted', () => {
             const { graph, shots } = fixture([
                 shot(3, { trigger: 'nav', src: 'file:///shots/nav.png' }),
-                shot(3, { trigger: 'error', src: 'file:///shots/err.png' }),
+                shot(3, { trigger: 'error', src: 'file:///shots/err.png', path: '/shots/err.png' }),
             ]);
             const svg = renderSvg(graph, shots);
-            assert.ok(svg.includes('href="file:///shots/err.png"'), 'the fault capture is the thumbnail');
+            assert.ok(svg.includes('src="file:///shots/err.png"'), 'the fault capture is the thumbnail');
             assert.ok(!svg.includes('nav.png'), 'the nav capture is not also referenced');
             assert.ok(svg.includes('fm-shot-pill-alert'), 'the pill carries the fault tint');
             assert.ok(svg.includes('data-shot-index="2"'), 'the lightbox counter reports its real position');
@@ -167,7 +170,7 @@ suite('FlowMap diagram screenshot thumbnails', () => {
             // trigger on hover the reader cannot tell which one they are looking at.
             const { graph, shots } = fixture([shot(3, { trigger: 'nav' }), shot(3, { trigger: 'error' })]);
             const svg = renderSvg(graph, shots);
-            assert.ok(/<title>[^<]*·\s*error\s*·\s*Home<\/title>/.test(svg), 'names the trigger and screen');
+            assert.ok(/title="[^"]*·\s*error\s*·\s*Home"/.test(svg), 'names the trigger and screen');
             assert.ok(!svg.includes('· nav ·'), 'and not the capture that is NOT shown');
         });
 
@@ -210,6 +213,7 @@ suite('FlowMap diagram screenshot thumbnails', () => {
         const script = flowMapLightboxScript('abc123', {
             title: 'Screenshot', captured: 'Captured', trigger: 'Trigger', screen: 'Screen',
             logLine: 'Log line', close: 'Close', counter: '{0}/{1}', counterScreen: '{0}/{1} here',
+            file: 'File', copyPath: 'Copy full path', zoom: 'Zoom', zoomHint: 'Scroll to zoom',
         });
 
         test('should keep Tab inside the dialog and restore focus to the opener on close', () => {
@@ -228,6 +232,26 @@ suite('FlowMap diagram screenshot thumbnails', () => {
 
         test('should carry the nonce so the strict CSP admits the script', () => {
             assert.ok(script.startsWith('<script nonce="abc123">'), 'nonce-guarded');
+        });
+
+        test('should bind BOTH surfaces with one img selector', () => {
+            // The diagram thumbnail is an <img> inside a <foreignObject> now, not an SVG <image> —
+            // a stale 'image.fm-shot' selector would silently stop opening the lightbox from a card.
+            assert.ok(script.includes("'img.shot-img, img.fm-shot'"), 'gallery and card share the binder');
+            assert.ok(!script.includes('image.fm-shot'), 'no SVG-image selector left behind');
+        });
+
+        test('should copy the full path through its own message, not the summary copier', () => {
+            assert.ok(script.includes("'copyShotPath'"), 'dedicated message so the toast names the right thing');
+            assert.ok(script.includes('data-shot-path'), 'reads the path off the clicked capture');
+        });
+
+        test('should zoom on wheel and by slider, with a reset back to fit', () => {
+            assert.ok(script.includes('zoomAttach'), 'zoom is wired when the overlay opens');
+            assert.ok(/addEventListener\('wheel'/.test(script), 'scroll-to-zoom');
+            assert.ok(script.includes("slider.addEventListener('input'"), 'slider drives the same scale');
+            assert.ok(script.includes('zoomReset'), 'and fit is recoverable');
+            assert.ok(script.includes('passive: false'), 'wheel can preventDefault, so the page cannot scroll under it');
         });
     });
 });
