@@ -7,7 +7,8 @@
  */
 
 import type { FlowGraph, FlowNode, IssueEvent, ParsedLog, SourceAnchor } from './flow-map-model';
-import { screenKeyOf, type FlowShot } from './flow-map-screenshots';
+import type { FlowShot } from './flow-map-screenshots';
+import { screenshotsSectionHtml } from './flow-map-html-shots';
 import { anchorText, formatActions, formatDwellMs, nodeHasError, stripAnsi } from './flow-map-format';
 import { renderSvg } from './flow-map-svg';
 import { t } from '../../l10n';
@@ -164,31 +165,6 @@ function section(id: string, title: string, body: string): string {
     return `<details class="sec" id="${id}" open><summary>${title}</summary><div class="sec-body">${body}</div></details>`;
 }
 
-/** Truncate alt/caption text to a readable length without cutting mid-word where avoidable. */
-function truncate(s: string, max: number): string {
-    return s.length > max ? `${s.slice(0, max).trimEnd()}…` : s;
-}
-
-/** One screenshot figure: clickable thumbnail (reuses the log-reveal path) + a clock/trigger/screen caption. */
-function shotFigureHtml(shot: FlowShot): string {
-    const dataLine = shot.logLine > 0 ? ` data-line="${shot.logLine}"` : '';
-    // The replay preview pairs figures to diagram nodes by this key (matches the node's data-rowkey).
-    const keyAttr = shot.screenLabel
-        ? ` data-screen-key="${esc(screenKeyOf(stripAnsi(shot.screenLabel)))}"` : '';
-    const alt = esc(truncate(stripAnsi(shot.text), 80));
-    const screen = shot.screenLabel ? esc(stripAnsi(shot.screenLabel)) : '—';
-    const caption = `${esc(shot.clock)} · ${esc(shot.trigger)} · ${screen}`;
-    return `<figure class="shot-fig"${keyAttr}><img class="shot-img loglink" role="link" tabindex="0"${dataLine} `
-        + `src="${shot.dataUri}" alt="${alt}" title="${alt}"><figcaption class="shot-cap">${caption}</figcaption></figure>`;
-}
-
-/** Screenshot gallery body: a grid of figures plus an omitted-count note when the report capped the set. */
-function screenshotsSectionHtml(shots: readonly FlowShot[], omitted: number): string {
-    const grid = `<div class="shot-grid">${shots.map(shotFigureHtml).join('')}</div>`;
-    const more = omitted > 0 ? `<p class="shot-more">${esc(t('flowMap.shots.more', String(omitted)))}</p>` : '';
-    return grid + more;
-}
-
 /**
  * Localized section titles keyed by section id, emoji baked into the template (not translated).
  * Single source of truth shared by `tocHtml()` and the `section()` calls in `buildFlowMapBody()`.
@@ -248,15 +224,27 @@ function suggestBlockHtml(suggestions: readonly BreadcrumbSuggestion[]): string 
         + '</div>';
 }
 
+/** Everything the diagram block renders beyond the graph itself. Optional individually. */
+export interface FlowDiagramOptions {
+    /** Show the pop-out button. False inside the already-popped-out panel. */
+    readonly withPopout?: boolean;
+    /** Second line of the empty state, naming WHICH empty this is (see `emptyDetailFor`). */
+    readonly emptyDetail?: string;
+    /** Empty-state custom-rule suggestions mined from the log's own lines. */
+    readonly suggestions?: readonly BreadcrumbSuggestion[];
+    /** Session captures — each screen's first one becomes its node's thumbnail. */
+    readonly screenshots?: readonly FlowShot[];
+}
+
 /**
  * The diagram block: an overlay zoom/pan/fit toolbar (plus center-on-fault when a node faulted, and
  * an optional pop-out) over the SVG, which sits in a scroll container so zoom grows scrollbars and
  * the chart centers via margin:auto when it is smaller than the viewport. Glyphs are symbols (exempt
- * from l10n); titles are localized. `withPopout` is false inside the already-popped-out panel.
+ * from l10n); titles are localized. Options are an object, not positional parameters, because the
+ * set outgrew the project's 4-parameter limit once screenshots joined it.
  */
-export function flowDiagramHtml(
-    graph: FlowGraph, withPopout: boolean, emptyDetail = '', suggestions: readonly BreadcrumbSuggestion[] = [],
-): string {
+export function flowDiagramHtml(graph: FlowGraph, opts: FlowDiagramOptions = {}): string {
+    const { withPopout = false, emptyDetail = '', suggestions = [], screenshots = [] } = opts;
     // No nodes = nothing to draw or zoom. Say so instead of shipping an empty diagram — a log with
     // no navigation breadcrumbs (logcat-only captures, tooling runs) otherwise reads as broken.
     if (graph.nodes.length === 0) {
@@ -274,7 +262,8 @@ export function flowDiagramHtml(
         + (hasCrash ? btn('crash', '💥', t('flowMap.jumpToCrashBtn'), ' fm-zoom-crash') : '')
         + (withPopout ? btn('popout', '⤢', t('flowMap.popOutBtn')) : '')
         + '</div>';
-    return '<div class="diagram">' + zoomToolbar + '<div class="diagram-scroll">' + renderSvg(graph) + '</div></div>';
+    return '<div class="diagram">' + zoomToolbar
+        + '<div class="diagram-scroll">' + renderSvg(graph, screenshots) + '</div></div>';
 }
 
 /**
@@ -282,11 +271,9 @@ export function flowDiagramHtml(
  * empty graph — a key explaining walked/dashed/fault glyphs reads as broken beside a "no breadcrumbs"
  * note, since there are no glyphs to decode.
  */
-function legendAndDiagram(
-    graph: FlowGraph, withPopout: boolean, emptyDetail = '', suggestions: readonly BreadcrumbSuggestion[] = [],
-): string {
+function legendAndDiagram(graph: FlowGraph, opts: FlowDiagramOptions = {}): string {
     const legend = graph.nodes.length > 0 ? flowLegend() : '';
-    return legend + flowDiagramHtml(graph, withPopout, emptyDetail, suggestions);
+    return legend + flowDiagramHtml(graph, opts);
 }
 
 /**
@@ -301,9 +288,13 @@ function emptyDetailFor(parsed: ParsedLog): string {
         : t('flowMap.emptyNoClock');
 }
 
-/** Diagram-only body for the pop-out panel: the legend plus the full-area diagram, no tables/TOC. */
-export function buildFlowDiagramBody(graph: FlowGraph): string {
-    return '<div class="diagram-only">' + legendAndDiagram(graph, false) + '</div>';
+/**
+ * Diagram-only body for the pop-out panel: the legend plus the full-area diagram, no tables/TOC.
+ * Screenshots come through so the pop-out's cards carry the same thumbnails as the report's — its
+ * host must therefore allow `img-src data:` in the panel CSP, which the report already did.
+ */
+export function buildFlowDiagramBody(graph: FlowGraph, screenshots: readonly FlowShot[] = []): string {
+    return '<div class="diagram-only">' + legendAndDiagram(graph, { screenshots }) + '</div>';
 }
 
 /**
@@ -332,7 +323,10 @@ export function buildFlowMapBody(
     const screenshots = shots?.screenshots ?? [];
     const hasShots = screenshots.length > 0;
     const diagramCol = '<div class="diagram-col">'
-        + section('sec-flow', titles.flow, legendAndDiagram(graph, true, emptyDetailFor(parsed), shots?.suggestions ?? []))
+        + section('sec-flow', titles.flow, legendAndDiagram(graph, {
+            withPopout: true, emptyDetail: emptyDetailFor(parsed),
+            suggestions: shots?.suggestions ?? [], screenshots,
+        }))
         + '</div>';
     const shotsSection = hasShots
         ? section('sec-shots', titles.screenshots, screenshotsSectionHtml(screenshots, shots?.screenshotsOmitted ?? 0))
