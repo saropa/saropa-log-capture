@@ -56,7 +56,6 @@ export const stringsWebview: Record<string, string> = {
     // Trouble chart header button: scrolls to the first error after app launch.
     'viewer.troubleChart.jumpFirstError': 'First error',
     'viewer.troubleChart.jumpFirstError.title': 'Jump to the first error after app start',
-    'viewer.troubleChart.jumpFirstError.none': 'No errors found',
     // Crashlytics issue detail (rail + panel skeleton). {0}=event count, {1}=user count.
     'viewer.troubleCrashlytics.counts': '{0} events · {1} users',
     // Trouble Mode Signals band. count = per-row occurrence count; total = signals in the head; all = "See all" link.
