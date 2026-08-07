@@ -39,7 +39,7 @@ export function getTroubleChartStyles(): string {
     --tc-warning: #ff9800;
     --tc-performance: #9c27b0;
     --tc-database: #2196f3;
-    --tc-todo: #ffc107;
+    --tc-todo: #8bc34a;
     --tc-debug: #78909c;
     --tc-notice: #00acc1;
     display: none;
