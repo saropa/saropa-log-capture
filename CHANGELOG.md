@@ -43,10 +43,13 @@ Introduces quality-of-life improvements to the Logs panel by collapsing older lo
 - Flow map: screens that were captured now show the screenshot on the diagram card itself, with a count pill when a screen was captured more than once
 - Flow map: clicking any screenshot — a diagram card's thumbnail or a gallery figure — opens a lightbox with the capture at full size plus its screen, capture time, trigger, and a clickable log line
 - Flow map: the pop-out diagram carries the same screenshot thumbnails as the report
+- Flow map: a screen captured several times shows the capture that faulted — error first, then warning — instead of whichever came first, and the count pill takes that severity's tint
 
 ### Changed
 
 - Flow map: diagram nodes are now portrait "storyboard" cards (168px wide) instead of 236px landscape boxes, so a screenshot fits on the card at a recognizable size and more sibling screens fit per row
+- Flow map: the report now bounds embedded screenshots by total size (6 MB of image data) as well as count (12), and skips any single capture larger than the whole budget — a high-DPI screenshot can no longer freeze the panel it is embedded in
+- Flow map: the screenshot lightbox keeps keyboard focus inside itself and returns focus to the thumbnail that opened it
 
 - Trouble Mode level constants (valid set + defaults) consolidated into a single source of truth (`trouble-level-constants.ts`) shared by config reader, load handler, and webview initialisation
 - New `verify:trouble-levels` compile gate asserts `package.json` enum/default match the shared constants AND every valid level has a matching chart legend l10n key

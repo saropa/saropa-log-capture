@@ -2,6 +2,7 @@ import * as assert from 'assert';
 import { parseLog } from '../../../modules/flow-map/flow-map-log-parser';
 import { buildGraph } from '../../../modules/flow-map/flow-map-builder';
 import { buildFlowDiagramBody, buildFlowMapBody } from '../../../modules/flow-map/flow-map-html';
+import type { FlowShot } from '../../../modules/flow-map/flow-map-screenshots';
 
 /** Minimal walked session: enough for the diagram to render a real toolbar + at least one node. */
 const FIXTURE: readonly string[] = [
@@ -29,7 +30,7 @@ suite('FlowMap Replay button', () => {
     test('gallery figures carry the normalized screen key matching the node data-rowkey', () => {
         // The replay preview pairs figure ↔ node by exact key equality, so the figure's attribute
         // must use the SAME normalization the builder applies to node keys (lowercase, collapsed).
-        const shot = {
+        const shot: FlowShot = {
             dataUri: 'data:image/png;base64,AA==', clock: '08:00:02', trigger: 'nav',
             logLine: 3, screenLabel: 'Home', text: 'capture',
         };
@@ -41,7 +42,7 @@ suite('FlowMap Replay button', () => {
     });
 
     test('a shot with no screen label renders a figure without a screen key', () => {
-        const shot = {
+        const shot: FlowShot = {
             dataUri: 'data:image/png;base64,AA==', clock: '08:00:02', trigger: 'manual',
             logLine: 0, screenLabel: undefined, text: 'manual capture',
         };

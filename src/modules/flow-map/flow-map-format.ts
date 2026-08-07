@@ -15,6 +15,18 @@ export function stripAnsi(text: string): string {
     return text.replace(ANSI_RE, '');
 }
 
+/**
+ * R3 — the stable identity key for a screen label (lowercased, whitespace-collapsed, trimmed).
+ *
+ * THE single normalizer. The builder keys nodes with it and the screenshot join keys captures with
+ * it; the diagram pairs a card to its thumbnail by exact string equality of the two results. Two
+ * copies of this rule would let them drift, and drift fails SILENTLY — thumbnails would simply stop
+ * appearing, with no error anywhere to trace it by.
+ */
+export function normalizeScreenKey(label: string): string {
+    return label.toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
 /** Human dwell string: "brief" (<1s), "Ns" (<1min), else "~Nm". */
 export function formatDwellMs(ms: number): string {
     if (ms < 1000) {
