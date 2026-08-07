@@ -93,6 +93,8 @@
   "command.toggleSearchOverlay.title": "검색 전환",
   "command.toggleTrash.title": "Saropa Log Capture: 휴지통 표시 전환",
   "command.trashSession.title": "휴지통으로 이동",
+  "command.troubleModeErrorsOnly.title": "Saropa Log Capture: Trouble Mode — Errors Only",
+  "command.troubleModeResetLevels.title": "Saropa Log Capture: Trouble Mode — Reset Levels",
   "command.troubleModeToggle.title": "Toggle Trouble Mode",
   "config.accessibility.showCollapseDividerLabels.description": "Show the inline caption pill (for example \"─── 12 hidden lines · show ───\") on collapse divider rows — filtered gaps, peek brackets, and preview-mode stack trims. **Default on** — when off, the divider row still claims a few pixels of height with no visible text, leaving an unexplained gap between visible log lines. The pill renders as muted text at rest and brightens on hover.",
   "config.accessibility.showCollapseDividerLabels.title": "Accessibility: show collapse divider captions",

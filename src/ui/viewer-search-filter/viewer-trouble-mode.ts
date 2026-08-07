@@ -21,14 +21,20 @@
  * the next recalc — the same birth-height contract every other filter honors.
  */
 
+import { troubleDefaultLevels } from '../../modules/config/trouble-level-constants';
+
 /** Embedded webview JavaScript for the Trouble Mode zero-context filter. */
 export function getTroubleModeScript(): string {
+    // Build the default TROUBLE_LEVELS object from the shared constant so the
+    // webview initialisation and the host-side config reader agree on defaults.
+    const defaultObj = troubleDefaultLevels.map(l => `${l}: 1`).join(', ');
     return /* javascript */ `
 /* Levels that survive Trouble Mode. Default excludes 'database' and 'todo' —
    Drift SQL volume would drown the feed. Configurable via troubleMode.levels
    setting; the host pushes setTroubleLevels on load and on config change.
-   Signals/Crashlytics rows arrive as markers, which are never filtered. */
-var TROUBLE_LEVELS = { error: 1, warning: 1, performance: 1 };
+   Signals/Crashlytics rows arrive as markers, which are never filtered.
+   Source of truth: trouble-level-constants.ts (package.json enum must match). */
+var TROUBLE_LEVELS = { ${defaultObj} };
 var troubleModeActive = false;
 
 /* Read-only classifier shared with computeLineBirthHeight. Returns true when a
