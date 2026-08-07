@@ -159,6 +159,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     /* Trouble Mode chart window; 1–60s matches the setting min/max and the webview
        setTroubleChartInterval() guard. Default 5s. */
     troubleModeChartInterval: clamp(cfg.get("troubleMode.chartInterval"), 1, 60, 5),
+    troubleModeOpenOnLoad: ensureBoolean(cfg.get("troubleMode.openOnLoad"), false),
     logViewerVisualSpacing: ensureBoolean(cfg.get("logViewerVisualSpacing"), false),
     /* Default ON: when this rendered as off, preview-collapsed stack frames left a
        silent ~8px gap between visible rows (the .viewer-divider stayed in the DOM

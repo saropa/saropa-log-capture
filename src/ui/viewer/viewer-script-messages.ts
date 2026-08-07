@@ -194,6 +194,7 @@ window.addEventListener('message', function(event) {
         case 'triggerExpandAllSections': if (typeof expandAllSections === 'function') expandAllSections(); if (typeof window.__setAllSectionsCollapsed === 'function') window.__setAllSectionsCollapsed(false); break;
         case 'triggerToggleSearch': if (typeof toggleSearchPanel === 'function') toggleSearchPanel(); break;
         case 'triggerToggleTroubleMode': if (typeof toggleTroubleMode === 'function') toggleTroubleMode(); break;
+        case 'activateTroubleMode': if (typeof activateTroubleMode === 'function') activateTroubleMode(); break;
         case 'triggerGotoLine': if (typeof openGotoLine === 'function') openGotoLine(); break;
         case 'triggerExplainRootCauseHypotheses':
             if (typeof runTriggerExplainRootCauseHypothesesFromHost === 'function') runTriggerExplainRootCauseHypothesesFromHost();
