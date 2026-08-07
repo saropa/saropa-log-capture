@@ -33,6 +33,13 @@ export function getSessionRenderingScript(): string {
         if (sessionEmptyEl) sessionEmptyEl.style.display = 'none';
         if (typeof rebuildSessionTagChips === 'function') rebuildSessionTagChips(sessions);
         markLatestByName(sessions, applySessionDisplayOptions);
+        /* Prune collapsedDays keys that no longer match any session's date so the
+           map does not grow unboundedly over months of use. */
+        var liveDays = Object.create(null);
+        for (var pi = 0; pi < sessions.length; pi++) {
+            if (sessions[pi].mtime) liveDays[toDateKey(sessions[pi].mtime)] = true;
+        }
+        for (var dk in collapsedDays) { if (!(dk in liveDays)) delete collapsedDays[dk]; }
         var active = sessions.filter(function(s) { return !s.trashed; });
         /* Pinned rows are lifted out BEFORE any filter runs: a pin means "always keep this at the
            top of the list", so the date / size / name / tag filters must never hide it. They render
