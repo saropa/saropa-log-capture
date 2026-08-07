@@ -76,17 +76,17 @@ suite('FlowMap screenshots join (Phase E, plan 117)', () => {
             const shots = joinShotsToScreens([shot(2, { trigger: 'error' })], parsed.events);
             const html = buildFlowMapBody(parsed, graph, undefined, { screenshots: shots, screenshotsOmitted: 3 });
             assert.ok(html.includes('sec-shots'), 'renders the Screenshots section');
-            assert.ok(html.includes('data-line="2"'), 'thumbnail carries the log-line anchor');
+            assert.ok(html.includes('data-shot-line="2"'), 'thumbnail carries the log-line anchor');
             assert.ok(html.includes('shot-fig'), 'renders a figure per shot');
             assert.ok(/\+3 more/.test(html), 'renders the omitted-count note');
         });
 
-        test('should omit data-line for an unanchored (logLine 0) capture', () => {
+        test('should carry logLine 0 for an unanchored capture (the lightbox drops the log row)', () => {
             const parsed = parseLog(lines);
             const graph = buildGraph(parsed);
             const shots = joinShotsToScreens([shot(0)], parsed.events);
             const html = buildFlowMapBody(parsed, graph, undefined, { screenshots: shots, screenshotsOmitted: 0 });
-            assert.ok(!html.includes('data-line="0"'), 'no data-line attribute for an unanchored shot');
+            assert.ok(html.includes('data-shot-line="0"'), 'unanchored shot reports line 0, not a stale anchor');
         });
 
         test('should render nothing at all — no section, no TOC entry — when there are no screenshots', () => {

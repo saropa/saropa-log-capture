@@ -27,7 +27,7 @@ cspell:disable
 
 ## [9.3.8]
 
-Introduces quality-of-life improvements to the Logs panel by collapsing older logs and simplifying severity counts to reduce visual clutter. Trouble Mode also gains an auto-activation setting, customizable severity filters, and a new quick-jump button to locate initial errors faster. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.8/CHANGELOG.md)
+Introduces quality-of-life improvements to the Logs panel by collapsing older logs and simplifying severity counts to reduce visual clutter. Trouble Mode also gains an auto-activation setting, customizable severity filters, and a new quick-jump button to locate initial errors faster. The flow map now reads like a storyboard — captured screenshots appear on the diagram cards themselves, and any screenshot opens full size in a lightbox. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.8/CHANGELOG.md)
 
 
 ### Added
@@ -40,8 +40,13 @@ Introduces quality-of-life improvements to the Logs panel by collapsing older lo
 - Setting `troubleMode.levels`: choose which severity levels survive the Trouble Mode filter (default: error, warning, performance); changes apply live without reopening the log
 - Command palette: "Trouble Mode — Errors Only" and "Trouble Mode — Reset Levels" for quick preset switching
 - Trouble chart: bars and legend now dynamically bucket all configured severity levels instead of only error/warning/performance; chart rebuilds when `troubleMode.levels` changes
+- Flow map: screens that were captured now show the screenshot on the diagram card itself, with a count pill when a screen was captured more than once
+- Flow map: clicking any screenshot — a diagram card's thumbnail or a gallery figure — opens a lightbox with the capture at full size plus its screen, capture time, trigger, and a clickable log line
+- Flow map: the pop-out diagram carries the same screenshot thumbnails as the report
 
 ### Changed
+
+- Flow map: diagram nodes are now portrait "storyboard" cards (168px wide) instead of 236px landscape boxes, so a screenshot fits on the card at a recognizable size and more sibling screens fit per row
 
 - Trouble Mode level constants (valid set + defaults) consolidated into a single source of truth (`trouble-level-constants.ts`) shared by config reader, load handler, and webview initialisation
 - New `verify:trouble-levels` compile gate asserts `package.json` enum/default match the shared constants AND every valid level has a matching chart legend l10n key
