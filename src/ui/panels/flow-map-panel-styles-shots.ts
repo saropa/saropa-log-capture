@@ -7,9 +7,10 @@
 /** CSS text (no `<style>` wrapper) for diagram thumbnails and the screenshot lightbox. */
 export function flowMapShotStyles(): string {
     return `
-  /* Diagram card thumbnails: the capture fills a fixed frame (cropped from the bottom, see
-     thumbMarkup) with a hairline border so a pale screenshot still reads as a distinct panel. */
-  .fm-shot { cursor: pointer; }
+  /* Diagram card thumbnails: an HTML <img> inside a <foreignObject> (see thumbMarkup for why not an
+     SVG <image>), filling its frame and cropped from the BOTTOM — object-position:top is what keeps a
+     phone capture's identifying chrome, and is this element's equivalent of xMidYMin slice. */
+  .fm-shot { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top center; cursor: pointer; }
   .fm-shot:hover { filter: brightness(1.12); }
   /* A thumbnail is its own tab stop, so it needs its own visible focus ring — brightness alone is not
      a focus indicator (WCAG 2.4.7). Keep the default outline rather than suppressing it. */
@@ -35,8 +36,24 @@ export function flowMapShotStyles(): string {
      shows at the largest size that still leaves its facts visible. */
   .fms-overlay { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 1.2rem; background: rgba(0,0,0,0.62); }
   .fms-card { position: relative; display: flex; flex-direction: column; gap: 0.6rem; max-width: min(92vw, 900px); max-height: 92vh; overflow: auto; padding: 1.1rem 1.3rem; background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); }
-  /* min-height:0 lets the image shrink inside the flex column instead of overflowing the card. */
-  .fms-img { min-height: 0; max-width: 100%; max-height: 70vh; object-fit: contain; align-self: center; border: 1px solid var(--border); border-radius: var(--radius); background: rgba(0,0,0,0.25); }
+  /* The capture's scroll box. min-height:0 lets it shrink inside the flex column instead of pushing
+     the facts grid out of the card; once zoomed past the card the image scrolls in here. */
+  .fms-stage { min-height: 0; overflow: auto; display: flex; justify-content: center; align-items: flex-start; }
+  /* max-width/max-height are the FIT mode; the zoom script overrides all three inline (see
+     flow-map-panel-lightbox-zoom.ts) and never fights these because inline styles win. */
+  .fms-img { display: block; max-width: 100%; max-height: 70vh; object-fit: contain; border: 1px solid var(--border); border-radius: var(--radius); background: rgba(0,0,0,0.25); }
+  /* Zoom strip under the capture: reset-to-fit, slider, live percentage. */
+  .fms-zoombar { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85em; }
+  .fms-zoom-range { flex: 1 1 auto; min-width: 6rem; accent-color: var(--link); cursor: pointer; }
+  .fms-zoom-pct { min-width: 3.2rem; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .fms-zoom-fit { border: 1px solid var(--border); background: transparent; color: var(--text); border-radius: 4px; cursor: pointer; padding: 0.1rem 0.4rem; }
+  .fms-zoom-fit:hover { background: var(--vscode-toolbar-hoverBackground, rgba(127,127,127,0.18)); }
+  /* Filename row: the name reads inline, the full path rides on the copy button and the hover title —
+     an absolute Windows path inline would dominate a facts grid it is the least-read row of. */
+  .fms-path { display: flex; align-items: center; gap: 0.4rem; }
+  .fms-file { font-family: var(--vscode-editor-font-family); word-break: break-all; }
+  .fms-copy { flex: 0 0 auto; border: 1px solid var(--border); background: transparent; color: var(--muted); border-radius: 4px; cursor: pointer; padding: 0 0.35rem; line-height: 1.4; }
+  .fms-copy:hover { color: var(--text); background: var(--vscode-toolbar-hoverBackground, rgba(127,127,127,0.18)); }
   .fms-close { position: absolute; top: 0.5rem; right: 0.5rem; border: none; background: transparent; color: var(--muted); cursor: pointer; font-size: 1rem; padding: 0.15rem 0.4rem; border-radius: 5px; }
   .fms-close:hover { background: var(--vscode-toolbar-hoverBackground, rgba(127,127,127,0.18)); color: var(--text); }
   .fms-count { font-size: 0.85em; color: var(--muted); text-align: center; }
