@@ -38,10 +38,12 @@ BRAND_ONLY_STRINGS: frozenset[str] = frozenset({
 # locales (no mix of "OK" and "わかりました").
 ACRONYM_ONLY_STRINGS: frozenset[str] = frozenset({
     "ANR",   # Android: Application Not Responding
-    "SQL",
-    "OS",    # Operating System
+    "APP",   # badge label: application code
     "DB",    # Database
+    "FW",    # badge label: framework code
     "OK",    # universal confirm label
+    "OS",    # Operating System
+    "SQL",
     "TODO",  # source-code keyword
 })
 
