@@ -94,10 +94,26 @@ if (JSON.stringify(pkgDefault) !== JSON.stringify(tsDefault)) {
 	ok = false;
 }
 
+// Verify that every valid level has a matching l10n legend key in strings-webview.ts.
+// A missing key would render a raw key string in the chart legend instead of a label.
+const l10nFile = fs.readFileSync(
+	path.join(root, "src", "l10n", "strings-webview.ts"),
+	"utf8",
+);
+const missingL10n = tsValid.filter(
+	(lvl) => !l10nFile.includes(`'viewer.troubleChart.legend.${lvl}'`),
+);
+if (missingL10n.length > 0) {
+	console.error(
+		`ERROR: missing l10n legend keys in strings-webview.ts for: ${missingL10n.join(", ")}`,
+	);
+	ok = false;
+}
+
 if (!ok) {
 	process.exit(1);
 }
 
 console.log(
-	`verify:trouble-levels — OK (${tsValid.length} valid, ${tsDefault.length} default)`,
+	`verify:trouble-levels — OK (${tsValid.length} valid, ${tsDefault.length} default, ${tsValid.length} legend keys)`,
 );

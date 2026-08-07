@@ -44,7 +44,7 @@ Introduces quality-of-life improvements to the Logs panel by collapsing older lo
 ### Changed
 
 - Trouble Mode level constants (valid set + defaults) consolidated into a single source of truth (`trouble-level-constants.ts`) shared by config reader, load handler, and webview initialisation
-- New `verify:trouble-levels` compile gate asserts `package.json` enum and default match the shared constants
+- New `verify:trouble-levels` compile gate asserts `package.json` enum/default match the shared constants AND every valid level has a matching chart legend l10n key
 - Trouble Mode preset commands fall back to global config when no workspace is open
 - Trouble chart "todo" swatch changed from amber (#ffc107) to green (#8bc34a) for better contrast with the warning swatch
 - First-error scan extracted to `viewer-trouble-chart-first-error.ts` (chart file was over the 300-line limit)

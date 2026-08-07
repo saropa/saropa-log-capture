@@ -38,9 +38,11 @@ import { troubleValidLevels } from '../../modules/config/trouble-level-constants
 export function getTroubleChartScript(): string {
     // Canonical stacking order injected at build time so chart and constants agree.
     const orderJson = JSON.stringify([...troubleValidLevels]);
-    // The launch-line scan and the bar/legend/axis builders are prepended, not imported at
-    // runtime: every viewer script is concatenated into one page scope, so troubleChartLaunchTs()
-    // and troubleChartPlotHtml() are simply in scope below (all render calls happen post-load).
+    // Concatenation order matters: each module reads symbols the previous one defined.
+    // 1. launch  — defines troubleChartLaunchTs()
+    // 2. render  — reads launch helpers, defines troubleChartPlotHtml() etc.
+    // 3. first-error — reads troubleChartLaunchTs(), allLines
+    // 4. this file — reads all of the above + TROUBLE_LEVELS (from trouble-mode.ts)
     return getTroubleChartLaunchScript() + getTroubleChartRenderScript() + getTroubleChartFirstErrorScript() + /* javascript */ `
 /* Canonical stacking order for chart bars and legend chips (source of truth:
    trouble-level-constants.ts). Only levels present in TROUBLE_LEVELS are drawn. */
