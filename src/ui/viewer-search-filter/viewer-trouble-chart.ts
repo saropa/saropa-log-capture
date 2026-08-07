@@ -197,6 +197,7 @@ function renderTroubleChart() {
     if (data.bins.length === 0 || data.maxTotal === 0) {
         if (legend) { legend.innerHTML = ''; }
         renderTroubleChartPeak(0);
+        syncJumpFirstErrorButton();
         body.innerHTML = '<div class="tc-empty">' + vt('viewer.troubleChart.empty') + '</div>';
         return;
     }
@@ -204,6 +205,7 @@ function renderTroubleChart() {
        reason collapsing beats hiding. Only the plot's string building is skipped. */
     renderTroubleChartLegend(data.totals);
     renderTroubleChartPeak(data.maxTotal);
+    syncJumpFirstErrorButton();
     if (troubleChartCollapsed) { return; }
     body.innerHTML = troubleChartPlotHtml(troubleChartBarsHtml(data), data);
 }
@@ -265,20 +267,44 @@ function wireTroubleChartChips() {
     });
 }
 
+/* Find the 1-based viewer line number of the first error-level line after the app-start
+   boundary (or from line 0 when no boundary exists). Returns 0 when no error is found. */
+function findFirstErrorLineAfterLaunch() {
+    var launchTs = troubleChartLaunchTs();
+    for (var i = 0; i < allLines.length; i++) {
+        var item = allLines[i];
+        if (!item || item.type !== 'line' || item.level !== 'error') { continue; }
+        if (launchTs > 0 && item.timestamp > 0 && item.timestamp < launchTs) { continue; }
+        if (typeof item.viewerLineIndex === 'number') { return item.viewerLineIndex + 1; }
+    }
+    return 0;
+}
+
+/* Show/hide the "First error" button based on whether a post-launch error exists.
+   Called from renderTroubleChart so the button stays in sync with the chart data. */
+function syncJumpFirstErrorButton() {
+    var btn = document.getElementById('tc-jump-first-error');
+    if (!btn) { return; }
+    var line = findFirstErrorLineAfterLaunch();
+    btn.classList.toggle('u-hidden', line <= 0);
+}
+
 (function() {
     if (typeof document === 'undefined') { return; }
     var toggle = document.getElementById('trouble-chart-toggle');
     if (toggle) { toggle.addEventListener('click', toggleTroubleChartCollapsed); }
-    /* The title toggles too — a larger target than the caret. Only the title span, not the
-       whole head: the legend chips beside it own their level-filter click handlers. */
     var chartTitle = document.getElementById('trouble-chart-title');
     if (chartTitle) { chartTitle.addEventListener('click', toggleTroubleChartCollapsed); }
     wireTroubleChartChips();
+    var jumpBtn = document.getElementById('tc-jump-first-error');
+    if (jumpBtn) {
+        jumpBtn.addEventListener('click', function() {
+            var line = findFirstErrorLineAfterLaunch();
+            if (line > 0 && typeof scrollToLineNumber === 'function') { scrollToLineNumber(line); }
+        });
+    }
     var body = document.getElementById('trouble-chart-body');
     if (!body) { return; }
-    /* Delegated click: a bar carries the 1-based line number of its window's first
-       row; scrollToLineNumber jumps the feed there. Guarded — the goto-line script
-       owns the scroller. */
     body.addEventListener('click', function(e) {
         var g = e.target && e.target.closest ? e.target.closest('.tc-bar') : null;
         if (!g) { return; }

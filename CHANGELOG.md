@@ -31,6 +31,8 @@ cspell:disable
 
 - Logs panel: older day groups now collapse by default — only today's group starts expanded; clicking a heading still toggles, and explicit expand/collapse persists across reloads (plan 001 part A)
 - Logs panel: non-latest, non-active rows now show a single neutral line-count pill instead of the full severity breakdown — click the pill to expand inline; a "Collapse counts" toggle in Display options controls the behavior (plan 001 part B)
+- Logs panel: "Expand all" / "Collapse all" buttons in the Display submenu to open or close all day groups at once (plan 001)
+- Trouble chart: "First error" button in the header jumps to the first error after app start
 
 ### Fixed
 
