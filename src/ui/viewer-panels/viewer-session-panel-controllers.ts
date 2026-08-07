@@ -152,9 +152,9 @@ export function getControllerGroupingScript(): string {
      *  collapsible day-heading chrome. */
     function renderDayGroup(dateKey, dayRecords, bnCounts) {
         /* Default: non-today days collapsed, today expanded. An explicit entry in
-           collapsedDays (true = collapsed, false = expanded) overrides the default. */
-        var today = toDateKey(Date.now());
-        var collapsed = dateKey in collapsedDays ? collapsedDays[dateKey] : dateKey !== today;
+           collapsedDays (true = collapsed, false = expanded) overrides the default.
+           todayDateKey is set once per renderSessionList call (rendering.ts). */
+        var collapsed = dateKey in collapsedDays ? collapsedDays[dateKey] : dateKey !== todayDateKey;
         var cls = 'session-day-group' + (collapsed ? ' collapsed' : '');
         return '<div class="' + cls + '" data-day-key="' + escapeAttr(dateKey) + '">'
             + renderDayHeading(dateKey, collapsed, dayRecords.length)
