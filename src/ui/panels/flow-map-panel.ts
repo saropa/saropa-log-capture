@@ -16,6 +16,9 @@ import { flowMapScript } from './flow-map-panel-script';
 import { flowMapZoomScript } from './flow-map-panel-zoom-script';
 import { flowMapReplayScript } from './flow-map-panel-replay-script';
 import { flowMapLightboxScript, type LightboxLabels } from './flow-map-panel-lightbox-script';
+import {
+    loadSessionShots, shotsForScreen, type CompareSession,
+} from '../../modules/flow-map/flow-map-cross-session';
 
 const VIEW_TYPE = 'saropaFlowMap';
 const POPOUT_VIEW_TYPE = 'saropaFlowMapDiagram';
@@ -37,11 +40,13 @@ export interface FlowMapPanelParams {
     /** Count of sidecar entries beyond the render cap, for the "+N more" gallery note. */
     readonly screenshotsOmitted: number;
     /**
-     * The `.screenshots/` directory beside the source log — the ONE path both panels open to
-     * `localResourceRoots`. Captures are referenced, not embedded, so without this every thumbnail
-     * loads as nothing.
+     * Capture directories both panels open to `localResourceRoots`: this log's `.screenshots/`
+     * first, then those of the sessions it can be compared against. Captures are referenced, not
+     * embedded, so a capture outside every one of these roots loads as nothing.
      */
-    readonly shotRoot: vscode.Uri;
+    readonly shotRoots: readonly vscode.Uri[];
+    /** Other sessions holding captures of the same screens, for the lightbox's compare selector. */
+    readonly compareSessions: readonly CompareSession[];
     /** Empty-state breadcrumb diagnostic (plan follow-up): custom-rule suggestions when the diagram
      * has no nodes. Empty when the graph is populated or the heuristic found nothing worth suggesting. */
     readonly suggestions: readonly BreadcrumbSuggestion[];
@@ -102,6 +107,10 @@ function lightboxLabels(): LightboxLabels {
         compare: t('flowMap.shot.compare'),
         comparePrev: t('flowMap.shot.comparePrev'),
         compareNext: t('flowMap.shot.compareNext'),
+        compareSession: t('flowMap.shot.compareSession'),
+        compareThisSession: t('flowMap.shot.compareThisSession'),
+        compareLoading: t('flowMap.shot.compareLoading'),
+        compareNoMatch: t('flowMap.shot.compareNoMatch'),
     };
 }
 
@@ -115,11 +124,23 @@ function withWebviewSrc(webview: vscode.Webview, shots: readonly FlowShot[]): re
 }
 
 /**
- * Webview options for both panels. `localResourceRoots` opens exactly one directory — the captures
- * beside the source log — and is reapplied on every render because the panel outlives any one log.
+ * Webview options for both panels. `localResourceRoots` opens exactly the directories holding
+ * captures this report can show — the source log's, plus any session it can be compared against.
  */
-function webviewOptions(shotRoot: vscode.Uri): vscode.WebviewOptions {
-    return { enableScripts: true, localResourceRoots: [shotRoot] };
+function webviewOptions(roots: readonly vscode.Uri[]): vscode.WebviewOptions {
+    return { enableScripts: true, localResourceRoots: [...roots] };
+}
+
+/**
+ * Reapply resource roots only when they actually changed. The panel outlives any one log, so the
+ * roots must follow the report — but writing `webview.options` unconditionally on every render
+ * reassigns a live webview's security configuration for no reason, and a no-op write is not
+ * something to do to a surface that is currently displaying content.
+ */
+function syncResourceRoots(webview: vscode.Webview, roots: readonly vscode.Uri[]): void {
+    const current = (webview.options.localResourceRoots ?? []).map(u => u.toString()).join('|');
+    const next = roots.map(u => u.toString()).join('|');
+    if (current !== next) { webview.options = webviewOptions(roots); }
 }
 
 /** The report title, shown first (before the pill/action bar). */
@@ -155,7 +176,7 @@ ${body}
 ${flowMapScript(nonce)}
 ${flowMapZoomScript(nonce)}
 ${flowMapReplayScript(nonce)}
-${flowMapLightboxScript(nonce, lightboxLabels())}</body></html>`;
+${flowMapLightboxScript(nonce, lightboxLabels(), params.compareSessions)}</body></html>`;
 }
 
 /** The pop-out panel's HTML: diagram only, full bleed, same lens/popup scripts (no nested pop-out). */
@@ -172,7 +193,7 @@ ${buildFlowDiagramBody(params.graph, withWebviewSrc(webview, params.screenshots)
 ${flowMapScript(nonce)}
 ${flowMapZoomScript(nonce)}
 ${flowMapReplayScript(nonce)}
-${flowMapLightboxScript(nonce, lightboxLabels())}</body></html>`;
+${flowMapLightboxScript(nonce, lightboxLabels(), params.compareSessions)}</body></html>`;
 }
 
 /** Open (or reveal) the diagram-only pop-out panel beside the report. */
@@ -180,13 +201,13 @@ function showFlowDiagramPanel(params: FlowMapPanelParams): void {
     if (!popout) {
         popout = vscode.window.createWebviewPanel(
             POPOUT_VIEW_TYPE, panelTitle(params), vscode.ViewColumn.Beside,
-            { ...webviewOptions(params.shotRoot), retainContextWhenHidden: true },
+            { ...webviewOptions(params.shotRoots), retainContextWhenHidden: true },
         );
         popout.onDidDispose(() => { popout = undefined; });
         popout.webview.onDidReceiveMessage(handleMessage);
     }
     popout.title = panelTitle(params);
-    popout.webview.options = webviewOptions(params.shotRoot);
+    syncResourceRoots(popout.webview, params.shotRoots);
     popout.webview.html = buildDiagramHtml(params, getNonce(), popout.webview);
     popout.reveal(vscode.ViewColumn.Beside);
 }
@@ -281,9 +302,45 @@ async function addCustomBreadcrumbRule(p: FlowMapPanelParams, pattern: string, l
     }
 }
 
+/**
+ * Answer a compare request: that session's captures OF THE ASKED SCREEN, as webview URLs for
+ * whichever panels are open.
+ *
+ * The reply goes to BOTH panels rather than to the asker, because the message handler is shared and
+ * does not know which webview sent it. That is safe: the reply is addressed by `logFsPath` +
+ * `screenKey`, and a panel with no matching request in flight drops it.
+ *
+ * An empty reply is still a reply. The webview turns it into "that session has no capture of this
+ * screen" — a silent non-answer would read as a broken control.
+ */
+async function sendCompareShots(logFsPath: unknown, screenKey: unknown): Promise<void> {
+    if (typeof logFsPath !== 'string' || typeof screenKey !== 'string') { return; }
+    // Only sessions this report already offered: the list bounds both the resource roots and what a
+    // webview message is allowed to make the host read off disk.
+    const known = currentParams?.compareSessions.find(s => s.logFsPath === logFsPath);
+    if (!known) { return; }
+    let shots: readonly FlowShot[] = [];
+    try {
+        shots = shotsForScreen(await loadSessionShots(logFsPath), screenKey);
+    } catch {
+        // A log that vanished or will not parse yields the empty reply, which the webview reports.
+        shots = [];
+    }
+    for (const panel of [current, popout]) {
+        if (!panel) { continue; }
+        void panel.webview.postMessage({
+            type: 'flowMapCompareShots', logFsPath, screenKey, label: known.label,
+            shots: withWebviewSrc(panel.webview, shots),
+        });
+    }
+}
+
 /** Dispatch one webview message against the latest shown report. */
 function handleMessage(
-    msg: { type?: string; file?: string; line?: number; text?: string; pattern?: string; label?: string },
+    msg: {
+        type?: string; file?: string; line?: number; text?: string; pattern?: string; label?: string;
+        logFsPath?: string; screenKey?: string;
+    },
 ): void {
     const p = currentParams;
     if (!p) { return; }
@@ -304,6 +361,8 @@ function handleMessage(
         void copyLogLine(p.logUri, msg.line);
     } else if (msg.type === 'addFlowMapPattern' && msg.pattern) {
         void addCustomBreadcrumbRule(p, msg.pattern, msg.label || '$1');
+    } else if (msg.type === 'compareSessionShots') {
+        void sendCompareShots(msg.logFsPath, msg.screenKey);
     } else if (msg.type === 'copyShotPath' && msg.text) {
         // Its own case rather than reusing copyText: the status line has to name what was copied, and
         // "Summary copied" after clicking a screenshot's copy button is a wrong outcome report.
@@ -329,20 +388,20 @@ export function showFlowMapPanel(params: FlowMapPanelParams): void {
     if (!current) {
         current = vscode.window.createWebviewPanel(
             VIEW_TYPE, title, vscode.ViewColumn.Active,
-            { ...webviewOptions(params.shotRoot), retainContextWhenHidden: true },
+            { ...webviewOptions(params.shotRoots), retainContextWhenHidden: true },
         );
         current.onDidDispose(() => { current = undefined; currentParams = undefined; });
         current.webview.onDidReceiveMessage(handleMessage);
     }
     current.title = title;
-    // Reapplied every render: an existing panel showing a different log has the old root.
-    current.webview.options = webviewOptions(params.shotRoot);
+    // Reapplied every render: an existing panel showing a different log has the old roots.
+    syncResourceRoots(current.webview, params.shotRoots);
     current.webview.html = buildHtml(params, getNonce(), current.webview);
     current.reveal(vscode.ViewColumn.Active);
     // Keep an open pop-out diagram in sync after a refresh (it shares the same report).
     if (popout) {
         popout.title = title;
-        popout.webview.options = webviewOptions(params.shotRoot);
+        syncResourceRoots(popout.webview, params.shotRoots);
         popout.webview.html = buildDiagramHtml(params, getNonce(), popout.webview);
     }
 }

@@ -9,6 +9,7 @@
 import type { FlowGraph, FlowNode, IssueEvent, ParsedLog, SourceAnchor } from './flow-map-model';
 import type { FlowShot } from './flow-map-screenshots';
 import { screenshotsSectionHtml } from './flow-map-html-shots';
+import { groupShotsByScreen, shotSetsIsland } from './flow-map-svg-shots';
 import { anchorText, formatActions, formatDwellMs, nodeHasError, stripAnsi } from './flow-map-format';
 import { renderSvg } from './flow-map-svg';
 import { t } from '../../l10n';
@@ -296,7 +297,10 @@ function emptyDetailFor(parsed: ParsedLog): string {
  * pop-out cannot borrow the report's.
  */
 export function buildFlowDiagramBody(graph: FlowGraph, screenshots: readonly FlowShot[] = []): string {
-    return '<div class="diagram-only">' + legendAndDiagram(graph, { screenshots }) + '</div>';
+    // The pop-out renders no gallery but its cards still open the lightbox, so it needs the same
+    // capture-set island the report emits — compare would otherwise be dead here alone.
+    return '<div class="diagram-only">' + legendAndDiagram(graph, { screenshots }) + '</div>'
+        + shotSetsIsland(groupShotsByScreen(screenshots));
 }
 
 /**
@@ -349,5 +353,7 @@ export function buildFlowMapBody(
     return [
         tocHtml(titles, hasShots),
         '<div class="report-row">' + diagramCol + resizer + detailCol + '</div>',
+        // Once per document, not once per capture element — see `shotSetsIsland`.
+        shotSetsIsland(groupShotsByScreen(screenshots)),
     ].join('\n');
 }

@@ -35,11 +35,21 @@ const BACK_STAGGER = 14;
 /** Vertical gap between stacked cards in the terminal-fault side column (see `flow-map-svg-layout`). */
 const FAULT_GAP = 14;
 /**
- * How tall the fault column may grow before wrapping into another column. Roughly a comfortable
- * panel height — deeper than this and the reader is scrolling a sidebar of crash cards, which is the
- * same unbounded-growth problem the fault column was introduced to solve, turned on its side.
+ * Roughly how many fault cards may stack before the column wraps. Expressed in CARDS, not pixels, so
+ * the bound tracks card geometry instead of drifting the next time a card's height changes — a raw
+ * pixel constant silently means "ten cards" today and "six cards" after a text-budget edit.
+ *
+ * Roughly, because the bound is a canvas y and a stack starts below its PARENT, not at the margin:
+ * a fault hanging off a deep row fits fewer cards than one hanging off the first. That is the right
+ * trade — the bound exists to stop runaway height, not to guarantee an exact card count.
  */
-const FAULT_COL_H = 720;
+const FAULT_COL_CARDS = 10;
+/**
+ * Minimum height a fault card occupies: no thumbnail, and the fewest lines `nodeDisplayLines` ever
+ * produces for a crash node (title + one detail). Used only to convert `FAULT_COL_CARDS` into a
+ * height bound — real cards are measured, this is the conversion factor.
+ */
+const FAULT_CARD_MIN_H = PAD_Y * 2 + LINE_H * 2 + FAULT_GAP;
 
 interface Palette { readonly cls: string; readonly dashed: boolean; }
 
@@ -122,25 +132,39 @@ function placeFaultLeaves(
     leaves: ReadonlyMap<string, readonly FlowNode[]>,
     placed: Map<string, Placed>, shots: ShotsByScreen, fit: FaultColumnFit,
 ): FaultColumnPlacement {
-    let cursor = MARGIN;
-    let bottom = MARGIN;
-    let x = fit.x;
-    let columns = leaves.size > 0 ? 1 : 0;
+    // One cursor per column, so a card can go in the leftmost column that still has room. Always
+    // appending to the trailing column stranded earlier ones half-empty and spent width the cards
+    // did not need.
+    const cursors: number[] = [];
     const groups = [...leaves].sort((a, b) => (placed.get(a[0])?.y ?? 0) - (placed.get(b[0])?.y ?? 0));
     for (const [parentKey, nodes] of groups) {
         const parent = placed.get(parentKey);
-        if (parent) { cursor = Math.max(cursor, parent.y + parent.h + FAULT_GAP); }
+        // Every one of this parent's cards starts at or below its bottom edge, whichever column it
+        // lands in, so the parent→fault arrow always reads downward.
+        const floor = parent ? parent.y + parent.h + FAULT_GAP : MARGIN;
         for (const p of buildRow(nodes, shots)) {
-            // `cursor > MARGIN` keeps a single over-tall card from wrapping to an empty column.
-            if (cursor + p.h > fit.maxY && cursor > MARGIN) { columns++; x += BOX_W + COL_GAP; cursor = MARGIN; }
-            p.x = x;
-            p.y = cursor;
+            const col = pickFaultColumn(cursors, floor, p.h, fit.maxY);
+            const top = Math.max(cursors[col], floor);
+            p.x = fit.x + col * (BOX_W + COL_GAP);
+            p.y = top;
             placed.set(p.node.key, p);
-            cursor += p.h + FAULT_GAP;
-            bottom = Math.max(bottom, cursor);
+            cursors[col] = top + p.h + FAULT_GAP;
         }
     }
-    return { bottom, columns };
+    return { bottom: Math.max(MARGIN, ...cursors), columns: cursors.length };
+}
+
+/**
+ * The leftmost fault column this card fits in, opening a new one when none has room. A column's
+ * FIRST card always fits: an over-tall card must land somewhere rather than open columns forever.
+ */
+function pickFaultColumn(cursors: number[], floor: number, height: number, maxY: number): number {
+    for (let i = 0; i < cursors.length; i++) {
+        const top = Math.max(cursors[i], floor);
+        if (cursors[i] === MARGIN || top + height <= maxY) { return i; }
+    }
+    cursors.push(MARGIN);
+    return cursors.length - 1;
 }
 
 /** Position every node; returns placements + the overall canvas size. */
@@ -162,9 +186,10 @@ function layout(graph: FlowGraph, shots: ShotsByScreen): { placed: Map<string, P
         y += rowHeight + ROW_GAP;
     }
     const columnX = MARGIN + maxWidth + COL_GAP;
-    // Let the fault column run as deep as the walk, but never shorter than FAULT_COL_H — a one-row
-    // walk with six faults should stack them, not fan into six columns to match its own height.
-    const maxY = Math.max(y - ROW_GAP, MARGIN + FAULT_COL_H);
+    // Let the fault column run as deep as the walk, but never shorter than FAULT_COL_CARDS' worth —
+    // a one-row walk with six faults should stack them, not fan into six columns to match its own
+    // height.
+    const maxY = Math.max(y - ROW_GAP, MARGIN + FAULT_COL_CARDS * FAULT_CARD_MIN_H);
     const faults = placeFaultLeaves(plan.faultLeaves, placed, shots, { x: columnX, maxY });
     // The column only costs width when something is actually in it.
     const contentW = faults.columns > 0
@@ -234,9 +259,13 @@ function renderNode(p: Placed): string {
     const cls = nodeHasError(p.node) ? `fm-node fm-crash ${pal.cls}` : `fm-node ${pal.cls}`;
     const logAttr = p.node.logLine ? ` data-logline="${p.node.logLine}"` : '';
     return `<g class="${cls}" data-rowkey="${esc(rowKeyOf(p.node))}"${logAttr}${detailAttr(p.node)} tabindex="0" role="button">`
-        + `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="7" `
+        // class="fm-box": the palette/hover/pulse rules target THIS rect by class, never by element.
+        // A bare `rect` descendant selector also matches the thumbnail frame and the count pill —
+        // which are siblings in this same group — and a CSS `fill` overrides their `fill="none"`
+        // presentation attribute, painting the node's color straight over the screenshot.
+        + `<rect class="fm-box" x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="7" `
         + `stroke-width="1.5"${dash}/>`
-        + thumbMarkup(p.x, p.y, p.shots)
+        + thumbMarkup(p.x, p.y, p.shots, p.node.key)
         + `<text x="${cx}" y="${textTop}" text-anchor="middle" `
         + `font-family="var(--vscode-font-family)">${tspans}</text>${visitBadge(p)}</g>`;
 }

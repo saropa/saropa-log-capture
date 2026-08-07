@@ -9,7 +9,7 @@
 import { screenKeyOf, type FlowShot } from './flow-map-screenshots';
 import type { ShotsByScreen } from './flow-map-svg-shots';
 import { stripAnsi } from './flow-map-format';
-import { groupShotsByScreen, shotDataAttrs, shotSiblingsAttr } from './flow-map-svg-shots';
+import { groupShotsByScreen, shotDataAttrs, shotSetAttrs } from './flow-map-svg-shots';
 import { t } from '../../l10n';
 
 /** Escape text for HTML. */
@@ -35,7 +35,9 @@ function shotFigureHtml(
     const keyAttr = key ? ` data-screen-key="${esc(key)}"` : '';
     // Compare offers the same set a card thumbnail does — this capture's SCREEN, not the whole
     // gallery. Comparing Home against Settings answers nothing; comparing two Homes is the question.
-    const siblings = shotSiblingsAttr(byScreen.get(key) ?? []);
+    // The index is this capture's position within its SCREEN, which is not its gallery position.
+    const screenSet = byScreen.get(key) ?? [];
+    const siblings = shotSetAttrs(key, screenSet.indexOf(shot), screenSet.length);
     const alt = esc(truncate(stripAnsi(shot.text), 80));
     const screen = shot.screenLabel ? esc(stripAnsi(shot.screenLabel)) : '—';
     const caption = `${esc(shot.clock)} · ${esc(shot.trigger)} · ${screen}`;

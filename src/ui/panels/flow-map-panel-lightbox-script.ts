@@ -16,7 +16,7 @@
  */
 
 import { flowMapLightboxZoomJs } from './flow-map-panel-lightbox-zoom';
-import { flowMapLightboxCompareJs } from './flow-map-panel-lightbox-compare';
+import { flowMapLightboxCompareJs, type CompareSessionRef } from './flow-map-panel-lightbox-compare';
 
 /** Labels the overlay renders, resolved host-side so the webview needs no l10n runtime. */
 export interface LightboxLabels {
@@ -42,16 +42,23 @@ export interface LightboxLabels {
     readonly compare: string;
     readonly comparePrev: string;
     readonly compareNext: string;
+    /** Session picker: its own label, the "stay here" option, and the two outcome messages. */
+    readonly compareSession: string;
+    readonly compareThisSession: string;
+    readonly compareLoading: string;
+    readonly compareNoMatch: string;
 }
 
 /** The full `<script>` block wiring the screenshot lightbox, nonce-guarded for CSP. */
-export function flowMapLightboxScript(nonce: string, labels: LightboxLabels): string {
+export function flowMapLightboxScript(
+    nonce: string, labels: LightboxLabels, sessions: readonly CompareSessionRef[] = [],
+): string {
     return `<script nonce="${nonce}">(function(){
   var L = ${JSON.stringify(labels)};
   var overlay = null;
   var opener = null;
 ${flowMapLightboxZoomJs()}
-${flowMapLightboxCompareJs()}
+${flowMapLightboxCompareJs(sessions)}
 
   function close(){
     if (overlay) { overlay.remove(); overlay = null; }
@@ -274,5 +281,9 @@ ${flowMapLightboxCompareJs()}
   });
 
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && overlay) { close(); } });
+  // The only inbound message this panel handles: another session's captures of the open screen.
+  window.addEventListener('message', function(e){
+    if (e.data && e.data.type === 'flowMapCompareShots') { cmpApplyShots(e.data); }
+  });
 })();</script>`;
 }

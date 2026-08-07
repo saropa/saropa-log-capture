@@ -18,9 +18,36 @@ verified correct beforehand — the PNG files, the sidecar join, the emitted mar
 CSP as a `<meta http-equiv>`, and the real stylesheet all rendered the capture in headless Chromium.
 Weight was the only property no probe reproduced.
 
-**The element.** After captures moved to on-disk references, the gallery painted and the diagram
-still did not, in one document, under one CSP, using the same URLs from the same directory. That
-isolated the failure to the SVG `<image>` element itself rather than to resource loading.
+**The element — a WRONG conclusion, recorded because it cost a round.** After captures moved to
+on-disk references the gallery painted and the diagram still did not, in one document, under one CSP,
+using the same URLs from the same directory. That was read as isolating the failure to the SVG
+`<image>` element, and the diagram was switched to an HTML `<img>` inside a `<foreignObject>`. It did
+not fix anything. The discriminating experiment had ruled out the URL, the CSP and the directory —
+but not the stylesheet, which is what actually differed between a gallery figure and a diagram card.
+
+**The stylesheet — the real cause.** A Playwright render of the real emitted markup against the real
+`flowMapStyles()` reproduced the blank card outside the Extension Host for the first time, and an
+isolated three-way probe showed a plain `<img>`, a `<foreignObject>` `<img>`, and an SVG `<image>` all
+painting correctly with no stylesheet attached. The palette rules were descendant selectors:
+
+```css
+.fm-p-walked rect { fill: color-mix(…); stroke: …; }
+```
+
+`.fm-shot-frame` is a sibling rect inside the same `<g class="fm-node fm-p-walked">`, and a CSS `fill`
+overrides that rect's `fill="none"` presentation attribute. The frame is drawn AFTER the capture, so
+every card painted its own node color straight over its screenshot. The count pill was being repainted
+the same way. This had been true since thumbnails were introduced, through the data-URI era and the
+`<foreignObject>` change alike, which is exactly why neither of those addressed it.
+
+The fix is a class: the node's own rect is `class="fm-box"`, and every palette, hover, transition,
+crash-pulse, flash, replay and reduced-motion selector now says `rect.fm-box`. A regression test pins
+both halves — the emitted class and the absence of any bare `rect` descendant rule in the stylesheet —
+because one new such rule silently blanks every card at once.
+
+The `<foreignObject>` `<img>` was kept: it makes the diagram and the gallery one element type served by
+one lightbox binder. That is a simplification, not the fix, and the comment that claimed otherwise has
+been corrected in place.
 
 ### What changed
 
@@ -156,13 +183,54 @@ There is deliberately no pixel-difference overlay. Webview image URLs are a diff
 webview document, so drawing them to a canvas taints it and `getImageData` throws. A real difference
 metric belongs host-side where the bytes are readable.
 
+## Second hardening pass
+
+- **The fault-column bound is expressed in cards.** A raw 720px constant silently means one card
+  count today and another after a text-budget edit; `FAULT_COL_CARDS` times a derived card height
+  tracks the geometry it is really about. Approximate by construction — a stack starts below its
+  parent, not at the margin — and documented as such.
+- **Fault columns fill leftmost-first.** Appending only to the trailing column stranded earlier ones
+  half-empty and spent width the cards did not need. A per-column cursor plus a per-parent floor
+  keeps the parent→fault arrow reading downward while columns are reused. A regression test places
+  two parents at different depths, each spilling into multiple columns, and asserts no two of the 20
+  cards overlap — the invariant that a single-parent test cannot reach.
+- **The column height budget is measured on load and on header resize**, not only on window resize.
+  A webfont or icon resolving after first paint grows the topbar, and the columns would otherwise
+  stay sized against a header that no longer exists.
+- **The capture set is emitted once per document.** Inlining every screen's set onto every element of
+  that screen made the markup grow with the square of a screen's capture count — fine under the
+  12-capture cap, quietly not fine the moment it is raised. Elements now carry a pointer
+  (`data-shot-screen-key` + `data-shot-sib`) into one `#fm-shot-sets` island.
+- **Compare steps by index, not by URL equality.** Nothing dedups captures by file, so two entries in
+  a set can share a URL; the previous walk could refuse to move or spin.
+- **Resource roots are written only when they change**, rather than reassigning a live webview's
+  security configuration on every render.
+
+## Cross-session compare
+
+The lightbox can now compare a screen against **another session**. "Did this screen regress since
+yesterday's build" is the older and more useful question, and it is the same screen-key join, run
+against a different log.
+
+`flow-map-cross-session.ts` lists candidate sessions (sibling `*.log` files that have a screenshot
+sidecar, newest first, capped at 8) and, only when the reader picks one, reads and parses that log to
+resolve its captures of the asked screen. The split is deliberate: listing is a directory read plus a
+`stat` per candidate, while resolving costs a full log parse, so a report that is never compared pays
+only for the listing.
+
+The host answers a `compareSessionShots` request only for a session it already enumerated for this
+report — the same list that determines `localResourceRoots`, so the webview cannot walk the host into
+reading an arbitrary path. Replies are addressed by log path plus screen key, and a request abandoned
+mid-flight (the reader returning to this session) is dropped rather than allowed to land later and
+silently replace what they chose.
+
 ## Verification
 
 - `npm run check-types` — 0 errors.
 - `npm run lint` — 0 errors, 14 pre-existing warnings.
-- `npm run compile` — full gate chain green, including `verify:l10n-keys` (2557 keys), the webview
+- `npm run compile` — full gate chain green, including `verify:l10n-keys` (2561 keys), the webview
   message catalogs, and `verify:dist-size`.
-- 177 tests passing across the twelve affected suites, including two new files:
+- 191 tests passing across the thirteen affected suites, including three new files:
   `flow-map-svg-layout.test.ts` (13) covering fault-leaf extraction, back-edge exclusion, orphan
   retention, row wrapping, and rendered canvas width; and `screenshot-sidecar-validation.test.ts`
   (6) covering trigger-union rejection, per-field defaulting, and malformed sidecars. The layout
@@ -171,8 +239,10 @@ metric belongs host-side where the bytes are readable.
 
 ## Known gaps
 
-- Nothing in this change has been exercised in the Extension Host. The thumbnail fix in particular
-  rests on an inference from field evidence, not on an observed console.
+- Nothing in this change has been exercised in the Extension Host. The thumbnail fix no longer rests
+  on an inference: a Playwright render of the real markup against the real stylesheet reproduced the
+  blank card and then showed the capture painting once the selectors were scoped. What remains
+  unobserved is the webview itself.
 - `resolveShotFile` / `loadFlowShots` in `commands-flow-map.ts` have no direct test — they are not
   exported and require `vscode.workspace.fs`. The pure layers either side of them
   (`joinShotsToScreens`, `planRows`, `validateEntry`) are covered.
