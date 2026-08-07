@@ -267,17 +267,29 @@ function wireTroubleChartChips() {
     });
 }
 
+/* Cached first-error line. Invalidated when allLines grows or the launch boundary shifts. */
+var tcFirstErrorCache = { len: -1, launchTs: -1, line: 0 };
+
 /* Find the 1-based viewer line number of the first error-level line after the app-start
-   boundary (or from line 0 when no boundary exists). Returns 0 when no error is found. */
+   boundary (or from line 0 when no boundary exists). Returns 0 when no error is found.
+   Cached: the O(n) scan only re-runs when allLines grows or the launch boundary changes. */
 function findFirstErrorLineAfterLaunch() {
     var launchTs = troubleChartLaunchTs();
-    for (var i = 0; i < allLines.length; i++) {
+    var len = allLines.length;
+    if (tcFirstErrorCache.len === len && tcFirstErrorCache.launchTs === launchTs) {
+        return tcFirstErrorCache.line;
+    }
+    var result = 0;
+    for (var i = 0; i < len; i++) {
         var item = allLines[i];
         if (!item || item.type !== 'line' || item.level !== 'error') { continue; }
+        /* Skip pre-launch lines: require a real timestamp on both the boundary and the line
+           so a line with timestamp 0 (no clock prefix) is never wrongly skipped. */
         if (launchTs > 0 && item.timestamp > 0 && item.timestamp < launchTs) { continue; }
-        if (typeof item.viewerLineIndex === 'number') { return item.viewerLineIndex + 1; }
+        if (typeof item.viewerLineIndex === 'number') { result = item.viewerLineIndex + 1; break; }
     }
-    return 0;
+    tcFirstErrorCache = { len: len, launchTs: launchTs, line: result };
+    return result;
 }
 
 /* Show/hide the "First error" button based on whether a post-launch error exists.
@@ -285,8 +297,7 @@ function findFirstErrorLineAfterLaunch() {
 function syncJumpFirstErrorButton() {
     var btn = document.getElementById('tc-jump-first-error');
     if (!btn) { return; }
-    var line = findFirstErrorLineAfterLaunch();
-    btn.classList.toggle('u-hidden', line <= 0);
+    btn.classList.toggle('u-hidden', findFirstErrorLineAfterLaunch() <= 0);
 }
 
 (function() {
