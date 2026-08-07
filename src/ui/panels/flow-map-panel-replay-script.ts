@@ -125,9 +125,10 @@ export function flowMapReplayScript(nonce: string): string {
 
   btn.addEventListener('click', function(){ if (timer) { stop(); } else { start(); } });
   document.addEventListener('keydown', function(e){
-    // When the node-detail popup is open, Escape belongs to it — closing the popup while the replay
-    // keeps stepping matches how users layer dismissals; only a bare Escape stops the replay.
-    if (e.key === 'Escape' && timer && !document.querySelector('.fmd-overlay')) { stop(); }
+    // When an overlay is open (node detail, screenshot lightbox), Escape belongs to it — closing the
+    // overlay while the replay keeps stepping matches how users layer dismissals; only a bare Escape
+    // stops the replay.
+    if (e.key === 'Escape' && timer && !document.querySelector('.fmd-overlay, .fms-overlay')) { stop(); }
   });
 })();</script>`;
 }
