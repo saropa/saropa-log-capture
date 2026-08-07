@@ -5,6 +5,7 @@ import { renderSvg } from '../../../modules/flow-map/flow-map-svg';
 import { buildFlowDiagramBody, buildFlowMapBody } from '../../../modules/flow-map/flow-map-html';
 import { parseLog } from '../../../modules/flow-map/flow-map-log-parser';
 import { buildGraph } from '../../../modules/flow-map/flow-map-builder';
+import { flowMapLightboxScript } from '../../../ui/panels/flow-map-panel-lightbox-script';
 
 const HEAD = ['=== SAROPA LOG CAPTURE — SESSION START ===', 'Project:        demo'];
 const nav = (clock: string, name: string) => `[${clock}.000] [console] [log] Screen Navigation: ${name}`;
@@ -109,11 +110,47 @@ suite('FlowMap diagram screenshot thumbnails', () => {
             assert.ok(!buildFlowDiagramBody(graph).includes('fm-shot'), 'and none when no captures are passed');
         });
 
+        test('should escape the data URI identically on both surfaces', () => {
+            // The diagram thumbnail and the gallery figure render the SAME value; divergent escaping
+            // is how one surface ends up with a broken attribute the other does not.
+            const { parsed, graph, shots } = fixture([shot(3, { dataUri: 'data:image/png;base64,A"B' })]);
+            const html = buildFlowMapBody(parsed, graph, undefined, { screenshots: shots, screenshotsOmitted: 0 });
+            assert.ok(!/src="data:image\/png;base64,A"B"/.test(html), 'gallery escapes the quote');
+            assert.ok(html.includes('base64,A&quot;B'), 'both surfaces emit the escaped form');
+        });
+
         test('should open the lightbox from a gallery figure instead of jumping the log', () => {
             const { parsed, graph, shots } = fixture([shot(3)]);
             const html = buildFlowMapBody(parsed, graph, undefined, { screenshots: shots, screenshotsOmitted: 0 });
             assert.ok(html.includes('class="shot-img"'), 'figure image is a plain lightbox trigger');
             assert.ok(!html.includes('shot-img loglink'), 'no longer wired to the log-reveal path');
+        });
+    });
+
+    // The overlay's runtime behavior lives in the webview; what IS checkable from the Extension Host
+    // is that the generated script carries the wiring an aria-modal dialog is required to have.
+    suite('lightbox script contract', () => {
+        const script = flowMapLightboxScript('abc123', {
+            title: 'Screenshot', captured: 'Captured', trigger: 'Trigger', screen: 'Screen',
+            logLine: 'Log line', close: 'Close', counter: '{0}/{1}', counterScreen: '{0}/{1} here',
+        });
+
+        test('should keep Tab inside the dialog and restore focus to the opener on close', () => {
+            assert.ok(script.includes('trapTab'), 'Tab is trapped inside the card');
+            assert.ok(/opener\s*=\s*el/.test(script), 'the clicked thumbnail is remembered');
+            assert.ok(script.includes('opener.focus()'), 'focus returns to it on close');
+        });
+
+        test('should never build overlay content with innerHTML', () => {
+            // Screen labels and triggers come from log text — markup interpolation would let a log
+            // line inject nodes into the panel.
+            // Matches an ASSIGNMENT, not the word — the script's own comment names innerHTML to
+            // explain why it is avoided, and that mention must not fail the check.
+            assert.ok(!/innerHTML\s*=/.test(script), 'facts are rendered with textContent only');
+        });
+
+        test('should carry the nonce so the strict CSP admits the script', () => {
+            assert.ok(script.startsWith('<script nonce="abc123">'), 'nonce-guarded');
         });
     });
 });

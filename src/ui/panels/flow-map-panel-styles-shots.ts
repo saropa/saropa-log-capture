@@ -10,9 +10,14 @@ export function flowMapShotStyles(): string {
   /* Diagram card thumbnails: the capture fills a fixed frame (cropped from the bottom, see
      thumbMarkup) with a hairline border so a pale screenshot still reads as a distinct panel. */
   .fm-shot { cursor: pointer; }
-  .fm-shot:hover, .fm-shot:focus { filter: brightness(1.12); outline: none; }
+  .fm-shot:hover { filter: brightness(1.12); }
+  /* A thumbnail is its own tab stop, so it needs its own visible focus ring — brightness alone is not
+     a focus indicator (WCAG 2.4.7). Keep the default outline rather than suppressing it. */
+  .fm-shot:focus-visible { outline: 2px solid var(--vscode-focusBorder); outline-offset: 1px; }
   .fm-shot-frame { stroke: var(--border); pointer-events: none; }
-  .fm-node:hover .fm-shot-frame, .fm-node:focus .fm-shot-frame { stroke: var(--vscode-focusBorder); }
+  /* :focus-within, not :focus — Tab lands on the child <image>, never on the .fm-node group itself,
+     so a :focus rule on the group would never fire once thumbnails became focusable. */
+  .fm-node:hover .fm-shot-frame, .fm-node:focus-within .fm-shot-frame { stroke: var(--vscode-focusBorder); }
   /* Multi-capture pill sits ON the thumbnail, so it needs its own opaque backing rather than the
      card fill — over a photo, a translucent chip is unreadable. */
   .fm-shot-pill { fill: var(--surface-1); stroke: var(--border); stroke-width: 1; }

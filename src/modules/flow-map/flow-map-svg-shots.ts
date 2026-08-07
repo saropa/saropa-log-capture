@@ -6,6 +6,13 @@
  * captured more than once. Only the first shot's data URI is embedded per node — repeating every
  * capture's base64 in the diagram would multiply the panel HTML weight by the capture count for no
  * extra information at thumbnail size (the gallery and the lightbox still reach the whole set).
+ *
+ * Known cost: in the main report that first capture's bytes ship TWICE — once here and once in the
+ * gallery figure — so a session with N captured screens carries N extra copies. Static HTML has no
+ * way to share one payload between an SVG `<image>` and an `<img>`, and the alternative (the diagram
+ * borrowing the gallery's img at runtime) would leave the pop-out, which renders no gallery, with
+ * blank cards. The report cap of 12 captures bounds the total either way. The pop-out itself pays
+ * nothing extra — it embeds only the diagram copy.
  */
 
 import type { FlowShot } from './flow-map-screenshots';
