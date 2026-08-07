@@ -34,6 +34,7 @@ import {
   ensureNonNegative,
   ensureStringArray,
 } from "./config-validation";
+import { troubleValidLevels, troubleDefaultLevels } from "./trouble-level-constants";
 
 export type {
   SeverityKeywords,
@@ -161,12 +162,12 @@ export function getConfig(): SaropaLogCaptureConfig {
     troubleModeChartInterval: clamp(cfg.get("troubleMode.chartInterval"), 1, 60, 5),
     troubleModeLevels: (() => {
       const v = cfg.get("troubleMode.levels");
-      const valid = ["error", "warning", "performance", "database", "todo", "debug", "notice"];
       if (Array.isArray(v) && v.length > 0) {
+        const valid: readonly string[] = troubleValidLevels;
         const filtered = v.filter((s): s is string => typeof s === "string" && valid.includes(s));
         if (filtered.length > 0) { return filtered; }
       }
-      return ["error", "warning", "performance"];
+      return [...troubleDefaultLevels];
     })(),
     troubleModeOpenOnLoad: ensureBoolean(cfg.get("troubleMode.openOnLoad"), false),
     logViewerVisualSpacing: ensureBoolean(cfg.get("logViewerVisualSpacing"), false),

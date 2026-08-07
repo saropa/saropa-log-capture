@@ -138,3 +138,41 @@ A new `saropaLogCapture.troubleMode.levels` array setting (default `["error", "w
 - Needs F5 manual verification with a log containing pre-launch logcat errors
 - Needs F5 manual verification of `troubleMode.openOnLoad` setting (set to true, open a log, verify Trouble Mode activates and no smart bookmark modal appears)
 - Needs F5 manual verification of `troubleMode.levels` setting (change levels, verify filter updates live)
+
+## Finish Report (2026-08-07)
+
+### Hardening
+
+The valid trouble level list (`["error", "warning", "performance", "database", "todo", "debug", "notice"]`) and the default set (`["error", "warning", "performance"]`) were duplicated across `config.ts`, `extension-activation-handlers.ts`, and the webview template literal in `viewer-trouble-mode.ts`. A new `trouble-level-constants.ts` module exports both arrays as `troubleValidLevels` and `troubleDefaultLevels`. All three consumers now import from the shared constant, eliminating the risk of a new severity level being added to one location but not the others.
+
+The `tcFirstErrorCache` in `viewer-trouble-chart.ts` documents the assumption that same-length content replacement is not a real scenario (clear sets length to 0 first, invalidating the cache).
+
+### Preset commands
+
+Two command palette commands enable quick switching without opening Settings:
+- **"Trouble Mode — Errors Only"** (`saropaLogCapture.troubleMode.errorsOnly`): sets `troubleMode.levels` to `["error"]` at workspace scope.
+- **"Trouble Mode — Reset Levels"** (`saropaLogCapture.troubleMode.resetLevels`): removes the workspace override, reverting to the default `["error", "warning", "performance"]`.
+
+Both commands update the VS Code setting directly. The existing config change listener in `activation-listeners.ts` pushes the new value to the webview via `setTroubleLevels`, so the filter updates live with no additional wiring.
+
+### Files changed
+
+| File | Change |
+|------|--------|
+| `src/modules/config/trouble-level-constants.ts` | New: shared valid/default level arrays |
+| `src/modules/config/config.ts` | Imports from shared constant |
+| `src/extension-activation-handlers.ts` | Imports from shared constant |
+| `src/ui/viewer-search-filter/viewer-trouble-mode.ts` | Imports from shared constant; builds default `TROUBLE_LEVELS` from it at template time |
+| `src/ui/viewer-search-filter/viewer-trouble-chart.ts` | Cache assumption documented |
+| `src/commands-tools.ts` | Two new command registrations |
+| `package.json` | Two new `contributes.commands` entries |
+| `package.nls*.json` (11 files) | NLS keys for new command titles |
+| `plans/reference/contributes-commands.md` | Regenerated |
+| `CHANGELOG.md` | Added/Changed entries |
+
+### Verification
+
+- `npm run compile`: all 12 gates pass
+- Trouble mode tests: 3/3 pass
+- Trouble chart tests: 16/16 pass
+- First-error bookmark tests: 9/9 pass

@@ -212,6 +212,14 @@
         "title": "%command.troubleModeToggle.title%"
       },
       {
+        "command": "saropaLogCapture.troubleMode.errorsOnly",
+        "title": "%command.troubleModeErrorsOnly.title%"
+      },
+      {
+        "command": "saropaLogCapture.troubleMode.resetLevels",
+        "title": "%command.troubleModeResetLevels.title%"
+      },
+      {
         "command": "saropaLogCapture.gotoLineInViewer",
         "icon": "$(go-to-file)",
         "title": "%command.gotoLineInViewer.title%"
