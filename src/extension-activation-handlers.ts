@@ -106,8 +106,12 @@ export function wireViewerSpecificHandlers(deps: ViewerHandlerDeps): { refreshLo
     };
     viewerProvider.setFileLoadedHandler((uri, loadResult) => {
         void refreshLogContext();
+        const cfg = getConfig();
         const isActive = historyProvider.getActiveUri()?.toString() === uri.toString();
-        if (isActive) {
+        if (cfg.troubleModeOpenOnLoad) {
+            broadcaster.postToWebview({ type: 'activateTroubleMode' });
+        }
+        if (isActive && !cfg.troubleModeOpenOnLoad) {
             void maybeSuggestSmartBookmark(uri, loadResult, bookmarkStore, smartBookmarkSession, smartBookmarkViewer);
         }
         /* Record EVERY load here — this is the single chokepoint all open paths flow through

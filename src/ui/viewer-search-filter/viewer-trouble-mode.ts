@@ -74,6 +74,14 @@ function applyTroubleModeIndicator() {
     }
 }
 
+/* Idempotent activate — only turns ON, never toggles off. Used by the
+   troubleMode.openOnLoad setting so the host can fire-and-forget without
+   needing to know the current webview-side state. */
+function activateTroubleMode() {
+    if (troubleModeActive) return;
+    toggleTroubleMode();
+}
+
 function toggleTroubleMode() {
     troubleModeActive = !troubleModeActive;
     applyTroubleModeIndicator();
