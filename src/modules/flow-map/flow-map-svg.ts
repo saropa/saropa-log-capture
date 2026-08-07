@@ -3,12 +3,17 @@
  * webview needs no Mermaid/dagre dependency and works offline. Sessions produce small, near-linear
  * graphs, so a simple longest-path layered (top-down) layout reads cleanly. The same node text as
  * the Mermaid export is reused via nodeDisplayLines so the webview and the saved .md agree.
+ *
+ * This module owns PIXELS. Which nodes share a row, and which nodes leave the walk for the fault
+ * column, is decided by `flow-map-svg-layout.ts` — see its header for why a four-step session used
+ * to render 1272px wide.
  */
 
 import type { FlowEdge, FlowGraph, FlowNode } from './flow-map-model';
 import type { FlowShot } from './flow-map-screenshots';
 import { formatDwellMs, kindIcon, nodeDisplayLines, nodeHasError } from './flow-map-format';
 import { groupShotsByScreen, THUMB_BLOCK_H, thumbMarkup, type ShotsByScreen } from './flow-map-svg-shots';
+import { planRows } from './flow-map-svg-layout';
 
 /**
  * Portrait card width. Nodes are storyboard cards (tall, phone-shaped) rather than the original 236px
@@ -27,6 +32,8 @@ const EDGE_LABEL_GAP = 8;
 const BACK_BULGE = 22;
 /** Extra bulge per additional back edge so overlapping return curves fan out instead of stacking. */
 const BACK_STAGGER = 14;
+/** Vertical gap between stacked cards in the terminal-fault side column (see `flow-map-svg-layout`). */
+const FAULT_GAP = 14;
 
 interface Palette { readonly cls: string; readonly dashed: boolean; }
 
@@ -60,24 +67,6 @@ function clip(line: string, isTitle: boolean): string {
     return line.length > max ? line.slice(0, max - 1) + '…' : line;
 }
 
-/** Longest-path depth per node (DAG; R1 keeps edges forward so no cycles). */
-function computeDepths(graph: FlowGraph): Map<string, number> {
-    const depth = new Map<string, number>();
-    graph.nodes.forEach(n => depth.set(n.key, 0));
-    for (let pass = 0; pass < graph.nodes.length; pass++) {
-        let changed = false;
-        for (const e of graph.edges) {
-            // Back edges close cycles (B returns to ancestor A); skipping them keeps longest-path
-            // layering a DAG so depths can't run away and rows stay top-down.
-            if (e.back) { continue; }
-            const d = (depth.get(e.from) ?? 0) + 1;
-            if (d > (depth.get(e.to) ?? 0)) { depth.set(e.to, d); changed = true; }
-        }
-        if (!changed) { break; }
-    }
-    return depth;
-}
-
 interface Placed {
     readonly node: FlowNode;
     readonly lines: string[];
@@ -103,26 +92,45 @@ function buildRow(row: readonly FlowNode[], shots: ShotsByScreen): Placed[] {
     });
 }
 
-/** Group nodes into rows by depth, preserving insertion order within a row. */
-function rowsByDepth(graph: FlowGraph, depth: Map<string, number>): FlowNode[][] {
-    const rows: FlowNode[][] = [];
-    for (const node of graph.nodes) {
-        const d = depth.get(node.key) ?? 0;
-        (rows[d] ??= []).push(node);
+/** Pixel width of a row of `count` cards, gaps included. */
+function rowWidth(count: number): number {
+    return count * BOX_W + (count - 1) * COL_GAP;
+}
+
+/**
+ * Stack terminal fault cards in ONE column to the right of the walk, each at or below its parent's
+ * bottom edge so the parent→fault arrow still reads downward. Parents are visited top-down and share
+ * a single cursor, so two parents on adjacent rows can never have their stacks overlap. Returns the
+ * y the column ends at (`MARGIN` when there are no fault leaves).
+ */
+function placeFaultLeaves(
+    leaves: ReadonlyMap<string, readonly FlowNode[]>,
+    placed: Map<string, Placed>, shots: ShotsByScreen, columnX: number,
+): number {
+    let cursor = MARGIN;
+    const groups = [...leaves].sort((a, b) => (placed.get(a[0])?.y ?? 0) - (placed.get(b[0])?.y ?? 0));
+    for (const [parentKey, nodes] of groups) {
+        const parent = placed.get(parentKey);
+        if (parent) { cursor = Math.max(cursor, parent.y + parent.h + FAULT_GAP); }
+        for (const p of buildRow(nodes, shots)) {
+            p.x = columnX;
+            p.y = cursor;
+            placed.set(p.node.key, p);
+            cursor += p.h + FAULT_GAP;
+        }
     }
-    return rows.filter(Boolean);
+    return cursor;
 }
 
 /** Position every node; returns placements + the overall canvas size. */
 function layout(graph: FlowGraph, shots: ShotsByScreen): { placed: Map<string, Placed>; width: number; height: number } {
-    const rows = rowsByDepth(graph, computeDepths(graph));
-    const built = rows.map(row => buildRow(row, shots));
-    const maxWidth = Math.max(...built.map(r => r.length * BOX_W + (r.length - 1) * COL_GAP), BOX_W);
+    const plan = planRows(graph);
+    const built = plan.rows.map(row => buildRow(row, shots));
+    const maxWidth = Math.max(...built.map(r => rowWidth(r.length)), BOX_W);
     const placed = new Map<string, Placed>();
     let y = MARGIN;
     for (const row of built) {
-        const rowWidth = row.length * BOX_W + (row.length - 1) * COL_GAP;
-        let x = MARGIN + (maxWidth - rowWidth) / 2;
+        let x = MARGIN + (maxWidth - rowWidth(row.length)) / 2;
         const rowHeight = Math.max(...row.map(p => p.h));
         for (const p of row) {
             p.x = x;
@@ -132,13 +140,17 @@ function layout(graph: FlowGraph, shots: ShotsByScreen): { placed: Map<string, P
         }
         y += rowHeight + ROW_GAP;
     }
+    const columnX = MARGIN + maxWidth + COL_GAP;
+    const faultBottom = placeFaultLeaves(plan.faultLeaves, placed, shots, columnX);
+    // The column only costs width when something is actually in it.
+    const contentW = plan.faultLeaves.size > 0 ? columnX - MARGIN + BOX_W : maxWidth;
     // Floor BOTH axes at the margins and reject non-finite values: a zero-node graph computes a
     // NEGATIVE height, and any negative/NaN viewBox dimension is an invalid SVG that browsers
     // silently render as nothing — a blank panel with no console error to trace it by.
     return {
         placed,
-        width: safeDimension(maxWidth + MARGIN * 2, BOX_W),
-        height: safeDimension(y - ROW_GAP + MARGIN, MARGIN * 2),
+        width: safeDimension(contentW + MARGIN * 2, BOX_W),
+        height: safeDimension(Math.max(y - ROW_GAP, faultBottom - FAULT_GAP) + MARGIN, MARGIN * 2),
     };
 }
 

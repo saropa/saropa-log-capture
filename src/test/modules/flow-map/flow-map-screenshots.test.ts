@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import {
-    formatClock, joinShotsToScreens, shotBudgetVerdict, type ShotWithDataUri,
+    formatClock, joinShotsToScreens, type ShotWithSource,
 } from '../../../modules/flow-map/flow-map-screenshots';
 import { buildFlowMapBody } from '../../../modules/flow-map/flow-map-html';
 import { parseLog } from '../../../modules/flow-map/flow-map-log-parser';
@@ -12,9 +12,9 @@ function ev(kind: TimelineEvent['kind'], label: string, logLine: number): Timeli
     return { tsMs: 0, clock: '00:00:00', kind, label, logLine };
 }
 
-/** A minimal sidecar+dataUri entry, defaults chosen so tests only set what they're asserting on. */
-function shot(logLine: number, overrides: Partial<ShotWithDataUri> = {}): ShotWithDataUri {
-    return { trigger: 'error', timestamp: 0, logLine, text: 'boom', dataUri: 'data:image/png;base64,AA==', ...overrides };
+/** A minimal sidecar+source entry, defaults chosen so tests only set what they're asserting on. */
+function shot(logLine: number, overrides: Partial<ShotWithSource> = {}): ShotWithSource {
+    return { trigger: 'error', timestamp: 0, logLine, text: 'boom', src: 'file:///shots/a.png', ...overrides };
 }
 
 suite('FlowMap screenshots join (Phase E, plan 117)', () => {
@@ -50,36 +50,12 @@ suite('FlowMap screenshots join (Phase E, plan 117)', () => {
             assert.strictEqual(shots[0].screenLabel, 'Home');
         });
 
-        test('should carry the data URI, trigger, log line, and text through unchanged', () => {
+        test('should carry the image URL, trigger, log line, and text through unchanged', () => {
             const shots = joinShotsToScreens([shot(2, { trigger: 'nav', text: 'Screen Navigation: Settings' })], []);
-            assert.strictEqual(shots[0].dataUri, 'data:image/png;base64,AA==');
+            assert.strictEqual(shots[0].src, 'file:///shots/a.png');
             assert.strictEqual(shots[0].trigger, 'nav');
             assert.strictEqual(shots[0].logLine, 2);
             assert.strictEqual(shots[0].text, 'Screen Navigation: Settings');
-        });
-    });
-
-    suite('shotBudgetVerdict', () => {
-        test('should embed a capture that fits the remaining budget', () => {
-            assert.strictEqual(shotBudgetVerdict(100, 0, 1000), 'embed');
-            assert.strictEqual(shotBudgetVerdict(100, 899, 1000), 'embed');
-        });
-
-        test('should STOP once the running total would exceed the budget', () => {
-            assert.strictEqual(shotBudgetVerdict(200, 900, 1000), 'stop');
-        });
-
-        test('should SKIP — not embed — a single capture larger than the whole budget', () => {
-            // The pathological case the budget exists for: one 3x-DPI screenshot big enough to
-            // freeze the panel must not ride in just because it was read first.
-            assert.strictEqual(shotBudgetVerdict(5000, 0, 1000), 'skip');
-        });
-
-        test('should never STOP before something has been embedded', () => {
-            // stop with an empty gallery would drop captures that WOULD have fit; over-budget
-            // captures are skipped individually, so this state is unreachable by construction.
-            const verdicts = [1, 999, 1000, 1001, 99_999].map(n => shotBudgetVerdict(n, 0, 1000));
-            assert.ok(!verdicts.includes('stop'), 'first capture is always embed or skip');
         });
     });
 

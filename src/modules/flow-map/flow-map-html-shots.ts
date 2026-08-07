@@ -33,10 +33,10 @@ function shotFigureHtml(shot: FlowShot, index: number, all: readonly FlowShot[])
     const alt = esc(truncate(stripAnsi(shot.text), 80));
     const screen = shot.screenLabel ? esc(stripAnsi(shot.screenLabel)) : '—';
     const caption = `${esc(shot.clock)} · ${esc(shot.trigger)} · ${screen}`;
-    // esc() the data URI like the diagram thumbnail does: base64 carries no HTML metacharacters
+    // esc() the URL like the diagram thumbnail does: a webview URI carries no HTML metacharacters
     // today, but the two surfaces render the SAME value and must not diverge on escaping.
     return `<figure class="shot-fig"${keyAttr}><img class="shot-img" role="button" tabindex="0"`
-        + `${shotDataAttrs(shot, index + 1, all.length)} src="${esc(shot.dataUri)}" alt="${alt}" `
+        + `${shotDataAttrs(shot, index + 1, all.length)} src="${esc(shot.src)}" alt="${alt}" `
         + `title="${esc(t('flowMap.shot.open'))}"><figcaption class="shot-cap">${caption}</figcaption></figure>`;
 }
 
