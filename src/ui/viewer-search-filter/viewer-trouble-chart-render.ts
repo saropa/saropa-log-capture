@@ -19,18 +19,16 @@ export function getTroubleChartRenderScript(): string {
    spike scaled past the viewBox saturates at the top instead of drawing above it, where the
    SVG would cut it off. */
 function troubleChartStackRects(bin, geom, scale) {
-    var segs = [
-        { cls: 'tc-bar-error', n: bin.error, min: TROUBLE_CHART_MIN_ERROR },
-        { cls: 'tc-bar-warning', n: bin.warning, min: TROUBLE_CHART_MIN_BAR },
-        { cls: 'tc-bar-performance', n: bin.performance, min: TROUBLE_CHART_MIN_BAR },
-    ];
     var y = TROUBLE_CHART_VH;
     var rects = '';
-    for (var s = 0; s < segs.length; s++) {
-        if (segs[s].n <= 0 || y <= 0) { continue; }
-        var h = Math.min(y, Math.max(segs[s].min, segs[s].n * scale));
+    for (var s = 0; s < activeChartLevels.length; s++) {
+        var lvl = activeChartLevels[s];
+        var n = bin[lvl] || 0;
+        if (n <= 0 || y <= 0) { continue; }
+        var minH = (lvl === 'error') ? TROUBLE_CHART_MIN_ERROR : TROUBLE_CHART_MIN_BAR;
+        var h = Math.min(y, Math.max(minH, n * scale));
         y -= h;
-        rects += '<rect class="' + segs[s].cls + '" x="' + geom.barX.toFixed(1) + '" y="' + y.toFixed(1)
+        rects += '<rect class="tc-bar-' + lvl + '" x="' + geom.barX.toFixed(1) + '" y="' + y.toFixed(1)
             + '" width="' + geom.barW.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="1"></rect>';
     }
     return rects;
@@ -51,7 +49,12 @@ function troubleChartBar(bin, geom, scale, intervalMs, selected) {
     var hit = (bin.firstLine != null)
         ? '<rect class="tc-hit" x="' + geom.cellX.toFixed(1) + '" y="0" width="' + geom.cellW.toFixed(1) + '" height="' + TROUBLE_CHART_VH + '"></rect>'
         : '';
-    var tip = vt('viewer.troubleChart.barTip', troubleChartClock(bin.key * intervalMs), bin.error, bin.warning, bin.performance);
+    var tipParts = troubleChartClock(bin.key * intervalMs);
+    for (var tpi = 0; tpi < activeChartLevels.length; tpi++) {
+        var tl = activeChartLevels[tpi];
+        tipParts += ' · ' + vt('viewer.troubleChart.legend.' + tl, bin[tl] || 0);
+    }
+    var tip = tipParts;
     return '<g class="tc-bar"' + lineAttr + '><title>' + tip + '</title>' + band + rects + hit + '</g>';
 }
 
@@ -75,10 +78,9 @@ function troubleChartChipHtml(level, count) {
 function renderTroubleChartLegend(totals) {
     var el = document.getElementById('trouble-chart-legend');
     if (!el) { return; }
-    var levels = ['error', 'warning', 'performance'];
     var html = '';
-    for (var i = 0; i < levels.length; i++) {
-        html += troubleChartChipHtml(levels[i], totals[levels[i]]);
+    for (var i = 0; i < activeChartLevels.length; i++) {
+        html += troubleChartChipHtml(activeChartLevels[i], totals[activeChartLevels[i]] || 0);
     }
     el.innerHTML = html;
 }

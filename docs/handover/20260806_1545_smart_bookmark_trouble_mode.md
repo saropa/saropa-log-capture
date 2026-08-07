@@ -151,3 +151,22 @@
 - **config.ts `troubleModeLevels` reader**: Uses an IIFE with validation against a hardcoded list of 7 valid level strings. If a new severity level is added to the classifier, it must also be added here AND to the `package.json` enum.
 - **`setTroubleLevels` with empty array is a no-op**: Guarded by `if (!Array.isArray(levels) || levels.length === 0) return;` — the user can't accidentally hide all lines via an empty config.
 - **Trouble chart legend chips are NOT affected by `setTroubleLevels`**: The chips are built from `enabledLevels` (the level-filter system), not `TROUBLE_LEVELS`. Adding `database` to `troubleMode.levels` will show database lines in trouble mode but the legend chips won't show a database swatch.
+
+## Finish Report (2026-08-07) — Dynamic trouble chart bucketing
+
+### Problem
+The trouble chart (bar histogram + legend) hardcoded three severity levels — error, warning, performance. When users configured `troubleMode.levels` to include database, todo, debug, or notice, those lines appeared in the feed but were invisible in the chart: no bars, no legend chips, no tooltips.
+
+### Changes
+- **`viewer-trouble-chart.ts`**: Injected `TROUBLE_CHART_LEVEL_ORDER` (the canonical stacking order from `troubleValidLevels`) as a JSON array at template-build time. Added `activeChartLevels` / `rebuildActiveChartLevels()` to track which levels from the order are currently enabled in `TROUBLE_LEVELS`. `troubleChartScanLines` initialises bucket counters dynamically from the full order. `buildTroubleChartBuckets` computes totals dynamically over `activeChartLevels`.
+- **`viewer-trouble-chart-render.ts`**: `troubleChartStackRects` iterates `activeChartLevels` with `tc-bar-{level}` CSS class. Tooltip built dynamically from per-level l10n keys. `renderTroubleChartLegend` iterates `activeChartLevels`.
+- **`viewer-trouble-mode.ts`**: `setTroubleLevels` calls `rebuildActiveChartLevels()` then `scheduleTroubleChartUpdate()` so the chart re-renders when levels change mid-session.
+- **`viewer-styles-trouble-chart.ts`**: Four new CSS custom properties (`--tc-database`, `--tc-todo`, `--tc-debug`, `--tc-notice`) plus matching `.tc-bar-*` fill rules and `.tc-chip-* i` swatch rules.
+- **`strings-webview.ts`**: Four new legend l10n keys (`legend.database`, `.todo`, `.debug`, `.notice`); dead `barTip` key removed (tooltip now built dynamically per-level).
+- **`trouble-level-constants.ts`**: Doc updated to reflect that `troubleValidLevels` ordering is now the canonical chart stacking order.
+- **`verify-trouble-levels.mjs`**: Hardened — multiline `[\s\S]*?` regex, comment stripping, quoted-string extraction, `findSetting()` walks `allOf`/`oneOf` nesting.
+
+### Verification
+- `npm run compile`: 0 errors, all 13 gates pass (including `verify:trouble-levels`).
+- `npm run test:file -- out/test/ui/viewer-trouble-chart.test.js`: 16/16 pass.
+- F5 manual testing required for: custom levels visible in chart bars/legend, chart rebuild on live `troubleMode.levels` change.
