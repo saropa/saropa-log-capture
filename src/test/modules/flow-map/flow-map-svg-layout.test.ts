@@ -152,6 +152,54 @@ suite('FlowMap diagram row planning', () => {
             assert.strictEqual(svgWidth(build(5)), svgWidth(build(8)), 'and a stack that fits still uses one column');
         });
 
+        test('should never overlap fault cards when SEVERAL parents spill into the columns', () => {
+            // The case the per-column cursors exist for: two parents at different depths, each with
+            // enough faults to wrap. Cards from different parents share columns, so "monotonic
+            // within one parent" is not enough — this asserts the real invariant on real geometry.
+            const aKeys = Array.from({ length: 9 }, (_, i) => `crash:a${i}`);
+            const bKeys = Array.from({ length: 9 }, (_, i) => `crash:b${i}`);
+            const graph: FlowGraph = {
+                nodes: [node('home'), node('settings'), ...aKeys.map(faultNode), ...bKeys.map(faultNode)],
+                edges: [
+                    edge('home', 'settings'),
+                    ...aKeys.map(k => edge('home', k)),
+                    ...bKeys.map(k => edge('settings', k)),
+                ],
+            };
+            const boxes = [...renderSvg(graph).matchAll(
+                /<rect class="fm-box" x="(\d+(?:\.\d+)?)" y="(\d+(?:\.\d+)?)" width="(\d+)" height="(\d+(?:\.\d+)?)"/g,
+            )].map(m => ({ x: +m[1], y: +m[2], w: +m[3], h: +m[4] }));
+            assert.strictEqual(boxes.length, 20, 'every node was placed');
+            for (let i = 0; i < boxes.length; i++) {
+                for (let j = i + 1; j < boxes.length; j++) {
+                    const a = boxes[i];
+                    const b = boxes[j];
+                    const apart = a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y;
+                    assert.ok(apart, `cards ${i} and ${j} overlap: ${JSON.stringify(a)} vs ${JSON.stringify(b)}`);
+                }
+            }
+        });
+
+        test('should put a later parent\'s faults below that parent, not level with an earlier one', () => {
+            const graph: FlowGraph = {
+                nodes: [node('home'), node('settings'), faultNode('crash:a'), faultNode('crash:b')],
+                edges: [edge('home', 'settings'), edge('home', 'crash:a'), edge('settings', 'crash:b')],
+            };
+            const svg = renderSvg(graph);
+            // NOT by data-rowkey: every crash node reports rowkey "crash" so the issue table can
+            // cross-link them as one row. The label inside data-detail is what identifies the node.
+            const at = (label: string) => {
+                const re = new RegExp(`data-detail="[^"]*${label}[^"]*"[^]*?<rect class="fm-box" x="([\\d.]+)" y="([\\d.]+)" width="\\d+" height="([\\d.]+)"`);
+                const m = re.exec(svg);
+                return m ? { x: +m[1], y: +m[2], h: +m[3] } : undefined;
+            };
+            const settings = at('settings');
+            const crashB = at('crash:b');
+            assert.ok(settings && crashB, 'both nodes rendered');
+            assert.ok(crashB.y >= settings.y + settings.h,
+                'the deeper parent\'s fault sits below that parent, so its arrow reads downward');
+        });
+
         test('should cost no extra width when the session has no fault leaves', () => {
             const plain: FlowGraph = { nodes: [node('home'), node('settings')], edges: [edge('home', 'settings')] };
             assert.strictEqual(svgWidth(plain), 168 + 26 * 2, 'one card plus margins — no empty column reserved');
@@ -163,8 +211,11 @@ suite('FlowMap diagram row planning', () => {
                 edges: [edge('home', 'crash:a'), edge('home', 'crash:b')],
             };
             const svg = renderSvg(graph);
-            const ys = [...svg.matchAll(/<rect x="(\d+(?:\.\d+)?)" y="(\d+(?:\.\d+)?)"/g)]
+            // Node boxes only: `.fm-box` is what carries a card's position (thumbnail frames and
+            // count pills are rects too, and they are positioned relative to their own card).
+            const ys = [...svg.matchAll(/<rect class="fm-box" x="(\d+(?:\.\d+)?)" y="(\d+(?:\.\d+)?)"/g)]
                 .map(m => ({ x: Number(m[1]), y: Number(m[2]) }));
+            assert.strictEqual(ys.length, 3, 'one box per node');
             const parent = ys[0];
             assert.ok(ys.slice(1).every(r => r.x > parent.x), 'fault cards sit to the right of the walk');
             assert.ok(ys.slice(1).every(r => r.y > parent.y), 'and below their parent');
