@@ -11,14 +11,17 @@
 import type {
     CrashInfo, FlowEdge, FlowGraph, FlowNode, IssueEvent, NodeKind, ParsedLog, SourceAnchor, TimelineEvent,
 } from './flow-map-model';
+import { normalizeScreenKey } from './flow-map-format';
 
 /** Static-scan output: normalized screen label → { source, displayLabel }. */
 export type ScanIndex = Map<string, { source: SourceAnchor; label: string }>;
 
-/** R3 — normalize a label to a stable identity key. */
-function normalizeKey(label: string): string {
-    return label.toLowerCase().replace(/\s+/g, ' ').trim();
-}
+/**
+ * R3 — normalize a label to a stable identity key. Delegates to the shared normalizer: the screenshot
+ * join keys captures with the SAME function, and the diagram pairs a card to its thumbnail by exact
+ * equality of the two results, so a second copy of this rule here could drift them apart silently.
+ */
+const normalizeKey = normalizeScreenKey;
 
 /** Map a breadcrumb kind to a node kind. */
 function kindFor(event: TimelineEvent): NodeKind {

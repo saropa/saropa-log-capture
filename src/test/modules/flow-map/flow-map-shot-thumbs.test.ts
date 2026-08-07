@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { groupShotsByScreen, THUMB_BLOCK_H } from '../../../modules/flow-map/flow-map-svg-shots';
+import { groupShotsByScreen, pickThumbShot, THUMB_BLOCK_H } from '../../../modules/flow-map/flow-map-svg-shots';
 import { joinShotsToScreens, type ShotWithDataUri } from '../../../modules/flow-map/flow-map-screenshots';
 import { renderSvg } from '../../../modules/flow-map/flow-map-svg';
 import { buildFlowDiagramBody, buildFlowMapBody } from '../../../modules/flow-map/flow-map-html';
@@ -49,9 +49,51 @@ suite('FlowMap diagram screenshot thumbnails', () => {
             assert.strictEqual(groupShotsByScreen(shots).size, 0);
         });
 
-        test('should preserve capture order within a screen (first one becomes the thumbnail)', () => {
+        test('should preserve capture order within a screen', () => {
             const { shots } = fixture([shot(3, { trigger: 'nav' }), shot(3, { trigger: 'error' })]);
             assert.strictEqual(groupShotsByScreen(shots).get('home')?.[0].trigger, 'nav');
+        });
+
+        test('should key captures with the SAME normalizer the builder keys nodes with', () => {
+            // Drift between the two fails silently — thumbnails just stop appearing — so pin it
+            // through the real pipeline on a label the normalizer has to actually work on.
+            const parsed = parseLog([...HEAD, '[08:00:01.000] [console] [log] Screen Navigation:   Contact   VIEW  ']);
+            const graph = buildGraph(parsed);
+            const shots = joinShotsToScreens([shot(3)], parsed.events);
+            const key = graph.nodes.find(n => n.kind !== 'launch')?.key;
+            assert.ok(key, 'the fixture produced a screen node');
+            assert.strictEqual(groupShotsByScreen(shots).get(key)?.length, 1, 'capture lands on that node key');
+        });
+    });
+
+    suite('pickThumbShot', () => {
+        test('should show a warning capture too — the capturer treats it as a fault', () => {
+            const { shots } = fixture([shot(3, { trigger: 'nav' }), shot(3, { trigger: 'warning' })]);
+            const picked = pickThumbShot(groupShotsByScreen(shots).get('home') ?? []);
+            assert.strictEqual(picked?.shot.trigger, 'warning');
+        });
+
+        test('should rank an error above a warning when a screen produced both', () => {
+            const { shots } = fixture([shot(3, { trigger: 'warning' }), shot(3, { trigger: 'error' })]);
+            assert.strictEqual(pickThumbShot(groupShotsByScreen(shots).get('home') ?? [])?.shot.trigger, 'error');
+        });
+
+        test('should show the error capture when a screen has one', () => {
+            const { shots } = fixture([shot(3, { trigger: 'nav' }), shot(3, { trigger: 'error' })]);
+            const picked = pickThumbShot(groupShotsByScreen(shots).get('home') ?? []);
+            assert.strictEqual(picked?.shot.trigger, 'error', 'the fault capture represents the screen');
+            assert.strictEqual(picked?.index, 1, 'and reports its real position, not 0');
+        });
+
+        test('should fall back to the first capture when none faulted', () => {
+            const { shots } = fixture([shot(3, { trigger: 'nav' }), shot(3, { trigger: 'manual' })]);
+            const picked = pickThumbShot(groupShotsByScreen(shots).get('home') ?? []);
+            assert.strictEqual(picked?.shot.trigger, 'nav');
+            assert.strictEqual(picked?.index, 0);
+        });
+
+        test('should return undefined for a screen with no captures', () => {
+            assert.strictEqual(pickThumbShot([]), undefined);
         });
     });
 
@@ -83,7 +125,33 @@ suite('FlowMap diagram screenshot thumbnails', () => {
             assert.strictEqual(grew, THUMB_BLOCK_H, 'height grows by the thumbnail block, nothing else');
         });
 
-        test('should embed only the FIRST capture per screen, not every one', () => {
+        test('should draw the error capture and flag the pill when a screen faulted', () => {
+            const { graph, shots } = fixture([
+                shot(3, { trigger: 'nav', dataUri: 'data:image/png;base64,NAV=' }),
+                shot(3, { trigger: 'error', dataUri: 'data:image/png;base64,ERR=' }),
+            ]);
+            const svg = renderSvg(graph, shots);
+            assert.ok(svg.includes('href="data:image/png;base64,ERR="'), 'the fault capture is the thumbnail');
+            assert.ok(!svg.includes('base64,NAV='), 'the nav capture is not also embedded');
+            assert.ok(svg.includes('fm-shot-pill-alert'), 'the pill carries the fault tint');
+            assert.ok(svg.includes('data-shot-index="2"'), 'the lightbox counter reports its real position');
+        });
+
+        test('should tint the pill at the severity that actually fired', () => {
+            const { graph, shots } = fixture([shot(3, { trigger: 'nav' }), shot(3, { trigger: 'warning' })]);
+            const svg = renderSvg(graph, shots);
+            assert.ok(svg.includes('fm-shot-pill-warn'), 'a warning capture gets the warning tint');
+            assert.ok(!svg.includes('fm-shot-pill-alert'), 'not the error tint');
+        });
+
+        test('should leave the pill untinted when no capture on the screen faulted', () => {
+            const { graph, shots } = fixture([shot(3, { trigger: 'nav' }), shot(3, { trigger: 'manual' })]);
+            const svg = renderSvg(graph, shots);
+            assert.ok(svg.includes('fm-shot-pill'), 'pill present');
+            assert.ok(!/fm-shot-pill-(alert|warn)/.test(svg), 'but not tinted');
+        });
+
+        test('should embed only ONE capture per screen, not every one', () => {
             const { graph, shots } = fixture([shot(3), shot(3), shot(3)]);
             const svg = renderSvg(graph, shots);
             assert.strictEqual(svg.split('class="fm-shot"').length - 1, 1, 'one thumbnail per screen');

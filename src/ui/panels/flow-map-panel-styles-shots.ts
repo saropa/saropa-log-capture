@@ -22,6 +22,11 @@ export function flowMapShotStyles(): string {
      card fill — over a photo, a translucent chip is unreadable. */
   .fm-shot-pill { fill: var(--surface-1); stroke: var(--border); stroke-width: 1; }
   .fm-shot-pill-text { fill: var(--text); }
+  /* Severity tint: the capture on show is the fault one, not merely the first of N. Tinted at the
+     same ratio the diagram's crash/warning node fills use, so the pill reads as part of the existing
+     severity language and the count digit keeps its --text contrast in both themes. */
+  .fm-shot-pill-alert { fill: color-mix(in srgb, var(--status-bad) 22%, var(--surface-1)); stroke: var(--status-bad); }
+  .fm-shot-pill-warn { fill: color-mix(in srgb, var(--accent-warning) 22%, var(--surface-1)); stroke: var(--accent-warning); }
 
   /* Screenshot lightbox: centered card over a dimmed backdrop, sized to the viewport so the capture
      shows at the largest size that still leaves its facts visible. */

@@ -232,7 +232,7 @@ export interface FlowDiagramOptions {
     readonly emptyDetail?: string;
     /** Empty-state custom-rule suggestions mined from the log's own lines. */
     readonly suggestions?: readonly BreadcrumbSuggestion[];
-    /** Session captures — each screen's first one becomes its node's thumbnail. */
+    /** Session captures — one per screen becomes its node's thumbnail (see `pickThumbShot`). */
     readonly screenshots?: readonly FlowShot[];
 }
 
