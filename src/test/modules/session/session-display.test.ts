@@ -16,6 +16,10 @@ suite('session-display', () => {
             assert.strictEqual(defaultDisplayOptions.showLatestOnly, false);
         });
 
+        test('collapseSeverityCounts is ON by default (declutter non-latest rows)', () => {
+            assert.strictEqual(defaultDisplayOptions.collapseSeverityCounts, true);
+        });
+
         test('has all required display option fields', () => {
             assert.strictEqual(typeof defaultDisplayOptions.stripDatetime, 'boolean');
             assert.strictEqual(typeof defaultDisplayOptions.normalizeNames, 'boolean');
