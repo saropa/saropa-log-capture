@@ -162,7 +162,7 @@ export function flowMapLightboxScript(nonce: string, labels: LightboxLabels): st
   document.querySelectorAll('img.shot-img').forEach(function(img){
     bind(img, function(){ return img.src; });
   });
-  // SVG <image> exposes its data URI through the href/xlink:href attribute, not .src.
+  // SVG <image> exposes its URL through the href/xlink:href attribute, not .src.
   document.querySelectorAll('image.fm-shot').forEach(function(im){
     bind(im, function(){ return im.getAttribute('href') || im.getAttribute('xlink:href') || ''; });
   });

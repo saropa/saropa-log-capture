@@ -15,50 +15,32 @@ import type { ScreenshotTrigger } from '../screenshot/screenshot-store';
 import { normalizeScreenKey } from './flow-map-format';
 
 /**
- * Sidecar entry plus its already-encoded PNG data URI. The caller (host-side, async `vscode.workspace.fs`
- * reads) pairs each `.screenshots.json` entry with its data URI before calling `joinShotsToScreens` so
- * this module stays pure sync data-in/data-out.
+ * Sidecar entry plus the URL its PNG will render from. The caller (host-side) resolves each
+ * `.screenshots.json` entry to a URL before calling `joinShotsToScreens` so this module stays pure
+ * sync data-in/data-out.
  */
-export interface ShotWithDataUri {
+export interface ShotWithSource {
     readonly trigger: ScreenshotTrigger;
     readonly timestamp: number;
     readonly logLine: number;
     readonly text: string;
-    readonly dataUri: string;
+    readonly src: string;
 }
 
 /** One screenshot ready to render: sidecar metadata plus the screen it was captured on. */
 export interface FlowShot {
-    readonly dataUri: string;
+    /**
+     * Image URL. Two-stage by design: the loader puts the PNG's `file:` URI here, and the panel
+     * rewrites it to `webview.asWebviewUri(...)` immediately before render, because only a live
+     * `Webview` can mint a URL its own sandbox will load. Render modules just emit the string.
+     */
+    readonly src: string;
     readonly clock: string;
     readonly trigger: ScreenshotTrigger;
     readonly logLine: number;
     /** Display label of the screen active at capture time; undefined when none preceded it. */
     readonly screenLabel?: string;
     readonly text: string;
-}
-
-/**
- * Verdict for one capture against the report's embed budget. `skip` drops this capture but keeps
- * reading (a single capture too large to ever embed must not end the gallery); `stop` ends the walk
- * because the budget is spent.
- */
-export type ShotBudgetVerdict = 'embed' | 'skip' | 'stop';
-
-/**
- * Whether a capture fits the report's data-URI budget. Pure so the rule is testable without the
- * Extension Host — the caller does the file reads.
- *
- * A capture larger than the WHOLE budget is skipped rather than admitted as a special case: the adb
- * path alone allows a 32 MB PNG (~43 MB as base64), and shipping one because it happened to be first
- * would freeze the panel it is embedded in — precisely what the budget exists to prevent. Because
- * over-budget captures are skipped individually, `stop` can only be reached once something is already
- * embedded, so the gallery never comes back empty while a capture that fits was still available.
- */
-export function shotBudgetVerdict(uriLength: number, bytesSoFar: number, maxBytes: number): ShotBudgetVerdict {
-    if (uriLength > maxBytes) { return 'skip'; }
-    if (bytesSoFar + uriLength > maxBytes) { return 'stop'; }
-    return 'embed';
 }
 
 /** Kinds of `TimelineEvent` that create/enter a flow-map node (mirrors `flow-map-builder.ts`). */
@@ -99,15 +81,15 @@ function screenAt(logLine: number, events: readonly TimelineEvent[]): string | u
 }
 
 /**
- * Decorate sidecar entries (already paired with their data URI) with the screen active at capture
+ * Decorate sidecar entries (already paired with their image URL) with the screen active at capture
  * time — the last node-creating ('nav'/'reached') event at or before the entry's log line.
  */
 export function joinShotsToScreens(
-    entries: readonly ShotWithDataUri[],
+    entries: readonly ShotWithSource[],
     events: readonly TimelineEvent[],
 ): FlowShot[] {
     return entries.map(entry => ({
-        dataUri: entry.dataUri,
+        src: entry.src,
         clock: formatClock(entry.timestamp),
         trigger: entry.trigger,
         logLine: entry.logLine,
