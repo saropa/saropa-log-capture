@@ -5,6 +5,7 @@
  */
 
 import { getTokenStyles } from '../viewer-styles/viewer-styles-tokens';
+import { flowMapShotStyles } from './flow-map-panel-styles-shots';
 
 /** The full `<style>` block for the panel, nonce-guarded for CSP. */
 export function flowMapStyles(nonce: string): string {
@@ -254,5 +255,6 @@ export function flowMapStyles(nonce: string): string {
   .fmd-issues li { margin: 0.2rem 0; }
   .fmd-link { color: var(--link); cursor: pointer; font-family: var(--vscode-editor-font-family); }
   .fmd-link:hover { text-decoration: underline; color: var(--vscode-textLink-activeForeground); }
+${flowMapShotStyles()}
 </style>`;
 }
