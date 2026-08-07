@@ -291,7 +291,7 @@
   "Devices": "nllb",
   "Diagnose missing lines (log capture pipeline)": "nllb",
   "Disable {0} filter": "nllb",
-  "Display": "manual",
+  "Display": "qwen3_8b_local",
   "Distinct arguments": "nllb",
   "Double each row's height for easier reading (1.2 → 2.0 line-height)": "nllb",
   "Double-clicking a log line opens an inline peek popup centered on that line, showing several lines of surrounding context above and below. The popup appears as a floating card over the viewport. This lets you read nearby lines without losing your scroll position. Click outside the peek or press Escape to dismiss it.": "nllb",

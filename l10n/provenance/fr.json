@@ -946,7 +946,7 @@
   "Use eager loading (joins) or batch queries instead of issuing one query per item in a loop.": "nllb",
   "Use existing file: {0}": "nllb",
   "Use regex": "nllb",
-  "Ver": "manual",
+  "Ver": "qwen3_8b_local",
   "Version": "manual",
   "Versions": "manual",
   "View": "manual",

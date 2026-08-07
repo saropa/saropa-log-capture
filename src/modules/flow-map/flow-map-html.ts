@@ -291,7 +291,9 @@ function emptyDetailFor(parsed: ParsedLog): string {
 /**
  * Diagram-only body for the pop-out panel: the legend plus the full-area diagram, no tables/TOC.
  * Screenshots come through so the pop-out's cards carry the same thumbnails as the report's — its
- * host must therefore allow `img-src data:` in the panel CSP, which the report already did.
+ * host must therefore allow its own `webview.cspSource` as `img-src` and open `localResourceRoots`
+ * to the capture directory, exactly as the report panel does. `cspSource` is per-webview: the
+ * pop-out cannot borrow the report's.
  */
 export function buildFlowDiagramBody(graph: FlowGraph, screenshots: readonly FlowShot[] = []): string {
     return '<div class="diagram-only">' + legendAndDiagram(graph, { screenshots }) + '</div>';
