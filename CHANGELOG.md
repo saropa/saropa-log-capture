@@ -33,10 +33,11 @@ cspell:disable
 - Logs panel: non-latest, non-active rows now show a single neutral line-count pill instead of the full severity breakdown — click the pill to expand inline; a "Collapse counts" toggle in Display options controls the behavior (plan 001 part B)
 - Logs panel: "Expand all" / "Collapse all" buttons in the Display submenu to open or close all day groups at once; buttons auto-hide when day headings are off (plan 001)
 - Trouble chart: "First error" button in the header jumps to the first error after app start
+- Setting `troubleMode.openOnLoad`: auto-activate Trouble Mode when a log opens; suppresses the smart bookmark modal since Trouble Mode already surfaces errors
 
 ### Fixed
 
-- Logs panel: stale day keys in `collapsedDays` are pruned on each render so the persisted map does not grow unboundedly over months (plan 001)
+- Logs panel: stale day keys in `collapsedDays` are pruned when the session list changes so the persisted map does not grow unboundedly; skipped on option-toggle re-renders (plan 001)
 - Logs panel: "Expand all" / "Collapse all" now cover all session dates including paginated pages, not just the currently rendered DOM subset (plan 001)
 
 - Smart bookmark modal no longer fires on pre-launch device backlog errors; skipped pre-launch error count is logged to the output channel (bug_002)
