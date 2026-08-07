@@ -124,13 +124,19 @@ export function thumbMarkup(x: number, y: number, shots: readonly FlowShot[]): s
     const tx = x + THUMB_PAD;
     const ty = y + THUMB_PAD;
     const label = esc(stripAnsi(shot.screenLabel ?? shot.trigger));
+    // Hover title answers "why THIS capture?" — a card shows one of several, chosen by trigger, and
+    // without the clock and trigger the reader has no way to tell which one they are looking at.
+    // Same `clock · trigger · screen` wording (and same untranslated trigger word) as the gallery
+    // caption, so the two surfaces describe one capture identically.
+    const title = `<title>${esc(shot.clock)} · ${esc(shot.trigger)} · ${label}</title>`;
     return `<image class="fm-shot" x="${tx}" y="${ty}" width="${THUMB_W}" height="${THUMB_H}" `
         + `preserveAspectRatio="xMidYMin slice" href="${esc(shot.src)}" role="button" tabindex="0" `
         // data-shot-scope="screen": this thumbnail's index/total count THIS SCREEN's captures, while a
         // gallery figure's count the whole session's. Same attributes, different denominator — the
         // lightbox picks its wording from the scope so "1 of 3" never silently means two things. The
         // index is the SHOWN capture's position, which is not always the first one (see pickThumbShot).
-        + `aria-label="${label}"${shotDataAttrs(shot, index + 1, shots.length)} data-shot-scope="screen"/>`
+        + `aria-label="${label}"${shotDataAttrs(shot, index + 1, shots.length)} data-shot-scope="screen">`
+        + `${title}</image>`
         + `<rect class="fm-shot-frame" x="${tx}" y="${ty}" width="${THUMB_W}" height="${THUMB_H}" rx="4" `
         + `fill="none" stroke-width="1"/>`
         + countPill(tx, ty, shots.length, pillClass(shot.trigger));

@@ -162,6 +162,15 @@ suite('FlowMap diagram screenshot thumbnails', () => {
             assert.ok(renderSvg(graph).includes('width="168"'), 'node boxes use the portrait card width');
         });
 
+        test('should title the thumbnail with WHY this capture is the one on show', () => {
+            // A card shows one of several captures, chosen by trigger — without the clock and
+            // trigger on hover the reader cannot tell which one they are looking at.
+            const { graph, shots } = fixture([shot(3, { trigger: 'nav' }), shot(3, { trigger: 'error' })]);
+            const svg = renderSvg(graph, shots);
+            assert.ok(/<title>[^<]*·\s*error\s*·\s*Home<\/title>/.test(svg), 'names the trigger and screen');
+            assert.ok(!svg.includes('· nav ·'), 'and not the capture that is NOT shown');
+        });
+
         test('should carry the capture facts the lightbox reads', () => {
             const { graph, shots } = fixture([shot(3, { trigger: 'nav' })]);
             const svg = renderSvg(graph, shots);
