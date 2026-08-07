@@ -78,6 +78,16 @@ export function buildScreenshotSettingsPayload(): Record<string, unknown> {
     };
 }
 
+/**
+ * The capture directory and the separator to join filenames to it. Exported so every message that
+ * badges a capture carries the same pair — a popover opened from a LIVE capture (which arrives
+ * before any list) would otherwise have no directory and fall back to a bare filename.
+ */
+export function screenshotDirPayload(logFsPath: string): { dir: string; sep: string } {
+    const dir = screenshotDirUri(logFsPath).fsPath;
+    return { dir, sep: dir.includes('\\') ? '\\' : '/' };
+}
+
 /** Send the sidecar's entry list for the currently loaded log (empty when none). */
 async function postScreenshotList(ctx: ViewerMessageContext): Promise<void> {
     if (!ctx.currentFileUri) { return; }
@@ -85,9 +95,10 @@ async function postScreenshotList(ctx: ViewerMessageContext): Promise<void> {
     const screenshots = await readScreenshotSidecar(logFsPath);
     // The capture directory rides along so the popover can show a reader the FULL path of the PNG
     // it is previewing. The sidecar stores bare filenames, and a filename alone is not something the
-    // reader can act on — they need the path to open, copy, or attach the file.
-    const dir = screenshotDirUri(logFsPath).fsPath;
-    ctx.post({ type: 'screenshotList', logFsPath, dir, screenshots });
+    // reader can act on — they need the path to open, copy, or attach the file. The separator is
+    // sent explicitly rather than inferred webview-side: the webview has no platform of its own, and
+    // a path this host had already normalized to forward slashes would fool any inference rule.
+    ctx.post({ type: 'screenshotList', logFsPath, ...screenshotDirPayload(logFsPath), screenshots });
 }
 
 /** Resolve a sidecar-relative PNG name against the current log, rejecting traversal. */

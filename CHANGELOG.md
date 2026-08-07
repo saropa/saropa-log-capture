@@ -27,14 +27,21 @@ cspell:disable
 
 ## [9.3.9]
 
+### Added
+
+- Flow map: any screen captured more than once can be compared in the screenshot lightbox — two captures side by side with their clocks, stepping through the rest of that screen's set
+
 ### Fixed
 
+- Flow map: a screen with a very large number of crashes now wraps them into further columns instead of one column that grows off the bottom of the report
+- Flow map: the two report columns size their scroll area from the actual header height, so a wrapped toolbar no longer pushes the bottom of each column out of reach
 - Flow map: screenshot thumbnails on the diagram cards rendered as empty frames — captures are now referenced from disk instead of being embedded in the panel, which drops a screenshot-heavy report from megabytes of markup to a few kilobytes and lets each capture load on its own
 - Flow map: a short session no longer fans out across the screen — terminal crash cards stack in a column beside the walk rather than sitting side by side in it, and any genuinely wide row of sibling screens wraps instead of widening the canvas (a real four-step session measured 1272px wide before, 456px after)
 - Flow map: diagram card thumbnails render again — the captures now draw with the same kind of image element the gallery uses, which was the one painting correctly
 - Flow map: the diagram and the detail column each scroll on their own, so a long issue table no longer drags the diagram off the screen
 - Log viewer: the screenshot preview popover shows the full path of the capture it is previewing, not just the filename
 - Flow map: the screenshot lightbox shows the capture's filename with a one-click copy of its full path, and the image can be zoomed by scrolling over it or with a zoom slider (which overrides fit-to-window; the fit button returns)
+- Flow map: a screenshot that has been moved or deleted since the report was built now says so in its frame, instead of showing a broken-image placeholder
 - Screenshots: a screenshot record with an unrecognized trigger is now rejected when the sidecar is read, instead of reaching the gallery and the diagram as an untinted mystery capture
 - Flow map: the capture-count badge on a diagram card keeps its contrast over any severity tint, and hovering a card thumbnail now says which capture is on show and what triggered it
 - l10n: 25 untranslated trouble-chart legend and flow-map strings filled across 10 locales (DB, Debug, TODO, Screenshot, Trigger); all locales now at 100% coverage

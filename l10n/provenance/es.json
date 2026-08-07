@@ -983,7 +983,7 @@
   "https://example.com/path/to/file.log": "nllb",
   "inline": "manual",
   "just now": "nllb",
-  "local": "manual",
+  "local": "qwen3_8b_local",
   "memory event": "nllb",
   "missing": "nllb",
   "more": "nllb",
