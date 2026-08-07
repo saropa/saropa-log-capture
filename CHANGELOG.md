@@ -64,6 +64,10 @@ Introduces quality-of-life improvements to the Logs panel by collapsing older lo
 
 - Smart bookmark modal no longer fires on pre-launch device backlog errors; skipped pre-launch error count is logged to the output channel (bug_002)
 
+- l10n: 25 untranslated trouble-chart legend and flow-map strings filled across 10 locales (DB, Debug, TODO, Screenshot, Trigger); all locales now at 100% coverage
+- l10n: `is_acronym_only` now recognizes acronym + placeholder patterns (e.g. "DB {0}", "TODO {0}") so they classify as identity instead of untranslated gaps
+- l10n: new `--run-mode fill-identity` (menu option 8) marks remaining EN-COPY identity gaps with manual provenance in one step
+
 ---
 
 ## [9.3.7]

@@ -150,15 +150,25 @@ def is_brand_only(en_value: str) -> bool:
     return not any(ch.isalnum() for ch in shielded)
 
 
-def is_acronym_only(en_value: str) -> bool:
-    """True if the whole string is a technical acronym forced English everywhere.
+# Format placeholders like {0}, {1}, {count} are substituted at runtime and are
+# not translatable text. Drop them before deciding whether a word remains.
+_PLACEHOLDER_RE = re.compile(r"\{[^}]*\}")
 
-    Exact-match only — an acronym inside a longer sentence (e.g. "Clear SQL
-    baseline") is still translated normally; just the standalone label is forced
-    to English. Callers force identity (overwrite any prior translation) so the
-    label is uniform across all locales.
+
+def is_acronym_only(en_value: str) -> bool:
+    """True if the string is a technical acronym (optionally with placeholders).
+
+    Matches both standalone acronyms ("DB", "TODO") and acronym-plus-placeholder
+    patterns ("DB {0}", "TODO {count}"). An acronym inside a longer sentence
+    (e.g. "Clear SQL baseline") is still translated normally. Callers force
+    identity so the label is uniform across all locales.
     """
-    return en_value in ACRONYM_ONLY_STRINGS
+    if en_value in ACRONYM_ONLY_STRINGS:
+        return True
+    # Strip {n}/{name} placeholders; if only an acronym + whitespace remains,
+    # the translatable content is just the acronym — identity is correct.
+    stripped = _PLACEHOLDER_RE.sub("", en_value).strip()
+    return stripped in ACRONYM_ONLY_STRINGS
 
 
 def is_verified_identical(en_value: str, locale: str) -> bool:
@@ -170,11 +180,6 @@ def is_verified_identical(en_value: str, locale: str) -> bool:
     untranslated, so genuine gaps stay visible while reviewed ones go quiet.
     """
     return en_value in VERIFIED_IDENTICAL.get(locale, frozenset())
-
-
-# Format placeholders like {0}, {1}, {count} are substituted at runtime and are
-# not translatable text. Drop them before deciding whether a word remains.
-_PLACEHOLDER_RE = re.compile(r"\{[^}]*\}")
 
 
 def is_no_translatable_content(en_value: str) -> bool:
