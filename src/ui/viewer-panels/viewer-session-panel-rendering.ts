@@ -8,12 +8,17 @@ import { getControllerGroupingScript } from './viewer-session-panel-controllers'
 import { getSessionStreamingScript } from './viewer-session-panel-rendering-stream';
 import { getNameFilterBarScript } from './viewer-session-panel-rendering-name-filter';
 import { getPinnedRenderingScript } from './viewer-session-panel-rendering-pinned';
+import { getSessionMetaScript } from './viewer-session-panel-rendering-meta';
 
 /** Get the session panel rendering script fragment. */
 export function getSessionRenderingScript(): string {
-    return getSessionGroupRenderingScript() + getControllerGroupingScript() + getSessionStreamingScript() + getNameFilterBarScript() + getPinnedRenderingScript() + /* javascript */ `
+    return getSessionGroupRenderingScript() + getControllerGroupingScript() + getSessionStreamingScript() + getNameFilterBarScript() + getPinnedRenderingScript() + getSessionMetaScript() + /* javascript */ `
     /* escapeAttr and escapeHtmlText are provided by the session panel IIFE bootstrap. */
+    /* Cached once per renderSessionList call so all day groups in a single render agree
+       on what "today" is. Prevents mid-render drift if Date.now() crosses midnight. */
+    var todayDateKey = toDateKey(Date.now());
     function renderSessionList(sessions) {
+        todayDateKey = toDateKey(Date.now());
         if (sessionLoadingEl) sessionLoadingEl.style.display = 'none';
         if (!sessionListEl) return;
         /* No badge on the Logs icon: the count plateaus at "99+" for any project with history,
@@ -156,6 +161,19 @@ export function getSessionRenderingScript(): string {
        local implementation was removed because function declarations hoist and the later
        declaration would win, silently undoing the Reports-bucket split. Plan: 001. */
 
+    function shouldCollapseCounts(s) {
+        return sessionDisplayOptions.collapseSeverityCounts && !s.isLatestOfName && !s.isActive;
+    }
+    function renderCollapsedCount(s) {
+        var total = s.lineCount || 0;
+        var full = renderSeverityDots(s);
+        return '<span class="sev-dots sev-dots-collapsed">'
+            + '<span class="sev-collapsed-total">'
+            + '<span class="sev-count sev-count-other">' + groupThousands(total) + '</span>'
+            + '</span>'
+            + '<span class="sev-expanded-full">' + full + '</span>'
+            + '</span>';
+    }
     function renderItem(s, bnCounts) {
         var icon = s.isActive ? 'codicon-record' : (s.hasTimestamps ? 'codicon-history' : 'codicon-output');
         var iconTitle = s.isActive ? vt('viewer.session.icon.recording') : (s.hasTimestamps ? vt('viewer.session.icon.completed') : vt('viewer.session.icon.logFile'));
@@ -270,46 +288,8 @@ export function getSessionRenderingScript(): string {
     /* Day heading/formatting helpers and formatSessionSize are loaded
        from viewer-session-transforms.ts as a separate script. */
 
-    /* Meta line: adapter, time, duration, size, tags — no dots (rendered as a sibling, see renderItem). */
-    function buildSessionMeta(s, fileTime) {
-        var parts = [];
-        if (s.adapter) parts.push(escapeHtmlText(s.adapter));
-        var timePart = '';
-        var clockTime = s.formattedTime || s.formattedMtime || '';
-        if (fileTime) {
-            var md = new Date(s.mtime);
-            var mtimeMatch = md.getHours() === fileTime.hours && md.getMinutes() === fileTime.minutes;
-            if (!mtimeMatch) {
-                timePart = formatTime12hFromParts(fileTime.hours, fileTime.minutes);
-            } else if (sessionDisplayOptions.showDayHeadings) {
-                timePart = s.relativeTime || clockTime;
-            } else {
-                var tl = s.formattedMtime || '';
-                timePart = s.relativeTime ? tl + ' ' + s.relativeTime : tl;
-            }
-        } else {
-            var timeLabel = sessionDisplayOptions.showDayHeadings ? clockTime : (s.formattedMtime || s.formattedTime || '');
-            timePart = timeLabel ? (s.relativeTime ? timeLabel + ' ' + s.relativeTime : timeLabel) : (s.relativeTime || clockTime);
-        }
-        if (timePart) parts.push(escapeHtmlText(timePart));
-        if (s.durationMs > 0) parts.push(escapeHtmlText(formatSessionDuration(s.durationMs)));
-        if (s.size) parts.push(escapeHtmlText(formatSessionSize(s.size)));
-        var allTags = (s.tags || []).map(function(t) { return '#' + t; })
-            .concat((s.autoTags || []).map(function(t) { return '~' + t; }))
-            .concat((s.correlationTags || []).slice(0, 3).map(function(t) { return '@' + t; }));
-        if (allTags.length > 0) parts.push(escapeHtmlText(allTags.join(' ')));
-        return parts.join(' \\u00b7 ');
-    }
-
-    function applySessionDisplayOptions(name) {
-        var result = trimSessionSeconds(name);
-        if (sessionDisplayOptions.stripDatetime) result = stripSessionDatetime(result);
-        if (sessionDisplayOptions.normalizeNames) {
-            result = normalizeSessionName(result);
-            result = splitFileExt(result)[0];
-        }
-        return result;
-    }
+    /* buildSessionMeta and applySessionDisplayOptions are now in
+       viewer-session-panel-rendering-meta.ts — extracted for the 300-line limit. */
 
     /* renderSessionListPreview and updateSessionBatchItems are now provided by
        getSessionStreamingScript() — see viewer-session-panel-rendering-stream.ts. They live

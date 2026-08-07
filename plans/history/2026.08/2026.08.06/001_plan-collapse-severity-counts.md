@@ -1,6 +1,43 @@
 # Plan 001 — Session List Readability and Discoverability
 
-## Status: Fixed (pending review)
+## Status: Closed
+
+## Finish Report (2026-08-06)
+
+Parts A and B of plan 001 are implemented and tested. Issues 3–5 remain deferred as documented.
+
+### Part A — Day groups collapsed by default
+
+`renderDayGroup` in `viewer-session-panel-controllers.ts` now computes a `today` key from `Date.now()` and defaults non-today days to collapsed (CSS class `collapsed` + `aria-expanded="false"`). The `collapsedDays` map adopts tri-state semantics: `true` = explicitly collapsed, `false` = explicitly expanded, absent = use default. The click handler in `viewer-session-panel-events.ts` reads the current DOM state (`classList.contains('collapsed')`) and persists the opposite. Hydration in `viewer-session-panel-events-messages.ts` preserves `false` entries instead of discarding them.
+
+### Part B — Collapsed severity pills
+
+`shouldCollapseCounts` returns `true` when `collapseSeverityCounts` is enabled AND the row is neither `isLatestOfName` nor `isActive`. `renderCollapsedCount` emits both a collapsed total pill (`sev-collapsed-total`) and the full breakdown (`sev-expanded-full`) inside a `.sev-dots-collapsed` wrapper. CSS toggles visibility; clicking the wrapper (capture-phase listener in `viewer-session-panel-events.ts`) swaps the class to `.sev-dots-expanded`. A "Collapse counts" toggle in the Display submenu controls the feature, wired through the existing `bindToggle`/`syncToggleButtons`/`toggleOption` pattern. Both functions live in `viewer-session-panel-rendering.ts` (inside the IIFE, not the transforms script) because they read `sessionDisplayOptions`.
+
+### File extraction
+
+`buildSessionMeta` and `applySessionDisplayOptions` were extracted to `viewer-session-panel-rendering-meta.ts` to keep the rendering file under the 300-line limit after the new functions were added.
+
+### Test coverage
+
+Seven new tests in `viewer-session-day-collapse.test.ts` cover: default-collapsed non-today, explicit `false` override in `collapsedDays`, collapsed pill on non-latest rows, full breakdown on latest rows, full breakdown on active rows, and toggle-off disabling collapse. One new test in `session-display.test.ts` pins `collapseSeverityCounts: true` as the default. All 39 tests pass (19 day-collapse + 20 session-display).
+
+### Scope fix
+
+`shouldCollapseCounts` and `renderCollapsedCount` were initially placed in `viewer-session-transforms.ts` (global scope). They reference `sessionDisplayOptions` which lives inside the session panel IIFE — a `ReferenceError` at runtime. Both functions moved to `viewer-session-panel-rendering.ts` inside the IIFE scope.
+
+### Midnight rollover hardening
+
+`todayDateKey` is computed once per `renderSessionList` call and shared across all `renderDayGroup` invocations, preventing mid-render drift if `Date.now()` crosses midnight during a render.
+
+### Expand/collapse all days
+
+Two action buttons ("Expand all" / "Collapse all") added to the Display submenu. `setAllDaysCollapsed(collapsed)` queries all rendered `.session-day-group` elements, writes the target state to `collapsedDays`, persists via `setSessionDisplayOptions`, and re-renders. Only meaningful when day headings are on.
+
+### Commits
+
+- `37e03196` — initial implementation (12 files, 74 insertions, 10 deletions)
+- (pending) — scope fix, file extraction, tests, hardening, expand/collapse all
 
 ## Problem
 
