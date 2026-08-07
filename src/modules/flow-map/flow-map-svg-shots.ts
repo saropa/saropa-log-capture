@@ -101,6 +101,21 @@ function countPill(x: number, y: number, count: number, cls: string): string {
  * gallery figures (`flow-map-html-shots.ts`) import this so a figure and its diagram thumbnail can
  * never drift into describing the same capture differently.
  */
+/**
+ * The whole set a capture belongs to, as JSON, so the lightbox can compare two captures of the same
+ * screen without another round trip. Only the three fields compare needs travel — a URL, a clock,
+ * and a trigger — because the alternative (every capture's facts on every element) multiplies the
+ * markup by the set size to answer a question most readers never ask.
+ *
+ * Omitted for a lone capture: there is nothing to compare it against, and the compare control keys
+ * off this attribute's absence.
+ */
+export function shotSiblingsAttr(shots: readonly FlowShot[]): string {
+    if (shots.length < 2) { return ''; }
+    const set = shots.map(s => ({ src: s.src, clock: s.clock, trigger: s.trigger }));
+    return ` data-shot-siblings="${esc(JSON.stringify(set))}"`;
+}
+
 export function shotDataAttrs(shot: FlowShot, index: number, total: number): string {
     return ` data-shot-clock="${esc(shot.clock)}" data-shot-trigger="${esc(shot.trigger)}"`
         + ` data-shot-screen="${esc(stripAnsi(shot.screenLabel ?? ''))}"`
@@ -148,7 +163,8 @@ export function thumbMarkup(x: number, y: number, shots: readonly FlowShot[]): s
         // gallery figure's count the whole session's. Same attributes, different denominator — the
         // lightbox picks its wording from the scope so "1 of 3" never silently means two things. The
         // index is the SHOWN capture's position, which is not always the first one (see pickThumbShot).
-        + `aria-label="${label}"${shotDataAttrs(shot, index + 1, shots.length)} data-shot-scope="screen"/>`
+        + `aria-label="${label}"${shotDataAttrs(shot, index + 1, shots.length)}`
+        + `${shotSiblingsAttr(shots)} data-shot-scope="screen"/>`
         + `</foreignObject>`
         // Drawn AFTER the foreignObject so the hairline frame sits on top of the capture, and kept as
         // SVG so it scales with the diagram's zoom exactly like every other stroke.
