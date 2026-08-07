@@ -9,6 +9,10 @@
  */
 
 import type { TimelineEvent } from './flow-map-model';
+// Type-only: erased at emit, so this module keeps its no-vscode-at-runtime property while the
+// trigger stays tied to the capturer's real union instead of a bare string a rename could desync.
+import type { ScreenshotTrigger } from '../screenshot/screenshot-store';
+import { normalizeScreenKey } from './flow-map-format';
 
 /**
  * Sidecar entry plus its already-encoded PNG data URI. The caller (host-side, async `vscode.workspace.fs`
@@ -16,7 +20,7 @@ import type { TimelineEvent } from './flow-map-model';
  * this module stays pure sync data-in/data-out.
  */
 export interface ShotWithDataUri {
-    readonly trigger: string;
+    readonly trigger: ScreenshotTrigger;
     readonly timestamp: number;
     readonly logLine: number;
     readonly text: string;
@@ -27,23 +31,47 @@ export interface ShotWithDataUri {
 export interface FlowShot {
     readonly dataUri: string;
     readonly clock: string;
-    readonly trigger: string;
+    readonly trigger: ScreenshotTrigger;
     readonly logLine: number;
     /** Display label of the screen active at capture time; undefined when none preceded it. */
     readonly screenLabel?: string;
     readonly text: string;
 }
 
+/**
+ * Verdict for one capture against the report's embed budget. `skip` drops this capture but keeps
+ * reading (a single capture too large to ever embed must not end the gallery); `stop` ends the walk
+ * because the budget is spent.
+ */
+export type ShotBudgetVerdict = 'embed' | 'skip' | 'stop';
+
+/**
+ * Whether a capture fits the report's data-URI budget. Pure so the rule is testable without the
+ * Extension Host — the caller does the file reads.
+ *
+ * A capture larger than the WHOLE budget is skipped rather than admitted as a special case: the adb
+ * path alone allows a 32 MB PNG (~43 MB as base64), and shipping one because it happened to be first
+ * would freeze the panel it is embedded in — precisely what the budget exists to prevent. Because
+ * over-budget captures are skipped individually, `stop` can only be reached once something is already
+ * embedded, so the gallery never comes back empty while a capture that fits was still available.
+ */
+export function shotBudgetVerdict(uriLength: number, bytesSoFar: number, maxBytes: number): ShotBudgetVerdict {
+    if (uriLength > maxBytes) { return 'skip'; }
+    if (bytesSoFar + uriLength > maxBytes) { return 'stop'; }
+    return 'embed';
+}
+
 /** Kinds of `TimelineEvent` that create/enter a flow-map node (mirrors `flow-map-builder.ts`). */
 const NODE_CREATING_KINDS: ReadonlySet<TimelineEvent['kind']> = new Set(['nav', 'reached']);
 
 /**
- * Normalized screen identity for a display label — MUST mirror the builder's `normalizeKey` (R3),
- * because the replay preview pairs gallery figures (`data-screen-key`) with diagram nodes
- * (`data-rowkey`) by exact string equality of this key.
+ * Normalized screen identity for a display label. Delegates to the shared normalizer the builder's
+ * `normalizeKey` also uses (R3) — the replay preview and the card thumbnails both pair gallery figures
+ * (`data-screen-key`) to diagram nodes (`data-rowkey`) by exact string equality of this key, and a
+ * private copy of the rule would let the two sides drift with no error to trace it by.
  */
 export function screenKeyOf(label: string): string {
-    return label.toLowerCase().replace(/\s+/g, ' ').trim();
+    return normalizeScreenKey(label);
 }
 
 /**

@@ -80,15 +80,49 @@ candidate); the two-closure `srcOf` split between `.src` and `getAttribute('href
 binding; and the two fixed-black values in the overlay CSS (backdrop scrim and image letterbox), which
 are intentionally theme-independent but are not tokenized.
 
+## Hardening pass and the fault-aware thumbnail
+
+A second review round drove four further changes.
+
+**One normalizer.** The builder's `normalizeKey` and the screenshot join's `screenKeyOf` were two
+identical private copies of the same rule, and the diagram pairs a card to its thumbnail by exact
+equality of their results — drift would have made thumbnails silently stop appearing. Both now
+delegate to `normalizeScreenKey` in
+[flow-map-format.ts](../../../../src/modules/flow-map/flow-map-format.ts), and a test pins the pairing
+through the real pipeline on a label the normalizer has to work on (`  Contact   VIEW  `).
+
+**A byte budget.** `MAX_REPORT_SHOTS` (12) capped the capture COUNT while assuming a capture's size;
+the adb path alone permits a 32 MB PNG, roughly 43 MB as base64. `MAX_REPORT_SHOT_BYTES` (6 MB) now
+caps the total, and `shotBudgetVerdict` — pure, in `flow-map-screenshots.ts`, so the rule is testable
+without the Extension Host — decides per capture. A capture larger than the entire budget is SKIPPED
+rather than admitted for being first: shipping it would freeze the panel the budget exists to protect.
+Because oversized captures are skipped individually, `stop` is unreachable until something has been
+embedded, so the gallery never returns empty while a capture that would have fit was still available.
+
+**Fault-aware thumbnail.** `pickThumbShot` shows the capture that faulted — error ranked above
+warning, both treated as faults because the capturer itself fingerprint-dedups on either — and falls
+back to the first capture when none did. The count pill takes that severity's tint. A screen captured
+three times because it kept failing now shows what it looked like when it failed, not what it looked
+like on arrival. The lightbox counter reports the SHOWN capture's real position, which is no longer
+always 1.
+
+**Focus trap.** The trap selector covers every natively focusable element rather than the controls the
+card happens to build today.
+
+`FlowShot.trigger` is now typed `ScreenshotTrigger` (type-only import, erased at emit, so the module
+keeps its no-vscode-at-runtime property) instead of a bare `string` — the fault comparisons are now
+tied to the capturer's real union.
+
 ## Verification
 
 - `npm run check-types` — 0 errors.
 - `npm run lint` — 0 errors, 14 pre-existing warnings, none in the touched files.
 - `npm run compile` — full gate chain green, including `verify:l10n-keys` (2548 keys) and
   `verify:dist-size` (5.34 MiB of a 12 MiB ceiling).
-- 17 tests in `src/test/modules/flow-map/flow-map-shot-thumbs.test.ts` (new) plus the existing 114
-  flow-map tests across seven files — all passing.
-- Not verified on screen: no run in the Extension Development Host was performed for this work.
+- 26 tests in `src/test/modules/flow-map/flow-map-shot-thumbs.test.ts` (new) plus the seven existing
+  flow-map test files — 131 tests, all passing.
+- Not verified on screen: no run in the Extension Development Host was performed for this work. The
+  severity pill tints in particular are asserted by class name, never looked at in either theme.
 
 ## Known follow-up
 
