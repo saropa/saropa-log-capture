@@ -37,6 +37,15 @@ const registeredAcronyms = new Set(
 		.filter(Boolean),
 );
 
+// Guard against the regex silently parsing an empty or truncated set.
+if (registeredAcronyms.size < 5) {
+	console.error(
+		`ERROR: parsed only ${registeredAcronyms.size} acronyms from l10n_brands.py`
+		+ " — the frozenset regex may be broken.",
+	);
+	process.exit(1);
+}
+
 // --- Scan l10n source strings ---
 
 const l10nDir = path.join(root, "src", "l10n");
@@ -52,6 +61,17 @@ const acronymRe = /^[A-Z]{2,}$/;
 const uppercaseWordsNotAcronyms = new Set([
 	"ACTIVE", "BUG", "CRITICAL", "FATAL", "OFF", "ON", "TRANSIENT",
 ]);
+
+// A word in both sets means someone registered the acronym but forgot to remove
+// it from the exclusion list (or vice versa). Either way the intent is ambiguous.
+const overlap = [...uppercaseWordsNotAcronyms].filter((w) => registeredAcronyms.has(w));
+if (overlap.length > 0) {
+	console.error(
+		`ERROR: ${overlap.join(", ")} appear in BOTH registeredAcronyms and`
+		+ " uppercaseWordsNotAcronyms — remove from one.",
+	);
+	process.exit(1);
+}
 
 const failures = [];
 
