@@ -29,9 +29,27 @@ export function flowMapLightboxScript(nonce: string, labels: LightboxLabels): st
     return `<script nonce="${nonce}">(function(){
   var L = ${JSON.stringify(labels)};
   var overlay = null;
+  var opener = null;
 
   function close(){
     if (overlay) { overlay.remove(); overlay = null; }
+    // Return focus where it came from: the diagram and the gallery are both keyboard-navigable, and
+    // dropping focus to <body> on close would send the next Tab back to the top of the panel.
+    if (opener && opener.focus) { opener.focus(); }
+    opener = null;
+  }
+
+  // Real modal semantics for aria-modal="true": every focusable behind the overlay (diagram nodes,
+  // thumbnails, gallery figures, links) is still tabbable, so without this a keyboard user Tabs
+  // straight out of the "modal" into content the backdrop is visually blocking.
+  function trapTab(card, e){
+    if (e.key !== 'Tab') { return; }
+    var f = card.querySelectorAll('button, [tabindex="0"], a[href]');
+    if (f.length === 0) { return; }
+    var first = f[0];
+    var last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   }
 
   // Build the facts grid with textContent (never innerHTML): a capture's screen label and trigger
@@ -81,6 +99,8 @@ export function flowMapLightboxScript(nonce: string, labels: LightboxLabels): st
 
   function open(el, src){
     close();
+    // Captured BEFORE the overlay steals focus, so close() can hand it back to the exact thumbnail.
+    opener = el;
     overlay = document.createElement('div');
     overlay.className = 'fms-overlay';
     overlay.setAttribute('role', 'dialog');
@@ -118,6 +138,7 @@ export function flowMapLightboxScript(nonce: string, labels: LightboxLabels): st
     // Backdrop click closes; a click inside the card must not bubble out and close it immediately.
     overlay.addEventListener('click', close);
     card.addEventListener('click', function(e){ e.stopPropagation(); });
+    overlay.addEventListener('keydown', function(e){ trapTab(card, e); });
     document.body.appendChild(overlay);
     closeBtn.focus();
   }
