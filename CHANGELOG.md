@@ -25,6 +25,19 @@ cspell:disable
 
 ---
 
+## [9.3.9]
+
+### Fixed
+
+- l10n: 25 untranslated trouble-chart legend and flow-map strings filled across 10 locales (DB, Debug, TODO, Screenshot, Trigger); all locales now at 100% coverage
+- l10n: `is_acronym_only` now recognizes acronym + placeholder patterns (e.g. "DB {0}", "TODO {0}") so they classify as identity instead of untranslated gaps
+- l10n: `fill-identity` action (menu 8 / `--run-mode fill-identity`) stamps provenance on EN-COPY bundle entries that match any forced-identity criterion; scans bundles directly with dry-run preview and confirmation prompt in interactive mode
+- l10n: `ACRONYM_ONLY_STRINGS` expanded with "APP" and "FW" (analysis badge labels with garbled MT output)
+- l10n: garbled acronym translations (NLLB hallucinations for short inputs like "APP", "FW") are now automatically reset to identity during `run_sync` — no manual cleanup needed
+- New `verify:acronym-coverage` compile gate asserts every acronym-only source string in `strings-*.ts` is registered in `ACRONYM_ONLY_STRINGS`; includes minimum-count assertion and overlap check between the acronym set and the uppercase-words exclusion list
+
+---
+
 ## [9.3.8]
 
 Introduces quality-of-life improvements to the Logs panel by collapsing older logs and simplifying severity counts to reduce visual clutter. Trouble Mode also gains an auto-activation setting, customizable severity filters, and a new quick-jump button to locate initial errors faster. The flow map now reads like a storyboard — captured screenshots appear on the diagram cards themselves, and any screenshot opens full size in a lightbox. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.8/CHANGELOG.md)
@@ -63,13 +76,6 @@ Introduces quality-of-life improvements to the Logs panel by collapsing older lo
 - Logs panel: "Expand all" / "Collapse all" now cover all session dates including paginated pages, not just the currently rendered DOM subset (plan 001)
 
 - Smart bookmark modal no longer fires on pre-launch device backlog errors; skipped pre-launch error count is logged to the output channel (bug_002)
-
-- l10n: 25 untranslated trouble-chart legend and flow-map strings filled across 10 locales (DB, Debug, TODO, Screenshot, Trigger); all locales now at 100% coverage
-- l10n: `is_acronym_only` now recognizes acronym + placeholder patterns (e.g. "DB {0}", "TODO {0}") so they classify as identity instead of untranslated gaps
-- l10n: `fill-identity` action (menu 8 / `--run-mode fill-identity`) stamps provenance on EN-COPY bundle entries that match any forced-identity criterion; scans bundles directly with dry-run preview and confirmation prompt in interactive mode
-- l10n: `ACRONYM_ONLY_STRINGS` expanded with "APP" and "FW" (analysis badge labels with garbled MT output)
-- l10n: garbled acronym translations (NLLB hallucinations for short inputs like "APP", "FW") are now automatically reset to identity during `run_sync` — no manual cleanup needed
-- New `verify:acronym-coverage` compile gate asserts every acronym-only source string in `strings-*.ts` is registered in `ACRONYM_ONLY_STRINGS`; includes minimum-count assertion and overlap check between the acronym set and the uppercase-words exclusion list
 
 ---
 
