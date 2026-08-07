@@ -110,6 +110,8 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
                 aria-label="${t('viewer.troubleChart.toggle.label')}">&#x25BE;</button>
             <span id="trouble-chart-title" class="trouble-chart-title">${t('viewer.troubleChart.title')}</span>
             <span id="trouble-chart-peak" class="tc-peak"></span>
+            <button id="tc-jump-first-error" class="tc-jump-btn u-hidden" type="button"
+                title="${t('viewer.troubleChart.jumpFirstError.title')}">${t('viewer.troubleChart.jumpFirstError')}</button>
             <span id="trouble-chart-legend" class="tc-legend"></span>
         </div>
         <!-- role="img" belongs on the plot, not the region: the region now holds a real button,

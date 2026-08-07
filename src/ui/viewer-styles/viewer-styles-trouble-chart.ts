@@ -200,6 +200,25 @@ body.slc-trouble-active .trouble-chart { display: block; }
    clickable (pointer-events:none) so it never intercepts a click meant for the first bar. */
 .trouble-chart .tc-app-start { fill: var(--vscode-charts-green, #4caf50); pointer-events: none; }
 
+/* "First error" button in the head row: a compact pill that jumps the feed to the first
+   error-level line after app start. Hidden (u-hidden) when no error exists. Uses the same
+   10px font as the head row so it reads as part of the strip, not a standalone control. */
+.trouble-chart .tc-jump-btn {
+    background: none;
+    border: 1px solid var(--tc-error);
+    color: var(--tc-error);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.trouble-chart .tc-jump-btn:hover { background: var(--tc-error); color: var(--surface-1); }
+.trouble-chart .tc-jump-btn:focus-visible { outline: 1px solid var(--vscode-focusBorder); outline-offset: 1px; }
+
 .trouble-chart .tc-empty {
     font-size: var(--text-caption);
     color: var(--muted);
