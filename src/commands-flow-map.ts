@@ -9,11 +9,22 @@ import { buildReport } from './modules/flow-map/flow-map-report';
 import { scanProjectScreens } from './modules/flow-map/flow-map-source-scan';
 import { showFlowMapPanel, type FlowMapPanelParams } from './ui/panels/flow-map-panel';
 import { readScreenshotSidecar, screenshotDirUri } from './modules/screenshot/screenshot-store';
-import { joinShotsToScreens, type ShotWithDataUri } from './modules/flow-map/flow-map-screenshots';
+import { joinShotsToScreens, shotBudgetVerdict, type ShotWithDataUri } from './modules/flow-map/flow-map-screenshots';
 import { suggestBreadcrumbPatterns } from './modules/flow-map/flow-map-empty-diagnostic';
 
 /** Bound how many screenshots the webview embeds as data URIs — keeps panel HTML weight sane. */
 const MAX_REPORT_SHOTS = 12;
+
+/**
+ * Second, independent bound: total base64 bytes the report may embed. The count cap alone assumes a
+ * capture's size, and a device screenshotting at 3x can be an order of magnitude larger than the one
+ * that cap was chosen against. Panel HTML is parsed synchronously by the webview, so weight here buys
+ * a frozen panel, not a slow one — and nothing else measures it (`verify:dist-size` watches the
+ * BUNDLE, not generated HTML). A captured screen's shown shot is embedded twice in the report (card
+ * thumbnail + gallery figure), so the effective document weight is up to ~2x this number — a bound
+ * that holds because no single capture may exceed the budget either (see `shotBudgetVerdict`).
+ */
+const MAX_REPORT_SHOT_BYTES = 6 * 1024 * 1024;
 
 /** The viewer surface the flow map drives to reveal log lines. */
 export interface FlowMapViewer {
@@ -52,18 +63,28 @@ async function readShotDataUri(logFsPath: string, file: string): Promise<string 
 }
 
 /**
- * Load the first `MAX_REPORT_SHOTS` sidecar screenshots as data URIs and join them to the screen
- * active at capture time. Returns the shots plus how many entries were left out of the cap.
+ * Load sidecar screenshots as data URIs and join them to the screen active at capture time. Stops at
+ * whichever bound hits first — `MAX_REPORT_SHOTS` captures or `MAX_REPORT_SHOT_BYTES` of base64 — and
+ * reports every entry it did not embed as `omitted`, so the gallery's "+N more" note stays truthful
+ * however the budget was spent. Unreadable PNGs are skipped without consuming budget.
  */
 async function loadFlowShots(logFsPath: string): Promise<{ shots: ShotWithDataUri[]; omitted: number }> {
     const entries = await readScreenshotSidecar(logFsPath);
     const capped = entries.slice(0, MAX_REPORT_SHOTS);
     const withUris: ShotWithDataUri[] = [];
+    let bytes = 0;
     for (const entry of capped) {
         const dataUri = await readShotDataUri(logFsPath, entry.file);
-        if (dataUri) { withUris.push({ ...entry, dataUri }); }
+        if (!dataUri) { continue; }
+        // Checked BEFORE pushing, so the budget is a ceiling on what ships rather than one the last
+        // capture is allowed to blow through. See `shotBudgetVerdict` for why skip and stop differ.
+        const verdict = shotBudgetVerdict(dataUri.length, bytes, MAX_REPORT_SHOT_BYTES);
+        if (verdict === 'stop') { break; }
+        if (verdict === 'skip') { continue; }
+        bytes += dataUri.length;
+        withUris.push({ ...entry, dataUri });
     }
-    return { shots: withUris, omitted: Math.max(0, entries.length - MAX_REPORT_SHOTS) };
+    return { shots: withUris, omitted: Math.max(0, entries.length - withUris.length) };
 }
 
 /** Read the log and build the report model + markdown. Separated for isolated testing/observation. */

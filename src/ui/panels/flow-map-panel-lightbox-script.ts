@@ -44,7 +44,11 @@ export function flowMapLightboxScript(nonce: string, labels: LightboxLabels): st
   // straight out of the "modal" into content the backdrop is visually blocking.
   function trapTab(card, e){
     if (e.key !== 'Tab') { return; }
-    var f = card.querySelectorAll('button, [tabindex="0"], a[href]');
+    // Every NATIVELY focusable element, not just the ones the card happens to build today — a future
+    // control added without an explicit tabindex would otherwise fall outside the trap and leak focus.
+    var f = card.querySelectorAll(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]),'
+      + ' textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
     if (f.length === 0) { return; }
     var first = f[0];
     var last = f[f.length - 1];
@@ -86,9 +90,9 @@ export function flowMapLightboxScript(nonce: string, labels: LightboxLabels): st
     grid.appendChild(vd);
   }
 
-  // "3 of 7" — which capture of the whole session's set this is. The diagram thumbnail shows only a
-  // screen's FIRST capture, so this is how a reader learns the pill's other captures exist and where
-  // in the gallery to find them.
+  // "3 of 7" — which capture of the set this is. The diagram thumbnail shows only ONE of a screen's
+  // captures (the fault one when there is one, else the first), so this is how a reader learns the
+  // pill's other captures exist and where in the gallery to find them.
   function counterText(el){
     var i = el.getAttribute('data-shot-index');
     var n = el.getAttribute('data-shot-total');
