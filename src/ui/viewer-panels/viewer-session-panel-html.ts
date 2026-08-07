@@ -117,7 +117,15 @@ export function getSessionPanelHtml(): string {
             ${renderOptionToggle('session-toggle-headings', 'list-tree', 'toggleHeadings')}
             ${renderOptionToggle('session-toggle-reverse', 'sort-precedence', 'toggleReverse')}
             ${renderOptionToggle('session-toggle-latest', 'pinned', 'toggleLatest')}
-            ${renderOptionToggle('session-toggle-collapse-counts', 'list-flat', 'toggleCollapseCounts')}`)}
+            ${renderOptionToggle('session-toggle-collapse-counts', 'list-flat', 'toggleCollapseCounts')}
+            <button id="session-expand-all-days" type="button" class="session-options-action" role="menuitem" title="${t('viewer.session.expandAllDays.title')}" aria-label="${t('viewer.session.expandAllDays.label')}">
+                <span class="codicon codicon-expand-all"></span>
+                <span class="session-options-action-text">${t('viewer.session.expandAllDays.text')}</span>
+            </button>
+            <button id="session-collapse-all-days" type="button" class="session-options-action" role="menuitem" title="${t('viewer.session.collapseAllDays.title')}" aria-label="${t('viewer.session.collapseAllDays.label')}">
+                <span class="codicon codicon-collapse-all"></span>
+                <span class="session-options-action-text">${t('viewer.session.collapseAllDays.text')}</span>
+            </button>`)}
         <hr class="session-options-sep" />
         ${renderOptionsSubmenu('list-unordered', 'viewer.session.group.actions', `
             <button id="session-export-list" type="button" class="session-options-action" role="menuitem" title="${t('viewer.session.exportList.title')}" aria-label="${t('viewer.session.exportList.label')}">
