@@ -98,6 +98,10 @@ function lightboxLabels(): LightboxLabels {
         copyPath: t('flowMap.shot.copyPath'),
         zoom: t('flowMap.shot.zoom'),
         zoomHint: t('flowMap.shot.zoomHint'),
+        unavailable: t('flowMap.shot.unavailable'),
+        compare: t('flowMap.shot.compare'),
+        comparePrev: t('flowMap.shot.comparePrev'),
+        compareNext: t('flowMap.shot.compareNext'),
     };
 }
 

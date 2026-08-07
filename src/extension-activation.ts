@@ -20,6 +20,7 @@ import { ViewerBroadcaster } from './ui/provider/viewer-broadcaster';
 import { PopOutPanel } from './ui/viewer-panels/pop-out-panel';
 import { wireViewerSpecificHandlers } from './extension-activation-handlers';
 import { wireSharedHandlers, SESSION_PANEL_ROOT_KEY } from './ui/provider/viewer-handler-wiring';
+import { screenshotDirPayload } from './ui/provider/viewer-message-handler-screenshots';
 import { checkGitignoreSaropa } from './modules/config/gitignore-checker';
 import { migrateCrashlyticsCacheToSaropa } from './modules/crashlytics/crashlytics-io';
 import { migrateSidecarsInDirectory } from './modules/session/session-metadata';
@@ -291,6 +292,10 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
             broadcaster.postToWebview({
                 type: 'screenshotCaptured',
                 logFsPath,
+                // Same dir/sep pair the sidecar listing sends: a live capture badges its line
+                // immediately, so its popover must be able to show a full path without waiting for
+                // the next screenshotList to arrive.
+                ...screenshotDirPayload(logFsPath),
                 file: result.entry.file,
                 trigger: result.entry.trigger,
                 timestamp: result.entry.timestamp,

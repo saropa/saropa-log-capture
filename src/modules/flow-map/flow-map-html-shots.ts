@@ -7,8 +7,9 @@
  */
 
 import { screenKeyOf, type FlowShot } from './flow-map-screenshots';
+import type { ShotsByScreen } from './flow-map-svg-shots';
 import { stripAnsi } from './flow-map-format';
-import { shotDataAttrs } from './flow-map-svg-shots';
+import { groupShotsByScreen, shotDataAttrs, shotSiblingsAttr } from './flow-map-svg-shots';
 import { t } from '../../l10n';
 
 /** Escape text for HTML. */
@@ -26,23 +27,30 @@ function truncate(s: string, max: number): string {
  * reveal-in-log action itself, so a mis-click no longer scrolls the viewer out from under the reader)
  * plus a clock/trigger/screen caption.
  */
-function shotFigureHtml(shot: FlowShot, index: number, all: readonly FlowShot[]): string {
+function shotFigureHtml(
+    shot: FlowShot, index: number, all: readonly FlowShot[], byScreen: ShotsByScreen,
+): string {
     // The replay preview pairs figures to diagram nodes by this key (matches the node's data-rowkey).
-    const keyAttr = shot.screenLabel
-        ? ` data-screen-key="${esc(screenKeyOf(stripAnsi(shot.screenLabel)))}"` : '';
+    const key = shot.screenLabel ? screenKeyOf(stripAnsi(shot.screenLabel)) : '';
+    const keyAttr = key ? ` data-screen-key="${esc(key)}"` : '';
+    // Compare offers the same set a card thumbnail does — this capture's SCREEN, not the whole
+    // gallery. Comparing Home against Settings answers nothing; comparing two Homes is the question.
+    const siblings = shotSiblingsAttr(byScreen.get(key) ?? []);
     const alt = esc(truncate(stripAnsi(shot.text), 80));
     const screen = shot.screenLabel ? esc(stripAnsi(shot.screenLabel)) : '—';
     const caption = `${esc(shot.clock)} · ${esc(shot.trigger)} · ${screen}`;
     // esc() the URL like the diagram thumbnail does: a webview URI carries no HTML metacharacters
     // today, but the two surfaces render the SAME value and must not diverge on escaping.
     return `<figure class="shot-fig"${keyAttr}><img class="shot-img" role="button" tabindex="0"`
-        + `${shotDataAttrs(shot, index + 1, all.length)} src="${esc(shot.src)}" alt="${alt}" `
+        + `${shotDataAttrs(shot, index + 1, all.length)}${siblings} src="${esc(shot.src)}" alt="${alt}" `
         + `title="${esc(t('flowMap.shot.open'))}"><figcaption class="shot-cap">${caption}</figcaption></figure>`;
 }
 
 /** Screenshot gallery body: a grid of figures plus an omitted-count note when the report capped the set. */
 export function screenshotsSectionHtml(shots: readonly FlowShot[], omitted: number): string {
-    const grid = `<div class="shot-grid">${shots.map((s, i) => shotFigureHtml(s, i, shots)).join('')}</div>`;
+    const byScreen = groupShotsByScreen(shots);
+    const figures = shots.map((s, i) => shotFigureHtml(s, i, shots, byScreen)).join('');
+    const grid = `<div class="shot-grid">${figures}</div>`;
     const more = omitted > 0 ? `<p class="shot-more">${esc(t('flowMap.shots.more', String(omitted)))}</p>` : '';
     return grid + more;
 }

@@ -135,7 +135,10 @@ suite('FlowMap diagram screenshot thumbnails', () => {
             ]);
             const svg = renderSvg(graph, shots);
             assert.ok(svg.includes('src="file:///shots/err.png"'), 'the fault capture is the thumbnail');
-            assert.ok(!svg.includes('nav.png'), 'the nav capture is not also referenced');
+            // ONE thumbnail per screen — the nav capture now appears in data-shot-siblings (compare
+            // needs the whole set), so the assertion is on the drawn images, not on the string.
+            assert.strictEqual(svg.split('class="fm-shot"').length - 1, 1, 'only the fault capture is drawn');
+            assert.ok(!/src="file:\/\/\/shots\/nav\.png"/.test(svg), 'the nav capture is not drawn');
             assert.ok(svg.includes('fm-shot-pill-alert'), 'the pill carries the fault tint');
             assert.ok(svg.includes('data-shot-index="2"'), 'the lightbox counter reports its real position');
         });
@@ -163,6 +166,15 @@ suite('FlowMap diagram screenshot thumbnails', () => {
         test('should render portrait cards (168px wide)', () => {
             const { graph } = fixture([]);
             assert.ok(renderSvg(graph).includes('width="168"'), 'node boxes use the portrait card width');
+        });
+
+        test('should carry the screen\'s capture set for compare, and only when there is a set', () => {
+            const one = fixture([shot(3)]);
+            assert.ok(!renderSvg(one.graph, one.shots).includes('data-shot-siblings'), 'no set for a lone capture');
+            const many = fixture([shot(3, { src: 'file:///a.png' }), shot(3, { src: 'file:///b.png' })]);
+            const svg = renderSvg(many.graph, many.shots);
+            assert.ok(svg.includes('data-shot-siblings'), 'the screen set rides on the thumbnail');
+            assert.ok(svg.includes('file:///b.png'), 'including the capture NOT shown on the card');
         });
 
         test('should title the thumbnail with WHY this capture is the one on show', () => {
@@ -214,6 +226,8 @@ suite('FlowMap diagram screenshot thumbnails', () => {
             title: 'Screenshot', captured: 'Captured', trigger: 'Trigger', screen: 'Screen',
             logLine: 'Log line', close: 'Close', counter: '{0}/{1}', counterScreen: '{0}/{1} here',
             file: 'File', copyPath: 'Copy full path', zoom: 'Zoom', zoomHint: 'Scroll to zoom',
+            unavailable: 'Screenshot unavailable',
+            compare: 'Compare', comparePrev: 'Previous', compareNext: 'Next',
         });
 
         test('should keep Tab inside the dialog and restore focus to the opener on close', () => {
@@ -244,6 +258,33 @@ suite('FlowMap diagram screenshot thumbnails', () => {
         test('should copy the full path through its own message, not the summary copier', () => {
             assert.ok(script.includes("'copyShotPath'"), 'dedicated message so the toast names the right thing');
             assert.ok(script.includes('data-shot-path'), 'reads the path off the clicked capture');
+        });
+
+        test('should state a load failure instead of leaving a broken-image glyph', () => {
+            // A capture present when the report was built can be gone by the time the browser fetches
+            // it — the report must say so rather than show a silent browser placeholder.
+            assert.ok(/addEventListener\('error'/.test(script), 'both surfaces handle a failed fetch');
+            assert.ok(script.includes('fm-shot-missing'), 'and mark the frame as failed');
+            assert.ok(script.includes("removeAttribute('role')"), 'a dead thumbnail stops advertising a click');
+        });
+
+        test('should offer compare only when the screen has more than one capture', () => {
+            assert.ok(script.includes('data-shot-siblings'), 'compare reads the screen set off the element');
+            assert.ok(/set\.length > 1/.test(script), 'a lone capture has nothing to compare against');
+        });
+
+        test('should walk compare siblings with a BOUNDED scan, never skip-until-different', () => {
+            // Nothing dedups captures by file, so every entry in a screen's set can carry the same
+            // src; an unbounded "skip until different" loop would spin forever and hang the panel.
+            assert.ok(!/do\s*\{/.test(script), 'no unbounded do/while in the sibling walk');
+            assert.ok(/for \(var i = 0; i < n; i\+\+\)/.test(script), 'one lap maximum');
+        });
+
+        test('should state a load failure in a compare pane too, not just on a thumbnail', () => {
+            // A broken-image glyph in the one view meant for spotting differences reads as "this
+            // screen changed completely" — the exact wrong conclusion.
+            const panes = script.split('fms-cmp-img')[1] || '';
+            assert.ok(panes.includes("addEventListener('error'"), 'compare panes handle a failed fetch');
         });
 
         test('should zoom on wheel and by slider, with a reset back to fit', () => {
