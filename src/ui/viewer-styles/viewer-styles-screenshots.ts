@@ -36,6 +36,17 @@ export function getScreenshotStyles(): string {
     font-size: 0.85em;
     color: var(--muted);
 }
+/* Full path of the previewed PNG. Monospace and break-all because an absolute path is longer than
+   the popover is wide and must wrap rather than clip — a truncated path is not an actionable one.
+   user-select:text so it can be highlighted and copied without opening the file. */
+.screenshot-popover-path {
+    padding: 0 4px 2px;
+    font-family: var(--vscode-editor-font-family);
+    font-size: 0.78em;
+    color: var(--muted);
+    word-break: break-all;
+    user-select: text;
+}
 
 /* Footer camera toggle: always visible; dimmed = capture disabled. flex-shrink 0 so a
    narrow sidebar ellipsizes the filename (which is the designed shrink target) instead
