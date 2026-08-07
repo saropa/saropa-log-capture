@@ -25,6 +25,7 @@ export interface ShotWithSource {
     readonly logLine: number;
     readonly text: string;
     readonly src: string;
+    readonly path: string;
 }
 
 /** One screenshot ready to render: sidecar metadata plus the screen it was captured on. */
@@ -35,6 +36,12 @@ export interface FlowShot {
      * `Webview` can mint a URL its own sandbox will load. Render modules just emit the string.
      */
     readonly src: string;
+    /**
+     * Absolute on-disk path of the PNG, shown and copyable in the lightbox. Distinct from `src`:
+     * that one is a URL the sandbox can fetch, this one is what the reader pastes into a terminal or
+     * a bug report, so it must survive the webview rewrite unchanged.
+     */
+    readonly path: string;
     readonly clock: string;
     readonly trigger: ScreenshotTrigger;
     readonly logLine: number;
@@ -90,6 +97,7 @@ export function joinShotsToScreens(
 ): FlowShot[] {
     return entries.map(entry => ({
         src: entry.src,
+        path: entry.path,
         clock: formatClock(entry.timestamp),
         trigger: entry.trigger,
         logLine: entry.logLine,

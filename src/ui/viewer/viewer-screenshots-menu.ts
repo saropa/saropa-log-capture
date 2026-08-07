@@ -129,6 +129,13 @@ function screenshotPopoverShow(file) {
     cap.textContent = caption;
     el.appendChild(img);
     el.appendChild(cap);
+    /* The full path, not just the filename: a reader looking at a capture in the log needs something
+       they can open, copy, or attach. Selectable (the popover's click-to-open handler ignores drags
+       on this row) and wrapped, because an absolute path is longer than the popover is wide. */
+    var pathEl = document.createElement('div');
+    pathEl.className = 'screenshot-popover-path';
+    pathEl.textContent = screenshotJoinPath(screenshotDir, file);
+    el.appendChild(pathEl);
     el.classList.remove('u-hidden');
 }
 
