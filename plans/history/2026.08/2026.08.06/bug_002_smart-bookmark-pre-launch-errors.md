@@ -93,6 +93,10 @@ Added an optional `skipBeforeLine` field to `FirstErrorOptions`. When set, `find
 - `maybeSuggestSmartBookmark` logs the skipped count to the Saropa Log Capture output channel when pre-launch errors are suppressed
 - Edge case verified: no launch line → `startIndices[0]` is `undefined` → `skipBeforeLine` is `undefined` → scans from line 0 (correct for plain logs)
 
+### "First error" button in trouble chart
+
+A "First error" button in the trouble chart header provides a non-modal alternative to the smart bookmark. The button appears only when trouble mode is active and a post-app-start error exists. Clicking it scrolls the feed to that error via `scrollToLineNumber`. The button reuses the existing `troubleChartLaunchTs()` boundary so the chart's app-start and the button's app-start can never disagree.
+
 ### Files changed
 
 | File | Change |
@@ -102,10 +106,15 @@ Added an optional `skipBeforeLine` field to `FirstErrorOptions`. When set, `find
 | `src/ui/provider/log-viewer-provider-load.ts` | `LoadResultFirstError` carries `skippedPreLaunchErrors` |
 | `src/extension-activation-helpers.ts` | Logs skipped pre-launch error count to output channel |
 | `src/test/modules/bookmarks/first-error.test.ts` | 3 regression tests with `skippedPreLaunchErrors` assertions |
-| `CHANGELOG.md` | `[Unreleased]` entry |
+| `src/ui/viewer-search-filter/viewer-trouble-chart.ts` | `findFirstErrorLineAfterLaunch`, `syncJumpFirstErrorButton`, button click handler |
+| `src/ui/viewer-styles/viewer-styles-trouble-chart.ts` | `.tc-jump-btn` styles |
+| `src/ui/provider/viewer-content-body.ts` | Button HTML in trouble chart header |
+| `src/l10n/strings-webview.ts` | 3 l10n keys for button label, title, and empty state |
+| `CHANGELOG.md` | `[Unreleased]` entries |
 
 ### Verification
 
 - `npm run compile`: all 12 gates pass
 - `npm run test:file -- out/test/modules/bookmarks/first-error.test.js`: 9/9 pass
+- `npm run test:file -- out/test/ui/viewer-trouble-chart.test.js`: 16/16 pass
 - Needs F5 manual verification with a log containing pre-launch logcat errors
