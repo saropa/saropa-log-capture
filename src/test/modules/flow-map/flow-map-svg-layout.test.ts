@@ -138,6 +138,20 @@ suite('FlowMap diagram row planning', () => {
             assert.ok(svgWidth(graph) < 500, `canvas is ${svgWidth(graph)}px, not a fan-out`);
         });
 
+        test('should wrap a very tall fault stack into more columns instead of growing forever', () => {
+            // Otherwise the fix becomes its own defect rotated ninety degrees: twenty faults under
+            // one screen would make a 2000px column beside a 400px walk.
+            const build = (n: number): FlowGraph => {
+                const keys = Array.from({ length: n }, (_, i) => `crash:${i}`);
+                return { nodes: [node('home'), ...keys.map(faultNode)], edges: keys.map(k => edge('home', k)) };
+            };
+            const svgHeight = (g: FlowGraph) =>
+                Number(/viewBox="0 0 [\d.]+ (\d+(?:\.\d+)?)/.exec(renderSvg(g))?.[1] ?? 0);
+            assert.strictEqual(svgHeight(build(20)), svgHeight(build(40)), 'height is bounded, not linear in fault count');
+            assert.ok(svgWidth(build(40)) > svgWidth(build(20)), 'the overflow goes sideways into more columns');
+            assert.strictEqual(svgWidth(build(5)), svgWidth(build(8)), 'and a stack that fits still uses one column');
+        });
+
         test('should cost no extra width when the session has no fault leaves', () => {
             const plain: FlowGraph = { nodes: [node('home'), node('settings')], edges: [edge('home', 'settings')] };
             assert.strictEqual(svgWidth(plain), 168 + 26 * 2, 'one card plus margins — no empty column reserved');

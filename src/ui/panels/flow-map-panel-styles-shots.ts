@@ -15,6 +15,10 @@ export function flowMapShotStyles(): string {
   /* A thumbnail is its own tab stop, so it needs its own visible focus ring — brightness alone is not
      a focus indicator (WCAG 2.4.7). Keep the default outline rather than suppressing it. */
   .fm-shot:focus-visible { outline: 2px solid var(--vscode-focusBorder); outline-offset: 1px; }
+  /* A capture whose file could not be fetched (see the lightbox script's error handler). The alt text
+     is what the frame shows instead, so the reader learns WHICH screen is missing rather than reading
+     a browser broken-image glyph — and the cursor stops advertising a click that would open nothing. */
+  .fm-shot-missing { cursor: default; font-size: 0.75rem; color: var(--muted); background: var(--surface-2); padding: 0.3rem; }
   .fm-shot-frame { stroke: var(--border); pointer-events: none; }
   /* :focus-within, not :focus — Tab lands on the child <image>, never on the .fm-node group itself,
      so a :focus rule on the group would never fire once thumbnails became focusable. */
@@ -48,6 +52,20 @@ export function flowMapShotStyles(): string {
   .fms-zoom-pct { min-width: 3.2rem; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
   .fms-zoom-fit { border: 1px solid var(--border); background: transparent; color: var(--text); border-radius: 4px; cursor: pointer; padding: 0.1rem 0.4rem; }
   .fms-zoom-fit:hover { background: var(--vscode-toolbar-hoverBackground, rgba(127,127,127,0.18)); }
+  /* Compare view: two captures of the same screen, side by side, sharing a height so the screens
+     line up row for row — an unaligned pair makes every element look changed. Replaces the single
+     stage rather than sitting beside it (see the toggle in flow-map-panel-lightbox-compare.ts). */
+  /* Local hide utility. The viewer's u-hidden is not in this panel's stylesheet, and borrowing that
+     name here would create a second definition of a shared utility that nothing keeps in step. */
+  .fms-off { display: none !important; }
+  .fms-cmp { display: flex; gap: 0.6rem; min-height: 0; overflow: auto; justify-content: center; }
+  .fms-cmp-pane { display: flex; flex-direction: column; gap: 0.3rem; align-items: center; min-width: 0; }
+  .fms-cmp-img { display: block; max-width: 100%; max-height: 62vh; object-fit: contain; border: 1px solid var(--border); border-radius: var(--radius); background: rgba(0,0,0,0.25); }
+  .fms-cmp-cap { font-size: 0.82em; color: var(--muted); }
+  .fms-cmp-bar { display: flex; align-items: center; gap: 0.4rem; }
+  .fms-cmp-btn { border: 1px solid var(--border); background: transparent; color: var(--text); border-radius: 4px; cursor: pointer; padding: 0.1rem 0.5rem; font-size: 0.85em; }
+  .fms-cmp-btn:hover { background: var(--vscode-toolbar-hoverBackground, rgba(127,127,127,0.18)); }
+  .fms-cmp-btn.fms-cmp-on { background: var(--vscode-button-background); color: var(--vscode-button-foreground); }
   /* Filename row: the name reads inline, the full path rides on the copy button and the hover title —
      an absolute Windows path inline would dominate a facts grid it is the least-read row of. */
   .fms-path { display: flex; align-items: center; gap: 0.4rem; }

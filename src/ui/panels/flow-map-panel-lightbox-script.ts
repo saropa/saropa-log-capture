@@ -1,7 +1,12 @@
 /**
  * Client script for the screenshot lightbox. Any capture in the panel — a diagram card's thumbnail
- * (`image.fm-shot` inside the SVG) or a gallery figure (`img.shot-img`) — opens a full-size overlay
- * with its capture facts and a reveal-in-log action.
+ * (`img.fm-shot`, inside a `<foreignObject>` on the SVG) or a gallery figure (`img.shot-img`) —
+ * opens a full-size overlay with its capture facts and a reveal-in-log action. Both surfaces are
+ * plain `<img>`, so one selector covers them; see `thumbMarkup` for why the diagram is not an SVG
+ * `<image>`.
+ *
+ * This script also owns the thumbnails' load-failure state, because it is already the one module
+ * that addresses both surfaces at once.
  *
  * Kept as its own nonce-guarded `<script>` (like the zoom and replay scripts) so each diagram feature
  * owns its state machine and no single file drifts over the line budget. Clicks on a thumbnail
@@ -11,6 +16,7 @@
  */
 
 import { flowMapLightboxZoomJs } from './flow-map-panel-lightbox-zoom';
+import { flowMapLightboxCompareJs } from './flow-map-panel-lightbox-compare';
 
 /** Labels the overlay renders, resolved host-side so the webview needs no l10n runtime. */
 export interface LightboxLabels {
@@ -30,6 +36,12 @@ export interface LightboxLabels {
     readonly copyPath: string;
     readonly zoom: string;
     readonly zoomHint: string;
+    /** Tooltip on a thumbnail whose PNG failed to load (deleted, moved, or outside the resource root). */
+    readonly unavailable: string;
+    /** Compare toggle, shown only when the screen has more than one capture. */
+    readonly compare: string;
+    readonly comparePrev: string;
+    readonly compareNext: string;
 }
 
 /** The full `<script>` block wiring the screenshot lightbox, nonce-guarded for CSP. */
@@ -39,6 +51,7 @@ export function flowMapLightboxScript(nonce: string, labels: LightboxLabels): st
   var overlay = null;
   var opener = null;
 ${flowMapLightboxZoomJs()}
+${flowMapLightboxCompareJs()}
 
   function close(){
     if (overlay) { overlay.remove(); overlay = null; }
@@ -207,7 +220,13 @@ ${flowMapLightboxZoomJs()}
     addLogRow(grid, parseInt(el.getAttribute('data-shot-line') || '0', 10));
     card.appendChild(closeBtn);
     card.appendChild(stage);
+    // cmpBar appends the (hidden) compare panes to the card itself and returns just its controls, so
+    // the panes land directly under the stage they replace rather than inside the control strip.
+    var compareBar = cmpBar(card, stage, {
+        src: src, clock: el.getAttribute('data-shot-clock') || '', trigger: el.getAttribute('data-shot-trigger') || '',
+    }, el);
     card.appendChild(zoomBar(stage, img));
+    if (compareBar) { card.appendChild(compareBar); }
     var count = counterText(el);
     if (count) {
       var cd = document.createElement('div');
@@ -241,6 +260,17 @@ ${flowMapLightboxZoomJs()}
   // thumbMarkup), so one selector and one src accessor cover the gallery and the cards alike.
   document.querySelectorAll('img.shot-img, img.fm-shot').forEach(function(img){
     bind(img, function(){ return img.src; });
+    // A capture that existed when the report was built can be gone by the time the browser fetches
+    // it, and a wrong localResourceRoots fails the same way. Without this the reader gets the
+    // browser's broken-image glyph and no statement of what happened — the report would be lying
+    // about a capture it can no longer show. The class swaps the frame for a visible failed state
+    // and drops the click target, since there is nothing to open.
+    img.addEventListener('error', function(){
+      img.classList.add('fm-shot-missing');
+      img.removeAttribute('role');
+      img.removeAttribute('tabindex');
+      img.title = L.unavailable;
+    });
   });
 
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && overlay) { close(); } });

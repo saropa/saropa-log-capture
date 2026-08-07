@@ -55,11 +55,16 @@ export function flowMapLightboxZoomJs(): string {
      zooming in on a detail walks it off-screen and the reader has to chase it. */
   function zoomWheel(e){
     if (!zoomStage || !zoomImg) { return; }
+    // Leaving fit needs the image's true size to convert "how big it looks now" into a scale.
+    // naturalWidth is 0 until the PNG decodes, and guessing 1.0 there would snap a fitted capture
+    // to full size on the first wheel tick — a jump, not a zoom. Swallow the event instead: the
+    // wheel still must not scroll the page behind the overlay, and the next tick after decode works.
     e.preventDefault();
+    if (!zoomImg.naturalWidth) { return; }
     var rect = zoomImg.getBoundingClientRect();
     var fx = rect.width ? (e.clientX - rect.left) / rect.width : 0.5;
     var fy = rect.height ? (e.clientY - rect.top) / rect.height : 0.5;
-    var from = zoomIsFit() ? (zoomImg.naturalWidth ? rect.width / zoomImg.naturalWidth : 1) : zoomScale;
+    var from = zoomIsFit() ? rect.width / zoomImg.naturalWidth : zoomScale;
     zoomSet(from * (e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP));
     var now = zoomImg.getBoundingClientRect();
     zoomStage.scrollLeft += (fx * now.width) - (e.clientX - now.left);
