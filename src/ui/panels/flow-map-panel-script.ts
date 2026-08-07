@@ -110,6 +110,16 @@ export function flowMapScript(nonce: string): string {
   }
   sizeColumns();
   window.addEventListener('resize', sizeColumns);
+  // The first measurement runs while the document is still settling: a webfont or an icon that
+  // resolves afterwards can grow the topbar, and the columns would then be sized against a header
+  // that no longer exists — under-scrolled, with nothing to correct it until the user resizes.
+  // 'load' catches late resources; observing the row's own top edge catches everything else
+  // (a collapsed section, a wrapped pill row) without polling.
+  window.addEventListener('load', sizeColumns);
+  if (row && typeof ResizeObserver === 'function') {
+    var head = document.querySelector('.report-head');
+    if (head) { new ResizeObserver(sizeColumns).observe(head); }
+  }
   if (resizer && row && diagram) {
     var dragging = false;
     resizer.addEventListener('pointerdown', function(e){

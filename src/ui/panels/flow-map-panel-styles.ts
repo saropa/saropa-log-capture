@@ -101,10 +101,10 @@ export function flowMapStyles(nonce: string): string {
   .fm-zoom-btn:hover { background: var(--vscode-button-secondaryHoverBackground, rgba(90, 93, 94, 0.6)); }
   .fm-zoom-btn:focus-visible { outline: 1px solid var(--vscode-focusBorder); outline-offset: 1px; }
   /* Brief flash when "center the fault" lands so the eye catches the crash node after the pan. */
-  .fm-node.fm-flash rect { animation: fm-flash 0.9s ease 2; }
+  .fm-node.fm-flash rect.fm-box { animation: fm-flash 0.9s ease 2; }
   @keyframes fm-flash { 0%, 100% { stroke-width: 1.5; } 50% { stroke-width: 4.5; } }
   /* Persistent step marker while Replay is running (distinct from the one-shot fm-flash above). */
-  .fm-node.fm-replay-hl rect { stroke-width: 4; filter: brightness(1.25); animation: fm-replay-pulse 1.4s ease-in-out infinite; }
+  .fm-node.fm-replay-hl rect.fm-box { stroke-width: 4; filter: brightness(1.25); animation: fm-replay-pulse 1.4s ease-in-out infinite; }
   @keyframes fm-replay-pulse { 0%, 100% { stroke-opacity: 1; } 50% { stroke-opacity: 0.5; } }
   /* The Replay button itself stays lit while a walk is in progress, mirroring the panning-cursor cue. */
   .fm-zoom-btn.fm-zoom-active { background: var(--vscode-button-background); color: var(--vscode-button-foreground); }
@@ -199,11 +199,11 @@ export function flowMapStyles(nonce: string): string {
 
   /* Diagram palette — semantic tokens so the SVG tracks the host light/dark theme (was baked dark
      hex). Fills are token tints over the panel surface; text inherits the theme foreground. */
-  .fm-p-walked rect { fill: color-mix(in srgb, var(--status-good) 14%, var(--surface-1)); stroke: var(--status-good); }
-  .fm-p-crash rect { fill: color-mix(in srgb, var(--status-bad) 16%, var(--surface-1)); stroke: var(--status-bad); }
-  .fm-p-external rect { fill: color-mix(in srgb, var(--accent-opinionated) 14%, var(--surface-1)); stroke: var(--accent-opinionated); }
-  .fm-p-launch rect { fill: color-mix(in srgb, var(--muted) 12%, var(--surface-1)); stroke: var(--muted); }
-  .fm-p-static rect { fill: var(--surface-1); stroke: var(--border); }
+  .fm-p-walked rect.fm-box { fill: color-mix(in srgb, var(--status-good) 14%, var(--surface-1)); stroke: var(--status-good); }
+  .fm-p-crash rect.fm-box { fill: color-mix(in srgb, var(--status-bad) 16%, var(--surface-1)); stroke: var(--status-bad); }
+  .fm-p-external rect.fm-box { fill: color-mix(in srgb, var(--accent-opinionated) 14%, var(--surface-1)); stroke: var(--accent-opinionated); }
+  .fm-p-launch rect.fm-box { fill: color-mix(in srgb, var(--muted) 12%, var(--surface-1)); stroke: var(--muted); }
+  .fm-p-static rect.fm-box { fill: var(--surface-1); stroke: var(--border); }
   .fm-node .fm-t-title { fill: var(--text); }
   .fm-node .fm-t-sub { fill: var(--muted); }
   .fm-p-static .fm-t-title { fill: var(--muted); }
@@ -241,9 +241,9 @@ export function flowMapStyles(nonce: string): string {
   .fm-suggest-btn:hover { background: var(--vscode-button-hoverBackground); }
 
   .fm-node { cursor: pointer; }
-  .fm-node rect { transition: stroke-width 0.12s ease, filter 0.12s ease; }
-  .fm-node:hover rect, .fm-node:focus rect { stroke-width: 3; filter: brightness(1.18); outline: none; }
-  .fm-crash rect { animation: fm-pulse 1.7s ease-in-out infinite; }
+  .fm-node rect.fm-box { transition: stroke-width 0.12s ease, filter 0.12s ease; }
+  .fm-node:hover rect.fm-box, .fm-node:focus rect.fm-box { stroke-width: 3; filter: brightness(1.18); outline: none; }
+  .fm-crash rect.fm-box { animation: fm-pulse 1.7s ease-in-out infinite; }
   .diagram svg { animation: fm-fade 0.45s ease both; }
   tr.fm-hl { background: var(--vscode-list-activeSelectionBackground) !important; box-shadow: inset 3px 0 0 var(--vscode-focusBorder); }
   tr.sev-error td:first-child { box-shadow: inset 3px 0 0 var(--accent-critical); }
@@ -252,7 +252,7 @@ export function flowMapStyles(nonce: string): string {
   tr.sev-perf td:first-child { box-shadow: inset 3px 0 0 var(--status-good); }
   @keyframes fm-fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @keyframes fm-pulse { 0%,100% { stroke-opacity: 1; } 50% { stroke-opacity: 0.3; } }
-  @media (prefers-reduced-motion: reduce) { .diagram-scroll svg, .fm-crash rect, .fm-node.fm-flash rect, .fm-node.fm-replay-hl rect { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .diagram-scroll svg, .fm-crash rect.fm-box, .fm-node.fm-flash rect.fm-box, .fm-node.fm-replay-hl rect.fm-box { animation: none; } }
 
   /* Node detail popup (double-click a node): a centered modal card over a dimmed backdrop, listing
      everything known about the surface — type, dwell, times, source, log line, actions, issues. */
