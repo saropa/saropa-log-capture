@@ -165,6 +165,14 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
         vscode.commands.registerCommand('saropaLogCapture.troubleMode.toggle', () => {
             broadcaster.postToWebview({ type: 'triggerToggleTroubleMode' });
         }),
+        vscode.commands.registerCommand('saropaLogCapture.troubleMode.errorsOnly', async () => {
+            const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+            await cfg.update('troubleMode.levels', ['error'], vscode.ConfigurationTarget.Workspace);
+        }),
+        vscode.commands.registerCommand('saropaLogCapture.troubleMode.resetLevels', async () => {
+            const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+            await cfg.update('troubleMode.levels', undefined, vscode.ConfigurationTarget.Workspace);
+        }),
         /* Ctrl+G in the log viewer: VS Code's built-in workbench.action.gotoLine has no
            `when` clause, so without this it preempts the webview keydown handler and opens
            Quick Open instead. The package.json keybinding scopes Ctrl+G to the log viewer
