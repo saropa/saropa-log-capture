@@ -110,6 +110,38 @@ export class ScreenshotStore {
     }
 }
 
+/** The trigger union as a runtime set — a type cannot police a JSON file a user can hand-edit. */
+const SCREENSHOT_TRIGGERS: ReadonlySet<string> = new Set<ScreenshotTrigger>(
+    ['error', 'warning', 'nav', 'manual'],
+);
+
+/**
+ * Validate one parsed sidecar record into an entry, or undefined to drop it.
+ *
+ * `trigger` is checked against the real union rather than `typeof string`, because it is not just
+ * data in transit: consumers switch on it to pick a severity tint and to decide which capture
+ * represents a screen, so an unknown value from an older or hand-edited sidecar would render as an
+ * untinted mystery instead of being rejected at the boundary.
+ *
+ * The remaining fields are DEFAULTED, not required: a capture with no log anchor (logLine 0) or no
+ * fingerprint (nav/manual triggers never have one) is a legitimate record, so demanding them would
+ * discard valid history. Only `file`, `timestamp`, and `trigger` identify the capture at all.
+ */
+function validateEntry(raw: unknown): ScreenshotMetaEntry | undefined {
+    if (!raw || typeof raw !== 'object') { return undefined; }
+    const s = raw as Partial<ScreenshotMetaEntry>;
+    if (typeof s.file !== 'string' || typeof s.timestamp !== 'number') { return undefined; }
+    if (typeof s.trigger !== 'string' || !SCREENSHOT_TRIGGERS.has(s.trigger)) { return undefined; }
+    return {
+        file: s.file,
+        trigger: s.trigger,
+        timestamp: s.timestamp,
+        logLine: typeof s.logLine === 'number' ? s.logLine : 0,
+        text: typeof s.text === 'string' ? s.text : '',
+        fingerprint: typeof s.fingerprint === 'string' ? s.fingerprint : '',
+    };
+}
+
 /**
  * Read a `.screenshots.json` sidecar from disk (viewer/timeline/gallery load path for
  * logs captured in an earlier process). Returns [] on missing or malformed sidecars.
@@ -119,8 +151,9 @@ export async function readScreenshotSidecar(logFsPath: string): Promise<Screensh
         const bytes = await vscode.workspace.fs.readFile(screenshotSidecarUri(logFsPath));
         const parsed = JSON.parse(new TextDecoder().decode(bytes)) as Partial<ScreenshotSidecar>;
         if (!Array.isArray(parsed.screenshots)) { return []; }
-        return parsed.screenshots.filter((s): s is ScreenshotMetaEntry =>
-            !!s && typeof s.file === 'string' && typeof s.timestamp === 'number');
+        return parsed.screenshots
+            .map(validateEntry)
+            .filter((e): e is ScreenshotMetaEntry => e !== undefined);
     } catch {
         return [];
     }
