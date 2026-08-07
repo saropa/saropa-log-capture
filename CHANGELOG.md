@@ -43,6 +43,8 @@ Introduces quality-of-life improvements to the Logs panel by collapsing older lo
 ### Changed
 
 - Trouble Mode level constants (valid set + defaults) consolidated into a single source of truth (`trouble-level-constants.ts`) shared by config reader, load handler, and webview initialisation
+- New `verify:trouble-levels` compile gate asserts `package.json` enum and default match the shared constants
+- Trouble Mode preset commands fall back to global config when no workspace is open
 
 ### Fixed
 
