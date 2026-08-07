@@ -21,7 +21,10 @@ export function flowMapShotStyles(): string {
   /* Multi-capture pill sits ON the thumbnail, so it needs its own opaque backing rather than the
      card fill — over a photo, a translucent chip is unreadable. */
   .fm-shot-pill { fill: var(--surface-1); stroke: var(--border); stroke-width: 1; }
-  .fm-shot-pill-text { fill: var(--text); }
+  /* Halo the digit against the pill rather than trusting the pill's fill: the tinted variants below
+     mix a severity color into the backing, and paint-order:stroke keeps the count legible whatever
+     that mix lands on (and over the capture itself, if a pill ever sits proud of its rect). */
+  .fm-shot-pill-text { fill: var(--text); stroke: var(--surface-1); stroke-width: 2; paint-order: stroke; stroke-linejoin: round; }
   /* Severity tint: the capture on show is the fault one, not merely the first of N. Tinted at the
      same ratio the diagram's crash/warning node fills use, so the pill reads as part of the existing
      severity language and the count digit keeps its --text contrast in both themes. */
