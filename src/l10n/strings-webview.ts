@@ -38,8 +38,6 @@ export const stringsWebview: Record<string, string> = {
 
     // Trouble Mode severity chart (Stage 3) — client-side chart strings.
     'viewer.troubleChart.empty': 'No errors, warnings, or performance issues in this log yet',
-    // {0}=window start time, {1}=error count, {2}=warning count, {3}=performance count.
-    'viewer.troubleChart.barTip': '{0} · errors {1} · warnings {2} · performance {3}',
     // Chart readability (plan 110, Stage 4): legend chips, peak-count label, axis end labels.
     // {0}=count in each legend chip, so a language can put the number before the word. The
     // words are deliberately abbreviated (Error / Warn / Perf) — the chips sit in a dense
@@ -48,6 +46,10 @@ export const stringsWebview: Record<string, string> = {
     'viewer.troubleChart.legend.error': 'Error {0}',
     'viewer.troubleChart.legend.warning': 'Warn {0}',
     'viewer.troubleChart.legend.performance': 'Perf {0}',
+    'viewer.troubleChart.legend.database': 'DB {0}',
+    'viewer.troubleChart.legend.todo': 'TODO {0}',
+    'viewer.troubleChart.legend.debug': 'Debug {0}',
+    'viewer.troubleChart.legend.notice': 'Notice {0}',
     // Tooltip on each legend chip: the chips are clickable level filters, mirroring the
     // toolbar dots (single-click toggles the level, double-click focuses only it).
     'viewer.troubleChart.chip.title': 'Click to toggle this level, double-click to focus it',

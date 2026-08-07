@@ -39,6 +39,7 @@ Introduces quality-of-life improvements to the Logs panel by collapsing older lo
 - Setting `troubleMode.openOnLoad`: auto-activate Trouble Mode when a log opens; suppresses the smart bookmark modal since Trouble Mode already surfaces errors
 - Setting `troubleMode.levels`: choose which severity levels survive the Trouble Mode filter (default: error, warning, performance); changes apply live without reopening the log
 - Command palette: "Trouble Mode — Errors Only" and "Trouble Mode — Reset Levels" for quick preset switching
+- Trouble chart: bars and legend now dynamically bucket all configured severity levels instead of only error/warning/performance; chart rebuilds when `troubleMode.levels` changes
 
 ### Changed
 

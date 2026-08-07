@@ -88,7 +88,11 @@ function setTroubleLevels(levels) {
     if (!Array.isArray(levels) || levels.length === 0) return;
     TROUBLE_LEVELS = {};
     for (var i = 0; i < levels.length; i++) { TROUBLE_LEVELS[levels[i]] = 1; }
-    if (troubleModeActive) { applyTroubleFilter(); }
+    if (typeof rebuildActiveChartLevels === 'function') { rebuildActiveChartLevels(); }
+    if (troubleModeActive) {
+        applyTroubleFilter();
+        if (typeof scheduleTroubleChartUpdate === 'function') { scheduleTroubleChartUpdate(); }
+    }
 }
 
 /* Idempotent activate — only turns ON, never toggles off. Used by the
