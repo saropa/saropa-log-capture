@@ -19,7 +19,9 @@ from modules.verify.l10n_bundle_audit import (
     write_failures_export_sentences,
     write_translation_error_audit,
 )
+from modules.verify.l10n_brands import is_acronym_only
 from modules.verify.l10n_console import cyan, dim, green, header, red, yellow
+from modules.verify.l10n_provenance import ENGINE_MANUAL, save_provenance
 from modules.verify.l10n_translator import (
     fix_mangled_brands,
     get_canonical_keys,
@@ -252,3 +254,39 @@ def write_report_and_offer_export(audit: AuditResult) -> None:
         "  Run a translate pass to fill them; strings the engine cannot produce "
         "are exported (sentence-level) for human translation."
     ))
+
+
+def run_fill_identity(audit: AuditResult, *, dry_run: bool = False) -> int:
+    """Mark EN-COPY gaps as manual provenance when the value is identity-correct.
+
+    Targets gaps where the English string is an acronym with placeholders
+    (e.g. "DB {0}", "TODO {0}") — the correct rendering IS the English text, so
+    adding manual provenance clears the gap without changing the bundle value.
+
+    Returns the number of entries marked.
+    """
+    header("Fill identity gaps")
+    total = 0
+    for lc in audit.locale_coverage:
+        updates: dict[str, str] = {}
+        for entry in lc.untranslated_entries:
+            if entry.reason != "untranslated":
+                continue
+            if not is_acronym_only(entry.en_value):
+                continue
+            updates[entry.en_value] = ENGINE_MANUAL
+        if not updates:
+            continue
+        keys_str = ", ".join(sorted(updates))
+        if dry_run:
+            print(f"  {cyan(lc.locale)}: would mark {len(updates)} — {keys_str}")
+        else:
+            save_provenance(lc.locale, updates)
+            print(f"  {cyan(lc.locale)}: marked {green(str(len(updates)))} — {keys_str}")
+        total += len(updates)
+    if total == 0:
+        print(f"  {dim('No identity gaps found.')}")
+    else:
+        verb = "would mark" if dry_run else "marked"
+        print(f"\n  {verb} {green(str(total))} identity gap(s) as manual provenance.")
+    return total
