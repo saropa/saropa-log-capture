@@ -30,11 +30,22 @@ cspell:disable
 ### Fixed
 
 - l10n: 25 untranslated trouble-chart legend and flow-map strings filled across 10 locales (DB, Debug, TODO, Screenshot, Trigger); all locales now at 100% coverage
-- l10n: `is_acronym_only` now recognizes acronym + placeholder patterns (e.g. "DB {0}", "TODO {0}") so they classify as identity instead of untranslated gaps
-- l10n: `fill-identity` action (menu 8 / `--run-mode fill-identity`) stamps provenance on EN-COPY bundle entries that match any forced-identity criterion; scans bundles directly with dry-run preview and confirmation prompt in interactive mode
-- l10n: `ACRONYM_ONLY_STRINGS` expanded with "APP" and "FW" (analysis badge labels with garbled MT output)
-- l10n: garbled acronym translations (NLLB hallucinations for short inputs like "APP", "FW") are now automatically reset to identity during `run_sync` — no manual cleanup needed
+
+<details>
+<summary>Maintenance</summary>
+
+**l10n pipeline**
+
+- `is_acronym_only` now recognizes acronym + placeholder patterns (e.g. "DB {0}", "TODO {0}") so they classify as identity instead of untranslated gaps
+- `fill-identity` action (menu 8 / `--run-mode fill-identity`) stamps provenance on EN-COPY bundle entries that match any forced-identity criterion; scans bundles directly with dry-run preview and confirmation prompt in interactive mode
+- `ACRONYM_ONLY_STRINGS` expanded with "APP" and "FW" (analysis badge labels with garbled MT output)
+- Garbled acronym translations (NLLB hallucinations for short inputs like "APP", "FW") are now automatically reset to identity during `run_sync` — no manual cleanup needed
+
+**Build gates**
+
 - New `verify:acronym-coverage` compile gate asserts every acronym-only source string in `strings-*.ts` is registered in `ACRONYM_ONLY_STRINGS`; includes minimum-count assertion and overlap check between the acronym set and the uppercase-words exclusion list
+
+</details>
 
 ---
 
