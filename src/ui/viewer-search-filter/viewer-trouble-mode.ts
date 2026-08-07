@@ -24,9 +24,10 @@
 /** Embedded webview JavaScript for the Trouble Mode zero-context filter. */
 export function getTroubleModeScript(): string {
     return /* javascript */ `
-/* Levels that survive Trouble Mode. 'database' and 'todo' are deliberately
-   excluded: Drift SQL volume in particular would drown the feed the mode exists
-   to clean. Signals/Crashlytics rows arrive as markers, which are never filtered. */
+/* Levels that survive Trouble Mode. Default excludes 'database' and 'todo' —
+   Drift SQL volume would drown the feed. Configurable via troubleMode.levels
+   setting; the host pushes setTroubleLevels on load and on config change.
+   Signals/Crashlytics rows arrive as markers, which are never filtered. */
 var TROUBLE_LEVELS = { error: 1, warning: 1, performance: 1 };
 var troubleModeActive = false;
 
@@ -72,6 +73,16 @@ function applyTroubleModeIndicator() {
         btn.classList.toggle('toolbar-icon-btn-active', troubleModeActive);
         btn.setAttribute('aria-pressed', troubleModeActive ? 'true' : 'false');
     }
+}
+
+/* Replace the hardcoded TROUBLE_LEVELS with a user-supplied set. Called by the
+   host via setTroubleLevels message. Re-applies the filter if Trouble Mode is
+   already active so the change takes effect immediately. */
+function setTroubleLevels(levels) {
+    if (!Array.isArray(levels) || levels.length === 0) return;
+    TROUBLE_LEVELS = {};
+    for (var i = 0; i < levels.length; i++) { TROUBLE_LEVELS[levels[i]] = 1; }
+    if (troubleModeActive) { applyTroubleFilter(); }
 }
 
 /* Idempotent activate — only turns ON, never toggles off. Used by the
