@@ -21,6 +21,7 @@ import { recordLoadedFile } from './modules/session/loaded-files-history';
 import { computeLoadedFileMetadata } from './modules/session/loaded-file-metadata';
 import { getConfig, getActiveLogDirectoryUri } from './modules/config/config';
 import { logExtensionError } from './modules/misc/extension-logger';
+import { troubleDefaultLevels } from './modules/config/trouble-level-constants';
 import { t } from './l10n';
 
 interface ViewerHandlerDeps {
@@ -108,9 +109,8 @@ export function wireViewerSpecificHandlers(deps: ViewerHandlerDeps): { refreshLo
         void refreshLogContext();
         const cfg = getConfig();
         const isActive = historyProvider.getActiveUri()?.toString() === uri.toString();
-        const defaultLevels = ["error", "warning", "performance"];
-        const levelsChanged = cfg.troubleModeLevels.length !== defaultLevels.length
-            || cfg.troubleModeLevels.some((l, i) => l !== defaultLevels[i]);
+        const levelsChanged = cfg.troubleModeLevels.length !== troubleDefaultLevels.length
+            || cfg.troubleModeLevels.some((l, i) => l !== troubleDefaultLevels[i]);
         if (levelsChanged) {
             broadcaster.postToWebview({ type: 'setTroubleLevels', levels: cfg.troubleModeLevels });
         }
