@@ -64,6 +64,27 @@ export function getSessionPanelEventsScript(): string {
     bindToggle('session-toggle-latest', 'showLatestOnly');
     bindToggle('session-toggle-collapse-counts', 'collapseSeverityCounts');
 
+    /* Expand all / collapse all day groups: set every visible day key to the
+       target state and re-render. Only meaningful when day headings are on. */
+    function setAllDaysCollapsed(collapsed) {
+        if (!sessionListEl) return;
+        var groups = sessionListEl.querySelectorAll('.session-day-group');
+        for (var i = 0; i < groups.length; i++) {
+            var key = groups[i].getAttribute('data-day-key');
+            if (key) collapsedDays[key] = collapsed;
+        }
+        var optsCopy = {};
+        for (var ck in sessionDisplayOptions) optsCopy[ck] = sessionDisplayOptions[ck];
+        optsCopy.collapsedDays = collapsedDays;
+        sessionDisplayOptions = optsCopy;
+        vscodeApi.postMessage({ type: 'setSessionDisplayOptions', options: sessionDisplayOptions });
+        if (cachedSessions) renderSessionList(cachedSessions);
+    }
+    var expandAllBtn = document.getElementById('session-expand-all-days');
+    if (expandAllBtn) expandAllBtn.addEventListener('click', function(e) { e.stopPropagation(); setAllDaysCollapsed(false); });
+    var collapseAllBtn = document.getElementById('session-collapse-all-days');
+    if (collapseAllBtn) collapseAllBtn.addEventListener('click', function(e) { e.stopPropagation(); setAllDaysCollapsed(true); });
+
     /* Filter dropdowns (date range, minimum size) share one binding: clone the options, write the
        selected value under the given key, reset to page 0, persist, and re-render. Cloning keeps the
        persisted object a fresh reference so the host's merge-and-rebroadcast sees a changed value. */
