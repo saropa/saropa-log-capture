@@ -3,17 +3,14 @@
  * near the 300-line budget) and kept pure so the geometry can be unit-tested without a webview.
  *
  * A node shows ONE screenshot from that screen — the error capture when there is one, else the first
- * (see `pickThumbShot`) — plus a count pill when the screen was captured more than once. Only the
- * shown shot's data URI is embedded per node — repeating every
- * capture's base64 in the diagram would multiply the panel HTML weight by the capture count for no
- * extra information at thumbnail size (the gallery and the lightbox still reach the whole set).
+ * (see `pickThumbShot`) — plus a count pill when the screen was captured more than once. At 148px a
+ * second capture of the same screen adds no information, so the extra ones stay in the gallery and
+ * the lightbox.
  *
- * Known cost: in the main report the shown capture's bytes ship TWICE — once here and once in the
- * gallery figure — so a session with N captured screens carries N extra copies. Static HTML has no
- * way to share one payload between an SVG `<image>` and an `<img>`, and the alternative (the diagram
- * borrowing the gallery's img at runtime) would leave the pop-out, which renders no gallery, with
- * blank cards. The report cap of 12 captures bounds the total either way. The pop-out itself pays
- * nothing extra — it embeds only the diagram copy.
+ * The `href` is a `webview.asWebviewUri(...)` URL, not a base64 data URI: the PNGs sit on disk beside
+ * the log, so referencing them keeps the panel document a few KB instead of megabytes and lets
+ * Chromium load and cache each capture independently. It also means the diagram and the gallery
+ * figure of the same capture share ONE fetch rather than shipping the bytes twice.
  */
 
 import type { FlowShot } from './flow-map-screenshots';
@@ -128,7 +125,7 @@ export function thumbMarkup(x: number, y: number, shots: readonly FlowShot[]): s
     const ty = y + THUMB_PAD;
     const label = esc(stripAnsi(shot.screenLabel ?? shot.trigger));
     return `<image class="fm-shot" x="${tx}" y="${ty}" width="${THUMB_W}" height="${THUMB_H}" `
-        + `preserveAspectRatio="xMidYMin slice" href="${esc(shot.dataUri)}" role="button" tabindex="0" `
+        + `preserveAspectRatio="xMidYMin slice" href="${esc(shot.src)}" role="button" tabindex="0" `
         // data-shot-scope="screen": this thumbnail's index/total count THIS SCREEN's captures, while a
         // gallery figure's count the whole session's. Same attributes, different denominator — the
         // lightbox picks its wording from the scope so "1 of 3" never silently means two things. The
