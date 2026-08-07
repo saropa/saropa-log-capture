@@ -965,6 +965,12 @@
           "minimum": 1,
           "maximum": 60
         },
+        "saropaLogCapture.troubleMode.openOnLoad": {
+          "default": false,
+          "description": "%config.troubleModeOpenOnLoad.description%",
+          "title": "%config.troubleModeOpenOnLoad.title%",
+          "type": "boolean"
+        },
         "saropaLogCapture.logViewerVisualSpacing": {
           "default": false,
           "description": "%config.logViewerVisualSpacing.description%",
