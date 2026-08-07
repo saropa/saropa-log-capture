@@ -14,7 +14,10 @@ function ev(kind: TimelineEvent['kind'], label: string, logLine: number): Timeli
 
 /** A minimal sidecar+source entry, defaults chosen so tests only set what they're asserting on. */
 function shot(logLine: number, overrides: Partial<ShotWithSource> = {}): ShotWithSource {
-    return { trigger: 'error', timestamp: 0, logLine, text: 'boom', src: 'file:///shots/a.png', ...overrides };
+    return {
+        trigger: 'error', timestamp: 0, logLine, text: 'boom',
+        src: 'file:///shots/a.png', path: 'D:\shots\a.png', ...overrides,
+    };
 }
 
 suite('FlowMap screenshots join (Phase E, plan 117)', () => {

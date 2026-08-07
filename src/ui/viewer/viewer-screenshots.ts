@@ -35,6 +35,17 @@ function screenshotCachePut(file, dataUri) {
     screenshotDataUris[file] = dataUri;
 }
 var screenshotSessionCount = 0;
+/* Directory holding this log's PNGs (from screenshotList). The popover joins it with a capture's
+   bare filename to show the full path — the sidecar itself only ever stores the filename. */
+var screenshotDir = '';
+
+/* Join the capture directory to a bare filename. The separator is inferred from the directory the
+   host sent rather than assumed: the webview has no platform of its own, and a hard-coded '\\' would
+   print a Windows path on Linux and macOS. */
+function screenshotJoinPath(dir, file) {
+    if (!dir) return file;
+    return dir + (dir.indexOf('\\\\') >= 0 ? '\\\\' : '/') + file;
+}
 /* file whose image the open popover is waiting for/showing (null = popover closed). */
 var screenshotPopoverFile = null;
 
@@ -89,6 +100,7 @@ function screenshotFindIdx(logLine, text) {
 /* Rebuild the badge map from a full sidecar list (sent on load / request). */
 function screenshotApplyList(msg) {
     screenshotByIdx = {};
+    if (msg && typeof msg.dir === 'string') screenshotDir = msg.dir;
     var list = (msg && Array.isArray(msg.screenshots)) ? msg.screenshots : [];
     screenshotSessionCount = list.length;
     for (var i = 0; i < list.length; i++) {
