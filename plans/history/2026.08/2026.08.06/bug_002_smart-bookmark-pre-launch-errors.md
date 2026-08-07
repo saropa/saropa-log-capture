@@ -103,6 +103,10 @@ A new `saropaLogCapture.troubleMode.openOnLoad` boolean setting (default false) 
 
 The webview receives an `activateTroubleMode` message (idempotent — only turns ON, never toggles off) after each file load. The host does not need to know the webview's current trouble mode state.
 
+### `troubleMode.levels` setting
+
+A new `saropaLogCapture.troubleMode.levels` array setting (default `["error", "warning", "performance"]`) controls which severity levels survive the Trouble Mode filter. Valid values are the seven classifier output levels: `error`, `warning`, `performance`, `database`, `todo`, `debug`, `notice`. Changes apply live via `setTroubleLevels` message — no viewer reload needed. The config change listener in `activation-listeners.ts` pushes updates immediately.
+
 ### Files changed
 
 | File | Change |
@@ -114,16 +118,17 @@ The webview receives an `activateTroubleMode` message (idempotent — only turns
 | `src/extension-activation-handlers.ts` | Sends `activateTroubleMode` on load when setting is on; suppresses smart bookmark modal |
 | `src/test/modules/bookmarks/first-error.test.ts` | 3 regression tests with `skippedPreLaunchErrors` assertions |
 | `src/ui/viewer-search-filter/viewer-trouble-chart.ts` | `findFirstErrorLineAfterLaunch`, `syncJumpFirstErrorButton`, button click handler, O(1) cache |
-| `src/ui/viewer-search-filter/viewer-trouble-mode.ts` | Added `activateTroubleMode()` (idempotent ON-only function) |
-| `src/ui/viewer/viewer-script-messages.ts` | `activateTroubleMode` message handler |
+| `src/ui/viewer-search-filter/viewer-trouble-mode.ts` | Added `activateTroubleMode()` and `setTroubleLevels()` |
+| `src/ui/viewer/viewer-script-messages.ts` | `activateTroubleMode` and `setTroubleLevels` message handlers |
 | `src/ui/viewer-styles/viewer-styles-trouble-chart.ts` | `.tc-jump-btn` styles |
 | `src/ui/provider/viewer-content-body.ts` | Button HTML in trouble chart header |
 | `src/l10n/strings-webview.ts` | 2 l10n keys for button label and title |
-| `src/modules/config/config-types.ts` | Added `troubleModeOpenOnLoad` to `SaropaLogCaptureConfig` |
-| `src/modules/config/config.ts` | Reads `troubleMode.openOnLoad` setting |
-| `package.json` | Setting definition for `troubleMode.openOnLoad` |
-| `package.nls*.json` (11 files) | NLS keys for setting title and description |
-| `plans/reference/webview-outbound-message-types.md` | Regenerated (new `activateTroubleMode` message) |
+| `src/modules/config/config-types.ts` | Added `troubleModeOpenOnLoad` and `troubleModeLevels` to `SaropaLogCaptureConfig` |
+| `src/modules/config/config.ts` | Reads `troubleMode.openOnLoad` and `troubleMode.levels` settings |
+| `src/activation-listeners.ts` | Live-pushes `setTroubleLevels` on config change |
+| `package.json` | Setting definitions for `troubleMode.openOnLoad` and `troubleMode.levels` |
+| `package.nls*.json` (11 files) | NLS keys for setting titles and descriptions |
+| `plans/reference/webview-outbound-message-types.md` | Regenerated (new `activateTroubleMode` and `setTroubleLevels` messages) |
 | `CHANGELOG.md` | `[Unreleased]` entries |
 
 ### Verification
@@ -132,3 +137,4 @@ The webview receives an `activateTroubleMode` message (idempotent — only turns
 - `npm run test:file -- out/test/modules/bookmarks/first-error.test.js`: 9/9 pass
 - Needs F5 manual verification with a log containing pre-launch logcat errors
 - Needs F5 manual verification of `troubleMode.openOnLoad` setting (set to true, open a log, verify Trouble Mode activates and no smart bookmark modal appears)
+- Needs F5 manual verification of `troubleMode.levels` setting (change levels, verify filter updates live)

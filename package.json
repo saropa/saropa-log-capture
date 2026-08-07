@@ -971,6 +971,18 @@
           "title": "%config.troubleModeOpenOnLoad.title%",
           "type": "boolean"
         },
+        "saropaLogCapture.troubleMode.levels": {
+          "default": ["error", "warning", "performance"],
+          "description": "%config.troubleModeLevels.description%",
+          "title": "%config.troubleModeLevels.title%",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["error", "warning", "performance", "database", "todo", "debug", "notice"]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
         "saropaLogCapture.logViewerVisualSpacing": {
           "default": false,
           "description": "%config.logViewerVisualSpacing.description%",

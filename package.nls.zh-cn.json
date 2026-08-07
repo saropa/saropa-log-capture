@@ -473,6 +473,8 @@
   "config.treeRefreshInterval.title": "Tree view refresh interval in seconds during active recording.",
   "config.troubleModeChartInterval.description": "Width of each tumbling time window (in seconds, 1–60) in the Trouble Mode severity chart. Lower values give finer-grained bars over a shorter recent span.",
   "config.troubleModeChartInterval.title": "Trouble Mode severity-chart window (seconds)",
+  "config.troubleModeLevels.description": "Severity levels that survive the Trouble Mode filter. Only lines matching these levels are shown when Trouble Mode is active. Default: error, warning, performance.",
+  "config.troubleModeLevels.title": "Trouble Mode visible levels",
   "config.troubleModeOpenOnLoad.description": "Automatically activate Trouble Mode when a log opens in the viewer. When enabled, the smart bookmark modal is suppressed — Trouble Mode already surfaces errors.",
   "config.troubleModeOpenOnLoad.title": "Auto-activate Trouble Mode on load",
   "config.verboseDap.description": "将所有原始 DAP 协议消息（请求、响应、事件）记录到日志文件。会产生大量输出 — 用于调试适配器通信问题。",
