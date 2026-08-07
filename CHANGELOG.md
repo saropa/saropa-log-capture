@@ -64,6 +64,8 @@ Introduces quality-of-life improvements to the Logs panel by collapsing older lo
 
 - Smart bookmark modal no longer fires on pre-launch device backlog errors; skipped pre-launch error count is logged to the output channel (bug_002)
 
+---
+
 ## [9.3.7]
 
 Flutter profile mode now captures screenshots on crash, alongside inline log image references, on-demand capture tools, diagnostic self-tests, and smart flow map breadcrumb suggestions. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.7/CHANGELOG.md)
@@ -290,6 +292,8 @@ The Trouble Mode chart now starts exactly where the app started — the same gre
 
 - **Trouble Mode chart started too early on some captures.** The severity chart derived its own app-start point from a resumable webview scan that could drift, leaving the chart drawing the device's pre-launch logcat backlog while the feed's green "App started" divider was correctly placed. The chart now anchors to the same host-detected launch line the divider uses (`setTroubleChartHostLaunchTs` from `handleRunBoundaries`), so the chart's left edge and the feed divider always agree; the webview scan remains only as the live-capture fallback before the host boundary message arrives.
 
+---
+
 ## [9.2.2]
 
 A new green "App started" divider cleanly separates pre-app noise in your log feed, while the Trouble Mode chart aligns to match it, gains fully clickable bars, and cleans up its axes. [log](https://github.com/saropa/saropa-log-capture/blob/v9.2.2/CHANGELOG.md)
@@ -501,47 +505,6 @@ Search now always shows what it finds. If a match is tucked inside a collapsed g
 ### Changed
 
 - **Log banner buttons use title case** — "Open in Editor" and "Copy Full Path".
-
-## [9.0.9]
-
-Level badges now match what you see: the count on a severity dot equals the rows that appear when you focus it. Earlier, device noise (Android `E/` logcat) inflated the Error count, so the badge could say 32 while focusing Error showed none. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.9/CHANGELOG.md)
-
-### Fixed
-
-- **Level dot counts now equal the rows shown when you focus that level.** The badge total was computed from a separate raw text classification, while the rows are filtered by each line's effective level. These diverged: Android-native device logcat (`gralloc4`, `Badge`, `MediaCodec`, …) is deliberately shown as informational rather than error, but the badge still counted it as error — so the Error dot read 32 while double-clicking it revealed zero. Counts are now tallied from the same per-row level the filter uses (effective, after device demotion and repeat-collapse), so every badge equals exactly what isolating that level displays. App and Dart errors are unaffected — only Android OS/hardware-layer logcat is treated as informational, and it always was for display. (Background: `plans/history/2026.06/2026.06.26/level-badge-count-vs-visible-attempts.md`.)
-
-## [9.0.8]
-
-Database (and other) lines no longer vanish when you isolate a severity: Drift query logs stay visible under the Database filter, and double-clicking a level dot to focus it now opens the Log Sources tiers so you actually see those lines. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.8/CHANGELOG.md)
-
-### Fixed
-
-- **Drift / database log lines no longer disappear under the Database filter.** Each Drift interceptor line ends with an inline `» Member (./path.dart:line:col)` call-site annotation; that trailing source reference was being misread as a stack frame, so the whole SQL line got folded into a collapsed stack group and lost its `database` level. Isolating Database then showed ~1 row even when the count badge said 200+. Content lines carrying that inline `»` annotation are now kept as normal log lines (a genuine standalone stack frame — `⠀ » Member (path)` with nothing before the `»` — is still detected). Guarded in both the extension-side and webview detectors with a parity-corpus regression case.
-- **Double-clicking a level dot to focus a severity now opens the Log Sources tiers.** Device and External tiers default to **Warn+**, which independently hides every non-error/warning line regardless of the level filter — so soloing Debug or Database showed nothing despite the count badge. Soloing a level now resets all three tiers to **All** and moves the drawer radios to match, so the isolated level's lines are actually shown.
-
-### Maintenance
-
-- Aligned `@types/vscode` down to `^1.105.0` to match `engines.vscode`. The dev type range had drifted ahead to `^1.125.0`, which vsce rejects at the Package step — the prerequisite manifest-compat gate now self-heals or stops before any version/CHANGELOG mutation, preserving the committed VS Code compatibility floor.
-
-## [9.0.7]
-
-Group related logs into named Investigations with notes, so a multi-session bug reads as one case — and bug reports now point at where the failing operation actually began instead of just dumping a fixed window. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.7/CHANGELOG.md)
-
-### Added
-
-- **Investigations — bundle related logs into one named, annotated case.** A curated layer over automatic session grouping: give a multi-session debugging effort a title ("Bug #42: Payment timeout") and notes (the root cause), spanning whichever logs you choose. Right-click a log in the Logs panel → **Add to Investigation** (or **Remove from Investigation**), or use the Command Palette: New / Rename / Edit Notes / Delete / **Open Investigation**. Open shows the member sessions or a one-page **overview** that gathers the title, notes, and each session with its error/warning counts and notes. Investigations are non-destructive (a log can be in an auto group and any number of investigations) and persist per-workspace.
-- **Bug reports now point at where the failing operation began.** The Log Context section already flagged the largest pause before an error; it now also walks back from the error to find the logical start of the operation it belongs to — a blank-line break, a timestamp gap, or a rise in severity — and annotates "the failing operation begins N lines back". The full context window is still shown unchanged; this just marks the boundary so a developer reads the relevant operation instead of guessing how far back to look.
-
-<details>
-<summary>Maintenance</summary>
-
-**Build tooling**
-
-- **F5 (Run Extension) now uses a fast `dev-build` instead of the full `compile` chain.** Debug launches were blocked behind the whole validate-and-bundle pipeline (two `tsc` passes plus nine `verify:*` checks), which pinned a CPU core and kept the "Waiting for preLaunchTask 'compile'…" dialog up until everything finished. The launch configs now run only the two artifact-producing steps — regenerate the embedded DB-detector merge source, then `esbuild` the bundle — so F5 starts quickly. Full type/lint/verify coverage still runs via `npm run compile` and in CI.
-- **`.vscode-test/` no longer accumulates a full ~200 MB VS Code build per release.** `@vscode/test-electron` downloads a complete editor per version under `.vscode-test/` and never prunes the old ones; left unbounded this reached 16.3 GB / 179,824 files across 26 installs and froze the window on open ([Bug 002](plans/history/2026.06/2026.06.25/bug_002_vscode-test-cache-hangs-window-on-open.md) / [Bug 003](plans/history/2026.06/2026.06.25/bug_003_workspace-large-dir-blowout-detection-and-prevention.md)). A new `posttest` step ([prune-vscode-test-cache.mjs](scripts/modules/test/prune-vscode-test-cache.mjs)) keeps only the newest install after every `npm test`, bounding the cache to one build. Run it manually with `npm run prune:vscode-test` (`--dry-run` to preview). Build/test tooling only.
-- **The packaged `.vsix` no longer ships repo and CI artifacts.** `.vscodeignore` did not exclude `coverage/`, `.nyc_output/`, `reports/`, `plans/`, `bugs/`, `examples/`, `test/`, `.github/`, and `l10n/provenance/`, so a package pulled in 2,851 files (~18 MB) of test-coverage HTML, captured logs, and planning docs that have no runtime consumer. Those folders are now ignored; only `dist/`, `l10n/` bundles, `images/`, `media/walkthrough/`, `audio/`, and the manifest NLS files ship — 47 files. Packaging only.
-
-</details>
 
 ---
 
