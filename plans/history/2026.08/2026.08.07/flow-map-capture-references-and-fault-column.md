@@ -90,8 +90,8 @@ caps, since two stacked viewport-height boxes would mean scrolling twice to reac
 
 **Full path surfaced.** The sidecar stores bare filenames, which are not something a reader can act
 on. The capture directory now rides along on the `screenshotList` message and the log viewer's
-preview popover prints the full path, selectable and wrapped, with the separator inferred from the
-directory the host sent rather than assumed — the webview has no platform of its own. In the flow
+preview popover prints the full path, selectable and wrapped, with the separator sent by the host
+rather than guessed webview-side — the webview has no platform of its own. In the flow
 map's lightbox, a File row shows the filename inline with the full path on a copy button and its
 hover title, using a dedicated `copyShotPath` message rather than the generic `copyText`, whose
 status line reports "Summary copied".
