@@ -267,7 +267,9 @@ function wireTroubleChartChips() {
     });
 }
 
-/* Cached first-error line. Invalidated when allLines grows or the launch boundary shifts. */
+/* Cached first-error line. Invalidated when allLines.length or launchTs changes.
+   Assumption: same-length content replacement (clear + reload with identical line count)
+   is not a real scenario — clear sets length to 0 first, which invalidates. */
 var tcFirstErrorCache = { len: -1, launchTs: -1, line: 0 };
 
 /* Find the 1-based viewer line number of the first error-level line after the app-start

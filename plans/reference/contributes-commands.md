@@ -121,7 +121,9 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.toggleSearchOverlay` | %command.toggleSearchOverlay.title% |  |
 | `saropaLogCapture.toggleTrash` | %command.toggleTrash.title% |  |
 | `saropaLogCapture.trashSession` | %command.trashSession.title% |  |
+| `saropaLogCapture.troubleMode.errorsOnly` | %command.troubleModeErrorsOnly.title% |  |
+| `saropaLogCapture.troubleMode.resetLevels` | %command.troubleModeResetLevels.title% |  |
 | `saropaLogCapture.troubleMode.toggle` | %command.troubleModeToggle.title% |  |
 | `saropaLogCapture.ungroupSession` | Saropa Log Capture: Ungroup Session |  |
 
-**Total:** 117 commands.
+**Total:** 119 commands.
