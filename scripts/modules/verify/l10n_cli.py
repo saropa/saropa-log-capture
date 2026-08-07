@@ -132,32 +132,41 @@ def interactive_menu() -> int:
         return _sync_translate_reaudit(None)
     if choice == "3":
         return _sync_translate_reaudit(get_translation_locales(), "gaps")
-    if choice == "4":
+    if choice in ("4", "6"):
         codes = prompt_locale_codes()
         if not codes:
             print(yellow("  Cancelled."))
             return 2
-        return _sync_translate_reaudit(codes, "gaps")
+        scope = "gaps" if choice == "4" else "low_quality"
+        return _sync_translate_reaudit(codes, scope)
     if choice == "5":
         return _sync_translate_reaudit(get_translation_locales(), "low_quality")
-    if choice == "6":
-        codes = prompt_locale_codes()
-        if not codes:
-            print(yellow("  Cancelled."))
-            return 2
-        return _sync_translate_reaudit(codes, "low_quality")
     if choice == "7":
         return _run_quality_audit()
     if choice == "8":
-        filled = run_fill_identity(audit)
-        if filled:
-            final = run_audit()
-            print()
-            print_audit(final)
-            write_report_and_offer_export(final)
-        return 0
+        return _run_fill_identity()
     print(red(f"  Unknown choice: {choice}"))
     return 1
+
+
+def _run_fill_identity() -> int:
+    """Preview identity gaps, confirm, apply, and re-audit."""
+    if not run_fill_identity(dry_run=True):
+        return 0
+    try:
+        go = input(f"\n  Apply? [y/N]: ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return 2
+    if go != "y":
+        print(yellow("  Cancelled."))
+        return 0
+    run_fill_identity()
+    final = run_audit()
+    print()
+    print_audit(final)
+    write_report_and_offer_export(final)
+    return 0
 
 
 def _run_quality_audit() -> int:
@@ -314,7 +323,7 @@ def run_non_interactive() -> int:
         return 1 if audit.missing_from_bundle else 0
 
     if args.run_mode == "fill-identity":
-        filled = run_fill_identity(audit, dry_run=args.dry_run)
+        filled = run_fill_identity(dry_run=args.dry_run)
         if filled and not args.dry_run:
             final = run_audit()
             print()
