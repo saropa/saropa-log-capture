@@ -94,6 +94,10 @@ function lightboxLabels(): LightboxLabels {
         // No args: `t()` returns the translated template with {0}/{1} intact for the script to fill.
         counter: t('flowMap.shot.counter'),
         counterScreen: t('flowMap.shot.counterScreen'),
+        file: t('flowMap.shot.file'),
+        copyPath: t('flowMap.shot.copyPath'),
+        zoom: t('flowMap.shot.zoom'),
+        zoomHint: t('flowMap.shot.zoomHint'),
     };
 }
 
@@ -296,6 +300,11 @@ function handleMessage(
         void copyLogLine(p.logUri, msg.line);
     } else if (msg.type === 'addFlowMapPattern' && msg.pattern) {
         void addCustomBreadcrumbRule(p, msg.pattern, msg.label || '$1');
+    } else if (msg.type === 'copyShotPath' && msg.text) {
+        // Its own case rather than reusing copyText: the status line has to name what was copied, and
+        // "Summary copied" after clicking a screenshot's copy button is a wrong outcome report.
+        void vscode.env.clipboard.writeText(msg.text);
+        vscode.window.setStatusBarMessage(t('flowMap.shot.pathCopied'), 2000);
     } else if (msg.type === 'copyText' && msg.text) {
         // The Executive-Summary copy button sends the rendered prose; write it straight to clipboard.
         void vscode.env.clipboard.writeText(msg.text);
