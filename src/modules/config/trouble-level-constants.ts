@@ -7,13 +7,13 @@
  * template-build time, and `setTroubleLevels()` replaces it at runtime when
  * the host pushes a non-default configuration.
  *
- * The trouble chart (viewer-trouble-chart.ts) currently only buckets error,
- * warning, and performance — adding a level here makes it survive the feed
- * filter but NOT appear in the chart histogram or legend. A chart-side change
- * is needed to visualise additional levels.
+ * `troubleValidLevels` also defines the canonical stacking order for the
+ * trouble chart: error at the baseline (drawn first), notice at the top.
+ * The chart only draws levels present in the active `TROUBLE_LEVELS` set.
  */
 
-/** Every level the user may include in `troubleMode.levels`. */
+/** Every level the user may include in `troubleMode.levels`.
+ *  Order defines the chart stack: first = baseline, last = top. */
 export const troubleValidLevels = [
     "error", "warning", "performance", "database", "todo", "debug", "notice",
 ] as const;

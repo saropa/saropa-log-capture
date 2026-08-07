@@ -38,6 +38,10 @@ export function getTroubleChartStyles(): string {
     --tc-error: #f44336;
     --tc-warning: #ff9800;
     --tc-performance: #9c27b0;
+    --tc-database: #2196f3;
+    --tc-todo: #ffc107;
+    --tc-debug: #78909c;
+    --tc-notice: #00acc1;
     display: none;
     flex-shrink: 0;
     padding: var(--space-2) var(--space-3);
@@ -84,6 +88,10 @@ body.slc-trouble-active .trouble-chart { display: block; }
 .trouble-chart .tc-chip-error i { background: var(--tc-error); }
 .trouble-chart .tc-chip-warning i { background: var(--tc-warning); }
 .trouble-chart .tc-chip-performance i { background: var(--tc-performance); }
+.trouble-chart .tc-chip-database i { background: var(--tc-database); }
+.trouble-chart .tc-chip-todo i { background: var(--tc-todo); }
+.trouble-chart .tc-chip-debug i { background: var(--tc-debug); }
+.trouble-chart .tc-chip-notice i { background: var(--tc-notice); }
 /* Peak sits beside the title, never over the plot: the leading device-startup warning
    spike is the tallest bar in most logs and drew straight through the old overlay label. */
 .trouble-chart .tc-peak { font-variant-numeric: tabular-nums; }
@@ -190,6 +198,10 @@ body.slc-trouble-active .trouble-chart { display: block; }
 .trouble-chart .tc-bar-error { fill: var(--tc-error); }
 .trouble-chart .tc-bar-warning { fill: var(--tc-warning); }
 .trouble-chart .tc-bar-performance { fill: var(--tc-performance); }
+.trouble-chart .tc-bar-database { fill: var(--tc-database); }
+.trouble-chart .tc-bar-todo { fill: var(--tc-todo); }
+.trouble-chart .tc-bar-debug { fill: var(--tc-debug); }
+.trouble-chart .tc-bar-notice { fill: var(--tc-notice); }
 /* The window holding the row currently open in the side rail. A full-height band BEHIND
    the bar, not a stroke on it: preserveAspectRatio="none" stretches the SVG horizontally,
    so any stroke width would render as a thick smear on the vertical edges. */
