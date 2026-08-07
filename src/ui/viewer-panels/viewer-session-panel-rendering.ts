@@ -17,6 +17,7 @@ export function getSessionRenderingScript(): string {
     /* Cached once per renderSessionList call so all day groups in a single render agree
        on what "today" is. Prevents mid-render drift if Date.now() crosses midnight. */
     var todayDateKey = toDateKey(Date.now());
+    var lastPrunedSessions = null;
     function renderSessionList(sessions) {
         todayDateKey = toDateKey(Date.now());
         if (sessionLoadingEl) sessionLoadingEl.style.display = 'none';
@@ -34,12 +35,16 @@ export function getSessionRenderingScript(): string {
         if (typeof rebuildSessionTagChips === 'function') rebuildSessionTagChips(sessions);
         markLatestByName(sessions, applySessionDisplayOptions);
         /* Prune collapsedDays keys that no longer match any session's date so the
-           map does not grow unboundedly over months of use. */
-        var liveDays = Object.create(null);
-        for (var pi = 0; pi < sessions.length; pi++) {
-            if (sessions[pi].mtime) liveDays[toDateKey(sessions[pi].mtime)] = true;
+           map does not grow unboundedly. Gated on sessions identity so option-toggle
+           re-renders (same array, different display options) skip the O(n) scan. */
+        if (sessions !== lastPrunedSessions) {
+            lastPrunedSessions = sessions;
+            var liveDays = Object.create(null);
+            for (var pi = 0; pi < sessions.length; pi++) {
+                if (sessions[pi].mtime) liveDays[toDateKey(sessions[pi].mtime)] = true;
+            }
+            for (var dk in collapsedDays) { if (!(dk in liveDays)) delete collapsedDays[dk]; }
         }
-        for (var dk in collapsedDays) { if (!(dk in liveDays)) delete collapsedDays[dk]; }
         var active = sessions.filter(function(s) { return !s.trashed; });
         /* Pinned rows are lifted out BEFORE any filter runs: a pin means "always keep this at the
            top of the list", so the date / size / name / tag filters must never hide it. They render
