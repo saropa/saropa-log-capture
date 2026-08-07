@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 
 from modules.verify.l10n_actions import (
+    run_fill_identity,
     run_sync,
     run_translate,
     write_report_and_offer_export,
@@ -86,6 +87,7 @@ def _print_menu() -> None:
     print("  5  Sync + upgrade LOW-QUALITY → Qwen — all locales")
     print("  6  Sync + upgrade LOW-QUALITY → Qwen — specific locales")
     print("  7  Round-trip quality audit (samples translations, needs Qwen)")
+    print("  8  Fill identity gaps (mark acronym+placeholder EN-COPYs as manual)")
     print("  0  Exit")
 
 
@@ -146,6 +148,14 @@ def interactive_menu() -> int:
         return _sync_translate_reaudit(codes, "low_quality")
     if choice == "7":
         return _run_quality_audit()
+    if choice == "8":
+        filled = run_fill_identity(audit)
+        if filled:
+            final = run_audit()
+            print()
+            print_audit(final)
+            write_report_and_offer_export(final)
+        return 0
     print(red(f"  Unknown choice: {choice}"))
     return 1
 
@@ -174,9 +184,9 @@ def _parse_args() -> argparse.Namespace:
     )
     p.add_argument(
         "--run-mode",
-        choices=["audit", "sync", "translate"],
+        choices=["audit", "sync", "translate", "fill-identity"],
         default="audit",
-        help="Pipeline mode: audit (read-only), sync, or translate.",
+        help="Pipeline mode: audit, sync, translate, or fill-identity.",
     )
     p.add_argument(
         "--locales",
@@ -302,6 +312,15 @@ def run_non_interactive() -> int:
             print_untranslated_detail(audit, max_entries=None)
         # Missing-from-bundle is a hard failure for CI; gaps alone are not.
         return 1 if audit.missing_from_bundle else 0
+
+    if args.run_mode == "fill-identity":
+        filled = run_fill_identity(audit, dry_run=args.dry_run)
+        if filled and not args.dry_run:
+            final = run_audit()
+            print()
+            print_audit(final)
+            _write_audit_report(final)
+        return 0
 
     run_sync()
     if args.run_mode == "translate":
