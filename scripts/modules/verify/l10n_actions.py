@@ -36,6 +36,47 @@ from modules.verify.l10n_translator import (
 )
 
 
+def _reset_garbled_acronyms() -> int:
+    """Reset locale translations for forced-identity keys to the English value.
+
+    NLLB hallucinates sentence-length output from 2-3 character acronym inputs
+    (e.g. "APP" → "APP APP Das ist ein App."). This scans every locale bundle
+    for keys where ``is_forced_identity`` is True but the stored value differs
+    from the English key, resets the value to identity, and stamps provenance.
+    """
+    locales = get_translation_locales()
+    total = 0
+    for locale in locales:
+        bundle_path = L10N_DIR / f"bundle.l10n.{locale}.json"
+        if not bundle_path.exists():
+            continue
+        raw = bundle_path.read_text(encoding="utf-8")
+        bundle = json.loads(raw)
+        prov_updates: dict[str, str] = {}
+        changed = False
+        for key, value in bundle.items():
+            if value == key:
+                continue
+            if not is_forced_identity(key, locale):
+                continue
+            bundle[key] = key
+            prov_updates[key] = ENGINE_MANUAL
+            changed = True
+        if not changed:
+            continue
+        bundle_path.write_text(
+            json.dumps(bundle, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        save_provenance(locale, prov_updates)
+        keys_str = ", ".join(sorted(prov_updates))
+        print(f"  {cyan(locale)}: reset {yellow(str(len(prov_updates)))} garbled — {keys_str}")
+        total += len(prov_updates)
+    if total > 0:
+        print(f"  Total: {yellow(str(total))} garbled identity value(s) reset")
+    return total
+
+
 def run_sync() -> None:
     """Sync the English bundle to match the TS source strings."""
     header("Syncing English bundle")
@@ -44,6 +85,7 @@ def run_sync() -> None:
     print(f"  Added:   {green(str(added))}")
     print(f"  Removed: {red(str(removed))} orphan(s)")
     print(f"  Total:   {cyan(str(kept + added))} keys")
+    _reset_garbled_acronyms()
 
 
 def _reset_mangled_brands(locales: list[str], canonical: set[str]) -> None:
