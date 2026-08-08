@@ -49,6 +49,24 @@ export function flowMapStyles(nonce: string): string {
 
   .session-info { display: grid; grid-template-columns: max-content 1fr; gap: 0.2rem 0.9rem; font-size: 0.92em; }
   .si-k { color: var(--muted); }
+  /* Two label/value pairs per line once the column is wide enough to hold them. Keyed off the
+     COLUMN's width (a container query), not the viewport's: the divider between the two columns is
+     user-draggable, so a viewport media query would promote a 300px-wide column to two pairs simply
+     because the window is wide, which is the opposite of responsive.
+
+     The query container is THIS SECTION's body, deliberately not .detail-col. container-type applies
+     layout and size containment, and .detail-col is the element that also owns the scroll box, the
+     --report-vh height budget, the ResizeObserver that measures the report row, and the collapse
+     class — containing all of that to make one grid responsive is a large blast radius for a small
+     effect. Scoped here, nothing else in the column can be affected.
+
+     inline-size, not size: the section's height is content-driven and containing it would collapse
+     the block to zero. Container queries need Chromium 105; engines.vscode is ^1.105.0, which ships
+     far past that, and a browser without them simply keeps the single-pair layout. */
+  #sec-session .sec-body { container-type: inline-size; container-name: detail; }
+  @container detail (min-width: 620px) {
+    .session-info { grid-template-columns: max-content 1fr max-content 1fr; }
+  }
 
   .sec { margin: 1.1rem 0; }
   /* No always-on marker on the left; a chevron fades in on the right only when the header is hovered. */
@@ -78,6 +96,10 @@ export function flowMapStyles(nonce: string): string {
      diagram column delegates to .diagram-scroll, which must keep the scrollbars zoom-panning needs. */
   .detail-col { flex: 1 1 420px; min-width: 20px; overflow-y: auto; overflow-x: hidden; max-height: var(--report-vh); }
   .detail-col p { max-width: 60ch; }
+  /* The executive summary is the exception to the 60ch measure: it is one dense paragraph the reader
+     scans rather than reads line by line, and capping it mid-column leaves a ragged half-empty band
+     beside the tables it summarizes. It fills whatever width the column has. */
+  #narrative-text { max-width: none; }
   .diagram { position: relative; max-width: 100%; padding: 0.4rem 0 1rem; }
   /* The SVG lives in its own scroll box so zoom (which scales the SVG element's width/height) grows
      REAL scrollbars instead of clipping the chart, and margin:auto centers it when it is smaller
@@ -86,6 +108,18 @@ export function flowMapStyles(nonce: string): string {
   .diagram-scroll { overflow: auto; max-height: calc(var(--report-vh, 78vh) - 4.5rem); }
   .diagram-scroll svg { display: block; margin: 0 auto; cursor: grab; touch-action: none; }
   .diagram-scroll.fm-panning svg { cursor: grabbing; }
+  /* A card is draggable (see flow-map-panel-drag-script.ts). "move" rather than the canvas's "grab"
+     so the two gestures read as different things: the background pans the view, a card moves itself.
+     While dragging, the cursor stays "move" over EVERY descendant — a thumbnail's own "pointer"
+     would otherwise reassert itself mid-drag and say the card is about to open something. */
+  /* user-select:none is load-bearing, not cosmetic: a card's title and detail lines are real SVG
+     text, and a pointer sweeping across them mid-drag starts a selection that fights the gesture
+     (and leaves the diagram highlighted after the drop). Nothing in the diagram is text worth
+     selecting — the same facts are copyable from the tables. */
+  .fm-node { cursor: move; user-select: none; -webkit-user-select: none; }
+  .fm-node.fm-dragging, .fm-node.fm-dragging * { cursor: move; }
+  /* Lift the dragged card clear of its neighbors so its own edges stay readable under the pointer. */
+  .fm-node.fm-dragging rect.fm-box { filter: brightness(1.15); stroke-width: 2.5; }
   /* Pop-out panel: the diagram claims the full panel height. */
   .diagram-only { padding: 0 1.5rem; }
   .diagram-only .diagram-scroll { max-height: calc(100vh - 96px); }

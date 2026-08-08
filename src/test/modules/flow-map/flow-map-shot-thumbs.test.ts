@@ -265,6 +265,7 @@ suite('FlowMap diagram screenshot thumbnails', () => {
             logLine: 'Log line', close: 'Close', counter: '{0}/{1}', counterScreen: '{0}/{1} here',
             file: 'File', copyPath: 'Copy full path', zoom: 'Zoom', zoomHint: 'Scroll to zoom',
             unavailable: 'Screenshot unavailable',
+            prev: 'Previous screenshot', next: 'Next screenshot',
             compare: 'Compare', comparePrev: 'Previous', compareNext: 'Next',
             compareSession: 'Other session', compareThisSession: 'This session',
             compareLoading: 'Reading…', compareNoMatch: 'No capture of this screen',
@@ -288,10 +289,14 @@ suite('FlowMap diagram screenshot thumbnails', () => {
             assert.ok(script.startsWith('<script nonce="abc123">'), 'nonce-guarded');
         });
 
-        test('should bind BOTH surfaces with one img selector', () => {
+        test('should bind EVERY capture surface with one img selector', () => {
             // The diagram thumbnail is an <img> inside a <foreignObject> now, not an SVG <image> —
             // a stale 'image.fm-shot' selector would silently stop opening the lightbox from a card.
-            assert.ok(script.includes("'img.shot-img, img.fm-shot'"), 'gallery and card share the binder');
+            // .fm-mini-shot covers the timeline strip and the screen-visit rows: a surface left out
+            // of this one selector renders a capture that simply does nothing when clicked.
+            assert.ok(
+                script.includes("'img.shot-img, img.fm-shot, img.fm-mini-shot'"),
+                'all three capture surfaces share the binder');
             assert.ok(!script.includes('image.fm-shot'), 'no SVG-image selector left behind');
         });
 
