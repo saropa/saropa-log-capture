@@ -34,6 +34,12 @@ class FakeStore {
     noteSuppressed(_log: string): void {
         this.suppressed++;
     }
+    /** The capturer flushes on a log change, so the double must answer it. */
+    flushes = 0;
+    flushSuppressed(): Promise<void> {
+        this.flushes++;
+        return Promise.resolve();
+    }
     save(_log: string, _png: Uint8Array, entry: { trigger: string; logLine: number }): Promise<ScreenshotSaveResult | undefined> {
         this.saves.push({ trigger: entry.trigger, logLine: entry.logLine });
         return Promise.resolve({
@@ -220,5 +226,8 @@ suite('ScreenshotCapturer near-duplicate skipping', () => {
         h.capturer.onLine(navLine(1, 'd:/reports/next-session.log'));
         await h.flush();
         assert.strictEqual(h.store.saves.length, 2, 'the new log kept its first capture');
+        // The previous log's count is final the moment a new log starts, and session-end only fires
+        // for a debug session that actually started and terminated cleanly.
+        assert.strictEqual(h.store.flushes, 1, 'and the previous log had its count written out');
     });
 });

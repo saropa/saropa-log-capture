@@ -269,6 +269,10 @@ export class ScreenshotCapturer {
         // an empty history, not against the log that came before it.
         if (req.logFsPath !== this.dedupLogFsPath) {
             this.recentShots.clear();
+            // A new log means the previous one's count is FINAL, so write it now. The
+            // session-terminate flush is the usual trigger, but it only fires for a debug session
+            // that actually started and terminated cleanly — this covers the rest.
+            if (this.dedupLogFsPath) { void this.deps.store.flushSuppressed(); }
             this.dedupLogFsPath = req.logFsPath;
         }
         // A manual capture is an explicit request for THIS moment; deduping it would refuse a
