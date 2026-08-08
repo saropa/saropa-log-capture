@@ -2219,5 +2219,19 @@
   "Screenshot": "Captura de pantalla",
   "Show full severity counts only on latest and active logs": "Muestra solo los conteos de severidad completos en los registros más recientes y activos",
   "TODO {0}": "TODO {0}",
-  "Trigger": "Desencadenar"
+  "Trigger": "Desencadenar",
+  "Compare": "Comparar",
+  "Compare against another session": "Compara con otra sesión",
+  "Copy full path": "Copiar ruta completa",
+  "File": "Archivo",
+  "Next capture of this screen": "Próxima captura de esta pantalla",
+  "Previous capture of this screen": "Captura anterior de esta pantalla",
+  "Reading that session…": "Leyendo esa sesión…",
+  "Screenshot path copied": "Ruta de la captura de pantalla copiada",
+  "Screenshot unavailable — the file may have been moved or deleted": "Captura de pantalla no disponible — el archivo podría haber sido movido o eliminado",
+  "Scroll over the image to zoom": "Desliza sobre la imagen para acercar",
+  "That session has no capture of this screen": "Esa sesión no tiene captura de esta pantalla",
+  "This session": "Esta sesión",
+  "Zoom": "Zoom",
+  "{0} near-duplicate captures were skipped for this log": "{0} capturas de casi duplicados se omitieron para este registro"
 }

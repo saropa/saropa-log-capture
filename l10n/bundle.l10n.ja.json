@@ -2219,5 +2219,19 @@
   "Screenshot": "スクリーンショット",
   "Show full severity counts only on latest and active logs": "最新かつアクティブなログのみに完全な深刻度カウントを表示",
   "TODO {0}": "TODO {0}",
-  "Trigger": "トリガー"
+  "Trigger": "トリガー",
+  "Compare": "比較",
+  "Compare against another session": "他セッションと比較",
+  "Copy full path": "フルパスをコピー",
+  "File": "ファイル /no_think",
+  "Next capture of this screen": "次のスクリーンキャプチャ",
+  "Previous capture of this screen": "この画面の前のキャプチャ",
+  "Reading that session…": "そのセッションを読み込んでいます…",
+  "Screenshot path copied": "スクリーンショットのパスがコピーされました",
+  "Screenshot unavailable — the file may have been moved or deleted": "スクリーンショットが表示できません — ファイルが移動または削除された可能性があります",
+  "Scroll over the image to zoom": "画像をスクロールしてズームします",
+  "That session has no capture of this screen": "そのセッションにはこの画面のキャプチャがありません",
+  "This session": "このセッション",
+  "Zoom": "ズーム",
+  "{0} near-duplicate captures were skipped for this log": "{0} ほぼ複製のキャプチャはこのログでスキップされました"
 }

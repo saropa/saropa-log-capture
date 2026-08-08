@@ -143,6 +143,30 @@ suite('screenshot sidecar validation at the read boundary', () => {
                 'and the whole burst lands in one write');
         });
 
+        test('should write immediately once a burst passes the pending cutoff', async () => {
+            // The delay exists to coalesce a handful of writes, not to hold an unbounded count in
+            // memory for a whole burst and lose all of it to an abrupt exit.
+            const store = new ScreenshotStore();
+            for (let i = 0; i < 30; i++) { store.noteSuppressed(logFsPath); }
+            // No dispose(), no timer wait: the cutoff must have written on its own.
+            await store.flushSuppressed();
+            assert.strictEqual((await readScreenshotSummary(logFsPath)).suppressed, 30);
+            assert.strictEqual(store.hasPendingSuppressed, false, 'nothing left pending');
+        });
+
+        test('should not lose a count that arrives WHILE its own write is in flight', async () => {
+            // The write persists the count as it was; clearing the log's dirty mark afterwards would
+            // discard the newer one for good, unless that log happened to skip another capture.
+            const store = new ScreenshotStore();
+            store.noteSuppressed(logFsPath);
+            const flushing = store.flushSuppressed();
+            store.noteSuppressed(logFsPath);   // lands mid-write
+            await flushing;
+            await store.dispose();
+            assert.strictEqual((await readScreenshotSummary(logFsPath)).suppressed, 2,
+                'both counts reached disk');
+        });
+
         test('should keep flushing OTHER logs when one log\'s write fails', async () => {
             // Clearing the whole dirty set up front meant one failure discarded every other log's
             // count with it, permanently — nothing marks them dirty again unless that log happens

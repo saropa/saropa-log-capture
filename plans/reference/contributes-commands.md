@@ -43,6 +43,7 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.deleteCollection` | %command.deleteCollection.title% |  |
 | `saropaLogCapture.deleteInvestigation` | Saropa Log Capture: Delete Investigation |  |
 | `saropaLogCapture.deleteSession` | %command.deleteSession.title% |  |
+| `saropaLogCapture.diagnoseScreenshots` | %command.diagnoseScreenshots.title% |  |
 | `saropaLogCapture.editInvestigationNotes` | Saropa Log Capture: Edit Investigation Notes |  |
 | `saropaLogCapture.emptyTrash` | %command.emptyTrash.title% |  |
 | `saropaLogCapture.expandAllSections` | %command.expandAllSections.title% |  |
@@ -126,4 +127,4 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.troubleMode.toggle` | %command.troubleModeToggle.title% |  |
 | `saropaLogCapture.ungroupSession` | Saropa Log Capture: Ungroup Session |  |
 
-**Total:** 119 commands.
+**Total:** 120 commands.

@@ -301,13 +301,47 @@ A near-miss notice reports once when a KEPT capture scored above 95% but below t
 the setting to lower. The threshold is calibrated against one device's captures, and one set slightly
 too high is otherwise invisible — duplicates keep arriving and nothing says they nearly matched.
 
+## Asking instead of being told
+
+Every number the pipeline knew was announced once, at the moment it happened — "captures are idle",
+"this capture could not be read", "a kept capture nearly matched". A reader who arrived afterwards
+could not recover any of it, which is why those notices kept accumulating: each new silent state
+needed its own announcement.
+
+`saropaLogCapture.diagnoseScreenshots` asks instead. It reports the settings in force, whether a VM
+Service is known (the most common reason captures never fire), captures kept and near-duplicates
+skipped BOTH in this process and as read back from disk — the two disagreeing is itself the answer
+to "why is my count wrong" — plus the logcat replay count and the three paths a reader needs to
+inspect the files. `buildScreenshotDiagnosis` is pure string assembly, so the report is tested
+without a command, a channel or a session.
+
+## Write scheduling moved out of the store
+
+`screenshot-store.ts` had grown to own four things: PNG files, metadata, suppression counting, and
+when to write. `SidecarWriter` now owns the last of those. The payload is built at WRITE time by a
+callback the store supplies, which removed an unenforceable "the entries array must be a live
+reference, never a copy" invariant that a future caller could have broken silently.
+
+Three defects in that writer were found in review and fixed before it shipped:
+
+- A flush cleared a log's dirty mark after its write even when a NEWER count had arrived mid-write,
+  losing it for good unless that log happened to skip another capture. A per-log generation counter
+  now decides whether what was written is still the latest word.
+- The burst cutoff started a second flush without cancelling the pending timer, so a fast burst
+  could run two flushes at once over the same files. The timer is cancelled, and a concurrent
+  `flush()` now JOINS the one already running rather than returning before the write it asked for
+  has landed.
+- `write()` returned a promise a caller is allowed to ignore, so an ignored failure would surface as
+  an unhandled rejection in the extension host rather than as anything anyone sees. The rejection is
+  attached at the source; awaiting callers still observe it.
+
 ## Verification
 
 - `npm run check-types` — 0 errors.
 - `npm run lint` — 0 errors, 14 pre-existing warnings.
 - `npm run compile` — full gate chain green, including `verify:l10n-keys` (2561 keys), the webview
   message catalogs, and `verify:dist-size`.
-- 253 tests passing across the sixteen affected suites, including six new files:
+- 267 tests passing across the seventeen affected suites, including seven new files:
   `flow-map-svg-layout.test.ts` (13) covering fault-leaf extraction, back-edge exclusion, orphan
   retention, row wrapping, and rendered canvas width; and `screenshot-sidecar-validation.test.ts`
   (6) covering trigger-union rejection, per-field defaulting, and malformed sidecars. The layout
