@@ -31,9 +31,8 @@ interface Recorded { trigger: string; logLine: number; }
 class FakeStore {
     saves: Recorded[] = [];
     suppressed = 0;
-    noteSuppressed(_log: string): Promise<void> {
+    noteSuppressed(_log: string): void {
         this.suppressed++;
-        return Promise.resolve();
     }
     save(_log: string, _png: Uint8Array, entry: { trigger: string; logLine: number }): Promise<ScreenshotSaveResult | undefined> {
         this.saves.push({ trigger: entry.trigger, logLine: entry.logLine });
@@ -178,6 +177,27 @@ suite('ScreenshotCapturer near-duplicate skipping', () => {
         assert.strictEqual(h.store.saves.length, 2, 'unreadable captures are kept, never dropped');
         const notices = h.logs.filter(l => l.includes('could not be read'));
         assert.strictEqual(notices.length, 1, `said exactly once, not per capture: ${h.logs.length} logs`);
+    });
+
+    test('should mention ONCE that a kept capture nearly matched, so the threshold can be tuned', async () => {
+        // A threshold set slightly too high is invisible: captures the reader considers duplicates
+        // keep arriving and nothing says they nearly matched.
+        let shade = 120;
+        const h = dedupHarness(() => shade);
+        h.capturer.onLine(navLine(1));
+        await h.flush();
+        // 10 levels apart is ~96% similar: past the near-miss floor, short of the 98.5% threshold.
+        // (3 levels apart would be 98.8% — a real duplicate, which would be skipped.)
+        shade = 130;
+        h.capturer.onLine(navLine(2));
+        await h.flush();
+        shade = 140;
+        h.capturer.onLine(navLine(3));
+        await h.flush();
+        assert.strictEqual(h.store.saves.length, 3, 'near misses are KEPT, not skipped');
+        const notices = h.logs.filter(l => l.includes('similar to a recent one'));
+        assert.strictEqual(notices.length, 1, `said once, not per capture: ${h.logs.join(' | ')}`);
+        assert.ok(notices[0].includes('duplicateSimilarity'), 'and names the setting to change');
     });
 
     test('should record the suppressed count so a later report can state it', async () => {

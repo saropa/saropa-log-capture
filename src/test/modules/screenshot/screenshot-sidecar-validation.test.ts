@@ -28,6 +28,16 @@ suite('screenshot sidecar validation at the read boundary', () => {
         await vscode.workspace.fs.writeFile(screenshotSidecarUri(logFsPath), bytes);
     }
 
+    /**
+     * A log path whose sidecar can never be written, because a directory sits where the file goes.
+     * The most reliable way to force a write failure without mocking the filesystem.
+     */
+    async function makeUnwritableLog(name: string): Promise<string> {
+        const doomed = path.join(path.dirname(logFsPath), `${name}.log`);
+        await vscode.workspace.fs.createDirectory(screenshotSidecarUri(doomed));
+        return doomed;
+    }
+
     /** A complete, valid record. */
     function entry(overrides: Record<string, unknown> = {}): Record<string, unknown> {
         return {
@@ -113,11 +123,64 @@ suite('screenshot sidecar validation at the read boundary', () => {
             await store.save(logFsPath, new Uint8Array([1]), {
                 trigger: 'nav', timestamp: 1, logLine: 1, text: 'x', fingerprint: '',
             }, 10);
-            await store.noteSuppressed(logFsPath);
-            await store.noteSuppressed(logFsPath);
+            store.noteSuppressed(logFsPath);
+            store.noteSuppressed(logFsPath);
+            await store.dispose();
             const summary = await readScreenshotSummary(logFsPath);
             assert.strictEqual(summary.suppressed, 2, 'both suppressions counted');
             assert.strictEqual(summary.entries.length, 1, 'and the saved capture survived the rewrite');
+        });
+
+        test('should NOT write on every skip — a burst costs one write', async () => {
+            // Skips arrive in bursts and cost nothing but a decision; a whole-file rewrite each
+            // would put that burst on the live capture path to record a number read much later.
+            const store = new ScreenshotStore();
+            for (let i = 0; i < 20; i++) { store.noteSuppressed(logFsPath); }
+            assert.strictEqual((await readScreenshotSummary(logFsPath)).suppressed, 0,
+                'nothing written yet — the write is debounced');
+            await store.dispose();
+            assert.strictEqual((await readScreenshotSummary(logFsPath)).suppressed, 20,
+                'and the whole burst lands in one write');
+        });
+
+        test('should keep flushing OTHER logs when one log\'s write fails', async () => {
+            // Clearing the whole dirty set up front meant one failure discarded every other log's
+            // count with it, permanently — nothing marks them dirty again unless that log happens
+            // to skip another capture.
+            const errors: string[] = [];
+            const store = new ScreenshotStore((m) => errors.push(m));
+            // Unwritable by construction: a DIRECTORY already occupies the sidecar's exact path, so
+            // writeFile must fail. (A missing parent would not do — writeFile creates parents.)
+            const doomed = await makeUnwritableLog('doomed');
+            store.noteSuppressed(doomed);
+            store.noteSuppressed(logFsPath);
+            await store.flushSuppressed();
+            assert.strictEqual((await readScreenshotSummary(logFsPath)).suppressed, 1,
+                'the healthy log was written despite the other failing');
+            assert.strictEqual(errors.length, 1, `the failure was reported: ${errors.join(' | ')}`);
+            assert.ok(errors[0].includes('suppressed count'), 'and says what could not be recorded');
+        });
+
+        test('should keep a failed log dirty so the next flush retries it', async () => {
+            const store = new ScreenshotStore(() => { /* failures are asserted elsewhere */ });
+            store.noteSuppressed(await makeUnwritableLog('retry'));
+            await store.flushSuppressed();
+            assert.strictEqual(store.hasPendingSuppressed, true, 'still pending after a failed write');
+        });
+
+        test('should not lose counts when a save races the pending flush', async () => {
+            // save() and the flush rewrite the SAME file from the same state; overlapping whole-file
+            // writes would let the last writer win with a stale snapshot.
+            const store = new ScreenshotStore();
+            store.noteSuppressed(logFsPath);
+            const saving = store.save(logFsPath, new Uint8Array([1]), {
+                trigger: 'nav', timestamp: 2, logLine: 2, text: 'y', fingerprint: '',
+            }, 10);
+            const flushing = store.flushSuppressed();
+            await Promise.all([saving, flushing]);
+            const summary = await readScreenshotSummary(logFsPath);
+            assert.strictEqual(summary.entries.length, 1, 'the capture survived');
+            assert.strictEqual(summary.suppressed, 1, 'and so did the count');
         });
     });
 });

@@ -7,11 +7,16 @@
  * and time so a directory listing sorts chronologically without parsing metadata.
  *
  * The per-log cap bounds disk use on pathological sessions; once hit, saves are refused
- * and the caller logs one warning. Metadata is kept in memory per log base and rewritten
- * whole on each save. save() is a read-modify-write (seq number from entries.length across
- * two awaits) and is NOT safe under concurrency — the capturer's in-flight guard on every
- * capture path (auto AND manual) is what serializes calls; do not add a caller that
- * bypasses it.
+ * and the caller logs one warning.
+ *
+ * Metadata is kept in memory per log base and rewritten WHOLE by three paths: `save()`, the
+ * debounced suppressed-count flush, and `dispose()`. Those writes are serialized by `writeChain`,
+ * NOT by the capturer's in-flight guard — that guard serializes captures, and a flush is not a
+ * capture. Any new writer must go through `writeSidecar` for the same reason.
+ *
+ * save() is separately a read-modify-write (seq number from entries.length across two awaits) and is
+ * NOT safe under concurrent CAPTURES — the capturer's in-flight guard on every capture path (auto
+ * AND manual) is what protects that; do not add a caller that bypasses it.
  */
 
 import * as vscode from 'vscode';
@@ -75,12 +80,30 @@ export function screenshotSidecarUri(logFsPath: string): vscode.Uri {
     return vscode.Uri.file(`${screenshotBaseFromLogPath(logFsPath)}.screenshots.json`);
 }
 
+/**
+ * How long a suppressed-count change waits before the sidecar is rewritten. Long enough that a burst
+ * of skips costs ONE write, short enough that a crash loses at most a couple of seconds of counting.
+ */
+const SUPPRESSED_FLUSH_MS = 3000;
+
 /** Saves PNGs + metadata beside the log. One instance per extension activation. */
 export class ScreenshotStore {
     /** log base fsPath → entries written this process (authoritative during a session). */
     private readonly entriesByBase = new Map<string, ScreenshotMetaEntry[]>();
     /** log base fsPath → captures dropped as near-duplicates this process. */
     private readonly suppressedByBase = new Map<string, number>();
+    /** log base → its log path, for counts changed since the last write. */
+    private readonly dirtyBases = new Map<string, string>();
+    private flushTimer: ReturnType<typeof setTimeout> | undefined;
+    /** Serializes every sidecar write; see `writeSidecar` for why overlapping writes are unsafe. */
+    private writeChain: Promise<void> = Promise.resolve();
+
+    /**
+     * @param onError Reports a failed sidecar write. Optional so tests and the many call sites that
+     * only read do not have to supply one, but the extension always does: a write that fails
+     * silently makes a wrong suppressed count undiagnosable.
+     */
+    constructor(private readonly onError?: (message: string) => void) { }
 
     /** Count of screenshots recorded for a log (0 when none). */
     countForLog(logFsPath: string): number {
@@ -121,24 +144,84 @@ export class ScreenshotStore {
     }
 
     /**
-     * Record one capture dropped as a near-duplicate, persisting the running count.
+     * Record one capture dropped as a near-duplicate.
      *
-     * Persisted rather than kept in memory because the number's whole purpose is to be READ later,
-     * by a report generated from the log after the session ended — an in-memory counter would show
-     * 0 for every log the current process did not itself capture.
+     * The count is PERSISTED because its whole purpose is to be read later, by a report generated
+     * from the log after the session ended — an in-memory counter would show 0 for every log the
+     * current process did not itself capture.
+     *
+     * The write is DEBOUNCED because a skip costs nothing but a decision, so skips arrive in bursts
+     * (a chatty navigation session skipping most of what it sees), and writing the whole sidecar per
+     * skip would put a burst of file rewrites on the live capture path to record a number nobody
+     * reads until the session is over. Counting is immediate; only the write waits.
      */
-    async noteSuppressed(logFsPath: string): Promise<void> {
+    noteSuppressed(logFsPath: string): void {
         const base = screenshotBaseFromLogPath(logFsPath);
         this.suppressedByBase.set(base, (this.suppressedByBase.get(base) ?? 0) + 1);
-        await this.writeSidecar(logFsPath, this.entriesByBase.get(base) ?? []);
+        this.dirtyBases.set(base, logFsPath);
+        if (this.flushTimer) { return; }
+        this.flushTimer = setTimeout(() => {
+            this.flushTimer = undefined;
+            void this.flushSuppressed();
+        }, SUPPRESSED_FLUSH_MS);
+        // A pending timer must never hold the extension host open past deactivate.
+        this.flushTimer.unref?.();
     }
 
-    /** Rewrite the metadata sidecar whole (small file, cooldown-limited cadence). */
-    private async writeSidecar(logFsPath: string, entries: readonly ScreenshotMetaEntry[]): Promise<void> {
-        const suppressed = this.suppressedByBase.get(screenshotBaseFromLogPath(logFsPath)) ?? 0;
-        const sidecar: ScreenshotSidecar = { version: 1, screenshots: [...entries], suppressed };
-        const bytes = new TextEncoder().encode(JSON.stringify(sidecar, null, 2));
-        await vscode.workspace.fs.writeFile(screenshotSidecarUri(logFsPath), bytes);
+    /**
+     * Write out every pending suppressed count now. Called on the debounce timer and at shutdown —
+     * a count that only ever existed in memory would be lost exactly when the session it describes
+     * is the one being reported on.
+     */
+    async flushSuppressed(): Promise<void> {
+        const pending = [...this.dirtyBases.entries()];
+        for (const [base, logFsPath] of pending) {
+            try {
+                await this.writeSidecar(logFsPath, this.entriesForLog(logFsPath));
+                // Cleared only once the write LANDED. Clearing the whole set up front meant one
+                // failure discarded every other pending log's count with it, permanently: nothing
+                // would mark them dirty again unless that log happened to skip another capture.
+                this.dirtyBases.delete(base);
+            } catch (err) {
+                // Keep going: the other logs' counts are independent of this one's failure, and each
+                // stays dirty so the next flush retries it.
+                this.onError?.(`screenshot: could not record the suppressed count for ${logFsPath} (${err instanceof Error ? err.message : String(err)})`);
+            }
+        }
+    }
+
+    /** Stop the pending timer and write what it was waiting to write. */
+    async dispose(): Promise<void> {
+        if (this.flushTimer) {
+            clearTimeout(this.flushTimer);
+            this.flushTimer = undefined;
+        }
+        await this.flushSuppressed();
+    }
+
+    /** True when a suppressed count is counted but not yet on disk (tests and shutdown checks). */
+    get hasPendingSuppressed(): boolean { return this.dirtyBases.size > 0; }
+
+    /**
+     * Rewrite the metadata sidecar whole (small file, cooldown-limited cadence).
+     *
+     * SERIALIZED through one chain: `save()` and a debounced suppressed-count flush both rewrite the
+     * same file from the same in-memory state, and two overlapping whole-file writes can interleave
+     * so the last writer wins with a stale snapshot. The capturer's in-flight guard serializes
+     * CAPTURES, but the flush is not a capture and is not covered by it.
+     */
+    private writeSidecar(logFsPath: string, entries: readonly ScreenshotMetaEntry[]): Promise<void> {
+        // `entries` must be a LIVE reference to the stored array, never a copy: this write runs later,
+        // and a snapshot would persist stale entries beside a freshly-read suppressed count.
+        const write = async (): Promise<void> => {
+            const suppressed = this.suppressedByBase.get(screenshotBaseFromLogPath(logFsPath)) ?? 0;
+            const sidecar: ScreenshotSidecar = { version: 1, screenshots: [...entries], suppressed };
+            const bytes = new TextEncoder().encode(JSON.stringify(sidecar, null, 2));
+            await vscode.workspace.fs.writeFile(screenshotSidecarUri(logFsPath), bytes);
+        };
+        // A failed write must not poison the chain for every later write.
+        this.writeChain = this.writeChain.then(write, write);
+        return this.writeChain;
     }
 }
 
