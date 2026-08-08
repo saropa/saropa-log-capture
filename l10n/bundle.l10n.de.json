@@ -574,7 +574,7 @@
   "Part": "Teil",
   "Pause": "Pause",
   "Pause replay": "Wiedergabe pausieren",
-  "Perf": "Leistung",
+  "Perf": "Perf",
   "Performance": "Leistung",
   "Performance data available": "Leistungsdaten verfügbar",
   "Performance data available — click to open the Signals panel": "Leistungsdaten verfügbar – klicken Sie, um das Signalfenster zu öffnen",
@@ -2233,5 +2233,6 @@
   "That session has no capture of this screen": "Diese Sitzung enthält keine Aufzeichnung dieses Bildschirms",
   "This session": "Diese Sitzung",
   "Zoom": "Zoom",
-  "{0} near-duplicate captures were skipped for this log": "{0} nahezu-doppelte Erfassungen wurden für diesen Log übersprungen"
+  "{0} near-duplicate captures were skipped for this log": "{0} nahezu-doppelte Erfassungen wurden für diesen Log übersprungen",
+  "Screenshot diagnosis written to the Saropa Log Capture output channel.": "Screenshot-Diagnose geschrieben in den Saropa Log Capture-Ausgabekanal."
 }

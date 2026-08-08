@@ -1077,7 +1077,7 @@
   "in {0}": "en {0}",
   "line {0}": "línea {0}",
   "lines": "pauta",
-  "local": "local /no_think",
+  "local": "local",
   "not detected": "no detectado",
   "pkg": "paquete",
   "revealed lines below · click to re-collapse": "líneas reveladas a continuación · haga clic para volver a contraer",
@@ -2233,5 +2233,6 @@
   "That session has no capture of this screen": "Esa sesión no tiene captura de esta pantalla",
   "This session": "Esta sesión",
   "Zoom": "Zoom",
-  "{0} near-duplicate captures were skipped for this log": "{0} capturas de casi duplicados se omitieron para este registro"
+  "{0} near-duplicate captures were skipped for this log": "{0} capturas de casi duplicados se omitieron para este registro",
+  "Screenshot diagnosis written to the Saropa Log Capture output channel.": "Diagnóstico de captura de pantalla escrito en el canal de salida Saropa Log Capture."
 }
