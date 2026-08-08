@@ -65,25 +65,33 @@ export function flowMapTimeLayoutJs(): string {
     return lanes.length - 1;
   }
 
-  /* Lane tops, derived from the tallest card so a lane can hold any of them without overlap. */
-  function laneTop(lane, tallest){
-    return TIME_MARGIN + lane * (tallest + LANE_GAP);
-  }
-
+  /* Two passes, not one. Assigning x and lane is a left-to-right sweep in TIME order and has to be
+     (a card's lane depends on which earlier cards are still in its way), but each lane's ROW HEIGHT
+     must come from the cards THAT LANE actually holds, not from the tallest card anywhere in the
+     diagram — a single oversized crash card would otherwise inflate the vertical gap of every lane
+     below it, even lanes holding nothing but small cards. So: sweep once to assign x/lane, group by
+     lane, then lay out lane rows top to bottom using each lane's own tallest occupant. */
   function arrangeTimed(cards){
     var xOf = timeScale(cards);
-    var tallest = 0;
-    cards.forEach(function(c){ if (c.n.h > tallest) { tallest = c.n.h; } });
-    var lanes = [];          // lane index -> x the lane is free from
-    var bottom = 0;
+    var lanes = [];        // lane index -> x that lane is free from (packing state, x-order only)
+    var laneCards = [];    // lane index -> [{ c, x }], the cards it actually ended up holding
     cards.forEach(function(c){
       var x = xOf(c.n.ts);
       var lane = pickLane(lanes, x);
-      var y = laneTop(lane, tallest);
       lanes[lane] = x + c.n.w + LANE_GAP;
-      // setOffset takes a DELTA from the card's laid-out position, not an absolute point.
-      setOffset(c.key, x - c.n.x, y - c.n.y);
-      if (y + c.n.h > bottom) { bottom = y + c.n.h; }
+      (laneCards[lane] = laneCards[lane] || []).push({ c: c, x: x });
+    });
+    var y = TIME_MARGIN;
+    var bottom = y;
+    laneCards.forEach(function(entries){
+      var laneH = 0;
+      entries.forEach(function(e){ if (e.c.n.h > laneH) { laneH = e.c.n.h; } });
+      entries.forEach(function(e){
+        // setOffset takes a DELTA from the card's laid-out position, not an absolute point.
+        setOffset(e.c.key, e.x - e.c.n.x, y - e.c.n.y);
+        if (y + e.c.n.h > bottom) { bottom = y + e.c.n.h; }
+      });
+      y += laneH + LANE_GAP;
     });
     return bottom;
   }

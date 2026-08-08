@@ -124,12 +124,81 @@ export function flowMapZoomScript(nonce: string): string {
     crash.classList.remove('fm-flash'); void crash.getBBox(); crash.classList.add('fm-flash');
   }
 
+  /* Export the diagram exactly as it is on screen — whatever the reader dragged or arranged by
+     time — as a standalone .svg a bug report or a PR description can embed. The exported file must
+     render on its own outside this webview, so this is not a plain serialization of the live
+     element: colors come from var(--vscode-*) tokens the webview's own document defines, and the
+     zoom's inline width/height on the live <svg> is a display SCALE, not the diagram's real size.
+
+     Both are resolved by baking each element's COMPUTED style into a clone before serializing —
+     the clone is what gets read and thrown away, so the live diagram is never touched. Limited to a
+     fixed, small property list: the goal is "the diagram reads correctly standalone", not a
+     faithful re-creation of every CSS rule the panel applies (hover states, focus rings and
+     animations have no meaning in a static file and are deliberately left out).
+
+     No background rect is added — the export is transparent, like the SVG a diagramming tool would
+     hand you, and renders atop whatever the viewer's own background is. */
+  var EXPORT_PROPS = [
+    'fill', 'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-opacity', 'fill-opacity',
+    'opacity', 'font-family', 'font-size', 'font-weight', 'color',
+  ];
+
+  function bakeComputedStyle(liveEl, targetEl){
+    var cs = getComputedStyle(liveEl);
+    var decl = '';
+    EXPORT_PROPS.forEach(function(p){
+      var v = cs.getPropertyValue(p);
+      if (v) { decl += p + ':' + v.trim() + ';'; }
+    });
+    // Always cleared first: a leftover inline style (the live root's zoom-scale width/height, most
+    // notably) must not survive into the export just because this element had nothing to bake.
+    targetEl.removeAttribute('style');
+    if (decl) { targetEl.setAttribute('style', decl); }
+  }
+
+  /* A card's screenshot thumbnail (thumbMarkup in flow-map-svg-shots.ts) is an <img> inside a
+     <foreignObject>, sized entirely by the .fm-shot CSS rule (width/height/object-fit) — none of
+     which is in EXPORT_PROPS, so baking would leave it unsized. Worse, its src is a
+     vscode-webview://… URL scoped to this live session; the moment the file is saved to disk and
+     opened elsewhere (a browser, a PR description — the exact use this button exists for) that URL
+     resolves to nothing. A broken-image glyph on every captured card would be worse than no picture
+     at all, so the thumbnail is dropped rather than exported broken. The hairline frame drawn AFTER
+     it (see thumbMarkup) is left in place, so the card still says "this screen had a capture" —
+     just without the capture itself. Run on the CLONE, and only after baking: removing nodes first
+     would desync the live/clone NodeList pairing bakeComputedStyle relies on. */
+  // Returns the count removed, not just whether any were: "no silent async" applies here — a click
+  // that quietly drops information the reader may have wanted (the captures) must say so, not just
+  // report the save as if nothing was left out.
+  function stripThumbnails(root){
+    var shots = root.querySelectorAll('foreignObject');
+    for (var i = shots.length - 1; i >= 0; i--) {
+      var fo = shots[i];
+      if (fo.parentNode) { fo.parentNode.removeChild(fo); }
+    }
+    return shots.length;
+  }
+
+  function exportArrangedSvg(){
+    var clone = svg.cloneNode(true);
+    bakeComputedStyle(svg, clone);
+    var liveEls = svg.querySelectorAll('*');
+    var cloneEls = clone.querySelectorAll('*');
+    // cloneNode(true) preserves document order exactly, so the two NodeLists walk in lockstep —
+    // no matching by id or position needed.
+    for (var i = 0; i < liveEls.length; i++) { bakeComputedStyle(liveEls[i], cloneEls[i]); }
+    var stripped = stripThumbnails(clone);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    var xml = new XMLSerializer().serializeToString(clone);
+    send('exportArrangedSvg', { svg: '<?xml version="1.0" encoding="UTF-8"?>\n' + xml, shotsOmitted: stripped });
+  }
+
   var ZOOM = { in: function(){ zoomTo(scale * 1.2); }, out: function(){ zoomTo(scale / 1.2); }, reset: resetView, crash: centerCrash };
   document.querySelectorAll('.fm-zoom-btn').forEach(function(btn){
     var act = btn.getAttribute('data-zoom');
     if (act === 'popout') { btn.addEventListener('click', function(){ send('popOutFlow'); }); return; }
     // 'time' needs its own button to toggle the lit state on, so it cannot go through the ZOOM map.
     if (act === 'time') { btn.addEventListener('click', function(){ arrangeByTime(btn); }); return; }
+    if (act === 'export-svg') { btn.addEventListener('click', exportArrangedSvg); return; }
     btn.addEventListener('click', function(){ var fn = ZOOM[act]; if (fn) { fn(); } });
   });
 

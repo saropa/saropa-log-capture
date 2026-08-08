@@ -1,6 +1,6 @@
 # Plan 056 — Session Flow Map (screen-transition diagram)
 
-## Status: S1 implemented · S2 shipped · S3 shipped (2026-06-11: CSS-size zoom that scrolls instead of cropping + centers/fits, fixed center-on-fault, diagram pop-out panel, double-click node detail card, return-to-caller back arrows, edge time labels off the arrow, splitter floors lowered to 20px) · S2 extended (2026-08-08: cards draggable with live edge re-routing, lightbox prev/next, capture thumbnails on the activity timeline and the screen-visit table, lightbox wheel-zoom fix, container-query detail column) · live log-filtering still proposed
+## Status: S1 implemented · S2 shipped · S3 shipped (2026-06-11: CSS-size zoom that scrolls instead of cropping + centers/fits, fixed center-on-fault, diagram pop-out panel, double-click node detail card, return-to-caller back arrows, edge time labels off the arrow, splitter floors lowered to 20px) · S2 extended (2026-08-08: cards draggable with live edge re-routing, lightbox prev/next, capture thumbnails on the activity timeline and the screen-visit table, lightbox wheel-zoom fix, container-query detail column; then arrange-by-time layout, export-diagram-as-SVG, and hardening — per-lane row heights, center-the-fault on a moved card, thumbnail stripping so the SVG export doesn't ship broken images) · live log-filtering still proposed
 
 **S1 (the combined session report) shipped** as the `saropaLogCapture.exportFlowMap` command —
 log parser, error-causing-widget parser, static source scan (contacts preset), graph builder
@@ -579,3 +579,107 @@ verified only at the generated-markup level.
 **Outstanding (S2 still proposed):** click-a-node to filter the main log viewer to that node's dwell
 windows; the interactive possible-vs-walked overlay toggle; the 30-node layout/perf check. Plan stays
 active.
+
+
+---
+
+## Finish Report (2026-08-08) — S2: by-time arrangement, SVG export, and hardening
+
+**The additions.** Two follow-on requests against the round above: (1) harden the six items its own
+handoff reflection flagged as least-confident, and (2) build the one unrequested feature it
+brainstormed — exporting the arranged diagram. Both landed together, then a second review pass on
+the delta found and fixed a real defect in the export before it shipped.
+
+### Arrange by time
+
+A new toolbar mode (`⏱`, gated on at least one node carrying `firstTsMs`) lays cards out along a
+wall-clock axis instead of by graph depth — horizontal distance becomes elapsed time, and
+near-simultaneous screens lane-pack into a column. `flow-map-panel-time-layout.ts` (new) is injected
+into the drag script's IIFE and drives cards through its existing `setOffset`/re-route path, so an
+arranged card stays draggable afterward with no second layout engine. The axis is normalized into
+the canvas the renderer already sized (a card past the static viewBox is clipped with nothing to
+scroll to); untimed cards (the launch node, unwalked screens) get their own wrapped rows below the
+arrangement rather than sitting on top of it. Reset view clears the arrangement along with any
+manual drag.
+
+**Hardening applied to this feature across two review rounds:**
+- `arrangeTimed` was rewritten from a single-pass model (every lane sized off the tallest card
+  *anywhere*) to two passes: assign x/lane per card, THEN size each lane's row from only the cards
+  it actually holds. A single oversized crash card no longer inflates the row height — and therefore
+  the vertical position of everything below it — for lanes that hold nothing but short cards.
+  Pinned numerically: a 4-card/3-lane fixture (`flow-map-time-and-export.test.ts`) extracts the real
+  `timeScale`/`pickLane`/`arrangeTimed` functions out of the generated script via brace-counting and
+  runs them against hand-picked cards, asserting lane 2 lands at y=418 — not the 678 the old
+  every-lane-uses-the-tallest-card model would have produced.
+- The untimed row now wraps at the canvas edge (previously unbounded, which could silently push
+  screens off the right of the report on a session with many unwalked screens).
+- `centerCrash()` (the 💥 control) now asks the drag script for the crash card's current drag/time
+  offset before centering — `getBBox()` reports an element's own pre-transform user space, so a
+  dragged or time-arranged crash card was centering the viewport on where the card USED to be.
+
+### Export diagram as SVG
+
+A new toolbar button (`⇩`, unconditional — the default layout is worth exporting too) saves the
+diagram exactly as rendered — colors, and any drag/time rearrangement — as a standalone `.svg`, for
+pasting into a bug report or a PR. `exportArrangedSvg()` clones the live `<svg>`, bakes each
+element's `getComputedStyle()` onto the clone (a small, fixed property whitelist — fill, stroke,
+font, opacity, color; hover/focus/animation states have no meaning in a static file), clears any
+stale inline style first (the live root carries a zoom-scale width/height that is a display factor,
+not the diagram's true size), and serializes with `XMLSerializer`. `flow-map-panel-export.ts` (new)
+owns the host-side save-dialog-then-offer-to-open flow, split out of `flow-map-panel.ts` to keep it
+under the 300-line house limit.
+
+**A real defect found by the second review pass, fixed before shipping:** the export baked colors
+onto screenshot thumbnails but never their sizing (`.fm-shot`'s `width/height/object-fit` aren't in
+the style whitelist), and each thumbnail's `src` is a `vscode-webview://…` URL meaningless outside
+the live session — so every exported diagram with captures would have shipped unsized or broken
+images, silently, in the file explicitly marketed for external sharing. Fixed by stripping thumbnail
+`<foreignObject>`s from the clone (after baking completes, so the live/clone element pairing isn't
+desynced) — the card's frame rect is left in place, so it still reads as "this screen had a
+capture," just without a picture that would not have worked anyway. The save confirmation now says
+how many thumbnails were left out (`{0} screenshot thumbnails were left out — they only load inside
+the panel`), consistent with the project's "no silent async" rule — a click that drops information
+must say so. Pinned with a fake-DOM behavioral test (same `new Function`-extraction technique used
+for `nodeGroupOf`) proving the real extracted `stripThumbnails` removes every `foreignObject` and
+returns the correct count.
+
+### Other hardening from the reflection
+
+- `nodeGroupOf`'s `parentNode` fallback (used when `Element.closest` is unavailable) is no longer
+  proven only by source-string matching — a test extracts the real function and runs it against
+  fake DOM objects lacking `.closest`, confirming the walk actually finds the card, prefers
+  `closest()` when present, and returns null for an orphan or falsy target.
+- `--shot-fit-h`'s single-token fix for the lightbox zoom (stage/image height must match exactly)
+  is now backed by a test confirming `.fms-stage`/`.fms-img` are genuinely built as descendants of
+  `.fms-card` at runtime (read from the lightbox script's real source), closing the loop between the
+  CSS custom property and the DOM structure it depends on.
+- `nodes`/`incident`/`offsets` in the drag script are `Object.create(null)` at every reassignment
+  site including `__fmResetNodes`, not just at declaration — a screen key normalizing to
+  `__proto__` can no longer reassign a plain object's prototype and throw mid-loop.
+- The container query for the two-column session-info grid was moved off `.detail-col` (which also
+  owns the scroll box, the `--report-vh` height budget, its `ResizeObserver` target, and the
+  collapse class) onto `#sec-session .sec-body` — establishing layout/size containment on the
+  scrolling column itself was a wider blast radius than the feature needed.
+
+### File-length maintenance
+
+`flow-map-panel.ts` was split (extracting `saveMarkdown`/`saveArrangedSvg`/`defaultSvgUri` into
+`flow-map-panel-export.ts`) to absorb the new export wiring without crossing the 300-line house
+limit; it introduces a type-only import cycle back from `flow-map-panel-export.ts` (erased at
+compile, confirmed no other panel file in the codebase currently has this exact shape — noted as a
+new pattern, not a problem). `flow-map-node-drag.test.ts` was similarly split — the "arrange by
+time" and "export SVG" suites moved into a new `flow-map-time-and-export.test.ts` — when the
+drag-contract suite alone reached the budget.
+
+**Tests:** two new suites this round (`flow-map-time-and-export.test.ts`, 23 cases) plus hardening
+additions to the existing drag suite. All eleven flow-map suites pass (**210 cases total**, up from
+196). `npm run check-types` clean; `npm run lint` 0 errors, the 14 pre-existing warnings unchanged;
+`npm run compile` passes every verify gate; `dist/extension.js` 5.43 MiB against the 12 MiB ceiling.
+
+**Not verified on device.** As before — nothing in this round has been exercised in the Extension
+Development Host. The by-time arrangement's readability at real session spans, the export's fidelity
+when opened in an actual browser/PR viewer, and the container query's behavior in the webview's
+Chromium are all verified only at the generated-markup and fake-DOM level.
+
+**Outstanding (S2 still proposed):** unchanged from the round above — click-a-node log filtering,
+the possible-vs-walked overlay toggle, the 30-node layout/perf check.

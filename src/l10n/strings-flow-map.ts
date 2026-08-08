@@ -7,6 +7,7 @@
 export const stringsFlowMap: Record<string, string> = {
     'flowMap.progress': 'Building session flow map…',
     'flowMap.saveTitle': 'Save Session Flow Map',
+    'flowMap.saveSvgTitle': 'Export Diagram as SVG',
     'flowMap.failed': 'Could not build flow map: {0}',
     'flowMap.panelTitle': 'Saropa Flow Map',
     'flowMap.saveMarkdownBtn': 'Save as Markdown',
@@ -78,6 +79,8 @@ export const stringsFlowMap: Record<string, string> = {
     'flowMap.shot.zoomHint': 'Scroll over the image to zoom',
     'flowMap.shot.unavailable': 'Screenshot unavailable — the file may have been moved or deleted',
     'flowMap.arrangeByTimeBtn': 'Arrange by time — space the cards by when each screen was entered',
+    'flowMap.exportSvgBtn': 'Export diagram as SVG — keeps any rearrangement, for a bug report or a PR',
+    'flowMap.exportSvgShotsOmitted': '({0} screenshot thumbnails were left out — they only load inside the panel)',
     'flowMap.shot.prev': 'Previous screenshot',
     'flowMap.shot.next': 'Next screenshot',
     'flowMap.shot.compare': 'Compare',

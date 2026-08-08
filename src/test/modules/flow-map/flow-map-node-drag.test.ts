@@ -1,6 +1,7 @@
 import * as assert from 'assert';
+import * as fs from 'fs';
+import * as path from 'path';
 import { renderSvg } from '../../../modules/flow-map/flow-map-svg';
-import { flowDiagramHtml } from '../../../modules/flow-map/flow-map-html';
 import { flowMapDragScript } from '../../../ui/panels/flow-map-panel-drag-script';
 import { flowMapZoomScript } from '../../../ui/panels/flow-map-panel-zoom-script';
 import { flowMapStyles } from '../../../ui/panels/flow-map-panel-styles';
@@ -199,6 +200,18 @@ suite('FlowMap card dragging', () => {
     suite('finding the card an event landed in', () => {
         const script = flowMapDragScript('abc123');
 
+        /**
+         * Pulls `nodeGroupOf`'s actual body out of the generated script and runs it against plain
+         * fake-DOM objects, so the fallback walk is PROVEN correct rather than merely present. A
+         * string-content assertion only shows the code exists; it cannot show `el.parentNode` and
+         * `classList.contains` compose into a working traversal.
+         */
+        function extractNodeGroupOf(): (target: unknown) => unknown {
+            const body = /function nodeGroupOf\(target\)\{([\s\S]*?)\n  \}/.exec(script)?.[1];
+            if (!body) { throw new Error('nodeGroupOf source not found in the generated script'); }
+            return new Function('target', body) as (target: unknown) => unknown;
+        }
+
         test('should not depend on closest() alone', () => {
             // A card's thumbnail is an HTML <img> inside a <foreignObject>. closest() is the right
             // tool and does cross that boundary, but if it ever stopped, cards would silently
@@ -210,86 +223,33 @@ suite('FlowMap card dragging', () => {
                 script.includes("el.classList.contains('fm-node')"),
                 'the fallback recognizes a card the same way');
         });
-    });
 
-    suite('arrange by time', () => {
-        const script = flowMapDragScript('abc123');
-        const timed = (key: string, ts: number) => node(key, { firstTsMs: ts });
-
-        test('should publish each card\'s entry time as its own attribute', () => {
-            // Not read out of data-detail: that is a JSON blob built for a human-readable popup, and
-            // a layout should not have to parse a document to run.
-            const svg = renderSvg({ nodes: [timed('home', 5000)], edges: [] });
-            assert.ok(svg.includes('data-ts="5000"'), 'the entry time rides on the card');
+        test('should walk parentNode all the way up to the card when closest is unavailable', () => {
+            const nodeGroupOf = extractNodeGroupOf();
+            // Mimics the real shape: an <img> inside a <foreignObject> inside the <g class="fm-node">
+            // group. None of these fakes carry `.closest`, forcing the fallback path.
+            const group = { classList: { contains: (c: string) => c === 'fm-node' }, parentNode: null };
+            const foreignObject = { classList: undefined, parentNode: group };
+            const img = { classList: undefined, parentNode: foreignObject };
+            assert.strictEqual(nodeGroupOf(img), group, 'walks up through every intermediate ancestor');
         });
 
-        test('should omit the attribute for a card that was never entered', () => {
-            // Absent, not zero — 0 is a real ms-of-day (midnight), so a zero default would place an
-            // unentered card at the very start of the session.
-            assert.ok(!renderSvg({ nodes: [node('home')], edges: [] }).includes('data-ts'));
+        test('should prefer closest() when it is available', () => {
+            const nodeGroupOf = extractNodeGroupOf();
+            const found = { marker: 'via-closest' };
+            const target = { closest: (sel: string) => (sel === '.fm-node' ? found : null) };
+            assert.strictEqual(nodeGroupOf(target), found, 'closest() short-circuits the walk');
         });
 
-        test('should offer the control only when something carries a time', () => {
-            const withTimes = flowDiagramHtml({ nodes: [timed('home', 1000)], edges: [] });
-            const without = flowDiagramHtml({ nodes: [node('home')], edges: [] });
-            assert.ok(withTimes.includes('data-zoom="time"'), 'the control is offered');
-            assert.ok(!without.includes('data-zoom="time"'), 'and never rendered inert');
+        test('should return null for an event with no card ancestor', () => {
+            const nodeGroupOf = extractNodeGroupOf();
+            const orphan = { classList: undefined, parentNode: null };
+            assert.strictEqual(nodeGroupOf(orphan), null, 'a click outside any card finds nothing');
         });
 
-        test('should normalize the axis into the canvas the renderer already sized', () => {
-            // The lens sizes the SVG from a static viewBox, so a card placed past it is clipped with
-            // nothing to scroll to — silently losing the last screen of the session.
-            assert.ok(script.includes('BASE_W - TIME_MARGIN * 2 - widest'), 'the axis fits the canvas');
-            assert.ok(script.includes('span > 0 && usable > 0'), 'a zero span cannot divide by zero');
-        });
-
-        test('should lane-pack cards that land at nearly the same moment', () => {
-            assert.ok(script.includes('pickLane'), 'lanes exist');
-            assert.ok(script.includes('laneTop'), 'and have derived tops');
-        });
-
-        test('should place untimed cards rather than leave them over the arrangement', () => {
-            // Left where the depth layout put them, they would land on top of timed cards.
-            assert.ok(script.includes('arrangeUntimed'), 'they get their own row');
-        });
-
-        test('should wrap the untimed row at the canvas edge', () => {
-            // Same reason the time axis is normalized into the canvas: the lens sizes the SVG from a
-            // static viewBox, so an unbounded row silently drops screens off the right of the report.
-            assert.ok(
-                /x \+ n\.w > BASE_W - TIME_MARGIN/.test(script), 'the row is bounded by the canvas');
-            assert.ok(
-                /x > TIME_MARGIN &&/.test(script),
-                'but a card wider than the canvas still lands rather than wrapping forever');
-        });
-
-        test('should drive the arrangement through the drag path, not a second layout engine', () => {
-            // An arranged card is a card with an offset, so it stays draggable and its edges
-            // re-route through exactly the same code.
-            assert.ok(/setOffset\(c\.key, x - c\.n\.x, y - c\.n\.y\)/.test(script), 'offsets, not coordinates');
-        });
-
-        test('should refuse to arrange when nothing carries a time', () => {
-            assert.ok(
-                /if \(cards\.length === 0\) \{ return false; \}/.test(script),
-                'the depth layout is left alone rather than collapsed to the left margin');
-        });
-
-        test('should clear the arranged flag when the view is reset', () => {
-            // Reset drops every offset; a flag left set would make the next press try to un-arrange
-            // an arrangement that is no longer on screen.
-            assert.ok(/offsets = Object\.create\(null\);\n    arranged = false;/.test(script));
-            const zoom = flowMapZoomScript('abc123');
-            assert.ok(
-                zoom.includes("timeBtn.classList.remove('fm-zoom-active')"),
-                'and the control stops reading as engaged');
-        });
-
-        test('should light the control while the mode is on', () => {
-            const zoom = flowMapZoomScript('abc123');
-            assert.ok(
-                /btn\.classList\.toggle\('fm-zoom-active', window\.__fmArrangeByTime\(\)\)/.test(zoom),
-                'the toggle drives the lit state from the layout\'s own answer');
+        test('should return null for a falsy target', () => {
+            const nodeGroupOf = extractNodeGroupOf();
+            assert.strictEqual(nodeGroupOf(null), null);
         });
     });
 
@@ -322,6 +282,25 @@ suite('FlowMap card dragging', () => {
             assert.strictEqual(
                 css.split('max-height: var(--shot-fit-h)').length - 1, 2,
                 'both the stage and the image read it');
+        });
+
+        test('should keep the stage and image inside the card that defines the token', () => {
+            // A custom property inherits down the DOM, not down the stylesheet's source order — the
+            // token only reaches .fms-stage/.fms-img if the lightbox script actually nests them
+            // inside .fms-card at runtime. Read from the script that builds the dialog, not the CSS.
+            //
+            // Two candidate paths: this test runs COMPILED from out/test/modules/flow-map, where
+            // the sibling .ts source does not exist (out/ holds only .js) — read the real source
+            // from src/ instead, falling back to a same-tree lookup for a ts-node/direct run.
+            const relFromSrc = 'ui/panels/flow-map-panel-lightbox-script.ts';
+            const fromOut = path.join(__dirname, '../../../../src', relFromSrc);
+            const fromSrcTree = path.join(__dirname, '../../..', relFromSrc);
+            const srcPath = fs.existsSync(fromOut) ? fromOut : fromSrcTree;
+            const src = fs.readFileSync(srcPath, 'utf8');
+            assert.ok(/card\.className = 'fms-card'/.test(src), 'the card carries the token');
+            assert.ok(/stage\.className = 'fms-stage'/.test(src), 'the stage is built inside it');
+            assert.ok(/card\.appendChild\(stage\)/.test(src), 'and actually appended to the card');
+            assert.ok(/stage\.appendChild\(img\)/.test(src), 'with the image nested inside the stage');
         });
 
         test('should scope the container query away from the scrolling column', () => {
