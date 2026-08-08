@@ -361,13 +361,35 @@ The generation check also moved to sample at BUILD time rather than at queue tim
 behind another had already captured the newer value by the time it composed its document, so
 comparing against the queue-time value reported every such write as stale and rewrote it redundantly.
 
+## Closing the verification gap, as far as it can be closed here
+
+The whole of this work was verified against itself: unit tests, headless Chromium, and real capture
+files, but never the Extension Host. The wiring seam — where the capturer, the store, the settings
+reader, the commands and the line listener connect — had no coverage at all, so an unregistered
+command or a handler that throws on first call would have compiled, passed every test, and appeared
+only on a real F5 run.
+
+`screenshot-wiring-smoke.test.ts` runs inside the Extension Host against the ACTIVATED extension: it
+activates directly (the pattern `extension-smoke.test.ts` established, so an activation failure
+reports itself rather than surfacing later as "the command is not registered"), then asserts both
+commands are registered, that the diagnosis runs against the live pipeline without rejecting, that
+running it twice still works, and that a manual capture invoked from the palette with nothing running
+does not reject.
+
+Deliberately NOT by calling `registerScreenshotCapture` a second time — the real extension already
+registered those command ids, and a second registration throws. Going through the live registration
+is the stronger assertion anyway: it exercises the wiring the user gets.
+
+This does not replace F5. A PNG is still never produced here, because the transport needs a VM
+Service or adb and neither exists on a test machine.
+
 ## Verification
 
 - `npm run check-types` — 0 errors.
 - `npm run lint` — 0 errors, 14 pre-existing warnings.
 - `npm run compile` — full gate chain green, including `verify:l10n-keys` (2561 keys), the webview
   message catalogs, and `verify:dist-size`.
-- 279 tests passing across the eighteen affected suites, including eight new files:
+- 291 tests passing across the nineteen affected suites, including nine new files:
   `flow-map-svg-layout.test.ts` (13) covering fault-leaf extraction, back-edge exclusion, orphan
   retention, row wrapping, and rendered canvas width; and `screenshot-sidecar-validation.test.ts`
   (6) covering trigger-union rejection, per-field defaulting, and malformed sidecars. The layout
