@@ -1063,7 +1063,7 @@
   "Trends": "Tendances",
   "Uncommitted changes": "Modifications non validées",
   "Users": "Utilisateurs",
-  "Ver": "Afficher",
+  "Ver": "Ver",
   "Versions": "Versions",
   "View Full Context": "Afficher le contexte complet",
   "View on Firebase Console": "Visualiser sur la console Firebase",
@@ -2233,5 +2233,6 @@
   "That session has no capture of this screen": "Cette session ne capture pas cette écran",
   "This session": "Cette session",
   "Zoom": "Zoom",
-  "{0} near-duplicate captures were skipped for this log": "{0} captures de presque-duplication ont été ignorés pour ce journal"
+  "{0} near-duplicate captures were skipped for this log": "{0} captures de presque-duplication ont été ignorés pour ce journal",
+  "Screenshot diagnosis written to the Saropa Log Capture output channel.": "Diagnostic de capture d'écran écrit dans le canal de sortie Saropa Log Capture."
 }

@@ -27,6 +27,8 @@ cspell:disable
 
 ## [9.3.9]
 
+Introduces a new Diagnose Screenshot Capture command, smart near-duplicate screenshot filtering, side-by-side screen comparisons in the flow map lightbox, and major performance fixes that keep reports lightweight. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.9/CHANGELOG.md)
+
 ### Added
 
 - The Diagnose Screenshot Capture report lines up its values in a column computed from the labels, so adding a row cannot quietly misalign the rest
@@ -496,60 +498,6 @@ Cut through the noise with the new Trouble Mode. This zero-context triage filter
 - **Blank rows no longer render an expander arrow.** An empty log line sitting just above filter-hidden rows was picking up the "reveal hidden rows" chevron, showing a blank sliver with an expander on it. The chevron now attaches to the nearest non-blank row instead.
 - **Copy Report / the saved report now include the Recommendations section.** The exported markdown previously omitted the recommendations shown on the panel; the copied and saved reports now carry the same advice alongside evidence, cross-session history, and other signals.
 - **Cross-Session History rows now open the selected session.** Clicking a history row called an unregistered command and silently did nothing; it now loads that session's log into the viewer.
-
----
-
-## [9.1.0]
-
-The viewer now follows the newest run automatically. When a new log arrives, the viewer jumps to it the moment it appears — no more clicking Open on the newer-log banner. Prefer the old behavior? Turn off **Always Switch to Latest Log** and the viewer stays on the log you are reading, surfacing the banner instead. [log](https://github.com/saropa/saropa-log-capture/blob/v9.1.0/CHANGELOG.md)
-
-### Added
-
-- **"Always Switch to Latest Log" setting (`saropaLogCapture.autoSwitchToLatest`).** On by default: the viewer automatically loads the newest controller log as soon as it appears, instead of only surfacing the sticky newer-log banner and waiting for a click. Turn it off to keep the passive banner. Joins the existing newer-log banner/dot settings. Switching happens without stealing editor focus, and only when the newest log differs from the one already open (so it never reloads in a loop).
-- **Error notification setting (`saropaLogCapture.showErrorSnackbars`).** When enabled, each newly detected error during live capture pops a notification showing the error text, with **Open Log** (opens the Log Viewer scrolled to that error line) and **Error Report** (opens the bug-report webview for that error) buttons. Off by default. Notifications are coalesced so bursts don't flood the corner: repeats of the same error signature (variations like differing ports/ids/timestamps normalize to one) are suppressed, and a short cooldown limits how fast distinct errors can stack.
-
-### Changed
-
-- **Icon-bar badges (Signal, SQL, Integrations, Crashlytics, Collections, Bookmarks, Trash) now count unread items, not the panel total.** Each badge shows only how many items arrived since you last opened that panel; opening the panel clears it to zero. Baselines persist across viewer reloads, and a panel that is already open never lights its own badge while you are looking at it.
-
-### Fixed
-
-- **Signals panel formatting overhaul.** The Signals sidebar now reads as one clean, aligned list. Every signal row, section subtitle, and empty state starts its icon on a single left rail; the critical/high severity accent is painted inside the row instead of as a border, so severity rows no longer jog their text right. Signal labels now fill the real column width and truncate with an ellipsis at the panel edge (they were cut off at a fixed 50–60 characters, stranding "..." well short of the available space). Rows that open something (a session, a log line, or inline detail) now carry a trailing chevron; rows that do nothing show none, so it is obvious at a glance which rows are clickable.
-- **Signals "Workspace pulse" strip no longer shows an all-zero row.** A pulse of `▲ 0 · ▼ 0 · ● 0 · Fixed 0%` — nothing improving, worsening, stable, and a fix-rate measured against nothing — is vacuous, so the strip now stays hidden in that case. A positive fix-rate, or a 0% fix-rate when there are recurring issues it actually measures, still shows.
-- **Opening a cross-session signal now gives immediate feedback.** Clicking a signal that has to load a different session's log could sit silently for a moment, looking like a dead click. The clicked row now shimmers and a slim loading bar appears under the panel header until the target line is reached.
-
----
-
-## [9.0.11]
-
-The live viewer no longer crashes the debugger during very high-volume sessions. Under a sustained firehose (full logcat plus per-query database logs), the viewer's pending-line queue could grow without limit until the editor's extension host ran out of memory and aborted — dropping the debug session every few minutes. The queue is now capped and drains faster under load. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.11/CHANGELOG.md)
-
-### Fixed
-
-- **High-volume sessions no longer crash the extension host (bug 001).** When a debug target streamed lines faster than the viewer could post them to the webview, the `pendingLines` staging queue grew unbounded toward the ~4GB V8 heap limit; the extension host aborted with an out-of-memory illegal-instruction crash (`0xC000001D`) roughly every seven minutes, terminating the active Dart/Flutter debug session each time. The queue is now hard-capped at 20,000 lines: on overflow the oldest un-posted lines are dropped (the full stream is still in the session log file) and a single notice marker records the count, mirroring the existing early-output buffer cap.
-- **Batch flush now back-pressures correctly.** When the queue was backlogged, the flush interval previously *lengthened* (200ms → 500ms), halving drain throughput exactly when the queue was growing — accelerating the runaway. The interval now *shortens* under backlog (200ms → 50ms) so the consumer speeds up; per-flush payload size stays bounded.
-
----
-
-## [9.0.10]
-
-Search now always shows what it finds. If a match is tucked inside a collapsed group or hidden by a filter, the viewer reveals it instead of scrolling to an empty spot — and tells you which filter was hiding it, with a one-click way to turn that filter off. The match counter also reports how many results are hidden. [log](https://github.com/saropa/saropa-log-capture/blob/v9.0.10/CHANGELOG.md)
-
-### Fixed
-
-- **Log banner "Open in Editor" now works.** Clicking **Open in Editor** (or any file action) in the click-opened log banner did nothing when the log was viewed in a popped-out panel: the banner posted a bare message that the host resolved against the panel's own current-file URI, which is only set for the live tail session — not for an opened report. The banner now sends the URI it is actually displaying, so every action targets the open file regardless of where it is shown.
-- **Log banner kebab menu no longer hides behind the log.** The overflow (⋮) menu painted under the colored severity bars and log text because the banner had no stacking promotion above the content. The banner is now raised above the log content (still below the toolbar and dialogs) so the menu is fully visible.
-- **Search no longer scrolls to an invisible match.** Searching for text that lived inside a collapsed continuation/stack/banner/ASCII-art group, or on a line hidden by a filter (level, Log Sources tier, exclusions, source/class/SQL tags, file scope, metadata, time range, manual hide), showed "Showing 1 of 1" but nothing on screen. Navigating to a match now expands any collapsed group automatically and force-shows the matched line past the filter so it is always visible.
-- **Null-guard test for `clearSearchState` widened.** The two leading typeof-guards added by the search-reveal feature pushed the `matchCountEl` guard past the test's 200-char slice window, producing a false test failure. Widened the slice to 400 chars; the guard itself was always present.
-
-### Added
-
-- **"Hidden by filter" search notice.** When the current match was only visible because search revealed it past an active filter, an inline notice names the responsible filter (e.g. "This match was hidden by the Level filter.") with a one-click **Disable** action to turn that filter off for full context.
-- **Richer search match counter.** The badge now reads "Match N of M" and appends "· K hidden by filters" when some results sit outside the visible set, so you know matches exist beyond what is shown.
-
-### Changed
-
-- **Log banner buttons use title case** — "Open in Editor" and "Copy Full Path".
 
 ---
 
