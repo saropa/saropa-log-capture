@@ -25,9 +25,9 @@ cspell:disable
 
 ---
 
-## [9.3.10]
+## [Unreleased]
 
-Flow map diagrams can now be rearranged by hand or laid out along a time axis, exported as a standalone SVG, and screenshots turn up wherever a moment is listed; the screenshot lightbox got a working zoom and prev/next buttons. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.10/CHANGELOG.md)
+Flow map diagrams can now be rearranged by hand or laid out along a time axis, exported as a standalone SVG, and screenshots turn up wherever a moment is listed; the screenshot lightbox got a working zoom and prev/next buttons.
 
 ### Added
 
@@ -45,6 +45,15 @@ Flow map diagrams can now be rearranged by hand or laid out along a time axis, e
 - Flow map: the session-info list splits into two pairs of columns when the detail column is dragged wide enough to hold them
 - Flow map: **Center the fault** now scrolls to where a dragged or time-arranged crash card actually is, instead of where the automatic layout first placed it
 - Flow map: a screen entered well before every other lane on the by-time layout no longer inflates the row height of lanes that hold nothing but short cards
+
+### Changed
+
+- Screenshots: **Skip Near-Duplicate Screenshots** now defaults to on. It only skips a capture whose picture matches a recent one on the same screen; error, warning and manually-requested captures are never skipped, and an unreadable capture is always kept
+
+### Maintenance
+
+- Flow map: consolidated five identical HTML/XML-escaping helpers (one per rendering module) into a single shared function
+- Flow map: split the graph builder's crash- and issue-attachment logic into its own module to bring the builder back under the project's 300-line file limit
 
 ---
 

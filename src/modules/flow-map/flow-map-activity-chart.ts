@@ -15,7 +15,7 @@
 import type { ParsedLog } from './flow-map-model';
 import type { FlowShot } from './flow-map-screenshots';
 import { pickThumbShot, shotDataAttrs } from './flow-map-svg-shots';
-import { stripAnsi } from './flow-map-format';
+import { esc, stripAnsi } from './flow-map-format';
 
 /** One time bin: how many samples fell in it, and the earliest log line to jump to. */
 interface Bin {
@@ -44,11 +44,6 @@ const SHOT_H = 40;
 const SHOT_STRIP_H = SHOT_H + 8;
 /** The XHTML namespace a `<foreignObject>` child must declare to survive XML parsing. */
 const XHTML_NS = 'http://www.w3.org/1999/xhtml';
-
-/** Escape text for XML/SVG (clocks are digits+colons, but titles get user-adjacent values). */
-function esc(s: string): string {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
 
 /**
  * Collect every timed sample (events + issues), earliest first. Samples with a non-positive `tsMs`

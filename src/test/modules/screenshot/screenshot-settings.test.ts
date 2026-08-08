@@ -21,13 +21,16 @@ suite('screenshot settings reader', () => {
     /** The full key, as it appears in package.json — a rename must break these tests. */
     const key = (name: string): string => `integrations.screenshots.${name}`;
 
-    test('should default to capture-on-error with everything optional turned off', () => {
+    test('should default to capture-on-error with the optional triggers off but dedup on', () => {
         const s = readScreenshotSettings(cfg());
         assert.strictEqual(s.enabled, true);
         assert.strictEqual(s.onError, true, 'errors are the default reason to capture');
         assert.strictEqual(s.onWarning, false);
         assert.strictEqual(s.onNavigation, false);
-        assert.strictEqual(s.skipNearDuplicates, false, 'nothing that DISCARDS a capture is on by default');
+        // Flipped on 2026-08-08 after a real seven-capture session correctly kept 5 and skipped 2,
+        // with both fault captures kept — the only setting in this group that can DISCARD a capture,
+        // now trusted by default because the fault/manual/unreadable guards make a false positive rare.
+        assert.strictEqual(s.skipNearDuplicates, true, 'near-duplicate captures are skipped by default');
     });
 
     test('should read every key under its published name', () => {
