@@ -5,6 +5,9 @@ import * as vscode from 'vscode';
 import { buildScreenshotDiagnosis } from '../../../modules/screenshot/screenshot-diagnose';
 import { ScreenshotStore } from '../../../modules/screenshot/screenshot-store';
 import type { ScreenshotCapturer } from '../../../modules/screenshot/screenshot-capturer';
+import {
+    readScreenshotSettings, type ScreenshotSettings,
+} from '../../../modules/screenshot/screenshot-settings';
 
 /**
  * The diagnosis exists so a reader can ASK what the pipeline is doing, instead of having to have
@@ -21,11 +24,16 @@ suite('screenshot capture diagnosis', () => {
         logFsPath = path.join(dir, 'session.log');
     });
 
-    /** Settings double: the real API surface the report reads, with no workspace involved. */
-    function settings(values: Record<string, unknown> = {}): vscode.WorkspaceConfiguration {
-        return {
+    /**
+     * Settings resolved through the REAL reader, over a configuration double. Going through
+     * `readScreenshotSettings` is the point: the report must describe the values the pipeline
+     * resolves, including its clamping, not a second interpretation of the same keys.
+     */
+    function settings(values: Record<string, unknown> = {}): ScreenshotSettings {
+        const cfg = {
             get: (key: string, fallback?: unknown) => (key in values ? values[key] : fallback),
         } as unknown as vscode.WorkspaceConfiguration;
+        return readScreenshotSettings(cfg);
     }
 
     /** Capturer double — the report only reads counters off it. */
@@ -48,6 +56,13 @@ suite('screenshot capture diagnosis', () => {
         assert.ok(/on navigation:\s+yes/.test(text));
         assert.ok(/skip near-dupes:\s+yes/.test(text));
         assert.ok(/similarity:\s+0\.9/.test(text));
+    });
+
+    test('should report the CLAMPED value the pipeline uses, not the raw setting', () => {
+        // The whole reason the report shares the pipeline's reader: a hand-edited settings.json can
+        // hold a value capture never actually uses, and a report that echoed it would be lying.
+        const resolved = settings({ 'integrations.screenshots.maxPerLog': 0 });
+        assert.strictEqual(resolved.maxPerLog, 1, 'clamped up to the manifest minimum');
     });
 
     test('should name the missing VM Service, the most common reason captures never fire', async () => {
