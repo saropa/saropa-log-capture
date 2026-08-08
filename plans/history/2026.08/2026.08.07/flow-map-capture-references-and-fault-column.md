@@ -276,13 +276,38 @@ The picture is the more reliable identity than the log's own claim about which s
 so the picture is what is compared. The reasoning is recorded on `RecentShotSignatures` so the
 refinement is not re-proposed from first principles.
 
+## Reporting what was suppressed
+
+A skipped capture was visible only in the output channel, which makes the setting hard to trust and
+impossible to tune from the report it affects. The count is now persisted in the sidecar — an
+optional field, absent from every sidecar written before it existed and defaulting to 0 — so a report
+generated later, in another process, can still state it. The gallery reports it SEPARATELY from the
+render cap, because an omitted capture exists on disk while a suppressed one was never taken, and
+collapsing them would misdescribe both.
+
+The write is debounced (one write per ~3s of skips, plus a flush at session end) rather than one
+whole-file rewrite per skip: a skip costs nothing but a decision, so skips arrive in bursts, and the
+number is not read until a report is built. All three writers — `save()`, the flush, and `dispose()`
+— are serialized through one chain, because they rewrite the same file from the same in-memory state
+and the capturer's in-flight guard covers captures, not flushes.
+
+Two failure paths are handled rather than assumed away. A flush clears a log from the dirty set only
+once its write LANDED, so one failing log no longer discards every other pending log's count with it,
+and each failure is reported to the output channel. Shutdown flushing is documented as best-effort:
+VS Code disposes subscriptions synchronously and does not await a Thenable, so the guarantees that
+actually hold are the session-end flush and the fact that any later save persists the pending count.
+
+A near-miss notice reports once when a KEPT capture scored above 95% but below the threshold, naming
+the setting to lower. The threshold is calibrated against one device's captures, and one set slightly
+too high is otherwise invisible — duplicates keep arriving and nothing says they nearly matched.
+
 ## Verification
 
 - `npm run check-types` — 0 errors.
 - `npm run lint` — 0 errors, 14 pre-existing warnings.
 - `npm run compile` — full gate chain green, including `verify:l10n-keys` (2561 keys), the webview
   message catalogs, and `verify:dist-size`.
-- 245 tests passing across the sixteen affected suites, including six new files:
+- 253 tests passing across the sixteen affected suites, including six new files:
   `flow-map-svg-layout.test.ts` (13) covering fault-leaf extraction, back-edge exclusion, orphan
   retention, row wrapping, and rendered canvas width; and `screenshot-sidecar-validation.test.ts`
   (6) covering trigger-union rejection, per-field defaulting, and malformed sidecars. The layout
