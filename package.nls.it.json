@@ -6,6 +6,7 @@
   "command.applyPreset.title": "Saropa Log Capture: Applica preset filtro",
   "command.applyTemplate.title": "Saropa Log Capture: Applica modello registro",
   "command.captureScreenshot.title": "Saropa Log Capture: Acquisisci screenshot",
+  "command.diagnoseScreenshots.title": "Diagnose Screenshot Capture",
   "command.checkFilterSuggestions.title": "Saropa Log Capture: Check Filter Suggestions",
   "command.clear.title": "Saropa Log Capture: Cancella registro corrente",
   "command.clearGlobalAggregates.title": "Saropa Log Capture: Clear Cross-Workspace Noise Patterns",

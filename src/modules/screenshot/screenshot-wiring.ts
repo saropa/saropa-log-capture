@@ -18,6 +18,7 @@ import { captureAdbScreenshot } from './adb-screenshot';
 import { makeCaptureTransport } from './screenshot-transport';
 import { getLatestVmServiceWsUri, recordVmServiceUriFromLogLine, registerVmServiceUriTracking } from './vm-service-uri';
 import { runScreenshotSelfTest, formatSelfTest } from './screenshot-self-test';
+import { runScreenshotDiagnosis } from './screenshot-diagnose';
 import type { SessionManagerImpl } from '../session/session-manager';
 
 /** What the rest of the extension needs back from the wiring. */
@@ -30,6 +31,8 @@ interface ScreenshotWiringDeps {
     readonly context: vscode.ExtensionContext;
     readonly sessionManager: SessionManagerImpl;
     readonly log: (message: string) => void;
+    /** Reveal the output channel — the diagnosis is written there and must not land unseen. */
+    readonly showOutput: () => void;
     /** Fan-out for UI surfaces (footer counter, viewer icons) after each save. */
     readonly onSaved: (logFsPath: string, result: ScreenshotSaveResult) => void;
 }
@@ -109,6 +112,23 @@ export function registerScreenshotCapture(deps: ScreenshotWiringDeps): Screensho
     deps.context.subscriptions.push(
         vscode.commands.registerCommand('saropaLogCapture.captureScreenshot', () =>
             runManualCapture(capturer, deps.sessionManager),
+        ),
+        // Ask, rather than wait to be told. Every number this reports already existed, but only as a
+        // one-time notice at the moment it happened — a reader who arrived afterwards had no way to
+        // recover it, which is why those notices kept accumulating.
+        vscode.commands.registerCommand('saropaLogCapture.diagnoseScreenshots', () =>
+            runScreenshotDiagnosis(
+                {
+                    capturer, store,
+                    logFsPath: deps.sessionManager.getActiveSession()?.fileUri.fsPath,
+                    settings: cfg(),
+                    vmServiceUri: getLatestVmServiceWsUri(),
+                },
+                deps.log,
+                // The report is only useful if the reader can see it, and the output channel is not
+                // necessarily the visible one when the command is invoked.
+                () => { deps.showOutput(); },
+            ),
         ),
     );
     return { capturer, store };

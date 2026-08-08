@@ -2219,5 +2219,19 @@
   "Screenshot": "스크린샷",
   "Show full severity counts only on latest and active logs": "최신 및 활성 로그만에 전체 심각도 카운트 표시",
   "TODO {0}": "TODO {0}",
-  "Trigger": "트리거"
+  "Trigger": "트리거",
+  "Compare": "비교",
+  "Compare against another session": "다른 세션과 비교",
+  "Copy full path": "전체 경로 복사",
+  "File": "파일",
+  "Next capture of this screen": "이 화면의 다음 캡처",
+  "Previous capture of this screen": "이 화면의 이전 캡처",
+  "Reading that session…": "그 세션 읽고 있습니다…",
+  "Screenshot path copied": "스크린샷 경로 복사",
+  "Screenshot unavailable — the file may have been moved or deleted": "스크린샷 불가능 — 파일이 이동되거나 삭제되었을 수 있습니다",
+  "Scroll over the image to zoom": "이미지 위로 스크롤하여 확대",
+  "That session has no capture of this screen": "그 세션은 이 화면의 캡처가 없습니다",
+  "This session": "이 세션",
+  "Zoom": "확대",
+  "{0} near-duplicate captures were skipped for this log": "{0} 로그에 대해 근접 복제 캡처가 건너뛰었습니다."
 }

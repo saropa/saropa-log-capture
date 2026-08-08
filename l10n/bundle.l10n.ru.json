@@ -2219,5 +2219,19 @@
   "Screenshot": "Скриншот",
   "Show full severity counts only on latest and active logs": "Показывать полные счетчики серьезности только для последних и активных логов",
   "TODO {0}": "TODO {0}",
-  "Trigger": "Триггер"
+  "Trigger": "Триггер",
+  "Compare": "Сравнить",
+  "Compare against another session": "Сравнить с другой сессией",
+  "Copy full path": "Скопировать полный путь",
+  "File": "Файл",
+  "Next capture of this screen": "Следующее захватывание этого экрана",
+  "Previous capture of this screen": "Предыдущая запись этого экрана",
+  "Reading that session…": "Читаю сессию…",
+  "Screenshot path copied": "Путь к снимку скопирован",
+  "Screenshot unavailable — the file may have been moved or deleted": "Скриншот недоступен — файл может быть перемещен или удален",
+  "Scroll over the image to zoom": "Переместите курсор по изображению для увеличения",
+  "That session has no capture of this screen": "Эта сессия не содержит захвата этого экрана",
+  "This session": "Эта сессия",
+  "Zoom": "Зум",
+  "{0} near-duplicate captures were skipped for this log": "{0} близкие дубликаты захвата были пропущены для этого лога"
 }

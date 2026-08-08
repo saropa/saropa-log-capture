@@ -2219,5 +2219,19 @@
   "Screenshot": "Capture d'écran",
   "Show full severity counts only on latest and active logs": "Afficher uniquement les compteurs de gravité complète sur les derniers et logs actifs",
   "TODO {0}": "TODO {0}",
-  "Trigger": "Démarrer"
+  "Trigger": "Démarrer",
+  "Compare": "Comparer",
+  "Compare against another session": "Comparer avec une autre session",
+  "Copy full path": "Copier le chemin complet",
+  "File": "Fichier",
+  "Next capture of this screen": "Prochaine capture de cette fenêtre",
+  "Previous capture of this screen": "Précédente capture de cette fenêtre",
+  "Reading that session…": "Lecture de cette session…",
+  "Screenshot path copied": "Chemin d’écran copié",
+  "Screenshot unavailable — the file may have been moved or deleted": "Capture d'écran non disponible — le fichier a pu être déplacé ou supprimé",
+  "Scroll over the image to zoom": "Défilez sur l'image pour zoomer",
+  "That session has no capture of this screen": "Cette session ne capture pas cette écran",
+  "This session": "Cette session",
+  "Zoom": "Zoom",
+  "{0} near-duplicate captures were skipped for this log": "{0} captures de presque-duplication ont été ignorés pour ce journal"
 }

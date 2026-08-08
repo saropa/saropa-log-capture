@@ -2219,5 +2219,19 @@
   "Screenshot": "截图",
   "Show full severity counts only on latest and active logs": "仅在最新和活跃日志中显示完整的严重性计数",
   "TODO {0}": "TODO {0}",
-  "Trigger": "触发"
+  "Trigger": "触发",
+  "Compare": "比较",
+  "Compare against another session": "与另一个会话进行比较",
+  "Copy full path": "复制完整路径",
+  "File": "文件",
+  "Next capture of this screen": "此屏幕的下一次捕获",
+  "Previous capture of this screen": "此屏幕之前的捕获",
+  "Reading that session…": "正在读取该会话…",
+  "Screenshot path copied": "截图路径已复制",
+  "Screenshot unavailable — the file may have been moved or deleted": "截图不可用 — 该文件可能已被移动或删除",
+  "Scroll over the image to zoom": "将鼠标悬停在图片上以缩放",
+  "That session has no capture of this screen": "该会话未捕获此屏幕",
+  "This session": "本次会话",
+  "Zoom": "缩放",
+  "{0} near-duplicate captures were skipped for this log": "{0} 个近似重复的捕获已跳过"
 }
