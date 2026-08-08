@@ -36,7 +36,9 @@ interface ScreenshotWiringDeps {
 
 /** Build + register the screenshot pipeline. Called once at activation. */
 export function registerScreenshotCapture(deps: ScreenshotWiringDeps): ScreenshotRuntime {
-    const store = new ScreenshotStore();
+    // Failed sidecar writes reach the output channel — a wrong suppressed count is otherwise
+    // undiagnosable, and the write no longer happens on a path any caller awaits.
+    const store = new ScreenshotStore(deps.log);
     const cfg = (): vscode.WorkspaceConfiguration =>
         vscode.workspace.getConfiguration('saropaLogCapture');
     const capturer = new ScreenshotCapturer({
@@ -85,7 +87,17 @@ export function registerScreenshotCapture(deps: ScreenshotWiringDeps): Screensho
         if (suppressed > 0) {
             deps.log(`screenshot: ${suppressed} device crash line(s) were treated as replayed history and did not capture — if the app genuinely crashed live, report this count`);
         }
+        // Session end is exactly when the near-duplicate count starts being read (a report is
+        // generated FROM this log), so the debounced write must not still be pending. This is the
+        // guarantee that matters — see the dispose note below for why shutdown is only best-effort.
+        void store.flushSuppressed();
     }));
+    // Best-effort only: VS Code disposes subscriptions synchronously and does not await a Thenable
+    // returned from dispose(), so a window closed mid-session may exit before this write lands. It
+    // costs nothing and sometimes helps. The counts that MATTER are already safe by two other
+    // routes — the session-terminate flush above, and the fact that every save() rewrites the
+    // sidecar from the live count, so any later capture persists what is pending.
+    deps.context.subscriptions.push({ dispose: () => { void store.dispose(); } });
     deps.sessionManager.addLineListener((data) => {
         // Fallback URI discovery from the console banner — regex runs ONLY while no URI is
         // known (one boolean check per line otherwise), so the firehose cost stays near zero.
