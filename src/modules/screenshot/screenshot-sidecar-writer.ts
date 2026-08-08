@@ -40,11 +40,11 @@ const FLUSH_DELAY_MS = 3000;
 const FLUSH_AFTER_PENDING = 25;
 
 /**
- * How many times `dispose()` re-flushes. Only the FINAL flush drains: a normal flush can leave work
- * for the next timer, but dispose has no successor, so anything it leaves behind is lost. Bounded so
- * a permanently failing write cannot hold shutdown open.
+ * Rounds `dispose()` repeats its flush. Only the final flush drains: a normal one can leave work for
+ * the next timer, but dispose has no successor, so what it leaves is lost. Bounded because shutdown
+ * must terminate — a permanently failing write must not hold the window open.
  */
-const MAX_DRAIN_ATTEMPTS = 3;
+const DRAIN_ROUNDS = 3;
 
 /** Serializes and schedules sidecar writes. One per store. */
 export class SidecarWriter {
@@ -194,9 +194,12 @@ export class SidecarWriter {
             clearTimeout(this.timer);
             this.timer = undefined;
         }
-        for (let attempt = 0; attempt < MAX_DRAIN_ATTEMPTS; attempt++) {
+        // Bounded because SHUTDOWN MUST TERMINATE — not as a tuning choice. Each round writes
+        // everything pending when it starts, so a second round covers whatever arrived during the
+        // first, and a third covers the same for it. A write that keeps failing stays pending and
+        // simply exhausts the rounds rather than holding the window open.
+        for (let round = 0; round < DRAIN_ROUNDS && this.hasPending; round++) {
             await this.flush();
-            if (!this.hasPending) { return; }
         }
     }
 }
