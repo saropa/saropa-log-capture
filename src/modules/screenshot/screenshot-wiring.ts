@@ -3,14 +3,15 @@
  * extension-activation.ts for the line limit: builds the capturer with live deps,
  * registers the line listener, the VM-Service URI tracking, and the manual command.
  *
- * Settings are read one key at a time (not getConfig()) because onLine runs on the
- * live capture firehose and getConfig() rebuilds all ~256 settings per call — the
- * same trade the error snackbar documents.
+ * Settings come from `readScreenshotSettings` — the one reader the diagnosis command shares, so the
+ * report describes the values capture is really using. It reads its own keys rather than calling
+ * getConfig(), because onLine runs on the live capture firehose and getConfig() rebuilds all ~256
+ * settings per call — the same trade the error snackbar documents. The per-line master-toggle check
+ * uses `readScreenshotEnabled`, which reads that one key alone.
  */
 
 import * as vscode from 'vscode';
 import { t } from '../../l10n';
-import { clamp } from '../config/config-validation';
 import { ScreenshotCapturer, type ManualCaptureOutcome } from './screenshot-capturer';
 import { ScreenshotStore, type ScreenshotSaveResult } from './screenshot-store';
 import { captureVmServiceScreenshot } from './vm-service-screenshot';
@@ -19,6 +20,7 @@ import { makeCaptureTransport } from './screenshot-transport';
 import { getLatestVmServiceWsUri, recordVmServiceUriFromLogLine, registerVmServiceUriTracking } from './vm-service-uri';
 import { runScreenshotSelfTest, formatSelfTest } from './screenshot-self-test';
 import { runScreenshotDiagnosis } from './screenshot-diagnose';
+import { readScreenshotEnabled, readScreenshotSettings } from './screenshot-settings';
 import type { SessionManagerImpl } from '../session/session-manager';
 
 /** What the rest of the extension needs back from the wiring. */
@@ -45,21 +47,10 @@ export function registerScreenshotCapture(deps: ScreenshotWiringDeps): Screensho
     const cfg = (): vscode.WorkspaceConfiguration =>
         vscode.workspace.getConfiguration('saropaLogCapture');
     const capturer = new ScreenshotCapturer({
-        isEnabled: () => cfg().get<boolean>('integrations.screenshots.enabled', true),
-        triggerSettings: () => ({
-            onError: cfg().get<boolean>('integrations.screenshots.onError', true),
-            onWarning: cfg().get<boolean>('integrations.screenshots.onWarning', false),
-            onNavigation: cfg().get<boolean>('integrations.screenshots.onNavigation', false),
-            // Clamp to the package.json ranges: raw .get() skips getConfig()'s validation, and
-            // a hand-edited settings.json value (e.g. maxPerLog 0) would otherwise silently
-            // disable capture while the menu UI shows the clamped number.
-            cooldownMs: clamp(cfg().get('integrations.screenshots.cooldownMs'), 250, 60000, 2000),
-            maxPerLog: clamp(cfg().get('integrations.screenshots.maxPerLog'), 1, 500, 50),
-            skipNearDuplicates: cfg().get<boolean>('integrations.screenshots.skipNearDuplicates', false),
-            // Same clamp reasoning: a hand-edited 0 would make every capture a "duplicate" of the
-            // one before it and silently stop the gallery filling.
-            duplicateSimilarity: clamp(cfg().get('integrations.screenshots.duplicateSimilarity'), 0.5, 0.999, 0.985),
-        }),
+        // Both read through readScreenshotSettings, so the diagnosis command reports the values the
+        // capturer is actually using rather than its own second reading of the same keys.
+        isEnabled: () => readScreenshotEnabled(cfg()),
+        triggerSettings: () => readScreenshotSettings(cfg()),
         getVmServiceWsUri: getLatestVmServiceWsUri,
         // VM first (chrome-free where it still exists), adb screencap fallback — the path
         // that works on modern Flutter, where _flutter.screenshot is gone. Device serial
@@ -121,7 +112,7 @@ export function registerScreenshotCapture(deps: ScreenshotWiringDeps): Screensho
                 {
                     capturer, store,
                     logFsPath: deps.sessionManager.getActiveSession()?.fileUri.fsPath,
-                    settings: cfg(),
+                    settings: readScreenshotSettings(cfg()),
                     vmServiceUri: getLatestVmServiceWsUri(),
                 },
                 deps.log,
