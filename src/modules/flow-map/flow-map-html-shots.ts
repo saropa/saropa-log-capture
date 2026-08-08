@@ -9,7 +9,7 @@
 import { screenKeyOf, type FlowShot } from './flow-map-screenshots';
 import type { ShotsByScreen } from './flow-map-svg-shots';
 import { stripAnsi } from './flow-map-format';
-import { groupShotsByScreen, shotDataAttrs, shotSetAttrs } from './flow-map-svg-shots';
+import { groupShotsByScreen, pickThumbShot, shotDataAttrs, shotSetAttrs } from './flow-map-svg-shots';
 import { t } from '../../l10n';
 
 /** Escape text for HTML. */
@@ -46,6 +46,28 @@ function shotFigureHtml(
     return `<figure class="shot-fig"${keyAttr}><img class="shot-img" role="button" tabindex="0"`
         + `${shotDataAttrs(shot, index + 1, all.length)}${siblings} src="${esc(shot.src)}" alt="${alt}" `
         + `title="${esc(t('flowMap.shot.open'))}"><figcaption class="shot-cap">${caption}</figcaption></figure>`;
+}
+
+/**
+ * A screen-visit table cell holding that screen's representative capture, or an empty cell when the
+ * screen was never captured. Same `pickThumbShot` choice the diagram card makes, so a row and its
+ * card never show different pictures of the same screen.
+ *
+ * The cell is emitted even when empty: a table whose rows have different column counts renders with
+ * the remaining cells shifted one place left, which silently misaligns every later column.
+ *
+ * `data-shot-index` counts the WHOLE session's captures (not this screen's), because these open the
+ * same lightbox the gallery does and its counter must mean one thing across every surface.
+ */
+export function shotCellHtml(shots: readonly FlowShot[], all: readonly FlowShot[]): string {
+    const picked = pickThumbShot(shots);
+    if (!picked) { return '<td class="shot-cell"></td>'; }
+    const { shot } = picked;
+    const screen = stripAnsi(shot.screenLabel ?? shot.trigger);
+    const title = esc(`${shot.clock} · ${shot.trigger} · ${screen}`);
+    return `<td class="shot-cell"><img class="fm-mini-shot" role="button" tabindex="0"`
+        + `${shotDataAttrs(shot, all.indexOf(shot) + 1, all.length)} src="${esc(shot.src)}" `
+        + `alt="${esc(screen)}" aria-label="${esc(screen)}" title="${title}"></td>`;
 }
 
 /** Counts the gallery reports beneath its grid: what the report capped, and what capture dropped. */

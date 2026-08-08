@@ -258,7 +258,17 @@ function renderNode(p: Placed): string {
     }).join('');
     const cls = nodeHasError(p.node) ? `fm-node fm-crash ${pal.cls}` : `fm-node ${pal.cls}`;
     const logAttr = p.node.logLine ? ` data-logline="${p.node.logLine}"` : '';
-    return `<g class="${cls}" data-rowkey="${esc(rowKeyOf(p.node))}"${logAttr}${detailAttr(p.node)} tabindex="0" role="button">`
+    // The card's laid-out box, published so the drag script can re-route this node's edges without
+    // measuring the DOM. data-key is the NODE key, distinct from data-rowkey (which a crash node
+    // redirects to the issue table's 'crash' row) — an edge names nodes, never table rows.
+    // data-ts is the card's ENTRY time, the axis the by-time arrangement lays cards out along.
+    // Published separately from data-detail (which carries it too) because that attribute is a JSON
+    // blob built for a human-readable popup — a layout should not have to parse a document to run.
+    // Absent, not zero, when the node was never entered: 0 is a real ms-of-day (midnight).
+    const tsAttr = p.node.firstTsMs !== undefined ? ` data-ts="${p.node.firstTsMs}"` : '';
+    const geom = ` data-key="${esc(p.node.key)}" data-nx="${p.x}" data-ny="${p.y}"`
+        + ` data-nw="${p.w}" data-nh="${p.h}"${tsAttr}`;
+    return `<g class="${cls}" data-rowkey="${esc(rowKeyOf(p.node))}"${geom}${logAttr}${detailAttr(p.node)} tabindex="0" role="button">`
         // class="fm-box": the palette/hover/pulse rules target THIS rect by class, never by element.
         // A bare `rect` descendant selector also matches the thumbnail frame and the count pill —
         // which are siblings in this same group — and a CSS `fill` overrides their `fill="none"`
@@ -315,11 +325,22 @@ function renderBackEdge(from: Placed, to: Placed, edge: FlowEdge, backIndex: num
         + `font-size="10" font-family="var(--vscode-font-family)">×${edge.count}</text>`;
 }
 
-/** Render one edge: a line from the source's bottom to the target's top, with the dwell/count label. */
+/**
+ * Render one edge, wrapped in a group that names the two nodes it joins and (for a back edge) which
+ * bulge lane it took. The drag script re-derives this exact geometry from those attributes when a
+ * node moves, so the wrapper is what keeps an arrow attached to a card the reader dragged away.
+ */
 function renderEdge(edge: FlowEdge, placed: Map<string, Placed>, backIndex: number): string {
     const from = placed.get(edge.from);
     const to = placed.get(edge.to);
     if (!from || !to) { return ''; }
+    const attrs = ` data-from="${esc(edge.from)}" data-to="${esc(edge.to)}"`
+        + (edge.back ? ` data-back="1" data-backidx="${backIndex}"` : '');
+    return `<g class="fm-edge"${attrs}>${edgeShapes(edge, from, to, backIndex)}</g>`;
+}
+
+/** The edge's own shapes (arrow/curve plus label), without the identifying wrapper group. */
+function edgeShapes(edge: FlowEdge, from: Placed, to: Placed, backIndex: number): string {
     if (edge.back) { return renderBackEdge(from, to, edge, backIndex); }
     const x1 = from.x + from.w / 2;
     const y1 = from.y + from.h;
@@ -358,7 +379,10 @@ export function renderSvg(graph: FlowGraph, shots: readonly FlowShot[] = []): st
     let backIdx = 0;
     const edges = graph.edges.map(e => renderEdge(e, placed, e.back ? backIdx++ : 0)).join('');
     const nodes = [...placed.values()].map(renderNode).join('');
-    return `<svg viewBox="0 0 ${canvasW} ${height}" width="${canvasW}" height="${height}" `
+    // The three edge-geometry constants, published once so the drag script re-routes with the SAME
+    // numbers this render used instead of keeping a second copy that drifts on the next tuning pass.
+    const geom = ` data-geom="${EDGE_LABEL_GAP},${BACK_BULGE},${BACK_STAGGER}"`;
+    return `<svg viewBox="0 0 ${canvasW} ${height}" width="${canvasW}" height="${height}"${geom} `
         + `xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Session flow diagram">`
         + `${defs}${edges}${nodes}</svg>`;
 }
