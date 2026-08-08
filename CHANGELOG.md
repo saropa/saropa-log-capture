@@ -25,13 +25,15 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.3.10]
 
-Flow map diagrams can now be rearranged by hand, screenshots turn up wherever a moment is listed, and the screenshot lightbox got a working zoom and prev/next buttons.
+Flow map diagrams can now be rearranged by hand or laid out along a time axis, exported as a standalone SVG, and screenshots turn up wherever a moment is listed; the screenshot lightbox got a working zoom and prev/next buttons. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.10/CHANGELOG.md)
 
 ### Added
 
 - Flow map: diagram cards can be dragged into any arrangement — every arrow, dwell label and return curve follows the card live, so two screens can be put side by side without the diagram coming apart. The Reset view button returns to the automatic layout
+- Flow map: an **Arrange by time** toolbar button lays the cards out along a wall-clock axis instead of by graph depth, so horizontal distance becomes elapsed time and near-simultaneous screens stack into a column. Reset view clears it along with any hand-dragged cards
+- Flow map: an **Export diagram as SVG** toolbar button saves the diagram exactly as it looks — including any hand rearrangement or by-time layout — as a standalone file for a bug report or a PR. Screenshot thumbnails are left out of the export (their preview only loads inside the panel), and the save confirmation says how many were left out
 - Flow map: the screenshot lightbox has previous/next buttons and arrow-key navigation, stepping through the captures on whichever surface it was opened from
 - Flow map: the activity timeline shows a small capture under each stretch of the session that has one, clickable straight into the lightbox
 - Flow map: the screen-visit table shows each screen's capture in its own row, clickable straight into the lightbox. The column only appears when the session captured something
@@ -41,6 +43,10 @@ Flow map diagrams can now be rearranged by hand, screenshots turn up wherever a 
 - Flow map: zooming a screenshot in the lightbox no longer makes the image jump around — the picture now scrolls inside its own box, so the point under the cursor stays put and the left edge of a zoomed capture is reachable
 - Flow map: the executive summary fills the width of its column instead of wrapping short in the middle of it
 - Flow map: the session-info list splits into two pairs of columns when the detail column is dragged wide enough to hold them
+- Flow map: **Center the fault** now scrolls to where a dragged or time-arranged crash card actually is, instead of where the automatic layout first placed it
+- Flow map: a screen entered well before every other lane on the by-time layout no longer inflates the row height of lanes that hold nothing but short cards
+
+---
 
 ## [9.3.9]
 
