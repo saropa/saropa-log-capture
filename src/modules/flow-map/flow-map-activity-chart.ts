@@ -13,6 +13,9 @@
  */
 
 import type { ParsedLog } from './flow-map-model';
+import type { FlowShot } from './flow-map-screenshots';
+import { pickThumbShot, shotDataAttrs } from './flow-map-svg-shots';
+import { stripAnsi } from './flow-map-format';
 
 /** One time bin: how many samples fell in it, and the earliest log line to jump to. */
 interface Bin {
@@ -34,6 +37,13 @@ const MT = 16;
 const MB = 34;   // bottom margin — room for the time-axis clocks
 const PLOT_W = W - ML - MR;
 const PLOT_H = H - MT - MB;
+/** Thumbnail size in the capture strip below the x axis (portrait, matching a phone capture). */
+const SHOT_W = 30;
+const SHOT_H = 40;
+/** Height the strip adds to the canvas when at least one bin has a capture; 0 when none do. */
+const SHOT_STRIP_H = SHOT_H + 8;
+/** The XHTML namespace a `<foreignObject>` child must declare to survive XML parsing. */
+const XHTML_NS = 'http://www.w3.org/1999/xhtml';
 
 /** Escape text for XML/SVG (clocks are digits+colons, but titles get user-adjacent values). */
 function esc(s: string): string {
@@ -152,20 +162,125 @@ function lineHtml(bins: Bin[], maxCount: number): string {
     return `<polyline class="ac-line" points="${pts}"/>`;
 }
 
-/** Build the activity-chart section body (returns a note when there is nothing timed to plot). */
-export function activityChartHtml(parsed: ParsedLog, clockOf: (tsMs: number) => string): string {
+/** A timed sample reduced to the pair the capture lookup needs, sorted by `line` ascending. */
+interface LineAnchor { readonly line: number; readonly tsMs: number; }
+
+/**
+ * The samples that carry a log line, sorted BY LINE. Built once per chart rather than rescanned per
+ * capture, and sorted on the axis the lookup actually searches: `collectSamples` orders by tsMs, and
+ * "the last one in tsMs order whose line is at or before X" quietly assumes log lines rise with
+ * time. They normally do — but a device clock that steps backward mid-session breaks that assumption
+ * with no symptom beyond a thumbnail under the wrong point. Sorting by line removes the assumption
+ * instead of relying on it.
+ */
+function lineAnchors(samples: readonly Sample[]): LineAnchor[] {
+    const out: LineAnchor[] = [];
+    for (const s of samples) {
+        if (s.logLine !== undefined) { out.push({ line: s.logLine, tsMs: s.tsMs }); }
+    }
+    return out.sort((a, b) => a.line - b.line);
+}
+
+/**
+ * The moment a capture belongs to, resolved through its LOG LINE rather than its own clock.
+ *
+ * A capture's clock is HOST-local (see `formatClock` in flow-map-screenshots.ts) while every chart
+ * sample is DEVICE-local ms-of-day. Binning on the clock would scatter every thumbnail hours from
+ * its point the moment the device sits in another timezone — and would do it silently, since a
+ * thumbnail under the wrong bin still looks like a chart. Log line numbers are the one ordering both
+ * sides agree on: the capture happened at the same moment as the sample with the greatest log line
+ * at or before its own.
+ *
+ * Binary search, so the strip costs O((samples + shots) log samples) rather than a full scan per
+ * capture. Returns undefined when no timed sample precedes the capture — it cannot be placed, so it
+ * is left out rather than pinned to the chart's start.
+ */
+function shotTsMs(shot: FlowShot, anchors: readonly LineAnchor[]): number | undefined {
+    let lo = 0;
+    let hi = anchors.length - 1;
+    let found: number | undefined;
+    while (lo <= hi) {
+        const mid = (lo + hi) >> 1;
+        if (anchors[mid].line <= shot.logLine) { found = anchors[mid].tsMs; lo = mid + 1; } else { hi = mid - 1; }
+    }
+    return found;
+}
+
+/**
+ * One representative capture per bin. A bin can hold several (a burst on one screen), and at 30px a
+ * second thumbnail says nothing the first does not — `pickThumbShot` picks the same way a diagram
+ * card does, so the fault capture wins and the strip agrees with the cards above it.
+ */
+function shotsByBin(
+    shots: readonly FlowShot[], samples: readonly Sample[],
+    bins: { binCount: number; minTs: number; spanMs: number },
+): Map<number, FlowShot> {
+    const buckets = new Map<number, FlowShot[]>();
+    const anchors = lineAnchors(samples);
+    for (const shot of shots) {
+        const ts = shotTsMs(shot, anchors);
+        if (ts === undefined) { continue; }
+        const frac = bins.spanMs > 0 ? (ts - bins.minTs) / bins.spanMs : 0;
+        const idx = Math.min(bins.binCount - 1, Math.max(0, Math.floor(frac * bins.binCount)));
+        const list = buckets.get(idx);
+        if (list) { list.push(shot); } else { buckets.set(idx, [shot]); }
+    }
+    const out = new Map<number, FlowShot>();
+    for (const [idx, list] of buckets) {
+        const picked = pickThumbShot(list);
+        if (picked) { out.set(idx, picked.shot); }
+    }
+    return out;
+}
+
+/**
+ * The capture strip below the x axis: each bin's representative capture, drawn at that bin's own x.
+ * A `<foreignObject>` `<img>` (the same element the diagram cards use) rather than an HTML strip
+ * under the SVG, so the thumbnails share the chart's coordinate system and stay under their own
+ * points at every column width instead of re-deriving the mapping and drifting from it.
+ *
+ * `data-shot-index` counts the WHOLE session's captures, not the strip's, because these thumbnails
+ * open the same lightbox the gallery does and its counter must mean one thing.
+ */
+function shotStripHtml(byBin: ReadonlyMap<number, FlowShot>, binCount: number, all: readonly FlowShot[]): string {
+    const top = H + 4;
+    return [...byBin].map(([i, shot]) => {
+        const x = xOf(i, binCount) - SHOT_W / 2;
+        const screen = stripAnsi(shot.screenLabel ?? shot.trigger);
+        // Same `clock · trigger · screen` wording as the card thumbnails and the gallery caption, so
+        // one capture never describes itself three ways.
+        const title = esc(`${shot.clock} · ${shot.trigger} · ${screen}`);
+        const label = esc(screen);
+        return `<foreignObject x="${x.toFixed(1)}" y="${top}" width="${SHOT_W}" height="${SHOT_H}">`
+            + `<img xmlns="${XHTML_NS}" class="fm-mini-shot ac-shot" src="${esc(shot.src)}" role="button" `
+            + `tabindex="0" title="${title}" alt="${label}" aria-label="${label}"`
+            + `${shotDataAttrs(shot, all.indexOf(shot) + 1, all.length)}/></foreignObject>`;
+    }).join('');
+}
+
+/**
+ * Build the activity-chart section body (returns a note when there is nothing timed to plot).
+ * `shots` are the session's captures; the ones that can be placed get a thumbnail under their bin.
+ */
+export function activityChartHtml(
+    parsed: ParsedLog, clockOf: (tsMs: number) => string, shots: readonly FlowShot[] = [],
+): string {
     const samples = collectSamples(parsed);
     if (samples.length < 2) {
         return '<p class="ac-empty">Not enough timed activity to chart.</p>';
     }
-    const { bins } = buildBins(samples);
+    const { bins, minTs, spanMs } = buildBins(samples);
+    const byBin = shotsByBin(shots, samples, { binCount: bins.length, minTs, spanMs });
+    // The strip only costs canvas height when something is actually in it.
+    const canvasH = byBin.size > 0 ? H + SHOT_STRIP_H : H;
     const maxCount = Math.max(1, ...bins.map(b => b.count));
     const axisLine = `<line class="ac-axis" x1="${ML}" y1="${MT + PLOT_H}" x2="${ML + PLOT_W}" y2="${MT + PLOT_H}"/>`
         + `<line class="ac-axis" x1="${ML}" y1="${MT}" x2="${ML}" y2="${MT + PLOT_H}"/>`;
-    const svg = `<svg class="activity-chart" viewBox="0 0 ${W} ${H}" role="img" `
+    const svg = `<svg class="activity-chart" viewBox="0 0 ${W} ${canvasH}" role="img" `
         + `aria-label="Session activity over time" preserveAspectRatio="xMidYMid meet">`
         + yAxisHtml(maxCount) + axisLine + lineHtml(bins, maxCount)
         + pointsHtml(bins, maxCount, clockOf) + xAxisHtml(bins, clockOf)
+        + shotStripHtml(byBin, bins.length, shots)
         + '</svg>';
     return '<p class="legend">Event volume over the session. Click a point to jump the log to that moment.</p>'
         + '<div class="activity-wrap">' + svg + '</div>';

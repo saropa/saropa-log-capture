@@ -1,6 +1,6 @@
 # Plan 056 — Session Flow Map (screen-transition diagram)
 
-## Status: S1 implemented · S2 shipped · S3 shipped (2026-06-11: CSS-size zoom that scrolls instead of cropping + centers/fits, fixed center-on-fault, diagram pop-out panel, double-click node detail card, return-to-caller back arrows, edge time labels off the arrow, splitter floors lowered to 20px) · live log-filtering still proposed
+## Status: S1 implemented · S2 shipped · S3 shipped (2026-06-11: CSS-size zoom that scrolls instead of cropping + centers/fits, fixed center-on-fault, diagram pop-out panel, double-click node detail card, return-to-caller back arrows, edge time labels off the arrow, splitter floors lowered to 20px) · S2 extended (2026-08-08: cards draggable with live edge re-routing, lightbox prev/next, capture thumbnails on the activity timeline and the screen-visit table, lightbox wheel-zoom fix, container-query detail column) · live log-filtering still proposed
 
 **S1 (the combined session report) shipped** as the `saropaLogCapture.exportFlowMap` command —
 log parser, error-causing-widget parser, static source scan (contacts preset), graph builder
@@ -447,3 +447,135 @@ This work will be reviewed by another AI.
 **Outstanding (S2 still proposed):** click-a-node → filter the *main log viewer* to that node's dwell windows (cross-webview into the viewer's filter pipeline); interactive possible-vs-walked overlay toggle; and the 30-node layout/perf check. The pan/zoom interactions are verified by unit tests at the HTML/wiring level but not yet exercised on a device — that is the user's F5 check. Plan stays active.
 
 **Finish report appended:** plans/056_plan-session-flow-map.md
+
+---
+
+## Finish Report (2026-08-08) — S2: hand rearrangement, inline captures, lightbox navigation
+
+**The defects.** The diagram's automatic layout was the only arrangement available, so a reader who
+wanted two particular screens side by side had no recourse. The screenshot lightbox's wheel zoom was
+unusable: the picture jumped on every tick and the left edge of a zoomed capture could not be
+reached. Captures were reachable only from the gallery and the diagram cards, though the activity
+timeline and the screen-visit table both list moments a capture exists for. The executive summary
+wrapped at 60ch in the middle of a column the reader had widened, and the session-info list stayed
+one label/value pair wide however wide that column got.
+
+### Cards can be rearranged by hand
+
+`renderNode` now publishes each card's laid-out box (`data-key`, `data-nx/ny/nw/nh`) and
+`renderEdge` wraps every edge in `<g class="fm-edge" data-from data-to>` (plus `data-back` and
+`data-backidx` for a return curve's bulge lane). The three edge-geometry constants are serialized
+once onto the `<svg>` as `data-geom`.
+
+A new client script, `flow-map-panel-drag-script.ts`, moves a pressed card by a group `transform`
+and recomputes every incident edge from those attributes — arrow endpoints, dwell labels, return
+curves and return counts. It reproduces `renderEdge`/`renderBackEdge` coordinate for coordinate
+rather than measuring the DOM, and reads the geometry constants off `data-geom` rather than keeping
+a second copy that would drift on the next tuning pass. The back-edge lane is read, never
+recomputed: recomputing it would let two returns collapse onto each other the moment a drag changed
+which card is rightmost.
+
+Pointer deltas are divided by the live zoom ratio (`getBoundingClientRect().width` over the viewBox
+width); without it a card at 40% zoom travels two and a half times as far as the pointer. A 4px
+movement threshold preserves the card's existing click (row highlight + log jump) and double-click
+(detail popup). The click that ends a drag is swallowed in the capture phase, so dragging a card by
+its thumbnail does not also open the screenshot.
+
+`pointerdown` deliberately does NOT call `preventDefault()`: suppressing the default action also
+suppresses focus-on-mousedown, which would silently cost every card its focus ring and break the Tab
+order after a click. What actually needed suppressing was the browser's native image-drag on a
+card's thumbnail, handled as a `dragstart` while a drag is armed.
+
+Positions are not persisted. A refresh re-parses the log and re-lays out the graph, so a stored
+offset would apply to a card the layout has already moved — a saved arrangement would silently
+become a scrambled one. `resetView` in the lens now clears the arrangement as well as the zoom,
+guarded on the hook's presence because the drag script is a sibling script block a panel could omit.
+
+`nodes`, `incident` and `offsets` are `Object.create(null)`, including on reset: their keys derive
+from the app's own log text, and a screen normalizing to `__proto__` would otherwise reassign a
+plain object's prototype and throw mid-loop, leaving every edge after it un-wired.
+
+### Lightbox zoom
+
+The root cause was `.fms-stage` having no height cap. Without one the stage grew with the zoomed
+image and the *card* scrolled instead, so the zoom script's `scrollLeft`/`scrollTop` anchoring wrote
+to a container that could not scroll. Compounding it, `justify-content: center` on a scroll container
+makes the overflowing leading edge unreachable — `scrollLeft` cannot go below zero — so the left of
+a zoomed capture was permanently clipped. The stage is now `max-height: 70vh; overflow: auto;
+display: block` with the image centered by `margin: auto`. The fit branch of `zoomApply` clears its
+three inline properties instead of restating `70vh`, leaving the stylesheet as the single definition
+of "fit".
+
+### Lightbox navigation
+
+`flow-map-panel-lightbox-nav.ts` adds previous/next buttons and arrow keys, navigating within the
+surface the overlay was opened from (`shot-img`, `fm-shot`, `fm-mini-shot`). A flat session-wide list
+was rejected: the three surfaces have three different denominators, so walking one list would jump
+the reader between surfaces and make the overlay's own "Capture 3 of 7" counter disagree with where
+the arrows go. Captures whose file failed to load are excluded — their click target is stripped, so
+stepping onto one opens an empty stage with no statement of why. The ends disable rather than wrap.
+
+Arrow keys defer to a focused form control (the zoom slider is a range input in the same dialog) and
+to the compare view while its pane is showing — stepping to another capture rebuilds the dialog and
+would silently discard the comparison the reader had set up. The compare guard keys off the visible
+pane, not the focused tag name: the dialog's close button takes focus the moment it opens, so a
+`BUTTON` exclusion would disable arrow navigation by default everywhere else. The flag that
+suppresses the intermediate focus restore is cleared in a `finally`; left set by a throw it would
+disable focus restoration for the life of the panel.
+
+### Captures on the timeline and the screen-visit table
+
+The activity chart renders a representative capture per bin as a `<foreignObject>` image inside the
+chart SVG, so the thumbnails share the chart's coordinate system and stay under their own points at
+every column width. Captures are binned by **log line**, never by clock: a capture's clock is
+host-local while every chart sample is device-local ms-of-day, so clock binning would scatter every
+thumbnail hours from its point on a device in another timezone — silently, since a misplaced
+thumbnail still looks like a chart. A capture no timed sample precedes is left out rather than
+pinned to the chart's start. The canvas grows by the strip's height only when the strip has content.
+
+The screen-visit table gains a leading capture column, present only when the session captured
+something. An uncaptured screen still emits an empty cell: a row with fewer cells than its header
+shifts every later column left and still renders. Both surfaces pick their capture with
+`pickThumbShot`, so a row, a timeline point and a diagram card never show different pictures of the
+same screen, and both count `data-shot-index` against the whole session so the shared lightbox's
+counter means one thing everywhere.
+
+### Column responsiveness
+
+`.detail-col` is now a named container-query context (`container-type: inline-size`), so
+`.session-info` splits into two label/value pairs at 620px of *column* width. A viewport media query
+was rejected: the divider between the columns is user-draggable, so a viewport rule would promote a
+300px column to two pairs simply because the window is wide. `#narrative-text` opts out of the
+`.detail-col p` 60ch measure — the executive summary is one dense paragraph the reader scans, and
+capping it mid-column leaves a ragged half-empty band beside the tables it summarizes.
+
+**Files changed:** `flow-map-svg.ts` (node/edge/svg data attributes, `edgeShapes` split out),
+`flow-map-activity-chart.ts` (`shotTsMs`, `shotsByBin`, `shotStripHtml`), `flow-map-html-shots.ts`
+(`shotCellHtml`), `flow-map-html.ts` (dwell column, chart shots), `flow-map-panel-drag-script.ts`
+(new), `flow-map-panel-lightbox-nav.ts` (new), `flow-map-panel-lightbox-script.ts` (nav wiring,
+third binder class), `flow-map-panel-lightbox-zoom.ts` (fit clears inline styles),
+`flow-map-panel-zoom-script.ts` (reset clears the arrangement), `flow-map-panel-styles.ts` and
+`-styles-shots.ts` (stage cap, container query, narrative width, mini thumbnails, drag cursors),
+`flow-map-panel.ts` (script registration and labels), `strings-flow-map.ts`
+(`flowMap.shot.prev` / `.next`), `CHANGELOG.md`, `README.md`.
+
+**Tests:** two new suites — `flow-map-node-drag.test.ts` (16 cases: the rendered attribute contract
+from both ends, the geometry-constant fallback, scale division, both re-route kinds, the movement
+threshold, capture-phase click swallowing, the unplaced-endpoint guard, the reset hook, the absent
+`preventDefault`, the `dragstart` guard, prototype-free key maps) and `flow-map-inline-shots.test.ts`
+(15 cases: dwell cells present/empty/absent, session-wide capture indices, timeline placement,
+log-line binning, canvas growth, unplaceable captures, the nav surface list, missing-file exclusion,
+non-wrapping ends, slider arrow keys, the compare guard, the `finally` reset). The binder-selector
+assertion in `flow-map-shot-thumbs.test.ts` was updated to the three-class selector. All ten
+flow-map suites pass (196 cases). `npm run check-types` clean; `npm run lint` 0 errors with the 14
+pre-existing warnings unchanged; `npm run compile` passes every verify gate; `dist/extension.js`
+5.42 MiB against a 12 MiB ceiling.
+
+**Not verified on device.** None of this has been exercised in the Extension Development Host — the
+drag gesture against a real pointer, the zoom anchor against a real image decode, arrow navigation
+across the three surfaces, and the container query's behavior in the webview's Chromium are all
+verified only at the generated-markup level.
+
+**Outstanding (S2 still proposed):** click-a-node to filter the main log viewer to that node's dwell
+windows; the interactive possible-vs-walked overlay toggle; the 30-node layout/perf check. Plan stays
+active.

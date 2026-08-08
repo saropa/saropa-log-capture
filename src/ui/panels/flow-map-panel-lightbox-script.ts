@@ -16,6 +16,7 @@
  */
 
 import { flowMapLightboxZoomJs } from './flow-map-panel-lightbox-zoom';
+import { flowMapLightboxNavJs } from './flow-map-panel-lightbox-nav';
 import { flowMapLightboxCompareJs, type CompareSessionRef } from './flow-map-panel-lightbox-compare';
 
 /** Labels the overlay renders, resolved host-side so the webview needs no l10n runtime. */
@@ -47,6 +48,9 @@ export interface LightboxLabels {
     readonly compareThisSession: string;
     readonly compareLoading: string;
     readonly compareNoMatch: string;
+    /** Prev/next within the surface the lightbox was opened from — see `navSetFor`. */
+    readonly prev: string;
+    readonly next: string;
 }
 
 /** The full `<script>` block wiring the screenshot lightbox, nonce-guarded for CSP. */
@@ -58,13 +62,15 @@ export function flowMapLightboxScript(
   var overlay = null;
   var opener = null;
 ${flowMapLightboxZoomJs()}
+${flowMapLightboxNavJs()}
 ${flowMapLightboxCompareJs(sessions)}
 
   function close(){
     if (overlay) { overlay.remove(); overlay = null; }
     // Return focus where it came from: the diagram and the gallery are both keyboard-navigable, and
     // dropping focus to <body> on close would send the next Tab back to the top of the panel.
-    if (opener && opener.focus) { opener.focus(); }
+    // Skipped mid-navigation (‹/›), which tears the overlay down only to rebuild it — see navGo.
+    if (!navigating && opener && opener.focus) { opener.focus(); }
     opener = null;
   }
 
@@ -196,6 +202,7 @@ ${flowMapLightboxCompareJs(sessions)}
     close();
     // Captured BEFORE the overlay steals focus, so close() can hand it back to the exact thumbnail.
     opener = el;
+    navReset(el);
     overlay = document.createElement('div');
     overlay.className = 'fms-overlay';
     overlay.setAttribute('role', 'dialog');
@@ -235,7 +242,12 @@ ${flowMapLightboxCompareJs(sessions)}
     card.appendChild(zoomBar(stage, img));
     if (compareBar) { card.appendChild(compareBar); }
     var count = counterText(el);
-    if (count) {
+    // The nav bar carries the counter itself when there is anywhere to navigate, so the two never
+    // render as two separate lines both stating where the reader is.
+    var nav = navBar(count);
+    if (nav) {
+      card.appendChild(nav);
+    } else if (count) {
       var cd = document.createElement('div');
       cd.className = 'fms-count';
       cd.textContent = count;
@@ -265,7 +277,9 @@ ${flowMapLightboxCompareJs(sessions)}
 
   // Both surfaces are plain <img> now — the diagram's lives inside a <foreignObject> (see
   // thumbMarkup), so one selector and one src accessor cover the gallery and the cards alike.
-  document.querySelectorAll('img.shot-img, img.fm-shot').forEach(function(img){
+  // .fm-mini-shot are the inline thumbnails on the timeline points and the dwell rows — same data
+  // attributes, same lightbox, so they join the binder rather than growing a second one.
+  document.querySelectorAll('img.shot-img, img.fm-shot, img.fm-mini-shot').forEach(function(img){
     bind(img, function(){ return img.src; });
     // A capture that existed when the report was built can be gone by the time the browser fetches
     // it, and a wrong localResourceRoots fails the same way. Without this the reader gets the
@@ -280,7 +294,10 @@ ${flowMapLightboxCompareJs(sessions)}
     });
   });
 
-  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && overlay) { close(); } });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && overlay) { close(); return; }
+    navKey(e);
+  });
   // The only inbound message this panel handles: another session's captures of the open screen.
   window.addEventListener('message', function(e){
     if (e.data && e.data.type === 'flowMapCompareShots') { cmpApplyShots(e.data); }

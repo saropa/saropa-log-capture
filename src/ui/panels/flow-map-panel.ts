@@ -14,6 +14,7 @@ import { buildFlowDiagramBody, buildFlowMapBody } from '../../modules/flow-map/f
 import { flowMapStyles } from './flow-map-panel-styles';
 import { flowMapScript } from './flow-map-panel-script';
 import { flowMapZoomScript } from './flow-map-panel-zoom-script';
+import { flowMapDragScript } from './flow-map-panel-drag-script';
 import { flowMapReplayScript } from './flow-map-panel-replay-script';
 import { flowMapLightboxScript, type LightboxLabels } from './flow-map-panel-lightbox-script';
 import {
@@ -106,6 +107,8 @@ function lightboxLabels(): LightboxLabels {
         zoom: t('flowMap.shot.zoom'),
         zoomHint: t('flowMap.shot.zoomHint'),
         unavailable: t('flowMap.shot.unavailable'),
+        prev: t('flowMap.shot.prev'),
+        next: t('flowMap.shot.next'),
         compare: t('flowMap.shot.compare'),
         comparePrev: t('flowMap.shot.comparePrev'),
         compareNext: t('flowMap.shot.compareNext'),
@@ -178,6 +181,7 @@ ${flowMapStyles(nonce)}</head><body>
 ${body}
 ${flowMapScript(nonce)}
 ${flowMapZoomScript(nonce)}
+${flowMapDragScript(nonce)}
 ${flowMapReplayScript(nonce)}
 ${flowMapLightboxScript(nonce, lightboxLabels(), params.compareSessions)}</body></html>`;
 }
@@ -195,6 +199,7 @@ ${flowMapStyles(nonce)}</head><body>
 ${buildFlowDiagramBody(params.graph, withWebviewSrc(webview, params.screenshots))}
 ${flowMapScript(nonce)}
 ${flowMapZoomScript(nonce)}
+${flowMapDragScript(nonce)}
 ${flowMapReplayScript(nonce)}
 ${flowMapLightboxScript(nonce, lightboxLabels(), params.compareSessions)}</body></html>`;
 }

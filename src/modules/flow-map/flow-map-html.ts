@@ -8,7 +8,7 @@
 
 import type { FlowGraph, FlowNode, IssueEvent, ParsedLog, SourceAnchor } from './flow-map-model';
 import type { FlowShot } from './flow-map-screenshots';
-import { screenshotsSectionHtml } from './flow-map-html-shots';
+import { screenshotsSectionHtml, shotCellHtml } from './flow-map-html-shots';
 import { groupShotsByScreen, shotSetsIsland } from './flow-map-svg-shots';
 import { anchorText, formatActions, formatDwellMs, nodeHasError, stripAnsi } from './flow-map-format';
 import { renderSvg } from './flow-map-svg';
@@ -111,11 +111,19 @@ function dwellCell(node: FlowNode, maxDwell: number): string {
         + `<span class="dwell-text">${esc(formatDwellMs(node.dwellMs))}</span></td>`;
 }
 
-/** Dwell table over walked nodes, in entry order. Rows carry data-key for diagram cross-highlight. */
-function dwellTableHtml(graph: FlowGraph): string {
+/**
+ * Dwell table over walked nodes, in entry order. Rows carry data-key for diagram cross-highlight.
+ *
+ * The leading capture column appears only when the session captured something: an always-present
+ * column of empty cells costs width on every row of a table that, in most sessions, has no captures
+ * to show at all.
+ */
+function dwellTableHtml(graph: FlowGraph, shots: readonly FlowShot[]): string {
     const walked = graph.nodes.filter(n => n.walked && n.kind !== 'launch');
     const maxDwell = Math.max(1, ...walked.map(n => n.dwellMs));
     const labels = kindLabel();
+    const byScreen = groupShotsByScreen(shots);
+    const withShots = shots.length > 0;
     const rows = walked
         .sort((a, b) => (a.firstTsMs ?? 0) - (b.firstTsMs ?? 0))
         .map(n => {
@@ -123,11 +131,17 @@ function dwellTableHtml(graph: FlowGraph): string {
             const cleanLabel = esc(stripAnsi(n.label));
             const label = actions ? `${cleanLabel} · ${esc(actions)}` : cleanLabel;
             const entered = n.firstTsMs !== undefined ? clockOf(n.firstTsMs) : '';
-            return `<tr data-key="${esc(n.key)}"><td>${label}</td><td class="ctr">${labels[n.kind]}</td>`
+            const shotCell = withShots ? shotCellHtml(byScreen.get(n.key) ?? [], shots) : '';
+            return `<tr data-key="${esc(n.key)}">${shotCell}<td>${label}</td><td class="ctr">${labels[n.kind]}</td>`
                 + `<td class="num">${entered}</td>${dwellCell(n, maxDwell)}<td class="num">${n.visits}</td>`
                 + `${sourceCell(n.source)}${logCell(n.logLine)}</tr>`;
         }).join('');
-    return `<table><thead><tr><th>${t('flowMap.th.screenPhase')}</th><th class="ctr">${t('flowMap.th.type')}</th>`
+    // The capture header is a glyph, not a word: at 34px a translated column name would wrap to
+    // three lines and set the whole header row's height.
+    const shotHead = withShots
+        ? `<th class="shot-cell" title="${esc(t('flowMap.shot.title'))}" `
+            + `aria-label="${esc(t('flowMap.shot.title'))}">📷</th>` : '';
+    return `<table><thead><tr>${shotHead}<th>${t('flowMap.th.screenPhase')}</th><th class="ctr">${t('flowMap.th.type')}</th>`
         + `<th class="num">${t('flowMap.th.entered')}</th><th>${t('flowMap.th.duration')}</th>`
         + `<th class="num">${t('flowMap.th.visits')}</th><th>${t('flowMap.th.source')}</th>`
         + `<th>${t('flowMap.th.log')}</th></tr></thead><tbody>${rows}</tbody></table>`;
@@ -253,12 +267,16 @@ export function flowDiagramHtml(graph: FlowGraph, opts: FlowDiagramOptions = {})
         return `<p class="fm-empty">${esc(t('flowMap.emptyDiagram'))}</p>${detail}${suggestBlockHtml(suggestions)}`;
     }
     const hasCrash = graph.nodes.some(nodeHasError);
+    // Gated like the crash control: with nothing timestamped there is no axis to lay cards out
+    // along, so the button would be present and inert.
+    const hasTimes = graph.nodes.some(n => n.firstTsMs !== undefined);
     const btn = (zoom: string, glyph: string, label: string, extra = '') =>
         `<button class="fm-zoom-btn${extra}" data-zoom="${zoom}" title="${label}" aria-label="${label}">${glyph}</button>`;
     const zoomToolbar = '<div class="fm-zoom-toolbar">'
         + btn('in', '+', t('flowMap.zoomInBtn'))
         + btn('out', '−', t('flowMap.zoomOutBtn'))
         + btn('reset', '⧉', t('flowMap.resetViewBtn'))
+        + (hasTimes ? btn('time', '⏱', t('flowMap.arrangeByTimeBtn')) : '')
         + btn('replay', '▶', t('flowMap.replayBtn'))
         + (hasCrash ? btn('crash', '💥', t('flowMap.jumpToCrashBtn'), ' fm-zoom-crash') : '')
         + (withPopout ? btn('popout', '⤢', t('flowMap.popOutBtn')) : '')
@@ -346,8 +364,8 @@ export function buildFlowMapBody(
         + section('sec-narrative', titles.narrative, narrativeSectionHtml(parsed, graph))
         + section('sec-session', titles.session, sessionInfoHtml(parsed, graph, logPath))
         + shotsSection
-        + section('sec-activity', titles.activity, activityChartHtml(parsed, clockOf))
-        + section('sec-dwell', titles.dwell, dwellTableHtml(graph))
+        + section('sec-activity', titles.activity, activityChartHtml(parsed, clockOf, screenshots))
+        + section('sec-dwell', titles.dwell, dwellTableHtml(graph, screenshots))
         + section('sec-perf', titles.issues, issueTableHtml(parsed))
         + '</div>';
     // A draggable divider between the two columns lets the reader trade diagram width for detail
