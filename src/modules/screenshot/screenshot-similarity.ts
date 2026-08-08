@@ -67,13 +67,23 @@ export function compareSignatures(a: ShotSignature, b: ShotSignature): number {
 }
 
 /**
- * A bounded ring of recent signatures. Bounded because the capturer runs for the life of a session
- * and an unbounded history is a leak; a ring rather than "just the last one" because captures often
- * alternate between two screens (A, B, A, B), and comparing only against the immediately previous
- * capture would call every one of those novel.
+ * Bounded ring of recent capture signatures.
+ *
+ * ONE ring for the whole session, deliberately — NOT one per screen. Keying by screen sounds more
+ * precise ("have I captured THIS screen looking like this"), and it was tried: measured against a
+ * real seven-capture session it skipped nothing at all, where the single ring correctly skipped two
+ * exact duplicates. The reason is that the screen label available at capture time comes from the
+ * navigation breadcrumb on the triggering line, and that label routinely disagrees with what is
+ * actually on screen — a capture taken just after a route change still shows the previous screen.
+ * Keying on an unreliable label partitioned identical pictures into separate buckets and lost the
+ * whole benefit. The picture is the more reliable identity, so the picture is what is compared.
+ *
+ * Bounded because the capturer runs for the life of the extension host; a ring rather than "just the
+ * last one" because captures often alternate between two screens (A, B, A) and a one-deep memory
+ * would call every one of those novel.
  */
 export class RecentShotSignatures {
-    private readonly entries: ShotSignature[] = [];
+    private entries: ShotSignature[] = [];
 
     constructor(private readonly capacity = 4) { }
 
@@ -98,31 +108,41 @@ export class RecentShotSignatures {
         if (this.entries.length > this.capacity) { this.entries.shift(); }
     }
 
-    /** Forget everything — called when the session changes, so one log never bleeds into the next. */
+    /** Forget everything — called when the log changes, so one session never bleeds into the next. */
     clear(): void {
-        this.entries.length = 0;
+        this.entries = [];
     }
 }
 
-/** What the capturer should do with a capture it just took. */
+/**
+ * What the capturer should do with a capture it just took. `unreadable` is distinct from `kept`
+ * because it means the comparison never happened — the caller reports it once rather than letting
+ * dedup look like it silently stopped working.
+ */
 export type DuplicateVerdict =
-    | { readonly duplicate: false }
+    | { readonly duplicate: false; readonly unreadable: boolean }
     | { readonly duplicate: true; readonly similarity: number };
+
+/** Inputs for one duplicate decision, bundled to keep the call inside the parameter limit. */
+export interface DuplicateQuery {
+    readonly png: Buffer;
+    readonly recent: RecentShotSignatures;
+    readonly threshold: number;
+}
 
 /**
  * Whether this capture is a near-duplicate of a recent one. Only ever answers `true` on a real
- * comparison: unreadable bytes and an empty history both return `false`, so every uncertainty keeps
- * the capture. Dropping a capture the user needed is a worse failure than keeping one they did not.
+ * comparison: unreadable bytes and an empty history both keep the capture. Dropping a capture the
+ * user needed is a worse failure than keeping one they did not.
  */
-export function duplicateVerdict(
-    png: Buffer, recent: RecentShotSignatures, threshold: number,
-): DuplicateVerdict {
+export function duplicateVerdict(query: DuplicateQuery): DuplicateVerdict {
+    const { png, recent, threshold } = query;
     const signature = signatureOf(png);
-    if (!signature) { return { duplicate: false }; }
+    if (!signature) { return { duplicate: false, unreadable: true }; }
     const best = recent.bestMatch(signature);
     if (best !== undefined && best >= threshold) { return { duplicate: true, similarity: best }; }
     // Only NEW pictures enter the history. Remembering duplicates too would let a long run of
     // near-identical captures drift the ring away from the picture it is meant to represent.
     recent.remember(signature);
-    return { duplicate: false };
+    return { duplicate: false, unreadable: false };
 }
