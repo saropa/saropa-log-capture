@@ -224,13 +224,49 @@ reading an arbitrary path. Replies are addressed by log path plus screen key, an
 mid-flight (the reader returning to this session) is dropped rather than allowed to land later and
 silently replace what they chose.
 
+## Near-duplicate captures
+
+Field report: "many of your screenshots are identical except for the phone's clock." The capturer
+already deduped FAULT captures, but on a fingerprint of the LOG LINE that triggered them, not on the
+picture — so two navigation captures of one screen carried different trigger text and were both kept
+however alike they looked.
+
+Captures are now compared as pictures, behind `integrations.screenshots.skipNearDuplicates`
+(**off by default** — this is the only setting in the group that discards a capture the user would
+otherwise have).
+
+- **No new dependency.** `png-decode.ts` reads PNG with Node's own `zlib`: chunk walk, inflate,
+  scanline unfiltering (all five filter types), sampling straight into a small grid so peak memory is
+  one scanline rather than width × height × 4. Scope is 8-bit non-interlaced grayscale/RGB/RGBA;
+  anything else returns undefined, and undefined always means "keep the capture".
+- **A 16 × 32 grayscale signature, not a pixel diff.** Downsampling is what makes the comparison
+  robust to encoder noise and one-pixel shifts, which a strict comparison would report as change.
+- **The top 6% is excluded.** That strip is the status bar — the clock and signal bars — and it is
+  the only region that differs between two otherwise identical captures.
+- **Faults and manual captures are never skipped.** The picture at the moment of an error is the
+  report's whole point, and an explicit capture request is not a duplicate to refuse.
+- **A bounded ring of 4 recent signatures**, not just the previous capture: captures often alternate
+  between two screens, and a one-deep memory would call every one of those novel. Only NEW pictures
+  enter the ring, so a long near-identical run cannot drift it.
+- **The ring resets when the log changes.** The capturer lives for the whole extension host, not one
+  session; without the reset a new run's first screenshot would be compared against the previous
+  run's last one and could be discarded before the new log had a single capture.
+- **Every skip is logged with its similarity.** A dropped capture is invisible by nature, so a
+  threshold that turns out wrong has to be diagnosable from the output channel rather than from a
+  reader wondering where their screenshots went.
+
+Measured against the reported session's seven real captures: three pairs scored 100%, and with the
+rule applied five captures are kept and two skipped — with the warning and error captures among those
+kept. Pairwise scores for genuinely different screens landed at 76-91%, well clear of the 0.985
+threshold.
+
 ## Verification
 
 - `npm run check-types` — 0 errors.
 - `npm run lint` — 0 errors, 14 pre-existing warnings.
 - `npm run compile` — full gate chain green, including `verify:l10n-keys` (2561 keys), the webview
   message catalogs, and `verify:dist-size`.
-- 191 tests passing across the thirteen affected suites, including three new files:
+- 231 tests passing across the fifteen affected suites, including five new files:
   `flow-map-svg-layout.test.ts` (13) covering fault-leaf extraction, back-edge exclusion, orphan
   retention, row wrapping, and rendered canvas width; and `screenshot-sidecar-validation.test.ts`
   (6) covering trigger-union rejection, per-field defaulting, and malformed sidecars. The layout

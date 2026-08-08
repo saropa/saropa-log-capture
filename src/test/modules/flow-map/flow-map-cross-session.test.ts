@@ -61,16 +61,41 @@ suite('FlowMap cross-session compare', () => {
         assert.deepStrictEqual(await findCompareSessions(vscode.Uri.file(self)), []);
     });
 
-    test('should offer the newest sessions first and cap the list', async () => {
-        // Logs are timestamp-named, so a lexical sort IS chronological — that is why the scan does
-        // not stat every candidate for a real mtime.
+    test('should offer the most recently captured sessions first and cap the list', async () => {
+        // Ordered by when each session last CAPTURED (the sidecar's mtime), not by filename — the
+        // sessions are created in ascending name order here, so a correct sort reverses them.
         const self = await makeSession('20260101_000000_app', LINES, [{ file: '001_nav_1.png', logLine: 3 }]);
         for (let i = 1; i <= MAX_COMPARE_SESSIONS + 3; i++) {
             await makeSession(`202602${String(i).padStart(2, '0')}_090000_app`, LINES, [{ file: '001_nav_1.png', logLine: 3 }]);
         }
         const found = await findCompareSessions(vscode.Uri.file(self));
         assert.strictEqual(found.length, MAX_COMPARE_SESSIONS, 'capped');
-        assert.ok(found[0].label > found[1].label, 'newest first');
+        assert.ok(found[0].lastCaptureMs >= found[1].lastCaptureMs, 'most recent capture first');
+    });
+
+    test('should order by LAST CAPTURE, not by filename', async () => {
+        // The case a lexical sort gets wrong: a log whose name sorts first was captured last —
+        // a copied or renamed log, which is ordinary once a report is shared or archived.
+        const self = await makeSession('20260301_000000_app', LINES, [{ file: '001_nav_1.png', logLine: 3 }]);
+        await makeSession('20260101_090000_older_name', LINES, [{ file: '001_nav_1.png', logLine: 3 }]);
+        await makeSession('20260102_090000_newer_name', LINES, [{ file: '001_nav_1.png', logLine: 3 }]);
+        // Touch the LEXICALLY-FIRST session's sidecar so it is the most recently captured.
+        const stale = vscode.Uri.file(path.join(dir, '20260101_090000_older_name.screenshots.json'));
+        const body = await vscode.workspace.fs.readFile(stale);
+        await new Promise(r => setTimeout(r, 1100));
+        await vscode.workspace.fs.writeFile(stale, body);
+        const found = await findCompareSessions(vscode.Uri.file(self));
+        assert.strictEqual(found[0].label, '20260101_090000_older_name',
+            'the freshly-captured session leads even though its name sorts first');
+    });
+
+    test('should refuse to read a log too large to parse for a comparison', async () => {
+        // The read happens behind a dropdown the reader can work repeatedly; an unbounded parse
+        // there is how a panel stops responding.
+        const other = await makeSession('20260102_090000_app', LINES, [{ file: '001_nav_1.png', logLine: 3 }]);
+        const huge = Buffer.alloc(33 * 1024 * 1024, 0x41);
+        await vscode.workspace.fs.writeFile(vscode.Uri.file(other), huge);
+        assert.deepStrictEqual(await loadSessionShots(other), [], 'over-size log yields no comparison');
     });
 
     test('should join another session\'s captures to the screens they were taken on', async () => {

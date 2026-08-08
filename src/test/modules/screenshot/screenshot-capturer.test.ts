@@ -3,6 +3,7 @@ import { ScreenshotCapturer, type ScreenshotCapturerDeps } from '../../../module
 import { ScreenshotStore, type ScreenshotSaveResult } from '../../../modules/screenshot/screenshot-store';
 import type { LineData } from '../../../modules/session/session-event-bus';
 
+
 function makeLine(text: string, overrides: Partial<LineData> = {}): LineData {
     return {
         text,
@@ -46,7 +47,7 @@ function makeHarness(overrides: Partial<ScreenshotCapturerDeps> = {}): Harness {
     const clock = { now: 1000000 };
     const deps: ScreenshotCapturerDeps = {
         isEnabled: () => true,
-        triggerSettings: () => ({ onError: true, onWarning: false, onNavigation: false, cooldownMs: 2000, maxPerLog: 50 }),
+        triggerSettings: () => ({ onError: true, onWarning: false, onNavigation: false, cooldownMs: 2000, maxPerLog: 50, skipNearDuplicates: false, duplicateSimilarity: 0.985 }),
         getVmServiceWsUri: () => 'ws://127.0.0.1:1234/tok=/ws',
         capturePng: () => Promise.resolve(new Uint8Array([1])),
         store: store as unknown as ScreenshotStore,
@@ -194,7 +195,7 @@ suite('ScreenshotCapturer', () => {
 
     test('should skip the tier classifier entirely when no trigger is enabled', async () => {
         const h = makeHarness({
-            triggerSettings: () => ({ onError: false, onWarning: false, onNavigation: false, cooldownMs: 2000, maxPerLog: 50 }),
+            triggerSettings: () => ({ onError: false, onWarning: false, onNavigation: false, cooldownMs: 2000, maxPerLog: 50, skipNearDuplicates: false, duplicateSimilarity: 0.985 }),
         });
         h.capturer.onLine(makeLine('Unhandled Exception: something broke'));
         await h.flush();
