@@ -36,18 +36,35 @@ export interface ScreenshotDiagnosis {
 /** `yes` / `no`, so a scanning reader can see state without parsing prose. */
 function yn(value: boolean): string { return value ? 'yes' : 'no'; }
 
+/** One labelled row of the report. */
+type Row = readonly [label: string, value: string];
+
+/**
+ * Align a block's values into a column, computed from the block's own longest label.
+ *
+ * Hand-padded strings looked identical and were not: adding one row silently misaligned the block,
+ * and nothing would have caught it because the report is read, never asserted character by character.
+ */
+function rows(entries: readonly Row[]): string[] {
+    // Guarded because Math.max of nothing is -Infinity, and padEnd(-Infinity) throws. No caller
+    // passes an empty block today; one that builds its rows conditionally would.
+    if (entries.length === 0) { return []; }
+    const width = Math.max(...entries.map(([label]) => label.length));
+    return entries.map(([label, value]) => `  ${label.padEnd(width)}  ${value}`);
+}
+
 /** Settings block: what the pipeline was told to do, as it resolved them. */
 function settingsLines(s: ScreenshotSettings): string[] {
-    return [
-        `  enabled:            ${yn(s.enabled)}`,
-        `  on error:           ${yn(s.onError)}`,
-        `  on warning:         ${yn(s.onWarning)}`,
-        `  on navigation:      ${yn(s.onNavigation)}`,
-        `  cooldown:           ${s.cooldownMs} ms`,
-        `  max per log:        ${s.maxPerLog}`,
-        `  skip near-dupes:    ${yn(s.skipNearDuplicates)}`,
-        `  similarity:         ${s.duplicateSimilarity}`,
-    ];
+    return rows([
+        ['enabled:', yn(s.enabled)],
+        ['on error:', yn(s.onError)],
+        ['on warning:', yn(s.onWarning)],
+        ['on navigation:', yn(s.onNavigation)],
+        ['cooldown:', `${s.cooldownMs} ms`],
+        ['max per log:', String(s.maxPerLog)],
+        ['skip near-dupes:', yn(s.skipNearDuplicates)],
+        ['similarity:', String(s.duplicateSimilarity)],
+    ]);
 }
 
 /**
@@ -58,24 +75,22 @@ function settingsLines(s: ScreenshotSettings): string[] {
 async function countLines(d: ScreenshotDiagnosis): Promise<string[]> {
     if (!d.logFsPath) { return ['  (no session is running, so there is nothing to count)']; }
     const summary = await readScreenshotSummary(d.logFsPath);
-    return [
-        `  captures kept:      ${d.store.countForLog(d.logFsPath)} this process, ${summary.entries.length} on disk`,
-        `  near-dupes skipped: ${d.store.suppressedForLog(d.logFsPath)} this process, ${summary.suppressed} on disk`,
-        `  count write queued: ${yn(d.store.hasPendingSuppressed)}`,
-        `  logcat crashes held as replay: ${d.capturer.suppressedLogcatCrashes}`,
-    ];
+    return rows([
+        ['captures kept:', `${d.store.countForLog(d.logFsPath)} this process, ${summary.entries.length} on disk`],
+        ['near-dupes skipped:', `${d.store.suppressedForLog(d.logFsPath)} this process, ${summary.suppressed} on disk`],
+        ['count write queued:', yn(d.store.hasPendingSuppressed)],
+        ['logcat crashes held as replay:', String(d.capturer.suppressedLogcatCrashes)],
+    ]);
 }
 
 /** Where block: the paths a reader needs to look at the files themselves. */
 function pathLines(logFsPath: string | undefined): string[] {
     if (!logFsPath) { return []; }
-    return [
-        '',
-        'Where:',
-        `  log:      ${logFsPath}`,
-        `  captures: ${screenshotDirUri(logFsPath).fsPath}`,
-        `  sidecar:  ${screenshotSidecarUri(logFsPath).fsPath}`,
-    ];
+    return ['', 'Where:', ...rows([
+        ['log:', logFsPath],
+        ['captures:', screenshotDirUri(logFsPath).fsPath],
+        ['sidecar:', screenshotSidecarUri(logFsPath).fsPath],
+    ])];
 }
 
 /**
@@ -90,7 +105,8 @@ export async function buildScreenshotDiagnosis(d: ScreenshotDiagnosis): Promise<
         ...settingsLines(d.settings),
         '',
         'Capture target:',
-        `  VM Service known:   ${d.vmServiceUri ? 'yes' : 'no — captures stay idle until a debug session announces one'}`,
+        ...rows([['VM Service known:',
+            d.vmServiceUri ? 'yes' : 'no — captures stay idle until a debug session announces one']]),
         '',
         'Counts:',
         ...(await countLines(d)),
