@@ -193,6 +193,7 @@
   "Screenshot limit for this log reached — older captures are kept.": "Screenshot limit for this log reached — older captures are kept.",
   "A screenshot capture is already in progress.": "A screenshot capture is already in progress.",
   "Screenshot capture failed — see the Saropa Log Capture output channel.": "Screenshot capture failed — see the Saropa Log Capture output channel.",
+  "Screenshot diagnosis written to the Saropa Log Capture output channel.": "Screenshot diagnosis written to the Saropa Log Capture output channel.",
   "No active capture log to attach the screenshot to.": "No active capture log to attach the screenshot to.",
   "No log files found.": "No log files found.",
   "Deleted {0} log file(s).": "Deleted {0} log file(s).",

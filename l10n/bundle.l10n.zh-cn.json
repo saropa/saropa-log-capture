@@ -2233,5 +2233,6 @@
   "That session has no capture of this screen": "该会话未捕获此屏幕",
   "This session": "本次会话",
   "Zoom": "缩放",
-  "{0} near-duplicate captures were skipped for this log": "{0} 个近似重复的捕获已跳过"
+  "{0} near-duplicate captures were skipped for this log": "{0} 个近似重复的捕获已跳过",
+  "Screenshot diagnosis written to the Saropa Log Capture output channel.": "截图诊断写入到 Saropa Log Capture 输出通道。"
 }

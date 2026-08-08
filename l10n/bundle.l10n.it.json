@@ -402,7 +402,7 @@
   "Delete all for this file": "Elimina tutto per questo file",
   "Device": "Dispositivo",
   "Dismiss explainer": "Ignora la spiegazione",
-  "Display": "Visualizza",
+  "Display": "Display",
   "Edit Note": "Modifica nota",
   "Elapsed time (+Nms)": "Tempo trascorso (+ Nm)",
   "Empty Trash": "Svuota cestino",
@@ -2233,5 +2233,6 @@
   "That session has no capture of this screen": "Quella sessione non ha la cattura di questa schermata",
   "This session": "Questa sessione",
   "Zoom": "Zoom",
-  "{0} near-duplicate captures were skipped for this log": "{0} catture quasi-duplicate sono state saltate per questo log"
+  "{0} near-duplicate captures were skipped for this log": "{0} catture quasi-duplicate sono state saltate per questo log",
+  "Screenshot diagnosis written to the Saropa Log Capture output channel.": "Diagnosi della schermata scritta nel canale di output Saropa Log Capture."
 }
