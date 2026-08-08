@@ -48,11 +48,27 @@ function shotFigureHtml(
         + `title="${esc(t('flowMap.shot.open'))}"><figcaption class="shot-cap">${caption}</figcaption></figure>`;
 }
 
-/** Screenshot gallery body: a grid of figures plus an omitted-count note when the report capped the set. */
-export function screenshotsSectionHtml(shots: readonly FlowShot[], omitted: number): string {
+/** Counts the gallery reports beneath its grid: what the report capped, and what capture dropped. */
+export interface ShotGalleryCounts {
+    readonly omitted: number;
+    readonly suppressed: number;
+}
+
+/**
+ * Screenshot gallery body: a grid of figures, plus notes for what is NOT shown.
+ *
+ * Two different absences, reported separately because they mean different things and have different
+ * remedies. `omitted` is a rendering cap — those captures exist on disk. `suppressed` is a capture
+ * that was never taken, because the near-duplicate rule judged it the same picture as a recent one;
+ * saying so is what keeps that setting honest, since a discarded capture is otherwise invisible.
+ */
+export function screenshotsSectionHtml(shots: readonly FlowShot[], counts: ShotGalleryCounts): string {
     const byScreen = groupShotsByScreen(shots);
     const figures = shots.map((s, i) => shotFigureHtml(s, i, shots, byScreen)).join('');
     const grid = `<div class="shot-grid">${figures}</div>`;
-    const more = omitted > 0 ? `<p class="shot-more">${esc(t('flowMap.shots.more', String(omitted)))}</p>` : '';
-    return grid + more;
+    const more = counts.omitted > 0
+        ? `<p class="shot-more">${esc(t('flowMap.shots.more', String(counts.omitted)))}</p>` : '';
+    const skipped = counts.suppressed > 0
+        ? `<p class="shot-more">${esc(t('flowMap.shots.suppressed', String(counts.suppressed)))}</p>` : '';
+    return grid + more + skipped;
 }

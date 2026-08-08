@@ -311,6 +311,8 @@ export function buildFlowDiagramBody(graph: FlowGraph, screenshots: readonly Flo
 export interface FlowShotsInput {
     readonly screenshots: readonly FlowShot[];
     readonly screenshotsOmitted: number;
+    /** Captures dropped as near-duplicates at capture time; noted in the gallery when non-zero. */
+    readonly screenshotsSuppressed?: number;
     readonly suggestions?: readonly BreadcrumbSuggestion[];
 }
 
@@ -335,7 +337,10 @@ export function buildFlowMapBody(
         }))
         + '</div>';
     const shotsSection = hasShots
-        ? section('sec-shots', titles.screenshots, screenshotsSectionHtml(screenshots, shots?.screenshotsOmitted ?? 0))
+        ? section('sec-shots', titles.screenshots, screenshotsSectionHtml(screenshots, {
+            omitted: shots?.screenshotsOmitted ?? 0,
+            suppressed: shots?.screenshotsSuppressed ?? 0,
+        }))
         : '';
     const detailCol = '<div class="detail-col">'
         + section('sec-narrative', titles.narrative, narrativeSectionHtml(parsed, graph))

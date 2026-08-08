@@ -39,6 +39,8 @@ export interface FlowMapPanelParams {
     readonly screenshots: readonly FlowShot[];
     /** Count of sidecar entries beyond the render cap, for the "+N more" gallery note. */
     readonly screenshotsOmitted: number;
+    /** Captures the near-duplicate rule dropped at capture time; 0 when that setting is off. */
+    readonly screenshotsSuppressed: number;
     /**
      * Capture directories both panels open to `localResourceRoots`: this log's `.screenshots/`
      * first, then those of the sessions it can be compared against. Captures are referenced, not
@@ -156,6 +158,7 @@ function buildHtml(params: FlowMapPanelParams, nonce: string, webview: vscode.We
     const body = buildFlowMapBody(params.parsed, params.graph, params.logUri.fsPath, {
         screenshots: withWebviewSrc(webview, params.screenshots),
         screenshotsOmitted: params.screenshotsOmitted,
+        screenshotsSuppressed: params.screenshotsSuppressed,
         suggestions: params.suggestions,
     });
     // img-src ${webview.cspSource} — captures load from disk (gallery AND diagram cards), never as

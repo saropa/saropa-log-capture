@@ -272,51 +272,61 @@ suite('Screenshot near-duplicate detection', () => {
 
         test('should never call the FIRST capture a duplicate', () => {
             const recent = new RecentShotSignatures();
-            assert.strictEqual(duplicateVerdict(png(120), recent, DEFAULT_SIMILARITY).duplicate, false);
+            assert.strictEqual(duplicateVerdict({ png: png(120), recent, threshold: DEFAULT_SIMILARITY }).duplicate, false);
         });
 
         test('should call a repeat of the same picture a duplicate', () => {
             const recent = new RecentShotSignatures();
-            duplicateVerdict(png(120), recent, DEFAULT_SIMILARITY);
-            const verdict = duplicateVerdict(png(120), recent, DEFAULT_SIMILARITY);
+            duplicateVerdict({ png: png(120), recent, threshold: DEFAULT_SIMILARITY });
+            const verdict = duplicateVerdict({ png: png(120), recent, threshold: DEFAULT_SIMILARITY });
             assert.strictEqual(verdict.duplicate, true);
             assert.ok(verdict.duplicate && verdict.similarity >= DEFAULT_SIMILARITY);
         });
 
         test('should keep a genuinely different picture', () => {
             const recent = new RecentShotSignatures();
-            duplicateVerdict(png(20), recent, DEFAULT_SIMILARITY);
-            assert.strictEqual(duplicateVerdict(png(220), recent, DEFAULT_SIMILARITY).duplicate, false);
+            duplicateVerdict({ png: png(20), recent, threshold: DEFAULT_SIMILARITY });
+            assert.strictEqual(duplicateVerdict({ png: png(220), recent, threshold: DEFAULT_SIMILARITY }).duplicate, false);
         });
 
         test('should KEEP a capture it cannot read — uncertainty must never discard', () => {
             const recent = new RecentShotSignatures();
-            duplicateVerdict(png(120), recent, DEFAULT_SIMILARITY);
-            assert.strictEqual(duplicateVerdict(Buffer.from('junk'), recent, DEFAULT_SIMILARITY).duplicate, false);
+            duplicateVerdict({ png: png(120), recent, threshold: DEFAULT_SIMILARITY });
+            assert.strictEqual(duplicateVerdict({ png: Buffer.from('junk'), recent, threshold: DEFAULT_SIMILARITY }).duplicate, false);
         });
 
         test('should catch an A-B-A alternation, which a last-one-only memory would miss', () => {
             const recent = new RecentShotSignatures();
-            duplicateVerdict(png(30), recent, DEFAULT_SIMILARITY);
-            duplicateVerdict(png(200), recent, DEFAULT_SIMILARITY);
-            assert.strictEqual(duplicateVerdict(png(30), recent, DEFAULT_SIMILARITY).duplicate, true,
+            duplicateVerdict({ png: png(30), recent, threshold: DEFAULT_SIMILARITY });
+            duplicateVerdict({ png: png(200), recent, threshold: DEFAULT_SIMILARITY });
+            assert.strictEqual(duplicateVerdict({ png: png(30), recent, threshold: DEFAULT_SIMILARITY }).duplicate, true,
                 'the screen from two captures ago is still remembered');
         });
 
         test('should bound what it remembers', () => {
             const recent = new RecentShotSignatures(2);
-            duplicateVerdict(png(30), recent, DEFAULT_SIMILARITY);
-            duplicateVerdict(png(120), recent, DEFAULT_SIMILARITY);
-            duplicateVerdict(png(220), recent, DEFAULT_SIMILARITY);
-            assert.strictEqual(duplicateVerdict(png(30), recent, DEFAULT_SIMILARITY).duplicate, false,
+            duplicateVerdict({ png: png(30), recent, threshold: DEFAULT_SIMILARITY });
+            duplicateVerdict({ png: png(120), recent, threshold: DEFAULT_SIMILARITY });
+            duplicateVerdict({ png: png(220), recent, threshold: DEFAULT_SIMILARITY });
+            assert.strictEqual(duplicateVerdict({ png: png(30), recent, threshold: DEFAULT_SIMILARITY }).duplicate, false,
                 'the oldest signature was evicted, so its screen reads as new again');
         });
 
         test('should forget everything on clear, so one session never bleeds into the next', () => {
             const recent = new RecentShotSignatures();
-            duplicateVerdict(png(120), recent, DEFAULT_SIMILARITY);
+            duplicateVerdict({ png: png(120), recent, threshold: DEFAULT_SIMILARITY });
             recent.clear();
-            assert.strictEqual(duplicateVerdict(png(120), recent, DEFAULT_SIMILARITY).duplicate, false);
+            assert.strictEqual(duplicateVerdict({ png: png(120), recent, threshold: DEFAULT_SIMILARITY }).duplicate, false);
+        });
+
+        test('should report an unreadable capture distinctly from a kept one', () => {
+            // The caller says so once — otherwise an unsupported PNG form looks like a setting that
+            // quietly stopped working.
+            const recent = new RecentShotSignatures();
+            const bad = duplicateVerdict({ png: Buffer.from('junk'), recent, threshold: DEFAULT_SIMILARITY });
+            assert.deepStrictEqual(bad, { duplicate: false, unreadable: true });
+            const good = duplicateVerdict({ png: png(120), recent, threshold: DEFAULT_SIMILARITY });
+            assert.deepStrictEqual(good, { duplicate: false, unreadable: false });
         });
 
         test('should treat two captures differing ONLY in the clock strip as the same picture', () => {
@@ -324,8 +334,8 @@ suite('Screenshot near-duplicate detection', () => {
             const withClock = (v: number) => makePng(SIG_COLS * 2, SIG_ROWS * 2, (_x, y) =>
                 (y < Math.floor(SIG_ROWS * 2 * CLOCK_STRIP) ? [v, v, v, 255] : [140, 140, 140, 255]));
             const recent = new RecentShotSignatures();
-            duplicateVerdict(withClock(0), recent, DEFAULT_SIMILARITY);
-            assert.strictEqual(duplicateVerdict(withClock(255), recent, DEFAULT_SIMILARITY).duplicate, true);
+            duplicateVerdict({ png: withClock(0), recent, threshold: DEFAULT_SIMILARITY });
+            assert.strictEqual(duplicateVerdict({ png: withClock(255), recent, threshold: DEFAULT_SIMILARITY }).duplicate, true);
         });
     });
 });

@@ -94,6 +94,29 @@ suite('FlowMap screenshots join (Phase E, plan 117)', () => {
             assert.ok(html.includes('data-shot-line="0"'), 'unanchored shot reports line 0, not a stale anchor');
         });
 
+        test('should report SUPPRESSED captures separately from omitted ones', () => {
+            // Two different absences: omitted captures exist on disk and were capped for rendering;
+            // suppressed ones were never taken. Collapsing them would misdescribe both.
+            const parsed = parseLog(lines);
+            const graph = buildGraph(parsed);
+            const shots = joinShotsToScreens([shot(2)], parsed.events);
+            const html = buildFlowMapBody(parsed, graph, undefined, {
+                screenshots: shots, screenshotsOmitted: 3, screenshotsSuppressed: 7,
+            });
+            assert.ok(/\+3 more/.test(html), 'the render cap is still reported');
+            assert.ok(/7 near-duplicate captures were skipped/.test(html), 'and so is what capture dropped');
+        });
+
+        test('should say nothing about suppression when nothing was suppressed', () => {
+            const parsed = parseLog(lines);
+            const graph = buildGraph(parsed);
+            const shots = joinShotsToScreens([shot(2)], parsed.events);
+            const html = buildFlowMapBody(parsed, graph, undefined, {
+                screenshots: shots, screenshotsOmitted: 0, screenshotsSuppressed: 0,
+            });
+            assert.ok(!/near-duplicate/.test(html), 'no note when the feature dropped nothing');
+        });
+
         test('should render nothing at all — no section, no TOC entry — when there are no screenshots', () => {
             const parsed = parseLog(lines);
             const graph = buildGraph(parsed);

@@ -2,7 +2,9 @@ import * as assert from 'node:assert';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { readScreenshotSidecar, screenshotSidecarUri } from '../../../modules/screenshot/screenshot-store';
+import {
+    ScreenshotStore, readScreenshotSidecar, readScreenshotSummary, screenshotSidecarUri,
+} from '../../../modules/screenshot/screenshot-store';
 
 /**
  * The sidecar is a JSON file on disk that outlives the process that wrote it — a user can edit it,
@@ -77,5 +79,45 @@ suite('screenshot sidecar validation at the read boundary', () => {
     test('should return [] when screenshots is present but not an array', async () => {
         await writeSidecar({ '0': entry() });
         assert.deepStrictEqual(await readScreenshotSidecar(logFsPath), []);
+    });
+
+    suite('suppressed count', () => {
+        /** Write a whole sidecar body, including fields `writeSidecar` would normally own. */
+        async function writeRaw(body: unknown): Promise<void> {
+            const bytes = new TextEncoder().encode(JSON.stringify(body));
+            await vscode.workspace.fs.writeFile(screenshotSidecarUri(logFsPath), bytes);
+        }
+
+        test('should read back a recorded suppressed count', async () => {
+            await writeRaw({ version: 1, screenshots: [entry()], suppressed: 4 });
+            const summary = await readScreenshotSummary(logFsPath);
+            assert.strictEqual(summary.suppressed, 4);
+            assert.strictEqual(summary.entries.length, 1, 'entries are unaffected');
+        });
+
+        test('should default to 0 for a sidecar written before the field existed', async () => {
+            // Every sidecar on disk today has no such field; demanding one would reject all of them.
+            await writeRaw({ version: 1, screenshots: [entry()] });
+            assert.strictEqual((await readScreenshotSummary(logFsPath)).suppressed, 0);
+        });
+
+        test('should report 0 rather than propagate a nonsense count', async () => {
+            for (const bad of [-3, 'many', null, Number.NaN]) {
+                await writeRaw({ version: 1, screenshots: [entry()], suppressed: bad });
+                assert.strictEqual((await readScreenshotSummary(logFsPath)).suppressed, 0, `for ${String(bad)}`);
+            }
+        });
+
+        test('should persist across saves without losing the entries', async () => {
+            const store = new ScreenshotStore();
+            await store.save(logFsPath, new Uint8Array([1]), {
+                trigger: 'nav', timestamp: 1, logLine: 1, text: 'x', fingerprint: '',
+            }, 10);
+            await store.noteSuppressed(logFsPath);
+            await store.noteSuppressed(logFsPath);
+            const summary = await readScreenshotSummary(logFsPath);
+            assert.strictEqual(summary.suppressed, 2, 'both suppressions counted');
+            assert.strictEqual(summary.entries.length, 1, 'and the saved capture survived the rewrite');
+        });
     });
 });
