@@ -106,11 +106,26 @@ suite('screenshot capture diagnosis', () => {
         assert.ok(!text.includes('Where:'), 'and no paths that would be blank');
     });
 
+    test('should align each block\'s values into one column', async () => {
+        // The alignment is computed from each block's own longest label. Hand-padded strings looked
+        // identical and were not: adding a row silently misaligned the block, and nothing caught it.
+        const text = await buildScreenshotDiagnosis({
+            capturer: capturer(), store: new ScreenshotStore(), logFsPath,
+            settings: settings(), vmServiceUri: 'ws://x/ws',
+        });
+        const block = text.split('\n')
+            .filter(l => /^ {2}(enabled|on error|on warning|on navigation|cooldown|max per log|skip near-dupes|similarity):/.test(l));
+        assert.strictEqual(block.length, 8, 'every setting row was found');
+        // Where the value begins on each line — one distinct position means one column.
+        const valueStarts = new Set(block.map(l => l.length - l.replace(/^.*:\s+/, '').length));
+        assert.strictEqual(valueStarts.size, 1, `values share a column: ${block.join(' | ')}`);
+    });
+
     test('should carry the logcat replay count, which is otherwise session-end only', async () => {
         const text = await buildScreenshotDiagnosis({
             capturer: capturer(4), store: new ScreenshotStore(), logFsPath,
             settings: settings(), vmServiceUri: 'ws://x/ws',
         });
-        assert.ok(/held as replay: 4/.test(text));
+        assert.ok(/held as replay:\s+4/.test(text), 'the value column is computed, so spacing is not fixed');
     });
 });

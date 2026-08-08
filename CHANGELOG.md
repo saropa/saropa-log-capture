@@ -29,6 +29,7 @@ cspell:disable
 
 ### Added
 
+- The Diagnose Screenshot Capture report lines up its values in a column computed from the labels, so adding a row cannot quietly misalign the rest
 - Screenshot settings are resolved in one place, so the Diagnose Screenshot Capture report shows the values capture is really using — including any clamping of a hand-edited value — rather than reading the settings a second time
 - New command **Diagnose Screenshot Capture**: reports the settings in force, whether a debug session's VM Service is known, captures kept and skipped (in this process and on disk), and the log, capture-directory and sidecar paths — so the state of the capture pipeline can be asked for rather than pieced together from output-channel lines that scrolled past
 - Flow map: the Screenshots gallery reports how many near-duplicate captures were skipped for that log, so the setting's effect is visible in the report it affects rather than only in the output channel
