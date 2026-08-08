@@ -59,7 +59,7 @@ export const stringsFlowMap: Record<string, string> = {
     // short technical labels (error/warning/nav/manual) matching the setting's own enum values.
     'flowMap.section.screenshots': 'Screenshots',
     'flowMap.shots.more': '+{0} more in the gallery',
-    'flowMap.shots.suppressed': '{0} near-duplicate captures were skipped during this session',
+    'flowMap.shots.suppressed': '{0} near-duplicate captures were skipped for this log',
     // Screenshot lightbox: opened by clicking any capture — a diagram card's thumbnail or a gallery
     // figure. Values are handed to the webview script as data, not looked up client-side.
     'flowMap.shot.open': 'Open this screenshot',
