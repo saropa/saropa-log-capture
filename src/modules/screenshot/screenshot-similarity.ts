@@ -84,8 +84,15 @@ export function compareSignatures(a: ShotSignature, b: ShotSignature): number {
  */
 export class RecentShotSignatures {
     private entries: ShotSignature[] = [];
+    private lastBest: number | undefined;
 
     constructor(private readonly capacity = 4) { }
+
+    /**
+     * The score from the most recent `bestMatch`, so a caller can report how CLOSE a kept capture
+     * came without recomputing it. Undefined until a comparison has actually been made.
+     */
+    get lastBestMatch(): number | undefined { return this.lastBest; }
 
     /**
      * The best similarity against anything remembered, and nothing when there is no comparison to
@@ -99,6 +106,7 @@ export class RecentShotSignatures {
             const score = compareSignatures(signature, entry);
             if (score > best) { best = score; }
         }
+        this.lastBest = best;
         return best;
     }
 
@@ -111,6 +119,7 @@ export class RecentShotSignatures {
     /** Forget everything — called when the log changes, so one session never bleeds into the next. */
     clear(): void {
         this.entries = [];
+        this.lastBest = undefined;
     }
 }
 

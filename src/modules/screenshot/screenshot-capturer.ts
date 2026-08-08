@@ -35,6 +35,13 @@ const MAX_SEEN = 500;
  */
 const MAX_CONSECUTIVE_FAILURES = 3;
 
+/**
+ * How similar a KEPT capture must have been for the capturer to mention it. Below this the
+ * comparison says nothing interesting; at or above it, the reader would probably have called the two
+ * the same picture, which is the signal that the threshold may be set too high for their device.
+ */
+const NEAR_MISS_FLOOR = 0.95;
+
 /** Longest matched-line text persisted in metadata (the gallery shows an excerpt, not the log). */
 const MAX_TEXT_LEN = 300;
 
@@ -105,6 +112,8 @@ export class ScreenshotCapturer {
     private dedupLogFsPath = '';
     /** One-time notice that captures cannot be read for comparison — never repeated per capture. */
     private warnedUnreadableShot = false;
+    /** One-time near-miss notice, so a slightly-too-high threshold is not invisible. */
+    private warnedNearMiss = false;
     /** Running count of captures dropped as near-duplicates, for the report's gallery note. */
     private suppressedShots = 0;
     private lastCaptureAt = 0;
@@ -270,6 +279,7 @@ export class ScreenshotCapturer {
             png: Buffer.from(png), recent: this.recentShots, threshold: req.duplicateSimilarity,
         });
         if (!verdict.duplicate) {
+            this.noteNearMiss(verdict);
             // "Cannot read it" is indistinguishable from "keep it" by design, which would make a
             // capture format this reader does not handle look like a setting that quietly stopped
             // working. Say it ONCE — the format will not change mid-session.
@@ -282,12 +292,27 @@ export class ScreenshotCapturer {
         const pct = (verdict.similarity * 100).toFixed(1);
         this.deps.log(`screenshot: skipped a ${pct}% match of a recent capture (${req.trigger}, line ${req.logLine})`);
         this.suppressedShots++;
-        // Persist so a report built from this log LATER — after the session ended, in another
-        // process — can still say what was dropped. Non-fatal: a failed count write must never cost
-        // the capture pipeline, which is why this is fire-and-forget with a logged failure.
-        this.deps.store.noteSuppressed(req.logFsPath)
-            .catch((err) => this.deps.log(`screenshot: could not record the suppressed count (${err instanceof Error ? err.message : String(err)})`));
+        // Counts immediately, writes on a debounce (see noteSuppressed) — skips arrive in bursts and
+        // the number is not read until a report is generated, so the capture path never waits on a file.
+        this.deps.store.noteSuppressed(req.logFsPath);
         return true;
+    }
+
+    /**
+     * Report ONCE the closest a kept capture came to being skipped, when it came close.
+     *
+     * The threshold is calibrated against one device's captures, and a threshold that is slightly
+     * too high is invisible: captures the reader considers duplicates keep arriving and nothing says
+     * they nearly matched. One line naming the closest near miss is the evidence needed to tune it,
+     * without a log entry per capture.
+     */
+    private noteNearMiss(verdict: { readonly duplicate: false; readonly unreadable: boolean }): void {
+        if (verdict.unreadable || this.warnedNearMiss) { return; }
+        const best = this.recentShots.lastBestMatch;
+        if (best === undefined || best < NEAR_MISS_FLOOR) { return; }
+        this.warnedNearMiss = true;
+        const pct = (best * 100).toFixed(1);
+        this.deps.log(`screenshot: kept a capture that was ${pct}% similar to a recent one — lower saropaLogCapture.integrations.screenshots.duplicateSimilarity to skip captures like it`);
     }
 
     /** Captures dropped as near-duplicates this session — surfaced in the flow map's gallery. */
