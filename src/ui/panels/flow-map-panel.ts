@@ -17,6 +17,7 @@ import { flowMapZoomScript } from './flow-map-panel-zoom-script';
 import { flowMapDragScript } from './flow-map-panel-drag-script';
 import { flowMapReplayScript } from './flow-map-panel-replay-script';
 import { flowMapLightboxScript, type LightboxLabels } from './flow-map-panel-lightbox-script';
+import { saveArrangedSvg, saveMarkdown } from './flow-map-panel-export';
 import {
     loadSessionShots, shotsForScreen, type CompareSession,
 } from '../../modules/flow-map/flow-map-cross-session';
@@ -220,21 +221,6 @@ function showFlowDiagramPanel(params: FlowMapPanelParams): void {
     popout.reveal(vscode.ViewColumn.Beside);
 }
 
-/** Save the markdown report via a save dialog, then offer to open it. */
-async function saveMarkdown(params: FlowMapPanelParams): Promise<void> {
-    const target = await vscode.window.showSaveDialog({
-        defaultUri: params.defaultUri,
-        filters: { Markdown: ['md'] },
-        title: t('flowMap.saveTitle'),
-    });
-    if (!target) { return; }
-    await vscode.workspace.fs.writeFile(target, Buffer.from(params.markdown, 'utf-8'));
-    const open = await vscode.window.showInformationMessage(
-        t('msg.exportedTo', target.fsPath.split(/[\\/]/).pop() ?? ''), t('action.open'),
-    );
-    if (open === t('action.open')) { await vscode.window.showTextDocument(target); }
-}
-
 /** Resolve a project-relative source path and open it at the given line. */
 async function openSource(projectRoot: string | undefined, file: string, line: number): Promise<void> {
     if (!file) { return; }
@@ -347,13 +333,15 @@ async function sendCompareShots(logFsPath: unknown, screenKey: unknown): Promise
 function handleMessage(
     msg: {
         type?: string; file?: string; line?: number; text?: string; pattern?: string; label?: string;
-        logFsPath?: string; screenKey?: string;
+        logFsPath?: string; screenKey?: string; svg?: string; shotsOmitted?: number;
     },
 ): void {
     const p = currentParams;
     if (!p) { return; }
     if (msg.type === 'saveMarkdown') {
         void saveMarkdown(p);
+    } else if (msg.type === 'exportArrangedSvg' && msg.svg) {
+        void saveArrangedSvg(p, msg.svg, msg.shotsOmitted ?? 0);
     } else if (msg.type === 'popOutFlow') {
         showFlowDiagramPanel(p);
     } else if (msg.type === 'refreshFlowMap') {
