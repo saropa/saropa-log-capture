@@ -8,14 +8,9 @@
 
 import { screenKeyOf, type FlowShot } from './flow-map-screenshots';
 import type { ShotsByScreen } from './flow-map-svg-shots';
-import { stripAnsi } from './flow-map-format';
+import { esc, stripAnsi } from './flow-map-format';
 import { groupShotsByScreen, pickThumbShot, shotDataAttrs, shotSetAttrs } from './flow-map-svg-shots';
 import { t } from '../../l10n';
-
-/** Escape text for HTML. */
-function esc(s: string): string {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
 
 /** Truncate alt/caption text to a readable length without cutting mid-word where avoidable. */
 function truncate(s: string, max: number): string {
