@@ -1,0 +1,195 @@
+/**
+ * Write scheduling for the screenshot sidecar. Split out of `screenshot-store.ts`, which had grown
+ * to own four things at once — PNG files, metadata, suppression counting, and when to write.
+ *
+ * Everything here exists because the sidecar is rewritten WHOLE by more than one caller:
+ *
+ * - **Serialization.** `save()` and a debounced count flush rewrite the same file from the same
+ *   in-memory state. Two overlapping whole-file writes let the last writer win with a stale
+ *   snapshot. The capturer's in-flight guard serializes CAPTURES; a flush is not a capture, so it
+ *   is not covered by it. Every write goes through one chain here instead.
+ * - **Debouncing.** A skipped capture costs nothing but a decision, so skips arrive in bursts, and
+ *   the count they update is not read until a report is generated. Writing per skip would put that
+ *   burst of whole-file writes between the capturer and a live log.
+ *
+ * The payload is built at WRITE time, not at schedule time, by the callback the store supplies —
+ * so a write queued behind another always persists current state rather than a stale snapshot.
+ */
+
+import * as vscode from 'vscode';
+import type { ScreenshotMetaEntry } from './screenshot-store-types';
+
+/** The whole sidecar document, as it will be serialized. */
+export interface SidecarPayload {
+    readonly version: 1;
+    readonly screenshots: ScreenshotMetaEntry[];
+    readonly suppressed: number;
+}
+
+/**
+ * How long a pending count waits before its write. Long enough that a burst of skips costs one
+ * write; short enough that an abrupt exit loses at most a few seconds of counting.
+ */
+const FLUSH_DELAY_MS = 3000;
+
+/**
+ * Pending skips that force an immediate write regardless of the timer. A long burst would otherwise
+ * hold an ever-larger number in memory for the whole burst, and lose all of it to an abrupt exit —
+ * the delay is meant to coalesce a handful of writes, not to defer an unbounded count indefinitely.
+ */
+const FLUSH_AFTER_PENDING = 25;
+
+/**
+ * How many times one flush re-checks for work marked dirty while it was writing. Bounded so a log
+ * being dirtied faster than it can be written cannot spin the flush — the next flush takes it.
+ */
+const MAX_FLUSH_PASSES = 3;
+
+/** Serializes and schedules sidecar writes. One per store. */
+export class SidecarWriter {
+    /** log base → log path, for documents whose state changed since the last write. */
+    private readonly dirty = new Map<string, string>();
+    /** log base → its sidecar URI, remembered so a flush needs no path arithmetic. */
+    private readonly uris = new Map<string, vscode.Uri>();
+    /**
+     * Change counter per log base, bumped by every `markDirty`. A flush compares the value it wrote
+     * against the current one to tell whether its write is still the latest word — see `writePending`.
+     */
+    private readonly generation = new Map<string, number>();
+    /** Logs whose write failed during a pass, re-dirtied once that pass ends. */
+    private readonly failed = new Map<string, string>();
+    /**
+     * The flush currently running, if any. Held rather than a boolean so a concurrent caller can
+     * AWAIT the in-flight flush instead of being told "someone else is doing it" and returning
+     * before the write it asked for has landed.
+     */
+    private active: Promise<void> | undefined;
+    /** Pending changes since the last write, across all logs — drives the burst cutoff. */
+    private pendingCount = 0;
+    private timer: ReturnType<typeof setTimeout> | undefined;
+    /**
+     * Tail of the write queue. ALWAYS resolved, never rejected: callers get their own promise from
+     * `write()`, and a chain that could reject would surface a caller's ignored failure as an
+     * unhandled rejection in the extension host rather than as anything anyone sees.
+     */
+    private chain: Promise<void> = Promise.resolve();
+
+    /**
+     * @param build Produces the document for a log AT WRITE TIME.
+     * @param baseOf Maps a log path to the identity used for de-duplicating dirty entries.
+     * @param onError Reports a failed write; without it a wrong count is undiagnosable.
+     */
+    constructor(
+        private readonly build: (logFsPath: string) => SidecarPayload,
+        private readonly baseOf: (logFsPath: string) => string,
+        private readonly onError?: (message: string) => void,
+    ) { }
+
+    /** True when something is counted but not yet on disk. */
+    get hasPending(): boolean { return this.dirty.size > 0; }
+
+    /** Queue a write of this log's sidecar and resolve when THIS write has landed. */
+    write(logFsPath: string, sidecarUri: vscode.Uri): Promise<void> {
+        const run = async (): Promise<void> => {
+            const bytes = new TextEncoder().encode(JSON.stringify(this.build(logFsPath), null, 2));
+            await vscode.workspace.fs.writeFile(sidecarUri, bytes);
+        };
+        // The caller's promise is separate from the chain: the chain must keep flowing past a
+        // failure, while the caller still learns its own write failed.
+        const mine = this.chain.then(run, run);
+        this.chain = mine.catch(() => { /* kept alive for the next writer; see `chain` */ });
+        // Attached HERE, not left to the caller: this promise may legitimately be ignored
+        // (`void writer.write(...)`), and an ignored rejection becomes an unhandled-rejection
+        // warning in the extension host rather than anything a person sees. Callers that DO await
+        // still observe the failure through `mine`.
+        mine.catch(() => { /* observed by whoever awaited, or deliberately dropped */ });
+        return mine;
+    }
+
+    /** Note that a log's counts changed, scheduling a write without performing one. */
+    markDirty(logFsPath: string, sidecarUri: vscode.Uri): void {
+        const base = this.baseOf(logFsPath);
+        this.dirty.set(base, logFsPath);
+        this.uris.set(base, sidecarUri);
+        // Bumped on EVERY change, so a flush can tell whether what it wrote is still current.
+        this.generation.set(base, (this.generation.get(base) ?? 0) + 1);
+        this.pendingCount++;
+        if (this.pendingCount >= FLUSH_AFTER_PENDING) {
+            // Cancel the pending timer instead of leaving it to fire into a SECOND flush: two
+            // concurrent flushes would write the same files twice and race each other's bookkeeping.
+            if (this.timer) { clearTimeout(this.timer); this.timer = undefined; }
+            void this.flush();
+            return;
+        }
+        if (this.timer) { return; }
+        this.timer = setTimeout(() => {
+            this.timer = undefined;
+            void this.flush();
+        }, FLUSH_DELAY_MS);
+        // A pending timer must never hold the extension host open past deactivate.
+        this.timer.unref?.();
+    }
+
+    /**
+     * Write every pending document now. A log is cleared from the dirty set only once its write
+     * LANDED: clearing the whole set up front meant one failure discarded every other log's pending
+     * state with it, permanently, since nothing would mark those dirty again.
+     */
+    async flush(): Promise<void> {
+        // A second concurrent flush would write every pending file twice and race the first one's
+        // bookkeeping. Join the one already running instead — it re-reads the dirty set on each
+        // pass, so anything marked while it runs is still its responsibility.
+        if (this.active) { return this.active; }
+        this.pendingCount = 0;
+        this.active = this.writePending().finally(() => { this.active = undefined; });
+        return this.active;
+    }
+
+    /**
+     * Write everything dirty, repeating while writes keep landing behind newer changes.
+     *
+     * Bounded by `MAX_FLUSH_PASSES`: a log dirtied faster than it can be written must not spin here
+     * forever — it is simply written by the next flush instead.
+     */
+    private async writePending(): Promise<void> {
+        for (let pass = 0; pass < MAX_FLUSH_PASSES && this.dirty.size > 0; pass++) {
+            for (const [base, logFsPath] of [...this.dirty]) {
+                await this.writeOne(base, logFsPath);
+            }
+            if (this.failed.size === 0) { continue; }
+            // Failures are restored AFTER the pass, never during it, so a failing log cannot be
+            // retried immediately and spin. The next flush takes them.
+            for (const [base, logFsPath] of this.failed) { this.dirty.set(base, logFsPath); }
+            this.failed.clear();
+            break;
+        }
+    }
+
+    /** Write one dirty log, deciding from the outcome whether it stays dirty. */
+    private async writeOne(base: string, logFsPath: string): Promise<void> {
+        const uri = this.uris.get(base);
+        if (!uri) { this.dirty.delete(base); return; }
+        const wrote = this.generation.get(base) ?? 0;
+        try {
+            await this.write(logFsPath, uri);
+        } catch (err) {
+            this.onError?.(`screenshot: could not record the suppressed count for ${logFsPath} (${err instanceof Error ? err.message : String(err)})`);
+            this.dirty.delete(base);
+            this.failed.set(base, logFsPath);
+            return;
+        }
+        // Cleared only when nothing changed WHILE the write was in flight. A count that arrived
+        // mid-write is not on disk, and dropping it here would lose it for good unless that log
+        // happened to skip another capture later.
+        if ((this.generation.get(base) ?? 0) === wrote) { this.dirty.delete(base); }
+    }
+
+    /** Stop the timer and write what it was waiting to write. */
+    async dispose(): Promise<void> {
+        if (this.timer) {
+            clearTimeout(this.timer);
+            this.timer = undefined;
+        }
+        await this.flush();
+    }
+}

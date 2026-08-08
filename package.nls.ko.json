@@ -6,6 +6,7 @@
   "command.applyPreset.title": "Saropa Log Capture: 필터 프리셋 적용",
   "command.applyTemplate.title": "Saropa Log Capture: 로그 템플릿 적용",
   "command.captureScreenshot.title": "Saropa Log Capture: 스크린샷 캡처",
+  "command.diagnoseScreenshots.title": "Diagnose Screenshot Capture",
   "command.checkFilterSuggestions.title": "Saropa Log Capture: Check Filter Suggestions",
   "command.clear.title": "Saropa Log Capture: 현재 로그 지우기",
   "command.clearGlobalAggregates.title": "Saropa Log Capture: Clear Cross-Workspace Noise Patterns",

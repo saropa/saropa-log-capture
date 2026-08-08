@@ -2219,5 +2219,19 @@
   "Screenshot": "截圖",
   "Show full severity counts only on latest and active logs": "僅在最新及活躍的紀錄中顯示完整嚴重性計數",
   "TODO {0}": "TODO {0}",
-  "Trigger": "觸發"
+  "Trigger": "觸發",
+  "Compare": "比較",
+  "Compare against another session": "比較至另一個會話",
+  "Copy full path": "複製完整路徑",
+  "File": "檔案 /no_think",
+  "Next capture of this screen": "此螢幕的下一次截取",
+  "Previous capture of this screen": "此螢幕的先前截取",
+  "Reading that session…": "讀取該會話…",
+  "Screenshot path copied": "螢幕截圖路徑已複製",
+  "Screenshot unavailable — the file may have been moved or deleted": "螢幕截圖不可用 — 該檔案可能已被移動或刪除",
+  "Scroll over the image to zoom": "將游標移至圖片上以縮放",
+  "That session has no capture of this screen": "該會話未捕獲此螢幕",
+  "This session": "本次會話",
+  "Zoom": "縮放",
+  "{0} near-duplicate captures were skipped for this log": "{0} 則近似重複的截取已跳過此日誌"
 }

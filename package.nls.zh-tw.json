@@ -6,6 +6,7 @@
   "command.applyPreset.title": "Saropa Log Capture：套用篩選預設",
   "command.applyTemplate.title": "Saropa Log Capture：套用記錄範本",
   "command.captureScreenshot.title": "Saropa Log Capture: 擷取螢幕截圖",
+  "command.diagnoseScreenshots.title": "Diagnose Screenshot Capture",
   "command.checkFilterSuggestions.title": "Saropa Log Capture: Check Filter Suggestions",
   "command.clear.title": "Saropa Log Capture：清除目前記錄",
   "command.clearGlobalAggregates.title": "Saropa Log Capture: Clear Cross-Workspace Noise Patterns",
