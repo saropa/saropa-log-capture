@@ -6,6 +6,7 @@
   "command.applyPreset.title": "Saropa Log Capture: Применить пресет фильтра",
   "command.applyTemplate.title": "Saropa Log Capture: Применить шаблон журнала",
   "command.captureScreenshot.title": "Saropa Log Capture: Сделать снимок экрана",
+  "command.diagnoseScreenshots.title": "Diagnose Screenshot Capture",
   "command.checkFilterSuggestions.title": "Saropa Log Capture: Check Filter Suggestions",
   "command.clear.title": "Saropa Log Capture: Очистить текущий журнал",
   "command.clearGlobalAggregates.title": "Saropa Log Capture: Clear Cross-Workspace Noise Patterns",

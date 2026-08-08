@@ -18,6 +18,11 @@
         "title": "%command.captureScreenshot.title%"
       },
       {
+        "command": "saropaLogCapture.diagnoseScreenshots",
+        "icon": "$(stethoscope)",
+        "title": "%command.diagnoseScreenshots.title%"
+      },
+      {
         "command": "saropaLogCapture.start",
         "icon": "$(play)",
         "title": "%command.start.title%"
