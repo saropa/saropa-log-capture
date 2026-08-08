@@ -24,13 +24,20 @@ import { readScreenshotSidecar, screenshotDirUri, screenshotSidecarUri } from '.
  */
 export const MAX_COMPARE_SESSIONS = 8;
 
+/**
+ * A candidate log this big is not read for a comparison. Picking a session parses a whole log
+ * synchronously in the extension host, and the reader can pick repeatedly from a dropdown — an
+ * unbounded read behind a repeatable control is how a UI stops responding.
+ */
+const MAX_COMPARE_LOG_BYTES = 32 * 1024 * 1024;
+
 /** One other session a screen can be compared against. */
 export interface CompareSession {
     /** Absolute path of that session's log — the identity the webview sends back on a pick. */
     readonly logFsPath: string;
     /** File name without extension, which is what the picker shows (logs are named by timestamp). */
     readonly label: string;
-    /** Newest capture in that session, for ordering most-recent-first. */
+    /** When that session last captured, for ordering most-recent-first. */
     readonly lastCaptureMs: number;
 }
 
@@ -42,20 +49,26 @@ function labelOf(logFsPath: string): string {
     return (logFsPath.split(/[\\/]/).pop() ?? logFsPath).replace(/\.log$/i, '');
 }
 
-/** True when this log has a screenshot sidecar — i.e. there is anything to compare against. */
-async function hasCaptures(logFsPath: string): Promise<boolean> {
+/**
+ * When this log last captured, or undefined when it never did. The sidecar's own mtime IS the last
+ * capture time — the store rewrites it whole on every save.
+ */
+async function lastCaptureAt(logFsPath: string): Promise<number | undefined> {
     try {
-        await vscode.workspace.fs.stat(screenshotSidecarUri(logFsPath));
-        return true;
+        return (await vscode.workspace.fs.stat(screenshotSidecarUri(logFsPath))).mtime;
     } catch {
-        return false;
+        return undefined;
     }
 }
 
 /**
- * Other logs beside `logUri` that carry captures, newest first, capped at `MAX_COMPARE_SESSIONS`.
- * Ordering is by the log's own name because these files are timestamp-named (`YYYYMMDD_HHMMSS_…`),
- * so a lexical sort IS a chronological one and costs no extra `stat` per candidate.
+ * Other logs beside `logUri` that carry captures, most recently captured first, capped at
+ * `MAX_COMPARE_SESSIONS`.
+ *
+ * Ordered by the sidecar's mtime rather than by filename. Logs are usually timestamp-named, so a
+ * lexical sort is usually chronological — but "usually" silently misorders a renamed or copied log
+ * with no signal to the reader, and the `stat` that answers it is one this scan already performs to
+ * decide whether the session has captures at all. Same cost, no assumption.
  */
 export async function findCompareSessions(logUri: vscode.Uri): Promise<CompareSession[]> {
     const dir = vscode.Uri.joinPath(logUri, '..');
@@ -69,17 +82,17 @@ export async function findCompareSessions(logUri: vscode.Uri): Promise<CompareSe
     const logs = entries
         .filter(([name, type]) => type === vscode.FileType.File && /\.log$/i.test(name))
         .map(([name]) => vscode.Uri.joinPath(dir, name).fsPath)
-        .filter(p => p !== self)
-        .sort()
-        .reverse();
-    const out: CompareSession[] = [];
+        .filter(p => p !== self);
+    const found: CompareSession[] = [];
     for (const logFsPath of logs) {
-        if (out.length >= MAX_COMPARE_SESSIONS) { break; }
-        if (await hasCaptures(logFsPath)) {
-            out.push({ logFsPath, label: labelOf(logFsPath), lastCaptureMs: 0 });
+        const mtime = await lastCaptureAt(logFsPath);
+        if (mtime !== undefined) {
+            found.push({ logFsPath, label: labelOf(logFsPath), lastCaptureMs: mtime });
         }
     }
-    return out;
+    // Sort AFTER collecting, not while scanning: the newest sessions are not necessarily the ones
+    // the directory listing reaches first, so an early cap would drop the very sessions worth showing.
+    return found.sort((a, b) => b.lastCaptureMs - a.lastCaptureMs).slice(0, MAX_COMPARE_SESSIONS);
 }
 
 /** Resolve one sidecar entry to a renderable source, or undefined when the PNG is unusable. */
@@ -108,7 +121,13 @@ export async function loadSessionShots(logFsPath: string): Promise<FlowShot[]> {
         if (found) { withSources.push({ ...entry, ...found }); }
     }
     if (withSources.length === 0) { return []; }
-    const bytes = await vscode.workspace.fs.readFile(vscode.Uri.file(logFsPath));
+    const logUri = vscode.Uri.file(logFsPath);
+    // Checked before the read, not after: the point is to never pull the file into memory at all.
+    // An over-size candidate returns empty, which the picker reports as "no capture of this screen"
+    // — imprecise, but the honest alternative (freezing the panel) is worse.
+    const stat = await vscode.workspace.fs.stat(logUri);
+    if (stat.size > MAX_COMPARE_LOG_BYTES) { return []; }
+    const bytes = await vscode.workspace.fs.readFile(logUri);
     const parsed = parseLog(Buffer.from(bytes).toString('utf-8').split(/\r?\n/));
     return joinShotsToScreens(withSources, parsed.events);
 }

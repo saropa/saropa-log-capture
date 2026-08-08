@@ -33,20 +33,19 @@ export function flowMapLightboxCompareJs(sessions: readonly CompareSessionRef[])
   /* Other sessions with captures, resolved host-side at render (the webview cannot read the log
      directory). Empty when this is the only session, which is what hides the picker. */
   var CMP_SESSIONS = ${JSON.stringify(sessions)};
-  /* Screen key → that screen's captures, parsed once from the island. */
-  var cmpSets = null;
   /* The open lightbox's compare state. cmpSet is the RIGHT pane's candidate list, which starts as
      this session's set and is replaced wholesale when another session is chosen. */
   var cmpSet = null, cmpSelf = -1, cmpRight = 0, cmpHost = null, cmpKey = '';
 
-  /* Parse the per-document island lazily. Returns {} (never null) so a document with no
-     multi-capture screen behaves like one whose screens simply have no siblings. */
+  /* Read the per-document island. Parsed on each lightbox open rather than cached: the sets are
+     small (bounded by the report's capture cap) and a cache would be a second source of truth for
+     something the DOM already holds — stale the moment anything re-renders the body. Returns {}
+     (never null) so a document with no multi-capture screen has one shape, not two. */
   function cmpAllSets(){
-    if (cmpSets) { return cmpSets; }
     var island = document.getElementById('fm-shot-sets');
-    try { cmpSets = island ? JSON.parse(island.getAttribute('data-sets') || '{}') : {}; }
-    catch (err) { cmpSets = {}; }
-    return cmpSets;
+    if (!island) { return {}; }
+    try { return JSON.parse(island.getAttribute('data-sets') || '{}'); }
+    catch (err) { return {}; }
   }
 
   /* This screen's captures for a clicked element, or null when there is nothing to compare. */

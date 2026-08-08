@@ -323,6 +323,8 @@
   "config.integrations.screenshots.cooldownMs.title": "Minimum gap between screenshot captures (ms).",
   "config.integrations.screenshots.enabled.title": "Allow debug screenshot capture (Flutter VM Service). On by default.",
   "config.integrations.screenshots.maxPerLog.title": "Maximum screenshots per log file.",
+  "config.integrations.screenshots.skipNearDuplicates.title": "Skip Near-Duplicate Screenshots",
+  "config.integrations.screenshots.duplicateSimilarity.title": "Near-Duplicate Similarity",
   "config.integrations.screenshots.onError.title": "Capture a screenshot when an error is detected.",
   "config.integrations.screenshots.onNavigation.title": "Capture a screenshot on each screen navigation.",
   "config.integrations.screenshots.onWarning.title": "Capture a screenshot when a warning is detected.",

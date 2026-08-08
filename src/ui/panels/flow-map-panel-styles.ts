@@ -199,6 +199,12 @@ export function flowMapStyles(nonce: string): string {
 
   /* Diagram palette — semantic tokens so the SVG tracks the host light/dark theme (was baked dark
      hex). Fills are token tints over the panel surface; text inherits the theme foreground. */
+  /* Node palettes target rect.fm-box, never a bare rect descendant: a node group also holds the
+     thumbnail frame and the count pill, and a CSS fill overrides their fill="none" attribute —
+     which is how every card spent months painting its own color over its screenshot. The same trap
+     exists for any element type a node group repeats (text, circle, image); as of this change the
+     only other descendant rule in this stylesheet is .fm-replay-preview img, which is a floating
+     card with a single image, not a node group. Add rules by CLASS and it stays that way. */
   .fm-p-walked rect.fm-box { fill: color-mix(in srgb, var(--status-good) 14%, var(--surface-1)); stroke: var(--status-good); }
   .fm-p-crash rect.fm-box { fill: color-mix(in srgb, var(--status-bad) 16%, var(--surface-1)); stroke: var(--status-bad); }
   .fm-p-external rect.fm-box { fill: color-mix(in srgb, var(--accent-opinionated) 14%, var(--surface-1)); stroke: var(--accent-opinionated); }

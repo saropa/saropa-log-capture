@@ -225,6 +225,15 @@ export interface IntegrationScreenshotsConfig {
   readonly cooldownMs: number;
   /** Maximum screenshots per log file; further captures are skipped with one warning. */
   readonly maxPerLog: number;
+  /**
+   * Skip a capture whose picture is near-identical to a recent one (default OFF). The status-bar
+   * strip is excluded from the comparison, so two captures of one screen that differ only by the
+   * clock count as the same picture. Off by default because this is the only setting in the group
+   * that DISCARDS a capture — every skip is logged to the output channel with its similarity.
+   */
+  readonly skipNearDuplicates: boolean;
+  /** Similarity at or above which two captures count as the same picture (0-1). */
+  readonly duplicateSimilarity: number;
 }
 
 export interface IntegrationFlutterCrashLogsConfig {
