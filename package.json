@@ -2800,6 +2800,20 @@
           "type": "number",
           "title": "%config.integrations.screenshots.maxPerLog.title%"
         },
+        "saropaLogCapture.integrations.screenshots.skipNearDuplicates": {
+          "default": false,
+          "description": "Skip a screenshot whose picture is near-identical to a recent capture. The phone's status bar is excluded from the comparison, so two captures of the same screen that differ only by the clock count as the same picture. Every skip is written to the output channel with its similarity.",
+          "type": "boolean",
+          "title": "%config.integrations.screenshots.skipNearDuplicates.title%"
+        },
+        "saropaLogCapture.integrations.screenshots.duplicateSimilarity": {
+          "default": 0.985,
+          "description": "How alike two captures must be to count as the same picture, from 0.5 to 0.999. Only used when Skip Near Duplicates is on. Lower values skip more.",
+          "minimum": 0.5,
+          "maximum": 0.999,
+          "type": "number",
+          "title": "%config.integrations.screenshots.duplicateSimilarity.title%"
+        },
         "saropaLogCapture.integrations.unifiedLog.writeAtSessionEnd": {
           "default": false,
           "description": "After session end, write basename.unified.jsonl next to the main log: one JSON line per row { \"source\", \"text\" } merging main log, .terminal.log, and external sidecars (for sharing or opening one file in the viewer with Sources filter).",
