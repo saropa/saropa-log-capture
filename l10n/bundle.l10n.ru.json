@@ -2233,5 +2233,6 @@
   "That session has no capture of this screen": "Эта сессия не содержит захвата этого экрана",
   "This session": "Эта сессия",
   "Zoom": "Зум",
-  "{0} near-duplicate captures were skipped for this log": "{0} близкие дубликаты захвата были пропущены для этого лога"
+  "{0} near-duplicate captures were skipped for this log": "{0} близкие дубликаты захвата были пропущены для этого лога",
+  "Screenshot diagnosis written to the Saropa Log Capture output channel.": "Скриншот диагностики записан в выходной канал Saropa Log Capture."
 }
