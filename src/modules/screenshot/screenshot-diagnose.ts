@@ -15,6 +15,7 @@ import { t } from '../../l10n';
 import type { ScreenshotCapturer } from './screenshot-capturer';
 import type { ScreenshotStore } from './screenshot-store';
 import { readScreenshotSummary, screenshotDirUri, screenshotSidecarUri } from './screenshot-store';
+import type { ScreenshotSettings } from './screenshot-settings';
 
 /** What the report needs to describe the live pipeline. */
 export interface ScreenshotDiagnosis {
@@ -22,7 +23,12 @@ export interface ScreenshotDiagnosis {
     readonly store: ScreenshotStore;
     /** Log currently being captured to, or undefined when no session is running. */
     readonly logFsPath: string | undefined;
-    readonly settings: vscode.WorkspaceConfiguration;
+    /**
+     * The RESOLVED settings the pipeline is using — not a configuration to read again. A second
+     * reading is a report that can show a default for a key that moved, exactly when someone reached
+     * for it because they no longer trust the behavior.
+     */
+    readonly settings: ScreenshotSettings;
     /** Live VM Service address, or undefined — the single most common reason captures never fire. */
     readonly vmServiceUri: string | undefined;
 }
@@ -30,18 +36,17 @@ export interface ScreenshotDiagnosis {
 /** `yes` / `no`, so a scanning reader can see state without parsing prose. */
 function yn(value: boolean): string { return value ? 'yes' : 'no'; }
 
-/** Settings block: what the pipeline was told to do. */
-function settingsLines(cfg: vscode.WorkspaceConfiguration): string[] {
-    const get = <T>(key: string, fallback: T): T => cfg.get<T>(`integrations.screenshots.${key}`, fallback);
+/** Settings block: what the pipeline was told to do, as it resolved them. */
+function settingsLines(s: ScreenshotSettings): string[] {
     return [
-        `  enabled:            ${yn(get('enabled', true))}`,
-        `  on error:           ${yn(get('onError', true))}`,
-        `  on warning:         ${yn(get('onWarning', false))}`,
-        `  on navigation:      ${yn(get('onNavigation', false))}`,
-        `  cooldown:           ${get('cooldownMs', 2000)} ms`,
-        `  max per log:        ${get('maxPerLog', 50)}`,
-        `  skip near-dupes:    ${yn(get('skipNearDuplicates', false))}`,
-        `  similarity:         ${get('duplicateSimilarity', 0.985)}`,
+        `  enabled:            ${yn(s.enabled)}`,
+        `  on error:           ${yn(s.onError)}`,
+        `  on warning:         ${yn(s.onWarning)}`,
+        `  on navigation:      ${yn(s.onNavigation)}`,
+        `  cooldown:           ${s.cooldownMs} ms`,
+        `  max per log:        ${s.maxPerLog}`,
+        `  skip near-dupes:    ${yn(s.skipNearDuplicates)}`,
+        `  similarity:         ${s.duplicateSimilarity}`,
     ];
 }
 
