@@ -29,6 +29,7 @@ cspell:disable
 
 ### Added
 
+- Screenshots: an optional **Skip Near-Duplicate Screenshots** setting (off by default) drops a capture whose picture matches a recent one. The phone's status bar is left out of the comparison, so two shots of the same screen that differ only by the clock count as the same picture; error, warning and manual captures are never skipped, and every skip is written to the output channel with its similarity. On a real seven-capture session it removed two duplicates and kept both fault captures
 - Flow map: any screen captured more than once can be compared in the screenshot lightbox — two captures side by side with their clocks, stepping through the rest of that screen's set
 - Flow map: a screen can also be compared against another session — the lightbox lists recent sessions that captured the same screen, so "what did this look like yesterday" is one click
 
