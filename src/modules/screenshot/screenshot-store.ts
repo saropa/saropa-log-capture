@@ -34,8 +34,24 @@ export interface ScreenshotMetaEntry {
     readonly fingerprint: string;
 }
 
-/** Sidecar JSON shape. Versioned so a future format change can migrate instead of misread. */
-interface ScreenshotSidecar { readonly version: 1; readonly screenshots: ScreenshotMetaEntry[]; }
+/**
+ * Sidecar JSON shape. Versioned so a future format change can migrate instead of misread.
+ *
+ * `suppressed` is OPTIONAL and defaults to 0: sidecars written before near-duplicate skipping
+ * existed have no such field, and a reader that demanded one would reject all of them.
+ */
+interface ScreenshotSidecar {
+    readonly version: 1;
+    readonly screenshots: ScreenshotMetaEntry[];
+    readonly suppressed?: number;
+}
+
+/** A log's capture history: what was kept, and how much was dropped as near-duplicate. */
+export interface ScreenshotSummary {
+    readonly entries: ScreenshotMetaEntry[];
+    /** Captures the near-duplicate rule dropped. 0 when the feature is off or nothing matched. */
+    readonly suppressed: number;
+}
 
 /** Result of a successful save: where the PNG landed and the running count for that log. */
 export interface ScreenshotSaveResult {
@@ -63,6 +79,8 @@ export function screenshotSidecarUri(logFsPath: string): vscode.Uri {
 export class ScreenshotStore {
     /** log base fsPath → entries written this process (authoritative during a session). */
     private readonly entriesByBase = new Map<string, ScreenshotMetaEntry[]>();
+    /** log base fsPath → captures dropped as near-duplicates this process. */
+    private readonly suppressedByBase = new Map<string, number>();
 
     /** Count of screenshots recorded for a log (0 when none). */
     countForLog(logFsPath: string): number {
@@ -102,9 +120,23 @@ export class ScreenshotStore {
         return { entry: full, pngUri, totalForLog: entries.length };
     }
 
+    /**
+     * Record one capture dropped as a near-duplicate, persisting the running count.
+     *
+     * Persisted rather than kept in memory because the number's whole purpose is to be READ later,
+     * by a report generated from the log after the session ended — an in-memory counter would show
+     * 0 for every log the current process did not itself capture.
+     */
+    async noteSuppressed(logFsPath: string): Promise<void> {
+        const base = screenshotBaseFromLogPath(logFsPath);
+        this.suppressedByBase.set(base, (this.suppressedByBase.get(base) ?? 0) + 1);
+        await this.writeSidecar(logFsPath, this.entriesByBase.get(base) ?? []);
+    }
+
     /** Rewrite the metadata sidecar whole (small file, cooldown-limited cadence). */
     private async writeSidecar(logFsPath: string, entries: readonly ScreenshotMetaEntry[]): Promise<void> {
-        const sidecar: ScreenshotSidecar = { version: 1, screenshots: [...entries] };
+        const suppressed = this.suppressedByBase.get(screenshotBaseFromLogPath(logFsPath)) ?? 0;
+        const sidecar: ScreenshotSidecar = { version: 1, screenshots: [...entries], suppressed };
         const bytes = new TextEncoder().encode(JSON.stringify(sidecar, null, 2));
         await vscode.workspace.fs.writeFile(screenshotSidecarUri(logFsPath), bytes);
     }
@@ -147,14 +179,27 @@ function validateEntry(raw: unknown): ScreenshotMetaEntry | undefined {
  * logs captured in an earlier process). Returns [] on missing or malformed sidecars.
  */
 export async function readScreenshotSidecar(logFsPath: string): Promise<ScreenshotMetaEntry[]> {
+    return (await readScreenshotSummary(logFsPath)).entries;
+}
+
+/**
+ * Read a sidecar as a whole summary — entries plus the suppressed count. Separate from
+ * `readScreenshotSidecar` so the many callers that only want the entries keep their simple shape.
+ */
+export async function readScreenshotSummary(logFsPath: string): Promise<ScreenshotSummary> {
+    const empty: ScreenshotSummary = { entries: [], suppressed: 0 };
     try {
         const bytes = await vscode.workspace.fs.readFile(screenshotSidecarUri(logFsPath));
         const parsed = JSON.parse(new TextDecoder().decode(bytes)) as Partial<ScreenshotSidecar>;
-        if (!Array.isArray(parsed.screenshots)) { return []; }
-        return parsed.screenshots
+        if (!Array.isArray(parsed.screenshots)) { return empty; }
+        const entries = parsed.screenshots
             .map(validateEntry)
             .filter((e): e is ScreenshotMetaEntry => e !== undefined);
+        // A negative or non-numeric count is meaningless; report none rather than propagate nonsense.
+        const raw = parsed.suppressed;
+        const suppressed = typeof raw === 'number' && raw > 0 ? Math.floor(raw) : 0;
+        return { entries, suppressed };
     } catch {
-        return [];
+        return empty;
     }
 }
