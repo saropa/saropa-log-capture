@@ -185,6 +185,28 @@ suite('screenshot sidecar validation at the read boundary', () => {
             assert.ok(errors[0].includes('suppressed count'), 'and says what could not be recorded');
         });
 
+        test('should DRAIN on dispose, including a log dirtied during the final flush', async () => {
+            // A normal flush may leave work for the next timer. Dispose has no next one, so whatever
+            // it leaves behind is lost — it repeats until nothing is pending.
+            const other = path.join(path.dirname(logFsPath), 'second.log');
+            const store = new ScreenshotStore();
+            store.noteSuppressed(logFsPath);
+            const disposing = store.dispose();
+            store.noteSuppressed(other);   // a DIFFERENT log, marked mid-drain
+            await disposing;
+            assert.strictEqual(store.hasPendingSuppressed, false, 'nothing left counted-but-unwritten');
+            assert.strictEqual((await readScreenshotSummary(logFsPath)).suppressed, 1);
+            assert.strictEqual((await readScreenshotSummary(other)).suppressed, 1,
+                'the log dirtied during the drain was written too');
+        });
+
+        test('should give up draining rather than hold shutdown open on a doomed write', async () => {
+            const store = new ScreenshotStore(() => { /* failures asserted elsewhere */ });
+            store.noteSuppressed(await makeUnwritableLog('doomed-drain'));
+            await store.dispose();
+            assert.strictEqual(store.hasPendingSuppressed, true, 'still pending, but dispose returned');
+        });
+
         test('should keep a failed log dirty so the next flush retries it', async () => {
             const store = new ScreenshotStore(() => { /* failures are asserted elsewhere */ });
             store.noteSuppressed(await makeUnwritableLog('retry'));

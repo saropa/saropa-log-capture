@@ -335,13 +335,39 @@ Three defects in that writer were found in review and fixed before it shipped:
   an unhandled rejection in the extension host rather than as anything anyone sees. The rejection is
   attached at the source; awaiting callers still observe it.
 
+## One reader for the settings
+
+The wiring read `integrations.screenshots.*` to drive capture, and the diagnosis report read the same
+keys again to describe it. Two readers of one setting is a reporting tool that can confidently show a
+default for a key that was renamed — precisely when someone reaches for it because they no longer
+trust the behavior. `readScreenshotSettings` is now the only reader, clamping included, and the
+report is handed the resolved object rather than a configuration to re-read. The per-line master
+toggle keeps its own one-key reader, because answering one boolean on the capture firehose should not
+cost eight key reads.
+
+## The writer, cut back
+
+This class had produced defects in three consecutive rounds, which is a design signal rather than
+bad luck. The multi-pass flush loop and the failed-log holding map were removed: a normal flush can
+safely leave work behind, because anything marked dirty while it runs arms a fresh timer and a failed
+write stays dirty for the next one. Those two mechanisms were doing the same job twice, and that
+overlap was where two of the three defects lived.
+
+Review then caught what the simplification broke: `dispose()` is the LAST flush, so anything it
+leaves behind is genuinely lost. Dispose now drains — repeating until nothing is pending, bounded so
+a permanently failing write cannot hold shutdown open — while the normal path stays a single pass.
+
+The generation check also moved to sample at BUILD time rather than at queue time. A write that sat
+behind another had already captured the newer value by the time it composed its document, so
+comparing against the queue-time value reported every such write as stale and rewrote it redundantly.
+
 ## Verification
 
 - `npm run check-types` — 0 errors.
 - `npm run lint` — 0 errors, 14 pre-existing warnings.
 - `npm run compile` — full gate chain green, including `verify:l10n-keys` (2561 keys), the webview
   message catalogs, and `verify:dist-size`.
-- 267 tests passing across the seventeen affected suites, including seven new files:
+- 279 tests passing across the eighteen affected suites, including eight new files:
   `flow-map-svg-layout.test.ts` (13) covering fault-leaf extraction, back-edge exclusion, orphan
   retention, row wrapping, and rendered canvas width; and `screenshot-sidecar-validation.test.ts`
   (6) covering trigger-union rejection, per-field defaulting, and malformed sidecars. The layout
