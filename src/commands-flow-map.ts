@@ -8,7 +8,7 @@ import { buildGraph } from './modules/flow-map/flow-map-builder';
 import { buildReport } from './modules/flow-map/flow-map-report';
 import { scanProjectScreens } from './modules/flow-map/flow-map-source-scan';
 import { showFlowMapPanel, type FlowMapPanelParams } from './ui/panels/flow-map-panel';
-import { readScreenshotSidecar, screenshotDirUri } from './modules/screenshot/screenshot-store';
+import { readScreenshotSummary, screenshotDirUri } from './modules/screenshot/screenshot-store';
 import { joinShotsToScreens, type ShotWithSource } from './modules/flow-map/flow-map-screenshots';
 import { suggestBreadcrumbPatterns } from './modules/flow-map/flow-map-empty-diagnostic';
 import { findCompareSessions } from './modules/flow-map/flow-map-cross-session';
@@ -80,8 +80,10 @@ async function resolveShotFile(
  *
  * The panel rewrites each `src` to a webview URI before render — see `FlowShot.src`.
  */
-async function loadFlowShots(logFsPath: string): Promise<{ shots: ShotWithSource[]; omitted: number }> {
-    const entries = await readScreenshotSidecar(logFsPath);
+async function loadFlowShots(
+    logFsPath: string,
+): Promise<{ shots: ShotWithSource[]; omitted: number; suppressed: number }> {
+    const { entries, suppressed } = await readScreenshotSummary(logFsPath);
     const capped = entries.slice(0, MAX_REPORT_SHOTS);
     const withUris: ShotWithSource[] = [];
     for (const entry of capped) {
@@ -89,7 +91,7 @@ async function loadFlowShots(logFsPath: string): Promise<{ shots: ShotWithSource
         if (!found) { continue; }
         withUris.push({ ...entry, ...found });
     }
-    return { shots: withUris, omitted: Math.max(0, entries.length - withUris.length) };
+    return { shots: withUris, omitted: Math.max(0, entries.length - withUris.length), suppressed };
 }
 
 /** Read the log and build the report model + markdown. Separated for isolated testing/observation. */
@@ -107,7 +109,7 @@ async function generateReport(logUri: vscode.Uri, revealLine: (line: number) => 
     // Source 3 — non-fatal; empty index yields a runtime-only map.
     const scan = await scanProjectScreens(parsed.header.projectRoot);
     const graph = buildGraph(parsed, scan);
-    const { shots, omitted } = await loadFlowShots(logUri.fsPath);
+    const { shots, omitted, suppressed } = await loadFlowShots(logUri.fsPath);
     // Cheap: a directory read plus one stat per candidate. Resolving a session's captures is the
     // expensive half and only happens if the reader actually picks one.
     const sessions = shots.length > 0 ? await findCompareSessions(logUri) : [];
@@ -122,6 +124,7 @@ async function generateReport(logUri: vscode.Uri, revealLine: (line: number) => 
         revealLine,
         screenshots: joinShotsToScreens(shots, parsed.events),
         screenshotsOmitted: omitted,
+        screenshotsSuppressed: suppressed,
         // Always passed, even with no captures: the panel is reused across refreshes, so its resource
         // roots must follow the log currently shown rather than whichever log first had screenshots.
         // Comparable sessions' directories are opened up front because a webview cannot be granted a

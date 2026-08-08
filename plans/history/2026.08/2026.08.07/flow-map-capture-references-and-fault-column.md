@@ -260,13 +260,29 @@ rule applied five captures are kept and two skipped — with the warning and err
 kept. Pairwise scores for genuinely different screens landed at 76-91%, well clear of the 0.985
 threshold.
 
+## A rejected refinement, recorded
+
+Keying the signature history BY SCREEN — "have I already captured this screen looking like this" —
+was implemented and then removed, because measurement rejected it. Against the same seven real
+captures it skipped nothing at all, where one shared ring correctly skipped two exact duplicates.
+
+The cause is that the screen label available at capture time comes from the navigation breadcrumb on
+the triggering line, and that label routinely disagrees with what is actually on screen: captures
+004 and 005 are labelled "Emergency Dashboard" and both show the contacts list, because the capture
+lands just after a route change. Keying on that label partitioned identical pictures into separate
+buckets and lost the entire benefit.
+
+The picture is the more reliable identity than the log's own claim about which screen was showing,
+so the picture is what is compared. The reasoning is recorded on `RecentShotSignatures` so the
+refinement is not re-proposed from first principles.
+
 ## Verification
 
 - `npm run check-types` — 0 errors.
 - `npm run lint` — 0 errors, 14 pre-existing warnings.
 - `npm run compile` — full gate chain green, including `verify:l10n-keys` (2561 keys), the webview
   message catalogs, and `verify:dist-size`.
-- 231 tests passing across the fifteen affected suites, including five new files:
+- 245 tests passing across the sixteen affected suites, including six new files:
   `flow-map-svg-layout.test.ts` (13) covering fault-leaf extraction, back-edge exclusion, orphan
   retention, row wrapping, and rendered canvas width; and `screenshot-sidecar-validation.test.ts`
   (6) covering trigger-union rejection, per-field defaulting, and malformed sidecars. The layout

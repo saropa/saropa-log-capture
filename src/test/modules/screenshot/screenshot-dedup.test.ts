@@ -27,9 +27,14 @@ function makeLine(text: string, overrides: Partial<LineData> = {}): LineData {
 
 interface Recorded { trigger: string; logLine: number; }
 
-/** Store double: records what was actually persisted. */
+/** Store double: records what was actually persisted, including suppression counts. */
 class FakeStore {
     saves: Recorded[] = [];
+    suppressed = 0;
+    noteSuppressed(_log: string): Promise<void> {
+        this.suppressed++;
+        return Promise.resolve();
+    }
     save(_log: string, _png: Uint8Array, entry: { trigger: string; logLine: number }): Promise<ScreenshotSaveResult | undefined> {
         this.saves.push({ trigger: entry.trigger, logLine: entry.logLine });
         return Promise.resolve({
@@ -154,6 +159,35 @@ suite('ScreenshotCapturer near-duplicate skipping', () => {
         h.capturer.onLine(navLine(2));
         await h.flush();
         assert.strictEqual(h.store.saves.length, 2, 'default-off means no behavior change');
+    });
+
+    test('should say ONCE when a capture cannot be read for comparison', async () => {
+        // "Cannot read it" keeps the capture by design, which would otherwise make an unsupported
+        // PNG form look like a setting that quietly stopped working.
+        const h = makeHarness({
+            capturePng: () => Promise.resolve(new Uint8Array([1, 2, 3])),
+            triggerSettings: () => ({
+                onError: true, onWarning: true, onNavigation: true, cooldownMs: 0, maxPerLog: 50,
+                skipNearDuplicates: true, duplicateSimilarity: 0.985,
+            }),
+        });
+        h.capturer.onLine(navLine(1));
+        await h.flush();
+        h.capturer.onLine(navLine(2));
+        await h.flush();
+        assert.strictEqual(h.store.saves.length, 2, 'unreadable captures are kept, never dropped');
+        const notices = h.logs.filter(l => l.includes('could not be read'));
+        assert.strictEqual(notices.length, 1, `said exactly once, not per capture: ${h.logs.length} logs`);
+    });
+
+    test('should record the suppressed count so a later report can state it', async () => {
+        const h = dedupHarness(() => 120);
+        h.capturer.onLine(navLine(1));
+        await h.flush();
+        h.capturer.onLine(navLine(2));
+        await h.flush();
+        assert.strictEqual(h.capturer.suppressedShotCount, 1, 'counted in memory');
+        assert.strictEqual(h.store.suppressed, 1, 'and persisted for a report built later');
     });
 
     test('should FORGET the previous log — a new session starts with an empty memory', async () => {

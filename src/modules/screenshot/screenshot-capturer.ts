@@ -103,6 +103,10 @@ export class ScreenshotCapturer {
      * single capture. A new session writes a new log file, which is the signal.
      */
     private dedupLogFsPath = '';
+    /** One-time notice that captures cannot be read for comparison — never repeated per capture. */
+    private warnedUnreadableShot = false;
+    /** Running count of captures dropped as near-duplicates, for the report's gallery note. */
+    private suppressedShots = 0;
     private lastCaptureAt = 0;
     private inFlight = false;
     private warnedCapFull = false;
@@ -262,12 +266,32 @@ export class ScreenshotCapturer {
         // direct instruction. Fault captures are kept for the same reason the capturer already
         // fingerprints them — the picture at the moment of an error is the report's whole point.
         if (req.trigger === 'manual' || req.trigger === 'error' || req.trigger === 'warning') { return false; }
-        const verdict = duplicateVerdict(Buffer.from(png), this.recentShots, req.duplicateSimilarity);
-        if (!verdict.duplicate) { return false; }
+        const verdict = duplicateVerdict({
+            png: Buffer.from(png), recent: this.recentShots, threshold: req.duplicateSimilarity,
+        });
+        if (!verdict.duplicate) {
+            // "Cannot read it" is indistinguishable from "keep it" by design, which would make a
+            // capture format this reader does not handle look like a setting that quietly stopped
+            // working. Say it ONCE — the format will not change mid-session.
+            if (verdict.unreadable && !this.warnedUnreadableShot) {
+                this.warnedUnreadableShot = true;
+                this.deps.log('screenshot: near-duplicate skipping is on, but this capture\'s image could not be read (unsupported PNG form) — every capture will be kept');
+            }
+            return false;
+        }
         const pct = (verdict.similarity * 100).toFixed(1);
         this.deps.log(`screenshot: skipped a ${pct}% match of a recent capture (${req.trigger}, line ${req.logLine})`);
+        this.suppressedShots++;
+        // Persist so a report built from this log LATER — after the session ended, in another
+        // process — can still say what was dropped. Non-fatal: a failed count write must never cost
+        // the capture pipeline, which is why this is fire-and-forget with a logged failure.
+        this.deps.store.noteSuppressed(req.logFsPath)
+            .catch((err) => this.deps.log(`screenshot: could not record the suppressed count (${err instanceof Error ? err.message : String(err)})`));
         return true;
     }
+
+    /** Captures dropped as near-duplicates this session — surfaced in the flow map's gallery. */
+    get suppressedShotCount(): number { return this.suppressedShots; }
 
     /**
      * Crash lines the logcat gate rejected as replay. Reported at session end when nothing
