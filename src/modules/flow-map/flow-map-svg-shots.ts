@@ -15,7 +15,7 @@
 
 import type { FlowShot } from './flow-map-screenshots';
 import { screenKeyOf } from './flow-map-screenshots';
-import { stripAnsi } from './flow-map-format';
+import { esc, stripAnsi } from './flow-map-format';
 
 /** Horizontal inset of the thumbnail inside the node box (also its top inset). */
 export const THUMB_PAD = 10;
@@ -31,11 +31,6 @@ export const THUMB_BLOCK_H = THUMB_PAD + THUMB_H + THUMB_GAP;
 
 /** Screen key → that screen's captures, in the order they were taken. */
 export type ShotsByScreen = ReadonlyMap<string, readonly FlowShot[]>;
-
-/** Escape text for an XML/SVG attribute. */
-function esc(s: string): string {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
 
 /**
  * Group captures by the normalized key of the screen they were taken on, so a node can look its own

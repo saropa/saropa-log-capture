@@ -59,7 +59,7 @@ export function readScreenshotSettings(cfg: vscode.WorkspaceConfiguration): Scre
         onNavigation: bool('onNavigation', false),
         cooldownMs: num('cooldownMs'),
         maxPerLog: num('maxPerLog'),
-        skipNearDuplicates: bool('skipNearDuplicates', false),
+        skipNearDuplicates: bool('skipNearDuplicates', true),
         duplicateSimilarity: num('duplicateSimilarity'),
     };
 }

@@ -53,9 +53,10 @@ export interface ScreenshotTriggerSettings {
     readonly cooldownMs: number;
     readonly maxPerLog: number;
     /**
-     * Skip a capture that looks like a recent one (`skipNearDuplicates`). Off by default: this is
-     * the only setting in the group that DISCARDS a capture the user would otherwise have, so it
-     * has to be asked for.
+     * Skip a capture that looks like a recent one (`skipNearDuplicates`). On by default (flipped
+     * 2026-08-08 after a real seven-capture session correctly kept 5 and skipped 2, with both fault
+     * captures kept) — it is still the only setting in the group that can DISCARD a capture the user
+     * would otherwise have, so a false positive here is a real cost, not a cosmetic one.
      */
     readonly skipNearDuplicates: boolean;
     /** Similarity at or above which a capture counts as a duplicate, 0-1. */

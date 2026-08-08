@@ -11,7 +11,7 @@
 
 import type { FlowEdge, FlowGraph, FlowNode } from './flow-map-model';
 import type { FlowShot } from './flow-map-screenshots';
-import { formatDwellMs, kindIcon, nodeDisplayLines, nodeHasError } from './flow-map-format';
+import { esc, formatDwellMs, kindIcon, nodeDisplayLines, nodeHasError } from './flow-map-format';
 import { groupShotsByScreen, THUMB_BLOCK_H, thumbMarkup, type ShotsByScreen } from './flow-map-svg-shots';
 import { planRows } from './flow-map-svg-layout';
 
@@ -66,11 +66,6 @@ function paletteOf(node: FlowNode): Palette {
     if (node.kind === 'external') { return { cls: 'fm-p-external', dashed: true }; }
     if (node.walked) { return { cls: 'fm-p-walked', dashed: false }; }
     return { cls: 'fm-p-static', dashed: true };
-}
-
-/** Escape text for XML/SVG. */
-function esc(s: string): string {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 /**

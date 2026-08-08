@@ -9,9 +9,10 @@
  */
 
 import type {
-    CrashInfo, FlowEdge, FlowGraph, FlowNode, IssueEvent, NodeKind, ParsedLog, SourceAnchor, TimelineEvent,
+    FlowEdge, FlowGraph, FlowNode, NodeKind, ParsedLog, SourceAnchor, TimelineEvent,
 } from './flow-map-model';
 import { normalizeScreenKey } from './flow-map-format';
+import { applyCrashes, attachIssues } from './flow-map-builder-issues';
 
 /** Static-scan output: normalized screen label → { source, displayLabel }. */
 export type ScanIndex = Map<string, { source: SourceAnchor; label: string }>;
@@ -30,8 +31,13 @@ function kindFor(event: TimelineEvent): NodeKind {
     return 'screen';
 }
 
-/** Mutable build state for the single ordered pass over events. */
-interface BuildState {
+/**
+ * Mutable build state for the single ordered pass over events. Exported so the crash/issue
+ * attachment pass (`flow-map-builder-issues.ts`), which runs immediately after the walk in
+ * `buildGraph`, can read and extend the same state rather than the walk handing back a narrower
+ * shape the second phase would have to re-derive.
+ */
+export interface BuildState {
     readonly nodes: Map<string, FlowNode>;
     readonly edges: Map<string, FlowEdge>;
     /**
@@ -53,7 +59,7 @@ interface BuildState {
 }
 
 /** Get or create a node, joining to the static scan index for label/source (R5/R6). */
-function ensureNode(state: BuildState, key: string, label: string, kind: NodeKind): FlowNode {
+export function ensureNode(state: BuildState, key: string, label: string, kind: NodeKind): FlowNode {
     const existing = state.nodes.get(key);
     if (existing) {
         return existing;
@@ -266,97 +272,6 @@ function seedLaunch(state: BuildState, atMs: number): void {
     state.enteredAtMs = atMs;
 }
 
-/**
- * The screen a crash's inferred edge should hang off: whoever was ACTUALLY current at the crash
- * time, read from the closed occupancy segments. Node dwell windows can't answer this — a node
- * revisited twice has one window spanning the gap where the user was elsewhere, so a crash in that
- * gap would window-match the wrong screen. The LAST containing segment wins (nested stays: the
- * caller's segment re-opens after an exit, so the latest entry is the innermost active surface).
- */
-function crashFromKey(state: BuildState, tsMs: number): string | undefined {
-    let found: string | undefined;
-    for (const seg of state.segments) {
-        if (tsMs >= seg.start && tsMs <= seg.end) { found = seg.key; }
-    }
-    return found ?? state.currentKey;
-}
-
-/** Create one crash's node + inferred edge and attach its crash issue (R4/R5). */
-function applyCrash(state: BuildState, crash: CrashInfo): void {
-    const base = crash.source?.file.split('/').pop()?.replace(/\.dart$/, '') ?? crash.widget ?? 'Crash';
-    const key = normalizeKey(`crash:${base}`);
-    const node = ensureNode(state, key, prettyDialogName(base), 'dialog');
-    node.visits++;
-    node.walked = true;
-    node.resolved = Boolean(crash.source);
-    node.source = crash.source ?? node.source;
-    node.firstTsMs ??= crash.tsMs;
-    node.logLine ??= crash.logLine;
-    const fromKey = crashFromKey(state, crash.tsMs);
-    if (fromKey && fromKey !== key) {
-        const id = `${fromKey}\0${key}`;
-        const existing = state.edges.get(id);
-        if (existing) { existing.count++; }
-        else { state.edges.set(id, { from: fromKey, to: key, count: 1, walked: true, inferred: true }); }
-    }
-    node.issues.push(crashIssueRow(crash.tsMs, crash.clock, crash.message, crash.source));
-}
-
-/** Turn `culture_religion_picker_dialog` into `Culture Religion Picker Dialog`. */
-function prettyDialogName(base: string): string {
-    return base.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-}
-
-/** Build the crash issue row attached to the crash node. */
-function crashIssueRow(tsMs: number, clock: string, message: string, source?: SourceAnchor): IssueEvent {
-    return { tsMs, clock, severity: 'error', category: 'Crash', detail: message, source };
-}
-
-/** True when a node's dwell window (open-ended if never left) contains the timestamp. */
-function issueWithin(node: FlowNode, tsMs: number): boolean {
-    return node.firstTsMs !== undefined
-        && tsMs >= node.firstTsMs
-        && (node.lastTsMs === undefined || tsMs <= node.lastTsMs);
-}
-
-/**
- * Pick the node an issue badges. Explicit `[flowmap] error` tags name a real moment, so they attach
- * to the surface actually current then — the INNERMOST open node (greatest firstTsMs among containing
- * windows), dialogs included. After an `exit`, a revealed caller's window re-extends over the span
- * its dialog was up, so the two windows overlap; first-match-by-insertion would wrongly hand the error
- * to the outer screen. Heuristic issues keep the old rule: first containing non-dialog node (which
- * keeps window-matched noise off the synthetic crash node).
- */
-function targetNodeForIssue(state: BuildState, issue: IssueEvent): FlowNode | undefined {
-    if (issue.explicit) {
-        let best: FlowNode | undefined;
-        for (const node of state.nodes.values()) {
-            if (issueWithin(node, issue.tsMs) && (!best || (node.firstTsMs ?? 0) > (best.firstTsMs ?? 0))) {
-                best = node;
-            }
-        }
-        return best;
-    }
-    for (const node of state.nodes.values()) {
-        if (issueWithin(node, issue.tsMs) && node.kind !== 'dialog') {
-            return node;
-        }
-    }
-    return undefined;
-}
-
-/** Attach window-matched issues (errors/perf) to the node active when they fired (R4). */
-function attachIssues(state: BuildState, issues: readonly IssueEvent[]): void {
-    for (const issue of issues) {
-        // The crash is already placed on its own dialog node by applyCrash; skip it here so it does
-        // not also flag the screen that was merely active at crash time (false "💥 crash" badge).
-        if (issue.tsMs <= 0 || issue.severity === 'info' || issue.category === 'Crash') {
-            continue;
-        }
-        targetNodeForIssue(state, issue)?.issues.push(issue);
-    }
-}
-
 /** Build the flow graph from a parsed log and optional static-scan index. */
 export function buildGraph(parsed: ParsedLog, scan?: ScanIndex): FlowGraph {
     const state: BuildState = { nodes: new Map(), edges: new Map(), navStack: [], segments: [], scan };
@@ -388,9 +303,7 @@ export function buildGraph(parsed: ParsedLog, scan?: ScanIndex): FlowGraph {
     const lastCrashMs = parsed.crashes.reduce((max, c) => Math.max(max, c.tsMs), 0);
     const endMs = Math.max(lastCrashMs, lastEventMs(parsed.events));
     leaveCurrent(state, endMs);
-    for (const crash of parsed.crashes) {
-        applyCrash(state, crash);
-    }
+    applyCrashes(state, parsed.crashes);
     attachIssues(state, parsed.issues);
 
     return { nodes: [...state.nodes.values()], edges: [...state.edges.values()] };

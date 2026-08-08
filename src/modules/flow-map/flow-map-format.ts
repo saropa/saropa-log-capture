@@ -16,6 +16,16 @@ export function stripAnsi(text: string): string {
 }
 
 /**
+ * Escape text for HTML/XML (shared by the SVG renderer, the Mermaid-free HTML report, the activity
+ * chart, and the gallery — five copies of this exact function, once per module that builds markup).
+ * A log line or a screen label reaches every one of these surfaces, so an unescaped `<`/`&` in one
+ * would inject markup there just as readily as in any other.
+ */
+export function esc(s: string): string {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/**
  * R3 — the stable identity key for a screen label (lowercased, whitespace-collapsed, trimmed).
  *
  * THE single normalizer. The builder keys nodes with it and the screenshot join keys captures with

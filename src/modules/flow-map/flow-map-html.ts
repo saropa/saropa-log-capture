@@ -10,17 +10,12 @@ import type { FlowGraph, FlowNode, IssueEvent, ParsedLog, SourceAnchor } from '.
 import type { FlowShot } from './flow-map-screenshots';
 import { screenshotsSectionHtml, shotCellHtml } from './flow-map-html-shots';
 import { groupShotsByScreen, shotSetsIsland } from './flow-map-svg-shots';
-import { anchorText, formatActions, formatDwellMs, nodeHasError, stripAnsi } from './flow-map-format';
+import { anchorText, esc, formatActions, formatDwellMs, nodeHasError, stripAnsi } from './flow-map-format';
 import { renderSvg } from './flow-map-svg';
 import { t } from '../../l10n';
 import { buildNarrative } from './flow-map-report';
 import { activityChartHtml } from './flow-map-activity-chart';
 import type { BreadcrumbSuggestion } from './flow-map-empty-diagnostic';
-
-/** Escape text for HTML. */
-function esc(s: string): string {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
 
 /** Convert ms-of-day to an HH:MM:SS clock. */
 function clockOf(tsMs: number): string {

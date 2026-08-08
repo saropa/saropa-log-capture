@@ -2806,8 +2806,8 @@
           "title": "%config.integrations.screenshots.maxPerLog.title%"
         },
         "saropaLogCapture.integrations.screenshots.skipNearDuplicates": {
-          "default": false,
-          "description": "Skip a screenshot whose picture is near-identical to a recent capture. The phone's status bar is excluded from the comparison, so two captures of the same screen that differ only by the clock count as the same picture. Every skip is written to the output channel with its similarity.",
+          "default": true,
+          "description": "Skip a screenshot whose picture is near-identical to a recent capture. The phone's status bar is excluded from the comparison, so two captures of the same screen that differ only by the clock count as the same picture. Fault (error/warning) and manually-requested captures are never skipped, and an unreadable capture is always kept. Every skip is written to the output channel with its similarity.",
           "type": "boolean",
           "title": "%config.integrations.screenshots.skipNearDuplicates.title%"
         },
