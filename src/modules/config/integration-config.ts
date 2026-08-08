@@ -267,7 +267,7 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
       onNavigation: ensureBoolean(cfg.get('integrations.screenshots.onNavigation'), false),
       cooldownMs: clamp(cfg.get('integrations.screenshots.cooldownMs'), 250, 60000, 2000),
       maxPerLog: clamp(cfg.get('integrations.screenshots.maxPerLog'), 1, 500, 50),
-      skipNearDuplicates: ensureBoolean(cfg.get('integrations.screenshots.skipNearDuplicates'), false),
+      skipNearDuplicates: ensureBoolean(cfg.get('integrations.screenshots.skipNearDuplicates'), true),
       // Floor at 0.5: below that, "similar" stops meaning anything and the feature would discard
       // unrelated screens. Ceiling below 1 because an exact-equality threshold can never fire on a
       // real capture — two shots of a live screen are never bit-identical after downsampling.
