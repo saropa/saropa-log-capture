@@ -280,6 +280,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         context,
         sessionManager,
         log: (msg) => outputChannel.appendLine(msg),
+        showOutput: () => outputChannel.show(true),
         onSaved: (logFsPath, result) => {
             /* Record the capture in the log itself. A screenshot that exists only as a file
                beside the log is invisible when reading the log — as a line it sits in the

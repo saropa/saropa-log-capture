@@ -21,29 +21,14 @@
 
 import * as vscode from 'vscode';
 
-/** What fired a capture. Mirrors the trigger settings + the manual command. */
-export type ScreenshotTrigger = 'error' | 'warning' | 'nav' | 'manual';
-
-/** One saved screenshot as recorded in the `.screenshots.json` sidecar. */
-export interface ScreenshotMetaEntry {
-    /** PNG filename inside the `.screenshots/` directory. */
-    readonly file: string;
-    readonly trigger: ScreenshotTrigger;
-    /** Capture time, epoch ms. */
-    readonly timestamp: number;
-    /** 1-based line number in the log the capture is anchored to (0 = no anchor, manual capture). */
-    readonly logLine: number;
-    /** The matched log line text (ANSI-stripped, truncated) — the "why" shown in the gallery. */
-    readonly text: string;
-    /** Normalized error fingerprint hash (dedup key); empty for nav/manual triggers. */
-    readonly fingerprint: string;
-}
+import { SidecarWriter, type SidecarPayload } from './screenshot-sidecar-writer';
+export type { ScreenshotMetaEntry, ScreenshotTrigger } from './screenshot-store-types';
+import type { ScreenshotMetaEntry, ScreenshotTrigger } from './screenshot-store-types';
 
 /**
- * Sidecar JSON shape. Versioned so a future format change can migrate instead of misread.
- *
- * `suppressed` is OPTIONAL and defaults to 0: sidecars written before near-duplicate skipping
- * existed have no such field, and a reader that demanded one would reject all of them.
+ * Sidecar JSON as READ from disk. Every field is optional-by-suspicion because the file outlives the
+ * process that wrote it: `suppressed` is absent from every sidecar written before near-duplicate
+ * skipping existed, and a reader that demanded it would reject all of them.
  */
 interface ScreenshotSidecar {
     readonly version: 1;
@@ -80,30 +65,33 @@ export function screenshotSidecarUri(logFsPath: string): vscode.Uri {
     return vscode.Uri.file(`${screenshotBaseFromLogPath(logFsPath)}.screenshots.json`);
 }
 
-/**
- * How long a suppressed-count change waits before the sidecar is rewritten. Long enough that a burst
- * of skips costs ONE write, short enough that a crash loses at most a couple of seconds of counting.
- */
-const SUPPRESSED_FLUSH_MS = 3000;
-
 /** Saves PNGs + metadata beside the log. One instance per extension activation. */
 export class ScreenshotStore {
     /** log base fsPath → entries written this process (authoritative during a session). */
     private readonly entriesByBase = new Map<string, ScreenshotMetaEntry[]>();
     /** log base fsPath → captures dropped as near-duplicates this process. */
     private readonly suppressedByBase = new Map<string, number>();
-    /** log base → its log path, for counts changed since the last write. */
-    private readonly dirtyBases = new Map<string, string>();
-    private flushTimer: ReturnType<typeof setTimeout> | undefined;
-    /** Serializes every sidecar write; see `writeSidecar` for why overlapping writes are unsafe. */
-    private writeChain: Promise<void> = Promise.resolve();
+    /** Owns WHEN and IN WHAT ORDER the sidecar is written; see its module doc. */
+    private readonly writer: SidecarWriter;
 
     /**
      * @param onError Reports a failed sidecar write. Optional so tests and the many call sites that
      * only read do not have to supply one, but the extension always does: a write that fails
      * silently makes a wrong suppressed count undiagnosable.
      */
-    constructor(private readonly onError?: (message: string) => void) { }
+    constructor(onError?: (message: string) => void) {
+        // The payload is built HERE, at write time, from live state — so a write queued behind
+        // another never persists a snapshot taken before the one in front of it changed things.
+        this.writer = new SidecarWriter(
+            (logFsPath): SidecarPayload => ({
+                version: 1,
+                screenshots: [...this.entriesForLog(logFsPath)],
+                suppressed: this.suppressedByBase.get(screenshotBaseFromLogPath(logFsPath)) ?? 0,
+            }),
+            screenshotBaseFromLogPath,
+            onError,
+        );
+    }
 
     /** Count of screenshots recorded for a log (0 when none). */
     countForLog(logFsPath: string): number {
@@ -139,7 +127,7 @@ export class ScreenshotStore {
         const full: ScreenshotMetaEntry = { ...entry, file };
         entries.push(full);
         this.entriesByBase.set(base, entries);
-        await this.writeSidecar(logFsPath, entries);
+        await this.writeSidecar(logFsPath);
         return { entry: full, pngUri, totalForLog: entries.length };
     }
 
@@ -158,14 +146,12 @@ export class ScreenshotStore {
     noteSuppressed(logFsPath: string): void {
         const base = screenshotBaseFromLogPath(logFsPath);
         this.suppressedByBase.set(base, (this.suppressedByBase.get(base) ?? 0) + 1);
-        this.dirtyBases.set(base, logFsPath);
-        if (this.flushTimer) { return; }
-        this.flushTimer = setTimeout(() => {
-            this.flushTimer = undefined;
-            void this.flushSuppressed();
-        }, SUPPRESSED_FLUSH_MS);
-        // A pending timer must never hold the extension host open past deactivate.
-        this.flushTimer.unref?.();
+        this.writer.markDirty(logFsPath, screenshotSidecarUri(logFsPath));
+    }
+
+    /** Captures dropped as near-duplicates for a log this process (0 when none). */
+    suppressedForLog(logFsPath: string): number {
+        return this.suppressedByBase.get(screenshotBaseFromLogPath(logFsPath)) ?? 0;
     }
 
     /**
@@ -174,54 +160,20 @@ export class ScreenshotStore {
      * is the one being reported on.
      */
     async flushSuppressed(): Promise<void> {
-        const pending = [...this.dirtyBases.entries()];
-        for (const [base, logFsPath] of pending) {
-            try {
-                await this.writeSidecar(logFsPath, this.entriesForLog(logFsPath));
-                // Cleared only once the write LANDED. Clearing the whole set up front meant one
-                // failure discarded every other pending log's count with it, permanently: nothing
-                // would mark them dirty again unless that log happened to skip another capture.
-                this.dirtyBases.delete(base);
-            } catch (err) {
-                // Keep going: the other logs' counts are independent of this one's failure, and each
-                // stays dirty so the next flush retries it.
-                this.onError?.(`screenshot: could not record the suppressed count for ${logFsPath} (${err instanceof Error ? err.message : String(err)})`);
-            }
-        }
+        await this.writer.flush();
     }
 
     /** Stop the pending timer and write what it was waiting to write. */
     async dispose(): Promise<void> {
-        if (this.flushTimer) {
-            clearTimeout(this.flushTimer);
-            this.flushTimer = undefined;
-        }
-        await this.flushSuppressed();
+        await this.writer.dispose();
     }
 
-    /** True when a suppressed count is counted but not yet on disk (tests and shutdown checks). */
-    get hasPendingSuppressed(): boolean { return this.dirtyBases.size > 0; }
+    /** True when a suppressed count is counted but not yet on disk. */
+    get hasPendingSuppressed(): boolean { return this.writer.hasPending; }
 
-    /**
-     * Rewrite the metadata sidecar whole (small file, cooldown-limited cadence).
-     *
-     * SERIALIZED through one chain: `save()` and a debounced suppressed-count flush both rewrite the
-     * same file from the same in-memory state, and two overlapping whole-file writes can interleave
-     * so the last writer wins with a stale snapshot. The capturer's in-flight guard serializes
-     * CAPTURES, but the flush is not a capture and is not covered by it.
-     */
-    private writeSidecar(logFsPath: string, entries: readonly ScreenshotMetaEntry[]): Promise<void> {
-        // `entries` must be a LIVE reference to the stored array, never a copy: this write runs later,
-        // and a snapshot would persist stale entries beside a freshly-read suppressed count.
-        const write = async (): Promise<void> => {
-            const suppressed = this.suppressedByBase.get(screenshotBaseFromLogPath(logFsPath)) ?? 0;
-            const sidecar: ScreenshotSidecar = { version: 1, screenshots: [...entries], suppressed };
-            const bytes = new TextEncoder().encode(JSON.stringify(sidecar, null, 2));
-            await vscode.workspace.fs.writeFile(screenshotSidecarUri(logFsPath), bytes);
-        };
-        // A failed write must not poison the chain for every later write.
-        this.writeChain = this.writeChain.then(write, write);
-        return this.writeChain;
+    /** Queue a whole-document rewrite. Ordering and failure handling live in `SidecarWriter`. */
+    private writeSidecar(logFsPath: string): Promise<void> {
+        return this.writer.write(logFsPath, screenshotSidecarUri(logFsPath));
     }
 }
 

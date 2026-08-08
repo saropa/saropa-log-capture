@@ -235,6 +235,7 @@ export const stringsA: Record<string, string> = {
     'msg.screenshotCapFull': 'Screenshot limit for this log reached — older captures are kept.',
     'msg.screenshotBusy': 'A screenshot capture is already in progress.',
     'msg.screenshotFailed': 'Screenshot capture failed — see the Saropa Log Capture output channel.',
+    'screenshot.diagnosed': 'Screenshot diagnosis written to the Saropa Log Capture output channel.',
     'msg.screenshotNoLog': 'No active capture log to attach the screenshot to.',
 
     'msg.noSessionFiles': 'No log files found.',
