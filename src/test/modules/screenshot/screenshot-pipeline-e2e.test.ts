@@ -38,7 +38,7 @@ suite('screenshot pipeline end-to-end', () => {
         const store = new ScreenshotStore();
         const capturer = new ScreenshotCapturer({
             isEnabled: () => true,
-            triggerSettings: () => ({ onError: true, onWarning: false, onNavigation: false, cooldownMs: 250, maxPerLog: 50 }),
+            triggerSettings: () => ({ onError: true, onWarning: false, onNavigation: false, cooldownMs: 250, maxPerLog: 50, skipNearDuplicates: false, duplicateSimilarity: 0.985 }),
             getVmServiceWsUri: getLatestVmServiceWsUri,
             capturePng: makeCaptureTransport({
                 vm: captureVmServiceScreenshot,
@@ -105,7 +105,7 @@ suite('screenshot pipeline end-to-end', () => {
         const store = new ScreenshotStore();
         const capturer = new ScreenshotCapturer({
             isEnabled: () => true,
-            triggerSettings: () => ({ onError: true, onWarning: false, onNavigation: false, cooldownMs: 250, maxPerLog: 50 }),
+            triggerSettings: () => ({ onError: true, onWarning: false, onNavigation: false, cooldownMs: 250, maxPerLog: 50, skipNearDuplicates: false, duplicateSimilarity: 0.985 }),
             getVmServiceWsUri: getLatestVmServiceWsUri,
             capturePng: makeCaptureTransport({
                 vm: captureVmServiceScreenshot,

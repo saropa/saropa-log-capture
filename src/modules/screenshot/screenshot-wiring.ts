@@ -50,6 +50,10 @@ export function registerScreenshotCapture(deps: ScreenshotWiringDeps): Screensho
             // disable capture while the menu UI shows the clamped number.
             cooldownMs: clamp(cfg().get('integrations.screenshots.cooldownMs'), 250, 60000, 2000),
             maxPerLog: clamp(cfg().get('integrations.screenshots.maxPerLog'), 1, 500, 50),
+            skipNearDuplicates: cfg().get<boolean>('integrations.screenshots.skipNearDuplicates', false),
+            // Same clamp reasoning: a hand-edited 0 would make every capture a "duplicate" of the
+            // one before it and silently stop the gallery filling.
+            duplicateSimilarity: clamp(cfg().get('integrations.screenshots.duplicateSimilarity'), 0.5, 0.999, 0.985),
         }),
         getVmServiceWsUri: getLatestVmServiceWsUri,
         // VM first (chrome-free where it still exists), adb screencap fallback — the path

@@ -17,6 +17,7 @@ import { isErrorLine, isWarningLine } from '../features/error-rate-alert';
 import { normalizeLine, hashFingerprint } from '../analysis/error-fingerprint-pure';
 import { classifyLogLine } from '../analysis/stack-parser';
 import { LogcatCrashGate } from './logcat-crash-gate';
+import { RecentShotSignatures, duplicateVerdict } from './screenshot-similarity';
 import { classifyBreadcrumb } from '../flow-map/flow-map-breadcrumbs';
 import { stripAnsi } from '../capture/ansi';
 import type { LineData } from '../session/session-event-bus';
@@ -44,6 +45,14 @@ export interface ScreenshotTriggerSettings {
     readonly onNavigation: boolean;
     readonly cooldownMs: number;
     readonly maxPerLog: number;
+    /**
+     * Skip a capture that looks like a recent one (`skipNearDuplicates`). Off by default: this is
+     * the only setting in the group that DISCARDS a capture the user would otherwise have, so it
+     * has to be asked for.
+     */
+    readonly skipNearDuplicates: boolean;
+    /** Similarity at or above which a capture counts as a duplicate, 0-1. */
+    readonly duplicateSimilarity: number;
 }
 
 /** Injected dependencies — see module doc for why these are not imported directly. */
@@ -62,6 +71,9 @@ export interface ScreenshotCapturerDeps {
     now?(): number;
 }
 
+/** What `captureAndSave` did with one admitted capture. */
+type CaptureOutcome = 'saved' | 'skipped' | 'capFull';
+
 /** Outcome of a manual capture, mapped to user-facing toasts by the command layer. */
 export type ManualCaptureOutcome = 'saved' | 'disabled' | 'noVmService' | 'capFull' | 'busy' | 'failed';
 
@@ -73,6 +85,8 @@ interface CaptureRequest {
     readonly text: string;
     readonly logLine: number;
     readonly maxPerLog: number;
+    readonly skipNearDuplicates: boolean;
+    readonly duplicateSimilarity: number;
 }
 
 /** Watches captured lines and saves VM Service screenshots on matching triggers. */
@@ -80,6 +94,15 @@ export class ScreenshotCapturer {
     private readonly seenFingerprints = new Set<string>();
     /** Live-vs-replay decision for the logcat feed; stateful per session (see its module doc). */
     private readonly logcatGate = new LogcatCrashGate();
+    /** Recent captures' picture signatures, for near-duplicate skipping. Bounded (see its class). */
+    private readonly recentShots = new RecentShotSignatures();
+    /**
+     * Log the signature ring currently describes. The capturer lives for the whole extension host,
+     * not for one session, so without this a new run's first screenshots would be compared against
+     * the PREVIOUS run's last ones and could be skipped as duplicates before the new log has a
+     * single capture. A new session writes a new log file, which is the signal.
+     */
+    private dedupLogFsPath = '';
     private lastCaptureAt = 0;
     private inFlight = false;
     private warnedCapFull = false;
@@ -132,8 +155,12 @@ export class ScreenshotCapturer {
         if (!trigger) { return; }
 
         if (!this.passesCoalescing(text, trigger, settings.cooldownMs)) { return; }
-        this.captureAndSave({ wsUri, logFsPath: data.logFileUri, trigger, text, logLine: data.lineCount, maxPerLog: settings.maxPerLog })
-            .catch((err) => this.recordFailure(wsUri, err));
+        this.captureAndSave({
+            wsUri, logFsPath: data.logFileUri, trigger, text, logLine: data.lineCount,
+            maxPerLog: settings.maxPerLog,
+            skipNearDuplicates: settings.skipNearDuplicates,
+            duplicateSimilarity: settings.duplicateSimilarity,
+        }).catch((err) => this.recordFailure(wsUri, err));
     }
 
     /**
@@ -150,8 +177,16 @@ export class ScreenshotCapturer {
         if (this.inFlight) { return 'busy'; }
         const { maxPerLog } = this.deps.triggerSettings();
         try {
-            const saved = await this.captureAndSave({ wsUri, logFsPath, trigger: 'manual', text: '', logLine, maxPerLog });
-            return saved ? 'saved' : 'capFull';
+            // skipNearDuplicates false regardless of the setting: an explicit capture request is
+            // never a duplicate to refuse (isNearDuplicate also excludes 'manual' — belt and braces,
+            // because this path must not depend on that classification staying put).
+            const outcome = await this.captureAndSave({
+                wsUri, logFsPath, trigger: 'manual', text: '', logLine, maxPerLog,
+                skipNearDuplicates: false, duplicateSimilarity: 1,
+            });
+            // 'skipped' is unreachable here (skipNearDuplicates is false on this path), but mapping
+            // it to 'saved' would be a lie if that ever changed — report the cap instead of guessing.
+            return outcome === 'saved' ? 'saved' : 'capFull';
         } catch (err) {
             this.deps.log(`screenshot (manual): ${err instanceof Error ? err.message : String(err)}`);
             return 'failed';
@@ -174,11 +209,16 @@ export class ScreenshotCapturer {
         return true;
     }
 
-    /** Fetch the PNG and persist it; resolves false when the per-log cap refused the save. */
-    private async captureAndSave(req: CaptureRequest): Promise<boolean> {
+    /**
+     * Fetch the PNG and persist it. Names the three outcomes rather than returning a boolean: a
+     * capture skipped as a near-duplicate is NOT a save, and a caller that read `true` as "persisted"
+     * would misreport a discarded capture.
+     */
+    private async captureAndSave(req: CaptureRequest): Promise<CaptureOutcome> {
         this.inFlight = true;
         try {
             const png = await this.deps.capturePng(req.wsUri);
+            if (this.isNearDuplicate(png, req)) { return 'skipped'; }
             const entry = {
                 trigger: req.trigger,
                 timestamp: this.now(),
@@ -189,13 +229,44 @@ export class ScreenshotCapturer {
             const result = await this.deps.store.save(req.logFsPath, png, entry, req.maxPerLog);
             if (!result) {
                 this.warnCapFullOnce(req.logFsPath, req.maxPerLog);
-                return false;
+                return 'capFull';
             }
             this.deps.onSaved?.(req.logFsPath, result);
-            return true;
+            return 'saved';
         } finally {
             this.inFlight = false;
         }
+    }
+
+    /**
+     * Whether this capture is near-identical to a recent one and should not be saved.
+     *
+     * Answers the field report "many of your screenshots are identical except for the phone's
+     * clock": the existing fingerprint dedup keys off the LOG LINE that triggered a capture, so two
+     * navigation captures of one screen are both kept however alike the pictures are. The comparison
+     * excludes the status-bar strip, which is the only region that differs between them.
+     *
+     * A skip is LOGGED with its similarity, never silent. A dropped capture is invisible by nature,
+     * and a threshold that turns out to be wrong has to be diagnosable from the output channel
+     * rather than from a reader wondering where their screenshots went.
+     */
+    private isNearDuplicate(png: Uint8Array, req: CaptureRequest): boolean {
+        if (!req.skipNearDuplicates) { return false; }
+        // Reset before comparing, never after: the first capture of a new log must be judged against
+        // an empty history, not against the log that came before it.
+        if (req.logFsPath !== this.dedupLogFsPath) {
+            this.recentShots.clear();
+            this.dedupLogFsPath = req.logFsPath;
+        }
+        // A manual capture is an explicit request for THIS moment; deduping it would refuse a
+        // direct instruction. Fault captures are kept for the same reason the capturer already
+        // fingerprints them — the picture at the moment of an error is the report's whole point.
+        if (req.trigger === 'manual' || req.trigger === 'error' || req.trigger === 'warning') { return false; }
+        const verdict = duplicateVerdict(Buffer.from(png), this.recentShots, req.duplicateSimilarity);
+        if (!verdict.duplicate) { return false; }
+        const pct = (verdict.similarity * 100).toFixed(1);
+        this.deps.log(`screenshot: skipped a ${pct}% match of a recent capture (${req.trigger}, line ${req.logLine})`);
+        return true;
     }
 
     /**
