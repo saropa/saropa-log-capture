@@ -55,7 +55,25 @@ export function flowMapZoomScript(nonce: string): string {
     var f = Math.min(aw / BASE_W, ah > 0 ? ah / BASE_H : 1, 1);
     return f > 0 ? f : 1;
   }
-  function resetView(){ scale = fitScale(); applyScale(); scroll.scrollLeft = 0; scroll.scrollTop = 0; }
+  // Reset view is the one deliberate way back to the renderer's own layout, so it also drops any
+  // cards the reader dragged (see flow-map-panel-drag-script.ts). Guarded: the drag script is a
+  // sibling <script>, and a future panel could ship the lens without it.
+  function resetView(){
+    if (typeof window.__fmResetNodes === 'function') { window.__fmResetNodes(); }
+    // Reset drops the by-time arrangement with everything else, so its control must stop reading as
+    // engaged — a lit button over a depth layout is the control lying about the mode it is in.
+    var timeBtn = document.querySelector('.fm-zoom-btn[data-zoom="time"]');
+    if (timeBtn) { timeBtn.classList.remove('fm-zoom-active'); }
+    scale = fitScale(); applyScale(); scroll.scrollLeft = 0; scroll.scrollTop = 0;
+  }
+
+  /* By-time arrangement: a MODE, so the button stays lit while it is on. The layout itself lives in
+     the drag script's IIFE (it drives the same setOffset/re-route path); this only owns the toolbar
+     side of it. Guarded because that script is a sibling block a panel could ship without. */
+  function arrangeByTime(btn){
+    if (typeof window.__fmArrangeByTime !== 'function') { return; }
+    btn.classList.toggle('fm-zoom-active', window.__fmArrangeByTime());
+  }
 
   // Zoom anchored at a client point (cursor) so the content under it stays put across the rescale.
   function zoomTo(next, cx, cy){
@@ -97,8 +115,12 @@ export function flowMapZoomScript(nonce: string): string {
     if (!crash) { return; }
     scale = Math.max(scale, 1); applyScale();
     var b = crash.getBBox();
-    scroll.scrollLeft = (b.x + b.width / 2) * scale - scroll.clientWidth / 2;
-    scroll.scrollTop = (b.y + b.height / 2) * scale - scroll.clientHeight / 2;
+    // getBBox reports the group's OWN user space and excludes its transform, so a card the reader
+    // dragged (or that the by-time arrangement moved) would center on where it used to be — the
+    // control would scroll to blank canvas and flash a card that is not on screen.
+    var off = (typeof window.__fmOffsetOf === 'function' && window.__fmOffsetOf(crash)) || { dx: 0, dy: 0 };
+    scroll.scrollLeft = (b.x + off.dx + b.width / 2) * scale - scroll.clientWidth / 2;
+    scroll.scrollTop = (b.y + off.dy + b.height / 2) * scale - scroll.clientHeight / 2;
     crash.classList.remove('fm-flash'); void crash.getBBox(); crash.classList.add('fm-flash');
   }
 
@@ -106,6 +128,8 @@ export function flowMapZoomScript(nonce: string): string {
   document.querySelectorAll('.fm-zoom-btn').forEach(function(btn){
     var act = btn.getAttribute('data-zoom');
     if (act === 'popout') { btn.addEventListener('click', function(){ send('popOutFlow'); }); return; }
+    // 'time' needs its own button to toggle the lit state on, so it cannot go through the ZOOM map.
+    if (act === 'time') { btn.addEventListener('click', function(){ arrangeByTime(btn); }); return; }
     btn.addEventListener('click', function(){ var fn = ZOOM[act]; if (fn) { fn(); } });
   });
 

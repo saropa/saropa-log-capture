@@ -29,9 +29,11 @@ export function flowMapLightboxZoomJs(): string {
   function zoomApply(){
     if (!zoomImg) { return; }
     if (zoomIsFit()) {
+      // Clear all three rather than restating the fit values: the stylesheet's .fms-img rule is the
+      // single definition of "fit", and a second copy here drifts the moment that rule is tuned.
       zoomImg.style.width = '';
-      zoomImg.style.maxWidth = '100%';
-      zoomImg.style.maxHeight = '70vh';
+      zoomImg.style.maxWidth = '';
+      zoomImg.style.maxHeight = '';
       if (zoomPct) { zoomPct.textContent = '—'; }
       if (zoomSlider) { zoomSlider.value = '100'; }
       return;
