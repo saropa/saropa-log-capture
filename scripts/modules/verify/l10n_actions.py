@@ -83,7 +83,7 @@ def run_sync() -> None:
     added, kept, removed = sync_english_bundle()
     print(f"\n  Kept:    {kept}")
     print(f"  Added:   {green(str(added))}")
-    print(f"  Removed: {red(str(removed))} orphan(s)")
+    print(f"  Removed: {yellow(str(removed))} orphan(s)")
     print(f"  Total:   {cyan(str(kept + added))} keys")
     _reset_garbled_acronyms()
 

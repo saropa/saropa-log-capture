@@ -2234,5 +2234,13 @@
   "This session": "Questa sessione",
   "Zoom": "Zoom",
   "{0} near-duplicate captures were skipped for this log": "{0} catture quasi-duplicate sono state saltate per questo log",
-  "Screenshot diagnosis written to the Saropa Log Capture output channel.": "Diagnosi della schermata scritta nel canale di output Saropa Log Capture."
+  "Screenshot diagnosis written to the Saropa Log Capture output channel.": "Diagnosi della schermata scritta nel canale di output Saropa Log Capture.",
+  "({0} screenshot thumbnails were left out — they only load inside the panel)": "({0} miniature screenshot omesse — si caricano solo all'interno del pannello)",
+  "Arrange by time — space the cards by when each screen was entered": "Ordina per tempo — posiziona le carte in base a quando è stato entrato in ogni schermata",
+  "Export Diagram as SVG": "Esporta Diagramma come SVG",
+  "Export diagram as SVG — keeps any rearrangement, for a bug report or a PR": "Esporta diagramma come SVG — mantiene qualsiasi riorganizzazione, per un report di bug o un PR",
+  "Next screenshot": "Successiva schermata",
+  "Previous screenshot": "Schermata precedente",
+  "Open setting": "Apri impostazioni",
+  "Saropa Log Capture now skips near-duplicate screenshots by default. Error, warning and manually-requested captures are never skipped.": "Saropa Log Capture ora salta automaticamente le screenshot quasi duplicate. Errori, avvisi e acquisizioni richieste manualmente non vengono mai saltati."
 }

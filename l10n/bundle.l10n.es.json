@@ -2240,5 +2240,7 @@
   "Export Diagram as SVG": "Exportar Diagrama como SVG",
   "Export diagram as SVG — keeps any rearrangement, for a bug report or a PR": "Exportar diagrama como SVG — mantiene cualquier reorganización, para un informe de error o una PR",
   "Next screenshot": "Próxima captura de pantalla",
-  "Previous screenshot": "Captura anterior"
+  "Previous screenshot": "Captura anterior",
+  "Open setting": "Abrir configuración",
+  "Saropa Log Capture now skips near-duplicate screenshots by default. Error, warning and manually-requested captures are never skipped.": "Saropa Log Capture ahora salta imágenes capturadas por defecto. Errores, advertencias y capturas solicitadas manualmente nunca se omiten."
 }

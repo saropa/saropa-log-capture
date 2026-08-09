@@ -4,12 +4,14 @@
 Pure presentation: takes the audit produced by ``l10n_bundle_audit.run_audit``
 and prints the status header, English-bundle issues (missing / orphan keys), the
 per-locale coverage table, and the untranslated-gap detail. Color is semantic —
-green = complete, yellow = partial gap, red = missing — so a glance at the table
-tells the operator where the work is. No mutation, no I/O beyond stdout.
+green = complete, yellow = gap / quality signal — so a glance at the table tells
+the operator where the work is. Red is reserved for actual runtime errors
+(translation failures, rate-limit aborts), never for audit/coverage state, so it
+never appears in this module. No mutation, no I/O beyond stdout.
 """
 
 from modules.verify.l10n_bundle_audit import AuditResult
-from modules.verify.l10n_console import bold, cyan, dim, green, header, red, yellow
+from modules.verify.l10n_console import bold, cyan, dim, green, header, yellow
 from modules.verify.l10n_provenance import ENGINE_DISPLAY_ORDER, is_low_quality
 
 
@@ -19,9 +21,9 @@ def _truncate(text: str, limit: int = 60, hard: int = 63) -> str:
 
 
 def _print_bundle_issues(audit: AuditResult) -> None:
-    """Print missing-from-bundle (red) and orphan-in-bundle (yellow) sections."""
+    """Print missing-from-bundle and orphan-in-bundle sections (both yellow — gaps, not errors)."""
     if audit.missing_from_bundle:
-        print(f"\n  {red(f'MISSING from English bundle: {len(audit.missing_from_bundle)}')}")
+        print(f"\n  {yellow(f'MISSING from English bundle: {len(audit.missing_from_bundle)}')}")
         for sym_key, en_val in audit.missing_from_bundle[:8]:
             print(f'    - [{cyan(sym_key)}] "{_truncate(en_val)}"')
         remaining = len(audit.missing_from_bundle) - 8
@@ -38,12 +40,15 @@ def _print_bundle_issues(audit: AuditResult) -> None:
 
 
 def _coverage_status(missing_count: int, untranslated_count: int) -> str:
-    """Build the colored per-locale status cell (COMPLETE / N missing / N untranslated)."""
+    """Build the colored per-locale status cell (COMPLETE / N missing / N untranslated).
+
+    Both non-complete states are yellow — a coverage gap, not a runtime error.
+    """
     if missing_count == 0 and untranslated_count == 0:
         return green("COMPLETE")
     parts = []
     if missing_count > 0:
-        parts.append(red(f"{missing_count} missing"))
+        parts.append(yellow(f"{missing_count} missing"))
     if untranslated_count > 0:
         parts.append(yellow(f"{untranslated_count} untranslated"))
     return ", ".join(parts)
@@ -76,7 +81,7 @@ def _print_coverage_table(audit: AuditResult) -> None:
 
 
 def _engine_breakdown(engine_counts: dict[str, int]) -> str:
-    """Format an engine→count map: low/untracked engines red, strong ones green."""
+    """Format an engine→count map: low/untracked engines yellow, strong ones green."""
     if not engine_counts:
         return dim("none")
     # Known engines in quality order first, then any unrecognized name.
@@ -85,7 +90,7 @@ def _engine_breakdown(engine_counts: dict[str, int]) -> str:
     parts = []
     for engine in ordered:
         label = f"{engine}:{engine_counts[engine]}"
-        parts.append(red(label) if is_low_quality(engine) else green(label))
+        parts.append(yellow(label) if is_low_quality(engine) else green(label))
     return ", ".join(parts)
 
 
@@ -93,8 +98,9 @@ def _print_provenance_table(audit: AuditResult) -> None:
     """Print the per-locale engine provenance + high/low quality split.
 
     Untracked (no provenance record) counts as low quality, so a locale full of
-    old un-attributed legacy strings reads as a large red Low-Q figure — the
-    signal that an "upgrade low-quality" pass has work to do.
+    old un-attributed legacy strings reads as a large yellow Low-Q figure — the
+    signal that an "upgrade low-quality" pass has work to do. Yellow, not red:
+    this is a quality/upgrade signal, not a runtime error.
     """
     if not audit.locale_coverage:
         return
@@ -108,7 +114,7 @@ def _print_provenance_table(audit: AuditResult) -> None:
         low = lc.low_quality_count
         hi_cell = green(f"{lc.high_quality_count:>7}")
         # Padded to width BEFORE coloring so the ANSI codes don't break columns.
-        low_cell = (red if low > 0 else green)(f"{low:>7}")
+        low_cell = (yellow if low > 0 else green)(f"{low:>7}")
         print(f"  {lc.locale:<10} {hi_cell} {low_cell}  {_engine_breakdown(lc.engine_counts)}")
 
 
@@ -126,8 +132,8 @@ def print_untranslated_detail(
         print(f"\n  {bold(lc.locale)} — {yellow(f'{len(lc.untranslated_entries)} gap(s)')}:")
         visible = lc.untranslated_entries if max_entries is None else lc.untranslated_entries[:max_entries]
         for entry in visible:
-            # Missing (absent) is more severe than en-copy (present, untranslated).
-            tag = red("MISSING") if entry.reason == "missing" else yellow("EN-COPY")
+            # Both are gap states, not errors — kept as one hue (yellow).
+            tag = yellow("MISSING") if entry.reason == "missing" else yellow("EN-COPY")
             print(f'    [{tag}] {entry.sym_key}: "{_truncate(entry.en_value, 55, 58)}"')
         remaining = len(lc.untranslated_entries) - len(visible)
         if remaining > 0:

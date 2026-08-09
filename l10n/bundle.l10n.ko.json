@@ -2234,5 +2234,13 @@
   "This session": "이 세션",
   "Zoom": "확대",
   "{0} near-duplicate captures were skipped for this log": "{0} 로그에 대해 근접 복제 캡처가 건너뛰었습니다.",
-  "Screenshot diagnosis written to the Saropa Log Capture output channel.": "Saropa Log Capture 출력 채널에 작성된 스크린샷 진단"
+  "Screenshot diagnosis written to the Saropa Log Capture output channel.": "Saropa Log Capture 출력 채널에 작성된 스크린샷 진단",
+  "({0} screenshot thumbnails were left out — they only load inside the panel)": "({0} 스크린샷 썸네일은 생략되었습니다 — 패널 내에서만 로드됩니다)",
+  "Arrange by time — space the cards by when each screen was entered": "시간 순으로 정렬 — 각 화면이 진입된 시점에 따라 카드를 배치합니다",
+  "Export Diagram as SVG": "도형을 SVG로 내보내기",
+  "Export diagram as SVG — keeps any rearrangement, for a bug report or a PR": "도형을 SVG로 내보내기 — 재배치 내용을 유지하여 버그 보고서 또는 PR에 사용",
+  "Next screenshot": "다음 스크린샷",
+  "Previous screenshot": "이전 스크린샷",
+  "Open setting": "설정 열기",
+  "Saropa Log Capture now skips near-duplicate screenshots by default. Error, warning and manually-requested captures are never skipped.": "Saropa Log Capture는 이제 기본적으로 유사한 스크린샷을 건너뜁니다. 오류, 경고 및 수동 요청 캡처는 절대 건너뛰지 않습니다."
 }

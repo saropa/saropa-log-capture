@@ -67,27 +67,29 @@ VERIFIED_IDENTICAL: dict[str, frozenset[str]] = {
     "de": frozenset({
         "Commit", "Detail", "Export", "in {0}", "Filter…", "Ver", "Version",
         "Perf", "Info", "Audio", "Layout", "Trends", "Terminal", "Pause",
-        "Git", "System",
+        "Git", "System", "Zoom",
     }),
     "es": frozenset({
         "local", "FATAL", "Ver", "Error", "{0} error", "Audio", "Terminal",
-        "{0} total",
+        "{0} total", "Commit", "Zoom",
     }),
     "fr": frozenset({
         "{0} commit", "FATAL", "Ver", "Version", "Versions", "Flutter DAP",
         "Exclusions", "Exclusions ({0})", "Collections", "Audio", "Performance",
         "Sources", "Terminal", "Pause", "Dates", "Git", "Session", "{0} types",
+        "Commit", "Zoom",
     }),
     "it": frozenset({
         "Dev", "— stdout, stderr, console", "Perf", "file", "Debug",
         "Timestamp", "Display", "Audio", "Volume:",
         "Database (Drift SQL) — {0} exec A / {1} exec B · {2} fp A / {3} fp B",
+        "Commit", "Zoom", "File", "Debug {0}",
     }),
     "ja": frozenset({
         "Git",
     }),
     "pt-br": frozenset({
-        "local", "FATAL", "Ver", "Volume:", "{0} total", "Git",
+        "local", "FATAL", "Ver", "Volume:", "{0} total", "Git", "Commit", "Zoom",
     }),
 }
 

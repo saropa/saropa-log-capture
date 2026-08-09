@@ -199,12 +199,12 @@ def run_quality_audit(
                     "round_trip": round_tripped[:120],
                     "similarity": f"{sim:.0%}",
                 })
-                print(f"    {red('FLAG')} ({sim:.0%}): {en_val[:60]}...")
+                print(f"    {yellow('FLAG')} ({sim:.0%}): {en_val[:60]}...")
 
         if locale_flags == 0:
             print(f"  {cyan(locale)}: {green('all samples passed')}")
         else:
-            print(f"  {cyan(locale)}: {red(f'{locale_flags} flagged')} "
+            print(f"  {cyan(locale)}: {yellow(f'{locale_flags} flagged')} "
                   f"/ {len(keys)} sampled")
 
     return flagged
@@ -216,7 +216,7 @@ def print_quality_report(flagged: list[dict[str, str]]) -> None:
         print(f"\n  {green('No quality issues found.')}")
         return
 
-    print(f"\n  {red(f'{len(flagged)} translation(s) flagged:')}")
+    print(f"\n  {yellow(f'{len(flagged)} translation(s) flagged:')}")
     for f in flagged:
         print(f"\n  {cyan(f['locale'])} | {dim(f['key'])}")
         print(f"    EN:    {f['en']}")

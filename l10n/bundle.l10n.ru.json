@@ -2234,5 +2234,13 @@
   "This session": "Эта сессия",
   "Zoom": "Зум",
   "{0} near-duplicate captures were skipped for this log": "{0} близкие дубликаты захвата были пропущены для этого лога",
-  "Screenshot diagnosis written to the Saropa Log Capture output channel.": "Скриншот диагностики записан в выходной канал Saropa Log Capture."
+  "Screenshot diagnosis written to the Saropa Log Capture output channel.": "Скриншот диагностики записан в выходной канал Saropa Log Capture.",
+  "({0} screenshot thumbnails were left out — they only load inside the panel)": "({0} миниатюры снимков были исключены — они загружаются только внутри панели)",
+  "Arrange by time — space the cards by when each screen was entered": "Упорядочить по времени — разместить карты в порядке времени входа на каждую экран /no_think",
+  "Export Diagram as SVG": "Экспорт диаграммы как SVG",
+  "Export diagram as SVG — keeps any rearrangement, for a bug report or a PR": "Экспорт диаграммы в SVG — сохраняет любую перестановку, для отчета об ошибке или PR",
+  "Next screenshot": "Следующий скриншот",
+  "Previous screenshot": "Предыдущий снимок экрана",
+  "Open setting": "Открыть настройки",
+  "Saropa Log Capture now skips near-duplicate screenshots by default. Error, warning and manually-requested captures are never skipped.": "Saropa Log Capture теперь пропускает почти дублирующиеся скриншоты по умолчанию. Ошибка, предупреждение и вручную запрашиваемые захваты никогда не пропускаются."
 }
