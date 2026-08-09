@@ -1,6 +1,6 @@
 # Plan 056 — Session Flow Map (screen-transition diagram)
 
-## Status: S1 implemented · S2 shipped · S3 shipped (2026-06-11: CSS-size zoom that scrolls instead of cropping + centers/fits, fixed center-on-fault, diagram pop-out panel, double-click node detail card, return-to-caller back arrows, edge time labels off the arrow, splitter floors lowered to 20px) · S2 extended (2026-08-08: cards draggable with live edge re-routing, lightbox prev/next, capture thumbnails on the activity timeline and the screen-visit table, lightbox wheel-zoom fix, container-query detail column; then arrange-by-time layout, export-diagram-as-SVG, and hardening — per-lane row heights, center-the-fault on a moved card, thumbnail stripping so the SVG export doesn't ship broken images; then backlog closeout — esc() consolidated, flow-map-builder.ts split under 300 lines, skipNearDuplicates now defaults on; then a compile-time guard on the attachment-state split, a first-activation notice for the default flip; then three v9.3.10 post-release regressions fixed — a JS syntax error that killed diagram zoom entirely, the lightbox zoom width instability, and screenshots attaching to the wrong screen (root cause: LogSession's split-threshold counter reused as a physical line number) — with a new script-parses-as-JS regression test class added; then reflection hardening round 2 — the lightbox width lock widened to the card's other children, the split continuation header now counted by physicalLineCount, two more physicalLineCount-vs-lineCount misuses fixed (error-snackbar's Open Log, manual screenshot capture), a realistic end-to-end ANSI fixture added alongside the hand-built one, and a build-time activation self-check re-parsing the five panel scripts as real JS · live log-filtering still proposed
+## Status: S1 implemented · S2 shipped · S3 shipped (2026-06-11: CSS-size zoom that scrolls instead of cropping + centers/fits, fixed center-on-fault, diagram pop-out panel, double-click node detail card, return-to-caller back arrows, edge time labels off the arrow, splitter floors lowered to 20px) · S2 extended (2026-08-08: cards draggable with live edge re-routing, lightbox prev/next, capture thumbnails on the activity timeline and the screen-visit table, lightbox wheel-zoom fix, container-query detail column; then arrange-by-time layout, export-diagram-as-SVG, and hardening — per-lane row heights, center-the-fault on a moved card, thumbnail stripping so the SVG export doesn't ship broken images; then backlog closeout — esc() consolidated, flow-map-builder.ts split under 300 lines, skipNearDuplicates now defaults on; then a compile-time guard on the attachment-state split, a first-activation notice for the default flip; then three v9.3.10 post-release regressions fixed — a JS syntax error that killed diagram zoom entirely, the lightbox zoom width instability, and screenshots attaching to the wrong screen (root cause: LogSession's split-threshold counter reused as a physical line number) — with a new script-parses-as-JS regression test class added; then reflection hardening round 2 — the lightbox width lock widened to the card's other children, the split continuation header now counted by physicalLineCount, two more physicalLineCount-vs-lineCount misuses fixed (error-snackbar's Open Log, manual screenshot capture), a realistic end-to-end ANSI fixture added alongside the hand-built one, and a build-time activation self-check re-parsing the five panel scripts as real JS; then reflection round 3 — fixed a real (disabled-by-default) maxLines bug where the split threshold never reset per part and degenerated into one file per line after the first split, and eliminated the self-check/parse-test generator-list duplication by exporting one canonical array instead of testing that two copies stayed in sync · live log-filtering still proposed
 
 **S1 (the combined session report) shipped** as the `saropaLogCapture.exportFlowMap` command —
 log parser, error-causing-widget parser, static source scan (contacts preset), graph builder
@@ -1113,3 +1113,75 @@ day's work):
 Re-verified: `npm run check-types` clean, `npm run lint` 0 errors (14 pre-existing warnings,
 unchanged), `npm run compile` passes every gate, full test suite (4131 vscode-test cases + full
 `node:test` set) 0 failing.
+
+## Finish Report (2026-08-09) — reflection round 3: a real maxLines bug, and generator-list dedup
+
+Addresses the `/finish` handoff reflection from the round-2 hardening pass: the two least-confident
+items the reflection named (the `_lineCount`-never-resets double-split quirk, and the self-check's
+hand-copied generator list) were both hardened, plus the reflection's brainstormed unrequested
+feature (a compile-time link between the two generator lists) was folded into the same fix rather
+than built as a separate check.
+
+### `maxLines` never reset its own threshold after a split — a real, previously-shipped bug
+
+Discovered as a side effect of writing a test for the round-2 header-line-count fix:
+`LogSession._lineCount` was reused for two purposes at once — the CUMULATIVE session total reported
+to the status bar (`onLineCountChanged`, the `lineCount` getter), and the gating value
+`splitBeforeNextLineIfNeeded`/`writeProcessedLines` check against `config.maxLines`. It was never
+reset after a split. Once it first crossed `maxLines`, the gating check stayed permanently true, so
+every SUBSEQUENT line re-triggered another split — a session with `maxLines: 3` writing 7 lines
+produced 9 one-line files, not the ~3 the setting's own description ("Split file after this many
+lines") promises. The existing regression test never caught this: it asserted `names.length >= 3`,
+which the degenerate 9-file case also satisfies.
+
+Fixed by giving the gating check its own field, `_partLineCount`, reset to `0` in exactly
+`performSplit()` and `clear()` — mirroring how `_bytesWritten` already resets per part for the
+`maxSizeKB` rule. `_lineCount` itself is now untouched by a split, so the status bar's "N lines"
+figure keeps climbing across a split instead of dropping (which would have read as data loss to a
+user watching it). The tightened test (`maxLines rotates parts and preserves newest lines`, now
+`assert.strictEqual(names.length, 3)`) fails immediately without the fix; a new test proves the
+cumulative counter survives a split unchanged.
+
+This is disabled by default (`maxLines: 0`) and unlikely to have been widely noticed, but is a real
+correctness bug for anyone who did configure it — silently fragmenting a session into a large number
+of near-empty files instead of the periodic rotation the setting advertises.
+
+### Generator-list duplication eliminated, not just tested for
+
+The round-2 reflection flagged that `flow-map-panel-scripts-self-check.ts`'s `GENERATORS` array was a
+hand-copied duplicate of `flow-map-panel-scripts-parse.test.ts`'s own array, "kept in sync manually"
+with nothing enforcing that claim — a sixth generator added to only one file would silently go
+uncovered by the other. Rather than adding a third test to check the two lists match, the array itself
+was made canonical: `flow-map-panel-scripts-self-check.ts` now exports
+`FLOW_MAP_PANEL_SCRIPT_GENERATORS`, and the parse test imports and iterates that same array instead of
+defining its own. A missing or renamed generator in one file is now a compile error in the other, not
+a runtime gap.
+
+### Also fixed: the self-check's own logging call wasn't guarded
+
+A delegated review of the round-2 commit (`fa356d88`) found the self-check module's outer `catch`
+block called `logExtensionWarn` unguarded — if that call itself threw (a disposed output channel
+mid-shutdown), the throw would escape `selfCheckFlowMapPanelScripts()`, breaking its own documented
+"never throws, never blocks activation" contract. Wrapped in its own `try { } catch { }`. Also
+extracted the newline-counting loop duplicated between `LogSession.writeBackpressured` and
+`performFileSplit`'s `headerLineCount` computation into a shared `countNewlines()` helper in
+`log-session-helpers.ts`, removing the exact kind of two-places-count-differently drift risk that
+caused the flow-map screenshot-mismatch bug this whole hardening arc traces back to. Both fixes are
+committed as `0ac364ed`.
+
+**Files changed (this round):** `log-session.ts` (`_partLineCount` field, all split-gating sites
+switched to it, `_lineCount` left cumulative), `log-session.test.ts` (tightened + new tests),
+`flow-map-panel-scripts-self-check.ts` (`FLOW_MAP_PANEL_SCRIPT_GENERATORS` exported),
+`flow-map-panel-scripts-parse.test.ts` (imports the shared array instead of duplicating it).
+
+**Tests:** `log-session.test.ts` gained a case proving the cumulative `lineCount` survives a split
+unchanged, and the pre-existing `maxLines rotates parts` test was tightened from `>= 3` to
+`=== 3` — the assertion that actually catches the bug this round fixes. Full suite: 4132 vscode-test
+cases (net +1) plus the full `node:test` set, 0 failing. `npm run check-types` clean; `npm run lint`
+0 errors, the same 14 pre-existing warnings; `npm run compile` passes every gate; `dist/extension.js`
+5.44 MiB against the 12 MiB ceiling.
+
+**Not verified on device.** No F5 walkthrough this round either. The `maxLines` fix is exercisable by
+configuring a non-default `saropaLogCapture.splitRules.maxLines` (or the legacy
+`saropaLogCapture.maxLines`) and confirming a long session produces the expected NUMBER of part files
+rather than one per line past the first split.
