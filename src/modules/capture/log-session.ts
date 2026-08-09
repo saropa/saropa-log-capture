@@ -111,6 +111,14 @@ export class LogSession {
         this.onSplit = callback;
     }
 
+    /** The ONLY place `_lineCount`/`_partLineCount` advance — a future write path that bumps one
+     * without the other silently reintroduces the drift `_partLineCount` exists to prevent (see its
+     * own comment). Every "a line was written" site must call this instead of touching either field
+     * directly. */
+    private bumpLineCounters(): void {
+        this._lineCount++; this._partLineCount++;
+    }
+
     /**
      * Attach a permanent `'error'` listener to a write stream.
      *
@@ -175,10 +183,7 @@ export class LogSession {
         const filePath = path.join(logDirPath, fileName);
         this._fileUri = vscode.Uri.file(filePath);
 
-        this.writeStream = fs.createWriteStream(filePath, {
-            flags: 'a',
-            encoding: 'utf-8',
-        });
+        this.writeStream = fs.createWriteStream(filePath, { flags: 'a', encoding: 'utf-8' });
         this.attachStreamErrorHandler(this.writeStream);
 
         const header = generateContextHeader(this.context, this.config, extraHeaderLines);
@@ -257,7 +262,7 @@ export class LogSession {
         if (!this.writeStream) { return; }
         await this.writeBackpressured(this.writeStream, item.block);
         this._bytesWritten += Buffer.byteLength(item.block, 'utf-8');
-        if (item.countsAsLine) { this._lineCount++; this._partLineCount++; }
+        if (item.countsAsLine) { this.bumpLineCounters(); }
     }
 
     /** Wait until buffered appendLine calls are flushed to disk. */
@@ -305,7 +310,7 @@ export class LogSession {
             const lineData = line + '\n';
             await this.writeBackpressured(this.writeStream, lineData);
             this._bytesWritten += Buffer.byteLength(lineData, 'utf-8');
-            this._lineCount++; this._partLineCount++;
+            this.bumpLineCounters();
         }
     }
 
