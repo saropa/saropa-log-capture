@@ -195,6 +195,18 @@ function redactEnv(
     return result;
 }
 
+/**
+ * Count real newline bytes in `text`. The single counting method physical-line accounting relies
+ * on — used both at the write choke point (`LogSession.writeBackpressured`) and by
+ * `performFileSplit`'s continuation-header count, so the two can never drift out of sync with each
+ * other the way `_physicalLineCount` and the screenshot capturer's old counter once did.
+ */
+export function countNewlines(text: string): number {
+    let count = 0;
+    for (let i = 0; i < text.length; i++) { if (text.charCodeAt(i) === 10) { count++; } }
+    return count;
+}
+
 /** Resolve the log directory URI for a session (date subfolder under config.logDirectory). */
 export function getLogDirUri(context: SessionContext, config: SaropaLogCaptureConfig): vscode.Uri {
     const base = path.isAbsolute(config.logDirectory)

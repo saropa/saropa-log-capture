@@ -58,8 +58,11 @@ export function selfCheckFlowMapPanelScripts(): void {
         }
     } catch (err) {
         // Any generator throwing outright (not just producing bad JS) is equally a build-time signal
-        // worth surfacing, but must never take activation down with it.
+        // worth surfacing, but must never take activation down with it — including if the logging
+        // call itself throws (e.g. a disposed output channel during shutdown).
         const msg = err instanceof Error ? err.message : String(err);
-        logExtensionWarn('flowMapPanelScriptsSelfCheck', `self-check failed to run: ${msg}`);
+        try {
+            logExtensionWarn('flowMapPanelScriptsSelfCheck', `self-check failed to run: ${msg}`);
+        } catch { /* never let logging itself break the never-throws contract */ }
     }
 }
