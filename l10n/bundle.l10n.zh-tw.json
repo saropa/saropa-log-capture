@@ -2234,5 +2234,13 @@
   "This session": "本次會話",
   "Zoom": "縮放",
   "{0} near-duplicate captures were skipped for this log": "{0} 則近似重複的截取已跳過此日誌",
-  "Screenshot diagnosis written to the Saropa Log Capture output channel.": "螢幕截圖診斷已寫入 Saropa Log Capture 輸出通道。"
+  "Screenshot diagnosis written to the Saropa Log Capture output channel.": "螢幕截圖診斷已寫入 Saropa Log Capture 輸出通道。",
+  "({0} screenshot thumbnails were left out — they only load inside the panel)": "({0} 截圖縮略圖被省略了 — 他們僅在面板內載入)",
+  "Arrange by time — space the cards by when each screen was entered": "按時間排列 — 將卡片按每個螢幕進入的時間間隔排列",
+  "Export Diagram as SVG": "匯出圖形為SVG",
+  "Export diagram as SVG — keeps any rearrangement, for a bug report or a PR": "匯出圖表為SVG — 保留任何重新排列，用於錯誤報告或提PR",
+  "Next screenshot": "下一張螢幕截圖",
+  "Previous screenshot": "上一張截圖",
+  "Open setting": "開啟設定",
+  "Saropa Log Capture now skips near-duplicate screenshots by default. Error, warning and manually-requested captures are never skipped.": "Saropa Log Capture 現在預設會跳過近似重複的螢幕截圖。 錯誤、警告及手動請求的截圖從來不會被跳過。"
 }

@@ -2234,5 +2234,13 @@
   "This session": "このセッション",
   "Zoom": "ズーム",
   "{0} near-duplicate captures were skipped for this log": "{0} ほぼ複製のキャプチャはこのログでスキップされました",
-  "Screenshot diagnosis written to the Saropa Log Capture output channel.": "Saropa Log Capture出力チャネルに書き込まれたスクリーンショット診断"
+  "Screenshot diagnosis written to the Saropa Log Capture output channel.": "Saropa Log Capture出力チャネルに書き込まれたスクリーンショット診断",
+  "({0} screenshot thumbnails were left out — they only load inside the panel)": "({0} スクリーンショットのサムネイルは省略されました — それらはパネル内でのみ読み込まれます)",
+  "Arrange by time — space the cards by when each screen was entered": "時系列で並べる — 各画面が開かれた時間順にカードを並べる",
+  "Export Diagram as SVG": "SVGとして図をエクスポート",
+  "Export diagram as SVG — keeps any rearrangement, for a bug report or a PR": "SVGとしてダイアグラムをエクスポート — 並び替えを保持し、バグレポートやPR用に",
+  "Next screenshot": "次のスクリーンショット",
+  "Previous screenshot": "前のスクリーンショット",
+  "Open setting": "設定を開く",
+  "Saropa Log Capture now skips near-duplicate screenshots by default. Error, warning and manually-requested captures are never skipped.": "Saropa Log Capture は現在、デフォルトで近い重複のスクリーンショットをスキップします。 エラー、警告および手動でリクエストされたキャプチャは常にスキップされません。"
 }
