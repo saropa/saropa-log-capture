@@ -56,6 +56,7 @@ Flow map diagrams can now be rearranged by hand or laid out along a time axis, e
 - Flow map: consolidated five identical HTML/XML-escaping helpers (one per rendering module) into a single shared function
 - Flow map: split the graph builder's crash- and issue-attachment logic into its own module to bring the builder back under the project's 300-line file limit
 - l10n: fixed translation script re-translating verified-identical keys every run, causing a garbled-reset → re-translate cycle and phantom "gaps" on 100%-complete locales
+- New advisory `verify:changelog-maintenance` script flags CHANGELOG bullets that read as internal tooling (l10n pipeline, design-token migrations, compile gates, file splits) but sit outside a Maintenance block; heuristic keyword match, not wired into `npm run compile`
 
 </details>
 
