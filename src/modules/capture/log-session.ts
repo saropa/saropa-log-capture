@@ -33,14 +33,23 @@ export type SplitCallback = (newUri: vscode.Uri, partNumber: number, reason: Spl
 
 export class LogSession {
     private _state: SessionState = 'recording';
+    /** Cumulative lines captured for the whole session (never reset by a split) — what the status
+     * bar's "N lines" figure reports, and what `lineCount` exposes. NOT the split-gating counter;
+     * see `_partLineCount` for that. */
     private _lineCount = 0;
+    /** Lines written to the CURRENT part, reset on every split — the actual value `maxLines`/
+     * `splitter.evaluate` gate against. `_lineCount` cannot be reused for this: it is intentionally
+     * cumulative (see its own comment), so once it first crossed `maxLines` it would stay past
+     * threshold forever, turning every later line into its own one-line file instead of periodic
+     * rotation. */
+    private _partLineCount = 0;
     /**
      * True count of physical lines written to the CURRENT part file, counted at the single choke
-     * point every write passes through (`writeBackpressured`) — unlike `_lineCount`, which is a
-     * split-threshold counter that deliberately skips header/DAP/marker writes (see its own doc
-     * comment) and is therefore NOT the file's actual line number. A consumer that needs "what line
-     * of the file is this" (screenshot capture recording where in the log a picture was taken) must
-     * read this counter, never `_lineCount` — reusing the split counter for that purpose is exactly
+     * point every write passes through (`writeBackpressured`) — unlike `_lineCount`/`_partLineCount`,
+     * which both deliberately skip header/DAP/marker writes (see their own comments) and are
+     * therefore NOT the file's actual line number. A consumer that needs "what line of the file is
+     * this" (screenshot capture recording where in the log a picture was taken) must read this
+     * counter, never `_lineCount` — reusing a line-count field not meant for this purpose is exactly
      * the bug this field exists to fix: every capture's recorded line silently drifted earlier than
      * its true position by (header lines) + (DAP lines so far) + (3 per marker), growing throughout
      * the session, which surfaced as screenshots attaching to the wrong screen in the flow map.
@@ -248,7 +257,7 @@ export class LogSession {
         if (!this.writeStream) { return; }
         await this.writeBackpressured(this.writeStream, item.block);
         this._bytesWritten += Buffer.byteLength(item.block, 'utf-8');
-        if (item.countsAsLine) { this._lineCount++; }
+        if (item.countsAsLine) { this._lineCount++; this._partLineCount++; }
     }
 
     /** Wait until buffered appendLine calls are flushed to disk. */
@@ -267,11 +276,11 @@ export class LogSession {
         if (!this.writeStream) {
             return;
         }
-        if (this.config.maxLines > 0 && this._lineCount >= this.config.maxLines) {
-            await this.performSplit({ type: 'lines', count: this._lineCount });
+        if (this.config.maxLines > 0 && this._partLineCount >= this.config.maxLines) {
+            await this.performSplit({ type: 'lines', count: this._partLineCount });
         }
         const splitResult = this.splitter.evaluate({
-            lineCount: this._lineCount,
+            lineCount: this._partLineCount,
             bytesWritten: this._bytesWritten,
             startTime: this._partStartTime,
             lastLineTime: this._lastLineTime,
@@ -287,8 +296,8 @@ export class LogSession {
             if (!this.writeStream) {
                 return;
             }
-            if (this.config.maxLines > 0 && this._lineCount >= this.config.maxLines) {
-                await this.performSplit({ type: 'lines', count: this._lineCount });
+            if (this.config.maxLines > 0 && this._partLineCount >= this.config.maxLines) {
+                await this.performSplit({ type: 'lines', count: this._partLineCount });
             }
             if (!this.writeStream) {
                 return;
@@ -296,7 +305,7 @@ export class LogSession {
             const lineData = line + '\n';
             await this.writeBackpressured(this.writeStream, lineData);
             this._bytesWritten += Buffer.byteLength(lineData, 'utf-8');
-            this._lineCount++;
+            this._lineCount++; this._partLineCount++;
         }
     }
 
@@ -383,6 +392,15 @@ export class LogSession {
             this._fileUri = result.newFileUri;
             this._partNumber = result.newPartNumber;
             this._bytesWritten = result.headerBytes;
+            // maxLines is a PER-PART threshold ("Split file after this many lines" — see the
+            // setting's own description), mirroring how _bytesWritten above already resets per part
+            // for maxSizeKB. _partLineCount (not the cumulative _lineCount the status bar reports)
+            // exists to gate it: without a per-part reset here, the split check would stay past
+            // threshold forever after the first split, turning every subsequent line into its own
+            // file instead of periodic rotation. _lineCount itself stays cumulative — resetting it
+            // here would make the status bar's "N lines" figure drop after every split, which reads
+            // as data loss to a user watching it climb.
+            this._partLineCount = 0;
             // A split opens a NEW file whose own physical line numbering starts at 1, so this counter
             // must restart too — it tracks the CURRENT part, mirroring what a reader of that one file
             // would count. Seeded from the continuation header's own line count (performFileSplit
@@ -390,8 +408,7 @@ export class LogSession {
             // be seen by the choke point that increments this counter on every other write) rather than
             // reset to a flat 0, so a picture taken right after a split still lands on the correct line.
             this._physicalLineCount = result.headerLineCount;
-            this._partStartTime = Date.now();
-            this._lastLineTime = 0;
+            this._partStartTime = Date.now(); this._lastLineTime = 0;
         } finally {
             this.splitting = false;
         }
@@ -443,8 +460,7 @@ export class LogSession {
     }
 
     clear(): void {
-        this._lineCount = 0;
-        this._physicalLineCount = 0;
+        this._lineCount = 0; this._partLineCount = 0; this._physicalLineCount = 0;
         this._previousTimestamp = undefined;
         this.pendingLines.length = 0;
         this.deduplicator.reset();

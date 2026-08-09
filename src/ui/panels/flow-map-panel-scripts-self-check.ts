@@ -18,8 +18,14 @@ const LIGHTBOX_LABELS = {
     compareSession: 't', compareThisSession: 't', compareLoading: 't', compareNoMatch: 't',
 };
 
-/** Same five generators `flow-map-panel-scripts-parse.test.ts` proves — kept in sync manually. */
-const GENERATORS: readonly [string, () => string][] = [
+/**
+ * The canonical list of flow-map panel script generators, in one place — both this module's
+ * activation self-check AND `flow-map-panel-scripts-parse.test.ts`'s regression test import this
+ * SAME array, so a sixth script added to only one of them is a compile error, not a silently
+ * uncovered gap (the prior version hand-duplicated this list in both files "kept in sync manually",
+ * with nothing enforcing that claim).
+ */
+export const FLOW_MAP_PANEL_SCRIPT_GENERATORS: readonly [string, () => string][] = [
     ['flowMapScript', () => flowMapScript('n')],
     ['flowMapZoomScript', () => flowMapZoomScript('n')],
     ['flowMapDragScript', () => flowMapDragScript('n')],
@@ -43,7 +49,7 @@ const GENERATORS: readonly [string, () => string][] = [
  */
 export function selfCheckFlowMapPanelScripts(): void {
     try {
-        for (const [name, build] of GENERATORS) {
+        for (const [name, build] of FLOW_MAP_PANEL_SCRIPT_GENERATORS) {
             const js = scriptBody(build());
             if (js === undefined) {
                 logExtensionWarn('flowMapPanelScriptsSelfCheck', `${name} did not emit a <script> tag`);

@@ -1,9 +1,5 @@
 import * as assert from 'assert';
-import { flowMapScript } from '../../../ui/panels/flow-map-panel-script';
-import { flowMapZoomScript } from '../../../ui/panels/flow-map-panel-zoom-script';
-import { flowMapDragScript } from '../../../ui/panels/flow-map-panel-drag-script';
-import { flowMapReplayScript } from '../../../ui/panels/flow-map-panel-replay-script';
-import { flowMapLightboxScript } from '../../../ui/panels/flow-map-panel-lightbox-script';
+import { FLOW_MAP_PANEL_SCRIPT_GENERATORS } from '../../../ui/panels/flow-map-panel-scripts-self-check';
 
 /**
  * Every flow-map panel script is generated as a TypeScript template literal whose CONTENT is
@@ -18,6 +14,11 @@ import { flowMapLightboxScript } from '../../../ui/panels/flow-map-panel-lightbo
  *
  * `new Function(js)` parses (without executing) the extracted script body exactly the way a browser
  * would before running it — the cheapest fully-faithful proof available outside a real webview.
+ *
+ * The generator list is imported from `flow-map-panel-scripts-self-check.ts`, not hand-duplicated
+ * here — that module needs the SAME five generators at runtime (its activation self-check re-runs
+ * this exact parse check against the real build). A sixth script added to only one of the two files
+ * used to be a silently uncovered gap; importing the same array makes it a compile error instead.
  */
 suite('FlowMap panel scripts — generated JS actually parses', () => {
 
@@ -28,20 +29,7 @@ suite('FlowMap panel scripts — generated JS actually parses', () => {
         return m![1];
     }
 
-    const generators: [string, () => string][] = [
-        ['flowMapScript', () => flowMapScript('n')],
-        ['flowMapZoomScript', () => flowMapZoomScript('n')],
-        ['flowMapDragScript', () => flowMapDragScript('n')],
-        ['flowMapReplayScript', () => flowMapReplayScript('n')],
-        ['flowMapLightboxScript', () => flowMapLightboxScript('n', {
-            title: 't', captured: 't', trigger: 't', screen: 't', logLine: 't', close: 't',
-            counter: 't', counterScreen: 't', file: 't', copyPath: 't', zoom: 't', zoomHint: 't',
-            unavailable: 't', prev: 't', next: 't', compare: 't', comparePrev: 't', compareNext: 't',
-            compareSession: 't', compareThisSession: 't', compareLoading: 't', compareNoMatch: 't',
-        }, [])],
-    ];
-
-    for (const [name, build] of generators) {
+    for (const [name, build] of FLOW_MAP_PANEL_SCRIPT_GENERATORS) {
         test(`${name}'s output is valid JavaScript`, () => {
             const js = scriptBody(build());
             try {

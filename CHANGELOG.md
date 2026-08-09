@@ -39,6 +39,7 @@ Three flow-map regressions from 9.3.10 are fixed: diagram zoom (wheel and every 
 - Flow map: the screenshot lightbox's zoom lock now also accounts for the facts grid and nav bar's own width, not just the picture's — a wide caption or path could previously force the dialog wider than the locked zoom box after it opened
 - Log capture: the line position recorded for a log-split's continuation header is now counted, instead of leaving a small gap right after any split configured with a non-default max-lines/max-size/silence-timeout rule
 - "Open Log" from an error notification, and manual screenshot capture, now use the same corrected line-position counter the flow map's screenshot-mismatch fix introduced, instead of the older counter that could point a few lines early
+- Log capture: a session configured with a max-lines split rule no longer degenerates into one file per line after the first split — the threshold now resets per file part the way its own description ("split file after this many lines") always said it would, instead of a counter that never reset and re-triggered a split on every single line once first crossed
 
 ### Added
 

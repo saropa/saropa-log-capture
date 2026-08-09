@@ -142,10 +142,8 @@ suite('LogSession queue safety', () => {
        bypassing writeBackpressured (the sole choke point that increments physicalLineCount) — so a
        flat reset-to-0 after a split would undercount every line by the header's own line count until
        the next line landed, reintroducing a narrower version of the screenshot-mismatch bug this
-       counter exists to fix. Proven generally here (not pinned to an exact part number, since
-       maxLines re-evaluates on every queued write and can rotate more than once for a small
-       threshold): after any split, the counter must equal the CURRENT part file's own real newline
-       count — never fall short by the continuation header's lines. */
+       counter exists to fix. maxLines: 1 forces exactly one split (the split-gating counter now
+       resets per part, so a second line does not re-trigger another split immediately). */
     const tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'saropa-log-split-header-'));
     const session = new LogSession(makeSessionContext(tmpRoot), makeSessionConfig('reports', 1), () => {});
     await session.start();
@@ -154,7 +152,7 @@ suite('LogSession queue safety', () => {
     session.appendLine('roll-line-1', 'console', new Date('2026-03-23T10:02:01.000Z'));
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    assert.ok(session.partNumber >= 1, 'maxLines: 1 forced at least one split');
+    assert.strictEqual(session.partNumber, 1, 'maxLines: 1 forces exactly one split for a 2nd line');
     assert.ok(session.physicalLineCount > 0, 'not flatly reset to 0 after the split');
     const body = await fs.readFile(session.fileUri.fsPath, 'utf-8');
     const actualNewlines = (body.match(/\n/g) ?? []).length;
@@ -217,7 +215,11 @@ suite('LogSession queue safety', () => {
 
     const dir = path.dirname(session.fileUri.fsPath);
     const names = (await fs.readdir(dir)).filter((n) => n.endsWith('.log')).sort();
-    assert.ok(names.length >= 3, 'expected split parts to be created');
+    // Exactly ceil(7/3) = 3 parts. Previously loose (>= 3) and never caught a real regression: a
+    // per-part threshold that never reset (_lineCount, reused for split-gating and never zeroed
+    // after a split) meant every line past the FIRST split re-triggered ANOTHER split — 7 lines at
+    // maxLines: 3 degenerated into 9 one-line files, and the old >= 3 assertion passed regardless.
+    assert.strictEqual(names.length, 3, 'maxLines rotates on a PER-PART threshold, not a cumulative one');
 
     let merged = '';
     for (const name of names) {
@@ -226,6 +228,22 @@ suite('LogSession queue safety', () => {
     for (let i = 0; i < 7; i++) {
       assert.ok(merged.includes(`roll-line-${i}`), `expected roll-line-${i} across split parts`);
     }
+  });
+
+  test('lineCount (status-bar total) keeps climbing across a split; only the split gate resets', async () => {
+    // The status bar's "N lines" figure reads LogSession.lineCount and must never drop mid-session
+    // — a user watching it fall after a split would read that as data loss, even though every line
+    // is still on disk (just in a new part). Only the internal split-gating counter is per-part.
+    const tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'saropa-log-cumulative-'));
+    const session = new LogSession(makeSessionContext(tmpRoot), makeSessionConfig('reports', 2), () => {});
+    await session.start();
+    for (let i = 0; i < 5; i++) {
+      session.appendLine(`cum-line-${i}`, 'console', new Date(`2026-03-23T10:03:${String(i % 60).padStart(2, '0')}.000Z`));
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    assert.ok(session.partNumber >= 1, 'maxLines: 2 forced at least one split by the 5th line');
+    assert.strictEqual(session.lineCount, 5, 'the cumulative total reflects every line written, not just the current part');
+    await session.stop();
   });
 
   test('high-volume writes preserve order and completeness under backpressure', async () => {
