@@ -11,13 +11,21 @@ import { normalizeScreenKey } from './flow-map-format';
 import type { CrashInfo, FlowNode, IssueEvent, SourceAnchor } from './flow-map-model';
 
 /**
+ * This phase only ever reads/writes the build's nodes, edges and occupancy record — never
+ * `navStack`/`enteredAtMs`, which belong solely to the walk that already finished by the time this
+ * runs. Narrower than `BuildState` on purpose: it makes it a type error for this module to reach
+ * into walk-only state it has no business touching, rather than relying on nobody happening to.
+ */
+type AttachmentState = Pick<BuildState, 'nodes' | 'edges' | 'segments' | 'currentKey' | 'scan'>;
+
+/**
  * The screen a crash's inferred edge should hang off: whoever was ACTUALLY current at the crash
  * time, read from the closed occupancy segments. Node dwell windows can't answer this — a node
  * revisited twice has one window spanning the gap where the user was elsewhere, so a crash in that
  * gap would window-match the wrong screen. The LAST containing segment wins (nested stays: the
  * caller's segment re-opens after an exit, so the latest entry is the innermost active surface).
  */
-function crashFromKey(state: BuildState, tsMs: number): string | undefined {
+function crashFromKey(state: AttachmentState, tsMs: number): string | undefined {
     let found: string | undefined;
     for (const seg of state.segments) {
         if (tsMs >= seg.start && tsMs <= seg.end) { found = seg.key; }
@@ -36,7 +44,7 @@ function crashIssueRow(tsMs: number, clock: string, message: string, source?: So
 }
 
 /** Create one crash's node + inferred edge and attach its crash issue (R4/R5). */
-function applyCrash(state: BuildState, crash: CrashInfo): void {
+function applyCrash(state: AttachmentState, crash: CrashInfo): void {
     const base = crash.source?.file.split('/').pop()?.replace(/\.dart$/, '') ?? crash.widget ?? 'Crash';
     const key = normalizeScreenKey(`crash:${base}`);
     const node = ensureNode(state, key, prettyDialogName(base), 'dialog');
@@ -57,7 +65,7 @@ function applyCrash(state: BuildState, crash: CrashInfo): void {
 }
 
 /** Create every crash's node + inferred edge (R4/R5). */
-export function applyCrashes(state: BuildState, crashes: readonly CrashInfo[]): void {
+export function applyCrashes(state: AttachmentState, crashes: readonly CrashInfo[]): void {
     for (const crash of crashes) { applyCrash(state, crash); }
 }
 
@@ -76,7 +84,7 @@ function issueWithin(node: FlowNode, tsMs: number): boolean {
  * to the outer screen. Heuristic issues keep the old rule: first containing non-dialog node (which
  * keeps window-matched noise off the synthetic crash node).
  */
-function targetNodeForIssue(state: BuildState, issue: IssueEvent): FlowNode | undefined {
+function targetNodeForIssue(state: AttachmentState, issue: IssueEvent): FlowNode | undefined {
     if (issue.explicit) {
         let best: FlowNode | undefined;
         for (const node of state.nodes.values()) {
@@ -95,7 +103,7 @@ function targetNodeForIssue(state: BuildState, issue: IssueEvent): FlowNode | un
 }
 
 /** Attach window-matched issues (errors/perf) to the node active when they fired (R4). */
-export function attachIssues(state: BuildState, issues: readonly IssueEvent[]): void {
+export function attachIssues(state: AttachmentState, issues: readonly IssueEvent[]): void {
     for (const issue of issues) {
         // The crash is already placed on its own dialog node by applyCrash; skip it here so it does
         // not also flag the screen that was merely active at crash time (false "💥 crash" badge).

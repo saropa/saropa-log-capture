@@ -58,8 +58,15 @@ export interface BuildState {
     enteredAtMs?: number;
 }
 
-/** Get or create a node, joining to the static scan index for label/source (R5/R6). */
-export function ensureNode(state: BuildState, key: string, label: string, kind: NodeKind): FlowNode {
+/**
+ * Get or create a node, joining to the static scan index for label/source (R5/R6). Typed against
+ * only the two `BuildState` fields it touches — narrower than `BuildState` itself, so a caller that
+ * has no business seeing `navStack`/`enteredAtMs` (the crash/issue attachment pass, in particular)
+ * can still create nodes without being handed the whole mutable walk state.
+ */
+export function ensureNode(
+    state: Pick<BuildState, 'nodes' | 'scan'>, key: string, label: string, kind: NodeKind,
+): FlowNode {
     const existing = state.nodes.get(key);
     if (existing) {
         return existing;

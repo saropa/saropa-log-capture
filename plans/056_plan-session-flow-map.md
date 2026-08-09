@@ -1,6 +1,6 @@
 # Plan 056 — Session Flow Map (screen-transition diagram)
 
-## Status: S1 implemented · S2 shipped · S3 shipped (2026-06-11: CSS-size zoom that scrolls instead of cropping + centers/fits, fixed center-on-fault, diagram pop-out panel, double-click node detail card, return-to-caller back arrows, edge time labels off the arrow, splitter floors lowered to 20px) · S2 extended (2026-08-08: cards draggable with live edge re-routing, lightbox prev/next, capture thumbnails on the activity timeline and the screen-visit table, lightbox wheel-zoom fix, container-query detail column; then arrange-by-time layout, export-diagram-as-SVG, and hardening — per-lane row heights, center-the-fault on a moved card, thumbnail stripping so the SVG export doesn't ship broken images) · live log-filtering still proposed
+## Status: S1 implemented · S2 shipped · S3 shipped (2026-06-11: CSS-size zoom that scrolls instead of cropping + centers/fits, fixed center-on-fault, diagram pop-out panel, double-click node detail card, return-to-caller back arrows, edge time labels off the arrow, splitter floors lowered to 20px) · S2 extended (2026-08-08: cards draggable with live edge re-routing, lightbox prev/next, capture thumbnails on the activity timeline and the screen-visit table, lightbox wheel-zoom fix, container-query detail column; then arrange-by-time layout, export-diagram-as-SVG, and hardening — per-lane row heights, center-the-fault on a moved card, thumbnail stripping so the SVG export doesn't ship broken images; then backlog closeout — esc() consolidated, flow-map-builder.ts split under 300 lines, skipNearDuplicates now defaults on) · live log-filtering still proposed
 
 **S1 (the combined session report) shipped** as the `saropaLogCapture.exportFlowMap` command —
 log parser, error-causing-widget parser, static source scan (contacts preset), graph builder
@@ -683,3 +683,97 @@ Chromium are all verified only at the generated-markup and fake-DOM level.
 
 **Outstanding (S2 still proposed):** unchanged from the round above — click-a-node log filtering,
 the possible-vs-walked overlay toggle, the 30-node layout/perf check.
+
+
+---
+
+## Finish Report (2026-08-08) — backlog closeout: esc() consolidation, builder split, dedup default, review hardening
+
+**The additions.** Four items carried in handover documents across three sessions were closed out
+together: consolidating five duplicate escaping helpers, splitting an over-length module, deciding
+`skipNearDuplicates`'s default, and investigating a claimed compile-time changelog side effect that
+turned out not to exist. A dedicated review pass on the resulting diff (previous rounds in this
+session had each already been reviewed separately) found one refactor opportunity, applied before
+commit.
+
+### esc() consolidation
+
+Five byte-identical HTML/XML-escaping functions — one each in `flow-map-svg.ts`,
+`flow-map-svg-shots.ts`, `flow-map-html.ts`, `flow-map-html-shots.ts`, `flow-map-activity-chart.ts` —
+were replaced with a single shared export in `flow-map-format.ts`, the module those five files
+already imported other shared helpers from. `flow-map-panel.ts`'s own `esc()` (three escapes, not
+four — no `"` handling) was deliberately left alone: its docstring already states it is a narrower
+helper for one specific call site, not a copy of this one, and `keyboard-shortcuts-panel.ts`'s
+`esc()` belongs to an unrelated feature entirely. Confirmed byte-for-byte equivalent behavior:
+identical escape order (`&` first in every version, so none of the later replacements can
+double-escape an entity the earlier ones just inserted).
+
+### flow-map-builder.ts split
+
+The graph builder was 402 lines against the project's 300-line house limit, lint-clean only through
+inaction (no directory override had been added). Crash-node creation (`applyCrash`, `crashFromKey`,
+`prettyDialogName`, `crashIssueRow`) and issue window-matching (`targetNodeForIssue`, `issueWithin`,
+`attachIssues`) — both post-walk attachment phases that run after the main traversal, not
+independent features — moved into a new `flow-map-builder-issues.ts`. `BuildState` and `ensureNode`
+were exported from the builder to support the split.
+
+A review pass on this delta flagged that exporting the *entire* mutable `BuildState` gave the new
+module access to `navStack`/`enteredAtMs`, fields that belong only to the walk phase and that the
+attachment phase never touches — nothing exploited this today, but nothing prevented it either.
+Fixed before commit: `ensureNode` is now typed against `Pick<BuildState, 'nodes' | 'scan'>` (the
+only two fields its body reads), and `flow-map-builder-issues.ts` defines its own
+`AttachmentState = Pick<BuildState, 'nodes' | 'edges' | 'segments' | 'currentKey' | 'scan'>`, making
+it a compile error for the attachment phase to reach into walk-only state rather than relying on
+nobody happening to. The `crashFromKey`/`applyCrash` migration also collapsed the builder's private
+`normalizeKey` alias into a direct call to `normalizeScreenKey` (the alias was never reassigned —
+confirmed a pure rename, not a behavior change) — a genuine circular value import between the two
+files was confirmed safe: both cross-file calls happen only inside function bodies, never at module
+load time, so neither ESM live bindings nor CJS `require` cycles are at risk.
+
+`flow-map-builder.ts` is now 208 code lines; `flow-map-builder-issues.ts` is 68.
+
+### skipNearDuplicates default
+
+Flipped from `false` to `true` — an explicit product decision made by the user, not inferred. The
+setting remains the only one in its group that can discard a capture, but a real seven-capture
+session (recorded in this plan's prior finish report) already showed it correctly keeping 5 and
+skipping 2 with both fault captures kept, and error/warning/manual triggers are exempt from the
+dedup check regardless of the setting (confirmed in `screenshot-capturer.ts`, not merely asserted by
+comment). Updated in every place a default lived: the `package.json` schema, both TypeScript-side
+fallback readers (`integration-config.ts`, `screenshot-settings.ts`), the doc comment explaining the
+rationale, and the one test asserting the default. Existing sessions that had the setting explicitly
+set (in either direction) are unaffected; a user who never touched the setting gets more skipping on
+upgrade with no first-activation notice beyond the CHANGELOG entry — consistent with how this repo
+already documents other default changes, not a new gap.
+
+### The changelog archiver — investigated, does not exist
+
+Three prior sessions' handover documents asserted `npm run compile` rewrites `CHANGELOG.md` and
+`CHANGELOG_ARCHIVE.md` as an automated side effect, and warned against "cleaning" the resulting dirty
+files. No such mechanism was found: no `.husky` directory, no `lint-staged`/`precommit`/`prepare`
+script in `package.json`, and grepping every script under `scripts/` for either filename turned up
+only the manually-invoked release/publish tooling. Compile was run more than a dozen times across
+this session with zero unexpected changes to either file. Most likely explanation: an earlier
+session's own CHANGELOG edit was mistaken for an automated side effect and the misattribution was
+carried forward unchallenged through three handover documents. Nothing was changed.
+
+### A self-correction
+
+The previous finish report's commit had accidentally relabeled the changelog's `## [Unreleased]`
+section as `## [9.3.10]`, with a `[log]` link pointing at a git tag that does not exist —
+`package.json` was and remains `9.3.9`. Caught and reverted in this round rather than left for a
+release script to trip over later.
+
+**Tests:** all flow-map suites (13 files, 236 cases) and the affected screenshot suites (5 files, 43
+cases) pass — 279 cases total, 0 failing. `npm run check-types` clean; `npm run lint` 0 errors, the
+14 pre-existing warnings unchanged; `npm run compile` passes every verify gate; `dist/extension.js`
+5.43 MiB against the 12 MiB ceiling.
+
+**Not verified on device.** As with every round this session — nothing has been exercised in the
+Extension Development Host. The `skipNearDuplicates` default flip in particular has real user-facing
+consequences (fewer screenshots saved by default for anyone who never touched the setting) that only
+a live capture session would surface.
+
+**Outstanding (S2 still proposed):** unchanged — click-a-node log filtering, the possible-vs-walked
+overlay toggle, the 30-node layout/perf check. No open backlog items remain from this session's
+handover chain.
