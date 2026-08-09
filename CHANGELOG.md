@@ -25,9 +25,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.3.10]
 
-Flow map diagrams can now be rearranged by hand or laid out along a time axis, exported as a standalone SVG, and screenshots turn up wherever a moment is listed; the screenshot lightbox got a working zoom and prev/next buttons.
+Flow map diagrams can now be rearranged by hand or laid out along a time axis, exported as a standalone SVG, and screenshots turn up wherever a moment is listed; the screenshot lightbox got a working zoom and prev/next buttons. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.10/CHANGELOG.md)
 
 ### Added
 
@@ -54,6 +54,7 @@ Flow map diagrams can now be rearranged by hand or laid out along a time axis, e
 
 - Flow map: consolidated five identical HTML/XML-escaping helpers (one per rendering module) into a single shared function
 - Flow map: split the graph builder's crash- and issue-attachment logic into its own module to bring the builder back under the project's 300-line file limit
+- l10n: fixed translation script re-translating verified-identical keys every run, causing a garbled-reset → re-translate cycle and phantom "gaps" on 100%-complete locales
 
 ---
 
