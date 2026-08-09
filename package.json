@@ -3415,6 +3415,7 @@
     "verify:l10n-keys": "node scripts/modules/verify/verify-l10n-keys.mjs",
     "verify:trouble-levels": "node scripts/modules/verify/verify-trouble-levels.mjs",
     "verify:acronym-coverage": "node scripts/modules/verify/verify-acronym-coverage.mjs",
+    "verify:changelog-maintenance": "node scripts/modules/verify/verify-changelog-maintenance.mjs",
     "analyze-bundle": "node scripts/modules/build/analyze-extension-bundle.mjs",
     "doctor": "node scripts/modules/fix/doctor.mjs",
     "install:hooks": "git config core.hooksPath scripts/git-hooks",
