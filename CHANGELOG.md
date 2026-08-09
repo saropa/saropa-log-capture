@@ -57,6 +57,8 @@ Flow map diagrams can now be rearranged by hand or laid out along a time axis, e
 - Flow map: split the graph builder's crash- and issue-attachment logic into its own module to bring the builder back under the project's 300-line file limit
 - Flow map: the crash/issue-attachment module's shared state is now typed narrower than the full graph-walk state, so it can no longer read or write walk-only fields it has no business touching
 - l10n: fixed translation script re-translating verified-identical keys every run, causing a garbled-reset → re-translate cycle and phantom "gaps" on 100%-complete locales
+- l10n: registered "Zoom"/"Commit"/"File"/"Debug {0}" as verified-identical for the locales already manually confirmed, stopping the deterministic translation-engine errors that recurred on every run
+- l10n: translation audit/coverage tables no longer use red for gap and quality-signal counts — red is reserved for actual runtime errors
 - New advisory `verify:changelog-maintenance` script flags CHANGELOG bullets that read as internal tooling (l10n pipeline, design-token migrations, compile gates, file splits) but sit outside a Maintenance block; heuristic keyword match, not wired into `npm run compile`
 
 </details>
