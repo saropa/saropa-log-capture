@@ -52,6 +52,15 @@ suite('screenshot settings reader', () => {
         });
     });
 
+    test('should honor an explicit false, even though the default flipped to true', () => {
+        // A user who turned this off before 2026-08-08 (when the default was false) must not have
+        // that choice silently overridden by the new default reading through their unset key — this
+        // proves the explicit-false path specifically, since an explicit-true fixture elsewhere in
+        // this file can no longer distinguish "explicit" from "just the new default".
+        const s = readScreenshotSettings(cfg({ [key('skipNearDuplicates')]: false }));
+        assert.strictEqual(s.skipNearDuplicates, false, 'an explicit false is never upgraded to true');
+    });
+
     test('should CLAMP a hand-edited value to what capture will really use', () => {
         // A raw get() skips the validation getConfig() performs: maxPerLog 0 would silently disable
         // capture, and duplicateSimilarity 0 would make every capture a duplicate of the one before.

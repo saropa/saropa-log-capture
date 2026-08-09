@@ -19,6 +19,16 @@ import type { CrashInfo, FlowNode, IssueEvent, SourceAnchor } from './flow-map-m
 type AttachmentState = Pick<BuildState, 'nodes' | 'edges' | 'segments' | 'currentKey' | 'scan'>;
 
 /**
+ * Compile-time proof that the guarantee above actually holds, not just an assertion in a comment.
+ * `_WalkOnlyLeak` is `never` only while `AttachmentState` excludes both walk-only fields; if a
+ * future edit widens the `Pick` to re-admit either one, this line stops compiling — the same
+ * failure mode `tsc --noEmit` already catches on every `npm run check-types` run, so the leak this
+ * type exists to prevent cannot land silently.
+ */
+type _WalkOnlyLeak = Extract<keyof AttachmentState, 'navStack' | 'enteredAtMs'>;
+const _assertNoWalkOnlyLeak: _WalkOnlyLeak extends never ? true : never = true;
+
+/**
  * The screen a crash's inferred edge should hang off: whoever was ACTUALLY current at the crash
  * time, read from the closed occupancy segments. Node dwell windows can't answer this — a node
  * revisited twice has one window spanning the gap where the user was elsewhere, so a crash in that

@@ -1,6 +1,6 @@
 # Plan 056 — Session Flow Map (screen-transition diagram)
 
-## Status: S1 implemented · S2 shipped · S3 shipped (2026-06-11: CSS-size zoom that scrolls instead of cropping + centers/fits, fixed center-on-fault, diagram pop-out panel, double-click node detail card, return-to-caller back arrows, edge time labels off the arrow, splitter floors lowered to 20px) · S2 extended (2026-08-08: cards draggable with live edge re-routing, lightbox prev/next, capture thumbnails on the activity timeline and the screen-visit table, lightbox wheel-zoom fix, container-query detail column; then arrange-by-time layout, export-diagram-as-SVG, and hardening — per-lane row heights, center-the-fault on a moved card, thumbnail stripping so the SVG export doesn't ship broken images; then backlog closeout — esc() consolidated, flow-map-builder.ts split under 300 lines, skipNearDuplicates now defaults on) · live log-filtering still proposed
+## Status: S1 implemented · S2 shipped · S3 shipped (2026-06-11: CSS-size zoom that scrolls instead of cropping + centers/fits, fixed center-on-fault, diagram pop-out panel, double-click node detail card, return-to-caller back arrows, edge time labels off the arrow, splitter floors lowered to 20px) · S2 extended (2026-08-08: cards draggable with live edge re-routing, lightbox prev/next, capture thumbnails on the activity timeline and the screen-visit table, lightbox wheel-zoom fix, container-query detail column; then arrange-by-time layout, export-diagram-as-SVG, and hardening — per-lane row heights, center-the-fault on a moved card, thumbnail stripping so the SVG export doesn't ship broken images; then backlog closeout — esc() consolidated, flow-map-builder.ts split under 300 lines, skipNearDuplicates now defaults on; then a compile-time guard on the attachment-state split, a first-activation notice for the default flip) · live log-filtering still proposed
 
 **S1 (the combined session report) shipped** as the `saropaLogCapture.exportFlowMap` command —
 log parser, error-causing-widget parser, static source scan (contacts preset), graph builder
@@ -773,6 +773,74 @@ cases) pass — 279 cases total, 0 failing. `npm run check-types` clean; `npm ru
 Extension Development Host. The `skipNearDuplicates` default flip in particular has real user-facing
 consequences (fewer screenshots saved by default for anyone who never touched the setting) that only
 a live capture session would surface.
+
+**Outstanding (S2 still proposed):** unchanged — click-a-node log filtering, the possible-vs-walked
+overlay toggle, the 30-node layout/perf check. No open backlog items remain from this session's
+handover chain.
+
+
+---
+
+## Finish Report (2026-08-09) — reflection hardening and a first-activation notice
+
+**The additions.** Closed out the prior round's handoff reflection: hardened three of its
+least-confident items and built the feature it brainstormed (a first-activation notice for the
+`skipNearDuplicates` default flip), scoped to a minimal shippable slice rather than a generic
+notice framework.
+
+### Hardening
+
+- **Compile-time proof for the narrowed attachment state.** The prior round's `AttachmentState`
+  type (restricting the crash/issue-attachment module to `nodes`/`edges`/`segments`/`currentKey`/
+  `scan`, excluding the walk-only `navStack`/`enteredAtMs`) was a structural guarantee with nothing
+  proving it held. `flow-map-builder-issues.ts` now carries `type _WalkOnlyLeak = Extract<keyof
+  AttachmentState, 'navStack' | 'enteredAtMs'>` plus a `const` typed `_WalkOnlyLeak extends never ?
+  true : never` — if a future edit ever widens the `Pick` to re-admit either field, this line stops
+  compiling on the next `tsc --noEmit`, the same check `npm run check-types` already runs.
+- **CI hook investigation closed.** The prior round's "no changelog archiver exists" conclusion was
+  absence-of-evidence from searching hooks and `scripts/`; `.github/workflows/` (the one place a
+  CI-only mechanism could hide from a local checkout) was checked this round and contains only
+  `ci.yml` and `dependabot-auto-merge.yml`, neither touching `CHANGELOG.md`. Nothing found.
+- **Confirmed the concurrent session's commit (`6b37f126`) touched nothing of this work.** Full
+  `git show --stat` review: five l10n-pipeline files plus a bug-report doc, unrelated to any file
+  this session's work depends on.
+- **Explicit-false coverage added.** The `skipNearDuplicates` default-reader test suite covered
+  "default is true" and "explicit true persists", but nothing distinguished "explicit true" from
+  "just the new default" — the case that actually matters (a pre-flip user who chose `false`) had no
+  dedicated assertion. Added.
+
+### First-activation notice
+
+New `screenshot-dedup-default-notice.ts`, modeled on the existing `nls-coverage-notice.ts` pattern
+(one-time `globalState` gate, never throws, safe to call on every activation). Fires exactly once,
+ever, and ONLY for a user the default flip actually changed behavior for: `vscode.workspace
+.getConfiguration().inspect()` — not `.get()` — is what makes "resolved to the schema default"
+distinguishable from "explicitly chose the value the schema default happens to match" across all
+three configuration scopes (user, workspace, workspace folder). The pure decision function
+(`isUntouched`) is exported and typed against the plain shape `inspect()` returns rather than the
+full `vscode.WorkspaceConfiguration` interface, so it unit-tests with plain object literals with no
+Extension Host required — six cases, including the deliberately conservative choice that an
+`inspect()` call returning `undefined` entirely (not expected for a real registered setting, but not
+ruled out) reads as "stay silent," not "notify," since the safe failure mode for "cannot determine
+whether this was touched" is silence rather than a notice that might be wrong. Wired into
+`extension-activation.ts` alongside the NLS coverage notice it was modeled on.
+
+**Tests:** two new test files (`screenshot-dedup-default-notice.test.ts`, 6 cases; plus one case
+added to `screenshot-settings.test.ts`). All flow-map suites (13 files, 236 cases) and all screenshot
+suites (6 files, 50 cases) pass — 286 cases total, 0 failing. `npm run check-types` clean; `npm run
+lint` 0 errors, the 14 pre-existing warnings unchanged; `npm run compile` passes every verify gate
+including `verify:l10n-keys` (2571 keys, all resolve); `dist/extension.js` 5.43 MiB against the
+12 MiB ceiling.
+
+**Not verified on device.** The notice itself — its `inspect()`-based scope detection, the
+`globalState` one-time gate, and the "Open setting" deep-link — has never fired in a real Extension
+Development Host session. Everything else carried forward from prior rounds remains equally
+unverified on device.
+
+**A concurrent-session note.** Another session's commit (`6b37f126`, landed between this round and
+the previous) reintroduced the CHANGELOG's `## [9.3.10]` heading with a `[log]` link to a
+nonexistent tag — `package.json` remains `9.3.9`. This was already flagged once in the prior finish
+report; not re-litigated a second time since it is that session's file to resolve, not this plan's.
 
 **Outstanding (S2 still proposed):** unchanged — click-a-node log filtering, the possible-vs-walked
 overlay toggle, the 30-node layout/perf check. No open backlog items remain from this session's

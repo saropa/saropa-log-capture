@@ -191,6 +191,7 @@ export const stringsA: Record<string, string> = {
     'action.enable': 'Enable',
     'action.copyAiPrompt': 'Copy prompt for external chat',
     'action.openAiSettings': 'Open AI settings',
+    'action.openSetting': 'Open setting',
 
     'msg.noLogFileLoaded': 'No log file is currently loaded for editing.',
     'msg.debugSessionActiveEdit': 'A debug session is active. Editing the log file now may cause data loss or corruption.',
@@ -236,6 +237,10 @@ export const stringsA: Record<string, string> = {
     'msg.screenshotBusy': 'A screenshot capture is already in progress.',
     'msg.screenshotFailed': 'Screenshot capture failed — see the Saropa Log Capture output channel.',
     'screenshot.diagnosed': 'Screenshot diagnosis written to the Saropa Log Capture output channel.',
+    // Shown once, ever, and only to someone who never set this setting explicitly (see
+    // screenshot-dedup-default-notice.ts). Skipping a picture the user would otherwise have kept is
+    // exactly the kind of silent default change a bare CHANGELOG line does not reach.
+    'screenshot.dedupDefaultNotice': 'Saropa Log Capture now skips near-duplicate screenshots by default. Error, warning and manually-requested captures are never skipped.',
     'msg.screenshotNoLog': 'No active capture log to attach the screenshot to.',
 
     'msg.noSessionFiles': 'No log files found.',
