@@ -169,8 +169,15 @@ export class ScreenshotCapturer {
         if (!trigger) { return; }
 
         if (!this.passesCoalescing(text, trigger, settings.cooldownMs)) { return; }
+        // physicalLineCount, NOT lineCount: the latter is a split-threshold counter that skips
+        // header/DAP/marker writes and is therefore not the file's actual line number — using it
+        // here was recording every capture against a line earlier than where it truly happened, an
+        // error that grew through the session and attached captures to the wrong screen in the flow
+        // map. The fallback only matters for a LineData that predates this field (there is none in
+        // this codebase today) — never a live discrepancy between the two on a current build.
         this.captureAndSave({
-            wsUri, logFsPath: data.logFileUri, trigger, text, logLine: data.lineCount,
+            wsUri, logFsPath: data.logFileUri, trigger, text,
+            logLine: data.physicalLineCount ?? data.lineCount,
             maxPerLog: settings.maxPerLog,
             skipNearDuplicates: settings.skipNearDuplicates,
             duplicateSimilarity: settings.duplicateSimilarity,

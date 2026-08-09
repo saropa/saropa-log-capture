@@ -21,6 +21,7 @@ export function flowMapLightboxZoomJs(): string {
     return /* javascript */ `
   var ZOOM_MIN = 25, ZOOM_MAX = 800, ZOOM_STEP = 1.15;
   var zoomScale = 0, zoomImg = null, zoomStage = null, zoomSlider = null, zoomPct = null;
+  var zoomWidthLocked = false;
 
   /* zoomScale 0 is the FIT sentinel — a real scale is always >= ZOOM_MIN/100, so one variable
      carries both the mode and the value without a second flag to keep in sync. */
@@ -73,15 +74,31 @@ export function flowMapLightboxZoomJs(): string {
     zoomStage.scrollTop += (fy * now.height) - (e.clientY - now.top);
   }
 
+  /* Locks the stage to its FIT-mode width, once per open, right after the image has loaded and
+     that layout has settled. Without this the stage (and the card, whose own width is its content's
+     max-content) has no width besides "however wide the image's CURRENT pixel width happens to
+     make it" — so every wheel tick both resizes the whole dialog AND re-centers it in the overlay,
+     instead of scrolling inside a box that stays put. zoomWheel's anchor math assumes exactly that
+     fixed box; without it there is nothing for scrollLeft to mean. Locked to the FIT width
+     specifically (not a constant) so a small capture still gets a small dialog and a large one
+     still gets up to the card's own max-width cap. */
+  function lockStageWidth(){
+    if (zoomWidthLocked || !zoomStage) { return; }
+    zoomStage.style.width = zoomStage.clientWidth + 'px';
+    zoomWidthLocked = true;
+  }
+
   /* Wire one lightbox's zoom surface. Called once per open; state resets to fit each time so a
      capture never inherits the previous one's scale. */
   function zoomAttach(stage, img, slider, pct){
     zoomStage = stage; zoomImg = img; zoomSlider = slider; zoomPct = pct;
     zoomScale = 0;
+    zoomWidthLocked = false;
+    stage.style.width = '';
     // passive:false — the handler calls preventDefault to stop the page scrolling under the card.
     stage.addEventListener('wheel', zoomWheel, { passive: false });
     slider.addEventListener('input', function(){ zoomSet(Number(slider.value) / 100); });
-    img.addEventListener('load', zoomApply);
+    img.addEventListener('load', function(){ zoomApply(); lockStageWidth(); });
     zoomApply();
   }
 

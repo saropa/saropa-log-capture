@@ -25,6 +25,20 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+Three flow-map regressions from 9.3.10 are fixed: diagram zoom (wheel and every toolbar button) stopped responding, the screenshot lightbox's zoom still jumped, and screenshots could attach to the wrong screen.
+
+### Fixed
+
+- Flow map: diagram zoom (mouse wheel, the +/− buttons, Reset view, Arrange by time, Export as SVG, Center the fault, and the pop-out button) works again — a stray unescaped character broke the script that wires all of them
+- Flow map: zooming a screenshot in the lightbox no longer resizes and re-centers the whole dialog on every scroll tick — the picture now zooms inside a box that stays a fixed size, so the point under the cursor actually stays there
+- Flow map: the lightbox's previous/next buttons no longer mix the activity-timeline captures and the screen-visit-table captures into one navigation set
+- Screenshots: fixed the root cause of captures attaching to the wrong screen in the flow map — the position recorded for a capture now counts every line actually written to the log (including the session header and diagnostic lines), instead of a counter that only tracked lines toward the file-split threshold and silently undercounted from the very first line
+- Flow map: a screen label carrying leftover ANSI color codes now matches its screenshot the same way a clean label does, instead of failing to pair silently
+
+---
+
 ## [9.3.10]
 
 Flow map diagrams can now be rearranged by hand or laid out along a time axis, exported as a standalone SVG, and screenshots turn up wherever a moment is listed; the screenshot lightbox got a working zoom and prev/next buttons. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.10/CHANGELOG.md)
