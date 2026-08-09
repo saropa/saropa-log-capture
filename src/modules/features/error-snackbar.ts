@@ -84,7 +84,11 @@ export class ErrorSnackbarNotifier {
         // Capture the values now — the active session may change before the user clicks. A button
         // action (loadFromFile / showBugReport) can reject; catch here so a failed click never
         // surfaces as an unhandled rejection from this fire-and-forget call (line listeners must not throw).
-        this.showSnackbar(text, data.lineCount, data.logFileUri).catch((err) => {
+        // physicalLineCount, not lineCount — the latter is a split-threshold counter that
+        // undercounts header/DAP/marker writes and would send "Open Log" to the wrong line (the
+        // same class of bug that made screenshots attach to the wrong screen; see LogSession's
+        // physicalLineCount doc comment). Falls back to lineCount only if the field is ever absent.
+        this.showSnackbar(text, data.physicalLineCount ?? data.lineCount, data.logFileUri).catch((err) => {
             logExtensionWarn('errorSnackbar', err instanceof Error ? err.message : String(err));
         });
     }

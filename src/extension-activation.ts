@@ -47,6 +47,7 @@ import { ErrorSnackbarNotifier } from './modules/features/error-snackbar';
 import { showBugReport } from './ui/panels/bug-report-panel';
 import { maybeNotifyPartialNlsCoverage } from './l10n/nls-coverage-notice';
 import { maybeNotifySkipNearDuplicatesDefaultChanged } from './modules/screenshot/screenshot-dedup-default-notice';
+import { selfCheckFlowMapPanelScripts } from './ui/panels/flow-map-panel-scripts-self-check';
 import { maybeNotifySilentSiblings } from './modules/diagnostics/suite-silent-notice';
 import { maybeRecommendAdapters } from './modules/integrations/recommend-adapters-notice';
 import { initLearningRuntime, flushLearningBuffer } from './modules/learning/learning-runtime';
@@ -388,6 +389,11 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     // Tell the user once if the near-duplicate-screenshot default flip actually changed their
     // capture behavior (never touched the setting, either direction).
     maybeNotifySkipNearDuplicatesDefaultChanged(context);
+
+    // Developer diagnostic: re-parse the five flow-map panel scripts' generated JS the way a
+    // browser would, warning to the output channel if the build shipped one that doesn't parse
+    // (the v9.3.10 zoom regression's exact failure class — see the self-check's own doc comment).
+    selfCheckFlowMapPanelScripts();
 
     // If a suite sibling is installed but hasn't shared its diagnostics mirror, try to refresh it
     // and otherwise tell the user once — the integration is invisible until the mirror exists.

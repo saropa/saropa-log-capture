@@ -175,7 +175,10 @@ async function runManualCapture(capturer: ScreenshotCapturer, sessionManager: Se
         void vscode.window.showInformationMessage(t('msg.screenshotNoLog'));
         return;
     }
-    const outcome = await capturer.captureManual(session.fileUri.fsPath, session.lineCount);
+    // physicalLineCount, not lineCount — the latter is a split-threshold counter that undercounts
+    // header/DAP/marker writes and would attach the capture to the wrong log line (see LogSession's
+    // own doc comment on physicalLineCount for the screenshot-mismatch bug this class caused).
+    const outcome = await capturer.captureManual(session.fileUri.fsPath, session.physicalLineCount);
     void showManualOutcome(outcome);
 }
 
