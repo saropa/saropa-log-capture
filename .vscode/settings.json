@@ -169,7 +169,7 @@
     "packages"
   ],
   "saropaLogCapture.ai.enabled": true,
-  "saropaLogCapture.enabled": true,
+  "saropaLogCapture.enabled": false,
   "saropaLogCapture.integrations.screenshots.onWarning": true,
   "saropaLogCapture.integrations.screenshots.onNavigation": true
 }
