@@ -11,18 +11,23 @@
 import type {
     FlowEdge, FlowGraph, FlowNode, NodeKind, ParsedLog, SourceAnchor, TimelineEvent,
 } from './flow-map-model';
-import { normalizeScreenKey } from './flow-map-format';
+import { normalizeScreenKey, stripAnsi } from './flow-map-format';
 import { applyCrashes, attachIssues } from './flow-map-builder-issues';
 
 /** Static-scan output: normalized screen label → { source, displayLabel }. */
 export type ScanIndex = Map<string, { source: SourceAnchor; label: string }>;
 
 /**
- * R3 — normalize a label to a stable identity key. Delegates to the shared normalizer: the screenshot
- * join keys captures with the SAME function, and the diagram pairs a card to its thumbnail by exact
- * equality of the two results, so a second copy of this rule here could drift them apart silently.
+ * R3 — normalize a label to a stable identity key. `stripAnsi` first, THEN normalize: the screenshot
+ * join keys captures with `screenKeyOf(stripAnsi(shot.screenLabel))` (flow-map-svg-shots.ts), and the
+ * diagram pairs a card to its thumbnail by exact equality of the two results — omitting stripAnsi on
+ * just one side is exactly the kind of silent drift the shared normalizer was meant to prevent. The
+ * log parser already strips ANSI at ingestion, so this is a second, defensive pass (the same
+ * belt-and-suspenders `nodeDisplayLines` already applies at render time) for whatever slips through.
  */
-const normalizeKey = normalizeScreenKey;
+function normalizeKey(label: string): string {
+    return normalizeScreenKey(stripAnsi(label));
+}
 
 /** Map a breadcrumb kind to a node kind. */
 function kindFor(event: TimelineEvent): NodeKind {

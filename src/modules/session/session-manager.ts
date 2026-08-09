@@ -271,6 +271,7 @@ export class SessionManagerImpl implements SessionManager {
         if (markerText) {
             this.broadcastLine({
                 text: markerText, isMarker: true, lineCount: logSession.lineCount,
+                physicalLineCount: logSession.physicalLineCount,
                 category: 'marker', timestamp: new Date(),
             });
         }
