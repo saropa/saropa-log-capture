@@ -1,6 +1,6 @@
 # Plan 056 — Session Flow Map (screen-transition diagram)
 
-## Status: S1 implemented · S2 shipped · S3 shipped (2026-06-11: CSS-size zoom that scrolls instead of cropping + centers/fits, fixed center-on-fault, diagram pop-out panel, double-click node detail card, return-to-caller back arrows, edge time labels off the arrow, splitter floors lowered to 20px) · S2 extended (2026-08-08: cards draggable with live edge re-routing, lightbox prev/next, capture thumbnails on the activity timeline and the screen-visit table, lightbox wheel-zoom fix, container-query detail column; then arrange-by-time layout, export-diagram-as-SVG, and hardening — per-lane row heights, center-the-fault on a moved card, thumbnail stripping so the SVG export doesn't ship broken images; then backlog closeout — esc() consolidated, flow-map-builder.ts split under 300 lines, skipNearDuplicates now defaults on; then a compile-time guard on the attachment-state split, a first-activation notice for the default flip) · live log-filtering still proposed
+## Status: S1 implemented · S2 shipped · S3 shipped (2026-06-11: CSS-size zoom that scrolls instead of cropping + centers/fits, fixed center-on-fault, diagram pop-out panel, double-click node detail card, return-to-caller back arrows, edge time labels off the arrow, splitter floors lowered to 20px) · S2 extended (2026-08-08: cards draggable with live edge re-routing, lightbox prev/next, capture thumbnails on the activity timeline and the screen-visit table, lightbox wheel-zoom fix, container-query detail column; then arrange-by-time layout, export-diagram-as-SVG, and hardening — per-lane row heights, center-the-fault on a moved card, thumbnail stripping so the SVG export doesn't ship broken images; then backlog closeout — esc() consolidated, flow-map-builder.ts split under 300 lines, skipNearDuplicates now defaults on; then a compile-time guard on the attachment-state split, a first-activation notice for the default flip; then three v9.3.10 post-release regressions fixed — a JS syntax error that killed diagram zoom entirely, the lightbox zoom width instability, and screenshots attaching to the wrong screen (root cause: LogSession's split-threshold counter reused as a physical line number) — with a new script-parses-as-JS regression test class added · live log-filtering still proposed
 
 **S1 (the combined session report) shipped** as the `saropaLogCapture.exportFlowMap` command —
 log parser, error-causing-widget parser, static source scan (contacts preset), graph builder
@@ -845,3 +845,141 @@ report; not re-litigated a second time since it is that session's file to resolv
 **Outstanding (S2 still proposed):** unchanged — click-a-node log filtering, the possible-vs-walked
 overlay toggle, the 30-node layout/perf check. No open backlog items remain from this session's
 handover chain.
+
+
+---
+
+## Finish Report (2026-08-09) — three post-release regressions in v9.3.10, root-caused and fixed
+
+**The defects.** v9.3.10 published with three real, user-facing flow-map regressions: diagram zoom
+(wheel and every toolbar button) stopped responding entirely; the screenshot lightbox's wheel-zoom,
+despite an earlier round's fix, still jumped wildly; and screenshots attached to the wrong screen
+across the diagram cards, gallery, activity timeline, and screen-visit table, inconsistently. All
+three shipped past a full round of code review and 279 passing tests before a live session ever ran
+the code, because none of that review or testing ever executed the generated client-side JavaScript
+as a browser would.
+
+### Diagram zoom — a JS syntax error, invisible to every gate that ran
+
+`flow-map-panel-zoom-script.ts`'s `exportArrangedSvg()` (added the previous round) built an XML
+prolog with `'<?xml version="1.0" encoding="UTF-8"?>\n' + xml` — a single backslash inside the
+OUTER TypeScript template literal that generates the script text. TypeScript's own escape processing
+consumed the `\n` at BUILD time, so the string returned to the browser contained a literal newline
+character INSIDE a single-quoted JS string literal — a hard `SyntaxError` the moment the webview
+tried to parse that `<script>` tag. A `<script>` element that fails to parse runs nothing: every
+button in that tag (+, −, Reset view, Arrange by time, Export as SVG, Center the fault, pop-out),
+background pan, wheel zoom, and the double-click detail popup were all silently dead. The other four
+`<script>` tags (base script, drag, replay, lightbox) are separate elements and kept working, which
+is why card dragging and screenshot clicking still worked while "zoom" appeared to have died
+wholesale.
+
+This is the exact "backtick trap" class of bug this session's own gotchas already warned about
+(anything meant to survive as a literal backslash sequence in the generated output needs doubling)
+— caught here by a NEW class of test rather than by vigilance. `flow-map-panel-scripts-parse.test.ts`
+extracts each of the five generated scripts' inner JS and runs it through `new Function(js)` —
+parsing (never executing) it exactly the way a browser would before running it. Verified to have
+teeth by temporarily reintroducing the single-backslash bug and confirming the test fails, then
+restoring the fix and confirming it passes. This is the single highest-value addition from this
+round: it makes the entire class of "the outer TypeScript compiles but the generated JS doesn't
+parse" bug impossible to ship silently again, across all five scripts, forever.
+
+### Lightbox zoom — a stable box to scroll within, not just a height cap
+
+The prior round's fix capped `.fms-stage`'s HEIGHT (`--shot-fit-h`) so the stage could scroll instead
+of the enclosing card. It never gave the stage — or the card, whose own width is driven by its
+children's max-content size — a stable WIDTH. `.fms-card` is a flex item with only a `max-width`
+cap, no explicit width, so its rendered width tracks whichever child needs the most room; once
+zoomed, that child is the image at its current (explicit, JS-set) pixel width. Every wheel tick grew
+the image, which grew the stage's max-content contribution, which grew the card, which the overlay
+then re-centered — the whole dialog resizing and re-centering on each tick instead of scrolling
+within a box that stayed put. The cursor-anchor scroll math (independently re-derived and confirmed
+algebraically correct) had nothing stable to scroll within: `scrollWidth === clientWidth` whenever
+the stage's content dictated its own size, making the anchor correction a no-op.
+
+Fixed by locking the stage to its FIT-mode width once, right after the image loads and that layout
+settles (`lockStageWidth()`), re-armed fresh on every open so a capture never inherits a previous
+one's locked size. Locked to the MEASURED fit width, not a constant, so a portrait capture still
+gets a small dialog and a landscape one still gets up to the card's max-width cap. Once the stage has
+a fixed width, `.fms-card`'s own width stabilizes as a consequence (a scroll container's overflowing
+content does not inflate an ancestor's intrinsic size), and the existing scroll-anchor math finally
+has a real, unchanging box to operate within.
+
+### Screenshots mismatched — two coordinate systems for "line number" conflated
+
+The deepest and most consequential of the three. Screenshot capture recorded a picture's position in
+the log by reading `LogSession.lineCount` and treating it as "the physical line number in the file."
+It is not: `lineCount` is a split-threshold counter that exists to drive `maxLines` file-splitting,
+and by design skips the session header, every DAP diagnostic line, and undercounts markers (a
+4-physical-line block bumps it by exactly 1) — its own doc comment says as much, in a context nobody
+reading the screenshot capturer would have reason to check. The flow-map report's own log-line
+numbers (used to join a capture to the screen active at that moment) come from `flow-map-log-parser.ts`
+counting REAL physical lines in the file, `i + 1`. The gap between the two — every header line, every
+DAP line, three lines per marker — meant every capture was anchored earlier in the log than where it
+actually happened, and the gap grew monotonically through the session. Near a navigation boundary
+this silently attributed a capture to the PREVIOUS screen instead of the current one — "sometimes
+right, sometimes wrong," exactly as reported, and worse the longer the session ran. A second,
+independent, load-dependent contributor was also present: the counter was read at line-ENQUEUE time,
+not at actual-write time, lagging further under a burst of output — "inconsistent" run to run.
+
+Fixed at the true single choke point every log write passes through
+(`LogSession.writeBackpressured`): a new `_physicalLineCount` field counts every `\n` actually
+handed to the write stream, regardless of whether that write "counts" toward the split threshold.
+Exposed as `LogSession.physicalLineCount`, threaded through as a new optional field on the shared
+`LineData` broadcast payload (`session-event-bus.ts`) so every existing construction site outside
+`session-manager-events.ts`/`session-manager.ts` — which have no `LogSession` to read it from —
+keeps compiling unchanged. `screenshot-capturer.ts`'s one call site that records a capture's log
+line now reads `data.physicalLineCount ?? data.lineCount`, with the fallback existing only for
+theoretical completeness (nothing in this codebase constructs a `LineData` without the new field on
+a current build). The counter resets alongside the split-threshold counter on `clear()`, and resets
+again (a small, deliberately accepted gap: it does not additionally count the continuation header,
+which bypasses the write choke point) at the start of a file split — relevant only to sessions with a
+non-default `maxLines`/`maxSizeKB`/`silenceMinutes` split rule configured, which defaults to off.
+
+A second, smaller, independently-real bug was found and fixed alongside it while tracing the
+mismatch: the diagram builder's node-key normalizer (`normalizeKey`) did not strip ANSI escape codes
+before normalizing, while the screenshot join's key normalizer (`screenKeyOf` → `groupShotsByScreen`)
+did — two different keys for what should be the same screen the moment any ANSI slipped through
+ingestion, silently failing to pair a capture to its node with no error to trace it by. Both now
+strip ANSI before normalizing, matching.
+
+A third bug, unrelated to the log-line mismatch but discovered in the same investigation: the
+lightbox's prev/next navigation grouped ALL `fm-mini-shot`-classed thumbnails into one navigation
+set, but that shared styling class is worn by TWO distinct surfaces — the activity timeline and the
+screen-visit table — with no way to tell them apart. Stepping through one silently walked into the
+other's captures while the overlay's own counter kept reporting the surface-correct position, so the
+label and the arrows disagreed. Fixed by giving each surface its own second class (`ac-shot` /
+`dwell-shot`, alongside the shared `fm-mini-shot` styling class) and keying navigation off those
+instead.
+
+**Files changed:** `flow-map-panel-zoom-script.ts` (the escape fix), `flow-map-panel-lightbox-zoom.ts`
+(`lockStageWidth`), `flow-map-panel-lightbox-nav.ts` (`ac-shot`/`dwell-shot` in `NAV_CLASSES`),
+`flow-map-html-shots.ts` (`dwell-shot` class added), `flow-map-builder.ts` (`normalizeKey` strips
+ANSI), `log-session.ts` (`_physicalLineCount`, `writeBackpressured`, `clear()`, `performSplit()`),
+`session-event-bus.ts` (`LineData.physicalLineCount`, optional), `session-manager-events.ts` /
+`session-manager.ts` (populate the new field at every broadcast site), `screenshot-capturer.ts`
+(reads the corrected field).
+
+**Tests:** one new file (`flow-map-panel-scripts-parse.test.ts`, 5 cases — the class of test that
+would have caught the zoom regression, verified to have teeth against the actual bug), plus targeted
+additions: 4 cases in `flow-map-shot-thumbs.test.ts` (width-lock behavior + the ANSI-symmetry
+regression), 3 cases in `log-session.test.ts` (the physical-vs-split-threshold distinction on the
+header, on a marker, and on `clear()`), 2 updated assertions (`flow-map-inline-shots.test.ts`,
+`flow-map-shot-thumbs.test.ts`) for the `ac-shot`/`dwell-shot` split and the `dwell-shot` class.
+All flow-map suites (14 files, 246 cases) and all screenshot/session/capture suites touched (54 + 39
+cases) pass — 339 cases total, 0 failing. `npm run check-types` clean; `npm run lint` 0 errors, the
+14 pre-existing warnings unchanged; `npm run compile` passes every verify gate including
+`verify:l10n-keys` (2571 keys); `dist/extension.js` 5.44 MiB against the 12 MiB ceiling.
+
+**These fixes target `[Unreleased]`, not a retroactive edit to the `## [9.3.10]` section** — v9.3.10
+was already tagged and published (`d5dd7e39`) with all three regressions present. The fixes ship in
+the next release.
+
+**Not verified on device.** As with every round this session, nothing has been exercised in the
+Extension Development Host. The one exception is the syntax-parse test, which is as close to "proven
+to work in a browser" as static analysis gets without one — it is not, itself, proof the zoom
+FEELS right, only that it no longer fails to parse. The width-lock fix's visual result (does the
+dialog actually stay put now) and the corrected screenshot attribution (does a real multi-screen
+session now show the right picture on the right card) both still need a live F5 walkthrough.
+
+**Outstanding (S2 still proposed):** unchanged — click-a-node log filtering, the possible-vs-walked
+overlay toggle, the 30-node layout/perf check.
