@@ -137,6 +137,33 @@ suite('LogSession queue safety', () => {
     assert.strictEqual(session.lineCount, 0);
   });
 
+  test('physicalLineCount is seeded from the continuation header on split, not reset to 0', async () => {
+    /* performFileSplit writes the continuation header directly on the new part's raw stream,
+       bypassing writeBackpressured (the sole choke point that increments physicalLineCount) — so a
+       flat reset-to-0 after a split would undercount every line by the header's own line count until
+       the next line landed, reintroducing a narrower version of the screenshot-mismatch bug this
+       counter exists to fix. Proven generally here (not pinned to an exact part number, since
+       maxLines re-evaluates on every queued write and can rotate more than once for a small
+       threshold): after any split, the counter must equal the CURRENT part file's own real newline
+       count — never fall short by the continuation header's lines. */
+    const tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'saropa-log-split-header-'));
+    const session = new LogSession(makeSessionContext(tmpRoot), makeSessionConfig('reports', 1), () => {});
+    await session.start();
+    session.appendLine('roll-line-0', 'console', new Date('2026-03-23T10:02:00.000Z'));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    session.appendLine('roll-line-1', 'console', new Date('2026-03-23T10:02:01.000Z'));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    assert.ok(session.partNumber >= 1, 'maxLines: 1 forced at least one split');
+    assert.ok(session.physicalLineCount > 0, 'not flatly reset to 0 after the split');
+    const body = await fs.readFile(session.fileUri.fsPath, 'utf-8');
+    const actualNewlines = (body.match(/\n/g) ?? []).length;
+    assert.strictEqual(
+      session.physicalLineCount, actualNewlines,
+      `the current part's counter matches its file's real newline count exactly (got ${session.physicalLineCount}, file has ${actualNewlines})`);
+    await session.stop();
+  });
+
   test('a write-stream error is caught and the stream dropped, not thrown (crash safety)', async () => {
     /* A Node stream that emits 'error' with no listener throws an uncaught exception that kills the
        extension host (disk full, revoked permission, file deleted mid-capture). The permanent

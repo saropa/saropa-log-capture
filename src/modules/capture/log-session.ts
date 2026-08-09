@@ -384,10 +384,11 @@ export class LogSession {
             this._bytesWritten = result.headerBytes;
             // A split opens a NEW file whose own physical line numbering starts at 1, so this counter
             // must restart too — it tracks the CURRENT part, mirroring what a reader of that one file
-            // would count. Not incremented for the continuation header itself (performFileSplit writes
-            // it directly on the raw stream, bypassing writeBackpressured) — a small, bounded gap only
-            // reachable with a non-default maxLines/maxSizeKB/silenceMinutes split rule configured.
-            this._physicalLineCount = 0;
+            // would count. Seeded from the continuation header's own line count (performFileSplit
+            // writes that header directly on the raw stream, bypassing writeBackpressured, so it can't
+            // be seen by the choke point that increments this counter on every other write) rather than
+            // reset to a flat 0, so a picture taken right after a split still lands on the correct line.
+            this._physicalLineCount = result.headerLineCount;
             this._partStartTime = Date.now();
             this._lastLineTime = 0;
         } finally {

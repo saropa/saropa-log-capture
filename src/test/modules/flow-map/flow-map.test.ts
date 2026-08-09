@@ -132,6 +132,24 @@ suite('FlowMap', () => {
             const crashNode = graph.nodes.find(n => n.key.startsWith('crash:'));
             assert.ok(crashNode?.issues.some(i => i.severity === 'error'), 'dialog flagged');
         });
+
+        test('a real ANSI-colored breadcrumb keys the same node as its plain equivalent, end to end', () => {
+            // Realistic fixture: a genuine ESC byte via the \u001b source escape (NOT bare "[32m"
+            // text -- the Read tool renders control chars invisibly, so this can look like a missing
+            // escape when viewed; it is not). Run through the ACTUAL parseLog -> buildGraph pipeline,
+            // not a hand-built TimelineEvent. Flutter colorizes the app's print() payload; the
+            // harness's own [HH:MM:SS.mmm] [console] [log] prefix is never app-colored, matching how
+            // the FIXTURE constant above is shaped.
+            const ansiFixture = [
+                '=== SAROPA LOG CAPTURE --- SESSION START ===',
+                'Project:        demo',
+                '[08:00:05.000] [console] [log] Screen Navigation: \u001b[32mContact View\u001b[0m',
+            ];
+            const ansiGraph = buildGraph(parseLog(ansiFixture));
+            const node = ansiGraph.nodes.find(n => n.kind !== 'launch');
+            assert.ok(node, 'the ANSI-colored line still produced a screen node');
+            assert.strictEqual(node!.key, 'contact view', 'key matches the plain-text fixture exactly');
+        });
     });
 
     suite('back navigation (return to caller)', () => {

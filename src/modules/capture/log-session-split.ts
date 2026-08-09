@@ -24,6 +24,10 @@ export interface SplitResult {
     readonly newFileUri: vscode.Uri;
     readonly newPartNumber: number;
     readonly headerBytes: number;
+    /** Physical `\n` count in the continuation header, written directly on `newStream` below —
+     * bypasses `LogSession.writeBackpressured`, so the caller must fold this into its own
+     * physical-line counter itself instead of counting on the choke point to see it. */
+    readonly headerLineCount: number;
 }
 
 /** Get the filename for a given part number. */
@@ -66,10 +70,14 @@ export async function performFileSplit(
     const header = generateContinuationHeader(ctx.context, nextPart, reason, ctx.baseFileName);
     newStream.write(header);
 
+    let headerLineCount = 0;
+    for (let i = 0; i < header.length; i++) { if (header.charCodeAt(i) === 10) { headerLineCount++; } }
+
     return {
         newStream,
         newFileUri,
         newPartNumber: nextPart,
         headerBytes: Buffer.byteLength(header, 'utf-8'),
+        headerLineCount,
     };
 }

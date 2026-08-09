@@ -1,6 +1,6 @@
 # Plan 056 — Session Flow Map (screen-transition diagram)
 
-## Status: S1 implemented · S2 shipped · S3 shipped (2026-06-11: CSS-size zoom that scrolls instead of cropping + centers/fits, fixed center-on-fault, diagram pop-out panel, double-click node detail card, return-to-caller back arrows, edge time labels off the arrow, splitter floors lowered to 20px) · S2 extended (2026-08-08: cards draggable with live edge re-routing, lightbox prev/next, capture thumbnails on the activity timeline and the screen-visit table, lightbox wheel-zoom fix, container-query detail column; then arrange-by-time layout, export-diagram-as-SVG, and hardening — per-lane row heights, center-the-fault on a moved card, thumbnail stripping so the SVG export doesn't ship broken images; then backlog closeout — esc() consolidated, flow-map-builder.ts split under 300 lines, skipNearDuplicates now defaults on; then a compile-time guard on the attachment-state split, a first-activation notice for the default flip; then three v9.3.10 post-release regressions fixed — a JS syntax error that killed diagram zoom entirely, the lightbox zoom width instability, and screenshots attaching to the wrong screen (root cause: LogSession's split-threshold counter reused as a physical line number) — with a new script-parses-as-JS regression test class added · live log-filtering still proposed
+## Status: S1 implemented · S2 shipped · S3 shipped (2026-06-11: CSS-size zoom that scrolls instead of cropping + centers/fits, fixed center-on-fault, diagram pop-out panel, double-click node detail card, return-to-caller back arrows, edge time labels off the arrow, splitter floors lowered to 20px) · S2 extended (2026-08-08: cards draggable with live edge re-routing, lightbox prev/next, capture thumbnails on the activity timeline and the screen-visit table, lightbox wheel-zoom fix, container-query detail column; then arrange-by-time layout, export-diagram-as-SVG, and hardening — per-lane row heights, center-the-fault on a moved card, thumbnail stripping so the SVG export doesn't ship broken images; then backlog closeout — esc() consolidated, flow-map-builder.ts split under 300 lines, skipNearDuplicates now defaults on; then a compile-time guard on the attachment-state split, a first-activation notice for the default flip; then three v9.3.10 post-release regressions fixed — a JS syntax error that killed diagram zoom entirely, the lightbox zoom width instability, and screenshots attaching to the wrong screen (root cause: LogSession's split-threshold counter reused as a physical line number) — with a new script-parses-as-JS regression test class added; then reflection hardening round 2 — the lightbox width lock widened to the card's other children, the split continuation header now counted by physicalLineCount, two more physicalLineCount-vs-lineCount misuses fixed (error-snackbar's Open Log, manual screenshot capture), a realistic end-to-end ANSI fixture added alongside the hand-built one, and a build-time activation self-check re-parsing the five panel scripts as real JS · live log-filtering still proposed
 
 **S1 (the combined session report) shipped** as the `saropaLogCapture.exportFlowMap` command —
 log parser, error-causing-widget parser, static source scan (contacts preset), graph builder
@@ -983,3 +983,105 @@ session now show the right picture on the right card) both still need a live F5 
 
 **Outstanding (S2 still proposed):** unchanged — click-a-node log filtering, the possible-vs-walked
 overlay toggle, the 30-node layout/perf check.
+
+
+## Finish Report (2026-08-09) — reflection hardening round 2, and a build-time script self-check
+
+Closes out the four hardening items raised by the previous round's `/finish` reflection, and builds
+that round's unrequested-feature commitment: an activation-time re-run of the script-parses-as-JS
+check against the real build.
+
+### (a) `lockStageWidth()`'s lock widened to cover the card's other children
+
+The one-time width lock (`flow-map-panel-lightbox-zoom.ts`) previously read only
+`zoomStage.clientWidth` — correct for the image itself, but blind to the card's OTHER children (the
+facts grid, the nav bar), whose own max-content width can exceed the image's fit-mode width for a
+capture with a long path or a wide multi-column fact row. `.fms-card` has no explicit width of its
+own; it tracks its widest child. Locking narrower than that would let those siblings force the card
+wider than the now-fixed stage after the lock had already been taken, breaking the anchor-scroll math
+the lock exists to stabilize. `lockStageWidth()` now locks to
+`Math.max(zoomStage.clientWidth, zoomStage.parentElement.scrollWidth)` — never narrower than what the
+card's other children already need at lock time.
+
+### (b) The split continuation header is now counted by `physicalLineCount`
+
+`performFileSplit()` (`log-session-split.ts`) writes the continuation header directly on the new
+part's raw stream, bypassing `LogSession.writeBackpressured` — the sole choke point that increments
+`_physicalLineCount`. The prior round reset the counter to a flat `0` after a split and documented the
+gap as accepted (only reachable with a non-default `maxLines`/`maxSizeKB`/`silenceMinutes` rule).
+Closed properly: `SplitResult` now carries `headerLineCount` (the header's own `\n` count, computed the
+same way `writeBackpressured` counts everything else), and `LogSession.performSplit()` seeds
+`_physicalLineCount` from that value instead of `0`. A capture taken immediately after a split now
+lands on the correct line in the new part from the first line written, not just from the second line
+onward.
+
+### (c) Audit of other `LineData`/`LogSession` "line count" consumers — two more real bugs found
+
+Grepped every `.lineCount` read across `src/` scoped to `LineData`/`LogSession` consumers (not the
+many unrelated `lineCount` concepts elsewhere — viewer file-load batch sizes, session-history
+metadata, the search index, VS Code's own `TextDocument.lineCount`). Found and fixed two more
+instances of the exact bug class the screenshot capturer had:
+
+- **`error-snackbar.ts`** — the "Open Log" action on a live error notification jumped to
+  `data.lineCount` (the split-threshold counter), not the physical line. Same drift as the
+  screenshot bug: the further into a session an error fired, the further "Open Log" would land from
+  the actual line. Now reads `data.physicalLineCount ?? data.lineCount`.
+- **`screenshot-wiring.ts`** — the manual screenshot-capture command (`runManualCapture`) passed
+  `session.lineCount` to `captureManual()`'s `logLine` parameter, the same misuse. Now passes
+  `session.physicalLineCount`.
+
+One call site was checked and ruled a non-issue: `screenshot-capturer.ts`'s call into
+`classifyBreadcrumb(text, ..., data.lineCount)` passes the split-threshold count into a `logLine`
+parameter, but the caller only reads the returned event's `.kind` — the `logLine` value is discarded,
+never surfaced. No fix needed there.
+
+### (d) ANSI-symmetry fix: a realistic end-to-end fixture added, not just the hand-built one
+
+The existing regression test (`flow-map-shot-thumbs.test.ts`, "should key a node the same way with or
+without ANSI in its label") hand-builds a `TimelineEvent` because `parseLog` always strips ANSI before
+an event is created — a raw fixture line can never reach `buildGraph`'s `normalizeKey` still carrying
+ANSI through the real pipeline, which is why that test intentionally bypasses `parseLog`. Confirmed
+this is still true by tracing `flow-map-log-parser.ts`: `stripAnsi(ctx.text)` runs before
+`classifyBreadcrumb`. Added a complementary end-to-end test in `flow-map.test.ts`
+("a real ANSI-colored breadcrumb keys the same node as its plain equivalent, end to end") that runs a
+raw log line with a genuine ESC byte through the ACTUAL `parseLog` → `buildGraph` pipeline and asserts
+the resulting node key. This proves the realistic path independently of the defense-in-depth unit
+test, rather than replacing it — both are needed, since they prove different things (parseLog's own
+ANSI stripping vs. `normalizeKey`'s redundant stripping for any input that reaches it another way).
+Item (e) from the prior reflection (the parse test's blind spot on semantically-wrong-but-valid
+escapes) remains accepted residual risk, unchanged from the prior round's reasoning.
+
+### New feature: activation-time self-check of the five generated panel scripts
+
+`flow-map-panel-scripts-self-check.ts` re-runs the same `new Function(js)` parse check
+`flow-map-panel-scripts-parse.test.ts` runs, but against the REAL runtime-built script strings, called
+once from `extension-activation.ts` alongside the other `maybeNotify*` calls. On a parse failure it
+logs a warning to the "Saropa Log Capture" output channel (never throws, never blocks activation — the
+same contract `maybeNotifyPartialNlsCoverage` and `maybeNotifySkipNearDuplicatesDefaultChanged`
+already establish). Purpose: the v9.3.10 zoom regression (a single un-doubled `\n` inside a template
+literal — valid TypeScript, a hard JS `SyntaxError` once generated) shipped through review, 339
+passing tests, and a tagged release before anyone noticed; the test suite alone only catches this
+class of bug on the next `npm test` run, not at build or install time. This surfaces the same signal
+without a live F5 session first.
+
+**Files changed:** `flow-map-panel-lightbox-zoom.ts` (`lockStageWidth`), `log-session-split.ts`
+(`SplitResult.headerLineCount`), `log-session.ts` (`performSplit()` seeds from it),
+`error-snackbar.ts`, `screenshot-wiring.ts` (both corrected to `physicalLineCount`),
+`flow-map-panel-scripts-self-check.ts` (new), `extension-activation.ts` (wires it in).
+
+**Tests:** `flow-map-shot-thumbs.test.ts` gained a case proving the widened lock reads
+`Math.max(zoomStage.clientWidth, siblingWidth)`; its pre-existing "lightbox script contract" suite
+(14 cases) was split out to a new file, `flow-map-lightbox-script-contract.test.ts`, to keep the
+original under the 300-line house limit — no case content changed. `log-session.test.ts` gained a
+case proving `physicalLineCount` after a split matches the current part file's actual newline count
+exactly (proven generally, not pinned to a specific part number, since `maxLines` re-evaluates on
+every queued write and can rotate more than once for a small threshold). `flow-map.test.ts` gained the
+end-to-end ANSI case described in (d). `flow-map-panel-scripts-self-check.test.ts` (new) proves the
+self-check logs nothing while the five real generators still parse cleanly. Full suite: 4131
+vscode-test cases plus the full `node:test` set, 0 failing. `npm run check-types` clean; `npm run lint`
+0 errors, the same 14 pre-existing warnings; `npm run compile` passes every verify gate;
+`dist/extension.js` 5.44 MiB against the 12 MiB ceiling.
+
+**Not verified on device.** No F5 walkthrough this round either — see the prior round's Finish Report
+for the still-outstanding manual test plan (diagram zoom, lightbox zoom stability, and screenshot
+attribution on a live multi-screen session), unchanged and still needed.
