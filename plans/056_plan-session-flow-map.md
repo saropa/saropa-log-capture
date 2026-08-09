@@ -1071,8 +1071,11 @@ without a live F5 session first.
 
 **Tests:** `flow-map-shot-thumbs.test.ts` gained a case proving the widened lock reads
 `Math.max(zoomStage.clientWidth, siblingWidth)`; its pre-existing "lightbox script contract" suite
-(14 cases) was split out to a new file, `flow-map-lightbox-script-contract.test.ts`, to keep the
-original under the 300-line house limit — no case content changed. `log-session.test.ts` gained a
+(14 cases) was moved to a new file, `flow-map-lightbox-script-contract.test.ts`, to keep the original
+under the 300-line house limit. Not a pure verbatim move: the moved suite also picked up the new
+"should widen the lock…" case and a loosened regex on "should lock to the FIT width" (now
+`/zoomStage\.clientWidth/` instead of the old exact-line match) to track hardening item (a) — the
+move and the content update landed together. `log-session.test.ts` gained a
 case proving `physicalLineCount` after a split matches the current part file's actual newline count
 exactly (proven generally, not pinned to a specific part number, since `maxLines` re-evaluates on
 every queued write and can rotate more than once for a small threshold). `flow-map.test.ts` gained the
@@ -1085,3 +1088,28 @@ vscode-test cases plus the full `node:test` set, 0 failing. `npm run check-types
 **Not verified on device.** No F5 walkthrough this round either — see the prior round's Finish Report
 for the still-outstanding manual test plan (diagram zoom, lightbox zoom stability, and screenshot
 attribution on a live multi-screen session), unchanged and still needed.
+
+### Addendum (2026-08-09) — /finish review-round fixes
+
+A delegated review of the round-2 hardening commit (`fa356d88`) found one real, low-severity gap and
+one duplication risk, both fixed here (no new commit-worthy behavior change, folded into the same
+day's work):
+
+- **`flow-map-panel-scripts-self-check.ts`'s outer `catch` block called `logExtensionWarn` unguarded**
+  — if that call itself threw (e.g. a disposed output channel mid-shutdown), the throw would propagate
+  out of `selfCheckFlowMapPanelScripts()`, breaking the "never throws, never blocks activation"
+  contract the function's own doc comment states. Now wrapped in its own `try { } catch { }`.
+- **Newline-counting was duplicated** between `LogSession.writeBackpressured` (`log-session.ts`) and
+  `performFileSplit`'s `headerLineCount` computation (`log-session-split.ts`) — the exact same
+  `charCodeAt(i) === 10` loop written twice. Extracted to a shared `countNewlines()` in
+  `log-session-helpers.ts`; both call sites now use it. Removes the risk of the two counters silently
+  drifting apart the way `_physicalLineCount` and the screenshot capturer's old counter once did —
+  the whole reason this round's hardening exists.
+- Corrected an inaccuracy in this file's own prior Finish Report: the "lightbox script contract"
+  suite's move to `flow-map-lightbox-script-contract.test.ts` was described as "no case content
+  changed" — false; the moved suite also picked up a loosened regex and a new test case tracking
+  hardening item (a), landing in the same commit as the move.
+
+Re-verified: `npm run check-types` clean, `npm run lint` 0 errors (14 pre-existing warnings,
+unchanged), `npm run compile` passes every gate, full test suite (4131 vscode-test cases + full
+`node:test` set) 0 failing.
