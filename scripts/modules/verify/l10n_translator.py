@@ -30,9 +30,7 @@ from modules.verify.l10n_bundle_audit import (
 )
 from modules.verify.l10n_console import red, yellow
 from modules.verify.l10n_brands import (
-    is_acronym_only,
     is_brand_only,
-    is_no_translatable_content,
     shield_brands,
     unshield_brands,
     validate_brands,
@@ -46,6 +44,7 @@ from modules.verify.l10n_qwen_engine import (
 )
 from modules.verify.l10n_provenance import (
     ENGINE_MANUAL,
+    is_forced_identity,
     is_low_quality,
     load_provenance,
     save_provenance,
@@ -323,6 +322,7 @@ def _key_action(
     *,
     scope: str,
     provenance: dict[str, str],
+    locale: str,
 ) -> str:
     """Decide what to do with one key under the active scope.
 
@@ -333,7 +333,7 @@ def _key_action(
       - "low_quality" translate ONLY existing real translations whose
                       provenance engine is low quality or untracked (upgrade).
     """
-    if is_brand_only(en_key) or is_acronym_only(en_key) or is_no_translatable_content(en_key):
+    if is_forced_identity(en_key, locale):
         return "identity"
     really_translated = bool(existing) and existing != en_key
     if scope == "low_quality":
@@ -432,7 +432,7 @@ def translate_locale(
     # so the live counter reads "done/total" and never overshoots its total.
     total_todo = sum(
         1 for k in canonical_keys
-        if _key_action(k, bundle.get(k), scope=scope, provenance=provenance) == "translate"
+        if _key_action(k, bundle.get(k), scope=scope, provenance=provenance, locale=locale) == "translate"
     )
     attempted = 0
 
@@ -452,7 +452,7 @@ def translate_locale(
     try:
         for en_key in sorted(canonical_keys):
             existing = bundle.get(en_key)
-            action = _key_action(en_key, existing, scope=scope, provenance=provenance)
+            action = _key_action(en_key, existing, scope=scope, provenance=provenance, locale=locale)
 
             # Forced-English identity (brand / acronym / symbol). No provenance
             # is stamped — classify_translated_keys infers "identity" by shape,
