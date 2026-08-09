@@ -25,9 +25,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.3.11]
 
-Three flow-map regressions from 9.3.10 are fixed: diagram zoom (wheel and every toolbar button) stopped responding, the screenshot lightbox's zoom still jumped, and screenshots could attach to the wrong screen.
+Three flow-map regressions from 9.3.10 are fixed: diagram zoom (wheel and every toolbar button) stopped responding, the screenshot lightbox's zoom still jumped, and screenshots could attach to the wrong screen. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.11/CHANGELOG.md)
 
 ### Fixed
 
@@ -41,9 +41,12 @@ Three flow-map regressions from 9.3.10 are fixed: diagram zoom (wheel and every 
 - "Open Log" from an error notification, and manual screenshot capture, now use the same corrected line-position counter the flow map's screenshot-mismatch fix introduced, instead of the older counter that could point a few lines early
 - Log capture: a session configured with a max-lines split rule no longer degenerates into one file per line after the first split — the threshold now resets per file part the way its own description ("split file after this many lines") always said it would, instead of a counter that never reset and re-triggered a split on every single line once first crossed
 
-### Added
+<details>
+<summary>Maintenance</summary>
 
 - A developer-only self-check runs at activation, re-verifying the flow map's five generated webview scripts are valid JavaScript and logging a warning to the "Saropa Log Capture" output channel if one isn't — the same check the test suite runs, but against the actual build, so a bug like the v9.3.10 zoom regression is visible without a live debugging session first
+
+</details>
 
 ---
 
@@ -520,65 +523,6 @@ Trouble Mode's reports now open **beside** the log instead of covering it, the l
 - **The device's startup noise no longer flattens the severity chart.** A phone drains its logcat backlog while an app starts, so the opening seconds of a log carry dozens of framework warnings that belong to the device, not to your app. That single burst set the chart's scale and squashed every real spike after it into a sliver. Time windows that end before the app's launch line are now excluded from the peak. They still draw — nothing is hidden — but muted, and their tooltip reads **Before app launch**.
 - **The chart's peak label is no longer drawn over.** The tallest bar is almost always the burst of device warnings a phone emits while an app starts, it always lands in the leading time window, and it painted straight through the "Peak N" label pinned to the plot's top-left corner. The label now sits in the chart's header beside the title.
 - **Copy to Search now opens the search bar.** Right-clicking a line and choosing **Copy to Search** filled in the search field but left the search bar hidden if it was not already open, so the pasted text was invisible until you separately opened search. The action now opens the bar itself.
-
----
-
-## [9.1.2]
-
-Trouble Mode grew up — a live severity chart, a band of your top Crashlytics issues, and a detail pane for any row you click — plus a one-click Markdown report for any issue and richer `[flowmap]` tagging for actions, exits, and errors. [log](https://github.com/saropa/saropa-log-capture/blob/v9.1.2/CHANGELOG.md)
-
-### Added
-
-- **`[flowmap]` navigation lines show as compact chips in the log viewer.** An instrumented app emits one `[flowmap] …` line per surface entered, action taken, and failure; raw, they are long and repetitive and drown the feed. A new "Flow tags" toolbar button (tag icon) cycles three modes: **chips** (default) renders each tag line as a small verb-colored pill — `→ Contact View`, `↩ Home`, `✕ Picker`, `＋ Favorite`, `↗ Google Maps`, `💥 Payment declined` — with the meaning, surface kind, and source anchor on hover; **raw** shows the original text; **hidden** filters the tag lines out. The mode persists per-view across reloads. Colors follow the flow palette (enter blue, back purple, exit gray, action green, handoff amber, error red).
-- **Copy a focused Markdown report for any issue.** The Trouble Mode detail pane has a "Copy report" button, and every log line has a "Copy issue report" right-click item. Both copy a compact Markdown report — the severity, the environment (app version, debug adapter, debug target, when known), and the exact fault line with its stack — and nothing else, so the report is the problem with no surrounding noise. Fault text that itself contains a code fence can't break the block. A message confirms the copy.
-- **Trouble Mode shows a band of your top Crashlytics crash issues above the feed.** When Trouble Mode is active, the most active cached crash issues (from the background Crashlytics watcher's on-disk cache) appear as a compact band between the severity chart and the feed — no new network call, and nothing shows if the cache is empty. Each row shows the issue, its severity, and event/user counts; clicking one opens the existing in-viewer Crashlytics detail. The band is hidden whenever Trouble Mode is off.
-- **Trouble Mode: select a feed row to open a detail pane for that issue.** Clicking a row while Trouble Mode is active slides in an in-viewer detail pane (over the feed, leaving the chart and toolbar visible) showing the fault line, its severity, the session's ANR risk when elevated, and the surrounding context with the line's position in the session and the preceding action — reusing the signal report's own evidence and context builders. Close it with the × or Escape; leaving Trouble Mode dismisses it.
-- **Trouble Mode now shows a live severity chart above the feed.** While Trouble Mode is active, a compact bar chart sits above the log, bucketing errors, warnings, and performance issues into tumbling time windows so you can see bursts and rates at a glance. Each bar stacks the three severities using the theme's error/warning/info colors; clicking a bar scrolls the feed to that window's first row. The window width is configurable with `saropaLogCapture.troubleMode.chartInterval` (1–60 seconds, default 5). The chart reads the same per-line severity the feed filters on, so it can never disagree with what the feed shows, and it aggregates entirely in the viewer (no extra capture buffer) with a bounded recent-activity window.
-- **`[flowmap] action` tag — explicit in-screen action breadcrumbs for the Session Flow Map.** Apps can now emit `[flowmap] action "<Category>" [file.dart:line]` (parallel to `enter` and `handoff`) to count user actions — Favorite, Share, Delete — on the screen where they happened. Action counts previously came only from app-specific heuristic text patterns, so most projects' Flow Maps showed no action data. Counts appear as per-screen action badges in the Flow Map report; the tag never creates nodes or edges. Format spec: `plans/guides/flowmap-tag-navigation.md`.
-- **`[flowmap] exit` tag — surface-dismissed marker that fixes inflated dialog dwell.** A dialog or sheet used to keep accruing time until the next screen change, so dismissing it and staying on the screen behind charged that idle time to the dialog. Emit `[flowmap] exit <kind> "<Name>"` at the dismissal point and the surface's dwell stops there; the revealed caller resumes accruing. An exit that doesn't name the currently open surface is ignored.
-- **`[flowmap] error` tag — a failure badge on the surface where it happened.** Emit `[flowmap] error "<Category>" [file.dart:line]` from the app's exception handler to record a failure in the Issue Report table and badge the exact active surface (dialogs included) with a marker — so the Flow Map shows *where* the app broke. Each occurrence is recorded (explicit errors are not deduped).
-- **`[flowmap] back` verb — correct return-arrow direction.** Emit `[flowmap] back <kind> "<Name>" [file.dart:line]` (the form Saropa Contacts logs from its back handler) when the app knows a step is a return. It forces a return edge even when the open-surface stack can't detect the return (the target was already closed), so a re-entry no longer draws as forward navigation. Previously only the alternate `[flowmap] enter screen "Home" back` keyword was recognized, so the standalone verb the app actually emits was silently dropped and back-navigation never appeared. The `enter … back` keyword still works as an alternate spelling.
-
-### Removed
-
-- **The Integrations screen no longer lists companion-tool issues.** The "Issues found by your companion tools" block (Drift Advisor / Saropa Lints diagnostics read from the workspace mirrors) rendered an unbounded raw diagnostics feed inside an options surface. The Options panel is for configuration only; companion findings stay in the tools' own UIs and the signal report's ecosystem section. The Integrations icon badge now counts only pending integration suggestions.
-
-### Changed
-
-- **Trouble Mode now lives in the log viewer toolbar, next to the filter icon.** The toggle moved off the editor view title bar into the viewer's own toolbar (a warning-triangle button) where the other filters live. The button highlights while active, and the level dots dim for the levels Trouble Mode is hiding (info, notice, debug, database, todo) so you can see exactly what is suppressed. The separate footer chip is gone — the button and dots carry the state.
-- **Collapse all / expand all moved into the log viewer toolbar.** The section-fold controls that were on the editor view title bar are now a single toolbar button that swaps its icon to show state (collapse-all when sections are open, expand-all when collapsed). The commands remain available from the command palette.
-- **Disabling capture now stops in-flight capture immediately.** Turning the master capture switch off (status bar toggle, Options panel, `saropaLogCapture.toggleCapture`, or the setting) finalizes any active session — flushing and closing the log file — and stops session-scoped work: external log tailers, the adb logcat process, terminal capture, and database live tail. Per-event DAP processing is skipped before buffering, and the background Crashlytics poller stops. Previously these kept running until the debug session happened to end. The captured log stays on disk; turning capture back on starts fresh on the next debug session. When disabling stopped live sessions, the toast names how many.
-
-### Fixed
-
-- **Turning off a level now hides its lines instead of dimming them.** The level filter's ±context window (default 3 lines) was re-revealing a disabled level's lines as dimmed *context* around still-shown neighbors, so turning off Performance with most levels still on left the perf lines visible-but-dimmed. The context reveal is now gated to a focused selection (when the shown levels are a minority) — excluding one or two levels hides them cleanly, while soloing or narrowing to a few levels still shows their surrounding context.
-- **Performance lines no longer show a redundant `[perf]` tag.** Structured logcat lines like `I/flutter (…): [perf] [frame-stall] …` kept a leading `[perf]` in the message body even though the severity is already shown by the row color and level chip. The structured render path now strips a leading tag that only restates the severity (`[perf]`, `[warn]`, `[error]`, …); a descriptive tag such as `[frame-stall]` is kept as the line's tag.
-- **Bare "performance" no longer misclassifies prose as a performance signal.** The `severityKeywords` setting default in `package.json` still shipped the bare keyword "performance", so informational lines containing noun phrases like "Performance settings filtering" classified as the performance level even after the in-code defaults dropped it (VS Code resolves the `package.json` default, making it the live list). Removed there too; specific keywords (`perf`, `jank`, `fps`, `choreographer`, `slow operation`, …) and the structural patterns (`Skipped N frames`, `GC pause`, `took Nms`) still catch real performance logs.
-- **Webview default perf keywords were missing "slow operation".** The webview's built-in perf keyword regex (active only until the settings broadcast arrives) lacked `slow operation`, which the extension-side default includes. Restored parity and extended the extension/webview parity test corpus with keyword-default cases so this drift is caught in CI.
-
----
-
-## [9.1.1]
-
-Cut through the noise with the new Trouble Mode. This zero-context triage filter instantly strips away nominal lines so you only see errors, warnings, and performance issues. We've also made saving signal reports completely automatic—they now write straight to your reports folder the moment you open them. [log](https://github.com/saropa/saropa-log-capture/blob/v9.1.1/CHANGELOG.md)
-
-### Changed
-
-- **Signal reports now save automatically when opened.** The manual **Save Report** button is gone — opening a signal report writes the full markdown report to your reports folder immediately, and the report's Session Overview links straight to the saved file. The log-file path in the overview is now a link too (opens the log in the viewer).
-
-### Added
-
-- **Trouble Mode — a zero-context triage filter for the log viewer.** Toggle it from the view title bar (the warning icon) or the command palette (**Toggle Trouble Mode**), and the viewer strips every nominal line to show only errors, warnings, and performance issues. It is a separate filter layered on top of your existing level selection — turning it off restores exactly what you had. A footer chip shows when the mode is active; click it to exit. Markers (run separators, database signals) always stay visible. This is the first stage of the Trouble Mode dashboard; the live chart, detail pane, Crashlytics rows, and Copy Report handoff follow.
-- **`[frame-stall]` bracket tag** for explicit performance-level annotation (aliases: `[perf]`, `[jank]`, `[slow]`, `[latency]`, `[timing]`, `[profile]`, `[frame]`, `[fps]`, `[gc]`, `[memory]`, `[bench]`, `[benchmark]`). Any of these tags at the start of a log line routes it to the Performance level in the viewer.
-- **Quantified performance metric detection.** Logs containing `took <n>ms` or `duration: <n>ms` patterns (e.g., `Database query took 2400ms`, `Elapsed duration: 1.5s`) now automatically classify as **Performance**. Supports fractional durations and optional spaces (`took 500 ms`).
-
-### Fixed
-
-- **Slow-query and repeat-query warnings now stay visible when the Database filter is off.** Drift's own performance annotations — `Drift SLOW <n>ms …` (over-threshold queries) and `Drift REPEAT x<n> …` (N+1 query storms) — carry the app's `[database]` tag, so they used to classify as **Database** and disappear the moment you turned that level off. They now classify as **Performance** and appear under the Performance filter (and no longer force an error when the logged SQL happens to contain an "…Error" enum value).
-- **Removed bare "performance" keyword from default severity patterns.** The bare word "Performance" was matching English prose like "Performance settings filtering" and misclassifying informational logs. Real performance logging now requires structured forms: `[perf]` bracket tags, `perf:` labels, or quantified metrics like `took Xms` (see Added section above).
-- **Blank rows no longer render an expander arrow.** An empty log line sitting just above filter-hidden rows was picking up the "reveal hidden rows" chevron, showing a blank sliver with an expander on it. The chevron now attaches to the nearest non-blank row instead.
-- **Copy Report / the saved report now include the Recommendations section.** The exported markdown previously omitted the recommendations shown on the panel; the copied and saved reports now carry the same advice alongside evidence, cross-session history, and other signals.
-- **Cross-Session History rows now open the selected session.** Clicking a history row called an unregistered command and silently did nothing; it now loads that session's log into the viewer.
 
 ---
 
