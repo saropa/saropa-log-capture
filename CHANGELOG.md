@@ -36,6 +36,13 @@ Three flow-map regressions from 9.3.10 are fixed: diagram zoom (wheel and every 
 - Flow map: the lightbox's previous/next buttons no longer mix the activity-timeline captures and the screen-visit-table captures into one navigation set
 - Screenshots: fixed the root cause of captures attaching to the wrong screen in the flow map — the position recorded for a capture now counts every line actually written to the log (including the session header and diagnostic lines), instead of a counter that only tracked lines toward the file-split threshold and silently undercounted from the very first line
 - Flow map: a screen label carrying leftover ANSI color codes now matches its screenshot the same way a clean label does, instead of failing to pair silently
+- Flow map: the screenshot lightbox's zoom lock now also accounts for the facts grid and nav bar's own width, not just the picture's — a wide caption or path could previously force the dialog wider than the locked zoom box after it opened
+- Log capture: the line position recorded for a log-split's continuation header is now counted, instead of leaving a small gap right after any split configured with a non-default max-lines/max-size/silence-timeout rule
+- "Open Log" from an error notification, and manual screenshot capture, now use the same corrected line-position counter the flow map's screenshot-mismatch fix introduced, instead of the older counter that could point a few lines early
+
+### Added
+
+- A developer-only self-check runs at activation, re-verifying the flow map's five generated webview scripts are valid JavaScript and logging a warning to the "Saropa Log Capture" output channel if one isn't — the same check the test suite runs, but against the actual build, so a bug like the v9.3.10 zoom regression is visible without a live debugging session first
 
 ---
 

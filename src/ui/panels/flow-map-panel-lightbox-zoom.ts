@@ -84,7 +84,13 @@ export function flowMapLightboxZoomJs(): string {
      still gets up to the card's own max-width cap. */
   function lockStageWidth(){
     if (zoomWidthLocked || !zoomStage) { return; }
-    zoomStage.style.width = zoomStage.clientWidth + 'px';
+    // Locking to the stage's own width alone can starve the card's OTHER children (the facts grid,
+    // the nav bar) if they need more horizontal room than the fit-mode image did — the card's width
+    // tracks its widest child's max-content size, so a narrower lock here would still let those
+    // siblings force the card wider than the (now-fixed) stage, breaking the anchor-scroll math the
+    // lock exists for. Locking to whichever is wider keeps the stage from ever being the bottleneck.
+    var siblingWidth = zoomStage.parentElement ? zoomStage.parentElement.scrollWidth : 0;
+    zoomStage.style.width = Math.max(zoomStage.clientWidth, siblingWidth) + 'px';
     zoomWidthLocked = true;
   }
 
