@@ -97,6 +97,35 @@ class ReassembleSentencesTests(unittest.TestCase):
         self.assertIsNone(translator._reassemble_sentences("A. B.", filled))
 
 
+class KeyActionVerifiedIdenticalTests(unittest.TestCase):
+    """``_key_action`` must never re-send a verified-identical key to the engine.
+
+    Regression: a key like de:"Perf" is in ``VERIFIED_IDENTICAL`` (human-confirmed
+    English is correct), but ``_key_action`` only checked brand/acronym/symbol
+    predicates. An en-copy value read as an untranslated gap, got sent to the
+    engine, was overwritten with a real translation, then reset back to English
+    by the garbled-acronym sync on the next run -- an infinite reset/re-translate
+    loop across every "gaps" pass.
+    """
+
+    def test_verified_identical_key_is_identity_not_translate(self) -> None:
+        from modules.verify.l10n_brands import VERIFIED_IDENTICAL
+
+        for locale, keys in VERIFIED_IDENTICAL.items():
+            for key in keys:
+                with self.subTest(locale=locale, key=key):
+                    action = translator._key_action(
+                        key, key, scope="gaps", provenance={}, locale=locale,
+                    )
+                    self.assertEqual(action, "identity")
+
+    def test_non_identity_en_copy_still_flagged_for_translation(self) -> None:
+        action = translator._key_action(
+            "Hello", "Hello", scope="gaps", provenance={}, locale="de",
+        )
+        self.assertEqual(action, "translate")
+
+
 class SentenceModeToggleTests(unittest.TestCase):
     """``set_sentence_mode`` flips the module flag the engine path reads."""
 
