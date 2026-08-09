@@ -50,11 +50,14 @@ Flow map diagrams can now be rearranged by hand or laid out along a time axis, e
 
 - Screenshots: **Skip Near-Duplicate Screenshots** now defaults to on. It only skips a capture whose picture matches a recent one on the same screen; error, warning and manually-requested captures are never skipped, and an unreadable capture is always kept
 
-### Maintenance
+<details>
+<summary>Maintenance</summary>
 
 - Flow map: consolidated five identical HTML/XML-escaping helpers (one per rendering module) into a single shared function
 - Flow map: split the graph builder's crash- and issue-attachment logic into its own module to bring the builder back under the project's 300-line file limit
 - l10n: fixed translation script re-translating verified-identical keys every run, causing a garbled-reset → re-translate cycle and phantom "gaps" on 100%-complete locales
+
+</details>
 
 ---
 
@@ -85,13 +88,12 @@ Introduces a new Diagnose Screenshot Capture command, smart near-duplicate scree
 - Flow map: a screenshot that has been moved or deleted since the report was built now says so in its frame, instead of showing a broken-image placeholder
 - Screenshots: a screenshot record with an unrecognized trigger is now rejected when the sidecar is read, instead of reaching the gallery and the diagram as an untinted mystery capture
 - Flow map: the capture-count badge on a diagram card keeps its contrast over any severity tint, and hovering a card thumbnail now says which capture is on show and what triggered it
-- l10n: 25 untranslated trouble-chart legend and flow-map strings filled across 10 locales (DB, Debug, TODO, Screenshot, Trigger); all locales now at 100% coverage
-
 <details>
 <summary>Maintenance</summary>
 
 **l10n pipeline**
 
+- 25 untranslated trouble-chart legend and flow-map strings filled across 10 locales (DB, Debug, TODO, Screenshot, Trigger); all locales now at 100% coverage
 - `is_acronym_only` now recognizes acronym + placeholder patterns (e.g. "DB {0}", "TODO {0}") so they classify as identity instead of untranslated gaps
 - `fill-identity` action (menu 8 / `--run-mode fill-identity`) stamps provenance on EN-COPY bundle entries that match any forced-identity criterion; scans bundles directly with dry-run preview and confirmation prompt in interactive mode
 - `ACRONYM_ONLY_STRINGS` expanded with "APP" and "FW" (analysis badge labels with garbled MT output)
@@ -131,11 +133,8 @@ Introduces quality-of-life improvements to the Logs panel by collapsing older lo
 - Flow map: the report now bounds embedded screenshots by total size (6 MB of image data) as well as count (12), and skips any single capture larger than the whole budget — a high-DPI screenshot can no longer freeze the panel it is embedded in
 - Flow map: the screenshot lightbox keeps keyboard focus inside itself and returns focus to the thumbnail that opened it
 
-- Trouble Mode level constants (valid set + defaults) consolidated into a single source of truth (`trouble-level-constants.ts`) shared by config reader, load handler, and webview initialisation
-- New `verify:trouble-levels` compile gate asserts `package.json` enum/default match the shared constants AND every valid level has a matching chart legend l10n key
 - Trouble Mode preset commands fall back to global config when no workspace is open
 - Trouble chart "todo" swatch changed from amber (#ffc107) to green (#8bc34a) for better contrast with the warning swatch
-- First-error scan extracted to `viewer-trouble-chart-first-error.ts` (chart file was over the 300-line limit)
 
 ### Fixed
 
@@ -143,6 +142,15 @@ Introduces quality-of-life improvements to the Logs panel by collapsing older lo
 - Logs panel: "Expand all" / "Collapse all" now cover all session dates including paginated pages, not just the currently rendered DOM subset (plan 001)
 
 - Smart bookmark modal no longer fires on pre-launch device backlog errors; skipped pre-launch error count is logged to the output channel (bug_002)
+
+<details>
+<summary>Maintenance</summary>
+
+- Trouble Mode level constants (valid set + defaults) consolidated into a single source of truth (`trouble-level-constants.ts`) shared by config reader, load handler, and webview initialisation
+- New `verify:trouble-levels` compile gate asserts `package.json` enum/default match the shared constants AND every valid level has a matching chart legend l10n key
+- First-error scan extracted to `viewer-trouble-chart-first-error.ts` (chart file was over the 300-line limit)
+
+</details>
 
 ---
 
@@ -158,7 +166,6 @@ Flutter profile mode now captures screenshots on crash, alongside inline log ima
 
 - Flow map: a suggested breadcrumb rule now reproduces its source line verbatim, so the rule matches the lines it was derived from (an arrow-separated suggestion previously generated a rule that matched nothing), and adding one falls back to user settings when no workspace folder is open instead of failing
 - Session Display menu: the Reverse toggle showed its raw l10n key (`viewer.session.toggleReverse.text`) instead of a label — added the missing `.text` string
-- l10n key verification now catches dynamic key families via four layers: literal keys, `@l10n-expand` JSDoc tags (cross-file, paren-balanced arg parsing, escape-aware, multi-line tags), `@l10n-family` catalog annotations, and a template-pattern fallback — a missing suffix in any family fails the compile gate; out-of-bounds arg indices emit ERROR (stale tag), non-literal args emit WARN
 - Flow map: a log with no navigation breadcrumbs (for example a logcat-only capture) no longer renders a silent blank diagram — the zero-node layout produced an invalid negative-height SVG; the diagram area now explains what the flow map needs, and the zoom toolbar and glyph legend are hidden when there is no diagram to control
 - Screenshots now capture in profile-mode Flutter runs: profile builds emit no console exception banners (the previous only trigger source), so live app crashes from the device log (`E/AndroidRuntime: FATAL EXCEPTION`) now trigger a capture — while the days-old crashes the device replays from its buffer at every session start, and routine warning-level system chatter, never do. Live-vs-replayed is judged entirely on the device's own clock, so it works whatever timezone the phone is set to
 - The output channel now announces "capture pipeline armed" with the running version at startup (confirms the installed build has the feature) and warns once when an app error passes with no VM Service address known, so an idle capture pipeline is never silent
@@ -166,7 +173,6 @@ Flutter profile mode now captures screenshots on crash, alongside inline log ima
 - A capture count pill sits with the open log's name in the banner as well as the toolbar, so a log you are reading shows how many screenshots it holds; clicking either opens the gallery
 - New "capture now" button in the viewer toolbar takes a screenshot on demand. It appears only while a live debug session is being viewed — there is nothing to photograph in a saved log, so the button is absent there rather than present and dead
 - Every Flutter debug session now records a screenshot self-test in its log and the output channel — whether capture is on, which triggers are armed, the adb version, and the attached device (or plainly "adb NOT FOUND" / "NO DEVICE attached"). A log that captured nothing now explains why on its own, without a live investigation
-- 29 manual translations filled across 9 locales (EN-COPY audit gaps from engine swap)
 - Japanese and Korean "Sev" column header fixed from sound transliterations to meaning (重度, 심각)
 
 <details>
@@ -174,8 +180,10 @@ Flutter profile mode now captures screenshots on crash, alongside inline log ima
 
 **l10n pipeline**
 
+- 29 manual translations filled across 9 locales (EN-COPY audit gaps from engine swap)
 - German loanwords (Commit, Detail, Version) kept as-is and added to verified-identical allow-list
 - Audit auto-suppresses EN-COPY entries with manual provenance (no code change needed for true cognates)
+- l10n key verification now catches dynamic key families via four layers: literal keys, `@l10n-expand` JSDoc tags (cross-file, paren-balanced arg parsing, escape-aware, multi-line tags), `@l10n-family` catalog annotations, and a template-pattern fallback — a missing suffix in any family fails the compile gate; out-of-bounds arg indices emit ERROR (stale tag), non-literal args emit WARN
 
 </details>
 
@@ -274,7 +282,6 @@ Automatic screenshots now capture your Flutter app the exact moment an error str
 
 ### Changed
 
-- l10n audit now prints per-locale untranslated string detail (key, reason, English value) below the gap count, so the operator sees exactly which strings need work without opening the JSON report; interactive mode always shows this (capped at 10 per locale), non-interactive suppresses it unless `--verbose` is passed (which removes the cap)
 - Signal report stat cards now show severity-colored top borders (red for errors, amber for warnings, blue for info signals)
 - Signal report health score replaced with a visual arc gauge — color graduates by tier (green ≥80, amber 50–79, red <50)
 - Signal report header upgraded to a hero block with type badge, larger title, and confidence badge on one line
@@ -282,15 +289,24 @@ Automatic screenshots now capture your Flutter app the exact moment an error str
 - Signal report overview rows now have subtle separators, bolder labels, and consistent vertical rhythm
 - Signal panel entries (both "This log" and "Across your logs") now show colored type badges (ERR, WARN, PERF, SQL, NET, MEM, etc.) for at-a-glance category scanning
 - Health gauge handles non-finite scores gracefully (renders 0 instead of NaN)
+
+<details>
+<summary>Maintenance</summary>
+
+**l10n pipeline**
+
+- l10n audit now prints per-locale untranslated string detail (key, reason, English value) below the gap count, so the operator sees exactly which strings need work without opening the JSON report; interactive mode always shows this (capped at 10 per locale), non-interactive suppresses it unless `--verbose` is passed (which removes the cap)
+
+**Design tokens**
+
 - Migrated hardcoded `border-radius` values to design token variables (`--radius-sm`, `--radius`, `--radius-pill`) across 45+ style files for consistent corner rounding
 - Migrated hardcoded `font-size` values to design token type scale (`--text-caption`, `--text-body`, `--text-h2`) across 48+ style files for consistent typography
 - Session comparison, collection, bug report, and keyboard shortcuts panels now load the design token layer — they can consume spacing, radius, type, and color tokens like the signal report already does
 - Migrated hardcoded `padding`, `margin`, and `gap` values to spacing tokens (`--space-1` through `--space-7`) across 59 style files — single-value, two-value, and three-value declarations that map to the 4 px scale
 - Replaced ~750 raw `--vscode-*` CSS variable references with semantic design tokens across 68 style files: surfaces (`--surface-1/2/3`, `--inset`), text (`--text`, `--muted`, `--link`), borders (`--border`), and status accents (`--accent-critical/warning/info`); collapsed redundant fallback chains where the raw variable already resolves through its token
-
-### Fixed
-
 - Fixed 6 test failures caused by the design token migration: updated CSS assertions to match semantic tokens instead of raw `--vscode-*` variables (including the ghost-pixel opaque background guard), fixed signal kind badge exhaustiveness check for hyphenated keys (`slow-op`), and registered dynamically created screenshot element IDs in the wiring test
+
+</details>
 
 ---
 
@@ -360,7 +376,13 @@ Tag column polish: the `lowmemorykiller` device tag now reads as "Low Memory Kil
 - Tag chips: added display-label overrides so all-lowercase Android system tags render as words — `lowmemorykiller` → "Low Memory Killer", `dalvikvm` → "Dalvik VM", `surfaceflinger` → "Surface Flinger", `bufferqueue`, `audioflinger`, `audiotrack`, `mediacodec`, `mediaplayer`, `cameraservice`, `inputmethodmanager`, plus casing fixes for `wpa_supplicant` → "WPA Supplicant" and `libc`.
 - Tag-cell hover tooltip now joins tag names with ", " instead of a space, keeping multi-word tags legible (e.g. "Perf, Frame Stall, Flutter").
 - **Flutter DevTools inspector "ghost errors" no longer show as errors.** Lines from the Layout Explorer's async widget-tree probe (`ext.flutter.inspector.getLayoutExplorerNode` / a `getLayoutExplorerNode` stack frame) throw a "Null check operator used on a null value" that is developer-tooling noise, not an app fault. Such lines now classify as `debug` — kept off the Errors filter and the timeline — even when they arrive on stderr. This catches the signature-bearing frame only; whole-stack suppression of the bare header line is tracked in `plans/history/2026.07/2026.07.16/BUG_Better_Support_ANR.md`.
-- Internal: the ANR keyword regex used by per-line classification and the pre-production ANR risk scorer is now a single shared definition, so the two cannot drift.
+
+<details>
+<summary>Maintenance</summary>
+
+- The ANR keyword regex used by per-line classification and the pre-production ANR risk scorer is now a single shared definition, so the two cannot drift
+
+</details>
 
 ---
 
