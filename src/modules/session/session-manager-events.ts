@@ -96,7 +96,7 @@ export function processOutputEvent(
         const summary = `[FLOOD SUPPRESSED: ${floodResult.suppressedCount} identical messages]`;
         session.appendLine(summary, 'system', now);
         target.broadcastLine({
-            text: summary, isMarker: false, lineCount: session.lineCount,
+            text: summary, isMarker: false, lineCount: session.lineCount, physicalLineCount: session.physicalLineCount,
             category: 'system', timestamp: now, logFileUri: session.fileUri.fsPath,
         });
     }
@@ -115,7 +115,7 @@ export function processOutputEvent(
     session.appendLine(text, category, now, sourceLocation);
     target.counters.categoryCounts[category] = (target.counters.categoryCounts[category] ?? 0) + 1;
     target.broadcastLine({
-        text, isMarker: false, lineCount: session.lineCount,
+        text, isMarker: false, lineCount: session.lineCount, physicalLineCount: session.physicalLineCount,
         category, timestamp: now, logFileUri: session.fileUri.fsPath,
         sourcePath: body.source?.path, sourceLine: body.line,
     });
@@ -162,7 +162,7 @@ function writeSpamSummary(
 ): void {
     session.appendLine(flush.summary, 'system', flush.timestamp);
     target.broadcastLine({
-        text: flush.summary, isMarker: false, lineCount: session.lineCount,
+        text: flush.summary, isMarker: false, lineCount: session.lineCount, physicalLineCount: session.physicalLineCount,
         category: 'system', timestamp: flush.timestamp, logFileUri: session.fileUri.fsPath,
     });
 }
@@ -240,7 +240,7 @@ function writeOneLine(
             const summary = `[FLOOD SUPPRESSED: ${floodResult.suppressedCount} identical messages]`;
             session.appendLine(summary, 'system', timestamp);
             target.broadcastLine({
-                text: summary, isMarker: false, lineCount: session.lineCount,
+                text: summary, isMarker: false, lineCount: session.lineCount, physicalLineCount: session.physicalLineCount,
                 category: 'system', timestamp, logFileUri: session.fileUri.fsPath,
             });
         }
@@ -253,7 +253,7 @@ function writeOneLine(
     session.appendLine(text, category, timestamp);
     target.counters.categoryCounts[category] = (target.counters.categoryCounts[category] ?? 0) + 1;
     target.broadcastLine({
-        text, isMarker: false, lineCount: session.lineCount,
+        text, isMarker: false, lineCount: session.lineCount, physicalLineCount: session.physicalLineCount,
         category, timestamp, logFileUri: session.fileUri.fsPath,
     });
 }

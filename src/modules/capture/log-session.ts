@@ -33,6 +33,18 @@ export type SplitCallback = (newUri: vscode.Uri, partNumber: number, reason: Spl
 export class LogSession {
     private _state: SessionState = 'recording';
     private _lineCount = 0;
+    /**
+     * True count of physical lines written to the CURRENT part file, counted at the single choke
+     * point every write passes through (`writeBackpressured`) — unlike `_lineCount`, which is a
+     * split-threshold counter that deliberately skips header/DAP/marker writes (see its own doc
+     * comment) and is therefore NOT the file's actual line number. A consumer that needs "what line
+     * of the file is this" (screenshot capture recording where in the log a picture was taken) must
+     * read this counter, never `_lineCount` — reusing the split counter for that purpose is exactly
+     * the bug this field exists to fix: every capture's recorded line silently drifted earlier than
+     * its true position by (header lines) + (DAP lines so far) + (3 per marker), growing throughout
+     * the session, which surfaced as screenshots attaching to the wrong screen in the flow map.
+     */
+    private _physicalLineCount = 0;
     private _fileUri: vscode.Uri | undefined;
     private writeStream: fs.WriteStream | undefined;
     /** Guard flag — prevents writes to a stream being closed during split. */
@@ -64,6 +76,8 @@ export class LogSession {
 
     get state(): SessionState { return this._state; }
     get lineCount(): number { return this._lineCount; }
+    /** Physical line count in the CURRENT part file — see the field's own doc comment. */
+    get physicalLineCount(): number { return this._physicalLineCount; }
     get fileUri(): vscode.Uri { return this._fileUri!; }
     get partNumber(): number { return this._partNumber; }
     get bytesWritten(): number { return this._bytesWritten; }
@@ -121,6 +135,9 @@ export class LogSession {
      * and every append guards on a missing stream, so resolving early here is safe.
      */
     private async writeBackpressured(stream: fs.WriteStream, data: string): Promise<void> {
+        // The single point every write passes through, so counting newlines HERE (not per call
+        // site) can never drift from what the file actually contains — see `_physicalLineCount`.
+        for (let i = 0; i < data.length; i++) { if (data.charCodeAt(i) === 10) { this._physicalLineCount++; } }
         if (stream.write(data)) { return; }
         await new Promise<void>((resolve) => {
             const done = (): void => {
@@ -365,6 +382,12 @@ export class LogSession {
             this._fileUri = result.newFileUri;
             this._partNumber = result.newPartNumber;
             this._bytesWritten = result.headerBytes;
+            // A split opens a NEW file whose own physical line numbering starts at 1, so this counter
+            // must restart too — it tracks the CURRENT part, mirroring what a reader of that one file
+            // would count. Not incremented for the continuation header itself (performFileSplit writes
+            // it directly on the raw stream, bypassing writeBackpressured) — a small, bounded gap only
+            // reachable with a non-default maxLines/maxSizeKB/silenceMinutes split rule configured.
+            this._physicalLineCount = 0;
             this._partStartTime = Date.now();
             this._lastLineTime = 0;
         } finally {
@@ -419,6 +442,7 @@ export class LogSession {
 
     clear(): void {
         this._lineCount = 0;
+        this._physicalLineCount = 0;
         this._previousTimestamp = undefined;
         this.pendingLines.length = 0;
         this.deduplicator.reset();

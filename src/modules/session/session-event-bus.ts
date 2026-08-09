@@ -16,6 +16,17 @@ export interface LineData {
     readonly text: string;
     readonly isMarker: boolean;
     readonly lineCount: number;
+    /**
+     * True physical line number of THIS line in the current part file (`LogSession
+     * .physicalLineCount`, read AFTER this line's own write), where `lineCount` is a
+     * split-threshold counter that undercounts (skips header/DAP/marker writes — see
+     * `LogSession._lineCount`'s doc comment) and is therefore the wrong field for anything that
+     * needs an actual file line number. Optional so every existing `LineData` construction site
+     * outside `session-manager-events.ts`/`session-manager.ts` (which do not have a `LogSession`
+     * to read this from) keeps compiling unchanged; a consumer that needs the real line number
+     * must fall back to `lineCount` only when this is absent, never treat the two as equivalent.
+     */
+    readonly physicalLineCount?: number;
     readonly category: string;
     readonly timestamp: Date;
     readonly sourcePath?: string;

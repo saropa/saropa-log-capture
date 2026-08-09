@@ -48,7 +48,10 @@ suite('FlowMap inline capture thumbnails', () => {
     suite('screen-visit table', () => {
         test('should show the screen\'s capture in its own row', () => {
             const html = body([shot(3), shot(4)]);
-            assert.ok(html.includes('<td class="shot-cell"><img class="fm-mini-shot"'), 'a thumbnail cell');
+            // dwell-shot, not bare fm-mini-shot: the lightbox's prev/next navigates within the
+            // class the reader clicked from, and this is what keeps it from mixing this surface's
+            // captures with the timeline's (both share fm-mini-shot for styling only).
+            assert.ok(html.includes('<td class="shot-cell"><img class="fm-mini-shot dwell-shot"'), 'a thumbnail cell');
             assert.ok(html.includes('data-shot-path="D:/shots/a.png"'), 'carrying the lightbox facts');
         });
 
@@ -129,10 +132,14 @@ suite('FlowMap inline capture thumbnails', () => {
         });
 
         test('should navigate within the surface it was opened from', () => {
-            // A flat session-wide list would jump the reader between the gallery, the cards and the
-            // strip, and make the overlay's own counter disagree with where the arrows go.
-            assert.ok(script.includes('NAV_CLASSES'), 'the three surfaces are named');
-            assert.ok(script.includes("'shot-img', 'fm-shot', 'fm-mini-shot'"), 'all three, in one list');
+            // A flat session-wide list would jump the reader between the gallery, the cards, the
+            // timeline and the dwell table, and make the overlay's own counter disagree with where
+            // the arrows go. ac-shot/dwell-shot, not the shared fm-mini-shot styling class — that
+            // class alone would silently merge the timeline and the dwell table into one set.
+            assert.ok(script.includes('NAV_CLASSES'), 'the four surfaces are named');
+            assert.ok(
+                script.includes("'shot-img', 'fm-shot', 'ac-shot', 'dwell-shot'"),
+                'all four, in one list, by their surface-specific classes');
         });
 
         test('should skip captures whose file failed to load', () => {

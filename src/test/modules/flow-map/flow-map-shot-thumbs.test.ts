@@ -68,6 +68,28 @@ suite('FlowMap diagram screenshot thumbnails', () => {
             assert.ok(key, 'the fixture produced a screen node');
             assert.strictEqual(groupShotsByScreen(shots).get(key)?.length, 1, 'capture lands on that node key');
         });
+
+        test('should key a node the same way with or without ANSI in its label', () => {
+            // The log parser strips ANSI at ingestion, so a raw fixture line can't reproduce "ANSI
+            // slipped through" — this bypasses the parser and hand-builds the event the builder
+            // actually keys from, the same way groupShotsByScreen's own caller
+            // (screenKeyOf(stripAnsi(shot.screenLabel))) already strips before normalizing. Before
+            // the fix, the builder's key kept the raw ANSI bytes and the shot's key didn't — two
+            // different strings for the same screen, and the thumbnail silently never appeared.
+            const ansiLabel = '[32mContact View[0m';
+            const parsed = {
+                header: {}, issues: [], crashes: [], slowQueryCount: 0, repeatBatchCount: 0,
+                events: [{ tsMs: 1000, clock: '08:00:01', kind: 'nav' as const, label: ansiLabel, logLine: 2 }],
+            };
+            const graph = buildGraph(parsed);
+            const shots = joinShotsToScreens([shot(2)], parsed.events);
+            const node = graph.nodes.find(n => n.kind !== 'launch');
+            assert.ok(node, 'the fixture produced a screen node');
+            assert.strictEqual(node!.key, 'contact view', 'the node key has the ANSI stripped');
+            assert.strictEqual(
+                groupShotsByScreen(shots).get(node!.key)?.length, 1,
+                'the capture lands on that same key — same normalizer, same pre-processing');
+        });
     });
 
     suite('pickThumbShot', () => {
@@ -340,6 +362,42 @@ suite('FlowMap diagram screenshot thumbnails', () => {
             assert.ok(script.includes("slider.addEventListener('input'"), 'slider drives the same scale');
             assert.ok(script.includes('zoomReset'), 'and fit is recoverable');
             assert.ok(script.includes('passive: false'), 'wheel can preventDefault, so the page cannot scroll under it');
+        });
+
+        test('should lock the stage to a fixed width once the image has loaded', () => {
+            // Without a fixed width, .fms-stage/.fms-card have no width besides "however wide the
+            // zoomed image's CURRENT pixel width happens to make them" — so every wheel tick both
+            // resizes and re-centers the whole dialog instead of scrolling inside a box that stays
+            // put, and the anchor-preserving scroll math has nothing stable to scroll within. This
+            // is what made the lightbox zoom "still jump around wildly" even after the earlier
+            // height-only fit-cap fix.
+            assert.ok(script.includes('lockStageWidth'), 'a width-locking step exists');
+            assert.ok(
+                /img\.addEventListener\('load', function\(\)\{ zoomApply\(\); lockStageWidth\(\); \}\)/.test(script),
+                'locked right after the image loads, once fit layout has settled');
+        });
+
+        test('should lock to the FIT width, not a fixed constant', () => {
+            // A constant would give a portrait capture the same dialog width as a landscape one;
+            // locking to the measured fit-mode width keeps a small capture's dialog small.
+            assert.ok(
+                /zoomStage\.style\.width = zoomStage\.clientWidth \+ 'px'/.test(script),
+                'the lock reads the stage\'s own measured width');
+        });
+
+        test('should re-lock fresh on every open, not carry a previous capture\'s width', () => {
+            assert.ok(script.includes('zoomWidthLocked = false'), 'the lock flag resets on open');
+            assert.ok(/stage\.style\.width = '';/.test(script), 'and any previous inline width is cleared');
+        });
+
+        test('should lock width only once per open, not on every zoom tick', () => {
+            // Re-measuring on every load event (the slider/zoomReset path can also fire zoomApply,
+            // though only the image's own load event calls lockStageWidth) would let the box keep
+            // growing to whatever the image happens to be at that moment — exactly the bug this
+            // guards against.
+            assert.ok(
+                /if \(zoomWidthLocked \|\| !zoomStage\) \{ return; \}/.test(script),
+                'a second call is a no-op');
         });
     });
 });

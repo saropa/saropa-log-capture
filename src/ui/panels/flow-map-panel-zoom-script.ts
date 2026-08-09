@@ -189,7 +189,7 @@ export function flowMapZoomScript(nonce: string): string {
     var stripped = stripThumbnails(clone);
     clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     var xml = new XMLSerializer().serializeToString(clone);
-    send('exportArrangedSvg', { svg: '<?xml version="1.0" encoding="UTF-8"?>\n' + xml, shotsOmitted: stripped });
+    send('exportArrangedSvg', { svg: '<?xml version="1.0" encoding="UTF-8"?>\\n' + xml, shotsOmitted: stripped });
   }
 
   var ZOOM = { in: function(){ zoomTo(scale * 1.2); }, out: function(){ zoomTo(scale / 1.2); }, reset: resetView, crash: centerCrash };

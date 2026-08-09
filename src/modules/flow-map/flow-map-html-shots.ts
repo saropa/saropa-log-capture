@@ -60,7 +60,12 @@ export function shotCellHtml(shots: readonly FlowShot[], all: readonly FlowShot[
     const { shot } = picked;
     const screen = stripAnsi(shot.screenLabel ?? shot.trigger);
     const title = esc(`${shot.clock} · ${shot.trigger} · ${screen}`);
-    return `<td class="shot-cell"><img class="fm-mini-shot" role="button" tabindex="0"`
+    // dwell-shot distinguishes this surface from the timeline's ac-shot: the lightbox's prev/next
+    // navigates within the class the reader clicked from (flow-map-panel-lightbox-nav.ts), and both
+    // surfaces sharing bare fm-mini-shot let the arrows silently walk across BOTH sets mixed
+    // together while the counter kept reporting the gallery-wide position — a "4 of 12" label next
+    // to arrows that actually stepped through 7.
+    return `<td class="shot-cell"><img class="fm-mini-shot dwell-shot" role="button" tabindex="0"`
         + `${shotDataAttrs(shot, all.indexOf(shot) + 1, all.length)} src="${esc(shot.src)}" `
         + `alt="${esc(screen)}" aria-label="${esc(screen)}" title="${title}"></td>`;
 }

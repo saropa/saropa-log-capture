@@ -4,12 +4,17 @@
  * IIFE, so it shares its scope (`L`, `open`, `overlay`) and adds no globals of its own.
  *
  * WHAT COUNTS AS "NEXT" is the surface the reader opened from, not the session's whole capture set.
- * The panel shows captures on three surfaces with three different denominators — the gallery lists
- * every capture, a diagram card shows one per screen, and the timeline/dwell thumbnails show one per
- * bin/row — so walking a single flat list would jump the reader between surfaces and make the
- * lightbox's own "Capture 3 of 7" counter disagree with where ‹ and › actually go. Navigation stays
- * within the class the opener belongs to, which is exactly the set the reader can see behind the
- * overlay.
+ * The panel shows captures on FOUR surfaces with four different denominators — the gallery lists
+ * every capture, a diagram card shows one per screen, the activity timeline shows one per bin, and
+ * the screen-visit table shows one per row — so walking a single flat list would jump the reader
+ * between surfaces and make the lightbox's own "Capture 3 of 7" counter disagree with where ‹ and ›
+ * actually go. Navigation stays within the class the opener belongs to, which is exactly the set
+ * the reader can see behind the overlay.
+ *
+ * The timeline and the screen-visit table both style their thumbnails via the shared `fm-mini-shot`
+ * class (`flow-map-panel-styles-shots.ts`), but each carries a SECOND, surface-specific class
+ * (`ac-shot` / `dwell-shot`) precisely so navigation can tell them apart — matching on the shared
+ * class here would silently merge two surfaces into one navigation set.
  *
  * Captures whose PNG failed to load are excluded: the error handler strips their click target, so
  * stepping onto one would open an empty stage with no way to tell why.
@@ -18,9 +23,11 @@
 /** JS statements (no wrapper) implementing lightbox prev/next, injected into the lightbox IIFE. */
 export function flowMapLightboxNavJs(): string {
     return /* javascript */ `
-  /* The three capture surfaces, each its own navigation set. Order is irrelevant — an element
-     belongs to exactly one of these classes. */
-  var NAV_CLASSES = ['shot-img', 'fm-shot', 'fm-mini-shot'];
+  /* The four capture surfaces, each its own navigation set. Order is irrelevant — an element
+     belongs to exactly one of these classes. ac-shot and dwell-shot are the SURFACE-SPECIFIC class
+     each carries alongside the shared fm-mini-shot styling class — matching on fm-mini-shot itself
+     would merge the timeline and the screen-visit table into one set. */
+  var NAV_CLASSES = ['shot-img', 'fm-shot', 'ac-shot', 'dwell-shot'];
   var navList = [], navIndex = -1, navigating = false;
 
   function navSetFor(el){

@@ -71,6 +71,72 @@ suite('LogSession queue safety', () => {
     assert.ok(!/\(x\d+\)/.test(body), 'capture side must not stamp an (xN) suffix');
   });
 
+  test('physicalLineCount counts the session header; lineCount (split threshold) does not', async () => {
+    /* This is the fix for a real bug: screenshot capture recorded a picture's position by reading
+       `session.lineCount` and treating it as "the line number in the file" — but that counter
+       deliberately skips header/DAP/marker writes (it exists to drive the maxLines split
+       threshold, not to number the file), so every capture's recorded line was too small by at
+       least the header's own length, growing further with every DAP line and marker for the rest
+       of the session. Screenshots attached to the wrong screen in the flow map as a result.
+       `physicalLineCount` is the fix: a true count of newlines actually written, counted at the
+       one choke point every write passes through. Proven here at the earliest possible moment —
+       right after start(), before a single appendLine — where lineCount is necessarily still 0
+       but the header has already put several real lines in the file. */
+    const tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'saropa-log-physical-'));
+    const session = new LogSession(makeSessionContext(tmpRoot), makeSessionConfig('reports', 1000), () => {});
+    await session.start();
+
+    assert.strictEqual(session.lineCount, 0, 'the split-threshold counter has counted nothing yet');
+    assert.ok(
+      session.physicalLineCount > 1,
+      `the physical counter already reflects the header's own multiple lines (got ${session.physicalLineCount})`);
+
+    // Confirm against the file too, once it has actually landed on disk — start() awaits the
+    // header WRITE resolving, not the underlying stream's 'open'/flush completing, so a read
+    // immediately after start() can race the file's own creation on some platforms.
+    for (let attempt = 0; attempt < 20; attempt++) {
+      try {
+        const header = await fs.readFile(session.fileUri.fsPath, 'utf-8');
+        assert.strictEqual(
+          session.physicalLineCount, (header.match(/\n/g) ?? []).length,
+          'the physical counter matches the header actually on disk, exactly');
+        break;
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== 'ENOENT' || attempt === 19) { throw err; }
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      }
+    }
+
+    await session.stop();
+  });
+
+  test('physicalLineCount counts every line a marker writes, not the single line lineCount credits it', async () => {
+    // appendMarker's block is `\n--- MARKER: … ---\n` + `\n` — three real lines — but only bumps
+    // the split-threshold lineCount by one (it is `countsAsLine: true`, not "counts as 3").
+    const tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'saropa-log-physical-marker-'));
+    const session = new LogSession(makeSessionContext(tmpRoot), makeSessionConfig('reports', 1000), () => {});
+    await session.start();
+    const before = session.physicalLineCount;
+    session.appendMarker('checkpoint');
+    // appendMarker enqueues; give the queue a tick to flush before reading the counter.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    const grew = session.physicalLineCount - before;
+    assert.ok(grew > 1, `the marker's own real line count (${grew}) must exceed the 1 lineCount would credit it`);
+
+    await session.stop();
+    const body = await fs.readFile(session.fileUri.fsPath, 'utf-8');
+    assert.ok(body.includes('--- MARKER: '), 'the marker text actually reached the file');
+  });
+
+  test('physicalLineCount resets to 0 on clear(), matching lineCount', async () => {
+    const session = new LogSession(makeSessionContext(os.tmpdir()), makeSessionConfig('reports'), () => {});
+    await session.start();
+    session.clear();
+    assert.strictEqual(session.physicalLineCount, 0);
+    assert.strictEqual(session.lineCount, 0);
+  });
+
   test('a write-stream error is caught and the stream dropped, not thrown (crash safety)', async () => {
     /* A Node stream that emits 'error' with no listener throws an uncaught exception that kills the
        extension host (disk full, revoked permission, file deleted mid-capture). The permanent
