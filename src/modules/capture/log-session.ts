@@ -13,6 +13,7 @@ import { FileSplitter, SplitReason } from '../misc/file-splitter';
 import {
     SessionContext,
     SourceLocation,
+    countNewlines,
     generateBaseFileName,
     formatLine,
     generateContextHeader,
@@ -137,7 +138,7 @@ export class LogSession {
     private async writeBackpressured(stream: fs.WriteStream, data: string): Promise<void> {
         // The single point every write passes through, so counting newlines HERE (not per call
         // site) can never drift from what the file actually contains — see `_physicalLineCount`.
-        for (let i = 0; i < data.length; i++) { if (data.charCodeAt(i) === 10) { this._physicalLineCount++; } }
+        this._physicalLineCount += countNewlines(data);
         if (stream.write(data)) { return; }
         await new Promise<void>((resolve) => {
             const done = (): void => {

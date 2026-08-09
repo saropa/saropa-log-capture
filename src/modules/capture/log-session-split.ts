@@ -7,7 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { SplitReason, formatSplitReason } from '../misc/file-splitter';
-import { SessionContext, generateContinuationHeader } from './log-session-helpers';
+import { SessionContext, countNewlines, generateContinuationHeader } from './log-session-helpers';
 
 /** State needed to perform a file split. */
 export interface SplitContext {
@@ -70,14 +70,11 @@ export async function performFileSplit(
     const header = generateContinuationHeader(ctx.context, nextPart, reason, ctx.baseFileName);
     newStream.write(header);
 
-    let headerLineCount = 0;
-    for (let i = 0; i < header.length; i++) { if (header.charCodeAt(i) === 10) { headerLineCount++; } }
-
     return {
         newStream,
         newFileUri,
         newPartNumber: nextPart,
         headerBytes: Buffer.byteLength(header, 'utf-8'),
-        headerLineCount,
+        headerLineCount: countNewlines(header),
     };
 }
