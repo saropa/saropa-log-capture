@@ -121,6 +121,20 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes("action === 'copy-db-cluster-block'"));
         });
 
+        test('Copy Error/Warning JSON and plain-text line numbers use sourceLineNo, not the raw array index', () => {
+            // Regression guard: sourceLineNo is the header-aware FILE line number; the bare array
+            // index (lo + 1 / hi + 1) undercounts by the session header's length. Both copy paths
+            // must resolve through sourceLineNo before falling back to the index. (Behavioral
+            // coverage, including the copyContextLines expansion, lives in
+            // viewer-context-menu-block-copy.test.ts — this is a lighter presence guard.)
+            const script = getContextMenuScript();
+            assert.ok(script.includes('allLines[xJ.lo] && allLines[xJ.lo].sourceLineNo != null'));
+            assert.ok(script.includes('allLines[xJ.hi] && allLines[xJ.hi].sourceLineNo != null'));
+            assert.ok(script.includes('allLines[lo] && allLines[lo].sourceLineNo != null'));
+            assert.ok(script.includes('allLines[hi] && allLines[hi].sourceLineNo != null'));
+            assert.ok(script.includes('function expandByContextLines'));
+        });
+
         test('should define incident range helpers before showContextMenu uses them', () => {
             const script = getContextMenuScript();
             assert.ok(script.includes('function computeIncidentLineRange'));
