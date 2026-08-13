@@ -139,7 +139,7 @@
   "config.contextViewLines.description": "Number of lines before and after to show in the context view modal.",
   "config.contextViewLines.title": "Number of lines before and after to show in the context view modal.",
   "config.contextWindowSeconds.title": "Time window (±seconds) for the Context Popover.",
-  "config.copyContextLines.description": "Number of log lines before and after the selection to include when using Copy with source (e.g. for stack traces). 0 = selection only.",
+  "config.copyContextLines.description": "Number of log lines before and after the selection to include when using Copy with source, Copy Error, or Copy Warning (e.g. for stack traces). 0 = selection only.",
   "config.copyContextLines.title": "Number of log lines before and after the selection to include when us…",
   "config.correlation.enabled.description": "Enable automatic correlation detection (highlight related events across debug, HTTP, perf, terminal).",
   "config.correlation.enabled.title": "Enable automatic correlation detection (highlight related events acro…",
