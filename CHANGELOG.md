@@ -25,6 +25,20 @@ cspell:disable
 
 ---
 
+## [9.3.12]
+
+Copying an error or warning block from the log viewer now reports the line numbers it's actually at, and pulls in a bit of surrounding context. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.12/CHANGELOG.md)
+
+### Fixed
+
+- Log viewer: **Copy Error/Warning** and **Copy Error/Warning JSON** reported line numbers that undercounted by the length of the session header block — the JSON payload's `lineStart`/`lineEnd` and the "Copied lines L-H" toast now use the same header-aware line number the gutter and screenshot matching already rely on
+
+### Changed
+
+- Log viewer: **Copy Error/Warning** and **Copy Error/Warning JSON** now include the same surrounding-context lines (`saropaLogCapture.copyContextLines`, default 3) that **Copy with source** already adds — the reported severity still reflects only the actual fault, not the neighboring context
+
+---
+
 ## [9.3.11]
 
 Three flow-map regressions from 9.3.10 are fixed: diagram zoom (wheel and every toolbar button) stopped responding, the screenshot lightbox's zoom still jumped, and screenshots could attach to the wrong screen. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.11/CHANGELOG.md)
