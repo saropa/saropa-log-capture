@@ -3339,7 +3339,7 @@
   },
   "description": "%description%",
   "dependencies": {
-    "google-auth-library": "^10.9.1",
+    "google-auth-library": "^11.0.2",
     "jszip": "^3.10.1",
     "ws": "^8.21.3"
   },
