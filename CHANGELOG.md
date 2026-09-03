@@ -27,12 +27,90 @@ cspell:disable
 
 ## [Unreleased]
 
+### Security
+
+- Fixed bug 003: bug reports and "Explain with AI" leaked unredacted secrets and absolute file paths. `redact.ts` now matches forward-slash and `vscode://file/` path forms, not just backslash paths; `formatBugReport()` and `formatReportFile()` run a final redaction pass over the fully assembled markdown (closing leaks from raw full-output/selected-text sections and markdown links, not just the header); and the AI data-send consent dialog is now wired into the root-cause hypotheses explain path (it was previously only gated on the line-explain path)
+- Added workspace trust gate for integration settings and replaced shell-string interpolation with argument arrays in build/CI, Docker, Linux-log, and Windows-event-log providers
+
+### Removed
+
+- Removed non-functional "Explain with AI" button from analysis panel
+- Removed non-functional `deemphasizeFrameworkLevels` setting
+- Removed non-functional GitHub Issue and Handoff bug report variants
+- Removed dead `rescanTags`, `showTimeline`, and `compareWithMarked` commands (bug_006); removed the now-unreachable `msg.noSessionMarked` l10n key left behind when `compareWithMarked` was deleted, and added a working "Mark for Comparison" context-menu entry point without re-adding the deleted command (bug_014)
+- Follow-up cleanup after bugs 005/009/029: removed the now-unreachable `viewer.analysis.aiUnavailable` l10n key left behind when the "Explain with AI" button was deleted (bug_005); deleted the unused `report-variant-runner.ts` and `report-file-variants.ts` modules — no command called into them, so they shipped as dead scaffolding rather than a working feature (bug_009); deleted the dead `bindExportModalKeyboardHandlers()` function, whose Escape/Tab-trap listeners were never wired up because `initExportModal()` duplicated them inline instead of calling it (bug_029)
+
+### Fixed
+
+- Fixed bug 020 follow-up: the `viewer.session.scanFailed` l10n key added by the original fix was never synced into `l10n/bundle.l10n.json`, so `vt()` looked it up and silently fell back to raw English — the base bundle now carries the identity entry alongside the source string
+- Fixed bug 028 follow-up: stack trace headers born while Trouble Mode was active were still hardcoded to the class/scope-filter fix's pattern minus Trouble Mode itself, so a new header flashed visible for one `recalcHeights()` pass before Trouble Mode hid it — `tryIngestStackLine()` now computes `calcTroubleFiltered()` at header birth the same way `computeLineBirthHeight()` already does for regular lines, and stamps the header's own `troubleFiltered` flag so `calcItemHeightBase()` respects it on the next recalc too
+- Fixed bug 025 follow-up: pinned lines and annotations are keyed by `allLines` index the same as the fixed trim-time re-indexing, but nothing reset them on a full log switch — the `clear` webview message handler now clears `pinnedIndices` and `annotations` alongside the selection-state reset it already did, so a pin/annotation from the previous file can no longer reappear on an unrelated row of the newly opened one
+- Fixed bug 011 follow-up: the keyboard bookmark shortcut (`bookmark` action in `viewer-script-keyboard.ts`) still stored the viewer's `allLines` array index instead of the file's `sourceLineNo`, so a bookmark set with the keyboard could resolve to the wrong row after any trim/filter change even though the right-click "Bookmark" menu action was already fixed — both entry points now key off `sourceLineNo` consistently
+- Fixed bug 015 follow-up: `openSignal`, `openSqlHistoryForFingerprint`, and `refreshRecurringSignals` posted to the log viewer without waiting for a closed/cold `WebviewView` to resolve, silently dropping the message — `openSignal`'s duplicated inline poll is replaced with the shared `ensureWebviewReadyOrWarn()` gate, `openSqlHistoryForFingerprint` now uses the same gate, and the automatic post-capture `refreshRecurringSignals` refresh uses the silent `ensureWebviewReady()` variant so a closed viewer doesn't pop a warning toast on every capture
+- Fixed bug 016 follow-up: bulk delete (`handleDeleteCommand` in `delete-command.ts`) was the one deletion path not calling `cleanupDeletedSessionMetadata()`, orphaning metadata and search-index entries for every file removed through the bulk quick pick — it now shares the same cleanup call as the single-file delete and empty-trash paths
+- Fixed bug 033: export timestamps mislabeled a local wall-clock time as UTC (`Z` suffix) and mixed a UTC date header with a local time-of-day, giving lines the wrong date near local midnight in any non-UTC timezone; `buildFullTimestamp()` now uses the session-start date's local calendar day (no `Z` suffix) and tracks a per-export `RolloverState` that detects a decreasing time-of-day between consecutive lines to advance the date across midnight, so long-running sessions that cross one or more local midnights get the correct date on every line
+- Fixed bug 046: deleting a log left its `.screenshots/` PNGs and `.screenshots.json` index behind forever, growing disk usage unbounded — sidecar cleanup is now wired into `cleanupDeletedSessionMetadata()`, the single choke point every physical-delete path (single-file delete, bulk delete, empty trash) already shares, so no call site needed a separate patch
+- Fixed bug 017 follow-up: `resetAllSettings` already skipped workspace-scope updates without a workspace and used `Promise.allSettled` so one rejected setting couldn't abort the rest, but it still showed the generic success toast even when some updates failed, silently hiding a partial reset — a failed reset now shows a warning with the failed/total counts instead
+- Restored walkthrough markdown files to `media/walkthrough/` (the only copy now — the stray `plans/walkthrough/` copy that never shipped is gone), refreshed their stale "sidebar viewer" and keyboard-shortcut content, and added a `verify:walkthrough-media` compile gate so a future move can't silently ship an empty walkthrough step again
+- Fixed Crashlytics OAuth scope to match Play Developer Reporting API
+- Fixed bug 010: adb logcat and other streaming integrations wrote lines straight to the log file via `logSession.appendLine` and never called `broadcastLine`, so the sidebar/viewer only showed logcat output after a reload and line listeners (file watchers, screenshot triggers, API callbacks) never saw it live — `makeStreamingWriteLine()` in `session-lifecycle-init.ts` now pairs every `appendLine` with a `broadcastLine` call, `broadcastLine` is threaded through `InitSessionParams`, and `session-manager-start.ts` supplies the same callback the DAP output path already used
+- Paused capture no longer shows lines in viewer that are absent from the saved file
+- Clarified `maxLogFiles` setting description to accurately reflect trash-only behavior
+- Commands that require a session context now show guidance instead of silently doing nothing
+- Reset All Settings no longer fails when no workspace is open
+- Deleting a session now cleans up metadata and search index entries
+- Debug output is no longer routed to wrong session in multi-root workspaces
+- Fixed bug 034 follow-up: a folder-B debug session starting within 5s (race guard) or 30s (recent-child fallback) of folder-A's session start could still get its output permanently aliased to folder A's log file, even though routing itself was already fixed — `getSingleRecentOwnerSession()` and `getMostRecentOwnerSessionId()` now refuse to alias across workspace folders
+- Analysis panel now respects user-configured level detection settings
+- Fixed exported log timestamps using inconsistent UTC/local time mix
+- Fixed signal report l10n overwrite and template ID mismatch
+- Fixed bug 022 follow-up: `collectBurstSignals()` and `collectRootCauseHintBundleEmbedded()` still re-scanned the entire `allLines` array on every batch after the general-signal collector was fixed — both now track their own incremental scan cursor (reset on session change and on the same buffer-trim shrink guard as the general collector), so a batch only walks the lines appended since the previous call
+- Fixed bug 030: three sources of false positives in the Signals panel — (1) the burst/silence-burst collector now suppresses a burst when any of its lines match a Gradle/Xcode/Flutter build-or-launch marker (`BUILD SUCCESSFUL`, `Running Gradle task`, `Launching lib/main.dart`, etc.), so a cold-start build no longer fires a HIGH-confidence "possible UI freeze" hint on every run; (2) the ANR risk cache in `signal-host-collectors.ts` now keys on file URI **and** byte size instead of URI alone, so an ANR appearing mid-session after the initial cache fill is picked up on the next check instead of returning a stale/undefined result until the session is reopened
+- Fixed bug 031: the signal report's screenshot strip inlined every thumbnail as base64 (up to 3 thumbnails + a 2-image diff pair, 10 MB cap each) into the section HTML, which was then re-persisted whole via `setState` on every `sectionReady` event — thumbnails now resolve through `webview.asWebviewUri()` instead, cutting persisted webview state from tens of MB to a handful of resource references; the before/after diff pair stays base64-inlined because its change-heat overlay reads pixels off a `<canvas>`, which needs a same-origin/data-URI source
+- Fixed bug 036: clicking a Signals-panel hypothesis report no longer counts the generated `.md` report toward `maxLogFiles` retention — `readTrackedFiles`/`readTrackedFilesStreaming` (`config-file-utils.ts`) now skip the `reports/` subdirectory entirely during the recursive scan, so real session logs can't be evicted just because a user clicked through report hypotheses
+- Fixed Vitals panel interval continuing after panel is closed
+- Fixed off-by-one line index in "Open Error Analysis": the 1-based `sourceLineNo` sent by the viewer is now converted to a 0-based index before frame extraction, so the correct line is analyzed instead of the one after it
+- Toggle capture now writes to user settings instead of workspace settings
+- Status bar click now opens log in the viewer instead of as raw text
+- AI features now require explicit opt-in instead of being silently enabled
+- GitHub token is now cleared on 401 responses with re-auth prompt
+- Fixed bug 044 follow-up: the 401 handler was wired into the share/upload path but not the Gist import path — `importFromGist()` now clears a stale token and offers re-auth on a non-OK Gist API response too; added a manual `saropaLogCapture.clearGitHubToken` command for a user-initiated re-auth (e.g. switching GitHub accounts) instead of only reacting to a failed request
+- Fixed bug 043: `verify:list-commands` only checked that the generated command reference matched `package.json` — a command registered in `src/` with no `contributes.commands` entry (invisible in the Command Palette) went undetected; the check now also verifies both directions between the manifest and every `registerCommand()` call in `src/`
+- Verified bug 041 items 1 and 3 (Flutter widget-exception banner lines no longer break stack-frame extraction; adb resolution now falls back to `ANDROID_HOME`/`ANDROID_SDK_ROOT` when not on PATH) — both were already fixed prior to this pass
+- Capture commands now show feedback when no session is active
+- Stack trace headers now respect active filters on arrival
+- Fixed stale "Prev/Next" reference in capture diagnostic message
+- Walkthrough and first-error dialog no longer interrupt active debug sessions
+- Logcat process is now stopped before queue drain to prevent write-after-close errors
+- Four commands are now visible in the Command Palette (Refresh Vitals, Refresh Recurring Signals, Open Settings, Open Changelog)
+- Log viewer: pins, annotations, and selection state now stay aligned after viewer line trimming
+- Scanner line cap prevents unbounded memory growth in analysis passes
+- Redact sensitive values from AI context and bug report payloads
+- Webview-ready gate prevents commands from firing before viewer is initialized
+- Root-cause hint SQL builder no longer injects unchecked identifiers
+- Repeat-collapse counters reset correctly across session switches
+- Source-line stamps in goto-line and viewer messages use consistent format
+- Regression detector and recurring-signal handler guard against empty input
+- Export HTML/script now escapes user content to prevent XSS in exported reports
+- Pattern extractor guards against malformed log input
+- Log session timestamp and tracker output handle missing/trailing newlines
+- Removed false deduplication claim from README (feature was never wired in)
+- Broadcaster skips expensive HTML build when all viewer panels are hidden
+- Fixed bug 035 follow-up: corrected a misleading comment in `ViewerBroadcaster.addLine()` claiming hidden targets "get raw data queued via addLine" — a hidden-viewer line is dropped, not queued for later delivery
+- Signal reports now write to a `reports/` subdirectory so they no longer evict session logs via `maxLogFiles` retention
+- Flutter widget exception `═══` banners no longer break stack frame extraction in bug reports
+- adb screenshot now falls back to `ANDROID_HOME`/`ANDROID_SDK_ROOT` when adb is not on PATH
+- Annotated log lines no longer cause cumulative scroll drift; adding or reloading annotations now rebuilds row heights before the viewport re-renders (bug_027)
+- Fixed bug 004 follow-up: the first-error notification's `detail` option only renders for modal dialogs — once the dialog became non-modal, the error line text was silently dropped instead of shown; the line text is now folded into the primary message so it still reaches the user
+
 ### Changed
 
-- README: fix activity bar → panel, captureAll default true, Compare Sessions → Compare Logs, VS Code ^1.105.0, 10 locales, footer version, remove AI brand name
+- README: fix activity bar → panel, captureAll default true, Compare Sessions → Compare Logs, VS Code ^1.105.0, 10 locales, footer version
 - ARCHITECTURE: fix dead INTEGRATION_API.md link, split session-lifecycle.ts → -init/-finalize
 - CONTRIBUTING: publish script path (scripts/publish.py), coverage tool (nyc), 300-line rule clarification
 - BUG_REPORT_GUIDE: fix stale bugs/history/ path and ROADMAP references
+- Changed the `flutterCrashLogs.deleteOriginals` code-level fallback default to `false` (bug_021 partial fix — the `package.json` setting schema still declares `"default": true`, which is what VS Code actually resolves for users who haven't touched the setting, so the destructive default is still in effect; see bug_021 for the remaining `package.json` change needed)
+- Session history and viewer broadcaster now support multiple viewer panels
 
 ---
 
