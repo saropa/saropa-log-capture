@@ -8,6 +8,7 @@
 import type { BugReportData } from './bug-report-collector';
 import { buildItemUrl } from '../marketplace-url';
 import { fencedBlock } from '../misc/outbound-content-safety';
+import { redactSensitiveContent } from '../security/redact';
 import {
     formatCrossSession, formatProductionImpact, formatFooter,
 } from './bug-report-sections';
@@ -38,7 +39,11 @@ export function formatReportFile(data: ReportFileData): string {
         formatUserSections(),
         formatFooter(data.bugReportData.logFilename, data.bugReportData.lineNumber),
     ];
-    return sections.join('\n\n');
+    // bug_003: Part 1 (raw selection) and Part 3 (raw full session output) are unredacted captured
+    // text — the original leak vector this bug reported (an "Authorization: Bearer ..." log line
+    // landing verbatim in the file). Redact the whole assembled report as a single choke point so
+    // every part (selection, full output, session/env tables) is covered, not just the header.
+    return redactSensitiveContent(sections.join('\n\n'));
 }
 
 function formatHeader(): string {

@@ -77,7 +77,8 @@ document.addEventListener('click', function(e) {
         else if (action === 'exportSlc') { vscodeApi.postMessage({ type: 'exportError', format: 'slc' }); }
         else if (action === 'exportJson') { vscodeApi.postMessage({ type: 'exportError', format: 'json' }); }
         else if (action === 'exportCsv') { vscodeApi.postMessage({ type: 'exportError', format: 'csv' }); }
-        else if (action === 'aiExplain') { vscodeApi.postMessage({ type: 'aiExplain' }); }
+        // 'aiExplain' branch removed with the button itself (bug_005) — the
+        // target command 'saropaLogCapture.explainError' was never registered.
         return;
     }
     var frame = e.target.closest('.frame-app[data-frame-file]');

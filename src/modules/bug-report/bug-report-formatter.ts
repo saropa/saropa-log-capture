@@ -18,6 +18,7 @@ import { scoreErrorAttention } from '../analysis/error-attention';
 import { formatLintSection } from './bug-report-lint-section';
 import { formatOwaspSection } from './bug-report-owasp-section';
 import { formatThreadGroupedLines } from './bug-report-thread-format';
+import { redactSensitiveContent } from '../security/redact';
 import {
     type ReportCtx, shortName,
     formatLogContext, formatEnvironment, formatDevEnvSection, formatSourceCode,
@@ -65,7 +66,12 @@ export function formatBugReport(data: BugReportData): string {
     if (data.crossSessionMatch) { sections.push(formatCrossSession(data.crossSessionMatch)); }
     if (data.firebaseMatch) { sections.push(formatProductionImpact(data.firebaseMatch)); }
     sections.push(formatFooter(data.logFilename, data.lineNumber));
-    return sections.join('\n\n');
+    // bug_003: per-field redaction upstream (collector.ts) only covers errorLine/logContext/
+    // stackTrace — sections built here from other BugReportData fields (git remote URLs, source
+    // file paths, environment/dev-env values, collection notes) were never routed through
+    // redact.ts. A final pass over the fully assembled markdown is the single choke point that
+    // guarantees nothing leaves unredacted regardless of which section it came from.
+    return redactSensitiveContent(sections.join('\n\n'));
 }
 
 function extractReportCtx(data: BugReportData): ReportCtx {

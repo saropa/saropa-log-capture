@@ -2,6 +2,7 @@
 
 import * as vscode from 'vscode';
 import { t } from '../../l10n';
+import { getConfig } from '../../modules/config/config';
 import { escapeHtml } from '../../modules/capture/ansi';
 import { getNonce } from '../provider/viewer-content';
 import { openLogAtLine } from '../../modules/search/log-search';
@@ -24,7 +25,8 @@ import {
 } from './analysis-panel-streams';
 import { classifyLevel, isActionableLevel } from '../../modules/analysis/level-classifier';
 import { type ErrorContext, buildErrorContext, runTriageLookup, runErrorTimeline, runOccurrenceScan } from './analysis-error-streams';
-import { handleTriageToggle, handleCopyContext, handleBugReport, handleExportAction, handleAiExplain } from './analysis-error-actions';
+// handleAiExplain import dropped with the removed "Explain with AI" button (bug_005).
+import { handleTriageToggle, handleCopyContext, handleBugReport, handleExportAction } from './analysis-error-actions';
 
 let panel: vscode.WebviewPanel | undefined;
 let activeAbort: AbortController | undefined;
@@ -60,7 +62,15 @@ export async function showAnalysis(lineText: string, lineIndex?: number, fileUri
     cancelAnalysis();
     const abort = new AbortController();
     activeAbort = abort;
-    const level = classifyLevel(lineText, 'stdout', false);
+    // Read settings fresh (not cached at module load) so a mid-session config change
+    // takes effect immediately, and use the SAME classification inputs as the main
+    // viewer (see viewer-handler-sessions.ts / export-formats.ts) — bug_023: this
+    // panel previously hardcoded `false, false`, causing its severity labels to
+    // disagree with the viewer whenever the user enabled strict detection or
+    // stderr-as-error.
+    const cfg = getConfig();
+    const strict = cfg.levelDetection === 'strict';
+    const level = classifyLevel(lineText, 'stdout', strict, cfg.stderrTreatAsError);
     const isError = isActionableLevel(level) && (level === 'error' || level === 'warning');
     const errCtx = isError ? buildErrorContext(lineText, undefined) : undefined;
     lastLineText = lineText;
@@ -180,7 +190,8 @@ function handleMessage(msg: Record<string, unknown>): void {
     if (msg.type === 'copyErrorContext') { handleCopyContext(lastLineText, lastErrorHash).catch(() => {}); return; }
     if (msg.type === 'generateBugReport') { handleBugReport(lastLineText, lastLineIndex, lastFileUri).catch(() => {}); return; }
     if (msg.type === 'exportError') { handleExportAction(String(msg.format ?? '')); return; }
-    if (msg.type === 'aiExplain') { handleAiExplain(lastLineText); return; }
+    // 'aiExplain' case removed (bug_005): its target command was never registered,
+    // so the button, the webview post, and this handler were all pulled together.
     if (msg.type === 'openMatch') {
         const match = { uri: vscode.Uri.parse(String(msg.uri)), filename: String(msg.filename), lineNumber: Number(msg.line), lineText: '', matchStart: 0, matchEnd: 0 };
         openLogAtLine(match).catch(() => {});

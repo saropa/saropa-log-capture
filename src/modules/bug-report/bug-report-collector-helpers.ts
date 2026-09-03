@@ -6,6 +6,7 @@ import { findInWorkspace, getSourcePreview, getGitHistory, getGitHistoryForLines
 import { getGitBlame, type BlameLine } from '../git/git-blame';
 import { aggregateSignals } from '../misc/cross-session-aggregator';
 import { extractImports, type ImportResults } from '../source/import-extractor';
+import { redactSensitiveContent } from '../security/redact';
 import type { StackFrame, FileAnalysis, CrossSessionMatch } from './bug-report-collector';
 
 const headerSeparator = '==================';
@@ -45,7 +46,10 @@ export function extractEnvironment(lines: readonly string[], headerEnd: number):
 
 export function extractLogContext(lines: readonly string[], errorIdx: number): string[] {
     const start = Math.max(0, errorIdx - maxContextLines);
-    return lines.slice(start, errorIdx).map(l => stripAnsi(l));
+    // bug_003: header redaction alone missed secrets embedded in the surrounding log lines
+    // themselves (e.g. an "Authorization: Bearer ..." line captured from app output) — redact
+    // every body line before it reaches the shareable report.
+    return lines.slice(start, errorIdx).map(l => redactSensitiveContent(stripAnsi(l)));
 }
 
 export function extractStackTrace(lines: readonly string[], errorIdx: number): StackFrame[] {
@@ -55,12 +59,22 @@ export function extractStackTrace(lines: readonly string[], errorIdx: number): S
     for (let i = errorIdx + 1; i < lines.length && frames.length < maxStackFrames; i++) {
         const line = lines[i];
         if (isStackFrameLine(line)) {
-            const text = stripAnsi(line).trimEnd();
-            const sourceRef = extractSourceReference(text);
+            const clean = stripAnsi(line).trimEnd();
+            // Extract the source reference from the un-redacted line first — redaction can consume
+            // an absolute path outright, and sourceRef.filePath drives the report's clickable
+            // file link (never rendered as raw text), so it must be resolved before we scrub.
+            const sourceRef = extractSourceReference(clean);
+            // bug_003: the *displayed* frame text can carry a query-string token (e.g. an HTTP
+            // call in the frame's args) or the same absolute path — redact before it lands in
+            // StackFrame.text, which is rendered verbatim into the report's Stack Trace section.
+            const text = redactSensitiveContent(clean);
             frames.push({ text, isApp: !isFrameworkFrame(text, wsPath), sourceRef, threadName: currentThread });
         } else {
             const header = parseThreadHeader(stripAnsi(line));
             if (header) { currentThread = header.name; continue; }
+            // Bug_041: Flutter widget exceptions wrap frames in decorative ═══ separator
+            // lines — skip them instead of breaking the frame extraction loop.
+            if (/^[═─]{3,}/.test(stripAnsi(line).trim())) { continue; }
             break;
         }
     }

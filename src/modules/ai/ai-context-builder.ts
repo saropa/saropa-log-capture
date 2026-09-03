@@ -8,6 +8,7 @@ import { findHeaderEnd, parseHeaderFields } from '../../ui/viewer/viewer-file-lo
 import { loadContextData, loadContextFromMeta } from '../context/context-loader';
 import type { ContextWindow } from '../context/context-loader-types';
 import { SessionMetadataStore } from '../session/session-metadata';
+import { redactSensitiveContent } from '../security/redact';
 
 export interface AIContext {
     errorLine: string;
@@ -102,14 +103,18 @@ function mapContextDataToIntegrationData(
         out.performance = { memory: mem, cpu };
     }
     if (data.http && data.http.length > 0) {
+        // bug_003: a captured HTTP call's query string can carry a token/API key — redact before
+        // it becomes part of the AI prompt (ai-prompt.ts embeds `url` verbatim).
         out.http = data.http.slice(0, 20).map((h) => ({
-            url: h.url,
+            url: redactSensitiveContent(h.url),
             status: h.status,
             duration: h.durationMs,
         }));
     }
     if (data.terminal && data.terminal.length > 0) {
-        out.terminal = data.terminal.slice(0, 30).map((t) => t.line);
+        // bug_003: terminal output can echo an exported secret (e.g. `export TOKEN=...`) or an
+        // absolute path — redact before it reaches the model.
+        out.terminal = data.terminal.slice(0, 30).map((t) => redactSensitiveContent(t.line));
     }
     if (Object.keys(out).length === 0) { return undefined; }
     return out;
@@ -181,10 +186,13 @@ export async function buildAIContext(
     };
 
     return {
-        errorLine: lineText,
+        // bug_003: this is the payload ai-prompt.ts embeds verbatim into the LM request — redact
+        // bearer tokens / absolute paths / query-string secrets here so every "Explain with AI"
+        // caller gets a scrubbed context without having to remember to redact themselves.
+        errorLine: redactSensitiveContent(lineText),
         lineIndex,
-        surroundingLines,
-        stackTrace,
+        surroundingLines: surroundingLines.map(redactSensitiveContent),
+        stackTrace: stackTrace ? redactSensitiveContent(stackTrace) : stackTrace,
         integrationData,
         sessionInfo,
     };
