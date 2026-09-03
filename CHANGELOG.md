@@ -25,9 +25,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.4.2]
 
-New compile gates for safer defaults and publish pipeline now runs unattended. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+New compile gates for safer defaults and publish pipeline now runs unattended. [log](https://github.com/saropa/saropa-log-capture/blob/v9.4.2/CHANGELOG.md)
 
 ### Changed
 
