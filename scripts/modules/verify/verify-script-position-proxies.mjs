@@ -14,36 +14,93 @@
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const TEST_UI_DIR = path.resolve('src', 'test', 'ui');
+// Resolve relative to this script's own location (not process.cwd()) so the audit works the
+// same whether invoked via `npm run verify:script-position-proxies` or `node <path>` from any
+// directory — this file lives at <repo-root>/scripts/modules/verify/.
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = path.resolve(__dirname, '..', '..', '..');
+const TEST_DIR = path.join(REPO_ROOT, 'src', 'test');
 
-/** @typedef {{ file: string, line: number, kind: 'order' | 'window', text: string }} Finding */
+/**
+ * Var-name pairs that are a known, deliberate single-region idiom, not a cross-branch ordering
+ * assumption — e.g. `start = script.indexOf(anchor)` / `end = script.indexOf('\n}', start)` /
+ * `assert.ok(end > start, ...)` to extract one balanced function body (see
+ * viewer-dart-frame-format.test.ts, viewer-stack-detection-parity.test.ts). Comparing these two
+ * is validating a single extraction window, not asserting two different branches' relative
+ * order, so it is not a position-proxy risk in the sense this audit is looking for.
+ */
+const SINGLE_REGION_PAIR = new Set(['start,end', 'end,start']);
+
+/**
+ * @typedef {{ file: string, line: number, kind: 'order' | 'window', text: string,
+ *   suggestion?: string }} Finding
+ */
+
+/** How many lines around a flagged comparison count as "nearby" when checking for an existing
+ *  occurrence-count guard (`.split(anchor).length - 1 === N` — the pattern manually added to
+ *  viewer-stack-frame-click.test.ts in cdf0555e) so this audit doesn't re-suggest a guard that's
+ *  already there. */
+const GUARD_SEARCH_WINDOW = 5;
+
+/** Extract the anchor string literal from an indexOf()/lastIndexOf() call, or null. */
+function anchorLiteral(line) {
+    const m = line.match(/\.(?:indexOf|lastIndexOf)\(\s*(['"])(.*?)\1/);
+    return m ? m[2] : null;
+}
+
+/** True if a `.split(<literal>).length` occurrence-count guard already exists near lineIdx. */
+function hasNearbyGuard(lines, lineIdx, anchors) {
+    const from = Math.max(0, lineIdx - GUARD_SEARCH_WINDOW);
+    const to = Math.min(lines.length, lineIdx + GUARD_SEARCH_WINDOW + 1);
+    const window = lines.slice(from, to).join('\n');
+    if (!/\.split\(.*\)\.length/.test(window)) { return false; }
+    return anchors.some((a) => a && window.includes(a));
+}
 
 function listTestFiles() {
-    return fs.readdirSync(TEST_UI_DIR)
-        .filter((f) => f.endsWith('.test.ts'))
-        .map((f) => path.join(TEST_UI_DIR, f));
+    const out = [];
+    const walk = (dir) => {
+        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+            const full = path.join(dir, entry.name);
+            if (entry.isDirectory()) { walk(full); }
+            else if (entry.name.endsWith('.test.ts')) { out.push(full); }
+        }
+    };
+    walk(TEST_DIR);
+    return out;
 }
 
 /**
  * A line is an "order" risk when it compares two indexOf() results (e.g. `idxA < idxB`) to
  * assert one branch appears before another in the concatenated script — this only holds while
- * the source files concatenate in the current order.
+ * the source files concatenate in the current order. Excludes the known start/end
+ * single-region idiom (see SINGLE_REGION_PAIR).
  */
 function findOrderRisks(lines, file, findings) {
-    const idxVarRe = /\bconst\s+(\w+)\s*=\s*script\.(?:indexOf|lastIndexOf)\(/;
+    const idxVarRe = /\b(?:const|let)\s+(\w+)\s*=\s*\w*[Ss]cript\.(?:indexOf|lastIndexOf)\(/;
     const idxVars = new Set();
+    const anchorOf = new Map();
     for (const line of lines) {
         const m = line.match(idxVarRe);
-        if (m) { idxVars.add(m[1]); }
+        if (m) { idxVars.add(m[1]); anchorOf.set(m[1], anchorLiteral(line)); }
     }
     if (idxVars.size < 2) { return; }
     const varAlt = [...idxVars].join('|');
-    const cmpRe = new RegExp(`\\b(${varAlt})\\s*[<>]=?\\s*(${varAlt})\\b`);
+    const cmpRe = new RegExp(`\\b(${varAlt})\\s*([<>]=?)\\s*(${varAlt})\\b`);
     lines.forEach((line, i) => {
-        if (cmpRe.test(line)) {
-            findings.push({ file, line: i + 1, kind: 'order', text: line.trim() });
+        const m = line.match(cmpRe);
+        if (!m || SINGLE_REGION_PAIR.has(`${m[1]},${m[3]}`)) { return; }
+        const anchors = [anchorOf.get(m[1]), anchorOf.get(m[3])];
+        const finding = { file, line: i + 1, kind: 'order', text: line.trim() };
+        if (!hasNearbyGuard(lines, i, anchors)) {
+            finding.suggestion = anchors
+                .filter(Boolean)
+                .map((a) => `assert.strictEqual(script.split(${JSON.stringify(a)}).length - 1, /* TODO fill in */ 1, 'expected exactly one occurrence of ${JSON.stringify(a)}');`)
+                .join('\n      ');
         }
+        findings.push(finding);
     });
 }
 
@@ -76,7 +133,7 @@ function auditFile(file) {
 const allFindings = listTestFiles().flatMap(auditFile);
 
 if (allFindings.length === 0) {
-    console.log('verify:script-position-proxies — no position-proxy risks found in src/test/ui/*.test.ts');
+    console.log('verify:script-position-proxies — no position-proxy risks found in src/test/**/*.test.ts');
     process.exit(0);
 }
 
@@ -95,8 +152,13 @@ for (const [file, findings] of [...byFile].sort(([a], [b]) => a.localeCompare(b)
     for (const f of findings.sort((a, b) => a.line - b.line)) {
         const label = f.kind === 'order' ? 'ordering-by-index' : 'fixed-offset window';
         console.log(`    L${f.line} [${label}]  ${f.text}`);
+        if (f.suggestion) {
+            console.log(`      suggested guard (fill in the TODO count, then add near L${f.line}):`);
+            console.log(`      ${f.suggestion}`);
+        }
     }
 }
 console.log('\nThese are not failures — they are candidates for hardening (occurrence-count guards, ');
 console.log('structural assertions) the next time a getXyzScript() file is split or reordered.');
+console.log('Suggested guards are advisory text only — this script never edits test files.');
 process.exit(0);

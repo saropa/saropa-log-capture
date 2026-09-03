@@ -108,9 +108,16 @@ cspell:disable
 - README: fix activity bar → panel, captureAll default true, Compare Sessions → Compare Logs, VS Code ^1.105.0, 10 locales, footer version
 - ARCHITECTURE: fix dead INTEGRATION_API.md link, split session-lifecycle.ts → -init/-finalize
 - CONTRIBUTING: publish script path (scripts/publish.py), coverage tool (nyc), 300-line rule clarification
-- ISSUE_REPORT_GUIDE: fix stale bugs/history/ path and ROADMAP references
+- ISSUE_REPORT_GUIDE (renamed from BUG_REPORT_GUIDE): fix stale bugs/history/ path and ROADMAP references, add a feature-request template, and correct the bug template's Status/Severity headings and Problem/Proposed Fix sections to match the 46 filed bug reports on disk
 - Changed the `flutterCrashLogs.deleteOriginals` code-level fallback default to `false` (bug_021 partial fix — the `package.json` setting schema still declares `"default": true`, which is what VS Code actually resolves for users who haven't touched the setting, so the destructive default is still in effect; see bug_021 for the remaining `package.json` change needed)
 - Session history and viewer broadcaster now support multiple viewer panels
+
+<details>
+<summary>Maintenance</summary>
+
+- New advisory `verify:script-position-proxies` script flags `src/test/**/*.test.ts` assertions that locate webview-script code by string position (`indexOf()` ordering comparisons, fixed-offset `.slice()` windows) instead of structure — the failure class behind the extraction/pause-gate test breakages fixed earlier this cycle; prints a copy-pasteable occurrence-count guard suggestion for each finding, heuristic-based, not wired into `npm run compile`
+
+</details>
 
 ---
 
