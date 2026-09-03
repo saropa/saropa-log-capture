@@ -31,7 +31,7 @@ flowchart LR
 
 7. **Viewer:** The sidebar `LogViewerProvider` and `PopOutPanel` implement `ViewerTarget`. The `ViewerBroadcaster` forwards every target method to both. Handlers (marker, pause, exclusions, search, bookmarks, session list, etc.) are wired once in `viewer-handler-wiring.ts` and applied to both targets. The webview sends messages to the extension via `viewer-message-handler.ts`, which routes by message type to the context callbacks.
 
-8. **Integrations:** See `docs/integrations/INTEGRATION_API.md`. Providers register with the default registry in activation. At session start the registry gathers header lines (sync) and runs async start (fire-and-forget). At session end it runs `onSessionEnd`, merges meta into `SessionMeta.integrations`, and writes sidecar files next to the log.
+8. **Integrations:** Providers register with the default registry in activation. At session start the registry gathers header lines (sync) and runs async start (fire-and-forget). At session end it runs `onSessionEnd`, merges meta into `SessionMeta.integrations`, and writes sidecar files next to the log. See `src/modules/integrations/registry.ts` for the provider contract.
 
 ## Key files
 
@@ -39,7 +39,7 @@ flowchart LR
 |------|--------|
 | Entry / activation | `extension.ts`, `extension-activation.ts`, `extension-lifecycle.ts` |
 | Capture pipeline | `tracker.ts`, `session-manager.ts`, `log-session.ts`, `log-session-split.ts`, `session-event-bus.ts` |
-| Session lifecycle | `session-lifecycle.ts`, `session-summary.ts`, `session-metadata.ts` |
+| Session lifecycle | `session-lifecycle-init.ts`, `session-lifecycle-finalize.ts`, `session-summary.ts`, `session-metadata.ts` |
 | Config | `config.ts`, `config-types.ts`, `integration-config.ts` |
 | Integrations | `integrations/index.ts`, `integrations/registry.ts`, `integrations/context.ts`, `integrations/providers/*` |
 | Viewer host | `log-viewer-provider.ts`, `viewer-broadcaster.ts`, `viewer-handler-wiring.ts`, `viewer-content.ts`, `viewer-message-handler.ts` |
@@ -47,7 +47,7 @@ flowchart LR
 
 ## Comment conventions
 
-- **File / module:** 2–4 lines at top describing what the file does and where it fits (callers/callees). Reference ARCHITECTURE.md or INTEGRATION_API.md where helpful.
+- **File / module:** 2–4 lines at top describing what the file does and where it fits (callers/callees). Reference ARCHITECTURE.md where helpful.
 - **Section:** Use `// --- Section name ---` for logical blocks in long files.
 - **Inline:** Brief “why” for non-obvious branches and invariants; avoid restating the code.
 - **JSDoc:** Use for exported functions, classes, and key params/returns; add `@remarks` for when/why to call when it helps.
