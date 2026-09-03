@@ -167,6 +167,8 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   getView(): { readonly visible: boolean } | undefined {
     return this.panel ? { visible: this.panel.visible } : undefined;
   }
+  /** Broadcaster uses this to skip expensive HTML build when no panel is showing. */
+  isVisible(): boolean { return !!this.panel?.visible; }
 
   /** BatchTarget / LogViewerLoadTarget compatibility (sidebar uses postMessage naming). */
   getSeenCategories(): Set<string> {
@@ -238,7 +240,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setErrorRateConfig(config: ErrorRateConfig): void { postErrorRateConfig(this, config); }
   setAutoHidePatterns(patterns: readonly string[]): void { this.post({ type: "setAutoHidePatterns", patterns: [...patterns] }); }
   setSessionInfo(info: Record<string, string> | null): void { this.post({ type: "setSessionInfo", info }); }
-  sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean }): void {
+  sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean; scanFailed?: boolean }): void {
     this.post({ type: "sessionList", sessions, ...rootInfo });
   }
   sendSessionListLoading(folderPath: string): void {

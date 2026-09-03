@@ -12,6 +12,12 @@ export function getExportScript(): string {
 /** Export modal element. */
 var exportModalEl = null;
 
+/* bug_029: the element that had focus before the modal opened (a toolbar/context-menu
+   item, or a replay-driven keybinding target — there is no single fixed "opener" button
+   to hardcode, unlike the options/bookmarks panels). Captured on open, refocused on
+   close so keyboard/screen-reader users land back where they were, not at document body. */
+var exportModalReturnFocusEl = null;
+
 /** Current export level selection. */
 var exportLevels = new Set(['error', 'warning', 'info']);
 
@@ -48,7 +54,15 @@ function openExportModal() {
     syncExportModalUi();
     updateExportPreview();
     updateExportSummaries();
+    // bug_029: remember who had focus so closeExportModal() can restore it, then move
+    // focus INTO the dialog — a modal with no initial focus target leaves keyboard users
+    // stranded on whatever was focused behind it.
+    exportModalReturnFocusEl = document.activeElement;
     exportModalEl.classList.add('visible');
+    requestAnimationFrame(function() {
+        var templateSelect = document.getElementById('export-template');
+        if (templateSelect) templateSelect.focus();
+    });
 }
 window.openExportModal = openExportModal;
 
@@ -58,6 +72,12 @@ window.openExportModal = openExportModal;
 function closeExportModal() {
     if (!exportModalEl) return;
     exportModalEl.classList.remove('visible');
+    // bug_029: return focus to the element that opened the modal (toolbar button,
+    // context-menu item, etc.) rather than letting it fall back to document body.
+    if (exportModalReturnFocusEl && typeof exportModalReturnFocusEl.focus === 'function') {
+        exportModalReturnFocusEl.focus();
+    }
+    exportModalReturnFocusEl = null;
 }
 
 /**

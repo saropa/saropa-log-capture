@@ -25,7 +25,12 @@ export interface ToolbarHtmlOptions {
  *  click target and holds the `active` state (toggled by syncLevelDots); the number lives in
  *  `.dot-count-num` so the count-writer (viewer-stats.ts) sets it without wiping the letter. */
 function levelDot(level: string, glyph: string): string {
-    return `<span class="level-dot-group active" data-level="${level}" title="${t('viewer.toolbar.levelDot.' + level + '.title')}" role="img" aria-label="${t('viewer.level.' + level)}"><span class="dot-count dot-count-${level}"><span class="dot-count-letter">${glyph}</span><span class="dot-count-num"></span></span></span>`;
+    // bug_029: tabindex="0" makes each dot a real Tab stop — it has a click/dblclick
+    // handler (toggleLevel/soloLevel in viewer-level-events.ts) so it must be reachable
+    // by keyboard, not just mouse. role stays "img" (the accessible name describes the
+    // count, not an action) but the paired keydown handler still fires Enter/Space
+    // activation for keyboard users, matching the click behavior.
+    return `<span class="level-dot-group active" data-level="${level}" tabindex="0" title="${t('viewer.toolbar.levelDot.' + level + '.title')}" role="img" aria-label="${t('viewer.level.' + level)}"><span class="dot-count dot-count-${level}"><span class="dot-count-letter">${glyph}</span><span class="dot-count-num"></span></span></span>`;
 }
 
 /** Toolbar HTML: nav arrows, icons, level dots, line count, filename. */
@@ -71,7 +76,9 @@ export function getToolbarHtml(opts: ToolbarHtmlOptions): string {
             <span class="codicon codicon-kebab-vertical" aria-hidden="true"></span>
         </button>
         <span class="toolbar-sep"></span>
-        <span id="level-menu-btn" class="level-summary" role="button" aria-label="${t('viewer.toolbar.levelSummary.label')}" title="${t('viewer.toolbar.levelSummary.title')}">
+        <!-- bug_029: tabindex="0" added — role="button" alone does not make an element
+             keyboard-reachable; without it Tab skipped the severity-dot group entirely. -->
+        <span id="level-menu-btn" class="level-summary" role="button" tabindex="0" aria-label="${t('viewer.toolbar.levelSummary.label')}" title="${t('viewer.toolbar.levelSummary.title')}">
             ${levelDot('error', 'E')}
             ${levelDot('warning', 'W')}
             ${levelDot('info', 'I')}
