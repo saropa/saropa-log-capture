@@ -404,7 +404,7 @@ See [plans/walkthrough/keyboard-shortcuts.md](plans/walkthrough/keyboard-shortcu
 
 ### Accessibility
 
-The webview viewer supports keyboard and assistive tech. Main content has a `main` landmark; the icon bar is a `toolbar`; the log area has `role="log"` with live region announcements. Slide-out panels have `region` landmarks; focus moves into them on open and returns on Escape. For the full audit, see [plans/028_plan-webview-accessibility.md](plans/028_plan-webview-accessibility.md).
+The webview viewer supports keyboard and assistive tech. Main content has a `main` landmark; the icon bar is a `toolbar`; the log area has `role="log"` with live region announcements. Slide-out panels have `region` landmarks; focus moves into them on open and returns on Escape. For the full audit, see [plans/history/2026.03/2026.03.26/028_plan-webview-accessibility.md](plans/history/2026.03/2026.03.26/028_plan-webview-accessibility.md).
 
 ---
 

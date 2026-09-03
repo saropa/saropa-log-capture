@@ -1,9 +1,10 @@
 # PLAN 055: Viewer row grid/column rewrite (Item E Path 2)
 
-Status: **ACTIVE** — Phase 1 landed 2026-06-09 (regular log rows on the grid; art
-blocks intentionally kept legacy). Phase 2 migrated AI rows (2026-06-10) and
-multi-frame stack headers + frames (2026-06-10). Remaining: chips → grid (or keep
-as block per D3), CSV/markdown `.cols` adoption, then legacy-CSS removal.
+Status: **ACTIVE — near complete.** Phase 1 (regular rows, 2026-06-09), Phase 2a
+(AI rows, 2026-06-10), Phase 2b (stack headers + frames, 2026-06-10) all shipped.
+All three open decisions (D1–D3) resolved. Remaining cleanup:
+- CSV/markdown `.cols` adoption (0 consumers today)
+- Legacy `:not(.cols)` CSS removal (24 occurrences)
 Reactivated 2026-06-09; was `plans/deferred/055_plan-viewer-row-dom-grid-rewrite.md`.
 See the Finish Reports at the bottom for what shipped.
 

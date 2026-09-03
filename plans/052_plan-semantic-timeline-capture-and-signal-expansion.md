@@ -1,6 +1,6 @@
 # Plan 052 — Semantic Timeline Capture and Signal Expansion
 
-## Status: Proposed
+## Status: Partially shipped (quick wins v7.11.0–v8.0.4); Workstreams A–J + [slc:event] wire format NOT STARTED
 
 <!-- cspell:disable -->
 

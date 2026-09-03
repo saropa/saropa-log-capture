@@ -43,7 +43,7 @@ static code, live data, and runtime behavior, with no product subsuming another.
 
 This is the **Log Capture** half of a three-repo plan. The sibling docs:
 
-- **Drift Advisor** — `D:\src\saropa_drift_advisor\plans\67-saropa-suite-integration.md`
+- **Drift Advisor** — `D:\src\saropa_drift_advisor\plans\history\2026.07\2026.07.16\67-saropa-suite-integration.md`
   (repo `saropa/saropa_drift_advisor`). **Owns the canonical shared protocol** (Section 2 there);
   this plan references it rather than restating the schema.
 - **Saropa Lints** — `D:\src\saropa_lints\plans\SAROPA_SUITE_INTEGRATION.md`
@@ -154,7 +154,7 @@ Capture is responsible for:
 consumers cost more in versioning, publishing, and release coordination than the duplication they
 remove, with zero user-facing benefit. The duplication below is real but accepted as a known
 trade-off; if a shared bug recurs, a single path-dep module or a sync script is preferred over a new
-published unit. Canonical rationale: `saropa_drift_advisor/plans/67-saropa-suite-integration.md` §7,
+published unit. Canonical rationale: `saropa_drift_advisor/plans/history/2026.07/2026.07.16/67-saropa-suite-integration.md` §7,
 mirrored in `saropa_lints`. This repo's three consumer task files are closed Won't Do and archived to
 `plans/history/2026.06/2026.06.14/`. The package descriptions below are retained as the record of what
 was considered:
@@ -175,14 +175,14 @@ deps, not a monorepo merge):
 
 ## Related Plans
 
-- Sibling: `saropa_drift_advisor` — `D:\src\saropa_drift_advisor\plans\67-saropa-suite-integration.md`
+- Sibling: `saropa_drift_advisor` — `D:\src\saropa_drift_advisor\plans\history\2026.07\2026.07.16\67-saropa-suite-integration.md`
   (canonical protocol + Drift Health loop + commit correlation)
 - Sibling: `saropa_lints` — `D:\src\saropa_lints\plans\SAROPA_SUITE_INTEGRATION.md`
   (crash-to-rule mapping, holistic dashboard)
 - Sibling: `saropa_dart_utils` — `D:\src\saropa_dart_utils\plans\SAROPA_SUITE_INTEGRATION.md`
   (remediation layer: the crash signatures R3 emits resolve, via Lints, to its safe helpers)
 - Internal: `DB_12_static-orm-code-analysis.md` (the "Find in codebase" entry point R5 extends),
-  `DB_17_cumulative-sql-history-across-logs.md`, `054_plan-app-quality-insights.md`,
+  `history/2026.06/2026.06.08/DB_17_cumulative-sql-history-across-logs.md`, `054_plan-app-quality-insights.md`,
   `001_integration-specs-index.md` (add a suite row), `058_plan-expand-translation-locales.md`.
 
 ## Finish Report (2026-06-13)
