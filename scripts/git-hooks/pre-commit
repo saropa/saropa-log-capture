@@ -1,0 +1,13 @@
+#!/bin/sh
+# Catch @types/vscode vs engines.vscode mismatches before they reach CI.
+# Only runs the check when package.json is in the staged diff — skips
+# unrelated commits for zero overhead.
+#
+# Install (one-time, per clone): npm run install:hooks
+#   — or manually: git config core.hooksPath scripts/git-hooks
+
+# Only check when package.json is staged (dep version changes)
+if git diff --cached --name-only | grep -q '^package\.json$'; then
+	node scripts/modules/verify/verify-engine-types-match.mjs
+	exit $?
+fi
