@@ -7,7 +7,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { logCrashlytics } from './crashlytics-diagnostics';
 
-const FIREBASE_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
+// Every Crashlytics/vitals consumer in this codebase calls the Play Developer
+// Reporting API host (playdeveloperreporting.googleapis.com), which requires
+// this specific scope. `cloud-platform` (the previous value) is unrelated and
+// insufficient here, so tokens minted with it were rejected with
+// 403 ACCESS_TOKEN_SCOPE_INSUFFICIENT on every request (bug_008).
+const PLAY_DEVELOPER_REPORTING_SCOPE = 'https://www.googleapis.com/auth/playdeveloperreporting';
 
 /**
  * Get an access token using the service account key file at keyPath.
@@ -30,7 +35,7 @@ export async function getAccessTokenFromServiceAccount(keyPath: string): Promise
         const client = new JWT({
             email: key.client_email,
             key: key.private_key,
-            scopes: [FIREBASE_SCOPE],
+            scopes: [PLAY_DEVELOPER_REPORTING_SCOPE],
         });
         const res = await client.authorize();
         const token = res.access_token ?? undefined;
