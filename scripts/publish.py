@@ -42,9 +42,12 @@
 #   python scripts/publish.py --auto-install    # auto-install .vsix (no prompt)
 #   python scripts/publish.py --no-logo         # suppress Saropa ASCII art
 #   python scripts/publish.py --store-versions  # only Step 16 (registries vs package.json)
+#   python scripts/publish.py --non-interactive # no prompts, safe defaults (CI / remote / Claude)
+#   python scripts/publish.py --log-file        # tee output to auto-timestamped log in reports/
+#   python scripts/publish.py --log-file out.log  # tee output to a specific file
 #
 # .NOTES
-#   Version:      4.0.0
+#   Version:      4.1.0
 #   Requires:     Python 3.10+
 #   colorama is auto-installed when missing (for Windows terminal color support)
 #
@@ -62,6 +65,7 @@
 # ##############################################################################
 
 import argparse
+import datetime
 import os
 import shutil
 import subprocess
@@ -111,6 +115,46 @@ except (AttributeError, ValueError):
     # Already-wrapped or detached stdout (e.g. under a test runner) — leave it.
     pass
 
+# ── Log tee ──────────────────────────────────────────────────
+# Duplicates all writes to both the original stream and a log file,
+# so remote/CI runs capture full output without losing terminal display.
+# Strips ANSI escape codes from the file copy since log viewers choke on them.
+
+import re as _re
+
+# Pre-compiled pattern for stripping ANSI escape sequences from log output.
+# Matches CSI sequences (colors, cursor moves) and OSC sequences (title sets).
+_ANSI_RE = _re.compile(r"\x1b\[[0-9;]*[A-Za-z]|\x1b\].*?\x07")
+
+
+class _TeeWriter:
+    """Write to both the original stream and a log file simultaneously.
+
+    ANSI escape codes are stripped from the file copy so the log is
+    human-readable in plain-text editors and grep-friendly in CI.
+    """
+
+    def __init__(self, original: io.TextIOBase, log_file: io.TextIOBase) -> None:
+        self._original = original
+        self._log_file = log_file
+
+    def write(self, text: str) -> int:
+        """Write text to both streams; strip ANSI for the file copy."""
+        self._original.write(text)
+        self._log_file.write(_ANSI_RE.sub("", text))
+        return len(text)
+
+    def flush(self) -> None:
+        """Flush both streams so output appears promptly in remote monitors."""
+        self._original.flush()
+        self._log_file.flush()
+
+    # Forward attribute access (encoding, buffer, etc.) to the original
+    # stream so colorama and the UTF-8 wrapper still work correctly.
+    def __getattr__(self, name: str):
+        return getattr(self._original, name)
+
+
 # ── Project imports ──────────────────────────────────────────
 # Grouped by layer: constants/config → display → data → actions.
 from modules.publish.constants import C, ExitCode, PROJECT_ROOT
@@ -146,6 +190,11 @@ _CLI_FLAGS = [
         "--store-versions",
         "Report Open VSX + VS Marketplace vs package.json (check-stores-version.ps1 -ReportOnly).",
     ),
+    (
+        "--non-interactive",
+        "No prompts; use safe defaults for all choices. "
+        "Implies --yes --no-logo --auto-install --on-test-fail stop.",
+    ),
 ]
 
 
@@ -166,6 +215,16 @@ def parse_args() -> argparse.Namespace:
         choices=["ask", "retry", "skip", "stop"],
         default="ask",
         help="Behavior when tests fail: ask (interactive), retry, skip, or stop (default: ask).",
+    )
+    # --log-file tees all output to a file for remote/CI monitoring.
+    # Omit the path to auto-generate a timestamped file in reports/.
+    parser.add_argument(
+        "--log-file",
+        nargs="?",
+        const="auto",
+        default=None,
+        metavar="PATH",
+        help="Tee all output to a log file. Omit PATH for auto-generated reports/<date>/run_*.log.",
     )
     return parser.parse_args()
 
@@ -216,6 +275,63 @@ def _exit_code_from_results(results: list[tuple[str, bool, float]]) -> int:
     # This shouldn't happen in practice — callers only invoke this
     # function when at least one step has failed.
     return 1
+
+
+# ── Non-interactive & logging setup ──────────────────────────
+
+
+def _apply_non_interactive(args: argparse.Namespace) -> None:
+    """Force safe defaults for every interactive prompt.
+
+    Closes stdin so every input() call in submodules raises EOFError,
+    which their existing handlers already catch and resolve to the safe
+    default (stop, ignore, accept suggested version, etc.).
+    """
+    args.yes = True
+    args.no_logo = True
+    args.auto_install = True
+    # Deterministic test-failure behavior — don't hang waiting for a human.
+    args.on_test_fail = "stop"
+    # Close stdin so input() immediately raises EOFError everywhere.
+    # The version module also checks sys.stdin.isatty(), which returns
+    # False on a closed fd, giving us non-interactive behavior for free.
+    try:
+        sys.stdin.close()
+    except Exception:
+        pass
+
+
+def _setup_log_file(args: argparse.Namespace) -> io.TextIOBase | None:
+    """Open the log file and tee stdout/stderr into it.
+
+    Returns the open file handle (caller closes it), or None if logging
+    was not requested. When args.log_file is 'auto', generates a
+    timestamped path under reports/<yyyymmdd>/.
+    """
+    path = args.log_file
+    if path is None:
+        return None
+
+    if path == "auto":
+        # Mirror the date-subfolder convention from report.py so all
+        # pipeline output for a given day lands in the same directory.
+        now = datetime.datetime.now()
+        date_folder = now.strftime("%Y%m%d")
+        log_dir = os.path.join(PROJECT_ROOT, "reports", date_folder)
+        os.makedirs(log_dir, exist_ok=True)
+        ts = now.strftime("%Y%m%d_%H%M%S")
+        path = os.path.join(log_dir, f"{ts}_pipeline_run.log")
+
+    # Ensure parent directory exists for user-supplied paths too.
+    parent = os.path.dirname(os.path.abspath(path))
+    os.makedirs(parent, exist_ok=True)
+
+    log_fh = open(path, "w", encoding="utf-8")
+    # Tee both streams so errors and warnings are captured alongside info.
+    sys.stdout = _TeeWriter(sys.stdout, log_fh)
+    sys.stderr = _TeeWriter(sys.stderr, log_fh)
+    print(f"  Logging to: {os.path.abspath(path)}")
+    return log_fh
 
 
 # ── Main ─────────────────────────────────────────────────────
@@ -338,6 +454,16 @@ def main() -> int:
     4. Otherwise: confirm → credentials → publish (Steps 11-15) → store propagation poll (Step 16)
     """
     args = parse_args()
+
+    # --non-interactive closes stdin and forces safe defaults for every
+    # prompt, so the entire pipeline can run unattended (CI, SSH, Claude).
+    if args.non_interactive:
+        _apply_non_interactive(args)
+
+    # --log-file tees all output to a file. Must run after non-interactive
+    # (which may set --no-logo) but before any output is printed.
+    log_fh = _setup_log_file(args)
+
     # Read current version from package.json — this is the source of truth
     # for the extension's identity across npm, VS Code, and Open VSX.
     version = read_package_version()
@@ -347,74 +473,84 @@ def main() -> int:
     if args.store_versions:
         _print_banner(args, version)
         heading("Store versions (registries vs package.json)")
-        return run_store_versions_report(version)
+        rc = run_store_versions_report(version)
+        if log_fh:
+            log_fh.close()
+        return rc
 
     # Accumulates (step_name, passed, elapsed_seconds) tuples as each step
     # completes. Used for timing reports and to determine exit codes.
     results: list[tuple[str, bool, float]] = []
 
-    _print_banner(args, version)
+    try:
+        _print_banner(args, version)
 
-    # Best-effort sweep of stale coverage/test junk (.nyc_output/, coverage/)
-    # left by prior manual runs, before compile touches out/.
-    from modules.publish.checks_build import cleanup_stray_output
-    cleanup_stray_output()
+        # Best-effort sweep of stale coverage/test junk (.nyc_output/, coverage/)
+        # left by prior manual runs, before compile touches out/.
+        from modules.publish.checks_build import cleanup_stray_output
+        cleanup_stray_output()
 
-    # ── ANALYSIS PHASE ──
-    # Steps 1-10: prerequisites, clean tree, compile, test, version.
-    # run_analysis may update `version` if the user bumps it during Step 10.
-    version, passed = run_analysis(args, results)
-    if not passed:
-        # Bail early but still emit timing + report so the developer can
-        # see exactly which step failed and how long each step took.
-        print_timing(results)
-        save_and_print_report(results, version)
-        return _exit_code_from_results(results)
+        # ── ANALYSIS PHASE ──
+        # Steps 1-10: prerequisites, clean tree, compile, test, version.
+        # run_analysis may update `version` if the user bumps it during Step 10.
+        version, passed = run_analysis(args, results)
+        if not passed:
+            # Bail early but still emit timing + report so the developer can
+            # see exactly which step failed and how long each step took.
+            print_timing(results)
+            save_and_print_report(results, version)
+            return _exit_code_from_results(results)
 
-    # ── PACKAGE + LOCAL INSTALL ──
-    # Build the .vsix bundle and optionally install it into the local
-    # VS Code instance so the developer can smoke-test before publishing.
-    vsix_path = package_and_install(args, results, version)
-    if not vsix_path:
-        return ExitCode.PACKAGE_FAILED
+        # ── PACKAGE + LOCAL INSTALL ──
+        # Build the .vsix bundle and optionally install it into the local
+        # VS Code instance so the developer can smoke-test before publishing.
+        vsix_path = package_and_install(args, results, version)
+        if not vsix_path:
+            return ExitCode.PACKAGE_FAILED
 
-    # ── ANALYZE-ONLY: stop here ──
-    # In this mode the developer just wanted a build artifact + local test.
-    # Save the report and offer to open it, but don't touch git or registries.
-    if args.analyze_only:
-        report = save_report(results, version, vsix_path)
-        print_timing(results)
-        print_report_path(report)
-        if report:
-            prompt_open_report(report)
+        # ── ANALYZE-ONLY: stop here ──
+        # In this mode the developer just wanted a build artifact + local test.
+        # Save the report and offer to open it, but don't touch git or registries.
+        if args.analyze_only:
+            report = save_report(results, version, vsix_path)
+            print_timing(results)
+            print_report_path(report)
+            if report:
+                prompt_open_report(report)
+            return ExitCode.SUCCESS
+
+        # ── PUBLISH PHASE ──
+        # Everything below is irreversible (git push, marketplace upload),
+        # so we gate it behind an explicit confirmation prompt.
+        heading("Publish Confirmation")
+        if not confirm_publish(version):
+            info("Publish cancelled by user.")
+            return ExitCode.USER_CANCELLED
+
+        # Default to publishing to both stores. If neither vsce nor ovsx CLIs
+        # are detected, ask the user which store(s) they have credentials for.
+        stores = "both"
+        if not get_installed_extension_versions():
+            stores = ask_publish_stores()
+        # Steps 11-15: commit, tag, marketplace publish, Open VSX, GitHub release.
+        if not run_publish(version, vsix_path, results, stores):
+            return _exit_code_from_results(results)
+
+        # Step 16: poll registry APIs until the new version is live. This
+        # catches CDN propagation delays so we don't close the terminal
+        # thinking the release is done when users still see the old version.
+        heading("Step 16 · Verify store propagation")
+        info("Polling registry APIs until the new version is visible (30s interval, 10 min max).")
+        store_rc = run_store_propagation_wait(version, stores)
+        if store_rc != ExitCode.SUCCESS:
+            return store_rc
         return ExitCode.SUCCESS
 
-    # ── PUBLISH PHASE ──
-    # Everything below is irreversible (git push, marketplace upload),
-    # so we gate it behind an explicit confirmation prompt.
-    heading("Publish Confirmation")
-    if not confirm_publish(version):
-        info("Publish cancelled by user.")
-        return ExitCode.USER_CANCELLED
-
-    # Default to publishing to both stores. If neither vsce nor ovsx CLIs
-    # are detected, ask the user which store(s) they have credentials for.
-    stores = "both"
-    if not get_installed_extension_versions():
-        stores = ask_publish_stores()
-    # Steps 11-15: commit, tag, marketplace publish, Open VSX, GitHub release.
-    if not run_publish(version, vsix_path, results, stores):
-        return _exit_code_from_results(results)
-
-    # Step 16: poll registry APIs until the new version is live. This
-    # catches CDN propagation delays so we don't close the terminal
-    # thinking the release is done when users still see the old version.
-    heading("Step 16 · Verify store propagation")
-    info("Polling registry APIs until the new version is visible (30s interval, 10 min max).")
-    store_rc = run_store_propagation_wait(version, stores)
-    if store_rc != ExitCode.SUCCESS:
-        return store_rc
-    return ExitCode.SUCCESS
+    finally:
+        # Close the log file handle so the full output is flushed to disk,
+        # even on early returns or unhandled exceptions.
+        if log_fh:
+            log_fh.close()
 
 
 if __name__ == "__main__":
