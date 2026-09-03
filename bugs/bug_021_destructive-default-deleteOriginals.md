@@ -1,6 +1,6 @@
 # Bug 021 — Destructive default for deleteOriginals
 
-## Status: Open
+## Status: Open (regression — fix incomplete)
 
 ## Severity: High
 
@@ -29,7 +29,20 @@ Destructive behavior enabled by default; no confirmation prompt.
 Change the default to `false`. Add a one-time notification when the feature is first used: "Saropa Log Capture can clean up flutter crash logs after importing them. Enable?" Consider requiring explicit opt-in rather than opt-out for file deletion.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+PARTIAL / NOT EFFECTIVE. `src/modules/config/integration-config.ts:284` was changed to
+`ensureBoolean(cfg.get('integrations.flutterCrashLogs.deleteOriginals'), false)` — the
+in-code fallback default is `false`. However `package.json:2287-2292`
+(`saropaLogCapture.integrations.flutterCrashLogs.deleteOriginals`) still declares
+`"default": true` in the settings schema (confirmed via `git blame`: unchanged since the
+setting was introduced in commit `97a500eb0`, 2026-04-14 — never edited to `false`). Because
+VS Code resolves `cfg.get()` to the schema default when the user hasn't set the value
+explicitly, `ensureBoolean()`'s own fallback is never reached in practice — the effective
+default a fresh install ships with is still `true`, and crash logs are still deleted by
+default. CHANGELOG.md ("Changed `flutterCrashLogs.deleteOriginals` default to `false` to
+prevent accidental file deletion") is inaccurate as of this verification pass and should not
+be trusted as evidence the bug is closed. Fix required: change `"default": true` to
+`"default": false` in `package.json` for this setting (the TS-side fallback is already
+correct and needs no further change).
 
 ## Tests Added
 <!-- List new or updated test files. -->

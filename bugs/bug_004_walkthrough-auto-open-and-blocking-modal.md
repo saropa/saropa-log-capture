@@ -1,6 +1,6 @@
 # Bug 004 — Walkthrough and "first error" modal disrupt live debugging
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: Critical
 
@@ -32,10 +32,13 @@ Both features trigger synchronously off debug-session events with no "user is ac
 2. Change `suggestFirstError` from a modal dialog to a non-modal notification (VS Code `showInformationMessage` without `modal: true`), or check `vscode.debug.activeDebugSession` and defer the prompt until the session ends.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+
+- Walkthrough auto-open on first debug session was removed/deferred (see CHANGELOG "Walkthrough and first-error dialog no longer interrupt active debug sessions").
+- `src/extension-activation-helpers.ts` (`showSmartBookmarkModal`): `suggestFirstError`'s dialog was changed from a modal (`{ modal: true }`) to a non-modal `vscode.window.showInformationMessage()` toast so it no longer blocks the editor, breakpoints, or debug toolbar.
+- **Gap closed this session:** the non-modal toast was still passing `{ detail: candidate.lineText }` as its options argument. Per the VS Code API, `MessageOptions.detail` only renders when `modal: true` — a non-modal toast silently drops it, so the actual error line text was no longer shown to the user after the modal was removed. Fixed by folding `candidate.lineText` directly into the primary message string (`` `${message}\n${candidate.lineText}` ``) instead of relying on `detail`, so the line text reaches the user in both modal and non-modal form.
 
 ## Tests Added
-<!-- List new or updated test files and what they verify. -->
+<!-- No new test — this is a two-line string-composition change with no existing test scaffolding around vscode.window.showInformationMessage in this module. Verified by reading the VS Code API contract for MessageOptions.detail and by `npx tsc --noEmit` / `npx eslint` passing clean. -->
 
 ## Commits
 <!-- Add commit hashes as fixes land. -->
