@@ -37,8 +37,9 @@ suite('Viewer log search and nav contracts', () => {
             css.includes('body.search-match-options-always .session-search-toggles-inline'),
             'setting-driven body class should force toggles visible',
         );
-        /* If “always” used loose truthiness, msg.always as string "true" could wrongly enable — source must use === true. */
-        const msgSrc = readViewerSrc('ui/viewer/viewer-script-messages.ts');
+        /* If “always” used loose truthiness, msg.always as string "true" could wrongly enable — source must use === true.
+           Case now lives in viewer-script-messages-misc.ts (extracted from viewer-script-messages.ts to clear max-lines). */
+        const msgSrc = readViewerSrc('ui/viewer/viewer-script-messages-misc.ts');
         assert.ok(
             msgSrc.includes("case 'searchMatchOptionsAlwaysVisible'") && msgSrc.includes('msg.always === true'),
             'webview must toggle class only when always is strictly true',
