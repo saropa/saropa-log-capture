@@ -11,8 +11,10 @@ suite('Webview script null guards – core viewer', () => {
         const script = getViewerScriptMessageHandler();
 
         test('should guard footerEl.classList in clear handler', () => {
+            // clear-handler body was extracted to handleClearMessage() (viewer-script-messages-clear.ts);
+            // slice by function name, not the 'case' label, since the case now just delegates to it.
             const clearBlock = script.slice(
-                script.indexOf("case 'clear':"),
+                script.indexOf('function handleClearMessage'),
                 script.indexOf("case 'updateFooter':"),
             );
             assert.ok(
@@ -33,8 +35,9 @@ suite('Webview script null guards – core viewer', () => {
         });
 
         test('should guard footerTextEl in clear handler', () => {
+            // See note above: clear-handler body now lives in handleClearMessage().
             const clearBlock = script.slice(
-                script.indexOf("case 'clear':"),
+                script.indexOf('function handleClearMessage'),
                 script.indexOf("case 'updateFooter':"),
             );
             assert.ok(

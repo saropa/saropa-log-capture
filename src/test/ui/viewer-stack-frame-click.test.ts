@@ -35,11 +35,16 @@ suite('Stack-frame whole-row click-to-open', () => {
 
     test('frame branch precedes the stack-header toggle branch', () => {
         // Ordering matters: a frame row must resolve to open-file before any
-        // header-toggle logic can claim the event.
+        // header-toggle logic can claim the event. Header-toggle handling was
+        // extracted to handleGroupToggleClicks() (viewer-script-click-handlers-groups.ts),
+        // whose source text is concatenated BEFORE this file's — so a raw
+        // indexOf('.stack-header') is no longer a valid position proxy (it finds
+        // the function definition, not where it runs). Check the delegating call
+        // site instead, searched from frameIdx so it can't match the definition.
         const frameIdx = script.indexOf(".closest('.stack-line')");
-        const headerIdx = script.indexOf(".closest('.stack-header')");
-        assert.ok(frameIdx >= 0 && headerIdx >= 0, 'both branches present');
-        assert.ok(frameIdx < headerIdx, 'frame branch comes before header branch');
+        const delegateCallIdx = script.indexOf('handleGroupToggleClicks(e)', frameIdx);
+        assert.ok(frameIdx >= 0 && delegateCallIdx >= 0, 'both branches present');
+        assert.ok(frameIdx < delegateCallIdx, 'frame branch comes before the delegated header-toggle call');
     });
 
     test('direct source-link click branch is still handled first', () => {
