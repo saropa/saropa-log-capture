@@ -16,7 +16,7 @@ How to file, investigate, and close bugs and feature requests in `saropa-log-cap
 | New feature | `NNN_plan-description.md` | `036_plan-voice-tts.md` |
 | Tooling / infra | `NNN_plan-infra-description.md` | `041_plan-infra-bundle-analyzer.md` |
 
-Use the next available number. Check existing files before picking one.
+Use the next available number. Check both `bugs/` (open) and `plans/history/` (closed/archived) before picking one — numbers are never reused. As of 2026-09-03 bugs 001–046 are taken (045 archived, 021 open).
 
 ---
 
@@ -38,7 +38,7 @@ If the bug belongs to another project, write a self-contained report in that pro
 
 Copy the block below into a new file.
 
-Field order and heading levels below match the 46 filed bug reports on disk (`bugs/bug_001_*.md` through `bugs/bug_046_*.md`) — do not substitute bold text for the `## Status:` / `## Severity:` headings, and do not add fields (`Area:`, `Created:`) that no filed bug actually uses.
+Field order and heading levels below match the 46 filed bug reports (archived to `plans/history/2026.09/2026.09.03/bug_*.md`) — do not substitute bold text for the `## Status:` / `## Severity:` headings, and do not add fields (`Area:`, `Created:`) that no filed bug actually uses.
 
 ````markdown
 # Bug NNN — Short, Specific Title
@@ -396,13 +396,13 @@ When an issue is closed (or a proposal is declined), `git mv` its file into the 
 
 ```
 bugs/bug_003_crash_severity-keywords-null.md
-  → plans/history/YYYY.MM/YYYYMMDD/bug_003_crash_severity-keywords-null.md
+  → plans/history/YYYY.MM/YYYY.MM.DD/bug_003_crash_severity-keywords-null.md
 
 bugs/036_plan-voice-tts.md
-  → plans/history/YYYY.MM/YYYYMMDD/036_plan-voice-tts.md
+  → plans/history/YYYY.MM/YYYY.MM.DD/036_plan-voice-tts.md
 ```
 
-Use the date the issue was closed. Create the `YYYY.MM/YYYYMMDD` folders if they do not exist. Grep and repoint any `bugs/<file>.md` references (CHANGELOG, ROADMAP, other issue files) to the new path in the same commit.
+Use the date the issue was closed. Create the `YYYY.MM/YYYY.MM.DD` folders if they do not exist. Grep and repoint any `bugs/<file>.md` references (CHANGELOG, ROADMAP, other issue files) to the new path in the same commit.
 
 ---
 

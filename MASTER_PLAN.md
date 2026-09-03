@@ -1,7 +1,7 @@
 # MASTER PLAN — Saropa Log Capture
 
 Comprehensive work schedule derived from the 2026-09-02 usability review.
-Bug reports in `bugs/bug_NNN_*.md`. Plans in `plans/`.
+Bug reports: open in `bugs/`, closed in `plans/history/`. Plans in `plans/`.
 
 **Version under review:** 9.3.12 · 120 commands · 272 settings · 4 MB dist
 
@@ -326,4 +326,4 @@ measurement recorded and do not touch the event. **Effort:** 2h to measure.
 
 *Generated 2026-09-03 from the usability review of v9.3.12.*
 *Review reports: `docs/handover/review-20260902/`.*
-*Bug reports: `bugs/bug_001_*.md` through `bugs/bug_046_*.md`.*
+*Bug reports: archived to `plans/history/2026.09/2026.09.03/bug_*.md` (bug 021 remains open in `bugs/`).*
