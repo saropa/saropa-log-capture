@@ -18,12 +18,10 @@ suite('viewer-data-helpers-render framework severity (tier system)', () => {
         );
     });
 
-    test('deemphasizeFrameworkLevels should not appear in render script', () => {
-        assert.ok(
-            !renderChunk.includes('deemphasizeFrameworkLevels'),
-            'renderItem must not reference the deprecated deemphasizeFrameworkLevels setting',
-        );
-    });
+    // NOTE: `deemphasizeFrameworkLevels` setting was removed entirely in bug_042 (it was
+    // never referenced by non-test source, so the setting had zero effect). The
+    // corresponding "should not appear in render script" test is gone with it —
+    // asserting the absence of a string that no longer exists anywhere is a no-op.
 
     /**
      * Before the tier system: `barCls` picked `level-bar-framework` (charts blue) when `item.fw && !hasSeverity`,

@@ -1,6 +1,6 @@
 # Bug 007 — Viewer row-index/file-line mismatch and 5,000-line scanner cap
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: Critical
 
@@ -33,10 +33,21 @@ Two related data-integrity issues:
 2. Remove or substantially raise the 5,000-line cap; add a `maxScanLines` setting for users with very large sessions; log a warning to the output channel when the cap is actually hit so truncation is visible rather than silent.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+
+- Fixed the off-by-one regression in `src/ui/provider/viewer-message-handler-panels.ts` (`openErrorAnalysis`
+  handler, ~line 160): `msg.sourceLineNo` was passed directly to `showAnalysis()` / `extractFrames()`, which
+  index into a 0-based `split('\n')` array. `sourceLineNo` is the 1-based file line number stamped by
+  `viewer-file-loader.ts`, so the handler now converts it with `safeLineIndex(msg.sourceLineNo, 0) - 1`,
+  matching the existing `sourceLineNo - 1` pattern already used in `locateLine()`
+  (`src/ui/shared/handlers/trouble-detail-handler.ts:59`). Without the conversion, frame extraction started
+  one line too late for every "open error analysis" request.
+- Item 2 (5,000-line scanner cap) was already fixed separately (centralized 50k-line cap) per the sweep
+  report and is out of scope for this pass.
 
 ## Tests Added
-<!-- List new or updated test files and what they verify. -->
+<!-- No new automated test added; fix is a one-line index-offset correction covered by existing
+     openErrorAnalysis manual verification. Consider adding a unit test around locateLine/showAnalysis
+     index math if this regresses again. -->
 
 ## Commits
 <!-- Add commit hashes as fixes land. -->

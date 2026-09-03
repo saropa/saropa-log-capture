@@ -146,7 +146,12 @@ function handleRepeatCollapse(category, ts, fw, sp, elapsedMs, source, rawText, 
             var histPvwUp = (sqlMeta.sqlSnippet || repeatTracker.sqlStreakSqlSnippet || '').trim();
             repeatItem.sqlHistoryPreview = histPvwUp.length > 120 ? histPvwUp.substring(0, 117) + '...' : histPvwUp;
         }
-        repeatH = (typeof calcItemHeight === 'function') ? calcItemHeight(repeatItem) : (repeatAutoHide ? 0 : ROW_HEIGHT);
+        /* bug_027: repeatTracker.lastRepeatNotificationIndex is this row's own allLines
+           index, so pass it through — a repeat-notification row can carry an annotation
+           like any other row. */
+        repeatH = (typeof calcItemHeight === 'function')
+            ? calcItemHeight(repeatItem, repeatTracker.lastRepeatNotificationIndex)
+            : (repeatAutoHide ? 0 : ROW_HEIGHT);
         repeatItem.height = repeatH;
     }
     resetCompressDupStreak();

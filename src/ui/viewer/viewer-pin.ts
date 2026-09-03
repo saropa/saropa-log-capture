@@ -18,6 +18,22 @@ function togglePin(idx) {
     renderPinnedSection();
 }
 
+/* trimData() splices excessCount rows off the head of allLines without touching pinned
+   rows themselves — every surviving pin's index must shift down by the same amount, or
+   it silently points at whatever unrelated row slid into its old slot (bug_025). A pin
+   whose own row was among the trimmed rows (index goes negative) is dropped rather than
+   clamped to 0 — clamping would re-attach the pin to a row the user never pinned. */
+function adjustPinnedIndicesAfterTrim(excessCount) {
+    if (excessCount <= 0 || pinnedIndices.size === 0) return;
+    var shifted = new Set();
+    pinnedIndices.forEach(function(idx) {
+        var newIdx = idx - excessCount;
+        if (newIdx >= 0) shifted.add(newIdx);
+    });
+    pinnedIndices = shifted;
+    renderPinnedSection();
+}
+
 function renderPinnedSection() {
     if (!pinnedSection) return;
     if (pinnedIndices.size === 0) {

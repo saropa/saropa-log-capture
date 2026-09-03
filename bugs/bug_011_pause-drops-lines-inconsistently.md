@@ -1,6 +1,6 @@
 # Bug 011 — Pause drops lines inconsistently
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: High
 
@@ -31,10 +31,29 @@ Pause flag checked in the file-write path but not in the broadcast path.
 Check the pause flag in `broadcastLine` as well, or (better) check it once at the entry point before both paths diverge. Ensure bookmarks reference file line numbers, not viewer indices.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+
+Two halves:
+
+1. **Pause-check unification (broadcast path).** `processOutputEvent()` and
+   `writeOneLine()` in `src/modules/session/session-manager-events.ts` now check
+   `session.state !== 'recording'` ONCE, before the file-write and broadcast paths
+   diverge, and return immediately if paused. Previously `LogSession.appendLine()`
+   already no-op'd while paused, but `target.broadcastLine()` was called
+   unconditionally afterward — so the viewer kept showing lines that never reached
+   the saved file (source: `src/modules/capture/log-session.ts:201`).
+2. **Bookmark line-number desync.** Bookmarks were keyed on the viewer's `allLines`
+   array index (`lineIdx`), which drifts from the on-disk file line count via
+   synthetic rows (markers, stack headers, repeat-notification chips) and any
+   trim/filter change. Both bookmark entry points now send the FILE line number
+   (`lineData.sourceLineNo`, falling back to the array index only for an unstamped
+   row):
+   - Right-click "Bookmark" — `src/ui/viewer-context-menu/viewer-context-menu-line-actions.ts`
+   - Keyboard bookmark shortcut — `src/ui/viewer/viewer-script-keyboard.ts` (this was
+     the follow-up gap: the context-menu path was fixed first, but the keyboard
+     shortcut still sent the raw array index)
 
 ## Tests Added
-<!-- List new or updated test files. -->
+<!-- No new automated test file added; verified via `npx tsc --noEmit` (0 errors) and code inspection of both bookmark entry points and both broadcast call sites. -->
 
 ## Commits
 <!-- Add commit hashes as fixes land. -->

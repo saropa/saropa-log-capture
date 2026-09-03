@@ -126,6 +126,22 @@ window.addEventListener('message', function(event) {
             if (typeof compressSuggestShown !== 'undefined') { compressSuggestShown = false; compressSuggestBannerDismissed = false; }
             if (typeof hideCompressSuggestionBanner === 'function') hideCompressSuggestionBanner();
             if (typeof hiddenLineIndices !== 'undefined') { hiddenLineIndices.clear(); isPeeking = false; autoHiddenCount = 0; sessionAutoHidePatterns = []; updateHiddenDisplay(); }
+            /* Selection state is keyed by allLines index; switching logs replaces allLines
+               wholesale (see allLines.length = 0 above) so any stale selection would apply
+               Ctrl+C / Shift+Arrow to rows of the NEW file that happen to share old indices
+               (bug_025). Reset the anchor, cursor, and implicit-click caret together. */
+            if (typeof selectionStart !== 'undefined') selectionStart = -1;
+            if (typeof selectionEnd !== 'undefined') selectionEnd = -1;
+            if (typeof lastClickedIdx !== 'undefined') lastClickedIdx = -1;
+            /* bug_025 (log-switch gap): pinnedIndices and annotations are ALSO keyed by
+               allLines index, same as selection above — trimData() re-indexes them on a
+               trim, but nothing reset them on a full log switch, so a pin/annotation from
+               the old file silently reappeared on whatever unrelated row now sits at that
+               index in the new file. screenshotByIdx needs no reset here: it is rebuilt
+               wholesale from the sidecar list on every 'screenshotList' message, which
+               loadComplete always requests after a switch. */
+            if (typeof pinnedIndices !== 'undefined') { pinnedIndices.clear(); if (typeof renderPinnedSection === 'function') renderPinnedSection(); }
+            if (typeof annotations !== 'undefined') annotations = {};
             if (footerTextEl) footerTextEl.textContent = 'Cleared'; updateLineCount(); renderViewport(true); if (typeof scheduleMinimap === 'function') scheduleMinimap();
             if (typeof scheduleTroubleChartUpdate === 'function') scheduleTroubleChartUpdate();
             break;
@@ -267,8 +283,18 @@ window.addEventListener('message', function(event) {
             if (typeof window.signalScrollToLabel === 'function') { window.signalScrollToLabel(msg.label || '', msg.detail || ''); }
             break;
         case 'scrollToLine': {
+            /* msg.line is a gutter/source line number, not an allLines array index — every host-side
+               caller (bookmarks, error snackbars, SQL query history cross-log jumps, flow-map reveal,
+               command-palette "Go to Line…") derives it from the file's physical line number, e.g.
+               "scrollToLine is 1-based to match the viewer's go-to-line input" in
+               extension-activation-helpers.ts. Synthetic rows (markers, stack headers) push
+               sourceLineNo past the array length, so treating it as allLines[line - 1] landed on
+               the wrong row (bug_026). Resolve through the same sourceLineNo lookup the Go-to-Line
+               input uses instead of indexing directly. */
             if (window.isContextMenuOpen) break;
-            var li = Math.max(0, Math.min(Number(msg.line) - 1, allLines.length - 1));
+            if (typeof findAllLinesIndexBySourceLine !== 'function' || allLines.length === 0) break;
+            var li = findAllLinesIndexBySourceLine(Number(msg.line));
+            if (li < 0) break;
             var ch = 0; for (var si = 0; si < li; si++) ch += allLines[si].height;
             if (window.setProgrammaticScroll) window.setProgrammaticScroll();
             suppressScroll = true; logEl.scrollTop = ch; suppressScroll = false;

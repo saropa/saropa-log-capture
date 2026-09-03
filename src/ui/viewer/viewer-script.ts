@@ -113,6 +113,14 @@ var learningEnabled = false, learningMaxLineLen = 2000, learningTrackScroll = fa
 var learningScrollLastT = 0, learningScrollLastTop = 0, learningScrollBurstSent = 0, learningScrollBurstReset = 0;
 var ROW_HEIGHT = 20;
 var MARKER_HEIGHT = 28;
+/* bug_027: annotations render as a sibling <div class="annotation"> after a row's .line
+   element (getAnnotationHtml in viewer-annotations.ts), so an annotated row is taller in
+   the DOM than the plain ROW_HEIGHT the virtual scroller's prefix sums assumed — causing
+   cumulative scroll drift proportional to the annotation count. Derived from the CSS in
+   viewer-styles-content.ts (.annotation: font-size 11px, padding 1px top/bottom, no
+   explicit line-height so it inherits the browser default of ~1.2): 11 * 1.2 + 2 ~= 15px,
+   rounded up to 16 for headroom rather than under-measuring and re-introducing drift. */
+var ANNOTATION_HEIGHT = 16;
 var OVERSCAN = 30;
 
 var allLines = [], totalHeight = 0, lineCount = 0;
