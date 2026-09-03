@@ -111,6 +111,12 @@ export async function handleSignalDataRequest(post: PostFn, currentFileUri?: vsc
             const regression = detectRegressions({
                 currentFingerprints: meta?.fingerprints ?? [],
                 pastMetas,
+                /* bug_030: this handler can run against a still-live session (the Signals
+                   panel polls while debugging is in progress), unlike session-signal-surfacing.ts
+                   which only fires after finalize. Read `meta?.fingerprints` BEFORE the `?? []`
+                   default above: its absence means the fingerprint scan hasn't run yet, so F8
+                   "resolved" claims must be suppressed rather than misreport active errors. */
+                currentSessionFinalized: meta?.fingerprints !== undefined,
             });
             const regressionEntries = buildRegressionSignalEntries(sessionFilename, regression);
             const merged = [...regressionEntries, ...thisSessionSignals];

@@ -28,7 +28,15 @@ export function getSessionRenderingScript(): string {
         if (!sessions || sessions.length === 0) {
             sessionListEl.innerHTML = '';
             if (sessionListPaginationEl) sessionListPaginationEl.style.display = 'none';
-            if (sessionEmptyEl) sessionEmptyEl.style.display = '';
+            /* bug_020: an empty array means either "no logs exist" or "the directory scan
+               threw" — those used to render identically, leaving users unable to tell a real
+               problem from a clean state. lastScanFailed (set from the sessionList message's
+               scanFailed flag) picks the message; text is set here rather than baked into the
+               server-rendered HTML because it can flip between renders without a full reload. */
+            if (sessionEmptyEl) {
+                sessionEmptyEl.textContent = lastScanFailed ? vt('viewer.session.scanFailed') : vt('viewer.session.empty');
+                sessionEmptyEl.style.display = '';
+            }
             return;
         }
         if (sessionEmptyEl) sessionEmptyEl.style.display = 'none';

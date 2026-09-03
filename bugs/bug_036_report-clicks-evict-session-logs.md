@@ -1,6 +1,6 @@
 # Bug 036 — Report clicks evict session logs
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: Medium
 
@@ -29,7 +29,14 @@ Signal reports are written to the same directory and namespace as session logs, 
 Either write signal reports to a separate directory (e.g., `reports/`), or exclude `.md` files from the `maxLogFiles` retention count. Add a report-specific retention limit if needed.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+
+`src/modules/config/config-file-utils.ts` now excludes the `reports/` subdirectory from file-retention scanning:
+
+- Added `RETENTION_EXCLUDED_DIR = 'reports'` — the directory signal-report clicks write generated `.md` hypothesis reports into (`signal-report-panel.ts`).
+- `collectFiles()` (backs `readTrackedFiles`, used by `enforceFileRetention` in `file-retention.ts`) now skips recursing into any directory named `reports` during its subfolder walk, in addition to the existing dotfile skip.
+- `collectFilesStreaming()` (backs `readTrackedFilesStreaming`, used by the Project Logs sidebar streaming preview) got the same skip so the two file-listing code paths stay consistent — reports still appear in the file browser (they're not excluded from `isTrackedFile`), they just no longer compete with session logs for the `maxLogFiles` slot.
+
+Root cause was that `enforceFileRetention` calls `readTrackedFiles` with `includeSubfolders: true` by default, and `.md` is in `DEFAULT_FILE_TYPES`, so generated reports were silently recursed into and counted toward the eviction limit alongside real session logs — exactly as the sweep report predicted.
 
 ## Tests Added
 <!-- List new or updated test files. -->

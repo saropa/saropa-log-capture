@@ -1,6 +1,6 @@
 # Bug 010 — Logcat lines bypass live viewer
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: High
 
@@ -30,10 +30,20 @@ The logcat capture path writes directly to the file stream, bypassing the `broad
 Route logcat lines through the same `broadcastLine` pipeline as DAP output so they appear in the viewer in real time and trigger all listeners.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+
+`InitSessionParams` (`src/modules/session/session-lifecycle-init.ts`) now takes a
+`broadcastLine` callback, the same shape `session-manager-events.ts` already uses for the
+DAP output path. `makeStreamingWriteLine()` builds the `writeLine` callback handed to
+streaming integrations (currently adb logcat via `runOnSessionStartStreaming`) so each
+line calls `logSession.appendLine` (file write) followed by `broadcastLine(...)` (live
+viewer + line listeners), mirroring `processOutputEvent`'s append+broadcast pair.
+`session-manager-start.ts` supplies `broadcastLine: (data) => deps.broadcastLine(data)`
+when calling `initializeSession()`, wiring the streaming path into the same broadcaster
+the DAP path already used. Logcat lines (and any future streaming integration) now reach
+the sidebar/pop-out viewer in real time instead of only appearing after a log-file reload.
 
 ## Tests Added
-<!-- List new or updated test files. -->
+<!-- No dedicated test added for this fix; see CONTRIBUTING for the streaming-integration test gap. -->
 
 ## Commits
-<!-- Add commit hashes as fixes land. -->
+<!-- Filled in at commit time. -->
