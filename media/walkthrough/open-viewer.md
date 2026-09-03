@@ -1,6 +1,8 @@
 # Live Log Viewer
 
-The sidebar viewer shows your debug output in real-time with powerful features.
+<!-- The log viewer is contributed to the bottom panel (package.json contributes.viewsContainers.panel),
+     not a sidebar — "sidebar viewer" was stale wording left over from an earlier layout. -->
+The Log Viewer shows your debug output in real-time with powerful features.
 
 ## Features
 

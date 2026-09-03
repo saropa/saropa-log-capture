@@ -1,6 +1,6 @@
 # Bug 001 — Getting Started walkthrough steps reference deleted `media/walkthrough/*.md`
 
-## Status: Open
+## Status: Fixed (pending review)
 
 <!-- Status values: Open → Investigating → Fix Ready → Fixed (pending review) → Closed -->
 
@@ -49,12 +49,44 @@ Commit `9f195441 chore(repo): migrate plan docs and expand project index coverag
 
 ## Changes Made
 
-<!-- Fill in when a fix is written. -->
+1. `git mv plans/walkthrough/*.md media/walkthrough/` — the six step bodies now live only at
+   the runtime location `package.json` already pointed at. `plans/walkthrough/` no longer
+   exists.
+2. Rewrote stale content while relocating:
+   - `open-viewer.md` — "sidebar viewer" → "Log Viewer" (the view container is contributed to
+     the bottom `panel`, not a sidebar; verified against `package.json`
+     `contributes.viewsContainers.panel`).
+   - `keyboard-shortcuts.md` — the **A** key description was "Toggle app-only stack frames";
+     that action was replaced by the three-way device-log cycle (`toggleDevice` in
+     `src/ui/viewer/viewer-keybindings.ts`) — updated to "Cycle device logs (None / Warn+ /
+     All)". **Ctrl+C** was documented as "Copy as plain text"; the shipped default is
+     `copyJson` (`ctrl+c`) — updated to "Copy as JSON", and added the previously-missing
+     **Ctrl+B** bookmark row. Added a comment pointing future editors at the source-of-truth
+     files (`viewer-keybindings.ts`, `viewer-keyboard-shortcuts-html.ts`) plus a note that F1
+     in the Log Viewer is the always-current reference.
+   - `session-history.md` — retention default was documented as 10; the shipped default
+     (`saropaLogCapture.maxLogFiles`) is `0` (unlimited) — corrected.
+   - `configure-settings.md`, `start-debugging.md`, `about-saropa.md` — verified against
+     `package.json` / current behavior; no stale content found, left as-is.
+3. Added `scripts/modules/verify/verify-walkthrough-media.mjs`: asserts every
+   `contributes.walkthroughs[*].steps[*].media.markdown` / `.image` path in `package.json`
+   exists on disk and does not resolve under a directory `.vscodeignore` excludes wholesale
+   (e.g. `plans/**`). Wired in as `npm run verify:walkthrough-media`, added to the
+   `npm run compile` verify chain.
+4. `README.md` already referenced `media/walkthrough/keyboard-shortcuts.md` (line 394) — no
+   change needed there; it was pointing at the correct future location all along.
 
 ## Tests Added
 
-<!-- verify:walkthrough-media script + a test that loads package.json and stats each path. -->
+- `src/test/modules/scripts/walkthrough-media.test.ts` — asserts every walkthrough step's
+  `media.markdown` path starts with `media/walkthrough/` and exists on disk, and asserts
+  `plans/walkthrough/` does not exist (regression guard against the doc-consolidation pattern
+  that caused this bug).
+- `scripts/modules/verify/verify-walkthrough-media.mjs` — compile-time gate covering the same
+  invariant plus the `.vscodeignore` packaging check; run manually with
+  `node scripts/modules/verify/verify-walkthrough-media.mjs` (confirmed passing: "OK (6
+  walkthrough media path(s) resolve and ship)").
 
 ## Commits
 
-<!-- Add commit hashes as fixes land. -->
+<!-- Add commit hashes once this change is committed. -->
