@@ -139,13 +139,21 @@ sprints. No user-facing urgency.
 - 33 stray `.js` emits in `src/` (gitignored but unexpected)
 - Dead enum value in one settings type
 
-### Surface-area sprawl (naming + consolidation pass)
+### Surface-area sprawl (naming pass — scope fixed by Decision 1)
 
-- 120 commands with NO `category` field — command palette is unsearchable
-- Inconsistent title prefixes: "Saropa Log Capture:", "Saropa:", bare
-- Banned terms in command titles: "Session" (6 commands), "Case" (1 command)
-- Duplicate command families: Investigation (7) vs Collection (10)
-- 272 settings — 117 under `integrations.*` alone; audit for dead/redundant
+**In scope (4h):**
+
+- Add `category: "Saropa Log Capture"` to all 120 commands
+- Strip the now-redundant prefix from the ~60% of titles carrying it, and from
+  the "Saropa:" Build/CI token commands
+
+**Deferred by decision — do not do these without a migration:**
+
+- ~~Banned terms in titles: "Session" (6 commands), "Case" (1 command)~~
+- ~~Consolidate Investigation (7) vs Collection (10) families~~
+
+**Still unscoped:** 272 settings, 117 under `integrations.*` alone — audit for
+dead/redundant. Bug 042 already covers one confirmed dead setting.
 
 ### Docs debt
 
@@ -175,11 +183,14 @@ coverage tool, 300-line rule; BUG_REPORT_GUIDE `bugs/history/` + ROADMAP table.
   filed. Per house rules this must be a bug report in
   `D:\src\saropa_lints\bugs\` — **never** an edit to that repo.
 
-### Bundle / activation
+### Bundle / activation (Decision 5 — measure before changing)
 
-- `dist/extension.js` = 4 MB on a `onDebugAdapterProtocolTracker` activation
-- Measure activation time; lazy-load panels that aren't immediately visible
-- Audit `activationEvents` — DAP tracker fires on ANY debug session
+1. Measure cold-start activation time with the 4 MB `dist/extension.js`. (2h)
+2. **If under ~200 ms:** record the number, close the item, change nothing.
+3. **Only if slow:** narrow `onDebugAdapterProtocolTracker` — it fires on ANY
+   debug session in any language — to `onDebug` + `workspaceContains`, and
+   lazy-load panels that are not immediately visible. Requires testing that
+   capture still starts for every supported debug configuration.
 
 ### Plan 055 remaining cleanup
 
@@ -235,20 +246,62 @@ P3 Tech debt (batch sprints, no dependency)
 
 ---
 
-## Owner Decisions Still Needed
+## Owner Decisions — RESOLVED 2026-09-03
 
-1. **DB_18b 1d** — sample SQL preview: recommendation is SKIP (see
-   `plans/deferred/DB_18b-1d-sample-sql-preview.md`). Confirm skip or reactivate.
-2. **Command categories** — adding `category` to all 120 commands is a breaking
-   change for keybinding muscle memory if titles change. Decide scope.
-3. **Activation event** — switching from `onDebugAdapterProtocolTracker` to
-   something narrower (e.g. `onDebug` + `workspaceContains`) needs testing.
-   Decide appetite for the activation-time investigation.
-4. **Configuration guide** — generate from `package.json` (full automation) or
-   curate manually (better prose, higher maintenance)? Recommend generate + verify
-   gate, matching the existing webview/command catalog pattern.
-5. **SCREENSHOTS_PLAN** — 2 of 21 screenshots done, terminology is pre-v7.
-   Rewrite or archive?
+All five decisions are made. No planning blockers remain.
+
+### 1. Command surface → add `category`, keep titles
+
+Add `category: "Saropa Log Capture"` to all 120 commands and strip the now-
+redundant prefix from the ~60% of titles that carry it. The palette becomes
+groupable and searchable while the displayed string stays near-identical, so
+existing muscle memory survives.
+
+**Explicitly NOT in scope:** renaming banned terms ("Session" ×6, "Case" ×1) and
+consolidating the duplicate Investigation (7) vs Collection (10) families. Both
+were considered and rejected for this cycle as breaking changes. Revisit only
+with a deliberate migration.
+
+**Effort:** 4h. **Slot:** P3 naming pass.
+
+### 2. Configuration guide → generate + verify gate
+
+Generate the full 272-setting table from `package.json` and add a
+`verify:config-guide` gate to the compile chain, matching the three existing
+reference catalogs (webview incoming/outbound, commands) that all pass today.
+Manual curation was rejected: it drifts the moment a setting is added and there
+is no gate to catch it — which is exactly how the guide reached 16% coverage.
+
+Accepted downside: loses hand-written prose nuance per setting.
+
+**This is task D1.** **Effort:** 1d.
+
+### 3. DB_18b 1d → SKIP (confirmed)
+
+Sample SQL preview stays skipped, as
+`plans/deferred/DB_18b-1d-sample-sql-preview.md` itself recommends. Leave the
+plan in `plans/deferred/`; do not schedule.
+
+### 4. SCREENSHOTS_PLAN → rewrite
+
+Rewrite against current v9.3.x features and terminology (currently 2/21 done,
+pre-v7 wording). Archiving was rejected — screenshots carry real weight on the
+marketplace listing.
+
+**Effort:** rewrite the plan 2h; capturing the screenshots is separate.
+
+### 5. Activation event → measure first, then decide
+
+Time cold-start activation before changing anything. Only if the 4 MB load
+measurably hurts do we narrow `onDebugAdapterProtocolTracker` to `onDebug` +
+`workspaceContains` and lazy-load non-visible panels.
+
+Changing the event blind was rejected: it risks silently breaking capture for
+debug configurations that no longer match, and no user has reported slow
+startup (the one closed issue, #30, was high CPU — not activation).
+
+**Gate:** if activation is under ~200 ms cold, close this item with the
+measurement recorded and do not touch the event. **Effort:** 2h to measure.
 
 ---
 
