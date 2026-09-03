@@ -11,6 +11,8 @@ import {
     readCentral, writeCentral, loadSidecar,
     type MetaMap,
 } from './session-metadata-io';
+import { getGlobalSearchIndex } from '../search/search-index-global';
+import { screenshotDirUri, screenshotSidecarUri } from '../screenshot/screenshot-store';
 
 /** A single annotation attached to a log line. */
 export interface Annotation {
@@ -419,4 +421,40 @@ export class SessionMetadataStore {
         const data = await readCentral(centralUri);
         return new Map(Object.entries(data));
     }
+}
+
+/**
+ * Drop every trace of a permanently-deleted log file's metadata: the central metadata
+ * entry, its search-index entry, AND its screenshot sidecars. Shared by every path that
+ * physically deletes a log (single-file delete, bulk delete, empty-trash) so a fix to
+ * one cleanup step can never drift from the others again (bug_016 — the single-file path
+ * used to skip this and orphan entries; bug_046 — none of them cleaned up screenshot
+ * sidecars, so `<base>.screenshots/` PNGs and `<base>.screenshots.json` outlived the log
+ * they belonged to and grew disk usage unbounded).
+ *
+ * Callers still own the actual file delete (`vscode.workspace.fs.delete`) and any
+ * UI refresh — this only clears the metadata/index/sidecar side effects.
+ */
+export async function cleanupDeletedSessionMetadata(
+    uri: vscode.Uri,
+    metaStore: SessionMetadataStore,
+): Promise<void> {
+    await metaStore.deleteMetadata(uri);
+    // Search-index removal is best-effort: a missing/locked index entry must never
+    // block the delete from completing.
+    getGlobalSearchIndex()?.removeFile(uri).catch(() => {});
+    await deleteScreenshotSidecars(uri);
+}
+
+/**
+ * Remove a log's screenshot sidecars (the `<base>.screenshots/` PNG directory and the
+ * `<base>.screenshots.json` index) if present. Most logs never captured a screenshot, so
+ * a missing sidecar is the common case, not an error — both deletes are best-effort and
+ * swallow failures (including "not found") rather than block metadata cleanup.
+ */
+async function deleteScreenshotSidecars(uri: vscode.Uri): Promise<void> {
+    const dir = screenshotDirUri(uri.fsPath);
+    const sidecar = screenshotSidecarUri(uri.fsPath);
+    try { await vscode.workspace.fs.delete(dir, { recursive: true, useTrash: false }); } catch { /* no screenshots for this log */ }
+    try { await vscode.workspace.fs.delete(sidecar, { useTrash: false }); } catch { /* no sidecar index for this log */ }
 }
