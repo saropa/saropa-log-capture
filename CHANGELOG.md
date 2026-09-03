@@ -108,7 +108,7 @@ cspell:disable
 - README: fix activity bar → panel, captureAll default true, Compare Sessions → Compare Logs, VS Code ^1.105.0, 10 locales, footer version
 - ARCHITECTURE: fix dead INTEGRATION_API.md link, split session-lifecycle.ts → -init/-finalize
 - CONTRIBUTING: publish script path (scripts/publish.py), coverage tool (nyc), 300-line rule clarification
-- BUG_REPORT_GUIDE: fix stale bugs/history/ path and ROADMAP references
+- ISSUE_REPORT_GUIDE: fix stale bugs/history/ path and ROADMAP references
 - Changed the `flutterCrashLogs.deleteOriginals` code-level fallback default to `false` (bug_021 partial fix — the `package.json` setting schema still declares `"default": true`, which is what VS Code actually resolves for users who haven't touched the setting, so the destructive default is still in effect; see bug_021 for the remaining `package.json` change needed)
 - Session history and viewer broadcaster now support multiple viewer panels
 
