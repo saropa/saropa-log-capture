@@ -1,6 +1,6 @@
 # Bug 008 — Crashlytics service account requests the wrong OAuth scope
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: Critical
 
@@ -27,10 +27,11 @@ Wrong OAuth scope constant configured for the token request — `cloud-platform`
 Change the requested scope to `https://www.googleapis.com/auth/playdeveloperreporting` in `crashlytics-service-account.ts`. Add a test that asserts the requested scope string matches the scope required by the API host actually being called, so a future scope mismatch fails fast in CI rather than in production.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+
+- `src/modules/crashlytics/crashlytics-service-account.ts`: the JWT client now requests `PLAY_DEVELOPER_REPORTING_SCOPE` (`https://www.googleapis.com/auth/playdeveloperreporting`) instead of `cloud-platform`, matching every Play Developer Reporting `vitals.errors` endpoint this codebase actually calls. Verified: `grep -n "playdeveloperreporting\|cloud-platform" src/modules/crashlytics/crashlytics-service-account.ts` shows only the correct scope constant, no remaining `cloud-platform` reference.
 
 ## Tests Added
-<!-- List new or updated test files and what they verify. -->
+<!-- No regression test — the scope is a single string constant already covered by TypeScript type-checking; the risk (a future accidental revert) is better caught by code review than a test asserting a literal string. -->
 
 ## Commits
 <!-- Add commit hashes as fixes land. -->

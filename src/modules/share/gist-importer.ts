@@ -10,6 +10,7 @@ import * as os from 'os';
 import { importSlcBundle, type ImportCollectionResult } from '../export/slc-bundle';
 import type { Collection } from '../collection/collection-types';
 import type { CollectionStore } from '../collection/collection-store';
+import { handleGitHubApiUnauthorized } from './github-auth';
 import { t } from '../../l10n';
 
 const GIST_API = 'https://api.github.com/gists';
@@ -63,9 +64,14 @@ async function importFromSlcUri(
 export async function importFromGist(
     gistId: string,
     store: CollectionStore,
+    context?: vscode.ExtensionContext,
 ): Promise<Collection | undefined> {
     const res = await fetch(`${GIST_API}/${gistId}`);
     if (!res.ok) {
+        // bug_044: import hits the same GitHub Gist API host as share/upload, so a stale token
+        // left over from a prior share can 401 here too — clear it here rather than only on the
+        // share path, otherwise the next share attempt fails identically with no re-auth prompt.
+        if (context) { await handleGitHubApiUnauthorized(context, res); }
         throw new Error(t('msg.importGistNotFound'));
     }
 

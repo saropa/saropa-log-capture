@@ -34,6 +34,17 @@ export interface RegressionDetectionInput {
     readonly pastMetas: readonly LoadedMeta[];
     /** Override the default lookback. */
     readonly lookbackSessions?: number;
+    /**
+     * bug_030: whether the current session has finished writing its fingerprints.
+     * `SessionMeta.fingerprints` is populated only at `finalizeSession` — a still-running
+     * session's metadata has the field entirely absent, not an empty array. Callers reading a
+     * live session MUST pass `false` here (computed from the raw metadata BEFORE defaulting
+     * `fingerprints` to `[]`), otherwise every currently-occurring error gets misreported as F8
+     * "resolved" simply because the fingerprint scan hasn't run yet. Defaults to `true` so
+     * callers that only ever run post-finalize (e.g. `session-signal-surfacing.ts`, which fires
+     * on session end) keep their existing behavior unchanged.
+     */
+    readonly currentSessionFinalized?: boolean;
 }
 
 export interface NewErrorRegression {
@@ -106,17 +117,26 @@ export function detectRegressions(input: RegressionDetectionInput): RegressionDe
         }
     }
 
-    // F8: fingerprints in past but not in current
+    /* F8: fingerprints in past but not in current — bug_030 fix.
+       An empty `currentFingerprints` set is ambiguous: it either means "no errors this session"
+       (legitimate F8 candidate) or "the fingerprint scan hasn't run yet because the session is
+       still live" (every past error would falsely appear "resolved"). Only trust an empty
+       current set when the caller confirms the session is finalized; a live session with zero
+       fingerprints scanned so far skips F8 entirely rather than emit false "Resolved" claims. */
+    const currentSessionFinalized = input.currentSessionFinalized ?? true;
+    const canTrustDisappearance = input.currentFingerprints.length > 0 || currentSessionFinalized;
     const disappearingErrors: DisappearingError[] = [];
-    for (const [hash, info] of pastByHash) {
-        if (!currentHashes.has(hash)) {
-            disappearingErrors.push(info);
+    if (canTrustDisappearance) {
+        for (const [hash, info] of pastByHash) {
+            if (!currentHashes.has(hash)) {
+                disappearingErrors.push(info);
+            }
         }
+        /* Sort disappearing by recency (most recent first) so the user sees "recently fixed"
+           before "fixed a while ago". New errors stay in the order they appeared in the current
+           session — order maps to first-occurrence time which is useful debugging context. */
+        disappearingErrors.sort((a, b) => a.sessionsAgo - b.sessionsAgo);
     }
-    /* Sort disappearing by recency (most recent first) so the user sees "recently fixed" before
-       "fixed a while ago". New errors stay in the order they appeared in the current session —
-       order maps to first-occurrence time which is useful debugging context. */
-    disappearingErrors.sort((a, b) => a.sessionsAgo - b.sessionsAgo);
 
     return { newErrors, disappearingErrors };
 }

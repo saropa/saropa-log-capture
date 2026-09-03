@@ -1,6 +1,6 @@
 # Bug 030 — Signal false positives (resolved claims, build-noise bursts, stale ANR cache)
 
-## Status: Open
+## Status: Fixed (pending review)
 
 ## Severity: Medium
 
@@ -34,10 +34,39 @@ Signals feature assumes session-end data is available mid-session; the burst det
 3. Add a TTL to the ANR cache, or invalidate it on new lines rather than only on `sessionId` change.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+
+Sub-issue 1 (false "Resolved" claims) was already fixed in an earlier pass. This pass
+covers sub-issues 2 and 3:
+
+**2. Build-noise burst suppression** (`viewer-root-cause-hints-embed-collect-bursts.ts`):
+Added `rchBuildNoiseRe`, a regex matching the stable markers Flutter/Gradle/Xcode print
+around a build+launch cycle (`BUILD SUCCESSFUL`, `BUILD FAILED`, `Running Gradle task`,
+`Gradle build`, `Xcode build done`, `Launching lib/main.dart`, `Installing build/`,
+`Syncing files to device`, `> Task :`, `CocoaPods`, `Signing app bundle`,
+`Debug service listening on`). Every line entering the F9 silence-burst window is now
+tested against it; a `pendingBurst.buildNoise` flag is set the first time any line in
+the accumulating burst matches, and every emission point (mid-loop silence-close,
+window-exceeded close, end-of-call trailing flush) now additionally requires
+`!pendingBurst.buildNoise` before pushing to `silenceBursts`. A burst that starts on or
+passes through a build/launch marker line is suppressed outright rather than emitted
+as a "possible UI freeze".
+
+**3. Stale ANR cache** (`signal-host-collectors.ts`): `collectAnrRisk()` used to cache
+keyed only on the file's URI, cleared solely on `sessionId` change — since the log file
+keeps the same URI for the whole live session, an ANR appearing after the initial cache
+fill was invisible until the session was reopened. The cache key is now
+`` `${uriStr}|${stat.size}` ``, read via a cheap `vscode.workspace.fs.stat()` call before
+the (expensive) full `readFile()` + `scanAnrRisk()` pass — any growth or truncation of
+the file changes the byte size and invalidates the cache on the very next check, without
+depending on a session-reset hook firing correctly.
 
 ## Tests Added
-<!-- List new or updated test files. -->
+
+No new automated test — `collectBurstSignals()` is plain JS embedded via a TypeScript
+template literal, exercised through the webview runtime like the rest of the root-cause
+hint collectors. `collectAnrRisk()`'s cache-key change was verified by inspection
+(stat-based key computation is a small, direct diff) and by `npx tsc --noEmit`
+(0 errors) plus the full `npm run compile` gate chain passing.
 
 ## Commits
 <!-- Add commit hashes as fixes land. -->

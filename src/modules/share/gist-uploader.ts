@@ -5,7 +5,8 @@
 import * as vscode from 'vscode';
 import type { Collection } from '../collection/collection-types';
 import { exportCollectionToBuffer } from '../export/slc-bundle';
-import { getGitHubToken } from './github-auth';
+import { getGitHubToken, handleGitHubApiUnauthorized } from './github-auth';
+import { logExtensionError } from '../misc/extension-logger';
 import type { GistShareResult } from './share-types';
 import { buildItemUrl } from '../marketplace-url';
 
@@ -72,6 +73,9 @@ export async function shareViaGist(
     });
 
     if (!createRes.ok) {
+        // A revoked/expired token (401) must be cleared here — otherwise it stays cached
+        // and every retry fails identically with no path back to a working share (bug_044).
+        await handleGitHubApiUnauthorized(context, createRes);
         const errBody = await createRes.json().catch(() => ({})) as { message?: string };
         throw new Error(errBody.message ?? 'Failed to create gist');
     }
@@ -94,7 +98,11 @@ export async function shareViaGist(
     });
 
     if (!patchRes.ok) {
-        // Non-fatal: gist was created, just no README
+        // Non-fatal: gist was created, just no README. Still clear a revoked token so the
+        // NEXT share doesn't repeat the same silent failure with stale credentials.
+        await handleGitHubApiUnauthorized(context, patchRes).catch((err: unknown) => {
+            logExtensionError('gist-uploader', err instanceof Error ? err : String(err));
+        });
     }
 
     const rawUrl = gist.files['collection.slc.b64']?.raw_url ?? '';

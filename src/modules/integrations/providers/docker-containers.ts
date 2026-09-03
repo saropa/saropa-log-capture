@@ -4,16 +4,24 @@
  * for the session time range and write sidecar.
  */
 
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import type { IntegrationProvider, IntegrationContext, IntegrationEndContext, Contribution } from '../types';
 
 function isEnabled(context: IntegrationContext): boolean {
     return (context.config.integrationsAdapters ?? []).includes('docker');
 }
 
+/**
+ * WHY execFileSync over execSync: `runtime` and `args` are ultimately derived
+ * from workspace settings (container name pattern, container id). execSync
+ * concatenates them into a single string that a shell re-parses, so a value
+ * containing `;`, `&&`, or backticks could execute arbitrary commands.
+ * execFileSync passes `args` as a literal argv array — no shell is invoked,
+ * so shell metacharacters in any element are inert.
+ */
 function runCli(runtime: string, args: string[], timeoutMs: number): { stdout: string; ok: boolean } {
     try {
-        const out = execSync(`${runtime} ${args.join(' ')}`, {
+        const out = execFileSync(runtime, args, {
             encoding: 'utf-8',
             timeout: timeoutMs,
             maxBuffer: 4 * 1024 * 1024,

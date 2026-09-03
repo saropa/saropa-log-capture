@@ -2,6 +2,7 @@
  * Build/CI API fetchers: GitHub Actions, Azure DevOps, GitLab CI.
  */
 
+import * as vscode from 'vscode';
 import type { IntegrationContext } from '../types';
 import type { BuildInfo } from './build-ci';
 import { parseGitHubRemote } from '../../source/link-helpers';
@@ -112,6 +113,25 @@ export async function fetchAzureBuildInfo(
     };
 }
 
+const GITLAB_DEFAULT_BASE_URL = 'https://gitlab.com';
+
+/**
+ * Resolve the GitLab base URL to use for the pipelines request.
+ *
+ * WHY: `gitlabBaseUrl` is a workspace-scoped setting, so a malicious repo can
+ * commit a `.vscode/settings.json` pointing it at an attacker-controlled host.
+ * Because the caller attaches the `PRIVATE-TOKEN` header to every request,
+ * honoring an untrusted, non-default host would exfiltrate the user's GitLab
+ * personal access token on the next session start. Only trusted workspaces
+ * (see https://code.visualstudio.com/api/extension-guides/workspace-trust)
+ * may override the default host; untrusted workspaces silently fall back.
+ */
+function resolveTrustedGitLabBaseUrl(gitlabBaseUrl: string | undefined): string {
+    const isOverride = !!gitlabBaseUrl && gitlabBaseUrl !== GITLAB_DEFAULT_BASE_URL;
+    const base = isOverride && !vscode.workspace.isTrusted ? GITLAB_DEFAULT_BASE_URL : (gitlabBaseUrl ?? GITLAB_DEFAULT_BASE_URL);
+    return base.replace(/\/$/, '');
+}
+
 /** GitLab CI: GET /api/v4/projects/{id}/pipelines?ref={branch}&per_page=1 */
 export async function fetchGitLabBuildInfo(
     context: IntegrationContext,
@@ -123,7 +143,7 @@ export async function fetchGitLabBuildInfo(
     const { gitlabProjectId, gitlabBaseUrl } = context.config.integrationsBuildCi;
     const projectId = gitlabProjectId?.trim();
     if (!projectId) { return undefined; }
-    const base = (gitlabBaseUrl ?? 'https://gitlab.com').replace(/\/$/, '');
+    const base = resolveTrustedGitLabBaseUrl(gitlabBaseUrl);
     const url = `${base}/api/v4/projects/${encodeURIComponent(projectId)}/pipelines?ref=${encodeURIComponent(branch)}&per_page=1`;
     const res = await fetchWithTimeout(url, {
         method: 'GET',

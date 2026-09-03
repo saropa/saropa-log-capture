@@ -1,6 +1,6 @@
 # Bug 031 — Signal report rendering issues (l10n overwrite, oversized state, template ID mismatch)
 
-## Status: Open
+## Status: Fixed (pending review)
 
 ## Severity: Medium
 
@@ -35,10 +35,36 @@ Three issues in signal report rendering:
 3. Fix the template ID constant so emission and lookup match.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+
+Fix 1 (l10n overwrite) and fix 3 (template ID mismatch) were already fixed in an
+earlier pass. This pass covers fix 2 (50 MB base64 state bloat):
+
+- `signal-report-panel.ts`: `createPanel()` now takes the log's `fileUri` and sets
+  `localResourceRoots: [screenshotDirUri(fileUri.fsPath)]` on the webview panel
+  (previously `[]`, which blocked any local-resource loading). `showSignalReport()` and
+  `populateSections()` pass `panel.webview` through to `buildScreenshotSectionHtml()`.
+- `signal-report-screenshots.ts`: `buildThumbHtml()` no longer reads the PNG off disk
+  and base64-encodes it — it builds the `<img>` `src` from
+  `webview.asWebviewUri(pngUri)` instead, so the browser streams the file directly and
+  nothing but a short resource-reference string enters the section HTML (or the
+  `setState` payload it feeds on every `sectionReady` event). `buildScreenshotSectionHtml()`
+  now takes the `webview` parameter and builds thumbnail cards synchronously (no disk
+  read to await).
+- The before/after diff pair (`buildDiffBlockHtml()` / `readImageDataUri()`) is
+  **unchanged** — it stays base64-inlined because the shell script reads its pixels off
+  a `<canvas>` to compute the change-heat overlay, which needs a same-origin/data-URI
+  image source; a `vscode-webview-resource:` URI would taint the canvas for pixel
+  reads. This matches the exception called out in the bug's proposed fix.
+- Net effect: worst case per report went from ~50 MB (3 thumbnails + 2 diff images, all
+  base64, all re-persisted via `setState` on every section refresh) to ~20 MB
+  (diff pair only) with the 3 thumbnails now a handful of URI strings.
 
 ## Tests Added
-<!-- List new or updated test files. -->
+
+No new automated test — the change is a webview resource-loading plumbing change with
+no pure-function surface to unit test (`buildThumbHtml`/`buildScreenshotSectionHtml`
+depend on a live `vscode.Webview`). Verified via `npx tsc --noEmit` (0 errors) and
+`npm run compile` (all 12 gates pass, including `verify:dist-size`).
 
 ## Commits
 <!-- Add commit hashes as fixes land. -->

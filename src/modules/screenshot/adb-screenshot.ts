@@ -14,6 +14,23 @@
  */
 
 import { spawn } from 'node:child_process';
+import * as path from 'node:path';
+import { existsSync } from 'node:fs';
+
+/**
+ * Resolve the adb executable: prefer PATH, fall back to ANDROID_HOME or
+ * ANDROID_SDK_ROOT's platform-tools/ if the bare command would ENOENT.
+ */
+function resolveAdb(): string {
+    for (const envVar of ['ANDROID_HOME', 'ANDROID_SDK_ROOT']) {
+        const sdkDir = process.env[envVar];
+        if (!sdkDir) { continue; }
+        const candidate = path.join(sdkDir, 'platform-tools', process.platform === 'win32' ? 'adb.exe' : 'adb');
+        if (existsSync(candidate)) { return candidate; }
+    }
+    // Fall back to bare 'adb' — will throw ENOENT if not on PATH.
+    return 'adb';
+}
 
 /** Bound a hung adb (device asleep, USB drop) — same order as the VM capture timeout. */
 const CAPTURE_TIMEOUT_MS = 7000;
@@ -37,7 +54,7 @@ function looksLikePng(buf: Buffer): boolean {
 export function captureAdbScreenshot(deviceSerial: string): Promise<Uint8Array> {
     return new Promise<Uint8Array>((resolve, reject) => {
         const args = [...(deviceSerial ? ['-s', deviceSerial] : []), 'exec-out', 'screencap', '-p'];
-        const child = spawn('adb', args, { windowsHide: true });
+        const child = spawn(resolveAdb(), args, { windowsHide: true });
         const out: Buffer[] = [];
         const err: Buffer[] = [];
         let settled = false;

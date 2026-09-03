@@ -1,6 +1,6 @@
 # Bug 002 — Security: workspace-setting-driven exfiltration and command injection
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: Critical
 
@@ -33,10 +33,20 @@ Integration providers trust workspace settings as safe input without sanitizatio
 - Validate `gitlabBaseUrl` against an allowlist or require explicit user confirmation the first time a non-default host is used.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+
+- `src/modules/integrations/providers/build-ci-api.ts`: added `resolveTrustedGitLabBaseUrl()`, which gates a non-default `gitlabBaseUrl` on `vscode.workspace.isTrusted`, falling back to the hardcoded `GITLAB_DEFAULT_BASE_URL` in untrusted workspaces so the `PRIVATE-TOKEN` header can never be sent to an attacker-controlled host committed via `.vscode/settings.json`.
+- `src/modules/integrations/providers/docker-containers.ts`: replaced `execSync` string concatenation with `execFileSync(runtime, args, …)`, passing `runtime`/`containerId`/`containerNamePattern`-derived values as a literal argv array so shell metacharacters are inert.
+- `src/modules/integrations/providers/linux-logs.ts`: replaced `exec`/joined-string invocation with `execFile` (promisified); `wslDistro` is passed as a discrete `-d <distro>` argv entry, never interpolated into a shell-string template.
+- `src/modules/integrations/providers/windows-event-log.ts`: replaced `execSync` string concatenation with `execFileSync('powershell', [...])`, and added `escapePowerShellSingleQuoted()` to double any embedded `'` in workspace-scoped event-log names before they are embedded in the PowerShell `@('...')` literal.
 
 ## Tests Added
-<!-- List new or updated test files and what they verify. -->
+
+- `src/test/modules/integrations/bug-002-injection-regression.test.ts` — static regression guard (a live `child_process` monkey-patch was attempted but `child_process`'s exports are non-configurable in this runtime and cannot be swapped). Verifies:
+  - `docker-containers.ts` uses `execFileSync` and never `execSync` with a template-string command, and no longer imports `execSync`.
+  - `linux-logs.ts` uses `execFile` and never joins argv into a single command string or interpolates `wslDistro` into a `wsl ${...}` template.
+  - `windows-event-log.ts` uses `execFileSync` and never launches `powershell` via a concatenated command string; every log name is routed through `escapePowerShellSingleQuoted()` before being quoted into the script.
+  - `build-ci-api.ts` gates `gitlabBaseUrl` on `vscode.workspace.isTrusted`, defines a hardcoded default host to fall back to, and defines the trust-gate function textually before the `PRIVATE-TOKEN` header is attached (so a future reorder can't silently bypass the gate).
+  - Verified passing via a Mocha-global shim over the compiled `out/test/...` output (all 5 assertions pass).
 
 ## Commits
 <!-- Add commit hashes as fixes land. -->
