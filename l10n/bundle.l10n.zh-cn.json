@@ -28,7 +28,6 @@
   "Permanently delete {0} trashed file(s)? This cannot be undone.": "要永久删除 {0} 个已删除的文件吗？此操作无法撤消。",
   "Permanently deleted {0} file(s) from trash.": "已从回收站中永久删除 {0} 个文件。",
   "Marked \"{0}\" for comparison. Select another log to compare.": "标记为“{0}”以进行比较。选择另一个日志进行比较。",
-  "No log marked. Right-click a log and \"Mark for Comparison\" first.": "没有标记日志。右键单击日志并首先“标记进行比较”。",
   "Cannot compare a log with itself.": "无法将日志与其自身进行比较。",
   "Need at least 2 logs to compare.": "至少需要 2 个日志进行比较。",
   "Select FIRST log to compare": "选择第一个日志进行比较",
@@ -1614,7 +1613,6 @@
   "...and {0} more": "...和更多的PH0__",
   "; process: {0} MB": "; 过程: {0} MB 的",
   "ACTIVE": "资产是可以使用的.",
-  "AI explanation is not available": "人工智能解释不提供.",
   "ANR Rate": "美国人自动化率 (ANR) 的利率",
   "ANR patterns: {0}": "其他国家无线电模式: {0}",
   "ANR risk ({0})": "美国国家银行风险 ({0})",
@@ -2250,5 +2248,7 @@
   "No active capture session. Start debugging to begin capturing.": "无活动的捕获会话。 开始调试以开始捕获。",
   "Open the Log Viewer first.": "先打开日志查看器",
   "Right-click a log in the Logs panel to use this command.": "在日志面板中右键点击一个日志以使用此命令。",
-  "This will send log data (the error line, surrounding context, and stack trace) to an AI language model. Continue?": "这将把日志数据（错误行、周围上下文和堆栈跟踪）发送到一个AI语言模型。 继续？"
+  "This will send log data (the error line, surrounding context, and stack trace) to an AI language model. Continue?": "这将把日志数据（错误行、周围上下文和堆栈跟踪）发送到一个AI语言模型。 继续？",
+  "GitHub token cleared. You will be prompted to re-authenticate on the next share or import.": "GitHub标记已清除。 您将在下次共享或导入时被提示重新认证。",
+  "{0} of {1} settings reset to defaults; {2} failed. See the Saropa Log Capture output channel for details.": "{0} 的 {1} 设置已重置为默认值；{2} 失败。 查看 Saropa Log Capture 输出通道以获取详细信息。"
 }
