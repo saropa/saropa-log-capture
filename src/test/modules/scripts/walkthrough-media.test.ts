@@ -37,7 +37,7 @@ suite("walkthrough media paths (generated-adjacent, verified at compile)", () =>
                 if (!markdown) { continue; }
                 // media/walkthrough/*.md is the only location .vscodeignore leaves in the
                 // .vsix for these files (plans/** and docs/** are both excluded) — see
-                // bugs/bug_001_walkthrough-markdown-missing-from-vsix.md for the incident
+                // plans/history/2026.09/2026.09.03/bug_001_walkthrough-markdown-missing-from-vsix.md for the incident
                 // this guards against.
                 assert.ok(
                     markdown.startsWith("media/walkthrough/"),

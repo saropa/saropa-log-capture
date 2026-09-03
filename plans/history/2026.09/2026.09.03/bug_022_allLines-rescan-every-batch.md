@@ -1,6 +1,6 @@
 # Bug 022 — allLines rescan on every batch
 
-## Status: Fixed (pending review)
+## Status: Closed
 
 ## Severity: High
 
