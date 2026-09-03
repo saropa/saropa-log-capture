@@ -5,7 +5,7 @@ All your debug logs are saved and organized for easy access.
 ## Features
 
 - **Persistent Storage** - Logs saved to `reports/` folder
-- **Auto-Retention** - Configurable max files (default: 10)
+- **Auto-Retention** - Configurable max files (default: unlimited; oldest logs move to trash once the limit is set and reached)
 - **File Splitting** - Large logs can split automatically
 - **Metadata** - File size, line count, duration shown
 
