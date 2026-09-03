@@ -14,6 +14,12 @@ function setAnnotation(idx, text) {
     } else {
         annotations[idx] = text.trim();
     }
+    /* bug_027: an added/removed annotation changes this row's calcItemHeight() result
+       (ANNOTATION_HEIGHT is added when annotations[idx] is set), so the prefix-sum
+       heights recalcHeights() maintains are now stale. Rebuild them BEFORE
+       renderViewport reads totalHeight/row offsets, or scroll position drifts from the
+       actual DOM as more rows get annotated. */
+    recalcHeights();
     renderViewport(true);
 }
 
@@ -32,7 +38,29 @@ function handleLoadAnnotations(msg) {
         var ann = msg.annotations[i];
         annotations[ann.lineIndex] = ann.text;
     }
+    /* bug_027: reload-restored annotations grow their rows' heights the same way
+       setAnnotation does, but this path replaces the whole annotations map at once —
+       recalcHeights() must run before renderViewport so the prefix sums account for
+       every restored annotation, not just the ones from this session. */
+    recalcHeights();
     renderViewport(true);
+}
+
+/* trimData() splices excessCount rows off the head of allLines; the annotations map is
+   keyed by the OLD index, so every surviving key must shift down by excessCount or the
+   annotation renders under a different (unrelated) row after the trim (bug_025). Keys
+   whose row was itself trimmed away (new index negative) are dropped — a note attached
+   to a row that no longer exists has nowhere left to render. */
+function adjustAnnotationsAfterTrim(excessCount) {
+    if (excessCount <= 0) return;
+    var shifted = {};
+    var hasAny = false;
+    for (var key in annotations) {
+        if (!Object.prototype.hasOwnProperty.call(annotations, key)) continue;
+        var newIdx = parseInt(key, 10) - excessCount;
+        if (newIdx >= 0) { shifted[newIdx] = annotations[key]; hasAny = true; }
+    }
+    annotations = hasAny ? shifted : {};
 }
 
 function promptAnnotation(idx) {

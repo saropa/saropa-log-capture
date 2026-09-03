@@ -28,6 +28,8 @@ export interface ViewerTarget {
   appendLiveLineFromBroadcast(line: PendingLine, rawText: string): void;
   /** Pop-out: true while hydrating from disk so addLine can buffer raw LineData. */
   isLiveCaptureHydrating?(): boolean;
+  /** True when the webview panel is visible — lets broadcaster skip expensive HTML build. */
+  isVisible?(): boolean;
   clear(): void;
   setPaused(paused: boolean): void;
   setFilename(filename: string): void;
@@ -48,7 +50,9 @@ export interface ViewerTarget {
   setLogContextInfo(info: import("../provider/viewer-log-context").LogContextInfo): void;
   setSessionInfo(info: Record<string, string> | null): void;
   setHasPerformanceData(has: boolean): void;
-  sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean }): void;
+  // scanFailed (bug_020) lets the webview distinguish "directory scan failed" from
+  // "no sessions on disk" — both otherwise arrive as an empty `sessions` array.
+  sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean; scanFailed?: boolean }): void;
   sendSessionListLoading(folderPath: string): void;
   sendDisplayOptions(options: SessionDisplayOptions): void;
   setSessionActive(active: boolean): void;

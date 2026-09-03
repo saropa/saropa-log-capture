@@ -69,7 +69,14 @@ function openGotoLine() {
     if (!gotoOverlay || !gotoInput) return;
     gotoSavedScroll = logEl ? logEl.scrollTop : 0;
     gotoInput.value = '';
-    gotoInput.placeholder = vt('viewer.gotoLine.rangePlaceholder', allLines.length);
+    /* Hint the range in gutter numbers (sourceLineNo), matching what the user actually reads off
+       the gutter and types — allLines.length (the array size) would mislabel the range once
+       synthetic rows push sourceLineNo past the array length (bug_026). */
+    var maxSourceLine = allLines.length;
+    for (var gi = allLines.length - 1; gi >= 0; gi--) {
+        if (allLines[gi].sourceLineNo !== undefined) { maxSourceLine = allLines[gi].sourceLineNo; break; }
+    }
+    gotoInput.placeholder = vt('viewer.gotoLine.rangePlaceholder', maxSourceLine);
     gotoOverlay.classList.add('visible');
     gotoInput.focus();
 }
@@ -102,11 +109,23 @@ function scrollToLineNumber(num) {
     renderViewport(false);
 }
 
+function scrollToSourceLineNumber(targetLine) {
+    /* The overlay's input shows/accepts the gutter number (sourceLineNo), not an allLines array
+       index — those two drift apart once synthetic rows (markers, stack headers) are interleaved
+       (bug_026). Resolve the typed number to its array position first, then reuse the existing
+       array-index scroller so behavior (jump-button, autoScroll reset) stays identical. */
+    if (targetLine < 1 || allLines.length === 0 || window.isContextMenuOpen) return;
+    if (typeof findAllLinesIndexBySourceLine !== 'function') return;
+    var idx = findAllLinesIndexBySourceLine(targetLine);
+    if (idx < 0) return;
+    scrollToLineNumber(idx + 1);
+}
+
 if (gotoInput) {
     gotoInput.addEventListener('input', function() {
         this.value = this.value.replace(/[^0-9]/g, '');
         var num = parseInt(this.value, 10);
-        if (!isNaN(num) && num > 0) scrollToLineNumber(num);
+        if (!isNaN(num) && num > 0) scrollToSourceLineNumber(num);
     });
     gotoInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') { e.preventDefault(); closeGotoLine(false); }

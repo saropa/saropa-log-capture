@@ -1,6 +1,6 @@
 # Bug 045 — Stale "Prev/Next" wording in capture diagnostic message
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: Low
 
@@ -54,7 +54,7 @@ Then grep for other survivors of the stepper removal:
 list pagination respectively) and must not be changed.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+`src/modules/session/session-manager-routing.ts` (~line 84) now reads: "If the open log looks empty, press [ or ] in the viewer, or pick another log from the Logs panel." — matching the Proposed Fix wording exactly. The two other `Prev/Next` matches in the repo (`run-boundaries.ts:68`, `viewer-session-panel-rendering.ts`) are the legitimate run-navigation and session-list-pagination usages the report called out as not to be changed, and neither was touched.
 
 ## Tests Added
 <!-- List new or updated test files. -->
