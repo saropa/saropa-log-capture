@@ -1,6 +1,6 @@
 # Bug 041 — Bug report generation pipeline issues
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: Medium
 
@@ -40,10 +40,34 @@ Each is an independent gap in error handling and pattern matching:
 4. Clear the token on 401 responses, not just on session change.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+
+This pass verified and closed sub-items 1 and 3 only (already implemented before this session);
+sub-items 2 and 4 are tracked separately.
+
+1. **Flutter banner detected** — confirmed fixed. `extractStackTrace()` in
+   `src/modules/bug-report/bug-report-collector-helpers.ts` skips `═══`/`───` decorative
+   separator lines instead of breaking the frame-extraction loop on them (see the `Bug_041`
+   comment at the skip check). The crash-detection side (`src/modules/flow-map/flow-map-log-parser.ts`)
+   independently matches the banner with a deliberately loose `Exception caught by\s+\w`
+   pattern that also covers non-"library"-suffixed variants like "Exception caught by gesture".
+3. **adb PATH-only resolution** — confirmed fixed. `resolveAdb()` in
+   `src/modules/screenshot/adb-screenshot.ts` now checks `ANDROID_HOME` and
+   `ANDROID_SDK_ROOT` platform-tools/ before falling back to bare `adb` on PATH.
+
+Item 4 (stale GitHub token) is the exact subject of bug_044 and is fixed there
+(`handleGitHubApiUnauthorized()` in `src/modules/share/github-auth.ts`, now also wired into
+`src/modules/share/gist-importer.ts`'s `importFromGist()`).
+
+Item 2 (blocking notification) was not part of this pass's scope — current bug-report-panel.ts
+notification calls (`msg.bugReportCopied`, `msg.reportSavedTo`) are already fire-and-forget
+(no blocking `await`), so it may already be resolved, but was not independently re-verified
+against the original report-generation code path here.
 
 ## Tests Added
-<!-- List new or updated test files. -->
+
+None this pass — both verified items are edge cases in external tool integration
+(Flutter's exact banner wording; Android SDK installed without PATH entry) and were assessed
+as not warranting new coverage in this pass.
 
 ## Commits
 <!-- Add commit hashes as fixes land. -->
