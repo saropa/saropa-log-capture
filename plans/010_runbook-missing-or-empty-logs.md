@@ -2,7 +2,7 @@
 
 ## Still empty or "1 line"? Do this first
 
-- **Use Prev/Next** in the log viewer. The extension often creates two log files (e.g. Dart/Flutter parent and child); output is routed to the **most recent** one. The file you have open may be the older, empty one — switch to the other log.
+- **Switch between logs** in the viewer (use the log selector in the toolbar). The extension often creates two log files (e.g. Dart/Flutter parent and child); output is routed to the **most recent** one. The file you have open may be the older, empty one — switch to the other log.
 - **Turn on diagnostics:** Settings → `saropaLogCapture.diagnosticCapture` = `true`, run again, then **Output → Saropa Log Capture**. If you see "routing output to most recent session" or "new log session created" twice, use Prev/Next to open the log that received the output.
 
 ---

@@ -1,8 +1,8 @@
 # Deferred: Investigation Groups — Logs-panel tree-parent rendering
 
 **Parent feature:** Investigation Groups (cross-session-analysis idea #2), shipped command-driven on
-2026-06-25. See [../cross-session-analysis-remaining.md](../cross-session-analysis-remaining.md) §2
-and commit `961b3794`.
+2026-06-25. See [../history/2026.06/2026.06.25/cross-session-analysis-remaining.md](../history/2026.06/2026.06.25/cross-session-analysis-remaining.md) §2
+and commit `890dee1b`.
 
 ## What is deferred
 

@@ -123,7 +123,7 @@ plans).
 
 **Scope:** (B) VS Code extension (TypeScript) + (C) plans/docs. No Flutter/Dart app code.
 
-### Item 1 — Smart Context Boundaries (commit `c172db16`)
+### Item 1 — Smart Context Boundaries (commit `ae054ad0`)
 
 The bug report's Log Context section previously surfaced only the largest pause before an error
 (idea #15). It now also locates where the failing operation logically begins.
@@ -136,7 +136,7 @@ using blank lines and timestamp gaps as strong separators (nearest wins) and a s
 reported twice. The fixed window is still shown in full — this annotates, it does not shrink.
 Verified by 13 unit cases ([time-travel-context.test.ts](../src/test/modules/bug-report/time-travel-context.test.ts)).
 
-### Item 2 — Investigation Groups (commit `961b3794`)
+### Item 2 — Investigation Groups (commit `890dee1b`)
 
 A curated, human-named layer over automatic session grouping: a titled, annotated bundle of related
 sessions, non-destructive (a log can belong to an auto group and any number of investigations).
