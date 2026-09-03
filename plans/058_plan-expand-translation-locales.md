@@ -82,13 +82,20 @@ than a loss.
 2. **Runtime bundles (OPERATOR-RUN ONLY — see the prohibition below):** run
    `scripts/translate_l10n.py` and scope it to the new locales. 13 × 2244 ≈
    **29,000 strings**; all 15 ≈ 33,700.
-3. **Static NLS files:** create `package.nls.<locale>.json` for each of the 13.
-   **Open question, unchanged and still unanswered:** nothing in `scripts/`
-   currently *writes* a `package.nls.<locale>.json` — `verify-nls` only checks
-   alignment and `sync-nls-title-keys.js` only aligns keys. Either extend the
-   tooling to translate the NLS key set through the same engine, or accept
-   hand-translation. **Resolve this before starting Phase 1** — it decides
-   whether Phase 1 is one operator run or thirteen manual files.
+3. **Static NLS files — RESOLVED 2026-09-03: extend the script.** Nothing in
+   `scripts/` currently *writes* `package.nls.<locale>.json` (`verify-nls` only
+   checks alignment; `sync-nls-title-keys.js` only aligns keys). **Teach the
+   translate script to emit the chrome files through the same Qwen engine that
+   produces the runtime bundles**, so one operator run covers both file types.
+
+   Rejected: hand-translating 13 files (repeats for every future locale, and no
+   gate catches drift — this is how chrome coverage decayed to 22–37% on the
+   existing 10), and shipping viewer-only with no chrome files (leaves the
+   palette and settings English by construction).
+
+   This tooling work is a **prerequisite** for the translation run, not a
+   parallel task. Build and verify it against one existing locale before
+   running any new ones.
 4. **Gates:** `npm run verify-nls`, `npm run verify:nls-coverage`,
    `npm run compile`, and the `translate_l10n.py` audit all clean.
 
