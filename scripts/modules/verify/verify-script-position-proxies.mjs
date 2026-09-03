@@ -24,25 +24,9 @@ const REPO_ROOT = path.resolve(__dirname, '..', '..', '..');
 const TEST_DIR = path.join(REPO_ROOT, 'src', 'test');
 
 /**
- * Var-name pairs that are a known, deliberate single-region idiom, not a cross-branch ordering
- * assumption — e.g. `start = script.indexOf(anchor)` / `end = script.indexOf('\n}', start)` /
- * `assert.ok(end > start, ...)` to extract one balanced function body (see
- * viewer-dart-frame-format.test.ts, viewer-stack-detection-parity.test.ts). Comparing these two
- * is validating a single extraction window, not asserting two different branches' relative
- * order, so it is not a position-proxy risk in the sense this audit is looking for.
- */
-const SINGLE_REGION_PAIR = new Set(['start,end', 'end,start']);
-
-/**
  * @typedef {{ file: string, line: number, kind: 'order' | 'window', text: string,
  *   suggestion?: string }} Finding
  */
-
-/** How many lines around a flagged comparison count as "nearby" when checking for an existing
- *  occurrence-count guard (`.split(anchor).length - 1 === N` — the pattern manually added to
- *  viewer-stack-frame-click.test.ts in cdf0555e) so this audit doesn't re-suggest a guard that's
- *  already there. */
-const GUARD_SEARCH_WINDOW = 5;
 
 /** Extract the anchor string literal from an indexOf()/lastIndexOf() call, or null. */
 function anchorLiteral(line) {
@@ -50,13 +34,34 @@ function anchorLiteral(line) {
     return m ? m[2] : null;
 }
 
-/** True if a `.split(<literal>).length` occurrence-count guard already exists near lineIdx. */
-function hasNearbyGuard(lines, lineIdx, anchors) {
-    const from = Math.max(0, lineIdx - GUARD_SEARCH_WINDOW);
-    const to = Math.min(lines.length, lineIdx + GUARD_SEARCH_WINDOW + 1);
-    const window = lines.slice(from, to).join('\n');
-    if (!/\.split\(.*\)\.length/.test(window)) { return false; }
-    return anchors.some((a) => a && window.includes(a));
+/**
+ * True when varA/varB are a single-region extraction pair rather than a cross-branch ordering
+ * assumption — i.e. somewhere in the file they are both used together as `.slice(varA, varB`
+ * (or `varB` offset by a literal, e.g. `.slice(varA, varB + 2)`). That call is the actual
+ * evidence of "these two indices bound one extracted region", so this checks the real usage
+ * instead of hardcoding the `start`/`end` names the idiom happens to use today (see
+ * viewer-dart-frame-format.test.ts, viewer-stack-detection-parity.test.ts) — any future pair
+ * with different names but the same `.slice(a, b` shape is caught too.
+ */
+function isSingleRegionPair(fullText, varA, varB) {
+    const sliceRe = new RegExp(`\\.slice\\(\\s*${varA}\\s*,\\s*${varB}\\b`);
+    return sliceRe.test(fullText);
+}
+
+/**
+ * True if a `.split(<literal>).length` occurrence-count guard for this anchor already exists
+ * anywhere in the file — scanning the whole file (not just a line window around the finding)
+ * because a shared guard is sometimes declared once in a `setup()`/helper and reused by several
+ * assertions further down.
+ */
+function hasGuard(fullText, anchor) {
+    if (!anchor) { return false; }
+    const guardRe = new RegExp(`\\.split\\(\\s*['"\`]${escapeRegExp(anchor)}['"\`]\\s*\\)\\.length`);
+    return guardRe.test(fullText);
+}
+
+function escapeRegExp(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function listTestFiles() {
@@ -75,10 +80,11 @@ function listTestFiles() {
 /**
  * A line is an "order" risk when it compares two indexOf() results (e.g. `idxA < idxB`) to
  * assert one branch appears before another in the concatenated script — this only holds while
- * the source files concatenate in the current order. Excludes the known start/end
- * single-region idiom (see SINGLE_REGION_PAIR).
+ * the source files concatenate in the current order. Excludes single-region extraction pairs
+ * (see isSingleRegionPair) regardless of what the two variables happen to be named.
  */
 function findOrderRisks(lines, file, findings) {
+    const fullText = lines.join('\n');
     const idxVarRe = /\b(?:const|let)\s+(\w+)\s*=\s*\w*[Ss]cript\.(?:indexOf|lastIndexOf)\(/;
     const idxVars = new Set();
     const anchorOf = new Map();
@@ -91,13 +97,14 @@ function findOrderRisks(lines, file, findings) {
     const cmpRe = new RegExp(`\\b(${varAlt})\\s*([<>]=?)\\s*(${varAlt})\\b`);
     lines.forEach((line, i) => {
         const m = line.match(cmpRe);
-        if (!m || SINGLE_REGION_PAIR.has(`${m[1]},${m[3]}`)) { return; }
+        if (!m) { return; }
+        if (isSingleRegionPair(fullText, m[1], m[3]) || isSingleRegionPair(fullText, m[3], m[1])) { return; }
         const anchors = [anchorOf.get(m[1]), anchorOf.get(m[3])];
         const finding = { file, line: i + 1, kind: 'order', text: line.trim() };
-        if (!hasNearbyGuard(lines, i, anchors)) {
-            finding.suggestion = anchors
-                .filter(Boolean)
-                .map((a) => `assert.strictEqual(script.split(${JSON.stringify(a)}).length - 1, /* TODO fill in */ 1, 'expected exactly one occurrence of ${JSON.stringify(a)}');`)
+        const unguarded = anchors.filter((a) => a && !hasGuard(fullText, a));
+        if (unguarded.length > 0) {
+            finding.suggestion = unguarded
+                .map((a) => `assert.strictEqual(script.split(${JSON.stringify(a)}).length - 1, /* TODO: real expected count, do not assume 1 */ 'FILL_IN_COUNT', 'expected N occurrences of ${JSON.stringify(a)}');`)
                 .join('\n      ');
         }
         findings.push(finding);
