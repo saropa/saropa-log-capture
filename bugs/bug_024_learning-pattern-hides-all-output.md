@@ -1,6 +1,6 @@
 # Bug 024 — Learning pattern can hide all output
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: High
 
@@ -29,7 +29,14 @@ The LCP threshold is too short (12 chars), and there's no validation that the re
 Increase the minimum LCP length. Add a guard: if a candidate pattern matches >50% of recent app-category lines, reject it with a warning. Add an "undo last learning" action.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+
+Verified both pieces of the proposed fix are in place in `src/modules/learning/pattern-extractor.ts`:
+- `MIN_PREFIX_LEN` raised from 12 to 24 chars — a shared prefix that short is common by coincidence (timestamps, tags, English preambles); 24 chars demands a far more specific match before a candidate is even considered.
+- `MAX_RECENT_LINE_MATCH_RATIO` (0.5) guard in `extractPatterns()`: any prefix-derived ("framework"/"noise") candidate that matches more than 50% of the user's actual recent lines (not just the dismissed subset that produced it) is rejected outright and logged via `logExtensionWarn`, independent of its computed confidence score.
+
+"Undo last learning action" from the original proposed fix is **not implemented** — it is a new user-facing feature (a persisted-pattern rollback action, its own UI entry point, and interaction-log bookkeeping), not a bug fix, so it is out of scope for this pass. Tracked as future work; the current guard rails (longer prefix threshold + broad-match rejection) already prevent the reported failure mode without it.
+
+No test added in this pass per task scope.
 
 ## Tests Added
 <!-- List new or updated test files. -->
