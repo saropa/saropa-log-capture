@@ -1,9 +1,9 @@
 # DB_12 Static ORM / Code-Level Analysis
 
-## Progress (incremental)
+## Status: V1 shipped (v3.13.0). Remaining items deferred.
 
-- **Shipped:** Fingerprint → **search tokens** plus **ORM mapping** with **optional path globs** (`**/*.dart` per row, union + default) → filter indexer hits before line scan (`drift-sql-static-orm-patterns.ts`, `drift-static-sql-candidates.ts`). **Line-aware ranking** + QuickPick at best line. **Entry points:** N+1 row, **context menu** (DB line with fingerprint), **integration popover** (Database insight), **SQL repeat drilldown**, **Performance → DB** table “Sources” column. **Fixture acceptance:** `src/test/fixtures/drift-static-sql-mini` + `drift-static-sql-fixture-acceptance.test.ts` (top-3 goal). **Setting** `staticSqlFromFingerprint.enabled`. **`.dart`** in default project-index types. Copy distinguishes **static index vs stack trace** where relevant.
-- **Not yet:** **symbol-level “open at query”** (LSP); TS/Kotlin mapping rows.
+- **Shipped (v3.13.0):** Fingerprint → **search tokens** plus **ORM mapping** with **optional path globs** (`**/*.dart` per row, union + default) → filter indexer hits before line scan (`drift-sql-static-orm-patterns.ts`, `drift-static-sql-candidates.ts`). **Line-aware ranking** + QuickPick at best line. **Entry points:** N+1 row, **context menu** (DB line with fingerprint), **integration popover** (Database insight), **SQL repeat drilldown**, **Performance → DB** table “Sources” column. **Fixture acceptance:** `src/test/fixtures/drift-static-sql-mini` + `drift-static-sql-fixture-acceptance.test.ts` (top-3 goal). **Setting** `staticSqlFromFingerprint.enabled`. **`.dart`** in default project-index types. Copy distinguishes **static index vs stack trace** where relevant.
+- **Deferred:** **symbol-level “open at query”** (LSP); TS/Kotlin mapping rows.
 
 ## Goal
 

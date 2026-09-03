@@ -7,7 +7,7 @@ Folder navigation:
 - Folder guide and canonical links: [README.md](README.md)
 - Task ordering and rough effort: [TASK_BREAKDOWN_AND_EASE.md](TASK_BREAKDOWN_AND_EASE.md)
 - Runbook for empty/missing capture logs: [010_runbook-missing-or-empty-logs.md](010_runbook-missing-or-empty-logs.md)
-- Long-form design docs (background): `http-network.md`, `browser-devtools.md`, `security-audit-logs.md`. The `application-file-logs.md` (+ its `application-file-logs-advanced.md` follow-up) and `database-query-logs.md` deferred-work docs are all complete and archived under `history/2026.06/2026.06.14/`.
+- Long-form design docs (background): all archived under `history/2026.06/`. Deferred items carried forward in [deferred/integration-spec-deferred-items.md](deferred/integration-spec-deferred-items.md).
 
 Implemented adapters are marked **Done** and documented in the spec (or provider code); **Partial** and **Pending** rows link to active plans/specs.
 
@@ -22,14 +22,14 @@ Implemented adapters are marked **Done** and documented in the spec (or provider
 | `crashDumps` | *(implemented)* — spec moved to [history/](history/) | Done |
 | `windowsEvents` | *(implemented)* — spec moved to [history/](history/) | Done |
 | `docker` | *(implemented)* — spec moved to [history/](history/) | Done |
-| `database` | [011_integration-spec-database-query-logs.md](011_integration-spec-database-query-logs.md) | Partial |
-| `externalLogs` | [009_integration-spec-application-file-logs.md](009_integration-spec-application-file-logs.md) | Done (v1; see spec for deferred items) |
+| `database` | *(implemented)* — spec archived to [history/2026.06/](history/2026.06/); deferred items in [deferred/integration-spec-deferred-items.md](deferred/integration-spec-deferred-items.md) | Done |
+| `externalLogs` | *(implemented)* — spec archived to [history/2026.06/](history/2026.06/); deferred items in [deferred/integration-spec-deferred-items.md](deferred/integration-spec-deferred-items.md) | Done |
 | `performance` | *(implemented)* — spec moved to [history/](history/) | Done |
-| `http` | [010_integration-spec-http-network.md](010_integration-spec-http-network.md) | Partial |
+| `http` | *(implemented)* — spec archived to [history/2026.06/](history/2026.06/); deferred items in [deferred/integration-spec-deferred-items.md](deferred/integration-spec-deferred-items.md) | Done |
 | `terminal` | *(implemented)* — spec moved to [history/](history/) | Done |
 | `browser` | *(implemented)* — spec moved to [history/](history/2026.06/2026.06.10/) | Done |
 | `linuxLogs` | *(implemented)* — spec moved to [history/](history/) | Done |
-| `security` | [013_integration-spec-security-audit-logs.md](013_integration-spec-security-audit-logs.md) | Partial |
+| `security` | *(implemented)* — spec archived to [history/2026.06/](history/2026.06/); deferred items in [deferred/integration-spec-deferred-items.md](deferred/integration-spec-deferred-items.md) | Done |
 
 **API:** [INTEGRATION_API.md](../history/INTEGRATION_API.md) — provider contract, lifecycle, performance/UX, status bar.
 

@@ -15,7 +15,7 @@ is actually built, what was deliberately not built, and the manual checks that r
 This plan lives in `saropa-log-capture` by decision, but it governs all four repos. The per-repo plans
 it sits over:
 
-- **Drift Advisor** — `D:\src\saropa_drift_advisor\plans\67-saropa-suite-integration.md`
+- **Drift Advisor** — `D:\src\saropa_drift_advisor\plans\history\2026.07\2026.07.16\67-saropa-suite-integration.md`
   (owns the canonical envelope schema — Section 2 there).
 - **Saropa Lints** — `D:\src\saropa_lints\plans\SAROPA_SUITE_INTEGRATION.md`.
 - **Log Capture** (this repo) — `D:\src\saropa-log-capture\plans\105_plan-saropa-suite-integration.md`.
@@ -175,7 +175,7 @@ shared-infra closure above being the first).
 
 ## Related plans
 
-- `D:\src\saropa_drift_advisor\plans\67-saropa-suite-integration.md` (canonical envelope owner)
+- `D:\src\saropa_drift_advisor\plans\history\2026.07\2026.07.16\67-saropa-suite-integration.md` (canonical envelope owner)
 - `D:\src\saropa-log-capture\plans\105_plan-saropa-suite-integration.md` (Log-Capture half)
 - `D:\src\saropa_lints\plans\SAROPA_SUITE_INTEGRATION.md`
 - `D:\src\saropa_dart_utils\plans\SAROPA_SUITE_INTEGRATION.md`
