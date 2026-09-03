@@ -76,7 +76,7 @@ estimated 3–5 days total.
 
 ## P2 — Medium: correctness, polish, UX gaps
 
-19 bugs, estimated 6–10 days total. Interleave with wow features.
+20 bugs, estimated 6–10 days total. Interleave with wow features.
 
 ### Viewer correctness
 
@@ -122,6 +122,7 @@ estimated 3–5 days total.
 | 042 | Dead setting `deemphasizeFrameworkLevels` (no code reads it) | 30m |
 | 043 | Undeclared commands referenced in package.json `when` clauses | 1h |
 | 044 | Stale GitHub token on 401 — no re-auth prompt | 1h |
+| 045 | Capture diagnostic cites removed viewer "Prev/Next" stepper | 30m |
 
 ---
 
@@ -148,14 +149,31 @@ sprints. No user-facing urgency.
 
 ### Docs debt
 
-- `plans/guides/configuration.md`: covers 44 of 272 settings (16%)
-  — generate from `package.json` + add a verify gate
-- ARCHITECTURE.md: 6 months stale, dead links, no module list
-- CONTRIBUTING.md: wrong publish script name, wrong coverage tool name,
-  300-line rule missing exclusion clarification
-- BUG_REPORT_GUIDE.md: references nonexistent `bugs/history/` and ROADMAP table
-- README: 5 factual errors (see lead-findings.md "Confirmed facts"),
-  missing 9.3.x features, AI brand name on line 119
+**Done** (commit `eadc6084`): README 9 factual errors + AI brand name;
+ARCHITECTURE dead links + renamed lifecycle files; CONTRIBUTING publish script,
+coverage tool, 300-line rule; BUG_REPORT_GUIDE `bugs/history/` + ROADMAP table.
+
+**Remaining** — each is a discrete task, not a batch:
+
+| # | Task | Effort |
+|---|------|--------|
+| D1 | `plans/guides/configuration.md` covers 44 of 272 settings (16%); wrong defaults (`maxLogFiles` doc 10 / actual 0, `captureAll`), phantom `autoOpen`, `splitRules.*` documented flat but is one object — **generate from `package.json` + verify gate**, matching the 3 existing reference catalogs | 1d |
+| D2 | README missing 9.3.x features — screenshot capture, `spamPatterns`, flow-map replay/`customBreadcrumbs`/`customIssues`, status bar SLC menu, `troubleMode.openOnLoad`/`levels`, collapsed day groups; plus ~14 command families with no README coverage | 1d |
+| D3 | ARCHITECTURE.md has no module list at all — 30 modules, 17 `ui/` dirs undocumented | 4h |
+| D4 | `plans/guides/localization.md` stale counts — NLS 487→546, runtime 1608→2244, coverage 20–33% | 1h |
+| D5 | `plans/guides/watch-list.md` — all 7 source paths stale | 1h |
+| D6 | `walkthrough/keyboard-shortcuts.md` — `A` key documented as "app-only stack frames", code says "Cycle device logs"; ~18 listed vs ~42 `viewerKeybindings` actions vs README's unverified "51 power shortcuts" | 2h |
+| D7 | `style-guide.md` + `terminology.md` not linked from CONTRIBUTING; README:433 mislabels style-guide as "code style" (it is UI style) | 30m |
+| D8 | `AGENTS.md` is gitignored, is a `s/Claude/Codex/` copy pointing at a nonexistent `.Codex/rules/`, and lacks the MT-pipeline prohibition — decide: fix, track, or delete | 1h |
+| D9 | No test covers the walkthrough (`grep walkthrough src/test` = 0) — add one alongside bug_001's `verify:walkthrough-media` gate | 2h |
+| D10 | CHANGELOG.md 543 lines against a ~500 target — trim oldest entries into the 4912-line archive | 30m |
+| D11 | `.claude/rules/global.md` says features need an "approved plan in `bugs/`"; reality is plans live in `plans/` and `bugs/` holds defects — correct the rule | 15m |
+
+### Cross-repo follow-up
+
+- Plan 108 residual: the Saropa Lints `writeDiagnosticsMirror` request was never
+  filed. Per house rules this must be a bug report in
+  `D:\src\saropa_lints\bugs\` — **never** an edit to that repo.
 
 ### Bundle / activation
 
@@ -236,4 +254,4 @@ P3 Tech debt (batch sprints, no dependency)
 
 *Generated 2026-09-03 from the usability review of v9.3.12.*
 *Review reports: `docs/handover/review-20260902/`.*
-*Bug reports: `bugs/bug_001_*.md` through `bugs/bug_044_*.md`.*
+*Bug reports: `bugs/bug_001_*.md` through `bugs/bug_045_*.md`.*
