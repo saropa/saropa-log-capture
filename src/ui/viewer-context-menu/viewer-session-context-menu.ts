@@ -84,10 +84,12 @@ export function getSessionContextMenuHtml(): string {
          to vscode.window.createTreeView), so contributes.menus/view/item/context has no view to
          attach to here; this HTML context menu + the sessionAction dispatch in
          viewer-handler-sessions.ts IS the session right-click menu (bug_006 documents the missing
-         TreeView in more detail). The former "Compare with Marked Log" partner item was removed
-         (bug_006/bug_014 conflict): its command, compareWithMarked, was deleted as unreachable
-         dead code (bug_006), which left this menu item dispatching a nonexistent command and
-         throwing "command not found" at runtime. -->
+         TreeView in more detail). The former comparison-partner menu item (bug_006/bug_014
+         conflict) was removed: its command, compareWithMarked, was deleted as unreachable dead
+         code (bug_006), which left that menu item dispatching a nonexistent command and throwing
+         "command not found" at runtime. NOTE: this is an HTML comment embedded in the returned
+         string (see viewer-session-context-menu.test.ts's regression guard) — never write the
+         literal removed label here again, it would leak into the generated markup. -->
     <div class="context-menu-item session-normal-only" data-session-action="markForComparison">
         <span class="codicon codicon-bookmark"></span> Mark for Comparison
     </div>

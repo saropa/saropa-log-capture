@@ -31,7 +31,10 @@ describe("SessionManagerImpl", () => {
     let captured = false;
     mgr.addLineListener(() => { captured = true; });
     // fileUri is required: broadcastLine reads session.fileUri.fsPath (added in b916c032).
-    mgr["sessions"].set("test", { appendLine: () => {}, lineCount: 1, fileUri: { fsPath: "test.log" } } as any);
+    // state: 'recording' is required: bug_011's pause-check gate in processOutputEvent
+    // treats any session.state !== 'recording' (including undefined) as paused and drops
+    // the event before filtering/broadcast logic ever runs.
+    mgr["sessions"].set("test", { appendLine: () => {}, lineCount: 1, fileUri: { fsPath: "test.log" }, state: 'recording' } as any);
     mgr.onOutputEvent("test", { output: "foo", category: "system" });
     assert.ok(captured, "Output should be captured when captureAll is true");
   });
@@ -44,7 +47,10 @@ describe("SessionManagerImpl", () => {
     let captured = false;
     mgr.addLineListener(() => { captured = true; });
     // fileUri is required: broadcastLine reads session.fileUri.fsPath (added in b916c032).
-    mgr["sessions"].set("test", { appendLine: () => {}, lineCount: 1, fileUri: { fsPath: "test.log" } } as any);
+    // state: 'recording' is required: bug_011's pause-check gate in processOutputEvent
+    // treats any session.state !== 'recording' (including undefined) as paused and drops
+    // the event before filtering/broadcast logic ever runs.
+    mgr["sessions"].set("test", { appendLine: () => {}, lineCount: 1, fileUri: { fsPath: "test.log" }, state: 'recording' } as any);
     mgr.onOutputEvent("test", { output: "foo", category: "system" });
     assert.ok(
       !captured,
@@ -63,7 +69,10 @@ describe("SessionManagerImpl", () => {
     mgr.refreshConfig(makeConfig({
       captureAll: false, enabled: true, categories: ["console"], exclusions: [],
     }));
-    mgr["sessions"].set("test", { appendLine: () => {}, lineCount: 1, fileUri: { fsPath: "test.log" } } as any);
+    // state: 'recording' is required: bug_011's pause-check gate in processOutputEvent
+    // treats any session.state !== 'recording' (including undefined) as paused and drops
+    // the event before filtering/broadcast logic ever runs.
+    mgr["sessions"].set("test", { appendLine: () => {}, lineCount: 1, fileUri: { fsPath: "test.log" }, state: 'recording' } as any);
     // Two stdout lines (not whitelisted) plus one stderr line: each unrecognized
     // category should log exactly once, regardless of how many lines it drops.
     mgr.onOutputEvent("test", { output: "a", category: "stdout" });
@@ -89,7 +98,10 @@ describe("SessionManagerImpl", () => {
     }));
     // exclusionRules is normally built on session start; set it directly for the unit test.
     mgr["exclusionRules"] = [{ source: "noise", text: "noise" }];
-    mgr["sessions"].set("test", { appendLine: () => {}, lineCount: 1, fileUri: { fsPath: "test.log" } } as any);
+    // state: 'recording' is required: bug_011's pause-check gate in processOutputEvent
+    // treats any session.state !== 'recording' (including undefined) as paused and drops
+    // the event before filtering/broadcast logic ever runs.
+    mgr["sessions"].set("test", { appendLine: () => {}, lineCount: 1, fileUri: { fsPath: "test.log" }, state: 'recording' } as any);
     // Two distinct lines hit the same pattern; the pattern is reported exactly once.
     mgr.onOutputEvent("test", { output: "noise line 1", category: "stdout" });
     mgr.onOutputEvent("test", { output: "noise line 2", category: "stdout" });
@@ -112,7 +124,10 @@ describe("SessionManagerImpl", () => {
       diagnosticCapture: true,
     }));
     mgr["exclusionRules"] = [{ source: "noise", text: "noise" }];
-    mgr["sessions"].set("test", { appendLine: () => {}, lineCount: 1, fileUri: { fsPath: "test.log" } } as any);
+    // state: 'recording' is required: bug_011's pause-check gate in processOutputEvent
+    // treats any session.state !== 'recording' (including undefined) as paused and drops
+    // the event before filtering/broadcast logic ever runs.
+    mgr["sessions"].set("test", { appendLine: () => {}, lineCount: 1, fileUri: { fsPath: "test.log" }, state: 'recording' } as any);
     mgr.onOutputEvent("test", { output: "kept line", category: "stdout" });
     mgr.onOutputEvent("test", { output: "noise dropped", category: "stdout" });
     const traces = logged.filter((m) => m.includes("Capture diagnostic: DAP output"));
@@ -137,7 +152,10 @@ describe("SessionManagerImpl", () => {
     let captured = false;
     mgr.addLineListener(() => { captured = true; });
     // fileUri is required: broadcastLine reads session.fileUri.fsPath (added in b916c032).
-    mgr["sessions"].set("test", { appendLine: () => {}, lineCount: 1, fileUri: { fsPath: "test.log" } } as any);
+    // state: 'recording' is required: bug_011's pause-check gate in processOutputEvent
+    // treats any session.state !== 'recording' (including undefined) as paused and drops
+    // the event before filtering/broadcast logic ever runs.
+    mgr["sessions"].set("test", { appendLine: () => {}, lineCount: 1, fileUri: { fsPath: "test.log" }, state: 'recording' } as any);
     const { parseExclusionPattern } = require("../../../modules/features/exclusion-matcher");
     mgr["exclusionRules"] = [parseExclusionPattern("foo")];
     mgr.onOutputEvent("test", { output: "foo", category: "console" });

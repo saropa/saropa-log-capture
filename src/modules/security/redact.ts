@@ -6,7 +6,10 @@
 
 // Matches "Bearer <token>" and "Authorization: <token>" (case-insensitive, optional colon+space
 // after Authorization) so both header styles and inline log mentions are caught in one pass.
-const BEARER_AUTH_RE = /(Bearer|Authorization:?\s*)\S+/gi;
+// \s* sits OUTSIDE the alternation (not just on the Authorization branch) — "Bearer" is always
+// followed by a space before the token in real headers, so without it \S+ can never match
+// adjacent to the bare "Bearer" literal and the whole alternative silently never fires.
+const BEARER_AUTH_RE = /(Bearer|Authorization:?)\s*\S+/gi;
 
 // Windows user-profile paths — both backslash form (C:\Users\craig\...) and forward-slash form
 // (C:/Users/craig/..., as produced by vscode://file/ URIs whose path segments always use "/" —

@@ -192,11 +192,10 @@ export const stringsViewerB: Record<string, string> = {
     'viewer.session.loadedFiles.aria': 'Recently opened files',
     'viewer.session.loadedFiles.empty': 'Opened files will appear here',
     'viewer.session.pagination.label': 'Session list pagination',
-    'viewer.session.empty': 'No sessions found',
-    // bug_020: shown instead of viewer.session.empty when the directory scan itself
-    // threw (permissions, EMFILE, corrupt sidecar JSON) — tells the user the list is
-    // empty because the scan broke, not because there are no logs.
-    'viewer.session.scanFailed': 'Failed to scan sessions — check Output panel',
+    // viewer.session.empty and viewer.session.scanFailed moved to strings-webview-c.ts:
+    // viewer-session-panel-rendering.ts re-renders this text client-side via vt() on every
+    // scan, so both keys must live in a strings-webview-*.ts file to reach the __VT map
+    // (see l10n.ts's getWebviewL10nMap — only webview-* files are included, not this one).
     'viewer.session.loading': 'Loading…',
 
     // ── Signals panel — leftover host literals (panels/viewer-signal-panel.ts) ─

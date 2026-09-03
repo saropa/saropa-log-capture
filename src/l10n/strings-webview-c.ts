@@ -8,6 +8,15 @@
  * over branching keys.
  */
 export const stringsWebviewC: Record<string, string> = {
+    // Session list empty-state text — re-rendered client-side via vt() every time the
+    // directory scan completes (viewer-session-panel-rendering.ts), not just on initial
+    // HTML build, so it must live in a webview-* file to reach __VT (see l10n.ts).
+    'viewer.session.empty': 'No sessions found',
+    // bug_020: shown instead of viewer.session.empty when the directory scan itself
+    // threw (permissions, EMFILE, corrupt sidecar JSON) — tells the user the list is
+    // empty because the scan broke, not because there are no logs.
+    'viewer.session.scanFailed': 'Failed to scan sessions — check Output panel',
+
     // Error-rate tab summary + tooltip
     'viewer.errorRate.errors': '{0} error(s)',
     'viewer.errorRate.warnings': '{0} warning(s)',
