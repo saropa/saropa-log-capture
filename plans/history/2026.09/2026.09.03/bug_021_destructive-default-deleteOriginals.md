@@ -56,5 +56,12 @@ default for every user who had not explicitly set the value remained `true`, sil
 crash logs after import.
 
 Commit `d347a16d7` corrected the `package.json` schema default to `false`, aligning both
-layers. The CHANGELOG entry for 9.4.0 (line 129) was updated to remove the stale caveat that
-the schema still declared `true`. Bug report archived to history.
+layers. The CHANGELOG entry for 9.4.0 was updated to remove the stale caveat that the schema
+still declared `true`.
+
+A `verify:safe-setting-defaults` compile gate was added to prevent recurrence. The script
+scans all boolean settings in `package.json` for 10 destructive keywords (delete, remove,
+purge, wipe, discard, overwrite, clean, erase, strip, truncate) and fails the build if any
+match defaults to `true`. It handles both the single-object and array forms of
+`contributes.configuration`, and supports `--fix` to auto-correct violations. It runs as part
+of `npm run compile`, after `verify:engine-types-match`. Bug report archived to history.

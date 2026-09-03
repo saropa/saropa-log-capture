@@ -6,12 +6,12 @@
  * never visit the settings page.
  *
  * Destructive settings are identified by keyword match on the setting
- * key (delete, remove, purge, wipe, discard, overwrite, clean).
- * Add an entry to ALLOW_TRUE if a future setting legitimately needs
- * a true default despite the keyword match.
+ * key. Add an entry to ALLOW_TRUE if a future setting legitimately
+ * needs a true default despite the keyword match.
  *
  * Usage:
- *   node scripts/modules/verify/verify-safe-setting-defaults.mjs
+ *   node scripts/modules/verify/verify-safe-setting-defaults.mjs          # check only
+ *   node scripts/modules/verify/verify-safe-setting-defaults.mjs --fix    # auto-fix to false
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -21,9 +21,39 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..", "..", "..");
 const pkgPath = path.join(root, "package.json");
 
-/** Keywords in setting keys that indicate destructive behavior. */
-const DESTRUCTIVE_KEYWORDS =
-	/\b(delete|remove|purge|wipe|discard|overwrite|clean)\b/i;
+const fixMode = process.argv.includes("--fix");
+
+/**
+ * Keywords in setting keys that indicate destructive behavior.
+ * Case-insensitive, word-boundary-aware so camelCase segments like
+ * "deleteOriginals" and "autoClean" still match at segment boundaries.
+ * The pattern also matches at camelCase transitions (uppercase after
+ * lowercase) via the lookahead/lookbehind alternatives.
+ */
+const DESTRUCTIVE_KEYWORDS = [
+	"delete",
+	"remove",
+	"purge",
+	"wipe",
+	"discard",
+	"overwrite",
+	"clean",
+	"erase",
+	"strip",
+	"truncate",
+];
+
+/**
+ * Builds a regex that matches any keyword at word boundaries OR at
+ * camelCase segment boundaries (e.g. "autoDelete" matches "delete").
+ */
+function buildKeywordPattern(keywords) {
+	// Join as alternation, match case-insensitively
+	const alt = keywords.join("|");
+	return new RegExp(`(?:^|\\b|(?<=[a-z])(?=[A-Z]))(${alt})(?:\\b|(?=[A-Z])|$)`, "i");
+}
+
+const DESTRUCTIVE_PATTERN = buildKeywordPattern(DESTRUCTIVE_KEYWORDS);
 
 /**
  * Allowlist for settings that match a destructive keyword but
@@ -31,11 +61,34 @@ const DESTRUCTIVE_KEYWORDS =
  * explaining why the default is safe.
  */
 const ALLOW_TRUE = new Set([
-	// (none yet)
+	// (none yet — add "saropaLogCapture.x.y" with justification)
 ]);
 
-const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
-const settings = pkg.contributes?.configuration?.properties ?? {};
+const raw = fs.readFileSync(pkgPath, "utf8");
+const pkg = JSON.parse(raw);
+
+/**
+ * Collects all setting properties from contributes.configuration.
+ * Handles both the single-object form ({ properties: {...} }) and the
+ * array form ([{ properties: {...} }, ...]) that VS Code supports.
+ */
+function collectSettings(config) {
+	if (!config) {
+		return {};
+	}
+	// Array form: merge all sections' properties
+	if (Array.isArray(config)) {
+		const merged = {};
+		for (const section of config) {
+			Object.assign(merged, section.properties ?? {});
+		}
+		return merged;
+	}
+	// Single-object form
+	return config.properties ?? {};
+}
+
+const settings = collectSettings(pkg.contributes?.configuration);
 
 const violations = [];
 
@@ -45,9 +98,9 @@ for (const [key, schema] of Object.entries(settings)) {
 		continue;
 	}
 
-	// Only flag settings whose key contains a destructive keyword
+	// Strip the extension prefix for keyword matching
 	const shortKey = key.replace(/^saropaLogCapture\./, "");
-	if (!DESTRUCTIVE_KEYWORDS.test(shortKey)) {
+	if (!DESTRUCTIVE_PATTERN.test(shortKey)) {
 		continue;
 	}
 
@@ -62,6 +115,45 @@ for (const [key, schema] of Object.entries(settings)) {
 }
 
 if (violations.length > 0) {
+	if (fixMode) {
+		// Fix each violation by replacing "default": true with "default": false
+		// in the JSON text, scoped to the specific setting key's block
+		let updated = raw;
+		let fixCount = 0;
+
+		for (const key of violations) {
+			// Match the setting key followed by its "default": true within a
+			// reasonable window (the setting block is typically <200 chars)
+			const escapedKey = key.replace(/\./g, "\\.");
+			const pattern = new RegExp(
+				`("${escapedKey}"\\s*:\\s*\\{[^}]*?"default"\\s*:\\s*)true`,
+			);
+			if (pattern.test(updated)) {
+				updated = updated.replace(pattern, "$1false");
+				fixCount++;
+			}
+		}
+
+		if (fixCount === 0) {
+			console.error(
+				"ERROR: found violations but could not auto-fix them in the JSON text. Fix manually:",
+			);
+			for (const key of violations) {
+				console.error(`  - ${key}`);
+			}
+			process.exit(1);
+		}
+
+		fs.writeFileSync(pkgPath, updated, "utf8");
+		console.log(
+			`FIXED: changed ${fixCount} destructive setting default(s) from true to false:`,
+		);
+		for (const key of violations) {
+			console.log(`  - ${key}`);
+		}
+		process.exit(0);
+	}
+
 	console.error(
 		"ERROR: destructive settings must default to false (explicit opt-in):",
 	);
@@ -69,7 +161,8 @@ if (violations.length > 0) {
 		console.error(`  - ${key}`);
 	}
 	console.error(
-		"\nChange the default to false in package.json, or add to ALLOW_TRUE with justification.",
+		"\nChange the default to false in package.json, add to ALLOW_TRUE " +
+			"with justification, or run with --fix to auto-correct.",
 	);
 	process.exit(1);
 }
@@ -77,5 +170,5 @@ if (violations.length > 0) {
 console.log(
 	"OK: all destructive settings default to false (checked " +
 		`${Object.keys(settings).length} settings, ` +
-		`${DESTRUCTIVE_KEYWORDS.source} keyword filter)`,
+		`${DESTRUCTIVE_KEYWORDS.length} keyword filter)`,
 );

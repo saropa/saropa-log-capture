@@ -25,6 +25,26 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+New compile gates for safer defaults and publish pipeline now runs unattended. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+
+### Changed
+
+- Added `verify:safe-setting-defaults` compile gate to catch destructive settings (delete, remove, purge, etc.) that default to `true`; supports `--fix` to auto-correct — prevents a repeat of bug_021 where `deleteOriginals` shipped enabled by default
+
+### Fixed
+
+- Corrected the `flutterCrashLogs.deleteOriginals` changelog entry — the `package.json` schema default was already fixed in 9.4.0 (commit `d347a16d`); the prior entry incorrectly said it was still `true`
+
+<details>
+<summary>Maintenance</summary>
+
+- `scripts/publish.py`: added `--non-interactive` flag for unattended runs (CI, SSH, Claude) — closes stdin and implies `--yes --no-logo --auto-install --on-test-fail stop`
+- `scripts/publish.py`: added `--log-file [PATH]` flag to tee all output (ANSI-stripped) to a file for remote monitoring; omit path for auto-timestamped log in `reports/`
+
+</details>
+
 ## [9.4.1]
 
 Fixed packaging failure and added a compile gate to prevent it recurring. [log](https://github.com/saropa/saropa-log-capture/blob/v9.4.1/CHANGELOG.md)
@@ -36,7 +56,6 @@ Fixed packaging failure and added a compile gate to prevent it recurring. [log](
 - Added `verify:engine-types-match` compile gate to catch `@types/vscode` vs `engines.vscode` mismatches before they reach the VSIX packaging step; supports `--fix` to auto-correct `package.json`
 - Added `pre-commit` git hook that runs the engine-types-match check when `package.json` is staged
 - Added advisory `verify:types-api-ceiling` script that warns when the installed `@types/vscode` version exposes APIs newer than `engines.vscode` — does not block the build, surfaces the gap for manual review
-- Added `verify:safe-setting-defaults` compile gate to catch destructive settings (delete, remove, purge, etc.) that default to `true` — prevents a repeat of bug_021 where `deleteOriginals` shipped enabled by default
 
 </details>
 
