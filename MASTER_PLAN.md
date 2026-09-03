@@ -163,7 +163,7 @@ dead/redundant. Bug 042 already covers one confirmed dead setting.
 
 **Done** (commit `eadc6084`): README 9 factual errors + AI brand name;
 ARCHITECTURE dead links + renamed lifecycle files; CONTRIBUTING publish script,
-coverage tool, 300-line rule; BUG_REPORT_GUIDE `bugs/history/` + ROADMAP table.
+coverage tool, 300-line rule; ISSUE_REPORT_GUIDE `bugs/history/` + ROADMAP table.
 
 **Remaining** — each is a discrete task, not a batch:
 
