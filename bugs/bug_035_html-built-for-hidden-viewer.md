@@ -1,6 +1,6 @@
 # Bug 035 — HTML built for hidden viewer
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: Medium
 
@@ -29,7 +29,14 @@ The broadcaster does not check webview visibility before building and posting HT
 Check `webview.visible` before running the build pipeline. Queue raw lines when hidden and build HTML on the `onDidChangeViewState` visible transition, or defer building to the webview's request.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+
+`ViewerBroadcaster.addLine()` (`src/ui/provider/viewer-broadcaster.ts:38-58`) already skipped the expensive
+per-line HTML build (ANSI→HTML, linkify, thread parse, frame classify, diagnostics lookup) when no target is
+visible — `anyVisible` gates the call to `buildPendingLineFromLineData()`. The bug was a misleading comment at
+line 54 claiming "Hidden targets get raw data queued via addLine", which is false: when `anyVisible` is `false`,
+`line` is `undefined` and the loop's `if (!line) { continue; }` guard drops the line for every non-hydrating
+target — nothing queues it for replay later. Corrected the comment to describe the actual behavior (the line is
+dropped, not queued) so a future reader does not go looking for a replay/backfill path that doesn't exist.
 
 ## Tests Added
 <!-- List new or updated test files. -->

@@ -167,7 +167,12 @@ ${getSignalReportDiffScript()}
     if (msg.type === 'sectionReady') {
       applySection(msg.id, msg.title, msg.html);
       if (msg.id === 'screenshots') { computeScreenshotDiffs(); }
-      // Persist each section so tab-move recreation can restore it
+      // Persist each section so tab-move recreation can restore it.
+      // TODO(bug_031): this re-stores the FULL section HTML (base64 images included for
+      // the 'screenshots' section, see signal-report-screenshots.ts) on every single
+      // sectionReady event, not just the changed one — worst case tens of MB written to
+      // VS Code webview state per panel. Fix belongs with the base64-to-webview-local-URI
+      // migration tracked there; deferred out of scope for this fix.
       var state = vscodeApi.getState() || {};
       var sections = state.sections || {};
       sections[msg.id] = { title: msg.title, html: msg.html };

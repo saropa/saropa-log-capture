@@ -26,6 +26,7 @@ import { loadSignalHistory, loadLastCleanSessionUri } from './signal-report-hist
 import { buildHistoryHtml } from './signal-report-history';
 import { buildEcosystemHtml } from './signal-report-ecosystem';
 import { buildScreenshotSectionHtml } from './signal-report-screenshots';
+import { screenshotDirUri } from '../../modules/screenshot/screenshot-store';
 
 /** Per-panel state for the copy + auto-save report actions. Includes bundle for full markdown export. */
 interface PanelState {
@@ -47,7 +48,7 @@ export async function showSignalReport(
   fileUri: vscode.Uri | undefined,
 ): Promise<void> {
   const state: PanelState = { hypothesis, bundle, fileUri };
-  const panel = createPanel(hypothesis);
+  const panel = createPanel(hypothesis, fileUri);
   panel.webview.onDidReceiveMessage(
     (msg) => handleMessage(msg, state, panel),
   );
@@ -62,7 +63,10 @@ export async function showSignalReport(
   const { logLines, cleanHeader } = await populateSections(panel, state);
   const reportUri = await autoSaveReport(state, logLines, cleanHeader);
   if (reportUri) {
-    postSection(panel, 'overview', 'Session Overview', buildOverviewHtml({
+    // Use the l10n() result directly for the section title — a hardcoded English
+    // string here overwrote the translated heading the shell already rendered,
+    // so non-English users saw "Session Overview" regardless of locale (bug_031).
+    postSection(panel, 'overview', t('signals.section.overview'), buildOverviewHtml({
       bundle,
       logLineCount: logLines.length,
       logFilePath: fileUri?.fsPath,
@@ -79,12 +83,24 @@ function panelTitle(hypothesis: RootCauseHypothesis): string {
   return `Signal: ${hypothesis.templateId}`;
 }
 
-function createPanel(hypothesis: RootCauseHypothesis): vscode.WebviewPanel {
+/**
+ * Create the report webview panel.
+ *
+ * bug_031 (sub-issue 2): the screenshot strip used to inline EVERY thumbnail as base64
+ * (3 thumbnails + 2 diff-pair images, up to 10 MB each) directly into the section HTML,
+ * which is then re-persisted whole via setState on every sectionReady event — tens of
+ * MB of webview state per panel. Thumbnails now stream via `webview.asWebviewUri()`
+ * instead, so `localResourceRoots` must include the log's screenshot directory (the
+ * diff pair still needs base64 — the shell script reads its pixels off a `<canvas>` to
+ * compute the change-heat overlay, which only works for same-origin/data-URI images).
+ */
+function createPanel(hypothesis: RootCauseHypothesis, fileUri: vscode.Uri | undefined): vscode.WebviewPanel {
+  const localResourceRoots = fileUri ? [screenshotDirUri(fileUri.fsPath)] : [];
   const panel = vscode.window.createWebviewPanel(
     'saropaLogCapture.signalReport',
     panelTitle(hypothesis),
     vscode.ViewColumn.Beside,
-    { enableScripts: true, localResourceRoots: [] },
+    { enableScripts: true, localResourceRoots },
   );
   openPanels.add(panel);
   panel.onDidDispose(() => { openPanels.delete(panel); });
@@ -113,37 +129,42 @@ async function populateSections(
     logFileUri: fileUri?.toString(),
     logLines,
   });
-  postSection(panel, 'overview', 'Session Overview', overviewHtml);
+  // Section titles use t() directly — NEVER hardcode English here. The shell
+  // (signal-report-render.ts buildSignalReportShell) renders the same keys on first
+  // paint, and applySection() in the webview script overwrites that heading with
+  // whatever title postSection sends; a hardcoded string silently reverted a
+  // translated heading back to English for every non-English user (bug_031).
+  postSection(panel, 'overview', t('signals.section.overview'), overviewHtml);
 
   // 2. Evidence — target lines with 10 lines of context and stack trace extension
   const evidenceHtml = buildEvidenceHtml(hypothesis, logLines);
-  postSection(panel, 'evidence', 'Evidence', evidenceHtml);
+  postSection(panel, 'evidence', t('signals.section.evidence'), evidenceHtml);
 
   // 2b. Screenshots nearest the signal's anchor line (plan 114) — visual evidence strip.
-  const screenshotsHtml = await buildScreenshotSectionHtml(fileUri, hypothesis.evidenceLineIds);
-  postSection(panel, 'screenshots', 'Screenshots', screenshotsHtml);
+  const screenshotsHtml = await buildScreenshotSectionHtml(panel.webview, fileUri, hypothesis.evidenceLineIds);
+  postSection(panel, 'screenshots', t('signals.section.screenshots'), screenshotsHtml);
 
   // 3. Signal-type-specific details (N+1, SQL burst, ANR, distribution analysis)
   const detailsHtml = buildDetailsHtml(hypothesis, bundle);
   const detailsFallback = `<div class="no-data">${t('signals.panel.noDetails')}</div>`;
-  postSection(panel, 'details', 'Signal Details', detailsHtml || detailsFallback);
+  postSection(panel, 'details', t('signals.section.details'), detailsHtml || detailsFallback);
 
   // 4. Related lines — all matching items with excerpts and line numbers
   const relatedHtml = buildRelatedHtml(hypothesis, bundle, logLines);
-  postSection(panel, 'related', 'Related Lines', relatedHtml);
+  postSection(panel, 'related', t('signals.section.related'), relatedHtml);
 
   // 5. Other signals detected in the same session
   const otherHtml = buildOtherSignalsHtml(hypothesis, bundle);
-  postSection(panel, 'other-signals', 'Other Signals', otherHtml);
+  postSection(panel, 'other-signals', t('signals.section.otherSignals'), otherHtml);
 
   // 6. Recommendations — template-based advice, category-tailored for error-recent
   const firstErrorCat = bundle.errors?.find(e => e?.category)?.category;
   const recsHtml = renderRecommendations(hypothesis.templateId, firstErrorCat);
-  postSection(panel, 'recommendations', 'Recommendations', recsHtml);
+  postSection(panel, 'recommendations', t('signals.section.recommendations'), recsHtml);
 
   // 7. Companion extensions — Drift Advisor + Saropa Lints status / install prompts
   const ecosystemHtml = buildEcosystemHtml(bundle);
-  postSection(panel, 'ecosystem', 'Companion Extensions', ecosystemHtml);
+  postSection(panel, 'ecosystem', t('signals.section.ecosystem'), ecosystemHtml);
 
   // 8. Cross-session history + "what changed" diff
   const history = await loadSignalHistory(hypothesis.templateId);
@@ -161,7 +182,7 @@ async function populateSections(
     currentHeader,
     cleanHeader,
   });
-  postSection(panel, 'history', 'Cross-Session History', historyHtml);
+  postSection(panel, 'history', t('signals.section.history'), historyHtml);
 
   // Hand the already-read log lines + clean header back so the auto-save reuses
   // them instead of reading the log file a second time.
@@ -309,9 +330,12 @@ async function autoSaveReport(
     if (!md) { return undefined; }
     const wsFolder = vscode.workspace.workspaceFolders?.[0];
     const logDirUri = getLogDirectoryUri(wsFolder);
+    // Bug_036: write reports to a `reports/` subdirectory so .md files don't
+    // count toward maxLogFiles retention and evict real session logs.
+    const reportsDir = vscode.Uri.joinPath(logDirUri, 'reports');
     const filename = buildSaveFilename(state, new Date());
-    const destUri = vscode.Uri.joinPath(logDirUri, filename);
-    await vscode.workspace.fs.createDirectory(logDirUri);
+    const destUri = vscode.Uri.joinPath(reportsDir, filename);
+    await vscode.workspace.fs.createDirectory(reportsDir);
     await vscode.workspace.fs.writeFile(destUri, Buffer.from(md, 'utf-8'));
     return destUri;
   } catch (err) {

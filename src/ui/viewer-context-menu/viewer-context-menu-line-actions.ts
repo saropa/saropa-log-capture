@@ -236,7 +236,21 @@ function handleLineAction(action, lineIdx) {
         case 'add-exclusion': vscodeApi.postMessage({ type: 'addToExclusion', text: plainText }); return true;
         case 'pin': if (typeof togglePin === 'function') togglePin(lineIdx); return true;
         case 'annotate': if (typeof promptAnnotation === 'function') promptAnnotation(lineIdx); return true;
-        case 'bookmark': vscodeApi.postMessage({ type: 'addBookmark', lineIndex: lineIdx, text: plainText }); return true;
+        case 'bookmark':
+            /* bug_011: bookmarks must key off the FILE line number (sourceLineNo), not the
+               viewer's allLines array index. Synthetic rows (markers, stack headers,
+               repeat-notification chips) and any dropped/filtered lines make the array index
+               drift from the on-disk line count, so a bookmark stored as lineIdx pointed at
+               the wrong row after any trim or filter change — goto-line and exports (which
+               resolve against the file) landed on unrelated content. Fall back to lineIdx only
+               for the rare unstamped row (e.g. a pure marker) so the bookmark still resolves
+               to something rather than silently failing. */
+            vscodeApi.postMessage({
+                type: 'addBookmark',
+                lineIndex: lineData.sourceLineNo != null ? lineData.sourceLineNo : lineIdx,
+                text: plainText,
+            });
+            return true;
         case 'open-source':
             var viewport = document.getElementById('viewport');
             if (viewport) {

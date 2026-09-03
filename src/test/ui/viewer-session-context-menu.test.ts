@@ -59,6 +59,25 @@ suite('ViewerSessionContextMenu', () => {
             assert.ok(html.includes('codicon-folder-opened'));
             assert.ok(html.includes('session-reveal-label'));
         });
+        test('should include Mark for Comparison action (bug_014)', () => {
+            /* Regression test for bug_014: markForComparison had no UI entry point at all — this
+               context menu is the fix, since the session panel is a webview list (no native
+               TreeView), not a contributes.menus/view/item/context target. */
+            const html = getSessionContextMenuHtml();
+            assert.ok(html.includes('data-session-action="markForComparison"'));
+            assert.ok(html.includes('Mark for Comparison'));
+            assert.ok(html.includes('codicon-bookmark'));
+        });
+        test('should NOT include the removed Compare with Marked Log action (bug_006/bug_014 conflict)', () => {
+            /* Regression test: compareWithMarked was a valid menu item under bug_014, but bug_006
+               later deleted its backing command as unreachable dead code, which left this menu
+               item dispatching a nonexistent command ("command not found" at runtime). The item
+               was removed rather than the command re-registered — see the fix comment above the
+               Mark for Comparison item in viewer-session-context-menu.ts. */
+            const html = getSessionContextMenuHtml();
+            assert.ok(!html.includes('data-session-action="compareWithMarked"'));
+            assert.ok(!html.includes('Compare with Marked Log'));
+        });
         test('should group the 6 export actions under an Export flyout submenu', () => {
             /* Export targets HTML, CSV, JSON, JSONL, .slc Bundle, and Loki live in a
                flyout submenu to keep the top-level menu short. Each action must still
