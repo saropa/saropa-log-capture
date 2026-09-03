@@ -111,7 +111,8 @@ def _print_locale_summary(
     if brand_count > 0:
         parts.append(cyan(f"{brand_count} brand"))
     if errors > 0:
-        parts.append(red(f"{errors} errors"))
+        # Pluralise: "1 error" vs "2 errors".
+        parts.append(red(f"{errors} {'error' if errors == 1 else 'errors'}"))
     total = translated + kept + brand_count + errors
     print(f"{', '.join(parts)} = {total}")
 

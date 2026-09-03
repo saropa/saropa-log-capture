@@ -173,6 +173,42 @@ def _translate_one(
     return _translate_segment(translator, en_key)
 
 
+# Max characters in the on-screen WARN preview of a source key.
+_KEY_PREVIEW_LIMIT = 52
+
+
+def _truncate_key_preview(key: str, limit: int = _KEY_PREVIEW_LIMIT) -> str:
+    """Shorten a source key for the WARN line without cutting mid-word.
+
+    Finds the last space at or before ``limit`` so the preview reads naturally
+    (e.g. "GitHub token cleared..." instead of "GitHub token cleared. You wi...").
+    """
+    if len(key) <= limit:
+        return key
+    # Walk back to a space so the cut falls on a word boundary.
+    cut = key.rfind(" ", 0, limit)
+    if cut <= 0:
+        # Single long word — hard-cut is the only option.
+        cut = limit
+    return key[:cut] + "..."
+
+
+def _friendly_error(exc: Exception) -> str:
+    """Condense a raw exception into a one-line operator-friendly reason.
+
+    urllib raises ``HTTPError("HTTP Error 500: Internal Server Error")`` which
+    says nothing about *what* returned the 500.  This rewrites the common cases
+    so the WARN line names the failing component (Ollama) and drops the generic
+    HTTP boilerplate.
+    """
+    msg = str(exc)
+    # urllib.error.HTTPError — rewrite to name the engine.
+    if "HTTP Error" in msg:
+        return f"Ollama {msg}"
+    # socket / connection timeouts — already clear, pass through.
+    return msg
+
+
 def _translate_with_retry(translator: object, en_key: str) -> str | None:
     """Translate one string, retrying transient endpoint failures with backoff.
 
@@ -251,7 +287,12 @@ def _apply_translation(
     try:
         result = _translate_with_retry(translator, en_key)
     except Exception as exc:
-        print(f"    WARN [{locale}]: {en_key[:50]}... -> {exc}")
+        # Truncate the preview at a word boundary so the WARN line stays
+        # readable (no mid-word cuts like "re-a...").  The full key is in the
+        # error-audit sink for post-mortem review.
+        preview = _truncate_key_preview(en_key)
+        reason = _friendly_error(exc)
+        print(f"    WARN [{locale}]: {preview} -> {reason}")
         _record_error(error_sink, locale, en_key, "net_fail", str(exc))
         if not keep_existing_on_failure:
             bundle[en_key] = en_key
