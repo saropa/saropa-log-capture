@@ -304,12 +304,10 @@ def _call_ollama(prompt: str, timeout_s: float) -> str | None:
         method="POST",
     )
 
+    # urlopen raises urllib.error.HTTPError for non-2xx status codes before
+    # the with-body runs, so no manual status check is needed here.  The
+    # exception propagates to _translate_with_retry for backoff/retry.
     with urllib.request.urlopen(req, timeout=timeout_s) as response:
-        if response.status != 200:
-            raise OSError(
-                f"Ollama returned HTTP {response.status} "
-                f"(expected 200) from {_OLLAMA_BASE}/api/chat"
-            )
         res_data = json.loads(response.read().decode("utf-8"))
         translated = (
             (res_data.get("message") or {}).get("content", "").strip()
