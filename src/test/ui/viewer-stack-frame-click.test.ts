@@ -45,6 +45,14 @@ suite('Stack-frame whole-row click-to-open', () => {
         const delegateCallIdx = script.indexOf('handleGroupToggleClicks(e)', frameIdx);
         assert.ok(frameIdx >= 0 && delegateCallIdx >= 0, 'both branches present');
         assert.ok(frameIdx < delegateCallIdx, 'frame branch comes before the delegated header-toggle call');
+        // Guard against a third occurrence of the literal (e.g. a comment) silently
+        // being picked up by the from-frameIdx search instead of the real call site.
+        const occurrences = script.split('handleGroupToggleClicks(e)').length - 1;
+        assert.strictEqual(
+            occurrences, 2,
+            'expected exactly 2 occurrences (function definition, call site) — a 3rd would ' +
+            'make the from-frameIdx search above ambiguous and this test unreliable',
+        );
     });
 
     test('direct source-link click branch is still handled first', () => {
