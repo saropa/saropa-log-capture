@@ -44,7 +44,7 @@ transport chain that replaced it instead.
 
 ## 2. Retention: delete screenshot sidecars — FILED AS BUG 046
 
-Moved to `bugs/bug_046_screenshot-sidecars-survive-log-deletion.md`. It is a
+Moved to `plans/history/2026.09/2026.09.03/bug_046_screenshot-sidecars-survive-log-deletion.md`. It is a
 defect (unbounded disk growth), not planned work. Sequence it with or before
 bug 012 — fixing retention first turns a static leak into a growing one.
 

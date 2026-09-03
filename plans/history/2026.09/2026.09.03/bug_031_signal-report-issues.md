@@ -1,6 +1,6 @@
 # Bug 031 — Signal report rendering issues (l10n overwrite, oversized state, template ID mismatch)
 
-## Status: Fixed (pending review)
+## Status: Closed
 
 ## Severity: Medium
 

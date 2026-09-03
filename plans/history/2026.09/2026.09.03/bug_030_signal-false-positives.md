@@ -1,6 +1,6 @@
 # Bug 030 — Signal false positives (resolved claims, build-noise bursts, stale ANR cache)
 
-## Status: Fixed (pending review)
+## Status: Closed
 
 ## Severity: Medium
 

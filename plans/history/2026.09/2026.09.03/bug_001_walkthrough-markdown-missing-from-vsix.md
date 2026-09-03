@@ -1,6 +1,6 @@
 # Bug 001 — Getting Started walkthrough steps reference deleted `media/walkthrough/*.md`
 
-## Status: Fixed (pending review)
+## Status: Closed
 
 <!-- Status values: Open → Investigating → Fix Ready → Fixed (pending review) → Closed -->
 
