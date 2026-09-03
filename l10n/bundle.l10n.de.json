@@ -2036,7 +2036,7 @@
   "e.g. Root cause was connection pool exhaustion": "z.B. durch GG Die Hauptursache war die Erschöpfung des Verbindungspools.",
   "{0} is not in any investigation.": "{0} ist in keiner Untersuchung.",
   "{0} session(s)": "{0} Sitzung (s)",
-  " · {0} hidden by filters": "· {0} durch Filter ausgeblendet",
+  " · {0} hidden by filters": "· {0} durch Filter versteckt",
   "Auto-Hide": "Auto-Verstecken",
   "Categories": "Kategorien",
   "Disable {0} filter": "Deaktivieren Sie den {0} Filter.",
@@ -2242,5 +2242,13 @@
   "Next screenshot": "Nächste Screenshot",
   "Previous screenshot": "Vorheriger Screenshot",
   "Open setting": "Einstellungen öffnen",
-  "Saropa Log Capture now skips near-duplicate screenshots by default. Error, warning and manually-requested captures are never skipped.": "Saropa Log Capture überspringt standardmäßig nahezu-doppelte Screenshots. Fehler, Warnungen und manuell angeforderte Aufnahmen werden niemals übersprungen."
+  "Saropa Log Capture now skips near-duplicate screenshots by default. Error, warning and manually-requested captures are never skipped.": "Saropa Log Capture überspringt standardmäßig nahezu-doppelte Screenshots. Fehler, Warnungen und manuell angeforderte Aufnahmen werden niemals übersprungen.",
+  "AI features are available in Saropa Log Capture. Enable them?": "KI-Funktionen sind in Saropa Log Capture verfügbar. Aktivieren?",
+  "Failed to scan sessions — check Output panel": "Fehler beim Scannen der Sitzungen — prüfen Sie den Ausgabebereich",
+  "GitHub token expired. Re-authenticate?": "GitHub-Token ist abgelaufen. Nochmals authentifizieren?",
+  "No active capture session.": "Keine aktive Erfassungssitzung.",
+  "No active capture session. Start debugging to begin capturing.": "Keine aktive Erfassungssitzung. Debuggen starten, um die Erfassung zu beginnen.",
+  "Open the Log Viewer first.": "Zuerst den Log-Viewer öffnen.",
+  "Right-click a log in the Logs panel to use this command.": "Mit der Maustaste klicken Sie auf einen Log im Logs-Panel, um diesen Befehl zu verwenden.",
+  "This will send log data (the error line, surrounding context, and stack trace) to an AI language model. Continue?": "Dies sendet die Protokolldaten (die Fehlerzeile, umgebendes Kontext und Stapelverfolgung) an ein KI-Modell. Weitermachen?"
 }

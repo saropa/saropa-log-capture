@@ -2242,5 +2242,13 @@
   "Next screenshot": "下一张截图",
   "Previous screenshot": "上一张截图",
   "Open setting": "打开设置",
-  "Saropa Log Capture now skips near-duplicate screenshots by default. Error, warning and manually-requested captures are never skipped.": "Saropa Log Capture 现在默认跳过近似重复的截图。 错误、警告和手动请求的捕获永远不会被跳过。"
+  "Saropa Log Capture now skips near-duplicate screenshots by default. Error, warning and manually-requested captures are never skipped.": "Saropa Log Capture 现在默认跳过近似重复的截图。 错误、警告和手动请求的捕获永远不会被跳过。",
+  "AI features are available in Saropa Log Capture. Enable them?": "AI功能在Saropa Log Capture中可用。 启用它们？",
+  "Failed to scan sessions — check Output panel": "无法扫描会话 — 检查输出面板",
+  "GitHub token expired. Re-authenticate?": "GitHub令牌已过期。 重新认证？",
+  "No active capture session.": "无活动的捕获会话。",
+  "No active capture session. Start debugging to begin capturing.": "无活动的捕获会话。 开始调试以开始捕获。",
+  "Open the Log Viewer first.": "先打开日志查看器",
+  "Right-click a log in the Logs panel to use this command.": "在日志面板中右键点击一个日志以使用此命令。",
+  "This will send log data (the error line, surrounding context, and stack trace) to an AI language model. Continue?": "这将把日志数据（错误行、周围上下文和堆栈跟踪）发送到一个AI语言模型。 继续？"
 }

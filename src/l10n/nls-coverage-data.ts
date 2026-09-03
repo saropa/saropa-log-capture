@@ -13,7 +13,7 @@ export const nlsManifestCoverage: Readonly<Record<string, number>> = {
     "es": 32,
     "fr": 20,
     "it": 20,
-    "ja": 33,
+    "ja": 32,
     "ko": 32,
     "pt-br": 20,
     "ru": 20,

@@ -30,6 +30,14 @@ export const stringsA: Record<string, string> = {
 
     'msg.noActiveSession': 'No active log. Open a log file in the viewer first.',
     'msg.noActiveSessionToSplit': 'No active debug session to split.',
+    // bug_037: stop/pause/insertMarker gave no feedback at all when invoked with no capture
+    // session running — the command silently no-op'd, making the extension look unresponsive.
+    'msg.noActiveCaptureSession': 'No active capture session.',
+    // bug_037: start-specific variant — points the user at the action that creates a session,
+    // since "no active session" alone doesn't tell them what to do next.
+    'msg.noActiveCaptureSessionStart': 'No active capture session. Start debugging to begin capturing.',
+    // Context-menu commands invoked from the Command Palette have no target log item.
+    'msg.paletteRequiresLog': 'Right-click a log in the Logs panel to use this command.',
     'msg.logFileSplit': 'Log file split. Now on part {0}.',
     'msg.deleteFileConfirm': 'Delete {0}?',
     'msg.renameSessionPrompt': 'Enter new name for this log (also renames file)',
@@ -70,6 +78,9 @@ export const stringsA: Record<string, string> = {
     'msg.templateApplied': 'Template "{0}" applied.',
     'msg.resetSettingsConfirm': 'Reset all Saropa Log Capture settings to defaults?',
     'msg.settingsReset': 'Reset {0} settings to defaults.',
+    // bug_017: shown instead of msg.settingsReset when one or more of the individual
+    // configuration updates rejected, so the user knows the reset was only partial.
+    'msg.settingsResetPartial': '{0} of {1} settings reset to defaults; {2} failed. See the Saropa Log Capture output channel for details.',
     'msg.markerPrompt': 'Marker text (leave empty for timestamp only)',
     'msg.markerPlaceholder': 'e.g. before refactor, test attempt 2',
 
@@ -78,7 +89,9 @@ export const stringsA: Record<string, string> = {
     'msg.permanentlyDeletedFromTrash': 'Permanently deleted {0} file(s) from trash.',
 
     'msg.markedForComparison': 'Marked "{0}" for comparison. Select another log to compare.',
-    'msg.noSessionMarked': 'No log marked. Right-click a log and "Mark for Comparison" first.',
+    // msg.noSessionMarked was the "no marked log" message for the compareWithMarked command,
+    // which bug_006 deleted as unreachable dead code (no TreeView ever provided the viewItem
+    // context its when-clause required). Nothing reads this key anymore (bug_006/bug_014).
     'msg.cannotCompareWithSelf': 'Cannot compare a log with itself.',
     'msg.needTwoSessions': 'Need at least 2 logs to compare.',
     'prompt.selectFirstSession': 'Select FIRST log to compare',
@@ -126,11 +139,19 @@ export const stringsA: Record<string, string> = {
     'msg.importFileTooLarge': 'File too large (max 100 MB).',
     'msg.importOnlyHttps': 'Use an https URL, a same-network http URL (e.g. 192.168.x.x), or a file:// URL.',
     'msg.githubAuthRequired': 'GitHub authentication required to share via Gist.',
+    'msg.githubTokenExpired': 'GitHub token expired. Re-authenticate?',
+    // bug_044: confirmation for the manual "Clear GitHub Token" command — a silent clear would
+    // leave the user unsure whether the action actually happened.
+    'msg.githubTokenCleared': 'GitHub token cleared. You will be prompted to re-authenticate on the next share or import.',
     'msg.collectionTooLargeWarning': 'Collection is large ({0} MB). Upload may be slow or hit Gist limits. Continue?',
     'msg.deepLinksCopied': '{0} deep links copied to clipboard',
     'msg.filePathsCopied': '{0} file paths copied to clipboard',
 
     'msg.aiExplainDisabled': 'Turn on Explain with AI: Options → Integrations in the log viewer, or enable "Saropa Log Capture › AI: Enabled" in Settings.',
+    // bug_003 consent gate: shown once per "Explain with AI" invocation, before any log/stack
+    // content is sent to a language model — the redaction pass runs first, but the user must
+    // still confirm data leaves the machine at all.
+    'msg.aiSendConsent': 'This will send log data (the error line, surrounding context, and stack trace) to an AI language model. Continue?',
     'msg.aiExplainError': 'Explain with AI: {0}',
     'msg.aiExplainNoModel':
         'No Language Model API chat model is registered in this editor. Install an extension that provides one (e.g. GitHub Copilot Chat), or copy the prompt and use Cursor, Claude, or another chat tool.',
@@ -241,6 +262,10 @@ export const stringsA: Record<string, string> = {
     // screenshot-dedup-default-notice.ts). Skipping a picture the user would otherwise have kept is
     // exactly the kind of silent default change a bare CHANGELOG line does not reach.
     'screenshot.dedupDefaultNotice': 'Saropa Log Capture now skips near-duplicate screenshots by default. Error, warning and manually-requested captures are never skipped.',
+    // Shown once, ever, and only when a chat-capable language model is detected and the user has
+    // never explicitly set ai.enabled (see ai-auto-enable.ts). Bug 019: this used to be a silent
+    // settings write with no opt-in — the notice replaces that with an explicit choice.
+    'ai.autoEnableNotice': 'AI features are available in Saropa Log Capture. Enable them?',
     'msg.screenshotNoLog': 'No active capture log to attach the screenshot to.',
 
     'msg.noSessionFiles': 'No log files found.',
@@ -310,6 +335,9 @@ export const stringsA: Record<string, string> = {
     'msg.slcImportMissingLog': 'Invalid .slc: missing log file "{0}"',
     'msg.slcImportUnsafePath': 'Blocked an unsafe .slc bundle: entry "{0}" tries to write outside the log folder.',
     'msg.openLogFirst': 'Open a log file first.',
+    // Shown when a viewer command times out waiting for the sidebar webview to
+    // resolve (bug_015) — distinct from msg.openLogFirst, which is about file state.
+    'msg.openLogViewerFirst': 'Open the Log Viewer first.',
     'title.importSlc': 'Import .slc log bundle(s)',
     'progress.exportSlc': 'Exporting .slc bundle\u2026',
     'progress.importSlc': 'Importing .slc bundle(s)\u2026',

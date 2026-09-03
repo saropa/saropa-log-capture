@@ -1,6 +1,6 @@
 # Bug 037 — Lifecycle commands give no feedback when no session is active
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: Medium
 
@@ -28,7 +28,16 @@ Commands assume a session is always active; there is no fallback branch for the 
 Add an `else` branch that shows an informational message: "No active capture session. Start debugging to begin capturing." For `start`, consider starting a session or showing the quick pick.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+
+`start`, `stop`, `pause`, and `insertMarker` in `src/commands-session.ts` now each have an `else` branch that
+surfaces `vscode.window.showInformationMessage()` when there is no session to act on, using two new symbolic
+l10n keys added to `src/l10n/strings-a.ts`: `msg.noActiveCaptureSession` ("No active capture session.") for
+stop/pause/insertMarker, and `msg.noActiveCaptureSessionStart` ("No active capture session. Start debugging to
+begin capturing.") for `start`, which points the user at the action that actually creates a session rather than
+just repeating the negative. `insertMarker` checks for a session before showing the input box, so the user is
+told immediately instead of typing marker text that would silently be discarded. Both new keys' English values
+are present in `l10n/bundle.l10n.json` and every locale bundle (`l10n/bundle.l10n.<locale>.json`) as identity
+entries pending translation; `npm run verify:l10n-keys` confirms every referenced key resolves.
 
 ## Tests Added
 <!-- List new or updated test files. -->
