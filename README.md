@@ -110,7 +110,7 @@ Collapse any column's sections to shrink that column aside and give the open sid
 
 ### Capture & Storage
 - **Auto-capture:** Debug Console output saved to `.log` files automatically.
-- **Deduplication:** Identical rapid lines grouped as `Message (x54)`. Flood protection suppresses >100/sec repeats.
+- **Flood protection:** Suppresses >100/sec repeats.
 - **File retention:** Oldest logs auto-deleted when limit exceeded.
 - **Auto file split:** Split logs by line count, size, keywords, duration, or silence.
 - **Context header:** Each log starts with session metadata.
@@ -211,7 +211,7 @@ Collapse any column's sections to shrink that column aside and give the open sid
 ### Infrastructure
 - **Project index:** Lightweight index under `.saropa/index/` for faster analysis and doc matching.
 - **Script fault isolation:** Each viewer feature runs in a separate script block.
-- **App-only stack traces (A key), stack deduplication, session summary.**
+- **App-only stack traces (A key), session summary.**
 
 </details>
 
@@ -391,7 +391,7 @@ Press **F1** inside the viewer for the full interactive reference with descripti
 | **Ctrl+F** | Open search overlay |
 | **F5** | Start debugging (VS Code built-in) |
 
-See [plans/walkthrough/keyboard-shortcuts.md](plans/walkthrough/keyboard-shortcuts.md) for the complete list, or open **Options → Keyboard shortcuts...** in the viewer. All 51 power shortcuts are rebindable via `saropaLogCapture.viewerKeybindings`.
+See [media/walkthrough/keyboard-shortcuts.md](media/walkthrough/keyboard-shortcuts.md) for the complete list, or open **Options → Keyboard shortcuts...** in the viewer. All 51 power shortcuts are rebindable via `saropaLogCapture.viewerKeybindings`.
 
 ---
 
