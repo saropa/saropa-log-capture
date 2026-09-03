@@ -62,6 +62,18 @@ export function processOutputEvent(
     const text = body.output.replace(/[\r\n]+$/, '');
     if (text.length === 0) { return; }
 
+    // bug_011: check the pause flag ONCE here, before the file-write and broadcast paths
+    // diverge below (the FLOOD SUPPRESSED summary, the spam summary, and the main captured
+    // line each pair a `session.appendLine` with a `target.broadcastLine`). `LogSession
+    // .appendLine` already no-ops while paused, but `broadcastLine` did not — so the viewer
+    // kept showing paused-out lines that never reached the saved file, desyncing bookmarks
+    // and exports (which reference file line numbers) from what the viewer displayed.
+    // Returning here suppresses BOTH paths together so they can never disagree.
+    if (session.state !== 'recording') {
+        traceOutcome(deps, category, 'dropped (capture paused)', text);
+        return;
+    }
+
     if (!deps.config.captureAll && !deps.config.categories.includes(category)) {
         // Plan 102 Step 3: a missing Debug Console line is most often dropped here —
         // captureAll is off and the line's DAP category is not in the whitelist, so it
@@ -231,6 +243,11 @@ function writeOneLine(
     input: WriteLineInput,
 ): void {
     const { session, text, category, timestamp } = input;
+    // bug_011: same single-entry-point pause check as processOutputEvent — the API write-line
+    // path pairs session.appendLine with target.broadcastLine too (directly, and via the flood
+    // / spam summaries below), so it needs the identical guard to avoid showing paused lines
+    // in the viewer that are absent from the saved file.
+    if (session.state !== 'recording') { return; }
     if (text.length > 0) {
         if (testExclusion(text, deps.exclusionRules)) { return; }
         const floodResult = deps.floodGuard.check(text);

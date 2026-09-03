@@ -1,6 +1,6 @@
 # Bug 039 — toggleCapture writes workspace-scope setting
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: Medium
 
@@ -29,7 +29,7 @@ Setting written to workspace scope instead of user-global scope.
 Write to `ConfigurationTarget.Global` instead of `ConfigurationTarget.Workspace`. If workspace-level override is intentional, add it to `.gitignore` recommendations or use `ConfigurationTarget.WorkspaceFolder` with a notice.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+`src/commands-session.ts` (~line 65) now writes `await cfg.update('enabled', newValue, vscode.ConfigurationTarget.Global)` instead of `ConfigurationTarget.Workspace`, with a comment explaining the git-diff/teammate-contamination reasoning and referencing bug_039 directly.
 
 ## Tests Added
 <!-- List new or updated test files. -->
