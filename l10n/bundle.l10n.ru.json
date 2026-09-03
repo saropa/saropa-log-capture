@@ -2242,5 +2242,13 @@
   "Next screenshot": "Следующий скриншот",
   "Previous screenshot": "Предыдущий снимок экрана",
   "Open setting": "Открыть настройки",
-  "Saropa Log Capture now skips near-duplicate screenshots by default. Error, warning and manually-requested captures are never skipped.": "Saropa Log Capture теперь пропускает почти дублирующиеся скриншоты по умолчанию. Ошибка, предупреждение и вручную запрашиваемые захваты никогда не пропускаются."
+  "Saropa Log Capture now skips near-duplicate screenshots by default. Error, warning and manually-requested captures are never skipped.": "Saropa Log Capture теперь пропускает почти дублирующиеся скриншоты по умолчанию. Ошибка, предупреждение и вручную запрашиваемые захваты никогда не пропускаются.",
+  "AI features are available in Saropa Log Capture. Enable them?": "AI-функции доступны в Saropa Log Capture. Включить их?",
+  "Failed to scan sessions — check Output panel": "Не удалось сканировать сессии — проверьте панель вывода",
+  "GitHub token expired. Re-authenticate?": "GitHub токен истек. Повторно авторизоваться?",
+  "No active capture session.": "Нет активной сессии захвата.",
+  "No active capture session. Start debugging to begin capturing.": "Нет активной сессии захвата. Начните отладку, чтобы начать захват.",
+  "Open the Log Viewer first.": "Откройте сначала просмотр логов.",
+  "Right-click a log in the Logs panel to use this command.": "Щелкните правой кнопкой мыши лог в панели Логов, чтобы использовать эту команду.",
+  "This will send log data (the error line, surrounding context, and stack trace) to an AI language model. Continue?": "Это отправит данные лога (строку ошибки, окружение и стек-трейс) на искусственный интеллект. Продолжить?"
 }

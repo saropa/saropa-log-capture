@@ -2242,5 +2242,13 @@
   "Next screenshot": "Successiva schermata",
   "Previous screenshot": "Schermata precedente",
   "Open setting": "Apri impostazioni",
-  "Saropa Log Capture now skips near-duplicate screenshots by default. Error, warning and manually-requested captures are never skipped.": "Saropa Log Capture ora salta automaticamente le screenshot quasi duplicate. Errori, avvisi e acquisizioni richieste manualmente non vengono mai saltati."
+  "Saropa Log Capture now skips near-duplicate screenshots by default. Error, warning and manually-requested captures are never skipped.": "Saropa Log Capture ora salta automaticamente le screenshot quasi duplicate. Errori, avvisi e acquisizioni richieste manualmente non vengono mai saltati.",
+  "AI features are available in Saropa Log Capture. Enable them?": "Le funzionalità AI sono disponibili in Saropa Log Capture. Abilitarli?",
+  "Failed to scan sessions — check Output panel": "Non è stato possibile scansionare le sessioni — verifica la scheda Output",
+  "GitHub token expired. Re-authenticate?": "GitHub token scaduto. Riconferma l'autenticazione?",
+  "No active capture session.": "Nessuna sessione di cattura attiva.",
+  "No active capture session. Start debugging to begin capturing.": "Nessuna sessione di cattura attiva. Inizia il debug per iniziare la raccolta.",
+  "Open the Log Viewer first.": "Apri prima il Visualizzatore Log.",
+  "Right-click a log in the Logs panel to use this command.": "Fai clic destro su un log nel pannello Logs per utilizzare questo comando.",
+  "This will send log data (the error line, surrounding context, and stack trace) to an AI language model. Continue?": "Questo invierà i dati dei log (la riga di errore, il contesto circostante e la traccia dello stack) a un modello linguistico AI. Continua?"
 }

@@ -219,7 +219,9 @@ export const stringsViewerD: Record<string, string> = {
     'viewer.analysis.processBackground': 'Background',
     'viewer.analysis.errorContextCopied': 'Error context copied to clipboard',
     'viewer.analysis.noLogForBugReport': 'No log file available for bug report',
-    'viewer.analysis.aiUnavailable': 'AI explanation is not available',
+    // 'viewer.analysis.aiUnavailable' removed (bug_005): the only caller (handleAiExplain())
+    // was deleted when the never-registered 'saropaLogCapture.explainError' command was
+    // removed, leaving this key with zero references anywhere in the webview or catalogs.
     // Crash-detail section headers + empty states (analysis-crash-detail.ts). "Android" stays literal
     // (brand/OS name); the APP/FW frame badges stay literal (technical, matching analysis-frame-render).
     'viewer.analysis.noStackTrace': 'No stack trace available',

@@ -1,6 +1,6 @@
 # Bug 020 — Directory scan errors swallowed
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: High
 
@@ -28,7 +28,8 @@ Catch block returns empty array without logging to the output channel.
 Log the error to the `Saropa Log Capture` output channel. Show a different message when the scan fails vs. when no sessions exist ("Failed to scan sessions — check Output panel" vs. "No sessions found").
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+
+Scan-error logging and the "Failed to scan sessions — check Output panel" vs. "No sessions found" distinction were already implemented (`src/ui/session/session-history-fetching.ts`, `lastFetchFailed` flag). The gap closed in this pass: the new `viewer.session.scanFailed` l10n key was added to `src/l10n/strings-viewer-b.ts` but never synced into `l10n/bundle.l10n.json`, so `vt()` resolved the key to raw English at runtime instead of going through the translation bundle. Added the identity entry (`"Failed to scan sessions — check Output panel"`) to `l10n/bundle.l10n.json`. Verified with `node scripts/modules/verify/verify-l10n-keys.mjs` — passes.
 
 ## Tests Added
 <!-- List new or updated test files. -->
