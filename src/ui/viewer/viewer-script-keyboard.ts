@@ -74,7 +74,14 @@ document.addEventListener('keydown', function(e) {
         var _escSel = window.getSelection(); if (_escSel) _escSel.removeAllRanges();
         return;
     }
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+    /* bug_029: guard interactive elements BEFORE any shortcut fires (moved ahead of the
+       old input/textarea-only check and widened to button/select/a) so Space activates
+       a focused <button> and letter keys type into a focused <select>/<a> instead of
+       being hijacked as viewer shortcuts (e.g. Space no longer force-triggers togglePause
+       while a toolbar button has focus). Returning without preventDefault lets the
+       browser's native key behavior run. */
+    var targetTag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';
+    if (['button', 'select', 'input', 'a', 'textarea'].includes(targetTag)) return;
     if (action === 'selectAll') {
         e.preventDefault();
         var r = document.createRange(); r.selectNodeContents(viewportEl);
@@ -116,8 +123,20 @@ document.addEventListener('keydown', function(e) {
     if (action === 'toggleSqlHistory') { e.preventDefault(); if (typeof setActivePanel === 'function') setActivePanel('sqlHistory'); return; }
     if (action === 'toggleTrash') { e.preventDefault(); if (typeof setActivePanel === 'function') setActivePanel('trash'); return; }
 
-    /* Bookmark center line */
-    if (action === 'bookmark') { e.preventDefault(); var _bi = getCenterIdx(); var _bd = allLines[_bi]; var _bt = _bd ? (_bd.text || '') : ''; vscodeApi.postMessage({ type: 'addBookmark', lineIndex: _bi, text: _bt }); return; }
+    /* Bookmark center line. bug_011: must key off the FILE line number (sourceLineNo), same
+       as the right-click "Bookmark" context-menu action (viewer-context-menu-line-actions.ts)
+       — the array index (_bi) drifts from the on-disk line count via synthetic rows and
+       trims, which desynced goto-line/exports from this keyboard shortcut's bookmarks even
+       after the context-menu path was fixed. Falls back to _bi only for an unstamped row. */
+    if (action === 'bookmark') {
+        e.preventDefault();
+        var _bi = getCenterIdx();
+        var _bd = allLines[_bi];
+        var _bt = _bd ? (_bd.text || '') : '';
+        var _bLineIndex = (_bd && _bd.sourceLineNo != null) ? _bd.sourceLineNo : _bi;
+        vscodeApi.postMessage({ type: 'addBookmark', lineIndex: _bLineIndex, text: _bt });
+        return;
+    }
 
     /* Display toggles */
     if (action === 'toggleCompress' && typeof toggleCompressLines === 'function') { e.preventDefault(); toggleCompressLines(); return; }

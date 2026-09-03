@@ -1,6 +1,6 @@
 # Bug 032 — Deduplication documented but bypassed
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: Medium
 
@@ -28,10 +28,34 @@ The deduplicator class exists but its `process()` method is never invoked from t
 Either wire `Deduplicator.process()` back into the capture pipeline (gated by a setting), or remove the claim from README. If re-enabling, add a `deduplication.enabled` setting (default true) and a `deduplication.threshold` for minimum repeat count.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+
+- README no longer makes the `(x54)` grouping claim — verified via repo-wide grep for
+  `dedup`/`x54` in `README.md`, no match; the misleading documentation was already
+  corrected in an earlier pass.
+- `.github/copilot-instructions.md` still has a stale dedup claim at line 20, but that
+  file is gitignored (`git status` confirms it is untracked/ignored) and is never
+  shipped or read by users — left as-is per scope; it is local-machine-only guidance,
+  not a repo artifact.
+- Re-verified the `Deduplicator` class (`src/modules/capture/deduplication.ts`) against
+  the "dead code" premise in this pass's task list: it is **not** dead code. It is
+  imported and instantiated in `LogSession` (`log-session.ts:11,74,105`), and
+  `flush()`/`reset()` are still called from `stop()` and `clear()`. Only `process()` —
+  the method that actually performs the line-folding — is never called, which is the
+  documented, intentional bypass: `log-session.ts:445-450` carries a comment explaining
+  capture-side deduplication is bypassed by design (every raw line is written; see the
+  `drainPendingLines` rationale) and that `flush()`/`reset()` are kept as defensive
+  no-ops "in case a future code path resurfaces capture-side folding." Deleting the
+  class would contradict that documented intent and break `deduplication.test.ts` /
+  `log-session.test.ts`, which still exercise `Deduplicator` directly. Not deleted.
+- Net effect: the misleading claim is gone from shipped docs; the underlying feature
+  remains intentionally disabled (not a defect to "clean up" as dead code) — re-enabling
+  it, if wanted, is the original proposed fix (a `deduplication.enabled` setting), which
+  is out of scope for this dead-code pass.
 
 ## Tests Added
-<!-- List new or updated test files. -->
+
+None — no code behavior changed; `Deduplicator` was confirmed live (not dead) and left
+untouched, and README was already corrected before this pass.
 
 ## Commits
 <!-- Add commit hashes as fixes land. -->

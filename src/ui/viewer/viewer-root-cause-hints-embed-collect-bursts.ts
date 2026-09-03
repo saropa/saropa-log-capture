@@ -35,49 +35,98 @@ export function getViewerRootCauseHintsBurstsCollectChunk(slowOpThresholdMs: num
   const SLOW_MS = slowOpThresholdMs;
 
   return /* javascript */ `
+/* bug_022: collectBurstSignals() used to re-run its single forward pass over the
+   ENTIRE allLines array on every batch (O(n) per batch, O(n^2) over a session). The
+   sliding-window state (warnWindow/slowWindow/pendingBurst) and the emitted signal
+   arrays now persist at module scope (this file's chunk is concatenated into the
+   general collector's chunk, sharing one long-lived webview script scope) so a batch
+   only walks the lines appended since the previous call. */
+var rchBurstsLastScannedIndex = 0;
+var rchBurstsEscalations = [];
+var rchBurstsSilenceBursts = [];
+var rchBurstsFrameBudgetClusters = [];
+var rchBurstsWarnWindow = [];
+var rchBurstsSlowWindow = [];
+var rchBurstsPrevTs = null;
+var rchBurstsPendingBurst = null;
+
+/* bug_030 (sub-issue 2): every Gradle/Xcode cold-start produces 30-90s of silence
+   (the native build) followed by a flood of app-boot log lines — that flood was
+   indistinguishable from a real "possible UI freeze" burst, so it fired HIGH
+   confidence on every single build (and again on every idle-then-tap, which is a
+   separate false positive but shares the same root cause: bursts have no content
+   awareness). These are the concrete, stable markers Flutter/Gradle/Xcode print
+   around a build+launch cycle; a burst that starts on or contains one of them is
+   build/launch noise, not a UI freeze, and gets suppressed. */
+var rchBuildNoiseRe = /\\b(BUILD SUCCESSFUL|BUILD FAILED|Running Gradle task|Gradle build|Xcode build done|Launching lib\\/main\\.dart|Installing build[\\\\/]|Syncing files to device|> Task :|CocoaPods|Signing app bundle|Debug service listening on)\\b/i;
+
+/** Reset burst-signal accumulator state. Called on session change/clear so a new
+ *  session never inherits sliding-window state or line indices from the previous one. */
+function resetBurstSignalsAccumulator() {
+    rchBurstsLastScannedIndex = 0;
+    rchBurstsEscalations = [];
+    rchBurstsSilenceBursts = [];
+    rchBurstsFrameBudgetClusters = [];
+    rchBurstsWarnWindow = [];
+    rchBurstsSlowWindow = [];
+    rchBurstsPrevTs = null;
+    rchBurstsPendingBurst = null;
+}
+
 /**
  * Collect severity escalation, silence-then-burst, and frame-budget cluster signals.
- * Single forward pass over allLines. Returns {} fields when allLines unavailable.
+ * Incremental forward pass over allLines — only scans lines appended since the last
+ * call (bug_022). Returns {} fields when allLines unavailable.
  * Caps per signal type to keep bundle payload bounded.
  *
  * Depends on rchExtractDuration / stripTags from collect-general (shared webview scope).
  */
 function collectBurstSignals() {
-    var escalations = [];
-    var silenceBursts = [];
-    var frameBudgetClusters = [];
-
     if (typeof allLines === 'undefined' || !allLines.length) {
-        return { escalations: escalations, silenceBursts: silenceBursts, frameBudgetClusters: frameBudgetClusters };
+        return { escalations: rchBurstsEscalations, silenceBursts: rchBurstsSilenceBursts, frameBudgetClusters: rchBurstsFrameBudgetClusters };
     }
 
-    /* Sliding warning window for F10 — trimmed by ts on each iteration. Each entry is
-       { lineIndex, ts } so we can both count and emit evidence line IDs. */
-    var warnWindow = [];
-    /* Sliding slow-op window for F14 — same shape. Emitting a cluster clears the window
-       to avoid overlapping cluster reports for one extended jank period. */
-    var slowWindow = [];
-    /* Silence-burst state for F9: when we detect a >=MIN_SILENCE gap, we start counting
-       lines whose ts falls within BURST_WIN_MS of the burst start. We emit at most one
-       burst per gap to avoid double-reporting nested bursts. */
-    var prevTs = null;
-    var pendingBurst = null;
+    /* trimData() splices lines off the front of allLines once the buffer exceeds MAX_LINES,
+       shifting every stored lineIndex out from under us. A shrink is the only signal we
+       have of that (see collect-general.js's identical guard) — treat it as "start over". */
+    if (rchBurstsLastScannedIndex > allLines.length) {
+        resetBurstSignalsAccumulator();
+    }
 
-    var i, row, ts, plain, signalLevel, durResult, j;
+    /* Local aliases so the pass body below (unchanged logic) reads/writes the
+       persisted module-scope state without a wall of rchBursts-prefixed names. */
+    var escalations = rchBurstsEscalations;
+    var silenceBursts = rchBurstsSilenceBursts;
+    var frameBudgetClusters = rchBurstsFrameBudgetClusters;
+    var warnWindow = rchBurstsWarnWindow;
+    var slowWindow = rchBurstsSlowWindow;
+    var prevTs = rchBurstsPrevTs;
+    var pendingBurst = rchBurstsPendingBurst;
 
-    for (i = 0; i < allLines.length; i++) {
+    var i, row, ts, plain, signalLevel, durResult;
+
+    for (i = rchBurstsLastScannedIndex; i < allLines.length; i++) {
         row = allLines[i];
         if (!row || row.type !== 'line') continue;
         if (row.isSeparator || row.errorSuppressed) continue;
 
         ts = (typeof row.timestamp === 'number' && isFinite(row.timestamp)) ? row.timestamp : null;
 
+        /* Computed once per line (was previously computed lazily per-signal) — the
+           build-noise check (F9) now needs the plain text on every line, not just
+           the ones that already needed it for F10/F14, so there is no longer a
+           cheaper lazy path. */
+        plain = stripTags(row.html || '').replace(/\\s+/g, ' ').trim();
+        var isBuildNoiseLine = plain.length >= 4 && rchBuildNoiseRe.test(plain);
+
         /* --- F9 silence-then-burst -------------------------------------------------
            Track gaps in the timestamp stream. A burst starts when a gap >= MIN_SILENCE_MS
            opens; subsequent lines whose ts is within BURST_WIN_MS of the gap-end count
            toward the burst. We finalize when ts moves outside the burst window or when
            a new larger silence opens. Lines with no ts break the chain (can't reason
-           about gaps without timestamps) — reset prevTs to null. */
+           about gaps without timestamps) — reset prevTs to null.
+           buildNoise on the accumulating pendingBurst suppresses emission entirely
+           (bug_030 sub-issue 2) once ANY line in the burst matches a build/launch marker. */
         if (ts !== null) {
             if (prevTs !== null) {
                 var gap = ts - prevTs;
@@ -85,7 +134,7 @@ function collectBurstSignals() {
                     /* Finalize any pending burst (the new silence ends it).
                        This emit path catches bursts where the trailing line is also separated
                        by another silence — rare but real. */
-                    if (pendingBurst && pendingBurst.count >= ${SB_MIN_LINES} && silenceBursts.length < 4) {
+                    if (pendingBurst && !pendingBurst.buildNoise && pendingBurst.count >= ${SB_MIN_LINES} && silenceBursts.length < 4) {
                         silenceBursts.push({
                             lineIndex: pendingBurst.startIdx,
                             silenceMs: Math.round(pendingBurst.silenceMs),
@@ -93,14 +142,15 @@ function collectBurstSignals() {
                             burstWindowMs: Math.round(pendingBurst.spanMs)
                         });
                     }
-                    pendingBurst = { startIdx: i, startTs: ts, silenceMs: gap, count: 1, spanMs: 0 };
+                    pendingBurst = { startIdx: i, startTs: ts, silenceMs: gap, count: 1, spanMs: 0, buildNoise: isBuildNoiseLine };
                 } else if (pendingBurst) {
                     var burstAge = ts - pendingBurst.startTs;
                     if (burstAge <= ${SB_WIN_MS}) {
                         pendingBurst.count++;
                         pendingBurst.spanMs = burstAge;
+                        if (isBuildNoiseLine) pendingBurst.buildNoise = true;
                     } else {
-                        if (pendingBurst.count >= ${SB_MIN_LINES} && silenceBursts.length < 4) {
+                        if (!pendingBurst.buildNoise && pendingBurst.count >= ${SB_MIN_LINES} && silenceBursts.length < 4) {
                             silenceBursts.push({
                                 lineIndex: pendingBurst.startIdx,
                                 silenceMs: Math.round(pendingBurst.silenceMs),
@@ -138,7 +188,6 @@ function collectBurstSignals() {
             if (warnWindow.length > 32) warnWindow.shift();
         }
         if (signalLevel === 'error' && ts !== null && warnWindow.length >= ${ESC_MIN_WARN} && escalations.length < 5) {
-            plain = stripTags(row.html || '').replace(/\\s+/g, ' ').trim();
             if (plain.length >= 4) {
                 var earliestTs = warnWindow[0].ts;
                 /* Use the shared rchExcerpt helper from collect-general — keeps truncation
@@ -151,8 +200,11 @@ function collectBurstSignals() {
                 });
             }
             /* Clear so the same warning set doesn't fire on the next error in the same
-               window. Subsequent errors need fresh warnings to escalate. */
-            warnWindow = [];
+               window. Subsequent errors need fresh warnings to escalate.
+               In-place clear (not reassignment) — warnWindow aliases the persisted
+               rchBurstsWarnWindow array; a plain "= []" would only rebind this local
+               var and leave the persisted array stale for the next incremental call. */
+            warnWindow.length = 0;
         }
 
         /* --- F14 frame-budget cluster --------------------------------------------
@@ -160,38 +212,49 @@ function collectBurstSignals() {
            collect-general). Maintain a sliding window keyed by ts. When the window
            hits MIN_COUNT slow ops, emit a cluster and clear the window so we don't
            re-emit overlapping clusters for one continuous jank period. */
-        if (ts !== null && typeof rchExtractDuration === 'function') {
-            plain = plain || stripTags(row.html || '').replace(/\\s+/g, ' ').trim();
-            if (plain && plain.length >= 4) {
-                durResult = rchExtractDuration(plain);
-                if (durResult && durResult.durationMs >= ${SLOW_MS}) {
-                    while (slowWindow.length > 0 && (ts - slowWindow[0].ts) > ${FBC_WIN_MS}) {
-                        slowWindow.shift();
-                    }
-                    slowWindow.push({ lineIndex: i, ts: ts });
-                    if (slowWindow.length >= ${FBC_MIN_COUNT} && frameBudgetClusters.length < 4) {
-                        var firstTs = slowWindow[0].ts;
-                        frameBudgetClusters.push({
-                            lineIndices: slowWindow.map(function(s) { return s.lineIndex; }),
-                            windowMs: Math.round(ts - firstTs)
-                        });
-                        slowWindow = [];
-                    }
+        if (ts !== null && typeof rchExtractDuration === 'function' && plain.length >= 4) {
+            durResult = rchExtractDuration(plain);
+            if (durResult && durResult.durationMs >= ${SLOW_MS}) {
+                while (slowWindow.length > 0 && (ts - slowWindow[0].ts) > ${FBC_WIN_MS}) {
+                    slowWindow.shift();
+                }
+                slowWindow.push({ lineIndex: i, ts: ts });
+                if (slowWindow.length >= ${FBC_MIN_COUNT} && frameBudgetClusters.length < 4) {
+                    var firstTs = slowWindow[0].ts;
+                    frameBudgetClusters.push({
+                        lineIndices: slowWindow.map(function(s) { return s.lineIndex; }),
+                        windowMs: Math.round(ts - firstTs)
+                    });
+                    /* In-place clear — see warnWindow.length = 0 comment above. */
+                    slowWindow.length = 0;
                 }
             }
         }
-        /* Reset plain so the next iteration doesn't reuse it. */
-        plain = null;
     }
 
-    /* Finalize trailing pending burst at end of stream. */
-    if (pendingBurst && pendingBurst.count >= ${SB_MIN_LINES} && silenceBursts.length < 4) {
+    rchBurstsLastScannedIndex = allLines.length;
+    /* Persist the sliding-window/pendingBurst state back to module scope for the next
+       incremental call (warnWindow/slowWindow were mutated in place above, but prevTs
+       and pendingBurst are reassigned by value inside the loop, so they need writing
+       back explicitly). */
+    rchBurstsPrevTs = prevTs;
+    rchBurstsPendingBurst = pendingBurst;
+
+    /* Finalize trailing pending burst against the lines seen SO FAR. This is a
+       best-effort snapshot, not a true end-of-stream finalize (there is no such thing
+       once scanning is incremental — more lines may extend this same burst next
+       batch). Null it out after emitting so we never push the same burst twice; a
+       burst that keeps growing across batches is under-reported (its window looks
+       shorter than it eventually is) rather than duplicated, which is the safer
+       failure mode for a signal panel. */
+    if (pendingBurst && !pendingBurst.buildNoise && pendingBurst.count >= ${SB_MIN_LINES} && silenceBursts.length < 4) {
         silenceBursts.push({
             lineIndex: pendingBurst.startIdx,
             silenceMs: Math.round(pendingBurst.silenceMs),
             burstSize: pendingBurst.count,
             burstWindowMs: Math.round(pendingBurst.spanMs)
         });
+        rchBurstsPendingBurst = null;
     }
 
     return { escalations: escalations, silenceBursts: silenceBursts, frameBudgetClusters: frameBudgetClusters };

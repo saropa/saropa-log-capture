@@ -30,9 +30,31 @@ var rchHostSessionDiffSummary = null;
 var rootCauseHintSessionEpoch = 0;
 var rootCauseHypothesesRaf = null;
 
+/* bug_022: this bundle collector's own error/n-plus-one loops used to walk the whole
+   allLines array every call, same defect as the general/bursts collectors. They now
+   share the same incremental-cursor pattern, with their own persisted state. */
+var rchBundleErrorsLastScannedIndex = 0;
+var rchBundleErrorsAccum = [];
+var rchBundleNPlusOneLastScannedIndex = 0;
+var rchBundleNPlusOneAccum = [];
+
+/** Reset the bundle collector's incremental error/n-plus-one accumulators. */
+function resetBundleSignalsAccumulator() {
+    rchBundleErrorsLastScannedIndex = 0;
+    rchBundleErrorsAccum = [];
+    rchBundleNPlusOneLastScannedIndex = 0;
+    rchBundleNPlusOneAccum = [];
+}
+
 function clearRootCauseHintHostFields() {
     rchHostDriftAdvisorSummary = null;
     rchHostSessionDiffSummary = null;
+    /* Session reset must also rewind every incremental collector's cursor — otherwise
+       a new session's allLines (which starts back at index 0) would be seen as
+       "already scanned" and its signals silently dropped (bug_022 follow-up). */
+    if (typeof resetGeneralSignalsAccumulator === 'function') resetGeneralSignalsAccumulator();
+    if (typeof resetBurstSignalsAccumulator === 'function') resetBurstSignalsAccumulator();
+    resetBundleSignalsAccumulator();
 }
 
 function collectSessionDiffRegressionFpsEmbedded() {
@@ -63,14 +85,22 @@ function collectSessionDiffRegressionFpsEmbedded() {
 
 function collectRootCauseHintBundleEmbedded() {
     var sid = String(rootCauseHintSessionEpoch || 0) + '|' + (typeof currentFilename !== 'undefined' ? currentFilename : '');
-    var errors = [];
-    var nPlusOneHints = [];
     var leaders = [];
     var sqlBursts = [];
     var i, row, plain, excerpt, im, keys, eEnt, j, line, fp, sampleIdx, sbk, sbi, sbSid, sbSt, h0, hL, wMs, sessionDiffSummary, regFps;
 
     if (typeof allLines !== 'undefined' && allLines.length) {
-        for (i = allLines.length - 1; i >= 0 && errors.length < 50; i--) {
+        /* bug_022: self-heal on buffer trim, same guard as the general/bursts collectors —
+           trimData() splices the front of allLines, invalidating every stored lineIndex. */
+        if (rchBundleErrorsLastScannedIndex > allLines.length || rchBundleNPlusOneLastScannedIndex > allLines.length) {
+            resetBundleSignalsAccumulator();
+        }
+
+        /* Incremental forward scan for qualifying errors (was: full backward rescan of
+           allLines every call). Appending forward + capping at 50 by dropping the OLDEST
+           entry keeps the same "most recent 50 qualifying errors" result, since order
+           doesn't matter to the consumers (build-hypotheses groups by fingerprint). */
+        for (i = rchBundleErrorsLastScannedIndex; i < allLines.length; i++) {
             row = allLines[i];
             if (!row || row.type !== 'line') continue;
             if (row.level !== 'error' || row.errorSuppressed || row.isSeparator || row.recentErrorContext) continue;
@@ -79,14 +109,16 @@ function collectRootCauseHintBundleEmbedded() {
             if (excerpt.length < ${MIN_ERR}) continue;
             if (!/[a-zA-Z0-9]/.test(excerpt)) continue;
             if (excerpt.length > 400) excerpt = excerpt.substring(0, 397) + '...';
-            errors.push({ lineIndex: i, excerpt: excerpt });
+            rchBundleErrorsAccum.push({ lineIndex: i, excerpt: excerpt });
+            if (rchBundleErrorsAccum.length > 50) rchBundleErrorsAccum.shift();
         }
+        rchBundleErrorsLastScannedIndex = allLines.length;
 
-        for (i = 0; i < allLines.length; i++) {
+        for (i = rchBundleNPlusOneLastScannedIndex; i < allLines.length; i++) {
             row = allLines[i];
             if (!row || row.type !== 'n-plus-one-signal' || !row.signalMeta) continue;
             im = row.signalMeta;
-            nPlusOneHints.push({
+            rchBundleNPlusOneAccum.push({
                 lineIndex: i,
                 fingerprint: im.fingerprint,
                 repeats: im.repeats,
@@ -95,6 +127,7 @@ function collectRootCauseHintBundleEmbedded() {
                 confidence: im.confidence || 'low'
             });
         }
+        rchBundleNPlusOneLastScannedIndex = allLines.length;
     }
 
     if (typeof dbSignalSessionRollup !== 'undefined' && dbSignalSessionRollup && typeof allLines !== 'undefined') {
@@ -149,8 +182,8 @@ function collectRootCauseHintBundleEmbedded() {
     return {
         bundleVersion: ${BV},
         sessionId: sid,
-        errors: errors,
-        nPlusOneHints: nPlusOneHints,
+        errors: rchBundleErrorsAccum,
+        nPlusOneHints: rchBundleNPlusOneAccum,
         fingerprintLeaders: leaders,
         sqlBursts: sqlBursts.length ? sqlBursts : undefined,
         driftAdvisorSummary: rchHostDriftAdvisorSummary || undefined,

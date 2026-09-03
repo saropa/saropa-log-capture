@@ -123,6 +123,23 @@ function screenshotApplyList(msg) {
     if (typeof renderViewport === 'function') renderViewport(true);
 }
 
+/* trimData() splices excessCount rows off the head of allLines; screenshotByIdx is keyed
+   by the OLD row index, so every surviving key must shift down by excessCount or the
+   camera badge renders on a different (unrelated) row after the trim (bug_025). A key
+   whose row was itself trimmed away (new index negative) is dropped — its sidecar entry
+   is re-attached the next time screenshotApplyList rebuilds from the full list. */
+function adjustScreenshotByIdxAfterTrim(excessCount) {
+    if (excessCount <= 0) return;
+    var shifted = {};
+    var hasAny = false;
+    for (var key in screenshotByIdx) {
+        if (!Object.prototype.hasOwnProperty.call(screenshotByIdx, key)) continue;
+        var newIdx = parseInt(key, 10) - excessCount;
+        if (newIdx >= 0) { shifted[newIdx] = screenshotByIdx[key]; hasAny = true; }
+    }
+    screenshotByIdx = hasAny ? shifted : {};
+}
+
 /* One live capture landed: badge its line and bump the footer counter. */
 function screenshotHandleCaptured(msg) {
     if (!msg) return;

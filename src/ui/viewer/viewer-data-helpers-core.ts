@@ -86,7 +86,9 @@ function cleanupTrailingRepeats() {
                while the streak was active. */
             var _sds = (typeof stackDefaultState !== 'undefined') ? stackDefaultState : false;
             sAnchor.collapsed = _sds;
-            sAnchor.height = calcItemHeight(sAnchor);
+            /* bug_027: pass the anchor's own allLines index so a restored anchor's
+               annotation (if any) is counted back into its height. */
+            sAnchor.height = calcItemHeight(sAnchor, stackHdrRepeatTracker.anchorIdx);
             totalHeight += sAnchor.height;
         }
         if (stackHdrRepeatTracker.lastRepeatNotificationIdx >= 0 &&
@@ -108,7 +110,9 @@ function cleanupTrailingRepeats() {
         /* SQL path: original was hidden behind a notification row — restore it. */
         if (orig && orig.repeatHidden) {
             orig.repeatHidden = false;
-            orig.height = calcItemHeight(orig);
+            /* bug_027: same reasoning as the anchor restore above — pass the restored
+               line's own index so its annotation height (if any) is accounted for. */
+            orig.height = calcItemHeight(orig, repeatTracker.lastLineIndex);
             totalHeight += orig.height;
         }
         /* Non-SQL path: all duplicate lines are stored in allLines normally;
@@ -137,7 +141,30 @@ function cleanupTrailingRepeats() {
     repeatTracker.sqlStreakVariantCounts = null;
     repeatTracker.lastRepeatNotificationIndex = -1;
 }
-function calcItemHeight(item) {
+/**
+ * bug_027: calcItemHeight() is the single source of truth for row height in the virtual
+ * scroller's prefix-sum math, but an annotated row renders a sibling <div class="annotation">
+ * (see getAnnotationHtml in viewer-annotations.ts) that this function used to ignore
+ * entirely — every annotated row scrolled past left the DOM taller than the math assumed,
+ * so the scrollbar drifted further out of sync with the visible content the more
+ * annotations a session had. Wrapping the original height logic (renamed to
+ * calcItemHeightBase, unchanged below) lets the annotation-height addition apply uniformly
+ * to every item type/branch without threading it through each individual early return.
+ * idx is the item's position in allLines — the same index annotations are keyed by
+ * (see setAnnotation/getAnnotationHtml) — passed by call sites that know it; callers that
+ * don't (a few narrow anchor-restore paths) simply skip the annotation-height addition.
+ */
+function calcItemHeight(item, idx) {
+    var _baseH = calcItemHeightBase(item);
+    /* Only add annotation height when the row is actually visible (_baseH > 0) — a
+       filtered/collapsed row's annotation isn't rendered either, so it must not
+       contribute height and drift the prefix sums in the opposite direction. */
+    if (_baseH > 0 && idx !== undefined && idx !== null && typeof annotations !== 'undefined' && annotations[idx]) {
+        return _baseH + ANNOTATION_HEIGHT;
+    }
+    return _baseH;
+}
+function calcItemHeightBase(item) {
     /* peekOverride: scoped peek triggered by a .viewer-divider show-gap click or
        a .dedup-badge expand (see viewer-peek-chevron.ts and bugs/048_plan-severity-gutter-decoupling.md).
        Bypasses every filter/hide gate so the user can reveal exactly one gap's worth of

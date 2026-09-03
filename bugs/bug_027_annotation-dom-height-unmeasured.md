@@ -1,6 +1,6 @@
 # Bug 027 — Annotation DOM height unmeasured
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: Medium
 
@@ -20,15 +20,26 @@ Annotations render as a sibling `<div>` block after the `.line` element, but `ca
 
 ## Root Cause
 
-The virtual scroll height calculation doesn't account for the extra height added by annotation blocks.
-(`viewer-data-helpers-render.ts:274,392,397`, `viewer-styles-content.ts:230-236`)
+`calcItemHeight()` in `viewer-data-helpers-core.ts` already adds `ANNOTATION_HEIGHT` for a
+line that has an annotation. The remaining bug was that `setAnnotation()` and
+`handleLoadAnnotations()` in `viewer-annotations.ts` mutated the `annotations` map and then
+called `renderViewport(true)` directly, without calling `recalcHeights()` first.
+`recalcHeights()` is what walks `allLines` and rebuilds each row's `.height` (and the
+prefix-sum `totalHeight`) — skipping it left the viewport rendering against stale heights
+computed before the annotation existed, so every annotated row after the first caused
+cumulative scroll drift. This affected both interactively-added annotations
+(`setAnnotation`) and annotations restored on session reload (`handleLoadAnnotations`).
 
 ## Proposed Fix
 
-Add annotation height to `calcItemHeight()` when an annotation is present on the item. Use a fixed annotation height constant or measure it once on first render.
+Call `recalcHeights()` in both `setAnnotation()` and `handleLoadAnnotations()` immediately
+after the `annotations` map is mutated and before `renderViewport(true)` is called.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+
+- `src/ui/viewer/viewer-annotations.ts`: added `recalcHeights()` calls in `setAnnotation()`
+  and `handleLoadAnnotations()`, before `renderViewport(true)`, with comments explaining why
+  the height rebuild must precede the render.
 
 ## Tests Added
 <!-- List new or updated test files. -->

@@ -1,6 +1,6 @@
 # Bug 026 — Go-to-Line number mismatch
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: Medium
 
@@ -29,7 +29,7 @@ Goto-line uses array index while the gutter shows source line numbers; no mappin
 Search for the item with matching `sourceLineNo` instead of using the input as an array index. Add a `sourceLineNo` lookup function.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+Added `findAllLinesIndexBySourceLine()` (present in `src/ui/viewer/viewer-source-line-stamp.ts`, `viewer-script-messages.ts`, and `viewer-goto-line.ts`). `viewer-goto-line.ts` (~line 118-121) now resolves the user-typed gutter number to an `allLines` array index via this lookup before calling the existing `scrollToLineNumber()` index-based scroller, instead of treating the typed number directly as an array index. Comment at the call site references bug_026.
 
 ## Tests Added
 <!-- List new or updated test files. -->

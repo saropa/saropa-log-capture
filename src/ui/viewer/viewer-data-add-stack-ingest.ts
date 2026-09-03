@@ -203,11 +203,26 @@ function tryIngestStackLine(html, rawText, category, ts, fw, sp, elapsedMs, qual
     var _hdrLevel = previousLineLevel();
     var _hdrOrigLevel = (_prevForHdr && _prevForHdr.originalLevel) ? _prevForHdr.originalLevel : undefined;
     var hdrTierHidden = (typeof isTierHidden === 'function') ? isTierHidden({ tier: lineTier, level: _hdrLevel, originalLevel: _hdrOrigLevel }) : false;
-    var hdrH = (hdrAutoHide || catFiltered || hdrTierHidden || calcLevelFiltered(_hdrLevel)) ? 0 : ROW_HEIGHT;
+    /* bug_028: class-tag and scope filters were hardcoded false on the header object below,
+       so a header born while either filter is active rendered at ROW_HEIGHT (since hdrH did
+       not check them either) and only collapsed on the NEXT full recalcHeights() pass — the
+       visible flash the bug describes. Computed here, the same way regular lines compute
+       classHidden/scopeFilt in addToData(), so the header is born already hidden. */
+    var hdrClassFiltered = (typeof isClassFiltered === 'function') ? isClassFiltered({ classTags: cTagsH, type: 'stack-header' }) : false;
+    var hdrScopeFiltered = (typeof calcScopeFiltered === 'function') ? calcScopeFiltered(sp) : false;
+    /* bug_028: Trouble Mode was omitted from both the header object's own flag and the
+       hdrH gate below, so a stack header born while Trouble Mode is active flashed
+       visible (ROW_HEIGHT) until the next full recalcHeights() pass reapplied the
+       filter — the same class of bug already fixed here for class/scope filters.
+       Mirrors computeLineBirthHeight()'s calcTroubleFiltered(o.lvl) call for
+       regular lines (viewer-data-add-line-birth.ts) so headers follow the same
+       birth-time contract. */
+    var hdrTroubleFiltered = (typeof calcTroubleFiltered === 'function') ? calcTroubleFiltered(_hdrLevel) : false;
+    var hdrH = (hdrAutoHide || catFiltered || hdrTierHidden || hdrClassFiltered || hdrScopeFiltered || hdrTroubleFiltered || calcLevelFiltered(_hdrLevel)) ? 0 : ROW_HEIGHT;
     if (hdrAutoHide && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
     var _sds = (typeof stackDefaultState !== 'undefined') ? stackDefaultState : true;
     var _spc = (typeof stackPreviewCount !== 'undefined') ? stackPreviewCount : 3;
-    var hdr = { html: displayHtml, rawText: rawText || null, type: 'stack-header', height: hdrH, category: category, groupId: gid, frameCount: 1, collapsed: _sds, previewCount: _spc, timestamp: ts, fw: fw, tier: lineTier, level: _hdrLevel, seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, filteredOut: catFiltered, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: false, autoHidden: hdrAutoHide, qualityPercent: qualityPercent, source: lineSource, levelFiltered: calcLevelFiltered(_hdrLevel) };
+    var hdr = { html: displayHtml, rawText: rawText || null, type: 'stack-header', height: hdrH, category: category, groupId: gid, frameCount: 1, collapsed: _sds, previewCount: _spc, timestamp: ts, fw: fw, tier: lineTier, level: _hdrLevel, seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, filteredOut: catFiltered, sourceFiltered: false, classFiltered: hdrClassFiltered, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: hdrScopeFiltered, autoHidden: hdrAutoHide, qualityPercent: qualityPercent, source: lineSource, levelFiltered: calcLevelFiltered(_hdrLevel), troubleFiltered: hdrTroubleFiltered };
     if (_hdrOrigLevel) hdr.originalLevel = _hdrOrigLevel;
     if (elapsedMs !== undefined && elapsedMs >= 0) hdr.elapsedMs = elapsedMs;
     allLines.push(hdr);

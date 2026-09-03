@@ -1,6 +1,6 @@
 # Bug 033 — Export timestamps mislabeled UTC
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: Medium
 
@@ -29,10 +29,29 @@ Mixed use of local time for the time component and UTC for the date component, w
 Use either all-UTC or all-local consistently. If UTC, use `toISOString()` for both date and time. If local, drop the `Z` suffix and use `toLocaleDateString()`/`toLocaleTimeString()` or `Intl.DateTimeFormat`.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+
+`src/modules/export/export-formats.ts`:
+
+- `buildFullTimestamp()` now reads the LOCAL calendar date off the parsed `sessionStart`
+  header value (`getFullYear()`/`getMonth()`/`getDate()`, not the UTC accessors) and drops
+  the trailing `Z` suffix, since the per-line time-of-day string (`timeStr`) is always local
+  wall-clock time (from `Date.toTimeString()` in `log-session-helpers.ts`), never UTC.
+- Added midnight-rollover tracking: a new `RolloverState { dayOffset, lastTimeStr }` is
+  created once per export pass in `parseLogFile()` and threaded through `parseLine()` /
+  `ParseLineOptions` down to `buildFullTimestamp()`. Because exported lines are
+  chronological, a lexical decrease in `HH:MM:SS.mmm` versus the previous timestamped line
+  can only mean local midnight rolled over between them; `dayOffset` is bumped in that case
+  and applied via `Date.setDate()` (so month/year boundaries, e.g. Jan 31 -> Feb 1, roll
+  over correctly without manual month-length math). `dayOffset` accumulates across multiple
+  midnight crossings within one very long session.
+- Fixed the resulting type error at the old call site (`buildFullTimestamp` was being
+  called with a 3rd `rollover` argument the function didn't accept yet).
 
 ## Tests Added
-<!-- List new or updated test files. -->
+
+None added in this pass — `npx tsc --noEmit` confirms 0 type errors after the fix.
+Follow-up: add a regression test in `src/test/` covering a synthetic export with lines
+before and after a local-midnight crossing (see `.claude/rules/testing.md`).
 
 ## Commits
 <!-- Add commit hashes as fixes land. -->

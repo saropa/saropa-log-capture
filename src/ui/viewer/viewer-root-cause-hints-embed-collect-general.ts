@@ -95,20 +95,49 @@ function rchExtractDuration(text) {
     return { durationMs: val, operationName: undefined };
 }
 
+/* bug_022: this collector used to re-scan the WHOLE allLines array on every "addLines" batch
+   (O(n) work per batch, so O(n^2) over a session), which stalled the UI thread once a session
+   grew into the tens of thousands of lines. It now keeps a persistent scan cursor and
+   accumulator state at module scope (this file's chunk is concatenated into the webview's
+   single long-lived script, so these vars survive across calls) and only walks the lines
+   appended since the previous call. */
+var rchGeneralLastScannedIndex = 0;
+var rchGeneralWarningsMap = Object.create(null);
+var rchGeneralNetworkFailures = [];
+var rchGeneralMemoryEvents = [];
+var rchGeneralSlowOperations = [];
+var rchGeneralPermissionDenials = [];
+var rchGeneralClassifiedErrors = [];
+
+/** Reset general-signal accumulator state. Called on session change/clear so a new
+ *  session never inherits lineIndex references or counts from the previous one. */
+function resetGeneralSignalsAccumulator() {
+    rchGeneralLastScannedIndex = 0;
+    rchGeneralWarningsMap = Object.create(null);
+    rchGeneralNetworkFailures = [];
+    rchGeneralMemoryEvents = [];
+    rchGeneralSlowOperations = [];
+    rchGeneralPermissionDenials = [];
+    rchGeneralClassifiedErrors = [];
+}
+
 function collectGeneralSignals() {
-    var warnings = Object.create(null);
-    var networkFailures = [];
-    var memoryEvents = [];
-    var slowOperations = [];
-    var permissionDenials = [];
-    var classifiedErrors = [];
     var i, row, plain, wKey, match, durResult;
 
     if (typeof allLines === 'undefined' || !allLines.length) {
         return { warnings: [], networkFailures: [], memoryEvents: [], slowOperations: [], permissionDenials: [], classifiedErrors: [] };
     }
 
-    for (i = 0; i < allLines.length; i++) {
+    /* trimData() splices lines off the FRONT of allLines once the buffer exceeds MAX_LINES,
+       which shifts every index below the accumulated results out from under them. A shrink
+       is the only signal we have of that happening here (no trim callback is threaded into
+       this module), so treat it as "start over" — cheaper and less error-prone than trying
+       to shift every stored lineIndex by the trimmed amount. */
+    if (rchGeneralLastScannedIndex > allLines.length) {
+        resetGeneralSignalsAccumulator();
+    }
+
+    for (i = rchGeneralLastScannedIndex; i < allLines.length; i++) {
         row = allLines[i];
         if (!row || row.type !== 'line') continue;
         if (row.isSeparator || row.errorSuppressed) continue;
@@ -120,33 +149,33 @@ function collectGeneralSignals() {
         var signalLevel = row.originalLevel || row.level;
         if (signalLevel === 'warning') {
             wKey = plain.slice(-80).toLowerCase();
-            if (!warnings[wKey]) {
-                warnings[wKey] = { excerpt: rchExcerpt(plain), count: 0, lineIndices: [] };
+            if (!rchGeneralWarningsMap[wKey]) {
+                rchGeneralWarningsMap[wKey] = { excerpt: rchExcerpt(plain), count: 0, lineIndices: [] };
             }
-            warnings[wKey].count++;
-            if (warnings[wKey].lineIndices.length < 8) warnings[wKey].lineIndices.push(i);
+            rchGeneralWarningsMap[wKey].count++;
+            if (rchGeneralWarningsMap[wKey].lineIndices.length < 8) rchGeneralWarningsMap[wKey].lineIndices.push(i);
         }
 
         if (signalLevel === 'error' && !row.recentErrorContext) {
             match = rchMatchesAny(plain, rchNetworkPatterns);
-            if (match && networkFailures.length < 20) {
-                networkFailures.push({ lineIndex: i, excerpt: rchExcerpt(plain), pattern: match });
+            if (match && rchGeneralNetworkFailures.length < 20) {
+                rchGeneralNetworkFailures.push({ lineIndex: i, excerpt: rchExcerpt(plain), pattern: match });
             }
             match = rchMatchesAny(plain, rchMemoryPatterns);
-            if (match && memoryEvents.length < 10) {
-                memoryEvents.push({ lineIndex: i, excerpt: rchExcerpt(plain) });
+            if (match && rchGeneralMemoryEvents.length < 10) {
+                rchGeneralMemoryEvents.push({ lineIndex: i, excerpt: rchExcerpt(plain) });
             }
             match = rchMatchesAny(plain, rchPermissionPatterns);
-            if (match && permissionDenials.length < 10) {
-                permissionDenials.push({ lineIndex: i, excerpt: rchExcerpt(plain) });
+            if (match && rchGeneralPermissionDenials.length < 10) {
+                rchGeneralPermissionDenials.push({ lineIndex: i, excerpt: rchExcerpt(plain) });
             }
             match = rchMatchesAny(plain, rchCriticalPatterns);
-            if (match && classifiedErrors.length < 10) {
-                classifiedErrors.push({ lineIndex: i, excerpt: rchExcerpt(plain), classification: 'critical' });
+            if (match && rchGeneralClassifiedErrors.length < 10) {
+                rchGeneralClassifiedErrors.push({ lineIndex: i, excerpt: rchExcerpt(plain), classification: 'critical' });
             } else {
                 match = rchMatchesAny(plain, rchBugPatterns);
-                if (match && classifiedErrors.length < 10) {
-                    classifiedErrors.push({ lineIndex: i, excerpt: rchExcerpt(plain), classification: 'bug' });
+                if (match && rchGeneralClassifiedErrors.length < 10) {
+                    rchGeneralClassifiedErrors.push({ lineIndex: i, excerpt: rchExcerpt(plain), classification: 'bug' });
                 }
             }
         }
@@ -156,24 +185,28 @@ function collectGeneralSignals() {
            (e.g. "3% 502/android.hardware.sensors...") false-positive as HTTP 502.
            Database lines are also excluded (numeric values in SQL result sets). */
         var httpMatch = plain.match(rchHttpCodeRe);
-        if (httpMatch && row.level !== 'database' && rchHttpContextRe.test(plain) && networkFailures.length < 20) {
+        if (httpMatch && row.level !== 'database' && rchHttpContextRe.test(plain) && rchGeneralNetworkFailures.length < 20) {
             var httpCode = httpMatch[1];
             var httpReason = rchHttpErrorCodes[httpCode] || httpCode;
-            networkFailures.push({ lineIndex: i, excerpt: rchExcerpt(plain), pattern: httpCode + ' ' + httpReason });
+            rchGeneralNetworkFailures.push({ lineIndex: i, excerpt: rchExcerpt(plain), pattern: httpCode + ' ' + httpReason });
         }
 
         durResult = rchExtractDuration(plain);
-        if (durResult && durResult.durationMs >= ${MIN_SLOW_MS} && slowOperations.length < 10) {
-            slowOperations.push({ lineIndex: i, excerpt: rchExcerpt(plain), durationMs: durResult.durationMs, operationName: durResult.operationName });
+        if (durResult && durResult.durationMs >= ${MIN_SLOW_MS} && rchGeneralSlowOperations.length < 10) {
+            rchGeneralSlowOperations.push({ lineIndex: i, excerpt: rchExcerpt(plain), durationMs: durResult.durationMs, operationName: durResult.operationName });
         }
     }
+    rchGeneralLastScannedIndex = allLines.length;
 
+    /* Warning groups are re-derived from the accumulated map on every call (cheap — the map
+       only ever holds a bounded number of distinct trailing-80-char keys), so counts stay
+       correct even though the underlying scan is now incremental. */
     var warnGroups = [];
     var wk;
-    for (wk in warnings) {
-        if (!Object.prototype.hasOwnProperty.call(warnings, wk)) continue;
-        if (warnings[wk].count >= ${MIN_WARN}) {
-            warnGroups.push(warnings[wk]);
+    for (wk in rchGeneralWarningsMap) {
+        if (!Object.prototype.hasOwnProperty.call(rchGeneralWarningsMap, wk)) continue;
+        if (rchGeneralWarningsMap[wk].count >= ${MIN_WARN}) {
+            warnGroups.push(rchGeneralWarningsMap[wk]);
         }
     }
     warnGroups.sort(function(a, b) { return b.count - a.count; });
@@ -181,11 +214,11 @@ function collectGeneralSignals() {
 
     return {
         warnings: warnGroups,
-        networkFailures: networkFailures,
-        memoryEvents: memoryEvents,
-        slowOperations: slowOperations,
-        permissionDenials: permissionDenials,
-        classifiedErrors: classifiedErrors
+        networkFailures: rchGeneralNetworkFailures,
+        memoryEvents: rchGeneralMemoryEvents,
+        slowOperations: rchGeneralSlowOperations,
+        permissionDenials: rchGeneralPermissionDenials,
+        classifiedErrors: rchGeneralClassifiedErrors
     };
 }
 `;

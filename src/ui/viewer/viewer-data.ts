@@ -97,6 +97,13 @@ function trimData() {
     }
     // Adjust hidden line indices after splice
     if (typeof adjustHiddenIndicesAfterTrim === 'function') adjustHiddenIndicesAfterTrim(excess);
+    /* Re-index pins, annotations, and screenshot badges the same way as the trackers
+       above: they are keyed by the pre-splice allLines index, so a trim without this
+       adjustment leaves them pointing at whatever unrelated row slid into their old
+       slot (bug_025). Each helper no-ops when its own store is empty. */
+    if (typeof adjustPinnedIndicesAfterTrim === 'function') adjustPinnedIndicesAfterTrim(excess);
+    if (typeof adjustAnnotationsAfterTrim === 'function') adjustAnnotationsAfterTrim(excess);
+    if (typeof adjustScreenshotByIdxAfterTrim === 'function') adjustScreenshotByIdxAfterTrim(excess);
     if (removedHeight > 0 && !autoScroll && !window.isContextMenuOpen) {
         if (window.setProgrammaticScroll) window.setProgrammaticScroll();
         suppressScroll = true;
@@ -308,7 +315,9 @@ function recalcHeights() {
     for (var i = 0; i < allLines.length; i++) {
         var _row = allLines[i];
         if (_row.type === 'line') _row.viewerLineIndex = i;
-        _row.height = calcItemHeight(_row);
+        /* bug_027: pass i so calcItemHeight can look up an annotation at this allLines
+           index (annotations are keyed by the same index renderItem/renderViewport use). */
+        _row.height = calcItemHeight(_row, i);
         totalHeight += _row.height;
     }
     /* Invalidate visible-line cache so updateLineCount recalc runs after filter/layout change. */
