@@ -233,7 +233,7 @@ export function findNextMatchImpl(target: ProviderStateTarget): void {
 export function sendSessionListImpl(
   target: ProviderStateTarget,
   sessions: readonly Record<string, unknown>[],
-  rootInfo?: { label: string; path: string; isDefault: boolean },
+  rootInfo?: { label: string; path: string; isDefault: boolean; scanFailed?: boolean },
 ): void {
   target.postMessage({ type: "sessionList", sessions, ...rootInfo });
 }

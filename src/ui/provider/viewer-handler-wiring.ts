@@ -222,14 +222,18 @@ function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void
       : await historyProvider.getAllChildren();
     const payload = await buildSessionListPayload(items, historyProvider.getActiveUri(), makePayloadOptions(deps));
     const rootLabel = getSessionRootPath(deps.context);
-    broadcaster.sendSessionList(payload, { label: rootLabel, path: rootLabel, isDefault: !overrideUri });
+    // bug_020: lastFetchFailed is set by the fetch just above (getAllChildren(FromRoot) ->
+    // fetchItemsCore), so it always reflects THIS refresh, not a stale prior one.
+    broadcaster.sendSessionList(payload, { label: rootLabel, path: rootLabel, isDefault: !overrideUri, scanFailed: historyProvider.lastFetchFailed });
   };
 
   /** Send the final session list to the webview (always clears the shimmer). */
   const sendFinalList = (records: readonly Record<string, unknown>[]): void => {
     const rootLabel = getSessionRootPath(deps.context);
     const overrideUriStr = deps.context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
-    broadcaster.sendSessionList(records, { label: rootLabel, path: rootLabel, isDefault: !overrideUriStr });
+    // bug_020: forwards the streaming fetch's failure flag so the panel can show
+    // "scan failed" instead of "no sessions found" when the directory scan threw.
+    broadcaster.sendSessionList(records, { label: rootLabel, path: rootLabel, isDefault: !overrideUriStr, scanFailed: historyProvider.lastFetchFailed });
   };
 
   /** Streaming refresh: paints a day-grouped skeleton from the cheap stat pass, then

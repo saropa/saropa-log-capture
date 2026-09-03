@@ -9,17 +9,26 @@ import type { VitalsSnapshot } from '../../modules/crashlytics/google-play-vital
 import { renderSparkline } from './vitals-sparkline';
 import { getTokenStyles } from '../viewer-styles/viewer-styles-tokens';
 
-let refreshTimer: ReturnType<typeof setInterval> | undefined;
-
 /** WebviewViewProvider for the Google Play Vitals sidebar panel. */
 export class VitalsPanelProvider implements vscode.WebviewViewProvider, vscode.Disposable {
     private view: vscode.WebviewView | undefined;
+    // Bug 018 hardening: this was a module-level `let`, shared by every instance of the class.
+    // VS Code only ever registers one VitalsPanelProvider today, but a module-level timer is a
+    // latent trap — a second instance (e.g. a future pop-out variant) would silently clear the
+    // first instance's interval on dispose, or leak a second interval nothing tracks. Instance
+    // field keeps the timer's lifetime tied 1:1 to the panel that owns it.
+    private refreshTimer: ReturnType<typeof setInterval> | undefined;
     static readonly viewType = 'saropaLogCapture.vitalsPanel';
 
     resolveWebviewView(webviewView: vscode.WebviewView): void {
         this.view = webviewView;
         webviewView.webview.options = { enableScripts: true, localResourceRoots: [] };
         webviewView.webview.onDidReceiveMessage(msg => this.handleMessage(msg));
+        // Bug 018: the panel can be closed while the auto-refresh interval is still pending.
+        // Without this handler the interval survives the webview and throws when it later
+        // assigns to `webview.html` on a disposed view. Route disposal through the class's
+        // own dispose() so interval-clearing logic lives in one place.
+        webviewView.onDidDispose(() => this.dispose());
         this.refresh();
         this.startAutoRefresh();
     }
@@ -32,14 +41,24 @@ export class VitalsPanelProvider implements vscode.WebviewViewProvider, vscode.D
         if (this.view) { this.view.webview.html = buildPanelHtml(snapshot); }
     }
 
+    /** Clears the auto-refresh interval. Called both by `onDidDispose` above (panel closed by
+     *  the user) and by anything that holds a `vscode.Disposable` reference to this provider
+     *  (e.g. `context.subscriptions`), so the interval is torn down however disposal happens. */
     dispose(): void {
-        if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = undefined; }
+        if (this.refreshTimer) { clearInterval(this.refreshTimer); this.refreshTimer = undefined; }
     }
 
     private startAutoRefresh(): void {
-        if (refreshTimer) { return; }
+        if (this.refreshTimer) { return; }
         const interval = vscode.workspace.getConfiguration('saropaLogCapture.firebase').get<number>('refreshInterval', 300);
-        if (interval > 0) { refreshTimer = setInterval(() => this.refresh(), interval * 1000); }
+        // Bug 018: also gate each tick on `visible` — a hidden-but-not-yet-disposed panel
+        // (e.g. user switched to another sidebar view) doesn't need a background network query,
+        // and skipping it avoids racing a dispose that happens between ticks.
+        if (interval > 0) {
+            this.refreshTimer = setInterval(() => {
+                if (this.view?.visible) { this.refresh(); }
+            }, interval * 1000);
+        }
     }
 
     private async handleMessage(msg: Record<string, unknown>): Promise<void> {

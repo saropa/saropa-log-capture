@@ -157,7 +157,15 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
         handleErrorHoverRequest(String(msg.text ?? ''), safeLineIndex(msg.lineIndex, 0), ctx.post).catch(() => {});
         return true;
       case "openErrorAnalysis":
-        showAnalysis(String(msg.text ?? ''), safeLineIndex(msg.lineIndex, 0), ctx.currentFileUri).catch(() => {});
+        // bug_007: read sourceLineNo (the real FILE line number the webview now sends),
+        // not lineIndex (the allLines array position) — see viewer-script-click-handlers.ts
+        // and viewer-error-hover-script.ts for the sender side of this fix.
+        // sourceLineNo is 1-based (stamped in viewer-file-loader.ts), but showAnalysis /
+        // extractFrames index directly into a 0-based split('\n') array, so it must be
+        // converted here — same 1-based-to-0-based conversion as trouble-detail-handler.ts:59
+        // (`const hint = sourceLineNo - 1;`). Without the "- 1" every analysis starts one
+        // line too late.
+        showAnalysis(String(msg.text ?? ''), safeLineIndex(msg.sourceLineNo, 0) - 1, ctx.currentFileUri).catch(() => {});
         return true;
       case "showCodeQualityForFrame":
         handleCodeQualityForFrameRequest(
