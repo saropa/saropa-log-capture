@@ -14,7 +14,7 @@ import time
 
 from modules.publish.constants import C, MARKETPLACE_EXTENSION_ID, PROJECT_ROOT
 from modules.publish.display import fail, info, ok, warn
-from modules.publish.utils import get_ovsx_pat, run
+from modules.publish.utils import get_ovsx_pat, get_vsce_pat, run
 
 # Error from yazl when a file's size changes between stat and read (e.g. watch overwriting dist).
 _YAZL_STREAM_BYTES_ERROR = "file data stream has unexpected number of bytes"
@@ -103,12 +103,22 @@ def publish_marketplace(vsix_path: str) -> bool:
     """Publish the pre-built .vsix to VS Code Marketplace.
 
     Requires a valid PAT (Personal Access Token) for the 'saropa' publisher.
-    The PAT is stored in the system keychain via `npx @vscode/vsce login`.
+    Prefers VSCE_PAT from env / .env (passed via --pat, no keychain needed);
+    falls back to the keychain entry stored by `npx @vscode/vsce login`.
     """
     vsix_name = os.path.basename(vsix_path)
     info(f"Publishing {vsix_name} to marketplace...")
+    cmd = ["npx", _VSCE_CLI, "publish", "--packagePath", vsix_path]
+    # Use explicit --pat when VSCE_PAT is set, bypassing the keychain.
+    # vsce also reads VSCE_PAT from the environment natively, but passing
+    # it explicitly makes the credential source visible in debug output.
+    # Re-reads .env here (also read in check_vsce_auth) — intentional so
+    # the publish step uses whatever value is current at publish time.
+    pat = get_vsce_pat()
+    if pat:
+        cmd.extend(["--pat", pat])
     result = run(
-        ["npx", _VSCE_CLI, "publish", "--packagePath", vsix_path],
+        cmd,
         cwd=PROJECT_ROOT,
     )
     if result.returncode != 0:

@@ -15,7 +15,7 @@ import sys
 
 from modules.publish.constants import C, PROJECT_ROOT
 from modules.publish.display import fail, fix, info, ok, prompt_fix_action, warn
-from modules.publish.utils import get_ovsx_pat, run
+from modules.publish.utils import get_ovsx_pat, get_vsce_pat, run
 
 
 def check_node() -> bool:
@@ -98,11 +98,21 @@ def check_vsce_auth() -> bool:
 
     Only called when --analyze-only is NOT set, since credentials are
     only needed for the actual marketplace publish in Step 13.
-    Uses `vsce verify-pat` to validate without publishing. If verification
-    fails, runs `vsce login saropa` interactively so the user can enter or
-    overwrite the PAT (handles both first-time and overwrite prompts).
+
+    Resolution order:
+      1. VSCE_PAT env / .env  → non-interactive, passes --pat to publish
+      2. Keychain (vsce verify-pat) → already logged in
+      3. Interactive vsce login → logout first to dodge the overwrite prompt
     """
     info("Checking marketplace credentials...")
+
+    # 1. Env-based PAT bypasses the keychain entirely — no interactive prompt.
+    pat = get_vsce_pat()
+    if pat:
+        ok("VSCE_PAT found (env / .env) — will use --pat at publish time")
+        return True
+
+    # 2. Try the keychain-stored PAT.
     result = run(
         ["npx", "@vscode/vsce", "verify-pat", "saropa"],
         cwd=PROJECT_ROOT,
@@ -113,23 +123,38 @@ def check_vsce_auth() -> bool:
         return True
 
     # verify-pat may not exist in older vsce versions — treat as a
-    # non-blocking warning rather than failing the entire pipeline
+    # non-blocking warning rather than failing the entire pipeline.
     stderr = (result.stderr or "").lower()
     if "unknown command" in stderr or "not a vsce command" in stderr:
         warn("Could not verify PAT (vsce verify-pat not available).")
         info("Publish may fail if credentials are missing.")
         return True
 
-    # Clear the stale publisher entry first so `vsce login` goes straight to
-    # the PAT prompt — avoids the "overwrite? [y/N]" prompt that breaks on
-    # Windows when stdin doesn't pass through the cmd.exe → npx.cmd chain.
+    # 3. Interactive login.  Clear the stale publisher entry first so
+    #    `vsce login` goes straight to the PAT prompt — avoids the
+    #    "overwrite? [y/N]" prompt that breaks on Windows when stdin
+    #    doesn't pass through the cmd.exe → npx.cmd chain.
     info("Marketplace needs a login token (PAT). Same token whether you use VS Code or Cursor — it can expire.")
     info(f"  Get one: {C.WHITE}https://marketplace.visualstudio.com/manage{C.RESET} -> your publisher -> Create token. Copy it, then paste here when vsce asks.")
-    run(
+    info(f"  {C.WHITE}Tip:{C.RESET} set VSCE_PAT in .env to skip this prompt next time.")
+    logout = run(
         ["npx", "@vscode/vsce", "logout", "saropa"],
         cwd=PROJECT_ROOT,
         check=False,
     )
+    # Logout may fail if the publisher isn't registered ("unknown publisher")
+    # or the subcommand doesn't exist in this vsce version ("unknown command").
+    # Both are harmless — login should still be attempted.  Only warn on
+    # unexpected failures so the operator knows the overwrite prompt may appear.
+    if logout.returncode != 0:
+        logout_stderr = (logout.stderr or "").lower()
+        is_expected = (
+            "unknown command" in logout_stderr
+            or "unknown publisher" in logout_stderr
+        )
+        if not is_expected:
+            warn("Could not clear stale publisher (may see an overwrite prompt).")
+
     info("Running vsce login for publisher 'saropa'...")
     info("  Paste the token when asked.")
     login_result = subprocess.run(
@@ -139,8 +164,9 @@ def check_vsce_auth() -> bool:
     )
     if login_result.returncode != 0:
         fail("vsce login failed or was cancelled.")
+        info(f"  {C.WHITE}Alternative:{C.RESET} set VSCE_PAT=<token> in .env and re-run.")
         return False
-    # Re-verify after login
+    # Re-verify after login.
     result = run(
         ["npx", "@vscode/vsce", "verify-pat", "saropa"],
         cwd=PROJECT_ROOT,
@@ -151,6 +177,7 @@ def check_vsce_auth() -> bool:
         return True
     fail("No valid marketplace PAT found for publisher 'saropa'.")
     info(f"  Run manually if needed: {C.YELLOW}npx @vscode/vsce login saropa{C.RESET}")
+    info(f"  Or set VSCE_PAT=<token> in .env")
     return False
 
 

@@ -40,6 +40,34 @@ def run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess[str]:
     )
 
 
+def get_vsce_pat() -> str:
+    """Return VSCE_PAT from environment or from project .env file.
+
+    When set, the publish pipeline passes it via --pat to vsce publish,
+    bypassing the interactive `vsce login` keychain flow entirely.
+    Mirrors the OVSX_PAT pattern — set in .env (gitignored) or shell env.
+
+    Note: vsce ≥2.x also reads VSCE_PAT from the environment natively,
+    but we pass it explicitly via --pat for visibility in debug output
+    and to support the .env file (which vsce doesn't read on its own).
+    """
+    pat = os.environ.get("VSCE_PAT", "").strip()
+    if pat:
+        return pat
+    env_path = os.path.join(PROJECT_ROOT, ".env")
+    try:
+        with open(env_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("VSCE_PAT="):
+                    # Strip surrounding quotes that .env editors may add.
+                    value = line.split("=", 1)[1].strip().strip('"').strip("'")
+                    return value
+    except OSError:
+        pass
+    return ""
+
+
 def get_ovsx_pat() -> str:
     """Return OVSX_PAT from environment or from project .env file.
 

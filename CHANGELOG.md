@@ -119,7 +119,7 @@ Massive stability and security sweep — dozens of long-standing bugs squashed, 
 
 - New advisory `verify:script-position-proxies` script flags `src/test/**/*.test.ts` assertions that locate webview-script code by string position (`indexOf()` ordering comparisons, fixed-offset `.slice()` windows) instead of structure — the failure class behind the extraction/pause-gate test breakages fixed earlier this cycle; prints a copy-pasteable occurrence-count guard suggestion for each finding, heuristic-based, not wired into `npm run compile`
 - Archived 45 fixed bug reports from `bugs/` to `plans/history/2026.09/2026.09.03/`; repointed stale `bugs/bug_*.md` references in MASTER_PLAN, plan 114, and the issue report guide
-- Fixed publish script hanging at `vsce login` overwrite prompt on Windows — `logout` first so the PAT prompt appears directly without the interactive y/N confirmation that stdin can't reach through the cmd.exe → npx chain
+- Fixed publish script hanging at `vsce login` overwrite prompt on Windows — `logout` first so the PAT prompt appears directly without the interactive y/N confirmation that stdin can't reach through the cmd.exe → npx chain; added `VSCE_PAT` env / `.env` support to bypass interactive login entirely (mirrors `OVSX_PAT`)
 
 
 </details>
