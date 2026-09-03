@@ -4,8 +4,7 @@ Implementation specs for log-capture integration adapters. Each adapter is opt-i
 
 Folder navigation:
 
-- Folder guide and canonical links: [README.md](README.md)
-- Task ordering and rough effort: [TASK_BREAKDOWN_AND_EASE.md](TASK_BREAKDOWN_AND_EASE.md)
+- Work schedule, priorities and effort: [MASTER_PLAN.md](../MASTER_PLAN.md)
 - Runbook for empty/missing capture logs: [010_runbook-missing-or-empty-logs.md](010_runbook-missing-or-empty-logs.md)
 - Long-form design docs (background): all archived under `history/2026.06/`. Deferred items carried forward in [deferred/integration-spec-deferred-items.md](deferred/integration-spec-deferred-items.md).
 
@@ -31,7 +30,7 @@ Implemented adapters are marked **Done** and documented in the spec (or provider
 | `linuxLogs` | *(implemented)* — spec moved to [history/](history/) | Done |
 | `security` | *(implemented)* — spec archived to [history/2026.06/](history/2026.06/); deferred items in [deferred/integration-spec-deferred-items.md](deferred/integration-spec-deferred-items.md) | Done |
 
-**API:** [INTEGRATION_API.md](../history/INTEGRATION_API.md) — provider contract, lifecycle, performance/UX, status bar.
+**API:** [registry.ts](../src/modules/integrations/registry.ts) — the provider contract and lifecycle live in code. (The former `INTEGRATION_API.md` never existed in this repo; three docs linked to it.)
 
 ---
 
