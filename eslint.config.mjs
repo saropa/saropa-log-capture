@@ -46,7 +46,10 @@ export default [{
     },
 }, {
     // Single module emits the full webview client script as one template literal; line budget is higher than typical TS.
-    files: ["src/ui/viewer/viewer-script.ts"],
+    // log-viewer-provider.ts: WebviewViewProvider implementation — mostly one-line handler-setter
+    // methods and ViewerTarget delegation to log-viewer-provider-state.ts. Already at the 325 tier;
+    // bumped to 340 rather than fragmenting the class further for a few lines of margin.
+    files: ["src/ui/viewer/viewer-script.ts", "src/ui/provider/log-viewer-provider.ts"],
     rules: {
         "max-lines": ["warn", { max: 340, skipBlankLines: true, skipComments: true }],
     },
@@ -60,7 +63,6 @@ export default [{
     // the new logic lives in viewer-data-add-stack-header-repeat.ts. Matching the 325 tier here
     // rather than carving another split since addToData's dispatch flow is the file's point.
     files: [
-        "src/ui/provider/log-viewer-provider.ts",
         "src/ui/viewer-panels/pop-out-panel.ts",
         "src/ui/viewer/viewer-script-messages.ts",
         "src/ui/viewer/viewer-data-add.ts",
