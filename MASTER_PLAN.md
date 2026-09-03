@@ -215,9 +215,11 @@ Plan rewritten 2026-09-03 against the current engine.
   `_LOCALE_INFO` registry). `l10n_nllb_engine.py` and the `_LOCALE_MAP` are
   **gone** — the plan's old FLORES steps pointed at dead symbols
 - Bundle is 2244 keys, so Phase 1 is ~29,000 strings
-- **Blocker to resolve before starting Phase 1:** nothing in `scripts/` writes
-  `package.nls.<locale>.json`. Decide whether to extend the tooling or accept
-  hand-translation — it decides whether Phase 1 is one run or 13 manual files
+- **Prerequisite (decided 2026-09-03):** extend the translate script to emit
+  `package.nls.<locale>.json` through the same Qwen engine, so one operator run
+  covers both the viewer bundle and the VS Code chrome. Build and verify it
+  against an existing locale before running any new ones. Hand-translation was
+  rejected — it is how chrome coverage decayed to 22–37% on the existing 10
 - The MT pipeline stays operator-run only; never at publish or from a build
 
 ---
