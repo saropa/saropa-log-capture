@@ -67,7 +67,8 @@ export function buildProgressiveShell(opts: ShellOptions): string {
     const errorSlots = isError ? 3 : 0; // error-header, error-timeline, error-occurrences
     // 6 = trend + docs + symbols + tokens + github + firebase
     const sectionCount = errorSlots + (hasSource ? 3 : 0) + (hasTag ? 2 : 0) + 6;
-    const actionBar = isError && errorHash ? renderActionBar(errorHash, true) : '';
+    // hasAi arg dropped with the removed "Explain with AI" button (bug_005).
+    const actionBar = isError && errorHash ? renderActionBar(errorHash) : '';
     return wrapHtml(nonce, `<div role="main" aria-label="${t('viewer.analysis.mainLabel')}"><div class="header"><div class="analyzed-line">${escapeHtml(lineText)}</div>
         <div class="summary"><span id="progress-text">${t('viewer.analysis.analyzingProgress', sectionCount)}</span> <button class="cancel-btn" id="cancel-btn" aria-label="${t('viewer.analysis.cancelAnalysis')}">${t('viewer.analysis.stop')}</button></div>
         <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="${sectionCount}" data-total="${sectionCount}" style="width:0%"></div></div></div>

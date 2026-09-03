@@ -3,6 +3,7 @@
  */
 
 import { parseExclusionPattern, testExclusion } from "../features/exclusion-matcher";
+import { logExtensionWarn } from "../misc/extension-logger";
 import type { InteractionType, UserInteraction } from "./interaction-types";
 
 export interface ExtractedPattern {
@@ -12,6 +13,40 @@ export interface ExtractedPattern {
     matchCount: number;
     sampleLines: string[];
     category: "noise" | "framework" | "verbose" | "repetitive";
+}
+
+/**
+ * Minimum shared-prefix length a candidate must clear before it is even considered.
+ * bug_024: at 12 chars, four semi-random log lines routinely share a prefix that long
+ * (timestamps, log tags, common English preambles), so a handful of dismisses could mint
+ * a pattern broad enough to hide unrelated app output. 24 chars demands a far more
+ * specific — and so far less likely to be coincidental — shared preamble.
+ */
+const MIN_PREFIX_LEN = 24;
+
+/**
+ * bug_024 safety net: above this fraction of the user's own recent lines matched, a candidate
+ * is rejected outright regardless of its computed confidence. This is independent of the
+ * ratio/confidence math in extractPrefixPatterns, which only measures a candidate against the
+ * dismissed subset that produced it — not against everything the user has actually seen, so it
+ * cannot by itself catch a prefix that happens to also match most of the surrounding output.
+ */
+const MAX_RECENT_LINE_MATCH_RATIO = 0.5;
+
+/**
+ * True when `pattern` would match more than MAX_RECENT_LINE_MATCH_RATIO of `recentLines` — the
+ * broader set of lines the user has actually interacted with (dismissed, kept, or scrolled past),
+ * not just the subset that produced the candidate. This is the best available proxy for "recent
+ * app output" here: the extractor only ever sees tracked UserInteraction records, never the full
+ * log stream, so there is no separate app/framework classification to test against.
+ */
+function matchesTooBroadly(pattern: string, recentLines: readonly string[]): boolean {
+    const rule = parseExclusionPattern(pattern);
+    if (!rule || recentLines.length === 0) {
+        return false;
+    }
+    const matched = recentLines.filter((line) => testExclusion(line, [rule])).length;
+    return matched / recentLines.length > MAX_RECENT_LINE_MATCH_RATIO;
 }
 
 const DISMISS_TYPES: ReadonlySet<InteractionType> = new Set([
@@ -87,13 +122,14 @@ function extractPrefixPatterns(weightedLines: { text: string; w: number }[]): Ex
     if (weightedLines.length < 4) {
         return [];
     }
-    const texts = weightedLines.map((x) => x.text).filter((t) => t.length >= 12);
+    const texts = weightedLines.map((x) => x.text).filter((t) => t.length >= MIN_PREFIX_LEN);
     if (texts.length < 4) {
         return [];
     }
     const totalW = weightedLines.reduce((s, x) => s + x.w, 0);
     const len = commonPrefixLen(texts);
-    if (len < 12) {
+    // bug_024: below MIN_PREFIX_LEN the shared prefix is too generic to trust as a real pattern.
+    if (len < MIN_PREFIX_LEN) {
         return [];
     }
     const prefix = texts[0].slice(0, len);
@@ -217,12 +253,28 @@ export function extractPatterns(
         ...extractRepetitivePatterns(weightedLines),
     ];
     const deduped = dedupePatterns(raw);
+    // bug_024: the full interaction set (every tracked type, not just the dismissed subset that
+    // produced a candidate) is the broadest sample of "recent app output" available to this pure
+    // module — used below to reject any candidate that would hide most of it.
+    const recentLines = interactions.map((i) => i.lineText);
     return deduped.filter((p) => {
         if (p.confidence < minConfidence) {
             return false;
         }
         const rule = parseExclusionPattern(p.pattern);
         if (!rule) {
+            return false;
+        }
+        // bug_024: only the LCP/prefix heuristic ("framework"/"noise" categories) is prone to
+        // over-generalizing past its dismissed sample — a "repetitive" candidate already matches
+        // only lines equal to (or containing) the exact dismissed text, so it cannot by
+        // construction sweep up unrelated app output the way a short shared prefix can.
+        const isPrefixDerived = p.category === "framework" || p.category === "noise";
+        if (isPrefixDerived && matchesTooBroadly(p.pattern, recentLines)) {
+            logExtensionWarn(
+                "pattern-extractor",
+                `Rejected overly broad learned pattern "${p.pattern}" — matched more than ${Math.round(MAX_RECENT_LINE_MATCH_RATIO * 100)}% of recent lines.`,
+            );
             return false;
         }
         // Do not suggest if it would hide an explicit-keep sample (user pinned similar text).

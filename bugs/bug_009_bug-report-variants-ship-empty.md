@@ -1,6 +1,6 @@
 # Bug 009 — GitHub Issue and Handoff bug-report variants ship empty
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: Critical
 
@@ -27,10 +27,26 @@ The variant runner dispatches to format-specific builder functions for each vari
 Either implement the GitHub Issue and Handoff variant builders using the same underlying data the Markdown variant already assembles, or remove the broken variants from the UI selector until they are implemented. Add a test that generates a report for a sample session in every registered variant and asserts none of fingerprint/body/sessionInfo is empty.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+
+- The `exportGitHubIssue` / `copyHandoffBundle` commands were already removed from the
+  command palette and `package.json` in an earlier pass — verified against current
+  `src/commands-bug-report.ts`, only `saropaLogCapture.createReportFile` (the working
+  Markdown variant) is registered.
+- Follow-up cleanup in this pass: `src/modules/bug-report/report-variant-runner.ts` and
+  `report-file-variants.ts` (the broken GitHub Issue / Handoff formatters, which
+  hardcoded `sessionInfo`/`fullOutput`/`fullOutputLineCount` to empty) had been kept in
+  the tree "for the future fix" but had zero live callers — `collectAndFormatVariant()`
+  was referenced only in comments, not imported by any command, and had no test
+  coverage. Deleted both files rather than carry dead scaffolding indefinitely; a real
+  fix should be built fresh against `collectBugReportData()` when the feature is
+  reintroduced, rather than resurrecting this runner.
+- Updated the explanatory comment in `commands-bug-report.ts` to stop pointing at the
+  now-deleted `report-variant-runner.ts`.
 
 ## Tests Added
-<!-- List new or updated test files and what they verify. -->
+
+None — this pass only deleted unreferenced dead code; no behavior changed. Re-adding the
+GitHub Issue / Handoff variants needs new formatter tests per the original proposed fix.
 
 ## Commits
 <!-- Add commit hashes as fixes land. -->

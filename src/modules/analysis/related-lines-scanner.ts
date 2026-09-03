@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { parseSourceTag } from '../source/source-tag-parser';
 import { extractSourceReference } from '../source/source-linker';
 import { type AnalysisToken, extractAnalysisTokens } from './line-analyzer';
+import { MAX_SCAN_LINES, warnIfScanCapped } from './scanner-line-cap';
 
 /** A single line belonging to the related-lines group. */
 export interface RelatedLine {
@@ -20,7 +21,8 @@ export interface RelatedLinesResult {
     readonly enhancedTokens: readonly AnalysisToken[];
 }
 
-const maxScanLines = 5000;
+// bug_007: raised from a silent 5,000-line cap — see scanner-line-cap.ts.
+const maxScanLines = MAX_SCAN_LINES;
 const maxRelatedLines = 200;
 
 /** Scan a log file for all lines sharing the given source tag. */
@@ -28,6 +30,7 @@ export async function scanRelatedLines(fileUri: vscode.Uri, sourceTag: string, _
     const raw = await vscode.workspace.fs.readFile(fileUri);
     const allLines = Buffer.from(raw).toString('utf-8').split('\n');
     const scanLimit = Math.min(allLines.length, maxScanLines);
+    warnIfScanCapped('related-lines-scanner', allLines.length, scanLimit);
     const lines: RelatedLine[] = [];
     const fileSet = new Set<string>();
     for (let i = 0; i < scanLimit && lines.length < maxRelatedLines; i++) {

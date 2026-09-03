@@ -144,17 +144,22 @@ export function renderOccurrencesSection(count: number, examples: readonly strin
     return doneSlot('error-occurrences', html);
 }
 
-/** Render the action bar with export/diagnostic buttons. */
-export function renderActionBar(hash: string, hasAi: boolean): string {
+/**
+ * Render the action bar with export/diagnostic buttons.
+ *
+ * The "Explain with AI" button was removed (bug_005): it posted to a message
+ * handler that called `vscode.commands.executeCommand('saropaLogCapture.explainError')`,
+ * a command with no matching `registerCommand` anywhere in the extension. Every
+ * click therefore failed silently and showed "AI unavailable". Re-add only once
+ * the command is wired to a real handler (see `src/modules/ai/ai-context-builder.ts`).
+ */
+export function renderActionBar(hash: string): string {
     let html = '<div class="err-action-bar">';
     html += `<button class="err-action" data-action="copyContext" title="Copy error context to clipboard">📋 Copy Context</button>`;
     html += `<button class="err-action" data-action="bugReport" data-hash="${escapeHtml(hash)}" title="Generate bug report">🐛 Bug Report</button>`;
     html += `<button class="err-action" data-action="exportSlc" title="Export log as .slc bundle">📦 Export .slc</button>`;
     html += `<button class="err-action" data-action="exportJson" title="Export as JSON">{ } JSON</button>`;
     html += `<button class="err-action" data-action="exportCsv" title="Export as CSV">📊 CSV</button>`;
-    if (hasAi) {
-        html += `<button class="err-action err-action-ai" data-action="aiExplain" title="Explain with AI">🤖 AI Explain</button>`;
-    }
     html += '</div>';
     return html;
 }

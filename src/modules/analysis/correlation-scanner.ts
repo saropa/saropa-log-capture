@@ -7,8 +7,10 @@
 
 import * as vscode from 'vscode';
 import { extractAnalysisTokens, type AnalysisToken } from './line-analyzer';
+import { MAX_SCAN_LINES, warnIfScanCapped } from './scanner-line-cap';
 
-const maxScanLines = 5000;
+// bug_007: raised from a silent 5,000-line cap — see scanner-line-cap.ts.
+const maxScanLines = MAX_SCAN_LINES;
 const maxTags = 20;
 const correlationTypes: ReadonlySet<AnalysisToken['type']> = new Set(['source-file', 'error-class']);
 
@@ -18,6 +20,7 @@ export async function scanForCorrelationTags(fileUri: vscode.Uri): Promise<strin
     const text = Buffer.from(raw).toString('utf-8');
     const lines = text.split('\n');
     const scanLimit = Math.min(lines.length, maxScanLines);
+    warnIfScanCapped('correlation-scanner', lines.length, scanLimit);
     const freq = new Map<string, number>();
     for (let i = 0; i < scanLimit; i++) { collectTokens(lines[i], freq); }
     return rankTags(freq);

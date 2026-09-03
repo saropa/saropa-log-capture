@@ -12,6 +12,21 @@ export function isNoChatModelErrorMessage(message: string): boolean {
     return message.includes('No AI model available');
 }
 
+/**
+ * bug_003: "Explain with AI" ships log lines, a stack trace, and (optionally) HTTP/terminal
+ * data to a third-party language model — the user must confirm this each time before anything
+ * leaves the machine, even though the content is redacted (redact.ts) before it is sent.
+ * Returns true only when the user explicitly chose to continue.
+ */
+export async function confirmAiDataConsent(): Promise<boolean> {
+    const choice = await vscode.window.showWarningMessage(
+        t('msg.aiSendConsent'),
+        { modal: true },
+        t('action.continue'),
+    );
+    return choice === t('action.continue');
+}
+
 function errorToMessage(err: unknown): string {
     if (err instanceof Error) {
         return err.message;
