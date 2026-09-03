@@ -35,3 +35,34 @@ default" convention; `let`-declared or destructured index vars would be missed),
 has no try/catch around `readdirSync`, so it throws an unhandled `ENOENT` if invoked from
 outside the repo root instead of an npm script (acceptable: it is only ever invoked via
 `npm run verify:script-position-proxies` from the repo root).
+
+## Follow-up (same day): hardening + occurrence-count guard suggestions
+
+Both handoff-reflection findings were addressed directly rather than left as noted risk:
+
+- **Path resolution** now derives the repo root from the script's own `import.meta.url`
+  instead of `process.cwd()`, so the audit behaves identically regardless of the invoking
+  directory (previously would throw `ENOENT` if run from outside the repo root).
+- **Scan scope** widened from `src/test/ui/` to a recursive walk of all of `src/test/`, so a
+  future test file using this idiom outside `ui/` is no longer silently invisible to the audit.
+- **Detection regex** now matches both `const` and `let` declared index variables (previously
+  `const`-only).
+- **False-positive suppression**: excluded the `start`/`end` variable-name pair from
+  ordering-risk detection — this is a deliberate single-function-extraction idiom (`start =
+  indexOf(anchor)`, `end = indexOf('\n}', start)`, `assert.ok(end > start, ...)`,
+  `slice(start, end + 2)`) seen in `viewer-dart-frame-format.test.ts` and
+  `viewer-stack-detection-parity.test.ts`, not a cross-branch ordering assumption. Rerunning
+  after all hardening changes: 53 findings across 24 files (down from 56/25 — the two false
+  positives removed, one new file surfaced by the wider `let` + recursive scan).
+
+**Unrequested feature, scoped as a minimal, safe slice**: rather than auto-editing the 24
+affected test files with generated occurrence-count assertions (unreviewed automated mutation
+of test logic across the codebase — disproportionate blast radius for a "minimal, shippable
+slice"), the script now prints a copy-pasteable `assert.strictEqual(script.split(anchor).length
+- 1, /* TODO fill in */ 1, ...)` suggestion beneath each ordering-risk finding that doesn't
+already have a nearby occurrence-count guard (checked via a 5-line text-window scan for
+`.split(...).length` referencing the same anchor). This mirrors the exact hardening pattern
+manually applied to `viewer-stack-frame-click.test.ts` in `cdf0555e`, as advisory text only —
+the script never writes to test files.
+
+`/code-review low` on this follow-up diff: no findings.
