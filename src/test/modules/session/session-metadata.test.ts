@@ -1,5 +1,12 @@
 import * as assert from 'node:assert';
-import { SessionMetadataStore, SessionMeta, Annotation, hasMeaningfulPerformanceData, isOurSidecar } from '../../../modules/session/session-metadata';
+import * as os from 'node:os';
+import * as path from 'node:path';
+import * as vscode from 'vscode';
+import {
+    SessionMetadataStore, SessionMeta, Annotation, hasMeaningfulPerformanceData, isOurSidecar,
+    cleanupDeletedSessionMetadata,
+} from '../../../modules/session/session-metadata';
+import { screenshotDirUri, screenshotSidecarUri } from '../../../modules/screenshot/screenshot-store';
 
 suite('SessionMetadataStore', () => {
 
@@ -75,5 +82,49 @@ suite('SessionMetadataStore', () => {
         assert.strictEqual(hasMeaningfulPerformanceData({ snapshot: { cpus: 8 } }), true);
         assert.strictEqual(hasMeaningfulPerformanceData({ snapshot: { totalMemMb: 16384, freeMemMb: 8000 } }), true);
         assert.strictEqual(hasMeaningfulPerformanceData({ snapshot: { processMemMb: 512 } }), true);
+    });
+
+    // bug_046: deleting a log used to leave its `.screenshots/` PNGs and `.screenshots.json`
+    // index behind forever, growing disk usage unbounded. These run against real files in a
+    // temp directory (like the flow-map cross-session tests) because the behavior under test
+    // IS the filesystem cleanup, and a mocked fs would only test the mock.
+    suite('cleanupDeletedSessionMetadata screenshot sidecar cleanup (bug_046)', () => {
+        let dir = '';
+
+        setup(async () => {
+            dir = path.join(os.tmpdir(), `slc-sidecar-cleanup-${process.hrtime.bigint()}`);
+            await vscode.workspace.fs.createDirectory(vscode.Uri.file(dir));
+        });
+
+        teardown(async () => {
+            try { await vscode.workspace.fs.delete(vscode.Uri.file(dir), { recursive: true }); } catch { /* best effort */ }
+        });
+
+        test('should remove the screenshots directory and sidecar index when a log is deleted', async () => {
+            const logFsPath = path.join(dir, '20260101_090000_app.log');
+            const logUri = vscode.Uri.file(logFsPath);
+            await vscode.workspace.fs.writeFile(logUri, new TextEncoder().encode('=== SAROPA LOG CAPTURE — SESSION START ===\n'));
+
+            // Lay out sidecars exactly as ScreenshotStore.save() would.
+            const dirUri = screenshotDirUri(logFsPath);
+            const sidecarUri = screenshotSidecarUri(logFsPath);
+            await vscode.workspace.fs.createDirectory(dirUri);
+            await vscode.workspace.fs.writeFile(vscode.Uri.joinPath(dirUri, '001_nav_1.png'), new Uint8Array([1]));
+            await vscode.workspace.fs.writeFile(sidecarUri, new TextEncoder().encode('{"version":1,"screenshots":[]}'));
+
+            await cleanupDeletedSessionMetadata(logUri, new SessionMetadataStore());
+
+            // vscode.workspace.fs.stat returns a Thenable, not a real Promise, so assert.rejects
+            // needs an async wrapper to get a type it accepts.
+            await assert.rejects(async () => vscode.workspace.fs.stat(dirUri), 'screenshots directory must be gone');
+            await assert.rejects(async () => vscode.workspace.fs.stat(sidecarUri), 'screenshots.json sidecar must be gone');
+        });
+
+        test('should not throw when a log has no screenshot sidecars at all', async () => {
+            // Most logs never captured a screenshot — this is the common case, not an error.
+            const logUri = vscode.Uri.file(path.join(dir, '20260101_090000_app.log'));
+            await vscode.workspace.fs.writeFile(logUri, new TextEncoder().encode('no screenshots here\n'));
+            await assert.doesNotReject(cleanupDeletedSessionMetadata(logUri, new SessionMetadataStore()));
+        });
     });
 });

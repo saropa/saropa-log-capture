@@ -8,7 +8,7 @@ import type { DapOutputBody } from '../capture/tracker';
 import type { LogSession } from '../capture/log-session';
 import type { SaropaLogCaptureConfig } from '../config/config';
 import { getConfig } from '../config/config';
-import type { EarlyOutputBuffer } from './session-event-bus';
+import type { EarlyOutputBuffer, LineData } from './session-event-bus';
 import type { ExclusionRule } from '../features/exclusion-matcher';
 import type { AutoTagger } from '../misc/auto-tagger';
 import type { FloodGuard } from '../capture/flood-guard';
@@ -34,8 +34,15 @@ export interface StartSequenceDeps {
     readonly floodGuard: FloodGuard;
     readonly spamSuppressor: SpamSuppressor;
     readonly categoryCounts: Record<string, number>;
-    getSingleRecentOwnerSession(windowMs: number): { sid: string; logSession: LogSession } | null;
+    // Bug 034: workspaceFolder threaded through to session-manager-start.ts's folder guard.
+    getSingleRecentOwnerSession(
+        windowMs: number,
+        workspaceFolder?: vscode.WorkspaceFolder,
+    ): { sid: string; logSession: LogSession } | null;
     broadcastSplit(newUri: vscode.Uri, totalParts: number): void;
+    // Threaded down to initializeSession so streaming integrations (adb logcat) broadcast
+    // to the live viewer the same way DAP output does (bug_010).
+    broadcastLine(data: Omit<LineData, 'watchHits'>): void;
     onOutputEvent(sessionId: string, body: DapOutputBody): void;
     clearBufferTimeoutState(): void;
     setExclusionRules(rules: ExclusionRule[]): void;
@@ -66,10 +73,11 @@ export async function runStartSequenceImpl(
         childToParentId: deps.childToParentId,
         earlyBuffer: deps.earlyBuffer,
         outputChannel: deps.outputChannel,
-        getSingleRecentOwnerSession: (w) => deps.getSingleRecentOwnerSession(w),
+        getSingleRecentOwnerSession: (w, wf) => deps.getSingleRecentOwnerSession(w, wf),
         statusBar: deps.statusBar,
         onActiveLineCount: (n) => deps.onActiveLineCount?.(n),
         broadcastSplit: (uri, totalParts) => deps.broadcastSplit(uri, totalParts),
+        broadcastLine: (data) => deps.broadcastLine(data),
         onOutputEvent: (id, b) => deps.onOutputEvent(id, b),
         clearBufferTimeoutState: () => deps.clearBufferTimeoutState(),
     };

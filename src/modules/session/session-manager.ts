@@ -135,7 +135,7 @@ export class SessionManagerImpl implements SessionManager {
     removeSplitListener(listener: SplitListener): void { removeListener(this.splitListeners, listener); }
 
     /** Called by the DAP tracker for every output event. */
-    onOutputEvent(sessionId: string, body: DapOutputBody): void {
+    onOutputEvent(sessionId: string, body: DapOutputBody, workspaceFolder?: vscode.WorkspaceFolder): void {
         // Kill switch (first touch): when capture is disabled, do zero per-event work — bail before
         // session-id routing runs. resolveEffectiveSessionId can trigger a late startSession attempt
         // (onOutputBufferedWithNoSession) that startSession then rejects on `enabled=false` anyway, so
@@ -154,8 +154,10 @@ export class SessionManagerImpl implements SessionManager {
             config: this.cachedConfig,
             outputChannel: this.outputChannel,
             onOutputBufferedWithNoSession: this.onOutputBufferedWithNoSession,
-            getMostRecentOwnerSessionId: () => this.getMostRecentOwnerSessionId(),
-        });
+            // Bug 034: thread the folder through so the multi-owner fallback can exclude
+            // sessions opened for a different workspace folder.
+            getMostRecentOwnerSessionId: (wf) => this.getMostRecentOwnerSessionId(wf),
+        }, workspaceFolder);
         const counters = { categoryCounts: this.categoryCounts, floodSuppressedTotal: this.floodSuppressedTotal };
         processOutputEvent(
             {
@@ -212,8 +214,12 @@ export class SessionManagerImpl implements SessionManager {
             floodGuard: this.floodGuard,
             spamSuppressor: this.spamSuppressor,
             categoryCounts: this.categoryCounts,
-            getSingleRecentOwnerSession: (w) => this.getSingleRecentOwnerSession(w),
+            getSingleRecentOwnerSession: (w, wf) => this.getSingleRecentOwnerSession(w, wf),
             broadcastSplit: (uri, totalParts) => this.broadcastSplit(uri, totalParts),
+            // Reuse the same private broadcastLine the DAP output path calls, so streaming
+            // integrations (adb logcat) started during initializeSession reach the live viewer
+            // instead of only appearing after a file reload (bug_010).
+            broadcastLine: (data) => this.broadcastLine(data),
             onOutputEvent: (id, b) => this.onOutputEvent(id, b),
             clearBufferTimeoutState: () => this.clearBufferTimeoutState(),
             setExclusionRules: (r) => { this.exclusionRules = r; },
@@ -311,16 +317,23 @@ export class SessionManagerImpl implements SessionManager {
     /** Recreate the keyword watcher from current config. */
     refreshWatcher(): void { this.watcher = createWatcherImpl(); }
 
-    private getSingleRecentOwnerSession(windowMs: number): { sid: string; logSession: LogSession } | null {
-        return getSingleRecentOwnerSessionImpl(this.ownerSessionIds, this.ownerSessionCreatedAt, this.sessions, windowMs);
+    // Bug 034: workspaceFolder forwarded to the impl's folder guard, which refuses to
+    // return a candidate LogSession opened for a different workspace root.
+    private getSingleRecentOwnerSession(
+        windowMs: number,
+        workspaceFolder?: vscode.WorkspaceFolder,
+    ): { sid: string; logSession: LogSession } | null {
+        return getSingleRecentOwnerSessionImpl(
+            this.ownerSessionIds, this.ownerSessionCreatedAt, this.sessions, windowMs, workspaceFolder,
+        );
     }
 
     private clearBufferTimeoutState(): void {
         clearBufferTimeoutStateImpl(this.firstBufferTime, this.bufferTimeoutWarnedFor);
     }
 
-    private getMostRecentOwnerSessionId(): string | null {
-        return getMostRecentOwnerSessionIdImpl(this.ownerSessionIds, this.ownerSessionCreatedAt, this.sessions);
+    private getMostRecentOwnerSessionId(workspaceFolder?: vscode.WorkspaceFolder): string | null {
+        return getMostRecentOwnerSessionIdImpl(this.ownerSessionIds, this.ownerSessionCreatedAt, this.sessions, workspaceFolder);
     }
 
     private broadcastLine(data: Omit<LineData, 'watchHits'>): void {

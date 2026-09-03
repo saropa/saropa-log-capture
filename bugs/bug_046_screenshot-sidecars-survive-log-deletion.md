@@ -1,6 +1,6 @@
 # Bug 046 — Screenshot sidecars survive log deletion (unbounded disk growth)
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: Medium
 
@@ -58,10 +58,34 @@ Sequence this **with or before** bug 012 — fixing retention first turns a stat
 leak into a growing one.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+
+Followed the proposed fix: cleanup was wired into the single choke point every physical
+delete already shares (bug_016's `cleanupDeletedSessionMetadata()`), not patched into each
+call site separately.
+
+- `src/modules/session/session-metadata.ts` — added `deleteScreenshotSidecars()`, called from
+  `cleanupDeletedSessionMetadata()` after the metadata/search-index cleanup. Removes
+  `<base>.screenshots/` (`vscode.workspace.fs.delete(dir, { recursive: true, useTrash: false })`)
+  and `<base>.screenshots.json` (`vscode.workspace.fs.delete(sidecar, { useTrash: false })`),
+  each independently try/caught — most logs never captured a screenshot, so a missing sidecar
+  is the common case, not an error, and must never block the metadata cleanup it runs
+  alongside.
+- No changes needed in the three callers (`src/commands-session.ts` single-file delete,
+  `src/commands-trash.ts` empty-trash, `src/modules/features/delete-command.ts` bulk delete)
+  — all three already call `cleanupDeletedSessionMetadata()` after the physical file delete,
+  so they inherit sidecar cleanup automatically.
+- File retention (`src/modules/config/file-retention.ts`) needed no change: it only
+  soft-trashes (`metaStore.setTrashed`), never a hard delete (see bug_012) — the sidecars stay
+  intact until the user runs Empty Trash, which already routes through the shared cleanup.
 
 ## Tests Added
-<!-- List new or updated test files. -->
+
+- `src/test/modules/session/session-metadata.test.ts` — new suite
+  `cleanupDeletedSessionMetadata screenshot sidecar cleanup (bug_046)`: writes a log plus a
+  `.screenshots/` PNG and `.screenshots.json` sidecar in a temp directory (mirroring the
+  flow-map cross-session test pattern), runs `cleanupDeletedSessionMetadata()`, and asserts
+  both are gone (`vscode.workspace.fs.stat` rejects on each). A second case asserts the
+  cleanup does not throw for a log with no sidecars at all (the common case).
 
 ## Commits
 <!-- Add commit hashes as fixes land. -->

@@ -1,6 +1,6 @@
 # Bug 040 — Stop queue drain races logcat process shutdown
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: Medium
 
@@ -28,7 +28,7 @@ When a debug session ends, `logSession.stop()` drains the pending line queue whi
 Stop the logcat child process first, then drain remaining buffered lines, then finalize the file. This ensures no new lines arrive after drain starts.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+`finalizeSession()` in `src/modules/session/session-lifecycle-finalize.ts` (~line 102) now calls `stopLogcatCapture()` before `await logSession.stop()`, with a comment explicitly documenting the bug_040 ordering fix and the drop/write-after-close failure mode it prevents. The later `stopExternalLogTailers()` call has an added comment noting logcat is deliberately not stopped again there.
 
 ## Tests Added
 <!-- List new or updated test files. -->

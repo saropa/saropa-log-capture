@@ -9,7 +9,7 @@ import type { LogSession } from '../capture/log-session';
 import type { SaropaLogCaptureConfig } from '../config/config';
 import { initializeSession, type SessionSetupResult, type InitSessionParams } from './session-lifecycle-init';
 import { replayEarlyBuffer, replayAllOtherEarlyBuffers } from './session-manager-replay';
-import type { EarlyOutputBuffer } from './session-event-bus';
+import type { EarlyOutputBuffer, LineData } from './session-event-bus';
 
 export type StartSessionDeps = {
     config: SaropaLogCaptureConfig;
@@ -19,9 +19,17 @@ export type StartSessionDeps = {
     childToParentId: Map<string, string>;
     earlyBuffer: EarlyOutputBuffer;
     outputChannel: vscode.OutputChannel;
-    getSingleRecentOwnerSession: (windowMs: number) => { sid: string; logSession: LogSession } | null;
+    // Bug 034: workspaceFolder is threaded through so callers can refuse to alias a new
+    // session onto an existing LogSession opened for a different workspace root.
+    getSingleRecentOwnerSession: (
+        windowMs: number,
+        workspaceFolder?: vscode.WorkspaceFolder,
+    ) => { sid: string; logSession: LogSession } | null;
     statusBar: { updateLineCount: (n: number) => void; show: () => void };
     broadcastSplit: (newUri: vscode.Uri, totalParts: number) => void;
+    // Same broadcast used by the DAP output path — threaded through to initializeSession so
+    // streaming integrations (adb logcat) can reach the live viewer too (bug_010).
+    broadcastLine: (data: Omit<LineData, 'watchHits'>) => void;
     onOutputEvent: (sessionId: string, body: DapOutputBody) => void;
     clearBufferTimeoutState: () => void;
     // Authoritative active-session line count, reported from the write queue (write-time, not
@@ -66,7 +74,11 @@ export async function startSessionImpl(
         }
     }
 
-    const recentChild = !session.parentSession ? deps.getSingleRecentOwnerSession(30_000) : null;
+    // Bug 034: pass session.workspaceFolder so a folder-B session cannot alias onto a
+    // folder-A LogSession just because A's session started within the last 30s.
+    const recentChild = !session.parentSession
+        ? deps.getSingleRecentOwnerSession(30_000, session.workspaceFolder)
+        : null;
     if (recentChild) {
         deps.sessions.set(session.id, recentChild.logSession);
         deps.outputChannel.appendLine(`Parent session aliased to recent child (fallback): ${session.type}`);
@@ -75,7 +87,10 @@ export async function startSessionImpl(
         return { kind: 'aliased' };
     }
 
-    const recentRace = deps.getSingleRecentOwnerSession(5000);
+    // Bug 034: same folder guard on the tighter race-guard window — this is the path that
+    // was aliasing a fresh folder-B session to folder-A's just-created LogSession with no
+    // folder check at all, the core of the multi-root contamination bug.
+    const recentRace = deps.getSingleRecentOwnerSession(5000, session.workspaceFolder);
     if (recentRace) {
         deps.sessions.set(session.id, recentRace.logSession);
         deps.outputChannel.appendLine(`Session aliased to just-created session (race guard): ${session.type}`);
@@ -102,6 +117,7 @@ export async function startSessionImpl(
             deps.broadcastSplit(newUri, partNumber + 1);
             deps.outputChannel.appendLine(`File split: Part ${partNumber + 1} at ${newUri.fsPath}`);
         },
+        broadcastLine: (data) => deps.broadcastLine(data),
     } as InitSessionParams);
 
     if (!result) {

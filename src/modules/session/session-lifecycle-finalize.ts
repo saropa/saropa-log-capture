@@ -93,6 +93,14 @@ export async function finalizeSession(
     const sessionEndTime = Date.now();
     const config = getConfig();
 
+    // Bug 040: kill the logcat child process (and detach its line callback) BEFORE
+    // logSession.stop() drains the pending-line queue and closes the file. Previously
+    // stopLogcatCapture() ran after the drain, so a still-running logcat process could keep
+    // pushing lines via its callback while (or after) the file was being finalized, causing
+    // dropped lines or write-after-close errors. Stopping it first guarantees no new lines
+    // are produced once the drain begins.
+    stopLogcatCapture();
+
     try {
         await logSession.stop();
         outputChannel.appendLine(`Session stopped: ${logSession.fileUri.fsPath}`);
@@ -116,10 +124,11 @@ export async function finalizeSession(
         debugProcessId: params.debugProcessId,
     });
     await integrationRegistry.runOnSessionEnd(endContext, metadataStore);
-    // Always dispose external log watchers and adb logcat (provider stops when adapter enabled; if disabled mid-session, this still closes handles).
+    // Always dispose external log watchers (provider stops when adapter enabled; if disabled
+    // mid-session, this still closes handles). Logcat itself was already stopped above, before
+    // the drain, so it isn't repeated here.
     stopExternalLogTailers();
     disposeExternalLogTailStatus();
-    stopLogcatCapture();
     // Belt-and-suspenders: the database provider stops its live tail in onSessionEnd; this closes the handle if onSessionEnd was skipped.
     stopDatabaseQueryTail();
     await writeUnifiedSessionLogIfEnabled(logSession.fileUri, baseFileName, config, outputChannel);
