@@ -9,6 +9,7 @@
 import * as vscode from 'vscode';
 import * as path from 'node:path';
 import { stripAnsi } from '../capture/ansi';
+import { redactSensitiveContent } from '../security/redact';
 import { getConfig } from '../config/config';
 import { parseJSONOrDefault } from '../misc/safe-json';
 import type { CodeQualityPayload } from '../integrations/providers/quality-types';
@@ -265,7 +266,10 @@ export async function collectBugReportData(
     } : undefined;
 
     return {
-        errorLine: cleanError, fingerprint, stackTrace, logContext,
+        // bug_003: redact only at the point of storage — sourceRef/token extraction above needs
+        // the un-redacted `cleanError` (a scrubbed path would break file-path parsing), but the
+        // value actually stored on BugReportData (and rendered into the report) must be scrubbed.
+        errorLine: redactSensitiveContent(cleanError), fingerprint, stackTrace, logContext,
         environment, devEnvironment: devEnv, sourcePreview, blame, gitHistory,
         crossSessionMatch, lineRangeHistory, docMatches, imports,
         resolvedSymbols, fileAnalyses, primarySourcePath: sourceRef?.filePath,

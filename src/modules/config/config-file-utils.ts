@@ -2,6 +2,16 @@
 
 import * as vscode from 'vscode';
 
+/**
+ * Directory name that never counts toward file-retention scanning. Signal-report
+ * clicks (signal-report-panel.ts) write generated `.md` hypothesis reports into this
+ * subdirectory so they're distinguishable from real session logs. `readTrackedFiles`
+ * recurses into subdirectories by default (includeSubfolders), so without this skip the
+ * generated reports were counted toward `maxLogFiles` and could evict real session logs
+ * just because a user clicked around the Signals panel (bug_036).
+ */
+const RETENTION_EXCLUDED_DIR = 'reports';
+
 /** Check if a filename matches any tracked file type. Excludes .meta.json and dotfiles. */
 export function isTrackedFile(name: string, fileTypes: readonly string[]): boolean {
   if (name.endsWith('.meta.json') || name.startsWith('.')) { return false; }
@@ -52,7 +62,10 @@ async function collectFiles(dir: vscode.Uri, fileTypes: readonly string[], depth
     const rel = prefix ? `${prefix}/${name}` : name;
     if (type === vscode.FileType.File && isTrackedFile(name, fileTypes)) {
       results.push(rel);
-    } else if (depth > 0 && type === vscode.FileType.Directory && !name.startsWith('.')) {
+    } else if (
+      depth > 0 && type === vscode.FileType.Directory &&
+      !name.startsWith('.') && name !== RETENTION_EXCLUDED_DIR
+    ) {
       results.push(...await collectFiles(vscode.Uri.joinPath(dir, name), fileTypes, depth - 1, rel));
     }
   }
@@ -94,7 +107,10 @@ async function collectFilesStreaming(dir: vscode.Uri, opts: StreamingCollectOpts
   if (batch.length > 0) { opts.onBatch(batch); }
   /* Then recurse into subdirectories. */
   for (const [name, type] of entries) {
-    if (opts.depth > 0 && type === vscode.FileType.Directory && !name.startsWith('.')) {
+    if (
+      opts.depth > 0 && type === vscode.FileType.Directory &&
+      !name.startsWith('.') && name !== RETENTION_EXCLUDED_DIR
+    ) {
       const rel = opts.prefix ? `${opts.prefix}/${name}` : name;
       results.push(...await collectFilesStreaming(
         vscode.Uri.joinPath(dir, name),

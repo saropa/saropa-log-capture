@@ -1,6 +1,6 @@
 # Bug 019 — AI auto-enabled without consent
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: High
 
@@ -30,7 +30,7 @@ Auto-enable logic intended to "discover" AI capability and enable it, but implem
 Either remove the auto-enable and let the user opt in via settings, or show a notification like `screenshot-dedup-default-notice.ts` does: "AI features are available. Enable?" with Accept/Dismiss buttons.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+`src/modules/ai/ai-auto-enable.ts` now gates auto-enable behind a one-time notice: it checks `context.globalState.get('slc.aiAutoEnableNoticeShown')` to avoid re-showing, marks the flag before awaiting the user's choice, and only calls `aiCfg.update('enabled', true, vscode.ConfigurationTarget.Global)` when the user explicitly clicks "Enable" on the `t('ai.autoEnableNotice')` toast (modeled on `screenshot-dedup-default-notice.ts`). Dismissing leaves AI features off. Verified the notice string exists in `src/l10n/strings-a.ts`.
 
 ## Tests Added
 <!-- List new or updated test files. -->

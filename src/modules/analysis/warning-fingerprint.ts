@@ -11,8 +11,10 @@ import { isWarningLine } from '../features/error-rate-alert';
 import { isErrorLine } from '../features/error-rate-alert';
 import { normalizeLine, hashFingerprint } from './error-fingerprint-pure';
 import type { FingerprintEntry } from './error-fingerprint';
+import { MAX_SCAN_LINES, warnIfScanCapped } from './scanner-line-cap';
 
-const maxScanLines = 5000;
+// bug_007: raised from a silent 5,000-line cap — see scanner-line-cap.ts.
+const maxScanLines = MAX_SCAN_LINES;
 const maxFingerprints = 30;
 const maxExampleLength = 200;
 
@@ -22,6 +24,7 @@ export async function scanForWarningFingerprints(fileUri: vscode.Uri): Promise<F
     const text = Buffer.from(raw).toString('utf-8');
     const lines = text.split('\n');
     const scanLimit = Math.min(lines.length, maxScanLines);
+    warnIfScanCapped('warning-fingerprint', lines.length, scanLimit);
     const groups = new Map<string, WarnAccum>();
     for (let i = 0; i < scanLimit; i++) {
         collectWarningFingerprint(lines[i], groups);

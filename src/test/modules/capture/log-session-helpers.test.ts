@@ -1,5 +1,11 @@
 import * as assert from 'assert';
-import { formatLine, LineFormatContext, SourceLocation } from '../../../modules/capture/log-session-helpers';
+import * as vscode from 'vscode';
+import { formatLine, LineFormatContext, SourceLocation, workspaceFolderMatches } from '../../../modules/capture/log-session-helpers';
+
+/** Build a minimal vscode.WorkspaceFolder for a given fsPath. */
+function folder(fsPath: string): vscode.WorkspaceFolder {
+    return { uri: { fsPath } as vscode.Uri, name: fsPath, index: 0 };
+}
 
 /** Build a LineFormatContext with sensible defaults, overriding as needed. */
 function ctx(overrides: Partial<LineFormatContext> = {}): LineFormatContext {
@@ -111,5 +117,29 @@ suite('formatLine', () => {
         const result = formatLine('msg', 'stdout', ctx({ includeSourceLocation: true, sourceLocation }));
         assert.ok(result.includes('[app.ts:5]'));
         assert.ok(!result.includes(':0'));
+    });
+});
+
+// Bug 034 regression coverage: workspaceFolderMatches is the single gate every multi-root
+// aliasing/routing fallback (session-manager-internals.ts, session-manager-routing.ts) relies
+// on to stop folder B's output from landing in folder A's log file.
+suite('workspaceFolderMatches', () => {
+
+    test('should match when fsPaths are identical', () => {
+        const a = folder('/repo/folder-a');
+        assert.strictEqual(workspaceFolderMatches(a, folder('/repo/folder-a')), true);
+    });
+
+    test('should not match when fsPaths differ (the core bug 034 case)', () => {
+        const sessionFolder = folder('/repo/folder-a');
+        const incoming = folder('/repo/folder-b');
+        assert.strictEqual(workspaceFolderMatches(sessionFolder, incoming), false);
+    });
+
+    test('should fail open (match) when candidate is undefined', () => {
+        // An attach-only debug session may report no workspaceFolder at all — we cannot rule
+        // the LogSession out in that case, so single-root behavior (no folder set) still works.
+        const sessionFolder = folder('/repo/folder-a');
+        assert.strictEqual(workspaceFolderMatches(sessionFolder, undefined), true);
     });
 });

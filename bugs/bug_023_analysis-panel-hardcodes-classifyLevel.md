@@ -1,6 +1,6 @@
 # Bug 023 — Analysis panel hardcodes classifyLevel parameters
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: High
 
@@ -29,7 +29,7 @@ Analysis panel was written before the configurable level detection settings exis
 Read `levelDetection` and `stderrTreatAsError` from the current configuration and pass them to `classifyLevel()`.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+`showAnalysis()` in `src/ui/analysis/analysis-panel.ts` (line ~71) now calls `getConfig()` fresh on every invocation and passes `cfg.levelDetection === 'strict'` and `cfg.stderrTreatAsError` into `classifyLevel()`, instead of the previous hardcoded `false, false`. Comment at the call site explicitly references bug_023.
 
 ## Tests Added
 <!-- List new or updated test files. -->

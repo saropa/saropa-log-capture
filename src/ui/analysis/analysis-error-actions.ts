@@ -55,9 +55,10 @@ export function handleExportAction(format: string): void {
     if (cmd) { vscode.commands.executeCommand(cmd).then(undefined, () => {}); }
 }
 
-/** Trigger AI explanation via existing command. */
-export function handleAiExplain(errorText: string): void {
-    vscode.commands.executeCommand('saropaLogCapture.explainError', errorText).then(undefined, () => {
-        vscode.window.showWarningMessage(t('viewer.analysis.aiUnavailable'));
-    });
-}
+// handleAiExplain() removed (bug_005): it called executeCommand on
+// 'saropaLogCapture.explainError', a command that was never registered with
+// vscode.commands.registerCommand anywhere in the extension, so every call
+// failed silently and the UI always reported "AI unavailable". The caller
+// (the "Explain with AI" button in analysis-error-render.ts) was removed at
+// the same time. Reintroduce both together once a real command handler
+// exists — see `src/modules/ai/ai-context-builder.ts` for the groundwork.

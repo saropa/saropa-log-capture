@@ -24,6 +24,23 @@ export interface SessionContext {
     readonly devEnvironment?: DevEnvironment;
 }
 
+/**
+ * True when a candidate workspace folder matches a session's recorded workspace folder.
+ * Bug 034 fix: in multi-root workspaces, output routing must not fall back to matching
+ * purely on timing — it has to confirm the debug adapter's folder is the same one the
+ * LogSession was opened for, or output from folder B silently lands in folder A's file.
+ * When `candidate` is undefined (the debug session reported no workspace folder, e.g. an
+ * attach-only launch) we cannot rule the session out, so we fail open and allow the match —
+ * this preserves existing single-root behavior where `workspaceFolder` is not always set.
+ */
+export function workspaceFolderMatches(
+    sessionWorkspaceFolder: vscode.WorkspaceFolder,
+    candidate: vscode.WorkspaceFolder | undefined,
+): boolean {
+    if (!candidate) { return true; }
+    return sessionWorkspaceFolder.uri.fsPath === candidate.uri.fsPath;
+}
+
 /** Format a date as yyyymmdd for use as a subfolder name. */
 export function formatDateFolder(date: Date): string {
     const y = date.getFullYear();

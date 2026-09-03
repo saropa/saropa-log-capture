@@ -98,6 +98,10 @@ export async function enforceFileRetention(
     for (const name of expanded) {
         try {
             const uri = vscode.Uri.joinPath(logDirUri, name);
+            // Intentionally trash-only, never a hard delete: silently unlinking bytes on a
+            // background sweep (with no confirmation and no undo) risks losing a log a user
+            // still needed. Trash keeps the bytes recoverable; freeing disk space requires the
+            // user's explicit "Empty Trash" action. See bug_012.
             await metaStore.setTrashed(uri, true);
             removeReportFromIndex(uri);
             trashed++;

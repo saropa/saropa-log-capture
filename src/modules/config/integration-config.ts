@@ -278,7 +278,10 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
       maxLinesPerSource: clamp(cfg.get('integrations.unifiedLog.maxLinesPerSource'), 1000, 500000, 50000),
     },
     integrationsFlutterCrashLogs: {
-      deleteOriginals: ensureBoolean(cfg.get('integrations.flutterCrashLogs.deleteOriginals'), true),
+      // Fallback must mirror package.json's manifest default (bug_021): file deletion
+      // has to be an explicit opt-in, never a silent default, so a first-run session
+      // cannot destroy crash logs the user never chose to remove.
+      deleteOriginals: ensureBoolean(cfg.get('integrations.flutterCrashLogs.deleteOriginals'), false),
       leadMinutes: configNonNegative(cfg, 'integrations.flutterCrashLogs.leadMinutes', 1),
       lagMinutes: configNonNegative(cfg, 'integrations.flutterCrashLogs.lagMinutes', 5),
     },

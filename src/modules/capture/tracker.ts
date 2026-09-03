@@ -18,7 +18,10 @@ export interface DapOutputBody {
 
 /** Interface for the object that receives captured output events. */
 export interface SessionManager {
-    onOutputEvent(sessionId: string, body: DapOutputBody): void;
+    // `workspaceFolder` is optional (bug 034 fix): callers that already know the routing target
+    // (e.g. early-buffer replay for a session id already resolved) can omit it; the live DAP path
+    // below always supplies it so multi-root routing can reject a workspace-folder mismatch.
+    onOutputEvent(sessionId: string, body: DapOutputBody, workspaceFolder?: vscode.WorkspaceFolder): void;
     /** Optional handler for all raw DAP protocol messages (verbose mode). */
     onDapMessage?(sessionId: string, msg: unknown, direction: DapDirection): void;
     /** Optional: called when DAP sends a process event with systemProcessId (debug target PID). */
@@ -50,7 +53,9 @@ class SaropaTracker implements vscode.DebugAdapterTracker {
     onDidSendMessage(message: unknown): void {
         const msg = message as { type?: string; event?: string; body?: unknown };
         if (msg.type === 'event' && msg.event === 'output' && msg.body && typeof (msg.body as DapOutputBody).output === 'string') {
-            this.manager.onOutputEvent(this.session.id, msg.body as DapOutputBody);
+            // Bug 034: forward this debug session's own workspace folder so the manager's
+            // routing logic can refuse to attribute the output to a different folder's session.
+            this.manager.onOutputEvent(this.session.id, msg.body as DapOutputBody, this.session.workspaceFolder);
             return; // Output events handled by onOutputEvent — skip onDapMessage
         }
         if (msg.type === 'event' && msg.event === 'process' && msg.body && typeof (msg.body as { systemProcessId?: number }).systemProcessId === 'number') {

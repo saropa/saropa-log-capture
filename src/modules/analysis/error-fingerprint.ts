@@ -8,10 +8,14 @@
 import * as vscode from 'vscode';
 import { isErrorLine } from '../features/error-rate-alert';
 import { normalizeLine, hashFingerprint, classifyCategory, type CrashCategory } from './error-fingerprint-pure';
+import { MAX_SCAN_LINES, warnIfScanCapped } from './scanner-line-cap';
 
 export { normalizeLine, hashFingerprint, classifyCategory, type CrashCategory };
 
-const maxScanLines = 5000;
+// bug_007: was a hard 5,000-line cap with no warning — errors past that line were
+// silently invisible to fingerprinting. Raised via the shared MAX_SCAN_LINES; a cap
+// hit now logs a warning (warnIfScanCapped) instead of truncating silently.
+const maxScanLines = MAX_SCAN_LINES;
 const maxFingerprints = 30;
 const maxExampleLength = 200;
 
@@ -30,6 +34,7 @@ export async function scanForFingerprints(fileUri: vscode.Uri): Promise<Fingerpr
     const text = Buffer.from(raw).toString('utf-8');
     const lines = text.split('\n');
     const scanLimit = Math.min(lines.length, maxScanLines);
+    warnIfScanCapped('error-fingerprint', lines.length, scanLimit);
     const groups = new Map<string, FpAccum>();
     for (let i = 0; i < scanLimit; i++) {
         collectFingerprint(lines[i], groups);

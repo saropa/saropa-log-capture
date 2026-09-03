@@ -1,6 +1,6 @@
 # Bug 003 — Security: bug reports and AI features leak unredacted sensitive data
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: Critical
 
@@ -33,10 +33,32 @@ Redaction was implemented narrowly, scoped only to the header/metadata section o
 - Add regression tests asserting a synthetic bearer token never appears in generated report or AI-context output.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+
+- `src/modules/security/redact.ts`: `WINDOWS_USER_PATH_RE` rewritten to match both `\` and `/`
+  separators (`[A-Za-z]:[\\/]Users[\\/]...`), so `vscode://file/C:/Users/<name>/...` links — the
+  exact leak the bug report cited — are now redacted, not just `C:\Users\<name>\...` backslash form.
+- `src/modules/bug-report/bug-report-formatter.ts` (`formatBugReport`) and
+  `src/modules/bug-report/report-file-formatter.ts` (`formatReportFile`) now run
+  `redactSensitiveContent()` as a final pass over the fully assembled markdown before returning it,
+  in addition to the existing per-field redaction done upstream in `bug-report-collector.ts` /
+  `bug-report-collector-helpers.ts`. This closes item 1 (redaction previously only covered the
+  header table) and item 2 (absolute paths in generated markdown links / raw full-output and
+  selected-text sections) in one choke point, so no future section can bypass redaction by
+  forgetting to call it individually.
+- `src/ui/provider/viewer-message-handler-root-cause-ai.ts`: wired `confirmAiDataConsent()` into
+  `runExplainRootCauseHypotheses` (split into a `*Confirmed` continuation, mirroring the existing
+  pattern in `viewer-message-handler-actions.ts`'s `runExplainWithAi`). This path called
+  `buildAIContext` directly with no consent gate — `confirmAiDataConsent()` existed
+  (`src/modules/ai/ai-explain-ui.ts`) and was already wired into the line-explain path, but not
+  into root-cause hypotheses, so that entry point sent data to the model with zero confirmation.
 
 ## Tests Added
-<!-- List new or updated test files and what they verify. -->
+
+- `src/test/modules/security/redact.test.ts` (pre-existing file, verified/extended): covers falsy
+  input, Bearer/Authorization tokens, Windows backslash paths, Windows forward-slash paths
+  (`vscode://file/C:/Users/...` — the reported leak), Unix `/home/` and macOS `/Users/` paths,
+  query-string secrets (key name preserved, value redacted), and multiple secrets combined in one
+  string (mixed separators/forms in a single pass).
 
 ## Commits
 <!-- Add commit hashes as fixes land. -->

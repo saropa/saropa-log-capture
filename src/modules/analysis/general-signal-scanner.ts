@@ -16,8 +16,10 @@ import {
     SIGNAL_SUMMARY_SCHEMA_VERSION_V2,
     type PersistedSignalSummaryV2, type PersistedSignalEntryV2, type SignalSummaryCounts,
 } from '../root-cause-hints/signal-summary-types';
+import { MAX_SCAN_LINES, warnIfScanCapped } from './scanner-line-cap';
 
-const maxScanLines = 5000;
+// bug_007: raised from a silent 5,000-line cap — see scanner-line-cap.ts.
+const maxScanLines = MAX_SCAN_LINES;
 const maxEntriesPerKind = 5;
 
 /**
@@ -199,6 +201,7 @@ export async function scanForGeneralSignals(fileUri: vscode.Uri): Promise<Persis
     const text = Buffer.from(raw).toString('utf-8');
     const lines = text.split('\n');
     const scanLimit = Math.min(lines.length, maxScanLines);
+    warnIfScanCapped('general-signal-scanner', lines.length, scanLimit);
 
     const rawCounts: Record<string, number> = {};
     const entryMap: EntryMap = new Map();
