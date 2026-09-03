@@ -19,7 +19,15 @@ if (viewportEl) viewportEl.addEventListener('click', function(e) {
             var item = allLines[idx];
             if (item) {
                 var plain = stripTags(item.html || '');
-                vscodeApi.postMessage({ type: 'openErrorAnalysis', text: plain, lineIndex: idx });
+                /* bug_007: idx is the allLines array position, not the source file's
+                   line number — synthetic rows (markers, stack headers, banners) shift
+                   the two out of sync. sourceLineNo is the real 1-based FILE line
+                   (stamped by stampSourceLineNoOnNewItems), so the host reads the
+                   correct source line when extracting/highlighting frames. Fall back
+                   to idx+1 only for rows that predate the stamp (e.g. live-only lines
+                   with no on-disk source yet). */
+                var errAnalysisLineNo = (typeof item.sourceLineNo === 'number') ? item.sourceLineNo : (idx + 1);
+                vscodeApi.postMessage({ type: 'openErrorAnalysis', text: plain, sourceLineNo: errAnalysisLineNo });
             }
         }
         return;

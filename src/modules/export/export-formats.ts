@@ -29,6 +29,20 @@ interface ParseLineOptions {
     readonly sessionStart: string | null;
     readonly strict: boolean;
     readonly stderrTreatAsError: boolean;
+    readonly rollover: RolloverState;
+}
+
+/**
+ * bug_033 (midnight rollover): mutable state threaded through sequential line parsing
+ * within a single export pass. Exported log lines only carry a time-of-day string, not a
+ * full date, so a session that runs past local midnight needs a way to notice the
+ * calendar day changed. `lastTimeStr` is the previous timestamped line's time-of-day;
+ * `dayOffset` counts how many local-midnight rollovers have been detected so far and is
+ * added to the session-start date for every subsequent line.
+ */
+interface RolloverState {
+    dayOffset: number;
+    lastTimeStr: string | null;
 }
 
 /**
@@ -87,6 +101,9 @@ async function parseLogFile(logUri: vscode.Uri): Promise<ParsedLog> {
 
     const { headerLines, bodyLines, bodyStartIndex } = splitHeader(lines);
     const sessionStart = extractSessionStart(headerLines);
+    // bug_033: one rollover tracker shared across the whole file, so a midnight crossing
+    // detected on line N still applies to every line after it in this export pass.
+    const rollover: RolloverState = { dayOffset: 0, lastTimeStr: null };
 
     const entries: LogEntry[] = [];
     for (let i = 0; i < bodyLines.length; i++) {
@@ -98,7 +115,7 @@ async function parseLogFile(logUri: vscode.Uri): Promise<ParsedLog> {
         if (line.startsWith('---') || line.startsWith('===')) {
             continue;
         }
-        const entry = parseLine(line, bodyStartIndex + i + 1, { sessionStart, strict, stderrTreatAsError });
+        const entry = parseLine(line, bodyStartIndex + i + 1, { sessionStart, strict, stderrTreatAsError, rollover });
         if (entry) {
             entries.push(entry);
         }
@@ -150,12 +167,12 @@ function parseLine(
     opts: ParseLineOptions,
 ): LogEntry | null {
     const clean = stripAnsi(line);
-    const { sessionStart, strict, stderrTreatAsError } = opts;
+    const { sessionStart, strict, stderrTreatAsError, rollover } = opts;
 
     // Try format with timestamp: [HH:MM:SS.mmm] [category] message
     const withTs = clean.match(/^\[(\d{2}:\d{2}:\d{2}\.\d{3})\]\s+\[(\w+)\]\s+(.*)$/);
     if (withTs) {
-        const timestamp = buildFullTimestamp(withTs[1], sessionStart);
+        const timestamp = buildFullTimestamp(withTs[1], sessionStart, rollover);
         const category = withTs[2];
         const message = withTs[3];
         return {
@@ -192,19 +209,56 @@ function parseLine(
 }
 
 /**
- * Build a full ISO timestamp from time-only and session start date.
+ * Build a full timestamp from a per-line time-only string and the session start date.
+ *
+ * bug_033: `timeStr` is always LOCAL wall-clock time (see `formatTimestamp()` in
+ * log-session-helpers.ts, which uses `Date.toTimeString()`), never UTC. The old code
+ * regex-extracted the UTC calendar-date substring from the header's `Date:` field
+ * (written via `toISOString()`) and glued it directly onto the local `timeStr`, then
+ * appended a `Z` suffix — falsely labeling a local time as UTC. Near local midnight,
+ * in any timezone offset from UTC, the UTC date substring can also be a different
+ * calendar day than the local date the time-of-day actually belongs to, giving lines
+ * the wrong date. Fix: parse `sessionStart` into a Date and read its LOCAL calendar
+ * date (matching the local `timeStr`), and drop the `Z` suffix since the result is
+ * local time, not UTC.
+ *
+ * bug_033 (rollover): a session that keeps running past local midnight will keep
+ * emitting lines whose `timeStr` is still just a time-of-day, with no date component
+ * of its own — so without tracking, every line after midnight would still be stamped
+ * with the session-start date. Detect the rollover by comparing this line's time-of-day
+ * against the previous line's: exported lines are chronological, so a decrease (e.g.
+ * "23:59:58" followed by "00:00:02") can only mean the calendar day advanced. `rollover`
+ * is threaded through the whole parse pass (one instance per export) so `dayOffset`
+ * accumulates across multiple midnight crossings in a single very long session.
  */
-function buildFullTimestamp(timeStr: string, sessionStart: string | null): string {
+function buildFullTimestamp(timeStr: string, sessionStart: string | null, rollover: RolloverState): string {
     if (!sessionStart) {
         return timeStr;
     }
-    // Extract date portion from session start (ISO format)
-    const dateMatch = sessionStart.match(/^(\d{4}-\d{2}-\d{2})/);
-    if (dateMatch) {
-        // Convert HH:MM:SS.mmm to ISO time format
-        return `${dateMatch[1]}T${timeStr}Z`;
+    const parsed = new Date(sessionStart);
+    // Guard against an unparseable header value — fall back to the bare time string
+    // rather than emitting "NaN-NaN-NaNT..." into the export.
+    if (isNaN(parsed.getTime())) {
+        return timeStr;
     }
-    return timeStr;
+    // A lexical decrease in HH:MM:SS.mmm versus the prior line means local midnight
+    // rolled over between them — bump the running day offset. Comparing the previous
+    // line rather than the session start lets multi-midnight sessions accumulate offsets.
+    if (rollover.lastTimeStr !== null && timeStr < rollover.lastTimeStr) {
+        rollover.dayOffset += 1;
+    }
+    rollover.lastTimeStr = timeStr;
+
+    // Local (not UTC) calendar date, so it lines up with the local time-of-day below.
+    // Add the accumulated day offset via setDate() so month/year boundaries (e.g.
+    // Jan 31 -> Feb 1) roll over correctly instead of needing manual month-length math.
+    const rolled = new Date(parsed);
+    rolled.setDate(rolled.getDate() + rollover.dayOffset);
+    const year = rolled.getFullYear();
+    const month = String(rolled.getMonth() + 1).padStart(2, '0');
+    const day = String(rolled.getDate()).padStart(2, '0');
+    // No trailing 'Z': timeStr is local wall-clock time, and labeling it UTC was the bug.
+    return `${year}-${month}-${day}T${timeStr}`;
 }
 
 /**
