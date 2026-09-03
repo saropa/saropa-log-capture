@@ -41,7 +41,7 @@ estimated 3–5 days total.
 
 ## P1 — High: broken features, data loss risks
 
-16 bugs, estimated 5–8 days total. Fix after P0, before new features.
+17 bugs, estimated 5–8 days total. Fix after P0, before new features.
 
 ### Capture pipeline
 
@@ -50,7 +50,11 @@ estimated 3–5 days total.
 | 010 | Logcat lines bypass live viewer (only appear on file reopen) | 3h |
 | 011 | Pause drops lines inconsistently (race between pause flag and buffer) | 3h |
 | 012 | File retention `maxLogFiles` never deletes old files | 2h |
+| 046 | Screenshot sidecars survive log deletion — unbounded disk growth | 2h |
 | 022 | `allLines` array rescanned every batch — O(n²) on large logs | 2h |
+
+**Sequence 046 with or before 012.** Fixing retention first makes 012 start
+deleting logs, which turns 046 from a static leak into a growing one.
 
 ### Command UX
 
@@ -194,14 +198,27 @@ coverage tool, 300-line rule; BUG_REPORT_GUIDE `bugs/history/` + ROADMAP table.
 
 ### Plan 055 remaining cleanup
 
-- CSV/markdown `.cols` adoption (0 consumers today)
-- Legacy `:not(.cols)` CSS removal (24 occurrences)
+Plan trimmed 2026-09-03 to its two open items; Phases 1–2 archived.
+
+- Legacy `:not(.cols)` CSS removal — **15 occurrences**, not the 24 the review
+  reported (9 in two style files, 6 in two test files). Confirm every render
+  path opts in before removing the guards.
+- CSV/markdown `.cols` adoption in `export-formats.ts` (0 consumers today).
+  Optional — exports are correct, just independently derived.
 
 ### Plan 058 translation locales
 
+Plan rewritten 2026-09-03 against the current engine.
+
 - Phase 0 shipped; Phases 1–2 not started
-- NLLB/FLORES steps in the plan are obsolete (engine is now Qwen/Ollama)
-- Plan needs full rewrite against current tooling
+- Engine is Qwen via Ollama (`l10n_qwen_engine.py`, VRAM-selected model ladder,
+  `_LOCALE_INFO` registry). `l10n_nllb_engine.py` and the `_LOCALE_MAP` are
+  **gone** — the plan's old FLORES steps pointed at dead symbols
+- Bundle is 2244 keys, so Phase 1 is ~29,000 strings
+- **Blocker to resolve before starting Phase 1:** nothing in `scripts/` writes
+  `package.nls.<locale>.json`. Decide whether to extend the tooling or accept
+  hand-translation — it decides whether Phase 1 is one run or 13 manual files
+- The MT pipeline stays operator-run only; never at publish or from a build
 
 ---
 
@@ -307,4 +324,4 @@ measurement recorded and do not touch the event. **Effort:** 2h to measure.
 
 *Generated 2026-09-03 from the usability review of v9.3.12.*
 *Review reports: `docs/handover/review-20260902/`.*
-*Bug reports: `bugs/bug_001_*.md` through `bugs/bug_045_*.md`.*
+*Bug reports: `bugs/bug_001_*.md` through `bugs/bug_046_*.md`.*
