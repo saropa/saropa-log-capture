@@ -25,6 +25,17 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- README: fix activity bar → panel, captureAll default true, Compare Sessions → Compare Logs, VS Code ^1.105.0, 10 locales, footer version, remove AI brand name
+- ARCHITECTURE: fix dead INTEGRATION_API.md link, split session-lifecycle.ts → -init/-finalize
+- CONTRIBUTING: publish script path (scripts/publish.py), coverage tool (nyc), 300-line rule clarification
+- BUG_REPORT_GUIDE: fix stale bugs/history/ path and ROADMAP references
+
+---
+
 ## [9.3.12]
 
 Copying an error or warning block from the log viewer now reports the line numbers it's actually at, and pulls in a bit of surrounding context. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.12/CHANGELOG.md)
