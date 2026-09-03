@@ -1,6 +1,6 @@
 # Bug 042 — Dead setting: deemphasizeFrameworkLevels
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: Medium
 
@@ -27,7 +27,7 @@ The setting's implementation was removed during a refactor but the manifest decl
 Remove the setting from `package.json`. Remove or update the test. If the feature is wanted, re-implement it; if not, add a deprecation migration that removes it from user settings on activation.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+`deemphasizeFrameworkLevels` is fully removed from `package.json` and every `package.nls*.json` / `l10n/` file (verified zero remaining matches). The old deprecation test at `src/test/ui/viewer-data-helpers-render-fw-muted.test.ts:21-24` was updated to a comment explaining the removal rather than asserting the string's absence (the assertion would be a no-op once the string is gone everywhere). Remaining references are historical only: `CHANGELOG.md`, `CHANGELOG_ARCHIVE.md`, `MASTER_PLAN.md`, and a `plans/history/` snapshot — none of these are shipped runtime surfaces.
 
 ## Tests Added
 <!-- List new or updated test files. -->

@@ -26,7 +26,7 @@ import { setViewerKeybinding, getViewerKeybindingsFromConfig, getViewerActionLab
 import type { ViewerMessageContext } from './viewer-message-types';
 import { runFindStaticSourcesForSqlFingerprint } from './viewer-message-handler-static-sql';
 import { getAiEnabledConfigurationTarget } from '../../modules/ai/ai-enable-scope';
-import { showAiExplainRunFailure } from '../../modules/ai/ai-explain-ui';
+import { showAiExplainRunFailure, confirmAiDataConsent } from '../../modules/ai/ai-explain-ui';
 import { SAROPA_BOOL_SETTING_BY_MSG_TYPE } from "./viewer-workspace-bool-message-map";
 import { handleSessionAndUiActions } from './viewer-message-handler-session-ui';
 import { dispatchRootCauseMessage } from './viewer-message-handler-root-cause';
@@ -101,6 +101,22 @@ function runExplainWithAi(msg: Record<string, unknown>, ctx: ViewerMessageContex
     }, () => {});
     return;
   }
+  // bug_003: explicit per-invocation consent — the user must confirm before log/stack content is
+  // sent to a third-party model, even though redact.ts scrubs it first. Declining aborts silently
+  // (no error dialog) since the user made a deliberate choice, not a failure.
+  confirmAiDataConsent().then((consented) => {
+    if (consented) { runExplainWithAiConfirmed(msg, ctx, aiCfg); }
+  }, () => {});
+}
+
+/** Continuation of runExplainWithAi after consent is granted — split out to keep both under the line/complexity limit. */
+function runExplainWithAiConfirmed(
+  msg: Record<string, unknown>, ctx: ViewerMessageContext, aiCfg: vscode.WorkspaceConfiguration,
+): void {
+  const uri = ctx.currentFileUri;
+  const text = msgStr(msg, "text").trim();
+  const lineIdx = safeLineIndex(msg.lineIndex, 0);
+  if (!uri || !text) { return; }
   vscode.window.withProgress(
     { location: vscode.ProgressLocation.Notification, title: t("msg.aiExplainProgress"), cancellable: false },
     async () => {
