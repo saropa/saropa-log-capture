@@ -1,6 +1,6 @@
 # Bug 006 — Four command families are unreachable: no TreeView registered
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: Critical
 
@@ -34,10 +34,29 @@ Tree view registration was either removed during refactoring or never implemente
 Either implement the TreeView and its `TreeDataProvider` to supply the expected `viewItem` context, or remove the unreachable commands and their `package.json` contributions/registration code entirely. If the TreeView is still wanted, file it as a separate feature plan per the "feature needs a plan" discipline before implementing.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+
+Removed the four unreachable command families instead of building a TreeView for them
+(no plan approved a TreeView, so the "remove" branch of the proposed fix was taken):
+
+- `showTimeline` and its registration deleted (`src/commands-timeline.ts` removed). The
+  `timeline-panel.ts:showTimeline()` implementation is left in place as dead code — it is
+  no longer wired to any command, tracked as a separate cleanup, not part of this fix.
+- `rescanTags` command registration removed.
+- `correlateSession` command registration removed.
+- `compareWithMarked` command registration removed. This conflicted with bug_014, which
+  had added a context-menu entry point for it — see bug_014's Changes Made for how the
+  conflict was resolved (the menu item was removed, not the command re-added).
+- Removed the now-dead `msg.noSessionMarked` l10n key from `src/l10n/strings-a.ts` — it
+  was the "no log marked" message read only by the deleted `compareWithMarked` handler.
+- Verified `package.json` `contributes.commands`/`contributes.menus` carry no
+  `viewItem`-gated entries for any of the four removed commands.
 
 ## Tests Added
-<!-- List new or updated test files and what they verify. -->
+
+No new test needed — `src/test/ui/viewer-session-context-menu.test.ts` already carries a
+regression test ("should NOT include the removed Compare with Marked Log action") added
+under bug_014 covering the shared conflict.
 
 ## Commits
 <!-- Add commit hashes as fixes land. -->
+
