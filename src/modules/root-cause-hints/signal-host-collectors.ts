@@ -12,7 +12,14 @@ import { scanAnrRisk } from '../analysis/anr-risk-scorer';
 import type { RootCauseHintBundle, SignalAnrRisk } from './root-cause-hint-types';
 import { ROOT_CAUSE_ANR_MIN_SCORE } from './root-cause-hint-eligibility';
 
-let cachedAnrFileUri: string | undefined;
+/* bug_030 (sub-issue 3): the cache used to key ONLY on file URI, cleared solely on
+   `sessionId` change. A log file grows continuously during a live session (same URI
+   the whole time), so once the initial bundle was cached, an ANR appearing 5 minutes
+   later was never picked up — the cache returned the stale (often `undefined`) result
+   until the session was reopened. Adding the file's byte size to the cache key means
+   any growth (or truncation) of the file invalidates the cache on the next check,
+   without needing a session-reset hook to fire correctly. */
+let cachedAnrCacheKey: string | undefined;
 let cachedAnrResult: SignalAnrRisk | undefined;
 
 /**
@@ -30,20 +37,25 @@ export async function enrichBundleWithHostSignals(
 
 /** Clear cached host signals (call on session reset). */
 export function clearHostSignalCache(): void {
-  cachedAnrFileUri = undefined;
+  cachedAnrCacheKey = undefined;
   cachedAnrResult = undefined;
 }
 
-/** Run ANR risk scoring on the current log file, cached per URI. */
+/** Run ANR risk scoring on the current log file, cached per URI + byte size. */
 async function collectAnrRisk(fileUri: vscode.Uri | undefined): Promise<SignalAnrRisk | undefined> {
   if (!fileUri) { return undefined; }
   const uriStr = fileUri.toString();
-  if (cachedAnrFileUri === uriStr) { return cachedAnrResult; }
   try {
+    /* stat() is a cheap metadata read (no file content) — use the size to decide
+       whether the cached scan is still valid before paying for a full readFile(). */
+    const stat = await vscode.workspace.fs.stat(fileUri);
+    const cacheKey = `${uriStr}|${stat.size}`;
+    if (cachedAnrCacheKey === cacheKey) { return cachedAnrResult; }
+
     const raw = await vscode.workspace.fs.readFile(fileUri);
     const text = Buffer.from(raw).toString('utf-8');
     const result = scanAnrRisk(text);
-    cachedAnrFileUri = uriStr;
+    cachedAnrCacheKey = cacheKey;
     cachedAnrResult = result.score >= ROOT_CAUSE_ANR_MIN_SCORE
       ? { score: result.score, level: result.level, signals: result.signals }
       : undefined;

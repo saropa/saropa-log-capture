@@ -42,6 +42,9 @@ export function getSessionMessageListenerScript(): string {
         if (e.data.type === 'sessionList') {
             cachedSessions = e.data.sessions;
             sessionListPage = 0;
+            // bug_020: capture the scan-failure flag BEFORE rendering so the empty-state
+            // branch (inside renderSessionList) picks up the correct message on this pass.
+            lastScanFailed = !!e.data.scanFailed;
             renderSessionList(e.data.sessions);
             /* Refresh the kebab "recently opened" shortcut list from the same records (it reads the
                loadedManually-flagged ones). Guarded: the fragment is hoisted but stay defensive. */

@@ -3,6 +3,12 @@ export function getExportInitScript(): string {
     return /* javascript */ `
 /**
  * Initialize the export modal.
+ *
+ * bug_029 (Fixed): Escape-to-close and the Tab focus trap below were originally
+ * factored into a separate bindExportModalKeyboardHandlers() function but nothing ever
+ * called it — the two keydown listeners were duplicated inline in this function
+ * instead, leaving the extracted function dead. Deleted the dead function and kept
+ * only the inline listeners (the ones actually wired up on load).
  */
 function initExportModal() {
     exportModalEl = document.getElementById('export-modal');
@@ -100,6 +106,34 @@ function initExportModal() {
     exportModalEl.addEventListener('click', function(e) {
         if (e.target === exportModalEl) {
             closeExportModal();
+        }
+    });
+
+    // bug_029: Escape closes the modal (matches viewer-log-file-modal.ts) — without this
+    // the export dialog trapped keyboard users with no way out except mouse-clicking Cancel.
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Escape' || !exportModalEl.classList.contains('visible')) return;
+        e.preventDefault();
+        closeExportModal();
+    });
+
+    // bug_029: focus trap — Tab/Shift+Tab wraps within the dialog's focusable elements
+    // instead of escaping into the hidden viewer behind it, per WAI-ARIA modal-dialog
+    // practice (an aria-modal="true" region must not leak Tab focus outside itself).
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Tab' || !exportModalEl.classList.contains('visible')) return;
+        var focusable = exportModalEl.querySelectorAll(
+            'button, select, input, a[href], [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
         }
     });
 }

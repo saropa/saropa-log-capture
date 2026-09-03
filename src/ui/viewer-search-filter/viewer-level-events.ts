@@ -26,6 +26,17 @@ for (var di = 0; di < dotGroups.length; di++) {
             var lvl = group.getAttribute('data-level');
             if (lvl) soloLevel(lvl);
         });
+        /* bug_029: dots now carry tabindex="0" but role="img" gives no native Space/Enter
+           activation the way a real <button> would — without this handler the dot would
+           be focusable yet inert for keyboard users. Space is prevented so it does not
+           also scroll the page. */
+        group.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            e.preventDefault();
+            e.stopPropagation();
+            var lvl = group.getAttribute('data-level');
+            if (lvl) toggleLevel(lvl);
+        });
     })(dotGroups[di]);
 }
 

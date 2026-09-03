@@ -6,9 +6,15 @@
  * strip (each opens full size), which covers the multi-capture case without the
  * stateful prev/next navigation the plan first sketched.
  *
- * Thumbnails are embedded as data URIs: the report panel has localResourceRoots []
- * and a one-shot HTML build, so lazy loading would buy nothing here. Reads are
- * capped per image and to three images.
+ * bug_031 (sub-issue 2): thumbnails used to be embedded as base64 data URIs, which
+ * bloated the section HTML (up to MAX_STRIP * MAX_IMAGE_BYTES) and got re-persisted
+ * whole via setState on every sectionReady event. They now stream via
+ * `webview.asWebviewUri()` — the panel's localResourceRoots is set to the log's
+ * screenshot directory (signal-report-panel.ts createPanel) so this resolves. The
+ * before/after diff pair is the one exception: the shell script reads its pixels off
+ * a <canvas> to compute the change-heat overlay, which needs a same-origin/data-URI
+ * source (a vscode-webview-resource: URI would taint the canvas for pixel reads), so
+ * it stays base64-inlined and capped per image.
  */
 
 import * as vscode from 'vscode';
@@ -20,7 +26,8 @@ import {
     type ScreenshotMetaEntry,
 } from '../../modules/screenshot/screenshot-store';
 
-/** Same inline-image ceiling as the viewer/gallery handlers. */
+/** Same inline-image ceiling as the viewer/gallery handlers — still applies to the
+ *  diff pair, which remains base64-inlined (see file header comment). */
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
 /** At most this many thumbnails in the strip. */
@@ -54,6 +61,7 @@ export function selectDiffPair(
 
 /** Build the Screenshots section HTML; a no-data div when the log has no captures. */
 export async function buildScreenshotSectionHtml(
+    webview: vscode.Webview,
     fileUri: vscode.Uri | undefined,
     evidenceLineIds: readonly number[],
 ): Promise<string> {
@@ -70,11 +78,14 @@ export async function buildScreenshotSectionHtml(
     // Before/after pixel diff: when the log holds a capture from BEFORE the error (screen
     // navigation shots are the intended source), show what changed on screen leading into
     // the failure. The heat overlay is computed client-side on a canvas by the shell script
-    // (see signal-report-diff-script.ts) — the extension host has no image decoder.
+    // (see signal-report-diff-script.ts) — the extension host has no image decoder. This
+    // pair stays base64 (canvas pixel reads need a same-origin/data-URI source).
     const pair = selectDiffPair(entries, target);
     const diffHtml = pair ? await buildDiffBlockHtml(fileUri, pair) : '';
 
-    const cards = await Promise.all(nearest.map((e) => buildThumbHtml(fileUri, e)));
+    // Thumbnails stream via webview.asWebviewUri() instead of base64 (bug_031) — no
+    // disk read or MAX_IMAGE_BYTES check needed here, the <img> tag loads them lazily.
+    const cards = nearest.map((e) => buildThumbHtml(webview, fileUri, e));
     const strip = cards.filter((c) => c.length > 0).join('');
     if (diffHtml.length === 0 && strip.length === 0) { return noData(); }
     return diffHtml + (strip.length > 0 ? `<div class="screenshot-strip">${strip}</div>` : '');
@@ -122,15 +133,17 @@ function noData(): string {
     return `<div class="no-data">${escapeHtml(t('signals.screenshots.noData'))}</div>`;
 }
 
-/** One clickable thumbnail (reuses the shell's .overview-file-link openFile delegate). */
-async function buildThumbHtml(fileUri: vscode.Uri, entry: ScreenshotMetaEntry): Promise<string> {
+/** One clickable thumbnail (reuses the shell's .overview-file-link openFile delegate).
+ *  bug_031: src is now a webview.asWebviewUri() resource reference, not an inlined
+ *  base64 data URI — the browser streams the PNG from disk instead of it round-tripping
+ *  through postMessage + the panel's persisted webview state on every section refresh. */
+function buildThumbHtml(webview: vscode.Webview, fileUri: vscode.Uri, entry: ScreenshotMetaEntry): string {
     const pngUri = vscode.Uri.joinPath(screenshotDirUri(fileUri.fsPath), entry.file);
-    const dataUri = await readImageDataUri(fileUri, entry);
-    if (!dataUri) { return ''; }
+    const webviewSrc = webview.asWebviewUri(pngUri).toString();
     const when = new Date(entry.timestamp).toLocaleTimeString();
     const caption = t('signals.screenshots.caption', String(entry.logLine), when);
     return `<a class="overview-file-link screenshot-card" href="#" data-uri="${escapeHtml(pngUri.toString())}" data-kind="image" title="${escapeHtml(t('signals.screenshots.openFull'))}">
-        <img class="screenshot-thumb" src="${dataUri}" alt="">
+        <img class="screenshot-thumb" src="${escapeHtml(webviewSrc)}" alt="">
         <span class="screenshot-caption">${escapeHtml(caption)}</span>
     </a>`;
 }

@@ -23,6 +23,10 @@ export function getSessionPanelScript(): string {
     var sessionLoadingEl = document.getElementById('session-loading');
     var cachedSessions = null;
     var sessionListPage = 0;
+    /* bug_020: true when the host's last directory scan threw (permissions, EMFILE,
+       corrupt sidecar JSON). Set from the sessionList message's scanFailed flag; read
+       by renderSessionList's empty-state branch to pick the right message. */
+    var lastScanFailed = false;
     /** Set when openSessionPanel runs; renderSessionList consumes it once to scroll
         the panel to the file currently open in the viewer (so the user lands on the
         row they care about instead of the previous scroll position, which after a

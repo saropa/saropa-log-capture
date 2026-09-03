@@ -150,7 +150,13 @@ function attachErrorHoverHandlers(popover, lineIdx, plain) {
     });
     popover.querySelector('.eh-analyze-btn').addEventListener('click', function(e) {
         e.stopPropagation();
-        vscodeApi.postMessage({ type: 'openErrorAnalysis', text: plain, lineIndex: lineIdx });
+        /* bug_007: same array-index-vs-file-line bug as the badge click handler in
+           viewer-script-click-handlers.ts — send the item's real sourceLineNo so the
+           host reads/highlights the correct line, not lineIdx (the allLines position,
+           which drifts once synthetic rows are inserted). */
+        var _ehItem = allLines[lineIdx];
+        var _ehSourceLineNo = (_ehItem && typeof _ehItem.sourceLineNo === 'number') ? _ehItem.sourceLineNo : (lineIdx + 1);
+        vscodeApi.postMessage({ type: 'openErrorAnalysis', text: plain, sourceLineNo: _ehSourceLineNo });
         closeErrorHover();
     });
 

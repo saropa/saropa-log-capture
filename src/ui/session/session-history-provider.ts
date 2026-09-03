@@ -10,6 +10,7 @@ import { applyDisplayOptions, SessionDisplayOptions, defaultDisplayOptions } fro
 import { buildDescription, buildTooltip, formatCount } from './session-history-helpers';
 import { fetchItemsCore, type FetchTarget, type FetchCallbacks } from './session-history-fetching';
 import { type OnItemLoaded } from './session-history-metadata';
+import { logExtensionError } from '../../modules/misc/extension-logger';
 
 /** Extract the basename from a relative path (strip folder prefix). */
 function getBasename(name: string): string {
@@ -45,6 +46,10 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
     private fetchInFlight: Promise<TreeItem[]> | undefined;
     /** Basenames that appear more than once — need subfolder for disambiguation. */
     private duplicateBasenames = new Set<string>();
+    /** bug_020: true when the most recent directory scan threw (permissions, EMFILE,
+     *  corrupt sidecar JSON). Set by fetchItemsCore; read by callers that build the
+     *  webview payload so "scan failed" can be shown instead of "no sessions found". */
+    lastFetchFailed = false;
 
     constructor() {
         this.setupWatcher();
@@ -228,7 +233,13 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
                 this.computeDuplicateBasenames(items);
             }
             return items;
-        }).catch(() => {
+        }).catch((error: unknown) => {
+            // bug_020: fetchItemsCore normally swallows its own errors internally (returning
+            // []) and never rejects; this catch is a defensive backstop for anything that
+            // throws before that try block runs. Log it and flag the failure the same way,
+            // so the two paths behave identically from the webview's point of view.
+            this.lastFetchFailed = true;
+            logExtensionError('SessionHistoryProvider.getCachedOrFetch', error instanceof Error ? error : String(error));
             if (this.fetchInFlight === promise) { this.fetchInFlight = undefined; }
             return [];
         });

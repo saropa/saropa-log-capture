@@ -112,7 +112,10 @@ export function diffHypotheses(bundle: RootCauseHintBundle, maxTextLen: number):
   const fp = d.regressionFingerprints[0];
   return [
     {
-      templateId: 'session-diff-regression',
+      // Must match the 'session-diff' case in signal-report-details.ts buildTypeDetails()
+      // and appendTypeMarkdown() — a mismatched ID here silently drops the details section
+      // to the "no details" fallback even though sessionDiffSummary is populated (bug_031).
+      templateId: 'session-diff',
       text: truncateText(`SQL query volume increased compared to previous session (performance regression)`, maxTextLen),
       evidenceLineIds: [],
       confidence: 'low',

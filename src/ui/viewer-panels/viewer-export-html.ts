@@ -14,10 +14,13 @@ import { t } from "../../l10n";
 
 /** Returns the HTML for the export modal element. */
 export function getExportModalHtml(): string {
-    return `<div id="export-modal" class="modal">
+    // bug_029: role="dialog" + aria-modal="true" + aria-labelledby announce this as a
+    // dialog (not a plain document region) to screen readers, matching the pattern already
+    // used by the other viewer modals (viewer-log-file-modal.ts, viewer-files-list-modal.ts).
+    return `<div id="export-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="export-modal-title">
     <div class="modal-content">
         <div class="modal-header">
-            <span>${t('viewer.export.title')}</span>
+            <span id="export-modal-title">${t('viewer.export.title')}</span>
             <button class="modal-close" title="${t('viewer.export.close')}">&times;</button>
         </div>
         <div class="modal-body">

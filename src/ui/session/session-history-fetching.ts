@@ -9,10 +9,18 @@ import { SessionMetadataStore, migrateSidecarsInDirectory } from '../../modules/
 import { loadLoadedFileHistory, type LoadedFileHistoryEntry } from '../../modules/session/loaded-files-history';
 import { SessionMetadata, TreeItem, groupSplitFiles, groupSessionGroups } from './session-history-grouping';
 import { loadBatch, LoadMetadataTarget, type OnItemLoaded, type SessionPreviewRecord } from './session-history-metadata';
+import { logExtensionError } from '../../modules/misc/extension-logger';
 
 /** Target interface for fetch operations that need access to provider state. */
 export interface FetchTarget extends LoadMetadataTarget {
     readonly metaStore: SessionMetadataStore;
+    /**
+     * Set by fetchItemsCore's catch block when the directory scan throws (permissions,
+     * EMFILE, corrupt sidecar JSON) so the webview can tell "scan failed" apart from
+     * "no logs exist" (bug_020) instead of both collapsing into the same empty array.
+     * Cleared at the start of every fetch so a later successful retry recovers the UI.
+     */
+    lastFetchFailed: boolean;
 }
 
 /** Callbacks for progressive loading in fetchItemsCore. */
@@ -59,6 +67,9 @@ export async function fetchItemsCore(
     const logDir = logDirOverride ?? configuredDir!;
     /* Migration is best-effort — fire-and-forget so it never delays file listing. */
     migrateIfNeeded(folder ?? undefined, configuredDir, logDirOverride).catch(() => {});
+    // Reset before every attempt so a fresh success (after a prior failure) clears the
+    // "scan failed" state the webview may still be showing.
+    target.lastFetchFailed = false;
     try {
         const { fileTypes, includeSubfolders } = getConfig();
         /* List all files and load the central metadata store in parallel. The progressive
@@ -93,7 +104,11 @@ export async function fetchItemsCore(
         // in the listed folder is shown once.
         const loadedItems = await loadHistoryItems(logDir, items);
         return [...finalItems, ...loadedItems].sort((a, b) => b.mtime - a.mtime);
-    } catch {
+    } catch (error: unknown) {
+        // bug_020: log to the output channel and flag the failure so the webview can show
+        // "scan failed" instead of a silent, indistinguishable "no sessions found".
+        target.lastFetchFailed = true;
+        logExtensionError('SessionHistory.fetchItemsCore', error instanceof Error ? error : String(error));
         return [];
     }
 }
