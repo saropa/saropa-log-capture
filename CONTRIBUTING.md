@@ -130,7 +130,7 @@ When writing user-facing text, ask:
 - Functions: max 30 lines
 - Parameters: max 4 per function
 - Nesting: max 3 levels deep
-- Files: max 300 lines
+- Files: max 300 lines of code (blank lines and comments excluded; some globs allow 325 or 340 — see eslint config)
 
 ### Style Guidelines
 
@@ -317,7 +317,7 @@ Optional: **`npm run verify:release-tag`** — same as above plus requires an ex
 npm run test:coverage
 ```
 
-Runs tests with c8 and prints a coverage report. Note: many tests run inside the VS Code Extension Host (child process), so reported coverage may not include all code paths exercised there. Coverage is most accurate for pure logic tested in the same process (e.g. `selectFilesToTrash`, `EarlyOutputBuffer`, `FloodGuard`).
+Runs tests with nyc and prints a coverage report. Note: many tests run inside the VS Code Extension Host (child process), so reported coverage may not include all code paths exercised there. Coverage is most accurate for pure logic tested in the same process (e.g. `selectFilesToTrash`, `EarlyOutputBuffer`, `FloodGuard`).
 
 ## Error handling, param validation, and logging
 
@@ -406,7 +406,7 @@ Paste the token when prompted. The PAT is stored in your system keychain.
 npx @vscode/vsce verify-pat saropa
 ```
 
-The `publish_to_vscode.py` script checks this automatically during the prerequisite step.
+The `scripts/publish.py` script checks this automatically during the prerequisite step.
 
 ## Commit Messages
 
