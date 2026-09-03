@@ -23,7 +23,7 @@ VS Code deletes your Debug Console the moment you stop debugging — every `prin
 [![GitHub last commit](https://img.shields.io/github/last-commit/saropa/saropa-log-capture)](https://github.com/saropa/saropa-log-capture/commits)
 [![GitHub issues](https://img.shields.io/github/issues/saropa/saropa-log-capture)](https://github.com/saropa/saropa-log-capture/issues)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Languages](https://img.shields.io/badge/UI%20languages-11%20locales-blue)](https://github.com/saropa/saropa-log-capture#translations)
+[![Languages](https://img.shields.io/badge/UI%20languages-10%20locales-blue)](https://github.com/saropa/saropa-log-capture#translations)
 [![Coverage](https://img.shields.io/badge/coverage-50%25%2B-brightgreen)](https://github.com/saropa/saropa-log-capture/actions)
 
 > Feedback or ideas? [Open an issue](https://github.com/saropa/saropa-log-capture/issues/new).
@@ -35,7 +35,7 @@ VS Code deletes your Debug Console the moment you stop debugging — every `prin
 1. Install from the VS Code Marketplace
 2. Start a debug session (F5)
 3. Output is automatically captured to `reports/`
-4. Click the **Saropa Log Capture** icon on the activity bar to view output in real time
+4. Click the **Saropa Log Capture** icon in the bottom panel to view output in real time
 
 > **Testing the extension (F5):** Use **VS Code** (not a downstream fork) for the Extension Development Host — **File → Open Folder** → this repo → **F5**. Some forks won't load the extension as the F5 host.
 
@@ -55,7 +55,7 @@ VS Code deletes your Debug Console the moment you stop debugging — every `prin
 - **Click to source** — Click `file.ts:42` in any log line to jump to the code (Ctrl+Click for split editor).
 - **Search everything** — Regex search with history, floating overlay (Ctrl+F), cross-session search.
 - **Filter the noise** — Eight severity levels, log source tiers (Flutter DAP / Device / External), source tag chips, exclusion patterns, and saved presets. Tags & Origins side panel for browsing sources.
-- **Compare sessions** — Side-by-side diff of any two runs.
+- **Compare logs** — Side-by-side diff of any two runs.
 - **100K+ lines, no lag** — Virtual scrolling handles massive logs without freezing.
 - **Signals** — Automatic detection of slow operations, N+1 queries, ANR risk, and error clusters with evidence-backed signal reports. Unified Signals panel with collections, all signals, hot files, and performance data.
 - **Error intelligence** — Errors auto-classified as CRITICAL, TRANSIENT, or BUG with inline badges. Recurring patterns surfaced across sessions. Configurable alerts (flash, sound, badge, modal).
@@ -116,7 +116,7 @@ Collapse any column's sections to shrink that column aside and give the open sid
 - **Context header:** Each log starts with session metadata.
 - **Integration adapters:** Opt-in adapters add header lines per session (packages, build/CI, Git, env, test results, coverage, crash dumps, Docker, performance, terminal output, Drift Advisor, and more). Configure via `saropaLogCapture.integrations.adapters`. When your `pubspec.yaml` or `package.json` declares a package an adapter can enrich, Saropa Log Capture offers once to turn the matching adapter on — never enabling anything without your tap.
 - **Full Debug Console capture:** Toggle "App Only" or set `captureAll` to include system/framework logs.
-- **AI Activity (opt-in):** Stream Claude Code AI activity into the log viewer, with colored borders and category filters. Settings under `saropaLogCapture.aiActivity.*`.
+- **AI Activity (opt-in):** Stream AI coding-assistant activity into the log viewer, with colored borders and category filters. Settings under `saropaLogCapture.aiActivity.*`.
 
 ### Viewer
 - **Live sidebar viewer:** Real-time output with virtual scrolling, auto-scroll, and theme support.
@@ -230,7 +230,7 @@ Works standalone, but unlocks richer diagnostics paired with these companion ext
 
 ## Requirements
 
-- **VS Code** ^1.108.1 — also available via Open VSX for compatible editors.
+- **VS Code** ^1.105.0 — also available via Open VSX for compatible editors.
 - **Node.js** >= **22** for building and tests. Optional: use the **Dev Container** (`.devcontainer/devcontainer.json`). See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Remote Development
@@ -249,9 +249,9 @@ All settings are prefixed with `saropaLogCapture.` — see [plans/guides/configu
 | --------------- | ----------- | ---------------------------------------------------- |
 | `enabled`       | `true`      | Master capture switch. Disabling stops active capture immediately (sessions, external tailers, watchers), not only new sessions |
 | `logDirectory`  | `"reports"` | Where to save log files (relative to workspace root) |
-| `captureAll`    | `false`     | Capture all Debug Console output, bypassing filters  |
+| `captureAll`    | `true`      | Capture all Debug Console output, bypassing filters  |
 
-> **Tip:** To capture system/framework noise alongside your app logs, toggle **App Only: OFF** in the viewer or set `captureAll` to `true`.
+> **Tip:** To filter out system/framework noise, toggle **App Only: ON** in the viewer or set `captureAll` to `false`.
 
 ---
 
@@ -372,7 +372,7 @@ See [api-types.ts](src/api-types.ts) for the full type definitions.
 | `Saropa Log Capture: Pause/Resume Capture` | Toggle capture on/off |
 | `Saropa Log Capture: Insert Marker` | Insert a visual separator into the log |
 | `Saropa Log Capture: Search Log Files` | Search across all log files |
-| `Saropa Log Capture: Compare Sessions` | Side-by-side diff of two log sessions |
+| `Saropa Log Capture: Compare Logs` | Side-by-side diff of two log sessions |
 | `Saropa Log Capture: Export Session Flow Map` | Build a screen-journey Flow Map report from a log |
 | `Saropa Log Capture: Import .slc Bundle` | Import a shared `.slc` session bundle |
 | `Saropa Log Capture: Getting Started` | Open the Getting Started walkthrough |
@@ -418,7 +418,7 @@ Contributions and feedback are welcome — something **broken**, **missing**, or
 
 ### Translations
 
-The extension ships localized UI strings for 11 locales: Chinese (Simplified & Traditional), German, Spanish, French, Italian, Japanese, Korean, Portuguese (Brazil), and Russian. Corrections welcome — email [language@saropa.com](mailto:language@saropa.com).
+The extension ships localized UI strings for 10 locales: Chinese (Simplified & Traditional), German, Spanish, French, Italian, Japanese, Korean, Portuguese (Brazil), and Russian. Corrections welcome — email [language@saropa.com](mailto:language@saropa.com).
 
 ---
 
@@ -444,4 +444,4 @@ Built by [Saropa](https://saropa.com). Questions? Ideas? [Open an issue](https:/
 
 [GitHub](https://github.com/saropa/saropa-log-capture) | [Issues](https://github.com/saropa/saropa-log-capture/issues) | [Saropa](https://saropa.com)
 
-<sub>v8.0.0 · 2026-06-09</sub>
+<sub>v9.3.12</sub>

@@ -192,20 +192,11 @@ Closed              ← verified, file moved to bugs/history/YYYYMMDD/
 
 ### Moving to History
 
-When a bug is closed, move its file:
-
-```
-bugs/bug_003_severity-keywords-null-crash.md
-  → bugs/history/YYYYMMDD/bug_003_severity-keywords-null-crash.md
-```
-
-Use the date the bug was closed. Update any ROADMAP.md references to point to the new path.
+When a bug is closed, move its file to `plans/history/YYYY.MM/YYYY.MM.DD/` using the date the bug was closed.
 
 ---
 
 ## Severity Guide
-
-Use these labels in ROADMAP.md's "Known issues" table.
 
 | Severity | Meaning | Examples |
 |----------|---------|---------|
@@ -219,5 +210,5 @@ Use these labels in ROADMAP.md's "Known issues" table.
 ## Linking
 
 - Reference bugs from commits: `fix(viewer): description (bug_003)`
-- Reference bugs from ROADMAP: `[003](bugs/bug_003_severity-keywords-null-crash.md)`
+- Reference bugs from MASTER_PLAN: `[003](bugs/bug_003_severity-keywords-null-crash.md)`
 - Reference bugs from CHANGELOG: plain text description is fine, no link needed

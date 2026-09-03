@@ -1,7 +1,7 @@
 /**
  * Integration API: types, registry, and context helpers.
  * Providers register with the registry; session lifecycle calls getHeaderContributions
- * and runOnSessionEnd. See docs/history/INTEGRATION_API.md.
+ * and runOnSessionEnd. See registry.ts for the provider contract.
  */
 
 export type {
