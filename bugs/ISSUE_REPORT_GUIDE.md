@@ -38,24 +38,26 @@ If the bug belongs to another project, write a self-contained report in that pro
 
 Copy the block below into a new file.
 
+Field order and heading levels below match the 46 filed bug reports on disk (`bugs/bug_001_*.md` through `bugs/bug_046_*.md`) — do not substitute bold text for the `## Status:` / `## Severity:` headings, and do not add fields (`Area:`, `Created:`) that no filed bug actually uses.
+
 ````markdown
 # Bug NNN — Short, Specific Title
 
-**Status: Open**
+## Status: Open
 
-<!-- Status values: Open → Investigating → Fix Ready → Closed -->
+<!-- Status values: Open → Investigating → Fix Ready → Fixed (pending review) → Closed -->
 
-Created: YYYY-MM-DD
-Area: Viewer / Session / Retention / Settings / Extension lifecycle
-Severity: Critical / High / Medium / Low
+## Severity: Critical / High / Medium / Low
 
----
+One or two sentences on why this severity — who hits it, how often, what it costs them.
 
-## Summary
+## Problem
 
-One or two sentences: what happens, what should happen instead.
+Describe what the user sees.
 
----
+```
+Paste the exact error message or unexpected output here.
+```
 
 ## Reproduction
 
@@ -65,55 +67,14 @@ One or two sentences: what happens, what should happen instead.
 
 **Frequency:** Always / Intermittent / Once
 
-```
-Paste the exact error message or unexpected output here.
-```
-
----
-
-## Environment
-
-- VS Code version:
-- Extension version:
-- OS:
-- Debug adapter / language:
-
----
-
-## Expected vs Actual
-
-| | Behavior |
-|---|---|
-| **Expected** | What should happen |
-| **Actual** | What actually happens |
-
----
-
-## Data Flow Context
-
-<!-- For webview bugs, trace where the data breaks.
-     Extension → message → webview → render. -->
-
----
-
 ## Root Cause
 
 <!-- Fill in during investigation. Explain the *mechanism*: which condition
      evaluates wrong, and why. Reference specific lines. -->
 
-### Hypothesis A: ...
-
-Explain the theory and what to check.
-
-### Hypothesis B: ...
-
----
-
-## Suggested Fix
+## Proposed Fix
 
 <!-- Describe the code change needed. Reference file paths and line numbers. -->
-
----
 
 ## Changes Made
 
@@ -131,13 +92,9 @@ old code
 new code
 ```
 
----
-
 ## Tests Added
 
 <!-- List new or updated test files and what they verify. -->
-
----
 
 ## Commits
 
@@ -145,11 +102,13 @@ new code
 - `abcdef0` fix(scope): description
 ````
 
+An `## Environment` section (VS Code version, extension version, OS, debug adapter) is optional — add it only when the bug is environment-specific (one filed bug out of 46 uses it).
+
 ---
 
 ## Feature Request Template
 
-Copy the block below into a new file.
+Copy the block below into a new file. Unlike the bug template above, existing `plans/NNN_plan-*.md` files are **not** consistently structured (ad-hoc headers, some use `**Feature:**`/`**Status (date): ...**` instead of this template) — this template is the target for *new* filings, not a description of legacy ones. Don't assume an existing plan file matches it.
 
 ````markdown
 # PLAN NNN — Short, Specific Title
@@ -235,7 +194,7 @@ Why this feature is needed. Include concrete scenarios where this would improve 
 - Start with the affected area: `Viewer Crash`, `Session Persistence`, `Filter`,  `Options Panel`
 - Be specific: "null dereference in calcItemHeight" beats "crash", "lines disappear after level filter" beats "filter broken"
 
-### Summary
+### Problem
 
 - Include the **exact error message** with stack trace if available
 - Describe **what you expected** vs **what happened**
