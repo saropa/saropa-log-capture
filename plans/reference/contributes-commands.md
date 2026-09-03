@@ -21,6 +21,7 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.clearBuildCiGithubToken` | Saropa: Clear Build/CI GitHub Token |  |
 | `saropaLogCapture.clearBuildCiGitlabToken` | Saropa: Clear Build/CI GitLab Token |  |
 | `saropaLogCapture.clearDatabaseApiToken` | Saropa Log Capture: Clear Database API Token |  |
+| `saropaLogCapture.clearGitHubToken` | %command.clearGitHubToken.title% |  |
 | `saropaLogCapture.clearGlobalAggregates` | %command.clearGlobalAggregates.title% |  |
 | `saropaLogCapture.clearLearningData` | %command.clearLearningData.title% |  |
 | `saropaLogCapture.clearShareHistory` | %command.clearShareHistory.title% |  |
@@ -30,12 +31,10 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.compareLogToPreviousCommit` | %command.compareLogToPreviousCommit.title% |  |
 | `saropaLogCapture.compareSessions` | %command.compareSessions.title% |  |
 | `saropaLogCapture.compareThreeSessions` | %command.compareThreeSessions.title% |  |
-| `saropaLogCapture.compareWithMarked` | %command.compareWithMarked.title% |  |
 | `saropaLogCapture.configureIntegrations` | %command.configureIntegrations.title% |  |
 | `saropaLogCapture.copyAllFilteredLines` | %command.copyAllFilteredLines.title% |  |
 | `saropaLogCapture.copyDeepLink` | %command.copyDeepLink.title% |  |
 | `saropaLogCapture.copyFilePath` | %command.copyFilePath.title% |  |
-| `saropaLogCapture.copyHandoffBundle` | %command.copyHandoffBundle.title% |  |
 | `saropaLogCapture.createCollection` | %command.createCollection.title% |  |
 | `saropaLogCapture.createReportFile` | %command.createReportFile.title% |  |
 | `saropaLogCapture.debugProjectIndexRanking` | Debug Project Index Ranking |  |
@@ -51,7 +50,6 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.exportCollection` | %command.exportCollection.title% |  |
 | `saropaLogCapture.exportCsv` | %command.exportCsv.title% |  |
 | `saropaLogCapture.exportFlowMap` | %command.exportFlowMap.title% |  |
-| `saropaLogCapture.exportGitHubIssue` | %command.exportGitHubIssue.title% |  |
 | `saropaLogCapture.exportHtml` | %command.exportHtml.title% |  |
 | `saropaLogCapture.exportHtmlInteractive` | %command.exportHtmlInteractive.title% |  |
 | `saropaLogCapture.exportJson` | %command.exportJson.title% |  |
@@ -69,6 +67,7 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.newCollectionFromSessions` | %command.newCollectionFromSessions.title% |  |
 | `saropaLogCapture.newInvestigation` | Saropa Log Capture: New Investigation |  |
 | `saropaLogCapture.open` | %command.open.title% |  |
+| `saropaLogCapture.openChangelog` | %command.openChangelog.title% |  |
 | `saropaLogCapture.openCollection` | %command.openCollection.title% |  |
 | `saropaLogCapture.openExternalLogsForSession` | %command.openExternalLogsForSession.title% |  |
 | `saropaLogCapture.openFolder` | %command.openFolder.title% |  |
@@ -78,6 +77,7 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.openQualityReport` | %command.openQualityReport.title% |  |
 | `saropaLogCapture.openSession` | %command.openSession.title% |  |
 | `saropaLogCapture.openSessionGroup` | Saropa Log Capture: Open Session Group (Merged) |  |
+| `saropaLogCapture.openSettings` | %command.openSettings.title% |  |
 | `saropaLogCapture.openSignal` | %command.openSignal.title% |  |
 | `saropaLogCapture.openSignalsInTab` | %command.openSignalsInTab.title% |  |
 | `saropaLogCapture.openSqlHistoryForFingerprint` | %command.openSqlHistoryForFingerprint.title% |  |
@@ -89,12 +89,13 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.rebuildProjectIndex` | Rebuild Project Index |  |
 | `saropaLogCapture.rebuildSearchIndex` | Rebuild Log Search Index |  |
 | `saropaLogCapture.refreshHistory` | %command.refreshHistory.title% |  |
+| `saropaLogCapture.refreshRecurringSignals` | %command.refreshRecurringSignals.title% |  |
+| `saropaLogCapture.refreshVitals` | %command.refreshVitals.title% |  |
 | `saropaLogCapture.removeFromCollection` | %command.removeFromCollection.title% |  |
 | `saropaLogCapture.removeFromInvestigation` | Saropa Log Capture: Remove from Investigation |  |
 | `saropaLogCapture.renameInvestigation` | Saropa Log Capture: Rename Investigation |  |
 | `saropaLogCapture.renameSession` | %command.renameSession.title% |  |
 | `saropaLogCapture.replay` | %command.replay.title% |  |
-| `saropaLogCapture.rescanTags` | %command.rescanTags.title% |  |
 | `saropaLogCapture.resetAllSettings` | %command.resetAllSettings.title% |  |
 | `saropaLogCapture.restoreSession` | %command.restoreSession.title% |  |
 | `saropaLogCapture.savePreset` | %command.savePreset.title% |  |
@@ -111,7 +112,6 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 | `saropaLogCapture.showLogReferences` | %command.showLogReferences.title% |  |
 | `saropaLogCapture.showRelatedQueries` | %command.showRelatedQueries.title% |  |
 | `saropaLogCapture.showSignals` | %command.showSignals.title% |  |
-| `saropaLogCapture.showTimeline` | %command.showTimeline.title% |  |
 | `saropaLogCapture.splitNow` | %command.splitNow.title% |  |
 | `saropaLogCapture.start` | %command.start.title% |  |
 | `saropaLogCapture.stop` | %command.stop.title% |  |

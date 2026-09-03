@@ -1,6 +1,6 @@
 # Bug 029 — Keyboard accessibility issues
 
-## Status: Open
+## Status: Fixed
 
 ## Severity: Medium
 
@@ -30,10 +30,13 @@ Keyboard event handling doesn't distinguish interactive elements from the viewpo
 (1) Check `event.target` before handling Space/letter keys — skip if target is a button, select, or other interactive element. (2) Add `tabindex="0"` to level dots. (3) Add `role="dialog"`, `aria-modal="true"`, Escape handler, and focus management to the export modal.
 
 ## Changes Made
-<!-- Fill in when a fix is written. -->
+
+- All three original issues were already addressed in an earlier pass: `viewer-script-keyboard.ts` now checks `event.target`'s tag before handling Space/type-ahead keys so focused buttons/selects are not hijacked; the level severity dots gained `tabindex="0"`; and the export modal (`viewer-export-init.ts`) gained Escape-to-close and a Tab focus trap, verified against current source.
+- Follow-up cleanup in this pass: `bindExportModalKeyboardHandlers()` in `src/ui/viewer-panels/viewer-export-init.ts` was a separate function containing the Escape/Tab-trap listeners, but `initExportModal()` never called it — it duplicated the same two listeners inline instead, leaving the extracted function completely dead (confirmed via repo-wide grep: only its own definition matched). Deleted the dead function; the inline listeners in `initExportModal()` (the ones actually wired up) are unchanged and still active.
 
 ## Tests Added
-<!-- List new or updated test files. -->
+
+None — this pass only deleted a dead function whose logic was already duplicated and running inline; no behavior changed.
 
 ## Commits
 <!-- Add commit hashes as fixes land. -->

@@ -13,6 +13,7 @@ import { showIntegrationsPicker } from './modules/integrations/integrations-ui';
 import { getGlobalProjectIndexer } from './modules/project-indexer/project-indexer';
 import { getGlobalSearchIndex } from './modules/search/search-index-global';
 import { logExtensionWarn } from './modules/misc/extension-logger';
+import { ensureWebviewReadyOrWarn } from './commands-webview-ready';
 
 const extensionId = 'saropa.saropa-log-capture';
 const settingsSection = 'saropaLogCapture';
@@ -20,13 +21,20 @@ const settingsSection = 'saropaLogCapture';
 export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
     const { viewerProvider, inlineDecorations, popOutPanel, sessionManager, broadcaster } = deps;
     return [
-        vscode.commands.registerCommand('saropaLogCapture.explainRootCauseHypotheses', () => {
+        // bug_015: these three fire from the command palette / keybindings, which can run
+        // before the sidebar webview has ever resolved (e.g. right after activation) — post
+        // immediately and vscode.Webview.postMessage() silently drops it. Wait for readiness
+        // first so the user gets a warning instead of a no-op.
+        vscode.commands.registerCommand('saropaLogCapture.explainRootCauseHypotheses', async () => {
+            if (!(await ensureWebviewReadyOrWarn(viewerProvider))) { return; }
             broadcaster.postToWebview({ type: 'triggerExplainRootCauseHypotheses' });
         }),
-        vscode.commands.registerCommand('saropaLogCapture.openSqlQueryHistory', () => {
+        vscode.commands.registerCommand('saropaLogCapture.openSqlQueryHistory', async () => {
+            if (!(await ensureWebviewReadyOrWarn(viewerProvider))) { return; }
             broadcaster.postToWebview({ type: 'openSqlQueryHistoryPanel' });
         }),
-        vscode.commands.registerCommand('saropaLogCapture.showRelatedQueries', () => {
+        vscode.commands.registerCommand('saropaLogCapture.showRelatedQueries', async () => {
+            if (!(await ensureWebviewReadyOrWarn(viewerProvider))) { return; }
             broadcaster.postToWebview({ type: 'triggerShowRelatedQueries' });
         }),
         vscode.commands.registerCommand('saropaLogCapture.rebuildProjectIndex', async () => {
@@ -138,15 +146,20 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
             }
             await vscode.window.showTextDocument(vscode.Uri.parse(picked.doc.uri), { preview: true });
         }),
-        vscode.commands.registerCommand('saropaLogCapture.copyAllFilteredLines', () => {
+        // bug_015: same "may not be resolved yet" hazard as above for every command below
+        // that posts to the webview — guard each with ensureWebviewReadyOrWarn().
+        vscode.commands.registerCommand('saropaLogCapture.copyAllFilteredLines', async () => {
+            if (!(await ensureWebviewReadyOrWarn(viewerProvider))) { return; }
             broadcaster.postToWebview({ type: 'triggerCopyAllFiltered' });
         }),
-        vscode.commands.registerCommand('saropaLogCapture.collapseAllSections', () => {
+        vscode.commands.registerCommand('saropaLogCapture.collapseAllSections', async () => {
+            if (!(await ensureWebviewReadyOrWarn(viewerProvider))) { return; }
             broadcaster.postToWebview({ type: 'triggerCollapseAllSections' });
             /* Toggle the context key so the view title bar swaps to the expand-all icon */
             vscode.commands.executeCommand('setContext', 'saropaLogCapture.allCollapsed', true);
         }),
-        vscode.commands.registerCommand('saropaLogCapture.expandAllSections', () => {
+        vscode.commands.registerCommand('saropaLogCapture.expandAllSections', async () => {
+            if (!(await ensureWebviewReadyOrWarn(viewerProvider))) { return; }
             broadcaster.postToWebview({ type: 'triggerExpandAllSections' });
             /* Toggle the context key so the view title bar swaps to the collapse-all icon */
             vscode.commands.executeCommand('setContext', 'saropaLogCapture.allCollapsed', false);
@@ -155,14 +168,16 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
             /* Delegate to VS Code's built-in panel maximize toggle */
             vscode.commands.executeCommand('workbench.action.toggleMaximizedPanel');
         }),
-        vscode.commands.registerCommand('saropaLogCapture.toggleSearchOverlay', () => {
+        vscode.commands.registerCommand('saropaLogCapture.toggleSearchOverlay', async () => {
+            if (!(await ensureWebviewReadyOrWarn(viewerProvider))) { return; }
             broadcaster.postToWebview({ type: 'triggerToggleSearch' });
         }),
         /* Trouble Mode: a zero-context triage filter that hides every nominal line
            and shows only errors, warnings, and performance issues. Fire-and-forget —
            the webview owns and persists the active state (setState), so a bare toggle
            message is all the host sends. */
-        vscode.commands.registerCommand('saropaLogCapture.troubleMode.toggle', () => {
+        vscode.commands.registerCommand('saropaLogCapture.troubleMode.toggle', async () => {
+            if (!(await ensureWebviewReadyOrWarn(viewerProvider))) { return; }
             broadcaster.postToWebview({ type: 'triggerToggleTroubleMode' });
         }),
         vscode.commands.registerCommand('saropaLogCapture.troubleMode.errorsOnly', async () => {
@@ -183,7 +198,8 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
            `when` clause, so without this it preempts the webview keydown handler and opens
            Quick Open instead. The package.json keybinding scopes Ctrl+G to the log viewer
            view + pop-out panel; this command then forwards to the webview's openGotoLine(). */
-        vscode.commands.registerCommand('saropaLogCapture.gotoLineInViewer', () => {
+        vscode.commands.registerCommand('saropaLogCapture.gotoLineInViewer', async () => {
+            if (!(await ensureWebviewReadyOrWarn(viewerProvider))) { return; }
             broadcaster.postToWebview({ type: 'triggerGotoLine' });
         }),
         vscode.commands.registerCommand('saropaLogCapture.popOutViewer', async () => { await popOutPanel.open(); }),
@@ -202,10 +218,19 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
         }),
         vscode.commands.registerCommand('saropaLogCapture.copyDeepLink',
           async (item: { uri: vscode.Uri; filename: string }) => {
-            if (item?.filename) { await copyDeepLinkToClipboard(item.filename); }
+            // bug_013: Palette invocation has no target log — guide the user to the context menu.
+            if (!item?.filename) {
+                void vscode.window.showInformationMessage(t('msg.paletteRequiresLog'));
+                return;
+            }
+            await copyDeepLinkToClipboard(item.filename);
         }),
         vscode.commands.registerCommand('saropaLogCapture.copyFilePath', async (item: { uri: vscode.Uri }) => {
-            if (!item?.uri) { return; }
+            // bug_013: Palette invocation has no target log — guide the user to the context menu.
+            if (!item?.uri) {
+                void vscode.window.showInformationMessage(t('msg.paletteRequiresLog'));
+                return;
+            }
             await vscode.env.clipboard.writeText(item.uri.fsPath);
             vscode.window.showInformationMessage(t('msg.filePathCopied'));
         }),
@@ -262,10 +287,34 @@ async function resetAllSettings(): Promise<void> {
         .map(k => k.slice(prefix.length));
 
     const { Global, Workspace } = vscode.ConfigurationTarget;
-    await Promise.all(keys.flatMap(k => [
-        cfg.update(k, undefined, Global),
-        cfg.update(k, undefined, Workspace),
-    ]));
+    // Workspace-scope updates reject outright when no folder is open ("Unable to write
+    // into Workspace settings") — skip that scope entirely rather than let every one of
+    // the 272 settings fail and get counted as a rejection below.
+    const hasWorkspace = (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
+    const updates = keys.flatMap(k => (
+        hasWorkspace
+            ? [cfg.update(k, undefined, Global), cfg.update(k, undefined, Workspace)]
+            : [cfg.update(k, undefined, Global)]
+    ));
+
+    // allSettled (not all) so one setting's rejection can't abort the reset of the
+    // other ~271 — Promise.all previously stopped on the first rejection, leaving
+    // settings partially reset (bug_017).
+    const results = await Promise.allSettled(updates);
+    const failures = results.filter(r => r.status === 'rejected');
+    if (failures.length > 0) {
+        logExtensionWarn(
+            'resetAllSettings',
+            `${failures.length} of ${updates.length} setting updates failed`,
+        );
+        // bug_017: a success toast here would be silent-async — the user has no way to know
+        // some settings kept their prior values. Surface the partial failure explicitly instead
+        // of the generic "reset" message.
+        vscode.window.showWarningMessage(
+            t('msg.settingsResetPartial', String(updates.length - failures.length), String(updates.length), String(failures.length)),
+        );
+        return;
+    }
 
     vscode.window.showInformationMessage(
         t('msg.settingsReset', String(keys.length)),
