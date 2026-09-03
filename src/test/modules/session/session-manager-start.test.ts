@@ -53,6 +53,9 @@ function makeDeps(overrides: {
         getSingleRecentOwnerSession: () => null,
         statusBar: { updateLineCount: () => {}, show: () => {} },
         broadcastSplit: () => {},
+        // bug_010 fix added this field to StartSessionDeps; a no-op is fine for these tests,
+        // which don't exercise streaming integrations.
+        broadcastLine: () => {},
         onOutputEvent: () => {},
         clearBufferTimeoutState: () => {},
     };

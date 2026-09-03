@@ -5,6 +5,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from '../config/config';
 import { LogSession } from '../capture/log-session';
+import { workspaceFolderMatches } from '../capture/log-session-helpers';
 import { KeywordWatcher } from '../features/keyword-watcher';
 import { StatusBar } from '../../ui/shared/status-bar';
 import { AutoTagger } from '../misc/auto-tagger';
@@ -18,12 +19,20 @@ import type { EarlyOutputBuffer } from './session-event-bus';
 import type { SessionSetupResult } from './session-lifecycle-init';
 import { replayEarlyBuffer, replayAllOtherEarlyBuffers } from './session-manager-replay';
 
-/** Returns the single owner session if exactly one exists and was created within windowMs. */
+/**
+ * Returns the single owner session if exactly one exists and was created within windowMs.
+ * Bug 034 fix: `workspaceFolder`, when supplied, must match the candidate LogSession's own
+ * workspace folder. Without this check, a folder-B debug session starting within the
+ * race-guard (5s) or recent-child (30s) aliasing window after folder-A's session would be
+ * aliased to folder A's LogSession purely on timing, permanently mixing folder B's output
+ * into folder A's log file for the rest of that session's lifetime.
+ */
 export function getSingleRecentOwnerSession(
     ownerSessionIds: Set<string>,
     ownerSessionCreatedAt: Map<string, number>,
     sessions: Map<string, LogSession>,
     windowMs: number,
+    workspaceFolder?: vscode.WorkspaceFolder,
 ): { sid: string; logSession: LogSession } | null {
     if (ownerSessionIds.size !== 1) { return null; }
     const now = Date.now();
@@ -31,6 +40,11 @@ export function getSingleRecentOwnerSession(
         const createdAt = ownerSessionCreatedAt.get(sid);
         if (createdAt !== undefined && now - createdAt < windowMs) {
             const logSession = sessions.get(sid) ?? null;
+            // Folder guard: refuse to alias across workspace roots even though the
+            // single-owner + timing conditions above are otherwise satisfied.
+            if (logSession && !workspaceFolderMatches(logSession.sessionContext.workspaceFolder, workspaceFolder)) {
+                return null;
+            }
             return logSession ? { sid, logSession } : null;
         }
     }
@@ -46,17 +60,26 @@ export function clearBufferTimeoutState(
     bufferTimeoutWarnedFor.clear();
 }
 
-/** Returns the owner session id that was created most recently. */
+/**
+ * Returns the owner session id that was created most recently.
+ * Bug 034 fix: when `workspaceFolder` is supplied, a candidate is only eligible if its
+ * LogSession was opened for that same folder — this stops the multi-root "most recent
+ * session wins" fallback from routing folder B's output into folder A's log file just
+ * because folder A's session happens to have the newer timestamp.
+ */
 export function getMostRecentOwnerSessionId(
     ownerSessionIds: Set<string>,
     ownerSessionCreatedAt: Map<string, number>,
     sessions: Map<string, LogSession>,
+    workspaceFolder?: vscode.WorkspaceFolder,
 ): string | null {
     let newestId: string | null = null;
     let newestAt = 0;
     for (const sid of ownerSessionIds) {
         const at = ownerSessionCreatedAt.get(sid) ?? 0;
-        if (at > newestAt && sessions.has(sid)) {
+        const logSession = sessions.get(sid);
+        if (!logSession) { continue; }
+        if (at > newestAt && workspaceFolderMatches(logSession.sessionContext.workspaceFolder, workspaceFolder)) {
             newestAt = at;
             newestId = sid;
         }
