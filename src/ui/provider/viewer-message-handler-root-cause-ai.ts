@@ -10,7 +10,7 @@ import { showAIExplanationPanel } from "../panels/ai-explain-panel";
 import { safeLineIndex } from "./viewer-message-handler-panels";
 import type { ViewerMessageContext } from "./viewer-message-types";
 import { getAiEnabledConfigurationTarget } from "../../modules/ai/ai-enable-scope";
-import { showAiExplainRunFailure } from "../../modules/ai/ai-explain-ui";
+import { showAiExplainRunFailure, confirmAiDataConsent } from "../../modules/ai/ai-explain-ui";
 
 function msgStr(m: Record<string, unknown>, key: string, fallback = ""): string {
   const v = m[key];
@@ -34,6 +34,22 @@ export function runExplainRootCauseHypotheses(msg: Record<string, unknown>, ctx:
     }, () => {});
     return;
   }
+  // bug_003: this path bypassed the consent dialog entirely — it calls buildAIContext directly
+  // (same data volume as "Explain with AI") but had no confirmAiDataConsent() gate, so root-cause
+  // hypotheses were sent to the model with zero user confirmation. Mirror runExplainWithAi's gate.
+  confirmAiDataConsent().then((consented) => {
+    if (consented) { runExplainRootCauseHypothesesConfirmed(msg, ctx, aiCfg); }
+  }, () => {});
+}
+
+/** Continuation of runExplainRootCauseHypotheses after consent is granted. */
+function runExplainRootCauseHypothesesConfirmed(
+  msg: Record<string, unknown>, ctx: ViewerMessageContext, aiCfg: vscode.WorkspaceConfiguration,
+): void {
+  const uri = ctx.currentFileUri;
+  const text = msgStr(msg, "text").trim();
+  const lineIdx = safeLineIndex(msg.lineIndex, 0);
+  if (!uri || !text) { return; }
   vscode.window.withProgress(
     { location: vscode.ProgressLocation.Notification, title: t("msg.aiExplainHypothesesProgress"), cancellable: false },
     async () => {

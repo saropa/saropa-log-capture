@@ -242,7 +242,7 @@ export class LogViewerProvider
   sendFindResults(results: unknown): void { state.sendFindResultsImpl(this, results); }
   setupFindSearch(query: string, options: Record<string, unknown>): void { state.setupFindSearchImpl(this, query, options); }
   findNextMatch(): void { state.findNextMatchImpl(this); }
-  sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean }): void { state.sendSessionListImpl(this, sessions, rootInfo); }
+  sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean; scanFailed?: boolean }): void { state.sendSessionListImpl(this, sessions, rootInfo); }
   sendSessionListLoading(folderPath: string): void { state.sendSessionListLoadingImpl(this, folderPath); }
   sendBookmarkList(files: Record<string, unknown>): void { state.sendBookmarkListImpl(this, files); }
   sendDisplayOptions(options: SessionDisplayOptions): void { state.sendDisplayOptionsImpl(this, options); }
@@ -296,6 +296,8 @@ export class LogViewerProvider
   getView(): vscode.WebviewView | undefined {
     return this.visibleView ?? this.views.values().next().value;
   }
+  /** Broadcaster uses this to skip expensive HTML build when no panel is showing. */
+  isVisible(): boolean { return !!this.getView()?.visible; }
   getSeenCategories(): Set<string> { return this.seenCategories; }
   updateWatchCounts(counts: ReadonlyMap<string, number>, badgeCount?: number): void {
     const obj = Object.fromEntries(counts);

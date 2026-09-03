@@ -80,6 +80,16 @@ export async function handleSessionAction(
                 await vscode.commands.executeCommand('saropaLogCapture.addSessionNote', items[0]);
             }
             break;
+        // Mark for Comparison (bug_014): takes a single { uri, filename } item — marks the first
+        // selection so a future comparison entry point can read it. Its former partner action,
+        // compareWithMarked, was removed here (bug_006/bug_014 conflict): the compareWithMarked
+        // *command* was deleted as unreachable dead code by bug_006, which left this dispatch
+        // calling a nonexistent command and throwing "command not found" at runtime.
+        case 'markForComparison':
+            if (items[0]) {
+                await vscode.commands.executeCommand('saropaLogCapture.markForComparison', items[0]);
+            }
+            break;
         case 'exportHtml':
             for (const item of items) {
                 await vscode.commands.executeCommand('saropaLogCapture.exportHtml', item);

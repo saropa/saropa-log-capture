@@ -36,13 +36,25 @@ export class ViewerBroadcaster implements ViewerTarget {
   removeTarget(target: ViewerTarget): void { this.targets.delete(target); }
 
   addLine(data: LineData): void {
-    const line = buildPendingLineFromLineData(data, this.diagnosticCache);
+    // Bug_035: skip expensive HTML build (ANSI, linkify, classify) when every target
+    // is either hydrating or hidden — the batch pipeline already drops lines for
+    // hidden viewers (log-viewer-provider-batch.ts:104), but building still ran.
+    const anyVisible = [...this.targets].some(
+      t => !t.isLiveCaptureHydrating?.() && (t.isVisible?.() ?? true),
+    );
+    const line = anyVisible
+      ? buildPendingLineFromLineData(data, this.diagnosticCache)
+      : undefined;
     for (const t of this.targets) {
       // Pop-out defers raw LineData while loading disk snapshot; it cannot use pre-built HTML yet.
       if (t.isLiveCaptureHydrating?.()) {
         t.addLine(data);
         continue;
       }
+      // No visible target: `line` was never built (see anyVisible above), so this
+      // line is dropped for every non-hydrating target — nothing queues it for later,
+      // hidden targets simply do not receive it.
+      if (!line) { continue; }
       t.appendLiveLineFromBroadcast({ ...line }, data.text);
     }
   }
@@ -111,7 +123,7 @@ export class ViewerBroadcaster implements ViewerTarget {
   setHasPerformanceData(has: boolean): void {
     for (const t of this.targets) { t.setHasPerformanceData(has); }
   }
-  sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean }): void {
+  sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean; scanFailed?: boolean }): void {
     for (const t of this.targets) { t.sendSessionList(sessions, rootInfo); }
   }
   sendSessionListLoading(folderPath: string): void {
