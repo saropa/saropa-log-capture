@@ -4,9 +4,12 @@ import { getViewerScriptDbMessageHandler } from './viewer-script-messages-db';
 import { getViewerScriptTypographyMessageHandler } from './viewer-script-messages-typography';
 import { getSourceLineStampScript } from './viewer-source-line-stamp';
 import { getFileCodeStampScript } from './viewer-file-code-stamp';
+import { getViewerScriptAddLinesHandlerScript } from './viewer-script-messages-addlines';
+import { getViewerScriptClearHandlerScript } from './viewer-script-messages-clear';
+import { getViewerScriptMiscMessageHandler } from './viewer-script-messages-misc';
 
 export function getViewerScriptMessageHandler(): string {
-    return getViewerScriptDbMessageHandler() + getViewerScriptTypographyMessageHandler() + getSourceLineStampScript() + getFileCodeStampScript() + /* javascript */ `
+    return getViewerScriptDbMessageHandler() + getViewerScriptTypographyMessageHandler() + getSourceLineStampScript() + getFileCodeStampScript() + getViewerScriptAddLinesHandlerScript() + getViewerScriptClearHandlerScript() + getViewerScriptMiscMessageHandler() + /* javascript */ `
 /* Crashlytics icon shows only when the adapter is enabled AND the workspace looks like a deployable
    app (host posts 'crashlyticsApplicable'). Both signals arrive as separate messages, so this single
    helper re-derives visibility whenever either changes. Default is hidden until the host confirms
@@ -21,53 +24,11 @@ function syncCrashlyticsIconVisibility() {
 window.addEventListener('message', function(event) {
     var msg = event.data;
     /* Pre-handlers return true when they've dispatched the message; skip the switch on hit. */
-    if ((typeof handleDbMessages === 'function' && handleDbMessages(msg)) || (typeof handleTypographyMessages === 'function' && handleTypographyMessages(msg)) || (typeof handleSuiteSuggestionsMessage === 'function' && handleSuiteSuggestionsMessage(msg))) return;
+    if ((typeof handleDbMessages === 'function' && handleDbMessages(msg)) || (typeof handleTypographyMessages === 'function' && handleTypographyMessages(msg)) || (typeof handleSuiteSuggestionsMessage === 'function' && handleSuiteSuggestionsMessage(msg)) || (typeof handleMiscViewerMessages === 'function' && handleMiscViewerMessages(msg))) return;
     switch (msg.type) {
-        case 'addLines': {
-            var isHidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';
-            for (var i = 0; i < msg.lines.length; i++) {
-                var ln = msg.lines[i], beforeAddLen = allLines.length;
-                addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw, ln.sourcePath, ln.elapsedMs, ln.qualityPercent, ln.source, ln.rawText, ln.tier); stampSourceLineNoOnNewItems(beforeAddLen, ln.sourceLineNo); stampFileCodeOnNewItems(beforeAddLen, ln.logFileUri, ln.timestamp);
-                if (typeof applyLintDataToLastLine === 'function') applyLintDataToLastLine(ln);
-            }
-            trimData();
-            /* Badge counts must equal what the level filter shows. Recompute here — after the
-               addToData loop and trimData have settled allLines, repeat-collapse, and trimming —
-               so the tally reads the same per-row item.level the filter reads (effective, post-
-               demotion, post-collapse), not a separate raw classification that diverges. */
-            if (typeof recomputeStatsCounters === 'function') recomputeStatsCounters();
-            if (msg.lineCount !== undefined) {
-                lineCount = msg.lineCount;
-                // Decoration width only changes when line-count digit width crosses a threshold.
-                if (typeof applyDecorationLayoutWidth === 'function') applyDecorationLayoutWidth();
-            }
-            /* Compress mode mutates heights: any compression mode can mutate prior line heights/visibility; must full recalc, not appendPrefixSums only. */
-            if ((typeof compressLinesMode !== 'undefined' && compressLinesMode)
-                || (typeof compressNonConsecutiveMode !== 'undefined' && compressNonConsecutiveMode)) {
-                if (typeof recalcHeights === 'function') recalcHeights();
-                if (typeof buildPrefixSums === 'function') buildPrefixSums();
-            } else if (typeof buildPrefixSums === 'function' && typeof appendPrefixSums === 'function') {
-                if (prefixSums && prefixSums.length + msg.lines.length === allLines.length + 1) { appendPrefixSums(); }
-                else { buildPrefixSums(); }
-            }
-            if (!isHidden) {
-                // Use hysteresis (force=false) so we skip full DOM replace when visible range unchanged,
-                // preserving text selection while the log is being written to.
-                renderViewport(false);
-                if (typeof scheduleMinimap === 'function') scheduleMinimap();
-                // Render-snap-render: the render above used the OLD scrollTop and only reaches OVERSCAN rows past the previous bottom. When a streaming batch is larger than that the snapped viewport lands inside the empty bottom spacer and the contents appear to jump until the next event paints the new tail. The trailing renderViewport(false) re-uses the snapped scrollTop and is cheap on small batches (early-returns on unchanged range).
-                // Suppress snap-to-bottom while the user is selecting: the snap changes the viewport range mid-drag, which makes renderViewport rewrite DOM and wipes any native within-line selection the user is building. With the snap suppressed the visible range stays put and renderViewport's hysteresis early-returns, preserving both native and model selections during streaming. Sticky-bottom resumes on the next batch after selection clears.
-                if (autoScroll && !window.isContextMenuOpen && (typeof isUserSelecting !== 'function' || !isUserSelecting())) { if (window.setProgrammaticScroll) window.setProgrammaticScroll(); suppressScroll = true; logEl.scrollTop = logEl.scrollHeight; suppressScroll = false; renderViewport(false); }
-                updateFooterText();
-            }
-            if (typeof scheduleRootCauseHypothesesRefresh === 'function') scheduleRootCauseHypothesesRefresh();
-            /* Refresh the Trouble Mode severity chart once per batch (no-op while the mode is off). */
-            if (typeof scheduleTroubleChartUpdate === 'function') scheduleTroubleChartUpdate();
-            /* Warm-up filter re-applies when the app-ready boundary first resolves mid-load
-               (no-op while the filter is off or the boundary is unchanged). */
-            if (typeof maybeReapplyWarmupOnBoundaryChange === 'function') maybeReapplyWarmupOnBoundaryChange();
+        case 'addLines':
+            handleAddLinesMessage(msg);
             break;
-        }
         case 'setTroubleChartInterval':
             if (typeof setTroubleChartInterval === 'function') setTroubleChartInterval(msg.seconds);
             break;
@@ -90,60 +51,7 @@ window.addEventListener('message', function(event) {
             if (typeof handleUpdateLintData === 'function') handleUpdateLintData(msg);
             break;
         case 'clear':
-            loadTruncatedInfo = null;
-            correlationByLineIndex = {};
-            databaseQueryLinesByIndex = {};
-            traceLinksByIndex = {};
-            MAX_LINES = MAX_LINES_DEFAULT;
-            if (typeof window !== 'undefined') { window.enabledSources = null; window.availableSources = []; }
-            if (typeof window.exitReplayMode === 'function') window.exitReplayMode();
-            if (currentFilename && !autoScroll) { scrollMemory[currentFilename] = logEl.scrollTop; }
-            autoScroll = true;
-            fileMode = 'log'; formatEnabled = false; if (typeof updateFormatToggleVisibility === 'function') updateFormatToggleVisibility(); if (typeof applyMarkdownTypography === 'function') applyMarkdownTypography();
-            allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null; nextSeq = 1; sessionStartTs = 0; if (typeof resetDecoSeen === 'function') resetDecoSeen(); if (typeof resetTreeDetector === 'function') resetTreeDetector(); if (typeof resetFileCodes === 'function') resetFileCodes(); if (typeof resetTroubleChartLaunchScan === 'function') resetTroubleChartLaunchScan();
-            if (typeof applyDecorationLayoutWidth === 'function') applyDecorationLayoutWidth();
-            lastStart = -1; lastEnd = -1; groupHeaderMap = {}; prefixSums = null;
-            if (typeof resetContinuationState === 'function') resetContinuationState();
-            if (typeof resetFlutterBannerDetector === 'function') resetFlutterBannerDetector();
-            cachedVisibleCount = 0; if (typeof window !== 'undefined') window.__visibleCountDirty = false;
-            isPaused = false; isViewingFile = false; if (footerEl) footerEl.classList.remove('paused');
-            if (typeof window.setReplayEnabled === 'function') window.setReplayEnabled(false, isSessionActive);
-            if (typeof closeContextModal === 'function') closeContextModal();
-            if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof resetClassTags === 'function') resetClassTags(); if (typeof resetSqlPatternTags === 'function') resetSqlPatternTags(); if (typeof resetScopeFilter === 'function') resetScopeFilter(); if (typeof resetWarmupFilter === 'function') resetWarmupFilter(); if (typeof dbTimeFilterActive !== 'undefined') { dbTimeFilterActive = false; dbTimeFilterMin = 0; dbTimeFilterMax = 0; } if (typeof window !== 'undefined') { window.driftAdvisorDbPanelMeta = null; window.ppDbTimelineMeta = null; } if (typeof resetDriftDebugServerFromLogSession === 'function') resetDriftDebugServerFromLogSession(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
-            if (typeof clearRunNav === 'function') clearRunNav();
-            if (typeof artBlockTracker !== 'undefined') { artBlockTracker.startIdx = -1; artBlockTracker.count = 0; artBlockTracker.timestamp = 0; }
-            if (typeof resetAsciiArtDetector === 'function') resetAsciiArtDetector();
-            if (typeof repeatTracker !== 'undefined') {
-                repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0;
-                repeatTracker.lastTimestamp = 0; repeatTracker.lastLineIndex = -1; repeatTracker.lastRepeatNotificationIndex = -1; repeatTracker.streakMinN = 2; repeatTracker.streakSqlFp = false;
-                repeatTracker.sqlRepeatPreview = null; repeatTracker.sqlStreakFingerprint = null; repeatTracker.sqlStreakSqlSnippet = '';
-                repeatTracker.sqlStreakFirstTs = 0; repeatTracker.sqlStreakLastTs = 0; repeatTracker.sqlStreakVariantOrder = []; repeatTracker.sqlStreakVariantCounts = null;
-            }
-            if (typeof resetDbSignalDetectorSession === 'function') resetDbSignalDetectorSession();
-            if (typeof setDbBaselineFingerprintSummaryFromHost === 'function') setDbBaselineFingerprintSummaryFromHost(null);
-            if (typeof resetRootCauseHypothesesSession === 'function') resetRootCauseHypothesesSession();
-            if (typeof resetCompressDupStreak === 'function') resetCompressDupStreak();
-            if (typeof compressSuggestShown !== 'undefined') { compressSuggestShown = false; compressSuggestBannerDismissed = false; }
-            if (typeof hideCompressSuggestionBanner === 'function') hideCompressSuggestionBanner();
-            if (typeof hiddenLineIndices !== 'undefined') { hiddenLineIndices.clear(); isPeeking = false; autoHiddenCount = 0; sessionAutoHidePatterns = []; updateHiddenDisplay(); }
-            /* Selection state is keyed by allLines index; switching logs replaces allLines
-               wholesale (see allLines.length = 0 above) so any stale selection would apply
-               Ctrl+C / Shift+Arrow to rows of the NEW file that happen to share old indices
-               (bug_025). Reset the anchor, cursor, and implicit-click caret together. */
-            if (typeof selectionStart !== 'undefined') selectionStart = -1;
-            if (typeof selectionEnd !== 'undefined') selectionEnd = -1;
-            if (typeof lastClickedIdx !== 'undefined') lastClickedIdx = -1;
-            /* bug_025 (log-switch gap): pinnedIndices and annotations are ALSO keyed by
-               allLines index, same as selection above — trimData() re-indexes them on a
-               trim, but nothing reset them on a full log switch, so a pin/annotation from
-               the old file silently reappeared on whatever unrelated row now sits at that
-               index in the new file. screenshotByIdx needs no reset here: it is rebuilt
-               wholesale from the sidecar list on every 'screenshotList' message, which
-               loadComplete always requests after a switch. */
-            if (typeof pinnedIndices !== 'undefined') { pinnedIndices.clear(); if (typeof renderPinnedSection === 'function') renderPinnedSection(); }
-            if (typeof annotations !== 'undefined') annotations = {};
-            if (footerTextEl) footerTextEl.textContent = 'Cleared'; updateLineCount(); renderViewport(true); if (typeof scheduleMinimap === 'function') scheduleMinimap();
-            if (typeof scheduleTroubleChartUpdate === 'function') scheduleTroubleChartUpdate();
+            handleClearMessage();
             break;
         case 'updateFooter':
             if (footerTextEl) footerTextEl.textContent = msg.text;
@@ -355,79 +263,6 @@ window.addEventListener('message', function(event) {
             break;
         case 'setScopeContext':
             if (typeof handleScopeContextMessage === 'function') handleScopeContextMessage(msg);
-            break;
-        case 'minimapShowInfo':
-            minimapShowInfoMarkers = !!msg.show;
-            if (typeof handleMinimapShowInfo === 'function') handleMinimapShowInfo(msg);
-            break;
-        case 'minimapShowSqlDensity':
-            if (typeof minimapShowSqlDensity !== 'undefined') minimapShowSqlDensity = msg.show !== false;
-            if (typeof handleMinimapShowSqlDensity === 'function') handleMinimapShowSqlDensity(msg);
-            if (typeof syncOptionsPanelUi === 'function') syncOptionsPanelUi();
-            break;
-        case 'minimapProportionalLines':
-            minimapProportionalLines = msg.show !== false;
-            if (typeof handleMinimapProportionalLines === 'function') handleMinimapProportionalLines(msg);
-            break;
-        case 'minimapViewportRedOutline':
-            minimapViewportRedOutline = msg.show === true;
-            if (typeof handleMinimapViewportRedOutline === 'function') handleMinimapViewportRedOutline(msg);
-            break;
-        case 'minimapViewportOutsideArrow':
-            minimapViewportOutsideArrow = msg.show === true;
-            if (typeof handleMinimapViewportOutsideArrow === 'function') handleMinimapViewportOutsideArrow(msg);
-            break;
-        case 'minimapWidth': if (typeof handleMinimapWidth === 'function') handleMinimapWidth(msg); break;
-        case 'minimapWidthPx': if (typeof handleMinimapWidthPx === 'function') handleMinimapWidthPx(msg); break;
-        case 'troubleRailWidthPx': if (typeof handleTroubleRailWidthPx === 'function') handleTroubleRailWidthPx(msg); break;
-        case 'scrollbarVisible': /* Apply showScrollbar setting + force Chromium scrollbar re-render */ applyScrollbarVisible(msg.show === true); break;
-        case 'searchMatchOptionsAlwaysVisible': document.body.classList.toggle('search-match-options-always', msg.always === true); break;
-        case 'iconBarPosition':
-            document.body.dataset.iconBar = msg.position || 'left';
-            syncJumpButtonInset();
-            break;
-        case 'captureEnabled':
-            window.captureEnabled = msg.enabled !== false;
-            if (typeof syncCaptureEnabledUi === 'function') syncCaptureEnabledUi();
-            break;
-        case 'diagnosticCapture':
-            window.diagnosticCapture = msg.enabled === true;
-            if (typeof syncDiagnosticCaptureUi === 'function') syncDiagnosticCaptureUi();
-            break;
-        case 'setLearningOptions':
-            learningEnabled = msg.enabled !== false;
-            learningMaxLineLen = typeof msg.maxLineLength === 'number' && msg.maxLineLength >= 80 ? msg.maxLineLength : 2000;
-            learningTrackScroll = msg.trackScroll === true;
-            break;
-        case 'integrationsAdapters':
-            window.integrationAdapters = Array.isArray(msg.adapterIds) ? msg.adapterIds : [];
-            if (typeof syncIntegrationsUi === 'function') syncIntegrationsUi();
-            syncCrashlyticsIconVisibility();
-            var ibPerf = document.getElementById('ib-performance');
-            if (ibPerf) ibPerf.classList.toggle('ib-integration-enabled', window.integrationAdapters.indexOf('performance') >= 0);
-            if (typeof window.applyFooterQualityReportState === 'function') window.applyFooterQualityReportState();
-            break;
-        case 'captureSources':
-            if (typeof renderCaptureSources === 'function') renderCaptureSources(msg.sources);
-            break;
-        case 'crashlyticsApplicable':
-            // Library / package projects (no app evidence) keep the icon hidden even when the
-            // crashlytics adapter is enabled, so the setup hint never nags where it cannot apply.
-            window.crashlyticsApplicable = msg.applicable !== false;
-            syncCrashlyticsIconVisibility();
-            break;
-        case 'errorHoverData':
-            if (typeof handleErrorHoverData === 'function') handleErrorHoverData(msg);
-            break;
-        case 'setViewerKeybindings':
-            if (msg.keyToAction && typeof msg.keyToAction === 'object') window.viewerKeyMap = msg.keyToAction;
-            break;
-        case 'setErrorRateConfig':
-            if (typeof msg.bucketSize === 'string') erBucketSizeSetting = msg.bucketSize;
-            if (typeof msg.showWarnings === 'boolean') erShowWarnings = msg.showWarnings;
-            if (typeof msg.detectSpikes === 'boolean') erDetectSpikes = msg.detectSpikes; break;
-        case 'viewerKeybindingRecordMode':
-            window.viewerKeybindingRecordingFor = msg.active ? (msg.actionId || null) : null;
             break;
     }
 });
