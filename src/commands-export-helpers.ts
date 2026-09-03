@@ -49,7 +49,11 @@ export function htmlExportCmd(
 ): vscode.Disposable {
     return vscode.commands.registerCommand(`saropaLogCapture.${name}`,
         async (item: { uri: vscode.Uri }) => {
-            if (!item?.uri) { return; }
+            // bug_013: Palette invocation has no target log — guide the user to the context menu.
+            if (!item?.uri) {
+                void vscode.window.showInformationMessage(t('msg.paletteRequiresLog'));
+                return;
+            }
             await vscode.env.openExternal(await fn(item.uri));
         });
 }
@@ -60,7 +64,11 @@ export function fileExportCmd(
 ): vscode.Disposable {
     return vscode.commands.registerCommand(`saropaLogCapture.${name}`,
         async (item: { uri: vscode.Uri }) => {
-            if (!item?.uri) { return; }
+            // bug_013: Palette invocation has no target log — guide the user to the context menu.
+            if (!item?.uri) {
+                void vscode.window.showInformationMessage(t('msg.paletteRequiresLog'));
+                return;
+            }
             const outUri = await fn(item.uri);
             const action = await vscode.window.showInformationMessage(
                 t('msg.exportedTo', outUri.fsPath.split(/[\\/]/).pop() ?? ''),

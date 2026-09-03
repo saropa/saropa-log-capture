@@ -3,10 +3,9 @@
 import * as vscode from 'vscode';
 import { t } from './l10n';
 import { getConfig, getLogDirectoryUri, readTrackedFiles } from './modules/config/config';
-import { SessionMetadataStore } from './modules/session/session-metadata';
+import { SessionMetadataStore, cleanupDeletedSessionMetadata } from './modules/session/session-metadata';
 import { SessionHistoryProvider } from './ui/session/session-history-provider';
 import { getGlobalProjectIndexer } from './modules/project-indexer/project-indexer';
-import { getGlobalSearchIndex } from './modules/search/search-index-global';
 
 /** Register trash-related commands. */
 export function trashCommands(
@@ -76,9 +75,9 @@ async function emptyTrash(metaStore: SessionMetadataStore): Promise<number> {
     for (const uri of trashed) {
         try {
             await vscode.workspace.fs.delete(uri);
-            await metaStore.deleteMetadata(uri);
-            // Drop the trigram entry too so a permanently deleted log stops counting toward the cap.
-            getGlobalSearchIndex()?.removeFile(uri).catch(() => {});
+            // Shared with the single-file delete path (commands-session.ts) so metadata
+            // and search-index cleanup can never drift apart between the two (bug_016).
+            await cleanupDeletedSessionMetadata(uri, metaStore);
             deleted++;
         } catch { /* file may be locked */ }
     }

@@ -24,6 +24,7 @@
 import * as vscode from 'vscode';
 import type { CommandDeps } from './commands-deps';
 import { normalizeDriftSqlFingerprintSql } from './modules/db/drift-sql-fingerprint-normalize';
+import { ensureWebviewReadyOrWarn } from './commands-webview-ready';
 
 /** Arg for `saropaLogCapture.openSignal` — the diagnostic id, `${kind}:${fingerprint}`. */
 interface OpenSignalArg {
@@ -49,13 +50,12 @@ function fingerprintFromSignalId(id: string): string {
 /**
  * Reveal the Log Viewer's Signal panel and scroll to one signal. Mirrors the
  * `showSignals` focus-then-wait dance: the WebviewView resolves asynchronously after
- * `focus`, so posting immediately would hit an empty view set and be dropped.
+ * `focus`, so posting immediately would hit an empty view set and be dropped
+ * (bug_015). Uses the shared `ensureWebviewReadyOrWarn()` gate instead of a
+ * duplicated inline poll so every deep-link command shares one wait/timeout policy.
  */
 async function openSignal(deps: CommandDeps, arg: OpenSignalArg | undefined): Promise<void> {
-  await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
-  for (let i = 0; i < 20 && !deps.viewerProvider.getView(); i++) {
-    await new Promise<void>((resolve) => setTimeout(resolve, 50));
-  }
+  if (!(await ensureWebviewReadyOrWarn(deps.viewerProvider))) { return; }
   const focusFingerprint = arg?.id ? fingerprintFromSignalId(arg.id) : undefined;
   deps.viewerProvider.postMessage({ type: 'openSignalPanel', tab: 'recurring', focusFingerprint });
 }
@@ -64,8 +64,17 @@ async function openSignal(deps: CommandDeps, arg: OpenSignalArg | undefined): Pr
  * Open the SQL Query History panel focused on a specific query. Accepts a precomputed
  * `fingerprint` or raw `sql` (normalized here with the same fingerprinter the panel
  * uses, so a sibling tool that only has the literal query still lands on the right row).
+ *
+ * Gated on `ensureWebviewReadyOrWarn()` (bug_015): this command is a sibling-tool
+ * deep link, invoked the same way as `openSignal` — before the fix it posted through
+ * the broadcaster immediately after focus, with no wait for `resolveWebviewView()`,
+ * so the message could be silently dropped on a cold sidebar view.
  */
-function openSqlHistoryForFingerprint(deps: CommandDeps, arg: OpenSqlHistoryArg | undefined): void {
+async function openSqlHistoryForFingerprint(
+  deps: CommandDeps,
+  arg: OpenSqlHistoryArg | undefined,
+): Promise<void> {
+  if (!(await ensureWebviewReadyOrWarn(deps.viewerProvider))) { return; }
   const fingerprint = arg?.fingerprint
     ?? (arg?.sql ? normalizeDriftSqlFingerprintSql(arg.sql) : undefined);
   deps.broadcaster.postToWebview({ type: 'openSqlQueryHistoryPanel', focusFingerprint: fingerprint });

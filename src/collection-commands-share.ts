@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 import { t } from './l10n';
 import { exportCollectionToSlc, exportCollectionToBuffer } from './modules/export/slc-bundle';
 import { shareViaGist } from './modules/share/gist-uploader';
+import { clearGitHubToken } from './modules/share/github-auth';
 import { getShareHistory, addToShareHistory, clearShareHistory } from './modules/share/share-history';
 import { startShareServer } from './modules/share/lan-server';
 import { uploadBufferToPutUrl } from './modules/share/upload-url';
@@ -211,6 +212,14 @@ export function registerShareCommands(deps: ShareCommandsDeps): vscode.Disposabl
         vscode.commands.registerCommand('saropaLogCapture.clearShareHistory', async () => {
             await clearShareHistory(context);
             vscode.window.showInformationMessage(t('msg.shareHistoryCleared'));
+        }),
+
+        // bug_044: the 401 handler clears a stale token automatically, but there was no manual
+        // escape hatch for a user who wants to force re-auth (e.g. switching GitHub accounts)
+        // without waiting for a failed request to trigger it.
+        vscode.commands.registerCommand('saropaLogCapture.clearGitHubToken', async () => {
+            await clearGitHubToken(context);
+            vscode.window.showInformationMessage(t('msg.githubTokenCleared'));
         }),
 
         vscode.commands.registerCommand('saropaLogCapture.newCollectionFromSessions', async () => {
