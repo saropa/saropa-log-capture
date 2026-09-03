@@ -28,7 +28,6 @@
   "Permanently delete {0} trashed file(s)? This cannot be undone.": "{0} 個のゴミ箱に置かれたファイルを完全に削除しますか?これを元に戻すことはできません。",
   "Permanently deleted {0} file(s) from trash.": "{0} 個のファイルがゴミ箱から完全に削除されました。",
   "Marked \"{0}\" for comparison. Select another log to compare.": "比較のために「{0}」とマークされています。比較する別のログを選択します。",
-  "No log marked. Right-click a log and \"Mark for Comparison\" first.": "マークされたログはありません。まずログを右クリックし、「比較用にマーク」を付けます。",
   "Cannot compare a log with itself.": "ログをそれ自体と比較することはできません。",
   "Need at least 2 logs to compare.": "比較するには少なくとも 2 つのログが必要です。",
   "Select FIRST log to compare": "比較する最初のログを選択してください",
@@ -1614,7 +1613,6 @@
   "...and {0} more": "そして,もっとPH0__",
   "; process: {0} MB": "プロセス: {0} MB",
   "ACTIVE": "アクティブ 資産",
-  "AI explanation is not available": "AIの説明は利用できません.",
   "ANR Rate": "ANRレート 率について",
   "ANR patterns: {0}": "ANRパターンは: {0}",
   "ANR risk ({0})": "ANRリスク ({0})",
@@ -2250,5 +2248,7 @@
   "No active capture session. Start debugging to begin capturing.": "アクティブなキャプチャセッションがありません。 デバッグを開始してログのキャプチャを開始してください。",
   "Open the Log Viewer first.": "ログビューワーを開いてください。",
   "Right-click a log in the Logs panel to use this command.": "ログパネル内のログを右クリックしてこのコマンドを使用してください。",
-  "This will send log data (the error line, surrounding context, and stack trace) to an AI language model. Continue?": "これはログデータ（エラー行、周辺コンテキスト、スタックトレース）をAI言語モデルに送信します。 続ける？"
+  "This will send log data (the error line, surrounding context, and stack trace) to an AI language model. Continue?": "これはログデータ（エラー行、周辺コンテキスト、スタックトレース）をAI言語モデルに送信します。 続ける？",
+  "GitHub token cleared. You will be prompted to re-authenticate on the next share or import.": "GitHub トークンがクリアされました。 次回の共有またはインポート時に再認証を求められます。",
+  "{0} of {1} settings reset to defaults; {2} failed. See the Saropa Log Capture output channel for details.": "{0}の{1}設定がデフォルト値に戻りました; {2}の実行に失敗しました。 Saropa Log Captureの出力チャネルをご覧ください。"
 }

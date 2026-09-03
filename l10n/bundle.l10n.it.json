@@ -28,7 +28,6 @@
   "Permanently delete {0} trashed file(s)? This cannot be undone.": "Eliminare definitivamente {0} file nel cestino? Questa operazione non può essere annullata.",
   "Permanently deleted {0} file(s) from trash.": "{0} file eliminati definitivamente dal cestino.",
   "Marked \"{0}\" for comparison. Select another log to compare.": "Contrassegnato con \"{0}\" per il confronto. Seleziona un altro registro da confrontare.",
-  "No log marked. Right-click a log and \"Mark for Comparison\" first.": "Nessun registro contrassegnato. Fare clic con il pulsante destro del mouse su un registro e prima su \"Segna per confronto\".",
   "Cannot compare a log with itself.": "Impossibile confrontare un registro con se stesso.",
   "Need at least 2 logs to compare.": "Sono necessari almeno 2 log per il confronto.",
   "Select FIRST log to compare": "Seleziona il PRIMO registro da confrontare",
@@ -1614,7 +1613,6 @@
   "...and {0} more": "...e {0} ancora di più.",
   "; process: {0} MB": "; processo: {0} MB",
   "ACTIVE": "ATTIVO Attivo attivo.",
-  "AI explanation is not available": "AI spiegazione non è disponibile.",
   "ANR Rate": "Tasso ANR tasso di cambio.",
   "ANR patterns: {0}": "Modelli ANR: {0}",
   "ANR risk ({0})": "Rischio ANR ({0})",
@@ -2250,5 +2248,7 @@
   "No active capture session. Start debugging to begin capturing.": "Nessuna sessione di cattura attiva. Inizia il debug per iniziare la raccolta.",
   "Open the Log Viewer first.": "Apri prima il Visualizzatore Log.",
   "Right-click a log in the Logs panel to use this command.": "Fai clic destro su un log nel pannello Logs per utilizzare questo comando.",
-  "This will send log data (the error line, surrounding context, and stack trace) to an AI language model. Continue?": "Questo invierà i dati dei log (la riga di errore, il contesto circostante e la traccia dello stack) a un modello linguistico AI. Continua?"
+  "This will send log data (the error line, surrounding context, and stack trace) to an AI language model. Continue?": "Questo invierà i dati dei log (la riga di errore, il contesto circostante e la traccia dello stack) a un modello linguistico AI. Continua?",
+  "GitHub token cleared. You will be prompted to re-authenticate on the next share or import.": "Token GitHub cancellato. Verrai richiesto di riconvalidare l'autenticazione nel prossimo condivisionimento o import.",
+  "{0} of {1} settings reset to defaults; {2} failed. See the Saropa Log Capture output channel for details.": "{0} delle {1} impostazioni reimpostate sui valori predefiniti; {2} fallito. Visualizza il canale di output Saropa Log Capture per i dettagli."
 }

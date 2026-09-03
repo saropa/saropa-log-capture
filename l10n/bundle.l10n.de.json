@@ -28,7 +28,6 @@
   "Permanently delete {0} trashed file(s)? This cannot be undone.": "{0} im Papierkorb befindliche(n) Datei(en) dauerhaft löschen? Dies kann nicht rückgängig gemacht werden.",
   "Permanently deleted {0} file(s) from trash.": "{0} Datei(en) endgültig aus dem Papierkorb gelöscht.",
   "Marked \"{0}\" for comparison. Select another log to compare.": "Zum Vergleich mit „{0}“ gekennzeichnet. Wählen Sie ein anderes Protokoll zum Vergleichen aus.",
-  "No log marked. Right-click a log and \"Mark for Comparison\" first.": "Kein Protokoll markiert. Klicken Sie mit der rechten Maustaste auf ein Protokoll und wählen Sie zunächst „Zum Vergleich markieren“.",
   "Cannot compare a log with itself.": "Ein Log kann nicht mit sich selbst verglichen werden.",
   "Need at least 2 logs to compare.": "Zum Vergleich sind mindestens zwei Protokolle erforderlich.",
   "Select FIRST log to compare": "Wählen Sie das ERSTE Protokoll zum Vergleichen aus",
@@ -1614,7 +1613,6 @@
   "...and {0} more": "...und {0} weitere",
   "; process: {0} MB": "; Prozess: {0} MB",
   "ACTIVE": "AKTIV",
-  "AI explanation is not available": "AI-Erklärung ist nicht verfügbar",
   "ANR Rate": "ANR-Rate",
   "ANR patterns: {0}": "ANR-Muster: {0}",
   "ANR risk ({0})": "ANR-Risiko ({0})",
@@ -2250,5 +2248,7 @@
   "No active capture session. Start debugging to begin capturing.": "Keine aktive Erfassungssitzung. Debuggen starten, um die Erfassung zu beginnen.",
   "Open the Log Viewer first.": "Zuerst den Log-Viewer öffnen.",
   "Right-click a log in the Logs panel to use this command.": "Mit der Maustaste klicken Sie auf einen Log im Logs-Panel, um diesen Befehl zu verwenden.",
-  "This will send log data (the error line, surrounding context, and stack trace) to an AI language model. Continue?": "Dies sendet die Protokolldaten (die Fehlerzeile, umgebendes Kontext und Stapelverfolgung) an ein KI-Modell. Weitermachen?"
+  "This will send log data (the error line, surrounding context, and stack trace) to an AI language model. Continue?": "Dies sendet die Protokolldaten (die Fehlerzeile, umgebendes Kontext und Stapelverfolgung) an ein KI-Modell. Weitermachen?",
+  "GitHub token cleared. You will be prompted to re-authenticate on the next share or import.": "GitHub-Token gelöscht. Sie werden beim nächsten Teilen oder Importieren aufgefordert, sich erneut zu authentifizieren.",
+  "{0} of {1} settings reset to defaults; {2} failed. See the Saropa Log Capture output channel for details.": "{0} der {1} Einstellungen wurden auf Standardwerte zurückgesetzt; {2} fehlgeschlagen. Siehe den Saropa Log Capture Ausgabekanal für Details."
 }

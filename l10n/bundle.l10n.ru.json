@@ -28,7 +28,6 @@
   "Permanently delete {0} trashed file(s)? This cannot be undone.": "Удалить навсегда удаленные файлы ({0})? Это невозможно отменить.",
   "Permanently deleted {0} file(s) from trash.": "Безвозвратно удалены файлы ({0}) из корзины.",
   "Marked \"{0}\" for comparison. Select another log to compare.": "Помечено \"{0}\" для сравнения. Выберите другой журнал для сравнения.",
-  "No log marked. Right-click a log and \"Mark for Comparison\" first.": "Журнал не отмечен. Щелкните журнал правой кнопкой мыши и сначала выберите «Отметить для сравнения».",
   "Cannot compare a log with itself.": "Невозможно сравнить журнал сам с собой.",
   "Need at least 2 logs to compare.": "Для сравнения нужно минимум 2 журнала.",
   "Select FIRST log to compare": "Выберите ПЕРВЫЙ журнал для сравнения",
@@ -1614,7 +1613,6 @@
   "...and {0} more": "...и {0} еще больше.",
   "; process: {0} MB": "; процесс: {0} MB",
   "ACTIVE": "Активный актив - это актива.",
-  "AI explanation is not available": "AI объяснение не доступно.",
   "ANR Rate": "Ставка ANR - это ставка, которая определяется по ставке.",
   "ANR patterns: {0}": "ANR-паттерны: {0}",
   "ANR risk ({0})": "ANR риск ({0})",
@@ -2250,5 +2248,7 @@
   "No active capture session. Start debugging to begin capturing.": "Нет активной сессии захвата. Начните отладку, чтобы начать захват.",
   "Open the Log Viewer first.": "Откройте сначала просмотр логов.",
   "Right-click a log in the Logs panel to use this command.": "Щелкните правой кнопкой мыши лог в панели Логов, чтобы использовать эту команду.",
-  "This will send log data (the error line, surrounding context, and stack trace) to an AI language model. Continue?": "Это отправит данные лога (строку ошибки, окружение и стек-трейс) на искусственный интеллект. Продолжить?"
+  "This will send log data (the error line, surrounding context, and stack trace) to an AI language model. Continue?": "Это отправит данные лога (строку ошибки, окружение и стек-трейс) на искусственный интеллект. Продолжить?",
+  "GitHub token cleared. You will be prompted to re-authenticate on the next share or import.": "Токен GitHub очищен. Вы будете запрошены на повторную аутентификацию при следующем совместном использовании или импорте.",
+  "{0} of {1} settings reset to defaults; {2} failed. See the Saropa Log Capture output channel for details.": "{0} из {1} настроек восстановлены до значений по умолчанию; {2} не удалось. Посмотрите на выходной канал Saropa Log Capture для деталей."
 }

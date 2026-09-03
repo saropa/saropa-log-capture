@@ -28,7 +28,6 @@
   "Permanently delete {0} trashed file(s)? This cannot be undone.": "Excluir permanentemente {0} arquivo(s) da lixeira? Isto não pode ser desfeito.",
   "Permanently deleted {0} file(s) from trash.": "Excluídos permanentemente {0} arquivo(s) da lixeira.",
   "Marked \"{0}\" for comparison. Select another log to compare.": "Marcado como \"{0}\" para comparação. Selecione outro log para comparar.",
-  "No log marked. Right-click a log and \"Mark for Comparison\" first.": "Nenhum registro marcado. Clique com o botão direito em um registro e \"Marcar para comparação\" primeiro.",
   "Cannot compare a log with itself.": "Não é possível comparar um log consigo mesmo.",
   "Need at least 2 logs to compare.": "Precisa de pelo menos 2 registros para comparar.",
   "Select FIRST log to compare": "Selecione o PRIMEIRO registro para comparar",
@@ -1614,7 +1613,6 @@
   "...and {0} more": "...e mais PH0__.",
   "; process: {0} MB": "; processo: {0} MB",
   "ACTIVE": "Ativos: O ativo é um activo.",
-  "AI explanation is not available": "Explicação de IA não está disponível.",
   "ANR Rate": "Taxa de ANR A taxa de AN R é a taxa mais alta do país.",
   "ANR patterns: {0}": "Padrões de ANR: {0}",
   "ANR risk ({0})": "Risco de ANR ({0})",
@@ -2250,5 +2248,7 @@
   "No active capture session. Start debugging to begin capturing.": "Nenhuma sessão de captura ativa. Inicie a depuração para começar a capturar.",
   "Open the Log Viewer first.": "Abra primeiro o Visualizador de Logs.",
   "Right-click a log in the Logs panel to use this command.": "Clique com o botão direito em um log no painel Logs para usar este comando.",
-  "This will send log data (the error line, surrounding context, and stack trace) to an AI language model. Continue?": "Isso enviará os dados de log (a linha de erro, o contexto ao redor e a pilha de chamadas) para um modelo de linguagem de IA. Continuar?"
+  "This will send log data (the error line, surrounding context, and stack trace) to an AI language model. Continue?": "Isso enviará os dados de log (a linha de erro, o contexto ao redor e a pilha de chamadas) para um modelo de linguagem de IA. Continuar?",
+  "GitHub token cleared. You will be prompted to re-authenticate on the next share or import.": "Token GitHub limpo. Você será solicitado a reautenticar-se na próxima compartilhamento ou importação.",
+  "{0} of {1} settings reset to defaults; {2} failed. See the Saropa Log Capture output channel for details.": "{0} das {1} configurações restauradas para padrões; {2} falhou. Veja o canal de saída Saropa Log Capture para detalhes."
 }

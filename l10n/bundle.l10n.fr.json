@@ -28,7 +28,6 @@
   "Permanently delete {0} trashed file(s)? This cannot be undone.": "Supprimer définitivement {0} fichiers supprimés ? Cela ne peut pas être annulé.",
   "Permanently deleted {0} file(s) from trash.": "{0} fichier(s) définitivement supprimé(s) de la corbeille.",
   "Marked \"{0}\" for comparison. Select another log to compare.": "Marqué \"{0}\" pour comparaison. Sélectionnez un autre journal à comparer.",
-  "No log marked. Right-click a log and \"Mark for Comparison\" first.": "Aucun journal marqué. Cliquez avec le bouton droit sur un journal et d'abord « Marquer pour comparaison ».",
   "Cannot compare a log with itself.": "Impossible de comparer un journal avec lui-même.",
   "Need at least 2 logs to compare.": "Besoin d'au moins 2 journaux pour comparer.",
   "Select FIRST log to compare": "Sélectionnez le PREMIER journal à comparer",
@@ -1614,7 +1613,6 @@
   "...and {0} more": "... et plus de PH0__.",
   "; process: {0} MB": "; processus: {0} MB est le nombre de mégabytes.",
   "ACTIVE": "L'actif est un actif.",
-  "AI explanation is not available": "L'explication de l'IA n'est pas disponible.",
   "ANR Rate": "Le taux ANR est le taux de l'ANR.",
   "ANR patterns: {0}": "Les modèles ANR sont les suivants: {0}.",
   "ANR risk ({0})": "Le risque de l'ANR est le _PH0__.",
@@ -2250,5 +2248,7 @@
   "No active capture session. Start debugging to begin capturing.": "Aucune session de capture active. Commencez le débogage pour commencer la capture.",
   "Open the Log Viewer first.": "Ouvrez d'abord le Visualiseur de logs.",
   "Right-click a log in the Logs panel to use this command.": "Cliquez droit sur un journal dans le panneau Logs pour utiliser cette commande.",
-  "This will send log data (the error line, surrounding context, and stack trace) to an AI language model. Continue?": "Cela enverra les données de journal (la ligne d'erreur, le contexte environnant et la trace de pile) à un modèle de langage IA. Continuer ?"
+  "This will send log data (the error line, surrounding context, and stack trace) to an AI language model. Continue?": "Cela enverra les données de journal (la ligne d'erreur, le contexte environnant et la trace de pile) à un modèle de langage IA. Continuer ?",
+  "GitHub token cleared. You will be prompted to re-authenticate on the next share or import.": "GitHub token effacé. Vous serez invité à vous reconnecter lors du prochain partage ou import.",
+  "{0} of {1} settings reset to defaults; {2} failed. See the Saropa Log Capture output channel for details.": "{0} des {1} paramètres réinitialisés aux valeurs par défaut ; {2} échoué. Voir le canal de sortie Saropa Log Capture pour plus de détails."
 }
