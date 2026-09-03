@@ -8,7 +8,13 @@ import { compareThreeSessions } from './modules/compare/session-compare';
 import { renderThreeWayMarkdown } from './modules/compare/session-compare-markdown';
 import type { ViewerBroadcaster } from './ui/provider/viewer-broadcaster';
 
-/** URI of session marked for comparison (first selection). */
+/**
+ * URI of session marked for comparison (first selection). Retained for `markForComparison`
+ * even though its former reader `compareWithMarked` was removed (bug_006 — that command
+ * required a TreeView `viewItem` context that no view ever provided, so it was
+ * unreachable). `markForComparison` is tracked separately by bug_014, which proposes
+ * wiring a working context-menu entry point for the mark/compare pair.
+ */
 let comparisonMarkUri: vscode.Uri | undefined;
 
 /** Register session comparison commands. */
@@ -16,28 +22,15 @@ export function comparisonCommands(extensionUri: vscode.Uri, broadcaster: Viewer
     return [
         vscode.commands.registerCommand('saropaLogCapture.markForComparison',
           (item: { uri: vscode.Uri; filename: string }) => {
-            if (!item?.uri) { return; }
+            // Palette invocation has no target log — guide the user to the context menu.
+            if (!item?.uri) {
+                void vscode.window.showInformationMessage(t('msg.paletteRequiresLog'));
+                return;
+            }
             comparisonMarkUri = item.uri;
             vscode.window.showInformationMessage(
                 t('msg.markedForComparison', item.filename),
             );
-        }),
-        vscode.commands.registerCommand('saropaLogCapture.compareWithMarked',
-          async (item: { uri: vscode.Uri }) => {
-            if (!item?.uri) { return; }
-            if (!comparisonMarkUri) {
-                vscode.window.showWarningMessage(
-                    t('msg.noSessionMarked'),
-                );
-                return;
-            }
-            if (comparisonMarkUri.fsPath === item.uri.fsPath) {
-                vscode.window.showWarningMessage(t('msg.cannotCompareWithSelf'));
-                return;
-            }
-            const panel = getComparisonPanel(extensionUri);
-            await panel.compare(comparisonMarkUri, item.uri);
-            comparisonMarkUri = undefined;
         }),
         vscode.commands.registerCommand('saropaLogCapture.compareSessions', async () => {
             const sessions = await pickTwoSessions();

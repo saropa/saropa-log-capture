@@ -38,10 +38,15 @@ function pickCandidate(loadResult: LoadResultFirstError): FirstErrorResult | und
 }
 
 /**
- * Surface the first error/warning in a freshly loaded log with a modal that
- * shows the full error text and 5 actions (Focus / Copy / Bookmark / Ignore /
- * Dismiss). One prompt per file per window; Ignore suppresses an exact line
- * pattern globally for the rest of the session.
+ * Surface the first error/warning in a freshly loaded log with a non-modal
+ * notification that shows the full error text and 5 actions (Focus / Copy /
+ * Bookmark / Ignore / Dismiss). One prompt per file per window; Ignore
+ * suppresses an exact line pattern globally for the rest of the session.
+ *
+ * bug_004: this used to be a modal (`{ modal: true }`), which blocks the editor,
+ * breakpoints, and debug toolbar until dismissed — disruptive when it fires mid
+ * debug session on the very first captured error. A non-modal notification still
+ * carries the same detail text and actions but never steals focus or blocks input.
  */
 export async function maybeSuggestSmartBookmark(
     uri: vscode.Uri,
@@ -77,9 +82,14 @@ async function showSmartBookmarkModal(candidate: FirstErrorResult): Promise<Smar
     const bookmark = t('action.addBookmark');
     const ignore = t('action.ignoreError');
     const dismiss = t('action.dismiss');
+    // bug_004 follow-up: `MessageOptions.detail` is a modal-only field in the VS Code
+    // API — a non-modal `showInformationMessage` toast silently drops it, so the error
+    // line text never reached the user once the modal was removed. Fold the line text
+    // into the primary message (separated so it still reads as a distinct line) instead
+    // of relying on `detail`, which requires `modal: true` to render at all.
+    const fullMessage = `${message}\n${candidate.lineText}`;
     const picked = await vscode.window.showInformationMessage(
-        message,
-        { modal: true, detail: candidate.lineText },
+        fullMessage,
         focus, copy, bookmark, ignore, dismiss,
     );
     if (picked === focus) { return 'focus'; }
@@ -129,15 +139,39 @@ function addBookmarkFromCandidate(uri: vscode.Uri, candidate: FirstErrorResult, 
     void vscode.window.showInformationMessage(t('msg.bookmarkAdded', String(candidate.lineIndex + 1)));
 }
 
-/** Show the Getting Started walkthrough once on first install. */
-export function showWalkthroughOnFirstInstall(context: vscode.ExtensionContext): void {
-    if (context.globalState.get<boolean>(walkthroughShownKey)) { return; }
-    void context.globalState.update(walkthroughShownKey, true);
+/** Command + args that open the extension's Getting Started walkthrough tab. */
+function openWalkthrough(): void {
     void vscode.commands.executeCommand(
         'workbench.action.openWalkthrough',
         'saropa.saropa-log-capture#saropaLogCapture.getStarted',
         false,
     );
+}
+
+/**
+ * Show the Getting Started walkthrough once on first install.
+ *
+ * bug_004: opening the walkthrough tab synchronously during activation used to steal
+ * focus from a live debug session — the worst possible moment for a first-run user, who
+ * is often mid-way through their first debug attempt. If a debug session is already
+ * active when this would normally fire, defer via a one-time `onDidTerminateDebugSession`
+ * listener so the walkthrough only appears once the user is back at idle. The "shown"
+ * flag is still marked immediately so we never queue more than one deferred open.
+ */
+export function showWalkthroughOnFirstInstall(context: vscode.ExtensionContext): void {
+    if (context.globalState.get<boolean>(walkthroughShownKey)) { return; }
+    void context.globalState.update(walkthroughShownKey, true);
+    if (!vscode.debug.activeDebugSession) {
+        openWalkthrough();
+        return;
+    }
+    // A debug session is running — wait for it to end before stealing the editor's focus.
+    // The listener disposes itself after firing once so it never fires again for a later session.
+    const listener = vscode.debug.onDidTerminateDebugSession(() => {
+        listener.dispose();
+        openWalkthrough();
+    });
+    context.subscriptions.push(listener);
 }
 
 /** Find the most recently viewed URI from the last-viewed workspace state map. */

@@ -13,6 +13,14 @@
         "title": "%command.openWalkthrough.title%"
       },
       {
+        "command": "saropaLogCapture.openSettings",
+        "title": "%command.openSettings.title%"
+      },
+      {
+        "command": "saropaLogCapture.openChangelog",
+        "title": "%command.openChangelog.title%"
+      },
+      {
         "command": "saropaLogCapture.captureScreenshot",
         "icon": "$(device-camera)",
         "title": "%command.captureScreenshot.title%"
@@ -82,6 +90,14 @@
         "title": "%command.refreshHistory.title%"
       },
       {
+        "command": "saropaLogCapture.refreshVitals",
+        "title": "%command.refreshVitals.title%"
+      },
+      {
+        "command": "saropaLogCapture.refreshRecurringSignals",
+        "title": "%command.refreshRecurringSignals.title%"
+      },
+      {
         "command": "saropaLogCapture.openSession",
         "icon": "$(go-to-file)",
         "title": "%command.openSession.title%"
@@ -130,11 +146,6 @@
         "command": "saropaLogCapture.addSessionNote",
         "icon": "$(note)",
         "title": "%command.addSessionNote.title%"
-      },
-      {
-        "command": "saropaLogCapture.rescanTags",
-        "icon": "$(sync)",
-        "title": "%command.rescanTags.title%"
       },
       {
         "command": "saropaLogCapture.splitNow",
@@ -250,16 +261,6 @@
         "title": "%command.createReportFile.title%"
       },
       {
-        "command": "saropaLogCapture.exportGitHubIssue",
-        "icon": "$(github)",
-        "title": "%command.exportGitHubIssue.title%"
-      },
-      {
-        "command": "saropaLogCapture.copyHandoffBundle",
-        "icon": "$(comment-discussion)",
-        "title": "%command.copyHandoffBundle.title%"
-      },
-      {
         "command": "saropaLogCapture.exportFlowMap",
         "icon": "$(type-hierarchy)",
         "title": "%command.exportFlowMap.title%"
@@ -302,11 +303,6 @@
         "title": "%command.openQualityReport.title%"
       },
       {
-        "command": "saropaLogCapture.showTimeline",
-        "icon": "$(graph-line)",
-        "title": "%command.showTimeline.title%"
-      },
-      {
         "command": "saropaLogCapture.compareSessions",
         "icon": "$(diff)",
         "title": "%command.compareSessions.title%"
@@ -320,11 +316,6 @@
         "command": "saropaLogCapture.markForComparison",
         "icon": "$(bookmark)",
         "title": "%command.markForComparison.title%"
-      },
-      {
-        "command": "saropaLogCapture.compareWithMarked",
-        "icon": "$(diff)",
-        "title": "%command.compareWithMarked.title%"
       },
       {
         "command": "saropaLogCapture.compareLogToPreviousCommit",
@@ -576,6 +567,11 @@
         "command": "saropaLogCapture.clearShareHistory",
         "icon": "$(trash)",
         "title": "%command.clearShareHistory.title%"
+      },
+      {
+        "command": "saropaLogCapture.clearGitHubToken",
+        "icon": "$(key)",
+        "title": "%command.clearGitHubToken.title%"
       },
       {
         "command": "saropaLogCapture.deleteCollection",
@@ -1013,13 +1009,6 @@
           "description": "%config.viewerAlwaysShowSearchMatchOptions.description%",
           "title": "%config.viewerAlwaysShowSearchMatchOptions.title%",
           "type": "boolean"
-        },
-        "saropaLogCapture.deemphasizeFrameworkLevels": {
-          "default": false,
-          "markdownDescription": "%config.deemphasizeFrameworkLevels.markdownDescription%",
-          "type": "boolean",
-          "title": "%config.deemphasizeFrameworkLevels.title%",
-          "deprecationMessage": "No longer needed. The device tier system automatically demotes severity on device-other lines and preserves severity on device-critical lines."
         },
         "saropaLogCapture.docsScanDirs": {
           "default": [
@@ -2296,7 +2285,7 @@
           "title": "%config.integrations.crashDumps.copyToSession.title%"
         },
         "saropaLogCapture.integrations.flutterCrashLogs.deleteOriginals": {
-          "default": true,
+          "default": false,
           "description": "Delete flutter_*.log files from workspace root after importing to reports.",
           "type": "boolean",
           "title": "%config.integrations.flutterCrashLogs.deleteOriginals.title%"

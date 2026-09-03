@@ -158,7 +158,9 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
             classifyMeta: buildClassifierInputs(cfg.reportsClassifier.kindPatterns, refreshFolderName),
             classifyRole: buildRoleClassifier(cfg.reportsClassifier.controllerNames, refreshFolderName),
         });
-        broadcaster.sendSessionList(payload, { label: defaultLabel, path: defaultLabel, isDefault: true });
+        // bug_020: propagate scan-failure state so the panel can distinguish a broken
+        // directory scan from a genuinely empty log directory.
+        broadcaster.sendSessionList(payload, { label: defaultLabel, path: defaultLabel, isDefault: true, scanFailed: historyProvider.lastFetchFailed });
         // Recompute the open log's staleness the instant a new log is written (this refresh is the
         // moment a newer controller log can appear). Reuses the same items/cfg/cursor just gathered.
         const logContext = computeLogContextInfo({
@@ -191,7 +193,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     context.subscriptions.push(collectionStore, { dispose: disposeCollectionPanel });
 
     const importHandlers = {
-        importFromGist: (gistId: string) => importFromGist(gistId, collectionStore),
+        importFromGist: (gistId: string) => importFromGist(gistId, collectionStore, context),
         importFromUrl: (url: string) => importFromUrl(url, collectionStore),
     };
     context.subscriptions.push(
@@ -399,7 +401,8 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     // and otherwise tell the user once — the integration is invisible until the mirror exists.
     void maybeNotifySilentSiblings(context);
 
-    scheduleMaybeAutoEnableAiFromLanguageModels();
+    // Bug 019: needs `context` to persist the one-time opt-in notice (no longer a silent settings write).
+    scheduleMaybeAutoEnableAiFromLanguageModels(context);
 
     outputChannel.appendLine('Saropa Log Capture activated.');
     return {

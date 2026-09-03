@@ -3,7 +3,15 @@
 import * as vscode from 'vscode';
 import { t } from './l10n';
 import { createBugReportFile } from './modules/bug-report/report-file-writer';
-import { collectAndFormatVariant, type ReportVariant } from './modules/bug-report/report-variant-runner';
+/* bug_009 (Fixed): the GitHub Issue and Handoff variant commands (exportGitHubIssue,
+   copyHandoffBundle) were removed from the command palette because their formatters
+   read sessionInfo/fullOutput fields that the variant runner always hardcoded to empty
+   — the variants shipped with the log body and session info missing. The unused
+   report-variant-runner.ts / report-file-variants.ts modules (no live callers, no
+   tests) were deleted rather than kept as dead scaffolding; a future fix should
+   rebuild the variant formatters against collectBugReportData() from scratch, wired
+   through the existing createBugReportFile() data flow. Only the working Markdown
+   report (createReportFile) stays exposed. */
 
 /** Callbacks needed by bug report commands. */
 export interface BugReportCommandDeps {
@@ -38,40 +46,9 @@ export function bugReportCommands(deps: BugReportCommandDeps): vscode.Disposable
                 extensionContext: deps.context,
             }).catch(() => {});
         }),
-        /* E3 (plan 052): GitHub-issue preset — variant of the report tailored to GitHub's
-           default issue template. Copies markdown to clipboard so the user can paste straight
-           into "New issue" without going through file save / open. */
-        vscode.commands.registerCommand('saropaLogCapture.exportGitHubIssue', () =>
-            runVariantCommand(deps, 'github-issue', 'GitHub issue markdown copied to clipboard'),
-        ),
-        /* E4 (plan 052): Compact handoff bundle — three-section markdown subset designed for
-           paste into Slack/Discord/Teams. Same data path as the full report, different
-           formatter. ~30 lines so it fits in a single chat message. */
-        vscode.commands.registerCommand('saropaLogCapture.copyHandoffBundle', () =>
-            runVariantCommand(deps, 'handoff-bundle', 'Handoff bundle copied to clipboard'),
-        ),
+        /* E3/E4 (plan 052): GitHub-issue and Handoff-bundle variant commands intentionally
+           NOT registered here — see bug_009. Re-add once report-variant-runner.ts populates
+           sessionInfo/fullOutput/fullOutputLineCount from collected data instead of hardcoding
+           them to empty. */
     ];
-}
-
-async function runVariantCommand(deps: BugReportCommandDeps, variant: ReportVariant, successMsg: string): Promise<void> {
-    const fileUri = deps.getFileUri();
-    if (!fileUri) {
-        vscode.window.showInformationMessage(t('msg.noActiveSession'));
-        return;
-    }
-    try {
-        const markdown = await collectAndFormatVariant({
-            variant,
-            fileUri,
-            extensionContext: deps.context,
-        });
-        await vscode.env.clipboard.writeText(markdown);
-        vscode.window.showInformationMessage(successMsg);
-    } catch (err) {
-        /* Non-critical: failures here just mean the user gets no markdown. Log via channel
-           so they aren't silent, but don't surface a modal — the show in the user's logs is
-           enough since they triggered the command and will notice nothing happened. */
-        const msg = err instanceof Error ? err.message : String(err);
-        vscode.window.showWarningMessage(`Could not build ${variant} markdown: ${msg}`);
-    }
 }

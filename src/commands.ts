@@ -1,21 +1,19 @@
 /**
  * Command registration for the Saropa Log Capture extension.
  * Groups: session lifecycle (start/stop, marker, pause), session actions (open, trash, export),
- * history browse/edit, export, comparison, correlation, signals, bug report, timeline, trash,
- * collection, tools.
+ * history browse/edit, export, comparison, signals, bug report, trash, collection, tools.
+ * (Timeline and correlation-rescan commands were removed in bug_006 — they required a
+ * TreeView `viewItem` context that no view ever provided, so they were unreachable.)
  */
 
 import * as vscode from 'vscode';
-import { t } from './l10n';
 import type { CommandDeps } from './commands-deps';
-import { scanForCorrelationTags } from './modules/analysis/correlation-scanner';
 import { comparisonCommands } from './commands-comparison';
 import { comparisonGitCommands } from './commands-comparison-git';
 import { signalsCommands } from './commands-signals';
 import { bugReportCommands } from './commands-bug-report';
 import { flowMapCommands } from './commands-flow-map';
 import { qualityCommands } from './commands-quality';
-import { timelineCommands } from './commands-timeline';
 import { trashCommands } from './commands-trash';
 import { sessionLifecycleCommands, sessionActionCommands, historyBrowseCommands, historyEditCommands } from './commands-session';
 import { exportCommands } from './commands-export';
@@ -49,7 +47,6 @@ export function registerCommands(deps: CommandDeps, captureToggle: CaptureToggle
             broadcaster: deps.broadcaster,
             getFileUri: () => deps.viewerProvider.getCurrentFileUri(),
         }),
-        ...correlationCommands(deps),
         ...signalsCommands(deps),
         ...bugReportCommands({ getFileUri: () => deps.viewerProvider.getCurrentFileUri(), context }),
         ...flowMapCommands({
@@ -57,7 +54,6 @@ export function registerCommands(deps: CommandDeps, captureToggle: CaptureToggle
             viewer: deps.viewerProvider,
         }),
         ...qualityCommands({ getFileUri: () => deps.viewerProvider.getCurrentFileUri() }),
-        ...timelineCommands(),
         ...trashCommands(deps.historyProvider, () => deps.viewerProvider.getCurrentFileUri()),
         ...registerCollectionCommands({ context, collectionStore, historyProvider: deps.historyProvider, viewerProvider: deps.viewerProvider }),
         ...toolCommands(deps),
@@ -79,21 +75,4 @@ function walkthroughCommand(): vscode.Disposable {
             false,
         );
     });
-}
-
-function correlationCommands(deps: CommandDeps): vscode.Disposable[] {
-    const { historyProvider } = deps;
-    return [
-        vscode.commands.registerCommand('saropaLogCapture.rescanTags', async (item: { uri: vscode.Uri }) => {
-            if (!item?.uri) { return; }
-            const tags = await scanForCorrelationTags(item.uri);
-            await historyProvider.getMetaStore().setCorrelationTags(item.uri, tags);
-            historyProvider.refresh();
-            vscode.window.showInformationMessage(
-            tags.length === 1
-                ? t('msg.foundCorrelationTags.one', String(tags.length))
-                : t('msg.foundCorrelationTags.many', String(tags.length)),
-        );
-        }),
-    ];
 }
