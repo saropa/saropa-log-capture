@@ -100,7 +100,6 @@ export function wireViewerSpecificHandlers(deps: ViewerHandlerDeps): { refreshLo
 
     const smartBookmarkSession: SmartBookmarkSession = {
         promptedUris: new Set<string>(),
-        ignoredErrorTexts: new Set<string>(),
     };
     const smartBookmarkViewer = {
         scrollToLine: (line: number) => viewerProvider.scrollToLine(line),

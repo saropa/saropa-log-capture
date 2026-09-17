@@ -13,14 +13,11 @@ const walkthroughShownKey = 'slc.walkthroughShown';
 
 /**
  * Session-scoped state for the smart-bookmark prompt.
- * promptedUris dedups per file (we asked once already), ignoredErrorTexts
- * dedups across files (user said "stop showing me this exact line"). Both
- * live for the VS Code window lifetime — intentionally not persisted, so a
- * reload gives the user a fresh start.
+ * promptedUris dedups per file (we asked once already) — lives for the VS Code
+ * window lifetime, intentionally not persisted, so a reload gives a fresh start.
  */
 export interface SmartBookmarkSession {
     readonly promptedUris: Set<string>;
-    readonly ignoredErrorTexts: Set<string>;
 }
 
 /** Viewer capabilities the prompt invokes when the user picks an action. */
@@ -28,7 +25,7 @@ export interface SmartBookmarkViewer {
     scrollToLine(line: number): void;
 }
 
-type SmartBookmarkAction = 'focus' | 'copy' | 'bookmark' | 'ignore' | 'dismiss' | undefined;
+type SmartBookmarkAction = 'focus' | 'dismiss' | undefined;
 
 function pickCandidate(loadResult: LoadResultFirstError): FirstErrorResult | undefined {
     const cfg = getConfig().smartBookmarks;
@@ -39,9 +36,10 @@ function pickCandidate(loadResult: LoadResultFirstError): FirstErrorResult | und
 
 /**
  * Surface the first error/warning in a freshly loaded log with a non-modal
- * notification that shows the full error text and 5 actions (Focus / Copy /
- * Bookmark / Ignore / Dismiss). One prompt per file per window; Ignore
- * suppresses an exact line pattern globally for the rest of the session.
+ * notification that shows the full error text and 2 actions (Focus / Dismiss).
+ * One prompt per file per window. Copy, Bookmark, and Ignore for this line are
+ * still reachable via the line's right-click context menu in the viewer once
+ * Focus has taken the user there — no need to duplicate them as toast buttons.
  *
  * bug_004: this used to be a modal (`{ modal: true }`), which blocks the editor,
  * breakpoints, and debug toolbar until dismissed — disruptive when it fires mid
@@ -63,13 +61,12 @@ export async function maybeSuggestSmartBookmark(
     if (!candidate) { return; }
     const uriStr = uri.toString();
     if (session.promptedUris.has(uriStr)) { return; }
-    if (session.ignoredErrorTexts.has(candidate.lineText)) { return; }
     const existing = bookmarkStore.getForFile(uriStr);
     if (existing.some((b) => b.lineIndex === candidate.lineIndex)) { return; }
     // Mark prompted BEFORE awaiting so a second load racing in cannot double-prompt.
     session.promptedUris.add(uriStr);
     const action = await showSmartBookmarkModal(candidate);
-    await runSmartBookmarkAction(action, candidate, uri, bookmarkStore, session, viewer);
+    runSmartBookmarkAction(action, candidate, viewer);
 }
 
 async function showSmartBookmarkModal(candidate: FirstErrorResult): Promise<SmartBookmarkAction> {
@@ -78,9 +75,6 @@ async function showSmartBookmarkModal(candidate: FirstErrorResult): Promise<Smar
         ? t('msg.smartBookmarkFirstError', String(lineNum))
         : t('msg.smartBookmarkFirstWarning', String(lineNum));
     const focus = t('action.focusLine');
-    const copy = t('action.copy');
-    const bookmark = t('action.addBookmark');
-    const ignore = t('action.ignoreError');
     const dismiss = t('action.dismiss');
     // bug_004 follow-up: `MessageOptions.detail` is a modal-only field in the VS Code
     // API — a non-modal `showInformationMessage` toast silently drops it, so the error
@@ -90,53 +84,22 @@ async function showSmartBookmarkModal(candidate: FirstErrorResult): Promise<Smar
     const fullMessage = `${message}\n${candidate.lineText}`;
     const picked = await vscode.window.showInformationMessage(
         fullMessage,
-        focus, copy, bookmark, ignore, dismiss,
+        focus, dismiss,
     );
     if (picked === focus) { return 'focus'; }
-    if (picked === copy) { return 'copy'; }
-    if (picked === bookmark) { return 'bookmark'; }
-    if (picked === ignore) { return 'ignore'; }
     if (picked === dismiss) { return 'dismiss'; }
     return undefined;
 }
 
-async function runSmartBookmarkAction(
+function runSmartBookmarkAction(
     action: SmartBookmarkAction,
     candidate: FirstErrorResult,
-    uri: vscode.Uri,
-    bookmarkStore: BookmarkStore,
-    session: SmartBookmarkSession,
     viewer: SmartBookmarkViewer,
-): Promise<void> {
+): void {
     if (action === 'focus') {
         // scrollToLine is 1-based to match the viewer's go-to-line input.
         viewer.scrollToLine(candidate.lineIndex + 1);
-        return;
     }
-    if (action === 'copy') {
-        await vscode.env.clipboard.writeText(candidate.lineText);
-        void vscode.window.showInformationMessage(t('msg.errorCopied'));
-        return;
-    }
-    if (action === 'bookmark') {
-        addBookmarkFromCandidate(uri, candidate, bookmarkStore);
-        return;
-    }
-    if (action === 'ignore') {
-        session.ignoredErrorTexts.add(candidate.lineText);
-    }
-}
-
-function addBookmarkFromCandidate(uri: vscode.Uri, candidate: FirstErrorResult, bookmarkStore: BookmarkStore): void {
-    const filename = uri.path.split(/[/\\]/).pop() ?? '';
-    bookmarkStore.add({
-        fileUri: uri.toString(),
-        filename,
-        lineIndex: candidate.lineIndex,
-        lineText: candidate.lineText,
-        note: '',
-    });
-    void vscode.window.showInformationMessage(t('msg.bookmarkAdded', String(candidate.lineIndex + 1)));
 }
 
 /** Command + args that open the extension's Getting Started walkthrough tab. */

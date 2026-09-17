@@ -198,13 +198,8 @@ export const stringsA: Record<string, string> = {
     'prompt.editBookmarkNote': 'Edit bookmark note',
     'msg.smartBookmarkFirstError': 'First error at line {0}',
     'msg.smartBookmarkFirstWarning': 'First warning at line {0}',
-    'action.addBookmark': 'Bookmark',
     'action.dismiss': 'Dismiss',
     'action.focusLine': 'Focus',
-    'action.copy': 'Copy',
-    'action.ignoreError': 'Ignore',
-    'msg.errorCopied': 'Error copied to clipboard',
-    'msg.bookmarkAdded': 'Bookmark added at line {0}. Open the Bookmarks panel in the viewer toolbar to find it.',
     // Shown once per display language when the editor runs in a locale whose manifest
     // (command titles, settings, menus) is largely untranslated. {0} = language name,
     // {1} = coverage percent. The log viewer itself is fully localized; only the chrome lags.
