@@ -43,7 +43,16 @@ const stackFrameRe = /^\s+[\u2800\u00a0 ]*[»›]\s+/;
 export async function scanForPerfFingerprints(fileUri: vscode.Uri): Promise<PerfFingerprintEntry[]> {
     const raw = await vscode.workspace.fs.readFile(fileUri);
     const text = Buffer.from(raw).toString('utf-8');
-    const lines = text.split('\n');
+    return scanLinesForPerfFingerprints(text.split('\n'));
+}
+
+/**
+ * Scan already-loaded lines and return performance fingerprints grouped by operation name.
+ * Factored out of {@link scanForPerfFingerprints} so a caller that already has a line slice in
+ * memory (e.g. a marker-bounded window read straight off disk) can fingerprint it without a
+ * second file read.
+ */
+export function scanLinesForPerfFingerprints(lines: readonly string[]): PerfFingerprintEntry[] {
     const scanLimit = Math.min(lines.length, maxScanLines);
     const groups = new Map<string, PerfAccum>();
     for (let i = 0; i < scanLimit; i++) {
@@ -65,7 +74,7 @@ function addDuration(groups: Map<string, PerfAccum>, name: string, ms: number, s
 }
 
 /** Parse a perf event from the line. Returns number of extra lines consumed (stack frames). */
-function collectPerfEvent(lines: string[], idx: number, limit: number, groups: Map<string, PerfAccum>): number {
+function collectPerfEvent(lines: readonly string[], idx: number, limit: number, groups: Map<string, PerfAccum>): number {
     const plain = stripAnsi(lines[idx].trim());
     if (!plain) { return 0; }
 
@@ -102,7 +111,7 @@ function collectPerfEvent(lines: string[], idx: number, limit: number, groups: M
 }
 
 /** Collect consecutive stack frame lines following a perf event. */
-function collectStack(lines: string[], start: number, limit: number): { text: string; count: number } {
+function collectStack(lines: readonly string[], start: number, limit: number): { text: string; count: number } {
     let count = 0;
     const frames: string[] = [];
     for (let i = start; i < limit; i++) {

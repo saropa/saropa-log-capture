@@ -22,7 +22,15 @@ const maxExampleLength = 200;
 export async function scanForWarningFingerprints(fileUri: vscode.Uri): Promise<FingerprintEntry[]> {
     const raw = await vscode.workspace.fs.readFile(fileUri);
     const text = Buffer.from(raw).toString('utf-8');
-    const lines = text.split('\n');
+    return scanLinesForWarningFingerprints(text.split('\n'));
+}
+
+/**
+ * Scan already-loaded lines and return warning fingerprints grouped by hash. Factored out of
+ * {@link scanForWarningFingerprints} so a caller that already has a line slice in memory (e.g. a
+ * marker-bounded window read straight off disk) can fingerprint it without a second file read.
+ */
+export function scanLinesForWarningFingerprints(lines: readonly string[]): FingerprintEntry[] {
     const scanLimit = Math.min(lines.length, maxScanLines);
     warnIfScanCapped('warning-fingerprint', lines.length, scanLimit);
     const groups = new Map<string, WarnAccum>();

@@ -10,6 +10,7 @@ import { ExclusionRule } from '../features/exclusion-matcher';
 import { AutoTagger } from '../misc/auto-tagger';
 import { DapDirection } from '../capture/dap-formatter';
 import { SessionMetadataStore } from './session-metadata';
+import { MarkerRegistry, type MarkerRecord } from './session-marker-registry';
 import { LineData, EarlyOutputBuffer } from './session-event-bus';
 import { addListener, removeListener, type LineListener, type SplitListener } from './session-manager-listeners';
 import { processOutputEvent, processApiWriteLine, processDapMessage } from './session-manager-events';
@@ -66,6 +67,7 @@ export class SessionManagerImpl implements SessionManager {
     private floodSuppressedTotal = 0;
     private autoTagger: AutoTagger | null = null;
     private readonly metadataStore = new SessionMetadataStore();
+    private readonly markerRegistry = new MarkerRegistry();
     private readonly earlyBuffer = new EarlyOutputBuffer();
     /** Called when output is buffered and no log session exists (e.g. Dart/Cursor never fired onDidStartDebugSession). */
     private onOutputBufferedWithNoSession: ((sessionId: string) => void) | undefined;
@@ -269,10 +271,26 @@ export class SessionManagerImpl implements SessionManager {
         this.floodSuppressedTotal = counters.floodSuppressedTotal;
     }
 
-    /** Insert a visual marker into the active log session. */
-    insertMarker(customText?: string): void {
+    /**
+     * Insert a visual marker into the active log session and return an opaque id usable with
+     * {@link resolveMarker} (and the public `getSignalDelta` API) to correlate what happened
+     * after this point. `undefined` if no session is active — same no-op as before this returned
+     * anything.
+     */
+    insertMarker(customText?: string): string | undefined {
+        const active = vscode.debug.activeDebugSession;
         const logSession = this.getActiveSession();
-        if (!logSession) { return; }
+        if (!active || !logSession) { return undefined; }
+        // Capture the split point BEFORE enqueueing the marker write: appendMarker only enqueues
+        // (the actual write/count-bump happens later on the queue), so physicalLineCount here is
+        // still "lines written before this marker" — exactly the boundary getSignalDelta needs.
+        const markerId = this.markerRegistry.record({
+            sessionKey: active.id,
+            baseFileName: logSession.baseFileName,
+            logDirUri: vscode.Uri.joinPath(logSession.fileUri, '..'),
+            partNumber: logSession.partNumber,
+            physicalLineIndex: logSession.physicalLineCount,
+        });
         const markerText = logSession.appendMarker(customText);
         if (markerText) {
             this.broadcastLine({
@@ -281,6 +299,24 @@ export class SessionManagerImpl implements SessionManager {
                 category: 'marker', timestamp: new Date(),
             });
         }
+        return markerId;
+    }
+
+    /** Resolve a marker id previously returned by {@link insertMarker}. Backs `getSignalDelta`. */
+    resolveMarker(markerId: string): MarkerRecord | undefined {
+        return this.markerRegistry.resolve(markerId);
+    }
+
+    /** Whether the log session that owns `sessionKey` is still alive (not yet finalized). */
+    isSessionAlive(sessionKey: string): boolean {
+        return this.sessions.has(sessionKey);
+    }
+
+    /** Current physical line count of the live part of the session owning `sessionKey`, if alive. */
+    getLiveSessionState(sessionKey: string): { readonly partNumber: number; readonly physicalLineCount: number } | undefined {
+        const session = this.sessions.get(sessionKey);
+        if (!session) { return undefined; }
+        return { partNumber: session.partNumber, physicalLineCount: session.physicalLineCount };
     }
 
     /** Toggle pause/resume on the active session. Returns the new paused state. */
