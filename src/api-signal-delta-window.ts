@@ -1,6 +1,6 @@
 /**
  * Marker-bounded log reading for `getSignalDelta` (PLAN 119 /
- * bugs/119_plan-run-scoped-signal-correlation-api.md).
+ * plans/history/2026.09/2026.09.17/119_plan-run-scoped-signal-correlation-api.md).
  *
  * Split out of `api-signal-delta.ts` so the boundary math — the highest-risk part of the feature,
  * where an off-by-one silently misattributes signals across a marker or a file split — sits behind
