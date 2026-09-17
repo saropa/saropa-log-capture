@@ -346,6 +346,18 @@ if (info?.isActive) {
     api.insertMarker('My extension checkpoint');
 }
 
+// Bracket a command run and ask what changed in that window (apiVersion >= 2)
+if (api.apiVersion >= 2 && api.getSessionInfo()?.isActive) {
+    const started = api.insertMarker('My extension: running build');
+    await runMyCommand();
+    const finished = api.insertMarker('My extension: build finished');
+    if (started && finished) {
+        const delta = await api.getSignalDelta(started, finished);
+        // delta.newSignals    — errors/warnings/perf ops this run introduced
+        // delta.resolvedSignals — ones that were happening right before it and stopped
+    }
+}
+
 // Register an integration provider
 context.subscriptions.push(
     api.registerIntegrationProvider({

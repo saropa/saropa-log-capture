@@ -66,6 +66,30 @@ export interface SourceLocation {
     readonly column?: number;
 }
 
+/**
+ * Called when a queued 'raw' block is about to be written, with the position it lands at.
+ *
+ * Fires from inside `LogSession`'s append queue — after any split the block triggered, before the
+ * block itself is written — so `physicalLineIndex` is exactly "what this part held before this
+ * block". A caller that reads `partNumber`/`physicalLineCount` at ENQUEUE time instead gets a
+ * position that is wrong by the whole queue backlog, and points at the wrong part entirely if the
+ * queue splits the file before the block lands (`getSignalDelta`'s marker boundary is built on
+ * this callback, and was originally wrong in exactly that way).
+ */
+export type RawWriteCallback = (partNumber: number, physicalLineIndex: number) => void;
+
+/**
+ * Format the marker/separator block a marker insertion writes. Lives here with the other line
+ * formatters rather than inline in `LogSession.appendMarker`, which is about queueing the write.
+ * The leading and trailing newlines are part of the block: they are what visually separates the
+ * marker from surrounding output, and they count toward the physical line positions
+ * `getSignalDelta` slices on.
+ */
+export function formatMarkerLine(customText?: string): string {
+    const ts = new Date().toLocaleTimeString();
+    return `\n--- MARKER: ${customText ? `${ts} — ${customText}` : ts} ---\n`;
+}
+
 /** All context needed to format a single log line. */
 export interface LineFormatContext {
     readonly timestamp: Date;
