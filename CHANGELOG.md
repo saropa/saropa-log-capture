@@ -25,7 +25,7 @@ cspell:disable
 
 ---
 
-## [9.5.1]
+## [9.5.1] - Unreleased
 
 "Open Log" from an error notification, and the log position screenshots are pinned to, now land on the right line even while the app is logging heavily. [log](https://github.com/saropa/saropa-log-capture/blob/v9.5.1/CHANGELOG.md)
 
@@ -33,13 +33,13 @@ cspell:disable
 
 - The log line number carried to "Open Log" in the error snackbar and to screenshot capture's flow-map position was read immediately after `appendLine`, which only *enqueues* the write. Under any queue backlog it pointed earlier in the file than the line actually was, and across a file split it named the part the line had already rotated out of — the same drift that once attached screenshots to the wrong screen, which `physicalLineCount` was introduced to eliminate. The position is now reported from inside the write queue, once the line has really reached the file
 - A captured line is no longer announced to the viewer until it has been written, so a line dropped because the write stream died, the session was cleared, or capture was paused before the queue reached it can no longer appear in the viewer while being absent from the saved file (extends bug_011's viewer/file agreement from the pause flag to the write queue)
+- The Session Viewer's "first error" prompt could point at an Android system logcat line (e.g. `E/ActivityManager`, `E/Zygote`) instead of the app's own error, since any `E`/`F`/`A`-level logcat line counted as "first error" regardless of which process emitted it. It now prefers the first app-code (Flutter/Dart) error, only falling back to a device-level one when the log has no app-code error at all
+- The same prompt is trimmed from 5 buttons (Focus / Copy / Bookmark / Ignore / Dismiss) to 2 (Focus / Dismiss) — Copy, Bookmark, and Ignore for that line were already one right-click away in the viewer, so carrying them as separate toast buttons was redundant clutter
 
-<details>
-<summary>Maintenance</summary>
+### Internal
 
 - Re-pinned `@types/vscode` to `^1.105.0` to match the `engines.vscode` floor. A dependency bump had raised it to `^1.137.0`, which `verify:engine-types-match` (added in 9.4.1 for exactly this) rejects and `vsce` refuses to package — the same failure 9.4.1 fixed, reintroduced. Declaration only: the installed version is unchanged, since `^1.105.0` still resolves to 1.137.0
 
-</details>
 
 ---
 
@@ -79,27 +79,22 @@ New compile gates for safer defaults and publish pipeline now runs unattended. [
 
 - Corrected the `flutterCrashLogs.deleteOriginals` changelog entry — the `package.json` schema default was already fixed in 9.4.0 (commit `d347a16d`); the prior entry incorrectly said it was still `true`
 
-<details>
-<summary>Maintenance</summary>
+### Internal
 
 - `scripts/publish.py`: added `--non-interactive` flag for unattended runs (CI, SSH, Claude) — closes stdin and implies `--yes --no-logo --auto-install --on-test-fail stop`
 - `scripts/publish.py`: added `--log-file [PATH]` flag to tee all output (ANSI-stripped) to a file for remote monitoring; omit path for auto-timestamped log in `reports/`
-
-</details>
 
 ## [9.4.1]
 
 Fixed packaging failure and added a compile gate to prevent it recurring. [log](https://github.com/saropa/saropa-log-capture/blob/v9.4.1/CHANGELOG.md)
 
-<details>
-<summary>Maintenance</summary>
+### Internal
 
 - Fixed `vsce package` failure caused by `@types/vscode` (`^1.134.0`) being newer than `engines.vscode` (`^1.105.0`); pinned `@types/vscode` to `^1.105.0` to match the engine floor
 - Added `verify:engine-types-match` compile gate to catch `@types/vscode` vs `engines.vscode` mismatches before they reach the VSIX packaging step; supports `--fix` to auto-correct `package.json`
 - Added `pre-commit` git hook that runs the engine-types-match check when `package.json` is staged
 - Added advisory `verify:types-api-ceiling` script that warns when the installed `@types/vscode` version exposes APIs newer than `engines.vscode` — does not block the build, surfaces the gap for manual review
 
-</details>
 
 ---
 
@@ -192,8 +187,7 @@ Massive stability and security sweep — dozens of long-standing bugs squashed, 
 - Changed the `flutterCrashLogs.deleteOriginals` default to `false` in both the `package.json` setting schema and the code-level fallback, so fresh installs no longer delete crash logs without explicit opt-in (bug_021)
 - Session history and viewer broadcaster now support multiple viewer panels
 
-<details>
-<summary>Maintenance</summary>
+### Internal
 
 - Fixed `vsce package` failure caused by `@types/vscode` (`^1.134.0`) being newer than `engines.vscode` (`^1.105.0`); pinned `@types/vscode` to `^1.105.0` to match the engine floor
 - New advisory `verify:script-position-proxies` script flags `src/test/**/*.test.ts` assertions that locate webview-script code by string position (`indexOf()` ordering comparisons, fixed-offset `.slice()` windows) instead of structure — the failure class behind the extraction/pause-gate test breakages fixed earlier this cycle; prints a copy-pasteable occurrence-count guard suggestion for each finding, heuristic-based, not wired into `npm run compile`
@@ -201,7 +195,6 @@ Massive stability and security sweep — dozens of long-standing bugs squashed, 
 - Fixed publish script hanging at `vsce login` overwrite prompt on Windows — `logout` first so the PAT prompt appears directly without the interactive y/N confirmation that stdin can't reach through the cmd.exe → npx chain; added `VSCE_PAT` env / `.env` support to bypass interactive login entirely (mirrors `OVSX_PAT`)
 
 
-</details>
 
 ---
 
@@ -235,12 +228,10 @@ Three flow-map regressions from 9.3.10 are fixed: diagram zoom (wheel and every 
 - "Open Log" from an error notification, and manual screenshot capture, now use the same corrected line-position counter the flow map's screenshot-mismatch fix introduced, instead of the older counter that could point a few lines early
 - Log capture: a session configured with a max-lines split rule no longer degenerates into one file per line after the first split — the threshold now resets per file part the way its own description ("split file after this many lines") always said it would, instead of a counter that never reset and re-triggered a split on every single line once first crossed
 
-<details>
-<summary>Maintenance</summary>
+### Internal
 
 - A developer-only self-check runs at activation, re-verifying the flow map's five generated webview scripts are valid JavaScript and logging a warning to the "Saropa Log Capture" output channel if one isn't — the same check the test suite runs, but against the actual build, so a bug like the v9.3.10 zoom regression is visible without a live debugging session first
 
-</details>
 
 ---
 
@@ -269,8 +260,7 @@ Flow map diagrams can now be rearranged by hand or laid out along a time axis, e
 
 - Screenshots: **Skip Near-Duplicate Screenshots** now defaults to on. It only skips a capture whose picture matches a recent one on the same screen; error, warning and manually-requested captures are never skipped, and an unreadable capture is always kept. Anyone who never touched this setting sees a one-time notice explaining the change, with a shortcut to the setting
 
-<details>
-<summary>Maintenance</summary>
+### Internal
 
 - Flow map: consolidated five identical HTML/XML-escaping helpers (one per rendering module) into a single shared function
 - Flow map: split the graph builder's crash- and issue-attachment logic into its own module to bring the builder back under the project's 300-line file limit
@@ -280,7 +270,6 @@ Flow map diagrams can now be rearranged by hand or laid out along a time axis, e
 - l10n: translation audit/coverage tables no longer use red for gap and quality-signal counts — red is reserved for actual runtime errors
 - New advisory `verify:changelog-maintenance` script flags CHANGELOG bullets that read as internal tooling (l10n pipeline, design-token migrations, compile gates, file splits) but sit outside a Maintenance block; heuristic keyword match, not wired into `npm run compile`
 
-</details>
 
 ---
 
@@ -311,8 +300,7 @@ Introduces a new Diagnose Screenshot Capture command, smart near-duplicate scree
 - Flow map: a screenshot that has been moved or deleted since the report was built now says so in its frame, instead of showing a broken-image placeholder
 - Screenshots: a screenshot record with an unrecognized trigger is now rejected when the sidecar is read, instead of reaching the gallery and the diagram as an untinted mystery capture
 - Flow map: the capture-count badge on a diagram card keeps its contrast over any severity tint, and hovering a card thumbnail now says which capture is on show and what triggered it
-<details>
-<summary>Maintenance</summary>
+### Internal
 
 **l10n pipeline**
 
@@ -326,7 +314,6 @@ Introduces a new Diagnose Screenshot Capture command, smart near-duplicate scree
 
 - New `verify:acronym-coverage` compile gate asserts every acronym-only source string in `strings-*.ts` is registered in `ACRONYM_ONLY_STRINGS`; includes minimum-count assertion and overlap check between the acronym set and the uppercase-words exclusion list
 
-</details>
 
 ---
 
@@ -366,14 +353,12 @@ Introduces quality-of-life improvements to the Logs panel by collapsing older lo
 
 - Smart bookmark modal no longer fires on pre-launch device backlog errors; skipped pre-launch error count is logged to the output channel (bug_002)
 
-<details>
-<summary>Maintenance</summary>
+### Internal
 
 - Trouble Mode level constants (valid set + defaults) consolidated into a single source of truth (`trouble-level-constants.ts`) shared by config reader, load handler, and webview initialisation
 - New `verify:trouble-levels` compile gate asserts `package.json` enum/default match the shared constants AND every valid level has a matching chart legend l10n key
 - First-error scan extracted to `viewer-trouble-chart-first-error.ts` (chart file was over the 300-line limit)
 
-</details>
 
 ---
 
@@ -398,8 +383,7 @@ Flutter profile mode now captures screenshots on crash, alongside inline log ima
 - Every Flutter debug session now records a screenshot self-test in its log and the output channel — whether capture is on, which triggers are armed, the adb version, and the attached device (or plainly "adb NOT FOUND" / "NO DEVICE attached"). A log that captured nothing now explains why on its own, without a live investigation
 - Japanese and Korean "Sev" column header fixed from sound transliterations to meaning (重度, 심각)
 
-<details>
-<summary>Maintenance</summary>
+### Internal
 
 **l10n pipeline**
 
@@ -408,7 +392,6 @@ Flutter profile mode now captures screenshots on crash, alongside inline log ima
 - Audit auto-suppresses EN-COPY entries with manual provenance (no code change needed for true cognates)
 - l10n key verification now catches dynamic key families via four layers: literal keys, `@l10n-expand` JSDoc tags (cross-file, paren-balanced arg parsing, escape-aware, multi-line tags), `@l10n-family` catalog annotations, and a template-pattern fallback — a missing suffix in any family fails the compile gate; out-of-bounds arg indices emit ERROR (stale tag), non-literal args emit WARN
 
-</details>
 
 ---
 
@@ -416,8 +399,7 @@ Flutter profile mode now captures screenshots on crash, alongside inline log ima
 
 Non-english language translations have been upgraded to a higher-quality offline engine. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.6/CHANGELOG.md)
 
-<details>
-<summary>Maintenance</summary>
+### Internal
 
 **l10n pipeline**
 
@@ -431,7 +413,6 @@ Non-english language translations have been upgraded to a higher-quality offline
 - Sentinel format comment corrected from "7 chars" to "8 chars"
 - Dead imports removed from quality audit module
 
-</details>
 
 ---
 
@@ -513,8 +494,7 @@ Automatic screenshots now capture your Flutter app the exact moment an error str
 - Signal panel entries (both "This log" and "Across your logs") now show colored type badges (ERR, WARN, PERF, SQL, NET, MEM, etc.) for at-a-glance category scanning
 - Health gauge handles non-finite scores gracefully (renders 0 instead of NaN)
 
-<details>
-<summary>Maintenance</summary>
+### Internal
 
 **l10n pipeline**
 
@@ -529,7 +509,6 @@ Automatic screenshots now capture your Flutter app the exact moment an error str
 - Replaced ~750 raw `--vscode-*` CSS variable references with semantic design tokens across 68 style files: surfaces (`--surface-1/2/3`, `--inset`), text (`--text`, `--muted`, `--link`), borders (`--border`), and status accents (`--accent-critical/warning/info`); collapsed redundant fallback chains where the raw variable already resolves through its token
 - Fixed 6 test failures caused by the design token migration: updated CSS assertions to match semantic tokens instead of raw `--vscode-*` variables (including the ghost-pixel opaque background guard), fixed signal kind badge exhaustiveness check for hyphenated keys (`slow-op`), and registered dynamically created screenshot element IDs in the wiring test
 
-</details>
 
 ---
 
