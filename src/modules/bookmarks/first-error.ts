@@ -5,6 +5,7 @@
  */
 
 import { classifyLevel, type SeverityLevel } from '../analysis/level-classifier';
+import { classifyLogLine } from '../analysis/stack-parser';
 
 const MAX_SNIPPET_LEN = 80;
 
@@ -71,12 +72,38 @@ export interface FindFirstErrorResult {
   readonly skippedPreLaunchErrors: number;
 }
 
+/**
+ * True when the line is Android system/device logcat noise, not the app's own code.
+ *
+ * Only `device-other` counts as noise. `device-critical` tags (AndroidRuntime,
+ * ActivityManager, ART, lowmemorykiller, …) are curated in device-tag-tiers.ts as
+ * exactly the device lines that DO signal a real app problem — a FATAL EXCEPTION or
+ * an ANR kill is the line the user most wants to jump to, so it must stay a
+ * first-class first-error candidate. This mirrors screenshot-capturer.ts, which
+ * likewise gates only on `=== 'device-other'`.
+ *
+ * Pass ANSI-stripped, left-trimmed text: classifyLogLine's logcat and Android
+ * system-process regexes are all anchored at `^`, so a leading escape sequence or
+ * indent makes every one of them miss.
+ */
+function isDeviceTierLine(text: string): boolean {
+  return classifyLogLine(text) === 'device-other';
+}
+
 export function findFirstErrorLines(
   contentLines: readonly string[],
   options: FirstErrorOptions,
 ): FindFirstErrorResult {
   let firstError: FirstErrorResult | undefined;
   let firstWarning: FirstErrorResult | undefined;
+  // Fallbacks: first `device-other` logcat error or warning, used only if the log
+  // never has one from the app's own code. Background Android system lines
+  // (SurfaceFlinger, libc, GraphicBufferAllocator, ...) routinely carry E/F level
+  // prefixes that aren't app faults, so they must not win the "first error" race over
+  // a real Dart/Flutter exception that appears later in the log. Device-critical tags
+  // are NOT demoted — see isDeviceTierLine.
+  let firstDeviceError: FirstErrorResult | undefined;
+  let firstDeviceWarning: FirstErrorResult | undefined;
   let skippedPreLaunchErrors = 0;
   const strict = options.strict;
 
@@ -94,22 +121,41 @@ export function findFirstErrorLines(
     const raw = contentLines[i];
     const { category, plainText } = extractCategoryAndPlain(raw);
     const level: SeverityLevel = classifyLevel(plainText, category, strict, options.stderrTreatAsError);
+    // Nothing left to learn from this line's severity? Skip before paying for the
+    // ANSI strip, the snippet build and classifyLogLine's regex battery — with no
+    // app-code error in the log this loop now runs to the last line, so the
+    // per-line cost has to stay proportional to what is still unresolved.
+    const wantsError = level === 'error' && !firstError;
+    const wantsWarning = level === 'warning' && !firstWarning;
+    if (!wantsError && !wantsWarning) { continue; }
     const trimmed = stripAnsi(plainText);
     const displaySnippet = trimmed.length > MAX_SNIPPET_LEN ? trimmed.slice(0, MAX_SNIPPET_LEN) + '…' : trimmed;
+    const isDevice = isDeviceTierLine(trimmed);
+    const candidate: FirstErrorResult = {
+      lineIndex: i, snippet: displaySnippet, lineText: trimmed, level: wantsError ? 'error' : 'warning',
+    };
 
-    if (level === 'error' && !firstError) {
-      firstError = { lineIndex: i, snippet: displaySnippet, lineText: trimmed, level: 'error' };
-      if (!options.includeWarning) {
-        return { firstError, firstWarning, skippedPreLaunchErrors };
+    if (wantsError) {
+      if (isDevice) {
+        firstDeviceError ??= candidate;
+      } else {
+        firstError = candidate;
       }
-    }
-    if (level === 'warning' && !firstWarning) {
-      firstWarning = { lineIndex: i, snippet: displaySnippet, lineText: trimmed, level: 'warning' };
+    } else {
+      if (isDevice) {
+        firstDeviceWarning ??= candidate;
+      } else {
+        firstWarning = candidate;
+      }
     }
     if (firstError && (firstWarning || !options.includeWarning)) {
       break;
     }
   }
 
-  return { firstError, firstWarning, skippedPreLaunchErrors };
+  return {
+    firstError: firstError ?? firstDeviceError,
+    firstWarning: firstWarning ?? firstDeviceWarning,
+    skippedPreLaunchErrors,
+  };
 }

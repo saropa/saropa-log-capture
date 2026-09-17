@@ -123,5 +123,41 @@ suite('FirstError', () => {
       assert.ok(!result.firstError);
       assert.strictEqual(result.skippedPreLaunchErrors, 1);
     });
+
+    test('prefers a later app-code error over an earlier device-other error', () => {
+      const lines = [
+        '[12:00:00] [stdout] Launching lib/main.dart in debug mode',
+        '[12:00:01] [stdout] E/SurfaceFlinger: Failed to acquire buffer',
+        '[12:00:02] [stdout] Error: real app exception in main.dart',
+      ];
+      const result = findFirstErrorLines(lines, { strict: false, includeWarning: false, stderrTreatAsError: false });
+      assert.ok(result.firstError);
+      assert.strictEqual(result.firstError!.lineIndex, 2);
+    });
+
+    test('falls back to a device-other error when no app-code error exists', () => {
+      const lines = [
+        '[12:00:00] [stdout] Launching lib/main.dart in debug mode',
+        '[12:00:01] [stdout] E/SurfaceFlinger: Failed to acquire buffer',
+        '[12:00:02] [stdout] Normal output, nothing app-level wrong',
+      ];
+      const result = findFirstErrorLines(lines, { strict: false, includeWarning: false, stderrTreatAsError: false });
+      assert.ok(result.firstError);
+      assert.strictEqual(result.firstError!.lineIndex, 1);
+    });
+
+    // device-critical tags (AndroidRuntime, ActivityManager, ART, ...) are curated as the
+    // device lines that DO mean a real app problem — they must NOT be demoted behind a
+    // later Dart error, matching screenshot-capturer's `!== 'device-other'` gate.
+    test('does not demote a device-critical error behind a later app-code error', () => {
+      const lines = [
+        '[12:00:00] [stdout] Launching lib/main.dart in debug mode',
+        '[12:00:01] [stdout] E/AndroidRuntime: FATAL EXCEPTION: main',
+        '[12:00:02] [stdout] Error: later app exception in main.dart',
+      ];
+      const result = findFirstErrorLines(lines, { strict: false, includeWarning: false, stderrTreatAsError: false });
+      assert.ok(result.firstError);
+      assert.strictEqual(result.firstError!.lineIndex, 1);
+    });
   });
 });
