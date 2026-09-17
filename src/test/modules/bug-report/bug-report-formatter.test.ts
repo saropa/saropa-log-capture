@@ -217,7 +217,12 @@ suite('BugReportFormatter', () => {
             const md = formatBugReport(minimalData({
                 devEnvironment: { 'Git Remote': 'https://github.com/test/repo' },
             }));
-            assert.ok(md.includes('https://github.com/test/repo'));
+            // Match the exact rendered table row (word-bounded), not a bare substring —
+            // a loose `.includes('https://github.com/test/repo')` would also pass for an
+            // unrelated/spoofed value like "https://github.com/test/repo.evil.com" or
+            // "evil.com/https://github.com/test/repo", which isn't what this test claims
+            // to verify.
+            assert.match(md, /\| Git Remote \| https:\/\/github\.com\/test\/repo \|/);
         });
     });
 

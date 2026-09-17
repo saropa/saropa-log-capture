@@ -125,7 +125,10 @@ suite('Viewer HTML', () => {
 
         test('should produce HTML with no script syntax errors', () => {
             const html = buildViewerHtml({ nonce: getNonce(), extensionUri: 'https://example.com', version: '0.0.0' });
-            const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/g;
+            // Case-insensitive + word-boundary + tolerant closing-tag whitespace so the
+            // extraction can't be bypassed by an uppercase/mixed-case <SCRIPT> tag or a
+            // closing tag with interior whitespace ("</script >").
+            const scriptRegex = /<script\b[^>]*>([\s\S]*?)<\/script\s*>/gi;
             let match: RegExpExecArray | null;
             let blockIndex = 0;
 

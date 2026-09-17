@@ -70,9 +70,20 @@ function getNonce(): string {
     return out;
 }
 
-/** Minimal escape for the dynamic save label injected outside the pre-escaped body. */
+/**
+ * Escape for the dynamic label injected into a double-quoted HTML attribute
+ * (`title="${...}"` / `aria-label="${...}"` in {@link iconButton}). Must also
+ * escape `"` (and `'` for good measure) — without it, a label containing a
+ * double quote breaks out of the attribute value and lets arbitrary
+ * attributes/markup be injected into the button element.
+ */
 function esc(s: string): string {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return s
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 // Inline glyphs (no codicon font asset / no CSP font-src needed).

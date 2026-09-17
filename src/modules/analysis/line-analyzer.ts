@@ -20,7 +20,14 @@ const classMethodPattern = /\b([A-Z][a-zA-Z\d]+\.[a-z]\w+)\b/g;
 // which have no Exception/HTTP/URL/quoted hook but do carry meaningful
 // camelCase method names and PascalCase class names worth searching on.
 // Requires ≥2 word segments to avoid matching every short capitalised word.
-const camelMethodFallback = /\b([a-z][a-z0-9]+(?:[A-Z][a-zA-Z0-9]+){1,})\b/g;
+// NOTE: the repeated group's tail must NOT include uppercase letters ([a-z0-9]* not
+// [a-zA-Z0-9]+). Allowing uppercase there lets the engine partition an uppercase run
+// between "end of one iteration" and "start of the next" in exponentially many ways,
+// which is classic catastrophic-backtracking (ReDoS) territory on adversarial input
+// like a long run of alternating-case characters with no trailing word boundary. With
+// the tail restricted to lowercase/digits, each iteration boundary is forced at the
+// next uppercase letter, so there is exactly one way to partition any match — linear time.
+const camelMethodFallback = /\b([a-z][a-z0-9]*(?:[A-Z][a-z0-9]*){1,})\b/g;
 const pascalClassFallback = /\b([A-Z][a-z0-9]+(?:[A-Z][a-z0-9]+){1,})\b/g;
 
 /** Extract all meaningful tokens from a log line, ordered by relevance. */

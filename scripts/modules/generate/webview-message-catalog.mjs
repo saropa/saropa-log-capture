@@ -102,7 +102,10 @@ function buildMarkdown() {
 
 	for (const t of types) {
 		const files = [...(byType.get(t) ?? [])].sort();
-		const esc = t.replace(/\|/g, "\\|");
+		// Escape backslash first (so it can't combine with an inserted "\|"/"\`"
+		// to forge a fake escape sequence), then the table delimiter and the
+		// backtick that would otherwise break out of the inline code span.
+		const esc = t.replace(/\\/g, "\\\\").replace(/\|/g, "\\|").replace(/`/g, "\\`");
 		lines.push(`| \`${esc}\` | ${files.join(", ")} |`);
 	}
 

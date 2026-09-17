@@ -120,7 +120,10 @@ suite('Webview element ID wiring', () => {
     }
 
     function extractScriptGetElementByIdCalls(html: string): Set<string> {
-        const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/g;
+        // Case-insensitive + word-boundary + tolerant closing-tag whitespace so the
+        // extraction can't be bypassed by an uppercase/mixed-case <SCRIPT> tag or a
+        // closing tag with interior whitespace ("</script >").
+        const scriptRegex = /<script\b[^>]*>([\s\S]*?)<\/script\s*>/gi;
         const getElemRegex = /getElementById\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
         const ids = new Set<string>();
         let sm: RegExpExecArray | null;

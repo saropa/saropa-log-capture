@@ -123,8 +123,13 @@ if (violations.length > 0) {
 
 		for (const key of violations) {
 			// Match the setting key followed by its "default": true within a
-			// reasonable window (the setting block is typically <200 chars)
-			const escapedKey = key.replace(/\./g, "\\.");
+			// reasonable window (the setting block is typically <200 chars).
+			// Escape ALL regex metacharacters in the key, not just ".": a key
+			// containing any other special character (e.g. "+", "*", "(", "$")
+			// would otherwise be interpreted as regex syntax instead of a literal
+			// match, which could make the pattern match the wrong block or fail
+			// to match at all.
+			const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 			const pattern = new RegExp(
 				`("${escapedKey}"\\s*:\\s*\\{[^}]*?"default"\\s*:\\s*)true`,
 			);

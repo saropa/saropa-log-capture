@@ -7,7 +7,11 @@ import { flowMapLightboxScript } from './flow-map-panel-lightbox-script';
 
 /** Pulls the JS out of a `<script nonce="...">...</script>` wrapper, mirroring the test harness. */
 function scriptBody(html: string): string | undefined {
-    const m = /<script[^>]*>([\s\S]*)<\/script>/.exec(html);
+    // Lazy content match + case-insensitive + tolerant closing-tag whitespace: a greedy
+    // "[\s\S]*" would, given more than one <script> block, swallow everything from the
+    // FIRST opening tag to the LAST closing tag instead of stopping at the first block's
+    // own close — silently merging/mis-slicing the generators' output.
+    const m = /<script\b[^>]*>([\s\S]*?)<\/script\s*>/i.exec(html);
     return m?.[1];
 }
 

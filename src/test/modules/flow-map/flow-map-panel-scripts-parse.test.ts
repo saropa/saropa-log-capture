@@ -24,7 +24,11 @@ suite('FlowMap panel scripts — generated JS actually parses', () => {
 
     /** Pulls the JS out of a `<script nonce="...">...</script>` wrapper. */
     function scriptBody(html: string): string {
-        const m = /<script[^>]*>([\s\S]*)<\/script>/.exec(html);
+        // Lazy content match + case-insensitive + tolerant closing-tag whitespace: a greedy
+        // "[\s\S]*" would, given more than one <script> block, swallow everything from the
+        // FIRST opening tag to the LAST closing tag instead of stopping at the first block's
+        // own close.
+        const m = /<script\b[^>]*>([\s\S]*?)<\/script\s*>/i.exec(html);
         assert.ok(m, 'the generator emitted a <script> tag');
         return m![1];
     }

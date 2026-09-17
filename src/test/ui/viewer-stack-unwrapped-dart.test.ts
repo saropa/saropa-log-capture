@@ -71,8 +71,16 @@ suite('unwrapped Dart stack ingestion (bug_001)', () => {
            bare ")" line, so allLines must contain no stack-frame whose stripped
            html is ")". (The existing trace-tail suite covers the wrapped path.) */
         const tailRows = vm.allLines.filter((i) => {
-            const html = (i.html || '').replace(/<[^>]*>/g, '').trim();
-            return html === ')';
+            // Loop the tag-strip to a fixed point rather than a single pass: a single
+            // pass can be fooled by overlapping/nested tag-like text reconstituting a
+            // tag after the inner one is removed.
+            let html = i.html || '';
+            for (;;) {
+                const stripped = html.replace(/<[^>]*>/g, '');
+                if (stripped === html) { break; }
+                html = stripped;
+            }
+            return html.trim() === ')';
         });
         assert.strictEqual(tailRows.length, 0, 'unwrapped trace must not produce a ")" tail row');
     });

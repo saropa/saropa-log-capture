@@ -20,9 +20,21 @@ export interface QuickExportMetadata {
 	readonly levelCounts: Record<string, number>;
 }
 
-/** Escape pipe and backtick characters for safe markdown table cell values. */
+/**
+ * Escape a value for safe embedding in a markdown table cell.
+ * Order matters: backslash MUST be escaped first, or the backslashes this
+ * function inserts for `|`/`` ` `` would themselves get re-escaped (or, if a
+ * different order let a raw backslash survive next to an inserted escape
+ * character, an attacker-controlled value could forge a fake `\|`/`` \` ``
+ * escape sequence and break back out of the cell). Newlines are also
+ * flattened to spaces since a bare newline would terminate the table row.
+ */
 export function mdEscape(s: string): string {
-	return s.replace(/\|/g, "\\|").replace(/`/g, "\\`");
+	return s
+		.replace(/\\/g, "\\\\")
+		.replace(/\|/g, "\\|")
+		.replace(/`/g, "\\`")
+		.replace(/\r\n|\r|\n/g, " ");
 }
 
 /** Build the markdown header block for a quick-export report. */

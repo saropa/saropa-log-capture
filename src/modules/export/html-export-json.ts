@@ -47,8 +47,16 @@ export function wrapJsonInLine(html: string): string {
  * @returns Object with prefix, json, suffix, and pretty-printed version, or null
  */
 function detectJsonInHtml(html: string): { prefix: string; json: string; suffix: string; pretty: string } | null {
-    // Strip HTML tags to work with plain text
-    const text = html.replace(/<[^>]*>/g, '');
+    // Strip HTML tags to work with plain text. A single non-overlapping pass can be
+    // fooled by overlapping/nested constructions (e.g. "<scr<foo>ipt>" — stripping the
+    // inner "<foo>" re-forms "<script>" from the leftovers), so loop to a fixed point:
+    // keep stripping until a pass makes no further change.
+    let text = html;
+    for (;;) {
+        const stripped = text.replace(/<[^>]*>/g, '');
+        if (stripped === text) { break; }
+        text = stripped;
+    }
 
     // Collect all potential JSON start positions
     const candidates: { start: number; closer: string }[] = [];

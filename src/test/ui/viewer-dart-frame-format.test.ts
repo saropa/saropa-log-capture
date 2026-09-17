@@ -20,9 +20,18 @@ function extractFunction(script: string, name: string): string {
 function loadFormatter(): (html: string) => string {
     const src = extractFunction(getViewerDataHelpersCore(), 'formatFrameMemberFirst');
     const sandbox: Record<string, unknown> = {
-        stripTags: (h: string) =>
-            String(h ?? '').replace(/<[^>]*>/g, '')
-                .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'),
+        stripTags: (h: string) => {
+            // Loop the tag-strip to a fixed point rather than a single pass: a single
+            // pass can be fooled by overlapping/nested tag-like text reconstituting a
+            // tag after the inner one is removed.
+            let s = String(h ?? '');
+            for (;;) {
+                const stripped = s.replace(/<[^>]*>/g, '');
+                if (stripped === s) { break; }
+                s = stripped;
+            }
+            return s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+        },
         escapeHtml: (t: string) =>
             t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'),
     };

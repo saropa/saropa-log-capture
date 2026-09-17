@@ -74,7 +74,13 @@ function formatSessionInfo(data: ReportFileData): string {
     if (keys.length === 0) {
         return '## Part 2: Session Information\n\n*No session information available.*';
     }
-    const rows = keys.map(k => `| ${k} | ${env[k].replace(/\|/g, '\\|')} |`);
+    // Escape backslash first so it can't be combined with the inserted `\|`
+    // to forge a fake escape sequence, then escape the pipe (table cell
+    // delimiter) and flatten newlines that would otherwise terminate the row.
+    const rows = keys.map(k => `| ${k} | ${env[k]
+        .replace(/\\/g, '\\\\')
+        .replace(/\|/g, '\\|')
+        .replace(/\r\n|\r|\n/g, ' ')} |`);
     return [
         '## Part 2: Session Information',
         '| Field | Value |\n|-------|-------|\n' + rows.join('\n'),

@@ -20,7 +20,11 @@ if (!/^\d+\.\d+\.\d+/.test(ver)) {
 
 const chPath = path.join(root, "CHANGELOG.md");
 const ch = fs.readFileSync(chPath, "utf8");
-const heading = new RegExp(`^## \\[${ver.replace(/\./g, "\\.")}\\]`, "m");
+// Escape ALL regex metacharacters, not just ".": ver is validated to START with
+// \d+\.\d+\.\d+ above but may carry an unvalidated prerelease/build suffix
+// (e.g. "1.2.3-beta+build.1") that could contain other regex-special characters.
+const escapedVer = ver.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const heading = new RegExp(`^## \\[${escapedVer}\\]`, "m");
 if (!heading.test(ch)) {
 	console.error(`ERROR: CHANGELOG.md has no section heading ## [${ver}]`);
 	process.exit(1);
