@@ -25,6 +25,17 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+"Open Log" from an error notification, and the log position screenshots are pinned to, now land on the right line even while the app is logging heavily. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+
+### Fixed
+
+- The log line number carried to "Open Log" in the error snackbar and to screenshot capture's flow-map position was read immediately after `appendLine`, which only *enqueues* the write. Under any queue backlog it pointed earlier in the file than the line actually was, and across a file split it named the part the line had already rotated out of — the same drift that once attached screenshots to the wrong screen, which `physicalLineCount` was introduced to eliminate. The position is now reported from inside the write queue, once the line has really reached the file
+- A captured line is no longer announced to the viewer until it has been written, so a line dropped because the write stream died, the session was cleared, or capture was paused before the queue reached it can no longer appear in the viewer while being absent from the saved file (extends bug_011's viewer/file agreement from the pause flag to the write queue)
+
+---
+
 ## [9.5.0]
 
 A sibling extension can now bracket a command run with two log markers and ask what errors, warnings, or performance signals changed in between. [log](https://github.com/saropa/saropa-log-capture/blob/v9.5.0/CHANGELOG.md)
