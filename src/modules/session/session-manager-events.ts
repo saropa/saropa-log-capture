@@ -71,9 +71,14 @@ interface BroadcastableLine {
 function broadcastOnWrite(session: LogSession, target: OutputEventTarget, line: BroadcastableLine): void {
     session.appendLine(line.text, line.category, line.timestamp, {
         sourceLocation: line.sourceLocation,
+        // `before + 1`, not `position.after`: a single DAP output event can carry an embedded
+        // newline (a stack trace arrives as one event, and this path — unlike the API write path
+        // — does not split them), so the block occupies several physical lines. `after` would
+        // anchor "Open Log" and the flow-map position to the last frame of a trace rather than to
+        // where the error starts. For a single-line block the two are identical.
         onWritten: (position) => target.broadcastLine({
             text: line.text, isMarker: false, lineCount: session.lineCount,
-            physicalLineCount: position.after,
+            physicalLineCount: position.before + 1,
             category: line.category, timestamp: line.timestamp,
             logFileUri: session.fileUri.fsPath,
             sourcePath: line.sourcePath, sourceLine: line.sourceLine,
