@@ -10,6 +10,7 @@ import { ExclusionRule } from '../features/exclusion-matcher';
 import { AutoTagger } from '../misc/auto-tagger';
 import { DapDirection } from '../capture/dap-formatter';
 import { SessionMetadataStore } from './session-metadata';
+import { MarkerRegistry, type MarkerRecord } from './session-marker-registry';
 import { LineData, EarlyOutputBuffer } from './session-event-bus';
 import { addListener, removeListener, type LineListener, type SplitListener } from './session-manager-listeners';
 import { processOutputEvent, processApiWriteLine, processDapMessage } from './session-manager-events';
@@ -66,6 +67,7 @@ export class SessionManagerImpl implements SessionManager {
     private floodSuppressedTotal = 0;
     private autoTagger: AutoTagger | null = null;
     private readonly metadataStore = new SessionMetadataStore();
+    private readonly markerRegistry = new MarkerRegistry();
     private readonly earlyBuffer = new EarlyOutputBuffer();
     /** Called when output is buffered and no log session exists (e.g. Dart/Cursor never fired onDidStartDebugSession). */
     private onOutputBufferedWithNoSession: ((sessionId: string) => void) | undefined;
@@ -269,18 +271,59 @@ export class SessionManagerImpl implements SessionManager {
         this.floodSuppressedTotal = counters.floodSuppressedTotal;
     }
 
-    /** Insert a visual marker into the active log session. */
-    insertMarker(customText?: string): void {
+    /**
+     * Insert a visual marker into the active log session and return an opaque id usable with
+     * {@link waitForMarkerPosition} (and the public `getSignalDelta` API) to correlate what happened
+     * after this point.
+     *
+     * `undefined` when no session is active (the same no-op as before this returned anything), and
+     * also when the session refuses the append — a stopped session or a dead write stream — since
+     * an id for a marker that will never be written could never resolve to a position.
+     */
+    insertMarker(customText?: string): string | undefined {
+        const active = vscode.debug.activeDebugSession;
         const logSession = this.getActiveSession();
-        if (!logSession) { return; }
-        const markerText = logSession.appendMarker(customText);
-        if (markerText) {
-            this.broadcastLine({
-                text: markerText, isMarker: true, lineCount: logSession.lineCount,
-                physicalLineCount: logSession.physicalLineCount,
-                category: 'marker', timestamp: new Date(),
-            });
+        if (!active || !logSession) { return undefined; }
+        // The id is reserved synchronously because the caller needs it now, but its file position
+        // is only known once the append queue drains to the marker — `appendMarker` enqueues, it
+        // does not write. Reading `physicalLineCount`/`partNumber` here instead would be wrong by
+        // the whole queue backlog, and would name the wrong part outright if the queue splits the
+        // file before the marker lands, silently moving the getSignalDelta boundary.
+        const markerId = this.markerRegistry.record({
+            sessionKey: active.id,
+            baseFileName: logSession.baseFileName,
+            logDirUri: vscode.Uri.joinPath(logSession.fileUri, '..'),
+        });
+        const markerText = logSession.appendMarker(customText, (partNumber, physicalLineIndex) => {
+            this.markerRegistry.settle(markerId, { partNumber, physicalLineIndex });
+        });
+        if (!markerText) {
+            // Nothing was enqueued (session stopped, or the write stream is gone), so the id would
+            // never settle — don't hand the caller an id for a marker that does not exist.
+            this.markerRegistry.discard(markerId);
+            return undefined;
         }
+        this.broadcastLine({
+            text: markerText, isMarker: true, lineCount: logSession.lineCount,
+            physicalLineCount: logSession.physicalLineCount,
+            category: 'marker', timestamp: new Date(),
+        });
+        return markerId;
+    }
+
+    /**
+     * Resolve a marker id, waiting up to `timeoutMs` for a still-queued marker write to land.
+     * Backs `getSignalDelta`, which cannot slice the log until the boundary is known.
+     */
+    waitForMarkerPosition(markerId: string, timeoutMs: number): Promise<MarkerRecord | undefined> {
+        return this.markerRegistry.waitForPosition(markerId, timeoutMs);
+    }
+
+    /** Current physical line count of the live part of the session owning `sessionKey`, if alive. */
+    getLiveSessionState(sessionKey: string): { readonly partNumber: number; readonly physicalLineCount: number } | undefined {
+        const session = this.sessions.get(sessionKey);
+        if (!session) { return undefined; }
+        return { partNumber: session.partNumber, physicalLineCount: session.physicalLineCount };
     }
 
     /** Toggle pause/resume on the active session. Returns the new paused state. */

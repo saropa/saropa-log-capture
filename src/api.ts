@@ -20,6 +20,7 @@ import type {
 } from './api-types';
 import { getDefaultIntegrationRegistry } from './modules/integrations';
 import { getDailySummary } from './api-daily-summary';
+import { getSignalDelta } from './api-signal-delta';
 
 /** Result of createApi — the public API object plus lifecycle helpers. */
 export interface ApiHandle {
@@ -60,7 +61,7 @@ export function createApi(sessionManager: SessionManagerImpl): ApiHandle {
     sessionManager.addSplitListener(splitListener);
 
     const api: SaropaLogCaptureApi = {
-        apiVersion: 1,
+        apiVersion: 2,
         onDidWriteLine: lineEmitter.event,
         onDidSplitFile: splitEmitter.event,
         onDidStartSession: startEmitter.event,
@@ -78,8 +79,8 @@ export function createApi(sessionManager: SessionManagerImpl): ApiHandle {
             );
         },
 
-        insertMarker(text?: string): void {
-            sessionManager.insertMarker(text);
+        insertMarker(text?: string): string | undefined {
+            return sessionManager.insertMarker(text);
         },
 
         registerIntegrationProvider(
@@ -94,6 +95,10 @@ export function createApi(sessionManager: SessionManagerImpl): ApiHandle {
 
         getDailySummary(date: string) {
             return getDailySummary(date);
+        },
+
+        getSignalDelta(sinceMarkerId: string, untilMarkerId?: string) {
+            return getSignalDelta(sessionManager, sinceMarkerId, untilMarkerId);
         },
     };
 

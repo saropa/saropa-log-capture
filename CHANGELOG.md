@@ -25,6 +25,30 @@ cspell:disable
 
 ---
 
+## [9.5.0]
+
+A sibling extension can now bracket a command run with two log markers and ask what errors, warnings, or performance signals changed in between. [log](https://github.com/saropa/saropa-log-capture/blob/v9.5.0/CHANGELOG.md)
+
+### Added
+
+- PLAN 119: `insertMarker()` now returns an opaque marker id (`string | undefined`) instead of `void`. Added `getSignalDelta(sinceMarkerId, untilMarkerId?)` to the public API so a sibling extension (e.g. Saropa Workspace's command catalog) can bracket a command run with two markers and ask what error/warning/perf signals newly appeared or stopped recurring in that window, without duplicating Log Capture's own signal detection (`bugs/119_plan-run-scoped-signal-correlation-api.md`)
+
+### Changed
+
+- **Public API `apiVersion` is now `2`.** Calling code is unaffected — a function whose return type widened from `void` still satisfies every existing call site. Code that *implements* `SaropaLogCaptureApi` (a sibling's test double or adapter) does need updating: `insertMarker` must now return `string | undefined`, and `getSignalDelta` is a required member. A sibling built against v2 types running against a v1 host should guard both with `api.apiVersion >= 2`
+- The line scanners (`scanLinesForFingerprints` / `scanLinesForWarningFingerprints` / `scanLinesForPerfFingerprints`) take an optional `LineScanOptions` to lift their per-call fingerprint-count and line-count caps. Session-end callers are unchanged; the caps exist for presentation and are wrong for a caller that diffs two scans
+
+### Fixed
+
+- PLAN 119: `insertMarker()` recorded the marker's log position at the moment it was *called* rather than when the marker was actually written. Because `appendMarker` only enqueues, every line still sitting in the append queue fell on the wrong side of the `getSignalDelta` boundary — and if the queue split the file first, the recorded part number named a file the marker was never written to. The position is now reported from inside the write queue
+- PLAN 119: `getSignalDelta`'s `resolvedSignals` compared the marker window against the entire preceding session, so any signal that merely failed to repeat inside a short window read as "resolved" — a bracketed command that logged nothing reported the session's whole signal set as fixed by it. It now compares against an equal-length run of log ending at the marker, and an empty window resolves nothing
+- PLAN 119: the signal diff ran over the scanners' top-30-by-frequency presentation lists, so a signal that occurred before the marker but ranked below that cut was missing from the "before" set and reported as newly introduced. The diff now runs over the complete fingerprint set, and past the scanners' line caps (5,000 for perf) as well
+- PLAN 119: reading a marker window from a large log part threw `RangeError: Maximum call stack size exceeded` — spread-apply is bounded by the call stack, and a single part can exceed it at the default `maxLines` of 100,000 since that setting excludes header/DAP/marker lines from its count. Reads are now iterative and bounded, per-part reads honor a 25 MiB ceiling, and history is read backwards from the marker so it no longer walks an entire session to discard most of it
+- PLAN 119: `getSignalDelta` accepted two marker ids from different capture sessions and applied one session's file offsets to the other's files; it now returns `undefined`. A marker whose write never reached the log no longer yields an id at all, and the marker registry is capped instead of growing for the lifetime of the extension host
+- PLAN 119: an unreadable log part (permissions, a truncated read) was silently indistinguishable from a part that does not exist, quietly shortening the window; only a genuine "not found" is silent now, and the end-of-session probe steps over a gap in the part sequence the same way an explicit window read already did
+
+---
+
 ## [9.4.2]
 
 New compile gates for safer defaults and publish pipeline now runs unattended. [log](https://github.com/saropa/saropa-log-capture/blob/v9.4.2/CHANGELOG.md)
