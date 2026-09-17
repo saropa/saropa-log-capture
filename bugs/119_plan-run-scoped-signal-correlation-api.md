@@ -166,11 +166,22 @@ for `getDailySummary`, reusing the `saropaLogCapture.openSignal` deep-link contr
 `src/modules/capture/log-session.ts`, `src/modules/analysis/error-fingerprint.ts`,
 `src/modules/analysis/warning-fingerprint.ts`, `src/modules/misc/perf-fingerprint.ts`.
 
-**Tests:** `src/test/api/signal-delta.test.ts` — pins the pure diff step (`diffFingerprints`/
+**Tests:** `readWindow`/`findEndOfSessionBound` — the split/boundary math, and the highest-risk
+part of this feature — are factored behind an injectable `PartReader` so they're pinned directly
+with `node:test` using an in-memory fake reader, no real disk or `vscode.workspace.fs` needed:
+single-part slicing, multi-part windows (full parts in the middle, partial parts at both ends),
+misordered/empty bounds, a missing/rotated middle part, and end-of-session probing (single part,
+multiple parts, starting past the last part). `src/test/modules/session/session-marker-registry.test.ts`
+covers the marker registry (record/resolve round-trip, unknown id, id uniqueness, independent
+records). `src/test/api/signal-delta.test.ts` also pins the pure diff step (`diffFingerprints`/
 `diffPerf`): new-vs-resolved by hash, same-hash-different-example is not "new", perf keyed by
-operation name, singular/plural occurrence wording. File I/O (`readWindow`, marker resolution) and
-the line scanners themselves (they consult `vscode` config to classify error/warning lines) need
-the real extension host and are exercised via the project's vscode-test suite, not `node:test`.
+operation name, singular/plural occurrence wording.
+
+Still not covered by an automated test: the real `vscode.workspace.fs`-backed `PartReader`
+(`diskPartReader`) and the line scanners themselves (they consult `vscode` config to classify
+error/warning lines) — both need the real extension host and would need a vscode-test suite, not
+`node:test`, to exercise. The window/boundary logic those two wrap is now pinned, which was the
+main risk; the two vscode-only edges are unverified beyond type-checking.
 
 ---
 
