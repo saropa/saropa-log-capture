@@ -90,6 +90,10 @@ export class LogSession {
     get physicalLineCount(): number { return this._physicalLineCount; }
     get fileUri(): vscode.Uri { return this._fileUri!; }
     get partNumber(): number { return this._partNumber; }
+    /** Base file name (no `.log`/`_NNN.log` suffix) shared by every part this session ever splits
+     *  into — see {@link getPartFileName}. Lets a caller (e.g. the signal-delta reader) enumerate
+     *  all parts of this session on disk regardless of which part is currently live. */
+    get baseFileName(): string { return this._baseFileName; }
     get bytesWritten(): number { return this._bytesWritten; }
     get startTime(): number { return this._partStartTime; }
     /** Time (ms since epoch) of last write to this session (for "recent updates" UI). */
