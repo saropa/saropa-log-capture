@@ -61,7 +61,7 @@ export function createApi(sessionManager: SessionManagerImpl): ApiHandle {
     sessionManager.addSplitListener(splitListener);
 
     const api: SaropaLogCaptureApi = {
-        apiVersion: 1,
+        apiVersion: 2,
         onDidWriteLine: lineEmitter.event,
         onDidSplitFile: splitEmitter.event,
         onDidStartSession: startEmitter.event,
