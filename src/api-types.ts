@@ -101,6 +101,38 @@ export interface SaropaDailyTroubleItem {
 }
 
 /**
+ * New/resolved signals in a marker-bounded window, returned by
+ * {@link SaropaLogCaptureApi.getSignalDelta}. Reuses the existing trouble-item shape from
+ * {@link SaropaDailySummary} so a caller already rendering one kind of item can render both.
+ *
+ * Covers error, warning, and perf signals only — the kinds derivable directly from log text.
+ * SQL/network/memory/ANR-risk/Drift-Advisor signals are computed once at session finalization
+ * and have no live equivalent to re-run mid-session, so they never appear here.
+ *
+ * `command`/`args` on each item deep-link into Log Capture's Signal panel on the same
+ * `openSignal` contract {@link SaropaDailySummary} uses. Note that the panel's rows are built
+ * from finalized session metadata, so a signal first seen inside a still-running session may not
+ * have a row to land on until that session ends.
+ */
+export interface SaropaSignalDelta {
+    /**
+     * Signals in the marker window that had not appeared earlier in the session — "did this run
+     * introduce something new?". Compared against as much log before the marker as the read
+     * ceiling allows.
+     */
+    readonly newSignals: readonly SaropaDailyTroubleItem[];
+    /**
+     * Signals that were occurring immediately before the marker and did not occur inside the
+     * window — "did this run stop something that was happening?".
+     *
+     * The comparison is against an equal-length run of log ending at the marker, not against the
+     * whole session, so both sides carry the same amount of evidence. A window with no output in
+     * it resolves nothing: absence of logging is not absence of a signal.
+     */
+    readonly resolvedSignals: readonly SaropaDailyTroubleItem[];
+}
+
+/**
  * Aggregated one-day rollup returned by {@link SaropaLogCaptureApi.getDailySummary}.
  *
  * A thin read-only projection of what one calendar day of the reports store already
@@ -128,8 +160,14 @@ export interface SaropaLogCaptureApi {
     /**
      * Suite API contract version. Bumped only on a breaking change to the exported
      * shape so a sibling can feature-detect (`if (api.apiVersion >= 1) …`).
+     *
+     * `2` adds {@link getSignalDelta} and widens {@link insertMarker}'s return type. Both are
+     * source-compatible for code that CALLS this API, but not for code that IMPLEMENTS it (a test
+     * double returning `void` from `insertMarker` no longer satisfies the interface), and a
+     * sibling built against v2 types will find `getSignalDelta` missing at runtime on a v1 host —
+     * so guard those two members with `api.apiVersion >= 2` rather than assuming them.
      */
-    readonly apiVersion: 1;
+    readonly apiVersion: 2;
 
     /** Fires for every line written to the log during capture. */
     readonly onDidWriteLine: vscode.Event<SaropaLineEvent>;
@@ -164,8 +202,13 @@ export interface SaropaLogCaptureApi {
      */
     writeLine(text: string, options?: WriteLineOptions): void;
 
-    /** Insert a visual marker into the active session's log. */
-    insertMarker(text?: string): void;
+    /**
+     * Insert a visual marker into the active session's log, AND return an opaque id usable with
+     * {@link getSignalDelta} to correlate what happened after this point. `undefined` if no
+     * session is active (same no-op behavior as before this returned anything) — non-breaking for
+     * existing callers that ignore the return value.
+     */
+    insertMarker(text?: string): string | undefined;
 
     /** Register an integration provider. Returns a Disposable to unregister. */
     registerIntegrationProvider(provider: SaropaIntegrationProvider): vscode.Disposable;
@@ -180,4 +223,20 @@ export interface SaropaLogCaptureApi {
      *   matching how session log filenames are stamped).
      */
     getDailySummary(date: string): Promise<SaropaDailySummary | undefined>;
+
+    /**
+     * Signals that newly appeared, or stopped recurring, in the window between two markers (or
+     * between one marker and "now" when `untilMarkerId` is omitted). Scoped to error, warning,
+     * and perf signals (see {@link SaropaSignalDelta}). Requires `apiVersion >= 2`.
+     *
+     * Returns `undefined` if either id is unknown — e.g. from a previous extension host session,
+     * since a marker id is only valid within the VS Code window that created it — if a marker's
+     * write never reached the log, or if the two ids come from different capture sessions, whose
+     * file positions are not comparable.
+     *
+     * @param sinceMarkerId - Id returned by a prior {@link insertMarker} call.
+     * @param untilMarkerId - Id from a later {@link insertMarker} call on the SAME session; omit
+     *   to use "now".
+     */
+    getSignalDelta(sinceMarkerId: string, untilMarkerId?: string): Promise<SaropaSignalDelta | undefined>;
 }

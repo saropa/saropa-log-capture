@@ -8,7 +8,7 @@
 import * as vscode from 'vscode';
 import { isErrorLine } from '../features/error-rate-alert';
 import { normalizeLine, hashFingerprint, classifyCategory, type CrashCategory } from './error-fingerprint-pure';
-import { MAX_SCAN_LINES, warnIfScanCapped } from './scanner-line-cap';
+import { MAX_SCAN_LINES, warnIfScanCapped, type LineScanOptions } from './scanner-line-cap';
 
 export { normalizeLine, hashFingerprint, classifyCategory, type CrashCategory };
 
@@ -32,14 +32,25 @@ export interface FingerprintEntry {
 export async function scanForFingerprints(fileUri: vscode.Uri): Promise<FingerprintEntry[]> {
     const raw = await vscode.workspace.fs.readFile(fileUri);
     const text = Buffer.from(raw).toString('utf-8');
-    const lines = text.split('\n');
-    const scanLimit = Math.min(lines.length, maxScanLines);
+    return scanLinesForFingerprints(text.split('\n'));
+}
+
+/**
+ * Scan already-loaded lines and return error fingerprints grouped by hash. Factored out of
+ * {@link scanForFingerprints} so a caller that already has a line slice in memory (e.g. a
+ * marker-bounded window read straight off disk) can fingerprint it without a second file read.
+ *
+ * `options` lifts the presentation caps for a caller that diffs two scans — see
+ * {@link LineScanOptions} for why a ranked, truncated list is the wrong input to a set difference.
+ */
+export function scanLinesForFingerprints(lines: readonly string[], options?: LineScanOptions): FingerprintEntry[] {
+    const scanLimit = Math.min(lines.length, options?.maxScanLines ?? maxScanLines);
     warnIfScanCapped('error-fingerprint', lines.length, scanLimit);
     const groups = new Map<string, FpAccum>();
     for (let i = 0; i < scanLimit; i++) {
         collectFingerprint(lines[i], groups);
     }
-    return rankFingerprints(groups);
+    return rankFingerprints(groups, options?.maxFingerprints ?? maxFingerprints);
 }
 
 type FpAccum = { n: string; e: string; c: number; cat: CrashCategory };
@@ -58,9 +69,9 @@ function collectFingerprint(line: string, groups: Map<string, FpAccum>): void {
     }
 }
 
-function rankFingerprints(groups: Map<string, FpAccum>): FingerprintEntry[] {
+function rankFingerprints(groups: Map<string, FpAccum>, limit: number): FingerprintEntry[] {
     return [...groups.entries()]
         .sort((a, b) => b[1].c - a[1].c)
-        .slice(0, maxFingerprints)
+        .slice(0, limit)
         .map(([h, { n, e, c, cat }]) => ({ h, n, e, c, cat: cat === 'non-fatal' ? undefined : cat }));
 }

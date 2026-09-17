@@ -6,6 +6,7 @@
 
 import * as vscode from 'vscode';
 import { stripAnsi } from '../capture/ansi';
+import type { LineScanOptions } from '../analysis/scanner-line-cap';
 
 const maxScanLines = 5000;
 const maxFingerprints = 30;
@@ -43,14 +44,28 @@ const stackFrameRe = /^\s+[\u2800\u00a0 ]*[»›]\s+/;
 export async function scanForPerfFingerprints(fileUri: vscode.Uri): Promise<PerfFingerprintEntry[]> {
     const raw = await vscode.workspace.fs.readFile(fileUri);
     const text = Buffer.from(raw).toString('utf-8');
-    const lines = text.split('\n');
-    const scanLimit = Math.min(lines.length, maxScanLines);
+    return scanLinesForPerfFingerprints(text.split('\n'));
+}
+
+/**
+ * Scan already-loaded lines and return performance fingerprints grouped by operation name.
+ * Factored out of {@link scanForPerfFingerprints} so a caller that already has a line slice in
+ * memory (e.g. a marker-bounded window read straight off disk) can fingerprint it without a
+ * second file read.
+ *
+ * `options` lifts the presentation caps for a caller that diffs two scans — see
+ * {@link LineScanOptions} for why a ranked, truncated list is the wrong input to a set difference.
+ * Note this scanner's own line cap is 5,000, a tenth of the shared `MAX_SCAN_LINES`, so an
+ * unoverridden scan of a long window sees only its opening lines.
+ */
+export function scanLinesForPerfFingerprints(lines: readonly string[], options?: LineScanOptions): PerfFingerprintEntry[] {
+    const scanLimit = Math.min(lines.length, options?.maxScanLines ?? maxScanLines);
     const groups = new Map<string, PerfAccum>();
     for (let i = 0; i < scanLimit; i++) {
         const consumed = collectPerfEvent(lines, i, scanLimit, groups);
         if (consumed > 0) { i += consumed; }
     }
-    return rankPerfFingerprints(groups);
+    return rankPerfFingerprints(groups, options?.maxFingerprints ?? maxFingerprints);
 }
 
 type PerfAccum = { durations: number[]; stack?: string };
@@ -65,7 +80,7 @@ function addDuration(groups: Map<string, PerfAccum>, name: string, ms: number, s
 }
 
 /** Parse a perf event from the line. Returns number of extra lines consumed (stack frames). */
-function collectPerfEvent(lines: string[], idx: number, limit: number, groups: Map<string, PerfAccum>): number {
+function collectPerfEvent(lines: readonly string[], idx: number, limit: number, groups: Map<string, PerfAccum>): number {
     const plain = stripAnsi(lines[idx].trim());
     if (!plain) { return 0; }
 
@@ -102,7 +117,7 @@ function collectPerfEvent(lines: string[], idx: number, limit: number, groups: M
 }
 
 /** Collect consecutive stack frame lines following a perf event. */
-function collectStack(lines: string[], start: number, limit: number): { text: string; count: number } {
+function collectStack(lines: readonly string[], start: number, limit: number): { text: string; count: number } {
     let count = 0;
     const frames: string[] = [];
     for (let i = start; i < limit; i++) {
@@ -114,7 +129,7 @@ function collectStack(lines: string[], start: number, limit: number): { text: st
     return { text: frames.join('\n').slice(0, maxStackLength), count };
 }
 
-function rankPerfFingerprints(groups: Map<string, PerfAccum>): PerfFingerprintEntry[] {
+function rankPerfFingerprints(groups: Map<string, PerfAccum>, limit: number): PerfFingerprintEntry[] {
     return [...groups.entries()]
         .map(([name, { durations, stack }]) => {
             const sorted = durations.sort((a, b) => a - b);
@@ -129,5 +144,5 @@ function rankPerfFingerprints(groups: Map<string, PerfAccum>): PerfFingerprintEn
             };
         })
         .sort((a, b) => (b.count * b.avgMs) - (a.count * a.avgMs))
-        .slice(0, maxFingerprints);
+        .slice(0, limit);
 }
