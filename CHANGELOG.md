@@ -25,9 +25,9 @@ cspell:disable
 
 ---
 
-## [Unreleased]
+## [9.5.0]
 
-A sibling extension can now bracket a command run with two log markers and ask what errors, warnings, or performance signals changed in between. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+A sibling extension can now bracket a command run with two log markers and ask what errors, warnings, or performance signals changed in between. [log](https://github.com/saropa/saropa-log-capture/blob/v9.5.0/CHANGELOG.md)
 
 ### Added
 
