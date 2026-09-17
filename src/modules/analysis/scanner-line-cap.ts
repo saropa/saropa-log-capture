@@ -16,6 +16,24 @@ import { logExtensionWarn } from '../misc/extension-logger';
 export const MAX_SCAN_LINES = 50_000;
 
 /**
+ * Per-call overrides for the line scanners' two caps, for callers whose needs differ from the
+ * session-end default.
+ *
+ * Both defaults exist for PRESENTATION — a sidecar stores a session's headline signals, and a
+ * panel shows a short list. A caller that DIFFS two scans (`getSignalDelta`) needs neither: a
+ * fingerprint dropped by the rank cap is missing from the "before" set, so it reads as newly
+ * introduced the next time it occurs, and a line past the scan cap is invisible to the "before"
+ * side of a comparison it did in fact appear in. Both turn into confident false positives, which
+ * is worse than a short list.
+ */
+export interface LineScanOptions {
+    /** Max fingerprints returned. Defaults to the scanner's own presentation cap. */
+    readonly maxFingerprints?: number;
+    /** Max lines read. Defaults to the scanner's own cap ({@link MAX_SCAN_LINES} for most). */
+    readonly maxScanLines?: number;
+}
+
+/**
  * Log a warning to the "Saropa Log Capture" output channel when a scan was
  * truncated by MAX_SCAN_LINES, so content past the cap is a visible, diagnosable
  * condition rather than a silent gap in fingerprints/signals/tags.

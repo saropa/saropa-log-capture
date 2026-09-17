@@ -11,7 +11,7 @@ import { isWarningLine } from '../features/error-rate-alert';
 import { isErrorLine } from '../features/error-rate-alert';
 import { normalizeLine, hashFingerprint } from './error-fingerprint-pure';
 import type { FingerprintEntry } from './error-fingerprint';
-import { MAX_SCAN_LINES, warnIfScanCapped } from './scanner-line-cap';
+import { MAX_SCAN_LINES, warnIfScanCapped, type LineScanOptions } from './scanner-line-cap';
 
 // bug_007: raised from a silent 5,000-line cap — see scanner-line-cap.ts.
 const maxScanLines = MAX_SCAN_LINES;
@@ -29,15 +29,18 @@ export async function scanForWarningFingerprints(fileUri: vscode.Uri): Promise<F
  * Scan already-loaded lines and return warning fingerprints grouped by hash. Factored out of
  * {@link scanForWarningFingerprints} so a caller that already has a line slice in memory (e.g. a
  * marker-bounded window read straight off disk) can fingerprint it without a second file read.
+ *
+ * `options` lifts the presentation caps for a caller that diffs two scans — see
+ * {@link LineScanOptions} for why a ranked, truncated list is the wrong input to a set difference.
  */
-export function scanLinesForWarningFingerprints(lines: readonly string[]): FingerprintEntry[] {
-    const scanLimit = Math.min(lines.length, maxScanLines);
+export function scanLinesForWarningFingerprints(lines: readonly string[], options?: LineScanOptions): FingerprintEntry[] {
+    const scanLimit = Math.min(lines.length, options?.maxScanLines ?? maxScanLines);
     warnIfScanCapped('warning-fingerprint', lines.length, scanLimit);
     const groups = new Map<string, WarnAccum>();
     for (let i = 0; i < scanLimit; i++) {
         collectWarningFingerprint(lines[i], groups);
     }
-    return rankWarningFingerprints(groups);
+    return rankWarningFingerprints(groups, options?.maxFingerprints ?? maxFingerprints);
 }
 
 type WarnAccum = { n: string; e: string; c: number };
@@ -64,9 +67,9 @@ function collectWarningFingerprint(line: string, groups: Map<string, WarnAccum>)
 }
 
 /** Rank warnings by frequency (descending) and cap at maxFingerprints. */
-function rankWarningFingerprints(groups: Map<string, WarnAccum>): FingerprintEntry[] {
+function rankWarningFingerprints(groups: Map<string, WarnAccum>, limit: number): FingerprintEntry[] {
     return [...groups.entries()]
         .sort((a, b) => b[1].c - a[1].c)
-        .slice(0, maxFingerprints)
+        .slice(0, limit)
         .map(([h, { n, e, c }]) => ({ h, n, e, c }));
 }

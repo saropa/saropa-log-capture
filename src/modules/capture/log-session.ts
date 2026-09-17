@@ -16,13 +16,15 @@ import {
     countNewlines,
     generateBaseFileName,
     formatLine,
+    formatMarkerLine,
+    type RawWriteCallback,
     generateContextHeader,
     getLogDirUri,
     computeElapsed as computeElapsedMs,
 } from './log-session-helpers';
 import { getPartFileName, performFileSplit } from './log-session-split';
 import { logExtensionError } from '../misc/extension-logger';
-export type { SessionContext } from './log-session-helpers';
+export type { SessionContext, RawWriteCallback } from './log-session-helpers';
 
 export type SessionState = 'recording' | 'paused' | 'stopped';
 
@@ -69,7 +71,7 @@ export class LogSession {
      */
     private readonly pendingLines: Array<
         | { readonly kind: 'line'; readonly text: string; readonly category: string; readonly timestamp: Date; readonly sourceLocation?: SourceLocation }
-        | { readonly kind: 'raw'; readonly block: string; readonly countsAsLine: boolean }
+        | { readonly kind: 'raw'; readonly block: string; readonly countsAsLine: boolean; readonly onWritten?: RawWriteCallback }
     > = [];
     private readonly deduplicator: Deduplicator;
     private readonly splitter: FileSplitter;
@@ -259,11 +261,14 @@ export class LogSession {
     }
 
     /** Write one pre-formatted block (marker / DAP / header) in queue order, split-accounted by size. */
-    private async writeQueuedRaw(item: { block: string; countsAsLine: boolean }): Promise<void> {
+    private async writeQueuedRaw(item: { block: string; countsAsLine: boolean; onWritten?: RawWriteCallback }): Promise<void> {
         // Split before writing so a marker can't push a part past its limits (the old direct-write
         // path skipped this); the block doubles as the "next text" for the byte-size split check.
         await this.splitBeforeNextLineIfNeeded(item.block);
         if (!this.writeStream) { return; }
+        // Report the landing position AFTER any split above and BEFORE the write itself — see
+        // RawWriteCallback for why an enqueue-time position is not a usable boundary.
+        item.onWritten?.(this._partNumber, this._physicalLineCount);
         await this.writeBackpressured(this.writeStream, item.block);
         this._bytesWritten += Buffer.byteLength(item.block, 'utf-8');
         if (item.countsAsLine) { this.bumpLineCounters(); }
@@ -321,22 +326,23 @@ export class LogSession {
     /**
      * Insert a visual marker/separator into the log file.
      * Bypasses deduplication — markers should never be grouped.
+     *
+     * @param onWritten - Optional {@link RawWriteCallback}, invoked with the marker's true file
+     *   position when the queue reaches it. Never fires if `undefined` is returned here, and never
+     *   fires for a marker still queued when the session is cleared or stopped while paused.
      * @returns The marker text written, or undefined if not recording.
      */
-    appendMarker(customText?: string): string | undefined {
+    appendMarker(customText?: string, onWritten?: RawWriteCallback): string | undefined {
         if (this._state === 'stopped' || !this.writeStream) {
             return undefined;
         }
 
-        const now = new Date();
-        const ts = now.toLocaleTimeString();
-        const label = customText ? `${ts} — ${customText}` : ts;
-        const markerLine = `\n--- MARKER: ${label} ---\n`;
+        const markerLine = formatMarkerLine(customText);
 
         // Enqueue rather than write directly so the marker can't interleave with queued lines or skip
         // split accounting. The text is returned synchronously for the caller's viewer broadcast; the
         // file write and line-count bump happen when the queue reaches this entry.
-        this.pendingLines.push({ kind: 'raw', block: markerLine + '\n', countsAsLine: true });
+        this.pendingLines.push({ kind: 'raw', block: markerLine + '\n', countsAsLine: true, onWritten });
         this.processPendingLines().catch((e) => { console.error('Log append queue failed:', e); });
         return markerLine.trim();
     }
@@ -470,8 +476,9 @@ export class LogSession {
 
     clear(): void {
         this._lineCount = 0; this._partLineCount = 0; this._physicalLineCount = 0;
-        this._previousTimestamp = undefined;
-        this.pendingLines.length = 0;
+        // Dropping the queue here means any marker still waiting in it never reports a position,
+        // so its registry entry stays unsettled rather than resolving to a stale one.
+        this._previousTimestamp = undefined; this.pendingLines.length = 0;
         this.deduplicator.reset();
         this.onLineCountChanged(0);
     }
