@@ -32,7 +32,15 @@ export interface FingerprintEntry {
 export async function scanForFingerprints(fileUri: vscode.Uri): Promise<FingerprintEntry[]> {
     const raw = await vscode.workspace.fs.readFile(fileUri);
     const text = Buffer.from(raw).toString('utf-8');
-    const lines = text.split('\n');
+    return scanLinesForFingerprints(text.split('\n'));
+}
+
+/**
+ * Scan already-loaded lines and return error fingerprints grouped by hash. Factored out of
+ * {@link scanForFingerprints} so a caller that already has a line slice in memory (e.g. a
+ * marker-bounded window read straight off disk) can fingerprint it without a second file read.
+ */
+export function scanLinesForFingerprints(lines: readonly string[]): FingerprintEntry[] {
     const scanLimit = Math.min(lines.length, maxScanLines);
     warnIfScanCapped('error-fingerprint', lines.length, scanLimit);
     const groups = new Map<string, FpAccum>();

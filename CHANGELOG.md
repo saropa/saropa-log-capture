@@ -25,6 +25,14 @@ cspell:disable
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- PLAN 119: `insertMarker()` now returns an opaque marker id (`string | undefined`) instead of `void` — non-breaking for existing callers that ignore the return value. Added `getSignalDelta(sinceMarkerId, untilMarkerId?)` to the public API so a sibling extension (e.g. Saropa Workspace's command catalog) can bracket a command run with two markers and ask what error/warning/perf signals newly appeared or stopped recurring in that window, without duplicating Log Capture's own signal detection (`bugs/119_plan-run-scoped-signal-correlation-api.md`)
+
+---
+
 ## [9.4.2]
 
 New compile gates for safer defaults and publish pipeline now runs unattended. [log](https://github.com/saropa/saropa-log-capture/blob/v9.4.2/CHANGELOG.md)
