@@ -27,6 +27,8 @@ cspell:disable
 
 ## [Unreleased]
 
+A sibling extension can now bracket a command run with two log markers and ask what errors, warnings, or performance signals changed in between. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+
 ### Added
 
 - PLAN 119: `insertMarker()` now returns an opaque marker id (`string | undefined`) instead of `void`. Added `getSignalDelta(sinceMarkerId, untilMarkerId?)` to the public API so a sibling extension (e.g. Saropa Workspace's command catalog) can bracket a command run with two markers and ask what error/warning/perf signals newly appeared or stopped recurring in that window, without duplicating Log Capture's own signal detection (`bugs/119_plan-run-scoped-signal-correlation-api.md`)
