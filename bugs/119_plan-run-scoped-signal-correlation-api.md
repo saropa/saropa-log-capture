@@ -2,6 +2,8 @@
 
 **Status: In Progress**
 
+<!-- Status values: Open → Accepted → In Progress → Closed -->
+
 GitHub issue: https://github.com/saropa/saropa-log-capture/issues/86
 
 Created: 2026-09-17
@@ -79,13 +81,25 @@ export interface SaropaSignalDelta {
 2. **Session ends between the two markers** — `getSignalDelta` resolves against whatever exists on
    disk up to session end rather than throwing; implemented via `findEndOfSessionBound` in
    `src/api-signal-delta.ts`.
-3. **Marker id from a rotated/split log file** — the marker id itself (`sessionKey` +
-   `baseFileName` + `partNumber` + `physicalLineIndex`, see Implementation Notes) stays resolvable
-   across a split; `readWindow` walks every part between the two bounds.
+3. **Marker id from a rotated/split log file** — a marker id resolves to `sessionKey` +
+   `baseFileName` + a `MarkerPosition` (`partNumber` + `physicalLineIndex`) recorded when the
+   marker write lands, so it stays resolvable across a split; `readWindow` walks every part
+   between the two bounds.
 4. **Settle window for delayed signals** — left to the caller, as originally proposed: this API is
-   a pure read with no internal timers.
+   a pure read with no internal timers. (Distinct from the marker *write* settling, below.)
 5. **High-frequency callers** — reads straight from disk on every call, same "never cached"
-   posture as `getDailySummary`.
+   posture as `getDailySummary`, but every read is bounded: 25 MiB per part, 50,000 lines of
+   history (read backwards from the marker), 50,000 lines of window.
+6. **Marker still queued when `getSignalDelta` is called** — `insertMarker` returns its id
+   synchronously but the write is enqueued, so a caller bracketing a very fast command can ask
+   before the marker lands. `getSignalDelta` waits up to 2s for the position, then returns
+   `undefined` rather than guessing a boundary.
+7. **Marker never written at all** — a session stopped, or a dead write stream, refuses the
+   append. `insertMarker` returns `undefined` instead of an id that could never resolve.
+8. **Two marker ids from different sessions** — returns `undefined`. Reachable in normal use: a
+   bracketed command (an install, a `pm clear`) can itself restart the app and the debug session.
+9. **Empty window** — a bracketed command that logged nothing resolves nothing. Absence of
+   logging is not evidence that a signal stopped.
 
 ---
 
@@ -134,56 +148,104 @@ such on `SaropaSignalDelta`.
 
 ## Implementation Notes
 
-**Marker resolution.** `SessionManagerImpl.insertMarker` now records a `MarkerRecord` in a new
-in-memory `MarkerRegistry` (`src/modules/session/session-marker-registry.ts`) before enqueueing
-the marker write: `{ sessionKey (vscode.debug.activeDebugSession.id), baseFileName, logDirUri,
-partNumber, physicalLineIndex }`. `physicalLineIndex` is `LogSession.physicalLineCount` captured
-*before* `appendMarker()` runs — the marker write is enqueued, not synchronous, so this is exactly
-"lines written before the marker." `LogSession` gained a `baseFileName` getter (stable across
-splits — `getPartFileName(baseFileName, n)` derives every part's filename) so a marker stays
-resolvable even if the session rotates to a new part after it was recorded. The registry is
-in-memory only, like the rest of the live-session state this module already tracks; a marker id
-is valid only within the VS Code window that created it (matches how `getSessionInfo()` etc.
+**Marker resolution.** `SessionManagerImpl.insertMarker` records a `MarkerRecord` in a new
+in-memory `MarkerRegistry` (`src/modules/session/session-marker-registry.ts`) in two steps, because
+`LogSession.appendMarker` only *enqueues* the write:
+
+1. `record()` reserves the id the caller needs synchronously — `{ sessionKey
+   (vscode.debug.activeDebugSession.id), baseFileName, logDirUri }`, position still unknown.
+2. `appendMarker` is handed a `RawWriteCallback`; the append queue invokes it when it reaches the
+   marker (after any split that block triggered, before the block is written), and
+   `settle()` fills in `{ partNumber, physicalLineIndex }`.
+
+The first cut of this recorded `LogSession.physicalLineCount`/`partNumber` at *call* time and
+claimed that was "lines written before the marker". It is not: anything already queued gets
+written after that index but before the marker, so it lands on the wrong side of the boundary, and
+if the queue splits the file in between, the recorded part number names a file the marker was
+never written to. `src/test/modules/capture/log-session-marker-position.test.ts` pins both cases
+against the real `LogSession`.
+
+`LogSession` gained a `baseFileName` getter (stable across splits — `getPartFileName(baseFileName,
+n)` derives every part's filename) so a marker stays resolvable even if the session rotates after
+it was recorded. The registry is in-memory only, capped at 500 markers oldest-first, and a marker
+id is valid only within the VS Code window that created it (matching how `getSessionInfo()` etc.
 already behave across a window reload).
 
-**Reading a window.** `src/api-signal-delta.ts`'s `readWindow()` walks every log part between two
-`FileBound`s (`{ partNumber, physicalLineIndex }`), reading full parts in between and slicing the
-boundary parts at their recorded line index — so a window that spans a split reads correctly.
-`resolveNowBound()` handles `untilMarkerId` omitted: uses the live session's current position if
-still alive (`SessionManagerImpl.getLiveSessionState`), or probes forward on disk for the last
-existing part if the session already ended.
+**Reading a window.** `src/api-signal-delta-window.ts` holds the boundary math behind an injectable
+`PartReader`. `readWindow()` walks every part between two `FileBound`s, reading full parts in
+between and slicing the boundary parts at their recorded line index. `readHistory()` walks parts
+*backwards* from a bound for up to 50,000 lines — bounding I/O as well as memory, and dropping the
+oldest lines rather than the most recent ones. `findEndOfSessionBound()` handles `untilMarkerId`
+omitted for an ended session, stepping over up to three missing parts so a gap in the sequence
+doesn't read as the end; `resolveNowBound()` prefers the live session's position when it is still
+alive. All reads are iterative rather than spread-applied (`push(...slice)` throws `RangeError`
+past ~125k arguments, and one part can hold more physical lines than that), and `diskPartReader`
+honors a 25 MiB per-part ceiling mirroring `api-daily-summary-build.ts`'s `maxSeverityScanBytes`.
 
 **Diffing.** `error-fingerprint.ts` / `warning-fingerprint.ts` / `perf-fingerprint.ts` each gained
 a `scanLinesFor*` sibling to their existing `scanFor*(fileUri)` (factored out of the same loop, no
-behavior change for existing callers) so the before/after line slices can be fingerprinted without
-a second file read. `diffFingerprints`/`diffPerf` in `api-signal-delta.ts` do the actual new/
-resolved set difference, by hash for error/warning and by operation name for perf, then map into
-`SaropaDailyTroubleItem` the same way `api-daily-summary-build.ts`'s `buildTrouble()` already does
-for `getDailySummary`, reusing the `saropaLogCapture.openSignal` deep-link contract.
+behavior change for existing callers), plus an optional `LineScanOptions` to lift their two caps.
+Both caps are presentation defaults — top 30 fingerprints by frequency, and a line cap of 50,000
+(5,000 for perf) — and both are wrong for a set difference: a fingerprint missing from the
+"before" side is indistinguishable from one that never occurred, so it reports as newly
+introduced. `getSignalDelta` scans uncapped.
+
+`computeDelta` compares three slices, not two:
+
+- `after` — the marker-bounded window.
+- `history` — up to 50,000 lines before the marker. `newSignals` = in `after`, not in `history`.
+- `baseline` — the tail of `history` the same length as `after`. `resolvedSignals` = in
+  `baseline`, not in `after`.
+
+The original used `history` for both directions, which made every signal that simply failed to
+repeat inside a 20-second window read as "resolved" — a command that logged nothing reported the
+session's entire signal set as fixed by it. Matching the lengths makes it like-for-like, and an
+empty window now resolves nothing.
+
+`diffFingerprints`/`diffPerf` do the set difference, by hash for error/warning and by operation
+name for perf, then map into `SaropaDailyTroubleItem` the same way `api-daily-summary-build.ts`'s
+`buildTrouble()` already does, reusing the `saropaLogCapture.openSignal` deep-link contract. Note
+that the Signal panel builds its rows from finalized session metadata, so a signal first seen
+inside a still-running session may have no row to land on until that session ends —
+`SaropaSignalDelta` documents this.
+
+**API version.** `apiVersion` goes to `2`. Additive for callers, but not for implementors (a test
+double returning `void` from `insertMarker` no longer satisfies the interface, and
+`getSignalDelta` is required), and a sibling built against v2 types on a v1 host needs a runtime
+guard — which the literal `1` gave it no way to express.
 
 **Files touched:** `src/api-types.ts`, `src/api.ts`, `src/api-signal-delta.ts` (new),
-`src/modules/session/session-marker-registry.ts` (new), `src/modules/session/session-manager.ts`,
-`src/modules/capture/log-session.ts`, `src/modules/analysis/error-fingerprint.ts`,
-`src/modules/analysis/warning-fingerprint.ts`, `src/modules/misc/perf-fingerprint.ts`.
+`src/api-signal-delta-window.ts` (new), `src/modules/session/session-marker-registry.ts` (new),
+`src/modules/session/session-manager.ts`, `src/modules/capture/log-session.ts`,
+`src/modules/capture/log-session-helpers.ts`, `src/modules/analysis/scanner-line-cap.ts`,
+`src/modules/analysis/error-fingerprint.ts`, `src/modules/analysis/warning-fingerprint.ts`,
+`src/modules/misc/perf-fingerprint.ts`, `README.md`.
 
-**Tests:** `readWindow`/`findEndOfSessionBound` — the split/boundary math, and the highest-risk
-part of this feature — are factored behind an injectable `PartReader` so they're pinned directly
-with `node:test` using an in-memory fake reader, no real disk or `vscode.workspace.fs` needed:
-single-part slicing, multi-part windows (full parts in the middle, partial parts at both ends),
-misordered/empty bounds, a missing/rotated middle part, and end-of-session probing (single part,
-multiple parts, starting past the last part). `src/test/modules/session/session-marker-registry.test.ts`
-covers the marker registry (record/resolve round-trip, unknown id, id uniqueness, independent
-records). `src/test/api/signal-delta.test.ts` also pins the pure diff step (`diffFingerprints`/
-`diffPerf`): new-vs-resolved by hash, same-hash-different-example is not "new", perf keyed by
-operation name, singular/plural occurrence wording.
+**Tests.** All under `node:test`:
 
-Still not covered by an automated test: the real `vscode.workspace.fs`-backed `PartReader`
-(`diskPartReader`) and the line scanners themselves (they consult `vscode` config to classify
-error/warning lines) — both need the real extension host and would need a vscode-test suite, not
-`node:test`, to exercise. The window/boundary logic those two wrap is now pinned, which was the
-main risk; the two vscode-only edges are unverified beyond type-checking.
+- `src/test/modules/capture/log-session-marker-position.test.ts` — the marker boundary, driven
+  against the **real** `LogSession` and real files: a queue backlog, a marker landing several
+  splits later, a marker opening a fresh part after a continuation header, and a refused append.
+- `src/test/api/signal-delta.test.ts` — `readWindow` / `readHistory` / `findEndOfSessionBound`
+  (single-part slicing, multi-part windows, misordered and empty bounds, a missing middle part, a
+  bound past a part's real length, the `maxLines` caps, a 250,000-line part), then `computeDelta`
+  twice over: with an injected scanner, asserting exactly which slice is compared against which,
+  and end-to-end through the real `vscode`-backed scanners, so the fake cannot drift from
+  production. Also the pure `diffFingerprints`/`diffPerf` step.
+- `src/test/modules/analysis/scanner-line-scan-options.test.ts` — the caps stay put by default and
+  actually lift when overridden, for all three scanners.
+- `src/test/modules/session/session-marker-registry.test.ts` — record/settle/discard, waiters
+  released on settle *and* on discard rather than hanging to the timeout, and oldest-first eviction.
 
----
+To keep these in `node:test` rather than needing the Extension Development Host,
+`scripts/modules/test/vscode-stub.cjs` gained faithful `Uri`, `workspace.getConfiguration` and
+`window.createOutputChannel` surfaces. The no-op Proxy could not serve them: it let the *call*
+succeed and returned `undefined`, so the next property access threw — which is why the real
+scanners and the real `LogSession` were previously untestable there rather than merely degraded.
+
+Still not covered by an automated test: the `vscode.workspace.fs`-backed `PartReader`
+(`diskPartReader`) — its stat/read/error branches need the real extension host and a vscode-test
+suite. Everything it wraps is now pinned.
 
 ## Commits
 

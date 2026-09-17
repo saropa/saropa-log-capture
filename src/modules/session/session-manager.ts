@@ -273,43 +273,50 @@ export class SessionManagerImpl implements SessionManager {
 
     /**
      * Insert a visual marker into the active log session and return an opaque id usable with
-     * {@link resolveMarker} (and the public `getSignalDelta` API) to correlate what happened
-     * after this point. `undefined` if no session is active — same no-op as before this returned
-     * anything.
+     * {@link waitForMarkerPosition} (and the public `getSignalDelta` API) to correlate what happened
+     * after this point.
+     *
+     * `undefined` when no session is active (the same no-op as before this returned anything), and
+     * also when the session refuses the append — a stopped session or a dead write stream — since
+     * an id for a marker that will never be written could never resolve to a position.
      */
     insertMarker(customText?: string): string | undefined {
         const active = vscode.debug.activeDebugSession;
         const logSession = this.getActiveSession();
         if (!active || !logSession) { return undefined; }
-        // Capture the split point BEFORE enqueueing the marker write: appendMarker only enqueues
-        // (the actual write/count-bump happens later on the queue), so physicalLineCount here is
-        // still "lines written before this marker" — exactly the boundary getSignalDelta needs.
+        // The id is reserved synchronously because the caller needs it now, but its file position
+        // is only known once the append queue drains to the marker — `appendMarker` enqueues, it
+        // does not write. Reading `physicalLineCount`/`partNumber` here instead would be wrong by
+        // the whole queue backlog, and would name the wrong part outright if the queue splits the
+        // file before the marker lands, silently moving the getSignalDelta boundary.
         const markerId = this.markerRegistry.record({
             sessionKey: active.id,
             baseFileName: logSession.baseFileName,
             logDirUri: vscode.Uri.joinPath(logSession.fileUri, '..'),
-            partNumber: logSession.partNumber,
-            physicalLineIndex: logSession.physicalLineCount,
         });
-        const markerText = logSession.appendMarker(customText);
-        if (markerText) {
-            this.broadcastLine({
-                text: markerText, isMarker: true, lineCount: logSession.lineCount,
-                physicalLineCount: logSession.physicalLineCount,
-                category: 'marker', timestamp: new Date(),
-            });
+        const markerText = logSession.appendMarker(customText, (partNumber, physicalLineIndex) => {
+            this.markerRegistry.settle(markerId, { partNumber, physicalLineIndex });
+        });
+        if (!markerText) {
+            // Nothing was enqueued (session stopped, or the write stream is gone), so the id would
+            // never settle — don't hand the caller an id for a marker that does not exist.
+            this.markerRegistry.discard(markerId);
+            return undefined;
         }
+        this.broadcastLine({
+            text: markerText, isMarker: true, lineCount: logSession.lineCount,
+            physicalLineCount: logSession.physicalLineCount,
+            category: 'marker', timestamp: new Date(),
+        });
         return markerId;
     }
 
-    /** Resolve a marker id previously returned by {@link insertMarker}. Backs `getSignalDelta`. */
-    resolveMarker(markerId: string): MarkerRecord | undefined {
-        return this.markerRegistry.resolve(markerId);
-    }
-
-    /** Whether the log session that owns `sessionKey` is still alive (not yet finalized). */
-    isSessionAlive(sessionKey: string): boolean {
-        return this.sessions.has(sessionKey);
+    /**
+     * Resolve a marker id, waiting up to `timeoutMs` for a still-queued marker write to land.
+     * Backs `getSignalDelta`, which cannot slice the log until the boundary is known.
+     */
+    waitForMarkerPosition(markerId: string, timeoutMs: number): Promise<MarkerRecord | undefined> {
+        return this.markerRegistry.waitForPosition(markerId, timeoutMs);
     }
 
     /** Current physical line count of the live part of the session owning `sessionKey`, if alive. */
