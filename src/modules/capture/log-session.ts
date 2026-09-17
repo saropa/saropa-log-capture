@@ -15,16 +15,15 @@ import {
     SourceLocation,
     countNewlines,
     generateBaseFileName,
-    formatLine,
     formatMarkerLine,
-    type RawWriteCallback,
+    formatQueuedLine,
+    type WriteCallback,
     generateContextHeader,
     getLogDirUri,
-    computeElapsed as computeElapsedMs,
 } from './log-session-helpers';
 import { getPartFileName, performFileSplit } from './log-session-split';
 import { logExtensionError } from '../misc/extension-logger';
-export type { SessionContext, RawWriteCallback } from './log-session-helpers';
+export type { SessionContext, WriteCallback, WritePosition } from './log-session-helpers';
 
 export type SessionState = 'recording' | 'paused' | 'stopped';
 
@@ -70,8 +69,8 @@ export class LogSession {
      * decides whether they advance the line count — markers do, DAP/header don't).
      */
     private readonly pendingLines: Array<
-        | { readonly kind: 'line'; readonly text: string; readonly category: string; readonly timestamp: Date; readonly sourceLocation?: SourceLocation }
-        | { readonly kind: 'raw'; readonly block: string; readonly countsAsLine: boolean; readonly onWritten?: RawWriteCallback }
+        | { readonly kind: 'line'; readonly text: string; readonly category: string; readonly timestamp: Date; readonly sourceLocation?: SourceLocation; readonly onWritten?: WriteCallback }
+        | { readonly kind: 'raw'; readonly block: string; readonly countsAsLine: boolean; readonly onWritten?: WriteCallback }
     > = [];
     private readonly deduplicator: Deduplicator;
     private readonly splitter: FileSplitter;
@@ -198,16 +197,25 @@ export class LogSession {
         this._partStartTime = Date.now();
     }
 
+    /**
+     * Queue one captured line for writing.
+     *
+     * `options.onWritten` fires when the line actually reaches the file, carrying its true
+     * {@link WritePosition}. Anything that needs this line's file line number — or that must not
+     * claim the line exists until it does — has to go through that callback: this method only
+     * enqueues, so reading `physicalLineCount` after it returns reports where the file was before
+     * the queue backlog drained, and reports a line that a dead stream may never write at all.
+     */
     appendLine(
         text: string,
         category: string,
         timestamp: Date,
-        sourceLocation?: SourceLocation,
+        options?: { readonly sourceLocation?: SourceLocation; readonly onWritten?: WriteCallback },
     ): void {
         if (this._state !== 'recording' || !this.writeStream) {
             return;
         }
-        this.pendingLines.push({ kind: 'line', text, category, timestamp, sourceLocation });
+        this.pendingLines.push({ kind: 'line', text, category, timestamp, sourceLocation: options?.sourceLocation, onWritten: options?.onWritten });
         this.processPendingLines().catch((e) => { console.error('Log append queue failed:', e); });
     }
 
@@ -242,36 +250,45 @@ export class LogSession {
 
     /** Format and write one queued captured line (split-accounted, counted). */
     private async writeQueuedLine(
-        item: { text: string; category: string; timestamp: Date; sourceLocation?: SourceLocation },
+        item: { text: string; category: string; timestamp: Date; sourceLocation?: SourceLocation; onWritten?: WriteCallback },
     ): Promise<void> {
         await this.splitBeforeNextLineIfNeeded(item.text);
-        const elapsedMs = computeElapsedMs(this.config.includeElapsedTime, this._previousTimestamp, item.timestamp);
-        const formatted = formatLine(item.text, item.category, {
-            timestamp: item.timestamp,
-            includeTimestamp: this.config.includeTimestamp,
-            sourceLocation: item.sourceLocation,
-            includeSourceLocation: this.config.includeSourceLocation,
-            elapsedMs,
-            includeElapsedTime: this.config.includeElapsedTime,
-        });
+        // Captured AFTER the split above, so `before` names the part the line really lands in.
+        const before = this._physicalLineCount;
+        const formatted = formatQueuedLine(item, this.config, this._previousTimestamp);
         this._previousTimestamp = item.timestamp;
         // Capture-side dedup intentionally bypassed (2026.04 unified-line-collapsing rethink — the
         // viewer folds visually); each line is written 1:1 so file line numbers match the app output.
         await this.writeProcessedLines([formatted]);
+        this.reportWritten(item.onWritten, before);
     }
 
     /** Write one pre-formatted block (marker / DAP / header) in queue order, split-accounted by size. */
-    private async writeQueuedRaw(item: { block: string; countsAsLine: boolean; onWritten?: RawWriteCallback }): Promise<void> {
+    private async writeQueuedRaw(item: { block: string; countsAsLine: boolean; onWritten?: WriteCallback }): Promise<void> {
         // Split before writing so a marker can't push a part past its limits (the old direct-write
         // path skipped this); the block doubles as the "next text" for the byte-size split check.
         await this.splitBeforeNextLineIfNeeded(item.block);
         if (!this.writeStream) { return; }
-        // Report the landing position AFTER any split above and BEFORE the write itself — see
-        // RawWriteCallback for why an enqueue-time position is not a usable boundary.
-        item.onWritten?.(this._partNumber, this._physicalLineCount);
+        const before = this._physicalLineCount;
         await this.writeBackpressured(this.writeStream, item.block);
         this._bytesWritten += Buffer.byteLength(item.block, 'utf-8');
         if (item.countsAsLine) { this.bumpLineCounters(); }
+        this.reportWritten(item.onWritten, before);
+    }
+
+    /**
+     * Hand a queued write's true position to its observer.
+     *
+     * Guarded because these observers are no longer the caller's own synchronous frame — they now
+     * run inside the append queue, so an exception from one (a viewer line listener, say) would
+     * abort the queue loop and strand every line behind it. A broken observer must cost its own
+     * notification, never the log.
+     */
+    private reportWritten(onWritten: WriteCallback | undefined, before: number): void {
+        if (!onWritten) { return; }
+        const position = { partNumber: this._partNumber, before, after: this._physicalLineCount };
+        try { onWritten(position); }
+        catch (err) { logExtensionError('logSession.onWritten', err instanceof Error ? err : String(err)); }
     }
 
     /** Wait until buffered appendLine calls are flushed to disk. */
@@ -327,12 +344,13 @@ export class LogSession {
      * Insert a visual marker/separator into the log file.
      * Bypasses deduplication — markers should never be grouped.
      *
-     * @param onWritten - Optional {@link RawWriteCallback}, invoked with the marker's true file
-     *   position when the queue reaches it. Never fires if `undefined` is returned here, and never
-     *   fires for a marker still queued when the session is cleared or stopped while paused.
+     * @param onWritten - Optional {@link WriteCallback}, invoked with the marker block's true
+     *   {@link WritePosition} when the queue reaches it. Never fires if `undefined` is returned
+     *   here, and never fires for a marker still queued when the session is cleared, or stopped
+     *   while paused.
      * @returns The marker text written, or undefined if not recording.
      */
-    appendMarker(customText?: string, onWritten?: RawWriteCallback): string | undefined {
+    appendMarker(customText?: string, onWritten?: WriteCallback): string | undefined {
         if (this._state === 'stopped' || !this.writeStream) {
             return undefined;
         }
