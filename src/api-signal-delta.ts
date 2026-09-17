@@ -6,9 +6,8 @@
  * session is finalized (`session-lifecycle-finalize.ts`), but the whole point of this API is to
  * bracket a short window *inside* a still-running session. So this reads the session's own log
  * file(s) directly off disk, sliced at the two markers' physical-line boundaries recorded by
- * `SessionManagerImpl.insertMarker`, and re-runs the same line-level fingerprint scanners
- * (`scanLinesForFingerprints` / `scanLinesForWarningFingerprints` / `scanLinesForPerfFingerprints`)
- * against the "before" and "after" slices, then diffs the two fingerprint sets.
+ * `SessionManagerImpl.insertMarker`, and re-runs the same line-level fingerprint scanners against
+ * the relevant slices, then diffs the resulting fingerprint sets.
  *
  * Scope note: this covers error, warning, and perf signals — the three kinds derivable purely
  * from log text. SQL/network/memory/ANR-risk/Drift-Advisor signals live only in
@@ -16,39 +15,53 @@
  * finalization; there is no live equivalent to re-run mid-session, so they are not part of a
  * marker-bounded delta.
  *
- * The window/boundary math (`readWindow`, `findEndOfSessionBound`) is the highest-risk part of
- * this file — off-by-one errors there silently misattribute signals across a marker or a file
- * split. It's factored behind an injectable {@link PartReader} so it can be pinned with plain
- * `node:test` cases using an in-memory fake, independent of the real `vscode.workspace.fs`-backed
- * reader used at runtime (see `src/test/api/signal-delta.test.ts`).
+ * The window/boundary math lives in `api-signal-delta-window.ts` behind an injectable
+ * `PartReader`; the scan step here is injectable too, so `computeDelta` — which decides which
+ * slice is compared against which — is directly testable under `node:test`.
  */
 
-import * as vscode from 'vscode';
-import { getPartFileName } from './modules/capture/log-session-split';
-import type { SessionManagerImpl } from './modules/session/session-manager';
 import { scanLinesForFingerprints, type FingerprintEntry } from './modules/analysis/error-fingerprint';
 import { scanLinesForWarningFingerprints } from './modules/analysis/warning-fingerprint';
 import { scanLinesForPerfFingerprints, type PerfFingerprintEntry } from './modules/misc/perf-fingerprint';
+import type { SessionManagerImpl } from './modules/session/session-manager';
+import type { MarkerRecord } from './modules/session/session-marker-registry';
 import type { SaropaDailyTroubleItem, SaropaSignalDelta } from './api-types';
-
-/** A position within a session's (possibly multi-part) log file. */
-export interface FileBound {
-    readonly partNumber: number;
-    /** Physical line index into that part (0-based; matches `LogSession.physicalLineCount` semantics). */
-    readonly physicalLineIndex: number;
-}
-
-/** Reads one part's lines by part number, or `undefined` if that part doesn't exist. */
-export type PartReader = (partNumber: number) => Promise<string[] | undefined>;
+import {
+    diskPartReader,
+    findEndOfSessionBound,
+    readHistory,
+    readWindow,
+    type FileBound,
+    type PartReader,
+} from './api-signal-delta-window';
 
 /** Signals detected from one line slice, keyed by fingerprint kind for diffing. */
-interface ScannedSignals {
+export interface ScannedSignals {
     readonly errors: readonly FingerprintEntry[];
     readonly warnings: readonly FingerprintEntry[];
     readonly perf: readonly PerfFingerprintEntry[];
 }
 
-const sessionStartBound: FileBound = { partNumber: 0, physicalLineIndex: 0 };
+/** Fingerprints one slice of log lines. Injectable so `computeDelta` is testable without `vscode`. */
+export type LineScanner = (lines: readonly string[]) => ScannedSignals;
+
+/** How much history before the marker the "was this already happening?" question looks at. */
+const maxHistoryLines = 50_000;
+
+/** Ceiling on the marker-bounded window itself, so one very chatty command can't be unbounded. */
+const maxWindowLines = 50_000;
+
+/**
+ * How long to wait for a marker whose write is still queued. `insertMarker` returns its id
+ * synchronously but the marker's file position is only known once the append queue reaches it,
+ * so a caller that brackets a very fast command can legitimately ask before the write lands.
+ */
+const markerSettleTimeoutMs = 2_000;
+
+/** Rank cap disabled — a set difference needs the complete fingerprint set. See `LineScanOptions`. */
+const unlimitedFingerprints = Number.POSITIVE_INFINITY;
+
+const emptySignals: ScannedSignals = { errors: [], warnings: [], perf: [] };
 
 /** Compute the new/resolved signal delta for the window between two markers. */
 export async function getSignalDelta(
@@ -56,25 +69,41 @@ export async function getSignalDelta(
     sinceMarkerId: string,
     untilMarkerId?: string,
 ): Promise<SaropaSignalDelta | undefined> {
-    const since = sessionManager.resolveMarker(sinceMarkerId);
-    if (!since) { return undefined; }
+    const since = await sessionManager.waitForMarkerPosition(sinceMarkerId, markerSettleTimeoutMs);
+    if (!since?.position) { return undefined; }
 
-    const untilRecord = untilMarkerId ? sessionManager.resolveMarker(untilMarkerId) : undefined;
-    if (untilMarkerId && !untilRecord) { return undefined; }
+    let until: MarkerRecord | undefined;
+    if (untilMarkerId !== undefined) {
+        until = await sessionManager.waitForMarkerPosition(untilMarkerId, markerSettleTimeoutMs);
+        if (!until?.position || !isSameSession(since, until)) { return undefined; }
+    }
 
     const reader = diskPartReader(since.logDirUri, since.baseFileName);
-    const sinceBound: FileBound = { partNumber: since.partNumber, physicalLineIndex: since.physicalLineIndex };
-    const untilBound: FileBound = untilRecord
-        ? { partNumber: untilRecord.partNumber, physicalLineIndex: untilRecord.physicalLineIndex }
-        : await resolveNowBound(sessionManager, since.sessionKey, since.partNumber, reader);
+    const untilBound = until?.position
+        ?? await resolveNowBound(sessionManager, since.sessionKey, since.position.partNumber, reader);
 
-    return computeDelta(reader, sinceBound, untilBound);
+    return computeDelta(reader, since.position, untilBound);
+}
+
+/**
+ * Both markers must belong to one session's files. A marker id carries offsets that only mean
+ * anything against the files that produced them, so applying a second session's offsets to the
+ * first session's parts would read an arbitrary slice and report confident nonsense — which is
+ * reachable in normal use, since a bracketed command (an install, a `pm clear`) can itself restart
+ * the app and therefore the debug session.
+ */
+function isSameSession(since: MarkerRecord, until: MarkerRecord): boolean {
+    return since.sessionKey === until.sessionKey && since.baseFileName === until.baseFileName;
 }
 
 /**
  * "Now" bound when `untilMarkerId` is omitted: the live session's current position if it's still
  * alive, otherwise the end of its last part on disk (session already ended — edge case #2 from
  * the plan: resolve against whatever exists, don't throw).
+ *
+ * The live counter is incremented before the stream write is flushed, so it can name a line the
+ * file does not hold yet; `readWindow` slices against the part's real length, so that resolves as
+ * a slightly short window rather than an error.
  */
 async function resolveNowBound(
     sessionManager: SessionManagerImpl,
@@ -87,72 +116,72 @@ async function resolveNowBound(
     return findEndOfSessionBound(reader, sincePartNumber);
 }
 
-/** Probe forward from `fromPart` for the last part that exists, and its line count. */
-export async function findEndOfSessionBound(reader: PartReader, fromPart: number): Promise<FileBound> {
-    let lastPart = fromPart;
-    let lastLineCount = 0;
-    for (let p = fromPart; ; p++) {
-        const lines = await reader(p);
-        if (lines === undefined) { break; }
-        lastPart = p;
-        lastLineCount = lines.length;
-    }
-    return { partNumber: lastPart, physicalLineIndex: lastLineCount };
+/**
+ * Read the slices this delta needs and diff them. Pure given a `PartReader` and a `LineScanner`.
+ *
+ * Three slices, not two, because "new" and "resolved" are not the same question:
+ *
+ *  - `after` — the marker-bounded window itself.
+ *  - `history` — up to {@link maxHistoryLines} before the marker. A signal is NEW if the window
+ *    has it and this doesn't: "did the bracketed command introduce something this session had not
+ *    produced before?" wants as much prior evidence as it can afford.
+ *  - `baseline` — the tail of `history` the same length as `after`. A signal is RESOLVED if the
+ *    baseline has it and the window doesn't. Comparing the window against all of `history`
+ *    instead — as the first cut of this API did — makes every signal that merely failed to repeat
+ *    inside a 20-second window read as "resolved", so a command that logged nothing at all would
+ *    report the session's entire signal set as fixed by it. Matching the lengths makes it a
+ *    like-for-like comparison, and an empty window is reported as resolving nothing at all,
+ *    because no output is no evidence.
+ */
+export async function computeDelta(
+    reader: PartReader,
+    sinceBound: FileBound,
+    untilBound: FileBound,
+    scan: LineScanner = scanLines,
+): Promise<SaropaSignalDelta> {
+    const afterLines = await readWindow(reader, sinceBound, untilBound, maxWindowLines);
+    const historyLines = await readHistory(reader, sinceBound, maxHistoryLines);
+
+    const after = scan(afterLines);
+    const history = scan(historyLines);
+    const baseline = scanBaseline(historyLines, history, afterLines.length, scan);
+
+    return {
+        newSignals: diffAll(history, after),
+        resolvedSignals: diffAll(after, baseline),
+    };
 }
 
 /**
- * Read the lines in `[from, to)` across however many parts that spans. `from`/`to` are physical
- * line positions within their own part (see {@link FileBound}); parts strictly between them are
- * read in full. A part missing from disk (rotated/deleted) is skipped rather than failing the
- * whole read.
+ * The equal-length tail of the history slice that the resolved comparison is made against.
+ * Reuses the already-scanned `history` when the window is at least as long as the history, since
+ * the slice would then be the same lines and scanning up to 50,000 of them twice is not free.
  */
-export async function readWindow(reader: PartReader, from: FileBound, to: FileBound): Promise<string[]> {
-    if (to.partNumber < from.partNumber || (to.partNumber === from.partNumber && to.physicalLineIndex <= from.physicalLineIndex)) {
-        return [];
-    }
-    const collected: string[] = [];
-    for (let p = from.partNumber; p <= to.partNumber; p++) {
-        const lines = await reader(p);
-        if (lines === undefined) { continue; }
-        const start = p === from.partNumber ? from.physicalLineIndex : 0;
-        const end = p === to.partNumber ? to.physicalLineIndex : lines.length;
-        collected.push(...lines.slice(start, Math.max(start, end)));
-    }
-    return collected;
+function scanBaseline(historyLines: readonly string[], history: ScannedSignals, windowLength: number, scan: LineScanner): ScannedSignals {
+    if (windowLength === 0) { return emptySignals; }
+    if (windowLength >= historyLines.length) { return history; }
+    return scan(historyLines.slice(-windowLength));
 }
 
-/** Real, `vscode.workspace.fs`-backed {@link PartReader} for one session's parts on disk. */
-function diskPartReader(logDirUri: vscode.Uri, baseFileName: string): PartReader {
-    return async (partNumber) => {
-        try {
-            const uri = vscode.Uri.joinPath(logDirUri, getPartFileName(baseFileName, partNumber));
-            const raw = await vscode.workspace.fs.readFile(uri);
-            return Buffer.from(raw).toString('utf-8').split('\n');
-        } catch {
-            return undefined;
-        }
-    };
+/** Every signal present in `after` but not in `before`, across all three fingerprint kinds. */
+function diffAll(before: ScannedSignals, after: ScannedSignals): SaropaDailyTroubleItem[] {
+    return [
+        ...diffFingerprints(before.errors, after.errors, 'error'),
+        ...diffFingerprints(before.warnings, after.warnings, 'warning'),
+        ...diffPerf(before.perf, after.perf),
+    ];
 }
 
-/** Read the before/after windows via `reader` and diff their signals. Pure given a `PartReader`. */
-export async function computeDelta(reader: PartReader, sinceBound: FileBound, untilBound: FileBound): Promise<SaropaSignalDelta> {
-    const beforeLines = await readWindow(reader, sessionStartBound, sinceBound);
-    const afterLines = await readWindow(reader, sinceBound, untilBound);
-
-    const before = scanLines(beforeLines);
-    const after = scanLines(afterLines);
-
-    return {
-        newSignals: [...diffFingerprints(before.errors, after.errors, 'error'), ...diffFingerprints(before.warnings, after.warnings, 'warning'), ...diffPerf(before.perf, after.perf)],
-        resolvedSignals: [...diffFingerprints(after.errors, before.errors, 'error'), ...diffFingerprints(after.warnings, before.warnings, 'warning'), ...diffPerf(after.perf, before.perf)],
-    };
-}
-
+/** The real, `vscode`-backed scanner: the complete fingerprint set for a slice, uncapped. */
 function scanLines(lines: readonly string[]): ScannedSignals {
+    // Both caps are lifted deliberately. The rank cap would drop a "before" fingerprint that then
+    // reads as newly introduced the next time it occurs, and the line cap (a tenth as large for
+    // perf) would hide the middle of a window from one side of a comparison it did appear in.
+    const options = { maxFingerprints: unlimitedFingerprints, maxScanLines: lines.length };
     return {
-        errors: scanLinesForFingerprints(lines),
-        warnings: scanLinesForWarningFingerprints(lines),
-        perf: scanLinesForPerfFingerprints(lines),
+        errors: scanLinesForFingerprints(lines, options),
+        warnings: scanLinesForWarningFingerprints(lines, options),
+        perf: scanLinesForPerfFingerprints(lines, options),
     };
 }
 
