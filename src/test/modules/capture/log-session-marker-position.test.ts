@@ -18,7 +18,7 @@ import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { LogSession } from '../../../modules/capture/log-session';
+import { LogSession, type WritePosition } from '../../../modules/capture/log-session';
 import { getPartFileName } from '../../../modules/capture/log-session-split';
 import { defaultSplitRules } from '../../../modules/misc/file-splitter';
 
@@ -65,14 +65,12 @@ async function readPartLines(session: LogSession, partNumber: number): Promise<s
 
 test('marker position accounts for lines still sitting in the append queue', async () => {
     const session = await startSession();
-    let reported: { partNumber: number; physicalLineIndex: number } | undefined;
+    let reported: WritePosition | undefined;
 
     // A burst of captured output immediately followed by a marker — the exact call pattern of a
     // sibling extension bracketing a command while the app is still producing output.
     for (let i = 0; i < 5; i++) { session.appendLine(`burst line ${i}`, 'stdout', new Date()); }
-    session.appendMarker('RUN START', (partNumber, physicalLineIndex) => {
-        reported = { partNumber, physicalLineIndex };
-    });
+    session.appendMarker('RUN START', (position) => { reported = position; });
     await session.stop();
 
     assert.ok(reported, 'expected the marker write to report a position');
@@ -82,10 +80,10 @@ test('marker position accounts for lines still sitting in the append queue', asy
 
     // The reported index is the split point: everything before it is "before the marker", and the
     // marker block itself starts there (its leading blank line first, then the MARKER line).
-    assert.strictEqual(reported.physicalLineIndex, actualMarkerIndex - 1);
+    assert.strictEqual(reported.before, actualMarkerIndex - 1);
     for (let i = 0; i < 5; i++) {
         assert.ok(
-            lines.slice(0, reported.physicalLineIndex).some((l) => l.includes(`burst line ${i}`)),
+            lines.slice(0, reported.before).some((l) => l.includes(`burst line ${i}`)),
             `burst line ${i} was logged before the marker and must fall before the boundary`,
         );
     }
@@ -95,12 +93,10 @@ test('marker position names the part the marker actually landed in, across split
     // maxLines 3 forces the queue to split the file several times while the burst drains, so a
     // position captured at enqueue time would name part 0 for a marker that lands much later.
     const session = await startSession(3);
-    let reported: { partNumber: number; physicalLineIndex: number } | undefined;
+    let reported: WritePosition | undefined;
 
     for (let i = 0; i < 10; i++) { session.appendLine(`burst line ${i}`, 'stdout', new Date()); }
-    session.appendMarker('RUN START', (partNumber, physicalLineIndex) => {
-        reported = { partNumber, physicalLineIndex };
-    });
+    session.appendMarker('RUN START', (position) => { reported = position; });
     await session.stop();
 
     assert.ok(reported, 'expected the marker write to report a position');
@@ -109,7 +105,7 @@ test('marker position names the part the marker actually landed in, across split
 
     const lines = await readPartLines(session, reported.partNumber);
     const actualMarkerIndex = lines.findIndex((l) => l.includes('MARKER: '));
-    assert.strictEqual(reported.physicalLineIndex, actualMarkerIndex - 1);
+    assert.strictEqual(reported.before, actualMarkerIndex - 1);
 });
 
 test('marker position is the continuation-header offset when a marker opens a fresh part', async () => {
@@ -117,18 +113,16 @@ test('marker position is the continuation-header offset when a marker opens a fr
     // stream, bypassing the counter's choke point, and seeds `_physicalLineCount` from its own line
     // count. A marker written right after must land after that header, not at line 0.
     const session = await startSession(2);
-    let reported: { partNumber: number; physicalLineIndex: number } | undefined;
+    let reported: WritePosition | undefined;
 
     for (let i = 0; i < 6; i++) { session.appendLine(`line ${i}`, 'stdout', new Date()); }
-    session.appendMarker('AFTER SPLIT', (partNumber, physicalLineIndex) => {
-        reported = { partNumber, physicalLineIndex };
-    });
+    session.appendMarker('AFTER SPLIT', (position) => { reported = position; });
     await session.stop();
 
     assert.ok(reported);
     const lines = await readPartLines(session, reported.partNumber);
-    assert.ok(reported.physicalLineIndex > 0, 'must sit past the continuation header, not at line 0');
-    assert.strictEqual(lines.findIndex((l) => l.includes('MARKER: ')), reported.physicalLineIndex + 1);
+    assert.ok(reported.before > 0, 'must sit past the continuation header, not at line 0');
+    assert.strictEqual(lines.findIndex((l) => l.includes('MARKER: ')), reported.before + 1);
 });
 
 test('a marker refused by a stopped session never reports a position', async () => {

@@ -1,7 +1,7 @@
 /**
  * In-memory registry of marker ids created by {@link SessionManagerImpl.insertMarker}.
  *
- * Backs the public `getSignalDelta` API (PLAN 119 / bugs/119_plan-run-scoped-signal-correlation-api.md):
+ * Backs the public `getSignalDelta` API (PLAN 119 / plans/history/2026.09/2026.09.17/119_plan-run-scoped-signal-correlation-api.md):
  * a marker id must be resolvable back to "which log file part, at which physical line" so a later
  * call can read the file directly and diff signals before/after it. Kept in memory only — like the
  * rest of the live-session state this module's siblings track, it does not survive an extension

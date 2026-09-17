@@ -42,6 +42,50 @@ export interface OutputEventTarget {
     broadcastLine: (data: Omit<LineData, 'watchHits'>) => void;
 }
 
+/** One captured line on its way to the log, plus the viewer metadata that travels with it. */
+interface BroadcastableLine {
+    readonly text: string;
+    readonly category: string;
+    readonly timestamp: Date;
+    readonly sourceLocation?: SourceLocation;
+    readonly sourcePath?: string;
+    readonly sourceLine?: number;
+}
+
+/**
+ * Append one line and broadcast it once it has actually reached the file.
+ *
+ * The broadcast rides `appendLine`'s write-time callback rather than following the call, because
+ * `appendLine` only enqueues. Reading `session.physicalLineCount`/`fileUri` on the next statement
+ * reports where the file stood before the queue backlog drained — so `LineData.physicalLineCount`,
+ * documented as "this line's true physical line number", pointed earlier than the line really was
+ * by the whole queue depth, and named the pre-split part for a line the queue then rotated. The
+ * consumers of that field (the error snackbar's "Open Log", screenshot capture's flow-map
+ * position) are exactly the "jump to this line" features that field exists to keep honest.
+ *
+ * Broadcasting here also means a line is announced only if it was written: a queued line dropped
+ * because the stream died, the session was cleared, or capture was paused before the queue reached
+ * it no longer shows up in the viewer as a line the saved file does not contain (bug_011's
+ * viewer/file agreement, now covering the queue as well as the pause flag).
+ */
+function broadcastOnWrite(session: LogSession, target: OutputEventTarget, line: BroadcastableLine): void {
+    session.appendLine(line.text, line.category, line.timestamp, {
+        sourceLocation: line.sourceLocation,
+        // `before + 1`, not `position.after`: a single DAP output event can carry an embedded
+        // newline (a stack trace arrives as one event, and this path — unlike the API write path
+        // — does not split them), so the block occupies several physical lines. `after` would
+        // anchor "Open Log" and the flow-map position to the last frame of a trace rather than to
+        // where the error starts. For a single-line block the two are identical.
+        onWritten: (position) => target.broadcastLine({
+            text: line.text, isMarker: false, lineCount: session.lineCount,
+            physicalLineCount: position.before + 1,
+            category: line.category, timestamp: line.timestamp,
+            logFileUri: session.fileUri.fsPath,
+            sourcePath: line.sourcePath, sourceLine: line.sourceLine,
+        }),
+    });
+}
+
 /** Process a DAP output event — buffer, filter, append to log, and broadcast. */
 export function processOutputEvent(
     deps: OutputEventDeps,
@@ -106,11 +150,7 @@ export function processOutputEvent(
     if (floodResult.suppressedCount) {
         target.counters.floodSuppressedTotal += floodResult.suppressedCount;
         const summary = `[FLOOD SUPPRESSED: ${floodResult.suppressedCount} identical messages]`;
-        session.appendLine(summary, 'system', now);
-        target.broadcastLine({
-            text: summary, isMarker: false, lineCount: session.lineCount, physicalLineCount: session.physicalLineCount,
-            category: 'system', timestamp: now, logFileUri: session.fileUri.fsPath,
-        });
+        broadcastOnWrite(session, target, { text: summary, category: 'system', timestamp: now });
     }
 
     const spamResult = deps.spamSuppressor.check(text, now);
@@ -124,11 +164,9 @@ export function processOutputEvent(
 
     const sourceLocation: SourceLocation | undefined =
         body.source?.path ? { path: body.source.path, line: body.line, column: body.column } : undefined;
-    session.appendLine(text, category, now, sourceLocation);
     target.counters.categoryCounts[category] = (target.counters.categoryCounts[category] ?? 0) + 1;
-    target.broadcastLine({
-        text, isMarker: false, lineCount: session.lineCount, physicalLineCount: session.physicalLineCount,
-        category, timestamp: now, logFileUri: session.fileUri.fsPath,
+    broadcastOnWrite(session, target, {
+        text, category, timestamp: now, sourceLocation,
         sourcePath: body.source?.path, sourceLine: body.line,
     });
     traceOutcome(deps, category, 'captured', text);
@@ -172,11 +210,7 @@ function writeSpamSummary(
     target: OutputEventTarget,
     flush: SpamFlush,
 ): void {
-    session.appendLine(flush.summary, 'system', flush.timestamp);
-    target.broadcastLine({
-        text: flush.summary, isMarker: false, lineCount: session.lineCount, physicalLineCount: session.physicalLineCount,
-        category: 'system', timestamp: flush.timestamp, logFileUri: session.fileUri.fsPath,
-    });
+    broadcastOnWrite(session, target, { text: flush.summary, category: 'system', timestamp: flush.timestamp });
 }
 
 /** Max characters of line text shown in a diagnostic trace — keep the output channel readable. */
@@ -255,11 +289,7 @@ function writeOneLine(
         if (floodResult.suppressedCount) {
             target.counters.floodSuppressedTotal += floodResult.suppressedCount;
             const summary = `[FLOOD SUPPRESSED: ${floodResult.suppressedCount} identical messages]`;
-            session.appendLine(summary, 'system', timestamp);
-            target.broadcastLine({
-                text: summary, isMarker: false, lineCount: session.lineCount, physicalLineCount: session.physicalLineCount,
-                category: 'system', timestamp, logFileUri: session.fileUri.fsPath,
-            });
+            broadcastOnWrite(session, target, { text: summary, category: 'system', timestamp });
         }
         const spamResult = deps.spamSuppressor.check(text, timestamp);
         if (spamResult.flush) {
@@ -267,12 +297,8 @@ function writeOneLine(
         }
         if (!spamResult.allow) { return; }
     }
-    session.appendLine(text, category, timestamp);
     target.counters.categoryCounts[category] = (target.counters.categoryCounts[category] ?? 0) + 1;
-    target.broadcastLine({
-        text, isMarker: false, lineCount: session.lineCount, physicalLineCount: session.physicalLineCount,
-        category, timestamp, logFileUri: session.fileUri.fsPath,
-    });
+    broadcastOnWrite(session, target, { text, category, timestamp });
 }
 
 /** Process a verbose DAP protocol message — record it in the log file. */

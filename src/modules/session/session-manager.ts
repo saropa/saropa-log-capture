@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { getConfig, SaropaLogCaptureConfig } from '../config/config';
 import { SessionManager, DapOutputBody } from '../capture/tracker';
 import { LogSession } from '../capture/log-session';
+import { markerTextLineNumber } from '../capture/log-session-helpers';
 import { StatusBar } from '../../ui/shared/status-bar';
 import { KeywordWatcher } from '../features/keyword-watcher';
 import { FloodGuard } from '../capture/flood-guard';
@@ -294,8 +295,18 @@ export class SessionManagerImpl implements SessionManager {
             baseFileName: logSession.baseFileName,
             logDirUri: vscode.Uri.joinPath(logSession.fileUri, '..'),
         });
-        const markerText = logSession.appendMarker(customText, (partNumber, physicalLineIndex) => {
-            this.markerRegistry.settle(markerId, { partNumber, physicalLineIndex });
+        const markerText = logSession.appendMarker(customText, (position) => {
+            this.markerRegistry.settle(markerId, {
+                partNumber: position.partNumber, physicalLineIndex: position.before,
+            });
+            // Broadcast from here, not from the enqueue below: until the block lands there is no
+            // line number to report and no guarantee it will ever be written at all.
+            this.broadcastLine({
+                text: markerText ?? '', isMarker: true, lineCount: logSession.lineCount,
+                physicalLineCount: markerTextLineNumber(position.before),
+                category: 'marker', timestamp: new Date(),
+                logFileUri: logSession.fileUri.fsPath,
+            });
         });
         if (!markerText) {
             // Nothing was enqueued (session stopped, or the write stream is gone), so the id would
@@ -303,11 +314,6 @@ export class SessionManagerImpl implements SessionManager {
             this.markerRegistry.discard(markerId);
             return undefined;
         }
-        this.broadcastLine({
-            text: markerText, isMarker: true, lineCount: logSession.lineCount,
-            physicalLineCount: logSession.physicalLineCount,
-            category: 'marker', timestamp: new Date(),
-        });
         return markerId;
     }
 
