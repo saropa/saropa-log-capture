@@ -5,16 +5,37 @@ import { SpamSuppressor } from '../../../modules/capture/spam-suppressor';
 import { parseExclusionPattern } from '../../../modules/features/exclusion-matcher';
 import type { LineData } from '../../../modules/session/session-event-bus';
 
-/** Minimal mock LogSession for testing appendLine and lineCount. */
+/**
+ * Minimal mock LogSession for testing appendLine and lineCount.
+ *
+ * `appendLine` must invoke `options.onWritten`, because that callback is how a written line gets
+ * broadcast — the real `LogSession` only enqueues, and reporting the position from the queue is
+ * what keeps `LineData.physicalLineCount` pointing at the line's true place in the file. This mock
+ * writes synchronously, so the position it reports is simply the count after the line; the real
+ * queue's timing is covered separately by the node:test suites against a real `LogSession`.
+ */
 function mockSession() {
     const lines: string[] = [];
     return {
         lines,
         lineCount: 0,
+        /** Physical lines written so far — what the real session reports as `position.after`. */
+        physicalLineCount: 0,
         state: 'recording' as const,
         // writeOneLine reads session.fileUri.fsPath when building the broadcast payload.
         fileUri: { fsPath: '/mock/session.log' },
-        appendLine(text: string) { lines.push(text); this.lineCount++; },
+        appendLine(
+            text: string,
+            _category: string,
+            _timestamp: Date,
+            options?: { onWritten?: (position: { partNumber: number; before: number; after: number }) => void },
+        ) {
+            lines.push(text);
+            this.lineCount++;
+            const before = this.physicalLineCount;
+            this.physicalLineCount++;
+            options?.onWritten?.({ partNumber: 0, before, after: this.physicalLineCount });
+        },
     };
 }
 
