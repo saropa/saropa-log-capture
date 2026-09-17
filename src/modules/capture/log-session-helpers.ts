@@ -67,16 +67,27 @@ export interface SourceLocation {
 }
 
 /**
- * Called when a queued 'raw' block is about to be written, with the position it lands at.
+ * Where a queued block actually landed in its part file, reported from inside `LogSession`'s
+ * append queue once the write happens.
  *
- * Fires from inside `LogSession`'s append queue — after any split the block triggered, before the
- * block itself is written — so `physicalLineIndex` is exactly "what this part held before this
- * block". A caller that reads `partNumber`/`physicalLineCount` at ENQUEUE time instead gets a
- * position that is wrong by the whole queue backlog, and points at the wrong part entirely if the
- * queue splits the file before the block lands (`getSignalDelta`'s marker boundary is built on
- * this callback, and was originally wrong in exactly that way).
+ * Nothing outside the queue can work this out. `appendLine`/`appendMarker` only ENQUEUE, so a
+ * caller reading `partNumber`/`physicalLineCount` at enqueue time gets a position short by the
+ * whole queue backlog — and naming the wrong part entirely if the queue splits the file before
+ * the block lands. Both numbers are needed because the two consumers ask different questions:
+ * a boundary ("what came before this?") and a line number ("which line is this?").
  */
-export type RawWriteCallback = (partNumber: number, physicalLineIndex: number) => void;
+export interface WritePosition {
+    readonly partNumber: number;
+    /** Physical line count of the part immediately BEFORE this block — the `getSignalDelta` split
+     *  point: lines `[0, before)` precede the block. */
+    readonly before: number;
+    /** Physical line count immediately AFTER. For a single captured line, this is that line's own
+     *  1-based physical line number, which is what `LineData.physicalLineCount` documents. */
+    readonly after: number;
+}
+
+/** Called from inside the append queue when a queued block is written. See {@link WritePosition}. */
+export type WriteCallback = (position: WritePosition) => void;
 
 /**
  * Format the marker/separator block a marker insertion writes. Lives here with the other line
@@ -90,6 +101,18 @@ export function formatMarkerLine(customText?: string): string {
     return `\n--- MARKER: ${customText ? `${ts} — ${customText}` : ts} ---\n`;
 }
 
+/**
+ * 1-based physical line number of the MARKER text itself, given the block's `before` position.
+ *
+ * The block {@link formatMarkerLine} writes is `\n--- MARKER: … ---\n`, plus the trailing `\n`
+ * `appendMarker` adds — so a blank separator line sits at `before`, the marker text one line
+ * after it, and another blank after that. A viewer or snackbar pointing at this marker wants the
+ * text line, not the blank one that opens the block.
+ */
+export function markerTextLineNumber(before: number): number {
+    return before + 2;
+}
+
 /** All context needed to format a single log line. */
 export interface LineFormatContext {
     readonly timestamp: Date;
@@ -98,6 +121,35 @@ export interface LineFormatContext {
     readonly includeSourceLocation: boolean;
     readonly elapsedMs?: number;
     readonly includeElapsedTime: boolean;
+}
+
+/** One queued captured line, as much of it as formatting needs. */
+export interface QueuedLine {
+    readonly text: string;
+    readonly category: string;
+    readonly timestamp: Date;
+    readonly sourceLocation?: SourceLocation;
+}
+
+/**
+ * Apply every configured decoration to one queued line — the timestamp/elapsed/source options
+ * plus the elapsed-time computation they depend on. Pure, and pulled out of `LogSession` so the
+ * write queue reads as the sequence of side effects it is (split, position, write, report) rather
+ * than as formatting with a write buried in it.
+ */
+export function formatQueuedLine(
+    line: QueuedLine,
+    config: SaropaLogCaptureConfig,
+    previousTimestamp: Date | undefined,
+): string {
+    return formatLine(line.text, line.category, {
+        timestamp: line.timestamp,
+        includeTimestamp: config.includeTimestamp,
+        sourceLocation: line.sourceLocation,
+        includeSourceLocation: config.includeSourceLocation,
+        elapsedMs: computeElapsed(config.includeElapsedTime, previousTimestamp, line.timestamp),
+        includeElapsedTime: config.includeElapsedTime,
+    });
 }
 
 /** Format a log line with optional timestamp, elapsed time, category, and source. */
