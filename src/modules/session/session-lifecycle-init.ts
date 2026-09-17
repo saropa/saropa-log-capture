@@ -68,11 +68,16 @@ function makeStreamingWriteLine(
 ): (text: string, category: string, timestamp?: Date) => void {
     return (text, category, timestamp) => {
         const ts = timestamp ?? new Date();
-        logSession.appendLine(text, category, ts);
-        broadcastLine({
-            text, isMarker: false, lineCount: logSession.lineCount,
-            physicalLineCount: logSession.physicalLineCount,
-            category, timestamp: ts, logFileUri: logSession.fileUri.fsPath,
+        // Broadcast from the write-time callback, matching the DAP path: `appendLine` only
+        // enqueues, so reading `physicalLineCount`/`fileUri` on the next statement reports where
+        // the file stood before the queue drained — and streamed logcat output is exactly the
+        // high-volume case that keeps a backlog in the queue.
+        logSession.appendLine(text, category, ts, {
+            onWritten: (position) => broadcastLine({
+                text, isMarker: false, lineCount: logSession.lineCount,
+                physicalLineCount: position.before + 1,
+                category, timestamp: ts, logFileUri: logSession.fileUri.fsPath,
+            }),
         });
     };
 }

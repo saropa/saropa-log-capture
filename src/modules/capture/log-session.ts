@@ -259,8 +259,9 @@ export class LogSession {
         this._previousTimestamp = item.timestamp;
         // Capture-side dedup intentionally bypassed (2026.04 unified-line-collapsing rethink — the
         // viewer folds visually); each line is written 1:1 so file line numbers match the app output.
-        await this.writeProcessedLines([formatted]);
-        this.reportWritten(item.onWritten, before);
+        if (await this.writeProcessedLines([formatted])) {
+            this.reportWritten(item.onWritten, before);
+        }
     }
 
     /** Write one pre-formatted block (marker / DAP / header) in queue order, split-accounted by size. */
@@ -321,23 +322,26 @@ export class LogSession {
         }
     }
 
-    /** Write deduplicated lines and rotate mid-batch instead of dropping newest output. */
-    private async writeProcessedLines(lines: readonly string[]): Promise<void> {
+    /**
+     * Write deduplicated lines and rotate mid-batch instead of dropping newest output.
+     *
+     * Returns false when the stream died part-way and something was NOT written, so the caller can
+     * withhold the write-time notification: reporting a position for a line the file never received
+     * is precisely the viewer/file disagreement this reporting exists to prevent.
+     */
+    private async writeProcessedLines(lines: readonly string[]): Promise<boolean> {
         for (const line of lines) {
-            if (!this.writeStream) {
-                return;
-            }
+            if (!this.writeStream) { return false; }
             if (this.config.maxLines > 0 && this._partLineCount >= this.config.maxLines) {
                 await this.performSplit({ type: 'lines', count: this._partLineCount });
             }
-            if (!this.writeStream) {
-                return;
-            }
+            if (!this.writeStream) { return false; }
             const lineData = line + '\n';
             await this.writeBackpressured(this.writeStream, lineData);
             this._bytesWritten += Buffer.byteLength(lineData, 'utf-8');
             this.bumpLineCounters();
         }
+        return true;
     }
 
     /**
