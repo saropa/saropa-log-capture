@@ -34,14 +34,16 @@ export function formatLogContext(context: readonly string[]): string {
 export function formatEnvironment(env: Record<string, string>): string {
     const keys = Object.keys(env);
     if (keys.length === 0) { return '## Environment\n\n*No environment data available.*'; }
-    const rows = keys.map(k => `| ${k} | ${env[k]} |`);
+    // Same table-cell escaping every other row builder in this file uses — the values are
+    // collected from the environment (paths, versions, git remotes), not from constants.
+    const rows = keys.map(k => `| ${escapePipe(k)} | ${escapePipe(env[k])} |`);
     return `## Environment\n\n| Field | Value |\n|-------|-------|\n${rows.join('\n')}`;
 }
 
 export function formatDevEnvSection(env: Record<string, string>): string {
     const keys = Object.keys(env);
     if (keys.length === 0) { return '## Development Environment\n\n*No dev environment data available.*'; }
-    const rows = keys.map(k => `| ${k} | ${env[k]} |`);
+    const rows = keys.map(k => `| ${escapePipe(k)} | ${escapePipe(env[k])} |`);
     return `## Development Environment\n\n| Field | Value |\n|-------|-------|\n${rows.join('\n')}`;
 }
 
@@ -66,7 +68,7 @@ export function formatCodeQualitySection(entries: readonly QualitySummaryEntry[]
     if (entries.length === 0) { return ''; }
     const rows = entries.map(e => {
         const cov = e.linePercent === undefined ? '—' : `${e.linePercent}%`;
-        return `| \`${escapePipe(e.filePath)}\` | ${cov} | ${e.lintWarnings} | ${e.lintErrors} |`;
+        return `| ${mdCodeSpan(e.filePath)} | ${cov} | ${e.lintWarnings} | ${e.lintErrors} |`;
     });
     return [
         '## Code Quality (referenced files)',
@@ -242,6 +244,23 @@ export function extractSectionData(data: BugReportData): SectionData {
 }
 
 export function escapePipe(text: string): string { return text.replaceAll('|', String.raw`\|`); }
+
+/**
+ * Wrap a value as a literal markdown inline code span. Code spans are
+ * verbatim in CommonMark/GFM — `escapePipe`'s inserted backslash would
+ * render literally rather than being processed, and a `|` inside a code
+ * span already can't break out of a table cell — so `escapePipe` must never
+ * be applied to text going into a code span. The fence is widened past the
+ * longest backtick run in the value instead, per the standard CommonMark
+ * technique, with padding if the value starts/ends with a backtick.
+ */
+function mdCodeSpan(text: string): string {
+    const flat = text.replace(/\r\n|\r|\n/g, ' ');
+    const longestBacktickRun = Math.max(0, ...(flat.match(/`+/g) ?? []).map(run => run.length));
+    const fence = '`'.repeat(longestBacktickRun + 1);
+    const needsPadding = flat === '' || flat.startsWith('`') || flat.endsWith('`');
+    return `${fence}${needsPadding ? ` ${flat} ` : flat}${fence}`;
+}
 
 export function formatFooter(filename: string, lineNumber: number): string {
     const origin = filename

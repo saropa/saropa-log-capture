@@ -36,11 +36,11 @@ cspell:disable
 - The Session Viewer's "first error" prompt could point at background Android system logcat noise (e.g. `E/SurfaceFlinger`, `E/libc`) instead of the app's own error, since any `E`/`F`/`A`-level logcat line counted as "first error" regardless of which process emitted it. It now prefers the first app-code (Flutter/Dart) error, only falling back to a `device-other` line when the log has no app-code error at all. The curated device-critical tags (`AndroidRuntime`, `ActivityManager`, `ART`, `lowmemorykiller`, …) are *not* demoted — a FATAL EXCEPTION or an ANR kill is exactly the line to jump to, the same rule screenshot capture already applies
 - The same prompt is trimmed from 5 buttons (Focus / Copy / Bookmark / Ignore / Dismiss) to 2 (Focus / Dismiss) — Copy, Bookmark, and Ignore for that line were already one right-click away in the viewer, so carrying them as separate toast buttons was redundant clutter
 - Hardened 20 CodeQL-flagged spots across markdown/HTML generation and CI: incomplete escaping in generated markdown and regexes, single-pass HTML tag stripping that overlapping tags could survive, an attribute-breakout gap in the flow-map panel's label escaping, a catastrophic-backtracking regex in log line analysis, and missing least-privilege `permissions:` on two CI jobs
+- Two bug-report table builders (`formatEnvironment`, `formatDevEnvSection`) were escaping neither key nor value; quick-export and code-quality report rows were escaping text meant for a markdown code span with the plain-cell escaper, which rendered literal backslashes instead of being processed — fixed with a code-span-aware escaper
 
 ### Internal
 
 - Re-pinned `@types/vscode` to `^1.105.0` to match the `engines.vscode` floor. A dependency bump had raised it to `^1.137.0`, which `verify:engine-types-match` (added in 9.4.1 for exactly this) rejects and `vsce` refuses to package — the same failure 9.4.1 fixed, reintroduced. Declaration only: the installed version is unchanged, since `^1.105.0` still resolves to 1.137.0
-
 
 ---
 
@@ -95,7 +95,6 @@ Fixed packaging failure and added a compile gate to prevent it recurring. [log](
 - Added `verify:engine-types-match` compile gate to catch `@types/vscode` vs `engines.vscode` mismatches before they reach the VSIX packaging step; supports `--fix` to auto-correct `package.json`
 - Added `pre-commit` git hook that runs the engine-types-match check when `package.json` is staged
 - Added advisory `verify:types-api-ceiling` script that warns when the installed `@types/vscode` version exposes APIs newer than `engines.vscode` — does not block the build, surfaces the gap for manual review
-
 
 ---
 
@@ -196,7 +195,6 @@ Massive stability and security sweep — dozens of long-standing bugs squashed, 
 - Fixed publish script hanging at `vsce login` overwrite prompt on Windows — `logout` first so the PAT prompt appears directly without the interactive y/N confirmation that stdin can't reach through the cmd.exe → npx chain; added `VSCE_PAT` env / `.env` support to bypass interactive login entirely (mirrors `OVSX_PAT`)
 
 
-
 ---
 
 ## [9.3.12]
@@ -232,7 +230,6 @@ Three flow-map regressions from 9.3.10 are fixed: diagram zoom (wheel and every 
 ### Internal
 
 - A developer-only self-check runs at activation, re-verifying the flow map's five generated webview scripts are valid JavaScript and logging a warning to the "Saropa Log Capture" output channel if one isn't — the same check the test suite runs, but against the actual build, so a bug like the v9.3.10 zoom regression is visible without a live debugging session first
-
 
 ---
 
@@ -270,7 +267,6 @@ Flow map diagrams can now be rearranged by hand or laid out along a time axis, e
 - l10n: registered "Zoom"/"Commit"/"File"/"Debug {0}" as verified-identical for the locales already manually confirmed, stopping the deterministic translation-engine errors that recurred on every run
 - l10n: translation audit/coverage tables no longer use red for gap and quality-signal counts — red is reserved for actual runtime errors
 - New advisory `verify:changelog-maintenance` script flags CHANGELOG bullets that read as internal tooling (l10n pipeline, design-token migrations, compile gates, file splits) but sit outside a Maintenance block; heuristic keyword match, not wired into `npm run compile`
-
 
 ---
 
@@ -315,13 +311,11 @@ Introduces a new Diagnose Screenshot Capture command, smart near-duplicate scree
 
 - New `verify:acronym-coverage` compile gate asserts every acronym-only source string in `strings-*.ts` is registered in `ACRONYM_ONLY_STRINGS`; includes minimum-count assertion and overlap check between the acronym set and the uppercase-words exclusion list
 
-
 ---
 
 ## [9.3.8]
 
 Introduces quality-of-life improvements to the Logs panel by collapsing older logs and simplifying severity counts to reduce visual clutter. Trouble Mode also gains an auto-activation setting, customizable severity filters, and a new quick-jump button to locate initial errors faster. The flow map now reads like a storyboard — captured screenshots appear on the diagram cards themselves, and any screenshot opens full size in a lightbox. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.8/CHANGELOG.md)
-
 
 ### Added
 
@@ -360,7 +354,6 @@ Introduces quality-of-life improvements to the Logs panel by collapsing older lo
 - New `verify:trouble-levels` compile gate asserts `package.json` enum/default match the shared constants AND every valid level has a matching chart legend l10n key
 - First-error scan extracted to `viewer-trouble-chart-first-error.ts` (chart file was over the 300-line limit)
 
-
 ---
 
 ## [9.3.7]
@@ -393,7 +386,6 @@ Flutter profile mode now captures screenshots on crash, alongside inline log ima
 - Audit auto-suppresses EN-COPY entries with manual provenance (no code change needed for true cognates)
 - l10n key verification now catches dynamic key families via four layers: literal keys, `@l10n-expand` JSDoc tags (cross-file, paren-balanced arg parsing, escape-aware, multi-line tags), `@l10n-family` catalog annotations, and a template-pattern fallback — a missing suffix in any family fails the compile gate; out-of-bounds arg indices emit ERROR (stale tag), non-literal args emit WARN
 
-
 ---
 
 ## [9.3.6]
@@ -413,7 +405,6 @@ Non-english language translations have been upgraded to a higher-quality offline
 - Stale Google/NLLB references replaced with engine-agnostic wording across pipeline modules
 - Sentinel format comment corrected from "7 chars" to "8 chars"
 - Dead imports removed from quality audit module
-
 
 ---
 
@@ -509,35 +500,6 @@ Automatic screenshots now capture your Flutter app the exact moment an error str
 - Migrated hardcoded `padding`, `margin`, and `gap` values to spacing tokens (`--space-1` through `--space-7`) across 59 style files — single-value, two-value, and three-value declarations that map to the 4 px scale
 - Replaced ~750 raw `--vscode-*` CSS variable references with semantic design tokens across 68 style files: surfaces (`--surface-1/2/3`, `--inset`), text (`--text`, `--muted`, `--link`), borders (`--border`), and status accents (`--accent-critical/warning/info`); collapsed redundant fallback chains where the raw variable already resolves through its token
 - Fixed 6 test failures caused by the design token migration: updated CSS assertions to match semantic tokens instead of raw `--vscode-*` variables (including the ghost-pixel opaque background guard), fixed signal kind badge exhaustiveness check for hyphenated keys (`slow-op`), and registered dynamically created screenshot element IDs in the wiring test
-
-
----
-
-## [9.3.2]
-
-Android platform spam that used to flood log files (200k+ junk lines per session) is now suppressed at capture time, and you can add your own spam patterns in settings. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.2/CHANGELOG.md)
-
-### Added
-
-- New `saropaLogCapture.spamPatterns` setting — define custom spam patterns as comma-separated substring lists; lines matching all substrings in any pattern are suppressed at capture time alongside the built-in patterns
-
-### Fixed
-
-- Suppress BLASTBufferQueue `acquireNextBufferLocked` spam at capture time — consecutive lines matching known high-frequency Android platform patterns are replaced by a single summary line with count and time range, instead of writing hundreds of thousands of junk lines to log files
-
----
-
-## [9.3.1]
-
-Severity count pills now read the same everywhere: each pill shows its level letter and count together (E, W, I, …), and the sidebar Logs list gains those letters too, so a glance tells you the level without decoding colors. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.1/CHANGELOG.md)
-
-### Changed
-
-- Log-viewer toolbar level pills now carry the prefix letter INSIDE the count pill instead of as a separate level-colored chip beside it; the letter inherits the pill's contrasting foreground so letter and number are the same color.
-- Removed the small leading color dot beside each toolbar level pill — the pill itself carries the level color and letter, so the dot was pure duplication (matching the sidebar Logs pills). The whole pill remains the click target and dims when its level is filtered out.
-- The severity pill palette is now defined once as shared `--sev-*` design tokens and consumed by the toolbar pills, the sidebar Logs pills, and the minimap severity ticks — so the three can no longer drift apart. As part of this, the sidebar Logs pills for **warning, debug, todo, and performance** now match the toolbar's colors exactly (they had quietly diverged), so a log reads the same color in the list and when open.
-- Toolbar level pills no longer briefly flash as letter-only chips before the first counts arrive.
-- Sidebar Logs session-history count pills now include the category prefix letter (E/W/I/P/T/N/D/DB/FW/O) and use a slightly smaller font so the letter plus count fit without widening the row.
 
 ---
 

@@ -27,7 +27,10 @@ const classMethodPattern = /\b([A-Z][a-zA-Z\d]+\.[a-z]\w+)\b/g;
 // like a long run of alternating-case characters with no trailing word boundary. With
 // the tail restricted to lowercase/digits, each iteration boundary is forced at the
 // next uppercase letter, so there is exactly one way to partition any match — linear time.
-const camelMethodFallback = /\b([a-z][a-z0-9]*(?:[A-Z][a-z0-9]*){1,})\b/g;
+// The leading segment keeps its "+" (≥2 chars) so the "≥2 word segments" rule above still
+// holds: with "*" a bare "aB"/"iOS" would start matching, which the ReDoS fix never needed
+// to change (the ambiguity is entirely in the repeated group's tail, not the lead-in).
+const camelMethodFallback = /\b([a-z][a-z0-9]+(?:[A-Z][a-z0-9]*){1,})\b/g;
 const pascalClassFallback = /\b([A-Z][a-z0-9]+(?:[A-Z][a-z0-9]+){1,})\b/g;
 
 /** Extract all meaningful tokens from a log line, ordered by relevance. */

@@ -33,6 +33,13 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      # gitleaks-action@v2 is not read-only on pull_request runs: it calls
+      # GET /repos/{owner}/{repo}/pulls/{n}/commits to derive the scan range
+      # (unguarded — a 403 there fails the whole job) and, unless
+      # GITLEAKS_ENABLE_COMMENTS=false, posts a review comment per finding via
+      # pulls.createReviewComment. Both need the pull-requests scope, which
+      # declaring `permissions:` at all would otherwise set to `none`.
+      pull-requests: write
     steps:
       - uses: actions/checkout@v6
         with:

@@ -48,7 +48,8 @@ suite('drift-viewer-health', () => {
 
     const r = await fetchDriftViewerHealth('http://127.0.0.1:8642');
     assert.strictEqual(r.ok, false);
-    assert.ok(r.error?.includes('503'), r.error);
+    assert.ok(r.error);
+    assert.ok(r.error.includes('503'), r.error);
   });
 
   test('fetchDriftViewerHealth returns ok false on network failure', async () => {
@@ -58,6 +59,7 @@ suite('drift-viewer-health', () => {
 
     const r = await fetchDriftViewerHealth('http://127.0.0.1:9');
     assert.strictEqual(r.ok, false);
-    assert.ok(r.error?.includes('ECONNREFUSED'), r.error);
+    assert.ok(r.error);
+    assert.ok(r.error.includes('ECONNREFUSED'), r.error);
   });
 });

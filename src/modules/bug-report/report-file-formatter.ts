@@ -77,10 +77,13 @@ function formatSessionInfo(data: ReportFileData): string {
     // Escape backslash first so it can't be combined with the inserted `\|`
     // to forge a fake escape sequence, then escape the pipe (table cell
     // delimiter) and flatten newlines that would otherwise terminate the row.
-    const rows = keys.map(k => `| ${k} | ${env[k]
+    // Applied to the KEY as well: both halves come from collected session /
+    // environment data, so a field name breaks the row exactly like a value.
+    const cell = (s: string): string => s
         .replace(/\\/g, '\\\\')
         .replace(/\|/g, '\\|')
-        .replace(/\r\n|\r|\n/g, ' ')} |`);
+        .replace(/\r\n|\r|\n/g, ' ');
+    const rows = keys.map(k => `| ${cell(k)} | ${cell(env[k])} |`);
     return [
         '## Part 2: Session Information',
         '| Field | Value |\n|-------|-------|\n' + rows.join('\n'),
