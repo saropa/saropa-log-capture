@@ -580,7 +580,6 @@ verified only at the generated-markup level.
 windows; the interactive possible-vs-walked overlay toggle; the 30-node layout/perf check. Plan stays
 active.
 
-
 ---
 
 ## Finish Report (2026-08-08) — S2: by-time arrangement, SVG export, and hardening
@@ -684,7 +683,6 @@ Chromium are all verified only at the generated-markup and fake-DOM level.
 **Outstanding (S2 still proposed):** unchanged from the round above — click-a-node log filtering,
 the possible-vs-walked overlay toggle, the 30-node layout/perf check.
 
-
 ---
 
 ## Finish Report (2026-08-08) — backlog closeout: esc() consolidation, builder split, dedup default, review hardening
@@ -778,7 +776,6 @@ a live capture session would surface.
 overlay toggle, the 30-node layout/perf check. No open backlog items remain from this session's
 handover chain.
 
-
 ---
 
 ## Finish Report (2026-08-09) — reflection hardening and a first-activation notice
@@ -845,7 +842,6 @@ report; not re-litigated a second time since it is that session's file to resolv
 **Outstanding (S2 still proposed):** unchanged — click-a-node log filtering, the possible-vs-walked
 overlay toggle, the 30-node layout/perf check. No open backlog items remain from this session's
 handover chain.
-
 
 ---
 

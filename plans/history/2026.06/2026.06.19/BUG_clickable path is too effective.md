@@ -12,7 +12,6 @@ D:\src\saropa-log-capture\bugs\BUG_clickable path is too effective.png
 d:\src\contacts\reports\20260616\20260616_091310_contacts.log
 
 
-
 ---
 
 [
