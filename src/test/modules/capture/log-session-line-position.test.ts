@@ -155,6 +155,57 @@ test('a throwing observer costs its own notification, not the queue', async () =
     assert.ok(lines.some((l) => l.includes('after poison')), 'and so is everything behind it');
 });
 
+test('a line the stream could not take reports no position at all', async () => {
+    // A line whose write is refused must stay silent. Reporting it anyway would announce a line to
+    // the viewer that the saved file does not contain — the exact disagreement this reporting
+    // exists to prevent, reintroduced from the other direction.
+    const session = await startSession();
+    const reported: string[] = [];
+
+    // The window is narrow and only reachable mid-drain: `appendLine` refuses outright once the
+    // stream is gone, and the queue loop stops at its own guard — so the stream has to die while a
+    // line is already in flight, which is what a disk error during a split does (the permanent
+    // error handler nulls the stream from under the write). Patched here rather than raced,
+    // because the whole point is that this must hold every time, not most of the time.
+    const internals = session as unknown as {
+        splitBeforeNextLineIfNeeded: (text: string) => Promise<void>;
+        writeStream: unknown;
+    };
+    const realSplitCheck = internals.splitBeforeNextLineIfNeeded.bind(session);
+    let checks = 0;
+    internals.splitBeforeNextLineIfNeeded = async (text: string) => {
+        await realSplitCheck(text);
+        if (++checks === 3) { internals.writeStream = undefined; }
+    };
+
+    for (let i = 0; i < 6; i++) {
+        session.appendLine(`line ${i}`, 'stdout', new Date(), { onWritten: () => reported.push(`line ${i}`) });
+    }
+    await new Promise((resolve) => setTimeout(resolve, 40));
+
+    const lines = await readPartLines(session, 0);
+    assert.ok(reported.length > 0, 'the lines written before the failure must still report');
+    assert.ok(reported.length < 6, 'the test must actually have killed the stream mid-drain');
+    for (const text of reported) {
+        assert.ok(lines.some((l) => l.includes(text)), `"${text}" was reported but never reached the file`);
+    }
+});
+
+test('a multi-line block anchors to its first line, not its last', async () => {
+    // A single DAP output event can carry a whole stack trace; anchoring to `after` would send
+    // "Open Log" to the last frame instead of to where the error starts.
+    const session = await startSession();
+    let position: WritePosition | undefined;
+    const trace = 'Exception: boom\n  at first()\n  at second()';
+    session.appendLine(trace, 'stderr', new Date(), { onWritten: (p) => { position = p; } });
+    await session.stop();
+
+    assert.ok(position);
+    const lines = await readPartLines(session, 0);
+    assert.ok(lines[position.before].includes('Exception: boom'), 'before + 1 is the first line of the block');
+    assert.ok(position.after > position.before + 1, 'and the block really does span several lines');
+});
+
 test('a line is reported once, not once per observer call', async () => {
     const session = await startSession();
     let calls = 0;
