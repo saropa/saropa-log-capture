@@ -250,3 +250,6 @@ suite. Everything it wraps is now pinned.
 ## Commits
 
 <!-- Add commit hashes as implementation lands -->
+- `0789938` feat(api): add run-scoped signal correlation API (PLAN 119)
+- `5cff3ab` test(api): pin the getSignalDelta window/boundary math with node:test
+- `2d6ee99` fix(api): correct getSignalDelta marker boundary, diff semantics and read bounds
