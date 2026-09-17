@@ -1,6 +1,6 @@
 # PLAN 119 — Run-Scoped Signal Correlation API
 
-**Status: In Progress**
+**Status: Closed**
 
 <!-- Status values: Open → Accepted → In Progress → Closed -->
 
@@ -249,7 +249,10 @@ suite. Everything it wraps is now pinned.
 
 ## Commits
 
-<!-- Add commit hashes as implementation lands -->
-- `0789938` feat(api): add run-scoped signal correlation API (PLAN 119)
-- `5cff3ab` test(api): pin the getSignalDelta window/boundary math with node:test
-- `2d6ee99` fix(api): correct getSignalDelta marker boundary, diff semantics and read bounds
+- `3a45545` feat(api): add run-scoped signal correlation API (PLAN 119)
+- `84dc362` test(api): pin the getSignalDelta window/boundary math with node:test
+- `896fb40` fix(api): correct getSignalDelta marker boundary, diff semantics and read bounds
+- `c6f6d10` docs(plan): record PLAN 119 commit hashes
+- `2bce947` docs(changelog): add missing intro line to Unreleased section
+- `60c12e9` release: v9.5.0
+- `913f163` feat(api): add run-scoped signal correlation API (PLAN 119) (#87) — merged to `main`

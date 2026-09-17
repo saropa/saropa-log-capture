@@ -25,13 +25,31 @@ cspell:disable
 
 ---
 
+## [9.5.1]
+
+"Open Log" from an error notification, and the log position screenshots are pinned to, now land on the right line even while the app is logging heavily. [log](https://github.com/saropa/saropa-log-capture/blob/v9.5.1/CHANGELOG.md)
+
+### Fixed
+
+- The log line number carried to "Open Log" in the error snackbar and to screenshot capture's flow-map position was read immediately after `appendLine`, which only *enqueues* the write. Under any queue backlog it pointed earlier in the file than the line actually was, and across a file split it named the part the line had already rotated out of — the same drift that once attached screenshots to the wrong screen, which `physicalLineCount` was introduced to eliminate. The position is now reported from inside the write queue, once the line has really reached the file
+- A captured line is no longer announced to the viewer until it has been written, so a line dropped because the write stream died, the session was cleared, or capture was paused before the queue reached it can no longer appear in the viewer while being absent from the saved file (extends bug_011's viewer/file agreement from the pause flag to the write queue)
+
+<details>
+<summary>Maintenance</summary>
+
+- Re-pinned `@types/vscode` to `^1.105.0` to match the `engines.vscode` floor. A dependency bump had raised it to `^1.137.0`, which `verify:engine-types-match` (added in 9.4.1 for exactly this) rejects and `vsce` refuses to package — the same failure 9.4.1 fixed, reintroduced. Declaration only: the installed version is unchanged, since `^1.105.0` still resolves to 1.137.0
+
+</details>
+
+---
+
 ## [9.5.0]
 
 A sibling extension can now bracket a command run with two log markers and ask what errors, warnings, or performance signals changed in between. [log](https://github.com/saropa/saropa-log-capture/blob/v9.5.0/CHANGELOG.md)
 
 ### Added
 
-- PLAN 119: `insertMarker()` now returns an opaque marker id (`string | undefined`) instead of `void`. Added `getSignalDelta(sinceMarkerId, untilMarkerId?)` to the public API so a sibling extension (e.g. Saropa Workspace's command catalog) can bracket a command run with two markers and ask what error/warning/perf signals newly appeared or stopped recurring in that window, without duplicating Log Capture's own signal detection (`bugs/119_plan-run-scoped-signal-correlation-api.md`)
+- PLAN 119: `insertMarker()` now returns an opaque marker id (`string | undefined`) instead of `void`. Added `getSignalDelta(sinceMarkerId, untilMarkerId?)` to the public API so a sibling extension (e.g. Saropa Workspace's command catalog) can bracket a command run with two markers and ask what error/warning/perf signals newly appeared or stopped recurring in that window, without duplicating Log Capture's own signal detection (`plans/history/2026.09/2026.09.17/119_plan-run-scoped-signal-correlation-api.md`)
 
 ### Changed
 
