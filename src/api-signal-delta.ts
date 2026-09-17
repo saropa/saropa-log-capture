@@ -1,5 +1,5 @@
 /**
- * Run-scoped signal correlation (PLAN 119 / bugs/119_plan-run-scoped-signal-correlation-api.md).
+ * Run-scoped signal correlation (PLAN 119 / plans/history/2026.09/2026.09.17/119_plan-run-scoped-signal-correlation-api.md).
  *
  * Backs {@link SaropaLogCaptureApi.getSignalDelta}. Unlike {@link getDailySummary}, this cannot
  * read from persisted `.session-metadata.json` fingerprints — those are only written when a
