@@ -2,6 +2,7 @@ import * as assert from 'node:assert';
 import test from 'node:test';
 import {
   classifySibling,
+  workspaceUsesDrift,
   type MirrorSnapshot,
 } from '../../../modules/diagnostics/suite-connection-classify';
 
@@ -52,4 +53,20 @@ test('classifySibling: present mirror with zero findings is connected (shared, n
   const empty: MirrorSnapshot = { findingCount: 0, capturedCommit: 'abc123' };
   const c = classifySibling('lints', true, empty, 'abc123');
   assert.strictEqual(c.state, 'connected');
+});
+
+test('workspaceUsesDrift: no drift-related dependency → false', () => {
+  assert.strictEqual(workspaceUsesDrift(new Set(['flutter', 'http'])), false);
+});
+
+test('workspaceUsesDrift: drift dependency → true', () => {
+  assert.strictEqual(workspaceUsesDrift(new Set(['flutter', 'drift'])), true);
+});
+
+test('workspaceUsesDrift: saropa_drift_advisor dependency → true', () => {
+  assert.strictEqual(workspaceUsesDrift(new Set(['saropa_drift_advisor'])), true);
+});
+
+test('workspaceUsesDrift: empty dependency set → false', () => {
+  assert.strictEqual(workspaceUsesDrift(new Set()), false);
 });
