@@ -1,6 +1,6 @@
 # Bug 047 — Suite silent-sibling check nags about Drift Advisor in workspaces that don't use Drift
 
-## Status: Fixed (pending review)
+## Status: Closed
 
 <!-- Status values: Open → Investigating → Fix Ready → Fixed (pending review) → Closed -->
 
