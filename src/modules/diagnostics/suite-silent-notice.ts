@@ -6,9 +6,10 @@
  * the tool emit (self-wiring: call its refresh command where one exists), and only if it is still
  * silent tells the user, once, with the concrete next action it cannot perform for them.
  *
- * Gated per (tool, cause) in globalState so it never nags; a changed cause re-arms it. Evidence-based
- * by construction: a tool that is not installed is never mentioned, so this only speaks about lenses
- * the user already opted into.
+ * Gated per (tool, cause) in workspaceState so it never nags in a given workspace but still speaks up
+ * in a different one; a changed cause re-arms it. Evidence-based by construction: a tool that is not
+ * installed, or that this workspace could never produce data for (e.g. Advisor with no Drift
+ * dependency), is never mentioned, so this only speaks about lenses the user already opted into.
  */
 
 import * as vscode from 'vscode';
@@ -37,7 +38,7 @@ const REFRESH_COMMAND: Partial<Readonly<Record<SiblingTool, string>>> = {
   advisor: 'driftViewer.writeDiagnosticsMirror',
 };
 
-/** globalState key for the once-gate, keyed by tool AND cause so a new cause re-notifies. */
+/** workspaceState key for the once-gate, keyed by tool AND cause so a new cause re-notifies. */
 function silentNoticeKey(c: SiblingConnection): string {
   return `slc.suiteSilentNotice.${c.tool}.${c.cause ?? 'unknown'}`;
 }
@@ -66,7 +67,9 @@ async function tryRefreshSilent(silent: readonly SiblingConnection[]): Promise<b
     const command = REFRESH_COMMAND[c.tool];
     if (command && registered.has(command)) {
       try {
-        await vscode.commands.executeCommand(command);
+        // { silent: true } tells Advisor this is an automated self-wire, not a user-run command, so
+        // it skips its own toasts (e.g. "server not running") on older or newer Advisor builds alike.
+        await vscode.commands.executeCommand(command, { silent: true });
         ran = true;
       } catch {
         // Refresh is best-effort — e.g. Drift Advisor's server is not running, so it cannot write.
@@ -79,10 +82,10 @@ async function tryRefreshSilent(silent: readonly SiblingConnection[]): Promise<b
 /** Show the silent notice for one tool at most once per (tool, cause). */
 async function notifySilentOnce(context: vscode.ExtensionContext, c: SiblingConnection): Promise<void> {
   const key = silentNoticeKey(c);
-  if (context.globalState.get<boolean>(key)) {
+  if (context.workspaceState.get<boolean>(key)) {
     return;
   }
-  await context.globalState.update(key, true);
+  await context.workspaceState.update(key, true);
   void vscode.window.showInformationMessage(silentMessage(c));
 }
 
@@ -96,14 +99,14 @@ export async function maybeNotifySilentSiblings(context: vscode.ExtensionContext
     // Resolve HEAD so a mirror captured at a different commit is judged stale, not trusted as current.
     const folder = vscode.workspace.workspaceFolders?.[0];
     const currentCommit = folder ? await readWorkspaceHeadCommit(folder.uri) : undefined;
-    let connections = await readSuiteConnections(currentCommit);
+    let connections = await readSuiteConnections(currentCommit, folder?.uri);
     const silent = connections.filter((c) => c.state === 'silent');
     if (silent.length === 0) {
       return;
     }
     // Self-wire first: a tool we can refresh may stop being silent, sparing the user a notice.
     if (await tryRefreshSilent(silent)) {
-      connections = await readSuiteConnections(currentCommit);
+      connections = await readSuiteConnections(currentCommit, folder?.uri);
     }
     for (const c of connections) {
       if (c.state === 'silent') {
