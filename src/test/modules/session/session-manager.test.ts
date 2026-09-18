@@ -34,7 +34,15 @@ describe("SessionManagerImpl", () => {
     // state: 'recording' is required: bug_011's pause-check gate in processOutputEvent
     // treats any session.state !== 'recording' (including undefined) as paused and drops
     // the event before filtering/broadcast logic ever runs.
-    mgr["sessions"].set("test", { appendLine: () => {}, lineCount: 1, fileUri: { fsPath: "test.log" }, state: 'recording' } as any);
+    // appendLine must invoke onWritten synchronously: broadcastOnWrite only calls
+    // target.broadcastLine (which flips `captured`) from that write-time callback, not
+    // on the appendLine call itself — a no-op mock never fires the listener.
+    mgr["sessions"].set("test", {
+      appendLine: (_text: string, _category: string, _timestamp: Date, options?: { onWritten?: (position: { before: number; after: number }) => void }) => {
+        options?.onWritten?.({ before: 0, after: 1 });
+      },
+      lineCount: 1, fileUri: { fsPath: "test.log" }, state: 'recording',
+    } as any);
     mgr.onOutputEvent("test", { output: "foo", category: "system" });
     assert.ok(captured, "Output should be captured when captureAll is true");
   });
