@@ -62,10 +62,12 @@ On activation, `maybeNotifySilentSiblings` treats Drift Advisor as "installed bu
 - `maybeNotifySilentSiblings` (`src/modules/diagnostics/suite-silent-notice.ts`) now passes the first workspace folder's URI through to `readSuiteConnections` on both the initial read and the post-refresh re-read.
 - `tryRefreshSilent` now calls the refresh command with `{ silent: true }` so Advisor treats it as an automated self-wire, not a user-run command, and skips its own toasts.
 - The once-gate moved from `globalState` to `workspaceState`, so a notice already shown in one workspace no longer suppresses it in a different (e.g. genuinely Drift) workspace.
+- Review follow-up: `maybeNotifySilentSiblings` returns early when no workspace folder is open. The Drift check needs a root, so an empty window previously fell through to the mirror check, classified Advisor `silent`, ran the refresh and showed the notice. `tryRefreshSilent` and `notifySilentOnce` are exported for unit tests.
 
 ## Tests Added
 
 - `src/test/modules/diagnostics/suite-connection-status.test.ts`: added unit tests for `workspaceUsesDrift` — no Drift-related dependency → `false`; `drift` dependency → `true`; `saropa_drift_advisor` dependency → `true`; empty dependency set → `false`.
+- `src/test/modules/diagnostics/suite-silent-notice.test.ts` (Extension Development Host): Advisor is `notApplicable` for a non-Drift pubspec and for a missing pubspec, and still `silent` for a Drift `dev_dependencies` workspace with no mirror; no workspace folder → no refresh command and no notice; the refresh passes `{ silent: true }`; the once-gate writes `workspaceState` only and a fresh workspace is notified again.
 
 ## Commits
 

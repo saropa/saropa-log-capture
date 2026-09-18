@@ -37,6 +37,7 @@ cspell:disable
 - The same prompt is trimmed from 5 buttons (Focus / Copy / Bookmark / Ignore / Dismiss) to 2 (Focus / Dismiss) — Copy, Bookmark, and Ignore for that line were already one right-click away in the viewer, so carrying them as separate toast buttons was redundant clutter
 - Hardened 20 CodeQL-flagged spots across markdown/HTML generation and CI: incomplete escaping in generated markdown and regexes, single-pass HTML tag stripping that overlapping tags could survive, an attribute-breakout gap in the flow-map panel's label escaping, a catastrophic-backtracking regex in log line analysis, and missing least-privilege `permissions:` on two CI jobs
 - Two bug-report table builders (`formatEnvironment`, `formatDevEnvSection`) were escaping neither key nor value; quick-export and code-quality report rows were escaping text meant for a markdown code span with the plain-cell escaper, which rendered literal backslashes instead of being processed — fixed with a code-span-aware escaper
+- With Saropa Drift Advisor installed, opening a project that doesn't use Drift (or an empty window) no longer shows "Drift Advisor is installed but has not shared any data yet", and no longer triggers Advisor's "Could not write the diagnostics mirror" warning. When a real Drift project is missing Advisor's data, the notice is now shown once per workspace instead of once ever, so dismissing it in one project no longer hides it in the next (bug_047)
 
 ### Internal
 

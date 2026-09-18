@@ -59,8 +59,9 @@ function silentMessage(c: SiblingConnection): string {
  * Try the refresh command for each silent tool that exposes one. Returns true if any ran, so the
  * caller re-reads the connections (the tool may now be emitting). Best-effort: a refresh that
  * throws or whose command is unregistered is skipped, falling through to the guidance notice.
+ * Exported for unit tests.
  */
-async function tryRefreshSilent(silent: readonly SiblingConnection[]): Promise<boolean> {
+export async function tryRefreshSilent(silent: readonly SiblingConnection[]): Promise<boolean> {
   const registered = new Set(await vscode.commands.getCommands(true));
   let ran = false;
   for (const c of silent) {
@@ -79,8 +80,8 @@ async function tryRefreshSilent(silent: readonly SiblingConnection[]): Promise<b
   return ran;
 }
 
-/** Show the silent notice for one tool at most once per (tool, cause). */
-async function notifySilentOnce(context: vscode.ExtensionContext, c: SiblingConnection): Promise<void> {
+/** Show the silent notice for one tool at most once per (tool, cause). Exported for unit tests. */
+export async function notifySilentOnce(context: vscode.ExtensionContext, c: SiblingConnection): Promise<void> {
   const key = silentNoticeKey(c);
   if (context.workspaceState.get<boolean>(key)) {
     return;
@@ -98,15 +99,20 @@ export async function maybeNotifySilentSiblings(context: vscode.ExtensionContext
   try {
     // Resolve HEAD so a mirror captured at a different commit is judged stale, not trusted as current.
     const folder = vscode.workspace.workspaceFolders?.[0];
-    const currentCommit = folder ? await readWorkspaceHeadCommit(folder.uri) : undefined;
-    let connections = await readSuiteConnections(currentCommit, folder?.uri);
+    // No folder means no `.saropa/diagnostics` directory: neither sibling can ever share data here,
+    // so there is nothing to refresh and no guidance the user could act on (bug 047).
+    if (!folder) {
+      return;
+    }
+    const currentCommit = await readWorkspaceHeadCommit(folder.uri);
+    let connections = await readSuiteConnections(currentCommit, folder.uri);
     const silent = connections.filter((c) => c.state === 'silent');
     if (silent.length === 0) {
       return;
     }
     // Self-wire first: a tool we can refresh may stop being silent, sparing the user a notice.
     if (await tryRefreshSilent(silent)) {
-      connections = await readSuiteConnections(currentCommit, folder?.uri);
+      connections = await readSuiteConnections(currentCommit, folder.uri);
     }
     for (const c of connections) {
       if (c.state === 'silent') {
