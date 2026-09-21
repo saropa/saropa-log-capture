@@ -24,9 +24,16 @@ def check_node() -> bool:
     VS Code extensions require Node 18+ for the vsce packaging tool
     and for esbuild bundling.
     """
-    result = run(["node", "--version"], check=False)
-    if result.returncode != 0:
-        fail("Node.js is not installed. Install from https://nodejs.org/")
+    try:
+        result = run(["node", "--version"], check=False)
+    except OSError:
+        result = None
+    if result is None or result.returncode != 0:
+        fail("Node.js was not found on PATH or in common install locations.")
+        info(f"  PATH searched: {C.WHITE}{os.environ.get('PATH', '')}{C.RESET}")
+        info(f"  Install from {C.WHITE}https://nodejs.org/{C.RESET} "
+             f"(macOS: {C.YELLOW}brew install node{C.RESET}), or run this script from a shell where "
+             f"{C.YELLOW}node --version{C.RESET} works.")
         return False
     # node --version returns "vXX.YY.ZZ", strip the leading "v"
     version = result.stdout.strip().lstrip("v")
@@ -44,8 +51,11 @@ def check_npm() -> bool:
     npm ships with Node.js, so a missing npm usually means a broken
     Node installation rather than a separate install step.
     """
-    result = run(["npm", "--version"], check=False)
-    if result.returncode != 0:
+    try:
+        result = run(["npm", "--version"], check=False)
+    except OSError:
+        result = None
+    if result is None or result.returncode != 0:
         fail("npm is not installed. It ships with Node.js — reinstall Node.")
         return False
     ok(f"npm {C.WHITE}{result.stdout.strip()}{C.RESET}")

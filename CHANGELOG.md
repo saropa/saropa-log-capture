@@ -48,6 +48,7 @@ cspell:disable
 ### Internal
 
 - Re-pinned `@types/vscode` to `^1.105.0` to match the `engines.vscode` floor. A dependency bump had raised it to `^1.137.0`, which `verify:engine-types-match` (added in 9.4.1 for exactly this) rejects and `vsce` refuses to package — the same failure 9.4.1 fixed, reintroduced. Declaration only: the installed version is unchanged, since `^1.105.0` still resolves to 1.137.0
+- `scripts/publish.py` prerequisites no longer report Node.js as missing when it is installed but not visible: well-known install dirs (Homebrew, `/usr/local`, nvm, fnm, Volta, asdf, mise, Windows Node dirs) are appended to `PATH`, and a broken `node` earlier on `PATH` (e.g. a Homebrew build with missing dylibs) is skipped in favour of the first one that runs. The failure message now shows the searched `PATH` and an install hint
 
 ---
 

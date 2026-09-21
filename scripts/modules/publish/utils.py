@@ -11,6 +11,85 @@ import time
 from modules.publish.constants import MARKETPLACE_EXTENSION_ID, PROJECT_ROOT
 
 
+def _extra_tool_dirs() -> list[str]:
+    """Return existing directories where Node/npm/git/gh commonly live.
+
+    GUI-launched processes (VS Code "Run", Finder, launchd) get a minimal PATH
+    that omits Homebrew and version-manager shims, so a working Node install
+    looks "not installed". Probing well-known locations fixes that without
+    requiring the user to edit shell profiles.
+    """
+    home = os.path.expanduser("~")
+    cands: list[str] = []
+    if sys.platform == "win32":
+        for var in ("ProgramFiles", "ProgramFiles(x86)", "LOCALAPPDATA", "APPDATA"):
+            base = os.environ.get(var)
+            if base:
+                cands += [os.path.join(base, "nodejs"), os.path.join(base, "Programs", "nodejs")]
+        cands += [os.path.join(os.environ.get("APPDATA", ""), "npm"),
+                  os.path.join(home, ".volta", "bin")]
+    else:
+        cands += ["/opt/homebrew/bin", "/opt/homebrew/sbin", "/usr/local/bin",
+                  "/usr/local/sbin", "/usr/bin", "/bin", "/snap/bin",
+                  "/usr/local/opt/node/bin", "/opt/homebrew/opt/node/bin",
+                  os.path.join(home, ".volta", "bin"),
+                  os.path.join(home, ".asdf", "shims"),
+                  os.path.join(home, ".local", "share", "mise", "shims"),
+                  os.path.join(home, ".local", "share", "fnm", "aliases", "default", "bin"),
+                  os.path.join(home, "Library", "Application Support", "fnm", "aliases", "default", "bin"),
+                  os.path.join(home, ".local", "bin"),
+                  os.path.join(home, ".npm-global", "bin")]
+        # nvm keeps one dir per version; prefer the newest installed.
+        nvm_root = os.environ.get("NVM_DIR") or os.path.join(home, ".nvm")
+        versions = os.path.join(nvm_root, "versions", "node")
+        if os.path.isdir(versions):
+            for v in sorted(os.listdir(versions), reverse=True):
+                cands.append(os.path.join(versions, v, "bin"))
+    return [d for d in cands if d and os.path.isdir(d)]
+
+
+def ensure_tool_paths() -> None:
+    """Append missing well-known tool dirs to os.environ['PATH'] (idempotent).
+
+    Appended, not prepended, so anything already on PATH keeps precedence.
+    """
+    parts = os.environ.get("PATH", "").split(os.pathsep)
+    add = [d for d in _extra_tool_dirs() if d not in parts]
+    if add:
+        os.environ["PATH"] = os.pathsep.join([p for p in parts if p] + add)
+
+
+def prefer_working_node() -> str | None:
+    """Ensure the first `node` on PATH actually runs; return its dir if it was changed.
+
+    A stale install (e.g. a Homebrew node whose dylibs were removed) can shadow
+    a healthy one and exit non-zero, which reads as "not installed". Probe every
+    node on PATH and move the first one that executes to the front.
+    """
+    exe = "node.exe" if sys.platform == "win32" else "node"
+    parts = [p for p in os.environ.get("PATH", "").split(os.pathsep) if p]
+    for d in parts:
+        cand = os.path.join(d, exe)
+        if not os.path.isfile(cand):
+            continue
+        try:
+            r = subprocess.run([cand, "--version"], capture_output=True, text=True,
+                               timeout=10, stdin=subprocess.DEVNULL)
+        except (OSError, subprocess.SubprocessError):
+            continue
+        if r.returncode != 0:
+            continue
+        if parts[0] == d:
+            return None
+        os.environ["PATH"] = os.pathsep.join([d] + [p for p in parts if p != d])
+        return d
+    return None
+
+
+ensure_tool_paths()
+prefer_working_node()
+
+
 def run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess[str]:
     """Run a shell command and return the result.
 
