@@ -2893,6 +2893,12 @@
           "type": "string",
           "title": "%config.loki.pushUrl.title%"
         },
+        "saropaLogCapture.export.redactSensitiveData": {
+          "default": true,
+          "description": "%config.export.redactSensitiveData.description%",
+          "type": "boolean",
+          "title": "%config.export.redactSensitiveData.title%"
+        },
         "saropaLogCapture.redactEnvVars": {
           "default": [],
           "description": "%config.redactEnvVars.description%",

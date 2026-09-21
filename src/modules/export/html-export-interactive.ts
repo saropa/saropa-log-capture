@@ -20,6 +20,7 @@
 
 import * as vscode from 'vscode';
 import { ansiToHtml, escapeHtml } from '../capture/ansi';
+import { redactForExport } from './export-redaction';
 import { SessionMetadataStore } from '../session/session-metadata';
 import { isPlainTextBlankAfterAnsi } from '../misc/blank-line-text';
 import { getInteractiveStyles } from './html-export-styles';
@@ -53,7 +54,7 @@ interface ParsedLine {
  */
 export async function exportToInteractiveHtml(logUri: vscode.Uri): Promise<vscode.Uri> {
     const raw = await vscode.workspace.fs.readFile(logUri);
-    const text = Buffer.from(raw).toString('utf-8');
+    const text = redactForExport(Buffer.from(raw).toString('utf-8'));
     const lines = text.split('\n');
 
     const { headerLines, bodyLines } = splitHeader(lines);
@@ -61,7 +62,7 @@ export async function exportToInteractiveHtml(logUri: vscode.Uri): Promise<vscod
 
     const store = new SessionMetadataStore();
     const annotations = await store.getAnnotations(logUri);
-    const annotationMap = new Map(annotations.map(a => [a.lineIndex, a.text]));
+    const annotationMap = new Map(annotations.map(a => [a.lineIndex, redactForExport(a.text)]));
 
     const parsed = parseLines(bodyLines);
     const categories = extractCategories(parsed);

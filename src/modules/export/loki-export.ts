@@ -6,6 +6,7 @@
 import * as vscode from 'vscode';
 import type { IntegrationLokiConfig } from '../config/config';
 import type { SessionMetadataStore } from '../session/session-metadata';
+import { redactForExport } from './export-redaction';
 
 const LOKI_SECRET_KEY = 'saropaLogCapture.loki.bearerToken';
 const JOB_LABEL = 'saropa-log-capture';
@@ -61,7 +62,7 @@ async function buildLokiPayload(
         vscode.workspace.fs.readFile(logUri),
         vscode.workspace.fs.stat(logUri),
     ]);
-    const text = Buffer.from(raw).toString('utf-8');
+    const text = redactForExport(Buffer.from(raw).toString('utf-8'));
     // Keep all lines including empty ones so log structure is preserved in Loki.
     const lines = text.split(/\r?\n/).filter(line => line.length > 0 || line === '');
     // Loki timestamp: nanoseconds as string (FileStat.mtime is ms since epoch)

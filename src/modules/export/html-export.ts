@@ -4,6 +4,7 @@ import { SessionMetadataStore } from '../session/session-metadata';
 import { isPlainTextBlankAfterAnsi } from '../misc/blank-line-text';
 import { getSimpleHtmlExportStyles } from './html-export-styles';
 import { getStandaloneFallbackPalette } from './html-export-fallback-palette';
+import { redactForExport } from './export-redaction';
 
 /**
  * Export a .log file to a styled .html file alongside it.
@@ -12,7 +13,7 @@ import { getStandaloneFallbackPalette } from './html-export-fallback-palette';
  */
 export async function exportToHtml(logUri: vscode.Uri): Promise<vscode.Uri> {
     const raw = await vscode.workspace.fs.readFile(logUri);
-    const text = Buffer.from(raw).toString('utf-8');
+    const text = redactForExport(Buffer.from(raw).toString('utf-8'));
     const lines = text.split('\n');
 
     const { headerLines, bodyLines } = splitHeader(lines);
@@ -20,7 +21,7 @@ export async function exportToHtml(logUri: vscode.Uri): Promise<vscode.Uri> {
 
     const store = new SessionMetadataStore();
     const annotations = await store.getAnnotations(logUri);
-    const annotationMap = new Map(annotations.map(a => [a.lineIndex, a.text]));
+    const annotationMap = new Map(annotations.map(a => [a.lineIndex, redactForExport(a.text)]));
     const bodyHtml = buildBodyWithAnnotations(bodyLines, annotationMap);
 
     const htmlPath = logUri.fsPath.replace(/\.log$/, '.html');

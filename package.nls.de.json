@@ -405,6 +405,8 @@
   "config.projectIndex.maxFilesPerSource.title": "Maximum number of files to index per source directory.",
   "config.projectIndex.refreshInterval.title": "Seconds between automatic index refreshes.",
   "config.projectIndex.sources.title": "Directories to index for project knowledge.",
+  "config.export.redactSensitiveData.description": "Redact bearer tokens, Authorization headers, query-string secrets and user-home paths from HTML, CSV, JSON, JSONL and Loki exports.",
+  "config.export.redactSensitiveData.title": "Redact sensitive data in exports.",
   "config.redactEnvVars.description": "Muster für Umgebungsvariablennamen, die in Kontextheadern geschwärzt werden sollen. Unterstützt *-Platzhalter (z. B. API_KEY, SECRET_*).",
   "config.redactEnvVars.title": "Environment variable name patterns to redact from context headers.",
   "config.reloadOnExternalChange.description": "When the open log file is rewritten, truncated, or deleted on disk by another process, reload it into the viewer instead of showing stale content. Live append-growth is always followed regardless of this setting.",

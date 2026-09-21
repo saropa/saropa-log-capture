@@ -9,7 +9,10 @@
 // \s* sits OUTSIDE the alternation (not just on the Authorization branch) — "Bearer" is always
 // followed by a space before the token in real headers, so without it \S+ can never match
 // adjacent to the bare "Bearer" literal and the whole alternative silently never fires.
-const BEARER_AUTH_RE = /(Bearer|Authorization:?)\s*\S+/gi;
+// bug_048: "Authorization: Bearer <token>" is the common real-world form — Authorization must
+// also swallow an optional "Bearer" scheme word, otherwise \S+ consumes only "Bearer" and the
+// actual token is left in the output.
+const BEARER_AUTH_RE = /(Bearer|Authorization:?(?:\s+Bearer)?)\s*\S+/gi;
 
 // Windows user-profile paths — both backslash form (C:\Users\craig\...) and forward-slash form
 // (C:/Users/craig/..., as produced by vscode://file/ URIs whose path segments always use "/" —

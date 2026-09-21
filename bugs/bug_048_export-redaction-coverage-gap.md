@@ -1,6 +1,6 @@
 # Bug 048 — Sensitive-data redaction is not applied to HTML/CSV/JSON/Loki export paths
 
-## Status: Open
+## Status: Fixed (pending review)
 
 <!-- Status values: Open → Investigating → Fix Ready → Fixed (pending review) → Closed -->
 
@@ -71,9 +71,13 @@ redaction step — each formatter independently serializes line content.
 
 ## Changes Made
 
-<!-- Fill in when a fix is written. -->
+- New `src/modules/export/export-redaction.ts`: `redactForExport()` wraps `redactSensitiveContent()`, gated by new setting `saropaLogCapture.export.redactSensitiveData` (default on; `package.json` + all `package.nls*.json`).
+- Applied right after the log is read (and to annotations) in `export-formats.ts` (CSV/JSON/JSONL), `html-export.ts`, `html-export-interactive.ts`, and `loki-export.ts` (payload content; the outbound Authorization header is untouched).
+- Not done: README/CHANGELOG note.
 
 ## Tests Added
+
+Pending: exporters need the VS Code API, so the pattern coverage is tested in `src/test/modules/export/export-redaction.test.ts` against the shared function only.
 
 <!-- Regression test: seed a line matching each of the three redact.ts patterns
      (bearer/auth header, path with username, query-string secret), run each exporter,

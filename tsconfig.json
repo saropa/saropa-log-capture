@@ -12,7 +12,9 @@
 		"strict": true,   /* enable all strict type-checking options */
 		"noImplicitReturns": true,
 		"noFallthroughCasesInSwitch": true,
-		"noUnusedParameters": true
+		"noUnusedParameters": true,
+		/* Third-party .d.ts are broken upstream (undici-types@8.9.0 misses files; google-logging-utils has no types). */
+		"skipLibCheck": true
 	},
 	/* Top-level test/ holds standalone harness tooling (test/visual, Playwright) that imports src via
 	   esbuild and lives outside rootDir "src"; the real extension tests are under src/test. Exclude

@@ -8,6 +8,7 @@ import { stripAnsi } from '../capture/ansi';
 import { classifyLevel } from '../analysis/level-classifier';
 import { getConfig } from '../config/config';
 import { csvFormulaSafe } from '../misc/outbound-content-safety';
+import { redactForExport } from './export-redaction';
 
 /** A parsed log entry. */
 export interface LogEntry {
@@ -93,7 +94,7 @@ export async function exportToJsonl(logUri: vscode.Uri): Promise<vscode.Uri> {
  */
 async function parseLogFile(logUri: vscode.Uri): Promise<ParsedLog> {
     const raw = await vscode.workspace.fs.readFile(logUri);
-    const text = Buffer.from(raw).toString('utf-8');
+    const text = redactForExport(Buffer.from(raw).toString('utf-8'));
     const lines = text.split('\n');
     const cfg = getConfig();
     const strict = cfg.levelDetection === 'strict';
