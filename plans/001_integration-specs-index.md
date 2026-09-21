@@ -4,7 +4,6 @@ Implementation specs for log-capture integration adapters. Each adapter is opt-i
 
 Folder navigation:
 
-- Work schedule, priorities and effort: [MASTER_PLAN.md](../MASTER_PLAN.md)
 - Runbook for empty/missing capture logs: [010_runbook-missing-or-empty-logs.md](010_runbook-missing-or-empty-logs.md)
 - Long-form design docs (background): all archived under `history/2026.06/`. Deferred items carried forward in [deferred/integration-spec-deferred-items.md](deferred/integration-spec-deferred-items.md).
 

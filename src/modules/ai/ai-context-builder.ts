@@ -14,6 +14,8 @@ export interface AIContext {
     errorLine: string;
     lineIndex: number;
     surroundingLines: string[];
+    /** Set when the surrounding window was clamped at a session boundary. Fixed text only — bypasses redaction, so never interpolate log content or paths. */
+    truncationNote?: string;
     stackTrace?: string;
     integrationData?: {
         performance?: { memory: string; cpu: string };
@@ -120,6 +122,14 @@ function mapContextDataToIntegrationData(
     return out;
 }
 
+/** Disclose when the surrounding window was cut short by a session boundary (not a cap). */
+function describeWindowClamp(atStart: boolean, atEnd: boolean): string | undefined {
+    if (atStart && atEnd) { return 'Context is the entire session (window reached both start and end).'; }
+    if (atStart) { return 'Context window begins at the start of the session; no earlier lines exist.'; }
+    if (atEnd) { return 'Context window ends at the end of the session; no later lines exist.'; }
+    return undefined;
+}
+
 /**
  * Read log file and build context: surrounding lines, stack trace, session metadata, optional integration data.
  */
@@ -153,6 +163,13 @@ export async function buildAIContext(
         const line = contentLines[i];
         if (line !== undefined) { surroundingLines.push(line.trimEnd()); }
     }
+    // No note when there is nothing to show (unreadable/empty file): "entire session" would be false.
+    // A trailing newline yields a phantom empty last element, so ignore it when locating the end.
+    const lastReal = contentLines.length > 0 && contentLines[contentLines.length - 1] === ''
+        ? contentLines.length - 2 : contentLines.length - 1;
+    const truncationNote = surroundingLines.length === 0
+        ? undefined
+        : describeWindowClamp(lineIndex - n <= 0, endLine + n >= lastReal);
 
     const stackTrace = extractStackTrace(contentLines, lineIndex);
 
@@ -192,6 +209,7 @@ export async function buildAIContext(
         errorLine: redactSensitiveContent(lineText),
         lineIndex,
         surroundingLines: surroundingLines.map(redactSensitiveContent),
+        truncationNote,
         stackTrace: stackTrace ? redactSensitiveContent(stackTrace) : stackTrace,
         integrationData,
         sessionInfo,

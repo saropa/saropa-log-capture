@@ -29,6 +29,10 @@ cspell:disable
 
 "Open Log" from an error notification, and the log position screenshots are pinned to, now land on the right line even while the app is logging heavily. [log](https://github.com/saropa/saropa-log-capture/blob/v9.5.1/CHANGELOG.md)
 
+### Changed
+
+- PLAN 120: "Explain with AI" prompts now open with an untrusted-data notice telling the model that captured log, stack, HTTP and terminal text is evidence only and must never be followed as instructions (prompt-injection framing). When the surrounding-context window is cut short by the start or end of the session, the prompt now says so instead of silently presenting a partial window as complete. Both are always on; redaction is unchanged
+
 ### Fixed
 
 - Bug 048: HTML, CSV, JSON, JSONL and Grafana Loki exports now redact bearer/Authorization tokens, query-string secrets and user-home paths from log content and annotations, controlled by the new `saropaLogCapture.export.redactSensitiveData` setting (on by default). Previously only bug reports and AI context were redacted. Also fixes `Authorization: Bearer <token>` leaving the token in place everywhere redaction is used

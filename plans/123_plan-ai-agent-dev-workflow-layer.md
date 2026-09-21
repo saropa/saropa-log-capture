@@ -37,7 +37,7 @@ JSDoc conventions, test/build commands, marketplace publishing steps.
 This is a real gap in the team's own tooling, separate from the product comparison.
 But this repo already has unusually strong process discipline to build on: 373 files
 under `plans/`, a numbered plan/bug convention with strict rules
-(`bugs/ISSUE_REPORT_GUIDE.md`), a `MASTER_PLAN.md` P0/P1 backlog, and a real CI
+(`bugs/ISSUE_REPORT_GUIDE.md`), and a real CI
 pipeline with 9+ custom verify scripts. A full 14-agent pipeline would be
 disproportionate to adopt wholesale; a **minimal, high-leverage subset** captures
 most of the value.
