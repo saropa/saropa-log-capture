@@ -1,6 +1,6 @@
 # Bug 048 — Sensitive-data redaction is not applied to HTML/CSV/JSON/Loki export paths
 
-## Status: Fixed (pending review)
+## Status: Closed
 
 <!-- Status values: Open → Investigating → Fix Ready → Fixed (pending review) → Closed -->
 
@@ -86,4 +86,4 @@ Pending: exporters need the VS Code API, so the pattern coverage is tested in `s
 
 ## Commits
 
-<!-- Add commit hashes as fixes land. -->
+- 0da98cd2 — fix(export): redact secrets in HTML/CSV/JSON/JSONL/Loki exports (bug 048)
