@@ -7,6 +7,7 @@ but will auto-install if missing and the tools are reachable.
 """
 
 import json
+import os
 import shutil
 import sys
 
@@ -34,6 +35,30 @@ def check_vscode_cli() -> bool:
     return True
 
 
+def _is_permission_error(stderr: str) -> bool:
+    """True when npm failed because the global prefix isn't writable."""
+    text = stderr or ""
+    return "EACCES" in text or "EPERM" in text
+
+
+def _short_error(stderr: str, max_lines: int = 4) -> str:
+    """Trim npm's long stack traces to the first few meaningful lines."""
+    lines = [ln for ln in (stderr or "").splitlines() if ln.strip()]
+    return "\n".join(lines[:max_lines])
+
+
+def _install_to_user_prefix(pkg: str):
+    """Install `pkg` globally into ~/.npm-global and put its bin dir on PATH."""
+    prefix = os.path.join(os.path.expanduser("~"), ".npm-global")
+    warn(f"No write access to the global npm prefix; installing to {C.WHITE}{prefix}{C.RESET} instead.")
+    result = run(["npm", "install", "-g", "--prefix", prefix, pkg], check=False)
+    if result.returncode == 0:
+        bin_dir = os.path.join(prefix, "bin")
+        if bin_dir not in os.environ.get("PATH", "").split(os.pathsep):
+            os.environ["PATH"] = os.environ.get("PATH", "") + os.pathsep + bin_dir
+    return result
+
+
 def check_global_npm_packages() -> bool:
     """Check and install required global npm packages.
 
@@ -52,6 +77,16 @@ def check_global_npm_packages() -> bool:
         except json.JSONDecodeError:
             pass
 
+    # Packages from a previous permission-fallback live in ~/.npm-global,
+    # which plain `npm list -g` doesn't see.
+    user_prefix = os.path.join(os.path.expanduser("~"), ".npm-global")
+    if os.path.isdir(user_prefix):
+        extra = run(["npm", "list", "-g", "--depth=0", "--json", "--prefix", user_prefix], check=False)
+        try:
+            installed |= set(json.loads(extra.stdout).get("dependencies", {}).keys())
+        except (json.JSONDecodeError, AttributeError):
+            pass
+
     for pkg in REQUIRED_GLOBAL_NPM_PACKAGES:
         if pkg in installed:
             ok(f"npm global: {C.WHITE}{pkg}{C.RESET}")
@@ -60,9 +95,14 @@ def check_global_npm_packages() -> bool:
             install_result = run(
                 ["npm", "install", "-g", pkg], check=False,
             )
+            if install_result.returncode != 0 and _is_permission_error(install_result.stderr):
+                # System prefix (e.g. /usr/local) isn't writable. Rather than
+                # requiring sudo, install into a user-owned prefix.
+                install_result = _install_to_user_prefix(pkg)
             if install_result.returncode != 0:
                 fail(f"Failed to install {pkg}: "
-                     f"{install_result.stderr.strip()}")
+                     f"{_short_error(install_result.stderr)}")
+                info(f"  Install manually: {C.YELLOW}npm install -g {pkg}{C.RESET}")
                 all_ok = False
             else:
                 ok(f"Installed: {C.WHITE}{pkg}{C.RESET}")
