@@ -25,9 +25,9 @@ cspell:disable
 
 ---
 
-## [9.5.1] - Unreleased
+## [9.6.0]
 
-"Open Log" from an error notification, and the log position screenshots are pinned to, now land on the right line even while the app is logging heavily. [log](https://github.com/saropa/saropa-log-capture/blob/v9.5.1/CHANGELOG.md)
+"Open Log" from an error notification, and the log position screenshots are pinned to, now land on the right line even while the app is logging heavily. [log](https://github.com/saropa/saropa-log-capture/blob/v9.6.0/CHANGELOG.md)
 
 ### Changed
 
