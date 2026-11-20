@@ -527,7 +527,7 @@
   "config.watchPatterns.keyword.description": "로그 출력에서 감시할 텍스트 또는 /regex/ 패턴.",
   "config.watchPatterns.title": "Keywords to watch for in log output.",
   "description": "VS Code 디버그 콘솔 출력을 자동으로 영구 로그 파일에 저장합니다",
-  "displayName": "Saropa Capture",
+  "displayName": "Saropa Log Capture",
   "view.logViewer.name": "로그 뷰어",
   "view.vitalsPanel.name": "Play Vitals",
   "viewContainer.saropaCapture.title": "Saropa Capture",

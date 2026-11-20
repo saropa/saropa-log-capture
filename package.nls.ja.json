@@ -527,7 +527,7 @@
   "config.watchPatterns.keyword.description": "ログ出力で監視するテキストまたは /regex/ パターン。",
   "config.watchPatterns.title": "Keywords to watch for in log output.",
   "description": "VS Code デバッグコンソールの出力を自動的に永続ログファイルに保存します",
-  "displayName": "Saropa Capture",
+  "displayName": "Saropa Log Capture",
   "view.logViewer.name": "ログビューアー",
   "view.vitalsPanel.name": "Play Vitals",
   "viewContainer.saropaCapture.title": "Saropa Capture",

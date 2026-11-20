@@ -527,7 +527,7 @@
   "config.watchPatterns.keyword.description": "Text or /regex/ pattern to watch for in log output.",
   "config.watchPatterns.title": "Keywords to watch for in log output.",
   "description": "Capturer automatiquement la sortie de la console de débogage VS Code dans des fichiers journaux persistants",
-  "displayName": "Saropa Capture",
+  "displayName": "Saropa Log Capture",
   "view.logViewer.name": "Vue des journaux",
   "view.vitalsPanel.name": "Play Vitals",
   "viewContainer.saropaCapture.title": "Saropa Capture",

@@ -527,7 +527,7 @@
   "config.watchPatterns.keyword.description": "要在日志输出中监视的文本或 /regex/ 模式。",
   "config.watchPatterns.title": "Keywords to watch for in log output.",
   "description": "自动将 VS Code 调试控制台输出保存到持久日志文件",
-  "displayName": "Saropa Capture",
+  "displayName": "Saropa Log Capture",
   "view.logViewer.name": "日志查看器",
   "view.vitalsPanel.name": "Play Vitals",
   "viewContainer.saropaCapture.title": "Saropa Capture",

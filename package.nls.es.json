@@ -527,7 +527,7 @@
   "config.watchPatterns.keyword.description": "Texto o patrón /regex/ a vigilar en la salida del registro.",
   "config.watchPatterns.title": "Keywords to watch for in log output.",
   "description": "Captura automáticamente la salida de la consola de depuración de VS Code en archivos de registro persistentes",
-  "displayName": "Saropa Capture",
+  "displayName": "Saropa Log Capture",
   "view.logViewer.name": "Visor de registros",
   "view.vitalsPanel.name": "Play Vitals",
   "viewContainer.saropaCapture.title": "Saropa Capture",

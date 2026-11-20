@@ -40,6 +40,19 @@ const ALLOWED = [
 	"scripts/modules/verify/test_l10n_brands.py",
 	// This script itself references the patterns in string literals.
 	"scripts/modules/verify/verify-no-old-name.mjs",
+	// NLS files: displayName reverted to "Saropa Log Capture" while Marketplace
+	// reserves the "Saropa Capture" name from the unpublished duplicate listing.
+	"package.nls.json",
+	"package.nls.de.json",
+	"package.nls.es.json",
+	"package.nls.fr.json",
+	"package.nls.it.json",
+	"package.nls.ja.json",
+	"package.nls.ko.json",
+	"package.nls.pt-br.json",
+	"package.nls.ru.json",
+	"package.nls.zh-cn.json",
+	"package.nls.zh-tw.json",
 ];
 
 /**

@@ -33,6 +33,7 @@ More accurate translations of technical terms like "signal", "marker", and "capt
 
 - Removed "Saropa Lints" from brand shielding — wrong product name left over from the pipeline port
 - Added domain term glossary to Qwen translation prompts so words like "signal", "marker", "capture", and "collection" translate with the correct software sense instead of their everyday meaning
+- Display name reverted to "Saropa Log Capture" while the Marketplace releases the "Saropa Capture" reservation from the unpublished duplicate listing
 
 ---
 

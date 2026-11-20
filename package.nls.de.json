@@ -527,7 +527,7 @@
   "config.watchPatterns.keyword.description": "Text oder /regex/-Muster, auf das in der Protokollausgabe geachtet werden soll.",
   "config.watchPatterns.title": "Keywords to watch for in log output.",
   "description": "Speichert die Ausgabe der VS Code-Debug-Konsole automatisch in persistenten Protokolldateien",
-  "displayName": "Saropa Capture",
+  "displayName": "Saropa Log Capture",
   "view.logViewer.name": "Protokoll-Viewer",
   "view.vitalsPanel.name": "Play Vitals",
   "viewContainer.saropaCapture.title": "Saropa Capture",
