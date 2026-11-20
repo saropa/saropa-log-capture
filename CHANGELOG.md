@@ -25,6 +25,20 @@ cspell:disable
 
 ---
 
+## [9.8.1]
+
+Packaging fix for the Saropa Capture rename. [log](https://github.com/saropa/saropa-log-capture/blob/v9.8.1/CHANGELOG.md)
+
+### Fixed
+
+- Package `name` field updated to `saropa-capture` so the VS Code extension ID (`saropa.saropa-capture`) matches all runtime lookups, deep links, and test assertions
+
+### Added
+
+- Build-time guard (`verify:no-old-name`) that fails on any leftover old-name string outside an allowlist of historical and migration files
+
+---
+
 ## [9.8.0]
 
 Saropa Log Capture is now Saropa Capture. Your existing settings and keybindings keep working. [log](https://github.com/saropa/saropa-log-capture/blob/v9.8.0/CHANGELOG.md)
@@ -40,8 +54,6 @@ Saropa Log Capture is now Saropa Capture. Your existing settings and keybindings
 - Settings migration: on first activation, any explicitly set `saropaLogCapture.*` value (user, workspace, and workspace-folder scope) is copied to the matching `saropaCapture.*` key unless that key is already set. Old entries are left in place; a one-time notice reports how many were copied
 - Old command IDs (`saropaLogCapture.*`) stay registered as aliases of the new commands, so existing keybindings, tasks, and other extensions that call them keep working
 - Warning when the previous "Saropa Log Capture" extension is still installed alongside this one
-- Build-time guard (`verify:no-old-name`) that fails on any leftover old-name string outside an allowlist of historical and migration files
-- Reverted package `name` field to `saropa-log-capture` so VSIX packaging works while the repo folder keeps the old name (full rename deferred to plan 126)
 
 ### Notes
 

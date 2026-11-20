@@ -3392,7 +3392,7 @@
   "license": "MIT",
   "main": "./dist/extension.js",
   "l10n": "./l10n",
-  "name": "saropa-log-capture",
+  "name": "saropa-capture",
   "publisher": "saropa",
   "repository": {
     "type": "git",
@@ -3448,5 +3448,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "9.8.0"
+  "version": "9.8.1"
 }
